@@ -52,22 +52,6 @@
 // Because `uv_os_getenv` requires allocating, we must manage a map to maintain
 // the behavior of `os_getenv`.
 static PMap(cstr_t) envmap = MAP_INIT;
-static uv_mutex_t mutex;
-
-void env_init(void)
-{
-  uv_mutex_init(&mutex);
-}
-
-void os_env_var_lock(void)
-{
-  uv_mutex_lock(&mutex);
-}
-
-void os_env_var_unlock(void)
-{
-  uv_mutex_unlock(&mutex);
-}
 
 /// Like getenv(), but returns NULL if the variable is empty.
 /// @see os_env_exists
@@ -79,7 +63,6 @@ const char *os_getenv(const char *name)
   if (name[0] == '\0') {
     return NULL;
   }
-  uv_mutex_lock(&mutex);
   int r = 0;
   if (pmap_has(cstr_t)(&envmap, name)
       && !!(e = (char *)pmap_get(cstr_t)(&envmap, name))) {
@@ -105,8 +88,6 @@ const char *os_getenv(const char *name)
   }
   pmap_put(cstr_t)(&envmap, xstrdup(name), e);
 end:
-  // Must do this before ELOG, log.c may call os_setenv.
-  uv_mutex_unlock(&mutex);
   if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
     ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
@@ -158,7 +139,6 @@ int os_setenv(const char *name, const char *value, int overwrite)
     return 0;
   }
 #endif
-  uv_mutex_lock(&mutex);
   int r;
 #ifdef MSWIN
   // libintl uses getenv() for LC_ALL/LANG/etc., so we must use _putenv_s().
@@ -173,8 +153,6 @@ int os_setenv(const char *name, const char *value, int overwrite)
   // Destroy the old map item. Do this AFTER uv_os_setenv(), because `value`
   // could be a previous os_getenv() result.
   pmap_del2(&envmap, name);
-  // Must do this before ELOG, log.c may call os_setenv.
-  uv_mutex_unlock(&mutex);
   if (r != 0) {
     ELOG("uv_os_setenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
@@ -188,11 +166,8 @@ int os_unsetenv(const char *name)
   if (name[0] == '\0') {
     return -1;
   }
-  uv_mutex_lock(&mutex);
   pmap_del2(&envmap, name);
   int r = uv_os_unsetenv(name);
-  // Must do this before ELOG, log.c may call os_setenv.
-  uv_mutex_unlock(&mutex);
   if (r != 0) {
     ELOG("uv_os_unsetenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
@@ -519,10 +494,8 @@ static char *os_homedir(void)
 {
   homedir_buf[0] = NUL;
   size_t homedir_size = MAXPATHL;
-  uv_mutex_lock(&mutex);
   // http://docs.libuv.org/en/v1.x/misc.html#c.uv_os_homedir
   int ret_value = uv_os_homedir(homedir_buf, &homedir_size);
-  uv_mutex_unlock(&mutex);
   if (ret_value == 0 && homedir_size < MAXPATHL) {
     return homedir_buf;
   }
