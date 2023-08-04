@@ -547,7 +547,7 @@ return {
         if_true = '',
         doc = [["$TMPDIR/*,$TMP/*,$TEMP/*"
         Unix: "/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*"
-        Mac: "/private/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*")]],
+        Mac: "/private/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*"]],
         meta = '/tmp/*',
       },
       deny_duplicates = true,
@@ -3726,8 +3726,7 @@ return {
       defaults = {
         if_true = macros('DFLT_HELPFILE'),
         doc = [[(MS-Windows) "$VIMRUNTIME\doc\help.txt"
-                  (others) "$VIMRUNTIME/doc/help.txt")
-      ]],
+                  (others) "$VIMRUNTIME/doc/help.txt"]],
       },
       desc = [=[
         Name of the main help file.  All distributed help files should be
@@ -4270,8 +4269,7 @@ return {
         if_true = '@,48-57,/,\\,.,-,_,+,,,#,$,%,{,},[,],:,@-@,!,~,=',
         doc = [[for Windows:
       "@,48-57,/,\,.,-,_,+,,,#,$,%,{,},[,],:,@-@,!,~,="
-     otherwise: "@,48-57,/,.,-,_,+,,,#,$,%,~,=")
-      ]],
+     otherwise: "@,48-57,/,.,-,_,+,,,#,$,%,~,="]],
       },
       deny_duplicates = true,
       desc = [=[
@@ -4337,8 +4335,7 @@ return {
         if_true = '@,48-57,_,128-167,224-235',
         doc = [[for Windows:
                     "@,48-57,_,128-167,224-235"
-         otherwise: "@,48-57,_,192-255")
-      ]],
+         otherwise: "@,48-57,_,192-255"]],
       },
       deny_duplicates = true,
       desc = [=[
@@ -9031,6 +9028,7 @@ return {
       scope = { 'global' },
       secure = true,
       short_desc = N_('where to store undo files'),
+      tags = { 'E5003' },
       type = 'string',
       varname = 'p_udir',
     },
