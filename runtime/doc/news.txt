@@ -158,6 +158,10 @@ The following new APIs and features were added.
 • Floating windows can now show footer with new `footer` and `footer_pos`
   config fields. Uses |hl-FloatFooter| by default.
 
+• New events for replaying macros:
+  • |ReplayEnter|
+  • |ReplayLeave|
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
