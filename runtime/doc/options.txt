@@ -904,7 +904,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'backupskip'* *'bsk'*
 'backupskip' 'bsk'	string	(default "$TMPDIR/*,$TMP/*,$TEMP/*"
                                  Unix: "/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*"
-                                 Mac: "/private/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*"))
+                                 Mac: "/private/tmp/*,$TMPDIR/*,$TMP/*,$TEMP/*")
 			global
 	A list of file patterns.  When one of the patterns matches with the
 	name of the file which is written, no backup file is created.  Both
@@ -3102,7 +3102,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'helpfile'* *'hf'*
 'helpfile' 'hf'		string	(default (MS-Windows) "$VIMRUNTIME\doc\help.txt"
                                          (others) "$VIMRUNTIME/doc/help.txt")
-                             )
 			global
 	Name of the main help file.  All distributed help files should be
 	placed together in one directory.  Additionally, all "doc" directories
@@ -3428,7 +3427,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'isfname' 'isf'		string	(default for Windows:
                              "@,48-57,/,\,.,-,_,+,,,#,$,%,{,},[,],:,@-@,!,~,="
                             otherwise: "@,48-57,/,.,-,_,+,,,#,$,%,~,=")
-                             )
 			global
 	The characters specified by this option are included in file names and
 	path names.  Filenames are used for commands like "gf", "[i" and in
@@ -3480,7 +3478,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'isident' 'isi'		string	(default for Windows:
                                            "@,48-57,_,128-167,224-235"
                                 otherwise: "@,48-57,_,192-255")
-                             )
 			global
 	The characters given by this option are included in identifiers.
 	Identifiers are used in recognizing environment variables and after a
@@ -6610,7 +6607,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	used for CTRL-\ CTRL-N and CTRL-\ CTRL-G when part of a command has
 	been typed.
 
-						*'undodir'* *'udir'*
+					*'undodir'* *'udir'* *E5003*
 'undodir' 'udir'	string	(default "$XDG_STATE_HOME/nvim/undo//")
 			global
 	List of directory names for undo files, separated with commas.
