@@ -2352,7 +2352,7 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
       pmap_put(ptr_t)(&saved_bufs, buf, NULL);
 
       u_clearall(buf);
-      buf->b_p_ul = LONG_MAX;  // Make sure we can undo all changes
+      buf->b_p_ul = INT_MAX;  // Make sure we can undo all changes
     }
 
     CpWinInfo cp_wininfo;
