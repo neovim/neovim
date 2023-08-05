@@ -446,14 +446,14 @@ end
 --- |quickfix| window. If the symbol can resolve to multiple
 --- items, the user can pick one in the |inputlist()|.
 function M.incoming_calls()
-  call_hierarchy('callHierarchy/incomingCalls')
+  call_hierarchy(ms.callHierarchy_incomingCalls)
 end
 
 --- Lists all the items that are called by the symbol under the
 --- cursor in the |quickfix| window. If the symbol can resolve to
 --- multiple items, the user can pick one in the |inputlist()|.
 function M.outgoing_calls()
-  call_hierarchy('callHierarchy/outgoingCalls')
+  call_hierarchy(ms.callHierarchy_outgoingCalls)
 end
 
 --- List workspace folders.
@@ -659,10 +659,10 @@ local function on_code_action_results(results, ctx, options)
     local reg = client.dynamic_capabilities:get(ms.textDocument_codeAction, { bufnr = ctx.bufnr })
 
     local supports_resolve = vim.tbl_get(reg or {}, 'registerOptions', 'resolveProvider')
-      or client.supports_method('codeAction/resolve')
+      or client.supports_method(ms.codeAction_resolve)
 
     if not action.edit and client and supports_resolve then
-      client.request('codeAction/resolve', action, function(err, resolved_action)
+      client.request(ms.codeAction_resolve, action, function(err, resolved_action)
         if err then
           vim.notify(err.code .. ': ' .. err.message, vim.log.levels.ERROR)
           return

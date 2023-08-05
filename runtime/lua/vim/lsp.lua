@@ -1612,7 +1612,7 @@ function lsp.start_client(config)
         data = { client_id = client_id, request_id = id, request = request },
       })
     end
-    return rpc.notify('$/cancelRequest', { id = id })
+    return rpc.notify(ms.dollar_cancelRequest, { id = id })
   end
 
   -- Track this so that we can escalate automatically if we've already tried a
@@ -1636,9 +1636,9 @@ function lsp.start_client(config)
       return
     end
     -- Sending a signal after a process has exited is acceptable.
-    rpc.request('shutdown', nil, function(err, _)
+    rpc.request(ms.shutdown, nil, function(err, _)
       if err == nil then
-        rpc.notify('exit')
+        rpc.notify(ms.exit)
       else
         -- If there was an error in the shutdown request, then term to be safe.
         rpc.terminate()
