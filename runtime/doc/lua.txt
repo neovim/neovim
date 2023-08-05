@@ -2654,7 +2654,7 @@ vim.filetype.add({filetypes})                             *vim.filetype.add()*
          ['.*'] = {
            priority = -math.huge,
            function(path, bufnr)
-             local content = vim.filetype.getlines(bufnr, 1)
+             local content = vim.filetype.getline(bufnr, 1)
              if vim.filetype.matchregex(content, [[^#!.*\<mine\>]]) then
                return 'mine'
              elseif vim.filetype.matchregex(content, [[\<drawing\>]]) then

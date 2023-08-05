@@ -2,6 +2,14 @@ local api = vim.api
 
 local M = {}
 
+--- @alias vim.filetype.mapfn fun(path:string,bufnr:integer, ...):(((string|false)?),(fun(b:integer)?))
+--- @alias vim.filetype.maptbl {[1]:string|vim.filetype.mapfn, [2]:{priority:integer}}
+--- @alias vim.filetype.mapping.value string|vim.filetype.mapfn|vim.filetype.maptbl
+--- @alias vim.filetype.mapping table<string,vim.filetype.mapping.value>
+
+--- @param ft string|vim.filetype.mapfn
+--- @param opts? {priority:integer}
+--- @return vim.filetype.maptbl
 local function starsetf(ft, opts)
   return {
     function(path, bufnr)
@@ -23,36 +31,44 @@ local function starsetf(ft, opts)
 end
 
 ---@private
---- Get a single line or line range from the buffer.
---- If only start_lnum is specified, return a single line as a string.
---- If both start_lnum and end_lnum are omitted, return all lines from the buffer.
----
+--- Get a line range from the buffer.
 ---@param bufnr integer The buffer to get the lines from
 ---@param start_lnum integer|nil The line number of the first line (inclusive, 1-based)
 ---@param end_lnum integer|nil The line number of the last line (inclusive, 1-based)
----@return table<string>|string Array of lines, or string when end_lnum is omitted
+---@return string[] # Array of lines
 function M.getlines(bufnr, start_lnum, end_lnum)
   if end_lnum then
     -- Return a line range
     return api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
   end
+
   if start_lnum then
     -- Return a single line
-    return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ''
-  else
-    -- Return all lines
-    return api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)
   end
+
+  -- Return all lines
+  return api.nvim_buf_get_lines(bufnr, 0, -1, false)
+end
+
+---@private
+--- Get a single line from the buffer.
+---@param bufnr integer The buffer to get the lines from
+---@param start_lnum integer The line number of the first line (inclusive, 1-based)
+---@return string
+function M._getline(bufnr, start_lnum)
+  -- Return a single line
+  return M.getlines(bufnr, start_lnum)[1] or ''
 end
 
 ---@private
 --- Check whether a string matches any of the given Lua patterns.
 ---
----@param s string The string to check
----@param patterns table<string> A list of Lua patterns
+---@param s string? The string to check
+---@param patterns string[] A list of Lua patterns
 ---@return boolean `true` if s matched a pattern, else `false`
 function M.findany(s, patterns)
-  if s == nil then
+  if not s then
     return false
   end
   for _, v in ipairs(patterns) do
@@ -78,26 +94,30 @@ function M.nextnonblank(bufnr, start_lnum)
   return nil
 end
 
+--- @type table<string,vim.regex>
+local cache = {}
+
 ---@private
 --- Check whether the given string matches the Vim regex pattern.
-M.matchregex = (function()
-  local cache = {}
-  return function(s, pattern)
-    if s == nil then
-      return nil
-    end
-    if not cache[pattern] then
-      cache[pattern] = vim.regex(pattern)
-    end
-    return cache[pattern]:match_str(s)
+--- @param s string?
+--- @param pattern string
+--- @return vim.regex?
+function M.matchregex(s, pattern)
+  if not s then
+    return
   end
-end)()
+  if not cache[pattern] then
+    cache[pattern] = vim.regex(pattern)
+  end
+  return cache[pattern]:match_str(s)
+end
 
 -- luacheck: push no unused args
 -- luacheck: push ignore 122
 
 -- Filetypes based on file extension
 ---@diagnostic disable: unused-local
+--- @type vim.filetype.mapping
 local extension = {
   -- BEGIN EXTENSION
   ['8th'] = '8th',
@@ -226,7 +246,7 @@ local extension = {
   atg = 'coco',
   recipe = 'conaryrecipe',
   hook = function(path, bufnr)
-    return M.getlines(bufnr, 1) == '[Trigger]' and 'conf'
+    return M._getline(bufnr, 1) == '[Trigger]' and 'conf'
   end,
   nmconnection = 'confini',
   mklx = 'context',
@@ -1078,7 +1098,7 @@ local extension = {
   tutor = 'tutor',
   twig = 'twig',
   ts = function(path, bufnr)
-    return M.getlines(bufnr, 1):find('<%?xml') and 'xml' or 'typescript'
+    return M._getline(bufnr, 1):find('<%?xml') and 'xml' or 'typescript'
   end,
   mts = 'typescript',
   cts = 'typescript',
@@ -1153,7 +1173,7 @@ local extension = {
   wpl = 'xml',
   xmi = 'xml',
   xpm = function(path, bufnr)
-    return M.getlines(bufnr, 1):find('XPM2') and 'xpm2' or 'xpm'
+    return M._getline(bufnr, 1):find('XPM2') and 'xpm2' or 'xpm'
   end,
   ['xpm2'] = 'xpm2',
   xqy = 'xquery',
@@ -1244,19 +1264,19 @@ local extension = {
     return require('vim.filetype.detect').y(bufnr)
   end,
   cmd = function(path, bufnr)
-    return M.getlines(bufnr, 1):find('^/%*') and 'rexx' or 'dosbatch'
+    return M._getline(bufnr, 1):find('^/%*') and 'rexx' or 'dosbatch'
   end,
   rul = function(path, bufnr)
     return require('vim.filetype.detect').rul(bufnr)
   end,
   cpy = function(path, bufnr)
-    return M.getlines(bufnr, 1):find('^##') and 'python' or 'cobol'
+    return M._getline(bufnr, 1):find('^##') and 'python' or 'cobol'
   end,
   dsl = function(path, bufnr)
-    return M.getlines(bufnr, 1):find('^%s*<!') and 'dsl' or 'structurizr'
+    return M._getline(bufnr, 1):find('^%s*<!') and 'dsl' or 'structurizr'
   end,
   smil = function(path, bufnr)
-    return M.getlines(bufnr, 1):find('<%?%s*xml.*%?>') and 'xml' or 'smil'
+    return M._getline(bufnr, 1):find('<%?%s*xml.*%?>') and 'xml' or 'smil'
   end,
   smi = function(path, bufnr)
     return require('vim.filetype.detect').smi(bufnr)
@@ -1357,6 +1377,7 @@ local extension = {
   -- END EXTENSION
 }
 
+--- @type vim.filetype.mapping
 local filename = {
   -- BEGIN FILENAME
   ['a2psrc'] = 'a2ps',
@@ -1770,6 +1791,7 @@ local filename = {
   -- END FILENAME
 }
 
+--- @type vim.filetype.mapping
 local pattern = {
   -- BEGIN PATTERN
   ['.*/etc/a2ps/.*%.cfg'] = 'a2ps',
@@ -2317,8 +2339,10 @@ local pattern = {
 -- luacheck: pop
 -- luacheck: pop
 
+--- @param t vim.filetype.mapping
+--- @return vim.filetype.mapping[]
 local function sort_by_priority(t)
-  local sorted = {}
+  local sorted = {} --- @type vim.filetype.mapping[]
   for k, v in pairs(t) do
     local ft = type(v) == 'table' and v[1] or v
     assert(
@@ -2340,6 +2364,9 @@ end
 
 local pattern_sorted = sort_by_priority(pattern)
 
+--- @param path string
+--- @param as_pattern? true
+--- @return string
 local function normalize_path(path, as_pattern)
   local normal = path:gsub('\\', '/')
   if normal:find('^~') then
@@ -2348,11 +2375,16 @@ local function normalize_path(path, as_pattern)
       -- The rest of path should already be properly escaped.
       normal = vim.pesc(vim.env.HOME) .. normal:sub(2)
     else
-      normal = vim.env.HOME .. normal:sub(2)
+      normal = vim.env.HOME .. normal:sub(2) --- @type string
     end
   end
   return normal
 end
+
+--- @class vim.filetype.add.filetypes
+--- @field pattern vim.filetype.mapping
+--- @field extension vim.filetype.mapping
+--- @field filename vim.filetype.mapping
 
 --- Add new filetype mappings.
 ---
@@ -2423,7 +2455,7 @@ end
 ---     ['.*'] = {
 ---       priority = -math.huge,
 ---       function(path, bufnr)
----         local content = vim.filetype.getlines(bufnr, 1)
+---         local content = vim.filetype.getline(bufnr, 1)
 ---         if vim.filetype.matchregex(content, [[^#!.*\\<mine\\>]]) then
 ---           return 'mine'
 ---         elseif vim.filetype.matchregex(content, [[\\<drawing\\>]]) then
@@ -2435,7 +2467,7 @@ end
 --- }
 --- </pre>
 ---
----@param filetypes table A table containing new filetype maps (see example).
+---@param filetypes vim.filetype.add.filetypes A table containing new filetype maps (see example).
 function M.add(filetypes)
   for k, v in pairs(filetypes.extension or {}) do
     extension[k] = v
@@ -2454,38 +2486,62 @@ function M.add(filetypes)
   end
 end
 
+--- @param ft vim.filetype.mapping.value
+--- @param path? string
+--- @param bufnr? integer
+--- @param ... any
+--- @return string?
+--- @return fun(b: integer)?
 local function dispatch(ft, path, bufnr, ...)
-  local on_detect
-  if type(ft) == 'function' then
-    if bufnr then
-      ft, on_detect = ft(path, bufnr, ...)
-    else
-      -- If bufnr is nil (meaning we are matching only against the filename), set it to an invalid
-      -- value (-1) and catch any errors from the filetype detection function. If the function tries
-      -- to use the buffer then it will fail, but this enables functions which do not need a buffer
-      -- to still work.
-      local ok
-      ok, ft, on_detect = pcall(ft, path, -1, ...)
-      if not ok then
-        return
-      end
+  if type(ft) == 'string' then
+    return ft
+  end
+
+  if type(ft) ~= 'function' then
+    return
+  end
+
+  assert(path)
+
+  ---@type string|false?, fun(b: integer)?
+  local ft0, on_detect
+  if bufnr then
+    ft0, on_detect = ft(path, bufnr, ...)
+  else
+    -- If bufnr is nil (meaning we are matching only against the filename), set it to an invalid
+    -- value (-1) and catch any errors from the filetype detection function. If the function tries
+    -- to use the buffer then it will fail, but this enables functions which do not need a buffer
+    -- to still work.
+    local ok
+    ok, ft0, on_detect = pcall(ft, path, -1, ...)
+    if not ok then
+      return
     end
   end
 
-  if type(ft) == 'string' then
-    return ft, on_detect
+  if not ft0 then
+    return
   end
+
+  return ft0, on_detect
 end
 
--- Lookup table/cache for patterns that contain an environment variable pattern, e.g. ${SOME_VAR}.
+--- Lookup table/cache for patterns that contain an environment variable pattern, e.g. ${SOME_VAR}.
+--- @type table<string,boolean>
 local expand_env_lookup = {}
 
+--- @param name string
+--- @param path string
+--- @param tail string
+--- @param pat string
+--- @return string|false?
 local function match_pattern(name, path, tail, pat)
   if expand_env_lookup[pat] == nil then
     expand_env_lookup[pat] = pat:find('%${') ~= nil
   end
   if expand_env_lookup[pat] then
-    local return_early
+    local return_early --- @type true?
+    --- @type string
     pat = pat:gsub('%${(%S-)}', function(env)
       -- If an environment variable is present in the pattern but not set, there is no match
       if not vim.env[env] then
@@ -2501,17 +2557,21 @@ local function match_pattern(name, path, tail, pat)
 
   -- If the pattern contains a / match against the full path, otherwise just the tail
   local fullpat = '^' .. pat .. '$'
-  local matches
+
   if pat:find('/') then
     -- Similar to |autocmd-pattern|, if the pattern contains a '/' then check for a match against
     -- both the short file name (as typed) and the full file name (after expanding to full path
     -- and resolving symlinks)
-    matches = name:match(fullpat) or path:match(fullpat)
-  else
-    matches = tail:match(fullpat)
+    return (name:match(fullpat) or path:match(fullpat))
   end
-  return matches
+
+  return (tail:match(fullpat))
 end
+
+--- @class vim.filetype.match.args
+--- @field buf? integer
+--- @field filename? string
+--- @field contents? string[]
 
 --- Perform filetype detection.
 ---
@@ -2542,7 +2602,8 @@ end
 ---   vim.filetype.match({ contents = {'#!/usr/bin/env bash'} })
 --- </pre>
 ---
----@param args table Table specifying which matching strategy to use. Accepted keys are:
+---@param args vim.filetype.match.args Table specifying which matching strategy to use.
+---                 Accepted keys are:
 ---                   * buf (number): Buffer number to use for matching. Mutually exclusive with
 ---                                   {contents}
 ---                   * filename (string): Filename to use for matching. When {buf} is given,
@@ -2555,8 +2616,8 @@ end
 ---                   * contents (table): An array of lines representing file contents to use for
 ---                                       matching. Can be used with {filename}. Mutually exclusive
 ---                                       with {buf}.
----@return string|nil If a match was found, the matched filetype.
----@return function|nil A function that modifies buffer state when called (for example, to set some
+---@return string|nil # If a match was found, the matched filetype.
+---@return function|nil # A function that modifies buffer state when called (for example, to set some
 ---                     filetype specific buffer variables). The function accepts a buffer number as
 ---                     its only argument.
 function M.match(args)
@@ -2576,6 +2637,7 @@ function M.match(args)
     name = api.nvim_buf_get_name(bufnr)
   end
 
+  --- @type string?, fun(b: integer)?
   local ft, on_detect
 
   if name then
@@ -2641,10 +2703,11 @@ function M.match(args)
   -- Finally, check file contents
   if contents or bufnr then
     if contents == nil then
+      assert(bufnr)
       if api.nvim_buf_line_count(bufnr) > 101 then
         -- only need first 100 and last line for current checks
         contents = M.getlines(bufnr, 1, 100)
-        contents[#contents + 1] = M.getlines(bufnr, -1)
+        contents[#contents + 1] = M._getline(bufnr, -1)
       else
         contents = M.getlines(bufnr)
       end

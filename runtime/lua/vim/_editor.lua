@@ -428,10 +428,17 @@ vim.cmd = setmetatable({}, {
   end,
 })
 
+--- @class vim.var_accessor
+--- @field [string] any
+--- @field [integer] vim.var_accessor
+
 -- These are the vim.env/v/g/o/bo/wo variable magic accessors.
 do
   local validate = vim.validate
 
+  --- @param scope string
+  --- @param handle? false|integer
+  --- @return vim.var_accessor
   local function make_dict_accessor(scope, handle)
     validate({
       scope = { scope, 's' },
