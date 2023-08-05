@@ -112,7 +112,7 @@ end
 --- about the context in which a completion was triggered (how it was triggered,
 --- and by which trigger character, if applicable)
 ---
----@see vim.lsp.protocol.constants.CompletionTriggerKind
+---@see vim.lsp.protocol.CompletionTriggerKind
 function M.completion(context)
   local params = util.make_position_params()
   params.context = context
@@ -728,7 +728,7 @@ end
 ---           using mark-like indexing. See |api-indexing|
 ---
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
----@see vim.lsp.protocol.constants.CodeActionTriggerKind
+---@see vim.lsp.protocol.CodeActionTriggerKind
 function M.code_action(options)
   validate({ options = { options, 't', true } })
   options = options or {}
