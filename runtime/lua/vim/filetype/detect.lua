@@ -17,13 +17,9 @@
 --     Example:
 --     `if line =~ '^\s*unwind_protect\>'` => `if matchregex(line, [[\c^\s*unwind_protect\>]])`
 
---- @alias vim.filetype.detect.fun1 fun(bufnr:integer): string?, fun(b: integer)?
---- @alias vim.filetype.detect.fun2 fun(path:string, bufnr:integer): string?
---- @alias vim.filetype.detect.fun3 fun(path:string): string
-
 local M = {}
 
-local getlines = vim.filetype.getlines
+local getlines = vim.filetype._getlines
 local getline = vim.filetype._getline
 local findany = vim.filetype.findany
 local nextnonblank = vim.filetype.nextnonblank
@@ -34,11 +30,11 @@ local matchregex = vim.filetype.matchregex
 
 -- This function checks for the kind of assembly that is wanted by the user, or
 -- can be detected from the first five lines of the file.
---- @type vim.filetype.detect.fun1
-function M.asm(bufnr)
+--- @type vim.filetype.mapfn
+function M.asm(path, bufnr)
   local syntax = vim.b[bufnr].asmsyntax
   if not syntax or syntax == '' then
-    syntax = M.asm_syntax(bufnr)
+    syntax = M.asm_syntax(path, bufnr)
   end
 
   -- If b:asmsyntax still isn't set, default to asmsyntax or GNU
@@ -55,8 +51,8 @@ function M.asm(bufnr)
 end
 
 --- Active Server Pages (with Perl or Visual Basic Script)
---- @type vim.filetype.detect.fun1
-function M.asp(bufnr)
+--- @type vim.filetype.mapfn
+function M.asp(_, bufnr)
   if vim.g.filetype_asp then
     return vim.g.filetype_asp
   elseif table.concat(getlines(bufnr, 1, 3)):lower():find('perlscript') then
@@ -67,8 +63,8 @@ end
 
 -- Checks the first 5 lines for a asmsyntax=foo override.
 -- Only whitespace characters can be present immediately before or after this statement.
---- @type vim.filetype.detect.fun1
-function M.asm_syntax(bufnr)
+--- @type vim.filetype.mapfn
+function M.asm_syntax(_, bufnr)
   local lines = ' ' .. table.concat(getlines(bufnr, 1, 5), ' '):lower() .. ' '
   local match = lines:match('%sasmsyntax=([a-zA-Z0-9]+)%s')
   if match then
@@ -82,8 +78,8 @@ local visual_basic_content =
   { 'vb_name', 'begin vb%.form', 'begin vb%.mdiform', 'begin vb%.usercontrol' }
 
 -- See frm() for Visual Basic form file detection
---- @type vim.filetype.detect.fun1
-function M.bas(bufnr)
+--- @type vim.filetype.mapfn
+function M.bas(_, bufnr)
   if vim.g.filetype_bas then
     return vim.g.filetype_bas
   end
@@ -114,18 +110,18 @@ function M.bas(bufnr)
   return 'basic'
 end
 
---- @param bufnr integer
---- @param default? string
---- @return string?
-function M.bindzone(bufnr, default)
+--- @type vim.filetype.mapfn
+function M.bindzone(_, bufnr)
   local lines = table.concat(getlines(bufnr, 1, 4))
   if findany(lines, { '^; <<>> DiG [0-9%.]+.* <<>>', '%$ORIGIN', '%$TTL', 'IN%s+SOA' }) then
     return 'bindzone'
   end
-  return default
 end
 
 -- Returns true if file content looks like RAPID
+--- @param bufnr integer
+--- @param extension? string
+--- @return string|boolean?
 local function is_rapid(bufnr, extension)
   if extension == 'cfg' then
     local line = getline(bufnr, 1):lower()
@@ -139,8 +135,8 @@ local function is_rapid(bufnr, extension)
   return false
 end
 
---- @type vim.filetype.detect.fun1
-function M.cfg(bufnr)
+--- @type vim.filetype.mapfn
+function M.cfg(_, bufnr)
   if vim.g.filetype_cfg then
     return vim.g.filetype_cfg --[[@as string]]
   elseif is_rapid(bufnr, 'cfg') then
@@ -154,8 +150,8 @@ end
 --- If the first line starts with # or ! it's probably a ch file.
 --- If a line has "main", "include", "//" or "/*" it's probably ch.
 --- Otherwise CHILL is assumed.
---- @type vim.filetype.detect.fun1
-function M.change(bufnr)
+--- @type vim.filetype.mapfn
+function M.change(_, bufnr)
   local first_line = getline(bufnr, 1)
   if findany(first_line, { '^#', '^!' }) then
     return 'ch'
@@ -173,8 +169,8 @@ function M.change(bufnr)
   return 'chill'
 end
 
---- @type vim.filetype.detect.fun1
-function M.changelog(bufnr)
+--- @type vim.filetype.mapfn
+function M.changelog(_, bufnr)
   local line = getline(bufnr, 1):lower()
   if line:find('; urgency=') then
     return 'debchangelog'
@@ -182,16 +178,16 @@ function M.changelog(bufnr)
   return 'changelog'
 end
 
---- @type vim.filetype.detect.fun1
-function M.class(bufnr)
+--- @type vim.filetype.mapfn
+function M.class(_, bufnr)
   -- Check if not a Java class (starts with '\xca\xfe\xba\xbe')
   if not getline(bufnr, 1):find('^\202\254\186\190') then
     return 'stata'
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.cls(bufnr)
+--- @type vim.filetype.mapfn
+function M.cls(_, bufnr)
   if vim.g.filetype_cls then
     return vim.g.filetype_cls
   end
@@ -206,7 +202,7 @@ function M.cls(bufnr)
   return 'st'
 end
 
---- @type vim.filetype.detect.fun2
+--- @type vim.filetype.mapfn
 function M.conf(path, bufnr)
   if vim.fn.did_filetype() ~= 0 or path:find(vim.g.ft_ignore_pat) then
     return
@@ -222,22 +218,27 @@ function M.conf(path, bufnr)
 end
 
 --- Debian Control
---- @type vim.filetype.detect.fun1
-function M.control(bufnr)
+--- @type vim.filetype.mapfn
+function M.control(_, bufnr)
   if getline(bufnr, 1):find('^Source:') then
     return 'debcontrol'
   end
 end
 
 --- Debian Copyright
---- @type vim.filetype.detect.fun1
-function M.copyright(bufnr)
+--- @type vim.filetype.mapfn
+function M.copyright(_, bufnr)
   if getline(bufnr, 1):find('^Format:') then
     return 'debcopyright'
   end
 end
 
---- @type vim.filetype.detect.fun2
+--- @type vim.filetype.mapfn
+function M.cpp(_, _)
+  return vim.g.cynlib_syntax_for_cpp and 'cynlib' or 'cpp'
+end
+
+--- @type vim.filetype.mapfn
 function M.csh(path, bufnr)
   if vim.fn.did_filetype() ~= 0 then
     -- Filetype was already detected
@@ -301,7 +302,7 @@ local function cvs_diff(path, contents)
   end
 end
 
---- @type vim.filetype.detect.fun2
+--- @type vim.filetype.mapfn
 function M.dat(path, bufnr)
   local file_name = vim.fn.fnamemodify(path, ':t'):lower()
   -- Innovation data processing
@@ -318,8 +319,8 @@ function M.dat(path, bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.decl(bufnr)
+--- @type vim.filetype.mapfn
+function M.decl(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 3)) do
     if line:lower():find('^<!sgml') then
       return 'sgmldecl'
@@ -329,7 +330,7 @@ end
 
 -- This function is called for all files under */debian/patches/*, make sure not
 -- to non-dep3patch files, such as README and other text files.
---- @type vim.filetype.detect.fun2
+--- @type vim.filetype.mapfn
 function M.dep3patch(path, bufnr)
   local file_name = vim.fn.fnamemodify(path, ':t')
   if file_name == 'series' then
@@ -376,7 +377,7 @@ local function diff(contents)
   end
 end
 
-function M.dns_zone(contents)
+local function dns_zone(contents)
   if
     findany(
       contents[1] .. contents[2] .. contents[3] .. contents[4],
@@ -394,8 +395,8 @@ function M.dns_zone(contents)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.dtrace(bufnr)
+--- @type vim.filetype.mapfn
+function M.dtrace(_, bufnr)
   if vim.fn.did_filetype() ~= 0 then
     -- Filetype was already detected
     return
@@ -411,8 +412,8 @@ function M.dtrace(bufnr)
   return 'd'
 end
 
---- @type vim.filetype.detect.fun1
-function M.e(bufnr)
+--- @type vim.filetype.mapfn
+function M.e(_, bufnr)
   if vim.g.filetype_euphoria then
     return vim.g.filetype_euphoria
   end
@@ -424,8 +425,8 @@ function M.e(bufnr)
   return 'eiffel'
 end
 
---- @type vim.filetype.detect.fun1
-function M.edn(bufnr)
+--- @type vim.filetype.mapfn
+function M.edn(_, bufnr)
   local line = getline(bufnr, 1)
   if matchregex(line, [[\c^\s*(\s*edif\>]]) then
     return 'edif'
@@ -437,8 +438,8 @@ end
 -- This function checks for valid cl syntax in the first five lines.
 -- Look for either an opening comment, '#', or a block start, '{'.
 -- If not found, assume SGML.
---- @type vim.filetype.detect.fun1
-function M.ent(bufnr)
+--- @type vim.filetype.mapfn
+function M.ent(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 5)) do
     if line:find('^%s*[#{]') then
       return 'cl'
@@ -451,8 +452,13 @@ function M.ent(bufnr)
   return 'dtd'
 end
 
---- @type vim.filetype.detect.fun1
-function M.ex(bufnr)
+--- @type vim.filetype.mapfn
+function M.euphoria(_, _)
+  return vim.g.filetype_euphoria or 'euphoria3'
+end
+
+--- @type vim.filetype.mapfn
+function M.ex(_, bufnr)
   if vim.g.filetype_euphoria then
     return vim.g.filetype_euphoria
   else
@@ -468,8 +474,8 @@ end
 -- This function checks the first 15 lines for appearance of 'FoamFile'
 -- and then 'object' in a following line.
 -- In that case, it's probably an OpenFOAM file
---- @type vim.filetype.detect.fun1
-function M.foam(bufnr)
+--- @type vim.filetype.mapfn
+function M.foam(_, bufnr)
   local foam_file = false
   for _, line in ipairs(getlines(bufnr, 1, 15)) do
     if line:find('^FoamFile') then
@@ -480,8 +486,8 @@ function M.foam(bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.frm(bufnr)
+--- @type vim.filetype.mapfn
+function M.frm(_, bufnr)
   if vim.g.filetype_frm then
     return vim.g.filetype_frm
   end
@@ -493,7 +499,8 @@ function M.frm(bufnr)
   end
 end
 
-function M.fvwm(path)
+--- @type vim.filetype.mapfn
+function M.fvwm(path, _)
   if vim.fn.fnamemodify(path, ':e') == 'm4' then
     return 'fvwm2m4'
   end
@@ -503,8 +510,8 @@ function M.fvwm(path)
 end
 
 -- Distinguish between Forth and F#.
---- @type vim.filetype.detect.fun1
-function M.fs(bufnr)
+--- @type vim.filetype.mapfn
+function M.fs(_, bufnr)
   if vim.g.filetype_fs then
     return vim.g.filetype_fs
   end
@@ -516,16 +523,16 @@ function M.fs(bufnr)
   return 'fsharp'
 end
 
---- @type vim.filetype.detect.fun1
-function M.git(bufnr)
+--- @type vim.filetype.mapfn
+function M.git(_, bufnr)
   local line = getline(bufnr, 1)
   if matchregex(line, [[^\x\{40,\}\>\|^ref: ]]) then
     return 'git'
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.header(bufnr)
+--- @type vim.filetype.mapfn
+function M.header(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 200)) do
     if findany(line:lower(), { '^@interface', '^@end', '^@class' }) then
       if vim.g.c_syntax_for_h then
@@ -544,8 +551,8 @@ function M.header(bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.html(bufnr)
+--- @type vim.filetype.mapfn
+function M.html(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 10)) do
     if matchregex(line, [[\<DTD\s\+XHTML\s]]) then
       return 'xhtml'
@@ -557,16 +564,16 @@ function M.html(bufnr)
 end
 
 -- Virata Config Script File or Drupal module
---- @type vim.filetype.detect.fun1
-function M.hw(bufnr)
+--- @type vim.filetype.mapfn
+function M.hw(_, bufnr)
   if getline(bufnr, 1):lower():find('<%?php') then
     return 'php'
   end
   return 'virata'
 end
 
---- @type vim.filetype.detect.fun1
-function M.idl(bufnr)
+--- @type vim.filetype.mapfn
+function M.idl(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 50)) do
     if findany(line:lower(), { '^%s*import%s+"unknwn"%.idl', '^%s*import%s+"objidl"%.idl' }) then
       return 'msidl'
@@ -579,8 +586,8 @@ local pascal_comments = { '^%s*{', '^%s*%(%*', '^%s*//' }
 local pascal_keywords =
   [[\c^\s*\%(program\|unit\|library\|uses\|begin\|procedure\|function\|const\|type\|var\)\>]]
 
---- @type vim.filetype.detect.fun1
-function M.inc(bufnr)
+--- @type vim.filetype.mapfn
+function M.inc(path, bufnr)
   if vim.g.filetype_inc then
     return vim.g.filetype_inc
   end
@@ -598,7 +605,7 @@ function M.inc(bufnr)
   elseif findany(lines, { '^%s*inherit ', '^%s*require ', '^%s*%u[%w_:${}]*%s+%??[?:+]?= ' }) then
     return 'bitbake'
   else
-    local syntax = M.asm_syntax(bufnr)
+    local syntax = M.asm_syntax(path, bufnr)
     if not syntax or syntax == '' then
       return 'pov'
     end
@@ -608,8 +615,8 @@ function M.inc(bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.inp(bufnr)
+--- @type vim.filetype.mapfn
+function M.inp(_, bufnr)
   if getline(bufnr, 1):find('^%*') then
     return 'abaqus'
   else
@@ -621,19 +628,18 @@ function M.inp(bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun2
+--- @type vim.filetype.mapfn
 function M.install(path, bufnr)
   if getline(bufnr, 1):lower():find('<%?php') then
     return 'php'
   end
-  return M.sh(path, getlines(bufnr), 'bash')
+  return M.bash(path, bufnr)
 end
 
 --- Innovation Data Processing
 --- (refactor of filetype.vim since the patterns are case-insensitive)
---- @param path string
---- @return string?
-function M.log(path)
+--- @type vim.filetype.mapfn
+function M.log(path, _)
   path = path:lower()
   if
     findany(
@@ -656,8 +662,8 @@ function M.log(path)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.lpc(bufnr)
+--- @type vim.filetype.mapfn
+function M.lpc(_, bufnr)
   if vim.g.lpc_syntax_for_c then
     for _, line in ipairs(getlines(bufnr, 1, 12)) do
       if
@@ -680,8 +686,8 @@ function M.lpc(bufnr)
   return 'c'
 end
 
---- @type vim.filetype.detect.fun1
-function M.lsl(bufnr)
+--- @type vim.filetype.mapfn
+function M.lsl(_, bufnr)
   if vim.g.filetype_lsl then
     return vim.g.filetype_lsl
   end
@@ -694,8 +700,8 @@ function M.lsl(bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.m(bufnr)
+--- @type vim.filetype.mapfn
+function M.m(_, bufnr)
   if vim.g.filetype_m then
     return vim.g.filetype_m
   end
@@ -764,8 +770,8 @@ end
 
 --- Rely on the file to start with a comment.
 --- MS message text files use ';', Sendmail files use '#' or 'dnl'
---- @type vim.filetype.detect.fun1
-function M.mc(bufnr)
+--- @type vim.filetype.mapfn
+function M.mc(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 20)) do
     if findany(line:lower(), { '^%s*#', '^%s*dnl' }) then
       -- Sendmail .mc file
@@ -787,8 +793,8 @@ function M.me(path)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.mm(bufnr)
+--- @type vim.filetype.mapfn
+function M.mm(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 20)) do
     if matchregex(line, [[\c^\s*\(#\s*\(include\|import\)\>\|@import\>\|/\*\)]]) then
       return 'objcpp'
@@ -797,8 +803,8 @@ function M.mm(bufnr)
   return 'nroff'
 end
 
---- @type vim.filetype.detect.fun1
-function M.mms(bufnr)
+--- @type vim.filetype.mapfn
+function M.mms(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 20)) do
     if findany(line, { '^%s*%%', '^%s*//', '^%*' }) then
       return 'mmix'
@@ -825,7 +831,7 @@ local function is_lprolog(bufnr)
 end
 
 --- Determine if *.mod is ABB RAPID, LambdaProlog, Modula-2, Modsim III or go.mod
---- @type vim.filetype.detect.fun2
+--- @type vim.filetype.mapfn
 function M.mod(path, bufnr)
   if vim.g.filetype_mod then
     return vim.g.filetype_mod
@@ -842,8 +848,16 @@ function M.mod(path, bufnr)
   return 'modsim3'
 end
 
---- @type vim.filetype.detect.fun1
-function M.news(bufnr)
+--- Determine if *.mod is ABB RAPID, LambdaProlog, Modula-2, Modsim III or go.mod
+--- @type vim.filetype.mapfn
+function M.mp(_, _)
+  return 'mp', function(b)
+    vim.b[b].mp_metafun = 1
+  end
+end
+
+--- @type vim.filetype.mapfn
+function M.news(_, bufnr)
   if getline(bufnr, 1):lower():find('; urgency=') then
     return 'debchangelog'
   end
@@ -851,8 +865,8 @@ end
 
 --- This function checks if one of the first five lines start with a dot. In
 --- that case it is probably an nroff file.
---- @type vim.filetype.detect.fun1
-function M.nroff(bufnr)
+--- @type vim.filetype.mapfn
+function M.nroff(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 5)) do
     if line:find('^%.') then
       return 'nroff'
@@ -860,8 +874,8 @@ function M.nroff(bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.patch(bufnr)
+--- @type vim.filetype.mapfn
+function M.patch(_, bufnr)
   local firstline = getline(bufnr, 1)
   if string.find(firstline, '^From ' .. string.rep('%x', 40) .. '+ Mon Sep 17 00:00:00 2001$') then
     return 'gitsendemail'
@@ -873,7 +887,7 @@ end
 --- it is almost certainly a Perl test file.
 --- If the first line starts with '#' and contains 'perl' it's probably a Perl file.
 --- (Slow test) If a file contains a 'use' statement then it is almost certainly a Perl file.
---- @type vim.filetype.detect.fun2
+--- @type vim.filetype.mapfn
 function M.perl(path, bufnr)
   local dir_name = vim.fs.dirname(path)
   if vim.fn.expand(path, '%:e') == 't' and (dir_name == 't' or dir_name == 'xt') then
@@ -890,8 +904,8 @@ function M.perl(path, bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.pl(bufnr)
+--- @type vim.filetype.mapfn
+function M.pl(_, bufnr)
   if vim.g.filetype_pl then
     return vim.g.filetype_pl
   end
@@ -909,8 +923,8 @@ function M.pl(bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.pm(bufnr)
+--- @type vim.filetype.mapfn
+function M.pm(_, bufnr)
   local line = getline(bufnr, 1)
   if line:find('XPM2') then
     return 'xpm2'
@@ -921,8 +935,8 @@ function M.pm(bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.pp(bufnr)
+--- @type vim.filetype.mapfn
+function M.pp(_, bufnr)
   if vim.g.filetype_pp then
     return vim.g.filetype_pp
   end
@@ -934,8 +948,8 @@ function M.pp(bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.prg(bufnr)
+--- @type vim.filetype.mapfn
+function M.prg(_, bufnr)
   if vim.g.filetype_prg then
     return vim.g.filetype_prg
   elseif is_rapid(bufnr) then
@@ -956,15 +970,15 @@ end
 
 -- This function checks for an assembly comment in the first ten lines.
 -- If not found, assume Progress.
---- @type vim.filetype.detect.fun1
-function M.progress_asm(bufnr)
+--- @type vim.filetype.mapfn
+function M.progress_asm(path, bufnr)
   if vim.g.filetype_i then
     return vim.g.filetype_i
   end
 
   for _, line in ipairs(getlines(bufnr, 1, 10)) do
     if line:find('^%s*;') or line:find('^/%*') then
-      return M.asm(bufnr)
+      return M.asm(path, bufnr)
     elseif not line:find('^%s*$') or line:find('^/%*') then
       -- Not an empty line: doesn't look like valid assembly code
       -- or it looks like a Progress /* comment.
@@ -974,8 +988,8 @@ function M.progress_asm(bufnr)
   return 'progress'
 end
 
---- @type vim.filetype.detect.fun1
-function M.progress_cweb(bufnr)
+--- @type vim.filetype.mapfn
+function M.progress_cweb(_, bufnr)
   if vim.g.filetype_w then
     return vim.g.filetype_w
   else
@@ -993,8 +1007,8 @@ end
 -- This function checks for valid Pascal syntax in the first 10 lines.
 -- Look for either an opening comment or a program start.
 -- If not found, assume Progress.
---- @type vim.filetype.detect.fun1
-function M.progress_pascal(bufnr)
+--- @type vim.filetype.mapfn
+function M.progress_pascal(_, bufnr)
   if vim.g.filetype_p then
     return vim.g.filetype_p
   end
@@ -1011,10 +1025,8 @@ function M.progress_pascal(bufnr)
 end
 
 --- Distinguish between "default", Prolog and Cproto prototype file.
---- @param bufnr integer
---- @param default string
---- @return string?
-function M.proto(bufnr, default)
+--- @type vim.filetype.mapfn
+function M.proto(_, bufnr)
   -- Cproto files have a comment in the first line and a function prototype in
   -- the second line, it always ends in ";".  Indent files may also have
   -- comments, thus we can't match comments to see the difference.
@@ -1022,25 +1034,22 @@ function M.proto(bufnr, default)
   -- character before the ';'.
   if getline(bufnr, 2):find('.;$') then
     return 'cpp'
-  else
-    -- Recognize Prolog by specific text in the first non-empty line;
-    -- require a blank after the '%' because Perl uses "%list" and "%translate"
-    local line = nextnonblank(bufnr, 1)
-    if
-      line and line:find(':%-')
-      or matchregex(line, [[\c\<prolog\>]])
-      or findany(line, { '^%s*%%+%s', '^%s*%%+$', '^%s*/%*' })
-    then
-      return 'prolog'
-    else
-      return default
-    end
+  end
+  -- Recognize Prolog by specific text in the first non-empty line;
+  -- require a blank after the '%' because Perl uses "%list" and "%translate"
+  local line = nextnonblank(bufnr, 1)
+  if
+    line and line:find(':%-')
+    or matchregex(line, [[\c\<prolog\>]])
+    or findany(line, { '^%s*%%+%s', '^%s*%%+$', '^%s*/%*' })
+  then
+    return 'prolog'
   end
 end
 
 -- Software Distributor Product Specification File (POSIX 1387.2-1995)
---- @type vim.filetype.detect.fun1
-function M.psf(bufnr)
+--- @type vim.filetype.mapfn
+function M.psf(_, bufnr)
   local line = getline(bufnr, 1):lower()
   if
     findany(line, {
@@ -1055,8 +1064,8 @@ function M.psf(bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.r(bufnr)
+--- @type vim.filetype.mapfn
+function M.r(_, bufnr)
   local lines = getlines(bufnr, 1, 50)
   -- Rebol is easy to recognize, check for that first
   if matchregex(table.concat(lines), [[\c\<rebol\>]]) then
@@ -1077,14 +1086,13 @@ function M.r(bufnr)
   -- Nothing recognized, use user default or assume R
   if vim.g.filetype_r then
     return vim.g.filetype_r
-  else
-    -- Rexx used to be the default, but R appears to be much more popular.
-    return 'r'
   end
+  -- Rexx used to be the default, but R appears to be much more popular.
+  return 'r'
 end
 
---- @type vim.filetype.detect.fun1
-function M.redif(bufnr)
+--- @type vim.filetype.mapfn
+function M.redif(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 5)) do
     if line:lower():find('^template%-type:') then
       return 'redif'
@@ -1092,8 +1100,8 @@ function M.redif(bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.reg(bufnr)
+--- @type vim.filetype.mapfn
+function M.reg(_, bufnr)
   local line = getline(bufnr, 1):lower()
   if
     line:find('^regedit[0-9]*%s*$') or line:find('^windows registry editor version %d*%.%d*%s*$')
@@ -1103,8 +1111,8 @@ function M.reg(bufnr)
 end
 
 -- Diva (with Skill) or InstallShield
---- @type vim.filetype.detect.fun1
-function M.rul(bufnr)
+--- @type vim.filetype.mapfn
+function M.rul(_, bufnr)
   if table.concat(getlines(bufnr, 1, 6)):lower():find('installshield') then
     return 'ishd'
   end
@@ -1112,7 +1120,7 @@ function M.rul(bufnr)
 end
 
 local udev_rules_pattern = '^%s*udev_rules%s*=%s*"([%^"]+)/*".*'
---- @type vim.filetype.detect.fun3
+--- @type vim.filetype.mapfn
 function M.rules(path)
   path = path:lower()
   if
@@ -1152,8 +1160,8 @@ function M.rules(path)
 end
 
 -- LambdaProlog and Standard ML signature files
---- @type vim.filetype.detect.fun1
-function M.sig(bufnr)
+--- @type vim.filetype.mapfn
+function M.sig(_, bufnr)
   if vim.g.filetype_sig then
     return vim.g.filetype_sig
   end
@@ -1171,8 +1179,8 @@ end
 
 -- This function checks the first 25 lines of file extension "sc" to resolve
 -- detection between scala and SuperCollider
---- @type vim.filetype.detect.fun1
-function M.sc(bufnr)
+--- @type vim.filetype.mapfn
+function M.sc(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 25)) do
     if
       findany(line, {
@@ -1192,8 +1200,8 @@ end
 
 -- This function checks the first line of file extension "scd" to resolve
 -- detection between scdoc and SuperCollider
---- @type vim.filetype.detect.fun1
-function M.scd(bufnr)
+--- @type vim.filetype.mapfn
+function M.scd(_, bufnr)
   local first = '^%S+%(%d[0-9A-Za-z]*%)'
   local opt = [[%s+"[^"]*"]]
   local line = getline(bufnr, 1)
@@ -1203,8 +1211,8 @@ function M.scd(bufnr)
   return 'supercollider'
 end
 
---- @type vim.filetype.detect.fun1
-function M.sgml(bufnr)
+--- @type vim.filetype.mapfn
+function M.sgml(_, bufnr)
   local lines = table.concat(getlines(bufnr, 1, 5))
   if lines:find('linuxdoc') then
     return 'smgllnx'
@@ -1223,7 +1231,7 @@ end
 --- @param contents string[]
 --- @param name? string
 --- @return string?, fun(b: integer)?
-function M.sh(path, contents, name)
+local function sh(path, contents, name)
   -- Path may be nil, do not fail in that case
   if vim.fn.did_filetype() ~= 0 or (path or ''):find(vim.g.ft_ignore_pat) then
     -- Filetype was already detected or detection should be skipped
@@ -1268,6 +1276,19 @@ function M.sh(path, contents, name)
   return M.shell(path, contents, 'sh'), on_detect
 end
 
+--- @param name? string
+--- @return vim.filetype.mapfn
+local function sh_with(name)
+  return function(path, bufnr)
+    return sh(path, getlines(bufnr), name)
+  end
+end
+
+M.sh = sh_with()
+M.bash = sh_with('bash')
+M.ksh = sh_with('ksh')
+M.tcsh = sh_with('tcsh')
+
 --- For shell-like file types, check for an "exec" command hidden in a comment, as used for Tcl.
 --- @param path string
 --- @param contents string[]
@@ -1299,8 +1320,8 @@ function M.shell(path, contents, name)
 end
 
 -- Swift Intermediate Language or SILE
---- @type vim.filetype.detect.fun1
-function M.sil(bufnr)
+--- @type vim.filetype.mapfn
+function M.sil(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 100)) do
     if line:find('^%s*[\\%%]') then
       return 'sile'
@@ -1313,8 +1334,8 @@ function M.sil(bufnr)
 end
 
 -- SMIL or SNMP MIB file
---- @type vim.filetype.detect.fun1
-function M.smi(bufnr)
+--- @type vim.filetype.mapfn
+function M.smi(_, bufnr)
   local line = getline(bufnr, 1)
   if matchregex(line, [[\c\<smil\>]]) then
     return 'smil'
@@ -1323,9 +1344,14 @@ function M.smi(bufnr)
   end
 end
 
+--- @type vim.filetype.mapfn
+function M.sql(_, _)
+  return vim.g.filetype_sql and vim.g.filetype_sql or 'sql'
+end
+
 -- Determine if a *.src file is Kuka Robot Language
---- @type vim.filetype.detect.fun1
-function M.src(bufnr)
+--- @type vim.filetype.mapfn
+function M.src(_, bufnr)
   if vim.g.filetype_src then
     return vim.g.filetype_src
   end
@@ -1335,8 +1361,8 @@ function M.src(bufnr)
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.sys(bufnr)
+--- @type vim.filetype.mapfn
+function M.sys(_, bufnr)
   if vim.g.filetype_sys then
     return vim.g.filetype_sys
   elseif is_rapid(bufnr) then
@@ -1349,7 +1375,7 @@ end
 -- 1. Check the first line of the file for "%&<format>".
 -- 2. Check the first 1000 non-comment lines for LaTeX or ConTeXt keywords.
 -- 3. Default to "plain" or to g:tex_flavor, can be set in user's vimrc.
---- @type vim.filetype.detect.fun2
+--- @type vim.filetype.mapfn
 function M.tex(path, bufnr)
   local matched, _, format = getline(bufnr, 1):find('^%%&%s*(%a+)')
   if matched then
@@ -1392,8 +1418,8 @@ function M.tex(path, bufnr)
 end
 
 -- Determine if a *.tf file is TF mud client or terraform
---- @type vim.filetype.detect.fun1
-function M.tf(bufnr)
+--- @type vim.filetype.mapfn
+function M.tf(_, bufnr)
   for _, line in ipairs(getlines(bufnr)) do
     -- Assume terraform file on a non-empty line (not whitespace-only)
     -- and when the first non-whitespace character is not a ; or /
@@ -1404,8 +1430,8 @@ function M.tf(bufnr)
   return 'tf'
 end
 
---- @type vim.filetype.detect.fun1
-function M.ttl(bufnr)
+--- @type vim.filetype.mapfn
+function M.ttl(_, bufnr)
   local line = getline(bufnr, 1):lower()
   if line:find('^@?prefix') or line:find('^@?base') then
     return 'turtle'
@@ -1413,16 +1439,16 @@ function M.ttl(bufnr)
   return 'teraterm'
 end
 
---- @type vim.filetype.detect.fun1
-function M.txt(bufnr)
+--- @type vim.filetype.mapfn
+function M.txt(_, bufnr)
   -- helpfiles match *.txt, but should have a modeline as last line
   if not getline(bufnr, -1):find('vim:.*ft=help') then
     return 'text'
   end
 end
 
---- @type vim.filetype.detect.fun1
-function M.typ(bufnr)
+--- @type vim.filetype.mapfn
+function M.typ(_, bufnr)
   if vim.g.filetype_typ then
     return vim.g.filetype_typ
   end
@@ -1445,8 +1471,8 @@ function M.typ(bufnr)
 end
 
 -- Determine if a .v file is Verilog, V, or Coq
---- @type vim.filetype.detect.fun1
-function M.v(bufnr)
+--- @type vim.filetype.mapfn
+function M.v(_, bufnr)
   if vim.fn.did_filetype() ~= 0 then
     -- Filetype was already detected
     return
@@ -1465,8 +1491,8 @@ end
 
 -- WEB (*.web is also used for Winbatch: Guess, based on expecting "%" comment
 -- lines in a WEB file).
---- @type vim.filetype.detect.fun1
-function M.web(bufnr)
+--- @type vim.filetype.mapfn
+function M.web(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 5)) do
     if line:find('^%%') then
       return 'web'
@@ -1476,7 +1502,8 @@ function M.web(bufnr)
 end
 
 -- XFree86 config
-function M.xfree86()
+--- @type vim.filetype.mapfn
+function M.xfree86_v3(_, _)
   return 'xf86conf',
     function(bufnr)
       local line = getline(bufnr, 1)
@@ -1486,8 +1513,16 @@ function M.xfree86()
     end
 end
 
---- @type vim.filetype.detect.fun1
-function M.xml(bufnr)
+-- XFree86 config
+--- @type vim.filetype.mapfn
+function M.xfree86_v4(_, _)
+  return 'xf86conf', function(b)
+    vim.b[b].xf86conf_xfree86_version = 4
+  end
+end
+
+--- @type vim.filetype.mapfn
+function M.xml(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 100)) do
     local is_docbook4 = line:find('<!DOCTYPE.*DocBook')
     line = line:lower()
@@ -1506,8 +1541,8 @@ function M.xml(bufnr)
   return 'xml'
 end
 
---- @type vim.filetype.detect.fun1
-function M.y(bufnr)
+--- @type vim.filetype.mapfn
+function M.y(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 100)) do
     if line:find('^%s*%%') then
       return 'yacc'
@@ -1609,11 +1644,11 @@ local function match_from_hashbang(contents, path, dispatch_extension)
 
   if matchregex(name, [[^\(bash\d*\|dash\|ksh\d*\|sh\)\>]]) then
     -- Bourne-like shell scripts: bash bash2 dash ksh ksh93 sh
-    return require('vim.filetype.detect').sh(path, contents, first_line)
+    return sh(path, contents, first_line)
   elseif matchregex(name, [[^csh\>]]) then
-    return require('vim.filetype.detect').shell(path, contents, vim.g.filetype_csh or 'csh')
+    return M.shell(path, contents, vim.g.filetype_csh or 'csh')
   elseif matchregex(name, [[^tcsh\>]]) then
-    return require('vim.filetype.detect').shell(path, contents, 'tcsh')
+    return M.shell(path, contents, 'tcsh')
   end
 
   for k, v in pairs(patterns_hashbang) do
@@ -1718,9 +1753,7 @@ local patterns_text = {
   ['S Y S T E M S   I M P R O V E D '] = { 'syndaout', { start_lnum = 3 } },
   ['Run Date: '] = { 'takcmp', { start_lnum = 6 } },
   ['Node    File  1'] = { 'sindacmp', { start_lnum = 9 } },
-  function(contents)
-    require('vim.filetype.detect').dns_zone(contents)
-  end,
+  dns_zone,
   -- Valgrind
   ['^==%d+== valgrind'] = 'valgrind',
   ['^==%d+== Using valgrind'] = { 'valgrind', { start_lnum = 3 } },
@@ -1767,7 +1800,7 @@ local patterns_text = {
 local function match_from_text(contents, path)
   if contents[1]:find('^:$') then
     -- Bourne-like shell scripts: sh ksh bash bash2
-    return M.sh(path, contents)
+    return sh(path, contents)
   elseif
     matchregex(
       '\n' .. table.concat(contents, '\n'),
