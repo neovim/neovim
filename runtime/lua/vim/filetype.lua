@@ -2,7 +2,7 @@ local api = vim.api
 
 local M = {}
 
---- @alias vim.filetype.mapfn fun(path:string,bufnr:integer, ...):(((string|false)?),(fun(b:integer)?))
+--- @alias vim.filetype.mapfn fun(path:string,bufnr:integer, ...):string?, fun(b:integer)?
 --- @alias vim.filetype.maptbl {[1]:string|vim.filetype.mapfn, [2]:{priority:integer}}
 --- @alias vim.filetype.mapping.value string|vim.filetype.mapfn|vim.filetype.maptbl
 --- @alias vim.filetype.mapping table<string,vim.filetype.mapping.value>
@@ -278,7 +278,7 @@ local extension = {
   atg = 'coco',
   recipe = 'conaryrecipe',
   hook = function(path, bufnr)
-    return M._getline(bufnr, 1) == '[Trigger]' and 'conf'
+    return M._getline(bufnr, 1) == '[Trigger]' and 'conf' or nil
   end,
   nmconnection = 'confini',
   mklx = 'context',
@@ -614,7 +614,7 @@ local extension = {
   quake = 'm3quake',
   m4 = function(path, bufnr)
     path = path:lower()
-    return not (path:find('html%.m4$') or path:find('fvwm2rc')) and 'm4'
+    return not (path:find('html%.m4$') or path:find('fvwm2rc')) and 'm4' or nil
   end,
   eml = 'mail',
   mk = 'make',
