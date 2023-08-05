@@ -67,7 +67,7 @@ end
 ---@param s string? The string to check
 ---@param patterns string[] A list of Lua patterns
 ---@return boolean `true` if s matched a pattern, else `false`
-function M.findany(s, patterns)
+function M._findany(s, patterns)
   if not s then
     return false
   end
@@ -85,7 +85,7 @@ end
 ---@param bufnr integer The buffer to get the line from
 ---@param start_lnum integer The line number of the first line to start from (inclusive, 1-based)
 ---@return string|nil The first non-blank line if found or `nil` otherwise
-function M.nextnonblank(bufnr, start_lnum)
+function M._nextnonblank(bufnr, start_lnum)
   for _, line in ipairs(M._getlines(bufnr, start_lnum, -1)) do
     if not line:find('^%s*$') then
       return line

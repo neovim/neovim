@@ -21,8 +21,8 @@ local M = {}
 
 local getlines = vim.filetype._getlines
 local getline = vim.filetype._getline
-local findany = vim.filetype.findany
-local nextnonblank = vim.filetype.nextnonblank
+local findany = vim.filetype._findany
+local nextnonblank = vim.filetype._nextnonblank
 local matchregex = vim.filetype._matchregex
 
 -- luacheck: push no unused args
