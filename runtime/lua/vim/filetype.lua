@@ -102,7 +102,7 @@ local cache = {}
 --- @param s string?
 --- @param pattern string
 --- @return boolean?
-function M.matchregex(s, pattern)
+function M._matchregex(s, pattern)
   if not s then
     return
   end
@@ -2100,10 +2100,10 @@ end
 ---     ['.*'] = {
 ---       priority = -math.huge,
 ---       function(path, bufnr)
----         local content = vim.filetype.getline(bufnr, 1)
----         if vim.filetype.matchregex(content, [[^#!.*\\<mine\\>]]) then
+---         local content = vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] or ''
+---         if vim.regex([[^#!.*\\<mine\\>]]):match_str(content) ~= nil then
 ---           return 'mine'
----         elseif vim.filetype.matchregex(content, [[\\<drawing\\>]]) then
+---         elseif vim.regex([[\\<drawing\\>]]):match_str(content) ~= nil then
 ---           return 'drawing'
 ---         end
 ---       end,

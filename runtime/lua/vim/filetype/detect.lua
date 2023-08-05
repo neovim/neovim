@@ -23,7 +23,7 @@ local getlines = vim.filetype._getlines
 local getline = vim.filetype._getline
 local findany = vim.filetype.findany
 local nextnonblank = vim.filetype.nextnonblank
-local matchregex = vim.filetype.matchregex
+local matchregex = vim.filetype._matchregex
 
 -- luacheck: push no unused args
 -- luacheck: push ignore 122
