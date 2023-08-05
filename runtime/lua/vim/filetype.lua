@@ -122,7 +122,7 @@ local detect = setmetatable({}, {
       return require('vim.filetype.detect')(...)
     end
     return t[k]
-  end
+  end,
 })
 
 --- @param ... string|vim.filetype.mapfn
@@ -1964,8 +1964,7 @@ local pattern = {
   ['.*xmodmap.*'] = starsetf('xmodmap'),
   ['.*/xorg%.conf%.d/.*%.conf'] = detect.xfree86_v4,
   -- Increase priority to run before the pattern below
-  ['XF86Config%-4.*'] = starsetf(detect.xfree86_v4,
-  { priority = -math.huge + 1 }),
+  ['XF86Config%-4.*'] = starsetf(detect.xfree86_v4, { priority = -math.huge + 1 }),
   ['XF86Config.*'] = starsetf(detect.xfree86_v3),
   ['%.zcompdump.*'] = starsetf('zsh'),
   -- .zlog* and zlog*
