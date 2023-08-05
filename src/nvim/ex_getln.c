@@ -2357,7 +2357,7 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
       set_put(ptr_t, &saved_bufs, buf);
 
       u_clearall(buf);
-      buf->b_p_ul = LONG_MAX;  // Make sure we can undo all changes
+      buf->b_p_ul = INT_MAX;  // Make sure we can undo all changes
     }
 
     CpWinInfo cp_wininfo;
@@ -2396,7 +2396,7 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
 static void cmdpreview_restore_state(CpInfo *cpinfo)
   FUNC_ATTR_NONNULL_ALL
 {
-  for (size_t i = 0; i < cpinfo->buf_info.size; i++) {
+  for (size_t i = cpinfo->buf_info.size; i-- > 0;) {
     CpBufInfo cp_bufinfo = cpinfo->buf_info.items[i];
     buf_T *buf = cp_bufinfo.buf;
 
@@ -2436,7 +2436,7 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
     extmark_clear(buf, (uint32_t)cmdpreview_ns, 0, 0, MAXLNUM, MAXCOL);
   }
 
-  for (size_t i = 0; i < cpinfo->win_info.size; i++) {
+  for (size_t i = cpinfo->win_info.size; i-- > 0;) {
     CpWinInfo cp_wininfo = cpinfo->win_info.items[i];
     win_T *win = cp_wininfo.win;
 
