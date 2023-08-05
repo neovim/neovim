@@ -1,4 +1,5 @@
 local api = vim.api
+local fn = vim.fn
 
 local M = {}
 
@@ -145,7 +146,7 @@ local function detect_seq(...)
 end
 
 local function detect_noext(path, bufnr)
-  local root = vim.fn.fnamemodify(path, ':r')
+  local root = fn.fnamemodify(path, ':r')
   return M.match({ buf = bufnr, filename = root })
 end
 
@@ -1146,7 +1147,7 @@ local extension = {
   ['dpkg-new'] = detect_noext,
   ['in'] = function(path, bufnr)
     if vim.fs.basename(path) ~= 'configure.in' then
-      local root = vim.fn.fnamemodify(path, ':r')
+      local root = fn.fnamemodify(path, ':r')
       return M.match({ buf = bufnr, filename = root })
     end
   end,
@@ -1804,7 +1805,7 @@ local pattern = {
   ['.*/etc/modules'] = 'modconf',
   ['.*/etc/modprobe%..*'] = starsetf('modconf'),
   ['.*/etc/modutils/.*'] = starsetf(function(path, bufnr)
-    if vim.fn.executable(vim.fn.expand(path)) ~= 1 then
+    if fn.executable(fn.expand(path)) ~= 1 then
       return 'modconf'
     end
   end),
@@ -1975,7 +1976,7 @@ local pattern = {
   ['.*~'] = function(path, bufnr)
     local short = path:gsub('~$', '', 1)
     if path ~= short and short ~= '' then
-      return M.match({ buf = bufnr, filename = vim.fn.fnameescape(short) })
+      return M.match({ buf = bufnr, filename = fn.fnameescape(short) })
     end
   end,
   -- END PATTERN
@@ -2288,14 +2289,14 @@ function M.match(args)
     name = normalize_path(name)
 
     -- First check for the simple case where the full path exists as a key
-    local path = vim.fn.fnamemodify(name, ':p')
+    local path = fn.fnamemodify(name, ':p')
     ft, on_detect = dispatch(filename[path], path, bufnr)
     if ft then
       return ft, on_detect
     end
 
     -- Next check against just the file name
-    local tail = vim.fn.fnamemodify(name, ':t')
+    local tail = fn.fnamemodify(name, ':t')
     ft, on_detect = dispatch(filename[tail], path, bufnr)
     if ft then
       return ft, on_detect
@@ -2322,7 +2323,7 @@ function M.match(args)
     end
 
     -- Next, check file extension
-    local ext = vim.fn.fnamemodify(name, ':e')
+    local ext = fn.fnamemodify(name, ':e')
     ft, on_detect = dispatch(extension[ext], path, bufnr)
     if ft then
       return ft, on_detect

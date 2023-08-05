@@ -17,6 +17,8 @@
 --     Example:
 --     `if line =~ '^\s*unwind_protect\>'` => `if matchregex(line, [[\c^\s*unwind_protect\>]])`
 
+local fn = vim.fn
+
 local M = {}
 
 local getlines = vim.filetype._getlines
@@ -204,7 +206,7 @@ end
 
 --- @type vim.filetype.mapfn
 function M.conf(path, bufnr)
-  if vim.fn.did_filetype() ~= 0 or path:find(vim.g.ft_ignore_pat) then
+  if fn.did_filetype() ~= 0 or path:find(vim.g.ft_ignore_pat) then
     return
   end
   if path:find('%.conf$') then
@@ -240,7 +242,7 @@ end
 
 --- @type vim.filetype.mapfn
 function M.csh(path, bufnr)
-  if vim.fn.did_filetype() ~= 0 then
+  if fn.did_filetype() ~= 0 then
     -- Filetype was already detected
     return
   end
@@ -304,7 +306,7 @@ end
 
 --- @type vim.filetype.mapfn
 function M.dat(path, bufnr)
-  local file_name = vim.fn.fnamemodify(path, ':t'):lower()
+  local file_name = fn.fnamemodify(path, ':t'):lower()
   -- Innovation data processing
   if findany(file_name, { '^upstream%.dat$', '^upstream%..*%.dat$', '^.*%.upstream%.dat$' }) then
     return 'upstreamdat'
@@ -332,7 +334,7 @@ end
 -- to non-dep3patch files, such as README and other text files.
 --- @type vim.filetype.mapfn
 function M.dep3patch(path, bufnr)
-  local file_name = vim.fn.fnamemodify(path, ':t')
+  local file_name = fn.fnamemodify(path, ':t')
   if file_name == 'series' then
     return
   end
@@ -397,7 +399,7 @@ end
 
 --- @type vim.filetype.mapfn
 function M.dtrace(_, bufnr)
-  if vim.fn.did_filetype() ~= 0 then
+  if fn.did_filetype() ~= 0 then
     -- Filetype was already detected
     return
   end
@@ -501,7 +503,7 @@ end
 
 --- @type vim.filetype.mapfn
 function M.fvwm(path, _)
-  if vim.fn.fnamemodify(path, ':e') == 'm4' then
+  if fn.fnamemodify(path, ':e') == 'm4' then
     return 'fvwm2m4'
   end
   return 'fvwm', function(bufnr)
@@ -787,7 +789,7 @@ end
 --- @param path string
 --- @return string?
 function M.me(path)
-  local filename = vim.fn.fnamemodify(path, ':t'):lower()
+  local filename = fn.fnamemodify(path, ':t'):lower()
   if filename ~= 'read.me' and filename ~= 'click.me' then
     return 'nroff'
   end
@@ -890,7 +892,7 @@ end
 --- @type vim.filetype.mapfn
 function M.perl(path, bufnr)
   local dir_name = vim.fs.dirname(path)
-  if vim.fn.expand(path, '%:e') == 't' and (dir_name == 't' or dir_name == 'xt') then
+  if fn.expand(path, '%:e') == 't' and (dir_name == 't' or dir_name == 'xt') then
     return 'perl'
   end
   local first_line = getline(bufnr, 1)
@@ -961,7 +963,7 @@ function M.prg(_, bufnr)
 end
 
 function M.printcap(ptcap_type)
-  if vim.fn.did_filetype() == 0 then
+  if fn.did_filetype() == 0 then
     return 'ptcap', function(bufnr)
       vim.b[bufnr].ptcap_type = ptcap_type
     end
@@ -1140,12 +1142,12 @@ function M.rules(path)
   elseif findany(path, { '^/etc/polkit%-1/rules%.d', '/usr/share/polkit%-1/rules%.d' }) then
     return 'javascript'
   else
-    local ok, config_lines = pcall(vim.fn.readfile, '/etc/udev/udev.conf')
+    local ok, config_lines = pcall(fn.readfile, '/etc/udev/udev.conf')
     --- @cast config_lines +string[]
     if not ok then
       return 'hog'
     end
-    local dir = vim.fn.expand(path, ':h')
+    local dir = fn.expand(path, ':h')
     for _, line in ipairs(config_lines) do
       local match = line:match(udev_rules_pattern)
       if match then
@@ -1233,7 +1235,7 @@ end
 --- @return string?, fun(b: integer)?
 local function sh(path, contents, name)
   -- Path may be nil, do not fail in that case
-  if vim.fn.did_filetype() ~= 0 or (path or ''):find(vim.g.ft_ignore_pat) then
+  if fn.did_filetype() ~= 0 or (path or ''):find(vim.g.ft_ignore_pat) then
     -- Filetype was already detected or detection should be skipped
     return
   end
@@ -1295,7 +1297,7 @@ M.tcsh = sh_with('tcsh')
 --- @param name? string
 --- @return string?
 function M.shell(path, contents, name)
-  if vim.fn.did_filetype() ~= 0 or matchregex(path, vim.g.ft_ignore_pat) then
+  if fn.did_filetype() ~= 0 or matchregex(path, vim.g.ft_ignore_pat) then
     -- Filetype was already detected or detection should be skipped
     return
   end
@@ -1473,7 +1475,7 @@ end
 -- Determine if a .v file is Verilog, V, or Coq
 --- @type vim.filetype.mapfn
 function M.v(_, bufnr)
-  if vim.fn.did_filetype() ~= 0 then
+  if fn.did_filetype() ~= 0 then
     -- Filetype was already detected
     return
   end
@@ -1616,7 +1618,7 @@ local function match_from_hashbang(contents, path, dispatch_extension)
       :gsub('%-%-ignore%-environment', '', 1)
       :gsub('%-%-split%-string', '', 1)
       :gsub('%-[iS]', '', 1)
-    first_line = vim.fn.substitute(first_line, [[\<env\s\+]], '', '')
+    first_line = fn.substitute(first_line, [[\<env\s\+]], '', '')
   end
 
   -- Get the program name.
@@ -1627,13 +1629,13 @@ local function match_from_hashbang(contents, path, dispatch_extension)
   -- Otherwise get the last word after a slash: "#!/usr/bin/perl [path/args]".
   local name --- @type string
   if first_line:find('^#!%s*%a:[/\\]') then
-    name = vim.fn.substitute(first_line, [[^#!.*[/\\]\(\i\+\).*]], '\\1', '')
+    name = fn.substitute(first_line, [[^#!.*[/\\]\(\i\+\).*]], '\\1', '')
   elseif matchregex(first_line, [[^#!.*\<env\>]]) then
-    name = vim.fn.substitute(first_line, [[^#!.*\<env\>\s\+\(\i\+\).*]], '\\1', '')
+    name = fn.substitute(first_line, [[^#!.*\<env\>\s\+\(\i\+\).*]], '\\1', '')
   elseif matchregex(first_line, [[^#!\s*[^/\\ ]*\>\([^/\\]\|$\)]]) then
-    name = vim.fn.substitute(first_line, [[^#!\s*\([^/\\ ]*\>\).*]], '\\1', '')
+    name = fn.substitute(first_line, [[^#!\s*\([^/\\ ]*\>\).*]], '\\1', '')
   else
-    name = vim.fn.substitute(first_line, [[^#!\s*\S*[/\\]\(\f\+\).*]], '\\1', '')
+    name = fn.substitute(first_line, [[^#!\s*\S*[/\\]\(\f\+\).*]], '\\1', '')
   end
 
   -- tcl scripts may have #!/bin/sh in the first line and "exec wish" in the
