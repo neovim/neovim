@@ -567,6 +567,27 @@ describe('lua stdlib', function()
     eq(1, exec_lua("return select('#', vim.tbl_get({ nested = {} }, 'nested', 'missing_key'))"))
   end)
 
+  it('vim.get get', function()
+    eq(true, exec_lua('return vim.get({ test = { nested_test = true }}).test.nested_test()'))
+    eq(NIL, exec_lua('return vim.get({ unindexable = true }).unindexable.missing_key()'))
+    eq(NIL, exec_lua('return vim.get({ unindexable = 1 }).unindexable.missing_key()'))
+    eq(NIL, exec_lua('return vim.get({ unindexable = coroutine.create(function () end) }).unindexable.missing_key()'))
+    eq(NIL, exec_lua('return vim.get({ unindexable = function () end }).unindexable.missing_key()'))
+    eq(NIL, exec_lua('return vim.get({}).missing_key()'))
+    eq('vim/shared.lua:0: calling vim.get() on its shim, did you forget to call() the leaf?',
+      pcall_err(exec_lua, 'vim.get((vim.get({})))'))
+    eq(1, exec_lua("return select('#', (vim.get({})()))"))
+    eq(1, exec_lua("return select('#', vim.get({ nested = {} }).nested.missing_key)"))
+  end)
+
+  it('vim.get set', function()
+    eq({ k1 = { k2 = 'assigned-value' }}, exec_lua([[
+      local t = { k1 = { k2 = true }}
+      vim.get(t).k1.k2 = 'assigned-value'
+      return t
+    ]]))
+  end)
+
   it('vim.tbl_extend', function()
     ok(exec_lua([[
       local a = {x = 1}

@@ -450,6 +450,38 @@ function vim.tbl_add_reverse_lookup(o)
   return o
 end
 
+local lastval = nil
+local foo = {}
+setmetatable(foo, {
+  __call = function()
+    local v = lastval
+    lastval = nil
+    return v
+  end,
+  __index = function(_, key)
+    -- Return nil if indexing into non-table (non-indexable) objects.
+    -- TODO(justinmk): That behavior is from tbl_get(), is it still wanted?
+    lastval = type(lastval) == 'table' and lastval[key] or nil
+    return foo
+  end,
+  __newindex = function(_, key, val)
+    if type(lastval) ~= 'table' then
+      error('not indexable')
+    end
+    lastval[key] = val
+    lastval = nil
+  end,
+})
+
+--- xxx
+function vim.get(o)
+  if o == foo then
+    error('calling vim.get() on its shim, did you forget to call() the leaf?')
+  end
+  lastval = o
+  return foo
+end
+
 --- Index into a table (first argument) via string keys passed as subsequent arguments.
 --- Return `nil` if the key does not exist.
 ---
