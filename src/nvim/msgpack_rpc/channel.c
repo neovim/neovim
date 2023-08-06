@@ -326,8 +326,8 @@ static void parse_msgpack(Channel *channel)
         char buf[256];
         snprintf(buf, sizeof(buf),
                  "ch %" PRIu64 " returned a response with an unknown request "
-                 "id. Ensure the client is properly synchronized",
-                 channel->id);
+                 "id %" PRIu32 ". Ensure the client is properly synchronized",
+                 channel->id, p->request_id);
         chan_close_with_error(channel, buf, LOGLVL_ERR);
       }
       frame->returned = true;
