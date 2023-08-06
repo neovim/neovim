@@ -152,6 +152,12 @@ local function get_range_str(lnum, col, end_lnum, end_col)
   return string.format('[%d:%d - %d:%d]', lnum + 1, col + 1, end_lnum + 1, end_col)
 end
 
+---@param text string
+---@return string
+local function escape_quotes(text)
+  return string.format('"%s"', text:sub(2, #text - 1):gsub('"', '\\"'))
+end
+
 --- Write the contents of this View into {bufnr}.
 ---
 ---@param bufnr integer Buffer number to write into.
@@ -164,8 +170,9 @@ function TSTreeView:draw(bufnr)
   for _, item in self:iter() do
     local range_str = get_range_str(item.lnum, item.col, item.end_lnum, item.end_col)
     local lang_str = self.opts.lang and string.format(' %s', item.lang) or ''
+    local text = item.named and item.text or escape_quotes(item.text)
     local line =
-      string.format('%s%s ; %s%s', string.rep(' ', item.depth), item.text, range_str, lang_str)
+      string.format('%s%s ; %s%s', string.rep(' ', item.depth), text, range_str, lang_str)
 
     if self.opts.lang then
       lang_hl_marks[#lang_hl_marks + 1] = {
