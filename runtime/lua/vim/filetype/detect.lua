@@ -502,6 +502,13 @@ function M.frm(_, bufnr)
 end
 
 --- @type vim.filetype.mapfn
+function M.fvwm_1(_, _)
+  return 'fvwm', function(bufnr)
+    vim.b[bufnr].fvwm_version = 1
+  end
+end
+
+--- @type vim.filetype.mapfn
 function M.fvwm_v2(path, _)
   if fn.fnamemodify(path, ':e') == 'm4' then
     return 'fvwm2m4'

@@ -1514,15 +1514,7 @@ local filename = {
 }
 
 -- Re-use closures as much as possible
-
 local detect_apache = starsetf('apache')
-
-local detect_fvwm_v1 = starsetf(function(path, bufnr)
-  return 'fvwm', function(b)
-    vim.b[b].fvwm_version = 1
-  end
-end)
-
 local detect_muttrc = starsetf('muttrc')
 local detect_neomuttrc = starsetf('neomuttrc')
 
@@ -1634,8 +1626,8 @@ local pattern = {
   ['.*/0/.*'] = detect.foam,
   ['.*/0%.orig/.*'] = detect.foam,
   ['.*/%.fvwm/.*'] = starsetf('fvwm'),
-  ['.*fvwmrc.*'] = detect_fvwm_v1,
-  ['.*fvwm95.*%.hook'] = detect_fvwm_v1,
+  ['.*fvwmrc.*'] = starsetf(detect.fvwm_v1),
+  ['.*fvwm95.*%.hook'] = starsetf(detect.fvwm_v1),
   ['.*fvwm2rc.*'] = starsetf(detect.fvwm_v2),
   ['.*/tmp/lltmp.*'] = starsetf('gedcom'),
   ['.*/etc/gitconfig%.d/.*'] = starsetf('gitconfig'),
