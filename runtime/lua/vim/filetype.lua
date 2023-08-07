@@ -120,7 +120,7 @@ local detect = setmetatable({}, {
   --- @return function
   __index = function(t, k)
     t[k] = function(...)
-      return require('vim.filetype.detect')(...)
+      return require('vim.filetype.detect')[k](...)
     end
     return t[k]
   end,
