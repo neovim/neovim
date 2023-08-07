@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
   "runtime": {
       "version": "LuaJIT"
   },
@@ -24,6 +24,5 @@
     "disable": [
       "luadoc-miss-see-name"
     ]
-  },
-  "telemetry.enable": false
+  }
 }
