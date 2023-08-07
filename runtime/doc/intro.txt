@@ -194,6 +194,16 @@ Elvis	Another Vi clone, made by Steve Kirkendall.  Very compact but isn't
 Vim	Nvim is based on Vim.  https://www.vim.org/
 
 ==============================================================================
+Bram Moolenaar                                    *Bram* *brammool*
+
+Nvim is a text editor built as a continuation of Vim, Vi Improved.  Vim was
+orginally developed by Bram Moolenaar.  Searching his name within the source
+code of Nvim will reveal just how much of his work still remains in
+nvim.  On August 3, 2023, he passed away at the age of 62.  If Vim or Nvim
+have been of use to you in your life, please read |Uganda| and consider
+honoring his memory however you may see fit.
+
+==============================================================================
 Notation						*notation*
 
 When syntax highlighting is used to read this, text that is not typed
