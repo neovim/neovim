@@ -95,22 +95,24 @@ function M._nextnonblank(bufnr, start_lnum)
   return nil
 end
 
---- @type table<string,vim.regex>
-local cache = {}
+do
+  --- @type table<string,vim.regex>
+  local regex_cache = {}
 
----@private
---- Check whether the given string matches the Vim regex pattern.
---- @param s string?
---- @param pattern string
---- @return boolean?
-function M._matchregex(s, pattern)
-  if not s then
-    return
+  ---@private
+  --- Check whether the given string matches the Vim regex pattern.
+  --- @param s string?
+  --- @param pattern string
+  --- @return boolean?
+  function M._matchregex(s, pattern)
+    if not s then
+      return
+    end
+    if not regex_cache[pattern] then
+      regex_cache[pattern] = vim.regex(pattern)
+    end
+    return regex_cache[pattern]:match_str(s) ~= nil
   end
-  if not cache[pattern] then
-    cache[pattern] = vim.regex(pattern)
-  end
-  return cache[pattern]:match_str(s) ~= nil
 end
 
 --- @module 'vim.filetype.detect'
@@ -1511,6 +1513,19 @@ local filename = {
   -- END FILENAME
 }
 
+-- Re-use closures as much as possible
+
+local detect_apache = starsetf('apache')
+
+local detect_fvwm_v1 = starsetf(function(path, bufnr)
+  return 'fvwm', function(b)
+    vim.b[b].fvwm_version = 1
+  end
+end)
+
+local detect_muttrc = starsetf('muttrc')
+local detect_neomuttrc = starsetf('neomuttrc')
+
 --- @type vim.filetype.mapping
 local pattern = {
   -- BEGIN PATTERN
@@ -1520,19 +1535,19 @@ local pattern = {
   ['.*/etc/asound%.conf'] = 'alsaconf',
   ['.*/etc/apache2/sites%-.*/.*%.com'] = 'apache',
   ['.*/etc/httpd/.*%.conf'] = 'apache',
-  ['.*/etc/apache2/.*%.conf.*'] = starsetf('apache'),
-  ['.*/etc/apache2/conf%..*/.*'] = starsetf('apache'),
-  ['.*/etc/apache2/mods%-.*/.*'] = starsetf('apache'),
-  ['.*/etc/apache2/sites%-.*/.*'] = starsetf('apache'),
-  ['access%.conf.*'] = starsetf('apache'),
-  ['apache%.conf.*'] = starsetf('apache'),
-  ['apache2%.conf.*'] = starsetf('apache'),
-  ['httpd%.conf.*'] = starsetf('apache'),
-  ['srm%.conf.*'] = starsetf('apache'),
-  ['.*/etc/httpd/conf%..*/.*'] = starsetf('apache'),
-  ['.*/etc/httpd/conf%.d/.*%.conf.*'] = starsetf('apache'),
-  ['.*/etc/httpd/mods%-.*/.*'] = starsetf('apache'),
-  ['.*/etc/httpd/sites%-.*/.*'] = starsetf('apache'),
+  ['.*/etc/apache2/.*%.conf.*'] = detect_apache,
+  ['.*/etc/apache2/conf%..*/.*'] = detect_apache,
+  ['.*/etc/apache2/mods%-.*/.*'] = detect_apache,
+  ['.*/etc/apache2/sites%-.*/.*'] = detect_apache,
+  ['access%.conf.*'] = detect_apache,
+  ['apache%.conf.*'] = detect_apache,
+  ['apache2%.conf.*'] = detect_apache,
+  ['httpd%.conf.*'] = detect_apache,
+  ['srm%.conf.*'] = detect_apache,
+  ['.*/etc/httpd/conf%..*/.*'] = detect_apache,
+  ['.*/etc/httpd/conf%.d/.*%.conf.*'] = detect_apache,
+  ['.*/etc/httpd/mods%-.*/.*'] = detect_apache,
+  ['.*/etc/httpd/sites%-.*/.*'] = detect_apache,
   ['.*/etc/proftpd/.*%.conf.*'] = starsetf('apachestyle'),
   ['.*/etc/proftpd/conf%..*/.*'] = starsetf('apachestyle'),
   ['proftpd%.conf.*'] = starsetf('apachestyle'),
@@ -1619,17 +1634,9 @@ local pattern = {
   ['.*/0/.*'] = detect.foam,
   ['.*/0%.orig/.*'] = detect.foam,
   ['.*/%.fvwm/.*'] = starsetf('fvwm'),
-  ['.*fvwmrc.*'] = starsetf(function(path, bufnr)
-    return 'fvwm', function(b)
-      vim.b[b].fvwm_version = 1
-    end
-  end),
-  ['.*fvwm95.*%.hook'] = starsetf(function(path, bufnr)
-    return 'fvwm', function(b)
-      vim.b[b].fvwm_version = 1
-    end
-  end),
-  ['.*fvwm2rc.*'] = starsetf(detect.fvwm),
+  ['.*fvwmrc.*'] = detect_fvwm_v1,
+  ['.*fvwm95.*%.hook'] = detect_fvwm_v1,
+  ['.*fvwm2rc.*'] = starsetf(detect.fvwm_v2),
   ['.*/tmp/lltmp.*'] = starsetf('gedcom'),
   ['.*/etc/gitconfig%.d/.*'] = starsetf('gitconfig'),
   ['.*/gitolite%-admin/conf/.*'] = starsetf('gitolite'),
@@ -1814,24 +1821,24 @@ local pattern = {
   ['Muttngrc'] = 'muttrc',
   ['.*/etc/Muttrc%.d/.*'] = starsetf('muttrc'),
   ['.*/%.mplayer/config'] = 'mplayerconf',
-  ['Muttrc.*'] = starsetf('muttrc'),
-  ['Muttngrc.*'] = starsetf('muttrc'),
+  ['Muttrc.*'] = detect_muttrc,
+  ['Muttngrc.*'] = detect_muttrc,
   -- muttrc* and .muttrc*
-  ['%.?muttrc.*'] = starsetf('muttrc'),
+  ['%.?muttrc.*'] = detect_muttrc,
   -- muttngrc* and .muttngrc*
-  ['%.?muttngrc.*'] = starsetf('muttrc'),
-  ['.*/%.mutt/muttrc.*'] = starsetf('muttrc'),
-  ['.*/%.muttng/muttrc.*'] = starsetf('muttrc'),
-  ['.*/%.muttng/muttngrc.*'] = starsetf('muttrc'),
+  ['%.?muttngrc.*'] = detect_muttrc,
+  ['.*/%.mutt/muttrc.*'] = detect_muttrc,
+  ['.*/%.muttng/muttrc.*'] = detect_muttrc,
+  ['.*/%.muttng/muttngrc.*'] = detect_muttrc,
   ['rndc.*%.conf'] = 'named',
   ['rndc.*%.key'] = 'named',
   ['named.*%.conf'] = 'named',
   ['.*/etc/nanorc'] = 'nanorc',
   ['.*%.NS[ACGLMNPS]'] = 'natural',
-  ['Neomuttrc.*'] = starsetf('neomuttrc'),
+  ['Neomuttrc.*'] = detect_neomuttrc,
   -- neomuttrc* and .neomuttrc*
-  ['%.?neomuttrc.*'] = starsetf('neomuttrc'),
-  ['.*/%.neomutt/neomuttrc.*'] = starsetf('neomuttrc'),
+  ['%.?neomuttrc.*'] = detect_neomuttrc,
+  ['.*/%.neomutt/neomuttrc.*'] = detect_neomuttrc,
   ['nginx.*%.conf'] = 'nginx',
   ['.*/etc/nginx/.*'] = 'nginx',
   ['.*nginx%.conf'] = 'nginx',

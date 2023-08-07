@@ -502,7 +502,7 @@ function M.frm(_, bufnr)
 end
 
 --- @type vim.filetype.mapfn
-function M.fvwm(path, _)
+function M.fvwm_v2(path, _)
   if fn.fnamemodify(path, ':e') == 'm4' then
     return 'fvwm2m4'
   end
