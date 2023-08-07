@@ -1809,6 +1809,7 @@ local pattern = {
   ['.*/build/conf/.*%.conf'] = 'bitbake',
   ['.*/meta/conf/.*%.conf'] = 'bitbake',
   ['.*/meta%-.*/conf/.*%.conf'] = 'bitbake',
+  ['.*%.blade%.php'] = 'blade',
   ['bzr_log%..*'] = 'bzr',
   ['.*enlightenment/.*%.cfg'] = 'c',
   ['${HOME}/cabal%.config'] = 'cabalconfig',

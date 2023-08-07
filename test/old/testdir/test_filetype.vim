@@ -112,6 +112,7 @@ func s:GetFilenameChecks() abort
     \ 'bicep': ['file.bicep'],
     \ 'bindzone': ['named.root', '/bind/db.file', '/named/db.file', 'any/bind/db.file', 'any/named/db.file'],
     \ 'bitbake': ['file.bb', 'file.bbappend', 'file.bbclass', 'build/conf/local.conf', 'meta/conf/layer.conf', 'build/conf/bbappend.conf', 'meta-layer/conf/distro/foo.conf'],
+    \ 'blade': ['file.blade.php'],
     \ 'blank': ['file.bl'],
     \ 'blueprint': ['file.blp'],
     \ 'bsdl': ['file.bsd', 'file.bsdl'],
