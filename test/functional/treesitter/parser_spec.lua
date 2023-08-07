@@ -982,4 +982,38 @@ int x = INT_MAX;
     eq(rb, r)
 
   end)
+
+  it("does not produce empty injection ranges (#23409)", function()
+    insert [[
+      Examples: >lua
+        local a = {}
+<
+    ]]
+
+    -- This is not a valid injection since (code) has children and include-children is not set
+    exec_lua [[
+      parser1 = require('vim.treesitter.languagetree').new(0, "vimdoc", {
+        injections = {
+          vimdoc = "((codeblock (language) @injection.language (code) @injection.content))"
+        }
+      })
+      parser1:parse()
+    ]]
+
+    eq(0, exec_lua("return #vim.tbl_keys(parser1:children())"))
+
+    exec_lua [[
+      parser2 = require('vim.treesitter.languagetree').new(0, "vimdoc", {
+        injections = {
+          vimdoc = "((codeblock (language) @injection.language (code) @injection.content) (#set! injection.include-children))"
+        }
+      })
+      parser2:parse()
+    ]]
+
+    eq(1, exec_lua("return #vim.tbl_keys(parser2:children())"))
+    eq( { { { 1, 0, 21, 2, 0, 42 } } }, exec_lua("return parser2:children().lua:included_regions()"))
+
+  end)
+
 end)
