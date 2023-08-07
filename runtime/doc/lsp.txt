@@ -1154,7 +1154,7 @@ code_action({options})                             *vim.lsp.buf.code_action()*
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
-      • vim.lsp.protocol.constants.CodeActionTriggerKind
+      • vim.lsp.protocol.CodeActionTriggerKind
 
 completion({context})                               *vim.lsp.buf.completion()*
     Retrieves the completion items at the current cursor position. Can only be
@@ -1167,7 +1167,7 @@ completion({context})                               *vim.lsp.buf.completion()*
                    character, if applicable)
 
     See also: ~
-      • vim.lsp.protocol.constants.CompletionTriggerKind
+      • vim.lsp.protocol.CompletionTriggerKind
 
 declaration({options})                             *vim.lsp.buf.declaration()*
     Jumps to the declaration of the symbol under the cursor.
