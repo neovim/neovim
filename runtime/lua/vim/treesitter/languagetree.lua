@@ -110,6 +110,10 @@ function LanguageTree.new(source, lang, opts)
   ---@type LanguageTreeOpts
   opts = opts or {}
 
+  if source == 0 then
+    source = vim.api.nvim_get_current_buf()
+  end
+
   local injections = opts.injections or {}
   local self = setmetatable({
     _source = source,
@@ -561,11 +565,13 @@ end
 ---@param node TSNode
 ---@param source string|integer
 ---@param metadata TSMetadata
+---@param include_children boolean
 ---@return Range6[]
 local function get_node_ranges(node, source, metadata, include_children)
   local range = vim.treesitter.get_range(node, source, metadata)
+  local child_count = node:named_child_count()
 
-  if include_children then
+  if include_children or child_count == 0 then
     return { range }
   end
 
@@ -573,7 +579,8 @@ local function get_node_ranges(node, source, metadata, include_children)
 
   local srow, scol, sbyte, erow, ecol, ebyte = Range.unpack6(range)
 
-  for i = 0, node:named_child_count() - 1 do
+  -- We are excluding children so we need to mask out their ranges
+  for i = 0, child_count - 1 do
     local child = node:named_child(i)
     local c_srow, c_scol, c_sbyte, c_erow, c_ecol, c_ebyte = child:range(true)
     if c_srow > srow or c_scol > scol then
@@ -604,7 +611,10 @@ end
 ---@param combined boolean
 ---@param ranges Range6[]
 local function add_injection(t, tree_index, pattern, lang, combined, ranges)
-  assert(type(lang) == 'string')
+  if #ranges == 0 then
+    -- Make sure not to add an empty range set as this is interpreted to mean the whole buffer.
+    return
+  end
 
   -- Each tree index should be isolated from the other nodes.
   if not t[tree_index] then
