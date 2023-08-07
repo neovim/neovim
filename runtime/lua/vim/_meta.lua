@@ -15,6 +15,7 @@ vim.loader = require('vim.loader')
 vim.lsp = require('vim.lsp')
 vim.re = require('vim.re')
 vim.secure = require('vim.secure')
+vim.treesitter = require('vim.treesitter')
 vim.ui = require('vim.ui')
 vim.version = require('vim.version')
 
