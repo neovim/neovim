@@ -237,12 +237,6 @@ make lint
 - Recommendation is to use **[clangd]**.
   Can use the maintained config in [nvim-lspconfig/clangd].
 - Explore the source code [on the web](https://sourcegraph.com/github.com/neovim/neovim).
-- If using [lua-language-server], symlink `contrib/luarc.json` into the
-  project root:
-
-  ```bash
-  ln -s contrib/luarc.json .luarc.json
-  ```
 
 ### Includes
 
