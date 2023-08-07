@@ -61,7 +61,7 @@ Dictionary nvim_exec2(uint64_t channel_id, String src, Dict(exec_opts) *opts, Er
     return result;
   }
 
-  if (HAS_KEY(opts->output) && api_object_to_bool(opts->output, "opts.output", false, err)) {
+  if (opts->output) {
     PUT(result, "output", STRING_OBJ(output));
   }
 
@@ -70,19 +70,17 @@ Dictionary nvim_exec2(uint64_t channel_id, String src, Dict(exec_opts) *opts, Er
 
 String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *err)
 {
-  Boolean output = api_object_to_bool(opts->output, "opts.output", false, err);
-
   const int save_msg_silent = msg_silent;
   garray_T *const save_capture_ga = capture_ga;
   const int save_msg_col = msg_col;
   garray_T capture_local;
-  if (output) {
+  if (opts->output) {
     ga_init(&capture_local, 1, 80);
     capture_ga = &capture_local;
   }
 
   try_start();
-  if (output) {
+  if (opts->output) {
     msg_silent++;
     msg_col = 0;  // prevent leading spaces
   }
@@ -90,7 +88,7 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
   const sctx_T save_current_sctx = api_set_sctx(channel_id);
 
   do_source_str(src.data, "nvim_exec2()");
-  if (output) {
+  if (opts->output) {
     capture_ga = save_capture_ga;
     msg_silent = save_msg_silent;
     // Put msg_col back where it was, since nothing should have been written.
@@ -104,7 +102,7 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
     goto theend;
   }
 
-  if (output && capture_local.ga_len > 1) {
+  if (opts->output && capture_local.ga_len > 1) {
     String s = (String){
       .data = capture_local.ga_data,
       .size = (size_t)capture_local.ga_len,
@@ -118,7 +116,7 @@ String exec_impl(uint64_t channel_id, String src, Dict(exec_opts) *opts, Error *
     return s;  // Caller will free the memory.
   }
 theend:
-  if (output) {
+  if (opts->output) {
     ga_clear(&capture_local);
   }
   return (String)STRING_INIT;

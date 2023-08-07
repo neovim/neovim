@@ -173,7 +173,7 @@ describe('luaeval(vim.api.…)', function()
 
   it('errors out correctly when working with API', function()
     -- Conversion errors
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Cannot convert given lua table',
+    eq([[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'obj': Cannot convert given Lua table]],
        remove_trace(exc_exec([[call luaeval("vim.api.nvim__id({1, foo=42})")]])))
     -- Errors in number of arguments
     eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected 1 argument',
@@ -183,32 +183,32 @@ describe('luaeval(vim.api.…)', function()
     eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected 2 arguments',
        remove_trace(exc_exec([[call luaeval("vim.api.nvim_set_var(1, 2, 3)")]])))
     -- Error in argument types
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua string',
+    eq([[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'name': Expected Lua string]],
        remove_trace(exc_exec([[call luaeval("vim.api.nvim_set_var(1, 2)")]])))
 
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua number',
+    eq([[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'start': Expected Lua number]],
        remove_trace(exc_exec([[call luaeval("vim.api.nvim_buf_get_lines(0, 'test', 1, false)")]])))
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Number is not integral',
+    eq([[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'start': Number is not integral]],
        remove_trace(exc_exec([[call luaeval("vim.api.nvim_buf_get_lines(0, 1.5, 1, false)")]])))
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected Lua number',
+    eq([[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'window': Expected Lua number]],
        remove_trace(exc_exec([[call luaeval("vim.api.nvim_win_is_valid(nil)")]])))
 
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua table',
+    eq([[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'flt': Expected Lua number]],
        remove_trace(exc_exec([[call luaeval("vim.api.nvim__id_float('test')")]])))
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Unexpected type',
+    eq([[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'flt': Expected Float-like Lua table]],
        remove_trace(exc_exec([[call luaeval("vim.api.nvim__id_float({[vim.type_idx]=vim.types.dictionary})")]])))
 
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua table',
+    eq([[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'arr': Expected Lua table]],
        remove_trace(exc_exec([[call luaeval("vim.api.nvim__id_array(1)")]])))
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Unexpected type',
+    eq([[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'arr': Expected Array-like Lua table]],
        remove_trace(exc_exec([[call luaeval("vim.api.nvim__id_array({[vim.type_idx]=vim.types.dictionary})")]])))
 
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua table',
+    eq([[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'dct': Expected Lua table]],
        remove_trace(exc_exec([[call luaeval("vim.api.nvim__id_dictionary(1)")]])))
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Unexpected type',
+    eq([[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Invalid 'dct': Expected Dict-like Lua table]],
        remove_trace(exc_exec([[call luaeval("vim.api.nvim__id_dictionary({[vim.type_idx]=vim.types.array})")]])))
 
-    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua table',
+    eq([[Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected Lua table]],
        remove_trace(exc_exec([[call luaeval("vim.api.nvim_set_keymap('', '', '', '')")]])))
 
     -- TODO: check for errors with Tabpage argument

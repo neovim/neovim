@@ -832,9 +832,11 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   struct {
     int *dest; RgbValue val; Object name;
   } cattrs[] = {
-    { &g->sg_rgb_fg_idx, g->sg_rgb_fg, HAS_KEY(dict->fg) ? dict->fg : dict->foreground },
-    { &g->sg_rgb_bg_idx, g->sg_rgb_bg, HAS_KEY(dict->bg) ? dict->bg : dict->background },
-    { &g->sg_rgb_sp_idx, g->sg_rgb_sp, HAS_KEY(dict->sp) ? dict->sp : dict->special },
+    { &g->sg_rgb_fg_idx, g->sg_rgb_fg,
+      HAS_KEY(dict, highlight, fg) ? dict->fg : dict->foreground },
+    { &g->sg_rgb_bg_idx, g->sg_rgb_bg,
+      HAS_KEY(dict, highlight, bg) ? dict->bg : dict->background },
+    { &g->sg_rgb_sp_idx, g->sg_rgb_sp, HAS_KEY(dict, highlight, sp) ? dict->sp : dict->special },
     { NULL, -1, NIL },
   };
 
@@ -1563,19 +1565,12 @@ static bool hlgroup2dict(Dictionary *hl, NS ns_id, int hl_id, Arena *arena)
 
 Dictionary ns_get_hl_defs(NS ns_id, Dict(get_highlight) *opts, Arena *arena, Error *err)
 {
-  Boolean link = api_object_to_bool(opts->link, "link", true, err);
+  Boolean link = GET_BOOL_OR_TRUE(opts, get_highlight, link);
   int id = -1;
-  if (opts->name.type != kObjectTypeNil) {
-    VALIDATE_T("highlight name", kObjectTypeString, opts->name.type, {
-      goto cleanup;
-    });
-    String name = opts->name.data.string;
-    id = syn_check_group(name.data, name.size);
-  } else if (opts->id.type != kObjectTypeNil) {
-    VALIDATE_T("highlight id", kObjectTypeInteger, opts->id.type, {
-      goto cleanup;
-    });
-    id = (int)opts->id.data.integer;
+  if (HAS_KEY(opts, get_highlight, name)) {
+    id = syn_check_group(opts->name.data, opts->name.size);
+  } else if (HAS_KEY(opts, get_highlight, id)) {
+    id = (int)opts->id;
   }
 
   if (id != -1) {

@@ -67,13 +67,27 @@ local keysets = {}
 
 local function add_keyset(val)
   local keys = {}
-  for _,field in ipairs(val.fields) do
+  local types = {}
+  local is_set_name = 'is_set__' .. val.keyset_name .. '_'
+  local has_optional = false
+  for i,field in ipairs(val.fields) do
     if field.type ~= 'Object' then
-      error 'not yet implemented: types other than Object'
+      types[field.name] = field.type
     end
-    table.insert(keys, {field.name, field.type})
+    if field.name ~= is_set_name and field.type ~= 'OptionalKeys' then
+      table.insert(keys, field.name)
+    else
+      if i > 1 then
+        error("'is_set__{type}_' must be first if present")
+      elseif field.name ~= is_set_name then
+        error(val.keyset_name..": name of first key should be "..is_set_name)
+      elseif field.type ~= 'OptionalKeys' then
+        error("'"..is_set_name.."' must have type 'OptionalKeys'")
+      end
+      has_optional = true
+    end
   end
-  table.insert(keysets, {val.keyset_name, keys})
+  table.insert(keysets, {name=val.keyset_name, keys=keys, types=types, has_optional=has_optional})
 end
 
 -- read each input file, parse and append to the api metadata
@@ -232,53 +246,60 @@ output:write([[
 
 ]])
 
-for _,keyset in ipairs(keysets) do
-  local name, keys = unpack(keyset)
-  local special = {}
-  local function sanitize(key)
-    if special[key] then
-      return key .. "_"
+for _,k in ipairs(keysets) do
+  local c_name = {}
+
+  for i = 1,#k.keys do
+    -- some keys, like "register" are c keywords and get
+    -- escaped with a trailing _ in the struct.
+    if vim.endswith(k.keys[i], "_") then
+      local orig = k.keys[i]
+      k.keys[i] = string.sub(k.keys[i],1, #(k.keys[i]) - 1)
+      c_name[k.keys[i]] = orig
+      k.types[k.keys[i]] = k.types[orig]
     end
-    return key
   end
 
-  local key_names = {}
-  for i = 1,#keys do
-    local kname = keys[i][1]
-    if vim.endswith(kname, "_") then
-      kname = string.sub(kname,1, #kname - 1)
-      special[kname] = true
-    end
-    key_names[i] = kname
-  end
-  local neworder, hashfun = hashy.hashy_hash(name, key_names, function (idx)
-    return name.."_table["..idx.."].str"
+  local neworder, hashfun = hashy.hashy_hash(k.name, k.keys, function (idx)
+    return k.name.."_table["..idx.."].str"
   end)
 
-  keysets_defs:write("extern KeySetLink "..name.."_table[];\n")
+  keysets_defs:write("extern KeySetLink "..k.name.."_table[];\n")
 
-  output:write("KeySetLink "..name.."_table[] = {\n")
-  for _, key in ipairs(neworder) do
-    output:write('  {"'..key..'", offsetof(KeyDict_'..name..", "..sanitize(key)..")},\n")
+  local function typename(type)
+    if type ~= nil then
+      return "kObjectType"..type
+    else
+      return "kObjectTypeNil"
+    end
   end
-    output:write('  {NULL, 0},\n')
+
+  output:write("KeySetLink "..k.name.."_table[] = {\n")
+  for i, key in ipairs(neworder) do
+    local ind = -1
+    if k.has_optional then
+      ind = i
+      keysets_defs:write("#define KEYSET_OPTIDX_"..k.name.."__"..key.." "..ind.."\n")
+    end
+    output:write('  {"'..key..'", offsetof(KeyDict_'..k.name..", "..(c_name[key] or key).."), "..typename(k.types[key])..", "..ind.."},\n")
+  end
+    output:write('  {NULL, 0, kObjectTypeNil, -1},\n')
   output:write("};\n\n")
 
   output:write(hashfun)
 
   output:write([[
-Object *KeyDict_]]..name..[[_get_field(void *retval, const char *str, size_t len)
+KeySetLink *KeyDict_]]..k.name..[[_get_field(const char *str, size_t len)
 {
-  int hash = ]]..name..[[_hash(str, len);
+  int hash = ]]..k.name..[[_hash(str, len);
   if (hash == -1) {
     return NULL;
   }
-
-  return (Object *)((char *)retval + ]]..name..[[_table[hash].ptr_off);
+  return &]]..k.name..[[_table[hash];
 }
 
 ]])
-  keysets_defs:write("#define api_free_keydict_"..name.."(x) api_free_keydict(x, "..name.."_table)\n")
+  keysets_defs:write("#define api_free_keydict_"..k.name.."(x) api_free_keydict(x, "..k.name.."_table)\n")
 end
 
 local function real_type(type)
@@ -558,6 +579,7 @@ local function process_function(fn)
   static int %s(lua_State *lstate)
   {
     Error err = ERROR_INIT;
+    char *err_param = 0;
     if (lua_gettop(lstate) != %i) {
       api_set_error(&err, kErrorTypeValidation, "Expected %i argument%s");
       goto exit_0;
@@ -605,19 +627,22 @@ local function process_function(fn)
       extra = "true, "
     end
     local errshift = 0
+    local seterr = ''
     if string.match(param_type, '^KeyDict_') then
       write_shifted_output(output, string.format([[
-      %s %s = { 0 }; nlua_pop_keydict(lstate, &%s, %s_get_field, %s&err);]], param_type, cparam, cparam, param_type, extra))
+      %s %s = { 0 }; nlua_pop_keydict(lstate, &%s, %s_get_field, &err_param, &err);]], param_type, cparam, cparam, param_type))
       cparam = '&'..cparam
       errshift = 1 -- free incomplete dict on error
     else
       write_shifted_output(output, string.format([[
       const %s %s = nlua_pop_%s(lstate, %s&err);]], param[1], cparam, param_type, extra))
+      seterr = [[
+      err_param = "]]..param[2]..[[";]]
     end
 
     write_shifted_output(output, string.format([[
 
-    if (ERROR_SET(&err)) {
+    if (ERROR_SET(&err)) {]]..seterr..[[
       goto exit_%u;
     }
 
@@ -661,9 +686,14 @@ local function process_function(fn)
   exit_0:
     if (ERROR_SET(&err)) {
       luaL_where(lstate, 1);
+      if (err_param) {
+        lua_pushstring(lstate, "Invalid '");
+        lua_pushstring(lstate, err_param);
+        lua_pushstring(lstate, "': ");
+      }
       lua_pushstring(lstate, err.msg);
       api_clear_error(&err);
-      lua_concat(lstate, 2);
+      lua_concat(lstate, err_param ? 5 : 2);
       return lua_error(lstate);
     }
   ]]

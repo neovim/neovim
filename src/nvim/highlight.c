@@ -226,8 +226,8 @@ int ns_get_hl(NS *ns_hl, int hl_id, bool link, bool nodefault)
       if (api_dict_to_keydict(&dict, KeyDict_highlight_get_field,
                               ret.data.dictionary, &err)) {
         attrs = dict2hlattrs(&dict, true, &it.link_id, &err);
-        fallback = api_object_to_bool(dict.fallback, "fallback", true, &err);
-        tmp = api_object_to_bool(dict.fallback, "tmp", false, &err);
+        fallback = GET_BOOL_OR_TRUE(&dict, highlight, fallback);
+        tmp = dict.fallback;  // or false
         if (it.link_id >= 0) {
           fallback = true;
         }
@@ -938,6 +938,7 @@ void hlattrs2dict(Dictionary *hl, Dictionary *hl_attrs, HlAttrs ae, bool use_rgb
 
 HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *err)
 {
+#define HAS_KEY_X(d, key) HAS_KEY(d, highlight, key)
   HlAttrs hlattrs = HLATTRS_INIT;
   int32_t fg = -1, bg = -1, ctermfg = -1, ctermbg = -1, sp = -1;
   int blend = -1;
@@ -946,7 +947,7 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   bool cterm_mask_provided = false;
 
 #define CHECK_FLAG(d, m, name, extra, flag) \
-  if (api_object_to_bool(d->name##extra, #name, false, err)) { \
+  if (d->name##extra) { \
     if (flag & HL_UNDERLINE_MASK) { \
       m &= ~HL_UNDERLINE_MASK; \
     } \
@@ -971,52 +972,48 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   CHECK_FLAG(dict, mask, nocombine, , HL_NOCOMBINE);
   CHECK_FLAG(dict, mask, default, _, HL_DEFAULT);
 
-  if (HAS_KEY(dict->fg)) {
+  if (HAS_KEY_X(dict, fg)) {
     fg = object_to_color(dict->fg, "fg", use_rgb, err);
-  } else if (HAS_KEY(dict->foreground)) {
+  } else if (HAS_KEY_X(dict, foreground)) {
     fg = object_to_color(dict->foreground, "foreground", use_rgb, err);
   }
   if (ERROR_SET(err)) {
     return hlattrs;
   }
 
-  if (HAS_KEY(dict->bg)) {
+  if (HAS_KEY_X(dict, bg)) {
     bg = object_to_color(dict->bg, "bg", use_rgb, err);
-  } else if (HAS_KEY(dict->background)) {
+  } else if (HAS_KEY_X(dict, background)) {
     bg = object_to_color(dict->background, "background", use_rgb, err);
   }
   if (ERROR_SET(err)) {
     return hlattrs;
   }
 
-  if (HAS_KEY(dict->sp)) {
+  if (HAS_KEY_X(dict, sp)) {
     sp = object_to_color(dict->sp, "sp", true, err);
-  } else if (HAS_KEY(dict->special)) {
+  } else if (HAS_KEY_X(dict, special)) {
     sp = object_to_color(dict->special, "special", true, err);
   }
   if (ERROR_SET(err)) {
     return hlattrs;
   }
 
-  if (HAS_KEY(dict->blend)) {
-    VALIDATE_T("blend", kObjectTypeInteger, dict->blend.type, {
-      return hlattrs;
-    });
-
-    Integer blend0 = dict->blend.data.integer;
+  if (HAS_KEY_X(dict, blend)) {
+    Integer blend0 = dict->blend;
     VALIDATE_RANGE((blend0 >= 0 && blend0 <= 100), "blend", {
       return hlattrs;
     });
     blend = (int)blend0;
   }
 
-  if (HAS_KEY(dict->link) || HAS_KEY(dict->global_link)) {
+  if (HAS_KEY_X(dict, link) || HAS_KEY_X(dict, global_link)) {
     if (!link_id) {
       api_set_error(err, kErrorTypeValidation, "Invalid Key: '%s'",
-                    HAS_KEY(dict->global_link) ? "global_link" : "link");
+                    HAS_KEY_X(dict, global_link) ? "global_link" : "link");
       return hlattrs;
     }
-    if (HAS_KEY(dict->global_link)) {
+    if (HAS_KEY_X(dict, global_link)) {
       *link_id = object_to_hl_id(dict->global_link, "link", err);
       mask |= HL_GLOBAL;
     } else {
@@ -1050,21 +1047,21 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
     // empty list from Lua API should clear all cterm attributes
     // TODO(clason): handle via gen_api_dispatch
     cterm_mask_provided = true;
-  } else if (HAS_KEY(dict->cterm)) {
+  } else if (HAS_KEY_X(dict, cterm)) {
     VALIDATE_EXP(false, "cterm", "Dict", api_typename(dict->cterm.type), {
       return hlattrs;
     });
   }
 #undef CHECK_FLAG
 
-  if (HAS_KEY(dict->ctermfg)) {
+  if (HAS_KEY_X(dict, ctermfg)) {
     ctermfg = object_to_color(dict->ctermfg, "ctermfg", false, err);
     if (ERROR_SET(err)) {
       return hlattrs;
     }
   }
 
-  if (HAS_KEY(dict->ctermbg)) {
+  if (HAS_KEY_X(dict, ctermbg)) {
     ctermbg = object_to_color(dict->ctermbg, "ctermbg", false, err);
     if (ERROR_SET(err)) {
       return hlattrs;
@@ -1091,6 +1088,7 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
   }
 
   return hlattrs;
+#undef HAS_KEY_X
 }
 
 int object_to_color(Object val, char *key, bool rgb, Error *err)

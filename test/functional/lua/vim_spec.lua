@@ -1511,7 +1511,7 @@ describe('lua stdlib', function()
     eq(true, funcs.luaeval "vim.bo[BUF].modifiable")
     matches("Unknown option 'nosuchopt'$",
        pcall_err(exec_lua, 'return vim.bo.nosuchopt'))
-    matches("Expected lua string$",
+    matches("Expected Lua string$",
        pcall_err(exec_lua, 'return vim.bo[0][0].autoread'))
     matches("Invalid buffer id: %-1$",
        pcall_err(exec_lua, 'return vim.bo[-1].filetype'))

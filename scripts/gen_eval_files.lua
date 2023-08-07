@@ -289,19 +289,18 @@ local function get_api_keysets_meta()
 
   local ret = {} --- @type table<string, vim.EvalFn>
 
-  --- @type {[1]: string, [2]: {[1]: string, [2]: string}[] }[]
+  --- @type {name: string, keys: string[], types: table<string,string>}[]
   local keysets = metadata.keysets
 
-  for _, keyset in ipairs(keysets) do
-    local kname = keyset[1]
-    local kdef = keyset[2]
-    for _, field in ipairs(kdef) do
-      field[2] = api_type(field[2])
+  for _, k in ipairs(keysets) do
+    local params = {}
+    for _, key in ipairs(k.keys) do
+      table.insert(params, {key, api_type(k.types[key] or 'any')})
     end
-    ret[kname] = {
+    ret[k.name] = {
       signature = 'NA',
-      name = kname,
-      params = kdef,
+      name = k.name,
+      params = params,
     }
   end
 

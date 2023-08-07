@@ -134,6 +134,8 @@ The following new APIs and features were added.
   • `vim.fn.*`
   • `vim.api.*`
 
+• Improved messages for type errors in `vim.api.*` calls (including `opts` params)
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

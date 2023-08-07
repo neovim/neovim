@@ -7,6 +7,7 @@
 #include "klib/kvec.h"
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/win_config.h"
 #include "nvim/ascii.h"
@@ -231,7 +232,7 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
     win_config_float(win, fconfig);
     win->w_pos_changed = true;
   }
-  if (HAS_KEY(config->style)) {
+  if (HAS_KEY(config, float_config, style)) {
     if (fconfig.style == kWinStyleMinimal) {
       win_set_minimal_style(win);
       didset_window_options(win, true);
@@ -380,12 +381,8 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
   return true;
 }
 
-static void parse_border_title(Object title, Object title_pos, FloatConfig *fconfig, Error *err)
+static void parse_border_title(Object title, FloatConfig *fconfig, Error *err)
 {
-  if (!parse_title_pos(title_pos, fconfig, err)) {
-    return;
-  }
-
   if (title.type == kObjectTypeString) {
     if (title.data.string.size == 0) {
       fconfig->title = false;
@@ -415,24 +412,14 @@ static void parse_border_title(Object title, Object title_pos, FloatConfig *fcon
   fconfig->title = true;
 }
 
-static bool parse_title_pos(Object title_pos, FloatConfig *fconfig, Error *err)
+static bool parse_title_pos(String title_pos, FloatConfig *fconfig, Error *err)
 {
-  if (!HAS_KEY(title_pos)) {
+  if (title_pos.size == 0) {
     fconfig->title_pos = kAlignLeft;
     return true;
   }
 
-  if (title_pos.type != kObjectTypeString) {
-    api_set_error(err, kErrorTypeValidation, "title_pos must be string");
-    return false;
-  }
-
-  if (title_pos.data.string.size == 0) {
-    fconfig->title_pos = kAlignLeft;
-    return true;
-  }
-
-  char *pos = title_pos.data.string.data;
+  char *pos = title_pos.data;
 
   if (strequal(pos, "left")) {
     fconfig->title_pos = kAlignLeft;
@@ -559,110 +546,90 @@ static void parse_border_style(Object style,  FloatConfig *fconfig, Error *err)
 static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig, bool reconf,
                                bool new_win, Error *err)
 {
+#define HAS_KEY_X(d, key) HAS_KEY(d, float_config, key)
   bool has_relative = false, relative_is_win = false;
-  if (config->relative.type == kObjectTypeString) {
-    // ignore empty string, to match nvim_win_get_config
-    if (config->relative.data.string.size > 0) {
-      if (!parse_float_relative(config->relative.data.string, &fconfig->relative)) {
-        api_set_error(err, kErrorTypeValidation, "Invalid value of 'relative' key");
-        return false;
-      }
-
-      if (!(HAS_KEY(config->row) && HAS_KEY(config->col)) && !HAS_KEY(config->bufpos)) {
-        api_set_error(err, kErrorTypeValidation,
-                      "'relative' requires 'row'/'col' or 'bufpos'");
-        return false;
-      }
-
-      has_relative = true;
-      fconfig->external = false;
-      if (fconfig->relative == kFloatRelativeWindow) {
-        relative_is_win = true;
-        fconfig->bufpos.lnum = -1;
-      }
+  // ignore empty string, to match nvim_win_get_config
+  if (HAS_KEY_X(config, relative) && config->relative.size > 0) {
+    if (!parse_float_relative(config->relative, &fconfig->relative)) {
+      api_set_error(err, kErrorTypeValidation, "Invalid value of 'relative' key");
+      return false;
     }
-  } else if (HAS_KEY(config->relative)) {
-    api_set_error(err, kErrorTypeValidation, "'relative' key must be String");
-    return false;
+
+    if (!(HAS_KEY_X(config, row) && HAS_KEY_X(config, col)) && !HAS_KEY_X(config, bufpos)) {
+      api_set_error(err, kErrorTypeValidation,
+                    "'relative' requires 'row'/'col' or 'bufpos'");
+      return false;
+    }
+
+    has_relative = true;
+    fconfig->external = false;
+    if (fconfig->relative == kFloatRelativeWindow) {
+      relative_is_win = true;
+      fconfig->bufpos.lnum = -1;
+    }
   }
 
-  if (config->anchor.type == kObjectTypeString) {
-    if (!parse_float_anchor(config->anchor.data.string, &fconfig->anchor)) {
+  if (HAS_KEY_X(config, anchor)) {
+    if (!parse_float_anchor(config->anchor, &fconfig->anchor)) {
       api_set_error(err, kErrorTypeValidation, "Invalid value of 'anchor' key");
       return false;
     }
-  } else if (HAS_KEY(config->anchor)) {
-    api_set_error(err, kErrorTypeValidation, "'anchor' key must be String");
-    return false;
   }
 
-  if (HAS_KEY(config->row)) {
+  if (HAS_KEY_X(config, row)) {
     if (!has_relative) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'row'");
       return false;
-    } else if (config->row.type == kObjectTypeInteger) {
-      fconfig->row = (double)config->row.data.integer;
-    } else if (config->row.type == kObjectTypeFloat) {
-      fconfig->row = config->row.data.floating;
-    } else {
-      api_set_error(err, kErrorTypeValidation,
-                    "'row' key must be Integer or Float");
-      return false;
     }
+    fconfig->row = config->row;
   }
 
-  if (HAS_KEY(config->col)) {
+  if (HAS_KEY_X(config, col)) {
     if (!has_relative) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'col'");
       return false;
-    } else if (config->col.type == kObjectTypeInteger) {
-      fconfig->col = (double)config->col.data.integer;
-    } else if (config->col.type == kObjectTypeFloat) {
-      fconfig->col = config->col.data.floating;
-    } else {
-      api_set_error(err, kErrorTypeValidation,
-                    "'col' key must be Integer or Float");
-      return false;
     }
+    fconfig->col = config->col;
   }
 
-  if (HAS_KEY(config->bufpos)) {
+  if (HAS_KEY_X(config, bufpos)) {
     if (!has_relative) {
       api_set_error(err, kErrorTypeValidation, "non-float cannot have 'bufpos'");
       return false;
-    } else if (config->bufpos.type == kObjectTypeArray) {
-      if (!parse_float_bufpos(config->bufpos.data.array, &fconfig->bufpos)) {
+    } else {
+      if (!parse_float_bufpos(config->bufpos, &fconfig->bufpos)) {
         api_set_error(err, kErrorTypeValidation, "Invalid value of 'bufpos' key");
         return false;
       }
 
-      if (!HAS_KEY(config->row)) {
+      if (!HAS_KEY_X(config, row)) {
         fconfig->row = (fconfig->anchor & kFloatAnchorSouth) ? 0 : 1;
       }
-      if (!HAS_KEY(config->col)) {
+      if (!HAS_KEY_X(config, col)) {
         fconfig->col = 0;
       }
-    } else {
-      api_set_error(err, kErrorTypeValidation, "'bufpos' key must be Array");
-      return false;
     }
   }
 
-  if (config->width.type == kObjectTypeInteger && config->width.data.integer > 0) {
-    fconfig->width = (int)config->width.data.integer;
-  } else if (HAS_KEY(config->width)) {
-    api_set_error(err, kErrorTypeValidation, "'width' key must be a positive Integer");
-    return false;
+  if (HAS_KEY_X(config, width)) {
+    if (config->width > 0) {
+      fconfig->width = (int)config->width;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "'width' key must be a positive Integer");
+      return false;
+    }
   } else if (!reconf) {
     api_set_error(err, kErrorTypeValidation, "Must specify 'width'");
     return false;
   }
 
-  if (config->height.type == kObjectTypeInteger && config->height.data.integer > 0) {
-    fconfig->height = (int)config->height.data.integer;
-  } else if (HAS_KEY(config->height)) {
-    api_set_error(err, kErrorTypeValidation, "'height' key must be a positive Integer");
-    return false;
+  if (HAS_KEY_X(config, height)) {
+    if (config->height > 0) {
+      fconfig->height = (int)config->height;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "'height' key must be a positive Integer");
+      return false;
+    }
   } else if (!reconf) {
     api_set_error(err, kErrorTypeValidation, "Must specify 'height'");
     return false;
@@ -670,26 +637,20 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
 
   if (relative_is_win) {
     fconfig->window = curwin->handle;
-    if (config->win.type == kObjectTypeInteger || config->win.type == kObjectTypeWindow) {
-      if (config->win.data.integer > 0) {
-        fconfig->window = (Window)config->win.data.integer;
+    if (HAS_KEY_X(config, win)) {
+      if (config->win > 0) {
+        fconfig->window = config->win;
       }
-    } else if (HAS_KEY(config->win)) {
-      api_set_error(err, kErrorTypeValidation, "'win' key must be Integer or Window");
-      return false;
     }
   } else {
-    if (HAS_KEY(config->win)) {
+    if (HAS_KEY_X(config, win)) {
       api_set_error(err, kErrorTypeValidation, "'win' key is only valid with relative='win'");
       return false;
     }
   }
 
-  if (HAS_KEY(config->external)) {
-    fconfig->external = api_object_to_bool(config->external, "'external' key", false, err);
-    if (ERROR_SET(err)) {
-      return false;
-    }
+  if (HAS_KEY_X(config, external)) {
+    fconfig->external = config->external;
     if (has_relative && fconfig->external) {
       api_set_error(err, kErrorTypeValidation,
                     "Only one of 'relative' and 'external' must be used");
@@ -708,30 +669,22 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
     return false;
   }
 
-  if (HAS_KEY(config->focusable)) {
-    fconfig->focusable = api_object_to_bool(config->focusable, "'focusable' key", false, err);
-    if (ERROR_SET(err)) {
+  if (HAS_KEY_X(config, focusable)) {
+    fconfig->focusable = config->focusable;
+  }
+
+  if (HAS_KEY_X(config, zindex)) {
+    if (config->zindex > 0) {
+      fconfig->zindex = (int)config->zindex;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "'zindex' key must be a positive Integer");
       return false;
     }
   }
 
-  if (config->zindex.type == kObjectTypeInteger && config->zindex.data.integer > 0) {
-    fconfig->zindex = (int)config->zindex.data.integer;
-  } else if (HAS_KEY(config->zindex)) {
-    api_set_error(err, kErrorTypeValidation, "'zindex' key must be a positive Integer");
-    return false;
-  }
-
-  if (HAS_KEY(config->title_pos)) {
-    if (!HAS_KEY(config->title)) {
-      api_set_error(err, kErrorTypeException, "title_pos requires title to be set");
-      return false;
-    }
-  }
-
-  if (HAS_KEY(config->title)) {
+  if (HAS_KEY_X(config, title)) {
     // title only work with border
-    if (!HAS_KEY(config->border) && !fconfig->border) {
+    if (!HAS_KEY_X(config, border) && !fconfig->border) {
       api_set_error(err, kErrorTypeException, "title requires border to be set");
       return false;
     }
@@ -739,42 +692,49 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
     if (fconfig->title) {
       clear_virttext(&fconfig->title_chunks);
     }
-    parse_border_title(config->title, config->title_pos, fconfig, err);
+
+    parse_border_title(config->title, fconfig, err);
     if (ERROR_SET(err)) {
+      return false;
+    }
+
+    // handles unset 'title_pos' same as empty string
+    if (!parse_title_pos(config->title_pos, fconfig, err)) {
+      return false;
+    }
+  } else {
+    if (HAS_KEY_X(config, title_pos)) {
+      api_set_error(err, kErrorTypeException, "title_pos requires title to be set");
       return false;
     }
   }
 
-  if (HAS_KEY(config->border)) {
+  if (HAS_KEY_X(config, border)) {
     parse_border_style(config->border, fconfig, err);
     if (ERROR_SET(err)) {
       return false;
     }
   }
 
-  if (config->style.type == kObjectTypeString) {
-    if (config->style.data.string.data[0] == NUL) {
+  if (HAS_KEY_X(config, style)) {
+    if (config->style.data[0] == NUL) {
       fconfig->style = kWinStyleUnused;
-    } else if (striequal(config->style.data.string.data, "minimal")) {
+    } else if (striequal(config->style.data, "minimal")) {
       fconfig->style = kWinStyleMinimal;
     } else {
       api_set_error(err, kErrorTypeValidation, "Invalid value of 'style' key");
+      return false;
     }
-  } else if (HAS_KEY(config->style)) {
-    api_set_error(err, kErrorTypeValidation, "'style' key must be String");
-    return false;
   }
 
-  if (HAS_KEY(config->noautocmd)) {
+  if (HAS_KEY_X(config, noautocmd)) {
     if (!new_win) {
       api_set_error(err, kErrorTypeValidation, "Invalid key: 'noautocmd'");
       return false;
     }
-    fconfig->noautocmd = api_object_to_bool(config->noautocmd, "'noautocmd' key", false, err);
-    if (ERROR_SET(err)) {
-      return false;
-    }
+    fconfig->noautocmd = config->noautocmd;
   }
 
   return true;
+#undef HAS_KEY_X
 }
