@@ -1,14 +1,14 @@
 local uv = vim.uv
 
 --- @class SystemOpts
---- @field cmd string[]
---- @field stdin string|string[]|true
---- @field stdout fun(err:string, data: string)|false
---- @field stderr fun(err:string, data: string)|false
+--- @field cmd? string[]
+--- @field stdin? string|string[]|true
+--- @field stdout? fun(err:string, data: string)|false
+--- @field stderr? fun(err:string, data: string)|false
 --- @field cwd? string
 --- @field env? table<string,string|number>
 --- @field clear_env? boolean
---- @field text boolean?
+--- @field text? boolean
 --- @field timeout? integer Timeout in ms
 --- @field detach? boolean
 
@@ -19,15 +19,15 @@ local uv = vim.uv
 --- @field stderr? string
 
 --- @class SystemState
---- @field handle uv.uv_process_t
---- @field timer uv.uv_timer_t
---- @field pid integer
+--- @field handle? uv.uv_process_t
+--- @field timer?  uv.uv_timer_t
+--- @field pid? integer
 --- @field timeout? integer
---- @field done boolean
---- @field stdin uv.uv_stream_t?
---- @field stdout uv.uv_stream_t?
---- @field stderr uv.uv_stream_t?
---- @field cmd string[]
+--- @field done? boolean
+--- @field stdin? uv.uv_stream_t
+--- @field stdout? uv.uv_stream_t
+--- @field stderr? uv.uv_stream_t
+--- @field cmd? string[]
 --- @field result? SystemCompleted
 
 ---@param state SystemState

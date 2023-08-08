@@ -534,7 +534,7 @@ end
 ---@see Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
 ---@param t table Dict-like table
----@return # iterator over sorted keys and their values
+---@return function iterator over sorted keys and their values
 function vim.spairs(t)
   assert(type(t) == 'table', string.format('Expected table, got %s', type(t)))
 
