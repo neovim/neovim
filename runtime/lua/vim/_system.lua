@@ -1,7 +1,6 @@
 local uv = vim.uv
 
 --- @class SystemOpts
---- @field cmd? string[]
 --- @field stdin? string|string[]|true
 --- @field stdout? fun(err:string, data: string)|false
 --- @field stderr? fun(err:string, data: string)|false
