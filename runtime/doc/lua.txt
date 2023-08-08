@@ -2884,11 +2884,11 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
 <
 
     Parameters: ~
-      • {names}  (string|table|fun(name: string, path: string): boolean) Names
-                 of the items to find. Must be base names, paths and globs are
-                 not supported when {names} is a string or a table. If {names}
-                 is a function, it is called for each traversed item with
-                 args:
+      • {names}  (string|string[]|fun(name: string, path: string): boolean)
+                 Names of the items to find. Must be base names, paths and
+                 globs are not supported when {names} is a string or a table.
+                 If {names} is a function, it is called for each traversed
+                 item with args:
                  • name: base name of the current item
                  • path: full path of the current item The function should
                    return `true` if the given item is considered a match.
@@ -2907,7 +2907,7 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                    number of matches.
 
     Return: ~
-        (table) Normalized paths |vim.fs.normalize()| of all matching items
+        (string[]) Normalized paths |vim.fs.normalize()| of all matching items
 
 vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     Concatenate directories and/or file paths into a single path with
@@ -2967,8 +2967,10 @@ vim.fs.parents({start})                                     *vim.fs.parents()*
     Parameters: ~
       • {start}  (string) Initial path.
 
-    Return: ~
-        (function) Iterator
+    Return (multiple): ~
+        fun(_, dir: string): string? Iterator
+        nil
+        (string|nil)
 
 
 ==============================================================================
