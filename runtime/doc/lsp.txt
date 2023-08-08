@@ -2127,7 +2127,8 @@ request({method}, {params}, {callback}, {notify_reply_callback})
       • {method}                 (string) The invoked LSP method
       • {params}                 (table|nil) Parameters for the invoked LSP
                                  method
-      • {callback}               fun(err: lsp.ResponseError | nil, result: any) Callback to invoke
+      • {callback}               fun(err: lsp.ResponseError | nil, result:
+                                 any) Callback to invoke
       • {notify_reply_callback}  (function|nil) Callback to invoke as soon as
                                  a request is no longer pending
 
