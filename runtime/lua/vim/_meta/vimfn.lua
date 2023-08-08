@@ -4115,6 +4115,7 @@ function vim.fn.iconv(string, from, to) end
 --- @return any
 function vim.fn.id(expr) end
 
+--- The result is a Number, which is indent of line {lnum} in the
 --- current buffer.  The indent is counted in spaces, the value
 --- of 'tabstop' is relevant.  {lnum} is used just like in
 --- |getline()|.
@@ -4712,6 +4713,7 @@ function vim.fn.keytrans(string) end
 --- @return any
 function vim.fn.last_buffer_nr() end
 
+--- The result is a Number, which is the length of the argument.
 --- When {expr} is a String or a Number the length in bytes is
 --- used, as with |strlen()|.
 --- When {expr} is a |List| the number of items in the |List| is
