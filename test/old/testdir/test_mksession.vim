@@ -731,6 +731,7 @@ func Test_mksession_foldopt()
   close
   %bwipe
   set sessionoptions&
+  call delete('Xtest_mks.out')
 endfunc
 
 " Test for mksession with "help" but not "options" in 'sessionoptions'
@@ -857,14 +858,14 @@ func Test_mksession_shortmess_with_A()
   bwipe!
 
   " Recreate the swap file to pretend the file is being edited
-  call writefile(cont, fname)
+  call writefile(cont, fname, 'D')
   set shortmess+=A
   source Xtestsession
 
   set shortmess&
   set sessionoptions&
   call delete('Xtestsession')
-  call delete(fname)
+  call delete('Xtestfile')
 endfunc
 
 " Test for mksession with 'compatible' option

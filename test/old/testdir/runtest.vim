@@ -353,6 +353,24 @@ func RunTheTest(test)
   endif
 endfunc
 
+function Delete_Xtest_Files()
+  for file in glob('X*', v:false, v:true)
+    if file ==? 'XfakeHOME'
+      " Clean up files created by setup.vim
+      call delete('XfakeHOME', 'rf')
+      continue
+    endif
+    " call add(v:errors, file .. " exists when it shouldn't, trying to delete it!")
+    call delete(file)
+    if !empty(glob(file, v:false, v:true))
+      " call add(v:errors, file .. " still exists after trying to delete it!")
+      if has('unix')
+        call system('rm -rf  ' .. file)
+      endif
+    endif
+  endfor
+endfunc
+
 func AfterTheTest(func_name)
   if len(v:errors) > 0
     if match(s:may_fail_list, '^' .. a:func_name) >= 0
@@ -381,12 +399,10 @@ endfunc
 " This function can be called by a test if it wants to abort testing.
 func FinishTesting()
   call AfterTheTest('')
+  call Delete_Xtest_Files()
 
   " Don't write viminfo on exit.
   set viminfo=
-
-  " Clean up files created by setup.vim
-  call delete('XfakeHOME', 'rf')
 
   if s:fail == 0 && s:fail_expected == 0
     " Success, create the .res file so that make knows it's done.
