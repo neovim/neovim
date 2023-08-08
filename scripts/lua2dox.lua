@@ -58,7 +58,11 @@ local TYPES = { 'integer', 'number', 'string', 'table', 'list', 'boolean', 'func
 local TAGGED_TYPES = { 'TSNode', 'LanguageTree' }
 
 -- Document these as 'table'
-local ALIAS_TYPES = { 'Range', 'Range4', 'Range6', 'TSMetadata' }
+local ALIAS_TYPES = {
+  'Range', 'Range4', 'Range6', 'TSMetadata',
+  'vim.filetype.add.filetypes',
+  'vim.filetype.match.args'
+}
 
 local debug_outfile = nil --- @type string?
 local debug_output = {}
