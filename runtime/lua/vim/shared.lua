@@ -6,6 +6,7 @@
 -- or the test suite. (Eventually the test suite will be run in a worker process,
 -- so this wouldn't be a separate case to consider)
 
+---@diagnostic disable-next-line: lowercase-global
 vim = vim or {}
 
 local function _id(v)
