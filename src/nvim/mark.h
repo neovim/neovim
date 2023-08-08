@@ -86,7 +86,7 @@ static inline bool ltoreq(pos_T a, pos_T b)
 static inline void clearpos(pos_T *a)
   REAL_FATTR_ALWAYS_INLINE;
 
-/// Return true if position a is before (less than) position b.
+/// Returns true if position `a` is before (less than) position `b`.
 static inline bool lt(pos_T a, pos_T b)
 {
   if (a.lnum != b.lnum) {
@@ -98,13 +98,13 @@ static inline bool lt(pos_T a, pos_T b)
   }
 }
 
-/// Return true if position a and b are equal.
+/// Returns true if position `a` and `b` are equal.
 static inline bool equalpos(pos_T a, pos_T b)
 {
   return (a.lnum == b.lnum) && (a.col == b.col) && (a.coladd == b.coladd);
 }
 
-/// Return true if position a is less than or equal to b.
+/// Returns true if position `a` is less than or equal to `b`.
 static inline bool ltoreq(pos_T a, pos_T b)
 {
   return lt(a, b) || equalpos(a, b);

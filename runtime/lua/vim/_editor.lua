@@ -479,17 +479,29 @@ end
 ---@return table region Dict of the form `{linenr = {startcol,endcol}}`. `endcol` is exclusive, and
 ---whole lines are returned as `{startcol,endcol} = {0,-1}`.
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
+  vim.validate{
+    bufnr={bufnr, {'n'}},
+    pos1={pos1, {'t','s'}},
+    pos2={pos2, {'t','s'}},
+    regtype={regtype, 's'},
+    inclusive={inclusive, 'b', true}
+  }
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
+  end
+  local maxcol = vim.v.maxcol
+  --- Returns `expr1` if it is v:maxcol, else returns `expr2`.
+  local function ormax(expr1, expr2)
+    return expr1 == maxcol and expr1 or expr2
   end
 
   if type(pos1) == 'string' then
     local pos = vim.fn.getpos(pos1)
-    pos1 = { pos[2] - 1, pos[3] - 1 + pos[4] }
+    pos1 = { ormax(pos[2], pos[2] - 1), ormax(pos[3], pos[3] - 1 + pos[4]) }
   end
   if type(pos2) == 'string' then
     local pos = vim.fn.getpos(pos2)
-    pos2 = { pos[2] - 1, pos[3] - 1 + pos[4] }
+    pos2 = { ormax(pos[2], pos[2] - 1), ormax(pos[3], pos[3] - 1 + pos[4]) }
   end
 
   if pos1[1] > pos2[1] or (pos1[1] == pos2[1] and pos1[2] > pos2[2]) then
@@ -535,7 +547,7 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
       end
     else
       c1 = (l == pos1[1]) and pos1[2] or 0
-      c2 = (l == pos2[1]) and (pos2[2] + (inclusive and 1 or 0)) or -1
+      c2 = (l == pos2[1]) and ormax(pos2[2], pos2[2] + (inclusive and 1 or 0)) or -1
     end
     table.insert(region, l, { c1, c2 })
   end
@@ -1017,8 +1029,9 @@ function vim._init_default_mappings()
     local chunks = {}
     local maxcol = vim.v.maxcol
     for line, cols in vim.spairs(region) do
+      local startcol = cols[1] == maxcol and 1 or cols[1]
       local endcol = cols[2] == maxcol and -1 or cols[2]
-      local chunk = vim.api.nvim_buf_get_text(0, line, cols[1], line, endcol, {})[1]
+      local chunk = vim.api.nvim_buf_get_text(0, line, startcol, line, endcol, {})[1]
       table.insert(chunks, chunk)
     end
     return chunks
@@ -1026,13 +1039,8 @@ function vim._init_default_mappings()
 
   local function _visual_search(cmd)
     assert(cmd == '/' or cmd == '?')
-    local region = vim.region(
-      0,
-      '.',
-      'v',
-      vim.api.nvim_get_mode().mode:sub(1, 1),
-      vim.o.selection == 'inclusive'
-    )
+    local mode = vim.api.nvim_get_mode().mode:sub(1, 1)
+    local region = vim.region(0, 'v', 'v$', mode, vim.o.selection == 'inclusive')
     local chunks = region_chunks(region)
     local esc_chunks = vim
       .iter(chunks)

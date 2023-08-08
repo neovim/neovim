@@ -5900,10 +5900,13 @@ M.funcs = {
       	    display isn't updated, e.g. in silent Ex mode)
           w$	    last line visible in current window (this is one
       	    less than "w0" if no lines are visible)
-          v	    In Visual mode: the start of the Visual area (the
-      	    cursor is the end).  When not in Visual mode
-      	    returns the cursor position.  Differs from |'<| in
-      	    that it's updated right away.
+          v	    In Visual mode: start of the Visual area, that is, the
+            corner opposite the cursor position.  Updated immediately, unlike
+            |'<|. When not in Visual mode returns the cursor position.
+          v$	    In Visual mode: end of the Visual area, equivalent to
+            cursor position except in |blockwise-visual| mode.  Updated
+            immediately, unlike |'<|. When not in Visual mode returns the
+            cursor position.
       Note that a mark in another file can be used.  The line number
       then applies to another buffer.
       To get the column number use |col()|.  To get both use

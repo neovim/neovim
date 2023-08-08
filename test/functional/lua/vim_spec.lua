@@ -2322,7 +2322,7 @@ describe('lua stdlib', function()
   end)
 
   describe('vim.region', function()
-    it('charwise', function()
+    it('charwise-visual "v"', function()
       insert(dedent( [[
       text tααt tααt text
       text tαxt txtα tex
@@ -2330,7 +2330,20 @@ describe('lua stdlib', function()
       ]]))
       eq({5,15}, exec_lua[[ return vim.region(0,{1,5},{1,14},'v',true)[1] ]])
     end)
-    it('blockwise', function()
+    it('linewise-visual "V"', function()
+      insert(dedent( [[
+      text tααt tααt text
+      text tαxt txtα tex
+      text tαxt tαxt
+      ]]))
+      feed('gg0lvjjllV')
+      local expected = {
+        { 0, -1 },
+        { 0, eval('v:maxcol') },
+      }
+      eq(expected, exec_lua[[ local r = vim.region(0, 'v', 'v$', 'V', vim.o.selection == 'inclusive'); return {r[1], r[2]}; ]])
+    end)
+    it('blockwise-visual "^v"', function()
       insert([[αα]])
       eq({0,5}, exec_lua[[ return vim.region(0,{0,0},{0,4},'3',true)[0] ]])
     end)

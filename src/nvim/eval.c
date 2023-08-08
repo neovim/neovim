@@ -6621,9 +6621,28 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     // cursor
     pos = curwin->w_cursor;
   } else if (name[0] == 'v' && name[1] == NUL) {
-    // Visual start
+    // "v": Visual start.
     if (VIsual_active) {
       pos = VIsual;
+      if (VIsual_mode == 'V') {
+        pos.col = MAXCOL;
+      }
+    } else {
+      pos = curwin->w_cursor;
+    }
+  } else if (name[0] == 'v' && name[1] == '$') {
+    // "v$": Visual end.
+    if (VIsual_active) {
+      // See usage of getvcols() in cursor_pos_info(), v_swap_corners().
+
+      // TODO(justinmk): getvvcol()? See getvcols().
+      // colnr_T from1;
+      // colnr_T to1;
+      // getvvcol(curwin, pos1, &from1, NULL, &to1);
+
+      pos.lnum = curwin->w_cursor.lnum;
+      pos.col = (VIsual_mode == 'V') ? MAXCOL : curwin->w_cursor.col;
+      // pos.coladd = (VIsual_mode == 'V') ? MAXCOL : curwin->w_cursor.coladd;
     } else {
       pos = curwin->w_cursor;
     }
