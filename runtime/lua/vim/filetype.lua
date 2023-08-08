@@ -38,14 +38,8 @@ end
 ---@param end_lnum integer|nil The line number of the last line (inclusive, 1-based)
 ---@return string[] # Array of lines
 function M._getlines(bufnr, start_lnum, end_lnum)
-  if end_lnum then
-    -- Return a line range
-    return api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum, false)
-  end
-
   if start_lnum then
-    -- Return a single line
-    return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)
+    return api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum or start_lnum, false)
   end
 
   -- Return all lines
@@ -59,7 +53,7 @@ end
 ---@return string
 function M._getline(bufnr, start_lnum)
   -- Return a single line
-  return M._getlines(bufnr, start_lnum)[1] or ''
+  return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ''
 end
 
 ---@private
@@ -103,10 +97,10 @@ do
   --- Check whether the given string matches the Vim regex pattern.
   --- @param s string?
   --- @param pattern string
-  --- @return boolean?
+  --- @return boolean
   function M._matchregex(s, pattern)
     if not s then
-      return
+      return false
     end
     if not regex_cache[pattern] then
       regex_cache[pattern] = vim.regex(pattern)
@@ -165,7 +159,12 @@ local function detect_line1(pat, a, b)
   end
 end
 
-local detect_rc = detect_line1('/etc/Muttrc%.d/', nil, 'rc')
+--- @type vim.filetype.mapfn
+local detect_rc = function(path, _bufnr)
+  if not path:find('/etc/Muttrc%.d/') then
+    return 'rc'
+  end
+end
 
 -- luacheck: push no unused args
 -- luacheck: push ignore 122
@@ -1885,6 +1884,7 @@ local pattern = {
   ['.*/etc/profile'] = detect.sh,
   ['bash%-fc[%-%.].*'] = detect.bash,
   ['%.tcshrc.*'] = detect.tcsh,
+  ['.*/etc/sudoers%.d/.*'] = starsetf('sudoers'),
   ['.*%._sst%.meta'] = 'sisu',
   ['.*%.%-sst%.meta'] = 'sisu',
   ['.*%.sst%.meta'] = 'sisu',

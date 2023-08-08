@@ -826,7 +826,7 @@ end
 
 --- Returns true if file content looks like LambdaProlog
 --- @param bufnr integer
---- @return boolean?
+--- @return boolean
 local function is_lprolog(bufnr)
   -- Skip apparent comments and blank lines, what looks like
   -- LambdaProlog comment may be RAPID header
@@ -834,9 +834,10 @@ local function is_lprolog(bufnr)
     -- The second pattern matches a LambdaProlog comment
     if not findany(line, { '^%s*$', '^%s*%%' }) then
       -- The pattern must not catch a go.mod file
-      return matchregex(line, [[\c\<module\s\+\w\+\s*\.\s*\(%\|$\)]]) ~= nil
+      return matchregex(line, [[\c\<module\s\+\w\+\s*\.\s*\(%\|$\)]])
     end
   end
+  return false
 end
 
 --- Determine if *.mod is ABB RAPID, LambdaProlog, Modula-2, Modsim III or go.mod
