@@ -1441,7 +1441,7 @@ static int node_rawquery(lua_State *L)
 
 #ifdef NVIM_TS_HAS_SET_MAX_START_DEPTH
   // reset the start depth
-  ts_query_cursor_set_max_start_depth(cursor, 0);
+  ts_query_cursor_set_max_start_depth(cursor, UINT32_MAX);
 #endif
   ts_query_cursor_set_match_limit(cursor, 256);
   ts_query_cursor_exec(cursor, query, node);
