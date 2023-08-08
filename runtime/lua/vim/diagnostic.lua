@@ -1691,7 +1691,7 @@ end
 
 --- Convert a list of quickfix items to a list of diagnostics.
 ---
----@param list table List of quickfix items from |getqflist()| or |getloclist()|.
+---@param list table[] List of quickfix items from |getqflist()| or |getloclist()|.
 ---@return Diagnostic[] array of |diagnostic-structure|
 function M.fromqflist(list)
   vim.validate({

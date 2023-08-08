@@ -17,9 +17,9 @@
 --- @field deprecated? true
 --- @field returns? string|false
 --- @field returns_desc? string
---- @field signature? string
+--- @field signature string
 --- @field desc? string
---- @field params? {[1]:string, [2]:string, [3]:string}[]
+--- @field params {[1]:string, [2]:string, [3]:string}[]
 --- @field lua? false Do not render type information
 --- @field tags? string[] Extra tags
 --- @field data? string Used by gen_eval.lua
@@ -2898,6 +2898,9 @@ M.funcs = {
     signature = 'foldtextresult({lnum})',
   },
   foreground = {
+    args = 0,
+    params = {},
+    signature = '',
     lua = false,
   },
   fullcommand = {
@@ -11324,10 +11327,21 @@ M.funcs = {
     signature = 'termopen({cmd} [, {opts}])',
   },
   test_garbagecollect_now = {
+    args = 0,
+    desc = [=[
+      Like |garbagecollect()|, but executed right away.  This must
+      only be called directly to avoid any structure to exist
+      internally, and |v:testing| must have been set before calling
+      any function.
+    ]=],
+    params = {},
+    signature = 'test_garbagecollect_now()',
     lua = false,
   },
   test_write_list_log = {
     args = 1,
+    params = { { 'fname' } },
+    signature = '',
     lua = false,
   },
   timer_info = {

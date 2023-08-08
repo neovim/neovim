@@ -27,7 +27,6 @@ local uv = vim.uv
 --- @field stdin? uv.uv_stream_t
 --- @field stdout? uv.uv_stream_t
 --- @field stderr? uv.uv_stream_t
---- @field cmd? string[]
 --- @field result? SystemCompleted
 
 ---@param state SystemState
