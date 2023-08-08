@@ -5,8 +5,8 @@ local api = vim.api
 local M = {}
 
 ---@class lsp.inlay_hint.bufstate
----@field version integer
----@field client_hint table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
+---@field version? integer
+---@field client_hint? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
 ---@field applied table<integer, integer> Last version of hints applied to this line
 ---@field enabled boolean Whether inlay hints are enabled for this buffer
 ---@type table<integer, lsp.inlay_hint.bufstate>

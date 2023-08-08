@@ -17,9 +17,9 @@
 --- @field deprecated? true
 --- @field returns? string|false
 --- @field returns_desc? string
---- @field signature string
+--- @field signature? string
 --- @field desc? string
---- @field params {[1]:string, [2]:string, [3]:string}[]
+--- @field params? {[1]:string, [2]:string, [3]:string}[]
 --- @field lua? false Do not render type information
 --- @field tags? string[] Extra tags
 --- @field data? string Used by gen_eval.lua

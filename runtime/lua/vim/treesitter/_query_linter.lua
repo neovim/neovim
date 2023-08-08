@@ -36,6 +36,7 @@ local function add_lint_for_node(diagnostics, node, buf, lint, lang)
   local message = lint .. ': ' .. node_text
   local error_range = { node:range() }
   diagnostics[#diagnostics + 1] = {
+    bufnr = buf,
     lnum = error_range[1],
     end_lnum = error_range[3],
     col = error_range[2],

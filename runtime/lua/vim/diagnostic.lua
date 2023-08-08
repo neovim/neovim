@@ -732,7 +732,7 @@ end
 ---@field message string
 ---@field source nil|string
 ---@field code nil|string
----@field _tags { deprecated: boolean, unnecessary: boolean}
+---@field _tags? { deprecated: boolean, unnecessary: boolean}
 ---@field user_data nil|any arbitrary data plugins can add
 
 --- Get current diagnostics.
