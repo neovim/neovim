@@ -295,7 +295,7 @@ local function get_api_keysets_meta()
   for _, k in ipairs(keysets) do
     local params = {}
     for _, key in ipairs(k.keys) do
-      table.insert(params, {key, api_type(k.types[key] or 'any')})
+      table.insert(params, {key..'?', api_type(k.types[key] or 'any')})
     end
     ret[k.name] = {
       signature = 'NA',
