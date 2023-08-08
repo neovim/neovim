@@ -723,17 +723,17 @@ function M.get_namespaces()
 end
 
 ---@class Diagnostic
----@field bufnr integer
+---@field bufnr? integer
 ---@field lnum integer 0-indexed
----@field end_lnum nil|integer 0-indexed
+---@field end_lnum? integer 0-indexed
 ---@field col integer 0-indexed
----@field end_col nil|integer 0-indexed
----@field severity DiagnosticSeverity
+---@field end_col? integer 0-indexed
+---@field severity? DiagnosticSeverity
 ---@field message string
----@field source nil|string
----@field code nil|string
+---@field source? string
+---@field code? string
 ---@field _tags? { deprecated: boolean, unnecessary: boolean}
----@field user_data nil|any arbitrary data plugins can add
+---@field user_data? any arbitrary data plugins can add
 
 --- Get current diagnostics.
 ---
