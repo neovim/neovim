@@ -6,11 +6,13 @@ local lpeg = vim.lpeg
 
 local M = {}
 
+---@alias lpeg userdata
+
 --- Parses the raw pattern into an |lpeg| pattern. LPeg patterns natively support the "this" or "that"
 --- alternative constructions described in the LSP spec that cannot be expressed in a standard Lua pattern.
 ---
 ---@param pattern string The raw glob pattern
----@return userdata An |lpeg| representation of the pattern, or nil if the pattern is invalid.
+---@return lpeg An |lpeg| representation of the pattern, or nil if the pattern is invalid.
 local function parse(pattern)
   local l = lpeg
 
@@ -109,7 +111,7 @@ local to_lsp_change_type = {
 
 --- Default excludes the same as VSCode's `files.watcherExclude` setting.
 --- https://github.com/microsoft/vscode/blob/eef30e7165e19b33daa1e15e92fa34ff4a5df0d3/src/vs/workbench/contrib/files/browser/files.contribution.ts#L261
----@type Lpeg pattern
+---@type lpeg parsed Lpeg pattern
 M._poll_exclude_pattern = parse('**/.git/{objects,subtree-cache}/**')
   + parse('**/node_modules/*/**')
   + parse('**/.hg/store/**')
@@ -132,7 +134,7 @@ function M.register(reg, ctx)
   if not has_capability or not client.workspace_folders then
     return
   end
-  local watch_regs = {} --- @type table<string,{pattern:userdata,kind:integer}>
+  local watch_regs = {} --- @type table<string,{pattern:lpeg,kind:integer}>
   for _, w in ipairs(reg.registerOptions.watchers) do
     local relative_pattern = false
     local glob_patterns = {} --- @type {baseUri:string, pattern: string}[]
