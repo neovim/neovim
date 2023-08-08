@@ -1,4 +1,5 @@
 ---@meta
+error('Cannot require a meta file')
 
 ---@alias lsp-handler fun(err: lsp.ResponseError|nil, result: any, context: lsp.HandlerContext, config: table|nil): any?
 
