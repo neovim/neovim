@@ -1,6 +1,6 @@
 "  matchit.vim: (global plugin) Extended "%" matching
 "  autload script of matchit plugin, see ../plugin/matchit.vim
-"  Last Change: Jun 10, 2021
+"  Last Change: Jan 24, 2022
 
 " Neovim does not support scriptversion
 if has("vimscript-4")
@@ -41,6 +41,10 @@ function s:RestoreOptions()
   if &ve != ''
     let restore_options = " ve=" .. &ve .. restore_options
     set ve=
+  endif
+  if &smartcase
+    let restore_options = " smartcase " .. restore_options
+    set nosmartcase
   endif
   return restore_options
 endfunction
@@ -134,9 +138,6 @@ function matchit#Match_wrapper(word, forward, mode) range
     let curcol = match(matchline, regexp)
     " If there is no match, give up.
     if curcol == -1
-      " Make sure macros abort properly
-      "exe "norm! \<esc>"
-      call feedkeys("\e", 'tni')
       return s:CleanUp(restore_options, a:mode, startpos)
     endif
     let endcol = matchend(matchline, regexp)
@@ -756,15 +757,15 @@ endfun
 fun! s:ParseSkip(str)
   let skip = a:str
   if skip[1] == ":"
-    if skip[0] == "s"
+    if skip[0] ==# "s"
       let skip = "synIDattr(synID(line('.'),col('.'),1),'name') =~? '" ..
         \ strpart(skip,2) .. "'"
-    elseif skip[0] == "S"
+    elseif skip[0] ==# "S"
       let skip = "synIDattr(synID(line('.'),col('.'),1),'name') !~? '" ..
         \ strpart(skip,2) .. "'"
-    elseif skip[0] == "r"
+    elseif skip[0] ==# "r"
       let skip = "strpart(getline('.'),0,col('.'))=~'" .. strpart(skip,2) .. "'"
-    elseif skip[0] == "R"
+    elseif skip[0] ==# "R"
       let skip = "strpart(getline('.'),0,col('.'))!~'" .. strpart(skip,2) .. "'"
     endif
   endif

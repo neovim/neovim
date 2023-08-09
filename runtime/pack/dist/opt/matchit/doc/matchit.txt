@@ -1,10 +1,10 @@
-*matchit.txt*	Extended "%" matching
+*matchit.txt*   Extended "%" matching
 
 For instructions on installing this file, type
 	`:help matchit-install`
 inside Vim.
 
-For Vim version 8.2.  Last change:  2021 Dec 24
+For Vim version 9.0.  Last change:  2023 June 28
 
 
 		  VIM REFERENCE MANUAL    by Benji Fisher et al
@@ -150,8 +150,7 @@ To use the matchit plugin add this line to your |vimrc|: >
 
 The script should start working the next time you start Vim.
 
-To use the matchit plugin after startup, you can use this command (note the
-omitted '!'): >
+To use the matchit plugin after Vim has started, execute this command: >
 	packadd matchit
 
 (Earlier versions of the script did nothing unless a |buffer-variable| named
@@ -174,6 +173,22 @@ not have |syntax| highlighting turned on, matchit.vim should work, but it may
 fail to skip matching groups in comments and strings.  If the |filetype|
 mechanism is turned off, the |b:match_words| variable will probably not be
 defined automatically.
+
+2.1 Temporarily disable the matchit plugin	*matchit-disable* *:MatchDisable*
+
+To temporarily reset the plugins, that are setup you can run the following
+command: >
+	:MatchDisable
+
+This will delete all the defined key mappings to the Vim default.
+Now the "%" command will work like before loading the plugin |%|
+
+2.2 Re-enable the matchit plugin		*:MatchEnable*
+
+To re-enable the plugin, after it was disabled, use the following command: >
+	:MatchEnable
+
+This will resetup the key mappings.
 
 ==============================================================================
 3. Configuration					*matchit-configure*
@@ -243,6 +258,9 @@ Examples:
 	comment character) you can >
 		:let b:match_skip = 'r:\(^\|[^\\]\)\(\\\\\)*%'
 <
+	See the $VIMRUNTIME/ftplugin/vim.vim for an example that uses both
+	syntax and a regular expression.
+
 ==============================================================================
 4. Supporting a New Language				*matchit-newlang*
 							*b:match_words*
