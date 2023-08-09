@@ -1090,6 +1090,7 @@ local extension = {
   yxx = 'yacc',
   yml = 'yaml',
   yaml = 'yaml',
+  eyaml = 'yaml',
   yang = 'yang',
   yuck = 'yuck',
   z8a = 'z8a',
