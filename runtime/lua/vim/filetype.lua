@@ -1049,6 +1049,7 @@ local extension = {
   wat = 'wat',
   wdl = 'wdl',
   wm = 'webmacro',
+  wgsl = 'wgsl',
   wbt = 'winbatch',
   wit = 'wit',
   wml = 'wml',
