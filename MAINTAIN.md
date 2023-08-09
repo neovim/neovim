@@ -71,16 +71,36 @@ inform users of the change.
 
 In general, when a feature is slated to be removed it should:
 
-1. Be marked deprecated in the _next_ release
-  - This includes a note in the release notes (include a "Deprecation Warning"
-    section just below "Breaking Changes")
-  - Lua features can use `vim.deprecate()`
+1. Be _soft_ deprecated in the _next_ release
+  - Use of the deprecated feature will still work.
+  - This means deprecating via documentation and annotation (`@deprecated`) only.
+  - Include a note in `news.txt` under `DEPRECATIONS`.
+2. Be _hard_ deprecated in a following a release in which it was soft deprecated.
+  - Use of the deprecated feature will still work but should issue a warning
+    (typically via `vim.deprecate()` for Lua features).
   - Features implemented in Vimscript or in C will need bespoke implementations
     to communicate to users that the feature is deprecated
-2. Be removed in a release following the release in which it was marked
-   deprecated
+3. Be removed in a release following the release in which it was hard deprecated
   - Usually this will be the next release, but it may be a later release if a
     longer deprecation cycle is desired
+  - If possible, keep the feature as a stub (e.g. function API) and issue an error
+    when it is accessed.
+
+Example:
+
+```
+                Deprecation                            Removal
+                     ┆                 ┆                 ┆
+                     ┆      Soft       ┆      Hard       ┆
+                     ┆   Deprecation   ┆   Deprecation   ┆
+                     ┆     Period      ┆     Preiod      ┆
+         ────────────────────────────────────────────────────────────
+Version:            0.10              0.11              0.12
+         ────────────────────────────────────────────────────────────
+         Old code         Old code          Old code
+                             +                 +
+                          New code          New code         New code
+```
 
 Feature removals which may benefit from community input or further discussion
 should also have a tracking issue (which should be linked to in the release
