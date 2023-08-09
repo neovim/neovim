@@ -9,6 +9,7 @@ local eval = helpers.eval
 local NIL = helpers.NIL
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
+local pcall_err = helpers.pcall_err
 
 before_each(clear)
 
@@ -169,6 +170,29 @@ describe('luaeval(vim.api.…)', function()
     -- the case normally because empty table is an empty array.
     eq({}, funcs.luaeval('vim.api.nvim__id_dictionary({})'))
     eq(4, eval([[type(luaeval('vim.api.nvim__id_dictionary({})'))]]))
+  end)
+
+  it('converts booleans in positional args', function()
+    eq({''}, exec_lua [[ return vim.api.nvim_buf_get_lines(0, 0, 10, false) ]])
+    eq({''}, exec_lua [[ return vim.api.nvim_buf_get_lines(0, 0, 10, nil) ]])
+    eq('Index out of bounds', pcall_err(exec_lua, [[ return vim.api.nvim_buf_get_lines(0, 0, 10, true) ]]))
+    eq('Index out of bounds', pcall_err(exec_lua, [[ return vim.api.nvim_buf_get_lines(0, 0, 10, 1) ]]))
+
+    -- this follows lua conventions for bools (not api convention for Boolean)
+    eq('Index out of bounds', pcall_err(exec_lua, [[ return vim.api.nvim_buf_get_lines(0, 0, 10, 0) ]]))
+    eq('Index out of bounds', pcall_err(exec_lua, [[ return vim.api.nvim_buf_get_lines(0, 0, 10, {}) ]]))
+  end)
+
+  it('converts booleans in optional args', function()
+    eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=false}) ]])
+    eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {}) ]]) -- same as {output=nil}
+
+    -- API conventions (not lua conventions): zero is falsy
+    eq({}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=0}) ]])
+
+    eq({output='foobar'}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=true}) ]])
+    eq({output='foobar'}, exec_lua [[ return vim.api.nvim_exec2("echo 'foobar'", {output=1}) ]])
+    eq([[Invalid 'output': not a boolean]], pcall_err(exec_lua, [[ return vim.api.nvim_exec2("echo 'foobar'", {output={}}) ]]))
   end)
 
   it('errors out correctly when working with API', function()

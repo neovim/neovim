@@ -849,11 +849,44 @@ Integer nlua_pop_Integer(lua_State *lstate, Error *err)
 
 /// Convert lua value to boolean
 ///
+/// Despite the name of the function, this uses lua semantics for booleans.
+/// thus `err` is never set as any lua value can be co-erced into a lua bool
+///
 /// Always pops one value from the stack.
 Boolean nlua_pop_Boolean(lua_State *lstate, Error *err)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const Boolean ret = lua_toboolean(lstate, -1);
+  lua_pop(lstate, 1);
+  return ret;
+}
+
+/// Convert lua value to boolean
+///
+/// This follows API conventions for a Boolean value, compare api_object_to_bool
+///
+/// Always pops one value from the stack.
+Boolean nlua_pop_Boolean_strict(lua_State *lstate, Error *err)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  Boolean ret = false;
+  switch (lua_type(lstate, -1)) {
+  case LUA_TBOOLEAN:
+    ret = lua_toboolean(lstate, -1);
+    break;
+
+  case LUA_TNUMBER:
+    ret = (lua_tonumber(lstate, -1) != 0);
+    break;
+
+  case LUA_TNIL:
+    ret = false;
+    break;
+
+  default:
+    api_set_error(err, kErrorTypeValidation, "not a boolean");
+  }
+
   lua_pop(lstate, 1);
   return ret;
 }
@@ -1318,7 +1351,7 @@ void nlua_pop_keydict(lua_State *L, void *retval, FieldHashfn hashy, char **err_
     } else if (field->type == kObjectTypeInteger) {
       *(Integer *)mem = nlua_pop_Integer(L, err);
     } else if (field->type == kObjectTypeBoolean) {
-      *(Boolean *)mem = nlua_pop_Boolean(L, err);
+      *(Boolean *)mem = nlua_pop_Boolean_strict(L, err);
     } else if (field->type == kObjectTypeString) {
       *(String *)mem = nlua_pop_String(L, err);
     } else if (field->type == kObjectTypeFloat) {
