@@ -1374,7 +1374,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	Minimum value is 12, maximum value is 10000.
 
 					*'comments'* *'com'* *E524* *E525*
-'comments' 'com'	string	(default "s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-")
+'comments' 'com'	string	(default "s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-,fb:•")
 			local to buffer
 	A comma-separated list of strings that can start a comment line.  See
 	|format-comments|.  See |option-backslash| about using backslashes to

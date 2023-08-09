@@ -37,6 +37,7 @@ Defaults					            *nvim-defaults*
 - 'backspace' defaults to "indent,eol,start"
 - 'backupdir' defaults to .,~/.local/state/nvim/backup// (|xdg|), auto-created
 - 'belloff' defaults to "all"
+- 'comments' includes "fb:•"
 - 'commentstring' defaults to ""
 - 'compatible' is always disabled
 - 'complete' excludes "i"
