@@ -697,6 +697,7 @@ func s:GetFilenameChecks() abort
     \ 'webmacro': ['file.wm'],
     \ 'wget': ['.wgetrc', 'wgetrc'],
     \ 'wget2': ['.wget2rc', 'wget2rc'],
+    \ 'wgsl': ['file.wgsl'],
     \ 'winbatch': ['file.wbt'],
     \ 'wit': ['file.wit'],
     \ 'wml': ['file.wml'],
