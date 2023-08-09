@@ -747,7 +747,7 @@ M.funcs = {
       refers to an existing file then the file is read.  Otherwise
       the buffer will be empty.  If the buffer was already loaded
       then there is no change.  If the buffer is not related to a
-      file the no file is read (e.g., when 'buftype' is "nofile").
+      file then no file is read (e.g., when 'buftype' is "nofile").
       If there is an existing swap file for the file of the buffer,
       there will be no dialog, the buffer will be loaded anyway.
       The {buf} argument is used like with |bufexists()|.
