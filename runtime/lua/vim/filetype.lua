@@ -548,6 +548,7 @@ local extension = {
   slnf = 'json',
   json = 'json',
   jsonp = 'json',
+  geojson = 'json',
   webmanifest = 'json',
   ipynb = 'json',
   ['json-patch'] = 'json',
