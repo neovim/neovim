@@ -154,6 +154,9 @@ describe('vim.iter', function()
     eq({1, 2}, vim.iter(t):slice(1, 2):totable())
     eq({10}, vim.iter(t):slice(10, 10):totable())
     eq({8, 9, 10}, vim.iter(t):slice(8, 11):totable())
+
+    local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
+    matches('slice%(%) requires a list%-like table', pcall_err(it.slice, it, 1, 3))
   end)
 
   it('nth()', function()
@@ -395,40 +398,5 @@ describe('vim.iter', function()
       { item_2 = 'test' },
       { item_3 = 'test' },
     }, output)
-  end)
-
-  it('handles nil values', function()
-    local t = {1, 2, 3, 4, 5}
-    do
-      local it = vim.iter(t):enumerate():map(function(i, v)
-        if i % 2 == 0 then
-          return nil, v*v
-        end
-        return v, nil
-      end)
-      eq({
-        { [1] = 1 },
-        { [2] = 4 },
-        { [1] = 3 },
-        { [2] = 16 },
-        { [1] = 5 },
-      }, it:totable())
-    end
-
-    do
-      local it = vim.iter(ipairs(t)):map(function(i, v)
-        if i % 2 == 0 then
-          return nil, v*v
-        end
-        return v, nil
-      end)
-      eq({
-        { [1] = 1 },
-        { [2] = 4 },
-        { [1] = 3 },
-        { [2] = 16 },
-        { [1] = 5 },
-      }, it:totable())
-    end
   end)
 end)

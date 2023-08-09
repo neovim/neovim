@@ -6,10 +6,13 @@
 --- Each pipeline stage receives as input the output values from the prior stage. The values used in
 --- the first stage of the pipeline depend on the type passed to this function:
 ---
---- - List tables pass only the value of each element
---- - Non-list (dict) tables pass both the key and value of each element
+--- - List tables (arrays) pass only the value of each element
+--- - Non-list tables (dictionaries) pass both the key and value of each element
 --- - Function |iterator|s pass all of the values returned by their respective function
 --- - Tables with a metatable implementing |__call()| are treated as function iterators
+---
+--- The iterator pipeline terminates when the original table or function iterator runs out of values
+--- (for function iterators, this means that the first value returned by the function is nil).
 ---
 --- Examples:
 --- <pre>lua
@@ -22,6 +25,7 @@
 ---   it:totable()
 ---   -- { 9, 6, 3 }
 ---
+---   -- ipairs() is a function iterator which returns both the index (i) and the value (v)
 ---   vim.iter(ipairs({ 1, 2, 3, 4, 5 })):map(function(i, v)
 ---     if i > 2 then return v end
 ---   end):totable()
@@ -111,7 +115,7 @@ end
 ---@return boolean True if the iterator stage should continue, false otherwise
 ---@return any Function arguments.
 local function continue(...)
-  if select('#', ...) > 0 then
+  if select(1, ...) ~= nil then
     return false, ...
   end
   return true
@@ -127,7 +131,7 @@ end
 ---@return boolean True if the iterator pipeline should continue, false otherwise
 ---@return any Return values of f
 local function apply(f, ...)
-  if select('#', ...) > 0 then
+  if select(1, ...) ~= nil then
     return continue(f(...))
   end
   return false
@@ -258,7 +262,7 @@ end
 ---                       in the pipeline as arguments.
 function Iter.each(self, f)
   local function fn(...)
-    if select('#', ...) > 0 then
+    if select(1, ...) ~= nil then
       f(...)
       return true
     end
@@ -740,6 +744,12 @@ end
 ---@param last number
 ---@return Iter
 function Iter.slice(self, first, last) -- luacheck: no unused args
+  error('slice() requires a list-like table')
+  return self
+end
+
+---@private
+function ListIter.slice(self, first, last)
   return self:skip(math.max(0, first - 1)):skipback(math.max(0, self._tail - last - 1))
 end
 
@@ -912,6 +922,8 @@ function Iter.new(src, ...)
 
     --- Use a closure to handle var args returned from iterator
     local function fn(...)
+      -- Per the Lua 5.1 reference manual, an iterator is complete when the first returned value is
+      -- nil (even if there are other, non-nil return values). See |for-in|.
       if select(1, ...) ~= nil then
         var = select(1, ...)
         return ...
