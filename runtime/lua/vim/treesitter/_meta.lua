@@ -14,15 +14,15 @@
 ---@field extra fun(self: TSNode): boolean
 ---@field child_count fun(self: TSNode): integer
 ---@field named_child_count fun(self: TSNode): integer
----@field child fun(self: TSNode, integer): TSNode
----@field named_child fun(self: TSNode, integer): TSNode
----@field descendant_for_range fun(self: TSNode, integer, integer, integer, integer): TSNode
----@field named_descendant_for_range fun(self: TSNode, integer, integer, integer, integer): TSNode
----@field parent fun(self: TSNode): TSNode
----@field next_sibling fun(self: TSNode): TSNode
----@field prev_sibling fun(self: TSNode): TSNode
----@field next_named_sibling fun(self: TSNode): TSNode
----@field prev_named_sibling fun(self: TSNode): TSNode
+---@field child fun(self: TSNode, integer): TSNode?
+---@field named_child fun(self: TSNode, integer): TSNode?
+---@field descendant_for_range fun(self: TSNode, integer, integer, integer, integer): TSNode?
+---@field named_descendant_for_range fun(self: TSNode, integer, integer, integer, integer): TSNode?
+---@field parent fun(self: TSNode): TSNode?
+---@field next_sibling fun(self: TSNode): TSNode?
+---@field prev_sibling fun(self: TSNode): TSNode?
+---@field next_named_sibling fun(self: TSNode): TSNode?
+---@field prev_named_sibling fun(self: TSNode): TSNode?
 ---@field named_children fun(self: TSNode): TSNode[]
 ---@field has_changes fun(self: TSNode): boolean
 ---@field equal fun(self: TSNode, other: TSNode): boolean
