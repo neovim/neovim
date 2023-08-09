@@ -2034,9 +2034,9 @@ local function normalize_path(path, as_pattern)
 end
 
 --- @class vim.filetype.add.filetypes
---- @field pattern vim.filetype.mapping
---- @field extension vim.filetype.mapping
---- @field filename vim.filetype.mapping
+--- @field pattern? vim.filetype.mapping
+--- @field extension? vim.filetype.mapping
+--- @field filename? vim.filetype.mapping
 
 --- Add new filetype mappings.
 ---
