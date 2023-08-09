@@ -956,7 +956,7 @@ vim.go.co = vim.go.columns
 --- insert a space.
 ---
 --- @type string
-vim.o.comments = "s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-"
+vim.o.comments = "s1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-,fb:•"
 vim.o.com = vim.o.comments
 vim.bo.comments = vim.o.comments
 vim.bo.com = vim.bo.comments

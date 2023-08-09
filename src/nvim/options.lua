@@ -1287,7 +1287,7 @@ return {
       abbreviation = 'com',
       alloced = true,
       cb = 'did_set_comments',
-      defaults = { if_true = 's1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-' },
+      defaults = { if_true = 's1:/*,mb:*,ex:*/,://,b:#,:%,:XCOMM,n:>,fb:-,fb:•' },
       deny_duplicates = true,
       desc = [=[
         A comma-separated list of strings that can start a comment line.  See

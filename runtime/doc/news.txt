@@ -151,6 +151,7 @@ The following changes to existing APIs or features add new behavior.
   option, which allows for rendering e.g., diagnostic severities differently.
 
 • Defaults:
+  • 'comments' includes "fb:•".
   • 'shortmess' includes the "C" flag.
   • Automatic linting of treesitter query files (see |ft-query-plugin|).
     Can be disabled via: >lua
