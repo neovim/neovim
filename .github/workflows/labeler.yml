@@ -14,6 +14,7 @@ jobs:
         sync-labels: ""
 
   type-scope:
+    needs: triage
     runs-on: ubuntu-latest
     permissions:
       contents: write
