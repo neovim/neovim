@@ -1399,6 +1399,7 @@ local filename = {
   ['/etc/protocols'] = 'protocols',
   INDEX = detect.psf,
   INFO = detect.psf,
+  ['Manifest.in'] = 'pymanifest',
   ['.pythonstartup'] = 'python',
   ['.pythonrc'] = 'python',
   SConstruct = 'python',

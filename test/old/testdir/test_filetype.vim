@@ -504,6 +504,7 @@ func s:GetFilenameChecks() abort
     \ 'psl': ['file.psl'],
     \ 'pug': ['file.pug'],
     \ 'puppet': ['file.pp'],
+    \ 'pymanifest': ['MANIFEST.in'],
     \ 'pyret': ['file.arr'],
     \ 'pyrex': ['file.pyx', 'file.pxd'],
     \ 'python': ['file.py', 'file.pyw', '.pythonstartup', '.pythonrc', 'file.ptl', 'file.pyi', 'SConstruct'],
