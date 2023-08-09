@@ -1,14 +1,13 @@
 local uv = vim.uv
 
 --- @class SystemOpts
---- @field cmd string[]
---- @field stdin string|string[]|true
---- @field stdout fun(err:string, data: string)|false
---- @field stderr fun(err:string, data: string)|false
+--- @field stdin? string|string[]|true
+--- @field stdout? fun(err:string, data: string)|false
+--- @field stderr? fun(err:string, data: string)|false
 --- @field cwd? string
 --- @field env? table<string,string|number>
 --- @field clear_env? boolean
---- @field text boolean?
+--- @field text? boolean
 --- @field timeout? integer Timeout in ms
 --- @field detach? boolean
 
@@ -19,15 +18,14 @@ local uv = vim.uv
 --- @field stderr? string
 
 --- @class SystemState
---- @field handle uv_process_t
---- @field timer uv_timer_t
---- @field pid integer
+--- @field handle? uv.uv_process_t
+--- @field timer?  uv.uv_timer_t
+--- @field pid? integer
 --- @field timeout? integer
---- @field done boolean
---- @field stdin uv_stream_t?
---- @field stdout uv_stream_t?
---- @field stderr uv_stream_t?
---- @field cmd string[]
+--- @field done? boolean
+--- @field stdin? uv.uv_stream_t
+--- @field stdout? uv.uv_stream_t
+--- @field stderr? uv.uv_stream_t
 --- @field result? SystemCompleted
 
 ---@param state SystemState
@@ -128,7 +126,7 @@ function SystemObj:is_closing()
 end
 
 ---@param output function|'false'
----@return uv_stream_t?
+---@return uv.uv_stream_t?
 ---@return function? Handler
 local function setup_output(output)
   if output == nil then
@@ -144,7 +142,7 @@ local function setup_output(output)
 end
 
 ---@param input string|string[]|true|nil
----@return uv_stream_t?
+---@return uv.uv_stream_t?
 ---@return string|string[]?
 local function setup_input(input)
   if not input then
@@ -189,7 +187,7 @@ local function setup_env(env, clear_env)
   return renv
 end
 
---- @param stream uv_stream_t
+--- @param stream uv.uv_stream_t
 --- @param text? boolean
 --- @param bucket string[]
 --- @return fun(err: string?, data: string?)
@@ -217,7 +215,7 @@ local M = {}
 --- @param opts uv.aliases.spawn_options
 --- @param on_exit fun(code: integer, signal: integer)
 --- @param on_error fun()
---- @return uv_process_t, integer
+--- @return uv.uv_process_t, integer
 local function spawn(cmd, opts, on_exit, on_error)
   local handle, pid_or_err = uv.spawn(cmd, opts, on_exit)
   if not handle then

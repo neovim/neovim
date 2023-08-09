@@ -17,7 +17,7 @@ end
 
 --- Stops and closes a libuv |uv_fs_event_t| or |uv_fs_poll_t| handle
 ---
----@param handle (uv_fs_event_t|uv_fs_poll_t) The handle to stop
+---@param handle (uv.uv_fs_event_t|uv.uv_fs_poll_t) The handle to stop
 local function stop(handle)
   local _, stop_err = handle:stop()
   assert(not stop_err, stop_err)
@@ -79,7 +79,7 @@ local default_poll_interval_ms = 2000
 --- @field children? table<string,watch.Watches>
 --- @field cancel? fun()
 --- @field started? boolean
---- @field handle? uv_fs_poll_t
+--- @field handle? uv.uv_fs_poll_t
 
 --- @class watch.PollOpts
 --- @field interval? integer

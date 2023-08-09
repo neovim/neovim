@@ -31,11 +31,7 @@ Find more information in the file src/testdir/README.txt.
 ==============================================================================
 2. Test functions				*test-functions-details*
 
-test_garbagecollect_now()			 *test_garbagecollect_now()*
-		Like garbagecollect(), but executed right away.  This must
-		only be called directly to avoid any structure to exist
-		internally, and |v:testing| must have been set before calling
-		any function.
+See |test_garbagecollect_now()|.
 
 ==============================================================================
 3. Assert functions				*assert-functions-details*

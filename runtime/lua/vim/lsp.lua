@@ -364,7 +364,7 @@ do
   --- @field lines string[] snapshot of buffer lines from last didChange
   --- @field lines_tmp string[]
   --- @field pending_changes table[] List of debounced changes in incremental sync mode
-  --- @field timer nil|uv_timer_t uv_timer
+  --- @field timer nil|uv.uv_timer_t uv_timer
   --- @field last_flush nil|number uv.hrtime of the last flush/didChange-notification
   --- @field needs_flush boolean true if buffer updates haven't been sent to clients/servers yet
   --- @field refs integer how many clients are using this group

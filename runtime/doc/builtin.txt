@@ -1857,6 +1857,7 @@ foldtextresult({lnum})                                        *foldtextresult()*
 		line, "'m" mark m, etc.
 		Useful when exporting folded text, e.g., to HTML.
 
+
 fullcommand({name})                                              *fullcommand()*
 		Get the full command name from a short abbreviated command
 		name; see |20.2| for details on command abbreviations.
@@ -7992,6 +7993,13 @@ termopen({cmd} [, {opts}])                                          *termopen()*
 		Terminal environment is initialized as in |jobstart-env|,
 		except $TERM is set to "xterm-256color". Full behavior is
 		described in |terminal|.
+
+test_garbagecollect_now()                            *test_garbagecollect_now()*
+		Like |garbagecollect()|, but executed right away.  This must
+		only be called directly to avoid any structure to exist
+		internally, and |v:testing| must have been set before calling
+		any function.
+
 
 timer_info([{id}])                                                *timer_info()*
 		Return a list with information about timers.

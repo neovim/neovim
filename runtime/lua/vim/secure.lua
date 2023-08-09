@@ -119,9 +119,8 @@ end
 ---    - path (string|nil): Path to a file to update. Mutually exclusive with {bufnr}.
 ---      Cannot be used when {action} is "allow".
 ---    - bufnr (number|nil): Buffer number to update. Mutually exclusive with {path}.
----@return (boolean, string) success, msg:
----    - true and full path of target file if operation was successful
----    - false and error message on failure
+---@return boolean success true if operation was successful
+---@return string msg full path if operation was successful, else error message
 function M.trust(opts)
   vim.validate({
     path = { opts.path, 's', true },

@@ -2898,6 +2898,9 @@ M.funcs = {
     signature = 'foldtextresult({lnum})',
   },
   foreground = {
+    args = 0,
+    params = {},
+    signature = '',
     lua = false,
   },
   fullcommand = {
@@ -11326,10 +11329,21 @@ M.funcs = {
     signature = 'termopen({cmd} [, {opts}])',
   },
   test_garbagecollect_now = {
+    args = 0,
+    desc = [=[
+      Like |garbagecollect()|, but executed right away.  This must
+      only be called directly to avoid any structure to exist
+      internally, and |v:testing| must have been set before calling
+      any function.
+    ]=],
+    params = {},
+    signature = 'test_garbagecollect_now()',
     lua = false,
   },
   test_write_list_log = {
     args = 1,
+    params = { { 'fname' } },
+    signature = '',
     lua = false,
   },
   timer_info = {

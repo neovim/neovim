@@ -212,15 +212,15 @@ function M.last(versions)
   return last
 end
 
----@class Range
+---@class VersionRange
 ---@field from Version
 ---@field to? Version
-local Range = {}
+local VersionRange = {}
 
 --- @private
 ---
 ---@param version string|Version
-function Range:has(version)
+function VersionRange:has(version)
   if type(version) == 'string' then
     ---@diagnostic disable-next-line: cast-local-type
     version = M.parse(version)
@@ -266,7 +266,7 @@ end
 --- @param spec string Version range "spec"
 function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
   if spec == '*' or spec == '' then
-    return setmetatable({ from = M.parse('0.0.0') }, { __index = Range })
+    return setmetatable({ from = M.parse('0.0.0') }, { __index = VersionRange })
   end
 
   ---@type number?
@@ -280,7 +280,7 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
     return setmetatable({
       from = ra and ra.from,
       to = rb and (#parts == 3 and rb.from or rb.to),
-    }, { __index = Range })
+    }, { __index = VersionRange })
   end
   ---@type string, string
   local mods, version = spec:lower():match('^([%^=<>~]*)(.*)$')
@@ -326,7 +326,7 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
         end
       end
     end
-    return setmetatable({ from = from, to = to }, { __index = Range })
+    return setmetatable({ from = from, to = to }, { __index = VersionRange })
   end
 end
 

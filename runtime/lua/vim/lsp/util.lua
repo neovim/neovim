@@ -715,8 +715,8 @@ end
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
----@param result table The result of a `textDocument/completion` call, e.g. from
----|vim.lsp.buf.completion()|, which may be one of `CompletionItem[]`,
+---@param result table The result of a `textDocument/completion` call, e.g.
+--- from |vim.lsp.buf.completion()|, which may be one of `CompletionItem[]`,
 --- `CompletionList` or `null`
 ---@param prefix (string) the prefix to filter the completion items
 ---@return table { matches = complete-items table, incomplete = bool }

@@ -620,8 +620,8 @@ local on_key_cbs = {}
 ---
 ---@param fn fun(key: string) Function invoked on every key press. |i_CTRL-V|
 ---                   Returning nil removes the callback associated with namespace {ns_id}.
----@param ns_id integer? Namespace ID. If nil or 0, generates and returns a new
----                    |nvim_create_namespace()| id.
+---@param ns_id integer? Namespace ID. If nil or 0, generates and returns a
+---                     new |nvim_create_namespace()| id.
 ---
 ---@return integer Namespace id associated with {fn}. Or count of all callbacks
 ---if on_key() is called without arguments.

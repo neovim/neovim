@@ -2073,7 +2073,7 @@ vim.spairs({t})                                                 *vim.spairs()*
       • {t}  (table) Dict-like table
 
     Return: ~
-        iterator over sorted keys and their values
+        (function) iterator over sorted keys and their values
 
     See also: ~
       • Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -3007,10 +3007,9 @@ vim.secure.trust({opts})                                  *vim.secure.trust()*
                 • bufnr (number|nil): Buffer number to update. Mutually
                   exclusive with {path}.
 
-    Return: ~
-        (boolean, string) success, msg:
-        • true and full path of target file if operation was successful
-        • false and error message on failure
+    Return (multiple): ~
+        (boolean) success true if operation was successful
+        (string) msg full path if operation was successful, else error message
 
 
 ==============================================================================
