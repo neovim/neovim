@@ -357,7 +357,7 @@ ways to change this:
    You must create a new filetype plugin in a directory early in
    'runtimepath'.  For Unix, for example you could use this file: >
 	vim ~/.config/nvim/ftplugin/fortran.vim
-<  You can set those settings and mappings that you would like to add.  Note
+<   You can set those settings and mappings that you would like to add.  Note
    that the global plugin will be loaded after this, it may overrule the
    settings that you do here.  If this is the case, you need to use one of the
    following two methods.
@@ -366,7 +366,7 @@ ways to change this:
    You must put the copy in a directory early in 'runtimepath'.  For Unix, for
    example, you could do this: >
 	cp $VIMRUNTIME/ftplugin/fortran.vim ~/.config/nvim/ftplugin/fortran.vim
-<  Then you can edit the copied file to your liking.  Since the b:did_ftplugin
+<   Then you can edit the copied file to your liking.  Since the b:did_ftplugin
    variable will be set, the global plugin will not be loaded.
    A disadvantage of this method is that when the distributed plugin gets
    improved, you will have to copy and modify it again.
@@ -375,7 +375,7 @@ ways to change this:
    You must create a new filetype plugin in a directory from the end of
    'runtimepath'.  For Unix, for example, you could use this file: >
 	vim ~/.config/nvim/after/ftplugin/fortran.vim
-<  In this file you can change just those settings that you want to change.
+<   In this file you can change just those settings that you want to change.
 
 ==============================================================================
 3.  Docs for the default filetype plugins.		*ftplugin-docs*
