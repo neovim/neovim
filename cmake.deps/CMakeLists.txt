@@ -157,8 +157,8 @@ set(LIBTERMKEY_SHA256 6945bd3c4aaa83da83d80a045c5563da4edd7d0374c62c0d35aec09eb3
 set(LIBVTERM_URL https://github.com/neovim/deps/raw/12c9dcf1d823ac4acbccf494c93c4774a87db11d/opt/libvterm-0.3.3.tar.gz)
 set(LIBVTERM_SHA256 09156f43dd2128bd347cbeebe50d9a571d32c64e0cf18d211197946aff7226e0)
 
-set(LUV_URL https://github.com/luvit/luv/archive/093a977b82077591baefe1e880d37dfa2730bd54.tar.gz)
-set(LUV_SHA256 222b38b6425f0926218e14e7da81481fdde6f9660c1feac25a53e6fb52e886e6)
+set(LUV_URL https://github.com/luvit/luv/archive/1.45.0-0.tar.gz)
+set(LUV_SHA256 97e89940f9eeaa8dfb34f1c19f80dd373299c42719d15228ec790f415d4e4965)
 
 set(LUA_COMPAT53_URL https://github.com/keplerproject/lua-compat-5.3/archive/v0.9.tar.gz)
 set(LUA_COMPAT53_SHA256 ad05540d2d96a48725bb79a1def35cf6652a4e2ec26376e2617c8ce2baa6f416)
