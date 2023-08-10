@@ -410,9 +410,10 @@ end
 
 --- Refresh diagnostics, only if we have attached clients that support it
 ---@param bufnr (integer) buffer number
----@param opts? table Additional options to pass to util_refresh
+---@param opts? table Additional options to pass to util._refresh
 ---@private
 local function _refresh(bufnr, opts)
+  opts = opts or {}
   opts['bufnr'] = bufnr
   util._refresh(ms.textDocument_diagnostic, opts)
 end
@@ -438,7 +439,7 @@ function M._enable(bufnr)
           return
         end
         if bufstates[bufnr] and bufstates[bufnr].enabled then
-          _refresh(bufnr, { only_visible = true })
+          _refresh(bufnr, { only_visible = true, client_id = opts.data.client_id })
         end
       end,
       group = augroup,

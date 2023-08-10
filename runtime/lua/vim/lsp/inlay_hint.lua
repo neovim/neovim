@@ -133,9 +133,12 @@ end
 
 --- Refresh inlay hints, only if we have attached clients that support it
 ---@param bufnr (integer) Buffer handle, or 0 for current
+---@param opts? table Additional options to pass to util._refresh
 ---@private
-local function _refresh(bufnr)
-  util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
+local function _refresh(bufnr, opts)
+  opts = opts or {}
+  opts['bufnr'] = bufnr
+  util._refresh(ms.textDocument_inlayHint, opts)
 end
 
 --- Enable inlay hints for a buffer
@@ -157,7 +160,7 @@ local function enable(bufnr)
           return
         end
         if bufstates[bufnr] and bufstates[bufnr].enabled then
-          _refresh(bufnr)
+          _refresh(bufnr, { client_id = opts.data.client_id })
         end
       end,
       group = augroup,
