@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
+local dedent = helpers.dedent
 local eq = helpers.eq
 local insert = helpers.insert
 local exec_lua = helpers.exec_lua
@@ -502,22 +503,12 @@ end]]
     local root = parser:parse()[1]:root()
     parser:set_included_regions({{root:child(0)}})
     parser:invalidate()
-    return { parser:parse()[1]:root():range() }
+    return { parser:parse(true)[1]:root():range() }
     ]]
 
     eq({0, 0, 18, 1}, res2)
 
-    local range = exec_lua [[
-      local res = {}
-      for _, region in ipairs(parser:included_regions()) do
-        for _, node in ipairs(region) do
-          table.insert(res, {node:range()})
-        end
-      end
-      return res
-    ]]
-
-    eq(range, { { 0, 0, 18, 1 } })
+    eq({ { { 0, 0, 0, 18, 1, 512 } } }, exec_lua [[ return parser:included_regions() ]])
 
     local range_tbl = exec_lua [[
       parser:set_included_regions { { { 0, 0, 17, 1 } } }
@@ -542,7 +533,7 @@ end]]
 
     parser:set_included_regions({nodes})
 
-    local root = parser:parse()[1]:root()
+    local root = parser:parse(true)[1]:root()
 
     local res = {}
     for i=0,(root:named_child_count() - 1) do
@@ -638,9 +629,11 @@ int x = INT_MAX;
     describe("when parsing regions independently", function()
       it("should inject a language", function()
         exec_lua([[
+        vim.g.__ts_debug = 1
         parser = vim.treesitter.get_parser(0, "c", {
           injections = {
             c = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"}})
+        parser:parse(true)
         ]])
 
         eq("table", exec_lua("return type(parser:children().c)"))
@@ -673,6 +666,7 @@ int x = INT_MAX;
         parser = vim.treesitter.get_parser(0, "c", {
           injections = {
             c = "(preproc_def (preproc_arg) @c @combined) (preproc_function_def value: (preproc_arg) @c @combined)"}})
+        parser:parse(true)
         ]])
 
         eq("table", exec_lua("return type(parser:children().c)"))
@@ -713,6 +707,7 @@ int x = INT_MAX;
           injections = {
             c = "(preproc_def ((preproc_arg) @_c (#inject-clang! @_c)))" ..
                 "(preproc_function_def value: ((preproc_arg) @_a (#inject-clang! @_a)))"}})
+        parser:parse(true)
         ]=])
 
         eq("table", exec_lua("return type(parser:children().c)"))
@@ -760,6 +755,7 @@ int x = INT_MAX;
         parser = vim.treesitter.get_parser(0, "c", {
           injections = {
             c = "(preproc_def ((preproc_arg) @c (#offset! @c 0 2 0 -1))) (preproc_function_def value: (preproc_arg) @c)"}})
+        parser:parse(true)
         ]])
 
         eq("table", exec_lua("return type(parser:children().c)"))
@@ -800,6 +796,7 @@ int x = INT_MAX;
       local result = exec_lua([[
       parser = vim.treesitter.get_parser(0, "c", {
         injections = { c = "(preproc_def (preproc_arg) @c)"}})
+      parser:parse(true)
 
       local sub_tree = parser:language_for_range({1, 18, 1, 19})
 
@@ -951,7 +948,7 @@ int x = INT_MAX;
 
     local r = exec_lua([[
       local parser = vim.treesitter.get_string_parser(..., 'lua')
-      parser:parse()
+      parser:parse(true)
       local ranges = {}
       parser:for_each_tree(function(tstree, tree)
         ranges[tree:lang()] = { tstree:root():range(true) }
@@ -997,7 +994,7 @@ int x = INT_MAX;
           vimdoc = "((codeblock (language) @injection.language (code) @injection.content))"
         }
       })
-      parser1:parse()
+      parser1:parse(true)
     ]]
 
     eq(0, exec_lua("return #vim.tbl_keys(parser1:children())"))
@@ -1008,12 +1005,74 @@ int x = INT_MAX;
           vimdoc = "((codeblock (language) @injection.language (code) @injection.content) (#set! injection.include-children))"
         }
       })
-      parser2:parse()
+      parser2:parse(true)
     ]]
 
     eq(1, exec_lua("return #vim.tbl_keys(parser2:children())"))
     eq( { { { 1, 0, 21, 2, 0, 42 } } }, exec_lua("return parser2:children().lua:included_regions()"))
 
+  end)
+
+  it("parsers injections incrementally", function()
+    insert(dedent[[
+      >lua
+        local a = {}
+      <
+
+      >lua
+        local b = {}
+      <
+
+      >lua
+        local c = {}
+      <
+
+      >lua
+        local d = {}
+      <
+
+      >lua
+        local e = {}
+      <
+
+      >lua
+        local f = {}
+      <
+
+      >lua
+        local g = {}
+      <
+    ]])
+
+    exec_lua [[
+      parser = require('vim.treesitter.languagetree').new(0, "vimdoc", {
+        injections = {
+          vimdoc = "((codeblock (language) @injection.language (code) @injection.content) (#set! injection.include-children))"
+        }
+      })
+    ]]
+
+    --- Do not parse injections by default
+    eq(0, exec_lua [[
+      parser:parse()
+      return #vim.tbl_keys(parser:children())
+    ]])
+
+    --- Only parse injections between lines 0, 2
+    eq(1, exec_lua [[
+      parser:parse({0, 2})
+      return #parser:children().lua:trees()
+    ]])
+
+    eq(2, exec_lua [[
+      parser:parse({2, 6})
+      return #parser:children().lua:trees()
+    ]])
+
+    eq(7, exec_lua [[
+      parser:parse(true)
+      return #parser:children().lua:trees()
+    ]])
   end)
 
 end)

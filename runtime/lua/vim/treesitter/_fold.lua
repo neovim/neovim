@@ -147,11 +147,14 @@ local function normalise_erow(bufnr, erow)
   return math.min(erow or max_erow, max_erow)
 end
 
+-- TODO(lewis6991): Setup a decor provider so injections folds can be parsed
+-- as the window is redrawn
 ---@param bufnr integer
 ---@param info TS.FoldInfo
 ---@param srow integer?
 ---@param erow integer?
-local function get_folds_levels(bufnr, info, srow, erow)
+---@param parse_injections? boolean
+local function get_folds_levels(bufnr, info, srow, erow, parse_injections)
   srow = srow or 0
   erow = normalise_erow(bufnr, erow)
 
@@ -162,7 +165,7 @@ local function get_folds_levels(bufnr, info, srow, erow)
 
   local parser = ts.get_parser(bufnr)
 
-  parser:parse()
+  parser:parse(parse_injections and { srow, erow } or nil)
 
   parser:for_each_tree(function(tree, ltree)
     local query = ts.query.get(ltree:lang(), 'folds')

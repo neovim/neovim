@@ -99,7 +99,7 @@ function TSTreeView:new(bufnr, lang)
   -- For each child tree (injected language), find the root of the tree and locate the node within
   -- the primary tree that contains that root. Add a mapping from the node in the primary tree to
   -- the root in the child tree to the {injections} table.
-  local root = parser:parse()[1]:root()
+  local root = parser:parse(true)[1]:root()
   local injections = {} ---@type table<integer,table>
   parser:for_each_child(function(child, lang_)
     child:for_each_tree(function(tree)

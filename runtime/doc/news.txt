@@ -61,6 +61,10 @@ The following changes may require adaptations in user config or plugins.
     spaces (but paths themselves may contain spaces now).
   • |'directory'| will no longer remove a `>` at the start of the option.
 
+• |LanguageTree:parse()| will no longer parse injections by default and
+  now requires an explicit range argument to be passed. If injections are
+  required, provide an explicit range via `parser:parse({ start_row, end_row })`.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 
@@ -69,6 +73,9 @@ The following new APIs and features were added.
 • Performance:
   • 'diffopt' "linematch" scoring algorithm now favours larger and less groups
     https://github.com/neovim/neovim/pull/23611
+  • Treesitter highlighting now parses injections incrementally during
+    screen redraws only for the line range being rendered. This significantly
+    improves performance in large files with many injections.
 
 • |vim.iter()| provides a generic iterator interface for tables and Lua
   iterators |for-in|.

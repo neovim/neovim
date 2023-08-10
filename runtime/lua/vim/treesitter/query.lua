@@ -435,6 +435,7 @@ predicate_handlers['vim-match?'] = predicate_handlers['match?']
 
 ---@class TSMetadata
 ---@field range? Range
+---@field conceal? string
 ---@field [integer] TSMetadata
 ---@field [string] integer|string
 
