@@ -570,21 +570,23 @@ function module.concat_tables(...)
 end
 
 --- @param str string
---- @param leave_indent? boolean
+--- @param leave_indent? integer
 --- @return string
 function module.dedent(str, leave_indent)
   -- find minimum common indent across lines
-  local indent = nil
+  local indent --- @type string?
   for line in str:gmatch('[^\n]+') do
     local line_indent = line:match('^%s+') or ''
     if indent == nil or #line_indent < #indent then
       indent = line_indent
     end
   end
-  if indent == nil or #indent == 0 then
+
+  if not indent or #indent == 0 then
     -- no minimum common indent
     return str
   end
+
   local left_indent = (' '):rep(leave_indent or 0)
   -- create a pattern for the indent
   indent = indent:gsub('%s', '[ \t]')

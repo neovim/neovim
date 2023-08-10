@@ -2,6 +2,10 @@ local api = vim.api
 
 local M = {}
 
+---@class Range2
+---@field [1] integer start row
+---@field [2] integer end row
+
 ---@class Range4
 ---@field [1] integer start row
 ---@field [2] integer start column
@@ -16,7 +20,7 @@ local M = {}
 ---@field [5] integer end column
 ---@field [6] integer end bytes
 
----@alias Range Range4|Range6
+---@alias Range Range2|Range4|Range6
 
 ---@private
 ---@param a_row integer
@@ -111,6 +115,9 @@ end
 ---@param r Range
 ---@return integer, integer, integer, integer
 function M.unpack4(r)
+  if #r == 2 then
+    return r[1], 0, r[2], 0
+  end
   local off_1 = #r == 6 and 1 or 0
   return r[1], r[2], r[3 + off_1], r[4 + off_1]
 end
