@@ -1668,7 +1668,7 @@ func Test_sign_lnum_adjust()
 
   " Break the undo. Otherwise the undo operation below will undo all the
   " changes made by this function.
-  let &undolevels=&undolevels
+  let &g:undolevels=&g:undolevels
 
   " Nvim: make sign adjustment when deleting lines match Vim
   set signcolumn=yes:1
@@ -1684,7 +1684,7 @@ func Test_sign_lnum_adjust()
   call assert_equal(5, l[0].signs[0].lnum)
 
   " Break the undo
-  let &undolevels=&undolevels
+  let &g:undolevels=&g:undolevels
 
   " Delete few lines at the end of the buffer including the line with the sign
   " Sign line number should not change (as it is placed outside of the buffer)
