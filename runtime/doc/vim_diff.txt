@@ -233,6 +233,7 @@ Events:
   |RecordingLeave|
   |SearchWrapped|
   |Signal|
+  |TabMoved|
   |TabNewEntered|
   |TermClose|
   |TermOpen|

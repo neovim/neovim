@@ -943,6 +943,9 @@ TabEnter			Just after entering a tab page. |tab-page|
 							*TabLeave*
 TabLeave			Just before leaving a tab page. |tab-page|
 				After WinLeave.
+							*TabMoved*
+TabMoved			After a tab page is moved. |tab-page|
+				See |:tabmove|.
 							*TabNew*
 TabNew				When creating a new tab page. |tab-page|
 				After WinEnter.
