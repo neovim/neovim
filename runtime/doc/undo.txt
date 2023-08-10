@@ -114,7 +114,17 @@ use CTRL-G u.  This is useful if you want an insert command to be undoable in
 parts.  E.g., for each sentence.  |i_CTRL-G_u|
 
 Setting the value of 'undolevels' also closes the undo block.  Even when the
-new value is equal to the old value: >
+new value is equal to the old value.  Use `g:undolevels` to explicitly read
+and write only the global value of 'undolevels'. >
+	let &g:undolevels = &g:undolevels
+
+Note that the similar-looking assignment `let &undolevels=&undolevels` does not
+preserve the global option value of 'undolevels' in the event that the local
+option has been set to a different value.  For example: >
+	" Start with different global and local values for 'undolevels'.
+	let &g:undolevels = 1000
+	let &l:undolevels = 2000
+	" This assignment changes the global option to 2000:
 	let &undolevels = &undolevels
 
 ==============================================================================
@@ -351,11 +361,19 @@ undo is possible.  Use this if you are running out of memory.
 When you set 'undolevels' to -1 the undo information is not immediately
 cleared, this happens at the next change.  To force clearing the undo
 information you can use these commands: >
-	:let old_undolevels = &undolevels
-	:set undolevels=-1
+	:let old_undolevels = &l:undolevels
+	:setlocal undolevels=-1
 	:exe "normal a \<BS>\<Esc>"
-	:let &undolevels = old_undolevels
+	:let &l:undolevels = old_undolevels
 	:unlet old_undolevels
+
+Note use of `&l:undolevels` to explicitly read the local value of 'undolevels'
+and the use of `:setlocal` to change only the local option (which takes
+precedence over the corresponding global option value).  Saving the option value
+via the use of `&undolevels` is unpredictable; it reads either the local value
+(if one has been set) or the global value (otherwise).  Also, if a local value
+has been set, changing the option via `:set undolevels` will change both the
+global and local values, requiring extra work to save and restore both values.
 
 Marks for the buffer ('a to 'z) are also saved and restored, together with the
 text.

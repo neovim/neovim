@@ -1321,13 +1321,13 @@ func Test_map_cmdkey_op_pending_mode()
   call assert_equal(['lines', 'of test text'], getline(1, '$'))
   call assert_equal(['some short '], getreg('"', 1, 1))
   " create a new undo point
-  let &undolevels = &undolevels
+  let &g:undolevels = &g:undolevels
 
   call feedkeys(".", 'xt')
   call assert_equal(['test text'], getline(1, '$'))
   call assert_equal(['lines', 'of '], getreg('"', 1, 1))
   " create a new undo point
-  let &undolevels = &undolevels
+  let &g:undolevels = &g:undolevels
 
   call feedkeys("uu", 'xt')
   call assert_equal(['some short lines', 'of test text'], getline(1, '$'))
