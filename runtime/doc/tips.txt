@@ -346,14 +346,26 @@ comma-separated list of extension(s) you find yourself wanting to edit: >
 
 	" vim -b : edit binary using xxd-format!
 	augroup Binary
-	  au!
-	  au BufReadPre  *.bin let &bin=1
-	  au BufReadPost *.bin if &bin | %!xxd
-	  au BufReadPost *.bin set ft=xxd | endif
-	  au BufWritePre *.bin if &bin | %!xxd -r
-	  au BufWritePre *.bin endif
-	  au BufWritePost *.bin if &bin | %!xxd
-	  au BufWritePost *.bin set nomod | endif
+	  autocmd!
+	  autocmd BufReadPre  *.bin set binary
+	  autocmd BufReadPost *.bin
+	    \ if &binary
+	    \ |   execute "silent %!xxd -c 32"
+	    \ |   set filetype=xxd
+	    \ |   redraw
+	    \ | endif
+	  autocmd BufWritePre *.bin
+	    \ if &binary
+	    \ |   let s:view = winsaveview()
+	    \ |   execute "silent %!xxd -r -c 32"
+	    \ | endif
+	  autocmd BufWritePost *.bin
+	    \ if &binary
+	    \ |   execute "silent %!xxd -c 32"
+	    \ |   set nomodified
+	    \ |   call winrestview(s:view)
+	    \ |   redraw
+	    \ | endif
 	augroup END
 
 ==============================================================================
