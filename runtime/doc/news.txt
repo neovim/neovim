@@ -77,6 +77,8 @@ The following new APIs and features were added.
 
 • Added |vim.keycode()| for translating keycodes in a string.
 
+• Added |vim.uri| |vim.uri.encode()| |vim.uri.decode()|.
+
 • Added |vim.treesitter.query.omnifunc()| for treesitter query files (set by
   default).
 

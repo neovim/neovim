@@ -1,5 +1,5 @@
 local uv = vim.uv
-local uri_encode = vim.uri_encode
+local uri_encode = vim.uri.encode
 
 --- @type (fun(modename: string): fun()|string)[]
 local loaders = package.loaders

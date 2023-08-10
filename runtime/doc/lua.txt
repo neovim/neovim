@@ -2434,8 +2434,8 @@ vim.loader.reset({path})                                  *vim.loader.reset()*
 ==============================================================================
 Lua module: vim.uri                                                  *vim.uri*
 
-vim.uri_decode({str})                                       *vim.uri_decode()*
-    URI-decodes a string containing percent escapes.
+vim.uri.decode({str})                                       *vim.uri.decode()*
+    Decodes a URI-encoded string.
 
     Parameters: ~
       • {str}  (string) string to decode
@@ -2443,8 +2443,8 @@ vim.uri_decode({str})                                       *vim.uri_decode()*
     Return: ~
         (string) decoded string
 
-vim.uri_encode({str}, {rfc})                                *vim.uri_encode()*
-    URI-encodes a string using percent escapes.
+vim.uri.encode({str}, {rfc})                                *vim.uri.encode()*
+    URI-encodes a string.
 
     Parameters: ~
       • {str}  (string) string to encode
@@ -2453,7 +2453,7 @@ vim.uri_encode({str}, {rfc})                                *vim.uri_encode()*
     Return: ~
         (string) encoded string
 
-vim.uri_from_bufnr({bufnr})                             *vim.uri_from_bufnr()*
+vim.uri.from_bufnr({bufnr})                             *vim.uri.from_bufnr()*
     Gets a URI from a bufnr.
 
     Parameters: ~
@@ -2462,7 +2462,7 @@ vim.uri_from_bufnr({bufnr})                             *vim.uri_from_bufnr()*
     Return: ~
         (string) URI
 
-vim.uri_from_fname({path})                              *vim.uri_from_fname()*
+vim.uri.from_fname({path})                              *vim.uri.from_fname()*
     Gets a URI from a file path.
 
     Parameters: ~
@@ -2471,9 +2471,9 @@ vim.uri_from_fname({path})                              *vim.uri_from_fname()*
     Return: ~
         (string) URI
 
-vim.uri_to_bufnr({uri})                                   *vim.uri_to_bufnr()*
-    Gets the buffer for a uri. Creates a new unloaded buffer if no buffer for
-    the uri already exists.
+vim.uri.to_bufnr({uri})                                   *vim.uri.to_bufnr()*
+    Gets the buffer for a URI, or creates a new unloaded buffer if no buffer
+    exists.
 
     Parameters: ~
       • {uri}  (string)
@@ -2481,7 +2481,7 @@ vim.uri_to_bufnr({uri})                                   *vim.uri_to_bufnr()*
     Return: ~
         (integer) bufnr
 
-vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
+vim.uri.to_fname({uri})                                   *vim.uri.to_fname()*
     Gets a filename from a URI.
 
     Parameters: ~

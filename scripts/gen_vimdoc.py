@@ -225,7 +225,7 @@ CONFIG = {
             # `shared` functions are exposed on the `vim` module.
             'shared': 'vim',
             '_inspector': 'vim',
-            'uri': 'vim',
+            'uri': 'vim.uri',
             'ui': 'vim.ui',
             'loader': 'vim.loader',
             'filetype': 'vim.filetype',
