@@ -276,7 +276,7 @@ set(LUA_FILETYPE_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/filetype.lu
 set(LUA_INIT_PACKAGES_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_init_packages.lua)
 set(LUA_KEYMAP_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/keymap.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
-set(LUAJIT_RUNTIME_DIR ${DEPS_PREFIX}/share/luajit-2.1.0-beta3/jit)
+set(LUAJIT_RUNTIME_DIR ${DEPS_PREFIX}/share/luajit-2.1/jit)
 
 glob_wrapper(UNICODE_FILES ${UNICODE_DIR}/*.txt)
 glob_wrapper(API_HEADERS api/*.h)
