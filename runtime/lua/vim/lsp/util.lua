@@ -668,12 +668,14 @@ end
 --- Returns text that should be inserted when selecting completion item. The
 --- precedence is as follows: textEdit.newText > insertText > label
 --see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
-local function get_completion_word(item, ltext)
+local function get_completion_word(item, ltext, startchar_col)
   if item.textEdit ~= nil and item.textEdit.newText ~= nil and item.textEdit.newText ~= '' then
     local insert_text_format = protocol.InsertTextFormat[item.insertTextFormat]
     if insert_text_format == 'PlainText' or insert_text_format == nil then
-      local offset = charidx_without_compchar(ltext, item.textEdit.range.start.character)
-      return item.textEdit.newText:sub(offset)
+      local textstart_col = charidx_without_compchar(ltext, item.textEdit.range.start.character)
+      local offset = startchar_col - textstart_col - 1
+      return textstart_col ~= startchar_col and item.textEdit.newText:sub(offset + 1)
+        or item.textEdit.newText
     else
       return M.parse_snippet(item.textEdit.newText)
     end
@@ -718,7 +720,7 @@ end
 ---@param prefix (string) the prefix to filter the completion items
 ---@return table { matches = complete-items table, incomplete = bool }
 ---@see complete-items
-function M.text_document_completion_list_to_complete_items(result, ltext)
+function M.text_document_completion_list_to_complete_items(result, ltext, startchar_col)
   local items = M.extract_completion_items(result)
   if vim.tbl_isempty(items) then
     return {}
@@ -745,7 +747,7 @@ function M.text_document_completion_list_to_complete_items(result, ltext)
       end
     end
 
-    local word = get_completion_word(completion_item, ltext)
+    local word = get_completion_word(completion_item, ltext, startchar_col)
     table.insert(matches, {
       word = word,
       abbr = completion_item.label,
