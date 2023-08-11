@@ -2327,15 +2327,14 @@ function lsp.omnifunc(findstart, base)
   local _ = log.trace() and log.trace('omnifunc.line', pos, line)
 
   -- Get the start position of the current keyword
-  local match_pos = vim.fn.match(line_to_cursor, '\\k*$') + 1
-  local items = {}
+  local start_col = vim.fn.match(line_to_cursor, '\\k*$') + 1
 
-  local startbyte
+  local items = {}
 
   local function on_done()
     local mode = api.nvim_get_mode()['mode']
     if mode == 'i' or mode == 'ic' then
-      vim.fn.complete(startbyte or match_pos, items)
+      vim.fn.complete(start_col, items)
     end
   end
 
@@ -2361,16 +2360,17 @@ function lsp.omnifunc(findstart, base)
         --
         -- `adjust_start_col` is used to prefer the language server boundary.
         --
-        local encoding = client.offset_encoding
-        local candidates = util.extract_completion_items(result)
-        local curstartbyte = adjust_start_col(pos[1], line, candidates, encoding)
-        if startbyte == nil then
-          startbyte = curstartbyte
-        elseif curstartbyte ~= nil and curstartbyte ~= startbyte then
-          startbyte = match_pos
-        end
-        local prefix = startbyte and line:sub(startbyte + 1) or line_to_cursor:sub(match_pos)
-        local matches = util.text_document_completion_list_to_complete_items(result, prefix)
+        -- local encoding = client.offset_encoding
+        -- local candidates = util.extract_completion_items(result)
+        -- local curstartbyte = adjust_start_col(pos[1], line, candidates, encoding)
+        -- if startbyte == nil then
+        --   startbyte = curstartbyte
+        -- elseif curstartbyte ~= nil and curstartbyte ~= startbyte then
+        --   startbyte = match_pos
+        -- end
+        -- local prefix = startbyte and line:sub(startbyte + 1) or line_to_cursor:sub(match_pos)
+
+        local matches = util.text_document_completion_list_to_complete_items(result, line_to_cursor)
         vim.list_extend(items, matches)
       end
       remaining = remaining - 1

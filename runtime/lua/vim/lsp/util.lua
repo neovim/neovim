@@ -656,14 +656,24 @@ local function sort_completion_items(items)
   end)
 end
 
+local function charidx_without_compchar(ltext, col)
+  local byte_idx = vim.fn.byteidxcomp(ltext, col)
+  if byte_idx ~= -1 then
+    return byte_idx == vim.fn.strlen(ltext) and vim.fn.strcharlen(ltext)
+      or vim.fn.charidx(ltext, byte_idx, false)
+  end
+  return col
+end
+
 --- Returns text that should be inserted when selecting completion item. The
 --- precedence is as follows: textEdit.newText > insertText > label
 --see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
-local function get_completion_word(item)
+local function get_completion_word(item, ltext)
   if item.textEdit ~= nil and item.textEdit.newText ~= nil and item.textEdit.newText ~= '' then
     local insert_text_format = protocol.InsertTextFormat[item.insertTextFormat]
     if insert_text_format == 'PlainText' or insert_text_format == nil then
-      return item.textEdit.newText
+      local offset = charidx_without_compchar(ltext, item.textEdit.range.start.character)
+      return item.textEdit.newText:sub(offset)
     else
       return M.parse_snippet(item.textEdit.newText)
     end
@@ -708,13 +718,13 @@ end
 ---@param prefix (string) the prefix to filter the completion items
 ---@return table { matches = complete-items table, incomplete = bool }
 ---@see complete-items
-function M.text_document_completion_list_to_complete_items(result, prefix)
+function M.text_document_completion_list_to_complete_items(result, ltext)
   local items = M.extract_completion_items(result)
   if vim.tbl_isempty(items) then
     return {}
   end
 
-  items = remove_unmatch_completion_items(items, prefix)
+  -- items = remove_unmatch_completion_items(items, prefix)
   sort_completion_items(items)
 
   local matches = {}
@@ -735,7 +745,7 @@ function M.text_document_completion_list_to_complete_items(result, prefix)
       end
     end
 
-    local word = get_completion_word(completion_item)
+    local word = get_completion_word(completion_item, ltext)
     table.insert(matches, {
       word = word,
       abbr = completion_item.label,
