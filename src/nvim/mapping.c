@@ -279,16 +279,16 @@ static bool set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
   bool did_simplify = false;
   const int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
   char *bufarg = lhs_buf;
-  char *replaced = replace_termcodes(orig_lhs, orig_lhs_len, &bufarg, flags, &did_simplify,
-                                     cpo_flags);
+  char *replaced = replace_termcodes(orig_lhs, orig_lhs_len, &bufarg, 0,
+                                     flags, &did_simplify, cpo_flags);
   if (replaced == NULL) {
     return false;
   }
   mapargs->lhs_len = strlen(replaced);
   xstrlcpy(mapargs->lhs, replaced, sizeof(mapargs->lhs));
   if (did_simplify) {
-    replaced = replace_termcodes(orig_lhs, orig_lhs_len, &bufarg, flags | REPTERM_NO_SIMPLIFY,
-                                 NULL, cpo_flags);
+    replaced = replace_termcodes(orig_lhs, orig_lhs_len, &bufarg, 0,
+                                 flags | REPTERM_NO_SIMPLIFY, NULL, cpo_flags);
     if (replaced == NULL) {
       return false;
     }
@@ -298,14 +298,15 @@ static bool set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
     mapargs->alt_lhs_len = 0;
   }
 
-  set_maparg_rhs(orig_rhs, orig_rhs_len, rhs_lua, cpo_flags, mapargs);
+  set_maparg_rhs(orig_rhs, orig_rhs_len, rhs_lua, 0, cpo_flags, mapargs);
 
   return true;
 }
 
 /// @see set_maparg_lhs_rhs
 static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len,
-                           const LuaRef rhs_lua, const int cpo_flags, MapArguments *const mapargs)
+                           const LuaRef rhs_lua, const scid_T sid, const int cpo_flags,
+                           MapArguments *const mapargs)
 {
   mapargs->rhs_lua = rhs_lua;
 
@@ -319,8 +320,8 @@ static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len
       mapargs->rhs_is_noop = true;
     } else {
       char *rhs_buf = NULL;
-      char *replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf, REPTERM_DO_LT, NULL,
-                                         cpo_flags);
+      char *replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf, sid,
+                                         REPTERM_DO_LT, NULL, cpo_flags);
       mapargs->rhs_len = strlen(replaced);
       // NB: replace_termcodes may produce an empty string even if orig_rhs is non-empty
       // (e.g. a single ^V, see :h map-empty-rhs)
@@ -1079,9 +1080,8 @@ bool map_to_exists(const char *const str, const char *const modechars, const boo
   int retval;
 
   char *buf = NULL;
-  const char *const rhs = replace_termcodes(str, strlen(str),
-                                            &buf, REPTERM_DO_LT,
-                                            NULL, CPO_TO_CPO_FLAGS);
+  const char *const rhs = replace_termcodes(str, strlen(str), &buf, 0,
+                                            REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
 
 #define MAPMODE(mode, modechars, chr, modeflags) \
   do { \
@@ -1657,7 +1657,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
   char *res = NULL;
 
   if (replace_keycodes) {
-    replace_termcodes(p, strlen(p), &res, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
+    replace_termcodes(p, strlen(p), &res, 0, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
   } else {
     // Escape K_SPECIAL in the result to be able to use the string as typeahead.
     res = vim_strsave_escape_ks(p);
@@ -2157,8 +2157,8 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   const int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
   const int mode = get_map_mode((char **)&which, 0);
 
-  char *keys_simplified = replace_termcodes(keys, strlen(keys), &keys_buf, flags, &did_simplify,
-                                            CPO_TO_CPO_FLAGS);
+  char *keys_simplified = replace_termcodes(keys, strlen(keys), &keys_buf, 0,
+                                            flags, &did_simplify, CPO_TO_CPO_FLAGS);
   mapblock_T *mp = NULL;
   int buffer_local;
   LuaRef rhs_lua;
@@ -2167,10 +2167,8 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   if (did_simplify) {
     // When the lhs is being simplified the not-simplified keys are
     // preferred for printing, like in do_map().
-    (void)replace_termcodes(keys,
-                            strlen(keys),
-                            &alt_keys_buf, flags | REPTERM_NO_SIMPLIFY, NULL,
-                            CPO_TO_CPO_FLAGS);
+    (void)replace_termcodes(keys, strlen(keys), &alt_keys_buf, 0,
+                            flags | REPTERM_NO_SIMPLIFY, NULL, CPO_TO_CPO_FLAGS);
     rhs = check_map(alt_keys_buf, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
   }
 
@@ -2252,11 +2250,12 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     .replace_keycodes = tv_dict_get_number(d, "replace_keycodes") != 0,
     .desc = tv_dict_get_string(d, "desc", false),
   };
-  set_maparg_rhs(orig_rhs, strlen(orig_rhs), rhs_lua, CPO_TO_CPO_FLAGS, &args);
   scid_T sid = (scid_T)tv_dict_get_number(d, "sid");
   linenr_T lnum = (linenr_T)tv_dict_get_number(d, "lnum");
   bool buffer = tv_dict_get_number(d, "buffer") != 0;
   // mode from the dict is not used
+
+  set_maparg_rhs(orig_rhs, strlen(orig_rhs), rhs_lua, sid, CPO_TO_CPO_FLAGS, &args);
 
   mapblock_T **map_table = buffer ? curbuf->b_maphash : maphash;
   mapblock_T **abbr_table = buffer ? &curbuf->b_first_abbr : &first_abbr;
