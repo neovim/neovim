@@ -322,8 +322,32 @@ func Test_map_restore()
   nunmap <C-B>
 endfunc
 
-" Test restoring the script context of a mapping
+" Test restoring an <SID> mapping
 func Test_map_restore_sid()
+  func RestoreMap()
+    const d = maparg('<CR>', 'i', v:false, v:true)
+    iunmap <buffer> <CR>
+    call mapset('i', v:false, d)
+  endfunc
+
+  let mapscript =<< trim [CODE]
+    inoremap <silent><buffer> <SID>Return <C-R>=42<CR>
+    inoremap <script><buffer> <CR> <CR><SID>Return
+  [CODE]
+  call writefile(mapscript, 'Xmapscript', 'D')
+
+  new
+  source Xmapscript
+  inoremap <buffer> <C-B> <Cmd>call RestoreMap()<CR>
+  call feedkeys("i\<CR>\<C-B>\<CR>", 'xt')
+  call assert_equal(['', '42', '42'], getline(1, '$'))
+
+  bwipe!
+  delfunc RestoreMap
+endfunc
+
+" Test restoring a mapping with a negative script ID
+func Test_map_restore_negative_sid()
   let after =<< trim [CODE]
     call assert_equal("\tLast set from --cmd argument",
           \ execute('verbose nmap ,n')->trim()->split("\n")[-1])
