@@ -635,6 +635,29 @@ local function add_injection(t, tree_index, pattern, lang, combined, ranges)
   table.insert(t[tree_index][lang][pattern].regions, ranges)
 end
 
+-- TODO(clason): replace by refactored `ts.has_parser` API (without registering)
+---@param lang string parser name
+---@return boolean # true if parser for {lang} exists on rtp
+local has_parser = function(lang)
+  return vim._ts_has_language(lang)
+    or #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) > 0
+end
+
+--- Return parser name for language (if exists) or filetype (if registered and exists)
+---
+---@param alias string language or filetype name
+---@return string? # resolved parser name
+local function resolve_lang(alias)
+  if has_parser(alias) then
+    return alias
+  end
+
+  local lang = vim.treesitter.language.get_lang(alias)
+  if lang and has_parser(lang) then
+    return lang
+  end
+end
+
 ---@private
 --- Extract injections according to:
 --- https://tree-sitter.github.io/tree-sitter/syntax-highlighting#language-injection
@@ -649,10 +672,10 @@ function LanguageTree:_get_injection(match, metadata)
 
   for id, node in pairs(match) do
     local name = self._injection_query.captures[id]
-
     -- Lang should override any other language tag
     if name == 'injection.language' then
-      lang = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
+      local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
+      lang = resolve_lang(text) or resolve_lang(text:lower())
     elseif name == 'injection.content' then
       ranges = get_node_ranges(node, self._source, metadata[id], include_children)
     end

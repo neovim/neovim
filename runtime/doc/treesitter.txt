@@ -311,19 +311,7 @@ The following directives are built in:
             {capture_id}
 
         Example: >query
-            (#inject-language! @_lang)
-<
-    `inject-language!`                    *treesitter-directive-inject-language!*
-        Set the injection language from the node text, interpreted first as a
-        language name, then (if a parser is not found) a filetype. Custom
-        aliases can be added via |vim.treesitter.language.register()|. This
-        will set a new `metadata[capture_id]['injection.language']`.
-
-        Parameters: ~
-            {capture_id}
-
-        Example: >query
-            (#inject-language! @_lang)
+            (#trim! @fold)
 <
 Further directives can be added via |vim.treesitter.query.add_directive()|.
 Use |vim.treesitter.query.list_directives()| to list all available directives.
