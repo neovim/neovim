@@ -2,7 +2,7 @@
 " Language:    TOML
 " Homepage:    https://github.com/cespare/vim-toml
 " Maintainer:  Aman Verma
-" Author:      Kevin Ballard <kevin@sb.org>
+" Author:      Lily Ballard <lily@ballards.net>
 " Last Change: Sep 21, 2021
 
 if exists('b:did_ftplugin')
