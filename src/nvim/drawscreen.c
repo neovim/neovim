@@ -2574,6 +2574,7 @@ int number_width(win_T *wp)
   if (*wp->w_p_stc != NUL) {
     wp->w_statuscol_line_count = 0;  // make sure width is re-estimated
     wp->w_nrwidth_width = (wp->w_p_nu || wp->w_p_rnu) * (int)wp->w_p_nuw;
+    wp->w_valid &= ~VALID_WCOL;
     return wp->w_nrwidth_width;
   }
 
