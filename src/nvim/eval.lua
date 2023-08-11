@@ -11620,9 +11620,12 @@ M.funcs = {
     signature = 'undofile({name})',
   },
   undotree = {
+    args = { 0, 1 },
+    base = 1,
     desc = [=[
-      Return the current state of the undo tree in a dictionary with
-      the following items:
+      Return the current state of the undo tree for the current
+      buffer, or for a specific buffer if {buf} is given.  The
+      result is a dictionary with the following items:
         "seq_last"	The highest undo sequence number used.
         "seq_cur"	The sequence number of the current position in
       		the undo tree.  This differs from "seq_last"
@@ -11664,8 +11667,8 @@ M.funcs = {
       		item.
     ]=],
     name = 'undotree',
-    params = {},
-    signature = 'undotree()',
+    params = { { 'buf', 'any' } },
+    signature = 'undotree([{buf}])',
   },
   uniq = {
     args = { 1, 3 },

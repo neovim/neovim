@@ -8171,9 +8171,10 @@ undofile({name})                                                    *undofile()*
 		buffer without a file name will not write an undo file.
 		Useful in combination with |:wundo| and |:rundo|.
 
-undotree()                                                          *undotree()*
-		Return the current state of the undo tree in a dictionary with
-		the following items:
+undotree([{buf}])                                                   *undotree()*
+		Return the current state of the undo tree for the current
+		buffer, or for a specific buffer if {buf} is given.  The
+		result is a dictionary with the following items:
 		  "seq_last"	The highest undo sequence number used.
 		  "seq_cur"	The sequence number of the current position in
 				the undo tree.  This differs from "seq_last"

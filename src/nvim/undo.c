@@ -93,6 +93,7 @@
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
+#include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
@@ -3118,7 +3119,7 @@ bool curbufIsChanged(void)
 /// @param[in]  first_uhp  Undo blocks list to start with.
 ///
 /// @return [allocated] List with a representation of undo blocks.
-static list_T *u_eval_tree(const u_header_T *const first_uhp)
+static list_T *u_eval_tree(buf_T *const buf, const u_header_T *const first_uhp)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   list_T *const list = tv_list_alloc(kListLenMayKnow);
@@ -3127,10 +3128,10 @@ static list_T *u_eval_tree(const u_header_T *const first_uhp)
     dict_T *const dict = tv_dict_alloc();
     tv_dict_add_nr(dict, S_LEN("seq"), (varnumber_T)uhp->uh_seq);
     tv_dict_add_nr(dict, S_LEN("time"), (varnumber_T)uhp->uh_time);
-    if (uhp == curbuf->b_u_newhead) {
+    if (uhp == buf->b_u_newhead) {
       tv_dict_add_nr(dict, S_LEN("newhead"), 1);
     }
-    if (uhp == curbuf->b_u_curhead) {
+    if (uhp == buf->b_u_curhead) {
       tv_dict_add_nr(dict, S_LEN("curhead"), 1);
     }
     if (uhp->uh_save_nr > 0) {
@@ -3139,7 +3140,7 @@ static list_T *u_eval_tree(const u_header_T *const first_uhp)
 
     if (uhp->uh_alt_next.ptr != NULL) {
       // Recursive call to add alternate undo tree.
-      tv_dict_add_list(dict, S_LEN("alt"), u_eval_tree(uhp->uh_alt_next.ptr));
+      tv_dict_add_list(dict, S_LEN("alt"), u_eval_tree(buf, uhp->uh_alt_next.ptr));
     }
 
     tv_list_append_dict(list, dict);
@@ -3167,21 +3168,24 @@ void f_undofile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 }
 
-/// "undotree()" function
+/// "undotree(expr)" function
 void f_undotree(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
+  typval_T *const tv = &argvars[0];
+  buf_T *const buf = tv->v_type == VAR_UNKNOWN ? curbuf : tv_get_buf_from_arg(tv);
+
   tv_dict_alloc_ret(rettv);
 
   dict_T *dict = rettv->vval.v_dict;
 
-  tv_dict_add_nr(dict, S_LEN("synced"), (varnumber_T)curbuf->b_u_synced);
-  tv_dict_add_nr(dict, S_LEN("seq_last"), (varnumber_T)curbuf->b_u_seq_last);
-  tv_dict_add_nr(dict, S_LEN("save_last"), (varnumber_T)curbuf->b_u_save_nr_last);
-  tv_dict_add_nr(dict, S_LEN("seq_cur"), (varnumber_T)curbuf->b_u_seq_cur);
-  tv_dict_add_nr(dict, S_LEN("time_cur"), (varnumber_T)curbuf->b_u_time_cur);
-  tv_dict_add_nr(dict, S_LEN("save_cur"), (varnumber_T)curbuf->b_u_save_nr_cur);
+  tv_dict_add_nr(dict, S_LEN("synced"), (varnumber_T)buf->b_u_synced);
+  tv_dict_add_nr(dict, S_LEN("seq_last"), (varnumber_T)buf->b_u_seq_last);
+  tv_dict_add_nr(dict, S_LEN("save_last"), (varnumber_T)buf->b_u_save_nr_last);
+  tv_dict_add_nr(dict, S_LEN("seq_cur"), (varnumber_T)buf->b_u_seq_cur);
+  tv_dict_add_nr(dict, S_LEN("time_cur"), (varnumber_T)buf->b_u_time_cur);
+  tv_dict_add_nr(dict, S_LEN("save_cur"), (varnumber_T)buf->b_u_save_nr_cur);
 
-  tv_dict_add_list(dict, S_LEN("entries"), u_eval_tree(curbuf->b_u_oldhead));
+  tv_dict_add_list(dict, S_LEN("entries"), u_eval_tree(buf, buf->b_u_oldhead));
 }
 
 // Given the buffer, Return the undo header. If none is set, set one first.

@@ -1092,7 +1092,7 @@ Various:					*various-functions*
 	libcallnr()		idem, returning a number
 
 	undofile()		get the name of the undo file
-	undotree()		return the state of the undo tree
+	undotree()		return the state of the undo tree for a buffer
 
 	shiftwidth()		effective value of 'shiftwidth'
 

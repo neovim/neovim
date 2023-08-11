@@ -9733,8 +9733,9 @@ function vim.fn.type(expr) end
 --- @return string
 function vim.fn.undofile(name) end
 
---- Return the current state of the undo tree in a dictionary with
---- the following items:
+--- Return the current state of the undo tree for the current
+--- buffer, or for a specific buffer if {buf} is given.  The
+--- result is a dictionary with the following items:
 ---   "seq_last"  The highest undo sequence number used.
 ---   "seq_cur"  The sequence number of the current position in
 ---     the undo tree.  This differs from "seq_last"
@@ -9775,8 +9776,9 @@ function vim.fn.undofile(name) end
 ---     blocks.  Each item may again have an "alt"
 ---     item.
 ---
+--- @param buf? any
 --- @return any
-function vim.fn.undotree() end
+function vim.fn.undotree(buf) end
 
 --- Remove second and succeeding copies of repeated adjacent
 --- {list} items in-place.  Returns {list}.  If you want a list
