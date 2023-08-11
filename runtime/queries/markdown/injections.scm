@@ -1,8 +1,7 @@
 (fenced_code_block
   (info_string
-    (language) @_lang)
-  (code_fence_content) @injection.content
-  (#inject-language! @_lang))
+    (language) @injection.language)
+  (code_fence_content) @injection.content)
 
 ((html_block) @injection.content 
  (#set! injection.language "html")

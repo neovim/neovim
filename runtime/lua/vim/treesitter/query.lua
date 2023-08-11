@@ -541,33 +541,6 @@ local directive_handlers = {
       metadata.range = { start_row, start_col, end_row, end_col }
     end
   end,
-  -- Set injection language from node text, interpreted first as language and then as filetype
-  -- Example: (#inject-language! @_lang)
-  ['inject-language!'] = function(match, _, bufnr, pred, metadata)
-    local id = pred[2]
-    local node = match[id]
-    if not node then
-      return
-    end
-
-    -- TODO(clason): replace by refactored `ts.has_parser` API
-    local has_parser = function(lang)
-      return vim._ts_has_language(lang)
-        or #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) > 0
-    end
-
-    local alias = vim.treesitter.get_node_text(node, bufnr, { metadata = metadata[id] })
-    if not alias then
-      return
-    elseif has_parser(alias) then
-      metadata['injection.language'] = alias
-    else
-      local lang = vim.treesitter.language.get_lang(alias)
-      if lang and has_parser(lang) then
-        metadata['injection.language'] = lang
-      end
-    end
-  end,
 }
 
 --- Adds a new predicate to be used in queries

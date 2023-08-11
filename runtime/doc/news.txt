@@ -77,14 +77,8 @@ The following new APIs and features were added.
 
 • Added |vim.keycode()| for translating keycodes in a string.
 
-• Added |vim.treesitter.query.omnifunc()| for treesitter query files (set by
-  default).
-
 • |'smoothscroll'| option to scroll by screen line rather than by text line
   when |'wrap'| is set.
-
-• |Query:iter_matches()| now has the ability to set the maximum start depth
-  for matches.
 
 • Added inline virtual text support to |nvim_buf_set_extmark()|.
 
@@ -120,8 +114,16 @@ The following new APIs and features were added.
     `client.supports_method(<method>)`. It considers both the dynamic
     capabilities and static `server_capabilities`.
 
-• Bundled treesitter parser and queries (highlight, folds) for Markdown,
-  Python, and Bash.
+• Treesitter
+  • Bundled parsers and queries (highlight, folds) for Markdown, Python, and
+    Bash.
+  • Added |vim.treesitter.query.omnifunc()| for treesitter query files (set by
+    default).
+  • |Query:iter_matches()| now has the ability to set the maximum start depth
+    for matches.
+  • `@injection.language` now has smarter resolution and will now fallback to language aliases and/or attempt lower case variants of the text.
+    language via aliases (e.g., filetype) registered via
+    `vim.treesitter.language.register`.
 
 • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
   Windows `explorer`, Linux `xdg-open`, etc.)
