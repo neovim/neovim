@@ -1,4 +1,4 @@
-" Author: Kevin Ballard
+" Author: Lily Ballard
 " Description: Helper functions for Rust commands/mappings
 " Last Modified: May 27, 2014
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
