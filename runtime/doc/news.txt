@@ -121,7 +121,7 @@ The following new APIs and features were added.
     default).
   • |Query:iter_matches()| now has the ability to set the maximum start depth
     for matches.
-  • `@injection.language` is now case insensitive and allows specifying a
+  • `@injection.language` now has smarter resolution and will now fallback to language aliases and/or attempt lower case variants of the text.
     language via aliases (e.g., filetype) registered via
     `vim.treesitter.language.register`.
 
