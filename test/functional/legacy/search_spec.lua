@@ -642,7 +642,7 @@ describe('search cmdline', function()
   end)
 
   -- oldtest: Test_incsearch_substitute_dump2()
-  it('detects empty pattern properly vim-patch:8.2.2295', function()
+  it('incsearch detects empty pattern properly vim-patch:8.2.2295', function()
     screen:try_resize(70, 6)
     exec([[
       set incsearch hlsearch scrolloff=0
@@ -674,6 +674,37 @@ describe('search cmdline', function()
       abc|def                                                               |
       :1,5s/\v|^                                                             |
     ]])
+  end)
+
+  -- oldtest: Test_incsearch_restore_view()
+  it('incsearch restores viewport', function()
+    screen:try_resize(20, 6)
+    exec([[
+      set incsearch nohlsearch
+      setlocal scrolloff=0 smoothscroll
+      call setline(1, [join(range(25), ' '), '', '', '', '', 'xxx'])
+      call feedkeys("2\<C-E>", 't')
+    ]])
+    local s = [[
+      {tilde:<<<} 18 19 20 21 22 2|
+      ^3 24                |
+                          |
+                          |
+                          |
+                          |
+    ]]
+    screen:expect(s)
+    feed('/xxx')
+    screen:expect([[
+                          |
+                          |
+                          |
+                          |
+      {inc:xxx}                 |
+      /xxx^                |
+    ]])
+    feed('<Esc>')
+    screen:expect(s)
   end)
 end)
 

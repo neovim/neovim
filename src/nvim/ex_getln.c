@@ -82,6 +82,7 @@ static unsigned last_prompt_id = 0;
 typedef struct {
   colnr_T vs_curswant;
   colnr_T vs_leftcol;
+  colnr_T vs_skipcol;
   linenr_T vs_topline;
   int vs_topfill;
   linenr_T vs_botline;
@@ -208,6 +209,7 @@ static void save_viewstate(win_T *wp, viewstate_T *vs)
 {
   vs->vs_curswant = wp->w_curswant;
   vs->vs_leftcol = wp->w_leftcol;
+  vs->vs_skipcol = wp->w_skipcol;
   vs->vs_topline = wp->w_topline;
   vs->vs_topfill = wp->w_topfill;
   vs->vs_botline = wp->w_botline;
@@ -219,6 +221,7 @@ static void restore_viewstate(win_T *wp, viewstate_T *vs)
 {
   wp->w_curswant = vs->vs_curswant;
   wp->w_leftcol = vs->vs_leftcol;
+  wp->w_skipcol = vs->vs_skipcol;
   wp->w_topline = vs->vs_topline;
   wp->w_topfill = vs->vs_topfill;
   wp->w_botline = vs->vs_botline;
