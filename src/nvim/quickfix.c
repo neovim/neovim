@@ -80,14 +80,14 @@ struct qfline_S {
   int qf_col;             ///< column where the error occurred
   int qf_end_col;         ///< column when the error has range or zero
   int qf_nr;              ///< error number
-  char *qf_module;      ///< module name for this error
-  char *qf_pattern;     ///< search pattern for the error
-  char *qf_text;        ///< description of the error
-  char qf_viscol;       ///< set to true if qf_col and qf_end_col is
-  //   screen column
-  char qf_cleared;      ///< set to true if line has been deleted
-  char qf_type;         ///< type of the error (mostly 'E'); 1 for :helpgrep
-  char qf_valid;        ///< valid error message detected
+  char *qf_module;        ///< module name for this error
+  char *qf_pattern;       ///< search pattern for the error
+  char *qf_text;          ///< description of the error
+  char qf_viscol;         ///< set to true if qf_col and qf_end_col is screen column
+  char qf_cleared;        ///< set to true if line has been deleted
+  char qf_type;           ///< type of the error (mostly 'E'); 1 for :helpgrep
+  typval_T qf_user_data;  ///< custom user data associated with this item
+  char qf_valid;          ///< valid error message detected
 };
 
 // There is a stack of error lists.
@@ -109,18 +109,19 @@ typedef enum {
 /// created using setqflist()/setloclist() with a title and/or user context
 /// information and entries can be added later using setqflist()/setloclist().
 typedef struct qf_list_S {
-  unsigned qf_id;               ///< Unique identifier for this list
+  unsigned qf_id;         ///< Unique identifier for this list
   qfltype_T qfl_type;
-  qfline_T *qf_start;        ///< pointer to the first error
-  qfline_T *qf_last;         ///< pointer to the last error
-  qfline_T *qf_ptr;          ///< pointer to the current error
-  int qf_count;                 ///< number of errors (0 means empty list)
-  int qf_index;                 ///< current index in the error list
-  int qf_nonevalid;             ///< true if not a single valid entry found
-  char *qf_title;        ///< title derived from the command that created
-                         ///< the error list or set by setqflist
-  typval_T *qf_ctx;          ///< context set by setqflist/setloclist
-  Callback qf_qftf_cb;            ///< 'quickfixtextfunc' callback function
+  qfline_T *qf_start;     ///< pointer to the first error
+  qfline_T *qf_last;      ///< pointer to the last error
+  qfline_T *qf_ptr;       ///< pointer to the current error
+  int qf_count;           ///< number of errors (0 means empty list)
+  int qf_index;           ///< current index in the error list
+  bool qf_nonevalid;      ///< true if not a single valid entry found
+  bool qf_has_user_data;  ///< true if at least one item has user_data attached
+  char *qf_title;         ///< title derived from the command that created
+                          ///< the error list or set by setqflist
+  typval_T *qf_ctx;       ///< context set by setqflist/setloclist
+  Callback qf_qftf_cb;    ///< 'quickfixtextfunc' callback function
 
   struct dir_stack_T *qf_dir_stack;
   char *qf_directory;
@@ -226,6 +227,7 @@ typedef struct {
   char *pattern;
   int enr;
   char type;
+  typval_T *user_data;
   bool valid;
 } qffields_T;
 
@@ -351,6 +353,7 @@ static int qf_init_process_nextline(qf_list_T *qfl, efm_T *fmt_first, qfstate_T 
                       fields->pattern,
                       fields->enr,
                       fields->type,
+                      fields->user_data,
                       fields->valid);
 }
 
@@ -1281,6 +1284,7 @@ static void qf_new_list(qf_info_T *qi, const char *qf_title)
   qf_store_title(qfl, qf_title);
   qfl->qfl_type = qi->qfl_type;
   qfl->qf_id = ++last_qf_id;
+  qfl->qf_has_user_data = false;
 }
 
 /// Parse the match for filename ('%f') pattern in regmatch.
@@ -1836,12 +1840,14 @@ void check_quickfix_busy(void)
 /// @param  pattern  search pattern
 /// @param  nr       error number
 /// @param  type     type character
+/// @param  user_data  custom user data or NULL
 /// @param  valid    valid entry
 ///
 /// @return  QF_OK on success or QF_FAIL on failure.
 static int qf_add_entry(qf_list_T *qfl, char *dir, char *fname, char *module, int bufnum,
                         char *mesg, linenr_T lnum, linenr_T end_lnum, int col, int end_col,
-                        char vis_col, char *pattern, int nr, char type, char valid)
+                        char vis_col, char *pattern, int nr, char type, typval_T *user_data,
+                        char valid)
 {
   qfline_T *qfp = xmalloc(sizeof(qfline_T));
 
@@ -1862,6 +1868,12 @@ static int qf_add_entry(qf_list_T *qfl, char *dir, char *fname, char *module, in
   qfp->qf_col = col;
   qfp->qf_end_col = end_col;
   qfp->qf_viscol = vis_col;
+  if (user_data == NULL || user_data->v_type == VAR_UNKNOWN) {
+    qfp->qf_user_data.v_type = VAR_UNKNOWN;
+  } else {
+    tv_copy(user_data, &qfp->qf_user_data);
+    qfl->qf_has_user_data = true;
+  }
   if (pattern == NULL || *pattern == NUL) {
     qfp->qf_pattern = NULL;
   } else {
@@ -1997,6 +2009,7 @@ static int copy_loclist_entries(const qf_list_T *from_qfl, qf_list_T *to_qfl)
                      from_qfp->qf_pattern,
                      from_qfp->qf_nr,
                      0,
+                     &from_qfp->qf_user_data,
                      from_qfp->qf_valid) == QF_FAIL) {
       return FAIL;
     }
@@ -2022,6 +2035,7 @@ static int copy_loclist(qf_list_T *from_qfl, qf_list_T *to_qfl)
   // Some of the fields are populated by qf_add_entry()
   to_qfl->qfl_type = from_qfl->qfl_type;
   to_qfl->qf_nonevalid = from_qfl->qf_nonevalid;
+  to_qfl->qf_has_user_data = from_qfl->qf_has_user_data;
   to_qfl->qf_count = 0;
   to_qfl->qf_index = 0;
   to_qfl->qf_start = NULL;
@@ -3374,6 +3388,7 @@ static void qf_free_items(qf_list_T *qfl)
       xfree(qfp->qf_module);
       xfree(qfp->qf_text);
       xfree(qfp->qf_pattern);
+      tv_clear(&qfp->qf_user_data);
       stop = (qfp == qfpnext);
       xfree(qfp);
       if (stop) {
@@ -5239,6 +5254,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
                          NULL,   // search pattern
                          0,      // nr
                          0,      // type
+                         NULL,   // user_data
                          true)   // valid
             == QF_FAIL) {
           got_int = true;
@@ -5282,6 +5298,7 @@ static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *sp
                          NULL,   // search pattern
                          0,      // nr
                          0,      // type
+                         NULL,   // user_data
                          true)   // valid
             == QF_FAIL) {
           got_int = true;
@@ -5809,6 +5826,8 @@ static int get_qfline_items(qfline_T *qfp, list_T *list)
           == FAIL)
       || (tv_dict_add_str(dict, S_LEN("text"), (qfp->qf_text == NULL ? "" : qfp->qf_text)) == FAIL)
       || (tv_dict_add_str(dict, S_LEN("type"), buf) == FAIL)
+      || (qfp->qf_user_data.v_type != VAR_UNKNOWN
+          && tv_dict_add_tv(dict, S_LEN("user_data"), &qfp->qf_user_data) == FAIL)
       || (tv_dict_add_nr(dict, S_LEN("valid"), (varnumber_T)qfp->qf_valid) == FAIL)) {
     // tv_dict_add* fail only if key already exist, but this is a newly
     // allocated dictionary which is thus guaranteed to have no existing keys.
@@ -6288,8 +6307,7 @@ static int qf_setprop_qftf(qf_list_T *qfl, dictitem_T *di)
 /// Add a new quickfix entry to list at 'qf_idx' in the stack 'qi' from the
 /// items in the dict 'd'. If it is a valid error entry, then set 'valid_entry'
 /// to true.
-static int qf_add_entry_from_dict(qf_list_T *qfl, const dict_T *d, bool first_entry,
-                                  bool *valid_entry)
+static int qf_add_entry_from_dict(qf_list_T *qfl, dict_T *d, bool first_entry, bool *valid_entry)
   FUNC_ATTR_NONNULL_ALL
 {
   static bool did_bufnr_emsg;
@@ -6313,6 +6331,9 @@ static int qf_add_entry_from_dict(qf_list_T *qfl, const dict_T *d, bool first_en
   if (text == NULL) {
     text = xcalloc(1, 1);
   }
+  typval_T user_data = { .v_type = VAR_UNKNOWN };
+  tv_dict_get_tv(d, "user_data", &user_data);
+
   bool valid = true;
   if ((filename == NULL && bufnum == 0)
       || (lnum == 0 && pattern == NULL)) {
@@ -6349,12 +6370,14 @@ static int qf_add_entry_from_dict(qf_list_T *qfl, const dict_T *d, bool first_en
                                   pattern,   // search pattern
                                   nr,
                                   type == NULL ? NUL : *type,
+                                  &user_data,
                                   valid);
 
   xfree(filename);
   xfree(module);
   xfree(pattern);
   xfree(text);
+  tv_clear(&user_data);
 
   if (valid) {
     *valid_entry = true;
@@ -6390,13 +6413,12 @@ static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list, char *title, 
       continue;  // Skip non-dict items.
     }
 
-    const dict_T *const d = TV_LIST_ITEM_TV(li)->vval.v_dict;
+    dict_T *const d = TV_LIST_ITEM_TV(li)->vval.v_dict;
     if (d == NULL) {
       continue;
     }
 
-    retval = qf_add_entry_from_dict(qfl, d, li == tv_list_first(list),
-                                    &valid_entry);
+    retval = qf_add_entry_from_dict(qfl, d, li == tv_list_first(list), &valid_entry);
     if (retval == QF_FAIL) {
       break;
     }
@@ -6734,6 +6756,27 @@ int set_errorlist(win_T *wp, list_T *list, int action, char *title, dict_T *what
   return retval;
 }
 
+static bool mark_quickfix_user_data(qf_info_T *qi, int copyID)
+{
+  bool abort = false;
+  for (int i = 0; i < LISTCOUNT && !abort; i++) {
+    qf_list_T *qfl = &qi->qf_lists[i];
+    if (!qfl->qf_has_user_data) {
+      continue;
+    }
+    qfline_T *qfp;
+    int j;
+    FOR_ALL_QFL_ITEMS(qfl, qfp, j) {
+      typval_T *user_data = &qfp->qf_user_data;
+      if (user_data != NULL && user_data->v_type != VAR_NUMBER
+          && user_data->v_type != VAR_STRING && user_data->v_type != VAR_FLOAT) {
+        abort = abort || set_ref_in_item(user_data, copyID, NULL, NULL);
+      }
+    }
+  }
+  return abort;
+}
+
 /// Mark the quickfix context and callback function as in use for all the lists
 /// in a quickfix stack.
 static bool mark_quickfix_ctx(qf_info_T *qi, int copyID)
@@ -6763,6 +6806,11 @@ bool set_ref_in_quickfix(int copyID)
     return abort;
   }
 
+  abort = mark_quickfix_user_data(&ql_info, copyID);
+  if (abort) {
+    return abort;
+  }
+
   abort = set_ref_in_callback(&qftf_cb, copyID, NULL, NULL);
   if (abort) {
     return abort;
@@ -6771,6 +6819,11 @@ bool set_ref_in_quickfix(int copyID)
   FOR_ALL_TAB_WINDOWS(tp, win) {
     if (win->w_llist != NULL) {
       abort = mark_quickfix_ctx(win->w_llist, copyID);
+      if (abort) {
+        return abort;
+      }
+
+      abort = mark_quickfix_user_data(win->w_llist, copyID);
       if (abort) {
         return abort;
       }
@@ -7054,7 +7107,8 @@ static void hgr_search_file(qf_list_T *qfl, char *fname, regmatch_T *p_regmatch)
                        NULL,   // search pattern
                        0,      // nr
                        1,      // type
-                       true)    // valid
+                       NULL,   // user_data
+                       true)   // valid
           == QF_FAIL) {
         got_int = true;
         if (line != IObuff) {
