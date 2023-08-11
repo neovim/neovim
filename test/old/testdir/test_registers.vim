@@ -758,8 +758,9 @@ func Test_record_in_select_mode()
   bwipe!
 endfunc
 
-" mapping that ends macro recording should be removed from recorded macro
+" A mapping that ends recording should be removed from the recorded register.
 func Test_end_record_using_mapping()
+  new
   call setline(1, 'aaa')
   nnoremap s q
   call feedkeys('safas', 'tx')
@@ -779,7 +780,10 @@ func Test_end_record_using_mapping()
   bwipe!
 endfunc
 
+" Starting a new recording should work immediately after replaying a recording
+" that ends with a <Nop> mapping or a character search.
 func Test_end_reg_executing()
+  new
   nnoremap s <Nop>
   let @a = 's'
   call feedkeys("@aqaq\<Esc>", 'tx')
@@ -794,6 +798,26 @@ func Test_end_reg_executing()
   call assert_equal('aaa', getline(1))
 
   nunmap s
+  bwipe!
+endfunc
+
+" An operator-pending mode mapping shouldn't be applied to keys typed in
+" Insert mode immediately after a character search when replaying.
+func Test_replay_charsearch_omap()
+  CheckFeature timers
+
+  new
+  call setline(1, 'foo[blah]')
+  onoremap , k
+  call timer_start(10, {-> feedkeys(",bar\<Esc>q", 't')})
+  call feedkeys('qrct[', 'xt!')
+  call assert_equal(',bar[blah]', getline(1))
+  undo
+  call assert_equal('foo[blah]', getline(1))
+  call feedkeys('@r', 'xt!')
+  call assert_equal(',bar[blah]', getline(1))
+
+  ounmap ,
   bwipe!
 endfunc
 
