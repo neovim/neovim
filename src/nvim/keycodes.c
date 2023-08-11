@@ -873,6 +873,7 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 ///                    If `*bufp` is non-NULL, it will be used directly,
 ///                    and is assumed to be 128 bytes long (enough for transcoding LHS of mapping),
 ///                    and will be set to NULL in case of failure.
+/// @param[in]  sid_arg  Script ID to use for <SID>, or 0 to use current_sctx
 /// @param[in]  flags  REPTERM_FROM_PART    see above
 ///                    REPTERM_DO_LT        also translate <lt>
 ///                    REPTERM_NO_SPECIAL   do not accept <key> notation
@@ -882,7 +883,8 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 ///
 /// @return  The same as what `*bufp` is set to.
 char *replace_termcodes(const char *const from, const size_t from_len, char **const bufp,
-                        const int flags, bool *const did_simplify, const int cpo_flags)
+                        const scid_T sid_arg, const int flags, bool *const did_simplify,
+                        const int cpo_flags)
   FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   ssize_t i;
@@ -916,15 +918,15 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
       // Replace <SID> by K_SNR <script-nr> _.
       // (room: 5 * 6 = 30 bytes; needed: 3 + <nr> + 1 <= 14)
       if (end - src >= 4 && STRNICMP(src, "<SID>", 5) == 0) {
-        if (current_sctx.sc_sid <= 0) {
+        if (sid_arg < 0 || (sid_arg == 0 && current_sctx.sc_sid <= 0)) {
           emsg(_(e_usingsid));
         } else {
+          const scid_T sid = sid_arg != 0 ? sid_arg : current_sctx.sc_sid;
           src += 5;
           result[dlen++] = (char)K_SPECIAL;
           result[dlen++] = (char)KS_EXTRA;
           result[dlen++] = KE_SNR;
-          snprintf(result + dlen, buf_len - dlen, "%" PRId64,
-                   (int64_t)current_sctx.sc_sid);
+          snprintf(result + dlen, buf_len - dlen, "%" PRId64, (int64_t)sid);
           dlen += strlen(result + dlen);
           result[dlen++] = '_';
           continue;

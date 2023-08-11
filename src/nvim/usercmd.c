@@ -876,7 +876,7 @@ int uc_add_command(char *name, size_t name_len, const char *rep, uint32_t argt, 
   char *rep_buf = NULL;
   garray_T *gap;
 
-  replace_termcodes(rep, strlen(rep), &rep_buf, 0, NULL, CPO_TO_CPO_FLAGS);
+  replace_termcodes(rep, strlen(rep), &rep_buf, 0, 0, NULL, CPO_TO_CPO_FLAGS);
   if (rep_buf == NULL) {
     // Can't replace termcodes - try using the string as is
     rep_buf = xstrdup(rep);
