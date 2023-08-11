@@ -121,9 +121,75 @@ func Test_cmdwin_temp_curwin()
 
   call feedkeys("q::call CheckCmdWin()\<CR>:call win_execute(win_getid(winnr('#')), 'call CheckOtherWin()')\<CR>:q<CR>", 'ntx')
 
+  %bwipe!
   delfunc CheckWraps
   delfunc CheckCmdWin
   delfunc CheckOtherWin
+endfunc
+
+func Test_cmdwin_interrupted()
+  func CheckInterrupted()
+    call feedkeys("q::call assert_equal('', getcmdwintype())\<CR>:call assert_equal('', getcmdtype())\<CR>:q<CR>", 'ntx')
+  endfunc
+
+  augroup CmdWin
+
+  " While opening the cmdwin's split:
+  " Close the cmdwin's window.
+  au WinEnter * ++once quit
+  call CheckInterrupted()
+
+  " Close the old window.
+  au WinEnter * ++once execute winnr('#') 'quit'
+  call CheckInterrupted()
+
+  " Switch back to the old window.
+  au WinEnter * ++once wincmd p
+  call CheckInterrupted()
+
+  " Change the old window's buffer.
+  au WinEnter * ++once call win_execute(win_getid(winnr('#')), 'enew')
+  call CheckInterrupted()
+
+  " Using BufLeave autocmds as cmdwin restrictions do not apply to them when
+  " fired from opening the cmdwin...
+  " After opening the cmdwin's split, while creating the cmdwin's buffer:
+  " Delete the cmdwin's buffer.
+  au BufLeave * ++once bwipe
+  call CheckInterrupted()
+
+  " Close the cmdwin's window.
+  au BufLeave * ++once quit
+  call CheckInterrupted()
+
+  " Close the old window.
+  au BufLeave * ++once execute winnr('#') 'quit'
+  call CheckInterrupted()
+
+  " Switch to a different window.
+  au BufLeave * ++once split
+  call CheckInterrupted()
+
+  " Change the old window's buffer.
+  au BufLeave * ++once call win_execute(win_getid(winnr('#')), 'enew')
+  call CheckInterrupted()
+
+  " However, changing the current buffer is OK and does not interrupt.
+  au BufLeave * ++once edit other
+  call feedkeys("q::let t=getcmdwintype()\<CR>:let b=bufnr()\<CR>:clo<CR>", 'ntx')
+  call assert_equal(':', t)
+  call assert_equal(1, bufloaded('other'))
+  call assert_notequal(b, bufnr('other'))
+
+  augroup END
+
+  " No autocmds should remain, but clear the augroup to be sure.
+  augroup CmdWin
+    au!
+  augroup END
+
+  %bwipe!
+  delfunc CheckInterrupted
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
