@@ -803,25 +803,32 @@ static void normal_get_additional_char(NormalState *s)
       }
     }
 
-    // When getting a text character and the next character is a
-    // multi-byte character, it could be a composing character.
-    // However, don't wait for it to arrive. Also, do enable mapping,
-    // because if it's put back with vungetc() it's too late to apply
-    // mapping.
-    no_mapping--;
-    while (lang && (s->c = vpeekc()) > 0
-           && (s->c >= 0x100 || MB_BYTE2LEN(vpeekc()) > 1)) {
-      s->c = plain_vgetc();
-      if (!utf_iscomposing(s->c)) {
-        vungetc(s->c);                   // it wasn't, put it back
-        break;
-      } else if (s->ca.ncharC1 == 0) {
-        s->ca.ncharC1 = s->c;
-      } else {
-        s->ca.ncharC2 = s->c;
+    if (lang) {
+      // When getting a text character and the next character is a
+      // multi-byte character, it could be a composing character.
+      // However, don't wait for it to arrive. Also, do enable mapping,
+      // because if it's put back with vungetc() it's too late to apply
+      // mapping.
+      no_mapping--;
+      while (lang && (s->c = vpeekc()) > 0
+             && (s->c >= 0x100 || MB_BYTE2LEN(vpeekc()) > 1)) {
+        s->c = plain_vgetc();
+        if (!utf_iscomposing(s->c)) {
+          vungetc(s->c);                   // it wasn't, put it back
+          break;
+        } else if (s->ca.ncharC1 == 0) {
+          s->ca.ncharC1 = s->c;
+        } else {
+          s->ca.ncharC2 = s->c;
+        }
       }
+      no_mapping++;
+      // Vim may be in a different mode when the user types the next key,
+      // but when replaying a recording the next key is already in the
+      // typeahead buffer, so record a <Nop> before that to prevent the
+      // vpeekc() above from applying wrong mappings when replaying.
+      gotchars_nop();
     }
-    no_mapping++;
   }
   no_mapping--;
   allow_keys--;
