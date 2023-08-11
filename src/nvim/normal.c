@@ -4506,7 +4506,7 @@ static void nv_replace(cmdarg_T *cap)
   }
 
   // get another character
-  if (cap->nchar == Ctrl_V) {
+  if (cap->nchar == Ctrl_V || cap->nchar == Ctrl_Q) {
     had_ctrl_v = Ctrl_V;
     cap->nchar = get_literal(false);
     // Don't redo a multibyte character with CTRL-V.
@@ -4733,7 +4733,8 @@ static void nv_vreplace(cmdarg_T *cap)
   if (!MODIFIABLE(curbuf)) {
     emsg(_(e_modifiable));
   } else {
-    if (cap->extra_char == Ctrl_V) {          // get another character
+    if (cap->extra_char == Ctrl_V || cap->extra_char == Ctrl_Q) {
+      // get another character
       cap->extra_char = get_literal(false);
     }
     if (cap->extra_char < ' ') {
