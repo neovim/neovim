@@ -769,65 +769,6 @@ function LanguageTree:_get_injection(match, metadata)
   return lang, combined, ranges
 end
 
----@private
----@param match table<integer,TSNode>
----@param metadata TSMetadata
----@return string, boolean, Range6[]
-function LanguageTree:_get_injection_deprecated(match, metadata)
-  local lang = nil ---@type string
-  local ranges = {} ---@type Range6[]
-  local combined = metadata.combined ~= nil
-
-  -- Directives can configure how injections are captured as well as actual node captures.
-  -- This allows more advanced processing for determining ranges and language resolution.
-  if metadata.content then
-    local content = metadata.content ---@type any
-
-    -- Allow for captured nodes to be used
-    if type(content) == 'number' then
-      content = { match[content]:range() }
-    end
-
-    if type(content) == 'table' and #content >= 4 then
-      vim.list_extend(ranges, content)
-    end
-  end
-
-  local mlang = metadata.language
-  if mlang ~= nil then
-    assert(type(mlang) == 'string')
-    lang = mlang
-  end
-
-  -- You can specify the content and language together
-  -- using a tag with the language, for example
-  -- @javascript
-  for id, node in pairs(match) do
-    local name = self._injection_query.captures[id]
-
-    -- Lang should override any other language tag
-    if name == 'language' and not lang then
-      lang = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
-    elseif name == 'combined' then
-      combined = true
-    elseif name == 'content' and #ranges == 0 then
-      ranges[#ranges + 1] = vim.treesitter.get_range(node, self._source, metadata[id])
-      -- Ignore any tags that start with "_"
-      -- Allows for other tags to be used in matches
-    elseif string.sub(name, 1, 1) ~= '_' then
-      if not lang then
-        lang = name
-      end
-
-      if #ranges == 0 then
-        ranges[#ranges + 1] = vim.treesitter.get_range(node, self._source, metadata[id])
-      end
-    end
-  end
-
-  return lang, combined, ranges
-end
-
 --- Gets language injection points by language.
 ---
 --- This is where most of the injection processing occurs.
@@ -852,11 +793,11 @@ function LanguageTree:_get_injections()
       self._injection_query:iter_matches(root_node, self._source, start_line, end_line + 1)
     do
       local lang, combined, ranges = self:_get_injection(match, metadata)
-      if not lang then
-        -- TODO(lewis6991): remove after 0.9 (#20434)
-        lang, combined, ranges = self:_get_injection_deprecated(match, metadata)
+      if lang then
+        add_injection(injections, index, pattern, lang, combined, ranges)
+      else
+        self:_log('match from injection query failed for pattern', pattern)
       end
-      add_injection(injections, index, pattern, lang, combined, ranges)
     end
   end
 

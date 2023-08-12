@@ -634,7 +634,7 @@ int x = INT_MAX;
         exec_lua([[
         parser = vim.treesitter.get_parser(0, "c", {
           injections = {
-            c = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"}})
+            c = '(preproc_def (preproc_arg) @injection.content (#set! injection.language "c")) (preproc_function_def value: (preproc_arg) @injection.content (#set! injection.language "c"))'}})
         parser:parse(true)
         ]])
 
@@ -667,7 +667,7 @@ int x = INT_MAX;
         exec_lua([[
         parser = vim.treesitter.get_parser(0, "c", {
           injections = {
-            c = "(preproc_def (preproc_arg) @c @combined) (preproc_function_def value: (preproc_arg) @c @combined)"}})
+            c = '(preproc_def (preproc_arg) @injection.content (#set! injection.language "c") (#set! injection.combined)) (preproc_function_def value: (preproc_arg) @injection.content (#set! injection.language "c") (#set! injection.combined))'}})
         parser:parse(true)
         ]])
 
@@ -696,67 +696,12 @@ int x = INT_MAX;
       end)
     end)
 
-    describe("when providing parsing information through a directive", function()
-      it("should inject a language", function()
-        exec_lua([=[
-        vim.treesitter.query.add_directive("inject-clang!", function(match, _, _, pred, metadata)
-          metadata.language = "c"
-          metadata.combined = true
-          metadata.content = pred[2]
-        end)
-
-        parser = vim.treesitter.get_parser(0, "c", {
-          injections = {
-            c = "(preproc_def ((preproc_arg) @_c (#inject-clang! @_c)))" ..
-                "(preproc_function_def value: ((preproc_arg) @_a (#inject-clang! @_a)))"}})
-        parser:parse(true)
-        ]=])
-
-        eq("table", exec_lua("return type(parser:children().c)"))
-        eq(2, exec_lua("return #parser:children().c:trees()"))
-        eq({
-          {0, 0, 7, 0},   -- root tree
-          {3, 14, 5, 18}, -- VALUE 123
-                          -- VALUE1 123
-                          -- VALUE2 123
-          {1, 26, 2, 66}  -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-                          -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
-        }, get_ranges())
-
-        helpers.feed('ggo<esc>')
-        eq("table", exec_lua("return type(parser:children().c)"))
-        eq(2, exec_lua("return #parser:children().c:trees()"))
-        eq({
-          {0, 0, 8, 0},   -- root tree
-          {4, 14, 6, 18}, -- VALUE 123
-                          -- VALUE1 123
-                          -- VALUE2 123
-          {2, 26, 3, 66}  -- READ_STRING(x, y) (char *)read_string((x), (size_t)(y))
-                          -- READ_STRING_OK(x, y) (char *)read_string((x), (size_t)(y))
-        }, get_ranges())
-      end)
-
-      it("should not inject bad languages", function()
-        exec_lua([=[
-        vim.treesitter.query.add_directive("inject-bad!", function(match, _, _, pred, metadata)
-          metadata.language = "{"
-          metadata.combined = true
-          metadata.content = pred[2]
-        end)
-
-        parser = vim.treesitter.get_parser(0, "c", {
-          injections = {
-            c = "(preproc_function_def value: ((preproc_arg) @_a (#inject-bad! @_a)))"}})
-        ]=])
-      end)
-    end)
-
     describe("when using the offset directive", function()
       it("should shift the range by the directive amount", function()
         exec_lua([[
         parser = vim.treesitter.get_parser(0, "c", {
           injections = {
-            c = "(preproc_def ((preproc_arg) @c (#offset! @c 0 2 0 -1))) (preproc_function_def value: (preproc_arg) @c)"}})
+            c = '(preproc_def ((preproc_arg) @injection.content (#set! injection.language "c") (#offset! @injection.content 0 2 0 -1))) (preproc_function_def value: (preproc_arg) @injection.content (#set! injection.language "c"))'}})
         parser:parse(true)
         ]])
 
@@ -797,7 +742,7 @@ int x = INT_MAX;
     it("should return the correct language tree", function()
       local result = exec_lua([[
       parser = vim.treesitter.get_parser(0, "c", {
-        injections = { c = "(preproc_def (preproc_arg) @c)"}})
+        injections = { c = '(preproc_def (preproc_arg) @injection.content (#set! injection.language "c"))'}})
       parser:parse(true)
 
       local sub_tree = parser:language_for_range({1, 18, 1, 19})

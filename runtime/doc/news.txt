@@ -202,6 +202,8 @@ The following deprecated functions or APIs were removed.
 • Vimball support is removed.
   - :Vimuntar command removed.
 
+• Support for legacy treesitter injection queries is removed.
+
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*
 
