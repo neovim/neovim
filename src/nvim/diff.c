@@ -2384,7 +2384,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
 
     if (lnum >= dp->df_lnum[fromidx]) {
-      if (diff_flags & DIFF_LINEMATCH) {
+      if (dp->is_linematched) {
         calculate_topfill_and_topline(fromidx, toidx, fromwin->w_topline,
                                       fromwin->w_topfill, &towin->w_topfill, &towin->w_topline);
       } else {
