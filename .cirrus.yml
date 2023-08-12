@@ -9,7 +9,6 @@ freebsd_task:
     image_family: freebsd-13-1
   timeout_in: 30m
   install_script:
-    - pkg update -f
     - pkg install -y cmake gmake ninja unzip wget gettext python git
   build_deps_script:
     - gmake deps
