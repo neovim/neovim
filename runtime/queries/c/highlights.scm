@@ -1,5 +1,6 @@
 ; Lower priority to prefer @parameter when identifier appears in parameter_declaration.
 ((identifier) @variable (#set! "priority" 95))
+(preproc_def (preproc_arg) @variable)
 
 [
   "default"
@@ -16,6 +17,7 @@
   "sizeof"
   "offsetof"
 ] @keyword.operator
+(alignof_expression . _ @keyword.operator)
 
 "return" @keyword.return
 
@@ -141,8 +143,9 @@
 (storage_class_specifier) @storageclass
 
 [
-  (type_qualifier) 
+  (type_qualifier)
   (gnu_asm_qualifier)
+  "__extension__"
 ] @type.qualifier
 
 (linkage_specification
@@ -157,13 +160,52 @@
 
 ((identifier) @constant
  (#lua-match? @constant "^[A-Z][A-Z0-9_]+$"))
+(preproc_def (preproc_arg) @constant
+  (#lua-match? @constant "^[A-Z][A-Z0-9_]+$"))
 (enumerator
   name: (identifier) @constant)
 (case_statement
   value: (identifier) @constant)
 
 ((identifier) @constant.builtin
-    (#any-of? @constant.builtin "stderr" "stdin" "stdout"))
+  (#any-of? @constant.builtin
+    "stderr" "stdin" "stdout"
+    "__FILE__" "__LINE__" "__DATE__" "__TIME__"
+    "__STDC__" "__STDC_VERSION__" "__STDC_HOSTED__"
+    "__cplusplus" "__OBJC__" "__ASSEMBLER__"
+    "__BASE_FILE__" "__FILE_NAME__" "__INCLUDE_LEVEL__"
+    "__TIMESTAMP__" "__clang__" "__clang_major__"
+    "__clang_minor__" "__clang_patchlevel__"
+    "__clang_version__" "__clang_literal_encoding__"
+    "__clang_wide_literal_encoding__"
+    "__FUNCTION__" "__func__" "__PRETTY_FUNCTION__"
+    "__VA_ARGS__" "__VA_OPT__"))
+(preproc_def (preproc_arg) @constant.builtin
+  (#any-of? @constant.builtin
+    "stderr" "stdin" "stdout"
+    "__FILE__" "__LINE__" "__DATE__" "__TIME__"
+    "__STDC__" "__STDC_VERSION__" "__STDC_HOSTED__"
+    "__cplusplus" "__OBJC__" "__ASSEMBLER__"
+    "__BASE_FILE__" "__FILE_NAME__" "__INCLUDE_LEVEL__"
+    "__TIMESTAMP__" "__clang__" "__clang_major__"
+    "__clang_minor__" "__clang_patchlevel__"
+    "__clang_version__" "__clang_literal_encoding__"
+    "__clang_wide_literal_encoding__"
+    "__FUNCTION__" "__func__" "__PRETTY_FUNCTION__"
+    "__VA_ARGS__" "__VA_OPT__"))
+
+(attribute_specifier
+  (argument_list (identifier) @variable.builtin))
+((attribute_specifier
+  (argument_list (call_expression
+                   function: (identifier) @variable.builtin))))
+
+((call_expression
+  function: (identifier) @function.builtin)
+  (#lua-match? @function.builtin "^__builtin_"))
+((call_expression
+   function: (identifier) @function.builtin)
+  (#has-ancestor? @function.builtin attribute_specifier))
 
 ;; Preproc def / undef
 (preproc_def
@@ -195,6 +237,9 @@
 ;; Parameters
 (parameter_declaration
   declarator: (identifier) @parameter)
+
+(parameter_declaration
+  declarator: (array_declarator) @parameter)
 
 (parameter_declaration
   declarator: (pointer_declarator) @parameter)
