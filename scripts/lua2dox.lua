@@ -61,7 +61,8 @@ local TAGGED_TYPES = { 'TSNode', 'LanguageTree' }
 local ALIAS_TYPES = {
   'Range', 'Range4', 'Range6', 'TSMetadata',
   'vim.filetype.add.filetypes',
-  'vim.filetype.match.args'
+  'vim.filetype.match.args',
+  'LanguageTreeParseOpts',
 }
 
 local debug_outfile = nil --- @type string?
@@ -236,11 +237,11 @@ local function process_magic(line, generics)
     end
 
     for _, type in ipairs(TAGGED_TYPES) do
-      ty = ty:gsub(type, '|%1|')
+      ty = ty:gsub('%f[%w_]' .. type .. '%f[^%w_]', '|%1|')
     end
 
     for _, type in ipairs(ALIAS_TYPES) do
-      ty = ty:gsub('^'..type..'$', 'table') --- @type string
+      ty = ty:gsub('%f[%w_]' .. type .. '%f[^%w_]', 'table')
     end
 
     -- surround some types by ()

@@ -650,7 +650,7 @@ get_range({node}, {source}, {metadata})           *vim.treesitter.get_range()*
       • {node}      |TSNode|
       • {source}    integer|string|nil Buffer or string from which the {node}
                     is extracted
-      • {metadata}  TSMetadata|nil
+      • {metadata}  (table|nil)
 
     Return: ~
         (table)
@@ -726,7 +726,7 @@ node_contains({node}, {range})                *vim.treesitter.node_contains()*
     Return: ~
         (boolean) True if the {node} contains the {range}
 
-start({bufnr}, {lang})                                *vim.treesitter.start()*
+start({bufnr}, {lang}, {opts})                        *vim.treesitter.start()*
     Starts treesitter highlighting for a buffer
 
     Can be used in an ftplugin or FileType autocommand.
@@ -750,6 +750,11 @@ start({bufnr}, {lang})                                *vim.treesitter.start()*
                  buffer)
       • {lang}   (string|nil) Language of the parser (default: buffer
                  filetype)
+      • {opts}   (table|nil) Options:
+                 • max_loop_time (integer|nil): When provided, parsing will
+                   run asynchronously by segmenting the parse over Nvim's
+                   event loop where each segment will run for at most this
+                   value in ms. Defaults to 10ms.
 
 stop({bufnr})                                          *vim.treesitter.stop()*
     Stops treesitter highlighting for a buffer
@@ -1096,7 +1101,7 @@ LanguageTree:for_each_child({fn}, {include_self})
     Invokes the callback for each |LanguageTree| and its children recursively
 
     Parameters: ~
-      • {fn}            fun(tree: LanguageTree, lang: string)
+      • {fn}            fun(tree: LanguageTree, lang: string): boolean?
       • {include_self}  (boolean|nil) Whether to include the invoking tree in
                         the results
 
@@ -1155,13 +1160,24 @@ LanguageTree:named_node_for_range({range}, {opts})
     Return: ~
         |TSNode| | nil Found node
 
-LanguageTree:parse()                                    *LanguageTree:parse()*
+LanguageTree:parse({opts})                              *LanguageTree:parse()*
     Parses all defined regions using a treesitter parser for the language this
     tree represents. This will run the injection query for this language to
     determine if any child languages should be created.
 
+    Parameters: ~
+      • {opts}  (table|nil) Options:
+                • max_loop_time (integer|nil): Maximum time parsing can run on
+                  the event loop per iteration. If parsing reaches or exceeds
+                  this time, parsing is paused and continued in the next loop
+                  iteration. If source is a buffer, parsing is cancelled when
+                  the buffer's changedtick is updated. This causes this
+                  function to be non-blocking and thus will return nil.
+                • callback (function|nil): Called when parsing completes,
+                  passed with TSTree[].
+
     Return: ~
-        TSTree[]
+        TSTree[]|nil
 
                                                  *LanguageTree:register_cbs()*
 LanguageTree:register_cbs({cbs}, {recursive})

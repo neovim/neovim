@@ -13,6 +13,7 @@ local query = vim.treesitter.query
 ---@field orig_spelloptions string
 ---@field _highlight_states table<TSTree,TSHighlightState>
 ---@field _queries table<string,TSHighlighterQuery>
+---@field _max_loop_time integer? Maximum loop time in ms to use when parsing
 ---@field tree LanguageTree
 local TSHighlighter = rawget(vim.treesitter, 'TSHighlighter') or {}
 TSHighlighter.__index = TSHighlighter
@@ -59,6 +60,16 @@ function TSHighlighterQuery:query()
   return self._query
 end
 
+function TSHighlighter:_parse()
+  self.tree:parse({
+    max_loop_time = self._max_loop_time,
+  })
+end
+
+---@class TSHighlighterOpts
+---@field queries table<string,string>?
+---@field max_loop_time integer?
+
 ---@package
 ---
 --- Creates a highlighter for `tree`.
@@ -66,6 +77,7 @@ end
 ---@param tree LanguageTree parser object to use for highlighting
 ---@param opts (table|nil) Configuration of the highlighter:
 ---           - queries table overwrite queries used by the highlighter
+---           - max_loop_time integer Maximum loop time to use in ms for parsing.
 ---@return TSHighlighter Created highlighter object
 function TSHighlighter.new(tree, opts)
   local self = setmetatable({}, TSHighlighter)
@@ -74,7 +86,9 @@ function TSHighlighter.new(tree, opts)
     error('TSHighlighter can not be used with a string parser source.')
   end
 
-  opts = opts or {} ---@type { queries: table<string,string> }
+  ---@type TSHighlighterOpts
+  opts = opts or {}
+
   self.tree = tree
   tree:register_cbs({
     on_bytes = function(...)
@@ -106,6 +120,7 @@ function TSHighlighter.new(tree, opts)
 
   ---@type table<string,TSHighlighterQuery>
   self._queries = {}
+  self._max_loop_time = opts.max_loop_time
 
   -- Queries for a specific language can be overridden by a custom
   -- string query... if one is not provided it will be looked up by file.
@@ -134,7 +149,7 @@ function TSHighlighter.new(tree, opts)
     vim.opt_local.spelloptions:append('noplainbuffer')
   end)
 
-  self.tree:parse()
+  self:_parse()
 
   return self
 end
@@ -314,7 +329,7 @@ end
 function TSHighlighter._on_buf(_, buf)
   local self = TSHighlighter.active[buf]
   if self then
-    self.tree:parse()
+    self:_parse()
   end
 end
 
