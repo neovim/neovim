@@ -694,7 +694,16 @@ describe('search cmdline', function()
                           |
     ]]
     screen:expect(s)
-    feed('/xxx')
+    feed('/xx')
+    screen:expect([[
+                          |
+                          |
+                          |
+                          |
+      {inc:xx}x                 |
+      /xx^                 |
+    ]])
+    feed('x')
     screen:expect([[
                           |
                           |

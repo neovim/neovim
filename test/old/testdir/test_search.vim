@@ -2027,8 +2027,10 @@ func Test_incsearch_restore_view()
   let buf = RunVimInTerminal('-S Xincsearch_restore_view', {'rows': 6, 'cols': 20})
 
   call VerifyScreenDump(buf, 'Test_incsearch_restore_view_01', {})
-  call term_sendkeys(buf, '/xxx')
+  call term_sendkeys(buf, '/xx')
   call VerifyScreenDump(buf, 'Test_incsearch_restore_view_02', {})
+  call term_sendkeys(buf, 'x')
+  call VerifyScreenDump(buf, 'Test_incsearch_restore_view_03', {})
   call term_sendkeys(buf, "\<Esc>")
   call VerifyScreenDump(buf, 'Test_incsearch_restore_view_01', {})
 
