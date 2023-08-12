@@ -80,6 +80,11 @@ typedef kvec_t(AutoCmd) AutoCmdVec;
 // apply_autocmds_group.
 EXTERN bool au_did_filetype INIT(= false);
 
+/// For CursorMoved event
+EXTERN win_T *last_cursormoved_win INIT(= NULL);
+/// For CursorMoved event, only used when last_cursormoved_win == curwin
+EXTERN pos_T last_cursormoved INIT(= { 0, 0, 0 });
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "autocmd.h.generated.h"
 #endif

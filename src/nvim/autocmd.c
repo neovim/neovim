@@ -1030,7 +1030,8 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
     // If the event is CursorMoved, update the last cursor position
     // position to avoid immediately triggering the autocommand
     if (event == EVENT_CURSORMOVED && !has_event(EVENT_CURSORMOVED)) {
-      curwin->w_last_cursormoved = curwin->w_cursor;
+      last_cursormoved_win = curwin;
+      last_cursormoved = curwin->w_cursor;
     }
 
     // Initialize the fields checked by the WinScrolled and

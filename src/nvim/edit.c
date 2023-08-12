@@ -1287,7 +1287,8 @@ void ins_redraw(bool ready)
   // Trigger CursorMoved if the cursor moved.  Not when the popup menu is
   // visible, the command might delete it.
   if (ready && has_event(EVENT_CURSORMOVEDI)
-      && !equalpos(curwin->w_last_cursormoved, curwin->w_cursor)
+      && (last_cursormoved_win != curwin
+          || !equalpos(last_cursormoved, curwin->w_cursor))
       && !pum_visible()) {
     // Need to update the screen first, to make sure syntax
     // highlighting is correct after making a change (e.g., inserting
@@ -1300,7 +1301,8 @@ void ins_redraw(bool ready)
     // getcurpos()
     update_curswant();
     ins_apply_autocmds(EVENT_CURSORMOVEDI);
-    curwin->w_last_cursormoved = curwin->w_cursor;
+    last_cursormoved_win = curwin;
+    last_cursormoved = curwin->w_cursor;
   }
 
   // Trigger TextChangedI if changedtick differs.
