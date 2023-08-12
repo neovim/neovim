@@ -657,6 +657,9 @@ local function sort_completion_items(items)
 end
 
 local function charidx_without_compchar(ltext, col)
+  if col <= 0 or #ltext == 0 then
+    return col
+  end
   local byte_idx = vim.fn.byteidxcomp(ltext, col)
   if byte_idx ~= -1 then
     return byte_idx == vim.fn.strlen(ltext) and vim.fn.strcharlen(ltext)
@@ -673,8 +676,8 @@ local function get_completion_word(item, ltext, startchar_col)
     local insert_text_format = protocol.InsertTextFormat[item.insertTextFormat]
     if insert_text_format == 'PlainText' or insert_text_format == nil then
       local textstart_col = charidx_without_compchar(ltext, item.textEdit.range.start.character)
-      local offset = startchar_col - textstart_col - 1
-      return textstart_col ~= startchar_col and item.textEdit.newText:sub(offset + 1)
+      local offset = startchar_col - textstart_col
+      return textstart_col ~= startchar_col and item.textEdit.newText:sub(offset)
         or item.textEdit.newText
     else
       return M.parse_snippet(item.textEdit.newText)

@@ -2323,18 +2323,13 @@ function lsp.omnifunc(findstart, base)
   local win = api.nvim_get_current_win()
   local pos = api.nvim_win_get_cursor(win)
   local line = api.nvim_get_current_line()
-  local line_to_cursor = line:sub(1, pos[2])
+  local char_col = vim.fn.charcol('.')
+  local line_to_cursor = char_col == 1 and '' or line:sub(1, char_col)
   local _ = log.trace() and log.trace('omnifunc.line', pos, line)
 
   -- Get the start position of the current keyword
   local prefix, start_idx = unpack(vim.fn.matchstrpos(line_to_cursor, '\\k*$'))
-  local startchar_col
-
-  if #prefix ~= 0 then
-    startchar_col = vim.fn.charidx(line_to_cursor, start_idx) + 1
-  else
-    startchar_col = start_idx + 1
-  end
+  local startchar_col = #prefix ~= 0 and vim.fn.charidx(line_to_cursor, start_idx) + 1 or char_col
 
   local items = {}
 
