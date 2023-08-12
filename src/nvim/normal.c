@@ -1267,9 +1267,11 @@ static void normal_check_cursor_moved(NormalState *s)
 {
   // Trigger CursorMoved if the cursor moved.
   if (!finish_op && has_event(EVENT_CURSORMOVED)
-      && !equalpos(curwin->w_last_cursormoved, curwin->w_cursor)) {
+      && (last_cursormoved_win != curwin
+          || !equalpos(last_cursormoved, curwin->w_cursor))) {
     apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
-    curwin->w_last_cursormoved = curwin->w_cursor;
+    last_cursormoved_win = curwin;
+    last_cursormoved = curwin->w_cursor;
   }
 }
 

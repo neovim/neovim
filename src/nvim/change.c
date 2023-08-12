@@ -361,9 +361,10 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T 
   }
 
   // when the cursor line is changed always trigger CursorMoved
-  if (lnum <= curwin->w_cursor.lnum
+  if (last_cursormoved_win == curwin
+      && lnum <= curwin->w_cursor.lnum
       && lnume + (xtra < 0 ? -xtra : xtra) > curwin->w_cursor.lnum) {
-    curwin->w_last_cursormoved.lnum = 0;
+    last_cursormoved.lnum = 0;
   }
 }
 

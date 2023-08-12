@@ -455,7 +455,7 @@ coerced to strings. See |id()| for more details, currently it uses
 
 |c_CTRL-R| pasting a non-special register into |cmdline| omits the last <CR>.
 
-|CursorMoved| always triggers when moving between windows.
+|CursorMoved| triggers when moving between windows.
 
 Lua interface (|lua.txt|):
 

@@ -4943,7 +4943,6 @@ static void win_enter_ext(win_T *const wp, const int flags)
     if (other_buffer) {
       apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
     }
-    curwin->w_last_cursormoved.lnum = 0;
   }
 
   maketitle();
