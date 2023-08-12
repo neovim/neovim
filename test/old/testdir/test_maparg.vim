@@ -339,7 +339,7 @@ func Test_map_restore_sid()
   new
   source Xmapscript
   inoremap <buffer> <C-B> <Cmd>call RestoreMap()<CR>
-  call feedkeys("i\<CR>\<C-B>\<CR>", 'xt')
+  call feedkeys("i\<CR>\<*C-B>\<CR>", 'xt')
   call assert_equal(['', '42', '42'], getline(1, '$'))
 
   bwipe!
