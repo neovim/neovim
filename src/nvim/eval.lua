@@ -4105,6 +4105,9 @@ M.funcs = {
       	text	description of the error
       	type	type of the error, 'E', '1', etc.
       	valid	|TRUE|: recognized error message
+      	user_data
+      		custom data associated with the item, can be
+      		any type.
 
       When there is no error list or it's empty, an empty list is
       returned. Quickfix list entries with a non-existing buffer
@@ -9121,6 +9124,9 @@ M.funcs = {
           text	description of the error
           type	single-character error type, 'E', 'W', etc.
           valid	recognized error message
+          user_data
+      		custom data associated with the item, can be
+      		any type.
 
       The "col", "vcol", "nr", "type" and "text" entries are
       optional.  Either "lnum" or "pattern" entry can be used to
