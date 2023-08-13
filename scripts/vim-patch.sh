@@ -175,13 +175,13 @@ assign_commit_details() {
   vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
   vim_message="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:%B' "${vim_commit}" \
       | sed -e 's/\(#[0-9]\{1,\}\)/vim\/vim\1/g')"
-  local coauthor0
-  coauthor0="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:Co-authored-by: %an <%ae>' "${vim_commit}")"
+  local vim_coauthor0
+  vim_coauthor0="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:Co-authored-by: %an <%ae>' "${vim_commit}")"
   # Extract co-authors from the commit message.
-  vim_coauthors="$(echo "${vim_message}" | (grep -E '^Co-authored-by: ' || true) | (grep -Fxv "${coauthor0}" || true))"
-  vim_coauthors="$(echo "${coauthor0}"; echo "${vim_coauthors}")"
+  vim_coauthors="$(echo "${vim_message}" | (grep -E '^Co-authored-by: ' || true) | (grep -Fxv "${vim_coauthor0}" || true))"
+  vim_coauthors="$(echo "${vim_coauthor0}"; echo "${vim_coauthors}")"
   # Remove Co-authored-by and Signed-off-by lines from the commit message.
-  vim_message="$(echo "${vim_message}" | sed -e '/\(Co-authored\|Signed-off\)-by: /d')"
+  vim_message="$(echo "${vim_message}" | sed -e '/^\(Co-authored\|Signed-off\)-by: /d')"
   if [[ ${munge_commit_line} == "true" ]]; then
     # Remove first line of commit message.
     vim_message="$(echo "${vim_message}" | sed -e '1s/^patch /vim-patch:/')"
@@ -241,43 +241,47 @@ preprocess_patch() {
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename evalfunc.c to eval/funcs.c
-  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/evalfunc\.c/\1\/eval\/funcs\.c/g' \
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/evalfunc\.c/\1\/eval\/funcs.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename evalvars.c to eval/vars.c
-  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/evalvars\.c/\1\/eval\/vars\.c/g' \
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/evalvars\.c/\1\/eval\/vars.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename userfunc.c to eval/userfunc.c
-  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/userfunc\.c/\1\/eval\/userfunc\.c/g' \
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/userfunc\.c/\1\/eval\/userfunc.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename evalbuffer.c to eval/buffer.c
-  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/evalbuffer\.c/\1\/eval\/buffer\.c/g' \
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/evalbuffer\.c/\1\/eval\/buffer.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename evalwindow.c to eval/window.c
-  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/evalwindow\.c/\1\/eval\/window\.c/g' \
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/evalwindow\.c/\1\/eval\/window.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename map.c to mapping.c
-  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/map\(\.[ch]\)/\1\/mapping\2/g' \
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/map\.c/\1\/mapping.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename profiler.c to profile.c
-  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/profiler\(\.[ch]\)/\1\/profile\2/g' \
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/profiler\.c/\1\/profile.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename scriptfile.c to runtime.c
-  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/scriptfile\(\.[ch]\)/\1\/runtime\2/g' \
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/scriptfile\.c/\1\/runtime.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename session.c to ex_session.c
-  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/session\(\.[ch]\)/\1\/ex_session\2/g' \
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/session\.c/\1\/ex_session.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename highlight.c to highlight_group.c
-  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/highlight\(\.[ch]\)/\1\/highlight_group\2/g' \
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/highlight\.c/\1\/highlight_group.c/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
+  # Rename locale.c to os/lang.c
+  LC_ALL=C sed -e 's/\( [ab]\/src\/nvim\)\/locale\.c/\1\/os\/lang.c/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename keymap.h to keycodes.h
@@ -289,11 +293,11 @@ preprocess_patch() {
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename test_urls.vim to check_urls.vim
-  LC_ALL=C sed -e 's@\( [ab]\)/runtime/doc/test\(_urls\.vim\)@\1/scripts/check\2@g' \
+  LC_ALL=C sed -e 's/\( [ab]\)\/runtime\/doc\/test\(_urls\.vim\)/\1\/scripts\/check\2/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
   # Rename path to check_colors.vim
-  LC_ALL=C sed -e 's@\( [ab]/runtime\)/colors/\(tools/check_colors\.vim\)@\1/\2@g' \
+  LC_ALL=C sed -e 's/\( [ab]\/runtime\)\/colors\/\(tools\/check_colors\.vim\)/\1\/\2/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 }
 
