@@ -379,9 +379,7 @@ describe("'scrollback' option", function()
   end)
 
   local function set_fake_shell()
-    -- shell-test.c is a fake shell that prints its arguments and exits.
-    nvim('set_option_value', 'shell', testprg('shell-test'), {})
-    nvim('set_option_value', 'shellcmdflag', 'EXE', {})
+    nvim('set_option_value', 'shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
   end
 
   local function expect_lines(expected, epsilon)
@@ -514,9 +512,7 @@ describe("'scrollback' option", function()
 
     -- _Global_ scrollback=-1 defaults :terminal to 10_000.
     command('setglobal scrollback=-1')
-    -- Pass a command to prevent the terminal buffer from automatically
-    -- closing. The ':' command is just a no-op.
-    command('terminal :')
+    command('terminal')
     eq(10000, meths.get_option_value('scrollback', {}))
 
     -- _Local_ scrollback=-1 in :terminal forces the _maximum_.
