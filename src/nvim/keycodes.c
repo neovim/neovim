@@ -825,6 +825,10 @@ int find_special_key_in_table(int c)
 int get_special_key_code(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
+  if (name[0] == 't' && name[1] == '_' && name[2] != NUL && name[3] != NUL) {
+    return TERMCAP2KEY((uint8_t)name[2], (uint8_t)name[3]);
+  }
+
   for (int i = 0; key_names_table[i].name != NULL; i++) {
     const char *const table_name = key_names_table[i].name;
     int j;
