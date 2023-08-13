@@ -268,11 +268,6 @@ int linetabsize_col(int startcol, char *s)
   while (*cts.cts_ptr != NUL) {
     cts.cts_vcol += lbr_chartabsize_adv(&cts);
   }
-  if (cts.cts_has_virt_text && cts.cts_ptr == cts.cts_line) {
-    // check for virtual text in an empty line
-    (void)lbr_chartabsize_adv(&cts);
-    cts.cts_vcol += cts.cts_cur_text_width_left + cts.cts_cur_text_width_right;
-  }
   clear_chartabsize_arg(&cts);
   return cts.cts_vcol;
 }
