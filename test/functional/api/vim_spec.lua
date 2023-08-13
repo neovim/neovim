@@ -1957,6 +1957,12 @@ describe('API', function()
       -- value.
       eq('', meths.replace_termcodes('', true, true, true))
     end)
+
+    -- Not exactly the case, as nvim_replace_termcodes() escapes K_SPECIAL in Unicode
+    it('translates the result of keytrans() on string with 0x80 byte back', function()
+      local s = 'ff\128\253\097tt'
+      eq(s, meths.replace_termcodes(funcs.keytrans(s), true, true, true))
+    end)
   end)
 
   describe('nvim_feedkeys', function()
