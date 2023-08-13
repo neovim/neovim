@@ -1107,13 +1107,26 @@ end
 
 function vim._init_default_autocmds()
   local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim_terminal', {})
-  vim.api.nvim_create_autocmd({ 'bufreadcmd' }, {
+  vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
     pattern = 'term://*',
     group = nvim_terminal_augroup,
     nested = true,
     command = "if !exists('b:term_title')|call termopen(matchstr(expand(\"<amatch>\"), '\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), {'cwd': expand(get(matchlist(expand(\"<amatch>\"), '\\c\\mterm://\\(.\\{-}\\)//'), 1, ''))})",
   })
-  vim.api.nvim_create_autocmd({ 'cmdwinenter' }, {
+  vim.api.nvim_create_autocmd({ 'TermClose' }, {
+    group = nvim_terminal_augroup,
+    desc = 'Automatically close terminal buffers when started with no arguments and exiting without an error',
+    callback = function(args)
+      if vim.v.event.status == 0 then
+        local info = vim.api.nvim_get_chan_info(vim.bo[args.buf].channel)
+        local argv = info.argv or {}
+        if #argv == 1 and argv[1] == vim.o.shell then
+          vim.cmd({ cmd = 'bdelete', args = { args.buf }, bang = true })
+        end
+      end
+    end,
+  })
+  vim.api.nvim_create_autocmd({ 'CmdwinEnter' }, {
     pattern = '[:>]',
     group = vim.api.nvim_create_augroup('nvim_cmdwin', {}),
     command = 'syntax sync minlines=1 maxlines=1',

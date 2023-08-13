@@ -249,6 +249,10 @@ gx			Opens the current filepath or URL (decided by
 			Fails if changes have been made to the current buffer,
 			unless 'hidden' is set.
 
+			If {cmd} is omitted, and the 'shell' job exits with no
+			error, the buffer is closed automatically
+			|default-autocmds|.
+
 			To enter |Terminal-mode| automatically: >
 			      autocmd TermOpen * startinsert
 <

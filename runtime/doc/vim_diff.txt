@@ -133,6 +133,8 @@ remove them and ":autocmd {group}" to see how they're defined.
 
 nvim_terminal:
 - BufReadCmd: Treats "term://" buffers as |terminal| buffers. |terminal-start|
+- TermClose: A |terminal| buffer started with no arguments (which thus uses
+  'shell') and which exits with no error is closed automatically.
 
 nvim_cmdwin:
 - CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.

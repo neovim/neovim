@@ -103,12 +103,13 @@ describe('autocmd TermClose', function()
 
   it('reports the correct <abuf>', function()
     command('set hidden')
+    command('set shellcmdflag=EXE')
     command('autocmd TermClose * let g:abuf = expand("<abuf>")')
     command('edit foo')
     command('edit bar')
     eq(2, eval('bufnr("%")'))
 
-    command('terminal')
+    command('terminal ls')
     retry(nil, nil, function() eq(3, eval('bufnr("%")')) end)
 
     command('buffer 1')

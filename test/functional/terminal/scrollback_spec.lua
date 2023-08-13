@@ -514,7 +514,9 @@ describe("'scrollback' option", function()
 
     -- _Global_ scrollback=-1 defaults :terminal to 10_000.
     command('setglobal scrollback=-1')
-    command('terminal')
+    -- Pass a command to prevent the terminal buffer from automatically
+    -- closing. The ':' command is just a no-op.
+    command('terminal :')
     eq(10000, meths.get_option_value('scrollback', {}))
 
     -- _Local_ scrollback=-1 in :terminal forces the _maximum_.
