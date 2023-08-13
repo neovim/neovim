@@ -119,10 +119,10 @@ get_vim_sources() {
 }
 
 commit_message() {
-  if [[ -n "$vim_tag" ]]; then
-    printf '%s\n\n%s\n\n%s' "${vim_message}" "${vim_commit_url}" "${vim_coauthor}"
+  if [[ "${vim_message}" == "vim-patch:${vim_version}:"* ]]; then
+    printf '%s\n\n%s\n\n%s' "${vim_message}" "${vim_commit_url}" "${vim_coauthors}"
   else
-    printf 'vim-patch:%s\n\n%s\n\n%s\n\n%s' "$vim_version" "$vim_message" "$vim_commit_url" "$vim_coauthor"
+    printf 'vim-patch:%s\n\n%s\n\n%s\n\n%s' "$vim_version" "$vim_message" "$vim_commit_url" "$vim_coauthors"
   fi
 }
 
@@ -175,7 +175,13 @@ assign_commit_details() {
   vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
   vim_message="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:%B' "${vim_commit}" \
       | sed -e 's/\(#[0-9]\{1,\}\)/vim\/vim\1/g')"
-  vim_coauthor="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:Co-authored-by: %an <%ae>' "${vim_commit}")"
+  local coauthor0
+  coauthor0="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:Co-authored-by: %an <%ae>' "${vim_commit}")"
+  # Extract co-authors from the commit message.
+  vim_coauthors="$(echo "${vim_message}" | (grep -E '^Co-authored-by: ' || true) | (grep -Fxv "${coauthor0}" || true))"
+  vim_coauthors="$(echo "${coauthor0}"; echo "${vim_coauthors}")"
+  # Remove Co-authored-by and Signed-off-by lines from the commit message.
+  vim_message="$(echo "${vim_message}" | sed -e '/\(Co-authored\|Signed-off\)-by: /d')"
   if [[ ${munge_commit_line} == "true" ]]; then
     # Remove first line of commit message.
     vim_message="$(echo "${vim_message}" | sed -e '1s/^patch /vim-patch:/')"
