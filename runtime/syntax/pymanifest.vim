@@ -20,7 +20,7 @@ syn match pymanifestComment /\\\@1<!#.*/ contains=pymanifestTodo
 " Commands
 syn keyword pymanifestCommand
             \ include exclude
-            \ recursive-include global-include
+            \ recursive-include resursive-exclude
             \ global-include global-exclude
             \ graft prune
 
