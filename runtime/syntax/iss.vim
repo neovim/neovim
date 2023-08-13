@@ -2,10 +2,9 @@
 " Language:             Inno Setup File (iss file) and My InnoSetup extension
 " Maintainer:           Jason Mills (jmills@cs.mun.ca)
 " Previous Maintainer:  Dominique Stéphan (dominique@mggen.com)
-" Last Change:          2021 Aug 30
+" Last Change:          2023 Jan 26
 "
 " Todo:
-"  - The parameter String: is matched as flag string (because of case ignore).
 "  - Pascal scripting syntax is not recognized.
 "  - Embedded double quotes confuse string matches. e.g. "asfd""asfa"
 
@@ -16,6 +15,9 @@ endif
 
 " shut case off
 syn case ignore
+
+" match keywords with colon
+syn iskeyword @,48-57,_,192-255,:
 
 " Preprocessor
 syn region issPreProc start="^\s*#" end="$"
@@ -30,25 +32,25 @@ syn match  issDirective	"^[^=]\+="
 syn match  issURL	"http[s]\=:\/\/.*$"
 
 " Parameters used for any section.
-" syn match  issParam"[^: ]\+:"
-syn match  issParam	"Name:"
-syn match  issParam	"MinVersion:\|OnlyBelowVersion:\|Languages:"
-syn match  issParam	"Source:\|DestDir:\|DestName:\|CopyMode:"
-syn match  issParam	"Attribs:\|Permissions:\|FontInstall:\|Flags:"
-syn match  issParam	"FileName:\|Parameters:\|WorkingDir:\|HotKey:\|Comment:"
-syn match  issParam	"IconFilename:\|IconIndex:"
-syn match  issParam	"Section:\|Key:\|String:"
-syn match  issParam	"Root:\|SubKey:\|ValueType:\|ValueName:\|ValueData:"
-syn match  issParam	"RunOnceId:"
-syn match  issParam	"Type:\|Excludes:"
-syn match  issParam	"Components:\|Description:\|GroupDescription:\|Types:\|ExtraDiskSpaceRequired:"
-syn match  issParam	"StatusMsg:\|RunOnceId:\|Tasks:"
-syn match  issParam	"MessagesFile:\|LicenseFile:\|InfoBeforeFile:\|InfoAfterFile:"
+" syn match  issParam "[^: ]\+:"
+syn keyword issParam	Name:
+syn keyword issParam	MinVersion: OnlyBelowVersion: Languages:
+syn keyword issParam	Source: DestDir: DestName: CopyMode: ExternalSize:
+syn keyword issParam	Attribs: Permissions: FontInstall: Flags:
+syn keyword issParam	FileName: Parameters: WorkingDir: HotKey: Comment:
+syn keyword issParam	IconFilename: IconIndex:
+syn keyword issParam	Section: Key: String:
+syn keyword issParam	Root: SubKey: ValueType: ValueName: ValueData:
+syn keyword issParam	RunOnceId:
+syn keyword issParam	Type: Excludes:
+syn keyword issParam	Components: Description: GroupDescription: Types: ExtraDiskSpaceRequired:
+syn keyword issParam	StatusMsg: RunOnceId: Tasks:
+syn keyword issParam	MessagesFile: LicenseFile: InfoBeforeFile: InfoAfterFile:
 
 syn match  issComment	"^\s*;.*$" contains=@Spell
 
 " folder constant
-syn match  issFolder	"{[^{]*}" contains=@NoSpell
+syn match  issFolder	"{\@1<!{[^{]*}" contains=@NoSpell
 
 " string
 syn region issString	start=+"+ end=+"+ contains=issFolder,@Spell
@@ -61,16 +63,16 @@ syn keyword issFilesCopyMode normal onlyifdoesntexist alwaysoverwrite alwaysskip
 syn keyword issFilesAttribs readonly hidden system
 syn keyword issFilesPermissions full modify readexec
 syn keyword issFilesFlags allowunsafefiles comparetimestampalso confirmoverwrite deleteafterinstall
-syn keyword issFilesFlags dontcopy dontverifychecksum external fontisnttruetype ignoreversion 
-syn keyword issFilesFlags isreadme onlyifdestfileexists onlyifdoesntexist overwritereadonly 
+syn keyword issFilesFlags dontcopy dontverifychecksum external fontisnttruetype ignoreversion
+syn keyword issFilesFlags isreadme onlyifdestfileexists onlyifdoesntexist overwritereadonly
 syn keyword issFilesFlags promptifolder recursesubdirs regserver regtypelib restartreplace
-syn keyword issFilesFlags sharedfile skipifsourcedoesntexist sortfilesbyextension touch 
+syn keyword issFilesFlags sharedfile skipifsourcedoesntexist sortfilesbyextension touch
 syn keyword issFilesFlags uninsremovereadonly uninsrestartdelete uninsneveruninstall
-syn keyword issFilesFlags replacesameversion nocompression noencryption noregerror
+syn keyword issFilesFlags replacesameversion setntfscompression nocompression noencryption noregerror
 
 
 " [Icons]
-syn keyword issIconsFlags closeonexit createonlyiffileexists dontcloseonexit 
+syn keyword issIconsFlags closeonexit createonlyiffileexists dontcloseonexit
 syn keyword issIconsFlags runmaximized runminimized uninsneveruninstall useapppaths
 
 " [INI]
@@ -79,13 +81,13 @@ syn keyword issINIFlags createkeyifdoesntexist uninsdeleteentry uninsdeletesecti
 " [Registry]
 syn keyword issRegRootKey   HKCR HKCU HKLM HKU HKCC
 syn keyword issRegValueType none string expandsz multisz dword binary
-syn keyword issRegFlags createvalueifdoesntexist deletekey deletevalue dontcreatekey 
-syn keyword issRegFlags preservestringtype noerror uninsclearvalue 
+syn keyword issRegFlags createvalueifdoesntexist deletekey deletevalue dontcreatekey
+syn keyword issRegFlags preservestringtype noerror uninsclearvalue
 syn keyword issRegFlags uninsdeletekey uninsdeletekeyifempty uninsdeletevalue
 
 " [Run] and [UninstallRun]
 syn keyword issRunFlags hidewizard nowait postinstall runhidden runmaximized
-syn keyword issRunFlags runminimized shellexec skipifdoesntexist skipifnotsilent 
+syn keyword issRunFlags runminimized shellexec skipifdoesntexist skipifnotsilent
 syn keyword issRunFlags skipifsilent unchecked waituntilidle
 
 " [Types]
@@ -98,7 +100,7 @@ syn keyword issComponentsFlags dontinheritcheck exclusive fixed restart disablen
 syn keyword issInstallDeleteType files filesandordirs dirifempty
 
 " [Tasks]
-syn keyword issTasksFlags checkedonce dontinheritcheck exclusive restart unchecked 
+syn keyword issTasksFlags checkedonce dontinheritcheck exclusive restart unchecked
 
 
 " Define the default highlighting.
@@ -112,7 +114,7 @@ hi def link issParam	Type
 hi def link issFolder	Special
 hi def link issString	String
 hi def link issURL	Include
-hi def link issPreProc	PreProc 
+hi def link issPreProc	PreProc
 
 hi def link issDirsFlags		Keyword
 hi def link issFilesCopyMode	Keyword
