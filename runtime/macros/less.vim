@@ -1,6 +1,7 @@
 " Vim script to work like "less"
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2020 Dec 17
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
+" Last Change:	2023 Aug 10
+" Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Avoid loading this file twice, allow the user to define his own script.
 if exists("loaded_less")

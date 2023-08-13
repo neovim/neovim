@@ -1,7 +1,8 @@
 " Vim support file to switch on loading plugins for file types
 "
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2006 Apr 30
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
+" Last change:	2023 Aug 10
+" Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 if exists("did_load_ftplugin")
   finish

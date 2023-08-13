@@ -1,7 +1,8 @@
 " Vim syntax file
 " Language:	Quickfix window
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2001 Jan 15
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
+" Last Change:	2023 Aug 10
+" Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")

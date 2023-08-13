@@ -1,7 +1,8 @@
 " Vim filetype plugin file
 " Language:	Make
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2020 Oct 16
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
+" Last Change:	2023 Aug 10
+" Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")

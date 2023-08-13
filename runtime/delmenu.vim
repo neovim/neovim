@@ -1,8 +1,9 @@
 " This Vim script deletes all the menus, so that they can be redefined.
 " Warning: This also deletes all menus defined by the user!
 "
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 Dec 10
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
+" Last Change:	2023 Aug 10
+" Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 aunmenu *
 tlunmenu *

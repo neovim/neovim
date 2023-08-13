@@ -1,7 +1,8 @@
 " Vim script for testing colors
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
 " Contributors:	Rafael Garcia-Suarez, Charles Campbell
-" Last Change:	2008 Jun 04
+" Last Change:	2023 Aug 10
+" Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " edit this file, then do ":source %", and check if the colors match
 
