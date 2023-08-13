@@ -676,8 +676,9 @@ inspect_tree({opts})                           *vim.treesitter.inspect_tree()*
     language tree.
 
     While in the window, press "a" to toggle display of anonymous nodes, "I"
-    to toggle the display of the source language of each node, and press
-    <Enter> to jump to the node under the cursor in the source buffer.
+    to toggle the display of the source language of each node, "o" to toggle
+    the query previewer, and press <Enter> to jump to the node under the
+    cursor in the source buffer.
 
     Can also be shown with `:InspectTree`.                      *:InspectTree*
 
@@ -729,6 +730,11 @@ node_contains({node}, {range})                *vim.treesitter.node_contains()*
 
     Return: ~
         (boolean) True if the {node} contains the {range}
+
+preview_query()                               *vim.treesitter.preview_query()*
+    Open a window for live editing of a treesitter query.
+
+    Can also be shown with `:PreviewQuery`.                    *:PreviewQuery*
 
 start({bufnr}, {lang})                                *vim.treesitter.start()*
     Starts treesitter highlighting for a buffer

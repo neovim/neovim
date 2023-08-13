@@ -124,7 +124,7 @@ function TSTreeView:new(bufnr, lang)
   end
 
   local t = {
-    ns = api.nvim_create_namespace(''),
+    ns = api.nvim_create_namespace('treesitter/dev-inspect'),
     nodes = nodes,
     named = named,
     opts = {
@@ -156,6 +156,29 @@ end
 ---@return string
 local function escape_quotes(text)
   return string.format('"%s"', text:sub(2, #text - 1):gsub('"', '\\"'))
+end
+
+---@param w integer
+---@return boolean closed Whether the window was closed.
+local function close_win(w)
+  if api.nvim_win_is_valid(w) then
+    api.nvim_win_close(w, true)
+    return true
+  end
+
+  return false
+end
+
+---@param w integer
+---@param b integer
+local function set_dev_properties(w, b)
+  vim.wo[w].scrolloff = 5
+  vim.wo[w].wrap = false
+  vim.wo[w].foldmethod = 'manual' -- disable folding
+  vim.bo[b].buflisted = false
+  vim.bo[b].buftype = 'nofile'
+  vim.bo[b].bufhidden = 'wipe'
+  vim.bo[b].filetype = 'query'
 end
 
 --- Write the contents of this View into {bufnr}.
@@ -247,12 +270,9 @@ function M.inspect_tree(opts)
   local win = api.nvim_get_current_win()
   local pg = assert(TSTreeView:new(buf, opts.lang))
 
-  -- Close any existing dev window
-  if vim.b[buf].dev then
-    local w = vim.b[buf].dev
-    if api.nvim_win_is_valid(w) then
-      api.nvim_win_close(w, true)
-    end
+  -- Close any existing inspector window
+  if vim.b[buf].dev_inspect then
+    close_win(vim.b[buf].dev_inspect)
   end
 
   local w = opts.winid
@@ -268,16 +288,10 @@ function M.inspect_tree(opts)
     b = api.nvim_win_get_buf(w)
   end
 
-  vim.b[buf].dev = w
-
-  vim.wo[w].scrolloff = 5
-  vim.wo[w].wrap = false
-  vim.wo[w].foldmethod = 'manual' -- disable folding
-  vim.bo[b].buflisted = false
-  vim.bo[b].buftype = 'nofile'
-  vim.bo[b].bufhidden = 'wipe'
+  vim.b[buf].dev_inspect = w
+  vim.b[b].dev_base = win -- base window handle
   vim.b[b].disable_query_linter = true
-  vim.bo[b].filetype = 'query'
+  set_dev_properties(w, b)
 
   local title --- @type string?
   local opts_title = opts.title
@@ -306,7 +320,7 @@ function M.inspect_tree(opts)
   api.nvim_buf_set_keymap(b, 'n', 'a', '', {
     desc = 'Toggle anonymous nodes',
     callback = function()
-      local row, col = unpack(api.nvim_win_get_cursor(w))
+      local row, col = unpack(api.nvim_win_get_cursor(w)) ---@type integer, integer
       local curnode = pg:get(row)
       while curnode and not curnode.named do
         row = row - 1
@@ -334,6 +348,15 @@ function M.inspect_tree(opts)
     callback = function()
       pg.opts.lang = not pg.opts.lang
       pg:draw(b)
+    end,
+  })
+  api.nvim_buf_set_keymap(b, 'n', 'o', '', {
+    desc = 'Toggle query previewer',
+    callback = function()
+      local preview_w = vim.b[buf].dev_preview
+      if not preview_w or not close_win(preview_w) then
+        M.preview_query()
+      end
     end,
   })
 
@@ -436,11 +459,148 @@ function M.inspect_tree(opts)
     buffer = buf,
     once = true,
     callback = function()
-      if api.nvim_win_is_valid(w) then
-        api.nvim_win_close(w, true)
-      end
+      close_win(w)
     end,
   })
+end
+
+local preview_ns = api.nvim_create_namespace('treesitter/dev-preview')
+
+---@param query_win integer
+---@param base_win integer
+local function update_preview_highlights(query_win, base_win)
+  local base_buf = api.nvim_win_get_buf(base_win)
+  local query_buf = api.nvim_win_get_buf(query_win)
+  local parser = vim.treesitter.get_parser(base_buf)
+  local lang = parser:lang()
+  api.nvim_buf_clear_namespace(base_buf, preview_ns, 0, -1)
+  local query_content = table.concat(api.nvim_buf_get_lines(query_buf, 0, -1, false), '\n')
+
+  local ok_query, query = pcall(vim.treesitter.query.parse, lang, query_content)
+  if not ok_query then
+    return
+  end
+
+  local cursor_word = vim.fn.expand('<cword>') --[[@as string]]
+  -- Only highlight captures if the cursor is on a capture name
+  if cursor_word:find('^@') == nil then
+    return
+  end
+  -- Remove the '@' from the cursor word
+  cursor_word = cursor_word:sub(2)
+  local topline, botline = vim.fn.line('w0', base_win), vim.fn.line('w$', base_win)
+  for id, node in query:iter_captures(parser:trees()[1]:root(), base_buf, topline - 1, botline) do
+    local capture_name = query.captures[id]
+    if capture_name == cursor_word then
+      local lnum, col, end_lnum, end_col = node:range()
+      api.nvim_buf_set_extmark(base_buf, preview_ns, lnum, col, {
+        end_row = end_lnum,
+        end_col = end_col,
+        hl_group = 'Visual',
+        virt_text = {
+          { capture_name, 'Title' },
+        },
+      })
+    end
+  end
+end
+
+--- @private
+function M.preview_query()
+  local buf = api.nvim_get_current_buf()
+  local win = api.nvim_get_current_win()
+
+  -- Close any existing previewer window
+  if vim.b[buf].dev_preview then
+    close_win(vim.b[buf].dev_preview)
+  end
+
+  local cmd = '60vnew'
+  -- If the inspector is open, place the previewer above it.
+  local base_win = vim.b[buf].dev_base ---@type integer?
+  local base_buf = base_win and api.nvim_win_get_buf(base_win)
+  local inspect_win = base_buf and vim.b[base_buf].dev_inspect
+  if base_win and base_buf and api.nvim_win_is_valid(inspect_win) then
+    vim.api.nvim_set_current_win(inspect_win)
+    buf = base_buf
+    win = base_win
+    cmd = 'new'
+  end
+  vim.cmd(cmd)
+
+  local ok, parser = pcall(vim.treesitter.get_parser, buf)
+  if not ok then
+    return nil, 'No parser available for the given buffer'
+  end
+  local lang = parser:lang()
+
+  local query_win = api.nvim_get_current_win()
+  local query_buf = api.nvim_win_get_buf(query_win)
+
+  vim.b[buf].dev_preview = query_win
+  vim.bo[query_buf].omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
+  set_dev_properties(query_win, query_buf)
+
+  -- Note that omnifunc guesses the language based on the containing folder,
+  -- so we add the parser's language to the buffer's name so that omnifunc
+  -- can infer the language later.
+  api.nvim_buf_set_name(query_buf, string.format('%s/query_previewer.scm', lang))
+
+  local group = api.nvim_create_augroup('treesitter/dev-preview', {})
+  api.nvim_create_autocmd({ 'TextChanged', 'InsertLeave' }, {
+    group = group,
+    buffer = query_buf,
+    desc = 'Update query previewer diagnostics when the query changes',
+    callback = function()
+      vim.treesitter.query.lint(query_buf, { langs = lang, clear = false })
+    end,
+  })
+  api.nvim_create_autocmd({ 'TextChanged', 'InsertLeave', 'CursorMoved', 'BufEnter' }, {
+    group = group,
+    buffer = query_buf,
+    desc = 'Update query previewer highlights when the cursor moves',
+    callback = function()
+      update_preview_highlights(query_win, win)
+    end,
+  })
+  api.nvim_create_autocmd('BufLeave', {
+    group = group,
+    buffer = query_buf,
+    desc = 'Clear the query previewer highlights when leaving the previewer',
+    callback = function()
+      api.nvim_buf_clear_namespace(buf, preview_ns, 0, -1)
+    end,
+  })
+  api.nvim_create_autocmd('BufLeave', {
+    group = group,
+    buffer = buf,
+    desc = 'Clear the query previewer highlights when leaving the source buffer',
+    callback = function()
+      if not api.nvim_buf_is_loaded(query_buf) then
+        return true
+      end
+
+      api.nvim_buf_clear_namespace(query_buf, preview_ns, 0, -1)
+    end,
+  })
+  api.nvim_create_autocmd('BufHidden', {
+    group = group,
+    buffer = buf,
+    desc = 'Close the previewer window when the source buffer is hidden',
+    once = true,
+    callback = function()
+      close_win(query_win)
+    end,
+  })
+
+  api.nvim_buf_set_lines(query_buf, 0, -1, false, {
+    ';; Write your query here. Use @captures to highlight matches in the source buffer.',
+    ';; Completion for grammar nodes is available (see :h compl-omni)',
+    '',
+    '',
+  })
+  vim.cmd('normal! G')
+  vim.cmd.startinsert()
 end
 
 return M
