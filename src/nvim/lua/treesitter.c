@@ -325,6 +325,17 @@ static TSParser **parser_check(lua_State *L, uint16_t index)
   return luaL_checkudata(L, index, TS_META_PARSER);
 }
 
+static void logger_gc(TSLogger logger)
+{
+  if (!logger.log) {
+    return;
+  }
+
+  TSLuaLoggerOpts *opts = (TSLuaLoggerOpts *)logger.payload;
+  luaL_unref(opts->lstate, LUA_REGISTRYINDEX, opts->cb);
+  xfree(opts);
+}
+
 static int parser_gc(lua_State *L)
 {
   TSParser **p = parser_check(L, 1);
@@ -332,12 +343,7 @@ static int parser_gc(lua_State *L)
     return 0;
   }
 
-  TSLogger logger = ts_parser_logger(*p);
-  if (logger.log) {
-    TSLuaLoggerOpts *opts = (TSLuaLoggerOpts *)logger.payload;
-    xfree(opts);
-  }
-
+  logger_gc(ts_parser_logger(*p));
   ts_parser_delete(*p);
   return 0;
 }
@@ -698,7 +704,7 @@ static void logger_cb(void *payload, TSLogType logtype, const char *s)
 
   lua_State *lstate = opts->lstate;
 
-  nlua_pushref(lstate, opts->cb);
+  lua_rawgeti(lstate, LUA_REGISTRYINDEX, opts->cb);
   lua_pushstring(lstate, logtype == TSLogTypeParse ? "parse" : "lex");
   lua_pushstring(lstate, s);
   if (lua_pcall(lstate, 2, 0, 0)) {
@@ -726,11 +732,13 @@ static int parser_set_logger(lua_State *L)
   }
 
   TSLuaLoggerOpts *opts = xmalloc(sizeof(TSLuaLoggerOpts));
+  lua_pushvalue(L, 4);
+  LuaRef ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
   *opts = (TSLuaLoggerOpts){
     .lex = lua_toboolean(L, 2),
     .parse = lua_toboolean(L, 3),
-    .cb = nlua_ref_global(L, 4),
+    .cb = ref,
     .lstate = L
   };
 
@@ -753,7 +761,7 @@ static int parser_get_logger(lua_State *L)
   TSLogger logger = ts_parser_logger(*p);
   if (logger.log) {
     TSLuaLoggerOpts *opts = (TSLuaLoggerOpts *)logger.payload;
-    nlua_pushref(L, opts->cb);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, opts->cb);
   } else {
     lua_pushnil(L);
   }

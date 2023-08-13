@@ -9,10 +9,13 @@ local pcall_err = helpers.pcall_err
 local feed = helpers.feed
 local is_os = helpers.is_os
 
-before_each(clear)
-
 describe('treesitter parser API', function()
-  clear()
+  before_each(function()
+    clear()
+    exec_lua[[
+      vim.g.__ts_debug = 1
+    ]]
+  end)
 
   it('parses buffer', function()
     insert([[
@@ -629,7 +632,6 @@ int x = INT_MAX;
     describe("when parsing regions independently", function()
       it("should inject a language", function()
         exec_lua([[
-        vim.g.__ts_debug = 1
         parser = vim.treesitter.get_parser(0, "c", {
           injections = {
             c = "(preproc_def (preproc_arg) @c) (preproc_function_def value: (preproc_arg) @c)"}})
