@@ -3636,4 +3636,14 @@ func Test_rulerformat_position()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_usercmd_completion()
+  let g:complete=[]
+  command! -nargs=* -complete=command TestCompletion echo <q-args>
+  let g:complete = getcompletion('TestCompletion ', 'cmdline')
+  let a = getcompletion('', 'cmdline')
+
+  call assert_equal(a, g:complete)
+  delcom TestCompletion
+  unlet! g:complete
+endfunc
 " vim: shiftwidth=2 sts=2 expandtab
