@@ -1302,6 +1302,9 @@ LuaRef nlua_ref(lua_State *lstate, nlua_ref_state_t *ref_state, int index)
   return ref;
 }
 
+// TODO(lewis6991): Currently cannot be run in __gc metamethods as they are
+// invoked in lua_close() which can be invoked after the ref_markers map is
+// destroyed in nlua_common_free_all_mem.
 LuaRef nlua_ref_global(lua_State *lstate, int index)
 {
   return nlua_ref(lstate, nlua_global_refs, index);

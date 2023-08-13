@@ -156,6 +156,7 @@ function LanguageTree:_set_logger()
 
   local lang = self:lang()
 
+  vim.fn.mkdir(vim.fn.stdpath('log'), 'p')
   local logfilename = vim.fs.joinpath(vim.fn.stdpath('log'), 'treesitter.log')
 
   local logfile, openerr = io.open(logfilename, 'a+')
@@ -208,7 +209,8 @@ function LanguageTree:_log(...)
 
   local info = debug.getinfo(2, 'nl')
   local nregions = #self:included_regions()
-  local prefix = string.format('%s:%d: (#regions=%d) ', info.name, info.currentline, nregions)
+  local prefix =
+    string.format('%s:%d: (#regions=%d) ', info.name or '???', info.currentline or 0, nregions)
 
   local msg = { prefix }
   for _, x in ipairs(args) do
