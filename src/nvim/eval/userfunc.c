@@ -2702,7 +2702,7 @@ void ex_function(exarg_T *eap)
     // Give the function a sequential number.  Can only be used with a
     // Funcref!
     xfree(name);
-    sprintf(numbuf, "%d", ++func_nr);  // NOLINT(runtime/printf)
+    snprintf(numbuf, sizeof(numbuf), "%d", ++func_nr);
     name = xstrdup(numbuf);
   }
 
