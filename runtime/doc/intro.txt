@@ -83,14 +83,14 @@ For the most recent information about sponsoring look on the Vim web site:
 	https://www.vim.org/sponsor/
 
 
-Neovim development is funded separately from Vim:
+Nvim development is funded separately from Vim:
 
 	https://neovim.io/#sponsor
 
 ==============================================================================
-Credits				*credits*
+Credits							*credits*
 
-Most of Vim was written by Bram Moolenaar <Bram@vim.org>.
+Most of Vim was written by Bram Moolenaar <Bram@vim.org> |Bram-Moolenaar|
 
 Parts of the documentation come from several Vi manuals, written by:
 	W.N. Joy
@@ -192,6 +192,19 @@ Elvis	Another Vi clone, made by Steve Kirkendall.  Very compact but isn't
 	as flexible as Vim.  Source code is freely available.
 
 Vim	Nvim is based on Vim.  https://www.vim.org/
+
+==============================================================================
+Bram Moolenaar			*Bram* *Moolenaar* *Bram-Moolenaar* *brammool*
+
+Nvim is a fork of the Vim ("Vi IMproved") text editor, which was originally
+developed by Bram Moolenaar.  Searching his name within the source code of
+Nvim will reveal just how much of his work still remains in Nvim.
+On August 3, 2023, he passed away at the age of 62.  If Vim or Nvim have been
+of use to you in your life, please read |Uganda| and consider honoring his
+memory however you may see fit.
+
+Obituary Articles: https://github.com/vim/vim/discussions/12742
+Say Farewell: https://github.com/vim/vim/discussions/12737
 
 ==============================================================================
 Notation						*notation*
@@ -372,6 +385,7 @@ notation	meaning		    equivalent	decimal value(s)	~
 <C-…>		control-key			*control* *ctrl* *<C-*
 <M-…>		alt-key or meta-key		*META* *ALT* *<M-*
 <A-…>		same as <M-…>			*<A-*
+<T-…>		meta-key when it's not alt	*<T-*
 <D-…>		command-key or "super" key	*<D-*
 ----------------------------------------------------------------------- ~
 
@@ -385,7 +399,7 @@ Note:
   combinations actually work depends on the UI or host terminal.
 - When a key is pressed using a meta or alt modifier and no mapping exists for
   that keypress, Nvim may behave as though <Esc> was pressed before the key.
-- It is possible to notate combined modifiers (e.g. <C-A-T> for CTRL-ALT-T),
+- It is possible to notate combined modifiers (e.g. <M-C-T> for CTRL-ALT-T),
   but your terminal must encode the input for that to work. |tui-input|
 
 								*<>*
