@@ -41,6 +41,19 @@ describe('startup', function()
     ok(string.find(alter_slashes(meths.get_option_value('runtimepath', {})), funcs.stdpath('config'), 1, true) == nil)
   end)
 
+  it('prevents remote UI infinite loop', function()
+    clear()
+    local screen
+    screen = Screen.new(84, 3)
+    screen:attach()
+    funcs.termopen({ nvim_prog, '-u', 'NONE', '--server', eval('v:servername'), '--remote-ui' })
+    screen:expect([[
+      ^Cannot attach UI of :terminal child to its parent. (Unset $NVIM to skip this check) |
+                                                                                          |
+                                                                                          |
+    ]])
+  end)
+
   it('--startuptime', function()
     local testfile = 'Xtest_startuptime'
     finally(function()
