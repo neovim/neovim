@@ -1,7 +1,8 @@
 " Vim syntax file
 " Language:	Vgrindefs
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2005 Jun 20
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
+" Last Change:	2023 Aug 10
+" Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " The Vgrindefs file is used to specify a language for vgrind
 

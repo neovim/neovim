@@ -1,6 +1,7 @@
 " Vim autoload file for editing compressed files.
-" Maintainer: Bram Moolenaar <Bram@vim.org>
-" Last Change: 2016 Sep 28
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
+" Last Change:	2023 Aug 10
+" Former Maintainer: Bram Moolenaar <Bram@vim.org>
 
 " These functions are used by the gzip plugin.
 

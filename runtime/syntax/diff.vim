@@ -1,8 +1,9 @@
 " Vim syntax file
 " Language:	Diff (context or unified)
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
-"               Translations by Jakson Alves de Aquino.
-" Last Change:	2020 Dec 30
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
+"		Translations by Jakson Alves de Aquino.
+" Last Change:	2023 Aug 10
+" Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")

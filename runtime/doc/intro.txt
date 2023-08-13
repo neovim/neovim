@@ -88,9 +88,9 @@ Nvim development is funded separately from Vim:
 	https://neovim.io/#sponsor
 
 ==============================================================================
-Credits				*credits*
+Credits							*credits*
 
-Most of Vim was written by Bram Moolenaar <Bram@vim.org>.
+Most of Vim was written by Bram Moolenaar <Bram@vim.org> |Bram-Moolenaar|
 
 Parts of the documentation come from several Vi manuals, written by:
 	W.N. Joy
@@ -194,7 +194,7 @@ Elvis	Another Vi clone, made by Steve Kirkendall.  Very compact but isn't
 Vim	Nvim is based on Vim.  https://www.vim.org/
 
 ==============================================================================
-Bram Moolenaar                                    *Bram* *brammool*
+Bram Moolenaar			*Bram* *Moolenaar* *Bram-Moolenaar* *brammool*
 
 Nvim is a fork of the Vim ("Vi IMproved") text editor, which was originally
 developed by Bram Moolenaar.  Searching his name within the source code of
@@ -202,6 +202,9 @@ Nvim will reveal just how much of his work still remains in Nvim.
 On August 3, 2023, he passed away at the age of 62.  If Vim or Nvim have been
 of use to you in your life, please read |Uganda| and consider honoring his
 memory however you may see fit.
+
+Obituary Articles: https://github.com/vim/vim/discussions/12742
+Say Farewell: https://github.com/vim/vim/discussions/12737
 
 ==============================================================================
 Notation						*notation*

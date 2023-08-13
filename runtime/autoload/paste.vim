@@ -1,6 +1,7 @@
 " Vim support file to help with paste mappings and menus
-" Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 Jan 27
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
+" Last Change:	2023 Aug 10
+" Former Maintainer:	Bram Moolenaar <Bram@vim.org>
 
 " Define the string to use for items that are present both in Edit, Popup and
 " Toolbar menu.  Also used in mswin.vim and macmap.vim.
