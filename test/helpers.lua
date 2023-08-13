@@ -1,4 +1,3 @@
-require('test.compat')
 local shared = vim
 local assert = require('luassert')
 local busted = require('busted')
