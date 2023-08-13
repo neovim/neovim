@@ -2472,11 +2472,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
             char buf[MAXLINELEN];
 
             aff_entry->ae_cond = getroom_save(spin, items[4]);
-            if (*items[0] == 'P') {
-              sprintf(buf, "^%s", items[4]);  // NOLINT(runtime/printf)
-            } else {
-              sprintf(buf, "%s$", items[4]);  // NOLINT(runtime/printf)
-            }
+            snprintf(buf, sizeof(buf), *items[0] == 'P' ? "^%s" : "%s$", items[4]);
             aff_entry->ae_prog = vim_regcomp(buf, RE_MAGIC + RE_STRING + RE_STRICT);
             if (aff_entry->ae_prog == NULL) {
               smsg(_("Broken condition in %s line %d: %s"),
@@ -2520,7 +2516,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
                     onecap_copy(items[4], buf, true);
                     aff_entry->ae_cond = getroom_save(spin, buf);
                     if (aff_entry->ae_cond != NULL) {
-                      sprintf(buf, "^%s", aff_entry->ae_cond);  // NOLINT(runtime/printf)
+                      snprintf(buf, MAXLINELEN, "^%s", aff_entry->ae_cond);
                       vim_regfree(aff_entry->ae_prog);
                       aff_entry->ae_prog = vim_regcomp(buf, RE_MAGIC + RE_STRING);
                     }

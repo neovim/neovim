@@ -1522,21 +1522,17 @@ int mb_stricmp(const char *s1, const char *s2)
 // 'encoding' has been set to.
 void show_utf8(void)
 {
-  int len;
-  int rlen = 0;
-  char *line;
-  int clen;
-
   // Get the byte length of the char under the cursor, including composing
   // characters.
-  line = get_cursor_pos_ptr();
-  len = utfc_ptr2len(line);
+  char *line = get_cursor_pos_ptr();
+  int len = utfc_ptr2len(line);
   if (len == 0) {
     msg("NUL");
     return;
   }
 
-  clen = 0;
+  size_t rlen = 0;
+  int clen = 0;
   for (int i = 0; i < len; i++) {
     if (clen == 0) {
       // start of (composing) character, get its length
@@ -1546,10 +1542,11 @@ void show_utf8(void)
       }
       clen = utf_ptr2len(line + i);
     }
-    sprintf(IObuff + rlen, "%02x ",  // NOLINT(runtime/printf)
-            (line[i] == NL) ? NUL : (uint8_t)line[i]);          // NUL is stored as NL
+    assert(IOSIZE > rlen);
+    snprintf(IObuff + rlen, IOSIZE - rlen, "%02x ",
+             (line[i] == NL) ? NUL : (uint8_t)line[i]);  // NUL is stored as NL
     clen--;
-    rlen += (int)strlen(IObuff + rlen);
+    rlen += strlen(IObuff + rlen);
     if (rlen > IOSIZE - 20) {
       break;
     }
