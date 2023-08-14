@@ -494,9 +494,9 @@ Highlight groups:
   using |n| or |N|
   |hl-CursorLine| is low-priority unless foreground color is set
   |hl-VertSplit| superseded by |hl-WinSeparator|
-  Highlight groups names are allowed to contain the characters `.` and `@`.
+  Highlight groups names are allowed to contain the characters `.`, `@`, and `-`.
   It is an error to define a highlight group with a name that doesn't match
-  the regexp `[a-zA-Z0-9_.@]*` (see |group-name|).
+  the regexp `[a-zA-Z0-9_.@-]*` (see |group-name|).
 
 Macro/|recording| behavior
   Replay of a macro recorded during :lmap produces the same actions as when it
