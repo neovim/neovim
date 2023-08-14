@@ -697,8 +697,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 
     cattrs.rgb_ae_attr &= ~HL_BG_INDEXED;
   }
-  cattrs.rgb_bg_color = rgb_blend(ratio, battrs.rgb_bg_color,
-                                  fattrs.rgb_bg_color);
+  cattrs.rgb_bg_color = syn_attr2entry(back_attr).rgb_bg_color == -1 ? -1 :
+                        rgb_blend(ratio, battrs.rgb_bg_color, fattrs.rgb_bg_color);
 
   cattrs.hl_blend = -1;  // blend property was consumed
 
