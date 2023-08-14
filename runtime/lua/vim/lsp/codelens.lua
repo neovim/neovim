@@ -116,6 +116,7 @@ function M.clear(client_id, bufnr)
   bufnr = bufnr and resolve_bufnr(bufnr)
   local buffers = bufnr and { bufnr }
     or vim.tbl_filter(api.nvim_buf_is_loaded, api.nvim_list_bufs())
+
   for _, iter_bufnr in pairs(buffers) do
     local client_ids = client_id and { client_id } or vim.tbl_keys(namespaces)
     for _, iter_client_id in pairs(client_ids) do

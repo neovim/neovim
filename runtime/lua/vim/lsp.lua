@@ -26,6 +26,8 @@ local lsp = {
   codelens = require('vim.lsp.codelens'),
   semantic_tokens = semantic_tokens,
   util = util,
+  omnifunc = require('vim.lsp.completion').omnifunc,
+  auto_complete = require('vim.lsp.completion').auto_complete,
 
   -- Allow raw RPC access.
   rpc = lsp_rpc,
@@ -76,7 +78,7 @@ local function err_message(...)
   nvim_command('redraw')
 end
 
---- Returns the buffer number for the given {bufnr}.
+-- Returns the buffer number for the given {bufnr}.
 ---
 ---@param bufnr (integer|nil) Buffer number to resolve. Defaults to current buffer
 ---@return integer bufnr
@@ -2271,124 +2273,6 @@ function lsp.buf_notify(bufnr, method, params)
     end
   end
   return resp
-end
-
----@private
-local function adjust_start_col(lnum, line, items, encoding)
-  local min_start_char = nil
-  for _, item in pairs(items) do
-    if item.textEdit and item.textEdit.range.start.line == lnum - 1 then
-      if min_start_char and min_start_char ~= item.textEdit.range.start.character then
-        return nil
-      end
-      min_start_char = item.textEdit.range.start.character
-    end
-  end
-  if min_start_char then
-    return util._str_byteindex_enc(line, min_start_char, encoding)
-  else
-    return nil
-  end
-end
-
---- Implements 'omnifunc' compatible LSP completion.
----
----@see |complete-functions|
----@see |complete-items|
----@see |CompleteDone|
----
----@param findstart integer 0 or 1, decides behavior
----@param base integer findstart=0, text to match against
----
----@return integer|table Decided by {findstart}:
---- - findstart=0: column where the completion starts, or -2 or -3
---- - findstart=1: list of matches (actually just calls |complete()|)
-function lsp.omnifunc(findstart, base)
-  if log.debug() then
-    log.debug('omnifunc.findstart', { findstart = findstart, base = base })
-  end
-
-  local bufnr = resolve_bufnr()
-  local clients = lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_completion })
-  local remaining = #clients
-  if remaining == 0 then
-    return findstart == 1 and -1 or {}
-  end
-
-  -- Then, perform standard completion request
-  if log.info() then
-    log.info('base ', base)
-  end
-
-  local win = api.nvim_get_current_win()
-  local pos = api.nvim_win_get_cursor(win)
-  local line = api.nvim_get_current_line()
-  local char_col = vim.fn.charcol('.')
-  local line_to_cursor = char_col == 1 and '' or line:sub(1, char_col)
-  local _ = log.trace() and log.trace('omnifunc.line', pos, line)
-
-  -- Get the start position of the current keyword
-  local prefix, start_idx = unpack(vim.fn.matchstrpos(line_to_cursor, '\\k*$'))
-  local startchar_col = #prefix ~= 0 and vim.fn.charidx(line_to_cursor, start_idx) + 1 or char_col
-
-  local items = {}
-
-  local function on_done()
-    local mode = api.nvim_get_mode()['mode']
-    if mode == 'i' or mode == 'ic' then
-      vim.fn.complete(start_idx + 1, items)
-    end
-  end
-
-  for _, client in ipairs(clients) do
-    local params = util.make_position_params(win, client.offset_encoding)
-    client.request(ms.textDocument_completion, params, function(err, result)
-      if err then
-        log.warn(err.message)
-      end
-      if result and vim.fn.mode() == 'i' then
-        -- Completion response items may be relative to a position different than `textMatch`.
-        -- Concrete example, with sumneko/lua-language-server:
-        --
-        -- require('plenary.asy|
-        --         ▲       ▲   ▲
-        --         │       │   └── cursor_pos: 20
-        --         │       └────── textMatch: 17
-        --         └────────────── textEdit.range.start.character: 9
-        --                                 .newText = 'plenary.async'
-        --                  ^^^
-        --                  prefix (We'd remove everything not starting with `asy`,
-        --                  so we'd eliminate the `plenary.async` result
-        --
-        -- `adjust_start_col` is used to prefer the language server boundary.
-        --
-        -- local encoding = client.offset_encoding
-        -- local candidates = util.extract_completion_items(result)
-        -- local curstartbyte = adjust_start_col(pos[1], line, candidates, encoding)
-        -- if startbyte == nil then
-        --   startbyte = curstartbyte
-        -- elseif curstartbyte ~= nil and curstartbyte ~= startbyte then
-        --   startbyte = match_pos
-        -- end
-        -- local prefix = startbyte and line:sub(startbyte + 1) or line_to_cursor:sub(match_pos)
-
-        local matches = util.text_document_completion_list_to_complete_items(
-          result,
-          line_to_cursor,
-          startchar_col
-        )
-        vim.list_extend(items, matches)
-      end
-      remaining = remaining - 1
-      if remaining == 0 then
-        vim.schedule(on_done)
-      end
-    end, bufnr)
-  end
-
-  -- Return -2 to signal that we should continue completion so that we can
-  -- async complete.
-  return -2
 end
 
 --- Provides an interface between the built-in client and a `formatexpr` function.
