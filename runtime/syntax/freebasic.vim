@@ -2,7 +2,7 @@
 " Language:		FreeBASIC
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Mark Manning <markem@sim1.us>
-" Last Change:		2022 Jun 26
+" Last Change:		2023 Aug 14
 "
 " Description:
 "
@@ -338,13 +338,13 @@ syn keyword	freebasicPredefined		__FB_64BIT__ __FB_ARGC__ __FB_ARG_COUNT__ __FB_
 syn keyword	freebasicPredefined		__FB_ARG_RIGHTOF__ __FB_ARGV__ __FB_ARM__ __FB_ASM__ __FB_BACKEND__
 syn keyword	freebasicPredefined		__FB_BIGENDIAN__ __FB_BUILD_DATE__ __FB_BUILD_DATE_ISO__ __FB_BUILD_SHA1__
 syn keyword	freebasicPredefined		__FB_CYGWIN__ __FB_DARWIN__ __FB_DEBUG__ __FB_DOS__ __FB_ERR__ __FB_EVAL__
-syn keyword	freebasicPredefined		__FB_FPMODE__ __FB_FPU__ __FB_FREEBSD__ __FB_GCC__ __FB_GUI__ __FB_JOIN__
+syn keyword	freebasicPredefined		__FB_FPMODE__ __FB_FPU__ __FB_FREEBSD__ __FB_GCC__ __FB_GUI__ __FB_IIF__ __FB_JOIN__
 syn keyword	freebasicPredefined		__FB_LANG__ __FB_LINUX__ __FB_MAIN__ __FB_MIN_VERSION__ __FB_MT__ __FB_NETBSD__
 syn keyword	freebasicPredefined		__FB_OPENBSD__ __FB_OPTIMIZE__ __FB_OPTION_BYVAL__ __FB_OPTION_DYNAMIC__
 syn keyword	freebasicPredefined		__FB_OPTION_ESCAPE__ __FB_OPTION_EXPLICIT__ __FB_OPTION_GOSUB__
 syn keyword	freebasicPredefined		__FB_OPTION_PRIVATE__ __FB_OUT_DLL__ __FB_OUT_EXE__ __FB_OUT_LIB__ __FB_OUT_OBJ__
-syn keyword	freebasicPredefined		__FB_PCOS__ __FB_PPC__ __FB_QUOTE__ __FB_SIGNATURE__ __FB_SSE__ __FB_UNIQUEID__
-syn keyword	freebasicPredefined		__FB_UNIQUEID_POP__ __FB_UNIQUEID_PUSH__ __FB_UNIX__ __FB_UNQUOTE__
+syn keyword	freebasicPredefined		__FB_PCOS__ __FB_PPC__ __FB_QUERY_SYMBOL__ __FB_QUOTE__ __FB_SIGNATURE__ __FB_SSE__
+syn keyword	freebasicPredefined		__FB_UNIQUEID__ __FB_UNIQUEID_POP__ __FB_UNIQUEID_PUSH__ __FB_UNIX__ __FB_UNQUOTE__
 syn keyword	freebasicPredefined		__FB_VECTORIZE__ __FB_VER_MAJOR__ __FB_VER_MINOR__ __FB_VER_PATCH__ __FB_VERSION__
 syn keyword	freebasicPredefined		__FB_WIN32__ __FB_X86__ __FB_XBOX__
 syn keyword	freebasicPredefined		__FILE__ __FILE_NQ__ __FUNCTION__ __FUNCTION_NQ__
