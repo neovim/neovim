@@ -567,8 +567,8 @@ end
 ---       - virtual_text: (default true) Use virtual text for diagnostics. If multiple diagnostics
 ---                       are set for a namespace, one prefix per diagnostic + the last diagnostic
 ---                       message are shown. In addition to the options listed below, the
----                       "virt_text" options of |nvim_buf_set_extmark| may also be used here (e.g.
----                       "virt_text_pos" and "hl_mode").
+---                       "virt_text" options of |nvim_buf_set_extmark()| may also be used here
+---                       (e.g. "virt_text_pos" and "hl_mode").
 ---                       Options:
 ---                       * severity: Only show virtual text for diagnostics matching the given
 ---                       severity |diagnostic-severity|

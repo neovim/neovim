@@ -384,7 +384,7 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                        namespace, one prefix per diagnostic + the last
                        diagnostic message are shown. In addition to the
                        options listed below, the "virt_text" options of
-                       |nvim_buf_set_extmark| may also be used here (e.g.
+                       |nvim_buf_set_extmark()| may also be used here (e.g.
                        "virt_text_pos" and "hl_mode"). Options:
                        • severity: Only show virtual text for diagnostics
                          matching the given severity |diagnostic-severity|
