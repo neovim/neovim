@@ -139,6 +139,42 @@ describe('vim_strchr()', function()
   end)
 end)
 
+describe('vim_snprintf()', function()
+  itp('truncation', function()
+    local function check(expected, buf, bsize, fmt, ...)
+      eq(#expected, strings.vim_snprintf(buf, bsize, fmt, ...))
+      if bsize > 0 then
+        local actual = ffi.string(buf, math.min(#expected + 1, bsize))
+        eq(expected:sub(1, bsize - 1) .. '\0', actual)
+      end
+    end
+
+    for bsize = 0, 14 do
+      local buf = ffi.gc(strings.xmalloc(bsize), strings.xfree)
+      check('1234567', buf, bsize, '%d', ffi.cast('int', 1234567))
+      check('1234567', buf, bsize, '%ld', ffi.cast('long', 1234567))
+      check('  1234567', buf, bsize, '%9ld', ffi.cast('long', 1234567))
+      check('1234567  ', buf, bsize, '%-9ld', ffi.cast('long', 1234567))
+      check('deadbeef', buf, bsize, '%x', ffi.cast('unsigned', 0xdeadbeef))
+      check('001100', buf, bsize, '%06b', ffi.cast('int', 12))
+      check('1.234000', buf, bsize, '%f', ffi.cast('double', 1.234))
+      check('1.234000e+00', buf, bsize, '%e', ffi.cast('double', 1.234))
+      check('nan', buf, bsize, '%f', ffi.cast('double', 0.0 / 0.0))
+      check('inf', buf, bsize, '%f', ffi.cast('double', 1.0 / 0.0))
+      check('-inf', buf, bsize, '%f', ffi.cast('double', -1.0 / 0.0))
+      check('-0.000000', buf, bsize, '%f', ffi.cast('double', -0.0))
+      check('漢語', buf, bsize, '%s', '漢語')
+      check('  漢語', buf, bsize, '%8s', '漢語')
+      check('漢語  ', buf, bsize, '%-8s', '漢語')
+      check('漢', buf, bsize, '%.3s', '漢語')
+      check('  foo', buf, bsize, '%5S', 'foo')
+      check('%%%', buf, bsize, '%%%%%%')
+      check('0x87654321', buf, bsize, '%p', ffi.cast('char *', 0x87654321))
+      check('0x0087654321', buf, bsize, '%012p', ffi.cast('char *', 0x87654321))
+    end
+  end)
+end)
+
 describe('strcase_save()' , function()
   local strcase_save = function(input_string, upper)
     local res = strings.strcase_save(to_cstr(input_string), upper)
