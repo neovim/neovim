@@ -239,6 +239,8 @@ func Test_printf_misc()
   let lines =<< trim END
       call assert_equal('123', printf('123'))
 
+      call assert_equal('', printf('%'))
+      call assert_equal('', printf('%.0d', 0))
       call assert_equal('123', printf('%d', 123))
       call assert_equal('123', printf('%i', 123))
       call assert_equal('123', printf('%D', 123))
