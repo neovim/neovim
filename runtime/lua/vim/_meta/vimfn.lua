@@ -10016,6 +10016,9 @@ function vim.fn.virtcol(expr, list) end
 --- {lnum}, then the byte index of the character at the last
 --- virtual column is returned.
 ---
+--- For a multi-byte character, the column number of the first
+--- byte in the character is returned.
+---
 --- The {winid} argument can be the window number or the
 --- |window-ID|. If this is zero, then the current window is used.
 ---
