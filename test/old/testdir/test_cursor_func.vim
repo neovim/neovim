@@ -531,6 +531,15 @@ func Test_virtcol2col()
   call assert_equal(-1, virtcol2col(0, -1, 1))
   call assert_equal(-1, virtcol2col(0, 1, -1))
   call assert_equal(5, virtcol2col(0, 1, 20))
+
+  " Multibyte character
+  call setline(1, ['a✅✅✅'])
+  call assert_equal(1, virtcol2col(0, 1, 1))
+  call assert_equal(2, virtcol2col(0, 1, 3))
+  call assert_equal(5, virtcol2col(0, 1, 5))
+  call assert_equal(8, virtcol2col(0, 1, 7))
+  call assert_equal(8, virtcol2col(0, 1, 8))
+
   call assert_fails('echo virtcol2col("0", 1, 20)', 'E1210:')
   call assert_fails('echo virtcol2col(0, "1", 20)', 'E1210:')
   call assert_fails('echo virtcol2col(0, 1, "1")', 'E1210:')

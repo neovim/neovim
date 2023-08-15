@@ -1163,6 +1163,21 @@ void f_screenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   tv_dict_add_nr(dict, S_LEN("endcol"), ecol);
 }
 
+/// Convert a virtual (screen) column to a character column.  The first column
+/// is one.  For a multibyte character, the column number of the first byte is
+/// returned.
+static int virtcol2col(win_T *wp, linenr_T lnum, int vcol)
+{
+  int offset = vcol2col(wp, lnum, vcol);
+  char *line = ml_get_buf(wp->w_buffer, lnum, false);
+  char *p = line + offset;
+
+  // For a multibyte character, need to return the column number of the first byte.
+  MB_PTR_BACK(line, p);
+
+  return (int)(p - line + 1);
+}
+
 /// "virtcol2col({winid}, {lnum}, {col})" function
 void f_virtcol2col(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -1190,7 +1205,7 @@ void f_virtcol2col(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  rettv->vval.v_number = vcol2col(wp, lnum, screencol);
+  rettv->vval.v_number = virtcol2col(wp, lnum, screencol);
 }
 
 /// Scroll the current window down by "line_count" logical lines.  "CTRL-Y"
