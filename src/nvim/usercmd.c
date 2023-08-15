@@ -296,9 +296,6 @@ const char *set_context_in_user_cmdarg(const char *cmd FUNC_ATTR_UNUSED, const c
     return set_context_in_menu_cmd(xp, cmd, (char *)arg, forceit);
   }
   if (context == EXPAND_COMMANDS) {
-    if (xp->xp_context == EXPAND_NOTHING) {
-      xp->xp_context = context;
-    }
     return arg;
   }
   if (context == EXPAND_MAPPINGS) {
