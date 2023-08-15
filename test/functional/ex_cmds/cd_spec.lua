@@ -32,8 +32,17 @@ local tlwd = function() return lwd(-1,  0) end  -- tab dir
 --local glwd = function() return eval('haslocaldir(-1, -1)') end  -- global dir
 
 -- Test both the `cd` and `chdir` variants
-for _, cmd in ipairs {'cd', 'chdir'} do
-  describe(':' .. cmd, function()
+function test_cd_command(spec)
+  for _, cmd in ipairs {'cd', 'chdir'} do
+    describe(':' .. cmd, function()
+      spec(cmd)
+    end)
+  end
+end
+
+-- Test both the `cd` and `chdir` variants
+test_cd_command(
+  function(cmd)
     before_each(function()
       clear()
       for _, d in pairs(directories) do
@@ -227,7 +236,6 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       eq(globalDir .. pathsep .. directories.window, wcwd())
     end)
   end)
-end
 
 -- Test legal parameters for 'getcwd' and 'haslocaldir'
 for _, cmd in ipairs {'getcwd', 'haslocaldir'} do
@@ -308,3 +316,51 @@ describe("getcwd()", function ()
     eq(curdir .. pathsep .. directories.global, wcwd())
   end)
 end)
+
+-- cd/chdir without an argument goes to the home directory on Unix systems
+test_cd_command(
+  function(cmd)
+    -- window scopes and the commands for getting the window number
+    local window_scopes = {
+      tab = 'tabpagenr',
+      all = 'winnr',
+    }
+
+    local function is_unix() return not is_os('win') end
+    local function env_value(name) return call('environ')[name] end
+
+    before_each(function()
+      clear()
+      command('tabnew');
+
+      if (is_unix()) then
+        -- start in a new tab not in the home directory
+        helpers.neq(env_value('TMPDIR'), env_value('HOME'))
+        command('cd ' .. env_value('TMPDIR'))
+      end
+    end)
+
+    after_each(function()
+      command('tabclose');
+    end)
+
+    describe('without arguments goes to home directory', function()
+      for name, scope in pairs(window_scopes) do
+        it('in ' .. name .. ' windows', function()
+          -- set up
+          skip(not is_unix(), 'Unix only')
+
+          local homeDirectory = call('environ')['HOME']
+          local windowNumber = call(scope)
+
+          -- exercise
+          command('silent ' .. cmd)
+
+          -- verify
+          eq(homeDirectory, cwd())
+          eq(homeDirectory, wcwd(windowNumber))
+          eq(homeDirectory, tcwd(windowNumber))
+        end)
+      end
+    end)
+  end)

@@ -17,15 +17,7 @@ func Test_cd_up_and_down()
 endfunc
 
 func Test_cd_no_arg()
-  if has('unix')
-    " Test that cd without argument goes to $HOME directory on Unix systems.
-    let path = getcwd()
-    cd
-    call assert_equal($HOME, getcwd())
-    call assert_notequal(path, getcwd())
-    exe 'cd ' .. fnameescape(path)
-    call assert_equal(path, getcwd())
-  else
+  if !has('unix')
     " Test that cd without argument echoes cwd on non-Unix systems.
     call assert_match(getcwd(), execute('cd'))
   endif
