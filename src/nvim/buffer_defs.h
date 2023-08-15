@@ -1286,7 +1286,8 @@ struct window_S {
   ScreenGrid w_grid;                    // the grid specific to the window
   ScreenGrid w_grid_alloc;              // the grid specific to the window
   bool w_pos_changed;                   // true if window position changed
-  bool w_floating;                       ///< whether the window is floating
+  bool w_floating;                      ///< whether the window is floating
+  bool w_float_is_info;                 // the floating window is info float
   FloatConfig w_float_config;
 
   // w_fraction is the fractional row of the cursor within the window, from

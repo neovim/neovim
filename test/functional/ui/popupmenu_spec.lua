@@ -1431,7 +1431,7 @@ describe('builtin popupmenu', function()
         feed('<C-N>')
         screen:expect([[
           1info                           |
-                                          |
+          {1:~                               }|
           {1:~                               }|
           {3:[Scratch] [Preview]             }|
           one^                             |
@@ -1468,6 +1468,208 @@ describe('builtin popupmenu', function()
         ]])
       end)
     end
+
+    describe("floating window preview #popup", function()
+      it('pum popup preview', function()
+        --row must > 10
+        screen:try_resize(30, 11)
+        exec([[
+          funct Omni_test(findstart, base)
+            if a:findstart
+              return col(".") - 1
+            endif
+            return [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "three"}]
+          endfunc
+          set omnifunc=Omni_test
+          set completeopt=menu,popup
+
+          funct Set_info()
+            let comp_info = complete_info()
+            if comp_info['selected'] == 2
+              call nvim_complete_set(comp_info['selected'], {"info": "3info"})
+            endif
+          endfunc
+          autocmd CompleteChanged * call Set_info()
+        ]])
+        feed('Gi<C-x><C-o>')
+
+        --floating preview in right
+        if multigrid then
+          screen:expect{grid=[[
+          ## grid 1
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [3:------------------------------]|
+          ## grid 2
+            one^                           |
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+          ## grid 3
+            {2:-- }{5:match 1 of 3}               |
+          ## grid 4
+            {n:1info}|
+            {n:     }|
+          ## grid 5
+            {s:one            }|
+            {n:two            }|
+            {n:three          }|
+          ]], float_pos={
+            [5] = {{id = -1}, "NW", 2, 1, 0, false, 100};
+            [4] = {{id = 1001}, "NW", 1, 1, 15, true, 50};
+          }}
+        else
+          screen:expect{grid=[[
+            one^                           |
+            {s:one            }{n:1info}{1:          }|
+            {n:two                 }{1:          }|
+            {n:three          }{1:               }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {2:-- }{5:match 1 of 3}               |
+          ]], unchanged = true}
+        end
+
+        -- test nvim_complete_set_info
+        feed('<C-N><C-N>')
+        helpers.sleep(10)
+        if multigrid then
+          screen:expect{grid=[[
+          ## grid 1
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [3:------------------------------]|
+          ## grid 2
+            three^                         |
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+          ## grid 3
+            {2:-- }{5:match 3 of 3}               |
+          ## grid 4
+            {n:3info}|
+            {n:     }|
+          ## grid 5
+            {n:one            }|
+            {n:two            }|
+            {s:three          }|
+          ]], float_pos={
+            [5] = {{id = -1}, "NW", 2, 1, 0, false, 100};
+            [4] = {{id = 1001}, "NW", 1, 1, 15, true, 50};
+          }}
+        else
+          screen:expect{grid=[[
+            three^                         |
+            {n:one            3info}{1:          }|
+            {n:two                 }{1:          }|
+            {s:three          }{1:               }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {2:-- }{5:match 3 of 3}               |
+          ]]}
+        end
+        -- make sure info has set
+        feed('<C-y>')
+        eq('3info', exec_lua('return vim.v.completed_item.info'))
+
+        -- preview in left
+        feed('<ESC>cc')
+        insert(('test'):rep(5))
+        feed('i<C-x><C-o>')
+        if multigrid then
+          screen:expect{grid=[[
+          ## grid 1
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [3:------------------------------]|
+          ## grid 2
+            itesttesttesttesttesone^t      |
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+          ## grid 3
+            {2:-- }{5:match 1 of 3}               |
+          ## grid 5
+            {s: one      }|
+            {n: two      }|
+            {n: three    }|
+          ## grid 6
+            {n:1info}|
+            {n:     }|
+          ]], float_pos={
+            [5] = {{id = -1}, "NW", 2, 1, 19, false, 100};
+            [6] = {{id = 1002}, "NW", 1, 1, 1, true, 50};
+          }, win_viewport={
+            [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 23, linecount = 1, sum_scroll_delta = 0};
+            [6] = {win = {id = 1002}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          }}
+        else
+          screen:expect{grid=[[
+            itesttesttesttesttesone^t      |
+            {1:~}{n:1info}{1:             }{s: one      }{1: }|
+            {1:~}{n:     }{1:             }{n: two      }{1: }|
+            {1:~                  }{n: three    }{1: }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {2:-- }{5:match 1 of 3}               |
+          ]]}
+        end
+      end)
+    end)
 
     it('with vsplits', function()
       screen:try_resize(32, 8)

@@ -1061,6 +1061,10 @@ vim.bo.cfu = vim.bo.completefunc
 --- 	    select one from the menu. Only works in combination with
 --- 	    "menu" or "menuone".
 ---
+---    popup    Show extra information about the currently selected
+--- 	    completion in a popup window.  Only works in combination
+--- 	    with "menu" or "menuone".  Overrides "preview".
+---
 --- @type string
 vim.o.completeopt = "menu,preview"
 vim.o.cot = vim.o.completeopt
