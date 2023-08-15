@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
-" Version:	(v104) 2021 April 06
+" Version:	(v105) 2023 August 14
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-syntax from Vim
 " Credits:
@@ -11,7 +11,7 @@
 "  Walter Dieudonne, Alexander Wagner, Roman Bertle, Charles Rendleman,
 "  Andrew Griffiths, Joe Krahn, Hendrik Merx, Matt Thompson, Jan Hermann,
 "  Stefano Zaghi, Vishnu V. Krishnan, Judicael Grasset, Takuma Yoshida,
-"  Eisuke Kawashima, Andre Chalella, and Fritz Reese.
+"  Eisuke Kawashima, Andre Chalella, Fritz Reese, and Karl D. Hammond.
 
 if exists("b:current_syntax")
   finish
@@ -95,16 +95,14 @@ if exists("fortran_more_precise")
   syn match fortranConstructName "\(\<end\s*do\s\+\)\@11<=\a\w*"
   syn match fortranConstructName "\(\<end\s*if\s\+\)\@11<=\a\w*"
   syn match fortranConstructName "\(\<end\s*select\s\+\)\@15<=\a\w*"
+  syn match fortranConstructName "\(\<\%(exit\|cycle\)\s\+\)\@11<=\a\w*"
 endif
 
 syn match fortranUnitHeader	"\<end\>"
-syn match fortranType		"\<character\>"
-syn match fortranType		"\<complex\>"
-syn match fortranType		"\<integer\>"
-syn match fortranType		"\<real\>"
-syn match fortranType		"\<logical\>"
+syn match fortranType		"\<character\((\s*kind\s*=\w\+)\)\?\>"
+syn match fortranType		"\<complex\((\s*kind\s*=\w\+)\)\?\>"
 syn keyword fortranType		intrinsic
-syn match fortranType		"\<implicit\>"
+syn match fortranType		"\<implicit\>\s\+\(none\)\?"
 syn keyword fortranStructure	dimension
 syn keyword fortranStorageClass	parameter save
 syn match fortranUnitHeader	"\<subroutine\>"
@@ -131,7 +129,8 @@ syn match fortranTypeOb		"\<character\s*\*"
 
 syn match fortranBoolean	"\.\s*\(true\|false\)\s*\."
 
-syn keyword fortranReadWrite	backspace close endfile inquire open print read rewind write
+syn keyword fortranReadWrite	print
+syn match fortranReadWrite	'\<\(backspace\|close\|endfile\|inquire\|open\|read\|rewind\|write\)\ze\s*('
 
 "If tabs are allowed then the left margin checks do not work
 if exists("fortran_have_tabs")
@@ -140,7 +139,7 @@ else
   syn match fortranTab		"\t"
 endif
 
-syn keyword fortranIO		access blank direct exist file fmt form formatted iostat name named nextrec number opened rec recl sequential status unformatted unit
+syn match fortranIO		'\%(\((\|,\|, *&\n\)\s*\)\@<=\(access\|blank\|direct\|exist\|file\|fmt\|form\|formatted\|iostat\|name\|named\|nextrec\|number\|opened\|rec\|recl\|sequential\|status\|unformatted\|unit\)\ze\s*='
 
 syn keyword fortranIntrinsicR		alog alog10 amax0 amax1 amin0 amin1 amod cabs ccos cexp clog csin csqrt dabs dacos dasin datan datan2 dcos dcosh ddim dexp dint dlog dlog10 dmax1 dmin1 dmod dnint dsign dsin dsinh dsqrt dtan dtanh float iabs idim idint idnint ifix isign max0 max1 min0 min1 sngl
 
@@ -151,8 +150,9 @@ syn keyword fortranIntrinsic	abs acos aimag aint anint asin atan atan2 char cmpl
 syn match fortranIntrinsic	"\<len\s*[(,]"me=s+3
 syn match fortranIntrinsic	"\<real\s*("me=s+4
 syn match fortranIntrinsic	"\<logical\s*("me=s+7
-syn match fortranType           "\<implicit\s\+real\>"
-syn match fortranType           "\<implicit\s\+logical\>"
+syn match fortranType           "\<type\>\(\s\+is\>\)\?"
+syn match fortranType		"^\s*\(type\s\+\(is\)\? \)\?\s*\(real\|integer\|logical\|complex\|character\)\>"
+syn match fortranType           "^\s*\(implicit \)\?\s*\(real\|integer\|logical\|complex\|character\)\>"
 
 "Numbers of various sorts
 " Integers
@@ -206,9 +206,6 @@ syn region fortranStringR	start=+'+ end=+'+ contains=fortranContinueMark,fortran
 syn keyword fortranIntrinsicR	dim lge lgt lle llt mod
 syn keyword fortranKeywordDel	assign pause
 
-syn match fortranType           "\<type\>"
-syn keyword fortranType	        none
-
 syn keyword fortranStructure	private public intent optional
 syn keyword fortranStructure	pointer target allocatable
 syn keyword fortranStorageClass	in out
@@ -222,7 +219,8 @@ syn keyword fortranUnitHeader	result operator assignment
 syn match fortranUnitHeader	"\<interface\>"
 syn keyword fortranKeyword	allocate deallocate nullify cycle exit
 syn match fortranConditional	"\<select\>"
-syn keyword fortranConditional	case default where elsewhere
+syn match fortranConditional	"\<case\s\+default\>"
+syn keyword fortranConditional	where elsewhere
 
 syn match fortranOperator	"\(\(>\|<\)=\=\|==\|/=\|=\)"
 syn match fortranOperator	"=>"
@@ -231,8 +229,7 @@ syn region fortranString	start=+"+ end=+"+	contains=fortranLeftMargin,fortranCon
 syn keyword fortranIO		pad position action delim readwrite
 syn keyword fortranIO		eor advance nml
 
-syn keyword fortranIntrinsic	adjustl adjustr all allocated any associated bit_size btest ceiling count cshift date_and_time digits dot_product eoshift epsilon exponent floor fraction huge iand ibclr ibits ibset ieor ior ishft ishftc lbound len_trim matmul maxexponent maxloc maxval merge minexponent minloc minval modulo mvbits nearest pack precision present product radix random_number random_seed range repeat reshape rrspacing
-syn keyword fortranIntrinsic	scale scan selected_int_kind selected_real_kind set_exponent shape size spacing spread sum system_clock tiny transpose trim ubound unpack verify
+syn match fortranIntrinsic '\<\(adjustl\|adjustr\|all\|allocated\|any\|associated\|bit_size\|btest\|ceiling\|count\|cshift\|date_and_time\|digits\|dot_product\|eoshift\|epsilon\|exponent\|floor\|fraction\|huge\|iand\|ibclr\|ibits\|ibset\|ieor\|ior\|ishft\|ishftc\|lbound\|len_trim\|matmul\|maxexponent\|maxloc\|maxval\|merge\|minexponent\|minloc\|minval\|modulo\|mvbits\|nearest\|pack\|precision\|present\|product\|radix\|random_number\|random_seed\|range\|repeat\|reshape\|rrspacing\|scale\|scan\|selected_int_kind\|selected_real_kind\|set_exponent\|shape\|size\|spacing\|spread\|sum\|system_clock\|tiny\|transpose\|trim\|ubound\|unpack\|verify\)\>\ze\s*('
 syn match fortranIntrinsic		"\<not\>\(\s*\.\)\@!"me=s+3
 syn match fortranIntrinsic	"\<kind\>\s*[(,]"me=s+4
 
@@ -306,9 +303,9 @@ if b:fortran_dialect == "f08"
   syn match fortranType               "\<end\s*associate"
   syn match fortranType               "\<enum\s*,\s*bind\s*(\s*c\s*)"
   syn match fortranType               "\<end\s*enum"
-  syn match fortranConditional	"\<select\s*type"
-  syn match fortranConditional        "\<type\s*is\>"
+  syn match fortranConditional	      "\<select\s*type"
   syn match fortranConditional        "\<class\s*is\>"
+  syn match fortranConditional        "\<class\s*default\>"
   syn match fortranUnitHeader         "\<abstract\s*interface\>"
   syn match fortranOperator           "\([\|]\)"
 
@@ -525,11 +522,6 @@ else
   hi! def link fortranConditionalR	fortranConditional
 endif
 
-" CUDA
-hi def link fortranIntrinsicCUDA        fortranIntrinsic
-hi def link fortranTypeCUDA             fortranType
-hi def link fortranStringCUDA           fortranString
-
 hi def link fortranFormatSpec	Identifier
 hi def link fortranFloat	Float
 hi def link fortranPreCondit	PreCondit
@@ -543,8 +535,15 @@ hi def link fortranComment	Comment
 hi def link fortranSerialNumber	Todo
 hi def link fortranTab		Error
 
-" Uncomment the next line if you use extra intrinsics provided by vendors
-"hi def link fortranExtraIntrinsic	Function
+if exists("fortran_CUDA")
+  hi def link fortranIntrinsicCUDA        fortranIntrinsic
+  hi def link fortranTypeCUDA             fortranType
+  hi def link fortranStringCUDA           fortranString
+endif
+
+if exists("fortran_vendor_intrinsics")
+  hi def link fortranExtraIntrinsic	Function
+endif
 
 let b:current_syntax = "fortran"
 
