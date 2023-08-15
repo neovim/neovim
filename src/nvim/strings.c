@@ -49,9 +49,11 @@ static char typename_unknown[] = N_("unknown");
 static char typename_int[] = N_("int");
 static char typename_longint[] = N_("long int");
 static char typename_longlongint[] = N_("long long int");
+static char typename_signedsizet[] = N_("signed size_t");
 static char typename_unsignedint[] = N_("unsigned int");
 static char typename_unsignedlongint[] = N_("unsigned long int");
 static char typename_unsignedlonglongint[] = N_("unsigned long long int");
+static char typename_sizet[] = N_("size_t");
 static char typename_pointer[] = N_("pointer");
 static char typename_percent[] = N_("percent");
 static char typename_char[] = N_("char");
@@ -748,9 +750,11 @@ enum {
   TYPE_INT,
   TYPE_LONGINT,
   TYPE_LONGLONGINT,
+  TYPE_SIGNEDSIZET,
   TYPE_UNSIGNEDINT,
   TYPE_UNSIGNEDLONGINT,
   TYPE_UNSIGNEDLONGLONGINT,
+  TYPE_SIZET,
   TYPE_POINTER,
   TYPE_PERCENT,
   TYPE_CHAR,
@@ -768,8 +772,8 @@ static int format_typeof(const char *type, bool usetvs)
   // current conversion specifier character
   char fmt_spec = '\0';
 
-  // parse 'h', 'l' and 'll' length modifiers
-  if (*type == 'h' || *type == 'l') {
+  // parse 'h', 'l', 'll' and 'z' length modifiers
+  if (*type == 'h' || *type == 'l' || *type == 'z') {
     length_modifier = *type;
     type++;
     if (length_modifier == 'l' && *type == 'l') {
@@ -855,6 +859,8 @@ static int format_typeof(const char *type, bool usetvs)
         return TYPE_LONGINT;
       case 'L':
         return TYPE_LONGLONGINT;
+      case 'z':
+        return TYPE_SIGNEDSIZET;
       }
     } else {
       // unsigned
@@ -866,6 +872,8 @@ static int format_typeof(const char *type, bool usetvs)
         return TYPE_UNSIGNEDLONGINT;
       case 'L':
         return TYPE_UNSIGNEDLONGLONGINT;
+      case 'z':
+        return TYPE_SIZET;
       }
     }
     break;
@@ -894,10 +902,14 @@ static char *format_typename(const char *type)
     return _(typename_longlongint);
   case TYPE_UNSIGNEDINT:
     return _(typename_unsignedint);
+  case TYPE_SIGNEDSIZET:
+    return _(typename_signedsizet);
   case TYPE_UNSIGNEDLONGINT:
     return _(typename_unsignedlongint);
   case TYPE_UNSIGNEDLONGLONGINT:
     return _(typename_unsignedlonglongint);
+  case TYPE_SIZET:
+    return _(typename_sizet);
   case TYPE_POINTER:
     return _(typename_pointer);
   case TYPE_PERCENT:
@@ -1147,8 +1159,8 @@ static int parse_fmt_types(const char ***ap_types, int *num_posarg, const char *
         ptype = p;
       }
 
-      // parse 'h', 'l' and 'll' length modifiers
-      if (*p == 'h' || *p == 'l') {
+      // parse 'h', 'l', 'll' and 'z' length modifiers
+      if (*p == 'h' || *p == 'l' || *p == 'z') {
         length_modifier = *p;
         p++;
         if (length_modifier == 'l' && *p == 'l') {
@@ -1283,6 +1295,10 @@ static void skip_to_arg(const char **ap_types, va_list ap_start, va_list *ap, in
       va_arg(*ap, long long);  // NOLINT(runtime/int)
       break;
 
+    case TYPE_SIGNEDSIZET:  // implementation-defined, usually ptrdiff_t
+      va_arg(*ap, ptrdiff_t);
+      break;
+
     case TYPE_UNSIGNEDINT:
       va_arg(*ap, unsigned);
       break;
@@ -1293,6 +1309,10 @@ static void skip_to_arg(const char **ap_types, va_list ap_start, va_list *ap, in
 
     case TYPE_UNSIGNEDLONGLONGINT:
       va_arg(*ap, unsigned long long);  // NOLINT(runtime/int)
+      break;
+
+    case TYPE_SIZET:
+      va_arg(*ap, size_t);
       break;
 
     case TYPE_FLOAT:
@@ -1699,7 +1719,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
                       va_arg(ap, long long)));  // NOLINT(runtime/int)
             break;
-          case 'z':
+          case 'z':  // implementation-defined, usually ptrdiff_t
             arg = (tvs
                    ? (ptrdiff_t)tv_nr(tvs, &arg_idx)
                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
