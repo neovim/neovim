@@ -150,10 +150,12 @@ describe('vim_snprintf()', function()
 
   local function i(n) return ffi.cast('int', n) end
   local function l(n) return ffi.cast('long', n) end
-  local function u(n) return ffi.cast('unsigned', n) end
   local function ll(n) return ffi.cast('long long', n) end
+  local function z(n) return ffi.cast('ptrdiff_t', n) end
+  local function u(n) return ffi.cast('unsigned', n) end
   local function ul(n) return ffi.cast('unsigned long', n) end
   local function ull(n) return ffi.cast('unsigned long long', n) end
+  local function uz(n) return ffi.cast('size_t', n) end
 
   itp('truncation', function()
     for bsize = 0, 14 do
@@ -218,6 +220,15 @@ describe('vim_snprintf()', function()
       a('-inf', buf, bsize, '%1$f', -1.0 / 0.0)
       a('-0.000000', buf, bsize, '%1$f', -0.0)
     end
+  end)
+
+  itp('%zd and %zu', function()
+    local bsize = 20
+    local buf = ffi.gc(strings.xmalloc(bsize), strings.xfree)
+    a('-1234567 -7654321', buf, bsize, '%zd %zd', z(-1234567), z(-7654321))
+    a('-7654321 -1234567', buf, bsize, '%2$zd %1$zd', z(-1234567), z(-7654321))
+    a('1234567 7654321', buf, bsize, '%zu %zu', uz(1234567), uz(7654321))
+    a('7654321 1234567', buf, bsize, '%2$zu %1$zu', uz(1234567), uz(7654321))
   end)
 end)
 
