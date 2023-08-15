@@ -274,8 +274,7 @@ func Test_compl_with_CTRL_X_CTRL_K_using_spell()
   call assert_equal(['theater'], getline(1, '$'))
   set spelllang=en_gb
   call feedkeys("Stheat\<c-x>\<c-k>\<esc>", 'tnx')
-  " FIXME: commented out, expected theatre bug got theater. See issue #7025.
-  " call assert_equal(['theatre'], getline(1, '$'))
+  call assert_equal(['theatre'], getline(1, '$'))
 
   bwipe!
   set spell& spelllang& dictionary& ignorecase&
