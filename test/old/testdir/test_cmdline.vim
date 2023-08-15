@@ -601,6 +601,8 @@ func Test_getcompletion()
   call assert_true(index(l, 'taglist(') >= 0)
   let l = getcompletion('call paint', 'cmdline')
   call assert_equal([], l)
+  let l = getcompletion('autocmd BufEnter * map <bu', 'cmdline')
+  call assert_equal(['<buffer>'], l)
 
   func T(a, c, p)
     let g:cmdline_compl_params = [a:a, a:c, a:p]
@@ -3636,14 +3638,15 @@ func Test_rulerformat_position()
   call StopVimInTerminal(buf)
 endfunc
 
-func Test_usercmd_completion()
-  let g:complete=[]
+func Test_getcompletion_usercmd()
   command! -nargs=* -complete=command TestCompletion echo <q-args>
-  let g:complete = getcompletion('TestCompletion ', 'cmdline')
-  let a = getcompletion('', 'cmdline')
 
-  call assert_equal(a, g:complete)
+  call assert_equal(getcompletion('', 'cmdline'),
+        \ getcompletion('TestCompletion ', 'cmdline'))
+  call assert_equal(['<buffer>'],
+        \ getcompletion('TestCompletion map <bu', 'cmdline'))
+
   delcom TestCompletion
-  unlet! g:complete
 endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

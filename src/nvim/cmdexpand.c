@@ -3479,7 +3479,6 @@ void wildmenu_cleanup(CmdlineInfo *cclp)
 /// "getcompletion()" function
 void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  char *pat;
   expand_T xpc;
   bool filtered = false;
   int options = WILD_SILENT | WILD_USE_NL | WILD_ADD_SLASH
@@ -3510,9 +3509,10 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const char *pattern = tv_get_string(&argvars[0]);
 
   if (strcmp(type, "cmdline") == 0) {
-    set_one_cmd_context(&xpc, pattern);
+    const int cmdline_len = (int)strlen(pattern);
+    set_cmd_context(&xpc, (char *)pattern, cmdline_len, cmdline_len, false);
     xpc.xp_pattern_len = strlen(xpc.xp_pattern);
-    xpc.xp_col = (int)strlen(pattern);
+    xpc.xp_col = cmdline_len;
     goto theend;
   }
 
@@ -3539,6 +3539,8 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
 theend:
+  ;
+  char *pat;
   if (cmdline_fuzzy_completion_supported(&xpc)) {
     // when fuzzy matching, don't modify the search string
     pat = xstrdup(xpc.xp_pattern);
