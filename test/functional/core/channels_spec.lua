@@ -4,7 +4,7 @@ local clear, eq, eval, next_msg, ok, source =
 local command, fn, api = helpers.command, helpers.fn, helpers.api
 local sleep = vim.uv.sleep
 local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
-local set_session = helpers.set_session
+local get_session, set_session = helpers.get_session, helpers.set_session
 local nvim_prog = helpers.nvim_prog
 local is_os = helpers.is_os
 local retry = helpers.retry
@@ -57,6 +57,43 @@ describe('channels', function()
     eq({ 'notification', 'data', { id, res } }, next_msg())
     command("call chansend(g:id, msgpackdump([[2,'nvim_command',['quit']]]))")
     eq({ 'notification', 'data', { id, { '' } } }, next_msg())
+  end)
+
+  it('dont crash due to garbage in rpc #23781', function()
+    local client = get_session()
+    local server = spawn(nvim_argv, nil, nil, true)
+    set_session(server)
+    local address = funcs.serverlist()[1]
+    set_session(client)
+
+    meths.set_var('address', address)
+    command("let g:id = sockconnect('pipe', address, {'on_data':'OnEvent'})")
+    local id = eval('g:id')
+    ok(id > 0)
+
+    command("call chansend(g:id, 'F')")
+    eq({'notification', 'data', {id, {''}}}, next_msg())
+    set_session(server)
+    assert_alive()
+
+    set_session(client)
+    command('call chanclose(g:id)')
+    command("let g:id = sockconnect('pipe', address, {'on_data':'OnEvent'})")
+    id = eval('g:id')
+    ok(id > 0)
+
+    command("call chansend(g:id, msgpackdump([[2, 'redraw', 'F']], 'B')[:-4])")
+    set_session(server)
+    assert_alive()
+    set_session(client)
+    command("call chansend(g:id, 'F')")
+    eq({'notification', 'data', {id, {''}}}, next_msg())
+
+    set_session(server)
+    assert_alive()
+    set_session(client)
+    command('call chanclose(g:id)')
+    server:close()
   end)
 
   it('can use stdio channel', function()

@@ -304,8 +304,11 @@ static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c, void *data,
   p->read_ptr = rbuffer_read_ptr(rbuf, &size);
   p->read_size = size;
   parse_msgpack(channel);
-  size_t consumed = size - p->read_size;
-  rbuffer_consumed_compact(rbuf, consumed);
+
+  if (!unpacker_closed(p)) {
+    size_t consumed = size - p->read_size;
+    rbuffer_consumed_compact(rbuf, consumed);
+  }
 
 end:
   channel_decref(channel);
