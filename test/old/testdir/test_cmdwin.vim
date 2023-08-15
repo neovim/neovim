@@ -192,4 +192,17 @@ func Test_cmdwin_interrupted()
   delfunc CheckInterrupted
 endfunc
 
+func Test_cmdwin_existing_bufname()
+  func CheckName()
+    call assert_equal(1, getbufinfo('')[0].command)
+    call assert_equal(0, getbufinfo('[Command Line]')[0].command)
+    call assert_match('#a\s*"\[Command Line\]"', execute('ls'))
+    call assert_match('%a\s*"\[Command Line\]"', execute('ls'))
+  endfunc
+  file [Command Line]
+  call feedkeys("q::call CheckName()\<CR>:q\<CR>", 'ntx')
+  0file
+  delfunc CheckName
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

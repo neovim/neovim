@@ -4012,6 +4012,9 @@ char *buf_spname(buf_T *buf)
     if (buf->b_fname != NULL) {
       return buf->b_fname;
     }
+    if (buf == cmdwin_buf) {
+      return _("[Command Line]");
+    }
     if (bt_prompt(buf)) {
       return _("[Prompt]");
     }
@@ -4129,6 +4132,7 @@ void wipe_buffer(buf_T *buf, bool aucmd)
 ///   - Always considered 'nomodified'
 ///
 /// @param bufnr     Buffer to switch to, or 0 to create a new buffer.
+/// @param bufname   Buffer name, or NULL.
 ///
 /// @see curbufIsChanged()
 ///
@@ -4138,9 +4142,11 @@ int buf_open_scratch(handle_T bufnr, char *bufname)
   if (do_ecmd((int)bufnr, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL) == FAIL) {
     return FAIL;
   }
-  apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
-  setfname(curbuf, bufname, NULL, true);
-  apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
+  if (bufname != NULL) {
+    apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
+    setfname(curbuf, bufname, NULL, true);
+    apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
+  }
   set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
   set_option_value_give_err(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
   set_option_value_give_err(kOptSwapfile, BOOLEAN_OPTVAL(false), OPT_LOCAL);

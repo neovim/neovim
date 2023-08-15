@@ -4345,7 +4345,7 @@ static int open_cmdwin(void)
 
   // Create empty command-line buffer.  Be especially cautious of BufLeave
   // autocommands from do_ecmd(), as cmdwin restrictions do not apply to them!
-  const int newbuf_status = buf_open_scratch(0, _("[Command Line]"));
+  const int newbuf_status = buf_open_scratch(0, NULL);
   const bool cmdwin_valid = win_valid(cmdwin_win);
   if (newbuf_status == FAIL || !cmdwin_valid || curwin != cmdwin_win || !win_valid(old_curwin)
       || !bufref_valid(&old_curbuf) || old_curwin->w_buffer != old_curbuf.br_buf) {
