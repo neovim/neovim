@@ -194,6 +194,11 @@ The following changes to existing APIs or features add new behavior.
   automatically if the job exited without error, eliminating the (often
   unwanted) "[Process exited 0]" message.
 
+• |vim.diagnostic.config()| now accepts virtual text relevant options to
+  |nvim_buf_set_extmark()| (e.g. "virt_text_pos" and "hl_mode") in its
+  "virtual_text" table, which gives users more control over how diagnostic
+  virtual text is displayed.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

@@ -566,7 +566,9 @@ end
 ---                    severity |diagnostic-severity|
 ---       - virtual_text: (default true) Use virtual text for diagnostics. If multiple diagnostics
 ---                       are set for a namespace, one prefix per diagnostic + the last diagnostic
----                       message are shown.
+---                       message are shown. In addition to the options listed below, the
+---                       "virt_text" options of |nvim_buf_set_extmark| may also be used here (e.g.
+---                       "virt_text_pos" and "hl_mode").
 ---                       Options:
 ---                       * severity: Only show virtual text for diagnostics matching the given
 ---                       severity |diagnostic-severity|
@@ -1008,8 +1010,11 @@ M.handlers.virtual_text = {
 
       if virt_texts then
         api.nvim_buf_set_extmark(bufnr, virt_text_ns, line, 0, {
-          hl_mode = 'combine',
+          hl_mode = opts.virtual_text.hl_mode or 'combine',
           virt_text = virt_texts,
+          virt_text_pos = opts.virtual_text.virt_text_pos,
+          virt_text_hide = opts.virtual_text.virt_text_hide,
+          virt_text_win_col = opts.virtual_text.virt_text_win_col,
         })
       end
     end
