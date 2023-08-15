@@ -106,6 +106,7 @@ describe('semantic token highlighting', function()
       exec_lua([[
         bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_win_set_buf(0, bufnr)
+        vim.bo[bufnr].filetype = 'some-filetype'
         client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
       ]])
 
