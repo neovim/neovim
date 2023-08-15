@@ -1439,7 +1439,7 @@ describe('typval.c', function()
           eq('3', tv_list_find_str(l, 2))
           eq('3', tv_list_find_str(l, -3))
 
-          alloc_log:check({a.freed(alloc_log.null)})
+          alloc_log:check({a.freed(alloc_log.null), a.freed(alloc_log.null)})
         end)
         itp('returns string when used with VAR_STRING items', function()
           local l = list('1', '2', '3', '4', '5')
@@ -1768,7 +1768,7 @@ describe('typval.c', function()
           local s44 = check_emsg(function() return lib.tv_dict_get_string(d, 't', false) end,
                                  nil)
           eq('44.0', ffi.string(s44))
-          alloc_log:check({a.freed(alloc_log.null)})
+          alloc_log:check({a.freed(alloc_log.null), a.freed(alloc_log.null)})
         end)
         itp('allocates a string copy when requested', function()
           local function tv_dict_get_string_alloc(d, key, emsg, is_float)
@@ -1779,7 +1779,7 @@ describe('typval.c', function()
             if not emsg then
               if s_ret then
                 if is_float then
-                  alloc_log:check({a.freed(alloc_log.null), a.str(ret, s_ret)})
+                  alloc_log:check({a.freed(alloc_log.null), a.freed(alloc_log.null), a.str(ret, s_ret)})
                 else
                   alloc_log:check({a.str(ret, s_ret)})
                 end
@@ -1810,7 +1810,7 @@ describe('typval.c', function()
           local s_ret = (ret ~= nil) and ffi.string(ret) or nil
           if not emsg then
             if is_float then
-              alloc_log:check({a.freed(alloc_log.null)})
+              alloc_log:check({a.freed(alloc_log.null), a.freed(alloc_log.null)})
             else
               alloc_log:check({})
             end
@@ -1856,7 +1856,7 @@ describe('typval.c', function()
           local s_ret = (ret ~= nil) and ffi.string(ret) or nil
           if not emsg then
             if is_float then
-              alloc_log:check({a.freed(alloc_log.null)})
+              alloc_log:check({a.freed(alloc_log.null), a.freed(alloc_log.null)})
             else
               alloc_log:check({})
             end
@@ -3018,7 +3018,7 @@ describe('typval.c', function()
           if emsg then
             alloc_log:clear()
           elseif tv.v_type == lib.VAR_FLOAT then
-            alloc_log:check({a.freed(alloc_log.null)})
+            alloc_log:check({a.freed(alloc_log.null), a.freed(alloc_log.null)})
           else
             alloc_log:check({})
           end

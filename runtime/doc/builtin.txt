@@ -5010,7 +5010,11 @@ printf({fmt}, {expr1} ...)                                            *printf()*
 		The "%" starts a conversion specification.  The following
 		arguments appear in sequence:
 
-			%  [flags]  [field-width]  [.precision]  type
+			% [pos-argument] [flags] [field-width] [.precision] type
+
+		pos-argument
+			At most one positional argument specifier. These
+			take the form {n$}, where n is >= 1.
 
 		flags
 			Zero or more of the following flags:
@@ -5078,6 +5082,13 @@ printf({fmt}, {expr1} ...)                                            *printf()*
 			echo printf("%d: %.*s", nr, width, line)
 <		This limits the length of the text used from "line" to
 		"width" bytes.
+
+		If the argument to be formatted is specified using a posional
+		argument specifier, and a '*' is used to indicate that a
+		number argument is to be used to specify the width or
+		precision, the argument(s) to be used must also be specified
+		using a {n$} positional argument specifier. See |printf-$|.
+
 
 		The conversion specifiers and their meanings are:
 
@@ -5165,6 +5176,104 @@ printf({fmt}, {expr1} ...)                                            *printf()*
 		The number of {exprN} arguments must exactly match the number
 		of "%" items.  If there are not sufficient or too many
 		arguments an error is given.  Up to 18 arguments can be used.
+
+							*printf-$*
+		In certain languages, error and informative messages are
+		more readable when the order of words is different from the
+		corresponding message in English. To accomodate translations
+		having a different word order, positional arguments may be
+		used to indicate this. For instance: >vim
+
+			#, c-format
+			msgid "%s returning %s"
+			msgstr "waarde %2$s komt terug van %1$s"
+<
+		In this example, the sentence has its 2 string arguments reversed
+		in the output. >vim
+
+			echo printf(
+				"In The Netherlands, vim's creator's name is: %1$s %2$s",
+				"Bram", "Moolenaar")
+<			In The Netherlands, vim's creator's name is: Bram Moolenaar >vim
+
+			echo printf(
+				"In Belgium, vim's creator's name is: %2$s %1$s",
+				"Bram", "Moolenaar")
+<			In Belgium, vim's creator's name is: Moolenaar Bram
+
+		Width (and precision) can be specified using the '*' specifier.
+		In this case, you must specify the field width position in the
+		argument list. >vim
+
+			echo printf("%1$*2$.*3$d", 1, 2, 3)
+<			001 >vim
+			echo printf("%2$*3$.*1$d", 1, 2, 3)
+<			  2 >vim
+			echo printf("%3$*1$.*2$d", 1, 2, 3)
+<			03 >vim
+			echo printf("%1$*2$.*3$g", 1.4142, 2, 3)
+<			1.414
+
+		You can mix specifying the width and/or precision directly
+		and via positional arguments: >vim
+
+			echo printf("%1$4.*2$f", 1.4142135, 6)
+<			1.414214 >vim
+			echo printf("%1$*2$.4f", 1.4142135, 6)
+<			1.4142 >vim
+			echo printf("%1$*2$.*3$f", 1.4142135, 6, 2)
+<			  1.41
+
+							*E1400*
+		You cannot mix positional and non-positional arguments: >vim
+			echo printf("%s%1$s", "One", "Two")
+<			E1400: Cannot mix positional and non-positional
+			arguments: %s%1$s
+
+							*E1401*
+		You cannot skip a positional argument in a format string: >vim
+			echo printf("%3$s%1$s", "One", "Two", "Three")
+<			E1401: format argument 2 unused in $-style
+			format: %3$s%1$s
+
+							*E1402*
+		You can re-use a [field-width] (or [precision]) argument: >vim
+			echo printf("%1$d at width %2$d is: %01$*2$d", 1, 2)
+<			1 at width 2 is: 01
+
+		However, you can't use it as a different type: >vim
+			echo printf("%1$d at width %2$ld is: %01$*2$d", 1, 2)
+<			E1402: Positional argument 2 used as field
+			width reused as different type: long int/int
+
+							*E1403*
+		When a positional argument is used, but not the correct number
+		or arguments is given, an error is raised: >vim
+			echo printf("%1$d at width %2$d is: %01$*2$.*3$d", 1, 2)
+<			E1403: Positional argument 3 out of bounds:
+			%1$d at width %2$d is: %01$*2$.*3$d
+
+		Only the first error is reported: >vim
+			echo printf("%01$*2$.*3$d %4$d", 1, 2)
+<			E1403: Positional argument 3 out of bounds:
+			%01$*2$.*3$d %4$d
+
+							*E1404*
+		A positional argument can be used more than once: >vim
+			echo printf("%1$s %2$s %1$s", "One", "Two")
+<			One Two One
+
+		However, you can't use a different type the second time: >vim
+			echo printf("%1$s %2$s %1$d", "One", "Two")
+<			E1404: Positional argument 1 type used
+			inconsistently: int/string
+
+							*E1405*
+		Various other errors that lead to a format string being
+		wrongly formatted lead to: >vim
+			echo printf("%1$d at width %2$d is: %01$*2$.3$d", 1, 2)
+<			E1405: Invalid format specifier:
+			%1$d at width %2$d is: %01$*2$.3$d
 
 prompt_getprompt({buf})                                     *prompt_getprompt()*
 		Returns the effective prompt text for buffer {buf}.  {buf} can
