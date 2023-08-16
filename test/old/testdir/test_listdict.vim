@@ -480,6 +480,19 @@ func Test_dict_func_remove_in_use()
   endfunc
   let expected = 'a:' . string(get(d, 'func'))
   call assert_equal(expected, d.func(string(remove(d, 'func'))))
+
+  " similar, in a way it also works in Vim9
+  let lines =<< trim END
+      VAR d = {1: 1, 2: 'x'}
+      func GetArg(a)
+        return "a:" .. a:a
+      endfunc
+      LET d.func = function('GetArg')
+      VAR expected = 'a:' .. string(get(d, 'func'))
+      call assert_equal(expected, d.func(string(remove(d, 'func'))))
+  END
+  call CheckTransLegacySuccess(lines)
+  call CheckTransVim9Success(lines)
 endfunc
 
 func Test_dict_literal_keys()
