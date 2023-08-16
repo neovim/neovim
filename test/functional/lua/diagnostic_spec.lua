@@ -860,7 +860,7 @@ end)
       ]])
     end)
 
-    it('returns only requested diagnostics when severity is supplied', function()
+    it('returns only requested diagnostics when severity range is supplied', function()
       eq({2, 3, 2}, exec_lua [[
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
           make_error("Error 1", 1, 1, 1, 5),
@@ -876,6 +876,28 @@ end)
             severity = {
               min=vim.diagnostic.severity.INFO,
               max=vim.diagnostic.severity.WARN,
+            }
+          }),
+        }
+      ]])
+    end)
+
+    it('returns only requested diagnostics when severities are supplied', function()
+      eq({1, 1, 2}, exec_lua [[
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+          make_error("Error 1", 1, 1, 1, 5),
+          make_warning("Warning on Server 1", 1, 1, 2, 3),
+          make_info("Ignored information", 1, 1, 2, 3),
+          make_hint("Here's a hint", 1, 1, 2, 3),
+        })
+
+        return {
+          #vim.diagnostic.get(diagnostic_bufnr, { severity = {vim.diagnostic.severity.WARN} }),
+          #vim.diagnostic.get(diagnostic_bufnr, { severity = {vim.diagnostic.severity.ERROR} }),
+          #vim.diagnostic.get(diagnostic_bufnr, {
+            severity = {
+              vim.diagnostic.severity.INFO,
+              vim.diagnostic.severity.WARN,
             }
           }),
         }
