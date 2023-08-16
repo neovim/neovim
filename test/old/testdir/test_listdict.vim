@@ -505,95 +505,112 @@ endfunc
 
 " Nasty: deepcopy() dict that refers to itself (fails when noref used)
 func Test_dict_deepcopy()
-  let d = {1:1, 2:2}
-  let l = [4, d, 6]
-  let d[3] = l
-  let dc = deepcopy(d)
-  call assert_fails('call deepcopy(d, 1)', 'E698:')
-  let l2 = [0, l, l, 3]
-  let l[1] = l2
-  let l3 = deepcopy(l2)
-  call assert_true(l3[1] is l3[2])
+  let lines =<< trim END
+      VAR d = {1: 1, 2: '2'}
+      VAR l = [4, d, 6]
+      LET d[3] = l
+      VAR dc = deepcopy(d)
+      call deepcopy(d, 1)
+  END
+  call CheckLegacyAndVim9Failure(lines, 'E698:')
+
+  let lines =<< trim END
+      VAR d = {1: 1, 2: '2'}
+      VAR l = [4, d, 6]
+      LET d[3] = l
+      VAR l2 = [0, l, l, 3]
+      LET l[1] = l2
+      VAR l3 = deepcopy(l2)
+      call assert_true(l3[1] is l3[2])
+  END
+  call CheckLegacyAndVim9Success(lines)
+
   call assert_fails("call deepcopy([1, 2], 2)", 'E1023:')
 endfunc
 
 " Locked variables
 func Test_list_locked_var()
-  let expected = [
-	      \ [['1000-000', 'ppppppF'],
-	      \  ['0000-000', 'ppppppp'],
-	      \  ['0000-000', 'ppppppp']],
-	      \ [['1000-000', 'ppppppF'],
-	      \  ['0000-000', 'ppppppp'],
-	      \  ['0000-000', 'ppppppp']],
-	      \ [['1100-100', 'ppFppFF'],
-	      \  ['0000-000', 'ppppppp'],
-	      \  ['0000-000', 'ppppppp']],
-	      \ [['1110-110', 'pFFpFFF'],
-	      \  ['0010-010', 'pFppFpp'],
-	      \  ['0000-000', 'ppppppp']],
-	      \ [['1111-111', 'FFFFFFF'],
-	      \  ['0011-011', 'FFpFFpp'],
-	      \  ['0000-000', 'ppppppp']]
-	      \ ]
-  for depth in range(5)
-    for u in range(3)
-      unlet! l
-      let l = [0, [1, [2, 3]], {4: 5, 6: {7: 8}}]
-      exe "lockvar " . depth . " l"
-      if u == 1
-        exe "unlockvar l"
-      elseif u == 2
-        exe "unlockvar " . depth . " l"
-      endif
-      let ps = islocked("l").islocked("l[1]").islocked("l[1][1]").islocked("l[1][1][0]").'-'.islocked("l[2]").islocked("l[2]['6']").islocked("l[2]['6'][7]")
-      call assert_equal(expected[depth][u][0], ps, 'depth: ' .. depth)
-      let ps = ''
-      try
-        let l[1][1][0] = 99
-        let ps .= 'p'
-      catch
-        let ps .= 'F'
-      endtry
-      try
-        let l[1][1] = [99]
-        let ps .= 'p'
-      catch
-        let ps .= 'F'
-      endtry
-      try
-        let l[1] = [99]
-        let ps .= 'p'
-      catch
-        let ps .= 'F'
-      endtry
-      try
-        let l[2]['6'][7] = 99
-        let ps .= 'p'
-      catch
-        let ps .= 'F'
-      endtry
-      try
-        let l[2][6] = {99: 99}
-        let ps .= 'p'
-      catch
-        let ps .= 'F'
-      endtry
-      try
-        let l[2] = {99: 99}
-        let ps .= 'p'
-      catch
-        let ps .= 'F'
-      endtry
-      try
-        let l = [99]
-        let ps .= 'p'
-      catch
-        let ps .= 'F'
-      endtry
-      call assert_equal(expected[depth][u][1], ps, 'depth: ' .. depth)
-    endfor
-  endfor
+  " Not tested with :def function, local vars cannot be locked.
+  let lines =<< trim END
+      VAR expected = [
+                  \ [['1000-000', 'ppppppF'],
+                  \  ['0000-000', 'ppppppp'],
+                  \  ['0000-000', 'ppppppp']],
+                  \ [['1000-000', 'ppppppF'],
+                  \  ['0000-000', 'ppppppp'],
+                  \  ['0000-000', 'ppppppp']],
+                  \ [['1100-100', 'ppFppFF'],
+                  \  ['0000-000', 'ppppppp'],
+                  \  ['0000-000', 'ppppppp']],
+                  \ [['1110-110', 'pFFpFFF'],
+                  \  ['0010-010', 'pFppFpp'],
+                  \  ['0000-000', 'ppppppp']],
+                  \ [['1111-111', 'FFFFFFF'],
+                  \  ['0011-011', 'FFpFFpp'],
+                  \  ['0000-000', 'ppppppp']]
+                  \ ]
+      for depth in range(5)
+        for u in range(3)
+          VAR l = [0, [1, [2, 3]], {4: 5, 6: {7: 8}}]
+          exe "lockvar " .. depth .. " l"
+          if u == 1
+            exe "unlockvar l"
+          elseif u == 2
+            exe "unlockvar " .. depth .. " l"
+          endif
+          VAR ps = islocked("l") .. islocked("l[1]") .. islocked("l[1][1]") .. islocked("l[1][1][0]") .. '-' .. islocked("l[2]") .. islocked("l[2]['6']") .. islocked("l[2]['6'][7]")
+          call assert_equal(expected[depth][u][0], ps, 'depth: ' .. depth)
+          LET ps = ''
+          try
+            LET l[1][1][0] = 99
+            LET ps ..= 'p'
+          catch
+            LET ps ..= 'F'
+          endtry
+          try
+            LET l[1][1] = [99]
+            LET ps ..= 'p'
+          catch
+            LET ps ..= 'F'
+          endtry
+          try
+            LET l[1] = [99]
+            LET ps ..= 'p'
+          catch
+            LET ps ..= 'F'
+          endtry
+          try
+            LET l[2]['6'][7] = 99
+            LET ps ..= 'p'
+          catch
+            LET ps ..= 'F'
+          endtry
+          try
+            LET l[2][6] = {99: 99}
+            LET ps ..= 'p'
+          catch
+            LET ps ..= 'F'
+          endtry
+          try
+            LET l[2] = {99: 99}
+            LET ps ..= 'p'
+          catch
+            LET ps ..= 'F'
+          endtry
+          try
+            LET l = [99]
+            LET ps ..= 'p'
+          catch
+            LET ps ..= 'F'
+          endtry
+          call assert_equal(expected[depth][u][1], ps, 'depth: ' .. depth)
+          unlock! l
+        endfor
+      endfor
+  END
+  call CheckTransLegacySuccess(lines)
+  call CheckTransVim9Success(lines)
+
   call assert_fails("let x=islocked('a b')", 'E488:')
   let mylist = [1, 2, 3]
   call assert_fails("let x = islocked('mylist[1:2]')", 'E786:')
@@ -603,6 +620,7 @@ endfunc
 
 " Unletting locked variables
 func Test_list_locked_var_unlet()
+  " Not tested with Vim9: script and local variables cannot be unlocked
   let expected = [
 	      \ [['1000-000', 'ppppppp'],
 	      \  ['0000-000', 'ppppppp'],
@@ -701,26 +719,43 @@ endfunc
 
 " unlet after lock on dict item
 func Test_dict_item_lock_unlet()
-  let d = {'a': 99, 'b': 100}
-  lockvar d.a
-  unlet d.a
-  call assert_equal({'b' : 100}, d)
+  let lines =<< trim END
+      VAR d = {'a': 99, 'b': 100}
+      lockvar d.a
+      unlet d.a
+      call assert_equal({'b': 100}, d)
+  END
+  " TODO: make this work in a :def function
+  "call CheckLegacyAndVim9Success(lines)
+  call CheckTransLegacySuccess(lines)
+  call CheckTransVim9Success(lines)
 endfunc
 
 " filter() after lock on dict item
 func Test_dict_lock_filter()
-  let d = {'a': 99, 'b': 100}
-  lockvar d.a
-  call filter(d, 'v:key != "a"')
-  call assert_equal({'b' : 100}, d)
+  let lines =<< trim END
+      VAR d = {'a': 99, 'b': 100}
+      lockvar d.a
+      call filter(d, 'v:key != "a"')
+      call assert_equal({'b': 100}, d)
+  END
+  " TODO: make this work in a :def function
+  "call CheckLegacyAndVim9Success(lines)
+  call CheckTransLegacySuccess(lines)
+  call CheckTransVim9Success(lines)
 endfunc
 
 " map() after lock on dict
 func Test_dict_lock_map()
-  let d = {'a': 99, 'b': 100}
-  lockvar 1 d
-  call map(d, 'v:val + 200')
-  call assert_equal({'a' : 299, 'b' : 300}, d)
+  let lines =<< trim END
+      VAR d = {'a': 99, 'b': 100}
+      lockvar 1 d
+      call map(d, 'v:val + 200')
+      call assert_equal({'a': 299, 'b': 300}, d)
+  END
+  " This won't work in a :def function
+  call CheckTransLegacySuccess(lines)
+  call CheckTransVim9Success(lines)
 endfunc
 
 " No extend() after lock on dict item
