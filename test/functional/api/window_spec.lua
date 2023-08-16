@@ -44,14 +44,17 @@ describe('API/win', function()
       eq('Invalid window id: 23', pcall_err(window, 'set_buf', 23, nvim('get_current_buf')))
     end)
 
-    it('disallowed in cmdwin if win=curwin or buf=curbuf', function()
+    it('disallowed in cmdwin if win={old_}curwin or buf=curbuf', function()
       local new_buf = meths.create_buf(true, true)
+      local old_win = meths.get_current_win()
       local new_win = meths.open_win(new_buf, false, {
         relative='editor', row=10, col=10, width=50, height=10,
       })
       feed('q:')
       eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
          pcall_err(meths.win_set_buf, 0, new_buf))
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+         pcall_err(meths.win_set_buf, old_win, new_buf))
       eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
          pcall_err(meths.win_set_buf, new_win, 0))
 
