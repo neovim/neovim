@@ -25,6 +25,8 @@
 ---@field prev_named_sibling fun(self: TSNode): TSNode?
 ---@field named_children fun(self: TSNode): TSNode[]
 ---@field has_changes fun(self: TSNode): boolean
+---@field has_error fun(self: TSNode): boolean
+---@field sexpr fun(self: TSNode): string
 ---@field equal fun(self: TSNode, other: TSNode): boolean
 ---@field iter_children fun(self: TSNode): fun(): TSNode, string
 local TSNode = {}
