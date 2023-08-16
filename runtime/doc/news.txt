@@ -145,6 +145,9 @@ The following new APIs and features were added.
 
 • Improved messages for type errors in `vim.api.*` calls (including `opts` params)
 
+• Functions that take a severity as an optional parameter (e.g.
+  |vim.diagnostic.get()|) now also accept a list of severities |vim.diagnostic.severity|
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
