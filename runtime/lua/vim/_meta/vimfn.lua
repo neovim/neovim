@@ -1600,7 +1600,7 @@ function vim.fn.eventhandler() end
 --- |exepath()| can be used to get the full path of an executable.
 ---
 --- @param expr any
---- @return any
+--- @return 0|1|-1
 function vim.fn.executable(expr) end
 
 --- Execute {command} and capture its output.
@@ -8957,7 +8957,7 @@ function vim.fn.strcharpart(src, start, len, skipcc) end
 ---
 --- @param string string
 --- @param skipcc? any
---- @return any
+--- @return integer
 function vim.fn.strchars(string, skipcc) end
 
 --- The result is a Number, which is the number of display cells
@@ -8975,7 +8975,7 @@ function vim.fn.strchars(string, skipcc) end
 ---
 --- @param string string
 --- @param col? integer
---- @return any
+--- @return integer
 function vim.fn.strdisplaywidth(string, col) end
 
 --- The result is a String, which is a formatted date and time, as
@@ -8996,7 +8996,7 @@ function vim.fn.strdisplaywidth(string, col) end
 ---
 --- @param format any
 --- @param time? any
---- @return any
+--- @return string
 function vim.fn.strftime(format, time) end
 
 --- Get a Number corresponding to the character at {index} in
@@ -9007,9 +9007,9 @@ function vim.fn.strftime(format, time) end
 --- Returns -1 if {index} is invalid.
 --- Also see |strcharpart()| and |strchars()|.
 ---
---- @param str any
---- @param index any
---- @return any
+--- @param str string
+--- @param index integer
+--- @return integer
 function vim.fn.strgetchar(str, index) end
 
 --- The result is a Number, which gives the byte index in
@@ -9030,10 +9030,10 @@ function vim.fn.strgetchar(str, index) end
 --- stridx() works similar to the C function strstr().  When used
 --- with a single character it works similar to strchr().
 ---
---- @param haystack any
---- @param needle any
---- @param start? any
---- @return any
+--- @param haystack string
+--- @param needle string
+--- @param start? integer
+--- @return integer
 function vim.fn.stridx(haystack, needle, start) end
 
 --- Return {expr} converted to a String.  If {expr} is a Number,
@@ -9060,7 +9060,7 @@ function vim.fn.stridx(haystack, needle, start) end
 --- share data with other application.
 ---
 --- @param expr any
---- @return any
+--- @return string
 function vim.fn.string(expr) end
 
 --- The result is a Number, which is the length of the String
@@ -9072,7 +9072,7 @@ function vim.fn.string(expr) end
 --- Also see |len()|, |strdisplaywidth()| and |strwidth()|.
 ---
 --- @param string string
---- @return any
+--- @return integer
 function vim.fn.strlen(string) end
 
 --- The result is a String, which is part of {src}, starting from
@@ -9099,11 +9099,11 @@ function vim.fn.strlen(string) end
 --- <
 --- Returns an empty string on error.
 ---
---- @param src any
---- @param start any
---- @param len? any
---- @param chars? any
---- @return any
+--- @param src string
+--- @param start integer
+--- @param len? integer
+--- @param chars? 0|1
+--- @return string
 function vim.fn.strpart(src, start, len, chars) end
 
 --- The result is a Number, which is a unix timestamp representing
@@ -9129,9 +9129,9 @@ function vim.fn.strpart(src, start, len, chars) end
 ---   echo strftime("%c", strptime("%Y%m%d%H%M%S", "19970427115355") + 3600)
 --- <  Sun Apr 27 12:53:55 1997
 ---
---- @param format any
---- @param timestring any
---- @return any
+--- @param format string
+--- @param timestring string
+--- @return integer
 function vim.fn.strptime(format, timestring) end
 
 --- The result is a Number, which gives the byte index in
@@ -9151,10 +9151,10 @@ function vim.fn.strptime(format, timestring) end
 --- When used with a single character it works similar to the C
 --- function strrchr().
 ---
---- @param haystack any
---- @param needle any
---- @param start? any
---- @return any
+--- @param haystack string
+--- @param needle string
+--- @param start? integer
+--- @return integer
 function vim.fn.strridx(haystack, needle, start) end
 
 --- The result is a String, which is {string} with all unprintable
@@ -9167,7 +9167,7 @@ function vim.fn.strridx(haystack, needle, start) end
 --- Returns an empty string on error.
 ---
 --- @param string string
---- @return any
+--- @return string
 function vim.fn.strtrans(string) end
 
 --- The result is a Number, which is the number of UTF-16 code
@@ -9189,8 +9189,8 @@ function vim.fn.strtrans(string) end
 ---     echo strutf16len('ą́', v:true)  " returns 3
 ---
 --- @param string string
---- @param countcc? any
---- @return any
+--- @param countcc? 0|1
+--- @return integer
 function vim.fn.strutf16len(string, countcc) end
 
 --- The result is a Number, which is the number of display cells
@@ -9202,7 +9202,7 @@ function vim.fn.strutf16len(string, countcc) end
 --- Also see |strlen()|, |strdisplaywidth()| and |strchars()|.
 ---
 --- @param string string
---- @return any
+--- @return integer
 function vim.fn.strwidth(string) end
 
 --- Only for an expression in a |:substitute| command or
@@ -9233,8 +9233,8 @@ function vim.fn.strwidth(string) end
 --- A line break is included as a newline character.
 ---
 --- @param nr integer
---- @param list? any
---- @return any
+--- @param list? integer
+--- @return string|string[]
 function vim.fn.submatch(nr, list) end
 
 --- The result is a String, which is a copy of {string}, in which
@@ -9280,10 +9280,10 @@ function vim.fn.submatch(nr, list) end
 --- <Returns an empty string on error.
 ---
 --- @param string string
---- @param pat any
---- @param sub any
+--- @param pat string
+--- @param sub string
 --- @param flags string
---- @return any
+--- @return string
 function vim.fn.substitute(string, pat, sub, flags) end
 
 --- Returns a list of swap file names, like what "vim -r" shows.
@@ -9296,7 +9296,7 @@ function vim.fn.substitute(string, pat, sub, flags) end
 ---   let swapfiles = swapfilelist()
 ---   let &directory = save_dir
 ---
---- @return any
+--- @return string[]
 function vim.fn.swapfilelist() end
 
 --- The result is a dictionary, which holds information about the
@@ -9326,8 +9326,8 @@ function vim.fn.swapinfo(fname) end
 --- |:swapname| (unless there is no swap file).
 --- If buffer {buf} has no swap file, returns an empty string.
 ---
---- @param buf any
---- @return any
+--- @param buf integer|string
+--- @return string
 function vim.fn.swapname(buf) end
 
 --- The result is a Number, which is the syntax ID at the position
@@ -9357,8 +9357,8 @@ function vim.fn.swapname(buf) end
 ---
 --- @param lnum integer
 --- @param col integer
---- @param trans any
---- @return any
+--- @param trans 0|1
+--- @return integer
 function vim.fn.synID(lnum, col, trans) end
 
 --- The result is a String, which is the {what} attribute of
@@ -9406,10 +9406,10 @@ function vim.fn.synID(lnum, col, trans) end
 ---   echo synID(line("."), col("."), 1)->synIDtrans()->synIDattr("fg")
 --- <
 ---
---- @param synID any
---- @param what any
+--- @param synID integer
+--- @param what string
 --- @param mode? string
---- @return any
+--- @return string
 function vim.fn.synIDattr(synID, what, mode) end
 
 --- The result is a Number, which is the translated syntax ID of
@@ -9419,8 +9419,8 @@ function vim.fn.synIDattr(synID, what, mode) end
 ---
 --- Returns zero on error.
 ---
---- @param synID any
---- @return any
+--- @param synID integer
+--- @return integer
 function vim.fn.synIDtrans(synID) end
 
 --- The result is a |List| with currently three items:
@@ -9450,7 +9450,7 @@ function vim.fn.synIDtrans(synID) end
 ---
 --- @param lnum integer
 --- @param col integer
---- @return any
+--- @return {[1]: integer, [2]: string, [3]: integer}[]
 function vim.fn.synconcealed(lnum, col) end
 
 --- Return a |List|, which is the stack of syntax items at the
@@ -9473,7 +9473,7 @@ function vim.fn.synconcealed(lnum, col) end
 ---
 --- @param lnum integer
 --- @param col integer
---- @return any
+--- @return integer[]
 function vim.fn.synstack(lnum, col) end
 
 --- Note: Prefer |vim.system()| in Lua.
@@ -9524,9 +9524,9 @@ function vim.fn.synstack(lnum, col) end
 --- <Unlike ":!cmd" there is no automatic check for changed files.
 --- Use |:checktime| to force a check.
 ---
---- @param cmd any
---- @param input? any
---- @return any
+--- @param cmd string|string[]
+--- @param input? string|string[]|integer
+--- @return string
 function vim.fn.system(cmd, input) end
 
 --- Same as |system()|, but returns a |List| with lines (parts of
@@ -9542,10 +9542,10 @@ function vim.fn.system(cmd, input) end
 --- <
 --- Returns an empty string on error.
 ---
---- @param cmd any
---- @param input? any
---- @param keepempty? any
---- @return any
+--- @param cmd string|string[]
+--- @param input? string|string[]|integer
+--- @param keepempty? integer
+--- @return string[]
 function vim.fn.systemlist(cmd, input, keepempty) end
 
 --- The result is a |List|, where each item is the number of the
@@ -9577,8 +9577,8 @@ function vim.fn.tabpagebuflist(arg) end
 ---
 --- Returns zero on error.
 ---
---- @param arg? any
---- @return any
+--- @param arg? '$'|'#'
+--- @return integer
 function vim.fn.tabpagenr(arg) end
 
 --- Like |winnr()| but for tab page {tabarg}.
@@ -9593,15 +9593,15 @@ function vim.fn.tabpagenr(arg) end
 ---     tabpagewinnr(4, '$')    " number of windows in tab page 4
 --- <When {tabarg} is invalid zero is returned.
 ---
---- @param tabarg any
---- @param arg? any
---- @return any
+--- @param tabarg integer
+--- @param arg? '$'|'#'
+--- @return integer
 function vim.fn.tabpagewinnr(tabarg, arg) end
 
 --- Returns a |List| with the file names used to search for tags
 --- for the current buffer.  This is the 'tags' option expanded.
 ---
---- @return any
+--- @return string[]
 function vim.fn.tagfiles() end
 
 --- Returns a |List| of tags matching the regular expression {expr}.
@@ -9647,7 +9647,7 @@ function vim.fn.tagfiles() end
 --- the tags file generated by the different ctags tools.
 ---
 --- @param expr any
---- @param filename? any
+--- @param filename? string
 --- @return any
 function vim.fn.taglist(expr, filename) end
 
@@ -9661,8 +9661,8 @@ function vim.fn.taglist(expr, filename) end
 ---   echo tan(-4.01)
 --- <  -1.181502
 ---
---- @param expr any
---- @return any
+--- @param expr number
+--- @return number
 function vim.fn.tan(expr) end
 
 --- Return the hyperbolic tangent of {expr} as a |Float| in the
@@ -9675,8 +9675,8 @@ function vim.fn.tan(expr) end
 ---   echo tanh(-1)
 --- <  -0.761594
 ---
---- @param expr any
---- @return any
+--- @param expr number
+--- @return number
 function vim.fn.tanh(expr) end
 
 --- Generates a (non-existent) filename located in the Nvim root
@@ -9824,10 +9824,10 @@ function vim.fn.toupper(expr) end
 ---   echo tr("<blob>", "<>", "{}")
 --- <returns "{blob}"
 ---
---- @param src any
---- @param fromstr any
---- @param tostr any
---- @return any
+--- @param src string
+--- @param fromstr string
+--- @param tostr string
+--- @return string
 function vim.fn.tr(src, fromstr, tostr) end
 
 --- Return {text} as a String where any character in {mask} is
@@ -9855,8 +9855,8 @@ function vim.fn.tr(src, fromstr, tostr) end
 --- <returns "  vim"
 ---
 --- @param text any
---- @param mask? any
---- @param dir? string
+--- @param mask? string
+--- @param dir? 0|1|2
 --- @return string
 function vim.fn.trim(text, mask, dir) end
 
@@ -9873,7 +9873,7 @@ function vim.fn.trim(text, mask, dir) end
 --- <  4.0
 ---
 --- @param expr any
---- @return any
+--- @return integer
 function vim.fn.trunc(expr) end
 
 --- The result is a Number representing the type of {expr}.
@@ -9903,7 +9903,7 @@ function vim.fn.trunc(expr) end
 ---   if exists('v:t_number') | endif
 ---
 --- @param expr any
---- @return any
+--- @return integer
 function vim.fn.type(expr) end
 
 --- Return the name of the undo file that would be used for a file
@@ -9963,7 +9963,7 @@ function vim.fn.undofile(name) end
 ---     blocks.  Each item may again have an "alt"
 ---     item.
 ---
---- @param buf? any
+--- @param buf? integer|string
 --- @return any
 function vim.fn.undotree(buf) end
 
