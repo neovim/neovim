@@ -2551,8 +2551,8 @@ M.funcs = {
       of the current item.  For a |Dictionary| |v:key| has the key
       of the current item and for a |List| |v:key| has the index of
       the current item.  For a |Blob| |v:key| has the index of the
-      current byte.
-
+      current byte. For a |String| |v:key| has the index of the
+      current character.
       Examples: >vim
       	call filter(mylist, 'v:val !~ "OLD"')
       <Removes the items where "OLD" appears. >vim
@@ -6068,7 +6068,8 @@ M.funcs = {
       of the current item.  For a |Dictionary| |v:key| has the key
       of the current item and for a |List| |v:key| has the index of
       the current item.  For a |Blob| |v:key| has the index of the
-      current byte.
+      current byte. For a |String| |v:key| has the index of the
+      current character.
       Example: >vim
       	call map(mylist, '"> " .. v:val .. " <"')
       <This puts "> " before and " <" after each item in "mylist".
@@ -7876,9 +7877,9 @@ M.funcs = {
     tags = { 'E998' },
     desc = [=[
       {func} is called for every item in {object}, which can be a
-      |List| or a |Blob|.  {func} is called with two arguments: the
-      result so far and current item.  After processing all items
-      the result is returned.
+      |String|, |List| or a |Blob|.  {func} is called with two
+      arguments: the result so far and current item.  After
+      processing all items the result is returned.
 
       {initial} is the initial result.  When omitted, the first item
       in {object} is used and {func} is first called for the second
@@ -7889,6 +7890,7 @@ M.funcs = {
       	echo reduce([1, 3, 5], { acc, val -> acc + val })
       	echo reduce(['x', 'y'], { acc, val -> acc .. val }, 'a')
       	echo reduce(0z1122, { acc, val -> 2 * acc + val })
+      	echo reduce('xyz', { acc, val -> acc .. ',' .. val })
       <
     ]=],
     name = 'reduce',
