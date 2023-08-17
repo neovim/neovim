@@ -5042,7 +5042,7 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
                                      : N_("filter() argument")));
 
   // map() and filter() return the first argument, also on failure.
-  if (filtermap != FILTERMAP_MAPNEW) {
+  if (filtermap != FILTERMAP_MAPNEW && argvars[0].v_type != VAR_STRING) {
     tv_copy(&argvars[0], rettv);
   }
 
