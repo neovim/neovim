@@ -5217,8 +5217,11 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
         }
         vimvars[VV_KEY].vv_nr = idx;
         typval_T newtv;
-        if (filter_map_one(TV_LIST_ITEM_TV(li), expr, filtermap, &newtv, &rem) == FAIL
-            || did_emsg) {
+        if (filter_map_one(TV_LIST_ITEM_TV(li), expr, filtermap, &newtv, &rem) == FAIL) {
+          break;
+        }
+        if (did_emsg) {
+          tv_clear(&newtv);
           break;
         }
         if (filtermap == FILTERMAP_MAP) {
