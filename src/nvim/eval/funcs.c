@@ -154,8 +154,6 @@ static const char e_string_list_or_blob_required[]
   = N_("E1098: String, List or Blob required");
 static const char e_missing_function_argument[]
   = N_("E1132: Missing function argument");
-static const char e_string_expected_for_argument_nr[]
-  = N_("E1253: String expected for argument %d");
 
 /// Dummy va_list for passing to vim_snprintf
 ///
@@ -1187,18 +1185,16 @@ static void f_debugbreak(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "deepcopy()" function
 static void f_deepcopy(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  int noref = 0;
+  if (tv_check_for_opt_bool_arg(argvars, 1) == FAIL) {
+    return;
+  }
 
+  varnumber_T noref = 0;
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    noref = (int)tv_get_bool_chk(&argvars[1], NULL);
+    noref = tv_get_bool_chk(&argvars[1], NULL);
   }
-  if (noref < 0 || noref > 1) {
-    semsg(_(e_using_number_as_bool_nr), noref);
-  } else {
-    var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
-                                                   ? get_copyID()
-                                                   : 0));
-  }
+
+  var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0 ? get_copyID() : 0));
 }
 
 /// "delete()" function
@@ -6171,9 +6167,10 @@ static void f_reverse(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 }
 
-/// reduce() on a List
-static void reduce_list(typval_T *argvars, const char *func_name, funcexe_T *funcexe,
-                        typval_T *rettv)
+/// Implementation of reduce() for list "argvars[0]", using the function "expr"
+/// starting with the optional initial value argvars[2] and return the result in
+/// "rettv".
+static void reduce_list(typval_T *argvars, typval_T *expr, typval_T *rettv)
 {
   list_T *const l = argvars[0].vval.v_list;
   const int called_emsg_start = called_emsg;
@@ -6207,7 +6204,9 @@ static void reduce_list(typval_T *argvars, const char *func_name, funcexe_T *fun
     argv[0] = *rettv;
     argv[1] = *TV_LIST_ITEM_TV(li);
     rettv->v_type = VAR_UNKNOWN;
-    const int r = call_func(func_name, -1, rettv, 2, argv, funcexe);
+
+    const int r = eval_expr_typval(expr, argv, 2, rettv);
+
     tv_clear(&argv[0]);
     if (r == FAIL || called_emsg != called_emsg_start) {
       break;
@@ -6216,9 +6215,10 @@ static void reduce_list(typval_T *argvars, const char *func_name, funcexe_T *fun
   tv_list_set_lock(l, prev_locked);
 }
 
-/// reduce() on a String
-static void reduce_string(typval_T *argvars, const char *func_name, funcexe_T *funcexe,
-                          typval_T *rettv)
+/// Implementation of reduce() for String "argvars[0]" using the function "expr"
+/// starting with the optional initial value "argvars[2]" and return the result
+/// in "rettv".
+static void reduce_string(typval_T *argvars, typval_T *expr, typval_T *rettv)
 {
   const char *p = tv_get_string(&argvars[0]);
   int len;
@@ -6236,8 +6236,7 @@ static void reduce_string(typval_T *argvars, const char *func_name, funcexe_T *f
       .vval.v_string = xstrnsave(p, (size_t)len),
     };
     p += len;
-  } else if (argvars[2].v_type != VAR_STRING) {
-    semsg(_(e_string_expected_for_argument_nr), 3);
+  } else if (tv_check_for_string_arg(argvars, 2) == FAIL) {
     return;
   } else {
     tv_copy(&argvars[2], rettv);
@@ -6252,7 +6251,9 @@ static void reduce_string(typval_T *argvars, const char *func_name, funcexe_T *f
       .v_lock = VAR_UNLOCKED,
       .vval.v_string = xstrnsave(p, (size_t)len),
     };
-    const int r = call_func(func_name, -1, rettv, 2, argv, funcexe);
+
+    const int r = eval_expr_typval(expr, argv, 2, rettv);
+
     tv_clear(&argv[0]);
     tv_clear(&argv[1]);
     if (r == FAIL || called_emsg != called_emsg_start) {
@@ -6261,9 +6262,10 @@ static void reduce_string(typval_T *argvars, const char *func_name, funcexe_T *f
   }
 }
 
-/// reduce() on a Blob
-static void reduce_blob(typval_T *argvars, const char *func_name, funcexe_T *funcexe,
-                        typval_T *rettv)
+/// Implementaion of reduce() for Blob "argvars[0]" using the function "expr"
+/// starting with the optional initial value "argvars[2]" and return the result
+/// in "rettv".
+static void reduce_blob(typval_T *argvars, typval_T *expr, typval_T *rettv)
 {
   const blob_T *const b = argvars[0].vval.v_blob;
   const int called_emsg_start = called_emsg;
@@ -6281,8 +6283,7 @@ static void reduce_blob(typval_T *argvars, const char *func_name, funcexe_T *fun
       .vval.v_number = tv_blob_get(b, 0),
     };
     i = 1;
-  } else if (argvars[2].v_type != VAR_NUMBER) {
-    emsg(_(e_number_exp));
+  } else if (tv_check_for_number_arg(argvars, 2) == FAIL) {
     return;
   } else {
     initial = argvars[2];
@@ -6298,7 +6299,9 @@ static void reduce_blob(typval_T *argvars, const char *func_name, funcexe_T *fun
       .v_lock = VAR_UNLOCKED,
       .vval.v_number = tv_blob_get(b, i),
     };
-    const int r = call_func(func_name, -1, rettv, 2, argv, funcexe);
+
+    const int r = eval_expr_typval(expr, argv, 2, rettv);
+
     if (r == FAIL || called_emsg != called_emsg_start) {
       return;
     }
@@ -6318,12 +6321,10 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   const char *func_name;
-  partial_T *partial = NULL;
   if (argvars[1].v_type == VAR_FUNC) {
     func_name = argvars[1].vval.v_string;
   } else if (argvars[1].v_type == VAR_PARTIAL) {
-    partial = argvars[1].vval.v_partial;
-    func_name = partial_name(partial);
+    func_name = partial_name(argvars[1].vval.v_partial);
   } else {
     func_name = tv_get_string(&argvars[1]);
   }
@@ -6332,16 +6333,12 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  funcexe_T funcexe = FUNCEXE_INIT;
-  funcexe.fe_evaluate = true;
-  funcexe.fe_partial = partial;
-
   if (argvars[0].v_type == VAR_LIST) {
-    reduce_list(argvars, func_name, &funcexe, rettv);
+    reduce_list(argvars, &argvars[1], rettv);
   } else if (argvars[0].v_type == VAR_STRING) {
-    reduce_string(argvars, func_name, &funcexe, rettv);
+    reduce_string(argvars, &argvars[1], rettv);
   } else {
-    reduce_blob(argvars, func_name, &funcexe, rettv);
+    reduce_blob(argvars, &argvars[1], rettv);
   }
 }
 

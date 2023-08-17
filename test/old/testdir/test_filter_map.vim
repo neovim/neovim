@@ -109,6 +109,21 @@ func Test_map_and_modify()
   let d = #{a: 1, b: 2, c: 3}
   call assert_fails('call map(d, "remove(d, v:key)[0]")', 'E741:')
   call assert_fails('echo map(d, {k,v -> remove(d, k)})', 'E741:')
+
+  let b = 0z1234
+  call assert_fails('call filter(b, "remove(b, 0)")', 'E741:')
+endfunc
+
+func Test_filter_and_modify()
+  let l = [0]
+  " cannot change the list halfway a map()
+  call assert_fails('call filter(l, "remove(l, 0)")', 'E741:')
+
+  let d = #{a: 0, b: 0, c: 0}
+  call assert_fails('call filter(d, "remove(d, v:key)")', 'E741:')
+
+  let b = 0z1234
+  call assert_fails('call filter(b, "remove(b, 0)")', 'E741:')
 endfunc
 
 func Test_mapnew_dict()

@@ -526,7 +526,7 @@ func Test_dict_deepcopy()
   END
   call CheckLegacyAndVim9Success(lines)
 
-  call assert_fails("call deepcopy([1, 2], 2)", 'E1023:')
+  call assert_fails("call deepcopy([1, 2], 2)", 'E1212:')
 endfunc
 
 " Locked variables
@@ -952,25 +952,26 @@ func Test_reduce()
 
   call assert_fails("call reduce([], { acc, val -> acc + val })", 'E998: Reduce of an empty List with no initial value')
   call assert_fails("call reduce(0z, { acc, val -> acc + val })", 'E998: Reduce of an empty Blob with no initial value')
+  call assert_fails("call reduce(v:_null_blob, { acc, val -> acc + val })", 'E998: Reduce of an empty Blob with no initial value')
   call assert_fails("call reduce('', { acc, val -> acc + val })", 'E998: Reduce of an empty String with no initial value')
   call assert_fails("call reduce(v:_null_string, { acc, val -> acc + val })", 'E998: Reduce of an empty String with no initial value')
 
   call assert_fails("call reduce({}, { acc, val -> acc + val }, 1)", 'E1098:')
   call assert_fails("call reduce(0, { acc, val -> acc + val }, 1)", 'E1098:')
-  call assert_fails("call reduce([1, 2], 'Xdoes_not_exist')", 'E117:')
-  call assert_fails("echo reduce(0z01, { acc, val -> 2 * acc + val }, '')", 'E39:')
+  call assert_fails("call reduce([1, 2], 'Xdoes_not_exist')", 'E121:')
+  call assert_fails("echo reduce(0z01, { acc, val -> 2 * acc + val }, '')", 'E1210:')
 
   " call assert_fails("vim9 reduce(0, (acc, val) => (acc .. val), '')", 'E1252:')
   " call assert_fails("vim9 reduce({}, (acc, val) => (acc .. val), '')", 'E1252:')
   " call assert_fails("vim9 reduce(0.1, (acc, val) => (acc .. val), '')", 'E1252:')
   " call assert_fails("vim9 reduce(function('tr'), (acc, val) => (acc .. val), '')", 'E1252:')
-  call assert_fails("call reduce('', { acc, val -> acc + val }, 1)", 'E1253:')
-  call assert_fails("call reduce('', { acc, val -> acc + val }, {})", 'E1253:')
-  call assert_fails("call reduce('', { acc, val -> acc + val }, 0.1)", 'E1253:')
-  call assert_fails("call reduce('', { acc, val -> acc + val }, function('tr'))", 'E1253:')
+  call assert_fails("call reduce('', { acc, val -> acc + val }, 1)", 'E1174:')
+  call assert_fails("call reduce('', { acc, val -> acc + val }, {})", 'E1174:')
+  call assert_fails("call reduce('', { acc, val -> acc + val }, 0.1)", 'E1174:')
+  call assert_fails("call reduce('', { acc, val -> acc + val }, function('tr'))", 'E1174:')
   call assert_fails("call reduce('abc', { a, v -> a10}, '')", 'E121:')
-  call assert_fails("call reduce(0z01, { a, v -> a10}, 1)", 'E121:')
-  call assert_fails("call reduce([1], { a, v -> a10}, '')", 'E121:')
+  call assert_fails("call reduce(0z0102, { a, v -> a10}, 1)", 'E121:')
+  call assert_fails("call reduce([1, 2], { a, v -> a10}, '')", 'E121:')
 
   let g:lut = [1, 2, 3, 4]
   func EvilRemove()
