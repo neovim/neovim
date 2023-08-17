@@ -1079,6 +1079,7 @@ func Test_listdict_extend()
 
   let d = {'a': 'A', 'b': 'B'}
   call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'error')", 'E737:')
+  call assert_fails("call extend(d, {'b': 0}, [])", 'E730:')
   call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 'xxx')", 'E475:')
   if has('float')
     call assert_fails("call extend(d, {'b': 0, 'c':'C'}, 1.2)", 'E475:')

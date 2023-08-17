@@ -421,6 +421,7 @@ func Test_printf_misc()
       call assert_equal('[00000あiう]', printf('[%010.7S]', 'あiう'))
 
       call assert_equal('1%', printf('%d%%', 1))
+      call assert_notequal('', printf('%p', "abc"))
   END
   call CheckLegacyAndVim9Success(lines)
 

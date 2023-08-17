@@ -5217,9 +5217,6 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
         typval_T newtv;
         if (filter_map_one(&tv, expr, filtermap, &newtv, &rem) == FAIL
             || did_emsg) {
-          break;
-        }
-        if (did_emsg) {
           tv_clear(&newtv);
           tv_clear(&tv);
           break;

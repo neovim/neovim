@@ -175,6 +175,8 @@ func Test_filter_map_string()
     call assert_equal('', map('abc', LSTART i, x LMIDDLE '' LEND))
     call assert_equal('', map('', "v:val == 'a'"))
     call assert_equal('', map(v:_null_string, "v:val == 'a'"))
+    call assert_fails('echo map("abc", "10")', 'E928:')
+    call assert_fails('echo map("abc", "a10")', 'E121:')
   END
   call CheckLegacyAndVim9Success(lines)
 
