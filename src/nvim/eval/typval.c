@@ -3249,22 +3249,19 @@ void tv_blob_alloc_ret(typval_T *const ret_tv)
 ///
 /// @param[in]  from  Blob object to copy from.
 /// @param[out]  to  Blob object to copy to.
-void tv_blob_copy(typval_T *const from, typval_T *const to)
-  FUNC_ATTR_NONNULL_ALL
+void tv_blob_copy(blob_T *const from, typval_T *const to)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
-  assert(from->v_type == VAR_BLOB);
-
   to->v_type = VAR_BLOB;
   to->v_lock = VAR_UNLOCKED;
-  if (from->vval.v_blob == NULL) {
+  if (from == NULL) {
     to->vval.v_blob = NULL;
   } else {
     tv_blob_alloc_ret(to);
-    int len = from->vval.v_blob->bv_ga.ga_len;
+    int len = from->bv_ga.ga_len;
 
     if (len > 0) {
-      to->vval.v_blob->bv_ga.ga_data
-        = xmemdup(from->vval.v_blob->bv_ga.ga_data, (size_t)len);
+      to->vval.v_blob->bv_ga.ga_data = xmemdup(from->bv_ga.ga_data, (size_t)len);
     }
     to->vval.v_blob->bv_ga.ga_len = len;
     to->vval.v_blob->bv_ga.ga_maxlen = len;

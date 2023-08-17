@@ -6053,6 +6053,8 @@ M.funcs = {
       {expr1} must be a |List|, |Blob| or |Dictionary|.
       Replace each item in {expr1} with the result of evaluating
       {expr2}.  For a |Blob| each byte is replaced.
+      If the item type changes you may want to use |mapnew()| to
+      create a new List or Dictionary.
 
       {expr2} must be a |string| or |Funcref|.
 
@@ -6214,6 +6216,19 @@ M.funcs = {
     name = 'mapcheck',
     params = { { 'name', 'string' }, { 'mode', 'string' }, { 'abbr', 'any' } },
     signature = 'mapcheck({name} [, {mode} [, {abbr}]])',
+  },
+  mapnew = {
+    args = 2,
+    base = 1,
+    desc = [=[
+      Like |map()| but instead of replacing items in {expr1} a new
+      List or Dictionary is created and returned.  {expr1} remains
+      unchanged.  Items can still be changed by {expr2}, if you
+      don't want that use |deepcopy()| first.
+    ]=],
+    name = 'mapnew',
+    params = { { 'expr1', 'any' }, { 'expr2', 'any' } },
+    signature = 'mapnew({expr1}, {expr2})',
   },
   mapset = {
     args = 3,
