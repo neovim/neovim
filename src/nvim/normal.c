@@ -2812,7 +2812,7 @@ static void nv_zet(cmdarg_T *cap)
   long old_fdl = curwin->w_p_fdl;
   int old_fen = curwin->w_p_fen;
 
-  int siso = (int)get_sidescrolloff_value(curwin);
+  int siso = get_sidescrolloff_value(curwin);
 
   if (ascii_isdigit(nchar) && !nv_z_get_count(cap, &nchar)) {
     return;

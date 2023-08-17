@@ -5716,7 +5716,7 @@ static void ex_sleep(exarg_T *eap)
     setcursor_mayforce(true);
   }
 
-  linenr_T len = eap->line2;
+  int64_t len = eap->line2;
   switch (*eap->arg) {
   case 'm':
     break;
