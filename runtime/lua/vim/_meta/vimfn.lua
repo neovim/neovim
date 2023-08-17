@@ -6551,9 +6551,9 @@ function vim.fn.readdir(directory, expr) end
 function vim.fn.readfile(fname, type, max) end
 
 --- {func} is called for every item in {object}, which can be a
---- |List| or a |Blob|.  {func} is called with two arguments: the
---- result so far and current item.  After processing all items
---- the result is returned.
+--- |String|, |List| or a |Blob|.  {func} is called with two arguments:
+--- the result so far and current item.  After processing all
+--- items the result is returned.
 ---
 --- {initial} is the initial result.  When omitted, the first item
 --- in {object} is used and {func} is first called for the second
@@ -6564,6 +6564,7 @@ function vim.fn.readfile(fname, type, max) end
 ---   echo reduce([1, 3, 5], { acc, val -> acc + val })
 ---   echo reduce(['x', 'y'], { acc, val -> acc .. val }, 'a')
 ---   echo reduce(0z1122, { acc, val -> 2 * acc + val })
+---   echo reduce('xyz', { acc, val -> acc .. ',' .. val })
 --- <
 ---
 --- @param object any

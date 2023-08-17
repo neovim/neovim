@@ -1,4 +1,5 @@
 " Tests for the List and Dict types
+scriptencoding utf-8
 
 source vim9.vim
 
@@ -900,7 +901,7 @@ func Test_reverse_sort_uniq()
   call assert_fails("call sort([1, 2], function('min'))", "E118:")
 endfunc
 
-" reduce a list or a blob
+" reduce a list, blob or string
 func Test_reduce()
   let lines =<< trim END
       call assert_equal(1, reduce([], LSTART acc, val LMIDDLE acc + val LEND, 1))
@@ -923,6 +924,16 @@ func Test_reduce()
 
       call assert_equal(0xff, reduce(0zff, LSTART acc, val LMIDDLE acc + val LEND))
       call assert_equal(2 * (2 * 0xaf + 0xbf) + 0xcf, reduce(0zAFBFCF, LSTART acc, val LMIDDLE 2 * acc + val LEND))
+
+      call assert_equal('x,y,z', 'xyz'->reduce(LSTART acc, val LMIDDLE acc .. ',' .. val LEND))
+      call assert_equal('', ''->reduce(LSTART acc, val LMIDDLE acc .. ',' .. val LEND, ''))
+      call assert_equal('あ,い,う,え,お,😊,💕', 'あいうえお😊💕'->reduce(LSTART acc, val LMIDDLE acc .. ',' .. val LEND))
+      call assert_equal('😊,あ,い,う,え,お,💕', 'あいうえお💕'->reduce(LSTART acc, val LMIDDLE acc .. ',' .. val LEND, '😊'))
+      call assert_equal('ऊ,ॠ,ॡ', reduce('ऊॠॡ', LSTART acc, val LMIDDLE acc .. ',' .. val LEND))
+      call assert_equal('c,à,t', reduce('càt', LSTART acc, val LMIDDLE acc .. ',' .. val LEND))
+      call assert_equal('Å,s,t,r,ö,m', reduce('Åström', LSTART acc, val LMIDDLE acc .. ',' .. val LEND))
+      call assert_equal('Å,s,t,r,ö,m', reduce('Åström', LSTART acc, val LMIDDLE acc .. ',' .. val LEND))
+      call assert_equal(',a,b,c', reduce('abc', LSTART acc, val LMIDDLE acc .. ',' .. val LEND, v:_null_string))
   END
   call CheckLegacyAndVim9Success(lines)
 
@@ -931,12 +942,22 @@ func Test_reduce()
 
   call assert_fails("call reduce([], { acc, val -> acc + val })", 'E998: Reduce of an empty List with no initial value')
   call assert_fails("call reduce(0z, { acc, val -> acc + val })", 'E998: Reduce of an empty Blob with no initial value')
+  call assert_fails("call reduce('', { acc, val -> acc + val })", 'E998: Reduce of an empty String with no initial value')
+  call assert_fails("call reduce(v:_null_string, { acc, val -> acc + val })", 'E998: Reduce of an empty String with no initial value')
 
-  call assert_fails("call reduce({}, { acc, val -> acc + val }, 1)", 'E897:')
-  call assert_fails("call reduce(0, { acc, val -> acc + val }, 1)", 'E897:')
-  call assert_fails("call reduce('', { acc, val -> acc + val }, 1)", 'E897:')
+  call assert_fails("call reduce({}, { acc, val -> acc + val }, 1)", 'E1098:')
+  call assert_fails("call reduce(0, { acc, val -> acc + val }, 1)", 'E1098:')
   call assert_fails("call reduce([1, 2], 'Xdoes_not_exist')", 'E117:')
   call assert_fails("echo reduce(0z01, { acc, val -> 2 * acc + val }, '')", 'E39:')
+
+  " call assert_fails("vim9 reduce(0, (acc, val) => (acc .. val), '')", 'E1252:')
+  " call assert_fails("vim9 reduce({}, (acc, val) => (acc .. val), '')", 'E1252:')
+  " call assert_fails("vim9 reduce(0.1, (acc, val) => (acc .. val), '')", 'E1252:')
+  " call assert_fails("vim9 reduce(function('tr'), (acc, val) => (acc .. val), '')", 'E1252:')
+  call assert_fails("call reduce('', { acc, val -> acc + val }, 1)", 'E1253:')
+  call assert_fails("call reduce('', { acc, val -> acc + val }, {})", 'E1253:')
+  call assert_fails("call reduce('', { acc, val -> acc + val }, 0.1)", 'E1253:')
+  call assert_fails("call reduce('', { acc, val -> acc + val }, function('tr'))", 'E1253:')
 
   let g:lut = [1, 2, 3, 4]
   func EvilRemove()

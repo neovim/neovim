@@ -108,7 +108,7 @@ static const char e_dot_can_only_be_used_on_dictionary_str[]
   = N_("E1203: Dot can only be used on a dictionary: %s");
 static const char e_empty_function_name[]
   = N_("E1192: Empty function name");
-static char e_argument_of_str_must_be_list_string_dictionary_or_blob[]
+static const char e_argument_of_str_must_be_list_string_dictionary_or_blob[]
   = N_("E1250: Argument of %s must be a List, String, Dictionary or Blob");
 
 static char * const namespace_char = "abglstvw";
@@ -5206,7 +5206,6 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
       int len;
       for (const char *p = tv_get_string(&argvars[0]); *p != NUL; p += len) {
         len = utfc_ptr2len(p);
-
         typval_T tv = {
           .v_type = VAR_STRING,
           .v_lock = VAR_UNLOCKED,

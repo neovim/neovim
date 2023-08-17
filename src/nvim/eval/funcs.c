@@ -150,8 +150,12 @@ static const char *e_invalwindow = N_("E957: Invalid window number");
 static const char e_invalid_submatch_number_nr[]
   = N_("E935: Invalid submatch number: %d");
 static const char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial value");
+static const char e_string_list_or_blob_required[]
+  = N_("E1098: String, List or Blob required");
 static const char e_missing_function_argument[]
   = N_("E1132: Missing function argument");
+static const char e_string_expected_for_argument_nr[]
+  = N_("E1253: String expected for argument %d");
 
 /// Dummy va_list for passing to vim_snprintf
 ///
@@ -6168,11 +6172,16 @@ static void f_reverse(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 /// "reduce(list, { accumulator, element -> value } [, initial])" function
+/// "reduce(blob, { accumulator, element -> value } [, initial])" function
+/// "reduce(string, { accumulator, element -> value } [, initial])" function
 static void f_reduce(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  if (argvars[0].v_type != VAR_LIST && argvars[0].v_type != VAR_BLOB) {
-    emsg(_(e_listblobreq));
-    return;
+  const int called_emsg_start = called_emsg;
+
+  if (argvars[0].v_type != VAR_STRING
+      && argvars[0].v_type != VAR_LIST
+      && argvars[0].v_type != VAR_BLOB) {
+    emsg(_(e_string_list_or_blob_required));
   }
 
   const char *func_name;
@@ -6217,7 +6226,6 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
     if (l != NULL) {
       const VarLockStatus prev_locked = tv_list_locked(l);
-      const int called_emsg_start = called_emsg;
 
       tv_list_set_lock(l, VAR_FIXED);  // disallow the list changing here
       for (; li != NULL; li = TV_LIST_ITEM_NEXT(l, li)) {
@@ -6231,6 +6239,44 @@ static void f_reduce(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         }
       }
       tv_list_set_lock(l, prev_locked);
+    }
+  } else if (argvars[0].v_type == VAR_STRING) {
+    const char *p = tv_get_string(&argvars[0]);
+    int len;
+
+    if (argvars[2].v_type == VAR_UNKNOWN) {
+      if (*p == NUL) {
+        semsg(_(e_reduceempty), "String");
+        return;
+      }
+      len = utfc_ptr2len(p);
+      *rettv = (typval_T){
+        .v_type = VAR_STRING,
+        .v_lock = VAR_UNLOCKED,
+        .vval.v_string = xstrnsave(p, (size_t)len),
+      };
+      p += len;
+    } else if (argvars[2].v_type != VAR_STRING) {
+      semsg(_(e_string_expected_for_argument_nr), 3);
+      return;
+    } else {
+      tv_copy(&argvars[2], rettv);
+    }
+
+    for (; *p != NUL; p += len) {
+      argv[0] = *rettv;
+      len = utfc_ptr2len(p);
+      argv[1] = (typval_T){
+        .v_type = VAR_STRING,
+        .v_lock = VAR_UNLOCKED,
+        .vval.v_string = xstrnsave(p, (size_t)len),
+      };
+      const int r = call_func(func_name, -1, rettv, 2, argv, &funcexe);
+      tv_clear(&argv[0]);
+      tv_clear(&argv[1]);
+      if (r == FAIL || called_emsg != called_emsg_start) {
+        break;
+      }
     }
   } else {
     const blob_T *const b = argvars[0].vval.v_blob;
