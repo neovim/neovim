@@ -3981,15 +3981,6 @@ static dict_T *create_environment(const dictitem_T *job_env, const bool clear_en
           tv_dict_item_remove(env, dv);
         }
       }
-#ifndef MSWIN
-      // Set COLORTERM to "truecolor" if termguicolors is set and 256
-      // otherwise, but only if it was set in the parent terminal at all
-      dictitem_T *dv = tv_dict_find(env, S_LEN("COLORTERM"));
-      if (dv) {
-        tv_dict_item_remove(env, dv);
-        tv_dict_add_str(env, S_LEN("COLORTERM"), p_tgc ? "truecolor" : "256");
-      }
-#endif
     }
   }
 
