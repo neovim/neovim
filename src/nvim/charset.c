@@ -1376,7 +1376,7 @@ char *skiptowhite(const char *p)
 /// @param p
 ///
 /// @return Pointer to the next whitespace character.
-char *skiptowhite_esc(char *p)
+char *skiptowhite_esc(const char *p)
   FUNC_ATTR_PURE
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
@@ -1385,7 +1385,7 @@ char *skiptowhite_esc(char *p)
     }
     p++;
   }
-  return p;
+  return (char *)p;
 }
 
 /// Skip over text until '\n' or NUL.
