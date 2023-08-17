@@ -872,6 +872,9 @@ endfunc
 
 " Tests for reverse(), sort(), uniq()
 func Test_reverse_sort_uniq()
+  func g:RetOne()
+    return 1
+  endfunc
   let lines =<< trim END
       VAR l = ['-0', 'A11', 2, 2, 'xaaa', 4, 'foo', 'foo6', 'foo', [0, 1, 2], 'x8', [0, 1, 2], 1.5]
       call assert_equal(['-0', 'A11', 2, 'xaaa', 4, 'foo', 'foo6', 'foo', [0, 1, 2], 'x8', [0, 1, 2], 1.5], uniq(copy(l)))
@@ -887,12 +890,13 @@ func Test_reverse_sort_uniq()
         call assert_equal([-1, 'one', 'two', 'three', 'four', 1.0e-15, 0.22, 7, 9, 12, 18, 22, 255], sort(copy(l), 'n'))
 
         LET l = [7, 9, 18, 12, 22, 10.0e-16, -1, 0xff, 0, -0, 0.22, 'bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', {}, []]
-        call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 1))
+        call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), g:RetOne()))
         call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 'i'))
         call assert_equal(['BAR', 'Bar', 'FOO', 'FOOBAR', 'Foo', 'bar', 'foo', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l)))
       endif
   END
   call CheckLegacyAndVim9Success(lines)
+  delfunc g:RetOne
 
   call assert_fails('call reverse("")', 'E899:')
   call assert_fails('call uniq([1, 2], {x, y -> []})', 'E745:')
