@@ -660,6 +660,7 @@ List manipulation:					*list-functions*
 	deepcopy()		make a full copy of a List
 	filter()		remove selected items from a List
 	map()			change each List item
+	mapnew()		make a new List with changed items
 	reduce()		reduce a List to a value
 	slice()			take a slice of a List
 	sort()			sort a List
@@ -690,6 +691,7 @@ Dictionary manipulation:				*dict-functions*
 	extendnew()		make a new Dictionary and append items
 	filter()		remove selected entries from a Dictionary
 	map()			change each Dictionary entry
+	mapnew()		make a new Dictionary with changed items
 	keys()			get List of Dictionary keys
 	values()		get List of Dictionary values
 	items()			get List of Dictionary key-value pairs

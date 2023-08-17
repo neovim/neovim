@@ -2097,12 +2097,6 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
   }
 }
 
-/// "filter()" function
-static void f_filter(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  filter_map(argvars, rettv, false);
-}
-
 /// "finddir({fname}[, {path}[, {count}]])" function
 static void f_finddir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -4486,12 +4480,6 @@ static void f_luaeval(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   nlua_typval_eval(cstr_as_string((char *)str), &argvars[1], rettv);
-}
-
-/// "map()" function
-static void f_map(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
-{
-  filter_map(argvars, rettv, true);
 }
 
 static void find_some_match(typval_T *const argvars, typval_T *const rettv,

@@ -111,4 +111,25 @@ func Test_map_and_modify()
   call assert_fails('echo map(d, {k,v -> remove(d, k)})', 'E741:')
 endfunc
 
+func Test_mapnew_dict()
+  let din = #{one: 1, two: 2}
+  let dout = mapnew(din, {k, v -> string(v)})
+  call assert_equal(#{one: 1, two: 2}, din)
+  call assert_equal(#{one: '1', two: '2'}, dout)
+endfunc
+
+func Test_mapnew_list()
+  let lin = [1, 2, 3]
+  let lout = mapnew(lin, {k, v -> string(v)})
+  call assert_equal([1, 2, 3], lin)
+  call assert_equal(['1', '2', '3'], lout)
+endfunc
+
+func Test_mapnew_blob()
+  let bin = 0z123456
+  let bout = mapnew(bin, {k, v -> k == 1 ? 0x99 : v})
+  call assert_equal(0z123456, bin)
+  call assert_equal(0z129956, bout)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

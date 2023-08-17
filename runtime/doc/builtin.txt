@@ -4065,6 +4065,8 @@ map({expr1}, {expr2})                                                    *map()*
 		{expr1} must be a |List|, |Blob| or |Dictionary|.
 		Replace each item in {expr1} with the result of evaluating
 		{expr2}.  For a |Blob| each byte is replaced.
+		If the item type changes you may want to use |mapnew()| to
+		create a new List or Dictionary.
 
 		{expr2} must be a |string| or |Funcref|.
 
@@ -4204,6 +4206,11 @@ mapcheck({name} [, {mode} [, {abbr}]])                              *mapcheck()*
 			endif
 <		This avoids adding the "_vv" mapping when there already is a
 		mapping for "_v" or for "_vvv".
+
+mapnew({expr1}, {expr2})                                              *mapnew()*
+		Like |map()| but instead of replacing items in {expr1} a new
+		List or Dictionary is created and returned.  {expr1} remains
+		unchanged.
 
 mapset({mode}, {abbr}, {dict})                                        *mapset()*
 		Restore a mapping from a dictionary returned by |maparg()|.

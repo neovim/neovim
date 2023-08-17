@@ -4922,6 +4922,8 @@ function vim.fn.log10(expr) end
 --- {expr1} must be a |List|, |Blob| or |Dictionary|.
 --- Replace each item in {expr1} with the result of evaluating
 --- {expr2}.  For a |Blob| each byte is replaced.
+--- If the item type changes you may want to use |mapnew()| to
+--- create a new List or Dictionary.
 ---
 --- {expr2} must be a |string| or |Funcref|.
 ---
@@ -5077,6 +5079,15 @@ function vim.fn.maparg(name, mode, abbr, dict) end
 --- @param abbr? any
 --- @return any
 function vim.fn.mapcheck(name, mode, abbr) end
+
+--- Like |map()| but instead of replacing items in {expr1} a new
+--- List or Dictionary is created and returned.  {expr1} remains
+--- unchanged.
+---
+--- @param expr1 any
+--- @param expr2 any
+--- @return any
+function vim.fn.mapnew(expr1, expr2) end
 
 --- Restore a mapping from a dictionary returned by |maparg()|.
 --- {mode} and {abbr} should be the same as for the call to
