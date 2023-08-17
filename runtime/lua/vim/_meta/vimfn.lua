@@ -570,6 +570,8 @@ function vim.fn.bufloaded(buf) end
 --- with a listed buffer, that one is returned.  Next unlisted
 --- buffers are searched for.
 --- If the {buf} is a String, but you want to use it as a buffer
+--- number, force it to be a Number by adding zero to it: >vim
+---   echo bufname("3" + 0)
 --- <If the buffer doesn't exist, or doesn't have a name, an empty
 --- string is returned. >vim
 ---   echo bufname("#")  " alternate buffer name
@@ -4426,6 +4428,9 @@ function vim.fn.insert(object, item, idx) end
 function vim.fn.interrupt() end
 
 --- Bitwise invert.  The argument is converted to a number.  A
+--- List, Dict or Float argument causes an error.  Example: >vim
+---   let bits = invert(bits)
+--- <
 ---
 --- @param expr any
 --- @return any
@@ -6761,6 +6766,9 @@ function vim.fn.resolve(filename) end
 --- {object} can be a |List| or a |Blob|.
 --- Returns {object}.
 --- Returns zero if {object} is not a List or a Blob.
+--- If you want an object to remain unmodified make a copy first: >vim
+---   let revlist = reverse(copy(mylist))
+--- <
 ---
 --- @param object any
 --- @return any
