@@ -54,7 +54,7 @@ M.funcs = {
     name = 'abs',
     params = { { 'expr', 'any' } },
     signature = 'abs({expr})',
-    returns = 'number'
+    returns = 'number',
   },
   acos = {
     args = 1,
@@ -2071,6 +2071,7 @@ M.funcs = {
     fast = true,
     name = 'executable',
     params = { { 'expr', 'any' } },
+    returns = '0|1|-1',
     signature = 'executable({expr})',
   },
   execute = {
@@ -6180,7 +6181,12 @@ M.funcs = {
 
     ]=],
     name = 'maparg',
-    params = { { 'name', 'string' }, { 'mode', 'string' }, { 'abbr', 'boolean' }, { 'dict', 'boolean' } },
+    params = {
+      { 'name', 'string' },
+      { 'mode', 'string' },
+      { 'abbr', 'boolean' },
+      { 'dict', 'boolean' },
+    },
     returns = 'string|table<string,any>',
     signature = 'maparg({name} [, {mode} [, {abbr} [, {dict}]]])',
   },
@@ -10588,6 +10594,7 @@ M.funcs = {
     ]=],
     name = 'strchars',
     params = { { 'string', 'string' }, { 'skipcc', 'any' } },
+    returns = 'integer',
     signature = 'strchars({string} [, {skipcc}])',
   },
   strdisplaywidth = {
@@ -10610,6 +10617,7 @@ M.funcs = {
     ]=],
     name = 'strdisplaywidth',
     params = { { 'string', 'string' }, { 'col', 'integer' } },
+    returns = 'integer',
     signature = 'strdisplaywidth({string} [, {col}])',
   },
   strftime = {
@@ -10635,6 +10643,7 @@ M.funcs = {
     ]=],
     name = 'strftime',
     params = { { 'format', 'any' }, { 'time', 'any' } },
+    returns = 'string',
     signature = 'strftime({format} [, {time}])',
   },
   strgetchar = {
@@ -10651,7 +10660,8 @@ M.funcs = {
 
     ]=],
     name = 'strgetchar',
-    params = { { 'str', 'any' }, { 'index', 'any' } },
+    params = { { 'str', 'string' }, { 'index', 'integer' } },
+    returns = 'integer',
     signature = 'strgetchar({str}, {index})',
   },
   stridx = {
@@ -10679,7 +10689,8 @@ M.funcs = {
     ]=],
     fast = true,
     name = 'stridx',
-    params = { { 'haystack', 'any' }, { 'needle', 'any' }, { 'start', 'any' } },
+    params = { { 'haystack', 'string' }, { 'needle', 'string' }, { 'start', 'integer' } },
+    returns = 'integer',
     signature = 'stridx({haystack}, {needle} [, {start}])',
   },
   string = {
@@ -10712,6 +10723,7 @@ M.funcs = {
     ]=],
     name = 'string',
     params = { { 'expr', 'any' } },
+    returns = 'string',
     signature = 'string({expr})',
   },
   strlen = {
@@ -10729,6 +10741,7 @@ M.funcs = {
     ]=],
     name = 'strlen',
     params = { { 'string', 'string' } },
+    returns = 'integer',
     signature = 'strlen({string})',
   },
   strpart = {
@@ -10762,7 +10775,13 @@ M.funcs = {
     ]=],
     fast = true,
     name = 'strpart',
-    params = { { 'src', 'any' }, { 'start', 'any' }, { 'len', 'any' }, { 'chars', 'any' } },
+    params = {
+      { 'src', 'string' },
+      { 'start', 'integer' },
+      { 'len', 'integer' },
+      { 'chars', '0|1' },
+    },
+    returns = 'string',
     signature = 'strpart({src}, {start} [, {len} [, {chars}]])',
   },
   strptime = {
@@ -10794,7 +10813,8 @@ M.funcs = {
 
     ]=],
     name = 'strptime',
-    params = { { 'format', 'any' }, { 'timestring', 'any' } },
+    params = { { 'format', 'string' }, { 'timestring', 'string' } },
+    returns = 'integer',
     signature = 'strptime({format}, {timestring})',
   },
   strridx = {
@@ -10820,7 +10840,12 @@ M.funcs = {
 
     ]=],
     name = 'strridx',
-    params = { { 'haystack', 'any' }, { 'needle', 'any' }, { 'start', 'any' } },
+    params = {
+      { 'haystack', 'string' },
+      { 'needle', 'string' },
+      { 'start', 'integer' },
+    },
+    returns = 'integer',
     signature = 'strridx({haystack}, {needle} [, {start}])',
   },
   strtrans = {
@@ -10840,6 +10865,7 @@ M.funcs = {
     fast = true,
     name = 'strtrans',
     params = { { 'string', 'string' } },
+    returns = 'string',
     signature = 'strtrans({string})',
   },
   strutf16len = {
@@ -10866,7 +10892,8 @@ M.funcs = {
 
     ]=],
     name = 'strutf16len',
-    params = { { 'string', 'string' }, { 'countcc', 'any' } },
+    params = { { 'string', 'string' }, { 'countcc', '0|1' } },
+    returns = 'integer',
     signature = 'strutf16len({string} [, {countcc}])',
   },
   strwidth = {
@@ -10885,6 +10912,7 @@ M.funcs = {
     fast = true,
     name = 'strwidth',
     params = { { 'string', 'string' } },
+    returns = 'integer',
     signature = 'strwidth({string})',
   },
   submatch = {
@@ -10921,7 +10949,8 @@ M.funcs = {
 
     ]=],
     name = 'submatch',
-    params = { { 'nr', 'integer' }, { 'list', 'any' } },
+    params = { { 'nr', 'integer' }, { 'list', 'integer' } },
+    returns = 'string|string[]',
     signature = 'submatch({nr} [, {list}])',
   },
   substitute = {
@@ -10972,7 +11001,13 @@ M.funcs = {
 
     ]=],
     name = 'substitute',
-    params = { { 'string', 'string' }, { 'pat', 'any' }, { 'sub', 'any' }, { 'flags', 'string' } },
+    params = {
+      { 'string', 'string' },
+      { 'pat', 'string' },
+      { 'sub', 'string' },
+      { 'flags', 'string' },
+    },
+    returns = 'string',
     signature = 'substitute({string}, {pat}, {sub}, {flags})',
   },
   swapfilelist = {
@@ -10989,6 +11024,7 @@ M.funcs = {
     ]=],
     name = 'swapfilelist',
     params = {},
+    returns = 'string[]',
     signature = 'swapfilelist()',
   },
   swapinfo = {
@@ -11029,7 +11065,8 @@ M.funcs = {
 
     ]=],
     name = 'swapname',
-    params = { { 'buf', 'any' } },
+    params = { { 'buf', 'integer|string' } },
+    returns = 'string',
     signature = 'swapname({buf})',
   },
   synID = {
@@ -11061,7 +11098,8 @@ M.funcs = {
       <
     ]=],
     name = 'synID',
-    params = { { 'lnum', 'integer' }, { 'col', 'integer' }, { 'trans', 'any' } },
+    params = { { 'lnum', 'integer' }, { 'col', 'integer' }, { 'trans', '0|1' } },
+    returns = 'integer',
     signature = 'synID({lnum}, {col}, {trans})',
   },
   synIDattr = {
@@ -11114,7 +11152,8 @@ M.funcs = {
       <
     ]=],
     name = 'synIDattr',
-    params = { { 'synID', 'any' }, { 'what', 'any' }, { 'mode', 'string' } },
+    params = { { 'synID', 'integer' }, { 'what', 'string' }, { 'mode', 'string' } },
+    returns = 'string',
     signature = 'synIDattr({synID}, {what} [, {mode}])',
   },
   synIDtrans = {
@@ -11130,7 +11169,8 @@ M.funcs = {
 
     ]=],
     name = 'synIDtrans',
-    params = { { 'synID', 'any' } },
+    params = { { 'synID', 'integer' } },
+    returns = 'integer',
     signature = 'synIDtrans({synID})',
   },
   synconcealed = {
@@ -11163,6 +11203,7 @@ M.funcs = {
     ]=],
     name = 'synconcealed',
     params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
+    returns = '{[1]: integer, [2]: string, [3]: integer}[]',
     signature = 'synconcealed({lnum}, {col})',
   },
   synstack = {
@@ -11188,6 +11229,7 @@ M.funcs = {
     ]=],
     name = 'synstack',
     params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
+    returns = 'integer[]',
     signature = 'synstack({lnum}, {col})',
   },
   system = {
@@ -11245,7 +11287,11 @@ M.funcs = {
 
     ]=],
     name = 'system',
-    params = { { 'cmd', 'any' }, { 'input', 'any' } },
+    params = {
+      { 'cmd', 'string|string[]' },
+      { 'input', 'string|string[]|integer' },
+    },
+    returns = 'string',
     signature = 'system({cmd} [, {input}])',
   },
   systemlist = {
@@ -11267,7 +11313,14 @@ M.funcs = {
 
     ]=],
     name = 'systemlist',
-    params = { { 'cmd', 'any' }, { 'input', 'any' }, { 'keepempty', 'any' } },
+    params = {
+      { 'cmd', 'string|string[]' },
+      { 'input', 'string|string[]|integer' },
+      { 'keepempty', 'integer' },
+    },
+    -- TODO(lewis6991): Not sure the '' return case is possible via vim.fn
+    -- returns = "string[]|''",
+    returns = 'string[]',
     signature = 'systemlist({cmd} [, {input} [, {keepempty}]])',
   },
   tabpagebuflist = {
@@ -11308,7 +11361,8 @@ M.funcs = {
       Returns zero on error.
     ]=],
     name = 'tabpagenr',
-    params = { { 'arg', 'any' } },
+    params = { { 'arg', "'$'|'#'" } },
+    returns = 'integer',
     signature = 'tabpagenr([{arg}])',
   },
   tabpagewinnr = {
@@ -11329,7 +11383,8 @@ M.funcs = {
 
     ]=],
     name = 'tabpagewinnr',
-    params = { { 'tabarg', 'any' }, { 'arg', 'any' } },
+    params = { { 'tabarg', 'integer' }, { 'arg', "'$'|'#'" } },
+    returns = 'integer',
     signature = 'tabpagewinnr({tabarg} [, {arg}])',
   },
   tagfiles = {
@@ -11339,6 +11394,7 @@ M.funcs = {
     ]=],
     name = 'tagfiles',
     params = {},
+    returns = 'string[]',
     signature = 'tagfiles()',
   },
   taglist = {
@@ -11389,7 +11445,7 @@ M.funcs = {
 
     ]=],
     name = 'taglist',
-    params = { { 'expr', 'any' }, { 'filename', 'any' } },
+    params = { { 'expr', 'any' }, { 'filename', 'string' } },
     signature = 'taglist({expr} [, {filename}])',
   },
   tan = {
@@ -11409,7 +11465,8 @@ M.funcs = {
     ]=],
     float_func = 'tan',
     name = 'tan',
-    params = { { 'expr', 'any' } },
+    params = { { 'expr', 'number' } },
+    returns = 'number',
     signature = 'tan({expr})',
   },
   tanh = {
@@ -11429,7 +11486,8 @@ M.funcs = {
     ]=],
     float_func = 'tanh',
     name = 'tanh',
-    params = { { 'expr', 'any' } },
+    params = { { 'expr', 'number' } },
+    returns = 'number',
     signature = 'tanh({expr})',
   },
   tempname = {
@@ -11481,7 +11539,7 @@ M.funcs = {
   },
   test_write_list_log = {
     args = 1,
-    params = { { 'fname' } },
+    params = { { 'fname', 'string' } },
     signature = '',
     lua = false,
   },
@@ -11643,7 +11701,8 @@ M.funcs = {
 
     ]=],
     name = 'tr',
-    params = { { 'src', 'any' }, { 'fromstr', 'any' }, { 'tostr', 'any' } },
+    params = { { 'src', 'string' }, { 'fromstr', 'string' }, { 'tostr', 'string' } },
+    returns = 'string',
     signature = 'tr({src}, {fromstr}, {tostr})',
   },
   trim = {
@@ -11676,7 +11735,7 @@ M.funcs = {
 
     ]=],
     name = 'trim',
-    params = { { 'text', 'any' }, { 'mask', 'any' }, { 'dir', 'string' } },
+    params = { { 'text', 'any' }, { 'mask', 'string' }, { 'dir', '0|1|2' } },
     returns = 'string',
     signature = 'trim({text} [, {mask} [, {dir}]])',
   },
@@ -11700,6 +11759,7 @@ M.funcs = {
     float_func = 'trunc',
     name = 'trunc',
     params = { { 'expr', 'any' } },
+    returns = 'integer',
     signature = 'trunc({expr})',
   },
   type = {
@@ -11736,6 +11796,7 @@ M.funcs = {
     fast = true,
     name = 'type',
     params = { { 'expr', 'any' } },
+    returns = 'integer',
     signature = 'type({expr})',
   },
   undofile = {
@@ -11806,7 +11867,7 @@ M.funcs = {
       		item.
     ]=],
     name = 'undotree',
-    params = { { 'buf', 'any' } },
+    params = { { 'buf', 'integer|string' } },
     signature = 'undotree([{buf}])',
   },
   uniq = {
