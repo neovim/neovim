@@ -958,6 +958,9 @@ func Test_reduce()
   call assert_fails("call reduce('', { acc, val -> acc + val }, {})", 'E1253:')
   call assert_fails("call reduce('', { acc, val -> acc + val }, 0.1)", 'E1253:')
   call assert_fails("call reduce('', { acc, val -> acc + val }, function('tr'))", 'E1253:')
+  call assert_fails("call reduce('abc', { a, v -> a10}, '')", 'E121:')
+  call assert_fails("call reduce(0z01, { a, v -> a10}, 1)", 'E121:')
+  call assert_fails("call reduce([1], { a, v -> a10}, '')", 'E121:')
 
   let g:lut = [1, 2, 3, 4]
   func EvilRemove()
