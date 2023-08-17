@@ -5115,7 +5115,7 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
           todo--;
 
           dictitem_T *di = TV_DICT_HI2DI(hi);
-          if (filtermap != FILTERMAP_FILTER
+          if (filtermap == FILTERMAP_MAP
               && (value_check_lock(di->di_tv.v_lock, arg_errmsg, TV_TRANSLATE)
                   || var_check_ro(di->di_flags, arg_errmsg, TV_TRANSLATE))) {
             break;
@@ -5210,7 +5210,7 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
         tv_list_set_lock(l, VAR_LOCKED);
       }
       for (listitem_T *li = tv_list_first(l); li != NULL;) {
-        if (filtermap != FILTERMAP_FILTER
+        if (filtermap == FILTERMAP_MAP
             && value_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
                                 TV_TRANSLATE)) {
           break;
