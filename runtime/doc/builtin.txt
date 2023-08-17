@@ -4210,7 +4210,8 @@ mapcheck({name} [, {mode} [, {abbr}]])                              *mapcheck()*
 mapnew({expr1}, {expr2})                                              *mapnew()*
 		Like |map()| but instead of replacing items in {expr1} a new
 		List or Dictionary is created and returned.  {expr1} remains
-		unchanged.
+		unchanged.  Items can still be changed by {expr2}, if you
+		don't want that use |deepcopy()| first.
 
 mapset({mode}, {abbr}, {dict})                                        *mapset()*
 		Restore a mapping from a dictionary returned by |maparg()|.

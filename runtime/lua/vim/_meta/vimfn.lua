@@ -5082,7 +5082,8 @@ function vim.fn.mapcheck(name, mode, abbr) end
 
 --- Like |map()| but instead of replacing items in {expr1} a new
 --- List or Dictionary is created and returned.  {expr1} remains
---- unchanged.
+--- unchanged.  Items can still be changed by {expr2}, if you
+--- don't want that use |deepcopy()| first.
 ---
 --- @param expr1 any
 --- @param expr2 any

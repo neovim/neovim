@@ -6223,7 +6223,8 @@ M.funcs = {
     desc = [=[
       Like |map()| but instead of replacing items in {expr1} a new
       List or Dictionary is created and returned.  {expr1} remains
-      unchanged.
+      unchanged.  Items can still be changed by {expr2}, if you
+      don't want that use |deepcopy()| first.
     ]=],
     name = 'mapnew',
     params = { { 'expr1', 'any' }, { 'expr2', 'any' } },
