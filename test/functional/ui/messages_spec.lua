@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local eval = helpers.eval
 local eq = helpers.eq
+local matches = helpers.matches
 local command = helpers.command
 local set_method_error = helpers.set_method_error
 local meths = helpers.meths
@@ -1293,7 +1294,7 @@ describe('ui/ext_messages', function()
 
   before_each(function()
     clear{args_rm={'--headless'}, args={"--cmd", "set shortmess-=I"}}
-    screen = Screen.new(80, 24)
+    screen = Screen.new(40, 8)
     screen:attach({rgb=true, ext_messages=true, ext_popupmenu=true})
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
@@ -1307,95 +1308,66 @@ describe('ui/ext_messages', function()
   end)
 
   it('supports intro screen', function()
-    -- intro message is not externalized. But check that it still works.
     -- Note parts of it depends on version or is indeterministic. We ignore those parts.
-    screen:expect([[
-      ^                                                                                |
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {MATCH:.*}|
-      {1:~                                                                               }|
-      {1:~                 }Nvim is open source and freely distributable{1:                  }|
-      {1:~                           }https://neovim.io/#chat{1:                             }|
-      {1:~                                                                               }|
-      {1:~                }type  :help nvim{5:<Enter>}       if you are new! {1:                 }|
-      {1:~                }type  :checkhealth{5:<Enter>}     to optimize Nvim{1:                 }|
-      {1:~                }type  :q{5:<Enter>}               to exit         {1:                 }|
-      {1:~                }type  :help{5:<Enter>}            for help        {1:                 }|
-      {1:~                                                                               }|
-      {1:~{MATCH: +}}type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+}{1:{MATCH: +}}|
-      {1:~                                                                               }|
-      {MATCH:.*}|
-      {MATCH:.*}|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-    ]])
+    local function check_intro()
+      local intro = screen.msg_intro
+      matches("^NVIM", intro[1])
+      eq(14, #intro)
 
-    feed("<c-l>")
-    screen:expect([[
-      ^                                                                                |
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-      {1:~                                                                               }|
-    ]])
+      intro[1] = "NVIM" -- too complex
+      intro[13] = "sponsor1" -- these vary randomly
+      intro[14] = "sponsor2"
+
+      local version = meths.get_api_info()[2].version
+
+      eq({
+        "NVIM",
+        "",
+        "Nvim is open source and freely distributable",
+        "https://neovim.io/#chat",
+        "",
+        "type  :help nvim<Enter>       if you are new! ",
+        "type  :checkhealth<Enter>     to optimize Nvim",
+        "type  :q<Enter>               to exit         ",
+        "type  :help<Enter>            for help        ",
+        "",
+        "type  :help news<Enter> to see changes in v"..version.major..'.'..version.minor,
+        "",
+        "sponsor1",
+        "sponsor2"
+      }, intro)
+    end
+
+    screen:expect{grid=[[
+      ^                                        |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+    ]], condition=check_intro}
+
+    screen.msg_intro = nil
 
     feed(":intro<cr>")
     screen:expect{grid=[[
-                                                                                      |
-                                                                                      |
-                                                                                      |
-                                                                                      |
-                                                                                      |
-      {MATCH:.*}|
-                                                                                      |
-                        Nvim is open source and freely distributable                  |
-                                  https://neovim.io/#chat                             |
-                                                                                      |
-                       type  :help nvim{5:<Enter>}       if you are new!                  |
-                       type  :checkhealth{5:<Enter>}     to optimize Nvim                 |
-                       type  :q{5:<Enter>}               to exit                          |
-                       type  :help{5:<Enter>}            for help                         |
-                                                                                      |
-      {MATCH: +}type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+ +}|
-                                                                                      |
-      {MATCH:.*}|
-      {MATCH:.*}|
-                                                                                      |
-                                                                                      |
-                                                                                      |
-                                                                                      |
-                                                                                      |
-    ]], messages={
+      ^                                        |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+    ]], condition=check_intro, messages={
       {content = { { "Press ENTER or type command to continue", 4 } }, kind = "return_prompt" }
     }}
   end)
 
   it('supports global statusline', function()
+    screen:try_resize(80, 24)
     feed(":set laststatus=3<cr>")
     feed(":sp<cr>")
     feed(":set cmdheight<cr>")
@@ -1493,6 +1465,112 @@ describe('ui/ext_messages', function()
     ]], messages={
       {content = { { "  cmdheight=0" } }, kind = "" }
     }})
+  end)
+end)
+
+describe('ui/builtin messages', function()
+  local screen
+
+  before_each(function()
+    -- intro message is normally surpressed in tests by the global 'shortmess' test settings
+    -- undo that so we can actually test the :intro screen
+    clear{args_rm={'--headless'}, args={"--cmd", "set shortmess-=I"}}
+    screen = Screen.new(80, 24)
+    screen:attach({rgb=true})
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [3] = {bold = true},
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [5] = {foreground = Screen.colors.Blue1},
+      [6] = {reverse = true},
+      [7] = {bold = true, reverse = true},
+    })
+  end)
+
+  it('supports intro screen', function()
+    screen:expect([[
+      ^                                                                                |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {MATCH:.*}|
+      {1:~                                                                               }|
+      {1:~                 }Nvim is open source and freely distributable{1:                  }|
+      {1:~                           }https://neovim.io/#chat{1:                             }|
+      {1:~                                                                               }|
+      {1:~                }type  :help nvim{5:<Enter>}       if you are new! {1:                 }|
+      {1:~                }type  :checkhealth{5:<Enter>}     to optimize Nvim{1:                 }|
+      {1:~                }type  :q{5:<Enter>}               to exit         {1:                 }|
+      {1:~                }type  :help{5:<Enter>}            for help        {1:                 }|
+      {1:~                                                                               }|
+      {1:~{MATCH: +}}type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+}{1:{MATCH: +}}|
+      {1:~                                                                               }|
+      {MATCH:.*}|
+      {MATCH:.*}|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+                                                                                      |
+    ]])
+
+    feed("<c-l>")
+    screen:expect([[
+      ^                                                                                |
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+      {1:~                                                                               }|
+                                                                                      |
+    ]])
+
+    feed(":intro<cr>")
+    screen:expect{grid=[[
+                                                                                      |
+                                                                                      |
+                                                                                      |
+                                                                                      |
+                                                                                      |
+      {MATCH:.*}|
+                                                                                      |
+                        Nvim is open source and freely distributable                  |
+                                  https://neovim.io/#chat                             |
+                                                                                      |
+                       type  :help nvim{5:<Enter>}       if you are new!                  |
+                       type  :checkhealth{5:<Enter>}     to optimize Nvim                 |
+                       type  :q{5:<Enter>}               to exit                          |
+                       type  :help{5:<Enter>}            for help                         |
+                                                                                      |
+      {MATCH: +}type  :help news{5:<Enter>} to see changes in v{MATCH:%d+%.%d+ +}|
+                                                                                      |
+      {MATCH:.*}|
+      {MATCH:.*}|
+                                                                                      |
+                                                                                      |
+                                                                                      |
+                                                                                      |
+                                                                                      |
+    ]]}
   end)
 end)
 

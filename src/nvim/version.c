@@ -34,6 +34,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/strings.h"
+#include "nvim/ui.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
 
@@ -2751,8 +2752,15 @@ void maybe_intro_message(void)
 /// Or with the ":intro" command (for Sven :-).
 ///
 /// @param colon true for ":intro"
-void intro_message(int colon)
+void intro_message(bool colon)
 {
+  bool ext = ui_has(kUIMultigrid) || ui_has(kUIMessages);
+
+  if (colon && !ext) {
+    // TODO(bfredl): use msg_grid instead!
+    screenclear();
+  }
+
   static char *(lines[]) = {
     N_(NVIM_VERSION_LONG),
     "",
@@ -2769,6 +2777,8 @@ void intro_message(int colon)
     N_("Help poor children in Uganda!"),
     N_("type  :help iccf<Enter>       for information "),
   };
+
+  MAXSIZE_TEMP_ARRAY(ext_lines, ARRAY_SIZE(lines));
 
   // blanklines = screen height - # message lines
   size_t lines_size = ARRAY_SIZE(lines);
@@ -2793,20 +2803,17 @@ void intro_message(int colon)
   // start displaying the message lines after half of the blank lines
   long row = blanklines / 2;
 
-  if (((row >= 2) && (Columns >= 50)) || colon) {
+  char news_buf[64];
+
+  if (((row >= 2) && (Columns >= 50)) || colon || ext) {
     for (int i = 0; i < (int)ARRAY_SIZE(lines); i++) {
       char *p = lines[i];
       char *mesg = NULL;
-      int mesg_size = 0;
 
       if (strstr(p, "news") != NULL) {
         p = _(p);
-        mesg_size = snprintf(NULL, 0, p,
-                             STR(NVIM_VERSION_MAJOR), STR(NVIM_VERSION_MINOR));
-        assert(mesg_size > 0);
-        mesg = xmallocz((size_t)mesg_size);
-        snprintf(mesg, (size_t)mesg_size + 1, p,
-                 STR(NVIM_VERSION_MAJOR), STR(NVIM_VERSION_MINOR));
+        snprintf(news_buf, sizeof news_buf, p, STR(NVIM_VERSION_MAJOR), STR(NVIM_VERSION_MINOR));
+        mesg = news_buf;
       } else if (sponsor != 0) {
         if (strstr(p, "children") != NULL) {
           p = sponsor < 0
@@ -2827,19 +2834,21 @@ void intro_message(int colon)
         }
       }
 
-      if (*mesg != NUL) {
-        do_intro_line(row, mesg, 0);
+      if (*mesg != NUL || ext) {
+        if (ext) {
+          ADD_C(ext_lines, CSTR_AS_OBJ(mesg));
+        } else {
+          do_intro_line(row, mesg, 0);
+        }
       }
       row++;
-
-      if (mesg_size > 0) {
-        XFREE_CLEAR(mesg);
-      }
     }
   }
 
-  // Make the wait-return message appear just below the text.
-  if (colon) {
+  if (ext) {
+    ui_call_msg_intro(ext_lines);
+  } else if (colon) {
+    // Make the wait-return message appear just below the text.
     assert(row <= INT_MAX);
     msg_row = (int)row;
   }
@@ -2882,8 +2891,6 @@ static void do_intro_line(long row, char *mesg, int attr)
 /// @param eap
 void ex_intro(exarg_T *eap)
 {
-  // TODO(bfredl): use msg_grid instead!
-  screenclear();
   intro_message(true);
   wait_return(true);
 }
