@@ -388,9 +388,9 @@ func Test_runtime_completion()
   call writefile([], optdir . '/../Aunrelated')
   exe 'set rtp=' . &packpath . '/runtime'
 
-  func Check_runtime_completion(arg, arg1, res)
+  func Check_runtime_completion(arg, arg_prev, res)
     call feedkeys(':runtime ' .. a:arg .. "\<C-A>\<C-B>\"\<CR>", 'xt')
-    call assert_equal('"runtime ' .. a:arg1 .. join(a:res), @:)
+    call assert_equal('"runtime ' .. a:arg_prev .. join(a:res), @:)
     call assert_equal(a:res, getcompletion(a:arg, 'runtime'))
   endfunc
 
@@ -404,36 +404,67 @@ func Test_runtime_completion()
         \ ['PACK'])
   call Check_runtime_completion('A', '',
         \ ['Aextra/', 'Arunfoo.vim', 'ALL'])
+  call Check_runtime_completion('Other.vim ', 'Other.vim ',
+        \ ['Aextra/', 'Arunfoo.vim'])
   call Check_runtime_completion('Aextra/', '',
+        \ ['Aextra/Arunbar.vim', 'Aextra/Arunbaz/'])
+  call Check_runtime_completion('Other.vim Aextra/', 'Other.vim ',
         \ ['Aextra/Arunbar.vim', 'Aextra/Arunbaz/'])
 
   call Check_runtime_completion('START ', 'START ',
         \ ['Aextra/', 'Astartfoo.vim'])
+  call Check_runtime_completion('START Other.vim ', 'START Other.vim ',
+        \ ['Aextra/', 'Astartfoo.vim'])
   call Check_runtime_completion('START A', 'START ',
         \ ['Aextra/', 'Astartfoo.vim'])
+  call Check_runtime_completion('START Other.vim A', 'START Other.vim ',
+        \ ['Aextra/', 'Astartfoo.vim'])
   call Check_runtime_completion('START Aextra/', 'START ',
+        \ ['Aextra/Astartbar.vim', 'Aextra/Astartbaz/'])
+  call Check_runtime_completion('START Other.vim Aextra/', 'START Other.vim ',
         \ ['Aextra/Astartbar.vim', 'Aextra/Astartbaz/'])
 
   call Check_runtime_completion('OPT ', 'OPT ',
         \ ['Aextra/', 'Aoptfoo.vim'])
+  call Check_runtime_completion('OPT Other.vim ', 'OPT Other.vim ',
+        \ ['Aextra/', 'Aoptfoo.vim'])
   call Check_runtime_completion('OPT A', 'OPT ',
         \ ['Aextra/', 'Aoptfoo.vim'])
+  call Check_runtime_completion('OPT Other.vim A', 'OPT Other.vim ',
+        \ ['Aextra/', 'Aoptfoo.vim'])
   call Check_runtime_completion('OPT Aextra/', 'OPT ',
+        \ ['Aextra/Aoptbar.vim', 'Aextra/Aoptbaz/'])
+  call Check_runtime_completion('OPT Other.vim Aextra/', 'OPT Other.vim ',
         \ ['Aextra/Aoptbar.vim', 'Aextra/Aoptbaz/'])
 
   call Check_runtime_completion('PACK ', 'PACK ',
         \ ['Aextra/', 'Aoptfoo.vim', 'Astartfoo.vim'])
+  call Check_runtime_completion('PACK Other.vim ', 'PACK Other.vim ',
+        \ ['Aextra/', 'Aoptfoo.vim', 'Astartfoo.vim'])
   call Check_runtime_completion('PACK A', 'PACK ',
         \ ['Aextra/', 'Aoptfoo.vim', 'Astartfoo.vim'])
+  call Check_runtime_completion('PACK Other.vim A', 'PACK Other.vim ',
+        \ ['Aextra/', 'Aoptfoo.vim', 'Astartfoo.vim'])
   call Check_runtime_completion('PACK Aextra/', 'PACK ',
+        \ ['Aextra/Aoptbar.vim', 'Aextra/Aoptbaz/',
+        \ 'Aextra/Astartbar.vim', 'Aextra/Astartbaz/'])
+  call Check_runtime_completion('PACK Other.vim Aextra/', 'PACK Other.vim ',
         \ ['Aextra/Aoptbar.vim', 'Aextra/Aoptbaz/',
         \ 'Aextra/Astartbar.vim', 'Aextra/Astartbaz/'])
 
   call Check_runtime_completion('ALL ', 'ALL ',
         \ ['Aextra/', 'Aoptfoo.vim', 'Arunfoo.vim', 'Astartfoo.vim'])
+  call Check_runtime_completion('ALL Other.vim ', 'ALL Other.vim ',
+        \ ['Aextra/', 'Aoptfoo.vim', 'Arunfoo.vim', 'Astartfoo.vim'])
   call Check_runtime_completion('ALL A', 'ALL ',
         \ ['Aextra/', 'Aoptfoo.vim', 'Arunfoo.vim', 'Astartfoo.vim'])
+  call Check_runtime_completion('ALL Other.vim A', 'ALL Other.vim ',
+        \ ['Aextra/', 'Aoptfoo.vim', 'Arunfoo.vim', 'Astartfoo.vim'])
   call Check_runtime_completion('ALL Aextra/', 'ALL ',
+        \ ['Aextra/Aoptbar.vim', 'Aextra/Aoptbaz/',
+        \ 'Aextra/Arunbar.vim', 'Aextra/Arunbaz/',
+        \ 'Aextra/Astartbar.vim', 'Aextra/Astartbaz/'])
+  call Check_runtime_completion('ALL Other.vim Aextra/', 'ALL Other.vim ',
         \ ['Aextra/Aoptbar.vim', 'Aextra/Aoptbaz/',
         \ 'Aextra/Arunbar.vim', 'Aextra/Arunbaz/',
         \ 'Aextra/Astartbar.vim', 'Aextra/Astartbaz/'])
