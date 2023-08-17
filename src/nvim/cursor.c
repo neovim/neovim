@@ -460,7 +460,7 @@ bool set_leftcol(colnr_T leftcol)
   bool retval = false;
   // If the cursor is right or left of the screen, move it to last or first
   // visible character.
-  long siso = get_sidescrolloff_value(curwin);
+  int siso = get_sidescrolloff_value(curwin);
   if (curwin->w_virtcol > (colnr_T)(lastcol - siso)) {
     retval = true;
     coladvance((colnr_T)(lastcol - siso));
