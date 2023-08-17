@@ -2005,10 +2005,11 @@ function vim.fn.filereadable(file) end
 --- @return 0|1
 function vim.fn.filewritable(file) end
 
---- {expr1} must be a |List|, |Blob|, or a |Dictionary|.
+--- {expr1} must be a |List|, |String|, |Blob| or |Dictionary|.
 --- For each item in {expr1} evaluate {expr2} and when the result
---- is zero remove the item from the |List| or |Dictionary|. For a
---- |Blob| each byte is removed.
+--- is zero or false remove the item from the |List| or
+--- |Dictionary|.  Similarly for each byte in a |Blob| and each
+--- character in a |String|.
 ---
 --- {expr2} must be a |string| or |Funcref|.
 ---
@@ -2044,14 +2045,16 @@ function vim.fn.filewritable(file) end
 --- <If you do not use "val" you can leave it out: >vim
 ---   call filter(myList, {idx -> idx % 2 == 1})
 --- <
---- The operation is done in-place.  If you want a |List| or
---- |Dictionary| to remain unmodified make a copy first: >vim
+--- For a |List| and a |Dictionary| the operation is done
+--- in-place.  If you want it to remain unmodified make a copy
+--- first: >vim
 ---   let l = filter(copy(mylist), 'v:val =~ "KEEP"')
 ---
---- <Returns {expr1}, the |List|, |Blob| or |Dictionary| that was
---- filtered.  When an error is encountered while evaluating
---- {expr2} no further items in {expr1} are processed.  When
---- {expr2} is a Funcref errors inside a function are ignored,
+--- <Returns {expr1}, the |List| or |Dictionary| that was filtered,
+--- or a new |Blob| or |String|.
+--- When an error is encountered while evaluating {expr2} no
+--- further items in {expr1} are processed.
+--- When {expr2} is a Funcref errors inside a function are ignored,
 --- unless it was defined with the "abort" flag.
 ---
 --- @param expr1 any
@@ -4919,15 +4922,18 @@ function vim.fn.log(expr) end
 --- @return any
 function vim.fn.log10(expr) end
 
---- {expr1} must be a |List|, |Blob| or |Dictionary|.
---- Replace each item in {expr1} with the result of evaluating
---- {expr2}.  For a |Blob| each byte is replaced.
+--- {expr1} must be a |List|, |String|, |Blob| or |Dictionary|.
+--- When {expr1} is a |List|| or |Dictionary|, replace each
+--- item in {expr1} with the result of evaluating {expr2}.
+--- For a |Blob| each byte is replaced.
+--- For a |String|, each character, including composing
+--- characters, is replaced.
 --- If the item type changes you may want to use |mapnew()| to
 --- create a new List or Dictionary.
 ---
---- {expr2} must be a |string| or |Funcref|.
+--- {expr2} must be a |String| or |Funcref|.
 ---
---- If {expr2} is a |string|, inside {expr2} |v:val| has the value
+--- If {expr2} is a |String|, inside {expr2} |v:val| has the value
 --- of the current item.  For a |Dictionary| |v:key| has the key
 --- of the current item and for a |List| |v:key| has the index of
 --- the current item.  For a |Blob| |v:key| has the index of the
@@ -4957,14 +4963,15 @@ function vim.fn.log10(expr) end
 --- <If you do not use "key" you can use a short name: >vim
 ---   call map(myDict, {_, val -> 'item: ' .. val})
 --- <
---- The operation is done in-place.  If you want a |List| or
---- |Dictionary| to remain unmodified make a copy first: >vim
+--- The operation is done in-place for a |List| and |Dictionary|.
+--- If you want it to remain unmodified make a copy first: >vim
 ---   let tlist = map(copy(mylist), ' v:val .. "\t"')
 ---
---- <Returns {expr1}, the |List|, |Blob| or |Dictionary| that was
---- filtered.  When an error is encountered while evaluating
---- {expr2} no further items in {expr1} are processed.  When
---- {expr2} is a Funcref errors inside a function are ignored,
+--- <Returns {expr1}, the |List| or |Dictionary| that was filtered,
+--- or a new |Blob| or |String|.
+--- When an error is encountered while evaluating {expr2} no
+--- further items in {expr1} are processed.
+--- When {expr2} is a Funcref errors inside a function are ignored,
 --- unless it was defined with the "abort" flag.
 ---
 --- @param expr1 any
