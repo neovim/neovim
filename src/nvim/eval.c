@@ -820,21 +820,19 @@ bool eval_expr_valid_arg(const typval_T *const tv)
          && (tv->v_type != VAR_STRING || (tv->vval.v_string != NULL && *tv->vval.v_string != NUL));
 }
 
-int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *rettv)
-  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+/// Evaluate an expression, which can be a function, partial or string.
+/// Pass arguments "argv[argc]".
+/// Return the result in "rettv" and OK or FAIL.
+///
+/// @param want_func  if true, treat a string as a function name, not an expression
+int eval_expr_typval(const typval_T *expr, bool want_func, typval_T *argv, int argc,
+                     typval_T *rettv)
+  FUNC_ATTR_NONNULL_ALL
 {
+  char buf[NUMBUFLEN];
   funcexe_T funcexe = FUNCEXE_INIT;
 
-  if (expr->v_type == VAR_FUNC) {
-    const char *const s = expr->vval.v_string;
-    if (s == NULL || *s == NUL) {
-      return FAIL;
-    }
-    funcexe.fe_evaluate = true;
-    if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
-      return FAIL;
-    }
-  } else if (expr->v_type == VAR_PARTIAL) {
+  if (expr->v_type == VAR_PARTIAL) {
     partial_T *const partial = expr->vval.v_partial;
     if (partial == NULL) {
       return FAIL;
@@ -848,8 +846,18 @@ int eval_expr_typval(const typval_T *expr, typval_T *argv, int argc, typval_T *r
     if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
       return FAIL;
     }
+  } else if (expr->v_type == VAR_FUNC || want_func) {
+    const char *const s = (expr->v_type == VAR_FUNC
+                           ? expr->vval.v_string
+                           : tv_get_string_buf_chk(expr, buf));
+    if (s == NULL || *s == NUL) {
+      return FAIL;
+    }
+    funcexe.fe_evaluate = true;
+    if (call_func(s, -1, rettv, argc, argv, &funcexe) == FAIL) {
+      return FAIL;
+    }
   } else {
-    char buf[NUMBUFLEN];
     char *s = (char *)tv_get_string_buf_chk(expr, buf);
     if (s == NULL) {
       return FAIL;
@@ -874,7 +882,7 @@ bool eval_expr_to_bool(const typval_T *expr, bool *error)
 {
   typval_T argv, rettv;
 
-  if (eval_expr_typval(expr, &argv, 0, &rettv) == FAIL) {
+  if (eval_expr_typval(expr, false, &argv, 0, &rettv) == FAIL) {
     *error = true;
     return false;
   }
@@ -5352,7 +5360,7 @@ static int filter_map_one(typval_T *tv, typval_T *expr, const filtermap_T filter
   tv_copy(tv, &vimvars[VV_VAL].vv_tv);
   argv[0] = vimvars[VV_KEY].vv_tv;
   argv[1] = vimvars[VV_VAL].vv_tv;
-  if (eval_expr_typval(expr, argv, 2, newtv) == FAIL) {
+  if (eval_expr_typval(expr, false, argv, 2, newtv) == FAIL) {
     goto theend;
   }
   if (filtermap == FILTERMAP_FILTER) {

@@ -2953,7 +2953,7 @@ static void f_wait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const int called_emsg_before = called_emsg;
 
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, timeout,
-                            eval_expr_typval(&expr, &argv, 0, &exprval) != OK
+                            eval_expr_typval(&expr, false, &argv, 0, &exprval) != OK
                             || tv_get_number_chk(&exprval, &error)
                             || called_emsg > called_emsg_before || error || got_int);
 
@@ -3515,7 +3515,7 @@ static varnumber_T indexof_eval_expr(typval_T *expr)
   typval_T newtv;
   newtv.v_type = VAR_UNKNOWN;
 
-  if (eval_expr_typval(expr, argv, 2, &newtv) == FAIL) {
+  if (eval_expr_typval(expr, false, argv, 2, &newtv) == FAIL) {
     return false;
   }
 
@@ -5537,7 +5537,7 @@ static varnumber_T readdir_checkitem(void *context, const char *name)
   argv[0].vval.v_string = (char *)name;
 
   typval_T rettv;
-  if (eval_expr_typval(expr, argv, 1, &rettv) == FAIL) {
+  if (eval_expr_typval(expr, false, argv, 1, &rettv) == FAIL) {
     goto theend;
   }
 
@@ -6259,7 +6259,7 @@ static void reduce_list(typval_T *argvars, typval_T *expr, typval_T *rettv)
     argv[1] = *TV_LIST_ITEM_TV(li);
     rettv->v_type = VAR_UNKNOWN;
 
-    const int r = eval_expr_typval(expr, argv, 2, rettv);
+    const int r = eval_expr_typval(expr, true, argv, 2, rettv);
 
     tv_clear(&argv[0]);
     if (r == FAIL || called_emsg != called_emsg_start) {
@@ -6306,7 +6306,7 @@ static void reduce_string(typval_T *argvars, typval_T *expr, typval_T *rettv)
       .vval.v_string = xstrnsave(p, (size_t)len),
     };
 
-    const int r = eval_expr_typval(expr, argv, 2, rettv);
+    const int r = eval_expr_typval(expr, true, argv, 2, rettv);
 
     tv_clear(&argv[0]);
     tv_clear(&argv[1]);
@@ -6354,7 +6354,7 @@ static void reduce_blob(typval_T *argvars, typval_T *expr, typval_T *rettv)
       .vval.v_number = tv_blob_get(b, i),
     };
 
-    const int r = eval_expr_typval(expr, argv, 2, rettv);
+    const int r = eval_expr_typval(expr, true, argv, 2, rettv);
 
     if (r == FAIL || called_emsg != called_emsg_start) {
       return;
