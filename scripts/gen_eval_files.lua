@@ -1,5 +1,8 @@
 #!/usr/bin/env -S nvim -l
--- Generator for src/nvim/eval.lua
+-- Generator for various vimdoc and Lua type files
+
+local DEP_API_METADATA = 'build/api_metadata.mpack'
+local DEP_API_DOC  = 'runtime/doc/api.mpack'
 
 --- @class vim.api.metadata
 --- @field name string
@@ -168,11 +171,11 @@ end
 
 --- @return table<string, vim.EvalFn>
 local function get_api_meta()
-  local mpack_f = assert(io.open('build/api_metadata.mpack', 'rb'))
+  local mpack_f = assert(io.open(DEP_API_METADATA, 'rb'))
   local metadata = vim.mpack.decode(mpack_f:read('*all')) --[[@as vim.api.metadata[] ]]
   local ret = {} --- @type table<string, vim.EvalFn>
 
-  local doc_mpack_f = assert(io.open('runtime/doc/api.mpack', 'rb'))
+  local doc_mpack_f = assert(io.open(DEP_API_DOC, 'rb'))
   local doc_metadata = vim.mpack.decode(doc_mpack_f:read('*all')) --[[@as table<string,vim.gen_vim_doc_fun>]]
 
   for _, fun in ipairs(metadata) do
@@ -282,7 +285,7 @@ end
 
 --- @return table<string, vim.EvalFn>
 local function get_api_keysets_meta()
-  local mpack_f = assert(io.open('build/api_metadata.mpack', 'rb'))
+  local mpack_f = assert(io.open(DEP_API_METADATA, 'rb'))
 
   --- @diagnostic disable-next-line:no-unknown
   local metadata = assert(vim.mpack.decode(mpack_f:read('*all')))

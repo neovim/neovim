@@ -26,14 +26,10 @@ jobs:
           ./.github/scripts/install_deps.sh
           sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack
 
-      - name: Build metadata
-        run: |
-          make api-metadata
-
       - name: Generate docs
         id: docs
         run: |
-          python3 scripts/gen_vimdoc.py
+          make doc
           printf 'UPDATED_DOCS=%s\n' $([ -z "$(git diff)" ]; echo $?) >> $GITHUB_OUTPUT
 
       - name: FAIL, PR has not committed doc changes

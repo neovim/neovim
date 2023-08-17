@@ -1359,7 +1359,4 @@ if __name__ == "__main__":
     else:
         main(Doxyfile, args)
 
-        print('Running ./scripts/gen_eval_files.lua')
-        subprocess.call(['./scripts/gen_eval_files.lua'])
-
 # vim: set ft=python ts=4 sw=4 tw=79 et :

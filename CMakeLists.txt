@@ -242,6 +242,7 @@ add_glob_target(
   FLAGS -q
   GLOB_DIRS runtime/ scripts/ src/ test/
   GLOB_PAT *.lua
+  EXCLUDE runtime/lua/vim/_meta/.*
   TOUCH_STRATEGY SINGLE)
 add_dependencies(lintlua-luacheck luacheck)
 
@@ -253,7 +254,7 @@ add_glob_target(
   GLOB_PAT *.lua
   EXCLUDE
     /runtime/lua/vim/re.lua
-    /runtime/lua/vim/_meta/options.lua
+    /runtime/lua/vim/_meta/.*
   TOUCH_STRATEGY SINGLE)
 
 add_custom_target(lintlua)
