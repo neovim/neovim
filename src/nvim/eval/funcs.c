@@ -884,6 +884,86 @@ static void f_copy(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   var_item_copy(NULL, &argvars[0], rettv, false, 0);
 }
 
+/// Count the number of times "needle" occurs in string "haystack".
+///
+/// @param ic  ignore case
+static varnumber_T count_string(const char *haystack, const char *needle, bool ic)
+{
+  varnumber_T n = 0;
+  const char *p = haystack;
+
+  if (p == NULL || needle == NULL || *needle == NUL) {
+    return 0;
+  }
+
+  if (ic) {
+    const size_t len = strlen(needle);
+
+    while (*p != NUL) {
+      if (mb_strnicmp(p, needle, len) == 0) {
+        n++;
+        p += len;
+      } else {
+        MB_PTR_ADV(p);
+      }
+    }
+  } else {
+    const char *next;
+    while ((next = strstr(p, needle)) != NULL) {
+      n++;
+      p = next + strlen(needle);
+    }
+  }
+
+  return n;
+}
+
+/// Count the number of times item "needle" occurs in List "l" starting at index "idx".
+///
+/// @param ic  ignore case
+static varnumber_T count_list(list_T *l, typval_T *needle, int64_t idx, bool ic)
+{
+  if (tv_list_len(l) == 0) {
+    return 0;
+  }
+
+  listitem_T *li = tv_list_find(l, (int)idx);
+  if (li == NULL) {
+    semsg(_(e_list_index_out_of_range_nr), idx);
+    return 0;
+  }
+
+  varnumber_T n = 0;
+
+  for (; li != NULL; li = TV_LIST_ITEM_NEXT(l, li)) {
+    if (tv_equal(TV_LIST_ITEM_TV(li), needle, ic, false)) {
+      n++;
+    }
+  }
+
+  return n;
+}
+
+/// Count the number of times item "needle" occurs in Dict "d".
+///
+/// @param ic  ignore case
+static varnumber_T count_dict(dict_T *d, typval_T *needle, bool ic)
+{
+  if (d == NULL) {
+    return 0;
+  }
+
+  varnumber_T n = 0;
+
+  TV_DICT_ITER(d, di, {
+    if (tv_equal(&di->di_tv, needle, ic, false)) {
+      n++;
+    }
+  });
+
+  return n;
+}
+
 /// "count()" function
 static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -895,74 +975,26 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     ic = (int)tv_get_number_chk(&argvars[2], &error);
   }
 
-  if (argvars[0].v_type == VAR_STRING) {
-    const char *expr = tv_get_string_chk(&argvars[1]);
-    const char *p = argvars[0].vval.v_string;
-
-    if (!error && expr != NULL && *expr != NUL && p != NULL) {
-      if (ic) {
-        const size_t len = strlen(expr);
-
-        while (*p != NUL) {
-          if (mb_strnicmp(p, expr, len) == 0) {
-            n++;
-            p += len;
-          } else {
-            MB_PTR_ADV(p);
-          }
-        }
-      } else {
-        char *next;
-        while ((next = strstr(p, expr)) != NULL) {
-          n++;
-          p = next + strlen(expr);
-        }
-      }
+  if (!error && argvars[0].v_type == VAR_STRING) {
+    n = count_string(argvars[0].vval.v_string, tv_get_string_chk(&argvars[1]), ic);
+  } else if (!error && argvars[0].v_type == VAR_LIST) {
+    int64_t idx = 0;
+    if (argvars[2].v_type != VAR_UNKNOWN
+        && argvars[3].v_type != VAR_UNKNOWN) {
+      idx = (long)tv_get_number_chk(&argvars[3], &error);
     }
-  } else if (argvars[0].v_type == VAR_LIST) {
-    list_T *l = argvars[0].vval.v_list;
-
-    if (l != NULL) {
-      listitem_T *li = tv_list_first(l);
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        if (argvars[3].v_type != VAR_UNKNOWN) {
-          int64_t idx = tv_get_number_chk(&argvars[3], &error);
-          if (!error) {
-            li = tv_list_find(l, (int)idx);
-            if (li == NULL) {
-              semsg(_(e_list_index_out_of_range_nr), idx);
-            }
-          }
-        }
-        if (error) {
-          li = NULL;
-        }
-      }
-
-      for (; li != NULL; li = TV_LIST_ITEM_NEXT(l, li)) {
-        if (tv_equal(TV_LIST_ITEM_TV(li), &argvars[1], ic, false)) {
-          n++;
-        }
-      }
+    if (!error) {
+      n = count_list(argvars[0].vval.v_list, &argvars[1], idx, ic);
     }
-  } else if (argvars[0].v_type == VAR_DICT) {
+  } else if (!error && argvars[0].v_type == VAR_DICT) {
     dict_T *d = argvars[0].vval.v_dict;
 
     if (d != NULL) {
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        if (argvars[3].v_type != VAR_UNKNOWN) {
-          emsg(_(e_invarg));
-        }
-      }
-
-      int todo = error ? 0 : (int)d->dv_hashtab.ht_used;
-      for (hashitem_T *hi = d->dv_hashtab.ht_array; todo > 0; hi++) {
-        if (!HASHITEM_EMPTY(hi)) {
-          todo--;
-          if (tv_equal(&TV_DICT_HI2DI(hi)->di_tv, &argvars[1], ic, false)) {
-            n++;
-          }
-        }
+      if (argvars[2].v_type != VAR_UNKNOWN
+          && argvars[3].v_type != VAR_UNKNOWN) {
+        emsg(_(e_invarg));
+      } else {
+        n = count_dict(argvars[0].vval.v_dict, &argvars[1], ic);
       }
     }
   } else {
@@ -1875,104 +1907,124 @@ static void f_flattennew(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   flatten_common(argvars, rettv, true);
 }
 
-/// "extend()" or "extendnew()" function.  "is_new" is true for extendnew().
+/// extend() a List. Append List argvars[1] to List argvars[0] before index
+/// argvars[3] and return the resulting list in "rettv".
+///
+/// @param is_new  true for extendnew()
+static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, typval_T *rettv)
+{
+  bool error = false;
+
+  list_T *l1 = argvars[0].vval.v_list;
+  list_T *const l2 = argvars[1].vval.v_list;
+  if (is_new || !value_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
+    if (is_new) {
+      l1 = tv_list_copy(NULL, l1, false, get_copyID());
+      if (l1 == NULL) {
+        return;
+      }
+    }
+
+    listitem_T *item;
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      long before = (long)tv_get_number_chk(&argvars[2], &error);
+      if (error) {
+        return;  // Type error; errmsg already given.
+      }
+
+      if (before == tv_list_len(l1)) {
+        item = NULL;
+      } else {
+        item = tv_list_find(l1, (int)before);
+        if (item == NULL) {
+          semsg(_(e_list_index_out_of_range_nr), (int64_t)before);
+          return;
+        }
+      }
+    } else {
+      item = NULL;
+    }
+    tv_list_extend(l1, l2, item);
+
+    if (is_new) {
+      *rettv = (typval_T){
+        .v_type = VAR_LIST,
+        .v_lock = VAR_UNLOCKED,
+        .vval.v_list = l1,
+      };
+    } else {
+      tv_copy(&argvars[0], rettv);
+    }
+  }
+}
+
+/// extend() a Dict. Append Dict argvars[1] to Dict argvars[0] and return the
+/// resulting Dict in "rettv".
+///
+/// @param is_new  true for extendnew()
+static void extend_dict(typval_T *argvars, const char *arg_errmsg, bool is_new, typval_T *rettv)
+{
+  dict_T *d1 = argvars[0].vval.v_dict;
+  dict_T *const d2 = argvars[1].vval.v_dict;
+  if (d1 == NULL) {
+    const bool locked = value_check_lock(VAR_FIXED, arg_errmsg, TV_TRANSLATE);
+    (void)locked;
+    assert(locked == true);
+  } else if (d2 == NULL) {
+    // Do nothing
+    tv_copy(&argvars[0], rettv);
+  } else if (is_new || !value_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
+    if (is_new) {
+      d1 = tv_dict_copy(NULL, d1, false, get_copyID());
+      if (d1 == NULL) {
+        return;
+      }
+    }
+
+    const char *action = "force";
+    // Check the third argument.
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      const char *const av[] = { "keep", "force", "error" };
+
+      action = tv_get_string_chk(&argvars[2]);
+      if (action == NULL) {
+        return;  // Type error; error message already given.
+      }
+      size_t i;
+      for (i = 0; i < ARRAY_SIZE(av); i++) {
+        if (strcmp(action, av[i]) == 0) {
+          break;
+        }
+      }
+      if (i == 3) {
+        semsg(_(e_invarg2), action);
+        return;
+      }
+    }
+
+    tv_dict_extend(d1, d2, action);
+
+    if (is_new) {
+      *rettv = (typval_T){
+        .v_type = VAR_DICT,
+        .v_lock = VAR_UNLOCKED,
+        .vval.v_dict = d1,
+      };
+    } else {
+      tv_copy(&argvars[0], rettv);
+    }
+  }
+}
+
+/// "extend()" or "extendnew()" function.
+///
+/// @param is_new  true for extendnew()
 static void extend(typval_T *argvars, typval_T *rettv, char *arg_errmsg, bool is_new)
 {
   if (argvars[0].v_type == VAR_LIST && argvars[1].v_type == VAR_LIST) {
-    bool error = false;
-
-    list_T *l1 = argvars[0].vval.v_list;
-    list_T *const l2 = argvars[1].vval.v_list;
-    if (is_new || !value_check_lock(tv_list_locked(l1), arg_errmsg, TV_TRANSLATE)) {
-      if (is_new) {
-        l1 = tv_list_copy(NULL, l1, false, get_copyID());
-        if (l1 == NULL) {
-          return;
-        }
-      }
-
-      listitem_T *item;
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        long before = (long)tv_get_number_chk(&argvars[2], &error);
-        if (error) {
-          return;  // Type error; errmsg already given.
-        }
-
-        if (before == tv_list_len(l1)) {
-          item = NULL;
-        } else {
-          item = tv_list_find(l1, (int)before);
-          if (item == NULL) {
-            semsg(_(e_list_index_out_of_range_nr), (int64_t)before);
-            return;
-          }
-        }
-      } else {
-        item = NULL;
-      }
-      tv_list_extend(l1, l2, item);
-
-      if (is_new) {
-        *rettv = (typval_T){
-          .v_type = VAR_LIST,
-          .v_lock = VAR_UNLOCKED,
-          .vval.v_list = l1,
-        };
-      } else {
-        tv_copy(&argvars[0], rettv);
-      }
-    }
+    extend_list(argvars, arg_errmsg, is_new, rettv);
   } else if (argvars[0].v_type == VAR_DICT && argvars[1].v_type == VAR_DICT) {
-    dict_T *d1 = argvars[0].vval.v_dict;
-    dict_T *const d2 = argvars[1].vval.v_dict;
-    if (d1 == NULL) {
-      const bool locked = value_check_lock(VAR_FIXED, arg_errmsg, TV_TRANSLATE);
-      (void)locked;
-      assert(locked == true);
-    } else if (d2 == NULL) {
-      // Do nothing
-      tv_copy(&argvars[0], rettv);
-    } else if (is_new || !value_check_lock(d1->dv_lock, arg_errmsg, TV_TRANSLATE)) {
-      if (is_new) {
-        d1 = tv_dict_copy(NULL, d1, false, get_copyID());
-        if (d1 == NULL) {
-          return;
-        }
-      }
-
-      const char *action = "force";
-      // Check the third argument.
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        const char *const av[] = { "keep", "force", "error" };
-
-        action = tv_get_string_chk(&argvars[2]);
-        if (action == NULL) {
-          return;  // Type error; error message already given.
-        }
-        size_t i;
-        for (i = 0; i < ARRAY_SIZE(av); i++) {
-          if (strcmp(action, av[i]) == 0) {
-            break;
-          }
-        }
-        if (i == 3) {
-          semsg(_(e_invarg2), action);
-          return;
-        }
-      }
-
-      tv_dict_extend(d1, d2, action);
-
-      if (is_new) {
-        *rettv = (typval_T){
-          .v_type = VAR_DICT,
-          .v_lock = VAR_UNLOCKED,
-          .vval.v_dict = d1,
-        };
-      } else {
-        tv_copy(&argvars[0], rettv);
-      }
-    }
+    extend_dict(argvars, arg_errmsg, is_new, rettv);
   } else {
     semsg(_(e_listdictarg), is_new ? "extendnew()" : "extend()");
   }
