@@ -147,6 +147,8 @@ PRAGMA_DIAG_POP
 
 static const char *e_listblobarg = N_("E899: Argument of %s must be a List or Blob");
 static const char *e_invalwindow = N_("E957: Invalid window number");
+static const char e_argument_of_str_must_be_list_string_or_dictionary[]
+  = N_("E706: Argument of %s must be a List, String or Dictionary");
 static const char e_invalid_submatch_number_nr[]
   = N_("E935: Invalid submatch number: %d");
 static const char *e_reduceempty = N_("E998: Reduce of an empty %s with no initial value");
@@ -997,8 +999,8 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         n = count_dict(argvars[0].vval.v_dict, &argvars[1], ic);
       }
     }
-  } else {
-    semsg(_(e_listdictarg), "count()");
+  } else if (!error) {
+    semsg(_(e_argument_of_str_must_be_list_string_or_dictionary), "count()");
   }
   rettv->vval.v_number = n;
 }
