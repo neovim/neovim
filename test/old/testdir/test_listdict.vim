@@ -887,7 +887,7 @@ func Test_reverse_sort_uniq()
         call assert_equal([-1, 'one', 'two', 'three', 'four', 1.0e-15, 0.22, 7, 9, 12, 18, 22, 255], sort(copy(l), 'n'))
 
         LET l = [7, 9, 18, 12, 22, 10.0e-16, -1, 0xff, 0, -0, 0.22, 'bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', {}, []]
-        call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 1))
+        call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 'i'))
         call assert_equal(['bar', 'BAR', 'Bar', 'Foo', 'FOO', 'foo', 'FOOBAR', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l), 'i'))
         call assert_equal(['BAR', 'Bar', 'FOO', 'FOOBAR', 'Foo', 'bar', 'foo', -1, 0, 0, 0.22, 1.0e-15, 12, 18, 22, 255, 7, 9, [], {}], sort(copy(l)))
       endif
@@ -899,6 +899,16 @@ func Test_reverse_sort_uniq()
   call assert_fails("call sort([1, 2], function('min'), 1)", "E1206:")
   call assert_fails("call sort([1, 2], function('invalid_func'))", "E700:")
   call assert_fails("call sort([1, 2], function('min'))", "E118:")
+
+  let lines =<< trim END
+    call sort(['a', 'b'], 0)
+  END
+  call CheckDefAndScriptFailure(lines, 'E1256: String or function required for argument 2')
+
+  let lines =<< trim END
+    call sort(['a', 'b'], 1)
+  END
+  call CheckDefAndScriptFailure(lines, 'E1256: String or function required for argument 2')
 endfunc
 
 " reduce a list, blob or string

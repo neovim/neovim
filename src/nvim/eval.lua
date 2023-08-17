@@ -10157,15 +10157,16 @@ M.funcs = {
       If you want a list to remain unmodified make a copy first: >vim
       	let sortedlist = sort(copy(mylist))
 
-      <When {func} is omitted, is empty or zero, then sort() uses the
+      <When {how} is omitted or is a string, then sort() uses the
       string representation of each item to sort on.  Numbers sort
       after Strings, |Lists| after Numbers.  For sorting text in the
       current buffer use |:sort|.
 
-      When {func} is given and it is '1' or 'i' then case is
-      ignored.
+      When {how} is given and it is 'i' then case is ignored.
+      For backwards compatibility, the value one can be used to
+      ignore case.  Zero means to not ignore case.
 
-      When {func} is given and it is 'l' then the current collation
+      When {how} is given and it is 'l' then the current collation
       locale is used for ordering. Implementation details: strcoll()
       is used to compare strings. See |:language| check or set the
       collation locale. |v:collate| can also be used to check the
@@ -10182,19 +10183,19 @@ M.funcs = {
       <	['n', 'o', 'O', 'p', 'z', 'ö'] ~
       This does not work properly on Mac.
 
-      When {func} is given and it is 'n' then all items will be
+      When {how} is given and it is 'n' then all items will be
       sorted numerical (Implementation detail: this uses the
       strtod() function to parse numbers, Strings, Lists, Dicts and
       Funcrefs will be considered as being 0).
 
-      When {func} is given and it is 'N' then all items will be
+      When {how} is given and it is 'N' then all items will be
       sorted numerical. This is like 'n' but a string containing
       digits will be used as the number they represent.
 
-      When {func} is given and it is 'f' then all items will be
+      When {how} is given and it is 'f' then all items will be
       sorted numerical. All values must be a Number or a Float.
 
-      When {func} is a |Funcref| or a function name, this function
+      When {how} is a |Funcref| or a function name, this function
       is called to compare items.  The function is invoked with two
       items as argument and must return zero if they are equal, 1 or
       bigger if the first one sorts after the second one, -1 or
@@ -10224,8 +10225,8 @@ M.funcs = {
       <
     ]=],
     name = 'sort',
-    params = { { 'list', 'any' }, { 'func', 'any' }, { 'dict', 'any' } },
-    signature = 'sort({list} [, {func} [, {dict}]])',
+    params = { { 'list', 'any' }, { 'how', 'any' }, { 'dict', 'any' } },
+    signature = 'sort({list} [, {how} [, {dict}]])',
   },
   soundfold = {
     args = 1,
