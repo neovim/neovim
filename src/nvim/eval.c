@@ -108,6 +108,8 @@ static const char e_dot_can_only_be_used_on_dictionary_str[]
   = N_("E1203: Dot can only be used on a dictionary: %s");
 static const char e_empty_function_name[]
   = N_("E1192: Empty function name");
+static char e_argument_of_str_must_be_list_string_dictionary_or_blob[]
+  = N_("E1250: Argument of %s must be a List, String, Dictionary or Blob");
 
 static char * const namespace_char = "abglstvw";
 
@@ -5072,8 +5074,11 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
             && value_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE))) {
       return;
     }
+  } else if (argvars[0].v_type == VAR_STRING) {
+    rettv->v_type = VAR_STRING;
+    rettv->vval.v_string = NULL;
   } else {
-    semsg(_(e_listdictblobarg), ermsg);
+    semsg(_(e_argument_of_str_must_be_list_string_dictionary_or_blob), ermsg);
     return;
   }
 
@@ -5193,6 +5198,51 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
         }
         idx++;
       }
+    } else if (argvars[0].v_type == VAR_STRING) {
+      vimvars[VV_KEY].vv_type = VAR_NUMBER;
+
+      garray_T ga;
+      ga_init(&ga, (int)sizeof(char), 80);
+      int len;
+      for (const char *p = tv_get_string(&argvars[0]); *p != NUL; p += len) {
+        len = utfc_ptr2len(p);
+
+        typval_T tv = {
+          .v_type = VAR_STRING,
+          .v_lock = VAR_UNLOCKED,
+          .vval.v_string = xstrnsave(p, (size_t)len),
+        };
+
+        vimvars[VV_KEY].vv_nr = idx;
+        typval_T newtv;
+        if (filter_map_one(&tv, expr, filtermap, &newtv, &rem) == FAIL
+            || did_emsg) {
+          break;
+        }
+        if (did_emsg) {
+          tv_clear(&newtv);
+          tv_clear(&tv);
+          break;
+        } else if (filtermap != FILTERMAP_FILTER) {
+          if (newtv.v_type != VAR_STRING) {
+            tv_clear(&newtv);
+            tv_clear(&tv);
+            emsg(_(e_stringreq));
+            break;
+          } else {
+            ga_concat(&ga, newtv.vval.v_string);
+          }
+        } else if (!rem) {
+          ga_concat(&ga, tv.vval.v_string);
+        }
+
+        tv_clear(&newtv);
+        tv_clear(&tv);
+
+        idx++;
+      }
+      ga_append(&ga, NUL);
+      rettv->vval.v_string = ga.ga_data;
     } else {
       assert(argvars[0].v_type == VAR_LIST);
 
