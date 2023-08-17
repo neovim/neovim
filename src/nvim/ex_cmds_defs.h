@@ -244,6 +244,7 @@ struct expand {
 #endif
   int xp_numfiles;              // number of files found by file name completion
   int xp_col;                   // cursor position in line
+  int xp_selected;              // selected index in completion
   char **xp_files;              // list of files
   char *xp_line;                // text being completed
 #define EXPAND_BUF_LEN 256
