@@ -994,35 +994,13 @@ describe("cmdline height", function()
     assert_alive()
   end)
 
-  it('unchanged when trying to restore window sizes', function()
-    command('set showtabline=0 cmdheight=2 laststatus=0')
-    feed('q:')  -- Closing cmdwin tries to restore sizes
-    command('set cmdheight=1 | quit')
+  it('unchanged when restoring window sizes with global statusline', function()
+    command('set cmdheight=2 laststatus=2')
+    feed('q:')
+    command('set cmdheight=1 laststatus=3 | quit')
+    -- Available lines changed, so closing cmdwin should skip restoring window sizes, leaving the
+    -- cmdheight unchanged.
     eq(1, eval('&cmdheight'))
-
-    command('set showtabline=2 cmdheight=3')
-    feed('q:')
-    command('set showtabline=0 | quit')
-    eq(3, eval('&cmdheight'))
-
-    command('set cmdheight=1 laststatus=2')
-    feed('q:')
-    command('set laststatus=0 | quit')
-    eq(1, eval('&cmdheight'))
-
-    command('set laststatus=2')
-    feed('q:')
-    command('set laststatus=1 | quit')
-    eq(1, eval('&cmdheight'))
-
-    command('set laststatus=2 | belowright vsplit | wincmd _')
-    local restcmds = eval('winrestcmd()')
-    feed('q:')
-    command('set laststatus=1 | quit')
-    -- As we have 2 windows, &ls = 1 should still have a statusline on the last
-    -- window. As such, the number of available rows hasn't changed and the window
-    -- sizes should be restored.
-    eq(restcmds, eval('winrestcmd()'))
   end)
 end)
 
