@@ -144,7 +144,7 @@ func Test_filter_map_string()
   let lines =<< trim END
     VAR s = "abc"
     call filter(s, '"b" != v:val')
-    call assert_equal(s, s)
+    call assert_equal('abc', s)
     call assert_equal('ac', filter('abc', '"b" != v:val'))
     call assert_equal('あいうえお', filter('あxいxうxえxお', '"x" != v:val'))
     call assert_equal('あa😊💕💕b💕', filter('あxax😊x💕💕b💕x', '"x" != v:val'))
@@ -165,7 +165,7 @@ func Test_filter_map_string()
   let lines =<< trim END
     VAR s = "abc"
     call map(s, 'nr2char(char2nr(v:val) + 2)')
-    call assert_equal(s, s)
+    call assert_equal('abc', s)
     call assert_equal('cde', map('abc', 'nr2char(char2nr(v:val) + 2)'))
     call assert_equal('[あ][i][う][え][お]', map('あiうえお', '"[" .. v:val .. "]"'))
     call assert_equal('[あ][a][😊][,][‱][‼][⁇][⁈][⁉][💕][b][💕][c][💕]', map('あa😊,‱‼⁇⁈⁉💕b💕c💕', '"[" .. v:val .. "]"'))
@@ -184,7 +184,7 @@ func Test_filter_map_string()
   let lines =<< trim END
     VAR s = "abc"
     call mapnew(s, 'nr2char(char2nr(v:val) + 2)')
-    call assert_equal(s, s)
+    call assert_equal('abc', s)
     call assert_equal('cde', mapnew('abc', 'nr2char(char2nr(v:val) + 2)'))
     call assert_equal('[あ][i][う][え][お]', mapnew('あiうえお', '"[" .. v:val .. "]"'))
     call assert_equal('[あ][a][😊][,][‱][‼][⁇][⁈][⁉][💕][b][💕][c][💕]', mapnew('あa😊,‱‼⁇⁈⁉💕b💕c💕', '"[" .. v:val .. "]"'))
