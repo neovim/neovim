@@ -5040,7 +5040,6 @@ static void filter_map_dict(dict_T *d, filtermap_T filtermap, const char *func_n
     return;
   }
 
-  const VarLockStatus prev_lock = d->dv_lock;
   dict_T *d_ret = NULL;
 
   if (filtermap == FILTERMAP_MAPNEW) {
@@ -5050,7 +5049,8 @@ static void filter_map_dict(dict_T *d, filtermap_T filtermap, const char *func_n
 
   vimvars[VV_KEY].vv_type = VAR_STRING;
 
-  if (filtermap != FILTERMAP_FILTER && d->dv_lock == VAR_UNLOCKED) {
+  const VarLockStatus prev_lock = d->dv_lock;
+  if (d->dv_lock == VAR_UNLOCKED) {
     d->dv_lock = VAR_LOCKED;
   }
   hash_lock(&d->dv_hashtab);
@@ -5060,7 +5060,6 @@ static void filter_map_dict(dict_T *d, filtermap_T filtermap, const char *func_n
             || var_check_ro(di->di_flags, arg_errmsg, TV_TRANSLATE))) {
       break;
     }
-
     vimvars[VV_KEY].vv_str = xstrdup(di->di_key);
     typval_T newtv;
     bool rem;
@@ -5097,14 +5096,16 @@ static void filter_map_dict(dict_T *d, filtermap_T filtermap, const char *func_n
 
 /// Implementation of map() and filter() for a Blob.
 static void filter_map_blob(blob_T *blob_arg, filtermap_T filtermap, typval_T *expr,
-                            typval_T *rettv)
+                            const char *arg_errmsg, typval_T *rettv)
 {
   if (filtermap == FILTERMAP_MAPNEW) {
     rettv->v_type = VAR_BLOB;
     rettv->vval.v_blob = NULL;
   }
-  blob_T *b;
-  if ((b = blob_arg) == NULL) {
+  blob_T *b = blob_arg;
+  if (b == NULL
+      || (filtermap == FILTERMAP_FILTER
+          && value_check_lock(b->bv_lock, arg_errmsg, TV_TRANSLATE))) {
     return;
   }
 
@@ -5116,6 +5117,11 @@ static void filter_map_blob(blob_T *blob_arg, filtermap_T filtermap, typval_T *e
   }
 
   vimvars[VV_KEY].vv_type = VAR_NUMBER;
+
+  const VarLockStatus prev_lock = b->bv_lock;
+  if (b->bv_lock == 0) {
+    b->bv_lock = VAR_LOCKED;
+  }
 
   for (int i = 0, idx = 0; i < b->bv_ga.ga_len; i++) {
     const varnumber_T val = tv_blob_get(b, i);
@@ -5148,6 +5154,8 @@ static void filter_map_blob(blob_T *blob_arg, filtermap_T filtermap, typval_T *e
     }
     idx++;
   }
+
+  b->bv_lock = prev_lock;
 }
 
 /// Implementation of map() and filter() for a String.
@@ -5215,7 +5223,6 @@ static void filter_map_list(list_T *l, filtermap_T filtermap, const char *func_n
     return;
   }
 
-  const VarLockStatus prev_lock = tv_list_locked(l);
   list_T *l_ret = NULL;
 
   if (filtermap == FILTERMAP_MAPNEW) {
@@ -5225,7 +5232,8 @@ static void filter_map_list(list_T *l, filtermap_T filtermap, const char *func_n
 
   vimvars[VV_KEY].vv_type = VAR_NUMBER;
 
-  if (filtermap != FILTERMAP_FILTER && tv_list_locked(l) == VAR_UNLOCKED) {
+  const VarLockStatus prev_lock = tv_list_locked(l);
+  if (tv_list_locked(l) == VAR_UNLOCKED) {
     tv_list_set_lock(l, VAR_LOCKED);
   }
 
@@ -5311,7 +5319,7 @@ static void filter_map(typval_T *argvars, typval_T *rettv, filtermap_T filtermap
       filter_map_dict(argvars[0].vval.v_dict, filtermap, func_name,
                       arg_errmsg, expr, rettv);
     } else if (argvars[0].v_type == VAR_BLOB) {
-      filter_map_blob(argvars[0].vval.v_blob, filtermap, expr, rettv);
+      filter_map_blob(argvars[0].vval.v_blob, filtermap, expr, arg_errmsg, rettv);
     } else if (argvars[0].v_type == VAR_STRING) {
       filter_map_string(tv_get_string(&argvars[0]), filtermap, expr, rettv);
     } else {
