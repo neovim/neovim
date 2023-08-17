@@ -154,8 +154,6 @@ static const char e_string_list_or_blob_required[]
   = N_("E1098: String, List or Blob required");
 static const char e_missing_function_argument[]
   = N_("E1132: Missing function argument");
-static const char e_string_expected_for_argument_nr[]
-  = N_("E1253: String expected for argument %d");
 
 /// Dummy va_list for passing to vim_snprintf
 ///
@@ -1187,18 +1185,16 @@ static void f_debugbreak(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "deepcopy()" function
 static void f_deepcopy(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  int noref = 0;
+  if (tv_check_for_opt_bool_arg(argvars, 1) == FAIL) {
+    return;
+  }
 
+  varnumber_T noref = 0;
   if (argvars[1].v_type != VAR_UNKNOWN) {
-    noref = (int)tv_get_bool_chk(&argvars[1], NULL);
+    noref = tv_get_bool_chk(&argvars[1], NULL);
   }
-  if (noref < 0 || noref > 1) {
-    semsg(_(e_using_number_as_bool_nr), noref);
-  } else {
-    var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0
-                                                   ? get_copyID()
-                                                   : 0));
-  }
+
+  var_item_copy(NULL, &argvars[0], rettv, true, (noref == 0 ? get_copyID() : 0));
 }
 
 /// "delete()" function
@@ -6236,8 +6232,7 @@ static void reduce_string(typval_T *argvars, const char *func_name, funcexe_T *f
       .vval.v_string = xstrnsave(p, (size_t)len),
     };
     p += len;
-  } else if (argvars[2].v_type != VAR_STRING) {
-    semsg(_(e_string_expected_for_argument_nr), 3);
+  } else if (tv_check_for_string_arg(argvars, 2) == FAIL) {
     return;
   } else {
     tv_copy(&argvars[2], rettv);
@@ -6281,8 +6276,7 @@ static void reduce_blob(typval_T *argvars, const char *func_name, funcexe_T *fun
       .vval.v_number = tv_blob_get(b, 0),
     };
     i = 1;
-  } else if (argvars[2].v_type != VAR_NUMBER) {
-    emsg(_(e_number_exp));
+  } else if (tv_check_for_number_arg(argvars, 2) == FAIL) {
     return;
   } else {
     initial = argvars[2];
