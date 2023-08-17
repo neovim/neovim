@@ -1188,7 +1188,7 @@ void ex_helptags(exarg_T *eap)
   }
 
   if (strcmp(eap->arg, "ALL") == 0) {
-    do_in_path(p_rtp, "doc", DIP_ALL + DIP_DIR, helptags_cb, &add_help_tags);
+    do_in_path(p_rtp, "", "doc", DIP_ALL + DIP_DIR, helptags_cb, &add_help_tags);
   } else {
     ExpandInit(&xpc);
     xpc.xp_context = EXPAND_DIRECTORIES;

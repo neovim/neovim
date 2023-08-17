@@ -330,15 +330,17 @@ static bool source_callback(int num_fnames, char **fnames, bool all, void *cooki
   return did_one;
 }
 
-/// Find the file "name" in all directories in "path" and invoke
+/// Find the patterns in "name" in all directories in "path" and invoke
 /// "callback(fname, cookie)".
-/// "name" can contain wildcards.
+/// "prefix" is prepended to each pattern in "name".
 /// When "flags" has DIP_ALL: source all files, otherwise only the first one.
 /// When "flags" has DIP_DIR: find directories instead of files.
 /// When "flags" has DIP_ERR: give an error message if there is no match.
 ///
-/// return FAIL when no file could be sourced, OK otherwise.
-int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, void *cookie)
+/// Return FAIL when no file could be sourced, OK otherwise.
+int do_in_path(const char *path, const char *prefix, char *name, int flags,
+               DoInRuntimepathCB callback, void *cookie)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   bool did_one = false;
 
@@ -350,7 +352,11 @@ int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, vo
     char *tail;
     if (p_verbose > 10 && name != NULL) {
       verbose_enter();
-      smsg(_("Searching for \"%s\" in \"%s\""), name, path);
+      if (*prefix != NUL) {
+        smsg(_("Searching for \"%s\" under \"%s\" in \"%s\""), name, prefix, path);
+      } else {
+        smsg(_("Searching for \"%s\" in \"%s\""), name, path);
+      }
       verbose_leave();
     }
 
@@ -376,8 +382,9 @@ int do_in_path(char *path, char *name, int flags, DoInRuntimepathCB callback, vo
       if (name == NULL) {
         (*callback)(1, &buf, do_all, cookie);
         did_one = true;
-      } else if (buflen + strlen(name) + 2 < MAXPATHL) {
+      } else if (buflen + 2 + strlen(prefix) + strlen(name) < MAXPATHL) {
         add_pathsep(buf);
+        STRCAT(buf, prefix);
         tail = buf + strlen(buf);
 
         // Loop over all patterns in "name"
@@ -633,52 +640,26 @@ int do_in_path_and_pp(char *path, char *name, int flags, DoInRuntimepathCB callb
   int done = FAIL;
 
   if ((flags & DIP_NORTP) == 0) {
-    done |= do_in_path(path, (name && !*name) ? NULL : name, flags, callback,
+    done |= do_in_path(path, "", (name && !*name) ? NULL : name, flags, callback,
                        cookie);
   }
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_START)) {
-    char *start_dir = "pack/*/start/*/%s%s";  // NOLINT
-    size_t len = strlen(start_dir) + strlen(name) + 6;
-    char *s = xmallocz(len);  // TODO(bfredl): get rid of random allocations
-    char *suffix = (flags & DIP_AFTER) ? "after/" : "";
-
-    vim_snprintf(s, len, start_dir, suffix, name);
-    done |= do_in_path(p_pp, s, flags & ~DIP_AFTER, callback, cookie);
-
-    xfree(s);
+    const char *prefix
+      = (flags & DIP_AFTER) ? "pack/*/start/*/after/" : "pack/*/start/*/";  // NOLINT
+    done |= do_in_path(p_pp, prefix, name, flags & ~DIP_AFTER, callback, cookie);
 
     if (done == FAIL || (flags & DIP_ALL)) {
-      start_dir = "start/*/%s%s";  // NOLINT
-      len = strlen(start_dir) + strlen(name) + 6;
-      s = xmallocz(len);
-
-      vim_snprintf(s, len, start_dir, suffix, name);
-      done |= do_in_path(p_pp, s, flags & ~DIP_AFTER, callback, cookie);
-
-      xfree(s);
+      prefix = (flags & DIP_AFTER) ? "start/*/after/" : "start/*/";  // NOLINT
+      done |= do_in_path(p_pp, prefix, name, flags & ~DIP_AFTER, callback, cookie);
     }
   }
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_OPT)) {
-    char *opt_dir = "pack/*/opt/*/%s";  // NOLINT
-    size_t len = strlen(opt_dir) + strlen(name);
-    char *s = xmallocz(len);
-
-    vim_snprintf(s, len, opt_dir, name);
-    done |= do_in_path(p_pp, s, flags, callback, cookie);
-
-    xfree(s);
+    done |= do_in_path(p_pp, "pack/*/opt/*/", name, flags, callback, cookie);  // NOLINT
 
     if (done == FAIL || (flags & DIP_ALL)) {
-      opt_dir = "opt/*/%s";  // NOLINT
-      len = strlen(opt_dir) + strlen(name);
-      s = xmallocz(len);
-
-      vim_snprintf(s, len, opt_dir, name);
-      done |= do_in_path(p_pp, s, flags, callback, cookie);
-
-      xfree(s);
+      done |= do_in_path(p_pp, "opt/*/", name, flags, callback, cookie);  // NOLINT
     }
   }
 
@@ -1173,7 +1154,7 @@ static bool add_opt_pack_plugins(int num_fnames, char **fnames, bool all, void *
 /// Add all packages in the "start" directory to 'runtimepath'.
 void add_pack_start_dirs(void)
 {
-  do_in_path(p_pp, NULL, DIP_ALL + DIP_DIR, add_pack_start_dir, NULL);
+  do_in_path(p_pp, "", NULL, DIP_ALL + DIP_DIR, add_pack_start_dir, NULL);
 }
 
 static bool pack_has_entries(char *buf)
@@ -1215,9 +1196,9 @@ static bool add_pack_start_dir(int num_fnames, char **fnames, bool all, void *co
 void load_start_packages(void)
 {
   did_source_packages = true;
-  do_in_path(p_pp, "pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
+  do_in_path(p_pp, "", "pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
              add_start_pack_plugins, &APP_LOAD);
-  do_in_path(p_pp, "start/*", DIP_ALL + DIP_DIR,  // NOLINT
+  do_in_path(p_pp, "", "start/*", DIP_ALL + DIP_DIR,  // NOLINT
              add_start_pack_plugins, &APP_LOAD);
 }
 
@@ -1283,7 +1264,8 @@ void ex_packadd(exarg_T *eap)
     // The first round don't give a "not found" error, in the second round
     // only when nothing was found in the first round.
     res =
-      do_in_path(p_pp, pat, DIP_ALL + DIP_DIR + (round == 2 && res == FAIL ? DIP_ERR : 0),
+      do_in_path(p_pp, "", pat,
+                 DIP_ALL + DIP_DIR + (round == 2 && res == FAIL ? DIP_ERR : 0),
                  round == 1 ? add_start_pack_plugins : add_opt_pack_plugins,
                  eap->forceit ? &APP_ADD_DIR : &APP_BOTH);
     xfree(pat);
