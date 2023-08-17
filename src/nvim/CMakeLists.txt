@@ -281,16 +281,17 @@ set(UNICODE_TABLES_GENERATOR ${GENERATOR_DIR}/gen_unicode_tables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/src/unicode)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
-set(LUA_EDITOR_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_editor.lua)
-set(LUA_SHARED_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/shared.lua)
-set(LUA_LOADER_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/loader.lua)
-set(LUA_INSPECT_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/inspect.lua)
-set(LUA_FS_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/fs.lua)
-set(LUA_F_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/F.lua)
-set(LUA_OPTIONS_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_options.lua)
-set(LUA_FILETYPE_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/filetype.lua)
-set(LUA_INIT_PACKAGES_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/_init_packages.lua)
-set(LUA_KEYMAP_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/runtime/lua/vim/keymap.lua)
+set(NVIM_RUNTIME_DIR ${PROJECT_SOURCE_DIR}/runtime)
+set(LUA_EDITOR_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_editor.lua)
+set(LUA_SHARED_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/shared.lua)
+set(LUA_LOADER_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/loader.lua)
+set(LUA_INSPECT_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/inspect.lua)
+set(LUA_FS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/fs.lua)
+set(LUA_F_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/F.lua)
+set(LUA_OPTIONS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_options.lua)
+set(LUA_FILETYPE_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/filetype.lua)
+set(LUA_INIT_PACKAGES_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_init_packages.lua)
+set(LUA_KEYMAP_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/keymap.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LUAJIT_RUNTIME_DIR ${DEPS_PREFIX}/share/luajit-2.1/jit)
 
@@ -857,6 +858,57 @@ add_custom_target(generated-sources DEPENDS
   ${NVIM_GENERATED_SOURCES}
 )
 
-add_custom_target(api-metadata DEPENDS ${API_METADATA})
-
 add_subdirectory(po)
+
+#-------------------------------------------------------------------------------
+# Docs
+#-------------------------------------------------------------------------------
+
+set(VIMDOC_FILES
+  ${NVIM_RUNTIME_DIR}/doc/api.mpack
+  ${NVIM_RUNTIME_DIR}/doc/api.txt
+  ${NVIM_RUNTIME_DIR}/doc/diagnostic.mpack
+  ${NVIM_RUNTIME_DIR}/doc/diagnostic.txt
+  ${NVIM_RUNTIME_DIR}/doc/lsp.mpack
+  ${NVIM_RUNTIME_DIR}/doc/lsp.txt
+  ${NVIM_RUNTIME_DIR}/doc/lua.mpack
+  ${NVIM_RUNTIME_DIR}/doc/lua.txt
+  ${NVIM_RUNTIME_DIR}/doc/treesitter.mpack
+  ${NVIM_RUNTIME_DIR}/doc/treesitter.txt
+)
+
+glob_wrapper(API_SOURCES ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
+glob_wrapper(LUA_SOURCES ${NVIM_RUNTIME_DIR}/lua/vim/*.lua)
+
+add_custom_command(
+  OUTPUT ${VIMDOC_FILES}
+  COMMAND ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.py
+  DEPENDS ${API_SOURCES} ${LUA_SOURCES}
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+
+set(GEN_EVAL_FILES
+  ${NVIM_RUNTIME_DIR}/lua/vim/_meta/vimfn.lua
+  ${NVIM_RUNTIME_DIR}/lua/vim/_meta/api.lua
+  ${NVIM_RUNTIME_DIR}/lua/vim/_meta/api_keysets.lua
+  ${NVIM_RUNTIME_DIR}/doc/builtin.txt
+  ${NVIM_RUNTIME_DIR}/lua/vim/_meta/options.lua
+  ${NVIM_RUNTIME_DIR}/doc/options.txt
+)
+
+add_custom_command(
+  OUTPUT ${GEN_EVAL_FILES}
+  COMMAND ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+  DEPENDS
+    ${API_METADATA}
+    ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+    ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua
+    ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
+    ${NVIM_RUNTIME_DIR}/doc/api.mpack
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
+
+add_custom_target(doc
+  DEPENDS ${VIMDOC_FILES} ${GEN_EVAL_FILES}
+)
+
