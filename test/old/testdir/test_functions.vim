@@ -3093,12 +3093,32 @@ endfunc
 
 " Test for virtcol()
 func Test_virtcol()
-  enew!
+  new
   call setline(1, "the\tquick\tbrown\tfox")
   norm! 4|
   call assert_equal(8, virtcol('.'))
   call assert_equal(8, virtcol('.', v:false))
   call assert_equal([4, 8], virtcol('.', v:true))
+
+  let w = winwidth(0)
+  call setline(2, repeat('a', w + 2))
+  let win_nosbr = win_getid()
+  split
+  setlocal showbreak=!!
+  let win_sbr = win_getid()
+  call assert_equal([w, w], virtcol([2, w], v:true, win_nosbr))
+  call assert_equal([w + 1, w + 1], virtcol([2, w + 1], v:true, win_nosbr))
+  call assert_equal([w + 2, w + 2], virtcol([2, w + 2], v:true, win_nosbr))
+  call assert_equal([w, w], virtcol([2, w], v:true, win_sbr))
+  call assert_equal([w + 3, w + 3], virtcol([2, w + 1], v:true, win_sbr))
+  call assert_equal([w + 4, w + 4], virtcol([2, w + 2], v:true, win_sbr))
+  close
+
+  call assert_equal(0, virtcol(''))
+  call assert_equal([0, 0], virtcol('', v:true))
+  call assert_equal(0, virtcol('.', v:false, 5001))
+  call assert_equal([0, 0], virtcol('.', v:true, 5001))
+
   bwipe!
 endfunc
 

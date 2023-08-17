@@ -540,9 +540,28 @@ func Test_virtcol2col()
   call assert_equal(8, virtcol2col(0, 1, 7))
   call assert_equal(8, virtcol2col(0, 1, 8))
 
+  let w = winwidth(0)
+  call setline(2, repeat('a', w + 2))
+  let win_nosbr = win_getid()
+  split
+  setlocal showbreak=!!
+  let win_sbr = win_getid()
+  call assert_equal(w, virtcol2col(win_nosbr, 2, w))
+  call assert_equal(w + 1, virtcol2col(win_nosbr, 2, w + 1))
+  call assert_equal(w + 2, virtcol2col(win_nosbr, 2, w + 2))
+  call assert_equal(w + 2, virtcol2col(win_nosbr, 2, w + 3))
+  call assert_equal(w, virtcol2col(win_sbr, 2, w))
+  call assert_equal(w + 1, virtcol2col(win_sbr, 2, w + 1))
+  call assert_equal(w + 1, virtcol2col(win_sbr, 2, w + 2))
+  call assert_equal(w + 1, virtcol2col(win_sbr, 2, w + 3))
+  call assert_equal(w + 2, virtcol2col(win_sbr, 2, w + 4))
+  call assert_equal(w + 2, virtcol2col(win_sbr, 2, w + 5))
+  close
+
   call assert_fails('echo virtcol2col("0", 1, 20)', 'E1210:')
   call assert_fails('echo virtcol2col(0, "1", 20)', 'E1210:')
   call assert_fails('echo virtcol2col(0, 1, "1")', 'E1210:')
+
   bw!
 endfunc
 

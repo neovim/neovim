@@ -8748,13 +8748,31 @@ static void f_type(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_number = n;
 }
 
-/// "virtcol(string, bool)" function
+/// "virtcol({expr}, [, {list} [, {winid}]])" function
 static void f_virtcol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   colnr_T vcol_start = 0;
   colnr_T vcol_end = 0;
-  int fnum = curbuf->b_fnum;
+  switchwin_T switchwin;
+  bool winchanged = false;
 
+  if (argvars[1].v_type != VAR_UNKNOWN && argvars[2].v_type != VAR_UNKNOWN) {
+    // use the window specified in the third argument
+    tabpage_T *tp;
+    win_T *wp = win_id2wp_tp((int)tv_get_number(&argvars[2]), &tp);
+    if (wp == NULL || tp == NULL) {
+      goto theend;
+    }
+
+    if (switch_win_noblock(&switchwin, wp, tp, true) != OK) {
+      goto theend;
+    }
+
+    check_cursor();
+    winchanged = true;
+  }
+
+  int fnum = curbuf->b_fnum;
   pos_T *fp = var2fpos(&argvars[0], false, &fnum, false);
   if (fp != NULL && fp->lnum <= curbuf->b_ml.ml_line_count
       && fnum == curbuf->b_fnum) {
@@ -8772,12 +8790,17 @@ static void f_virtcol(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     vcol_end++;
   }
 
+theend:
   if (argvars[1].v_type != VAR_UNKNOWN && tv_get_bool(&argvars[1])) {
     tv_list_alloc_ret(rettv, 2);
     tv_list_append_number(rettv->vval.v_list, vcol_start);
     tv_list_append_number(rettv->vval.v_list, vcol_end);
   } else {
     rettv->vval.v_number = vcol_end;
+  }
+
+  if (winchanged) {
+    restore_win_noblock(&switchwin, true);
   }
 }
 
