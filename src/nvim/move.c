@@ -69,7 +69,7 @@ int adjust_plines_for_skipcol(win_T *wp, int n)
   if (wp->w_skipcol >= width) {
     off++;
     int skip = wp->w_skipcol - width;
-    width -= win_col_off2(wp);
+    width += win_col_off2(wp);
     while (skip >= width) {
       off++;
       skip -= width;
@@ -996,7 +996,11 @@ void curs_columns(win_T *wp, int may_scroll)
       if (n > plines - wp->w_height_inner + 1) {
         n = plines - wp->w_height_inner + 1;
       }
-      wp->w_skipcol = n * width2;
+      if (n > 0) {
+        curwin->w_skipcol = width1 + (n - 1) * width2;
+      } else {
+        curwin->w_skipcol = 0;
+      }
     } else if (extra == 1) {
       // less than 'scrolloff' lines above, decrease skipcol
       assert(so <= INT_MAX);
@@ -1064,7 +1068,6 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
 {
   colnr_T scol = 0, ccol = 0, ecol = 0;
   int row = 0;
-  int rowoff = 0;
   colnr_T coloff = 0;
   bool visible_row = false;
   bool is_folded = false;
@@ -1072,7 +1075,10 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   linenr_T lnum = pos->lnum;
   if (lnum >= wp->w_topline && lnum <= wp->w_botline) {
     is_folded = hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
-    row = plines_m_win(wp, wp->w_topline, lnum - 1) + 1;
+    row = plines_m_win(wp, wp->w_topline, lnum - 1, false) + 1;
+    // "row" should be the screen line where line "lnum" begins, which can
+    // be negative if "lnum" is "w_topline" and "w_skipcol" is non-zero.
+    row = adjust_plines_for_skipcol(wp, row);
     // Add filler lines above this buffer line.
     row += lnum == wp->w_topline ? wp->w_topfill : win_get_fill(wp, lnum);
     visible_row = true;
@@ -1098,20 +1104,17 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
       col += off;
       int width = wp->w_width_inner - off + win_col_off2(wp);
 
-      if (lnum == wp->w_topline) {
-        col -= wp->w_skipcol;
-      }
-
       // long line wrapping, adjust row
       if (wp->w_p_wrap && col >= (colnr_T)wp->w_width_inner && width > 0) {
         // use same formula as what is used in curs_columns()
-        rowoff = visible_row ? ((col - wp->w_width_inner) / width + 1) : 0;
+        int rowoff = visible_row ? ((col - wp->w_width_inner) / width + 1) : 0;
         col -= rowoff * width;
+        row += rowoff;
       }
 
       col -= wp->w_leftcol;
 
-      if (col >= 0 && col < wp->w_width_inner && row + rowoff <= wp->w_height_inner) {
+      if (col >= 0 && col < wp->w_width_inner && row > 0 && row <= wp->w_height_inner) {
         coloff = col - scol + (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
         row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
       } else {
@@ -1120,12 +1123,12 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
         if (local) {
           coloff = col < 0 ? -1 : wp->w_width_inner + 1;
         } else {
-          row = rowoff = 0;
+          row = 0;
         }
       }
     }
   }
-  *rowp = row + rowoff;
+  *rowp = row;
   *scolp = scol + coloff;
   *ccolp = ccol + coloff;
   *ecolp = ecol + coloff;

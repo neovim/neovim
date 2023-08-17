@@ -35,11 +35,11 @@
 /// Return the number of window lines occupied by buffer line "lnum".
 /// Includes any filler lines.
 ///
-/// @param winheight when true limit to window height
-int plines_win(win_T *wp, linenr_T lnum, bool winheight)
+/// @param limit_winheight  when true limit to window height
+int plines_win(win_T *wp, linenr_T lnum, bool limit_winheight)
 {
   // Check for filler lines above this buffer line.
-  return plines_win_nofill(wp, lnum, winheight) + win_get_fill(wp, lnum);
+  return plines_win_nofill(wp, lnum, limit_winheight) + win_get_fill(wp, lnum);
 }
 
 /// Return the number of filler lines above "lnum".
@@ -71,8 +71,8 @@ bool win_may_fill(win_T *wp)
 /// Return the number of window lines occupied by buffer line "lnum".
 /// Does not include filler lines.
 ///
-/// @param winheight when true limit to window height
-int plines_win_nofill(win_T *wp, linenr_T lnum, bool winheight)
+/// @param limit_winheight  when true limit to window height
+int plines_win_nofill(win_T *wp, linenr_T lnum, bool limit_winheight)
 {
   if (!wp->w_p_wrap) {
     return 1;
@@ -88,7 +88,7 @@ int plines_win_nofill(win_T *wp, linenr_T lnum, bool winheight)
   }
 
   const int lines = plines_win_nofold(wp, lnum);
-  if (winheight && lines > wp->w_height_inner) {
+  if (limit_winheight && lines > wp->w_height_inner) {
     return wp->w_height_inner;
   }
   return lines;
@@ -184,22 +184,22 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
 ///
 /// XXX: Because of topfill, this only makes sense when lnum >= wp->w_topline.
 ///
-/// @param[in]  wp       window the line is in
-/// @param[in]  lnum     line number
-/// @param[out] nextp    if not NULL, the line after a fold
-/// @param[out] foldedp  if not NULL, whether lnum is on a fold
-/// @param[in]  cache    whether to use the window's cache for folds
-/// @param[in]  winheight when true limit to window height
+/// @param[in]  wp               window the line is in
+/// @param[in]  lnum             line number
+/// @param[out] nextp            if not NULL, the line after a fold
+/// @param[out] foldedp          if not NULL, whether lnum is on a fold
+/// @param[in]  cache            whether to use the window's cache for folds
+/// @param[in]  limit_winheight  when true limit to window height
 ///
 /// @return the total number of screen lines
 int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp, bool *const foldedp,
-                    const bool cache, const bool winheight)
+                    const bool cache, const bool limit_winheight)
 {
   bool folded = hasFoldingWin(wp, lnum, &lnum, nextp, cache, NULL);
   if (foldedp != NULL) {
     *foldedp = folded;
   }
-  return ((folded ? 1 : plines_win_nofill(wp, lnum, winheight)) +
+  return ((folded ? 1 : plines_win_nofill(wp, lnum, limit_winheight)) +
           (lnum == wp->w_topline ? wp->w_topfill : win_get_fill(wp, lnum)));
 }
 
@@ -207,19 +207,19 @@ int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp, bool *const
 /// This takes care of both folds and topfill.
 ///
 /// XXX: Because of topfill, this only makes sense when first >= wp->w_topline.
-/// XXX: This limits the size of each line to current window height.
 ///
-/// @param first  first line number
-/// @param last   last line number
+/// @param first            first line number
+/// @param last             last line number
+/// @param limit_winheight  when true limit each line to window height
 ///
 /// @see win_text_height
-int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
+int plines_m_win(win_T *wp, linenr_T first, linenr_T last, bool limit_winheight)
 {
   int count = 0;
 
   while (first <= last) {
     linenr_T next = first;
-    count += plines_win_full(wp, first, &next, NULL, false, true);
+    count += plines_win_full(wp, first, &next, NULL, false, limit_winheight);
     first = next + 1;
   }
   return count;
