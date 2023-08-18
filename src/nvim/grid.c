@@ -625,12 +625,10 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
       }
 
       grid->attrs[off_to] = linebuf_attr[off_from];
-      grid->vcols[off_to] = linebuf_vcol[off_from];
       // For simplicity set the attributes of second half of a
       // double-wide character equal to the first half.
       if (char_cells == 2) {
         grid->attrs[off_to + 1] = linebuf_attr[off_from];
-        grid->vcols[off_to + 1] = linebuf_vcol[off_from + 1];
       }
     }
 
