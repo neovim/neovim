@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "nvim/pos.h"
 #include "nvim/types.h"
 
 #define MAX_MCO  6  // fixed value for 'maxcombine'
@@ -37,9 +38,14 @@ enum {
 /// screen is cleared, the cells should be filled with a single whitespace char.
 ///
 /// attrs[] contains the highlighting attribute for each cell.
-/// line_offset[n] is the offset from chars[] and attrs[] for the
-/// start of line 'n'. These offsets are in general not linear, as full screen
-/// scrolling is implemented by rotating the offsets in the line_offset array.
+///
+/// vcols[] countain the virtual columns in the line. -1 means not available
+/// (below last line), MAXCOL means after the end of the line.
+///
+/// line_offset[n] is the offset from chars[], attrs[] and vcols[] for the start
+/// of line 'n'. These offsets are in general not linear, as full screen scrolling
+/// is implemented by rotating the offsets in the line_offset array.
+///
 /// line_wraps[] is an array of boolean flags indicating if the screen line
 /// wraps to the next line. It can only be true if a window occupies the entire
 /// screen width.
@@ -49,6 +55,7 @@ struct ScreenGrid {
 
   schar_T *chars;
   sattr_T *attrs;
+  colnr_T *vcols;
   size_t *line_offset;
   char *line_wraps;
 
@@ -106,7 +113,7 @@ struct ScreenGrid {
   bool comp_disabled;
 };
 
-#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
+#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
                            false, 0, 0, NULL, false, true, 0, \
                            0, 0, 0, 0, 0,  false }
 

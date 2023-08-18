@@ -78,6 +78,7 @@ void grid_clear_line(ScreenGrid *grid, size_t off, int width, bool valid)
   }
   int fill = valid ? 0 : -1;
   (void)memset(grid->attrs + off, fill, (size_t)width * sizeof(sattr_T));
+  (void)memset(grid->vcols + off, -1, (size_t)width * sizeof(colnr_T));
 }
 
 void grid_invalidate(ScreenGrid *grid)
@@ -196,6 +197,7 @@ void grid_put_schar(ScreenGrid *grid, int row, int col, char *schar, int attr)
     // TODO(bfredl): Y U NO DOUBLEWIDTH?
     put_dirty_last = MAX(put_dirty_last, col + 1);
   }
+  grid->vcols[off] = -1;
 }
 
 /// like grid_puts(), but output "text[len]".  When "len" is -1 output up to
@@ -324,9 +326,11 @@ int grid_puts_len(ScreenGrid *grid, const char *text, int textlen, int row, int 
 
       schar_copy(grid->chars[off], buf);
       grid->attrs[off] = attr;
+      grid->vcols[off] = -1;
       if (mbyte_cells == 2) {
         grid->chars[off + 1][0] = 0;
         grid->attrs[off + 1] = attr;
+        grid->vcols[off + 1] = -1;
       }
       put_dirty_first = MIN(put_dirty_first, col);
       put_dirty_last = MAX(put_dirty_last, col + mbyte_cells);
@@ -437,6 +441,7 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
         }
         dirty_last = col + 1;
       }
+      grid->vcols[off] = -1;
       if (col == start_col) {
         schar_from_char(sc, c2);
       }
@@ -620,11 +625,18 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
       }
 
       grid->attrs[off_to] = linebuf_attr[off_from];
+      grid->vcols[off_to] = linebuf_vcol[off_from];
       // For simplicity set the attributes of second half of a
       // double-wide character equal to the first half.
       if (char_cells == 2) {
         grid->attrs[off_to + 1] = linebuf_attr[off_from];
+        grid->vcols[off_to + 1] = linebuf_vcol[off_from + 1];
       }
+    }
+
+    grid->vcols[off_to] = linebuf_vcol[off_from];
+    if (char_cells == 2) {
+      grid->vcols[off_to + 1] = linebuf_vcol[off_from];
     }
 
     off_to += (size_t)char_cells;
@@ -659,6 +671,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
         }
         clear_end = col + 1;
       }
+      grid->vcols[off_to] = MAXCOL;
       col++;
       off_to++;
     }
@@ -690,6 +703,8 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
   size_t ncells = (size_t)rows * (size_t)columns;
   ngrid.chars = xmalloc(ncells * sizeof(schar_T));
   ngrid.attrs = xmalloc(ncells * sizeof(sattr_T));
+  ngrid.vcols = xmalloc(ncells * sizeof(colnr_T));
+  memset(ngrid.vcols, -1, ncells * sizeof(colnr_T));
   ngrid.line_offset = xmalloc((size_t)rows * sizeof(*ngrid.line_offset));
   ngrid.line_wraps = xmalloc((size_t)rows * sizeof(*ngrid.line_wraps));
 
@@ -715,6 +730,9 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
         memmove(ngrid.attrs + ngrid.line_offset[new_row],
                 grid->attrs + grid->line_offset[new_row],
                 (size_t)len * sizeof(sattr_T));
+        memmove(ngrid.vcols + ngrid.line_offset[new_row],
+                grid->vcols + grid->line_offset[new_row],
+                (size_t)len * sizeof(colnr_T));
       }
     }
   }
@@ -726,8 +744,10 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
   if (linebuf_size < (size_t)columns) {
     xfree(linebuf_char);
     xfree(linebuf_attr);
+    xfree(linebuf_vcol);
     linebuf_char = xmalloc((size_t)columns * sizeof(schar_T));
     linebuf_attr = xmalloc((size_t)columns * sizeof(sattr_T));
+    linebuf_vcol = xmalloc((size_t)columns * sizeof(colnr_T));
     linebuf_size = (size_t)columns;
   }
 }
@@ -736,11 +756,13 @@ void grid_free(ScreenGrid *grid)
 {
   xfree(grid->chars);
   xfree(grid->attrs);
+  xfree(grid->vcols);
   xfree(grid->line_offset);
   xfree(grid->line_wraps);
 
   grid->chars = NULL;
   grid->attrs = NULL;
+  grid->vcols = NULL;
   grid->line_offset = NULL;
   grid->line_wraps = NULL;
 }
@@ -751,6 +773,7 @@ void grid_free_all_mem(void)
   grid_free(&default_grid);
   xfree(linebuf_char);
   xfree(linebuf_attr);
+  xfree(linebuf_vcol);
 }
 
 /// (Re)allocates a window grid if size changed while in ext_multigrid mode.
@@ -939,6 +962,7 @@ static void linecopy(ScreenGrid *grid, int to, int from, int col, int width)
 
   memmove(grid->chars + off_to, grid->chars + off_from, (size_t)width * sizeof(schar_T));
   memmove(grid->attrs + off_to, grid->attrs + off_from, (size_t)width * sizeof(sattr_T));
+  memmove(grid->vcols + off_to, grid->vcols + off_from, (size_t)width * sizeof(colnr_T));
 }
 
 win_T *get_win_by_grid_handle(handle_T handle)

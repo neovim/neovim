@@ -2022,6 +2022,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       c = NUL;
     } else {
       int c0;
+      char *prev_ptr = ptr;
 
       // Get a character from the line itself.
       c0 = c = (uint8_t)(*ptr);
@@ -2209,7 +2210,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         v = (ptr - line);
         if (spv->spv_has_spell && v >= word_end && v > cur_checked_col) {
           spell_attr = 0;
-          char *prev_ptr = ptr - mb_l;
           // do not calculate cap_col at the end of the line or when
           // only white space is following
           if (c != 0 && (*skipwhite(prev_ptr) != NUL) && can_spell) {
@@ -2746,6 +2746,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           eol_attr = hl_combine_attr(wlv.cul_attr, eol_attr);
         }
         linebuf_attr[wlv.off] = eol_attr;
+        linebuf_vcol[wlv.off] = MAXCOL;
         if (wp->w_p_rl) {
           wlv.col--;
           wlv.off--;
@@ -2832,6 +2833,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
         while (wp->w_p_rl ? wlv.col >= 0 : wlv.col < grid->cols) {
           schar_from_ascii(linebuf_char[wlv.off], ' ');
+          linebuf_vcol[wlv.off] = MAXCOL;
           wlv.col += col_stride;
           if (draw_color_col) {
             draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
@@ -2866,6 +2868,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         while (wlv.col >= 0 && wlv.col < grid->cols) {
           schar_from_ascii(linebuf_char[wlv.off], ' ');
           linebuf_attr[wlv.off] = wlv.vcol >= TERM_ATTRS_MAX ? 0 : term_attrs[wlv.vcol];
+          linebuf_vcol[wlv.off] = wlv.vcol;
           wlv.off += n;
           wlv.vcol += n;
           wlv.col += n;
@@ -2945,9 +2948,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     // Skip characters that are left of the screen for 'nowrap'.
     vcol_prev = wlv.vcol;
     if (wlv.draw_state < WL_LINE || n_skip <= 0) {
-      //
       // Store the character.
-      //
       if (wp->w_p_rl && utf_char2cells(mb_c) > 1) {
         // A double-wide character is: put first half in left cell.
         wlv.off--;
@@ -2965,6 +2966,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         linebuf_attr[wlv.off] = wlv.char_attr;
       }
 
+      linebuf_vcol[wlv.off] = wlv.vcol;
+
       if (utf_char2cells(mb_c) > 1) {
         // Need to fill two screen columns.
         wlv.off++;
@@ -2980,6 +2983,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         if (wlv.tocol == wlv.vcol) {
           wlv.tocol++;
         }
+
+        linebuf_vcol[wlv.off] = wlv.vcol;
+
         if (wp->w_p_rl) {
           // now it's time to backup one cell
           wlv.off--;
