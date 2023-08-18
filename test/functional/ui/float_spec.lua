@@ -8377,6 +8377,7 @@ describe('float window', function()
         # TODO: 测试字典信息的准确性
         # FIXME: 测试字典信息的准确性]])
       local buf = meths.create_buf(false,false)
+      meths.buf_set_lines(buf, 0, -1, true, {'口', '口'})
       local win = meths.open_win(buf, false, {relative='editor', width=5, height=3, row=0, col=11, style='minimal'})
       if multigrid then
         screen:expect{grid=[[
@@ -8397,15 +8398,15 @@ describe('float window', function()
           {0:~                                       }|
         ## grid 3
                                                   |
-        ## grid 4
+        ## grid 5
+          {1:口   }|
+          {1:口   }|
           {1:     }|
-          {1:     }|
-          {1:     }|
-        ]], float_pos={ [4] = { { id = 1001 }, "NW", 1, 0, 11, true } }}
+        ]], float_pos={ [5] = { { id = 1002 }, "NW", 1, 0, 11, true } }}
       else
         screen:expect([[
-          # TODO: 测 {1:     }信息的准确性            |
-          # FIXME: 测{1:     } 信息的准确^性           |
+          # TODO: 测 {1:口   }信息的准确性            |
+          # FIXME: 测{1:口   } 信息的准确^性           |
           {0:~          }{1:     }{0:                        }|
           {0:~                                       }|
           {0:~                                       }|
