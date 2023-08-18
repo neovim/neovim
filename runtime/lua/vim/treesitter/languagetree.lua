@@ -752,7 +752,7 @@ end
 function LanguageTree:_get_injection(match, metadata)
   local ranges = {} ---@type Range6[]
   local combined = metadata['injection.combined'] ~= nil
-  local lang = metadata['injection.language'] --[[@as string?]]
+  local lang = metadata['injection.self'] ~= nil and self:lang() or metadata['injection.language'] --[[@as string?]]
   local include_children = metadata['injection.include-children'] ~= nil
 
   for id, node in pairs(match) do
