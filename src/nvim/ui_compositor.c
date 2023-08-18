@@ -402,7 +402,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
       if (col == endcol - 1) {
         skipend = 0;
       }
-    } else if (n > 1 && linebuf[col - startcol + 1][0] == NUL) {
+    } else if (col == startcol && n > 1 && linebuf[1][0] == NUL) {
       skipstart = 0;
     }
 
