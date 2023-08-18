@@ -1329,13 +1329,13 @@ retnomove:
     }
   }
 
+  colnr_T col_from_screen = -1;
+  int mouse_fold_flags = 0;
+  mouse_check_grid(&col_from_screen, &mouse_fold_flags);
+
   // compute the position in the buffer line from the posn on the screen
   if (mouse_comp_pos(curwin, &row, &col, &curwin->w_cursor.lnum)) {
     mouse_past_bottom = true;
-  }
-
-  if (!(flags & MOUSE_RELEASED) && which_button == MOUSE_LEFT) {
-    col = mouse_adjust_click(curwin, row, col);
   }
 
   // Start Visual mode before coladvance(), for when 'sel' != "old"
@@ -1350,6 +1350,10 @@ retnomove:
     if (p_smd && msg_silent == 0) {
       redraw_cmdline = true;            // show visual mode later
     }
+  }
+
+  if (col_from_screen >= 0) {
+    col = col_from_screen;
   }
 
   curwin->w_curswant = col;
@@ -1369,14 +1373,14 @@ retnomove:
     count |= CURSOR_MOVED;              // Cursor has moved
   }
 
-  count |= mouse_check_fold();
+  count |= mouse_fold_flags;
 
   return count;
 }
 
-// Compute the position in the buffer line from the posn on the screen in
-// window "win".
-// Returns true if the position is below the last line.
+/// Compute the position in the buffer line from the posn on the screen in
+/// window "win".
+/// Returns true if the position is below the last line.
 bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 {
   int col = *colp;
@@ -1573,9 +1577,7 @@ static void set_mouse_topline(win_T *wp)
   orig_topfill = wp->w_topfill;
 }
 
-///
 /// Return length of line "lnum" for horizontal scrolling.
-///
 static colnr_T scroll_line_len(linenr_T lnum)
 {
   colnr_T col = 0;
@@ -1663,116 +1665,9 @@ bool mouse_scroll_horiz(int dir)
   return set_leftcol(leftcol);
 }
 
-/// Adjusts the clicked column position when 'conceallevel' > 0
-static int mouse_adjust_click(win_T *wp, int row, int col)
-{
-  if (!(wp->w_p_cole > 0 && curbuf->b_p_smc > 0
-        && wp->w_leftcol < curbuf->b_p_smc && conceal_cursor_line(wp))) {
-    return col;
-  }
-
-  // `col` is the position within the current line that is highlighted by the
-  // cursor without consideration for concealed characters.  The current line is
-  // scanned *up to* `col`, nudging it left or right when concealed characters
-  // are encountered.
-  //
-  // win_chartabsize() is used to keep track of the virtual column position
-  // relative to the line's bytes.  For example: if col == 9 and the line
-  // starts with a tab that's 8 columns wide, we would want the cursor to be
-  // highlighting the second byte, not the ninth.
-
-  linenr_T lnum = wp->w_cursor.lnum;
-  // Make a copy of the line, because syntax matching may free it.
-  char *line = xstrdup(ml_get(lnum));
-  char *ptr = line;
-  char *ptr_end;
-  char *ptr_row_offset = line;  // Where we begin adjusting `ptr_end`
-
-  // Find the offset where scanning should begin.
-  int offset = wp->w_leftcol;
-  if (row > 0) {
-    offset += row * (wp->w_width_inner - win_col_off(wp) - win_col_off2(wp) -
-                     wp->w_leftcol + wp->w_skipcol);
-  }
-
-  int vcol;
-
-  if (offset) {
-    // Skip everything up to an offset since nvim takes care of displaying the
-    // correct portion of the line when horizontally scrolling.
-    // When 'wrap' is enabled, only the row (of the wrapped line) needs to be
-    // checked for concealed characters.
-    vcol = 0;
-    while (vcol < offset && *ptr != NUL) {
-      vcol += win_chartabsize(curwin, ptr, vcol);
-      ptr += utfc_ptr2len(ptr);
-    }
-
-    ptr_row_offset = ptr;
-  }
-
-  // Align `ptr_end` with `col`
-  vcol = offset;
-  ptr_end = ptr_row_offset;
-  while (vcol < col && *ptr_end != NUL) {
-    vcol += win_chartabsize(curwin, ptr_end, vcol);
-    ptr_end += utfc_ptr2len(ptr_end);
-  }
-
-  int prev_matchid;
-  int nudge = 0;
-
-  vcol = offset;
-
-#define INCR() nudge++; ptr_end += utfc_ptr2len(ptr_end)
-#define DECR() nudge--; ptr_end -= utfc_ptr2len(ptr_end)
-
-  while (ptr < ptr_end && *ptr != NUL) {
-    int cwidth = win_chartabsize(curwin, ptr, vcol);
-    vcol += cwidth;
-    if (cwidth > 1 && *ptr == '\t' && nudge > 0) {
-      // A tab will "absorb" any previous adjustments.
-      cwidth = MIN(cwidth, nudge);
-      while (cwidth > 0) {
-        DECR();
-        cwidth--;
-      }
-    }
-
-    int matchid = syn_get_concealed_id(wp, lnum, (colnr_T)(ptr - line));
-    if (matchid != 0) {
-      if (wp->w_p_cole == 3) {
-        INCR();
-      } else {
-        if (!(row > 0 && ptr == ptr_row_offset)
-            && (wp->w_p_cole == 1 || (wp->w_p_cole == 2
-                                      && (wp->w_p_lcs_chars.conceal != NUL
-                                          || syn_get_sub_char() != NUL)))) {
-          // At least one placeholder character will be displayed.
-          DECR();
-        }
-
-        prev_matchid = matchid;
-
-        while (prev_matchid == matchid && *ptr != NUL) {
-          INCR();
-          ptr += utfc_ptr2len(ptr);
-          matchid = syn_get_concealed_id(wp, lnum, (colnr_T)(ptr - line));
-        }
-
-        continue;
-      }
-    }
-
-    ptr += utfc_ptr2len(ptr);
-  }
-
-  xfree(line);
-  return col + nudge;
-}
-
-// Check clicked cell is foldcolumn
-int mouse_check_fold(void)
+/// Check clicked cell on its grid
+static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
+  FUNC_ATTR_NONNULL_ALL
 {
   int click_grid = mouse_grid;
   int click_row = mouse_row;
@@ -1780,7 +1675,8 @@ int mouse_check_fold(void)
   int mouse_char = ' ';
   int max_row = Rows;
   int max_col = Columns;
-  int multigrid = ui_has(kUIMultigrid);
+  bool multigrid = ui_has(kUIMultigrid);
+  colnr_T col_from_screen = -1;
 
   win_T *wp = mouse_find_win(&click_grid, &click_row, &click_col);
   if (wp && multigrid) {
@@ -1792,14 +1688,46 @@ int mouse_check_fold(void)
       && mouse_col >= 0 && mouse_col < max_col) {
     ScreenGrid *gp = multigrid ? &wp->w_grid_alloc : &default_grid;
     int fdc = win_fdccol_count(wp);
-    int row = multigrid && mouse_grid == 0 ? click_row : mouse_row;
-    int col = multigrid && mouse_grid == 0 ? click_col : mouse_col;
+    int use_row = multigrid && mouse_grid == 0 ? click_row : mouse_row;
+    int use_col = multigrid && mouse_grid == 0 ? click_col : mouse_col;
 
-    // Remember the character under the mouse, might be one of foldclose or
-    // foldopen fillchars in the fold column.
     if (gp->chars != NULL) {
-      mouse_char = utf_ptr2char((char *)gp->chars[gp->line_offset[row]
-                                                  + (unsigned)col]);
+      const size_t off = gp->line_offset[use_row] + (size_t)use_col;
+
+      // Only use vcols[] after the window was redrawn.  Mainly matters
+      // for tests, a user would not click before redrawing.
+      if (wp->w_redr_type == 0) {
+        col_from_screen = gp->vcols[off];
+      }
+
+      if (col_from_screen == MAXCOL) {
+        // When clicking after end of line, still need to set correct curswant
+        size_t off_l = gp->line_offset[use_row];
+        if (gp->vcols[off_l] < MAXCOL) {
+          // Binary search to find last char in line
+          size_t off_r = off;
+          while (off_l < off_r) {
+            size_t off_m = (off_l + off_r + 1) / 2;
+            if (gp->vcols[off_m] < MAXCOL) {
+              off_l = off_m;
+            } else {
+              off_r = off_m - 1;
+            }
+          }
+          *vcolp = gp->vcols[off_r] + (int)(off - off_r);
+        } else {
+          // Shouldn't normally happen
+          *vcolp = MAXCOL;
+        }
+      } else if (col_from_screen >= 0) {
+        // Use the virtual column from vcols[], it is accurate also after
+        // concealed characters.
+        *vcolp = col_from_screen;
+      }
+
+      // Remember the character under the mouse, might be one of foldclose or
+      // foldopen fillchars in the fold column.
+      mouse_char = utf_ptr2char((char *)gp->chars[off]);
     }
 
     // Check for position outside of the fold column.
@@ -1810,10 +1738,8 @@ int mouse_check_fold(void)
   }
 
   if (wp && mouse_char == wp->w_p_fcs_chars.foldclosed) {
-    return MOUSE_FOLD_OPEN;
+    *flagsp |= MOUSE_FOLD_OPEN;
   } else if (mouse_char != ' ') {
-    return MOUSE_FOLD_CLOSE;
+    *flagsp |= MOUSE_FOLD_CLOSE;
   }
-
-  return 0;
 }

@@ -1089,7 +1089,6 @@ describe('ui/mouse/input', function()
       command([[setlocal concealcursor=ni nowrap shiftwidth=2 tabstop=4 list listchars=tab:>-]])
       command([[syntax region X0 matchgroup=X1 start=/\*/ end=/\*/ concealends contains=X2]])
       command([[syntax match X2 /cats/ conceal cchar=X contained]])
-      -- No heap-use-after-free with multi-line syntax pattern #24317
       command([[syntax match X3 /\n\@<=x/ conceal cchar=>]])
       command([[highlight link X0 Normal]])
       command([[highlight link X1 NonText]])
@@ -1497,7 +1496,6 @@ describe('ui/mouse/input', function()
       ]])
     end) -- level 2 - wrapped
 
-
     it('(level 3) click on non-wrapped lines', function()
       feed_command('let &conceallevel=3', 'echo')
 
@@ -1535,6 +1533,7 @@ describe('ui/mouse/input', function()
       ]])
 
       feed('<esc><LeftMouse><20,2>')
+      feed('zH')  -- FIXME: unnecessary horizontal scrolling
       screen:expect([[
         Section{0:>>--->--->---}t1   |
         {0:>--->--->---}  t2 t3 t4   |

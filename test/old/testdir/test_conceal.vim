@@ -349,9 +349,56 @@ func Test_conceal_mouse_click()
   call Ntest_setmouse(1, 16)
   call feedkeys("\<LeftMouse>", "tx")
   call assert_equal([0, 1, 20, 0, 20], getcurpos())
+  " click on 'e' of "here" puts cursor there
+  call Ntest_setmouse(1, 19)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 23, 0, 23], getcurpos())
+  " click after end of line puts cursor on 'e' without 'virtualedit'
+  call Ntest_setmouse(1, 20)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 23, 0, 24], getcurpos())
+  call Ntest_setmouse(1, 21)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 23, 0, 25], getcurpos())
+  call Ntest_setmouse(1, 22)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 23, 0, 26], getcurpos())
+  call Ntest_setmouse(1, 31)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 23, 0, 35], getcurpos())
+  call Ntest_setmouse(1, 32)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 23, 0, 36], getcurpos())
+
+  set virtualedit=all
+  redraw  " Nvim: redraw_for_cursorcolumn() redraws for conceal
+  " click on 'h' of "here" puts cursor there
+  call Ntest_setmouse(1, 16)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 20, 0, 20], getcurpos())
+  " click on 'e' of "here" puts cursor there
+  call Ntest_setmouse(1, 19)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 23, 0, 23], getcurpos())
+  " click after end of line puts cursor there without 'virtualedit'
+  call Ntest_setmouse(1, 20)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 24, 0, 24], getcurpos())
+  call Ntest_setmouse(1, 21)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 24, 1, 25], getcurpos())
+  call Ntest_setmouse(1, 22)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 24, 2, 26], getcurpos())
+  call Ntest_setmouse(1, 31)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 24, 11, 35], getcurpos())
+  call Ntest_setmouse(1, 32)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 24, 12, 36], getcurpos())
 
   bwipe!
-  set mouse&
+  set mouse& virtualedit&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
