@@ -108,6 +108,8 @@ syn match   hsLineComment      "---*\([^-!#$%&\*\+./<=>\?@\\^|~].*\)\?$" contain
 syn region  hsBlockComment     start="{-"  end="-}" contains=hsBlockComment,@Spell
 syn region  hsPragma	       start="{-#" end="#-}"
 
+syn keyword hsTodo	        contained FIXME TODO XXX NOTE
+
 " C Preprocessor directives. Shamelessly ripped from c.vim and trimmed
 " First, see whether to flag directive-like lines or not
 if (!exists("hs_allow_hash_operator"))
