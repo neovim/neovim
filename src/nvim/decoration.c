@@ -332,7 +332,7 @@ next_mark:
 
   int attr = 0;
   size_t j = 0;
-  bool conceal = 0;
+  int conceal = 0;
   int conceal_char = 0;
   int conceal_attr = 0;
   TriState spell = kNone;
@@ -362,8 +362,9 @@ next_mark:
       attr = hl_combine_attr(attr, item.attr_id);
     }
     if (active && item.decor.conceal) {
-      conceal = true;
-      if (item.start_row == state->row && item.start_col == col && item.decor.conceal_char) {
+      conceal = 1;
+      if (item.start_row == state->row && item.start_col == col) {
+        conceal = 2;
         conceal_char = item.decor.conceal_char;
         state->col_until = MIN(state->col_until, item.start_col);
         conceal_attr = item.attr_id;

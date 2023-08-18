@@ -101,7 +101,7 @@ typedef struct {
   int current;
   int eol_col;
 
-  bool conceal;
+  int conceal;
   int conceal_char;
   int conceal_attr;
 

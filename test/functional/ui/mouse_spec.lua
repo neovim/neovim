@@ -1655,8 +1655,7 @@ describe('ui/mouse/input', function()
       test_mouse_click_conceal()
     end)
 
-    -- FIXME: cannot make extmark conceal behave exactly like syntax conceal without cchar
-    pending('(extmarks)', function()
+    describe('(extmarks)', function()
       before_each(function()
         local ns = meths.create_namespace('conceal')
         meths.buf_set_extmark(0, ns, 0, 11, { end_col = 12, conceal = '' })

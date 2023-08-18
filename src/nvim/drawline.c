@@ -2179,11 +2179,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         if (has_decor && v > 0) {
           // extmarks take preceedence over syntax.c
           decor_attr = hl_combine_attr(decor_attr, extmark_attr);
-
           decor_conceal = decor_state.conceal;
-          if (decor_conceal && decor_state.conceal_char) {
-            decor_conceal = 2;  // really??
-          }
           can_spell = TRISTATE_TO_BOOL(decor_state.spell, can_spell);
         }
 

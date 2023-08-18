@@ -1361,18 +1361,43 @@ describe('extmark decorations', function()
     assert_alive()
   end)
 
-  it('conceal #19007', function()
+  it('conceal with conceal char #19007', function()
     screen:try_resize(50, 5)
     insert('foo\n')
-    command('let &conceallevel=2')
     meths.buf_set_extmark(0, ns, 0, 0, {end_col=0, end_row=2, conceal='X'})
+    command('set conceallevel=2')
     screen:expect([[
-        {26:X}                                                 |
-        ^                                                  |
-        {1:~                                                 }|
-        {1:~                                                 }|
-                                                          |
-      ]])
+      {26:X}                                                 |
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+    command('set conceallevel=1')
+    screen:expect_unchanged()
+  end)
+
+  it('conceal without conceal char #24782', function()
+    screen:try_resize(50, 5)
+    insert('foobar\n')
+    meths.buf_set_extmark(0, ns, 0, 0, {end_col=3, conceal=''})
+    command('set listchars=conceal:?')
+    command('let &conceallevel=1')
+    screen:expect([[
+      {26:?}bar                                              |
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+    command('let &conceallevel=2')
+    screen:expect([[
+      bar                                               |
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]])
   end)
 
   it('conceal works just before truncated double-width char #21486', function()
