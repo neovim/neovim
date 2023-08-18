@@ -10013,9 +10013,12 @@ function vim.fn.values(dict) end
 ---       returns the cursor position.  Differs from |'<| in
 ---       that it's updated right away.
 ---
---- If {list} is present and non-zero then virtcol() returns a List
---- with the first and last screen position occupied by the
+--- If {list} is present and non-zero then virtcol() returns a
+--- List with the first and last screen position occupied by the
 --- character.
+---
+--- With the optional {winid} argument the values are obtained for
+--- that window instead of the current window.
 ---
 --- Note that only marks in the current file can be used.
 --- Examples: >vim
@@ -10028,15 +10031,16 @@ function vim.fn.values(dict) end
 ---   " With text "    there", with 't at 'h':
 ---
 ---   echo virtcol("'t")  " returns 6
---- <Techo he first column is 1.  0 is returned for an error.
---- A echo more advanced example that echoes the maximum length of
+--- <The first column is 1.  0 or [0, 0] is returned for an error.
+--- A more advanced example that echoes the maximum length of
 --- all lines: >vim
 ---     echo max(map(range(1, line('$')), "virtcol([v:val, '$'])"))
 ---
 --- @param expr any
 --- @param list? any
+--- @param winid? integer
 --- @return any
-function vim.fn.virtcol(expr, list) end
+function vim.fn.virtcol(expr, list, winid) end
 
 --- The result is a Number, which is the byte index of the
 --- character in window {winid} at buffer line {lnum} and virtual

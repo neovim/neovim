@@ -11893,7 +11893,7 @@ M.funcs = {
     signature = 'values({dict})',
   },
   virtcol = {
-    args = { 1, 2 },
+    args = { 1, 3 },
     base = 1,
     desc = [=[
       The result is a Number, which is the screen column of the file
@@ -11927,9 +11927,12 @@ M.funcs = {
       	    returns the cursor position.  Differs from |'<| in
       	    that it's updated right away.
 
-      If {list} is present and non-zero then virtcol() returns a List
-      with the first and last screen position occupied by the
+      If {list} is present and non-zero then virtcol() returns a
+      List with the first and last screen position occupied by the
       character.
+
+      With the optional {winid} argument the values are obtained for
+      that window instead of the current window.
 
       Note that only marks in the current file can be used.
       Examples: >vim
@@ -11942,15 +11945,15 @@ M.funcs = {
       	" With text "	  there", with 't at 'h':
 
       	echo virtcol("'t")	" returns 6
-      <Techo he first column is 1.  0 is returned for an error.
-      A echo more advanced example that echoes the maximum length of
+      <The first column is 1.  0 or [0, 0] is returned for an error.
+      A more advanced example that echoes the maximum length of
       all lines: >vim
           echo max(map(range(1, line('$')), "virtcol([v:val, '$'])"))
 
     ]=],
     name = 'virtcol',
-    params = { { 'expr', 'any' }, { 'list', 'any' } },
-    signature = 'virtcol({expr} [, {list}])',
+    params = { { 'expr', 'any' }, { 'list', 'any' }, { 'winid', 'integer' } },
+    signature = 'virtcol({expr} [, {list} [, {winid}]])',
   },
   virtcol2col = {
     args = 3,
