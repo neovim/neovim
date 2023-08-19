@@ -3310,6 +3310,13 @@ nvim_create_autocmd({event}, {*opts})                  *nvim_create_autocmd()*
         })
 <
 
+    Example for |User| autocommands: >lua
+        vim.api.nvim_create_autocmd({"User"}, {
+          pattern = {"SomeUserEvent"},
+          command = "echo 'SomeUserEvent has been triggered'",
+        })
+<
+
     Note: `pattern` is NOT automatically expanded (unlike with |:autocmd|), thus names like
     "$HOME" and "~" must be expanded explicitly: >lua
       pattern = vim.fn.expand("~") .. "/some/path/*.py"
