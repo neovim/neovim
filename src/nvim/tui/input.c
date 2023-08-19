@@ -297,10 +297,10 @@ static void forward_simple_utf8(TermInput *input, TermKeyKey *key)
     } else {
       buf[len++] = *ptr;
     }
+    assert(len < sizeof(buf));
     ptr++;
   }
 
-  assert(len < sizeof(buf));
   tinput_enqueue(input, buf, len);
 }
 
