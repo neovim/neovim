@@ -2831,9 +2831,14 @@ bbbbbbb]])
 
   it('blockwise Visual highlight with double-width virtual text (replace)', function()
     screen:try_resize(60, 6)
-    insert('123456789\n123456789\n123456789')
+    insert('123456789\n123456789\n123456789\n123456789')
     meths.buf_set_extmark(0, ns, 1, 1, {
       virt_text = { { '-口-', 'Special' } },
+      virt_text_pos = 'inline',
+      hl_mode = 'replace',
+    })
+    meths.buf_set_extmark(0, ns, 2, 2, {
+      virt_text = { { '口', 'Special' } },
       virt_text_pos = 'inline',
       hl_mode = 'replace',
     })
@@ -2841,17 +2846,17 @@ bbbbbbb]])
     screen:expect{grid=[[
       ^123456789                                                   |
       1{10:-口-}23456789                                               |
+      12{10:口}3456789                                                 |
       123456789                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
                                                                   |
     ]]}
-    feed('<C-V>2jl')
+    feed('<C-V>3jl')
     screen:expect{grid=[[
       {7:12}3456789                                                   |
       {7:1}{10:-口-}23456789                                               |
+      {7:12}{10:口}3456789                                                 |
       {7:1}^23456789                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]]}
@@ -2859,8 +2864,8 @@ bbbbbbb]])
     screen:expect{grid=[[
       {7:123}456789                                                   |
       {7:1}{10:-口-}23456789                                               |
+      {7:12}{10:口}3456789                                                 |
       {7:12}^3456789                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]]}
@@ -2868,8 +2873,8 @@ bbbbbbb]])
     screen:expect{grid=[[
       {7:1234567}89                                                   |
       {7:1}{10:-口-}{7:23}456789                                               |
+      {7:12}{10:口}{7:345}6789                                                 |
       {7:123456}^789                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]]}
@@ -2877,8 +2882,8 @@ bbbbbbb]])
     screen:expect{grid=[[
       1{7:234567}89                                                   |
       1{10:-口-}{7:23}456789                                               |
+      1{7:2}{10:口}{7:345}6789                                                 |
       1^2{7:34567}89                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]]}
@@ -2886,8 +2891,8 @@ bbbbbbb]])
     screen:expect{grid=[[
       12{7:34567}89                                                   |
       1{10:-口-}{7:23}456789                                               |
+      12{10:口}{7:345}6789                                                 |
       12^3{7:4567}89                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]]}
@@ -2895,8 +2900,8 @@ bbbbbbb]])
     screen:expect{grid=[[
       123{7:4567}89                                                   |
       1{10:-口-}{7:23}456789                                               |
+      12{10:口}{7:345}6789                                                 |
       123^4{7:567}89                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]]}
@@ -2904,9 +2909,14 @@ bbbbbbb]])
 
   it('blockwise Visual highlight with double-width virtual text (combine)', function()
     screen:try_resize(60, 6)
-    insert('123456789\n123456789\n123456789')
+    insert('123456789\n123456789\n123456789\n123456789')
     meths.buf_set_extmark(0, ns, 1, 1, {
       virt_text = { { '-口-', 'Special' } },
+      virt_text_pos = 'inline',
+      hl_mode = 'combine',
+    })
+    meths.buf_set_extmark(0, ns, 2, 2, {
+      virt_text = { { '口', 'Special' } },
       virt_text_pos = 'inline',
       hl_mode = 'combine',
     })
@@ -2914,17 +2924,17 @@ bbbbbbb]])
     screen:expect{grid=[[
       ^123456789                                                   |
       1{10:-口-}23456789                                               |
+      12{10:口}3456789                                                 |
       123456789                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
                                                                   |
     ]]}
-    feed('<C-V>2jl')
+    feed('<C-V>3jl')
     screen:expect{grid=[[
       {7:12}3456789                                                   |
       {7:1}{20:-}{10:口-}23456789                                               |
+      {7:12}{10:口}3456789                                                 |
       {7:1}^23456789                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]]}
@@ -2932,8 +2942,8 @@ bbbbbbb]])
     screen:expect{grid=[[
       {7:123}456789                                                   |
       {7:1}{20:-口}{10:-}23456789                                               |
+      {7:12}{20:口}3456789                                                 |
       {7:12}^3456789                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]]}
@@ -2941,8 +2951,8 @@ bbbbbbb]])
     screen:expect{grid=[[
       {7:1234567}89                                                   |
       {7:1}{20:-口-}{7:23}456789                                               |
+      {7:12}{20:口}{7:345}6789                                                 |
       {7:123456}^789                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]]}
@@ -2950,8 +2960,8 @@ bbbbbbb]])
     screen:expect{grid=[[
       1{7:234567}89                                                   |
       1{20:-口-}{7:23}456789                                               |
+      1{7:2}{20:口}{7:345}6789                                                 |
       1^2{7:34567}89                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]]}
@@ -2959,8 +2969,8 @@ bbbbbbb]])
     screen:expect{grid=[[
       12{7:34567}89                                                   |
       1{10:-}{20:口-}{7:23}456789                                               |
+      12{20:口}{7:345}6789                                                 |
       12^3{7:4567}89                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]]}
@@ -2968,8 +2978,8 @@ bbbbbbb]])
     screen:expect{grid=[[
       123{7:4567}89                                                   |
       1{10:-}{20:口-}{7:23}456789                                               |
+      12{20:口}{7:345}6789                                                 |
       123^4{7:567}89                                                   |
-      {1:~                                                           }|
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
     ]]}

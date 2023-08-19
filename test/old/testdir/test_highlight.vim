@@ -698,10 +698,9 @@ func Test_colorcolumn_sbr()
   let lines =<< trim END
 	call setline(1, 'The quick brown fox jumped over the lazy dogs')
   END
-  call writefile(lines, 'Xtest_colorcolumn_srb', 'D')
-  let buf = RunVimInTerminal('-S Xtest_colorcolumn_srb', {'rows': 10,'columns': 40})
+  call writefile(lines, 'Xtest_colorcolumn_sbr', 'D')
+  let buf = RunVimInTerminal('-S Xtest_colorcolumn_sbr', {'rows': 10,'columns': 40})
   call term_sendkeys(buf, ":set co=40 showbreak=+++>\\  cc=40,41,43\<CR>")
-  call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_colorcolumn_3', {})
 
   " clean up

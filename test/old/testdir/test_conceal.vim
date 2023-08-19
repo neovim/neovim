@@ -345,6 +345,10 @@ func Test_conceal_mouse_click()
   redraw
   call assert_equal(['conceal  click here '], ScreenLines(1, 20))
 
+  " click on the space between "this" and "click" puts cursor there
+  call Ntest_setmouse(1, 9)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 13, 0, 13], getcurpos())
   " click on 'h' of "here" puts cursor there
   call Ntest_setmouse(1, 16)
   call feedkeys("\<LeftMouse>", "tx")
@@ -371,7 +375,11 @@ func Test_conceal_mouse_click()
   call assert_equal([0, 1, 23, 0, 36], getcurpos())
 
   set virtualedit=all
-  redraw  " Nvim: redraw_for_cursorcolumn() redraws for conceal
+  redraw
+  " click on the space between "this" and "click" puts cursor there
+  call Ntest_setmouse(1, 9)
+  call feedkeys("\<LeftMouse>", "tx")
+  call assert_equal([0, 1, 13, 0, 13], getcurpos())
   " click on 'h' of "here" puts cursor there
   call Ntest_setmouse(1, 16)
   call feedkeys("\<LeftMouse>", "tx")
