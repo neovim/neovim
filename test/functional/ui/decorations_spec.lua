@@ -103,7 +103,7 @@ describe('decorations providers', function()
     ]]}
     check_trace {
       { "start", 4 };
-      { "win", 1000, 1, 0, 8 };
+      { "win", 1000, 1, 0, 6 };
       { "line", 1000, 1, 0 };
       { "line", 1000, 1, 1 };
       { "line", 1000, 1, 2 };
@@ -128,7 +128,7 @@ describe('decorations providers', function()
     check_trace {
       { "start", 5 };
       { "buf", 1, 5 };
-      { "win", 1000, 1, 0, 8 };
+      { "win", 1000, 1, 0, 6 };
       { "line", 1000, 1, 6 };
       { "end", 5 };
     }
@@ -195,7 +195,7 @@ describe('decorations providers', function()
 
     check_trace {
       { "start", 5 };
-      { "win", 1000, 1, 0, 5 };
+      { "win", 1000, 1, 0, 3 };
       { "line", 1000, 1, 0 };
       { "line", 1000, 1, 1 };
       { "line", 1000, 1, 2 };

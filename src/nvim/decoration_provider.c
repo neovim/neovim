@@ -126,9 +126,10 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
 {
   kvi_init(*line_providers);
 
-  linenr_T knownmax = ((wp->w_valid & VALID_BOTLINE)
-                       ? wp->w_botline
-                       : (wp->w_topline + wp->w_height_inner));
+  linenr_T knownmax = MIN(wp->w_buffer->b_ml.ml_line_count,
+                          ((wp->w_valid & VALID_BOTLINE)
+                           ? wp->w_botline
+                           : MAX(wp->w_topline + wp->w_height_inner, wp->w_botline)));
 
   for (size_t k = 0; k < kv_size(*providers); k++) {
     DecorProvider *p = kv_A(*providers, k);
@@ -138,7 +139,7 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
       ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
       // TODO(bfredl): we are not using this, but should be first drawn line?
       ADD_C(args, INTEGER_OBJ(wp->w_topline - 1));
-      ADD_C(args, INTEGER_OBJ(knownmax));
+      ADD_C(args, INTEGER_OBJ(knownmax - 1));
       if (decor_provider_invoke(p, "win", p->redraw_win, args, true)) {
         kvi_push(*line_providers, p);
       }
