@@ -3148,4 +3148,21 @@ func Test_delfunc_while_listing()
   call StopVimInTerminal(buf)
 endfunc
 
+" Test for the reverse() function with a string
+func Test_string_reverse()
+  call assert_equal('', reverse(v:_null_string))
+  for [s1, s2] in [['', ''], ['a', 'a'], ['ab', 'ba'], ['abc', 'cba'],
+        \ ['abcd', 'dcba'], ['«-«-»-»', '»-»-«-«'],
+        \ ['🇦', '🇦'], ['🇦🇧', '🇧🇦'], ['🇦🇧🇨', '🇨🇧🇦'],
+        \ ['🇦«🇧-🇨»🇩', '🇩»🇨-🇧«🇦']]
+    call assert_equal(s2, reverse(s1))
+  endfor
+
+  " test in latin1 encoding
+  let save_enc = &encoding
+  " set encoding=latin1
+  call assert_equal('dcba', reverse('abcd'))
+  let &encoding = save_enc
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -626,6 +626,7 @@ String manipulation:					*string-functions*
 	strdisplaywidth()	size of string when displayed, deals with tabs
 	setcellwidths()		set character cell width overrides
 	getcellwidths()		get character cell width overrides
+	reverse()		reverse the order of characters in a string
 	substitute()		substitute a pattern match with a string
 	submatch()		get a specific match in ":s" and substitute()
 	strpart()		get part of a string using byte index
@@ -664,7 +665,7 @@ List manipulation:					*list-functions*
 	reduce()		reduce a List to a value
 	slice()			take a slice of a List
 	sort()			sort a List
-	reverse()		reverse the order of a List or Blob
+	reverse()		reverse the order of items in a List
 	uniq()			remove copies of repeated adjacent items
 	split()			split a String into a List
 	join()			join List items into a String
@@ -731,6 +732,7 @@ Floating point computation:				*float-functions*
 Blob manipulation:					*blob-functions*
 	blob2list()		get a list of numbers from a blob
 	list2blob()		get a blob from a list of numbers
+	reverse()		reverse the order of numbers in a blob
 
 Other computation:					*bitwise-function*
 	and()			bitwise AND
