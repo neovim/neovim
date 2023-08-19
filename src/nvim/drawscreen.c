@@ -2112,7 +2112,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
               new_rows++;
             } else if (l == wp->w_topline) {
               int n = plines_win_nofill(wp, l, false) + wp->w_topfill;
-              n = adjust_plines_for_skipcol(wp, n);
+              n -= adjust_plines_for_skipcol(wp);
               if (n > wp->w_height_inner) {
                 n = wp->w_height_inner;
               }
