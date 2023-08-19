@@ -81,6 +81,8 @@ static const char e_blob_required_for_argument_nr[]
   = N_("E1238: Blob required for argument %d");
 static const char e_invalid_value_for_blob_nr[]
   = N_("E1239: Invalid value for blob: %d");
+static const char e_string_list_or_blob_required_for_argument_nr[]
+  = N_("E1252: String, List or Blob required for argument %d");
 static const char e_string_or_function_required_for_argument_nr[]
   = N_("E1256: String or function required for argument %d");
 static const char e_non_null_dict_required_for_argument_nr[]
@@ -4350,7 +4352,20 @@ int tv_check_for_string_or_list_arg(const typval_T *const args, const int idx)
   return OK;
 }
 
-/// Check for an optional string or list argument at 'idx'
+/// Give an error and return FAIL unless "args[idx]" is a string, a list or a blob.
+int tv_check_for_string_or_list_or_blob_arg(const typval_T *const args, const int idx)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
+{
+  if (args[idx].v_type != VAR_STRING
+      && args[idx].v_type != VAR_LIST
+      && args[idx].v_type != VAR_BLOB) {
+    semsg(_(e_string_list_or_blob_required_for_argument_nr), idx + 1);
+    return FAIL;
+  }
+  return OK;
+}
+
+/// Check for an optional string or list argument at "idx"
 int tv_check_for_opt_string_or_list_arg(const typval_T *const args, const int idx)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {

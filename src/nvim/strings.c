@@ -2168,20 +2168,17 @@ int kv_do_printf(StringBuilder *str, const char *fmt, ...)
 ///
 /// @return  the allocated string.
 char *reverse_text(char *s)
-  FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  // Reverse the pattern.
   size_t len = strlen(s);
   char *rev = xmalloc(len + 1);
-  size_t rev_i = len;
-  for (size_t s_i = 0; s_i < len; s_i++) {
+  for (size_t s_i = 0, rev_i = len; s_i < len; s_i++) {
     const int mb_len = utfc_ptr2len(s + s_i);
     rev_i -= (size_t)mb_len;
     memmove(rev + rev_i, s + s_i, (size_t)mb_len);
     s_i += (size_t)mb_len - 1;
   }
   rev[len] = NUL;
-
   return rev;
 }
 
