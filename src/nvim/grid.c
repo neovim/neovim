@@ -634,7 +634,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
 
     grid->vcols[off_to] = linebuf_vcol[off_from];
     if (char_cells == 2) {
-      grid->vcols[off_to + 1] = linebuf_vcol[off_from];
+      grid->vcols[off_to + 1] = linebuf_vcol[off_from + 1];
     }
 
     off_to += (size_t)char_cells;
