@@ -57,26 +57,19 @@ typedef struct {
 # include "move.c.generated.h"
 #endif
 
-/// Reduce "n" for the screen lines skipped with "wp->w_skipcol".
-int adjust_plines_for_skipcol(win_T *wp, int n)
+/// Get the number of screen lines skipped with "wp->w_skipcol".
+int adjust_plines_for_skipcol(win_T *wp)
 {
   if (wp->w_skipcol == 0) {
-    return n;
+    return 0;
   }
 
-  int off = 0;
   int width = wp->w_width_inner - win_col_off(wp);
   if (wp->w_skipcol >= width) {
-    off++;
-    int skip = wp->w_skipcol - width;
-    width += win_col_off2(wp);
-    while (skip >= width) {
-      off++;
-      skip -= width;
-    }
+    return (wp->w_skipcol - width) / (width + win_col_off2(wp)) + 1;
   }
-  wp->w_valid &= ~VALID_WROW;
-  return n - off;
+
+  return 0;
 }
 
 /// Return how many lines "lnum" will take on the screen, taking into account
@@ -86,7 +79,7 @@ static int plines_correct_topline(win_T *wp, linenr_T lnum, linenr_T *nextp, boo
 {
   int n = plines_win_full(wp, lnum, nextp, foldedp, true, false);
   if (lnum == wp->w_topline) {
-    n = adjust_plines_for_skipcol(wp, n);
+    n -= adjust_plines_for_skipcol(wp);
   }
   if (n > wp->w_height_inner) {
     return wp->w_height_inner;
@@ -1075,17 +1068,17 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   linenr_T lnum = pos->lnum;
   if (lnum >= wp->w_topline && lnum <= wp->w_botline) {
     is_folded = hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
-    row = plines_m_win(wp, wp->w_topline, lnum - 1, false) + 1;
+    row = plines_m_win(wp, wp->w_topline, lnum - 1, false);
     // "row" should be the screen line where line "lnum" begins, which can
     // be negative if "lnum" is "w_topline" and "w_skipcol" is non-zero.
-    row = adjust_plines_for_skipcol(wp, row);
+    row -= adjust_plines_for_skipcol(wp);
     // Add filler lines above this buffer line.
     row += lnum == wp->w_topline ? wp->w_topfill : win_get_fill(wp, lnum);
     visible_row = true;
   } else if (!local || lnum < wp->w_topline) {
     row = 0;
   } else {
-    row = wp->w_height_inner;
+    row = wp->w_height_inner - 1;
   }
 
   bool existing_row = (lnum > 0 && lnum <= wp->w_buffer->b_ml.ml_line_count);
@@ -1093,7 +1086,7 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
   if ((local || visible_row) && existing_row) {
     const colnr_T off = win_col_off(wp);
     if (is_folded) {
-      row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
+      row += (local ? 0 : wp->w_winrow + wp->w_winrow_off) + 1;
       coloff = (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1 + off;
     } else {
       assert(lnum == pos->lnum);
@@ -1114,9 +1107,9 @@ void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp, int *ccolp,
 
       col -= wp->w_leftcol;
 
-      if (col >= 0 && col < wp->w_width_inner && row > 0 && row <= wp->w_height_inner) {
+      if (col >= 0 && col < wp->w_width_inner && row >= 0 && row < wp->w_height_inner) {
         coloff = col - scol + (local ? 0 : wp->w_wincol + wp->w_wincol_off) + 1;
-        row += local ? 0 : wp->w_winrow + wp->w_winrow_off;
+        row += (local ? 0 : wp->w_winrow + wp->w_winrow_off) + 1;
       } else {
         // character is left, right or below of the window
         scol = ccol = ecol = 0;
