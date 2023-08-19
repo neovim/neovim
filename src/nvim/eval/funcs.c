@@ -6199,6 +6199,10 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "reverse({list})" function
 static void f_reverse(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
+  if (tv_check_for_string_or_list_or_blob_arg(argvars, 0) == FAIL) {
+    return;
+  }
+
   if (argvars[0].v_type == VAR_BLOB) {
     blob_T *const b = argvars[0].vval.v_blob;
     const int len = tv_blob_len(b);
@@ -6216,9 +6220,7 @@ static void f_reverse(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     } else {
       rettv->vval.v_string = NULL;
     }
-  } else if (argvars[0].v_type != VAR_LIST) {
-    semsg(_(e_listblobarg), "reverse()");
-  } else {
+  } else if (argvars[0].v_type == VAR_LIST) {
     list_T *const l = argvars[0].vval.v_list;
     if (!value_check_lock(tv_list_locked(l), N_("reverse() argument"),
                           TV_TRANSLATE)) {
