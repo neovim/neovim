@@ -4117,4 +4117,26 @@ func Test_normal_click_on_double_width_char()
   let &mouse = save_mouse
 endfunc
 
+func Test_normal33_g_cmd_nonblank()
+  " Test that g<End> goes to the last non-blank char and g$ to the last
+  " visible column
+  20vnew
+  setlocal nowrap nonumber signcolumn=no
+  call setline(1, ['fooo   fooo         fooo   fooo         fooo   fooo         fooo   fooo        '])
+  exe "normal 0g\<End>"
+  call assert_equal(11, col('.'))
+  normal 0g$
+  call assert_equal(20, col('.'))
+  exe "normal 0g\<kEnd>"
+  call assert_equal(11, col('.'))
+  setlocal wrap
+  exe "normal 0g\<End>"
+  call assert_equal(11, col('.'))
+  normal 0g$
+  call assert_equal(20, col('.'))
+  exe "normal 0g\<kEnd>"
+  call assert_equal(11, col('.'))
+  bw!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

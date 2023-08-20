@@ -5284,7 +5284,7 @@ static void nv_g_home_m_cmd(cmdarg_T *cap)
   if (flag) {
     do {
       i = gchar_cursor();
-    } while (ascii_iswhite(i) && oneright());
+    } while (ascii_iswhite(i) && oneright() == OK);
     curwin->w_valid &= ~VALID_WCOL;
   }
   curwin->w_set_curswant = true;
@@ -5323,6 +5323,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
   oparg_T *oap = cap->oap;
   int i;
   int col_off = curwin_col_off();
+  const bool flag = cap->nchar == K_END || cap->nchar == K_KEND;
 
   oap->motion_type = kMTCharWise;
   oap->inclusive = true;
@@ -5372,6 +5373,12 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
 
     // Make sure we stick in this column.
     update_curswant_force();
+  }
+  if (flag) {
+    do {
+      i = gchar_cursor();
+    } while (ascii_iswhite(i) && oneleft() == OK);
+    curwin->w_valid &= ~VALID_WCOL;
   }
 }
 

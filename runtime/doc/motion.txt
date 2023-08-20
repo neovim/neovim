@@ -233,8 +233,8 @@ gM			Like "g0", but to halfway the text of the line.
 			Thus "10gM" is near the start of the text and "90gM"
 			is near the end of the text.
 
-							*g$* *g<End>*
-g$ or g<End>		When lines wrap ('wrap' on): To the last character of
+							*g$*
+g$			When lines wrap ('wrap' on): To the last character of
 			the screen line and [count - 1] screen lines downward
 			|inclusive|.  Differs from "$" when a line is wider
 			than the screen.
@@ -246,6 +246,10 @@ g$ or g<End>		When lines wrap ('wrap' on): To the last character of
 			instead of going to the end of the line.
 			When 'virtualedit' is enabled moves to the end of the
 			screen line.
+
+							*g<End>* *g<kEnd>*
+g<End>			Like |g$| but to the last non-blank character
+			instead of the last character.
 
 							*bar*
 |			To screen column [count] in the current line.
