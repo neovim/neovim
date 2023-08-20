@@ -2785,9 +2785,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       wlv.char_attr = hl_combine_attr(wlv.line_attr_lowprio, wlv.char_attr);
     }
 
+    if (wlv.draw_state == WL_LINE) {
+      vcol_prev = wlv.vcol;
+    }
+
     // Store character to be displayed.
     // Skip characters that are left of the screen for 'nowrap'.
-    vcol_prev = wlv.vcol;
     if (wlv.draw_state < WL_LINE || n_skip <= 0) {
       //
       // Store the character.
