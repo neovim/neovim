@@ -3582,7 +3582,9 @@ M.funcs = {
       color		color schemes
       command		Ex command
       compiler	compilers
-      diff_buffer     |:diffget| and |:diffput| completion
+      custom,{func}	custom completion, defined via {func}
+      customlist,{func} custom completion, defined via {func}
+      diff_buffer	|:diffget| and |:diffput| completion
       dir		directory names
       environment	environment variable names
       event		autocommand events

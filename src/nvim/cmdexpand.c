@@ -3515,10 +3515,32 @@ void f_getcompletion(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   ExpandInit(&xpc);
   xpc.xp_pattern = (char *)pattern;
   xpc.xp_pattern_len = strlen(xpc.xp_pattern);
+  xpc.xp_line = (char *)pattern;
+
   xpc.xp_context = cmdcomplete_str_to_type(type);
   if (xpc.xp_context == EXPAND_NOTHING) {
     semsg(_(e_invarg2), type);
     return;
+  }
+
+  if (xpc.xp_context == EXPAND_USER_DEFINED) {
+    // Must be "custom,funcname" pattern
+    if (strncmp(type, "custom,", 7) != 0) {
+      semsg(_(e_invarg2), type);
+      return;
+    }
+
+    xpc.xp_arg = (char *)(type + 7);
+  }
+
+  if (xpc.xp_context == EXPAND_USER_LIST) {
+    // Must be "customlist,funcname" pattern
+    if (strncmp(type, "customlist,", 11) != 0) {
+      semsg(_(e_invarg2), type);
+      return;
+    }
+
+    xpc.xp_arg = (char *)(type + 11);
   }
 
   if (xpc.xp_context == EXPAND_MENUS) {
