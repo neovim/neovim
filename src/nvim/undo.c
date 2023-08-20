@@ -3171,10 +3171,13 @@ void f_undofile(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "undotree(expr)" function
 void f_undotree(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  typval_T *const tv = &argvars[0];
-  buf_T *const buf = tv->v_type == VAR_UNKNOWN ? curbuf : tv_get_buf_from_arg(tv);
-
   tv_dict_alloc_ret(rettv);
+
+  typval_T *const tv = &argvars[0];
+  buf_T *const buf = tv->v_type == VAR_UNKNOWN ? curbuf : get_buf_arg(tv);
+  if (buf == NULL) {
+    return;
+  }
 
   dict_T *dict = rettv->vval.v_dict;
 
