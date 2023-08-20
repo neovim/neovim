@@ -43,6 +43,61 @@ describe('splitkeep', function()
     screen:attach()
   end)
 
+  -- oldtest: Test_splitkeep_cursor()
+  it('does not adjust cursor in window that did not change size', function()
+    screen:try_resize(75, 8)
+    -- FIXME: bottom window is different without the "vsplit | close"
+    exec([[
+      vsplit | close
+      set scrolloff=5
+      set splitkeep=screen
+      autocmd CursorMoved * wincmd p | wincmd p
+      call setline(1, range(1, 200))
+      func CursorEqualize()
+        call cursor(100, 1)
+        wincmd =
+      endfunc
+      wincmd s
+      call CursorEqualize()
+    ]])
+
+    screen:expect([[
+      99                                                                         |
+      ^100                                                                        |
+      101                                                                        |
+      [No Name] [+]                                                              |
+      5                                                                          |
+      6                                                                          |
+      [No Name] [+]                                                              |
+                                                                                 |
+    ]])
+
+    feed('j')
+    screen:expect([[
+      100                                                                        |
+      ^101                                                                        |
+      102                                                                        |
+      [No Name] [+]                                                              |
+      5                                                                          |
+      6                                                                          |
+      [No Name] [+]                                                              |
+                                                                                 |
+    ]])
+
+    command('set scrolloff=0')
+    feed('G')
+    screen:expect([[
+      198                                                                        |
+      199                                                                        |
+      ^200                                                                        |
+      [No Name] [+]                                                              |
+      5                                                                          |
+      6                                                                          |
+      [No Name] [+]                                                              |
+                                                                                 |
+    ]])
+  end)
+
   -- oldtest: Test_splitkeep_callback()
   it('does not scroll when split in callback', function()
     exec([[
