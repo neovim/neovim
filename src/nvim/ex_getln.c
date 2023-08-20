@@ -4165,11 +4165,19 @@ static char *get_cmdline_completion(void)
   }
 
   char *cmd_compl = get_user_cmd_complete(p->xpc, p->xpc->xp_context);
-  if (cmd_compl != NULL) {
-    return xstrdup(cmd_compl);
+  if (cmd_compl == NULL) {
+    return NULL;
   }
 
-  return NULL;
+  if (p->xpc->xp_context == EXPAND_USER_LIST
+      || p->xpc->xp_context == EXPAND_USER_DEFINED) {
+    size_t buflen = strlen(cmd_compl) + strlen(p->xpc->xp_arg) + 2;
+    char *buffer = xmalloc(buflen);
+    snprintf(buffer, buflen, "%s,%s", cmd_compl, p->xpc->xp_arg);
+    return buffer;
+  }
+
+  return xstrdup(cmd_compl);
 }
 
 /// "getcmdcompltype()" function
