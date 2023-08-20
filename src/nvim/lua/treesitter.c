@@ -483,7 +483,7 @@ static int parser_parse(lua_State *L)
   uint32_t n_ranges = 0;
   TSRange *changed = old_tree ? ts_tree_get_changed_ranges(old_tree, new_tree, &n_ranges) : NULL;
 
-  push_tree(L, new_tree, false);  // [tree]
+  push_tree(L, new_tree, true);  // [tree]
 
   push_ranges(L, changed, n_ranges, include_bytes);  // [tree, ranges]
 
@@ -508,7 +508,8 @@ static int tree_copy(lua_State *L)
     return 0;
   }
 
-  push_tree(L, ud->tree, true);  // [tree]
+  TSTree *copy = ts_tree_copy(ud->tree);
+  push_tree(L, copy, true);  // [tree]
 
   return 1;
 }
@@ -778,8 +779,8 @@ static int parser_get_logger(lua_State *L)
 
 /// push tree interface on lua stack.
 ///
-/// This makes a copy of the tree, so ownership of the argument is unaffected.
-void push_tree(lua_State *L, TSTree *tree, bool do_copy)
+/// The tree is garbage collected if gc is true
+void push_tree(lua_State *L, TSTree *tree, bool gc)
 {
   if (tree == NULL) {
     lua_pushnil(L);
@@ -787,13 +788,8 @@ void push_tree(lua_State *L, TSTree *tree, bool do_copy)
   }
   TSLuaTree *ud = lua_newuserdata(L, sizeof(TSLuaTree));  // [udata]
 
-  if (do_copy) {
-    ud->tree = ts_tree_copy(tree);
-    ud->gc = true;
-  } else {
-    ud->tree = tree;
-    ud->gc = false;
-  }
+  ud->tree = tree;
+  ud->gc = gc;
 
   lua_getfield(L, LUA_REGISTRYINDEX, TS_META_TREE);  // [udata, meta]
   lua_setmetatable(L, -2);  // [udata]
