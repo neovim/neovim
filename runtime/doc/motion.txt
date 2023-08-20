@@ -246,7 +246,8 @@ g$			When lines wrap ('wrap' on): To the last character of
 			instead of going to the end of the line.
 			When 'virtualedit' is enabled moves to the end of the
 			screen line.
-							*g<End>*
+
+							*g<End>* *g<kEnd>*
 g<End>			Like |g$| but to the last non-blank character
 			instead of the last character.
 

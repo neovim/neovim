@@ -5323,7 +5323,7 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
   oparg_T *oap = cap->oap;
   int i;
   int col_off = curwin_col_off();
-  const bool flag = cap->nchar == K_END;
+  const bool flag = cap->nchar == K_END || cap->nchar == K_KEND;
 
   oap->motion_type = kMTCharWise;
   oap->inclusive = true;
