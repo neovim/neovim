@@ -299,7 +299,9 @@ local function on_changedtree(bufnr, foldinfo, tree_changes)
       local srow, _, erow = Range.unpack4(change)
       get_folds_levels(bufnr, foldinfo, srow, erow)
     end
-    foldupdate(bufnr)
+    if #tree_changes > 0 then
+      foldupdate(bufnr)
+    end
   end)
 end
 
