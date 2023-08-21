@@ -2568,6 +2568,17 @@ endfunc
 func Test_state()
   CheckRunVimInTerminal
 
+  " In the first run try a short wait time.  If the test fails retry with a
+  " longer wait time.
+  if g:run_nr == 1
+    let wait_time = 50
+  elseif g:run_nr == 2
+    let wait_time = 200
+  else
+    let wait_time = 500
+  endif
+  let getstate = ":echo 'state: ' .. g:state .. '; mode: ' .. g:mode\<CR>"
+
   let lines =<< trim END
 	call setline(1, ['one', 'two', 'three'])
 	map ;; gg
@@ -2587,28 +2598,27 @@ func Test_state()
 
   " Using a timer callback
   call term_sendkeys(buf, ":call RunTimer()\<CR>")
-  call term_wait(buf, 50)
-  let getstate = ":echo 'state: ' .. g:state .. '; mode: ' .. g:mode\<CR>"
+  call term_wait(buf, wait_time)
   call term_sendkeys(buf, getstate)
   call WaitForAssert({-> assert_match('state: c; mode: n', term_getline(buf, 6))}, 1000)
 
   " Halfway a mapping
   call term_sendkeys(buf, ":call RunTimer()\<CR>;")
-  call term_wait(buf, 50)
+  call term_wait(buf, wait_time)
   call term_sendkeys(buf, ";")
   call term_sendkeys(buf, getstate)
   call WaitForAssert({-> assert_match('state: mSc; mode: n', term_getline(buf, 6))}, 1000)
 
   " Insert mode completion (bit slower on Mac)
   call term_sendkeys(buf, ":call RunTimer()\<CR>Got\<C-N>")
-  call term_wait(buf, 200)
+  call term_wait(buf, wait_time)
   call term_sendkeys(buf, "\<Esc>")
   call term_sendkeys(buf, getstate)
   call WaitForAssert({-> assert_match('state: aSc; mode: i', term_getline(buf, 6))}, 1000)
 
   " Autocommand executing
   call term_sendkeys(buf, ":set filetype=foobar\<CR>")
-  call term_wait(buf, 50)
+  call term_wait(buf, wait_time)
   call term_sendkeys(buf, getstate)
   call WaitForAssert({-> assert_match('state: xS; mode: n', term_getline(buf, 6))}, 1000)
 
@@ -2616,7 +2626,7 @@ func Test_state()
 
   " messages scrolled
   call term_sendkeys(buf, ":call RunTimer()\<CR>:echo \"one\\ntwo\\nthree\"\<CR>")
-  call term_wait(buf, 50)
+  call term_wait(buf, wait_time)
   call term_sendkeys(buf, "\<CR>")
   call term_sendkeys(buf, getstate)
   call WaitForAssert({-> assert_match('state: Scs; mode: r', term_getline(buf, 6))}, 1000)
