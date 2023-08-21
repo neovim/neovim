@@ -8749,27 +8749,30 @@ function vim.fn.srand(expr) end
 --- current state.  Mostly useful in callbacks that want to do
 --- work that may not always be safe.  Roughly this works like:
 --- - callback uses state() to check if work is safe to do.
----   If yes, then do it right away.
----   Otherwise add to work queue and add SafeState autocommand.
---- - When SafeState is triggered, check with state() if the work
----   can be done now, and if yes remove it from the queue and
----   execute.
+---   Yes: then do it right away.
+---   No:  add to work queue and add a |SafeState| autocommand.
+--- - When SafeState is triggered and executes your autocommand,
+---   check with `state()` if the work can be done now, and if yes
+---   remove it from the queue and execute.
+---   Remove the autocommand if the queue is now empty.
 --- Also see |mode()|.
 ---
 --- When {what} is given only characters in this string will be
 --- added.  E.g, this checks if the screen has scrolled: >vim
----   if state('s') != ''
+---   if state('s') == ''
+---      " screen has not scrolled
 ---
 --- These characters indicate the state, generally indicating that
 --- something is busy:
 ---     m  halfway a mapping, :normal command, feedkeys() or
----        stuffed command
----     o  operator pending or waiting for a command argument
+---   stuffed command
+---     o  operator pending or waiting for a command argument,
+---   e.g. after |f|
 ---     a  Insert mode autocomplete active
 ---     x  executing an autocommand
 ---     S  not triggering SafeState
 ---     c  callback invoked, including timer (repeats for
----        recursiveness up to "ccc")
+---   recursiveness up to "ccc")
 ---     s  screen has scrolled for messages
 ---
 --- @param what? string
