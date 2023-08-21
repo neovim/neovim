@@ -1805,6 +1805,33 @@ func Test_splitkeep_misc()
   set splitkeep&
 endfunc
 
+func Test_splitkeep_cursor()
+  CheckScreendump
+  let lines =<< trim END
+    set splitkeep=screen
+    autocmd CursorMoved * wincmd p | wincmd p
+    call setline(1, range(1, 200))
+    func CursorEqualize()
+      call cursor(100, 1)
+      wincmd =
+    endfunc
+    wincmd s
+    call CursorEqualize()
+  END
+  call writefile(lines, 'XTestSplitkeepCallback', 'D')
+  let buf = RunVimInTerminal('-S XTestSplitkeepCallback', #{rows: 8})
+
+  call VerifyScreenDump(buf, 'Test_splitkeep_cursor_1', {})
+
+  call term_sendkeys(buf, "j")
+  call VerifyScreenDump(buf, 'Test_splitkeep_cursor_2', {})
+
+  call term_sendkeys(buf, ":set scrolloff=0\<CR>G")
+  call VerifyScreenDump(buf, 'Test_splitkeep_cursor_3', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_splitkeep_callback()
   CheckScreendump
   let lines =<< trim END

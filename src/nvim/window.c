@@ -6465,6 +6465,10 @@ void win_fix_scroll(int resize)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     // Skip when window height has not changed or when floating.
     if (!wp->w_floating && wp->w_height != wp->w_prev_height) {
+      // Cursor position in this window may now be invalid.  It is kept
+      // potentially invalid until the window is made the current window.
+      wp->w_do_win_fix_cursor = true;
+
       // If window has moved update botline to keep the same screenlines.
       if (*p_spk == 's' && wp->w_winrow != wp->w_prev_winrow
           && wp->w_botline - 1 <= wp->w_buffer->b_ml.ml_line_count) {
@@ -6488,6 +6492,7 @@ void win_fix_scroll(int resize)
       } else if (wp == curwin) {
         wp->w_valid &= ~VALID_CROW;
       }
+
       invalidate_botline_win(wp);
       validate_botline(wp);
     }
@@ -6505,16 +6510,19 @@ void win_fix_scroll(int resize)
 
 /// Make sure the cursor position is valid for 'splitkeep'.
 /// If it is not, put the cursor position in the jumplist and move it.
-/// If we are not in normal mode ("normal" is zero), make it valid by scrolling
+/// If we are not in normal mode ("normal" is false), make it valid by scrolling
 /// instead.
-static void win_fix_cursor(int normal)
+static void win_fix_cursor(bool normal)
 {
   win_T *wp = curwin;
 
-  if (skip_win_fix_cursor || wp->w_buffer->b_ml.ml_line_count < wp->w_height) {
+  if (skip_win_fix_cursor
+      || !wp->w_do_win_fix_cursor
+      || wp->w_buffer->b_ml.ml_line_count < wp->w_height_inner) {
     return;
   }
 
+  wp->w_do_win_fix_cursor = false;
   // Determine valid cursor range.
   int so = MIN(wp->w_height_inner / 2, get_scrolloff_value(wp));
   linenr_T lnum = wp->w_cursor.lnum;
@@ -6533,7 +6541,7 @@ static void win_fix_cursor(int normal)
   if (lnum > bot && (wp->w_botline - wp->w_buffer->b_ml.ml_line_count) != 1) {
     nlnum = bot;
   } else if (lnum < top && wp->w_topline != 1) {
-    nlnum = (so == wp->w_height / 2) ? bot : top;
+    nlnum = (so == wp->w_height_inner / 2) ? bot : top;
   }
 
   if (nlnum != 0) {  // Cursor is invalid for current scroll position.
