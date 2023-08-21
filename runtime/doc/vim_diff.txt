@@ -619,6 +619,7 @@ Eval:
   *v:sizeofpointer*
 
 Events:
+  *SafeStateAgain*
   *SigUSR1* Use |Signal| to detect `SIGUSR1` signal instead.
 
 Highlight groups:

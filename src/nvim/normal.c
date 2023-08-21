@@ -482,6 +482,20 @@ bool check_text_or_curbuf_locked(oparg_T *oap)
   return true;
 }
 
+static oparg_T *current_oap = NULL;
+
+/// Check if an operator was started but not finished yet.
+/// Includes typing a count or a register name.
+bool op_pending(void)
+{
+  return !(current_oap != NULL
+           && !finish_op
+           && current_oap->prev_opcount == 0
+           && current_oap->prev_count0 == 0
+           && current_oap->op_type == OP_NOP
+           && current_oap->regname == NUL);
+}
+
 /// Normal state entry point. This is called on:
 ///
 /// - Startup, In this case the function never returns.
@@ -490,15 +504,18 @@ bool check_text_or_curbuf_locked(oparg_T *oap)
 ///   for example. Returns when re-entering ex mode(because ex mode recursion is
 ///   not allowed)
 ///
-/// This used to be called main_loop on main.c
+/// This used to be called main_loop() on main.c
 void normal_enter(bool cmdwin, bool noexmode)
 {
   NormalState state;
   normal_state_init(&state);
+  oparg_T *prev_oap = current_oap;
+  current_oap = &state.oa;
   state.cmdwin = cmdwin;
   state.noexmode = noexmode;
   state.toplevel = (!cmdwin || cmdwin_result == 0) && !noexmode;
   state_enter(&state.state);
+  current_oap = prev_oap;
 }
 
 static void normal_prepare(NormalState *s)
@@ -1295,6 +1312,13 @@ static void normal_check_buffer_modified(NormalState *s)
   }
 }
 
+/// If nothing is pending and we are going to wait for the user to
+/// type a character, trigger SafeState.
+static void normal_check_safe_state(NormalState *s)
+{
+  may_trigger_safestate(!op_pending() && restart_edit == 0);
+}
+
 static void normal_check_folds(NormalState *s)
 {
   // Include a closed fold completely in the Visual area.
@@ -1387,6 +1411,9 @@ static int normal_check(VimState *state)
   }
   quit_more = false;
 
+  // it's not safe unless normal_check_safe_state() is called
+  state_no_longer_safe(NULL);
+
   // If skip redraw is set (for ":" in wait_return()), don't redraw now.
   // If there is nothing in the stuff_buffer or do_redraw is true,
   // update cursor and redraw.
@@ -1403,6 +1430,7 @@ static int normal_check(VimState *state)
     normal_check_text_changed(s);
     normal_check_window_scrolled(s);
     normal_check_buffer_modified(s);
+    normal_check_safe_state(s);
 
     // Updating diffs from changed() does not always work properly,
     // esp. updating folds.  Do an update just before redrawing if

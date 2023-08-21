@@ -6917,6 +6917,7 @@ M.funcs = {
       If [expr] is supplied and it evaluates to a non-zero Number or
       a non-empty String (|non-zero-arg|), then the full mode is
       returned, otherwise only the first letter is returned.
+      Also see |state()|.
 
          n	    Normal
          no	    Operator-pending
@@ -10450,6 +10451,42 @@ M.funcs = {
     name = 'stdpath',
     params = { { 'what', 'any' } },
     signature = 'stdpath({what})',
+  },
+  state = {
+    args = {0, 1},
+    base = 1,
+    desc = [=[
+      Return a string which contains characters indicating the
+      current state.  Mostly useful in callbacks that want to do
+      work that may not always be safe.  Roughly this works like:
+      - callback uses state() to check if work is safe to do.
+        If yes, then do it right away.
+        Otherwise add to work queue and add SafeState autocommand.
+      - When SafeState is triggered, check with state() if the work
+        can be done now, and if yes remove it from the queue and
+        execute.
+      Also see |mode()|.
+
+      When {what} is given only characters in this string will be
+      added.  E.g, this checks if the screen has scrolled: >vim
+      	if state('s') != ''
+
+      These characters indicate the state, generally indicating that
+      something is busy:
+          m  halfway a mapping, :normal command, feedkeys() or
+             stuffed command
+          o  operator pending or waiting for a command argument
+          a  Insert mode autocomplete active
+          x  executing an autocommand
+          S  not triggering SafeState
+          c  callback invoked, including timer (repeats for
+             recursiveness up to "ccc")
+          s  screen has scrolled for messages
+    ]=],
+    fast = true,
+    name = 'state',
+    params = { { 'what', 'string' } },
+    signature = 'state([{what}])',
   },
   str2float = {
     args = 1,

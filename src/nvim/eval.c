@@ -5994,6 +5994,13 @@ bool callback_from_typval(Callback *const callback, const typval_T *const arg)
   return true;
 }
 
+static int callback_depth = 0;
+
+int get_callback_depth(void)
+{
+  return callback_depth;
+}
+
 /// @return  whether the callback could be called.
 bool callback_call(Callback *const callback, const int argcount_in, typval_T *const argvars_in,
                    typval_T *const rettv)
@@ -6041,7 +6048,11 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   funcexe.fe_lastline = curwin->w_cursor.lnum;
   funcexe.fe_evaluate = true;
   funcexe.fe_partial = partial;
-  return call_func(name, -1, rettv, argcount_in, argvars_in, &funcexe);
+
+  callback_depth++;
+  int ret = call_func(name, -1, rettv, argcount_in, argvars_in, &funcexe);
+  callback_depth--;
+  return ret;
 }
 
 bool set_ref_in_callback(Callback *callback, int copyID, ht_stack_T **ht_stack,

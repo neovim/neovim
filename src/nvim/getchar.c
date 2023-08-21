@@ -885,6 +885,7 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
   if (++typebuf.tb_change_cnt == 0) {
     typebuf.tb_change_cnt = 1;
   }
+  state_no_longer_safe("ins_typebuf()");
 
   addlen = (int)strlen(str);
 
@@ -1624,6 +1625,12 @@ int vgetc(void)
 
   // Execute Lua on_key callbacks.
   nlua_execute_on_key(c);
+
+  // Need to process the character before we know it's safe to do something
+  // else.
+  if (c != K_IGNORE) {
+    state_no_longer_safe("key typed");
+  }
 
   return c;
 }
