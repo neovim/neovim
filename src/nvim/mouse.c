@@ -1003,13 +1003,13 @@ void ins_mouse(int c)
 ///    K_MOUSERIGHT - MSCR_RIGHT
 /// "curwin" may have been changed to the window that should be scrolled and
 /// differ from the window that actually has focus.
-static void do_mousescroll(cmdarg_T *cap)
+void do_mousescroll(cmdarg_T *cap)
 {
   bool shift_or_ctrl = mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL);
 
   if (cap->arg == MSCR_UP || cap->arg == MSCR_DOWN) {
     // Vertical scrolling
-    if (!(State & MODE_INSERT) && shift_or_ctrl) {
+    if ((State & MODE_NORMAL) && shift_or_ctrl) {
       // whole page up or down
       (void)onepage(cap->arg ? FORWARD : BACKWARD, 1);
     } else {

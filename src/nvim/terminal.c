@@ -79,6 +79,7 @@
 #include "nvim/move.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/normal.h"
+#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/optionstr.h"
 #include "nvim/pos.h"
@@ -1456,17 +1457,37 @@ static bool send_mouse_event(Terminal *term, int c)
     return false;
   }
 
-  if (c == K_MOUSEDOWN || c == K_MOUSEUP) {
+  if (c == K_MOUSEUP || c == K_MOUSEDOWN || c == K_MOUSELEFT || c == K_MOUSERIGHT) {
     win_T *save_curwin = curwin;
     // switch window/buffer to perform the scroll
     curwin = mouse_win;
     curbuf = curwin->w_buffer;
-    int direction = c == K_MOUSEDOWN ? MSCR_DOWN : MSCR_UP;
-    if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-      scroll_redraw(direction, curwin->w_botline - curwin->w_topline);
-    } else if (p_mousescroll_vert > 0) {
-      scroll_redraw(direction, (linenr_T)p_mousescroll_vert);
+
+    cmdarg_T cap;
+    oparg_T oa;
+    CLEAR_FIELD(cap);
+    clear_oparg(&oa);
+    cap.oap = &oa;
+
+    switch (cap.cmdchar = c) {
+    case K_MOUSEUP:
+      cap.arg = MSCR_UP;
+      break;
+    case K_MOUSEDOWN:
+      cap.arg = MSCR_DOWN;
+      break;
+    case K_MOUSELEFT:
+      cap.arg = MSCR_LEFT;
+      break;
+    case K_MOUSERIGHT:
+      cap.arg = MSCR_RIGHT;
+      break;
+    default:
+      abort();
     }
+
+    // Call the common mouse scroll function shared with other modes.
+    do_mousescroll(&cap);
 
     curwin->w_redr_status = true;
     curwin = save_curwin;
