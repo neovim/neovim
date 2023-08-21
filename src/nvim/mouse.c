@@ -13,6 +13,7 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
+#include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -34,6 +35,7 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/plines.h"
+#include "nvim/popupmenu.h"
 #include "nvim/pos.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
@@ -959,6 +961,82 @@ popupexit:
   return moved;
 }
 
+void ins_mouse(int c)
+{
+  pos_T tpos;
+  win_T *old_curwin = curwin;
+
+  undisplay_dollar();
+  tpos = curwin->w_cursor;
+  if (do_mouse(NULL, c, BACKWARD, 1, 0)) {
+    win_T *new_curwin = curwin;
+
+    if (curwin != old_curwin && win_valid(old_curwin)) {
+      // Mouse took us to another window.  We need to go back to the
+      // previous one to stop insert there properly.
+      curwin = old_curwin;
+      curbuf = curwin->w_buffer;
+      if (bt_prompt(curbuf)) {
+        // Restart Insert mode when re-entering the prompt buffer.
+        curbuf->b_prompt_insert = 'A';
+      }
+    }
+    start_arrow(curwin == old_curwin ? &tpos : NULL);
+    if (curwin != new_curwin && win_valid(new_curwin)) {
+      curwin = new_curwin;
+      curbuf = curwin->w_buffer;
+    }
+    set_can_cindent(true);
+  }
+
+  // redraw status lines (in case another window became active)
+  redraw_statuslines();
+}
+
+void ins_mousescroll(int dir)
+{
+  win_T *const old_curwin = curwin;
+  pos_T tpos = curwin->w_cursor;
+
+  if (mouse_row >= 0 && mouse_col >= 0) {
+    int row = mouse_row, col = mouse_col, grid = mouse_grid;
+
+    // find the window at the pointer coordinates
+    win_T *wp = mouse_find_win(&grid, &row, &col);
+    if (wp == NULL) {
+      return;
+    }
+    curwin = wp;
+    curbuf = curwin->w_buffer;
+  }
+  if (curwin == old_curwin) {
+    undisplay_dollar();
+  }
+
+  // Don't scroll the window in which completion is being done.
+  if (!pum_visible() || curwin != old_curwin) {
+    if (dir == MSCR_DOWN || dir == MSCR_UP) {
+      if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
+        scroll_redraw(dir, curwin->w_botline - curwin->w_topline);
+      } else if (p_mousescroll_vert > 0) {
+        scroll_redraw(dir, (linenr_T)p_mousescroll_vert);
+      }
+    } else {
+      mouse_scroll_horiz(dir);
+    }
+  }
+
+  curwin->w_redr_status = true;
+
+  curwin = old_curwin;
+  curbuf = curwin->w_buffer;
+
+  if (!equalpos(curwin->w_cursor, tpos)) {
+    start_arrow(&tpos);
+    set_can_cindent(true);
+  }
+}
+
 /// Return true if "c" is a mouse key.
 bool is_mouse_key(int c)
 {
@@ -1378,6 +1456,57 @@ retnomove:
   return count;
 }
 
+/// Mouse scroll wheel: Default action is to scroll three lines, or one page
+/// when Shift or Ctrl is used.
+/// K_MOUSEUP (cap->arg == 1) or K_MOUSEDOWN (cap->arg == 0) or
+/// K_MOUSELEFT (cap->arg == -1) or K_MOUSERIGHT (cap->arg == -2)
+void nv_mousescroll(cmdarg_T *cap)
+{
+  win_T *old_curwin = curwin;
+
+  if (mouse_row >= 0 && mouse_col >= 0) {
+    int grid, row, col;
+
+    grid = mouse_grid;
+    row = mouse_row;
+    col = mouse_col;
+
+    // find the window at the pointer coordinates
+    win_T *wp = mouse_find_win(&grid, &row, &col);
+    if (wp == NULL) {
+      return;
+    }
+    curwin = wp;
+    curbuf = curwin->w_buffer;
+  }
+
+  if (cap->arg == MSCR_UP || cap->arg == MSCR_DOWN) {
+    if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
+      (void)onepage(cap->arg ? FORWARD : BACKWARD, 1);
+    } else if (p_mousescroll_vert > 0) {
+      cap->count1 = (int)p_mousescroll_vert;
+      cap->count0 = (int)p_mousescroll_vert;
+      nv_scroll_line(cap);
+    }
+  } else {
+    mouse_scroll_horiz(cap->arg);
+  }
+  if (curwin != old_curwin && curwin->w_p_cul) {
+    redraw_for_cursorline(curwin);
+  }
+
+  curwin->w_redr_status = true;
+
+  curwin = old_curwin;
+  curbuf = curwin->w_buffer;
+}
+
+/// Mouse clicks and drags.
+void nv_mouse(cmdarg_T *cap)
+{
+  (void)do_mouse(cap->oap, cap->cmdchar, BACKWARD, cap->count1, 0);
+}
+
 /// Compute the position in the buffer line from the posn on the screen in
 /// window "win".
 /// Returns true if the position is below the last line.
@@ -1742,4 +1871,45 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
   } else if (mouse_char != ' ') {
     *flagsp |= MOUSE_FOLD_CLOSE;
   }
+}
+
+/// "getmousepos()" function
+void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  int row = mouse_row;
+  int col = mouse_col;
+  int grid = mouse_grid;
+  varnumber_T winid = 0;
+  varnumber_T winrow = 0;
+  varnumber_T wincol = 0;
+  linenr_T lnum = 0;
+  varnumber_T column = 0;
+
+  tv_dict_alloc_ret(rettv);
+  dict_T *d = rettv->vval.v_dict;
+
+  tv_dict_add_nr(d, S_LEN("screenrow"), (varnumber_T)mouse_row + 1);
+  tv_dict_add_nr(d, S_LEN("screencol"), (varnumber_T)mouse_col + 1);
+
+  win_T *wp = mouse_find_win(&grid, &row, &col);
+  if (wp != NULL) {
+    int height = wp->w_height + wp->w_hsep_height + wp->w_status_height;
+    // The height is adjusted by 1 when there is a bottom border. This is not
+    // necessary for a top border since `row` starts at -1 in that case.
+    if (row < height + wp->w_border_adj[2]) {
+      winid = wp->handle;
+      winrow = row + 1 + wp->w_winrow_off;  // Adjust by 1 for top border
+      wincol = col + 1 + wp->w_wincol_off;  // Adjust by 1 for left border
+      if (row >= 0 && row < wp->w_height && col >= 0 && col < wp->w_width) {
+        (void)mouse_comp_pos(wp, &row, &col, &lnum);
+        col = vcol2col(wp, lnum, col);
+        column = col + 1;
+      }
+    }
+  }
+  tv_dict_add_nr(d, S_LEN("winid"), winid);
+  tv_dict_add_nr(d, S_LEN("winrow"), winrow);
+  tv_dict_add_nr(d, S_LEN("wincol"), wincol);
+  tv_dict_add_nr(d, S_LEN("line"), (varnumber_T)lnum);
+  tv_dict_add_nr(d, S_LEN("column"), column);
 }

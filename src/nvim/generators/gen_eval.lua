@@ -32,6 +32,7 @@ hashpipe:write([[
 #include "nvim/match.h"
 #include "nvim/mbyte.h"
 #include "nvim/menu.h"
+#include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/quickfix.h"
 #include "nvim/runtime.h"
