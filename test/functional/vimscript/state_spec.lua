@@ -17,7 +17,6 @@ describe('state() function', function()
       function _G.Get_state_mode()
         _G.res = { vim.fn.state(), vim.api.nvim_get_mode().mode:sub(1, 1) }
       end
-
       function _G.Run_timer()
         local timer = vim.uv.new_timer()
         timer:start(0, 0, function()
