@@ -6,13 +6,17 @@
 " Current Maintainer:     Hong Xu <hong@topbug.net>
 " Homepage:               http://www.vim.org/scripts/script.php?script_id=3747
 " Repository:             https://github.com/xuhdev/syntax-dosini.vim
-" Last Change:            2023 Jun 27
+" Last Change:            2023 Aug 20
 
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
   finish
 endif
+
+" using of line-continuation requires cpo&vim
+let s:cpo_save = &cpo
+set cpo&vim
 
 " shut case off
 syn case ignore
@@ -38,5 +42,8 @@ hi def link dosiniValue    String
 
 
 let b:current_syntax = "dosini"
+
+let &cpo = s:cpo_save
+unlet s:cpo_save
 
 " vim: sts=2 sw=2 et
