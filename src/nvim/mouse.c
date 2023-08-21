@@ -993,6 +993,48 @@ void ins_mouse(int c)
   redraw_statuslines();
 }
 
+/// Common mouse wheel scrolling, shared between Insert mode and NV modes.
+/// Default action is to scroll mouse_vert_step lines (or mouse_hor_step columns
+/// depending on the scroll direction) or one page when Shift or Ctrl is used.
+/// Direction is indicated by "cap->arg":
+///    K_MOUSEUP    - MSCR_UP
+///    K_MOUSEDOWN  - MSCR_DOWN
+///    K_MOUSELEFT  - MSCR_LEFT
+///    K_MOUSERIGHT - MSCR_RIGHT
+/// "curwin" may have been changed to the window that should be scrolled and
+/// differ from the window that actually has focus.
+static void do_mousescroll(cmdarg_T *cap)
+{
+  bool shift_or_ctrl = mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL);
+
+  if (cap->arg == MSCR_UP || cap->arg == MSCR_DOWN) {
+    // Vertical scrolling
+    if (!(State & MODE_INSERT) && shift_or_ctrl) {
+      // whole page up or down
+      (void)onepage(cap->arg ? FORWARD : BACKWARD, 1);
+    } else {
+      if (shift_or_ctrl) {
+        // whole page up or down
+        cap->count1 = curwin->w_botline - curwin->w_topline;
+      } else {
+        cap->count1 = (int)p_mousescroll_vert;
+      }
+      if (cap->count1 > 0) {
+        cap->count0 = cap->count1;
+        nv_scroll_line(cap);
+      }
+    }
+  } else {
+    // Horizontal scrolling
+    int step = shift_or_ctrl ? curwin->w_width_inner : (int)p_mousescroll_hor;
+    colnr_T leftcol = curwin->w_leftcol + (cap->arg == MSCR_RIGHT ? -step : +step);
+    if (leftcol < 0) {
+      leftcol = 0;
+    }
+    (void)do_mousescroll_horiz(leftcol);
+  }
+}
+
 /// Implementation for scrolling in Insert mode in direction "dir", which is one
 /// of the MSCR_ values.
 void ins_mousescroll(int dir)
@@ -1021,19 +1063,22 @@ void ins_mousescroll(int dir)
     siemsg("Invalid ins_mousescroll() argument: %d", dir);
   }
 
-  win_T *wp = curwin;
+  win_T *old_curwin = curwin;
   if (mouse_row >= 0 && mouse_col >= 0) {
     // Find the window at the mouse pointer coordinates.
+    // NOTE: Must restore "curwin" to "old_curwin" before returning!
     int grid = mouse_grid;
     int row = mouse_row;
     int col = mouse_col;
-    wp = mouse_find_win(&grid, &row, &col);
-    if (wp == NULL) {
+    curwin = mouse_find_win(&grid, &row, &col);
+    if (curwin == NULL) {
+      curwin = old_curwin;
       return;
     }
+    curbuf = curwin->w_buffer;
   }
 
-  if (wp == curwin) {
+  if (curwin == old_curwin) {
     // Don't scroll the current window if the popup menu is visible.
     if (pum_visible()) {
       return;
@@ -1044,8 +1089,12 @@ void ins_mousescroll(int dir)
 
   pos_T orig_cursor = curwin->w_cursor;
 
-  // The scrolling works almost the same way as in Normal mode.
-  nv_mousescroll(&cap);
+  // Call the common mouse scroll function shared with other modes.
+  do_mousescroll(&cap);
+
+  curwin->w_redr_status = true;
+  curwin = old_curwin;
+  curbuf = curwin->w_buffer;
 
   if (!equalpos(curwin->w_cursor, orig_cursor)) {
     start_arrow(&orig_cursor);
@@ -1494,66 +1543,33 @@ static bool do_mousescroll_horiz(colnr_T leftcol)
   return set_leftcol(leftcol);
 }
 
-/// Mouse scroll wheel: Default action is to scroll p_mousescroll_vert lines,
-/// or p_mousescroll_hor, or one page when Shift or Ctrl is used.
-/// Direction is indicated by "cap->arg":
-///    K_MOUSEUP    - MSCR_UP
-///    K_MOUSEDOWN  - MSCR_DOWN
-///    K_MOUSELEFT  - MSCR_LEFT
-///    K_MOUSERIGHT - MSCR_RIGHT
+/// Normal and Visual modes implementation for scrolling in direction
+/// "cap->arg", which is one of the MSCR_ values.
 void nv_mousescroll(cmdarg_T *cap)
 {
   win_T *const old_curwin = curwin;
 
   if (mouse_row >= 0 && mouse_col >= 0) {
     // Find the window at the mouse pointer coordinates.
+    // NOTE: Must restore "curwin" to "old_curwin" before returning!
     int grid = mouse_grid;
     int row = mouse_row;
     int col = mouse_col;
-    win_T *wp = mouse_find_win(&grid, &row, &col);
-    if (wp == NULL) {
+    curwin = mouse_find_win(&grid, &row, &col);
+    if (curwin == NULL) {
+      curwin = old_curwin;
       return;
     }
-    // NOTE: Must restore "curwin" to "old_curwin" before returning!
-    curwin = wp;
     curbuf = curwin->w_buffer;
   }
 
-  bool shift_or_ctrl = mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL);
-
-  if (cap->arg == MSCR_UP || cap->arg == MSCR_DOWN) {
-    // Vertical scrolling
-    if (!(State & MODE_INSERT) && shift_or_ctrl) {
-      // whole page up or down
-      (void)onepage(cap->arg ? FORWARD : BACKWARD, 1);
-    } else {
-      if (shift_or_ctrl) {
-        // whole page up or down
-        cap->count1 = curwin->w_botline - curwin->w_topline;
-      } else {
-        cap->count1 = (int)p_mousescroll_vert;
-      }
-      if (cap->count1 > 0) {
-        cap->count0 = cap->count1;
-        nv_scroll_line(cap);
-      }
-    }
-  } else {
-    // Horizontal scrolling
-    int step = shift_or_ctrl ? curwin->w_width_inner : (int)p_mousescroll_hor;
-    colnr_T leftcol = curwin->w_leftcol + (cap->arg == MSCR_RIGHT ? -step : +step);
-    if (leftcol < 0) {
-      leftcol = 0;
-    }
-    (void)do_mousescroll_horiz(leftcol);
-  }
+  // Call the common mouse scroll function shared with other modes.
+  do_mousescroll(cap);
 
   if (curwin != old_curwin && curwin->w_p_cul) {
     redraw_for_cursorline(curwin);
   }
-
   curwin->w_redr_status = true;
-
   curwin = old_curwin;
   curbuf = curwin->w_buffer;
 }
