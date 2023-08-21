@@ -2615,60 +2615,9 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
   return retval;
 }
 
-/// Mouse scroll wheel: Default action is to scroll three lines, or one page
-/// when Shift or Ctrl is used.
-/// K_MOUSEUP (cap->arg == 1) or K_MOUSEDOWN (cap->arg == 0) or
-/// K_MOUSELEFT (cap->arg == -1) or K_MOUSERIGHT (cap->arg == -2)
-static void nv_mousescroll(cmdarg_T *cap)
-{
-  win_T *old_curwin = curwin;
-
-  if (mouse_row >= 0 && mouse_col >= 0) {
-    int grid, row, col;
-
-    grid = mouse_grid;
-    row = mouse_row;
-    col = mouse_col;
-
-    // find the window at the pointer coordinates
-    win_T *wp = mouse_find_win(&grid, &row, &col);
-    if (wp == NULL) {
-      return;
-    }
-    curwin = wp;
-    curbuf = curwin->w_buffer;
-  }
-
-  if (cap->arg == MSCR_UP || cap->arg == MSCR_DOWN) {
-    if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-      (void)onepage(cap->arg ? FORWARD : BACKWARD, 1);
-    } else if (p_mousescroll_vert > 0) {
-      cap->count1 = (int)p_mousescroll_vert;
-      cap->count0 = (int)p_mousescroll_vert;
-      nv_scroll_line(cap);
-    }
-  } else {
-    mouse_scroll_horiz(cap->arg);
-  }
-  if (curwin != old_curwin && curwin->w_p_cul) {
-    redraw_for_cursorline(curwin);
-  }
-
-  curwin->w_redr_status = true;
-
-  curwin = old_curwin;
-  curbuf = curwin->w_buffer;
-}
-
-/// Mouse clicks and drags.
-static void nv_mouse(cmdarg_T *cap)
-{
-  (void)do_mouse(cap->oap, cap->cmdchar, BACKWARD, cap->count1, 0);
-}
-
 /// Handle CTRL-E and CTRL-Y commands: scroll a line up or down.
 /// cap->arg must be true for CTRL-E.
-static void nv_scroll_line(cmdarg_T *cap)
+void nv_scroll_line(cmdarg_T *cap)
 {
   if (!checkclearop(cap->oap)) {
     scroll_redraw(cap->arg, cap->count1);
