@@ -229,6 +229,7 @@ local extension = {
   com = detect_seq(detect.bindzone, 'dcl'),
   db = detect.bindzone,
   bicep = 'bicep',
+  bicepparam = 'bicep',
   bb = 'bitbake',
   bbappend = 'bitbake',
   bbclass = 'bitbake',
