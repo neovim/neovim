@@ -2962,7 +2962,6 @@ endfunc
 
 func Test_autocmd_SafeState()
   CheckRunVimInTerminal
-  let g:test_is_flaky = 1
 
   let lines =<< trim END
 	let g:safe = 0
