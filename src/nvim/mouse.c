@@ -993,18 +993,17 @@ void ins_mouse(int c)
   redraw_statuslines();
 }
 
-/// Implementation for scrolling in direction "dir", which is one of the MSCR_
-/// values.
+/// Implementation for scrolling in Insert mode in direction "dir", which is one
+/// of the MSCR_ values.
 void ins_mousescroll(int dir)
 {
   cmdarg_T cap;
-  CLEAR_FIELD(cap);
-
   oparg_T oa;
+  CLEAR_FIELD(cap);
   clear_oparg(&oa);
   cap.oap = &oa;
-
   cap.arg = dir;
+
   switch (dir) {
   case MSCR_UP:
     cap.cmdchar = K_MOUSEUP;
@@ -1021,7 +1020,37 @@ void ins_mousescroll(int dir)
   default:
     siemsg("Invalid ins_mousescroll() argument: %d", dir);
   }
-  do_mousescroll(MODE_INSERT, &cap);
+
+  win_T *wp = curwin;
+  if (mouse_row >= 0 && mouse_col >= 0) {
+    // Find the window at the mouse pointer coordinates.
+    int grid = mouse_grid;
+    int row = mouse_row;
+    int col = mouse_col;
+    wp = mouse_find_win(&grid, &row, &col);
+    if (wp == NULL) {
+      return;
+    }
+  }
+
+  if (wp == curwin) {
+    // Don't scroll the current window if the popup menu is visible.
+    if (pum_visible()) {
+      return;
+    }
+
+    undisplay_dollar();
+  }
+
+  pos_T orig_cursor = curwin->w_cursor;
+
+  // The scrolling works almost the same way as in Normal mode.
+  nv_mousescroll(&cap);
+
+  if (!equalpos(curwin->w_cursor, orig_cursor)) {
+    start_arrow(&orig_cursor);
+    set_can_cindent(true);
+  }
 }
 
 /// Return true if "c" is a mouse key.
@@ -1472,64 +1501,54 @@ static bool do_mousescroll_horiz(colnr_T leftcol)
 ///    K_MOUSEDOWN  - MSCR_DOWN
 ///    K_MOUSELEFT  - MSCR_LEFT
 ///    K_MOUSERIGHT - MSCR_RIGHT
-void do_mousescroll(int mode, cmdarg_T *cap)
+void nv_mousescroll(cmdarg_T *cap)
 {
   win_T *const old_curwin = curwin;
-  pos_T tpos = curwin->w_cursor;
 
   if (mouse_row >= 0 && mouse_col >= 0) {
+    // Find the window at the mouse pointer coordinates.
     int grid = mouse_grid;
     int row = mouse_row;
     int col = mouse_col;
-
-    // find the window at the pointer coordinates
     win_T *wp = mouse_find_win(&grid, &row, &col);
     if (wp == NULL) {
       return;
     }
+    // NOTE: Must restore "curwin" to "old_curwin" before returning!
     curwin = wp;
     curbuf = curwin->w_buffer;
   }
 
-  if (mode == MODE_INSERT && curwin == old_curwin) {
-    undisplay_dollar();
-  }
+  bool shift_or_ctrl = mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL);
 
-  // For Insert mode, don't scroll the window in which completion is being done.
-  if (mode == MODE_NORMAL || !pum_visible() || curwin != old_curwin) {
-    if (cap->arg == MSCR_UP || cap->arg == MSCR_DOWN) {
-      if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-        if (mode == MODE_INSERT) {
-          int step = curwin->w_botline - curwin->w_topline;
-          scroll_redraw(cap->arg, step);
-        } else {
-          (void)onepage(cap->arg ? FORWARD : BACKWARD, 1);
-        }
-      } else if (p_mousescroll_vert > 0) {
-        if (mode == MODE_INSERT) {
-          scroll_redraw(cap->arg, (linenr_T)p_mousescroll_vert);
-        } else {
-          cap->count1 = (int)p_mousescroll_vert;
-          cap->count0 = (int)p_mousescroll_vert;
-          nv_scroll_line(cap);
-        }
-      }
+  if (cap->arg == MSCR_UP || cap->arg == MSCR_DOWN) {
+    // Vertical scrolling
+    if (!(State & MODE_INSERT) && shift_or_ctrl) {
+      // whole page up or down
+      (void)onepage(cap->arg ? FORWARD : BACKWARD, 1);
     } else {
-      int step = (int)p_mousescroll_hor;
-      if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-        step = curwin->w_width_inner;
+      if (shift_or_ctrl) {
+        // whole page up or down
+        cap->count1 = curwin->w_botline - curwin->w_topline;
+      } else {
+        cap->count1 = (int)p_mousescroll_vert;
       }
-
-      colnr_T leftcol = curwin->w_leftcol + (cap->arg == MSCR_RIGHT ? -step : +step);
-      if (leftcol < 0) {
-        leftcol = 0;
+      if (cap->count1 > 0) {
+        cap->count0 = cap->count1;
+        nv_scroll_line(cap);
       }
-
-      (void)do_mousescroll_horiz(leftcol);
     }
+  } else {
+    // Horizontal scrolling
+    int step = shift_or_ctrl ? curwin->w_width_inner : (int)p_mousescroll_hor;
+    colnr_T leftcol = curwin->w_leftcol + (cap->arg == MSCR_RIGHT ? -step : +step);
+    if (leftcol < 0) {
+      leftcol = 0;
+    }
+    (void)do_mousescroll_horiz(leftcol);
   }
 
-  if (mode == MODE_NORMAL && curwin != old_curwin && curwin->w_p_cul) {
+  if (curwin != old_curwin && curwin->w_p_cul) {
     redraw_for_cursorline(curwin);
   }
 
@@ -1537,18 +1556,6 @@ void do_mousescroll(int mode, cmdarg_T *cap)
 
   curwin = old_curwin;
   curbuf = curwin->w_buffer;
-
-  if (mode == MODE_INSERT) {
-    if (!equalpos(curwin->w_cursor, tpos)) {
-      start_arrow(&tpos);
-      set_can_cindent(true);
-    }
-  }
-}
-
-void nv_mousescroll(cmdarg_T *cap)
-{
-  do_mousescroll(MODE_NORMAL, cap);
 }
 
 /// Mouse clicks and drags.
