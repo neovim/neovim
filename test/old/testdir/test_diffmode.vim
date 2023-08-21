@@ -852,7 +852,6 @@ func VerifyInternal(buf, dumpfile, extra)
   call term_sendkeys(a:buf, ":diffupdate!\<CR>")
   " trailing : for leaving the cursor on the command line
   call term_sendkeys(a:buf, ":set diffopt=internal,filler" . a:extra . "\<CR>:")
-  call TermWait(a:buf)
   call VerifyScreenDump(a:buf, a:dumpfile, {})
 endfunc
 
