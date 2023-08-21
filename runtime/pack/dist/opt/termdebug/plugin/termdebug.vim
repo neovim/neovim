@@ -1637,9 +1637,9 @@ func s:HandleCursor(msg)
           " prompt, since it is unlikely we want to edit the file.
           " The file may be changed but not saved, warn for that.
           au SwapExists * echohl WarningMsg
-                \ | echo 'Warning: file is being edited elsewhere'
-                \ | echohl None
-                \ | let v:swapchoice = 'o'
+          \ | echo 'Warning: file is being edited elsewhere'
+          \ | echohl None
+          \ | let v:swapchoice = 'o'
         augroup END
         if &modified
           " TODO: find existing window
