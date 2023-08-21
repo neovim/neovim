@@ -146,6 +146,15 @@ func Test_for_over_null_string()
   let &enc = save_enc
 endfunc
 
+func Test_for_with_modifier()
+  " this checks has_loop_cmd() works with a modifier
+  let result = []
+  horizontal for i in range(3)
+    call extend(result, [i])
+  endfor
+  call assert_equal([0, 1, 2], result)
+endfunc
+
 func Test_for_invalid_line_count()
   let lines =<< trim END
       111111111111111111111111 for line in ['one']
