@@ -188,9 +188,8 @@ thing.  These are then linked to a highlight group that specifies the color.
 A syntax group name doesn't specify any color or attributes itself.
 
 The name for a highlight or syntax group must consist of ASCII letters,
-digits, underscores, periods, hyphens, and `@` characters.  As a regexp it is
-`[a-zA-Z0-9_.@-]*`. The maximum length of a group name is about 200 bytes.
-*E1249*
+digits, underscores, dots, hyphens, or `@`.  As a regexp: `[a-zA-Z0-9_.@-]*`.
+The maximum length of a group name is about 200 bytes.  *E1249*
 
 To be able to allow each user to pick their favorite set of colors, there must
 be preferred names for highlight groups that are common for many languages.
