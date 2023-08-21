@@ -279,7 +279,8 @@ static bool is_safe_now(void)
   return stuff_empty()
          && typebuf.tb_len == 0
          && !using_script()
-         && !global_busy;
+         && !global_busy
+         && !debug_mode;
 }
 
 /// Trigger SafeState if currently in s safe state, that is "safe" is TRUE and
