@@ -29,6 +29,7 @@ describe('state() function', function()
     exec([[
       call setline(1, ['one', 'two', 'three'])
       map ;; gg
+      set complete=.
       func RunTimer()
         call timer_start(0, {id -> v:lua.Get_state_mode()})
       endfunc
@@ -51,7 +52,7 @@ describe('state() function', function()
     eq({ 'mS', 'n' }, exec_lua('return _G.res'))
 
     -- Insert mode completion
-    feed([[:call RunTimer()<CR>Got<C-X><C-N>]])
+    feed([[:call RunTimer()<CR>Got<C-N>]])
     poke_eventloop()  -- Allow polling for events
     feed('<Esc>')
     eq({ 'aSc', 'i' }, exec_lua('return _G.res'))

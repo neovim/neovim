@@ -2571,6 +2571,7 @@ func Test_state()
   let lines =<< trim END
 	call setline(1, ['one', 'two', 'three'])
 	map ;; gg
+	set complete=.
 	func RunTimer()
 	  call timer_start(10, {id -> execute('let g:state = state()') .. execute('let g:mode = mode()')})
 	endfunc
@@ -2598,9 +2599,9 @@ func Test_state()
   call term_sendkeys(buf, getstate)
   call WaitForAssert({-> assert_match('state: mSc; mode: n', term_getline(buf, 6))}, 1000)
 
-  " Insert mode completion
+  " Insert mode completion (bit slower on Mac)
   call term_sendkeys(buf, ":call RunTimer()\<CR>Got\<C-N>")
-  call term_wait(buf, 50)
+  call term_wait(buf, 200)
   call term_sendkeys(buf, "\<Esc>")
   call term_sendkeys(buf, getstate)
   call WaitForAssert({-> assert_match('state: aSc; mode: i', term_getline(buf, 6))}, 1000)
