@@ -2022,7 +2022,7 @@ func Test_setbufvar_keep_window_title()
   END
   call writefile(lines, 'Xsetbufvar')
   let buf = RunVimInTerminal('-S Xsetbufvar', {})
-  call assert_match('Xa.txt', term_gettitle(buf))
+  call WaitForAssert({-> assert_match('Xa.txt', term_gettitle(buf))}, 1000)
 
   call term_sendkeys(buf, "i\<F2>")
   call TermWait(buf)
