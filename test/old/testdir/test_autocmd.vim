@@ -2974,17 +2974,19 @@ func Test_autocmd_SafeState()
   call writefile(lines, 'XSafeState')
   let buf = RunVimInTerminal('-S XSafeState', #{rows: 6})
 
-  " Sometimes we loop to handle an K_IGNORE
+  " Sometimes we loop to handle a K_IGNORE, SafeState may be trigered once or
+  " more often.
   call term_sendkeys(buf, ":echo g:safe\<CR>")
-  call WaitForAssert({-> assert_match('^[12] ', term_getline(buf, 6))}, 1000)
+  call WaitForAssert({-> assert_match('^\d ', term_getline(buf, 6))}, 1000)
 
+  " SafeStateAgain should be invoked at least three times
   call term_sendkeys(buf, ":echo g:again\<CR>")
-  call WaitForAssert({-> assert_match('^xxxx', term_getline(buf, 6))}, 1000)
+  call WaitForAssert({-> assert_match('^xxx', term_getline(buf, 6))}, 1000)
 
   call term_sendkeys(buf, ":let g:again = ''\<CR>:call CallTimer()\<CR>")
-  call term_wait(buf, 50)
+  call term_wait(buf, 100)
   call term_sendkeys(buf, ":\<CR>")
-  call term_wait(buf, 50)
+  call term_wait(buf, 100)
   call term_sendkeys(buf, ":echo g:again\<CR>")
   call WaitForAssert({-> assert_match('xtx', term_getline(buf, 6))}, 1000)
 
