@@ -132,6 +132,22 @@ function GetRustIndent(lnum)
 		return indent(prevlinenum) + 6
 	endif
 
+	"match newline after struct with generic bound like
+	"struct SomeThing<T>
+	"| <-- newline indent should same as prevline
+	if prevline[len(prevline) - 1] == ">"
+				\ && prevline =~# "\s*struct.*>$"
+		return indent(prevlinenum)
+	endif
+
+	"match newline after where like:
+	"struct SomeThing<T>
+	"where
+	"     T: Display,
+	if prevline =~# '^\s*where$'
+		return indent(prevlinenum) + 4
+	endif
+
 	if prevline[len(prevline) - 1] == ","
 				\ && s:get_line_trimmed(a:lnum) !~ '^\s*[\[\]{}]'
 				\ && prevline !~ '^\s*fn\s'
