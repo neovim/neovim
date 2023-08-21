@@ -620,7 +620,7 @@ func Test_pum_with_folds_two_tabs()
 
   call writefile(lines, 'Xpumscript')
   let buf = RunVimInTerminal('-S Xpumscript', #{rows: 10})
-  call term_wait(buf, 100)
+  call TermWait(buf, 50)
   call term_sendkeys(buf, "a\<C-N>")
   call VerifyScreenDump(buf, 'Test_pum_with_folds_two_tabs', {})
 
@@ -645,9 +645,9 @@ func Test_pum_with_preview_win()
 
   call writefile(lines, 'Xpreviewscript')
   let buf = RunVimInTerminal('-S Xpreviewscript', #{rows: 12})
-  call term_wait(buf, 100)
+  call TermWait(buf, 50)
   call term_sendkeys(buf, "Gi\<C-X>\<C-O>")
-  call term_wait(buf, 200)
+  call TermWait(buf, 100)
   call term_sendkeys(buf, "\<C-N>")
   call VerifyScreenDump(buf, 'Test_pum_with_preview_win', {})
 

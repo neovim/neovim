@@ -543,9 +543,9 @@ func Test_cursorline_after_yank()
 	\ 'call setline(1, ["","1","2","3",""])',
 	\ ], 'Xtest_cursorline_yank')
   let buf = RunVimInTerminal('-S Xtest_cursorline_yank', {'rows': 8})
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, "Gy3k")
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, "jj")
 
   call VerifyScreenDump(buf, 'Test_cursorline_yank_01', {})
@@ -583,7 +583,7 @@ func Test_cursorline_with_visualmode()
 	\ 'call setline(1, repeat(["abc"], 50))',
 	\ ], 'Xtest_cursorline_with_visualmode')
   let buf = RunVimInTerminal('-S Xtest_cursorline_with_visualmode', {'rows': 12})
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, "V\<C-f>kkkjk")
 
   call VerifyScreenDump(buf, 'Test_cursorline_with_visualmode_01', {})
@@ -591,6 +591,59 @@ func Test_cursorline_with_visualmode()
   " clean up
   call StopVimInTerminal(buf)
   call delete('Xtest_cursorline_with_visualmode')
+endfunc
+
+func Test_wincolor()
+  CheckScreendump
+  " make sure the width is enough for the test
+  set columns=80
+
+  let lines =<< trim END
+	set cursorline cursorcolumn rnu
+	call setline(1, ["","1111111111","22222222222","3 here 3","","the cat is out of the bag"])
+	set wincolor=Pmenu
+	hi CatLine guifg=green ctermfg=green
+	hi Reverse gui=reverse cterm=reverse
+	syn match CatLine /^the.*/
+	call prop_type_add("foo", {"highlight": "Reverse", "combine": 1})
+	call prop_add(6, 12, {"type": "foo", "end_col": 15})
+	/here
+  END
+  call writefile(lines, 'Xtest_wincolor')
+  let buf = RunVimInTerminal('-S Xtest_wincolor', {'rows': 8})
+  call TermWait(buf)
+  call term_sendkeys(buf, "2G5lvj")
+  call TermWait(buf)
+
+  call VerifyScreenDump(buf, 'Test_wincolor_01', {})
+
+  " clean up
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xtest_wincolor')
+endfunc
+
+func Test_wincolor_listchars()
+  CheckScreendump
+  CheckFeature conceal
+
+  let lines =<< trim END
+	call setline(1, ["one","\t\tsome random text enough long to show 'extends' and 'precedes' includingnbsps, preceding tabs and trailing spaces    ","three"])
+	set wincolor=Todo
+	set nowrap cole=1 cocu+=n
+	set list lcs=eol:$,tab:>-,space:.,trail:_,extends:>,precedes:<,conceal:*,nbsp:#
+	call matchadd('Conceal', 'text')
+	normal 2G5zl
+  END
+  call writefile(lines, 'Xtest_wincolorlcs')
+  let buf = RunVimInTerminal('-S Xtest_wincolorlcs', {'rows': 8})
+
+  call VerifyScreenDump(buf, 'Test_wincolor_lcs', {})
+
+  " clean up
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xtest_wincolorlcs')
 endfunc
 
 func Test_cursorcolumn_insert_on_tab()
@@ -665,7 +718,6 @@ func Test_colorcolumn()
   call writefile(lines, 'Xtest_colorcolumn')
   let buf = RunVimInTerminal('-S Xtest_colorcolumn', {'rows': 10})
   call term_sendkeys(buf, ":\<CR>")
-  call term_wait(buf)
   call VerifyScreenDump(buf, 'Test_colorcolumn_1', {})
 
   " clean up
@@ -683,7 +735,6 @@ func Test_colorcolumn_bri()
   call writefile(lines, 'Xtest_colorcolumn_bri')
   let buf = RunVimInTerminal('-S Xtest_colorcolumn_bri', {'rows': 10,'columns': 40})
   call term_sendkeys(buf, ":set co=40 linebreak bri briopt=shift:2 cc=40,41,43\<CR>")
-  call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_colorcolumn_2', {})
 
   " clean up

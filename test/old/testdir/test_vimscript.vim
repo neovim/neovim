@@ -7249,30 +7249,30 @@ func Test_deep_nest()
 
   " Deep nesting of if ... endif
   call term_sendkeys(buf, ":call Test1()\n")
-  call term_wait(buf)
+  call TermWait(buf)
   call WaitForAssert({-> assert_match('^E579:', term_getline(buf, 5))})
 
   " Deep nesting of for ... endfor
   call term_sendkeys(buf, ":call Test2()\n")
-  call term_wait(buf)
+  call TermWait(buf)
   call WaitForAssert({-> assert_match('^E585:', term_getline(buf, 5))})
 
   " Deep nesting of while ... endwhile
   call term_sendkeys(buf, ":call Test3()\n")
-  call term_wait(buf)
+  call TermWait(buf)
   call WaitForAssert({-> assert_match('^E585:', term_getline(buf, 5))})
 
   " Deep nesting of try ... endtry
   call term_sendkeys(buf, ":call Test4()\n")
-  call term_wait(buf)
+  call TermWait(buf)
   call WaitForAssert({-> assert_match('^E601:', term_getline(buf, 5))})
 
   " Deep nesting of function ... endfunction
   call term_sendkeys(buf, ":call Test5()\n")
-  call term_wait(buf)
+  call TermWait(buf)
   call WaitForAssert({-> assert_match('^E1058:', term_getline(buf, 4))})
   call term_sendkeys(buf, "\<C-C>\n")
-  call term_wait(buf)
+  call TermWait(buf)
 
   "let l = ''
   "for i in range(1, 6)

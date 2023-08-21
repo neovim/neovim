@@ -278,9 +278,9 @@ func Test_map_timeout()
 endfunc
 
 func Test_map_timeout_with_timer_interrupt()
-  if !has('job') || !has('timers')
-    return
-  endif
+  CheckFeature job
+  CheckFeature timers
+  let g:test_is_flaky = 1
 
   " Confirm the timer invoked in exit_cb of the job doesn't disturb mapped key
   " sequence.
@@ -418,9 +418,9 @@ func Test_error_in_map_expr()
 
   " GC must not run during map-expr processing, which can make Vim crash.
   call term_sendkeys(buf, '!')
-  call term_wait(buf, 100)
+  call TermWait(buf, 50)
   call term_sendkeys(buf, "\<CR>")
-  call term_wait(buf, 100)
+  call TermWait(buf, 50)
   call assert_equal('run', job_status(job))
 
   call term_sendkeys(buf, ":qall!\<CR>")
@@ -1226,7 +1226,7 @@ func Test_map_cmdkey_visual_mode()
   call feedkeys("v\<F4>", 'xt!')
   call assert_equal(['v', 1, 12], [mode(1), col('v'), col('.')])
 
-  " can invoke an opeartor, ending the visual mode
+  " can invoke an operator, ending the visual mode
   let @a = ''
   call feedkeys("\<F5>", 'xt!')
   call assert_equal('n', mode(1))

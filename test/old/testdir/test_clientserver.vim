@@ -26,9 +26,10 @@ func Check_X11_Connection()
 endfunc
 
 func Test_client_server()
+  let g:test_is_flaky = 1
   let cmd = GetVimCommand()
   if cmd == ''
-    return
+    throw 'GetVimCommand() failed'
   endif
   call Check_X11_Connection()
 

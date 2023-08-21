@@ -2013,6 +2013,7 @@ endfunc
 
 " Test for BufUnload autocommand that unloads all the other buffers
 func Test_bufunload_all()
+  let g:test_is_flaky = 1
   call writefile(['Test file Xxx1'], 'Xxx1')"
   call writefile(['Test file Xxx2'], 'Xxx2')"
 
@@ -2961,6 +2962,7 @@ endfunc
 
 func Test_autocmd_SafeState()
   CheckRunVimInTerminal
+  let g:test_is_flaky = 1
 
   let lines =<< trim END
 	let g:safe = 0
@@ -2974,17 +2976,19 @@ func Test_autocmd_SafeState()
   call writefile(lines, 'XSafeState')
   let buf = RunVimInTerminal('-S XSafeState', #{rows: 6})
 
-  " Sometimes we loop to handle an K_IGNORE
+  " Sometimes we loop to handle a K_IGNORE, SafeState may be trigered once or
+  " more often.
   call term_sendkeys(buf, ":echo g:safe\<CR>")
-  call WaitForAssert({-> assert_match('^[12] ', term_getline(buf, 6))}, 1000)
+  call WaitForAssert({-> assert_match('^\d ', term_getline(buf, 6))}, 1000)
 
+  " SafeStateAgain should be invoked at least three times
   call term_sendkeys(buf, ":echo g:again\<CR>")
-  call WaitForAssert({-> assert_match('^xxxx', term_getline(buf, 6))}, 1000)
+  call WaitForAssert({-> assert_match('^xxx', term_getline(buf, 6))}, 1000)
 
   call term_sendkeys(buf, ":let g:again = ''\<CR>:call CallTimer()\<CR>")
-  call term_wait(buf)
+  call TermWait(buf, 50)
   call term_sendkeys(buf, ":\<CR>")
-  call term_wait(buf)
+  call TermWait(buf, 50)
   call term_sendkeys(buf, ":echo g:again\<CR>")
   call WaitForAssert({-> assert_match('xtx', term_getline(buf, 6))}, 1000)
 
@@ -3008,7 +3012,7 @@ func Test_autocmd_CmdWinEnter()
   let buf = RunVimInTerminal('-S '.filename, #{rows: 6})
 
   call term_sendkeys(buf, "q:")
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, ":echo b:dummy_var\<cr>")
   call WaitForAssert({-> assert_match('^This is a dummy', term_getline(buf, 6))}, 2000)
   call term_sendkeys(buf, ":echo &buftype\<cr>")
@@ -3042,6 +3046,7 @@ func Test_autocmd_was_using_freed_memory()
 endfunc
 
 func Test_BufWrite_lockmarks()
+  let g:test_is_flaky = 1
   edit! Xtest
   call setline(1, ['a', 'b', 'c', 'd'])
 

@@ -815,12 +815,12 @@ func Test_search_cmdline_incsearch_highlight_attr()
 
   call WaitForAssert({-> assert_equal(lines, [term_getline(buf, 1), term_getline(buf, 2)])})
   " wait for vim to complete initialization
-  call term_wait(buf)
+  call TermWait(buf)
 
   " Get attr of normal(a0), incsearch(a1), hlsearch(a2) highlight
   call term_sendkeys(buf, ":set incsearch hlsearch\<cr>")
   call term_sendkeys(buf, '/b')
-  call term_wait(buf, 200)
+  call TermWait(buf, 100)
   let screen_line1 = term_scrape(buf, 1)
   call assert_true(len(screen_line1) > 2)
   " a0: attr_normal
@@ -836,7 +836,7 @@ func Test_search_cmdline_incsearch_highlight_attr()
 
   " Test incremental highlight search
   call term_sendkeys(buf, "/vim")
-  call term_wait(buf, 200)
+  call TermWait(buf, 100)
   " Buffer:
   " abb vim vim vi
   " vimvivim
@@ -848,7 +848,7 @@ func Test_search_cmdline_incsearch_highlight_attr()
 
   " Test <C-g>
   call term_sendkeys(buf, "\<C-g>\<C-g>")
-  call term_wait(buf, 200)
+  call TermWait(buf, 100)
   let attr_line1 = [a0,a0,a0,a0,a2,a2,a2,a0,a2,a2,a2,a0,a0,a0]
   let attr_line2 = [a1,a1,a1,a0,a0,a2,a2,a2]
   call assert_equal(attr_line1, map(term_scrape(buf, 1)[:len(attr_line1)-1], 'v:val.attr'))
@@ -856,7 +856,7 @@ func Test_search_cmdline_incsearch_highlight_attr()
 
   " Test <C-t>
   call term_sendkeys(buf, "\<C-t>")
-  call term_wait(buf, 200)
+  call TermWait(buf, 100)
   let attr_line1 = [a0,a0,a0,a0,a2,a2,a2,a0,a1,a1,a1,a0,a0,a0]
   let attr_line2 = [a2,a2,a2,a0,a0,a2,a2,a2]
   call assert_equal(attr_line1, map(term_scrape(buf, 1)[:len(attr_line1)-1], 'v:val.attr'))
@@ -864,7 +864,7 @@ func Test_search_cmdline_incsearch_highlight_attr()
 
   " Type Enter and a1(incsearch highlight) should become a2(hlsearch highlight)
   call term_sendkeys(buf, "\<cr>")
-  call term_wait(buf, 200)
+  call TermWait(buf, 100)
   let attr_line1 = [a0,a0,a0,a0,a2,a2,a2,a0,a2,a2,a2,a0,a0,a0]
   let attr_line2 = [a2,a2,a2,a0,a0,a2,a2,a2]
   call assert_equal(attr_line1, map(term_scrape(buf, 1)[:len(attr_line1)-1], 'v:val.attr'))
@@ -874,7 +874,7 @@ func Test_search_cmdline_incsearch_highlight_attr()
   call term_sendkeys(buf, ":1\<cr>")
   call term_sendkeys(buf, ":set nohlsearch\<cr>")
   call term_sendkeys(buf, "/vim")
-  call term_wait(buf, 200)
+  call TermWait(buf, 100)
   let attr_line1 = [a0,a0,a0,a0,a1,a1,a1,a0,a0,a0,a0,a0,a0,a0]
   let attr_line2 = [a0,a0,a0,a0,a0,a0,a0,a0]
   call assert_equal(attr_line1, map(term_scrape(buf, 1)[:len(attr_line1)-1], 'v:val.attr'))

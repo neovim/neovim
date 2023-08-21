@@ -333,15 +333,12 @@ func Test_search_stat_foldopen()
   call writefile(lines, 'Xsearchstat1')
 
   let buf = RunVimInTerminal('-S Xsearchstat1', #{rows: 10})
-  call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_searchstat_3', {})
 
   call term_sendkeys(buf, "n")
-  call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_searchstat_3', {})
 
   call term_sendkeys(buf, "n")
-  call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_searchstat_3', {})
 
   call StopVimInTerminal(buf)
@@ -364,12 +361,10 @@ func! Test_search_stat_screendump()
   END
   call writefile(lines, 'Xsearchstat')
   let buf = RunVimInTerminal('-S Xsearchstat', #{rows: 10})
-  call term_wait(buf)
   call VerifyScreenDump(buf, 'Test_searchstat_1', {})
 
   call term_sendkeys(buf, ":nnoremap <silent> n n\<cr>")
   call term_sendkeys(buf, "gg0n")
-  call term_wait(buf)
   call VerifyScreenDump(buf, 'Test_searchstat_2', {})
 
   call StopVimInTerminal(buf)
@@ -388,11 +383,9 @@ func Test_search_stat_then_gd()
 
   let buf = RunVimInTerminal('-S Xsearchstatgd', #{rows: 10})
   call term_sendkeys(buf, "/dog\<CR>")
-  call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_searchstatgd_1', {})
 
   call term_sendkeys(buf, "G0gD")
-  call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_searchstatgd_2', {})
 
   call StopVimInTerminal(buf)

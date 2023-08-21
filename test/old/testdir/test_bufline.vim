@@ -217,7 +217,6 @@ func Test_appendbufline_redraw()
   END
   call writefile(lines, 'XscriptMatchCommon')
   let buf = RunVimInTerminal('-S XscriptMatchCommon', #{rows: 10})
-  call term_wait(buf)
   call VerifyScreenDump(buf, 'Test_appendbufline_1', {})
 
   call StopVimInTerminal(buf)

@@ -177,7 +177,6 @@ func Test_scroll_CursorLineNr_update()
   call writefile(lines, filename)
   let buf = RunVimInTerminal('-S '.filename, #{rows: 5, cols: 50})
   call term_sendkeys(buf, "k")
-  call term_wait(buf)
   call VerifyScreenDump(buf, 'Test_winline_rnu', {})
 
   " clean up
