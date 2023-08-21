@@ -76,14 +76,14 @@ func Test_buflist_browse()
   %bwipe!
   call assert_fails('buffer 1000', 'E86:')
 
-  call writefile(['foo1', 'foo2', 'foo3', 'foo4'], 'Xfile1')
-  call writefile(['bar1', 'bar2', 'bar3', 'bar4'], 'Xfile2')
-  call writefile(['baz1', 'baz2', 'baz3', 'baz4'], 'Xfile3')
-  edit Xfile1
+  call writefile(['foo1', 'foo2', 'foo3', 'foo4'], 'Xbrowse1')
+  call writefile(['bar1', 'bar2', 'bar3', 'bar4'], 'Xbrowse2')
+  call writefile(['baz1', 'baz2', 'baz3', 'baz4'], 'Xbrowse3')
+  edit Xbrowse1
   let b1 = bufnr()
-  edit Xfile2
+  edit Xbrowse2
   let b2 = bufnr()
-  edit +/baz4 Xfile3
+  edit +/baz4 Xbrowse3
   let b3 = bufnr()
 
   call assert_fails('buffer ' .. b1 .. ' abc', 'E488:')
@@ -127,9 +127,9 @@ func Test_buflist_browse()
 
   call assert_fails('sandbox bnext', 'E48:')
 
-  call delete('Xfile1')
-  call delete('Xfile2')
-  call delete('Xfile3')
+  call delete('Xbrowse1')
+  call delete('Xbrowse2')
+  call delete('Xbrowse3')
   %bwipe!
 endfunc
 
@@ -200,39 +200,39 @@ endfunc
 " Test for quitting the 'swapfile exists' dialog with the split buffer
 " command.
 func Test_buffer_sbuf_cleanup()
-  call writefile([], 'Xfile')
+  call writefile([], 'XsplitCleanup')
   " first open the file in a buffer
-  new Xfile
+  new XsplitCleanup
   let bnr = bufnr()
   close
   " create the swap file
-  call writefile([], '.Xfile.swp')
+  call writefile([], '.XsplitCleanup.swp')
   " Remove the catch-all that runtest.vim adds
   au! SwapExists
   augroup BufTest
     au!
-    autocmd SwapExists Xfile let v:swapchoice='q'
+    autocmd SwapExists XsplitCleanup let v:swapchoice='q'
   augroup END
   exe 'sbuf ' . bnr
   call assert_equal(1, winnr('$'))
-  call assert_equal(0, getbufinfo('Xfile')[0].loaded)
+  call assert_equal(0, getbufinfo('XsplitCleanup')[0].loaded)
 
   " test for :sball
   sball
   call assert_equal(1, winnr('$'))
-  call assert_equal(0, getbufinfo('Xfile')[0].loaded)
+  call assert_equal(0, getbufinfo('XsplitCleanup')[0].loaded)
 
   %bw!
   set shortmess+=F
   let v:statusmsg = ''
-  edit Xfile
+  edit XsplitCleanup
   call assert_equal('', v:statusmsg)
   call assert_equal(1, winnr('$'))
-  call assert_equal(0, getbufinfo('Xfile')[0].loaded)
+  call assert_equal(0, getbufinfo('XsplitCleanup')[0].loaded)
   set shortmess&
 
-  call delete('Xfile')
-  call delete('.Xfile.swp')
+  call delete('XsplitCleanup')
+  call delete('.XsplitCleanup.swp')
   augroup BufTest
     au!
   augroup END
@@ -265,35 +265,35 @@ func Test_goto_buf_with_confirm()
   CheckUnix
   CheckNotGui
   CheckFeature dialog_con
-  new Xfile
+  new XgotoConf
   enew
   call setline(1, 'test')
-  call assert_fails('b Xfile', 'E37:')
+  call assert_fails('b XgotoConf', 'E37:')
   call feedkeys('c', 'L')
-  call assert_fails('confirm b Xfile', 'E37:')
+  call assert_fails('confirm b XgotoConf', 'E37:')
   call assert_equal(1, &modified)
   call assert_equal('', @%)
   call feedkeys('y', 'L')
-  call assert_fails('confirm b Xfile', ['', 'E37:'])
+  call assert_fails('confirm b XgotoConf', ['', 'E37:'])
   call assert_equal(1, &modified)
   call assert_equal('', @%)
   call feedkeys('n', 'L')
-  confirm b Xfile
-  call assert_equal('Xfile', @%)
+  confirm b XgotoConf
+  call assert_equal('XgotoConf', @%)
   close!
 endfunc
 
 " Test for splitting buffer with 'switchbuf'
 func Test_buffer_switchbuf()
-  new Xfile
+  new Xswitchbuf
   wincmd w
   set switchbuf=useopen
-  sbuf Xfile
+  sbuf Xswitchbuf
   call assert_equal(1, winnr())
   call assert_equal(2, winnr('$'))
   set switchbuf=usetab
   tabnew
-  sbuf Xfile
+  sbuf Xswitchbuf
   call assert_equal(1, tabpagenr())
   call assert_equal(2, tabpagenr('$'))
   set switchbuf&
@@ -305,11 +305,11 @@ func Test_bufadd_autocmd_bwipe()
   %bw!
   augroup BufAdd_Wipe
     au!
-    autocmd BufAdd Xfile %bw!
+    autocmd BufAdd Xbwipe %bw!
   augroup END
-  edit Xfile
+  edit Xbwipe
   call assert_equal('', @%)
-  call assert_equal(0, bufexists('Xfile'))
+  call assert_equal(0, bufexists('Xbwipe'))
   augroup BufAdd_Wipe
     au!
   augroup END
@@ -329,40 +329,40 @@ endfunc
 " Test for using CTRL-^ to edit the alternative file keeping the cursor
 " position with 'nostartofline'. Also test using the 'buf' command.
 func Test_buffer_edit_altfile()
-  call writefile(repeat(['one two'], 50), 'Xfile1')
-  call writefile(repeat(['five six'], 50), 'Xfile2')
+  call writefile(repeat(['one two'], 50), 'Xaltfile1')
+  call writefile(repeat(['five six'], 50), 'Xaltfile2')
   set nosol
-  edit Xfile1
+  edit Xaltfile1
   call cursor(25, 5)
-  edit Xfile2
+  edit Xaltfile2
   call cursor(30, 4)
   exe "normal \<C-^>"
   call assert_equal([0, 25, 5, 0], getpos('.'))
   exe "normal \<C-^>"
   call assert_equal([0, 30, 4, 0], getpos('.'))
-  buf Xfile1
+  buf Xaltfile1
   call assert_equal([0, 25, 5, 0], getpos('.'))
-  buf Xfile2
+  buf Xaltfile2
   call assert_equal([0, 30, 4, 0], getpos('.'))
   set sol&
-  call delete('Xfile1')
-  call delete('Xfile2')
+  call delete('Xaltfile1')
+  call delete('Xaltfile2')
 endfunc
 
 " Test for running the :sball command with a maximum window count and a
 " modified buffer
 func Test_sball_with_count()
   %bw!
-  edit Xfile1
+  edit Xcountfile1
   call setline(1, ['abc'])
-  new Xfile2
-  new Xfile3
-  new Xfile4
+  new Xcountfile2
+  new Xcountfile3
+  new Xcountfile4
   2sball
-  call assert_equal(bufnr('Xfile4'), winbufnr(1))
-  call assert_equal(bufnr('Xfile1'), winbufnr(2))
-  call assert_equal(0, getbufinfo('Xfile2')[0].loaded)
-  call assert_equal(0, getbufinfo('Xfile3')[0].loaded)
+  call assert_equal(bufnr('Xcountfile4'), winbufnr(1))
+  call assert_equal(bufnr('Xcountfile1'), winbufnr(2))
+  call assert_equal(0, getbufinfo('Xcountfile2')[0].loaded)
+  call assert_equal(0, getbufinfo('Xcountfile3')[0].loaded)
   %bw!
 endfunc
 
@@ -456,18 +456,18 @@ func Test_buflist_alloc_failure()
   CheckFunction test_alloc_fail
   %bw!
 
-  edit Xfile1
+  edit XallocFail1
   call test_alloc_fail(GetAllocId('newbuf_bvars'), 0, 0)
-  call assert_fails('edit Xfile2', 'E342:')
+  call assert_fails('edit XallocFail2', 'E342:')
 
   " test for bufadd()
   call test_alloc_fail(GetAllocId('newbuf_bvars'), 0, 0)
   call assert_fails('call bufadd("Xbuffer")', 'E342:')
 
   " test for setting the arglist
-  edit Xfile2
+  edit XallocFail2
   call test_alloc_fail(GetAllocId('newbuf_bvars'), 0, 0)
-  call assert_fails('next Xfile3', 'E342:')
+  call assert_fails('next XallocFail3', 'E342:')
 
   " test for setting the alternate buffer name when writing a file
   call test_alloc_fail(GetAllocId('newbuf_bvars'), 0, 0)
@@ -494,17 +494,17 @@ func Test_buflist_alloc_failure()
   endif
 
   " test for loading a new buffer after wiping out all the buffers
-  edit Xfile4
+  edit XallocFail4
   call test_alloc_fail(GetAllocId('newbuf_bvars'), 0, 0)
   call assert_fails('%bw!', 'E342:')
 
   " test for :checktime loading the buffer
-  call writefile(['one'], 'Xfile5')
+  call writefile(['one'], 'XallocFail5')
   if has('unix')
-    edit Xfile5
+    edit XallocFail5
     " sleep for some time to make sure the timestamp is different
     sleep 200m
-    call writefile(['two'], 'Xfile5')
+    call writefile(['two'], 'XallocFail5')
     set autoread
     call test_alloc_fail(GetAllocId('newbuf_bvars'), 0, 0)
     call assert_fails('checktime', 'E342:')
@@ -514,12 +514,12 @@ func Test_buflist_alloc_failure()
 
   " test for :vimgrep loading a dummy buffer
   call test_alloc_fail(GetAllocId('newbuf_bvars'), 0, 0)
-  call assert_fails('vimgrep two Xfile5', 'E342:')
-  call delete('Xfile5')
+  call assert_fails('vimgrep two XallocFail5', 'E342:')
+  call delete('XallocFail5')
 
   " test for quickfix command loading a buffer
   call test_alloc_fail(GetAllocId('newbuf_bvars'), 0, 0)
-  call assert_fails('cexpr "Xfile6:10:Line10"', 'E342:')
+  call assert_fails('cexpr "XallocFail6:10:Line10"', 'E342:')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

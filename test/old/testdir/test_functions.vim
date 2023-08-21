@@ -2009,6 +2009,32 @@ func Test_setbufvar_options()
   bwipe!
 endfunc
 
+func Test_setbufvar_keep_window_title()
+  CheckRunVimInTerminal
+  if !has('title') || empty(&t_ts)
+    throw "Skipped: can't get/set title"
+  endif
+
+  let lines =<< trim END
+      set title
+      edit Xa.txt
+      let g:buf = bufadd('Xb.txt')
+      inoremap <F2> <C-R>=setbufvar(g:buf, '&autoindent', 1) ?? ''<CR>
+  END
+  call writefile(lines, 'Xsetbufvar')
+  let buf = RunVimInTerminal('-S Xsetbufvar', {})
+  call WaitForAssert({-> assert_match('Xa.txt', term_gettitle(buf))}, 1000)
+
+  call term_sendkeys(buf, "i\<F2>")
+  call TermWait(buf)
+  call term_sendkeys(buf, "\<Esc>")
+  call TermWait(buf)
+  call assert_match('Xa.txt', term_gettitle(buf))
+
+  call StopVimInTerminal(buf)
+  call delete('Xsetbufvar')
+endfunc
+
 func Test_redo_in_nested_functions()
   nnoremap g. :set opfunc=Operator<CR>g@
   function Operator( type, ... )
@@ -2567,7 +2593,6 @@ endfunc
 
 func Test_state()
   CheckRunVimInTerminal
-  let g:test_is_flaky = 1
 
   let getstate = ":echo 'state: ' .. g:state .. '; mode: ' .. g:mode\<CR>"
 

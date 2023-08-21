@@ -24,29 +24,29 @@ endfunc
 " Test for the CursorHold autocmd
 func Test_CursorHold_autocmd()
   CheckRunVimInTerminal
-  call writefile(['one', 'two', 'three'], 'Xfile')
+  call writefile(['one', 'two', 'three'], 'XoneTwoThree')
   let before =<< trim END
     set updatetime=10
-    au CursorHold * call writefile([line('.')], 'Xoutput', 'a')
+    au CursorHold * call writefile([line('.')], 'XCHoutput', 'a')
   END
-  call writefile(before, 'Xinit')
-  let buf = RunVimInTerminal('-S Xinit Xfile', {})
+  call writefile(before, 'XCHinit')
+  let buf = RunVimInTerminal('-S XCHinit XoneTwoThree', {})
   call term_sendkeys(buf, "G")
-  call term_wait(buf, 20)
+  call term_wait(buf, 50)
   call term_sendkeys(buf, "gg")
   call term_wait(buf)
-  call WaitForAssert({-> assert_equal(['1'], readfile('Xoutput')[-1:-1])})
+  call WaitForAssert({-> assert_equal(['1'], readfile('XCHoutput')[-1:-1])})
   call term_sendkeys(buf, "j")
   call term_wait(buf)
-  call WaitForAssert({-> assert_equal(['1', '2'], readfile('Xoutput')[-2:-1])})
+  call WaitForAssert({-> assert_equal(['1', '2'], readfile('XCHoutput')[-2:-1])})
   call term_sendkeys(buf, "j")
   call term_wait(buf)
-  call WaitForAssert({-> assert_equal(['1', '2', '3'], readfile('Xoutput')[-3:-1])})
+  call WaitForAssert({-> assert_equal(['1', '2', '3'], readfile('XCHoutput')[-3:-1])})
   call StopVimInTerminal(buf)
 
-  call delete('Xinit')
-  call delete('Xoutput')
-  call delete('Xfile')
+  call delete('XCHinit')
+  call delete('XCHoutput')
+  call delete('XoneTwoThree')
 endfunc
 
 if has('timers')
@@ -1724,21 +1724,21 @@ endfunc
 
 " Test for Bufleave autocommand that deletes the buffer we are about to edit.
 func Test_BufleaveWithDelete()
-  new | edit Xfile1
+  new | edit XbufLeave1
 
   augroup test_bufleavewithdelete
       autocmd!
-      autocmd BufLeave Xfile1 bwipe Xfile2
+      autocmd BufLeave XbufLeave1 bwipe XbufLeave2
   augroup END
 
-  call assert_fails('edit Xfile2', 'E143:')
-  call assert_equal('Xfile1', bufname('%'))
+  call assert_fails('edit XbufLeave2', 'E143:')
+  call assert_equal('XbufLeave1', bufname('%'))
 
-  autocmd! test_bufleavewithdelete BufLeave Xfile1
+  autocmd! test_bufleavewithdelete BufLeave XbufLeave1
   augroup! test_bufleavewithdelete
 
   new
-  bwipe! Xfile1
+  bwipe! XbufLeave1
 endfunc
 
 " Test for autocommand that changes the buffer list, when doing ":ball".
@@ -2962,7 +2962,6 @@ endfunc
 
 func Test_autocmd_SafeState()
   CheckRunVimInTerminal
-  let g:test_is_flaky = 1
 
   let lines =<< trim END
 	let g:safe = 0
@@ -3243,13 +3242,13 @@ endfunc
 func Test_BufReadPre_delfile()
   augroup TestAuCmd
     au!
-    autocmd BufReadPre Xfile call delete('Xfile')
+    autocmd BufReadPre XbufreadPre call delete('XbufreadPre')
   augroup END
-  call writefile([], 'Xfile')
-  call assert_fails('new Xfile', 'E200:')
-  call assert_equal('Xfile', @%)
+  call writefile([], 'XbufreadPre')
+  call assert_fails('new XbufreadPre', 'E200:')
+  call assert_equal('XbufreadPre', @%)
   call assert_equal(1, &readonly)
-  call delete('Xfile')
+  call delete('XbufreadPre')
   augroup TestAuCmd
     au!
   augroup END
@@ -3260,13 +3259,13 @@ endfunc
 func Test_BufReadPre_changebuf()
   augroup TestAuCmd
     au!
-    autocmd BufReadPre Xfile edit Xsomeotherfile
+    autocmd BufReadPre Xchangebuf edit Xsomeotherfile
   augroup END
-  call writefile([], 'Xfile')
-  call assert_fails('new Xfile', 'E201:')
+  call writefile([], 'Xchangebuf')
+  call assert_fails('new Xchangebuf', 'E201:')
   call assert_equal('Xsomeotherfile', @%)
   call assert_equal(1, &readonly)
-  call delete('Xfile')
+  call delete('Xchangebuf')
   augroup TestAuCmd
     au!
   augroup END

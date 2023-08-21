@@ -49,7 +49,7 @@ describe('title', function()
     end)
 
     it('calling setbufvar() to set an option in a hidden buffer from i_CTRL-R', function()
-      command([[inoremap <F2> <C-R>=setbufvar(]]..buf2..[[, '&autoindent', 1) ? '' : ''<CR>]])
+      command([[inoremap <F2> <C-R>=setbufvar(]]..buf2..[[, '&autoindent', 1) ?? ''<CR>]])
       feed('i<F2><Esc>')
       command('redraw!')
       screen:expect(function()
