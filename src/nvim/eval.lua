@@ -10483,6 +10483,7 @@ M.funcs = {
              recursiveness up to "ccc")
           s  screen has scrolled for messages
     ]=],
+    fast = true,
     name = 'state',
     params = { { 'what', 'string' } },
     signature = 'state([{what}])',

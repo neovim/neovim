@@ -4952,7 +4952,7 @@ static void f_state(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (autocmd_busy) {
     may_add_state_char(&ga, include, 'x');
   }
-  if (!ctrl_x_mode_none()) {
+  if (ins_compl_active()) {
     may_add_state_char(&ga, include, 'a');
   }
   if (!get_was_safe_state()) {
