@@ -595,6 +595,8 @@ endfunc
 
 func Test_wincolor()
   CheckScreendump
+  " make sure the width is enough for the test
+  set columns=80
 
   let lines =<< trim END
 	set cursorline cursorcolumn rnu
