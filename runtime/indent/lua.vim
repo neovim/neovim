@@ -41,7 +41,7 @@ function! GetLuaIndent()
   let prevline = getline(prevlnum)
   let midx = match(prevline, '^\s*\%(if\>\|for\>\|while\>\|repeat\>\|else\>\|elseif\>\|do\>\|then\>\)')
   if midx == -1
-    let midx = match(prevline, '{\s*$')
+    let midx = match(prevline, '{\s*\%(--\%([^[].*\)\?\)\?$')
     if midx == -1
       let midx = match(prevline, '\<function\>\s*\%(\k\|[.:]\)\{-}\s*(')
     endif
