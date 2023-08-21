@@ -25,7 +25,7 @@ syn keyword sdcNonIdealities	set_load set_min_capacitance set_max_capacitance
 syn keyword sdcCreateOperations	create_clock create_timing_netlist update_timing_netlist
 
 " command flags highlighting
-syn match sdcFlags		"[[:space:]]-[[:alpha:]]*\>"
+syn match sdcFlags		"[[:space:]]-[[:alpha:]_]*\>"
 
 " Define the default highlighting.
 hi def link sdcCollections      Repeat
