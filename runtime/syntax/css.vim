@@ -452,12 +452,12 @@ syn match cssAttrComma ","
 " Pseudo class
 " https://www.w3.org/TR/selectors-4/
 syn match cssPseudoClass ":[A-Za-z0-9_-]*" contains=cssNoise,cssPseudoClassId,cssUnicodeEscape,cssVendor,cssPseudoClassFn
-syn keyword cssPseudoClassId contained link visited active hover before after left right
-syn keyword cssPseudoClassId contained root empty target enabled disabled checked invalid
+syn keyword cssPseudoClassId contained link visited active hover before after left right any-link
+syn keyword cssPseudoClassId contained root empty target enabled disabled checked invalid default defined autofill fullscreen host indeterminate in-range modal optional out-of-range picture-in-picture placeholder-shown paused playing read-only read-write required scope
 syn match cssPseudoClassId contained "\<first-\(line\|letter\)\>"
 syn match cssPseudoClassId contained "\<\(first\|last\|only\)-\(of-type\|child\)\>"
 syn match cssPseudoClassId contained  "\<focus\(-within\|-visible\)\=\>"
-syn region cssPseudoClassFn contained matchgroup=cssFunctionName start="\<\(not\|is\|lang\|\(nth\|nth-last\)-\(of-type\|child\)\)(" end=")" contains=cssStringQ,cssStringQQ,cssTagName,cssAttributeSelector,cssClassName,cssIdentifier
+syn region cssPseudoClassFn contained matchgroup=cssFunctionName start="\<\(where\|has\|host\|not\|is\|lang\|\(nth\|nth-last\)-\(of-type\|child\)\)(" end=")" contains=cssStringQ,cssStringQQ,cssTagName,cssAttributeSelector,cssClassName,cssIdentifier
 " ------------------------------------
 " Vendor specific properties
 syn match cssPseudoClassId contained  "\<selection\>"
