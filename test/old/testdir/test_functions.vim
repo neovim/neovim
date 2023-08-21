@@ -2011,6 +2011,9 @@ endfunc
 
 func Test_setbufvar_keep_window_title()
   CheckRunVimInTerminal
+  if !has('title') || empty(&t_ts)
+    throw "Skipped: can't get/set title"
+  endif
 
   let lines =<< trim END
       edit Xa.txt
