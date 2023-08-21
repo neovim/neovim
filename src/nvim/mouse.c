@@ -993,48 +993,35 @@ void ins_mouse(int c)
   redraw_statuslines();
 }
 
+/// Implementation for scrolling in direction "dir", which is one of the MSCR_
+/// values.
 void ins_mousescroll(int dir)
 {
-  win_T *const old_curwin = curwin;
-  pos_T tpos = curwin->w_cursor;
+  cmdarg_T cap;
+  CLEAR_FIELD(cap);
 
-  if (mouse_row >= 0 && mouse_col >= 0) {
-    int row = mouse_row, col = mouse_col, grid = mouse_grid;
+  oparg_T oa;
+  clear_oparg(&oa);
+  cap.oap = &oa;
 
-    // find the window at the pointer coordinates
-    win_T *wp = mouse_find_win(&grid, &row, &col);
-    if (wp == NULL) {
-      return;
-    }
-    curwin = wp;
-    curbuf = curwin->w_buffer;
+  cap.arg = dir;
+  switch (dir) {
+  case MSCR_UP:
+    cap.cmdchar = K_MOUSEUP;
+    break;
+  case MSCR_DOWN:
+    cap.cmdchar = K_MOUSEDOWN;
+    break;
+  case MSCR_LEFT:
+    cap.cmdchar = K_MOUSELEFT;
+    break;
+  case MSCR_RIGHT:
+    cap.cmdchar = K_MOUSERIGHT;
+    break;
+  default:
+    siemsg("Invalid ins_mousescroll() argument: %d", dir);
   }
-  if (curwin == old_curwin) {
-    undisplay_dollar();
-  }
-
-  // Don't scroll the window in which completion is being done.
-  if (!pum_visible() || curwin != old_curwin) {
-    if (dir == MSCR_DOWN || dir == MSCR_UP) {
-      if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-        scroll_redraw(dir, curwin->w_botline - curwin->w_topline);
-      } else if (p_mousescroll_vert > 0) {
-        scroll_redraw(dir, (linenr_T)p_mousescroll_vert);
-      }
-    } else {
-      mouse_scroll_horiz(dir);
-    }
-  }
-
-  curwin->w_redr_status = true;
-
-  curwin = old_curwin;
-  curbuf = curwin->w_buffer;
-
-  if (!equalpos(curwin->w_cursor, tpos)) {
-    start_arrow(&tpos);
-    set_can_cindent(true);
-  }
+  do_mousescroll(MODE_INSERT, &cap);
 }
 
 /// Return true if "c" is a mouse key.
@@ -1456,20 +1443,44 @@ retnomove:
   return count;
 }
 
-/// Mouse scroll wheel: Default action is to scroll three lines, or one page
-/// when Shift or Ctrl is used.
-/// K_MOUSEUP (cap->arg == 1) or K_MOUSEDOWN (cap->arg == 0) or
-/// K_MOUSELEFT (cap->arg == -1) or K_MOUSERIGHT (cap->arg == -2)
-void nv_mousescroll(cmdarg_T *cap)
+/// Make a horizontal scroll to "leftcol".
+/// @return true if the cursor moved, false otherwise.
+static bool do_mousescroll_horiz(colnr_T leftcol)
 {
-  win_T *old_curwin = curwin;
+  if (curwin->w_p_wrap) {
+    return false;  // no horizontal scrolling when wrapping
+  }
+  if (curwin->w_leftcol == leftcol) {
+    return false;  // already there
+  }
+
+  // When the line of the cursor is too short, move the cursor to the
+  // longest visible line.
+  if (!virtual_active()
+      && leftcol > scroll_line_len(curwin->w_cursor.lnum)) {
+    curwin->w_cursor.lnum = find_longest_lnum();
+    curwin->w_cursor.col = 0;
+  }
+
+  return set_leftcol(leftcol);
+}
+
+/// Mouse scroll wheel: Default action is to scroll p_mousescroll_vert lines,
+/// or p_mousescroll_hor, or one page when Shift or Ctrl is used.
+/// Direction is indicated by "cap->arg":
+///    K_MOUSEUP    - MSCR_UP
+///    K_MOUSEDOWN  - MSCR_DOWN
+///    K_MOUSELEFT  - MSCR_LEFT
+///    K_MOUSERIGHT - MSCR_RIGHT
+void do_mousescroll(int mode, cmdarg_T *cap)
+{
+  win_T *const old_curwin = curwin;
+  pos_T tpos = curwin->w_cursor;
 
   if (mouse_row >= 0 && mouse_col >= 0) {
-    int grid, row, col;
-
-    grid = mouse_grid;
-    row = mouse_row;
-    col = mouse_col;
+    int grid = mouse_grid;
+    int row = mouse_row;
+    int col = mouse_col;
 
     // find the window at the pointer coordinates
     win_T *wp = mouse_find_win(&grid, &row, &col);
@@ -1480,18 +1491,45 @@ void nv_mousescroll(cmdarg_T *cap)
     curbuf = curwin->w_buffer;
   }
 
-  if (cap->arg == MSCR_UP || cap->arg == MSCR_DOWN) {
-    if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-      (void)onepage(cap->arg ? FORWARD : BACKWARD, 1);
-    } else if (p_mousescroll_vert > 0) {
-      cap->count1 = (int)p_mousescroll_vert;
-      cap->count0 = (int)p_mousescroll_vert;
-      nv_scroll_line(cap);
-    }
-  } else {
-    mouse_scroll_horiz(cap->arg);
+  if (mode == MODE_INSERT && curwin == old_curwin) {
+    undisplay_dollar();
   }
-  if (curwin != old_curwin && curwin->w_p_cul) {
+
+  // For Insert mode, don't scroll the window in which completion is being done.
+  if (mode == MODE_NORMAL || !pum_visible() || curwin != old_curwin) {
+    if (cap->arg == MSCR_UP || cap->arg == MSCR_DOWN) {
+      if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
+        if (mode == MODE_INSERT) {
+          int step = curwin->w_botline - curwin->w_topline;
+          scroll_redraw(cap->arg, step);
+        } else {
+          (void)onepage(cap->arg ? FORWARD : BACKWARD, 1);
+        }
+      } else if (p_mousescroll_vert > 0) {
+        if (mode == MODE_INSERT) {
+          scroll_redraw(cap->arg, (linenr_T)p_mousescroll_vert);
+        } else {
+          cap->count1 = (int)p_mousescroll_vert;
+          cap->count0 = (int)p_mousescroll_vert;
+          nv_scroll_line(cap);
+        }
+      }
+    } else {
+      int step = (int)p_mousescroll_hor;
+      if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
+        step = curwin->w_width_inner;
+      }
+
+      colnr_T leftcol = curwin->w_leftcol + (cap->arg == MSCR_RIGHT ? -step : +step);
+      if (leftcol < 0) {
+        leftcol = 0;
+      }
+
+      (void)do_mousescroll_horiz(leftcol);
+    }
+  }
+
+  if (mode == MODE_NORMAL && curwin != old_curwin && curwin->w_p_cul) {
     redraw_for_cursorline(curwin);
   }
 
@@ -1499,6 +1537,18 @@ void nv_mousescroll(cmdarg_T *cap)
 
   curwin = old_curwin;
   curbuf = curwin->w_buffer;
+
+  if (mode == MODE_INSERT) {
+    if (!equalpos(curwin->w_cursor, tpos)) {
+      start_arrow(&tpos);
+      set_can_cindent(true);
+    }
+  }
+}
+
+void nv_mousescroll(cmdarg_T *cap)
+{
+  do_mousescroll(MODE_NORMAL, cap);
 }
 
 /// Mouse clicks and drags.
@@ -1724,9 +1774,7 @@ static colnr_T scroll_line_len(linenr_T lnum)
   return col;
 }
 
-///
 /// Find longest visible line number.
-///
 static linenr_T find_longest_lnum(void)
 {
   linenr_T ret = 0;
@@ -1759,39 +1807,6 @@ static linenr_T find_longest_lnum(void)
   }
 
   return ret;
-}
-
-/// Do a horizontal scroll.
-/// @return true if the cursor moved, false otherwise.
-bool mouse_scroll_horiz(int dir)
-{
-  if (curwin->w_p_wrap) {
-    return false;
-  }
-
-  int step = (int)p_mousescroll_hor;
-  if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
-    step = curwin->w_width_inner;
-  }
-
-  int leftcol = curwin->w_leftcol + (dir == MSCR_RIGHT ? -step : +step);
-  if (leftcol < 0) {
-    leftcol = 0;
-  }
-
-  if (curwin->w_leftcol == leftcol) {
-    return false;
-  }
-
-  // When the line of the cursor is too short, move the cursor to the
-  // longest visible line.
-  if (!virtual_active()
-      && (colnr_T)leftcol > scroll_line_len(curwin->w_cursor.lnum)) {
-    curwin->w_cursor.lnum = find_longest_lnum();
-    curwin->w_cursor.col = 0;
-  }
-
-  return set_leftcol(leftcol);
 }
 
 /// Check clicked cell on its grid
