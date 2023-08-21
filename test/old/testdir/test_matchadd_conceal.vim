@@ -372,14 +372,14 @@ func Test_cursor_column_in_concealed_line_after_window_scroll()
   END
   call writefile(lines, 'Xcolesearch')
   let buf = RunVimInTerminal('Xcolesearch', {})
-  call term_wait(buf, 100)
+  call TermWait(buf, 50)
 
   " Jump to something that is beyond the bottom of the window,
   " so there's a scroll down.
   call term_sendkeys(buf, ":so %\<CR>")
-  call term_wait(buf, 100)
+  call TermWait(buf, 50)
   call term_sendkeys(buf, "/expr\<CR>")
-  call term_wait(buf, 100)
+  call TermWait(buf, 50)
 
   " Are the concealed parts of the current line really hidden?
   let cursor_row = term_scrape(buf, '.')->map({_, e -> e.chars})->join('')
@@ -409,7 +409,7 @@ func Test_cursor_column_in_concealed_line_after_leftcol_change()
   " Horizontal scroll would center the cursor in the screen line, but conceal
   " makes it go to screen column 1.
   call term_sendkeys(buf, "$")
-  call term_wait(buf)
+  call TermWait(buf)
 
   " Are the concealed parts of the current line really hidden?
   call WaitForAssert({-> assert_equal('c', term_getline(buf, '.'))})

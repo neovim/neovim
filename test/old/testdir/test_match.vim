@@ -322,7 +322,7 @@ func OtherWindowCommon()
   END
   call writefile(lines, 'XscriptMatchCommon')
   let buf = RunVimInTerminal('-S XscriptMatchCommon', #{rows: 12})
-  call term_wait(buf)
+  call TermWait(buf)
   return buf
 endfunc
 

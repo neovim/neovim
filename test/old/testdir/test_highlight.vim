@@ -543,9 +543,9 @@ func Test_cursorline_after_yank()
 	\ 'call setline(1, ["","1","2","3",""])',
 	\ ], 'Xtest_cursorline_yank')
   let buf = RunVimInTerminal('-S Xtest_cursorline_yank', {'rows': 8})
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, "Gy3k")
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, "jj")
 
   call VerifyScreenDump(buf, 'Test_cursorline_yank_01', {})
@@ -583,7 +583,7 @@ func Test_cursorline_with_visualmode()
 	\ 'call setline(1, repeat(["abc"], 50))',
 	\ ], 'Xtest_cursorline_with_visualmode')
   let buf = RunVimInTerminal('-S Xtest_cursorline_with_visualmode', {'rows': 12})
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, "V\<C-f>kkkjk")
 
   call VerifyScreenDump(buf, 'Test_cursorline_with_visualmode_01', {})
@@ -611,9 +611,9 @@ func Test_wincolor()
   END
   call writefile(lines, 'Xtest_wincolor')
   let buf = RunVimInTerminal('-S Xtest_wincolor', {'rows': 8})
-  call term_wait(buf)
+  call TermWait(buf)
   call term_sendkeys(buf, "2G5lvj")
-  call term_wait(buf)
+  call TermWait(buf)
 
   call VerifyScreenDump(buf, 'Test_wincolor_01', {})
 
@@ -718,7 +718,7 @@ func Test_colorcolumn()
   call writefile(lines, 'Xtest_colorcolumn')
   let buf = RunVimInTerminal('-S Xtest_colorcolumn', {'rows': 10})
   call term_sendkeys(buf, ":\<CR>")
-  call term_wait(buf)
+  call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_colorcolumn_1', {})
 
   " clean up

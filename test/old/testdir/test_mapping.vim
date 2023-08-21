@@ -418,9 +418,9 @@ func Test_error_in_map_expr()
 
   " GC must not run during map-expr processing, which can make Vim crash.
   call term_sendkeys(buf, '!')
-  call term_wait(buf, 100)
+  call TermWait(buf, 50)
   call term_sendkeys(buf, "\<CR>")
-  call term_wait(buf, 100)
+  call TermWait(buf, 50)
   call assert_equal('run', job_status(job))
 
   call term_sendkeys(buf, ":qall!\<CR>")

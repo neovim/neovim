@@ -1482,7 +1482,7 @@ func Test_verbose_option()
   call writefile(lines, 'XTest_verbose')
 
   let buf = RunVimInTerminal('-S XTest_verbose', {'rows': 12})
-  call term_wait(buf, 100)
+  call TermWait(buf, 50)
   call term_sendkeys(buf, ":DoSomething\<CR>")
   call VerifyScreenDump(buf, 'Test_verbose_option_1', {})
 
@@ -1560,7 +1560,7 @@ func Test_cmdwin_restore()
   call writefile(lines, 'XTest_restore')
 
   let buf = RunVimInTerminal('-S XTest_restore', {'rows': 12})
-  call term_wait(buf, 100)
+  call TermWait(buf, 50)
   call term_sendkeys(buf, "q:")
   call VerifyScreenDump(buf, 'Test_cmdwin_restore_1', {})
 
@@ -1687,7 +1687,7 @@ func Test_cmdlineclear_tabenter()
 
   call writefile(lines, 'XtestCmdlineClearTabenter')
   let buf = RunVimInTerminal('-S XtestCmdlineClearTabenter', #{rows: 10})
-  call term_wait(buf, 50)
+  call TermWait(buf, 25)
   " in one tab make the command line higher with CTRL-W -
   call term_sendkeys(buf, ":tabnew\<cr>\<C-w>-\<C-w>-gtgt")
   call VerifyScreenDump(buf, 'Test_cmdlineclear_tabenter', {})

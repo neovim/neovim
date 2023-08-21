@@ -364,12 +364,12 @@ func! Test_search_stat_screendump()
   END
   call writefile(lines, 'Xsearchstat')
   let buf = RunVimInTerminal('-S Xsearchstat', #{rows: 10})
-  call term_wait(buf)
+  call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_searchstat_1', {})
 
   call term_sendkeys(buf, ":nnoremap <silent> n n\<cr>")
   call term_sendkeys(buf, "gg0n")
-  call term_wait(buf)
+  call TermWait(buf)
   call VerifyScreenDump(buf, 'Test_searchstat_2', {})
 
   call StopVimInTerminal(buf)
