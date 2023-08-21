@@ -156,8 +156,8 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 					\ 'text', 'vLink']
 		let bodys = bodyprop
 		" Document - document.
-		let docuprop = ['anchors', 'body', 'characterSet', 'doctype',
-					\ 'documentElement', 'documentURI', 'embeds', 'fonts', 'forms',
+		let docuprop = ['anchors', 'applets', 'body', 'characterSet', 'childNodes',
+					\ 'doctype', 'documentElement', 'documentURI', 'embeds', 'fonts', 'forms',
 					\ 'head', 'hidden', 'images', 'implementation', 'lastStyleSheetSet',
 					\ 'links', 'plugins', 'preferredStyleSheetSet', 'scripts',
 					\ 'scrollingElement', 'selectedStyleSheetSet', 'styleSheetSets',
@@ -171,7 +171,7 @@ function! javascriptcomplete#CompleteJS(findstart, base)
 					\ 'createEvent', 'createExpression', 'createNSResolver',
 					\ 'createNodeIterator', 'createProcessingInstruction', 'createRange',
 					\ 'createTextNode', 'createTouchList', 'createTreeWalker',
-					\ 'enableStyleSheetsForSet', 'evaluate', 'focus', 'getElementById',
+					\ 'enableStyleSheetsForSet', 'evaluate', 'focus', 
 					\ 'getElementById', 'getElementsByClassName', 'getElementsByName',
 					\ 'getElementsByTagName', 'getElementsByTagNameNS',
 					\ 'hasStorageAccess', 'importNode', 'onClick', 'onDblClick',
