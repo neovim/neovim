@@ -79,11 +79,11 @@ endfunc
 func Test_non_existing_backupdir()
   throw 'Skipped: Nvim auto-creates backup directory'
   set backupdir=./non_existing_dir backupskip=
-  call writefile(['line1'], 'Xfile')
-  new Xfile
+  call writefile(['line1'], 'Xbackupdir')
+  new Xbackupdir
   call assert_fails('write', 'E510:')
   set backupdir&vim backupskip&vim
-  call delete('Xfile')
+  call delete('Xbackupdir')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
