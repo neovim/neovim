@@ -268,3 +268,30 @@ void may_trigger_modechanged(void)
 
   restore_v_event(v_event, &save_v_event);
 }
+
+/// When true in a safe state when starting to wait for a character.
+static bool was_safe = false;
+
+/// Trigger SafeState if currently in s safe state, that is "safe" is TRUE and
+/// there is no typeahead.
+void may_trigger_safestate(bool safe)
+{
+  bool is_safe = safe
+                 && stuff_empty()
+                 && typebuf.tb_len == 0
+                 && !using_script()
+                 && !global_busy;
+
+  if (is_safe) {
+    apply_autocmds(EVENT_SAFESTATE, NULL, NULL, false, curbuf);
+  }
+  was_safe = is_safe;
+}
+
+/// Something changed which causes the state possibly to be unsafe, e.g. a
+/// character was typed.  It will remain unsafe until the next call to
+/// may_trigger_safestate().
+void state_no_longer_safe(void)
+{
+  was_safe = false;
+}
