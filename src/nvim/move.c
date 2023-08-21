@@ -547,13 +547,7 @@ void set_topline(win_T *wp, linenr_T lnum)
 /// If the line length changed the number of screen lines might change,
 /// requiring updating w_topline.  That may also invalidate w_crow.
 /// Need to take care of w_botline separately!
-void changed_cline_bef_curs(void)
-{
-  curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL|VALID_CROW
-                       |VALID_CHEIGHT|VALID_TOPLINE);
-}
-
-void changed_cline_bef_curs_win(win_T *wp)
+void changed_cline_bef_curs(win_T *wp)
 {
   wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL|VALID_CROW
                    |VALID_CHEIGHT|VALID_TOPLINE);
@@ -595,13 +589,8 @@ void validate_botline(win_T *wp)
   }
 }
 
-// Mark curwin->w_botline as invalid (because of some change in the buffer).
-void invalidate_botline(void)
-{
-  curwin->w_valid &= ~(VALID_BOTLINE|VALID_BOTLINE_AP);
-}
-
-void invalidate_botline_win(win_T *wp)
+// Mark wp->w_botline as invalid (because of some change in the buffer).
+void invalidate_botline(win_T *wp)
 {
   wp->w_valid &= ~(VALID_BOTLINE|VALID_BOTLINE_AP);
 }
@@ -1276,7 +1265,7 @@ bool scrolldown(long line_count, int byfold)
       }
     }
     curwin->w_botline--;                // approximate w_botline
-    invalidate_botline();
+    invalidate_botline(curwin);
   }
   curwin->w_wrow += done;               // keep w_wrow updated
   curwin->w_cline_row += done;          // keep w_cline_row updated
@@ -2651,7 +2640,7 @@ void halfpage(bool flag, linenr_T Prenum)
       } else {
         curwin->w_cursor.lnum += n;
       }
-      check_cursor_lnum();
+      check_cursor_lnum(curwin);
     }
   } else {
     // scroll the text down

@@ -152,7 +152,17 @@ bool logmsg(int log_level, const char *context, const char *func_name, int line_
 #ifdef EXITFREE
   // Logging after we've already started freeing all our memory will only cause
   // pain.  We need access to VV_PROGPATH, homedir, etc.
-  assert(!entered_free_all_mem);
+  if (entered_free_all_mem) {
+    fprintf(stderr, "FATAL: error in free_all_mem\n %s %s %d: ", context, func_name, line_num);
+    va_list args;
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+    if (eol) {
+      fprintf(stderr, "\n");
+    }
+    abort();
+  }
 #endif
 
   log_lock();

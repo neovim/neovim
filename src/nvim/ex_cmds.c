@@ -321,7 +321,7 @@ void ex_align(exarg_T *eap)
     }
     (void)set_indent(new_indent, 0);                    // set indent
   }
-  changed_lines(eap->line1, 0, eap->line2 + 1, 0L, true);
+  changed_lines(curbuf, eap->line1, 0, eap->line2 + 1, 0L, true);
   curwin->w_cursor = save_curpos;
   beginline(BL_WHITE | BL_FIX);
 }
@@ -702,7 +702,7 @@ void ex_sort(exarg_T *eap)
                    (int)count, 0, old_count,
                    lnum - eap->line2, 0, new_count, kExtmarkUndo);
 
-    changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
+    changed_lines(curbuf, eap->line1, 0, eap->line2 + 1, -deleted, true);
   }
 
   curwin->w_cursor.lnum = eap->line1;
@@ -784,7 +784,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   mark_adjust_nofold(line1, line2, last_line - line2, 0L, kExtmarkNOOP);
 
   disable_fold_update++;
-  changed_lines(last_line - num_lines + 1, 0, last_line + 1, num_lines, false);
+  changed_lines(curbuf, last_line - num_lines + 1, 0, last_line + 1, num_lines, false);
   disable_fold_update--;
 
   int line_off = 0;
@@ -821,7 +821,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
                      -(last_line - dest - extra), 0L, kExtmarkNOOP);
 
   disable_fold_update++;
-  changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
+  changed_lines(curbuf, last_line - num_lines + 1, 0, last_line + 1, -extra, false);
   disable_fold_update--;
 
   // send update regarding the new lines that were added
@@ -859,9 +859,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     if (dest > last_line + 1) {
       dest = last_line + 1;
     }
-    changed_lines(line1, 0, dest, 0L, false);
+    changed_lines(curbuf, line1, 0, dest, 0L, false);
   } else {
-    changed_lines(dest + 1, 0, line1 + num_lines, 0L, false);
+    changed_lines(curbuf, dest + 1, 0, line1 + num_lines, 0L, false);
   }
 
   // send nvim_buf_lines_event regarding lines that were deleted
@@ -1124,7 +1124,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
   curwin->w_cursor.lnum = line1;
   curwin->w_cursor.col = 0;
   changed_line_abv_curs();
-  invalidate_botline();
+  invalidate_botline(curwin);
 
   // When using temp files:
   // 1. * Form temp file names
@@ -2088,7 +2088,7 @@ int getfile(int fnum, char *ffname_arg, char *sfname_arg, int setpm, linenr_T ln
     if (lnum != 0) {
       curwin->w_cursor.lnum = lnum;
     }
-    check_cursor_lnum();
+    check_cursor_lnum(curwin);
     beginline(BL_SOL | BL_FIX);
     retval = GETFILE_SAME_FILE;     // it's in the same file
   } else if (do_ecmd(fnum, ffname, sfname, NULL, lnum,
@@ -2652,7 +2652,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       check_cursor();
     } else if (newlnum > 0) {  // line number from caller or old position
       curwin->w_cursor.lnum = newlnum;
-      check_cursor_lnum();
+      check_cursor_lnum(curwin);
       if (solcol >= 0 && !p_sol) {
         // 'sol' is off: Use last known column.
         curwin->w_cursor.col = solcol;
@@ -2883,7 +2883,7 @@ void ex_append(exarg_T *eap)
     curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
   }
   curwin->w_cursor.lnum = lnum;
-  check_cursor_lnum();
+  check_cursor_lnum(curwin);
   beginline(BL_SOL | BL_FIX);
 
   need_wait_return = false;     // don't use wait_return() now
@@ -2913,7 +2913,7 @@ void ex_change(exarg_T *eap)
   }
 
   // make sure the cursor is not beyond the end of the file now
-  check_cursor_lnum();
+  check_cursor_lnum(curwin);
   deleted_lines_mark(eap->line1, (eap->line2 - lnum));
 
   // ":append" on the line above the deleted lines.
@@ -4200,7 +4200,7 @@ skip:
     // the line number before the change (same as adding the number of
     // deleted lines).
     i = curbuf->b_ml.ml_line_count - old_line_count;
-    changed_lines(first_line, 0, last_line - (linenr_T)i, (linenr_T)i, false);
+    changed_lines(curbuf, first_line, 0, last_line - (linenr_T)i, (linenr_T)i, false);
 
     int64_t num_added = last_line - first_line;
     int64_t num_removed = num_added - i;
@@ -4611,15 +4611,15 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
   linenr_T linenr_origbuf = 0;  // last line added to original buffer
   linenr_T next_linenr = 0;     // next line to show for the match
 
-  // Temporarily switch to preview buffer
-  aco_save_T aco;
-
   for (size_t matchidx = 0; matchidx < lines.subresults.size; matchidx++) {
     SubResult match = lines.subresults.items[matchidx];
 
     if (cmdpreview_buf) {
       lpos_T p_start = { 0, match.start.col };  // match starts here in preview
       lpos_T p_end   = { 0, match.end.col };    // ... and ends here
+
+      // You Might Gonna Need It
+      buf_ensure_loaded(cmdpreview_buf);
 
       if (match.pre_match == 0) {
         next_linenr = match.start.lnum;
@@ -4656,14 +4656,11 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
         // Put "|lnum| line" into `str` and append it to the preview buffer.
         snprintf(str, line_size, "|%*" PRIdLINENR "| %s", col_width - 3,
                  next_linenr, line);
-        // Temporarily switch to preview buffer
-        aucmd_prepbuf(&aco, cmdpreview_buf);
         if (linenr_preview == 0) {
-          ml_replace(1, str, true);
+          ml_replace_buf(cmdpreview_buf, 1, str, true);
         } else {
-          ml_append(linenr_preview, str, (colnr_T)line_size, false);
+          ml_append_buf(cmdpreview_buf, linenr_preview, str, (colnr_T)line_size, false);
         }
-        aucmd_restbuf(&aco);
         linenr_preview += 1;
       }
       linenr_origbuf = match.end.lnum;

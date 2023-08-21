@@ -1121,7 +1121,7 @@ void ex_changes(exarg_T *eap)
 void mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after,
                  ExtmarkOp op)
 {
-  mark_adjust_internal(line1, line2, amount, amount_after, true, op);
+  mark_adjust_buf(curbuf, line1, line2, amount, amount_after, true, true, op);
 }
 
 // mark_adjust_nofold() does the same as mark_adjust() but without adjusting
@@ -1132,13 +1132,13 @@ void mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amoun
 void mark_adjust_nofold(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after,
                         ExtmarkOp op)
 {
-  mark_adjust_internal(line1, line2, amount, amount_after, false, op);
+  mark_adjust_buf(curbuf, line1, line2, amount, amount_after, false, true, op);
 }
 
-static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount,
-                                 linenr_T amount_after, bool adjust_folds, ExtmarkOp op)
+void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount,
+                     linenr_T amount_after, bool adjust_folds, bool adj_cursor, ExtmarkOp op)
 {
-  int fnum = curbuf->b_fnum;
+  int fnum = buf->b_fnum;
   linenr_T *lp;
   static pos_T initpos = { 1, 0, 0 };
 
@@ -1149,7 +1149,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // named marks, lower case and upper case
     for (int i = 0; i < NMARKS; i++) {
-      ONE_ADJUST(&(curbuf->b_namedm[i].mark.lnum));
+      ONE_ADJUST(&(buf->b_namedm[i].mark.lnum));
       if (namedfm[i].fmark.fnum == fnum) {
         ONE_ADJUST_NODEL(&(namedfm[i].fmark.mark.lnum));
       }
@@ -1161,54 +1161,56 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount
     }
 
     // last Insert position
-    ONE_ADJUST(&(curbuf->b_last_insert.mark.lnum));
+    ONE_ADJUST(&(buf->b_last_insert.mark.lnum));
 
     // last change position
-    ONE_ADJUST(&(curbuf->b_last_change.mark.lnum));
+    ONE_ADJUST(&(buf->b_last_change.mark.lnum));
 
     // last cursor position, if it was set
-    if (!equalpos(curbuf->b_last_cursor.mark, initpos)) {
-      ONE_ADJUST(&(curbuf->b_last_cursor.mark.lnum));
+    if (!equalpos(buf->b_last_cursor.mark, initpos)) {
+      ONE_ADJUST(&(buf->b_last_cursor.mark.lnum));
     }
 
     // list of change positions
-    for (int i = 0; i < curbuf->b_changelistlen; i++) {
-      ONE_ADJUST_NODEL(&(curbuf->b_changelist[i].mark.lnum));
+    for (int i = 0; i < buf->b_changelistlen; i++) {
+      ONE_ADJUST_NODEL(&(buf->b_changelist[i].mark.lnum));
     }
 
     // Visual area
-    ONE_ADJUST_NODEL(&(curbuf->b_visual.vi_start.lnum));
-    ONE_ADJUST_NODEL(&(curbuf->b_visual.vi_end.lnum));
+    ONE_ADJUST_NODEL(&(buf->b_visual.vi_start.lnum));
+    ONE_ADJUST_NODEL(&(buf->b_visual.vi_end.lnum));
 
     // quickfix marks
-    if (!qf_mark_adjust(NULL, line1, line2, amount, amount_after)) {
-      curbuf->b_has_qf_entry &= ~BUF_HAS_QF_ENTRY;
+    if (!qf_mark_adjust(buf, NULL, line1, line2, amount, amount_after)) {
+      buf->b_has_qf_entry &= ~BUF_HAS_QF_ENTRY;
     }
     // location lists
     bool found_one = false;
     FOR_ALL_TAB_WINDOWS(tab, win) {
-      found_one |= qf_mark_adjust(win, line1, line2, amount, amount_after);
+      found_one |= qf_mark_adjust(buf, win, line1, line2, amount, amount_after);
     }
     if (!found_one) {
-      curbuf->b_has_qf_entry &= ~BUF_HAS_LL_ENTRY;
+      buf->b_has_qf_entry &= ~BUF_HAS_LL_ENTRY;
     }
 
-    sign_mark_adjust(line1, line2, amount, amount_after);
+    sign_mark_adjust(buf, line1, line2, amount, amount_after);
   }
 
   if (op != kExtmarkNOOP) {
-    extmark_adjust(curbuf, line1, line2, amount, amount_after, op);
+    extmark_adjust(buf, line1, line2, amount, amount_after, op);
   }
 
-  // previous context mark
-  ONE_ADJUST(&(curwin->w_pcmark.lnum));
+  if (curwin->w_buffer == buf) {
+    // previous context mark
+    ONE_ADJUST(&(curwin->w_pcmark.lnum));
 
-  // previous pcmark
-  ONE_ADJUST(&(curwin->w_prev_pcmark.lnum));
+    // previous pcpmark
+    ONE_ADJUST(&(curwin->w_prev_pcmark.lnum));
 
-  // saved cursor for formatting
-  if (saved_cursor.lnum != 0) {
-    ONE_ADJUST_NODEL(&(saved_cursor.lnum));
+    // saved cursor for formatting
+    if (saved_cursor.lnum != 0) {
+      ONE_ADJUST_NODEL(&(saved_cursor.lnum));
+    }
   }
 
   // Adjust items in all windows related to the current buffer.
@@ -1223,7 +1225,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount
       }
     }
 
-    if (win->w_buffer == curbuf) {
+    if (win->w_buffer == buf) {
       if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
         // marks in the tag stack
         for (int i = 0; i < win->w_tagstacklen; i++) {
@@ -1259,19 +1261,21 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount
           win->w_topline += amount_after;
           win->w_topfill = 0;
         }
-        if (win->w_cursor.lnum >= line1 && win->w_cursor.lnum <= line2) {
-          if (amount == MAXLNUM) {         // line with cursor is deleted
-            if (line1 <= 1) {
-              win->w_cursor.lnum = 1;
-            } else {
-              win->w_cursor.lnum = line1 - 1;
+        if (adj_cursor) {
+          if (win->w_cursor.lnum >= line1 && win->w_cursor.lnum <= line2) {
+            if (amount == MAXLNUM) {         // line with cursor is deleted
+              if (line1 <= 1) {
+                win->w_cursor.lnum = 1;
+              } else {
+                win->w_cursor.lnum = line1 - 1;
+              }
+              win->w_cursor.col = 0;
+            } else {                      // keep cursor on the same line
+              win->w_cursor.lnum += amount;
             }
-            win->w_cursor.col = 0;
-          } else {                      // keep cursor on the same line
-            win->w_cursor.lnum += amount;
+          } else if (amount_after && win->w_cursor.lnum > line2) {
+            win->w_cursor.lnum += amount_after;
           }
-        } else if (amount_after && win->w_cursor.lnum > line2) {
-          win->w_cursor.lnum += amount_after;
         }
       }
 
@@ -1282,7 +1286,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, linenr_T amount
   }
 
   // adjust diffs
-  diff_mark_adjust(line1, line2, amount, amount_after);
+  diff_mark_adjust(buf, line1, line2, amount, amount_after);
 }
 
 // This code is used often, needs to be fast.

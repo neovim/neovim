@@ -164,7 +164,7 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
     // Set or reset 'modified' before executing autocommands, so that
     // it can be changed there.
     if (!readonlymode && !buf_is_empty(curbuf)) {
-      changed();
+      changed(curbuf);
     } else if (retval != FAIL) {
       unchanged(curbuf, false, true);
     }
@@ -175,20 +175,22 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
   return retval;
 }
 
-/// Ensure buffer "buf" is loaded.  Does not trigger the swap-exists action.
-void buffer_ensure_loaded(buf_T *buf)
+/// Ensure buffer "buf" is loaded.
+bool buf_ensure_loaded(buf_T *buf)
 {
   if (buf->b_ml.ml_mfp != NULL) {
-    return;
+    // already open (common case)
+    return true;
   }
 
   aco_save_T aco;
 
   // Make sure the buffer is in a window.
   aucmd_prepbuf(&aco, buf);
-  swap_exists_action = SEA_NONE;
-  open_buffer(false, NULL, 0);
+  // status can be OK or NOTDONE (which also means ok/done)
+  int status = open_buffer(false, NULL, 0);
   aucmd_restbuf(&aco);
+  return (status != FAIL);
 }
 
 /// Open current buffer, that is: open the memfile and read the file into
@@ -343,7 +345,7 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
   if ((got_int && vim_strchr(p_cpo, CPO_INTMOD) != NULL)
       || modified_was_set               // ":set modified" used in autocmd
       || (aborting() && vim_strchr(p_cpo, CPO_INTMOD) != NULL)) {
-    changed();
+    changed(curbuf);
   } else if (retval != FAIL && !read_stdin && !read_fifo) {
     unchanged(curbuf, false, true);
   }
@@ -749,8 +751,6 @@ void buf_clear(void)
     ml_delete((linenr_T)1, false);
   }
   deleted_lines_mark(1, line_count);  // prepare for display
-  ml_close(curbuf, true);             // free memline_T
-  buf_clear_file(curbuf);
 }
 
 /// buf_freeall() - free all things allocated for a buffer that are related to
@@ -2124,7 +2124,7 @@ void buflist_getfpos(void)
   fpos = &buflist_findfmark(curbuf)->mark;
 
   curwin->w_cursor.lnum = fpos->lnum;
-  check_cursor_lnum();
+  check_cursor_lnum(curwin);
 
   if (p_sol) {
     curwin->w_cursor.col = 0;

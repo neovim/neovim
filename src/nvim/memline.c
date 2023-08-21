@@ -348,9 +348,8 @@ int ml_open(buf_T *buf)
   }
 
   // Fill in root pointer block and write page 1.
-  if ((hp = ml_new_ptr(mfp)) == NULL) {
-    goto error;
-  }
+  hp = ml_new_ptr(mfp);
+  assert(hp != NULL);
   if (hp->bh_bnum != 1) {
     iemsg(_("E298: Didn't get block nr 1?"));
     goto error;
@@ -1170,7 +1169,7 @@ void ml_recover(bool checkext)
     // Recovering an empty file results in two lines and the first line is
     // empty.  Don't set the modified flag then.
     if (!(curbuf->b_ml.ml_line_count == 2 && *ml_get(1) == NUL)) {
-      changed_internal();
+      changed_internal(curbuf);
       buf_inc_changedtick(curbuf);
     }
   } else {
@@ -1180,7 +1179,7 @@ void ml_recover(bool checkext)
       int i = strcmp(p, ml_get(idx + lnum));
       xfree(p);
       if (i != 0) {
-        changed_internal();
+        changed_internal(curbuf);
         buf_inc_changedtick(curbuf);
         break;
       }
@@ -2493,6 +2492,19 @@ int ml_delete(linenr_T lnum, bool message)
 {
   ml_flush_line(curbuf);
   return ml_delete_int(curbuf, lnum, message);
+}
+
+/// Delete line `lnum` in buffer
+///
+/// @note The caller of this function should probably also call changed_lines() after this.
+///
+/// @param message  Show "--No lines in buffer--" message.
+///
+/// @return  FAIL for failure, OK otherwise
+int ml_delete_buf(buf_T *buf, linenr_T lnum, bool message)
+{
+  ml_flush_line(buf);
+  return ml_delete_int(buf, lnum, message);
 }
 
 static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)

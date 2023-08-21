@@ -5881,7 +5881,7 @@ static void ex_copymove(exarg_T *eap)
   } else {
     ex_copy(eap->line1, eap->line2, n);
   }
-  u_clearline();
+  u_clearline(curbuf);
   beginline(BL_SOL | BL_FIX);
   ex_may_print(eap);
 }

@@ -3446,7 +3446,7 @@ void ins_compl_delete(void)
 
   // TODO(vim): is this sufficient for redrawing?  Redrawing everything
   // causes flicker, thus we can't do that.
-  changed_cline_bef_curs();
+  changed_cline_bef_curs(curwin);
   // clear v:completed_item
   set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc_lock(VAR_FIXED));
 }

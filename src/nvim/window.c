@@ -562,7 +562,7 @@ wingotofile:
 
       if (wp != NULL && nchar == 'F' && lnum >= 0) {
         curwin->w_cursor.lnum = lnum;
-        check_cursor_lnum();
+        check_cursor_lnum(curwin);
         beginline(BL_SOL | BL_FIX);
       }
       xfree(ptr);
@@ -6493,7 +6493,7 @@ void win_fix_scroll(int resize)
         wp->w_valid &= ~VALID_CROW;
       }
 
-      invalidate_botline_win(wp);
+      invalidate_botline(wp);
       validate_botline(wp);
     }
     wp->w_prev_height = wp->w_height;
@@ -6666,7 +6666,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
   }
 
   redraw_later(wp, UPD_SOME_VALID);
-  invalidate_botline_win(wp);
+  invalidate_botline(wp);
 }
 
 void win_set_inner_size(win_T *wp, bool valid_cursor)
@@ -6713,7 +6713,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
     wp->w_lines_valid = 0;
     if (valid_cursor) {
       changed_line_abv_curs_win(wp);
-      invalidate_botline_win(wp);
+      invalidate_botline(wp);
       if (wp == curwin && *p_spk == 'c') {
         curs_columns(wp, true);  // validate w_wrow
       }

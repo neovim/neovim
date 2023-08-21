@@ -836,7 +836,7 @@ void fix_help_buffer(void)
       linenr_T appended = lnum - lnum_start;
       if (appended) {
         mark_adjust(lnum_start + 1, (linenr_T)MAXLNUM, appended, 0L, kExtmarkUndo);
-        changed_lines_buf(curbuf, lnum_start + 1, lnum_start + 1, appended);
+        buf_redraw_changed_lines_later(curbuf, lnum_start + 1, lnum_start + 1, appended);
       }
       break;
     }

@@ -492,7 +492,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
   // first restore the old curwin values, so the screen is
   // positioned in the same way as the actual search command
   restore_viewstate(curwin, &s->old_viewstate);
-  changed_cline_bef_curs();
+  changed_cline_bef_curs(curwin);
   update_topline(curwin);
 
   if (found != 0) {
@@ -1460,7 +1460,7 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
 
     set_search_match(&s->match_end);
     curwin->w_cursor = s->match_start;
-    changed_cline_bef_curs();
+    changed_cline_bef_curs(curwin);
     update_topline(curwin);
     validate_cursor();
     highlight_match = true;
@@ -4480,7 +4480,7 @@ static int open_cmdwin(void)
   curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
   curwin->w_cursor.col = ccline.cmdpos;
   changed_line_abv_curs();
-  invalidate_botline();
+  invalidate_botline(curwin);
   if (ui_has(kUICmdline)) {
     ccline.redraw_state = kCmdRedrawNone;
     ui_call_cmdline_hide(ccline.level);

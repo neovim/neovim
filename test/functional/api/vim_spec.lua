@@ -28,7 +28,6 @@ local write_file = helpers.write_file
 local exec_lua = helpers.exec_lua
 local exc_exec = helpers.exc_exec
 local insert = helpers.insert
-local expect_exit = helpers.expect_exit
 local skip = helpers.skip
 
 local pcall_err = helpers.pcall_err
@@ -2832,7 +2831,9 @@ describe('API', function()
 
     it('does not cause heap-use-after-free on exit while setting options', function()
       command('au OptionSet * q')
-      expect_exit(command, 'silent! call nvim_create_buf(0, 1)')
+      command('silent! call nvim_create_buf(0, 1)')
+      -- nowadays this works because we don't execute any spurious autocmds at all #24824
+      assert_alive()
     end)
   end)
 

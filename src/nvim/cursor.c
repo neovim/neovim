@@ -324,18 +324,18 @@ void check_pos(buf_T *buf, pos_T *pos)
 }
 
 /// Make sure curwin->w_cursor.lnum is valid.
-void check_cursor_lnum(void)
+void check_cursor_lnum(win_T *win)
 {
-  if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
+  buf_T *buf = win->w_buffer;
+  if (win->w_cursor.lnum > buf->b_ml.ml_line_count) {
     // If there is a closed fold at the end of the file, put the cursor in
     // its first line.  Otherwise in the last line.
-    if (!hasFolding(curbuf->b_ml.ml_line_count,
-                    &curwin->w_cursor.lnum, NULL)) {
-      curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+    if (!hasFolding(buf->b_ml.ml_line_count, &win->w_cursor.lnum, NULL)) {
+      win->w_cursor.lnum = buf->b_ml.ml_line_count;
     }
   }
-  if (curwin->w_cursor.lnum <= 0) {
-    curwin->w_cursor.lnum = 1;
+  if (win->w_cursor.lnum <= 0) {
+    win->w_cursor.lnum = 1;
   }
 }
 
@@ -406,7 +406,7 @@ void check_cursor_col_win(win_T *win)
 /// Make sure curwin->w_cursor in on a valid character
 void check_cursor(void)
 {
-  check_cursor_lnum();
+  check_cursor_lnum(curwin);
   check_cursor_col();
 }
 
@@ -451,7 +451,7 @@ bool set_leftcol(colnr_T leftcol)
   }
   curwin->w_leftcol = leftcol;
 
-  changed_cline_bef_curs();
+  changed_cline_bef_curs(curwin);
   // TODO(hinidu): I think it should be colnr_T or int, but p_siso is long.
   // Perhaps we can change p_siso to int.
   int64_t lastcol = curwin->w_leftcol + curwin->w_width_inner - curwin_col_off() - 1;
@@ -481,7 +481,7 @@ bool set_leftcol(colnr_T leftcol)
     retval = true;
     if (coladvance(e + 1) == FAIL) {    // there isn't another character
       curwin->w_leftcol = s;            // adjust w_leftcol instead
-      changed_cline_bef_curs();
+      changed_cline_bef_curs(curwin);
     }
   }
 
