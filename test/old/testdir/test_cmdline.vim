@@ -1583,6 +1583,7 @@ endfunc
 func Test_cmdwin_no_terminal()
   CheckFeature cmdwin
   CheckFeature terminal
+  CheckNotMSWindows
 
   let buf = RunVimInTerminal('', {'rows': 12})
   call TermWait(buf, 50)
