@@ -27,6 +27,16 @@ if exists("*GetLuaIndent")
 endif
 
 function! GetLuaIndent()
+    let ignorecase_save = &ignorecase
+  try
+    let &ignorecase = 0
+    return GetLuaIndentIntern()
+  finally
+    let &ignorecase = ignorecase_save
+  endtry
+endfunction
+
+function! GetLuaIndentIntern()
   " Find a non-blank line above the current line.
   let prevlnum = prevnonblank(v:lnum - 1)
 
