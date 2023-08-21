@@ -2016,6 +2016,7 @@ func Test_setbufvar_keep_window_title()
   endif
 
   let lines =<< trim END
+      set title
       edit Xa.txt
       let g:buf = bufadd('Xb.txt')
       inoremap <F2> <C-R>=setbufvar(g:buf, '&autoindent', 1) ?? ''<CR>
