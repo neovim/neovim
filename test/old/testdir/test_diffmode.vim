@@ -857,6 +857,7 @@ func VerifyInternal(buf, dumpfile, extra)
 endfunc
 
 func Test_diff_screen()
+  let g:test_is_flaky = 1
   CheckScreendump
   CheckFeature menu
 

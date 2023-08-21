@@ -131,6 +131,7 @@ func Do_test_quotestar_for_x11()
 endfunc
 
 func Test_quotestar()
+  let g:test_is_flaky = 1
   let skipped = ''
 
   let quotestar_saved = @*

@@ -2013,6 +2013,7 @@ endfunc
 
 " Test for BufUnload autocommand that unloads all the other buffers
 func Test_bufunload_all()
+  let g:test_is_flaky = 1
   call writefile(['Test file Xxx1'], 'Xxx1')"
   call writefile(['Test file Xxx2'], 'Xxx2')"
 
@@ -2961,6 +2962,7 @@ endfunc
 
 func Test_autocmd_SafeState()
   CheckRunVimInTerminal
+  let g:test_is_flaky = 1
 
   let lines =<< trim END
 	let g:safe = 0
@@ -3044,6 +3046,7 @@ func Test_autocmd_was_using_freed_memory()
 endfunc
 
 func Test_BufWrite_lockmarks()
+  let g:test_is_flaky = 1
   edit! Xtest
   call setline(1, ['a', 'b', 'c', 'd'])
 

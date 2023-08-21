@@ -2567,6 +2567,7 @@ endfunc
 
 func Test_state()
   CheckRunVimInTerminal
+  let g:test_is_flaky = 1
 
   let getstate = ":echo 'state: ' .. g:state .. '; mode: ' .. g:mode\<CR>"
 

@@ -676,7 +676,9 @@ endfunc
 
 func Test_popup_and_window_resize()
   CheckFeature terminal
+  CheckFeature quickfix
   CheckNotGui
+  let g:test_is_flaky = 1
 
   let h = winheight(0)
   if h < 15

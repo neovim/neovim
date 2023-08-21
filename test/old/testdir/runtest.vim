@@ -489,33 +489,6 @@ else
   endtry
 endif
 
-" Names of flaky tests.
-let s:flaky_tests = [
-      \ 'Test_autocmd_SafeState()',
-      \ 'Test_cursorhold_insert()',
-      \ 'Test_exit_callback_interval()',
-      \ 'Test_map_timeout_with_timer_interrupt()',
-      \ 'Test_out_cb()',
-      \ 'Test_popup_and_window_resize()',
-      \ 'Test_quoteplus()',
-      \ 'Test_quotestar()',
-      \ 'Test_reltime()',
-      \ 'Test_state()',
-      \ 'Test_term_mouse_double_click_to_create_tab()',
-      \ 'Test_term_mouse_multiple_clicks_to_visually_select()',
-      \ 'Test_terminal_composing_unicode()',
-      \ 'Test_terminal_redir_file()',
-      \ 'Test_terminal_tmap()',
-      \ 'Test_timer_oneshot()',
-      \ 'Test_timer_paused()',
-      \ 'Test_timer_repeat_many()',
-      \ 'Test_timer_repeat_three()',
-      \ 'Test_timer_stop_all_in_callback()',
-      \ 'Test_timer_stop_in_callback()',
-      \ 'Test_timer_with_partial_callback()',
-      \ 'Test_termwinscroll()',
-      \ ]
-
 " Delete the .res file, it may change behavior for completion
 call delete(fnamemodify(g:testname, ':r') .. '.res')
 
@@ -565,8 +538,7 @@ for g:testfunc in sort(s:tests)
   " - it fails five times (with a different message)
   if len(v:errors) > 0
         \ && $TEST_NO_RETRY == ''
-        \ && (index(s:flaky_tests, g:testfunc) >= 0
-        \      || g:test_is_flaky)
+        \ && g:test_is_flaky
     while 1
       call add(s:messages, 'Found errors in ' .. g:testfunc .. ':')
       call extend(s:messages, v:errors)
