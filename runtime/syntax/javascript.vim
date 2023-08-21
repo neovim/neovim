@@ -103,7 +103,7 @@ hi def link javaScriptStringD		String
 hi def link javaScriptStringT		String
 hi def link javaScriptCharacter		Character
 hi def link javaScriptSpecialCharacter	javaScriptSpecial
-hi def link javaScriptNumber		javaScriptValue
+hi def link javaScriptNumber		Number
 hi def link javaScriptConditional		Conditional
 hi def link javaScriptRepeat		Repeat
 hi def link javaScriptBranch		Conditional
