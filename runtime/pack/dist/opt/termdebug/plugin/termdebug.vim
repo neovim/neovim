@@ -875,7 +875,9 @@ func s:HandleDisasmMsg(msg)
   else
     let value = substitute(a:msg, '^\~\"[ ]*', '', '')
     let value = substitute(value, '^=>[ ]*', '', '')
-    let value = substitute(value, '\\n\"\r$', '', '')
+    " Nvim already trims the final "\r" in s:CommOutput()
+    " let value = substitute(value, '\\n\"\r$', '', '')
+    let value = substitute(value, '\\n\"$', '', '')
     let value = substitute(value, '\r', '', '')
     let value = substitute(value, '\\t', ' ', 'g')
 
@@ -929,11 +931,10 @@ func s:HandleVariablesMsg(msg)
 endfunc
 
 func s:CommOutput(job_id, msgs, event)
-
   for msg in a:msgs
-    " remove prefixed NL
-    if msg[0] == "\n"
-      let msg = msg[1:]
+    " Nvim job lines are split on "\n", so trim a suffixed CR.
+    if msg[-1:] == "\r"
+      let msg = msg[:-2]
     endif
 
     if s:parsing_disasm_msg
