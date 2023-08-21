@@ -282,6 +282,11 @@ void may_trigger_safestate(bool safe)
                  && !using_script()
                  && !global_busy;
 
+  if (was_safe != is_safe) {
+    // Only log when the state changes, otherwise it happens at nearly
+    // every key stroke.
+    DLOG(is_safe ? "Start triggering SafeState" : "Stop triggering SafeState");
+  }
   if (is_safe) {
     apply_autocmds(EVENT_SAFESTATE, NULL, NULL, false, curbuf);
   }
@@ -293,5 +298,8 @@ void may_trigger_safestate(bool safe)
 /// may_trigger_safestate().
 void state_no_longer_safe(void)
 {
+  if (was_safe) {
+    DLOG("safe state reset");
+  }
   was_safe = false;
 }
