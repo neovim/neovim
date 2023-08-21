@@ -4925,6 +4925,47 @@ static void f_mode(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->v_type = VAR_STRING;
 }
 
+static void may_add_state_char(garray_T *gap, const char *include, uint8_t c)
+{
+  if (include == NULL || vim_strchr(include, c) != NULL) {
+    ga_append(gap, c);
+  }
+}
+
+/// "state()" function
+static void f_state(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  garray_T ga;
+  ga_init(&ga, 1, 20);
+  const char *include = NULL;
+
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    include = tv_get_string(&argvars[0]);
+  }
+
+  if (!(stuff_empty() && typebuf.tb_len == 0 && !using_script())) {
+    may_add_state_char(&ga, include, 'm');
+  }
+  if (op_pending()) {
+    may_add_state_char(&ga, include, 'o');
+  }
+  if (autocmd_busy) {
+    may_add_state_char(&ga, include, 'x');
+  }
+  if (!ctrl_x_mode_none()) {
+    may_add_state_char(&ga, include, 'a');
+  }
+  for (int i = 0; i < get_callback_depth() && i < 3; i++) {
+    may_add_state_char(&ga, include, 'c');
+  }
+  if (msg_scrolled > 0) {
+    may_add_state_char(&ga, include, 's');
+  }
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = ga.ga_data;
+}
+
 /// "msgpackdump()" function
 static void f_msgpackdump(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   FUNC_ATTR_NONNULL_ALL
