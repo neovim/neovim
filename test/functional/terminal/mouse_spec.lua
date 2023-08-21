@@ -287,7 +287,7 @@ describe(':terminal mouse', function()
         ]])
       end)
 
-      it("won't lose focus if another window is scrolled", function()
+      it("scrolling another window keeps focus and respects 'mousescroll'", function()
         feed('<ScrollWheelUp><4,0><ScrollWheelUp><4,0>')
         screen:expect([[
           {7: 21 }line                 │line30                  |
@@ -299,20 +299,6 @@ describe(':terminal mouse', function()
           {3:-- TERMINAL --}                                    |
         ]])
         feed('<S-ScrollWheelDown><4,0>')
-        screen:expect([[
-          {7: 26 }line                 │line30                  |
-          {7: 27 }line                 │rows: 5, cols: 25       |
-          {7: 28 }line                 │rows: 5, cols: 24       |
-          {7: 29 }line                 │mouse enabled           |
-          {7: 30 }line                 │{1: }                       |
-          ==========                ==========              |
-          {3:-- TERMINAL --}                                    |
-        ]])
-      end)
-
-      it("scrolling another window respects 'mousescroll'", function()
-        command('set mousescroll=ver:1')
-        feed('<ScrollWheelUp><4,0>')
         screen:expect([[
           {7: 26 }line                 │line30                  |
           {7: 27 }line                 │rows: 5, cols: 25       |
@@ -336,6 +322,39 @@ describe(':terminal mouse', function()
         command('set mousescroll=ver:0')
         feed('<ScrollWheelUp><4,0>')
         screen:expect_unchanged()
+        feed([[<C-\><C-N><C-W>w]])
+        command('setlocal nowrap')
+        feed('0<C-V>gg3ly$4p<C-W>wi')
+        screen:expect([[
+          {7:  1 }linelinelinelineline │line30                  |
+          {7:  2 }linelinelinelineline │rows: 5, cols: 25       |
+          {7:  3 }linelinelinelineline │rows: 5, cols: 24       |
+          {7:  4 }linelinelinelineline │mouse enabled           |
+          {7:  5 }linelinelinelineline │{1: }                       |
+          ==========                ==========              |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        feed('<ScrollWheelRight><4,0>')
+        screen:expect([[
+          {7:  1 }nelinelineline       │line30                  |
+          {7:  2 }nelinelineline       │rows: 5, cols: 25       |
+          {7:  3 }nelinelineline       │rows: 5, cols: 24       |
+          {7:  4 }nelinelineline       │mouse enabled           |
+          {7:  5 }nelinelineline       │{1: }                       |
+          ==========                ==========              |
+          {3:-- TERMINAL --}                                    |
+        ]])
+        command('set mousescroll=hor:4')
+        feed('<ScrollWheelLeft><4,0>')
+        screen:expect([[
+          {7:  1 }nelinelinelineline   │line30                  |
+          {7:  2 }nelinelinelineline   │rows: 5, cols: 25       |
+          {7:  3 }nelinelinelineline   │rows: 5, cols: 24       |
+          {7:  4 }nelinelinelineline   │mouse enabled           |
+          {7:  5 }nelinelinelineline   │{1: }                       |
+          ==========                ==========              |
+          {3:-- TERMINAL --}                                    |
+        ]])
       end)
 
       it('will lose focus if another window is clicked', function()
