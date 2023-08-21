@@ -128,6 +128,10 @@ func s:GetCommand()
   return type(cmd) == v:t_list ? copy(cmd) : [cmd]
 endfunc
 
+func s:Echoerr(msg)
+  echohl ErrorMsg | echom '[termdebug] ' .. a:msg | echohl None
+endfunc
+
 func s:StartDebug(bang, ...)
   " First argument is the command to debug, second core file or process ID.
   call s:StartDebug_internal({'gdb_args': a:000, 'bang': a:bang})
@@ -140,12 +144,12 @@ endfunc
 
 func s:StartDebug_internal(dict)
   if exists('s:gdbwin')
-    echoerr 'Terminal debugger already running, cannot run two'
+    call s:Echoerr('Terminal debugger already running, cannot run two')
     return
   endif
   let gdbcmd = s:GetCommand()
   if !executable(gdbcmd[0])
-    echoerr 'Cannot execute debugger program "' .. gdbcmd[0] .. '"'
+    call s:Echoerr('Cannot execute debugger program "' .. gdbcmd[0] .. '"')
     return
   endif
 
@@ -242,7 +246,7 @@ endfunc
 
 func s:CheckGdbRunning()
   if !s:gdb_running
-      echoerr string(s:GetCommand()[0]) . ' exited unexpectedly'
+      call s:Echoerr(string(s:GetCommand()[0]) . ' exited unexpectedly')
       call s:CloseBuffers()
       return ''
   endif
@@ -254,10 +258,10 @@ func s:StartDebug_term(dict)
   execute s:vertical ? 'vnew' : 'new'
   let s:pty_job_id = termopen('tail -f /dev/null;#gdb program')
   if s:pty_job_id == 0
-    echoerr 'invalid argument (or job table is full) while opening terminal window'
+    call s:Echoerr('Invalid argument (or job table is full) while opening terminal window')
     return
   elseif s:pty_job_id == -1
-    echoerr 'Failed to open the program terminal window'
+    call s:Echoerr('Failed to open the program terminal window')
     return
   endif
   let pty_job_info = nvim_get_chan_info(s:pty_job_id)
@@ -281,11 +285,11 @@ func s:StartDebug_term(dict)
         \ })
   " hide terminal buffer
   if s:comm_job_id == 0
-    echoerr 'invalid argument (or job table is full) while opening communication terminal window'
+    call s:Echoerr('Invalid argument (or job table is full) while opening communication terminal window')
     exe 'bwipe! ' . s:ptybuf
     return
   elseif s:comm_job_id == -1
-    echoerr 'Failed to open the communication terminal window'
+    call s:Echoerr('Failed to open the communication terminal window')
     exe 'bwipe! ' . s:ptybuf
     return
   endif
@@ -326,11 +330,11 @@ func s:StartDebug_term(dict)
   " call ch_log('executing "' . join(gdb_cmd) . '"')
   let s:gdb_job_id = termopen(gdb_cmd, {'on_exit': function('s:EndTermDebug')})
   if s:gdb_job_id == 0
-    echoerr 'invalid argument (or job table is full) while opening gdb terminal window'
+    call s:Echoerr('Invalid argument (or job table is full) while opening gdb terminal window')
     exe 'bwipe! ' . s:ptybuf
     return
   elseif s:gdb_job_id == -1
-    echoerr 'Failed to open the gdb terminal window'
+    call s:Echoerr('Failed to open the gdb terminal window')
     call s:CloseBuffers()
     return
   endif
@@ -386,7 +390,7 @@ func s:StartDebug_term(dict)
         " response can be in the same line or the next line
         let response = line1 . line2
         if response =~ 'Undefined command'
-          echoerr 'Sorry, your gdb is too old, gdb 7.12 is required'
+          call s:Echoerr('Sorry, your gdb is too old, gdb 7.12 is required')
           " CHECKME: possibly send a "server show version" here
           call s:CloseBuffers()
           return
@@ -405,7 +409,7 @@ func s:StartDebug_term(dict)
     endif
     let try_count += 1
     if try_count > 100
-      echoerr 'Cannot check if your gdb works, continuing anyway'
+      call s:Echoerr('Cannot check if your gdb works, continuing anyway')
       break
     endif
     sleep 10m
@@ -464,11 +468,11 @@ func s:StartDebug_prompt(dict)
     \ 'on_stdout': function('s:JobOutCallback', {'last_line': '', 'real_cb': function('s:GdbOutCallback')}),
     \ })
   if s:gdbjob == 0
-    echoerr 'invalid argument (or job table is full) while starting gdb job'
+    call s:Echoerr('Invalid argument (or job table is full) while starting gdb job')
     exe 'bwipe! ' . s:ptybuf
     return
   elseif s:gdbjob == -1
-    echoerr 'Failed to start the gdb job'
+    call s:Echoerr('Failed to start the gdb job')
     call s:CloseBuffers()
     return
   endif
@@ -484,10 +488,10 @@ func s:StartDebug_prompt(dict)
     wincmd x | wincmd j
     belowright let s:pty_job_id = termopen('tail -f /dev/null;#gdb program')
     if s:pty_job_id == 0
-      echoerr 'invalid argument (or job table is full) while opening terminal window'
+      call s:Echoerr('Invalid argument (or job table is full) while opening terminal window')
       return
     elseif s:pty_job_id == -1
-      echoerr 'Failed to open the program terminal window'
+      call s:Echoerr('Failed to open the program terminal window')
       return
     endif
     let pty_job_info = nvim_get_chan_info(s:pty_job_id)
@@ -616,7 +620,7 @@ func s:PromptInterrupt()
     " Using job_stop() does not work on MS-Windows, need to send SIGTRAP to
     " the debugger program so that gdb responds again.
     if s:pid == 0
-      echoerr 'Cannot interrupt gdb, did not find a process ID'
+      call s:Echoerr('Cannot interrupt gdb, did not find a process ID')
     else
       call debugbreak(s:pid)
     endif
@@ -696,7 +700,7 @@ endfunc
 " - change \\ to \
 func s:DecodeMessage(quotedText, literal)
   if a:quotedText[0] != '"'
-    echoerr 'DecodeMessage(): missing quote in ' . a:quotedText
+    call s:Echoerr('DecodeMessage(): missing quote in ' . a:quotedText)
     return
   endif
   let msg = a:quotedText
@@ -1189,7 +1193,7 @@ func s:ClearBreakpoint()
       endif
       echomsg 'Breakpoint ' . id . ' cleared from line ' . lnum . '.'
     else
-      echoerr 'Internal error trying to remove breakpoint at line ' . lnum . '!'
+      call s:Echoerr('Internal error trying to remove breakpoint at line ' . lnum . '!')
     endif
   else
     echomsg 'No breakpoint to remove at line ' . lnum . '.'
@@ -1447,7 +1451,7 @@ func s:HandleError(msg)
     return
   endif
   let msgVal = substitute(a:msg, '.*msg="\(.*\)"', '\1', '')
-  echoerr substitute(msgVal, '\\"', '"', 'g')
+  call s:Echoerr(substitute(msgVal, '\\"', '"', 'g'))
 endfunc
 
 func s:GotoSourcewinOrCreateIt()
