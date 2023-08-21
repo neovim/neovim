@@ -2411,7 +2411,7 @@ int parse_command_modifiers(exarg_T *eap, const char **errormsg, cmdmod_T *cmod,
 
     char *p = skip_range(eap->cmd, NULL);
     switch (*p) {
-    // When adding an entry, also modify cmd_exists().
+    // When adding an entry, also modify cmdmods[]
     case 'a':
       if (!checkforcmd(&eap->cmd, "aboveleft", 3)) {
         break;
@@ -3051,6 +3051,7 @@ static struct cmdmod {
   { "confirm", 4, false },
   { "filter", 4, false },
   { "hide", 3, false },
+  { "horizontal", 3, false },
   { "keepalt", 5, false },
   { "keepjumps", 5, false },
   { "keepmarks", 3, false },
