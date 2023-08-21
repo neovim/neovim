@@ -1412,7 +1412,7 @@ static int normal_check(VimState *state)
   quit_more = false;
 
   // it's not safe unless normal_check_safe_state() is called
-  state_no_longer_safe();
+  state_no_longer_safe(NULL);
 
   // If skip redraw is set (for ":" in wait_return()), don't redraw now.
   // If there is nothing in the stuff_buffer or do_redraw is true,

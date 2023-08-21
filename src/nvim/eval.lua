@@ -10471,13 +10471,16 @@ M.funcs = {
       added.  E.g, this checks if the screen has scrolled: >vim
       	if state('s') != ''
 
-      These characters indicate the state:
+      These characters indicate the state, generally indicating that
+      something is busy:
           m  halfway a mapping, :normal command, feedkeys() or
              stuffed command
           o  operator pending or waiting for a command argument
           a  Insert mode autocomplete active
           x  executing an autocommand
-          c  callback invoked (repeats for recursiveness up to "ccc")
+          S  not triggering SafeState
+          c  callback invoked, including timer (repeats for
+             recursiveness up to "ccc")
           s  screen has scrolled for messages
     ]=],
     name = 'state',

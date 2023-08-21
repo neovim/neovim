@@ -4955,6 +4955,9 @@ static void f_state(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (!ctrl_x_mode_none()) {
     may_add_state_char(&ga, include, 'a');
   }
+  if (!get_was_safe_state()) {
+    may_add_state_char(&ga, include, 'S');
+  }
   for (int i = 0; i < get_callback_depth() && i < 3; i++) {
     may_add_state_char(&ga, include, 'c');
   }
