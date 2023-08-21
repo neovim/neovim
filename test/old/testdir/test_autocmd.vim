@@ -2982,7 +2982,9 @@ func Test_autocmd_SafeState()
   call WaitForAssert({-> assert_match('^xxxx', term_getline(buf, 6))}, 1000)
 
   call term_sendkeys(buf, ":let g:again = ''\<CR>:call CallTimer()\<CR>")
-  call term_wait(buf, 50)
+  call term_wait(buf)
+  call term_sendkeys(buf, ":\<CR>")
+  call term_wait(buf)
   call term_sendkeys(buf, ":echo g:again\<CR>")
   call WaitForAssert({-> assert_match('xtx', term_getline(buf, 6))}, 1000)
 
