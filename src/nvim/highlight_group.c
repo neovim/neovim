@@ -1936,7 +1936,7 @@ int syn_check_group(const char *name, size_t len)
 /// @see syn_check_group
 static int syn_add_group(const char *name, size_t len)
 {
-  // Check that the name is ASCII letters, digits and underscore.
+  // Check that the name is valid (ASCII letters, digits, '_', '.', '@', '-').
   for (size_t i = 0; i < len; i++) {
     int c = (uint8_t)name[i];
     if (!vim_isprintc(c)) {
