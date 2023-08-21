@@ -943,6 +943,8 @@ theend:
 
 static int command_line_check(VimState *state)
 {
+  CommandLineState *s = (CommandLineState *)state;
+
   redir_off = true;        // Don't redirect the typed command.
   // Repeated, because a ":redir" inside
   // completion may switch it on.
@@ -951,6 +953,9 @@ static int command_line_check(VimState *state)
   did_emsg = false;        // There can't really be a reason why an error
                            // that occurs while typing a command should
                            // cause the command not to be executed.
+
+  // Trigger SafeState if nothing is pending.
+  may_trigger_safestate(s->xpc.xp_numfiles <= 0);
 
   cursorcmd();             // set the cursor on the right spot
   ui_cursor_shape();

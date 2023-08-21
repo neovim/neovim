@@ -1355,6 +1355,11 @@ void ins_redraw(bool ready)
     curbuf->b_changed_invalid = false;
   }
 
+  // Trigger SafeState if nothing is pending.
+  may_trigger_safestate(ready
+                        && !ins_compl_active()
+                        && !pum_visible());
+
   pum_check_clear();
   show_cursor_info_later(false);
   if (must_redraw) {
