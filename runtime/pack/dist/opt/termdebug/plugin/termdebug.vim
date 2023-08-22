@@ -624,7 +624,7 @@ func s:PromptInterrupt()
       call debugbreak(s:pid)
     endif
   else
-    call jobstop(s:gdbjob)
+    call v:lua.vim.uv.kill(jobpid(s:gdbjob), 'sigint')
   endif
 endfunc
 
@@ -821,6 +821,7 @@ func s:EndPromptDebug(job_id, exit_code, event)
 
   let curwinid = win_getid()
   call win_gotoid(s:gdbwin)
+  set nomodified
   close
   if curwinid != s:gdbwin
     call win_gotoid(curwinid)
