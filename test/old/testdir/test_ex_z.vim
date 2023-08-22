@@ -98,11 +98,18 @@ func Test_z_bang()
   %bwipe!
 endfunc
 
-func Test_z_bug()
+func Test_z_overflow()
   " This used to access invalid memory as a result of an integer overflow
   " and freeze vim.
   normal ox
   normal Heat
   z777777776666666
   ')
+endfunc
+
+func Test_z_negative_lnum()
+  new
+  z^
+  call assert_equal(1, line('.'))
+  bwipe!
 endfunc
