@@ -160,10 +160,7 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append, typval_
   if (lines->v_type == VAR_LIST) {
     l = lines->vval.v_list;
     if (l == NULL || tv_list_len(l) == 0) {
-      // set proper return code
-      if (lnum > curbuf->b_ml.ml_line_count) {
-        rettv->vval.v_number = 1;       // FAIL
-      }
+      // not appending anything always succeeds
       goto cleanup;
     }
     li = tv_list_first(l);

@@ -79,7 +79,8 @@ function vim.fn.api_info() end
 --- {lnum} can be zero to insert a line before the first one.
 --- {lnum} is used like with |getline()|.
 --- Returns 1 for failure ({lnum} out of range or out of memory),
---- 0 for success.  Example: >vim
+--- 0 for success.  When {text} is an empty list zero is returned,
+--- no matter the value of {lnum}.  Example: >vim
 ---   let failed = append(line('$'), "# THE END")
 ---   let failed = append(0, ["Chapter 1", "the beginning"])
 --- <
@@ -106,7 +107,8 @@ function vim.fn.append(lnum, text) end
 --- If {buf} is not a valid buffer or {lnum} is not valid, an
 --- error message is given. Example: >vim
 ---   let failed = appendbufline(13, 0, "# THE START")
---- <
+--- <However, when {text} is an empty list then no error is given
+--- for an invalid {lnum}, since {lnum} isn't actually used.
 ---
 --- @param buf any
 --- @param lnum integer
@@ -7398,9 +7400,10 @@ function vim.fn.serverstop(address) end
 ---
 --- To insert lines use |appendbufline()|.
 ---
---- {text} can be a string to set one line, or a list of strings
---- to set multiple lines.  If the list extends below the last
---- line then those lines are added.
+--- {text} can be a string to set one line, or a List of strings
+--- to set multiple lines.  If the List extends below the last
+--- line then those lines are added.  If the List is empty then
+--- nothing is changed and zero is returned.
 ---
 --- For the use of {buf}, see |bufname()| above.
 ---
@@ -7602,7 +7605,8 @@ function vim.fn.setfperm(fname, mode) end
 --- When {lnum} is just below the last line the {text} will be
 --- added below the last line.
 --- {text} can be any type or a List of any type, each item is
---- converted to a String.
+--- converted to a String.  When {text} is an empty List then
+--- nothing is changed and FALSE is returned.
 ---
 --- If this succeeds, FALSE is returned.  If this fails (most likely
 --- because {lnum} is invalid) TRUE is returned.
