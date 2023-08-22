@@ -1517,26 +1517,6 @@ func Test_edit_rightleft()
   bw!
 endfunc
 
-func Test_edit_backtick()
-  next a\`b c
-  call assert_equal('a`b', expand('%'))
-  next
-  call assert_equal('c', expand('%'))
-  call assert_equal('a\`b c', expand('##'))
-endfunc
-
-func Test_edit_quit()
-  edit foo.txt
-  split
-  new
-  call setline(1, 'hello')
-  3wincmd w
-  redraw!
-  call assert_fails('1q', 'E37:')
-  bwipe! foo.txt
-  only
-endfunc
-
 func Test_edit_complete_very_long_name()
   if !has('unix')
     " Long directory names only work on Unix.
@@ -1592,6 +1572,26 @@ func Test_edit_complete_very_long_name()
     exe 'winpos ' . winposx . ' ' . winposy
   endif
   set swapfile&
+endfunc
+
+func Test_edit_backtick()
+  next a\`b c
+  call assert_equal('a`b', expand('%'))
+  next
+  call assert_equal('c', expand('%'))
+  call assert_equal('a\`b c', expand('##'))
+endfunc
+
+func Test_edit_quit()
+  edit foo.txt
+  split
+  new
+  call setline(1, 'hello')
+  3wincmd w
+  redraw!
+  call assert_fails('1q', 'E37:')
+  bwipe! foo.txt
+  only
 endfunc
 
 func Test_edit_alt()
