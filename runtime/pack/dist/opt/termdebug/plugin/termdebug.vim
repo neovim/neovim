@@ -204,9 +204,9 @@ func s:StartDebug_internal(dict)
   endif
   if !has('win32') && !use_prompt
     let s:way = 'terminal'
-   else
+  else
     let s:way = 'prompt'
-   endif
+  endif
 
   if s:way == 'prompt'
     call s:StartDebug_prompt(a:dict)
@@ -484,9 +484,8 @@ func s:StartDebug_prompt(dict)
   else
     " Unix: Run the debugged program in a terminal window.  Open it below the
     " gdb window.
-    execute 'new'
-    wincmd x | wincmd j
-    belowright let s:pty_job_id = termopen('tail -f /dev/null;#gdb program')
+    belowright new
+    let s:pty_job_id = termopen('tail -f /dev/null;#gdb program')
     if s:pty_job_id == 0
       call s:Echoerr('Invalid argument (or job table is full) while opening terminal window')
       return
