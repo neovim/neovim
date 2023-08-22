@@ -942,14 +942,13 @@ func Test_cursor_position_with_showbreak()
       repeat('x', &columns - leftcol - 1)->setline(1)
       'second line'->setline(2)
   END
-  call writefile(lines, 'XscriptShowbreak')
+  call writefile(lines, 'XscriptShowbreak', 'D')
   let buf = RunVimInTerminal('-S XscriptShowbreak', #{rows: 6})
 
   call term_sendkeys(buf, "AX")
   call VerifyScreenDump(buf, 'Test_cursor_position_with_showbreak', {})
 
   call StopVimInTerminal(buf)
-  call delete('XscriptShowbreak')
 endfunc
 
 func Test_no_spurious_match()
