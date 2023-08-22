@@ -41,18 +41,20 @@ describe('state() function', function()
 
     -- Using a timer callback
     feed([[:call RunTimer()<CR>]])
-    poke_eventloop()  -- Allow polling for events
+    poke_eventloop()  -- Process pending input
+    poke_eventloop()  -- Process time_event
     eq({ 'c', 'n' }, exec_lua('return _G.res'))
 
     -- Halfway a mapping
     feed([[:call v:lua.Run_timer()<CR>;]])
-    meths.get_mode()  -- Allow polling for fast events
+    meths.get_mode()  -- Process pending input and luv timer callback
     feed(';')
     eq({ 'mS', 'n' }, exec_lua('return _G.res'))
 
     -- Insert mode completion
     feed([[:call RunTimer()<CR>Got<C-N>]])
-    poke_eventloop()  -- Allow polling for events
+    poke_eventloop()  -- Process pending input
+    poke_eventloop()  -- Process time_event
     feed('<Esc>')
     eq({ 'aSc', 'i' }, exec_lua('return _G.res'))
 
@@ -62,7 +64,7 @@ describe('state() function', function()
 
     -- messages scrolled
     feed([[:call v:lua.Run_timer() | echo "one\ntwo\nthree"<CR>]])
-    meths.get_mode()  -- Allow polling for fast events
+    meths.get_mode()  -- Process pending input and luv timer callback
     feed('<CR>')
     eq({ 'Ss', 'r' }, exec_lua('return _G.res'))
   end)
