@@ -473,6 +473,38 @@ function M.ex(_, bufnr)
   end
 end
 
+--- @param bufnr integer
+--- @return boolean
+local function is_forth(bufnr)
+  local first_line = nextnonblank(bufnr, 1)
+
+  -- SwiftForth block comment (line is usually filled with '-' or '=') or
+  -- OPTIONAL (sometimes precedes the header comment)
+  if first_line and findany(first_line:lower(), { '^%{%s', '^%{$', '^optional%s' }) then
+    return true
+  end
+
+  for _, line in ipairs(getlines(bufnr, 1, 100)) do
+    -- Forth comments and colon definitions
+    if line:find('^[:(\\] ') then
+      return true
+    end
+  end
+  return false
+end
+
+-- Distinguish between Forth and Fortran
+--- @type vim.filetype.mapfn
+function M.f(_, bufnr)
+  if vim.g.filetype_f then
+    return vim.g.filetype_f
+  end
+  if is_forth(bufnr) then
+    return 'forth'
+  end
+  return 'fortran'
+end
+
 -- This function checks the first 15 lines for appearance of 'FoamFile'
 -- and then 'object' in a following line.
 -- In that case, it's probably an OpenFOAM file
@@ -518,16 +550,14 @@ function M.fvwm_v2(path, _)
   end
 end
 
--- Distinguish between Forth and F#.
+-- Distinguish between Forth and F#
 --- @type vim.filetype.mapfn
 function M.fs(_, bufnr)
   if vim.g.filetype_fs then
     return vim.g.filetype_fs
   end
-  for _, line in ipairs(getlines(bufnr, 1, 100)) do
-    if line:find('^[:(\\] ') then
-      return 'forth'
-    end
+  if is_forth(bufnr) then
+    return 'forth'
   end
   return 'fsharp'
 end
