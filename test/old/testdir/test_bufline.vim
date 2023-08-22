@@ -88,6 +88,7 @@ func Test_setline_startup()
   endif
   call writefile(['call setline(1, "Hello")', 'silent w Xtest', 'q!'], 'Xscript', 'D')
   call system(cmd)
+  sleep 50m
   call assert_equal(['Hello'], readfile('Xtest'))
 
   call delete('Xtest')

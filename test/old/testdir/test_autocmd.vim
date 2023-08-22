@@ -971,6 +971,7 @@ func Test_autocmd_bufwipe_in_SessLoadPost()
 
   call writefile(content, 'Xvimrc', 'D')
   call system(GetVimCommand('Xvimrc') .. ' --headless --noplugins -S Session.vim -c cq')
+  sleep 50m
   let errors = join(readfile('Xerrors'))
   call assert_match('E814:', errors)
 

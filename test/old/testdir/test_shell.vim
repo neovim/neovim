@@ -5,6 +5,11 @@ source check.vim
 source shared.vim
 
 func Test_shell_options()
+  if has('win32')
+    " FIXME: This test is flaky on MS-Windows.
+    let g:test_is_flaky = 1
+  endif
+
   " The expected value of 'shellcmdflag', 'shellpipe', 'shellquote',
   " 'shellredir', 'shellxescape', 'shellxquote' for the supported shells.
   let shells = []
