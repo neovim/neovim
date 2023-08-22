@@ -835,9 +835,13 @@ endfunc
 func Test_append()
   enew!
   split
-  call append(0, ["foo"])
-  call append(1, [])
-  call append(1, v:_null_list)
+  call assert_equal(0, append(1, []))
+  call assert_equal(0, append(1, v:_null_list))
+  call assert_equal(0, append(0, ["foo"]))
+  call assert_equal(0, append(1, []))
+  call assert_equal(0, append(1, v:_null_list))
+  call assert_equal(0, append(8, []))
+  call assert_equal(0, append(9, v:_null_list))
   call assert_equal(['foo', ''], getline(1, '$'))
   split
   only

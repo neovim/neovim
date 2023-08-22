@@ -24,12 +24,12 @@ endfunc
 " Test for the CursorHold autocmd
 func Test_CursorHold_autocmd()
   CheckRunVimInTerminal
-  call writefile(['one', 'two', 'three'], 'XoneTwoThree')
+  call writefile(['one', 'two', 'three'], 'XoneTwoThree', 'D')
   let before =<< trim END
     set updatetime=10
     au CursorHold * call writefile([line('.')], 'XCHoutput', 'a')
   END
-  call writefile(before, 'XCHinit')
+  call writefile(before, 'XCHinit', 'D')
   let buf = RunVimInTerminal('-S XCHinit XoneTwoThree', {})
   call term_sendkeys(buf, "G")
   call term_wait(buf, 50)
@@ -44,9 +44,7 @@ func Test_CursorHold_autocmd()
   call WaitForAssert({-> assert_equal(['1', '2', '3'], readfile('XCHoutput')[-3:-1])})
   call StopVimInTerminal(buf)
 
-  call delete('XCHinit')
   call delete('XCHoutput')
-  call delete('XoneTwoThree')
 endfunc
 
 if has('timers')
@@ -112,7 +110,7 @@ if has('timers')
     augroup set_tabstop
       au OptionSet tabstop call timer_start(1, {-> execute("echo 'Handler called'", "")})
     augroup END
-    call writefile(['vim: set ts=7 sw=5 :', 'something'], 'XoptionsetModeline')
+    call writefile(['vim: set ts=7 sw=5 :', 'something'], 'XoptionsetModeline', 'D')
     set modeline
     let v:errmsg = ''
     call assert_fails('split XoptionsetModeline', 'E12:')
@@ -124,7 +122,6 @@ if has('timers')
     augroup END
     bwipe!
     set ts&
-    call delete('XoptionsetModeline')
     call test_override('starting', 0)
   endfunc
 
@@ -234,8 +231,8 @@ endfunc
 
 func Test_autocmd_dummy_wipeout()
   " prepare files
-  call writefile([''], 'Xdummywipetest1.txt')
-  call writefile([''], 'Xdummywipetest2.txt')
+  call writefile([''], 'Xdummywipetest1.txt', 'D')
+  call writefile([''], 'Xdummywipetest2.txt', 'D')
   augroup test_bufunload_group
     autocmd!
     autocmd BufUnload * call add(s:li, "bufunload")
@@ -249,8 +246,6 @@ func Test_autocmd_dummy_wipeout()
   call assert_equal(["bufunload", "bufwipeout"], s:li)
 
   bwipeout
-  call delete('Xdummywipetest1.txt')
-  call delete('Xdummywipetest2.txt')
   au! test_bufunload_group
   augroup! test_bufunload_group
 endfunc
@@ -969,18 +964,19 @@ func Test_autocmd_bufwipe_in_SessLoadPost()
     augroup END
 
     func WriteErrors()
-      call writefile([execute("messages")], "Xerrors")
+      call writefile([execute("messages")], "XerrorsBwipe")
     endfunc
     au VimLeave * call WriteErrors()
   [CODE]
 
-  call writefile(content, 'Xvimrc')
+  call writefile(content, 'Xvimrc', 'D')
   call system(GetVimCommand('Xvimrc') .. ' --headless --noplugins -S Session.vim -c cq')
-  let errors = join(readfile('Xerrors'))
-  call assert_match('E814', errors)
+  sleep 100m
+  let errors = join(readfile('XerrorsBwipe'))
+  call assert_match('E814:', errors)
 
   set swapfile
-  for file in ['Session.vim', 'Xvimrc', 'Xerrors']
+  for file in ['Session.vim', 'XerrorsBwipe']
     call delete(file)
   endfor
 endfunc
@@ -993,16 +989,16 @@ func Test_autocmd_blast_badd()
       edit foo1
       au BufNew,BufAdd,BufWinEnter,BufEnter,BufLeave,BufWinLeave,BufUnload,VimEnter foo* ball
       edit foo2
-      call writefile(['OK'], 'Xerrors')
+      call writefile(['OK'], 'XerrorsBlast')
       qall
   [CODE]
 
-  call writefile(content, 'XblastBall')
+  call writefile(content, 'XblastBall', 'D')
   call system(GetVimCommand() .. ' --clean -S XblastBall')
-  call assert_match('OK', readfile('Xerrors')->join())
+  sleep 100m
+  call assert_match('OK', readfile('XerrorsBlast')->join())
 
-  call delete('XblastBall')
-  call delete('Xerrors')
+  call delete('XerrorsBlast')
 endfunc
 
 " SEGV occurs in older versions.
@@ -1029,20 +1025,21 @@ func Test_autocmd_bufwipe_in_SessLoadPost2()
     au SessionLoadPost * call DeleteInactiveBufs()
 
     func WriteErrors()
-      call writefile([execute("messages")], "Xerrors")
+      call writefile([execute("messages")], "XerrorsPost")
     endfunc
     au VimLeave * call WriteErrors()
   [CODE]
 
-  call writefile(content, 'Xvimrc')
+  call writefile(content, 'Xvimrc', 'D')
   call system(GetVimCommand('Xvimrc') .. ' --headless --noplugins -S Session.vim -c cq')
-  let errors = join(readfile('Xerrors'))
+  sleep 100m
+  let errors = join(readfile('XerrorsPost'))
   " This probably only ever matches on unix.
   call assert_notmatch('Caught deadly signal SEGV', errors)
   call assert_match('SessionLoadPost DONE', errors)
 
   set swapfile
-  for file in ['Session.vim', 'Xvimrc', 'Xerrors']
+  for file in ['Session.vim', 'XerrorsPost']
     call delete(file)
   endfor
 endfunc
@@ -1745,9 +1742,9 @@ endfunc
 func Test_Acmd_BufAll()
   enew!
   %bwipe!
-  call writefile(['Test file Xxx1'], 'Xxx1')
-  call writefile(['Test file Xxx2'], 'Xxx2')
-  call writefile(['Test file Xxx3'], 'Xxx3')
+  call writefile(['Test file Xxx1'], 'Xxx1', 'D')
+  call writefile(['Test file Xxx2'], 'Xxx2', 'D')
+  call writefile(['Test file Xxx3'], 'Xxx3', 'D')
 
   " Add three files to the buffer list
   split Xxx1
@@ -1769,9 +1766,6 @@ func Test_Acmd_BufAll()
 
   au! BufReadPost
   %bwipe!
-  call delete('Xxx1')
-  call delete('Xxx2')
-  call delete('Xxx3')
   enew! | only
 endfunc
 
@@ -1781,11 +1775,11 @@ func Test_Acmd_BufEnter()
   %bwipe!
   call writefile(['start of test file Xxx1',
 	      \ "\<Tab>this is a test",
-	      \ 'end of test file Xxx1'], 'Xxx1')
+	      \ 'end of test file Xxx1'], 'Xxx1', 'D')
   call writefile(['start of test file Xxx2',
 	      \ 'vim: set noai :',
 	      \ "\<Tab>this is a test",
-	      \ 'end of test file Xxx2'], 'Xxx2')
+	      \ 'end of test file Xxx2'], 'Xxx2', 'D')
 
   au BufEnter Xxx2 brew
   set ai modeline modelines=3
@@ -1807,8 +1801,6 @@ func Test_Acmd_BufEnter()
   call assert_equal(4, line('.'))
 
   %bwipe!
-  call delete('Xxx1')
-  call delete('Xxx2')
   set ai&vim modeline&vim modelines&vim
 endfunc
 
@@ -1835,8 +1827,8 @@ func Test_BufLeave_Wipe()
   let content = ['start of test file Xxx',
 	      \ 'this is a test',
 	      \ 'end of test file Xxx']
-  call writefile(content, 'Xxx1')
-  call writefile(content, 'Xxx2')
+  call writefile(content, 'Xxx1', 'D')
+  call writefile(content, 'Xxx2', 'D')
 
   au BufLeave Xxx2 bwipe
   edit Xxx1
@@ -1862,8 +1854,6 @@ func Test_BufLeave_Wipe()
   let g:bufinfo = getbufinfo()
   call assert_equal(1, len(g:bufinfo))
 
-  call delete('Xxx1')
-  call delete('Xxx2')
   call delete('test.out')
   %bwipe
   au! BufLeave
@@ -1990,32 +1980,30 @@ func Test_BufWritePre()
   au BufWritePre Xxx1 bunload
   au BufWritePre Xxx2 bwipe
 
-  call writefile(['start of Xxx1', 'test', 'end of Xxx1'], 'Xxx1')
-  call writefile(['start of Xxx2', 'test', 'end of Xxx2'], 'Xxx2')
+  call writefile(['start of Xxx1', 'test', 'end of Xxx1'], 'Xxx1', 'D')
+  call writefile(['start of Xxx2', 'test', 'end of Xxx2'], 'Xxx2', 'D')
 
   edit Xtest
   e! Xxx2
   bdel Xtest
   e Xxx1
   " write it, will unload it and give an error msg
-  call assert_fails('w', 'E203')
+  call assert_fails('w', 'E203:')
   call assert_equal('Xxx2', bufname('%'))
   edit Xtest
   e! Xxx2
   bwipe Xtest
   " write it, will delete the buffer and give an error msg
-  call assert_fails('w', 'E203')
+  call assert_fails('w', 'E203:')
   call assert_equal('Xxx1', bufname('%'))
   au! BufWritePre
-  call delete('Xxx1')
-  call delete('Xxx2')
 endfunc
 
 " Test for BufUnload autocommand that unloads all the other buffers
 func Test_bufunload_all()
   let g:test_is_flaky = 1
-  call writefile(['Test file Xxx1'], 'Xxx1')"
-  call writefile(['Test file Xxx2'], 'Xxx2')"
+  call writefile(['Test file Xxx1'], 'Xxx1', 'D')"
+  call writefile(['Test file Xxx2'], 'Xxx2', 'D')"
 
   let content =<< trim [CODE]
     func UnloadAllBufs()
@@ -2035,15 +2023,12 @@ func Test_bufunload_all()
     q
   [CODE]
 
-  call writefile(content, 'Xtest')
+  call writefile(content, 'Xbunloadtest', 'D')
 
   call delete('Xout')
-  call system(GetVimCommandClean() .. ' -N --headless -S Xtest')
+  call system(GetVimCommandClean() .. ' -N --headless -S Xbunloadtest')
   call assert_true(filereadable('Xout'))
 
-  call delete('Xxx1')
-  call delete('Xxx2')
-  call delete('Xtest')
   call delete('Xout')
 endfunc
 
@@ -2071,7 +2056,7 @@ endfunc
 
 " Test for "*Cmd" autocommands
 func Test_Cmd_Autocmds()
-  call writefile(['start of Xxx', "\tabc2", 'end of Xxx'], 'Xxx')
+  call writefile(['start of Xxx', "\tabc2", 'end of Xxx'], 'Xxx', 'D')
 
   enew!
   au BufReadCmd XtestA 0r Xxx|$del
@@ -2146,7 +2131,6 @@ func Test_Cmd_Autocmds()
   au! FileWriteCmd
   au! FileAppendCmd
   %bwipe!
-  call delete('Xxx')
   enew!
 endfunc
 
@@ -2171,7 +2155,7 @@ func Test_BufReadCmd()
   autocmd BufReadCmd *.test call s:ReadFile()
   autocmd BufWriteCmd *.test call s:WriteFile()
 
-  call writefile(['one', 'two', 'three'], 'Xcmd.test')
+  call writefile(['one', 'two', 'three'], 'Xcmd.test', 'D')
   edit Xcmd.test
   call assert_match('Xcmd.test" line 1 of 3', execute('file'))
   normal! Gofour
@@ -2179,7 +2163,6 @@ func Test_BufReadCmd()
   call assert_equal(['one', 'two', 'three', 'four'], readfile('Xcmd.test'))
 
   bwipe!
-  call delete('Xcmd.test')
   au! BufReadCmd
   au! BufWriteCmd
 endfunc
@@ -2543,7 +2526,7 @@ func Test_Changed_FirstTime()
   let g:test_is_flaky = 1
 
   " Prepare file for TextChanged event.
-  call writefile([''], 'Xchanged.txt')
+  call writefile([''], 'Xchanged.txt', 'D')
   let buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': 3})
   call assert_equal('running', term_getstatus(buf))
   " Wait for the ruler (in the status line) to be shown.
@@ -2555,7 +2538,6 @@ func Test_Changed_FirstTime()
   call assert_equal([''], readfile('Xchanged.txt'))
 
   " clean up
-  call delete('Xchanged.txt')
   bwipe!
 endfunc
 
@@ -2642,13 +2624,12 @@ func Test_autocmd_nested_switch_window()
       autocmd BufReadPost * autocmd SafeState * ++once foldclosed('.')
       autocmd WinEnter * matchadd('ErrorMsg', 'pat')
   END
-  call writefile(lines, 'Xautoscript')
+  call writefile(lines, 'Xautoscript', 'D')
   let buf = RunVimInTerminal('-S Xautoscript', {'rows': 10})
   call VerifyScreenDump(buf, 'Test_autocmd_nested_switch', {})
 
   call StopVimInTerminal(buf)
   call delete('Xautofile')
-  call delete('Xautoscript')
 endfunc
 
 func Test_autocmd_once()
@@ -2801,7 +2782,7 @@ func Test_ReadWrite_Autocmds()
     au FileAppendPost  *.out  !cat Xtest.c >> test.out
   augroup END
 
-  call writefile(['/*', ' * Here is a new .c file', ' */'], 'Xtest.c')
+  call writefile(['/*', ' * Here is a new .c file', ' */'], 'Xtest.c', 'D')
   new foo.c			" should load Xtest.c
   call assert_equal(['/*', ' * Here is a new .c file', ' */'], getline(2, 4))
   w! >> test.out		" append it to the output file
@@ -2925,7 +2906,6 @@ func Test_ReadWrite_Autocmds()
 
   au! FileChangedShell
   call delete('Xtestfile.gz')
-  call delete('Xtest.c')
   call delete('test.out')
 endfunc
 
@@ -2972,10 +2952,10 @@ func Test_autocmd_SafeState()
 	  call timer_start(10, {id -> execute('let g:again ..= "t"')})
 	endfunc
   END
-  call writefile(lines, 'XSafeState')
+  call writefile(lines, 'XSafeState', 'D')
   let buf = RunVimInTerminal('-S XSafeState', #{rows: 6})
 
-  " Sometimes we loop to handle a K_IGNORE, SafeState may be trigered once or
+  " Sometimes we loop to handle a K_IGNORE, SafeState may be triggered once or
   " more often.
   call term_sendkeys(buf, ":echo g:safe\<CR>")
   call WaitForAssert({-> assert_match('^\d ', term_getline(buf, 6))}, 1000)
@@ -2992,7 +2972,6 @@ func Test_autocmd_SafeState()
   call WaitForAssert({-> assert_match('xtx', term_getline(buf, 6))}, 1000)
 
   call StopVimInTerminal(buf)
-  call delete('XSafeState')
 endfunc
 
 func Test_autocmd_CmdWinEnter()
@@ -3244,11 +3223,11 @@ func Test_BufReadPre_delfile()
     au!
     autocmd BufReadPre XbufreadPre call delete('XbufreadPre')
   augroup END
-  call writefile([], 'XbufreadPre')
+  call writefile([], 'XbufreadPre', 'D')
   call assert_fails('new XbufreadPre', 'E200:')
   call assert_equal('XbufreadPre', @%)
   call assert_equal(1, &readonly)
-  call delete('XbufreadPre')
+
   augroup TestAuCmd
     au!
   augroup END
@@ -3261,11 +3240,11 @@ func Test_BufReadPre_changebuf()
     au!
     autocmd BufReadPre Xchangebuf edit Xsomeotherfile
   augroup END
-  call writefile([], 'Xchangebuf')
+  call writefile([], 'Xchangebuf', 'D')
   call assert_fails('new Xchangebuf', 'E201:')
   call assert_equal('Xsomeotherfile', @%)
   call assert_equal(1, &readonly)
-  call delete('Xchangebuf')
+
   augroup TestAuCmd
     au!
   augroup END

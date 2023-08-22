@@ -25,8 +25,8 @@ func Test_setbufline_getbufline()
 
   call assert_equal(1, setbufline(b, 5, 'x'))
   call assert_equal(1, setbufline(b, 5, ['x']))
-  call assert_equal(1, setbufline(b, 5, []))
-  call assert_equal(1, setbufline(b, 5, v:_null_list))
+  call assert_equal(0, setbufline(b, 5, []))
+  call assert_equal(0, setbufline(b, 5, v:_null_list))
 
   call assert_equal(1, 'x'->setbufline(bufnr('$') + 1, 1))
   call assert_equal(1, ['x']->setbufline(bufnr('$') + 1, 1))
@@ -86,11 +86,16 @@ func Test_setline_startup()
   if cmd == ''
     return
   endif
-  call writefile(['call setline(1, "Hello")', 'silent w Xtest', 'q!'], 'Xscript')
+  call writefile(['call setline(1, "Hello")', 'silent w Xtest', 'q!'], 'Xscript', 'D')
   call system(cmd)
+  sleep 50m
   call assert_equal(['Hello'], readfile('Xtest'))
 
-  call delete('Xscript')
+  call assert_equal(0, setline(1, []))
+  call assert_equal(0, setline(1, v:_null_list))
+  call assert_equal(0, setline(5, []))
+  call assert_equal(0, setline(6, v:_null_list))
+
   call delete('Xtest')
 endfunc
 
@@ -130,8 +135,8 @@ func Test_appendbufline()
 
   call assert_equal(1, appendbufline(b, 4, 'x'))
   call assert_equal(1, appendbufline(b, 4, ['x']))
-  call assert_equal(1, appendbufline(b, 4, []))
-  call assert_equal(1, appendbufline(b, 4, v:_null_list))
+  call assert_equal(0, appendbufline(b, 4, []))
+  call assert_equal(0, appendbufline(b, 4, v:_null_list))
 
   call assert_equal(1, appendbufline(1234, 1, 'x'))
   call assert_equal(1, appendbufline(1234, 1, ['x']))
@@ -140,8 +145,8 @@ func Test_appendbufline()
 
   call assert_equal(0, appendbufline(b, 1, []))
   call assert_equal(0, appendbufline(b, 1, v:_null_list))
-  call assert_equal(1, appendbufline(b, 3, []))
-  call assert_equal(1, appendbufline(b, 3, v:_null_list))
+  call assert_equal(0, appendbufline(b, 3, []))
+  call assert_equal(0, appendbufline(b, 3, v:_null_list))
 
   call assert_equal(['a', 'b', 'c'], getbufline(b, 1, '$'))
 
@@ -215,12 +220,11 @@ func Test_appendbufline_redraw()
     call deletebufline(buf, 1, '$')
     call appendbufline(buf, '$', 'Hello Vim world...')
   END
-  call writefile(lines, 'XscriptMatchCommon')
+  call writefile(lines, 'XscriptMatchCommon', 'D')
   let buf = RunVimInTerminal('-S XscriptMatchCommon', #{rows: 10})
   call VerifyScreenDump(buf, 'Test_appendbufline_1', {})
 
   call StopVimInTerminal(buf)
-  call delete('XscriptMatchCommon')
 endfunc
 
 func Test_setbufline_select_mode()

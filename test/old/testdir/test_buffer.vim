@@ -5,64 +5,60 @@ source check.vim
 " Test for the :bunload command with an offset
 func Test_bunload_with_offset()
   %bwipe!
-  call writefile(['B1'], 'b1')
-  call writefile(['B2'], 'b2')
-  call writefile(['B3'], 'b3')
-  call writefile(['B4'], 'b4')
+  call writefile(['B1'], 'Xb1', 'D')
+  call writefile(['B2'], 'Xb2', 'D')
+  call writefile(['B3'], 'Xb3', 'D')
+  call writefile(['B4'], 'Xb4', 'D')
 
   " Load four buffers. Unload the second and third buffers and then
   " execute .+3bunload to unload the last buffer.
-  edit b1
-  new b2
-  new b3
-  new b4
+  edit Xb1
+  new Xb2
+  new Xb3
+  new Xb4
 
-  bunload b2
-  bunload b3
-  exe bufwinnr('b1') . 'wincmd w'
+  bunload Xb2
+  bunload Xb3
+  exe bufwinnr('Xb1') . 'wincmd w'
   .+3bunload
-  call assert_equal(0, getbufinfo('b4')[0].loaded)
-  call assert_equal('b1',
+  call assert_equal(0, getbufinfo('Xb4')[0].loaded)
+  call assert_equal('Xb1',
         \ fnamemodify(getbufinfo({'bufloaded' : 1})[0].name, ':t'))
 
   " Load four buffers. Unload the third and fourth buffers. Execute .+3bunload
   " and check whether the second buffer is unloaded.
   ball
-  bunload b3
-  bunload b4
-  exe bufwinnr('b1') . 'wincmd w'
+  bunload Xb3
+  bunload Xb4
+  exe bufwinnr('Xb1') . 'wincmd w'
   .+3bunload
-  call assert_equal(0, getbufinfo('b2')[0].loaded)
-  call assert_equal('b1',
+  call assert_equal(0, getbufinfo('Xb2')[0].loaded)
+  call assert_equal('Xb1',
         \ fnamemodify(getbufinfo({'bufloaded' : 1})[0].name, ':t'))
 
   " Load four buffers. Unload the second and third buffers and from the last
   " buffer execute .-3bunload to unload the first buffer.
   ball
-  bunload b2
-  bunload b3
-  exe bufwinnr('b4') . 'wincmd w'
+  bunload Xb2
+  bunload Xb3
+  exe bufwinnr('Xb4') . 'wincmd w'
   .-3bunload
-  call assert_equal(0, getbufinfo('b1')[0].loaded)
-  call assert_equal('b4',
+  call assert_equal(0, getbufinfo('Xb1')[0].loaded)
+  call assert_equal('Xb4',
         \ fnamemodify(getbufinfo({'bufloaded' : 1})[0].name, ':t'))
 
   " Load four buffers. Unload the first and second buffers. Execute .-3bunload
   " from the last buffer and check whether the third buffer is unloaded.
   ball
-  bunload b1
-  bunload b2
-  exe bufwinnr('b4') . 'wincmd w'
+  bunload Xb1
+  bunload Xb2
+  exe bufwinnr('Xb4') . 'wincmd w'
   .-3bunload
-  call assert_equal(0, getbufinfo('b3')[0].loaded)
-  call assert_equal('b4',
+  call assert_equal(0, getbufinfo('Xb3')[0].loaded)
+  call assert_equal('Xb4',
         \ fnamemodify(getbufinfo({'bufloaded' : 1})[0].name, ':t'))
 
   %bwipe!
-  call delete('b1')
-  call delete('b2')
-  call delete('b3')
-  call delete('b4')
 
   call assert_fails('1,4bunload', 'E16:')
   call assert_fails(',100bunload', 'E16:')
@@ -76,9 +72,9 @@ func Test_buflist_browse()
   %bwipe!
   call assert_fails('buffer 1000', 'E86:')
 
-  call writefile(['foo1', 'foo2', 'foo3', 'foo4'], 'Xbrowse1')
-  call writefile(['bar1', 'bar2', 'bar3', 'bar4'], 'Xbrowse2')
-  call writefile(['baz1', 'baz2', 'baz3', 'baz4'], 'Xbrowse3')
+  call writefile(['foo1', 'foo2', 'foo3', 'foo4'], 'Xbrowse1', 'D')
+  call writefile(['bar1', 'bar2', 'bar3', 'bar4'], 'Xbrowse2', 'D')
+  call writefile(['baz1', 'baz2', 'baz3', 'baz4'], 'Xbrowse3', 'D')
   edit Xbrowse1
   let b1 = bufnr()
   edit Xbrowse2
@@ -127,9 +123,6 @@ func Test_buflist_browse()
 
   call assert_fails('sandbox bnext', 'E48:')
 
-  call delete('Xbrowse1')
-  call delete('Xbrowse2')
-  call delete('Xbrowse3')
   %bwipe!
 endfunc
 
@@ -200,13 +193,13 @@ endfunc
 " Test for quitting the 'swapfile exists' dialog with the split buffer
 " command.
 func Test_buffer_sbuf_cleanup()
-  call writefile([], 'XsplitCleanup')
+  call writefile([], 'XsplitCleanup', 'D')
   " first open the file in a buffer
   new XsplitCleanup
   let bnr = bufnr()
   close
   " create the swap file
-  call writefile([], '.XsplitCleanup.swp')
+  call writefile([], '.XsplitCleanup.swp', 'D')
   " Remove the catch-all that runtest.vim adds
   au! SwapExists
   augroup BufTest
@@ -231,8 +224,6 @@ func Test_buffer_sbuf_cleanup()
   call assert_equal(0, getbufinfo('XsplitCleanup')[0].loaded)
   set shortmess&
 
-  call delete('XsplitCleanup')
-  call delete('.XsplitCleanup.swp')
   augroup BufTest
     au!
   augroup END
@@ -329,8 +320,8 @@ endfunc
 " Test for using CTRL-^ to edit the alternative file keeping the cursor
 " position with 'nostartofline'. Also test using the 'buf' command.
 func Test_buffer_edit_altfile()
-  call writefile(repeat(['one two'], 50), 'Xaltfile1')
-  call writefile(repeat(['five six'], 50), 'Xaltfile2')
+  call writefile(repeat(['one two'], 50), 'Xaltfile1', 'D')
+  call writefile(repeat(['five six'], 50), 'Xaltfile2', 'D')
   set nosol
   edit Xaltfile1
   call cursor(25, 5)
@@ -345,8 +336,6 @@ func Test_buffer_edit_altfile()
   buf Xaltfile2
   call assert_equal([0, 30, 4, 0], getpos('.'))
   set sol&
-  call delete('Xaltfile1')
-  call delete('Xaltfile2')
 endfunc
 
 " Test for running the :sball command with a maximum window count and a
@@ -390,6 +379,7 @@ endfunc
 func Test_buffer_scheme()
   CheckMSWindows
 
+  set noswapfile
   set noshellslash
   %bwipe!
   let bufnames = [
@@ -412,6 +402,7 @@ func Test_buffer_scheme()
   endfor
 
   set shellslash&
+  set swapfile&
 endfunc
 
 " this was using a NULL pointer after failing to use the pattern
@@ -499,7 +490,7 @@ func Test_buflist_alloc_failure()
   call assert_fails('%bw!', 'E342:')
 
   " test for :checktime loading the buffer
-  call writefile(['one'], 'XallocFail5')
+  call writefile(['one'], 'XallocFail5', 'D')
   if has('unix')
     edit XallocFail5
     " sleep for some time to make sure the timestamp is different
@@ -515,7 +506,6 @@ func Test_buflist_alloc_failure()
   " test for :vimgrep loading a dummy buffer
   call test_alloc_fail(GetAllocId('newbuf_bvars'), 0, 0)
   call assert_fails('vimgrep two XallocFail5', 'E342:')
-  call delete('XallocFail5')
 
   " test for quickfix command loading a buffer
   call test_alloc_fail(GetAllocId('newbuf_bvars'), 0, 0)

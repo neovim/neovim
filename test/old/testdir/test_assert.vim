@@ -92,12 +92,12 @@ func Test_assert_equalfile()
   call remove(v:errors, 0)
 
   let goodtext = ["one", "two", "three"]
-  call writefile(goodtext, 'Xone')
+  call writefile(goodtext, 'Xone', 'D')
   call assert_equal(1, 'Xone'->assert_equalfile('xyzxyz'))
   call assert_match("E485: Can't read file xyzxyz", v:errors[0])
   call remove(v:errors, 0)
 
-  call writefile(goodtext, 'Xtwo')
+  call writefile(goodtext, 'Xtwo', 'D')
   call assert_equal(0, assert_equalfile('Xone', 'Xtwo'))
 
   call writefile([goodtext[0]], 'Xone')
@@ -127,9 +127,6 @@ func Test_assert_equalfile()
   call assert_equal(1, assert_equalfile('Xone', 'Xtwo', 'a message'))
   call assert_match("a message: difference at byte 234, line 1 after", v:errors[0])
   call remove(v:errors, 0)
-
-  call delete('Xone')
-  call delete('Xtwo')
 endfunc
 
 func Test_assert_notequal()
