@@ -523,6 +523,10 @@ associated with patterns:
     node's entire text should be re-parsed, including the text of its child
     nodes. By default, child nodes' text will be excluded from the injected
     document.
+    • `injection.self` - indicates that the node's text should be parsed with
+      the same language as the node's LanguageTree.
+    • `injection.parent` - indicates that the captured node’s text should
+      be parsed with the same language as the node's parent LanguageTree.
 
 ==============================================================================
 VIM.TREESITTER                                                *lua-treesitter*
