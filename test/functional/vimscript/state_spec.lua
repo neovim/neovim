@@ -10,6 +10,7 @@ local poke_eventloop = helpers.poke_eventloop
 before_each(clear)
 
 describe('state() function', function()
+  -- oldtest: Test_state()
   it('works', function()
     meths.ui_attach(80, 24, {})  -- Allow hit-enter-prompt
 
@@ -50,6 +51,20 @@ describe('state() function', function()
     meths.get_mode()  -- Process pending input and luv timer callback
     feed(';')
     eq({ 'mS', 'n' }, exec_lua('return _G.res'))
+
+    -- An operator is pending
+    feed([[:call RunTimer()<CR>y]])
+    poke_eventloop()  -- Process pending input
+    poke_eventloop()  -- Process time_event
+    feed('y')
+    eq({ 'oSc', 'n' }, exec_lua('return _G.res'))
+
+    -- A register was specified
+    feed([[:call RunTimer()<CR>"r]])
+    poke_eventloop()  -- Process pending input
+    poke_eventloop()  -- Process time_event
+    feed('yy')
+    eq({ 'oSc', 'n' }, exec_lua('return _G.res'))
 
     -- Insert mode completion
     feed([[:call RunTimer()<CR>Got<C-N>]])
