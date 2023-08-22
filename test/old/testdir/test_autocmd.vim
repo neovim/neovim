@@ -971,7 +971,7 @@ func Test_autocmd_bufwipe_in_SessLoadPost()
 
   call writefile(content, 'Xvimrc', 'D')
   call system(GetVimCommand('Xvimrc') .. ' --headless --noplugins -S Session.vim -c cq')
-  sleep 50m
+  sleep 100m
   let errors = join(readfile('Xerrors'))
   call assert_match('E814:', errors)
 
@@ -995,6 +995,7 @@ func Test_autocmd_blast_badd()
 
   call writefile(content, 'XblastBall', 'D')
   call system(GetVimCommand() .. ' --clean -S XblastBall')
+  sleep 100m
   call assert_match('OK', readfile('Xerrors')->join())
 
   call delete('Xerrors')
@@ -1031,6 +1032,7 @@ func Test_autocmd_bufwipe_in_SessLoadPost2()
 
   call writefile(content, 'Xvimrc', 'D')
   call system(GetVimCommand('Xvimrc') .. ' --headless --noplugins -S Session.vim -c cq')
+  sleep 100m
   let errors = join(readfile('Xerrors'))
   " This probably only ever matches on unix.
   call assert_notmatch('Caught deadly signal SEGV', errors)
