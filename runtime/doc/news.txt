@@ -131,6 +131,8 @@ The following new APIs and features were added.
   • `@injection.language` now has smarter resolution and will now fallback to language aliases and/or attempt lower case variants of the text.
     language via aliases (e.g., filetype) registered via
     `vim.treesitter.language.register`.
+  • The `#set!` directive now supports `injection.self` and `injection.parent` for injecting either the current node's language
+    or the parent LanguageTree's language, respectively.
 
 • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
   Windows `explorer`, Linux `xdg-open`, etc.)

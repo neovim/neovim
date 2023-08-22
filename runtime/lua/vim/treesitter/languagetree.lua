@@ -82,6 +82,7 @@ local TSCallbackNames = {
 ---List of regions this tree should manage and parse. If nil then regions are
 ---taken from _trees. This is mostly a short-lived cache for included_regions()
 ---@field private _lang string Language name
+---@field private _parent_lang? string Parent language name
 ---@field private _source (integer|string) Buffer or string to parse
 ---@field private _trees TSTree[] Reference to parsed tree (one for each language)
 ---@field private _valid boolean|table<integer,boolean> If the parsed tree is valid
@@ -105,8 +106,9 @@ LanguageTree.__index = LanguageTree
 ---@param opts (table|nil) Optional arguments:
 ---             - injections table Map of language to injection query strings. Overrides the
 ---                                built-in runtime file searching for language injections.
+---@param parent_lang? string Parent language name of this tree
 ---@return LanguageTree parser object
-function LanguageTree.new(source, lang, opts)
+function LanguageTree.new(source, lang, opts, parent_lang)
   language.add(lang)
   ---@type LanguageTreeOpts
   opts = opts or {}
@@ -121,6 +123,7 @@ function LanguageTree.new(source, lang, opts)
   local self = {
     _source = source,
     _lang = lang,
+    _parent_lang = parent_lang,
     _children = {},
     _trees = {},
     _opts = opts,
@@ -489,7 +492,7 @@ function LanguageTree:add_child(lang)
     self:remove_child(lang)
   end
 
-  local child = LanguageTree.new(self._source, lang, self._opts)
+  local child = LanguageTree.new(self._source, lang, self._opts, self:lang())
 
   -- Inherit recursive callbacks
   for nm, cb in pairs(self._callbacks_rec) do
@@ -752,7 +755,9 @@ end
 function LanguageTree:_get_injection(match, metadata)
   local ranges = {} ---@type Range6[]
   local combined = metadata['injection.combined'] ~= nil
-  local lang = metadata['injection.language'] --[[@as string?]]
+  local lang = metadata['injection.self'] ~= nil and self:lang()
+    or metadata['injection.parent'] ~= nil and self._parent_lang
+    or metadata['injection.language'] --[[@as string?]]
   local include_children = metadata['injection.include-children'] ~= nil
 
   for id, node in pairs(match) do
