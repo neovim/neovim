@@ -64,6 +64,7 @@
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/vim.h"
+#include "nvim/window.h"
 
 // Definitions used for CTRL-X submode.
 // Note: If you change CTRL-X submode, you must also maintain ctrl_x_msgs[]
@@ -161,7 +162,8 @@ struct compl_S {
 /// state information used for getting the next set of insert completion
 /// matches.
 typedef struct {
-  char *e_cpt;            ///< current entry in 'complete'
+  char *e_cpt_copy;       ///< copy of 'complete'
+  char *e_cpt;            ///< current entry in "e_cpt_copy"
   buf_T *ins_buf;         ///< buffer being scanned
   pos_T *cur_match_pos;   ///< current match position
   pos_T prev_match_pos;   ///< previous match position
@@ -2219,7 +2221,8 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
   static win_T *wp = NULL;
 
   if (flag == 'w') {            // just windows
-    if (buf == curbuf || wp == NULL) {  // first call for this flag/expansion
+    if (buf == curbuf || !win_valid(wp)) {
+      // first call for this flag/expansion or window was closed
       wp = curwin;
     }
     assert(wp);
@@ -3287,6 +3290,7 @@ static bool get_next_completion_match(int type, ins_compl_next_state_T *st, pos_
 static int ins_compl_get_exp(pos_T *ini)
 {
   static ins_compl_next_state_T st;
+  static bool st_cleared = false;
   int i;
   int found_new_match;
   int type = ctrl_x_mode;
@@ -3297,9 +3301,16 @@ static int ins_compl_get_exp(pos_T *ini)
     FOR_ALL_BUFFERS(buf) {
       buf->b_scanned = false;
     }
+    if (!st_cleared) {
+      CLEAR_FIELD(st);
+      st_cleared = true;
+    }
     st.found_all = false;
     st.ins_buf = curbuf;
-    st.e_cpt = (compl_cont_status & CONT_LOCAL) ? "." : curbuf->b_p_cpt;
+    xfree(st.e_cpt_copy);
+    // Make a copy of 'complete', in case the buffer is wiped out.
+    st.e_cpt_copy = xstrdup((compl_cont_status & CONT_LOCAL) ? "." : curbuf->b_p_cpt);
+    st.e_cpt = st.e_cpt_copy == NULL ? "" : st.e_cpt_copy;
     st.last_match_pos = st.first_match_pos = *ini;
   } else if (st.ins_buf != curbuf && !buf_valid(st.ins_buf)) {
     st.ins_buf = curbuf;  // In case the buffer was wiped out.
@@ -3599,6 +3610,7 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   int num_matches = -1;
   int todo = count;
   const bool started = compl_started;
+  buf_T *const orig_curbuf = curbuf;
 
   // When user complete function return -1 for findstart which is next
   // time of 'always', compl_shown_match become NULL.
@@ -3631,6 +3643,12 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   // around.
   if (find_next_completion_match(allow_get_expansion, todo, advance,
                                  &num_matches) == -1) {
+    return -1;
+  }
+
+  if (curbuf != orig_curbuf) {
+    // In case some completion function switched buffer, don't want to
+    // insert the completion elsewhere.
     return -1;
   }
 
