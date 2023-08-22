@@ -162,7 +162,7 @@ func Test_cursorline_screenline()
   call term_sendkeys(buf, "gj")
   call VerifyScreenDump(buf, 'Test_'. filename. '_12', {})
   if exists("+foldcolumn") && exists("+signcolumn") && exists("+breakindent")
-    " test with set foldcolumn signcoloumn and breakindent
+    " test with set foldcolumn signcolumn and breakindent
     call term_sendkeys(buf, "gg0")
     call term_sendkeys(buf, ":set breakindent foldcolumn=2 signcolumn=yes\<cr>")
     call VerifyScreenDump(buf, 'Test_'. filename. '_13', {})
