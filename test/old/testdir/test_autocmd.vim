@@ -964,7 +964,7 @@ func Test_autocmd_bufwipe_in_SessLoadPost()
     augroup END
 
     func WriteErrors()
-      call writefile([execute("messages")], "Xerrors")
+      call writefile([execute("messages")], "XerrorsBwipe")
     endfunc
     au VimLeave * call WriteErrors()
   [CODE]
@@ -972,11 +972,11 @@ func Test_autocmd_bufwipe_in_SessLoadPost()
   call writefile(content, 'Xvimrc', 'D')
   call system(GetVimCommand('Xvimrc') .. ' --headless --noplugins -S Session.vim -c cq')
   sleep 100m
-  let errors = join(readfile('Xerrors'))
+  let errors = join(readfile('XerrorsBwipe'))
   call assert_match('E814:', errors)
 
   set swapfile
-  for file in ['Session.vim', 'Xerrors']
+  for file in ['Session.vim', 'XerrorsBwipe']
     call delete(file)
   endfor
 endfunc
@@ -989,16 +989,16 @@ func Test_autocmd_blast_badd()
       edit foo1
       au BufNew,BufAdd,BufWinEnter,BufEnter,BufLeave,BufWinLeave,BufUnload,VimEnter foo* ball
       edit foo2
-      call writefile(['OK'], 'Xerrors')
+      call writefile(['OK'], 'XerrorsBlast')
       qall
   [CODE]
 
   call writefile(content, 'XblastBall', 'D')
   call system(GetVimCommand() .. ' --clean -S XblastBall')
   sleep 100m
-  call assert_match('OK', readfile('Xerrors')->join())
+  call assert_match('OK', readfile('XerrorsBlast')->join())
 
-  call delete('Xerrors')
+  call delete('XerrorsBlast')
 endfunc
 
 " SEGV occurs in older versions.
@@ -1025,7 +1025,7 @@ func Test_autocmd_bufwipe_in_SessLoadPost2()
     au SessionLoadPost * call DeleteInactiveBufs()
 
     func WriteErrors()
-      call writefile([execute("messages")], "Xerrors")
+      call writefile([execute("messages")], "XerrorsPost")
     endfunc
     au VimLeave * call WriteErrors()
   [CODE]
@@ -1033,13 +1033,13 @@ func Test_autocmd_bufwipe_in_SessLoadPost2()
   call writefile(content, 'Xvimrc', 'D')
   call system(GetVimCommand('Xvimrc') .. ' --headless --noplugins -S Session.vim -c cq')
   sleep 100m
-  let errors = join(readfile('Xerrors'))
+  let errors = join(readfile('XerrorsPost'))
   " This probably only ever matches on unix.
   call assert_notmatch('Caught deadly signal SEGV', errors)
   call assert_match('SessionLoadPost DONE', errors)
 
   set swapfile
-  for file in ['Session.vim', 'Xerrors']
+  for file in ['Session.vim', 'XerrorsPost']
     call delete(file)
   endfor
 endfunc
