@@ -3641,7 +3641,7 @@ endfunc
 "	    exceptions.
 "-------------------------------------------------------------------------------
 
-func Test_execption_info_for_error()
+func Test_exception_info_for_error()
   CheckEnglish
 
   let test =<< trim [CODE]

@@ -51,7 +51,7 @@ func Test_digraphs()
   call Put_Dig("'e")
   call Put_Dig("b'") " not defined
   call assert_equal(["á", "é", "'"], getline(line('.')-2,line('.')))
-  " Cicumflex
+  " Circumflex
   call Put_Dig("a>")
   call Put_Dig(">e")
   call Put_Dig("b>") " not defined

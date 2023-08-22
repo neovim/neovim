@@ -100,8 +100,8 @@ func Test_signal_INT()
   call term_sendkeys(buf, ":while 1 | endwhile\n")
   call WaitForAssert({-> assert_equal(':while 1 | endwhile', term_getline(buf, 6))})
   exe 'silent !kill -s INT ' .. pid_vim
-  call term_sendkeys(buf, ":call setline(1, 'INTERUPTED')\n")
-  call WaitForAssert({-> assert_equal('INTERUPTED', term_getline(buf, 1))})
+  call term_sendkeys(buf, ":call setline(1, 'INTERRUPTED')\n")
+  call WaitForAssert({-> assert_equal('INTERRUPTED', term_getline(buf, 1))})
 
   call StopVimInTerminal(buf)
 endfunc

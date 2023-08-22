@@ -491,7 +491,7 @@ func Test_spellsuggest_option_expr()
   bwipe!
 endfunc
 
-" Test for 'spellsuggest' expr errrors
+" Test for 'spellsuggest' expr errors
 func Test_spellsuggest_expr_errors()
   " 'spellsuggest'
   func MySuggest()

@@ -162,7 +162,7 @@ endfunc
 
 " Test for menu item completion in command line
 func Test_menu_expand()
-  " Create the menu itmes for test
+  " Create the menu items for test
   menu Dummy.Nothing lll
   for i in range(1, 4)
     let m = 'menu Xmenu.A' .. i .. '.A' .. i
