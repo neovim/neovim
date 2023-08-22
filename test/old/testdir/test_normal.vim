@@ -1807,30 +1807,21 @@ func Test_normal22_zet()
   " Test for ZZ
   " let shell = &shell
   " let &shell = 'sh'
-
-  " Remove any stale test files from previous run.
-  for file in ['Xfile_Test_normal22_zet']
-    call delete(file)
-  endfor
-
-  call writefile(['1', '2'], 'Xfile_Test_normal22_zet')
+  call writefile(['1', '2'], 'Xn22file', 'D')
   let args = ' -N -i NONE --noplugins -X --headless'
-  call system(GetVimCommand() .. args .. ' -c "%d" -c ":norm! ZZ" Xfile_Test_normal22_zet')
-  let a = readfile('Xfile_Test_normal22_zet')
+  call system(GetVimCommand() .. args .. ' -c "%d" -c ":norm! ZZ" Xn22file')
+  let a = readfile('Xn22file')
   call assert_equal([], a)
   " Test for ZQ
-  call writefile(['1', '2'], 'Xfile_Test_normal22_zet')
-  call system(GetVimCommand() . args . ' -c "%d" -c ":norm! ZQ" Xfile_Test_normal22_zet')
-  let a = readfile('Xfile_Test_normal22_zet')
+  call writefile(['1', '2'], 'Xn22file')
+  call system(GetVimCommand() . args . ' -c "%d" -c ":norm! ZQ" Xn22file')
+  let a = readfile('Xn22file')
   call assert_equal(['1', '2'], a)
 
   " Unsupported Z command
   call assert_beeps('normal! ZW')
 
-  " Nvim: This sometimes hangs the TSAN build.
-  " for file in ['Xfile_Test_normal22_zet']
-  "   call delete(file)
-  " endfor
+  " clean up
   " let &shell = shell
 endfunc
 

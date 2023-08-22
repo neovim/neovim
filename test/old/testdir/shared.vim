@@ -339,7 +339,7 @@ func RunVimPiped(before, after, arguments, pipecmd)
 
   let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
   " Nvim does not support -Z flag, remove it.
-  exe "silent !" . a:pipecmd . cmd . args . ' ' . substitute(a:arguments, '-Z', '', 'g')
+  exe "silent !" . a:pipecmd . cmd . args . ' ' . a:arguments->substitute('-Z', '', 'g')
 
   if len(a:before) > 0
     call delete('Xbefore.vim')
