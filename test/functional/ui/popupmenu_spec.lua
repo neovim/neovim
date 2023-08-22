@@ -3239,7 +3239,7 @@ describe('builtin popupmenu', function()
                                           |
           {3:[No Name]                       }|
           {1::}sign define                    |
-          {1::}sign define^                    |
+          {1::}sign defin^e                    |
           {1:~                               }|
           {1:~                               }|
           {1:~                               }|

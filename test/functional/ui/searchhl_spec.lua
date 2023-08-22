@@ -52,7 +52,7 @@ describe('search highlighting', function()
       {1:~                                       }|
       /text^                                   |
     ]], win_viewport={
-      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 9, linecount = 2, sum_scroll_delta = 0};
+      [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 8, linecount = 2, sum_scroll_delta = 0};
     }}
   end)
 

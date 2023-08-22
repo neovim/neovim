@@ -316,7 +316,7 @@ local function test_cmdline(linegrid)
     screen:expect{grid=[[
                                |
       {2:[No Name]                }|
-      {1::}make^                    |
+      {1::}mak^e                    |
       {3:[Command Line]           }|
                                |
     ]]}
@@ -326,7 +326,7 @@ local function test_cmdline(linegrid)
     screen:expect{grid=[[
                                |
       {2:[No Name]                }|
-      {1::}make^                    |
+      {1::}mak^e                    |
       {3:[Command Line]           }|
                                |
     ]], cmdline={nil, {
@@ -339,7 +339,7 @@ local function test_cmdline(linegrid)
     screen:expect{grid=[[
                                |
       {2:[No Name]                }|
-      {1::}make^                    |
+      {1::}mak^e                    |
       {3:[Command Line]           }|
                                |
     ]], cmdline={nil, {
@@ -352,7 +352,7 @@ local function test_cmdline(linegrid)
     screen:expect{grid=[[
                                |
       {2:[No Name]                }|
-      {1::}make^                    |
+      {1::}mak^e                    |
       {3:[Command Line]           }|
                                |
     ]]}
