@@ -234,10 +234,10 @@ endfunc
 " Use when debugger didn't start or ended.
 func s:CloseBuffers()
   exe 'bwipe! ' . s:ptybuf
-  if s:asmbuf > 0
+  if s:asmbuf > 0 && bufexists(s:asmbuf)
     exe 'bwipe! ' . s:asmbuf
   endif
-  if s:varbuf > 0
+  if s:varbuf > 0 && bufexists(s:varbuf)
     exe 'bwipe! ' . s:varbuf
   endif
   s:running = 0
@@ -649,30 +649,36 @@ endfunc
 func s:GdbOutCallback(job_id, msgs, event)
   "call ch_log('received from gdb: ' . a:text)
 
-  " Drop the gdb prompt, we have our own.
-  " Drop status and echo'd commands.
-  call filter(a:msgs, { index, val ->
-        \ val !=# '(gdb)' && val !=# '^done' && val[0] !=# '&'})
-
+  let comm_msgs = []
   let lines = []
-  let index = 0
 
   for msg in a:msgs
+    " Disassembly messages need to be forwarded as-is.
+    if s:parsing_disasm_msg || msg =~ '^&"disassemble'
+      call s:CommOutput(a:job_id, [msg], a:event)
+      continue
+    endif
+
+    " Drop the gdb prompt, we have our own.
+    " Drop status and echo'd commands.
+    if msg == '(gdb) ' || msg == '^done' || msg[0] == '&'
+      continue
+    endif
+
     if msg =~ '^\^error,msg='
       if exists('s:evalexpr')
             \ && s:DecodeMessage(msg[11:], v:false)
             \    =~ 'A syntax error in expression, near\|No symbol .* in current context'
         " Silently drop evaluation errors.
-        call remove(a:msgs, index)
         unlet s:evalexpr
         continue
       endif
     elseif msg[0] == '~'
       call add(lines, s:DecodeMessage(msg[1:], v:false))
-      call remove(a:msgs, index)
       continue
     endif
-    let index += 1
+
+    call add(comm_msgs, msg)
   endfor
 
   let curwinid = win_getid()
@@ -687,12 +693,13 @@ func s:GdbOutCallback(job_id, msgs, event)
   endif
 
   call win_gotoid(curwinid)
-  call s:CommOutput(a:job_id, a:msgs, a:event)
+  call s:CommOutput(a:job_id, comm_msgs, a:event)
 endfunc
 
 " Decode a message from gdb.  "quotedText" starts with a ", return the text up
-" to the next ", unescaping characters:
+" to the next unescaped ", unescaping characters:
 " - remove line breaks (unless "literal" is v:true)
+" - change \" to "
 " - change \\t to \t (unless "literal" is v:true)
 " - change \0xhh to \xhh (disabled for now)
 " - change \ooo to octal
@@ -703,24 +710,25 @@ func s:DecodeMessage(quotedText, literal)
     return
   endif
   let msg = a:quotedText
-        \ ->substitute('^"\|".*', '', 'g')
-        " multi-byte characters arrive in octal form
-        " NULL-values must be kept encoded as those break the string otherwise
+        \ ->substitute('^"\|[^\\]\zs".*', '', 'g')
+        \ ->substitute('\\"', '"', 'g')
+        "\ multi-byte characters arrive in octal form
+        "\ NULL-values must be kept encoded as those break the string otherwise
         \ ->substitute('\\000', s:NullRepl, 'g')
         \ ->substitute('\\\o\o\o', {-> eval('"' .. submatch(0) .. '"')}, 'g')
-        " Note: GDB docs also mention hex encodings - the translations below work
-        "       but we keep them out for performance-reasons until we actually see
-        "       those in mi-returns
-        " \ ->substitute('\\0x\(\x\x\)', {-> eval('"\x' .. submatch(1) .. '"')}, 'g')
-        " \ ->substitute('\\0x00', s:NullRepl, 'g')
+        "\ Note: GDB docs also mention hex encodings - the translations below work
+        "\       but we keep them out for performance-reasons until we actually see
+        "\       those in mi-returns
+        "\ \ ->substitute('\\0x\(\x\x\)', {-> eval('"\x' .. submatch(1) .. '"')}, 'g')
+        "\ \ ->substitute('\\0x00', s:NullRepl, 'g')
         \ ->substitute('\\\\', '\', 'g')
         \ ->substitute(s:NullRepl, '\\000', 'g')
   if !a:literal
-          return msg
+    return msg
         \ ->substitute('\\t', "\t", 'g')
         \ ->substitute('\\n', '', 'g')
   else
-          return msg
+    return msg
   endif
 endfunc
 const s:NullRepl = 'XXXNULLXXX'
@@ -757,15 +765,7 @@ func s:EndTermDebug(job_id, exit_code, event)
     doauto <nomodeline> User TermdebugStopPre
   endif
 
-  if s:asmbuf > 0
-    exe 'bwipe! ' . s:asmbuf
-  endif
-  if s:varbuf > 0
-    exe 'bwipe! ' . s:varbuf
-  endif
-  let s:running = 0
   unlet s:gdbwin
-
   call s:EndDebugCommon()
 endfunc
 
@@ -775,6 +775,13 @@ func s:EndDebugCommon()
   if exists('s:ptybuf') && s:ptybuf
     exe 'bwipe! ' . s:ptybuf
   endif
+  if s:asmbuf > 0 && bufexists(s:asmbuf)
+    exe 'bwipe! ' . s:asmbuf
+  endif
+  if s:varbuf > 0 && bufexists(s:varbuf)
+    exe 'bwipe! ' . s:varbuf
+  endif
+  let s:running = 0
 
   " Restore 'signcolumn' in all buffers for which it was set.
   call win_gotoid(s:sourcewin)
@@ -824,7 +831,6 @@ func s:EndPromptDebug(job_id, exit_code, event)
   "call ch_log("Returning from EndPromptDebug()")
 endfunc
 
-" - CommOutput: disassemble $pc
 " - CommOutput: &"disassemble $pc\n"
 " - CommOutput: ~"Dump of assembler code for function main(int, char**):\n"
 " - CommOutput: ~"   0x0000555556466f69 <+0>:\tpush   rbp\n"
@@ -834,7 +840,6 @@ endfunc
 " - CommOutput: ~"End of assembler dump.\n"
 " - CommOutput: ^done
 
-" - CommOutput: disassemble $pc
 " - CommOutput: &"disassemble $pc\n"
 " - CommOutput: &"No function contains specified address.\n"
 " - CommOutput: ^error,msg="No function contains specified address."
@@ -866,12 +871,12 @@ func s:HandleDisasmMsg(msg)
       call s:SendCommand('disassemble $pc,+100')
     endif
     let s:parsing_disasm_msg = 0
-  elseif a:msg =~ '\&\"disassemble \$pc'
+  elseif a:msg =~ '^&"disassemble \$pc'
     if a:msg =~ '+100'
       " This is our second disasm attempt
       let s:parsing_disasm_msg = 2
     endif
-  else
+  elseif a:msg !~ '^&"disassemble'
     let value = substitute(a:msg, '^\~\"[ ]*', '', '')
     let value = substitute(value, '^=>[ ]*', '', '')
     " Nvim already trims the final "\r" in s:CommOutput()
@@ -953,9 +958,10 @@ func s:CommOutput(job_id, msgs, event)
         call s:HandleEvaluate(msg)
       elseif msg =~ '^\^error,msg='
         call s:HandleError(msg)
-      elseif msg =~ '^disassemble'
+      elseif msg =~ '^&"disassemble'
         let s:parsing_disasm_msg = 1
         let s:asm_lines = []
+        call s:HandleDisasmMsg(msg)
       elseif msg =~ '^\^done,variables='
         call s:HandleVariablesMsg(msg)
       endif
@@ -1500,7 +1506,7 @@ func s:GotoAsmwinOrCreateIt()
     setlocal signcolumn=no
     setlocal modifiable
 
-    if s:asmbuf > 0
+    if s:asmbuf > 0 && bufexists(s:asmbuf)
       exe 'buffer' . s:asmbuf
     else
       silent file Termdebug-asm-listing
@@ -1562,7 +1568,7 @@ func s:GotoVariableswinOrCreateIt()
     setlocal signcolumn=no
     setlocal modifiable
 
-    if s:varbuf > 0
+    if s:varbuf > 0 && bufexists(s:varbuf)
       exe 'buffer' . s:varbuf
     else
       silent file Termdebug-variables-listing
