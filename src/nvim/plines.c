@@ -494,7 +494,10 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   // string at start of line.
   // Do not use 'showbreak' at the NUL after the text.
   int head = mb_added;
-  char *const sbr = c == NUL ? empty_option : get_showbreak_value(wp);
+  char *const sbr
+  // XXX: there should be a better check deeper below
+    = ((c == NUL && cts->cts_cur_text_width_left + cts->cts_cur_text_width_right == 0)
+       ? empty_option : get_showbreak_value(wp));
   if ((*sbr != NUL || wp->w_p_bri) && wp->w_p_wrap) {
     int col_off_prev = win_col_off(wp);
     int width2 = wp->w_width_inner - col_off_prev + win_col_off2(wp);
