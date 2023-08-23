@@ -1542,9 +1542,10 @@ example, FORM files, use this in your startup vimrc: >
 
 FORTH						*forth.vim* *ft-forth-syntax*
 
-Files matching "*.fs" could be F# or Forth.  If the automatic detection
-doesn't work for you, or you don't edit F# at all, use this in your
-startup vimrc: >
+Files matching "*.f" could be Fortran or Forth and those matching "*.fs" could
+be F# or Forth.  If the automatic detection doesn't work for you, or you don't
+edit F# or Fortran at all, use this in your startup vimrc: >
+   :let filetype_f  = "forth"
    :let filetype_fs = "forth"
 
 
