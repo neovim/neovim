@@ -1,5 +1,6 @@
 local M = {}
 
+--- @type table<string,fun(bufnr: integer, val: string, opts?: table)>
 M.properties = {}
 
 --- Modified version of the builtin assert that does not include error position information
@@ -19,7 +20,7 @@ end
 ---
 ---@private
 local function warn(msg, ...)
-  vim.notify(string.format(msg, ...), vim.log.levels.WARN, {
+  vim.notify_once(string.format(msg, ...), vim.log.levels.WARN, {
     title = 'editorconfig',
   })
 end
@@ -168,12 +169,12 @@ end
 ---
 ---@param filepath string File path of the file to apply EditorConfig settings to
 ---@param dir string Current directory
----@return table Table of options to apply to the given file
+---@return table<string,string|boolean> Table of options to apply to the given file
 ---
 ---@private
 local function parse(filepath, dir)
-  local pat = nil
-  local opts = {}
+  local pat --- @type vim.regex?
+  local opts = {} --- @type table<string,string|boolean>
   local f = io.open(dir .. '/.editorconfig')
   if f then
     for line in f:lines() do
@@ -217,7 +218,7 @@ function M.config(bufnr)
     return
   end
 
-  local opts = {}
+  local opts = {} --- @type table<string,string|boolean>
   for parent in vim.fs.parents(path) do
     for k, v in pairs(parse(path, parent)) do
       if opts[k] == nil then
@@ -230,7 +231,7 @@ function M.config(bufnr)
     end
   end
 
-  local applied = {}
+  local applied = {} --- @type table<string,string|boolean>
   for opt, val in pairs(opts) do
     if val ~= 'unset' then
       local func = M.properties[opt]
