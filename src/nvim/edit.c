@@ -232,7 +232,8 @@ static void insert_enter(InsertState *s)
   may_trigger_modechanged();
   stop_insert_mode = false;
 
-  // need to position cursor again when on a TAB
+  // need to position cursor again when on a TAB and
+  // when on a char with inline virtual text
   if (gchar_cursor() == TAB || curbuf->b_virt_text_inline > 0) {
     curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
   }
@@ -3471,7 +3472,8 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
 
   State = MODE_NORMAL;
   may_trigger_modechanged();
-  // need to position cursor again when on a TAB
+  // need to position cursor again when on a TAB and
+  // when on a char with inline virtual text
   if (gchar_cursor() == TAB || curbuf->b_virt_text_inline > 0) {
     curwin->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_VIRTCOL);
   }

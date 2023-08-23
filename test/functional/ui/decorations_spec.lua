@@ -2021,7 +2021,7 @@ bbbbbbb]])
     ]]}
   end)
 
-  it('cursor position is correct with virtual text attached to hard tabs', function()
+  it('cursor position is correct with virtual text attached to hard TABs', function()
     command('set noexpandtab')
     feed('i')
     feed('<TAB>')
@@ -2692,7 +2692,7 @@ bbbbbbb]])
       ]]}
   end)
 
-  it('correctly draws when overflowing virtual text is followed by tab with no wrap', function()
+  it('correctly draws when overflowing virtual text is followed by TAB with no wrap', function()
     command('set nowrap')
     feed('i<TAB>test<ESC>')
     meths.buf_set_extmark(
@@ -2982,6 +2982,328 @@ bbbbbbb]])
       123^4{7:567}89                                                   |
       {1:~                                                           }|
       {8:-- VISUAL BLOCK --}                                          |
+    ]]}
+  end)
+
+  local function test_virt_inline_showbreak_smoothscroll()
+    screen:try_resize(30, 6)
+    exec([[
+      highlight! link LineNr Normal
+      call setline(1, repeat('a', 28))
+      setlocal number showbreak=+ breakindent breakindentopt=shift:2
+      setlocal scrolloff=0 smoothscroll
+      normal! $
+    ]])
+    meths.buf_set_extmark(0, ns, 0, 27, { virt_text = { { ('123'):rep(23) } }, virt_text_pos = 'inline' })
+    feed(':<CR>')  -- Have a screen line that doesn't start with spaces
+    screen:expect{grid=[[
+        1 aaaaaaaaaaaaaaaaaaaaaaaaaa|
+            {1:+}a1231231231231231231231|
+            {1:+}23123123123123123123123|
+            {1:+}12312312312312312312312|
+            {1:+}3^a                     |
+      :                             |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}a1231231231231231231231|
+            {1:+}23123123123123123123123|
+            {1:+}12312312312312312312312|
+            {1:+}3^a                     |
+      {1:~                             }|
+      :                             |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}23123123123123123123123|
+            {1:+}12312312312312312312312|
+            {1:+}3^a                     |
+      {1:~                             }|
+      {1:~                             }|
+      :                             |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}12312312312312312312312|
+            {1:+}3^a                     |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      :                             |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}3^a                     |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      :                             |
+    ]]}
+    feed('zbi')
+    screen:expect{grid=[[
+        1 aaaaaaaaaaaaaaaaaaaaaaaaaa|
+            {1:+}a^1231231231231231231231|
+            {1:+}23123123123123123123123|
+            {1:+}12312312312312312312312|
+            {1:+}3a                     |
+      {8:-- INSERT --}                  |
+    ]]}
+    feed('<BS>')
+    screen:expect{grid=[[
+        1 aaaaaaaaaaaaaaaaaaaaaaaaaa|
+            {1:+}^12312312312312312312312|
+            {1:+}31231231231231231231231|
+            {1:+}23123123123123123123123|
+            {1:+}a                      |
+      {8:-- INSERT --}                  |
+    ]]}
+    feed('<Esc>l')
+    feed(':<CR>')  -- Have a screen line that doesn't start with spaces
+    screen:expect{grid=[[
+        1 aaaaaaaaaaaaaaaaaaaaaaaaaa|
+            {1:+}12312312312312312312312|
+            {1:+}31231231231231231231231|
+            {1:+}23123123123123123123123|
+            {1:+}^a                      |
+      :                             |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}12312312312312312312312|
+            {1:+}31231231231231231231231|
+            {1:+}23123123123123123123123|
+            {1:+}^a                      |
+      {1:~                             }|
+      :                             |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}31231231231231231231231|
+            {1:+}23123123123123123123123|
+            {1:+}^a                      |
+      {1:~                             }|
+      {1:~                             }|
+      :                             |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}23123123123123123123123|
+            {1:+}^a                      |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      :                             |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}^a                      |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      :                             |
+    ]]}
+    feed('023x$')
+    screen:expect{grid=[[
+        1 aaa12312312312312312312312|
+            {1:+}31231231231231231231231|
+            {1:+}23123123123123123123123|
+            {1:+}^a                      |
+      {1:~                             }|
+      :                             |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}31231231231231231231231|
+            {1:+}23123123123123123123123|
+            {1:+}^a                      |
+      {1:~                             }|
+      {1:~                             }|
+      :                             |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}23123123123123123123123|
+            {1:+}^a                      |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      :                             |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}^a                      |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      :                             |
+    ]]}
+    feed('zbi')
+    screen:expect{grid=[[
+        1 aaa^12312312312312312312312|
+            {1:+}31231231231231231231231|
+            {1:+}23123123123123123123123|
+            {1:+}a                      |
+      {1:~                             }|
+      {8:-- INSERT --}                  |
+    ]]}
+    feed('<C-U>')
+    screen:expect{grid=[[
+        1 ^12312312312312312312312312|
+            {1:+}31231231231231231231231|
+            {1:+}23123123123123123123a  |
+      {1:~                             }|
+      {1:~                             }|
+      {8:-- INSERT --}                  |
+    ]]}
+    feed('<Esc>')
+    screen:expect{grid=[[
+        1 12312312312312312312312312|
+            {1:+}31231231231231231231231|
+            {1:+}23123123123123123123^a  |
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}31231231231231231231231|
+            {1:+}23123123123123123123^a  |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+            {1:+}23123123123123123123^a  |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
+  end
+
+  describe('with showbreak, smoothscroll', function()
+    it('and cpoptions-=n', function()
+      test_virt_inline_showbreak_smoothscroll()
+    end)
+
+    it('and cpoptions+=n', function()
+      command('set cpoptions+=n')
+      -- because of 'breakindent' the screen states are the same
+      test_virt_inline_showbreak_smoothscroll()
+    end)
+  end)
+
+  it('before TABs with smoothscroll', function()
+    screen:try_resize(30, 6)
+    exec([[
+      call setline(1, repeat("\t", 4) .. 'a')
+      setlocal list listchars=tab:<-> scrolloff=0 smoothscroll
+      normal! $
+    ]])
+    meths.buf_set_extmark(0, ns, 0, 3, { virt_text = { { ('12'):rep(32) } }, virt_text_pos = 'inline' })
+    screen:expect{grid=[[
+      {1:<------><------><------>}121212|
+      121212121212121212121212121212|
+      1212121212121212121212121212{1:<-}|
+      {1:----->}^a                       |
+      {1:~                             }|
+                                    |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+      {1:<<<}212121212121212121212121212|
+      1212121212121212121212121212{1:<-}|
+      {1:----->}^a                       |
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+      {1:<<<}2121212121212121212121212{1:<-}|
+      {1:----->}^a                       |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+      {1:<<<-->}^a                       |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
+    feed('zbh')
+    screen:expect{grid=[[
+      {1:<------><------><------>}121212|
+      121212121212121212121212121212|
+      1212121212121212121212121212{1:^<-}|
+      {1:----->}a                       |
+      {1:~                             }|
+                                    |
+    ]]}
+    feed('i')
+    screen:expect{grid=[[
+      {1:<------><------><------>}^121212|
+      121212121212121212121212121212|
+      1212121212121212121212121212{1:<-}|
+      {1:----->}a                       |
+      {1:~                             }|
+      {8:-- INSERT --}                  |
+    ]]}
+    feed('<C-O>:setlocal nolist<CR>')
+    screen:expect{grid=[[
+                              ^121212|
+      121212121212121212121212121212|
+      1212121212121212121212121212  |
+            a                       |
+      {1:~                             }|
+      {8:-- INSERT --}                  |
+    ]]}
+    feed('<Esc>l')
+    screen:expect{grid=[[
+                              121212|
+      121212121212121212121212121212|
+      1212121212121212121212121212  |
+           ^ a                       |
+      {1:~                             }|
+                                    |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+      {1:<<<}212121212121212121212121212|
+      1212121212121212121212121212  |
+           ^ a                       |
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+      {1:<<<}2121212121212121212121212  |
+           ^ a                       |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
+    feed('<C-E>')
+    screen:expect{grid=[[
+      {1:<<<}  ^ a                       |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+                                    |
     ]]}
   end)
 end)
@@ -3643,7 +3965,7 @@ if (h->n_buckets < new_n_buckets) { // expand
   end)
 
 
-  it('works with hard tabs', function()
+  it('works with hard TABs', function()
     insert(example_text2)
     feed 'gg'
     meths.buf_set_extmark(0, ns, 1, 0, {
