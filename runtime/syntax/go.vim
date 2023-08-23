@@ -5,7 +5,7 @@
 " go.vim: Vim syntax file for Go.
 " Language:             Go
 " Maintainer:           Billie Cleek <bhcleek@gmail.com>
-" Latest Revision:      2023-02-19
+" Latest Revision:      2023-08-21
 " License:              BSD-style. See LICENSE file in source repository.
 " Repository:           https://github.com/fatih/vim-go
 
@@ -130,8 +130,8 @@ hi def link     goFloats            Type
 hi def link     goComplexes         Type
 
 " Predefined functions and values
-syn keyword     goBuiltins                 append cap close complex copy delete imag len
-syn keyword     goBuiltins                 make new panic print println real recover
+syn keyword     goBuiltins                 append cap clear close complex copy delete imag len
+syn keyword     goBuiltins                 make max min new panic print println real recover
 syn keyword     goBoolean                  true false
 syn keyword     goPredefinedIdentifiers    nil iota
 
