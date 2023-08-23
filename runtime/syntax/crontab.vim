@@ -5,7 +5,7 @@
 " License: This file can be redistribued and/or modified under the same terms
 "   as Vim itself.
 " Filenames: /tmp/crontab.* used by "crontab -e"
-" Last Change: 2015-01-20
+" Last Change: 2022-09-22
 "
 " crontab line format:
 " Minutes   Hours   Days   Months   Days_of_Week   Commands # comments
@@ -15,20 +15,20 @@ if exists("b:current_syntax")
 	finish
 endif
 
-syntax match crontabNick "^\s*@\(reboot\|yearly\|annually\|monthly\|weekly\|daily\|midnight\|hourly\)\>" nextgroup=crontabCmd skipwhite
+syntax match crontabNick "^\s*@\(reboot\|yearly\|annually\|monthly\|weekly\|daily\|midnight\|hourly\|every_minute\|every_second\)\>" nextgroup=crontabCmd skipwhite
 
 syntax match crontabVar "^\s*\k\w*\s*="me=e-1
 
 syntax case ignore
 
-syntax match crontabMin "^\s*[-0-9/,.*]\+" nextgroup=crontabHr skipwhite
-syntax match crontabHr "\s[-0-9/,.*]\+" nextgroup=crontabDay skipwhite contained
-syntax match crontabDay "\s[-0-9/,.*]\+" nextgroup=crontabMnth skipwhite contained
+syntax match crontabMin "^\s*[-~0-9/,.*]\+" nextgroup=crontabHr skipwhite
+syntax match crontabHr "\s[-~0-9/,.*]\+" nextgroup=crontabDay skipwhite contained
+syntax match crontabDay "\s[-~0-9/,.*]\+" nextgroup=crontabMnth skipwhite contained
 
-syntax match crontabMnth "\s[-a-z0-9/,.*]\+" nextgroup=crontabDow skipwhite contained
+syntax match crontabMnth "\s[-~a-z0-9/,.*]\+" nextgroup=crontabDow skipwhite contained
 syntax keyword crontabMnth12 contained jan feb mar apr may jun jul aug sep oct nov dec
 
-syntax match crontabDow "\s[-a-z0-9/,.*]\+" nextgroup=crontabCmd skipwhite contained
+syntax match crontabDow "\s[-~a-z0-9/,.*]\+" nextgroup=crontabCmd skipwhite contained
 syntax keyword crontabDow7 contained sun mon tue wed thu fri sat
 
 syntax region crontabCmd start="\S" end="$" skipwhite contained keepend contains=crontabPercent
