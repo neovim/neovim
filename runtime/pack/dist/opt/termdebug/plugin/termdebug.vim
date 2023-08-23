@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2023 Jun 24
+" Last Change: 2023 Aug 23
 "
 " WORK IN PROGRESS - The basics works stable, more to come
 " Note: In general you need at least GDB 7.12 because this provides the
@@ -240,7 +240,7 @@ func s:CloseBuffers()
   if s:varbuf > 0 && bufexists(s:varbuf)
     exe 'bwipe! ' . s:varbuf
   endif
-  s:running = 0
+  let s:running = 0
   unlet! s:gdbwin
 endfunc
 
@@ -476,6 +476,7 @@ func s:StartDebug_prompt(dict)
     call s:CloseBuffers()
     return
   endif
+  exe $'au BufUnload <buffer={s:promptbuf}> ++once call jobstop(s:gdbjob)'
 
   let s:ptybuf = 0
   if has('win32')
@@ -819,12 +820,8 @@ func s:EndPromptDebug(job_id, exit_code, event)
     doauto <nomodeline> User TermdebugStopPre
   endif
 
-  let curwinid = win_getid()
-  call win_gotoid(s:gdbwin)
-  set nomodified
-  close
-  if curwinid != s:gdbwin
-    call win_gotoid(curwinid)
+  if bufexists(s:promptbuf)
+    exe 'bwipe! ' . s:promptbuf
   endif
 
   call s:EndDebugCommon()
@@ -1006,8 +1003,8 @@ func s:InstallCommands()
   endif
 
   command -nargs=* Frame call s:Frame(<q-args>)
-  command -nargs=* Up call s:Up(<q-args>)
-  command -nargs=* Down call s:Down(<q-args>)
+  command -count=1 Up call s:Up(<count>)
+  command -count=1 Down call s:Down(<count>)
 
   command -range -nargs=* Evaluate call s:Evaluate(<range>, <q-args>)
   command Gdb call win_gotoid(s:gdbwin)
@@ -1034,7 +1031,7 @@ func s:InstallCommands()
   endif
   if map
     let s:plus_map_saved = maparg('+', 'n', 0, 1)
-    nnoremap + :Up<CR>
+    nnoremap <expr> + $'<Cmd>{v:count1}Up<CR>'
   endif
 
   let map = 1
@@ -1043,7 +1040,7 @@ func s:InstallCommands()
   endif
   if map
     let s:minus_map_saved = maparg('-', 'n', 0, 1)
-    nnoremap - :Down<CR>
+    nnoremap <expr> - $'<Cmd>{v:count1}Down<CR>'
   endif
 
 
@@ -1270,26 +1267,16 @@ func s:Frame(arg)
   endif
 endfunc
 
-" :Up - go one frame in the stack "higher"
-func s:Up(arg)
-  if a:arg != ''
-    let s:cmd = '"up ' . a:arg . '"'
-  else
-    let s:cmd = '"up"'
-  endif
+" :Up - go a:count frames in the stack "higher"
+func s:Up(count)
   " the 'correct' one would be -stack-select-frame N, but we don't know N
-  call s:SendCommand('-interpreter-exec console ' . s:cmd)
+  call s:SendCommand($'-interpreter-exec console "up {a:count}"')
 endfunc
 
-" :Down - go one frame in the stack "below"
-func s:Down(arg)
-  if a:arg != ''
-    let s:cmd = '"down ' . a:arg . '"'
-  else
-    let s:cmd = '"down"'
-  endif
+" :Down - go a:count frames in the stack "below"
+func s:Down(count)
   " the 'correct' one would be -stack-select-frame N, but we don't know N
-  call s:SendCommand('-interpreter-exec console ' . s:cmd)
+  call s:SendCommand($'-interpreter-exec console "down {a:count}"')
 endfunc
 
 func s:SendEval(expr)

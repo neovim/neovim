@@ -317,19 +317,16 @@ This is similar to using "print" in the gdb window.
 You can usually shorten `:Evaluate` to `:Ev`.
 
 
-Navigation in the Stack ~
-					*termdebug-variables* *:Frame*
- `:Frame`	Select the given frame, using  either the frame's
-                stack number, address, or function name.
- `:Up`	        Select the frame that called the current one with an
-                optional argument to say how many frames to go up.
- `+`		same (see |termdebug_map_plus| to disable)
- `:Down`	        Select the frame called by the current one with
-                an optional argument to say how many frames to go down.
- `-`		same (see |termdebug_map_minus| to disable)
-
-This is similar to using "print" in the gdb window.
-You can usually shorten `:Evaluate` to `:Ev`.
+Navigating stack frames ~
+				*termdebug-frames* *:Frame* *:Up* *:Down*
+ `:Frame` [frame]	select frame [frame], which is a frame number,
+			address, or function name (default: current frame)
+ `:Up` [count]		go up [count] frames (default: 1; the frame that
+			called the current)
+ `+`			same (see |termdebug_map_plus| to disable)
+ `:Down` [count]	go down [count] frames (default: 1; the frame called
+			by the current)
+ `-`			same (see |termdebug_map_minus| to disable)
 
 
 Other commands ~
@@ -403,17 +400,17 @@ If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_use_prompt = 1
 <
 						*termdebug_map_K*
-The K key is normally mapped to :Evaluate. If you do not want this use: >vim
+The K key is normally mapped to |:Evaluate|. If you do not want this use: >vim
 	let g:termdebug_config['map_K'] = 0
 If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_map_K = 0
 <
 						*termdebug_map_minus*
-The - key is normally mapped to :Down. If you do not want this use: >vim
+The - key is normally mapped to |:Down|. If you do not want this use: >vim
 	let g:termdebug_config['map_minus'] = 0
 <
 						*termdebug_map_plus*
-The + key is normally mapped to :Up. If you do not want this use: >vim
+The + key is normally mapped to |:Up|. If you do not want this use: >vim
 	let g:termdebug_config['map_plus'] = 0
 <
 						*termdebug_disasm_window*
