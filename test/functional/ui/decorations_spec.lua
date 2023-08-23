@@ -2209,111 +2209,119 @@ bbbbbbb]])
   end)
 
   it('cursor position is correct when inserting around a virtual text with left gravity', function()
-    insert('foo foo foo foo')
-    meths.buf_set_extmark(0, ns, 0, 8, { virt_text = { { 'virtual text', 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
-    feed('0')
-    feed('8l')
+    screen:try_resize(27, 4)
+    insert(('a'):rep(15))
+    meths.buf_set_extmark(0, ns, 0, 8, { virt_text = { { ('>'):rep(43), 'Special' } }, virt_text_pos = 'inline', right_gravity = false })
+    command('setlocal showbreak=+ breakindent breakindentopt=shift:2')
+    feed('08l')
     screen:expect{grid=[[
-      foo foo {10:virtual text}^foo foo                       |
-      {1:~                                                 }|
-                                                        |
+      aaaaaaaa{10:>>>>>>>>>>>>>>>>>>>}|
+        {1:+}{10:>>>>>>>>>>>>>>>>>>>>>>>>}|
+        {1:+}^aaaaaaa                 |
+                                 |
     ]]}
-
     feed('i')
     screen:expect{grid=[[
-      foo foo {10:virtual text}^foo foo                       |
-      {1:~                                                 }|
-      {8:-- INSERT --}                                      |
+      aaaaaaaa{10:>>>>>>>>>>>>>>>>>>>}|
+        {1:+}{10:>>>>>>>>>>>>>>>>>>>>>>>>}|
+        {1:+}^aaaaaaa                 |
+      {8:-- INSERT --}               |
     ]]}
-
     feed([[<C-\><C-O>]])
     screen:expect{grid=[[
-      foo foo {10:virtual text}^foo foo                       |
-      {1:~                                                 }|
-      {8:-- (insert) --}                                    |
+      aaaaaaaa{10:>>>>>>>>>>>>>>>>>>>}|
+        {1:+}{10:>>>>>>>>>>>>>>>>>>>>>>>>}|
+        {1:+}^aaaaaaa                 |
+      {8:-- (insert) --}             |
     ]]}
-
     feed('D')
     screen:expect{grid=[[
-      foo foo {10:virtual text}^                              |
-      {1:~                                                 }|
-      {8:-- INSERT --}                                      |
+      aaaaaaaa{10:>>>>>>>>>>>>>>>>>>>}|
+        {1:+}{10:>>>>>>>>>>>>>>>>>>>>>>>>}|
+      {1:^~                          }|
+      {8:-- INSERT --}               |
     ]]}
-
+    command('setlocal list listchars=eol:$')
+    screen:expect{grid=[[
+      aaaaaaaa{10:>>>>>>>>>>>>>>>>>>>}|
+        {1:+}{10:>>>>>>>>>>>>>>>>>>>>>>>>}|
+        {1:+^$}                       |
+      {8:-- INSERT --}               |
+    ]]}
     feed('<C-U>')
     screen:expect{grid=[[
-      {10:virtual text}^                                      |
-      {1:~                                                 }|
-      {8:-- INSERT --}                                      |
+      {10:>>>>>>>>>>>>>>>>>>>>>>>>>>>}|
+        {1:+}{10:>>>>>>>>>>>>>>>>}{1:^$}       |
+      {1:~                          }|
+      {8:-- INSERT --}               |
     ]]}
-
     feed('a')
     screen:expect{grid=[[
-      {10:virtual text}a^                                     |
-      {1:~                                                 }|
-      {8:-- INSERT --}                                      |
+      {10:>>>>>>>>>>>>>>>>>>>>>>>>>>>}|
+        {1:+}{10:>>>>>>>>>>>>>>>>}a{1:^$}      |
+      {1:~                          }|
+      {8:-- INSERT --}               |
     ]]}
-
     feed('<Esc>')
     screen:expect{grid=[[
-      {10:virtual text}^a                                     |
-      {1:~                                                 }|
-                                                        |
+      {10:>>>>>>>>>>>>>>>>>>>>>>>>>>>}|
+        {1:+}{10:>>>>>>>>>>>>>>>>}^a{1:$}      |
+      {1:~                          }|
+                                 |
     ]]}
-
     feed('x')
     screen:expect{grid=[[
-      {10:^virtual text}                                      |
-      {1:~                                                 }|
-                                                        |
+      {10:^>>>>>>>>>>>>>>>>>>>>>>>>>>>}|
+        {1:+}{10:>>>>>>>>>>>>>>>>}{1:$}       |
+      {1:~                          }|
+                                 |
     ]]}
   end)
 
   it('cursor position is correct when inserting around virtual texts with both left and right gravity', function()
     screen:try_resize(30, 4)
     command('setlocal showbreak=+ breakindent breakindentopt=shift:2')
-    insert('foo foo foo foo')
+    insert(('a'):rep(15))
     meths.buf_set_extmark(0, ns, 0, 8, { virt_text = {{ ('>'):rep(32), 'Special' }}, virt_text_pos = 'inline', right_gravity = false })
     meths.buf_set_extmark(0, ns, 0, 8, { virt_text = {{ ('<'):rep(32), 'Special' }}, virt_text_pos = 'inline', right_gravity = true })
-
     feed('08l')
     screen:expect{grid=[[
-      foo foo {10:>>>>>>>>>>>>>>>>>>>>>>}|
+      aaaaaaaa{10:>>>>>>>>>>>>>>>>>>>>>>}|
         {1:+}{10:>>>>>>>>>><<<<<<<<<<<<<<<<<}|
-        {1:+}{10:<<<<<<<<<<<<<<<}^foo foo     |
+        {1:+}{10:<<<<<<<<<<<<<<<}^aaaaaaa     |
                                     |
     ]]}
     feed('i')
     screen:expect{grid=[[
-      foo foo {10:>>>>>>>>>>>>>>>>>>>>>>}|
+      aaaaaaaa{10:>>>>>>>>>>>>>>>>>>>>>>}|
         {1:+}{10:>>>>>>>>>>^<<<<<<<<<<<<<<<<<}|
-        {1:+}{10:<<<<<<<<<<<<<<<}foo foo     |
+        {1:+}{10:<<<<<<<<<<<<<<<}aaaaaaa     |
       {8:-- INSERT --}                  |
     ]]}
     feed('a')
     screen:expect{grid=[[
-      foo foo {10:>>>>>>>>>>>>>>>>>>>>>>}|
+      aaaaaaaa{10:>>>>>>>>>>>>>>>>>>>>>>}|
         {1:+}{10:>>>>>>>>>>}a{10:^<<<<<<<<<<<<<<<<}|
-        {1:+}{10:<<<<<<<<<<<<<<<<}foo foo    |
+        {1:+}{10:<<<<<<<<<<<<<<<<}aaaaaaa    |
       {8:-- INSERT --}                  |
     ]]}
     feed([[<C-\><C-O>]])
     screen:expect{grid=[[
-      foo foo {10:>>>>>>>>>>>>>>>>>>>>>>}|
+      aaaaaaaa{10:>>>>>>>>>>>>>>>>>>>>>>}|
         {1:+}{10:>>>>>>>>>>}a{10:<<<<<<<<<<<<<<<<}|
-        {1:+}{10:<<<<<<<<<<<<<<<<}^foo foo    |
+        {1:+}{10:<<<<<<<<<<<<<<<<}^aaaaaaa    |
       {8:-- (insert) --}                |
     ]]}
     feed('D')
     screen:expect{grid=[[
-      foo foo {10:>>>>>>>>>>>>>>>>>>>>>>}|
+      aaaaaaaa{10:>>>>>>>>>>>>>>>>>>>>>>}|
         {1:+}{10:>>>>>>>>>>}a{10:^<<<<<<<<<<<<<<<<}|
         {1:+}{10:<<<<<<<<<<<<<<<<}           |
       {8:-- INSERT --}                  |
     ]]}
     feed('<BS>')
     screen:expect{grid=[[
-      foo foo {10:>>>>>>>>>>>>>>>>>>>>>>}|
+      aaaaaaaa{10:>>>>>>>>>>>>>>>>>>>>>>}|
         {1:+}{10:>>>>>>>>>>^<<<<<<<<<<<<<<<<<}|
         {1:+}{10:<<<<<<<<<<<<<<<}            |
       {8:-- INSERT --}                  |
@@ -2345,6 +2353,27 @@ bbbbbbb]])
         {1:+}{10:>><<<<<<<<<<<<<<<<<<<<<<<<<}|
         {1:+}{10:<<<<<<<}                    |
                                     |
+    ]]}
+    feed('i')
+    screen:expect{grid=[[
+      {10:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>}|
+        {1:+}{10:>>^<<<<<<<<<<<<<<<<<<<<<<<<<}|
+        {1:+}{10:<<<<<<<}                    |
+      {8:-- INSERT --}                  |
+    ]]}
+    screen:try_resize(32, 4)
+    screen:expect{grid=[[
+      {10:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>}|
+        {1:+}{10:^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<}|
+        {1:+}{10:<<<}                          |
+      {8:-- INSERT --}                    |
+    ]]}
+    command('setlocal nobreakindent')
+    screen:expect{grid=[[
+      {10:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>}|
+      {1:+}{10:^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<}|
+      {1:+}{10:<}                              |
+      {8:-- INSERT --}                    |
     ]]}
   end)
 
@@ -3001,6 +3030,24 @@ bbbbbbb]])
       {1:~                             }|
       {1:~                             }|
                                     |
+    ]]}
+    feed('26ia<Esc>a')
+    screen:expect{grid=[[
+        1 aaaaaaaaaaaaaaaaaaaaaaaaaa|
+            {1:+}^12312312312312312312312|
+            {1:+}31231231231231231231231|
+            {1:+}23123123123123123123123|
+      {1:~                             }|
+      {8:-- INSERT --}                  |
+    ]]}
+    feed([[<C-\><C-O>:setlocal breakindentopt=<CR>]])
+    screen:expect{grid=[[
+        1 aaaaaaaaaaaaaaaaaaaaaaaaaa|
+          {1:+}^1231231231231231231231231|
+          {1:+}2312312312312312312312312|
+          {1:+}3123123123123123123      |
+      {1:~                             }|
+      {8:-- INSERT --}                  |
     ]]}
   end
 
