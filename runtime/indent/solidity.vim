@@ -1,9 +1,11 @@
 " Vim indent file
-" Language: 		Solidity
-" Acknowledgement: 	Based off of vim-javascript
-" Maintainer: 		Cothi (jiungdev@gmail.com)
-" Original Author: 	tomlion (https://github.com/tomlion/vim-solidity)
-" Last Changed: 	2022 Sep 27
+" Language:		Solidity
+" Maintainer:		Cothi (jiungdev@gmail.com)
+" Original Author:	tomlion (https://github.com/tomlion/vim-solidity)
+" Last Change:		2022 Sep 27
+" 			2023 Aug 22 Vim Project (undo_indent)
+"
+" Acknowledgement: Based off of vim-javascript
 "
 " 0. Initialization {{{1
 " =================
@@ -19,6 +21,8 @@ setlocal nosmartindent
 " Now, set up our indentation expression and keys that trigger it.
 setlocal indentexpr=GetSolidityIndent()
 setlocal indentkeys=0{,0},0),0],0\,,!^F,o,O,e
+
+let b:undo_indent = "setlocal indentexpr< indentkeys< smartindent<"
 
 " Only define the function once.
 if exists("*GetSolidityIndent")
