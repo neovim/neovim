@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:     TypeScript and TypeScriptReact
-" Maintainer:   Bram Moolenaar, Herrington Darkholme
-" Last Change:	2021 Sep 22
+" Maintainer:   Herrington Darkholme
+" Last Change:	2023 Aug 13
 " Based On:     Herrington Darkholme's yats.vim
-" Changes:      See https:github.com/HerringtonDarkholme/yats.vim
+" Changes:      See https://github.com/HerringtonDarkholme/yats.vim
 " Credits:      See yats.vim on github
 
 if &cpo =~ 'C'

@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:     TypeScript
-" Maintainer:   Bram Moolenaar, Herrington Darkholme
-" Last Change:	2019 Nov 30
+" Maintainer:   Herrington Darkholme
+" Last Change:  2023 Aug 13
 " Based On:     Herrington Darkholme's yats.vim
-" Changes:      Go to https:github.com/HerringtonDarkholme/yats.vim for recent changes.
+" Changes:      Go to https://github.com/HerringtonDarkholme/yats.vim for recent changes.
 " Origin:       https://github.com/othree/yajs
 " Credits:      Kao Wei-Ko(othree), Jose Elera Campana, Zhao Yi, Claudio Fleiner, Scott Shattuck
 "               (This file is based on their hard work), gumnos (From the #vim

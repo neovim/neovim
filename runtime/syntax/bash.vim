@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	bash
-" Maintainer:	Bram
-" Last Change:	2019 Sep 27
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
+" Last Change:	2023 Aug 13
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
