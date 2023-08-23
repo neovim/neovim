@@ -542,6 +542,36 @@ local function scope_to_doc(s)
   return 'global or '..m[s[2]]..' |global-local|'
 end
 
+-- @param o vim.option_meta
+-- @return string
+local function scope_more_doc(o)
+  if
+    vim.list_contains({
+      'previewwindow',
+      'scroll',
+      'winfixheight',
+      'winfixwidth',
+    }, o.full_name)
+  then
+    return '  |special-local-window-option|'
+  end
+
+  if
+    vim.list_contains({
+      'bufhidden',
+      'buftype',
+      'filetype',
+      'modified',
+      'readonly',
+      'syntax',
+    }, o.full_name)
+  then
+    return '  |special-local-buffer-option|'
+  end
+
+  return ''
+end
+
 --- @return table<string,vim.option_meta>
 local function get_option_meta()
   local opts = require('src/nvim/options').options
@@ -624,7 +654,7 @@ local function render_option_doc(_f, opt, write)
     write(string.format('%s\t%s', name_str, otype))
   end
 
-  write('\t\t\t'..scope_to_doc(opt.scope))
+  write('\t\t\t'..scope_to_doc(opt.scope)..scope_more_doc(opt))
   for _, l in ipairs(split(opt.desc)) do
     if l == '<' or l:match('^<%s') then
       write(l)

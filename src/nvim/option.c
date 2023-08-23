@@ -4702,6 +4702,8 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_sms = from->wo_sms;
   to->wo_crb = from->wo_crb;
   to->wo_crb_save = from->wo_crb_save;
+  to->wo_siso = from->wo_siso;
+  to->wo_so = from->wo_so;
   to->wo_spell = from->wo_spell;
   to->wo_cuc = from->wo_cuc;
   to->wo_cul = from->wo_cul;
