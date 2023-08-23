@@ -404,8 +404,13 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
     return win_chartabsize(wp, s, vcol);
   }
 
+  bool has_lcs_eol = wp->w_p_list && wp->w_p_lcs_chars.eol != NUL;
+
   // First get normal size, without 'linebreak' or inline virtual text
   int size = win_chartabsize(wp, s, vcol);
+  if (*s == NUL && !has_lcs_eol) {
+    size = 0;  // NUL is not displayed
+  }
 
   if (cts->cts_has_virt_text) {
     int tab_size = size;
@@ -491,14 +496,11 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   }
 
   // May have to add something for 'breakindent' and/or 'showbreak'
-  // string at start of line.
-  // Do not use 'showbreak' at the NUL after the text.
+  // string at the start of a screen line.
   int head = mb_added;
-  char *const sbr
-  // XXX: there should be a better check deeper below
-    = ((c == NUL && cts->cts_cur_text_width_left + cts->cts_cur_text_width_right == 0)
-       ? empty_option : get_showbreak_value(wp));
-  if ((*sbr != NUL || wp->w_p_bri) && wp->w_p_wrap) {
+  char *const sbr = get_showbreak_value(wp);
+  // When "size" is 0, no new screen line is started.
+  if (size > 0 && wp->w_p_wrap && (*sbr != NUL || wp->w_p_bri)) {
     int col_off_prev = win_col_off(wp);
     int width2 = wp->w_width_inner - col_off_prev + win_col_off2(wp);
     colnr_T wcol = vcol + col_off_prev;
@@ -542,35 +544,33 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
       if (wp->w_p_bri) {
         head_mid += get_breakindent_win(wp, line);
       }
-      if (head_mid > 0) {
-        if (wcol + size > wp->w_width_inner) {
-          // Calculate effective window width.
-          int prev_rem = wp->w_width_inner - wcol;
-          int width = width2 - head_mid;
+      if (head_mid > 0 && wcol + size > wp->w_width_inner) {
+        // Calculate effective window width.
+        int prev_rem = wp->w_width_inner - wcol;
+        int width = width2 - head_mid;
 
-          if (width <= 0) {
-            width = 1;
+        if (width <= 0) {
+          width = 1;
+        }
+        // divide "size - prev_width" by "width", rounding up
+        int cnt = (size - prev_rem + width - 1) / width;
+        added += cnt * head_mid;
+
+        if (max_head_vcol == 0 || vcol + size + added < max_head_vcol) {
+          head += cnt * head_mid;
+        } else if (max_head_vcol > vcol + head_prev + prev_rem) {
+          head += (max_head_vcol - (vcol + head_prev + prev_rem)
+                   + width2 - 1) / width2 * head_mid;
+        } else if (max_head_vcol < 0) {
+          int off = 0;
+          if (c != NUL || !(State & MODE_NORMAL)) {
+            off += cts->cts_cur_text_width_left;
           }
-          // divide "size - prev_width" by "width", rounding up
-          int cnt = (size - prev_rem + width - 1) / width;
-          added += cnt * head_mid;
-
-          if (max_head_vcol == 0 || vcol + size + added < max_head_vcol) {
-            head += cnt * head_mid;
-          } else if (max_head_vcol > vcol + head_prev + prev_rem) {
-            head += (max_head_vcol - (vcol + head_prev + prev_rem)
-                     + width2 - 1) / width2 * head_mid;
-          } else if (max_head_vcol < 0) {
-            int off = 0;
-            if (c != NUL || !(State & MODE_NORMAL)) {
-              off += cts->cts_cur_text_width_left;
-            }
-            if (c != NUL && (State & MODE_NORMAL)) {
-              off += cts->cts_cur_text_width_right;
-            }
-            if (off >= prev_rem) {
-              head += (1 + (off - prev_rem) / width) * head_mid;
-            }
+          if (c != NUL && (State & MODE_NORMAL)) {
+            off += cts->cts_cur_text_width_right;
+          }
+          if (off >= prev_rem) {
+            head += (1 + (off - prev_rem) / width) * head_mid;
           }
         }
       }
