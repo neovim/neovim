@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
+local command = helpers.command
 local exec = helpers.exec
 local feed = helpers.feed
 
@@ -17,19 +18,14 @@ describe('breakindent', function()
     })
     screen:attach()
     exec([[
+      set listchars=eol:$
       let &signcolumn = 'yes'
-      let &showbreak = '+'
+      let &showbreak = '++'
+      let &breakindent = v:true
+      let &breakindentopt = 'shift:2'
       let leftcol = win_getid()->getwininfo()->get(0, {})->get('textoff')
       eval repeat('x', &columns - leftcol - 1)->setline(1)
       eval 'second line'->setline(2)
-    ]])
-    screen:expect([[
-      {1:  }^xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx |
-      {1:  }second line                                                              |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-                                                                                 |
     ]])
     feed('AX')
     screen:expect([[
@@ -40,5 +36,18 @@ describe('breakindent', function()
       {0:~                                                                          }|
       {2:-- INSERT --}                                                               |
     ]])
+    -- No line wraps, so changing 'showbreak' should lead to the same screen.
+    command('setlocal showbreak=+')
+    screen:expect_unchanged()
+    -- The first line now wraps because of "eol" in 'listchars'.
+    command('setlocal list')
+    screen:expect{grid=[[
+      {1:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
+      {1:  }  {0:+^$}                                                                     |
+      {1:  }second line{0:$}                                                             |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {2:-- INSERT --}                                                               |
+    ]]}
   end)
 end)

@@ -2886,6 +2886,15 @@ bbbbbbb]])
       {1:~                             }|
                                     |
     ]]}
+    feed('zbx')
+    screen:expect{grid=[[
+        1 ^12312312312312312312312312|
+            {1:+}31231231231231231231231|
+            {1:+}23123123123123123123   |
+      {1:~                             }|
+      {1:~                             }|
+                                    |
+    ]]}
   end
 
   describe('with showbreak, smoothscroll', function()

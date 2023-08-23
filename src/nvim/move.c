@@ -879,7 +879,7 @@ void curs_columns(win_T *wp, int may_scroll)
       // column
       char *const sbr = get_showbreak_value(wp);
       if (*sbr && *get_cursor_pos_ptr() == NUL
-          && wp->w_wcol == vim_strsize(sbr)) {
+          && wp->w_wcol == (wp->w_width_inner - width2) + vim_strsize(sbr)) {
         wp->w_wcol = 0;
       }
     }
