@@ -1548,7 +1548,7 @@ describe('lua stdlib', function()
     eq(100, funcs.luaeval "vim.wo.scrolloff")
     exec_lua [[
     vim.wo[0][0].scrolloff = 200
-    vim.cmd "split"
+    vim.cmd "enew"
     ]]
     eq(100, funcs.luaeval "vim.wo.scrolloff")
   end)

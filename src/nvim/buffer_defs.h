@@ -230,6 +230,10 @@ typedef struct {
 #define w_p_crb_save w_onebuf_opt.wo_crb_save
   char *wo_scl;
 #define w_p_scl w_onebuf_opt.wo_scl    // 'signcolumn'
+  long wo_siso;
+#define w_p_siso w_onebuf_opt.wo_siso  // 'sidescrolloff' local value
+  long wo_so;
+#define w_p_so w_onebuf_opt.wo_so      // 'scrolloff' local value
   char *wo_winhl;
 #define w_p_winhl w_onebuf_opt.wo_winhl    // 'winhighlight'
   char *wo_lcs;
@@ -1321,8 +1325,6 @@ struct window_S {
   uint32_t w_p_fdt_flags;           // flags for 'foldtext'
   int *w_p_cc_cols;                 // array of columns to highlight or NULL
   uint8_t w_p_culopt_flags;         // flags for cursorline highlighting
-  long w_p_siso;                    // 'sidescrolloff' local value
-  long w_p_so;                      // 'scrolloff' local value
 
   int w_briopt_min;                 // minimum width for breakindent
   int w_briopt_shift;               // additional shift for breakindent

@@ -5132,8 +5132,8 @@ static win_T *win_alloc(win_T *after, bool hidden)
   new_wp->w_ns_hl = -1;
 
   // use global option for global-local options
-  new_wp->w_p_so = -1;
-  new_wp->w_p_siso = -1;
+  new_wp->w_allbuf_opt.wo_so = new_wp->w_p_so = -1;
+  new_wp->w_allbuf_opt.wo_siso = new_wp->w_p_siso = -1;
 
   // We won't calculate w_fraction until resizing the window
   new_wp->w_fraction = 0;
