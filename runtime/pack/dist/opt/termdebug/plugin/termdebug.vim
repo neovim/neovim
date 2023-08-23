@@ -1005,6 +1005,10 @@ func s:InstallCommands()
     command Continue call chansend(s:gdb_job_id, "continue\r")
   endif
 
+  command -nargs=* Frame call s:Frame(<q-args>)
+  command -nargs=* Up call s:Up(<q-args>)
+  command -nargs=* Down call s:Down(<q-args>)
+
   command -range -nargs=* Evaluate call s:Evaluate(<range>, <q-args>)
   command Gdb call win_gotoid(s:gdbwin)
   command Program call s:GotoProgram()
@@ -1020,16 +1024,28 @@ func s:InstallCommands()
     let map = g:termdebug_map_K
   endif
   if map
-    " let s:k_map_saved = maparg('K', 'n', 0, 1)
-    let s:k_map_saved = {}
-    for map in nvim_get_keymap('n')
-      if map.lhs ==# 'K'
-        let s:k_map_saved = map
-        break
-      endif
-    endfor
+    let s:k_map_saved = maparg('K', 'n', 0, 1)
     nnoremap K :Evaluate<CR>
   endif
+
+  let map = 1
+  if exists('g:termdebug_config')
+    let map = get(g:termdebug_config, 'map_plus', 1)
+  endif
+  if map
+    let s:plus_map_saved = maparg('+', 'n', 0, 1)
+    nnoremap + :Up<CR>
+  endif
+
+  let map = 1
+  if exists('g:termdebug_config')
+    let map = get(g:termdebug_config, 'map_minus', 1)
+  endif
+  if map
+    let s:minus_map_saved = maparg('-', 'n', 0, 1)
+    nnoremap - :Down<CR>
+  endif
+
 
   if has('menu') && &mouse != ''
     call s:InstallWinbar(0)
@@ -1081,6 +1097,9 @@ func s:DeleteCommands()
   delcommand Arguments
   delcommand Stop
   delcommand Continue
+  delcommand Frame
+  delcommand Up
+  delcommand Down
   delcommand Evaluate
   delcommand Gdb
   delcommand Program
@@ -1097,6 +1116,24 @@ func s:DeleteCommands()
       call mapset('n', 0, s:k_map_saved)
     endif
     unlet s:k_map_saved
+  endif
+  if exists('s:plus_map_saved')
+    if empty(s:plus_map_saved)
+      nunmap +
+    else
+      " call mapset(s:plus_map_saved)
+      call mapset('n', 0, s:plus_map_saved)
+    endif
+    unlet s:plus_map_saved
+  endif
+  if exists('s:minus_map_saved')
+    if empty(s:minus_map_saved)
+      nunmap -
+    else
+      " call mapset(s:minus_map_saved)
+      call mapset('n', 0, s:minus_map_saved)
+    endif
+    unlet s:minus_map_saved
   endif
 
   if has('menu')
@@ -1212,6 +1249,47 @@ func s:Run(args)
     call s:SendResumingCommand('-exec-arguments ' . a:args)
   endif
   call s:SendResumingCommand('-exec-run')
+endfunc
+
+" :Frame - go to a specfic frame in the stack
+func s:Frame(arg)
+  " Note: we explicit do not use mi's command
+  " call s:SendCommand('-stack-select-frame "' . a:arg .'"')
+  " as we only get a "done" mi response and would have to open the file
+  " 'manually' - using cli command "frame" provides us with the mi response
+  " already parsed and allows for more formats
+  if a:arg =~ '^\d\+$' || a:arg == ''
+    " specify frame by number
+    call s:SendCommand('-interpreter-exec mi "frame ' . a:arg .'"')
+  elseif a:arg =~ '^0x[0-9a-fA-F]\+$'
+    " specify frame by stack address
+    call s:SendCommand('-interpreter-exec mi "frame address ' . a:arg .'"')
+  else
+    " specify frame by function name
+    call s:SendCommand('-interpreter-exec mi "frame function ' . a:arg .'"')
+  endif
+endfunc
+
+" :Up - go one frame in the stack "higher"
+func s:Up(arg)
+  if a:arg != ''
+    let s:cmd = '"up ' . a:arg . '"'
+  else
+    let s:cmd = '"up"'
+  endif
+  " the 'correct' one would be -stack-select-frame N, but we don't know N
+  call s:SendCommand('-interpreter-exec console ' . s:cmd)
+endfunc
+
+" :Down - go one frame in the stack "below"
+func s:Down(arg)
+  if a:arg != ''
+    let s:cmd = '"down ' . a:arg . '"'
+  else
+    let s:cmd = '"down"'
+  endif
+  " the 'correct' one would be -stack-select-frame N, but we don't know N
+  call s:SendCommand('-interpreter-exec console ' . s:cmd)
 endfunc
 
 func s:SendEval(expr)
