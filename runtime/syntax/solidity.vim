@@ -1,10 +1,10 @@
 " Vim syntax file
-" Language: 		Solidity
-" Maintainer: 		Cothi (jiungdev@gmail.com)
-" Original Author: 	tomlion (https://github.com/tomlion/vim-solidity/blob/master/syntax/solidity.vim)
-" Last Changed: 	2022 Sep 27
+" Language:		Solidity
+" Maintainer:		Cothi (jiungdev@gmail.com)
+" Original Author:	tomlion (https://github.com/tomlion/vim-solidity/blob/master/syntax/solidity.vim)
+" Last Change:		2022 Sep 27
 "
-" Additional contributors:
+" Contributors:
 "       Modified by thesis (https://github.com/thesis/vim-solidity/blob/main/indent/solidity.vim)
 
 if exists("b:current_syntax")
