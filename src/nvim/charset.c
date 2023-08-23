@@ -991,6 +991,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
   chartabsize_T cts;
   bool on_NUL = false;
   init_chartabsize_arg(&cts, wp, pos->lnum, 0, line, line);
+  cts.cts_max_head_vcol = -1;
 
   // This function is used very often, do some speed optimizations.
   // When 'list', 'linebreak', 'showbreak' and 'breakindent' are not set

@@ -249,7 +249,6 @@ endfunc
 
 func Test_chinese_char_on_wrap_column()
   call s:test_windows("setl nolbr wrap sbr=")
-  syntax off
   call setline(1, [
 \ 'aaaaaaaaaaaaaaaaaaa中'.
 \ 'aaaaaaaaaaaaaaaaa中'.
@@ -278,5 +277,85 @@ func Test_chinese_char_on_wrap_column()
 \ '中hello             ']
   let lines = s:screen_lines([1, 10], winwidth(0))
   call s:compare_lines(expect, lines)
+  call assert_equal(len(expect), winline())
+  call assert_equal(strwidth(trim(expect[-1], ' ', 2)), wincol())
   call s:close_windows()
-endfu
+endfunc
+
+func Test_chinese_char_on_wrap_column_sbr()
+  call s:test_windows("setl nolbr wrap sbr=!!!")
+  call setline(1, [
+\ 'aaaaaaaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaa中'.
+\ 'hello'])
+  call cursor(1,1)
+  norm! $
+  redraw!
+  let expect=[
+\ '!!!中aaaaaaaaaaaaaa>',
+\ '!!!中aaaaaaaaaaaaaa>',
+\ '!!!中aaaaaaaaaaaaaa>',
+\ '!!!中aaaaaaaaaaaaaa>',
+\ '!!!中aaaaaaaaaaaaaa>',
+\ '!!!中aaaaaaaaaaaaaa>',
+\ '!!!中aaaaaaaaaaaaaa>',
+\ '!!!中aaaaaaaaaaaaaa>',
+\ '!!!中aaaaaaaaaaaaaa>',
+\ '!!!中hello          ']
+  let lines = s:screen_lines([1, 10], winwidth(0))
+  call s:compare_lines(expect, lines)
+  call assert_equal(len(expect), winline())
+  call assert_equal(strwidth(trim(expect[-1], ' ', 2)), wincol())
+  call s:close_windows()
+endfunc
+
+func Test_unprintable_char_on_wrap_column()
+  call s:test_windows("setl nolbr wrap sbr=")
+  call setline(1, 'aaa' .. repeat("\uFEFF", 50) .. 'bbb')
+  call cursor(1,1)
+  norm! $
+  redraw!
+  let expect=[
+\ '<<<<feff><feff><feff',
+\ '><feff><feff><feff><',
+\ 'feff><feff><feff><fe',
+\ 'ff><feff><feff><feff',
+\ '><feff><feff><feff><',
+\ 'feff><feff><feff><fe',
+\ 'ff><feff><feff><feff',
+\ '><feff><feff><feff><',
+\ 'feff><feff><feff><fe',
+\ 'ff>bbb              ']
+  let lines = s:screen_lines([1, 10], winwidth(0))
+  call s:compare_lines(expect, lines)
+  call assert_equal(len(expect), winline())
+  call assert_equal(strwidth(trim(expect[-1], ' ', 2)), wincol())
+  setl sbr=!!
+  redraw!
+  let expect=[
+\ '!!><feff><feff><feff',
+\ '!!><feff><feff><feff',
+\ '!!><feff><feff><feff',
+\ '!!><feff><feff><feff',
+\ '!!><feff><feff><feff',
+\ '!!><feff><feff><feff',
+\ '!!><feff><feff><feff',
+\ '!!><feff><feff><feff',
+\ '!!><feff><feff><feff',
+\ '!!><feff><feff>bbb  ']
+  let lines = s:screen_lines([1, 10], winwidth(0))
+  call s:compare_lines(expect, lines)
+  call assert_equal(len(expect), winline())
+  call assert_equal(strwidth(trim(expect[-1], ' ', 2)), wincol())
+  call s:close_windows()
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

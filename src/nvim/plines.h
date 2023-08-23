@@ -19,6 +19,7 @@ typedef struct {
   MarkTreeIter cts_iter[1];
 
   int cts_vcol;                  ///< virtual column at current position
+  int cts_max_head_vcol;         ///< see win_lbr_chartabsize()
 } chartabsize_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
