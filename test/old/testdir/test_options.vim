@@ -1768,4 +1768,85 @@ func Test_set_option_window_global_local_all()
   bw!
 endfunc
 
+func Test_paste_depending_options()
+  " setting the paste option, resets all dependent options
+  " and will be reported correctly using :verbose set <option>?
+  let lines =<< trim [CODE]
+    " set paste test
+    set autoindent
+    set expandtab
+    " disabled, because depends on compiled feature set
+    " set hkmap
+    " set revins
+    " set varsofttabstop=8,32,8
+    set ruler
+    set showmatch
+    set smarttab
+    set softtabstop=4
+    set textwidth=80
+    set wrapmargin=10
+
+    source Xvimrc_paste2
+
+    redir > Xoutput_paste
+    verbose set expandtab?
+    verbose setg expandtab?
+    verbose setl expandtab?
+    redir END
+
+    qall!
+  [CODE]
+
+  call writefile(lines, 'Xvimrc_paste', 'D')
+  call writefile(['set paste'], 'Xvimrc_paste2', 'D')
+  if !RunVim([], lines, '--clean')
+    return
+  endif
+
+  let result = readfile('Xoutput_paste')->filter('!empty(v:val)')
+  call assert_equal('noexpandtab', result[0])
+  call assert_match("^\tLast set from .*Xvimrc_paste2 line 1$", result[1])
+  call assert_equal('noexpandtab', result[2])
+  call assert_match("^\tLast set from .*Xvimrc_paste2 line 1$", result[3])
+  call assert_equal('noexpandtab', result[4])
+  call assert_match("^\tLast set from .*Xvimrc_paste2 line 1$", result[5])
+
+  call delete('Xoutput_paste')
+endfunc
+
+func Test_binary_depending_options()
+  " setting the paste option, resets all dependent options
+  " and will be reported correctly using :verbose set <option>?
+  let lines =<< trim [CODE]
+    " set binary test
+    set expandtab
+
+    source Xvimrc_bin2
+
+    redir > Xoutput_bin
+    verbose set expandtab?
+    verbose setg expandtab?
+    verbose setl expandtab?
+    redir END
+
+    qall!
+  [CODE]
+
+  call writefile(lines, 'Xvimrc_bin', 'D')
+  call writefile(['set binary'], 'Xvimrc_bin2', 'D')
+  if !RunVim([], lines, '--clean')
+    return
+  endif
+
+  let result = readfile('Xoutput_bin')->filter('!empty(v:val)')
+  call assert_equal('noexpandtab', result[0])
+  call assert_match("^\tLast set from .*Xvimrc_bin2 line 1$", result[1])
+  call assert_equal('noexpandtab', result[2])
+  call assert_match("^\tLast set from .*Xvimrc_bin2 line 1$", result[3])
+  call assert_equal('noexpandtab', result[4])
+  call assert_match("^\tLast set from .*Xvimrc_bin2 line 1$", result[5])
+
+  call delete('Xoutput_bin')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

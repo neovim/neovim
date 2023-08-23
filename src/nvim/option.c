@@ -160,6 +160,14 @@ typedef enum {
 # include "options.generated.h"
 #endif
 
+static char *(p_bin_dep_opts[]) = {
+  "textwidth", "wrapmargin", "modeline", "expandtab", NULL
+};
+static char *(p_paste_dep_opts[]) = {
+  "autoindent", "expandtab", "ruler", "showmatch", "smarttab",
+  "softtabstop", "textwidth", "wrapmargin", "revins", "varsofttabstop", NULL
+};
+
 void set_init_tablocal(void)
 {
   // susy baka: cmdheight calls itself OPT_GLOBAL but is really tablocal!
@@ -1681,6 +1689,9 @@ void set_options_bin(int oldval, int newval, int opt_flags)
       p_et = p_et_nobin;
     }
   }
+
+  // Remember where the dependent option were reset
+  didset_options_sctx(opt_flags, p_bin_dep_opts);
 }
 
 /// Find the parameter represented by the given character (eg ', :, ", or /),
@@ -5608,6 +5619,7 @@ static void paste_option_changed(void)
     p_wm = 0;
     p_sts = 0;
     p_ai = 0;
+    p_et = 0;
     if (p_vsts) {
       free_string_option(p_vsts);
     }
@@ -5655,6 +5667,9 @@ static void paste_option_changed(void)
   }
 
   old_p_paste = p_paste;
+
+  // Remember where the dependent options were reset
+  didset_options_sctx((OPT_LOCAL | OPT_GLOBAL), p_paste_dep_opts);
 }
 
 /// vimrc_found() - Called when a vimrc or "VIMINIT" has been found.
@@ -5818,6 +5833,20 @@ int option_set_callback_func(char *optval, Callback *optcb)
   *optcb = cb;
   tv_free(tv);
   return OK;
+}
+
+static void didset_options_sctx(int opt_flags, char **buf)
+{
+  for (int i = 0;; i++) {
+    if (buf[i] == NULL) {
+      break;
+    }
+
+    int idx = findoption(buf[i]);
+    if (idx >= 0) {
+      set_option_sctx_idx(idx, opt_flags, current_sctx);
+    }
+  }
 }
 
 /// Check if backspacing over something is allowed.
