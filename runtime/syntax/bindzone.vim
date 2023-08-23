@@ -33,7 +33,7 @@ syn match       zoneDomain      contained  /[^[:space:]!"#$%&'()*+,\/:;<=>?@[\]\
 syn match       zoneSpecial     contained /^[@*.]\s/
 syn match       zoneTTL         contained /\s\@<=\d[0-9WwDdHhMmSs]*\(\s\|$\)\@=/ nextgroup=zoneClass,zoneRRType skipwhite
 syn keyword     zoneClass       contained IN CHAOS CH HS HESIOD nextgroup=zoneRRType,zoneTTL skipwhite
-syn keyword     zoneRRType      contained A AAAA CAA CERT CNAME DNAME DNSKEY DS HINFO LOC MX NAPTR NS NSEC NSEC3 NSEC3PARAM OPENPGPKEY PTR RP RRSIG SMIMEA SOA SPF SRV SSHFP TLSA TXT nextgroup=zoneRData skipwhite
+syn keyword     zoneRRType      contained A AAAA APL CAA CERT CNAME DNAME DNSKEY DS HINFO LOC MX NAPTR NS NSEC NSEC3 NSEC3PARAM OPENPGPKEY PTR RP RRSIG SMIMEA SOA SPF SRV SSHFP TLSA TXT nextgroup=zoneRData skipwhite
 syn match       zoneRData       contained /[^;]*/ contains=zoneDomain,zoneIPAddr,zoneIP6Addr,zoneText,zoneNumber,zoneParen,zoneUnknown
 
 syn match       zoneIPAddr      contained /\<[0-9]\{1,3}\(\.[0-9]\{1,3}\)\{,3}\>/
@@ -60,7 +60,7 @@ syn match       zoneIP6Addr     contained /\<\(\x\{1,4}:\)\{1,7}:\(\s\|;\|$\)\@=
 
 syn match       zoneText        contained /"\([^"\\]\|\\.\)*"\(\s\|;\|$\)\@=/
 syn match       zoneNumber      contained /\<[0-9]\+\(\s\|;\|$\)\@=/
-syn match       zoneSerial      contained /\<[0-9]\{9,10}\(\s\|;\|$\)\@=/
+syn match       zoneSerial      contained /\<[0-9]\{1,10}\(\s\|;\|$\)\@=/
 
 syn match       zoneErrParen    /)/
 syn region      zoneParen       contained start="(" end=")" contains=zoneSerial,zoneTTL,zoneNumber,zoneComment
