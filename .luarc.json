@@ -9,6 +9,9 @@
       "${3rd}/busted/library",
       "${3rd}/luv/library"
     ],
+    "ignoreDir": [
+      "test"
+    ],
     "checkThirdParty": false
   },
   "diagnostics": {
