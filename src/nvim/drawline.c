@@ -877,7 +877,8 @@ static bool has_more_inline_virt(winlinevars_T *wlv, ptrdiff_t v)
     DecorRange *item = &kv_A(state->active, i);
     if (item->start_row != state->row
         || !kv_size(item->decor.virt_text)
-        || item->decor.virt_text_pos != kVTInline) {
+        || item->decor.virt_text_pos != kVTInline
+        || item->decor.virt_text_width == 0) {
       continue;
     }
     if (item->draw_col >= -1 && item->start_col >= v) {
@@ -899,7 +900,8 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
         DecorRange *item = &kv_A(state->active, i);
         if (item->start_row != state->row
             || !kv_size(item->decor.virt_text)
-            || item->decor.virt_text_pos != kVTInline) {
+            || item->decor.virt_text_pos != kVTInline
+            || item->decor.virt_text_width == 0) {
           continue;
         }
         if (item->draw_col >= -1 && item->start_col == v) {
@@ -935,6 +937,7 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
       // If the text didn't reach until the first window
       // column we need to skip cells.
       if (wlv->skip_cells > 0) {
+        // FIXME: this should use virt_text_width instead
         int virt_text_len = wlv->n_attr;
         if (virt_text_len > wlv->skip_cells) {
           int len = mb_charlen2bytelen(wlv->p_extra, wlv->skip_cells);
