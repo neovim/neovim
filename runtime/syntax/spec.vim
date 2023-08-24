@@ -56,7 +56,7 @@ syn match specListedFilesEtc    contained '/etc/'me=e-1
 syn match specListedFilesShare  contained '/share/'me=e-1
 syn cluster specListedFiles contains=specListedFilesBin,specListedFilesLib,specListedFilesDoc,specListedFilesEtc,specListedFilesShare,specListedFilesPrefix,specVariables,specSpecialChar
 
-"specComands
+"specCommands
 syn match   specConfigure  contained '\./configure'
 syn match   specTarCommand contained '\<tar\s\+[cxvpzIf]\{,5}\s*'
 syn keyword specCommandSpecial contained root
@@ -87,7 +87,7 @@ syn region specSectionMacroBracketArea oneline matchgroup=specSectionMacro start
 "TODO %config valid parameters: missingok\|noreplace
 "TODO %verify valid parameters: \(not\)\= \(md5\|atime\|...\)
 syn region specFilesArea matchgroup=specSection start='^%[Ff][Ii][Ll][Ee][Ss]\>' skip='%\(attrib\|defattr\|attr\|dir\|config\|docdir\|doc\|lang\|license\|verify\|ghost\|exclude\)\>' end='^%[a-zA-Z]'me=e-2 contains=specFilesOpts,specFilesDirective,@specListedFiles,specComment,specCommandSpecial,specMacroIdentifier
-"tip: remember to include new itens in specFilesArea above
+"tip: remember to include new items in specFilesArea above
 syn match  specFilesDirective contained '%\(attrib\|defattr\|attr\|dir\|config\|docdir\|doc\|lang\|license\|verify\|ghost\|exclude\)\>'
 
 "valid options for certain section headers

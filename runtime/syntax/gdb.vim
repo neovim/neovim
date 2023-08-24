@@ -30,7 +30,7 @@ syn keyword gdbStatement contained search section set sharedlibrary shell show s
 syn keyword gdbStatement contained stop target tbreak tdump tfind thbreak thread tp trace tstart tstatus tstop
 syn keyword gdbStatement contained tty und[isplay] unset until up watch whatis where while ws x
 syn match gdbFuncDef "\<define\>.*"
-syn match gdbStatmentContainer "^\s*\S\+" contains=gdbStatement,gdbFuncDef
+syn match gdbStatementContainer "^\s*\S\+" contains=gdbStatement,gdbFuncDef
 syn match gdbStatement "^\s*info" nextgroup=gdbInfo skipwhite skipempty
 
 " some commonly used abbreviations

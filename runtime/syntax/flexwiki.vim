@@ -67,10 +67,10 @@ syntax match flexwikiEmoticons      /\((.)\|:[()|$@]\|:-[DOPS()\]|$@]\|;)\|:'(\)
 " Aggregate all the regular text highlighting into flexwikiText
 syntax cluster flexwikiText contains=flexwikiItalic,flexwikiBold,flexwikiCode,flexwikiDeEmphasis,flexwikiDelText,flexwikiInsText,flexwikiSuperScript,flexwikiSubScript,flexwikiCitation,flexwikiLink,flexwikiWord,flexwikiEmoticons
 
-" single-line WikiPropertys
+" single-line WikiProperties
 syntax match flexwikiSingleLineProperty /^:\?[A-Z_][_a-zA-Z0-9]\+:/
 
-" TODO: multi-line WikiPropertys
+" TODO: multi-line WikiProperties
 
 " Header levels, 1-6
 syntax match flexwikiH1             /^!.*$/

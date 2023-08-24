@@ -9,7 +9,7 @@ if exists("b:current_syntax")
 endif
 
 " This setup is probably atypical for a syntax highlighting file, because
-" most of it is not really intended to be overrideable.  Instead, the
+" most of it is not really intended to be overridable.  Instead, the
 " highlighting is supposed to correspond to the highlighting specified by
 " the .lss file entries themselves; ie. the "bold" keyword should be bold,
 " the "red" keyword should be red, and so forth.  The exceptions to this

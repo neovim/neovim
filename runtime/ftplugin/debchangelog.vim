@@ -122,7 +122,7 @@ function NewVersion()
     normal! 1G0
     call search(')')
     normal! h
-    " ':normal' doens't support key annotation (<c-a>) directly.
+    " ':normal' doesn't support key annotation (<c-a>) directly.
     " Vim's manual recommends using ':exe' to use key annotation indirectly (backslash-escaping needed though).
     exe "normal! \<c-a>"
     call setline(1, substitute(getline(1), '-\$\$', '-', ''))

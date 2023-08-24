@@ -146,7 +146,7 @@ endfunction
 
 " Returns the length of the line until a:str occur outside a string or
 " comment. Search starts at string index a:startIdx.
-" If a:str is a word also add word bounderies and case insesitivity.
+" If a:str is a word also add word boundaries and case insensitivity.
 " Note: rapidTodoComment and rapidDebugComment are not taken into account.
 function s:RapidLenTilStr(lnum, str, startIdx) abort
 
@@ -179,8 +179,8 @@ function s:RapidLenTilStr(lnum, str, startIdx) abort
   return -1
 endfunction
 
-" a:lchar shoud be one of (, ), [, ], { or }
-" returns the number of opening/closing parenthesise which have no
+" a:lchar should be one of (, ), [, ], { or }
+" returns the number of opening/closing parentheses which have no
 " closing/opening match in getline(a:lnum)
 function s:RapidLoneParen(lnum,lchar) abort
   if a:lchar == "(" || a:lchar == ")"
@@ -205,7 +205,7 @@ function s:RapidLoneParen(lnum,lchar) abort
   endif
 
   let l:opnParen = 0
-  " count opening brakets
+  " count opening brackets
   let l:i = 0
   while l:i >= 0
     let l:i = s:RapidLenTilStr(a:lnum, l:opnParChar, l:i)
@@ -216,7 +216,7 @@ function s:RapidLoneParen(lnum,lchar) abort
   endwhile
 
   let l:clsParen = 0
-  " count closing brakets
+  " count closing brackets
   let l:i = 0
   while l:i >= 0
     let l:i = s:RapidLenTilStr(a:lnum, l:clsParChar, l:i)
@@ -242,7 +242,7 @@ function s:RapidPreNoneBlank(lnum) abort
   let nPreNoneBlank = prevnonblank(a:lnum)
 
   while nPreNoneBlank>0 && getline(nPreNoneBlank) =~ '\v\c^\s*(\%\%\%|!)'
-    " Previouse none blank line irrelevant. Look further aback.
+    " Previous none blank line irrelevant. Look further aback.
     let nPreNoneBlank = prevnonblank(nPreNoneBlank - 1)
   endwhile
 

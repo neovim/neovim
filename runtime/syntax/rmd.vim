@@ -81,7 +81,7 @@ else
     syn match  yamlEscape contained '\\\%([\\"abefnrtv\^0_ NLP\n]\|x\x\x\|u\x\{4}\|U\x\{8}\)'
     syn match  yamlSingleEscape contained "''"
     syn match yamlComment /#.*/ contained
-    " A second colon is a syntax error, unles within a string or following !expr
+    " A second colon is a syntax error, unless within a string or following !expr
     syn match yamlColonError /:\s*[^'^"^!]*:/ contained
     if &filetype == 'quarto'
       syn region pandocYAMLHeader matchgroup=rmdYamlBlockDelim start=/\%(\%^\|\_^\s*\n\)\@<=\_^-\{3}\ze\n.\+/ end=/^---$/ keepend contains=rmdYamlFieldTtl,yamlFlowString,yamlComment,yamlColonError

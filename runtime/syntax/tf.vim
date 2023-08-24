@@ -27,7 +27,7 @@ syn keyword tfVar  bamf bg_output borg clearfull cleardone clock connect  contai
 syn keyword tfVar  emulation end_color gag gethostbyname gpri hook hilite  contained
 syn keyword tfVar  hiliteattr histsize hpri insert isize istrip kecho  contained
 syn keyword tfVar  kprefix login lp lpquote maildelay matching max_iter  contained
-syn keyword tfVar  max_recur mecho more mprefix oldslash promt_sec  contained
+syn keyword tfVar  max_recur mecho more mprefix oldslash prompt_sec  contained
 syn keyword tfVar  prompt_usec proxy_host proxy_port ptime qecho qprefix  contained
 syn keyword tfVar  quite quitdone redef refreshtime scroll shpause snarf sockmload  contained
 syn keyword tfVar  start_color tabsize telopt sub time_format visual  contained

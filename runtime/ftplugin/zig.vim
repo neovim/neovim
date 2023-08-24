@@ -17,7 +17,7 @@ compiler zig_build
 " Match Zig builtin fns
 setlocal iskeyword+=@-@
 
-" Recomended code style, no tabs and 4-space indentation
+" Recommended code style, no tabs and 4-space indentation
 setlocal expandtab
 setlocal tabstop=8
 setlocal softtabstop=4

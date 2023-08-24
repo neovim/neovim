@@ -5,7 +5,7 @@
 " Email:	Subject: send syntax_vim.tgz
 " Last Change:	2001 Mai 01
 "
-" Options	lite_sql_query = 1 for SQL syntax highligthing inside strings
+" Options	lite_sql_query = 1 for SQL syntax highlighting inside strings
 "		lite_minlines = x     to sync at least x lines backwards
 
 " quit when a syntax file was already loaded

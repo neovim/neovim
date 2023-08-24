@@ -140,7 +140,7 @@ if !exists("*SQL_SetType")
                         \ )
 
             " Remove duplicates, since sqlanywhere.vim can exist in the
-            " sytax, indent and ftplugin directory, yet we only want
+            " syntax, indent and ftplugin directory, yet we only want
             " to display the option once
             let index = match(sqls, '.\{-}\ze\n')
             while index > -1
@@ -204,7 +204,7 @@ if !exists("*SQL_SetType")
         endif
         let b:sql_type_override = new_sql_type
 
-        " Remove any cached SQL since a new sytax will have different
+        " Remove any cached SQL since a new syntax will have different
         " items and groups
         if !exists('g:loaded_sql_completion') || g:loaded_sql_completion >= 100
             call sqlcomplete#ResetCacheSyntax()

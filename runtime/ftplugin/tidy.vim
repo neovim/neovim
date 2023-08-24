@@ -1,5 +1,5 @@
 " Vim filetype plugin file
-" Language:	HMTL Tidy Configuration
+" Language:	HTML Tidy Configuration
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
 " Last Change:	2020 Sep 4
 

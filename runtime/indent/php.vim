@@ -327,13 +327,13 @@ endfun
 
 function! FindArrowIndent (lnum)  " {{{
 
-    let parrentArrowPos = -1
+    let parentArrowPos = -1
     let cursorPos = -1
     let lnum = a:lnum
     while lnum > 1
 	let last_line = getline(lnum)
 	if last_line =~ '^\s*->'
-	    let parrentArrowPos = indent(a:lnum)
+	    let parentArrowPos = indent(a:lnum)
 	    break
 	else
 
@@ -355,28 +355,28 @@ function! FindArrowIndent (lnum)  " {{{
 		    else
 		    endif
 		else
-		    let parrentArrowPos = -1
+		    let parentArrowPos = -1
 		    break
 		end
 	    endif
 
 	    if cleanedLnum =~ '->'
 		call cursor(lnum, cursorPos == -1 ? strwidth(cleanedLnum) : cursorPos)
-		let parrentArrowPos = searchpos('->', 'cWb', lnum)[1] - 1
+		let parentArrowPos = searchpos('->', 'cWb', lnum)[1] - 1
 
 		break
 	    else
-		let parrentArrowPos = -1
+		let parentArrowPos = -1
 		break
 	    endif
 	endif
     endwhile
 
-    if parrentArrowPos == -1
-	let parrentArrowPos = indent(lnum) + shiftwidth()
+    if parentArrowPos == -1
+	let parentArrowPos = indent(lnum) + shiftwidth()
     end
 
-    return parrentArrowPos
+    return parentArrowPos
 endfun "}}}
 
 function! FindTheIfOfAnElse (lnum, StopAfterFirstPrevElse) " {{{
