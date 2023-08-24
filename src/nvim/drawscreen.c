@@ -596,6 +596,8 @@ int update_screen(void)
     // Reset 'statuscolumn' if there is no dedicated signcolumn but it is invalid.
     if (*wp->w_p_stc != NUL && !wp->w_buffer->b_signcols.valid && win_no_signcol(wp)) {
       wp->w_nrwidth_line_count = 0;
+      wp->w_valid &= ~VALID_WCOL;
+      wp->w_redr_type = UPD_NOT_VALID;
     }
   }
 
