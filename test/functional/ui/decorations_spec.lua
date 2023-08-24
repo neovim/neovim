@@ -1748,7 +1748,7 @@ describe('decorations: inline virtual text', function()
     ]]}
   end)
 
-  it('works with empty chunk', function()
+  it('works with 0-width chunk', function()
     screen:try_resize(50, 10)
     insert(example_text)
     feed 'gg'
@@ -1766,7 +1766,22 @@ describe('decorations: inline virtual text', function()
     ]]}
 
     meths.buf_set_extmark(0, ns, 0, 5, {virt_text={{''}, {''}}, virt_text_pos='inline'})
-    meths.buf_set_extmark(0, ns, 1, 14, {virt_text={{''}, {': ', 'Special'}, {'string', 'Type'}}, virt_text_pos='inline'})
+    meths.buf_set_extmark(0, ns, 1, 14, {virt_text={{''}, {': ', 'Special'}}, virt_text_pos='inline'})
+    meths.buf_set_extmark(0, ns, 1, 48, {virt_text={{''}, {''}}, virt_text_pos='inline'})
+    screen:expect{grid=[[
+      ^for _,item in ipairs(items) do                    |
+          local text{10:: }, hl_id_cell, count = unpack(item)|
+          if hl_id_cell ~= nil then                     |
+              hl_id = hl_id_cell                        |
+          end                                           |
+          for _ = 1, (count or 1) do                    |
+              local cell = line[colpos]                 |
+              cell.text = text                          |
+              cell.hl_id = hl_id                        |
+                                                        |
+    ]]}
+
+    meths.buf_set_extmark(0, ns, 1, 14, {virt_text={{''}, {'string', 'Type'}}, virt_text_pos='inline'})
     feed('V')
     screen:expect{grid=[[
       ^f{7:or _,item in ipairs(items) do}                    |
