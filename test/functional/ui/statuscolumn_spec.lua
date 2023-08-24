@@ -727,6 +727,8 @@ describe('statuscolumn', function()
         end
         return vim.v.lnum .. '%=' .. sign
       end
+      vim.o.number = true
+      vim.o.numberwidth = 2
       vim.o.statuscolumn = "%!v:lua.StatusCol()"
     ]])
     command('sign place 1 line=2 name=sign')
