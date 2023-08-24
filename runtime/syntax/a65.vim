@@ -118,7 +118,7 @@ syn match a65Section	"\(^\|\s\)\.)\($\|\s\)"
 " Strings
 syn match a65String	"\".*\""
 
-" Programm Counter
+" Program Counter
 syn region a65PC	start="\*=" end="\>" keepend
 
 " HI/LO Byte

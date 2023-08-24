@@ -31,7 +31,7 @@ syn keyword	squidConf	cache_effective_user cache_host cache_host_acl
 syn keyword	squidConf	cache_host_domain cache_log cache_mem
 syn keyword	squidConf	cache_mem_high cache_mem_low cache_mgr
 syn keyword	squidConf	cachemgr_passwd cache_peer cache_peer_access
-syn keyword	squidConf	cahce_replacement_policy cache_stoplist
+syn keyword	squidConf	cache_replacement_policy cache_stoplist
 syn keyword	squidConf	cache_stoplist_pattern cache_store_log cache_swap
 syn keyword	squidConf	cache_swap_high cache_swap_log cache_swap_low
 syn keyword	squidConf	client_db client_lifetime client_netmask

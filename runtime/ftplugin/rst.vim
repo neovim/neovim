@@ -28,7 +28,7 @@ setlocal formatoptions+=tcroql
 " directives (..) and ordered lists (1.), although it can cause problems for
 " many other cases.
 "
-" More sophisticated indentation rules should be revisted in the future.
+" More sophisticated indentation rules should be revisited in the future.
 
 if exists("g:rst_style") && g:rst_style != 0
     setlocal expandtab shiftwidth=3 softtabstop=3 tabstop=8

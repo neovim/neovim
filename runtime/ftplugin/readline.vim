@@ -25,7 +25,7 @@ if exists("loaded_matchit") && !exists("b:match_words")
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Readline Intialization Files (inputrc .inputrc)\tinputrc;*.inputrc\n" ..
+  let b:browsefilter = "Readline Initialization Files (inputrc .inputrc)\tinputrc;*.inputrc\n" ..
 	\	       "All Files (*.*)\t*.*\n"
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif

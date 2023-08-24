@@ -27,7 +27,7 @@ syn keyword euphoria4Debug	includes inline warning define
 " Keywords for conditional compilation - from $EUDIR/include/euphoria/keywords.e:
 syn keyword euphoria4PreProc	elsedef elsifdef ifdef 
 
-" Keywords (Statments) - from $EUDIR/include/euphoria/keywords.e:
+" Keywords (Statements) - from $EUDIR/include/euphoria/keywords.e:
 syn keyword euphoria4Keyword	and as break by case constant continue do else     
 syn keyword euphoria4Keyword	elsif end entry enum exit export
 syn keyword euphoria4Keyword	fallthru for function global goto if include

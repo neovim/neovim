@@ -294,7 +294,7 @@ syn sync minlines=100
 hi def link sgmlTodo			Todo
 hi def link sgmlTag			Function
 hi def link sgmlEndTag			Identifier
-" SGML specifig
+" SGML specific
 hi def link sgmlAbbrEndTag		Identifier
 hi def link sgmlEmptyTag		Function
 hi def link sgmlEntity			Statement

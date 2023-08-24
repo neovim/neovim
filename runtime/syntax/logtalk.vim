@@ -330,7 +330,7 @@ syn match	logtalkKeyword		"\<t\(an\|runcate\)\ze("
 syn match	logtalkKeyword		"\<ceiling\ze("
 
 
-" Other arithemtic functors
+" Other arithmetic functors
 
 syn match	logtalkOperator		"\*\*"
 syn match	logtalkKeyword		"\<s\(in\|qrt\)\ze("

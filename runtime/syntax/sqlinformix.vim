@@ -162,7 +162,7 @@ hi def link sqlNumber	Number
 hi def link sqlBoolean	Boolean
 hi def link sqlString	String
 
-" === Statment syntax group ===
+" === Statement syntax group ===
 hi def link sqlStatement	Statement
 hi def link sqlConditional	Conditional
 hi def link sqlRepeat		Repeat

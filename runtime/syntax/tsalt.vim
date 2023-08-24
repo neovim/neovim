@@ -83,11 +83,11 @@ syn keyword tsaltFunction	vGetChrs vGetChrsA  vPutChr vPutChrs
 syn keyword tsaltFunction	vPutChrsA vRstrArea vSaveArea
 
 " Dynamic Data Exchange (DDE) Operations
-syn keyword tsaltFunction	DDEExecute DDEInitate DDEPoke DDERequest
+syn keyword tsaltFunction	DDEExecute DDEInitiate DDEPoke DDERequest
 syn keyword tsaltFunction	DDETerminate DDETerminateAll
 "END FUNCTIONS
 
-"PREDEFINED VARAIABLES
+"PREDEFINED VARIABLES
 syn keyword tsaltSysVar	_add_lf _alarm_on _answerback_str _asc_rcrtrans
 syn keyword tsaltSysVar	_asc_remabort _asc_rlftrans _asc_scpacing
 syn keyword tsaltSysVar	_asc_scrtrans _asc_secho _asc_slpacing
@@ -106,7 +106,7 @@ syn keyword tsaltSysVar	_scr_chk_key _script_dir _sound_on
 syn keyword tsaltSysVar	_strip_high _swap_bs _telix_dir _up_dir
 syn keyword tsaltSysVar	_usage_fname _zmodauto _zmod_rcrash
 syn keyword tsaltSysVar	_zmod_scrash
-"END PREDEFINED VARAIABLES
+"END PREDEFINED VARIABLES
 
 "TYPE
 syn keyword tsaltType	str int
