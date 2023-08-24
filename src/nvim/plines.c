@@ -319,6 +319,7 @@ void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum, colnr_T 
   cts->cts_vcol = col;
   cts->cts_line = line;
   cts->cts_ptr = ptr;
+  cts->cts_max_head_vcol = 0;
   cts->cts_cur_text_width_left = 0;
   cts->cts_cur_text_width_right = 0;
   cts->cts_has_virt_text = false;
