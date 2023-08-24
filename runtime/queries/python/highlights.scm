@@ -27,6 +27,8 @@
            "credits"
            "license"))
 
+"_" @constant.builtin ; match wildcard
+
 ((attribute
     attribute: (identifier) @field)
  (#lua-match? @field "^[%l_].*$"))
@@ -155,7 +157,10 @@
   (#lua-match? @preproc "^#!/"))
 
 (string) @string
-(escape_sequence) @string.escape
+[
+  (escape_sequence)
+  (escape_interpolation)
+] @string.escape
 
 ; doc-strings
 
@@ -241,6 +246,7 @@
   "print"
   "with"
   "as"
+  "type"
 ] @keyword
 
 [
