@@ -2061,7 +2061,8 @@ end
 --- pattern, if any) and should return a string that will be used as the
 --- buffer's filetype. Optionally, the function can return a second function
 --- value which, when called, modifies the state of the buffer. This can be used
---- to, for example, set filetype-specific buffer variables.
+--- to, for example, set filetype-specific buffer variables. This function will
+--- be called by Nvim before setting the buffer's filetype.
 ---
 --- Filename patterns can specify an optional priority to resolve cases when a
 --- file path matches multiple patterns. Higher priorities are matched first.
