@@ -437,6 +437,8 @@ local function render_eval_doc(f, fun, write)
     l = l:gsub('^      ', '')
     if vim.startswith(l, '<') and not l:match('^<[^ \t]+>') then
       write('<\t\t' .. l:sub(2))
+    elseif l:match('^>[a-z0-9]*$') then
+      write(l)
     else
       write('\t\t' .. l)
     end

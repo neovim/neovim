@@ -3211,7 +3211,7 @@ has({feature})                                                           *has()*
 			clipboard	|clipboard| provider is available.
 			fname_case	Case in file names matters (for Darwin and MS-Windows
 					this is not present).
-		                        gui_running	Nvim has a GUI.
+			gui_running	Nvim has a GUI.
 			iconv		Can use |iconv()| for conversion.
 			linux		Linux system.
 			mac		MacOS system.
@@ -4950,7 +4950,7 @@ pathshorten({path} [, {len}])                                    *pathshorten()*
 		letters).  Leading '~' and '.' characters are kept.  Examples: >vim
 			echo pathshorten('~/.config/nvim/autoload/file1.vim')
 <			~/.c/n/a/file1.vim ~
-		>vim
+>vim
 			echo pathshorten('~/.config/nvim/autoload/file2.vim', 2)
 <			~/.co/nv/au/file2.vim ~
 		It doesn't matter if the path exists or not.
@@ -7219,7 +7219,7 @@ sort({list} [, {how} [, {dict}]])                                  *sort()* *E70
 			language collate en_US.UTF8
 			echo sort(['n', 'o', 'O', 'ö', 'p', 'z'], 'l')
 <			['n', 'o', 'O', 'ö', 'p', 'z'] ~
-		>vim
+>vim
 			" ö is sorted after z with Swedish locale.
 			language collate sv_SE.UTF8
 			echo sort(['n', 'o', 'O', 'ö', 'p', 'z'], 'l')
@@ -7390,7 +7390,7 @@ state([{what}])                                                        *state()*
 		added.  E.g, this checks if the screen has scrolled: >vim
 			if state('s') == ''
 			   " screen has not scrolled
-
+<
 		These characters indicate the state, generally indicating that
 		something is busy:
 		    m	halfway a mapping, :normal command, feedkeys() or
@@ -7958,7 +7958,6 @@ synconcealed({lnum}, {col})                                     *synconcealed()*
 			synconcealed(lnum, 4)   [1, 'X', 2]
 			synconcealed(lnum, 5)   [1, 'X', 2]
 			synconcealed(lnum, 6)   [0, '', 0]
-<
 
 synstack({lnum}, {col})                                             *synstack()*
 		Return a |List|, which is the stack of syntax items at the

@@ -4730,7 +4730,7 @@ M.funcs = {
       	clipboard	|clipboard| provider is available.
       	fname_case	Case in file names matters (for Darwin and MS-Windows
       			this is not present).
-                              gui_running	Nvim has a GUI.
+      	gui_running	Nvim has a GUI.
       	iconv		Can use |iconv()| for conversion.
       	linux		Linux system.
       	mac		MacOS system.
@@ -10482,7 +10482,7 @@ M.funcs = {
       added.  E.g, this checks if the screen has scrolled: >vim
       	if state('s') == ''
       	   " screen has not scrolled
-
+      <
       These characters indicate the state, generally indicating that
       something is busy:
           m	halfway a mapping, :normal command, feedkeys() or
@@ -11255,7 +11255,6 @@ M.funcs = {
       	synconcealed(lnum, 4)   [1, 'X', 2]
       	synconcealed(lnum, 5)   [1, 'X', 2]
       	synconcealed(lnum, 6)   [0, '', 0]
-      <
     ]=],
     name = 'synconcealed',
     params = { { 'lnum', 'integer' }, { 'col', 'integer' } },
