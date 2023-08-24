@@ -41,6 +41,19 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
 
+if (exists('b:is_bash') && (b:is_bash == 1)) ||
+      \ (exists('b:is_sh') && (b:is_sh == 1))
+  if !has('gui_running') && executable('less')
+    command! -buffer -nargs=1 Help silent exe '!bash -c "{ help "<args>" 2>/dev/null || man "<args>"; } | LESS= less"' | redraw!
+  elseif has('terminal')
+    command! -buffer -nargs=1 Help silent exe ':term bash -c "help "<args>" 2>/dev/null || man "<args>""'
+  else
+    command! -buffer -nargs=1 Help echo system('bash -c "help <args>" 2>/dev/null || man "<args>"')
+  endif
+  setlocal keywordprg=:Help
+  let b:undo_ftplugin .= '| setlocal keywordprg<'
+endif
+
 " Restore the saved compatibility options.
 let &cpo = s:save_cpo
 unlet s:save_cpo
