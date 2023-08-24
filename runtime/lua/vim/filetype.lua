@@ -727,6 +727,7 @@ local extension = {
   ora = 'ora',
   org = 'org',
   org_archive = 'org',
+  norg = 'norg',
   pxsl = 'papp',
   papp = 'papp',
   pxml = 'papp',
