@@ -31,14 +31,17 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
 endif
 
 if has('unix') && executable('less')
-  if !has('gui_running')
+  " Nvim's :! is not interactive.
+  " if !has('gui_running')
+  "   command -buffer -nargs=1 Sman
+  "         \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s+' . <q-args> . '\b'' --hilite-search" man ' . '3 readline' |
+  "         \ redraw!
+  " elseif has('terminal')
     command -buffer -nargs=1 Sman
-          \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s+' . <q-args> . '\b'' --hilite-search" man ' . '3 readline' |
-          \ redraw!
-  elseif has('terminal')
-    command -buffer -nargs=1 Sman
+          "\ Nvim's :terminal doesn't split or enter terminal mode by default.
+          \ split | startinsert |
           \ silent exe 'term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s+' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . '3 readline'
-  endif
+  " endif
   if exists(':Sman') == 2
     setlocal iskeyword+=-
     setlocal keywordprg=:Sman

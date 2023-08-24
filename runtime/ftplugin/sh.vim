@@ -43,13 +43,15 @@ endif
 
 if (exists('b:is_bash') && (b:is_bash == 1)) ||
       \ (exists('b:is_sh') && (b:is_sh == 1))
-  if !has('gui_running') && executable('less')
-    command! -buffer -nargs=1 Help silent exe '!bash -c "{ help "<args>" 2>/dev/null || man "<args>"; } | LESS= less"' | redraw!
-  elseif has('terminal')
-    command! -buffer -nargs=1 Help silent exe ':term bash -c "help "<args>" 2>/dev/null || man "<args>""'
-  else
-    command! -buffer -nargs=1 Help echo system('bash -c "help <args>" 2>/dev/null || man "<args>"')
-  endif
+  " if !has('gui_running') && executable('less')
+  "   command! -buffer -nargs=1 Help silent exe '!bash -c "{ help "<args>" 2>/dev/null || man "<args>"; } | LESS= less"' | redraw!
+  " elseif has('terminal')
+      " Nvim's :terminal doesn't split or enter terminal mode by default.
+      " command! -buffer -nargs=1 Help silent exe ':term bash -c "help "<args>" 2>/dev/null || man "<args>""'
+      command! -buffer -nargs=1 Help split | startinsert | silent exe ':term bash -c "help "<args>" 2>/dev/null || man "<args>""'
+  " else
+  "   command! -buffer -nargs=1 Help echo system('bash -c "help <args>" 2>/dev/null || man "<args>"')
+  " endif
   setlocal keywordprg=:Help
   let b:undo_ftplugin .= '| setlocal keywordprg<'
 endif
