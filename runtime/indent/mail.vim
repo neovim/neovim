@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Mail
-" Maintainer:	Bram Moolenaar
-" Last Change:	2021 Sep 26
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
+" Last Change:	2023 Aug 13
 
 if exists("b:did_indent")
   finish

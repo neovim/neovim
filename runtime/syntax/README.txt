@@ -34,9 +34,10 @@ checking a few lines in the file. And please write the file in a portable way,
 see ":help 44.12".
 
 If you have remarks about an existing file, send them to the maintainer of
-that file.  Only when you get no response send a message to Bram@vim.org.
+that file.  Only when you get no response send a message to the vim-dev
+mailing list: <vim-dev@vim.org>.
 
 If you are the maintainer of a syntax file and make improvements, send the new
-version to Bram@vim.org.
+version to the vim-dev mailing list: <vim-dev@vim.org>
 
 For further info see ":help syntax" in Vim.

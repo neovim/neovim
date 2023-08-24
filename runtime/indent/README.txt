@@ -11,10 +11,11 @@ detecting the file type for this language, by file name extension or by
 checking a few lines in the file. And please stick to the rules below.
 
 If you have remarks about an existing file, send them to the maintainer of
-that file.  Only when you get no response send a message to Bram@vim.org.
+that file.  Only when you get no response send a message to the vim-dev
+mailing list: <vim-dev@vim.org>.
 
 If you are the maintainer of an indent file and make improvements, e-mail the
-new version to Bram@vim.org.
+new version to the vim-dev mailing list: <vim-dev@vim.org>.
 
 
 Rules for making an indent file:

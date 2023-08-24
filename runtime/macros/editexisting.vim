@@ -1,6 +1,6 @@
 " Vim Plugin:	Edit the file with an existing Vim if possible
-" Maintainer:	Bram Moolenaar
-" Last Change:	2014 Dec 06
+" Maintainer:	The Vim Project <https://github.com/vim/vim>
+" Last Change:	2023 Aug 13
 
 " This is a plugin, drop it in your (Unix) ~/.vim/plugin or (Win32)
 " $VIM/vimfiles/plugin directory.  Or make a symbolic link, so that you
