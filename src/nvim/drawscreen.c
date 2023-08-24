@@ -823,7 +823,7 @@ void show_cursor_info_later(bool force)
 {
   int state = get_real_state();
   int empty_line = (State & MODE_INSERT) == 0
-                   && *ml_get_buf(curwin->w_buffer, curwin->w_cursor.lnum, false) == NUL;
+                   && *ml_get_buf(curwin->w_buffer, curwin->w_cursor.lnum) == NUL;
 
   // Only draw when something changed.
   validate_virtcol_win(curwin);
@@ -1875,7 +1875,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
                  pos.lnum += cursor_above ? 1 : -1) {
               colnr_T t;
 
-              pos.col = (colnr_T)strlen(ml_get_buf(wp->w_buffer, pos.lnum, false));
+              pos.col = (colnr_T)strlen(ml_get_buf(wp->w_buffer, pos.lnum));
               getvvcol(wp, &pos, NULL, NULL, &t);
               if (toc < t) {
                 toc = t;

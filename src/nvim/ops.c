@@ -1373,7 +1373,7 @@ bool get_spec_reg(int regname, char **argp, bool *allocated, bool errmsg)
       return false;
     }
 
-    *argp = ml_get_buf(curwin->w_buffer, curwin->w_cursor.lnum, false);
+    *argp = ml_get_buf(curwin->w_buffer, curwin->w_cursor.lnum);
     return true;
 
   case '_':                     // black hole: always empty
@@ -1783,7 +1783,7 @@ static void mb_adjust_opend(oparg_T *oap)
 static inline void pbyte(pos_T lp, int c)
 {
   assert(c <= UCHAR_MAX);
-  *(ml_get_buf(curbuf, lp.lnum, true) + lp.col) = (char)c;
+  *(ml_get_buf_mut(curbuf, lp.lnum) + lp.col) = (char)c;
   if (!curbuf_splice_pending) {
     extmark_splice_cols(curbuf, (int)lp.lnum - 1, lp.col, 1, 1, kExtmarkUndo);
   }
@@ -6915,14 +6915,14 @@ bcount_t get_region_bytecount(buf_T *buf, linenr_T start_lnum, linenr_T end_lnum
   if (start_lnum == end_lnum) {
     return end_col - start_col;
   }
-  const char *first = ml_get_buf(buf, start_lnum, false);
+  const char *first = ml_get_buf(buf, start_lnum);
   bcount_t deleted_bytes = (bcount_t)strlen(first) - start_col + 1;
 
   for (linenr_T i = 1; i <= end_lnum - start_lnum - 1; i++) {
     if (start_lnum + i > max_lnum) {
       return deleted_bytes;
     }
-    deleted_bytes += (bcount_t)strlen(ml_get_buf(buf, start_lnum + i, false)) + 1;
+    deleted_bytes += (bcount_t)strlen(ml_get_buf(buf, start_lnum + i)) + 1;
   }
   if (end_lnum > max_lnum) {
     return deleted_bytes;

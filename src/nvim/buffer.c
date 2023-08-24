@@ -4250,7 +4250,7 @@ bool buf_contents_changed(buf_T *buf)
     if (buf->b_ml.ml_line_count == curbuf->b_ml.ml_line_count) {
       differ = false;
       for (linenr_T lnum = 1; lnum <= curbuf->b_ml.ml_line_count; lnum++) {
-        if (strcmp(ml_get_buf(buf, lnum, false), ml_get(lnum)) != 0) {
+        if (strcmp(ml_get_buf(buf, lnum), ml_get(lnum)) != 0) {
           differ = true;
           break;
         }

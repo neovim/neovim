@@ -660,13 +660,13 @@ void fix_help_buffer(void)
   if (!syntax_present(curwin)) {
     bool in_example = false;
     for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; lnum++) {
-      line = ml_get_buf(curbuf, lnum, false);
+      line = ml_get_buf(curbuf, lnum);
       const size_t len = strlen(line);
       if (in_example && len > 0 && !ascii_iswhite(line[0])) {
         // End of example: non-white or '<' in first column.
         if (line[0] == '<') {
           // blank-out a '<' in the first column
-          line = ml_get_buf(curbuf, lnum, true);
+          line = ml_get_buf_mut(curbuf, lnum);
           line[0] = ' ';
         }
         in_example = false;
@@ -674,12 +674,12 @@ void fix_help_buffer(void)
       if (!in_example && len > 0) {
         if (line[len - 1] == '>' && (len == 1 || line[len - 2] == ' ')) {
           // blank-out a '>' in the last column (start of example)
-          line = ml_get_buf(curbuf, lnum, true);
+          line = ml_get_buf_mut(curbuf, lnum);
           line[len - 1] = ' ';
           in_example = true;
         } else if (line[len - 1] == '~') {
           // blank-out a '~' at the end of line (header marker)
-          line = ml_get_buf(curbuf, lnum, true);
+          line = ml_get_buf_mut(curbuf, lnum);
           line[len - 1] = ' ';
         }
       }
@@ -696,7 +696,7 @@ void fix_help_buffer(void)
           && TOLOWER_ASC(fname[7]) == 'x'
           && fname[8] == NUL)) {
     for (lnum = 1; lnum < curbuf->b_ml.ml_line_count; lnum++) {
-      line = ml_get_buf(curbuf, lnum, false);
+      line = ml_get_buf(curbuf, lnum);
       if (strstr(line, "*local-additions*") == NULL) {
         continue;
       }

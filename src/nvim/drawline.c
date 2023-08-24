@@ -770,7 +770,7 @@ static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
       wlv->p_extra = NULL;
       wlv->c_extra = ' ';
       wlv->c_final = NUL;
-      wlv->n_extra = get_breakindent_win(wp, ml_get_buf(wp->w_buffer, wlv->lnum, false));
+      wlv->n_extra = get_breakindent_win(wp, ml_get_buf(wp->w_buffer, wlv->lnum));
       if (wlv->row == wlv->startrow) {
         wlv->n_extra -= win_col_off2(wp);
         if (wlv->n_extra < 0) {
@@ -1431,11 +1431,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     // Trick: skip a few chars for C/shell/Vim comments
     nextline[SPWORDLEN] = NUL;
     if (lnum < wp->w_buffer->b_ml.ml_line_count) {
-      line = ml_get_buf(wp->w_buffer, lnum + 1, false);
+      line = ml_get_buf(wp->w_buffer, lnum + 1);
       spell_cat_line(nextline + SPWORDLEN, line, SPWORDLEN);
     }
     assert(!end_fill);
-    line = ml_get_buf(wp->w_buffer, lnum, false);
+    line = ml_get_buf(wp->w_buffer, lnum);
 
     // If current line is empty, check first word in next line for capital.
     ptr = skipwhite(line);
@@ -1470,7 +1470,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     }
   }
 
-  line = end_fill ? "" : ml_get_buf(wp->w_buffer, lnum, false);
+  line = end_fill ? "" : ml_get_buf(wp->w_buffer, lnum);
   ptr = line;
 
   colnr_T trailcol = MAXCOL;  // start of trailing spaces
@@ -1567,7 +1567,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       len = spell_move_to(wp, FORWARD, true, true, &spell_hlf);
 
       // spell_move_to() may call ml_get() and make "line" invalid
-      line = ml_get_buf(wp->w_buffer, lnum, false);
+      line = ml_get_buf(wp->w_buffer, lnum);
       ptr = line + linecol;
 
       if (len == 0 || (int)wp->w_cursor.col > ptr - line) {
@@ -1712,7 +1712,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             get_statuscol_str(wp, lnum, wlv.row - startrow - wlv.filler_lines, &statuscol);
             if (!end_fill) {
               // Get the line again as evaluating 'statuscolumn' may free it.
-              line = ml_get_buf(wp->w_buffer, lnum, false);
+              line = ml_get_buf(wp->w_buffer, lnum);
               ptr = line + v;
             }
             if (wp->w_redr_statuscol) {
@@ -1912,7 +1912,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       wlv.p_extra[wlv.n_extra] = NUL;
 
       // Get the line again as evaluating 'foldtext' may free it.
-      line = ml_get_buf(wp->w_buffer, lnum, false);
+      line = ml_get_buf(wp->w_buffer, lnum);
       ptr = line + v;
     }
 
@@ -2166,7 +2166,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
           // Need to get the line again, a multi-line regexp may
           // have made it invalid.
-          line = ml_get_buf(wp->w_buffer, lnum, false);
+          line = ml_get_buf(wp->w_buffer, lnum);
           ptr = line + v;
 
           // no concealing past the end of the line, it interferes

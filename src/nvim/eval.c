@@ -6423,7 +6423,7 @@ char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl, bool crl
     buf_T *buf = buflist_findnr((int)tv->vval.v_number);
     if (buf) {
       for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-        for (char *p = ml_get_buf(buf, lnum, false); *p != NUL; p++) {
+        for (char *p = ml_get_buf(buf, lnum); *p != NUL; p++) {
           *len += 1;
         }
         *len += 1;
@@ -6441,7 +6441,7 @@ char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl, bool crl
     char *ret = xmalloc((size_t)(*len) + 1);
     char *end = ret;
     for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-      for (char *p = ml_get_buf(buf, lnum, false); *p != NUL; p++) {
+      for (char *p = ml_get_buf(buf, lnum); *p != NUL; p++) {
         *end++ = (*p == '\n') ? NUL : *p;
       }
       *end++ = '\n';
@@ -6493,7 +6493,7 @@ int buf_byteidx_to_charidx(buf_T *buf, linenr_T lnum, int byteidx)
     lnum = buf->b_ml.ml_line_count;
   }
 
-  char *str = ml_get_buf(buf, lnum, false);
+  char *str = ml_get_buf(buf, lnum);
 
   if (*str == NUL) {
     return 0;
@@ -6531,7 +6531,7 @@ int buf_charidx_to_byteidx(buf_T *buf, linenr_T lnum, int charidx)
     lnum = buf->b_ml.ml_line_count;
   }
 
-  char *str = ml_get_buf(buf, lnum, false);
+  char *str = ml_get_buf(buf, lnum);
 
   // Convert the character offset to a byte offset
   char *t = str;

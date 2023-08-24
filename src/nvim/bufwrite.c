@@ -1524,7 +1524,7 @@ restore_backup:
     for (lnum = start; lnum <= end; lnum++) {
       // The next while loop is done once for each character written.
       // Keep it fast!
-      char *ptr = ml_get_buf(buf, lnum, false) - 1;
+      char *ptr = ml_get_buf(buf, lnum) - 1;
       if (write_undo_file) {
         sha256_update(&sha_ctx, (uint8_t *)ptr + 1, (uint32_t)(strlen(ptr + 1) + 1));
       }

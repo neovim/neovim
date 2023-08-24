@@ -3775,7 +3775,7 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         // again when auto-formatting.
         if (has_format_option(FO_AUTO)
             && has_format_option(FO_WHITE_PAR)) {
-          char *ptr = ml_get_buf(curbuf, curwin->w_cursor.lnum, true);
+          char *ptr = ml_get_buf_mut(curbuf, curwin->w_cursor.lnum);
           int len;
 
           len = (int)strlen(ptr);

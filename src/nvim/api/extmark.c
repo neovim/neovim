@@ -783,7 +783,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     });
     line = buf->b_ml.ml_line_count;
   } else if (line < buf->b_ml.ml_line_count) {
-    len = opts->ephemeral ? MAXCOL : strlen(ml_get_buf(buf, (linenr_T)line + 1, false));
+    len = opts->ephemeral ? MAXCOL : strlen(ml_get_buf(buf, (linenr_T)line + 1));
   }
 
   if (col == -1) {
@@ -801,7 +801,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   if (col2 >= 0) {
     if (line2 >= 0 && line2 < buf->b_ml.ml_line_count) {
-      len = opts->ephemeral ? MAXCOL : strlen(ml_get_buf(buf, (linenr_T)line2 + 1, false));
+      len = opts->ephemeral ? MAXCOL : strlen(ml_get_buf(buf, (linenr_T)line2 + 1));
     } else if (line2 == buf->b_ml.ml_line_count) {
       // We are trying to add an extmark past final newline
       len = 0;

@@ -596,7 +596,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
                && pos->lnum <= buf->b_ml.ml_line_count
                && pos->col < MAXCOL - 2) {
       // Watch out for the "col" being MAXCOL - 2, used in a closed fold.
-      ptr = ml_get_buf(buf, pos->lnum, false);
+      ptr = ml_get_buf(buf, pos->lnum);
       if ((int)strlen(ptr) <= pos->col) {
         start_char_len = 1;
       } else {
@@ -667,7 +667,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
           if (lnum + matchpos.lnum > buf->b_ml.ml_line_count) {
             ptr = "";
           } else {
-            ptr = ml_get_buf(buf, lnum + matchpos.lnum, false);
+            ptr = ml_get_buf(buf, lnum + matchpos.lnum);
           }
 
           // Forward search in the first line: match should be after
@@ -739,7 +739,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
               }
               // Need to get the line pointer again, a multi-line search may
               // have made it invalid.
-              ptr = ml_get_buf(buf, lnum, false);
+              ptr = ml_get_buf(buf, lnum);
             }
             if (!match_ok) {
               continue;
@@ -821,7 +821,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
               }
               // Need to get the line pointer again, a
               // multi-line search may have made it invalid.
-              ptr = ml_get_buf(buf, lnum + matchpos.lnum, false);
+              ptr = ml_get_buf(buf, lnum + matchpos.lnum);
             }
 
             // If there is only a match after the cursor, skip
@@ -844,12 +844,12 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
             if (endpos.col == 0) {
               if (pos->lnum > 1) {              // just in case
                 pos->lnum--;
-                pos->col = (colnr_T)strlen(ml_get_buf(buf, pos->lnum, false));
+                pos->col = (colnr_T)strlen(ml_get_buf(buf, pos->lnum));
               }
             } else {
               pos->col--;
               if (pos->lnum <= buf->b_ml.ml_line_count) {
-                ptr = ml_get_buf(buf, pos->lnum, false);
+                ptr = ml_get_buf(buf, pos->lnum);
                 pos->col -= utf_head_off(ptr, ptr + pos->col);
               }
             }
@@ -962,7 +962,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
   // A pattern like "\n\zs" may go past the last line.
   if (pos->lnum > buf->b_ml.ml_line_count) {
     pos->lnum = buf->b_ml.ml_line_count;
-    pos->col = (int)strlen(ml_get_buf(buf, pos->lnum, false));
+    pos->col = (int)strlen(ml_get_buf(buf, pos->lnum));
     if (pos->col > 0) {
       pos->col--;
     }
@@ -1467,7 +1467,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
     if (start == 0) {
       start = pos->lnum;
     }
-    char *ptr = ml_get_buf(buf, pos->lnum, false);
+    char *ptr = ml_get_buf(buf, pos->lnum);
     char *p = skipwhite(ptr);
     pos->col = (colnr_T)(p - ptr);
 

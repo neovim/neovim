@@ -1707,7 +1707,7 @@ void ex_luado(exarg_T *const eap)
       break;
     }
     lua_pushvalue(lstate, -1);
-    const char *const old_line = ml_get_buf(curbuf, l, false);
+    const char *const old_line = ml_get_buf(curbuf, l);
     // Get length of old_line here as calling Lua code may free it.
     const size_t old_line_len = strlen(old_line);
     lua_pushstring(lstate, old_line);

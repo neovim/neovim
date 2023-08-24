@@ -1706,7 +1706,7 @@ void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
   FUNC_ATTR_NONNULL_ALL
 {
   if (lp->col > 0 || lp->coladd > 1) {
-    const char *const p = ml_get_buf(buf, lp->lnum, false);
+    const char *const p = ml_get_buf(buf, lp->lnum);
     if (*p == NUL || (int)strlen(p) < lp->col) {
       lp->col = 0;
     } else {

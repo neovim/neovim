@@ -1049,7 +1049,7 @@ static char *reg_getline(linenr_T lnum)
     // Must have matched the "\n" in the last line.
     return "";
   }
-  return ml_get_buf(rex.reg_buf, rex.reg_firstlnum + lnum, false);
+  return ml_get_buf(rex.reg_buf, rex.reg_firstlnum + lnum);
 }
 
 static uint8_t *reg_startzp[NSUBEXP];  // Workspace to mark beginning
