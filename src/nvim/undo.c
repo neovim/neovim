@@ -645,7 +645,7 @@ void u_compute_hash(buf_T *buf, uint8_t *hash)
   context_sha256_T ctx;
   sha256_start(&ctx);
   for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-    char *p = ml_get_buf(buf, lnum, false);
+    char *p = ml_get_buf(buf, lnum);
     sha256_update(&ctx, (uint8_t *)p, strlen(p) + 1);
   }
   sha256_finish(&ctx, hash);
@@ -2779,7 +2779,7 @@ void u_find_first_changed(void)
   linenr_T lnum;
   for (lnum = 1; lnum < curbuf->b_ml.ml_line_count
        && lnum <= uep->ue_size; lnum++) {
-    if (strcmp(ml_get_buf(curbuf, lnum, false), uep->ue_array[lnum - 1]) != 0) {
+    if (strcmp(ml_get_buf(curbuf, lnum), uep->ue_array[lnum - 1]) != 0) {
       clearpos(&(uhp->uh_cursor));
       uhp->uh_cursor.lnum = lnum;
       return;
@@ -3073,7 +3073,7 @@ static char *u_save_line(linenr_T lnum)
 /// @param buf buffer to copy from
 static char *u_save_line_buf(buf_T *buf, linenr_T lnum)
 {
-  return xstrdup(ml_get_buf(buf, lnum, false));
+  return xstrdup(ml_get_buf(buf, lnum));
 }
 
 /// Check if the 'modified' flag is set, or 'ff' has changed (only need to

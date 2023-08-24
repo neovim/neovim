@@ -512,7 +512,7 @@ void win_redr_ruler(win_T *wp)
 
   // Check if not in Insert mode and the line is empty (will show "0-1").
   int empty_line = (State & MODE_INSERT) == 0
-                   && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, false) == NUL;
+                   && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum) == NUL;
 
   int width;
   int row;
@@ -1012,7 +1012,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
   }
 
   // Get line & check if empty (cursorpos will show "0-1").
-  const char *line_ptr = ml_get_buf(wp->w_buffer, lnum, false);
+  const char *line_ptr = ml_get_buf(wp->w_buffer, lnum);
   bool empty_line = (*line_ptr == NUL);
 
   // Get the byte value now, in case we need it below. This is more

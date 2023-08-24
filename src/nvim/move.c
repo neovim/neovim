@@ -1164,7 +1164,7 @@ void f_screenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static int virtcol2col(win_T *wp, linenr_T lnum, int vcol)
 {
   int offset = vcol2col(wp, lnum, vcol);
-  char *line = ml_get_buf(wp->w_buffer, lnum, false);
+  char *line = ml_get_buf(wp->w_buffer, lnum);
   char *p = line + offset;
 
   // For a multibyte character, need to return the column number of the first byte.

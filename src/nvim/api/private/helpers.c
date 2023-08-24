@@ -517,7 +517,7 @@ String buf_get_text(buf_T *buf, int64_t lnum, int64_t start_col, int64_t end_col
     return rv;
   }
 
-  char *bufstr = ml_get_buf(buf, (linenr_T)lnum, false);
+  char *bufstr = ml_get_buf(buf, (linenr_T)lnum);
   size_t line_length = strlen(bufstr);
 
   start_col = start_col < 0 ? (int64_t)line_length + start_col + 1 : start_col;

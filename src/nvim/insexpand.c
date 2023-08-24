@@ -3045,14 +3045,14 @@ static char *ins_compl_get_next_word_or_line(buf_T *ins_buf, pos_T *cur_match_po
                                              bool *cont_s_ipos)
 {
   *match_len = 0;
-  char *ptr = ml_get_buf(ins_buf, cur_match_pos->lnum, false) + cur_match_pos->col;
+  char *ptr = ml_get_buf(ins_buf, cur_match_pos->lnum) + cur_match_pos->col;
   int len;
   if (ctrl_x_mode_line_or_eval()) {
     if (compl_status_adding()) {
       if (cur_match_pos->lnum >= ins_buf->b_ml.ml_line_count) {
         return NULL;
       }
-      ptr = ml_get_buf(ins_buf, cur_match_pos->lnum + 1, false);
+      ptr = ml_get_buf(ins_buf, cur_match_pos->lnum + 1);
       if (!p_paste) {
         ptr = skipwhite(ptr);
       }
@@ -3080,7 +3080,7 @@ static char *ins_compl_get_next_word_or_line(buf_T *ins_buf, pos_T *cur_match_po
         // normal command "J" was used. IOSIZE is always greater than
         // compl_length, so the next strncpy always works -- Acevedo
         strncpy(IObuff, ptr, (size_t)len);  // NOLINT(runtime/printf)
-        ptr = ml_get_buf(ins_buf, cur_match_pos->lnum + 1, false);
+        ptr = ml_get_buf(ins_buf, cur_match_pos->lnum + 1);
         tmp_ptr = ptr = skipwhite(ptr);
         // Find start of next word.
         tmp_ptr = find_word_start(tmp_ptr);

@@ -2842,7 +2842,7 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   // Copy the lines in "frombuf" to "tobuf".
   curbuf = tobuf;
   for (linenr_T lnum = 1; lnum <= frombuf->b_ml.ml_line_count; lnum++) {
-    char *p = xstrdup(ml_get_buf(frombuf, lnum, false));
+    char *p = xstrdup(ml_get_buf(frombuf, lnum));
     if (ml_append(lnum - 1, p, 0, false) == FAIL) {
       xfree(p);
       retval = FAIL;

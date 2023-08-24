@@ -1970,7 +1970,7 @@ void mb_check_adjust_col(void *win_)
 
   // Column 0 is always valid.
   if (oldcol != 0) {
-    char *p = ml_get_buf(win->w_buffer, win->w_cursor.lnum, false);
+    char *p = ml_get_buf(win->w_buffer, win->w_cursor.lnum);
     colnr_T len = (colnr_T)strlen(p);
 
     // Empty line or invalid column?

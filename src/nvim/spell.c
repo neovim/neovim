@@ -1289,7 +1289,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
   decor_spell_nav_start(wp);
 
   while (!got_int) {
-    char *line = ml_get_buf(wp->w_buffer, lnum, false);
+    char *line = ml_get_buf(wp->w_buffer, lnum);
 
     len = strlen(line);
     if (buflen < len + MAXWLEN + 2) {
@@ -1316,7 +1316,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
 
       // Need to get the line again, may have looked at the previous
       // one.
-      line = ml_get_buf(wp->w_buffer, lnum, false);
+      line = ml_get_buf(wp->w_buffer, lnum);
     }
 
     // Copy the line into "buf" and append the start of the next line if
@@ -1326,7 +1326,7 @@ size_t spell_move_to(win_T *wp, int dir, bool allwords, bool curline, hlf_T *att
     STRCPY(buf, line);
     if (lnum < wp->w_buffer->b_ml.ml_line_count) {
       spell_cat_line(buf + strlen(buf),
-                     ml_get_buf(wp->w_buffer, lnum + 1, false),
+                     ml_get_buf(wp->w_buffer, lnum + 1),
                      MAXWLEN);
     }
     char *p = buf + skip;
@@ -2550,7 +2550,7 @@ bool check_need_cap(win_T *wp, linenr_T lnum, colnr_T col)
   }
 
   bool need_cap = false;
-  char *line = col ? ml_get_buf(wp->w_buffer, lnum, false) : NULL;
+  char *line = col ? ml_get_buf(wp->w_buffer, lnum) : NULL;
   char *line_copy = NULL;
   colnr_T endcol = 0;
   if (col == 0 || getwhitecols(line) >= col) {
@@ -2559,7 +2559,7 @@ bool check_need_cap(win_T *wp, linenr_T lnum, colnr_T col)
     if (lnum == 1) {
       need_cap = true;
     } else {
-      line = ml_get_buf(wp->w_buffer, lnum - 1, false);
+      line = ml_get_buf(wp->w_buffer, lnum - 1);
       if (*skipwhite(line) == NUL) {
         need_cap = true;
       } else {

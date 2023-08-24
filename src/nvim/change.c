@@ -609,7 +609,7 @@ bool file_ff_differs(buf_T *buf, bool ignore_empty)
   if (ignore_empty
       && (buf->b_flags & BF_NEW)
       && buf->b_ml.ml_line_count == 1
-      && *ml_get_buf(buf, (linenr_T)1, false) == NUL) {
+      && *ml_get_buf(buf, (linenr_T)1) == NUL) {
     return false;
   }
   if (buf->b_start_ffc != *buf->b_p_ff) {

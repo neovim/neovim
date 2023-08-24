@@ -4644,7 +4644,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
         if (next_linenr == orig_buf->b_ml.ml_line_count + 1) {
           line = "";
         } else {
-          line = ml_get_buf(orig_buf, next_linenr, false);
+          line = ml_get_buf(orig_buf, next_linenr);
           line_size = strlen(line) + (size_t)col_width + 1;
 
           // Reallocate if line not long enough

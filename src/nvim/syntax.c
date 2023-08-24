@@ -2475,7 +2475,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
           break;
         }
 
-        line = ml_get_buf(syn_buf, startpos->lnum, false);
+        line = ml_get_buf(syn_buf, startpos->lnum);
         int line_len = (int)strlen(line);
 
         // take care of an empty match or negative offset
@@ -2611,7 +2611,7 @@ static void syn_add_end_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *spp
   if (result->lnum > syn_buf->b_ml.ml_line_count) {
     col = 0;
   } else if (off != 0) {
-    base = ml_get_buf(syn_buf, result->lnum, false);
+    base = ml_get_buf(syn_buf, result->lnum);
     p = base + col;
     if (off > 0) {
       while (off-- > 0 && *p != NUL) {
@@ -2653,10 +2653,10 @@ static void syn_add_start_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *s
   if (result->lnum > syn_buf->b_ml.ml_line_count) {
     // a "\n" at the end of the pattern may take us below the last line
     result->lnum = syn_buf->b_ml.ml_line_count;
-    col = (int)strlen(ml_get_buf(syn_buf, result->lnum, false));
+    col = (int)strlen(ml_get_buf(syn_buf, result->lnum));
   }
   if (off != 0) {
-    base = ml_get_buf(syn_buf, result->lnum, false);
+    base = ml_get_buf(syn_buf, result->lnum);
     p = base + col;
     if (off > 0) {
       while (off-- && *p != NUL) {
@@ -2675,7 +2675,7 @@ static void syn_add_start_off(lpos_T *result, regmmatch_T *regmatch, synpat_T *s
 /// Get current line in syntax buffer.
 static char *syn_getcurline(void)
 {
-  return ml_get_buf(syn_buf, current_lnum, false);
+  return ml_get_buf(syn_buf, current_lnum);
 }
 
 // Call vim_regexec() to find a match with "rmp" in "syn_buf".

@@ -105,7 +105,7 @@ static int regex_match_line(lua_State *lstate)
     return luaL_error(lstate, "invalid row");
   }
 
-  char *line = ml_get_buf(buf, rownr + 1, false);
+  char *line = ml_get_buf(buf, rownr + 1);
   size_t len = strlen(line);
 
   if (start < 0 || (size_t)start > len) {

@@ -1803,20 +1803,40 @@ theend:
 //  line2 = ml_get(2);  // line1 is now invalid!
 // Make a copy of the line if necessary.
 
-/// @return  a pointer to a (read-only copy of a) line.
+/// @return  a pointer to a (read-only copy of a) line in curbuf.
 ///
 /// On failure an error message is given and IObuff is returned (to avoid
 /// having to check for error everywhere).
 char *ml_get(linenr_T lnum)
 {
-  return ml_get_buf(curbuf, lnum, false);
+  return ml_get_buf_impl(curbuf, lnum, false);
+}
+
+/// @return  a pointer to a (read-only copy of a) line.
+///
+/// This is the same as ml_get(), but taking in the buffer
+/// as an argument.
+char *ml_get_buf(buf_T *buf, linenr_T lnum)
+{
+  return ml_get_buf_impl(buf, lnum, false);
+}
+
+/// Like `ml_get_buf`, but allow the line to be mutated in place.
+///
+/// This is very limited. Generally ml_replace_buf()
+/// should be used to modify a line.
+///
+/// @return a pointer to a line in the buffer
+char *ml_get_buf_mut(buf_T *buf, linenr_T lnum)
+{
+  return ml_get_buf_impl(buf, lnum, true);
 }
 
 /// @return  pointer to position "pos".
 char *ml_get_pos(const pos_T *pos)
   FUNC_ATTR_NONNULL_ALL
 {
-  return ml_get_buf(curbuf, pos->lnum, false) + pos->col;
+  return ml_get_buf(curbuf, pos->lnum) + pos->col;
 }
 
 /// @return  codepoint at pos. pos must be either valid or have col set to MAXCOL!
@@ -1833,7 +1853,7 @@ int gchar_pos(pos_T *pos)
 /// @param will_change  true mark the buffer dirty (chars in the line will be changed)
 ///
 /// @return  a pointer to a line in a specific buffer
-char *ml_get_buf(buf_T *buf, linenr_T lnum, bool will_change)
+static char *ml_get_buf_impl(buf_T *buf, linenr_T lnum, bool will_change)
   FUNC_ATTR_NONNULL_ALL
 {
   static int recursive = 0;
@@ -2447,7 +2467,7 @@ int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy)
   }
 
   if (kv_size(buf->update_callbacks)) {
-    ml_add_deleted_len_buf(buf, ml_get_buf(buf, lnum, false), -1);
+    ml_add_deleted_len_buf(buf, ml_get_buf(buf, lnum), -1);
   }
 
   if (buf->b_ml.ml_flags & (ML_LINE_DIRTY | ML_ALLOCATED)) {

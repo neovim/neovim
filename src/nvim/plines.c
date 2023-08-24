@@ -98,7 +98,7 @@ int plines_win_nofill(win_T *wp, linenr_T lnum, bool limit_winheight)
 /// Does not care about folding, 'wrap' or filler lines.
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
-  char *s = ml_get_buf(wp->w_buffer, lnum, false);
+  char *s = ml_get_buf(wp->w_buffer, lnum);
   chartabsize_T cts;
   init_chartabsize_arg(&cts, wp, lnum, 0, s, s);
   if (*s == NUL && !cts.cts_has_virt_text) {
@@ -143,7 +143,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
     return lines + 1;
   }
 
-  char *line = ml_get_buf(wp->w_buffer, lnum, false);
+  char *line = ml_get_buf(wp->w_buffer, lnum);
 
   colnr_T col = 0;
   chartabsize_T cts;
@@ -292,7 +292,7 @@ unsigned win_linetabsize(win_T *wp, linenr_T lnum, char *line, colnr_T len)
 /// screen, taking into account the size of a tab and inline virtual text.
 unsigned linetabsize(win_T *wp, linenr_T lnum)
 {
-  return win_linetabsize(wp, lnum, ml_get_buf(wp->w_buffer, lnum, false), (colnr_T)MAXCOL);
+  return win_linetabsize(wp, lnum, ml_get_buf(wp->w_buffer, lnum), (colnr_T)MAXCOL);
 }
 
 void win_linetabsize_cts(chartabsize_T *cts, colnr_T len)

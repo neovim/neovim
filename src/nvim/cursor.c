@@ -108,7 +108,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
                  || (VIsual_active && *p_sel != 'o')
                  || ((get_ve_flags() & VE_ONEMORE) && wcol < MAXCOL);
 
-  char *line = ml_get_buf(curbuf, pos->lnum, false);
+  char *line = ml_get_buf(curbuf, pos->lnum);
 
   if (wcol >= MAXCOL) {
     idx = (int)strlen(line) - 1 + one_more;
@@ -315,7 +315,7 @@ void check_pos(buf_T *buf, pos_T *pos)
   }
 
   if (pos->col > 0) {
-    char *line = ml_get_buf(buf, pos->lnum, false);
+    char *line = ml_get_buf(buf, pos->lnum);
     colnr_T len = (colnr_T)strlen(line);
     if (pos->col > len) {
       pos->col = len;
@@ -353,7 +353,7 @@ void check_cursor_col_win(win_T *win)
   colnr_T oldcoladd = win->w_cursor.col + win->w_cursor.coladd;
   unsigned cur_ve_flags = get_ve_flags();
 
-  colnr_T len = (colnr_T)strlen(ml_get_buf(win->w_buffer, win->w_cursor.lnum, false));
+  colnr_T len = (colnr_T)strlen(ml_get_buf(win->w_buffer, win->w_cursor.lnum));
   if (len == 0) {
     win->w_cursor.col = 0;
   } else if (win->w_cursor.col >= len) {
@@ -501,18 +501,17 @@ int gchar_cursor(void)
 /// It is directly written into the block.
 void pchar_cursor(char c)
 {
-  *(ml_get_buf(curbuf, curwin->w_cursor.lnum, true)
-    + curwin->w_cursor.col) = c;
+  *(ml_get_buf_mut(curbuf, curwin->w_cursor.lnum) + curwin->w_cursor.col) = c;
 }
 
 /// @return  pointer to cursor line.
 char *get_cursor_line_ptr(void)
 {
-  return ml_get_buf(curbuf, curwin->w_cursor.lnum, false);
+  return ml_get_buf(curbuf, curwin->w_cursor.lnum);
 }
 
 /// @return  pointer to cursor position.
 char *get_cursor_pos_ptr(void)
 {
-  return ml_get_buf(curbuf, curwin->w_cursor.lnum, false) + curwin->w_cursor.col;
+  return ml_get_buf(curbuf, curwin->w_cursor.lnum) + curwin->w_cursor.col;
 }

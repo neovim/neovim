@@ -2816,7 +2816,7 @@ static void add_sound_suggest(suginfo_T *su, char *goodword, int score, langp_T 
   }
 
   // Go over the list of good words that produce this soundfold word
-  char *nrline = ml_get_buf(slang->sl_sugbuf, (linenr_T)sfwordnr + 1, false);
+  char *nrline = ml_get_buf(slang->sl_sugbuf, (linenr_T)sfwordnr + 1);
   int orgnr = 0;
   while (*nrline != NUL) {
     // The wordnr was stored in a minimal nr of bytes as an offset to the
