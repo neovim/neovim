@@ -2377,11 +2377,16 @@ function M.match(args)
     -- If the function tries to use the filename that is nil then it will fail,
     -- but this enables checks which do not need a filename to still work.
     local ok
-    ok, ft = pcall(require('vim.filetype.detect').match_contents, contents, name, function(ext)
-      return dispatch(extension[ext], name, bufnr)
-    end)
-    if ok and ft then
-      return ft
+    ok, ft, on_detect = pcall(
+      require('vim.filetype.detect').match_contents,
+      contents,
+      name,
+      function(ext)
+        return dispatch(extension[ext], name, bufnr)
+      end
+    )
+    if ok then
+      return ft, on_detect
     end
   end
 end
