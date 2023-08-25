@@ -258,6 +258,7 @@ Highlight groups:
   |hl-NormalFloat| highlights floating window
   |hl-FloatBorder| highlights border of a floating window
   |hl-FloatTitle| highlights title of a floating window
+  |hl-FloatFooter| highlights footer of a floating window
   |hl-NormalNC| highlights non-current windows
   |hl-MsgArea| highlights messages/cmdline area
   |hl-MsgSeparator| highlights separator for scrolled messages

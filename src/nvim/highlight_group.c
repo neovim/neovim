@@ -173,6 +173,7 @@ static const char *highlight_init_both[] = {
   "default link NormalFloat Pmenu",
   "default link FloatBorder WinSeparator",
   "default link FloatTitle Title",
+  "default link FloatFooter Title",
   "default FloatShadow blend=80 guibg=Black",
   "default FloatShadowThrough blend=100 guibg=Black",
   "RedrawDebugNormal cterm=reverse gui=reverse",

@@ -5273,6 +5273,8 @@ NormalFloat	Normal text in floating windows.
 FloatBorder	Border of floating windows.
 							*hl-FloatTitle*
 FloatTitle	Title of floating windows.
+							*hl-FloatFooter*
+FloatFooter	Footer of floating windows.
 							*hl-NormalNC*
 NormalNC	Normal text in non-current windows.
 							*hl-Pmenu*

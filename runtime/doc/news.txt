@@ -156,7 +156,7 @@ The following new APIs and features were added.
   support fully MessagePack-RPC compliant clients.
 
 • Floating windows can now show footer with new `footer` and `footer_pos`
-  config fields.
+  config fields. Uses |hl-FloatFooter| by default.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*

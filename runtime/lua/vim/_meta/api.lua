@@ -1559,7 +1559,7 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---                 Default is `"left"`.
 ---               • footer: Footer (optional) in window border, string or
 ---                 list. List should consist of `[text, highlight]` tuples.
----                 If string, the default highlight group is `FloatTitle`.
+---                 If string, the default highlight group is `FloatFooter`.
 ---               • footer_pos: Footer position. Must be set with `footer`
 ---                 option. Value can be one of "left", "center", or "right".
 ---                 Default is `"left"`.
