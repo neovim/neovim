@@ -138,7 +138,7 @@ test: $(TEST)
 
 iwyu: build/.ran-cmake
 	cmake --preset iwyu
-	cmake --build --preset iwyu > build/iwyu.log
+	cmake --build build > build/iwyu.log
 	iwyu-fix-includes --only_re="src/nvim" --ignore_re="src/nvim/(auto|map.h|eval/encode.c)" --safe_headers < build/iwyu.log
 	cmake -B build -U ENABLE_IWYU
 
