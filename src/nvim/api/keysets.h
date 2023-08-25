@@ -99,6 +99,8 @@ typedef struct {
   Object border;
   Object title;
   String title_pos;
+  Object footer;
+  String footer_pos;
   String style;
   Boolean noautocmd;
 } Dict(float_config);

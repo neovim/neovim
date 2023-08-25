@@ -145,11 +145,18 @@
 ///     By default, `FloatBorder` highlight is used, which links to `WinSeparator`
 ///     when not defined.  It could also be specified by character:
 ///       [ ["+", "MyCorner"], ["x", "MyBorder"] ].
-///   - title: Title (optional) in window border, String or list.
-///     List is [text, highlight] tuples. if is string the default
-///     highlight group is `FloatTitle`.
-///   - title_pos: Title position must set with title option.
-///     value can be of `left` `center` `right` default is left.
+///   - title: Title (optional) in window border, string or list.
+///     List should consist of `[text, highlight]` tuples.
+///     If string, the default highlight group is `FloatTitle`.
+///   - title_pos: Title position. Must be set with `title` option.
+///     Value can be one of "left", "center", or "right".
+///     Default is `"left"`.
+///   - footer: Footer (optional) in window border, string or list.
+///     List should consist of `[text, highlight]` tuples.
+///     If string, the default highlight group is `FloatTitle`.
+///   - footer_pos: Footer position. Must be set with `footer` option.
+///     Value can be one of "left", "center", or "right".
+///     Default is `"left"`.
 ///   - noautocmd: If true then no buffer-related autocommand events such as
 ///                  |BufEnter|, |BufLeave| or |BufWinEnter| may fire from
 ///                  calling this function.
@@ -247,11 +254,19 @@ Dictionary config_put_bordertext(Dictionary config, FloatConfig *fconfig,
   AlignTextPos align;
   char *field_name;
   char *field_pos_name;
-  if (bordertext_type == kBorderTextTitle) {
+  switch (bordertext_type) {
+  case kBorderTextTitle:
     chunks = fconfig->title_chunks;
     align = fconfig->title_pos;
     field_name = "title";
     field_pos_name = "title_pos";
+    break;
+  case kBorderTextFooter:
+    chunks = fconfig->footer_chunks;
+    align = fconfig->footer_pos;
+    field_name = "footer";
+    field_pos_name = "footer_pos";
+    break;
   }
 
   Array bordertext = ARRAY_DICT_INIT;
@@ -345,6 +360,9 @@ Dictionary nvim_win_get_config(Window window, Error *err)
       if (config->title) {
         rv = config_put_bordertext(rv, config, kBorderTextTitle);
       }
+      if (config->footer) {
+        rv = config_put_bordertext(rv, config, kBorderTextFooter);
+      }
     }
   }
 
@@ -410,10 +428,17 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type,
   bool *is_present;
   VirtText *chunks;
   int *width;
-  if (bordertext_type == kBorderTextTitle) {
+  switch (bordertext_type) {
+  case kBorderTextTitle:
     is_present = &fconfig->title;
     chunks = &fconfig->title_chunks;
     width = &fconfig->title_width;
+    break;
+  case kBorderTextFooter:
+    is_present = &fconfig->footer;
+    chunks = &fconfig->footer_chunks;
+    width = &fconfig->footer_width;
+    break;
   }
 
   if (bordertext.type == kObjectTypeString) {
@@ -449,8 +474,13 @@ static bool parse_bordertext_pos(String bordertext_pos, BorderTextType bordertex
                                  FloatConfig *fconfig, Error *err)
 {
   AlignTextPos *align;
-  if (bordertext_type == kBorderTextTitle) {
+  switch (bordertext_type) {
+  case kBorderTextTitle:
     align = &fconfig->title_pos;
+    break;
+  case kBorderTextFooter:
+    align = &fconfig->footer_pos;
+    break;
   }
 
   if (bordertext_pos.size == 0) {
@@ -467,8 +497,13 @@ static bool parse_bordertext_pos(String bordertext_pos, BorderTextType bordertex
   } else if (strequal(pos, "right")) {
     *align = kAlignRight;
   } else {
-    if (bordertext_type == kBorderTextTitle) {
+    switch (bordertext_type) {
+    case kBorderTextTitle:
       api_set_error(err, kErrorTypeValidation, "invalid title_pos value");
+      break;
+    case kBorderTextFooter:
+      api_set_error(err, kErrorTypeValidation, "invalid footer_pos value");
+      break;
     }
     return false;
   }
@@ -559,8 +594,9 @@ static void parse_border_style(Object style,  FloatConfig *fconfig, Error *err)
     String str = style.data.string;
     if (str.size == 0 || strequal(str.data, "none")) {
       fconfig->border = false;
-      // title does not work with border equal none
+      // border text does not work with border equal none
       fconfig->title = false;
+      fconfig->footer = false;
       return;
     }
     for (size_t i = 0; defaults[i].name; i++) {
@@ -746,6 +782,33 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
   } else {
     if (HAS_KEY_X(config, title_pos)) {
       api_set_error(err, kErrorTypeException, "title_pos requires title to be set");
+      return false;
+    }
+  }
+
+  if (HAS_KEY_X(config, footer)) {
+    // footer only work with border
+    if (!HAS_KEY_X(config, border) && !fconfig->border) {
+      api_set_error(err, kErrorTypeException, "footer requires border to be set");
+      return false;
+    }
+
+    if (fconfig->footer) {
+      clear_virttext(&fconfig->footer_chunks);
+    }
+
+    parse_bordertext(config->footer, kBorderTextFooter, fconfig, err);
+    if (ERROR_SET(err)) {
+      return false;
+    }
+
+    // handles unset 'footer_pos' same as empty string
+    if (!parse_bordertext_pos(config->footer_pos, kBorderTextFooter, fconfig, err)) {
+      return false;
+    }
+  } else {
+    if (HAS_KEY_X(config, footer_pos)) {
+      api_set_error(err, kErrorTypeException, "footer_pos requires footer to be set");
       return false;
     }
   }

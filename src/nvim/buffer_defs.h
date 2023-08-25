@@ -938,6 +938,7 @@ typedef enum {
 
 typedef enum {
   kBorderTextTitle = 0,
+  kBorderTextFooter = 1,
 } BorderTextType;
 
 typedef struct {
@@ -952,14 +953,18 @@ typedef struct {
   int zindex;
   WinStyle style;
   bool border;
-  bool title;
   bool shadow;
   schar_T border_chars[8];
   int border_hl_ids[8];
   int border_attr[8];
+  bool title;
   AlignTextPos title_pos;
   VirtText title_chunks;
   int title_width;
+  bool footer;
+  AlignTextPos footer_pos;
+  VirtText footer_chunks;
+  int footer_width;
   bool noautocmd;
 } FloatConfig;
 

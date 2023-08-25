@@ -108,6 +108,8 @@ error('Cannot require a meta file')
 --- @field border? any
 --- @field title? any
 --- @field title_pos? string
+--- @field footer? any
+--- @field footer_pos? string
 --- @field style? string
 --- @field noautocmd? boolean
 

@@ -782,9 +782,16 @@ static void win_redr_border(win_T *wp)
     if (adj[3]) {
       grid_put_schar(grid, irow + adj[0], 0, chars[6], attrs[6]);
     }
+
     for (int i = 0; i < icol; i++) {
       int ic = (i == 0 && !adj[3] && chars[6][0]) ? 6 : 5;
       grid_put_schar(grid, irow + adj[0], i + adj[3], chars[ic], attrs[ic]);
+    }
+
+    if (wp->w_float_config.footer) {
+      int footer_col = win_get_bordertext_col(icol, wp->w_float_config.footer_width,
+                                              wp->w_float_config.footer_pos);
+      win_redr_bordertext(wp, grid, wp->w_float_config.footer_chunks, grid->rows - 1, footer_col);
     }
     if (adj[1]) {
       grid_put_schar(grid, irow + adj[0], icol + adj[3], chars[4], attrs[4]);
