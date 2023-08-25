@@ -369,13 +369,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
           head += (max_head_vcol - (vcol + head_prev + prev_rem)
                    + width2 - 1) / width2 * head_mid;
         } else if (max_head_vcol < 0) {
-          int off = 0;
-          if (c != NUL || !(State & MODE_NORMAL)) {
-            off += cts->cts_cur_text_width_left;
-          }
-          if (c != NUL && (State & MODE_NORMAL)) {
-            off += cts->cts_cur_text_width_right;
-          }
+          int off = virt_text_cursor_off(cts, c == NUL);
           if (off >= prev_rem) {
             head += (1 + (off - prev_rem) / width) * head_mid;
           }
@@ -451,6 +445,23 @@ static bool in_win_border(win_T *wp, colnr_T vcol)
     return false;
   }
   return (vcol - width1) % width2 == width2 - 1;
+}
+
+/// Get how many virtual columns inline virtual text should offset the cursor.
+///
+/// @param cts     should contain information stored by win_lbr_chartabsize()
+///                about widths of left and right gravity virtual text
+/// @param on_NUL  whether this is the end of the line
+static int virt_text_cursor_off(chartabsize_T *cts, bool on_NUL)
+{
+  int off = 0;
+  if (!on_NUL || !(State & MODE_NORMAL)) {
+    off += cts->cts_cur_text_width_left;
+  }
+  if (!on_NUL && (State & MODE_NORMAL)) {
+    off += cts->cts_cur_text_width_right;
+  }
+  return off;
 }
 
 /// Get virtual column number of pos.
@@ -594,12 +605,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       // cursor at end
       *cursor = vcol + incr - 1;
     } else {
-      if (!on_NUL || !(State & MODE_NORMAL)) {
-        vcol += cts.cts_cur_text_width_left;
-      }
-      if (!on_NUL && (State & MODE_NORMAL)) {
-        vcol += cts.cts_cur_text_width_right;
-      }
+      vcol += virt_text_cursor_off(&cts, on_NUL);
       // cursor at start
       *cursor = vcol + head;
     }
