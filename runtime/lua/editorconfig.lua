@@ -112,7 +112,20 @@ end
 function M.properties.insert_final_newline(bufnr, val)
   assert(val == 'true' or val == 'false', 'insert_final_newline must be either "true" or "false"')
   vim.bo[bufnr].fixendofline = val == 'true'
-  vim.bo[bufnr].endofline = val == 'true'
+
+  -- 'endofline' can be read to detect if the file contains a final newline,
+  -- so only change 'endofline' right before writing the file
+  local endofline = val == 'true'
+  if vim.bo[bufnr].endofline ~= endofline then
+    vim.api.nvim_create_autocmd('BufWritePre', {
+      group = 'editorconfig',
+      buffer = bufnr,
+      once = true,
+      callback = function()
+        vim.bo[bufnr].endofline = endofline
+      end,
+    })
+  end
 end
 
 --- Modified version of |glob2regpat()| that does not match path separators on *.

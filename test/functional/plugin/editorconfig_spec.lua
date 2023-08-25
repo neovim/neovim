@@ -160,8 +160,8 @@ describe('editorconfig', function()
   end)
 
   it('sets newline options', function()
-    test_case('with_newline.txt', { fixendofline = true, endofline = true })
-    test_case('without_newline.txt', { fixendofline = false, endofline = false })
+    test_case('with_newline.txt', { fixendofline = true })
+    test_case('without_newline.txt', { fixendofline = false })
   end)
 
   it('respects trim_trailing_whitespace', function()
