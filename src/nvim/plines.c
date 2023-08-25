@@ -3,7 +3,6 @@
 
 // plines.c: calculate the vertical and horizontal size of text in a window
 
-#include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -17,12 +16,15 @@
 #include "nvim/globals.h"
 #include "nvim/indent.h"
 #include "nvim/macros.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/plines.h"
 #include "nvim/pos.h"
+#include "nvim/state.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -421,6 +423,298 @@ static int win_nolbr_chartabsize(chartabsize_T *cts, int *headp)
     return 3;
   }
   return n;
+}
+
+/// Check that virtual column "vcol" is in the rightmost column of window "wp".
+///
+/// @param  wp    window
+/// @param  vcol  column number
+static bool in_win_border(win_T *wp, colnr_T vcol)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+{
+  if (wp->w_width_inner == 0) {
+    // there is no border
+    return false;
+  }
+  int width1 = wp->w_width_inner - win_col_off(wp);  // width of first line (after line number)
+
+  if ((int)vcol < width1 - 1) {
+    return false;
+  }
+
+  if ((int)vcol == width1 - 1) {
+    return true;
+  }
+  int width2 = width1 + win_col_off2(wp);  // width of further lines
+
+  if (width2 <= 0) {
+    return false;
+  }
+  return (vcol - width1) % width2 == width2 - 1;
+}
+
+/// Get virtual column number of pos.
+///  start: on the first position of this character (TAB, ctrl)
+/// cursor: where the cursor is on this character (first char, except for TAB)
+///    end: on the last position of this character (TAB, ctrl)
+///
+/// This is used very often, keep it fast!
+///
+/// @param wp
+/// @param pos
+/// @param start
+/// @param cursor
+/// @param end
+void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
+{
+  char *ptr;     // points to current char
+  char *posptr;  // points to char at pos->col
+  int incr;
+  int head;
+  long *vts = wp->w_buffer->b_p_vts_array;
+  int ts = (int)wp->w_buffer->b_p_ts;
+
+  colnr_T vcol = 0;
+  char *line = ptr = ml_get_buf(wp->w_buffer, pos->lnum);  // start of the line
+
+  if (pos->col == MAXCOL) {
+    // continue until the NUL
+    posptr = NULL;
+  } else {
+    // In a few cases the position can be beyond the end of the line.
+    for (colnr_T i = 0; i < pos->col; i++) {
+      if (ptr[i] == NUL) {
+        pos->col = i;
+        break;
+      }
+    }
+    posptr = ptr + pos->col;
+    posptr -= utf_head_off(line, posptr);
+  }
+
+  chartabsize_T cts;
+  bool on_NUL = false;
+  init_chartabsize_arg(&cts, wp, pos->lnum, 0, line, line);
+  cts.cts_max_head_vcol = -1;
+
+  // This function is used very often, do some speed optimizations.
+  // When 'list', 'linebreak', 'showbreak' and 'breakindent' are not set
+  // and there are no virtual text use a simple loop.
+  // Also use this when 'list' is set but tabs take their normal size.
+  if ((!wp->w_p_list || (wp->w_p_lcs_chars.tab1 != NUL))
+      && !wp->w_p_lbr
+      && *get_showbreak_value(wp) == NUL
+      && !wp->w_p_bri
+      && !cts.cts_has_virt_text) {
+    while (true) {
+      head = 0;
+      int c = (uint8_t)(*ptr);
+
+      // make sure we don't go past the end of the line
+      if (c == NUL) {
+        // NUL at end of line only takes one column
+        incr = 1;
+        break;
+      }
+
+      // A tab gets expanded, depending on the current column
+      if (c == TAB) {
+        incr = tabstop_padding(vcol, ts, vts);
+      } else {
+        // For utf-8, if the byte is >= 0x80, need to look at
+        // further bytes to find the cell width.
+        if (c >= 0x80) {
+          incr = utf_ptr2cells(ptr);
+        } else {
+          incr = byte2cells(c);
+        }
+
+        // If a double-cell char doesn't fit at the end of a line
+        // it wraps to the next line, it's like this char is three
+        // cells wide.
+        if ((incr == 2)
+            && wp->w_p_wrap
+            && (MB_BYTE2LEN((uint8_t)(*ptr)) > 1)
+            && in_win_border(wp, vcol)) {
+          incr++;
+          head = 1;
+        }
+      }
+
+      if ((posptr != NULL) && (ptr >= posptr)) {
+        // character at pos->col
+        break;
+      }
+
+      vcol += incr;
+      MB_PTR_ADV(ptr);
+    }
+  } else {
+    while (true) {
+      // A tab gets expanded, depending on the current column
+      // Other things also take up space.
+      head = 0;
+      incr = win_lbr_chartabsize(&cts, &head);
+
+      // make sure we don't go past the end of the line
+      if (*cts.cts_ptr == NUL) {
+        // NUL at end of line only takes one column, unless there is virtual text
+        incr = MAX(1, cts.cts_cur_text_width_left + cts.cts_cur_text_width_right);
+        on_NUL = true;
+        break;
+      }
+
+      if ((posptr != NULL) && (cts.cts_ptr >= posptr)) {
+        // character at pos->col
+        break;
+      }
+
+      cts.cts_vcol += incr;
+      MB_PTR_ADV(cts.cts_ptr);
+    }
+    vcol = cts.cts_vcol;
+    ptr = cts.cts_ptr;
+  }
+  clear_chartabsize_arg(&cts);
+
+  if (start != NULL) {
+    *start = vcol + head;
+  }
+
+  if (end != NULL) {
+    *end = vcol + incr - 1;
+  }
+
+  if (cursor != NULL) {
+    if ((*ptr == TAB)
+        && (State & MODE_NORMAL)
+        && !wp->w_p_list
+        && !virtual_active()
+        && !(VIsual_active && ((*p_sel == 'e') || ltoreq(*pos, VIsual)))) {
+      // cursor at end
+      *cursor = vcol + incr - 1;
+    } else {
+      if (!on_NUL || !(State & MODE_NORMAL)) {
+        vcol += cts.cts_cur_text_width_left;
+      }
+      if (!on_NUL && (State & MODE_NORMAL)) {
+        vcol += cts.cts_cur_text_width_right;
+      }
+      // cursor at start
+      *cursor = vcol + head;
+    }
+  }
+}
+
+/// Get virtual cursor column in the current window, pretending 'list' is off.
+///
+/// @param posp
+///
+/// @retujrn The virtual cursor column.
+colnr_T getvcol_nolist(pos_T *posp)
+{
+  int list_save = curwin->w_p_list;
+  colnr_T vcol;
+
+  curwin->w_p_list = false;
+  if (posp->coladd) {
+    getvvcol(curwin, posp, NULL, &vcol, NULL);
+  } else {
+    getvcol(curwin, posp, NULL, &vcol, NULL);
+  }
+  curwin->w_p_list = list_save;
+  return vcol;
+}
+
+/// Get virtual column in virtual mode.
+///
+/// @param wp
+/// @param pos
+/// @param start
+/// @param cursor
+/// @param end
+void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
+{
+  colnr_T col;
+
+  if (virtual_active()) {
+    // For virtual mode, only want one value
+    getvcol(wp, pos, &col, NULL, NULL);
+
+    colnr_T coladd = pos->coladd;
+    colnr_T endadd = 0;
+
+    // Cannot put the cursor on part of a wide character.
+    char *ptr = ml_get_buf(wp->w_buffer, pos->lnum);
+
+    if (pos->col < (colnr_T)strlen(ptr)) {
+      int c = utf_ptr2char(ptr + pos->col);
+      if ((c != TAB) && vim_isprintc(c)) {
+        endadd = (colnr_T)(char2cells(c) - 1);
+        if (coladd > endadd) {
+          // past end of line
+          endadd = 0;
+        } else {
+          coladd = 0;
+        }
+      }
+    }
+    col += coladd;
+
+    if (start != NULL) {
+      *start = col;
+    }
+
+    if (cursor != NULL) {
+      *cursor = col;
+    }
+
+    if (end != NULL) {
+      *end = col + endadd;
+    }
+  } else {
+    getvcol(wp, pos, start, cursor, end);
+  }
+}
+
+/// Get the leftmost and rightmost virtual column of pos1 and pos2.
+/// Used for Visual block mode.
+///
+/// @param wp
+/// @param pos1
+/// @param pos2
+/// @param left
+/// @param right
+void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left, colnr_T *right)
+{
+  colnr_T from1;
+  colnr_T from2;
+  colnr_T to1;
+  colnr_T to2;
+
+  if (lt(*pos1, *pos2)) {
+    getvvcol(wp, pos1, &from1, NULL, &to1);
+    getvvcol(wp, pos2, &from2, NULL, &to2);
+  } else {
+    getvvcol(wp, pos2, &from1, NULL, &to1);
+    getvvcol(wp, pos1, &from2, NULL, &to2);
+  }
+
+  if (from2 < from1) {
+    *left = from2;
+  } else {
+    *left = from1;
+  }
+
+  if (to2 > to1) {
+    if ((*p_sel == 'e') && (from2 - 1 >= to1)) {
+      *right = from2 - 1;
+    } else {
+      *right = to2;
+    }
+  } else {
+    *right = to1;
+  }
 }
 
 /// Functions calculating vertical size of text when displayed inside a window.

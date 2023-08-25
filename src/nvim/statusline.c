@@ -36,6 +36,7 @@
 #include "nvim/optionstr.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
+#include "nvim/plines.h"
 #include "nvim/pos.h"
 #include "nvim/sign.h"
 #include "nvim/statusline.h"

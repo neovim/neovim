@@ -2,9 +2,11 @@
 #define NVIM_PLINES_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nvim/buffer_defs.h"
-#include "nvim/vim.h"
+#include "nvim/marktree.h"
+#include "nvim/pos.h"
 
 /// Argument for lbr_chartabsize().
 typedef struct {
