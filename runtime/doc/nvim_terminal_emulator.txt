@@ -317,6 +317,18 @@ This is similar to using "print" in the gdb window.
 You can usually shorten `:Evaluate` to `:Ev`.
 
 
+Navigating stack frames ~
+				*termdebug-frames* *:Frame* *:Up* *:Down*
+ `:Frame` [frame]	select frame [frame], which is a frame number,
+			address, or function name (default: current frame)
+ `:Up` [count]		go up [count] frames (default: 1; the frame that
+			called the current)
+ `+`			same (see |termdebug_map_plus| to disable)
+ `:Down` [count]	go down [count] frames (default: 1; the frame called
+			by the current)
+ `-`			same (see |termdebug_map_minus| to disable)
+
+
 Other commands ~
 							*termdebug-commands*
  *:Gdb*	     jump to the gdb window
@@ -325,7 +337,9 @@ Other commands ~
 	     isn't one
  *:Asm*	     jump to the window with the disassembly, create it if there
 	     isn't one
-
+ *:Var*	     jump to the window with the local and argument variables,
+             create it if there isn't one. This window updates whenever the
+             program is stopped
 
 Events ~
 							*termdebug-events*
@@ -386,10 +400,18 @@ If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_use_prompt = 1
 <
 						*termdebug_map_K*
-The K key is normally mapped to :Evaluate. If you do not want this use: >vim
+The K key is normally mapped to |:Evaluate|. If you do not want this use: >vim
 	let g:termdebug_config['map_K'] = 0
 If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_map_K = 0
+<
+						*termdebug_map_minus*
+The - key is normally mapped to |:Down|. If you do not want this use: >vim
+	let g:termdebug_config['map_minus'] = 0
+<
+						*termdebug_map_plus*
+The + key is normally mapped to |:Up|. If you do not want this use: >vim
+	let g:termdebug_config['map_plus'] = 0
 <
 						*termdebug_disasm_window*
 If you want the Asm window shown by default, set the "disasm_window" flag to
@@ -399,6 +421,15 @@ If you want the Asm window shown by default, set the "disasm_window" flag to
 If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_disasm_window = 15
 Any value greater than 1 will set the Asm window height to that value.
+
+						*termdebug_variables_window*
+If you want the Var window shown by default, set the flag to 1.
+the "variables_window_height" entry can be used to set the window height: >vim
+	let g:termdebug_config['variables_window'] = 1
+	let g:termdebug_config['variables_window_height'] = 15
+If there is no g:termdebug_config you can use: >vim
+	let g:termdebug_variables_window = 15
+Any value greater than 1 will set the Var window height to that value.
 
 Communication ~
 						*termdebug-communication*
