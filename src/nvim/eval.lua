@@ -10460,7 +10460,7 @@ M.funcs = {
     ]=],
     fast = true,
     name = 'stdpath',
-    params = { { 'what', 'string' } },
+    params = { { 'what', "'cache'|'config'|'config_dirs'|'data'|'data_dirs'|'log'|'run'|'state'" } },
     returns = 'string|string[]',
     signature = 'stdpath({what})',
   },

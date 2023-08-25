@@ -8827,7 +8827,7 @@ function vim.fn.stdioopen(opts) end
 ---   echo stdpath("config")
 --- <
 ---
---- @param what string
+--- @param what 'cache'|'config'|'config_dirs'|'data'|'data_dirs'|'log'|'run'|'state'
 --- @return string|string[]
 function vim.fn.stdpath(what) end
 
