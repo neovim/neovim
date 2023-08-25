@@ -246,9 +246,9 @@ endfunc
 
 func s:CheckGdbRunning()
   if !s:gdb_running
-      call s:Echoerr(string(s:GetCommand()[0]) . ' exited unexpectedly')
-      call s:CloseBuffers()
-      return ''
+    call s:Echoerr(string(s:GetCommand()[0]) . ' exited unexpectedly')
+    call s:CloseBuffers()
+    return ''
   endif
   return 'ok'
 endfunc
@@ -464,9 +464,9 @@ func s:StartDebug_prompt(dict)
 
   " call ch_log('executing "' . join(gdb_cmd) . '"')
   let s:gdbjob = jobstart(gdb_cmd, {
-    \ 'on_exit': function('s:EndPromptDebug'),
-    \ 'on_stdout': function('s:JobOutCallback', {'last_line': '', 'real_cb': function('s:GdbOutCallback')}),
-    \ })
+        \ 'on_exit': function('s:EndPromptDebug'),
+        \ 'on_stdout': function('s:JobOutCallback', {'last_line': '', 'real_cb': function('s:GdbOutCallback')}),
+        \ })
   if s:gdbjob == 0
     call s:Echoerr('Invalid argument (or job table is full) while starting gdb job')
     exe 'bwipe! ' . s:ptybuf
@@ -1197,7 +1197,7 @@ func s:SetBreakpoint(at)
 
   " Use the fname:lnum format, older gdb can't handle --source.
   let at = empty(a:at) ?
-  \ fnameescape(expand('%:p')) . ':' . line('.') : a:at
+        \ fnameescape(expand('%:p')) . ':' . line('.') : a:at
   call s:SendCommand('-break-insert ' . at)
   if do_continue
     Continue
@@ -1417,101 +1417,101 @@ function! s:CloseFloatingHoverOnCursorMove(win_id, opened) abort
 endfunction
 
 function! s:CloseFloatingHoverOnBufEnter(win_id, bufnr) abort
-    let winnr = win_id2win(a:win_id)
-    if winnr == 0
-        " Float window was already closed
-        autocmd! nvim_termdebug_close_hover
-        return
-    endif
-    if winnr == winnr()
-        " Cursor is moving into floating window. Do not close it
-        return
-    endif
-    if bufnr('%') == a:bufnr
-        " When current buffer opened hover window, it's not another buffer. Skipped
-        return
-    endif
+  let winnr = win_id2win(a:win_id)
+  if winnr == 0
+    " Float window was already closed
     autocmd! nvim_termdebug_close_hover
-    call nvim_win_close(a:win_id, v:true)
-  endfunction
+    return
+  endif
+  if winnr == winnr()
+    " Cursor is moving into floating window. Do not close it
+    return
+  endif
+  if bufnr('%') == a:bufnr
+    " When current buffer opened hover window, it's not another buffer. Skipped
+    return
+  endif
+  autocmd! nvim_termdebug_close_hover
+  call nvim_win_close(a:win_id, v:true)
+endfunction
 
 " Open preview window. Window is open in:
 "   - Floating window on Neovim (0.4.0 or later)
 "   - Preview window on Neovim (0.3.0 or earlier) or Vim
 function! s:OpenHoverPreview(lines, filetype) abort
-    " Use local variable since parameter is not modifiable
-    let lines = a:lines
-    let bufnr = bufnr('%')
+  " Use local variable since parameter is not modifiable
+  let lines = a:lines
+  let bufnr = bufnr('%')
 
-    let use_float_win = s:ShouldUseFloatWindow()
-    if use_float_win
-      let pos = getpos('.')
+  let use_float_win = s:ShouldUseFloatWindow()
+  if use_float_win
+    let pos = getpos('.')
 
-      " Calculate width and height
-      let width = 0
-      for index in range(len(lines))
-        let line = lines[index]
-        let lw = strdisplaywidth(line)
-        if lw > width
-          let width = lw
-        endif
-        let lines[index] = line
-      endfor
-
-      let height = len(lines)
-
-      " Calculate anchor
-      " Prefer North, but if there is no space, fallback into South
-      let bottom_line = line('w0') + winheight(0) - 1
-      if pos[1] + height <= bottom_line
-        let vert = 'N'
-        let row = 1
-      else
-        let vert = 'S'
-        let row = 0
+    " Calculate width and height
+    let width = 0
+    for index in range(len(lines))
+      let line = lines[index]
+      let lw = strdisplaywidth(line)
+      if lw > width
+        let width = lw
       endif
+      let lines[index] = line
+    endfor
 
-      " Prefer West, but if there is no space, fallback into East
-      if pos[2] + width <= &columns
-        let hor = 'W'
-        let col = 0
-      else
-        let hor = 'E'
-        let col = 1
-      endif
+    let height = len(lines)
 
-      let buf = nvim_create_buf(v:false, v:true)
-      call nvim_buf_set_lines(buf, 0, -1, v:true, lines)
-      " using v:true for second argument of nvim_open_win make the floating
-      " window disappear
-      let float_win_id = nvim_open_win(buf, v:false, {
-            \   'relative': 'cursor',
-            \   'anchor': vert . hor,
-            \   'row': row,
-            \   'col': col,
-            \   'width': width,
-            \   'height': height,
-            \   'style': 'minimal',
-            \ })
-
-      if a:filetype isnot v:null
-        call nvim_set_option_value('filetype', a:filetype, { 'win' : float_win_id })
-      endif
-
-      call nvim_set_option_value('modified', v:false, { 'buf' : buf })
-      call nvim_set_option_value('modifiable', v:false, { 'buf' : buf })
-
-      " Unlike preview window, :pclose does not close window. Instead, close
-      " hover window automatically when cursor is moved.
-      let call_after_move = printf('<SID>CloseFloatingHoverOnCursorMove(%d, %s)', float_win_id, string(pos))
-      let call_on_bufenter = printf('<SID>CloseFloatingHoverOnBufEnter(%d, %d)', float_win_id, bufnr)
-      augroup nvim_termdebug_close_hover
-        execute 'autocmd CursorMoved,CursorMovedI,InsertEnter <buffer> call ' . call_after_move
-        execute 'autocmd BufEnter * call ' . call_on_bufenter
-      augroup END
+    " Calculate anchor
+    " Prefer North, but if there is no space, fallback into South
+    let bottom_line = line('w0') + winheight(0) - 1
+    if pos[1] + height <= bottom_line
+      let vert = 'N'
+      let row = 1
     else
-      echomsg a:lines[0]
+      let vert = 'S'
+      let row = 0
     endif
+
+    " Prefer West, but if there is no space, fallback into East
+    if pos[2] + width <= &columns
+      let hor = 'W'
+      let col = 0
+    else
+      let hor = 'E'
+      let col = 1
+    endif
+
+    let buf = nvim_create_buf(v:false, v:true)
+    call nvim_buf_set_lines(buf, 0, -1, v:true, lines)
+    " using v:true for second argument of nvim_open_win make the floating
+    " window disappear
+    let float_win_id = nvim_open_win(buf, v:false, {
+          \   'relative': 'cursor',
+          \   'anchor': vert . hor,
+          \   'row': row,
+          \   'col': col,
+          \   'width': width,
+          \   'height': height,
+          \   'style': 'minimal',
+          \ })
+
+    if a:filetype isnot v:null
+      call nvim_set_option_value('filetype', a:filetype, { 'win' : float_win_id })
+    endif
+
+    call nvim_set_option_value('modified', v:false, { 'buf' : buf })
+    call nvim_set_option_value('modifiable', v:false, { 'buf' : buf })
+
+    " Unlike preview window, :pclose does not close window. Instead, close
+    " hover window automatically when cursor is moved.
+    let call_after_move = printf('<SID>CloseFloatingHoverOnCursorMove(%d, %s)', float_win_id, string(pos))
+    let call_on_bufenter = printf('<SID>CloseFloatingHoverOnBufEnter(%d, %d)', float_win_id, bufnr)
+    augroup nvim_termdebug_close_hover
+      execute 'autocmd CursorMoved,CursorMovedI,InsertEnter <buffer> call ' . call_after_move
+      execute 'autocmd BufEnter * call ' . call_on_bufenter
+    augroup END
+  else
+    echomsg a:lines[0]
+  endif
 endfunction
 
 " Handle an error.
@@ -1681,15 +1681,15 @@ func s:HandleCursor(msg)
 
       let curwinid = win_getid()
       if win_gotoid(s:asmwin)
-      let lnum = search('^' . s:asm_addr)
-      if lnum == 0
-        call s:SendCommand('disassemble $pc')
-      else
-        call sign_unplace('TermDebug', #{id: s:asm_id})
-        call sign_place(s:asm_id, 'TermDebug', 'debugPC', '%', #{lnum: lnum})
-      endif
+        let lnum = search('^' . s:asm_addr)
+        if lnum == 0
+          call s:SendCommand('disassemble $pc')
+        else
+          call sign_unplace('TermDebug', #{id: s:asm_id})
+          call sign_place(s:asm_id, 'TermDebug', 'debugPC', '%', #{lnum: lnum})
+        endif
 
-      call win_gotoid(curwinid)
+        call win_gotoid(curwinid)
       endif
     endif
   endif
