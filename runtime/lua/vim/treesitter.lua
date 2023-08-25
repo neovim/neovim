@@ -472,8 +472,8 @@ end
 --- Open a window that displays a textual representation of the nodes in the language tree.
 ---
 --- While in the window, press "a" to toggle display of anonymous nodes, "I" to toggle the
---- display of the source language of each node, and press <Enter> to jump to the node under the
---- cursor in the source buffer.
+--- display of the source language of each node, "o" to toggle the query previewer, and press
+--- <Enter> to jump to the node under the cursor in the source buffer.
 ---
 --- Can also be shown with `:InspectTree`. *:InspectTree*
 ---
@@ -492,6 +492,13 @@ end
 function M.inspect_tree(opts)
   ---@cast opts InspectTreeOpts
   require('vim.treesitter.dev').inspect_tree(opts)
+end
+
+--- Open a window for live editing of a treesitter query.
+---
+--- Can also be shown with `:PreviewQuery`. *:PreviewQuery*
+function M.preview_query()
+  require('vim.treesitter.dev').preview_query()
 end
 
 --- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':
