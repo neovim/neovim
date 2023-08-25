@@ -3297,8 +3297,8 @@ function vim.fn.getpid() end
 ---   call setpos("'a", save_a_mark)
 --- <Also see |getcharpos()|, |getcurpos()| and |setpos()|.
 ---
---- @param expr any
---- @return any
+--- @param expr string
+--- @return integer[]
 function vim.fn.getpos(expr) end
 
 --- Returns a |List| with all the current quickfix errors.  Each
@@ -8827,8 +8827,8 @@ function vim.fn.stdioopen(opts) end
 ---   echo stdpath("config")
 --- <
 ---
---- @param what any
---- @return any
+--- @param what string
+--- @return string|string[]
 function vim.fn.stdpath(what) end
 
 --- Convert String {string} to a Float.  This mostly works the

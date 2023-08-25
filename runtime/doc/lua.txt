@@ -1567,6 +1567,9 @@ vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
 vim.inspect                                                    *vim.inspect()*
     Gets a human-readable representation of the given object.
 
+    Return: ~
+        (string)
+
     See also: ~
       • |vim.print()|
       • https://github.com/kikito/inspect.lua

@@ -188,6 +188,7 @@ end
 ---@see |vim.print()|
 ---@see https://github.com/kikito/inspect.lua
 ---@see https://github.com/mpeterv/vinspect
+---@return string
 vim.inspect = vim.inspect
 
 do
