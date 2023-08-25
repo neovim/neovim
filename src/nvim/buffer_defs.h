@@ -936,6 +936,10 @@ typedef enum {
   kAlignRight  = 2,
 } AlignTextPos;
 
+typedef enum {
+  kBorderTextTitle = 0,
+} BorderTextType;
+
 typedef struct {
   Window window;
   lpos_T bufpos;

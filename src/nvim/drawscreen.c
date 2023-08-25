@@ -701,17 +701,29 @@ void end_search_hl(void)
   screen_search_hl.rm.regprog = NULL;
 }
 
-static void win_border_redr_title(win_T *wp, ScreenGrid *grid, int col)
+static void win_redr_bordertext(win_T *wp, ScreenGrid *grid, VirtText text_chunks, int row, int col)
 {
-  VirtText title_chunks = wp->w_float_config.title_chunks;
-
-  for (size_t i = 0; i < title_chunks.size; i++) {
-    char *text = title_chunks.items[i].text;
+  for (size_t i = 0; i < text_chunks.size; i++) {
+    char *text = text_chunks.items[i].text;
     int cell = (int)mb_string2cells(text);
-    int hl_id = title_chunks.items[i].hl_id;
+    int hl_id = text_chunks.items[i].hl_id;
     int attr = hl_id ? syn_id2attr(hl_id) : 0;
-    grid_puts(grid, text, 0, col, attr);
+    grid_puts(grid, text, row, col, attr);
     col += cell;
+  }
+}
+
+int win_get_bordertext_col(int total_col, int text_width, AlignTextPos align)
+{
+  switch (align) {
+  case kAlignLeft:
+    return 1;
+  case kAlignCenter:
+    return (total_col - text_width) / 2 + 1;
+  case kAlignRight:
+    return total_col - text_width + 1;
+  default:
+    abort();
   }
 }
 
@@ -741,17 +753,9 @@ static void win_redr_border(win_T *wp)
     }
 
     if (wp->w_float_config.title) {
-      int title_col = 0;
-      int title_width = wp->w_float_config.title_width;
-      AlignTextPos title_pos = wp->w_float_config.title_pos;
-
-      if (title_pos == kAlignCenter) {
-        title_col = (icol - title_width) / 2 + 1;
-      } else {
-        title_col = title_pos == kAlignLeft ? 1 : icol - title_width + 1;
-      }
-
-      win_border_redr_title(wp, grid, title_col);
+      int title_col = win_get_bordertext_col(icol, wp->w_float_config.title_width,
+                                             wp->w_float_config.title_pos);
+      win_redr_bordertext(wp, grid, wp->w_float_config.title_chunks, 0, title_col);
     }
     if (adj[1]) {
       grid_put_schar(grid, 0, icol + adj[3], chars[2], attrs[2]);
