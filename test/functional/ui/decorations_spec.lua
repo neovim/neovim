@@ -3784,6 +3784,63 @@ if (h->n_buckets < new_n_buckets) { // expand
     ]]}
   end)
 
+  it('works when using dd or yyp #23915 #23916', function()
+    insert([[
+      line1
+      line2
+      line3
+      line4
+      line5]])
+    meths.buf_set_extmark(0, ns, 0, 0, {virt_lines={{{"foo"}}, {{"bar"}}, {{"baz"}}}})
+    screen:expect{grid=[[
+      line1                                             |
+      foo                                               |
+      bar                                               |
+      baz                                               |
+      line2                                             |
+      line3                                             |
+      line4                                             |
+      line^5                                             |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    feed('gg')
+    feed('dd')
+    screen:expect{grid=[[
+      ^line2                                             |
+      foo                                               |
+      bar                                               |
+      baz                                               |
+      line3                                             |
+      line4                                             |
+      line5                                             |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+
+    feed('yyp')
+    screen:expect{grid=[[
+      line2                                             |
+      foo                                               |
+      bar                                               |
+      baz                                               |
+      ^line2                                             |
+      line3                                             |
+      line4                                             |
+      line5                                             |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
 end)
 
 describe('decorations: signs', function()
