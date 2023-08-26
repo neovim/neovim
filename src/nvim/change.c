@@ -297,7 +297,12 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, linenr_T 
           if (wp->w_lines[i].wl_lnum >= lnum) {
             // Do not change wl_lnum at index zero, it is used to
             // compare with w_topline.  Invalidate it instead.
-            if (wp->w_lines[i].wl_lnum < lnume || i == 0) {
+            // If the buffer has virt_lines, invalidate the line
+            // after the changed lines as the virt_lines for a
+            // changed line may become invalid.
+            if (i == 0 || wp->w_lines[i].wl_lnum < lnume
+                || (wp->w_lines[i].wl_lnum == lnume
+                    && wp->w_buffer->b_virt_line_blocks > 0)) {
               // line included in change
               wp->w_lines[i].wl_valid = false;
             } else if (xtra != 0) {
