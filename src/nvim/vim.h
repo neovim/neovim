@@ -13,6 +13,14 @@
 #include "auto/config.h"
 #define HAVE_PATHDEF
 
+// Some file names are stored in pathdef.c, which is generated from the
+// Makefile to make their value depend on the Makefile.
+#ifdef HAVE_PATHDEF
+extern char *default_vim_dir;
+extern char *default_vimruntime_dir;
+extern char *default_lib_dir;
+#endif
+
 // Check if configure correctly managed to find sizeof(int).  If this failed,
 // it becomes zero.  This is likely a problem of not being able to run the
 // test program.  Other items from configure may also be wrong then!
