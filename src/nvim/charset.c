@@ -112,17 +112,11 @@ int buf_init_chartab(buf_T *buf, int global)
     while (c < 256) {
       if (c >= 0xa0) {
         // UTF-8: bytes 0xa0 - 0xff are printable (latin1)
-        g_chartab[c++] = CT_PRINT_CHAR + 1;
+        // Also assume that every multi-byte char is a filename character.
+        g_chartab[c++] = (CT_PRINT_CHAR | CT_FNAME_CHAR) + 1;
       } else {
         // the rest is unprintable by default
         g_chartab[c++] = (dy_flags & DY_UHEX) ? 4 : 2;
-      }
-    }
-
-    // Assume that every multi-byte char is a filename character.
-    for (c = 1; c < 256; c++) {
-      if (c >= 0xa0) {
-        g_chartab[c] |= CT_FNAME_CHAR;
       }
     }
   }
