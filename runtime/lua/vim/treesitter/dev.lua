@@ -560,7 +560,9 @@ function M.preview_query()
     buffer = query_buf,
     desc = 'Update query previewer highlights when the cursor moves',
     callback = function()
-      update_preview_highlights(query_win, win)
+      if api.nvim_win_is_valid(win) then
+        update_preview_highlights(query_win, win)
+      end
     end,
   })
   api.nvim_create_autocmd('BufLeave', {
