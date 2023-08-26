@@ -618,8 +618,6 @@ static void free_menu(vimmenu_T **menup)
 {
   vimmenu_T *menu = *menup;
 
-  // Don't change *menup until after calling gui_mch_destroy_menu(). The
-  // MacOS code needs the original structure to properly delete the menu.
   *menup = menu->next;
   xfree(menu->name);
   xfree(menu->dname);

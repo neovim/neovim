@@ -1402,7 +1402,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
       while ((fd = os_open(wfname, fflags, mode)) < 0) {
         // A forced write will try to create a new file if the old one
         // is still readonly. This may also happen when the directory
-        // is read-only. In that case the mch_remove() will fail.
+        // is read-only. In that case the os_remove() will fail.
         if (err.msg == NULL) {
 #ifdef UNIX
           FileInfo file_info;
