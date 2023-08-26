@@ -132,7 +132,7 @@ function vim.str_utf_pos(str) end
 ---
 --- Examples:
 --- <pre>lua
---- -- The character 'æ' are equal to the bytes '\xc3\xa6' (using UTF-8)
+--- -- The character 'æ' is stored as the bytes '\xc3\xa6' (using UTF-8)
 ---
 --- -- Returns 0 because the index is pointing at the first byte of a character
 --- vim.str_utf_start('æ', 1)
@@ -151,12 +151,12 @@ function vim.str_utf_start(str, index) end
 ---
 --- Examples:
 --- <pre>lua
---- -- The character 'æ' are equal to the bytes '\xc3\xa6' (using UTF-8)
+--- -- The character 'æ' is stored as the bytes '\xc3\xa6' (using UTF-8)
 ---
 --- -- Returns 0 because the index is pointing at the last byte of a character
 --- vim.str_utf_end('æ', 2)
 ---
---- -- Returns 1 because the index is pointing at the second last byte of a character
+--- -- Returns 1 because the index is pointing at the penultimate byte of a character
 --- vim.str_utf_end('æ', 1)
 --- </pre>
 ---

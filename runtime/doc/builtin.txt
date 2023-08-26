@@ -8316,15 +8316,15 @@ type({expr})                                                            *type()*
 		The result is a Number representing the type of {expr}.
 		Instead of using the number directly, it is better to use the
 		v:t_ variable that has the value:
-		        Number:     0 (|v:t_number|)
-			String:     1 (|v:t_string|)
-			Funcref:    2 (|v:t_func|)
-			List:       3 (|v:t_list|)
-			Dictionary: 4 (|v:t_dict|)
-			Float:      5 (|v:t_float|)
-			Boolean:    6 (|v:true| and |v:false|)
-			Null:       7 (|v:null|)
-			Blob:      10 (|v:t_blob|)
+			Number:	    0  |v:t_number|
+			String:	    1  |v:t_string|
+			Funcref:    2  |v:t_func|
+			List:	    3  |v:t_list|
+			Dictionary: 4  |v:t_dict|
+			Float:	    5  |v:t_float|
+			Boolean:    6  |v:t_bool| (|v:false| and |v:true|)
+			Null:	    7  (|v:null|)
+			Blob:	   10  |v:t_blob|
 		For backward compatibility, this method can be used: >vim
 			if type(myvar) == type(0) | endif
 			if type(myvar) == type("") | endif

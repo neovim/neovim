@@ -4323,8 +4323,9 @@ vim.go.mousemoveevent = vim.o.mousemoveevent
 vim.go.mousemev = vim.go.mousemoveevent
 
 --- This option controls the number of lines / columns to scroll by when
---- scrolling with a mouse. The option is a comma separated list of parts.
---- Each part consists of a direction and a count as follows:
+--- scrolling with a mouse wheel (`scroll-mouse-wheel`). The option is
+--- a comma-separated list. Each part consists of a direction and a count
+--- as follows:
 --- 	direction:count,direction:count
 --- Direction is one of either "hor" or "ver". "hor" controls horizontal
 --- scrolling and "ver" controls vertical scrolling. Count sets the amount
