@@ -1784,7 +1784,7 @@ failed:
       curbuf->b_p_ro = true;
     }
 
-    u_clearline();          // cannot use "U" command after adding lines
+    u_clearline(curbuf);   // cannot use "U" command after adding lines
 
     // In Ex mode: cursor at last new line.
     // Otherwise: cursor at first new line.
@@ -1793,7 +1793,7 @@ failed:
     } else {
       curwin->w_cursor.lnum = from + 1;
     }
-    check_cursor_lnum();
+    check_cursor_lnum(curwin);
     beginline(BL_WHITE | BL_FIX);           // on first non-blank
 
     if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {

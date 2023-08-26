@@ -250,15 +250,20 @@ int u_save_cursor(void)
 /// Returns FAIL when lines could not be saved, OK otherwise.
 int u_save(linenr_T top, linenr_T bot)
 {
-  if (top >= bot || bot > (curbuf->b_ml.ml_line_count + 1)) {
+  return u_save_buf(curbuf, top, bot);
+}
+
+int u_save_buf(buf_T *buf, linenr_T top, linenr_T bot)
+{
+  if (top >= bot || bot > (buf->b_ml.ml_line_count + 1)) {
     return FAIL;        // rely on caller to do error messages
   }
 
   if (top + 2 == bot) {
-    u_saveline((linenr_T)(top + 1));
+    u_saveline(buf, (linenr_T)(top + 1));
   }
 
-  return u_savecommon(curbuf, top, bot, (linenr_T)0, false);
+  return u_savecommon(buf, top, bot, (linenr_T)0, false);
 }
 
 /// Save the line "lnum" (used by ":s" and "~" command).
@@ -2288,7 +2293,7 @@ static void u_undoredo(int undo, bool do_buf_event)
         || bot > curbuf->b_ml.ml_line_count + 1) {
       unblock_autocmds();
       iemsg(_("E438: u_undo: line numbers wrong"));
-      changed();                // don't want UNCHANGED now
+      changed(curbuf);                // don't want UNCHANGED now
       return;
     }
 
@@ -2373,7 +2378,7 @@ static void u_undoredo(int undo, bool do_buf_event)
       }
     }
 
-    changed_lines(top + 1, 0, bot, newsize - oldsize, do_buf_event);
+    changed_lines(curbuf, top + 1, 0, bot, newsize - oldsize, do_buf_event);
     // When text has been changed, possibly the start of the next line
     // may have SpellCap that should be removed or it needs to be
     // displayed.  Schedule the next line for redrawing just in case.
@@ -2439,7 +2444,7 @@ static void u_undoredo(int undo, bool do_buf_event)
     curbuf->b_ml.ml_flags |= ML_EMPTY;
   }
   if (old_flags & UH_CHANGED) {
-    changed();
+    changed(curbuf);
   } else {
     unchanged(curbuf, false, true);
   }
@@ -2980,34 +2985,34 @@ void u_clearall(buf_T *buf)
 }
 
 /// save the line "lnum" for the "U" command
-void u_saveline(linenr_T lnum)
+void u_saveline(buf_T *buf, linenr_T lnum)
 {
-  if (lnum == curbuf->b_u_line_lnum) {      // line is already saved
+  if (lnum == buf->b_u_line_lnum) {      // line is already saved
     return;
   }
-  if (lnum < 1 || lnum > curbuf->b_ml.ml_line_count) {  // should never happen
+  if (lnum < 1 || lnum > buf->b_ml.ml_line_count) {  // should never happen
     return;
   }
-  u_clearline();
-  curbuf->b_u_line_lnum = lnum;
-  if (curwin->w_cursor.lnum == lnum) {
-    curbuf->b_u_line_colnr = curwin->w_cursor.col;
+  u_clearline(buf);
+  buf->b_u_line_lnum = lnum;
+  if (curwin->w_buffer == buf && curwin->w_cursor.lnum == lnum) {
+    buf->b_u_line_colnr = curwin->w_cursor.col;
   } else {
-    curbuf->b_u_line_colnr = 0;
+    buf->b_u_line_colnr = 0;
   }
-  curbuf->b_u_line_ptr = u_save_line(lnum);
+  buf->b_u_line_ptr = u_save_line_buf(buf, lnum);
 }
 
 /// clear the line saved for the "U" command
 /// (this is used externally for crossing a line while in insert mode)
-void u_clearline(void)
+void u_clearline(buf_T *buf)
 {
-  if (curbuf->b_u_line_ptr == NULL) {
+  if (buf->b_u_line_ptr == NULL) {
     return;
   }
 
-  XFREE_CLEAR(curbuf->b_u_line_ptr);
-  curbuf->b_u_line_lnum = 0;
+  XFREE_CLEAR(buf->b_u_line_ptr);
+  buf->b_u_line_lnum = 0;
 }
 
 /// Implementation of the "U" command.

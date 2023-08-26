@@ -766,7 +766,8 @@ static linenr_T sign_adjust_one(const linenr_T se_lnum, linenr_T line1, linenr_T
 }
 
 /// Adjust placed signs for inserted/deleted lines.
-void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after)
+void sign_mark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount,
+                      linenr_T amount_after)
 {
   sign_entry_T *sign;           // a sign in a b_signlist
   sign_entry_T *next;           // the next sign in a b_signlist
@@ -774,15 +775,15 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T 
   sign_entry_T **lastp = NULL;  // pointer to pointer to current sign
   linenr_T new_lnum;            // new line number to assign to sign
   int is_fixed = 0;
-  int signcol = win_signcol_configured(curwin, &is_fixed);
+  int signcol = curwin->w_buffer == buf ? win_signcol_configured(curwin, &is_fixed) : 0;
 
   if (amount == MAXLNUM) {  // deleting
-    buf_signcols_del_check(curbuf, line1, line2);
+    buf_signcols_del_check(buf, line1, line2);
   }
 
-  lastp = &curbuf->b_signlist;
+  lastp = &buf->b_signlist;
 
-  for (sign = curbuf->b_signlist; sign != NULL; sign = next) {
+  for (sign = buf->b_signlist; sign != NULL; sign = next) {
     next = sign->se_next;
 
     new_lnum = sign_adjust_one(sign->se_lnum, line1, line2, amount, amount_after);
@@ -799,7 +800,7 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T 
       // If the new sign line number is past the last line in the buffer,
       // then don't adjust the line number. Otherwise, it will always be past
       // the last line and will not be visible.
-      if (new_lnum <= curbuf->b_ml.ml_line_count) {
+      if (new_lnum <= buf->b_ml.ml_line_count) {
         sign->se_lnum = new_lnum;
       }
     }
@@ -808,9 +809,9 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T 
     lastp = &sign->se_next;
   }
 
-  new_lnum = sign_adjust_one(curbuf->b_signcols.sentinel, line1, line2, amount, amount_after);
+  new_lnum = sign_adjust_one(buf->b_signcols.sentinel, line1, line2, amount, amount_after);
   if (new_lnum != 0) {
-    curbuf->b_signcols.sentinel = new_lnum;
+    buf->b_signcols.sentinel = new_lnum;
   }
 }
 
@@ -1168,7 +1169,7 @@ static linenr_T sign_jump(int sign_id, char *sign_group, buf_T *buf)
   // goto a sign ...
   if (buf_jump_open_win(buf) != NULL) {     // ... in a current window
     curwin->w_cursor.lnum = lnum;
-    check_cursor_lnum();
+    check_cursor_lnum(curwin);
     beginline(BL_WHITE);
   } else {      // ... not currently in a window
     if (buf->b_fname == NULL) {

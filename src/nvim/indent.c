@@ -1083,7 +1083,7 @@ void ex_retab(exarg_T *eap)
     redraw_curbuf_later(UPD_NOT_VALID);
   }
   if (first_line != 0) {
-    changed_lines(first_line, 0, last_line + 1, 0L, true);
+    changed_lines(curbuf, first_line, 0, last_line + 1, 0L, true);
   }
 
   curwin->w_p_list = save_list;         // restore 'list'
@@ -1107,7 +1107,7 @@ void ex_retab(exarg_T *eap)
   }
   coladvance(curwin->w_curswant);
 
-  u_clearline();
+  u_clearline(curbuf);
 }
 
 /// Get indent level from 'indentexpr'.

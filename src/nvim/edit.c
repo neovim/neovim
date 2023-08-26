@@ -1708,7 +1708,7 @@ void change_indent(int type, int amount, int round, int replaced, int call_chang
     curwin->w_cursor.col = (colnr_T)new_cursor_col;
   }
   curwin->w_set_curswant = true;
-  changed_cline_bef_curs();
+  changed_cline_bef_curs(curwin);
 
   // May have to adjust the start of the insert.
   if (State & MODE_INSERT) {

@@ -743,8 +743,7 @@ void deleteFold(win_T *const wp, const linenr_T start, const linenr_T end, const
   }
 
   if (last_lnum > 0) {
-    // TODO(teto): pass the buffer
-    changed_lines(first_lnum, (colnr_T)0, last_lnum, 0L, false);
+    changed_lines(wp->w_buffer, first_lnum, (colnr_T)0, last_lnum, 0L, false);
 
     // send one nvim_buf_lines_event at the end
     // last_lnum is the line *after* the last line of the outermost fold
@@ -1580,8 +1579,7 @@ static void foldCreateMarkers(win_T *wp, pos_T start, pos_T end)
 
   // Update both changes here, to avoid all folds after the start are
   // changed when the start marker is inserted and the end isn't.
-  // TODO(teto): pass the buffer
-  changed_lines(start.lnum, (colnr_T)0, end.lnum, 0L, false);
+  changed_lines(buf, start.lnum, (colnr_T)0, end.lnum, 0L, false);
 
   // Note: foldAddMarker() may not actually change start and/or end if
   // u_save() is unable to save the buffer line, but we send the

@@ -3433,14 +3433,17 @@ static void qf_free(qf_list_T *qfl)
   qfl->qf_changedtick = 0L;
 }
 
-// qf_mark_adjust: adjust marks
-bool qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, linenr_T amount,
+/// Adjust error list entries for changed line numbers
+///
+/// Note: `buf` is the changed buffer, but `wp` is a potential location list
+/// into that buffer, or NULL to check the quickfix list.
+bool qf_mark_adjust(buf_T *buf, win_T *wp, linenr_T line1, linenr_T line2, linenr_T amount,
                     linenr_T amount_after)
 {
   qf_info_T *qi = &ql_info;
   int buf_has_flag = wp == NULL ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
 
-  if (!(curbuf->b_has_qf_entry & buf_has_flag)) {
+  if (!(buf->b_has_qf_entry & buf_has_flag)) {
     return false;
   }
   if (wp != NULL) {
@@ -3457,7 +3460,7 @@ bool qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, linenr_T amount,
     qf_list_T *qfl = qf_get_list(qi, idx);
     if (!qf_list_empty(qfl)) {
       FOR_ALL_QFL_ITEMS(qfl, qfp, i) {
-        if (qfp->qf_fnum == curbuf->b_fnum) {
+        if (qfp->qf_fnum == buf->b_fnum) {
           found_one = true;
           if (qfp->qf_lnum >= line1 && qfp->qf_lnum <= line2) {
             if (amount == MAXLNUM) {

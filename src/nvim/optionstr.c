@@ -406,6 +406,19 @@ void set_string_option_direct_in_win(win_T *wp, const char *name, int opt_idx, c
   unblock_autocmds();
 }
 
+/// Like set_string_option_direct(), but for a buffer-local option in "buf".
+/// Blocks autocommands to avoid the old curwin becoming invalid.
+void set_string_option_direct_in_buf(buf_T *buf, const char *name, int opt_idx, const char *val,
+                                     int opt_flags, int set_sid)
+{
+  buf_T *save_curbuf = curbuf;
+
+  block_autocmds();
+  curbuf = buf;
+  set_string_option_direct(name, opt_idx, val, opt_flags, set_sid);
+  curbuf = save_curbuf;
+  unblock_autocmds();
+}
 /// Set a string option to a new value, handling the effects
 ///
 /// @param[in]  opt_idx  Option to set.

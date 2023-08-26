@@ -266,24 +266,25 @@ void diff_invalidate(buf_T *buf)
   }
 }
 
-/// Called by mark_adjust(): update line numbers in "curbuf".
+/// Called by mark_adjust(): update line numbers in "buf".
 ///
 /// @param line1
 /// @param line2
 /// @param amount
 /// @param amount_after
-void diff_mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after)
+void diff_mark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount,
+                      linenr_T amount_after)
 {
-  // Handle all tab pages that use the current buffer in a diff.
+  // Handle all tab pages that use "buf" in a diff.
   FOR_ALL_TABS(tp) {
-    int idx = diff_buf_idx_tp(curbuf, tp);
+    int idx = diff_buf_idx_tp(buf, tp);
     if (idx != DB_COUNT) {
       diff_mark_adjust_tp(tp, idx, line1, line2, amount, amount_after);
     }
   }
 }
 
-/// Update line numbers in tab page "tp" for "curbuf" with index "idx".
+/// Update line numbers in tab page "tp" for the buffer with index "idx".
 ///
 /// This attempts to update the changes as much as possible:
 /// When inserting/deleting lines outside of existing change blocks, create a
@@ -2444,7 +2445,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
   }
 
   // When w_topline changes need to recompute w_botline and cursor position
-  invalidate_botline_win(towin);
+  invalidate_botline(towin);
   changed_line_abv_curs_win(towin);
 
   check_topfill(towin, false);
@@ -3144,7 +3145,7 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
         }
       }
       extmark_adjust(curbuf, lnum, lnum + count - 1, (long)MAXLNUM, added, kExtmarkUndo);
-      changed_lines(lnum, 0, lnum + count, added, true);
+      changed_lines(curbuf, lnum, 0, lnum + count, added, true);
 
       if (did_free) {
         // Diff is deleted, update folds in other windows.
