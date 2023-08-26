@@ -92,11 +92,6 @@
 # include <time.h>
 #endif
 
-typedef struct block0 ZERO_BL;              // contents of the first block
-typedef struct pointer_block PTR_BL;        // contents of a pointer block
-typedef struct data_block DATA_BL;          // contents of a data block
-typedef struct pointer_entry PTR_EN;        // block/line-count pair
-
 enum {
   DATA_ID = (('d' << 8) + 'a'),  // data block id
   PTR_ID = (('p' << 8) + 't'),   // pointer block id
@@ -105,32 +100,32 @@ enum {
 };
 
 // pointer to a block, used in a pointer block
-struct pointer_entry {
+typedef struct {
   blocknr_T pe_bnum;            // block number
   linenr_T pe_line_count;       // number of lines in this branch
   linenr_T pe_old_lnum;         // lnum for this block (for recovery)
   int pe_page_count;            // number of pages in block pe_bnum
-};
+} PointerEntry;
 
 // A pointer block contains a list of branches in the tree.
-struct pointer_block {
+typedef struct {
   uint16_t pb_id;               // ID for pointer block: PTR_ID
   uint16_t pb_count;            // number of pointers in this block
   uint16_t pb_count_max;        // maximum value for pb_count
-  PTR_EN pb_pointer[];          // list of pointers to blocks
+  PointerEntry pb_pointer[];    // list of pointers to blocks
                                 // followed by empty space until end of page
-};
+} PointerBlock;
 
 // Value for pb_count_max.
 #define PB_COUNT_MAX(mfp) \
-  (uint16_t)((mfp->mf_page_size - offsetof(PTR_BL, pb_pointer)) / sizeof(PTR_EN))
+  (uint16_t)((mfp->mf_page_size - offsetof(PointerBlock, pb_pointer)) / sizeof(PointerEntry))
 
 // A data block is a leaf in the tree.
 //
 // The text of the lines is at the end of the block. The text of the first line
 // in the block is put at the end, the text of the second line in front of it,
 // etc. Thus the order of the lines is the opposite of the line number.
-struct data_block {
+typedef struct {
   uint16_t db_id;               // ID for data block: DATA_ID
   unsigned db_free;             // free space available
   unsigned db_txt_start;        // byte where text starts
@@ -141,7 +136,7 @@ struct data_block {
                                 // followed by empty space up to db_txt_start
                                 // followed by the text in the lines until
                                 // end of page
-};
+} DataBlock;
 
 // The low bits of db_index hold the actual index. The topmost bit is
 // used for the global command to be able to mark a line.
@@ -153,7 +148,7 @@ struct data_block {
 #define DB_INDEX_MASK   (~DB_MARKED)
 
 #define INDEX_SIZE  (sizeof(unsigned))      // size of one db_index entry
-#define HEADER_SIZE (offsetof(DATA_BL, db_index))  // size of data block header
+#define HEADER_SIZE (offsetof(DataBlock, db_index))  // size of data block header
 
 enum {
   B0_FNAME_SIZE_ORG = 900,      // what it was in older versions
@@ -172,7 +167,8 @@ enum {
   B0_MAGIC_CHAR = 0x55,
 };
 
-// Block zero holds all info about the swap file.
+// Block zero holds all info about the swap file. This is the first block in
+// the file.
 //
 // NOTE: DEFINITION OF BLOCK 0 SHOULD NOT CHANGE! It would make all existing
 // swap files unusable!
@@ -182,7 +178,7 @@ enum {
 // This block is built up of single bytes, to make it portable across
 // different machines. b0_magic_* is used to check the byte order and size of
 // variables, because the rest of the swap file is not portable.
-struct block0 {
+typedef struct {
   char b0_id[2];                     ///< ID for block 0: BLOCK0_ID0 and BLOCK0_ID1.
   char b0_version[10];               // Vim version string
   char b0_page_size[4];              // number of bytes per page
@@ -196,7 +192,7 @@ struct block0 {
   int b0_magic_int;                  // check for byte order of int
   int16_t b0_magic_short;            // check for byte order of short
   char b0_magic_char;                // check for last char
-};
+} ZeroBlock;
 
 // Note: b0_dirty and b0_flags are put at the end of the file name.  For very
 // long file names in older versions of Vim they are invalid.
@@ -315,7 +311,7 @@ int ml_open(buf_T *buf)
     iemsg(_("E298: Didn't get block nr 0?"));
     goto error;
   }
-  ZERO_BL *b0p = hp->bh_data;
+  ZeroBlock *b0p = hp->bh_data;
 
   b0p->b0_id[0] = BLOCK0_ID0;
   b0p->b0_id[1] = BLOCK0_ID1;
@@ -354,7 +350,7 @@ int ml_open(buf_T *buf)
     iemsg(_("E298: Didn't get block nr 1?"));
     goto error;
   }
-  PTR_BL *pp = hp->bh_data;
+  PointerBlock *pp = hp->bh_data;
   pp->pb_count = 1;
   pp->pb_pointer[0].pe_bnum = 2;
   pp->pb_pointer[0].pe_page_count = 1;
@@ -369,7 +365,7 @@ int ml_open(buf_T *buf)
     goto error;
   }
 
-  DATA_BL *dp = hp->bh_data;
+  DataBlock *dp = hp->bh_data;
   dp->db_index[0] = --dp->db_txt_start;         // at end of block
   dp->db_free -= 1 + (unsigned)INDEX_SIZE;
   dp->db_line_count = 1;
@@ -608,14 +604,14 @@ void ml_timestamp(buf_T *buf)
 }
 
 /// Checks whether the IDs in b0 are valid.
-static bool ml_check_b0_id(ZERO_BL *b0p)
+static bool ml_check_b0_id(ZeroBlock *b0p)
   FUNC_ATTR_NONNULL_ALL
 {
   return b0p->b0_id[0] == BLOCK0_ID0 && b0p->b0_id[1] == BLOCK0_ID1;
 }
 
 /// Checks whether all strings in b0 are valid (i.e. nul-terminated).
-static bool ml_check_b0_strings(ZERO_BL *b0p)
+static bool ml_check_b0_strings(ZeroBlock *b0p)
   FUNC_ATTR_NONNULL_ALL
 {
   return (memchr(b0p->b0_version, NUL, 10)
@@ -633,7 +629,7 @@ static void ml_upd_block0(buf_T *buf, upd_block0_T what)
   if (mfp == NULL || (hp = mf_get(mfp, 0, 1)) == NULL) {
     return;
   }
-  ZERO_BL *b0p = hp->bh_data;
+  ZeroBlock *b0p = hp->bh_data;
   if (ml_check_b0_id(b0p) == FAIL) {
     iemsg(_("E304: ml_upd_block0(): Didn't get block 0??"));
   } else {
@@ -649,7 +645,7 @@ static void ml_upd_block0(buf_T *buf, upd_block0_T what)
 /// Write file name and timestamp into block 0 of a swap file.
 /// Also set buf->b_mtime.
 /// Don't use NameBuff[]!!!
-static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
+static void set_b0_fname(ZeroBlock *b0p, buf_T *buf)
 {
   if (buf->b_ffname == NULL) {
     b0p->b0_fname[0] = NUL;
@@ -702,7 +698,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
 /// swapfile for "buf" are in the same directory.
 /// This is fail safe: if we are not sure the directories are equal the flag is
 /// not set.
-static void set_b0_dir_flag(ZERO_BL *b0p, buf_T *buf)
+static void set_b0_dir_flag(ZeroBlock *b0p, buf_T *buf)
 {
   if (same_directory(buf->b_ml.ml_mfp->mf_fname, buf->b_ffname)) {
     b0p->b0_flags |= B0_SAME_DIR;
@@ -712,7 +708,7 @@ static void set_b0_dir_flag(ZERO_BL *b0p, buf_T *buf)
 }
 
 /// When there is room, add the 'fileencoding' to block zero.
-static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
+static void add_b0_fenc(ZeroBlock *b0p, buf_T *buf)
 {
   const int size = B0_FNAME_SIZE_NOCRYPT;
 
@@ -730,7 +726,7 @@ static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
 /// Return true if the process with number "b0p->b0_pid" is still running.
 /// "swap_fname" is the name of the swap file, if it's from before a reboot then
 /// the result is false;
-static bool swapfile_process_running(const ZERO_BL *b0p, const char *swap_fname)
+static bool swapfile_process_running(const ZeroBlock *b0p, const char *swap_fname)
 {
   FileInfo st;
   double uptime;
@@ -754,11 +750,11 @@ void ml_recover(bool checkext)
   memfile_T *mfp = NULL;
   char *fname_used = NULL;
   bhdr_T *hp = NULL;
-  ZERO_BL *b0p;
+  ZeroBlock *b0p;
   int b0_ff;
   char *b0_fenc = NULL;
-  PTR_BL *pp;
-  DATA_BL *dp;
+  PointerBlock *pp;
+  DataBlock *dp;
   infoptr_T *ip;
   bool directly;
   char *p;
@@ -1467,7 +1463,7 @@ static bool process_still_running;
 void get_b0_dict(const char *fname, dict_T *d)
 {
   int fd;
-  struct block0 b0;
+  ZeroBlock b0;
 
   if ((fd = os_open(fname, O_RDONLY, 0)) >= 0) {
     if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
@@ -1506,7 +1502,7 @@ static time_t swapfile_info(char *fname)
 {
   assert(fname != NULL);
   int fd;
-  struct block0 b0;
+  ZeroBlock b0;
   time_t x = (time_t)0;
 #ifdef UNIX
   char uname[B0_UNAME_SIZE];
@@ -1596,7 +1592,7 @@ static time_t swapfile_info(char *fname)
 ///          can be safely deleted.
 static bool swapfile_unchanged(char *fname)
 {
-  struct block0 b0;
+  ZeroBlock b0;
 
   // Swap file must exist.
   if (!os_path_exists(fname)) {
@@ -1905,7 +1901,7 @@ errorret:
       goto errorret;
     }
 
-    DATA_BL *dp = hp->bh_data;
+    DataBlock *dp = hp->bh_data;
 
     char *ptr = (char *)dp + (dp->db_index[lnum - buf->b_ml.ml_locked_low] & DB_INDEX_MASK);
     buf->b_ml.ml_line_ptr = ptr;
@@ -2037,7 +2033,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
   // get line count (number of indexes in current block) before the insertion
   int line_count = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low;
 
-  DATA_BL *dp = hp->bh_data;
+  DataBlock *dp = hp->bh_data;
 
   // If
   // - there is not enough room in the current block
@@ -2120,13 +2116,13 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     int lines_moved;
     int data_moved = 0;                     // init to shut up gcc
     int total_moved = 0;                    // init to shut up gcc
-    DATA_BL *dp_right, *dp_left;
+    DataBlock *dp_right, *dp_left;
     int stack_idx;
     bool in_left;
     int lineadd;
     blocknr_T bnum_left, bnum_right;
     linenr_T lnum_left, lnum_right;
-    PTR_BL *pp_new;
+    PointerBlock *pp_new;
 
     // We are going to allocate a new data block. Depending on the
     // situation it will be put to the left or right of the existing
@@ -2263,7 +2259,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
       if ((hp = mf_get(mfp, ip->ip_bnum, 1)) == NULL) {
         return FAIL;
       }
-      PTR_BL *pp = hp->bh_data;         // must be pointer block
+      PointerBlock *pp = hp->bh_data;         // must be pointer block
       if (pp->pb_id != PTR_ID) {
         iemsg(_(e_pointer_block_id_wrong_three));
         mf_put(mfp, hp, false, false);
@@ -2276,7 +2272,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
         if (pb_idx + 1 < (int)pp->pb_count) {
           memmove(&pp->pb_pointer[pb_idx + 2],
                   &pp->pb_pointer[pb_idx + 1],
-                  (size_t)(pp->pb_count - pb_idx - 1) * sizeof(PTR_EN));
+                  (size_t)(pp->pb_count - pb_idx - 1) * sizeof(PointerEntry));
         }
         pp->pb_count++;
         pp->pb_pointer[pb_idx].pe_line_count = line_count_left;
@@ -2349,7 +2345,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
       if (total_moved) {
         memmove(&pp_new->pb_pointer[0],
                 &pp->pb_pointer[pb_idx + 1],
-                (size_t)(total_moved) * sizeof(PTR_EN));
+                (size_t)(total_moved) * sizeof(PointerEntry));
         pp_new->pb_count = (uint16_t)total_moved;
         pp->pb_count = (uint16_t)(pp->pb_count - (total_moved - 1));
         pp->pb_pointer[pb_idx + 1].pe_bnum = bnum_right;
@@ -2542,7 +2538,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
     return FAIL;
   }
 
-  DATA_BL *dp = hp->bh_data;
+  DataBlock *dp = hp->bh_data;
   // compute line count (number of entries in block) before the delete
   int count = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 2;
   int idx = lnum - buf->b_ml.ml_locked_low;
@@ -2579,7 +2575,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
       if ((hp = mf_get(mfp, ip->ip_bnum, 1)) == NULL) {
         return FAIL;
       }
-      PTR_BL *pp = hp->bh_data;         // must be pointer block
+      PointerBlock *pp = hp->bh_data;         // must be pointer block
       if (pp->pb_id != PTR_ID) {
         iemsg(_(e_pointer_block_id_wrong_four));
         mf_put(mfp, hp, false, false);
@@ -2591,7 +2587,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
       } else {
         if (count != idx) {             // move entries after the deleted one
           memmove(&pp->pb_pointer[idx], &pp->pb_pointer[idx + 1],
-                  (size_t)(count - idx) * sizeof(PTR_EN));
+                  (size_t)(count - idx) * sizeof(PointerEntry));
         }
         mf_put(mfp, hp, true, false);
 
@@ -2651,7 +2647,7 @@ void ml_setmarked(linenr_T lnum)
   if ((hp = ml_find_line(curbuf, lnum, ML_FIND)) == NULL) {
     return;                 // give error message?
   }
-  DATA_BL *dp = hp->bh_data;
+  DataBlock *dp = hp->bh_data;
   dp->db_index[lnum - curbuf->b_ml.ml_locked_low] |= DB_MARKED;
   curbuf->b_ml.ml_flags |= ML_LOCKED_DIRTY;
 }
@@ -2673,7 +2669,7 @@ linenr_T ml_firstmarked(void)
     if ((hp = ml_find_line(curbuf, lnum, ML_FIND)) == NULL) {
       return 0;                   // give error message?
     }
-    DATA_BL *dp = hp->bh_data;
+    DataBlock *dp = hp->bh_data;
 
     for (int i = lnum - curbuf->b_ml.ml_locked_low;
          lnum <= curbuf->b_ml.ml_locked_high; i++, lnum++) {
@@ -2705,7 +2701,7 @@ void ml_clearmarked(void)
     if ((hp = ml_find_line(curbuf, lnum, ML_FIND)) == NULL) {
       return;                   // give error message?
     }
-    DATA_BL *dp = hp->bh_data;
+    DataBlock *dp = hp->bh_data;
 
     for (int i = lnum - curbuf->b_ml.ml_locked_low;
          lnum <= curbuf->b_ml.ml_locked_high; i++, lnum++) {
@@ -2754,7 +2750,7 @@ static void ml_flush_line(buf_T *buf)
     if (hp == NULL) {
       siemsg(_("E320: Cannot find line %" PRId64), (int64_t)lnum);
     } else {
-      DATA_BL *dp = hp->bh_data;
+      DataBlock *dp = hp->bh_data;
       int idx = lnum - buf->b_ml.ml_locked_low;
       int start = ((dp->db_index[idx]) & DB_INDEX_MASK);
       char *old_line = (char *)dp + start;
@@ -2822,7 +2818,7 @@ static bhdr_T *ml_new_data(memfile_T *mfp, bool negative, int page_count)
 {
   assert(page_count >= 0);
   bhdr_T *hp = mf_new(mfp, negative, (unsigned)page_count);
-  DATA_BL *dp = hp->bh_data;
+  DataBlock *dp = hp->bh_data;
   dp->db_id = DATA_ID;
   dp->db_txt_start = dp->db_txt_end = (unsigned)page_count * mfp->mf_page_size;
   dp->db_free = dp->db_txt_start - (unsigned)HEADER_SIZE;
@@ -2835,7 +2831,7 @@ static bhdr_T *ml_new_data(memfile_T *mfp, bool negative, int page_count)
 static bhdr_T *ml_new_ptr(memfile_T *mfp)
 {
   bhdr_T *hp = mf_new(mfp, false, 1);
-  PTR_BL *pp = hp->bh_data;
+  PointerBlock *pp = hp->bh_data;
   pp->pb_id = PTR_ID;
   pp->pb_count = 0;
   pp->pb_count_max = PB_COUNT_MAX(mfp);
@@ -2858,7 +2854,7 @@ static bhdr_T *ml_new_ptr(memfile_T *mfp)
 /// @return  NULL for failure, pointer to block header otherwise
 static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
 {
-  PTR_BL *pp;
+  PointerBlock *pp;
   bhdr_T *hp;
   int top;
 
@@ -2935,7 +2931,7 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
       high--;
     }
 
-    DATA_BL *dp = hp->bh_data;
+    DataBlock *dp = hp->bh_data;
     if (dp->db_id == DATA_ID) {         // data block
       buf->b_ml.ml_locked = hp;
       buf->b_ml.ml_locked_low = low;
@@ -2945,7 +2941,7 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
       return hp;
     }
 
-    pp = (PTR_BL *)(dp);                // must be pointer block
+    pp = (PointerBlock *)(dp);                // must be pointer block
     if (pp->pb_id != PTR_ID) {
       iemsg(_(e_pointer_block_id_wrong));
       goto error_block;
@@ -3055,7 +3051,7 @@ static void ml_lineadd(buf_T *buf, int count)
     if ((hp = mf_get(mfp, ip->ip_bnum, 1)) == NULL) {
       break;
     }
-    PTR_BL *pp = hp->bh_data;       // must be pointer block
+    PointerBlock *pp = hp->bh_data;       // must be pointer block
     if (pp->pb_id != PTR_ID) {
       mf_put(mfp, hp, false, false);
       iemsg(_(e_pointer_block_id_wrong_two));
@@ -3371,7 +3367,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
       if (!recoverymode && buf_fname != NULL
           && !buf->b_help && !(buf->b_flags & BF_DUMMY)) {
         int fd;
-        struct block0 b0;
+        ZeroBlock b0;
         int differ = false;
 
         // Try to read block 0 from the swap file to get the original
@@ -3548,7 +3544,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
   return fname;
 }
 
-static int b0_magic_wrong(ZERO_BL *b0p)
+static int b0_magic_wrong(ZeroBlock *b0p)
 {
   return b0p->b0_magic_long != B0_MAGIC_LONG
          || b0p->b0_magic_int != B0_MAGIC_INT
@@ -3684,7 +3680,7 @@ static long char_to_long(const char *s_in)
 /// - 'fileencoding'
 void ml_setflags(buf_T *buf)
 {
-  ZERO_BL *b0p;
+  ZeroBlock *b0p;
 
   if (!buf->b_ml.ml_mfp) {
     return;
@@ -3769,7 +3765,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
   curchnk->mlcs_totalsize += len;
   if (updtype == ML_CHNK_ADDLINE) {
     int rest;
-    DATA_BL *dp;
+    DataBlock *dp;
     curchnk->mlcs_numlines++;
 
     // May resize here so we don't have to do it in both cases below
@@ -3972,7 +3968,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
         || (hp = ml_find_line(buf, curline, ML_FIND)) == NULL) {
       return -1;
     }
-    DATA_BL *dp = hp->bh_data;
+    DataBlock *dp = hp->bh_data;
     int count
       = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 1;  // number of entries in block
     int idx;
