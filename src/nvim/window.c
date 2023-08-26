@@ -5171,7 +5171,6 @@ static void win_free(win_T *wp, tabpage_T *tp)
   alist_unlink(wp->w_alist);
 
   // Don't execute autocommands while the window is halfway being deleted.
-  // gui_mch_destroy_scrollbar() may trigger a FocusGained event.
   block_autocmds();
 
   clear_winopt(&wp->w_onebuf_opt);
