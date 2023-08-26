@@ -9,7 +9,7 @@
 #include "nvim/runtime.h"
 
 #define TIME_MSG(s) do { \
-  if (time_fd != NULL) time_msg(s, NULL); \
+  DLOG("%s", s); \
 } while (0)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

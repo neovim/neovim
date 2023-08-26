@@ -79,9 +79,13 @@ function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
     local type, id_or_cb, method_or_error, args_or_result
     local pos = 1
     local len = #data
+    print('')
+    print('Length:', len)
     while pos <= len do
       type, id_or_cb, method_or_error, args_or_result, pos =
         self._session:receive(data, pos)
+      print('Pos:', pos)
+      print('Type:', type)
       if type == 'request' or type == 'notification' then
         if type == 'request' then
           request_cb(method_or_error, args_or_result, Response.new(self,
@@ -92,6 +96,7 @@ function MsgpackRpcStream:read_start(request_cb, notification_cb, eof_cb)
       elseif type == 'response' then
         if method_or_error == mpack.NIL then
           method_or_error = nil
+          print('Response:', args_or_result)
         else
           args_or_result = nil
         end

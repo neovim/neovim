@@ -8,6 +8,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
 #include "nvim/event/wstream.h"
+#include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
 
@@ -89,6 +90,7 @@ bool wstream_write(Stream *stream, WBuffer *buffer)
   uvbuf.base = buffer->data;
   uvbuf.len = UV_BUF_LEN(buffer->size);
 
+  DLOG("write: %zu", buffer->size);
   if (uv_write(&data->uv_req, stream->uvstream, &uvbuf, 1, write_cb)) {
     xfree(data);
     goto err;

@@ -104,6 +104,10 @@ end
 
 function Session:run(request_cb, notification_cb, setup_cb, timeout)
   local function on_request(method, args, response)
+    print('')
+    print('')
+    print('')
+    print(method, vim.inspect(args), vim.inspect(response))
     coroutine_exec(request_cb, method, args, function(status, result, flag)
       if status then
         response:send(result, flag)
@@ -114,6 +118,10 @@ function Session:run(request_cb, notification_cb, setup_cb, timeout)
   end
 
   local function on_notification(method, args)
+    print('')
+    print('')
+    print('')
+    print(method, vim.inspect(args))
     coroutine_exec(notification_cb, method, args)
   end
 
@@ -159,10 +167,18 @@ function Session:_blocking_request(method, args)
   local err, result
 
   local function on_request(method_, args_, response)
+    print('')
+    print('')
+    print('')
+    print(method_, vim.inspect(args_), vim.inspect(response))
     table.insert(self._pending_messages, {'request', method_, args_, response})
   end
 
   local function on_notification(method_, args_)
+    print('')
+    print('')
+    print('')
+    print(method_, vim.inspect(args_))
     table.insert(self._pending_messages, {'notification', method_, args_})
   end
 

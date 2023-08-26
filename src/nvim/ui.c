@@ -349,11 +349,14 @@ void ui_attach_impl(UI *ui, uint64_t chanid)
 
   uis[ui_count++] = ui;
   ui_refresh_options();
+  remote_ui_flush_buf(ui);
   resettitle();
+  remote_ui_flush_buf(ui);
 
   for (UIExtension i = kUIGlobalCount; (int)i < kUIExtCount; i++) {
     ui_set_ext_option(ui, i, ui->ui_ext[i]);
   }
+  remote_ui_flush_buf(ui);
 
   bool sent = false;
   if (ui->ui_ext[kUIHlState]) {
@@ -362,6 +365,7 @@ void ui_attach_impl(UI *ui, uint64_t chanid)
   if (!sent) {
     ui_send_all_hls(ui);
   }
+  remote_ui_flush_buf(ui);
   ui_refresh();
 
   do_autocmd_uienter(chanid, true);

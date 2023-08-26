@@ -396,14 +396,7 @@ else()
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes -Wno-misleading-indentation")
 endif()
 
-# Log level (NVIM_LOG_DEBUG in log.h)
-if(CI_BUILD)
-  # Don't debug log on CI, it gets too verbose in the main build log.
-  # TODO(bfredl): debug log level also exposes some errors with EXITFREE in ASAN build.
-else()
-  # Minimize logging for release-type builds.
-  target_compile_definitions(nvim PRIVATE $<$<CONFIG:Debug>:NVIM_LOG_DEBUG>)
-endif()
+target_compile_definitions(nvim PRIVATE NVIM_LOG_DEBUG)
 
 if(ENABLE_ASAN_UBSAN OR ENABLE_MSAN OR ENABLE_TSAN)
   target_compile_definitions(main_lib INTERFACE EXITFREE)

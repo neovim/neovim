@@ -3828,7 +3828,9 @@ long read_eintr(int fd, void *buf, size_t bufsize)
   long ret;
 
   while (true) {
+    DLOG("read %d %zu", fd, bufsize);
     ret = read(fd, buf, (unsigned)bufsize);
+    DLOG("return %ld", ret);
     if (ret >= 0 || errno != EINTR) {
       break;
     }
