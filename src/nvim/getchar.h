@@ -1,28 +1,20 @@
 #ifndef NVIM_GETCHAR_H
 #define NVIM_GETCHAR_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "nvim/eval/typval_defs.h"
+#include "nvim/getchar_defs.h"
 #include "nvim/os/fileio.h"
-#include "nvim/vim.h"
+#include "nvim/types.h"
 
-/// Values for "noremap" argument of ins_typebuf()
-///
-/// Also used for map->m_noremap and menu->noremap[].
-enum RemapValues {
-  REMAP_YES = 0,  ///< Allow remapping.
-  REMAP_NONE = -1,  ///< No remapping.
-  REMAP_SCRIPT = -2,  ///< Remap script-local mappings only.
-  REMAP_SKIP = -3,  ///< No remapping for first char.
-};
-
-// Argument for flush_buffers().
+/// Argument for flush_buffers().
 typedef enum {
   FLUSH_MINIMAL,
-  FLUSH_TYPEAHEAD,  // flush current typebuf contents
-  FLUSH_INPUT,  // flush typebuf and inchar() input
+  FLUSH_TYPEAHEAD,  ///< flush current typebuf contents
+  FLUSH_INPUT,      ///< flush typebuf and inchar() input
 } flush_buffers_T;
-
-#define KEYLEN_PART_KEY (-1)  // keylen value for incomplete key-code
-#define KEYLEN_PART_MAP (-2)  // keylen value for incomplete mapping
 
 /// Maximum number of streams to read script from
 enum { NSCRIPT = 15, };

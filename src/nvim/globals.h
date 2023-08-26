@@ -4,10 +4,12 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include "nvim/arglist_defs.h"
 #include "nvim/ascii.h"
 #include "nvim/event/loop.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval_defs.h"
+#include "nvim/getchar_defs.h"
 #include "nvim/iconv.h"
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
@@ -808,14 +810,6 @@ enum {
   WM_SCROLLED = 2,  ///< wildmenu showing with scroll
   WM_LIST = 3,      ///< cmdline CTRL-D
 };
-
-// Some file names are stored in pathdef.c, which is generated from the
-// Makefile to make their value depend on the Makefile.
-#ifdef HAVE_PATHDEF
-extern char *default_vim_dir;
-extern char *default_vimruntime_dir;
-extern char *default_lib_dir;
-#endif
 
 // When a window has a local directory, the absolute path of the global
 // current directory is stored here (in allocated memory).  If the current

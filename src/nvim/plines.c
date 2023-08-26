@@ -726,7 +726,7 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left, colnr_T *right
 /// Functions calculating vertical size of text when displayed inside a window.
 /// Calls horizontal size functions defined above.
 
-/// Check if there may be filler inlines anywhere in window "wp".
+/// Check if there may be filler lines anywhere in window "wp".
 bool win_may_fill(win_T *wp)
 {
   return (wp->w_p_diff && diffopt_filler()) || wp->w_buffer->b_virt_line_blocks;

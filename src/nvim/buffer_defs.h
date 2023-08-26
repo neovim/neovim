@@ -7,8 +7,8 @@
 
 typedef struct file_buffer buf_T;  // Forward declaration
 
-// Reference to a buffer that stores the value of buf_free_count.
-// bufref_valid() only needs to check "buf" when the count differs.
+/// Reference to a buffer that stores the value of buf_free_count.
+/// bufref_valid() only needs to check "buf" when the count differs.
 typedef struct {
   buf_T *br_buf;
   int br_fnum;
@@ -17,6 +17,7 @@ typedef struct {
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/arglist_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/garray.h"
@@ -24,6 +25,7 @@ typedef struct {
 #include "nvim/hashtab.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/map.h"
+#include "nvim/mapping_defs.h"
 #include "nvim/mark_defs.h"
 #include "nvim/marktree.h"
 #include "nvim/option_defs.h"
@@ -99,28 +101,6 @@ typedef struct taggy {
   int cur_fnum;                 // buffer number used for cur_match
   char *user_data;              // used with tagfunc
 } taggy_T;
-
-typedef struct buffblock buffblock_T;
-typedef struct buffheader buffheader_T;
-
-// structure used to store one block of the stuff/redo/recording buffers
-struct buffblock {
-  buffblock_T *b_next;  // pointer to next buffblock
-  char b_str[1];        // contents (actually longer)
-};
-
-// header used for the stuff buffer and the redo buffer
-struct buffheader {
-  buffblock_T bh_first;  // first (dummy) block of list
-  buffblock_T *bh_curr;  // buffblock for appending
-  size_t bh_index;          // index for reading
-  size_t bh_space;          // space in bh_curr for appending
-};
-
-typedef struct {
-  buffheader_T sr_redobuff;
-  buffheader_T sr_old_redobuff;
-} save_redo_T;
 
 // Structure that contains all options that are local to a window.
 // Used twice in a window: for the current buffer and for all buffers.
@@ -267,27 +247,7 @@ struct wininfo_S {
   int wi_changelistidx;         // copy of w_changelistidx
 };
 
-// Argument list: Array of file names.
-// Used for the global argument list and the argument lists local to a window.
-//
-// TODO(neovim): move struct arglist to another header
-typedef struct arglist {
-  garray_T al_ga;               // growarray with the array of file names
-  int al_refcount;              // number of windows using this arglist
-  int id;                       ///< id of this arglist
-} alist_T;
-
-// For each argument remember the file name as it was given, and the buffer
-// number that contains the expanded file name (required for when ":cd" is
-// used).
-//
-// TODO(Felipe): move aentry_T to another header
-typedef struct argentry {
-  char *ae_fname;        // file name as specified
-  int ae_fnum;           // buffer number with expanded file name
-} aentry_T;
-
-#define ALIST(win) (win)->w_alist
+#define ALIST(win)      (win)->w_alist
 #define GARGLIST        ((aentry_T *)global_alist.al_ga.ga_data)
 #define ARGLIST         ((aentry_T *)ALIST(curwin)->al_ga.ga_data)
 #define WARGLIST(wp)    ((aentry_T *)ALIST(wp)->al_ga.ga_data)
@@ -295,51 +255,6 @@ typedef struct argentry {
 #define GARGCOUNT       (global_alist.al_ga.ga_len)
 #define ARGCOUNT        (ALIST(curwin)->al_ga.ga_len)
 #define WARGCOUNT(wp)   (ALIST(wp)->al_ga.ga_len)
-
-// Used for the typeahead buffer: typebuf.
-typedef struct {
-  uint8_t *tb_buf;              // buffer for typed characters
-  uint8_t *tb_noremap;          // mapping flags for characters in tb_buf[]
-  int tb_buflen;                // size of tb_buf[]
-  int tb_off;                   // current position in tb_buf[]
-  int tb_len;                   // number of valid bytes in tb_buf[]
-  int tb_maplen;                // nr of mapped bytes in tb_buf[]
-  int tb_silent;                // nr of silently mapped bytes in tb_buf[]
-  int tb_no_abbr_cnt;           // nr of bytes without abbrev. in tb_buf[]
-  int tb_change_cnt;            // nr of time tb_buf was changed; never zero
-} typebuf_T;
-
-// Struct to hold the saved typeahead for save_typeahead().
-typedef struct {
-  typebuf_T save_typebuf;
-  bool typebuf_valid;                       // true when save_typebuf valid
-  int old_char;
-  int old_mod_mask;
-  buffheader_T save_readbuf1;
-  buffheader_T save_readbuf2;
-  String save_inputbuf;
-} tasave_T;
-
-// Structure used for mappings and abbreviations.
-typedef struct mapblock mapblock_T;
-struct mapblock {
-  mapblock_T *m_next;           // next mapblock in list
-  char *m_keys;                 // mapped from, lhs
-  char *m_str;                  // mapped to, rhs
-  char *m_orig_str;             // rhs as entered by the user
-  LuaRef m_luaref;              // lua function reference as rhs
-  int m_keylen;                 // strlen(m_keys)
-  int m_mode;                   // valid mode
-  int m_simplified;             // m_keys was simplified, do no use this map
-                                // if keys are typed
-  int m_noremap;                // if non-zero no re-mapping for m_str
-  char m_silent;                // <silent> used, don't echo commands
-  char m_nowait;                // <nowait> used
-  char m_expr;                  // <expr> used, m_str is an expression
-  sctx_T m_script_ctx;          // SCTX where map was defined
-  char *m_desc;                 // description of mapping
-  bool m_replace_keycodes;      // replace keycodes in result of expression
-};
 
 // values for b_syn_spell: what to do with toplevel text
 #define SYNSPL_DEFAULT  0       // spell check if @Spell not defined
