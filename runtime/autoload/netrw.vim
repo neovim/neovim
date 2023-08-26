@@ -5230,9 +5230,10 @@ fun! s:NetrwBrowseUpDir(islocal)
    elseif curfile == '../'
      keepj call search('^\M'.curfile,"wb")
    else
-"    call Decho("search(^\\M".s:treedepthstring.curfile.") backwards"))
+    let fileWithoutLinkSyntax = substitute(curfile, '@. --> .*$', '', '')
+"    call Decho("search(^\\M".s:treedepthstring.fileWithoutLinkSyntax.") backwards"))
     while 1
-     keepj call search('^\M'.s:treedepthstring.curfile,"wb")
+     keepj call search('^\M'.s:treedepthstring.fileWithoutLinkSyntax,"wb")
      let treepath= s:NetrwTreePath(w:netrw_treetop)
 "     call Decho("..current treepath<".treepath.">",'~'.expand("<slnum>"))
      if treepath == curpath
