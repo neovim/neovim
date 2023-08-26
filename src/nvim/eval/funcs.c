@@ -6730,7 +6730,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     const char *name = NULL;
     Channel *chan = find_channel(chan_id);
     if (chan) {
-      name = rpc_client_name(chan);
+      name = get_client_info(chan, "name");
     }
     msg_ext_set_kind("rpc_error");
     if (name) {

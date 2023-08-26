@@ -306,6 +306,17 @@ end:
   channel_decref(channel);
 }
 
+static ChannelCallFrame *find_call_frame(RpcState *rpc, uint32_t request_id)
+{
+  for (size_t i = 0; i < kv_size(rpc->call_stack); i++) {
+    ChannelCallFrame *frame = kv_Z(rpc->call_stack, i);
+    if (frame->request_id == request_id) {
+      return frame;
+    }
+  }
+  return NULL;
+}
+
 static void parse_msgpack(Channel *channel)
 {
   Unpacker *p = channel->rpc.unpacker;
@@ -321,13 +332,15 @@ static void parse_msgpack(Channel *channel)
       }
       arena_mem_free(arena_finish(&p->arena));
     } else if (p->type == kMessageTypeResponse) {
-      ChannelCallFrame *frame = kv_last(channel->rpc.call_stack);
-      if (p->request_id != frame->request_id) {
+      ChannelCallFrame *frame = channel->rpc.client_type == kClientTypeMsgpackRpc
+        ? find_call_frame(&channel->rpc, p->request_id)
+        : kv_last(channel->rpc.call_stack);
+      if (frame == NULL || p->request_id != frame->request_id) {
         char buf[256];
         snprintf(buf, sizeof(buf),
-                 "ch %" PRIu64 " returned a response with an unknown request "
-                 "id. Ensure the client is properly synchronized",
-                 channel->id);
+                 "ch %" PRIu64 " (type=%" PRIu32 ") returned a response with an unknown request "
+                 "id %" PRIu32 ". Ensure the client is properly synchronized",
+                 channel->id, (unsigned)channel->rpc.client_type, p->request_id);
         chan_close_with_error(channel, buf, LOGLVL_ERR);
       }
       frame->returned = true;
@@ -691,6 +704,25 @@ void rpc_set_client_info(uint64_t id, Dictionary info)
 
   api_free_dictionary(chan->rpc.info);
   chan->rpc.info = info;
+
+  // Parse "type" on "info" and set "client_type"
+  const char *type = get_client_info(chan, "type");
+  if (type == NULL || strequal(type, "remote")) {
+    chan->rpc.client_type = kClientTypeRemote;
+  } else if (strequal(type, "msgpack-rpc")) {
+    chan->rpc.client_type = kClientTypeMsgpackRpc;
+  } else if (strequal(type, "ui")) {
+    chan->rpc.client_type = kClientTypeUi;
+  } else if (strequal(type, "embedder")) {
+    chan->rpc.client_type = kClientTypeEmbedder;
+  } else if (strequal(type, "host")) {
+    chan->rpc.client_type = kClientTypeHost;
+  } else if (strequal(type, "plugin")) {
+    chan->rpc.client_type = kClientTypePlugin;
+  } else {
+    chan->rpc.client_type = kClientTypeUnknown;
+  }
+
   channel_info_changed(chan, false);
 }
 
@@ -699,14 +731,15 @@ Dictionary rpc_client_info(Channel *chan)
   return copy_dictionary(chan->rpc.info, NULL);
 }
 
-const char *rpc_client_name(Channel *chan)
+const char *get_client_info(Channel *chan, const char *key)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (!chan->is_rpc) {
     return NULL;
   }
   Dictionary info = chan->rpc.info;
   for (size_t i = 0; i < info.size; i++) {
-    if (strequal("name", info.items[i].key.data)
+    if (strequal(key, info.items[i].key.data)
         && info.items[i].value.type == kObjectTypeString) {
       return info.items[i].value.data.string.data;
     }

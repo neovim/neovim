@@ -1679,7 +1679,11 @@ function vim.api.nvim_select_popupmenu_item(item, insert, finish, opts) end
 --- @param type string Must be one of the following values. Client libraries
 ---                   should default to "remote" unless overridden by the
 ---                   user.
----                   • "remote" remote client connected to Nvim.
+---                   • "remote" remote client connected "Nvim flavored"
+---                     MessagePack-RPC (responses must be in reverse order of
+---                     requests). `msgpack-rpc`
+---                   • "msgpack-rpc" remote client connected to Nvim via
+---                     fully MessagePack-RPC compliant protocol.
 ---                   • "ui" gui frontend
 ---                   • "embedder" application using Nvim as a component (for
 ---                     example, IDE/editor implementing a vim mode).
