@@ -5239,8 +5239,9 @@ static void win_free(win_T *wp, tabpage_T *tp)
     }
   }
 
-  // free the border title text
+  // free the border text
   clear_virttext(&wp->w_float_config.title_chunks);
+  clear_virttext(&wp->w_float_config.footer_chunks);
 
   clear_matches(wp);
 

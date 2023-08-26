@@ -145,11 +145,18 @@
 ///     By default, `FloatBorder` highlight is used, which links to `WinSeparator`
 ///     when not defined.  It could also be specified by character:
 ///       [ ["+", "MyCorner"], ["x", "MyBorder"] ].
-///   - title: Title (optional) in window border, String or list.
-///     List is [text, highlight] tuples. if is string the default
-///     highlight group is `FloatTitle`.
-///   - title_pos: Title position must set with title option.
-///     value can be of `left` `center` `right` default is left.
+///   - title: Title (optional) in window border, string or list.
+///     List should consist of `[text, highlight]` tuples.
+///     If string, the default highlight group is `FloatTitle`.
+///   - title_pos: Title position. Must be set with `title` option.
+///     Value can be one of "left", "center", or "right".
+///     Default is `"left"`.
+///   - footer: Footer (optional) in window border, string or list.
+///     List should consist of `[text, highlight]` tuples.
+///     If string, the default highlight group is `FloatFooter`.
+///   - footer_pos: Footer position. Must be set with `footer` option.
+///     Value can be one of "left", "center", or "right".
+///     Default is `"left"`.
 ///   - noautocmd: If true then no buffer-related autocommand events such as
 ///                  |BufEnter|, |BufLeave| or |BufWinEnter| may fire from
 ///                  calling this function.
@@ -240,6 +247,56 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
   }
 }
 
+Dictionary config_put_bordertext(Dictionary config, FloatConfig *fconfig,
+                                 BorderTextType bordertext_type)
+{
+  VirtText chunks;
+  AlignTextPos align;
+  char *field_name;
+  char *field_pos_name;
+  switch (bordertext_type) {
+  case kBorderTextTitle:
+    chunks = fconfig->title_chunks;
+    align = fconfig->title_pos;
+    field_name = "title";
+    field_pos_name = "title_pos";
+    break;
+  case kBorderTextFooter:
+    chunks = fconfig->footer_chunks;
+    align = fconfig->footer_pos;
+    field_name = "footer";
+    field_pos_name = "footer_pos";
+    break;
+  }
+
+  Array bordertext = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < chunks.size; i++) {
+    Array tuple = ARRAY_DICT_INIT;
+    ADD(tuple, CSTR_TO_OBJ(chunks.items[i].text));
+    if (chunks.items[i].hl_id > 0) {
+      ADD(tuple, CSTR_TO_OBJ(syn_id2name(chunks.items[i].hl_id)));
+    }
+    ADD(bordertext, ARRAY_OBJ(tuple));
+  }
+  PUT(config, field_name, ARRAY_OBJ(bordertext));
+
+  char *pos;
+  switch (align) {
+  case kAlignLeft:
+    pos = "left";
+    break;
+  case kAlignCenter:
+    pos = "center";
+    break;
+  case kAlignRight:
+    pos = "right";
+    break;
+  }
+  PUT(config, field_pos_name, CSTR_TO_OBJ(pos));
+
+  return config;
+}
+
 /// Gets window configuration.
 ///
 /// The returned value may be given to |nvim_open_win()|.
@@ -301,26 +358,10 @@ Dictionary nvim_win_get_config(Window window, Error *err)
       }
       PUT(rv, "border", ARRAY_OBJ(border));
       if (config->title) {
-        Array titles = ARRAY_DICT_INIT;
-        VirtText title_datas = config->title_chunks;
-        for (size_t i = 0; i < title_datas.size; i++) {
-          Array tuple = ARRAY_DICT_INIT;
-          ADD(tuple, CSTR_TO_OBJ(title_datas.items[i].text));
-          if (title_datas.items[i].hl_id > 0) {
-            ADD(tuple, CSTR_TO_OBJ(syn_id2name(title_datas.items[i].hl_id)));
-          }
-          ADD(titles, ARRAY_OBJ(tuple));
-        }
-        PUT(rv, "title", ARRAY_OBJ(titles));
-        char *title_pos;
-        if (config->title_pos == kAlignLeft) {
-          title_pos = "left";
-        } else if (config->title_pos == kAlignCenter) {
-          title_pos = "center";
-        } else {
-          title_pos = "right";
-        }
-        PUT(rv, "title_pos", CSTR_TO_OBJ(title_pos));
+        rv = config_put_bordertext(rv, config, kBorderTextTitle);
+      }
+      if (config->footer) {
+        rv = config_put_bordertext(rv, config, kBorderTextFooter);
       }
     }
   }
@@ -381,54 +422,91 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
   return true;
 }
 
-static void parse_border_title(Object title, FloatConfig *fconfig, Error *err)
+static void parse_bordertext(Object bordertext, BorderTextType bordertext_type,
+                             FloatConfig *fconfig, Error *err)
 {
-  if (title.type == kObjectTypeString) {
-    if (title.data.string.size == 0) {
-      fconfig->title = false;
+  bool *is_present;
+  VirtText *chunks;
+  int *width;
+  int default_hl_id;
+  switch (bordertext_type) {
+  case kBorderTextTitle:
+    is_present = &fconfig->title;
+    chunks = &fconfig->title_chunks;
+    width = &fconfig->title_width;
+    default_hl_id = syn_check_group(S_LEN("FloatTitle"));
+    break;
+  case kBorderTextFooter:
+    is_present = &fconfig->footer;
+    chunks = &fconfig->footer_chunks;
+    width = &fconfig->footer_width;
+    default_hl_id = syn_check_group(S_LEN("FloatFooter"));
+    break;
+  }
+
+  if (bordertext.type == kObjectTypeString) {
+    if (bordertext.data.string.size == 0) {
+      *is_present = false;
       return;
     }
-    int hl_id = syn_check_group(S_LEN("FloatTitle"));
-    kv_push(fconfig->title_chunks, ((VirtTextChunk){ .text = xstrdup(title.data.string.data),
-                                                     .hl_id = hl_id }));
-    fconfig->title_width = (int)mb_string2cells(title.data.string.data);
-    fconfig->title = true;
+    kv_push(*chunks, ((VirtTextChunk){ .text = xstrdup(bordertext.data.string.data),
+                                       .hl_id = default_hl_id }));
+    *width = (int)mb_string2cells(bordertext.data.string.data);
+    *is_present = true;
     return;
   }
 
-  if (title.type != kObjectTypeArray) {
+  if (bordertext.type != kObjectTypeArray) {
     api_set_error(err, kErrorTypeValidation, "title must be string or array");
     return;
   }
 
-  if (title.data.array.size == 0) {
+  if (bordertext.data.array.size == 0) {
     api_set_error(err, kErrorTypeValidation, "title cannot be an empty array");
     return;
   }
 
-  fconfig->title_width = 0;
-  fconfig->title_chunks = parse_virt_text(title.data.array, err, &fconfig->title_width);
+  *width = 0;
+  *chunks = parse_virt_text(bordertext.data.array, err, width);
 
-  fconfig->title = true;
+  *is_present = true;
 }
 
-static bool parse_title_pos(String title_pos, FloatConfig *fconfig, Error *err)
+static bool parse_bordertext_pos(String bordertext_pos, BorderTextType bordertext_type,
+                                 FloatConfig *fconfig, Error *err)
 {
-  if (title_pos.size == 0) {
-    fconfig->title_pos = kAlignLeft;
+  AlignTextPos *align;
+  switch (bordertext_type) {
+  case kBorderTextTitle:
+    align = &fconfig->title_pos;
+    break;
+  case kBorderTextFooter:
+    align = &fconfig->footer_pos;
+    break;
+  }
+
+  if (bordertext_pos.size == 0) {
+    *align = kAlignLeft;
     return true;
   }
 
-  char *pos = title_pos.data;
+  char *pos = bordertext_pos.data;
 
   if (strequal(pos, "left")) {
-    fconfig->title_pos = kAlignLeft;
+    *align = kAlignLeft;
   } else if (strequal(pos, "center")) {
-    fconfig->title_pos = kAlignCenter;
+    *align = kAlignCenter;
   } else if (strequal(pos, "right")) {
-    fconfig->title_pos = kAlignRight;
+    *align = kAlignRight;
   } else {
-    api_set_error(err, kErrorTypeValidation, "invalid title_pos value");
+    switch (bordertext_type) {
+    case kBorderTextTitle:
+      api_set_error(err, kErrorTypeValidation, "invalid title_pos value");
+      break;
+    case kBorderTextFooter:
+      api_set_error(err, kErrorTypeValidation, "invalid footer_pos value");
+      break;
+    }
     return false;
   }
   return true;
@@ -518,8 +596,9 @@ static void parse_border_style(Object style,  FloatConfig *fconfig, Error *err)
     String str = style.data.string;
     if (str.size == 0 || strequal(str.data, "none")) {
       fconfig->border = false;
-      // title does not work with border equal none
+      // border text does not work with border equal none
       fconfig->title = false;
+      fconfig->footer = false;
       return;
     }
     for (size_t i = 0; defaults[i].name; i++) {
@@ -693,18 +772,45 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
       clear_virttext(&fconfig->title_chunks);
     }
 
-    parse_border_title(config->title, fconfig, err);
+    parse_bordertext(config->title, kBorderTextTitle, fconfig, err);
     if (ERROR_SET(err)) {
       return false;
     }
 
     // handles unset 'title_pos' same as empty string
-    if (!parse_title_pos(config->title_pos, fconfig, err)) {
+    if (!parse_bordertext_pos(config->title_pos, kBorderTextTitle, fconfig, err)) {
       return false;
     }
   } else {
     if (HAS_KEY_X(config, title_pos)) {
       api_set_error(err, kErrorTypeException, "title_pos requires title to be set");
+      return false;
+    }
+  }
+
+  if (HAS_KEY_X(config, footer)) {
+    // footer only work with border
+    if (!HAS_KEY_X(config, border) && !fconfig->border) {
+      api_set_error(err, kErrorTypeException, "footer requires border to be set");
+      return false;
+    }
+
+    if (fconfig->footer) {
+      clear_virttext(&fconfig->footer_chunks);
+    }
+
+    parse_bordertext(config->footer, kBorderTextFooter, fconfig, err);
+    if (ERROR_SET(err)) {
+      return false;
+    }
+
+    // handles unset 'footer_pos' same as empty string
+    if (!parse_bordertext_pos(config->footer_pos, kBorderTextFooter, fconfig, err)) {
+      return false;
+    }
+  } else {
+    if (HAS_KEY_X(config, footer_pos)) {
+      api_set_error(err, kErrorTypeException, "footer_pos requires footer to be set");
       return false;
     }
   }

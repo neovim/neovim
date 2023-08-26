@@ -155,6 +155,9 @@ The following new APIs and features were added.
 • New RPC client type `msgpack-rpc` is added for `nvim_set_client_info` to
   support fully MessagePack-RPC compliant clients.
 
+• Floating windows can now show footer with new `footer` and `footer_pos`
+  config fields. Uses |hl-FloatFooter| by default.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
