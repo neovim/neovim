@@ -472,9 +472,11 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
                  kExtmarkUndo);
 
   changed_lines(buf, (linenr_T)start, 0, (linenr_T)end, (linenr_T)extra, true);
-  if (curwin->w_buffer == buf) {
-    // mark_adjust_buf handles non-current windows
-    fix_cursor(curwin, (linenr_T)start, (linenr_T)end, (linenr_T)extra);
+
+  FOR_ALL_TAB_WINDOWS(tp, win) {
+    if (win->w_buffer == buf) {
+      fix_cursor(win, (linenr_T)start, (linenr_T)end, (linenr_T)extra);
+    }
   }
 
 end:
@@ -710,7 +712,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   // changed range, and move any in the remainder of the buffer.
   // Do not adjust any cursors. need to use column-aware logic (below)
   mark_adjust_buf(buf, (linenr_T)start_row, (linenr_T)end_row, MAXLNUM, (linenr_T)extra,
-                  true, false, kExtmarkNOOP);
+                  true, true, kExtmarkNOOP);
 
   extmark_splice(buf, (int)start_row - 1, (colnr_T)start_col,
                  (int)(end_row - start_row), col_extent, old_byte,
