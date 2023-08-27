@@ -21,6 +21,7 @@ body:
         - For build failures: list the exact steps including CMake flags (if any).
         - For startup or shell-related problems: try `env -i TERM=ansi-256color "$(which nvim)"`.
         - See [Minimal-reproduction-template](https://github.com/neovim/neovim/wiki/Minimal-reproduction-template) for how to create a minimal configuration.
+        - Please do **not** include a package manager in the reproduction steps.
       placeholder: |
         nvim --clean
         :edit foo
