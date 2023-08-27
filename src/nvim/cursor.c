@@ -115,7 +115,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
     col = wcol;
 
     if ((addspaces || finetune) && !VIsual_active) {
-      curwin->w_curswant = linetabsize_str(line) + one_more;
+      curwin->w_curswant = (int)linetabsize(curwin, pos->lnum) + one_more;
       if (curwin->w_curswant > 0) {
         curwin->w_curswant--;
       }
@@ -129,7 +129,7 @@ static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol_a
         && curwin->w_width_inner != 0
         && wcol >= (colnr_T)width
         && width > 0) {
-      csize = linetabsize_str(line);
+      csize = (int)linetabsize(curwin, pos->lnum);
       if (csize > 0) {
         csize--;
       }
