@@ -359,7 +359,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
         if (width <= 0) {
           width = 1;
         }
-        // divide "size - prev_width" by "width", rounding up
+        // Divide "size - prev_rem" by "width", rounding up.
         int cnt = (size - prev_rem + width - 1) / width;
         added += cnt * head_mid;
 
@@ -371,7 +371,11 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
         } else if (max_head_vcol < 0) {
           int off = virt_text_cursor_off(cts, c == NUL);
           if (off >= prev_rem) {
-            head += (1 + (off - prev_rem) / width) * head_mid;
+            if (size > off) {
+              head += (1 + (off - prev_rem) / width) * head_mid;
+            } else {
+              head += (off - prev_rem + width - 1) / width * head_mid;
+            }
           }
         }
       }

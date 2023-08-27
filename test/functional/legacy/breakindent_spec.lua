@@ -21,7 +21,6 @@ describe('breakindent', function()
       set listchars=eol:$
       let &signcolumn = 'yes'
       let &showbreak = '++'
-      let &breakindent = v:true
       let &breakindentopt = 'shift:2'
       let leftcol = win_getid()->getwininfo()->get(0, {})->get('textoff')
       eval repeat('x', &columns - leftcol - 1)->setline(1)
@@ -39,11 +38,23 @@ describe('breakindent', function()
     -- No line wraps, so changing 'showbreak' should lead to the same screen.
     command('setlocal showbreak=+')
     screen:expect_unchanged()
+    -- No line wraps, so setting 'breakindent' should lead to the same screen.
+    command('setlocal breakindent')
+    screen:expect_unchanged()
     -- The first line now wraps because of "eol" in 'listchars'.
     command('setlocal list')
     screen:expect{grid=[[
       {1:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
       {1:  }  {0:+^$}                                                                     |
+      {1:  }second line{0:$}                                                             |
+      {0:~                                                                          }|
+      {0:~                                                                          }|
+      {2:-- INSERT --}                                                               |
+    ]]}
+    command('setlocal nobreakindent')
+    screen:expect{grid=[[
+      {1:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
+      {1:  }{0:+^$}                                                                       |
       {1:  }second line{0:$}                                                             |
       {0:~                                                                          }|
       {0:~                                                                          }|

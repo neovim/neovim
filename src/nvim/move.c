@@ -862,15 +862,6 @@ void curs_columns(win_T *wp, int may_scroll)
       n = (wp->w_wcol - wp->w_width_inner) / width2 + 1;
       wp->w_wcol -= n * width2;
       wp->w_wrow += n;
-
-      // When cursor wraps to first char of next line in Insert
-      // mode, the 'showbreak' string isn't shown, backup to first
-      // column
-      char *const sbr = get_showbreak_value(wp);
-      if (*sbr && *get_cursor_pos_ptr() == NUL
-          && wp->w_wcol == (wp->w_width_inner - width2) + vim_strsize(sbr)) {
-        wp->w_wcol = 0;
-      }
     }
   } else if (may_scroll
              && !wp->w_cline_folded) {
