@@ -3131,6 +3131,7 @@ M.funcs = {
     name = 'getbufinfo',
     params = { { 'buf', 'integer|string' } },
     signature = 'getbufinfo([{buf}])',
+    returns = 'vim.fn.getbufinfo.ret.item[]',
   },
   getbufinfo__1 = {
     args = { 0, 1 },
@@ -3202,8 +3203,9 @@ M.funcs = {
       <
     ]=],
     name = 'getbufinfo',
-    params = { { 'dict', 'table<string,any>' } },
+    params = { { 'dict', 'vim.fn.getbufinfo.dict' } },
     signature = 'getbufinfo([{dict}])',
+    returns = 'vim.fn.getbufinfo.ret.item[]',
   },
   getbufline = {
     args = { 2, 3 },
@@ -3246,8 +3248,9 @@ M.funcs = {
       as a string.
     ]=],
     name = 'getbufoneline',
-    params = { { 'buf', 'any' }, { 'lnum', 'integer' } },
+    params = { { 'buf', 'integer|string' }, { 'lnum', 'integer' } },
     signature = 'getbufoneline({buf}, {lnum})',
+    returns = 'string',
   },
   getbufvar = {
     args = { 2, 3 },
@@ -3876,6 +3879,7 @@ M.funcs = {
     name = 'getjumplist',
     params = { { 'winnr', 'integer' }, { 'tabnr', 'integer' } },
     signature = 'getjumplist([{winnr} [, {tabnr}]])',
+    returns = 'vim.fn.getjumplist.ret',
   },
   getline = {
     args = { 1, 2 },
@@ -4046,6 +4050,7 @@ M.funcs = {
     name = 'getmousepos',
     params = {},
     signature = 'getmousepos()',
+    returns = 'vim.fn.getmousepos.ret',
   },
   getpid = {
     desc = [=[
@@ -4507,6 +4512,7 @@ M.funcs = {
     name = 'getwininfo',
     params = { { 'winid', 'integer' } },
     signature = 'getwininfo([{winid}])',
+    returns = 'vim.fn.getwininfo.ret.item[]'
   },
   getwinpos = {
     args = { 0, 1 },
@@ -9618,8 +9624,9 @@ M.funcs = {
     args = { 1, 2 },
     base = 1,
     name = 'sign_define',
-    params = { { 'name', 'string' }, { 'dict', 'any' } },
+    params = { { 'name', 'string' }, { 'dict', 'vim.fn.sign_define.dict' } },
     signature = 'sign_define({name} [, {dict}])',
+    returns = '0|-1',
   },
   sign_define__1 = {
     args = { 1, 2 },
@@ -9671,8 +9678,9 @@ M.funcs = {
       <
     ]=],
     name = 'sign_define',
-    params = { { 'list', 'any' } },
+    params = { { 'list', 'vim.fn.sign_define.dict[]' } },
     signature = 'sign_define({list})',
+    returns = '(0|-1)[]',
   },
   sign_getdefined = {
     args = { 0, 1 },
@@ -9716,6 +9724,7 @@ M.funcs = {
     name = 'sign_getdefined',
     params = { { 'name', 'string' } },
     signature = 'sign_getdefined([{name}])',
+    returns = 'vim.fn.sign_getdefined.ret.item[]',
   },
   sign_getplaced = {
     args = { 0, 2 },
@@ -9782,8 +9791,9 @@ M.funcs = {
       <
     ]=],
     name = 'sign_getplaced',
-    params = { { 'buf', 'any' }, { 'dict', 'any' } },
+    params = { { 'buf', 'any' }, { 'dict', 'vim.fn.sign_getplaced.dict' } },
     signature = 'sign_getplaced([{buf} [, {dict}]])',
+    returns = 'vim.fn.sign_getplaced.ret.item[]',
   },
   sign_jump = {
     args = 3,
@@ -9805,8 +9815,9 @@ M.funcs = {
       <
     ]=],
     name = 'sign_jump',
-    params = { { 'id', 'any' }, { 'group', 'any' }, { 'buf', 'any' } },
+    params = { { 'id', 'integer' }, { 'group', 'string' }, { 'buf', 'integer|string' } },
     signature = 'sign_jump({id}, {group}, {buf})',
+    returns = 'integer'
   },
   sign_place = {
     args = { 4, 5 },
@@ -9866,9 +9877,10 @@ M.funcs = {
       { 'group', 'any' },
       { 'name', 'string' },
       { 'buf', 'any' },
-      { 'dict', 'any' },
+      { 'dict', 'vim.fn.sign_place.dict' },
     },
     signature = 'sign_place({id}, {group}, {name}, {buf} [, {dict}])',
+    returns = 'integer'
   },
   sign_placelist = {
     args = 1,
@@ -9933,8 +9945,9 @@ M.funcs = {
       <
     ]=],
     name = 'sign_placelist',
-    params = { { 'list', 'any' } },
+    params = { { 'list', 'vim.fn.sign_placelist.list.item[]' } },
     signature = 'sign_placelist({list})',
+    returns = 'integer[]'
   },
   sign_undefine = {
     args = { 0, 1 },
@@ -9942,6 +9955,7 @@ M.funcs = {
     name = 'sign_undefine',
     params = { { 'name', 'string' } },
     signature = 'sign_undefine([{name}])',
+    returns = '0|-1',
   },
   sign_undefine__1 = {
     args = { 0, 1 },
@@ -9970,8 +9984,9 @@ M.funcs = {
       <
     ]=],
     name = 'sign_undefine',
-    params = { { 'list', 'any' } },
+    params = { { 'list', 'string[]' } },
     signature = 'sign_undefine({list})',
+    returns = 'integer[]',
   },
   sign_unplace = {
     args = { 1, 2 },
@@ -10020,8 +10035,9 @@ M.funcs = {
 
     ]=],
     name = 'sign_unplace',
-    params = { { 'group', 'any' }, { 'dict', 'any' } },
+    params = { { 'group', 'string' }, { 'dict', 'vim.fn.sign_unplace.dict' } },
     signature = 'sign_unplace({group} [, {dict}])',
+    returns = '0|-1',
   },
   sign_unplacelist = {
     args = 1,
@@ -10056,8 +10072,9 @@ M.funcs = {
       <
     ]=],
     name = 'sign_unplacelist',
-    params = { { 'list', 'any' } },
+    params = { { 'list', 'vim.fn.sign_unplacelist.list.item' } },
     signature = 'sign_unplacelist({list})',
+    returns = '(0|-1)[]',
   },
   simplify = {
     args = 1,
@@ -12554,7 +12571,7 @@ M.funcs = {
 
     ]=],
     name = 'winrestview',
-    params = { { 'dict', 'any' } },
+    params = { { 'dict', 'vim.fn.winrestview.dict' } },
     signature = 'winrestview({dict})',
   },
   winsaveview = {
@@ -12588,6 +12605,7 @@ M.funcs = {
     name = 'winsaveview',
     params = {},
     signature = 'winsaveview()',
+    returns = 'vim.fn.winsaveview.ret'
   },
   winwidth = {
     args = 1,
