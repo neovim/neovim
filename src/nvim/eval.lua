@@ -4092,7 +4092,8 @@ M.funcs = {
 
     ]=],
     name = 'getpos',
-    params = { { 'expr', 'any' } },
+    params = { { 'expr', 'string' } },
+    returns = 'integer[]',
     signature = 'getpos({expr})',
   },
   getqflist = {
@@ -10459,7 +10460,8 @@ M.funcs = {
     ]=],
     fast = true,
     name = 'stdpath',
-    params = { { 'what', 'any' } },
+    params = { { 'what', "'cache'|'config'|'config_dirs'|'data'|'data_dirs'|'log'|'run'|'state'" } },
+    returns = 'string|string[]',
     signature = 'stdpath({what})',
   },
   state = {
