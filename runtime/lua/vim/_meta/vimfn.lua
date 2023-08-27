@@ -2489,7 +2489,7 @@ function vim.fn.get(dict, key, default) end
 function vim.fn.get(func, what) end
 
 --- @param buf? integer|string
---- @return any
+--- @return vim.fn.getbufinfo.ret.item[]
 function vim.fn.getbufinfo(buf) end
 
 --- Get information about buffers as a List of Dictionaries.
@@ -2557,8 +2557,8 @@ function vim.fn.getbufinfo(buf) end
 ---   getbufvar({bufnr}, '&option_name')
 --- <
 ---
---- @param dict? table<string,any>
---- @return any
+--- @param dict? vim.fn.getbufinfo.dict
+--- @return vim.fn.getbufinfo.ret.item[]
 function vim.fn.getbufinfo(dict) end
 
 --- Return a |List| with the lines starting from {lnum} to {end}
@@ -2594,9 +2594,9 @@ function vim.fn.getbufline(buf, lnum, end_) end
 --- Just like `getbufline()` but only get one line and return it
 --- as a string.
 ---
---- @param buf any
+--- @param buf integer|string
 --- @param lnum integer
---- @return any
+--- @return string
 function vim.fn.getbufoneline(buf, lnum) end
 
 --- The result is the value of option or local buffer variable
@@ -3107,7 +3107,7 @@ function vim.fn.getftype(fname) end
 ---
 --- @param winnr? integer
 --- @param tabnr? integer
---- @return any
+--- @return vim.fn.getjumplist.ret
 function vim.fn.getjumplist(winnr, tabnr) end
 
 --- Without {end} the result is a String, which is line {lnum}
@@ -3260,7 +3260,7 @@ function vim.fn.getmatches(win) end
 --- When using |getchar()| the Vim variables |v:mouse_lnum|,
 --- |v:mouse_col| and |v:mouse_winid| also provide these values.
 ---
---- @return any
+--- @return vim.fn.getmousepos.ret
 function vim.fn.getmousepos() end
 
 --- Return a Number which is the process ID of the Vim process.
@@ -3659,7 +3659,7 @@ function vim.fn.gettext(text) end
 ---       "row" from |win_screenpos()|
 ---
 --- @param winid? integer
---- @return any
+--- @return vim.fn.getwininfo.ret.item[]
 function vim.fn.getwininfo(winid) end
 
 --- The result is a |List| with two numbers, the result of
@@ -8048,8 +8048,8 @@ function vim.fn.shellescape(string, special) end
 function vim.fn.shiftwidth(col) end
 
 --- @param name string
---- @param dict? any
---- @return any
+--- @param dict? vim.fn.sign_define.dict
+--- @return 0|-1
 function vim.fn.sign_define(name, dict) end
 
 --- Define a new sign named {name} or modify the attributes of an
@@ -8097,8 +8097,8 @@ function vim.fn.sign_define(name, dict) end
 ---     \ ])
 --- <
 ---
---- @param list any
---- @return any
+--- @param list vim.fn.sign_define.dict[]
+--- @return (0|-1)[]
 function vim.fn.sign_define(list) end
 
 --- Get a list of defined signs and their attributes.
@@ -8137,7 +8137,7 @@ function vim.fn.sign_define(list) end
 --- <
 ---
 --- @param name? string
---- @return any
+--- @return vim.fn.sign_getdefined.ret.item[]
 function vim.fn.sign_getdefined(name) end
 
 --- Return a list of signs placed in a buffer or all the buffers.
@@ -8201,8 +8201,8 @@ function vim.fn.sign_getdefined(name) end
 --- <
 ---
 --- @param buf? any
---- @param dict? any
---- @return any
+--- @param dict? vim.fn.sign_getplaced.dict
+--- @return vim.fn.sign_getplaced.ret.item[]
 function vim.fn.sign_getplaced(buf, dict) end
 
 --- Open the buffer {buf} or jump to the window that contains
@@ -8220,10 +8220,10 @@ function vim.fn.sign_getplaced(buf, dict) end
 ---   call sign_jump(10, '', '')
 --- <
 ---
---- @param id any
---- @param group any
---- @param buf any
---- @return any
+--- @param id integer
+--- @param group string
+--- @param buf integer|string
+--- @return integer
 function vim.fn.sign_jump(id, group, buf) end
 
 --- Place the sign defined as {name} at line {lnum} in file or
@@ -8278,8 +8278,8 @@ function vim.fn.sign_jump(id, group, buf) end
 --- @param group any
 --- @param name string
 --- @param buf any
---- @param dict? any
---- @return any
+--- @param dict? vim.fn.sign_place.dict
+--- @return integer
 function vim.fn.sign_place(id, group, name, buf, dict) end
 
 --- Place one or more signs.  This is similar to the
@@ -8340,12 +8340,12 @@ function vim.fn.sign_place(id, group, name, buf, dict) end
 ---     \ ])
 --- <
 ---
---- @param list any
---- @return any
+--- @param list vim.fn.sign_placelist.list.item[]
+--- @return integer[]
 function vim.fn.sign_placelist(list) end
 
 --- @param name? string
---- @return any
+--- @return 0|-1
 function vim.fn.sign_undefine(name) end
 
 --- Deletes a previously defined sign {name}. This is similar to
@@ -8370,8 +8370,8 @@ function vim.fn.sign_undefine(name) end
 ---   call sign_undefine()
 --- <
 ---
---- @param list? any
---- @return any
+--- @param list? string[]
+--- @return integer[]
 function vim.fn.sign_undefine(list) end
 
 --- Remove a previously placed sign in one or more buffers.  This
@@ -8415,9 +8415,9 @@ function vim.fn.sign_undefine(list) end
 ---   " Remove all the placed signs from all the buffers
 ---   call sign_unplace('*')
 ---
---- @param group any
---- @param dict? any
---- @return any
+--- @param group string
+--- @param dict? vim.fn.sign_unplace.dict
+--- @return 0|-1
 function vim.fn.sign_unplace(group, dict) end
 
 --- Remove previously placed signs from one or more buffers.  This
@@ -8448,8 +8448,8 @@ function vim.fn.sign_unplace(group, dict) end
 ---     \ ])
 --- <
 ---
---- @param list any
---- @return any
+--- @param list vim.fn.sign_unplacelist.list.item
+--- @return (0|-1)[]
 function vim.fn.sign_unplacelist(list) end
 
 --- Simplify the file name as much as possible without changing
@@ -10469,7 +10469,7 @@ function vim.fn.winrestcmd() end
 --- If you have changed the values the result is unpredictable.
 --- If the window size changed the result won't be the same.
 ---
---- @param dict any
+--- @param dict vim.fn.winrestview.dict
 --- @return any
 function vim.fn.winrestview(dict) end
 
@@ -10499,7 +10499,7 @@ function vim.fn.winrestview(dict) end
 ---   skipcol    columns skipped
 --- Note that no option values are saved.
 ---
---- @return any
+--- @return vim.fn.winsaveview.ret
 function vim.fn.winsaveview() end
 
 --- The result is a Number, which is the width of window {nr}.
