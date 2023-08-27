@@ -1811,6 +1811,98 @@ describe('decorations: inline virtual text', function()
     ]]}
   end)
 
+  it('Normal mode "gM" command works properly', function()
+    command([[call setline(1, '123456789')]])
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text = { { 'bbb', 'Special' } }, virt_text_pos = 'inline' })
+    meths.buf_set_extmark(0, ns, 0, 7, { virt_text = { { 'bbb', 'Special' } }, virt_text_pos = 'inline' })
+    feed('gM')
+    screen:expect{grid=[[
+      12{10:bbb}34^567{10:bbb}89                                   |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
+  local function test_normal_gj_gk()
+    screen:try_resize(60, 6)
+    command([[call setline(1, repeat([repeat('a', 55)], 2))]])
+    meths.buf_set_extmark(0, ns, 0, 40, { virt_text = { { ('b'):rep(10), 'Special' } }, virt_text_pos = 'inline' })
+    meths.buf_set_extmark(0, ns, 1, 40, { virt_text = { { ('b'):rep(10), 'Special' } }, virt_text_pos = 'inline' })
+    screen:expect{grid=[[
+      ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      aaaaa                                                       |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      aaaaa                                                       |
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+    feed('gj')
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      ^aaaaa                                                       |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      aaaaa                                                       |
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+    feed('gj')
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      aaaaa                                                       |
+      ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      aaaaa                                                       |
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+    feed('gj')
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      aaaaa                                                       |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      ^aaaaa                                                       |
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+    feed('gk')
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      aaaaa                                                       |
+      ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      aaaaa                                                       |
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+    feed('gk')
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      ^aaaaa                                                       |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      aaaaa                                                       |
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+    feed('gk')
+    screen:expect{grid=[[
+      ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      aaaaa                                                       |
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbbbbbbbbb}aaaaaaaaaa|
+      aaaaa                                                       |
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+  end
+
+  describe('Normal mode "gj" "gk" commands work properly', function()
+    it('with virtualedit=', function()
+      test_normal_gj_gk()
+    end)
+
+    it('with virtualedit=all', function()
+      command('set virtualedit=all')
+      test_normal_gj_gk()
+    end)
+  end)
+
   it('cursor positions are correct with multiple inline virtual text', function()
     insert('12345678')
     meths.buf_set_extmark(0, ns, 0, 4, { virt_text = { { ' virtual text ', 'Special' } }, virt_text_pos = 'inline' })
