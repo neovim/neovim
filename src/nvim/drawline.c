@@ -868,8 +868,8 @@ static void apply_cursorline_highlight(win_T *wp, winlinevars_T *wlv)
   }
 }
 
-// Checks if there is more inline virtual text that need to be drawn
-// and sets has_more_virt_inline_chunks to reflect that.
+/// Checks if there is more inline virtual text that need to be drawn
+/// and sets has_more_virt_inline_chunks to reflect that.
 static bool has_more_inline_virt(winlinevars_T *wlv, ptrdiff_t v)
 {
   DecorState *state = &decor_state;
@@ -3096,8 +3096,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             || wlv.filler_todo > 0
             || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL
                 && wlv.p_extra != at_end_str)
-            || (wlv.n_extra != 0
-                && (wlv.c_extra != NUL || *wlv.p_extra != NUL)) || wlv.more_virt_inline_chunks)) {
+            || (wlv.n_extra != 0 && (wlv.c_extra != NUL || *wlv.p_extra != NUL))
+            || wlv.more_virt_inline_chunks)) {
       bool wrap = wp->w_p_wrap       // Wrapping enabled.
                   && wlv.filler_todo <= 0          // Not drawing diff filler lines.
                   && lcs_eol_one != -1         // Haven't printed the lcs_eol character.

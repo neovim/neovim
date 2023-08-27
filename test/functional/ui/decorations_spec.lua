@@ -2668,7 +2668,45 @@ bbbbbbb]])
     ]]}
   end)
 
-  it('list "extends" is drawn with only inline virtual text offscreen', function()
+  it('lcs-extends is drawn with inline virtual text at end of screen line', function()
+    exec([[
+      setlocal nowrap list listchars=extends:!
+      call setline(1, repeat('a', 51))
+    ]])
+    meths.buf_set_extmark(0, ns, 0, 50, { virt_text = { { 'bbb', 'Special' } }, virt_text_pos = 'inline' })
+    feed('20l')
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaaaa^aaaaaaaaaaaaaaaaaaaaaaaaaaaaa{1:!}|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaaa^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{1:!}|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaa^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:b}{1:!}|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaa^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bb}{1:!}|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaa^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{10:bbb}a|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
+  it('lcs-extends is drawn with only inline virtual text offscreen', function()
     command('set nowrap')
     command('set list')
     command('set listchars+=extends:c')
@@ -2826,9 +2864,9 @@ bbbbbbb]])
     screen:try_resize(30, 6)
     exec([[
       highlight! link LineNr Normal
-      call setline(1, repeat('a', 28))
       setlocal number showbreak=+ breakindent breakindentopt=shift:2
       setlocal scrolloff=0 smoothscroll
+      call setline(1, repeat('a', 28))
       normal! $
     ]])
     meths.buf_set_extmark(0, ns, 0, 27, { virt_text = { { ('123'):rep(23) } }, virt_text_pos = 'inline' })
@@ -3066,8 +3104,8 @@ bbbbbbb]])
   it('before TABs with smoothscroll', function()
     screen:try_resize(30, 6)
     exec([[
-      call setline(1, repeat("\t", 4) .. 'a')
       setlocal list listchars=tab:<-> scrolloff=0 smoothscroll
+      call setline(1, repeat("\t", 4) .. 'a')
       normal! $
     ]])
     meths.buf_set_extmark(0, ns, 0, 3, { virt_text = { { ('12'):rep(32) } }, virt_text_pos = 'inline' })
