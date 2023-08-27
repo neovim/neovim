@@ -119,6 +119,7 @@ jobs:
   publish:
     needs: [linux, macOS, windows]
     runs-on: ubuntu-latest
+    if: github.repository_owner == 'neovim'
     env:
       GH_REPO: ${{ github.repository }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -197,6 +198,7 @@ jobs:
   publish-winget:
     needs: publish
     runs-on: windows-latest
+    if: github.repository_owner == 'neovim'
     steps:
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
         name: Publish stable
