@@ -16,6 +16,7 @@ local command = helpers.command
 local bufmeths = helpers.bufmeths
 local feed = helpers.feed
 local pcall_err = helpers.pcall_err
+local assert_alive = helpers.assert_alive
 
 describe('api/buf', function()
   before_each(clear)
@@ -39,6 +40,14 @@ describe('api/buf', function()
       curbuf_depr('del_line', -1)
       -- There's always at least one line
       eq(1, curbuf_depr('line_count'))
+    end)
+
+    it("doesn't crash just after set undolevels=1 #24894", function()
+      local buf = meths.create_buf(false, true)
+      meths.buf_set_option(buf, 'undolevels', -1)
+      meths.buf_set_lines(buf, 0, 1, false, { })
+
+      assert_alive()
     end)
 
     it('cursor position is maintained after lines are inserted #9961', function()

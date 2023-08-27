@@ -3208,15 +3208,13 @@ u_header_T *u_force_get_undo_header(buf_T *buf)
   }
   // Create the first undo header for the buffer
   if (!uhp) {
-    // Undo is normally invoked in change code, which already has swapped
-    // curbuf.
     // Args are tricky: this means replace empty range by empty range..
-    u_savecommon(curbuf, 0, 1, 1, true);
+    u_savecommon(buf, 0, 1, 1, true);
 
     uhp = buf->b_u_curhead;
     if (!uhp) {
       uhp = buf->b_u_newhead;
-      if (get_undolevel(curbuf) > 0 && !uhp) {
+      if (get_undolevel(buf) > 0 && !uhp) {
         abort();
       }
     }
