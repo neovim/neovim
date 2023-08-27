@@ -1976,91 +1976,100 @@ describe('decorations: inline virtual text', function()
   end)
 
   it('text is drawn correctly with a wrapping virtual text', function()
-    screen:try_resize(50, 8)
-    feed('o<esc>')
-    insert([[aaaaaaa
-
-bbbbbbb]])
-    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = { { string.rep('X', 51), 'Special' } }, virt_text_pos = 'inline' })
-    meths.buf_set_extmark(0, ns, 2, 0, { virt_text = { { string.rep('X', 50), 'Special' } }, virt_text_pos = 'inline' })
-    feed('gg0')
+    screen:try_resize(60, 8)
+    exec([[
+      call setline(1, ['', 'aaa', '', 'bbbbbb'])
+      normal gg0
+    ]])
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = { { string.rep('X', 60), 'Special' } }, virt_text_pos = 'inline' })
+    meths.buf_set_extmark(0, ns, 2, 0, { virt_text = { { string.rep('X', 61), 'Special' } }, virt_text_pos = 'inline' })
+    feed('$')
     screen:expect{grid=[[
-      {10:^XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
-      {10:X}                                                 |
-      aaaaaaa                                           |
-      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
-      bbbbbbb                                           |
-      {1:~                                                 }|
-      {1:~                                                 }|
-                                                        |
-      ]]}
-
+      {10:^XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      aaa                                                         |
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {10:X}                                                           |
+      bbbbbb                                                      |
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]]}
     feed('j')
     screen:expect{grid=[[
-      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
-      {10:X}                                                 |
-      ^aaaaaaa                                           |
-      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
-      bbbbbbb                                           |
-      {1:~                                                 }|
-      {1:~                                                 }|
-                                                        |
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      aa^a                                                         |
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {10:X}                                                           |
+      bbbbbb                                                      |
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
     ]]}
-
     feed('j')
     screen:expect{grid=[[
-      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
-      {10:X}                                                 |
-      aaaaaaa                                           |
-      {10:^XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
-      bbbbbbb                                           |
-      {1:~                                                 }|
-      {1:~                                                 }|
-                                                        |
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      aaa                                                         |
+      {10:^XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {10:X}                                                           |
+      bbbbbb                                                      |
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
     ]]}
-
     feed('j')
     screen:expect{grid=[[
-      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
-      {10:X}                                                 |
-      aaaaaaa                                           |
-      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
-      ^bbbbbbb                                           |
-      {1:~                                                 }|
-      {1:~                                                 }|
-                                                        |
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      aaa                                                         |
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {10:X}                                                           |
+      bbbbb^b                                                      |
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
     ]]}
-
-    feed('ggic')
+    feed('0<C-V>2l2k')
     screen:expect{grid=[[
-      c{10:^XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
-      {10:XX}                                                |
-      aaaaaaa                                           |
-      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
-      bbbbbbb                                           |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {8:-- INSERT --}                                      |
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {7:aa}^a                                                         |
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {10:X}                                                           |
+      {7:bbb}bbb                                                      |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {8:-- VISUAL BLOCK --}                                          |
     ]]}
-  end)
-
-  it('regexp \\%V does not count trailing virtual text', function()
-    screen:try_resize(50, 4)
-    meths.buf_set_lines(0, 0, -1, true, {'foofoo', '', 'foofoo'})
-    meths.buf_set_extmark(0, ns, 1, 0, { virt_text = {{'barbarbar', 'Special'}}, virt_text_pos = 'inline' })
-    feed([[<C-V>G5l<Esc>/foo\n\%V<CR>]])
+    feed([[<Esc>/aaa\n\%V<CR>]])
     screen:expect{grid=[[
-      foo{12:^foo }                                           |
-      {10:barbarbar}                                         |
-      foofoo                                            |
-      {16:search hit BOTTOM, continuing at TOP}              |
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {12:^aaa }                                                        |
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {10:X}                                                           |
+      bbbbbb                                                      |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {16:search hit BOTTOM, continuing at TOP}                        |
     ]]}
-    feed([[jIbaz<Esc>/foo\nbaz\%V<CR>]])
+    feed('3ggic')
     screen:expect{grid=[[
-      foo{12:^foo }                                           |
-      {12:baz}{10:barbarbar}                                      |
-      foofoo                                            |
-      {16:search hit BOTTOM, continuing at TOP}              |
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {12:aaa }                                                        |
+      c{10:^XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {10:XX}                                                          |
+      bbbbbb                                                      |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {8:-- INSERT --}                                                |
+    ]]}
+    feed([[<Esc>/aaa\nc\%V<CR>]])
+    screen:expect{grid=[[
+      {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {12:^aaa }                                                        |
+      {12:c}{10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
+      {10:XX}                                                          |
+      bbbbbb                                                      |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {16:search hit BOTTOM, continuing at TOP}                        |
     ]]}
   end)
 
