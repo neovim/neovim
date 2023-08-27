@@ -1121,7 +1121,7 @@ void ex_changes(exarg_T *eap)
 void mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after,
                  ExtmarkOp op)
 {
-  mark_adjust_buf(curbuf, line1, line2, amount, amount_after, true, true, op);
+  mark_adjust_buf(curbuf, line1, line2, amount, amount_after, true, false, op);
 }
 
 // mark_adjust_nofold() does the same as mark_adjust() but without adjusting
@@ -1132,11 +1132,11 @@ void mark_adjust(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amoun
 void mark_adjust_nofold(linenr_T line1, linenr_T line2, linenr_T amount, linenr_T amount_after,
                         ExtmarkOp op)
 {
-  mark_adjust_buf(curbuf, line1, line2, amount, amount_after, false, true, op);
+  mark_adjust_buf(curbuf, line1, line2, amount, amount_after, false, false, op);
 }
 
 void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount,
-                     linenr_T amount_after, bool adjust_folds, bool adj_cursor, ExtmarkOp op)
+                     linenr_T amount_after, bool adjust_folds, bool by_api, ExtmarkOp op)
 {
   int fnum = buf->b_fnum;
   linenr_T *lp;
@@ -1243,7 +1243,7 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
 
       // topline and cursor position for windows with the same buffer
       // other than the current window
-      if (win != curwin) {
+      if (win != curwin || by_api) {
         if (win->w_topline >= line1 && win->w_topline <= line2) {
           if (amount == MAXLNUM) {                  // topline is deleted
             if (line1 <= 1) {
@@ -1261,21 +1261,21 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
           win->w_topline += amount_after;
           win->w_topfill = 0;
         }
-        if (adj_cursor) {
-          if (win->w_cursor.lnum >= line1 && win->w_cursor.lnum <= line2) {
-            if (amount == MAXLNUM) {         // line with cursor is deleted
-              if (line1 <= 1) {
-                win->w_cursor.lnum = 1;
-              } else {
-                win->w_cursor.lnum = line1 - 1;
-              }
-              win->w_cursor.col = 0;
-            } else {                      // keep cursor on the same line
-              win->w_cursor.lnum += amount;
+      }
+      if (win != curwin && !by_api) {
+        if (win->w_cursor.lnum >= line1 && win->w_cursor.lnum <= line2) {
+          if (amount == MAXLNUM) {         // line with cursor is deleted
+            if (line1 <= 1) {
+              win->w_cursor.lnum = 1;
+            } else {
+              win->w_cursor.lnum = line1 - 1;
             }
-          } else if (amount_after && win->w_cursor.lnum > line2) {
-            win->w_cursor.lnum += amount_after;
+            win->w_cursor.col = 0;
+          } else {                      // keep cursor on the same line
+            win->w_cursor.lnum += amount;
           }
+        } else if (amount_after && win->w_cursor.lnum > line2) {
+          win->w_cursor.lnum += amount_after;
         }
       }
 
