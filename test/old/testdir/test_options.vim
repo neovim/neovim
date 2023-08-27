@@ -378,6 +378,12 @@ func Test_set_completion()
   call assert_equal('"set filetype=sshdconfig', @:)
   call feedkeys(":set filetype=a\<C-A>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"set filetype=' .. getcompletion('a*', 'filetype')->join(), @:)
+
+  " Expand values for 'syntax'
+  call feedkeys(":set syntax=sshdconfi\<Tab>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"set syntax=sshdconfig', @:)
+  call feedkeys(":set syntax=a\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"set syntax=' .. getcompletion('a*', 'syntax')->join(), @:)
 endfunc
 
 func Test_set_option_errors()
