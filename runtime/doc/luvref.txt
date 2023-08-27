@@ -4169,8 +4169,8 @@ uv.metrics_info()                                            *uv.metrics_info()*
 CREDITS                                                            *luv-credits*
 
 This document is a reformatted version of the LUV documentation, up-to-date
-with commit e8e7b7e (3 Feb 2023) of the luv repository
-https://github.com/luvit/luv/commit/e8e7b7e13225348a8806118a3ea9e021383a9536.
+with commit dcd1a1c (23 Aug 2023) of the luv repository
+https://github.com/luvit/luv/commit/dcd1a1cad5b05634a7691402d6ca2f214fb4ae76.
 
 Based on https://github.com/nanotee/luv-vimdocs with kind permission.
 
