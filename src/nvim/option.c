@@ -5394,6 +5394,11 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
 
   xp->xp_pattern = p + 1;
 
+  if (options[opt_idx].var == &p_syn) {
+    xp->xp_context = EXPAND_OWNSYNTAX;
+    return;
+  }
+
   if (flags & P_EXPAND) {
     p = options[opt_idx].var;
     if (p == (char *)&p_bdir
