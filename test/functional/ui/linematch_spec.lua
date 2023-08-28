@@ -1198,7 +1198,7 @@ abc abcd abcde abcdef
       write_file(fname_2, f2, false)
       reread()
     end)
-    describe('when the entire hunk is compared, cross-line', function()
+    describe('normal comparison, including whitespace', function()
       before_each(function()
         feed(':set diffopt+=chardiff:100<cr>')
       end)
@@ -1224,6 +1224,35 @@ abc abcd abcde abcdef
         {6:~                                                }│{6:~                                                 }|
         {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
         :set diffopt+=chardiff:100                                                                          |
+        ]])
+      end)
+    end)
+    describe('ignore whitespace', function()
+      before_each(function()
+        feed(':set diffopt+=chardiff:100<cr>:set diffopt+=iwhiteall<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+        {1:  }{10:  1 }{9:^ab}{8:c}{9: abc}{8:d}{9: abcd}{8:e}{9: abcde}{8:f}{9:                      }│{1:  }{10:  1 }{9:ababcabcdabcde                              }|
+        {1:  }{10:  2 }                                           │{1:  }{10:  2 }                                            |
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {6:~                                                }│{6:~                                                 }|
+        {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+        :set diffopt+=iwhiteall                                                                             |
         ]])
       end)
     end)
