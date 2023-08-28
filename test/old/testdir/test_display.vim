@@ -420,12 +420,19 @@ func Test_display_linebreak_breakat()
   new
   vert resize 25
   let _breakat = &breakat
-  setl signcolumn=yes linebreak breakat=) showbreak=+\ 
+  setl signcolumn=yes linebreak breakat=) showbreak=++
   call setline(1, repeat('x', winwidth(0) - 2) .. ')abc')
   let lines = ScreenLines([1, 2], 25)
   let expected = [
           \ '  xxxxxxxxxxxxxxxxxxxxxxx',
-          \ '  + )abc                 '
+          \ '  ++)abc                 ',
+          \ ]
+  call assert_equal(expected, lines)
+  setl breakindent breakindentopt=shift:2
+  let lines = ScreenLines([1, 2], 25)
+  let expected = [
+          \ '  xxxxxxxxxxxxxxxxxxxxxxx',
+          \ '    ++)abc               ',
           \ ]
   call assert_equal(expected, lines)
   %bw!
