@@ -1249,7 +1249,8 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
             if (line1 <= 1) {
               win->w_topline = 1;
             } else {
-              win->w_topline = line1 - 1;
+              // api: if the deleted region was replaced with new contents, display that
+              win->w_topline = (by_api && amount_after > line1 - line2 - 1) ? line1 : line1 - 1;
             }
           } else if (win->w_topline > line1) {
             // keep topline on the same line, unless inserting just
@@ -1257,7 +1258,9 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
             win->w_topline += amount;
           }
           win->w_topfill = 0;
-        } else if (amount_after && win->w_topline > line2) {
+          // api: display new line if inserted right at topline
+          // TODO(bfredl): maybe always?
+        } else if (amount_after && win->w_topline > line2 + (by_api ? 1 : 0)) {
           win->w_topline += amount_after;
           win->w_topfill = 0;
         }
