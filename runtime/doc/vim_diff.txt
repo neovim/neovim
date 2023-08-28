@@ -233,6 +233,8 @@ Commands:
 Events:
   |RecordingEnter|
   |RecordingLeave|
+  |ReplayEnter|
+  |ReplayLeave|
   |SearchWrapped|
   |Signal|
   |TabNewEntered|

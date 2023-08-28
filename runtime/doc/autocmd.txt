@@ -862,6 +862,14 @@ RecordingLeave			When a macro stops recording.
 				Sets these |v:event| keys:
 				    regcontents
 				    regname
+							*ReplayEnter*
+ReplayEnter			When a macro starts replaying.
+				The pattern is the current file name, and
+				|reg_executing()| is the replayed register.
+							*ReplayLeave*
+ReplayLeave			When a macro stops replaying.
+				The pattern is the current file name, and
+				|reg_executing()| is the replayed register.
 							*SafeState*
 SafeState			When nothing is pending, going to wait for the
 				user to type a character.
@@ -882,7 +890,6 @@ SafeState			When nothing is pending, going to wait for the
 				Depending on what you want to do, you may also
 				check more with `state()`, e.g. whether the
 				screen was scrolled for messages.
-
 							*SessionLoadPost*
 SessionLoadPost			After loading the session file created using
 				the |:mksession| command.
