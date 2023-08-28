@@ -158,6 +158,9 @@ The following new APIs and features were added.
 • Floating windows can now show footer with new `footer` and `footer_pos`
   config fields. Uses |hl-FloatFooter| by default.
 
+• The |:terminal| command now accepts some |:command-modifiers| (specifically
+  |:horizontal| and those that affect splitting a window).
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
