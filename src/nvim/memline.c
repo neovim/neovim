@@ -2523,7 +2523,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
       set_keep_msg(_(no_lines_msg), 0);
     }
 
-    int i = ml_replace(1, "", true);
+    int i = ml_replace_buf(buf, 1, "", true);
     buf->b_ml.ml_flags |= ML_EMPTY;
 
     return i;
