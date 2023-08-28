@@ -279,6 +279,18 @@ describe('api/buf', function()
         ]]}
       end)
     end)
+
+    it('handles clearing out non-current buffer #24911', function()
+        local buf = meths.get_current_buf()
+        meths.buf_set_lines(buf, 0, -1, true, {"aaa", "bbb", "ccc"})
+        command("new")
+
+        meths.buf_set_lines(0, 0, -1, true, {"xxx", "yyy", "zzz"})
+
+        meths.buf_set_lines(buf, 0, -1, true, {})
+        eq({"xxx", "yyy", "zzz"}, meths.buf_get_lines(0, 0, -1, true))
+        eq({''}, meths.buf_get_lines(buf, 0, -1, true))
+    end)
   end)
 
   describe('deprecated: {get,set,del}_line', function()
