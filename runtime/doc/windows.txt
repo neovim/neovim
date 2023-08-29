@@ -169,7 +169,7 @@ CTRL-W v						*CTRL-W_v*
 		it doesn't!
 
 CTRL-W n						*CTRL-W_n*
-CTRL-W CTRL_N						*CTRL-W_CTRL-N*
+CTRL-W CTRL-N						*CTRL-W_CTRL-N*
 :[N]new [++opt] [+cmd]					*:new*
 		Create a new window and start editing an empty file in it.
 		Make new window N high (default is to use half the existing
