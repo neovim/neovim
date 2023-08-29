@@ -8,6 +8,9 @@ vim.api.nvim_create_augroup('filetypedetect', { clear = false })
 vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile', 'StdinReadPost' }, {
   group = 'filetypedetect',
   callback = function(args)
+    if not vim.api.nvim_buf_is_valid(args.buf) then
+      return
+    end
     local ft, on_detect = vim.filetype.match({ filename = args.match, buf = args.buf })
     if not ft then
       -- Generic configuration file used as fallback
