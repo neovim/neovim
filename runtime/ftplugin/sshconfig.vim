@@ -15,14 +15,17 @@ setlocal comments=:# commentstring=#\ %s formatoptions-=t formatoptions+=croql
 let b:undo_ftplugin = 'setlocal com< cms< fo<'
 
 if has('unix') && executable('less')
-  if !has('gui_running')
+  " Nvim's :! is not interactive.
+  " if !has('gui_running')
+  "   command -buffer -nargs=1 Sman
+  "         \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s+' . <q-args> . '$'' --hilite-search" man ' . 'ssh_config' |
+  "         \ redraw!
+  " elseif has('terminal')
     command -buffer -nargs=1 Sman
-          \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s+' . <q-args> . '$'' --hilite-search" man ' . 'ssh_config' |
-          \ redraw!
-  elseif has('terminal')
-    command -buffer -nargs=1 Sman
+          "\ Nvim's :terminal doesn't split or enter terminal mode by default.
+          \ split | startinsert |
           \ silent exe 'term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s+' . <q-args> . '$', '\') . ''' --hilite-search" man ' . 'ssh_config'
-  endif
+  " endif
   if exists(':Sman') == 2
     setlocal iskeyword+=-
     setlocal keywordprg=:Sman

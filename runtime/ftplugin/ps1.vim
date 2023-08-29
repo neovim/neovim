@@ -39,15 +39,18 @@ elseif executable('powershell.exe') | let s:pwsh_cmd = 'powershell.exe'
 endif
 
 if exists('s:pwsh_cmd')
-  if !has('gui_running') && executable('less') &&
-        \ !(exists('$ConEmuBuild') && &term =~? '^xterm')
-    " For exclusion of ConEmu, see https://github.com/Maximus5/ConEmu/issues/2048
-    command! -buffer -nargs=1 GetHelp silent exe '!' . s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full "<args>" | ' . (has('unix') ? 'LESS= less' : 'less') | redraw!
-  elseif has('terminal')
-    command! -buffer -nargs=1 GetHelp silent exe 'term ' . s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full "<args>"' . (executable('less') ? ' | less' : '')
-  else
-    command! -buffer -nargs=1 GetHelp echo system(s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full <args>')
-  endif
+  " Nvim's :! is not interactive.
+  " if !has('gui_running') && executable('less') &&
+  "       \ !(exists('$ConEmuBuild') && &term =~? '^xterm')
+  "   " For exclusion of ConEmu, see https://github.com/Maximus5/ConEmu/issues/2048
+  "   command! -buffer -nargs=1 GetHelp silent exe '!' . s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full "<args>" | ' . (has('unix') ? 'LESS= less' : 'less') | redraw!
+  " elseif has('terminal')
+    " Nvim's :terminal doesn't split or enter terminal mode by default.
+    " command! -buffer -nargs=1 GetHelp silent exe 'term ' . s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full "<args>"' . (executable('less') ? ' | less' : '')
+    command! -buffer -nargs=1 GetHelp split | startinsert | silent exe 'term ' . s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full "<args>"' . (executable('less') ? ' | less' : '')
+  " else
+  "   command! -buffer -nargs=1 GetHelp echo system(s:pwsh_cmd . ' -NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -Command Get-Help -Full <args>')
+  " endif
 endif
 setlocal keywordprg=:GetHelp
 

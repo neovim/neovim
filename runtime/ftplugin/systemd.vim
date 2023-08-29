@@ -8,11 +8,14 @@ if !exists('b:did_ftplugin')
 endif
 
 if has('unix') && executable('less')
-  if !has('gui_running')
-    command -buffer -nargs=1 Sman silent exe '!' . KeywordLookup_systemd(<q-args>) | redraw!
-  elseif has('terminal')
-    command -buffer -nargs=1 Sman silent exe 'term ' . KeywordLookup_systemd(<q-args>)
-  endif
+  " Nvim's :! is not interactive.
+  " if !has('gui_running')
+  "   command -buffer -nargs=1 Sman silent exe '!' . KeywordLookup_systemd(<q-args>) | redraw!
+  " elseif has('terminal')
+    " Nvim's :terminal doesn't split or enter terminal mode by default.
+    " command -buffer -nargs=1 Sman silent exe 'term ' . KeywordLookup_systemd(<q-args>)
+    command -buffer -nargs=1 Sman split | startinsert | silent exe 'term ' . KeywordLookup_systemd(<q-args>)
+  " endif
   if exists(':Sman') == 2
     if !exists('*KeywordLookup_systemd')
       function KeywordLookup_systemd(keyword) abort
