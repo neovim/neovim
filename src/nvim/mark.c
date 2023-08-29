@@ -51,9 +51,6 @@
 // There are marks 'A - 'Z (set by user) and '0 to '9 (set when writing
 // shada).
 
-/// Global marks (marks with file number or name)
-static xfmark_T namedfm[NGLOBALMARKS];
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mark.c.generated.h"
 #endif
@@ -935,6 +932,7 @@ void ex_delmarks(exarg_T *eap)
     emsg(_(e_argreq));
   } else {
     // clear specified marks only
+    const Timestamp timestamp = os_time();
     for (p = eap->arg; *p != NUL; p++) {
       lower = ASCII_ISLOWER(*p);
       digit = ascii_isdigit(*p);
@@ -959,6 +957,7 @@ void ex_delmarks(exarg_T *eap)
         for (int i = from; i <= to; i++) {
           if (lower) {
             curbuf->b_namedm[i - 'a'].mark.lnum = 0;
+            curbuf->b_namedm[i - 'a'].timestamp = timestamp;
           } else {
             if (digit) {
               n = i - '0' + NMARKS;
@@ -967,17 +966,24 @@ void ex_delmarks(exarg_T *eap)
             }
             namedfm[n].fmark.mark.lnum = 0;
             namedfm[n].fmark.fnum = 0;
+            namedfm[n].fmark.timestamp = timestamp;
             XFREE_CLEAR(namedfm[n].fname);
           }
         }
       } else {
         switch (*p) {
         case '"':
-          CLEAR_FMARK(&curbuf->b_last_cursor); break;
+          curbuf->b_last_cursor.timestamp = timestamp;
+          CLEAR_FMARK(&curbuf->b_last_cursor);
+          break;
         case '^':
-          CLEAR_FMARK(&curbuf->b_last_insert); break;
+          curbuf->b_last_insert.timestamp = timestamp;
+          CLEAR_FMARK(&curbuf->b_last_insert);
+          break;
         case '.':
-          CLEAR_FMARK(&curbuf->b_last_change); break;
+          curbuf->b_last_change.timestamp = timestamp;
+          CLEAR_FMARK(&curbuf->b_last_change);
+          break;
         case '[':
           curbuf->b_op_start.lnum    = 0; break;
         case ']':
