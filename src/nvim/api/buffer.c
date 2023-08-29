@@ -464,7 +464,8 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
 
   // Adjust marks. Invalidate any which lie in the
   // changed range, and move any in the remainder of the buffer.
-  mark_adjust_buf(buf, (linenr_T)start, (linenr_T)(end - 1), MAXLNUM, (linenr_T)extra,
+  linenr_T adjust = end > start ? MAXLNUM : 0;
+  mark_adjust_buf(buf, (linenr_T)start, (linenr_T)(end - 1), adjust, (linenr_T)extra,
                   true, true, kExtmarkNOOP);
 
   extmark_splice(buf, (int)start - 1, 0, (int)(end - start), 0,
@@ -711,7 +712,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   // Adjust marks. Invalidate any which lie in the
   // changed range, and move any in the remainder of the buffer.
   // Do not adjust any cursors. need to use column-aware logic (below)
-  mark_adjust_buf(buf, (linenr_T)start_row, (linenr_T)end_row, MAXLNUM, (linenr_T)extra,
+  linenr_T adjust = end_row >= start_row ? MAXLNUM : 0;
+  mark_adjust_buf(buf, (linenr_T)start_row, (linenr_T)end_row, adjust, (linenr_T)extra,
                   true, true, kExtmarkNOOP);
 
   extmark_splice(buf, (int)start_row - 1, (colnr_T)start_col,

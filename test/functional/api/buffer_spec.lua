@@ -182,8 +182,8 @@ describe('api/buf', function()
           {2:[No Name]           }|
                               |
         ]]}
-        meths.buf_set_lines(buf, 0, 2, true, {"aaabbb"})
 
+        meths.buf_set_lines(buf, 0, 2, true, {"aaabbb"})
         screen:expect{grid=[[
                               |
           {1:~                   }|
@@ -195,6 +195,72 @@ describe('api/buf', function()
           xxx                 |
           yyy                 |
           ^zzz                 |
+          {2:[No Name] [+]       }|
+                              |
+        ]]}
+
+        -- replacing topline keeps it the topline
+        meths.buf_set_lines(buf, 3, 4, true, {"wwweeee"})
+        screen:expect{grid=[[
+                              |
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {3:[No Name]           }|
+          wwweeee             |
+          xxx                 |
+          yyy                 |
+          ^zzz                 |
+          {2:[No Name] [+]       }|
+                              |
+        ]]}
+
+        -- inserting just before topline does not scroll up if cursor would be moved
+        meths.buf_set_lines(buf, 3, 3, true, {"mmm"})
+        screen:expect{grid=[[
+                              |
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {3:[No Name]           }|
+          wwweeee             |
+          xxx                 |
+          yyy                 |
+          ^zzz                 |
+          {2:[No Name] [+]       }|
+                              |
+        ]], unchanged=true}
+
+        meths.win_set_cursor(0, {7, 0})
+        screen:expect{grid=[[
+                              |
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {3:[No Name]           }|
+          wwweeee             |
+          xxx                 |
+          ^yyy                 |
+          zzz                 |
+          {2:[No Name] [+]       }|
+                              |
+        ]]}
+
+        meths.buf_set_lines(buf, 4, 4, true, {"mmmeeeee"})
+        screen:expect{grid=[[
+                              |
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {3:[No Name]           }|
+          mmmeeeee            |
+          wwweeee             |
+          xxx                 |
+          ^yyy                 |
           {2:[No Name] [+]       }|
                               |
         ]]}
@@ -237,6 +303,40 @@ describe('api/buf', function()
           {3:[No Name] [+]       }|
                               |
         ]]}
+
+        -- replacing topline keeps it the topline
+        meths.buf_set_lines(buf, 3, 4, true, {"wwweeee"})
+        screen:expect{grid=[[
+          ^                    |
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {2:[No Name]           }|
+          wwweeee             |
+          xxx                 |
+          yyy                 |
+          zzz                 |
+          {3:[No Name] [+]       }|
+                              |
+        ]]}
+
+        -- inserting just before topline scrolls up
+        meths.buf_set_lines(buf, 3, 3, true, {"mmm"})
+        screen:expect{grid=[[
+          ^                    |
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {1:~                   }|
+          {2:[No Name]           }|
+          mmm                 |
+          wwweeee             |
+          xxx                 |
+          yyy                 |
+          {3:[No Name] [+]       }|
+                              |
+        ]]}
       end)
 
       it('of split windows with same buffer', function()
@@ -274,6 +374,40 @@ describe('api/buf', function()
           xxx                 |
           yyy                 |
           zzz                 |
+          {3:[No Name] [+]       }|
+                              |
+        ]]}
+
+        -- replacing topline keeps it the topline
+        meths.buf_set_lines(buf, 3, 4, true, {"wwweeee"})
+        screen:expect{grid=[[
+          ^aaabbb              |
+          ccc                 |
+          ddd                 |
+          wwweeee             |
+          xxx                 |
+          {2:[No Name] [+]       }|
+          wwweeee             |
+          xxx                 |
+          yyy                 |
+          zzz                 |
+          {3:[No Name] [+]       }|
+                              |
+        ]]}
+
+        -- inserting just before topline scrolls up
+        meths.buf_set_lines(buf, 3, 3, true, {"mmm"})
+        screen:expect{grid=[[
+          ^aaabbb              |
+          ccc                 |
+          ddd                 |
+          mmm                 |
+          wwweeee             |
+          {2:[No Name] [+]       }|
+          mmm                 |
+          wwweeee             |
+          xxx                 |
+          yyy                 |
           {3:[No Name] [+]       }|
                               |
         ]]}
