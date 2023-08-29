@@ -211,6 +211,11 @@ end
 ---@param client_id integer
 ---@param callback fun()
 local function resolve_lenses(lenses, bufnr, client_id, callback)
+  if not api.nvim_buf_is_valid(bufnr) then
+    active_refreshes[bufnr] = nil
+    return
+  end
+
   lenses = lenses or {}
   local num_lens = vim.tbl_count(lenses)
   if num_lens == 0 then
