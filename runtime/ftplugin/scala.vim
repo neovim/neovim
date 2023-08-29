@@ -4,6 +4,7 @@
 " URL:                  https://github.com/derekwyatt/vim-scala
 " License:              Same as Vim
 " Last Change:          11 August 2021
+"                       2023 Aug 28 by Vim Project (undo_ftplugin)
 " ----------------------------------------------------------------------------
 
 if exists('b:did_ftplugin') || &cp
@@ -31,5 +32,7 @@ setlocal includeexpr=substitute(v:fname,'\\.','/','g')
 
 setlocal path+=src/main/scala,src/test/scala
 setlocal suffixesadd=.scala
+
+let b:undo_ftplugin = "setlocal cms< com< et< fo< inc< inex< pa< sts< sua< sw<"
 
 " vim:set sw=2 sts=2 ts=8 et:

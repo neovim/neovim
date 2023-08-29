@@ -3,6 +3,7 @@
 " Maintainer:  R.Shankar <shankar.pec?gmail.com>
 " Modified By: Gerald Lai <laigera+vim?gmail.com>
 " Last Change: 2011 Dec 11
+"              2023 Aug 28 by Vim Project (undo_ftplugin, commentstring)
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -22,13 +23,20 @@ set cpo&vim
 " Set 'comments' to format dashed lists in comments.
 "setlocal comments=sO:*\ -,mO:*\ \ ,exO:*/,s1:/*,mb:*,ex:*/,://
 
+setlocal commentstring=--\ %s
+
 " Format comments to be up to 78 characters long
 "setlocal tw=75
+
+" let b:undo_ftplugin = "setl cms< com< fo< tw<"
+
+let b:undo_ftplugin = "setl cms< "
 
 " Win32 can filter files in the browse dialog
 "if has("gui_win32") && !exists("b:browsefilter")
 "  let b:browsefilter = "Verilog Source Files (*.v)\t*.v\n" .
 "   \ "All Files (*.*)\t*.*\n"
+"  let b:undo_ftplugin .= " | unlet! b:browsefilter"
 "endif
 
 " Let the matchit plugin know what items can be matched.
@@ -52,37 +60,49 @@ if ! exists("b:match_words")  &&  exists("loaded_matchit")
     \ s:notend.'\<package\>:\<end\s\+package\>,'.
     \ s:notend.'\<procedure\>:\<end\s\+procedure\>,'.
     \ s:notend.'\<configuration\>:\<end\s\+configuration\>'
+  let b:undo_ftplugin .= " | unlet! b:match_ignorecase b:match_words"
 endif
 
-" count repeat
-function! <SID>CountWrapper(cmd)
-  let i = v:count1
-  if a:cmd[0] == ":"
-    while i > 0
-      execute a:cmd
-      let i = i - 1
-    endwhile
-  else
-    execute "normal! gv\<Esc>"
-    execute "normal ".i.a:cmd
-    let curcol = col(".")
-    let curline = line(".")
-    normal! gv
-    call cursor(curline, curcol)
-  endif
-endfunction
+if !exists("no_plugin_maps") && !exists("no_vhdl_maps")
+  " count repeat
+  function! <SID>CountWrapper(cmd)
+    let i = v:count1
+    if a:cmd[0] == ":"
+      while i > 0
+	execute a:cmd
+	let i = i - 1
+      endwhile
+    else
+      execute "normal! gv\<Esc>"
+      execute "normal ".i.a:cmd
+      let curcol = col(".")
+      let curline = line(".")
+      normal! gv
+      call cursor(curline, curcol)
+    endif
+  endfunction
 
-" explore motion
-" keywords: "architecture", "block", "configuration", "component", "entity", "function", "package", "procedure", "process", "record", "units"
-let b:vhdl_explore = '\%(architecture\|block\|configuration\|component\|entity\|function\|package\|procedure\|process\|record\|units\)'
-noremap  <buffer><silent>[[ :<C-u>cal <SID>CountWrapper(':cal search("\\%(--.*\\)\\@<!\\%(\\<end\\s\\+\\)\\@<!\\<".b:vhdl_explore."\\>\\c\\<Bar>\\%^","bW")')<CR>
-noremap  <buffer><silent>]] :<C-u>cal <SID>CountWrapper(':cal search("\\%(--.*\\)\\@<!\\%(\\<end\\s\\+\\)\\@<!\\<".b:vhdl_explore."\\>\\c\\<Bar>\\%$","W")')<CR>
-noremap  <buffer><silent>[] :<C-u>cal <SID>CountWrapper(':cal search("\\%(--.*\\)\\@<!\\<end\\s\\+".b:vhdl_explore."\\>\\c\\<Bar>\\%^","bW")')<CR>
-noremap  <buffer><silent>][ :<C-u>cal <SID>CountWrapper(':cal search("\\%(--.*\\)\\@<!\\<end\\s\\+".b:vhdl_explore."\\>\\c\\<Bar>\\%$","W")')<CR>
-vnoremap <buffer><silent>[[ :<C-u>cal <SID>CountWrapper('[[')<CR>
-vnoremap <buffer><silent>]] :<C-u>cal <SID>CountWrapper(']]')<CR>
-vnoremap <buffer><silent>[] :<C-u>cal <SID>CountWrapper('[]')<CR>
-vnoremap <buffer><silent>][ :<C-u>cal <SID>CountWrapper('][')<CR>
+  " explore motion
+  " keywords: "architecture", "block", "configuration", "component", "entity", "function", "package", "procedure", "process", "record", "units"
+  let b:vhdl_explore = '\%(architecture\|block\|configuration\|component\|entity\|function\|package\|procedure\|process\|record\|units\)'
+  noremap  <buffer><silent>[[ :<C-u>cal <SID>CountWrapper(':cal search("\\%(--.*\\)\\@<!\\%(\\<end\\s\\+\\)\\@<!\\<".b:vhdl_explore."\\>\\c\\<Bar>\\%^","bW")')<CR>
+  noremap  <buffer><silent>]] :<C-u>cal <SID>CountWrapper(':cal search("\\%(--.*\\)\\@<!\\%(\\<end\\s\\+\\)\\@<!\\<".b:vhdl_explore."\\>\\c\\<Bar>\\%$","W")')<CR>
+  noremap  <buffer><silent>[] :<C-u>cal <SID>CountWrapper(':cal search("\\%(--.*\\)\\@<!\\<end\\s\\+".b:vhdl_explore."\\>\\c\\<Bar>\\%^","bW")')<CR>
+  noremap  <buffer><silent>][ :<C-u>cal <SID>CountWrapper(':cal search("\\%(--.*\\)\\@<!\\<end\\s\\+".b:vhdl_explore."\\>\\c\\<Bar>\\%$","W")')<CR>
+  vnoremap <buffer><silent>[[ :<C-u>cal <SID>CountWrapper('[[')<CR>
+  vnoremap <buffer><silent>]] :<C-u>cal <SID>CountWrapper(']]')<CR>
+  vnoremap <buffer><silent>[] :<C-u>cal <SID>CountWrapper('[]')<CR>
+  vnoremap <buffer><silent>][ :<C-u>cal <SID>CountWrapper('][')<CR>
+  let b:undo_ftplugin .=
+	\ " | silent! execute 'nunmap <buffer> [['" .
+	\ " | silent! execute 'nunmap <buffer> ]]'" .
+	\ " | silent! execute 'nunmap <buffer> []'" .
+	\ " | silent! execute 'nunmap <buffer> ]['" .
+	\ " | silent! execute 'vunmap <buffer> [['" .
+	\ " | silent! execute 'vunmap <buffer> ]]'" .
+	\ " | silent! execute 'vunmap <buffer> []'" .
+	\ " | silent! execute 'vunmap <buffer> ]['"
+endif
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
