@@ -4,6 +4,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local insert = helpers.insert
+local assert_alive = helpers.assert_alive
 
 before_each(clear)
 
@@ -13,6 +14,31 @@ end
 
 describe('treesitter node API', function()
   clear()
+
+  it('double free tree', function()
+    insert('F')
+    exec_lua([[
+      vim.treesitter.start(0, 'lua')
+      vim.treesitter.get_node():tree()
+      vim.treesitter.get_node():tree()
+      collectgarbage()
+    ]])
+    assert_alive()
+  end)
+
+  it('double free tree 2', function()
+    exec_lua([[
+      parser = vim.treesitter.get_parser(0, "c")
+      local x = parser:parse()[1]:root():tree()
+      vim.api.nvim_buf_set_text(0, 0,0, 0,0, {'y'})
+      parser:parse()
+      vim.api.nvim_buf_set_text(0, 0,0, 0,1, {'z'})
+      parser:parse()
+      collectgarbage()
+      x:root()
+    ]])
+    assert_alive()
+  end)
 
   it('can move between siblings', function()
     insert([[
