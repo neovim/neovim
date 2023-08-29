@@ -18,7 +18,7 @@ let b:undo_ftplugin = 'set sw< sts< et< com< cms<'
 " HTML: thanks to Johannes Zellner and Benji Fisher.
 if exists("loaded_matchit") && !exists("b:match_words")
   let b:match_ignorecase = 1
-  let b:match_words = '<!--:-->,' ..
+  let b:match_words = '<%\{-}!--:--%\{-}>,' ..
 	\	      '<:>,' ..
 	\	      '<\@<=[ou]l\>[^>]*\%(>\|$\):<\@<=li\>:<\@<=/[ou]l>,' ..
 	\	      '<\@<=dl\>[^>]*\%(>\|$\):<\@<=d[td]\>:<\@<=/dl>,' ..
