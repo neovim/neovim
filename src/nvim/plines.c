@@ -311,6 +311,9 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
     int col_off_prev = win_col_off(wp);
     int width2 = wp->w_width_inner - col_off_prev + win_col_off2(wp);
     colnr_T wcol = vcol + col_off_prev;
+    colnr_T max_head_vcol = cts->cts_max_head_vcol;
+    int added = 0;
+
     // cells taken by 'showbreak'/'breakindent' before current char
     int head_prev = 0;
     if (wcol >= wp->w_width_inner) {
@@ -326,23 +329,17 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
         head_prev += get_breakindent_win(wp, line);
       }
       if (wcol < head_prev) {
-        wcol = head_prev;
-      }
-      wcol += col_off_prev;
-    }
-
-    if ((vcol > 0 && wcol == col_off_prev + head_prev)
-        || wcol + size > wp->w_width_inner) {
-      int added = 0;
-      colnr_T max_head_vcol = cts->cts_max_head_vcol;
-
-      if (vcol > 0 && wcol == col_off_prev + head_prev) {
+        head_prev -= wcol;
+        wcol += head_prev;
         added += head_prev;
         if (max_head_vcol <= 0 || vcol < max_head_vcol) {
           head += head_prev;
         }
       }
+      wcol += col_off_prev;
+    }
 
+    if (wcol + size > wp->w_width) {
       // cells taken by 'showbreak'/'breakindent' halfway current char
       int head_mid = 0;
       if (*sbr != NUL) {
@@ -379,9 +376,9 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
           }
         }
       }
-
-      size += added;
     }
+
+    size += added;
   }
 
   if (headp != NULL) {
