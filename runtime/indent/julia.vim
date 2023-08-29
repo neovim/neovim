@@ -3,7 +3,8 @@
 " Maintainer:	Carlo Baldassi <carlobaldassi@gmail.com>
 " Homepage:	https://github.com/JuliaEditorSupport/julia-vim
 " Last Change:	2022 Jun 14
-" Notes:        originally based on Bram Molenaar's indent file for vim
+"		2023 Aug 28 by Vim Project (undo_indent)
+" Notes:        originally based on Bram Moolenaar's indent file for vim
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -20,6 +21,8 @@ setlocal indentkeys-=:
 setlocal indentkeys-=0{
 setlocal indentkeys-=0}
 setlocal nosmartindent
+
+let b:undo_indent = "setl ai< inde< indk< si<"
 
 " Only define the function once.
 if exists("*GetJuliaIndent")

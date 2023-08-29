@@ -2,6 +2,7 @@
 " Language:	Go
 " Maintainer:	David Barnett (https://github.com/google/vim-ft-go)
 " Last Change:	2017 Jun 13
+"		2023 Aug 28 by Vim Project (undo_indent)
 "
 " TODO:
 " - function invocations split across lines
@@ -18,6 +19,8 @@ setlocal nolisp
 setlocal autoindent
 setlocal indentexpr=GoIndent(v:lnum)
 setlocal indentkeys+=<:>,0=},0=)
+
+let b:undo_indent = "setl ai< inde< indk< lisp<"
 
 if exists('*GoIndent')
   finish

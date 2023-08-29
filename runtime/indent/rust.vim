@@ -2,6 +2,7 @@
 " Language:         Rust
 " Author:           Chris Morgan <me@chrismorgan.info>
 " Last Change:      2017 Jun 13
+"                   2023 Aug 28 by Vim Project (undo_indent)
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 
 " Only load this indent file when no other was loaded.
@@ -23,6 +24,8 @@ setlocal autoindent	" indentexpr isn't much help otherwise
 setlocal indentkeys=0{,0},!^F,o,O,0[,0]
 
 setlocal indentexpr=GetRustIndent(v:lnum)
+
+let b:undo_indent = "setlocal cindent< cinoptions< cinkeys< cinwords< lisp< autoindent< indentkeys< indentexpr<"
 
 " Only define the function once.
 if exists("*GetRustIndent")

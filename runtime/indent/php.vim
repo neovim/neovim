@@ -4,6 +4,7 @@
 " URL:		https://www.2072productions.com/vim/indent/php.vim
 " Home:		https://github.com/2072/PHP-Indenting-for-VIm
 " Last Change:	2020 Mar 05
+"		2023 Aug 28 by Vim Project (undo_indent)
 " Version:	1.70
 "
 "
@@ -128,7 +129,7 @@ setlocal nolisp
 setlocal indentexpr=GetPhpIndent()
 setlocal indentkeys=0{,0},0),0],:,!^F,o,O,e,*<Return>,=?>,=<?,=*/
 
-
+let b:undo_indent = "setl ai< cin< inde< indk< lisp< si<"
 
 let s:searchpairflags = 'bWr'
 

@@ -3,6 +3,7 @@
 " Maintainer:   Nicholas Boyle (github.com/nickeb96)
 " Repository:   https://github.com/nickeb96/fish.vim
 " Last Change:  February 4, 2023
+"               2023 Aug 28 by Vim Project (undo_indent)
 
 if exists("b:did_indent")
     finish
@@ -11,6 +12,8 @@ let b:did_indent = 1
 
 setlocal indentexpr=GetFishIndent(v:lnum)
 setlocal indentkeys+==end,=else,=case
+
+let b:undo_indent = "setlocal indentexpr< indentkeys<"
 
 function s:PrevCmdStart(linenum)
     let l:linenum = a:linenum
