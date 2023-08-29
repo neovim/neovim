@@ -51,6 +51,11 @@ typedef struct {
   bool parse;
 } TSLuaLoggerOpts;
 
+typedef struct {
+  TSTree *tree;
+  bool gc;
+} TSLuaTree;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/treesitter.c.generated.h"
 #endif
@@ -424,8 +429,8 @@ static int parser_parse(lua_State *L)
 
   TSTree *old_tree = NULL;
   if (!lua_isnil(L, 2)) {
-    TSTree **tmp = tree_check(L, 2);
-    old_tree = tmp ? *tmp : NULL;
+    TSLuaTree *ud = tree_check(L, 2);
+    old_tree = ud ? ud->tree : NULL;
   }
 
   TSTree *new_tree = NULL;
@@ -478,7 +483,7 @@ static int parser_parse(lua_State *L)
   uint32_t n_ranges = 0;
   TSRange *changed = old_tree ? ts_tree_get_changed_ranges(old_tree, new_tree, &n_ranges) : NULL;
 
-  push_tree(L, new_tree, false);  // [tree]
+  push_tree(L, new_tree, true);  // [tree]
 
   push_ranges(L, changed, n_ranges, include_bytes);  // [tree, ranges]
 
@@ -498,12 +503,13 @@ static int parser_reset(lua_State *L)
 
 static int tree_copy(lua_State *L)
 {
-  TSTree **tree = tree_check(L, 1);
-  if (!(*tree)) {
+  TSLuaTree *ud = tree_check(L, 1);
+  if (!ud) {
     return 0;
   }
 
-  push_tree(L, *tree, true);  // [tree]
+  TSTree *copy = ts_tree_copy(ud->tree);
+  push_tree(L, copy, true);  // [tree]
 
   return 1;
 }
@@ -515,8 +521,8 @@ static int tree_edit(lua_State *L)
     return lua_error(L);
   }
 
-  TSTree **tree = tree_check(L, 1);
-  if (!(*tree)) {
+  TSLuaTree *ud = tree_check(L, 1);
+  if (!ud) {
     return 0;
   }
 
@@ -530,22 +536,22 @@ static int tree_edit(lua_State *L)
   TSInputEdit edit = { start_byte, old_end_byte, new_end_byte,
                        start_point, old_end_point, new_end_point };
 
-  ts_tree_edit(*tree, &edit);
+  ts_tree_edit(ud->tree, &edit);
 
   return 0;
 }
 
 static int tree_get_ranges(lua_State *L)
 {
-  TSTree **tree = tree_check(L, 1);
-  if (!(*tree)) {
+  TSLuaTree *ud = tree_check(L, 1);
+  if (!ud) {
     return 0;
   }
 
   bool include_bytes = (lua_gettop(L) >= 2) && lua_toboolean(L, 2);
 
   uint32_t len;
-  TSRange *ranges = ts_tree_included_ranges(*tree, &len);
+  TSRange *ranges = ts_tree_included_ranges(ud->tree, &len);
 
   push_ranges(L, ranges, len, include_bytes);
 
@@ -773,20 +779,17 @@ static int parser_get_logger(lua_State *L)
 
 /// push tree interface on lua stack.
 ///
-/// This makes a copy of the tree, so ownership of the argument is unaffected.
-void push_tree(lua_State *L, TSTree *tree, bool do_copy)
+/// The tree is garbage collected if gc is true
+void push_tree(lua_State *L, TSTree *tree, bool gc)
 {
   if (tree == NULL) {
     lua_pushnil(L);
     return;
   }
-  TSTree **ud = lua_newuserdata(L, sizeof(TSTree *));  // [udata]
+  TSLuaTree *ud = lua_newuserdata(L, sizeof(TSLuaTree));  // [udata]
 
-  if (do_copy) {
-    *ud = ts_tree_copy(tree);
-  } else {
-    *ud = tree;
-  }
+  ud->tree = tree;
+  ud->gc = gc;
 
   lua_getfield(L, LUA_REGISTRYINDEX, TS_META_TREE);  // [udata, meta]
   lua_setmetatable(L, -2);  // [udata]
@@ -800,20 +803,18 @@ void push_tree(lua_State *L, TSTree *tree, bool do_copy)
   lua_setfenv(L, -2);  // [udata]
 }
 
-static TSTree **tree_check(lua_State *L, int index)
+static TSLuaTree *tree_check(lua_State *L, int index)
 {
-  TSTree **ud = luaL_checkudata(L, index, TS_META_TREE);
+  TSLuaTree *ud = luaL_checkudata(L, index, TS_META_TREE);
   return ud;
 }
 
 static int tree_gc(lua_State *L)
 {
-  TSTree **tree = tree_check(L, 1);
-  if (!tree) {
-    return 0;
+  TSLuaTree *ud = tree_check(L, 1);
+  if (ud && ud->gc) {
+    ts_tree_delete(ud->tree);
   }
-
-  ts_tree_delete(*tree);
   return 0;
 }
 
@@ -825,11 +826,11 @@ static int tree_tostring(lua_State *L)
 
 static int tree_root(lua_State *L)
 {
-  TSTree **tree = tree_check(L, 1);
-  if (!tree) {
+  TSLuaTree *ud = tree_check(L, 1);
+  if (!ud) {
     return 0;
   }
-  TSNode root = ts_tree_root_node(*tree);
+  TSNode root = ts_tree_root_node(ud->tree);
   push_node(L, root, 1);
   return 1;
 }
