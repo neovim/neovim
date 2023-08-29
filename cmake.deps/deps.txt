@@ -4,8 +4,8 @@ LIBUV_SHA256 7aa66be3413ae10605e1f5c9ae934504ffe317ef68ea16fdaa83e23905c681bd
 MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/c-6.0.0/msgpack-c-6.0.0.tar.gz
 MSGPACK_SHA256 3654f5e2c652dc52e0a993e270bb57d5702b262703f03771c152bba51602aeba
 
-LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/03c31124cc3b521ef54fe398e10fa55660a5057d.tar.gz
-LUAJIT_SHA256 61dcc7ae3f543ae3cc30e66db060e31e2a77e4be34ee65e370c953d112b4d60c
+LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/83954100dba9fc0cf5eeaf122f007df35ec9a604.tar.gz
+LUAJIT_SHA256 99b47959c953200e865f1d55dcbb19f887b1d6fc92b9d73192114115c62a7ac6
 
 LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz
 LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
