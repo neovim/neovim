@@ -4,6 +4,7 @@
 " Modifications By:     Derek Wyatt
 " URL:                  https://github.com/derekwyatt/vim-scala
 " Last Change:          2016 Aug 26
+"                       2023 Aug 28 by Vim Project (undo_indent)
 
 if exists("b:did_indent")
   finish
@@ -13,6 +14,8 @@ let b:did_indent = 1
 setlocal autoindent
 setlocal indentexpr=GetScalaIndent()
 setlocal indentkeys=0{,0},0),!^F,<>>,o,O,e,=case,<CR>
+
+let b:undo_indent = "setl ai< inde< indk<"
 
 if exists("*GetScalaIndent")
   finish

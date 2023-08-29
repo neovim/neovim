@@ -4,6 +4,7 @@
 " Homepage:      https://github.com/vim-perl/vim-perl
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues
 " Last Change:   2020 Apr 15
+"                2023 Aug 28 by Vim Project (undo_indent)
 " Contributors:  Andy Lester <andy@petdance.com>
 "                Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
 "
@@ -46,6 +47,8 @@ setlocal indentkeys+=0=,0),0],0>,0»,0=or,0=and
 if !b:indent_use_syntax
     setlocal indentkeys+=0=EO
 endif
+
+let b:undo_indent = "setlocal indentexpr< indentkeys<"
 
 let s:cpo_save = &cpo
 set cpo-=C

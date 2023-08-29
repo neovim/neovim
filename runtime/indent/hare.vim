@@ -2,6 +2,7 @@
 " Language: Hare
 " Maintainer: Amelia Clarke <me@rsaihe.dev>
 " Last Change: 2022 Sep 22
+"              2023 Aug 28 by Vim Project (undo_indent)
 
 if exists("b:did_indent")
   finish
@@ -39,6 +40,8 @@ setlocal indentkeys=0{,0},0),0],!^F,o,O,e,0=case
 setlocal cinwords=if,else,for,switch,match
 
 setlocal indentexpr=GetHareIndent()
+
+let b:undo_indent = "setl cin< cino< cinw< inde< indk<"
 
 function! FloorCindent(lnum)
   return cindent(a:lnum) / shiftwidth() * shiftwidth()

@@ -4,6 +4,7 @@
 " Maintainer: Marshall Ward <marshall.ward@gmail.com>
 " Previous Maintainer: Nikolai Weibull <now@bitwi.se>
 " Latest Revision: 2020-03-31
+"                  2023 Aug 28 by Vim Project (undo_indent)
 
 if exists("b:did_indent")
   finish
@@ -13,6 +14,8 @@ let b:did_indent = 1
 setlocal indentexpr=GetRSTIndent()
 setlocal indentkeys=!^F,o,O
 setlocal nosmartindent
+
+let b:undo_indent = "setlocal indentexpr< indentkeys< smartindent<"
 
 if exists("*GetRSTIndent")
   finish

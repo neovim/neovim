@@ -2,6 +2,7 @@
 " Language: TypeScript
 " Maintainer: See https://github.com/HerringtonDarkholme/yats.vim
 " Last Change: 2019 Oct 18
+"              2023 Aug 28 by Vim Project (undo_indent)
 " Acknowledgement: Based off of vim-ruby maintained by Nikolai Weibull http://vim-ruby.rubyforge.org
 
 " 0. Initialization {{{1
@@ -19,6 +20,8 @@ setlocal nosmartindent
 setlocal indentexpr=GetTypescriptIndent()
 setlocal formatexpr=Fixedgq(v:lnum,v:count)
 setlocal indentkeys=0{,0},0),0],0\,,!^F,o,O,e
+
+let b:undo_indent = "setlocal formatexpr< indentexpr< indentkeys< smartindent<"
 
 " Only define the function once.
 if exists("*GetTypescriptIndent")

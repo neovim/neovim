@@ -4,6 +4,7 @@
 " Acknowledgement:  Based off of vim-json maintained by Eli Parra <eli@elzr.com>
 "                   https://github.com/elzr/vim-json
 " Last Change:      2021-07-01
+"                   2023 Aug 28 by Vim Project (undo_indent)
 
 " 0. Initialization {{{1
 " =================
@@ -19,6 +20,8 @@ setlocal nosmartindent
 " Now, set up our indentation expression and keys that trigger it.
 setlocal indentexpr=GetJSONCIndent()
 setlocal indentkeys=0{,0},0),0[,0],!^F,o,O,e
+
+let b:undo_indent = "setlocal indentexpr< indentkeys< smartindent<"
 
 " Only define the function once.
 if exists("*GetJSONCIndent")

@@ -3,6 +3,7 @@
 " Maintainer:  Gerald Lai <laigera+vim?gmail.com>
 " Version:     1.62
 " Last Change: 2017 Oct 17
+"              2023 Aug 28 by Vim Project (undo_indent)
 " URL:         http://www.vim.org/scripts/script.php?script_id=1450
 
 " only load this indent file when no other was loaded
@@ -18,6 +19,8 @@ setlocal indentkeys+==~begin,=~end\ ,=~end\	,=~is,=~select,=~when
 setlocal indentkeys+==~if,=~then,=~elsif,=~else
 setlocal indentkeys+==~case,=~loop,=~for,=~generate,=~record,=~units,=~process,=~block,=~function,=~component,=~procedure
 setlocal indentkeys+==~architecture,=~configuration,=~entity,=~package
+
+let b:undo_indent = "setlocal indentexpr< indentkeys<"
 
 " constants
 " not a comment
