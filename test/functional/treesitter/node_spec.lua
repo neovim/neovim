@@ -26,6 +26,20 @@ describe('treesitter node API', function()
     assert_alive()
   end)
 
+  it('double free tree 2', function()
+    exec_lua([[
+      parser = vim.treesitter.get_parser(0, "c")
+      local x = parser:parse()[1]:root():tree()
+      vim.api.nvim_buf_set_text(0, 0,0, 0,0, {'y'})
+      parser:parse()
+      vim.api.nvim_buf_set_text(0, 0,0, 0,1, {'z'})
+      parser:parse()
+      collectgarbage()
+      x:root()
+    ]])
+    assert_alive()
+  end)
+
   it('can move between siblings', function()
     insert([[
       int main(int x, int y, int z) {

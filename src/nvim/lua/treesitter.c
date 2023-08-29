@@ -53,7 +53,6 @@ typedef struct {
 
 typedef struct {
   TSTree *tree;
-  bool gc;
 } TSLuaTree;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -477,13 +476,12 @@ static int parser_parse(lua_State *L)
     return luaL_error(L, "An error occurred when parsing.");
   }
 
-  // The new tree will be pushed to the stack, without copy, ownership is now to
-  // the lua GC.
-  // Old tree is still owned by the lua GC.
+  // The new tree will be pushed to the stack, without copy, ownership is now to the lua GC.
+  // Old tree is owned by lua GC since before
   uint32_t n_ranges = 0;
   TSRange *changed = old_tree ? ts_tree_get_changed_ranges(old_tree, new_tree, &n_ranges) : NULL;
 
-  push_tree(L, new_tree, true);  // [tree]
+  push_tree(L, new_tree);  // [tree]
 
   push_ranges(L, changed, n_ranges, include_bytes);  // [tree, ranges]
 
@@ -509,7 +507,7 @@ static int tree_copy(lua_State *L)
   }
 
   TSTree *copy = ts_tree_copy(ud->tree);
-  push_tree(L, copy, true);  // [tree]
+  push_tree(L, copy);  // [tree]
 
   return 1;
 }
@@ -779,8 +777,9 @@ static int parser_get_logger(lua_State *L)
 
 /// push tree interface on lua stack.
 ///
-/// The tree is garbage collected if gc is true
-void push_tree(lua_State *L, TSTree *tree, bool gc)
+/// The tree is not copied. Ownership of the tree is transfered from c code to
+/// lua. if needed use ts_tree_copy() in the caller
+void push_tree(lua_State *L, TSTree *tree)
 {
   if (tree == NULL) {
     lua_pushnil(L);
@@ -789,7 +788,6 @@ void push_tree(lua_State *L, TSTree *tree, bool gc)
   TSLuaTree *ud = lua_newuserdata(L, sizeof(TSLuaTree));  // [udata]
 
   ud->tree = tree;
-  ud->gc = gc;
 
   lua_getfield(L, LUA_REGISTRYINDEX, TS_META_TREE);  // [udata, meta]
   lua_setmetatable(L, -2);  // [udata]
@@ -812,7 +810,7 @@ static TSLuaTree *tree_check(lua_State *L, int index)
 static int tree_gc(lua_State *L)
 {
   TSLuaTree *ud = tree_check(L, 1);
-  if (ud && ud->gc) {
+  if (ud) {
     ts_tree_delete(ud->tree);
   }
   return 0;
@@ -1322,7 +1320,9 @@ static int node_tree(lua_State *L)
     return 0;
   }
 
-  push_tree(L, (TSTree *)node.tree, false);
+  lua_getfenv(L, 1);  // [udata, reftable]
+  lua_rawgeti(L, -1, 1);  // [udata, reftable, tree_udata]
+
   return 1;
 }
 
