@@ -62,10 +62,10 @@
 --- @field winrow integer
 
 --- @class vim.fn.sign_define.dict
---- @field icon string
+--- @field text string
+--- @field icon? string
 --- @field linehl? string
 --- @field numhl? string
---- @field text? string
 --- @field texthl? string
 --- @field culhl? string
 
