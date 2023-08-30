@@ -29,7 +29,7 @@ function! tutor#MouseDoubleClick()
     if foldclosed(line('.')) > -1
         normal! zo
     else
-        if match(getline('.'), '^#\{1,} ') > -1
+        if match(getline('.'), '^#\{1,} ') > -1 && foldlevel(line('.')) > 0
             silent normal! zc
         else
             call tutor#FollowLink(0)
