@@ -30,7 +30,7 @@ if executable('zsh') && &shell !~# '/\%(nologin\|false\)$'
     compiler zsh
   endif
   setlocal keywordprg=:RunHelp
-  let b:undo_ftplugin .= 'keywordprg<'
+  let b:undo_ftplugin .= 'keywordprg< | sil! delc -buffer RunHelp'
 endif
 
 let b:match_words = '\<if\>:\<elif\>:\<else\>:\<fi\>'
