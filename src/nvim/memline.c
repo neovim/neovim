@@ -3934,6 +3934,11 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
   if (buf->b_ml.ml_usedchunks == -1
       || buf->b_ml.ml_chunksize == NULL
       || lnum < 0) {
+    // memline is currently empty. Although if it is loaded,
+    // it behaves like there is one empty line.
+    if (!ffdos && buf->b_ml.ml_mfp && (lnum == 1 || lnum == 2)) {
+      return lnum - 1;
+    }
     return -1;
   }
 
