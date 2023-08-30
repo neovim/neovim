@@ -42,7 +42,7 @@ if has('unix') && executable('less')
   if exists(':Sman') == 2
     setlocal iskeyword+=-
     setlocal keywordprg=:Sman
-    let b:undo_ftplugin .= '| setlocal keywordprg< iskeyword<'
+    let b:undo_ftplugin .= '| setlocal keywordprg< iskeyword< | sil! delc -buffer Sman'
   endif
 endif
 
