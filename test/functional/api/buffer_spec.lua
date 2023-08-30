@@ -1151,6 +1151,18 @@ describe('api/buf', function()
       eq(6, bufmeths.get_offset(1,1))
       command("bunload! 1")
       eq(-1, bufmeths.get_offset(1,1))
+      eq(-1, bufmeths.get_offset(1,0))
+    end)
+
+    it('works in empty buffer', function()
+      eq(0, get_offset(0))
+      eq(1, get_offset(1))
+    end)
+
+    it('works in buffer with one line inserted', function()
+      feed('itext')
+      eq(0, get_offset(0))
+      eq(5, get_offset(1))
     end)
   end)
 
