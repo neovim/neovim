@@ -442,6 +442,7 @@ func s:GetFilenameChecks() abort
     \ 'nim': ['file.nim', 'file.nims', 'file.nimble'],
     \ 'ninja': ['file.ninja'],
     \ 'nix': ['file.nix'],
+    \ 'norg': ['file.norg'],
     \ 'nqc': ['file.nqc'],
     \ 'nroff': ['file.tr', 'file.nr', 'file.roff', 'file.tmac', 'file.mom', 'tmac.file'],
     \ 'nsis': ['file.nsi', 'file.nsh'],
