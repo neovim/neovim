@@ -855,6 +855,7 @@ let s:script_checks = {
       \ 'fish': [['#!/path/fish']],
       \ 'forth': [['#!/path/gforth']],
       \ 'icon': [['#!/path/icon']],
+      \ 'crystal': [['#!/path/crystal']],
       \ }
 
 " Various forms of "env" optional arguments.
