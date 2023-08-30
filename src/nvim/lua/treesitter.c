@@ -154,9 +154,9 @@ static void build_meta(lua_State *L, const char *tname, const luaL_Reg *meta)
   lua_pop(L, 1);  // [] (don't use it now)
 }
 
-/// init the tslua library
+/// Init the tslua library.
 ///
-/// all global state is stored in the regirstry of the lua_State
+/// All global state is stored in the registry of the lua_State.
 void tslua_init(lua_State *L)
 {
   // type metatables
@@ -775,16 +775,17 @@ static int parser_get_logger(lua_State *L)
 
 // Tree methods
 
-/// push tree interface on lua stack.
+/// Push tree interface on to the lua stack.
 ///
-/// The tree is not copied. Ownership of the tree is transfered from c code to
-/// lua. if needed use ts_tree_copy() in the caller
-void push_tree(lua_State *L, TSTree *tree)
+/// The tree is not copied. Ownership of the tree is transferred from C to
+/// Lua. If needed use ts_tree_copy() in the caller
+static void push_tree(lua_State *L, TSTree *tree)
 {
   if (tree == NULL) {
     lua_pushnil(L);
     return;
   }
+
   TSLuaTree *ud = lua_newuserdata(L, sizeof(TSLuaTree));  // [udata]
 
   ud->tree = tree;
@@ -792,9 +793,10 @@ void push_tree(lua_State *L, TSTree *tree)
   lua_getfield(L, LUA_REGISTRYINDEX, TS_META_TREE);  // [udata, meta]
   lua_setmetatable(L, -2);  // [udata]
 
-  // table used for node wrappers to keep a reference to tree wrapper
-  // NB: in lua 5.3 the uservalue for the node could just be the tree, but
-  // in lua 5.1 the uservalue (fenv) must be a table.
+  // To prevent the tree from being garbage collected, create a reference to it
+  // in the fenv which will be passed to userdata nodes of the tree.
+  // Note: environments (fenvs) associated with userdata have no meaning in Lua
+  // and are only used to associate a table.
   lua_createtable(L, 1, 0);  // [udata, reftable]
   lua_pushvalue(L, -2);  // [udata, reftable, udata]
   lua_rawseti(L, -2, 1);  // [udata, reftable]
@@ -835,9 +837,9 @@ static int tree_root(lua_State *L)
 
 // Node methods
 
-/// push node interface on lua stack
+/// Push node interface on to the Lua stack
 ///
-/// top of stack must either be the tree this node belongs to or another node
+/// Top of stack must either be the tree this node belongs to or another node
 /// of the same tree! This value is not popped. Can only be called inside a
 /// cfunction with the tslua environment.
 static void push_node(lua_State *L, TSNode node, int uindex)
@@ -851,6 +853,8 @@ static void push_node(lua_State *L, TSNode node, int uindex)
   *ud = node;
   lua_getfield(L, LUA_REGISTRYINDEX, TS_META_NODE);  // [udata, meta]
   lua_setmetatable(L, -2);  // [udata]
+
+  // Copy the fenv which contains the nodes tree.
   lua_getfenv(L, uindex);  // [udata, reftable]
   lua_setfenv(L, -2);  // [udata]
 }
