@@ -856,6 +856,8 @@ let s:script_checks = {
       \ 'forth': [['#!/path/gforth']],
       \ 'icon': [['#!/path/icon']],
       \ 'crystal': [['#!/path/crystal']],
+      \ 'rexx': [['#!/path/rexx'],
+      \          ['#!/path/regina']],
       \ }
 
 " Various forms of "env" optional arguments.
@@ -1953,7 +1955,22 @@ func Test_cls_file()
 
   " Rexx
 
-  call writefile(['# rexx'], 'Xfile.cls')
+  call writefile(['#!/usr/bin/rexx'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('rexx', &filetype)
+  bwipe!
+
+  call writefile(['#!/usr/bin/regina'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('rexx', &filetype)
+  bwipe!
+
+  call writefile(['/* Comment */'], 'Xfile.cls')
+  split Xfile.cls
+  call assert_equal('rexx', &filetype)
+  bwipe!
+
+  call writefile(['::class Foo subclass Bar public'], 'Xfile.cls')
   split Xfile.cls
   call assert_equal('rexx', &filetype)
   bwipe!
