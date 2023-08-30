@@ -77,7 +77,7 @@ function M.asm_syntax(_, bufnr)
 end
 
 local visual_basic_content =
-  { 'vb_name', 'begin vb%.form', 'begin vb%.mdiform', 'begin vb%.usercontrol' }
+  [[\c^\s*\%(Attribute\s\+VB_Name\|Begin\s\+\%(VB\.\|{\%(\x\+-\)\+\x\+}\)\)]]
 
 -- See frm() for Visual Basic form file detection
 --- @type vim.filetype.mapfn
@@ -97,7 +97,7 @@ function M.bas(_, bufnr)
   local qb64_preproc = [[\c^\s*\%($\a\+\|option\s\+\%(_explicit\|_\=explicitarray\)\>\)]]
 
   for _, line in ipairs(getlines(bufnr, 1, 100)) do
-    if findany(line:lower(), visual_basic_content) then
+    if matchregex(line, visual_basic_content) then
       return 'vb'
     elseif
       line:find(fb_comment)
@@ -193,12 +193,12 @@ function M.cls(_, bufnr)
   if vim.g.filetype_cls then
     return vim.g.filetype_cls
   end
-  local line = getline(bufnr, 1)
-  if line:find('^[%%\\]') then
+  local line1 = getline(bufnr, 1)
+  if line1:find('^[%%\\]') then
     return 'tex'
-  elseif line:find('^#') and line:lower():find('rexx') then
+  elseif line1:find('^#') and line1:lower():find('rexx') then
     return 'rexx'
-  elseif line == 'VERSION 1.0 CLASS' then
+  elseif line1 == 'VERSION 1.0 CLASS' then
     return 'vb'
   end
   return 'st'
@@ -525,12 +525,15 @@ function M.frm(_, bufnr)
   if vim.g.filetype_frm then
     return vim.g.filetype_frm
   end
-  local lines = table.concat(getlines(bufnr, 1, 5)):lower()
-  if findany(lines, visual_basic_content) then
+  if getline(bufnr, 1) == 'VERSION 5.00' then
     return 'vb'
-  else
-    return 'form'
   end
+  for _, line in ipairs(getlines(bufnr, 1, 5)) do
+    if matchregex(line, visual_basic_content) then
+      return 'vb'
+    end
+  end
+  return 'form'
 end
 
 --- @type vim.filetype.mapfn
@@ -1527,6 +1530,14 @@ function M.v(_, bufnr)
     end
   end
   return 'v'
+end
+
+--- @type vim.filetype.mapfn
+function M.vba(_, bufnr)
+  if getline(bufnr, 1):find('^["#] Vimball Archiver') then
+    return 'vim'
+  end
+  return 'vb'
 end
 
 -- WEB (*.web is also used for Winbatch: Guess, based on expecting "%" comment
