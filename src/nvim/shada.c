@@ -2160,6 +2160,12 @@ static inline ShaDaWriteResult shada_read_when_writing(ShaDaReadDef *const sd_re
           shada_free_shada_entry(&entry);
           break;
         }
+        if (wms->global_marks[idx].data.type == kSDItemMissing) {
+          if (namedfm[idx].fmark.timestamp >= entry.timestamp) {
+            shada_free_shada_entry(&entry);
+            break;
+          }
+        }
         COMPARE_WITH_ENTRY(&wms->global_marks[idx], entry);
       }
       break;
@@ -2189,6 +2195,7 @@ static inline ShaDaWriteResult shada_read_when_writing(ShaDaReadDef *const sd_re
             entry;
         } else {
           PossiblyFreedShadaEntry *const wms_entry = &filemarks->marks[idx];
+          bool set_wms = true;
           if (wms_entry->data.type != kSDItemMissing) {
             if (wms_entry->data.timestamp >= entry.timestamp) {
               shada_free_shada_entry(&entry);
@@ -2200,8 +2207,23 @@ static inline ShaDaWriteResult shada_read_when_writing(ShaDaReadDef *const sd_re
               }
               shada_free_shada_entry(&wms_entry->data);
             }
+          } else {
+            FOR_ALL_BUFFERS(buf) {
+              if (buf->b_ffname != NULL
+                  && path_fnamecmp(entry.data.filemark.fname, buf->b_ffname) == 0) {
+                fmark_T fm;
+                mark_get(buf, curwin, &fm, kMarkBufLocal, (int)entry.data.filemark.name);
+                if (fm.timestamp >= entry.timestamp) {
+                  set_wms = false;
+                  shada_free_shada_entry(&entry);
+                  break;
+                }
+              }
+            }
           }
-          *wms_entry = pfs_entry;
+          if (set_wms) {
+            *wms_entry = pfs_entry;
+          }
         }
       } else {
 #define AFTERFREE_DUMMY(entry)
