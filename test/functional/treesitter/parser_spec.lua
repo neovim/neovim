@@ -1090,9 +1090,9 @@ int x = INT_MAX;
 
     -- Invalid capture name
     test(
-      '.../query.lua:0: Query error at 1:30. Invalid capture name "ok.capture":\n'..
-      '((identifier) @id (#eq? @id @ok.capture))\n'..
-      '                             ^',
-      '((identifier) @id (#eq? @id @ok.capture))')
+      '.../query.lua:0: Query error at 3:2. Invalid capture name "ok.capture":\n'..
+      '@ok.capture\n'..
+      ' ^',
+      '((identifier) @id \n(#eq? @id\n@ok.capture\n))')
   end)
 end)

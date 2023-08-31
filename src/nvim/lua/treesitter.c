@@ -1582,25 +1582,19 @@ static void query_err_string(const char *src, int error_offset, TSQueryError err
   int error_line_len = 0;
 
   const char *end_str;
-  const char *src_tmp = src;
-  while ((end_str = strchr(src_tmp, '\n')) != NULL) {
-    int line_length = (int)(end_str - src_tmp) + 1;
+  do {
+    const char *src_tmp = src + line_start;
+    end_str = strchr(src_tmp, '\n');
+    int line_length  = end_str != NULL ? (int)(end_str - src_tmp) : (int)strlen(src_tmp);
     int line_end = line_start + line_length;
     if (line_end > error_offset) {
       error_line = src_tmp;
       error_line_len = line_length;
       break;
     }
-    line_start = line_end;
+    line_start = line_end + 1;
     row++;
-    src_tmp += line_length;
-  }
-
-  // Additional check for the last line
-  if (line_start <= error_offset) {
-    error_line = src_tmp;
-    error_line_len = (int)strlen(src_tmp);
-  }
+  } while (end_str != NULL);
 
   int column = error_offset - line_start;
 
