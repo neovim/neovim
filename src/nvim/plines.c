@@ -216,6 +216,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   if (*s == NUL && !has_lcs_eol) {
     size = 0;  // NUL is not displayed
   }
+  bool is_doublewidth = size == 2 && MB_BYTE2LEN((uint8_t)(*s)) > 1;
 
   if (cts->cts_has_virt_text) {
     int tab_size = size;
@@ -247,8 +248,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
     }
   }
 
-  if (size == 2 && MB_BYTE2LEN((uint8_t)(*s)) > 1
-      && wp->w_p_wrap && in_win_border(wp, vcol)) {
+  if (is_doublewidth && wp->w_p_wrap && in_win_border(wp, vcol + size - 2)) {
     // Count the ">" in the last column.
     size++;
     mb_added = 1;

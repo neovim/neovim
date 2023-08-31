@@ -3244,6 +3244,19 @@ describe('decorations: inline virtual text', function()
                                                         |
     ]]}
   end)
+
+  it('before double-width char that wraps', function()
+    exec([[
+      call setline(1, repeat('a', 40) .. '口' .. '12345')
+      normal! $
+    ]])
+    meths.buf_set_extmark(0, ns, 0, 40, { virt_text = { { ('b'):rep(9) } }, virt_text_pos = 'inline' })
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbb{1:>}|
+      口1234^5                                           |
+                                                        |
+    ]]}
+  end)
 end)
 
 describe('decorations: virtual lines', function()
