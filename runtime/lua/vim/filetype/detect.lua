@@ -194,12 +194,17 @@ function M.cls(_, bufnr)
     return vim.g.filetype_cls
   end
   local line1 = getline(bufnr, 1)
-  if line1:find('^[%%\\]') then
-    return 'tex'
-  elseif line1:find('^#') and line1:lower():find('rexx') then
+  if matchregex(line1, [[^#!.*\<\%(rexx\|regina\)\>]]) then
     return 'rexx'
   elseif line1 == 'VERSION 1.0 CLASS' then
     return 'vb'
+  end
+
+  local nonblank1 = nextnonblank(bufnr, 1)
+  if nonblank1 and nonblank1:find('^[%%\\]') then
+    return 'tex'
+  elseif nonblank1 and findany(nonblank1, { '^%s*/%*', '^%s*::%w' }) then
+    return 'rexx'
   end
   return 'st'
 end
@@ -1648,6 +1653,7 @@ local patterns_hashbang = {
   guile = 'scheme',
   ['nix%-shell'] = 'nix',
   ['crystal\\>'] = { 'crystal', { vim_regex = true } },
+  ['^\\%(rexx\\|regina\\)\\>'] = { 'rexx', { vim_regex = true } },
 }
 
 ---@private
