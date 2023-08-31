@@ -31,7 +31,7 @@ if(UNIX)
 
   set(LUAROCKS_CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
       --prefix=${DEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS})
-  set(LUAROCKS_INSTALL_COMMAND ${MAKE_PRG} -j1 bootstrap)
+  set(LUAROCKS_INSTALL_COMMAND ${MAKE_PRG} -j1 install)
 elseif(MSVC OR MINGW)
   if(MINGW)
     set(COMPILER_FLAG /MW)
