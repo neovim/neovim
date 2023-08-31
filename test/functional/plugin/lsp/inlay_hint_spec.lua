@@ -135,5 +135,103 @@ describe('inlay hints', function()
           unchanged = true
         })
       end)
+
+    it(
+      'inlay hints are cleared when the client detaches',
+      function()
+        exec_lua([[
+          bufnr = vim.api.nvim_get_current_buf()
+          vim.api.nvim_win_set_buf(0, bufnr)
+          client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+        ]])
+
+        insert(text)
+        exec_lua([[vim.lsp.inlay_hint(bufnr, true)]])
+        screen:expect({
+          grid = [[
+  auto add(int a, int b)-> int { return a + b; }    |
+                                                    |
+  int main() {                                      |
+      int x = 1;                                    |
+      int y = 2;                                    |
+      return add(a: x,b: y);                        |
+  }                                                 |
+  ^}                                                 |
+                                                    |
+]]
+        })
+        exec_lua([[vim.lsp.stop_client(client_id)]])
+        screen:expect({
+          grid = [[
+  auto add(int a, int b) { return a + b; }          |
+                                                    |
+  int main() {                                      |
+      int x = 1;                                    |
+      int y = 2;                                    |
+      return add(x,y);                              |
+  }                                                 |
+  ^}                                                 |
+                                                    |
+]],
+          unchanged = true
+        })
+      end)
+
+    it(
+      'inlay hints are not cleared when one of several clients detaches',
+      function()
+        -- Start two clients
+        exec_lua([[
+          bufnr = vim.api.nvim_get_current_buf()
+          vim.api.nvim_win_set_buf(0, bufnr)
+          server2 = _create_server({
+            capabilities = {
+              inlayHintProvider = true,
+            },
+            handlers = {
+              ['textDocument/inlayHint'] = function()
+                return {}
+              end,
+            }
+          })
+          client1 = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
+          client2 = vim.lsp.start({ name = 'dummy2', cmd = server2.cmd })
+        ]])
+
+        insert(text)
+        exec_lua([[vim.lsp.inlay_hint(bufnr, true)]])
+        screen:expect({
+          grid = [[
+  auto add(int a, int b)-> int { return a + b; }    |
+                                                    |
+  int main() {                                      |
+      int x = 1;                                    |
+      int y = 2;                                    |
+      return add(a: x,b: y);                        |
+  }                                                 |
+  ^}                                                 |
+                                                    |
+]]
+        })
+
+        -- Now stop one client
+        exec_lua([[ vim.lsp.stop_client(client2) ]])
+
+        -- We should still see the hints
+        screen:expect({
+          grid = [[
+  auto add(int a, int b)-> int { return a + b; }    |
+                                                    |
+  int main() {                                      |
+      int x = 1;                                    |
+      int y = 2;                                    |
+      return add(a: x,b: y);                        |
+  }                                                 |
+  ^}                                                 |
+                                                    |
+]],
+          unchanged = true
+        })
+      end)
   end)
 end)

@@ -2122,6 +2122,7 @@ end
 function M.make_workspace_params(added, removed)
   return { event = { added = added, removed = removed } }
 end
+
 --- Returns indentation size.
 ---
 ---@see 'shiftwidth'
@@ -2192,32 +2193,46 @@ end
 ---@private
 --- Request updated LSP information for a buffer.
 ---
+---@class lsp.util.RefreshOptions
+---@field bufnr integer? Buffer to refresh (default: 0)
+---@field only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
+---@field client_id? integer Client ID to refresh (default: all clients)
+--
 ---@param method string LSP method to call
----@param opts (nil|table) Optional arguments
----  - bufnr (integer, default: 0): Buffer to refresh
----  - only_visible (boolean, default: false): Whether to only refresh for the visible regions of the buffer
+---@param opts? lsp.util.RefreshOptions Options table
 function M._refresh(method, opts)
   opts = opts or {}
   local bufnr = opts.bufnr
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
-  local only_visible = opts.only_visible or false
-  for _, window in ipairs(api.nvim_list_wins()) do
-    if api.nvim_win_get_buf(window) == bufnr then
-      local first = vim.fn.line('w0', window)
-      local last = vim.fn.line('w$', window)
-      local params = {
-        textDocument = M.make_text_document_params(bufnr),
-        range = {
-          start = { line = first - 1, character = 0 },
-          ['end'] = { line = last, character = 0 },
-        },
-      }
-      vim.lsp.buf_request(bufnr, method, params)
-    end
+
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = method, id = opts.client_id })
+
+  if #clients == 0 then
+    return
   end
-  if not only_visible then
+
+  local only_visible = opts.only_visible or false
+
+  if only_visible then
+    for _, window in ipairs(api.nvim_list_wins()) do
+      if api.nvim_win_get_buf(window) == bufnr then
+        local first = vim.fn.line('w0', window)
+        local last = vim.fn.line('w$', window)
+        local params = {
+          textDocument = M.make_text_document_params(bufnr),
+          range = {
+            start = { line = first - 1, character = 0 },
+            ['end'] = { line = last, character = 0 },
+          },
+        }
+        for _, client in ipairs(clients) do
+          client.request(method, params, nil, bufnr)
+        end
+      end
+    end
+  else
     local params = {
       textDocument = M.make_text_document_params(bufnr),
       range = {
@@ -2225,7 +2240,9 @@ function M._refresh(method, opts)
         ['end'] = { line = api.nvim_buf_line_count(bufnr), character = 0 },
       },
     }
-    vim.lsp.buf_request(bufnr, method, params)
+    for _, client in ipairs(clients) do
+      client.request(method, params, nil, bufnr)
+    end
   end
 end
 

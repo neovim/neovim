@@ -131,6 +131,16 @@ local function disable(bufnr)
   end
 end
 
+--- Refresh inlay hints, only if we have attached clients that support it
+---@param bufnr (integer) Buffer handle, or 0 for current
+---@param opts? table Additional options to pass to util._refresh
+---@private
+local function _refresh(bufnr, opts)
+  opts = opts or {}
+  opts['bufnr'] = bufnr
+  util._refresh(ms.textDocument_inlayHint, opts)
+end
+
 --- Enable inlay hints for a buffer
 ---@param bufnr (integer) Buffer handle, or 0 for current
 local function enable(bufnr)
@@ -150,18 +160,18 @@ local function enable(bufnr)
           return
         end
         if bufstates[bufnr] and bufstates[bufnr].enabled then
-          util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
+          _refresh(bufnr, { client_id = opts.data.client_id })
         end
       end,
       group = augroup,
     })
-    util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
+    _refresh(bufnr)
     api.nvim_buf_attach(bufnr, false, {
       on_reload = function(_, cb_bufnr)
         clear(cb_bufnr)
         if bufstates[cb_bufnr] and bufstates[cb_bufnr].enabled then
           bufstates[cb_bufnr].applied = {}
-          util._refresh(ms.textDocument_inlayHint, { bufnr = cb_bufnr })
+          _refresh(cb_bufnr)
         end
       end,
       on_detach = function(_, cb_bufnr)
@@ -170,14 +180,22 @@ local function enable(bufnr)
     })
     api.nvim_create_autocmd('LspDetach', {
       buffer = bufnr,
-      callback = function()
-        disable(bufnr)
+      callback = function(args)
+        local clients = vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_inlayHint })
+
+        if
+          not vim.iter(clients):any(function(c)
+            return c.id ~= args.data.client_id
+          end)
+        then
+          disable(bufnr)
+        end
       end,
       group = augroup,
     })
   else
     bufstate.enabled = true
-    util._refresh(ms.textDocument_inlayHint, { bufnr = bufnr })
+    _refresh(bufnr)
   end
 end
 
