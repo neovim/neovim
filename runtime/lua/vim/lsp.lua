@@ -397,8 +397,7 @@ do
   ---@return CTGroup
   local function get_group(client)
     local allow_inc_sync = if_nil(client.config.flags.allow_incremental_sync, true)
-    local change_capability =
-      vim.tbl_get(client.server_capabilities or {}, 'textDocumentSync', 'change')
+    local change_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'change')
     local sync_kind = change_capability or protocol.TextDocumentSyncKind.None
     if not allow_inc_sync and change_capability == protocol.TextDocumentSyncKind.Incremental then
       sync_kind = protocol.TextDocumentSyncKind.Full
@@ -1312,6 +1311,9 @@ function lsp.start_client(config)
     --- - lsp.WorkDoneProgressEnd    (extended with title from Begin)
     progress = vim.ringbuf(50),
 
+    --- @type lsp.ServerCapabilities
+    server_capabilities = {},
+
     ---@deprecated use client.progress instead
     messages = { name = name, messages = {}, progress = {}, status = {} },
     dynamic_capabilities = require('vim.lsp._dynamic').new(client_id),
@@ -1401,7 +1403,7 @@ function lsp.start_client(config)
       if not required_capability then
         return true
       end
-      if vim.tbl_get(client.server_capabilities or {}, unpack(required_capability)) then
+      if vim.tbl_get(client.server_capabilities, unpack(required_capability)) then
         return true
       else
         if client.dynamic_capabilities:supports_registration(method) then
