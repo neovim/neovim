@@ -440,7 +440,7 @@ redo:
   case 14:
     NEXT_TYPE(tok, MPACK_TOKEN_ARRAY);
     int eventarrsize = (int)tok.length;
-    if (eventarrsize != 5) {
+    if (eventarrsize != 4) {
       p->state = -1;
       return false;
     }
@@ -508,16 +508,11 @@ redo:
     }
 
     g->icell++;
-    if (g->icell == g->ncells) {
-      NEXT_TYPE(tok, MPACK_TOKEN_BOOLEAN);
-      g->wrap = mpack_unpack_boolean(tok);
-      p->read_ptr = data;
-      p->read_size = size;
-      return true;
-    }
-
     p->read_ptr = data;
     p->read_size = size;
+    if (g->icell == g->ncells) {
+      return true;
+    }
     goto redo;
 
   case 12:

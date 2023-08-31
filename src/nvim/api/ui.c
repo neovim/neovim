@@ -73,11 +73,6 @@ static void mpack_uint(char **buf, uint32_t val)
   }
 }
 
-static void mpack_bool(char **buf, bool val)
-{
-  mpack_w(buf, 0xc2 | val);
-}
-
 static void mpack_array(char **buf, uint32_t len)
 {
   if (len < 0x10) {
@@ -819,7 +814,7 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
     data->ncalls++;
 
     char **buf = &data->buf_wptr;
-    mpack_array(buf, 5);
+    mpack_array(buf, 4);
     mpack_uint(buf, (uint32_t)grid);
     mpack_uint(buf, (uint32_t)row);
     mpack_uint(buf, (uint32_t)startcol);
@@ -833,20 +828,17 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
       repeat++;
       if (i == ncells - 1 || attrs[i] != attrs[i + 1]
           || strcmp(chunk[i], chunk[i + 1]) != 0) {
-        if (UI_BUF_SIZE - BUF_POS(data) < 2 * (1 + 2 + sizeof(schar_T) + 5 + 5) + 1) {
+        if (UI_BUF_SIZE - BUF_POS(data) < 2 * (1 + 2 + sizeof(schar_T) + 5 + 5)) {
           // close to overflowing the redraw buffer. finish this event,
           // flush, and start a new "grid_line" event at the current position.
           // For simplicity leave place for the final "clear" element
           // as well, hence the factor of 2 in the check.
           mpack_w2(&lenpos, nelem);
-
-          // We only ever set the wrap field on the final "grid_line" event for the line.
-          mpack_bool(buf, false);
           remote_ui_flush_buf(ui);
 
           prepare_call(ui, "grid_line");
           data->ncalls++;
-          mpack_array(buf, 5);
+          mpack_array(buf, 4);
           mpack_uint(buf, (uint32_t)grid);
           mpack_uint(buf, (uint32_t)row);
           mpack_uint(buf, (uint32_t)startcol + (uint32_t)i - repeat + 1);
@@ -878,10 +870,9 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
       mpack_uint(buf, (uint32_t)(clearcol - endcol));
     }
     mpack_w2(&lenpos, nelem);
-    mpack_bool(buf, flags & kLineFlagWrap);
 
     if (data->ncells_pending > 500) {
-      // pass off cells to UI to let it start processing them
+      // pass of cells to UI to let it start processing them
       remote_ui_flush_buf(ui);
     }
   } else {
