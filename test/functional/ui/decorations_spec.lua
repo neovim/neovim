@@ -3217,6 +3217,33 @@ describe('decorations: inline virtual text', function()
                                     |
     ]]}
   end)
+
+  it('before a space with linebreak', function()
+    screen:try_resize(50, 6)
+    exec([[
+      setlocal linebreak showbreak=+ breakindent breakindentopt=shift:2
+      call setline(1, repeat('a', 50) .. ' ' .. repeat('c', 45))
+      normal! $
+    ]])
+    meths.buf_set_extmark(0, ns, 0, 50, { virt_text = { { ('b'):rep(10) } }, virt_text_pos = 'inline' })
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+        {1:+}bbbbbbbbbb                                     |
+        {1:+}cccccccccccccccccccccccccccccccccccccccccccc^c  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('05x$')
+    screen:expect{grid=[[
+      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbb|
+        {1:+}bbbbb                                          |
+        {1:+}cccccccccccccccccccccccccccccccccccccccccccc^c  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
 end)
 
 describe('decorations: virtual lines', function()
