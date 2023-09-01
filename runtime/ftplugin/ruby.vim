@@ -99,41 +99,51 @@ function! s:build_path(path) abort
   return path
 endfunction
 
-if !exists('b:ruby_version') && !exists('g:ruby_path') && isdirectory(expand('%:p:h'))
-  let s:version_file = findfile('.ruby-version', '.;')
-  if !empty(s:version_file) && filereadable(s:version_file)
-    let b:ruby_version = get(readfile(s:version_file, '', 1), '')
-    if !has_key(g:ruby_version_paths, b:ruby_version)
-      let g:ruby_version_paths[b:ruby_version] = s:query_path(fnamemodify(s:version_file, ':p:h'))
-    endif
-  endif
+let s:execute_ruby = 1
+" Security Check, don't execute ruby from the current directory
+if fnamemodify(exepath("ruby"), ":p:h") ==# getcwd()
+  let s:execute_ruby = 0
 endif
 
-if exists("g:ruby_path")
-  let s:ruby_path = type(g:ruby_path) == type([]) ? join(g:ruby_path, ',') : g:ruby_path
-elseif has_key(g:ruby_version_paths, get(b:, 'ruby_version', ''))
-  let s:ruby_paths = g:ruby_version_paths[b:ruby_version]
-  let s:ruby_path = s:build_path(s:ruby_paths)
-else
-  if !exists('g:ruby_default_path')
-    if has("ruby") && has("win32")
-      ruby ::VIM::command( 'let g:ruby_default_path = split("%s",",")' % $:.join(%q{,}) )
-    elseif executable('ruby') && !empty($HOME)
-      let g:ruby_default_path = s:query_path($HOME)
-    else
-      let g:ruby_default_path = map(split($RUBYLIB,':'), 'v:val ==# "." ? "" : v:val')
+function SetRubyPath()
+  if !exists('b:ruby_version') && !exists('g:ruby_path') && isdirectory(expand('%:p:h'))
+    let s:version_file = findfile('.ruby-version', '.;')
+    if !empty(s:version_file) && filereadable(s:version_file) && s:execute_ruby
+      let b:ruby_version = get(readfile(s:version_file, '', 1), '')
+      if !has_key(g:ruby_version_paths, b:ruby_version)
+	let g:ruby_version_paths[b:ruby_version] = s:query_path(fnamemodify(s:version_file, ':p:h'))
+      endif
     endif
   endif
-  let s:ruby_paths = g:ruby_default_path
-  let s:ruby_path = s:build_path(s:ruby_paths)
-endif
 
-if stridx(&l:path, s:ruby_path) == -1
-  let &l:path = s:ruby_path
-endif
-if exists('s:ruby_paths') && stridx(&l:tags, join(map(copy(s:ruby_paths),'v:val."/tags"'),',')) == -1
-  let &l:tags = &tags . ',' . join(map(copy(s:ruby_paths),'v:val."/tags"'),',')
-endif
+  if exists("g:ruby_path")
+    let s:ruby_path = type(g:ruby_path) == type([]) ? join(g:ruby_path, ',') : g:ruby_path
+  elseif has_key(g:ruby_version_paths, get(b:, 'ruby_version', '')) && s:execute_ruby
+    let s:ruby_paths = g:ruby_version_paths[b:ruby_version]
+    let s:ruby_path = s:build_path(s:ruby_paths)
+  else
+    if !exists('g:ruby_default_path')
+      if has("ruby") && has("win32")
+	ruby ::VIM::command( 'let g:ruby_default_path = split("%s",",")' % $:.join(%q{,}) )
+      elseif executable('ruby') && !empty($HOME) && s:execute_ruby
+	let g:ruby_default_path = s:query_path($HOME)
+      else
+	let g:ruby_default_path = map(split($RUBYLIB,':'), 'v:val ==# "." ? "" : v:val')
+      endif
+    endif
+    let s:ruby_paths = g:ruby_default_path
+    let s:ruby_path = s:build_path(s:ruby_paths)
+  endif
+
+  if stridx(&l:path, s:ruby_path) == -1
+    let &l:path = s:ruby_path
+  endif
+  if exists('s:ruby_paths') && stridx(&l:tags, join(map(copy(s:ruby_paths),'v:val."/tags"'),',')) == -1
+    let &l:tags = &tags . ',' . join(map(copy(s:ruby_paths),'v:val."/tags"'),',')
+  endif
+endfunction
+
+call SetRubyPath()
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:browsefilter = "Ruby Source Files (*.rb)\t*.rb\n" .
