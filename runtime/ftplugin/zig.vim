@@ -39,7 +39,9 @@ endif
 
 let &l:define='\v(<fn>|<const>|<var>|^\s*\#\s*define)'
 
-if !exists('g:zig_std_dir') && exists('*json_decode') && executable('zig')
+" Safety check: don't execute zip from current directory
+if !exists('g:zig_std_dir') && exists('*json_decode') &&
+    \  executable('zig') && fnamemodify(exepath("zig"), ":p:h") != getcwd()
     silent let s:env = system('zig env')
     if v:shell_error == 0
         let g:zig_std_dir = json_decode(s:env)['std_dir']

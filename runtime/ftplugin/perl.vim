@@ -54,7 +54,8 @@ endif
 
 " Set this once, globally.
 if !exists("perlpath")
-    if executable("perl")
+    " safety check: don't execute perl from current directory
+    if executable("perl") && fnamemodify(exepath("perl"), ":p:h") != getcwd()
       try
 	if &shellxquote != '"'
 	    let perlpath = system('perl -e "print join(q/,/,@INC)"')
