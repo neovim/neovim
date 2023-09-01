@@ -112,7 +112,7 @@ M[ms.client_registerCapability] = function(_, result, ctx)
   local client = vim.lsp.get_client_by_id(client_id)
 
   client.dynamic_capabilities:register(result.registrations)
-  for bufnr, _ in ipairs(client.attached_buffers) do
+  for bufnr, _ in pairs(client.attached_buffers) do
     vim.lsp._set_defaults(client, bufnr)
   end
 
