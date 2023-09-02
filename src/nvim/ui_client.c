@@ -43,7 +43,7 @@ uint64_t ui_client_start_server(int argc, char **argv)
   varnumber_T exit_status;
   char **args = xmalloc(((size_t)(2 + argc)) * sizeof(char *));
   int args_idx = 0;
-  args[args_idx++] = xstrdup(get_vim_var_str(VV_PROGPATH));
+  args[args_idx++] = xstrdup(argv[0]);
   args[args_idx++] = xstrdup("--embed");
   for (int i = 1; i < argc; i++) {
     args[args_idx++] = xstrdup(argv[i]);
@@ -53,8 +53,8 @@ uint64_t ui_client_start_server(int argc, char **argv)
   CallbackReader on_err = CALLBACK_READER_INIT;
   on_err.fwd_err = true;
 
-  Channel *channel = channel_job_start(args, CALLBACK_READER_INIT,
-                                       on_err, CALLBACK_NONE,
+  Channel *channel = channel_job_start(args, get_vim_var_str(VV_PROGPATH),
+                                       CALLBACK_READER_INIT, on_err, CALLBACK_NONE,
                                        false, true, true, false, kChannelStdinPipe,
                                        NULL, 0, 0, NULL, &exit_status);
 

@@ -309,6 +309,7 @@ static void close_cb(Stream *stream, void *data)
 ///
 /// @param[in]  argv  Arguments vector specifying the command to run,
 ///                   NULL-terminated
+/// @param[in]  exepath  The path to the executable. If NULL, use `argv[0]`.
 /// @param[in]  on_stdout  Callback to read the job's stdout
 /// @param[in]  on_stderr  Callback to read the job's stderr
 /// @param[in]  on_exit  Callback to receive the job's exit status
@@ -330,10 +331,11 @@ static void close_cb(Stream *stream, void *data)
 ///                          < 0 if the job can't start
 ///
 /// @returns [allocated] channel
-Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader on_stderr,
-                           Callback on_exit, bool pty, bool rpc, bool overlapped, bool detach,
-                           ChannelStdinMode stdin_mode, const char *cwd, uint16_t pty_width,
-                           uint16_t pty_height, dict_T *env, varnumber_T *status_out)
+Channel *channel_job_start(char **argv, const char *exepath, CallbackReader on_stdout,
+                           CallbackReader on_stderr, Callback on_exit, bool pty, bool rpc,
+                           bool overlapped, bool detach, ChannelStdinMode stdin_mode,
+                           const char *cwd, uint16_t pty_width, uint16_t pty_height, dict_T *env,
+                           varnumber_T *status_out)
 {
   Channel *chan = channel_alloc(kChannelStreamProc);
   chan->on_data = on_stdout;
@@ -364,6 +366,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
 
   Process *proc = &chan->stream.proc;
   proc->argv = argv;
+  proc->exepath = exepath;
   proc->cb = channel_process_exit_cb;
   proc->events = chan->events;
   proc->detach = detach;
@@ -371,7 +374,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout, CallbackReader
   proc->env = env;
   proc->overlapped = overlapped;
 
-  char *cmd = xstrdup(proc->argv[0]);
+  char *cmd = xstrdup(process_get_exepath(proc));
   bool has_out, has_err;
   if (proc->type == kProcessTypePty) {
     has_out = true;
