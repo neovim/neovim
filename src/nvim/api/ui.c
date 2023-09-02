@@ -830,6 +830,7 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
     size_t ncells = (size_t)(endcol - startcol);
     int last_hl = -1;
     uint32_t nelem = 0;
+    bool was_space = false;
     for (size_t i = 0; i < ncells; i++) {
       repeat++;
       if (i == ncells - 1 || attrs[i] != attrs[i + 1]
@@ -868,9 +869,12 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
         data->ncells_pending += MIN(repeat, 2);
         last_hl = attrs[i];
         repeat = 0;
+        was_space = strequal(chunk[i], " ");
       }
     }
-    if (endcol < clearcol) {
+    // If the last chunk was all spaces, add a clearing chunk even if there are
+    // no more cells to clear, so there is no ambiguity about what to clear.
+    if (endcol < clearcol || was_space) {
       nelem++;
       data->ncells_pending += 1;
       mpack_array(buf, 3);

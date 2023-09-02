@@ -27,8 +27,6 @@ local is_os = helpers.is_os
 local new_pipename = helpers.new_pipename
 local spawn_argv = helpers.spawn_argv
 local set_session = helpers.set_session
-local feed = helpers.feed
-local eval = helpers.eval
 local write_file = helpers.write_file
 
 if helpers.skip(helpers.is_os('win')) then return end
@@ -898,7 +896,7 @@ describe('TUI', function()
     feed_data('\022\027[107;33u')  -- Meta + k
     feed_data('\022\027[13;41u')  -- Super + Meta + Enter
     feed_data('\022\027[127;48u')  -- Shift + Alt + Ctrl + Super + Meta + Backspace
-    feed('\n')
+    feed_data('\n')
     feed_data('\022\027[57376;9u')  -- Super + F13
     feed_data('\022\027[57377;33u')  -- Meta + F14
     feed_data('\022\027[57378;41u')  -- Super + Meta + F15
@@ -1752,7 +1750,7 @@ describe('TUI', function()
                                                         |
       {5:-- TERMINAL --}                                    |
     ]])
-    feed('i')
+    feed_data('i')
     screen:expect([[
       {1: }                                                 |
       {2:~}{3:                                                 }|
@@ -1897,6 +1895,30 @@ describe('TUI', function()
       <C-h>                                             |
       {3:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it('draws line with many trailing spaces correctly #24955', function()
+    local screen = thelpers.screen_setup(0, '["'..nvim_prog..[[", "-u", "NONE", "-i", "NONE"]]
+      ..[[, "--cmd", "call setline(1, ['1st line' .. repeat(' ', 153), '2nd line'])"]]..']', 80)
+    screen:expect{grid=[[
+      {1:1}st line                                                                        |
+                                                                                      |
+                                                                                      |
+      2nd line                                                                        |
+      {5:[No Name] [+]                                                 1,1            All}|
+                                                                                      |
+      {3:-- TERMINAL --}                                                                  |
+    ]]}
+    feed_data('$')
+    screen:expect{grid=[[
+      1st line                                                                        |
+                                                                                      |
+      {1: }                                                                               |
+      2nd line                                                                        |
+      {5:[No Name] [+]                                                 1,161          All}|
+                                                                                      |
+      {3:-- TERMINAL --}                                                                  |
+    ]]}
   end)
 end)
 
@@ -2703,8 +2725,8 @@ describe("TUI as a client", function()
     local client_super = spawn_argv(true)
 
     set_session(server)
-    local server_pipe = eval'v:servername'
-    feed'iHalloj!<esc>'
+    local server_pipe = meths.get_vvar('servername')
+    server:request('nvim_input', 'iHalloj!<Esc>')
 
     set_session(client_super)
     local screen = thelpers.screen_setup(0,
