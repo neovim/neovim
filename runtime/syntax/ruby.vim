@@ -3,7 +3,7 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " URL:			https://github.com/vim-ruby/vim-ruby
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:		2021 Nov 03
+" Last Change:		2023 Mar 16
 " ----------------------------------------------------------------------------
 "
 " Previous Maintainer:	Mirko Nasato
@@ -145,9 +145,9 @@ syn cluster rubyStringSpecial	 contains=rubyInterpolation,rubyStringEscape
 syn cluster rubyStringNotTop	 contains=@rubyStringSpecial,@rubyNestedBrackets,@rubySingleCharEscape
 
 " Regular Expression Metacharacters {{{1
-syn region rubyRegexpComment	  matchgroup=rubyRegexpSpecial	 start="(?#"								    skip="\\\\\|\\)"  end=")"  contained
-syn region rubyRegexpParens	  matchgroup=rubyRegexpSpecial	 start="(\(?:\|?<\=[=!]\|?>\|?<[a-z_]\w*>\|?[imx]*-[imx]*:\=\|\%(?#\)\@!\)" skip="\\\\\|\\)"  end=")"  contained transparent contains=@rubyRegexpSpecial
-syn region rubyRegexpBrackets	  matchgroup=rubyRegexpCharClass start="\[\^\="								    skip="\\\\\|\\\]" end="\]" contained transparent contains=rubyRegexpBrackets,rubyStringEscape,rubyRegexpEscape,rubyRegexpCharClass,rubyRegexpIntersection oneline
+syn region rubyRegexpComment	  matchgroup=rubyRegexpSpecial	 start="(?#"								     skip="\\\\\|\\)"  end=")"	contained
+syn region rubyRegexpParens	  matchgroup=rubyRegexpSpecial	 start="(\%(?:\|?<\=[=!]\|?>\|?<[a-z_]\w*>\|?[imx]*-[imx]*:\=\|\%(?#\)\@!\)" skip="\\\\\|\\)"  end=")"	contained transparent contains=@rubyRegexpSpecial
+syn region rubyRegexpBrackets	  matchgroup=rubyRegexpCharClass start="\[\^\="								     skip="\\\\\|\\\]" end="\]" contained transparent contains=rubyRegexpBrackets,rubyStringEscape,rubyRegexpEscape,rubyRegexpCharClass,rubyRegexpIntersection oneline
 syn match  rubyRegexpCharClass	  "\\[DdHhRSsWw]"	 contained display
 syn match  rubyRegexpCharClass	  "\[:\^\=\%(alnum\|alpha\|ascii\|blank\|cntrl\|digit\|graph\|lower\|print\|punct\|space\|upper\|word\|xdigit\):\]" contained
 syn match  rubyRegexpCharClass	  "\\[pP]{^\=.\{-}}"	 contained display
@@ -346,7 +346,7 @@ syn cluster rubyDeclaration contains=rubyAliasDeclaration,rubyAliasDeclaration2,
 syn match rubyControl	     "\%#=1\<\%(break\|in\|next\|redo\|retry\|return\)\>"
 syn match rubyKeyword	     "\%#=1\<\%(super\|yield\)\>"
 syn match rubyBoolean	     "\%#=1\<\%(true\|false\)\>[?!]\@!"
-syn match rubyPseudoVariable "\%#=1\<\(self\|nil\)\>[?!]\@!"
+syn match rubyPseudoVariable "\%#=1\<\%(self\|nil\)\>[?!]\@!"
 syn match rubyPseudoVariable "\%#=1\<__\%(ENCODING\|dir\|FILE\|LINE\|callee\|method\)__\>"
 syn match rubyBeginEnd	     "\%#=1\<\%(BEGIN\|END\)\>"
 
@@ -399,11 +399,6 @@ if !exists("b:ruby_no_expensive") && !exists("ruby_no_expensive")
 
   SynFold 'for' syn region rubyRepeatExpression start="\<for\>" start="\%(\%(^\|\.\.\.\=\|[{:,;([<>~\*/%&^|+=-]\|\%(\<\%(\h\|[^\x00-\x7F]\)\%(\w\|[^\x00-\x7F]\)*\)\@<![!?]\)\s*\)\@<=\<\%(until\|while\)\>" matchgroup=rubyRepeat skip="\<end:" end="\<end\>" contains=ALLBUT,@rubyNotTop nextgroup=rubyOptionalDoLine
 
-  if !exists("ruby_minlines")
-    let ruby_minlines = 500
-  endif
-  exe "syn sync minlines=" . ruby_minlines
-
 else
   syn match rubyControl "\<def\>"    nextgroup=rubyMethodDeclaration skipwhite skipnl
   syn match rubyControl "\<class\>"  nextgroup=rubyClassDeclaration  skipwhite skipnl
@@ -412,13 +407,18 @@ else
   syn match rubyKeyword "\<\%(alias\|undef\)\>"
 endif
 
+if !exists("ruby_minlines")
+  let ruby_minlines = 500
+endif
+exe "syn sync minlines=" . ruby_minlines
+
 " Special Methods {{{1
 if !exists("ruby_no_special_methods")
   syn match rubyAccess	  "\<\%(public\|protected\|private\)\>" " use re=2
   syn match rubyAccess	  "\%#=1\<\%(public\|private\)_class_method\>"
   syn match rubyAccess	  "\%#=1\<\%(public\|private\)_constant\>"
   syn match rubyAccess	  "\%#=1\<module_function\>"
-  syn match rubyAttribute "\%#=1\%(\%(^\|;\)\s*\)\@<=attr\>\(\s*[.=]\)\@!" " attr is a common variable name
+  syn match rubyAttribute "\%#=1\%(\%(^\|;\)\s*\)\@<=attr\>\%(\s*[.=]\)\@!" " attr is a common variable name
   syn match rubyAttribute "\%#=1\<attr_\%(accessor\|reader\|writer\)\>"
   syn match rubyControl   "\%#=1\<\%(abort\|at_exit\|exit\|fork\|loop\|trap\)\>"
   syn match rubyEval	  "\%#=1\<eval\>"
@@ -435,8 +435,8 @@ syn match   rubySharpBang    "\%^#!.*" display
 syn keyword rubyTodo	     FIXME NOTE TODO OPTIMIZE HACK REVIEW XXX todo contained
 syn match   rubyEncoding     "[[:alnum:]-_]\+" contained display
 syn match   rubyMagicComment "\c\%<3l#\s*\zs\%(coding\|encoding\):"					contained nextgroup=rubyEncoding skipwhite
-syn match   rubyMagicComment "\c\%<10l#\s*\zs\%(frozen_string_literal\|warn_indent\|warn_past_scope\):" contained nextgroup=rubyBoolean  skipwhite
-syn match   rubyMagicComment "\c\%<10l#\s*\zs\%(shareable_constant_value\):"				contained nextgroup=rubyEncoding  skipwhite
+syn match   rubyMagicComment "\c\%<10l#\s*\zs\%(frozen[-_]string[-_]literal\|warn[-_]indent\|warn[-_]past[-_]scope\):" contained nextgroup=rubyBoolean  skipwhite
+syn match   rubyMagicComment "\c\%<10l#\s*\zs\%(shareable[-_]constant[-_]value\):"				contained nextgroup=rubyEncoding  skipwhite
 syn match   rubyComment	     "#.*" contains=@rubyCommentSpecial,rubySpaceError,@Spell
 
 syn cluster rubyCommentSpecial contains=rubySharpBang,rubyTodo,rubyMagicComment
