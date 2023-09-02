@@ -246,7 +246,7 @@ To configure the behavior of a builtin |lsp-handler|, the convenient method
   consider the following example, where a new |lsp-handler| is created using
   |vim.lsp.with()| that no longer generates signs for the diagnostics: >lua
 
-    vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+    vim.lsp.handlers[vim.lsp.protocol.Methods.textDocument_publishDiagnostics] = vim.lsp.with(
       vim.lsp.diagnostic.on_publish_diagnostics, {
         -- Disable signs
         signs = false,
@@ -256,7 +256,7 @@ To configure the behavior of a builtin |lsp-handler|, the convenient method
   To enable signs, use |vim.lsp.with()| again to create and assign a new
   |lsp-handler| to |vim.lsp.handlers| for the associated method: >lua
 
-    vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+    vim.lsp.handlers[vim.lsp.protocol.Methods.textDocument_publishDiagnostics] = vim.lsp.with(
       vim.lsp.diagnostic.on_publish_diagnostics, {
         -- Enable signs
         signs = true,
@@ -269,7 +269,7 @@ To configure the behavior of a builtin |lsp-handler|, the convenient method
     vim.lsp.start_client {
       ..., -- Other configuration omitted.
       handlers = {
-        ["textDocument/publishDiagnostics"] = vim.lsp.with(
+        [vim.lsp.protocol.Methods.textDocument_publishDiagnostics] = vim.lsp.with(
           vim.lsp.diagnostic.on_publish_diagnostics, {
             -- Disable virtual_text
             virtual_text = false,
@@ -283,7 +283,7 @@ To configure the behavior of a builtin |lsp-handler|, the convenient method
 
     require('lspconfig').rust_analyzer.setup {
       handlers = {
-        ["textDocument/publishDiagnostics"] = vim.lsp.with(
+        [vim.lsp.protocol.Methods.textDocument_publishDiagnostics] = vim.lsp.with(
           vim.lsp.diagnostic.on_publish_diagnostics, {
             -- Disable virtual_text
             virtual_text = false
@@ -296,8 +296,8 @@ To configure the behavior of a builtin |lsp-handler|, the convenient method
   ||vim.lsp.diagnostic.on_publish_diagnostics()|). To override these, first
   create a reference to the existing handler: >lua
 
-    local on_references = vim.lsp.handlers["textDocument/references"]
-    vim.lsp.handlers["textDocument/references"] = vim.lsp.with(
+    local on_references = vim.lsp.handlers[vim.lsp.protocol.Methods.textDocument_references]
+    vim.lsp.handlers[vim.lsp.protocol.Methods.textDocument_references] = vim.lsp.with(
       on_references, {
         -- Use location list instead of quickfix list
         loclist = true,
@@ -312,7 +312,7 @@ Handlers can be set by:
   |lsp-method| names to |lsp-handlers|. To override the handler for the
   `"textDocument/definition"` method: >lua
 
-    vim.lsp.handlers["textDocument/definition"] = my_custom_default_definition
+    vim.lsp.handlers[vim.lsp.protocol.Methods.textDocument_definition] = my_custom_default_definition
 <
 - The {handlers} parameter of |vim.lsp.start()|. This sets the default
   |lsp-handler| for the server being started. Example: >lua
@@ -320,7 +320,7 @@ Handlers can be set by:
     vim.lsp.start {
       ..., -- Other configuration omitted.
       handlers = {
-        ["textDocument/definition"] = my_custom_server_definition
+        [vim.lsp.protocol.Methods.textDocument_definition] = my_custom_server_definition
       },
     }
 
@@ -329,7 +329,7 @@ Handlers can be set by:
 
     vim.lsp.buf_request_all(
       0,
-      "textDocument/definition",
+      vim.lsp.protocol.Methods.textDocument_definition,
       my_request_params,
       my_handler
     )
@@ -548,7 +548,7 @@ LspNotify                                                          *LspNotify*
         local params = args.data.params
 
         -- do something with the notification
-        if method == 'textDocument/...' then
+        if method == vim.lsp.protocol.Methods.textDocument_codeAction then
           update_buffer(bufnr)
         end
       end,
