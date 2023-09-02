@@ -250,7 +250,7 @@ describe('ShaDa support code', function()
     eq(0, exc_exec('rshada'))
   end)
 
-  it('updates deleted marks', function()
+  it('updates deleted marks with :delmarks', function()
     nvim_command('edit ' .. testfilename)
 
     nvim_command('mark A')
@@ -259,12 +259,15 @@ describe('ShaDa support code', function()
     -- since it can't be set via :mark
     feed('ggifoobar<esc>')
     nvim_command('wshada')
-    nvim_command('normal! `A`a`.')
 
+    reset()
+    nvim_command('edit ' .. testfilename)
+    nvim_command('normal! `A`a`.')
     nvim_command('delmarks A a .')
     nvim_command('wshada')
 
     reset()
+    nvim_command('edit ' .. testfilename)
     eq('Vim(normal):E20: Mark not set', exc_exec('normal! `A'))
     eq('Vim(normal):E20: Mark not set', exc_exec('normal! `a'))
     eq('Vim(normal):E20: Mark not set', exc_exec('normal! `.'))
