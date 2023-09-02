@@ -650,6 +650,7 @@ an 50.170.390 &Syntax.WXYZ.XFree86\ Config :cal SetSyn("xf86conf")<CR>
 an 50.170.410 &Syntax.WXYZ.YAML :cal SetSyn("yaml")<CR>
 an 50.170.420 &Syntax.WXYZ.Yacc :cal SetSyn("yacc")<CR>
 an 50.170.440 &Syntax.WXYZ.Zimbu :cal SetSyn("zimbu")<CR>
+an 50.170.440 &Syntax.WXYZ.Zserio:cal SetSyn("zserio")<CR>
 
 " The End Of The Syntax Menu
 
