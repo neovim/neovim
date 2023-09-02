@@ -70,7 +70,6 @@ typedef enum {
   OPT_ONECOLUMN = 0x40,   ///< list options one per line
   OPT_NO_REDRAW = 0x80,   ///< ignore redraw flags on option
   OPT_SKIPRTP   = 0x100,  ///< "skiprtp" in 'sessionoptions'
-  OPT_CLEAR     = 0x200,  ///< Clear local value of an option.
 } OptionFlags;
 
 // Return value from get_option_value_strict
@@ -1009,9 +1008,9 @@ typedef struct {
 
   // Option value was checked to be safe, no need to set P_INSECURE
   // Used for the 'keymap', 'filetype' and 'syntax' options.
-  int os_value_checked;
+  bool os_value_checked;
   // Option value changed.  Used for the 'filetype' and 'syntax' options.
-  int os_value_changed;
+  bool os_value_changed;
 
   // Used by the 'isident', 'iskeyword', 'isprint' and 'isfname' options.
   // Set to true if the character table is modified when processing the

@@ -1098,9 +1098,10 @@ static char *stropt_get_newval(int nextchar, int opt_idx, char **argp, void *var
 /// Part of do_set() for string options.
 static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int nextchar,
                                  set_op_T op_arg, uint32_t flags, void *varp_arg, char *errbuf,
-                                 size_t errbuflen, int *value_checked, const char **errmsg)
+                                 size_t errbuflen, bool *value_checked, const char **errmsg)
 {
-  char *arg = *argp;
+  vimoption_T *opt = get_option(opt_idx);
+
   set_op_T op = op_arg;
   void *varp = varp_arg;
   char *origval_l = NULL;
@@ -1110,20 +1111,20 @@ static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int ne
   // with a local value the local value will be
   // reset, use the global value here.
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
-      && ((int)options[opt_idx].indir & PV_BOTH)) {
-    varp = options[opt_idx].var;
+      && ((int)opt->indir & PV_BOTH)) {
+    varp = opt->var;
   }
 
   // The old value is kept until we are sure that the new value is valid.
   char *oldval = *(char **)varp;
 
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    origval_l = *(char **)get_varp_scope(&(options[opt_idx]), OPT_LOCAL);
-    origval_g = *(char **)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
+    origval_l = *(char **)get_varp_scope(opt, OPT_LOCAL);
+    origval_g = *(char **)get_varp_scope(opt, OPT_GLOBAL);
 
     // A global-local string option might have an empty option as value to
     // indicate that the global value should be used.
-    if (((int)options[opt_idx].indir & PV_BOTH) && origval_l == empty_option) {
+    if (((int)opt->indir & PV_BOTH) && origval_l == empty_option) {
       origval_l = origval_g;
     }
   }
@@ -1131,61 +1132,57 @@ static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int ne
   char *origval;
   // When setting the local value of a global option, the old value may be
   // the global value.
-  if (((int)options[opt_idx].indir & PV_BOTH) && (opt_flags & OPT_LOCAL)) {
-    origval = *(char **)get_varp(&options[opt_idx]);
+  if (((int)opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL)) {
+    origval = *(char **)get_varp(opt);
   } else {
     origval = oldval;
   }
 
   // Get the new value for the option
-  char *newval = stropt_get_newval(nextchar, opt_idx, &arg, varp, origval, &op, flags);
+  char *newval = stropt_get_newval(nextchar, opt_idx, argp, varp, origval, &op, flags);
 
   // Set the new value.
-  *(char **)(varp) = newval;
-  if (newval == NULL) {
-    *(char **)(varp) = empty_option;
-  }
+  *(char **)(varp) = newval != NULL ? newval : empty_option;
 
   // origval may be freed by did_set_string_option(), make a copy.
-  char *saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
-  char *saved_origval_l = (origval_l != NULL) ? xstrdup(origval_l) : NULL;
-  char *saved_origval_g = (origval_g != NULL) ? xstrdup(origval_g) : NULL;
+  char *const saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
+  char *const saved_origval_l = (origval_l != NULL) ? xstrdup(origval_l) : NULL;
+  char *const saved_origval_g = (origval_g != NULL) ? xstrdup(origval_g) : NULL;
 
   // newval (and varp) may become invalid if the buffer is closed by
   // autocommands.
-  char *saved_newval = (newval != NULL) ? xstrdup(newval) : NULL;
+  char *const saved_newval = (newval != NULL) ? xstrdup(newval) : NULL;
 
-  {
-    uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
-    const int secure_saved = secure;
+  uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
+  const int secure_saved = secure;
 
-    // When an option is set in the sandbox, from a modeline or in secure
-    // mode, then deal with side effects in secure mode.  Also when the
-    // value was set with the P_INSECURE flag and is not completely
-    // replaced.
-    if ((opt_flags & OPT_MODELINE)
-        || sandbox != 0
-        || (op != OP_NONE && (*p & P_INSECURE))) {
-      secure = 1;
-    }
-
-    // Handle side effects, and set the global value for ":set" on local
-    // options. Note: when setting 'syntax' or 'filetype' autocommands may
-    // be triggered that can cause havoc.
-    *errmsg = did_set_string_option(opt_idx, (char **)varp, oldval, newval,
-                                    errbuf, errbuflen,
-                                    opt_flags, value_checked);
-
-    secure = secure_saved;
+  // When an option is set in the sandbox, from a modeline or in secure
+  // mode, then deal with side effects in secure mode.  Also when the
+  // value was set with the P_INSECURE flag and is not completely
+  // replaced.
+  if ((opt_flags & OPT_MODELINE)
+      || sandbox != 0
+      || (op != OP_NONE && (*p & P_INSECURE))) {
+    secure = 1;
   }
 
+  // Handle side effects, and set the global value for ":set" on local
+  // options. Note: when setting 'syntax' or 'filetype' autocommands may
+  // be triggered that can cause havoc.
+  *errmsg = did_set_string_option(curbuf, curwin, opt_idx, (char **)varp, oldval,
+                                  errbuf, errbuflen,
+                                  opt_flags, value_checked);
+
+  secure = secure_saved;
+
+  // call autocommand after handling side effects
   if (*errmsg == NULL) {
     if (!starting) {
       trigger_optionset_string(opt_idx, opt_flags, saved_origval, saved_origval_l,
                                saved_origval_g, saved_newval);
     }
     if (options[opt_idx].flags & P_UI_OPTION) {
-      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+      ui_call_option_set(cstr_as_string(opt->fullname),
                          CSTR_AS_OBJ(saved_newval));
     }
   }
@@ -1193,8 +1190,6 @@ static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int ne
   xfree(saved_origval_l);
   xfree(saved_origval_g);
   xfree(saved_newval);
-
-  *argp = arg;
 }
 
 static set_op_T get_op(const char *arg)
@@ -1337,7 +1332,7 @@ static void do_set_option_value(int opt_idx, int opt_flags, char **argp, int pre
                                 set_op_T op, uint32_t flags, void *varp, char *errbuf,
                                 size_t errbuflen, const char **errmsg)
 {
-  int value_checked = false;
+  bool value_checked = false;
   if (flags & P_BOOL) {        // boolean
     do_set_bool(opt_idx, opt_flags, prefix, nextchar, varp, errmsg);
   } else if (flags & P_NUM) {  // numeric
@@ -1598,7 +1593,7 @@ int do_set(char *arg, int opt_flags)
 /// @param opt_flags  possibly with OPT_MODELINE
 /// @param new_value  value was replaced completely
 /// @param value_checked  value was checked to be safe, no need to set P_INSECURE
-void did_set_option(int opt_idx, int opt_flags, int new_value, int value_checked)
+void did_set_option(int opt_idx, int opt_flags, bool new_value, bool value_checked)
 {
   options[opt_idx].flags |= P_WAS_SET;
 
@@ -2981,6 +2976,157 @@ static const char *check_num_option_bounds(long *pp, long old_value, long old_Ro
   return errmsg;
 }
 
+/// Options that need some validation.
+static const char *validate_num_option(const long *pp, long *valuep)
+{
+  long value = *valuep;
+
+  // Many number options assume their value is in the signed int range.
+  if (value < INT_MIN || value > INT_MAX) {
+    return e_invarg;
+  }
+
+  if (pp == &p_wh) {
+    if (value < 1) {
+      return e_positive;
+    } else if (p_wmh > value) {
+      return e_winheight;
+    }
+  } else if (pp == &p_hh) {
+    if (value < 0) {
+      return e_positive;
+    }
+  } else if (pp == &p_wmh) {
+    if (value < 0) {
+      return e_positive;
+    } else if (value > p_wh) {
+      return e_winheight;
+    }
+  } else if (pp == &p_wiw) {
+    if (value < 1) {
+      return e_positive;
+    } else if (p_wmw > value) {
+      return e_winwidth;
+    }
+  } else if (pp == &p_wmw) {
+    if (value < 0) {
+      return e_positive;
+    } else if (value > p_wiw) {
+      return e_winwidth;
+    }
+  } else if (pp == &p_mco) {
+    *valuep = MAX_MCO;
+  } else if (pp == &p_titlelen) {
+    if (value < 0) {
+      return e_positive;
+    }
+  } else if (pp == &p_uc) {
+    if (value < 0) {
+      return e_positive;
+    }
+  } else if (pp == &p_ch) {
+    if (value < 0) {
+      return e_positive;
+    } else {
+      p_ch_was_zero = value == 0;
+    }
+  } else if (pp == &p_tm) {
+    if (value < 0) {
+      return e_positive;
+    }
+  } else if (pp == &p_hi) {
+    if (value < 0) {
+      return e_positive;
+    } else if (value > 10000) {
+      return e_invarg;
+    }
+  } else if (pp == &p_pyx) {
+    if (value == 0) {
+      *valuep = 3;
+    } else if (value != 3) {
+      return e_invarg;
+    }
+  } else if (pp == &p_re) {
+    if (value < 0 || value > 2) {
+      return e_invarg;
+    }
+  } else if (pp == &p_report) {
+    if (value < 0) {
+      return e_positive;
+    }
+  } else if (pp == &p_so) {
+    if (value < 0 && full_screen) {
+      return e_positive;
+    }
+  } else if (pp == &p_siso) {
+    if (value < 0 && full_screen) {
+      return e_positive;
+    }
+  } else if (pp == &p_cwh) {
+    if (value < 1) {
+      return e_positive;
+    }
+  } else if (pp == &p_ut) {
+    if (value < 0) {
+      return e_positive;
+    }
+  } else if (pp == &p_ss) {
+    if (value < 0) {
+      return e_positive;
+    }
+  } else if (pp == &curwin->w_p_fdl || pp == &curwin->w_allbuf_opt.wo_fdl) {
+    if (value < 0) {
+      return e_positive;
+    }
+  } else if (pp == &curwin->w_p_cole || pp == &curwin->w_allbuf_opt.wo_cole) {
+    if (value < 0) {
+      return e_positive;
+    } else if (value > 3) {
+      return e_invarg;
+    }
+  } else if (pp == &curwin->w_p_nuw || pp == &curwin->w_allbuf_opt.wo_nuw) {
+    if (value < 1) {
+      return e_positive;
+    } else if (value > MAX_NUMBERWIDTH) {
+      return e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_iminsert || pp == &p_iminsert) {
+    if (value < 0 || value > B_IMODE_LAST) {
+      return e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_imsearch || pp == &p_imsearch) {
+    if (value < -1 || value > B_IMODE_LAST) {
+      return e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_channel || pp == &p_channel) {
+    return e_invarg;
+  } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
+    if (value < -1 || value > SB_MAX) {
+      return e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_sw || pp == &p_sw) {
+    if (value < 0) {
+      return e_positive;
+    }
+  } else if (pp == &curbuf->b_p_ts || pp == &p_ts) {
+    if (value < 1) {
+      return e_positive;
+    } else if (value > TABSTOP_MAX) {
+      return e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_tw || pp == &p_tw) {
+    if (value < 0) {
+      return e_positive;
+    }
+  } else if (pp == &p_wd) {
+    if (value < 0) {
+      return e_positive;
+    }
+  }
+
+  return NULL;
+}
+
 /// Set the value of a number option, taking care of side effects
 ///
 /// @param[in]  opt_idx  Option index in options[] table.
@@ -2994,7 +3140,6 @@ static const char *check_num_option_bounds(long *pp, long old_value, long old_Ro
 static const char *set_num_option(int opt_idx, void *varp, long value, char *errbuf,
                                   size_t errbuflen, int opt_flags)
 {
-  const char *errmsg = NULL;
   long old_value = *(long *)varp;
   long old_global_value = 0;  // only used when setting a local and global option
   long old_Rows = Rows;       // remember old Rows
@@ -3012,149 +3157,7 @@ static const char *set_num_option(int opt_idx, void *varp, long value, char *err
     old_global_value = *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
   }
 
-  // Many number options assume their value is in the signed int range.
-  if (value < INT_MIN || value > INT_MAX) {
-    return e_invarg;
-  }
-
-  // Options that need some validation.
-  if (pp == &p_wh) {
-    if (value < 1) {
-      errmsg = e_positive;
-    } else if (p_wmh > value) {
-      errmsg = e_winheight;
-    }
-  } else if (pp == &p_hh) {
-    if (value < 0) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &p_wmh) {
-    if (value < 0) {
-      errmsg = e_positive;
-    } else if (value > p_wh) {
-      errmsg = e_winheight;
-    }
-  } else if (pp == &p_wiw) {
-    if (value < 1) {
-      errmsg = e_positive;
-    } else if (p_wmw > value) {
-      errmsg = e_winwidth;
-    }
-  } else if (pp == &p_wmw) {
-    if (value < 0) {
-      errmsg = e_positive;
-    } else if (value > p_wiw) {
-      errmsg = e_winwidth;
-    }
-  } else if (pp == &p_mco) {
-    value = MAX_MCO;
-  } else if (pp == &p_titlelen) {
-    if (value < 0) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &p_uc) {
-    if (value < 0) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &p_ch) {
-    if (value < 0) {
-      errmsg = e_positive;
-    } else {
-      p_ch_was_zero = value == 0;
-    }
-  } else if (pp == &p_tm) {
-    if (value < 0) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &p_hi) {
-    if (value < 0) {
-      errmsg = e_positive;
-    } else if (value > 10000) {
-      errmsg = e_invarg;
-    }
-  } else if (pp == &p_pyx) {
-    if (value == 0) {
-      value = 3;
-    } else if (value != 3) {
-      errmsg = e_invarg;
-    }
-  } else if (pp == &p_re) {
-    if (value < 0 || value > 2) {
-      errmsg = e_invarg;
-    }
-  } else if (pp == &p_report) {
-    if (value < 0) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &p_so) {
-    if (value < 0 && full_screen) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &p_siso) {
-    if (value < 0 && full_screen) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &p_cwh) {
-    if (value < 1) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &p_ut) {
-    if (value < 0) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &p_ss) {
-    if (value < 0) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &curwin->w_p_fdl || pp == &curwin->w_allbuf_opt.wo_fdl) {
-    if (value < 0) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &curwin->w_p_cole || pp == &curwin->w_allbuf_opt.wo_cole) {
-    if (value < 0) {
-      errmsg = e_positive;
-    } else if (value > 3) {
-      errmsg = e_invarg;
-    }
-  } else if (pp == &curwin->w_p_nuw || pp == &curwin->w_allbuf_opt.wo_nuw) {
-    if (value < 1) {
-      errmsg = e_positive;
-    } else if (value > MAX_NUMBERWIDTH) {
-      errmsg = e_invarg;
-    }
-  } else if (pp == &curbuf->b_p_iminsert || pp == &p_iminsert) {
-    if (value < 0 || value > B_IMODE_LAST) {
-      errmsg = e_invarg;
-    }
-  } else if (pp == &curbuf->b_p_imsearch || pp == &p_imsearch) {
-    if (value < -1 || value > B_IMODE_LAST) {
-      errmsg = e_invarg;
-    }
-  } else if (pp == &curbuf->b_p_channel || pp == &p_channel) {
-    errmsg = e_invarg;
-  } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
-    if (value < -1 || value > SB_MAX) {
-      errmsg = e_invarg;
-    }
-  } else if (pp == &curbuf->b_p_sw || pp == &p_sw) {
-    if (value < 0) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &curbuf->b_p_ts || pp == &p_ts) {
-    if (value < 1) {
-      errmsg = e_positive;
-    } else if (value > TABSTOP_MAX) {
-      errmsg = e_invarg;
-    }
-  } else if (pp == &curbuf->b_p_tw || pp == &p_tw) {
-    if (value < 0) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &p_wd) {
-    if (value < 0) {
-      errmsg = e_positive;
-    }
-  }
+  const char *errmsg = validate_num_option(pp, &value);
 
   // Don't change the value and return early if validation failed.
   if (errmsg != NULL) {
@@ -3714,14 +3717,73 @@ vimoption_T *get_option(int opt_idx)
   return &options[opt_idx];
 }
 
+/// Clear an option
+///
+/// The exact semantics of this depend on the option.
+static OptVal clear_optval(const char *name, uint32_t flags, void *varp, buf_T *buf, win_T *win)
+{
+  OptVal v = NIL_OPTVAL;
+
+  // Change the type of the OptVal to the type used by the option so that it can be cleared.
+  // TODO(famiu): Clean up all of this after set_(num|bool|string)_option() is unified.
+
+  if (flags & P_BOOL) {
+    v.type = kOptValTypeBoolean;
+    if ((int *)varp == &buf->b_p_ar) {
+      // TODO(lewis6991): replace this with a more general condition that
+      // indicates we are setting the local value of a global-local option
+      v.data.boolean = kNone;
+    } else {
+      v = get_option_value(name, NULL, OPT_GLOBAL, NULL);
+    }
+  } else if (flags & P_NUM) {
+    v.type = kOptValTypeNumber;
+    if ((long *)varp == &curbuf->b_p_ul) {
+      // The one true special case
+      v.data.number = NO_LOCAL_UNDOLEVEL;
+    } else if ((long *)varp == &win->w_p_so || (long *)varp == &win->w_p_siso) {
+      // TODO(lewis6991): replace this with a more general condition that
+      // indicates we are setting the local value of a global-local option
+      v.data.number = -1;
+    } else {
+      v = get_option_value(name, NULL, OPT_GLOBAL, NULL);
+    }
+  } else if (flags & P_STRING) {
+    v.type = kOptValTypeString;
+    v.data.string.data = NULL;
+  }
+
+  return v;
+}
+
+static const char *set_option(int opt_idx, void *varp, OptVal *v, int opt_flags, char *errbuf,
+                              size_t errbuflen)
+{
+  const char *errmsg = NULL;
+
+  bool value_checked = false;
+
+  if (v->type == kOptValTypeBoolean) {
+    errmsg = set_bool_option(opt_idx, varp, (int)v->data.boolean, opt_flags);
+  } else if (v->type == kOptValTypeNumber) {
+    errmsg = set_num_option(opt_idx, varp, (long)v->data.number, errbuf, errbuflen, opt_flags);
+  } else if (v->type == kOptValTypeString) {
+    errmsg = set_string_option(opt_idx, varp, v->data.string.data, opt_flags, &value_checked,
+                               errbuf, errbuflen);
+  }
+
+  if (errmsg != NULL) {
+    did_set_option(opt_idx, opt_flags, true, value_checked);
+  }
+
+  return errmsg;
+}
+
 /// Set the value of an option
 ///
 /// @param[in]  name       Option name.
 /// @param[in]  value      Option value. If NIL_OPTVAL, the option value is cleared.
 /// @param[in]  opt_flags  Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
-///                        If OPT_CLEAR is set, the value of the option
-///                        is cleared  (the exact semantics of this depend
-///                        on the option).
 ///
 /// @return NULL on success, an untranslated error message on error.
 const char *set_option_value(const char *const name, const OptVal value, int opt_flags)
@@ -3763,17 +3825,7 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
   OptVal v = optval_copy(value);
 
   if (v.type == kOptValTypeNil) {
-    opt_flags |= OPT_CLEAR;
-
-    // Change the type of the OptVal to the type used by the option so that it can be cleared.
-    // TODO(famiu): Clean up all of this after set_(num|bool|string)_option() is unified.
-    if (flags & P_BOOL) {
-      v.type = kOptValTypeBoolean;
-    } else if (flags & P_NUM) {
-      v.type = kOptValTypeNumber;
-    } else if (flags & P_STRING) {
-      v.type = kOptValTypeString;
-    }
+    v = clear_optval(name, flags, varp, curbuf, curwin);
   } else if (!optval_match_type(v, opt_idx)) {
     char *rep = optval_to_cstr(v);
     char *valid_types = option_get_valid_types(opt_idx);
@@ -3785,42 +3837,7 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
     goto end;
   }
 
-  switch (v.type) {
-  case kOptValTypeNil:
-    abort();  // This will never happen.
-  case kOptValTypeBoolean: {
-    if (opt_flags & OPT_CLEAR) {
-      if ((int *)varp == &curbuf->b_p_ar) {
-        v.data.boolean = kNone;
-      } else {
-        v = get_option_value(name, NULL, OPT_GLOBAL, NULL);
-      }
-    }
-    errmsg = set_bool_option(opt_idx, varp, (int)v.data.boolean, opt_flags);
-    break;
-  }
-  case kOptValTypeNumber: {
-    if (opt_flags & OPT_CLEAR) {
-      if ((long *)varp == &curbuf->b_p_ul) {
-        v.data.number = NO_LOCAL_UNDOLEVEL;
-      } else if ((long *)varp == &curwin->w_p_so || (long *)varp == &curwin->w_p_siso) {
-        v.data.number = -1;
-      } else {
-        v = get_option_value(name, NULL, OPT_GLOBAL, NULL);
-      }
-    }
-    errmsg = set_num_option(opt_idx, varp, (long)v.data.number, errbuf, sizeof(errbuf), opt_flags);
-    break;
-  }
-  case kOptValTypeString: {
-    const char *s = v.data.string.data;
-    if (s == NULL || opt_flags & OPT_CLEAR) {
-      s = "";
-    }
-    errmsg = set_string_option(opt_idx, s, opt_flags, errbuf, sizeof(errbuf));
-    break;
-  }
-  }
+  errmsg = set_option(opt_idx, varp, &v, opt_flags, errbuf, sizeof(errbuf));
 
 end:
   optval_free(v);  // Free the copied OptVal.
@@ -4477,7 +4494,7 @@ void *get_option_varp_scope_from(int opt_idx, int scope, buf_T *buf, win_T *win)
   return get_varp_scope_from(&(options[opt_idx]), scope, buf, win);
 }
 
-static void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
+void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
 {
   // hidden option, always return NULL
   if (p->var == NULL) {
