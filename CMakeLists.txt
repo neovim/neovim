@@ -316,3 +316,15 @@ ExternalProject_Add(uncrustify
   EXCLUDE_FROM_ALL TRUE)
 
 include(BuildLuarocks)
+
+ExternalProject_Add(busted
+  URL https://github.com/neovim/deps/raw/41d2f1b92aef964c8cb86985768702571e190e96/opt/busted-2.1.1.tar.gz
+  URL_HASH SHA256=9b23efce883ad25a3fe140598a32ab89ecc73f4c3d998cb937293d88e5b4c645
+  DOWNLOAD_NO_PROGRESS TRUE
+  DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/busted
+  SOURCE_DIR ${DEPS_SHARE_DIR}
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ""
+  EXCLUDE_FROM_ALL TRUE)
+add_dependencies(test_deps busted)
