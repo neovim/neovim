@@ -355,14 +355,14 @@ end
 --- Marked private as this is used internally by the LSP subsystem, but
 --- most users should instead prefer |vim.diagnostic.get()|.
 ---
----@param bufnr integer|nil The buffer number
----@param line_nr integer|nil The line number
----@param opts table|nil Configuration keys
+---@param bufnr? (integer) The buffer number
+---@param line_nr? (integer) The line number
+---@param opts? (table) Configuration keys
 ---         - severity: (DiagnosticSeverity, default nil)
 ---             - Only return diagnostics with this severity. Overrides severity_limit
 ---         - severity_limit: (DiagnosticSeverity, default nil)
 ---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
----@param client_id integer|nil the client id
+---@param client_id? (integer) the client id
 ---@return table Table with map of line number to list of diagnostics.
 ---              Structured: { [1] = {...}, [5] = {.... } }
 ---@private

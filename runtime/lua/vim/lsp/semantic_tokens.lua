@@ -639,11 +639,11 @@ end
 --- Return the semantic token(s) at the given position.
 --- If called without arguments, returns the token under the cursor.
 ---
----@param bufnr integer|nil Buffer number (0 for current buffer, default)
----@param row integer|nil Position row (default cursor position)
----@param col integer|nil Position column (default cursor position)
+---@param bufnr? (integer) Buffer number (0 for current buffer, default)
+---@param row? (integer) Position row (default cursor position)
+---@param col? (integer) Position column (default cursor position)
 ---
----@return table|nil (table|nil) List of tokens at position. Each token has
+---@return table? List of tokens at position. Each token has
 ---        the following fields:
 ---        - line (integer) line number, 0-based
 ---        - start_col (integer) start column, 0-based
@@ -692,7 +692,7 @@ end
 --- Only has an effect if the buffer is currently active for semantic token
 --- highlighting (|vim.lsp.semantic_tokens.start()| has been called for it)
 ---
----@param bufnr (integer|nil) filter by buffer. All buffers if nil, current
+---@param bufnr? (integer) filter by buffer. All buffers if nil, current
 ---       buffer if 0
 function M.force_refresh(bufnr)
   vim.validate({
@@ -722,8 +722,8 @@ end
 ---@param bufnr (integer) the buffer to highlight
 ---@param client_id (integer) The ID of the |vim.lsp.client|
 ---@param hl_group (string) Highlight group name
----@param opts (table|nil) Optional parameters.
----       - priority: (integer|nil) Priority for the applied extmark. Defaults
+---@param opts? (table) Optional parameters.
+---       - priority?: (integer) Priority for the applied extmark. Defaults
 ---         to `vim.highlight.priorities.semantic_tokens + 3`
 function M.highlight_token(token, bufnr, client_id, hl_group, opts)
   local highlighter = STHighlighter.active[bufnr]

@@ -56,7 +56,7 @@ end
 
 --- @param method string
 --- @param opts? {bufnr?: number}
---- @return lsp.Registration? (table|nil) the registration if found
+--- @return lsp.Registration? table? the registration if found
 --- @private
 function M:get(method, opts)
   opts = opts or {}

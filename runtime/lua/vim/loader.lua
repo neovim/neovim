@@ -235,7 +235,7 @@ end
 
 --- Loads the given module path using the cache
 ---@param modpath string
----@param opts? {mode?: "b"|"t"|"bt", env?:table} (table|nil) Options for loading the module:
+---@param opts? {mode?: "b"|"t"|"bt", env?:table} (table?) Options for loading the module:
 ---    - mode: (string) the mode to load the module with. "b"|"t"|"bt" (defaults to `nil`)
 ---    - env: (table) the environment to load the module in. (defaults to `nil`)
 ---@see |luaL_loadfile()|
@@ -272,7 +272,7 @@ end
 
 --- Finds Lua modules for the given module name.
 ---@param modname string Module name, or `"*"` to find the top-level modules instead
----@param opts? ModuleFindOpts (table|nil) Options for finding a module:
+---@param opts? ModuleFindOpts (table) Options for finding a module:
 ---    - rtp: (boolean) Search for modname in the runtime path (defaults to `true`)
 ---    - paths: (string[]) Extra paths to search for modname (defaults to `{}`)
 ---    - patterns: (string[]) List of patterns to use when searching for modules.
@@ -282,7 +282,7 @@ end
 ---@return ModuleInfo[] (list) A list of results with the following properties:
 ---    - modpath: (string) the path to the module
 ---    - modname: (string) the name of the module
----    - stat: (table|nil) the fs_stat of the module path. Won't be returned for `modname="*"`
+---    - stat: (table?) the fs_stat of the module path. Won't be returned for `modname="*"`
 function M.find(modname, opts)
   opts = opts or {}
 

@@ -10,8 +10,8 @@ local M = {}
 --- buffer.
 ---
 ---@param method (string) LSP method name
----@param params (table|nil) Parameters to send to the server
----@param handler (function|nil) See |lsp-handler|. Follows |lsp-handler-resolution|
+---@param params? (table) Parameters to send to the server
+---@param handler? (function) See |lsp-handler|. Follows |lsp-handler-resolution|
 --
 ---@return table<integer, integer> client_request_ids Map of client-id:request-id pairs
 ---for all successful requests.
@@ -60,7 +60,7 @@ end
 --- Jumps to the declaration of the symbol under the cursor.
 ---@note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
 ---
----@param options table|nil additional options
+---@param options? (table) additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.declaration(options)
@@ -70,7 +70,7 @@ end
 
 --- Jumps to the definition of the symbol under the cursor.
 ---
----@param options table|nil additional options
+---@param options? (table) additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.definition(options)
@@ -80,7 +80,7 @@ end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
 ---
----@param options table|nil additional options
+---@param options? (table) additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.type_definition(options)
@@ -91,7 +91,7 @@ end
 --- Lists all the implementations for the symbol under the cursor in the
 --- quickfix window.
 ---
----@param options table|nil additional options
+---@param options? (table) additional options
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.implementation(options)
   local params = util.make_position_params()
@@ -155,18 +155,18 @@ end
 --- Formats a buffer using the attached (and optionally filtered) language
 --- server clients.
 ---
---- @param options table|nil Optional table which holds the following optional fields:
----     - formatting_options (table|nil):
+--- @param options? table Optional table which holds the following optional fields:
+---     - formatting_options? (table):
 ---         Can be used to specify FormattingOptions. Some unspecified options will be
 ---         automatically derived from the current Nvim options.
 ---         See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions
----     - timeout_ms (integer|nil, default 1000):
+---     - timeout_ms? (integer, default 1000):
 ---         Time in milliseconds to block for formatting requests. No effect if async=true
----     - bufnr (number|nil):
+---     - bufnr? (number):
 ---         Restrict formatting to the clients attached to the given buffer, defaults to the current
 ---         buffer (0).
 ---
----     - filter (function|nil):
+---     - filter? (function):
 ---         Predicate used to filter clients. Receives a client as argument and must return a
 ---         boolean. Clients matching the predicate are included. Example: <pre>lua
 ---                     -- Never request typescript-language-server for formatting
@@ -175,17 +175,17 @@ end
 ---                     }
 ---         </pre>
 ---
----     - async boolean|nil
+---     - async? (boolean)
 ---         If true the method won't block. Defaults to false.
 ---         Editing the buffer while formatting asynchronous can lead to unexpected
 ---         changes.
 ---
----     - id (number|nil):
+---     - id? (number):
 ---         Restrict formatting to the client with ID (client.id) matching this field.
----     - name (string|nil):
+---     - name? (string):
 ---         Restrict formatting to the client with name (client.name) matching this field.
 ---
----     - range (table|nil) Range to format.
+---     - range? (table) Range to format.
 ---         Table must contain `start` and `end` keys with {row,col} tuples using
 ---         (1,0) indexing.
 ---         Defaults to current selection in visual mode
@@ -253,13 +253,13 @@ end
 
 --- Renames all references to the symbol under the cursor.
 ---
----@param new_name string|nil If not provided, the user will be prompted for a new
+---@param new_name? (string) If not provided, the user will be prompted for a new
 ---                name using |vim.ui.input()|.
----@param options table|nil additional options
----     - filter (function|nil):
+---@param options? (table) additional options
+---     - filter? (function):
 ---         Predicate used to filter clients. Receives a client as argument and
 ---         must return a boolean. Clients matching the predicate are included.
----     - name (string|nil):
+---     - name? (string):
 ---         Restrict clients used for rename to ones where client.name matches
 ---         this field.
 function M.rename(new_name, options)
@@ -379,9 +379,9 @@ end
 
 --- Lists all the references to the symbol under the cursor in the quickfix window.
 ---
----@param context (table|nil) Context for the request
+---@param context? (table) Context for the request
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
----@param options table|nil additional options
+---@param options? (table) additional options
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.references(context, options)
   validate({ context = { context, 't', true } })
@@ -394,7 +394,7 @@ end
 
 --- Lists all symbols in the current buffer in the quickfix window.
 ---
----@param options table|nil additional options
+---@param options? (table) additional options
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.document_symbol(options)
   local params = { textDocument = util.make_text_document_params() }
@@ -538,8 +538,8 @@ end
 --- call, the user is prompted to enter a string on the command line. An empty
 --- string means no filtering is done.
 ---
----@param query string|nil optional
----@param options table|nil additional options
+---@param query? (string) optional
+---@param options? (table) additional options
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.workspace_symbol(query, options)
   query = query or npcall(vim.fn.input, 'Query: ')
@@ -703,24 +703,24 @@ end
 --- Selects a code action available at the current
 --- cursor position.
 ---
----@param options table|nil Optional table which holds the following optional fields:
----  - context: (table|nil)
+---@param options? table Optional table which holds the following optional fields:
+---  - context?: (table)
 ---      Corresponds to `CodeActionContext` of the LSP specification:
----        - diagnostics (table|nil):
+---        - diagnostics? (table):
 ---                      LSP `Diagnostic[]`. Inferred from the current
 ---                      position if not provided.
----        - only (table|nil):
+---        - only? (table):
 ---               List of LSP `CodeActionKind`s used to filter the code actions.
 ---               Most language servers support values like `refactor`
 ---               or `quickfix`.
----        - triggerKind (number|nil): The reason why code actions were requested.
----  - filter: (function|nil)
+---        - triggerKind? (number): The reason why code actions were requested.
+---  - filter?: (function)
 ---           Predicate taking an `CodeAction` and returning a boolean.
----  - apply: (boolean|nil)
+---  - apply?: (boolean)
 ---           When set to `true`, and there is just one remaining action
 ---          (after filtering), the action is applied without user query.
 ---
----  - range: (table|nil)
+---  - range?: (table)
 ---           Range for which code actions should be requested.
 ---           If in visual mode this defaults to the active selection.
 ---           Table must contain `start` and `end` keys with {row,col} tuples

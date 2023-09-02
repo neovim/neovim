@@ -568,7 +568,7 @@ get_captures_at_cursor({winnr})
       • {winnr}  (integer|nil) Window handle or 0 for current window (default)
 
     Return: ~
-        string[] List of capture names
+        (string[]) List of capture names
 
                                         *vim.treesitter.get_captures_at_pos()*
 get_captures_at_pos({bufnr}, {row}, {col})
@@ -584,7 +584,7 @@ get_captures_at_pos({bufnr}, {row}, {col})
       • {col}    (integer) Position column
 
     Return: ~
-        table[] List of captures `{ capture = "name", metadata = { ... } }`
+        (table[]) List of captures `{ capture = "name", metadata = { ... } }`
 
 get_node({opts})                                   *vim.treesitter.get_node()*
     Returns the smallest named node at the given position
@@ -787,7 +787,7 @@ get_filetypes({lang})                *vim.treesitter.language.get_filetypes()*
       • {lang}  (string) Name of parser
 
     Return: ~
-        string[] filetypes
+        (string[]) filetypes
 
 get_lang({filetype})                      *vim.treesitter.language.get_lang()*
     Parameters: ~
@@ -862,8 +862,8 @@ edit({lang})                                     *vim.treesitter.query.edit()*
     persisted on disk.
 
     Parameters: ~
-      • {lang}  (string|nil) language to open the query editor for. If
-                omitted, inferred from the current buffer's filetype.
+      • {lang}  (string?) language to open the query editor for. If omitted,
+                inferred from the current buffer's filetype.
 
 get({lang}, {query_name})                         *vim.treesitter.query.get()*
     Returns the runtime query {query_name} for {lang}.
@@ -886,7 +886,7 @@ get_files({lang}, {query_name}, {is_included})
                        as `nil`
 
     Return: ~
-        string[] query_files List of files to load for given query and
+        (string[]) query_files List of files to load for given query and
         language
 
 lint({buf}, {opts})                              *vim.treesitter.query.lint()*
@@ -915,13 +915,13 @@ list_directives()                     *vim.treesitter.query.list_directives()*
     Lists the currently available directives to use in queries.
 
     Return: ~
-        string[] List of supported directives.
+        (string[]) List of supported directives.
 
 list_predicates()                     *vim.treesitter.query.list_predicates()*
     Lists the currently available predicates to use in queries.
 
     Return: ~
-        string[] List of supported predicates.
+        (string[]) List of supported predicates.
 
 omnifunc({findstart}, {base})                *vim.treesitter.query.omnifunc()*
     Omnifunc for completing node names and predicates in treesitter queries.
@@ -1190,9 +1190,8 @@ LanguageTree:register_cbs({cbs}, {recursive})
                      • `on_detach` : emitted when the buffer is detached, see
                        |nvim_buf_detach_event|. Takes one argument, the number
                        of the buffer.
-      • {recursive}  (boolean|nil) Apply callbacks recursively for all
-                     children. Any new children will also inherit the
-                     callbacks.
+      • {recursive}  (boolean?) Apply callbacks recursively for all children.
+                     Any new children will also inherit the callbacks.
 
 LanguageTree:source()                                  *LanguageTree:source()*
     Returns the source content of the language tree (bufnr or string).

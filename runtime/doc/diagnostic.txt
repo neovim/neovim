@@ -469,7 +469,7 @@ fromqflist({list})                               *vim.diagnostic.fromqflist()*
     Convert a list of quickfix items to a list of diagnostics.
 
     Parameters: ~
-      • {list}  table[] List of quickfix items from |getqflist()| or
+      • {list}  (table[]) List of quickfix items from |getqflist()| or
                 |getloclist()|.
 
     Return: ~
@@ -766,6 +766,6 @@ toqflist({diagnostics})                            *vim.diagnostic.toqflist()*
       • {diagnostics}  (table) List of diagnostics |diagnostic-structure|.
 
     Return: ~
-        table[] of quickfix list items |setqflist-what|
+        (table[]) of quickfix list items |setqflist-what|
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

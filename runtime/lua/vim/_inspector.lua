@@ -17,7 +17,7 @@ local defaults = {
 ---@param bufnr? integer defaults to the current buffer
 ---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
 ---@param col? integer col to inspect, 0-based. Defaults to the col of the current cursor
----@param filter? InspectorFilter (table|nil) a table with key-value pairs to filter the items
+---@param filter? InspectorFilter (table) a table with key-value pairs to filter the items
 ---               - syntax (boolean): include syntax based highlight groups (defaults to true)
 ---               - treesitter (boolean): include treesitter based highlight groups (defaults to true)
 ---               - extmarks (boolean|"all"): include extmarks. When `all`, then extmarks without a `hl_group` will also be included (defaults to true)
@@ -139,7 +139,7 @@ end
 ---@param bufnr? integer defaults to the current buffer
 ---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
 ---@param col? integer col to inspect, 0-based. Defaults to the col of the current cursor
----@param filter? InspectorFilter (table|nil) see |vim.inspect_pos()|
+---@param filter? InspectorFilter (table) see |vim.inspect_pos()|
 function vim.show_pos(bufnr, row, col, filter)
   local items = vim.inspect_pos(bufnr, row, col, filter)
 

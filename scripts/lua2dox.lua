@@ -53,7 +53,7 @@ There is hack that will insert the "missing" close paren.
 The effect is that you will get the function documented, but not with the parameter list you might expect.
 ]]
 
-local TYPES = { 'integer', 'number', 'string', 'table', 'list', 'boolean', 'function' }
+local TYPES = { 'integer', 'number', 'string', 'table', 'list', 'boolean', 'function', 'any' }
 
 local TAGGED_TYPES = { 'TSNode', 'LanguageTree' }
 
@@ -201,17 +201,17 @@ local function process_magic(line, generics)
 
   if directive == 'param' then
     for _, type in ipairs(TYPES) do
-      magic = magic:gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. ')%)', 'param %1 %2')
-      magic =
-        magic:gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. '|nil)%)', 'param %1 %2')
+      magic = magic
+        :gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. '|nil)%)', 'param %1 %2') -- verbose optional type
+        :gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. '%[%]|nil)%)', 'param %1 %2') -- verbose optional array
+        :gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. '[%?]?)%)', 'param %1 %2') -- non-nil or optional type
+        :gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. '%[%][%?]?)%)', 'param %1 %2') -- non-nil or optional array
     end
     magic_split = vim.split(magic, ' ', { plain = true })
     type_index = 3
   elseif directive == 'return' then
-    for _, type in ipairs(TYPES) do
-      magic = magic:gsub('^return%s+.*%((' .. type .. ')%)', 'return %1')
-      magic = magic:gsub('^return%s+.*%((' .. type .. '|nil)%)', 'return %1')
-    end
+    -- Remove surrounding parentheses
+    magic = magic:gsub('^return%s+.*%(([^)])%)', 'return %1')
     -- Remove first "#" comment char, if any. https://github.com/LuaLS/lua-language-server/wiki/Annotations#return
     magic = magic:gsub('# ', '', 1)
     -- handle the return of vim.spell.check
@@ -224,8 +224,8 @@ local function process_magic(line, generics)
   if ty then
     -- fix optional parameters
     if magic_split[2]:find('%?$') then
-      if not ty:find('nil') then
-        ty = ty  .. '|nil'
+      if not ty:find('?') then
+        ty = ty .. '?'
       end
       magic_split[2] = magic_split[2]:sub(1, -2)
     end
@@ -246,8 +246,10 @@ local function process_magic(line, generics)
     -- surround some types by ()
     for _, type in ipairs(TYPES) do
       ty = ty
-        :gsub('^(' .. type .. '|nil):?$', '(%1)')
-        :gsub('^(' .. type .. '):?$', '(%1)')
+        :gsub('^(' .. type .. '|nil):?$', '(%1)') -- verbose optional type
+        :gsub('^(' .. type .. '%[%]|nil):?$', '(%1)') -- verbose optional array
+        :gsub('^(' .. type .. '[%?]?):?$', '(%1)') -- non-nil or optional type
+        :gsub('^(' .. type .. '%[%][%?]?):?$', '(%1)') -- non-nil or optional array
     end
 
     magic_split[type_index] = ty

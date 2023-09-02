@@ -160,8 +160,8 @@ end
 --- Creates an RPC response object/table.
 ---
 ---@param code integer RPC error code defined in `vim.lsp.protocol.ErrorCodes`
----@param message string|nil arbitrary message to send to server
----@param data any|nil arbitrary data to send to server
+---@param message? string arbitrary message to send to server
+---@param data? any arbitrary data to send to server
 function M.rpc_response_error(code, message, data)
   -- TODO should this error or just pick a sane error (like InternalError)?
   local code_name = assert(protocol.ErrorCodes[code], 'Invalid RPC error code')
@@ -295,10 +295,10 @@ end
 --- Sends a request to the LSP server and runs {callback} upon response.
 ---
 ---@param method (string) The invoked LSP method
----@param params (table|nil) Parameters for the invoked LSP method
----@param callback fun(err: lsp.ResponseError|nil, result: any) Callback to invoke
----@param notify_reply_callback (function|nil) Callback to invoke as soon as a request is no longer pending
----@return boolean success, integer|nil request_id true, request_id if request could be sent, `false` if not
+---@param params? (table) Parameters for the invoked LSP method
+---@param callback (fun(err: lsp.ResponseError?, result: any)) Callback to invoke
+---@param notify_reply_callback? (function) Callback to invoke as soon as a request is no longer pending
+---@return boolean success, integer? request_id true, request_id if request could be sent, `false` if not
 function Client:request(method, params, callback, notify_reply_callback)
   validate({
     callback = { callback, 'f' },
@@ -512,17 +512,17 @@ local function public_client(client)
   --- Sends a request to the LSP server and runs {callback} upon response.
   ---
   ---@param method (string) The invoked LSP method
-  ---@param params (table|nil) Parameters for the invoked LSP method
-  ---@param callback fun(err: lsp.ResponseError | nil, result: any) Callback to invoke
-  ---@param notify_reply_callback (function|nil) Callback to invoke as soon as a request is no longer pending
-  ---@return boolean success, integer|nil request_id true, message_id if request could be sent, `false` if not
+  ---@param params? (table) Parameters for the invoked LSP method
+  ---@param callback (fun(err: lsp.ResponseError | nil, result: any)) Callback to invoke
+  ---@param notify_reply_callback? (function) Callback to invoke as soon as a request is no longer pending
+  ---@return boolean success, integer? request_id true, message_id if request could be sent, `false` if not
   function result.request(method, params, callback, notify_reply_callback)
     return client:request(method, params, callback, notify_reply_callback)
   end
 
   --- Sends a notification to the LSP server.
   ---@param method (string) The invoked LSP method
-  ---@param params (table|nil): Parameters for the invoked LSP method
+  ---@param params? (table) Parameters for the invoked LSP method
   ---@return boolean `true` if notification could be sent, `false` if not
   function result.notify(method, params)
     return client:notify(method, params)
@@ -614,17 +614,17 @@ end
 ---
 ---@param cmd (string) Command to start the LSP server.
 ---@param cmd_args (table) List of additional string arguments to pass to {cmd}.
----@param dispatchers table|nil Dispatchers for LSP message types. Valid
+---@param dispatchers? (table) Dispatchers for LSP message types. Valid
 ---dispatcher names are:
 --- - `"notification"`
 --- - `"server_request"`
 --- - `"on_error"`
 --- - `"on_exit"`
----@param extra_spawn_params table|nil Additional context for the LSP
+---@param extra_spawn_params? (table) Additional context for the LSP
 --- server process. May contain:
 --- - {cwd} (string) Working directory for the LSP server process
 --- - {env} (table) Additional environment variables for LSP server process
----@return table|nil Client RPC object, with these methods:
+---@return table? Client RPC object, with these methods:
 --- - `notify()` |vim.lsp.rpc.notify()|
 --- - `request()` |vim.lsp.rpc.request()|
 --- - `is_closing()` returns a boolean indicating if the RPC is closing.

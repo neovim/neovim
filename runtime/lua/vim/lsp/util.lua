@@ -116,8 +116,8 @@ end
 --- Convert byte index to `encoding` index.
 --- Convenience wrapper around vim.str_utfindex
 ---@param line string line to be indexed
----@param index integer|nil byte index (utf-8), or `nil` for length
----@param encoding string|nil utf-8|utf-16|utf-32|nil defaults to utf-16
+---@param index? integer byte index (utf-8), or `nil` for length
+---@param encoding? string utf-8|utf-16|utf-32|nil defaults to utf-16
 ---@return integer `encoding` index of `index` in `line`
 function M._str_utfindex_enc(line, index, encoding)
   if not encoding then
@@ -321,7 +321,7 @@ end
 
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
 --- Returns a zero-indexed column, since set_lines() does the conversion to
----@param offset_encoding string|nil utf-8|utf-16|utf-32
+---@param offset_encoding? (string) utf-8|utf-16|utf-32
 --- 1-indexed
 ---@return integer
 local function get_line_byte_from_position(bufnr, position, offset_encoding)
@@ -878,7 +878,7 @@ end
 --- `textDocument/signatureHelp`, and potentially others.
 ---
 ---@param input (`MarkedString` | `MarkedString[]` | `MarkupContent`)
----@param contents (table|nil) List of strings to extend with converted lines. Defaults to {}.
+---@param contents? (table) List of strings to extend with converted lines. Defaults to {}.
 ---@return table {contents} extended with lines of converted markdown.
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 function M.convert_input_to_markdown_lines(input, contents)
@@ -928,10 +928,10 @@ end
 --- Converts `textDocument/SignatureHelp` response to markdown lines.
 ---
 ---@param signature_help table Response of `textDocument/SignatureHelp`
----@param ft string|nil filetype that will be use as the `lang` for the label markdown code block
----@param triggers table|nil list of trigger characters from the lsp server. used to better determine parameter offsets
----@return table|nil table list of lines of converted markdown.
----@return table|nil table of active hl
+---@param ft? string filetype that will be use as the `lang` for the label markdown code block
+---@param triggers? table list of trigger characters from the lsp server. used to better determine parameter offsets
+---@return table? table list of lines of converted markdown.
+---@return table? table of active hl
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers)
   if not signature_help.signatures then
@@ -1128,8 +1128,8 @@ end
 --- Shows document and optionally jumps to the location.
 ---
 ---@param location table (`Location`|`LocationLink`)
----@param offset_encoding string|nil utf-8|utf-16|utf-32
----@param opts table|nil options
+---@param offset_encoding? string utf-8|utf-16|utf-32
+---@param opts? table options
 ---        - reuse_win (boolean) Jump to existing window if buffer is already open.
 ---        - focus (boolean) Whether to focus/jump to location if possible. Defaults to true.
 ---@return boolean `true` if succeeded
@@ -1185,8 +1185,8 @@ end
 --- Jumps to a location.
 ---
 ---@param location table (`Location`|`LocationLink`)
----@param offset_encoding string|nil utf-8|utf-16|utf-32
----@param reuse_win boolean|nil Jump to existing window if buffer is already open.
+---@param offset_encoding? string utf-8|utf-16|utf-32
+---@param reuse_win? boolean Jump to existing window if buffer is already open.
 ---@return boolean `true` if the jump succeeded
 function M.jump_to_location(location, offset_encoding, reuse_win)
   if offset_encoding == nil then
@@ -1206,8 +1206,8 @@ end
 ---   - for LocationLink, targetRange is shown (e.g., body of function definition)
 ---
 ---@param location table a single `Location` or `LocationLink`
----@return integer|nil buffer id of float window
----@return integer|nil window id of float window
+---@return integer? buffer id of float window
+---@return integer? window id of float window
 function M.preview_location(location, opts)
   -- location may be LocationLink or Location (more useful for the former)
   local uri = location.targetUri or location.uri
@@ -1487,7 +1487,7 @@ end
 --- Closes the preview window
 ---
 ---@param winnr integer window id of preview window
----@param bufnrs table|nil optional list of ignored buffers
+---@param bufnrs? table optional list of ignored buffers
 local function close_preview_window(winnr, bufnrs)
   vim.schedule(function()
     -- exit if we are in one of ignored buffers
@@ -1731,7 +1731,7 @@ do --[[ References ]]
 
   --- Removes document highlights from a buffer.
   ---
-  ---@param bufnr integer|nil Buffer id
+  ---@param bufnr? (integer) Buffer id
   function M.buf_clear_references(bufnr)
     validate({ bufnr = { bufnr, { 'n' }, true } })
     api.nvim_buf_clear_namespace(bufnr or 0, reference_ns, 0, -1)
@@ -1956,7 +1956,7 @@ function M.try_trim_markdown_code_blocks(lines)
   return 'markdown'
 end
 
----@param window integer|nil: window handle or 0 for current, defaults to current
+---@param window? integer window handle or 0 for current, defaults to current
 ---@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
 local function make_position_param(window, offset_encoding)
   window = window or 0
@@ -1976,8 +1976,8 @@ end
 
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
 ---
----@param window integer|nil: window handle or 0 for current, defaults to current
----@param offset_encoding string|nil utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
+---@param window? (integer) window handle or 0 for current, defaults to current
+---@param offset_encoding? (string) utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
 ---@return table `TextDocumentPositionParams` object
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 function M.make_position_params(window, offset_encoding)
@@ -2029,7 +2029,7 @@ end
 --- `textDocument/codeAction`, `textDocument/colorPresentation`,
 --- `textDocument/rangeFormatting`.
 ---
----@param window integer|nil: window handle or 0 for current, defaults to current
+---@param window? integer window handle or 0 for current, defaults to current
 ---@param offset_encoding "utf-8"|"utf-16"|"utf-32"|nil defaults to `offset_encoding` of first client of buffer of `window`
 ---@return table { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`current_position`, end = `current_position` } }
@@ -2046,12 +2046,12 @@ end
 --- Using the given range in the current buffer, creates an object that
 --- is similar to |vim.lsp.util.make_range_params()|.
 ---
----@param start_pos integer[]|nil {row,col} mark-indexed position.
+---@param start_pos? (integer[]) {row,col} mark-indexed position.
 --- Defaults to the start of the last visual selection.
----@param end_pos integer[]|nil {row,col} mark-indexed position.
+---@param end_pos? (integer[]) {row,col} mark-indexed position.
 --- Defaults to the end of the last visual selection.
----@param bufnr integer|nil buffer handle or 0 for current, defaults to current
----@param offset_encoding "utf-8"|"utf-16"|"utf-32"|nil defaults to `offset_encoding` of first client of `bufnr`
+---@param bufnr? (integer) buffer handle or 0 for current, defaults to current
+---@param offset_encoding ("utf-8"|"utf-16"|"utf-32"|nil) defaults to `offset_encoding` of first client of `bufnr`
 ---@return table { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`start_position`, end = `end_position` } }
 function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
@@ -2091,7 +2091,7 @@ end
 
 --- Creates a `TextDocumentIdentifier` object for the current buffer.
 ---
----@param bufnr integer|nil: Buffer handle, defaults to current
+---@param bufnr? (integer) Buffer handle, defaults to current
 ---@return table `TextDocumentIdentifier`
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
 function M.make_text_document_params(bufnr)
@@ -2108,7 +2108,7 @@ end
 --- Returns indentation size.
 ---
 ---@see 'shiftwidth'
----@param bufnr (integer|nil): Buffer handle, defaults to current
+---@param bufnr? (integer) Buffer handle, defaults to current
 ---@return (integer) indentation size
 function M.get_effective_tabstop(bufnr)
   validate({ bufnr = { bufnr, 'n', true } })
@@ -2119,7 +2119,7 @@ end
 
 --- Creates a `DocumentFormattingParams` object for the current buffer and cursor position.
 ---
----@param options table|nil with valid `FormattingOptions` entries
+---@param options? (table) with valid `FormattingOptions` entries
 ---@return `DocumentFormattingParams` object
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 function M.make_formatting_params(options)

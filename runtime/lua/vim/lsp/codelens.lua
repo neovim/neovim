@@ -95,8 +95,8 @@ end
 
 --- Clear the lenses
 ---
----@param client_id integer|nil filter by client_id. All clients if nil
----@param bufnr integer|nil filter by buffer. All buffers if nil
+---@param client_id? (integer) filter by client_id. All clients if nil
+---@param bufnr? (integer) filter by buffer. All buffers if nil
 function M.clear(client_id, bufnr)
   local buffers = bufnr and { resolve_bufnr(bufnr) } or vim.tbl_keys(lens_cache_by_buf)
   for _, iter_bufnr in pairs(buffers) do
