@@ -676,6 +676,7 @@ SynMenu WXYZ.XFree86\ Config:xf86conf
 SynMenu WXYZ.YAML:yaml
 SynMenu WXYZ.Yacc:yacc
 SynMenu WXYZ.Zimbu:zimbu
+SynMenu WXYZ.Zserio:zserio
 
 call append(s:lnum, "")
 
