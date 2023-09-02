@@ -4,7 +4,7 @@
 " Previous Maintainer:	Nikolai Weibull <now at bitwi.se>
 " URL:			https://github.com/vim-ruby/vim-ruby
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:		2022 Mar 22
+" Last Change:		2022 Jun 30
 
 " 0. Initialization {{{1
 " =================
@@ -93,7 +93,7 @@ let s:ruby_indent_keywords =
       \    '\<\%(if\|for\|while\|until\|case\|unless\|begin\):\@!\>'
 
 " Def without an end clause: def method_call(...) = <expression>
-let s:ruby_endless_def = '\<def\s\+\k\+[!?]\=\%((.*)\|\s\)\s*='
+let s:ruby_endless_def = '\<def\s\+\%(\k\+\.\)\=\k\+[!?]\=\%((.*)\|\s\)\s*='
 
 " Regex used for words that, at the start of a line, remove a level of indent.
 let s:ruby_deindent_keywords =

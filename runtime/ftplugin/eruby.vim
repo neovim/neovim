@@ -3,7 +3,7 @@
 " Maintainer:		Tim Pope <vimNOSPAM@tpope.org>
 " URL:			https://github.com/vim-ruby/vim-ruby
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:		2020 Jun 28
+" Last Change:		2022 May 15
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -86,8 +86,12 @@ runtime! ftplugin/ruby.vim ftplugin/ruby_*.vim ftplugin/ruby/*.vim
 let b:did_ftplugin = 1
 
 " Combine the new set of values with those previously included.
-if exists("b:undo_ftplugin")
-  let s:undo_ftplugin = b:undo_ftplugin . " | " . s:undo_ftplugin
+if !exists('b:undo_ftplugin')
+  " No-op
+  let b:undo_ftplugin = 'exe'
+endif
+if !empty(s:undo_ftplugin)
+  let b:undo_ftplugin .= '|' . s:undo_ftplugin
 endif
 if exists ("b:browsefilter")
   let s:browsefilter = substitute(b:browsefilter,'\cAll Files (\*\.\*)\t\*\.\*\n','','') . s:browsefilter
@@ -119,7 +123,7 @@ endif
 setlocal commentstring=<%#%s%>
 
 let b:undo_ftplugin = "setl cms< " .
-      \ " | unlet! b:browsefilter b:match_words | " . s:undo_ftplugin
+      \ " | unlet! b:browsefilter b:match_words | " . b:undo_ftplugin
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
