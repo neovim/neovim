@@ -925,7 +925,24 @@ void ex_delmarks(exarg_T *eap)
 
   if (*eap->arg == NUL && eap->forceit) {
     // clear all marks
-    clrallmarks(curbuf);
+    const Timestamp timestamp = os_time();
+    for (size_t i = 0; i < NMARKS; i++) {
+      curbuf->b_namedm[i].mark.lnum = 0;
+      curbuf->b_namedm[i].timestamp = timestamp;
+    }
+    curbuf->b_last_cursor.timestamp = timestamp;
+    CLEAR_FMARK(&curbuf->b_last_cursor);
+    curbuf->b_last_cursor.mark.lnum = 1;
+    curbuf->b_last_insert.timestamp = timestamp;
+    CLEAR_FMARK(&curbuf->b_last_insert);
+    curbuf->b_last_change.timestamp = timestamp;
+    CLEAR_FMARK(&curbuf->b_last_change);
+    curbuf->b_op_start.lnum = 0;  // start/end op mark cleared
+    curbuf->b_op_end.lnum = 0;
+    for (int i = 0; i < curbuf->b_changelistlen; i++) {
+      clear_fmark(&curbuf->b_changelist[i]);
+    }
+    curbuf->b_changelistlen = 0;
   } else if (eap->forceit) {
     emsg(_(e_invarg));
   } else if (*eap->arg == NUL) {

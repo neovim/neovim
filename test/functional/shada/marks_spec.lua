@@ -272,4 +272,26 @@ describe('ShaDa support code', function()
     eq('Vim(normal):E20: Mark not set', exc_exec('normal! `a'))
     eq('Vim(normal):E20: Mark not set', exc_exec('normal! `.'))
   end)
+
+  it('updates deleted marks with :delmarks!', function()
+    nvim_command('edit ' .. testfilename)
+
+    nvim_command('mark A')
+    nvim_command('mark a')
+    feed('ggifoobar<esc>')
+    nvim_command('wshada')
+
+    reset()
+    nvim_command('edit ' .. testfilename)
+    nvim_command('normal! `A`a`.')
+    nvim_command('delmarks!')
+    nvim_command('wshada')
+
+    reset()
+    nvim_command('edit ' .. testfilename)
+    eq('Vim(normal):E20: Mark not set', exc_exec('normal! `a'))
+    eq('Vim(normal):E20: Mark not set', exc_exec('normal! `.'))
+    -- Make sure that uppercase marks aren't deleted.
+    nvim_command('normal! `A')
+  end)
 end)
