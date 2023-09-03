@@ -4770,7 +4770,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
         }
       }
 
-      while (bits > 0) {
+      while (bits > 0 && i < NUMBUFLEN - 1) {
         buf2[i++] = ((n >> --bits) & 0x1) ? '1' : '0';
       }
 
