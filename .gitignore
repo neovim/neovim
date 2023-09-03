@@ -83,3 +83,4 @@ tags
 /contrib/result-*
 
 CMakeUserPresets.json
+Xtest-server-notify-log
