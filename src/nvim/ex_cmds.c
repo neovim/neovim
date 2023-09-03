@@ -2230,7 +2230,15 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
 
   // End Visual mode before switching to another buffer, so the text can be
   // copied into the GUI selection buffer.
+  // Careful: may trigger ModeChanged() autocommand
+
+  // Should we block autocommands here?
   reset_VIsual();
+
+  // autocommands freed window :(
+  if (oldwin != NULL && !win_valid(oldwin)) {
+    oldwin = NULL;
+  }
 
   if ((command != NULL || newlnum > (linenr_T)0)
       && *get_vim_var_str(VV_SWAPCOMMAND) == NUL) {
