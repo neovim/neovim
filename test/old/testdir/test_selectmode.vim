@@ -312,4 +312,15 @@ func Test_selectmode_register()
   bw!
 endfunc
 
+func Test_ins_ctrl_o_in_insert_mode_resets_selectmode()
+  new
+  " ctrl-o in insert mode resets restart_VIsual_select
+  call setline(1, 'abcdef')
+  call cursor(1, 1)
+  exe "norm! \<c-v>\<c-g>\<c-o>c\<c-o>\<c-v>\<right>\<right>IABC"
+  call assert_equal('ABCbcdef', getline(1))
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
