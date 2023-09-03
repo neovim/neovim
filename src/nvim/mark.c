@@ -77,11 +77,12 @@ void free_xfmark(xfmark_T fm)
 }
 
 /// Free and clear fmark_T item
-void clear_fmark(fmark_T *fm)
+void clear_fmark(fmark_T *const fm, const Timestamp timestamp)
   FUNC_ATTR_NONNULL_ALL
 {
   free_fmark(*fm);
   *fm = (fmark_T)INIT_FMARK;
+  fm->timestamp = timestamp;
 }
 
 // Set named mark "c" to position "pos".
@@ -763,20 +764,20 @@ bool mark_check_line_bounds(buf_T *buf, fmark_T *fm, const char **errormsg)
 /// Used mainly when trashing the entire buffer during ":e" type commands.
 ///
 /// @param[out]  buf  Buffer to clear marks in.
-void clrallmarks(buf_T *const buf)
+void clrallmarks(buf_T *const buf, const Timestamp timestamp)
   FUNC_ATTR_NONNULL_ALL
 {
   for (size_t i = 0; i < NMARKS; i++) {
-    clear_fmark(&buf->b_namedm[i]);
+    clear_fmark(&buf->b_namedm[i], timestamp);
   }
-  clear_fmark(&buf->b_last_cursor);
+  clear_fmark(&buf->b_last_cursor, timestamp);
   buf->b_last_cursor.mark.lnum = 1;
-  clear_fmark(&buf->b_last_insert);
-  clear_fmark(&buf->b_last_change);
+  clear_fmark(&buf->b_last_insert, timestamp);
+  clear_fmark(&buf->b_last_change, timestamp);
   buf->b_op_start.lnum = 0;  // start/end op mark cleared
   buf->b_op_end.lnum = 0;
   for (int i = 0; i < buf->b_changelistlen; i++) {
-    clear_fmark(&buf->b_changelist[i]);
+    clear_fmark(&buf->b_changelist[i], timestamp);
   }
   buf->b_changelistlen = 0;
 }
@@ -925,24 +926,7 @@ void ex_delmarks(exarg_T *eap)
 
   if (*eap->arg == NUL && eap->forceit) {
     // clear all marks
-    const Timestamp timestamp = os_time();
-    for (size_t i = 0; i < NMARKS; i++) {
-      curbuf->b_namedm[i].mark.lnum = 0;
-      curbuf->b_namedm[i].timestamp = timestamp;
-    }
-    curbuf->b_last_cursor.timestamp = timestamp;
-    CLEAR_FMARK(&curbuf->b_last_cursor);
-    curbuf->b_last_cursor.mark.lnum = 1;
-    curbuf->b_last_insert.timestamp = timestamp;
-    CLEAR_FMARK(&curbuf->b_last_insert);
-    curbuf->b_last_change.timestamp = timestamp;
-    CLEAR_FMARK(&curbuf->b_last_change);
-    curbuf->b_op_start.lnum = 0;  // start/end op mark cleared
-    curbuf->b_op_end.lnum = 0;
-    for (int i = 0; i < curbuf->b_changelistlen; i++) {
-      clear_fmark(&curbuf->b_changelist[i]);
-    }
-    curbuf->b_changelistlen = 0;
+    clrallmarks(curbuf, os_time());
   } else if (eap->forceit) {
     emsg(_(e_invarg));
   } else if (*eap->arg == NUL) {
@@ -990,16 +974,13 @@ void ex_delmarks(exarg_T *eap)
       } else {
         switch (*p) {
         case '"':
-          curbuf->b_last_cursor.timestamp = timestamp;
-          CLEAR_FMARK(&curbuf->b_last_cursor);
+          clear_fmark(&curbuf->b_last_cursor, timestamp);
           break;
         case '^':
-          curbuf->b_last_insert.timestamp = timestamp;
-          CLEAR_FMARK(&curbuf->b_last_insert);
+          clear_fmark(&curbuf->b_last_insert, timestamp);
           break;
         case '.':
-          curbuf->b_last_change.timestamp = timestamp;
-          CLEAR_FMARK(&curbuf->b_last_change);
+          clear_fmark(&curbuf->b_last_change, timestamp);
           break;
         case '[':
           curbuf->b_op_start.lnum    = 0; break;
