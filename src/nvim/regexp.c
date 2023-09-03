@@ -1765,9 +1765,10 @@ static int vim_regsub_both(char *source, typval_T *expr, char *dest, int destlen
     // "flags & REGSUB_COPY" == 0 to the call with
     // "flags & REGSUB_COPY" != 0.
     if (copy) {
-      if (eval_result[nested] != NULL) {
+      size_t reslen = eval_result[nested] != NULL ? strlen(eval_result[nested]) : 0;
+      if (eval_result[nested] != NULL && reslen < (size_t)destlen) {
         STRCPY(dest, eval_result[nested]);
-        dst += strlen(eval_result[nested]);
+        dst += reslen;
         XFREE_CLEAR(eval_result[nested]);
       }
     } else {
