@@ -2418,13 +2418,13 @@ void ml_add_deleted_len_buf(buf_T *buf, char *ptr, ssize_t len)
   if (len == -1 || len > maxlen) {
     len = maxlen;
   }
-  curbuf->deleted_bytes += (size_t)len + 1;
-  curbuf->deleted_bytes2 += (size_t)len + 1;
-  if (curbuf->update_need_codepoints) {
-    mb_utflen(ptr, (size_t)len, &curbuf->deleted_codepoints,
-              &curbuf->deleted_codeunits);
-    curbuf->deleted_codepoints++;  // NL char
-    curbuf->deleted_codeunits++;
+  buf->deleted_bytes += (size_t)len + 1;
+  buf->deleted_bytes2 += (size_t)len + 1;
+  if (buf->update_need_codepoints) {
+    mb_utflen(ptr, (size_t)len, &buf->deleted_codepoints,
+              &buf->deleted_codeunits);
+    buf->deleted_codepoints++;  // NL char
+    buf->deleted_codeunits++;
   }
 }
 
