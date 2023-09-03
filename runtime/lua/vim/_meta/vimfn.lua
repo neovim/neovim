@@ -6115,8 +6115,13 @@ function vim.fn.prevnonblank(lnum) end
 ---   than the field width, the field is expanded to contain
 ---   the conversion result.
 ---   The 'h' modifier indicates the argument is 16 bits.
----   The 'l' modifier indicates the argument is 32 bits.
----   The 'L' modifier indicates the argument is 64 bits.
+---   The 'l' modifier indicates the argument is a long
+---   integer.  The size will be 32 bits or 64 bits
+---   depending on your platform.
+---   The "ll" modifier indicates the argument is 64 bits.
+---   The b and B conversion specifiers never take a width
+---   modifier and always assume their argument is a 64 bit
+---   integer.
 ---   Generally, these modifiers are not useful. They are
 ---   ignored when type is known from the argument.
 ---
