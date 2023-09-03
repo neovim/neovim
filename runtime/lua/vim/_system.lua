@@ -18,6 +18,7 @@ local uv = vim.uv
 --- @field stderr? string
 
 --- @class SystemState
+--- @field cmd string[]
 --- @field handle? uv.uv_process_t
 --- @field timer?  uv.uv_timer_t
 --- @field pid? integer
@@ -63,11 +64,9 @@ local function new_systemobj(state)
   }, { __index = SystemObj })
 end
 
---- @param signal integer
+--- @param signal integer|string
 function SystemObj:kill(signal)
-  local state = self._state
-  state.handle:kill(signal)
-  close_handles(state)
+  self._state.handle:kill(signal)
 end
 
 local MAX_TIMEOUT = 2 ^ 31
@@ -159,7 +158,7 @@ end
 
 --- @return table<string,string>
 local function base_env()
-  local env = vim.fn.environ()
+  local env = vim.fn.environ() --- @type table<string,string>
   env['NVIM'] = vim.v.servername
   env['NVIM_LISTEN_ADDRESS'] = nil
   return env
@@ -212,7 +211,7 @@ end
 local M = {}
 
 --- @param cmd string
---- @param opts uv.aliases.spawn_options
+--- @param opts uv.spawn.options
 --- @param on_exit fun(code: integer, signal: integer)
 --- @param on_error fun()
 --- @return uv.uv_process_t, integer

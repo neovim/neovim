@@ -54,4 +54,28 @@ describe('vim.system', function()
     end)
   end
 
+  it('kill processes', function()
+    exec_lua([[
+      local signal
+      local cmd = vim.system({ 'cat', '-' }, { stdin = true }, function(r)
+        signal = r.signal
+      end) -- run forever
+
+      cmd:kill('sigint')
+
+      -- wait for the process not to exist
+      local done = vim.wait(2000, function()
+        return signal ~= nil
+      end)
+
+      assert(done, 'process did not exit')
+
+      -- Check the process is no longer running
+      vim.fn.systemlist({'ps', 'p', tostring(cmd.pid)})
+      assert(vim.v.shell_error == 1, 'dwqdqd '..vim.v.shell_error)
+
+      assert(signal == 2)
+    ]])
+  end)
+
 end)
