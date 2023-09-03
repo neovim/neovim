@@ -1476,17 +1476,19 @@ static inline char *cstrchr(const char *const s, const int c)
     }
     return NULL;
   }
-
-  int cc;
-  if (ASCII_ISUPPER(c)) {
-    cc = TOLOWER_ASC(c);
-  } else if (ASCII_ISLOWER(c)) {
-    cc = TOUPPER_ASC(c);
-  } else {
-    return vim_strchr(s, c);
+  char tofind[3];
+  typedef unsigned char u;
+  if ((u)c >= 'A') {
+    if ((u)c <= 'Z') {
+        tofind[1] = (u)c - 'A' + 'a';
+    } else if (ASCII_ISUPPER(c)) {
+        tofind[1] = (u)c - 'a' + 'A';
+    } else {
+        return strchr(s, c);
+    }
+    tofind[0] = c;
+    tofind[2] = '\0';
   }
-
-  char tofind[] = { (char)c, (char)cc, NUL };
   return strpbrk(s, tofind);
 }
 
