@@ -181,6 +181,18 @@ describe('vim.diagnostic', function()
     eq(0, #diagnostics)
   end)
 
+  it('always returns a copy of diagnostic tables', function()
+    local result = exec_lua [[
+      vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+        make_error('Diagnostic #1', 1, 1, 1, 1),
+      })
+      local diag = vim.diagnostic.get()
+      diag[1].col = 10000
+      return vim.diagnostic.get()[1].col == 10000
+    ]]
+    eq(result, false)
+  end)
+
   it('resolves buffer number 0 to the current buffer', function()
     eq(2, exec_lua [[
       vim.api.nvim_set_current_buf(diagnostic_bufnr)
