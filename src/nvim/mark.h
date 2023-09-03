@@ -34,10 +34,6 @@
     SET_FMARK(fmarkp___, mark_, fnum_, view_); \
   } while (0)
 
-/// Clear given fmark
-#define CLEAR_FMARK(fmarkp_) \
-  RESET_FMARK(fmarkp_, ((pos_T) { 0, 0, 0 }), 0, ((fmarkv_T)INIT_FMARKV))
-
 /// Set given extended mark (regular mark + file name)
 #define SET_XFMARK(xfmarkp_, mark_, fnum_, view_, fname_) \
   do { \
