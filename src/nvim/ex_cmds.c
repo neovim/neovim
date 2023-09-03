@@ -3177,21 +3177,21 @@ static bool sub_joining_lines(exarg_T *eap, char *pat, const char *sub, const ch
 /// Slightly more memory that is strictly necessary is allocated to reduce the
 /// frequency of memory (re)allocation.
 ///
-/// @param[in,out]  new_start   pointer to the memory for the replacement text
-/// @param[in]      needed_len  amount of memory needed
+/// @param[in,out]  new_start      pointer to the memory for the replacement text
+/// @param[in,out]  new_start_len  pointer to length of new_start
+/// @param[in]      needed_len     amount of memory needed
 ///
 /// @returns pointer to the end of the allocated memory
-static char *sub_grow_buf(char **new_start, int needed_len)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_RET
+static char *sub_grow_buf(char **new_start, int *new_start_len, int needed_len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  int new_start_len = 0;
   char *new_end;
   if (*new_start == NULL) {
     // Get some space for a temporary buffer to do the
     // substitution into (and some extra space to avoid
     // too many calls to xmalloc()/free()).
-    new_start_len = needed_len + 50;
-    *new_start = xmalloc((size_t)new_start_len);
+    *new_start_len = needed_len + 50;
+    *new_start = xmalloc((size_t)(*new_start_len));
     **new_start = NUL;
     new_end = *new_start;
   } else {
@@ -3200,9 +3200,9 @@ static char *sub_grow_buf(char **new_start, int needed_len)
     // extra to avoid too many calls to xmalloc()/free()).
     size_t len = strlen(*new_start);
     needed_len += (int)len;
-    if (needed_len > new_start_len) {
-      new_start_len = needed_len + 50;
-      *new_start = xrealloc(*new_start, (size_t)new_start_len);
+    if (needed_len > *new_start_len) {
+      *new_start_len = needed_len + 50;
+      *new_start = xrealloc(*new_start, (size_t)(*new_start_len));
     }
     new_end = *new_start + len;
   }
@@ -3527,6 +3527,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
       colnr_T matchcol;
       colnr_T prev_matchcol = MAXCOL;
       char *new_end, *new_start = NULL;
+      int new_start_len = 0;
       char *p1;
       bool did_sub = false;
       int lastone;
@@ -3572,7 +3573,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
       //   accordingly.
       //
       // The new text is built up in new_start[].  It has some extra
-      // room to avoid using xmalloc()/free() too often.
+      // room to avoid using xmalloc()/free() too often.  new_start_len is
+      // the length of the allocated memory at new_start.
       //
       // Make a copy of the old line, so it won't be taken away when
       // updating the screen or handling a multi-line match.  The "old_"
@@ -3952,7 +3954,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
             nmatch_tl += nmatch - 1;
           }
           size_t copy_len = (size_t)(regmatch.startpos[0].col - copycol);
-          new_end = sub_grow_buf(&new_start,
+          new_end = sub_grow_buf(&new_start, &new_start_len,
                                  (colnr_T)strlen(p1) - regmatch.endpos[0].col
                                  + (colnr_T)copy_len + sublen + 1);
 
