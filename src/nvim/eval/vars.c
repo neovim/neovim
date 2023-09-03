@@ -1810,7 +1810,7 @@ static void getwinvar(typval_T *argvars, typval_T *rettv, int off)
 /// @param[in]   tv      typval to convert.
 /// @param[in]   option  Option name.
 /// @param[in]   flags   Option flags.
-/// @param[out]  error   Whether an error occured.
+/// @param[out]  error   Whether an error occurred.
 ///
 /// @return  Typval converted to OptVal. Must be freed by caller.
 ///          Returns NIL_OPTVAL for invalid option name.

@@ -104,7 +104,7 @@ vim.log = {
 ---     Handle output from stdout. When passed as a function must have the signature `fun(err: string, data: string)`.
 ---     Defaults to `true`
 ---   - stderr: (boolean|function)
----     Handle output from stdout. When passed as a function must have the signature `fun(err: string, data: string)`.
+---     Handle output from stderr. When passed as a function must have the signature `fun(err: string, data: string)`.
 ---     Defaults to `true`.
 ---   - text: (boolean) Handle stdout and stderr as text. Replaces `\r\n` with `\n`.
 ---   - timeout: (integer) Run the command with a time limit. Upon timeout the process is sent the
