@@ -173,23 +173,10 @@ foreach(CFGNAME ${CMAKE_CONFIGURATION_TYPES})
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFGNAME} ${CMAKE_BINARY_DIR}/lib)
 endforeach()
 
-if(NOT LUA_PRG)
-  foreach(CURRENT_LUA_PRG luajit lua5.1 lua5.2 lua)
-    unset(_CHECK_LUA_PRG CACHE)
-    find_program(_CHECK_LUA_PRG ${CURRENT_LUA_PRG})
-
-    if(_CHECK_LUA_PRG)
-      set(LUA_PRG "${_CHECK_LUA_PRG}" CACHE FILEPATH "Path to a program.")
-      break()
-    endif()
-  endforeach()
-  unset(_CHECK_LUA_PRG CACHE)
-endif()
-
+find_program(LUA_PRG NAMES luajit lua5.1 lua5.2 lua)
 if(NOT LUA_PRG)
   message(FATAL_ERROR "Failed to find a Lua 5.1-compatible interpreter")
 endif()
-
 message(STATUS "Using Lua interpreter: ${LUA_PRG}")
 
 # Some of the code generation still relies on stable table ordering in order to
@@ -200,11 +187,9 @@ message(STATUS "Using Lua interpreter: ${LUA_PRG}")
 if(NOT LUA_GEN_PRG)
   set(LUA_GEN_PRG "${LUA_PRG}" CACHE FILEPATH "Path to the lua used for code generation.")
 endif()
-
 message(STATUS "Using Lua interpreter for code generation: ${LUA_GEN_PRG}")
 
 option(COMPILE_LUA "Pre-compile Lua sources into bytecode (for sources that are included in the binary)" ON)
-
 if(COMPILE_LUA AND NOT WIN32)
   if(PREFER_LUA)
     foreach(CURRENT_LUAC_PRG luac5.1 luac)
@@ -221,14 +206,11 @@ if(COMPILE_LUA AND NOT WIN32)
     endif()
   endif()
 endif()
-
 if(LUAC_PRG)
   message(STATUS "Using Lua compiler: ${LUAC_PRG}")
 endif()
 
-#
 # Lint
-#
 option(CI_LINT "Abort if lint programs not found" OFF)
 if(CI_LINT)
   set(LINT_REQUIRED "REQUIRED")
@@ -277,9 +259,7 @@ add_dependencies(lintcommit nvim)
 add_custom_target(lint)
 add_dependencies(lint clang-tidy lintc lintlua lintsh lintcommit)
 
-#
 # Format
-#
 add_custom_target(formatlua
   COMMAND ${CMAKE_COMMAND}
     -D FORMAT_PRG=${STYLUA_PRG}

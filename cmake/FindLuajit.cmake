@@ -1,5 +1,5 @@
 find_path(LUAJIT_INCLUDE_DIR luajit.h
-          PATH_SUFFIXES luajit-2.0 luajit-2.1)
+          PATH_SUFFIXES luajit-2.1)
 
 if(MSVC)
   list(APPEND LUAJIT_NAMES lua51)
