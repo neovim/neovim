@@ -896,7 +896,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   FUNC_ATTR_NONNULL_ALL
 {
   // If no argument, list current highlighting.
-  if (!init && ends_excmd((uint8_t)(*line))) {
+  if (!init && ends_excmd(*line)) {
     for (int i = 1; i <= highlight_ga.ga_len && !got_int; i++) {
       // TODO(brammool): only call when the group has attributes set
       highlight_list_one(i);
@@ -929,7 +929,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   }
 
   // ":highlight {group-name}": list highlighting for one group.
-  if (!doclear && !dolink && ends_excmd((uint8_t)(*linep))) {
+  if (!doclear && !dolink && ends_excmd(*linep)) {
     int id = syn_name2id_len(line, (size_t)(name_end - line));
     if (id == 0) {
       semsg(_(e_highlight_group_name_not_found_str), line);
@@ -953,8 +953,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
     to_start = skipwhite(from_end);
     to_end   = skiptowhite(to_start);
 
-    if (ends_excmd((uint8_t)(*from_start))
-        || ends_excmd((uint8_t)(*to_start))) {
+    if (ends_excmd(*from_start)
+        || ends_excmd(*to_start)) {
       semsg(_("E412: Not enough arguments: \":highlight link %s\""),
             from_start);
       return;
@@ -1014,7 +1014,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   if (doclear) {
     // ":highlight clear [group]" command.
     line = linep;
-    if (ends_excmd((uint8_t)(*line))) {
+    if (ends_excmd(*line)) {
       do_unlet(S_LEN("g:colors_name"), true);
       restore_cterm_colors();
 
@@ -1063,7 +1063,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   if (!doclear) {
     const char *arg_start;
 
-    while (!ends_excmd((uint8_t)(*linep))) {
+    while (!ends_excmd(*linep)) {
       const char *key_start = linep;
       if (*linep == '=') {
         semsg(_(e_unexpected_equal_sign_str), key_start);

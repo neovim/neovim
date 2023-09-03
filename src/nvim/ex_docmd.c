@@ -4381,7 +4381,7 @@ static void ex_blast(exarg_T *eap)
   }
 }
 
-int ends_excmd(int c) FUNC_ATTR_CONST
+bool ends_excmd(char c) FUNC_ATTR_CONST
 {
   return c == NUL || c == '|' || c == '"' || c == '\n';
 }

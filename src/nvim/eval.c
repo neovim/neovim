@@ -7006,21 +7006,21 @@ static char *make_expanded_name(const char *in_start, char *expr_start, char *ex
 
 /// @return  true if character "c" can be used in a variable or function name.
 ///          Does not include '{' or '}' for magic braces.
-bool eval_isnamec(int c)
+bool eval_isnamec(char c) FUNC_ATTR_CONST
 {
   return ASCII_ISALNUM(c) || c == '_' || c == ':' || c == AUTOLOAD_CHAR;
 }
 
 /// @return  true if character "c" can be used as the first character in a
 ///          variable or function name (excluding '{' and '}').
-bool eval_isnamec1(int c)
+bool eval_isnamec1(char c) FUNC_ATTR_CONST
 {
   return ASCII_ISALPHA(c) || c == '_';
 }
 
 /// @return  true if character "c" can be used as the first character of a
 ///          dictionary key.
-bool eval_isdictc(int c)
+bool eval_isdictc(char c) FUNC_ATTR_CONST
 {
   return ASCII_ISALNUM(c) || c == '_';
 }

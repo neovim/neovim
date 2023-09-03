@@ -1682,7 +1682,7 @@ bool valid_varname(const char *varname)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   for (const char *p = varname; *p != NUL; p++) {
-    if (!eval_isnamec1((int)(uint8_t)(*p))
+    if (!eval_isnamec1(*p)
         && (p == varname || !ascii_isdigit(*p))
         && *p != AUTOLOAD_CHAR) {
       semsg(_(e_illvar), varname);

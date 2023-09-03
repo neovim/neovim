@@ -1080,7 +1080,7 @@ void ex_mkrc(exarg_T *eap)
 }
 
 /// @return  the name of the view file for the current buffer.
-static char *get_view_file(int c)
+static char *get_view_file(char c)
 {
   if (curbuf->b_ffname == NULL) {
     emsg(_(e_noname));
@@ -1119,8 +1119,7 @@ static char *get_view_file(int c)
     }
   }
   *s++ = '=';
-  assert(c >= CHAR_MIN && c <= CHAR_MAX);
-  *s++ = (char)c;
+  *s++ = c;
   xstrlcpy(s, ".vim", 5);
 
   xfree(sname);
