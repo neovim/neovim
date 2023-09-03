@@ -301,3 +301,41 @@ jobs:
         run: |
           cd test/old/testdir
           mingw32-make VERBOSE=1
+
+  with-external-deps:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo add-apt-repository ppa:neovim-ppa/stable
+          ./.github/scripts/install_deps.sh
+          sudo apt-get install -y \
+            libluajit-5.1-dev \
+            libmsgpack-dev \
+            libtermkey-dev \
+            libunibilium-dev \
+            libuv1-dev \
+            lua-filesystem \
+            lua-lpeg \
+            luajit \
+            lua-luv-dev
+            # libtree-sitter-dev \
+            # libvterm-dev
+
+            # Remove comments from packages once we start using these external
+            # dependencies.
+
+      - uses: ./.github/actions/cache
+
+      - name: Build third-party deps
+        run: |
+          cmake -S cmake.deps --preset external_deps
+          cmake --build .deps
+
+      - name: Build
+        run: |
+          cmake --preset ci
+          cmake --build build

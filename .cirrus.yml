@@ -25,13 +25,3 @@ freebsd_task:
     - sudo -u cirrus gmake unittest
   oldtest_script:
     - sudo -u cirrus gmake oldtest
-
-external_deps_task:
-  container:
-    dockerfile: ci/Dockerfile.external_deps
-  deps_script:
-    - cmake -S cmake.deps --preset external_deps
-    - cmake --build .deps
-  build_script:
-    - cmake --preset ci
-    - cmake --build build
