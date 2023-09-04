@@ -870,5 +870,15 @@ func Test_undo_after_write()
   call delete('Xtestfile.txt')
 endfunc
 
+func Test_undo_range_normal()
+  new
+  call setline(1, ['asa', 'bsb'])
+  let &l:undolevels = &l:undolevels
+  %normal dfs
+  call assert_equal(['a', 'b'], getline(1, '$'))
+  undo
+  call assert_equal(['asa', 'bsb'], getline(1, '$'))
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
