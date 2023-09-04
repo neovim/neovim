@@ -31,7 +31,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: ./.github/scripts/install_deps.sh
@@ -49,7 +49,7 @@ jobs:
       CMAKE_URL: 'https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh'
       CMAKE_VERSION: '3.10.0'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up environment
         run: echo "$BIN_DIR" >> $GITHUB_PATH
@@ -83,7 +83,7 @@ jobs:
     name: Test USE_EXISTING_SRC_DIR=ON builds with no network access
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install build dependencies
         run: ./.github/scripts/install_deps.sh

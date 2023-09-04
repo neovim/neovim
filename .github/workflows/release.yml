@@ -36,7 +36,7 @@ jobs:
           apt-get install -y fuse libfuse2 # For linuxdeploy.
           # Workaround for https://github.com/actions/checkout/issues/766.
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - run: ./.github/scripts/install_deps.sh --container
@@ -75,7 +75,7 @@ jobs:
   macOS:
     runs-on: macos-11
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Install dependencies
@@ -96,7 +96,7 @@ jobs:
     runs-on: windows-2019
     name: windows (MSVC_64)
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - run: .github/scripts/env.ps1
@@ -127,7 +127,7 @@ jobs:
     steps:
       # Must perform checkout first, since it deletes the target directory
       # before running, and would therefore delete the downloaded artifacts
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v3
 
