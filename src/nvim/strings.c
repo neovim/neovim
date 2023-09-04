@@ -32,33 +32,35 @@
 #include "nvim/types.h"
 #include "nvim/vim.h"
 
-static char e_cannot_mix_positional_and_non_positional_str[]
+static const char e_cannot_mix_positional_and_non_positional_str[]
   = N_("E1400: Cannot mix positional and non-positional arguments: %s");
-static char e_fmt_arg_nr_unused_str[]
+static const char e_fmt_arg_nr_unused_str[]
   = N_("E1401: format argument %d unused in $-style format: %s");
-static char e_positional_num_field_spec_reused_str_str[]
+static const char e_positional_num_field_spec_reused_str_str[]
   = N_("E1402: Positional argument %d used as field width reused as different type: %s/%s");
-static char e_positional_nr_out_of_bounds_str[]
+static const char e_positional_nr_out_of_bounds_str[]
   = N_("E1403: Positional argument %d out of bounds: %s");
-static char e_positional_arg_num_type_inconsistent_str_str[]
+static const char e_positional_arg_num_type_inconsistent_str_str[]
   = N_("E1404: Positional argument %d type used inconsistently: %s/%s");
-static char e_invalid_format_specifier_str[]
+static const char e_invalid_format_specifier_str[]
   = N_("E1405: Invalid format specifier: %s");
+static const char e_aptypes_is_null_str_nr[]
+  = "E1408: Internal error: ap_types or ap_types[idx] is NULL: %s: %d";
 
-static char typename_unknown[] = N_("unknown");
-static char typename_int[] = N_("int");
-static char typename_longint[] = N_("long int");
-static char typename_longlongint[] = N_("long long int");
-static char typename_signedsizet[] = N_("signed size_t");
-static char typename_unsignedint[] = N_("unsigned int");
-static char typename_unsignedlongint[] = N_("unsigned long int");
-static char typename_unsignedlonglongint[] = N_("unsigned long long int");
-static char typename_sizet[] = N_("size_t");
-static char typename_pointer[] = N_("pointer");
-static char typename_percent[] = N_("percent");
-static char typename_char[] = N_("char");
-static char typename_string[] = N_("string");
-static char typename_float[] = N_("float");
+static const char typename_unknown[] = N_("unknown");
+static const char typename_int[] = N_("int");
+static const char typename_longint[] = N_("long int");
+static const char typename_longlongint[] = N_("long long int");
+static const char typename_signedsizet[] = N_("signed size_t");
+static const char typename_unsignedint[] = N_("unsigned int");
+static const char typename_unsignedlongint[] = N_("unsigned long int");
+static const char typename_unsignedlonglongint[] = N_("unsigned long long int");
+static const char typename_sizet[] = N_("size_t");
+static const char typename_pointer[] = N_("pointer");
+static const char typename_percent[] = N_("percent");
+static const char typename_char[] = N_("char");
+static const char typename_string[] = N_("string");
+static const char typename_float[] = N_("float");
 
 /// Copy up to `len` bytes of `string` into newly allocated memory and
 /// terminate with a NUL. The allocated memory always has size `len + 1`, even
@@ -763,7 +765,7 @@ enum {
 };
 
 /// Types that can be used in a format string
-static int format_typeof(const char *type, bool usetvs)
+static int format_typeof(const char *type)
   FUNC_ATTR_NONNULL_ALL
 {
   // allowed values: \0, h, l, L
@@ -800,19 +802,6 @@ static int format_typeof(const char *type, bool usetvs)
     break;
   }
 
-  if (usetvs) {
-    switch (fmt_spec) {
-    case 'd':
-    case 'u':
-    case 'o':
-    case 'x':
-    case 'X':
-      if (length_modifier == '\0') {
-        length_modifier = 'L';
-      }
-    }
-  }
-
   // get parameter value, do initial processing
   switch (fmt_spec) {
   // '%' and 'c' behave similar to 's' regarding flags and field
@@ -847,7 +836,7 @@ static int format_typeof(const char *type, bool usetvs)
     if (fmt_spec == 'p') {
       return TYPE_POINTER;
     } else if (fmt_spec == 'b' || fmt_spec == 'B') {
-      return TYPE_UNSIGNEDINT;
+      return TYPE_UNSIGNEDLONGLONGINT;
     } else if (fmt_spec == 'd') {
       // signed
       switch (length_modifier) {
@@ -893,7 +882,7 @@ static int format_typeof(const char *type, bool usetvs)
 static char *format_typename(const char *type)
   FUNC_ATTR_NONNULL_ALL
 {
-  switch (format_typeof(type, false)) {
+  switch (format_typeof(type)) {
   case TYPE_INT:
     return _(typename_int);
   case TYPE_LONGINT:
@@ -960,7 +949,7 @@ static int adjust_types(const char ***ap_types, int arg, int *num_posarg, const 
         }
       }
     } else {
-      if (format_typeof(type, false) != format_typeof((*ap_types)[arg - 1], false)) {
+      if (format_typeof(type) != format_typeof((*ap_types)[arg - 1])) {
         semsg(_(e_positional_arg_num_type_inconsistent_str_str), arg,
               format_typename(type), format_typename((*ap_types)[arg - 1]));
         return FAIL;
@@ -1239,7 +1228,7 @@ error:
 }
 
 static void skip_to_arg(const char **ap_types, va_list ap_start, va_list *ap, int *arg_idx,
-                        int *arg_cur)
+                        int *arg_cur, const char *fmt)
   FUNC_ATTR_NONNULL_ARG(3, 4, 5)
 {
   int arg_min = 0;
@@ -1260,10 +1249,14 @@ static void skip_to_arg(const char **ap_types, va_list ap_start, va_list *ap, in
   }
 
   for (*arg_cur = arg_min; *arg_cur < *arg_idx - 1; (*arg_cur)++) {
-    assert(ap_types != NULL);
+    if (ap_types == NULL || ap_types[*arg_cur] == NULL) {
+      semsg(e_aptypes_is_null_str_nr, fmt, *arg_cur);
+      return;
+    }
+
     const char *p = ap_types[*arg_cur];
 
-    int fmt_type = format_typeof(p, true);
+    int fmt_type = format_typeof(p);
 
     // get parameter value, do initial processing
     switch (fmt_type) {
@@ -1477,7 +1470,8 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
 
         const int j = (tvs
                        ? (int)tv_nr(tvs, &arg_idx)
-                       : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                       : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                      &arg_cur, fmt),
                           va_arg(ap, int)));
 
         if (j >= 0) {
@@ -1528,7 +1522,8 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
 
           const int j = (tvs
                          ? (int)tv_nr(tvs, &arg_idx)
-                         : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                         : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                        &arg_cur, fmt),
                             va_arg(ap, int)));
 
           if (j >= 0) {
@@ -1600,7 +1595,8 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
         case 'c': {
           const int j = (tvs
                          ? (int)tv_nr(tvs, &arg_idx)
-                         : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                         : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                        &arg_cur, fmt),
                             va_arg(ap, int)));
 
           // standard demands unsigned char
@@ -1613,7 +1609,8 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
         case 'S':
           str_arg = (tvs
                      ? tv_str(tvs, &arg_idx, &tofree)
-                     : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                     : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                    &arg_cur, fmt),
                         va_arg(ap, const char *)));
 
           if (!str_arg) {
@@ -1684,7 +1681,8 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
         if (fmt_spec == 'p') {
           ptr_arg = (tvs
                      ? tv_ptr(tvs, &arg_idx)
-                     : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                     : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                    &arg_cur, fmt),
                         va_arg(ap, void *)));
 
           if (ptr_arg) {
@@ -1696,7 +1694,8 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
           case '\0':
             arg = (tvs
                    ? (int)tv_nr(tvs, &arg_idx)
-                   : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                   : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                  &arg_cur, fmt),
                       va_arg(ap, int)));
             break;
           case 'h':
@@ -1704,25 +1703,29 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
             arg = (int16_t)
                   (tvs
                    ? (int)tv_nr(tvs, &arg_idx)
-                   : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                   : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                  &arg_cur, fmt),
                       va_arg(ap, int)));
             break;
           case 'l':
             arg = (tvs
                    ? (long)tv_nr(tvs, &arg_idx)
-                   : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                   : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                  &arg_cur, fmt),
                       va_arg(ap, long)));
             break;
           case 'L':
             arg = (tvs
                    ? (long long)tv_nr(tvs, &arg_idx)  // NOLINT(runtime/int)
-                   : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                   : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                  &arg_cur, fmt),
                       va_arg(ap, long long)));  // NOLINT(runtime/int)
             break;
           case 'z':  // implementation-defined, usually ptrdiff_t
             arg = (tvs
                    ? (ptrdiff_t)tv_nr(tvs, &arg_idx)
-                   : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                   : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                  &arg_cur, fmt),
                       va_arg(ap, ptrdiff_t)));
             break;
           }
@@ -1737,32 +1740,37 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
           case '\0':
             uarg = (tvs
                     ? (unsigned)tv_nr(tvs, &arg_idx)
-                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                   &arg_cur, fmt),
                        va_arg(ap, unsigned)));
             break;
           case 'h':
             uarg = (uint16_t)
                    (tvs
                     ? (unsigned)tv_nr(tvs, &arg_idx)
-                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                   &arg_cur, fmt),
                        va_arg(ap, unsigned)));
             break;
           case 'l':
             uarg = (tvs
                     ? (unsigned long)tv_nr(tvs, &arg_idx)
-                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                   &arg_cur, fmt),
                        va_arg(ap, unsigned long)));
             break;
           case 'L':
             uarg = (tvs
                     ? (unsigned long long)tv_nr(tvs, &arg_idx)  // NOLINT(runtime/int)
-                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                   &arg_cur, fmt),
                        va_arg(ap, unsigned long long)));  // NOLINT(runtime/int)
             break;
           case 'z':
             uarg = (tvs
                     ? (size_t)tv_nr(tvs, &arg_idx)
-                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                   &arg_cur, fmt),
                        va_arg(ap, size_t)));
             break;
           }
@@ -1900,7 +1908,8 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
 
         double f = (tvs
                     ? tv_float(tvs, &arg_idx)
-                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx, &arg_cur),
+                    : (skip_to_arg(ap_types, ap_start, &ap, &arg_idx,
+                                   &arg_cur, fmt),
                        va_arg(ap, double)));
 
         double abs_f = f < 0 ? -f : f;
