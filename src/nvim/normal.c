@@ -831,7 +831,7 @@ static void normal_get_additional_char(NormalState *s)
       // because if it's put back with vungetc() it's too late to apply
       // mapping.
       no_mapping--;
-      while (lang && (s->c = vpeekc()) > 0
+      while ((s->c = vpeekc()) > 0
              && (s->c >= 0x100 || MB_BYTE2LEN(vpeekc()) > 1)) {
         s->c = plain_vgetc();
         if (!utf_iscomposing(s->c)) {
@@ -848,7 +848,9 @@ static void normal_get_additional_char(NormalState *s)
       // but when replaying a recording the next key is already in the
       // typeahead buffer, so record a <Nop> before that to prevent the
       // vpeekc() above from applying wrong mappings when replaying.
+      no_u_sync++;
       gotchars_nop();
+      no_u_sync--;
     }
   }
   no_mapping--;
