@@ -1792,7 +1792,7 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
                    object, see return of SystemObj:wait().
 
     Return: ~
-        SystemObj Object with the fields:
+        vim.SystemObj Object with the fields:
         • pid (integer) Process ID
         • wait (fun(timeout: integer|nil): SystemCompleted) Wait for the
           process to complete. Upon timeout the process is sent the KILL
@@ -2545,7 +2545,7 @@ vim.ui.open({path})                                            *vim.ui.open()*
       • {path}  (string) Path or URL to open
 
     Return (multiple): ~
-        SystemCompleted|nil Command result, or nil if not found.
+        vim.SystemCompleted|nil Command result, or nil if not found.
         (string|nil) Error message on failure
 
     See also: ~

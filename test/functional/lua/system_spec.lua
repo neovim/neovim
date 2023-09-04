@@ -5,13 +5,20 @@ local eq = helpers.eq
 
 local function system_sync(cmd, opts)
   return exec_lua([[
+    local cmd, opts = ...
     local obj = vim.system(...)
-    local pid = obj.pid
+
+    if opts.timeout then
+      -- Minor delay before calling wait() so the timeout uv timer can have a headstart over the
+      -- internal call to vim.wait() in wait().
+      vim.wait(10)
+    end
+
     local res = obj:wait()
 
     -- Check the process is no longer running
-    vim.fn.systemlist({'ps', 'p', tostring(pid)})
-    assert(vim.v.shell_error == 1, 'process still exists')
+    local proc = vim.api.nvim_get_proc(obj.pid)
+    assert(not proc, 'process still exists')
 
     return res
   ]], cmd, opts)
@@ -26,15 +33,15 @@ local function system_async(cmd, opts)
       _G.ret = obj
     end)
 
-    local done = vim.wait(10000, function()
+    local ok = vim.wait(10000, function()
       return _G.done
     end)
 
-    assert(done, 'process did not exit')
+    assert(ok, 'process did not exit')
 
     -- Check the process is no longer running
-    vim.fn.systemlist({'ps', 'p', tostring(obj.pid)})
-    assert(vim.v.shell_error == 1, 'process still exists')
+    local proc = vim.api.nvim_get_proc(obj.pid)
+    assert(not proc, 'process still exists')
 
     return _G.ret
   ]], cmd, opts)
@@ -61,7 +68,7 @@ describe('vim.system', function()
           signal = 15,
           stdout = '',
           stderr = ''
-        }, system({ 'sleep', '10' }, { timeout = 1 }))
+        }, system({ 'sleep', '10' }, { timeout = 1000 }))
       end)
     end)
   end
@@ -83,8 +90,8 @@ describe('vim.system', function()
       assert(done, 'process did not exit')
 
       -- Check the process is no longer running
-      vim.fn.systemlist({'ps', 'p', tostring(cmd.pid)})
-      assert(vim.v.shell_error == 1, 'dwqdqd '..vim.v.shell_error)
+      local proc = vim.api.nvim_get_proc(cmd.pid)
+      assert(not proc, 'process still exists')
 
       assert(signal == 2)
     ]])

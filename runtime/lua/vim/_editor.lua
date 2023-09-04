@@ -117,7 +117,7 @@ vim.log = {
 --- @param on_exit (function|nil) Called when subprocess exits. When provided, the command runs
 ---   asynchronously. Receives SystemCompleted object, see return of SystemObj:wait().
 ---
---- @return SystemObj Object with the fields:
+--- @return vim.SystemObj Object with the fields:
 ---   - pid (integer) Process ID
 ---   - wait (fun(timeout: integer|nil): SystemCompleted) Wait for the process to complete. Upon
 ---     timeout the process is sent the KILL signal (9) and the exit code is set to 124.

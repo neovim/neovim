@@ -11,13 +11,13 @@ local uv = vim.uv
 --- @field timeout? integer Timeout in ms
 --- @field detach? boolean
 
---- @class SystemCompleted
+--- @class vim.SystemCompleted
 --- @field code integer
 --- @field signal integer
 --- @field stdout? string
 --- @field stderr? string
 
---- @class SystemState
+--- @class vim.SystemState
 --- @field handle? uv.uv_process_t
 --- @field timer?  uv.uv_timer_t
 --- @field pid? integer
@@ -26,7 +26,9 @@ local uv = vim.uv
 --- @field stdin? uv.uv_stream_t
 --- @field stdout? uv.uv_stream_t
 --- @field stderr? uv.uv_stream_t
---- @field result? SystemCompleted
+--- @field stdout_data? string[]
+--- @field stderr_data? string[]
+--- @field result? vim.SystemCompleted
 
 --- @enum vim.SystemSig
 local SIG = {
@@ -44,7 +46,7 @@ local function close_handle(handle)
   end
 end
 
----@param state SystemState
+---@param state vim.SystemState
 local function close_handles(state)
   close_handle(state.handle)
   close_handle(state.stdin)
@@ -53,17 +55,17 @@ local function close_handles(state)
   close_handle(state.timer)
 end
 
---- @class SystemObj
+--- @class vim.SystemObj
 --- @field pid integer
---- @field private _state SystemState
---- @field wait fun(self: SystemObj, timeout?: integer): SystemCompleted
---- @field kill fun(self: SystemObj, signal: integer|string)
---- @field write fun(self: SystemObj, data?: string|string[])
---- @field is_closing fun(self: SystemObj): boolean?
+--- @field private _state vim.SystemState
+--- @field wait fun(self: vim.SystemObj, timeout?: integer): vim.SystemCompleted
+--- @field kill fun(self: vim.SystemObj, signal: integer|string)
+--- @field write fun(self: vim.SystemObj, data?: string|string[])
+--- @field is_closing fun(self: vim.SystemObj): boolean?
 local SystemObj = {}
 
---- @param state SystemState
---- @return SystemObj
+--- @param state vim.SystemState
+--- @return vim.SystemObj
 local function new_systemobj(state)
   return setmetatable({
     pid = state.pid,
@@ -86,7 +88,7 @@ end
 local MAX_TIMEOUT = 2 ^ 31
 
 --- @param timeout? integer
---- @return SystemCompleted
+--- @return vim.SystemCompleted
 function SystemObj:wait(timeout)
   local state = self._state
 
@@ -254,12 +256,53 @@ local function timer_oneshot(timeout, cb)
   return timer
 end
 
+--- @param state vim.SystemState
+--- @param code integer
+--- @param signal integer
+--- @param on_exit fun(result: vim.SystemCompleted)?
+local function _on_exit(state, code, signal, on_exit)
+  close_handles(state)
+
+  local check = assert(uv.new_check())
+  check:start(function()
+    for _, pipe in pairs({ state.stdin, state.stdout, state.stderr }) do
+      if not pipe:is_closing() then
+        return
+      end
+    end
+    check:stop()
+    check:close()
+
+    if state.done == nil then
+      state.done = true
+    end
+
+    if code == 0 and state.done == 'timeout' then
+      code = 124
+    end
+
+    local stdout_data = state.stdout_data
+    local stderr_data = state.stderr_data
+
+    state.result = {
+      code = code,
+      signal = signal,
+      stdout = stdout_data and table.concat(stdout_data) or nil,
+      stderr = stderr_data and table.concat(stderr_data) or nil,
+    }
+
+    if on_exit then
+      on_exit(state.result)
+    end
+  end)
+end
+
 --- Run a system command
 ---
 --- @param cmd string[]
 --- @param opts? SystemOpts
---- @param on_exit? fun(out: SystemCompleted)
---- @return SystemObj
+--- @param on_exit? fun(out: vim.SystemCompleted)
+--- @return vim.SystemObj
 function M.run(cmd, opts, on_exit)
   vim.validate({
     cmd = { cmd, 'table' },
@@ -273,7 +316,7 @@ function M.run(cmd, opts, on_exit)
   local stderr, stderr_handler = setup_output(opts.stderr)
   local stdin, towrite = setup_input(opts.stdin)
 
-  --- @type SystemState
+  --- @type vim.SystemState
   local state = {
     done = false,
     cmd = cmd,
@@ -283,11 +326,6 @@ function M.run(cmd, opts, on_exit)
     stderr = stderr,
   }
 
-  -- Define data buckets as tables and concatenate the elements at the end as
-  -- one operation.
-  --- @type string[], string[]
-  local stdout_data, stderr_data
-
   state.handle, state.pid = spawn(cmd[1], {
     args = vim.list_slice(cmd, 2),
     stdio = { stdin, stdout, stderr },
@@ -296,50 +334,19 @@ function M.run(cmd, opts, on_exit)
     detached = opts.detach,
     hide = true,
   }, function(code, signal)
-    close_handles(state)
-
-    local check = assert(uv.new_check())
-
-    check:start(function()
-      for _, pipe in pairs({ state.stdin, state.stdout, state.stderr }) do
-        if not pipe:is_closing() then
-          return
-        end
-      end
-      check:stop()
-      check:close()
-
-      if state.done == nil then
-        state.done = true
-      end
-
-      if code == 0 and state.done == 'timeout' then
-        code = 124
-      end
-
-      state.result = {
-        code = code,
-        signal = signal,
-        stdout = stdout_data and table.concat(stdout_data) or nil,
-        stderr = stderr_data and table.concat(stderr_data) or nil,
-      }
-
-      if on_exit then
-        on_exit(state.result)
-      end
-    end)
+    _on_exit(state, code, signal, on_exit)
   end, function()
     close_handles(state)
   end)
 
   if stdout then
-    stdout_data = {}
-    stdout:read_start(stdout_handler or default_handler(stdout, opts.text, stdout_data))
+    state.stdout_data = {}
+    stdout:read_start(stdout_handler or default_handler(stdout, opts.text, state.stdout_data))
   end
 
   if stderr then
-    stderr_data = {}
-    stderr:read_start(stderr_handler or default_handler(stderr, opts.text, stderr_data))
+    state.stderr_data = {}
+    stderr:read_start(stderr_handler or default_handler(stderr, opts.text, state.stderr_data))
   end
 
   local obj = new_systemobj(state)
