@@ -3,9 +3,8 @@
 " Author:	John Wellesz <John.wellesz (AT) gmail (DOT) com>
 " URL:		https://www.2072productions.com/vim/indent/php.vim
 " Home:		https://github.com/2072/PHP-Indenting-for-VIm
-" Last Change:	2020 Mar 05
-"		2023 Aug 28 by Vim Project (undo_indent)
-" Version:	1.70
+" Last Change:	2023 August 18th
+" Version:	1.75
 "
 "
 "	Type :help php-indent for available options
@@ -143,10 +142,10 @@ if exists("*GetPhpIndent")
 endif
 
 
-let s:endline = '\s*\%(//.*\|#.*\|/\*.*\*/\s*\)\=$'
+let s:endline = '\s*\%(//.*\|#\[\@!.*\|/\*.*\*/\s*\)\=$'
 let s:PHP_validVariable = '[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*'
-let s:notPhpHereDoc = '\%(break\|return\|continue\|exit\|die\|else\|end\%(if\|while\|for\|foreach\|switch\)\)'
-let s:blockstart = '\%(\%(\%(}\s*\)\=else\%(\s\+\)\=\)\=if\>\|\%(}\s*\)\?else\>\|do\>\|while\>\|switch\>\|case\>\|default\>\|for\%(each\)\=\>\|declare\>\|class\>\|trait\>\|\%()\s*\)\=use\>\|interface\>\|abstract\>\|final\>\|try\>\|\%(}\s*\)\=catch\>\|\%(}\s*\)\=finally\>\)'
+let s:notPhpHereDoc = '\<\%(break\|return\|continue\|exit\|die\|true\|false\|elseif\|else\|end\%(if\|while\|for\|foreach\|match\|switch\)\)\>'
+let s:blockstart = '\%(\%(\%(}\s*\)\=else\%(\s\+\)\=\)\=if\>\|\%(}\s*\)\?else\>\|do\>\|while\>\|match\>\|switch\>\|case\>\|default\>\|for\%(each\)\=\>\|declare\>\|class\>\|trait\>\|\%()\s*\)\=use\>\|interface\>\|abstract\>\|final\>\|try\>\|\%(}\s*\)\=catch\>\|\%(}\s*\)\=finally\>\)'
 let s:functionDeclPrefix = '\<function\>\%(\s\+&\='.s:PHP_validVariable.'\)\=\s*('
 let s:functionDecl = s:functionDeclPrefix.'.*'
 let s:multilineFunctionDecl = s:functionDeclPrefix.s:endline
@@ -157,7 +156,8 @@ let s:unstated = '\%(^\s*'.s:blockstart.'.*)\|\%(//.*\)\@<!\<e'.'lse\>\)'.s:endl
 
 let s:terminated = '\%(\%(;\%(\s*\%(?>\|}\)\)\=\|<<<\s*[''"]\=\a\w*[''"]\=$\|^\s*}\|^\s*'.s:PHP_validVariable.':\)'.s:endline.'\)'
 let s:PHP_startindenttag = '<?\%(.*?>\)\@!\|<script[^>]*>\%(.*<\/script>\)\@!'
-let s:structureHead = '^\s*\%(' . s:blockstart . '\)\|'. s:functionDecl . s:endline . '\|\<new\s\+class\>'
+let s:matchStart = 'match\s*(\s*\$\?'.s:PHP_validVariable.'\s*)\s*{'. s:endline
+let s:structureHead = '^\s*\%(' . s:blockstart . '\)\|'. s:functionDecl . s:endline . '\|\<new\s\+class\>\|' . s:matchStart
 
 
 let s:escapeDebugStops = 0
@@ -224,7 +224,7 @@ function! GetLastRealCodeLNum(startline) " {{{
 	    while getline(lnum) !~? tofind && lnum > 1
 		let lnum = lnum - 1
 	    endwhile
-	elseif lastline =~ '^\s*[''"`][;,]' || (lastline =~ '^[^''"`]*[''"`][;,]'.s:endline && IslinePHP(lnum, "") == "SpecStringEntrails")
+	elseif lastline =~ '^\s*[''"`][;,]'.s:endline || (lastline =~ '^[^''"`]*[''"`][;,]'.s:endline && IslinePHP(lnum, "") == "SpecStringEntrails")
 
 	    let tofind=substitute( lastline, '^.*\([''"`]\)[;,].*$', '^[^\1]\\+[\1]$\\|^[^\1]\\+[=([]\\s*[\1]', '')
 	    let trylnum = lnum
@@ -267,7 +267,7 @@ function! Skippmatch2()
 
     let line = getline(".")
 
-    if line =~ "\\([\"']\\).*/\\*.*\\1" || line =~ '\%(//\|#\).*/\*'
+    if line =~ "\\([\"']\\).*/\\*.*\\1" || line =~ '\%(//\|#\[\@!\).*/\*'
 	return 1
     else
 	return 0
@@ -323,7 +323,11 @@ function! BalanceDirection (str)
 endfun
 
 function! StripEndlineComments (line)
-    return substitute(a:line,"\\(//\\|#\\)\\(\\(\\([^\"']*\\([\"']\\)[^\"']*\\5\\)\\+[^\"']*$\\)\\|\\([^\"']*$\\)\\)",'','')
+
+    let cleaned = substitute(a:line,'\v(//|#\[\@!)((([^"'']*(["''])[^"'']*\5)+[^"'']*$)|([^"'']*$))','','')
+    if cleaned != a:line
+    endif
+    return cleaned
 endfun
 
 function! FindArrowIndent (lnum)  " {{{
@@ -491,7 +495,7 @@ function! ResetPhpOptions()
     if ! b:optionsset && &filetype =~ "php"
 	if b:PHP_autoformatcomment
 
-	    setlocal comments=s1:/*,mb:*,ex:*/,://,:#
+	    setlocal comments=s1:/*,mb:*,ex:*/,://,f:#[,:#
 
 	    setlocal formatoptions-=t
 	    setlocal formatoptions+=q
@@ -507,7 +511,7 @@ endfunc
 call ResetPhpOptions()
 
 function! GetPhpIndentVersion()
-    return "1.70-bundle"
+    return "1.75"
 endfun
 
 function! GetPhpIndent()
@@ -651,7 +655,7 @@ function! GetPhpIndent()
 		let b:InPHPcode_and_script = 1
 	    endif
 
-	elseif last_line =~ '^[^''"`]\+[''"`]$' && last_line !~ '^\s*\%(//\|#\|/\*.*\*/\s*$\)' " a string identifier with nothing after it and no other string identifier before
+	elseif last_line =~ '^[^''"`]\+[''"`]$' && last_line !~ '^\s*\%(//\|#\[\@!\|/\*.*\*/\s*$\)' " a string identifier with nothing after it and no other string identifier before
 	    let b:InPHPcode = -1
 	    let b:InPHPcode_tofind = substitute( last_line, '^.*\([''"`]\).*$', '^[^\1]*\1[;,]$', '')
 	elseif last_line =~? '<<<\s*[''"]\=\a\w*[''"]\=$'
@@ -675,7 +679,7 @@ function! GetPhpIndent()
 
     " Indent successive // or # comment the same way the first is {{{
     let addSpecial = 0
-    if cline =~ '^\s*\%(//\|#\|/\*.*\*/\s*$\)'
+    if cline =~ '^\s*\%(//\|#\[\@!\|/\*.*\*/\s*$\)'
 	let addSpecial = b:PHP_outdentSLComments
 	if b:PHP_LastIndentedWasComment == 1
 	    return indent(real_PHP_lastindented)
@@ -716,7 +720,7 @@ function! GetPhpIndent()
 	return 0
     endif
 
-    if cline =~? '^\s*\a\w*;$\|^\a\w*$\|^\s*[''"`][;,]' && cline !~? s:notPhpHereDoc
+    if (cline =~? '^\s*\a\w*;$\|^\a\w*$' || (cline =~? '^\s*[''"`][;,]' && IslinePHP(v:lnum, '[;,]') !~? '^\(phpString[SD]\|phpBacktick\)') ) && cline !~? s:notPhpHereDoc
 	return 0
     endif " }}}
 
@@ -739,6 +743,9 @@ function! GetPhpIndent()
     if cline =~ '^\s*}\%(}}\)\@!'
 	let ind = indent(FindOpenBracket(v:lnum, 1))
 	let b:PHP_CurrentIndentLevel = b:PHP_default_indenting
+	if  b:PHP_BracesAtCodeLevel
+	    let ind = ind + shiftwidth()
+	endif
 	return ind
     endif
 
@@ -762,7 +769,7 @@ function! GetPhpIndent()
     if last_line =~ '[;}]'.endline && last_line !~ '^[)\]]' && last_line !~# s:defaultORcase && last_line !~ '^\s*[''"`][;,]'
 	if ind==b:PHP_default_indenting
 	    return b:PHP_default_indenting + addSpecial
-	elseif b:PHP_indentinghuge && ind==b:PHP_CurrentIndentLevel && cline !~# '^\s*\%(else\|\%(case\|default\).*:\|[})];\=\)' && last_line !~# '^\s*\%(\%(}\s*\)\=else\)' && getline(GetLastRealCodeLNum(lnum - 1))=~';'.endline
+	elseif b:PHP_indentinghuge && ind==b:PHP_CurrentIndentLevel && cline !~# '^\s*\%(else\|\%(case\|default\).*:\|[})];\=\)' && last_line !~# '^\s*\%(\%(}\s*\)\=else\)\|^\(\s*\S\+\s*\)\+}'.endline && getline(GetLastRealCodeLNum(lnum - 1))=~';'.endline
 	    return b:PHP_CurrentIndentLevel + addSpecial
 	endif
     endif
@@ -930,7 +937,7 @@ function! GetPhpIndent()
 	    let ind = ind + shiftwidth()
 
 
-	elseif AntepenultimateLine =~ '{'.endline && AntepenultimateLine !~? '^\s*use\>' || AntepenultimateLine =~ terminated || AntepenultimateLine =~# s:defaultORcase
+	elseif AntepenultimateLine =~ '{'.endline && AntepenultimateLine !~? '^\s*use\>' && AntepenultimateLine !~? s:matchStart || AntepenultimateLine =~ terminated || AntepenultimateLine =~# s:defaultORcase
 	    let ind = ind + shiftwidth()
 	endif
 
