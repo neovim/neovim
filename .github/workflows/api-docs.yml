@@ -19,7 +19,7 @@ jobs:
         with:
           neovim: true
           version: nightly
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           sudo apt-get update
