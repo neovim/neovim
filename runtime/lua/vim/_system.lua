@@ -2,8 +2,8 @@ local uv = vim.uv
 
 --- @class SystemOpts
 --- @field stdin? string|string[]|true
---- @field stdout? fun(err:string, data: string)|false
---- @field stderr? fun(err:string, data: string)|false
+--- @field stdout? fun(err:string?, data: string?)|false
+--- @field stderr? fun(err:string?, data: string?)|false
 --- @field cwd? string
 --- @field env? table<string,string|number>
 --- @field clear_env? boolean
@@ -18,39 +18,46 @@ local uv = vim.uv
 --- @field stderr? string
 
 --- @class SystemState
---- @field cmd string[]
 --- @field handle? uv.uv_process_t
 --- @field timer?  uv.uv_timer_t
 --- @field pid? integer
 --- @field timeout? integer
---- @field done? boolean
+--- @field done? boolean|'timeout'
 --- @field stdin? uv.uv_stream_t
 --- @field stdout? uv.uv_stream_t
 --- @field stderr? uv.uv_stream_t
 --- @field result? SystemCompleted
 
----@param state SystemState
-local function close_handles(state)
-  for _, handle in pairs({ state.handle, state.stdin, state.stdout, state.stderr }) do
-    if not handle:is_closing() then
-      handle:close()
-    end
+--- @enum vim.SystemSig
+local SIG = {
+  HUP = 1, -- Hangup
+  INT = 2, -- Interrupt from keyboard
+  KILL = 9, -- Kill signal
+  TERM = 15, -- Termination signal
+  -- STOP = 17,19,23  -- Stop the process
+}
+
+---@param handle uv.uv_handle_t?
+local function close_handle(handle)
+  if handle and not handle:is_closing() then
+    handle:close()
   end
 end
 
---- @param cmd string[]
---- @return SystemCompleted
-local function timeout_result(cmd)
-  local cmd_str = table.concat(cmd, ' ')
-  local err = string.format("Command timed out: '%s'", cmd_str)
-  return { code = 0, signal = 2, stdout = '', stderr = err }
+---@param state SystemState
+local function close_handles(state)
+  close_handle(state.handle)
+  close_handle(state.stdin)
+  close_handle(state.stdout)
+  close_handle(state.stderr)
+  close_handle(state.timer)
 end
 
 --- @class SystemObj
 --- @field pid integer
 --- @field private _state SystemState
 --- @field wait fun(self: SystemObj, timeout?: integer): SystemCompleted
---- @field kill fun(self: SystemObj, signal: integer)
+--- @field kill fun(self: SystemObj, signal: integer|string)
 --- @field write fun(self: SystemObj, data?: string|string[])
 --- @field is_closing fun(self: SystemObj): boolean?
 local SystemObj = {}
@@ -69,6 +76,13 @@ function SystemObj:kill(signal)
   self._state.handle:kill(signal)
 end
 
+--- @package
+--- @param signal? vim.SystemSig
+function SystemObj:_timeout(signal)
+  self._state.done = 'timeout'
+  self:kill(signal or SIG.TERM)
+end
+
 local MAX_TIMEOUT = 2 ^ 31
 
 --- @param timeout? integer
@@ -76,13 +90,16 @@ local MAX_TIMEOUT = 2 ^ 31
 function SystemObj:wait(timeout)
   local state = self._state
 
-  vim.wait(timeout or state.timeout or MAX_TIMEOUT, function()
-    return state.done
+  local done = vim.wait(timeout or state.timeout or MAX_TIMEOUT, function()
+    return state.result ~= nil
   end)
 
-  if not state.done then
-    self:kill(6) -- 'sigint'
-    state.result = timeout_result(state.cmd)
+  if not done then
+    -- Send sigkill since this cannot be caught
+    self:_timeout(SIG.KILL)
+    vim.wait(timeout or state.timeout or MAX_TIMEOUT, function()
+      return state.result ~= nil
+    end)
   end
 
   return state.result
@@ -124,9 +141,9 @@ function SystemObj:is_closing()
   return handle == nil or handle:is_closing()
 end
 
----@param output function|'false'
+---@param output fun(err:string?, data: string?)|false
 ---@return uv.uv_stream_t?
----@return function? Handler
+---@return fun(err:string?, data: string?)? Handler
 local function setup_output(output)
   if output == nil then
     return assert(uv.new_pipe(false)), nil
@@ -224,6 +241,19 @@ local function spawn(cmd, opts, on_exit, on_error)
   return handle, pid_or_err --[[@as integer]]
 end
 
+---@param timeout integer
+---@param cb fun()
+---@return uv.uv_timer_t
+local function timer_oneshot(timeout, cb)
+  local timer = assert(uv.new_timer())
+  timer:start(timeout, 0, function()
+    timer:stop()
+    timer:close()
+    cb()
+  end)
+  return timer
+end
+
 --- Run a system command
 ---
 --- @param cmd string[]
@@ -267,10 +297,6 @@ function M.run(cmd, opts, on_exit)
     hide = true,
   }, function(code, signal)
     close_handles(state)
-    if state.timer then
-      state.timer:stop()
-      state.timer:close()
-    end
 
     local check = assert(uv.new_check())
 
@@ -283,7 +309,14 @@ function M.run(cmd, opts, on_exit)
       check:stop()
       check:close()
 
-      state.done = true
+      if state.done == nil then
+        state.done = true
+      end
+
+      if code == 0 and state.done == 'timeout' then
+        code = 124
+      end
+
       state.result = {
         code = code,
         signal = signal,
@@ -317,16 +350,9 @@ function M.run(cmd, opts, on_exit)
   end
 
   if opts.timeout then
-    state.timer = assert(uv.new_timer())
-    state.timer:start(opts.timeout, 0, function()
-      state.timer:stop()
-      state.timer:close()
+    state.timer = timer_oneshot(opts.timeout, function()
       if state.handle and state.handle:is_active() then
-        obj:kill(6) --- 'sigint'
-        state.result = timeout_result(state.cmd)
-        if on_exit then
-          on_exit(state.result)
-        end
+        obj:_timeout()
       end
     end)
   end
