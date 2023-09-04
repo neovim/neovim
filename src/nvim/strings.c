@@ -1250,7 +1250,7 @@ static void skip_to_arg(const char **ap_types, va_list ap_start, va_list *ap, in
 
   for (*arg_cur = arg_min; *arg_cur < *arg_idx - 1; (*arg_cur)++) {
     if (ap_types == NULL || ap_types[*arg_cur] == NULL) {
-      semsg(e_aptypes_is_null_str_nr, fmt, *arg_cur);
+      siemsg(e_aptypes_is_null_str_nr, fmt, *arg_cur);
       return;
     }
 
