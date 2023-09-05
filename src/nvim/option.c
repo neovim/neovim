@@ -3772,7 +3772,7 @@ static const char *set_option(int opt_idx, void *varp, OptVal *v, int opt_flags,
                                errbuf, errbuflen);
   }
 
-  if (errmsg != NULL) {
+  if (errmsg == NULL) {
     did_set_option(opt_idx, opt_flags, true, value_checked);
   }
 

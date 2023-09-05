@@ -1416,6 +1416,20 @@ describe('API', function()
       eq(true, status)
       eq('  equalalways\n\tLast set from Lua', rv)
     end)
+
+    it('updates whether the option has ever been set #25025', function()
+      eq(false, nvim('get_option_info2', 'autochdir', {}).was_set)
+      nvim('set_option_value', 'autochdir', true, {})
+      eq(true, nvim('get_option_info2', 'autochdir', {}).was_set)
+
+      eq(false, nvim('get_option_info2', 'cmdwinheight', {}).was_set)
+      nvim('set_option_value', 'cmdwinheight', 10, {})
+      eq(true, nvim('get_option_info2', 'cmdwinheight', {}).was_set)
+
+      eq(false, nvim('get_option_info2', 'debug', {}).was_set)
+      nvim('set_option_value', 'debug', 'beep', {})
+      eq(true, nvim('get_option_info2', 'debug', {}).was_set)
+    end)
   end)
 
   describe('nvim_get_option_value, nvim_set_option_value', function()
