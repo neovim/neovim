@@ -277,7 +277,9 @@ local function _on_exit(state, code, signal, on_exit)
       state.done = true
     end
 
-    if code == 0 and state.done == 'timeout' then
+    if (code == 0 or code == 1) and state.done == 'timeout' then
+      -- Unix: code == 0
+      -- Windows: code == 1
       code = 124
     end
 
@@ -326,10 +328,12 @@ function M.run(cmd, opts, on_exit)
     stderr = stderr,
   }
 
+  --- @diagnostic disable-next-line:missing-fields
   state.handle, state.pid = spawn(cmd[1], {
     args = vim.list_slice(cmd, 2),
     stdio = { stdin, stdout, stderr },
     cwd = opts.cwd,
+    --- @diagnostic disable-next-line:assign-type-mismatch
     env = setup_env(opts.env, opts.clear_env),
     detached = opts.detach,
     hide = true,
