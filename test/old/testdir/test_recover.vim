@@ -144,9 +144,9 @@ func Test_recover_multiple_swap_files()
   call setline(1, ['a', 'b', 'c'])
   preserve
   let b = readblob(swapname(''))
-  call writefile(b, '.Xfile1.swm')
-  call writefile(b, '.Xfile1.swn')
-  call writefile(b, '.Xfile1.swo')
+  call writefile(b, '.Xfile1.swm', 'D')
+  call writefile(b, '.Xfile1.swn', 'D')
+  call writefile(b, '.Xfile1.swo', 'D')
   %bw!
   call feedkeys(":recover Xfile1\<CR>3\<CR>q", 'xt')
   call assert_equal(['a', 'b', 'c'], getline(1, '$'))
@@ -160,16 +160,13 @@ func Test_recover_multiple_swap_files()
   call assert_equal('Xfile1', @%)
   call assert_equal([''], getline(1, '$'))
   bw!
-
-  call delete('.Xfile1.swm')
-  call delete('.Xfile1.swn')
-  call delete('.Xfile1.swo')
 endfunc
 
 " Test for :recover using an empty swap file
 func Test_recover_empty_swap_file()
   CheckUnix
-  call writefile([], '.Xfile1.swp')
+  call writefile([], '.Xfile1.swp', 'D')
+  set dir=.
   let msg = execute('recover Xfile1')
   call assert_match('Unable to read block 0 from .Xfile1.swp', msg)
   call assert_equal('Xfile1', @%)
@@ -182,7 +179,7 @@ func Test_recover_empty_swap_file()
 
   " :recover from an empty buffer
   call assert_fails('recover', 'E305:')
-  call delete('.Xfile1.swp')
+  set dir&vim
 endfunc
 
 " Test for :recover using a corrupted swap file
@@ -389,16 +386,15 @@ func Test_recover_encrypted_swap_file()
 endfunc
 
 " Test for :recover using a unreadable swap file
-func Test_recover_unreadble_swap_file()
+func Test_recover_unreadable_swap_file()
   CheckUnix
   CheckNotRoot
   new Xfile1
   let b = readblob('.Xfile1.swp')
-  call writefile(b, '.Xfile1.swm')
+  call writefile(b, '.Xfile1.swm', 'D')
   bw!
   call setfperm('.Xfile1.swm', '-w-------')
   call assert_fails('recover Xfile1', 'E306:')
-  call delete('.Xfile1.swm')
 endfunc
 
 " Test for using :recover when the original file and the swap file have the
@@ -410,20 +406,19 @@ func Test_recover_unmodified_file()
   preserve
   let b = readblob('.Xfile1.swp')
   %bw!
-  call writefile(b, '.Xfile1.swz')
+  call writefile(b, '.Xfile1.swz', 'D')
   let msg = execute('recover Xfile1')
   call assert_equal(['aaa', 'bbb', 'ccc'], getline(1, '$'))
   call assert_false(&modified)
   call assert_match('Buffer contents equals file contents', msg)
   bw!
   call delete('Xfile1')
-  call delete('.Xfile1.swz')
 endfunc
 
 " Test for recovering a file when editing a symbolically linked file
 func Test_recover_symbolic_link()
   CheckUnix
-  call writefile(['aaa', 'bbb', 'ccc'], 'Xfile1')
+  call writefile(['aaa', 'bbb', 'ccc'], 'Xfile1', 'D')
   silent !ln -s Xfile1 Xfile2
   edit Xfile2
   call assert_equal('.Xfile1.swp', fnamemodify(swapname(''), ':t'))
@@ -438,7 +433,6 @@ func Test_recover_symbolic_link()
   update
   %bw!
   call assert_equal(['aaa', 'bbb', 'ccc'], readfile('Xfile1'))
-  call delete('Xfile1')
   call delete('Xfile2')
   call delete('.Xfile1.swp')
 endfunc
@@ -447,7 +441,7 @@ endfunc
 " line. This used to result in an internal error (E315) which is fixed
 " by 8.2.2966.
 func Test_recover_invalid_cursor_pos()
-  call writefile([], 'Xfile1')
+  call writefile([], 'Xfile1', 'D')
   edit Xfile1
   preserve
   let b = readblob('.Xfile1.swp')
@@ -457,7 +451,7 @@ func Test_recover_invalid_cursor_pos()
     au BufReadPost Xfile1 normal! 3G
   augroup END
   call writefile(range(1, 3), 'Xfile1')
-  call writefile(b, '.Xfile1.swp')
+  call writefile(b, '.Xfile1.swp', 'D')
   try
     recover Xfile1
   catch /E308:/
@@ -469,8 +463,6 @@ func Test_recover_invalid_cursor_pos()
     au!
   augroup END
   augroup! Test
-  call delete('Xfile1')
-  call delete('.Xfile1.swp')
 endfunc
 
 " Test for recovering a buffer without a name
@@ -481,10 +473,9 @@ func Test_noname_buffer()
   let sn = swapname('')
   let b = readblob(sn)
   bw!
-  call writefile(b, sn)
+  call writefile(b, sn, 'D')
   exe "recover " .. sn
   call assert_equal(['one', 'two'], getline(1, '$'))
-  call delete(sn)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
