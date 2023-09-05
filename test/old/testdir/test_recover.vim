@@ -166,6 +166,7 @@ endfunc
 func Test_recover_empty_swap_file()
   CheckUnix
   call writefile([], '.Xfile1.swp', 'D')
+  set dir=.
   let msg = execute('recover Xfile1')
   call assert_match('Unable to read block 0 from .Xfile1.swp', msg)
   call assert_equal('Xfile1', @%)
@@ -178,6 +179,7 @@ func Test_recover_empty_swap_file()
 
   " :recover from an empty buffer
   call assert_fails('recover', 'E305:')
+  set dir&vim
 endfunc
 
 " Test for :recover using a corrupted swap file
