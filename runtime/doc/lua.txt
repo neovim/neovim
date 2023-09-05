@@ -1777,7 +1777,9 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
                      `fun(err: string, data: string)`. Defaults to `true`.
                    • text: (boolean) Handle stdout and stderr as text.
                      Replaces `\r\n` with `\n`.
-                   • timeout: (integer)
+                   • timeout: (integer) Run the command with a time limit.
+                     Upon timeout the process is sent the TERM signal (15) and
+                     the exit code is set to 124.
                    • detach: (boolean) If true, spawn the child process in a
                      detached state - this will make it a process group
                      leader, and will effectively enable the child to keep
@@ -1790,16 +1792,18 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
                    object, see return of SystemObj:wait().
 
     Return: ~
-        SystemObj Object with the fields:
+        vim.SystemObj Object with the fields:
         • pid (integer) Process ID
-        • wait (fun(timeout: integer|nil): SystemCompleted)
+        • wait (fun(timeout: integer|nil): SystemCompleted) Wait for the
+          process to complete. Upon timeout the process is sent the KILL
+          signal (9) and the exit code is set to 124.
           • SystemCompleted is an object with the fields:
             • code: (integer)
             • signal: (integer)
             • stdout: (string), nil if stdout argument is passed
             • stderr: (string), nil if stderr argument is passed
 
-        • kill (fun(signal: integer))
+        • kill (fun(signal: integer|string))
         • write (fun(data: string|nil)) Requires `stdin=true`. Pass `nil` to
           close the stream.
         • is_closing (fun(): boolean)
@@ -2541,7 +2545,7 @@ vim.ui.open({path})                                            *vim.ui.open()*
       • {path}  (string) Path or URL to open
 
     Return (multiple): ~
-        SystemCompleted|nil Command result, or nil if not found.
+        vim.SystemCompleted|nil Command result, or nil if not found.
         (string|nil) Error message on failure
 
     See also: ~

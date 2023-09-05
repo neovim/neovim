@@ -648,7 +648,7 @@ function M.start(cmd, cmd_args, dispatchers, extra_spawn_params)
 
   dispatchers = merge_dispatchers(dispatchers)
 
-  local sysobj ---@type SystemObj
+  local sysobj ---@type vim.SystemObj
 
   local client = new_client(dispatchers, {
     write = function(msg)
@@ -708,7 +708,7 @@ function M.start(cmd, cmd_args, dispatchers, extra_spawn_params)
     return
   end
 
-  sysobj = sysobj_or_err --[[@as SystemObj]]
+  sysobj = sysobj_or_err --[[@as vim.SystemObj]]
 
   return public_client(client)
 end

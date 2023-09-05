@@ -118,7 +118,7 @@ end
 ---
 ---@param path string Path or URL to open
 ---
----@return SystemCompleted|nil # Command result, or nil if not found.
+---@return vim.SystemCompleted|nil # Command result, or nil if not found.
 ---@return string|nil # Error message on failure
 ---
 ---@see |vim.system()|
