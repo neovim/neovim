@@ -2371,6 +2371,7 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
     { &wp->w_p_fcs_chars.foldopen,   "foldopen",  '-' },
     { &wp->w_p_fcs_chars.foldclosed, "foldclose", '+' },
     { &wp->w_p_fcs_chars.foldsep,    "foldsep",   char2cells(0x2502) == 1 ? 0x2502 : '|' },  // │
+    { &wp->w_p_fcs_chars.nofold,    "nofold",   NUL },
     { &wp->w_p_fcs_chars.diff,       "diff",      '-' },
     { &wp->w_p_fcs_chars.msgsep,     "msgsep",    ' ' },
     { &wp->w_p_fcs_chars.eob,        "eob",       '~' },

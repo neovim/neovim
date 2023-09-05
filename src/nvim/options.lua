@@ -2805,6 +2805,7 @@ return {
           foldopen	'-'		mark the beginning of a fold
           foldclose	'+'		show a closed fold
           foldsep	'│' or '|'      open fold middle marker
+          nofold	depth level	no fold marker
           diff		'-'		deleted lines of the 'diff' option
           msgsep	' '		message separator 'display'
           eob		'~'		empty lines at the end of a buffer

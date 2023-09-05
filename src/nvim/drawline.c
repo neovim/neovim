@@ -435,6 +435,8 @@ size_t fill_foldcolumn(char *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum)
       symbol = wp->w_p_fcs_chars.foldopen;
     } else if (first_level == 1) {
       symbol = wp->w_p_fcs_chars.foldsep;
+    } else if (wp->w_p_fcs_chars.nofold != NUL) {
+      symbol = wp->w_p_fcs_chars.nofold;
     } else if (first_level + i <= 9) {
       symbol = '0' + first_level + i;
     } else {

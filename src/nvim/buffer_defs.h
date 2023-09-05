@@ -1074,6 +1074,7 @@ struct window_S {
     int foldopen;                    ///< when fold is open
     int foldclosed;                  ///< when fold is closed
     int foldsep;                     ///< continuous fold marker
+    int nofold;                      ///< when there's no fold
     int diff;
     int msgsep;
     int eob;
