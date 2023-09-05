@@ -77,7 +77,7 @@ function! s:query_path(root) abort
   let cwd = fnameescape(getcwd())
   try
     exe cd fnameescape(a:root)
-    if fnamemodify(exepath('ruby'), ':p:h') ==# getcwd()
+    if fnamemodify(exepath('ruby'), ':p:h') ==# cwd
       let path = []
     else
       let path = split(system(path_check),',')
