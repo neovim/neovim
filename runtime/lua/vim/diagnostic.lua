@@ -386,6 +386,7 @@ local function get_diagnostics(bufnr, opts, clamp)
 
   local function add(b, d)
     if not opts.lnum or d.lnum == opts.lnum then
+      d = vim.deepcopy(d)
       if clamp and api.nvim_buf_is_loaded(b) then
         local line_count = buf_line_count[b] - 1
         if
@@ -396,7 +397,6 @@ local function get_diagnostics(bufnr, opts, clamp)
           or d.col < 0
           or d.end_col < 0
         then
-          d = vim.deepcopy(d)
           d.lnum = math.max(math.min(d.lnum, line_count), 0)
           d.end_lnum = math.max(math.min(d.end_lnum, line_count), 0)
           d.col = math.max(d.col, 0)
@@ -749,6 +749,8 @@ end
 ---@field user_data? any arbitrary data plugins can add
 
 --- Get current diagnostics.
+---
+--- Modifying diagnostics in the returned table has no effect. To set diagnostics in a buffer, use |vim.diagnostic.set()|.
 ---
 ---@param bufnr integer|nil Buffer number to get diagnostics from. Use 0 for
 ---                        current buffer or nil for all buffers.

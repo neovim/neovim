@@ -480,6 +480,9 @@ fromqflist({list})                               *vim.diagnostic.fromqflist()*
 get({bufnr}, {opts})                                    *vim.diagnostic.get()*
     Get current diagnostics.
 
+    Modifying diagnostics in the returned table has no effect. To set
+    diagnostics in a buffer, use |vim.diagnostic.set()|.
+
     Parameters: ~
       • {bufnr}  (integer|nil) Buffer number to get diagnostics from. Use 0
                  for current buffer or nil for all buffers.
