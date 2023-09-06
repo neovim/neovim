@@ -285,7 +285,7 @@ describe('startup', function()
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
-    command([[exe printf("terminal %s -u NONE -i NONE --cmd \"]]
+    command([[exe printf("terminal! %s -u NONE -i NONE --cmd \"]]
             ..nvim_set..[[\"]]
             ..[[ -c \"echo has('ttyin') has('ttyout')\""]]
             ..[[, shellescape(v:progpath))]])
@@ -347,7 +347,7 @@ describe('startup', function()
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
-    command([[exe printf("terminal echo foo | ]]  -- Input from a pipe.
+    command([[exe printf("terminal! echo foo | ]]  -- Input from a pipe.
             ..[[%s -u NONE -i NONE --cmd \"]]
             ..nvim_set..[[\"]]
             ..[[ -c \"echo has('ttyin') has('ttyout')\""]]

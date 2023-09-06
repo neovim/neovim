@@ -31,7 +31,6 @@ describe(':terminal', function()
   end)
 
   it('next to a closing window', function()
-    command('split')
     command('terminal')
     command('vsplit foo')
     eq(3, eval("winnr('$')"))

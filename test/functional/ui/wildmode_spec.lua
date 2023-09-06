@@ -164,8 +164,7 @@ describe("'wildmenu'", function()
       command('let $PS1 = "$"')
     end
     command('set laststatus=0')
-    command('vsplit')
-    command('term')
+    command('vert term')
 
     -- Check for a shell prompt to verify that the terminal loaded.
     retry(nil, nil, function()

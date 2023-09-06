@@ -239,15 +239,18 @@ gx			Opens the current filepath or URL (decided by
 						  *:terminal* *:te*
 :te[rminal][!] [{cmd}]	Run {cmd} in a non-interactive 'shell' in a new
 			|terminal-emulator| buffer. Without {cmd}, start an
-			interactive 'shell'.
+			interactive 'shell'. The buffer is opened in a new
+			window.
 
 			Type |i| to enter |Terminal-mode|, then keys are sent to
 			the job running in the terminal. Type <C-\><C-N> to
 			leave Terminal-mode. |CTRL-\_CTRL-N|. Type <C-\><C-O>
 			to execute a single normal mode command |t_CTRL-\_CTRL-O|
 
-			Fails if changes have been made to the current buffer,
-			unless 'hidden' is set.
+			With [!], open the buffer in the current window. This
+			fails when changes have been made to the current
+			buffer, unless 'hidden' is set or 'autowriteall' is
+			set and the file can be written.
 
 			If {cmd} is omitted, and the 'shell' job exits with no
 			error, the buffer is closed automatically

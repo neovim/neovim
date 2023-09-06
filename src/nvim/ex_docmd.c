@@ -7304,7 +7304,11 @@ static void ex_terminal(exarg_T *eap)
   char ex_cmd[1024];
   size_t len = 0;
 
-  if (cmdmod.cmod_tab > 0 || cmdmod.cmod_split != 0) {
+  if (eap->forceit) {
+    int result = snprintf(ex_cmd, sizeof(ex_cmd), "enew");
+    assert(result > 0);
+    len += (size_t)result;
+  } else {
     bool multi_mods = false;
 
     // ex_cmd must be a null terminated string before passing to add_win_cmd_modifiers
@@ -7312,11 +7316,7 @@ static void ex_terminal(exarg_T *eap)
 
     len = add_win_cmd_modifiers(ex_cmd, &cmdmod, &multi_mods);
     assert(len < sizeof(ex_cmd));
-    int result = snprintf(ex_cmd + len, sizeof(ex_cmd) - len, " new");
-    assert(result > 0);
-    len += (size_t)result;
-  } else {
-    int result = snprintf(ex_cmd, sizeof(ex_cmd), "enew%s", eap->forceit ? "!" : "");
+    int result = snprintf(ex_cmd + len, sizeof(ex_cmd) - len, "%snew", len > 0 ? " " : "");
     assert(result > 0);
     len += (size_t)result;
   }
