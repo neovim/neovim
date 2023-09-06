@@ -55,7 +55,9 @@ endif
 " Set this once, globally.
 if !exists("perlpath")
     " safety check: don't execute perl from current directory
-    if executable("perl") && fnamemodify(exepath("perl"), ":p:h") != getcwd()
+    let s:tmp_cwd = getcwd()
+    if executable("perl") && (fnamemodify(exepath("perl"), ":p:h") != s:tmp_cwd
+          \ || (index(split($PATH,has("win32")? ';' : ':'), s:tmp_cwd) != -1 && s:tmp_cwd != '.'))
       try
 	if &shellxquote != '"'
 	    let perlpath = system('perl -e "print join(q/,/,@INC)"')
@@ -71,6 +73,7 @@ if !exists("perlpath")
 	" current directory and the directory of the current file.
 	let perlpath = ".,,"
     endif
+    unlet s:tmp_cwd
 endif
 
 " Append perlpath to the existing path value, if it is set.  Since we don't

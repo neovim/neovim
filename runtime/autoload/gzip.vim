@@ -11,7 +11,10 @@ fun s:check(cmd)
   let name = substitute(a:cmd, '\(\S*\).*', '\1', '')
   if !exists("s:have_" . name)
     " safety check, don't execute anything from the current directory
-    let f = fnamemodify(exepath(name), ":p:h") !=# getcwd()
+    let s:tmp_cwd = getcwd()
+    let f = (fnamemodify(exepath(name), ":p:h") !=# s:tmp_cwd
+          \ || (index(split($PATH,has("win32")? ';' : ':'), s:tmp_cwd) != -1 && s:tmp_cwd != '.'))
+    unlet s:tmp_cwd
     if !f
       echoerr "Warning: NOT executing " .. name .. " from current directory!"
     endif
