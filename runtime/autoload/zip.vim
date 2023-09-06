@@ -57,10 +57,15 @@ if !exists("g:zip_extractcmd")
  let g:zip_extractcmd= g:zip_unzipcmd
 endif
 
-if fnamemodify(exepath(g:zip_unzipcmd), ":p:h") ==# getcwd()
+let s:tmp_cwd = getcwd()
+if (fnamemodify(exepath(g:zip_unzipcmd), ":p:h") ==# getcwd()
+          \ && (index(split($PATH,has("win32")? ';' : ':'), s:tmp_cwd) == -1 || s:tmp_cwd == '.'))
+ unlet s:tmp_cwd
  echoerr "Warning: NOT executing " .. g:zip_unzipcmd .. " from current directory!"
  finish
 endif
+unlet s:tmp_cwd
+
 " ----------------
 "  Functions: {{{1
 " ----------------
