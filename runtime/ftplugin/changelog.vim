@@ -55,13 +55,19 @@ if &filetype == 'changelog'
     elseif $EMAIL_ADDRESS != ""
       return $EMAIL_ADDRESS
     endif
+    let s:default_login = 'unknown'
 
-    let login = s:login()
+    " Disabled by default for security reasons.  
+    if get(g:, 'changelog_exec', get(g:, 'plugin_exec', 0))
+      let login = s:login()
+    else
+      let login = s:default_login
+    endif
     return printf('%s <%s@%s>', s:name(login), login, s:hostname())
   endfunction
 
   function! s:login()
-    return s:trimmed_system_with_default('whoami', 'unknown')
+    return s:trimmed_system_with_default('whoami', s:default_login)
   endfunction
 
   function! s:trimmed_system_with_default(command, default)
@@ -71,7 +77,7 @@ if &filetype == 'changelog'
   function! s:system_with_default(command, default)
     let output = system(a:command)
     if v:shell_error
-      return default
+      return a:default
     endif
     return output
   endfunction

@@ -382,11 +382,24 @@ ways to change this:
 3.  Docs for the default filetype plugins.		*ftplugin-docs*
 
 
+					*plugin_exec* *g:plugin_exec*
+Enable executing of external commands.  This was done historically for e.g.
+the perl filetype plugin (and a few others) to set the search path.
+Disabled by default for security reasons: >
+	:let g:plugin_exec = 1
+It is also possible to enable this only for certain filetypes: >
+	:let g:<filetype>_exec = 1
+So to enable this only for ruby, set the following variable: >
+	:let g:ruby_exec = 1
+
+If both, the global `plugin_exec` and the `<filetype>_exec` specific variable
+are set, the filetpe specific variable should have precedent.
+
 AWK							*ft-awk-plugin*
 
 Support for features specific to GNU Awk, like @include, can be enabled by
 setting: >
-	let g:awk_is_gawk = 1
+	:let g:awk_is_gawk = 1
 
 
 CHANGELOG						*ft-changelog-plugin*

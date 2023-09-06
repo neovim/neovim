@@ -61,6 +61,10 @@ if !exists('g:ruby_version_paths')
 endif
 
 function! s:query_path(root) abort
+  " Disabled by default for security reasons.  
+  if !get(g:, 'ruby_exec', get(g:, 'plugin_exec', 0))
+    return []
+  endif
   let code = "print $:.join %q{,}"
   if &shell =~# 'sh' && empty(&shellxquote)
     let prefix = 'env PATH='.shellescape($PATH).' '
@@ -84,7 +88,7 @@ function! s:query_path(root) abort
     else
       let path = split(system(path_check),',')
     endif
-    unlet s:tmp_cwd
+    unlet! s:tmp_cwd
     exe cd cwd
     return path
   finally

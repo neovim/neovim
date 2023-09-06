@@ -37,11 +37,14 @@ if exists("g:awk_is_gawk")
     let b:undo_ftplugin .= " | setl fp<"
   endif
 
-  let path = system("gawk 'BEGIN { printf ENVIRON[\"AWKPATH\"] }'")
-  let path = substitute(path, '^\.\=:\|:\.\=$\|:\.\=:', ',,', 'g') " POSIX cwd
-  let path = substitute(path, ':', ',', 'g')
+  " Disabled by default for security reasons.  
+  if get(g:, 'awk_exec', get(g:, 'plugin_exec', 0))
+    let path = system("gawk 'BEGIN { printf ENVIRON[\"AWKPATH\"] }'")
+    let path = substitute(path, '^\.\=:\|:\.\=$\|:\.\=:', ',,', 'g') " POSIX cwd
+    let path = substitute(path, ':', ',', 'g')
 
-  let &l:path = path
+    let &l:path = path
+  endif
   let b:undo_ftplugin .= " | setl inc< path<"
 endif
 
