@@ -196,11 +196,13 @@ preprocess_patch() {
 
   # Remove Filelist, README
   local na_files='Filelist\|README.*'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/\<\%('"${na_files}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/\<\%('"${na_files}"'\)\>@norm! d/\v(^diff)|%$
+' +w +q "$file"
 
   # Remove *.proto, Make*, INSTALL*, gui_*, beval.*, some if_*, gvim, libvterm, tee, VisVim, xpm, xxd
   local na_src='auto\|configure.*\|GvimExt\|hardcopy.*\|libvterm\|proto\|tee\|VisVim\|xpm\|xxd\|Make.*\|INSTALL.*\|beval.*\|gui.*\|if_cscop\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%(testdir/\)\@<!\%('"${na_src}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%(testdir/\)\@<!\%('"${na_src}"'\)\>@norm! d/\v(^diff)|%$
+' +w +q "$file"
 
   # Remove runtime/print/
   local na_rt='print\/.*'
@@ -208,29 +210,35 @@ preprocess_patch() {
 
   # Remove unwanted Vim doc files.
   local na_doc='channel\.txt\|if_cscop\.txt\|netbeans\.txt\|os_\w\+\.txt\|print\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|vim9\.txt\|sponsor\.txt\|intro\.txt\|tags'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('"${na_doc}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('"${na_doc}"'\)\>@norm! d/\v(^diff)|%$
+' +w +q "$file"
 
   # Remove "Last change ..." changes in doc files.
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"
 
   # Remove gui, option, setup, screen dumps, testdir/Make_*.mak files
   local na_src_testdir='gen_opt_test\.vim\|gui_.*\|Make_amiga\.mak\|Make_dos\.mak\|Make_ming\.mak\|Make_vms\.mms\|dumps/.*\.dump\|setup_gui\.vim'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$
+' +w +q "$file"
 
   # Remove testdir/test_*.vim files
   local na_src_testdir='balloon.*\|behave\.vim\|channel.*\|crypt\.vim\|cscope\.vim\|gui.*\|hardcopy\.vim\|job_fails\.vim\|json\.vim\|mzscheme\.vim\|netbeans.*\|paste\.vim\|popupwin.*\|python2\.vim\|pyx2\.vim\|restricted\.vim\|shortpathname\.vim\|tcl\.vim\|terminal.*\|xxd\.vim'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<test_\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<test_\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$
+' +w +q "$file"
 
   # Remove version.c #7555
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\<\%(version\.c\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\<\%(version\.c\)\>@norm! d/\v(^diff)|%$
+' +w +q "$file"
 
   # Remove some *.po files. #5622
   local na_po='sjiscorr\.c\|ja\.sjis\.po\|ko\.po\|pl\.cp1250\.po\|pl\.po\|ru\.cp1251\.po\|uk\.cp1251\.po\|zh_CN\.cp936\.po\|zh_CN\.po\|zh_TW\.po'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/po/\<\%('${na_po}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/po/\<\%('${na_po}'\)\>@norm! d/\v(^diff)|%$
+' +w +q "$file"
 
   # Remove vimrc_example.vim
   local na_vimrcexample='vimrc_example\.vim'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/\<\%('${na_vimrcexample}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/\<\%('${na_vimrcexample}'\)\>@norm! d/\v(^diff)|%$
+' +w +q "$file"
 
   # Rename src/testdir/ paths to test/old/testdir/
   LC_ALL=C sed -Ee 's/( [ab])\/src\/testdir/\1\/test\/old\/testdir/g' \
@@ -566,7 +574,7 @@ _set_tokens_and_tags() {
   # Create an associative array mapping Vim commits to tags.
   eval "vim_commit_tags=(
     $(git -C "${VIM_SOURCE_DIR}" show-ref --tags --dereference \
-      | sed -nEe 's/^([0-9a-f]+) refs\/tags\/(v[0-9.]+)(\^\{\})?$/\1 \2/p')
+      | sed -nEe 's/^([0-9a-f]+) refs\/tags\/(v[0-9.]+)(\^\{\})?$/["\1"]="\2"/p')
   )"
   # Exit in case of errors from the above eval (empty vim_commit_tags).
   if ! (( "${#vim_commit_tags[@]}" )); then
