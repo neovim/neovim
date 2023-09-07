@@ -966,6 +966,8 @@ nvim_get_hl({ns_id}, {*opts})                                  *nvim_get_hl()*
                  • id: (integer) Get a highlight definition by id.
                  • link: (boolean, default true) Show linked group name
                    instead of effective definition |:hi-link|.
+                 • create: (boolean, default true) When highlight group
+                   doesn't exist create it.
 
     Return: ~
         Highlight groups as a map from group name to a highlight definition

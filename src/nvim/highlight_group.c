@@ -1569,7 +1569,13 @@ Dictionary ns_get_hl_defs(NS ns_id, Dict(get_highlight) *opts, Arena *arena, Err
   Boolean link = GET_BOOL_OR_TRUE(opts, get_highlight, link);
   int id = -1;
   if (HAS_KEY(opts, get_highlight, name)) {
-    id = syn_check_group(opts->name.data, opts->name.size);
+    Boolean create = GET_BOOL_OR_TRUE(opts, get_highlight, create);
+    id = create ? syn_check_group(opts->name.data, opts->name.size)
+                : syn_name2id_len(opts->name.data, opts->name.size);
+    if (id == 0 && !create) {
+      Dictionary attrs = ARRAY_DICT_INIT;
+      return attrs;
+    }
   } else if (HAS_KEY(opts, get_highlight, id)) {
     id = (int)opts->id;
   }

@@ -182,6 +182,7 @@ typedef struct {
   Integer id;
   String name;
   Boolean link;
+  Boolean create;
 } Dict(get_highlight);
 
 typedef struct {
