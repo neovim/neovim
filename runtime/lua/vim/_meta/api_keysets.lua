@@ -126,6 +126,7 @@ error('Cannot require a meta file')
 --- @field id? integer
 --- @field name? string
 --- @field link? boolean
+--- @field create? boolean
 
 --- @class vim.api.keyset.highlight
 --- @field bold? boolean

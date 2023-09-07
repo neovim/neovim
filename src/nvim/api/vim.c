@@ -96,6 +96,7 @@ Integer nvim_get_hl_id_by_name(String name)
 ///                 - name: (string) Get a highlight definition by name.
 ///                 - id: (integer) Get a highlight definition by id.
 ///                 - link: (boolean, default true) Show linked group name instead of effective definition |:hi-link|.
+///                 - create: (boolean, default true) When highlight group doesn't exist create it.
 ///
 /// @param[out] err Error details, if any.
 /// @return Highlight groups as a map from group name to a highlight definition map as in |nvim_set_hl()|,
