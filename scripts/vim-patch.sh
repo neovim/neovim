@@ -565,10 +565,8 @@ _set_tokens_and_tags() {
 
   # Create an associative array mapping Vim commits to tags.
   eval "vim_commit_tags=(
-    $(git -C "${VIM_SOURCE_DIR}" for-each-ref refs/tags \
-      --format '[%(objectname)]=%(refname:strip=2)' \
-      --sort='-*authordate' \
-      --shell)
+    $(git -C "${VIM_SOURCE_DIR}" show-ref --tags --dereference \
+      | sed -nEe 's/^([0-9a-f]+) refs\/tags\/(v[0-9.]+)(\^\{\})?$/\1 \2/p')
   )"
   # Exit in case of errors from the above eval (empty vim_commit_tags).
   if ! (( "${#vim_commit_tags[@]}" )); then
