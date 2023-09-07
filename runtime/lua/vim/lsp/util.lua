@@ -1812,6 +1812,9 @@ end)
 --- Returns the items with the byte position calculated correctly and in sorted
 --- order, for display in quickfix and location lists.
 ---
+--- The `user_data` field of each resulting item will contain the original
+--- `Location` or `LocationLink` it was computed from.
+---
 --- The result can be passed to the {list} argument of |setqflist()| or
 --- |setloclist()|.
 ---
@@ -1840,7 +1843,7 @@ function M.locations_to_items(locations, offset_encoding)
     -- locations may be Location or LocationLink
     local uri = d.uri or d.targetUri
     local range = d.range or d.targetSelectionRange
-    table.insert(grouped[uri], { start = range.start })
+    table.insert(grouped[uri], { start = range.start, location = d })
   end
 
   local keys = vim.tbl_keys(grouped)
@@ -1872,6 +1875,7 @@ function M.locations_to_items(locations, offset_encoding)
         lnum = row + 1,
         col = col + 1,
         text = line,
+        user_data = temp.location,
       })
     end
   end

@@ -162,6 +162,9 @@ The following new APIs and features were added.
 • The |:terminal| command now accepts some |:command-modifiers| (specifically
   |:horizontal| and those that affect splitting a window).
 
+• |vim.lsp.util.locations_to_items()| sets the `user_data` of each item to the
+  original LSP `Location` or `LocationLink`.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

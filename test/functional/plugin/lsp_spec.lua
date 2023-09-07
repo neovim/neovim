@@ -2387,7 +2387,14 @@ describe('LSP', function()
           filename = '/fake/uri',
           lnum = 1,
           col = 3,
-          text = 'testing'
+          text = 'testing',
+          user_data = {
+            uri = 'file:///fake/uri',
+            range = {
+              start = { line = 0, character = 2 },
+              ['end'] = { line = 0, character = 3 },
+            }
+          }
         },
       }
       local actual = exec_lua [[
@@ -2413,7 +2420,18 @@ describe('LSP', function()
           filename = '/fake/uri',
           lnum = 1,
           col = 3,
-          text = 'testing'
+          text = 'testing',
+          user_data = {
+            targetUri = "file:///fake/uri",
+            targetRange = {
+              start = { line = 0, character = 2 },
+              ['end'] = { line = 0, character = 3 },
+            },
+            targetSelectionRange = {
+              start = { line = 0, character = 2 },
+              ['end'] = { line = 0, character = 3 },
+            }
+          }
         },
       }
       local actual = exec_lua [[

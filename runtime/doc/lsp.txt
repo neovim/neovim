@@ -1751,6 +1751,9 @@ locations_to_items({locations}, {offset_encoding})
     Returns the items with the byte position calculated correctly and in
     sorted order, for display in quickfix and location lists.
 
+    The `user_data` field of each resulting item will contain the original
+    `Location` or `LocationLink` it was computed from.
+
     The result can be passed to the {list} argument of |setqflist()| or
     |setloclist()|.
 
