@@ -38,7 +38,7 @@ Follow these steps to get LSP features:
     })
 <
 3. Check that the server attached to the buffer: >
-    :lua =vim.lsp.get_clients()
+    :lua =vim.lsp.buf_get_clients()
 
 4. Configure keymaps and autocmds to use LSP features. See |lsp-config|.
 
@@ -105,7 +105,7 @@ calls behind capability checks:
 To learn what capabilities are available you can run the following command in
 a buffer with a started LSP client: >vim
 
-    :lua =vim.lsp.get_clients()[1].server_capabilities
+    :lua =vim.lsp.buf_get_clients()[1].server_capabilities
 
 Full list of features provided by default can be found in |lsp-buf|.
 
@@ -114,7 +114,7 @@ FAQ                                                     *lsp-faq*
 
 - Q: How to force-reload LSP?
 - A: Stop all clients, then reload the buffer. >vim
-     :lua vim.lsp.stop_client(vim.lsp.get_clients())
+     :lua vim.lsp.stop_client(vim.lsp.buf_get_clients())
      :edit
 
 - Q: Why isn't completion working?
@@ -713,7 +713,7 @@ buf_request_sync({bufnr}, {method}, {params}, {timeout_ms})
 
 client()                                                      *vim.lsp.client*
     LSP client object. You can get an active client object via
-    |vim.lsp.get_client_by_id()| or |vim.lsp.get_clients()|.
+    |vim.lsp.get_client_by_id()| or |vim.lsp.buf_get_clients()|.
 
     • Methods:
       • request(method, params, [handler], bufnr) Sends a request to the
@@ -834,7 +834,7 @@ get_client_by_id({client_id})                     *vim.lsp.get_client_by_id()*
     Return: ~
         (nil|lsp.Client) client rpc object
 
-get_clients({filter})                                  *vim.lsp.get_clients()*
+get_clients({filter})                                  *vim.lsp.buf_get_clients()*
     Get active clients.
 
     Parameters: ~
@@ -1080,7 +1080,7 @@ stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
 
     You can also use the `stop()` function on a |vim.lsp.client| object. To stop all clients: >lua
 
-     vim.lsp.stop_client(vim.lsp.get_clients())
+     vim.lsp.stop_client(vim.lsp.buf_get_clients())
 <
 
     By default asks the server to shutdown, unless stop was requested already
