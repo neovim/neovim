@@ -1,6 +1,6 @@
 " Vim plugin for converting a syntax highlighted file to HTML.
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2023 Jan 01
+" Last Change: 2023 Sep 07
 "
 " The core of the code is in $VIMRUNTIME/autoload/tohtml.vim and
 " $VIMRUNTIME/syntax/2html.vim
@@ -8,11 +8,29 @@
 if exists('g:loaded_2html_plugin')
   finish
 endif
-let g:loaded_2html_plugin = 'vim9.0_v1'
+let g:loaded_2html_plugin = 'vim9.0_v2'
 
 "
 " Changelog: {{{
-"   9.0_v1  (this version): - Implement g:html_no_doc and g:html_no_modeline
+"   9.0_v2  (this version): - Warn if using deprecated g:use_xhtml option
+"                           - Change default g:html_use_input_for_pc to "none"
+"                             instead of "fallback". All modern browsers support
+"                             the "user-select: none" and "content:" CSS
+"                             properties so the older method relying on extra
+"                             markup and unspecified browser/app clipboard
+"                             handling is only needed in rare special cases.
+"                           - Fix SourceForge issue #33: generate diff filler
+"                             correctly when new lines have been added to or
+"                             removed from end of buffer.
+"                           - Fix SourceForge issue #32/Vim Github issue #8547:
+"                             use translated highlight ID for styling the
+"                             special-use group names (e.g. LineNr) used
+"                             directly by name in the 2html processing.
+"                           - Fix SourceForge issue #26, refactoring to use
+"                             :let-heredoc style string assignment and
+"                             additional fixes for ".." vs. "." style string
+"                             concatenation. Requires Vim v8.1.1354 or higher.
+"   9.0_v1  (Vim 9.0.1275): - Implement g:html_no_doc and g:html_no_modeline
 "                             for diff mode. Add tests.
 "           (Vim 9.0.1122): NOTE: no version string update for this version!
 "                           - Bugfix for variable name in g:html_no_doc
@@ -21,7 +39,8 @@ let g:loaded_2html_plugin = 'vim9.0_v1'
 "                             and g:html_no_modeline (partially included in Vim
 "                             runtime prior to version string update).
 "                           - Updates for new Vim9 string append style (i.e. use
-"                             ".." instead of ".")
+"                             ".." instead of "."). Requires Vim version
+"                             8.1.1114 or higher.
 "
 "   8.1 updates: {{{
 "   8.1_v2  (Vim 8.1.2312): - Fix SourceForge issue #19: fix calculation of tab

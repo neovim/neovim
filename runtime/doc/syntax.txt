@@ -559,7 +559,7 @@ The method used to prevent copying in the generated page depends on the value
 of |g:html_use_input_for_pc|.
 
 						    *g:html_use_input_for_pc*
-Default: "fallback"
+Default: "none"
 If |g:html_prevent_copy| is non-empty, then:
 
 When "all", read-only <input> elements are used in place of normal text for
