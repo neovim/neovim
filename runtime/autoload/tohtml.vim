@@ -1,6 +1,6 @@
 " Vim autoload file for the tohtml plugin.
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2023 Jan 01
+" Last Change: 2023 Sep 03
 "
 " Additional contributors:
 "
@@ -307,7 +307,7 @@ func! tohtml#Convert2HTML(line1, line2) "{{{
     let g:html_diff_win_num = 0
     for window in win_list
       " switch to the next buffer to convert
-      exe ":" . bufwinnr(window) . "wincmd w"
+      exe ":" .. bufwinnr(window) .. "wincmd w"
 
       " figure out whether current charset and encoding will work, if not
       " default to UTF-8
@@ -355,7 +355,7 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
   if !s:settings.no_doc
     if s:settings.use_xhtml
       if s:settings.encoding != ""
-	let xml_line = "<?xml version=\"1.0\" encoding=\"" . s:settings.encoding . "\"?>"
+	let xml_line = "<?xml version=\"1.0\" encoding=\"" .. s:settings.encoding .. "\"?>"
       else
 	let xml_line = "<?xml version=\"1.0\"?>"
       endif
@@ -387,34 +387,34 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
     " contained in XML information
     if s:settings.encoding != "" && !s:settings.use_xhtml
       if s:html5
-	call add(html, '<meta charset="' . s:settings.encoding . '"' . tag_close)
+	call add(html, '<meta charset="' .. s:settings.encoding .. '"' .. tag_close)
       else
-	call add(html, "<meta http-equiv=\"content-type\" content=\"text/html; charset=" . s:settings.encoding . '"' . tag_close)
+	call add(html, "<meta http-equiv=\"content-type\" content=\"text/html; charset=" .. s:settings.encoding .. '"' .. tag_close)
       endif
     endif
 
     call add(html, '<title>diff</title>')
-    call add(html, '<meta name="Generator" content="Vim/'.v:version/100.'.'.v:version%100.'"'.tag_close)
-    call add(html, '<meta name="plugin-version" content="'.g:loaded_2html_plugin.'"'.tag_close)
+    call add(html, '<meta name="Generator" content="Vim/'..v:version/100..'.'..v:version%100..'"'..tag_close)
+    call add(html, '<meta name="plugin-version" content="'..g:loaded_2html_plugin..'"'..tag_close)
     call add(html, '<meta name="settings" content="'.
 	  \ join(filter(keys(s:settings),'s:settings[v:val]'),',').
-	  \ ',prevent_copy='.s:settings.prevent_copy.
-	  \ ',use_input_for_pc='.s:settings.use_input_for_pc.
-	  \ '"'.tag_close)
+	  \ ',prevent_copy='..s:settings.prevent_copy.
+	  \ ',use_input_for_pc='..s:settings.use_input_for_pc.
+	  \ '"'..tag_close)
     call add(html, '<meta name="colorscheme" content="'.
 	  \ (exists('g:colors_name')
 	  \ ? g:colors_name
-	  \ : 'none'). '"'.tag_close)
+	  \ : 'none').. '"'..tag_close)
 
     call add(html, '</head>')
     let body_line_num = len(html)
-    call add(html, '<body'.(s:settings.line_ids ? ' onload="JumpToLine();"' : '').'>')
+    call add(html, '<body'..(s:settings.line_ids ? ' onload="JumpToLine();"' : '')..'>')
   endif
-  call add(html, "<table ".(s:settings.use_css? "" : "border='1' width='100%' ")."id='vimCodeElement".s:settings.id_suffix."'>")
+  call add(html, "<table "..(s:settings.use_css? "" : "border='1' width='100%' ").."id='vimCodeElement"..s:settings.id_suffix.."'>")
 
   call add(html, '<tr>')
   for buf in a:win_list
-    call add(html, '<th>'.bufname(buf).'</th>')
+    call add(html, '<th>'..bufname(buf)..'</th>')
   endfor
   call add(html, '</tr><tr>')
 
@@ -423,7 +423,7 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
 
   for buf in a:buf_list
     let temp = []
-    exe bufwinnr(buf) . 'wincmd w'
+    exe bufwinnr(buf) .. 'wincmd w'
 
     " If text is folded because of user foldmethod settings, etc. we don't want
     " to act on everything in a fold by mistake.
@@ -526,16 +526,16 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
   endif
 
   let i = 1
-  let name = "Diff" . (s:settings.use_xhtml ? ".xhtml" : ".html")
+  let name = "Diff" .. (s:settings.use_xhtml ? ".xhtml" : ".html")
   " Find an unused file name if current file name is already in use
   while filereadable(name)
-    let name = substitute(name, '\d*\.x\?html$', '', '') . i . '.' . fnamemodify(copy(name), ":t:e")
+    let name = substitute(name, '\d*\.x\?html$', '', '') .. i .. '.' .. fnamemodify(copy(name), ":t:e")
     let i += 1
   endwhile
 
   let s:ei_sav = &eventignore
   set eventignore+=FileType
-  exe "topleft new " . name
+  exe "topleft new " .. name
   let &eventignore=s:ei_sav
   unlet s:ei_sav
 
@@ -601,7 +601,7 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
 		\ "",
 		\ "  /* navigate upwards in the DOM tree to open all folds containing the line */",
 		\ "  var node = lineElem;",
-		\ "  while (node && node.id != 'vimCodeElement".s:settings.id_suffix."')",
+		\ "  while (node && node.id != 'vimCodeElement"..s:settings.id_suffix.."')",
 		\ "  {",
 		\ "    if (node.className == 'closed-fold')",
 		\ "    {",
@@ -640,7 +640,7 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
 	call append(style_start, [
 	      \  "  function toggleFold(objID)",
 	      \  "  {",
-	      \  "    for (win_num = 1; win_num <= ".len(a:buf_list)."; win_num++)",
+	      \  "    for (win_num = 1; win_num <= "..len(a:buf_list).."; win_num++)",
 	      \  "    {",
 	      \  "      var fold;",
 	      \  '      fold = document.getElementById("win"+win_num+objID);',
@@ -660,7 +660,7 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
       if s:uses_script
 	" insert script tag if needed
 	call append(style_start, [
-	      \ "<script" . (s:html5 ? "" : " type='text/javascript'") . ">",
+	      \ "<script" .. (s:html5 ? "" : " type='text/javascript'") .. ">",
 	      \ s:settings.use_xhtml ? '//<![CDATA[' : "<!--"])
       endif
 
@@ -671,14 +671,14 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
       " is pretty useless for really long lines. {{{
       if s:settings.use_css
 	call append(style_start,
-	      \ ['<style' . (s:html5 ? '' : 'type="text/css"') . '>']+
+	      \ ['<style' .. (s:html5 ? '' : 'type="text/css"') .. '>']+
 	      \ style+
 	      \ [ s:settings.use_xhtml ? '' : '<!--',
 	      \   'table { table-layout: fixed; }',
 	      \   'html, body, table, tbody { width: 100%; margin: 0; padding: 0; }',
 	      \   'table, td, th { border: 1px solid; }',
 	      \   'td { vertical-align: top; }',
-	      \   'th, td { width: '.printf("%.1f",100.0/len(a:win_list)).'%; }',
+	      \   'th, td { width: '..printf("%.1f",100.0/len(a:win_list))..'%; }',
 	      \   'td div { overflow: auto; }',
 	      \   s:settings.use_xhtml ? '' : '-->',
 	      \   '</style>'
@@ -694,7 +694,7 @@ endfunc "}}}
 " Gets a single user option and sets it in the passed-in Dict, or gives it the
 " default value if the option doesn't actually exist.
 func! tohtml#GetOption(settings, option, default) "{{{
-  if exists('g:html_'.a:option)
+  if exists('g:html_'..a:option)
     let a:settings[a:option] = g:html_{a:option}
   else
     let a:settings[a:option] = a:default
@@ -713,10 +713,11 @@ func! tohtml#GetUserSettings() "{{{
     let user_settings = {}
 
     " Define the correct option if the old option name exists and we haven't
-    " already defined the correct one. Maybe I'll put out a warning message about
-    " this sometime and remove the old option entirely at some even later time,
-    " but for now just silently accept the old option.
+    " already defined the correct one.
     if exists('g:use_xhtml') && !exists("g:html_use_xhtml")
+      echohl WarningMsg
+      echomsg "Warning: g:use_xhtml is deprecated, use g:html_use_xhtml"
+      echohl None
       let g:html_use_xhtml = g:use_xhtml
     endif
 
@@ -739,7 +740,7 @@ func! tohtml#GetUserSettings() "{{{
     call tohtml#GetOption(user_settings,      'whole_filler', 0 )
     call tohtml#GetOption(user_settings,         'use_xhtml', 0 )
     call tohtml#GetOption(user_settings,          'line_ids', user_settings.number_lines )
-    call tohtml#GetOption(user_settings, 'use_input_for_pc', 'fallback')
+    call tohtml#GetOption(user_settings, 'use_input_for_pc', 'none')
     " }}}
     
     " override those settings that need it {{{
@@ -854,16 +855,16 @@ func! tohtml#GetUserSettings() "{{{
     if user_settings.use_css
       if exists("g:html_prevent_copy")
 	if user_settings.dynamic_folds && !user_settings.no_foldcolumn && g:html_prevent_copy =~# 'f'
-	  let user_settings.prevent_copy .= 'f'
+	  let user_settings.prevent_copy ..= 'f'
 	endif
 	if user_settings.number_lines && g:html_prevent_copy =~# 'n'
-	  let user_settings.prevent_copy .= 'n'
+	  let user_settings.prevent_copy ..= 'n'
 	endif
 	if &diff && g:html_prevent_copy =~# 'd'
-	  let user_settings.prevent_copy .= 'd'
+	  let user_settings.prevent_copy ..= 'd'
 	endif
 	if !user_settings.ignore_folding && g:html_prevent_copy =~# 't'
-	  let user_settings.prevent_copy .= 't'
+	  let user_settings.prevent_copy ..= 't'
 	endif
       else
 	let user_settings.prevent_copy = ""
@@ -875,10 +876,10 @@ func! tohtml#GetUserSettings() "{{{
 
     " enforce valid values for use_input_for_pc
     if user_settings.use_input_for_pc !~# 'fallback\|none\|all'
-      let user_settings.use_input_for_pc = 'fallback'
+      let user_settings.use_input_for_pc = 'none'
       echohl WarningMsg
-      echomsg '2html: "' . g:html_use_input_for_pc . '" is not valid for g:html_use_input_for_pc'
-      echomsg '2html: defaulting to "' . user_settings.use_input_for_pc . '"'
+      echomsg '2html: "' .. g:html_use_input_for_pc .. '" is not valid for g:html_use_input_for_pc'
+      echomsg '2html: defaulting to "' .. user_settings.use_input_for_pc .. '"'
       echohl None
       sleep 3
     endif
