@@ -543,7 +543,7 @@ void do_augroup(char *arg, int del_group)
 
     String name;
     int value;
-    map_foreach(int, &map_augroup_name_to_id, name, value, {
+    map_foreach(&map_augroup_name_to_id, name, value, {
       if (value > 0) {
         msg_puts(name.data);
       } else {
@@ -577,7 +577,7 @@ void free_all_autocmds(void)
   })
   map_destroy(String, &map_augroup_name_to_id);
 
-  map_foreach_value(String, &map_augroup_id_to_name, name, {
+  map_foreach_value(&map_augroup_id_to_name, name, {
     api_free_string(name);
   })
   map_destroy(int, &map_augroup_id_to_name);

@@ -127,7 +127,7 @@ void ui_free_all_mem(void)
   kv_destroy(call_buf);
 
   UIEventCallback *event_cb;
-  pmap_foreach_value(&ui_event_cbs, event_cb, {
+  map_foreach_value(&ui_event_cbs, event_cb, {
     free_ui_event_callback(event_cb);
   })
   map_destroy(uint32_t, &ui_event_cbs);
@@ -661,7 +661,7 @@ void ui_call_event(char *name, Array args)
 {
   UIEventCallback *event_cb;
   bool handled = false;
-  pmap_foreach_value(&ui_event_cbs, event_cb, {
+  map_foreach_value(&ui_event_cbs, event_cb, {
     Error err = ERROR_INIT;
     Object res = nlua_call_ref(event_cb->cb, name, args, false, &err);
     if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
@@ -687,7 +687,7 @@ void ui_cb_update_ext(void)
   for (size_t i = 0; i < kUIGlobalCount; i++) {
     UIEventCallback *event_cb;
 
-    pmap_foreach_value(&ui_event_cbs, event_cb, {
+    map_foreach_value(&ui_event_cbs, event_cb, {
       if (event_cb->ext_widgets[i]) {
         ui_cb_ext[i] = true;
         break;
@@ -723,7 +723,7 @@ void ui_add_cb(uint32_t ns_id, LuaRef cb, bool *ext_widgets)
 
 void ui_remove_cb(uint32_t ns_id)
 {
-  if (pmap_has(uint32_t)(&ui_event_cbs, ns_id)) {
+  if (map_has(uint32_t, &ui_event_cbs, ns_id)) {
     UIEventCallback *item = pmap_del(uint32_t)(&ui_event_cbs, ns_id, NULL);
     free_ui_event_callback(item);
   }

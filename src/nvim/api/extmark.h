@@ -8,7 +8,7 @@
 #include "nvim/map.h"
 #include "nvim/types.h"
 
-EXTERN Map(String, handle_T) namespace_ids INIT(= MAP_INIT);
+EXTERN Map(String, int) namespace_ids INIT(= MAP_INIT);
 EXTERN handle_T next_namespace_id INIT(= 1);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

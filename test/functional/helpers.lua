@@ -83,6 +83,13 @@ end
 
 local session, loop_running, last_error, method_error
 
+if not is_os('win') then
+  local sigpipe_handler = luv.new_signal()
+  luv.signal_start(sigpipe_handler, "sigpipe", function()
+    print("warning: got SIGPIPE signal. Likely related to a crash in nvim")
+  end)
+end
+
 function module.get_session()
   return session
 end

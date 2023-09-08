@@ -57,7 +57,7 @@ void channel_teardown(void)
 {
   Channel *channel;
 
-  pmap_foreach_value(&channels, channel, {
+  map_foreach_value(&channels, channel, {
     channel_close(channel->id, kChannelPartAll, NULL);
   });
 }
@@ -937,12 +937,28 @@ Dictionary channel_info(uint64_t id)
   return info;
 }
 
+/// Simple int64_t comparison function for use with qsort()
+static int int64_t_cmp(const void *a, const void *b)
+{
+  int64_t diff = *(int64_t *)a - *(int64_t *)b;
+  return (diff < 0) ? -1 : (diff > 0);
+}
+
 Array channel_all_info(void)
 {
-  Channel *channel;
-  Array ret = ARRAY_DICT_INIT;
-  pmap_foreach_value(&channels, channel, {
-    ADD(ret, DICTIONARY_OBJ(channel_info(channel->id)));
+  // order the items in the array by channel number, for Determinism™
+  kvec_t(int64_t) ids = KV_INITIAL_VALUE;
+  kv_resize(ids, map_size(&channels));
+  uint64_t id;
+  map_foreach_key(&channels, id, {
+    kv_push(ids, (int64_t)id);
   });
+  qsort(ids.items, ids.size, sizeof ids.items[0], int64_t_cmp);
+
+  Array ret = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < ids.size; i++) {
+    ADD(ret, DICTIONARY_OBJ(channel_info((uint64_t)ids.items[i])));
+  }
+  kv_destroy(ids);
   return ret;
 }

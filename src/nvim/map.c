@@ -1,122 +1,62 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+// map.c: Hash maps and sets
 //
-// map.c: khash.h wrapper
+// parts of the implementation derived from khash.h as part of klib (MIT license)
 //
 // NOTE: Callers must manage memory (allocate) for keys and values.
-//       khash.h does not make its own copy of the key or value.
-//
+//       Map and Set does not make its own copy of the key or value.
 
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "auto/config.h"
-#include "klib/khash.h"
 #include "nvim/gettext.h"
 #include "nvim/map.h"
 #include "nvim/memory.h"
 
-#define cstr_t_hash kh_str_hash_func
-#define cstr_t_eq kh_str_hash_equal
-#define uint64_t_hash kh_int64_hash_func
-#define uint64_t_eq kh_int64_hash_equal
-#define uint32_t_hash kh_int_hash_func
-#define uint32_t_eq kh_int_hash_equal
-#define int_hash kh_int_hash_func
-#define int_eq kh_int_hash_equal
-#define handle_T_hash kh_int_hash_func
-#define handle_T_eq kh_int_hash_equal
+#define equal_simple(x, y) ((x) == (y))
+
+#define hash_uint64_t(key) (uint32_t)((key) >> 33^(key)^(key) << 11)
+#define equal_uint64_t equal_simple
+#define hash_uint32_t(x) (x)
+#define equal_uint32_t equal_simple
+#define hash_int(x) hash_uint32_t((uint32_t)(x))
+#define equal_int equal_simple
 
 #if defined(ARCH_64)
-# define ptr_t_hash(key) uint64_t_hash((uint64_t)(key))
-# define ptr_t_eq(a, b) uint64_t_eq((uint64_t)(a), (uint64_t)(b))
+# define hash_ptr_t(key) hash_uint64_t((uint64_t)(key))
+# define equal_ptr_t(a, b) equal_uint64_t((uint64_t)(a), (uint64_t)(b))
 #elif defined(ARCH_32)
-# define ptr_t_hash(key) uint32_t_hash((uint32_t)(key))
-# define ptr_t_eq(a, b) uint32_t_eq((uint32_t)(a), (uint32_t)(b))
+# define hash_ptr_t(key) hash_uint32_t((uint32_t)(key))
+# define equal_ptr_t(a, b) equal_uint32_t((uint32_t)(a), (uint32_t)(b))
 #endif
 
-#define INITIALIZER(T, U) T##_##U##_initializer
-#define INITIALIZER_DECLARE(T, U, ...) const U INITIALIZER(T, U) = __VA_ARGS__
-#define DEFAULT_INITIALIZER { 0 }
-#define SSIZE_INITIALIZER { -1 }
-
-#define KEY_IMPL(T) \
-  __KHASH_IMPL(T, , T, T##_hash, T##_eq) \
-
-#define MAP_IMPL(T, U, ...) \
-  INITIALIZER_DECLARE(T, U, __VA_ARGS__); \
-  U map_##T##_##U##_get(Map(T, U) *map, T key) \
-  { \
-    khiter_t k; \
-    if ((k = kh_get(T, &map->table, key)) == kh_end(&map->table)) { \
-      return INITIALIZER(T, U); \
-    } \
-    return kh_val(U, &map->table, k); \
-  } \
-  U map_##T##_##U##_put(Map(T, U) *map, T key, U value) \
-  { \
-    STATIC_ASSERT(sizeof(U) <= KHASH_MAX_VAL_SIZE, "increase KHASH_MAX_VAL_SIZE"); \
-    int ret; \
-    U rv = INITIALIZER(T, U); \
-    khiter_t k = kh_put(T, &map->table, key, &ret, sizeof(U)); \
-    if (!ret) { \
-      rv = kh_val(U, &map->table, k); \
-    } \
-    kh_val(U, &map->table, k) = value; \
-    return rv; \
-  } \
-  U *map_##T##_##U##_ref(Map(T, U) *map, T key, T **key_alloc) \
-  { \
-    khiter_t k = kh_get(T, &map->table, key); \
-    if (k == kh_end(&map->table)) { \
-      return NULL; \
-    } \
-    if (key_alloc) { \
-      *key_alloc = &kh_key(&map->table, k); \
-    } \
-    return &kh_val(U, &map->table, k); \
-  } \
-  U *map_##T##_##U##_put_ref(Map(T, U) *map, T key, T **key_alloc, bool *new_item) \
-  { \
-    int ret; \
-    khiter_t k = kh_put(T, &map->table, key, &ret, sizeof(U)); \
-    if (ret) { \
-      kh_val(U, &map->table, k) = INITIALIZER(T, U); \
-    } \
-    if (new_item) { \
-      *new_item = (bool)ret; \
-    } \
-    if (key_alloc) { \
-      *key_alloc = &kh_key(&map->table, k); \
-    } \
-    return &kh_val(U, &map->table, k); \
-  } \
-  U map_##T##_##U##_del(Map(T, U) *map, T key, T *key_alloc) \
-  { \
-    U rv = INITIALIZER(T, U); \
-    khiter_t k; \
-    if ((k = kh_get(T, &map->table, key)) != kh_end(&map->table)) { \
-      rv = kh_val(U, &map->table, k); \
-      if (key_alloc) { \
-        *key_alloc = kh_key(&map->table, k); \
-      } \
-      kh_del(T, &map->table, k); \
-    } \
-    return rv; \
-  }
-
-static inline khint_t String_hash(String s)
+static inline uint32_t hash_cstr_t(const char *s)
 {
-  khint_t h = 0;
-  for (size_t i = 0; i < s.size && s.data[i]; i++) {
+  uint32_t h = 0;
+  for (size_t i = 0; s[i]; i++) {
+    h = (h << 5) - h + (uint8_t)s[i];
+  }
+  return h;
+}
+
+#define equal_cstr_t strequal
+
+// when used as a key, String doesn't need to be NUL terminated,
+// and can also contain embedded NUL:s as part of the data.
+static inline uint32_t hash_String(String s)
+{
+  uint32_t h = 0;
+  for (size_t i = 0; i < s.size; i++) {
     h = (h << 5) - h + (uint8_t)s.data[i];
   }
   return h;
 }
 
-static inline bool String_eq(String a, String b)
+static inline bool equal_String(String a, String b)
 {
   if (a.size != b.size) {
     return false;
@@ -124,61 +64,137 @@ static inline bool String_eq(String a, String b)
   return memcmp(a.data, b.data, a.size) == 0;
 }
 
-static inline khint_t HlEntry_hash(HlEntry ae)
+static inline uint32_t hash_HlEntry(HlEntry ae)
 {
   const uint8_t *data = (const uint8_t *)&ae;
-  khint_t h = 0;
+  uint32_t h = 0;
   for (size_t i = 0; i < sizeof(ae); i++) {
     h = (h << 5) - h + data[i];
   }
   return h;
 }
 
-static inline bool HlEntry_eq(HlEntry ae1, HlEntry ae2)
+static inline bool equal_HlEntry(HlEntry ae1, HlEntry ae2)
 {
   return memcmp(&ae1, &ae2, sizeof(ae1)) == 0;
 }
 
-static inline khint_t ColorKey_hash(ColorKey ae)
+static inline uint32_t hash_ColorKey(ColorKey ae)
 {
   const uint8_t *data = (const uint8_t *)&ae;
-  khint_t h = 0;
+  uint32_t h = 0;
   for (size_t i = 0; i < sizeof(ae); i++) {
     h = (h << 5) - h + data[i];
   }
   return h;
 }
 
-static inline bool ColorKey_eq(ColorKey ae1, ColorKey ae2)
+static inline bool equal_ColorKey(ColorKey ae1, ColorKey ae2)
 {
   return memcmp(&ae1, &ae2, sizeof(ae1)) == 0;
 }
 
-KEY_IMPL(int)
-KEY_IMPL(cstr_t)
-KEY_IMPL(ptr_t)
-KEY_IMPL(uint64_t)
-KEY_IMPL(uint32_t)
-KEY_IMPL(String)
-KEY_IMPL(HlEntry)
-KEY_IMPL(ColorKey)
+// TODO(bfredl): this could be _less_ for the h->hash part as this is now small (4 bytes per value)
+#define UPPER_FILL 0.77
 
-MAP_IMPL(int, int, DEFAULT_INITIALIZER)
-MAP_IMPL(int, ptr_t, DEFAULT_INITIALIZER)
-MAP_IMPL(int, cstr_t, DEFAULT_INITIALIZER)
-MAP_IMPL(cstr_t, ptr_t, DEFAULT_INITIALIZER)
-MAP_IMPL(cstr_t, int, DEFAULT_INITIALIZER)
-MAP_IMPL(ptr_t, ptr_t, DEFAULT_INITIALIZER)
-MAP_IMPL(uint32_t, ptr_t, DEFAULT_INITIALIZER)
-MAP_IMPL(uint64_t, ptr_t, DEFAULT_INITIALIZER)
-MAP_IMPL(uint64_t, ssize_t, SSIZE_INITIALIZER)
-MAP_IMPL(uint64_t, uint64_t, DEFAULT_INITIALIZER)
-MAP_IMPL(uint32_t, uint32_t, DEFAULT_INITIALIZER)
-MAP_IMPL(HlEntry, int, DEFAULT_INITIALIZER)
-MAP_IMPL(String, handle_T, 0)
-MAP_IMPL(String, int, DEFAULT_INITIALIZER)
-MAP_IMPL(int, String, DEFAULT_INITIALIZER)
-MAP_IMPL(ColorKey, ColorItem, COLOR_ITEM_INITIALIZER)
+#define roundup32(x) (--(x), (x)|= (x)>>1, (x)|= (x)>>2, (x)|= (x)>>4, (x)|= (x)>>8, \
+                      (x)|= (x)>>16, ++(x))
+
+// h->hash must either be NULL or an already valid pointer
+void mh_realloc(MapHash *h, uint32_t n_min_buckets)
+{
+  xfree(h->hash);
+  uint32_t n_buckets = n_min_buckets < 16 ? 16 : n_min_buckets;
+  roundup32(n_buckets);
+  // sets all buckets to EMPTY
+  h->hash = xcalloc(n_buckets, sizeof *h->hash);
+  h->n_occupied = h->size = 0;
+  h->n_buckets = n_buckets;
+  h->upper_bound = (uint32_t)(h->n_buckets * UPPER_FILL + 0.5);
+}
+
+void mh_clear(MapHash *h)
+{
+  if (h->hash) {
+    memset(h->hash, 0, h->n_buckets * sizeof(*h->hash));
+    h->size = h->n_occupied = 0;
+    h->n_keys = 0;
+  }
+}
+
+#define KEY_NAME(x) x##int
+#include "nvim/map_key_impl.c.h"
+#define VAL_NAME(x) quasiquote(x, int)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#define VAL_NAME(x) quasiquote(x, ptr_t)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#define VAL_NAME(x) quasiquote(x, String)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#undef KEY_NAME
+
+#define KEY_NAME(x) x##ptr_t
+#include "nvim/map_key_impl.c.h"
+#define VAL_NAME(x) quasiquote(x, ptr_t)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#undef KEY_NAME
+
+#define KEY_NAME(x) x##cstr_t
+#include "nvim/map_key_impl.c.h"
+#define VAL_NAME(x) quasiquote(x, ptr_t)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#define VAL_NAME(x) quasiquote(x, int)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#undef KEY_NAME
+
+#define KEY_NAME(x) x##String
+#include "nvim/map_key_impl.c.h"
+#define VAL_NAME(x) quasiquote(x, int)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#undef KEY_NAME
+
+#define KEY_NAME(x) x##uint32_t
+#include "nvim/map_key_impl.c.h"
+#define VAL_NAME(x) quasiquote(x, ptr_t)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#define VAL_NAME(x) quasiquote(x, uint32_t)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#undef KEY_NAME
+
+#define KEY_NAME(x) x##uint64_t
+#include "nvim/map_key_impl.c.h"
+#define VAL_NAME(x) quasiquote(x, ptr_t)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#define VAL_NAME(x) quasiquote(x, ssize_t)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#define VAL_NAME(x) quasiquote(x, uint64_t)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#undef KEY_NAME
+
+#define KEY_NAME(x) x##HlEntry
+#include "nvim/map_key_impl.c.h"
+#define VAL_NAME(x) quasiquote(x, int)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#undef KEY_NAME
+
+#define KEY_NAME(x) x##ColorKey
+#include "nvim/map_key_impl.c.h"
+#define VAL_NAME(x) quasiquote(x, ColorItem)
+#include "nvim/map_value_impl.c.h"
+#undef VAL_NAME
+#undef KEY_NAME
 
 /// Deletes a key:value pair from a string:pointer map, and frees the
 /// storage of both key and value.

@@ -54,14 +54,14 @@ void api_extmark_free_all_mem(void)
 Integer nvim_create_namespace(String name)
   FUNC_API_SINCE(5)
 {
-  handle_T id = map_get(String, handle_T)(&namespace_ids, name);
+  handle_T id = map_get(String, int)(&namespace_ids, name);
   if (id > 0) {
     return id;
   }
   id = next_namespace_id++;
   if (name.size > 0) {
     String name_alloc = copy_string(name, NULL);
-    map_put(String, handle_T)(&namespace_ids, name_alloc, id);
+    map_put(String, int)(&namespace_ids, name_alloc, id);
   }
   return (Integer)id;
 }
@@ -76,7 +76,7 @@ Dictionary nvim_get_namespaces(void)
   String name;
   handle_T id;
 
-  map_foreach(handle_T, &namespace_ids, name, id, {
+  map_foreach(&namespace_ids, name, id, {
     PUT(retval, name.data, INTEGER_OBJ(id));
   })
 
@@ -87,7 +87,7 @@ const char *describe_ns(NS ns_id)
 {
   String name;
   handle_T id;
-  map_foreach(handle_T, &namespace_ids, name, id, {
+  map_foreach(&namespace_ids, name, id, {
     if ((NS)id == ns_id && name.size) {
       return name.data;
     }
