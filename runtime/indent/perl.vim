@@ -4,7 +4,7 @@
 " Homepage:      https://github.com/vim-perl/vim-perl
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues
 " License:       Vim License (see :help license)
-" Last Change:   2021 Sep 24
+" Last Change:   2022 Jun 14
 
 " Suggestions and improvements by :
 "   Aaron J. Sherman (use syntax for hints)
@@ -133,6 +133,7 @@ function! GetPerlIndent()
                         \ || synid == "perlHereDoc"
                         \ || synid == "perlBraces"
                         \ || synid == "perlStatementIndirObj"
+                        \ || synid == "perlSubDeclaration"
                         \ || synid =~ "^perlFiledescStatement"
                         \ || synid =~ '^perl\(Sub\|Block\|Package\)Fold'
                 let brace = strpart(line, bracepos, 1)

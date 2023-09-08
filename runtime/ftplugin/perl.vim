@@ -5,6 +5,8 @@
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues
 " License:       Vim License (see :help license)
 " Last Change:   2021 Nov 10
+"                2023 Sep 07 by Vim Project (safety check: don't execute perl
+"                    from current directory)
 
 if exists("b:did_ftplugin") | finish | endif
 let b:did_ftplugin = 1
