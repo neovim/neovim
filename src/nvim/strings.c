@@ -44,8 +44,8 @@ static const char e_positional_arg_num_type_inconsistent_str_str[]
   = N_("E1404: Positional argument %d type used inconsistently: %s/%s");
 static const char e_invalid_format_specifier_str[]
   = N_("E1405: Invalid format specifier: %s");
-static const char e_aptypes_is_null_str_nr[]
-  = "E1408: Internal error: ap_types or ap_types[idx] is NULL: %s: %d";
+static const char e_aptypes_is_null_nr_str[]
+  = "E1408: Internal error: ap_types or ap_types[idx] is NULL: %d: %s";
 
 static const char typename_unknown[] = N_("unknown");
 static const char typename_int[] = N_("int");
@@ -1250,7 +1250,7 @@ static void skip_to_arg(const char **ap_types, va_list ap_start, va_list *ap, in
 
   for (*arg_cur = arg_min; *arg_cur < *arg_idx - 1; (*arg_cur)++) {
     if (ap_types == NULL || ap_types[*arg_cur] == NULL) {
-      siemsg(e_aptypes_is_null_str_nr, fmt, *arg_cur);
+      siemsg(e_aptypes_is_null_nr_str, fmt, *arg_cur);
       return;
     }
 
