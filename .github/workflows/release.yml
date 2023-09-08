@@ -22,7 +22,7 @@ jobs:
     outputs:
       version: ${{ steps.build.outputs.version }}
     container:
-      image: ubuntu:18.04
+      image: ubuntu:20.04
       options: --privileged # Privileged mode is needed to load fuse module.
     steps:
       - name: Prepare container
