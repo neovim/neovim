@@ -3596,6 +3596,35 @@ describe('LSP', function()
         end,
       }
     end)
+    it("Aborts silently if no client matches filter and silent is enabled", function()
+      local client
+      test_rpc_server {
+        test_name = "basic_init",
+        on_init = function(c)
+          client = c
+        end,
+        on_handler = function()
+          local notify_msg = exec_lua([[
+            local bufnr = vim.api.nvim_get_current_buf()
+            vim.lsp.buf_attach_client(bufnr, TEST_RPC_CLIENT_ID)
+            local notify_msg
+            local notify = vim.notify
+            vim.notify = function(msg, log_level)
+              notify_msg = msg
+            end
+            vim.lsp.buf.format({
+              silent = true,
+              filter = function(client) return client.name ~= 'does-not-exist' end
+            })
+            vim.notify = notify
+            return notify_msg
+          ]])
+          -- Shouldn't have been called so the value should simply be nil.
+          eq(NIL, notify_msg)
+          client.stop()
+        end,
+      }
+    end)
     it("Sends textDocument/formatting request to format buffer", function()
       local expected_handlers = {
         {NIL, {}, {method="shutdown", client_id=1}};

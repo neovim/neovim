@@ -120,6 +120,8 @@ The following new APIs and features were added.
     indicator to see if a server supports a feature. Instead use
     `client.supports_method(<method>)`. It considers both the dynamic
     capabilities and static `server_capabilities`.
+  • Added `silent` option to `vim.lsp.buf.format` to suppress the no matching
+    language servers notification when `true`.
 
 • Treesitter
   • Bundled parsers and queries (highlight, folds) for Markdown, Python, and

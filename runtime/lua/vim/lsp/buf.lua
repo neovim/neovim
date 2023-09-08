@@ -177,6 +177,21 @@ end
 ---           }
 ---         </pre>
 ---
+---     - silent (boolean|nil)
+---         If true then notify will not be called if no LSP has a format option
+---         available. Will still notify on LSP error. Meant to be used alongside
+---         filter.
+---
+---         <pre>lua
+---           -- Never request typescript-language-server for formatting
+---           -- But don't notify if nothing else is available (eg. eslint is not
+---           -- configured)
+---           vim.lsp.buf.format {
+---             silent = true,
+---             filter = function(client) return client.name ~= "tsserver" end
+---           }
+---         </pre>
+---
 ---     - async boolean|nil
 ---         If true the method won't block. Defaults to false.
 ---         Editing the buffer while formatting asynchronous can lead to unexpected
@@ -197,6 +212,7 @@ function M.format(options)
   local bufnr = options.bufnr or api.nvim_get_current_buf()
   local mode = api.nvim_get_mode().mode
   local range = options.range
+  local silent = options.silent
   if not range and mode == 'v' or mode == 'V' then
     range = range_from_selection(bufnr, mode)
   end
@@ -212,7 +228,7 @@ function M.format(options)
     clients = vim.tbl_filter(options.filter, clients)
   end
 
-  if #clients == 0 then
+  if #clients == 0 and not silent then
     vim.notify('[LSP] Format request failed, no matching language servers.')
   end
 
