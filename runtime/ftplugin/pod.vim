@@ -5,11 +5,12 @@
 " Homepage:      https://github.com/vim-perl/vim-perl
 " Bugs/requests: https://github.com/vim-perl/vim-perl/issues
 " License:       Vim License (see :help license)
-" Last Change:   2021 Oct 19
+" Last Change:   2023 Jul 05
 
 if exists("b:did_ftplugin")
-    finish
+  finish
 endif
+let b:did_ftplugin = 1
 
 let s:save_cpo = &cpo
 set cpo-=C
@@ -37,12 +38,12 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:undo_ftplugin .= " | unlet! b:browsefilter"
 endif
 
-function! s:jumpToSection(backwards)
-  let flags = a:backwards ? 'bsWz' : 'sWz'
-  if has('syntax_items')
+function s:jumpToSection(direction)
+  let flags = a:direction == "backward" ? "bsWz" : "sWz"
+  if has("syntax_items")
     let skip = "synIDattr(synID(line('.'), col('.'), 1), 'name') !~# '\\<podCommand\\>'"
   else
-    let skip = ''
+    let skip = ""
   endif
   for i in range(v:count1)
     call search('^=\a', flags, 0, 0, skip)
@@ -50,19 +51,17 @@ function! s:jumpToSection(backwards)
 endfunction
 
 if !exists("no_plugin_maps") && !exists("no_pod_maps")
-  nnoremap <silent> <buffer> ]] <Cmd>call <SID>jumpToSection()<CR>
-  vnoremap <silent> <buffer> ]] <Cmd>call <SID>jumpToSection()<CR>
-  nnoremap <silent> <buffer> ][ <Cmd>call <SID>jumpToSection()<CR>
-  vnoremap <silent> <buffer> ][ <Cmd>call <SID>jumpToSection()<CR>
-  nnoremap <silent> <buffer> [[ <Cmd>call <SID>jumpToSection(1)<CR>
-  vnoremap <silent> <buffer> [[ <Cmd>call <SID>jumpToSection(1)<CR>
-  nnoremap <silent> <buffer> [] <Cmd>call <SID>jumpToSection(1)<CR>
-  vnoremap <silent> <buffer> [] <Cmd>call <SID>jumpToSection(1)<CR>
-  let b:undo_ftplugin .=
-        \ " | silent! exe 'nunmap <buffer> ]]' | silent! exe 'vunmap <buffer> ]]'" .
-        \ " | silent! exe 'nunmap <buffer> ][' | silent! exe 'vunmap <buffer> ]['" .
-        \ " | silent! exe 'nunmap <buffer> ]]' | silent! exe 'vunmap <buffer> ]]'" .
-        \ " | silent! exe 'nunmap <buffer> []' | silent! exe 'vunmap <buffer> []'"
+  for s:mode in ["n", "o", "x"]
+    for s:lhs in ["]]", "]["]
+      execute s:mode . "noremap <silent> <buffer> " . s:lhs . " <Cmd>call <SID>jumpToSection('forward')<CR>"
+      let b:undo_ftplugin .= " | silent! execute '" . s:mode . "unmap <buffer> " . s:lhs . "'"
+    endfor
+    for s:lhs in ["[[", "[]"]
+      execute s:mode . "noremap <silent> <buffer> " . s:lhs . " <Cmd>call <SID>jumpToSection('backward')<CR>"
+      let b:undo_ftplugin .= " | silent! execute '" . s:mode . "unmap <buffer> " . s:lhs . "'"
+    endfor
+  endfor
+  unlet s:mode s:lhs
 endif
 
 let &cpo = s:save_cpo
