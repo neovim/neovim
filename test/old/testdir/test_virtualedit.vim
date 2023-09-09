@@ -236,7 +236,7 @@ func Test_ve_completion()
   set virtualedit=
 endfunc
 
-" Using "C" then then <CR> moves the last remaining character to the next
+" Using "C" then <CR> moves the last remaining character to the next
 " line.  (Mary Ellen Foster)
 func Test_ve_del_to_eol()
   new
