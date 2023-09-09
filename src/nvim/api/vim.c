@@ -160,6 +160,11 @@ void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
   VALIDATE_S((hl_id != 0), "highlight name", name.data, {
     return;
   });
+
+  if (HAS_KEY(val, highlight, default) && val->default_ && hl_has_settings(hl_id - 1, true)) {
+    return;
+  }
+
   int link_id = -1;
 
   HlAttrs attrs = dict2hlattrs(val, true, &link_id, err);

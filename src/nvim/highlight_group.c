@@ -1441,7 +1441,7 @@ void restore_cterm_colors(void)
 /// @param check_link  if true also check for an existing link.
 ///
 /// @return true if highlight group "idx" has any settings.
-static int hl_has_settings(int idx, bool check_link)
+int hl_has_settings(int idx, bool check_link)
 {
   return hl_table[idx].sg_cleared == 0
          && (hl_table[idx].sg_attr != 0
