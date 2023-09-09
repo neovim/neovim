@@ -1026,7 +1026,7 @@ static bool out_data_decide_throttle(size_t size)
     started = os_hrtime();
   } else {
     uint64_t since = os_hrtime() - started;
-    if (since < (visit * 0.1L * NS_1_SECOND)) {
+    if (since < (visit * (NS_1_SECOND / 10))) {
       return true;
     }
     if (since > (3 * NS_1_SECOND)) {
