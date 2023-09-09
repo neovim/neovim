@@ -39,7 +39,7 @@ endif
 
 let &l:define='\v(<fn>|<const>|<var>|^\s*\#\s*define)'
 
-" Safety check: don't execute zip from current directory
+" Safety check: don't execute zig from current directory
 if !exists('g:zig_std_dir') && exists('*json_decode') &&
     \  executable('zig') && get(g:, 'zig_exec', get(g:, 'plugin_exec', 0))
     \ && (fnamemodify(exepath("zig"), ":p:h") != s:tmp_cwd

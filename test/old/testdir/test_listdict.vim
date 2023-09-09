@@ -346,7 +346,7 @@ func Test_dict_big()
   endtry
   call assert_equal('Vim(let):E716: "1500"', str)
 
-  " lookup each items
+  " lookup each item
   for i in range(1500)
     call assert_equal(3000 - i, d[i])
   endfor

@@ -3888,6 +3888,10 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
           nmatch = curbuf->b_ml.ml_line_count - sub_firstlnum + 1;
           current_match.end.lnum = sub_firstlnum + (linenr_T)nmatch;
           skip_match = true;
+          // safety check
+          if (nmatch < 0) {
+            goto skip;
+          }
         }
 
         // Save the line numbers for the preview buffer

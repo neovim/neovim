@@ -1425,4 +1425,18 @@ func Test_z_substitute_expr_leak()
   delfunc SubExpr
 endfunc
 
+func Test_substitute_expr_switch_win()
+  func R()
+    wincmd x
+    return 'XXXX'
+  endfunc
+  new Xfoobar
+  let bufnr = bufnr('%')
+  put ="abcdef"
+  silent! s/\%')/\=R()
+  call assert_fails(':%s/./\=R()/g', 'E565:')
+  delfunc R
+  exe bufnr .. "bw!"
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

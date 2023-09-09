@@ -1884,6 +1884,10 @@ static void win_exchange(int Prenum)
     beep_flush();
     return;
   }
+  if (text_or_buf_locked()) {
+    beep_flush();
+    return;
+  }
 
   frame_T *frp;
 

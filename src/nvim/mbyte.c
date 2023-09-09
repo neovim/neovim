@@ -1648,7 +1648,7 @@ bool utf_allow_break_before(int cc)
     0x2021,  // ‡ double dagger
     0x2026,  // … horizontal ellipsis
     0x2030,  // ‰ per mille sign
-    0x2031,  // ‱ per then thousand sign
+    0x2031,  // ‱ per the thousand sign
     0x203c,  // ‼ double exclamation mark
     0x2047,  // ⁇ double question mark
     0x2048,  // ⁈ question exclamation mark

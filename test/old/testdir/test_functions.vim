@@ -2630,7 +2630,7 @@ func Test_state()
   call term_sendkeys(buf, getstate)
   call WaitForAssert({-> assert_match('state: mSc; mode: n', term_getline(buf, 6))}, 1000)
 
-  " A operator is pending
+  " An operator is pending
   call term_sendkeys(buf, ":call RunTimer()\<CR>y")
   call TermWait(buf, 25)
   call term_sendkeys(buf, "y")
