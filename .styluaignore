@@ -3,3 +3,4 @@
 /test
 /runtime/lua/vim/re.lua
 /runtime/lua/vim/_meta/options.lua
+/runtime/lua/coxpcall.lua

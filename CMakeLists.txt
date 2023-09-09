@@ -224,7 +224,9 @@ add_glob_target(
   FLAGS -ll ${PROJECT_SOURCE_DIR}/test/lua_runner.lua ${CMAKE_BINARY_DIR}/usr luacheck -q
   GLOB_DIRS runtime/ scripts/ src/ test/
   GLOB_PAT *.lua
-  EXCLUDE runtime/lua/vim/_meta/.*
+  EXCLUDE
+    runtime/lua/vim/_meta/.*
+    runtime/lua/coxpcall.lua
   TOUCH_STRATEGY SINGLE)
 add_dependencies(lintlua-luacheck lua-dev-deps)
 
@@ -237,6 +239,7 @@ add_glob_target(
   EXCLUDE
     /runtime/lua/vim/re.lua
     /runtime/lua/vim/_meta/.*
+    /runtime/lua/coxpcall.lua
   TOUCH_STRATEGY SINGLE)
 
 add_custom_target(lintlua)
