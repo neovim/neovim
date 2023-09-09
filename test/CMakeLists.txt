@@ -27,7 +27,7 @@ if(LUA_HAS_FFI)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
     DEPENDS ${UNITTEST_PREREQS}
     USES_TERMINAL)
-  add_dependencies(unittest test_deps)
+  add_dependencies(unittest lua-dev-deps)
 else()
   message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
 endif()
@@ -66,5 +66,5 @@ add_custom_target(benchmark
   DEPENDS ${BENCHMARK_PREREQS}
   USES_TERMINAL)
 
-add_dependencies(functionaltest test_deps)
-add_dependencies(benchmark test_deps)
+add_dependencies(functionaltest lua-dev-deps)
+add_dependencies(benchmark lua-dev-deps)
