@@ -6,9 +6,7 @@ local eq, clear, eval, command, nvim, next_msg =
 local meths = helpers.meths
 local exec_lua = helpers.exec_lua
 local retry = helpers.retry
-local is_ci = helpers.is_ci
 local assert_alive = helpers.assert_alive
-local skip = helpers.skip
 
 local testlog = 'Xtest-server-notify-log'
 
@@ -90,7 +88,6 @@ describe('notify', function()
   end)
 
   it('cancels stale events on channel close', function()
-    skip(is_ci(), 'hangs on CI #14083 #15251')
     local catchan = eval("jobstart(['cat'], {'rpc': v:true})")
     local catpath = eval('exepath("cat")')
     eq({id=catchan, argv={catpath}, stream='job', mode='rpc', client = {}}, exec_lua ([[
