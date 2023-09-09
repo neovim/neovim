@@ -1,12 +1,5 @@
 name: build
 on:
-  push:
-    paths:
-      - '**.cmake'
-      - '**/CMakeLists.txt'
-      - '**/CMakePresets.json'
-      - 'cmake.*/**'
-      - '.github/**'
   pull_request:
     branches:
       - 'master'
@@ -19,7 +12,7 @@ on:
       - '.github/**'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.repository_owner == 'neovim' && github.sha || github.ref_name }}
+  group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 env:
