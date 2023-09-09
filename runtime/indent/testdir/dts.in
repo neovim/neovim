@@ -1,0 +1,46 @@
+/* vim: set ft=dts noet sw=8 : */
+
+/* START_INDENT */
+/dts-v1/;
+#include <dt-bindings/pinctrl/pinctrl-imx6q.h>
+	#include "imx6qdl.dtsi"
+#include "imx6qdl-someboard.dtsi"
+
+	/delete-node/ &{/memory@10000000};
+
+	/ {
+compatible = "some,board";
+/delete-node/ memory;
+
+	chosen {
+environment = &{usdhc4/partitions/partition@0};
+};
+}
+
+	&iomuxc {
+pinctrl-names = "default";
+pinctrl-0 = <&pinctrl_hog>;
+
+pinctrl_gpiohog: gpiohoggrp {
+fsl,pins = <
+MX6QDL_PAD_GPIO_9__GPIO1_IO09           0x130b0
+MX6QDL_PAD_GPIO_17__GPIO7_IO12          0x130b0
+>;
+};
+}
+
+&usdhc4 {
+partitions {
+compatible = "fixed-partitions";
+
+partition@0 {
+label = "environment";
+reg = <0x0 0xe0000>;
+};
+};
+};
+
+&{/aliases} {
+usb0 = &usb;
+};
+/* END_INDENT */

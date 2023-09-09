@@ -1,0 +1,260 @@
+*news.txt*    Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+Notable changes in Nvim 0.10 from 0.9                                    *news*
+
+For changes in Nvim 0.9, see |news-0.9|.
+
+                                       Type |gO| to see the table of contents.
+
+==============================================================================
+BREAKING CHANGES                                                *news-breaking*
+
+The following changes may require adaptations in user config or plugins.
+
+• |vim.tbl_islist()| now checks whether a table is actually list-like (i.e.,
+  has integer keys without gaps and starting from 1). For the previous
+  behavior (only check for integer keys, allow gaps or not starting with 1),
+  use |vim.tbl_isarray()|.
+
+• "#" followed by a digit no longer stands for a function key at the start of
+  the lhs of a mapping.
+
+• `:behave` was removed.
+  - If you used `:behave xterm`, the following is equivalent: >vim
+
+    set mousemodel=extend
+<
+  - If you used `:behave mswin`, the following is equivalent: >vim
+
+    set selection=exclusive
+    set selectmode=mouse,key
+    set mousemodel=popup
+    set keymodel=startsel,stopsel
+<
+• When switching windows, |CursorMoved| autocommands trigger when Nvim is back
+  in the main loop rather than immediately. This is more compatible with Vim.
+
+• |-l| ensures output ends with a newline if the script prints messages and
+  doesn't cause Nvim to exit.
+
+• |LspRequest| and LspProgressUpdate (renamed to |LspProgress|) autocmds were
+  promoted from a |User| autocmd to first class citizen.
+
+• Renamed `vim.treesitter.playground` to `vim.treesitter.dev`.
+
+• Removed functions from the |vim.json| module:
+  • Unnecessary, undocumented functions which caused global side-effects.
+  • `vim.json.null` is redundant with `vim.NIL`.
+  • `vim.json.array_mt` (and related) is redundant with `vim.empty_dict()`.
+
+• Removed some Vim 5.0<= option compatibilities:
+  • |'backspace'| no longer supports number values. Instead:
+    • for `backspace=0` set `backspace=` (empty)
+    • for `backspace=1` set `backspace=indent,eol`
+    • for `backspace=2` set `backspace=indent,eol,start` (default behavior in Nvim)
+    • for `backspace=3` set `backspace=indent,eol,nostop`
+  • paths in |'backupdir'|, |'path'| and |'cdpath'| can no longer be separated with
+    spaces (but paths themselves may contain spaces now).
+  • |'directory'| will no longer remove a `>` at the start of the option.
+
+• |LanguageTree:parse()| will no longer parse injections by default and
+  now requires an explicit range argument to be passed. If injections are
+  required, provide an explicit range via `parser:parse({ start_row, end_row })`.
+
+==============================================================================
+NEW FEATURES                                                    *news-features*
+
+The following new APIs and features were added.
+
+• Performance:
+  • 'diffopt' "linematch" scoring algorithm now favours larger and less groups
+    https://github.com/neovim/neovim/pull/23611
+  • Treesitter highlighting now parses injections incrementally during
+    screen redraws only for the line range being rendered. This significantly
+    improves performance in large files with many injections.
+
+• |vim.iter()| provides a generic iterator interface for tables and Lua
+  iterators |for-in|.
+
+• Added |vim.ringbuf()| to create ring buffers.
+
+• Added |vim.keycode()| for translating keycodes in a string.
+
+• |'smoothscroll'| option to scroll by screen line rather than by text line
+  when |'wrap'| is set.
+
+• Added inline virtual text support to |nvim_buf_set_extmark()|.
+
+• The terminal buffer now supports reflow (wrapped lines adapt when the buffer
+  is resized horizontally). Note: Lines that are not visible and kept in
+  |'scrollback'| are not reflown.
+
+• |vim.system()| for running system commands.
+
+• Added |nvim_win_text_height()| to compute the number of screen lines occupied
+  by a range of text in a given window.
+
+• |nvim_set_keymap()| and |nvim_del_keymap()| now support abbreviations.
+
+• Builtin TUI can now recognize "super" (|<D-|) and "meta" (|<T-|) modifiers in a
+  terminal emulator that supports |tui-csiu|.
+
+• LSP
+  • LSP method names are available in |vim.lsp.protocol.Methods|.
+  • Implemented LSP inlay hints: |vim.lsp.inlay_hint()|
+    https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_inlayHint
+  • Implemented pull diagnostic textDocument/diagnostic: |vim.lsp.diagnostic.on_diagnostic()|
+    https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_diagnostic
+  • Added |vim.lsp.status()| to consume the last progress messages as a string.
+  • LSP client now always saves and restores named buffer marks when applying
+    text edits.
+  • LSP client now supports the `positionEncoding` server capability. If a server
+    responds with the `positionEncoding` capability in its initialization
+    response, Nvim automatically sets the client's `offset_encoding` field.
+  • Dynamic registration of LSP capabilities. An implication of this change is
+    that checking a client's `server_capabilities` is no longer a sufficient
+    indicator to see if a server supports a feature. Instead use
+    `client.supports_method(<method>)`. It considers both the dynamic
+    capabilities and static `server_capabilities`.
+
+• Treesitter
+  • Bundled parsers and queries (highlight, folds) for Markdown, Python, and
+    Bash.
+  • Added |vim.treesitter.query.omnifunc()| for treesitter query files (set by
+    default).
+  • |Query:iter_matches()| now has the ability to set the maximum start depth
+    for matches.
+  • `@injection.language` now has smarter resolution and will now fallback to language aliases and/or attempt lower case variants of the text.
+    language via aliases (e.g., filetype) registered via
+    `vim.treesitter.language.register`.
+  • The `#set!` directive now supports `injection.self` and `injection.parent` for injecting either the current node's language
+    or the parent LanguageTree's language, respectively.
+  • Added `vim.treesitter.preview_query()`, for live editing of treesitter
+    queries.
+  • Improved error messages for query parsing.
+
+• |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
+  Windows `explorer`, Linux `xdg-open`, etc.)
+
+• |vim.wo| can now be double indexed for |:setlocal| behaviour. Currently only
+  `0` for the buffer index is currently supported.
+
+• Lua type annotations for:
+  • `vim.*`
+  • `vim.fn.*`
+  • `vim.api.*`
+
+• Improved messages for type errors in `vim.api.*` calls (including `opts` params)
+
+• Functions that take a severity as an optional parameter (e.g.
+  |vim.diagnostic.get()|) now also accept a list of severities |vim.diagnostic.severity|
+
+• New RPC client type `msgpack-rpc` is added for `nvim_set_client_info` to
+  support fully MessagePack-RPC compliant clients.
+
+• Floating windows can now show footer with new `footer` and `footer_pos`
+  config fields. Uses |hl-FloatFooter| by default.
+
+• The |:terminal| command now accepts some |:command-modifiers| (specifically
+  |:horizontal| and those that affect splitting a window).
+
+• |vim.lsp.util.locations_to_items()| sets the `user_data` of each item to the
+  original LSP `Location` or `LocationLink`.
+
+==============================================================================
+CHANGED FEATURES                                                 *news-changed*
+
+The following changes to existing APIs or features add new behavior.
+
+• |vim.tbl_contains()| now works for general tables and allows specifying a
+  predicate function that is checked for each value. (Use |vim.list_contains()|
+  for checking list-like tables (integer keys without gaps) for literal values.)
+
+• |vim.region()| can use a string accepted by |getpos()| as position.
+
+• vim.diagnostic.config() now accepts a function for the virtual_text.prefix
+  option, which allows for rendering e.g., diagnostic severities differently.
+
+• Defaults:
+  • 'comments' includes "fb:•".
+  • 'shortmess' includes the "C" flag.
+  • Automatic linting of treesitter query files (see |ft-query-plugin|).
+    Can be disabled via: >lua
+      vim.g.query_lint_on = {}
+<
+  • Enabled treesitter highlighting for treesitter query files.
+
+• The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
+  by default.
+
+• |LspRequest| autocmd callbacks now contain additional information about the LSP
+  request status update that occurred.
+
+• `:source` without arguments treats a buffer with its 'filetype' set to "lua"
+  as Lua code regardless of its extension.
+
+• |:checkhealth| buffer now implements |folding|. The initial folding status is
+  defined by the 'foldenable' option.
+
+• |:Man| now respects 'wrapmargin'
+
+• |gx| now uses |vim.ui.open()| and not netrw. To customize, you can redefine
+  `vim.ui.open` or remap `gx`. To continue using netrw (deprecated): >vim
+  :call netrw#BrowseX(expand(exists("g:netrw_gx")? g:netrw_gx : '<cfile>'), netrw#CheckIfRemote())<CR>
+
+• |vim.lsp.start()| now maps |K| to use |vim.lsp.buf.hover()| if the server
+  supports it, unless |'keywordprg'| was customized before calling
+  |vim.lsp.start()|.
+
+• Terminal buffers started with no arguments (and use 'shell') close
+  automatically if the job exited without error, eliminating the (often
+  unwanted) "[Process exited 0]" message.
+
+• |vim.diagnostic.config()| now accepts virtual text relevant options to
+  |nvim_buf_set_extmark()| (e.g. "virt_text_pos" and "hl_mode") in its
+  "virtual_text" table, which gives users more control over how diagnostic
+  virtual text is displayed.
+
+==============================================================================
+REMOVED FEATURES                                                 *news-removed*
+
+The following deprecated functions or APIs were removed.
+
+• Vimball support is removed.
+  - :Vimuntar command removed.
+
+• Support for legacy treesitter injection queries is removed.
+
+==============================================================================
+DEPRECATIONS                                                *news-deprecations*
+
+The following functions are now deprecated and will be removed in a future
+release.
+
+• Checkhealth functions:
+  - |health#report_error|, |vim.health.report_error()|	Use |vim.health.error()| instead.
+  - |health#report_info|, |vim.health.report_info()|	Use |vim.health.info()| instead.
+  - |health#report_ok|, |vim.health.report_ok()|	Use |vim.health.ok()| instead.
+  - |health#report_start|, |vim.health.report_start()|	Use |vim.health.start()| instead.
+  - |health#report_warn|, |vim.health.report_warn()|	Use |vim.health.warn()| instead.
+
+• |API| functions:
+  - |nvim_buf_get_option()|	Use |nvim_get_option_value()| instead.
+  - |nvim_buf_set_option()|	Use |nvim_set_option_value()| instead.
+  - |nvim_get_option()|		Use |nvim_get_option_value()| instead.
+  - |nvim_set_option()|		Use |nvim_set_option_value()| instead.
+  - |nvim_win_get_option()|	Use |nvim_get_option_value()| instead.
+  - |nvim_win_set_option()|	Use |nvim_set_option_value()| instead.
+
+• vim.lsp functions:
+  - |vim.lsp.util.get_progress_messages()|	Use |vim.lsp.status()| instead.
+  - |vim.lsp.get_active_clients()|		Use |vim.lsp.get_clients()| instead.
+  - |vim.lsp.for_each_buffer_client()|		Use |vim.lsp.get_clients()| instead.
+
+• `vim.loop` has been renamed to `vim.uv`.
+
+ vim:tw=78:ts=8:sw=2:et:ft=help:norl:

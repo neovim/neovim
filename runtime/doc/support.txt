@@ -1,0 +1,56 @@
+*support.txt*			    Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+Support                                                              *support*
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+Supported platforms					 *supported-platforms*
+
+`System`          `Tier`      `Versions`                  `Tested versions`
+Linux            1      >= 2.6.32, glibc >= 2.12     Ubuntu 22.04
+macOS (Intel)    1      >= 10.15                     macOS 12
+Windows 64-bit   1      >= 8 (see note below)        Windows Server 2022
+FreeBSD          1      >= 10                        FreeBSD 13
+macOS (M1)       2      >= 10.15
+OpenBSD          2      >= 7
+MinGW            2      MinGW-w64
+
+Note: Windows 10 "Version 1809" or later is required for |:terminal|. To check
+your Windows version, run the "winver" command and look for "Version xxxx"
+(NOT "OS Build").
+
+Support types ~
+
+* Tier 1: Officially supported and tested with CI. Any contributed patch
+  MUST NOT break such systems.
+
+* Tier 2: Officially supported, but not necessarily tested with CI. These
+  systems are maintained to the best of our ability, without being a top
+  priority.
+
+* Tier 3: Not tested and no guarantees, but may work.
+
+Adding support for a new platform ~
+
+IMPORTANT: Before attempting to add support for a new platform please open
+an issue about it for discussion.
+
+
+==============================================================================
+Common
+
+Some common notes when adding support for new platforms:
+
+Cmake is the only supported build system. The platform must be buildable with cmake.
+
+All functionality related to the new platform must be implemented in its own
+file inside `src/nvim/os` unless it's already done in a common file, in which
+case adding an `#ifdef` is fine.
+
+
+ vim:tw=78:ts=8:et:ft=help:norl:

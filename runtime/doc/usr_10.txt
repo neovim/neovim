@@ -1,0 +1,824 @@
+*usr_10.txt*	Nvim
+
+		     VIM USER MANUAL - by Bram Moolenaar
+
+			     Making big changes
+
+
+In chapter 4 several ways to make small changes were explained.  This chapter
+goes into making changes that are repeated or can affect a large amount of
+text.  The Visual mode allows doing various things with blocks of text.  Use
+an external program to do really complicated things.
+
+|10.1|	Record and playback commands
+|10.2|	Substitution
+|10.3|	Command ranges
+|10.4|	The global command
+|10.5|	Visual block mode
+|10.6|	Reading and writing part of a file
+|10.7|	Formatting text
+|10.8|	Changing case
+|10.9|	Using an external program
+
+     Next chapter: |usr_11.txt|  Recovering from a crash
+ Previous chapter: |usr_09.txt|  Using the GUI
+Table of contents: |usr_toc.txt|
+
+==============================================================================
+*10.1*	Record and playback commands
+
+The "." command repeats the preceding change.  But what if you want to do
+something more complex than a single change?  That's where command recording
+comes in.  There are three steps:
+
+1. The "q{register}" command starts recording keystrokes into the register
+   named {register}.  The register name must be between a and z.
+2. Type your commands.
+3. To finish recording, press q (without any extra character).
+
+You can now execute the macro by typing the command "@{register}".
+
+Take a look at how to use these commands in practice.  You have a list of
+filenames that look like this:
+
+	stdio.h ~
+	fcntl.h ~
+	unistd.h ~
+	stdlib.h ~
+
+And what you want is the following:
+
+	#include "stdio.h" ~
+	#include "fcntl.h" ~
+	#include "unistd.h" ~
+	#include "stdlib.h" ~
+
+You start by moving to the first character of the first line.  Next you
+execute the following commands:
+
+	qa			Start recording a macro in register a.
+	^			Move to the beginning of the line.
+	i#include "<Esc>	Insert the string #include " at the beginning
+				of the line.
+	$			Move to the end of the line.
+	a"<Esc>			Append the character double quotation mark (")
+				to the end of the line.
+	j			Go to the next line.
+	q			Stop recording the macro.
+
+Now that you have done the work once, you can repeat the change by typing the
+command "@a" three times.
+   The "@a" command can be preceded by a count, which will cause the macro to
+be executed that number of times.  In this case you would type: >
+
+	3@a
+
+
+MOVE AND EXECUTE
+
+You might have the lines you want to change in various places.  Just move the
+cursor to each location and use the "@a" command.  If you have done that once,
+you can do it again with "@@".  That's a bit easier to type.  If you now
+execute register b with "@b", the next "@@" will use register b.
+   If you compare the playback method with using ".", there are several
+differences.  First of all, "." can only repeat one change.  As seen in the
+example above, "@a" can do several changes, and move around as well.
+Secondly, "." can only remember the last change.  Executing a register allows
+you to make any changes and then still use "@a" to replay the recorded
+commands.  Finally, you can use 26 different registers.  Thus you can remember
+26 different command sequences to execute.
+
+
+USING REGISTERS
+
+The registers used for recording are the same ones you used for yank and
+delete commands.  This allows you to mix recording with other commands to
+manipulate the registers.
+   Suppose you have recorded a few commands in register n.  When you execute
+this with "@n" you notice you did something wrong.  You could try recording
+again, but perhaps you will make another mistake.  Instead, use this trick:
+
+	G			Go to the end of the file.
+	o<Esc>			Create an empty line.
+	"np			Put the text from the n register.  You now see
+				the commands you typed as text in the file.
+	{edits}			Change the commands that were wrong.  This is
+				just like editing text.
+	0			Go to the start of the line.
+	"ny$			Yank the corrected commands into the n
+				register.
+	dd			Delete the scratch line.
+
+Now you can execute the corrected commands with "@n".  (If your recorded
+commands include line breaks, adjust the last two items in the example to
+include all the lines.)
+
+
+APPENDING TO A REGISTER
+
+So far we have used a lowercase letter for the register name.  To append to a
+register, use an uppercase letter.
+   Suppose you have recorded a command to change a word to register c.  It
+works properly, but you would like to add a search for the next word to
+change.  This can be done with: >
+
+	qC/word<Enter>q
+
+You start with "qC", which records to the c register and appends.  Thus
+writing to an uppercase register name means to append to the register with
+the same letter, but lowercase.
+
+This works both with recording and with yank and delete commands.  For
+example, you want to collect a sequence of lines into the a register.  Yank
+the first line with: >
+
+	"ayy
+
+Now move to the second line, and type: >
+
+	"Ayy
+
+Repeat this command for all lines.  The a register now contains all those
+lines, in the order you yanked them.
+
+==============================================================================
+*10.2*	Substitution						*find-replace*
+
+The ":substitute" command enables you to perform string replacements on a
+whole range of lines.  The general form of this command is as follows: >
+
+	:[range]substitute/from/to/[flags]
+
+This command changes the "from" string to the "to" string in the lines
+specified with [range].  For example, you can change "Professor" to "Teacher"
+in all lines with the following command: >
+
+	:%substitute/Professor/Teacher/
+<
+	Note:
+	The ":substitute" command is almost never spelled out completely.
+	Most of the time, people use the abbreviated version ":s".  From here
+	on the abbreviation will be used.
+
+The "%" before the command specifies the command works on all lines.  Without
+a range, ":s" only works on the current line.  More about ranges in the next
+section |10.3|.
+
+By default, the ":substitute" command changes only the first occurrence on
+each line.  For example, the preceding command changes the line:
+
+	Professor Smith criticized Professor Johnson today. ~
+
+to:
+
+	Teacher Smith criticized Professor Johnson today. ~
+
+To change every occurrence on the line, you need to add the g (global) flag.
+The command: >
+
+	:%s/Professor/Teacher/g
+
+results in (starting with the original line):
+
+	Teacher Smith criticized Teacher Johnson today. ~
+
+Other flags include p (print), which causes the ":substitute" command to print
+out the last line it changes.  The c (confirm) flag tells ":substitute" to ask
+you for confirmation before it performs each substitution.  Enter the
+following: >
+
+	:%s/Professor/Teacher/c
+
+Vim finds the first occurrence of "Professor" and displays the text it is
+about to change.  You get the following prompt: >
+
+	replace with Teacher (y/n/a/q/l/^E/^Y)?
+
+At this point, you must enter one of the following answers:
+
+	y		Yes; make this change.
+	n		No; skip this match.
+	a		All; make this change and all remaining ones without
+			further confirmation.
+	q		Quit; don't make any more changes.
+	l		Last; make this change and then quit.
+	CTRL-E		Scroll the text one line up.
+	CTRL-Y		Scroll the text one line down.
+
+
+The "from" part of the substitute command is actually a pattern.  The same
+kind as used for the search command.  For example, this command only
+substitutes "the" when it appears at the start of a line: >
+
+	:s/^the/these/
+
+If you are substituting with a "from" or "to" part that includes a slash, you
+need to put a backslash before it.  A simpler way is to use another character
+instead of the slash.  A plus, for example: >
+
+	:s+one/two+one or two+
+
+==============================================================================
+*10.3*	Command ranges
+
+The ":substitute" command, and many other : commands, can be applied to a
+selection of lines.  This is called a range.
+   The simple form of a range is {number},{number}.  For example: >
+
+	:1,5s/this/that/g
+
+Executes the substitute command on the lines 1 to 5.  Line 5 is included.
+The range is always placed before the command.
+
+A single number can be used to address one specific line: >
+
+	:54s/President/Fool/
+
+Some commands work on the whole file when you do not specify a range.  To make
+them work on the current line the "." address is used.  The ":write" command
+works like that.  Without a range, it writes the whole file.  To make it write
+only the current line into a file: >
+
+	:.write otherfile
+
+The first line always has number one.  How about the last line?  The "$"
+character is used for this.  For example, to substitute in the lines from the
+cursor to the end: >
+
+	:.,$s/yes/no/
+
+The "%" range that we used before, is actually a short way to say "1,$", from
+the first to the last line.
+
+
+USING A PATTERN IN A RANGE
+
+Suppose you are editing a chapter in a book, and want to replace all
+occurrences of "grey" with "gray".  But only in this chapter, not in the next
+one.  You know that only chapter boundaries have the word "Chapter" in the
+first column.  This command will work then: >
+
+	:?^Chapter?,/^Chapter/s=grey=gray=g
+
+You can see a search pattern is used twice.  The first "?^Chapter?" finds the
+line above the current position that matches this pattern.  Thus the ?pattern?
+range is used to search backwards.  Similarly, "/^Chapter/" is used to search
+forward for the start of the next chapter.
+   To avoid confusion with the slashes, the "=" character was used in the
+substitute command here.  A slash or another character would have worked as
+well.
+
+
+ADD AND SUBTRACT
+
+There is a slight error in the above command: If the title of the next chapter
+had included "grey" it would be replaced as well.  Maybe that's what you
+wanted, but what if you didn't?  Then you can specify an offset.
+   To search for a pattern and then use the line above it: >
+
+	/Chapter/-1
+
+You can use any number instead of the 1.  To address the second line below the
+match: >
+
+	/Chapter/+2
+
+The offsets can also be used with the other items in a range.  Look at this
+one: >
+
+	:.+3,$-5
+
+This specifies the range that starts three lines below the cursor and ends
+five lines before the last line in the file.
+
+
+USING MARKS
+
+Instead of figuring out the line numbers of certain positions, remembering them
+and typing them in a range, you can use marks.
+   Place the marks as mentioned in chapter 3.  For example, use "mt" to mark
+the top of an area and "mb" to mark the bottom.  Then you can use this range
+to specify the lines between the marks (including the lines with the marks): >
+
+	:'t,'b
+
+
+VISUAL MODE AND RANGES
+
+You can select text with Visual mode.  If you then press ":" to start a colon
+command, you will see this: >
+
+	:'<,'>
+
+Now you can type the command and it will be applied to the range of lines that
+was visually selected.
+
+	Note:
+	When using Visual mode to select part of a line, or using CTRL-V to
+	select a block of text, the colon commands will still apply to whole
+	lines.  This might change in a future version of Vim.
+
+The '< and '> are actually marks, placed at the start and end of the Visual
+selection.  The marks remain at their position until another Visual selection
+is made.  Thus you can use the "'<" command to jump to position where the
+Visual area started.  And you can mix the marks with other items: >
+
+	:'>,$
+
+This addresses the lines from the end of the Visual area to the end of the
+file.
+
+
+A NUMBER OF LINES
+
+When you know how many lines you want to change, you can type the number and
+then ":".  For example, when you type "5:", you will get: >
+
+	:.,.+4
+
+Now you can type the command you want to use.  It will use the range "."
+(current line) until ".+4" (four lines down).  Thus it spans five lines.
+
+==============================================================================
+*10.4*	The global command
+
+The ":global" command is one of the more powerful features of Vim.  It allows
+you to find a match for a pattern and execute a command there.  The general
+form is: >
+
+	:[range]global/{pattern}/{command}
+
+This is similar to the ":substitute" command.  But, instead of replacing the
+matched text with other text, the command {command} is executed.
+
+	Note:
+	The command executed for ":global" must be one that starts with a
+	colon.  Normal mode commands can not be used directly.  The |:normal|
+	command can do this for you.
+
+Suppose you want to change "foobar" to "barfoo", but only in C++ style
+comments.  These comments start with "//".  Use this command: >
+
+	:g+//+s/foobar/barfoo/g
+
+This starts with ":g".  That is short for ":global", just like ":s" is short
+for ":substitute".  Then the pattern, enclosed in plus characters.  Since the
+pattern we are looking for contains a slash, this uses the plus character to
+separate the pattern.  Next comes the substitute command that changes "foobar"
+into "barfoo".
+   The default range for the global command is the whole file.  Thus no range
+was specified in this example.  This is different from ":substitute", which
+works on one line without a range.
+   The command isn't perfect, since it also matches lines where "//" appears
+halfway through a line, and the substitution will also take place before the
+"//".
+
+Just like with ":substitute", any pattern can be used.  When you learn more
+complicated patterns later, you can use them here.
+
+==============================================================================
+*10.5*	Visual block mode
+
+With CTRL-V you can start selection of a rectangular area of text.  There are
+a few commands that do something special with the text block.
+
+There is something special about using the "$" command in Visual block mode.
+When the last motion command used was "$", all lines in the Visual selection
+will extend until the end of the line, also when the line with the cursor is
+shorter.  This remains effective until you use a motion command that moves the
+cursor horizontally.  Thus using "j" keeps it, "h" stops it.
+
+
+INSERTING TEXT
+
+The command  "I{string}<Esc>" inserts the text {string} in each line, just
+left of the visual block.  You start by pressing CTRL-V to enter visual block
+mode.  Now you move the cursor to define your block.  Next you type I to enter
+Insert mode, followed by the text to insert.  As you type, the text appears on
+the first line only.
+   After you press <Esc> to end the insert, the text will magically be
+inserted in the rest of the lines contained in the visual selection.  Example:
+
+	include one ~
+	include two ~
+	include three ~
+	include four ~
+
+Move the cursor to the "o" of "one" and press CTRL-V.  Move it down with "3j"
+to "four".  You now have a block selection that spans four lines.  Now type: >
+
+	Imain.<Esc>
+
+The result:
+
+	include main.one ~
+	include main.two ~
+	include main.three ~
+	include main.four ~
+
+If the block spans short lines that do not extend into the block, the text is
+not inserted in that line.  For example, make a Visual block selection that
+includes the word "long" in the first and last line of this text, and thus has
+no text selected in the second line:
+
+	This is a long line ~
+	short ~
+	Any other long line ~
+
+		  ^^^^ selected block
+
+Now use the command "Ivery <Esc>".  The result is:
+
+	This is a very long line ~
+	short ~
+	Any other very long line ~
+
+In the short line no text was inserted.
+
+If the string you insert contains a newline, the "I" acts just like a Normal
+insert command and affects only the first line of the block.
+
+The "A" command works the same way, except that it appends after the right
+side of the block.  And it does insert text in a short line.  Thus you can
+make a choice whether you do or don't want to append text to a short line.
+   There is one special case for "A": Select a Visual block and then use "$"
+to make the block extend to the end of each line.  Using "A" now will append
+the text to the end of each line.
+   Using the same example from above, and then typing "$A XXX<Esc>, you get
+this result:
+
+	This is a long line XXX ~
+	short XXX ~
+	Any other long line XXX ~
+
+This really requires using the "$" command.  Vim remembers that it was used.
+Making the same selection by moving the cursor to the end of the longest line
+with other movement commands will not have the same result.
+
+
+CHANGING TEXT
+
+The Visual block "c" command deletes the block and then throws you into Insert
+mode to enable you to type in a string.  The string will be inserted in each
+line in the block.
+   Starting with the same selection of the "long" words as above, then typing
+"c_LONG_<Esc>", you get this:
+
+	This is a _LONG_ line ~
+	short ~
+	Any other _LONG_ line ~
+
+Just like with "I" the short line is not changed.  Also, you can't enter a
+newline in the new text.
+
+The "C" command deletes text from the left edge of the block to the end of
+line.  It then puts you in Insert mode so that you can type in a string,
+which is added to the end of each line.
+   Starting with the same text again, and typing "Cnew text<Esc>" you get:
+
+	This is a new text ~
+	short ~
+	Any other new text ~
+
+Notice that, even though only the "long" word was selected, the text after it
+is deleted as well.  Thus only the location of the left edge of the visual
+block really matters.
+   Again, short lines that do not reach into the block are excluded.
+
+Other commands that change the characters in the block:
+
+	~	swap case	(a -> A and A -> a)
+	U	make uppercase  (a -> A and A -> A)
+	u	make lowercase  (a -> a and A -> a)
+
+
+FILLING WITH A CHARACTER
+
+To fill the whole block with one character, use the "r" command.  Again,
+starting with the same example text from above, and then typing "rx":
+
+	This is a xxxx line ~
+	short ~
+	Any other xxxx line ~
+
+
+	Note:
+	If you want to include characters beyond the end of the line in the
+	block, check out the 'virtualedit' feature in chapter 25.
+
+
+SHIFTING
+
+The command ">" shifts the selected text to the right one shift amount,
+inserting whitespace.  The starting point for this shift is the left edge of
+the visual block.
+   With the same example again, ">" gives this result:
+
+	This is a	  long line ~
+	short ~
+	Any other	  long line ~
+
+The shift amount is specified with the 'shiftwidth' option.  To change it to
+use 4 spaces: >
+
+	:set shiftwidth=4
+
+The "<" command removes one shift amount of whitespace at the left
+edge of the block.  This command is limited by the amount of text that is
+there; so if there is less than a shift amount of whitespace available, it
+removes what it can.
+
+
+JOINING LINES
+
+The "J" command joins all selected lines together into one line.  Thus it
+removes the line breaks.  Actually, the line break, leading white space and
+trailing white space is replaced by one space.  Two spaces are used after a
+line ending (that can be changed with the 'joinspaces' option).
+   Let's use the example that we got so familiar with now.  The result of
+using the "J" command:
+
+	This is a long line short Any other long line ~
+
+The "J" command doesn't require a blockwise selection.  It works with "v" and
+"V" selection in exactly the same way.
+
+If you don't want the white space to be changed, use the "gJ" command.
+
+==============================================================================
+*10.6*	Reading and writing part of a file
+
+When you are writing an e-mail message, you may want to include another file.
+This can be done with the ":read {filename}" command.  The text of the file is
+put below the cursor line.
+   Starting with this text:
+
+	Hi John, ~
+	Here is the diff that fixes the bug: ~
+	Bye, Pierre. ~
+
+Move the cursor to the second line and type: >
+
+	:read patch
+
+The file named "patch" will be inserted, with this result:
+
+	Hi John, ~
+	Here is the diff that fixes the bug: ~
+	2c2 ~
+	<	for (i = 0; i <= length; ++i) ~
+	--- ~
+	>	for (i = 0; i < length; ++i) ~
+	Bye, Pierre. ~
+
+The ":read" command accepts a range.  The file will be put below the last line
+number of this range.  Thus ":$r patch" appends the file "patch" at the end of
+the file.
+   What if you want to read the file above the first line?  This can be done
+with the line number zero.  This line doesn't really exist, you will get an
+error message when using it with most commands.  But this command is allowed:
+>
+	:0read patch
+
+The file "patch" will be put above the first line of the file.
+
+
+WRITING A RANGE OF LINES
+
+To write a range of lines to a file, the ":write" command can be used.
+Without a range it writes the whole file.  With a range only the specified
+lines are written: >
+
+	:.,$write tempo
+
+This writes the lines from the cursor until the end of the file into the file
+"tempo".  If this file already exists you will get an error message.  Vim
+protects you from accidentally overwriting an existing file.  If you know what
+you are doing and want to overwrite the file, append !: >
+
+	:.,$write! tempo
+
+CAREFUL: The ! must follow the ":write" command immediately, without white
+space.  Otherwise it becomes a filter command, which is explained later in
+this chapter.
+
+
+APPENDING TO A FILE
+
+In the first section of this chapter was explained how to collect a number of
+lines into a register.  The same can be done to collect lines in a file.
+Write the first line with this command: >
+
+	:.write collection
+
+Now move the cursor to the second line you want to collect, and type this: >
+
+	:.write >>collection
+
+The ">>" tells Vim the "collection" file is not to be written as a new file,
+but the line must be appended at the end.   You can repeat this as many times
+as you like.
+
+==============================================================================
+*10.7*	Formatting text
+
+When you are typing plain text, it's nice if the length of each line is
+automatically trimmed to fit in the window.  To make this happen while
+inserting text, set the 'textwidth' option: >
+
+	:set textwidth=78
+
+You might remember that in the example vimrc file this command was used for
+every text file.  Thus if you are using that vimrc file, you were already
+using it.  To check the current value of 'textwidth': >
+
+	:set textwidth
+
+Now lines will be broken to take only up to 78 characters.  However, when you
+insert text halfway through a line, or when you delete a few words, the lines
+will get too long or too short.  Vim doesn't automatically reformat the text.
+To tell Vim to format the current paragraph: >
+
+	gqap
+
+This starts with the "gq" command, which is an operator.  Following is "ap",
+the text object that stands for "a paragraph".  A paragraph is separated from
+the next paragraph by an empty line.
+
+	Note:
+	A blank line, which contains white space, does NOT separate
+	paragraphs.  This is hard to notice!
+
+Instead of "ap" you could use any motion or text object.  If your paragraphs
+are properly separated, you can use this command to format the whole file: >
+
+	gggqG
+
+"gg" takes you to the first line, "gq" is the format operator and "G" the
+motion that jumps to the last line.
+
+In case your paragraphs aren't clearly defined, you can format just the lines
+you manually select.  Move the cursor to the first line you want to format.
+Start with the command "gqj".  This formats the current line and the one below
+it.  If the first line was short, words from the next line will be appended.
+If it was too long, words will be moved to the next line.  The cursor moves to
+the second line.  Now you can use "." to repeat the command.  Keep doing this
+until you are at the end of the text you want to format.
+
+==============================================================================
+*10.8*	Changing case
+
+You have text with section headers in lowercase.  You want to make the word
+"section" all uppercase.  Do this with the "gU" operator.  Start with the
+cursor in the first column: >
+
+			     gUw
+<	section header	    ---->      SECTION header
+
+The "gu" operator does exactly the opposite: >
+
+			     guw
+<	SECTION header	    ---->      section header
+
+You can also use "g~" to swap case.  All these are operators, thus they work
+with any motion command, with text objects and in Visual mode.
+   To make an operator work on lines you double it.  The delete operator is
+"d", thus to delete a line you use "dd".  Similarly, "gugu" makes a whole line
+lowercase.  This can be shortened to "guu".  "gUgU" is shortened to "gUU" and
+"g~g~" to "g~~".  Example: >
+
+				g~~
+<	Some GIRLS have Fun    ---->   sOME girls HAVE fUN ~
+
+==============================================================================
+*10.9*	Using an external program
+
+Vim has a very powerful set of commands, it can do anything.  But there may
+still be something that an external command can do better or faster.
+   The command "!{motion}{program}" takes a block of text and filters it
+through an external program.  In other words, it runs the system command
+represented by {program}, giving it the block of text represented by {motion}
+as input.  The output of this command then replaces the selected block.
+   Because this summarizes badly if you are unfamiliar with Unix filters, take
+a look at an example.  The sort command sorts a file.  If you execute the
+following command, the unsorted file input.txt will be sorted and written to
+output.txt.  This works on both Unix and Windows. >
+
+	sort <input.txt >output.txt
+
+Now do the same thing in Vim.  You want to sort lines 1 through 5 of a file.
+You start by putting the cursor on line 1.  Next you execute the following
+command: >
+
+	!5G
+
+The "!" tells Vim that you are performing a filter operation.  The Vim editor
+expects a motion command to follow, indicating which part of the file to
+filter.  The "5G" command tells Vim to go to line 5, so it now knows that it
+is to filter lines 1 (the current line) through 5.
+   In anticipation of the filtering, the cursor drops to the bottom of the
+screen and a ! prompt displays.  You can now type in the name of the filter
+program, in this case "sort".  Therefore, your full command is as follows: >
+
+	!5Gsort<Enter>
+
+The result is that the sort program is run on the first 5 lines.  The output
+of the program replaces these lines.
+
+	line 55			      line 11
+	line 33			      line 22
+	line 11		-->	      line 33
+	line 22			      line 44
+	line 44			      line 55
+	last line		      last line
+
+The "!!" command filters the current line through a filter.  In Unix the "date"
+command prints the current time and date.  "!!date<Enter>" replaces the current
+line with the output of "date".  This is useful to add a timestamp to a file.
+
+
+WHEN IT DOESN'T WORK
+
+Starting a shell, sending it text and capturing the output requires that Vim
+knows how the shell works exactly.  When you have problems with filtering,
+check the values of these options:
+
+	'shell'		specifies the program that Vim uses to execute
+			external programs.
+	'shellcmdflag'	argument to pass a command to the shell
+	'shellquote'	quote to be used around the command
+	'shellxquote'	quote to be used around the command and redirection
+	'shellslash'	use forward slashes in the command (only for
+			MS-Windows and alikes)
+	'shellredir'	string used to write the command output into a file
+
+On Unix this is hardly ever a problem, because there are two kinds of shells:
+"sh" like and "csh" like.  Vim checks the 'shell' option and sets related
+options automatically, depending on whether it sees "csh" somewhere in
+'shell'.
+   On MS-Windows, however, there are many different shells and you might have
+to tune the options to make filtering work.  Check the help for the options
+for more information.
+
+
+READING COMMAND OUTPUT
+
+To read the contents of the current directory into the file, use this:
+
+on Unix: >
+	:read !ls
+on MS-Windows: >
+	:read !dir
+
+The output of the "ls" or "dir" command is captured and inserted in the text,
+below the cursor.  This is similar to reading a file, except that the "!" is
+used to tell Vim that a command follows.
+   The command may have arguments.  And a range can be used to tell where Vim
+should put the lines: >
+
+	:0read !date -u
+
+This inserts the current time and date in UTC format at the top of the file.
+(Well, if you have a date command that accepts the "-u" argument.)  Note the
+difference with using "!!date": that replaced a line, while ":read !date" will
+insert a line.
+
+
+WRITING TEXT TO A COMMAND
+
+The Unix command "wc" counts words.  To count the words in the current file: >
+
+	:write !wc
+
+This is the same write command as before, but instead of a file name the "!"
+character is used and the name of an external command.  The written text will
+be passed to the specified command as its standard input.  The output could
+look like this:
+
+       4      47     249 ~
+
+The "wc" command isn't verbose.  This means you have 4 lines, 47 words and 249
+characters.
+
+Watch out for this mistake: >
+
+	:write! wc
+
+This will write the file "wc" in the current directory, with force.  White
+space is important here!
+
+
+REDRAWING THE SCREEN
+
+If the external command produced an error message, the display may have been
+messed up.  Vim is very efficient and only redraws those parts of the screen
+that it knows need redrawing.  But it can't know about what another program
+has written.  To tell Vim to redraw the screen:
+>
+	CTRL-L
+<
+==============================================================================
+
+Next chapter: |usr_11.txt|  Recovering from a crash
+
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

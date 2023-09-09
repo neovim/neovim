@@ -1,0 +1,76 @@
+name: Bug Report
+description: Report a problem in Neovim
+labels: [bug]
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        _Before reporting:_ run `make distclean` when encountering build issues, search [existing issues](https://github.com/neovim/neovim/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and check the [FAQ](https://github.com/neovim/neovim/wiki/FAQ). Usage or "How to" questions belong on the [stackoverflow](https://vi.stackexchange.com/) and will be closed.
+
+  - type: textarea
+    attributes:
+      label: "Problem"
+      description: "Describe the current behavior. May include logs, images, or videos."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Steps to reproduce"
+      description: |
+        - For build failures: list the exact steps including CMake flags (if any).
+        - For startup or shell-related problems: try `env -i TERM=ansi-256color "$(which nvim)"`.
+        - See [Minimal-reproduction-template](https://github.com/neovim/neovim/wiki/Minimal-reproduction-template) for how to create a minimal configuration.
+        - Please do **not** include a package manager in the reproduction steps.
+      placeholder: |
+        nvim --clean
+        :edit foo
+        yiwp
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Expected behavior"
+      description: "Describe the behavior you expect."
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: "Neovim version (nvim -v)"
+      placeholder: "0.6.0 commit db1b0ee3b30f"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Vim (not Nvim) behaves the same?"
+      description: "Does `vim -u DEFAULTS` have the same issue? Note the exact Vim version (`8.x.yyyy`)."
+      placeholder: "no, vim 7.3.432"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Operating system/version"
+      placeholder: "macOS 11.5"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Terminal name/version"
+      placeholder: "xterm 3.1"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "$TERM environment variable"
+      placeholder: "xterm-256color"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: "Installation"
+      description: "How did you install neovim: build from repo / system package manager / appimage / homebrew / snap / chocolatey / other (describe)?"
+      placeholder: "Arch User Repository (AUR)"
+    validations:
+      required: true

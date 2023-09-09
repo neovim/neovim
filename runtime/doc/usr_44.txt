@@ -1,0 +1,708 @@
+*usr_44.txt*	Nvim
+
+		     VIM USER MANUAL - by Bram Moolenaar
+
+			 Your own syntax highlighted
+
+
+Vim comes with highlighting for a couple of hundred different file types.  If
+the file you are editing isn't included, read this chapter to find out how to
+get this type of file highlighted.  Also see |:syn-define| in the reference
+manual.
+
+|44.1|	Basic syntax commands
+|44.2|	Keywords
+|44.3|	Matches
+|44.4|	Regions
+|44.5|	Nested items
+|44.6|	Following groups
+|44.7|	Other arguments
+|44.8|	Clusters
+|44.9|	Including another syntax file
+|44.10|	Synchronizing
+|44.11|	Installing a syntax file
+|44.12|	Portable syntax file layout
+
+     Next chapter: |usr_45.txt|  Select your language
+ Previous chapter: |usr_43.txt|  Using filetypes
+Table of contents: |usr_toc.txt|
+
+==============================================================================
+*44.1*	Basic syntax commands
+
+Using an existing syntax file to start with will save you a lot of time.  Try
+finding a syntax file in $VIMRUNTIME/syntax for a language that is similar.
+These files will also show you the normal layout of a syntax file.  To
+understand it, you need to read the following.
+
+Let's start with the basic arguments.  Before we start defining any new
+syntax, we need to clear out any old definitions: >
+
+	:syntax clear
+
+This isn't required in the final syntax file, but very useful when
+experimenting.
+
+There are more simplifications in this chapter.  If you are writing a syntax
+file to be used by others, read all the way through the end to find out the
+details.
+
+
+LISTING DEFINED ITEMS
+
+To check which syntax items are currently defined, use this command: >
+
+	:syntax
+
+You can use this to check which items have actually been defined.  Quite
+useful when you are experimenting with a new syntax file.  It also shows the
+colors used for each item, which helps to find out what is what.
+   To list the items in a specific syntax group use: >
+
+	:syntax list {group-name}
+
+This also can be used to list clusters (explained in |44.8|).  Just include
+the @ in the name.
+
+
+MATCHING CASE
+
+Some languages are not case sensitive, such as Pascal.  Others, such as C, are
+case sensitive.  You need to tell which type you have with the following
+commands: >
+	:syntax case match
+	:syntax case ignore
+
+The "match" argument means that Vim will match the case of syntax elements.
+Therefore, "int" differs from "Int" and "INT".  If the "ignore" argument is
+used, the following are equivalent: "Procedure", "PROCEDURE" and "procedure".
+   The ":syntax case" commands can appear anywhere in a syntax file and affect
+the syntax definitions that follow.  In most cases, you have only one ":syntax
+case" command in your syntax file; if you work with an unusual language that
+contains both case-sensitive and non-case-sensitive elements, however, you can
+scatter the ":syntax case" command throughout the file.
+
+==============================================================================
+*44.2*	Keywords
+
+The most basic syntax elements are keywords.  To define a keyword, use the
+following form: >
+
+	:syntax keyword {group} {keyword} ...
+
+The {group} is the name of a syntax group.  With the ":highlight" command you
+can assign colors to a {group}.  The {keyword} argument is an actual keyword.
+Here are a few examples: >
+
+	:syntax keyword xType int long char
+	:syntax keyword xStatement if then else endif
+
+This example uses the group names "xType" and "xStatement".  By convention,
+each group name is prefixed by the filetype for the language being defined.
+This example defines syntax for the x language (eXample language without an
+interesting name).  In a syntax file for "csh" scripts the name "cshType"
+would be used.  Thus the prefix is equal to the value of 'filetype'.
+   These commands cause the words "int", "long" and "char" to be highlighted
+one way and the words "if", "then", "else" and "endif" to be highlighted
+another way.  Now you need to connect the x group names to standard Vim
+names.  You do this with the following commands: >
+
+	:highlight link xType Type
+	:highlight link xStatement Statement
+
+This tells Vim to highlight "xType" like "Type" and "xStatement" like
+"Statement".  See |group-name| for the standard names.
+
+
+UNUSUAL KEYWORDS
+
+The characters used in a keyword must be in the 'iskeyword' option.  If you
+use another character, the word will never match.  Vim doesn't give a warning
+message for this.
+   The x language uses the '-' character in keywords.  This is how it's done:
+>
+	:setlocal iskeyword+=-
+	:syntax keyword xStatement when-not
+
+The ":setlocal" command is used to change 'iskeyword' only for the current
+buffer.  Still it does change the behavior of commands like "w" and "*".  If
+that is not wanted, don't define a keyword but use a match (explained in the
+next section).
+
+The x language allows for abbreviations.  For example, "next" can be
+abbreviated to "n", "ne" or "nex".  You can define them by using this command:
+>
+	:syntax keyword xStatement n[ext]
+
+This doesn't match "nextone", keywords always match whole words only.
+
+==============================================================================
+*44.3*	Matches
+
+Consider defining something a bit more complex.  You want to match ordinary
+identifiers.  To do this, you define a match syntax item.  This one matches
+any word consisting of only lowercase letters: >
+
+	:syntax match xIdentifier /\<\l\+\>/
+<
+	Note:
+	Keywords overrule any other syntax item.  Thus the keywords "if",
+	"then", etc., will be keywords, as defined with the ":syntax keyword"
+	commands above, even though they also match the pattern for
+	xIdentifier.
+
+The part at the end is a pattern, like it's used for searching.  The // is
+used to surround the pattern (like how it's done in a ":substitute" command).
+You can use any other character, like a plus or a quote.
+
+Now define a match for a comment.  In the x language it is anything from # to
+the end of a line: >
+
+	:syntax match xComment /#.*/
+
+Since you can use any search pattern, you can highlight very complex things
+with a match item.  See |pattern| for help on search patterns.
+
+==============================================================================
+*44.4*	Regions
+
+In the example x language, strings are enclosed in double quotation marks (").
+To highlight strings you define a region.  You need a region start (double
+quote) and a region end (double quote).  The definition is as follows: >
+
+	:syntax region xString start=/"/ end=/"/
+
+The "start" and "end" directives define the patterns used to find the start
+and end of the region.  But what about strings that look like this?
+
+	"A string with a double quote (\") in it" ~
+
+This creates a problem: The double quotation marks in the middle of the string
+will end the region.  You need to tell Vim to skip over any escaped double
+quotes in the string.  Do this with the skip keyword: >
+
+	:syntax region xString start=/"/ skip=/\\"/ end=/"/
+
+The double backslash matches a single backslash, since the backslash is a
+special character in search patterns.
+
+When to use a region instead of a match?  The main difference is that a match
+item is a single pattern, which must match as a whole.  A region starts as
+soon as the "start" pattern matches.  Whether the "end" pattern is found or
+not doesn't matter.  Thus when the item depends on the "end" pattern to match,
+you cannot use a region.  Otherwise, regions are often simpler to define.  And
+it is easier to use nested items, as is explained in the next section.
+
+==============================================================================
+*44.5*	Nested items
+
+Take a look at this comment:
+
+	%Get input  TODO: Skip white space ~
+
+You want to highlight TODO in big yellow letters, even though it is in a
+comment that is highlighted blue.  To let Vim know about this, you define the
+following syntax groups: >
+
+	:syntax keyword xTodo TODO contained
+	:syntax match xComment /%.*/ contains=xTodo
+
+In the first line, the "contained" argument tells Vim that this keyword can
+exist only inside another syntax item.  The next line has "contains=xTodo".
+This indicates that the xTodo syntax element is inside it.  The result is that
+the comment line as a whole is matched with "xComment" and made blue.  The
+word TODO inside it is matched by xTodo and highlighted yellow (highlighting
+for xTodo was setup for this).
+
+
+RECURSIVE NESTING
+
+The x language defines code blocks in curly braces.  And a code block may
+contain other code blocks.  This can be defined this way: >
+
+	:syntax region xBlock start=/{/ end=/}/ contains=xBlock
+
+Suppose you have this text:
+
+	while i < b { ~
+		if a { ~
+			b = c; ~
+		} ~
+	} ~
+
+First a xBlock starts at the { in the first line.  In the second line another
+{ is found.  Since we are inside a xBlock item, and it contains itself, a
+nested xBlock item will start here.  Thus the "b = c" line is inside the
+second level xBlock region.  Then a } is found in the next line, which matches
+with the end pattern of the region.  This ends the nested xBlock.  Because the
+} is included in the nested region, it is hidden from the first xBlock region.
+Then at the last } the first xBlock region ends.
+
+
+KEEPING THE END
+
+Consider the following two syntax items: >
+
+	:syntax region xComment start=/%/ end=/$/ contained
+	:syntax region xPreProc start=/#/ end=/$/ contains=xComment
+
+You define a comment as anything from % to the end of the line.  A
+preprocessor directive is anything from # to the end of the line.  Because you
+can have a comment on a preprocessor line, the preprocessor definition
+includes a "contains=xComment" argument.  Now look what happens with this
+text:
+
+	#define X = Y  % Comment text ~
+	int foo = 1; ~
+
+What you see is that the second line is also highlighted as xPreProc.  The
+preprocessor directive should end at the end of the line.  That is why
+you have used "end=/$/".  So what is going wrong?
+   The problem is the contained comment.  The comment starts with % and ends
+at the end of the line.  After the comment ends, the preprocessor syntax
+continues.  This is after the end of the line has been seen, so the next
+line is included as well.
+   To avoid this problem and to avoid a contained syntax item eating a needed
+end of line, use the "keepend" argument.  This takes care of
+the double end-of-line matching: >
+
+	:syntax region xComment start=/%/ end=/$/ contained
+	:syntax region xPreProc start=/#/ end=/$/ contains=xComment keepend
+
+
+CONTAINING MANY ITEMS
+
+You can use the contains argument to specify that everything can be contained.
+For example: >
+
+	:syntax region xList start=/\[/ end=/\]/ contains=ALL
+
+All syntax items will be contained in this one.  It also contains itself, but
+not at the same position (that would cause an endless loop).
+   You can specify that some groups are not contained.  Thus contain all
+groups but the ones that are listed:
+>
+	:syntax region xList start=/\[/ end=/\]/ contains=ALLBUT,xString
+
+With the "TOP" item you can include all items that don't have a "contained"
+argument.  "CONTAINED" is used to only include items with a "contained"
+argument.  See |:syn-contains| for the details.
+
+==============================================================================
+*44.6*	Following groups
+
+The x language has statements in this form:
+
+	if (condition) then ~
+
+You want to highlight the three items differently.  But "(condition)" and
+"then" might also appear in other places, where they get different
+highlighting.  This is how you can do this: >
+
+	:syntax match xIf /if/ nextgroup=xIfCondition skipwhite
+	:syntax match xIfCondition /([^)]*)/ contained nextgroup=xThen skipwhite
+	:syntax match xThen /then/ contained
+
+The "nextgroup" argument specifies which item can come next.  This is not
+required.  If none of the items that are specified are found, nothing happens.
+For example, in this text:
+
+	if not (condition) then ~
+
+The "if" is matched by xIf.  "not" doesn't match the specified nextgroup
+xIfCondition, thus only the "if" is highlighted.
+
+The "skipwhite" argument tells Vim that white space (spaces and tabs) may
+appear in between the items.  Similar arguments are "skipnl", which allows a
+line break in between the items, and "skipempty", which allows empty lines.
+Notice that "skipnl" doesn't skip an empty line, something must match after
+the line break.
+
+==============================================================================
+*44.7*	Other arguments
+
+MATCHGROUP
+
+When you define a region, the entire region is highlighted according to the
+group name specified.  To highlight the text enclosed in parentheses () with
+the group xInside, for example, use the following command: >
+
+	:syntax region xInside start=/(/ end=/)/
+
+Suppose, that you want to highlight the parentheses differently.  You can do
+this with a lot of convoluted region statements, or you can use the
+"matchgroup" argument.  This tells Vim to highlight the start and end of a
+region with a different highlight group (in this case, the xParen group): >
+
+	:syntax region xInside matchgroup=xParen start=/(/ end=/)/
+
+The "matchgroup" argument applies to the start or end match that comes after
+it.  In the previous example both start and end are highlighted with xParen.
+To highlight the end with xParenEnd: >
+
+	:syntax region xInside matchgroup=xParen start=/(/
+		\ matchgroup=xParenEnd end=/)/
+
+A side effect of using "matchgroup" is that contained items will not match in
+the start or end of the region.  The example for "transparent" uses this.
+
+
+TRANSPARENT
+
+In a C language file you would like to highlight the () text after a "while"
+differently from the () text after a "for".  In both of these there can be
+nested () items, which should be highlighted in the same way.  You must make
+sure the () highlighting stops at the matching ).  This is one way to do this:
+>
+	:syntax region cWhile matchgroup=cWhile start=/while\s*(/ end=/)/
+		\ contains=cCondNest
+	:syntax region cFor matchgroup=cFor start=/for\s*(/ end=/)/
+		\ contains=cCondNest
+	:syntax region cCondNest start=/(/ end=/)/ contained transparent
+
+Now you can give cWhile and cFor different highlighting.  The cCondNest item
+can appear in either of them, but take over the highlighting of the item it is
+contained in.  The "transparent" argument causes this.
+   Notice that the "matchgroup" argument has the same group as the item
+itself.  Why define it then?  Well, the side effect of using a matchgroup is
+that contained items are not found in the match with the start item then.
+This avoids that the cCondNest group matches the ( just after the "while" or
+"for".  If this would happen, it would span the whole text until the matching
+) and the region would continue after it.  Now cCondNest only matches after
+the match with the start pattern, thus after the first (.
+
+
+OFFSETS
+
+Suppose you want to define a region for the text between ( and ) after an
+"if".  But you don't want to include the "if" or the ( and ).  You can do this
+by specifying offsets for the patterns.  Example: >
+
+	:syntax region xCond start=/if\s*(/ms=e+1 end=/)/me=s-1
+
+The offset for the start pattern is "ms=e+1".  "ms" stands for Match Start.
+This defines an offset for the start of the match.  Normally the match starts
+where the pattern matches.  "e+1" means that the match now starts at the end
+of the pattern match, and then one character further.
+   The offset for the end pattern is "me=s-1".  "me" stands for Match End.
+"s-1" means the start of the pattern match and then one character back.  The
+result is that in this text:
+
+	if (foo == bar) ~
+
+Only the text "foo == bar" will be highlighted as xCond.
+
+More about offsets here: |:syn-pattern-offset|.
+
+
+ONELINE
+
+The "oneline" argument indicates that the region does not cross a line
+boundary.  For example: >
+
+	:syntax region xIfThen start=/if/ end=/then/ oneline
+
+This defines a region that starts at "if" and ends at "then".  But if there is
+no "then" after the "if", the region doesn't match.
+
+	Note:
+	When using "oneline" the region doesn't start if the end pattern
+	doesn't match in the same line.  Without "oneline" Vim does _not_
+	check if there is a match for the end pattern.  The region starts even
+	when the end pattern doesn't match in the rest of the file.
+
+
+CONTINUATION LINES AND AVOIDING THEM
+
+Things now become a little more complex.  Let's define a preprocessor line.
+This starts with a # in the first column and continues until the end of the
+line.  A line that ends with \ makes the next line a continuation line.  The
+way you handle this is to allow the syntax item to contain a continuation
+pattern: >
+
+	:syntax region xPreProc start=/^#/ end=/$/ contains=xLineContinue
+	:syntax match xLineContinue "\\$" contained
+
+In this case, although xPreProc normally matches a single line, the group
+contained in it (namely xLineContinue) lets it go on for more than one line.
+For example, it would match both of these lines:
+
+	#define SPAM  spam spam spam \ ~
+			bacon and spam ~
+
+In this case, this is what you want.  If it is not what you want, you can call
+for the region to be on a single line by adding "excludenl" to the contained
+pattern.  For example, you want to highlight "end" in xPreProc, but only at
+the end of the line.  To avoid making the xPreProc continue on the next line,
+like xLineContinue does, use "excludenl" like this: >
+
+	:syntax region xPreProc start=/^#/ end=/$/
+		\ contains=xLineContinue,xPreProcEnd
+	:syntax match xPreProcEnd excludenl /end$/ contained
+	:syntax match xLineContinue "\\$" contained
+
+"excludenl" must be placed before the pattern.  Since "xLineContinue" doesn't
+have "excludenl", a match with it will extend xPreProc to the next line as
+before.
+
+==============================================================================
+*44.8*	Clusters
+
+One of the things you will notice as you start to write a syntax file is that
+you wind up generating a lot of syntax groups.  Vim enables you to define a
+collection of syntax groups called a cluster.
+   Suppose you have a language that contains for loops, if statements, while
+loops, and functions.  Each of them contains the same syntax elements: numbers
+and identifiers.  You define them like this: >
+
+	:syntax match xFor /^for.*/ contains=xNumber,xIdent
+	:syntax match xIf /^if.*/ contains=xNumber,xIdent
+	:syntax match xWhile /^while.*/ contains=xNumber,xIdent
+
+You have to repeat the same "contains=" every time.  If you want to add
+another contained item, you have to add it three times.  Syntax clusters
+simplify these definitions by enabling you to have one cluster stand for
+several syntax groups.
+   To define a cluster for the two items that the three groups contain, use
+the following command: >
+
+	:syntax cluster xState contains=xNumber,xIdent
+
+Clusters are used inside other syntax items just like any syntax group.
+Their names start with @.  Thus, you can define the three groups like this: >
+
+	:syntax match xFor /^for.*/ contains=@xState
+	:syntax match xIf /^if.*/ contains=@xState
+	:syntax match xWhile /^while.*/ contains=@xState
+
+You can add new group names to this cluster with the "add" argument: >
+
+	:syntax cluster xState add=xString
+
+You can remove syntax groups from this list as well: >
+
+	:syntax cluster xState remove=xNumber
+
+==============================================================================
+*44.9*	Including another syntax file
+
+The C++ language syntax is a superset of the C language.  Because you do not
+want to write two syntax files, you can have the C++ syntax file read in the
+one for C by using the following command: >
+
+	:runtime! syntax/c.vim
+
+The ":runtime!" command searches 'runtimepath' for all "syntax/c.vim" files.
+This makes the C parts of the C++ syntax be defined like for C files.  If you
+have replaced the c.vim syntax file, or added items with an extra file, these
+will be loaded as well.
+   After loading the C syntax items the specific C++ items can be defined.
+For example, add keywords that are not used in C: >
+
+	:syntax keyword cppStatement	new delete this friend using
+
+This works just like in any other syntax file.
+
+Now consider the Perl language.  A Perl script consists of two distinct parts:
+a documentation section in POD format, and a program written in Perl itself.
+The POD section starts with "=head" and ends with "=cut".
+   You want to define the POD syntax in one file, and use it from the Perl
+syntax file.  The ":syntax include" command reads in a syntax file and stores
+the elements it defined in a syntax cluster.  For Perl, the statements are as
+follows: >
+
+	:syntax include @Pod <sfile>:p:h/pod.vim
+	:syntax region perlPOD start=/^=head/ end=/^=cut/ contains=@Pod
+
+When "=head" is found in a Perl file, the perlPOD region starts.  In this
+region the @Pod cluster is contained.  All the items defined as top-level
+items in the pod.vim syntax files will match here.  When "=cut" is found, the
+region ends and we go back to the items defined in the Perl file.
+   The ":syntax include" command is clever enough to ignore a ":syntax clear"
+command in the included file.  And an argument such as "contains=ALL" will
+only contain items defined in the included file, not in the file that includes
+it.
+   The "<sfile>:p:h/" part uses the name of the current file (<sfile>),
+expands it to a full path (:p) and then takes the head (:h).  This results in
+the directory name of the file.  This causes the pod.vim file in the same
+directory to be included.
+
+==============================================================================
+*44.10*	Synchronizing
+
+Compilers have it easy.  They start at the beginning of a file and parse it
+straight through.  Vim does not have it so easy.  It must start in the middle,
+where the editing is being done.  So how does it tell where it is?
+   The secret is the ":syntax sync" command.  This tells Vim how to figure out
+where it is.  For example, the following command tells Vim to scan backward
+for the beginning or end of a C-style comment and begin syntax coloring from
+there: >
+
+	:syntax sync ccomment
+
+You can tune this processing with some arguments.  The "minlines" argument
+tells Vim the minimum number of lines to look backward, and "maxlines" tells
+the editor the maximum number of lines to scan.
+   For example, the following command tells Vim to look at least 10 lines
+before the top of the screen: >
+
+	:syntax sync ccomment minlines=10 maxlines=500
+
+If it cannot figure out where it is in that space, it starts looking farther
+and farther back until it figures out what to do.  But it looks no farther
+back than 500 lines.  (A large "maxlines" slows down processing.  A small one
+might cause synchronization to fail.)
+   To make synchronizing go a bit faster, tell Vim which syntax items can be
+skipped.  Every match and region that only needs to be used when actually
+displaying text can be given the "display" argument.
+   By default, the comment to be found will be colored as part of the Comment
+syntax group.  If you want to color things another way, you can specify a
+different syntax group: >
+
+	:syntax sync ccomment xAltComment
+
+If your programming language does not have C-style comments in it, you can try
+another method of synchronization.  The simplest way is to tell Vim to space
+back a number of lines and try to figure out things from there.  The following
+command tells Vim to go back 150 lines and start parsing from there: >
+
+	:syntax sync minlines=150
+
+A large "minlines" value can make Vim slower, especially when scrolling
+backwards in the file.
+   Finally, you can specify a syntax group to look for by using this command:
+>
+	:syntax sync match {sync-group-name}
+		\ grouphere {group-name} {pattern}
+
+This tells Vim that when it sees {pattern} the syntax group named {group-name}
+begins just after the pattern given.  The {sync-group-name} is used to give a
+name to this synchronization specification.  For example, the sh scripting
+language begins an if statement with "if" and ends it with "fi":
+
+	if [ --f file.txt ] ; then ~
+		echo "File exists" ~
+	fi ~
+
+To define a "grouphere" directive for this syntax, you use the following
+command: >
+
+	:syntax sync match shIfSync grouphere shIf "\<if\>"
+
+The "groupthere" argument tells Vim that the pattern ends a group.  For
+example, the end of the if/fi group is as follows: >
+
+	:syntax sync match shIfSync groupthere NONE "\<fi\>"
+
+In this example, the NONE tells Vim that you are not in any special syntax
+region.  In particular, you are not inside an if block.
+
+You also can define matches and regions that are with no "grouphere" or
+"groupthere" arguments.  These groups are for syntax groups skipped during
+synchronization.  For example, the following skips over anything inside {},
+even if it would normally match another synchronization method: >
+
+	:syntax sync match xSpecial /{.*}/
+
+More about synchronizing in the reference manual: |:syn-sync|.
+
+==============================================================================
+*44.11*	Installing a syntax file
+
+When your new syntax file is ready to be used, drop it in a "syntax" directory
+in 'runtimepath'.  For Unix that would be "~/.config/nvim/syntax".
+  The name of the syntax file must be equal to the file type, with ".vim"
+added.  Thus for the x language, the full path of the file would be:
+
+	~/.config/nvim/syntax/x.vim ~
+
+You must also make the file type be recognized.  See |43.2|.
+
+If your file works well, you might want to make it available to other Vim
+users.  First read the next section to make sure your file works well for
+others.  Then e-mail it to the Vim maintainer: <maintainer@vim.org>.  Also
+explain how the filetype can be detected.  With a bit of luck your file will
+be included in the next Vim version!
+
+
+ADDING TO AN EXISTING SYNTAX FILE
+
+We were assuming you were adding a completely new syntax file.  When an existing
+syntax file works, but is missing some items, you can add items in a separate
+file.  That avoids changing the distributed syntax file, which will be lost
+when installing a new version of Vim.
+   Write syntax commands in your file, possibly using group names from the
+existing syntax.  For example, to add new variable types to the C syntax file:
+>
+	:syntax keyword cType off_t uint
+
+Write the file with the same name as the original syntax file.  In this case
+"c.vim".  Place it in a directory near the end of 'runtimepath'.  This makes
+it loaded after the original syntax file.  For Unix this would be:
+
+	~/.config/nvim/after/syntax/c.vim ~
+
+==============================================================================
+*44.12*	Portable syntax file layout
+
+Wouldn't it be nice if all Vim users exchange syntax files?  To make this
+possible, the syntax file must follow a few guidelines.
+
+Start with a header that explains what the syntax file is for, who maintains
+it and when it was last updated.  Don't include too much information about
+changes history, not many people will read it.  Example: >
+
+	" Vim syntax file
+	" Language:	C
+	" Maintainer:	Bram Moolenaar <Bram@vim.org>
+	" Last Change:	2001 Jun 18
+	" Remark:	Included by the C++ syntax.
+
+Use the same layout as the other syntax files.  Using an existing syntax file
+as an example will save you a lot of time.
+
+Choose a good, descriptive name for your syntax file.  Use lowercase letters
+and digits.  Don't make it too long, it is used in many places: The name of
+the syntax file "name.vim", 'filetype', b:current_syntax and the start of each
+syntax group (nameType, nameStatement, nameString, etc).
+
+Start with a check for "b:current_syntax".  If it is defined, some other
+syntax file, earlier in 'runtimepath' was already loaded: >
+
+	if exists("b:current_syntax")
+	  finish
+	endif
+
+Set "b:current_syntax" to the name of the syntax at the end.  Don't forget
+that included files do this too, you might have to reset "b:current_syntax" if
+you include two files.
+
+Do not include anything that is a user preference.  Don't set 'tabstop',
+'expandtab', etc.  These belong in a filetype plugin.
+
+Do not include mappings or abbreviations.  Only include setting 'iskeyword' if
+it is really necessary for recognizing keywords.
+
+To allow users select their own preferred colors, make a different group name
+for every kind of highlighted item.  Then link each of them to one of the
+standard highlight groups.  That will make it work with every color scheme.
+If you select specific colors it will look bad with some color schemes.  And
+don't forget that some people use a different background color, or have only
+eight colors available.
+
+For the linking use "hi def link", so that the user can select different
+highlighting before your syntax file is loaded.  Example: >
+
+	  hi def link nameString	String
+	  hi def link nameNumber	Number
+	  hi def link nameCommand	Statement
+	  ... etc ...
+
+Add the "display" argument to items that are not used when syncing, to speed
+up scrolling backwards and CTRL-L.
+
+==============================================================================
+
+Next chapter: |usr_45.txt|  Select your language
+
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

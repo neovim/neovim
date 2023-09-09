@@ -1,0 +1,259 @@
+*usr_23.txt*	Nvim
+
+		     VIM USER MANUAL - by Bram Moolenaar
+
+			     Editing other files
+
+
+This chapter is about editing files that are not ordinary files.  With Vim you
+can edit files that are compressed.  Some files need to be accessed over the
+internet.  With some restrictions, binary files can be edited as well.
+
+|23.1|	DOS, Mac and Unix files
+|23.2|	Files on the internet
+|23.3|	Binary files
+|23.4|	Compressed files
+
+     Next chapter: |usr_24.txt|  Inserting quickly
+ Previous chapter: |usr_22.txt|  Finding the file to edit
+Table of contents: |usr_toc.txt|
+
+==============================================================================
+*23.1*	DOS, Mac and Unix files
+
+Back in the early days, the old Teletype machines used two characters to
+start a new line.  One to move the carriage back to the first position
+(carriage return, <CR>), another to move the paper up (line feed, <LF>).
+   When computers came out, storage was expensive.  Some people decided that
+they did not need two characters for end-of-line.  The Unix people decided
+they could use <New Line> or <NL> only for end-of-line.  The Apple people
+standardized on <CR>.  The Microsoft Windows folks decided to keep the old
+<CR><NL> (we use <NL> for line feed in the help text).
+   This means that if you try to move a file from one system to another, you
+have line-break problems.  The Vim editor automatically recognizes the
+different file formats and handles things properly behind your back.
+   The option 'fileformats' contains the various formats that will be tried
+when a new file is edited.  The following command, for example, tells Vim to
+try Unix format first and MS-DOS format second: >
+
+	:set fileformats=unix,dos
+
+You will notice the format in the message you get when editing a file.  You
+don't see anything if you edit a native file format.  Thus editing a Unix file
+on Unix won't result in a remark.  But when you edit a dos file, Vim will
+notify you of this:
+
+	"/tmp/test" [dos] 3L, 71C ~
+
+For a Mac file you would see "[mac]".
+   The detected file format is stored in the 'fileformat' option.  To see
+which format you have, execute the following command: >
+
+	:set fileformat?
+
+The three names that Vim uses are:
+
+	unix		<NL>
+	dos		<CR><NL>
+	mac		<CR>
+
+
+USING THE MAC FORMAT
+
+On Unix, <NL> is used to break a line.  It's not unusual to have a <CR>
+character halfway in a line.  Incidentally, this happens quite often in Vi
+(and Vim) scripts.
+   On the Macintosh, where <CR> is the line break character, it's possible to
+have a <NL> character halfway in a line.
+   The result is that it's not possible to be 100% sure whether a file
+containing both <CR> and <NL> characters is a Mac or a Unix file.  Therefore,
+Vim assumes that on Unix you probably won't edit a Mac file, and doesn't check
+for this type of file.  To check for this format anyway, add "mac" to
+'fileformats': >
+
+	:set fileformats+=mac
+
+Then Vim will take a guess at the file format.  Watch out for situations where
+Vim guesses wrong.
+
+
+OVERRULING THE FORMAT
+
+If you use the good old Vi and try to edit an MS-DOS format file, you will
+find that each line ends with a ^M character.  (^M is <CR>).  The automatic
+detection avoids this.  Suppose you do want to edit the file that way?  Then
+you need to overrule the format: >
+
+	:edit ++ff=unix file.txt
+
+The "++" string is an item that tells Vim that an option name follows, which
+overrules the default for this single command.  "++ff" is used for
+'fileformat'.  You could also use "++ff=mac" or "++ff=dos".
+   This doesn't work for any option, only "++ff" and "++enc" are currently
+implemented.  The full names "++fileformat" and "++encoding" also work.
+
+
+CONVERSION
+
+You can use the 'fileformat' option to convert from one file format to
+another.  Suppose, for example, that you have an MS-DOS file named README.TXT
+that you want to convert to Unix format.  Start by editing the MS-DOS format
+file: >
+	vim README.TXT
+
+Vim will recognize this as a dos format file.  Now change the file format to
+Unix: >
+
+	:set fileformat=unix
+	:write
+
+The file is written in Unix format.
+
+==============================================================================
+*23.2*	Files on the internet
+
+Someone sends you an e-mail message, which refers to a file by its URL.  For
+example:
+
+	You can find the information here: ~
+		ftp://ftp.vim.org/pub/vim/README ~
+
+You could start a program to download the file, save it on your local disk and
+then start Vim to edit it.
+   There is a much simpler way.  Move the cursor to any character of the URL.
+Then use this command: >
+
+	gf
+
+With a bit of luck, Vim will figure out which program to use for downloading
+the file, download it and edit the copy.  To open the file in a new window use
+CTRL-W f.
+   If something goes wrong you will get an error message.  It's possible that
+the URL is wrong, you don't have permission to read it, the network connection
+is down, etc.  Unfortunately, it's hard to tell the cause of the error.  You
+might want to try the manual way of downloading the file.
+
+Accessing files over the internet works with the netrw plugin.  Currently URLs
+with these formats are recognized:
+
+	ftp://		uses ftp
+	rcp://		uses rcp
+	scp://		uses scp
+	http://		uses wget (reading only)
+
+Vim doesn't do the communication itself, it relies on the mentioned programs
+to be available on your computer.  On most Unix systems "ftp" and "rcp" will
+be present.  "scp" and "wget" might need to be installed.
+
+Vim detects these URLs for each command that starts editing a new file, also
+with ":edit" and ":split", for example.  Write commands also work, except for
+http://.
+
+For more information, also about passwords, see |netrw|.
+
+==============================================================================
+*23.3*	Binary files
+
+You can edit binary files with Vim.  Vim wasn't really made for this, thus
+there are a few restrictions.  But you can read a file, change a character and
+write it back, with the result that only that one character was changed and
+the file is identical otherwise.
+   To make sure that Vim does not use its clever tricks in the wrong way, add
+the "-b" argument when starting Vim: >
+
+	vim -b datafile
+
+This sets the 'binary' option.  The effect of this is that unexpected side
+effects are turned off.  For example, 'textwidth' is set to zero, to avoid
+automatic formatting of lines.  And files are always read in Unix file format.
+
+Binary mode can be used to change a message in a program.  Be careful not to
+insert or delete any characters, it would stop the program from working.  Use
+"R" to enter replace mode.
+
+Many characters in the file will be unprintable.  To see them in Hex format: >
+
+	:set display=uhex
+
+Otherwise, the "ga" command can be used to see the value of the character
+under the cursor.  The output, when the cursor is on an <Esc>, looks like
+this:
+
+	<^[>  27,  Hex 1b,  Octal 033 ~
+
+There might not be many line breaks in the file.  To get some overview switch
+the 'wrap' option off: >
+
+	:set nowrap
+
+
+BYTE POSITION
+
+To see on which byte you are in the file use this command: >
+
+	g CTRL-G
+
+The output is verbose:
+
+    Col 9-16 of 9-16; Line 277 of 330; Word 1806 of 2058; Byte 10580 of 12206 ~
+
+The last two numbers are the byte position in the file and the total number of
+bytes.  This takes into account how 'fileformat' changes the number of bytes
+that a line break uses.
+    To move to a specific byte in the file, use the "go" command.  For
+example, to move to byte 2345: >
+
+	2345go
+
+
+USING XXD
+
+A real binary editor shows the text in two ways: as it is and in hex format.
+You can do this in Vim by first converting the file with the "xxd" program.
+This comes with Vim.
+   First edit the file in binary mode: >
+
+	vim -b datafile
+
+Now convert the file to a hex dump with xxd: >
+
+	:%!xxd
+
+The text will look like this:
+
+	0000000: 1f8b 0808 39d7 173b 0203 7474 002b 4e49  ....9..;..tt.+NI ~
+	0000010: 4b2c 8660 eb9c ecac c462 eb94 345e 2e30  K,.`.....b..4^.0 ~
+	0000020: 373b 2731 0b22 0ca6 c1a2 d669 1035 39d9  7;'1.".....i.59. ~
+
+You can now view and edit the text as you like.  Vim treats the information as
+ordinary text.  Changing the hex does not cause the printable character to be
+changed, or the other way around.
+   Finally convert it back with:
+>
+	:%!xxd -r
+
+Only changes in the hex part are used.  Changes in the printable text part on
+the right are ignored.
+
+See the manual page of xxd for more information.
+
+==============================================================================
+*23.4*	Compressed files
+
+This is easy: You can edit a compressed file just like any other file.  The
+"gzip" plugin takes care of decompressing the file when you edit it.  And
+compressing it again when you write it.
+   These compression methods are currently supported:
+
+	.Z	compress
+	.gz	gzip
+	.bz2	bzip2
+
+Vim uses the mentioned programs to do the actual compression and
+decompression.  You might need to install the programs first.
+
+==============================================================================
+
+Next chapter: |usr_24.txt|  Inserting quickly
+
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

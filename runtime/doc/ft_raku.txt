@@ -1,0 +1,126 @@
+*ft_raku.txt*	The Raku programming language filetype
+
+                                                      *vim-raku*
+
+Vim-raku provides syntax highlighting, indentation, and other support for
+editing Raku programs.
+
+1. Using Unicode in your Raku files	|raku-unicode|
+
+==============================================================================
+1. Using Unicode in your Raku files                           *raku-unicode*
+
+Defining new operators using Unicode symbols is a good way to make your
+Raku program easy to read. See:
+https://perl6advent.wordpress.com/2012/12/18/day-18-formulas-resistance-is-futile/
+
+While Raku does define ASCII alternatives for some common operators (see
+https://docs.raku.org/language/unicode_ascii), using the full range of
+Unicode operators is highly desirable. Your operating system provides input
+facilities, but using the features built in to Vim may be preferable.
+
+The natural way to produce these symbols in Vim is to use digraph shortcuts
+(:help |digraphs-use|). Many of them are defined; type `:digraphs` to get
+the list. A convenient way to read the list of digraphs is to save them in a
+file. From the shell: >
+        vim +'redir >/tmp/vim-digraphs-listing.txt' +digraphs +'redir END' +q
+
+Some of them are available with standard Vim digraphs:
+	<< «    /0 ∅    !< ≮  ~
+	>> »    Ob ∘    !> ≯  ~
+	., …    00 ∞    (C ⊂  ~
+	(U ∩    -: ÷    )C ⊃  ~
+	)U ∪    (_ ⊆    >= ≥  ~
+	?= ≅    )_ ⊇    =< ≤  ~
+	(- ∈    ?= ≅    != ≠  ~
+	-) ∋    ?- ≃  ~
+
+The Greek alphabet is available with "*" followed by a similar Latin symbol: >
+	*p π
+	*t τ
+	*X ×
+
+Numbers, subscripts and superscripts are available with 's' and 'S':
+	0s ₀    0S ⁰  ~
+	1s ₁    1S ¹  ~
+	2s ₂    9S ⁹  ~
+
+But some don't come defined by default. Those are digraph definitions you can
+add in your ~/.vimrc file. >
+	exec 'digraph \\ ' .. char2nr('∖')
+	exec 'digraph \< ' .. char2nr('≼')
+	exec 'digraph \> ' .. char2nr('≽')
+	exec 'digraph (L ' .. char2nr('⊈')
+	exec 'digraph )L ' .. char2nr('⊉')
+	exec 'digraph (/ ' .. char2nr('⊄')
+	exec 'digraph )/ ' .. char2nr('⊅')
+	exec 'digraph )/ ' .. char2nr('⊅')
+	exec 'digraph U+ ' .. char2nr('⊎')
+	exec 'digraph 0- ' .. char2nr('⊖')
+	" Euler's constant
+	exec 'digraph ne ' .. char2nr('𝑒')
+	" Raku's atomic operations marker
+	exec 'digraph @@ ' .. char2nr('⚛')
+
+Alternatively, you can write Insert mode abbreviations that convert ASCII-
+based operators into their single-character Unicode equivalent. >
+	iabbrev <buffer> !(<) ⊄
+	iabbrev <buffer> !(<=) ⊈
+	iabbrev <buffer> !(>) ⊅
+	iabbrev <buffer> !(>=) ⊉
+	iabbrev <buffer> !(cont) ∌
+	iabbrev <buffer> !(elem) ∉
+	iabbrev <buffer> != ≠
+	iabbrev <buffer> (&) ∩
+	iabbrev <buffer> (+) ⊎
+	iabbrev <buffer> (-) ∖
+	iabbrev <buffer> (.) ⊍
+	iabbrev <buffer> (<) ⊂
+	iabbrev <buffer> (<+) ≼
+	iabbrev <buffer> (<=) ⊆
+	iabbrev <buffer> (>) ⊃
+	iabbrev <buffer> (>+) ≽
+	iabbrev <buffer> (>=) ⊇
+	iabbrev <buffer> (\|) ∪
+	iabbrev <buffer> (^) ⊖
+	iabbrev <buffer> (atomic) ⚛
+	iabbrev <buffer> (cont) ∋
+	iabbrev <buffer> (elem) ∈
+	iabbrev <buffer> * ×
+	iabbrev <buffer> **0 ⁰
+	iabbrev <buffer> **1 ¹
+	iabbrev <buffer> **2 ²
+	iabbrev <buffer> **3 ³
+	iabbrev <buffer> **4 ⁴
+	iabbrev <buffer> **5 ⁵
+	iabbrev <buffer> **6 ⁶
+	iabbrev <buffer> **7 ⁷
+	iabbrev <buffer> **8 ⁸
+	iabbrev <buffer> **9 ⁹
+	iabbrev <buffer> ... …
+	iabbrev <buffer> / ÷
+	iabbrev <buffer> << «
+	iabbrev <buffer> <<[=]<< «=«
+	iabbrev <buffer> <<[=]>> «=»
+	iabbrev <buffer> <= ≤
+	iabbrev <buffer> =~= ≅
+	iabbrev <buffer> >= ≥
+	iabbrev <buffer> >> »
+	iabbrev <buffer> >>[=]<< »=«
+	iabbrev <buffer> >>[=]>> »=»
+	iabbrev <buffer> Inf ∞
+	iabbrev <buffer> atomic-add-fetch ⚛+=
+	iabbrev <buffer> atomic-assign ⚛=
+	iabbrev <buffer> atomic-fetch ⚛
+	iabbrev <buffer> atomic-dec-fetch --⚛
+	iabbrev <buffer> atomic-fetch-dec ⚛--
+	iabbrev <buffer> atomic-fetch-inc ⚛++
+	iabbrev <buffer> atomic-inc-fetch ++⚛
+	iabbrev <buffer> atomic-sub-fetch ⚛−=
+	iabbrev <buffer> e 𝑒
+	iabbrev <buffer> o ∘
+	iabbrev <buffer> pi π
+	iabbrev <buffer> set() ∅
+	iabbrev <buffer> tau τ
+<
+ vim:tw=78:ts=8:noet:ft=help:norl:

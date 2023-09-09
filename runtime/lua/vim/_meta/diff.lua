@@ -1,0 +1,69 @@
+---@meta
+
+-- luacheck: no unused args
+
+--- Run diff on strings {a} and {b}. Any indices returned by this function,
+--- either directly or via callback arguments, are 1-based.
+---
+--- Examples:
+--- <pre>lua
+---     vim.diff('a\\n', 'b\\nc\\n')
+---     -- =>
+---     -- @@ -1 +1,2 @@
+---     -- -a
+---     -- +b
+---     -- +c
+---
+---     vim.diff('a\\n', 'b\\nc\\n', {result_type = 'indices'})
+---     -- =>
+---     -- {
+---     --   {1, 1, 1, 2}
+---     -- }
+--- </pre>
+---
+--- @param a string First string to compare
+--- @param b string Second string to compare
+--- @param opts table<string,any> Optional parameters:
+---     - `on_hunk` (callback):
+---       Invoked for each hunk in the diff. Return a negative number
+---       to cancel the callback for any remaining hunks.
+---       Args:
+---       - `start_a` (integer): Start line of hunk in {a}.
+---       - `count_a` (integer): Hunk size in {a}.
+---       - `start_b` (integer): Start line of hunk in {b}.
+---       - `count_b` (integer): Hunk size in {b}.
+---     - `result_type` (string): Form of the returned diff:
+---       - "unified": (default) String in unified format.
+---       - "indices": Array of hunk locations.
+---       Note: This option is ignored if `on_hunk` is used.
+---     - `linematch` (boolean|integer): Run linematch on the resulting hunks
+---       from xdiff. When integer, only hunks upto this size in
+---       lines are run through linematch. Requires `result_type = indices`,
+---       ignored otherwise.
+---     - `algorithm` (string):
+---       Diff algorithm to use. Values:
+---       - "myers"      the default algorithm
+---       - "minimal"    spend extra time to generate the
+---                      smallest possible diff
+---       - "patience"   patience diff algorithm
+---       - "histogram"  histogram diff algorithm
+---     - `ctxlen` (integer): Context length
+---     - `interhunkctxlen` (integer):
+---       Inter hunk context length
+---     - `ignore_whitespace` (boolean):
+---       Ignore whitespace
+---     - `ignore_whitespace_change` (boolean):
+---       Ignore whitespace change
+---     - `ignore_whitespace_change_at_eol` (boolean)
+---       Ignore whitespace change at end-of-line.
+---     - `ignore_cr_at_eol` (boolean)
+---       Ignore carriage return at end-of-line
+---     - `ignore_blank_lines` (boolean)
+---       Ignore blank lines
+---     - `indent_heuristic` (boolean):
+---       Use the indent heuristic for the internal
+---       diff library.
+---
+--- @return string|table|nil
+---     See {opts.result_type}. `nil` if {opts.on_hunk} is given.
+function vim.diff(a, b, opts) end
