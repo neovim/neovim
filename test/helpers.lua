@@ -1,7 +1,6 @@
-local shared = vim
 local assert = require('luassert')
 local busted = require('busted')
-local luv = require('luv')
+local luv = vim.uv
 local Paths = require('test.cmakeconfig.paths')
 
 assert:set_parameter('TableFormatLevel', 100)
@@ -15,9 +14,13 @@ local function shell_quote(str)
   end
 end
 
+--- @class vim.test.helpers
 local module = {
   REMOVE_THIS = {},
 }
+
+--- @type vim.test.helpers
+module = vim.tbl_extend('error', module, Paths, vim, require('test.deprecated'))
 
 --- @param p string
 --- @return string
@@ -891,7 +894,5 @@ function module.mkdir(path)
   -- 493 is 0755 in decimal
   return luv.fs_mkdir(path, 493)
 end
-
-module = shared.tbl_extend('error', module, Paths, shared, require('test.deprecated'))
 
 return module

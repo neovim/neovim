@@ -1,6 +1,12 @@
-local uv = require('luv')
+local uv = vim.uv
 local MsgpackRpcStream = require('test.client.msgpack_rpc_stream')
 
+--- @class test.Session
+--- -@field _msgpack_rpc_stream
+--- @field _pending_messages string[]
+--- @field _prepare uv.uv_prepare_t
+--- @field _timer uv.uv_timer_t
+--- @field _is_running boolean
 local Session = {}
 Session.__index = Session
 if package.loaded['jit'] then
@@ -44,6 +50,8 @@ local function coroutine_exec(func, ...)
   end))
 end
 
+---@param stream any
+---@return test.Session
 function Session.new(stream)
   return setmetatable({
     _msgpack_rpc_stream = MsgpackRpcStream.new(stream),
@@ -82,12 +90,18 @@ function Session:next_message(timeout)
   return table.remove(self._pending_messages, 1)
 end
 
+--- @param method string
+--- @param ... any
 function Session:notify(method, ...)
   self._msgpack_rpc_stream:write(method, {...})
 end
 
+--- @param method string
+--- @param ... any
+--- @return boolean, any
 function Session:request(method, ...)
   local args = {...}
+  --- @type string, any
   local err, result
   if self._is_running then
     err, result = self:_yielding_request(method, args)

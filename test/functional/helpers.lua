@@ -1,5 +1,6 @@
-local luv = require('luv')
+local luv = vim.uv
 local global_helpers = require('test.helpers')
+local Paths = require('test.cmakeconfig.paths')
 
 local Session = require('test.client.session')
 local uv_stream = require('test.client.uv_stream')
@@ -10,22 +11,22 @@ local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
-local filter = global_helpers.tbl_filter
+local filter = vim.tbl_filter
 local is_os = global_helpers.is_os
-local map = global_helpers.tbl_map
+local map = vim.tbl_map
 local ok = global_helpers.ok
 local sleep = global_helpers.sleep
-local tbl_contains = global_helpers.tbl_contains
+local tbl_contains = vim.tbl_contains
 local fail = global_helpers.fail
 
-local module = {
-}
+--- @class vim.test.functional.helpers: vim.test.helpers
+local module = vim.deepcopy(global_helpers)
 
 local start_dir = luv.cwd()
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
 module.nvim_prog = (
   os.getenv('NVIM_PRG')
-  or global_helpers.test_build_dir .. '/bin/nvim'
+  or Paths.test_build_dir .. '/bin/nvim'
 )
 -- Default settings for the test session.
 module.nvim_set = (
@@ -47,7 +48,7 @@ if module.nvim_dir == module.nvim_prog then
   module.nvim_dir = "."
 end
 
-local prepend_argv
+local prepend_argv --- @type string[]
 
 if os.getenv('VALGRIND') then
   local log_file = os.getenv('VALGRIND_LOG') or 'valgrind-%p.log'
@@ -61,15 +62,12 @@ if os.getenv('VALGRIND') then
     table.insert(prepend_argv, '--vgdb-error=0')
   end
 elseif os.getenv('GDB') then
-  local gdbserver_port = '7777'
-  if os.getenv('GDBSERVER_PORT') then
-    gdbserver_port = os.getenv('GDBSERVER_PORT')
-  end
+  local gdbserver_port = os.getenv('GDBSERVER_PORT') or '7777'
   prepend_argv = {'gdbserver', 'localhost:'..gdbserver_port}
 end
 
 if prepend_argv then
-  local new_nvim_argv = {}
+  local new_nvim_argv = {} --- @type string[]
   local len = #prepend_argv
   for i = 1, len do
     new_nvim_argv[i] = prepend_argv[i]
@@ -81,10 +79,13 @@ if prepend_argv then
   module.prepend_argv = prepend_argv
 end
 
-local session, loop_running, last_error, method_error
+local session
+local loop_running --- @type boolean?
+local last_error --- @type string?
+local method_error --- @type string?
 
 if not is_os('win') then
-  local sigpipe_handler = luv.new_signal()
+  local sigpipe_handler = assert(luv.new_signal())
   luv.signal_start(sigpipe_handler, "sigpipe", function()
     print("warning: got SIGPIPE signal. Likely related to a crash in nvim")
   end)
@@ -98,6 +99,9 @@ function module.set_session(s)
   session = s
 end
 
+---@param method string
+---@param ... any
+---@return any
 function module.request(method, ...)
   local status, rv = session:request(method, ...)
   if not status then
@@ -119,6 +123,8 @@ function module.next_msg(timeout)
   return session:next_message(timeout and timeout or 10000)
 end
 
+--- @param msgs1 string[]
+--- @param msgs2 string[]
 function module.expect_twostreams(msgs1, msgs2)
   local pos1, pos2 = 1, 1
   while pos1 <= #msgs1 or pos2 <= #msgs2 do
@@ -216,8 +222,12 @@ function module.set_method_error(err)
   method_error = err
 end
 
+--- @alias Session.Callback fun(method: string, args: any[]): any
+
 function module.run_session(lsession, request_cb, notification_cb, setup_cb, timeout)
-  local on_request, on_notification, on_setup
+  local on_request --- @type Session.Callback?
+  local on_notification --- @type Session.Callback?
+  local on_setup --- @type Session.Callback?
 
   if request_cb then
     function on_request(method, args)
@@ -262,14 +272,14 @@ function module.stop()
   session:stop()
 end
 
+---@return string
 function module.nvim_prog_abs()
   -- system(['build/bin/nvim']) does not work for whatever reason. It must
   -- be executable searched in $PATH or something starting with / or ./.
   if module.nvim_prog:match('[/\\]') then
     return module.request('nvim_call_function', 'fnamemodify', {module.nvim_prog, ':p'})
-  else
-    return module.nvim_prog
   end
+  return module.nvim_prog
 end
 
 -- Executes an ex-command. Vimscript errors manifest as client (lua) errors, but
@@ -414,7 +424,7 @@ function module.check_close()
   session = nil
 end
 
---- @param io_extra used for stdin_fd, see :help ui-option
+--- @param io_extra table used for stdin_fd, see :help ui-option
 function module.spawn(argv, merge, env, keep, io_extra)
   if not keep then
     module.check_close()
@@ -426,7 +436,10 @@ function module.spawn(argv, merge, env, keep, io_extra)
   return Session.new(child_stream)
 end
 
--- Creates a new Session connected by domain socket (named pipe) or TCP.
+--- Creates a new Session connected by domain socket (named pipe) or TCP.
+--- comment
+--- @param file_or_address string
+--- @return table
 function module.connect(file_or_address)
   local addr, port = string.match(file_or_address, "(.*):(%d+)")
   local stream = (addr and port) and SocketStream.connect(addr, port) or
@@ -468,7 +481,7 @@ function module.new_argv(...)
     table.insert(args, '--listen')
     table.insert(args, _G._nvim_test_id)
   end
-  local new_args
+  local new_args --- @type any[]
   local io_extra
   local env = nil
   local opts = select(1, ...)
@@ -574,6 +587,7 @@ function module.set_shell_powershell(fake)
   return found
 end
 
+--- @return table<string,function>
 function module.create_callindex(func)
   local table = {}
   setmetatable(table, {
@@ -586,10 +600,15 @@ function module.create_callindex(func)
   return table
 end
 
+---@param method string
+---@param ... any
+---@return any
 local function ui(method, ...)
   return module.request('nvim_ui_'..method, ...)
 end
 
+---@param method string
+---@param ... any
 function module.nvim_async(method, ...)
   session:notify('nvim_'..method, ...)
 end
@@ -669,9 +688,21 @@ module.describe_lua_and_rpc = function(describe)
   end
 end
 
-for name, fn in pairs(module.rpc.api) do
-  module[name] = fn
-end
+module.nvim = module.rpc.api.nvim
+module.buffer = module.rpc.api.buffer
+module.window = module.rpc.api.window
+module.tabpage = module.rpc.api.tabpage
+module.curbuf = module.rpc.api.curbuf
+module.curwin = module.rpc.api.curwin
+module.curtab = module.rpc.api.curtab
+module.funcs = module.rpc.api.funcs
+module.meths = module.rpc.api.meths
+module.bufmeths = module.rpc.api.bufmeths
+module.winmeths = module.rpc.api.winmeths
+module.tabmeths = module.rpc.api.tabmeths
+module.curbufmeths = module.rpc.api.curbufmeths
+module.curwinmeths = module.rpc.api.curwinmeths
+module.curtabmeths = module.rpc.api.curtabmeths
 
 function module.poke_eventloop()
   -- Execute 'nvim_eval' (a deferred function) to
@@ -698,6 +729,10 @@ function module.expect_any(contents)
   return ok(nil ~= string.find(module.curbuf_contents(), contents, 1, true))
 end
 
+--- @param expected any[]
+--- @param received any[]
+--- @param kind string
+--- @return any[]
 function module.expect_events(expected, received, kind)
   local inspect = require'vim.inspect'
   if not pcall(eq, expected, received) then
@@ -734,6 +769,7 @@ function module.assert_visible(bufnr, visible)
   end
 end
 
+---@param path string
 local function do_rmdir(path)
   local stat = luv.fs_stat(path)
   if stat == nil then
@@ -771,6 +807,7 @@ local function do_rmdir(path)
   end
 end
 
+---@param path string
 function module.rmdir(path)
   local ret, _ = pcall(do_rmdir, path)
   if not ret and is_os('win') then
@@ -787,6 +824,8 @@ function module.rmdir(path)
   end
 end
 
+---@param cmd string
+---@return any
 function module.exc_exec(cmd)
   module.command(([[
     try
@@ -800,14 +839,15 @@ function module.exc_exec(cmd)
   return ret
 end
 
+---@param cond boolean
+---@param reason string
+---@return boolean
 function module.skip(cond, reason)
   if cond then
     local pending = getfenv(2).pending
     pending(reason or 'FIXME')
-    return true
-  else
-    return false
   end
+  return cond
 end
 
 -- Calls pending() and returns `true` if the system is too slow to
@@ -866,6 +906,8 @@ function module.new_pipename()
   return pipename
 end
 
+--- @param provider string
+--- @return boolean
 function module.missing_provider(provider)
   if provider == 'ruby' or provider == 'node' or provider == 'perl' then
     local e = module.funcs['provider#'..provider..'#Detect']()[2]
@@ -874,9 +916,8 @@ function module.missing_provider(provider)
     local py_major_version = (provider == 'python3' and 3 or 2)
     local e = module.funcs['provider#pythonx#Detect'](py_major_version)[2]
     return e ~= '' and e or false
-  else
-    assert(false, 'Unknown provider: '..provider)
   end
+  assert(false, 'Unknown provider: '..provider)
 end
 
 function module.alter_slashes(obj)
@@ -892,9 +933,8 @@ function module.alter_slashes(obj)
       ret[k] = module.alter_slashes(v)
     end
     return ret
-  else
-    assert(false, 'expected string or table of strings, got '..type(obj))
   end
+  assert(false, 'expected string or table of strings, got '..type(obj))
 end
 
 local load_factor = 1
@@ -904,12 +944,15 @@ if global_helpers.is_ci() then
   module.request('nvim_command', 'source test/old/testdir/load.vim')
   load_factor = module.request('nvim_eval', 'g:test_load_factor')
 end
+
+---@param num number
+---@return integer
 function module.load_adjust(num)
   return math.ceil(num * load_factor)
 end
 
 function module.parse_context(ctx)
-  local parsed = {}
+  local parsed = {} --- @type table<string,any>
   for _, item in ipairs({'regs', 'jumps', 'bufs', 'gvars'}) do
     parsed[item] = filter(function(v)
       return type(v) == 'table'
@@ -930,6 +973,8 @@ function module.add_builddir_to_rtp()
 end
 
 -- Kill process with given pid
+--- @param pid string
+--- @return boolean?
 function module.os_kill(pid)
   return os.execute((is_os('win')
     and 'taskkill /f /t /pid '..pid..' > nul'
@@ -937,13 +982,13 @@ function module.os_kill(pid)
 end
 
 -- Create folder with non existing parents
+--- @param path string
+--- @return boolean?
 function module.mkdir_p(path)
   return os.execute((is_os('win')
     and 'mkdir '..path
     or 'mkdir -p '..path))
 end
-
-module = global_helpers.tbl_extend('error', module, global_helpers)
 
 return function(after_each)
   if after_each then
