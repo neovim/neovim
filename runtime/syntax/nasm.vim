@@ -8,7 +8,7 @@
 " 	Peter Stanhope <dev.rptr@gmail.com> (Add missing 64-bit mode registers)
 " 	Frédéric Hamel <rederic.hamel123@gmail.com> (F16c support, partial AVX
 " 						     support, other)
-" Last Change:	2022 May 3
+" Last Change:	2023 Sep 7
 " NASM Home:	http://www.nasm.us/
 
 
@@ -250,12 +250,12 @@ syn match   nasmSegRegister	"\<[C-GS]S\>"
 syn match   nasmSpcRegister	"\<E\=IP\>"
 syn match   nasmFpuRegister	"\<ST\o\>"
 syn match   nasmMmxRegister	"\<MM\o\>"
-syn match   nasmSseRegister	"\<XMM\o\>"
+syn match   nasmAvxRegister	"\<[XYZ]MM\d\{1,2}\>"
 syn match   nasmCtrlRegister	"\<CR\o\>"
 syn match   nasmDebugRegister	"\<DR\o\>"
 syn match   nasmTestRegister	"\<TR\o\>"
 syn match   nasmRegisterError	"\<\(CR[15-9]\|DR[4-58-9]\|TR[0-28-9]\)\>"
-syn match   nasmRegisterError	"\<X\=MM[8-9]\>"
+syn match   nasmRegisterError	"\<[XYZ]MM\(3[2-9]\|[04-9]\d\)\>"
 syn match   nasmRegisterError	"\<ST\((\d)\|[8-9]\>\)"
 syn match   nasmRegisterError	"\<E\([A-D][HL]\|[C-GS]S\)\>"
 "  Memory reference operand (address):
