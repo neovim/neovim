@@ -1,6 +1,9 @@
 name: test
 on:
   push:
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
   pull_request:
     branches:
       - 'master'
@@ -9,7 +12,7 @@ on:
       - 'contrib/**'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.repository_owner == 'neovim' && github.sha || github.ref_name }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
   cancel-in-progress: true
 
 env:
