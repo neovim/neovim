@@ -119,7 +119,7 @@ CTRL-R {register}				*i_CTRL-R*
 			'/'	the last search pattern
 			':'	the last command-line
 			'.'	the last inserted text
-                                                       *i_CTRL-R_-*
+							*i_CTRL-R_-*
 			'-'	the last small (less than a line) delete
 				register. This is repeatable using |.| since
 				it remembers the register to put instead of

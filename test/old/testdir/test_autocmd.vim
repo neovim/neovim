@@ -2002,8 +2002,8 @@ endfunc
 " Test for BufUnload autocommand that unloads all the other buffers
 func Test_bufunload_all()
   let g:test_is_flaky = 1
-  call writefile(['Test file Xxx1'], 'Xxx1', 'D')"
-  call writefile(['Test file Xxx2'], 'Xxx2', 'D')"
+  call writefile(['Test file Xxx1'], 'Xxx1', 'D')
+  call writefile(['Test file Xxx2'], 'Xxx2', 'D')
 
   let content =<< trim [CODE]
     func UnloadAllBufs()
