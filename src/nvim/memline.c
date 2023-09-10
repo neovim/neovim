@@ -3684,22 +3684,19 @@ static long char_to_long(const char *s_in)
 /// - 'fileencoding'
 void ml_setflags(buf_T *buf)
 {
-  bhdr_T *hp;
   ZERO_BL *b0p;
 
   if (!buf->b_ml.ml_mfp) {
     return;
   }
-  for (hp = buf->b_ml.ml_mfp->mf_used_last; hp != NULL; hp = hp->bh_prev) {
-    if (hp->bh_bnum == 0) {
-      b0p = hp->bh_data;
-      b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
-      b0p->b0_flags = (char)((b0p->b0_flags & ~B0_FF_MASK) | (uint8_t)(get_fileformat(buf) + 1));
-      add_b0_fenc(b0p, buf);
-      hp->bh_flags |= BH_DIRTY;
-      mf_sync(buf->b_ml.ml_mfp, MFS_ZERO);
-      break;
-    }
+  bhdr_T *hp = pmap_get(int64_t)(&buf->b_ml.ml_mfp->mf_hash, 0);
+  if (hp) {
+    b0p = hp->bh_data;
+    b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
+    b0p->b0_flags = (char)((b0p->b0_flags & ~B0_FF_MASK) | (uint8_t)(get_fileformat(buf) + 1));
+    add_b0_fenc(b0p, buf);
+    hp->bh_flags |= BH_DIRTY;
+    mf_sync(buf->b_ml.ml_mfp, MFS_ZERO);
   }
 }
 

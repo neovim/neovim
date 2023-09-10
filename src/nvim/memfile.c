@@ -101,11 +101,9 @@ memfile_T *mf_open(char *fname, int flags)
   }
 
   mfp->mf_free_first = NULL;         // free list is empty
-  mfp->mf_used_first = NULL;         // used list is empty
-  mfp->mf_used_last = NULL;
   mfp->mf_dirty = MF_DIRTY_NO;
-  mf_hash_init(&mfp->mf_hash);
-  mf_hash_init(&mfp->mf_trans);
+  mfp->mf_hash = (PMap(int64_t)) MAP_INIT;
+  mfp->mf_trans = (Map(int64_t, int64_t)) MAP_INIT;
   mfp->mf_page_size = MEMFILE_PAGE_SIZE;
 
   // Try to set the page size equal to device's block size. Speeds up I/O a lot.
@@ -182,15 +180,15 @@ void mf_close(memfile_T *mfp, bool del_file)
   }
 
   // free entries in used list
-  for (bhdr_T *hp = mfp->mf_used_first, *nextp; hp != NULL; hp = nextp) {
-    nextp = hp->bh_next;
+  bhdr_T *hp;
+  map_foreach_value(&mfp->mf_hash, hp, {
     mf_free_bhdr(hp);
-  }
+  })
   while (mfp->mf_free_first != NULL) {  // free entries in free list
     xfree(mf_rem_free(mfp));
   }
-  mf_hash_free(&mfp->mf_hash);
-  mf_hash_free_all(&mfp->mf_trans);     // free hashtable and its items
+  map_destroy(int64_t, &mfp->mf_hash);
+  map_destroy(int64_t, &mfp->mf_trans);  // free hashtable and its items
   mf_free_fnames(mfp);
   xfree(mfp);
 }
@@ -271,8 +269,7 @@ bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
   hp->bh_flags = BH_LOCKED | BH_DIRTY;    // new block is always dirty
   mfp->mf_dirty = MF_DIRTY_YES;
   hp->bh_page_count = page_count;
-  mf_ins_used(mfp, hp);
-  mf_ins_hash(mfp, hp);
+  pmap_put(int64_t)(&mfp->mf_hash, hp->bh_bnum, hp);
 
   // Init the data to all zero, to avoid reading uninitialized data.
   // This also avoids that the passwd file ends up in the swap file!
@@ -294,7 +291,7 @@ bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, unsigned page_count)
   }
 
   // see if it is in the cache
-  bhdr_T *hp = mf_find_hash(mfp, nr);
+  bhdr_T *hp = pmap_get(int64_t)(&mfp->mf_hash, nr);
   if (hp == NULL) {                             // not in the hash list
     if (nr < 0 || nr >= mfp->mf_infile_count) {  // can't be in the file
       return NULL;
@@ -317,13 +314,11 @@ bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, unsigned page_count)
       return NULL;
     }
   } else {
-    mf_rem_used(mfp, hp);       // remove from list, insert in front below
-    mf_rem_hash(mfp, hp);
+    pmap_del(int64_t)(&mfp->mf_hash, hp->bh_bnum, NULL);
   }
 
   hp->bh_flags |= BH_LOCKED;
-  mf_ins_used(mfp, hp);         // put in front of used list
-  mf_ins_hash(mfp, hp);         // put in front of hash list
+  pmap_put(int64_t)(&mfp->mf_hash, hp->bh_bnum, hp);  // put in front of hash table
 
   return hp;
 }
@@ -356,8 +351,7 @@ void mf_put(memfile_T *mfp, bhdr_T *hp, bool dirty, bool infile)
 void mf_free(memfile_T *mfp, bhdr_T *hp)
 {
   xfree(hp->bh_data);           // free data
-  mf_rem_hash(mfp, hp);         // get *hp out of the hash list
-  mf_rem_used(mfp, hp);         // get *hp out of the used list
+  pmap_del(int64_t)(&mfp->mf_hash, hp->bh_bnum, NULL);  // get *hp out of the hash table
   if (hp->bh_bnum < 0) {
     xfree(hp);                  // don't want negative numbers in free list
     mfp->mf_neg_count--;
@@ -399,7 +393,8 @@ int mf_sync(memfile_T *mfp, int flags)
   // fails then we give up.
   int status = OK;
   bhdr_T *hp;
-  for (hp = mfp->mf_used_last; hp != NULL; hp = hp->bh_prev) {
+  // note, "last" block is typically earlier in the hash list
+  map_foreach_value(&mfp->mf_hash, hp, {
     if (((flags & MFS_ALL) || hp->bh_bnum >= 0)
         && (hp->bh_flags & BH_DIRTY)
         && (status == OK || (hp->bh_bnum >= 0
@@ -424,7 +419,7 @@ int mf_sync(memfile_T *mfp, int flags)
         break;
       }
     }
-  }
+  })
 
   // If the whole list is flushed, the memfile is not dirty anymore.
   // In case of an error, dirty flag is also set, to avoid trying all the time.
@@ -447,59 +442,13 @@ int mf_sync(memfile_T *mfp, int flags)
 /// These are blocks that need to be written to a newly created swapfile.
 void mf_set_dirty(memfile_T *mfp)
 {
-  for (bhdr_T *hp = mfp->mf_used_last; hp != NULL; hp = hp->bh_prev) {
+  bhdr_T *hp;
+  map_foreach_value(&mfp->mf_hash, hp, {
     if (hp->bh_bnum > 0) {
       hp->bh_flags |= BH_DIRTY;
     }
-  }
+  })
   mfp->mf_dirty = MF_DIRTY_YES;
-}
-
-/// Insert block in front of memfile's hash list.
-static void mf_ins_hash(memfile_T *mfp, bhdr_T *hp)
-{
-  mf_hash_add_item(&mfp->mf_hash, (mf_hashitem_T *)hp);
-}
-
-/// Remove block from memfile's hash list.
-static void mf_rem_hash(memfile_T *mfp, bhdr_T *hp)
-{
-  mf_hash_rem_item(&mfp->mf_hash, (mf_hashitem_T *)hp);
-}
-
-/// Lookup block with number "nr" in memfile's hash list.
-static bhdr_T *mf_find_hash(memfile_T *mfp, blocknr_T nr)
-{
-  return (bhdr_T *)mf_hash_find(&mfp->mf_hash, nr);
-}
-
-/// Insert block at the front of memfile's used list.
-static void mf_ins_used(memfile_T *mfp, bhdr_T *hp)
-{
-  hp->bh_next = mfp->mf_used_first;
-  mfp->mf_used_first = hp;
-  hp->bh_prev = NULL;
-  if (hp->bh_next == NULL) {    // list was empty, adjust last pointer
-    mfp->mf_used_last = hp;
-  } else {
-    hp->bh_next->bh_prev = hp;
-  }
-}
-
-/// Remove block from memfile's used list.
-static void mf_rem_used(memfile_T *mfp, bhdr_T *hp)
-{
-  if (hp->bh_next == NULL) {               // last block in used list
-    mfp->mf_used_last = hp->bh_prev;
-  } else {
-    hp->bh_next->bh_prev = hp->bh_prev;
-  }
-
-  if (hp->bh_prev == NULL) {               // first block in used list
-    mfp->mf_used_first = hp->bh_next;
-  } else {
-    hp->bh_prev->bh_next = hp->bh_next;
-  }
 }
 
 /// Release as many blocks as possible.
@@ -520,17 +469,18 @@ bool mf_release_all(void)
 
       // Flush as many blocks as possible, only if there is a swapfile.
       if (mfp->mf_fd >= 0) {
-        for (bhdr_T *hp = mfp->mf_used_last; hp != NULL;) {
+        for (int i = 0; i < (int)map_size(&mfp->mf_hash);) {
+          bhdr_T *hp = mfp->mf_hash.values[i];
           if (!(hp->bh_flags & BH_LOCKED)
               && (!(hp->bh_flags & BH_DIRTY)
                   || mf_write(mfp, hp) != FAIL)) {
-            mf_rem_used(mfp, hp);
-            mf_rem_hash(mfp, hp);
+            pmap_del(int64_t)(&mfp->mf_hash, hp->bh_bnum, NULL);
             mf_free_bhdr(hp);
-            hp = mfp->mf_used_last;    // restart, list was changed
             retval = true;
+            // Rerun with the same value of i. another item will have taken
+            // its place (or it was the last)
           } else {
-            hp = hp->bh_prev;
+            i++;
           }
         }
       }
@@ -558,7 +508,7 @@ static void mf_free_bhdr(bhdr_T *hp)
 /// Insert a block in the free list.
 static void mf_ins_free(memfile_T *mfp, bhdr_T *hp)
 {
-  hp->bh_next = mfp->mf_free_first;
+  hp->bh_data = mfp->mf_free_first;
   mfp->mf_free_first = hp;
 }
 
@@ -568,7 +518,7 @@ static void mf_ins_free(memfile_T *mfp, bhdr_T *hp)
 static bhdr_T *mf_rem_free(memfile_T *mfp)
 {
   bhdr_T *hp = mfp->mf_free_first;
-  mfp->mf_free_first = hp->bh_next;
+  mfp->mf_free_first = hp->bh_data;
   return hp;
 }
 
@@ -637,7 +587,7 @@ static int mf_write(memfile_T *mfp, bhdr_T *hp)
     blocknr_T nr = hp->bh_bnum;  // block nr which is being written
     if (nr > mfp->mf_infile_count) {            // beyond end of file
       nr = mfp->mf_infile_count;
-      hp2 = mf_find_hash(mfp, nr);              // NULL caught below
+      hp2 = pmap_get(int64_t)(&mfp->mf_hash, nr);  // NULL caught below
     } else {
       hp2 = hp;
     }
@@ -690,8 +640,6 @@ static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
     return OK;
   }
 
-  mf_blocknr_trans_item_T *np = xmalloc(sizeof(mf_blocknr_trans_item_T));
-
   // Get a new number for the block.
   // If the first item in the free list has sufficient pages, use its number.
   // Otherwise use mf_blocknr_max.
@@ -714,15 +662,13 @@ static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
     mfp->mf_blocknr_max += page_count;
   }
 
-  np->nt_old_bnum = hp->bh_bnum;            // adjust number
-  np->nt_new_bnum = new_bnum;
-
-  mf_rem_hash(mfp, hp);                     // remove from old hash list
+  blocknr_T old_bnum = hp->bh_bnum;            // adjust number
+  pmap_del(int64_t)(&mfp->mf_hash, hp->bh_bnum, NULL);
   hp->bh_bnum = new_bnum;
-  mf_ins_hash(mfp, hp);                     // insert in new hash list
+  pmap_put(int64_t)(&mfp->mf_hash, new_bnum, hp);
 
   // Insert "np" into "mf_trans" hashtable with key "np->nt_old_bnum".
-  mf_hash_add_item(&mfp->mf_trans, (mf_hashitem_T *)np);
+  map_put(int64_t, int64_t)(&mfp->mf_trans, old_bnum, new_bnum);
 
   return OK;
 }
@@ -733,20 +679,16 @@ static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
 ///          The old number           When not found.
 blocknr_T mf_trans_del(memfile_T *mfp, blocknr_T old_nr)
 {
-  mf_blocknr_trans_item_T *np =
-    (mf_blocknr_trans_item_T *)mf_hash_find(&mfp->mf_trans, old_nr);
-
-  if (np == NULL) {  // not found
+  blocknr_T *num = map_ref(int64_t, int64_t)(&mfp->mf_trans, old_nr, false);
+  if (num == NULL) {  // not found
     return old_nr;
   }
 
   mfp->mf_neg_count--;
-  blocknr_T new_bnum = np->nt_new_bnum;
+  blocknr_T new_bnum = *num;
 
   // remove entry from the trans list
-  mf_hash_rem_item(&mfp->mf_trans, (mf_hashitem_T *)np);
-
-  xfree(np);
+  map_del(int64_t, int64_t)(&mfp->mf_trans, old_nr, NULL);
 
   return new_bnum;
 }
@@ -810,7 +752,7 @@ static bool mf_do_open(memfile_T *mfp, char *fname, int flags)
     emsg(_("E300: Swap file already exists (symlink attack?)"));
   } else {
     // try to open the file
-    mfp->mf_fd = MCH_OPEN_RW(mfp->mf_fname, flags | O_NOFOLLOW);
+    mfp->mf_fd = os_open(mfp->mf_fname, flags | O_NOFOLLOW, S_IREAD | S_IWRITE);
   }
 
   // If the file cannot be opened, use memory only
@@ -822,153 +764,4 @@ static bool mf_do_open(memfile_T *mfp, char *fname, int flags)
   (void)os_set_cloexec(mfp->mf_fd);
 
   return true;
-}
-
-//
-// Implementation of mf_hashtab_T.
-//
-
-/// The number of buckets in the hashtable is increased by a factor of
-/// MHT_GROWTH_FACTOR when the average number of items per bucket
-/// exceeds 2 ^ MHT_LOG_LOAD_FACTOR.
-enum {
-  MHT_LOG_LOAD_FACTOR = 6,
-  MHT_GROWTH_FACTOR = 2,  // must be a power of two
-};
-
-/// Initialize an empty hash table.
-static void mf_hash_init(mf_hashtab_T *mht)
-{
-  CLEAR_POINTER(mht);
-  mht->mht_buckets = mht->mht_small_buckets;
-  mht->mht_mask = MHT_INIT_SIZE - 1;
-}
-
-/// Free the array of a hash table. Does not free the items it contains!
-/// The hash table must not be used again without another mf_hash_init() call.
-static void mf_hash_free(mf_hashtab_T *mht)
-{
-  if (mht->mht_buckets != mht->mht_small_buckets) {
-    xfree(mht->mht_buckets);
-  }
-}
-
-/// Free the array of a hash table and all the items it contains.
-static void mf_hash_free_all(mf_hashtab_T *mht)
-{
-  for (size_t idx = 0; idx <= mht->mht_mask; idx++) {
-    mf_hashitem_T *next;
-    for (mf_hashitem_T *mhi = mht->mht_buckets[idx]; mhi != NULL; mhi = next) {
-      next = mhi->mhi_next;
-      xfree(mhi);
-    }
-  }
-
-  mf_hash_free(mht);
-}
-
-/// Find by key.
-///
-/// @return  A pointer to a mf_hashitem_T or NULL if the item was not found.
-static mf_hashitem_T *mf_hash_find(mf_hashtab_T *mht, blocknr_T key)
-{
-  mf_hashitem_T *mhi = mht->mht_buckets[(size_t)key & mht->mht_mask];
-  while (mhi != NULL && mhi->mhi_key != key) {
-    mhi = mhi->mhi_next;
-  }
-  return mhi;
-}
-
-/// Add item to hashtable. Item must not be NULL.
-static void mf_hash_add_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
-{
-  size_t idx = (size_t)mhi->mhi_key & mht->mht_mask;
-  mhi->mhi_next = mht->mht_buckets[idx];
-  mhi->mhi_prev = NULL;
-  if (mhi->mhi_next != NULL) {
-    mhi->mhi_next->mhi_prev = mhi;
-  }
-  mht->mht_buckets[idx] = mhi;
-
-  mht->mht_count++;
-
-  /// Grow hashtable when we have more thank 2^MHT_LOG_LOAD_FACTOR
-  /// items per bucket on average.
-  if ((mht->mht_count >> MHT_LOG_LOAD_FACTOR) > mht->mht_mask) {
-    mf_hash_grow(mht);
-  }
-}
-
-/// Remove item from hashtable. Item must be non NULL and within hashtable.
-static void mf_hash_rem_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
-{
-  if (mhi->mhi_prev == NULL) {
-    mht->mht_buckets[(size_t)mhi->mhi_key & mht->mht_mask] =
-      mhi->mhi_next;
-  } else {
-    mhi->mhi_prev->mhi_next = mhi->mhi_next;
-  }
-
-  if (mhi->mhi_next != NULL) {
-    mhi->mhi_next->mhi_prev = mhi->mhi_prev;
-  }
-
-  mht->mht_count--;
-
-  // We could shrink the table here, but it typically takes little memory,
-  // so why bother?
-}
-
-/// Increase number of buckets in the hashtable by MHT_GROWTH_FACTOR and
-/// rehash items.
-static void mf_hash_grow(mf_hashtab_T *mht)
-{
-  size_t size = (mht->mht_mask + 1) * MHT_GROWTH_FACTOR * sizeof(void *);
-  mf_hashitem_T **buckets = xcalloc(1, size);
-
-  int shift = 0;
-  while ((mht->mht_mask >> shift) != 0) {
-    shift++;
-  }
-
-  for (size_t i = 0; i <= mht->mht_mask; i++) {
-    /// Traverse the items in the i-th original bucket and move them into
-    /// MHT_GROWTH_FACTOR new buckets, preserving their relative order
-    /// within each new bucket. Preserving the order is important because
-    /// mf_get() tries to keep most recently used items at the front of
-    /// each bucket.
-    ///
-    /// Here we strongly rely on the fact that hashes are computed modulo
-    /// a power of two.
-
-    mf_hashitem_T *tails[MHT_GROWTH_FACTOR];
-    CLEAR_FIELD(tails);
-
-    for (mf_hashitem_T *mhi = mht->mht_buckets[i];
-         mhi != NULL; mhi = mhi->mhi_next) {
-      size_t j = (mhi->mhi_key >> shift) & (MHT_GROWTH_FACTOR - 1);
-      if (tails[j] == NULL) {
-        buckets[i + (j << shift)] = mhi;
-        tails[j] = mhi;
-        mhi->mhi_prev = NULL;
-      } else {
-        tails[j]->mhi_next = mhi;
-        mhi->mhi_prev = tails[j];
-        tails[j] = mhi;
-      }
-    }
-
-    for (size_t j = 0; j < MHT_GROWTH_FACTOR; j++) {
-      if (tails[j] != NULL) {
-        tails[j]->mhi_next = NULL;
-      }
-    }
-  }
-
-  if (mht->mht_buckets != mht->mht_small_buckets) {
-    xfree(mht->mht_buckets);
-  }
-
-  mht->mht_buckets = buckets;
-  mht->mht_mask = (mht->mht_mask + 1) * MHT_GROWTH_FACTOR - 1;
 }
