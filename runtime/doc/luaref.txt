@@ -3610,8 +3610,11 @@ getmetatable({object})                                  *getmetatable()*
         object.
 
 ipairs({t})                                             *ipairs()*
-        Returns three values: an |iterator| function, the table {t}, and 0, so
-        that the construction
+        If {t} has a metamethod `__ipairs`, calls it with the argument {t} and
+        returns the first three results from the call.
+
+        Otherwise, returns three values: an |iterator| function, the table
+        {t}, and 0, so that the construction
 
                `for i,v in ipairs(t) do`  `body`  `end`
 
@@ -3662,8 +3665,11 @@ next({table} [, {index}])                               *next()*
         modify existing fields. In particular, you may clear existing fields.
 
 pairs({t})                                              *pairs()*
-        Returns three values: the |next()| function, the table {t}, and `nil`,
-        so that the construction
+        If {t} has a metamethod `__pairs`, calls it with the argument {t} and
+        returns the first three results from the call.
+
+        Otherwise, returns three values: the |next()| function, the table {t},
+        and `nil`, so that the construction
 
                `for k,v in pairs(t) do`  `body`  `end`
 
@@ -3689,9 +3695,15 @@ rawequal({v1}, {v2})                                    *rawequal()*
         Checks whether {v1} is equal to {v2}, without invoking any metamethod.
         Returns a boolean.
 
+rawipairs({t})                                          *rawipairs()*
+        Non-metamethod aware version of |ipairs|.
+
 rawget({table}, {index})                                *rawget()*
         Gets the real value of `table[index]`, without invoking any
         metamethod. {table} must be a table; {index} may be any value.
+
+rawpairs({t})                                           *rawpairs()*
+        Non-metamethod aware version of |pairs|.
 
 rawset({table}, {index}, {value})                       *rawset()*
         Sets the real value of `table[index]` to {value}, without invoking any

@@ -1,3 +1,19 @@
+-- Replace ipairs/pairs with functions that call a tables metatable
+-- __ipairs or __pairs function if present. Original ipairs/pairs
+-- are saved at _G.rawipairs _G.rawpairs, in the style of rawget, etc.
+-- Backport from Lua 5.2
+for raw_name, iter_name in pairs({rawpairs = "pairs", rawipairs = "ipairs"}) do
+  _G[raw_name] = _G[iter_name]
+  _G[iter_name] = function(t)
+    local mt = getmetatable(t)
+    local mt_iter = mt and mt["__" .. iter_name]
+    if mt_iter then
+      return mt_iter(t)
+    else
+      return _G[raw_name](t)
+    end
+  end
+end
 local pathtrails = {}
 vim._so_trails = {}
 for s in (package.cpath .. ';'):gmatch('[^;]*;') do
