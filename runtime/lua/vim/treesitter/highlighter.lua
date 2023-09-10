@@ -136,7 +136,7 @@ function TSHighlighter.new(tree, opts)
     vim.opt_local.spelloptions:append('noplainbuffer')
   end)
 
-  self.tree:parse()
+  self.tree:parse(true)
 
   return self
 end
@@ -313,22 +313,31 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
 end
 
 ---@private
+---@param buf integer
+function TSHighlighter._on_buf(_, buf)
+  local self = TSHighlighter.active[buf]
+  if self then
+    self.tree:parse(true)
+  end
+end
+
+---@private
 ---@param _win integer
 ---@param buf integer
----@param topline integer
----@param botline integer
-function TSHighlighter._on_win(_, _win, buf, topline, botline)
+---@param _topline integer
+function TSHighlighter._on_win(_, _win, buf, _topline)
   local self = TSHighlighter.active[buf]
   if not self then
     return false
   end
-  self.tree:parse({ topline, botline })
+
   self:reset_highlight_state()
   self.redraw_count = self.redraw_count + 1
   return true
 end
 
 api.nvim_set_decoration_provider(ns, {
+  on_buf = TSHighlighter._on_buf,
   on_win = TSHighlighter._on_win,
   on_line = TSHighlighter._on_line,
   _on_spell_nav = TSHighlighter._on_spell_nav,
