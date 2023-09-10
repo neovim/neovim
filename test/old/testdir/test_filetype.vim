@@ -427,6 +427,7 @@ func s:GetFilenameChecks() abort
     \ 'mrxvtrc': ['mrxvtrc', '.mrxvtrc'],
     \ 'msidl': ['file.odl', 'file.mof'],
     \ 'msql': ['file.msql'],
+    \ 'mojo': ['file.mojo', 'file.🔥'],
     \ 'mupad': ['file.mu'],
     \ 'mush': ['file.mush'],
     \ 'muttrc': ['Muttngrc', 'Muttrc', '.muttngrc', '.muttngrc-file', '.muttrc', '.muttrc-file', '/.mutt/muttngrc', '/.mutt/muttngrc-file', '/.mutt/muttrc', '/.mutt/muttrc-file', '/.muttng/muttngrc', '/.muttng/muttngrc-file', '/.muttng/muttrc', '/.muttng/muttrc-file', '/etc/Muttrc.d/file', '/etc/Muttrc.d/file.rc', 'Muttngrc-file', 'Muttrc-file', 'any/.mutt/muttngrc', 'any/.mutt/muttngrc-file', 'any/.mutt/muttrc', 'any/.mutt/muttrc-file', 'any/.muttng/muttngrc', 'any/.muttng/muttngrc-file', 'any/.muttng/muttrc', 'any/.muttng/muttrc-file', 'any/etc/Muttrc.d/file', 'muttngrc', 'muttngrc-file', 'muttrc', 'muttrc-file'],
