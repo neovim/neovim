@@ -97,8 +97,3 @@ endif()
 add_custom_target(test_deps)
 
 Download(luacheck 1.1.0-1 ${LUACHECK_EXE})
-
-if(PREFER_LUA)
-  Download(coxpcall 1.17.0-1)
-  add_dependencies(test_deps coxpcall)
-endif()
