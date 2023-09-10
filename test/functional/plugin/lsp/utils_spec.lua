@@ -1,4 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
+local feed = helpers.feed
 
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
@@ -85,4 +87,98 @@ describe('vim.lsp.util', function()
       eq(expected, stylize_markdown(lines, opts))
     end)
   end)
+
+  describe("make_floating_popup_options", function ()
+
+    local function assert_anchor(anchor_bias, expected_anchor)
+        local opts = exec_lua([[
+          local args = { ... }
+          local anchor_bias = args[1]
+          return vim.lsp.util.make_floating_popup_options(30, 10, { anchor_bias = anchor_bias })
+        ]], anchor_bias)
+
+        eq(expected_anchor, string.sub(opts.anchor, 1, 1))
+    end
+
+    local screen
+    before_each(function ()
+      helpers.clear()
+      screen = Screen.new(80, 80)
+      screen:attach()
+      feed("79i<CR><Esc>") -- fill screen with empty lines
+    end)
+
+    describe('when on the first line it places window below', function ()
+      before_each(function ()
+        feed('gg')
+      end)
+
+      it('for anchor_bias = "auto"', function ()
+        assert_anchor('auto', 'N')
+      end)
+
+      it('for anchor_bias = "above"', function ()
+        assert_anchor('above', 'N')
+      end)
+
+      it('for anchor_bias = "below"', function ()
+        assert_anchor('below', 'N')
+      end)
+    end)
+
+    describe('when on the last line it places window above', function ()
+      before_each(function ()
+        feed('G')
+      end)
+
+      it('for anchor_bias = "auto"', function ()
+        assert_anchor('auto', 'S')
+      end)
+
+      it('for anchor_bias = "above"', function ()
+        assert_anchor('above', 'S')
+      end)
+
+      it('for anchor_bias = "below"', function ()
+        assert_anchor('below', 'S')
+      end)
+    end)
+
+    describe('with 20 lines above, 59 lines below', function ()
+      before_each(function ()
+        feed('gg20j')
+      end)
+
+      it('places window below for anchor_bias = "auto"', function ()
+        assert_anchor('auto', 'N')
+      end)
+
+      it('places window above for anchor_bias = "above"', function ()
+        assert_anchor('above', 'S')
+      end)
+
+      it('places window below for anchor_bias = "below"', function ()
+        assert_anchor('below', 'N')
+      end)
+    end)
+
+    describe('with 59 lines above, 20 lines below', function ()
+      before_each(function ()
+        feed('G20k')
+      end)
+
+      it('places window above for anchor_bias = "auto"', function ()
+        assert_anchor('auto', 'S')
+      end)
+
+      it('places window above for anchor_bias = "above"', function ()
+        assert_anchor('above', 'S')
+      end)
+
+      it('places window below for anchor_bias = "below"', function ()
+        assert_anchor('below', 'N')
+      end)
+    end)
+  end)
+
 end)
