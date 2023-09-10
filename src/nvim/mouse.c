@@ -220,7 +220,10 @@ static int get_fpos_of_mouse(pos_T *mpos)
   // compute the position in the buffer line from the posn on the screen
   bool below_buffer = mouse_comp_pos(wp, &row, &col, &mpos->lnum);
 
-  if (!below_buffer && *wp->w_p_stc != NUL && mouse_col < win_col_off(wp)) {
+  if (!below_buffer && *wp->w_p_stc != NUL
+      && (wp->w_p_rl
+          ? wincol >= wp->w_width_inner - win_col_off(wp)
+          : wincol < win_col_off(wp))) {
     return MOUSE_STATUSCOL;
   }
 
@@ -673,6 +676,10 @@ popupexit:
       // and spans the whole screen.
       click_defs = curwin->w_status_click_defs;
       click_col = mouse_col;
+    }
+
+    if (in_statuscol && wp->w_p_rl) {
+      click_col = wp->w_width_inner - click_col - 1;
     }
 
     if (click_defs != NULL) {
@@ -1254,7 +1261,10 @@ retnomove:
   on_sep_line = grid == DEFAULT_GRID_HANDLE && col >= wp->w_width && col - wp->w_width + 1 == 1;
   on_winbar = row == -1 && wp->w_winbar_height != 0;
   on_statuscol = !below_window && !on_status_line && !on_sep_line && !on_winbar
-                 && *wp->w_p_stc != NUL && col < win_col_off(wp);
+                 && *wp->w_p_stc != NUL
+                 && (wp->w_p_rl
+                     ? col >= wp->w_width_inner - win_col_off(wp)
+                     : col < win_col_off(wp));
 
   // The rightmost character of the status line might be a vertical
   // separator character if there is no connecting window to the right.
