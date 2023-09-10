@@ -1087,6 +1087,12 @@ end
 ---        - focusable (string or table) override `focusable`
 ---        - zindex (string or table) override `zindex`, defaults to 50
 ---        - relative ("mouse"|"cursor") defaults to "cursor"
+---        - anchor_bias ("auto"|"above"|"below") defaults to "auto"
+---          - "auto": place window based on which side of the cursor has more lines
+---          - "above": place the window above the cursor unless there are not enough lines
+---            to display the full window height.
+---          - "below": place the window below the cursor unless there are not enough lines
+---            to display the full window height.
 ---@return table Options
 function M.make_floating_popup_options(width, height, opts)
   validate({
@@ -1105,7 +1111,20 @@ function M.make_floating_popup_options(width, height, opts)
     or vim.fn.winline() - 1
   local lines_below = vim.fn.winheight(0) - lines_above
 
-  if lines_above < lines_below then
+  local anchor_bias = opts.anchor_bias or 'auto'
+
+  local anchor_below
+
+  if anchor_bias == 'below' then
+    anchor_below = (lines_below > lines_above) or (height <= lines_below)
+  elseif anchor_bias == 'above' then
+    local anchor_above = (lines_above > lines_below) or (height <= lines_above)
+    anchor_below = not anchor_above
+  else
+    anchor_below = lines_below > lines_above
+  end
+
+  if anchor_below then
     anchor = anchor .. 'N'
     height = math.min(lines_below, height)
     row = 1
@@ -1635,7 +1654,8 @@ end
 ---
 ---@param contents table of lines to show in window
 ---@param syntax string of syntax to set for opened buffer
----@param opts table with optional fields (additional keys are passed on to |nvim_open_win()|)
+---@param opts table with optional fields (additional keys are filtered with |vim.lsp.util.make_floating_popup_options()|
+---                  before they are passed on to |nvim_open_win()|)
 ---             - height: (integer) height of floating window
 ---             - width: (integer) width of floating window
 ---             - wrap: (boolean, default true) wrap long lines

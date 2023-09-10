@@ -355,7 +355,7 @@ end
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
----         - See |nvim_open_win()|
+---         - See |vim.lsp.util.open_floating_preview()| for more options.
 function M.hover(_, result, ctx, config)
   config = config or {}
   config.focus_id = ctx.method
@@ -442,7 +442,7 @@ M[ms.textDocument_implementation] = location_handler
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
----         - See |nvim_open_win()|
+---         - See |vim.lsp.util.open_floating_preview()| for more options
 function M.signature_help(_, result, ctx, config)
   config = config or {}
   config.focus_id = ctx.method
