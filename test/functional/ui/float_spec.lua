@@ -325,6 +325,34 @@ describe('float window', function()
     eq(12, pos[2])
   end)
 
+
+  it('opened and can reset config see issue #18368', function()
+    local res = exec_lua([[
+      local bufnr = vim.api.nvim_create_buf(false, true)
+
+      local opts = {
+        width = 10,
+        height = 10,
+        col = 5,
+        row = 5,
+        relative = 'editor',
+        style = 'minimal'
+      }
+
+      local win_id = vim.api.nvim_open_win(bufnr, true, opts)
+
+      vim.api.nvim_win_set_config(win_id, {
+	width = 3,
+	height = 3,
+	row = 10,
+	col = 10,
+      })
+      return vim.api.nvim_win_get_config(win_id)
+    ]])
+
+    eq({10, 10, 3, 3,'editor'}, {res.row, res.col, res.width, res.height, res.relative})
+  end)
+
   it('is not operated on by windo when non-focusable #15374', function()
     command([[
       let winids = []
