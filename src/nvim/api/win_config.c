@@ -207,9 +207,6 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
 /// Configures window layout. Currently only for floating and external windows
 /// (including changing a split window to those layouts).
 ///
-/// When reconfiguring a floating window, absent option keys will not be
-/// changed.  `row`/`col` and `relative` must be reconfigured together.
-///
 /// @see |nvim_open_win()|
 ///
 /// @param      window  Window handle, or 0 for current window
