@@ -103,6 +103,29 @@ describe('float window', function()
     assert_alive()
   end)
 
+  it('open with WinNew autocmd', function()
+    local res = exec_lua([[
+      local triggerd = false
+      local buf = vim.api.nvim_create_buf(true, true)
+      vim.api.nvim_create_autocmd('WinNew', {
+        callback = function(opt)
+          if opt.buf == buf then
+            triggerd = true
+          end
+        end
+      })
+      local opts = {
+        relative = "win",
+        row = 0, col = 0,
+        width = 1, height = 1,
+        noautocmd = false,
+      }
+      vim.api.nvim_open_win(buf, true, opts)
+      return triggerd
+    ]])
+    eq(true, res)
+  end)
+
   it('opened with correct height', function()
     local height = exec_lua([[
       vim.go.winheight = 20
