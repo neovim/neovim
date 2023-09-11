@@ -2125,11 +2125,11 @@ should set a variable in your vimrc file: >
 	:let lpc_syntax_for_c = 1
 
 If it doesn't work properly for some particular C or LPC files, use a
-modeline.  For a LPC file:
+modeline.  For a LPC file: >
 
 	// vim:set ft=lpc:
 
-For a C file that is recognized as LPC:
+For a C file that is recognized as LPC: >
 
 	// vim:set ft=c:
 
@@ -2161,7 +2161,7 @@ LUA						*lua.vim* *ft-lua-syntax*
 The Lua syntax file can be used for versions 4.0, 5.0, 5.1 and 5.2 (5.2 is
 the default). You can select one of these versions using the global variables
 lua_version and lua_subversion. For example, to activate Lua
-5.1 syntax highlighting, set the variables like this:
+5.1 syntax highlighting, set the variables like this: >
 
 	:let lua_version = 5
 	:let lua_subversion = 1
