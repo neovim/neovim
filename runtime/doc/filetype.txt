@@ -136,35 +136,38 @@ what kind of file it is.  This doesn't always work.  A number of global
 variables can be used to overrule the filetype used for certain extensions:
 
 	file name	variable ~
-	`*.asa`		g:filetype_asa	|ft-aspvbs-syntax| |ft-aspperl-syntax|
-	`*.asm`		g:asmsyntax	|ft-asm-syntax|
-	`*.asp`		g:filetype_asp	|ft-aspvbs-syntax| |ft-aspperl-syntax|
-	`*.bas`		g:filetype_bas	|ft-basic-syntax|
+	`*.asa`		g:filetype_asa		|ft-aspperl-syntax|
+						|ft-aspvbs-syntax|
+	`*.asm`		g:asmsyntax		|ft-asm-syntax|
+	`*.asp`		g:filetype_asp		|ft-aspperl-syntax|
+						|ft-aspvbs-syntax|
+	`*.bas`		g:filetype_bas		|ft-basic-syntax|
 	`*.cfg`		g:filetype_cfg
 	`*.cls`		g:filetype_cls
-	`*.csh`		g:filetype_csh	|ft-csh-syntax|
+	`*.csh`		g:filetype_csh		|ft-csh-syntax|
 	`*.dat`		g:filetype_dat
-	`*.f`		g:filetype_f	|ft-forth-syntax|
-	`*.frm`		g:filetype_frm	|ft-form-syntax|
-	`*.fs`		g:filetype_fs	|ft-forth-syntax|
-	`*.i`		g:filetype_i	|ft-progress-syntax|
+	`*.f`		g:filetype_f		|ft-forth-syntax|
+	`*.frm`		g:filetype_frm		|ft-form-syntax|
+	`*.fs`		g:filetype_fs		|ft-forth-syntax|
+	`*.h`		g:c_syntax_for_h	|ft-c-syntax|
+	`*.i`		g:filetype_i		|ft-progress-syntax|
 	`*.inc`		g:filetype_inc
 	`*.lsl`		g:filetype_lsl
-	`*.m`		g:filetype_m	|ft-mathematica-syntax|
+	`*.m`		g:filetype_m		|ft-mathematica-syntax|
 	`*.mod`		g:filetype_mod
-	`*.p`		g:filetype_p	|ft-pascal-syntax|
+	`*.p`		g:filetype_p		|ft-pascal-syntax|
 	`*.pl`		g:filetype_pl
-	`*.pp`		g:filetype_pp	|ft-pascal-syntax|
+	`*.pp`		g:filetype_pp		|ft-pascal-syntax|
 	`*.prg`		g:filetype_prg
 	`*.r`		g:filetype_r
 	`*.sig`		g:filetype_sig
-	`*.sql`		g:filetype_sql	|ft-sql-syntax|
+	`*.sql`		g:filetype_sql		|ft-sql-syntax|
 	`*.src`		g:filetype_src
 	`*.sys`		g:filetype_sys
-	`*.sh`		g:bash_is_sh	|ft-sh-syntax|
-	`*.tex`		g:tex_flavor	|ft-tex-plugin|
+	`*.sh`		g:bash_is_sh		|ft-sh-syntax|
+	`*.tex`		g:tex_flavor		|ft-tex-plugin|
 	`*.typ`		g:filetype_typ
-	`*.w`		g:filetype_w	|ft-cweb-syntax|
+	`*.w`		g:filetype_w		|ft-cweb-syntax|
 
 For a few filetypes the global variable is used only when the filetype could
 not be detected:
