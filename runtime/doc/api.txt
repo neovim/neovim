@@ -2438,6 +2438,8 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
     Prefer |nvim_buf_set_lines()| if you are only adding or deleting entire
     lines.
 
+    Prefer |nvim_put()| if you want to insert text at the cursor position.
+
     Attributes: ~
         not allowed when |textlock| is active
 
@@ -2451,6 +2453,7 @@ nvim_buf_set_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
 
     See also: ~
       • |nvim_buf_set_lines()|
+      • |nvim_put()|
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
     Sets a buffer-scoped (b:) variable
