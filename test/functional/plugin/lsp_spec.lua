@@ -1787,7 +1787,7 @@ describe('LSP', function()
         eq({
           'First line of text';
         }, buf_lines(1))
-        eq({ 1, 6 }, funcs.nvim_win_get_cursor(0))
+        eq({ 1, 17 }, funcs.nvim_win_get_cursor(0))
       end)
 
       it('fix the cursor row', function()
