@@ -240,7 +240,7 @@ The options local to a window are remembered for each buffer.  This also
 happens when the buffer is not loaded, but they are lost when the buffer is
 wiped out |:bwipe|.
 
-Special local window options			*special-local-window-option*
+Special local window options			*local-noglobal*
 
 The following local window options won't be copied over when new windows are
 created, thus they behave slightly differently:
@@ -251,7 +251,7 @@ created, thus they behave slightly differently:
 	'winfixheight'	specific to existing window
 	'winfixwidth'	specific to existing window
 
-Special local buffer options			*special-local-buffer-option*
+Special local buffer options
 
 The following local buffer options won't be copied over when new buffers are
 created, thus they behave slightly differently:
@@ -1095,7 +1095,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'bufhidden'* *'bh'*
 'bufhidden' 'bh'	string	(default "")
-			local to buffer  |special-local-buffer-option|
+			local to buffer  |local-noglobal|
 	This option specifies what happens when a buffer is no longer
 	displayed in a window:
 	  <empty>	follow the global 'hidden' option
@@ -1127,7 +1127,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'buftype'* *'bt'* *E382*
 'buftype' 'bt'		string	(default "")
-			local to buffer  |special-local-buffer-option|
+			local to buffer  |local-noglobal|
 	The value of this option specifies the type of a buffer:
 	  <empty>	normal buffer
 	  acwrite	buffer will always be written with |BufWriteCmd|s
@@ -2433,7 +2433,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'filetype'* *'ft'*
 'filetype' 'ft'		string	(default "")
-			local to buffer  |special-local-buffer-option|
+			local to buffer  |local-noglobal|
 	When this option is set, the FileType autocommand event is triggered.
 	All autocommands that match with the value of this option will be
 	executed.  Thus the value of 'filetype' is used in place of the file
@@ -4109,7 +4109,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 				*'modified'* *'mod'* *'nomodified'* *'nomod'*
 'modified' 'mod'	boolean	(default off)
-			local to buffer  |special-local-buffer-option|
+			local to buffer  |local-noglobal|
 	When on, the buffer is considered to be modified.  This option is set
 	when:
 	1. A change was made to the text since it was last written.  Using the
@@ -4558,7 +4558,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 		*'previewwindow'* *'pvw'* *'nopreviewwindow'* *'nopvw'* *E590*
 'previewwindow' 'pvw'	boolean	(default off)
-			local to window  |special-local-window-option|
+			local to window  |local-noglobal|
 	Identifies the preview window.  Only one window can have this option
 	set.  It's normally not set directly, but by using one of the commands
 	|:ptag|, |:pedit|, etc.
@@ -4628,7 +4628,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 				*'readonly'* *'ro'* *'noreadonly'* *'noro'*
 'readonly' 'ro'		boolean	(default off)
-			local to buffer  |special-local-buffer-option|
+			local to buffer  |local-noglobal|
 	If on, writes fail unless you use a '!'.  Protects you from
 	accidentally overwriting a file.  Default on when Vim is started
 	in read-only mode ("vim -R") or when the executable is called "view".
@@ -4890,7 +4890,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'scroll'* *'scr'*
 'scroll' 'scr'		number	(default half the window height)
-			local to window  |special-local-window-option|
+			local to window  |local-noglobal|
 	Number of lines to scroll with CTRL-U and CTRL-D commands.  Will be
 	set to half the number of lines in the window when the window size
 	changes.  This may happen when enabling the |status-line| or
@@ -6240,7 +6240,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'syntax'* *'syn'*
 'syntax' 'syn'		string	(default "")
-			local to buffer  |special-local-buffer-option|
+			local to buffer  |local-noglobal|
 	When this option is set, the syntax with this name is loaded, unless
 	syntax highlighting has been switched off with ":syntax off".
 	Otherwise this option does not always reflect the current syntax (the
@@ -7107,7 +7107,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 			*'winfixheight'* *'wfh'* *'nowinfixheight'* *'nowfh'*
 'winfixheight' 'wfh'	boolean	(default off)
-			local to window  |special-local-window-option|
+			local to window  |local-noglobal|
 	Keep the window height when windows are opened or closed and
 	'equalalways' is set.  Also for |CTRL-W_=|.  Set by default for the
 	|preview-window| and |quickfix-window|.
@@ -7115,7 +7115,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 			*'winfixwidth'* *'wfw'* *'nowinfixwidth'* *'nowfw'*
 'winfixwidth' 'wfw'	boolean	(default off)
-			local to window  |special-local-window-option|
+			local to window  |local-noglobal|
 	Keep the window width when windows are opened or closed and
 	'equalalways' is set.  Also for |CTRL-W_=|.
 	The width may be changed anyway when running out of room.
