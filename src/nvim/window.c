@@ -861,6 +861,12 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
                                   wp->w_float_config.border_hl_ids,
                                   sizeof fconfig.border_hl_ids) != 0);
 
+  int right_extra = Columns - (int)fconfig.col - wp->w_width - (int)strlen(fconfig.border_chars[2]);
+  if (!wp->w_p_wrap && !fconfig.fixed && right_extra < 0
+      && (fconfig.anchor == 0 || fconfig.anchor == kFloatAnchorSouth)) {
+    wp->w_width = wp->w_width + right_extra;
+  }
+
   wp->w_float_config = fconfig;
 
   bool has_border = wp->w_floating && wp->w_float_config.border;

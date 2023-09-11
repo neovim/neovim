@@ -103,6 +103,7 @@ typedef struct {
   String footer_pos;
   String style;
   Boolean noautocmd;
+  Boolean fixed;
 } Dict(float_config);
 
 typedef struct {

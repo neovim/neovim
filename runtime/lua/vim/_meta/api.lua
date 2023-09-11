@@ -1566,6 +1566,10 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---               • noautocmd: If true then no buffer-related autocommand
 ---                 events such as `BufEnter`, `BufLeave` or `BufWinEnter` may
 ---                 fire from calling this function.
+---               • fixed: When anchor is NW or SW and wrap is off and the
+---                 float window would be truncated at the right edge of the
+---                 screen then the float window is moved to the left so as to
+---                 fit the contents on the screen. Set true to disable this.
 --- @return integer
 function vim.api.nvim_open_win(buffer, enter, config) end
 

@@ -295,6 +295,32 @@ describe('float window', function()
     eq(12, pos[2])
   end)
 
+  it('opened with fixed option', function()
+    local res = exec_lua([[
+      local result = {}
+      local buf = vim.api.nvim_create_buf(false, true)
+      local text = ('FooBar'):rep(10)
+      vim.opt.wrap = false
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, { text })
+      local opts = {
+        relative = 'editor',
+        height = 1,
+        width = #text,
+        col = vim.o.columns - 10,
+        row = 3,
+        fixed = false
+      }
+      local winid = vim.api.nvim_open_win(buf, false, opts)
+      result[1] = vim.api.nvim_win_get_width(winid)
+      vim.api.nvim_win_close(winid, true)
+      opts.fixed = true
+      winid = vim.api.nvim_open_win(buf, false, opts)
+      result[2] = vim.api.nvim_win_get_width(winid)
+      return result
+    ]])
+    eq({10, 60}, res);
+  end)
+
   it('is not operated on by windo when non-focusable #15374', function()
     command([[
       let winids = []

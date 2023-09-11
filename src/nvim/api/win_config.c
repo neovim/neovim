@@ -160,6 +160,9 @@
 ///   - noautocmd: If true then no buffer-related autocommand events such as
 ///                  |BufEnter|, |BufLeave| or |BufWinEnter| may fire from
 ///                  calling this function.
+///   - fixed: When anchor is NW or SW and wrap is off and the float window would be
+///            truncated at the right edge of the screen then the float window is moved to the left
+///            so as to fit the contents on the screen. Set true to disable this.
 ///
 /// @param[out] err Error details, if any
 ///
@@ -839,6 +842,10 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
       return false;
     }
     fconfig->noautocmd = config->noautocmd;
+  }
+
+  if (HAS_KEY_X(config, fixed)) {
+    fconfig->fixed = config->fixed;
   }
 
   return true;
