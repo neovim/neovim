@@ -335,12 +335,12 @@ describe('system()', function()
       if is_os('win') then
         eq("echoed\n", eval('system("echo echoed")'))
       else
-        eq("echoed", eval('system("echo -n echoed")'))
+        eq("echoed", eval('system("printf echoed")'))
       end
     end)
     it('to backgrounded command does not crash', function()
       -- This is indeterminate, just exercise the codepath. May get E5677.
-      feed_command('call system(has("win32") ? "start /b /wait cmd /c echo echoed" : "echo -n echoed &")')
+      feed_command('call system(has("win32") ? "start /b /wait cmd /c echo echoed" : "printf echoed &")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
       if v_errnum then
         eq("E5677:", v_errnum)
