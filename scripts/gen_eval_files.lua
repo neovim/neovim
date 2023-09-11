@@ -552,26 +552,19 @@ end
 local function scope_more_doc(o)
   if
     vim.list_contains({
-      'previewwindow',
-      'scroll',
-      'winfixheight',
-      'winfixwidth',
-    }, o.full_name)
-  then
-    return '  |special-local-window-option|'
-  end
-
-  if
-    vim.list_contains({
       'bufhidden',
       'buftype',
       'filetype',
       'modified',
+      'previewwindow',
       'readonly',
+      'scroll',
       'syntax',
+      'winfixheight',
+      'winfixwidth',
     }, o.full_name)
   then
-    return '  |special-local-buffer-option|'
+    return '  |local-noglobal|'
   end
 
   return ''
