@@ -322,7 +322,7 @@ function TSHighlighter._on_win(_, _win, buf, topline, botline)
   if not self then
     return false
   end
-  self.tree:parse({ topline, botline })
+  self.tree:parse({ topline, botline + 1 })
   self:reset_highlight_state()
   self.redraw_count = self.redraw_count + 1
   return true
