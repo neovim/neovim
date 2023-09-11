@@ -64,6 +64,13 @@ endif()
 
 set(ENV{SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_NAME})  # used by test/helpers.lua.
 
+if(NOT WIN32)
+  # Some tests may fail on fish shell #24941 #6172
+  # And in general $SHELL value can be pretty arbitrary and cause issues
+  # during a test run. Setting it to sh aims to avoid those kinds of issues.
+  set(ENV{SHELL} sh)
+endif()
+
 execute_process(
   # Note: because of "-ll" (low-level interpreter mode), some modules like
   # _editor.lua are not loaded.
