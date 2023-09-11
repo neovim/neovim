@@ -504,7 +504,10 @@ end:
 ///
 /// Prefer |nvim_buf_set_lines()| if you are only adding or deleting entire lines.
 ///
+/// Prefer |nvim_put()| if you want to insert text at the cursor position.
+///
 /// @see |nvim_buf_set_lines()|
+/// @see |nvim_put()|
 ///
 /// @param channel_id
 /// @param buffer           Buffer handle, or 0 for current buffer
@@ -725,11 +728,12 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   FOR_ALL_TAB_WINDOWS(tp, win) {
     if (win->w_buffer == buf) {
-      // adjust cursor like an extmark ( i e it was inside last_part_len)
-      if (win->w_cursor.lnum == end_row && win->w_cursor.col > end_col) {
-        win->w_cursor.col -= col_extent - (colnr_T)last_item.size;
+      if (win->w_cursor.lnum >= start_row && win->w_cursor.lnum <= end_row) {
+        fix_cursor_cols(win, (linenr_T)start_row, (colnr_T)start_col, (linenr_T)end_row,
+                        (colnr_T)end_col, (linenr_T)new_len, (colnr_T)last_item.size);
+      } else {
+        fix_cursor(win, (linenr_T)start_row, (linenr_T)end_row, (linenr_T)extra);
       }
-      fix_cursor(win, (linenr_T)start_row, (linenr_T)end_row, (linenr_T)extra);
     }
   }
 
@@ -1336,6 +1340,79 @@ static void fix_cursor(win_T *win, linenr_T lo, linenr_T hi, linenr_T extra)
     check_cursor_col_win(win);
     changed_cline_bef_curs(win);
   }
+  invalidate_botline(win);
+}
+
+/// Fix cursor position after replacing text
+/// between (start_row, start_col) and (end_row, end_col).
+///
+/// win->w_cursor.lnum is assumed to be >= start_row and <= end_row.
+static void fix_cursor_cols(win_T *win, linenr_T start_row, colnr_T start_col, linenr_T end_row,
+                            colnr_T end_col, linenr_T new_rows, colnr_T new_cols_at_end_row)
+{
+  colnr_T mode_col_adj = win == curwin && (State & MODE_INSERT) ? 0 : 1;
+
+  colnr_T end_row_change_start = new_rows == 1 ? start_col : 0;
+  colnr_T end_row_change_end = end_row_change_start + new_cols_at_end_row;
+
+  // check if cursor is after replaced range or not
+  if (win->w_cursor.lnum == end_row && win->w_cursor.col + mode_col_adj > end_col) {
+    // if cursor is after replaced range, it's shifted
+    // to keep it's position the same, relative to end_col
+
+    linenr_T old_rows = end_row - start_row + 1;
+    win->w_cursor.lnum += new_rows - old_rows;
+    win->w_cursor.col += end_row_change_end - end_col;
+  } else {
+    // if cursor is inside replaced range
+    // and the new range got smaller,
+    // it's shifted to keep it inside the new range
+    //
+    // if cursor is before range or range did not
+    // got smaller, position is not changed
+
+    colnr_T old_coladd = win->w_cursor.coladd;
+
+    // it's easier to work with a single value here.
+    // col and coladd are fixed by a later call
+    // to check_cursor_col_win when necessary
+    win->w_cursor.col += win->w_cursor.coladd;
+    win->w_cursor.coladd = 0;
+
+    linenr_T new_end_row = start_row + new_rows - 1;
+
+    // make sure cursor row is in the new row range
+    if (win->w_cursor.lnum > new_end_row) {
+      win->w_cursor.lnum = new_end_row;
+
+      // don't simply move cursor up, but to the end
+      // of new_end_row, if it's not at or after
+      // it already (in case virtualedit is active)
+      // column might be additionally adjusted below
+      // to keep it inside col range if needed
+      colnr_T len = (colnr_T)strlen(ml_get_buf(win->w_buffer, new_end_row));
+      if (win->w_cursor.col < len) {
+        win->w_cursor.col = len;
+      }
+    }
+
+    // if cursor is at the last row and
+    // it wasn't after eol before, move it exactly
+    // to end_row_change_end
+    if (win->w_cursor.lnum == new_end_row
+        && win->w_cursor.col > end_row_change_end && old_coladd == 0) {
+      win->w_cursor.col = end_row_change_end;
+
+      // make sure cursor is inside range, not after it,
+      // except when doing so would move it before new range
+      if (win->w_cursor.col - mode_col_adj >= end_row_change_start) {
+        win->w_cursor.col -= mode_col_adj;
+      }
+    }
+  }
+
+  check_cursor_col_win(win);
+  changed_cline_bef_curs(win);
   invalidate_botline(win);
 }
 

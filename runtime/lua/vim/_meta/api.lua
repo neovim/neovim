@@ -621,6 +621,7 @@ function vim.api.nvim_buf_set_option(buffer, name, value) end
 --- range, use `replacement = {}`.
 --- Prefer `nvim_buf_set_lines()` if you are only adding or deleting entire
 --- lines.
+--- Prefer `nvim_put()` if you want to insert text at the cursor position.
 ---
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param start_row integer First line index

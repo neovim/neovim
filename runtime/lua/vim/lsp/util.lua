@@ -454,23 +454,6 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
     end
   end)
 
-  -- Some LSP servers are depending on the VSCode behavior.
-  -- The VSCode will re-locate the cursor position after applying TextEdit so we also do it.
-  local is_current_buf = api.nvim_get_current_buf() == bufnr or bufnr == 0
-  local cursor = (function()
-    if not is_current_buf then
-      return {
-        row = -1,
-        col = -1,
-      }
-    end
-    local cursor = api.nvim_win_get_cursor(0)
-    return {
-      row = cursor[1] - 1,
-      col = cursor[2],
-    }
-  end)()
-
   -- save and restore local marks since they get deleted by nvim_buf_set_lines
   local marks = {}
   for _, m in pairs(vim.fn.getmarklist(bufnr or vim.api.nvim_get_current_buf())) do
@@ -480,7 +463,6 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   end
 
   -- Apply text edits.
-  local is_cursor_fixed = false
   local has_eol_text_edit = false
   for _, text_edit in ipairs(text_edits) do
     -- Normalize line ending
@@ -527,20 +509,6 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       e.end_col = math.min(last_line_len, e.end_col)
 
       api.nvim_buf_set_text(bufnr, e.start_row, e.start_col, e.end_row, e.end_col, e.text)
-
-      -- Fix cursor position.
-      local row_count = (e.end_row - e.start_row) + 1
-      if e.end_row < cursor.row then
-        cursor.row = cursor.row + (#e.text - row_count)
-        is_cursor_fixed = true
-      elseif e.end_row == cursor.row and e.end_col <= cursor.col then
-        cursor.row = cursor.row + (#e.text - row_count)
-        cursor.col = #e.text[#e.text] + (cursor.col - e.end_col)
-        if #e.text == 1 then
-          cursor.col = cursor.col + e.start_col
-        end
-        is_cursor_fixed = true
-      end
     end
   end
 
@@ -557,16 +525,6 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       pos[1] = math.min(pos[1], max)
       pos[2] = math.min(pos[2], #(get_line(bufnr, pos[1] - 1) or ''))
       vim.api.nvim_buf_set_mark(bufnr or 0, mark, pos[1], pos[2], {})
-    end
-  end
-
-  -- Apply fixed cursor position.
-  if is_cursor_fixed then
-    local is_valid_cursor = true
-    is_valid_cursor = is_valid_cursor and cursor.row < max
-    is_valid_cursor = is_valid_cursor and cursor.col <= #(get_line(bufnr, cursor.row) or '')
-    if is_valid_cursor then
-      api.nvim_win_set_cursor(0, { cursor.row + 1, cursor.col })
     end
   end
 
