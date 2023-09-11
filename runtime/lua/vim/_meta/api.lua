@@ -1781,7 +1781,9 @@ function vim.api.nvim_set_current_win(window) end
 ---              • on_buf: called for each buffer being redrawn (before window
 ---                callbacks) ["buf", bufnr, tick]
 ---              • on_win: called when starting to redraw a specific window.
----                ["win", winid, bufnr, topline, botline_guess]
+---                botline_guess is an approximation that does not exceed the
+---                last line number. ["win", winid, bufnr, topline,
+---                botline_guess]
 ---              • on_line: called for each buffer line being redrawn. (The
 ---                interaction with fold lines is subject to change) ["win",
 ---                winid, bufnr, row]
