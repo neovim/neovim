@@ -100,6 +100,14 @@ func CheckLinux()
   endif
 endfunc
 
+" Command to check for not running on a BSD system.
+command CheckNotBSD call CheckNotBSD()
+func CheckNotBSD()
+  if has('bsd')
+    throw 'Skipped: does not work on BSD'
+  endif
+endfunc
+
 " Command to check that making screendumps is supported.
 " Caller must source screendump.vim
 command CheckScreendump call CheckScreendump()
