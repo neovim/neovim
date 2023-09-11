@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/debug.h"
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -860,13 +861,6 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
                         || memcmp(fconfig.border_hl_ids,
                                   wp->w_float_config.border_hl_ids,
                                   sizeof fconfig.border_hl_ids) != 0);
-
-  int right_extra = Columns - (int)fconfig.col - wp->w_width - (int)strlen(fconfig.border_chars[2]);
-  if (!wp->w_p_wrap && !fconfig.fixed && right_extra < 0
-      && (fconfig.anchor == 0 || fconfig.anchor == kFloatAnchorSouth)) {
-    wp->w_width = wp->w_width + right_extra;
-  }
-
   wp->w_float_config = fconfig;
 
   bool has_border = wp->w_floating && wp->w_float_config.border;
@@ -1015,7 +1009,11 @@ void ui_ext_win_position(win_T *wp, bool validate)
       comp_row += grid->comp_row;
       comp_col += grid->comp_col;
       comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - (p_ch > 0 ? 1 : 0)), 0);
-      comp_col = MAX(MIN(comp_col, Columns - wp->w_width_outer), 0);
+      int right_extra = Columns - (int)col - wp->w_width_inner - (int)strlen(c.border_chars[2]);
+      if (!c.fixed && !wp->w_p_wrap && right_extra < 0) {
+        comp_col = MIN(comp_col, Columns - wp->w_width_outer);
+      }
+      comp_col = MAX(comp_col, 0);
       wp->w_winrow = comp_row;
       wp->w_wincol = comp_col;
       ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
