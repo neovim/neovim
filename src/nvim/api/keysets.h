@@ -70,6 +70,7 @@ typedef struct {
   LuaRef callback;
   String desc;
   Boolean replace_keycodes;
+  Boolean default_;
 } Dict(keymap);
 
 typedef struct {
