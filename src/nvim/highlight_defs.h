@@ -219,6 +219,7 @@ typedef enum {
   kHlCombine,
   kHlBlend,
   kHlBlendThrough,
+  kHlInvalid,
 } HlKind;
 
 typedef struct {
