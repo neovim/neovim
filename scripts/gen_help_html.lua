@@ -574,14 +574,15 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
       return ''
     end
     local el = in_heading and 'span' or 'code'
-    local s = ('%s<%s id="%s" class="%s">%s</%s>'):format(ws(), el, url_encode(tagname), cssclass, trimmed, el)
+    local encoded_tagname = url_encode(tagname)
+    local s = ('%s<%s id="%s" class="%s"><a href="#%s">%s</a></%s>'):format(ws(), el, encoded_tagname, cssclass, encoded_tagname, trimmed, el)
     if opt.old then
         s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
 
     if in_heading and prev ~= 'tag' then
       -- Don't set "id", let the heading use the tag as its "id" (used by search engines).
-      s = ('%s<%s class="%s">%s</%s>'):format(ws(), el, cssclass, trimmed, el)
+      s = ('%s<%s class="%s"><a href="#%s">%s</a></%s>'):format(ws(), el, cssclass, encoded_tagname, trimmed, el)
       -- Start the <span> container for tags in a heading.
       -- This makes "justify-content:space-between" right-align the tags.
       --    <h2>foo bar<span>tag1 tag2</span></h2>
@@ -963,6 +964,7 @@ local function gen_css(fname)
       margin-bottom: 0;
     }
 
+    /* TODO: should this rule be deleted? help tags are rendered as <code> or <span>, not <a> */
     a.help-tag, a.help-tag:focus, a.help-tag:hover {
       color: inherit;
       text-decoration: none;
@@ -976,6 +978,14 @@ local function gen_css(fname)
       margin-left: auto;
       margin-right: 0;
       float: right;
+    }
+    .help-tag a,
+    .help-tag-right a {
+      color: inherit;
+    }
+    .help-tag a:not(:hover),
+    .help-tag-right a:not(:hover) {
+      text-decoration: none;
     }
     h1 .help-tag, h2 .help-tag, h3 .help-tag {
       font-size: smaller;
