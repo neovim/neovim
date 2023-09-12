@@ -102,17 +102,15 @@ function TSPlayground:new(bufnr, lang)
   -- the root in the child tree to the {injections} table.
   local root = parser:parse()[1]:root()
   local injections = {} ---@type table<integer,table>
-  parser:for_each_child(function(child, lang_)
-    child:for_each_tree(function(tree)
-      local r = tree:root()
-      local node = root:named_descendant_for_range(r:range())
-      if node then
-        injections[node:id()] = {
-          lang = lang_,
-          root = r,
-        }
-      end
-    end)
+  parser:for_each_tree(function(tree, ltree)
+    local r = tree:root()
+    local node = root:named_descendant_for_range(r:range())
+    if node then
+      injections[node:id()] = {
+        lang = ltree:lang(),
+        root = r,
+      }
+    end
   end)
 
   local nodes = traverse(root, 0, parser:lang(), injections, {})
