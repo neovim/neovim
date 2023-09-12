@@ -800,6 +800,20 @@ function LanguageTree:_edit(
     end
     return true
   end)
+
+  for _, child in pairs(self._children) do
+    child:_edit(
+      start_byte,
+      end_byte_old,
+      end_byte_new,
+      start_row,
+      start_col,
+      end_row_old,
+      end_col_old,
+      end_row_new,
+      end_col_new
+    )
+  end
 end
 
 ---@package
@@ -846,20 +860,17 @@ function LanguageTree:_on_bytes(
   )
 
   -- Edit trees together BEFORE emitting a bytes callback.
-  ---@private
-  self:for_each_child(function(child)
-    child:_edit(
-      start_byte,
-      start_byte + old_byte,
-      start_byte + new_byte,
-      start_row,
-      start_col,
-      start_row + old_row,
-      old_end_col,
-      start_row + new_row,
-      new_end_col
-    )
-  end, true)
+  self:_edit(
+    start_byte,
+    start_byte + old_byte,
+    start_byte + new_byte,
+    start_row,
+    start_col,
+    start_row + old_row,
+    old_end_col,
+    start_row + new_row,
+    new_end_col
+  )
 
   self:_do_callback(
     'bytes',
@@ -913,9 +924,9 @@ function LanguageTree:register_cbs(cbs, recursive)
   end
 
   if recursive then
-    self:for_each_child(function(child)
+    for _, child in pairs(self._children) do
       child:register_cbs(cbs, true)
-    end)
+    end
   end
 end
 
