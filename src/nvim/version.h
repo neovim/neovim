@@ -7,6 +7,9 @@
 // defined in version.c
 extern char *Version;
 extern char *longVersion;
+#ifndef NDEBUG
+extern char *version_cflags;
+#endif
 
 //
 // Vim version number, name, etc. Patchlevel is defined in version.c.

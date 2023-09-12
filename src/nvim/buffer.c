@@ -747,6 +747,7 @@ void buf_clear_file(buf_T *buf)
 void buf_clear(void)
 {
   linenr_T line_count = curbuf->b_ml.ml_line_count;
+  extmark_free_all(curbuf);   // delete any extmarks
   while (!(curbuf->b_ml.ml_flags & ML_EMPTY)) {
     ml_delete((linenr_T)1, false);
   }

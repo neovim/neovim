@@ -207,6 +207,16 @@ static inline void *_memcpy_free(void *const restrict dest, void *const restrict
   /* 2^x initial array size. */ \
   kvi_resize(v, (v).capacity << 1)
 
+/// fit at least "len" more items
+#define kvi_ensure_more_space(v, len) \
+  do { \
+    if ((v).capacity < (v).size + len) { \
+      (v).capacity = (v).size + len; \
+      kv_roundup32((v).capacity); \
+      kvi_resize((v), (v).capacity); \
+    } \
+  } while (0)
+
 /// Get location where to store new element to a vector with preallocated array
 ///
 /// @param[in,out]  v  Vector to push to.
@@ -222,6 +232,19 @@ static inline void *_memcpy_free(void *const restrict dest, void *const restrict
 /// @param[in]  x  Value to push.
 #define kvi_push(v, x) \
   (*kvi_pushp(v) = (x))
+
+/// Copy a vector to a preallocated vector
+///
+/// @param[out] v1 destination
+/// @param[in] v0 source (can be either vector or preallocated vector)
+#define kvi_copy(v1, v0) \
+    do { \
+      if ((v1).capacity < (v0).size) { \
+        kvi_resize(v1, (v0).size); \
+      } \
+      (v1).size = (v0).size; \
+      memcpy((v1).items, (v0).items, sizeof((v1).items[0]) * (v0).size); \
+    } while (0)
 
 /// Free array of elements of a vector with preallocated array if needed
 ///
