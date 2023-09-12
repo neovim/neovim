@@ -268,4 +268,7 @@ release.
 
 • `vim.loop` has been renamed to `vim.uv`.
 
+• vim.treesitter.languagetree functions:
+  - |LanguageTree:for_each_child()|	Use |LanguageTree:children()| (non-recursive) instead.
+
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:
