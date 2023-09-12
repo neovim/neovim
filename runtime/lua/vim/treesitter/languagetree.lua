@@ -312,9 +312,9 @@ function LanguageTree:parse()
     query_time = query_time,
   })
 
-  self:for_each_child(function(child)
+  for _, child in pairs(self._children) do
     child:parse()
-  end)
+  end
 
   self._valid = true
 
