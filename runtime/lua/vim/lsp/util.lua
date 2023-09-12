@@ -1164,6 +1164,7 @@ function M.make_floating_popup_options(width, height, opts)
     zindex = opts.zindex or 50,
     title = title,
     title_pos = title_pos,
+    noautocmd = true,
   }
 end
 
