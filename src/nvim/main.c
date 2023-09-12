@@ -532,6 +532,7 @@ int main(int argc, char **argv)
   // Create the requested number of windows and edit buffers in them.
   // Also does recovery if "recoverymode" set.
   //
+  win_T *curwin_save = curwin != NULL ? curwin : NULL;
   create_windows(&params);
   TIME_MSG("opening buffers");
 
@@ -596,6 +597,10 @@ int main(int argc, char **argv)
     TIME_MSG("UIEnter autocommands");
   }
 
+  // restore curwin
+  if (curwin_save) {
+    win_enter(curwin_save, false);
+  }
 #ifdef MSWIN
   if (use_remote_ui) {
     os_icon_init();
