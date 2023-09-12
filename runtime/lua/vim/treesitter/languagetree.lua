@@ -444,9 +444,9 @@ function LanguageTree:parse(range)
     range = range,
   })
 
-  self:for_each_child(function(child)
+  for _, child in pairs(self._children) do
     child:parse(range)
-  end)
+  end
 
   return self._trees
 end
