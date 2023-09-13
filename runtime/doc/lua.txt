@@ -3229,42 +3229,42 @@ first value returned by the function is nil).
 
 Examples: >lua
 
-   local it = vim.iter({ 1, 2, 3, 4, 5 })
-   it:map(function(v)
-     return v * 3
-   end)
-   it:rev()
-   it:skip(2)
-   it:totable()
-   -- { 9, 6, 3 }
+    local it = vim.iter({ 1, 2, 3, 4, 5 })
+    it:map(function(v)
+      return v * 3
+    end)
+    it:rev()
+    it:skip(2)
+    it:totable()
+    -- { 9, 6, 3 }
 
-   -- ipairs() is a function iterator which returns both the index (i) and the value (v)
-   vim.iter(ipairs({ 1, 2, 3, 4, 5 })):map(function(i, v)
-     if i > 2 then return v end
-   end):totable()
-   -- { 3, 4, 5 }
+    -- ipairs() is a function iterator which returns both the index (i) and the value (v)
+    vim.iter(ipairs({ 1, 2, 3, 4, 5 })):map(function(i, v)
+      if i > 2 then return v end
+    end):totable()
+    -- { 3, 4, 5 }
 
-   local it = vim.iter(vim.gsplit('1,2,3,4,5', ','))
-   it:map(function(s) return tonumber(s) end)
-   for i, d in it:enumerate() do
-     print(string.format("Column %d is %d", i, d))
-   end
-   -- Column 1 is 1
-   -- Column 2 is 2
-   -- Column 3 is 3
-   -- Column 4 is 4
-   -- Column 5 is 5
+    local it = vim.iter(vim.gsplit('1,2,3,4,5', ','))
+    it:map(function(s) return tonumber(s) end)
+    for i, d in it:enumerate() do
+      print(string.format("Column %d is %d", i, d))
+    end
+    -- Column 1 is 1
+    -- Column 2 is 2
+    -- Column 3 is 3
+    -- Column 4 is 4
+    -- Column 5 is 5
 
-   vim.iter({ a = 1, b = 2, c = 3, z = 26 }):any(function(k, v)
-     return k == 'z'
-   end)
-   -- true
+    vim.iter({ a = 1, b = 2, c = 3, z = 26 }):any(function(k, v)
+      return k == 'z'
+    end)
+    -- true
 
-   local rb = vim.ringbuf(3)
-   rb:push("a")
-   rb:push("b")
-   vim.iter(rb):totable()
-   -- { "a", "b" }
+    local rb = vim.ringbuf(3)
+    rb:push("a")
+    rb:push("b")
+    vim.iter(rb):totable()
+    -- { "a", "b" }
 
 <
 
@@ -3276,7 +3276,7 @@ filter({f}, {src}, {...})                                  *vim.iter.filter()*
 
     This is a convenience function that performs: >lua
 
-     vim.iter(src):filter(f):totable()
+        vim.iter(src):filter(f):totable()
 <
 
     Parameters: ~
@@ -3326,25 +3326,25 @@ Iter:enumerate()                                            *Iter:enumerate()*
 
     For list tables, prefer >lua
 
-     vim.iter(ipairs(t))
+        vim.iter(ipairs(t))
 <
 
     over >lua
 
-     vim.iter(t):enumerate()
+        vim.iter(t):enumerate()
 <
 
     as the former is faster.
 
     Example: >lua
 
-     local it = vim.iter(vim.gsplit('abc', '')):enumerate()
-     it:next()
-     -- 1   'a'
-     it:next()
-     -- 2   'b'
-     it:next()
-     -- 3   'c'
+        local it = vim.iter(vim.gsplit('abc', '')):enumerate()
+        it:next()
+        -- 1   'a'
+        it:next()
+        -- 2   'b'
+        it:next()
+        -- 3   'c'
 <
 
     Return: ~
@@ -3355,7 +3355,7 @@ Iter:filter({f})                                               *Iter:filter()*
 
     Example: >lua
 
-     local bufs = vim.iter(vim.api.nvim_list_bufs()):filter(vim.api.nvim_buf_is_loaded)
+        local bufs = vim.iter(vim.api.nvim_list_bufs()):filter(vim.api.nvim_buf_is_loaded)
 <
 
     Parameters: ~
@@ -3374,17 +3374,17 @@ Iter:find({f})                                                   *Iter:find()*
 
     Examples: >lua
 
-     local it = vim.iter({ 3, 6, 9, 12 })
-     it:find(12)
-     -- 12
+        local it = vim.iter({ 3, 6, 9, 12 })
+        it:find(12)
+        -- 12
 
-     local it = vim.iter({ 3, 6, 9, 12 })
-     it:find(20)
-     -- nil
+        local it = vim.iter({ 3, 6, 9, 12 })
+        it:find(20)
+        -- nil
 
-     local it = vim.iter({ 3, 6, 9, 12 })
-     it:find(function(v) return v % 4 == 0 end)
-     -- 12
+        local it = vim.iter({ 3, 6, 9, 12 })
+        it:find(function(v) return v % 4 == 0 end)
+        -- 12
 <
 
     Return: ~
@@ -3395,15 +3395,15 @@ Iter:fold({init}, {f})                                           *Iter:fold()*
 
     Examples: >lua
 
-     -- Create a new table with only even values
-     local t = { a = 1, b = 2, c = 3, d = 4 }
-     local it = vim.iter(t)
-     it:filter(function(k, v) return v % 2 == 0 end)
-     it:fold({}, function(t, k, v)
-       t[k] = v
-       return t
-     end)
-     -- { b = 2, d = 4 }
+        -- Create a new table with only even values
+        local t = { a = 1, b = 2, c = 3, d = 4 }
+        local it = vim.iter(t)
+        it:filter(function(k, v) return v % 2 == 0 end)
+        it:fold({}, function(t, k, v)
+          t[k] = v
+          return t
+        end)
+        -- { b = 2, d = 4 }
 <
 
     Parameters: ~
@@ -3420,13 +3420,13 @@ Iter:last()                                                      *Iter:last()*
 
     Example: >lua
 
-     local it = vim.iter(vim.gsplit('abcdefg', ''))
-     it:last()
-     -- 'g'
+        local it = vim.iter(vim.gsplit('abcdefg', ''))
+        it:last()
+        -- 'g'
 
-     local it = vim.iter({ 3, 6, 9, 12, 15 })
-     it:last()
-     -- 15
+        local it = vim.iter({ 3, 6, 9, 12, 15 })
+        it:last()
+        -- 15
 <
 
     Return: ~
@@ -3439,13 +3439,13 @@ Iter:map({f})                                                     *Iter:map()*
 
     Example: >lua
 
-     local it = vim.iter({ 1, 2, 3, 4 }):map(function(v)
-       if v % 2 == 0 then
-         return v * 3
-       end
-     end)
-     it:totable()
-     -- { 6, 12 }
+        local it = vim.iter({ 1, 2, 3, 4 }):map(function(v)
+          if v % 2 == 0 then
+            return v * 3
+          end
+        end)
+        it:totable()
+        -- { 6, 12 }
 <
 
     Parameters: ~
@@ -3462,13 +3462,13 @@ Iter:next()                                                      *Iter:next()*
 
     Example: >lua
 
-     local it = vim.iter(string.gmatch('1 2 3', 'd+')):map(tonumber)
-     it:next()
-     -- 1
-     it:next()
-     -- 2
-     it:next()
-     -- 3
+        local it = vim.iter(string.gmatch('1 2 3', '%d+')):map(tonumber)
+        it:next()
+        -- 1
+        it:next()
+        -- 2
+        it:next()
+        -- 3
 <
 
     Return: ~
@@ -3481,11 +3481,11 @@ Iter:nextback()                                              *Iter:nextback()*
 
     Example: >lua
 
-     local it = vim.iter({1, 2, 3, 4})
-     it:nextback()
-     -- 4
-     it:nextback()
-     -- 3
+        local it = vim.iter({1, 2, 3, 4})
+        it:nextback()
+        -- 4
+        it:nextback()
+        -- 3
 <
 
     Return: ~
@@ -3498,11 +3498,11 @@ Iter:nth({n})                                                     *Iter:nth()*
 
     Example: >lua
 
-     local it = vim.iter({ 3, 6, 9, 12 })
-     it:nth(2)
-     -- 6
-     it:nth(2)
-     -- 12
+        local it = vim.iter({ 3, 6, 9, 12 })
+        it:nth(2)
+        -- 6
+        it:nth(2)
+        -- 12
 <
 
     Parameters: ~
@@ -3520,11 +3520,11 @@ Iter:nthback({n})                                             *Iter:nthback()*
 
     Example: >lua
 
-     local it = vim.iter({ 3, 6, 9, 12 })
-     it:nthback(2)
-     -- 9
-     it:nthback(2)
-     -- 3
+        local it = vim.iter({ 3, 6, 9, 12 })
+        it:nthback(2)
+        -- 9
+        it:nthback(2)
+        -- 3
 <
 
     Parameters: ~
@@ -3540,13 +3540,13 @@ Iter:peek()                                                      *Iter:peek()*
 
     Example: >lua
 
-     local it = vim.iter({ 3, 6, 9, 12 })
-     it:peek()
-     -- 3
-     it:peek()
-     -- 3
-     it:next()
-     -- 3
+        local it = vim.iter({ 3, 6, 9, 12 })
+        it:peek()
+        -- 3
+        it:peek()
+        -- 3
+        it:next()
+        -- 3
 <
 
     Return: ~
@@ -3559,13 +3559,13 @@ Iter:peekback()                                              *Iter:peekback()*
 
     Example: >lua
 
-     local it = vim.iter({1, 2, 3, 4})
-     it:peekback()
-     -- 4
-     it:peekback()
-     -- 4
-     it:nextback()
-     -- 4
+        local it = vim.iter({1, 2, 3, 4})
+        it:peekback()
+        -- 4
+        it:peekback()
+        -- 4
+        it:nextback()
+        -- 4
 <
 
     Return: ~
@@ -3578,9 +3578,9 @@ Iter:rev()                                                        *Iter:rev()*
 
     Example: >lua
 
-     local it = vim.iter({ 3, 6, 9, 12 }):rev()
-     it:totable()
-     -- { 12, 9, 6, 3 }
+        local it = vim.iter({ 3, 6, 9, 12 }):rev()
+        it:totable()
+        -- { 12, 9, 6, 3 }
 <
 
     Return: ~
@@ -3597,11 +3597,11 @@ Iter:rfind({f})                                                 *Iter:rfind()*
 
     Examples: >lua
 
-     local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
-     it:rfind(1)
-     -- 5   1
-     it:rfind(1)
-     -- 1   1
+        local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
+        it:rfind(1)
+        -- 5   1
+        it:rfind(1)
+        -- 1   1
 <
 
     Return: ~
@@ -3615,9 +3615,9 @@ Iter:skip({n})                                                   *Iter:skip()*
 
     Example: >lua
 
-     local it = vim.iter({ 3, 6, 9, 12 }):skip(2)
-     it:next()
-     -- 9
+        local it = vim.iter({ 3, 6, 9, 12 }):skip(2)
+        it:next()
+        -- 9
 <
 
     Parameters: ~
@@ -3633,11 +3633,11 @@ Iter:skipback({n})                                           *Iter:skipback()*
 
     Example: >lua
 
-     local it = vim.iter({ 1, 2, 3, 4, 5 }):skipback(2)
-     it:next()
-     -- 1
-     it:nextback()
-     -- 3
+        local it = vim.iter({ 1, 2, 3, 4, 5 }):skipback(2)
+        it:next()
+        -- 1
+        it:nextback()
+        -- 3
 <
 
     Parameters: ~
@@ -3670,14 +3670,14 @@ Iter:totable()                                                *Iter:totable()*
 
     Examples: >lua
 
-     vim.iter(string.gmatch('100 20 50', 'd+')):map(tonumber):totable()
-     -- { 100, 20, 50 }
+        vim.iter(string.gmatch('100 20 50', '%d+')):map(tonumber):totable()
+        -- { 100, 20, 50 }
 
-     vim.iter({ 1, 2, 3 }):map(function(v) return v, 2 * v end):totable()
-     -- { { 1, 2 }, { 2, 4 }, { 3, 6 } }
+        vim.iter({ 1, 2, 3 }):map(function(v) return v, 2 * v end):totable()
+        -- { { 1, 2 }, { 2, 4 }, { 3, 6 } }
 
-     vim.iter({ a = 1, b = 2, c = 3 }):filter(function(k, v) return v % 2 ~= 0 end):totable()
-     -- { { 'a', 1 }, { 'c', 3 } }
+        vim.iter({ a = 1, b = 2, c = 3 }):filter(function(k, v) return v % 2 ~= 0 end):totable()
+        -- { { 'a', 1 }, { 'c', 3 } }
 <
 
     The generated table is a list-like table with consecutive, numeric
@@ -3692,7 +3692,7 @@ map({f}, {src}, {...})                                        *vim.iter.map()*
 
     This is a convenience function that performs: >lua
 
-     vim.iter(src):map(f):totable()
+        vim.iter(src):map(f):totable()
 <
 
     Parameters: ~
@@ -3712,7 +3712,7 @@ totable({f}, {...})                                       *vim.iter.totable()*
 
     This is a convenience function that performs: >lua
 
-     vim.iter(f):totable()
+        vim.iter(f):totable()
 <
 
     Parameters: ~

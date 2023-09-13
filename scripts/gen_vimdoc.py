@@ -440,7 +440,7 @@ def is_blank(text):
     return '' == clean_lines(text)
 
 
-def get_text(n, preformatted=False):
+def get_text(n):
     """Recursively concatenates all text in a node tree."""
     text = ''
     if n.nodeType == n.TEXT_NODE:
@@ -449,11 +449,13 @@ def get_text(n, preformatted=False):
         for node in n.childNodes:
             text += get_text(node)
         return '`{}`'.format(text)
+    if n.nodeName == 'sp': # space, used in "programlisting" nodes
+        return ' '
     for node in n.childNodes:
         if node.nodeType == node.TEXT_NODE:
             text += node.data
         elif node.nodeType == node.ELEMENT_NODE:
-            text += get_text(node, preformatted)
+            text += get_text(node)
     return text
 
 
@@ -571,7 +573,7 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
     # text += (int(not space_preceding) * ' ')
 
     if n.nodeName == 'preformatted':
-        o = get_text(n, preformatted=True)
+        o = get_text(n)
         ensure_nl = '' if o[-1] == '\n' else '\n'
         if o[0:4] == 'lua\n':
             text += '>lua{}{}\n<'.format(ensure_nl, o[3:-1])
@@ -581,7 +583,15 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
             text += o[4:-1]
         else:
             text += '>{}{}\n<'.format(ensure_nl, o)
+    elif n.nodeName == 'programlisting': # codeblock (```)
+        o = get_text(n)
+        filename = n.attributes['filename'].value
+        if filename:
+            text += '>{}'.format(filename.lstrip('.'))
+        else:
+            text += '>'
 
+        text += '\n\n{}\n<'.format(textwrap.indent(o, ' ' * 4))
     elif is_inline(n):
         text = doc_wrap(get_text(n), prefix=prefix, indent=indent, width=width)
     elif n.nodeName == 'verbatim':
@@ -785,6 +795,18 @@ def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent=
 
     for child in parent.childNodes:
         para, _ = para_as_map(child, indent, width, fmt_vimhelp)
+
+        # 'programlisting' blocks are Markdown code blocks. Do not include
+        # these as a separate paragraph, but append to the last non-empty line
+        # in the text
+        if (
+            len(child.childNodes) == 1
+            and child.childNodes[0].nodeName == 'programlisting'
+        ):
+            while rendered_blocks and rendered_blocks[-1] == '':
+                rendered_blocks.pop()
+            rendered_blocks[-1] += ' ' + para['text']
+            continue
 
         # Generate text from the gathered items.
         chunks = [para['text']]
