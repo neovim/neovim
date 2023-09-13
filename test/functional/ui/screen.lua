@@ -1270,7 +1270,7 @@ end
 function Screen:render(headers, attr_state, preview)
   headers = headers and (self._options.ext_multigrid or self._options._debug_float)
   local rv = {}
-  for igrid,grid in pairs(self._grids) do
+  for igrid,grid in vim.spairs(self._grids) do
     if headers then
       local suffix = ""
       if igrid > 1 and self.win_position[igrid] == nil
