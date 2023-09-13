@@ -1955,8 +1955,6 @@ function lsp.buf_detach_client(bufnr, client_id)
 
   local namespace = lsp.diagnostic.get_namespace(client_id)
   vim.diagnostic.reset(namespace, bufnr)
-
-  vim.notify(string.format('Detached buffer (id: %d) from client (id: %d)', bufnr, client_id))
 end
 
 --- Checks if a buffer is attached for a particular client.
