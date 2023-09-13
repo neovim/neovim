@@ -239,6 +239,7 @@ EVENTS
   support implicit marks like |'[| or |'<|, …).
 • |TabClosedPre| is triggered before closing a |tabpage|.
 • New `terminator` parameter for |TermRequest| event.
+• Added |CmdlineCharPre| which works like InputCharPre for the cmdline
 
 HIGHLIGHTS
 

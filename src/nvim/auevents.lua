@@ -27,6 +27,7 @@ return {
     ChanOpen = false, -- channel was opened
     CmdUndefined = false, -- command undefined
     CmdlineChanged = false, -- command line was modified
+    CmdlineCharPre = false, -- before inserting a char in the cmdline window
     CmdlineEnter = false, -- after entering cmdline mode
     CmdlineLeave = false, -- before leaving cmdline mode
     CmdlineLeavePre = false, -- just before leaving the command line
@@ -157,6 +158,7 @@ return {
   --- List of Nvim-specific events or aliases for generating syntax file.
   nvim_specific = {
     BufModifiedSet = true,
+    CmdlineCharPre = true,
     DiagnosticChanged = true,
     LspAttach = true,
     LspDetach = true,

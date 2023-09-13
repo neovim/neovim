@@ -105,6 +105,7 @@ error('Cannot require a meta file')
 --- |'ChanOpen'
 --- |'CmdUndefined'
 --- |'CmdlineChanged'
+--- |'CmdlineCharPre'
 --- |'CmdlineEnter'
 --- |'CmdlineLeave'
 --- |'CmdlineLeavePre'
