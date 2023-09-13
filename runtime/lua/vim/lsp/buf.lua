@@ -168,14 +168,12 @@ end
 ---
 ---     - filter (function|nil):
 ---         Predicate used to filter clients. Receives a client as argument and must return a
----         boolean. Clients matching the predicate are included. Example:
----
----         ```lua
----         -- Never request typescript-language-server for formatting
----         vim.lsp.buf.format {
----           filter = function(client) return client.name ~= "tsserver" end
----         }
----         ```
+---         boolean. Clients matching the predicate are included. Example: <pre>lua
+---                     -- Never request typescript-language-server for formatting
+---                     vim.lsp.buf.format {
+---                       filter = function(client) return client.name ~= "tsserver" end
+---                     }
+---         </pre>
 ---
 ---     - async boolean|nil
 ---         If true the method won't block. Defaults to false.

@@ -969,8 +969,10 @@ start_client({config})                                *vim.lsp.start_client()*
                     the `cmd` process. Not related to `root_dir`.
                   • cmd_env: (table) Environment flags to pass to the LSP on
                     spawn. Must be specified using a table. Non-string values
-                    are coerced to string. Example: ` { PORT = 8080; HOST =
-                    "0.0.0.0"; } `
+                    are coerced to string. Example: >
+
+                       { PORT = 8080; HOST = "0.0.0.0"; }
+<
                   • detached: (boolean, default true) Daemonize the server
                     process so that it runs in a separate process group from
                     Nvim. Nvim will shutdown the process on exit, but if Nvim
@@ -1242,9 +1244,13 @@ format({options})                                       *vim.lsp.buf.format()*
                      buffer (0).
                    • filter (function|nil): Predicate used to filter clients.
                      Receives a client as argument and must return a boolean.
-                     Clients matching the predicate are included. Example:               • `lua -- Never request typescript-language-server for
-                     formatting vim.lsp.buf.format { filter = function(client)
-                     return client.name ~= "tsserver" end } `
+                     Clients matching the predicate are included. Example: >lua
+
+                         -- Never request typescript-language-server for formatting
+                         vim.lsp.buf.format {
+                           filter = function(client) return client.name ~= "tsserver" end
+                         }
+<
                    • async boolean|nil If true the method won't block.
                      Defaults to false. Editing the buffer while formatting
                      asynchronous can lead to unexpected changes.

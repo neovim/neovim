@@ -1010,9 +1010,9 @@ end
 ---       spawn.  Must be specified using a table.
 ---       Non-string values are coerced to string.
 ---       Example:
----       ```
+---       <pre>
 ---                   { PORT = 8080; HOST = "0.0.0.0"; }
----       ```
+---       </pre>
 ---
 --- - detached: (boolean, default true) Daemonize the server process so that it runs in a
 ---       separate process group from Nvim. Nvim will shutdown the process on exit, but if Nvim fails to
