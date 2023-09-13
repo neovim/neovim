@@ -20,16 +20,13 @@
 --- -- { bar = {}, foo = vim.empty_dict(), zub = vim.NIL }
 --- ```
 ---
---- Parameters: ~
----   • {str}    Stringified JSON data.
----   • {opts}   Options map keys:
----              • luanil: { object: bool, array: bool }
----                • `luanil.object=true` converts `null` in JSON objects to
----                  Lua `nil` instead of `vim.NIL`.
----                • `luanil.array=true` converts `null` in JSON arrays to Lua
----                  `nil` instead of `vim.NIL`.
----@param str string
----@param opts? table<string, any>
+---@param str string Stringified JSON data.
+---@param opts? table<string,any> Options table with keys:
+---                                 - luanil: (table) Table with keys:
+---                                   * object: (boolean) When true, converts `null` in JSON objects
+---                                                       to Lua `nil` instead of |vim.NIL|.
+---                                   * array: (boolean) When true, converts `null` in JSON arrays
+---                                                      to Lua `nil` instead of |vim.NIL|.
 ---@return any
 function vim.json.decode(str, opts) end
 

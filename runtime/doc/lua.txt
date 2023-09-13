@@ -794,12 +794,14 @@ vim.json.decode({str}, {opts})                             *vim.json.decode()*
         -- { bar = {}, foo = vim.empty_dict(), zub = vim.NIL }
 <
 
-    Parameters: ~ • {str} Stringified JSON data. • {opts} Options map keys: •
-    luanil: { object: bool, array: bool } • `luanil.object=true` converts `null` in JSON objects to Lua `nil` instead of `vim.NIL` . • `luanil.array=true` converts `null` in JSON arrays to Lua `nil` instead of `vim.NIL` .
-
     Parameters: ~
-      • {str}   (string)
-      • {opts}  table<string,|nil any>
+      • {str}   (string) Stringified JSON data.
+      • {opts}  table<string,any>|nil Options table with keys:
+                • luanil: (table) Table with keys:
+                  • object: (boolean) When true, converts `null` in JSON
+                    objects to Lua `nil` instead of |vim.NIL|.
+                  • array: (boolean) When true, converts `null` in JSON arrays
+                    to Lua `nil` instead of |vim.NIL|.
 
     Return: ~
         any
