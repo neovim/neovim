@@ -8,11 +8,13 @@ local M = {}
 --- @field langs string[]
 --- @field clear boolean
 
+--- @alias ParseError {msg: string, range: Range4}
+
 --- @private
 --- Caches parse results for queries for each language.
 --- Entries of parse_cache[lang][query_text] will either be true for successful parse or contain the
 --- message and range of the parse error.
---- @type table<string,table<string,{msg: string, range: Range4}|true>>
+--- @type table<string,table<string,ParseError|true>>
 local parse_cache = {}
 
 --- Contains language dependent context for the query linter
@@ -85,12 +87,13 @@ local lint_query = [[;; query
   (ERROR) @error
 ]]
 
----@param err string
----@param node TSNode
----@return {msg: string, range: Range4}
+--- @private
+--- @param err string
+--- @param node TSNode
+--- @return ParseError
 local function get_error_entry(err, node)
   local start_line, start_col = node:range()
-  local line_offset, col_offset, msg = err:gmatch('.-:%d+: Query error at (%d+):(%d+)%. ([^:]+)')()
+  local line_offset, col_offset, msg = err:gmatch('.-:%d+: Query error at (%d+):(%d+)%. ([^:]+)')() ---@type string, string, string
   start_line, start_col =
     start_line + tonumber(line_offset) - 1, start_col + tonumber(col_offset) - 1
   local end_line, end_col = start_line, start_col
@@ -125,7 +128,7 @@ local function check_toplevel(node, buf, lang, diagnostics)
   local lang_cache = parse_cache[lang]
 
   if lang_cache[query_text] == nil then
-    local cache_val, err = pcall(vim.treesitter.query.parse, lang, query_text)
+    local cache_val, err = pcall(vim.treesitter.query.parse, lang, query_text) ---@type boolean|ParseError, string|Query
 
     if not cache_val and type(err) == 'string' then
       cache_val = get_error_entry(err, node)
@@ -256,7 +259,7 @@ function M.omnifunc(findstart, base)
     end
   end
   for _, s in pairs(parser_info.symbols) do
-    local text = s[2] and s[1] or '"' .. s[1]:gsub([[\]], [[\\]]) .. '"'
+    local text = s[2] and s[1] or '"' .. s[1]:gsub([[\]], [[\\]]) .. '"' ---@type string
     if text:find(base, 1, true) then
       table.insert(items, text)
     end
