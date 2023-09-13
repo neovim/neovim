@@ -131,14 +131,12 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 --- "vim.print(events)" to see its contents):
 ---
 --- ```lua
----
 ---     events = {}
 ---     vim.api.nvim_buf_attach(0, false, {
 ---       on_lines = function(...)
 ---         table.insert(events, {...})
 ---       end,
 ---     })
----
 --- ```
 ---
 --- @param buffer integer Buffer handle, or 0 for current buffer
@@ -323,11 +321,10 @@ function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 --- respectively, thus the following are equivalent:
 ---
 --- ```lua
----
 ---     vim.api.nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
 ---     vim.api.nvim_buf_get_extmarks(0, my_ns, {0,0}, {-1,-1}, {})
----
 --- ```
+---
 --- If `end` is less than `start`, traversal works backwards. (Useful with
 --- `limit`, to get the first marks prior to a given position.)
 --- Note: when using extmark ranges (marks with a end_row/end_col position)
@@ -336,7 +333,6 @@ function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 --- Example:
 ---
 --- ```lua
----
 ---     local api = vim.api
 ---     local pos = api.nvim_win_get_cursor(0)
 ---     local ns  = api.nvim_create_namespace('my-plugin')
@@ -349,7 +345,6 @@ function vim.api.nvim_buf_get_extmark_by_id(buffer, ns_id, id, opts) end
 ---     -- Get all marks in this buffer + namespace.
 ---     local all = api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
 ---     vim.print(ms)
----
 --- ```
 ---
 --- @param buffer integer Buffer handle, or 0 for current buffer
@@ -790,11 +785,9 @@ function vim.api.nvim_command_output(command) end
 --- To get an existing group id, do:
 ---
 --- ```lua
----
 ---     local id = vim.api.nvim_create_augroup("MyGroup", {
 ---         clear = false
 ---     })
----
 --- ```
 ---
 --- @param name string String: The name of the group
@@ -808,32 +801,28 @@ function vim.api.nvim_create_augroup(name, opts) end
 --- Example using Lua callback:
 ---
 --- ```lua
----
 ---     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
 ---       pattern = {"*.c", "*.h"},
 ---       callback = function(ev)
 ---         print(string.format('event fired: %s', vim.inspect(ev)))
 ---       end
 ---     })
----
 --- ```
+---
 --- Example using an Ex command as the handler:
 ---
 --- ```lua
----
 ---     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
 ---       pattern = {"*.c", "*.h"},
 ---       command = "echo 'Entering a C or C++ file'",
 ---     })
----
 --- ```
+---
 --- Note: `pattern` is NOT automatically expanded (unlike with `:autocmd`),
 --- thus names like "$HOME" and "~" must be expanded explicitly:
 ---
 --- ```lua
----
 ---     pattern = vim.fn.expand("~") .. "/some/path/*.py"
----
 --- ```
 ---
 --- @param event any (string|array) Event(s) that will trigger the handler
@@ -897,11 +886,9 @@ function vim.api.nvim_create_namespace(name) end
 --- Example:
 ---
 --- ```vim
----
 ---     :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {'bang': v:true})
 ---     :SayHello
 ---     Hello world!
----
 --- ```
 ---
 --- @param name string Name of the new user command. Must begin with an uppercase
@@ -1114,10 +1101,8 @@ function vim.api.nvim_execute_lua(code, args) end
 --- Example:
 ---
 --- ```vim
----
 ---     :let key = nvim_replace_termcodes("<C-o>", v:true, v:false, v:true)
 ---     :call nvim_feedkeys(key, 'n', v:false)
----
 --- ```
 ---
 --- @param keys string to be typed
@@ -1144,7 +1129,6 @@ function vim.api.nvim_get_api_info() end
 --- These examples will get autocommands matching ALL the given criteria:
 ---
 --- ```lua
----
 ---     -- Matches all criteria
 ---     autocommands = vim.api.nvim_get_autocmds({
 ---       group = "MyGroup",
@@ -1156,8 +1140,8 @@ function vim.api.nvim_get_api_info() end
 ---     autocommands = vim.api.nvim_get_autocmds({
 ---       group = "MyGroup",
 ---     })
----
 --- ```
+---
 --- NOTE: When multiple patterns or events are provided, it will find all the
 --- autocommands that match any combination of them.
 ---
@@ -1185,10 +1169,8 @@ function vim.api.nvim_get_chan_info(chan) end
 --- Example:
 ---
 --- ```vim
----
 ---     :echo nvim_get_color_by_name("Pink")
 ---     :echo nvim_get_color_by_name("#cbcbcb")
----
 --- ```
 ---
 --- @param name string Color name or "#rrggbb" string
@@ -1510,7 +1492,6 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- Example (Lua): window-relative float
 ---
 --- ```lua
----
 ---     vim.api.nvim_open_win(0, false, {
 ---       relative='win',
 ---       row=3,
@@ -1518,19 +1499,17 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---       width=12,
 ---       height=3,
 ---     })
----
 --- ```
+---
 --- Example (Lua): buffer-relative float (travels as buffer is scrolled)
 ---
 --- ```lua
----
 ---     vim.api.nvim_open_win(0, false, {
 ---       relative='win',
 ---       width=12,
 ---       height=3,
 ---       bufpos={100,10},
 ---     })
----
 --- ```
 ---
 --- @param buffer integer Buffer to display, or 0 for current buffer
@@ -1910,16 +1889,13 @@ function vim.api.nvim_set_hl_ns_fast(ns_id) end
 --- Example:
 ---
 --- ```vim
----
 ---     call nvim_set_keymap('n', ' <NL>', '', {'nowait': v:true})
----
 --- ```
+---
 --- is equivalent to:
 ---
 --- ```vim
----
 ---     nmap <nowait> <Space><NL> <Nop>
----
 --- ```
 ---
 --- @param mode string Mode short-name (map command prefix: "n", "i", "v", "x", …) or
