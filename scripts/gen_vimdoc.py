@@ -449,7 +449,7 @@ def get_text(n):
         for node in n.childNodes:
             text += get_text(node)
         return '`{}`'.format(text)
-    if n.nodeName == 'sp':
+    if n.nodeName == 'sp': # space, used in "programlisting" nodes
         return ' '
     for node in n.childNodes:
         if node.nodeType == node.TEXT_NODE:
@@ -583,7 +583,7 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
             text += o[4:-1]
         else:
             text += '>{}{}\n<'.format(ensure_nl, o)
-    elif n.nodeName == 'programlisting':
+    elif n.nodeName == 'programlisting': # codeblock (```)
         o = get_text(n)
         filename = n.attributes['filename'].value
         if filename:
