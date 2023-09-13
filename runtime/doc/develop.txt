@@ -192,7 +192,7 @@ Docstring format:
   `@note`, `@param`, `@returns`
 - Limited markdown is supported.
   - List-items start with `-` (useful to nest or "indent")
-- Use `<pre>` for code samples.
+- Use ``` for code samples.
   Code samples can be annotated as `vim` or `lua`
 
 Example: the help for |nvim_open_win()| is generated from a docstring defined
@@ -202,10 +202,16 @@ in src/nvim/api/win_config.c like this: >
     /// ...
     ///
     /// Example (Lua): window-relative float
-    /// <pre>lua
-    ///     vim.api.nvim_open_win(0, false,
-    ///       {relative='win', row=3, col=3, width=12, height=3})
-    /// </pre>
+    ///
+    /// ```lua
+    /// vim.api.nvim_open_win(0, false, {
+    ///   relative='win',
+    ///   row=3,
+    ///   col=3,
+    ///   width=12,
+    ///   height=3,
+    /// })
+    /// ```
     ///
     /// @param buffer Buffer to display
     /// @param enter  Enter the window
