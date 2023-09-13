@@ -1,8 +1,7 @@
 Nvim core
 =========
 
-Module-specific details are documented at the top of each module (`terminal.c`,
-`screen.c`, …).
+Module-specific details are documented at the top of each module (`terminal.c`, `undo.c`, …).
 
 See `:help dev` for guidelines.
 
