@@ -73,5 +73,6 @@ struct u_header {
 #define UH_CHANGED  0x01        // b_changed flag before undo/after redo
 #define UH_EMPTYBUF 0x02        // buffer was empty
 #define UH_RELOAD   0x04        // buffer was reloaded
+#define UH_NOCURSOR 0x08        // don't move cursor on undo/redo
 
 #endif  // NVIM_UNDO_DEFS_H

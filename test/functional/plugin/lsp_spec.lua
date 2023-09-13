@@ -1694,6 +1694,46 @@ describe('LSP', function()
         'foobar';
       }, buf_lines(1))
     end)
+    it('does not move cursor to first edit on undo/redo', function()
+      funcs.nvim_win_set_cursor(0, { 4, 0 })
+      local edits = {
+        make_edit(0, 0, 0, 18, "line #1");
+        make_edit(2, 0, 2, 18, "line #3");
+      }
+
+      exec_lua('vim.lsp.util.apply_text_edits(...)', edits, 1, "utf-16")
+
+      eq({
+        'line #1';
+        'Second line of text';
+        'line #3';
+        'Fourth line of text';
+        'å å ɧ 汉语 ↥ 🤦 🦄';
+      }, buf_lines(1))
+      eq({ 4, 0 }, funcs.nvim_win_get_cursor(0))
+
+      command('undo')
+
+      eq({
+        'First line of text';
+        'Second line of text';
+        'Third line of text';
+        'Fourth line of text';
+        'å å ɧ 汉语 ↥ 🤦 🦄';
+      }, buf_lines(1))
+      eq({ 4, 0 }, funcs.nvim_win_get_cursor(0))
+
+      command('redo')
+
+      eq({
+        'line #1';
+        'Second line of text';
+        'line #3';
+        'Fourth line of text';
+        'å å ɧ 汉语 ↥ 🤦 🦄';
+      }, buf_lines(1))
+      eq({ 4, 0 }, funcs.nvim_win_get_cursor(0))
+    end)
     it('it restores marks', function()
       local edits = {
         make_edit(1, 0, 2, 5, "foobar");

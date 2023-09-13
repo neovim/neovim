@@ -85,6 +85,7 @@
 
 #include "auto/config.h"
 #include "klib/kvec.h"
+#include "nvim/api/extmark.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
@@ -479,6 +480,22 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
     // save changed and buffer empty flag for undo
     uhp->uh_flags = (buf->b_changed ? UH_CHANGED : 0) +
                     ((buf->b_ml.ml_flags & ML_EMPTY) ? UH_EMPTYBUF : 0);
+
+    String uh_nocursor_ns_name = cstr_to_string("uh_nocursor");
+    handle_T uh_nocursor_ns = map_get(String, int)(&namespace_ids, uh_nocursor_ns_name);
+    api_free_string(uh_nocursor_ns_name);
+
+    if (uh_nocursor_ns > 0) {
+      ExtmarkInfoArray extmarks = extmark_get(buf, (uint32_t)uh_nocursor_ns,
+                                              top, 0, bot + 1, 0,
+                                              1, false, kExtmarkNone, true);
+
+      if (extmarks.size != 0) {
+        uhp->uh_flags |= UH_NOCURSOR;
+      }
+
+      kv_destroy(extmarks);
+    }
 
     // save named marks and Visual marks for undo
     zero_fmark_additional_data(buf->b_namedm);
@@ -2271,7 +2288,8 @@ static void u_undoredo(int undo, bool do_buf_event)
   int old_flags = curhead->uh_flags;
   int new_flags = (curbuf->b_changed ? UH_CHANGED : 0)
                   | ((curbuf->b_ml.ml_flags & ML_EMPTY) ? UH_EMPTYBUF : 0)
-                  | (old_flags & UH_RELOAD);
+                  | (old_flags & UH_RELOAD)
+                  | (old_flags & UH_NOCURSOR);
   setpcmark();
 
   // save marks before undo/redo
@@ -2300,7 +2318,7 @@ static void u_undoredo(int undo, bool do_buf_event)
     linenr_T oldsize = bot - top - 1;        // number of lines before undo
     linenr_T newsize = (linenr_T)uep->ue_size;         // number of lines after undo
 
-    if (top < newlnum) {
+    if ((curhead->uh_flags & UH_NOCURSOR) == 0 && top < newlnum) {
       // If the saved cursor is somewhere in this undo block, move it to
       // the remembered position.  Makes "gwap" put the cursor back
       // where it was.

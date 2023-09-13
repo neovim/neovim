@@ -423,6 +423,16 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   end
   vim.bo[bufnr].buflisted = true
 
+  local uh_nocursor_ns = vim.api.nvim_create_namespace('uh_nocursor')
+
+  local uh_nocursor_extmark_id = vim.api.nvim_buf_set_extmark(bufnr, uh_nocursor_ns, 0, 0, {
+    -- ephemeral = true,
+    end_row = vim.api.nvim_buf_line_count(bufnr),
+    end_col = 0,
+    right_gravity = false,
+    end_right_gravity = true,
+  })
+
   -- Fix reversed range and indexing each text_edits
   local index = 0
   text_edits = vim.tbl_map(function(text_edit)
@@ -535,6 +545,8 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   if fix_eol then
     api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
   end
+
+  vim.api.nvim_buf_del_extmark(bufnr, uh_nocursor_ns, uh_nocursor_extmark_id)
 end
 
 -- local valid_windows_path_characters = "[^<>:\"/\\|?*]"
