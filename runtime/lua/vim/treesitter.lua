@@ -441,14 +441,15 @@ end
 --- In this case, add ``vim.bo.syntax = 'on'`` after the call to `start`.
 ---
 --- Example:
---- <pre>lua
+---
+--- ```lua
 --- vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
 ---     callback = function(args)
 ---         vim.treesitter.start(args.buf, 'latex')
 ---         vim.bo[args.buf].syntax = 'on'  -- only if additional legacy syntax is needed
 ---     end
 --- })
---- </pre>
+--- ```
 ---
 ---@param bufnr (integer|nil) Buffer to be highlighted (default: current buffer)
 ---@param lang (string|nil) Language of the parser (default: buffer filetype)
@@ -502,9 +503,11 @@ function M.preview_query()
 end
 
 --- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':
---- <pre>lua
+---
+--- ```lua
 --- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
---- </pre>
+--- ```
+---
 ---@param lnum integer|nil Line number to calculate fold level for
 ---@return string
 function M.foldexpr(lnum)

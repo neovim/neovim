@@ -2081,43 +2081,45 @@ end
 --- See $VIMRUNTIME/lua/vim/filetype.lua for more examples.
 ---
 --- Example:
---- <pre>lua
----  vim.filetype.add({
----    extension = {
----      foo = 'fooscript',
----      bar = function(path, bufnr)
----        if some_condition() then
----          return 'barscript', function(bufnr)
----            -- Set a buffer variable
----            vim.b[bufnr].barscript_version = 2
----          end
----        end
----        return 'bar'
----      end,
----    },
----    filename = {
----      ['.foorc'] = 'toml',
----      ['/etc/foo/config'] = 'toml',
----    },
----    pattern = {
----      ['.*/etc/foo/.*'] = 'fooscript',
----      -- Using an optional priority
----      ['.*/etc/foo/.*%.conf'] = { 'dosini', { priority = 10 } },
----      -- A pattern containing an environment variable
----      ['${XDG_CONFIG_HOME}/foo/git'] = 'git',
----      ['README.(%a+)$'] = function(path, bufnr, ext)
----        if ext == 'md' then
----          return 'markdown'
----        elseif ext == 'rst' then
----          return 'rst'
----        end
----      end,
----    },
----  })
---- </pre>
+---
+--- ```lua
+--- vim.filetype.add({
+---   extension = {
+---     foo = 'fooscript',
+---     bar = function(path, bufnr)
+---       if some_condition() then
+---         return 'barscript', function(bufnr)
+---           -- Set a buffer variable
+---           vim.b[bufnr].barscript_version = 2
+---         end
+---       end
+---       return 'bar'
+---     end,
+---   },
+---   filename = {
+---     ['.foorc'] = 'toml',
+---     ['/etc/foo/config'] = 'toml',
+---   },
+---   pattern = {
+---     ['.*/etc/foo/.*'] = 'fooscript',
+---     -- Using an optional priority
+---     ['.*/etc/foo/.*%.conf'] = { 'dosini', { priority = 10 } },
+---     -- A pattern containing an environment variable
+---     ['${XDG_CONFIG_HOME}/foo/git'] = 'git',
+---     ['README.(%a+)$'] = function(path, bufnr, ext)
+---       if ext == 'md' then
+---         return 'markdown'
+---       elseif ext == 'rst' then
+---         return 'rst'
+---       end
+---     end,
+---   },
+--- })
+--- ```
 ---
 --- To add a fallback match on contents, use
---- <pre>lua
+---
+--- ```lua
 --- vim.filetype.add {
 ---   pattern = {
 ---     ['.*'] = {
@@ -2133,7 +2135,7 @@ end
 ---     },
 ---   },
 --- }
---- </pre>
+--- ```
 ---
 ---@param filetypes vim.filetype.add.filetypes A table containing new filetype maps (see example).
 function M.add(filetypes)
@@ -2256,19 +2258,19 @@ end
 --- Each of the three options is specified using a key to the single argument of this function.
 --- Example:
 ---
---- <pre>lua
----   -- Using a buffer number
----   vim.filetype.match({ buf = 42 })
+--- ```lua
+--- -- Using a buffer number
+--- vim.filetype.match({ buf = 42 })
 ---
----   -- Override the filename of the given buffer
----   vim.filetype.match({ buf = 42, filename = 'foo.c' })
+--- -- Override the filename of the given buffer
+--- vim.filetype.match({ buf = 42, filename = 'foo.c' })
 ---
----   -- Using a filename without a buffer
----   vim.filetype.match({ filename = 'main.lua' })
+--- -- Using a filename without a buffer
+--- vim.filetype.match({ filename = 'main.lua' })
 ---
----   -- Using file contents
----   vim.filetype.match({ contents = {'#!/usr/bin/env bash'} })
---- </pre>
+--- -- Using file contents
+--- vim.filetype.match({ contents = {'#!/usr/bin/env bash'} })
+--- ```
 ---
 ---@param args vim.filetype.match.args Table specifying which matching strategy to use.
 ---                 Accepted keys are:
@@ -2404,9 +2406,10 @@ end
 --- is set, meaning it should respect all FileType autocmds and ftplugin files.
 ---
 --- Example:
---- <pre>lua
----   vim.filetype.get_option('vim', 'commentstring')
---- </pre>
+---
+--- ```lua
+--- vim.filetype.get_option('vim', 'commentstring')
+--- ```
 ---
 --- Note: this uses |nvim_get_option_value()| but caches the result.
 --- This means |ftplugin| and |FileType| autocommands are only

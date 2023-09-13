@@ -10,13 +10,14 @@
 --- the buffer. Consider calling this with |nvim_buf_call()|.
 ---
 --- Example:
---- <pre>lua
----     vim.spell.check("the quik brown fox")
----     -- =>
----     -- {
----     --     {'quik', 'bad', 5}
----     -- }
---- </pre>
+---
+--- ```lua
+--- vim.spell.check("the quik brown fox")
+--- -- =>
+--- -- {
+--- --     {'quik', 'bad', 5}
+--- -- }
+--- ```
 ---
 --- @param str string
 --- @return {[1]: string, [2]: string, [3]: string}[]

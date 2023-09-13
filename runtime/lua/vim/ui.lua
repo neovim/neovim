@@ -22,7 +22,8 @@ local M = {}
 ---
 ---
 --- Example:
---- <pre>lua
+---
+--- ```lua
 --- vim.ui.select({ 'tabs', 'spaces' }, {
 ---     prompt = 'Select tabs or spaces:',
 ---     format_item = function(item)
@@ -35,7 +36,7 @@ local M = {}
 ---         vim.o.expandtab = false
 ---     end
 --- end)
---- </pre>
+--- ```
 function M.select(items, opts, on_choice)
   vim.validate({
     items = { items, 'table', false },
@@ -79,11 +80,13 @@ end
 ---               `nil` if the user aborted the dialog.
 ---
 --- Example:
---- <pre>lua
+---
+--- ```lua
 --- vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
 ---     vim.o.shiftwidth = tonumber(input)
 --- end)
---- </pre>
+--- ```
+---
 function M.input(opts, on_confirm)
   vim.validate({
     on_confirm = { on_confirm, 'function', false },
@@ -110,11 +113,12 @@ end
 --- Expands "~/" and environment variables in filesystem paths.
 ---
 --- Examples:
---- <pre>lua
+---
+--- ```lua
 --- vim.ui.open("https://neovim.io/")
 --- vim.ui.open("~/path/to/file")
 --- vim.ui.open("$VIMRUNTIME")
---- </pre>
+--- ```
 ---
 ---@param path string Path or URL to open
 ---

@@ -255,10 +255,10 @@ end
 --- It is recommended to trigger this using an autocmd or via keymap.
 ---
 --- Example:
---- <pre>vim
----   autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh()
---- </pre>
 ---
+--- ```vim
+--- autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh()
+--- ```
 function M.refresh()
   local params = {
     textDocument = util.make_text_document_params(),

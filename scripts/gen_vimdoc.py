@@ -585,11 +585,10 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
             text += '>{}{}\n<'.format(ensure_nl, o)
     elif n.nodeName == 'programlisting': # codeblock (```)
         o = get_text(n)
-        filename = n.attributes['filename'].value
-        if filename:
-            text += '>{}'.format(filename.lstrip('.'))
-        else:
-            text += '>'
+        text += '>'
+        if 'filename' in n.attributes:
+            filename = n.attributes['filename'].value
+            text += filename.lstrip('.')
 
         text += '\n\n{}\n<'.format(textwrap.indent(o, ' ' * 4))
     elif is_inline(n):

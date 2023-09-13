@@ -238,7 +238,7 @@ Docstring format:
   `---@see`, `---@param`, `---@returns`
 - Limited markdown is supported.
   - List-items start with `-` (useful to nest or "indent")
-- Use `<pre>` for code samples.
+- Use ``` for code samples.
   Code samples can be annotated as `vim` or `lua`
 - Use `@nodoc` to prevent documentation generation.
 - Files which has `@meta` are only used for typing and documentation.
@@ -250,12 +250,13 @@ vim.paste in runtime/lua/vim/_editor.lua like this: >
     --- (such as the |TUI|) pastes text into the editor.
     ---
     --- Example: To remove ANSI color codes when pasting:
-    --- <pre>lua
+    ---
+    --- ```lua
     --- vim.paste = (function()
     ---   local overridden = vim.paste
     ---   ...
     --- end)()
-    --- </pre>
+    --- ```
     ---
     ---@see |paste|
     ---

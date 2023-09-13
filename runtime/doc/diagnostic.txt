@@ -360,12 +360,12 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
 
     For example, if a user enables virtual text globally with >lua
 
-       vim.diagnostic.config({ virtual_text = true })
+        vim.diagnostic.config({ virtual_text = true })
 <
 
     and a diagnostic producer sets diagnostics with >lua
 
-       vim.diagnostic.set(ns, 0, diagnostics, { virtual_text = false })
+        vim.diagnostic.set(ns, 0, diagnostics, { virtual_text = false })
 <
 
     then virtual text will not be enabled for those diagnostics.
@@ -609,15 +609,15 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
 
     For example, consider a line of output from a linter: >
 
-     WARNING filename:27:3: Variable 'foo' does not exist
+        WARNING filename:27:3: Variable 'foo' does not exist
 <
 
     This can be parsed into a diagnostic |diagnostic-structure| with: >lua
 
-       local s = "WARNING filename:27:3: Variable 'foo' does not exist"
-       local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
-       local groups = { "severity", "lnum", "col", "message" }
-       vim.diagnostic.match(s, pattern, groups, { WARNING = vim.diagnostic.WARN })
+        local s = "WARNING filename:27:3: Variable 'foo' does not exist"
+        local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
+        local groups = { "severity", "lnum", "col", "message" }
+        vim.diagnostic.match(s, pattern, groups, { WARNING = vim.diagnostic.WARN })
 <
 
     Parameters: ~

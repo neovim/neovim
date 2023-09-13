@@ -860,11 +860,12 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
 /// For Lua usage see |lua-guide-commands-create|.
 ///
 /// Example:
-/// <pre>vim
-///    :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {'bang': v:true})
-///    :SayHello
-///    Hello world!
-/// </pre>
+///
+/// ```vim
+/// :call nvim_create_user_command('SayHello', 'echo "Hello world!"', {'bang': v:true})
+/// :SayHello
+/// Hello world!
+/// ```
 ///
 /// @param  name    Name of the new user command. Must begin with an uppercase letter.
 /// @param  command Replacement command to execute when this user command is executed. When called

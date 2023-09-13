@@ -1,23 +1,24 @@
 ---@defgroup vim.highlight
 ---
----@brief
----Nvim includes a function for highlighting a selection on yank.
+--- Nvim includes a function for highlighting a selection on yank.
 ---
----To enable it, add the following to your `init.vim`:
----<pre>vim
----    au TextYankPost * silent! lua vim.highlight.on_yank()
----</pre>
+--- To enable it, add the following to your `init.vim`:
 ---
----You can customize the highlight group and the duration of
----the highlight via:
----<pre>vim
----    au TextYankPost * silent! lua vim.highlight.on_yank {higroup="IncSearch", timeout=150}
----</pre>
+--- ```vim
+--- au TextYankPost * silent! lua vim.highlight.on_yank()
+--- ```
 ---
----If you want to exclude visual selections from highlighting on yank, use:
----<pre>vim
----    au TextYankPost * silent! lua vim.highlight.on_yank {on_visual=false}
----</pre>
+--- You can customize the highlight group and the duration of the highlight via:
+---
+--- ```vim
+--- au TextYankPost * silent! lua vim.highlight.on_yank {higroup="IncSearch", timeout=150}
+--- ```
+---
+--- If you want to exclude visual selections from highlighting on yank, use:
+---
+--- ```vim
+--- au TextYankPost * silent! lua vim.highlight.on_yank {on_visual=false}
+--- ```
 
 local api = vim.api
 

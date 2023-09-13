@@ -5,12 +5,13 @@
 --- available tools and dependencies on the current system.
 ---
 --- Example:
----   <pre>lua
----   local v = vim.version.parse(vim.fn.system({'tmux', '-V'}), {strict=false})
----   if vim.version.gt(v, {3, 2, 0}) then
----     -- ...
----   end
----   </pre>
+---
+--- ```lua
+--- local v = vim.version.parse(vim.fn.system({'tmux', '-V'}), {strict=false})
+--- if vim.version.gt(v, {3, 2, 0}) then
+---   -- ...
+--- end
+--- ```
 ---
 --- \*vim.version()\* returns the version of the current Nvim process.
 ---
@@ -21,35 +22,36 @@
 ---
 --- Supported range specs are shown in the following table.
 --- Note: suffixed versions (1.2.3-rc1) are not matched.
----   <pre>
----   1.2.3             is 1.2.3
----   =1.2.3            is 1.2.3
----   >1.2.3            greater than 1.2.3
----   <1.2.3            before 1.2.3
----   >=1.2.3           at least 1.2.3
----   ~1.2.3            is >=1.2.3 <1.3.0       "reasonably close to 1.2.3"
----   ^1.2.3            is >=1.2.3 <2.0.0       "compatible with 1.2.3"
----   ^0.2.3            is >=0.2.3 <0.3.0       (0.x.x is special)
----   ^0.0.1            is =0.0.1               (0.0.x is special)
----   ^1.2              is >=1.2.0 <2.0.0       (like ^1.2.0)
----   ~1.2              is >=1.2.0 <1.3.0       (like ~1.2.0)
----   ^1                is >=1.0.0 <2.0.0       "compatible with 1"
----   ~1                same                    "reasonably close to 1"
----   1.x               same
----   1.*               same
----   1                 same
----   *                 any version
----   x                 same
 ---
----   1.2.3 - 2.3.4     is >=1.2.3 <=2.3.4
+--- ```
+--- 1.2.3             is 1.2.3
+--- =1.2.3            is 1.2.3
+--- >1.2.3            greater than 1.2.3
+--- <1.2.3            before 1.2.3
+--- >=1.2.3           at least 1.2.3
+--- ~1.2.3            is >=1.2.3 <1.3.0       "reasonably close to 1.2.3"
+--- ^1.2.3            is >=1.2.3 <2.0.0       "compatible with 1.2.3"
+--- ^0.2.3            is >=0.2.3 <0.3.0       (0.x.x is special)
+--- ^0.0.1            is =0.0.1               (0.0.x is special)
+--- ^1.2              is >=1.2.0 <2.0.0       (like ^1.2.0)
+--- ~1.2              is >=1.2.0 <1.3.0       (like ~1.2.0)
+--- ^1                is >=1.0.0 <2.0.0       "compatible with 1"
+--- ~1                same                    "reasonably close to 1"
+--- 1.x               same
+--- 1.*               same
+--- 1                 same
+--- *                 any version
+--- x                 same
 ---
----   Partial right: missing pieces treated as x (2.3 => 2.3.x).
----   1.2.3 - 2.3       is >=1.2.3 <2.4.0
----   1.2.3 - 2         is >=1.2.3 <3.0.0
+--- 1.2.3 - 2.3.4     is >=1.2.3 <=2.3.4
 ---
----   Partial left: missing pieces treated as 0 (1.2 => 1.2.0).
----   1.2 - 2.3.0       is 1.2.0 - 2.3.0
----   </pre>
+--- Partial right: missing pieces treated as x (2.3 => 2.3.x).
+--- 1.2.3 - 2.3       is >=1.2.3 <2.4.0
+--- 1.2.3 - 2         is >=1.2.3 <3.0.0
+---
+--- Partial left: missing pieces treated as 0 (1.2 => 1.2.0).
+--- 1.2 - 2.3.0       is 1.2.0 - 2.3.0
+--- ```
 
 local M = {}
 
@@ -237,29 +239,32 @@ function VersionRange:has(version)
 end
 
 --- Parses a semver |version-range| "spec" and returns a range object:
----   <pre>
----   {
----     from: Version
----     to: Version
----     has(v: string|Version)
----   }
----   </pre>
+---
+--- ```
+--- {
+---   from: Version
+---   to: Version
+---   has(v: string|Version)
+--- }
+--- ```
 ---
 --- `:has()` checks if a version is in the range (inclusive `from`, exclusive `to`).
 ---
 --- Example:
----   <pre>lua
----   local r = vim.version.range('1.0.0 - 2.0.0')
----   print(r:has('1.9.9'))       -- true
----   print(r:has('2.0.0'))       -- false
----   print(r:has(vim.version())) -- check against current Nvim version
----   </pre>
+---
+--- ```lua
+--- local r = vim.version.range('1.0.0 - 2.0.0')
+--- print(r:has('1.9.9'))       -- true
+--- print(r:has('2.0.0'))       -- false
+--- print(r:has(vim.version())) -- check against current Nvim version
+--- ```
 ---
 --- Or use cmp(), eq(), lt(), and gt() to compare `.to` and `.from` directly:
----   <pre>lua
----   local r = vim.version.range('1.0.0 - 2.0.0')
----   print(vim.version.gt({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
----   </pre>
+---
+--- ```lua
+--- local r = vim.version.range('1.0.0 - 2.0.0')
+--- print(vim.version.gt({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
+--- ```
 ---
 --- @see # https://github.com/npm/node-semver#ranges
 ---
@@ -345,16 +350,17 @@ end
 --- specified literally as a `{major, minor, patch}` tuple, e.g. `{1, 0, 3}`).
 ---
 --- Example:
---- <pre>lua
----   if vim.version.cmp({1,0,3}, {0,2,1}) == 0 then
----     -- ...
----   end
----   local v1 = vim.version.parse('1.0.3-pre')
----   local v2 = vim.version.parse('0.2.1')
----   if vim.version.cmp(v1, v2) == 0 then
----     -- ...
----   end
---- </pre>
+---
+--- ```lua
+--- if vim.version.cmp({1,0,3}, {0,2,1}) == 0 then
+---   -- ...
+--- end
+--- local v1 = vim.version.parse('1.0.3-pre')
+--- local v2 = vim.version.parse('0.2.1')
+--- if vim.version.cmp(v1, v2) == 0 then
+---   -- ...
+--- end
+--- ```
 ---
 --- @note Per semver, build metadata is ignored when comparing two otherwise-equivalent versions.
 ---
@@ -399,9 +405,10 @@ end
 
 --- Parses a semantic version string and returns a version object which can be used with other
 --- `vim.version` functions. For example "1.0.1-rc1+build.2" returns:
---- <pre>
----   { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
---- </pre>
+---
+--- ```
+--- { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
+--- ```
 ---
 --- @see # https://semver.org/spec/v2.0.0.html
 ---
