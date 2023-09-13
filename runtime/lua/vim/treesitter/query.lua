@@ -514,7 +514,10 @@ local directive_handlers = {
   -- Example: (#trim! @fold)
   -- TODO(clason): generalize to arbitrary whitespace removal
   ['trim!'] = function(match, _, bufnr, pred, metadata)
-    local node = match[pred[2]]
+    local capture_id = pred[2]
+    assert(type(capture_id) == 'number')
+
+    local node = match[capture_id]
     if not node then
       return
     end
@@ -526,9 +529,9 @@ local directive_handlers = {
       return
     end
 
-    while true do
+    while end_row >= start_row do
       -- As we only care when end_col == 0, always inspect one line above end_row.
-      local end_line = vim.api.nvim_buf_get_lines(bufnr, end_row - 1, end_row, true)[1]
+      local end_line = api.nvim_buf_get_lines(bufnr, end_row - 1, end_row, true)[1]
 
       if end_line ~= '' then
         break
@@ -539,7 +542,8 @@ local directive_handlers = {
 
     -- If this produces an invalid range, we just skip it.
     if start_row < end_row or (start_row == end_row and start_col <= end_col) then
-      metadata.range = { start_row, start_col, end_row, end_col }
+      metadata[capture_id] = metadata[capture_id] or {}
+      metadata[capture_id].range = { start_row, start_col, end_row, end_col }
     end
   end,
 }
