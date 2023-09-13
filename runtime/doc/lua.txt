@@ -1440,18 +1440,13 @@ vim.bo                                                                *vim.bo*
 
     Note: this is equivalent to both `:set` and `:setlocal`.
 
-    Example:
-
-    >lua
+    Example: >lua
 
         local bufnr = vim.api.nvim_get_current_buf()
         vim.bo[bufnr].buflisted = true    -- same as vim.bo.buflisted = true
         print(vim.bo.comments)
         print(vim.bo.baz)                 -- error: invalid key
 <
-
-    Parameters: ~
-      • {bufnr}  (integer|nil)
 
 vim.env                                                              *vim.env*
     Environment variables defined in the editor session. See |expand-env| and

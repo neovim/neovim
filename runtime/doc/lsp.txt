@@ -1588,10 +1588,9 @@ hover({_}, {result}, {ctx}, {config})               *vim.lsp.handlers.hover()*
 
                                            *vim.lsp.handlers.signature_help()*
 signature_help({_}, {result}, {ctx}, {config})
-    |lsp-handler| for the method "textDocument/signatureHelp". The active
-    parameter is highlighted with |hl-LspSignatureActiveParameter|.
+    |lsp-handler| for the method "textDocument/signatureHelp".
 
-    >lua
+    The active parameter is highlighted with |hl-LspSignatureActiveParameter|. >lua
 
         vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
           vim.lsp.handlers.signature_help, {
@@ -1602,6 +1601,8 @@ signature_help({_}, {result}, {ctx}, {config})
 <
 
     Parameters: ~
+      • {result}  (table) Response from the language server
+      • {ctx}     (table) Client context
       • {config}  (table) Configuration table.
                   • border: (default=nil)
                     • Add borders to the floating window

@@ -289,7 +289,6 @@ vim.go = setmetatable({}, {
 --- print(vim.bo.comments)
 --- print(vim.bo.baz)                 -- error: invalid key
 --- ```
----@param bufnr integer|nil
 vim.bo = new_buf_opt_accessor()
 
 --- Get or set window-scoped |options| for the window with handle {winid} and

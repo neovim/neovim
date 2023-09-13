@@ -432,6 +432,7 @@ M[ms.textDocument_typeDefinition] = location_handler
 M[ms.textDocument_implementation] = location_handler
 
 --- |lsp-handler| for the method "textDocument/signatureHelp".
+---
 --- The active parameter is highlighted with |hl-LspSignatureActiveParameter|.
 ---
 --- ```lua
@@ -442,6 +443,9 @@ M[ms.textDocument_implementation] = location_handler
 ---   }
 --- )
 --- ```
+---
+---@param result table Response from the language server
+---@param ctx table Client context
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
