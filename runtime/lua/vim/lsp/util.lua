@@ -893,7 +893,6 @@ function M.convert_input_to_markdown_lines(input, contents)
       -- The kind can be either plaintext or markdown.
       -- If it's plaintext, then wrap it in a <text></text> block
 
-      -- Some servers send input.value as empty, so let's ignore this :(
       local value = input.value or ''
 
       if input.kind == 'plaintext' then
@@ -902,12 +901,9 @@ function M.convert_input_to_markdown_lines(input, contents)
         value = string.format('<text>\n%s\n</text>', value)
       end
 
-      -- assert(type(value) == 'string')
       list_extend(contents, split_lines(value))
       -- MarkupString variation 2
     elseif input.language then
-      -- Some servers send input.value as empty, so let's ignore this :(
-      -- assert(type(input.value) == 'string')
       table.insert(contents, '```' .. input.language)
       list_extend(contents, split_lines(input.value or ''))
       table.insert(contents, '```')
@@ -1267,19 +1263,79 @@ function M._trim(contents, opts)
   return contents
 end
 
---- Generates a table mapping markdown code block lang to vim syntax,
---- based on g:markdown_fenced_languages
----@return table table of lang -> syntax mappings
-local function get_markdown_fences()
-  local fences = {}
-  for _, fence in pairs(vim.g.markdown_fenced_languages or {}) do
-    local lang, syntax = fence:match('^(.*)=(.*)$')
-    if lang then
-      fences[lang] = syntax
-    end
+---@param contents string[]
+---@return string[]
+local function parse_markdown(contents)
+  local function is_empty(line)
+    return line and line:find('^%s*$')
   end
-  return fences
+
+  ---@param l integer
+  local function eat_nl(l)
+    while is_empty(contents[l + 1]) do
+      l = l + 1
+    end
+    return l
+  end
+
+  local function is_rule(line)
+    return line and line:find('^%s*[%*%-_][%*%-_][%*%-_]+%s*$')
+  end
+
+  local function is_code_block(line)
+    return line and line:find('^%s*```')
+  end
+
+  local parsed = {}
+  local l = 1
+  while l <= #contents do
+    local line = contents[l]
+
+    if is_empty(line) then
+      local is_start = l == 1
+      l = eat_nl(l)
+      local is_end = l == #contents
+      if
+        not (
+          is_code_block(contents[l + 1])
+          or is_rule(contents[l + 1])
+          or is_rule(contents[l - 1])
+          or is_start
+          or is_end
+        )
+      then
+        table.insert(parsed, '')
+      end
+    elseif is_code_block(line) then
+      if l > 1 then
+        table.insert(parsed, '')
+      end
+
+      table.insert(parsed, line)
+      while contents[l + 1] and not is_code_block(contents[l + 1]) do
+        table.insert(parsed, contents[l + 1])
+        l = l + 1
+      end
+
+      table.insert(parsed, '```')
+      l = l + 1
+
+      -- Add a separator, but not on the last line.
+      if l < #contents then
+        table.insert(parsed, '---')
+      end
+      l = eat_nl(l)
+    elseif not is_rule(line) and not is_empty(line) then
+      table.insert(parsed, line)
+    end
+
+    l = l + 1
+  end
+
+  return parsed
 end
+
+local md_namespace = api.nvim_create_namespace('vim_lsp_markdown')
 
 --- Converts markdown into syntax highlighted regions by stripping the code
 --- blocks and converting them into highlighted code.
@@ -1308,180 +1364,54 @@ function M.stylize_markdown(bufnr, contents, opts)
   })
   opts = opts or {}
 
-  -- table of fence types to {ft, begin, end}
-  -- when ft is nil, we get the ft from the regex match
-  local matchers = {
-    block = { nil, '```+%s*([a-zA-Z0-9_]*)', '```+' },
-    pre = { nil, '<pre>([a-z0-9]*)', '</pre>' },
-    code = { '', '<code>', '</code>' },
-    text = { 'text', '<text>', '</text>' },
-  }
-
-  local match_begin = function(line)
-    for type, pattern in pairs(matchers) do
-      local ret = line:match(string.format('^%%s*%s%%s*$', pattern[2]))
-      if ret then
-        return {
-          type = type,
-          ft = pattern[1] or ret,
-        }
-      end
-    end
-  end
-
-  local match_end = function(line, match)
-    local pattern = matchers[match.type]
-    return line:match(string.format('^%%s*%s%%s*$', pattern[3]))
-  end
-
   -- Clean up
   contents = M._trim(contents, opts)
+  contents = vim.split(table.concat(contents, '\n'):gsub('</?pre>', '```'):gsub('\r', ''), '\n')
 
-  local stripped = {}
-  local highlights = {}
-  -- keep track of lnums that contain markdown
-  local markdown_lines = {}
-  do
-    local i = 1
-    while i <= #contents do
-      local line = contents[i]
-      local match = match_begin(line)
-      if match then
-        local start = #stripped
-        i = i + 1
-        while i <= #contents do
-          line = contents[i]
-          if match_end(line, match) then
-            i = i + 1
-            break
-          end
-          table.insert(stripped, line)
-          i = i + 1
-        end
-        table.insert(highlights, {
-          ft = match.ft,
-          start = start + 1,
-          finish = #stripped,
-        })
-        -- add a separator, but not on the last line
-        if opts.separator and i < #contents then
-          table.insert(stripped, '---')
-          markdown_lines[#stripped] = true
-        end
-      else
-        -- strip any empty lines or separators prior to this separator in actual markdown
-        if line:match('^---+$') then
-          while
-            markdown_lines[#stripped]
-            and (stripped[#stripped]:match('^%s*$') or stripped[#stripped]:match('^---+$'))
-          do
-            markdown_lines[#stripped] = false
-            table.remove(stripped, #stripped)
-          end
-        end
-        -- add the line if its not an empty line following a separator
-        if
-          not (
-            line:match('^%s*$')
-            and markdown_lines[#stripped]
-            and stripped[#stripped]:match('^---+$')
-          )
-        then
-          table.insert(stripped, line)
-          markdown_lines[#stripped] = true
-        end
-        i = i + 1
-      end
-    end
-  end
-
-  -- Handle some common html escape sequences
-  stripped = vim.tbl_map(function(line)
-    local escapes = {
-      ['&gt;'] = '>',
-      ['&lt;'] = '<',
-      ['&quot;'] = '"',
-      ['&apos;'] = "'",
-      ['&ensp;'] = ' ',
-      ['&emsp;'] = ' ',
-      ['&amp;'] = '&',
-    }
-    return (string.gsub(line, '&[^ ;]+;', escapes))
-  end, stripped)
+  contents = parse_markdown(contents)
 
   -- Compute size of float needed to show (wrapped) lines
   opts.wrap_at = opts.wrap_at or (vim.wo['wrap'] and api.nvim_win_get_width(0))
-  local width = M._make_floating_popup_size(stripped, opts)
+  local width = M._make_floating_popup_size(contents, opts)
 
+  -- Replace separators
   local sep_line = string.rep('─', math.min(width, opts.wrap_at or width))
+  contents = vim.iter.map(function(line)
+    return line:match('^---+$') and sep_line or line
+  end, contents)
 
-  for l in pairs(markdown_lines) do
-    if stripped[l]:match('^---+$') then
-      stripped[l] = sep_line
+  api.nvim_buf_set_lines(bufnr, 0, -1, false, contents)
+
+  -- Extra inline highlights.
+  for l, line in ipairs(contents) do
+    local highlights = {
+      ['|%S-|'] = '@text.reference',
+      ['@%S+'] = '@parameter',
+      ['^%s*(Parameters:)'] = '@text.title',
+      ['^%s*(Return:)'] = '@text.title',
+      ['^%s*(See also:)'] = '@text.title',
+      ['{%S-}'] = '@parameter',
+    }
+    for pattern, hl_group in pairs(highlights) do
+      local from = 1 ---@type integer?
+      while from do
+        local to, match
+        from, to, match = line:find(pattern, from)
+        if match then
+          from, to = line:find(match, from)
+        end
+        if from then
+          api.nvim_buf_set_extmark(bufnr, md_namespace, l - 1, from - 1, {
+            end_col = to,
+            hl_group = hl_group,
+          })
+        end
+        from = to and to + 1 or nil
+      end
     end
   end
 
-  api.nvim_buf_set_lines(bufnr, 0, -1, false, stripped)
-
-  local idx = 1
-  -- keep track of syntaxes we already included.
-  -- no need to include the same syntax more than once
-  local langs = {}
-  local fences = get_markdown_fences()
-  local function apply_syntax_to_region(ft, start, finish)
-    if ft == '' then
-      vim.cmd(
-        string.format(
-          'syntax region markdownCode start=+\\%%%dl+ end=+\\%%%dl+ keepend extend',
-          start,
-          finish + 1
-        )
-      )
-      return
-    end
-    ft = fences[ft] or ft
-    local name = ft .. idx
-    idx = idx + 1
-    local lang = '@' .. ft:upper()
-    if not langs[lang] then
-      -- HACK: reset current_syntax, since some syntax files like markdown won't load if it is already set
-      pcall(api.nvim_buf_del_var, bufnr, 'current_syntax')
-      if #api.nvim_get_runtime_file(('syntax/%s.vim'):format(ft), true) == 0 then
-        return
-      end
-      pcall(vim.cmd, string.format('syntax include %s syntax/%s.vim', lang, ft))
-      langs[lang] = true
-    end
-    vim.cmd(
-      string.format(
-        'syntax region %s start=+\\%%%dl+ end=+\\%%%dl+ contains=%s keepend',
-        name,
-        start,
-        finish + 1,
-        lang
-      )
-    )
-  end
-
-  -- needs to run in the buffer for the regions to work
-  api.nvim_buf_call(bufnr, function()
-    -- we need to apply lsp_markdown regions speperately, since otherwise
-    -- markdown regions can "bleed" through the other syntax regions
-    -- and mess up the formatting
-    local last = 1
-    for _, h in ipairs(highlights) do
-      if last < h.start then
-        apply_syntax_to_region('lsp_markdown', last, h.start - 1)
-      end
-      apply_syntax_to_region(h.ft, h.start, h.finish)
-      last = h.finish + 1
-    end
-    if last <= #stripped then
-      apply_syntax_to_region('lsp_markdown', last, #stripped)
-    end
-  end)
-
-  return stripped
+  return contents
 end
 
 --- Closes the preview window
@@ -1674,13 +1604,13 @@ function M.open_floating_preview(contents, syntax, opts)
   local floating_bufnr = api.nvim_create_buf(false, true)
   local do_stylize = syntax == 'markdown' and opts.stylize_markdown
 
-  -- Clean up input: trim empty lines from the end, pad
-  contents = M._trim(contents, opts)
-
   if do_stylize then
     -- applies the syntax and sets the lines to the buffer
     contents = M.stylize_markdown(floating_bufnr, contents, opts)
   else
+    -- Clean up input: trim empty lines from the end, pad
+    contents = M._trim(contents, opts)
+
     if syntax then
       vim.bo[floating_bufnr].syntax = syntax
     end
@@ -1699,7 +1629,7 @@ function M.open_floating_preview(contents, syntax, opts)
   local floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
   if do_stylize then
     vim.wo[floating_winnr].conceallevel = 2
-    vim.wo[floating_winnr].concealcursor = 'n'
+    vim.bo[floating_bufnr].filetype = 'markdown'
   end
   -- disable folding
   vim.wo[floating_winnr].foldenable = false
