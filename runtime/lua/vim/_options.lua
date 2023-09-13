@@ -237,6 +237,7 @@ end
 --- current buffer and window.
 ---
 --- Example:
+---
 --- ```lua
 --- vim.o.cmdheight = 4
 --- print(vim.o.columns)

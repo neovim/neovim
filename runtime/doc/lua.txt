@@ -595,9 +595,7 @@ via: >vim
 
 <
 
-If you want to exclude visual selections from highlighting on yank, use:
-
->vim
+If you want to exclude visual selections from highlighting on yank, use: >vim
 
     au TextYankPost * silent! lua vim.highlight.on_yank {on_visual=false}
 
@@ -1476,9 +1474,7 @@ vim.go                                                                *vim.go*
     option value and thus is mostly useful for use with |global-local|
     options.
 
-    Example:
-
-    >lua
+    Example: >lua
 
         vim.go.cmdheight = 4
         print(vim.go.columns)
@@ -1491,7 +1487,7 @@ vim.o                                                                  *vim.o*
     Note: this works on both buffer-scoped and window-scoped options using the
     current buffer and window.
 
-    Example:>lua
+    Example: >lua
 
         vim.o.cmdheight = 4
         print(vim.o.columns)
@@ -1507,9 +1503,7 @@ vim.wo                                                                *vim.wo*
     Note: only {bufnr} with value `0` (the current buffer in the window) is
     supported.
 
-    Example:
-
-    >lua
+    Example: >lua
 
         local winid = vim.api.nvim_get_current_win()
         vim.wo[winid].number = true    -- same as vim.wo.number = true
@@ -2547,9 +2541,7 @@ vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
       • {on_confirm}  (function) ((input|nil) -> ()) Called once the user
                       confirms or abort the input. `input` is what the user
                       typed (it might be an empty string if nothing was
-                      entered), or `nil` if the user aborted the dialog.
-
-    >lua
+                      entered), or `nil` if the user aborted the dialog. >lua
 
         vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
             vim.o.shiftwidth = tonumber(input)
@@ -2600,9 +2592,7 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
                        `items`, or the context in which select() was called.
       • {on_choice}  (function) ((item|nil, idx|nil) -> ()) Called once the
                      user made a choice. `idx` is the 1-based index of `item`
-                     within `items`. `nil` if the user aborted the dialog.
-
-    >lua
+                     within `items`. `nil` if the user aborted the dialog. >lua
 
         vim.ui.select({ 'tabs', 'spaces' }, {
             prompt = 'Select tabs or spaces:',
@@ -3078,9 +3068,7 @@ A version "range spec" defines a semantic version range which can be
 tested against a version, using |vim.version.range()|.
 
 Supported range specs are shown in the following table. Note: suffixed
-versions (1.2.3-rc1) are not matched.
-
->
+versions (1.2.3-rc1) are not matched. >
 
     1.2.3             is 1.2.3
     =1.2.3            is 1.2.3

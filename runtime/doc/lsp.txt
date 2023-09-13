@@ -1458,9 +1458,7 @@ refresh()                                         *vim.lsp.codelens.refresh()*
 
     It is recommended to trigger this using an autocmd or via keymap.
 
-    Example:
-
-    >vim
+    Example: >vim
 
         autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh()
 <
