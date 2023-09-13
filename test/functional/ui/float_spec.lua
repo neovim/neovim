@@ -3279,7 +3279,6 @@ describe('float window', function()
         ]])
       end
 
-
       meths.win_set_config(win, {relative='win', win=oldwin, row=1, col=10, anchor='NW'})
       if multigrid then
         screen:expect{grid=[[
@@ -3723,6 +3722,198 @@ describe('float window', function()
                                                   |
         ]])
       end
+    end)
+
+    it('anchored to another floating window updated in the same call #14735', function()
+      feed('i<CR><CR><CR><Esc>')
+
+      exec([[
+        let b1 = nvim_create_buf(v:true, v:false)
+        let b2 = nvim_create_buf(v:true, v:false)
+        let b3 = nvim_create_buf(v:true, v:false)
+        let b4 = nvim_create_buf(v:true, v:false)
+        let b5 = nvim_create_buf(v:true, v:false)
+        let b6 = nvim_create_buf(v:true, v:false)
+        let b7 = nvim_create_buf(v:true, v:false)
+        let b8 = nvim_create_buf(v:true, v:false)
+        call setbufline(b1, 1, '1')
+        call setbufline(b2, 1, '2')
+        call setbufline(b3, 1, '3')
+        call setbufline(b4, 1, '4')
+        call setbufline(b5, 1, '5')
+        call setbufline(b6, 1, '6')
+        call setbufline(b7, 1, '7')
+        call setbufline(b8, 1, '8')
+        let o1 = #{relative: 'editor', row: 1, col: 10, width: 5, height: 1}
+        let w1 = nvim_open_win(b1, v:false, o1)
+        let o2 = extendnew(o1, #{col: 30})
+        let w2 = nvim_open_win(b2, v:false, o2)
+        let o3 = extendnew(o1, #{relative: 'win', win: w1, anchor: 'NE', col: 0})
+        let w3 = nvim_open_win(b3, v:false, o3)
+        let o4 = extendnew(o3, #{win: w2})
+        let w4 = nvim_open_win(b4, v:false, o4)
+        let o5 = extendnew(o3, #{win: w3, anchor: 'SE', row: 0})
+        let w5 = nvim_open_win(b5, v:false, o5)
+        let o6 = extendnew(o5, #{win: w4})
+        let w6 = nvim_open_win(b6, v:false, o6)
+        let o7 = extendnew(o5, #{win: w5, anchor: 'SW', col: 5})
+        let w7 = nvim_open_win(b7, v:false, o7)
+        let o8 = extendnew(o7, #{win: w6})
+        let w8 = nvim_open_win(b8, v:false, o8)
+      ]])
+      if multigrid then
+      screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+                                                  |
+                                                  |
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {1:1    }|
+        ## grid 6
+          {1:2    }|
+        ## grid 7
+          {1:3    }|
+        ## grid 8
+          {1:4    }|
+        ## grid 9
+          {1:5    }|
+        ## grid 10
+          {1:6    }|
+        ## grid 11
+          {1:7    }|
+        ## grid 12
+          {1:8    }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NW", 1, 1, 10, true, 50};
+          [6] = {{id = 1003}, "NW", 1, 1, 30, true, 50};
+          [7] = {{id = 1004}, "NE", 5, 1, 0, true, 50};
+          [8] = {{id = 1005}, "NE", 6, 1, 0, true, 50};
+          [9] = {{id = 1006}, "SE", 7, 0, 0, true, 50};
+          [10] = {{id = 1007}, "SE", 8, 0, 0, true, 50};
+          [11] = {{id = 1008}, "SW", 9, 0, 5, true, 50};
+          [12] = {{id = 1009}, "SW", 10, 0, 5, true, 50};
+        }}
+      else
+        screen:expect([[
+               {1:7    }               {1:8    }          |
+          {1:5    }     {1:1    }     {1:6    }     {1:2    }     |
+               {1:3    }               {1:4    }          |
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+                                                  |
+        ]])
+      end
+
+      -- Reconfigure in different directions
+      exec([[
+        let o1 = extendnew(o1, #{anchor: 'NW'})
+        call nvim_win_set_config(w8, o1)
+        let o2 = extendnew(o2, #{anchor: 'NW'})
+        call nvim_win_set_config(w4, o2)
+        let o3 = extendnew(o3, #{win: w8})
+        call nvim_win_set_config(w2, o3)
+        let o4 = extendnew(o4, #{win: w4})
+        call nvim_win_set_config(w1, o4)
+        let o5 = extendnew(o5, #{win: w2})
+        call nvim_win_set_config(w6, o5)
+        let o6 = extendnew(o6, #{win: w1})
+        call nvim_win_set_config(w3, o6)
+        let o7 = extendnew(o7, #{win: w6})
+        call nvim_win_set_config(w5, o7)
+        let o8 = extendnew(o8, #{win: w3})
+        call nvim_win_set_config(w7, o8)
+      ]])
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+                                                  |
+                                                  |
+                                                  |
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 5
+          {1:1    }|
+        ## grid 6
+          {1:2    }|
+        ## grid 7
+          {1:3    }|
+        ## grid 8
+          {1:4    }|
+        ## grid 9
+          {1:5    }|
+        ## grid 10
+          {1:6    }|
+        ## grid 11
+          {1:7    }|
+        ## grid 12
+          {1:8    }|
+        ]], float_pos={
+          [5] = {{id = 1002}, "NE", 8, 1, 0, true, 50};
+          [6] = {{id = 1003}, "NE", 12, 1, 0, true, 50};
+          [7] = {{id = 1004}, "SE", 5, 0, 0, true, 50};
+          [8] = {{id = 1005}, "NW", 1, 1, 30, true, 50};
+          [9] = {{id = 1006}, "SW", 10, 0, 5, true, 50};
+          [10] = {{id = 1007}, "SE", 6, 0, 0, true, 50};
+          [11] = {{id = 1008}, "SW", 7, 0, 5, true, 50};
+          [12] = {{id = 1009}, "NW", 1, 1, 10, true, 50};
+        }}
+      else
+        screen:expect([[
+               {1:5    }               {1:7    }          |
+          {1:6    }     {1:8    }     {1:3    }     {1:4    }     |
+               {1:2    }               {1:1    }          |
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+                                                  |
+        ]])
+      end
+
+      -- Not clear how cycles should behave, but they should not hang or crash
+      exec([[
+        let o1 = extendnew(o1, #{relative: 'win', win: w7})
+        call nvim_win_set_config(w1, o1)
+        let o2 = extendnew(o2, #{relative: 'win', win: w8})
+        call nvim_win_set_config(w2, o2)
+        let o3 = extendnew(o3, #{win: w1})
+        call nvim_win_set_config(w3, o3)
+        let o4 = extendnew(o4, #{win: w2})
+        call nvim_win_set_config(w4, o4)
+        let o5 = extendnew(o5, #{win: w3})
+        call nvim_win_set_config(w5, o5)
+        let o6 = extendnew(o6, #{win: w4})
+        call nvim_win_set_config(w6, o6)
+        let o7 = extendnew(o7, #{win: w5})
+        call nvim_win_set_config(w7, o7)
+        let o8 = extendnew(o8, #{win: w6})
+        call nvim_win_set_config(w8, o8)
+        redraw
+      ]])
     end)
 
     it('can be placed relative text in a window', function()

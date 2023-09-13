@@ -965,7 +965,13 @@ void ui_ext_win_position(win_T *wp, bool validate)
     if (c.relative == kFloatRelativeWindow) {
       Error dummy = ERROR_INIT;
       win_T *win = find_window_by_handle(c.window, &dummy);
-      if (win) {
+      api_clear_error(&dummy);
+      if (win != NULL) {
+        // When a floating window is anchored to another window,
+        // update the position of its anchored window first.
+        if (win->w_pos_changed && win->w_grid_alloc.chars != NULL && win_valid(win)) {
+          ui_ext_win_position(win, validate);
+        }
         grid = &win->w_grid;
         int row_off = 0, col_off = 0;
         grid_adjust(&grid, &row_off, &col_off);
@@ -979,7 +985,6 @@ void ui_ext_win_position(win_T *wp, bool validate)
           col += tcol - 1;
         }
       }
-      api_clear_error(&dummy);
     }
 
     wp->w_grid_alloc.zindex = wp->w_float_config.zindex;
