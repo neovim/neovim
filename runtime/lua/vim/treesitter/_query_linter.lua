@@ -8,13 +8,13 @@ local M = {}
 --- @field langs string[]
 --- @field clear boolean
 
---- @alias ParseError {msg: string, range: Range4}
+--- @alias vim.treesitter.ParseError {msg: string, range: Range4}
 
 --- @private
 --- Caches parse results for queries for each language.
 --- Entries of parse_cache[lang][query_text] will either be true for successful parse or contain the
 --- message and range of the parse error.
---- @type table<string,table<string,ParseError|true>>
+--- @type table<string,table<string,vim.treesitter.ParseError|true>>
 local parse_cache = {}
 
 --- Contains language dependent context for the query linter
@@ -90,7 +90,7 @@ local lint_query = [[;; query
 --- @private
 --- @param err string
 --- @param node TSNode
---- @return ParseError
+--- @return vim.treesitter.ParseError
 local function get_error_entry(err, node)
   local start_line, start_col = node:range()
   local line_offset, col_offset, msg = err:gmatch('.-:%d+: Query error at (%d+):(%d+)%. ([^:]+)')() ---@type string, string, string
@@ -99,9 +99,8 @@ local function get_error_entry(err, node)
   local end_line, end_col = start_line, start_col
   if msg:match('^Invalid syntax') or msg:match('^Impossible') then
     -- Use the length of the underlined node
-    local lines = err:gmatch('[^\n]+')
-    lines()
-    end_col = end_col + #lines()
+    local underlined = vim.split(err, '\n')[2]
+    end_col = end_col + #underlined
   elseif msg:match('^Invalid') then
     -- Use the length of the problematic type/capture/field
     end_col = end_col + #msg:match('"([^"]+)"')
@@ -128,7 +127,7 @@ local function check_toplevel(node, buf, lang, diagnostics)
   local lang_cache = parse_cache[lang]
 
   if lang_cache[query_text] == nil then
-    local cache_val, err = pcall(vim.treesitter.query.parse, lang, query_text) ---@type boolean|ParseError, string|Query
+    local cache_val, err = pcall(vim.treesitter.query.parse, lang, query_text) ---@type boolean|vim.treesitter.ParseError, string|Query
 
     if not cache_val and type(err) == 'string' then
       cache_val = get_error_entry(err, node)
