@@ -901,7 +901,6 @@ start({config}, {opts})                                      *vim.lsp.start()*
     the current buffer to the client.
 
     Example: >lua
-
         vim.lsp.start({
            name = 'my-server-name',
            cmd = {'name-of-language-server-executable'},
@@ -1080,7 +1079,6 @@ stop_client({client_id}, {force})                      *vim.lsp.stop_client()*
 
     You can also use the `stop()` function on a |vim.lsp.client| object. To
     stop all clients: >lua
-
         vim.lsp.stop_client(vim.lsp.get_clients())
 <
 
@@ -1198,7 +1196,6 @@ document_highlight()                        *vim.lsp.buf.document_highlight()*
     Send request to the server to resolve document highlights for the current
     text document position. This request can be triggered by a key mapping or
     by events such as `CursorHold`, e.g.: >vim
-
         autocmd CursorHold  <buffer> lua vim.lsp.buf.document_highlight()
         autocmd CursorHoldI <buffer> lua vim.lsp.buf.document_highlight()
         autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
@@ -1368,7 +1365,6 @@ on_diagnostic({_}, {result}, {ctx}, {config})
 
     See |vim.diagnostic.config()| for configuration options. Handler-specific
     configuration can be set using |vim.lsp.with()|: >lua
-
         vim.lsp.handlers["textDocument/diagnostic"] = vim.lsp.with(
           vim.lsp.diagnostic.on_diagnostic, {
             -- Enable underline, use default values
@@ -1397,7 +1393,6 @@ on_publish_diagnostics({_}, {result}, {ctx}, {config})
 
     See |vim.diagnostic.config()| for configuration options. Handler-specific
     configuration can be set using |vim.lsp.with()|: >lua
-
         vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
           vim.lsp.diagnostic.on_publish_diagnostics, {
             -- Enable underline, use default values
@@ -1459,7 +1454,6 @@ refresh()                                         *vim.lsp.codelens.refresh()*
     It is recommended to trigger this using an autocmd or via keymap.
 
     Example: >vim
-
         autocmd BufEnter,CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh()
 <
 
@@ -1537,7 +1531,6 @@ start({bufnr}, {client_id}, {opts})          *vim.lsp.semantic_tokens.start()*
     server that supports it, you can delete the semanticTokensProvider table
     from the {server_capabilities} of your client in your |LspAttach| callback
     or your configuration's `on_attach` callback: >lua
-
         client.server_capabilities.semanticTokensProvider = nil
 <
 
@@ -1568,7 +1561,6 @@ Lua module: vim.lsp.handlers                                    *lsp-handlers*
 
 hover({_}, {result}, {ctx}, {config})               *vim.lsp.handlers.hover()*
     |lsp-handler| for the method "textDocument/hover" >lua
-
         vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
           vim.lsp.handlers.hover, {
             -- Use a sharp border with `FloatBorder` highlights
@@ -1591,7 +1583,6 @@ signature_help({_}, {result}, {ctx}, {config})
     |lsp-handler| for the method "textDocument/signatureHelp".
 
     The active parameter is highlighted with |hl-LspSignatureActiveParameter|. >lua
-
         vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
           vim.lsp.handlers.signature_help, {
             -- Use a sharp border with `FloatBorder` highlights

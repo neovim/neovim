@@ -583,20 +583,17 @@ VIM.HIGHLIGHT                                                  *vim.highlight*
 Nvim includes a function for highlighting a selection on yank.
 
 To enable it, add the following to your `init.vim`: >vim
-
     au TextYankPost * silent! lua vim.highlight.on_yank()
 
 <
 
 You can customize the highlight group and the duration of the highlight
 via: >vim
-
     au TextYankPost * silent! lua vim.highlight.on_yank {higroup="IncSearch", timeout=150}
 
 <
 
 If you want to exclude visual selections from highlighting on yank, use: >vim
-
     au TextYankPost * silent! lua vim.highlight.on_yank {on_visual=false}
 
 <
@@ -694,7 +691,6 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
     either directly or via callback arguments, are 1-based.
 
     Examples: >lua
-
         vim.diff('a\n', 'b\nc\n')
         -- =>
         -- @@ -1 +1,2 @@
@@ -787,7 +783,6 @@ vim.json.decode({str}, {opts})                             *vim.json.decode()*
     • Decodes empty array as `{}` (empty Lua table).
 
     Example: >lua
-
         vim.print(vim.json.decode('{"bar":[],"foo":{},"zub":null}'))
         -- { bar = {}, foo = vim.empty_dict(), zub = vim.NIL }
 <
@@ -826,7 +821,6 @@ vim.spell.check({str})                                     *vim.spell.check()*
     the buffer. Consider calling this with |nvim_buf_call()|.
 
     Example: >lua
-
         vim.spell.check("the quik brown fox")
         -- =>
         -- {
@@ -987,7 +981,6 @@ vim.str_utf_end({str}, {index})                            *vim.str_utf_end()*
     (character) that {index} points to.
 
     Examples: >lua
-
         -- The character 'æ' is stored as the bytes '\xc3\xa6' (using UTF-8)
 
         -- Returns 0 because the index is pointing at the last byte of a character
@@ -1024,7 +1017,6 @@ vim.str_utf_start({str}, {index})                        *vim.str_utf_start()*
     character.
 
     Examples: >lua
-
         -- The character 'æ' is stored as the bytes '\xc3\xa6' (using UTF-8)
 
         -- Returns 0 because the index is pointing at the first byte of a character
@@ -1089,7 +1081,6 @@ vim.ui_attach({ns}, {options}, {callback})                   *vim.ui_attach()*
     likewise experimental).
 
     Example (stub for a |ui-popupmenu| implementation): >lua
-
         ns = vim.api.nvim_create_namespace('my_fancy_pum')
 
         vim.ui_attach(ns, {ext_popupmenu=true}, function(event, ...)
@@ -1125,7 +1116,6 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
     time.
 
     Examples: >lua
-
         ---
         -- Wait for 100 ms, allowing other events to process
         vim.wait(100, function() end)
@@ -1177,7 +1167,6 @@ Objects passed over this bridge are COPIED (marshalled): there are no
 "references". |lua-guide-variables| For example, using `vim.fn.remove()`
 on a Lua list copies the list object to Vimscript and does NOT modify the
 Lua list: >lua
-
     local list = { 1, 2, 3 }
     vim.fn.remove(list, 0)
     vim.print(list)  --> "{ 1, 2, 3 }"
@@ -1352,7 +1341,6 @@ Option:append({value})                                      *vim.opt:append()*
     Append a value to string-style options. See |:set+=|
 
     These are equivalent: >lua
-
         vim.opt.formatoptions:append('j')
         vim.opt.formatoptions = vim.opt.formatoptions + 'j'
 <
@@ -1366,7 +1354,6 @@ Option:get()                                                   *vim.opt:get()*
 
     For values that are comma-separated lists, an array will be returned with
     the values as entries in the array: >lua
-
         vim.cmd [[set wildignore=*.pyc,*.o]]
 
         vim.print(vim.opt.wildignore:get())
@@ -1381,7 +1368,6 @@ Option:get()                                                   *vim.opt:get()*
 
     For values that are comma-separated maps, a table will be returned with
     the names as keys and the values as entries: >lua
-
         vim.cmd [[set listchars=space:_,tab:>~]]
 
         vim.print(vim.opt.listchars:get())
@@ -1394,7 +1380,6 @@ Option:get()                                                   *vim.opt:get()*
 
     For values that are lists of flags, a set will be returned with the flags
     as keys and `true` as entries. >lua
-
         vim.cmd [[set formatoptions=njtcroql]]
 
         vim.print(vim.opt.formatoptions:get())
@@ -1413,7 +1398,6 @@ Option:prepend({value})                                    *vim.opt:prepend()*
     Prepend a value to string-style options. See |:set^=|
 
     These are equivalent: >lua
-
         vim.opt.wildignore:prepend('*.o')
         vim.opt.wildignore = vim.opt.wildignore ^ '*.o'
 <
@@ -1425,7 +1409,6 @@ Option:remove({value})                                      *vim.opt:remove()*
     Remove a value from string-style options. See |:set-=|
 
     These are equivalent: >lua
-
         vim.opt.wildignore:remove('*.pyc')
         vim.opt.wildignore = vim.opt.wildignore - '*.pyc'
 <
@@ -1441,7 +1424,6 @@ vim.bo                                                                *vim.bo*
     Note: this is equivalent to both `:set` and `:setlocal`.
 
     Example: >lua
-
         local bufnr = vim.api.nvim_get_current_buf()
         vim.bo[bufnr].buflisted = true    -- same as vim.bo.buflisted = true
         print(vim.bo.comments)
@@ -1454,7 +1436,6 @@ vim.env                                                              *vim.env*
     returns `nil`.
 
     Example: >lua
-
         vim.env.FOO = 'bar'
         print(vim.env.TERM)
 <
@@ -1470,7 +1451,6 @@ vim.go                                                                *vim.go*
     options.
 
     Example: >lua
-
         vim.go.cmdheight = 4
         print(vim.go.columns)
         print(vim.go.bar)     -- error: invalid key
@@ -1483,7 +1463,6 @@ vim.o                                                                  *vim.o*
     current buffer and window.
 
     Example: >lua
-
         vim.o.cmdheight = 4
         print(vim.o.columns)
         print(vim.o.foo)     -- error: invalid key
@@ -1499,7 +1478,6 @@ vim.wo                                                                *vim.wo*
     supported.
 
     Example: >lua
-
         local winid = vim.api.nvim_get_current_win()
         vim.wo[winid].number = true    -- same as vim.wo.number = true
         print(vim.wo.foldmarker)
@@ -1518,7 +1496,6 @@ vim.cmd                                                            *vim.cmd()*
     callable function to the command.
 
     Example: >lua
-
         vim.cmd('echo 42')
         vim.cmd([[
           augroup My_group
@@ -1600,7 +1577,6 @@ vim.keycode({str})                                             *vim.keycode()*
     Translate keycodes.
 
     Example: >lua
-
         local k = vim.keycode
         vim.g.mapleader = k'<bs>'
 <
@@ -1674,7 +1650,6 @@ vim.paste({lines}, {phase})                                      *vim.paste()*
     |TUI|) pastes text into the editor.
 
     Example: To remove ANSI color codes when pasting: >lua
-
         vim.paste = (function(overridden)
           return function(lines, phase)
             for i,line in ipairs(lines) do
@@ -1705,7 +1680,6 @@ vim.print({...})                                                 *vim.print()*
     "Pretty prints" the given arguments and returns them unmodified.
 
     Example: >lua
-
         local hl_normal = vim.print(vim.api.nvim_get_hl_by_name('Normal', true))
 <
 
@@ -1758,7 +1732,6 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
     Run a system command
 
     Examples: >lua
-
         local on_exit = function(obj)
           print(obj.code)
           print(obj.signal)
@@ -1916,7 +1889,6 @@ vim.defaulttable({create})                                *vim.defaulttable()*
     If {create} is `nil`, this will create a defaulttable whose constructor
     function is this function, effectively allowing to create nested tables on
     the fly: >lua
-
         local a = vim.defaulttable()
         a.b.c = 1
 <
@@ -1943,7 +1915,6 @@ vim.gsplit({s}, {sep}, {opts})                                  *vim.gsplit()*
     in "lazy" fashion (as opposed to |vim.split()| which is "eager").
 
     Example: >lua
-
         for s in vim.gsplit(':aa::b:', ':', {plain=true}) do
           print(s)
         end
@@ -1951,7 +1922,6 @@ vim.gsplit({s}, {sep}, {opts})                                  *vim.gsplit()*
 
     If you want to also inspect the separator itself (instead of discarding
     it), use |string.gmatch()|. Example: >lua
-
         for word, num in ('foo111bar222'):gmatch('([^0-9]*)(%d*)') do
           print(('word: %s num: %s'):format(word, num))
         end
@@ -2041,7 +2011,6 @@ vim.pesc({s})                                                     *vim.pesc()*
 vim.ringbuf({size})                                            *vim.ringbuf()*
     Create a ring buffer limited to a maximal number of items. Once the buffer
     is full, adding a new entry overrides the oldest entry. >lua
-
         local ringbuf = vim.ringbuf(4)
         ringbuf:push("a")
         ringbuf:push("b")
@@ -2108,7 +2077,6 @@ vim.split({s}, {sep}, {opts})                                    *vim.split()*
     a table (unlike |vim.gsplit()|).
 
     Examples: >lua
-
         split(":aa::b:", ":")                   --> {'','aa','','b',''}
         split("axaby", "ab?")                   --> {'','x','y'}
         split("x*yz*o", "*", {plain=true})      --> {'x','yz','o'}
@@ -2155,7 +2123,6 @@ vim.tbl_contains({t}, {value}, {opts})                    *vim.tbl_contains()*
     a predicate that is checked for each value.
 
     Example: >lua
-
         vim.tbl_contains({ 'a', { 'b', 'c' } }, function(v)
           return vim.deep_equal(v, { 'b', 'c' })
         end, { predicate = true })
@@ -2177,7 +2144,6 @@ vim.tbl_contains({t}, {value}, {opts})                    *vim.tbl_contains()*
 
 vim.tbl_count({t})                                           *vim.tbl_count()*
     Counts the number of non-nil values in table `t`. >lua
-
         vim.tbl_count({ a=1, b=2 })  --> 2
         vim.tbl_count({ 1, 2 })      --> 2
 <
@@ -2253,7 +2219,6 @@ vim.tbl_get({o}, {...})                                        *vim.tbl_get()*
     arguments. Return `nil` if the key does not exist.
 
     Examples: >lua
-
         vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
         vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
 <
@@ -2356,7 +2321,6 @@ vim.validate({opt})                                           *vim.validate()*
     Validates a parameter specification (types and values).
 
     Usage example: >lua
-
         function user.new(name, age, hobbies)
           vim.validate{
             name={name, 'string'},
@@ -2368,7 +2332,6 @@ vim.validate({opt})                                           *vim.validate()*
 <
 
     Examples with explicit argument values (can be run directly): >lua
-
         vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
            --> NOP (success)
 
@@ -2380,7 +2343,6 @@ vim.validate({opt})                                           *vim.validate()*
 <
 
     If multiple types are valid they can be given as a list. >lua
-
         vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
         -- NOP (success)
 
@@ -2522,7 +2484,6 @@ vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
     work until `on_confirm`.
 
     Example: >lua
-
         vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
             vim.o.shiftwidth = tonumber(input)
         end)
@@ -2551,7 +2512,6 @@ vim.ui.open({path})                                            *vim.ui.open()*
     Expands "~/" and environment variables in filesystem paths.
 
     Examples: >lua
-
         vim.ui.open("https://neovim.io/")
         vim.ui.open("~/path/to/file")
         vim.ui.open("$VIMRUNTIME")
@@ -2572,7 +2532,6 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
     (potentially asynchronous) work until `on_choice`.
 
     Example: >lua
-
         vim.ui.select({ 'tabs', 'spaces' }, {
             prompt = 'Select tabs or spaces:',
             format_item = function(item)
@@ -2636,7 +2595,6 @@ vim.filetype.add({filetypes})                             *vim.filetype.add()*
     See $VIMRUNTIME/lua/vim/filetype.lua for more examples.
 
     Example: >lua
-
         vim.filetype.add({
           extension = {
             foo = 'fooscript',
@@ -2672,7 +2630,6 @@ vim.filetype.add({filetypes})                             *vim.filetype.add()*
 <
 
     To add a fallback match on contents, use >lua
-
         vim.filetype.add {
           pattern = {
             ['.*'] = {
@@ -2703,7 +2660,6 @@ vim.filetype.get_option({filetype}, {option})
     files.
 
     Example: >lua
-
         vim.filetype.get_option('vim', 'commentstring')
 <
 
@@ -2734,7 +2690,6 @@ vim.filetype.match({args})                              *vim.filetype.match()*
 
     Each of the three options is specified using a key to the single argument
     of this function. Example: >lua
-
         -- Using a buffer number
         vim.filetype.match({ buf = 42 })
 
@@ -2776,7 +2731,6 @@ Lua module: vim.keymap                                            *vim.keymap*
 
 vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
     Remove an existing mapping. Examples: >lua
-
         vim.keymap.del('n', 'lhs')
 
         vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
@@ -2792,7 +2746,6 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
 
 vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
     Adds a new |mapping|. Examples: >lua
-
         -- Map to a Lua function:
         vim.keymap.set('n', 'lhs', function() print("real lua function") end)
         -- Map to multiple modes:
@@ -2885,7 +2838,6 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
     narrow the search to find only that type.
 
     Examples: >lua
-
         -- location of Cargo.toml from the current buffer's path
         local cargo = vim.fs.find('Cargo.toml', {
           upward = true,
@@ -2948,7 +2900,6 @@ vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
     variables are also expanded.
 
     Examples: >lua
-
         vim.fs.normalize('C:\\\\Users\\\\jdoe')
         -- 'C:/Users/jdoe'
 
@@ -2972,7 +2923,6 @@ vim.fs.parents({start})                                     *vim.fs.parents()*
     Iterate over all the parents of the given path.
 
     Example: >lua
-
         local root_dir
         for dir in vim.fs.parents(vim.api.nvim_buf_get_name(0)) do
           if vim.fn.isdirectory(dir .. "/.git") == 1 then
@@ -3047,7 +2997,6 @@ spec. Plugins, and plugin managers, can use this to check available tools
 and dependencies on the current system.
 
 Example: >lua
-
     local v = vim.version.parse(vim.fn.system({'tmux', '-V'}), {strict=false})
     if vim.version.gt(v, {3, 2, 0}) then
       -- ...
@@ -3064,7 +3013,6 @@ tested against a version, using |vim.version.range()|.
 
 Supported range specs are shown in the following table. Note: suffixed
 versions (1.2.3-rc1) are not matched. >
-
     1.2.3             is 1.2.3
     =1.2.3            is 1.2.3
     >1.2.3            greater than 1.2.3
@@ -3101,7 +3049,6 @@ vim.version.cmp({v1}, {v2})                                *vim.version.cmp()*
     tuple, e.g. `{1, 0, 3}`).
 
     Example: >lua
-
         if vim.version.cmp({1,0,3}, {0,2,1}) == 0 then
           -- ...
         end
@@ -3166,7 +3113,6 @@ vim.version.parse({version}, {opts})                     *vim.version.parse()*
     Parses a semantic version string and returns a version object which can be
     used with other `vim.version` functions. For example "1.0.1-rc1+build.2"
     returns: >
-
         { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
 <
 
@@ -3186,7 +3132,6 @@ vim.version.parse({version}, {opts})                     *vim.version.parse()*
 
 vim.version.range({spec})                                *vim.version.range()*
     Parses a semver |version-range| "spec" and returns a range object: >
-
         {
           from: Version
           to: Version
@@ -3198,7 +3143,6 @@ vim.version.range({spec})                                *vim.version.range()*
     `to`).
 
     Example: >lua
-
         local r = vim.version.range('1.0.0 - 2.0.0')
         print(r:has('1.9.9'))       -- true
         print(r:has('2.0.0'))       -- false
@@ -3206,7 +3150,6 @@ vim.version.range({spec})                                *vim.version.range()*
 <
 
     Or use cmp(), eq(), lt(), and gt() to compare `.to` and `.from` directly: >lua
-
         local r = vim.version.range('1.0.0 - 2.0.0')
         print(vim.version.gt({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
 <
@@ -3243,7 +3186,6 @@ iterator runs out of values (for function iterators, this means that the
 first value returned by the function is nil).
 
 Examples: >lua
-
     local it = vim.iter({ 1, 2, 3, 4, 5 })
     it:map(function(v)
       return v * 3
@@ -3290,7 +3232,6 @@ filter({f}, {src}, {...})                                  *vim.iter.filter()*
     Filter a table or iterator.
 
     This is a convenience function that performs: >lua
-
         vim.iter(src):filter(f):totable()
 <
 
@@ -3340,19 +3281,16 @@ Iter:enumerate()                                            *Iter:enumerate()*
     the iterator value.
 
     For list tables, prefer >lua
-
         vim.iter(ipairs(t))
 <
 
     over >lua
-
         vim.iter(t):enumerate()
 <
 
     as the former is faster.
 
     Example: >lua
-
         local it = vim.iter(vim.gsplit('abc', '')):enumerate()
         it:next()
         -- 1   'a'
@@ -3369,7 +3307,6 @@ Iter:filter({f})                                               *Iter:filter()*
     Add a filter step to the iterator pipeline.
 
     Example: >lua
-
         local bufs = vim.iter(vim.api.nvim_list_bufs()):filter(vim.api.nvim_buf_is_loaded)
 <
 
@@ -3388,7 +3325,6 @@ Iter:find({f})                                                   *Iter:find()*
     found.
 
     Examples: >lua
-
         local it = vim.iter({ 3, 6, 9, 12 })
         it:find(12)
         -- 12
@@ -3409,7 +3345,6 @@ Iter:fold({init}, {f})                                           *Iter:fold()*
     Fold ("reduce") an iterator or table into a single value.
 
     Examples: >lua
-
         -- Create a new table with only even values
         local t = { a = 1, b = 2, c = 3, d = 4 }
         local it = vim.iter(t)
@@ -3434,7 +3369,6 @@ Iter:last()                                                      *Iter:last()*
     Drains the iterator.
 
     Example: >lua
-
         local it = vim.iter(vim.gsplit('abcdefg', ''))
         it:last()
         -- 'g'
@@ -3453,7 +3387,6 @@ Iter:map({f})                                                     *Iter:map()*
     If the map function returns nil, the value is filtered from the iterator.
 
     Example: >lua
-
         local it = vim.iter({ 1, 2, 3, 4 }):map(function(v)
           if v % 2 == 0 then
             return v * 3
@@ -3476,7 +3409,6 @@ Iter:next()                                                      *Iter:next()*
     Return the next value from the iterator.
 
     Example: >lua
-
         local it = vim.iter(string.gmatch('1 2 3', '%d+')):map(tonumber)
         it:next()
         -- 1
@@ -3495,7 +3427,6 @@ Iter:nextback()                                              *Iter:nextback()*
     Only supported for iterators on list-like tables.
 
     Example: >lua
-
         local it = vim.iter({1, 2, 3, 4})
         it:nextback()
         -- 4
@@ -3512,7 +3443,6 @@ Iter:nth({n})                                                     *Iter:nth()*
     This function advances the iterator.
 
     Example: >lua
-
         local it = vim.iter({ 3, 6, 9, 12 })
         it:nth(2)
         -- 6
@@ -3534,7 +3464,6 @@ Iter:nthback({n})                                             *Iter:nthback()*
     Only supported for iterators on list-like tables.
 
     Example: >lua
-
         local it = vim.iter({ 3, 6, 9, 12 })
         it:nthback(2)
         -- 9
@@ -3554,7 +3483,6 @@ Iter:peek()                                                      *Iter:peek()*
     Only supported for iterators on list-like tables.
 
     Example: >lua
-
         local it = vim.iter({ 3, 6, 9, 12 })
         it:peek()
         -- 3
@@ -3573,7 +3501,6 @@ Iter:peekback()                                              *Iter:peekback()*
     Only supported for iterators on list-like tables.
 
     Example: >lua
-
         local it = vim.iter({1, 2, 3, 4})
         it:peekback()
         -- 4
@@ -3592,7 +3519,6 @@ Iter:rev()                                                        *Iter:rev()*
     Only supported for iterators on list-like tables.
 
     Example: >lua
-
         local it = vim.iter({ 3, 6, 9, 12 }):rev()
         it:totable()
         -- { 12, 9, 6, 3 }
@@ -3611,7 +3537,6 @@ Iter:rfind({f})                                                 *Iter:rfind()*
     Only supported for iterators on list-like tables.
 
     Examples: >lua
-
         local it = vim.iter({ 1, 2, 3, 2, 1 }):enumerate()
         it:rfind(1)
         -- 5   1
@@ -3629,7 +3554,6 @@ Iter:skip({n})                                                   *Iter:skip()*
     Skip values in the iterator.
 
     Example: >lua
-
         local it = vim.iter({ 3, 6, 9, 12 }):skip(2)
         it:next()
         -- 9
@@ -3647,7 +3571,6 @@ Iter:skipback({n})                                           *Iter:skipback()*
     Only supported for iterators on list-like tables.
 
     Example: >lua
-
         local it = vim.iter({ 1, 2, 3, 4, 5 }):skipback(2)
         it:next()
         -- 1
@@ -3684,7 +3607,6 @@ Iter:totable()                                                *Iter:totable()*
     the iterator pipeline, each value will be included in a table.
 
     Examples: >lua
-
         vim.iter(string.gmatch('100 20 50', '%d+')):map(tonumber):totable()
         -- { 100, 20, 50 }
 
@@ -3706,7 +3628,6 @@ map({f}, {src}, {...})                                        *vim.iter.map()*
     Map and filter a table or iterator.
 
     This is a convenience function that performs: >lua
-
         vim.iter(src):map(f):totable()
 <
 
@@ -3726,7 +3647,6 @@ totable({f}, {...})                                       *vim.iter.totable()*
     Collect an iterator into a table.
 
     This is a convenience function that performs: >lua
-
         vim.iter(f):totable()
 <
 

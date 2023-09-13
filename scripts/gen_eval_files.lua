@@ -221,8 +221,8 @@ end
 local function norm_text(x)
   return (
     x:gsub('|([^ ]+)|', '`%1`')
-      :gsub('\n*>lua\n', '\n\n```lua')
-      :gsub('\n*>vim\n', '\n\n```vim')
+      :gsub('\n*>lua', '\n\n```lua')
+      :gsub('\n*>vim', '\n\n```vim')
       :gsub('\n+<$', '\n```')
       :gsub('\n+<\n+', '\n```\n\n')
       :gsub('%s+>\n+', '\n```\n')

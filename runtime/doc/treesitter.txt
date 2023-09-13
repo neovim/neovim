@@ -551,7 +551,6 @@ Lua module: vim.treesitter                               *lua-treesitter-core*
 foldexpr({lnum})                                   *vim.treesitter.foldexpr()*
     Returns the fold level for {lnum} in the current buffer. Can be set
     directly to 'foldexpr': >lua
-
         vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
 <
 
@@ -746,7 +745,6 @@ start({bufnr}, {lang})                                *vim.treesitter.start()*
     the call to `start`.
 
     Example: >lua
-
         vim.api.nvim_create_autocmd( 'FileType', { pattern = 'tex',
             callback = function(args)
                 vim.treesitter.start(args.buf, 'latex')
@@ -922,7 +920,6 @@ omnifunc({findstart}, {base})                *vim.treesitter.query.omnifunc()*
     Omnifunc for completing node names and predicates in treesitter queries.
 
     Use via >lua
-
         vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
 <
 
@@ -959,7 +956,6 @@ Query:iter_captures({node}, {source}, {start}, {stop})
     The iterator returns three values: a numeric id identifying the capture,
     the captured node, and metadata from any directives processing the match.
     The following example shows how to get captures by name: >lua
-
         for id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
           local name = query.captures[id] -- name of the capture in the query
           -- typically useful info about the node:
@@ -991,7 +987,6 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
     If the query has more than one pattern, the capture table might be sparse
     and e.g. `pairs()` method should be used over `ipairs`. Here is an example
     iterating over all captures in every match: >lua
-
         for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
           for id, node in pairs(match) do
             local name = query.captures[id]
@@ -1042,7 +1037,6 @@ some Vimscript commands needs multiple parsers to fully understand its
 contents.
 
 To create a LanguageTree (parser object) for a given buffer and language, use: >lua
-
     local parser = vim.treesitter.get_parser(bufnr, lang)
 
 <
@@ -1053,7 +1047,6 @@ this may change; a plugin should keep a reference to the parser object if
 it wants incremental updates.
 
 Whenever you need to access the current syntax tree, parse the buffer: >lua
-
     local tree = parser:parse({ start_row, end_row })
 
 <

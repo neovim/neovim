@@ -590,7 +590,7 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
             filename = n.attributes['filename'].value
             text += filename.lstrip('.')
 
-        text += '\n\n{}\n<'.format(textwrap.indent(o, ' ' * 4))
+        text += '\n{}\n<'.format(textwrap.indent(o, ' ' * 4))
     elif is_inline(n):
         text = doc_wrap(get_text(n), prefix=prefix, indent=indent, width=width)
     elif n.nodeName == 'verbatim':
