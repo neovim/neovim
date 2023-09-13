@@ -808,7 +808,7 @@ local Option = {} -- luacheck: no unused
 
 --- Returns a Lua-representation of the option. Boolean, number and string
 --- values will be returned in exactly the same fashion.
---- 
+---
 --- For values that are comma-separated lists, an array will be returned with
 --- the values as entries in the array:
 ---

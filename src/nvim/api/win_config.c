@@ -164,9 +164,9 @@
 ///                  |BufEnter|, |BufLeave| or |BufWinEnter| may fire from
 ///                  calling this function.
 ///
-///@param[out] err Error details, if any
+/// @param[out] err Error details, if any
 ///
-///@return Window handle, or 0 on error
+/// @return Window handle, or 0 on error
 Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, Error *err)
   FUNC_API_SINCE(6)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
