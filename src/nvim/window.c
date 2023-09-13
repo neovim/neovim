@@ -968,6 +968,9 @@ void ui_ext_win_position(win_T *wp, bool validate)
       if (win) {
         grid = &win->w_grid;
         int row_off = 0, col_off = 0;
+        if (grid->comp_row == 0 && wp->w_next != NULL && win_valid(wp->w_next)) {
+          ui_ext_win_position(wp->w_next, true);
+        }
         grid_adjust(&grid, &row_off, &col_off);
         row += row_off;
         col += col_off;
@@ -7614,20 +7617,17 @@ void win_get_tabwin(handle_T id, int *tabnr, int *winnr)
 
 void win_ui_flush(bool validate)
 {
-  FOR_ALL_TABS(tp) {
-    // Iterate in _reverse_ order.
-    for (win_T *wp = ((tp) == curtab) ? lastwin : (tp)->tp_lastwin; wp != NULL; wp = wp->w_prev){
-      if (wp->w_pos_changed && wp->w_grid_alloc.chars != NULL) {
-        if (tp == curtab) {
-          ui_ext_win_position(wp, validate);
-        } else {
-          ui_call_win_hide(wp->w_grid_alloc.handle);
-          wp->w_pos_changed = false;
-        }
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_pos_changed && wp->w_grid_alloc.chars != NULL) {
+      if (tp == curtab && wp->w_grid.comp_row == 0) {
+        ui_ext_win_position(wp, validate);
+      } else {
+        ui_call_win_hide(wp->w_grid_alloc.handle);
+        wp->w_pos_changed = false;
       }
-      if (tp == curtab) {
-        ui_ext_win_viewport(wp);
-      }
+    }
+    if (tp == curtab) {
+      ui_ext_win_viewport(wp);
     }
   }
 }
