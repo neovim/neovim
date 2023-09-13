@@ -9,6 +9,7 @@
 #include "mpack/conv.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/grid.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
@@ -497,13 +498,13 @@ redo:
     if (g->icell == g->ncells - 1 && cellsize == 1 && cellbuf[0] == ' ' && repeat > 1) {
       g->clear_width = repeat;
     } else {
+      schar_T sc = schar_from_buf(cellbuf, cellsize);
       for (int r = 0; r < repeat; r++) {
         if (g->coloff >= (int)grid_line_buf_size) {
           p->state = -1;
           return false;
         }
-        memcpy(grid_line_buf_char[g->coloff], cellbuf, cellsize);
-        grid_line_buf_char[g->coloff][cellsize] = NUL;
+        grid_line_buf_char[g->coloff] = sc;
         grid_line_buf_attr[g->coloff++] = g->cur_attr;
       }
     }

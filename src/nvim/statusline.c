@@ -1663,7 +1663,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
 
       char *p = NULL;
       if (fold) {
-        size_t n = fill_foldcolumn(out_p, wp, stcp->foldinfo, (linenr_T)get_vim_var_nr(VV_LNUM));
+        size_t n = fill_foldcolumn(out_p, wp, stcp->foldinfo,
+                                   (linenr_T)get_vim_var_nr(VV_LNUM), NULL);
         stl_items[curitem].minwid = -((stcp->use_cul ? HLF_CLF : HLF_FC) + 1);
         p = out_p;
         p[n] = NUL;

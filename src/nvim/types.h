@@ -46,4 +46,10 @@ typedef enum {
 
 typedef struct Decoration Decoration;
 
+#ifndef ORDER_BIG_ENDIAN
+# if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#  define ORDER_BIG_ENDIAN
+# endif
+#endif
+
 #endif  // NVIM_TYPES_H

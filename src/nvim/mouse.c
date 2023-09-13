@@ -1849,7 +1849,6 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
   int click_grid = mouse_grid;
   int click_row = mouse_row;
   int click_col = mouse_col;
-  int mouse_char = ' ';
   int max_row = Rows;
   int max_col = Columns;
   bool multigrid = ui_has(kUIMultigrid);
@@ -1864,7 +1863,6 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
   if (wp && mouse_row >= 0 && mouse_row < max_row
       && mouse_col >= 0 && mouse_col < max_col) {
     ScreenGrid *gp = multigrid ? &wp->w_grid_alloc : &default_grid;
-    int fdc = win_fdccol_count(wp);
     int use_row = multigrid && mouse_grid == 0 ? click_row : mouse_row;
     int use_col = multigrid && mouse_grid == 0 ? click_col : mouse_col;
 
@@ -1901,22 +1899,12 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
         // concealed characters.
         *vcolp = col_from_screen;
       }
-
-      // Remember the character under the mouse, might be one of foldclose or
-      // foldopen fillchars in the fold column.
-      mouse_char = utf_ptr2char((char *)gp->chars[off]);
-    }
-
-    // Check for position outside of the fold column.
-    if (wp->w_p_rl ? click_col < wp->w_width_inner - fdc :
-        click_col >= fdc + (cmdwin_type == 0 ? 0 : 1)) {
-      mouse_char = ' ';
     }
   }
 
-  if (wp && mouse_char == wp->w_p_fcs_chars.foldclosed) {
+  if (col_from_screen == -2) {
     *flagsp |= MOUSE_FOLD_OPEN;
-  } else if (mouse_char != ' ') {
+  } else if (col_from_screen == -3) {
     *flagsp |= MOUSE_FOLD_CLOSE;
   }
 }

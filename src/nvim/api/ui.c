@@ -833,8 +833,7 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
     bool was_space = false;
     for (size_t i = 0; i < ncells; i++) {
       repeat++;
-      if (i == ncells - 1 || attrs[i] != attrs[i + 1]
-          || strcmp(chunk[i], chunk[i + 1]) != 0) {
+      if (i == ncells - 1 || attrs[i] != attrs[i + 1] || chunk[i] != chunk[i + 1]) {
         if (UI_BUF_SIZE - BUF_POS(data) < 2 * (1 + 2 + sizeof(schar_T) + 5 + 5) + 1) {
           // close to overflowing the redraw buffer. finish this event,
           // flush, and start a new "grid_line" event at the current position.
@@ -859,7 +858,9 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
         uint32_t csize = (repeat > 1) ? 3 : ((attrs[i] != last_hl) ? 2 : 1);
         nelem++;
         mpack_array(buf, csize);
-        mpack_str(buf, chunk[i]);
+        char sc_buf[MAX_SCHAR_SIZE];
+        schar_get(sc_buf, chunk[i]);
+        mpack_str(buf, sc_buf);
         if (csize >= 2) {
           mpack_uint(buf, (uint32_t)attrs[i]);
           if (csize >= 3) {
@@ -869,7 +870,7 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
         data->ncells_pending += MIN(repeat, 2);
         last_hl = attrs[i];
         repeat = 0;
-        was_space = strequal(chunk[i], " ");
+        was_space = chunk[i] == schar_from_ascii(' ');
       }
     }
     // If the last chunk was all spaces, add a clearing chunk even if there are
@@ -893,8 +894,10 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
     for (int i = 0; i < endcol - startcol; i++) {
       remote_ui_cursor_goto(ui, row, startcol + i);
       remote_ui_highlight_set(ui, attrs[i]);
-      remote_ui_put(ui, chunk[i]);
-      if (utf_ambiguous_width(utf_ptr2char((char *)chunk[i]))) {
+      char sc_buf[MAX_SCHAR_SIZE];
+      schar_get(sc_buf, chunk[i]);
+      remote_ui_put(ui, sc_buf);
+      if (utf_ambiguous_width(utf_ptr2char(sc_buf))) {
         data->client_col = -1;  // force cursor update
       }
     }
