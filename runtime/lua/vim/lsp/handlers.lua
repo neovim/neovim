@@ -369,15 +369,22 @@ function M.hover(_, result, ctx, config)
     end
     return
   end
-  local markdown_lines = util.convert_input_to_markdown_lines(result.contents)
-  markdown_lines = util.trim_empty_lines(markdown_lines)
-  if vim.tbl_isempty(markdown_lines) then
+  local format = 'markdown'
+  local contents ---@type string[]
+  if type(result.contents) == 'table' and result.contents.kind == 'plaintext' then
+    format = 'plaintext'
+    contents = { result.contents.value or '' }
+  else
+    contents = util.convert_input_to_markdown_lines(result.contents)
+  end
+  contents = util.trim_empty_lines(contents)
+  if vim.tbl_isempty(contents) then
     if config.silent ~= true then
       vim.notify('No information available')
     end
     return
   end
-  return util.open_floating_preview(markdown_lines, 'markdown', config)
+  return util.open_floating_preview(contents, format, config)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover

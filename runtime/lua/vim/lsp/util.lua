@@ -877,9 +877,12 @@ end
 --- window for `textDocument/hover`, for parsing the result of
 --- `textDocument/signatureHelp`, and potentially others.
 ---
+--- Note that if the input is of type `MarkupContent` and its kind is `plaintext`,
+--- then the corresponding value is returned without further modifications.
+---
 ---@param input (`MarkedString` | `MarkedString[]` | `MarkupContent`)
 ---@param contents (table|nil) List of strings to extend with converted lines. Defaults to {}.
----@return table {contents} extended with lines of converted markdown.
+---@return string[] extended with lines of converted markdown.
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 function M.convert_input_to_markdown_lines(input, contents)
   contents = contents or {}
@@ -887,27 +890,13 @@ function M.convert_input_to_markdown_lines(input, contents)
   if type(input) == 'string' then
     list_extend(contents, split_lines(input))
   else
-    assert(type(input) == 'table', 'Expected a table for Hover.contents')
+    assert(type(input) == 'table', 'Expected a table for LSP input')
     -- MarkupContent
     if input.kind then
-      -- The kind can be either plaintext or markdown.
-      -- If it's plaintext, then wrap it in a <text></text> block
-
-      -- Some servers send input.value as empty, so let's ignore this :(
       local value = input.value or ''
-
-      if input.kind == 'plaintext' then
-        -- wrap this in a <text></text> block so that stylize_markdown
-        -- can properly process it as plaintext
-        value = string.format('<text>\n%s\n</text>', value)
-      end
-
-      -- assert(type(value) == 'string')
       list_extend(contents, split_lines(value))
       -- MarkupString variation 2
     elseif input.language then
-      -- Some servers send input.value as empty, so let's ignore this :(
-      -- assert(type(input.value) == 'string')
       table.insert(contents, '```' .. input.language)
       list_extend(contents, split_lines(input.value or ''))
       table.insert(contents, '```')
@@ -925,7 +914,7 @@ function M.convert_input_to_markdown_lines(input, contents)
   return contents
 end
 
---- Converts `textDocument/SignatureHelp` response to markdown lines.
+--- Converts `textDocument/signatureHelp` response to markdown lines.
 ---
 ---@param signature_help table Response of `textDocument/SignatureHelp`
 ---@param ft string|nil filetype that will be use as the `lang` for the label markdown code block
@@ -955,7 +944,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
   end
   local label = signature.label
   if ft then
-    -- wrap inside a code block so stylize_markdown can render it properly
+    -- wrap inside a code block for proper rendering
     label = ('```%s\n%s\n```'):format(ft, label)
   end
   list_extend(contents, split(label, '\n', { plain = true }))
@@ -1223,7 +1212,7 @@ function M.preview_location(location, opts)
   local syntax = vim.bo[bufnr].syntax
   if syntax == '' then
     -- When no syntax is set, we use filetype as fallback. This might not result
-    -- in a valid syntax definition. See also ft detection in stylize_markdown.
+    -- in a valid syntax definition.
     -- An empty syntax is more common now with TreeSitter, since TS disables syntax.
     syntax = vim.bo[bufnr].filetype
   end
@@ -1240,36 +1229,65 @@ local function find_window_by_var(name, value)
   end
 end
 
---- Trims empty lines from input and pad top and bottom with empty lines
----
----@param contents table of lines to trim and pad
----@param opts table with optional fields
----             - pad_top    number of lines to pad contents at top (default 0)
----             - pad_bottom number of lines to pad contents at bottom (default 0)
----@return table table of trimmed and padded lines
-function M._trim(contents, opts)
-  validate({
-    contents = { contents, 't' },
-    opts = { opts, 't', true },
-  })
-  opts = opts or {}
-  contents = M.trim_empty_lines(contents)
-  if opts.pad_top then
-    for _ = 1, opts.pad_top do
-      table.insert(contents, 1, '')
-    end
-  end
-  if opts.pad_bottom then
-    for _ = 1, opts.pad_bottom do
-      table.insert(contents, '')
-    end
-  end
-  return contents
+---Returns true if the line is empty or only contains whitespace.
+---@param line string
+---@return boolean
+local function is_blank_line(line)
+  return line and line:match('^%s*$')
 end
 
---- Generates a table mapping markdown code block lang to vim syntax,
---- based on g:markdown_fenced_languages
----@return table table of lang -> syntax mappings
+---Returns true if the line corresponds to a Markdown thematic break.
+---@param line string
+---@return boolean
+local function is_separator_line(line)
+  return line and line:match('^ ? ? ?%-%-%-+%s*$')
+end
+
+---Replaces separator lines by the given divider and removing surrounding blank lines.
+---@param contents string[]
+---@param divider string
+---@return string[]
+local function replace_separators(contents, divider)
+  local trimmed = {}
+  local l = 1
+  while l <= #contents do
+    local line = contents[l]
+    if is_separator_line(line) then
+      if l > 1 and is_blank_line(contents[l - 1]) then
+        table.remove(trimmed)
+      end
+      table.insert(trimmed, divider)
+      if is_blank_line(contents[l + 1]) then
+        l = l + 1
+      end
+    else
+      table.insert(trimmed, line)
+    end
+    l = l + 1
+  end
+
+  return trimmed
+end
+
+---Collapses successive blank lines in the input table into a single one.
+---@param contents string[]
+---@return string[]
+local function collapse_blank_lines(contents)
+  local collapsed = {}
+  local l = 1
+  while l <= #contents do
+    local line = contents[l]
+    if is_blank_line(line) then
+      while is_blank_line(contents[l + 1]) do
+        l = l + 1
+      end
+    end
+    table.insert(collapsed, line)
+    l = l + 1
+  end
+  return collapsed
+end
+
 local function get_markdown_fences()
   local fences = {}
   for _, fence in pairs(vim.g.markdown_fenced_languages or {}) do
@@ -1297,8 +1315,6 @@ end
 ---  - wrap_at   character to wrap at for computing height
 ---  - max_width  maximal width of floating window
 ---  - max_height maximal height of floating window
----  - pad_top    number of lines to pad contents at top
----  - pad_bottom number of lines to pad contents at bottom
 ---  - separator insert separator after code block
 ---@return table stripped content
 function M.stylize_markdown(bufnr, contents, opts)
@@ -1335,7 +1351,7 @@ function M.stylize_markdown(bufnr, contents, opts)
   end
 
   -- Clean up
-  contents = M._trim(contents, opts)
+  contents = M.trim_empty_lines(contents)
 
   local stripped = {}
   local highlights = {}
@@ -1484,6 +1500,49 @@ function M.stylize_markdown(bufnr, contents, opts)
   return stripped
 end
 
+--- @class lsp.util.NormalizeMarkdownOptions
+--- @field width integer Thematic breaks are expanded to this size. Defaults to 80.
+
+--- Normalizes Markdown input to a canonical form.
+---
+--- The returned Markdown adheres to the GitHub Flavored Markdown (GFM)
+--- specification.
+---
+--- The following transformations are made:
+---
+---   1. Empty lines at the beginning or end of the content are removed
+---   2. Carriage returns ('\r') are removed
+---   3. Successive empty lines are collapsed into a single empty line
+---   4. Thematic breaks are expanded to the given width
+---
+---@private
+---@param contents string[]
+---@param opts? lsp.util.NormalizeMarkdownOptions
+---@return string[] table of lines containing normalized Markdown
+---@see https://github.github.com/gfm
+function M._normalize_markdown(contents, opts)
+  validate({
+    contents = { contents, 't' },
+    opts = { opts, 't', true },
+  })
+  opts = opts or {}
+
+  -- 1. Empty lines at the beginning or end of the content are removed
+  contents = M.trim_empty_lines(contents)
+
+  -- 2. Carriage returns are removed
+  contents = vim.split(table.concat(contents, '\n'):gsub('\r', ''), '\n')
+
+  -- 3. Successive empty lines are collapsed into a single empty line
+  contents = collapse_blank_lines(contents)
+
+  -- 4. Thematic breaks are expanded to the given width
+  local divider = string.rep('─', opts.width or 80)
+  contents = replace_separators(contents, divider)
+
+  return contents
+end
+
 --- Closes the preview window
 ---
 ---@param winnr integer window id of preview window
@@ -1620,8 +1679,6 @@ end
 ---             - wrap_at: (integer) character to wrap at for computing height when wrap is enabled
 ---             - max_width: (integer) maximal width of floating window
 ---             - max_height: (integer) maximal height of floating window
----             - pad_top: (integer) number of lines to pad contents at top
----             - pad_bottom: (integer) number of lines to pad contents at bottom
 ---             - focus_id: (string) if a popup with this id is opened, then focus it
 ---             - close_events: (table) list of events that closes the floating window
 ---             - focusable: (boolean, default true) Make float focusable
@@ -1629,8 +1686,7 @@ end
 ---                      is also `true`, focus an existing floating window with the same
 ---                      {focus_id}
 ---@return integer bufnr of newly created float window
----@return integer winid of newly created float window
----preview window
+---@return integer winid of newly created float window preview window
 function M.open_floating_preview(contents, syntax, opts)
   validate({
     contents = { contents, 't' },
@@ -1639,7 +1695,6 @@ function M.open_floating_preview(contents, syntax, opts)
   })
   opts = opts or {}
   opts.wrap = opts.wrap ~= false -- wrapping by default
-  opts.stylize_markdown = opts.stylize_markdown ~= false and vim.g.syntax_on ~= nil
   opts.focus = opts.focus ~= false
   opts.close_events = opts.close_events or { 'CursorMoved', 'CursorMovedI', 'InsertCharPre' }
 
@@ -1671,16 +1726,21 @@ function M.open_floating_preview(contents, syntax, opts)
     api.nvim_win_close(existing_float, true)
   end
 
+  -- Create the buffer
   local floating_bufnr = api.nvim_create_buf(false, true)
-  local do_stylize = syntax == 'markdown' and opts.stylize_markdown
 
-  -- Clean up input: trim empty lines from the end, pad
-  contents = M._trim(contents, opts)
-
+  -- Set up the contents, using treesitter for markdown
+  local do_stylize = syntax == 'markdown' and vim.g.syntax_on ~= nil
   if do_stylize then
-    -- applies the syntax and sets the lines to the buffer
-    contents = M.stylize_markdown(floating_bufnr, contents, opts)
+    local width = M._make_floating_popup_size(contents, opts)
+    contents = M._normalize_markdown(contents, { width = width })
+    vim.bo[floating_bufnr].filetype = 'markdown'
+    vim.treesitter.start(floating_bufnr)
+    api.nvim_buf_set_lines(floating_bufnr, 0, -1, false, contents)
   else
+    -- Clean up input: trim empty lines from the end, pad
+    contents = M.trim_empty_lines(contents)
+
     if syntax then
       vim.bo[floating_bufnr].syntax = syntax
     end
@@ -1697,9 +1757,9 @@ function M.open_floating_preview(contents, syntax, opts)
 
   local float_option = M.make_floating_popup_options(width, height, opts)
   local floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
+
   if do_stylize then
     vim.wo[floating_winnr].conceallevel = 2
-    vim.wo[floating_winnr].concealcursor = 'n'
   end
   -- disable folding
   vim.wo[floating_winnr].foldenable = false
@@ -1708,6 +1768,7 @@ function M.open_floating_preview(contents, syntax, opts)
 
   vim.bo[floating_bufnr].modifiable = false
   vim.bo[floating_bufnr].bufhidden = 'wipe'
+
   api.nvim_buf_set_keymap(
     floating_bufnr,
     'n',

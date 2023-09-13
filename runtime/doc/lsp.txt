@@ -1681,20 +1681,24 @@ convert_input_to_markdown_lines({input}, {contents})
     window for `textDocument/hover`, for parsing the result of
     `textDocument/signatureHelp`, and potentially others.
 
+    Note that if the input is of type `MarkupContent` and its kind is
+    `plaintext`, then the corresponding value is returned without further
+    modifications.
+
     Parameters: ~
       • {input}     (`MarkedString` | `MarkedString[]` | `MarkupContent`)
       • {contents}  (table|nil) List of strings to extend with converted
                     lines. Defaults to {}.
 
     Return: ~
-        (table) {contents} extended with lines of converted markdown.
+        string[] extended with lines of converted markdown.
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 
                      *vim.lsp.util.convert_signature_help_to_markdown_lines()*
 convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
-    Converts `textDocument/SignatureHelp` response to markdown lines.
+    Converts `textDocument/signatureHelp` response to markdown lines.
 
     Parameters: ~
       • {signature_help}  (table) Response of `textDocument/SignatureHelp`
@@ -1911,10 +1915,6 @@ open_floating_preview({contents}, {syntax}, {opts})
                       height when wrap is enabled
                     • max_width: (integer) maximal width of floating window
                     • max_height: (integer) maximal height of floating window
-                    • pad_top: (integer) number of lines to pad contents at
-                      top
-                    • pad_bottom: (integer) number of lines to pad contents at
-                      bottom
                     • focus_id: (string) if a popup with this id is opened,
                       then focus it
                     • close_events: (table) list of events that closes the
@@ -2008,8 +2008,6 @@ stylize_markdown({bufnr}, {contents}, {opts})
                     • wrap_at character to wrap at for computing height
                     • max_width maximal width of floating window
                     • max_height maximal height of floating window
-                    • pad_top number of lines to pad contents at top
-                    • pad_bottom number of lines to pad contents at bottom
                     • separator insert separator after code block
 
     Return: ~
