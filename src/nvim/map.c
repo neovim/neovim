@@ -196,9 +196,6 @@ void mh_clear(MapHash *h)
 
 #define KEY_NAME(x) x##HlEntry
 #include "nvim/map_key_impl.c.h"
-#define VAL_NAME(x) quasiquote(x, int)
-#include "nvim/map_value_impl.c.h"
-#undef VAL_NAME
 #undef KEY_NAME
 
 #define KEY_NAME(x) x##ColorKey

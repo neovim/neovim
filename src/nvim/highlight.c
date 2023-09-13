@@ -40,12 +40,12 @@
 
 static bool hlstate_active = false;
 
-static kvec_t(HlEntry) attr_entries = KV_INITIAL_VALUE;
-
-static Map(HlEntry, int) attr_entry_ids = MAP_INIT;
+static Set(HlEntry) attr_entries = SET_INIT;
 static Map(int, int) combine_attr_entries = MAP_INIT;
 static Map(int, int) blend_attr_entries = MAP_INIT;
 static Map(int, int) blendthrough_attr_entries = MAP_INIT;
+
+#define attr_entry(i) attr_entries.keys[i]
 
 /// highlight entries private to a namespace
 static Map(ColorKey, ColorItem) ns_hls;
@@ -55,8 +55,8 @@ static PMap(int) ns_hl_attr;
 void highlight_init(void)
 {
   // index 0 is no attribute, add dummy entry:
-  kv_push(attr_entries, ((HlEntry){ .attr = HLATTRS_INIT, .kind = kHlUnknown,
-                                    .id1 = 0, .id2 = 0 }));
+  set_put(HlEntry, &attr_entries, ((HlEntry){ .attr = HLATTRS_INIT, .kind = kHlInvalid,
+                                              .id1 = 0, .id2 = 0 }));
 }
 
 /// @return true if hl table was reset
@@ -77,6 +77,7 @@ bool highlight_use_hlstate(void)
 /// @return 0 for error.
 static int get_attr_entry(HlEntry entry)
 {
+  bool retried = false;
   if (!hlstate_active) {
     // This information will not be used, erase it and reduce the table size.
     entry.kind = kHlUnknown;
@@ -84,17 +85,19 @@ static int get_attr_entry(HlEntry entry)
     entry.id2 = 0;
   }
 
-  int id = map_get(HlEntry, int)(&attr_entry_ids, entry);
-  if (id > 0) {
-    return id;
+retry: {}
+  MhPutStatus status;
+  uint32_t k = set_put_idx(HlEntry, &attr_entries, entry, &status);
+  if (status == kMHExisting) {
+    return (int)k;
   }
 
   static bool recursive = false;
-  if (kv_size(attr_entries) > MAX_TYPENR) {
+  if (set_size(&attr_entries) > MAX_TYPENR) {
     // Running out of attribute entries!  remove all attributes, and
     // compute new ones for all groups.
     // When called recursively, we are really out of numbers.
-    if (recursive) {
+    if (recursive || retried) {
       emsg(_("E424: Too many different highlighting attributes in use"));
       return 0;
     }
@@ -107,17 +110,12 @@ static int get_attr_entry(HlEntry entry)
       // This entry is now invalid, don't put it
       return 0;
     }
+    retried = true;
+    goto retry;
   }
 
-  size_t next_id = kv_size(attr_entries);
-  if (next_id > INT_MAX) {
-    ELOG("The index on attr_entries has overflowed");
-    return 0;
-  }
-  id = (int)next_id;
-  kv_push(attr_entries, entry);
-
-  map_put(HlEntry, int)(&attr_entry_ids, entry, id);
+  // new attr id, send event to remote ui:s
+  int id = (int)k;
 
   Array inspect = hl_inspect(id);
 
@@ -131,10 +129,10 @@ static int get_attr_entry(HlEntry entry)
 /// When a UI connects, we need to send it the table of highlights used so far.
 void ui_send_all_hls(UI *ui)
 {
-  for (size_t i = 1; i < kv_size(attr_entries); i++) {
+  for (size_t i = 1; i < set_size(&attr_entries); i++) {
     Array inspect = hl_inspect((int)i);
-    remote_ui_hl_attr_define(ui, (Integer)i, kv_A(attr_entries, i).attr,
-                             kv_A(attr_entries, i).attr, inspect);
+    HlAttrs attr = attr_entry(i).attr;
+    remote_ui_hl_attr_define(ui, (Integer)i, attr, attr, inspect);
     api_free_array(inspect);
   }
   for (size_t hlf = 0; hlf < HLF_COUNT; hlf++) {
@@ -364,7 +362,7 @@ void update_window_hl(win_T *wp, bool invalid)
 
   // if blend= attribute is not set, 'winblend' value overrides it.
   if (wp->w_floating && wp->w_p_winbl > 0) {
-    HlEntry entry = kv_A(attr_entries, wp->w_hl_attr_normal);
+    HlEntry entry = attr_entry(wp->w_hl_attr_normal);
     if (entry.attr.hl_blend == -1) {
       entry.attr.hl_blend = (int)wp->w_p_winbl;
       wp->w_hl_attr_normal = get_attr_entry(entry);
@@ -401,7 +399,7 @@ void update_window_hl(win_T *wp, bool invalid)
 
   // if blend= attribute is not set, 'winblend' value overrides it.
   if (wp->w_floating && wp->w_p_winbl > 0) {
-    HlEntry entry = kv_A(attr_entries, wp->w_hl_attr_normalnc);
+    HlEntry entry = attr_entry(wp->w_hl_attr_normalnc);
     if (entry.attr.hl_blend == -1) {
       entry.attr.hl_blend = (int)wp->w_p_winbl;
       wp->w_hl_attr_normalnc = get_attr_entry(entry);
@@ -490,8 +488,8 @@ int hl_get_term_attr(HlAttrs *aep)
 void clear_hl_tables(bool reinit)
 {
   if (reinit) {
-    kv_size(attr_entries) = 1;
-    map_clear(HlEntry, &attr_entry_ids);
+    set_clear(HlEntry, &attr_entries);
+    highlight_init();
     map_clear(int, &combine_attr_entries);
     map_clear(int, &blend_attr_entries);
     map_clear(int, &blendthrough_attr_entries);
@@ -500,8 +498,7 @@ void clear_hl_tables(bool reinit)
     highlight_changed();
     screen_invalidate_highlights();
   } else {
-    kv_destroy(attr_entries);
-    map_destroy(HlEntry, &attr_entry_ids);
+    set_destroy(HlEntry, &attr_entries);
     map_destroy(int, &combine_attr_entries);
     map_destroy(int, &blend_attr_entries);
     map_destroy(int, &blendthrough_attr_entries);
@@ -809,11 +806,11 @@ static int hl_cterm2rgb_color(int nr)
 /// Get highlight attributes for a attribute code
 HlAttrs syn_attr2entry(int attr)
 {
-  if (attr <= 0 || attr >= (int)kv_size(attr_entries)) {
+  if (attr <= 0 || attr >= (int)set_size(&attr_entries)) {
     // invalid attribute code, or the tables were cleared
     return HLATTRS_INIT;
   }
-  return kv_A(attr_entries, attr).attr;
+  return attr_entry(attr).attr;
 }
 
 /// Gets highlight description for id `attr_id` as a map.
@@ -825,7 +822,7 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Arena *arena, Error *
     return dic;
   }
 
-  if (attr_id <= 0 || attr_id >= (int)kv_size(attr_entries)) {
+  if (attr_id <= 0 || attr_id >= (int)set_size(&attr_entries)) {
     api_set_error(err, kErrorTypeException,
                   "Invalid attribute id: %" PRId64, attr_id);
     return dic;
@@ -1132,11 +1129,11 @@ Array hl_inspect(int attr)
 static void hl_inspect_impl(Array *arr, int attr)
 {
   Dictionary item = ARRAY_DICT_INIT;
-  if (attr <= 0 || attr >= (int)kv_size(attr_entries)) {
+  if (attr <= 0 || attr >= (int)set_size(&attr_entries)) {
     return;
   }
 
-  HlEntry e = kv_A(attr_entries, attr);
+  HlEntry e = attr_entry(attr);
   switch (e.kind) {
   case kHlSyntax:
     PUT(item, "kind", CSTR_TO_OBJ("syntax"));
@@ -1165,6 +1162,7 @@ static void hl_inspect_impl(Array *arr, int attr)
     return;
 
   case kHlUnknown:
+  case kHlInvalid:
     return;
   }
   PUT(item, "id", INTEGER_OBJ(attr));
