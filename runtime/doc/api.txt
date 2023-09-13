@@ -3066,7 +3066,7 @@ nvim_open_win({buffer}, {enter}, {*config})                  *nvim_open_win()*
     could let floats hover outside of the main window like a tooltip, but this
     should not be used to specify arbitrary WM screen positions.
 
-    Example (Lua): window-relative float>lua
+    Example (Lua): window-relative float >lua
 
         vim.api.nvim_open_win(0, false, {
           relative='win',
