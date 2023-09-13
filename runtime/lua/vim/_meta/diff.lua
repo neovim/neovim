@@ -8,14 +8,14 @@
 --- Examples:
 ---
 --- ```lua
---- vim.diff('a\\n', 'b\\nc\\n')
+--- vim.diff('a\n', 'b\nc\n')
 --- -- =>
 --- -- @@ -1 +1,2 @@
 --- -- -a
 --- -- +b
 --- -- +c
 ---
---- vim.diff('a\\n', 'b\\nc\\n', {result_type = 'indices'})
+--- vim.diff('a\n', 'b\nc\n', {result_type = 'indices'})
 --- -- =>
 --- -- {
 --- --   {1, 1, 1, 2}
