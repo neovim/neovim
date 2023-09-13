@@ -165,8 +165,7 @@ describe('float window', function()
       return vim.api.nvim_win_get_position(win_id)
     ]])
 
-    eq(9, pos[1])
-    eq(7, pos[2])
+    eq({9, 7}, pos)
   end)
 
   it('opened with correct position relative to the mouse', function()
@@ -188,8 +187,7 @@ describe('float window', function()
       return vim.api.nvim_win_get_position(win_id)
     ]])
 
-    eq(12, pos[1])
-    eq(11, pos[2])
+    eq({12, 11}, pos)
   end)
 
   it('opened with correct position relative to the cursor', function()
@@ -210,8 +208,7 @@ describe('float window', function()
       return vim.api.nvim_win_get_position(win_id)
     ]])
 
-    eq(9, pos[1])
-    eq(7, pos[2])
+    eq({9, 7}, pos)
   end)
 
   it('opened with correct position relative to another window', function()
@@ -244,8 +241,7 @@ describe('float window', function()
       return vim.api.nvim_win_get_position(win_id)
     ]])
 
-    eq(18, pos[1])
-    eq(14, pos[2])
+    eq({18,14}, pos)
   end)
 
 
@@ -291,8 +287,41 @@ describe('float window', function()
       return vim.api.nvim_win_get_position(win_id)
     ]])
 
-    eq(14, pos[1])
-    eq(12, pos[2])
+    eq({14,12}, pos)
+  end)
+
+  it('relative=win is relative to given (floating) window #14735', function()
+    local res = exec_lua([[
+      local parent_bufnr = vim.api.nvim_create_buf(false, true)
+      local parent_window_config = {
+        width = 10,
+        height = 6,
+        row = 10,
+        col = 20,
+        relative = 'editor',
+        style = 'minimal',
+        border = 'rounded',
+        zindex = 49,
+      }
+      local parent_winid = vim.api.nvim_open_win(parent_bufnr, false, parent_window_config)
+      local opts = {
+        width = 8,
+        height = 4,
+        row = 1,
+        col = 1,
+        relative = 'win',
+        style = 'minimal',
+        win = parent_winid,
+        zindex = 50,
+      }
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local win_id = vim.api.nvim_open_win(bufnr, true, opts)
+      return {
+        vim.api.nvim_win_get_position(parent_winid),
+        vim.api.nvim_win_get_position(win_id),
+      }
+    ]])
+    eq({{10, 20}, {11, 21}}, res)
   end)
 
   it('is not operated on by windo when non-focusable #15374', function()
