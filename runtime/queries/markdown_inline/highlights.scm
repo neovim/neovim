@@ -92,3 +92,11 @@
     "]"
   ] @conceal
   (#set! conceal ""))
+
+;; Replace common HTML entities.
+((entity_reference) @conceal (#eq? @conceal "&nbsp;") (#set! conceal ""))
+((entity_reference) @conceal (#eq? @conceal "&lt;") (#set! conceal "<"))
+((entity_reference) @conceal (#eq? @conceal "&gt;") (#set! conceal ">"))
+((entity_reference) @conceal (#eq? @conceal "&amp;") (#set! conceal "&"))
+((entity_reference) @conceal (#eq? @conceal "&quot;") (#set! conceal "\""))
+((entity_reference) @conceal (#any-of? @conceal "&ensp;" "&emsp;") (#set! conceal " "))

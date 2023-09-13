@@ -3032,7 +3032,7 @@ describe('LSP', function()
         }
         return vim.lsp.util.convert_signature_help_to_markdown_lines(signature_help, 'cs', {','})
       ]]
-      local expected = {'```cs', 'TestEntity.TestEntity()', '```', '<text>', 'some doc', '</text>'}
+      local expected = {'```cs', 'TestEntity.TestEntity()', '```', 'some doc'}
       eq(expected, result)
     end)
   end)

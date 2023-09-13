@@ -61,3 +61,11 @@
 ] @string.escape
 
 (inline) @spell
+
+;; Conceal backticks
+(fenced_code_block
+  (fenced_code_block_delimiter) @conceal
+  (#set! conceal ""))
+(fenced_code_block
+  (info_string (language) @conceal
+  (#set! conceal "")))
