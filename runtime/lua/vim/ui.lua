@@ -3,24 +3,6 @@ local M = {}
 --- Prompts the user to pick from a list of items, allowing arbitrary (potentially asynchronous)
 --- work until `on_choice`.
 ---
----@param items table Arbitrary items
----@param opts table Additional options
----     - prompt (string|nil)
----               Text of the prompt. Defaults to `Select one of:`
----     - format_item (function item -> text)
----               Function to format an
----               individual item from `items`. Defaults to `tostring`.
----     - kind (string|nil)
----               Arbitrary hint string indicating the item shape.
----               Plugins reimplementing `vim.ui.select` may wish to
----               use this to infer the structure or semantics of
----               `items`, or the context in which select() was called.
----@param on_choice function ((item|nil, idx|nil) -> ())
----               Called once the user made a choice.
----               `idx` is the 1-based index of `item` within `items`.
----               `nil` if the user aborted the dialog.
----
----
 --- Example:
 ---
 --- ```lua
@@ -37,6 +19,23 @@ local M = {}
 ---     end
 --- end)
 --- ```
+---
+---@param items table Arbitrary items
+---@param opts table Additional options
+---     - prompt (string|nil)
+---               Text of the prompt. Defaults to `Select one of:`
+---     - format_item (function item -> text)
+---               Function to format an
+---               individual item from `items`. Defaults to `tostring`.
+---     - kind (string|nil)
+---               Arbitrary hint string indicating the item shape.
+---               Plugins reimplementing `vim.ui.select` may wish to
+---               use this to infer the structure or semantics of
+---               `items`, or the context in which select() was called.
+---@param on_choice function ((item|nil, idx|nil) -> ())
+---               Called once the user made a choice.
+---               `idx` is the 1-based index of `item` within `items`.
+---               `nil` if the user aborted the dialog.
 function M.select(items, opts, on_choice)
   vim.validate({
     items = { items, 'table', false },
@@ -59,6 +58,14 @@ end
 --- Prompts the user for input, allowing arbitrary (potentially asynchronous) work until
 --- `on_confirm`.
 ---
+--- Example:
+---
+--- ```lua
+--- vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
+---     vim.o.shiftwidth = tonumber(input)
+--- end)
+--- ```
+---
 ---@param opts table Additional options. See |input()|
 ---     - prompt (string|nil)
 ---               Text of the prompt
@@ -78,15 +85,6 @@ end
 ---               `input` is what the user typed (it might be
 ---               an empty string if nothing was entered), or
 ---               `nil` if the user aborted the dialog.
----
---- Example:
----
---- ```lua
---- vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
----     vim.o.shiftwidth = tonumber(input)
---- end)
---- ```
----
 function M.input(opts, on_confirm)
   vim.validate({
     on_confirm = { on_confirm, 'function', false },

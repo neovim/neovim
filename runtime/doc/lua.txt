@@ -2521,7 +2521,12 @@ vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
     Prompts the user for input, allowing arbitrary (potentially asynchronous)
     work until `on_confirm`.
 
-    Example:
+    Example: >lua
+
+        vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
+            vim.o.shiftwidth = tonumber(input)
+        end)
+<
 
     Parameters: ~
       • {opts}        (table) Additional options. See |input()|
@@ -2536,12 +2541,7 @@ vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
       • {on_confirm}  (function) ((input|nil) -> ()) Called once the user
                       confirms or abort the input. `input` is what the user
                       typed (it might be an empty string if nothing was
-                      entered), or `nil` if the user aborted the dialog. >lua
-
-        vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
-            vim.o.shiftwidth = tonumber(input)
-        end)
-<
+                      entered), or `nil` if the user aborted the dialog.
 
 vim.ui.open({path})                                            *vim.ui.open()*
     Opens `path` with the system default handler (macOS `open`, Windows
@@ -2571,7 +2571,21 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
     Prompts the user to pick from a list of items, allowing arbitrary
     (potentially asynchronous) work until `on_choice`.
 
-    Example:
+    Example: >lua
+
+        vim.ui.select({ 'tabs', 'spaces' }, {
+            prompt = 'Select tabs or spaces:',
+            format_item = function(item)
+                return "I'd like to choose " .. item
+            end,
+        }, function(choice)
+            if choice == 'spaces' then
+                vim.o.expandtab = true
+            else
+                vim.o.expandtab = false
+            end
+        end)
+<
 
     Parameters: ~
       • {items}      (table) Arbitrary items
@@ -2587,21 +2601,7 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
                        `items`, or the context in which select() was called.
       • {on_choice}  (function) ((item|nil, idx|nil) -> ()) Called once the
                      user made a choice. `idx` is the 1-based index of `item`
-                     within `items`. `nil` if the user aborted the dialog. >lua
-
-        vim.ui.select({ 'tabs', 'spaces' }, {
-            prompt = 'Select tabs or spaces:',
-            format_item = function(item)
-                return "I'd like to choose " .. item
-            end,
-        }, function(choice)
-            if choice == 'spaces' then
-                vim.o.expandtab = true
-            else
-                vim.o.expandtab = false
-            end
-        end)
-<
+                     within `items`. `nil` if the user aborted the dialog.
 
 
 ==============================================================================
