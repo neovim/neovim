@@ -207,8 +207,14 @@ Object rpc_send_call(uint64_t id, const char *method_name, Array args, ArenaMem 
   // Push the frame
   ChannelCallFrame frame = { request_id, false, false, NIL, NULL };
   kv_push(rpc->call_stack, &frame);
-  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, channel->events, -1, frame.returned);
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, channel->events, -1, frame.returned || rpc->closed);
   (void)kv_pop(rpc->call_stack);
+
+  if (rpc->closed) {
+    api_set_error(err, kErrorTypeException, "Invalid channel: %" PRIu64, id);
+    channel_decref(channel);
+    return NIL;
+  }
 
   if (frame.errored) {
     if (frame.result.type == kObjectTypeString) {
