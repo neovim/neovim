@@ -899,6 +899,89 @@ describe('float window', function()
       end
     end)
 
+    it('window position fixed', function()
+      local buf = meths.create_buf(false,false)
+      command("set nowrap")
+      local win = meths.open_win(buf, false, {
+        relative='editor', width=20, height=2, row=2, col=30, anchor = 'NW', fixed = true})
+      local expected_pos = {
+          [4]={{id=1001}, 'NW', 1, 2, 30, true},
+      }
+
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 4
+          {1:                    }|
+          {2:~                   }|
+        ]], float_pos=expected_pos}
+      else
+        screen:expect([[
+          ^                                        |
+          {0:~                                       }|
+          {0:~                             }{1:          }|
+          {0:~                             }{2:~         }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                                  |
+          ]])
+      end
+
+      meths.win_set_config(win, {
+        relative='editor', width=20, height=2, row=2, col=30, anchor = 'NW', fixed = false})
+
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 4
+          {1:                    }|
+          {2:~                   }|
+        ]], float_pos=expected_pos}
+      else
+        screen:expect([[
+          ^                                        |
+          {0:~                                       }|
+          {0:~                   }{1:                    }|
+          {0:~                   }{2:~                   }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                                  |
+          ]])
+      end
+    end)
+
     it('draws correctly with redrawdebug=compositor', function()
       -- NB: we do not test that it produces the "correct" debug info
       -- (as it is intermediate only, and is allowed to change by internal
