@@ -108,7 +108,7 @@ notes).
 
 Exceptions to this policy may be made (for experimental subsystems or when
 there is broad consensus among maintainers). The rationale for the exception
-should be stated explicitly somewhere publicily visible.
+should be stated explicitly and publicly.
 
 Third-party dependencies
 ------------------------
