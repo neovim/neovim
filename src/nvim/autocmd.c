@@ -2524,7 +2524,7 @@ static bool arg_autocmd_flag_get(bool *flag, char **cmd_ptr, char *pattern, int 
 }
 
 /// When kFalse: VimSuspend should be triggered next.
-/// When kTrue: VimResume should be triggerd next.
+/// When kTrue: VimResume should be triggered next.
 /// When kNone: Currently triggering VimSuspend or VimResume.
 static TriState pending_vimresume = kFalse;
 

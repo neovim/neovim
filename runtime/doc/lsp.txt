@@ -578,7 +578,7 @@ LspRequest                                                        *LspRequest*
     "data" table passed to the callback function.
 
     It triggers when the initial request is sent ({type} == `pending`) and
-    when the LSP server responds ({type} == `complete`). If a cancelation
+    when the LSP server responds ({type} == `complete`). If a cancellation
     is requested using `client.cancel_request(request_id)`, then this event
     will trigger with {type} == `cancel`.
 

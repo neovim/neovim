@@ -39,7 +39,7 @@ enum {
 ///
 /// attrs[] contains the highlighting attribute for each cell.
 ///
-/// vcols[] countain the virtual columns in the line. -1 means not available
+/// vcols[] contains the virtual columns in the line. -1 means not available
 /// (below last line), MAXCOL means after the end of the line.
 ///
 /// line_offset[n] is the offset from chars[], attrs[] and vcols[] for the start
