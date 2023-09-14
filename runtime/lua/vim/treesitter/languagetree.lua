@@ -451,8 +451,7 @@ function LanguageTree:parse(range)
   return self._trees
 end
 
----@deprecated Misleading name. Use `LanguageTree:children()` (non-recursive) instead,
----            add recursion yourself if needed.
+---@deprecated in favor of `LanguageTree:children()` and `vim.traverse`
 --- Invokes the callback for each |LanguageTree| and its children recursively
 ---
 ---@param fn fun(tree: LanguageTree, lang: string)

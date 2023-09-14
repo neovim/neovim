@@ -396,6 +396,37 @@ function vim.tbl_deep_extend(behavior, ...)
   return tbl_extend(behavior, true, ...)
 end
 
+--- Traverses any tree-like object defined by `key`,
+--- calling the provided `visitor` on each descendant.
+---
+--- Example:
+---
+--- ```lua
+--- local comments = {}
+--- vim.traverse(
+---   language_tree,
+---   function(tree) return tree:children() end,
+---   function(tree)
+---     if tree:lang() == "comment" then
+---       table.insert(comments, tree)
+---     end
+---   end
+--- )
+--- ```
+---
+---@param tree any The object to traverse.
+---@param key string|fun(subtree: any): any[] Define the "children" to visit.
+---@param visitor fun(subtree: any): boolean|nil Function to call on each descendant.
+---       Return true to skip the rest of `subtree`.
+function vim.traverse(tree, key, visitor)
+  if not visitor(tree) then
+    local children = type(key) == 'function' and key(tree) or tree[key]
+    for _, child in pairs(children or {}) do
+      vim.traverse(child, key, visitor)
+    end
+  end
+end
+
 --- Deep compare values for equality
 ---
 --- Tables are compared recursively unless they both provide the `eq` metamethod.
