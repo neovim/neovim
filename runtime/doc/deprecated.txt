@@ -151,6 +151,8 @@ TREESITTER FUNCTIONS
 						and |TSNode:type()| instead.
 - *vim.treesitter.query.get_query()*		Use |vim.treesitter.query.get()|
 						instead.
+- *LanguageTree:for_each_child()*		Use |LanguageTree:children()|
+						(non-recursive) instead.
 
 LUA
 - vim.register_keystroke_callback()	Use |vim.on_key()| instead.

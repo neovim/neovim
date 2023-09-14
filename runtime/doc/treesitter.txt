@@ -1094,15 +1094,6 @@ LanguageTree:destroy()                                *LanguageTree:destroy()*
     Note: This DOES NOT remove this tree from a parent. Instead,
     `remove_child` must be called on the parent to remove it.
 
-                                               *LanguageTree:for_each_child()*
-LanguageTree:for_each_child({fn}, {include_self})
-    Invokes the callback for each |LanguageTree| and its children recursively
-
-    Parameters: ~
-      • {fn}            fun(tree: LanguageTree, lang: string)
-      • {include_self}  (boolean|nil) Whether to include the invoking tree in
-                        the results
-
 LanguageTree:for_each_tree({fn})                *LanguageTree:for_each_tree()*
     Invokes the callback for each |LanguageTree| recursively.
 
