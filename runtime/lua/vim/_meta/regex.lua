@@ -21,7 +21,7 @@ local regex = {} -- luacheck: no unused
 --- precisely, surround the regex with `^` and `$`. If there was a match, the
 --- byte indices for the beginning and end of the match are returned. When
 --- there is no match, `nil` is returned. Because any integer is "truthy",
---- `regex:match()` can be directly used as a condition in an if-statement.
+--- `regex:match_str()` can be directly used as a condition in an if-statement.
 --- @param str string
 function regex:match_str(str) end
 

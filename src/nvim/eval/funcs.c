@@ -6329,7 +6329,7 @@ static void reduce_string(typval_T *argvars, typval_T *expr, typval_T *rettv)
   }
 }
 
-/// Implementaion of reduce() for Blob "argvars[0]" using the function "expr"
+/// Implementation of reduce() for Blob "argvars[0]" using the function "expr"
 /// starting with the optional initial value "argvars[2]" and return the result
 /// in "rettv".
 static void reduce_blob(typval_T *argvars, typval_T *expr, typval_T *rettv)
