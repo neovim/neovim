@@ -135,7 +135,7 @@ The following new APIs and features were added.
     `vim.treesitter.language.register`.
   • The `#set!` directive now supports `injection.self` and `injection.parent` for injecting either the current node's language
     or the parent LanguageTree's language, respectively.
-  • Added `vim.treesitter.preview_query()`, for live editing of treesitter
+  • Added `vim.treesitter.query.edit()`, for live editing of treesitter
     queries.
   • Improved error messages for query parsing.
 
