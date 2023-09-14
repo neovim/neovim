@@ -20,5 +20,5 @@ vim.api.nvim_create_user_command('InspectTree', function(cmd)
 end, { desc = 'Inspect treesitter language tree for buffer', count = true })
 
 vim.api.nvim_create_user_command('EditQuery', function()
-  vim.treesitter.edit_query()
+  vim.treesitter.query.edit()
 end, { desc = 'Edit treesitter query' })

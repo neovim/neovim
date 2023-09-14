@@ -495,15 +495,6 @@ function M.inspect_tree(opts)
   require('vim.treesitter.dev').inspect_tree(opts)
 end
 
---- Open a window for live editing of a treesitter query.
----
---- Can also be shown with `:EditQuery`. *:EditQuery*
----
---- Note that the editor opens a scratch buffer, and so queries aren't persisted on disk.
-function M.edit_query()
-  require('vim.treesitter.dev').edit_query()
-end
-
 --- Returns the fold level for {lnum} in the current buffer. Can be set directly to 'foldexpr':
 ---
 --- ```lua
