@@ -21,7 +21,7 @@ env:
   BUILD_DIR: ${{ github.workspace }}/build
   INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
   LOG_DIR: ${{ github.workspace }}/build/log
-  NVIM_LOG_FILE: ${{ github.workspace }}/build/.nvimlog
+  NVIM_LOG_FILE: ${{ github.workspace }}/build/nvimlog
   TSAN_OPTIONS: log_path=${{ github.workspace }}/build/log/tsan
   UBSAN_OPTIONS: log_path=${{ github.workspace }}/build/log/ubsan
   VALGRIND_LOG: ${{ github.workspace }}/build/log/valgrind-%p.log
@@ -52,8 +52,7 @@ jobs:
           cmake -S cmake.deps -B .deps -G Ninja
           cmake --build .deps
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        run: cmake -B build -G Ninja -D CI_LINT=ON
+      - run: cmake -B build -G Ninja -D CI_LINT=ON
 
       - if: "!cancelled()"
         name: Determine if run should be aborted
@@ -214,6 +213,13 @@ jobs:
         name: Show logs
         run: cat $(find "$LOG_DIR" -type f)
 
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: nvimlog-${{ join(matrix.*, '-') }}
+          path: ${{ env.NVIM_LOG_FILE }}
+          retention-days: 1
+
   build-types:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
@@ -306,6 +312,13 @@ jobs:
         run: |
           cd test/old/testdir
           mingw32-make VERBOSE=1
+
+      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: nvimlog-windows
+          path: ${{ env.NVIM_LOG_FILE }}
+          retention-days: 1
 
   with-external-deps:
     runs-on: ubuntu-22.04

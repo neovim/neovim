@@ -32,10 +32,6 @@ if(IS_ABSOLUTE ${TEST_PATH})
   file(RELATIVE_PATH TEST_PATH "${WORKING_DIR}" "${TEST_PATH}")
 endif()
 
-if(BUSTED_OUTPUT_TYPE STREQUAL junit)
-  set(EXTRA_ARGS OUTPUT_FILE ${BUILD_DIR}/${TEST_TYPE}test-junit.xml)
-endif()
-
 set(BUSTED_ARGS $ENV{BUSTED_ARGS})
 separate_arguments(BUSTED_ARGS)
 
@@ -72,7 +68,7 @@ endif()
 execute_process(
   # Note: because of "-ll" (low-level interpreter mode), some modules like
   # _editor.lua are not loaded.
-  COMMAND ${NVIM_PRG} -ll ${WORKING_DIR}/test/lua_runner.lua ${DEPS_INSTALL_DIR} busted -v -o test.busted.outputHandlers.${BUSTED_OUTPUT_TYPE}
+  COMMAND ${NVIM_PRG} -ll ${WORKING_DIR}/test/lua_runner.lua ${DEPS_INSTALL_DIR} busted -v -o test.busted.outputHandlers.nvim
     --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua
     --lpath=${WORKING_DIR}/runtime/lua/?.lua
@@ -94,14 +90,6 @@ if(res)
     message(STATUS "No output to stderr.")
   else()
     message(STATUS "Output to stderr:\n${err}")
-  endif()
-
-  # Dump the logfile on CI (if not displayed and moved already).
-  if(CI_BUILD)
-    if(EXISTS $ENV{NVIM_LOG_FILE} AND NOT EXISTS $ENV{NVIM_LOG_FILE}.displayed)
-      file(READ $ENV{NVIM_LOG_FILE} out)
-      message(STATUS "$NVIM_LOG_FILE: $ENV{NVIM_LOG_FILE}\n${out}")
-    endif()
   endif()
 
   message(FATAL_ERROR "${TEST_TYPE} tests failed with error: ${res}")

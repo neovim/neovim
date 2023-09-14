@@ -867,26 +867,6 @@ function module.is_ci(name)
   return gh or cirrus
 end
 
--- Gets the (tail) contents of `logfile`.
--- Also moves the file to "${NVIM_LOG_FILE}.displayed" on CI environments.
-function module.read_nvim_log(logfile, ci_rename)
-  logfile = logfile or os.getenv('NVIM_LOG_FILE') or '.nvimlog'
-  local is_ci = module.is_ci()
-  local keep = is_ci and 100 or 10
-  local lines = module.read_file_list(logfile, -keep) or {}
-  local log = (('-'):rep(78)..'\n'
-    ..string.format('$NVIM_LOG_FILE: %s\n', logfile)
-    ..(#lines > 0 and '(last '..tostring(keep)..' lines)\n' or '(empty)\n'))
-  for _,line in ipairs(lines) do
-    log = log..line..'\n'
-  end
-  log = log..('-'):rep(78)..'\n'
-  if is_ci and ci_rename then
-    os.rename(logfile, logfile .. '.displayed')
-  end
-  return log
-end
-
 function module.mkdir(path)
   -- 493 is 0755 in decimal
   return luv.fs_mkdir(path, 493)
