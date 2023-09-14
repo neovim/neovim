@@ -566,7 +566,7 @@ return {
         backups if you don't care about losing the file.
 
         Note that environment variables are not expanded.  If you want to use
-        $HOME you must expand it explicitly, e.g.: >
+        $HOME you must expand it explicitly, e.g.: >vim
         	:let &backupskip = escape(expand('$HOME'), '\') .. '/tmp/*'
 
         <	Note that the default also makes sure that "crontab -e" works (when a

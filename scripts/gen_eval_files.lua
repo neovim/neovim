@@ -213,17 +213,20 @@ end
 
 --- Convert vimdoc references to markdown literals
 --- Convert vimdoc codeblocks to markdown codeblocks
+---
+--- Ensure code blocks have one empty line before the start fence and after the closing fence.
+---
 --- @param x string
 --- @return string
 local function norm_text(x)
   return (
     x:gsub('|([^ ]+)|', '`%1`')
-      :gsub('>lua', '\n```lua')
-      :gsub('>vim', '\n```vim')
-      :gsub('\n<$', '\n```')
-      :gsub('\n<\n', '\n```\n')
-      :gsub('%s+>\n', '\n```\n')
-      :gsub('\n<%s+\n?', '\n```\n')
+      :gsub('\n*>lua', '\n\n```lua')
+      :gsub('\n*>vim', '\n\n```vim')
+      :gsub('\n+<$', '\n```')
+      :gsub('\n+<\n+', '\n```\n\n')
+      :gsub('%s+>\n+', '\n```\n')
+      :gsub('\n+<%s+\n?', '\n```\n')
   )
 end
 

@@ -70,23 +70,24 @@ vim.log = {
 --- Run a system command
 ---
 --- Examples:
---- <pre>lua
 ---
----   local on_exit = function(obj)
----     print(obj.code)
----     print(obj.signal)
----     print(obj.stdout)
----     print(obj.stderr)
----   end
+--- ```lua
 ---
----   -- Run asynchronously
----   vim.system({'echo', 'hello'}, { text = true }, on_exit)
+--- local on_exit = function(obj)
+---   print(obj.code)
+---   print(obj.signal)
+---   print(obj.stdout)
+---   print(obj.stderr)
+--- end
 ---
----   -- Run synchronously
----   local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
----   -- { code = 0, signal = 0, stdout = 'hello', stderr = '' }
+--- -- Run asynchronously
+--- vim.system({'echo', 'hello'}, { text = true }, on_exit)
 ---
---- </pre>
+--- -- Run synchronously
+--- local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
+--- -- { code = 0, signal = 0, stdout = 'hello', stderr = '' }
+---
+--- ```
 ---
 --- See |uv.spawn()| for more details.
 ---
@@ -200,7 +201,8 @@ do
   --- (such as the |TUI|) pastes text into the editor.
   ---
   --- Example: To remove ANSI color codes when pasting:
-  --- <pre>lua
+  ---
+  --- ```lua
   --- vim.paste = (function(overridden)
   ---   return function(lines, phase)
   ---     for i,line in ipairs(lines) do
@@ -210,7 +212,7 @@ do
   ---     overridden(lines, phase)
   ---   end
   --- end)(vim.paste)
-  --- </pre>
+  --- ```
   ---
   ---@see |paste|
   ---@alias paste_phase -1 | 1 | 2 | 3
@@ -361,32 +363,33 @@ local VIM_CMD_ARG_MAX = 20
 --- command.
 ---
 --- Example:
---- <pre>lua
----   vim.cmd('echo 42')
----   vim.cmd([[
----     augroup My_group
----       autocmd!
----       autocmd FileType c setlocal cindent
----     augroup END
----   ]])
 ---
----   -- Ex command :echo "foo"
----   -- Note string literals need to be double quoted.
----   vim.cmd('echo "foo"')
----   vim.cmd { cmd = 'echo', args = { '"foo"' } }
----   vim.cmd.echo({ args = { '"foo"' } })
----   vim.cmd.echo('"foo"')
+--- ```lua
+--- vim.cmd('echo 42')
+--- vim.cmd([[
+---   augroup My_group
+---     autocmd!
+---     autocmd FileType c setlocal cindent
+---   augroup END
+--- ]])
 ---
----   -- Ex command :write! myfile.txt
----   vim.cmd('write! myfile.txt')
----   vim.cmd { cmd = 'write', args = { "myfile.txt" }, bang = true }
----   vim.cmd.write { args = { "myfile.txt" }, bang = true }
----   vim.cmd.write { "myfile.txt", bang = true }
+--- -- Ex command :echo "foo"
+--- -- Note string literals need to be double quoted.
+--- vim.cmd('echo "foo"')
+--- vim.cmd { cmd = 'echo', args = { '"foo"' } }
+--- vim.cmd.echo({ args = { '"foo"' } })
+--- vim.cmd.echo('"foo"')
 ---
----   -- Ex command :colorscheme blue
----   vim.cmd('colorscheme blue')
----   vim.cmd.colorscheme('blue')
---- </pre>
+--- -- Ex command :write! myfile.txt
+--- vim.cmd('write! myfile.txt')
+--- vim.cmd { cmd = 'write', args = { "myfile.txt" }, bang = true }
+--- vim.cmd.write { args = { "myfile.txt" }, bang = true }
+--- vim.cmd.write { "myfile.txt", bang = true }
+---
+--- -- Ex command :colorscheme blue
+--- vim.cmd('colorscheme blue')
+--- vim.cmd.colorscheme('blue')
+--- ```
 ---
 ---@param command string|table Command(s) to execute.
 ---                            If a string, executes multiple lines of Vim script at once. In this
@@ -871,9 +874,10 @@ end
 --- "Pretty prints" the given arguments and returns them unmodified.
 ---
 --- Example:
---- <pre>lua
----   local hl_normal = vim.print(vim.api.nvim_get_hl_by_name('Normal', true))
---- </pre>
+---
+--- ```lua
+--- local hl_normal = vim.print(vim.api.nvim_get_hl_by_name('Normal', true))
+--- ```
 ---
 --- @see |vim.inspect()|
 --- @see |:=|
@@ -900,10 +904,12 @@ end
 --- Translate keycodes.
 ---
 --- Example:
---- <pre>lua
----   local k = vim.keycode
----   vim.g.mapleader = k'<bs>'
---- </pre>
+---
+--- ```lua
+--- local k = vim.keycode
+--- vim.g.mapleader = k'<bs>'
+--- ```
+---
 --- @param str string String to be converted.
 --- @return string
 --- @see |nvim_replace_termcodes()|

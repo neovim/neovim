@@ -85,11 +85,15 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 ///
 /// Example (Lua): capture buffer updates in a global `events` variable
 /// (use "vim.print(events)" to see its contents):
-/// <pre>lua
-///   events = {}
-///   vim.api.nvim_buf_attach(0, false, {
-///     on_lines=function(...) table.insert(events, {...}) end})
-/// </pre>
+///
+/// ```lua
+/// events = {}
+/// vim.api.nvim_buf_attach(0, false, {
+///   on_lines = function(...)
+///     table.insert(events, {...})
+///   end,
+/// })
+/// ```
 ///
 /// @see |nvim_buf_detach()|
 /// @see |api-buffer-updates-lua|

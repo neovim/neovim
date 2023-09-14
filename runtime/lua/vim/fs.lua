@@ -5,7 +5,8 @@ local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
 --- Iterate over all the parents of the given path.
 ---
 --- Example:
---- <pre>lua
+---
+--- ```lua
 --- local root_dir
 --- for dir in vim.fs.parents(vim.api.nvim_buf_get_name(0)) do
 ---   if vim.fn.isdirectory(dir .. "/.git") == 1 then
@@ -17,7 +18,7 @@ local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
 --- if root_dir then
 ---   print("Found git repository at", root_dir)
 --- end
---- </pre>
+--- ```
 ---
 ---@param start (string) Initial path.
 ---@return fun(_, dir: string): string? # Iterator
@@ -165,7 +166,8 @@ end
 --- to narrow the search to find only that type.
 ---
 --- Examples:
---- <pre>lua
+---
+--- ```lua
 --- -- location of Cargo.toml from the current buffer's path
 --- local cargo = vim.fs.find('Cargo.toml', {
 ---   upward = true,
@@ -183,7 +185,7 @@ end
 --- local cpp_hpp = vim.fs.find(function(name, path)
 ---   return name:match('.*%.[ch]pp$') and path:match('[/\\\\]lib$')
 --- end, {limit = math.huge, type = 'file'})
---- </pre>
+--- ```
 ---
 ---@param names (string|string[]|fun(name: string, path: string): boolean) Names of the items to find.
 ---             Must be base names, paths and globs are not supported when {names} is a string or a table.
@@ -322,16 +324,17 @@ end
 --- variables are also expanded.
 ---
 --- Examples:
---- <pre>lua
----   vim.fs.normalize('C:\\\\Users\\\\jdoe')
----   --> 'C:/Users/jdoe'
 ---
----   vim.fs.normalize('~/src/neovim')
----   --> '/home/jdoe/src/neovim'
+--- ```lua
+--- vim.fs.normalize('C:\\\\Users\\\\jdoe')
+--- -- 'C:/Users/jdoe'
 ---
----   vim.fs.normalize('$XDG_CONFIG_HOME/nvim/init.vim')
----   --> '/Users/jdoe/.config/nvim/init.vim'
---- </pre>
+--- vim.fs.normalize('~/src/neovim')
+--- -- '/home/jdoe/src/neovim'
+---
+--- vim.fs.normalize('$XDG_CONFIG_HOME/nvim/init.vim')
+--- -- '/Users/jdoe/.config/nvim/init.vim'
+--- ```
 ---
 ---@param path (string) Path to normalize
 ---@param opts table|nil Options:

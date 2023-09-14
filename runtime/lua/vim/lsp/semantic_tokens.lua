@@ -555,9 +555,10 @@ local M = {}
 --- delete the semanticTokensProvider table from the {server_capabilities} of
 --- your client in your |LspAttach| callback or your configuration's
 --- `on_attach` callback:
---- <pre>lua
----   client.server_capabilities.semanticTokensProvider = nil
---- </pre>
+---
+--- ```lua
+--- client.server_capabilities.semanticTokensProvider = nil
+--- ```
 ---
 ---@param bufnr integer
 ---@param client_id integer

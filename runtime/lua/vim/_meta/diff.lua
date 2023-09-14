@@ -6,24 +6,25 @@
 --- either directly or via callback arguments, are 1-based.
 ---
 --- Examples:
---- <pre>lua
----     vim.diff('a\\n', 'b\\nc\\n')
----     -- =>
----     -- @@ -1 +1,2 @@
----     -- -a
----     -- +b
----     -- +c
 ---
----     vim.diff('a\\n', 'b\\nc\\n', {result_type = 'indices'})
----     -- =>
----     -- {
----     --   {1, 1, 1, 2}
----     -- }
---- </pre>
+--- ```lua
+--- vim.diff('a\n', 'b\nc\n')
+--- -- =>
+--- -- @@ -1 +1,2 @@
+--- -- -a
+--- -- +b
+--- -- +c
 ---
---- @param a string First string to compare
---- @param b string Second string to compare
---- @param opts table<string,any> Optional parameters:
+--- vim.diff('a\n', 'b\nc\n', {result_type = 'indices'})
+--- -- =>
+--- -- {
+--- --   {1, 1, 1, 2}
+--- -- }
+--- ```
+---
+---@param a string First string to compare
+---@param b string Second string to compare
+---@param opts table<string,any> Optional parameters:
 ---     - `on_hunk` (callback):
 ---       Invoked for each hunk in the diff. Return a negative number
 ---       to cancel the callback for any remaining hunks.
@@ -64,6 +65,6 @@
 ---       Use the indent heuristic for the internal
 ---       diff library.
 ---
---- @return string|table|nil
+---@return string|table|nil
 ---     See {opts.result_type}. `nil` if {opts.on_hunk} is given.
 function vim.diff(a, b, opts) end

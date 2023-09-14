@@ -141,6 +141,7 @@ vim.bo.ai = vim.bo.autoindent
 --- 	:set autoread<
 --- ```
 ---
+---
 --- @type boolean
 vim.o.autoread = true
 vim.o.ar = vim.o.autoread
@@ -354,6 +355,7 @@ vim.go.bkc = vim.go.backupcopy
 --- ```
 ---     :set bdir=c:\\tmp,\ dir\\,with\\,commas,\\\ dir\ with\ spaces
 --- ```
+---
 --- See also 'backup' and 'writebackup' options.
 --- If you want to hide your backup files on Unix, consider this value:
 --- ```
@@ -409,9 +411,9 @@ vim.go.bex = vim.go.backupext
 ---
 --- Note that environment variables are not expanded.  If you want to use
 --- $HOME you must expand it explicitly, e.g.:
---- ```
---- 	:let &backupskip = escape(expand('$HOME'), '\') .. '/tmp/*'
 ---
+--- ```vim
+--- 	:let &backupskip = escape(expand('$HOME'), '\') .. '/tmp/*'
 --- ```
 --- Note that the default also makes sure that "crontab -e" works (when a
 --- backup would be made by renaming the original file crontab won't see
@@ -833,6 +835,7 @@ vim.bo.cino = vim.bo.cinoptions
 --- 	set cinscopedecls+=signals,public\ slots,private\ slots
 --- ```
 ---
+---
 --- @type string
 vim.o.cinscopedecls = "public,protected,private"
 vim.o.cinsd = vim.o.cinscopedecls
@@ -916,11 +919,11 @@ vim.go.cwh = vim.go.cmdwinheight
 --- The screen column can be an absolute number, or a number preceded with
 --- '+' or '-', which is added to or subtracted from 'textwidth'.
 --- ```
----
 --- 	:set cc=+1	  " highlight column after 'textwidth'
 --- 	:set cc=+1,+2,+3  " highlight three columns after 'textwidth'
 --- 	:hi ColorColumn ctermbg=lightgrey guibg=lightgrey
 --- ```
+---
 --- When 'textwidth' is zero then the items with '-' and '+' are not used.
 --- A maximum of 256 columns are highlighted.
 ---
@@ -1418,6 +1421,7 @@ vim.wo.crb = vim.wo.cursorbind
 --- 	au WinEnter * set cursorline cursorcolumn
 --- ```
 ---
+---
 --- @type boolean
 vim.o.cursorcolumn = false
 vim.o.cuc = vim.o.cursorcolumn
@@ -1498,6 +1502,7 @@ vim.go.debug = vim.o.debug
 --- ```
 --- 	let &l:define = '^\s*\ze\k\+\s*=\s*function('
 --- ```
+---
 ---
 --- @type string
 vim.o.define = ""
@@ -1679,6 +1684,7 @@ vim.go.dex = vim.go.diffexpr
 --- 	:set diffopt-=internal  " do NOT use the internal diff parser
 --- ```
 ---
+---
 --- @type string
 vim.o.diffopt = "internal,filler,closeoff"
 vim.o.dip = vim.o.diffopt
@@ -1729,6 +1735,7 @@ vim.go.dg = vim.go.digraph
 --- ```
 ---     :set dir=c:\\tmp,\ dir\\,with\\,commas,\\\ dir\ with\ spaces
 --- ```
+---
 --- Editing the same file twice will result in a warning.  Using "/tmp" on
 --- is discouraged: if the system crashes you lose the swap file. And
 --- others on the computer may be able to see the files.
@@ -1916,6 +1923,7 @@ vim.go.efm = vim.go.errorformat
 --- ```
 ---     :set ei=WinEnter,WinLeave
 --- ```
+---
 ---
 --- @type string
 vim.o.eventignore = ""
@@ -2634,14 +2642,12 @@ vim.go.gp = vim.go.grepprg
 --- To disable cursor-styling, reset the option:
 --- ```
 --- 	:set guicursor=
----
 --- ```
 --- To enable mode shapes, "Cursor" highlight, and blinking:
 --- ```
 --- 	:set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50
 --- 	  \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
 --- 	  \,sm:block-blinkwait175-blinkoff150-blinkon175
----
 --- ```
 --- The option is a comma-separated list of parts.  Each part consists of a
 --- mode-list and an argument-list:
@@ -2719,6 +2725,7 @@ vim.go.gp = vim.go.grepprg
 ---     :highlight Cursor gui=NONE guifg=bg guibg=fg
 --- ```
 ---
+---
 --- @type string
 vim.o.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"
 vim.o.gcr = vim.o.guicursor
@@ -2789,6 +2796,7 @@ vim.go.gcr = vim.go.guicursor
 ---     :set guifont=courier_new:h12:w5:b:cRUSSIAN
 ---     :set guifont=Andale_Mono:h7.5:w4.5
 --- ```
+---
 ---
 --- @type string
 vim.o.guifont = ""
@@ -2943,6 +2951,7 @@ vim.go.gtl = vim.go.guitablabel
 --- ```
 --- 	:let &guitabtooltip = "line one\nline two"
 --- ```
+---
 ---
 --- @type string
 vim.o.guitabtooltip = ""
@@ -3206,6 +3215,7 @@ vim.go.inc = vim.go.include
 --- ```
 --- 	:setlocal includeexpr=tr(v:fname,'.','/')
 --- ```
+---
 --- Also used for the `gf` command if an unmodified file name can't be
 --- found.  Allows doing "gf" on the name after an 'include' statement.
 --- Also used for `<cfile>`.
@@ -3258,6 +3268,7 @@ vim.bo.inex = vim.bo.includeexpr
 --- 	  autocmd CmdlineLeave /,\? :set nohlsearch
 --- 	augroup END
 --- ```
+---
 --- CTRL-L can be used to add one character from after the current match
 --- to the command line.  If 'ignorecase' and 'smartcase' are set and the
 --- command line has no uppercase characters, the added character is
@@ -3565,6 +3576,7 @@ vim.go.kp = vim.go.keywordprg
 --- ```
 ---     :set langmap=zy,yz,ZY,YZ
 --- ```
+---
 --- The 'langmap' option is a list of parts, separated with commas.  Each
 --- part can be in one of two forms:
 --- 1.  A list of pairs.  Each pair is a "from" character immediately
@@ -3762,6 +3774,7 @@ vim.go.lw = vim.go.lispwords
 --- ```
 --- 	:set list lcs=tab:\ \
 --- ```
+---
 --- Note that list mode will also affect formatting (set with 'textwidth'
 --- or 'wrapmargin') when 'cpoptions' includes 'L'.  See 'listchars' for
 --- changing the way tabs are displayed.
@@ -3790,6 +3803,7 @@ vim.wo.list = vim.o.list
 --- 			>--
 --- 			etc.
 --- ```
+---
 ---   tab:xyz	The 'z' is always used, then 'x' is prepended, and
 --- 		then 'y' is used as many times as will fit.  Thus
 --- 		"tab:<->" displays:
@@ -3801,6 +3815,7 @@ vim.wo.list = vim.o.list
 --- 			<-->
 --- 			etc.
 --- ```
+---
 --- 		When "tab:" is omitted, a tab is shown as ^I.
 --- 						*lcs-space*
 ---   space:c	Character to show for a space.  When omitted, spaces
@@ -3816,6 +3831,7 @@ vim.wo.list = vim.o.list
 --- ```
 --- 			---+---+--
 --- ```
+---
 --- 						*lcs-lead*
 ---   lead:c	Character to show for leading spaces.  When omitted,
 --- 		leading spaces are blank.  Overrides the "space" and
@@ -3824,6 +3840,7 @@ vim.wo.list = vim.o.list
 --- ```
 --- 			:set listchars+=tab:>-,lead:.
 --- ```
+---
 --- 						*lcs-leadmultispace*
 ---   leadmultispace:c...
 --- 		Like the `lcs-multispace` value, but for leading
@@ -3834,6 +3851,7 @@ vim.wo.list = vim.o.list
 --- ```
 --- 			---+---+--XXX
 --- ```
+---
 --- 		Where "XXX" denotes the first non-blank characters in
 --- 		the line.
 --- 						*lcs-trail*
@@ -3941,6 +3959,7 @@ vim.go.mef = vim.go.makeef
 --- 	:set makeencoding=char	" system locale is used
 --- ```
 ---
+---
 --- @type string
 vim.o.makeencoding = ""
 vim.o.menc = vim.o.makeencoding
@@ -3986,13 +4005,11 @@ vim.go.mp = vim.go.makeprg
 --- '>' (for HTML):
 --- ```
 --- 	:set mps+=<:>
----
 --- ```
 --- A more exotic example, to jump between the '=' and ';' in an
 --- assignment, useful for languages like C and Java:
 --- ```
 --- 	:au FileType c,cpp,java set mps+==:;
----
 --- ```
 --- For a more advanced way of using "%", see the matchit.vim plugin in
 --- the $VIMRUNTIME/plugin directory. `add-local-help`
@@ -4078,6 +4095,7 @@ vim.go.mis = vim.go.menuitems
 --- ```
 --- 	{start},{inc},{added}
 --- ```
+---
 --- For most languages the uncompressed word tree fits in memory.  {start}
 --- gives the amount of memory in Kbyte that can be used before any
 --- compression is done.  It should be a bit smaller than the amount of
@@ -4196,6 +4214,7 @@ vim.go.more = vim.o.more
 --- ```
 --- 	:set mouse=nv
 --- ```
+---
 --- To temporarily disable mouse support, hold the shift key while using
 --- the mouse.
 ---
@@ -4299,6 +4318,7 @@ vim.go.mh = vim.go.mousehide
 ---    :map <4-S-LeftDrag>    <4-RightDrag>
 ---    :map <4-S-LeftRelease> <4-RightRelease>
 --- ```
+---
 --- Mouse commands requiring the CTRL modifier can be simulated by typing
 --- the "g" key before using the mouse:
 ---     "g<LeftMouse>"  is "<C-LeftMouse>	(jump to tag under mouse click)
@@ -4476,6 +4496,7 @@ vim.bo.nf = vim.bo.nrformats
 ---     |nobody         |  3 nobody     |  0 nobody     |3   nobody
 ---     |there          |  4 there      |  1 there      |  1 there
 --- ```
+---
 ---
 --- @type boolean
 vim.o.number = false
@@ -4710,10 +4731,10 @@ vim.wo.pvw = vim.wo.previewwindow
 --- the popupmenu using `highlight-blend`. For instance, to enable
 --- transparency but force the current selected element to be fully opaque:
 --- ```
----
 --- 	:set pumblend=15
 --- 	:hi PmenuSel blend=0
 --- ```
+---
 --- UI-dependent. Works best with RGB colors. 'termguicolors'
 ---
 --- @type integer
@@ -4985,6 +5006,7 @@ vim.go.ru = vim.go.ruler
 --- ```
 --- 	:set rulerformat=%15(%c%V\ %p%%%)
 --- ```
+---
 ---
 --- @type string
 vim.o.rulerformat = ""
@@ -5363,6 +5385,7 @@ vim.go.ssop = vim.go.sessionoptions
 --- ```
 ---     :set shada='50,<1000,s100,:0,n~/nvim/shada
 --- ```
+---
 --- '50		Marks will be remembered for the last 50 files you
 --- 		edited.
 --- <1000		Contents of registers (up to 1000 lines each) will be
@@ -5449,7 +5472,6 @@ vim.go.sdf = vim.go.shadafile
 --- 	let &shellredir = '2>&1 | %%{ "$_" } | Out-File %s; exit $LastExitCode'
 --- 	let &shellpipe  = '2>&1 | %%{ "$_" } | tee %s; exit $LastExitCode'
 --- 	set shellquote= shellxquote=
----
 --- ```
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
@@ -5726,6 +5748,7 @@ vim.go.shm = vim.go.shortmess
 --- 	:setlocal showbreak=NONE
 --- ```
 ---
+---
 --- @type string
 vim.o.showbreak = ""
 vim.o.sbr = vim.o.showbreak
@@ -5858,14 +5881,15 @@ vim.go.ss = vim.go.sidescroll
 --- 	setlocal sidescrolloff<
 --- 	setlocal sidescrolloff=-1
 --- ```
+---
 --- Example: Try this together with 'sidescroll' and 'listchars' as
 --- 	 in the following example to never allow the cursor to move
 --- 	 onto the "extends" character:
 --- ```
----
 --- 	 :set nowrap sidescroll=1 listchars=extends:>,precedes:<
 --- 	 :set sidescrolloff=1
 --- ```
+---
 ---
 --- @type integer
 vim.o.sidescrolloff = 0
@@ -6171,6 +6195,7 @@ vim.bo.spo = vim.bo.spelloptions
 --- ```
 --- 	:set sps=file:~/.config/nvim/sugg,best,expr:MySuggest()
 --- ```
+---
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
 ---
@@ -6263,6 +6288,7 @@ vim.go.sol = vim.go.startofline
 --- handler should be written with this in mind.
 ---
 --- Examples:
+---
 --- ```vim
 --- 	" Relative number with bar separator and click handlers:
 --- 	:set statuscolumn=%@SignCb@%s%=%T%@NumCb@%r│%T
@@ -6282,7 +6308,6 @@ vim.go.sol = vim.go.startofline
 --- 	:let &stc='%#NonText#%{&nu?v:lnum:""}' .
 --- 	 '%=%{&rnu&&(v:lnum%2)?"\ ".v:relnum:""}' .
 --- 	 '%#LineNr#%{&rnu&&!(v:lnum%2)?"\ ".v:relnum:""}'
----
 --- ```
 --- WARNING: this expression is evaluated for each screen line so defining
 --- an expensive expression can negatively affect render performance.
@@ -6522,6 +6547,7 @@ vim.wo.stc = vim.wo.statuscolumn
 ---   :endfunction
 --- ```
 ---
+---
 --- @type string
 vim.o.statusline = ""
 vim.o.stl = vim.o.statusline
@@ -6552,6 +6578,7 @@ vim.go.su = vim.go.suffixes
 --- ```
 --- 	:set suffixesadd=.java
 --- ```
+---
 ---
 --- @type string
 vim.o.suffixesadd = ""
@@ -7445,6 +7472,7 @@ vim.go.ww = vim.go.whichwrap
 --- 	:set wc=<Tab>
 --- ```
 ---
+---
 --- @type integer
 vim.o.wildchar = 9
 vim.o.wc = vim.o.wildchar
@@ -7533,6 +7561,7 @@ vim.go.wic = vim.go.wildignorecase
 --- 	:cnoremap <Left> <Space><BS><Left>
 --- 	:cnoremap <Right> <Space><BS><Right>
 --- ```
+---
 --- `hl-WildMenu` highlights the current match.
 ---
 --- @type boolean
@@ -7761,6 +7790,7 @@ vim.go.wh = vim.go.winheight
 --- ```
 --- 	set winhighlight=Normal:MyNormal,NormalNC:MyNormalNC
 --- ```
+---
 ---
 --- @type string
 vim.o.winhighlight = ""

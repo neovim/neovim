@@ -7,9 +7,9 @@
 ---
 --- To create a LanguageTree (parser object) for a given buffer and language, use:
 ---
---- <pre>lua
----     local parser = vim.treesitter.get_parser(bufnr, lang)
---- </pre>
+--- ```lua
+--- local parser = vim.treesitter.get_parser(bufnr, lang)
+--- ```
 ---
 --- (where `bufnr=0` means current buffer). `lang` defaults to 'filetype'.
 --- Note: currently the parser is retained for the lifetime of a buffer but this may change;
@@ -17,9 +17,9 @@
 ---
 --- Whenever you need to access the current syntax tree, parse the buffer:
 ---
---- <pre>lua
----     local tree = parser:parse({ start_row, end_row })
---- </pre>
+--- ```lua
+--- local tree = parser:parse({ start_row, end_row })
+--- ```
 ---
 --- This returns a table of immutable |treesitter-tree| objects representing the current state of
 --- the buffer. When the plugin wants to access the state after a (possible) edit it must call

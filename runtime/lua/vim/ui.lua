@@ -3,6 +3,23 @@ local M = {}
 --- Prompts the user to pick from a list of items, allowing arbitrary (potentially asynchronous)
 --- work until `on_choice`.
 ---
+--- Example:
+---
+--- ```lua
+--- vim.ui.select({ 'tabs', 'spaces' }, {
+---     prompt = 'Select tabs or spaces:',
+---     format_item = function(item)
+---         return "I'd like to choose " .. item
+---     end,
+--- }, function(choice)
+---     if choice == 'spaces' then
+---         vim.o.expandtab = true
+---     else
+---         vim.o.expandtab = false
+---     end
+--- end)
+--- ```
+---
 ---@param items table Arbitrary items
 ---@param opts table Additional options
 ---     - prompt (string|nil)
@@ -19,23 +36,6 @@ local M = {}
 ---               Called once the user made a choice.
 ---               `idx` is the 1-based index of `item` within `items`.
 ---               `nil` if the user aborted the dialog.
----
----
---- Example:
---- <pre>lua
---- vim.ui.select({ 'tabs', 'spaces' }, {
----     prompt = 'Select tabs or spaces:',
----     format_item = function(item)
----         return "I'd like to choose " .. item
----     end,
---- }, function(choice)
----     if choice == 'spaces' then
----         vim.o.expandtab = true
----     else
----         vim.o.expandtab = false
----     end
---- end)
---- </pre>
 function M.select(items, opts, on_choice)
   vim.validate({
     items = { items, 'table', false },
@@ -58,6 +58,14 @@ end
 --- Prompts the user for input, allowing arbitrary (potentially asynchronous) work until
 --- `on_confirm`.
 ---
+--- Example:
+---
+--- ```lua
+--- vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
+---     vim.o.shiftwidth = tonumber(input)
+--- end)
+--- ```
+---
 ---@param opts table Additional options. See |input()|
 ---     - prompt (string|nil)
 ---               Text of the prompt
@@ -77,13 +85,6 @@ end
 ---               `input` is what the user typed (it might be
 ---               an empty string if nothing was entered), or
 ---               `nil` if the user aborted the dialog.
----
---- Example:
---- <pre>lua
---- vim.ui.input({ prompt = 'Enter value for shiftwidth: ' }, function(input)
----     vim.o.shiftwidth = tonumber(input)
---- end)
---- </pre>
 function M.input(opts, on_confirm)
   vim.validate({
     on_confirm = { on_confirm, 'function', false },
@@ -110,11 +111,12 @@ end
 --- Expands "~/" and environment variables in filesystem paths.
 ---
 --- Examples:
---- <pre>lua
+---
+--- ```lua
 --- vim.ui.open("https://neovim.io/")
 --- vim.ui.open("~/path/to/file")
 --- vim.ui.open("$VIMRUNTIME")
---- </pre>
+--- ```
 ---
 ---@param path string Path or URL to open
 ---

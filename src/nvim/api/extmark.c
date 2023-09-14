@@ -300,10 +300,11 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 /// Region can be given as (row,col) tuples, or valid extmark ids (whose
 /// positions define the bounds). 0 and -1 are understood as (0,0) and (-1,-1)
 /// respectively, thus the following are equivalent:
-/// <pre>lua
-///   vim.api.nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
-///   vim.api.nvim_buf_get_extmarks(0, my_ns, {0,0}, {-1,-1}, {})
-/// </pre>
+///
+/// ```lua
+/// vim.api.nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
+/// vim.api.nvim_buf_get_extmarks(0, my_ns, {0,0}, {-1,-1}, {})
+/// ```
 ///
 /// If `end` is less than `start`, traversal works backwards. (Useful
 /// with `limit`, to get the first marks prior to a given position.)
@@ -313,20 +314,21 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 /// of an extmark will be considered.
 ///
 /// Example:
-/// <pre>lua
-///   local api = vim.api
-///   local pos = api.nvim_win_get_cursor(0)
-///   local ns  = api.nvim_create_namespace('my-plugin')
-///   -- Create new extmark at line 1, column 1.
-///   local m1  = api.nvim_buf_set_extmark(0, ns, 0, 0, {})
-///   -- Create new extmark at line 3, column 1.
-///   local m2  = api.nvim_buf_set_extmark(0, ns, 2, 0, {})
-///   -- Get extmarks only from line 3.
-///   local ms  = api.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
-///   -- Get all marks in this buffer + namespace.
-///   local all = api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
-///   vim.print(ms)
-/// </pre>
+///
+/// ```lua
+/// local api = vim.api
+/// local pos = api.nvim_win_get_cursor(0)
+/// local ns  = api.nvim_create_namespace('my-plugin')
+/// -- Create new extmark at line 1, column 1.
+/// local m1  = api.nvim_buf_set_extmark(0, ns, 0, 0, {})
+/// -- Create new extmark at line 3, column 1.
+/// local m2  = api.nvim_buf_set_extmark(0, ns, 2, 0, {})
+/// -- Get extmarks only from line 3.
+/// local ms  = api.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
+/// -- Get all marks in this buffer + namespace.
+/// local all = api.nvim_buf_get_extmarks(0, ns, 0, -1, {})
+/// vim.print(ms)
+/// ```
 ///
 /// @param buffer  Buffer handle, or 0 for current buffer
 /// @param ns_id  Namespace id from |nvim_create_namespace()| or -1 for all namespaces

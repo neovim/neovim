@@ -809,13 +809,14 @@ end
 --- Attaches the current buffer to the client.
 ---
 --- Example:
---- <pre>lua
+---
+--- ```lua
 --- vim.lsp.start({
 ---    name = 'my-server-name',
 ---    cmd = {'name-of-language-server-executable'},
 ---    root_dir = vim.fs.dirname(vim.fs.find({'pyproject.toml', 'setup.py'}, { upward = true })[1]),
 --- })
---- </pre>
+--- ```
 ---
 --- See |vim.lsp.start_client()| for all available options. The most important are:
 ---
@@ -1988,9 +1989,10 @@ end
 ---
 --- You can also use the `stop()` function on a |vim.lsp.client| object.
 --- To stop all clients:
---- <pre>lua
+---
+--- ```lua
 --- vim.lsp.stop_client(vim.lsp.get_clients())
---- </pre>
+--- ```
 ---
 --- By default asks the server to shutdown, unless stop was requested
 --- already for this client, then force-shutdown is attempted.
@@ -2502,12 +2504,7 @@ end
 ---@param bufnr integer Buffer number
 ---@param fn function Function to run on each client attached to buffer
 ---                   {bufnr}. The function takes the client, client ID, and
----                   buffer number as arguments. Example:
----             <pre>lua
----               vim.lsp.for_each_buffer_client(0, function(client, client_id, bufnr)
----                 vim.print(client)
----               end)
----             </pre>
+---                   buffer number as arguments.
 ---@deprecated use lsp.get_clients({ bufnr = bufnr }) with regular loop
 function lsp.for_each_buffer_client(bufnr, fn)
   return for_each_buffer_client(bufnr, fn)

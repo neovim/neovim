@@ -692,7 +692,8 @@ end
 --- The iterator returns three values: a numeric id identifying the capture,
 --- the captured node, and metadata from any directives processing the match.
 --- The following example shows how to get captures by name:
---- <pre>lua
+---
+--- ```lua
 --- for id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
 ---   local name = query.captures[id] -- name of the capture in the query
 ---   -- typically useful info about the node:
@@ -700,7 +701,7 @@ end
 ---   local row1, col1, row2, col2 = node:range() -- range of the capture
 ---   -- ... use the info here ...
 --- end
---- </pre>
+--- ```
 ---
 ---@param node TSNode under which the search will occur
 ---@param source (integer|string) Source buffer or string to extract text from
@@ -743,7 +744,8 @@ end
 --- If the query has more than one pattern, the capture table might be sparse
 --- and e.g. `pairs()` method should be used over `ipairs`.
 --- Here is an example iterating over all captures in every match:
---- <pre>lua
+---
+--- ```lua
 --- for pattern, match, metadata in cquery:iter_matches(tree:root(), bufnr, first, last) do
 ---   for id, node in pairs(match) do
 ---     local name = query.captures[id]
@@ -754,7 +756,7 @@ end
 ---     -- ... use the info here ...
 ---   end
 --- end
---- </pre>
+--- ```
 ---
 ---@param node TSNode under which the search will occur
 ---@param source (integer|string) Source buffer or string to search
@@ -824,9 +826,11 @@ end
 --- Omnifunc for completing node names and predicates in treesitter queries.
 ---
 --- Use via
---- <pre>lua
----   vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
---- </pre>
+---
+--- ```lua
+--- vim.bo.omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
+--- ```
+---
 function M.omnifunc(findstart, base)
   return require('vim.treesitter._query_linter').omnifunc(findstart, base)
 end

@@ -342,16 +342,18 @@ M[ms.textDocument_completion] = function(_, result, _, _)
 end
 
 --- |lsp-handler| for the method "textDocument/hover"
---- <pre>lua
----   vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
----     vim.lsp.handlers.hover, {
----       -- Use a sharp border with `FloatBorder` highlights
----       border = "single",
----       -- add the title in hover float window
----       title = "hover"
----     }
----   )
---- </pre>
+---
+--- ```lua
+--- vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+---   vim.lsp.handlers.hover, {
+---     -- Use a sharp border with `FloatBorder` highlights
+---     border = "single",
+---     -- add the title in hover float window
+---     title = "hover"
+---   }
+--- )
+--- ```
+---
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
@@ -430,15 +432,20 @@ M[ms.textDocument_typeDefinition] = location_handler
 M[ms.textDocument_implementation] = location_handler
 
 --- |lsp-handler| for the method "textDocument/signatureHelp".
+---
 --- The active parameter is highlighted with |hl-LspSignatureActiveParameter|.
---- <pre>lua
----   vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
----     vim.lsp.handlers.signature_help, {
----       -- Use a sharp border with `FloatBorder` highlights
----       border = "single"
----     }
----   )
---- </pre>
+---
+--- ```lua
+--- vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
+---   vim.lsp.handlers.signature_help, {
+---     -- Use a sharp border with `FloatBorder` highlights
+---     border = "single"
+---   }
+--- )
+--- ```
+---
+---@param result table Response from the language server
+---@param ctx table Client context
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window

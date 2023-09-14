@@ -65,19 +65,21 @@ end
 --- (as opposed to |vim.split()| which is "eager").
 ---
 --- Example:
----   <pre>lua
----   for s in vim.gsplit(':aa::b:', ':', {plain=true}) do
----     print(s)
----   end
----   </pre>
+---
+--- ```lua
+--- for s in vim.gsplit(':aa::b:', ':', {plain=true}) do
+---   print(s)
+--- end
+--- ```
 ---
 --- If you want to also inspect the separator itself (instead of discarding it), use
 --- |string.gmatch()|. Example:
----   <pre>lua
----   for word, num in ('foo111bar222'):gmatch('([^0-9]*)(%d*)') do
----     print(('word: %s num: %s'):format(word, num))
----   end
----   </pre>
+---
+--- ```lua
+--- for word, num in ('foo111bar222'):gmatch('([^0-9]*)(%d*)') do
+---   print(('word: %s num: %s'):format(word, num))
+--- end
+--- ```
 ---
 --- @see |string.gmatch()|
 --- @see |vim.split()|
@@ -165,12 +167,13 @@ end
 --- |vim.gsplit()|).
 ---
 --- Examples:
---- <pre>lua
----  split(":aa::b:", ":")                   --> {'','aa','','b',''}
----  split("axaby", "ab?")                   --> {'','x','y'}
----  split("x*yz*o", "*", {plain=true})      --> {'x','yz','o'}
----  split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
---- </pre>
+---
+--- ```lua
+--- split(":aa::b:", ":")                   --> {'','aa','','b',''}
+--- split("axaby", "ab?")                   --> {'','x','y'}
+--- split("x*yz*o", "*", {plain=true})      --> {'x','yz','o'}
+--- split("|x|y|z|", "|", {trimempty=true}) --> {'x', 'y', 'z'}
+--- ```
 ---
 ---@see |vim.gsplit()|
 ---@see |string.gmatch()|
@@ -259,12 +262,13 @@ end
 --- a predicate that is checked for each value.
 ---
 --- Example:
---- <pre>lua
----  vim.tbl_contains({ 'a', { 'b', 'c' } }, function(v)
----    return vim.deep_equal(v, { 'b', 'c' })
----  end, { predicate = true })
----  -- true
---- </pre>
+---
+--- ```lua
+--- vim.tbl_contains({ 'a', { 'b', 'c' } }, function(v)
+---   return vim.deep_equal(v, { 'b', 'c' })
+--- end, { predicate = true })
+--- -- true
+--- ```
 ---
 ---@see |vim.list_contains()| for checking values in list-like tables
 ---
@@ -455,10 +459,11 @@ end
 --- Return `nil` if the key does not exist.
 ---
 --- Examples:
---- <pre>lua
----  vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
----  vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
---- </pre>
+---
+--- ```lua
+--- vim.tbl_get({ key = { nested_key = true }}, 'key', 'nested_key') == true
+--- vim.tbl_get({ key = {}}, 'key', 'nested_key') == nil
+--- ```
 ---
 ---@param o table Table to index
 ---@param ... any Optional keys (0 or more, variadic) via which to index the table
@@ -626,10 +631,10 @@ end
 
 --- Counts the number of non-nil values in table `t`.
 ---
---- <pre>lua
+--- ```lua
 --- vim.tbl_count({ a=1, b=2 })  --> 2
 --- vim.tbl_count({ 1, 2 })      --> 2
---- </pre>
+--- ```
 ---
 ---@see https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
 ---@param t table Table
@@ -703,38 +708,41 @@ end
 --- Validates a parameter specification (types and values).
 ---
 --- Usage example:
---- <pre>lua
----  function user.new(name, age, hobbies)
----    vim.validate{
----      name={name, 'string'},
----      age={age, 'number'},
----      hobbies={hobbies, 'table'},
----    }
----    ...
----  end
---- </pre>
+---
+--- ```lua
+--- function user.new(name, age, hobbies)
+---   vim.validate{
+---     name={name, 'string'},
+---     age={age, 'number'},
+---     hobbies={hobbies, 'table'},
+---   }
+---   ...
+--- end
+--- ```
 ---
 --- Examples with explicit argument values (can be run directly):
---- <pre>lua
----  vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
----     --> NOP (success)
 ---
----  vim.validate{arg1={1, 'table'}}
----     --> error('arg1: expected table, got number')
+--- ```lua
+--- vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
+---    --> NOP (success)
 ---
----  vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
----     --> error('arg1: expected even number, got 3')
---- </pre>
+--- vim.validate{arg1={1, 'table'}}
+---    --> error('arg1: expected table, got number')
+---
+--- vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+---    --> error('arg1: expected even number, got 3')
+--- ```
 ---
 --- If multiple types are valid they can be given as a list.
---- <pre>lua
----  vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
----     --> NOP (success)
 ---
----  vim.validate{arg1={1, {'string', 'table'}}}
----     --> error('arg1: expected string|table, got number')
+--- ```lua
+--- vim.validate{arg1={{'foo'}, {'table', 'string'}}, arg2={'foo', {'table', 'string'}}}
+--- -- NOP (success)
 ---
---- </pre>
+--- vim.validate{arg1={1, {'string', 'table'}}}
+--- -- error('arg1: expected string|table, got number')
+---
+--- ```
 ---
 ---@param opt table Names of parameters to validate. Each key is a parameter
 ---          name; each value is a tuple in one of these forms:
@@ -866,10 +874,10 @@ end
 --- If {create} is `nil`, this will create a defaulttable whose constructor function is
 --- this function, effectively allowing to create nested tables on the fly:
 ---
---- <pre>lua
+--- ```lua
 --- local a = vim.defaulttable()
 --- a.b.c = 1
---- </pre>
+--- ```
 ---
 ---@param create function?(key:any):any The function called to create a missing value.
 ---@return table Empty table with metamethod
@@ -938,7 +946,7 @@ do
   --- Create a ring buffer limited to a maximal number of items.
   --- Once the buffer is full, adding a new entry overrides the oldest entry.
   ---
-  --- <pre>
+  --- ```lua
   ---   local ringbuf = vim.ringbuf(4)
   ---   ringbuf:push("a")
   ---   ringbuf:push("b")
@@ -952,7 +960,7 @@ do
   ---   for val in ringbuf do
   ---     print(val)
   ---   end
-  --- </pre>
+  --- ```
   ---
   --- Returns a Ringbuf instance with the following methods:
   ---

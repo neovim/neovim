@@ -553,14 +553,16 @@ end
 --- followed by namespace configuration, and finally global configuration.
 ---
 --- For example, if a user enables virtual text globally with
---- <pre>lua
----   vim.diagnostic.config({ virtual_text = true })
---- </pre>
+---
+--- ```lua
+--- vim.diagnostic.config({ virtual_text = true })
+--- ```
 ---
 --- and a diagnostic producer sets diagnostics with
---- <pre>lua
----   vim.diagnostic.set(ns, 0, diagnostics, { virtual_text = false })
---- </pre>
+---
+--- ```lua
+--- vim.diagnostic.set(ns, 0, diagnostics, { virtual_text = false })
+--- ```
 ---
 --- then virtual text will not be enabled for those diagnostics.
 ---
@@ -1601,18 +1603,20 @@ end
 --- Parse a diagnostic from a string.
 ---
 --- For example, consider a line of output from a linter:
---- <pre>
+---
+--- ```
 --- WARNING filename:27:3: Variable 'foo' does not exist
---- </pre>
+--- ```
 ---
 --- This can be parsed into a diagnostic |diagnostic-structure|
 --- with:
---- <pre>lua
----   local s = "WARNING filename:27:3: Variable 'foo' does not exist"
----   local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
----   local groups = { "severity", "lnum", "col", "message" }
----   vim.diagnostic.match(s, pattern, groups, { WARNING = vim.diagnostic.WARN })
---- </pre>
+---
+--- ```lua
+--- local s = "WARNING filename:27:3: Variable 'foo' does not exist"
+--- local pattern = "^(%w+) %w+:(%d+):(%d+): (.+)$"
+--- local groups = { "severity", "lnum", "col", "message" }
+--- vim.diagnostic.match(s, pattern, groups, { WARNING = vim.diagnostic.WARN })
+--- ```
 ---
 ---@param str string String to parse diagnostics from.
 ---@param pat string Lua pattern with capture groups.

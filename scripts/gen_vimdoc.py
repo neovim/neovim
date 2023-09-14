@@ -585,13 +585,12 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
             text += '>{}{}\n<'.format(ensure_nl, o)
     elif n.nodeName == 'programlisting': # codeblock (```)
         o = get_text(n)
-        filename = n.attributes['filename'].value
-        if filename:
-            text += '>{}'.format(filename.lstrip('.'))
-        else:
-            text += '>'
+        text += '>'
+        if 'filename' in n.attributes:
+            filename = n.attributes['filename'].value
+            text += filename.lstrip('.')
 
-        text += '\n\n{}\n<'.format(textwrap.indent(o, ' ' * 4))
+        text += '\n{}\n<'.format(textwrap.indent(o, ' ' * 4))
     elif is_inline(n):
         text = doc_wrap(get_text(n), prefix=prefix, indent=indent, width=width)
     elif n.nodeName == 'verbatim':
@@ -768,6 +767,27 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
 
     return chunks, xrefs
 
+def is_program_listing(para):
+    """
+    Return True if `para` contains a "programlisting" (i.e. a Markdown code
+    block ```).
+
+    Sometimes a <para> element will have only a single "programlisting" child
+    node, but othertimes it will have extra whitespace around the
+    "programlisting" node.
+
+    @param para XML <para> node
+    @return True if <para> is a programlisting
+    """
+
+    # Remove any child text nodes that are only whitespace
+    children = [
+        n for n in para.childNodes
+        if n.nodeType != n.TEXT_NODE or n.data.strip() != ''
+    ]
+
+    return len(children) == 1 and children[0].nodeName == 'programlisting'
+
 def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent='',
                         fmt_vimhelp=False):
     """Renders (nested) Doxygen <para> nodes as Vim :help text.
@@ -799,10 +819,7 @@ def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent=
         # 'programlisting' blocks are Markdown code blocks. Do not include
         # these as a separate paragraph, but append to the last non-empty line
         # in the text
-        if (
-            len(child.childNodes) == 1
-            and child.childNodes[0].nodeName == 'programlisting'
-        ):
+        if is_program_listing(child):
             while rendered_blocks and rendered_blocks[-1] == '':
                 rendered_blocks.pop()
             rendered_blocks[-1] += ' ' + para['text']

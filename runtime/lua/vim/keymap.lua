@@ -2,20 +2,21 @@ local keymap = {}
 
 --- Adds a new |mapping|.
 --- Examples:
---- <pre>lua
----   -- Map to a Lua function:
----   vim.keymap.set('n', 'lhs', function() print("real lua function") end)
----   -- Map to multiple modes:
----   vim.keymap.set({'n', 'v'}, '<leader>lr', vim.lsp.buf.references, { buffer = true })
----   -- Buffer-local mapping:
----   vim.keymap.set('n', '<leader>w', "<cmd>w<cr>", { silent = true, buffer = 5 })
----   -- Expr mapping:
----   vim.keymap.set('i', '<Tab>', function()
----     return vim.fn.pumvisible() == 1 and "<C-n>" or "<Tab>"
----   end, { expr = true })
----   -- <Plug> mapping:
----   vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
---- </pre>
+---
+--- ```lua
+--- -- Map to a Lua function:
+--- vim.keymap.set('n', 'lhs', function() print("real lua function") end)
+--- -- Map to multiple modes:
+--- vim.keymap.set({'n', 'v'}, '<leader>lr', vim.lsp.buf.references, { buffer = true })
+--- -- Buffer-local mapping:
+--- vim.keymap.set('n', '<leader>w', "<cmd>w<cr>", { silent = true, buffer = 5 })
+--- -- Expr mapping:
+--- vim.keymap.set('i', '<Tab>', function()
+---   return vim.fn.pumvisible() == 1 and "<C-n>" or "<Tab>"
+--- end, { expr = true })
+--- -- <Plug> mapping:
+--- vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
+--- ```
 ---
 ---@param mode string|table    Mode short-name, see |nvim_set_keymap()|.
 ---                            Can also be list of modes to create mapping on multiple modes.
@@ -80,11 +81,13 @@ end
 
 --- Remove an existing mapping.
 --- Examples:
---- <pre>lua
----   vim.keymap.del('n', 'lhs')
 ---
----   vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
---- </pre>
+--- ```lua
+--- vim.keymap.del('n', 'lhs')
+---
+--- vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
+--- ```
+---
 ---@param opts table|nil A table of optional arguments:
 ---                      - "buffer": (number|boolean) Remove a mapping from the given buffer.
 ---                        When `0` or `true`, use the current buffer.

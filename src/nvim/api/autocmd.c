@@ -49,19 +49,20 @@ static int64_t next_autocmd_id = 1;
 /// Get all autocommands that match the corresponding {opts}.
 ///
 /// These examples will get autocommands matching ALL the given criteria:
-/// <pre>lua
-///   -- Matches all criteria
-///   autocommands = vim.api.nvim_get_autocmds({
-///     group = "MyGroup",
-///     event = {"BufEnter", "BufWinEnter"},
-///     pattern = {"*.c", "*.h"}
-///   })
 ///
-///   -- All commands from one group
-///   autocommands = vim.api.nvim_get_autocmds({
-///     group = "MyGroup",
-///   })
-/// </pre>
+/// ```lua
+/// -- Matches all criteria
+/// autocommands = vim.api.nvim_get_autocmds({
+///   group = "MyGroup",
+///   event = {"BufEnter", "BufWinEnter"},
+///   pattern = {"*.c", "*.h"}
+/// })
+///
+/// -- All commands from one group
+/// autocommands = vim.api.nvim_get_autocmds({
+///   group = "MyGroup",
+/// })
+/// ```
 ///
 /// NOTE: When multiple patterns or events are provided, it will find all the autocommands that
 /// match any combination of them.
@@ -344,28 +345,31 @@ cleanup:
 /// function _name_ string) or `command` (Ex command string).
 ///
 /// Example using Lua callback:
-/// <pre>lua
-///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
-///       pattern = {"*.c", "*.h"},
-///       callback = function(ev)
-///         print(string.format('event fired: \%s', vim.inspect(ev)))
-///       end
-///     })
-/// </pre>
+///
+/// ```lua
+/// vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
+///   pattern = {"*.c", "*.h"},
+///   callback = function(ev)
+///     print(string.format('event fired: %s', vim.inspect(ev)))
+///   end
+/// })
+/// ```
 ///
 /// Example using an Ex command as the handler:
-/// <pre>lua
-///     vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
-///       pattern = {"*.c", "*.h"},
-///       command = "echo 'Entering a C or C++ file'",
-///     })
-/// </pre>
+///
+/// ```lua
+/// vim.api.nvim_create_autocmd({"BufEnter", "BufWinEnter"}, {
+///   pattern = {"*.c", "*.h"},
+///   command = "echo 'Entering a C or C++ file'",
+/// })
+/// ```
 ///
 /// Note: `pattern` is NOT automatically expanded (unlike with |:autocmd|), thus names like "$HOME"
 /// and "~" must be expanded explicitly:
-/// <pre>lua
-///   pattern = vim.fn.expand("~") .. "/some/path/*.py"
-/// </pre>
+///
+/// ```lua
+/// pattern = vim.fn.expand("~") .. "/some/path/*.py"
+/// ```
 ///
 /// @param event (string|array) Event(s) that will trigger the handler (`callback` or `command`).
 /// @param opts Options dict:
@@ -619,11 +623,12 @@ cleanup:
 /// Create or get an autocommand group |autocmd-groups|.
 ///
 /// To get an existing group id, do:
-/// <pre>lua
-///     local id = vim.api.nvim_create_augroup("MyGroup", {
-///         clear = false
-///     })
-/// </pre>
+///
+/// ```lua
+/// local id = vim.api.nvim_create_augroup("MyGroup", {
+///     clear = false
+/// })
+/// ```
 ///
 /// @param name String: The name of the group
 /// @param opts Dictionary Parameters

@@ -203,7 +203,8 @@ end
 ---
 --- See |vim.diagnostic.config()| for configuration options. Handler-specific
 --- configuration can be set using |vim.lsp.with()|:
---- <pre>lua
+---
+--- ```lua
 --- vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
 ---   vim.lsp.diagnostic.on_publish_diagnostics, {
 ---     -- Enable underline, use default values
@@ -221,7 +222,7 @@ end
 ---     update_in_insert = false,
 ---   }
 --- )
---- </pre>
+--- ```
 ---
 ---@param config table Configuration table (see |vim.diagnostic.config()|).
 function M.on_publish_diagnostics(_, result, ctx, config)
@@ -263,7 +264,8 @@ end
 ---
 --- See |vim.diagnostic.config()| for configuration options. Handler-specific
 --- configuration can be set using |vim.lsp.with()|:
---- <pre>lua
+---
+--- ```lua
 --- vim.lsp.handlers["textDocument/diagnostic"] = vim.lsp.with(
 ---   vim.lsp.diagnostic.on_diagnostic, {
 ---     -- Enable underline, use default values
@@ -281,7 +283,7 @@ end
 ---     update_in_insert = false,
 ---   }
 --- )
---- </pre>
+--- ```
 ---
 ---@param config table Configuration table (see |vim.diagnostic.config()|).
 function M.on_diagnostic(_, result, ctx, config)
