@@ -263,7 +263,7 @@ end
 ---
 ---@return Query Parsed query
 function M.parse(lang, query)
-  language.add(lang)
+  language.load(lang)
   local cached = query_parse_cache[lang][query]
   if cached then
     return cached

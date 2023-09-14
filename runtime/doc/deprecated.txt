@@ -143,7 +143,9 @@ LSP FUNCTIONS
 - *vim.lsp.for_each_buffer_client()*		Use |vim.lsp.get_clients()|
 
 TREESITTER FUNCTIONS
-- *vim.treesitter.language.require_language()*	Use |vim.treesitter.language.add()|
+- *vim.treesitter.language.require_language()*	Use |vim.treesitter.language.load()|
+						instead.
+- *vim.treesitter.language.add()*		Use |vim.treesitter.language.load()|
 						instead.
 - *vim.treesitter.get_node_at_pos()*		Use |vim.treesitter.get_node()|
 						instead.

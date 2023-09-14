@@ -27,7 +27,8 @@ the same language are found, the first one is used. (This typically implies
 the priority "user config > plugins > bundled".
 A parser can also be loaded manually using a full path: >lua
 
-    vim.treesitter.language.add('python', { path = "/path/to/python.so" })
+    vim.treesitter.language.load('python', { path = "/path/to/python.so" })
+    vim.treesitter.language.register('python', 'python')
 <
 ==============================================================================
 TREESITTER TREES                                             *treesitter-tree*
@@ -772,21 +773,6 @@ stop({bufnr})                                          *vim.treesitter.stop()*
 ==============================================================================
 Lua module: vim.treesitter.language                  *lua-treesitter-language*
 
-add({lang}, {opts})                            *vim.treesitter.language.add()*
-    Load parser with name {lang}
-
-    Parsers are searched in the `parser` runtime directory, or the provided
-    {path}
-
-    Parameters: ~
-      • {lang}  (string) Name of the parser (alphanumerical and `_` only)
-      • {opts}  (table|nil) Options:
-                • filetype (string|string[]) Default filetype the parser
-                  should be associated with. Defaults to {lang}.
-                • path (string|nil) Optional path the parser is located at
-                • symbol_name (string|nil) Internal symbol name for the
-                  language to load
-
 get_filetypes({lang})                *vim.treesitter.language.get_filetypes()*
     Get the filetypes associated with the parser named {lang}.
 
@@ -814,6 +800,21 @@ inspect({lang})                            *vim.treesitter.language.inspect()*
 
     Return: ~
         (table)
+
+load({lang}, {opts})                          *vim.treesitter.language.load()*
+    Load parser with name {lang}. To associate a parser with a filetype, use
+    |vim.treesitter.language.register()|.
+
+    Parsers are searched in the `parser` runtime directory, or the provided
+    {opts.path}
+
+    Parameters: ~
+      • {lang}  (string) Name of the parser (alphanumerical and `_` only)
+      • {opts}  (table|nil) Options:
+                • path (string|nil) (optional) Non-default path to load the
+                  parser from
+                • symbol_name (string|nil) Internal symbol name for the
+                  language to load
 
 register({lang}, {filetype})              *vim.treesitter.language.register()*
     Register a parser named {lang} to be used for {filetype}(s).

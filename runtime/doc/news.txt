@@ -138,6 +138,7 @@ The following new APIs and features were added.
   • Added `vim.treesitter.preview_query()`, for live editing of treesitter
     queries.
   • Improved error messages for query parsing.
+  • |vim.treesitter.language.load()| replaces |vim.treesitter.language.add()|.
 
 • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
   Windows `explorer`, Linux `xdg-open`, etc.)
@@ -265,6 +266,9 @@ release.
   - |vim.lsp.util.get_progress_messages()|	Use |vim.lsp.status()| instead.
   - |vim.lsp.get_active_clients()|		Use |vim.lsp.get_clients()| instead.
   - |vim.lsp.for_each_buffer_client()|		Use |vim.lsp.get_clients()| instead.
+
+• vim.treesitter functions:
+  • |vim.treesitter.language.add()|		Use |vim.treesitter.language.load()| instead.
 
 • `vim.loop` has been renamed to `vim.uv`.
 

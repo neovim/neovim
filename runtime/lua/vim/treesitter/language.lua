@@ -52,37 +52,30 @@ function M.require_language(lang, path, silent, symbol_name)
   return true
 end
 
----@class treesitter.RequireLangOpts
+---@class treesitter.LoadLangOpts
 ---@field path? string
----@field silent? boolean
----@field filetype? string|string[]
 ---@field symbol_name? string
 
---- Load parser with name {lang}
+--- Load parser with name {lang}.
+--- To associate a parser with a filetype, use |vim.treesitter.language.register()|.
 ---
---- Parsers are searched in the `parser` runtime directory, or the provided {path}
+--- Parsers are searched in the `parser` runtime directory, or the provided {opts.path}
 ---
 ---@param lang string Name of the parser (alphanumerical and `_` only)
 ---@param opts (table|nil) Options:
----                        - filetype (string|string[]) Default filetype the parser should be associated with.
----                          Defaults to {lang}.
----                        - path (string|nil) Optional path the parser is located at
+---                        - path (string|nil) (optional) Non-default path to load the parser from
 ---                        - symbol_name (string|nil) Internal symbol name for the language to load
-function M.add(lang, opts)
-  ---@cast opts treesitter.RequireLangOpts
+function M.load(lang, opts)
+  ---@cast opts treesitter.LoadLangOpts
   opts = opts or {}
   local path = opts.path
-  local filetype = opts.filetype or lang
   local symbol_name = opts.symbol_name
 
   vim.validate({
     lang = { lang, 'string' },
     path = { path, 'string', true },
     symbol_name = { symbol_name, 'string', true },
-    filetype = { filetype, { 'string', 'table' }, true },
   })
-
-  M.register(lang, filetype)
 
   if vim._ts_has_language(lang) then
     return
@@ -102,6 +95,14 @@ function M.add(lang, opts)
   end
 
   vim._ts_add_language(path, lang, symbol_name)
+end
+
+---@deprecated in favor of `M.load()`
+function M.add(lang, opts)
+  local filetype = (opts or {}).filetype or lang
+  vim.validate({ filetype = { filetype, { 'string', 'table' }, true } })
+  M.register(lang, filetype)
+  M.load(lang, opts)
 end
 
 --- @param x string|string[]
@@ -136,7 +137,7 @@ end
 ---@param lang string Language
 ---@return table
 function M.inspect(lang)
-  M.add(lang)
+  M.load(lang)
   return vim._ts_inspect_language(lang)
 end
 

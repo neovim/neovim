@@ -660,7 +660,7 @@ local function parse_buf(fname, parser_path)
     vim.cmd('sbuffer '..tostring(fname))          -- Buffer number.
   end
   if parser_path then
-    vim.treesitter.language.add('vimdoc', { path = parser_path })
+    vim.treesitter.language.load('vimdoc', { path = parser_path })
   end
   local lang_tree = vim.treesitter.get_parser(buf)
   return lang_tree, buf

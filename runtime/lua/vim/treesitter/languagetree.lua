@@ -109,7 +109,7 @@ LanguageTree.__index = LanguageTree
 ---@param parent_lang? string Parent language name of this tree
 ---@return LanguageTree parser object
 function LanguageTree.new(source, lang, opts, parent_lang)
-  language.add(lang)
+  language.load(lang)
   ---@type LanguageTreeOpts
   opts = opts or {}
 
@@ -371,7 +371,7 @@ function LanguageTree:_add_injections()
 
   local query_time, injections_by_lang = tcall(self._get_injections, self)
   for lang, injection_ranges in pairs(injections_by_lang) do
-    local has_lang = pcall(language.add, lang)
+    local has_lang = pcall(language.load, lang)
 
     -- Child language trees should just be ignored if not found, since
     -- they can depend on the text of a node. Intermediate strings
