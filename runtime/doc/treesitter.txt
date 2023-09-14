@@ -553,6 +553,9 @@ edit_query()                                     *vim.treesitter.edit_query()*
 
     Can also be shown with `:EditQuery`.                          *:EditQuery*
 
+    Note that the editor opens a scratch buffer, and so queries aren't
+    persisted on disk.
+
 foldexpr({lnum})                                   *vim.treesitter.foldexpr()*
     Returns the fold level for {lnum} in the current buffer. Can be set
     directly to 'foldexpr': >lua

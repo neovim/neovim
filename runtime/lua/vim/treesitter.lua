@@ -498,6 +498,8 @@ end
 --- Open a window for live editing of a treesitter query.
 ---
 --- Can also be shown with `:EditQuery`. *:EditQuery*
+---
+--- Note that the editor opens a scratch buffer, and so queries aren't persisted on disk.
 function M.edit_query()
   require('vim.treesitter.dev').edit_query()
 end
