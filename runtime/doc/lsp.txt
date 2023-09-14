@@ -1151,6 +1151,13 @@ code_action({options})                             *vim.lsp.buf.code_action()*
                      selection. Table must contain `start` and `end` keys with
                      {row,col} tuples using mark-like indexing. See
                      |api-indexing|
+                   • sync: (boolean|nil) If true the method blocks.
+                     Defaults to false. Editing the buffer while invoking an
+                     asynchronous code action can lead to unexpected
+                     changes.
+                   • timeout_ms: (integer|nil, default 1000): Time in
+                     milliseconds to block for code action requests. No effect
+                     if sync is not true
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction

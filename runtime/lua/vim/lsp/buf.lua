@@ -695,10 +695,26 @@ end
 --- with all aggregated results
 local function code_action_request(params, options)
   local bufnr = api.nvim_get_current_buf()
-  vim.lsp.buf_request_all(bufnr, ms.textDocument_codeAction, params, function(results)
+  if options and options.sync then
+    local results, err =
+      vim.lsp.buf_request_sync(bufnr, ms.textDocument_codeAction, params, options.timeout_ms)
+    if err then
+      if err == 'timeout' then
+        vim.notify('[LSP] Code action timed out', vim.log.levels.INFO)
+      else
+        vim.notify('[LSP] Code action failed - ' .. err, vim.log.levels.WARN)
+      end
+      return
+    end
     local ctx = { bufnr = bufnr, method = ms.textDocument_codeAction, params = params }
+    -- verify if results were successful before running on_code_action_results
     on_code_action_results(results, ctx, options)
-  end)
+  else
+    vim.lsp.buf_request_all(bufnr, ms.textDocument_codeAction, params, function(results)
+      local ctx = { bufnr = bufnr, method = ms.textDocument_codeAction, params = params }
+      on_code_action_results(results, ctx, options)
+    end)
+  end
 end
 
 --- Selects a code action available at the current
@@ -726,6 +742,14 @@ end
 ---           If in visual mode this defaults to the active selection.
 ---           Table must contain `start` and `end` keys with {row,col} tuples
 ---           using mark-like indexing. See |api-indexing|
+---  - sync:  (boolean|nil)
+---           If true the method blocks.
+---           Defaults to false. Editing the buffer while invoking an
+---           asynchronous code action can lead to unexpected
+---           changes.
+---  - timeout_ms: (integer|nil, default 1000)
+---           Time in milliseconds to block for code action requests.
+---           No effect if sync is not true
 ---
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 ---@see vim.lsp.protocol.CodeActionTriggerKind
