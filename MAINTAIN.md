@@ -69,7 +69,7 @@ remove existing features, or refactor parts of the code that would change
 user's workflow. In these cases, a deprecation policy is needed to properly
 inform users of the change.
 
-In general, when a feature is slated to be removed it should:
+When a (non-experimental) feature is slated to be removed it should:
 
 1. Be _soft_ deprecated in the _next_ release
   - Use of the deprecated feature will still work.
@@ -105,6 +105,10 @@ Version:            0.10              0.11              0.12
 Feature removals which may benefit from community input or further discussion
 should also have a tracking issue (which should be linked to in the release
 notes).
+
+Exceptions to this policy may be made (for experimental subsystems or when
+there is broad consensus among maintainers). The rationale for the exception
+should be stated explicitly and publicly.
 
 Third-party dependencies
 ------------------------
