@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	Forth
 " Maintainer:	Johan Kotlinski <kotlinski@gmail.com>
-" Last Change:	2023 Aug 08
+" Last Change:	2023 Sep 15
 " URL:		https://github.com/jkotlinski/forth.vim
 
 if exists("b:did_ftplugin")
@@ -58,6 +58,7 @@ if exists("loaded_matchit") && !exists("b:match_words")
   let b:match_ignorecase = 1
   let b:match_words = s:matchit_patterns[1:]->join(',')
   let b:undo_ftplugin ..= "| unlet! b:match_ignorecase b:match_words"
+  unlet s:matchit_patterns
 endif
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
@@ -68,4 +69,4 @@ endif
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
-unlet s:define_patterns s:include_patterns s:matchit_patterns
+unlet s:define_patterns s:include_patterns
