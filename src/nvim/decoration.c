@@ -348,18 +348,12 @@ next_mark:
     if (active && item.decor.spell != kNone) {
       spell = item.decor.spell;
     }
-    if (item.start_row == state->row && decor_virt_pos(&item.decor)
-        && item.draw_col != INT_MIN) {
-      if (item.start_col <= col) {
-        if (item.decor.virt_text_pos == kVTOverlay && item.draw_col == -1) {
-          item.draw_col = (item.decor.virt_text_hide && hidden) ? INT_MIN : win_col;
-        } else if (item.draw_col == -3) {
-          item.draw_col = -1;
-        }
-      } else if (wp->w_p_wrap
-                 && (item.decor.virt_text_pos == kVTRightAlign
-                     || item.decor.virt_text_pos == kVTWinCol)) {
-        item.draw_col = -3;
+    if (item.start_row == state->row && item.start_col <= col
+        && decor_virt_pos(&item.decor) && item.draw_col == -1) {
+      if (item.decor.virt_text_pos == kVTOverlay) {
+        item.draw_col = (item.decor.virt_text_hide && hidden) ? INT_MIN : win_col;
+      } else if (win_col < 0 && item.decor.virt_text_pos != kVTInline) {
+        item.draw_col = win_col;
       }
     }
     if (keep) {
