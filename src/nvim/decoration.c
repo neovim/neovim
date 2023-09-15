@@ -268,6 +268,28 @@ static void decor_add(DecorState *state, int start_row, int start_col, int end_r
   kv_A(state->active, index) = range;
 }
 
+/// Initialize the draw_col of a newly-added non-inline virtual text item.
+static void decor_init_draw_col(int win_col, bool hidden, DecorRange *item)
+{
+  if (win_col < 0) {
+    item->draw_col = win_col;
+  } else if (item->decor.virt_text_pos == kVTOverlay) {
+    item->draw_col = (item->decor.virt_text_hide && hidden) ? INT_MIN : win_col;
+  } else {
+    item->draw_col = -1;
+  }
+}
+
+void decor_recheck_draw_col(int win_col, bool hidden, DecorState *state)
+{
+  for (size_t i = 0; i < kv_size(state->active); i++) {
+    DecorRange *item = &kv_A(state->active, i);
+    if (item->draw_col == -3) {
+      decor_init_draw_col(win_col, hidden, item);
+    }
+  }
+}
+
 int decor_redraw_col(win_T *wp, int col, int win_col, bool hidden, DecorState *state)
 {
   buf_T *buf = wp->w_buffer;
@@ -349,12 +371,9 @@ next_mark:
       spell = item.decor.spell;
     }
     if (item.start_row == state->row && item.start_col <= col
-        && decor_virt_pos(&item.decor) && item.draw_col == -1) {
-      if (item.decor.virt_text_pos == kVTOverlay) {
-        item.draw_col = (item.decor.virt_text_hide && hidden) ? INT_MIN : win_col;
-      } else if (win_col < 0 && item.decor.virt_text_pos != kVTInline) {
-        item.draw_col = win_col;
-      }
+        && decor_virt_pos(&item.decor) && item.draw_col == -1
+        && item.decor.virt_text_pos != kVTInline) {
+      decor_init_draw_col(win_col, hidden, &item);
     }
     if (keep) {
       kv_A(state->active, j++) = item;
