@@ -3082,7 +3082,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       wlv.char_attr = saved_attr2;
     }
 
-    if (has_decor && (wp->w_p_rl ? (wlv.col < 0) : (wlv.col >= grid->cols))) {
+    if (has_decor && wlv.filler_todo <= 0
+        && (wp->w_p_rl ? (wlv.col < 0) : (wlv.col >= grid->cols))) {
       // At the end of screen line: might need to peek for decorations just after
       // this position.
       if (!has_fold && wp->w_p_wrap && wlv.n_extra == 0) {
@@ -3119,7 +3120,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       if (virt_line_offset >= 0) {
         draw_virt_text_item(buf, virt_line_offset, kv_A(virt_lines, virt_line_index).line,
                             kHlModeReplace, grid->cols, 0);
-      } else {
+      } else if (wlv.filler_todo <= 0) {
         draw_virt_text(wp, buf, win_col_offset, &draw_col, grid->cols, wlv.row);
       }
 
