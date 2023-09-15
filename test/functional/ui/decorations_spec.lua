@@ -692,6 +692,11 @@ describe('extmark decorations', function()
       [34] = {background = Screen.colors.Yellow};
       [35] = {background = Screen.colors.Yellow, bold = true, foreground = Screen.colors.Blue};
       [36] = {foreground = Screen.colors.Blue1, bold = true, background = Screen.colors.Red};
+      [37] = {background = Screen.colors.WebGray, foreground = Screen.colors.DarkBlue};
+      [38] = {background = Screen.colors.LightBlue};
+      [39] = {foreground = Screen.colors.Blue1, background = Screen.colors.LightCyan1, bold = true};
+      [40] = {reverse = true};
+      [41] = {bold = true, reverse = true};
     }
 
     ns = meths.create_namespace 'test'
@@ -1354,6 +1359,38 @@ describe('extmark decorations', function()
       3^3                                                |
                                                         |
     ]]}
+  end)
+
+  it('virtual text works below diff filler lines', function()
+    screen:try_resize(53, 8)
+    insert([[
+      aaaaa
+      bbbbb
+      ccccc
+      ddddd
+      eeeee]])
+    command('rightbelow vnew')
+    insert([[
+      bbbbb
+      ccccc
+      ddddd
+      eeeee]])
+    command('windo diffthis')
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = {{'AA', 'Underlined'}}, virt_text_pos = 'overlay' })
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = {{'BB', 'Underlined'}}, virt_text_win_col = 10 })
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = {{'CC', 'Underlined'}}, virt_text_pos = 'right_align' })
+    screen:expect{grid=[[
+      {37:  }{38:aaaaa                   }│{37:  }{39:------------------------}|
+      {37:  }bbbbb                   │{37:  }{28:AA}bbb     {28:BB}          {28:CC}|
+      {37:  }ccccc                   │{37:  }ccccc                   |
+      {37:  }ddddd                   │{37:  }ddddd                   |
+      {37:  }eeeee                   │{37:  }eeee^e                   |
+      {1:~                         }│{1:~                         }|
+      {40:[No Name] [+]              }{41:[No Name] [+]             }|
+                                                           |
+    ]]}
+    command('windo set wrap')
+    screen:expect_unchanged()
   end)
 
   it('can have virtual text which combines foreground and background groups', function()
