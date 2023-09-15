@@ -84,7 +84,8 @@ typedef struct {
   bool virt_text_owned;
   /// Screen column to draw the virtual text.
   /// When -1, the virtual text may be drawn after deciding where.
-  /// When -3, the virtual text should be drawn on a later screen line.
+  /// When -2, the virtual text should be drawn at the start of the screen line.
+  /// When -3, the virtual text should be drawn on the next screen line.
   /// When INT_MIN, the virtual text should no longer be drawn.
   int draw_col;
   uint64_t ns_id;

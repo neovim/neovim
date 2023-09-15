@@ -282,6 +282,10 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
       } else if (item->decor.virt_text_pos == kVTWinCol) {
         item->draw_col = MAX(item->decor.col + col_off, 0);
       }
+    } else if (item->draw_col == -2) {
+      item->draw_col = col_off;
+    } else if (item->draw_col == -3) {
+      item->draw_col = item->decor.virt_text_pos == kVTOverlay ? -2 : -1;
     }
     if (item->draw_col < 0) {
       continue;
@@ -3080,10 +3084,16 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
     if (has_decor && (wp->w_p_rl ? (wlv.col < 0) : (wlv.col >= grid->cols))) {
       // At the end of screen line: might need to peek for decorations just after
-      // this position. Without wrapping, we might need to display win_col overlays
-      // from the entire text line.
-      colnr_T nextpos = wp->w_p_wrap ? (colnr_T)(ptr - line) : (colnr_T)strlen(line);
-      decor_redraw_col(wp, nextpos, wlv.off, true, &decor_state);
+      // this position.
+      if (wp->w_p_wrap) {
+        // FIXME: virt_text_hide doesn't work for overlay virt_text at the next char
+        // as it's not easy to check if the next char is inside Visual selection.
+        decor_redraw_col(wp, (int)(ptr - line), -3, false, &decor_state);
+      } else {
+        // Without wrapping, we might need to display right_align and win_col
+        // virt_text for the entire text line.
+        decor_redraw_col(wp, MAXCOL, -1, true, &decor_state);
+      }
     }
 
     // At end of screen line and there is more to come: Display the line
