@@ -27,7 +27,7 @@ ${NVIM_VERSION}
 
 ### Linux (x64)
 
-Minimum glibc version to run these releases is 3.31. People requring releases
+Minimum glibc version to run these releases is 2.31. People requiring releases
 that work on older glibc versions can find them at
 https://github.com/neovim/neovim-releases.
 

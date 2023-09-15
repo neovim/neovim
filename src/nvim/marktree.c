@@ -852,7 +852,7 @@ static void intersect_add(Intersection *x, Intersection *y)
   }
 }
 
-// inplace assymetric difference: x &= ~y
+// inplace asymmetric difference: x &= ~y
 static void intersect_sub(Intersection *restrict x, Intersection *restrict y)
 {
   size_t xi = 0, yi = 0;

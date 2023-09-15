@@ -29,6 +29,7 @@
 ---@field sexpr fun(self: TSNode): string
 ---@field equal fun(self: TSNode, other: TSNode): boolean
 ---@field iter_children fun(self: TSNode): fun(): TSNode, string
+---@field field fun(self: TSNode, name: string): TSNode[]
 local TSNode = {}
 
 ---@param query userdata

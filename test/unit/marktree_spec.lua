@@ -391,7 +391,7 @@ describe('marktree', function()
     local iter = ffi.new("MarkTreeIter[1]")
     local ids = {}
 
-    -- new index and old index look the same, but still have to move becase
+    -- new index and old index look the same, but still have to move because
     -- pos will get updated
     table.insert(ids, put(tree, 1, 1, false, 1, 3, false))
     table.insert(ids, put(tree, 1, 3, false, 1, 3, false))

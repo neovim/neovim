@@ -209,7 +209,8 @@ not related to TUI rendering like so:
 
     lldb -- ./build/bin/nvim --headless --listen ~/.cache/nvim/debug-server.pipe
 
-You can then attach to the headless process to interact with the editor like so:
+While in lldb, enter `run`. You can then attach to the headless process in a
+new terminal window to interact with the editor like so:
 
     ./build/bin/nvim --remote-ui --server ~/.cache/nvim/debug-server.pipe
 
