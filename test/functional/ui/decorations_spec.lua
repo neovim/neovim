@@ -869,7 +869,7 @@ describe('extmark decorations', function()
     insert(('ab'):rep(100))
     for i = 0, 9 do
       meths.buf_set_extmark(0, ns, 0, 42 + i, { virt_text={{tostring(i), 'ErrorMsg'}}, virt_text_pos='overlay'})
-      meths.buf_set_extmark(0, ns, 0, 91 + i, { virt_text={{tostring(i), 'ErrorMsg'}}, virt_text_pos='overlay', virt_text_hide = true})
+      meths.buf_set_extmark(0, ns, 0, 91 + i, { virt_text={{tostring(i), 'ErrorMsg'}}, virt_text_pos='overlay', virt_text_hide=true})
     end
     screen:expect{grid=[[
       ababababababababababababababababababababab{4:01234567}|
@@ -880,7 +880,58 @@ describe('extmark decorations', function()
                                                         |
     ]]}
 
-    command('set number')
+    command('set showbreak=++')
+    screen:expect{grid=[[
+      ababababababababababababababababababababab{4:01234567}|
+      {1:++}{4:89}abababababababababababababababababababa{4:0123456}|
+      {1:++}{4:789}babababababababababababababababababababababab|
+      {1:++}abababababababababababababababababababababababab|
+      {1:++}ababa^b                                          |
+                                                        |
+    ]]}
+
+    feed('2gkvg0')
+    screen:expect{grid=[[
+      ababababababababababababababababababababab{4:01234567}|
+      {1:++}{4:89}abababababababababababababababababababa{4:0123456}|
+      {1:++}^a{18:babab}ababababababababababababababababababababab|
+      {1:++}abababababababababababababababababababababababab|
+      {1:++}ababab                                          |
+      {24:-- VISUAL --}                                      |
+    ]]}
+
+    feed('o')
+    screen:expect{grid=[[
+      ababababababababababababababababababababab{4:01234567}|
+      {1:++}{4:89}abababababababababababababababababababa{4:0123456}|
+      {1:++}{18:ababa}^bababababababababababababababababababababab|
+      {1:++}abababababababababababababababababababababababab|
+      {1:++}ababab                                          |
+      {24:-- VISUAL --}                                      |
+    ]]}
+
+    feed('gk')
+    screen:expect{grid=[[
+      ababababababababababababababababababababab{4:01234567}|
+      {1:++}{4:89}aba^b{18:ababababababababababababababababababababab}|
+      {1:++}{18:a}{4:89}babababababababababababababababababababababab|
+      {1:++}abababababababababababababababababababababababab|
+      {1:++}ababab                                          |
+      {24:-- VISUAL --}                                      |
+    ]]}
+
+    feed('o')
+    screen:expect{grid=[[
+      ababababababababababababababababababababab{4:01234567}|
+      {1:++}{4:89}aba{18:bababababababababababababababababababababab}|
+      {1:++}^a{4:89}babababababababababababababababababababababab|
+      {1:++}abababababababababababababababababababababababab|
+      {1:++}ababab                                          |
+      {24:-- VISUAL --}                                      |
+    ]]}
+
+    feed('<Esc>$')
+    command('set number showbreak=')
     screen:expect{grid=[[
       {2:  1 }ababababababababababababababababababababab{4:0123}|
       {2:    }{4:456789}abababababababababababababababababababa{4:0}|

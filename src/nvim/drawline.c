@@ -282,10 +282,6 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
       } else if (item->decor.virt_text_pos == kVTWinCol) {
         item->draw_col = MAX(item->decor.col + col_off, 0);
       }
-    } else if (item->draw_col == -2) {
-      item->draw_col = col_off;
-    } else if (item->draw_col == -3) {
-      item->draw_col = item->decor.virt_text_pos == kVTOverlay ? -2 : -1;
     }
     if (item->draw_col < 0) {
       continue;
@@ -1145,6 +1141,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
   bool saved_search_attr_from_match = false;
 
   int win_col_offset = 0;               // offset for window columns
+  bool area_active = false;             // whether in Visual selection, for virtual text
+  bool decor_need_recheck = false;      // call decor_recheck_draw_col() at next char
 
   char buf_fold[FOLD_TEXT_LEN];         // Hold value returned by get_foldtext
 
@@ -1786,9 +1784,27 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       }
 
       if (has_decor && wlv.n_extra == 0) {
-        bool selected = (area_highlighting
-                         && ((wlv.vcol >= wlv.fromcol && wlv.vcol < wlv.tocol)
-                             || (noinvcur && wlv.vcol == wp->w_virtcol)));
+        // Duplicate the Visual area check after this block,
+        // but don't check inside p_extra here.
+        if (wlv.vcol == wlv.fromcol
+            || (wlv.vcol + 1 == wlv.fromcol
+                && (wlv.n_extra == 0 && utf_ptr2cells(ptr) > 1))
+            || (vcol_prev == fromcol_prev
+                && vcol_prev < wlv.vcol
+                && wlv.vcol < wlv.tocol)) {
+          area_active = true;
+        } else if (area_active
+                   && (wlv.vcol == wlv.tocol
+                       || (noinvcur && wlv.vcol == wp->w_virtcol))) {
+          area_active = false;
+        }
+
+        bool selected = (area_active || (area_highlighting && noinvcur
+                                         && wlv.vcol == wp->w_virtcol));
+        if (decor_need_recheck) {
+          decor_recheck_draw_col(wlv.off, selected, &decor_state);
+          decor_need_recheck = false;
+        }
         extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off, selected, &decor_state);
 
         if (!has_fold && wp->w_buffer->b_virt_text_inline > 0) {
@@ -1822,10 +1838,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
               && vcol_prev < wlv.vcol               // not at margin
               && wlv.vcol < wlv.tocol)) {
         *area_attr_p = vi_attr;                     // start highlighting
+        area_active = true;
       } else if (*area_attr_p != 0
                  && (wlv.vcol == wlv.tocol
                      || (noinvcur && wlv.vcol == wp->w_virtcol))) {
         *area_attr_p = 0;                           // stop highlighting
+        area_active = false;
       }
 
       if (!has_fold && wlv.n_extra == 0) {
@@ -3087,9 +3105,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       // At the end of screen line: might need to peek for decorations just after
       // this position.
       if (!has_fold && wp->w_p_wrap && wlv.n_extra == 0) {
-        // FIXME: virt_text_hide doesn't work for overlay virt_text at the next char
-        // as it's not easy to check if the next char is inside Visual selection.
         decor_redraw_col(wp, (int)(ptr - line), -3, false, &decor_state);
+        // Check position/hiding of virtual text again on next screen line.
+        decor_need_recheck = true;
       } else if (has_fold || !wp->w_p_wrap) {
         // Without wrapping, we might need to display right_align and win_col
         // virt_text for the entire text line.
