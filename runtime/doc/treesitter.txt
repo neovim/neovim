@@ -676,8 +676,8 @@ inspect_tree({opts})                           *vim.treesitter.inspect_tree()*
 
     While in the window, press "a" to toggle display of anonymous nodes, "I"
     to toggle the display of the source language of each node, "o" to toggle
-    the query previewer, and press <Enter> to jump to the node under the
-    cursor in the source buffer.
+    the query editor, and press <Enter> to jump to the node under the cursor
+    in the source buffer.
 
     Can also be shown with `:InspectTree`.                      *:InspectTree*
 
@@ -729,11 +729,6 @@ node_contains({node}, {range})                *vim.treesitter.node_contains()*
 
     Return: ~
         (boolean) True if the {node} contains the {range}
-
-preview_query()                               *vim.treesitter.preview_query()*
-    Open a window for live editing of a treesitter query.
-
-    Can also be shown with `:PreviewQuery`.                    *:PreviewQuery*
 
 start({bufnr}, {lang})                                *vim.treesitter.start()*
     Starts treesitter highlighting for a buffer
@@ -857,6 +852,14 @@ add_predicate({name}, {handler}, {force})
                    • see |vim.treesitter.query.add_directive()| for argument
                      meanings
       • {force}    (boolean|nil)
+
+edit()                                           *vim.treesitter.query.edit()*
+    Open a window for live editing of a treesitter query.
+
+    Can also be shown with `:EditQuery`.                          *:EditQuery*
+
+    Note that the editor opens a scratch buffer, and so queries aren't
+    persisted on disk.
 
 get({lang}, {query_name})                         *vim.treesitter.query.get()*
     Returns the runtime query {query_name} for {lang}.

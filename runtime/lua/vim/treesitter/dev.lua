@@ -351,11 +351,11 @@ function M.inspect_tree(opts)
     end,
   })
   api.nvim_buf_set_keymap(b, 'n', 'o', '', {
-    desc = 'Toggle query previewer',
+    desc = 'Toggle query editor',
     callback = function()
-      local preview_w = vim.b[buf].dev_preview
-      if not preview_w or not close_win(preview_w) then
-        M.preview_query()
+      local edit_w = vim.b[buf].dev_edit
+      if not edit_w or not close_win(edit_w) then
+        M.edit_query()
       end
     end,
   })
@@ -464,16 +464,16 @@ function M.inspect_tree(opts)
   })
 end
 
-local preview_ns = api.nvim_create_namespace('treesitter/dev-preview')
+local edit_ns = api.nvim_create_namespace('treesitter/dev-edit')
 
 ---@param query_win integer
 ---@param base_win integer
-local function update_preview_highlights(query_win, base_win)
+local function update_editor_highlights(query_win, base_win)
   local base_buf = api.nvim_win_get_buf(base_win)
   local query_buf = api.nvim_win_get_buf(query_win)
   local parser = vim.treesitter.get_parser(base_buf)
   local lang = parser:lang()
-  api.nvim_buf_clear_namespace(base_buf, preview_ns, 0, -1)
+  api.nvim_buf_clear_namespace(base_buf, edit_ns, 0, -1)
   local query_content = table.concat(api.nvim_buf_get_lines(query_buf, 0, -1, false), '\n')
 
   local ok_query, query = pcall(vim.treesitter.query.parse, lang, query_content)
@@ -493,7 +493,7 @@ local function update_preview_highlights(query_win, base_win)
     local capture_name = query.captures[id]
     if capture_name == cursor_word then
       local lnum, col, end_lnum, end_col = node:range()
-      api.nvim_buf_set_extmark(base_buf, preview_ns, lnum, col, {
+      api.nvim_buf_set_extmark(base_buf, edit_ns, lnum, col, {
         end_row = end_lnum,
         end_col = end_col,
         hl_group = 'Visual',
@@ -506,17 +506,17 @@ local function update_preview_highlights(query_win, base_win)
 end
 
 --- @private
-function M.preview_query()
+function M.edit_query()
   local buf = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
 
-  -- Close any existing previewer window
-  if vim.b[buf].dev_preview then
-    close_win(vim.b[buf].dev_preview)
+  -- Close any existing editor window
+  if vim.b[buf].dev_edit then
+    close_win(vim.b[buf].dev_edit)
   end
 
   local cmd = '60vnew'
-  -- If the inspector is open, place the previewer above it.
+  -- If the inspector is open, place the editor above it.
   local base_win = vim.b[buf].dev_base ---@type integer?
   local base_buf = base_win and api.nvim_win_get_buf(base_win)
   local inspect_win = base_buf and vim.b[base_buf].dev_inspect
@@ -537,20 +537,20 @@ function M.preview_query()
   local query_win = api.nvim_get_current_win()
   local query_buf = api.nvim_win_get_buf(query_win)
 
-  vim.b[buf].dev_preview = query_win
+  vim.b[buf].dev_edit = query_win
   vim.bo[query_buf].omnifunc = 'v:lua.vim.treesitter.query.omnifunc'
   set_dev_properties(query_win, query_buf)
 
   -- Note that omnifunc guesses the language based on the containing folder,
   -- so we add the parser's language to the buffer's name so that omnifunc
   -- can infer the language later.
-  api.nvim_buf_set_name(query_buf, string.format('%s/query_previewer.scm', lang))
+  api.nvim_buf_set_name(query_buf, string.format('%s/query_editor.scm', lang))
 
-  local group = api.nvim_create_augroup('treesitter/dev-preview', {})
+  local group = api.nvim_create_augroup('treesitter/dev-edit', {})
   api.nvim_create_autocmd({ 'TextChanged', 'InsertLeave' }, {
     group = group,
     buffer = query_buf,
-    desc = 'Update query previewer diagnostics when the query changes',
+    desc = 'Update query editor diagnostics when the query changes',
     callback = function()
       vim.treesitter.query.lint(query_buf, { langs = lang, clear = false })
     end,
@@ -558,37 +558,37 @@ function M.preview_query()
   api.nvim_create_autocmd({ 'TextChanged', 'InsertLeave', 'CursorMoved', 'BufEnter' }, {
     group = group,
     buffer = query_buf,
-    desc = 'Update query previewer highlights when the cursor moves',
+    desc = 'Update query editor highlights when the cursor moves',
     callback = function()
       if api.nvim_win_is_valid(win) then
-        update_preview_highlights(query_win, win)
+        update_editor_highlights(query_win, win)
       end
     end,
   })
   api.nvim_create_autocmd('BufLeave', {
     group = group,
     buffer = query_buf,
-    desc = 'Clear the query previewer highlights when leaving the previewer',
+    desc = 'Clear highlights when leaving the query editor',
     callback = function()
-      api.nvim_buf_clear_namespace(buf, preview_ns, 0, -1)
+      api.nvim_buf_clear_namespace(buf, edit_ns, 0, -1)
     end,
   })
   api.nvim_create_autocmd('BufLeave', {
     group = group,
     buffer = buf,
-    desc = 'Clear the query previewer highlights when leaving the source buffer',
+    desc = 'Clear the query editor highlights when leaving the source buffer',
     callback = function()
       if not api.nvim_buf_is_loaded(query_buf) then
         return true
       end
 
-      api.nvim_buf_clear_namespace(query_buf, preview_ns, 0, -1)
+      api.nvim_buf_clear_namespace(query_buf, edit_ns, 0, -1)
     end,
   })
   api.nvim_create_autocmd('BufHidden', {
     group = group,
     buffer = buf,
-    desc = 'Close the previewer window when the source buffer is hidden',
+    desc = 'Close the editor window when the source buffer is hidden',
     once = true,
     callback = function()
       close_win(query_win)
