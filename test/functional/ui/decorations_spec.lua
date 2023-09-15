@@ -894,6 +894,16 @@ describe('extmark decorations', function()
       aba^b                                              |
                                                         |
     ]]}
+
+    feed('0g$hi<Tab>')
+    screen:expect{grid=[[
+      {2:  1 }ababababababababababababababababababababab{4:01}  |
+        {4:^23456789}abababababababababababababababababababa{4:0}|
+      {4:123456789}babababababababababababababababababababab|
+      ababababababababababababababababababababababababab|
+      abababab                                          |
+      {24:-- INSERT --}                                      |
+    ]]}
   end)
 
   it('virt_text_hide hides overlay virtual text when extmark is off-screen', function()
@@ -1265,6 +1275,44 @@ describe('extmark decorations', function()
       {1:~                                                 }|
                                                         |
     ]]}
+
+    feed('fhi<Tab>')
+    screen:expect{grid=[[
+      {2:  1 }n ipairs(items) do                            |
+      {2:  2 }xt, hl_id_cell, count = unpack({4:Very})      {4:VERY}|
+      {2:  3 }                                              |
+      {2:  4 }= nil then                     {4:Much}       {4:MUCH}|
+      {2:  5 }- -- -- -- -- -- -- -- -- -- --{4:Error}^hl_id{4:ERROR}|
+      {2:  6 }                                              |
+      {2:  7 }1, (count or 1) do                            |
+      {2:  8 }l cell = line[colpos]                         |
+      {2:  9 }.tex{1:-} = text                                 {1:-}|
+      {2: 10 }.hl_id = hl_id                                |
+      {2: 11 }os = colpos+1                                 |
+      {2: 12 }                                              |
+      {2: 13 }                                              |
+      {1:~                                                 }|
+      {24:-- INSERT --}                                      |
+    ]]}
+
+    feed('<Esc>0')
+    screen:expect{grid=[[
+      {2:  1 }for _,item in ipairs(items) do                |
+      {2:  2 }    local text, hl_id_cell, cou{4:Very} unpack{4:VERY}|
+      {2:  3 }    if                                        |
+      {2:  4 }hl_id_cell ~= nil then         {4:Much}       {4:MUCH}|
+      {2:  5 }^        -- -- -- -- -- -- -- --{4:Error}- -- {4:ERROR}|
+      {2:  6 }    end                                       |
+      {2:  7 }    for _ = 1, (count or 1) do                |
+      {2:  8 }        local cell = line[colpos]             |
+      {2:  9 }    {1:-}   cell.text = text                     {1:-}|
+      {2: 10 }        cell.hl_id = hl_id                    |
+      {2: 11 }        colpos = colpos+1                     |
+      {2: 12 }    end                                       |
+      {2: 13 }end                                           |
+      {1:~                                                 }|
+                                                        |
+    ]]}
   end)
 
   it('can have virtual text on folded line', function()
@@ -1273,7 +1321,6 @@ describe('extmark decorations', function()
       22222
       33333]])
     command('1,2fold')
-    command('set nowrap')
     screen:try_resize(50, 3)
     feed('zb')
     -- XXX: the behavior of overlay virtual text at non-zero column is strange:
@@ -1287,6 +1334,8 @@ describe('extmark decorations', function()
       3333^3                                             |
                                                         |
     ]]}
+    command('set nowrap')
+    screen:expect_unchanged()
     feed('zl')
     screen:expect{grid=[[
       {29:AA}{33:-  2 lin}{29:BB}{33:: 11111·····························}{29:CC}|
