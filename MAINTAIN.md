@@ -69,7 +69,7 @@ remove existing features, or refactor parts of the code that would change
 user's workflow. In these cases, a deprecation policy is needed to properly
 inform users of the change.
 
-When a feature is slated to be removed it should:
+When a (non-experimental) feature is slated to be removed it should:
 
 1. Be _soft_ deprecated in the _next_ release
   - Use of the deprecated feature will still work.
