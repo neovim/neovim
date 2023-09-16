@@ -788,6 +788,19 @@ function LanguageTree:_get_injection(match, metadata)
   return lang, combined, ranges
 end
 
+--- Can't use vim.tbl_flatten since a range is just a table.
+---@param regions Range6[][]
+---@return Range6[]
+local function combine_regions(regions)
+  local result = {} ---@type Range6[]
+  for _, region in ipairs(regions) do
+    for _, range in ipairs(region) do
+      result[#result + 1] = range
+    end
+  end
+  return result
+end
+
 --- Gets language injection points by language.
 ---
 --- This is where most of the injection processing occurs.
@@ -833,11 +846,7 @@ function LanguageTree:_get_injections()
 
       for _, entry in pairs(patterns) do
         if entry.combined then
-          ---@diagnostic disable-next-line:no-unknown
-          local regions = vim.tbl_map(function(e)
-            return vim.tbl_flatten(e)
-          end, entry.regions)
-          table.insert(result[lang], regions)
+          table.insert(result[lang], combine_regions(entry.regions))
         else
           for _, ranges in pairs(entry.regions) do
             table.insert(result[lang], ranges)
