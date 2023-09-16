@@ -824,7 +824,7 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     g->sg_link = 0;
   }
 
-  g->sg_gui = attrs.rgb_ae_attr;
+  g->sg_gui = attrs.rgb_ae_attr &~HL_DEFAULT;
 
   g->sg_rgb_fg = attrs.rgb_fg_color;
   g->sg_rgb_bg = attrs.rgb_bg_color;
@@ -851,7 +851,7 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     }
   }
 
-  g->sg_cterm = attrs.cterm_ae_attr;
+  g->sg_cterm = attrs.cterm_ae_attr &~HL_DEFAULT;
   g->sg_cterm_bg = attrs.cterm_bg_color;
   g->sg_cterm_fg = attrs.cterm_fg_color;
   g->sg_cterm_bold = g->sg_cterm & HL_BOLD;
@@ -1441,7 +1441,7 @@ void restore_cterm_colors(void)
 /// @param check_link  if true also check for an existing link.
 ///
 /// @return true if highlight group "idx" has any settings.
-static int hl_has_settings(int idx, bool check_link)
+static bool hl_has_settings(int idx, bool check_link)
 {
   return hl_table[idx].sg_cleared == 0
          && (hl_table[idx].sg_attr != 0
