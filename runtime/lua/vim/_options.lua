@@ -727,7 +727,10 @@ local function create_option_accessor(scope)
 
   return setmetatable({}, {
     __index = function(_, k)
-      return make_option(k, api.nvim_get_option_value(k, {}))
+      -- vim.opt_global must get global value only
+      -- vim.opt_local may fall back to global value like vim.opt
+      local opts = { scope = scope == 'global' and 'global' or nil }
+      return make_option(k, api.nvim_get_option_value(k, opts))
     end,
 
     __newindex = function(_, k, v)
