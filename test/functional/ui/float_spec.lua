@@ -407,13 +407,19 @@ describe('float window', function()
     assert_alive()
   end)
 
-  it("should re-apply 'style' when present", function()
+  it("should re-apply 'style' when present and not leak to normal windows", function()
+    local buf = api.nvim_create_buf(true, false)
     local float_opts = { style = 'minimal', relative = 'editor', row = 1, col = 1, width = 1, height = 1 }
-    local float_win = api.nvim_open_win(0, true, float_opts)
+    local float_win = api.nvim_open_win(buf, true, float_opts)
     api.nvim_set_option_value('number', true, { win = float_win })
     float_opts.row = 2
     api.nvim_win_set_config(float_win, float_opts)
     eq(false, api.nvim_get_option_value('number', { win = float_win }))
+    -- closing the float should not leak minimal style options to normal windows
+    api.nvim_win_close(float_win, true)
+    api.nvim_set_option_value('number', true, { win = 0 })
+    command('bnext')
+    eq(true, api.nvim_get_option_value('number', { win = 0 }))
   end)
 
   it("should not re-apply 'style' when missing", function()
