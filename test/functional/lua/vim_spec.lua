@@ -2257,8 +2257,8 @@ describe('lua stdlib', function()
     end)
   end) -- vim.opt
 
-  describe('opt_local', function()
-    it('should be able to append to an array list type option', function()
+  describe('vim.opt_local', function()
+    it('appends into global value when changing local option value', function()
       eq({ "foo,bar,baz,qux" }, exec_lua [[
         local result = {}
 
@@ -2267,6 +2267,19 @@ describe('lua stdlib', function()
         vim.opt_local.tags:append("qux")
 
         table.insert(result, vim.bo.tags)
+
+        return result
+      ]])
+    end)
+  end)
+
+  describe('vim.opt_global', function()
+    it('gets current global option value', function()
+      eq({ "yes" }, exec_lua [[
+        local result = {}
+
+        vim.cmd "setglobal signcolumn=yes"
+        table.insert(result, vim.opt_global.signcolumn:get())
 
         return result
       ]])
