@@ -1191,8 +1191,8 @@ void marktree_move(MarkTree *b, MarkTreeIter *itr, int row, int col)
         memmove(&x->key[new_i + 1], &x->key[new_i], sizeof(MTKey) * (size_t)(itr->i - new_i));
         x->key[new_i] = key;
       } else if (new_i > itr->i) {
-        memmove(&x->key[itr->i], &x->key[itr->i + 1], sizeof(MTKey) * (size_t)(new_i - itr->i));
-        x->key[new_i] = key;
+        memmove(&x->key[itr->i], &x->key[itr->i + 1], sizeof(MTKey) * (size_t)(new_i - itr->i - 1));
+        x->key[new_i - 1] = key;
       }
       return;
     }

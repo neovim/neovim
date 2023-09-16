@@ -208,6 +208,23 @@ describe('API/extmarks', function()
     eq({}, get_extmarks(ns2, {0, 0}, {-1, -1}))
   end)
 
+  it('can undo with extmarks (#25147)', function()
+    feed('itest<esc>')
+    set_extmark(ns, 1, 0, 0)
+    set_extmark(ns, 2, 1, 0)
+    eq({ { 1, 0, 0 }, { 2, 1, 0 } }, get_extmarks(ns, {0, 0}, {-1, -1}))
+    feed('dd')
+    eq({ { 1, 1, 0 }, { 2, 1, 0 } }, get_extmarks(ns, {0, 0}, {-1, -1}))
+    curbufmeths.clear_namespace(ns, 0, -1)
+    eq({}, get_extmarks(ns, {0, 0}, {-1, -1}))
+    set_extmark(ns, 1, 0, 0, { right_gravity = false })
+    set_extmark(ns, 2, 1, 0, { right_gravity = false })
+    eq({ { 1, 0, 0 }, { 2, 1, 0 } }, get_extmarks(ns, {0, 0}, {-1, -1}))
+    feed('u')
+    eq({ { 1, 0, 0 }, { 2, 1, 0 } }, get_extmarks(ns, {0, 0}, {-1, -1}))
+    curbufmeths.clear_namespace(ns, 0, -1)
+  end)
+
   it('querying for information and ranges', function()
     --marks = {1, 2, 3}
     --positions = {{0, 0,}, {0, 2}, {0, 3}}
