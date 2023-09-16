@@ -738,12 +738,14 @@ local function add_injection(t, tree_index, pattern, lang, combined, ranges)
 end
 
 -- TODO(clason): replace by refactored `ts.has_parser` API (without registering)
----@param lang string parser name
----@return boolean # true if parser for {lang} exists on rtp
-local has_parser = function(lang)
+--- The result of this function is cached to prevent nvim_get_runtime_file from being
+--- called too often
+--- @param lang string parser name
+--- @return boolean # true if parser for {lang} exists on rtp
+local has_parser = vim.func._memoize(1, function(lang)
   return vim._ts_has_language(lang)
     or #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) > 0
-end
+end)
 
 --- Return parser name for language (if exists) or filetype (if registered and exists).
 --- Also attempts with the input lower-cased.
