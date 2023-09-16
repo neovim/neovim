@@ -1178,6 +1178,9 @@ void marktree_move(MarkTree *b, MarkTreeIter *itr, int row, int col)
     }
 
     if (internal) {
+      if (key.pos.row == newpos.row && key.pos.col == newpos.col) {
+        return;
+      }
       key.pos = newpos;
       bool match;
       // tricky: could minimize movement in either direction better
@@ -1185,7 +1188,7 @@ void marktree_move(MarkTree *b, MarkTreeIter *itr, int row, int col)
       if (!match) {
         new_i++;
       }
-      if (new_i == itr->i || key_cmp(key, x->key[new_i]) == 0) {
+      if (new_i == itr->i) {
         x->key[itr->i].pos = newpos;
       } else if (new_i < itr->i) {
         memmove(&x->key[new_i + 1], &x->key[new_i], sizeof(MTKey) * (size_t)(itr->i - new_i));

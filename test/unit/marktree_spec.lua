@@ -366,6 +366,68 @@ describe('marktree', function()
     eq(0, tree[0].n_keys)
   end)
 
+  itp('works with intersections and marktree_splice', function()
+    local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
+
+    for i = 1,1000 do
+      put(tree, 1, i, false, 2, 1000-i, false)
+      if i % 10 == 1 then
+        check_intersections(tree)
+      end
+    end
+
+    check_intersections(tree)
+    eq(2000, tree[0].n_keys)
+    ok(tree[0].root.level >= 2)
+
+    for _ = 1,10 do
+      lib.marktree_splice(tree, 0, 0, 0, 100, 0, 0)
+      check_intersections(tree)
+    end
+  end)
+
+  itp('marktree_move should preserve key order', function()
+    local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
+    local iter = ffi.new("MarkTreeIter[1]")
+    local ids = {}
+
+    -- new index and old index look the same, but still have to move becase
+    -- pos will get updated
+    table.insert(ids, put(tree, 1, 1, false, 1, 3, false))
+    table.insert(ids, put(tree, 1, 3, false, 1, 3, false))
+    table.insert(ids, put(tree, 1, 3, false, 1, 3, false))
+    table.insert(ids, put(tree, 1, 3, false, 1, 3, false))
+
+    lib.marktree_lookup_ns(tree, ns, ids[3], false, iter)
+    lib.marktree_move(tree, iter, 1, 2)
+
+    check_intersections(tree)
+  end)
+
+  itp('works with intersections and marktree_move', function()
+    local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
+
+    local ids = {}
+
+    for i = 1,1000 do
+      table.insert(ids, put(tree, 1, i, false, 2, 1000-i, false))
+      if i % 10 == 1 then
+        check_intersections(tree)
+      end
+    end
+
+    local iter = ffi.new("MarkTreeIter[1]")
+    for i = 1,1000 do
+      local which = i%2
+      lib.marktree_lookup_ns(tree, ns, ids[i], which, iter)
+      lib.marktree_move(tree, iter, 1+which, 500+i)
+      if i % 10 == 1 then
+        check_intersections(tree)
+      end
+    end
+
+  end)
+
   itp('works with intersections with a even bigger tree', function()
     local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
 
@@ -434,5 +496,49 @@ describe('marktree', function()
     end
 
     eq(0, tree[0].n_keys)
+  end)
+
+  itp('works with intersections with a even bigger tree and splice', function()
+    local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
+
+    -- too much overhead on ASAN
+    local size_factor = helpers.is_asan() and 3 or 10
+
+    local at_row = {}
+    for i = 1, 10 do
+      at_row[i] = {}
+    end
+
+    local size = 1000*size_factor
+    local k = 1
+    while k <= size do
+      for row1 = 1,9 do
+        for row2 = row1,10 do -- note row2 can be == row1, leads to empty ranges being tested when k > size/2
+          if k > size then
+            break
+          end
+          local id = put(tree, row1, k, false, row2, size-k, false)
+          for i = row1+1, row2 do
+            table.insert(at_row[i], id)
+          end
+          --if tree[0].root.level == 4 then error("kk"..k) end
+          if k % 100*size_factor == 1 or (k < 2000 and k%100 == 1) then
+            check_intersections(tree)
+          end
+          k = k + 1
+        end
+      end
+    end
+
+    eq(2*size, tree[0].n_keys)
+    ok(tree[0].root.level >= 3)
+    check_intersections(tree)
+
+    for _ = 1,10 do
+      for j = 3, 8 do
+        lib.marktree_splice(tree, j, 0, 0, 200, 0, 0)
+        check_intersections(tree)
+      end
+    end
   end)
 end)
