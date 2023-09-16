@@ -2,7 +2,7 @@ local api = vim.api
 local query = vim.treesitter.query
 local Range = require('vim.treesitter._range')
 
----@alias TSHlIter fun(): integer, TSNode, TSMetadata
+---@alias TSHlIter fun(end_line: integer|nil): integer, TSNode, TSMetadata
 
 ---@class TSHighlightState
 ---@field next_row integer
@@ -241,40 +241,43 @@ local function on_line_impl(self, buf, line, is_spell_nav)
     end
 
     while line >= state.next_row do
-      local capture, node, metadata = state.iter()
+      local capture, node, metadata = state.iter(line)
 
-      if capture == nil then
-        break
+      local range = { root_end_row + 1, 0, root_end_row + 1, 0 }
+      if node then
+        range = vim.treesitter.get_range(node, buf, metadata and metadata[capture])
       end
-
-      local range = vim.treesitter.get_range(node, buf, metadata[capture])
       local start_row, start_col, end_row, end_col = Range.unpack4(range)
-      local hl = highlighter_query.hl_cache[capture]
 
-      local capture_name = highlighter_query:query().captures[capture]
-      local spell = nil ---@type boolean?
-      if capture_name == 'spell' then
-        spell = true
-      elseif capture_name == 'nospell' then
-        spell = false
+      if capture then
+        local hl = highlighter_query.hl_cache[capture]
+
+        local capture_name = highlighter_query:query().captures[capture]
+        local spell = nil ---@type boolean?
+        if capture_name == 'spell' then
+          spell = true
+        elseif capture_name == 'nospell' then
+          spell = false
+        end
+
+        -- Give nospell a higher priority so it always overrides spell captures.
+        local spell_pri_offset = capture_name == 'nospell' and 1 or 0
+
+        if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
+          local priority = (tonumber(metadata.priority) or vim.highlight.priorities.treesitter)
+            + spell_pri_offset
+          api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
+            end_line = end_row,
+            end_col = end_col,
+            hl_group = hl,
+            ephemeral = true,
+            priority = priority,
+            conceal = metadata.conceal,
+            spell = spell,
+          })
+        end
       end
 
-      -- Give nospell a higher priority so it always overrides spell captures.
-      local spell_pri_offset = capture_name == 'nospell' and 1 or 0
-
-      if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
-        local priority = (tonumber(metadata.priority) or vim.highlight.priorities.treesitter)
-          + spell_pri_offset
-        api.nvim_buf_set_extmark(buf, ns, start_row, start_col, {
-          end_line = end_row,
-          end_col = end_col,
-          hl_group = hl,
-          ephemeral = true,
-          priority = priority,
-          conceal = metadata.conceal,
-          spell = spell,
-        })
-      end
       if start_row > line then
         state.next_row = start_row
       end

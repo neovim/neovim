@@ -708,7 +708,8 @@ end
 ---@param start integer Starting line for the search
 ---@param stop integer Stopping line for the search (end-exclusive)
 ---
----@return (fun(): integer, TSNode, TSMetadata): capture id, capture node, metadata
+---@return (fun(end_line: integer|nil): integer, TSNode, TSMetadata):
+---        capture id, capture node, metadata
 function Query:iter_captures(node, source, start, stop)
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
@@ -717,7 +718,7 @@ function Query:iter_captures(node, source, start, stop)
   start, stop = value_or_node_range(start, stop, node)
 
   local raw_iter = node:_rawquery(self.query, true, start, stop)
-  local function iter()
+  local function iter(end_line)
     local capture, captured_node, match = raw_iter()
     local metadata = {}
 
@@ -725,7 +726,10 @@ function Query:iter_captures(node, source, start, stop)
       local active = self:match_preds(match, match.pattern, source)
       match.active = active
       if not active then
-        return iter() -- tail call: try next match
+        if end_line and captured_node:range() > end_line then
+          return nil, captured_node, nil
+        end
+        return iter(end_line) -- tail call: try next match
       end
 
       self:apply_directives(match, match.pattern, source, metadata)
