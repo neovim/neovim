@@ -415,6 +415,46 @@ describe('float window', function()
     eq(winids, eval('winids'))
   end)
 
+  it("open does not trigger BufEnter #15300", function()
+    local res = exec_lua[[
+      local times = {}
+      local buf = vim.api.nvim_create_buf(fasle, true)
+      vim.api.nvim_create_autocmd('BufEnter', {
+        callback = function(opt)
+          if opt.buf == buf then
+            times[#times + 1] = 1
+          end
+        end
+      })
+      local win_id
+      local fconfig = {
+        relative = 'editor',
+        row = 10,
+        col = 10,
+        width = 10,
+        height = 10,
+      }
+      --enter is false doesn't trigger
+      win_id = vim.api.nvim_open_win(buf, false, fconfig)
+      vim.api.nvim_win_close(win_id, true)
+      times[#times + 1] = #times == 0 and true or nil
+
+      --enter is true trigger
+      win_id = vim.api.nvim_open_win(buf, true, fconfig)
+      vim.api.nvim_win_close(win_id, true)
+      times[#times + 1] = #times == 2 and true or nil
+
+      --enter is true and fconfig.noautocmd is true doesn't trigger
+      fconfig.noautocmd = true
+      win_id = vim.api.nvim_open_win(buf, true, fconfig)
+      vim.api.nvim_win_close(win_id, true)
+      times[#times + 1] = #times == 2 and true or nil
+
+      return times
+    ]]
+    eq({true, 1, true}, res)
+  end)
+
   it('no crash with bufpos and non-existent window', function()
     command('new')
     local closed_win = meths.get_current_win().id
