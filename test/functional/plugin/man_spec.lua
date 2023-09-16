@@ -9,6 +9,7 @@ local matches = helpers.matches
 local write_file = helpers.write_file
 local tmpname = helpers.tmpname
 local eq = helpers.eq
+local pesc = helpers.pesc
 local skip = helpers.skip
 local is_ci = helpers.is_ci
 
@@ -189,7 +190,7 @@ describe(':Man', function()
     write_file(actual_file, '')
     local args = {nvim_prog, '--headless', '+:Man ' .. actual_file, '+q'}
     matches(('Error detected while processing command line:\r\n' ..
-      'man.lua: "no manual entry for %s"'):format(actual_file),
+      'man.lua: "no manual entry for %s"'):format(pesc(actual_file)),
       funcs.system(args, {''}))
     os.remove(actual_file)
   end)
