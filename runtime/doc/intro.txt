@@ -22,8 +22,7 @@ is not located in the default place.  You can jump to subjects like with tags:
 Use CTRL-] to jump to a subject under the cursor, use CTRL-T to jump back.
 
 							*pronounce*
-Vim is pronounced as one word, like Jim.  So Nvim is N-Jim, which sounds like
-"Ninja".  Starting Nvim is like performing a roundhouse kick.
+Vim is pronounced as one word, like Jim.  So Nvim is "En-Vim", two syllables.
 
 This manual is a reference for all Nvim editor and API features.  It is not an
 introduction; instead for beginners, there is a hands-on |tutor| and a user
