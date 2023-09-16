@@ -879,14 +879,7 @@ set(VIMDOC_FILES
 )
 
 glob_wrapper(API_SOURCES ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
-glob_wrapper(LUA_SOURCES ${NVIM_RUNTIME_DIR}/lua/vim/*.lua)
-
-add_custom_command(
-  OUTPUT ${VIMDOC_FILES}
-  COMMAND ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.py
-  DEPENDS ${API_SOURCES} ${LUA_SOURCES}
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
+glob_wrapper(LUA_SOURCES ${NVIM_RUNTIME_DIR}/lua/vim/**/*.lua)
 
 set(GEN_EVAL_FILES
   ${NVIM_RUNTIME_DIR}/lua/vim/_meta/vimfn.lua
@@ -895,6 +888,15 @@ set(GEN_EVAL_FILES
   ${NVIM_RUNTIME_DIR}/doc/builtin.txt
   ${NVIM_RUNTIME_DIR}/lua/vim/_meta/options.lua
   ${NVIM_RUNTIME_DIR}/doc/options.txt
+)
+
+list(REMOVE_ITEM LUA_SOURCES ${GEN_EVAL_FILES})
+
+add_custom_command(
+  OUTPUT ${VIMDOC_FILES}
+  COMMAND ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.py
+  DEPENDS ${API_SOURCES} ${LUA_SOURCES}
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
 add_custom_command(

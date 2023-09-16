@@ -237,7 +237,7 @@ local function on_line_impl(self, buf, line, is_spell_nav)
 
     if state.iter == nil or state.next_row < line then
       state.iter =
-        highlighter_query:query():iter_captures(root_node, self.bufnr, line, root_end_row + 1)
+        highlighter_query:query():captures_iterator(root_node, self.bufnr, line, root_end_row + 1)
     end
 
     while line >= state.next_row do

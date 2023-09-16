@@ -712,9 +712,26 @@ end
 ---@param start integer Starting line for the search
 ---@param stop integer Stopping line for the search (end-exclusive)
 ---
----@return (fun(end_line: integer|nil): integer, TSNode, TSMetadata):
+---@return (fun(): integer, TSNode, TSMetadata):
 ---        capture id, capture node, metadata
 function Query:iter_captures(node, source, start, stop)
+  local iter = self:captures_iterator(node, source, start, stop)
+  return function()
+    return iter()
+  end
+end
+
+--- Like |Query:iter_captures()| but returns an iterator that cannot be used in for-loops
+--- but instead takes optional arguments to control each invocation of the iterator.
+---
+---@param node TSNode under which the search will occur
+---@param source (integer|string) Source buffer or string to extract text from
+---@param start integer Starting line for the search
+---@param stop integer Stopping line for the search (end-exclusive)
+---
+---@return (fun(end_line: integer?): integer, TSNode, TSMetadata):
+---        capture id, capture node, metadata
+function Query:captures_iterator(node, source, start, stop)
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
