@@ -29,6 +29,7 @@ for k, v in pairs({
   treesitter = true,
   filetype = true,
   loader = true,
+  func = true,
   F = true,
   lsp = true,
   highlight = true,

@@ -10,20 +10,12 @@ local M = {}
 
 --- @alias vim.treesitter.ParseError {msg: string, range: Range4}
 
---- @private
---- Caches parse results for queries for each language.
---- Entries of parse_cache[lang][query_text] will either be true for successful parse or contain the
---- message and range of the parse error.
---- @type table<string,table<string,vim.treesitter.ParseError|true>>
-local parse_cache = {}
-
 --- Contains language dependent context for the query linter
 --- @class QueryLinterLanguageContext
 --- @field lang string? Current `lang` of the targeted parser
 --- @field parser_info table? Parser info returned by vim.treesitter.language.inspect
 --- @field is_first_lang boolean Whether this is the first language of a linter run checking queries for multiple `langs`
 
---- @private
 --- Adds a diagnostic for node in the query buffer
 --- @param diagnostics Diagnostic[]
 --- @param range Range4
@@ -42,7 +34,6 @@ local function add_lint_for_node(diagnostics, range, lint, lang)
   }
 end
 
---- @private
 --- Determines the target language of a query file by its path: <lang>/<query_type>.scm
 --- @param buf integer
 --- @return string?
@@ -53,7 +44,6 @@ local function guess_query_lang(buf)
   end
 end
 
---- @private
 --- @param buf integer
 --- @param opts QueryLinterOpts|QueryLinterNormalizedOpts|nil
 --- @return QueryLinterNormalizedOpts
@@ -87,7 +77,6 @@ local lint_query = [[;; query
   (ERROR) @error
 ]]
 
---- @private
 --- @param err string
 --- @param node TSNode
 --- @return vim.treesitter.ParseError
@@ -112,38 +101,26 @@ local function get_error_entry(err, node)
   }
 end
 
---- @private
 --- @param node TSNode
 --- @param buf integer
 --- @param lang string
---- @param diagnostics Diagnostic[]
-local function check_toplevel(node, buf, lang, diagnostics)
-  local query_text = vim.treesitter.get_node_text(node, buf)
-
-  if not parse_cache[lang] then
-    parse_cache[lang] = {}
-  end
-
-  local lang_cache = parse_cache[lang]
-
-  if lang_cache[query_text] == nil then
-    local cache_val, err = pcall(vim.treesitter.query.parse, lang, query_text) ---@type boolean|vim.treesitter.ParseError, string|Query
-
-    if not cache_val and type(err) == 'string' then
-      cache_val = get_error_entry(err, node)
-    end
-
-    lang_cache[query_text] = cache_val
-  end
-
-  local cache_entry = lang_cache[query_text]
-
-  if type(cache_entry) ~= 'boolean' then
-    add_lint_for_node(diagnostics, cache_entry.range, cache_entry.msg, lang)
-  end
+local function hash_parse(node, buf, lang)
+  return tostring(node:id()) .. tostring(buf) .. tostring(vim.b[buf].changedtick) .. lang
 end
 
---- @private
+--- @param node TSNode
+--- @param buf integer
+--- @param lang string
+--- @return vim.treesitter.ParseError?
+local parse = vim.func._memoize(hash_parse, function(node, buf, lang)
+  local query_text = vim.treesitter.get_node_text(node, buf)
+  local ok, err = pcall(vim.treesitter.query.parse, lang, query_text) ---@type boolean|vim.treesitter.ParseError, string|Query
+
+  if not ok and type(err) == 'string' then
+    return get_error_entry(err, node)
+  end
+end)
+
 --- @param buf integer
 --- @param match table<integer,TSNode>
 --- @param query Query
@@ -164,7 +141,10 @@ local function lint_match(buf, match, query, lang_context, diagnostics)
 
     -- other checks rely on Neovim parser introspection
     if lang and parser_info and cap_id == 'toplevel' then
-      check_toplevel(node, buf, lang, diagnostics)
+      local err = parse(node, buf, lang)
+      if err then
+        add_lint_for_node(diagnostics, err.range, err.msg, lang)
+      end
     end
   end
 end

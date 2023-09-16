@@ -361,6 +361,12 @@ local function process_line(line, in_stream, generics)
     return process_block_comment(line:sub(5), in_stream)
   end
 
+  -- Hax... I'm sorry
+  -- M.fun = vim.memoize(function(...)
+  --   ->
+  -- function M.fun(...)
+  line = line:gsub('^(.+) = .*_memoize%([^,]+, function%((.*)%)$', 'function %1(%2)')
+
   if line:find('^function') or line:find('^local%s+function') then
     return process_function_header(line)
   end
