@@ -2111,7 +2111,11 @@ M.funcs = {
 
     ]=],
     name = 'execute',
-    params = { { 'command', 'any' }, { 'silent', 'boolean' } },
+    params = {
+      { 'command', 'string|string[]' },
+      { 'silent', "''|'silent'|'silent!'" }
+    },
+    returns = 'string',
     signature = 'execute({command} [, {silent}])',
   },
   exepath = {
