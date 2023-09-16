@@ -1630,9 +1630,9 @@ function vim.fn.executable(expr) end
 --- To execute a command in another window than the current one
 --- use `win_execute()`.
 ---
---- @param command any
---- @param silent? boolean
---- @return any
+--- @param command string|string[]
+--- @param silent? ''|'silent'|'silent!'
+--- @return string
 function vim.fn.execute(command, silent) end
 
 --- Returns the full path of {expr} if it is an executable and
