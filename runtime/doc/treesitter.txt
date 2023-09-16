@@ -976,8 +976,8 @@ Query:iter_captures({node}, {source}, {start}, {stop})
       • {stop}    (integer) Stopping line for the search (end-exclusive)
 
     Return: ~
-        (fun(): integer, TSNode, TSMetadata): capture id, capture node,
-        metadata
+        (fun(end_line: integer|nil): integer, TSNode, TSMetadata): capture id,
+        capture node, metadata
 
                                                         *Query:iter_matches()*
 Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
