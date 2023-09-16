@@ -468,11 +468,11 @@ local edit_ns = api.nvim_create_namespace('treesitter/dev-edit')
 
 ---@param query_win integer
 ---@param base_win integer
-local function update_editor_highlights(query_win, base_win)
+---@param lang string
+local function update_editor_highlights(query_win, base_win, lang)
   local base_buf = api.nvim_win_get_buf(base_win)
   local query_buf = api.nvim_win_get_buf(query_win)
-  local parser = vim.treesitter.get_parser(base_buf)
-  local lang = parser:lang()
+  local parser = vim.treesitter.get_parser(base_buf, lang)
   api.nvim_buf_clear_namespace(base_buf, edit_ns, 0, -1)
   local query_content = table.concat(api.nvim_buf_get_lines(query_buf, 0, -1, false), '\n')
 
@@ -506,7 +506,8 @@ local function update_editor_highlights(query_win, base_win)
 end
 
 --- @private
-function M.edit_query()
+--- @param lang? string language to open the query editor for.
+function M.edit_query(lang)
   local buf = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()
 
@@ -528,11 +529,11 @@ function M.edit_query()
   end
   vim.cmd(cmd)
 
-  local ok, parser = pcall(vim.treesitter.get_parser, buf)
+  local ok, parser = pcall(vim.treesitter.get_parser, buf, lang)
   if not ok then
     return nil, 'No parser available for the given buffer'
   end
-  local lang = parser:lang()
+  lang = parser:lang()
 
   local query_win = api.nvim_get_current_win()
   local query_buf = api.nvim_win_get_buf(query_win)
@@ -561,7 +562,7 @@ function M.edit_query()
     desc = 'Update query editor highlights when the cursor moves',
     callback = function()
       if api.nvim_win_is_valid(win) then
-        update_editor_highlights(query_win, win)
+        update_editor_highlights(query_win, win, lang)
       end
     end,
   })
