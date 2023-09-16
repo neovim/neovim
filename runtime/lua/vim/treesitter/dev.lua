@@ -506,7 +506,7 @@ local function update_editor_highlights(query_win, base_win, lang)
 end
 
 --- @private
---- @param lang? string language to open the query editor with.
+--- @param lang? string language to open the query editor for.
 function M.edit_query(lang)
   local buf = api.nvim_get_current_buf()
   local win = api.nvim_get_current_win()

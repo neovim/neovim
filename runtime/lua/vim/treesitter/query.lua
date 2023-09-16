@@ -841,7 +841,7 @@ end
 ---
 --- Note that the editor opens a scratch buffer, and so queries aren't persisted on disk.
 ---
---- @param lang? string language to open the query editor with. If not provided, the current buffer's filetype is used.
+--- @param lang? string language to open the query editor for. If omitted, inferred from the current buffer's filetype.
 function M.edit(lang)
   require('vim.treesitter.dev').edit_query(lang)
 end

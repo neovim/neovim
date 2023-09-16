@@ -862,8 +862,8 @@ edit({lang})                                     *vim.treesitter.query.edit()*
     persisted on disk.
 
     Parameters: ~
-      • {lang}  (string|nil) language to open the query editor with. If not
-                provided, the current buffer's filetype is used.
+      • {lang}  (string|nil) language to open the query editor for. If
+                omitted, inferred from the current buffer's filetype.
 
 get({lang}, {query_name})                         *vim.treesitter.query.get()*
     Returns the runtime query {query_name} for {lang}.
