@@ -1271,8 +1271,11 @@ void *call_func_retlist(const char *func, int argc, typval_T *argv)
 /// it in "*cp".  Doesn't give error messages.
 int eval_foldexpr(win_T *wp, int *cp)
 {
+  const sctx_T saved_sctx = current_sctx;
   const bool use_sandbox = was_set_insecurely(wp, "foldexpr", OPT_LOCAL);
+
   char *arg = wp->w_p_fde;
+  current_sctx = wp->w_p_script_ctx[WV_FDE].script_ctx;
 
   emsg_off++;
   if (use_sandbox) {
@@ -1309,6 +1312,7 @@ int eval_foldexpr(win_T *wp, int *cp)
   }
   textlock--;
   clear_evalarg(&EVALARG_EVALUATE, NULL);
+  current_sctx = saved_sctx;
 
   return (int)retval;
 }

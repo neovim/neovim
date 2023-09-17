@@ -1241,6 +1241,8 @@ struct window_S {
   // this window, w_allbuf_opt is for all buffers in this window.
   winopt_T w_onebuf_opt;
   winopt_T w_allbuf_opt;
+  // transform a pointer to a "onebuf" option into a "allbuf" option
+#define GLOBAL_WO(p)    ((char *)(p) + sizeof(winopt_T))
 
   // A few options have local flags for P_INSECURE.
   uint32_t w_p_stl_flags;           // flags for 'statusline'
@@ -1255,9 +1257,6 @@ struct window_S {
   bool w_briopt_sbr;                // sbr in 'briopt'
   int w_briopt_list;                // additional indent for lists
   int w_briopt_vcol;                // indent for specific column
-
-  // transform a pointer to a "onebuf" option into a "allbuf" option
-#define GLOBAL_WO(p)    ((char *)(p) + sizeof(winopt_T))
 
   long w_scbind_pos;
 
