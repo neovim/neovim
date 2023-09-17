@@ -592,6 +592,7 @@ local extension = {
   ly = 'lilypond',
   ily = 'lilypond',
   liquid = 'liquid',
+  liq = 'liquidsoap',
   cl = 'lisp',
   L = 'lisp',
   lisp = 'lisp',
