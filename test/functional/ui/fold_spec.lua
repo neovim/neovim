@@ -40,12 +40,16 @@ describe("folded lines", function()
         [8] = {foreground = Screen.colors.Brown },
         [9] = {bold = true, foreground = Screen.colors.Brown},
         [10] = {background = Screen.colors.LightGrey, underline = true},
-        [11] = {bold=true},
+        [11] = {bold = true},
         [12] = {foreground = Screen.colors.Red},
         [13] = {foreground = Screen.colors.Red, background = Screen.colors.LightGrey},
         [14] = {background = Screen.colors.Red},
         [15] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Red},
         [16] = {background = Screen.colors.LightGrey},
+        [17] = {background = Screen.colors.Yellow, foreground = Screen.colors.Red},
+        [18] = {background = Screen.colors.LightGrey, bold = true, foreground = Screen.colors.Blue},
+        [19] = {background = Screen.colors.Yellow, foreground = Screen.colors.DarkBlue},
+        [20] = {background = Screen.colors.Red, bold = true, foreground = Screen.colors.Blue},
       })
     end)
 
@@ -2813,6 +2817,121 @@ describe("folded lines", function()
           {1:~                                            }|
           {1:~                                            }|
                                                        |
+        ]])
+      end
+    end)
+
+    it('support foldtext with virtual text format', function()
+      screen:try_resize(30, 7)
+      insert(content1)
+      command("hi! CursorLine guibg=NONE guifg=Red gui=NONE")
+      meths.set_option_value('cursorline', true, {})
+      meths.set_option_value('foldcolumn', '4', {})
+      meths.set_option_value('foldtext',
+        '[[v:folddashes], ["\t", "Search"], [getline(v:foldstart), "NonText"]]', {})
+
+      command('3,4fold')
+      command('5,6fold')
+      command('2,6fold')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [3:------------------------------]|
+        ## grid 2
+          {7:    }This is a                 |
+          {7:+   }{13:^-}{17:       }{18:valid English}{13:·····}|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+        ## grid 3
+                                        |
+        ]]}
+      else
+        screen:expect([[
+          {7:    }This is a                 |
+          {7:+   }{13:^-}{17:       }{18:valid English}{13:·····}|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+                                        |
+        ]])
+      end
+      eq('-\tvalid English', funcs.foldtextresult(2))
+
+      feed('zo')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [3:------------------------------]|
+        ## grid 2
+          {7:    }This is a                 |
+          {7:-   }valid English             |
+          {7:│+  }{5:--}{19:      }{18:sentence composed }|
+          {7:│+  }{13:^--}{17:      }{18:in his cave.}{13:······}|
+          {1:~                             }|
+          {1:~                             }|
+        ## grid 3
+                                        |
+        ]]}
+      else
+        screen:expect([[
+          {7:    }This is a                 |
+          {7:-   }valid English             |
+          {7:│+  }{5:--}{19:      }{18:sentence composed }|
+          {7:│+  }{13:^--}{17:      }{18:in his cave.}{13:······}|
+          {1:~                             }|
+          {1:~                             }|
+                                        |
+        ]])
+      end
+      eq('--\tsentence composed by', funcs.foldtextresult(3))
+      eq('--\tin his cave.', funcs.foldtextresult(5))
+
+      command('hi! Visual guibg=Red')
+      feed('V2k')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [3:------------------------------]|
+        ## grid 2
+          {7:    }This is a                 |
+          {7:-   }^v{14:alid English}             |
+          {7:│+  }{15:--}{19:      }{20:sentence composed }|
+          {7:│+  }{15:--}{19:      }{20:in his cave.}{15:······}|
+          {1:~                             }|
+          {1:~                             }|
+        ## grid 3
+          {11:-- VISUAL LINE --}             |
+        ]]}
+      else
+        screen:expect([[
+          {7:    }This is a                 |
+          {7:-   }^v{14:alid English}             |
+          {7:│+  }{15:--}{19:      }{20:sentence composed }|
+          {7:│+  }{15:--}{19:      }{20:in his cave.}{15:······}|
+          {1:~                             }|
+          {1:~                             }|
+          {11:-- VISUAL LINE --}             |
         ]])
       end
     end)
