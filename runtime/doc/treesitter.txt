@@ -1101,10 +1101,12 @@ LanguageTree:for_each_tree({fn})                *LanguageTree:for_each_tree()*
       • {fn}  fun(tree: TSTree, ltree: LanguageTree)
 
 LanguageTree:included_regions()              *LanguageTree:included_regions()*
-    Gets the set of included regions
+    Gets the set of included regions managed by this LanguageTree . This can be different from the regions set by injection query, because a
+    partial |LanguageTree:parse()| drops the regions outside the requested
+    range.
 
     Return: ~
-        Range6[][]
+        table<integer, Range6[]>
 
 LanguageTree:invalidate({reload})                  *LanguageTree:invalidate()*
     Invalidates this parser and all its children
@@ -1113,10 +1115,12 @@ LanguageTree:invalidate({reload})                  *LanguageTree:invalidate()*
       • {reload}  (boolean|nil)
 
 LanguageTree:is_valid({exclude_children})            *LanguageTree:is_valid()*
-    Determines whether this tree is valid. If the tree is invalid, call `parse()` . This will return the updated tree.
+    Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()| reflects the latest state of the
+    source. If invalid, user should call |LanguageTree:parse()|.
 
     Parameters: ~
-      • {exclude_children}  (boolean|nil)
+      • {exclude_children}  (boolean|nil) whether to ignore the validity of
+                            children (default `false`)
 
     Return: ~
         (boolean)
@@ -1165,7 +1169,7 @@ LanguageTree:parse({range})                             *LanguageTree:parse()*
                  injections).
 
     Return: ~
-        TSTree[]
+        table<integer, TSTree>
 
                                                  *LanguageTree:register_cbs()*
 LanguageTree:register_cbs({cbs}, {recursive})
@@ -1207,7 +1211,12 @@ LanguageTree:tree_for_range({range}, {opts})
         TSTree|nil
 
 LanguageTree:trees()                                    *LanguageTree:trees()*
-    Returns all trees this language tree contains. Does not include child
-    languages.
+    Returns all trees of the regions parsed by this parser. Does not include
+    child languages. The result is list-like if
+    • this LanguageTree is the root, in which case the result is empty or a singleton list; or
+    • the root LanguageTree is fully parsed.
+
+    Return: ~
+        table<integer, TSTree>
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

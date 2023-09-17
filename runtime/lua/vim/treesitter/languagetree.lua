@@ -78,13 +78,14 @@ local TSCallbackNames = {
 ---@field private _opts table Options
 ---@field private _parser TSParser Parser for language
 ---@field private _has_regions boolean
----@field private _regions Range6[][]?
+---@field private _regions table<integer, Range6[]>?
 ---List of regions this tree should manage and parse. If nil then regions are
 ---taken from _trees. This is mostly a short-lived cache for included_regions()
 ---@field private _lang string Language name
 ---@field private _parent_lang? string Parent language name
 ---@field private _source (integer|string) Buffer or string to parse
----@field private _trees TSTree[] Reference to parsed tree (one for each language)
+---@field private _trees table<integer, TSTree> Reference to parsed tree (one for each language).
+---Each key is the index of region, which is synced with _regions and _valid.
 ---@field private _valid boolean|table<integer,boolean> If the parsed tree is valid
 ---@field private _logger? fun(logtype: string, msg: string)
 ---@field private _logfile? file*
@@ -211,7 +212,7 @@ function LanguageTree:_log(...)
   end
 
   local info = debug.getinfo(2, 'nl')
-  local nregions = #self:included_regions()
+  local nregions = vim.tbl_count(self:included_regions())
   local prefix =
     string.format('%s:%d: (#regions=%d) ', info.name or '???', info.currentline or 0, nregions)
 
@@ -244,8 +245,13 @@ function LanguageTree:invalidate(reload)
   end
 end
 
---- Returns all trees this language tree contains.
+--- Returns all trees of the regions parsed by this parser.
 --- Does not include child languages.
+--- The result is list-like if
+--- * this LanguageTree is the root, in which case the result is empty or a singleton list; or
+--- * the root LanguageTree is fully parsed.
+---
+---@return table<integer, TSTree>
 function LanguageTree:trees()
   return self._trees
 end
@@ -255,16 +261,15 @@ function LanguageTree:lang()
   return self._lang
 end
 
---- Determines whether this tree is valid.
---- If the tree is invalid, call `parse()`.
---- This will return the updated tree.
----@param exclude_children boolean|nil
+--- Returns whether this LanguageTree is valid, i.e., |LanguageTree:trees()| reflects the latest
+--- state of the source. If invalid, user should call |LanguageTree:parse()|.
+---@param exclude_children boolean|nil whether to ignore the validity of children (default `false`)
 ---@return boolean
 function LanguageTree:is_valid(exclude_children)
   local valid = self._valid
 
   if type(valid) == 'table' then
-    for i = 1, #self:included_regions() do
+    for i, _ in pairs(self:included_regions()) do
       if not valid[i] then
         return false
       end
@@ -328,7 +333,7 @@ end
 
 --- @private
 --- @param range boolean|Range?
---- @return integer[] changes
+--- @return Range6[] changes
 --- @return integer no_regions_parsed
 --- @return number total_parse_time
 function LanguageTree:_parse_regions(range)
@@ -370,7 +375,7 @@ function LanguageTree:_add_injections()
   local seen_langs = {} ---@type table<string,boolean>
 
   local query_time, injections_by_lang = tcall(self._get_injections, self)
-  for lang, injection_ranges in pairs(injections_by_lang) do
+  for lang, injection_regions in pairs(injections_by_lang) do
     local has_lang = pcall(language.add, lang)
 
     -- Child language trees should just be ignored if not found, since
@@ -383,7 +388,7 @@ function LanguageTree:_add_injections()
         child = self:add_child(lang)
       end
 
-      child:set_included_regions(injection_ranges)
+      child:set_included_regions(injection_regions)
       seen_langs[lang] = true
     end
   end
@@ -408,14 +413,14 @@ end
 ---     Set to `true` to run a complete parse of the source (Note: Can be slow!)
 ---     Set to `false|nil` to only parse regions with empty ranges (typically
 ---     only the root tree without injections).
---- @return TSTree[]
+--- @return table<integer, TSTree>
 function LanguageTree:parse(range)
   if self:is_valid() then
     self:_log('valid')
     return self._trees
   end
 
-  local changes --- @type Range6?
+  local changes --- @type Range6[]?
 
   -- Collect some stats
   local no_regions_parsed = 0
@@ -565,7 +570,7 @@ function LanguageTree:_iter_regions(fn)
 
   local all_valid = true
 
-  for i, region in ipairs(self:included_regions()) do
+  for i, region in pairs(self:included_regions()) do
     if was_valid or self._valid[i] then
       self._valid[i] = fn(i, region)
       if not self._valid[i] then
@@ -601,7 +606,7 @@ end
 --- nodes, which is useful for templating languages like ERB and EJS.
 ---
 ---@private
----@param new_regions Range6[][] List of regions this tree should manage and parse.
+---@param new_regions (Range4|Range6|TSNode)[][] List of regions this tree should manage and parse.
 function LanguageTree:set_included_regions(new_regions)
   self._has_regions = true
 
@@ -609,16 +614,20 @@ function LanguageTree:set_included_regions(new_regions)
   for _, region in ipairs(new_regions) do
     for i, range in ipairs(region) do
       if type(range) == 'table' and #range == 4 then
-        region[i] = Range.add_bytes(self._source, range)
+        region[i] = Range.add_bytes(self._source, range --[[@as Range4]])
       elseif type(range) == 'userdata' then
         region[i] = { range:range(true) }
       end
     end
   end
 
+  -- included_regions is not guaranteed to be list-like, but this is still sound, i.e. if
+  -- new_regions is different from included_regions, then outdated regions in included_regions are
+  -- invalidated. For example, if included_regions = new_regions ++ hole ++ outdated_regions, then
+  -- outdated_regions is invalidated by _iter_regions in else branch.
   if #self:included_regions() ~= #new_regions then
     -- TODO(lewis6991): inefficient; invalidate trees incrementally
-    for _, t in ipairs(self._trees) do
+    for _, t in pairs(self._trees) do
       self:_do_callback('changedtree', t:included_ranges(true), t)
     end
     self._trees = {}
@@ -632,20 +641,22 @@ function LanguageTree:set_included_regions(new_regions)
   self._regions = new_regions
 end
 
----Gets the set of included regions
----@return Range6[][]
+---Gets the set of included regions managed by this LanguageTree. This can be different from the
+---regions set by injection query, because a partial |LanguageTree:parse()| drops the regions
+---outside the requested range.
+---@return table<integer, Range6[]>
 function LanguageTree:included_regions()
   if self._regions then
     return self._regions
   end
 
-  if not self._has_regions or #self._trees == 0 then
+  if not self._has_regions or next(self._trees) == nil then
     -- treesitter.c will default empty ranges to { -1, -1, -1, -1, -1, -1}
     return { {} }
   end
 
   local regions = {} ---@type Range6[][]
-  for i, _ in ipairs(self._trees) do
+  for i, _ in pairs(self._trees) do
     regions[i] = self._trees[i]:included_ranges(true)
   end
 
@@ -801,7 +812,7 @@ local function combine_regions(regions)
   return result
 end
 
---- Gets language injection points by language.
+--- Gets language injection regions by language.
 ---
 --- This is where most of the injection processing occurs.
 ---
