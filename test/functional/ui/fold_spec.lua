@@ -423,6 +423,45 @@ describe("folded lines", function()
           :set norightleft                             |
         ]])
       end
+
+      -- Add a winbar to avoid double-clicks
+      command('setlocal winbar=!!!!!!')
+      if multigrid then
+        meths.input_mouse('left', 'press', '', 2, 1, 1)
+        screen:expect([[
+        ## grid 1
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [2:---------------------------------------------]|
+          [3:---------------------------------------------]|
+        ## grid 2
+          {11:!!!!!!                                       }|
+          {7:▾▾}^aa                                         |
+          {7:││}bb                                         |
+          {7:││}cc                                         |
+          {7:││}dd                                         |
+          {7:││}ee                                         |
+          {7:│ }ff                                         |
+        ## grid 3
+          :set norightleft                             |
+        ]])
+      else
+        meths.input_mouse('left', 'press', '', 0, 1, 1)
+        screen:expect([[
+          {11:!!!!!!                                       }|
+          {7:▾▾}^aa                                         |
+          {7:││}bb                                         |
+          {7:││}cc                                         |
+          {7:││}dd                                         |
+          {7:││}ee                                         |
+          {7:│ }ff                                         |
+          :set norightleft                             |
+        ]])
+      end
     end)
 
     it("works with split", function()
@@ -2834,7 +2873,7 @@ describe("folded lines", function()
       command('5,6fold')
       command('2,6fold')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect([[
         ## grid 1
           [2:------------------------------]|
           [2:------------------------------]|
@@ -2852,7 +2891,7 @@ describe("folded lines", function()
           {1:~                             }|
         ## grid 3
                                         |
-        ]]}
+        ]])
       else
         screen:expect([[
           {7:    }This is a                 |
@@ -2868,7 +2907,7 @@ describe("folded lines", function()
 
       feed('zo')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect([[
         ## grid 1
           [2:------------------------------]|
           [2:------------------------------]|
@@ -2886,7 +2925,7 @@ describe("folded lines", function()
           {1:~                             }|
         ## grid 3
                                         |
-        ]]}
+        ]])
       else
         screen:expect([[
           {7:    }This is a                 |
@@ -2904,7 +2943,7 @@ describe("folded lines", function()
       command('hi! Visual guibg=Red')
       feed('V2k')
       if multigrid then
-        screen:expect{grid=[[
+        screen:expect([[
         ## grid 1
           [2:------------------------------]|
           [2:------------------------------]|
@@ -2922,7 +2961,7 @@ describe("folded lines", function()
           {1:~                             }|
         ## grid 3
           {11:-- VISUAL LINE --}             |
-        ]]}
+        ]])
       else
         screen:expect([[
           {7:    }This is a                 |
