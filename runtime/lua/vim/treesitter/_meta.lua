@@ -50,7 +50,8 @@ function TSNode:_rawquery(query, captures, start, end_, opts) end
 ---@alias TSLoggerCallback fun(logtype: 'parse'|'lex', msg: string)
 
 ---@class TSParser
----@field parse fun(self: TSParser, tree: TSTree?, source: integer|string, include_bytes: boolean?): TSTree, integer[]
+---@field parse fun(self: TSParser, tree: TSTree?, source: integer|string, include_bytes: true): TSTree, Range6[]
+---@field parse fun(self: TSParser, tree: TSTree?, source: integer|string, include_bytes: false|nil): TSTree, Range4[]
 ---@field reset fun(self: TSParser)
 ---@field included_ranges fun(self: TSParser, include_bytes: boolean?): integer[]
 ---@field set_included_ranges fun(self: TSParser, ranges: (Range6|TSNode)[])
