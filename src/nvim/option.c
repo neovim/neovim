@@ -1967,6 +1967,10 @@ void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
       curbuf->b_p_script_ctx[indir & PV_MASK] = last_set;
     } else if (indir & PV_WIN) {
       curwin->w_p_script_ctx[indir & PV_MASK] = last_set;
+      if (both) {
+        // also setting the "all buffers" value
+        curwin->w_allbuf_opt.wo_script_ctx[indir & PV_MASK] = last_set;
+      }
     }
   }
 }
