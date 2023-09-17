@@ -608,4 +608,21 @@ describe('API: get highlight', function()
     meths.set_hl(0, 'Tried', { fg = "#00ff00", default = true })
     eq({ fg = tonumber('00ff00', 16), default = true }, meths.get_hl(0, { name = 'Tried' }))
   end)
+
+  it('should not output empty gui and cterm #23474', function()
+    meths.set_hl(0, 'Foo', {default = true})
+    meths.set_hl(0, 'Bar', { default = true, fg = '#ffffff' })
+    meths.set_hl(0, 'FooBar', { default = true, fg = '#ffffff', cterm = {bold = true} })
+    meths.set_hl(0, 'FooBarA', { default = true, fg = '#ffffff', cterm = {bold = true,italic = true}})
+
+    eq('Foo            xxx cleared',
+      exec_capture('highlight Foo'))
+    eq({default = true}, meths.get_hl(0, {name = 'Foo'}))
+    eq('Bar            xxx guifg=#ffffff',
+      exec_capture('highlight Bar'))
+    eq('FooBar         xxx cterm=bold guifg=#ffffff',
+      exec_capture('highlight FooBar'))
+    eq('FooBarA        xxx cterm=bold,italic guifg=#ffffff',
+      exec_capture('highlight FooBarA'))
+  end)
 end)
