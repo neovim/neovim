@@ -47,7 +47,7 @@ describe(':terminal', function()
   end)
 
   it("reads output buffer on terminal reporting #4151", function()
-    skip(is_ci('cirrus') or is_os('win'))
+    skip(is_os('win'))
     if is_os('win') then
       feed_command([[terminal powershell -NoProfile -NoLogo -Command Write-Host -NoNewline "\"$([char]27)[6n\""; Start-Sleep -Milliseconds 500 ]])
     else
