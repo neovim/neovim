@@ -256,9 +256,9 @@ static int build_cmd_line(char **argv, wchar_t **cmd_line, bool is_cmdexe)
   QUEUE_FOREACH(q, &args_q, {
     ArgNode *arg_node = QUEUE_DATA(q, ArgNode, node);
     xstrlcat(utf8_cmd_line, arg_node->arg, utf8_cmd_line_len);
+    QUEUE_REMOVE(q);
     xfree(arg_node->arg);
     xfree(arg_node);
-    QUEUE_REMOVE(q);
     if (!QUEUE_EMPTY(&args_q)) {
       xstrlcat(utf8_cmd_line, " ", utf8_cmd_line_len);
     }
