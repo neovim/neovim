@@ -947,38 +947,42 @@ int skip_expr(char **pp, evalarg_T *const evalarg)
   return res;
 }
 
+/// Convert "tv" to a string.
+///
+/// @param convert  when true convert a List into a sequence of lines.
+///
+/// @return  an allocated string.
+static char *typval2string(typval_T *tv, bool convert)
+{
+  if (convert && tv->v_type == VAR_LIST) {
+    garray_T ga;
+    ga_init(&ga, (int)sizeof(char), 80);
+    if (tv->vval.v_list != NULL) {
+      tv_list_join(&ga, tv->vval.v_list, "\n");
+      if (tv_list_len(tv->vval.v_list) > 0) {
+        ga_append(&ga, NL);
+      }
+    }
+    ga_append(&ga, NUL);
+    return (char *)ga.ga_data;
+  }
+  return xstrdup(tv_get_string(tv));
+}
+
 /// Top level evaluation function, returning a string.
 ///
-/// @param convert  when true convert a List into a sequence of lines and convert
-///                 a Float to a String.
+/// @param convert  when true convert a List into a sequence of lines.
 ///
-/// @return         pointer to allocated memory, or NULL for failure.
+/// @return  pointer to allocated memory, or NULL for failure.
 char *eval_to_string(char *arg, bool convert)
 {
   typval_T tv;
   char *retval;
-  garray_T ga;
 
   if (eval0(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
     retval = NULL;
   } else {
-    if (convert && tv.v_type == VAR_LIST) {
-      ga_init(&ga, (int)sizeof(char), 80);
-      if (tv.vval.v_list != NULL) {
-        tv_list_join(&ga, tv.vval.v_list, "\n");
-        if (tv_list_len(tv.vval.v_list) > 0) {
-          ga_append(&ga, NL);
-        }
-      }
-      ga_append(&ga, NUL);
-      retval = (char *)ga.ga_data;
-    } else if (convert && tv.v_type == VAR_FLOAT) {
-      char numbuf[NUMBUFLEN];
-      vim_snprintf(numbuf, NUMBUFLEN, "%g", tv.vval.v_float);
-      retval = xstrdup(numbuf);
-    } else {
-      retval = xstrdup(tv_get_string(&tv));
-    }
+    retval = typval2string(&tv, convert);
     tv_clear(&tv);
   }
   clear_evalarg(&EVALARG_EVALUATE, NULL);
