@@ -2951,7 +2951,7 @@ fun! s:NetrwGetFile(readcmd, tfile, method)
    " to process this detection correctly.
 "   call Decho("detect filetype of local version of remote file<".rfile.">",'~'.expand("<slnum>"))
 "   call Decho("..did_filetype()=".did_filetype())
-   setl ft=
+"   setl ft=
 "   call Decho("..initial filetype<".&ft."> for buf#".bufnr()."<".bufname().">")
    let iskkeep= &isk
    setl isk-=/
