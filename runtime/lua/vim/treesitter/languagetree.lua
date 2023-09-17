@@ -70,6 +70,7 @@ local TSCallbackNames = {
 }
 
 ---@class LanguageTree
+---@field private _resolve_cache table<string,string> Cache for resolve_lang()
 ---@field private _callbacks table<TSCallbackName,function[]> Callback handlers
 ---@field package _callbacks_rec table<TSCallbackName,function[]> Callback handlers (recursive)
 ---@field private _children table<string,LanguageTree> Injected languages
@@ -739,24 +740,30 @@ end
 ---
 ---@param alias string language or filetype name
 ---@return string? # resolved parser name
-local function resolve_lang(alias)
+function LanguageTree:_resolve_lang(alias)
+  self._resolve_cache = self._resolve_cache or {}
+  local cached = self._resolve_cache[alias]
+  if cached then
+    return cached
+  end
+
+  local lang
   if has_parser(alias) then
-    return alias
+    lang = alias
+  elseif has_parser(alias:lower()) then
+    lang = alias:lower()
+  else
+    lang = vim.treesitter.language.get_lang(alias)
+    if not (lang and has_parser(lang)) then
+      lang = vim.treesitter.language.get_lang(alias:lower())
+      if not (lang and has_parser(lang)) then
+        lang = nil
+      end
+    end
   end
 
-  if has_parser(alias:lower()) then
-    return alias:lower()
-  end
-
-  local lang = vim.treesitter.language.get_lang(alias)
-  if lang and has_parser(lang) then
-    return lang
-  end
-
-  lang = vim.treesitter.language.get_lang(alias:lower())
-  if lang and has_parser(lang) then
-    return lang
-  end
+  self._resolve_cache[alias] = lang
+  return lang
 end
 
 ---@private
@@ -771,7 +778,7 @@ function LanguageTree:_get_injection(match, metadata)
   local injection_lang = metadata['injection.language'] --[[@as string?]]
   local lang = metadata['injection.self'] ~= nil and self:lang()
     or metadata['injection.parent'] ~= nil and self._parent_lang
-    or (injection_lang and resolve_lang(injection_lang))
+    or (injection_lang and LanguageTree:_resolve_lang(injection_lang))
   local include_children = metadata['injection.include-children'] ~= nil
 
   for id, node in pairs(match) do
@@ -779,7 +786,7 @@ function LanguageTree:_get_injection(match, metadata)
     -- Lang should override any other language tag
     if name == 'injection.language' then
       local text = vim.treesitter.get_node_text(node, self._source, { metadata = metadata[id] })
-      lang = resolve_lang(text)
+      lang = LanguageTree:_resolve_lang(text)
     elseif name == 'injection.content' then
       ranges = get_node_ranges(node, self._source, metadata[id], include_children)
     end
