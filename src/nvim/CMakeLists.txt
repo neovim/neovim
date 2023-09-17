@@ -879,7 +879,13 @@ set(VIMDOC_FILES
 )
 
 glob_wrapper(API_SOURCES ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
-glob_wrapper(LUA_SOURCES ${NVIM_RUNTIME_DIR}/lua/vim/*.lua)
+
+glob_wrapper(LUA_SOURCES
+  ${NVIM_RUNTIME_DIR}/lua/vim/*.lua
+  ${NVIM_RUNTIME_DIR}/lua/vim/filetype/*.lua
+  ${NVIM_RUNTIME_DIR}/lua/vim/lsp/*.lua
+  ${NVIM_RUNTIME_DIR}/lua/vim/treesitter/*.lua
+)
 
 add_custom_command(
   OUTPUT ${VIMDOC_FILES}
