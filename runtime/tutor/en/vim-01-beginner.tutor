@@ -3,6 +3,7 @@
 Neovim is a very powerful editor that has many commands, too many to explain in
 a tutorial such as this. This tutorial is designed to describe enough of the
 commands that you will be able to easily use Neovim as an all-purpose editor.
+
 It is IMPORTANT to remember that this tutorial is set up to teach by use. That
 means that you need to do the exercises to learn them properly. If you only
 read the text, you will soon forget what is most important!
@@ -19,17 +20,16 @@ pressing [<Esc>](<Esc>) and then [u](u) will undo the latest change.
 This tutorial is interactive, and there are a few things you should know.
 - Type [<Enter>](<Enter>) on links [like this](holy-grail    ) to open the linked help section.
 - Or simply type [K](K) on any word to find its documentation!
-- You can close this help window with `:q`{vim}
-- Sometimes you will be required to modify text like
+- You can close this help window with `:q`{vim} `<Enter>`{normal}
 
-    this here
-
+When there is a ✗ sign at the left, you will be required to modify text.
 Once you have done the changes correctly, the ✗ sign at the left will change
 to ✓. I imagine you can already see how neat Neovim can be.
+
 Other times, you'll be prompted to run a command (I'll explain this later):
-~~~ cmd
-    :help <Enter>
-~~~
+
+    `:help`{vim} `<Enter>`{normal}
+
 or press a sequence of keys
 ~~~ normal
     <Esc>0f<Space>d3wP$P
@@ -70,19 +70,19 @@ NOTE: The cursor keys should also work. But using hjkl you will be able to
 
  2. Type:
 
-    `:q!`{vim} `<Enter>`{normal}.
+    `:q!`{vim} `<Enter>`{normal}
 
     This quits the editor, DISCARDING any changes you have made.
 
  3. Open Neovim and get back here by executing the command that got you into
     this tutorial. That might be:
 
-    :Tutor <Enter>
+    `:Tutor`{vim} `<Enter>`{normal}
 
  4. If you have these steps memorized and are confident, execute steps
     1 through 3 to exit and re-enter the editor.
 
-NOTE: [:q!](:q) <Enter> discards any changes you made. In a few lessons you
+NOTE: [:q!](:q) `<Enter>`{normal} discards any changes you made. In a few lessons you
       will learn how to save the changes to a file.
 
  5. Move the cursor down to Lesson 1.3.
