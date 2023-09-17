@@ -229,11 +229,11 @@ These elements are specified in separate JSON files like this
 
 ~~~ json
 {
-    "expect": {
-	"1": "This is how this line should look.",
-	"2": "This is how this line should look.",
-	"3": -1
-    }
+  "expect": {
+    "1": "This is how this line should look.",
+    "2": "This is how this line should look.",
+    "3": -1
+  }
 }
 ~~~
 

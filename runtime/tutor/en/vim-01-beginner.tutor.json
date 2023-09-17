@@ -1,6 +1,5 @@
 {
   "expect": {
-    "25": -1,
     "103": "The cow jumped over the moon.",
     "125": "There is some text missing from this line.",
     "126": "There is some text missing from this line.",
