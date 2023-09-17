@@ -12,7 +12,9 @@
 #include <string.h>
 
 #include "auto/config.h"
+#include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
@@ -994,7 +996,7 @@ char *eval_to_string(char *arg, bool convert)
 /// textlock.
 ///
 /// @param use_sandbox  when true, use the sandbox.
-char *eval_to_string_safe(char *arg, int use_sandbox)
+char *eval_to_string_safe(char *arg, const bool use_sandbox)
 {
   char *retval;
   funccal_entry_T funccal_entry;
@@ -1267,11 +1269,10 @@ void *call_func_retlist(const char *func, int argc, typval_T *argv)
 
 /// Evaluate 'foldexpr'.  Returns the foldlevel, and any character preceding
 /// it in "*cp".  Doesn't give error messages.
-int eval_foldexpr(char *arg, int *cp)
+int eval_foldexpr(win_T *wp, int *cp)
 {
-  typval_T tv;
-  varnumber_T retval;
-  int use_sandbox = was_set_insecurely(curwin, "foldexpr", OPT_LOCAL);
+  const bool use_sandbox = was_set_insecurely(wp, "foldexpr", OPT_LOCAL);
+  char *arg = wp->w_p_fde;
 
   emsg_off++;
   if (use_sandbox) {
@@ -1279,6 +1280,9 @@ int eval_foldexpr(char *arg, int *cp)
   }
   textlock++;
   *cp = NUL;
+
+  typval_T tv;
+  varnumber_T retval;
   if (eval0(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
     retval = 0;
   } else {
@@ -1298,6 +1302,7 @@ int eval_foldexpr(char *arg, int *cp)
     }
     tv_clear(&tv);
   }
+
   emsg_off--;
   if (use_sandbox) {
     sandbox--;
@@ -1306,6 +1311,42 @@ int eval_foldexpr(char *arg, int *cp)
   clear_evalarg(&EVALARG_EVALUATE, NULL);
 
   return (int)retval;
+}
+
+/// Evaluate 'foldtext', returning an Array or a String (NULL_STRING on failure).
+Object eval_foldtext(win_T *wp)
+{
+  const bool use_sandbox = was_set_insecurely(wp, "foldtext", OPT_LOCAL);
+  char *arg = wp->w_p_fdt;
+  funccal_entry_T funccal_entry;
+
+  save_funccal(&funccal_entry);
+  if (use_sandbox) {
+    sandbox++;
+  }
+  textlock++;
+
+  typval_T tv;
+  Object retval;
+  if (eval0(arg, &tv, NULL, &EVALARG_EVALUATE) == FAIL) {
+    retval = STRING_OBJ(NULL_STRING);
+  } else {
+    if (tv.v_type == VAR_LIST) {
+      retval = vim_to_object(&tv);
+    } else {
+      retval = STRING_OBJ(cstr_to_string(tv_get_string(&tv)));
+    }
+    tv_clear(&tv);
+  }
+  clear_evalarg(&EVALARG_EVALUATE, NULL);
+
+  if (use_sandbox) {
+    sandbox--;
+  }
+  textlock--;
+  restore_funccal();
+
+  return retval;
 }
 
 /// Get an lvalue

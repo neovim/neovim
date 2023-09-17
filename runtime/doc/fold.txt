@@ -520,8 +520,10 @@ expression.  It can use these special Vim variables:
 			foldlevel.
 	v:foldlevel	the foldlevel of the fold
 
-In the result a TAB is replaced with a space and unprintable characters are
-made into printable characters.
+If the result is a |List|, it is parsed and drawn like "overlay" virtual text
+(see |nvim_buf_set_extmark()|), otherwise the result is converted to a string
+where a TAB is replaced with a space and unprintable characters are made into
+printable characters.
 
 The resulting line is truncated to fit in the window, it never wraps.
 When there is room after the text, it is filled with the character specified

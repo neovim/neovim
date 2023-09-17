@@ -1145,6 +1145,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
   bool decor_need_recheck = false;      // call decor_recheck_draw_col() at next char
 
   char buf_fold[FOLD_TEXT_LEN];         // Hold value returned by get_foldtext
+  VirtText fold_vt = VIRTTEXT_EMPTY;
 
   // 'cursorlineopt' has "screenline" and cursor is in this line
   bool cul_screenline = false;
@@ -1916,7 +1917,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     if (draw_folded && wlv.n_extra == 0 && wlv.col == win_col_offset) {
       linenr_T lnume = lnum + foldinfo.fi_lines - 1;
       memset(buf_fold, ' ', FOLD_TEXT_LEN);
-      wlv.p_extra = get_foldtext(wp, lnum, lnume, foldinfo, buf_fold);
+      wlv.p_extra = get_foldtext(wp, lnum, lnume, foldinfo, buf_fold, &fold_vt);
       wlv.n_extra = (int)strlen(wlv.p_extra);
 
       if (wlv.p_extra != buf_fold) {
@@ -2881,6 +2882,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         }
       }
 
+      if (kv_size(fold_vt) > 0) {
+        draw_virt_text_item(buf, win_col_offset, fold_vt, kHlModeCombine, grid->cols, 0);
+      }
       draw_virt_text(wp, buf, win_col_offset, &wlv.col, grid->cols, wlv.row);
       grid_put_linebuf(grid, wlv.row, 0, wlv.col, grid->cols, wp->w_p_rl, wp, bg_attr, false);
       wlv.row++;
@@ -3207,6 +3211,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     }
   }     // for every character in the line
 
+  clear_virttext(&fold_vt);
   kv_destroy(virt_lines);
   xfree(wlv.p_extra_free);
   xfree(wlv.saved_p_extra_free);
