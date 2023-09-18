@@ -140,7 +140,7 @@ Filtering Tests
 
 ### Filter by name
 
-Another filter method is by setting a pattern of test name to `TEST_FILTER` or `TEST_FILTER_OUT`.
+Tests can be filtered by setting a pattern of test name to `TEST_FILTER` or `TEST_FILTER_OUT`.
 
 ``` lua
 it('foo api',function()
