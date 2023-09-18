@@ -1408,7 +1408,7 @@ ADDITIONAL DATA DIRECTORY (DEFAULT) ~
     Windows:      Not applicable              Not applicable
 
 Note: Throughout the help pages these defaults are used as placeholders, e.g.
-"~/.config" is understood to mean "`$XDG_CONFIG_HOME` or ~/.config".
+"~/.config" is understood to mean "$XDG_CONFIG_HOME or ~/.config".
 
 Note: The log file directory is controlled by `$XDG_STATE_HOME`.
 
