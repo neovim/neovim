@@ -534,6 +534,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   fix_eol = fix_eol and get_line(bufnr, max - 1) == ''
   if fix_eol then
     api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
+    vim.diagnostic.show(nil, bufnr)
   end
 end
 
