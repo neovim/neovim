@@ -373,11 +373,10 @@ function M.hover(_, result, ctx, config)
   local contents ---@type string[]
   if type(result.contents) == 'table' and result.contents.kind == 'plaintext' then
     format = 'plaintext'
-    contents = { result.contents.value or '' }
+    contents = vim.split(result.contents.value or '', '\n', { trimempty = true })
   else
     contents = util.convert_input_to_markdown_lines(result.contents)
   end
-  contents = util.trim_empty_lines(contents)
   if vim.tbl_isempty(contents) then
     if config.silent ~= true then
       vim.notify('No information available')
@@ -470,7 +469,6 @@ function M.signature_help(_, result, ctx, config)
     vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
   local ft = vim.bo[ctx.bufnr].filetype
   local lines, hl = util.convert_signature_help_to_markdown_lines(result, ft, triggers)
-  lines = util.trim_empty_lines(lines)
   if vim.tbl_isempty(lines) then
     if config.silent ~= true then
       print('No signature help available')

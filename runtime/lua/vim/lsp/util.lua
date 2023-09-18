@@ -102,7 +102,7 @@ end
 
 local function split_lines(value)
   value = string.gsub(value, '\r\n?', '\n')
-  return split(value, '\n', { plain = true })
+  return split(value, '\n', { plain = true, trimempty = true })
 end
 
 local function create_window_without_focus()
@@ -947,7 +947,7 @@ function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers
     -- wrap inside a code block for proper rendering
     label = ('```%s\n%s\n```'):format(ft, label)
   end
-  list_extend(contents, split(label, '\n', { plain = true }))
+  list_extend(contents, split(label, '\n', { plain = true, trimempty = true }))
   if signature.documentation then
     -- if LSP returns plain string, we treat it as plaintext. This avoids
     -- special characters like underscore or similar from being interpreted
@@ -1351,7 +1351,7 @@ function M.stylize_markdown(bufnr, contents, opts)
   end
 
   -- Clean up
-  contents = M.trim_empty_lines(contents)
+  contents = vim.split(table.concat(contents, '\n'), '\n', { trimempty = true })
 
   local stripped = {}
   local highlights = {}
@@ -1510,10 +1510,9 @@ end
 ---
 --- The following transformations are made:
 ---
----   1. Empty lines at the beginning or end of the content are removed
----   2. Carriage returns ('\r') are removed
----   3. Successive empty lines are collapsed into a single empty line
----   4. Thematic breaks are expanded to the given width
+---   1. Carriage returns ('\r') and empty lines at the beginning and end are removed
+---   2. Successive empty lines are collapsed into a single empty line
+---   3. Thematic breaks are expanded to the given width
 ---
 ---@private
 ---@param contents string[]
@@ -1527,16 +1526,13 @@ function M._normalize_markdown(contents, opts)
   })
   opts = opts or {}
 
-  -- 1. Empty lines at the beginning or end of the content are removed
-  contents = M.trim_empty_lines(contents)
+  -- 1. Carriage returns are removed
+  contents = vim.split(table.concat(contents, '\n'):gsub('\r', ''), '\n', { trimempty = true })
 
-  -- 2. Carriage returns are removed
-  contents = vim.split(table.concat(contents, '\n'):gsub('\r', ''), '\n')
-
-  -- 3. Successive empty lines are collapsed into a single empty line
+  -- 2. Successive empty lines are collapsed into a single empty line
   contents = collapse_blank_lines(contents)
 
-  -- 4. Thematic breaks are expanded to the given width
+  -- 3. Thematic breaks are expanded to the given width
   local divider = string.rep('─', opts.width or 80)
   contents = replace_separators(contents, divider)
 
@@ -1738,8 +1734,8 @@ function M.open_floating_preview(contents, syntax, opts)
     vim.treesitter.start(floating_bufnr)
     api.nvim_buf_set_lines(floating_bufnr, 0, -1, false, contents)
   else
-    -- Clean up input: trim empty lines from the end, pad
-    contents = M.trim_empty_lines(contents)
+    -- Clean up input: trim empty lines
+    contents = vim.split(table.concat(contents, '\n'), '\n', { trimempty = true })
 
     if syntax then
       vim.bo[floating_bufnr].syntax = syntax
@@ -1969,6 +1965,7 @@ function M.symbols_to_items(symbols, bufnr)
 end
 
 --- Removes empty lines from the beginning and end.
+---@deprecated use `vim.split()` with `trimempty` instead
 ---@param lines table list of lines to trim
 ---@return table trimmed list of lines
 function M.trim_empty_lines(lines)
