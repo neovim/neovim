@@ -91,4 +91,80 @@ describe('file search', function()
     feed('gf')
     eq('filename_with_unicode_ααα', eval('expand("%:t")'))
   end)
+
+  it('matches Windows drive-letter filepaths (without ":" in &isfname)', function()
+    local os_win = is_os('win')
+
+    insert([[c:/d:/foo/bar.txt]])
+    eq([[c:/d:/foo/bar.txt]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[//share/c:/foo/bar/]])
+    eq([[//share/c:/foo/bar/]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[file://c:/foo/bar]])
+    eq([[file://c:/foo/bar]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[https://c:/foo/bar]])
+    eq([[https://c:/foo/bar]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[\foo\bar]])
+    eq(os_win and [[\foo\bar]] or [[bar]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[/foo/bar]])
+    eq([[/foo/bar]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[c:\foo\bar]])
+    eq(os_win and [[c:\foo\bar]] or [[bar]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[c:/foo/bar]])
+    eq([[c:/foo/bar]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[c:foo\bar]])
+    eq(os_win and [[foo\bar]] or [[bar]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[c:foo/bar]])
+    eq([[foo/bar]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[c:foo]])
+    eq([[foo]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    -- Examples from: https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#example-ways-to-refer-to-the-same-file
+    insert([[c:\temp\test-file.txt]])
+    eq(os_win and [[c:\temp\test-file.txt]] or [[test-file.txt]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[\\127.0.0.1\c$\temp\test-file.txt]])
+    eq(os_win and [[\\127.0.0.1\c$\temp\test-file.txt]] or [[test-file.txt]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[\\LOCALHOST\c$\temp\test-file.txt]])
+    eq(os_win and [[\\LOCALHOST\c$\temp\test-file.txt]] or [[test-file.txt]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[\\.\c:\temp\test-file.txt]]) -- not supported yet
+    eq(os_win and [[\\.\c]] or [[test-file.txt]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[\\?\c:\temp\test-file.txt]]) -- not supported yet
+    eq(os_win and [[\c]] or [[test-file.txt]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]])
+    eq(os_win and [[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]] or [[test-file.txt]], eval('expand("<cfile>")'))
+    command('%delete')
+
+    insert([[\\127.0.0.1\c$\temp\test-file.txt]])
+    eq(os_win and [[\\127.0.0.1\c$\temp\test-file.txt]] or [[test-file.txt]], eval('expand("<cfile>")'))
+  end)
 end)

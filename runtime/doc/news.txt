@@ -15,6 +15,9 @@ BREAKING CHANGES                                                *news-breaking*
 
 The following changes may require adaptations in user config or plugins.
 
+• Windows file path drive letters are now detected even if ":" is not in
+  'isfname'. The default 'isfname' no longer includes ":".
+
 • |vim.tbl_islist()| now checks whether a table is actually list-like (i.e.,
   has integer keys without gaps and starting from 1). For the previous
   behavior (only check for integer keys, allow gaps or not starting with 1),

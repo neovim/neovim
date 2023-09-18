@@ -26,6 +26,9 @@ if exists('s:did_load')
   set sessionoptions+=options
   set viewoptions+=options
   set switchbuf=
+  if has('win32')
+    set isfname+=:
+  endif
   if g:testname !~ 'test_mapping.vim$'
     " Make "Q" switch to Ex mode.
     " This does not work for all tests.
