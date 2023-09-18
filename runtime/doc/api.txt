@@ -1458,6 +1458,8 @@ nvim_set_hl({ns_id}, {name}, {*val})                           *nvim_set_hl()*
                  • cterm: cterm attribute map, like |highlight-args|. If not
                    set, cterm attributes will match those from the attribute
                    map documented above.
+                 • force: if true force update the highlight group when it
+                   exists.
 
 nvim_set_hl_ns({ns_id})                                     *nvim_set_hl_ns()*
     Set active namespace for highlights defined with |nvim_set_hl()|. This can

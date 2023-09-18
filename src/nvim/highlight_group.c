@@ -799,11 +799,10 @@ int lookup_color(const int idx, const bool foreground, TriState *const boldp)
 void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
 {
   int idx = id - 1;  // Index is ID minus one.
-
   bool is_default = attrs.rgb_ae_attr & HL_DEFAULT;
 
   // Return if "default" was used and the group already has settings
-  if (is_default && hl_has_settings(idx, true)) {
+  if (is_default && hl_has_settings(idx, true) && !dict->force) {
     return;
   }
 

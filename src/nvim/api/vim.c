@@ -151,6 +151,7 @@ Dictionary nvim_get_hl(Integer ns_id, Dict(get_highlight) *opts, Arena *arena, E
 ///                - cterm: cterm attribute map, like |highlight-args|. If not set,
 ///                         cterm attributes will match those from the attribute map
 ///                         documented above.
+///                - force: if true force update the highlight group when it exists.
 /// @param[out] err Error details, if any
 ///
 // TODO(bfredl): val should take update vs reset flag
