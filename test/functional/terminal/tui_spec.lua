@@ -1663,21 +1663,18 @@ describe('TUI', function()
 
   it('draws correctly when cursor_address overflows #21643', function()
     helpers.skip(helpers.is_os('mac'), 'FIXME: crashes/errors on macOS')
-    screen:try_resize(77, 834)
+    screen:try_resize(77, 855)
     retry(nil, nil, function()
-      eq({true, 831}, {child_session:request('nvim_win_get_height', 0)})
+      eq({true, 852}, {child_session:request('nvim_win_get_height', 0)})
     end)
     -- Use full screen message so that redrawing afterwards is more deterministic.
     child_session:notify('nvim_command', 'intro')
     screen:expect({any = 'Nvim'})
     -- Going to top-left corner needs 3 bytes.
     -- Setting underline attribute needs 9 bytes.
-    -- With screen width 77, 63857 characters need 829 full screen lines.
-    -- Drawing each full screen line needs 77 + 2 = 79 bytes (2 bytes for CR LF).
-    -- The incomplete screen line needs 24 + 3 = 27 bytes.
-    -- The whole line needs 3 + 9 + 79 * 829 + 27 = 65530 bytes.
+    -- The whole line needs 3 + 9 + 65515 + 3 = 65530 bytes.
     -- The cursor_address that comes after will overflow the 65535-byte buffer.
-    local line = ('a'):rep(63857) .. '℃'
+    local line = ('a'):rep(65515) .. '℃'
     child_session:notify('nvim_exec_lua', [[
       vim.api.nvim_buf_set_lines(0, 0, -1, true, {...})
       vim.o.cursorline = true
@@ -1686,8 +1683,8 @@ describe('TUI', function()
     feed_data('\n')
     screen:expect(
       '{13:a}{12:' .. ('a'):rep(76) .. '}|\n'
-      .. ('{12:' .. ('a'):rep(77) .. '}|\n'):rep(828)
-      .. '{12:' .. ('a'):rep(24) .. '℃' .. (' '):rep(52) .. '}|\n' .. dedent([[
+      .. ('{12:' .. ('a'):rep(77) .. '}|\n'):rep(849)
+      .. '{12:' .. ('a'):rep(65) .. '℃' .. (' '):rep(11) .. '}|\n' .. dedent([[
       b                                                                            |
       {5:[No Name] [+]                                                                }|
                                                                                    |
