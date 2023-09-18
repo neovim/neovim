@@ -102,9 +102,25 @@ Debugging tests
     DBG 2022-06-15T18:37:45.229 T57.58016.0   read_cb:118: closing Stream (0x7fd5d700ea18): EOF (end of file)
     INF 2022-06-15T18:37:45.229 T57.58016.0   on_process_exit:400: exited: pid=58017 status=0 stoptime=0
   ```
-- You can set `$GDB` to [run tests under gdbserver](https://github.com/neovim/neovim/pull/1527).
-  And if `$VALGRIND` is set it will pass `--vgdb=yes` to valgrind instead of
+- You can set `$GDB` to [run functional tests under gdbserver](https://github.com/neovim/neovim/pull/1527):
+
+  ```sh
+  GDB=1 TEST_FILE=test/functional/api/buffer_spec.lua TEST_FILTER='nvim_buf_set_text works$' make functionaltest
+  ```
+
+  Read more about [filtering tests](#filtering-tests).
+
+  Then, in another terminal:
+
+  ```sh
+  gdb -ex 'target remote localhost:7777' build/bin/nvim
+  ```
+
+  If `$VALGRIND` is also set it will pass `--vgdb=yes` to valgrind instead of
   starting gdbserver directly.
+
+  See [test/functional/helpers.lua](https://github.com/neovim/neovim/blob/9cadbf1d36b63f53f0de48c8c5ff6c752ff05d70/test/functional/helpers.lua#L52-L69) for details.
+
 - Hanging tests can happen due to unexpected "press-enter" prompts. The
   default screen width is 50 columns. Commands that try to print lines longer
   than 50 columns in the command-line, e.g. `:edit very...long...path`, will
@@ -124,7 +140,7 @@ Filtering Tests
 
 ### Filter by name
 
-Another filter method is by setting a pattern of test name to `TEST_FILTER` or `TEST_FILTER_OUT`.
+Tests can be filtered by setting a pattern of test name to `TEST_FILTER` or `TEST_FILTER_OUT`.
 
 ``` lua
 it('foo api',function()
