@@ -660,6 +660,7 @@ i`							*v_i`* *i`*
 			Special case: With a count of 2 the quotes are
 			included, but no extra white space as with a"/a'/a`.
 
+							*o_object-select*
 When used after an operator:
 For non-block objects:
 	For the "a" commands: The operator applies to the object and the white
@@ -675,6 +676,7 @@ For a block object:
 	the surrounding braces are excluded.  For the "a" commands, the braces
 	are included.
 
+							*v_object-select*
 When used in Visual mode:
 When start and end of the Visual area are the same (just after typing "v"):
 	One object is selected, the same as for using an operator.
