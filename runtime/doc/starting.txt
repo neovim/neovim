@@ -1370,6 +1370,7 @@ CONFIG DIRECTORY (DEFAULT) ~
                   *$XDG_CONFIG_HOME*            Nvim: stdpath("config")
     Unix:         ~/.config                   ~/.config/nvim
     Windows:      ~/AppData/Local             ~/AppData/Local/nvim
+
 DATA DIRECTORY (DEFAULT) ~
                   *$XDG_DATA_HOME*              Nvim: stdpath("data")
     Unix:         ~/.local/share              ~/.local/share/nvim
