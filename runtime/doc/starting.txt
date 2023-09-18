@@ -1366,6 +1366,9 @@ The $XDG_CONFIG_HOME, $XDG_DATA_HOME, $XDG_RUNTIME_DIR, $XDG_STATE_HOME,
 $XDG_CACHE_HOME, $XDG_CONFIG_DIRS and $XDG_DATA_DIRS environment variables
 are used if defined, else default values (listed below) are used.
 
+Throughout the help pages these defaults are used as placeholders, e.g.
+"~/.config" is understood to mean "$XDG_CONFIG_HOME or ~/.config".
+
 CONFIG DIRECTORY (DEFAULT) ~
                   *$XDG_CONFIG_HOME*            Nvim: stdpath("config")
     Unix:         ~/.config                   ~/.config/nvim
@@ -1392,9 +1395,11 @@ CACHE DIRECTORY (DEFAULT) ~
     Windows:      ~/AppData/Local/Temp        ~/AppData/Local/Temp/nvim-data
 
 LOG FILE (DEFAULT) ~
-                  `$NVIM_LOG_FILE`              Nvim: stdpath("log")
+                  `$NVIM_LOG_FILE`              Nvim: stdpath("log")/log
     Unix:         ~/.local/state/nvim         ~/.local/state/nvim/log
     Windows:      ~/AppData/Local/nvim-data   ~/AppData/Local/nvim-data/log
+
+Note that stdpath("log") is currently an alias for stdpath("state").
 
 ADDITIONAL CONFIGS DIRECTORY (DEFAULT) ~
                   *$XDG_CONFIG_DIRS*            Nvim: stdpath("config_dirs")
@@ -1407,18 +1412,14 @@ ADDITIONAL DATA DIRECTORY (DEFAULT) ~
                   /usr/share                  /usr/share/nvim
     Windows:      Not applicable              Not applicable
 
-Note: Throughout the help pages these defaults are used as placeholders, e.g.
-"~/.config" is understood to mean "$XDG_CONFIG_HOME or ~/.config".
-
-Note: The log file directory is controlled by `$XDG_STATE_HOME`.
-
 NVIM_APPNAME					*$NVIM_APPNAME*
 The standard directories can be further configured by the `$NVIM_APPNAME`
 environment variable. This variable controls the sub-directory that Nvim will
 read from (and auto-create) in each of the base directories. For example,
 setting `$NVIM_APPNAME` to "foo" before starting will cause Nvim to look for
 configuration files in `$XDG_CONFIG_HOME/foo` instead of
-`$XDG_CONFIG_HOME/nvim`.
+`$XDG_CONFIG_HOME/nvim`. `$NVIM_APPNAME` must be a name, such as "foo", or a
+relative path, such as "foo/bar".
 
 One use-case for $NVIM_APPNAME is to "isolate" Nvim applications.
 Alternatively, for true isolation, on Linux you can use cgroups namespaces: >

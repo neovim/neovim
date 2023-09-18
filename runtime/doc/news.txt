@@ -169,6 +169,8 @@ The following new APIs and features were added.
 • |vim.lsp.util.locations_to_items()| sets the `user_data` of each item to the
   original LSP `Location` or `LocationLink`.
 
+• |$NVIM_APPNAME| can be set to a relative path instead of only a name.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

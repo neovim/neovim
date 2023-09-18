@@ -251,7 +251,7 @@ int main(int argc, char **argv)
   argv0 = argv[0];
 
   if (!appname_is_valid()) {
-    os_errmsg("$NVIM_APPNAME is not a valid file name.\n");
+    os_errmsg("$NVIM_APPNAME must be a name or relative path.\n");
     exit(1);
   }
 

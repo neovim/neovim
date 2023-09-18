@@ -3279,11 +3279,17 @@ static void vim_mktempdir(void)
   char tmp[TEMP_FILE_PATH_MAXLEN];
   char path[TEMP_FILE_PATH_MAXLEN];
   char user[40] = { 0 };
+  char appname[40] = { 0 };
 
   (void)os_get_username(user, sizeof(user));
   // Usernames may contain slashes! #19240
   memchrsub(user, '/', '_', sizeof(user));
   memchrsub(user, '\\', '_', sizeof(user));
+
+  // Appname may be a relative path, replace slashes to make it name-like.
+  xstrlcpy(appname, get_appname(), sizeof(appname));
+  memchrsub(appname, '/', '%', sizeof(appname));
+  memchrsub(appname, '\\', '%', sizeof(appname));
 
   // Make sure the umask doesn't remove the executable bit.
   // "repl" has been reported to use "0177".
@@ -3298,7 +3304,6 @@ static void vim_mktempdir(void)
     // "/tmp/" exists, now try to create "/tmp/nvim.<user>/".
     add_pathsep(tmp);
 
-    const char *appname = get_appname();
     xstrlcat(tmp, appname, sizeof(tmp));
     xstrlcat(tmp, ".", sizeof(tmp));
     xstrlcat(tmp, user, sizeof(tmp));

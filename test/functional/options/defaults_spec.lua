@@ -598,8 +598,7 @@ describe('stdpath()', function()
   end)
 
   it('reacts to $NVIM_APPNAME', function()
-    local appname = "NVIM_APPNAME_TEST____________________________________" ..
-      "______________________________________________________________________"
+    local appname = 'NVIM_APPNAME_TEST' .. ('_'):rep(106)
     clear({env={ NVIM_APPNAME=appname }})
     eq(appname, funcs.fnamemodify(funcs.stdpath('config'), ':t'))
     eq(appname, funcs.fnamemodify(funcs.stdpath('cache'), ':t'))
@@ -616,10 +615,24 @@ describe('stdpath()', function()
 
     -- Check that Nvim rejects invalid APPNAMEs
     -- Call jobstart() and jobwait() in the same RPC request to reduce flakiness.
-    eq(1, exec_lua([[
-      local child = vim.fn.jobstart({ vim.v.progpath }, { env = { NVIM_APPNAME = 'a/b\\c' } })
-      return vim.fn.jobwait({ child }, 3000)[1]
-    ]]))
+    local function test_appname(testAppname, expected_exitcode)
+      local lua_code = string.format([[
+        local child = vim.fn.jobstart({ vim.v.progpath, '--clean', '--headless', '+qall!' }, { env = { NVIM_APPNAME = %q } })
+        return vim.fn.jobwait({ child }, %d)[1]
+      ]], alter_slashes(testAppname), 3000)
+      eq(expected_exitcode, exec_lua(lua_code))
+    end
+    -- Invalid appnames:
+    test_appname('a/../b', 1)
+    test_appname('../a', 1)
+    test_appname('a/..', 1)
+    test_appname('..', 1)
+    test_appname('.', 1)
+    test_appname('/', 1)
+    test_appname(is_os('win') and 'C:/a/b' or '/a/b', 1)
+    -- Valid appnames:
+    test_appname('a/b', 0)
+    test_appname('a/b\\c', 0)
   end)
 
   describe('returns a String', function()
