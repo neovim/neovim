@@ -949,6 +949,28 @@ function tests.set_defaults_all_capabilities()
   }
 end
 
+function tests.inlay_hint()
+  skeleton {
+    on_init = function(params)
+      local expected_capabilities = protocol.make_client_capabilities()
+      assert_eq(params.capabilities, expected_capabilities)
+      return {
+        capabilities = {
+          inlayHintProvider = true;
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_request('textDocument/inlayHint', function()
+        return nil, {}
+      end)
+      expect_notification("finish")
+      notify('finish')
+    end;
+  }
+end
+
 -- Tests will be indexed by test_name
 local test_name = arg[1]
 local timeout = arg[2]
