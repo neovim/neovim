@@ -4513,7 +4513,7 @@ static void nv_replace(cmdarg_T *cap)
   // Visual mode "r"
   if (VIsual_active) {
     if (got_int) {
-      reset_VIsual();
+      got_int = false;
     }
     if (had_ctrl_v) {
       // Use a special (negative) number to make a difference between a
