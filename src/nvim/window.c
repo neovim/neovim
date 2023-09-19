@@ -1009,10 +1009,8 @@ void ui_ext_win_position(win_T *wp, bool validate)
       comp_row += grid->comp_row;
       comp_col += grid->comp_col;
       comp_row = MAX(MIN(comp_row, Rows - wp->w_height_outer - (p_ch > 0 ? 1 : 0)), 0);
-      comp_col = MAX(MIN(comp_col, Columns - wp->w_width_outer), 0);
-      int right_extra = Columns - (int)c.col - wp->w_width - (c.border_chars[2][0] != 0);
-      if (!(c.anchor & kFloatAnchorEast) && c.fixed && right_extra < 0) {
-        comp_col = (int)c.col;
+      if (!c.fixed || east) {
+        comp_col = MAX(MIN(comp_col, Columns - wp->w_width_outer), 0);
       }
       wp->w_winrow = comp_row;
       wp->w_wincol = comp_col;
