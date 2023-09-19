@@ -1577,4 +1577,18 @@ func Test_visual_hl_with_showbreak()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_Visual_r_CTRL_C()
+  new
+  " visual r_cmd
+  call setline(1, ['   '])
+  call feedkeys("\<c-v>$r\<c-c>", 'tx')
+  call assert_equal([''], getline(1, 1))
+
+  " visual gr_cmd
+  call setline(1, ['   '])
+  call feedkeys("\<c-v>$gr\<c-c>", 'tx')
+  call assert_equal([''], getline(1, 1))
+  bw!
+endfu
+
 " vim: shiftwidth=2 sts=2 expandtab
