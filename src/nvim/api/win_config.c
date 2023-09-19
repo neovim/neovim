@@ -163,6 +163,8 @@
 ///   - noautocmd: If true then no buffer-related autocommand events such as
 ///                  |BufEnter|, |BufLeave| or |BufWinEnter| may fire from
 ///                  calling this function.
+///   - fixed: If true when anchor is NW or SW, the float window
+///            would be kept fixed even if the window would be truncated.
 ///
 /// @param[out] err Error details, if any
 ///
@@ -843,6 +845,10 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
       return false;
     }
     fconfig->noautocmd = config->noautocmd;
+  }
+
+  if (HAS_KEY_X(config, fixed)) {
+    fconfig->fixed = config->fixed;
   }
 
   return true;

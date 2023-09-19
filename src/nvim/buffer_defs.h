@@ -966,6 +966,7 @@ typedef struct {
   VirtText footer_chunks;
   int footer_width;
   bool noautocmd;
+  bool fixed;
 } FloatConfig;
 
 #define FLOAT_CONFIG_INIT ((FloatConfig){ .height = 0, .width = 0, \
@@ -975,7 +976,8 @@ typedef struct {
                                           .focusable = true, \
                                           .zindex = kZIndexFloatDefault, \
                                           .style = kWinStyleUnused, \
-                                          .noautocmd = false })
+                                          .noautocmd = false, \
+                                          .fixed = false })
 
 // Structure to store last cursor position and topline.  Used by check_lnums()
 // and reset_lnums().

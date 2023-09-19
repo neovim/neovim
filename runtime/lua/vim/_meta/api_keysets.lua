@@ -112,6 +112,7 @@ error('Cannot require a meta file')
 --- @field footer_pos? string
 --- @field style? string
 --- @field noautocmd? boolean
+--- @field fixed? boolean
 
 --- @class vim.api.keyset.get_autocmds
 --- @field event? any
