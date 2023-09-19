@@ -80,6 +80,9 @@ function vim.api.nvim__id_float(flt) end
 function vim.api.nvim__inspect_cell(grid, row, col) end
 
 --- @private
+function vim.api.nvim__invalidate_glyph_cache() end
+
+--- @private
 --- @return any[]
 function vim.api.nvim__runtime_inspect() end
 

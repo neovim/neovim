@@ -11,10 +11,8 @@ struct ugrid;
 typedef struct ucell UCell;
 typedef struct ugrid UGrid;
 
-#define CELLBYTES (sizeof(schar_T))
-
 struct ucell {
-  char data[CELLBYTES + 1];
+  schar_T data;
   sattr_T attr;
 };
 

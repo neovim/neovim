@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "nvim/grid.h"
 #include "nvim/memory.h"
 #include "nvim/ugrid.h"
 
@@ -79,8 +80,7 @@ static void clear_region(UGrid *grid, int top, int bot, int left, int right, sat
 {
   for (int row = top; row <= bot; row++) {
     UGRID_FOREACH_CELL(grid, row, left, right + 1, {
-      cell->data[0] = ' ';
-      cell->data[1] = 0;
+      cell->data = schar_from_ascii(' ');
       cell->attr = attr;
     });
   }

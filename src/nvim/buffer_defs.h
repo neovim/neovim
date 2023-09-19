@@ -954,7 +954,7 @@ typedef struct {
   WinStyle style;
   bool border;
   bool shadow;
-  schar_T border_chars[8];
+  char border_chars[8][MAX_SCHAR_SIZE];
   int border_hl_ids[8];
   int border_attr[8];
   bool title;

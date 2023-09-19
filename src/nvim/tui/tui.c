@@ -24,6 +24,7 @@
 #include "nvim/event/signal.h"
 #include "nvim/event/stream.h"
 #include "nvim/globals.h"
+#include "nvim/grid.h"
 #include "nvim/grid_defs.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/log.h"
@@ -675,15 +676,15 @@ static void final_column_wrap(TUIData *tui)
 /// It is undocumented, but in the majority of terminals and terminal emulators
 /// printing at the right margin does not cause an automatic wrap until the
 /// next character is printed, holding the cursor in place until then.
-static void print_cell(TUIData *tui, UCell *ptr)
+static void print_cell(TUIData *tui, char *buf, sattr_T attr)
 {
   UGrid *grid = &tui->grid;
   if (!tui->immediate_wrap_after_last_column) {
     // Printing the next character finally advances the cursor.
     final_column_wrap(tui);
   }
-  update_attrs(tui, ptr->attr);
-  out(tui, ptr->data, strlen(ptr->data));
+  update_attrs(tui, attr);
+  out(tui, buf, strlen(buf));
   grid->col++;
   if (tui->immediate_wrap_after_last_column) {
     // Printing at the right margin immediately advances the cursor.
@@ -703,8 +704,8 @@ static bool cheap_to_print(TUIData *tui, int row, int col, int next)
         return false;
       }
     }
-    if (strlen(cell->data) > 1) {
-      return false;
+    if (schar_get_ascii(cell->data) == 0) {
+      return false;  // not ascii
     }
     cell++;
   }
@@ -831,14 +832,16 @@ static void print_cell_at_pos(TUIData *tui, int row, int col, UCell *cell, bool 
 {
   UGrid *grid = &tui->grid;
 
-  if (grid->row == -1 && cell->data[0] == NUL) {
+  if (grid->row == -1 && cell->data == NUL) {
     // If cursor needs to repositioned and there is nothing to print, don't move cursor.
     return;
   }
 
   cursor_goto(tui, row, col);
 
-  bool is_ambiwidth = utf_ambiguous_width(utf_ptr2char(cell->data));
+  char buf[MAX_SCHAR_SIZE];
+  schar_get(buf, cell->data);
+  bool is_ambiwidth = utf_ambiguous_width(utf_ptr2char(buf));
   if (is_ambiwidth && is_doublewidth) {
     // Clear the two screen cells.
     // If the character is single-width in the host terminal it won't change the second cell.
@@ -847,7 +850,7 @@ static void print_cell_at_pos(TUIData *tui, int row, int col, UCell *cell, bool 
     cursor_goto(tui, row, col);
   }
 
-  print_cell(tui, cell);
+  print_cell(tui, buf, cell->attr);
 
   if (is_ambiwidth) {
     // Force repositioning cursor after printing an ambiguous-width character.
@@ -976,6 +979,8 @@ void tui_grid_clear(TUIData *tui, Integer g)
 {
   UGrid *grid = &tui->grid;
   ugrid_clear(grid);
+  // safe to clear cache at this point
+  schar_cache_clear_if_full();
   kv_size(tui->invalid_regions) = 0;
   clear_region(tui, 0, tui->height, 0, tui->width, 0);
 }
@@ -1273,7 +1278,7 @@ void tui_flush(TUIData *tui)
       int clear_col;
       for (clear_col = r.right; clear_col > 0; clear_col--) {
         UCell *cell = &grid->cells[row][clear_col - 1];
-        if (!(cell->data[0] == ' ' && cell->data[1] == NUL
+        if (!(cell->data == schar_from_ascii(' ')
               && cell->attr == clear_attr)) {
           break;
         }
@@ -1281,7 +1286,7 @@ void tui_flush(TUIData *tui)
 
       UGRID_FOREACH_CELL(grid, row, r.left, clear_col, {
         print_cell_at_pos(tui, row, curcol, cell,
-                          curcol < clear_col - 1 && (cell + 1)->data[0] == NUL);
+                          curcol < clear_col - 1 && (cell + 1)->data == NUL);
       });
       if (clear_col < r.right) {
         clear_region(tui, row, row + 1, clear_col, r.right, clear_attr);
@@ -1399,7 +1404,10 @@ void tui_screenshot(TUIData *tui, String path)
   for (int i = 0; i < grid->height; i++) {
     cursor_goto(tui, i, 0);
     for (int j = 0; j < grid->width; j++) {
-      print_cell(tui, &grid->cells[i][j]);
+      UCell cell = grid->cells[i][j];
+      char buf[MAX_SCHAR_SIZE];
+      schar_get(buf, cell.data);
+      print_cell(tui, buf, cell.attr);
     }
   }
   flush_buf(tui);
@@ -1446,13 +1454,13 @@ void tui_raw_line(TUIData *tui, Integer g, Integer linerow, Integer startcol, In
 {
   UGrid *grid = &tui->grid;
   for (Integer c = startcol; c < endcol; c++) {
-    memcpy(grid->cells[linerow][c].data, chunk[c - startcol], sizeof(schar_T));
+    grid->cells[linerow][c].data = chunk[c - startcol];
     assert((size_t)attrs[c - startcol] < kv_size(tui->attrs));
     grid->cells[linerow][c].attr = attrs[c - startcol];
   }
   UGRID_FOREACH_CELL(grid, (int)linerow, (int)startcol, (int)endcol, {
     print_cell_at_pos(tui, (int)linerow, curcol, cell,
-                      curcol < endcol - 1 && (cell + 1)->data[0] == NUL);
+                      curcol < endcol - 1 && (cell + 1)->data == NUL);
   });
 
   if (clearcol > endcol) {
@@ -1469,7 +1477,7 @@ void tui_raw_line(TUIData *tui, Integer g, Integer linerow, Integer startcol, In
 
     if (endcol != grid->width) {
       // Print the last char of the row, if we haven't already done so.
-      int size = grid->cells[linerow][grid->width - 1].data[0] == NUL ? 2 : 1;
+      int size = grid->cells[linerow][grid->width - 1].data == NUL ? 2 : 1;
       print_cell_at_pos(tui, (int)linerow, grid->width - size,
                         &grid->cells[linerow][grid->width - size], size == 2);
     }

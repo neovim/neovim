@@ -86,7 +86,7 @@ static int get_attr_entry(HlEntry entry)
   }
 
 retry: {}
-  MhPutStatus status;
+  MHPutStatus status;
   uint32_t k = set_put_idx(HlEntry, &attr_entries, entry, &status);
   if (status == kMHExisting) {
     return (int)k;

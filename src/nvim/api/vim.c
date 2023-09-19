@@ -1947,7 +1947,9 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Arena *arena, E
   }
   ret = arena_array(arena, 3);
   size_t off = g->line_offset[(size_t)row] + (size_t)col;
-  ADD_C(ret, CSTR_AS_OBJ((char *)g->chars[off]));
+  char *sc_buf = arena_alloc(arena, MAX_SCHAR_SIZE, false);
+  schar_get(sc_buf, g->chars[off]);
+  ADD_C(ret, CSTR_AS_OBJ(sc_buf));
   int attr = g->attrs[off];
   ADD_C(ret, DICTIONARY_OBJ(hl_get_attr_by_id(attr, true, arena, err)));
   // will not work first time
@@ -1961,6 +1963,11 @@ void nvim__screenshot(String path)
   FUNC_API_FAST
 {
   ui_call_screenshot(path);
+}
+
+void nvim__invalidate_glyph_cache(void)
+{
+  schar_cache_clear_force();
 }
 
 Object nvim__unpack(String str, Error *err)

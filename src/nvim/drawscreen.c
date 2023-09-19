@@ -444,6 +444,15 @@ int update_screen(void)
   display_tick++;  // let syntax code know we're in a next round of
                    // display updating
 
+  // glyph cache full, very rare
+  if (schar_cache_clear_if_full()) {
+    // must use CLEAR, as the contents of screen buffers cannot be
+    // compared to their previous state here.
+    // TODO(bfredl): if start to cache schar_T values in places (like fcs/lcs)
+    // we need to revalidate these here as well!
+    type = MAX(type, UPD_CLEAR);
+  }
+
   // Tricky: vim code can reset msg_scrolled behind our back, so need
   // separate bookkeeping for now.
   if (msg_did_scroll) {
@@ -736,7 +745,10 @@ static void win_redr_border(win_T *wp)
 
   ScreenGrid *grid = &wp->w_grid_alloc;
 
-  schar_T *chars = wp->w_float_config.border_chars;
+  schar_T chars[8];
+  for (int i = 0; i < 8; i++) {
+    chars[i] = schar_from_str(wp->w_float_config.border_chars[i]);
+  }
   int *attrs = wp->w_float_config.border_attr;
 
   int *adj = wp->w_border_adj;
@@ -770,7 +782,7 @@ static void win_redr_border(win_T *wp)
       grid_puts_line_flush(false);
     }
     if (adj[1]) {
-      int ic = (i == 0 && !adj[0] && chars[2][0]) ? 2 : 3;
+      int ic = (i == 0 && !adj[0] && chars[2]) ? 2 : 3;
       grid_puts_line_start(grid, i + adj[0]);
       grid_put_schar(grid, i + adj[0], icol + adj[3], chars[ic], attrs[ic]);
       grid_puts_line_flush(false);
@@ -784,7 +796,7 @@ static void win_redr_border(win_T *wp)
     }
 
     for (int i = 0; i < icol; i++) {
-      int ic = (i == 0 && !adj[3] && chars[6][0]) ? 6 : 5;
+      int ic = (i == 0 && !adj[3] && chars[6]) ? 6 : 5;
       grid_put_schar(grid, irow + adj[0], i + adj[3], chars[ic], attrs[ic]);
     }
 

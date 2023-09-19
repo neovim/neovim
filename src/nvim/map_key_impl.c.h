@@ -80,7 +80,7 @@ void KEY_NAME(mh_rehash_)(SET_TYPE *set)
 ///                 if new item, indicates if keys[] was resized.
 ///
 /// @return keys index
-uint32_t KEY_NAME(mh_put_)(SET_TYPE *set, KEY_TYPE key, MhPutStatus *new)
+uint32_t KEY_NAME(mh_put_)(SET_TYPE *set, KEY_TYPE key, MHPutStatus *new)
 {
   MapHash *h = &set->h;
   // Might rehash ahead of time if "key" already existed. But it was

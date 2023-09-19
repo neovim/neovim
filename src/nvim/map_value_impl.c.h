@@ -28,7 +28,7 @@ VALUE_TYPE *MAP_NAME(map_ref_)(MAP_TYPE *map, KEY_TYPE key, KEY_TYPE **key_alloc
 VALUE_TYPE *MAP_NAME(map_put_ref_)(MAP_TYPE *map, KEY_TYPE key, KEY_TYPE **key_alloc,
                                    bool *new_item)
 {
-  MhPutStatus status;
+  MHPutStatus status;
   uint32_t k = KEY_NAME(mh_put_)(&map->set, key, &status);
   if (status != kMHExisting) {
     if (status == kMHNewKeyRealloc) {

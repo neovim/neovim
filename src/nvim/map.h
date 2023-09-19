@@ -18,6 +18,25 @@
 typedef const char *cstr_t;
 typedef void *ptr_t;
 
+// when used as a key, String doesn't need to be NUL terminated,
+// and can also contain embedded NUL:s as part of the data.
+static inline uint32_t hash_String(String s)
+{
+  uint32_t h = 0;
+  for (size_t i = 0; i < s.size; i++) {
+    h = (h << 5) - h + (uint8_t)s.data[i];
+  }
+  return h;
+}
+
+static inline bool equal_String(String a, String b)
+{
+  if (a.size != b.size) {
+    return false;
+  }
+  return memcmp(a.data, b.data, a.size) == 0;
+}
+
 #define Set(type) Set_##type
 #define Map(T, U) Map_##T##U
 #define PMap(T) Map(T, ptr_t)
@@ -57,7 +76,7 @@ typedef enum {
   kMHExisting = 0,
   kMHNewKeyDidFit,
   kMHNewKeyRealloc,
-} MhPutStatus;
+} MHPutStatus;
 
 void mh_clear(MapHash *h);
 void mh_realloc(MapHash *h, uint32_t n_min_buckets);
@@ -65,20 +84,22 @@ void mh_realloc(MapHash *h, uint32_t n_min_buckets);
 // layer 1: key type specific defs
 // This is all need for sets.
 
-#define KEY_DECLS(T) \
+#define MH_DECLS(T, K, K_query) \
   typedef struct { \
     MapHash h; \
-    T *keys; \
+    K *keys; \
   } Set(T); \
  \
-  uint32_t mh_find_bucket_##T(Set(T) *set, T key, bool put); \
-  uint32_t mh_get_##T(Set(T) *set, T key); \
+  uint32_t mh_find_bucket_##T(Set(T) *set, K_query key, bool put); \
+  uint32_t mh_get_##T(Set(T) *set, K_query key); \
   void mh_rehash_##T(Set(T) *set); \
-  uint32_t mh_put_##T(Set(T) *set, T key, MhPutStatus *new); \
+  uint32_t mh_put_##T(Set(T) *set, K_query key, MHPutStatus *new); \
+
+#define KEY_DECLS(T) \
+  MH_DECLS(T, T, T) \
   uint32_t mh_delete_##T(Set(T) *set, T *key); \
- \
   static inline bool set_put_##T(Set(T) *set, T key, T **key_alloc) { \
-    MhPutStatus status; \
+    MHPutStatus status; \
     uint32_t k = mh_put_##T(set, key, &status); \
     if (key_alloc) { \
       *key_alloc = &set->keys[k]; \
@@ -120,6 +141,7 @@ void mh_realloc(MapHash *h, uint32_t n_min_buckets);
 
 #define quasiquote(x, y) x##y
 
+MH_DECLS(glyph, char, String)
 KEY_DECLS(int)
 KEY_DECLS(cstr_t)
 KEY_DECLS(ptr_t)

@@ -47,25 +47,6 @@ static inline uint32_t hash_cstr_t(const char *s)
 
 #define equal_cstr_t strequal
 
-// when used as a key, String doesn't need to be NUL terminated,
-// and can also contain embedded NUL:s as part of the data.
-static inline uint32_t hash_String(String s)
-{
-  uint32_t h = 0;
-  for (size_t i = 0; i < s.size; i++) {
-    h = (h << 5) - h + (uint8_t)s.data[i];
-  }
-  return h;
-}
-
-static inline bool equal_String(String a, String b)
-{
-  if (a.size != b.size) {
-    return false;
-  }
-  return memcmp(a.data, b.data, a.size) == 0;
-}
-
 static inline uint32_t hash_HlEntry(HlEntry ae)
 {
   const uint8_t *data = (const uint8_t *)&ae;

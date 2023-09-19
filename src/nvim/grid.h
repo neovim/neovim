@@ -33,30 +33,25 @@ EXTERN colnr_T *linebuf_vcol INIT(= NULL);
 // screen grid.
 
 /// Put a ASCII character in a screen cell.
-static inline void schar_from_ascii(char *p, const char c)
-{
-  p[0] = c;
-  p[1] = 0;
-}
+///
+/// If `x` is a compile time constant, schar_from_ascii(x) will also be.
+/// But the specific value varies per plattform.
+#ifdef ORDER_BIG_ENDIAN
+# define schar_from_ascii(x) ((schar_T)((x) << 24))
+#else
+# define schar_from_ascii(x) ((schar_T)(x))
+#endif
 
 /// Put a unicode character in a screen cell.
-static inline int schar_from_char(char *p, int c)
+static inline schar_T schar_from_char(int c)
 {
-  int len = utf_char2bytes(c, p);
-  p[len] = NUL;
-  return len;
-}
-
-/// compare the contents of two screen cells.
-static inline int schar_cmp(char *sc1, char *sc2)
-{
-  return strncmp(sc1, sc2, sizeof(schar_T));
-}
-
-/// copy the contents of screen cell `sc2` into cell `sc1`
-static inline void schar_copy(char *sc1, char *sc2)
-{
-  xstrlcpy(sc1, sc2, sizeof(schar_T));
+  schar_T sc = 0;
+  if (c >= 0x200000) {
+    // TODO(bfredl): this must NEVER happen, even if the file contained overlong sequences
+    c = 0xFFFD;
+  }
+  utf_char2bytes(c, (char *)&sc);
+  return sc;
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
