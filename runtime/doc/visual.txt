@@ -169,6 +169,7 @@ If you want to highlight exactly the same area as the last time, you can use
 CTRL-C			In Visual mode: Stop Visual mode.  When insert mode is
 			pending (the mode message shows
 			"-- (insert) VISUAL --"), it is also stopped.
+			On MS-Windows, you may need to press CTRL-Break.
 
 ==============================================================================
 3. Changing the Visual area				*visual-change*
