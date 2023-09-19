@@ -457,6 +457,12 @@ function M.start(bufnr, lang)
   bufnr = bufnr or api.nvim_get_current_buf()
   local parser = M.get_parser(bufnr, lang)
   M.highlighter.new(parser)
+  vim.api.nvim_exec_autocmds('TreesitterStart', {
+    modeline = false,
+    data = {
+      lang = lang,
+    },
+  })
 end
 
 --- Stops treesitter highlighting for a buffer
@@ -467,6 +473,7 @@ function M.stop(bufnr)
 
   if M.highlighter.active[bufnr] then
     M.highlighter.active[bufnr]:destroy()
+    vim.api.nvim_exec_autocmds('TreesitterStop', { modeline = false })
   end
 end
 

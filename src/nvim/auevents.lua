@@ -114,6 +114,8 @@ return {
     'TextChangedI',           -- text was modified in Insert mode(no popup)
     'TextChangedP',           -- text was modified in Insert mode(popup)
     'TextChangedT',           -- text was modified in Terminal mode
+    'TreesitterStart',        -- after starting Treesitter highlighting
+    'TreesitterStop',         -- after stopping Treesitter highlighting
     'TextYankPost',           -- after a yank or delete was done (y, d, c)
     'UIEnter',                -- after UI attaches
     'UILeave',                -- after UI detaches
@@ -166,6 +168,8 @@ return {
     TabNewEntered=true,
     TermClose=true,
     TermOpen=true,
+    TreesitterStart=true,
+    TreesitterStop=true,
     UIEnter=true,
     UILeave=true,
   },
