@@ -2998,16 +2998,6 @@ void realloc_cmdbuff(int len)
   }
 }
 
-static char *arshape_buf = NULL;
-
-#if defined(EXITFREE)
-void free_arshape_buf(void)
-{
-  xfree(arshape_buf);
-}
-
-#endif
-
 enum { MAX_CB_ERRORS = 1, };
 
 /// Color expression cmdline using built-in expressions parser
@@ -3317,98 +3307,7 @@ static void draw_cmdline(int start, int len)
       msg_putchar('*');
       i += utfc_ptr2len(ccline.cmdbuff + start + i) - 1;
     }
-  } else if (p_arshape && !p_tbidi && len > 0) {
-    bool do_arabicshape = false;
-    int mb_l;
-    for (int i = start; i < start + len; i += mb_l) {
-      char *p = ccline.cmdbuff + i;
-      int u8cc[MAX_MCO];
-      int u8c = utfc_ptr2char_len(p, u8cc, start + len - i);
-      mb_l = utfc_ptr2len_len(p, start + len - i);
-      if (ARABIC_CHAR(u8c)) {
-        do_arabicshape = true;
-        break;
-      }
-    }
-    if (!do_arabicshape) {
-      goto draw_cmdline_no_arabicshape;
-    }
-
-    static size_t buflen = 0;
-    assert(len >= 0);
-
-    // Do arabic shaping into a temporary buffer.  This is very
-    // inefficient!
-    if ((size_t)len * 2 + 2 > buflen) {
-      // Re-allocate the buffer.  We keep it around to avoid a lot of
-      // alloc()/free() calls.
-      xfree(arshape_buf);
-      buflen = (size_t)len * 2 + 2;
-      arshape_buf = xmalloc(buflen);
-    }
-
-    int newlen = 0;
-    if (utf_iscomposing(utf_ptr2char(ccline.cmdbuff + start))) {
-      // Prepend a space to draw the leading composing char on.
-      arshape_buf[0] = ' ';
-      newlen = 1;
-    }
-
-    int prev_c = 0;
-    int prev_c1 = 0;
-    for (int i = start; i < start + len; i += mb_l) {
-      char *p = ccline.cmdbuff + i;
-      int u8cc[MAX_MCO];
-      int u8c = utfc_ptr2char_len(p, u8cc, start + len - i);
-      mb_l = utfc_ptr2len_len(p, start + len - i);
-      if (ARABIC_CHAR(u8c)) {
-        int pc;
-        int pc1 = 0;
-        int nc = 0;
-        // Do Arabic shaping.
-        if (cmdmsg_rl) {
-          // Displaying from right to left.
-          pc = prev_c;
-          pc1 = prev_c1;
-          prev_c1 = u8cc[0];
-          if (i + mb_l >= start + len) {
-            nc = NUL;
-          } else {
-            nc = utf_ptr2char(p + mb_l);
-          }
-        } else {
-          // Displaying from left to right.
-          if (i + mb_l >= start + len) {
-            pc = NUL;
-          } else {
-            int pcc[MAX_MCO];
-
-            pc = utfc_ptr2char_len(p + mb_l, pcc, start + len - i - mb_l);
-            pc1 = pcc[0];
-          }
-          nc = prev_c;
-        }
-        prev_c = u8c;
-
-        u8c = arabic_shape(u8c, NULL, &u8cc[0], pc, pc1, nc);
-
-        newlen += utf_char2bytes(u8c, arshape_buf + newlen);
-        if (u8cc[0] != 0) {
-          newlen += utf_char2bytes(u8cc[0], arshape_buf + newlen);
-          if (u8cc[1] != 0) {
-            newlen += utf_char2bytes(u8cc[1], arshape_buf + newlen);
-          }
-        }
-      } else {
-        prev_c = u8c;
-        memmove(arshape_buf + newlen, p, (size_t)mb_l);
-        newlen += mb_l;
-      }
-    }
-
-    msg_outtrans_len(arshape_buf, newlen, 0);
   } else {
-draw_cmdline_no_arabicshape:
     if (kv_size(ccline.last_colors.colors)) {
       for (size_t i = 0; i < kv_size(ccline.last_colors.colors); i++) {
         CmdlineColorChunk chunk = kv_A(ccline.last_colors.colors, i);

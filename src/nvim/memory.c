@@ -767,8 +767,6 @@ void free_all_mem(void)
   // Free all option values.  Must come after closing windows.
   free_all_options();
 
-  free_arshape_buf();
-
   // Clear registers.
   clear_registers();
   ResetRedobuff();
