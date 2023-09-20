@@ -210,6 +210,7 @@ local extension = {
   astro = 'astro',
   atl = 'atlas',
   as = 'atlas',
+  zed = 'authzed',
   ahk = 'autohotkey',
   au3 = 'autoit',
   ave = 'ave',
