@@ -230,6 +230,11 @@ if(WIN32)
   endif()
 elseif(APPLE)
   target_link_libraries(nvim PRIVATE "-framework CoreServices")
+
+  # Actually export symbols - symbols may not be visible even though
+  # ENABLE_EXPORTS is set to true. See
+  # https://github.com/neovim/neovim/issues/25295
+  set_target_properties(nvim PROPERTIES LINK_FLAGS "-Wl,-export_dynamic")
 endif()
 
 if(UNIX)
