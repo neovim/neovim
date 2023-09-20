@@ -88,6 +88,40 @@ describe('vim.lsp.util', function()
     end)
   end)
 
+  describe('normalize_markdown', function ()
+    it('collapses consecutive blank lines', function ()
+      local result = exec_lua [[
+        local lines = {
+          'foo',
+          '',
+          '',
+          '',
+          'bar',
+          '',
+          'baz'
+        }
+        return vim.lsp.util._normalize_markdown(lines)
+      ]]
+      local expected = {'foo', '', 'bar', '', 'baz'}
+      eq(expected, result)
+    end)
+
+    it('removes preceding and trailing empty lines', function ()
+      local result = exec_lua [[
+        local lines = {
+          '',
+          'foo',
+          'bar',
+          '',
+          ''
+        }
+        return vim.lsp.util._normalize_markdown(lines)
+      ]]
+      local expected = {'foo', 'bar'}
+      eq(expected, result)
+    end)
+  end)
+
   describe("make_floating_popup_options", function ()
 
     local function assert_anchor(anchor_bias, expected_anchor)
