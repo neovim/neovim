@@ -1275,6 +1275,7 @@ describe('cmdheight=0', function()
   it('with multigrid', function()
     clear{args={'--cmd', 'set cmdheight=0'}}
     screen:attach{ext_multigrid=true}
+    meths.buf_set_lines(0, 0, -1, true, {'p'})
     screen:expect{grid=[[
     ## grid 1
       [2:-------------------------]|
@@ -1283,7 +1284,7 @@ describe('cmdheight=0', function()
       [2:-------------------------]|
       [2:-------------------------]|
     ## grid 2
-      ^                         |
+      ^p                        |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
@@ -1302,7 +1303,7 @@ describe('cmdheight=0', function()
       [2:-------------------------]|
       [3:-------------------------]|
     ## grid 2
-                               |
+      {6:p}                        |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
@@ -1427,7 +1428,21 @@ describe('cmdheight=0', function()
                                |
     ]])
     command('set cmdheight=0')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {2:[No Name]                }|
+    ]]}
     command('resize -1')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {2:[No Name]                }|
+                               |
+    ]]}
     command('resize +1')
     screen:expect([[
       ^                         |
