@@ -785,8 +785,8 @@ OptionSet			After setting an option (except during
 				number options, ...) it is the old local
 				value.
 
-				OptionSet is not triggered on startup and for
-				the 'key' option for obvious reasons.
+				OptionSet is not triggered on startup for obvious
+				reasons.
 
 				Usage example: Check for the existence of the
 				directory in the 'backupdir' and 'undodir'
