@@ -151,13 +151,13 @@ void didset_string_options(void)
   (void)opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true);
   (void)opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true);
   (void)opt_strings_flags(p_dy, p_dy_values, &dy_flags, true);
+  (void)opt_strings_flags(p_jop, p_jop_values, &jop_flags, true);
   (void)opt_strings_flags(p_rdb, p_rdb_values, &rdb_flags, true);
   (void)opt_strings_flags(p_tc, p_tc_values, &tc_flags, false);
   (void)opt_strings_flags(p_tpf, p_tpf_values, &tpf_flags, true);
   (void)opt_strings_flags(p_ve, p_ve_values, &ve_flags, true);
   (void)opt_strings_flags(p_swb, p_swb_values, &swb_flags, true);
   (void)opt_strings_flags(p_wop, p_wop_values, &wop_flags, true);
-  (void)opt_strings_flags(p_jop, p_jop_values, &jop_flags, true);
   (void)opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
 }
 

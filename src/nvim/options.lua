@@ -4443,12 +4443,11 @@ return {
       deny_duplicates = true,
       desc = [=[
         List of words that change the behavior of the |jumplist|.
-          stack         Make the jumplist behave like the tagstack or like a
-                        web browser.  Relative location of entries in the
-        		jumplist is preserved at the cost of discarding
-        		subsequent entries when navigating backwards in the
-        		jumplist and then jumping to a location.
-        		|jumplist-stack|
+          stack         Make the jumplist behave like the tagstack.
+        		Relative location of entries in the jumplist is
+        		preserved at the cost of discarding subsequent entries
+        		when navigating backwards in the jumplist and then
+        		jumping to a location.  |jumplist-stack|
 
           view          When moving through the jumplist, |changelist|,
         		|alternate-file| or using |mark-motions| try to

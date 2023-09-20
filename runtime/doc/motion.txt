@@ -1115,60 +1115,45 @@ If you have included the ' item in the 'shada' option the jumplist will be
 stored in the ShaDa file and restored when starting Vim.
 
 							*jumplist-stack*
-When jumpoptions includes "stack", the jumplist behaves like the history in a
-web browser and like the tag stack.  When jumping to a new location from the
-middle of the jumplist, the locations after the current position will be
-discarded.
+When 'jumpoptions' option includes "stack", the jumplist behaves like the tag
+stack.  When jumping to a new location from the middle of the jumplist, the
+locations after the current position will be discarded. With this option set
+you can move through a tree of jump locations. When going back up a branch and
+then down another branch, CTRL-O still takes you further up the tree.
 
-This behavior corresponds to the following situation in a web browser.
-Navigate to first.com, second.com, third.com, fourth.com and then fifth.com.
-Then navigate backwards twice so that third.com is displayed.  At that point,
-the history is:
-- first.com
-- second.com
-- third.com <--
-- fourth.com
-- fifth.com
+Given a jumplist like the following in which CTRL-O has been used to move back
+three times to location X: >
 
-Finally, navigate to a different webpage, new.com.  The history is
-- first.com
-- second.com
-- third.com
-- new.com <--
-
-When the jumpoptions includes "stack", this is the behavior of Nvim as well.
-That is, given a jumplist like the following in which CTRL-O has been used to
-move back three times to location X
-
- jump line  col file/text
-   2  1260    8 src/nvim/mark.c         <-- location X-2
-   1   685    0 src/nvim/option_defs.h  <-- location X-1
->  0   462   36 src/nvim/option_defs.h  <-- location X
-   1   479   39 src/nvim/option_defs.h
-   2   213    2 src/nvim/mark.c
-   3   181    0 src/nvim/mark.c
-
+     jump line  col file/text
+       2  1260    8 mark.c		<-- location X-2
+       1   685    0 eval.c		<-- location X-1
+    >  0   462   36 eval.c		<-- location X
+       1   479   39 eval.c
+       2   213    2 mark.c
+       3   181    0 mark.c
+<
 jumping to (new) location Y results in the locations after the current
-locations being removed:
+locations being removed: >
 
- jump line  col file/text
-   3  1260    8 src/nvim/mark.c
-   2   685    0 src/nvim/option_defs.h
-   1   462   36 src/nvim/option_defs.h  <-- location X
->
+     jump line  col file/text
+       3  1260    8 mark.c		<-- location X-2
+       2   685    0 eval.c		<-- location X-1
+       1   462   36 eval.c		<-- location X
+    >
+<
 
 Then, when yet another location Z is jumped to, the new location Y appears
 directly after location X in the jumplist and location X remains in the same
-position relative to the locations (X-1, X-2, etc., ...) that had been before it
-prior to the original jump from X to Y:
+position relative to the locations (X-1, X-2, etc., ...) that had been before
+it prior to the original jump from X to Y: >
 
- jump line  col file/text
-   4  1260    8 src/nvim/mark.c         <-- location X-2
-   3   685    0 src/nvim/option_defs.h  <-- location X-1
-   2   462   36 src/nvim/option_defs.h  <-- location X
-   1   100    0 src/nvim/option_defs.h  <-- location Y
->
-
+     jump line  col file/text
+       4  1260    8 mark.c		<-- location X-2
+       3   685    0 eval.c		<-- location X-1
+       2   462   36 eval.c		<-- location X
+       1   100    0 buffer.c	<-- location Y
+    >
+<
 CHANGE LIST JUMPS			*changelist* *change-list-jumps* *E664*
 
 When making a change the cursor position is remembered.  One position is
