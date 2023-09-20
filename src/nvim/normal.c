@@ -2078,18 +2078,16 @@ static void display_showcmd(void)
 
   msg_grid_validate();
   int showcmd_row = Rows - 1;
-  grid_puts_line_start(&msg_grid_adj, showcmd_row);
+  grid_line_start(&msg_grid_adj, showcmd_row);
 
   if (!showcmd_is_clear) {
-    grid_puts(&msg_grid_adj, showcmd_buf, showcmd_row, sc_col,
-              HL_ATTR(HLF_MSG));
+    grid_line_puts(sc_col, showcmd_buf, -1, HL_ATTR(HLF_MSG));
   }
 
   // clear the rest of an old message by outputting up to SHOWCMD_COLS spaces
-  grid_puts(&msg_grid_adj, (char *)"          " + len, showcmd_row,
-            sc_col + len, HL_ATTR(HLF_MSG));
+  grid_line_puts(sc_col + len, (char *)"          " + len, -1, HL_ATTR(HLF_MSG));
 
-  grid_puts_line_flush(false);
+  grid_line_flush(false);
 }
 
 /// When "check" is false, prepare for commands that scroll the window.

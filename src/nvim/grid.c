@@ -239,8 +239,7 @@ void grid_putchar(ScreenGrid *grid, int c, int row, int col, int attr)
 {
   char buf[MB_MAXBYTES + 1];
 
-  buf[utf_char2bytes(c, buf)] = NUL;
-  grid_puts(grid, buf, row, col, attr);
+  grid_puts(grid, buf, utf_char2bytes(c, buf), row, col, attr);
 }
 
 /// Get a single character directly from grid.chars into "bytes", which must
@@ -262,51 +261,81 @@ void grid_getbytes(ScreenGrid *grid, int row, int col, char *bytes, int *attrp)
   schar_get(bytes, grid->chars[off]);
 }
 
-/// put string '*text' on the window grid at position 'row' and 'col', with
-/// attributes 'attr', and update chars[] and attrs[].
-/// Note: only outputs within one row, message is truncated at grid boundary!
-/// Note: if grid, row and/or col is invalid, nothing is done.
-int grid_puts(ScreenGrid *grid, char *text, int row, int col, int attr)
+static bool check_grid(ScreenGrid *grid, int row, int col)
 {
-  return grid_puts_len(grid, text, -1, row, col, attr);
-}
-
-static ScreenGrid *put_dirty_grid = NULL;
-static int put_dirty_row = -1;
-static int put_dirty_first = INT_MAX;
-static int put_dirty_last = 0;
-
-/// Start a group of grid_puts_len calls that builds a single grid line.
-///
-/// Must be matched with a grid_puts_line_flush call before moving to
-/// another line.
-void grid_puts_line_start(ScreenGrid *grid, int row)
-{
-  int col = 0;  // unused
   grid_adjust(&grid, &row, &col);
-  assert(put_dirty_row == -1);
-  put_dirty_row = row;
-  put_dirty_grid = grid;
+  // Safety check. The check for negative row and column is to fix issue
+  // vim/vim#4102. TODO(neovim): find out why row/col could be negative.
+  if (grid->chars == NULL
+      || row >= grid->rows || row < 0
+      || col >= grid->cols || col < 0) {
+    return false;
+  }
+  return true;
 }
 
-void grid_put_schar(ScreenGrid *grid, int row, int col, schar_T schar, int attr)
+/// put string 'text' on the window grid at position 'row' and 'col', with
+/// attributes 'attr', and update contents of 'grid'
+/// @param textlen length of string or -1 to use strlen(text)
+/// Note: only outputs within one row!
+int grid_puts(ScreenGrid *grid, const char *text, int textlen, int row, int col, int attr)
 {
-  assert(put_dirty_row == row);
-  size_t off = grid->line_offset[row] + (size_t)col;
+  if (!check_grid(grid, row, col)) {
+    if (rdb_flags & RDB_INVALID) {
+      abort();
+    }
+    return 0;
+  }
+
+  grid_line_start(grid, row);
+  int len = grid_line_puts(col, text, textlen, attr);
+  grid_line_flush(true);
+  return len;
+}
+
+static ScreenGrid *grid_line_grid = NULL;
+static int grid_line_row = -1;
+static int grid_line_coloff = 0;
+static int grid_line_first = INT_MAX;
+static int grid_line_last = 0;
+static bool grid_line_was_invalid = false;
+
+/// Start a group of grid_line_puts calls that builds a single grid line.
+///
+/// Must be matched with a grid_line_flush call before moving to
+/// another line.
+void grid_line_start(ScreenGrid *grid, int row)
+{
+  int col = 0;
+  grid_adjust(&grid, &row, &col);
+  assert(grid_line_row == -1);
+  grid_line_row = row;
+  grid_line_grid = grid;
+  grid_line_coloff = col;
+  // TODO(bfredl): ugly hackaround, will be fixed in STAGE 2
+  grid_line_was_invalid = grid != &default_grid && grid_invalid_row(grid, row);
+}
+
+void grid_line_put_schar(int col, schar_T schar, int attr)
+{
+  assert(grid_line_row >= 0);
+  ScreenGrid *grid = grid_line_grid;
+
+  size_t off = grid->line_offset[grid_line_row] + (size_t)col;
   if (grid->attrs[off] != attr || grid->chars[off] != schar || rdb_flags & RDB_NODELTA) {
     grid->chars[off] = schar;
     grid->attrs[off] = attr;
 
-    put_dirty_first = MIN(put_dirty_first, col);
+    grid_line_first = MIN(grid_line_first, col);
     // TODO(bfredl): Y U NO DOUBLEWIDTH?
-    put_dirty_last = MAX(put_dirty_last, col + 1);
+    grid_line_last = MAX(grid_line_last, col + 1);
   }
   grid->vcols[off] = -1;
 }
 
 /// like grid_puts(), but output "text[len]".  When "len" is -1 output up to
 /// a NUL.
-int grid_puts_len(ScreenGrid *grid, const char *text, int textlen, int row, int col, int attr)
+int grid_line_puts(int col, const char *text, int textlen, int attr)
 {
   size_t off;
   const char *ptr = text;
@@ -318,36 +347,14 @@ int grid_puts_len(ScreenGrid *grid, const char *text, int textlen, int row, int 
   int prev_c = 0;  // previous Arabic character
   int pc, nc, nc1;
   int pcc[MAX_MCO];
-  bool do_flush = false;
 
-  grid_adjust(&grid, &row, &col);
+  assert(grid_line_row >= 0);
+  ScreenGrid *grid = grid_line_grid;
+  int row = grid_line_row;
+  col += grid_line_coloff;
 
-  // Safety check. The check for negative row and column is to fix issue
-  // vim/vim#4102. TODO(neovim): find out why row/col could be negative.
-  if (grid->chars == NULL
-      || row >= grid->rows || row < 0
-      || col >= grid->cols || col < 0) {
-    return 0;
-  }
-
-  if (put_dirty_row == -1) {
-    grid_puts_line_start(grid, row);
-    do_flush = true;
-  } else {
-    if (grid != put_dirty_grid || row != put_dirty_row) {
-      abort();
-    }
-  }
   off = grid->line_offset[row] + (size_t)col;
   int start_col = col;
-
-  // When drawing over the right half of a double-wide char clear out the
-  // left half.  Only needed in a terminal.
-  if (grid != &default_grid && col == 0 && grid_invalid_row(grid, row)) {
-    // redraw the previous cell, make it empty
-    put_dirty_first = -1;
-    put_dirty_last = MAX(put_dirty_last, 1);
-  }
 
   max_off = grid->line_offset[row] + (size_t)grid->cols;
   while (col < grid->cols
@@ -438,8 +445,8 @@ int grid_puts_len(ScreenGrid *grid, const char *text, int textlen, int row, int 
         grid->attrs[off + 1] = attr;
         grid->vcols[off + 1] = -1;
       }
-      put_dirty_first = MIN(put_dirty_first, col);
-      put_dirty_last = MAX(put_dirty_last, col + mbyte_cells);
+      grid_line_first = MIN(grid_line_first, col);
+      grid_line_last = MAX(grid_line_last, col + mbyte_cells);
     }
 
     off += (size_t)mbyte_cells;
@@ -452,39 +459,61 @@ int grid_puts_len(ScreenGrid *grid, const char *text, int textlen, int row, int 
     }
   }
 
-  if (do_flush) {
-    grid_puts_line_flush(true);
-  }
   return col - start_col;
 }
 
-/// End a group of grid_puts_len calls and send the screen buffer to the UI
-/// layer.
+void grid_line_fill(int start_col, int end_col, int c, int attr)
+{
+  ScreenGrid *grid = grid_line_grid;
+  size_t lineoff = grid->line_offset[grid_line_row];
+  start_col += grid_line_coloff;
+  end_col += grid_line_coloff;
+
+  schar_T sc = schar_from_char(c);
+  for (int col = start_col; col < end_col; col++) {
+    size_t off = lineoff + (size_t)col;
+    if (grid->chars[off] != sc || grid->attrs[off] != attr || rdb_flags & RDB_NODELTA) {
+      grid->chars[off] = sc;
+      grid->attrs[off] = attr;
+      grid_line_first = MIN(grid_line_first, col);
+      grid_line_last = MAX(grid_line_last, col + 1);
+    }
+    grid->vcols[off] = -1;
+  }
+}
+
+/// End a group of grid_line_puts calls and send the screen buffer to the UI layer.
 ///
 /// @param set_cursor Move the visible cursor to the end of the changed region.
 ///                   This is a workaround for not yet refactored code paths
 ///                   and shouldn't be used in new code.
-void grid_puts_line_flush(bool set_cursor)
+void grid_line_flush(bool set_cursor)
 {
-  assert(put_dirty_row != -1);
-  if (put_dirty_first < put_dirty_last) {
-    if (set_cursor) {
-      ui_grid_cursor_goto(put_dirty_grid->handle, put_dirty_row,
-                          MIN(put_dirty_last, put_dirty_grid->cols - 1));
+  assert(grid_line_row != -1);
+  if (grid_line_first < grid_line_last) {
+    // When drawing over the right half of a double-wide char clear out the
+    // left half.  Only needed in a terminal.
+    if (grid_line_was_invalid && grid_line_first == 0) {
+      // redraw the previous cell, make it empty
+      grid_line_first = -1;
     }
-    if (!put_dirty_grid->throttled) {
-      ui_line(put_dirty_grid, put_dirty_row, put_dirty_first, put_dirty_last,
-              put_dirty_last, 0, false);
-    } else if (put_dirty_grid->dirty_col) {
-      if (put_dirty_last > put_dirty_grid->dirty_col[put_dirty_row]) {
-        put_dirty_grid->dirty_col[put_dirty_row] = put_dirty_last;
+    if (set_cursor) {
+      ui_grid_cursor_goto(grid_line_grid->handle, grid_line_row,
+                          MIN(grid_line_last, grid_line_grid->cols - 1));
+    }
+    if (!grid_line_grid->throttled) {
+      ui_line(grid_line_grid, grid_line_row, grid_line_first, grid_line_last,
+              grid_line_last, 0, false);
+    } else if (grid_line_grid->dirty_col) {
+      if (grid_line_last > grid_line_grid->dirty_col[grid_line_row]) {
+        grid_line_grid->dirty_col[grid_line_row] = grid_line_last;
       }
     }
-    put_dirty_first = INT_MAX;
-    put_dirty_last = 0;
+    grid_line_first = INT_MAX;
+    grid_line_last = 0;
   }
-  put_dirty_row = -1;
-  put_dirty_grid = NULL;
+  grid_line_row = -1;
+  grid_line_grid = NULL;
 }
 
 /// Fill the grid from "start_row" to "end_row" (exclusive), from "start_col"
@@ -521,11 +550,11 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
     // double wide-char clear out the right half.  Only needed in a
     // terminal.
     if (start_col > 0 && grid_fix_col(grid, start_col, row) != start_col) {
-      grid_puts_len(grid, " ", 1, row, start_col - 1, 0);
+      grid_puts(grid, " ", 1, row, start_col - 1, 0);
     }
     if (end_col < grid->cols
         && grid_fix_col(grid, end_col, row) != end_col) {
-      grid_puts_len(grid, " ", 1, row, end_col, 0);
+      grid_puts(grid, " ", 1, row, end_col, 0);
     }
 
     // if grid was resized (in ext_multigrid mode), the UI has no redraw updates
@@ -553,11 +582,7 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
       }
     }
     if (dirty_last > dirty_first) {
-      // TODO(bfredl): support a cleared suffix even with a batched line?
-      if (put_dirty_row == row) {
-        put_dirty_first = MIN(put_dirty_first, dirty_first);
-        put_dirty_last = MAX(put_dirty_last, dirty_last);
-      } else if (grid->throttled) {
+      if (grid->throttled) {
         // Note: assumes msg_grid is the only throttled grid
         assert(grid == &msg_grid);
         int dirty = 0;

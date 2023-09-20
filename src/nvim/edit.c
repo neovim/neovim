@@ -1449,6 +1449,7 @@ void edit_putchar(int c, bool highlight)
 
     // save the character to be able to put it back
     if (pc_status == PC_STATUS_UNSET) {
+      // TODO(bfredl): save the schar_T instead
       grid_getbytes(&curwin->w_grid, pc_row, pc_col, pc_bytes, &pc_attr);
       pc_status = PC_STATUS_SET;
     }
@@ -1532,7 +1533,7 @@ void edit_unputchar(void)
     if (pc_status == PC_STATUS_RIGHT || pc_status == PC_STATUS_LEFT) {
       redrawWinline(curwin, curwin->w_cursor.lnum);
     } else {
-      grid_puts(&curwin->w_grid, pc_bytes, pc_row, pc_col, pc_attr);
+      grid_puts(&curwin->w_grid, pc_bytes, -1, pc_row, pc_col, pc_attr);
     }
   }
 }
@@ -3485,7 +3486,8 @@ static bool ins_esc(long *count, int cmdchar, bool nomove)
   // Otherwise remove the mode message.
   if (reg_recording != 0 || restart_edit != NUL) {
     showmode();
-  } else if (p_smd && (got_int || !skip_showmode())) {
+  } else if (p_smd && (got_int || !skip_showmode())
+             && !(p_ch == 0 && !ui_has(kUIMessages))) {
     msg("");
   }
   // Exit Insert mode
