@@ -197,6 +197,9 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
   if (win_valid(wp) && buffer > 0) {
     Boolean noautocmd = !enter || fconfig.noautocmd;
     win_set_buf(wp, buf, noautocmd, err);
+    if (!fconfig.noautocmd) {
+      apply_autocmds(EVENT_WINNEW, NULL, NULL, false, buf);
+    }
   }
   if (!win_valid(wp)) {
     api_set_error(err, kErrorTypeException, "Window was closed immediately");
