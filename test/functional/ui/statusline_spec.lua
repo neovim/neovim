@@ -799,3 +799,21 @@ it("shows correct ruler in cmdline with no statusline", function()
                    3longlonglong  |
   ]]
 end)
+
+it('uses "stl" and "stlnc" fillchars even if they are the same #19803', function()
+  clear()
+  local screen = Screen.new(53, 4)
+  screen:attach()
+  screen:set_default_attr_ids({
+    [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+  })
+  command('hi clear StatusLine')
+  command('hi clear StatusLineNC')
+  command('vsplit')
+  screen:expect{grid=[[
+    ^                          │                          |
+    {1:~                         }│{1:~                         }|
+    [No Name]                  [No Name]                 |
+                                                         |
+  ]]}
+end)

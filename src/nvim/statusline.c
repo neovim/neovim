@@ -637,18 +637,7 @@ int fillchar_status(int *attr, win_T *wp)
     *attr = win_hl_attr(wp, HLF_SNC);
     fill = wp->w_p_fcs_chars.stlnc;
   }
-  // Use fill when there is highlighting, and highlighting of current
-  // window differs, or the fillchars differ, or this is not the
-  // current window
-  if (*attr != 0 && ((win_hl_attr(wp, HLF_S) != win_hl_attr(wp, HLF_SNC)
-                      || !is_curwin || ONE_WINDOW)
-                     || (wp->w_p_fcs_chars.stl != wp->w_p_fcs_chars.stlnc))) {
-    return fill;
-  }
-  if (is_curwin) {
-    return '^';
-  }
-  return '=';
+  return fill;
 }
 
 /// Redraw the status line according to 'statusline' and take care of any
