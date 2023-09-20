@@ -1358,21 +1358,35 @@ static void draw_sep_connectors_win(win_T *wp)
   win_at_left = frp->fr_parent == NULL;
 
   // Draw the appropriate separator connector in every corner where drawing them is necessary
-  if (!(win_at_top || win_at_left)) {
-    grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_TOP_LEFT),
-                 wp->w_winrow - 1, wp->w_wincol - 1, hl);
+  // Make sure not to send cursor position updates to ui.
+  bool top_left = !(win_at_top || win_at_left);
+  bool top_right = !(win_at_top || win_at_right);
+  bool bot_left = !(win_at_bottom || win_at_left);
+  bool bot_right = !(win_at_bottom || win_at_right);
+
+  if (top_left || top_right) {
+    grid_puts_line_start(&default_grid, wp->w_winrow - 1);
+    if (top_left) {
+      grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_TOP_LEFT),
+                   wp->w_winrow - 1, wp->w_wincol - 1, hl);
+    }
+    if (top_right) {
+      grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_TOP_RIGHT),
+                   wp->w_winrow - 1, W_ENDCOL(wp), hl);
+    }
+    grid_puts_line_flush(false);
   }
-  if (!(win_at_top || win_at_right)) {
-    grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_TOP_RIGHT),
-                 wp->w_winrow - 1, W_ENDCOL(wp), hl);
-  }
-  if (!(win_at_bottom || win_at_left)) {
-    grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_BOTTOM_LEFT),
-                 W_ENDROW(wp), wp->w_wincol - 1, hl);
-  }
-  if (!(win_at_bottom || win_at_right)) {
-    grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_BOTTOM_RIGHT),
-                 W_ENDROW(wp), W_ENDCOL(wp), hl);
+  if (bot_left || bot_right) {
+    grid_puts_line_start(&default_grid, W_ENDROW(wp));
+    if (bot_left) {
+      grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_BOTTOM_LEFT),
+                   W_ENDROW(wp), wp->w_wincol - 1, hl);
+    }
+    if (bot_right) {
+      grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_BOTTOM_RIGHT),
+                   W_ENDROW(wp), W_ENDCOL(wp), hl);
+    }
+    grid_puts_line_flush(false);
   }
 }
 
