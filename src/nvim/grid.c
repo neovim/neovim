@@ -574,10 +574,6 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
         ui_line(grid, row, dirty_first, last, dirty_last, attr, false);
       }
     }
-
-    if (end_col == grid->cols) {
-      grid->line_wraps[row] = false;
-    }
   }
 }
 
@@ -777,12 +773,6 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int cle
     }
   }
 
-  if (clear_width > 0 || wp->w_width != grid->cols) {
-    // If we cleared after the end of the line, it did not wrap.
-    // For vsplit, line wrapping is not possible.
-    grid->line_wraps[row] = false;
-  }
-
   if (clear_end < end_dirty) {
     clear_end = end_dirty;
   }
@@ -806,14 +796,12 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
   ngrid.vcols = xmalloc(ncells * sizeof(colnr_T));
   memset(ngrid.vcols, -1, ncells * sizeof(colnr_T));
   ngrid.line_offset = xmalloc((size_t)rows * sizeof(*ngrid.line_offset));
-  ngrid.line_wraps = xmalloc((size_t)rows * sizeof(*ngrid.line_wraps));
 
   ngrid.rows = rows;
   ngrid.cols = columns;
 
   for (new_row = 0; new_row < ngrid.rows; new_row++) {
     ngrid.line_offset[new_row] = (size_t)new_row * (size_t)ngrid.cols;
-    ngrid.line_wraps[new_row] = false;
 
     grid_clear_line(&ngrid, ngrid.line_offset[new_row], columns, valid);
 
@@ -858,13 +846,11 @@ void grid_free(ScreenGrid *grid)
   xfree(grid->attrs);
   xfree(grid->vcols);
   xfree(grid->line_offset);
-  xfree(grid->line_wraps);
 
   grid->chars = NULL;
   grid->attrs = NULL;
   grid->vcols = NULL;
   grid->line_offset = NULL;
-  grid->line_wraps = NULL;
 }
 
 /// Doesn't allow reinit, so must only be called by free_all_mem!
@@ -987,16 +973,13 @@ void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
       }
       j += line_count;
       grid_clear_line(grid, grid->line_offset[j] + (size_t)col, width, false);
-      grid->line_wraps[j] = false;
     } else {
       j = end - 1 - i;
       temp = (unsigned)grid->line_offset[j];
       while ((j -= line_count) >= row) {
         grid->line_offset[j + line_count] = grid->line_offset[j];
-        grid->line_wraps[j + line_count] = grid->line_wraps[j];
       }
       grid->line_offset[j + line_count] = temp;
-      grid->line_wraps[j + line_count] = false;
       grid_clear_line(grid, temp, grid->cols, false);
     }
   }
@@ -1035,17 +1018,14 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
       }
       j -= line_count;
       grid_clear_line(grid, grid->line_offset[j] + (size_t)col, width, false);
-      grid->line_wraps[j] = false;
     } else {
       // whole width, moving the line pointers is faster
       j = row + i;
       temp = (unsigned)grid->line_offset[j];
       while ((j += line_count) <= end - 1) {
         grid->line_offset[j - line_count] = grid->line_offset[j];
-        grid->line_wraps[j - line_count] = grid->line_wraps[j];
       }
       grid->line_offset[j - line_count] = temp;
-      grid->line_wraps[j - line_count] = false;
       grid_clear_line(grid, temp, grid->cols, false);
     }
   }

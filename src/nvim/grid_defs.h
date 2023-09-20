@@ -52,10 +52,6 @@ enum {
 /// line_offset[n] is the offset from chars[], attrs[] and vcols[] for the start
 /// of line 'n'. These offsets are in general not linear, as full screen scrolling
 /// is implemented by rotating the offsets in the line_offset array.
-///
-/// line_wraps[] is an array of boolean flags indicating if the screen line
-/// wraps to the next line. It can only be true if a window occupies the entire
-/// screen width.
 typedef struct ScreenGrid ScreenGrid;
 struct ScreenGrid {
   handle_T handle;
@@ -64,7 +60,6 @@ struct ScreenGrid {
   sattr_T *attrs;
   colnr_T *vcols;
   size_t *line_offset;
-  char *line_wraps;
 
   // last column that was drawn (not cleared with the default background).
   // only used when "throttled" is set. Not allocated by grid_alloc!
@@ -120,7 +115,7 @@ struct ScreenGrid {
   bool comp_disabled;
 };
 
-#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
+#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
                            false, 0, 0, NULL, false, true, 0, \
                            0, 0, 0, 0, 0,  false }
 

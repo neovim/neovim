@@ -3172,9 +3172,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
         // Force a redraw of the first column of the next line.
         current_grid->attrs[current_grid->line_offset[current_row + 1]] = -1;
-
-        // Remember that the line wraps, used for modeless copy.
-        current_grid->line_wraps[current_row] = true;
       }
 
       wlv.boguscols = 0;

@@ -413,9 +413,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
   assert(endcol <= chk_width);
   assert(row < chk_height);
 
-  if (!(grid && grid == &default_grid)) {
-    // TODO(bfredl): too conservative, need check
-    // grid->line_wraps if grid->Width == Width
+  if (!(grid && (grid == &default_grid || (grid->comp_col == 0 && grid->cols == Columns)))) {
     flags = flags & ~kLineFlagWrap;
   }
 
