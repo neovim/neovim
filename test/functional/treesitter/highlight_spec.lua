@@ -838,3 +838,67 @@ describe('treesitter highlighting (help)', function()
   end)
 
 end)
+
+describe('treesitter highlighting (nested injections)', function()
+  local screen
+
+  before_each(function()
+    screen = Screen.new(80, 7)
+    screen:attach()
+    screen:set_default_attr_ids {
+      [1] = {foreground = Screen.colors.SlateBlue};
+      [2] = {bold = true, foreground = Screen.colors.Brown};
+      [3] = {foreground = Screen.colors.Cyan4};
+      [4] = {foreground = Screen.colors.Fuchsia};
+    }
+  end)
+
+  it("correctly redraws nested injections (GitHub #25252)", function()
+    insert[=[
+function foo() print("Lua!") end
+
+local lorem = {
+    ipsum = {},
+    bar = {},
+}
+vim.cmd([[
+    augroup RustLSP
+    autocmd CursorHold silent! lua vim.lsp.buf.document_highlight()
+    augroup END
+]])
+    ]=]
+
+    exec_lua [[
+      vim.opt.scrolloff = 0
+      vim.bo.filetype = 'lua'
+      vim.treesitter.start()
+    ]]
+
+    -- invalidate the language tree
+    feed("ggi--[[<ESC>04x")
+
+    screen:expect{grid=[[
+      {2:^function} {3:foo}{1:()} {1:print(}{4:"Lua!"}{1:)} {2:end}                                                |
+                                                                                      |
+      {2:local} {3:lorem} {2:=} {1:{}                                                                 |
+          {3:ipsum} {2:=} {1:{},}                                                                 |
+          {3:bar} {2:=} {1:{},}                                                                   |
+      {1:}}                                                                               |
+                                                                                      |
+    ]]}
+
+    -- spam newline insert/delete to invalidate Lua > Vim > Lua region
+    feed("3jo<ESC>ddko<ESC>ddko<ESC>ddko<ESC>ddk0")
+
+    screen:expect{grid=[[
+      {2:function} {3:foo}{1:()} {1:print(}{4:"Lua!"}{1:)} {2:end}                                                |
+                                                                                      |
+      {2:local} {3:lorem} {2:=} {1:{}                                                                 |
+      ^    {3:ipsum} {2:=} {1:{},}                                                                 |
+          {3:bar} {2:=} {1:{},}                                                                   |
+      {1:}}                                                                               |
+                                                                                      |
+    ]]}
+  end)
+
+end)
