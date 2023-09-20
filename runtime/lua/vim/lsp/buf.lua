@@ -633,6 +633,7 @@ local function on_code_action_results(results, ctx, options)
       local command = type(action.command) == 'table' and action.command or action
       client._exec_cmd(command, ctx)
     end
+    options.callback(action)
   end
 
   local function on_user_choice(action_tuple)
@@ -725,6 +726,8 @@ end
 ---           If in visual mode this defaults to the active selection.
 ---           Table must contain `start` and `end` keys with {row,col} tuples
 ---           using mark-like indexing. See |api-indexing|
+---  - callback: (function|nil)
+---           Callback function that takes the selected code action as an argument.
 ---
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
 ---@see vim.lsp.protocol.CodeActionTriggerKind
