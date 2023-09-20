@@ -475,7 +475,7 @@ describe('statuscolumn', function()
       aaaaaaaaa                                            |
       {1:virtual-2 15}virt_line1                               |
       {1:virtual-2 15}virt_line2                               |
-      {1:buffer  0 16}{5:^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {4:buffer  0 16}{5:^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {5:aaaaaaaaa                                            }|
       {1:virtual-1 16}END                                      |
       {0:~                                                    }|
