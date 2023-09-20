@@ -633,7 +633,9 @@ local function on_code_action_results(results, ctx, options)
       local command = type(action.command) == 'table' and action.command or action
       client._exec_cmd(command, ctx)
     end
-    options.callback(action)
+    if options.callback then
+      options.callback(action)
+    end  
   end
 
   local function on_user_choice(action_tuple)
