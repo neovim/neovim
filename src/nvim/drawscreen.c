@@ -215,7 +215,6 @@ void screenclear(void)
   for (int i = 0; i < default_grid.rows; i++) {
     grid_clear_line(&default_grid, default_grid.line_offset[i],
                     default_grid.cols, true);
-    default_grid.line_wraps[i] = false;
   }
 
   ui_call_grid_clear(1);  // clear the display
