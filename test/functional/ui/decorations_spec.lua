@@ -1910,6 +1910,84 @@ describe('extmark decorations', function()
                                                         |
     ]]}
   end)
+
+  it('virtual text works with rightleft', function()
+    screen:try_resize(50, 3)
+    insert('abcdefghijklmn')
+    feed('0')
+    command('set rightleft')
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = {{'EOL', 'Underlined'}}})
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = {{'right_align', 'Underlined'}}, virt_text_pos = 'right_align' })
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = {{'win_col', 'Underlined'}}, virt_text_win_col = 20 })
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text = {{'overlayed', 'Underlined'}}, virt_text_pos = 'overlay' })
+    screen:expect{grid=[[
+      {28:ngila_thgir}            {28:loc_niw}  {28:LOE} nml{28:deyalrevo}b^a|
+      {1:                                                 ~}|
+                                                        |
+    ]]}
+
+    insert(('#'):rep(32))
+    feed('0')
+    screen:expect{grid=[[
+      {28:ngila_tdeyalrevo}ba#####{28:loc_niw}###################^#|
+      {1:                                                 ~}|
+                                                        |
+    ]]}
+
+    insert(('#'):rep(16))
+    feed('0')
+    screen:expect{grid=[[
+      {28:ngila_thgir}############{28:loc_niw}###################^#|
+                                        {28:LOE} nml{28:deyalrevo}|
+                                                        |
+    ]]}
+
+    insert('###')
+    feed('0')
+    screen:expect{grid=[[
+      #################################################^#|
+      {28:ngila_thgir}            {28:loc_niw} {28:LOE} nml{28:deyalrevo}ba#|
+                                                        |
+    ]]}
+
+    command('set number')
+    screen:expect{grid=[[
+      #############################################^#{2: 1  }|
+      {28:ngila_thgir}        {28:loc_niw} nml{28:deyalrevo}ba#####{2:    }|
+                                                        |
+    ]]}
+
+    command('set cpoptions+=n')
+    screen:expect{grid=[[
+      #############################################^#{2: 1  }|
+      {28:ngila_thgir}            {28:loc_niw} nml{28:deyalrevo}ba#####|
+                                                        |
+    ]]}
+  end)
+
+  it('works with double width char and rightleft', function()
+    screen:try_resize(50, 3)
+    insert('abcdefghij口klmnop')
+    feed('0')
+    command('set rightleft')
+    screen:expect{grid=[[
+                                      ponmlk口jihgfedcb^a|
+      {1:                                                 ~}|
+                                                        |
+    ]]}
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text = {{'overlayed', 'Underlined'}}, virt_text_pos = 'overlay' })
+    screen:expect{grid=[[
+                                      ponmlk {28:deyalrevo}b^a|
+      {1:                                                 ~}|
+                                                        |
+    ]]}
+    meths.buf_set_extmark(0, ns, 0, 15, { virt_text = {{'古', 'Underlined'}}, virt_text_pos = 'overlay' })
+    screen:expect{grid=[[
+                                      po{28:古}lk {28:deyalrevo}b^a|
+      {1:                                                 ~}|
+                                                        |
+    ]]}
+  end)
 end)
 
 describe('decorations: inline virtual text', function()
@@ -4245,6 +4323,7 @@ if (h->n_buckets < new_n_buckets) { // expand
   end)
 
   it('does not show twice if end_row or end_col is specified #18622', function()
+    screen:try_resize(50, 8)
     insert([[
       aaa
       bbb
@@ -4260,10 +4339,28 @@ if (h->n_buckets < new_n_buckets) { // expand
       dd^d                                               |
       {1:VIRT LINE 2}                                       |
       {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
+  it('works with rightleft', function()
+    screen:try_resize(50, 8)
+    insert([[
+      aaa
+      bbb
+      ccc
+      ddd]])
+    command('set number rightleft')
+    meths.buf_set_extmark(0, ns, 0, 0, {virt_lines = {{{'VIRT LINE 1', 'NonText'}}}, virt_lines_leftcol = true})
+    meths.buf_set_extmark(0, ns, 3, 0, {virt_lines = {{{'VIRT LINE 2', 'NonText'}}}})
+    screen:expect{grid=[[
+                                                 aaa{9: 1  }|
+                                             {1:1 ENIL TRIV}|
+                                                 bbb{9: 2  }|
+                                                 ccc{9: 3  }|
+                                                 ^ddd{9: 4  }|
+                                         {1:2 ENIL TRIV}{9:    }|
+      {1:                                                 ~}|
                                                         |
     ]]}
   end)

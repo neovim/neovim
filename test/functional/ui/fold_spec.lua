@@ -3047,6 +3047,39 @@ describe("folded lines", function()
           {11:-- VISUAL LINE --}             |
         ]])
       end
+
+      meths.set_option_value('rightleft', true, {})
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [3:------------------------------]|
+        ## grid 2
+                           a si sihT{7:    }|
+                       {14:hsilgnE dila}^v{7:   -}|
+          {20: desopmoc ecnetnes}{19:      }{15:--}{7:  +│}|
+          {15:······}{20:.evac sih ni}{19:      }{15:--}{7:  +│}|
+          {1:                             ~}|
+          {1:                             ~}|
+        ## grid 3
+          {11:-- VISUAL LINE --}             |
+        ]])
+      else
+        screen:expect([[
+                           a si sihT{7:    }|
+                       {14:hsilgnE dila}^v{7:   -}|
+          {20: desopmoc ecnetnes}{19:      }{15:--}{7:  +│}|
+          {15:······}{20:.evac sih ni}{19:      }{15:--}{7:  +│}|
+          {1:                             ~}|
+          {1:                             ~}|
+          {11:-- VISUAL LINE --}             |
+        ]])
+      end
     end)
   end
 
