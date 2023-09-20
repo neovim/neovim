@@ -1237,6 +1237,25 @@ describe('extmark decorations', function()
                                                         |
     ]]}
 
+    meths.buf_set_extmark(0, ns, 4, 50, { virt_text={{'EOL', 'NonText'}} })
+    screen:expect{grid=[[
+      for _,item in ipairs(items) do                    |
+          local text, hl_id_cell, cou{4:Very} unpack(ite{4:VERY}|
+          if                                            |
+      hl_id_cell ~= nil then         {4:Much}           {4:MUCH}|
+              --^ -- -- -- -- -- -- --{4:Error}- -- hl_i{4:ERROR}|
+      l_id_cell {1:EOL}                                     |
+          end                                           |
+          for _ = 1, (count or 1) do                    |
+              local cell = line[colpos]                 |
+          {1:-}   cell.text = text                         {1:-}|
+              cell.hl_id = hl_id                        |
+              colpos = colpos+1                         |
+          end                                           |
+      end                                               |
+                                                        |
+    ]]}
+
     feed '.'
     screen:expect{grid=[[
       for _,item in ipairs(items) do                    |
@@ -1244,7 +1263,7 @@ describe('extmark decorations', function()
           if                                            |
       hl_id_cell ~= nil then         {4:Much}           {4:MUCH}|
               --^ -- -- -- -- -- -- -- -- -- -- -- hl_id |
-      = hl_id_cell                   {4:Error}         {4:ERROR}|
+      = hl_id_cell {1:EOL}               {4:Error}         {4:ERROR}|
           end                                           |
           for _ = 1, (count or 1) do                    |
               local cell = line[colpos]                 |
@@ -1264,7 +1283,7 @@ describe('extmark decorations', function()
       {2:  3 }    if                                        |
       {2:  4 }hl_id_cell ~= nil then         {4:Much}       {4:MUCH}|
       {2:  5 }        --^ -- -- -- -- -- -- -- -- -- -- -- hl|
-      {2:    }_id = hl_id_cell               {4:Error}     {4:ERROR}|
+      {2:    }_id = hl_id_cell {1:EOL}           {4:Error}     {4:ERROR}|
       {2:  6 }    end                                       |
       {2:  7 }    for _ = 1, (count or 1) do                |
       {2:  8 }        local cell = line[colpos]             |
@@ -1283,7 +1302,7 @@ describe('extmark decorations', function()
       {2:  3 }    if                                        |
       {2:  4 }hl_id_cell ~= nil then         {4:Much}       {4:MUCH}|
       {2:  5 }        --^ -- -- -- -- -- -- -- -- -- -- -- hl|
-      _id = hl_id_cell               {4:Error}         {4:ERROR}|
+      _id = hl_id_cell {1:EOL}           {4:Error}         {4:ERROR}|
       {2:  6 }    end                                       |
       {2:  7 }    for _ = 1, (count or 1) do                |
       {2:  8 }        local cell = line[colpos]             |
