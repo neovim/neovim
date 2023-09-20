@@ -650,8 +650,8 @@ function LanguageTree:included_regions()
     return self._regions
   end
 
-  if not self._has_regions or next(self._trees) == nil then
-    -- treesitter.c will default empty ranges to { -1, -1, -1, -1, -1, -1}
+  if not self._has_regions then
+    -- treesitter.c will default empty ranges to { -1, -1, -1, -1, -1, -1} (the full range)
     return { {} }
   end
 
