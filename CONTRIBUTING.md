@@ -183,11 +183,11 @@ master build. To view the defects, just request access; you will be approved.
   ASAN/UBSAN can be used to detect memory errors and other common forms of undefined behavior at runtime in debug builds.
 
 - To build Neovim with sanitizers enabled, use
-  ```
+  ```sh
   rm -rf build && CMAKE_EXTRA_FLAGS="-DCMAKE_C_COMPILER=clang -DENABLE_ASAN_UBSAN=1" make
   ```
 - When running Neovim, use
-  ```
+  ```sh
   ASAN_OPTIONS=log_path=/tmp/nvim_asan nvim args...
   ```
 - If Neovim exits unexpectedly, check `/tmp/nvim_asan.{PID}` (or your preferred `log_path`) for log files with error messages.

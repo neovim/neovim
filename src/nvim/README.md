@@ -29,21 +29,22 @@ Logs
 Low-level log messages sink to `$NVIM_LOG_FILE`.
 
 UI events are logged at DEBUG level.
-
-    rm -rf build/
-    make CMAKE_EXTRA_FLAGS="-DLOG_DEBUG"
-
+```sh
+rm -rf build/
+make CMAKE_EXTRA_FLAGS="-DLOG_DEBUG"
+```
 Use `LOG_CALLSTACK()` (Linux only) to log the current stacktrace. To log to an
 alternate file (e.g. stderr) use `LOG_CALLSTACK_TO_FILE(FILE*)`. Requires
 `-no-pie` ([ref](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=860394#15)):
-
-    rm -rf build/
-    make CMAKE_EXTRA_FLAGS="-DLOG_DEBUG -DCMAKE_C_FLAGS=-no-pie"
-
+```sh
+rm -rf build/
+make CMAKE_EXTRA_FLAGS="-DLOG_DEBUG -DCMAKE_C_FLAGS=-no-pie"
+```
 Many log messages have a shared prefix, such as "UI" or "RPC". Use the shell to
 filter the log, e.g. at DEBUG level you might want to exclude UI messages:
-
-    tail -F ~/.local/state/nvim/log | cat -v | stdbuf -o0 grep -v UI | stdbuf -o0 tee -a log
+```sh
+tail -F ~/.local/state/nvim/log | cat -v | stdbuf -o0 grep -v UI | stdbuf -o0 tee -a log
+```
 
 Build with ASAN
 ---------------
@@ -54,27 +55,27 @@ a good way to catch undefined behavior, leaks and other errors as soon as they
 happen.  It's significantly faster than Valgrind.
 
 Requires clang 3.4 or later, and `llvm-symbolizer` must be in `$PATH`:
-
-    clang --version
-
+```sh
+clang --version
+```
 Build Nvim with sanitizer instrumentation (choose one):
-
-    CC=clang make CMAKE_EXTRA_FLAGS="-DENABLE_ASAN_UBSAN=ON"
-    CC=clang make CMAKE_EXTRA_FLAGS="-DENABLE_MSAN=ON"
-    CC=clang make CMAKE_EXTRA_FLAGS="-DENABLE_TSAN=ON"
-
+```sh
+CC=clang make CMAKE_EXTRA_FLAGS="-DENABLE_ASAN_UBSAN=ON"
+CC=clang make CMAKE_EXTRA_FLAGS="-DENABLE_MSAN=ON"
+CC=clang make CMAKE_EXTRA_FLAGS="-DENABLE_TSAN=ON"
+```
 Create a directory to store logs:
-
-    mkdir -p "$HOME/logs"
-
+```sh
+mkdir -p "$HOME/logs"
+```
 Configure the sanitizer(s) via these environment variables:
-
-    # Change to detect_leaks=1 to detect memory leaks (slower, noisier).
-    export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan"
-    # Show backtraces in the logs.
-    export MSAN_OPTIONS="log_path=${HOME}/logs/msan"
-    export TSAN_OPTIONS="log_path=${HOME}/logs/tsan"
-
+```sh
+# Change to detect_leaks=1 to detect memory leaks (slower, noisier).
+export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan"
+# Show backtraces in the logs.
+export MSAN_OPTIONS="log_path=${HOME}/logs/msan"
+export TSAN_OPTIONS="log_path=${HOME}/logs/tsan"
+```
 Logs will be written to `${HOME}/logs/*san.PID` then.
 
 For more information: https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
@@ -118,73 +119,77 @@ Example using bpftrace to track slow vim functions, and print out any files
 that were opened during the trace. At the end, it prints a histogram of
 function timing:
 
-    #!/usr/bin/env bpftrace
+```c
+#!/usr/bin/env bpftrace
 
-    BEGIN {
-      @depth = -1;
-    }
+BEGIN {
+  @depth = -1;
+}
 
-    tracepoint:sched:sched_process_fork /@pidmap[args->parent_pid]/ {
-      @pidmap[args->child_pid] = 1;
-    }
+tracepoint:sched:sched_process_fork /@pidmap[args->parent_pid]/ {
+  @pidmap[args->child_pid] = 1;
+}
 
-    tracepoint:sched:sched_process_exit /@pidmap[args->pid]/ {
-      delete(@pidmap[args->pid]);
-    }
+tracepoint:sched:sched_process_exit /@pidmap[args->pid]/ {
+  delete(@pidmap[args->pid]);
+}
 
-    usdt:build/bin/nvim:neovim:eval__call_func__entry {
-        @pidmap[pid] = 1;
-        @depth++;
-        @funcentry[@depth] = nsecs;
-    }
+usdt:build/bin/nvim:neovim:eval__call_func__entry {
+  @pidmap[pid] = 1;
+  @depth++;
+  @funcentry[@depth] = nsecs;
+}
 
-    usdt:build/bin/nvim:neovim:eval__call_func__return {
-        $func = str(arg0);
-        $msecs = (nsecs - @funcentry[@depth]) / 1000000;
+usdt:build/bin/nvim:neovim:eval__call_func__return {
+  $func = str(arg0);
+  $msecs = (nsecs - @funcentry[@depth]) / 1000000;
 
-        @time_histo = hist($msecs);
+  @time_histo = hist($msecs);
 
-        if ($msecs >= 1000) {
-          printf("%u ms for %s\n", $msecs, $func);
-          print(@files);
-        }
+  if ($msecs >= 1000) {
+    printf("%u ms for %s\n", $msecs, $func);
+    print(@files);
+  }
 
-        clear(@files);
-        delete(@funcentry[@depth]);
-        @depth--;
-    }
+  clear(@files);
+  delete(@funcentry[@depth]);
+  @depth--;
+}
 
-    tracepoint:syscalls:sys_enter_open,
-    tracepoint:syscalls:sys_enter_openat {
-      if (@pidmap[pid] == 1 && @depth >= 0) {
-        @files[str(args->filename)] = count();
-      }
-    }
+tracepoint:syscalls:sys_enter_open,
+tracepoint:syscalls:sys_enter_openat {
+  if (@pidmap[pid] == 1 && @depth >= 0) {
+    @files[str(args->filename)] = count();
+  }
+}
 
-    END {
-      clear(@depth);
-    }
+END {
+  clear(@depth);
+}
+```
 
-    $ sudo bpftrace funcslower.bt
-    1527 ms for Slower
-    @files[/usr/lib/libstdc++.so.6]: 2
-    @files[/etc/fish/config.fish]: 2
-    <snip>
+```console
+$ sudo bpftrace funcslower.bt
+1527 ms for Slower
+@files[/usr/lib/libstdc++.so.6]: 2
+@files[/etc/fish/config.fish]: 2
+<snip>
 
-    ^C
-    @time_histo:
-    [0]                71430 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
-    [1]                  346 |                                                    |
-    [2, 4)               208 |                                                    |
-    [4, 8)                91 |                                                    |
-    [8, 16)               22 |                                                    |
-    [16, 32)              85 |                                                    |
-    [32, 64)               7 |                                                    |
-    [64, 128)              0 |                                                    |
-    [128, 256)             0 |                                                    |
-    [256, 512)             6 |                                                    |
-    [512, 1K)              1 |                                                    |
-    [1K, 2K)               5 |                                                    |
+^C
+@time_histo:
+[0]                71430 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
+[1]                  346 |                                                    |
+[2, 4)               208 |                                                    |
+[4, 8)                91 |                                                    |
+[8, 16)               22 |                                                    |
+[16, 32)              85 |                                                    |
+[32, 64)               7 |                                                    |
+[64, 128)              0 |                                                    |
+[128, 256)             0 |                                                    |
+[256, 512)             6 |                                                    |
+[512, 1K)              1 |                                                    |
+[1K, 2K)               5 |                                                    |
+```
 
 Debug: TUI
 ----------
@@ -193,8 +198,9 @@ Debug: TUI
 
 Nvim logs its internal terminfo state at 'verbose' level 3.  This makes it
 possible to see exactly what terminfo values Nvim is using on any system.
-
-    nvim -V3log
+```sh
+nvim -V3log
+```
 
 ### TUI Debugging with gdb/lldb
 
@@ -206,13 +212,13 @@ hit depending on which process the breakpoints were set in.
 To debug the main process, you can debug the nvim binary with the `--headless`
 flag which does not launch the TUI and will allow you to set breakpoints in code
 not related to TUI rendering like so:
-
-    lldb -- ./build/bin/nvim --headless --listen ~/.cache/nvim/debug-server.pipe
-
+```sh
+lldb -- ./build/bin/nvim --headless --listen ~/.cache/nvim/debug-server.pipe
+```
 You can then attach to the headless process to interact with the editor like so:
-
-    ./build/bin/nvim --remote-ui --server ~/.cache/nvim/debug-server.pipe
-
+```sh
+./build/bin/nvim --remote-ui --server ~/.cache/nvim/debug-server.pipe
+```
 Conversely for debugging TUI rendering, you can start a headless process and
 debug the remote-ui process multiple times without losing editor state.
 
@@ -227,26 +233,27 @@ terminal behavior. The libvterm `vterm-dump` utility formats the result for
 human-readability.
 
 Record a Nvim terminal session and format it with `vterm-dump`:
+```sh
+script foo
+./build/bin/nvim -u NONE
+# Exit the script session with CTRL-d
 
-    script foo
-    ./build/bin/nvim -u NONE
-    # Exit the script session with CTRL-d
-
-    # Use `vterm-dump` utility to format the result.
-    ./.deps/usr/bin/vterm-dump foo > bar
-
+# Use `vterm-dump` utility to format the result.
+./.deps/usr/bin/vterm-dump foo > bar
+```
 Then you can compare `bar` with another session, to debug TUI behavior.
 
 ### TUI redraw
 
 Set the 'writedelay' and 'redrawdebug' options to see where and when the UI is painted.
-
-    :set writedelay=50 rdb=compositor
-
+```vim
+:set writedelay=50 rdb=compositor
+```
 Note: neovim uses an internal screenbuffer to only send minimal updates even if a large
 region is repainted internally. To also highlight excess internal redraws, use
-
-    :set writedelay=50 rdb=compositor,nodelta
+```vim
+:set writedelay=50 rdb=compositor,nodelta
+```
 
 ### Terminal reference
 
@@ -434,19 +441,20 @@ Main loop
 
 The `Loop` structure (which describes `main_loop`) abstracts multiple queues
 into one loop:
-
-    uv_loop_t uv;
-    MultiQueue *events;
-    MultiQueue *thread_events;
-    MultiQueue *fast_events;
-
+```c
+uv_loop_t uv;
+MultiQueue *events;
+MultiQueue *thread_events;
+MultiQueue *fast_events;
+```
 `loop_poll_events` checks `Loop.uv` and `Loop.fast_events` whenever Nvim is
 idle, and also at `os_breakcheck` intervals.
 
 MultiQueue is cool because you can attach throw-away "child queues" trivially.
 For example `do_os_system()` does this (for every spawned process!) to
 automatically route events onto the `main_loop`:
-
-    Process *proc = &uvproc.process;
-    MultiQueue *events = multiqueue_new_child(main_loop.events);
-    proc->events = events;
+```c
+Process *proc = &uvproc.process;
+MultiQueue *events = multiqueue_new_child(main_loop.events);
+proc->events = events;
+```

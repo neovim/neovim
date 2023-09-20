@@ -58,33 +58,33 @@ Executing Tests
 ---------------
 
 To run all tests (except "old" tests):
-
-    make test
-
+```sh
+make test
+```
 To run only _unit_ tests:
-
-    make unittest
-
+```sh
+make unittest
+```
 To run only _functional_ tests:
-
-    make functionaltest
-
+```sh
+make functionaltest
+```
 
 Legacy tests
 ------------
 
 To run all legacy Vim tests:
-
-    make oldtest
-
+```sh
+make oldtest
+```
 To run a *single* legacy test file you can use either:
-
-    make oldtest TEST_FILE=test_syntax.vim
-
+```sh
+make oldtest TEST_FILE=test_syntax.vim
+```
 or:
-
-    make test/old/testdir/test_syntax.vim
-
+```sh
+make test/old/testdir/test_syntax.vim
+```
 - Specify only the test file name, not the full path.
 
 
@@ -152,38 +152,41 @@ end)
 ```
 
 To run only test with filter name:
-
-    TEST_FILTER='foo.*api' make functionaltest
-
+```sh
+TEST_FILTER='foo.*api' make functionaltest
+```
 To run all tests except ones matching a filter:
-
-    TEST_FILTER_OUT='foo.*api' make functionaltest
+```sh
+TEST_FILTER_OUT='foo.*api' make functionaltest
+```
 
 ### Filter by file
 
 To run a *specific* unit test:
-
-    TEST_FILE=test/unit/foo.lua make unittest
-
+```sh
+TEST_FILE=test/unit/foo.lua make unittest
+```
 or
-
-    cmake -E env "TEST_FILE=test/unit/foo.lua" cmake --build build --target unittest
+```sh
+cmake -E env "TEST_FILE=test/unit/foo.lua" cmake --build build --target unittest
+```
 
 To run a *specific* functional test:
-
-    TEST_FILE=test/functional/foo.lua make functionaltest
-
+```sh
+TEST_FILE=test/functional/foo.lua make functionaltest
+```
 or
-
-    cmake -E env "TEST_FILE=test/functional/foo.lua" cmake --build build --target functionaltest
-
+```sh
+cmake -E env "TEST_FILE=test/functional/foo.lua" cmake --build build --target functionaltest
+```
 To *repeat* a test:
-
-    BUSTED_ARGS="--repeat=100 --no-keep-going" TEST_FILE=test/functional/foo_spec.lua make functionaltest
-
+```sh
+BUSTED_ARGS="--repeat=100 --no-keep-going" TEST_FILE=test/functional/foo_spec.lua make functionaltest
+```
 or
-
-    cmake -E env "TEST_FILE=test/functional/foo_spec.lua" cmake -E env BUSTED_ARGS="--repeat=100 --no-keep-going" cmake --build build --target functionaltest
+```sh
+cmake -E env "TEST_FILE=test/functional/foo_spec.lua" cmake -E env BUSTED_ARGS="--repeat=100 --no-keep-going" cmake --build build --target functionaltest
+```
 
 ### Filter by tag
 
@@ -264,9 +267,9 @@ Lint
 on the test code.
 
 If a luacheck warning must be ignored, specify the warning code. Example:
-
-    -- luacheck: ignore 621
-
+```lua
+-- luacheck: ignore 621
+```
 http://luacheck.readthedocs.io/en/stable/warnings.html
 
 Ignore the smallest applicable scope (e.g. inside a function, not at the top of
