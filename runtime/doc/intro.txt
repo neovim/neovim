@@ -70,17 +70,12 @@ If Nvim crashes, try to get a backtrace.  See |debug.txt|.
 Sponsor Vim/Nvim development				*sponsor* *register*
 
 Fixing bugs and adding new features takes a lot of time and effort.  To show
-your appreciation for the work and motivate Bram and others to continue
-working on Vim please send a donation.
-
-Since Bram is back to a paid job the money will now be used to help children
-in Uganda.  See |uganda|.  But at the same time donations increase Bram's
-motivation to keep working on Vim!
+your appreciation for the work and motivate contributors to continue working
+on Vim and Nvim please send a donation.
 
 For the most recent information about sponsoring look on the Vim web site:
 
 	https://www.vim.org/sponsor/
-
 
 Nvim development is funded separately from Vim:
 
