@@ -655,7 +655,7 @@ void pum_redraw(void)
                        i >= thumb_pos && i < thumb_pos + thumb_height ? attr_thumb : attr_scroll);
       }
     }
-    grid_line_flush(false);
+    grid_line_flush();
     row++;
   }
 }

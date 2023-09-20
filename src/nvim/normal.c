@@ -2087,7 +2087,7 @@ static void display_showcmd(void)
   // clear the rest of an old message by outputting up to SHOWCMD_COLS spaces
   grid_line_puts(sc_col + len, (char *)"          " + len, -1, HL_ATTR(HLF_MSG));
 
-  grid_line_flush(false);
+  grid_line_flush();
 }
 
 /// When "check" is false, prepare for commands that scroll the window.

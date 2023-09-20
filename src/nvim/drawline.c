@@ -1825,7 +1825,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
          || (number_only && wlv.draw_state > WL_STC))
         && wlv.filler_todo <= 0) {
       draw_virt_text(wp, buf, win_col_offset, &wlv.col, wp->w_p_rl ? -1 : grid->cols, wlv.row);
-      grid_put_linebuf(grid, wlv.row, 0, wlv.col, -grid->cols, wp->w_p_rl, wp, bg_attr, false);
+      win_put_linebuf(wp, wlv.row, 0, wlv.col, -grid->cols, bg_attr, false);
       // Pretend we have finished updating the window.  Except when
       // 'cursorcolumn' is set.
       if (wp->w_p_cuc) {
@@ -2956,7 +2956,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
                             wp->w_p_rl ? -1 : grid->cols, 0, wp->w_p_rl);
       }
       draw_virt_text(wp, buf, win_col_offset, &wlv.col, wp->w_p_rl ? -1 : grid->cols, wlv.row);
-      grid_put_linebuf(grid, wlv.row, 0, wlv.col, grid->cols, wp->w_p_rl, wp, bg_attr, false);
+      win_put_linebuf(wp, wlv.row, 0, wlv.col, grid->cols, bg_attr, false);
       wlv.row++;
 
       // Update w_cline_height and w_cline_folded if the cursor line was
@@ -3229,7 +3229,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         draw_virt_text(wp, buf, win_col_offset, &draw_col, wp->w_p_rl ? -1 : grid->cols, wlv.row);
       }
 
-      grid_put_linebuf(grid, wlv.row, 0, draw_col, grid->cols, wp->w_p_rl, wp, bg_attr, wrap);
+      win_put_linebuf(wp, wlv.row, 0, draw_col, grid->cols, bg_attr, wrap);
       if (wrap) {
         ScreenGrid *current_grid = grid;
         int current_row = wlv.row, dummy_col = 0;  // dummy_col unused
@@ -3296,4 +3296,38 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
   xfree(wlv.p_extra_free);
   xfree(wlv.saved_p_extra_free);
   return wlv.row;
+}
+
+static void win_put_linebuf(win_T *wp, int row, int coloff, int endcol, int clear_width,
+                            int bg_attr, bool wrap)
+{
+  ScreenGrid *grid = &wp->w_grid;
+
+  // Take care of putting "<<<" on the first line for 'smoothscroll'.
+  if (row == 0 && wp->w_skipcol > 0
+      // do not overwrite the 'showbreak' text with "<<<"
+      && *get_showbreak_value(wp) == NUL
+      // do not overwrite the 'listchars' "precedes" text with "<<<"
+      && !(wp->w_p_list && wp->w_p_lcs_chars.prec != 0)) {
+    int off = 0;
+    if (wp->w_p_nu && wp->w_p_rnu) {
+      // do not overwrite the line number, change "123 text" to "123<<<xt".
+      while (off < grid->cols && ascii_isdigit(schar_get_ascii(linebuf_char[off]))) {
+        off++;
+      }
+    }
+
+    for (int i = 0; i < 3 && off < grid->cols; i++) {
+      if (off + 1 < grid->cols && linebuf_char[off + 1] == NUL) {
+        // When the first half of a double-width character is
+        // overwritten, change the second half to a space.
+        linebuf_char[off + 1] = schar_from_ascii(' ');
+      }
+      linebuf_char[off] = schar_from_ascii('<');
+      linebuf_attr[off] = HL_ATTR(HLF_AT);
+      off++;
+    }
+  }
+
+  grid_put_linebuf(grid, row, coloff, 0, endcol, clear_width, wp->w_p_rl, bg_attr, wrap, false);
 }
