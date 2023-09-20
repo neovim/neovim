@@ -1915,6 +1915,9 @@ bool parse_winhl_opt(win_T *wp)
     char *commap = xstrchrnul(hi, ',');
     size_t len = (size_t)(commap - hi);
     int hl_id = len ? syn_check_group(hi, len) : -1;
+    if (hl_id == 0) {
+      return false;
+    }
     int hl_id_link = nlen ? syn_check_group(p, nlen) : 0;
 
     HlAttrs attrs = HLATTRS_INIT;

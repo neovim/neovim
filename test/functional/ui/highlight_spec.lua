@@ -8,6 +8,7 @@ local feed_command, eq = helpers.feed_command, helpers.eq
 local curbufmeths = helpers.curbufmeths
 local funcs = helpers.funcs
 local meths = helpers.meths
+local exec_lua = helpers.exec_lua
 
 describe('colorscheme compatibility', function()
   before_each(function()
@@ -2640,5 +2641,18 @@ describe('highlight namespaces', function()
       {8:~                        }|
                                |
     ]]}
+  end)
+
+  it('winhl does not accept invalid value #24586', function()
+    local res = exec_lua([[
+      local curwin = vim.api.nvim_get_current_win()
+      vim.api.nvim_command("set winhl=Normal:Visual")
+      local _, msg = pcall(vim.api.nvim_command,"set winhl='Normal:Wrong'")
+      return { msg, vim.wo[curwin].winhl }
+    ]])
+    eq({
+     "Vim(set):E5248: Invalid character in group name",
+     "Normal:Visual",
+    },res)
   end)
 end)
