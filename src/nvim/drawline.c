@@ -1308,8 +1308,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
     statuscol.width = win_col_off(wp) - (cmdwin_type != 0 && wp == curwin);
     statuscol.use_cul = use_cursor_line_highlight(wp, lnum);
     statuscol.sign_cul_id = statuscol.use_cul ? sign_cul.hl_id : 0;
-    statuscol.num_attr = sign_num.hl_id ? syn_id2attr(sign_num.hl_id)
-                                        : get_line_number_attr(wp, &wlv);
+    statuscol.num_attr = sign_num.hl_id > 0 ? syn_id2attr(sign_num.hl_id) : 0;
   } else {
     if (sign_cul.hl_id > 0) {
       sign_cul_attr = syn_id2attr(sign_cul.hl_id);
@@ -1602,6 +1601,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         wlv.draw_state = WL_STC;
         // Draw the 'statuscolumn' if option is set.
         if (statuscol.draw) {
+          if (sign_num.hl_id == 0) {
+            statuscol.num_attr = get_line_number_attr(wp, &wlv);
+          }
           if (statuscol.textp == NULL) {
             v = (ptr - line);
             get_statuscol_str(wp, lnum, wlv.row - startrow - wlv.filler_lines, &statuscol);
