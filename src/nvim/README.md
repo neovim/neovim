@@ -255,6 +255,12 @@ region is repainted internally. To also highlight excess internal redraws, use
 - http://bazaar.launchpad.net/~libvterm/libvterm/trunk/view/head:/doc/seqs.txt
 - http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 
+Data structures
+---------------
+
+Buffer text is stored as a tree of line segments, defined in [memline.c](https://github.com/neovim/neovim/blob/a63c67005b9ea17214d86391e2fd649658c1bdec/src/nvim/memline.c#L8-L35).
+The central idea is found in [ml_find_line](https://github.com/neovim/neovim/blob/a63c67005b9ea17214d86391e2fd649658c1bdec/src/nvim/memline.c#L2855).
+
 Nvim lifecycle
 --------------
 

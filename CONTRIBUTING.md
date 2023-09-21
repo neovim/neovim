@@ -149,8 +149,10 @@ View the [Clang report] to see potential bugs found by the Clang
 
 ### Coverity
 
-[Coverity](https://scan.coverity.com/projects/neovim-neovim) runs against the
-master build. To view the defects, just request access; you will be approved.
+Coverity runs against the master build. To view the defects you must
+[request access](https://scan.coverity.com/projects/neovim-neovim) (Coverity
+does not have a "public" view), then you will be approved as soon as
+a maintainer sees the email.
 
 - Use this format for commit messages (where `{id}` is the CID (Coverity ID);
   ([example](https://github.com/neovim/neovim/pull/804))):
@@ -283,7 +285,7 @@ If you need to modify or debug the documentation flow, these are the main files:
 ### Lua docstrings
 
 Use [LuaLS] annotations in Lua docstrings to annotate parameter types, return
-types, etc. See [:help dev-doc-lua][dev-doc-lua].
+types, etc. See [:help dev-lua-doc][dev-lua-doc].
 
 - The template for function documentation is:
   ```lua
@@ -331,8 +333,8 @@ as context, use the `-W` argument as well.
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [conventional_commits]: https://www.conventionalcommits.org
 [dev-doc-guide]: https://neovim.io/doc/user/develop.html#dev-doc
-[dev-doc-lua]: https://neovim.io/doc/user/develop.html#dev-lua-doc
-[LuaLS]: https://github.com/LuaLS/lua-language-server/wiki/Annotations
+[dev-lua-doc]: https://neovim.io/doc/user/develop.html#dev-lua-doc
+[LuaLS]: https://luals.github.io/wiki/annotations/
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
 [gh]: https://cli.github.com/
 [git-bisect]: http://git-scm.com/book/en/v2/Git-Tools-Debugging-with-Git

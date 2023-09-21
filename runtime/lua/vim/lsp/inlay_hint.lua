@@ -368,7 +368,13 @@ function M.is_enabled(bufnr)
   return bufstates[bufnr] and bufstates[bufnr].enabled or false
 end
 
---- Enable/disable/toggle inlay hints for a buffer
+--- Enables or disables inlay hints for a buffer.
+---
+--- To "toggle", pass the inverse of `is_enabled()`:
+---
+--- ```lua
+--- vim.lsp.inlay_hint.enable(0, not vim.lsp.inlay_hint.is_enabled())
+--- ```
 ---
 --- @param bufnr (integer|nil) Buffer handle, or 0 or nil for current
 --- @param enable (boolean|nil) true/nil to enable, false to disable

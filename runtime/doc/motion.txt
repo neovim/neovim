@@ -1048,7 +1048,7 @@ CTRL-I			Go to [count] newer cursor position in jump list
 			|tui-modifyOtherKeys| or |tui-csiu|, CTRL-I can be
 			mapped separately from <Tab>, on the condition that
 			both keys are mapped, otherwise the mapping applies to
-			both.
+			both. Except in tmux: https://github.com/tmux/tmux/issues/2705
 
 							*:ju* *:jumps*
 :ju[mps]		Print the jump list (not a motion command).
