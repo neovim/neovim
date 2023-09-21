@@ -1430,7 +1430,7 @@ display({lenses}, {bufnr}, {client_id})           *vim.lsp.codelens.display()*
     Display the lenses using virtual text
 
     Parameters: ~
-      • {lenses}     (table) of lenses to display (`CodeLens[] | null`)
+      • {lenses}     lsp.CodeLens[]|nil lenses to display
       • {bufnr}      (integer)
       • {client_id}  (integer)
 
@@ -1442,7 +1442,7 @@ get({bufnr})                                          *vim.lsp.codelens.get()*
                  buffer.
 
     Return: ~
-        (table) (`CodeLens[]`)
+        lsp.CodeLens[]
 
                                               *vim.lsp.codelens.on_codelens()*
 on_codelens({err}, {result}, {ctx}, {_})
@@ -1464,7 +1464,7 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
     Store lenses for a specific buffer and client
 
     Parameters: ~
-      • {lenses}     (table) of lenses to store (`CodeLens[] | null`)
+      • {lenses}     lsp.CodeLens[]|nil lenses to store
       • {bufnr}      (integer)
       • {client_id}  (integer)
 
