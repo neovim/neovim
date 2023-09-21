@@ -6287,7 +6287,7 @@ describe('float window', function()
         end
 
         if multigrid then
-          meths.input_mouse('left', 'press', '', 1, 0, 0)
+          meths.input_mouse('left', 'press', '', 2, 0, 0)
           screen:expect{grid=[[
           ## grid 1
             [2:----------------------------------------]|
@@ -6366,7 +6366,7 @@ describe('float window', function()
         end
 
         if multigrid then
-          meths.input_mouse('left', 'press', '', 1, 0, 0)
+          meths.input_mouse('left', 'press', '', 2, 0, 0)
           screen:expect{grid=[[
           ## grid 1
             [2:----------------------------------------]|

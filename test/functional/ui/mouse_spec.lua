@@ -1676,7 +1676,7 @@ describe('ui/mouse/input', function()
 
   end)
 
-  it('getmousepos works correctly', function()
+  it('getmousepos() works correctly', function()
     local winwidth = meths.get_option_value('winwidth', {})
     -- Set winwidth=1 so that window sizes don't change.
     meths.set_option_value('winwidth', 1, {})
@@ -1771,7 +1771,7 @@ describe('ui/mouse/input', function()
 
     -- Test that mouse position values are properly set for ordinary windows.
     -- Set the float to be unfocusable instead of closing, to additionally test
-    -- that getmousepos does not consider unfocusable floats. (see discussion
+    -- that getmousepos() does not consider unfocusable floats. (see discussion
     -- in PR #14937 for details).
     opts.focusable = false
     meths.win_set_config(float, opts)
