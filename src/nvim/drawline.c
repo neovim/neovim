@@ -2219,7 +2219,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
                 ? hl_combine_attr(wlv.cul_attr, decor_attr)
                 : hl_combine_attr(decor_attr, wlv.cul_attr);
             } else {
-              wlv.char_attr = decor_attr;
+              wlv.char_attr = ptr > line + trailcol ? 0 : decor_attr;
             }
           } else {
             wlv.char_attr = hl_combine_attr(decor_attr, wlv.char_attr);
