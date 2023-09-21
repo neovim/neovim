@@ -167,4 +167,7 @@ void msg_history_show(Array entries)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void msg_history_clear(void)
   FUNC_API_SINCE(10) FUNC_API_REMOTE_ONLY;
+
+void error_exit(Integer status)
+  FUNC_API_SINCE(12);
 #endif  // NVIM_API_UI_EVENTS_IN_H
