@@ -2,9 +2,9 @@ local M = {}
 
 --- Reads trust database from $XDG_STATE_HOME/nvim/trust.
 ---
----@return (table) Contents of trust database, if it exists. Empty table otherwise.
+---@return table<string, string> Contents of trust database, if it exists. Empty table otherwise.
 local function read_trust()
-  local trust = {}
+  local trust = {} ---@type table<string, string>
   local f = io.open(vim.fn.stdpath('state') .. '/trust', 'r')
   if f then
     local contents = f:read('*a')
@@ -24,12 +24,12 @@ end
 --- Writes provided {trust} table to trust database at
 --- $XDG_STATE_HOME/nvim/trust.
 ---
----@param trust (table) Trust table to write
+---@param trust table<string, string> Trust table to write
 local function write_trust(trust)
   vim.validate({ trust = { trust, 't' } })
   local f = assert(io.open(vim.fn.stdpath('state') .. '/trust', 'w'))
 
-  local t = {}
+  local t = {} ---@type string[]
   for p, h in pairs(trust) do
     t[#t + 1] = string.format('%s %s\n', h, p)
   end
@@ -61,7 +61,7 @@ function M.read(path)
     return nil
   end
 
-  local contents
+  local contents ---@type string?
   do
     local f = io.open(fullpath, 'r')
     if not f then
@@ -108,6 +108,11 @@ function M.read(path)
   return contents
 end
 
+---@class vim.trust.opts
+---@field action string
+---@field path? string
+---@field bufnr? integer
+
 --- Manage the trust database.
 ---
 --- The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
@@ -134,6 +139,7 @@ function M.trust(opts)
     },
   })
 
+  ---@cast opts vim.trust.opts
   local path = opts.path
   local bufnr = opts.bufnr
   local action = opts.action
@@ -144,7 +150,7 @@ function M.trust(opts)
     assert(not path, '"path" is not valid when action is "allow"')
   end
 
-  local fullpath
+  local fullpath ---@type string?
   if path then
     fullpath = vim.uv.fs_realpath(vim.fs.normalize(path))
   elseif bufnr then
@@ -165,7 +171,8 @@ function M.trust(opts)
 
   if action == 'allow' then
     local newline = vim.bo[bufnr].fileformat == 'unix' and '\n' or '\r\n'
-    local contents = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), newline)
+    local contents =
+      table.concat(vim.api.nvim_buf_get_lines(bufnr --[[@as integer]], 0, -1, false), newline)
     if vim.bo[bufnr].endofline then
       contents = contents .. newline
     end
