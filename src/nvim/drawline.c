@@ -2395,6 +2395,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
           wlv.n_attr = 1;
           wlv.extra_attr = win_hl_attr(wp, HLF_0);
+          if (decor_attr) {
+            wlv.char_attr = 0;
+          }
           saved_attr2 = wlv.char_attr;  // save current attr
           mb_c = c;
           mb_utf8 = check_mb_utf8(&c, u8cc);
