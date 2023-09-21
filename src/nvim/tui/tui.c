@@ -145,6 +145,7 @@ struct TUIData {
   } unibi_ext;
   char *space_buf;
   bool stopped;
+  int seen_error_exit;
   int width;
   int height;
   bool rgb;
@@ -162,6 +163,7 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term)
   tui->is_starting = true;
   tui->screenshot = NULL;
   tui->stopped = false;
+  tui->seen_error_exit = 0;
   tui->loop = &main_loop;
   kv_init(tui->invalid_regions);
   signal_watcher_init(tui->loop, &tui->winch_handle, tui);
@@ -384,8 +386,13 @@ static void terminfo_stop(TUIData *tui)
   unibi_out_ext(tui, tui->unibi_ext.disable_extended_keys);
   // May restore old title before exiting alternate screen.
   tui_set_title(tui, (String)STRING_INIT);
-  // Exit alternate screen.
-  unibi_out(tui, unibi_exit_ca_mode);
+  // if nvim exited with nonzero status, without indicated this was an
+  // intentional exit (like `:1cquit`), it likely was an internal failure.
+  // Don't clobber the stderr error message in this case.
+  if (ui_client_exit_status == tui->seen_error_exit) {
+    // Exit alternate screen.
+    unibi_out(tui, unibi_exit_ca_mode);
+  }
   if (tui->cursor_color_changed) {
     unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
   }
@@ -441,6 +448,11 @@ static void tui_terminal_stop(TUIData *tui)
   // Position the cursor on the last screen line, below all the text
   cursor_goto(tui, tui->height - 1, 0);
   terminfo_stop(tui);
+}
+
+void tui_error_exit(TUIData *tui, Integer status)
+{
+  tui->seen_error_exit = (int)status;
 }
 
 void tui_stop(TUIData *tui)
