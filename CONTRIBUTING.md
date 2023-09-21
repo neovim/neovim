@@ -350,7 +350,7 @@ as context, use the `-W` argument as well.
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
 [conventional_commits]: https://www.conventionalcommits.org
 [dev-doc-guide]: https://neovim.io/doc/user/develop.html#dev-doc
-[dev-doc-lua]: https://neovim.io/doc/user/develop.html#dev-lua-doc
+[dev-doc-lua]: https://neovim.io/doc/user/develop.html#dev-doc-lua
 [LuaLS]: https://github.com/LuaLS/lua-language-server/wiki/Annotations
 [gcc-warnings]: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
 [gh]: https://cli.github.com/

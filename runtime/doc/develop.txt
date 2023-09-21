@@ -227,7 +227,7 @@ in src/nvim/api/win_config.c like this: >
 
 
 Lua docstrings ~
-							*dev-lua-doc*
+							*dev-doc-lua*
 Lua documentation lives in the source code, as docstrings on the function
 definitions.  The |lua-vim| :help is generated from the docstrings.
 
