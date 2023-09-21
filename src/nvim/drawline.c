@@ -3024,14 +3024,17 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         linebuf_attr[wlv.off] = wlv.char_attr;
       }
 
-      linebuf_vcol[wlv.off] = wlv.vcol;
-
-      if (wlv.draw_state == WL_FOLD) {
-        linebuf_vcol[wlv.off] = -2;
+      if (wlv.draw_state > WL_STC && wlv.filler_todo <= 0) {
+        linebuf_vcol[wlv.off] = wlv.vcol;
+      } else if (wlv.draw_state == WL_FOLD) {
         if (wlv.n_closing > 0) {
           linebuf_vcol[wlv.off] = -3;
           wlv.n_closing--;
+        } else {
+          linebuf_vcol[wlv.off] = -2;
         }
+      } else {
+        linebuf_vcol[wlv.off] = -1;
       }
 
       if (utf_char2cells(mb_c) > 1) {
@@ -3041,16 +3044,18 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         // UTF-8: Put a 0 in the second screen char.
         linebuf_char[wlv.off] = 0;
         linebuf_attr[wlv.off] = linebuf_attr[wlv.off - 1];
+
         if (wlv.draw_state > WL_STC && wlv.filler_todo <= 0) {
-          wlv.vcol++;
+          linebuf_vcol[wlv.off] = ++wlv.vcol;
+        } else {
+          linebuf_vcol[wlv.off] = -1;
         }
+
         // When "wlv.tocol" is halfway through a character, set it to the end
         // of the character, otherwise highlighting won't stop.
         if (wlv.tocol == wlv.vcol) {
           wlv.tocol++;
         }
-
-        linebuf_vcol[wlv.off] = wlv.vcol;
 
         if (wp->w_p_rl) {
           // now it's time to backup one cell
