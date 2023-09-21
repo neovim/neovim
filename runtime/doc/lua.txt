@@ -956,12 +956,12 @@ vim.rpcrequest({channel}, {method}, {args}, {...})          *vim.rpcrequest()*
       • {args}     any[]|nil
       • {...}      any|nil
 
-vim.schedule({callback})                                      *vim.schedule()*
-    Schedules {callback} to be invoked soon by the main event-loop. Useful to
-    avoid |textlock| or other temporary restrictions.
+vim.schedule({fn})                                            *vim.schedule()*
+    Schedules {fn} to be invoked soon by the main event-loop. Useful to avoid
+    |textlock| or other temporary restrictions.
 
     Parameters: ~
-      • {callback}  fun()
+      • {fn}  (function)
 
 vim.str_byteindex({str}, {index}, {use_utf16})           *vim.str_byteindex()*
     Convert UTF-32 or UTF-16 {index} to byte index. If {use_utf16} is not
