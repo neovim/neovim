@@ -2230,6 +2230,35 @@ function M.lookup_section(settings, section)
   return settings
 end
 
+--- Converts line range (0-based, end-inclusive) to lsp range,
+--- handles absence of a trailing newline
+---
+---@param bufnr integer
+---@param start_line integer
+---@param end_line integer
+---@param offset_encoding lsp.PositionEncodingKind
+---@return lsp.Range
+local function make_line_range_params(bufnr, start_line, end_line, offset_encoding)
+  local last_line = api.nvim_buf_line_count(bufnr) - 1
+
+  ---@type lsp.Position
+  local end_pos
+
+  if end_line == last_line and not vim.api.nvim_get_option_value('endofline', { buf = bufnr }) then
+    end_pos = {
+      line = end_line,
+      character = M.character_offset(bufnr, end_line, #get_line(bufnr, end_line), offset_encoding),
+    }
+  else
+    end_pos = { line = end_line + 1, character = 0 }
+  end
+
+  return {
+    start = { line = start_line, character = 0 },
+    ['end'] = end_pos,
+  }
+end
+
 ---@private
 --- Request updated LSP information for a buffer.
 ---
@@ -2253,6 +2282,8 @@ function M._refresh(method, opts)
     return
   end
 
+  local textDocument = M.make_text_document_params(bufnr)
+
   local only_visible = opts.only_visible or false
 
   if only_visible then
@@ -2260,28 +2291,25 @@ function M._refresh(method, opts)
       if api.nvim_win_get_buf(window) == bufnr then
         local first = vim.fn.line('w0', window)
         local last = vim.fn.line('w$', window)
-        local params = {
-          textDocument = M.make_text_document_params(bufnr),
-          range = {
-            start = { line = first - 1, character = 0 },
-            ['end'] = { line = last, character = 0 },
-          },
-        }
         for _, client in ipairs(clients) do
-          client.request(method, params, nil, bufnr)
+          client.request(method, {
+            textDocument = textDocument,
+            range = make_line_range_params(bufnr, first - 1, last - 1, client.offset_encoding),
+          }, nil, bufnr)
         end
       end
     end
   else
-    local params = {
-      textDocument = M.make_text_document_params(bufnr),
-      range = {
-        start = { line = 0, character = 0 },
-        ['end'] = { line = api.nvim_buf_line_count(bufnr), character = 0 },
-      },
-    }
     for _, client in ipairs(clients) do
-      client.request(method, params, nil, bufnr)
+      client.request(method, {
+        textDocument = textDocument,
+        range = make_line_range_params(
+          bufnr,
+          0,
+          api.nvim_buf_line_count(bufnr) - 1,
+          client.offset_encoding
+        ),
+      }, nil, bufnr)
     end
   end
 end

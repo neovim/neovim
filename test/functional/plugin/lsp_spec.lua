@@ -1244,6 +1244,67 @@ describe('LSP', function()
       }
     end)
 
+    it('should send correct range for inlay hints with noeol', function()
+      local expected_handlers = {
+        {NIL, {}, {method="shutdown", client_id=1}};
+        {NIL, {}, {method="finish", client_id=1}};
+        {NIL, {}, {
+          method="textDocument/inlayHint",
+          params = {
+            textDocument = {
+              uri = 'file://',
+            },
+            range = {
+              start = { line = 0, character = 0 },
+              ['end'] = { line = 1, character = 3 },
+            }
+          },
+          bufnr=2,
+          client_id=1,
+        }};
+        {NIL, {}, {method="start", client_id=1}};
+      }
+      local client
+      test_rpc_server {
+        test_name = "inlay_hint";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+              "testing";
+              "123";
+            })
+            vim.bo[BUFFER].eol = false
+          ]]
+        end;
+        on_init = function(_client)
+          client = _client
+          eq(true, client.supports_method('textDocument/inlayHint'))
+          exec_lua [[
+            assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
+          ]]
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code")
+          eq(0, signal, "exit signal")
+        end;
+        on_handler = function(err, result, ctx)
+          if ctx.method == 'start' then
+            exec_lua [[
+              vim.lsp.inlay_hint(BUFFER, true)
+            ]]
+          end
+          if ctx.method == 'textDocument/inlayHint' then
+            client.notify('finish')
+          end
+          eq(table.remove(expected_handlers), {err, result, ctx}, "expected handler")
+          if ctx.method == 'finish' then
+            client.stop()
+          end
+        end;
+      }
+    end)
+
     it('should check the body and didChange incremental', function()
       local expected_handlers = {
         {NIL, {}, {method="shutdown", client_id=1}};
