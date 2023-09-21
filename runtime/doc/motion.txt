@@ -1050,14 +1050,14 @@ can go to cursor positions before older jumps, and back again.  Thus you can
 move up and down the list.  There is a separate jump list for each window.
 The maximum number of entries is fixed at 100.
 
-For example, after three jump commands you have this jump list:
+For example, after three jump commands you have this jump list: >
 
-    jump line  col file/text ~
-      3	  1    0 some text ~
-      2	 70    0 another line ~
-      1  1154   23 end. ~
-   > ~
-
+    jump line  col file/text
+      3     1    0 some text
+      2    70    0 another line
+      1  1154   23 end.
+   >
+<
 The "file/text" column shows the file name, or the text at the jump if it is
 in the current file (an indent is removed and a long line is truncated to fit
 in the window).
@@ -1066,14 +1066,14 @@ The marker ">" indicates the current position in the jumplist.  It may not be
 shown when filtering the |:jumps| command using |:filter|
 
 You are currently in line 1167.  If you then use the CTRL-O command, the
-cursor is put in line 1154.  This results in:
+cursor is put in line 1154.  This results in: >
 
-    jump line  col file/text ~
-      2	  1    0 some text ~
-      1	 70    0 another line ~
-   >  0  1154   23 end. ~
-      1  1167    0 foo bar ~
-
+    jump line  col file/text
+      2     1    0 some text
+      1    70    0 another line
+   >  0  1154   23 end.
+      1  1167    0 foo bar
+<
 The pointer will be set at the last used jump position.  The next CTRL-O
 command will use the entry above it, the next CTRL-I command will use the
 entry below it.  If the pointer is below the last entry, this indicates that
@@ -1097,15 +1097,15 @@ command.  You can explicitly add a jump by setting the ' mark with "m'".  Note
 that calling setpos() does not do this.
 
 After the CTRL-O command that got you into line 1154 you could give another
-jump command (e.g., "G").  The jump list would then become:
+jump command (e.g., "G").  The jump list would then become: >
 
-    jump line  col file/text ~
-      4	  1    0 some text ~
-      3	 70    0 another line ~
-      2  1167    0 foo bar ~
-      1  1154   23 end. ~
-   > ~
-
+    jump line  col file/text
+      4     1    0 some text
+      3    70    0 another line
+      2  1167    0 foo bar
+      1  1154   23 end.
+   >
+<
 The line numbers will be adjusted for deleted and inserted lines.  This fails
 if you stop editing a file without writing, like with ":n!".
 
@@ -1141,7 +1141,6 @@ locations being removed: >
        1   462   36 eval.c		<-- location X
     >
 <
-
 Then, when yet another location Z is jumped to, the new location Y appears
 directly after location X in the jumplist and location X remains in the same
 position relative to the locations (X-1, X-2, etc., ...) that had been before
@@ -1151,7 +1150,7 @@ it prior to the original jump from X to Y: >
        4  1260    8 mark.c		<-- location X-2
        3   685    0 eval.c		<-- location X-1
        2   462   36 eval.c		<-- location X
-       1   100    0 buffer.c	<-- location Y
+       1   100    0 buffer.c		<-- location Y
     >
 <
 CHANGE LIST JUMPS			*changelist* *change-list-jumps* *E664*
