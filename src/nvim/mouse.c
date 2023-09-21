@@ -1890,13 +1890,15 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
       }
       colnr_T eol_vcol = gp->vcols[off_r];
       assert(eol_vcol < MAXCOL);
-      // This may be -2 or -3 with 'foldcolumn' and empty line.
-      // In that case set it to -1 as it's just before start of line.
-      eol_vcol = MAX(eol_vcol, -1);
+      if (eol_vcol < 0) {
+        // Empty line or whole line before w_leftcol,
+        // with columns before buffer text
+        eol_vcol = wp->w_leftcol - 1;
+      }
       *vcolp = eol_vcol + (int)(off - off_r);
     } else {
-      // Clicking on an empty line
-      *vcolp = click_col - start_col;
+      // Empty line or whole line before w_leftcol
+      *vcolp = click_col - start_col + wp->w_leftcol;
     }
   } else if (col_from_screen >= 0) {
     // Use the virtual column from vcols[], it is accurate also after

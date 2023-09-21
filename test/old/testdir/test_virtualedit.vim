@@ -599,6 +599,61 @@ func Test_virtualedit_mouse()
   call feedkeys("\<LeftMouse>", "xt")
   call assert_equal([0, 1, 10, 2, 15], getcurpos())
 
+  setlocal nowrap
+  call setline(2, repeat('a', 19))
+  normal! j14zl
+  redraw
+  call Ntest_setmouse(row, 21 + 1)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 10, 2, 15], getcurpos())
+  call Ntest_setmouse(row, 21 + 11)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 10, 12, 25], getcurpos())
+  call Ntest_setmouse(row + 1, 21 + 1)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 2, 15, 0, 15], getcurpos())
+  call Ntest_setmouse(row + 1, 21 + 11)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 2, 20, 5, 25], getcurpos())
+
+  setlocal number numberwidth=2
+  redraw
+  call Ntest_setmouse(row, 21 + 3)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 10, 2, 15], getcurpos())
+  call Ntest_setmouse(row, 21 + 13)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 10, 12, 25], getcurpos())
+  call Ntest_setmouse(row + 1, 21 + 3)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 2, 15, 0, 15], getcurpos())
+  call Ntest_setmouse(row + 1, 21 + 13)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 2, 20, 5, 25], getcurpos())
+  setlocal nonumber
+
+  if has('signs')
+    sign define Sign1 text=口
+    sign place 1 name=Sign1 line=1
+    sign place 2 name=Sign1 line=2
+    redraw
+    call Ntest_setmouse(row, 21 + 3)
+    call feedkeys("\<LeftMouse>", "xt")
+    call assert_equal([0, 1, 10, 2, 15], getcurpos())
+    call Ntest_setmouse(row, 21 + 13)
+    call feedkeys("\<LeftMouse>", "xt")
+    call assert_equal([0, 1, 10, 12, 25], getcurpos())
+    call Ntest_setmouse(row + 1, 21 + 3)
+    call feedkeys("\<LeftMouse>", "xt")
+    call assert_equal([0, 2, 15, 0, 15], getcurpos())
+    call Ntest_setmouse(row + 1, 21 + 13)
+    call feedkeys("\<LeftMouse>", "xt")
+    call assert_equal([0, 2, 20, 5, 25], getcurpos())
+    sign unplace 1
+    sign unplace 2
+    sign undefine Sign1
+  endif
+
   bwipe!
   let &mouse = save_mouse
   set virtualedit&
