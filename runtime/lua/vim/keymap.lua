@@ -28,7 +28,7 @@ local keymap = {}
 ---                        - "replace_keycodes" defaults to `true` if "expr" is `true`.
 ---                        - "noremap": inverse of "remap" (see below).
 ---                      - Also accepts:
----                        - "buffer": (number|boolean) Creates buffer-local mapping, `0` or `true`
+---                        - "buffer": (integer|boolean) Creates buffer-local mapping, `0` or `true`
 ---                        for current buffer.
 ---                        - "remap": (boolean) Make the mapping recursive. Inverse of "noremap".
 ---                        Defaults to `false`.
@@ -44,7 +44,9 @@ function keymap.set(mode, lhs, rhs, opts)
     opts = { opts, 't', true },
   })
 
-  opts = vim.deepcopy(opts) or {}
+  opts = vim.deepcopy(opts or {})
+
+  ---@cast mode string[]
   mode = type(mode) == 'string' and { mode } or mode
 
   if opts.expr and opts.replace_keycodes ~= false then
@@ -57,7 +59,7 @@ function keymap.set(mode, lhs, rhs, opts)
   else
     -- remaps behavior is opposite of noremap option.
     opts.noremap = not opts.remap
-    opts.remap = nil
+    opts.remap = nil ---@type boolean?
   end
 
   if type(rhs) == 'function' then
@@ -66,8 +68,8 @@ function keymap.set(mode, lhs, rhs, opts)
   end
 
   if opts.buffer then
-    local bufnr = opts.buffer == true and 0 or opts.buffer
-    opts.buffer = nil
+    local bufnr = opts.buffer == true and 0 or opts.buffer --[[@as integer]]
+    opts.buffer = nil ---@type integer?
     for _, m in ipairs(mode) do
       vim.api.nvim_buf_set_keymap(bufnr, m, lhs, rhs, opts)
     end
@@ -89,7 +91,7 @@ end
 --- ```
 ---
 ---@param opts table|nil A table of optional arguments:
----                      - "buffer": (number|boolean) Remove a mapping from the given buffer.
+---                      - "buffer": (integer|boolean) Remove a mapping from the given buffer.
 ---                        When `0` or `true`, use the current buffer.
 ---@see |vim.keymap.set()|
 ---
@@ -103,9 +105,9 @@ function keymap.del(modes, lhs, opts)
   opts = opts or {}
   modes = type(modes) == 'string' and { modes } or modes
 
-  local buffer = false
+  local buffer = false ---@type false|integer
   if opts.buffer ~= nil then
-    buffer = opts.buffer == true and 0 or opts.buffer
+    buffer = opts.buffer == true and 0 or opts.buffer --[[@as integer]]
   end
 
   if buffer == false then

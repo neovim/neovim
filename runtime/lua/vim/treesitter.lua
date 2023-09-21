@@ -127,6 +127,7 @@ function M.get_parser(bufnr, lang, opts)
       )
     end
   elseif parsers[bufnr] == nil or parsers[bufnr]:lang() ~= lang then
+    assert(lang, 'lang should be valid')
     parsers[bufnr] = M._create_parser(bufnr, lang, opts)
   end
 
@@ -162,7 +163,7 @@ function M.is_ancestor(dest, source)
     return false
   end
 
-  local current = source
+  local current = source ---@type TSNode?
   while current ~= nil do
     if current == dest then
       return true
@@ -491,7 +492,7 @@ end
 ---                        function, it accepts the buffer number of the source buffer as its only
 ---                        argument and should return a string.
 function M.inspect_tree(opts)
-  ---@cast opts InspectTreeOpts
+  ---@diagnostic disable-next-line: invisible
   require('vim.treesitter.dev').inspect_tree(opts)
 end
 

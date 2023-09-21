@@ -258,7 +258,7 @@ end
 
 --- @private
 ---
---- @param opts InspectTreeOpts
+--- @param opts InspectTreeOpts?
 function M.inspect_tree(opts)
   vim.validate({
     opts = { opts, 't', true },
