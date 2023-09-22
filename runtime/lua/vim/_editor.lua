@@ -316,18 +316,29 @@ do
   end
 end
 
---- Defers callback `cb` until the Nvim API is safe to call.
+--- Returns a function which calls {fn} via |vim.schedule()|.
+---
+--- The returned function passes all arguments to {fn}.
+---
+--- Example:
+---
+--- ```lua
+--- function notify_readable(_err, readable)
+---   vim.notify("readable? " .. tostring(readable))
+--- end
+--- vim.uv.fs_access(vim.fn.stdpath("config"), "R", vim.schedule_wrap(notify_readable))
+--- ```
 ---
 ---@see |lua-loop-callbacks|
 ---@see |vim.schedule()|
 ---@see |vim.in_fast_event()|
----@param cb function
+---@param fn function
 ---@return function
-function vim.schedule_wrap(cb)
+function vim.schedule_wrap(fn)
   return function(...)
     local args = vim.F.pack_len(...)
     vim.schedule(function()
-      cb(vim.F.unpack_len(args))
+      fn(vim.F.unpack_len(args))
     end)
   end
 end

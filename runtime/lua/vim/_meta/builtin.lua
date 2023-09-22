@@ -194,10 +194,10 @@ function vim.str_utfindex(str, index) end
 --- @return string|nil Converted string if conversion succeeds, `nil` otherwise.
 function vim.iconv(str, from, to, opts) end
 
---- Schedules {callback} to be invoked soon by the main event-loop. Useful
+--- Schedules {fn} to be invoked soon by the main event-loop. Useful
 --- to avoid |textlock| or other temporary restrictions.
---- @param callback fun()
-function vim.schedule(callback) end
+--- @param fn function
+function vim.schedule(fn) end
 
 --- Wait for {time} in milliseconds until {callback} returns `true`.
 ---

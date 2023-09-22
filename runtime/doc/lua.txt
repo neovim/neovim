@@ -956,12 +956,12 @@ vim.rpcrequest({channel}, {method}, {args}, {...})          *vim.rpcrequest()*
       • {args}     any[]|nil
       • {...}      any|nil
 
-vim.schedule({callback})                                      *vim.schedule()*
-    Schedules {callback} to be invoked soon by the main event-loop. Useful to
-    avoid |textlock| or other temporary restrictions.
+vim.schedule({fn})                                            *vim.schedule()*
+    Schedules {fn} to be invoked soon by the main event-loop. Useful to avoid
+    |textlock| or other temporary restrictions.
 
     Parameters: ~
-      • {callback}  fun()
+      • {fn}  (function)
 
 vim.str_byteindex({str}, {index}, {use_utf16})           *vim.str_byteindex()*
     Convert UTF-32 or UTF-16 {index} to byte index. If {use_utf16} is not
@@ -1714,11 +1714,20 @@ vim.region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})
         `endcol` is exclusive, and whole lines are returned as
         `{startcol,endcol} = {0,-1}`.
 
-vim.schedule_wrap({cb})                                  *vim.schedule_wrap()*
-    Defers callback `cb` until the Nvim API is safe to call.
+vim.schedule_wrap({fn})                                  *vim.schedule_wrap()*
+    Returns a function which calls {fn} via |vim.schedule()|.
+
+    The returned function passes all arguments to {fn}.
+
+    Example: >lua
+        function notify_readable(_err, readable)
+          vim.notify("readable? " .. tostring(readable))
+        end
+        vim.uv.fs_access(vim.fn.stdpath("config"), "R", vim.schedule_wrap(notify_readable))
+<
 
     Parameters: ~
-      • {cb}  (function)
+      • {fn}  (function)
 
     Return: ~
         (function)
