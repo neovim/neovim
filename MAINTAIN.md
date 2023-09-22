@@ -145,6 +145,8 @@ These dependencies are "vendored" (inlined), we must update the sources manually
     * Run `scripts/update_terminfo.sh` to update these definitions.
 * `runtime/lua/vim/lsp/_meta/protocol.lua`: LSP specification
     * Run `scripts/gen_lsp.lua` to update.
+* `runtime/lua/vim/_meta/lpeg.lua`: LPeg definitions.
+    * Refer to [`LuaCATS/lpeg`](https://github.com/LuaCATS/lpeg) for updates.
 * `src/bit.c`: only for PUC lua: port of `require'bit'` from luajit https://bitop.luajit.org/
 * [treesitter parsers](https://github.com/neovim/neovim/blob/fcc24e43e0b5f9d801a01ff2b8f78ce8c16dd551/cmake.deps/CMakeLists.txt#L197-L210)
 * `runtime/lua/coxpcall.lua`: coxpcall (only needed for PUC lua, builtin to luajit)
