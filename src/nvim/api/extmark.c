@@ -113,6 +113,36 @@ static Object hl_group_name(int hl_id, bool hl_name)
   }
 }
 
+Array virt_text_to_array(VirtText vt, bool hl_name)
+{
+  Array chunks = ARRAY_DICT_INIT;
+  Array hl_array = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < kv_size(vt); i++) {
+    char *text = kv_A(vt, i).text;
+    int hl_id = kv_A(vt, i).hl_id;
+    if (text == NULL) {
+      if (hl_id > 0) {
+        ADD(hl_array, hl_group_name(hl_id, hl_name));
+      }
+      continue;
+    }
+    Array chunk = ARRAY_DICT_INIT;
+    ADD(chunk, CSTR_TO_OBJ(text));
+    if (hl_array.size > 0) {
+      if (hl_id > 0) {
+        ADD(hl_array, hl_group_name(hl_id, hl_name));
+      }
+      ADD(chunk, ARRAY_OBJ(hl_array));
+      hl_array = (Array)ARRAY_DICT_INIT;
+    } else if (hl_id > 0) {
+      ADD(chunk, hl_group_name(hl_id, hl_name));
+    }
+    ADD(chunks, ARRAY_OBJ(chunk));
+  }
+  assert(hl_array.size == 0);
+  return chunks;
+}
+
 static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict, bool hl_name)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -145,16 +175,7 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
     }
 
     if (kv_size(decor->virt_text)) {
-      Array chunks = ARRAY_DICT_INIT;
-      for (size_t i = 0; i < decor->virt_text.size; i++) {
-        Array chunk = ARRAY_DICT_INIT;
-        VirtTextChunk *vtc = &decor->virt_text.items[i];
-        ADD(chunk, CSTR_TO_OBJ(vtc->text));
-        if (vtc->hl_id > 0) {
-          ADD(chunk, hl_group_name(vtc->hl_id, hl_name));
-        }
-        ADD(chunks, ARRAY_OBJ(chunk));
-      }
+      Array chunks = virt_text_to_array(decor->virt_text, hl_name);
       PUT(dict, "virt_text", ARRAY_OBJ(chunks));
       PUT(dict, "virt_text_hide", BOOLEAN_OBJ(decor->virt_text_hide));
       if (decor->virt_text_pos == kVTWinCol) {
@@ -171,19 +192,9 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
     if (kv_size(decor->virt_lines)) {
       Array all_chunks = ARRAY_DICT_INIT;
       bool virt_lines_leftcol = false;
-      for (size_t i = 0; i < decor->virt_lines.size; i++) {
-        Array chunks = ARRAY_DICT_INIT;
-        VirtText *vt = &decor->virt_lines.items[i].line;
-        virt_lines_leftcol = decor->virt_lines.items[i].left_col;
-        for (size_t j = 0; j < vt->size; j++) {
-          Array chunk = ARRAY_DICT_INIT;
-          VirtTextChunk *vtc = &vt->items[j];
-          ADD(chunk, CSTR_TO_OBJ(vtc->text));
-          if (vtc->hl_id > 0) {
-            ADD(chunk, hl_group_name(vtc->hl_id, hl_name));
-          }
-          ADD(chunks, ARRAY_OBJ(chunk));
-        }
+      for (size_t i = 0; i < kv_size(decor->virt_lines); i++) {
+        virt_lines_leftcol = kv_A(decor->virt_lines, i).left_col;
+        Array chunks = virt_text_to_array(kv_A(decor->virt_lines, i).line, hl_name);
         ADD(all_chunks, ARRAY_OBJ(chunks));
       }
       PUT(dict, "virt_lines", ARRAY_OBJ(all_chunks));

@@ -259,34 +259,28 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
 Dictionary config_put_bordertext(Dictionary config, FloatConfig *fconfig,
                                  BorderTextType bordertext_type)
 {
-  VirtText chunks;
+  VirtText vt;
   AlignTextPos align;
   char *field_name;
   char *field_pos_name;
   switch (bordertext_type) {
   case kBorderTextTitle:
-    chunks = fconfig->title_chunks;
+    vt = fconfig->title_chunks;
     align = fconfig->title_pos;
     field_name = "title";
     field_pos_name = "title_pos";
     break;
   case kBorderTextFooter:
-    chunks = fconfig->footer_chunks;
+    vt = fconfig->footer_chunks;
     align = fconfig->footer_pos;
     field_name = "footer";
     field_pos_name = "footer_pos";
     break;
+  default:
+    abort();
   }
 
-  Array bordertext = ARRAY_DICT_INIT;
-  for (size_t i = 0; i < chunks.size; i++) {
-    Array tuple = ARRAY_DICT_INIT;
-    ADD(tuple, CSTR_TO_OBJ(chunks.items[i].text));
-    if (chunks.items[i].hl_id > 0) {
-      ADD(tuple, CSTR_TO_OBJ(syn_id2name(chunks.items[i].hl_id)));
-    }
-    ADD(bordertext, ARRAY_OBJ(tuple));
-  }
+  Array bordertext = virt_text_to_array(vt, true);
   PUT(config, field_name, ARRAY_OBJ(bordertext));
 
   char *pos;
