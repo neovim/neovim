@@ -24,6 +24,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
@@ -351,8 +352,14 @@ int nlua_setvar(lua_State *lstate)
 {
   // non-local return if not found
   dict_T *dict = nlua_get_var_scope(lstate);
-  String key;
+  String key, scope;
   key.data = (char *)luaL_checklstring(lstate, 3, &key.size);
+  scope.data = (char *)luaL_checklstring(lstate, 1, &scope.size);
+  char *vimvar = NULL;
+  if (striequal(scope.data, "v")) {
+    vimvar = (char *)xmalloc(key.size + scope.size + 2);
+    snprintf(vimvar, key.size + scope.size + 2, "v:%s", key.data);
+  }
 
   bool del = (lua_gettop(lstate) < 4) || lua_isnil(lstate, 4);
 
@@ -403,6 +410,10 @@ int nlua_setvar(lua_State *lstate)
 
     // Update the value
     tv_copy(&tv, &di->di_tv);
+    if (vimvar != NULL) {
+      set_var_const(vimvar, strlen(vimvar), &tv, false, false);
+      xfree(vimvar);
+    }
 
     // Notify watchers
     if (watched) {
