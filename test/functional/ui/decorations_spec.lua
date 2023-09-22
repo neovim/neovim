@@ -1464,6 +1464,8 @@ describe('extmark decorations', function()
   end)
 
   it('can have virtual text which combines foreground and background groups', function()
+    screen:try_resize(20, 3)
+
     screen:set_default_attr_ids {
       [1] = {bold=true, foreground=Screen.colors.Blue};
       [2] = {background = tonumber('0x123456'), foreground = tonumber('0xbbbbbb')};
@@ -1481,30 +1483,21 @@ describe('extmark decorations', function()
       hi VeryBold gui=bold
     ]]
 
-    meths.buf_set_extmark(0, ns, 0, 0, { virt_text={
+    insert('##')
+    local vt = {
       {'a', {'BgOne', 'FgEin'}};
       {'b', {'BgOne', 'FgZwei'}};
       {'c', {'BgTwo', 'FgEin'}};
       {'d', {'BgTwo', 'FgZwei'}};
       {'X', {'BgTwo', 'FgZwei', 'VeryBold'}};
-    }})
-
+    }
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = vt, virt_text_pos = 'eol' })
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = vt, virt_text_pos = 'right_align' })
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = vt, virt_text_pos = 'inline' })
     screen:expect{grid=[[
-      ^ {2:a}{3:b}{4:c}{5:d}{6:X}                                            |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-                                                        |
+      {2:a}{3:b}{4:c}{5:d}{6:X}#^# {2:a}{3:b}{4:c}{5:d}{6:X}  {2:a}{3:b}{4:c}{5:d}{6:X}|
+      {1:~                   }|
+                          |
     ]]}
   end)
 

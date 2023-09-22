@@ -324,6 +324,24 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
   }
 }
 
+/// Get the next chunk of a virtual text item.
+///
+/// @param[in]     vt    The virtual text item
+/// @param[in,out] pos   Position in the virtual text item
+/// @param[in,out] attr  Highlight attribute
+///
+/// @return  The text of the chunk, or NULL if there are no more chunks
+static char *next_virt_text_chunk(VirtText vt, size_t *pos, int *attr)
+{
+  char *text = NULL;
+  for (; text == NULL && *pos < kv_size(vt); (*pos)++) {
+    text = kv_A(vt, *pos).text;
+    int hl_id = kv_A(vt, *pos).hl_id;
+    *attr = hl_combine_attr(*attr, hl_id > 0 ? syn_id2attr(hl_id) : 0);
+  }
+  return text;
+}
+
 static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode, int max_col,
                                int vcol, bool rl)
 {
@@ -332,23 +350,17 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
   size_t virt_pos = 0;
 
   while (rl ? col > max_col : col < max_col) {
-    if (!*s.p) {
+    if (*s.p == NUL) {
       if (virt_pos >= kv_size(vt)) {
         break;
       }
       virt_attr = 0;
-      do {
-        s.p = kv_A(vt, virt_pos).text;
-        int hl_id = kv_A(vt, virt_pos).hl_id;
-        virt_attr = hl_combine_attr(virt_attr,
-                                    hl_id > 0 ? syn_id2attr(hl_id) : 0);
-        virt_pos++;
-      } while (!s.p && virt_pos < kv_size(vt));
-      if (!s.p) {
+      s.p = next_virt_text_chunk(vt, &virt_pos, &virt_attr);
+      if (s.p == NULL) {
         break;
       }
     }
-    if (!*s.p) {
+    if (*s.p == NUL) {
       continue;
     }
     int attr;
@@ -950,17 +962,20 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
       }
     } else {
       // already inside existing inline virtual text with multiple chunks
-      VirtTextChunk vtc = kv_A(wlv->virt_inline, wlv->virt_inline_i);
-      wlv->virt_inline_i++;
-      wlv->p_extra = vtc.text;
-      wlv->n_extra = (int)strlen(vtc.text);
+      int attr = 0;
+      char *text = next_virt_text_chunk(wlv->virt_inline, &wlv->virt_inline_i, &attr);
+      if (text == NULL) {
+        continue;
+      }
+      wlv->p_extra = text;
+      wlv->n_extra = (int)strlen(text);
       if (wlv->n_extra == 0) {
         continue;
       }
       wlv->c_extra = NUL;
       wlv->c_final = NUL;
-      wlv->extra_attr = vtc.hl_id ? syn_id2attr(vtc.hl_id) : 0;
-      wlv->n_attr = mb_charlen(vtc.text);
+      wlv->extra_attr = attr;
+      wlv->n_attr = mb_charlen(text);
       // If the text didn't reach until the first window
       // column we need to skip cells.
       if (wlv->skip_cells > 0) {
