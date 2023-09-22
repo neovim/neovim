@@ -33,7 +33,7 @@ describe("folded lines", function()
         [1] = {bold = true, foreground = Screen.colors.Blue1},
         [2] = {reverse = true},
         [3] = {bold = true, reverse = true},
-        [4] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+        [4] = {foreground = Screen.colors.White, background = Screen.colors.Red},
         [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
         [6] = {background = Screen.colors.Yellow},
         [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
@@ -2938,10 +2938,15 @@ describe("folded lines", function()
       screen:try_resize(30, 7)
       insert(content1)
       command("hi! CursorLine guibg=NONE guifg=Red gui=NONE")
+      command('hi F0 guibg=Red guifg=Black')
+      command('hi F1 guifg=White')
       meths.set_option_value('cursorline', true, {})
       meths.set_option_value('foldcolumn', '4', {})
-      meths.set_option_value('foldtext',
-        '[[v:folddashes], ["\t", "Search"], [getline(v:foldstart), "NonText"]]', {})
+      meths.set_option_value('foldtext', '['
+        .. '["▶", ["F0", "F1"]], '
+        .. '[v:folddashes], '
+        .. '["\t", "Search"], '
+        .. '[getline(v:foldstart), "NonText"]]', {})
 
       command('3,4fold')
       command('5,6fold')
@@ -2958,7 +2963,7 @@ describe("folded lines", function()
           [3:------------------------------]|
         ## grid 2
           {7:    }This is a                 |
-          {7:+   }{13:^-}{17:       }{18:valid English}{13:·····}|
+          {7:+   }{4:^▶}{13:-}{17:      }{18:valid English}{13:·····}|
           {1:~                             }|
           {1:~                             }|
           {1:~                             }|
@@ -2969,7 +2974,7 @@ describe("folded lines", function()
       else
         screen:expect([[
           {7:    }This is a                 |
-          {7:+   }{13:^-}{17:       }{18:valid English}{13:·····}|
+          {7:+   }{4:^▶}{13:-}{17:      }{18:valid English}{13:·····}|
           {1:~                             }|
           {1:~                             }|
           {1:~                             }|
@@ -2977,7 +2982,7 @@ describe("folded lines", function()
                                         |
         ]])
       end
-      eq('-\tvalid English', funcs.foldtextresult(2))
+      eq('▶-\tvalid English', funcs.foldtextresult(2))
 
       feed('zo')
       if multigrid then
@@ -2993,8 +2998,8 @@ describe("folded lines", function()
         ## grid 2
           {7:    }This is a                 |
           {7:-   }valid English             |
-          {7:│+  }{5:--}{19:      }{18:sentence composed }|
-          {7:│+  }{13:^--}{17:      }{18:in his cave.}{13:······}|
+          {7:│+  }{4:▶}{5:--}{19:     }{18:sentence composed }|
+          {7:│+  }{4:^▶}{13:--}{17:     }{18:in his cave.}{13:······}|
           {1:~                             }|
           {1:~                             }|
         ## grid 3
@@ -3004,15 +3009,15 @@ describe("folded lines", function()
         screen:expect([[
           {7:    }This is a                 |
           {7:-   }valid English             |
-          {7:│+  }{5:--}{19:      }{18:sentence composed }|
-          {7:│+  }{13:^--}{17:      }{18:in his cave.}{13:······}|
+          {7:│+  }{4:▶}{5:--}{19:     }{18:sentence composed }|
+          {7:│+  }{4:^▶}{13:--}{17:     }{18:in his cave.}{13:······}|
           {1:~                             }|
           {1:~                             }|
                                         |
         ]])
       end
-      eq('--\tsentence composed by', funcs.foldtextresult(3))
-      eq('--\tin his cave.', funcs.foldtextresult(5))
+      eq('▶--\tsentence composed by', funcs.foldtextresult(3))
+      eq('▶--\tin his cave.', funcs.foldtextresult(5))
 
       command('hi! Visual guibg=Red')
       feed('V2k')
@@ -3029,8 +3034,8 @@ describe("folded lines", function()
         ## grid 2
           {7:    }This is a                 |
           {7:-   }^v{14:alid English}             |
-          {7:│+  }{15:--}{19:      }{20:sentence composed }|
-          {7:│+  }{15:--}{19:      }{20:in his cave.}{15:······}|
+          {7:│+  }{4:▶}{15:--}{19:     }{20:sentence composed }|
+          {7:│+  }{4:▶}{15:--}{19:     }{20:in his cave.}{15:······}|
           {1:~                             }|
           {1:~                             }|
         ## grid 3
@@ -3040,8 +3045,8 @@ describe("folded lines", function()
         screen:expect([[
           {7:    }This is a                 |
           {7:-   }^v{14:alid English}             |
-          {7:│+  }{15:--}{19:      }{20:sentence composed }|
-          {7:│+  }{15:--}{19:      }{20:in his cave.}{15:······}|
+          {7:│+  }{4:▶}{15:--}{19:     }{20:sentence composed }|
+          {7:│+  }{4:▶}{15:--}{19:     }{20:in his cave.}{15:······}|
           {1:~                             }|
           {1:~                             }|
           {11:-- VISUAL LINE --}             |
@@ -3062,8 +3067,8 @@ describe("folded lines", function()
         ## grid 2
                            a si sihT{7:    }|
                        {14:hsilgnE dila}^v{7:   -}|
-          {20: desopmoc ecnetnes}{19:      }{15:--}{7:  +│}|
-          {15:······}{20:.evac sih ni}{19:      }{15:--}{7:  +│}|
+          {20: desopmoc ecnetnes}{19:     }{15:--}{4:▶}{7:  +│}|
+          {15:······}{20:.evac sih ni}{19:     }{15:--}{4:▶}{7:  +│}|
           {1:                             ~}|
           {1:                             ~}|
         ## grid 3
@@ -3073,8 +3078,8 @@ describe("folded lines", function()
         screen:expect([[
                            a si sihT{7:    }|
                        {14:hsilgnE dila}^v{7:   -}|
-          {20: desopmoc ecnetnes}{19:      }{15:--}{7:  +│}|
-          {15:······}{20:.evac sih ni}{19:      }{15:--}{7:  +│}|
+          {20: desopmoc ecnetnes}{19:     }{15:--}{4:▶}{7:  +│}|
+          {15:······}{20:.evac sih ni}{19:     }{15:--}{4:▶}{7:  +│}|
           {1:                             ~}|
           {1:                             ~}|
           {11:-- VISUAL LINE --}             |

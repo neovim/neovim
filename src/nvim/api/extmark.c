@@ -1188,8 +1188,7 @@ VirtText parse_virt_text(Array chunks, Error *err, int *width)
             goto free_exit;
           }
           if (j < arr.size - 1) {
-            kv_push(virt_text, ((VirtTextChunk){ .text = NULL,
-                                                 .hl_id = hl_id }));
+            kv_push(virt_text, ((VirtTextChunk){ .text = NULL, .hl_id = hl_id }));
           }
         }
       } else {

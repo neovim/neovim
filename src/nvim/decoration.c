@@ -153,6 +153,24 @@ void clear_virttext(VirtText *text)
   *text = (VirtText)KV_INITIAL_VALUE;
 }
 
+/// Get the next chunk of a virtual text item.
+///
+/// @param[in]     vt    The virtual text item
+/// @param[in,out] pos   Position in the virtual text item
+/// @param[in,out] attr  Highlight attribute
+///
+/// @return  The text of the chunk, or NULL if there are no more chunks
+char *next_virt_text_chunk(VirtText vt, size_t *pos, int *attr)
+{
+  char *text = NULL;
+  for (; text == NULL && *pos < kv_size(vt); (*pos)++) {
+    text = kv_A(vt, *pos).text;
+    int hl_id = kv_A(vt, *pos).hl_id;
+    *attr = hl_combine_attr(*attr, hl_id > 0 ? syn_id2attr(hl_id) : 0);
+  }
+  return text;
+}
+
 Decoration *decor_find_virttext(buf_T *buf, int row, uint64_t ns_id)
 {
   MarkTreeIter itr[1] = { 0 };

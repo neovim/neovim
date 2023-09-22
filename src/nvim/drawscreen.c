@@ -709,13 +709,15 @@ void end_search_hl(void)
   screen_search_hl.rm.regprog = NULL;
 }
 
-static void win_redr_bordertext(win_T *wp, ScreenGrid *grid, VirtText text_chunks, int row, int col)
+static void win_redr_bordertext(win_T *wp, ScreenGrid *grid, VirtText vt, int row, int col)
 {
-  for (size_t i = 0; i < text_chunks.size; i++) {
-    char *text = text_chunks.items[i].text;
+  for (size_t i = 0; i < kv_size(vt);) {
+    int attr = 0;
+    char *text = next_virt_text_chunk(vt, &i, &attr);
+    if (text == NULL) {
+      break;
+    }
     int cell = (int)mb_string2cells(text);
-    int hl_id = text_chunks.items[i].hl_id;
-    int attr = hl_id ? syn_id2attr(hl_id) : 0;
     grid_puts(grid, text, row, col, attr);
     col += cell;
   }
