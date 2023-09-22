@@ -1,5 +1,8 @@
 ---@meta
 
+---@nodoc
+vim.json = {}
+
 -- luacheck: no unused args
 
 ---@defgroup vim.json
