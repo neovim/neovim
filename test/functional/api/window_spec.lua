@@ -895,13 +895,14 @@ describe('API/win', function()
     it('includes border', function()
       local b = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' }
       local win = meths.open_win(0, true, {
-         relative='win', row=3, col=3, width=12, height=3,
-         border = b,
+        relative='win', row=3, col=3, width=12, height=3,
+        border = b,
       })
 
       local cfg = meths.win_get_config(win)
       eq(b, cfg.border)
     end)
+
     it('includes border with highlight group', function()
       local b = {
         {'a', 'Normal'},
@@ -914,12 +915,25 @@ describe('API/win', function()
         {'h', 'PreProc'},
       }
       local win = meths.open_win(0, true, {
-         relative='win', row=3, col=3, width=12, height=3,
-         border = b,
+        relative='win', row=3, col=3, width=12, height=3,
+        border = b,
       })
 
       local cfg = meths.win_get_config(win)
       eq(b, cfg.border)
+    end)
+
+    it('includes title and footer', function()
+      local title = { {'A', {'StatusLine', 'TabLine'}}, {'B'}, {'C', 'WinBar'} }
+      local footer = { {'A', 'WinBar'}, {'B'}, {'C', {'StatusLine', 'TabLine'}} }
+      local win = meths.open_win(0, true, {
+        relative='win', row=3, col=3, width=12, height=3,
+        border = 'single', title = title, footer = footer,
+      })
+
+      local cfg = meths.win_get_config(win)
+      eq(title, cfg.title)
+      eq(footer, cfg.footer)
     end)
   end)
 end)

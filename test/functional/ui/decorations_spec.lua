@@ -1464,7 +1464,7 @@ describe('extmark decorations', function()
   end)
 
   it('can have virtual text which combines foreground and background groups', function()
-    screen:try_resize(20, 3)
+    screen:try_resize(20, 5)
 
     screen:set_default_attr_ids {
       [1] = {bold=true, foreground=Screen.colors.Blue};
@@ -1494,8 +1494,11 @@ describe('extmark decorations', function()
     meths.buf_set_extmark(0, ns, 0, 0, { virt_text = vt, virt_text_pos = 'eol' })
     meths.buf_set_extmark(0, ns, 0, 0, { virt_text = vt, virt_text_pos = 'right_align' })
     meths.buf_set_extmark(0, ns, 0, 0, { virt_text = vt, virt_text_pos = 'inline' })
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_lines = { vt, vt } })
     screen:expect{grid=[[
       {2:a}{3:b}{4:c}{5:d}{6:X}#^# {2:a}{3:b}{4:c}{5:d}{6:X}  {2:a}{3:b}{4:c}{5:d}{6:X}|
+      {2:a}{3:b}{4:c}{5:d}{6:X}               |
+      {2:a}{3:b}{4:c}{5:d}{6:X}               |
       {1:~                   }|
                           |
     ]]}
