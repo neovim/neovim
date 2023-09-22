@@ -821,7 +821,7 @@ describe('float window', function()
         [4] = {bold = true, reverse = true},
         [5] = {reverse = true},
         [6] = {background = Screen.colors.LightMagenta, bold = true, reverse = true},
-        [7] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+        [7] = {foreground = Screen.colors.White, background = Screen.colors.Red},
         [8] = {bold = true, foreground = Screen.colors.SeaGreen4},
         [9] = {background = Screen.colors.LightGrey, underline = true},
         [10] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Magenta},
@@ -2512,7 +2512,12 @@ describe('float window', function()
         ]]}
       end
 
-      meths.win_set_config(win, {title= { {"🦄"},{"BB"}},title_pos="right",footer= { {"🦄"},{"BB"}},footer_pos="right"})
+      command('hi B0 guibg=Red guifg=Black')
+      command('hi B1 guifg=White')
+      meths.win_set_config(win, {
+        title = {{"🦄"}, {"BB", {"B0", "B1"}}}, title_pos = "right",
+        footer= {{"🦄"}, {"BB", {"B0", "B1"}}}, footer_pos = "right",
+      })
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -2533,10 +2538,10 @@ describe('float window', function()
         ## grid 3
                                                   |
         ## grid 4
-          {5:╔═════}🦄BB{5:╗}|
+          {5:╔═════}🦄{7:BB}{5:╗}|
           {5:║}{1: halloj! }{5:║}|
           {5:║}{1: BORDAA  }{5:║}|
-          {5:╚═════}🦄BB{5:╝}|
+          {5:╚═════}🦄{7:BB}{5:╝}|
         ]], float_pos={
           [4] = { { id = 1001 }, "NW", 1, 2, 5, true }
         }, win_viewport={
@@ -2547,10 +2552,10 @@ describe('float window', function()
         screen:expect{grid=[[
           ^                                        |
           {0:~                                       }|
-          {0:~    }{5:╔═════}🦄BB{5:╗}{0:                        }|
+          {0:~    }{5:╔═════}🦄{7:BB}{5:╗}{0:                        }|
           {0:~    }{5:║}{1: halloj! }{5:║}{0:                        }|
           {0:~    }{5:║}{1: BORDAA  }{5:║}{0:                        }|
-          {0:~    }{5:╚═════}🦄BB{5:╝}{0:                        }|
+          {0:~    }{5:╚═════}🦄{7:BB}{5:╝}{0:                        }|
                                                   |
         ]]}
       end

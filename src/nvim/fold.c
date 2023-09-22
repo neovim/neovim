@@ -3344,8 +3344,13 @@ void f_foldtextresult(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
     if (kv_size(vt) > 0) {
       assert(*text == NUL);
-      for (size_t i = 0; i < kv_size(vt); i++) {
-        char *new_text = concat_str(text, kv_A(vt, i).text);
+      for (size_t i = 0; i < kv_size(vt);) {
+        int attr = 0;
+        char *new_text = next_virt_text_chunk(vt, &i, &attr);
+        if (new_text == NULL) {
+          break;
+        }
+        new_text = concat_str(text, new_text);
         xfree(text);
         text = new_text;
       }
