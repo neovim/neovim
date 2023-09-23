@@ -3610,8 +3610,11 @@ void ex_buffer_all(exarg_T *eap)
   }
   for (;;) {
     tpnext = curtab->tp_next;
-    for (wp = firstwin; wp != NULL; wp = wpnext) {
-      wpnext = wp->w_next;
+    // Try to close floating windows first
+    for (wp = lastwin->w_floating ? lastwin : firstwin; wp != NULL; wp = wpnext) {
+      wpnext = wp->w_floating
+        ? wp->w_prev->w_floating ? wp->w_prev : firstwin
+        : (wp->w_next == NULL || wp->w_next->w_floating) ? NULL : wp->w_next;
       if ((wp->w_buffer->b_nwindows > 1
            || ((cmdmod.cmod_split & WSP_VERT)
                ? wp->w_height + wp->w_hsep_height + wp->w_status_height < Rows - p_ch
@@ -3626,7 +3629,7 @@ void ex_buffer_all(exarg_T *eap)
         }
         // Just in case an autocommand does something strange with
         // windows: start all over...
-        wpnext = firstwin;
+        wpnext = lastwin->w_floating ? lastwin : firstwin;
         tpnext = first_tabpage;
         open_wins = 0;
       } else {
