@@ -21,8 +21,10 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_eval.h"
 #include "nvim/garray.h"
+#include "nvim/globals.h"
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/map.h"
@@ -235,8 +237,7 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retva
     // Delete the key
     if (di == NULL) {
       // Doesn't exist, fail
-      api_set_error(err, kErrorTypeValidation, "Key not found: %s",
-                    key.data);
+      api_set_error(err, kErrorTypeValidation, "Key not found: %s", key.data);
     } else {
       // Notify watchers
       if (watched) {
@@ -265,12 +266,22 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retva
       di = tv_dict_item_alloc_len(key.data, key.size);
       tv_dict_add(dict, di);
     } else {
-      if (watched) {
-        tv_copy(&di->di_tv, &oldtv);
-      }
       // Return the old value
       if (retval) {
         rv = vim_to_object(&di->di_tv);
+      }
+      bool type_error = false;
+      if (dict == &vimvardict
+          && !before_set_vvar(key.data, di, &tv, true, watched, &type_error)) {
+        tv_clear(&tv);
+        if (type_error) {
+          api_set_error(err, kErrorTypeValidation,
+                        "Setting v:%s to value with wrong type", key.data);
+        }
+        return rv;
+      }
+      if (watched) {
+        tv_copy(&di->di_tv, &oldtv);
       }
       tv_clear(&di->di_tv);
     }

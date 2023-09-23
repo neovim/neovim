@@ -24,6 +24,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
@@ -397,6 +398,15 @@ int nlua_setvar(lua_State *lstate)
       di = tv_dict_item_alloc_len(key.data, key.size);
       tv_dict_add(dict, di);
     } else {
+      bool type_error = false;
+      if (dict == &vimvardict
+          && !before_set_vvar(key.data, di, &tv, true, watched, &type_error)) {
+        tv_clear(&tv);
+        if (type_error) {
+          return luaL_error(lstate, "Setting v:%s to value with wrong type", key.data);
+        }
+        return 0;
+      }
       if (watched) {
         tv_copy(&di->di_tv, &oldtv);
       }

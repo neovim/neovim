@@ -1350,15 +1350,59 @@ describe('API', function()
     end)
 
     it('nvim_get_vvar, nvim_set_vvar', function()
-      -- Set readonly v: var.
-      eq('Key is read-only: count',
-        pcall_err(request, 'nvim_set_vvar', 'count', 42))
-      -- Set non-existent v: var.
-      eq('Dictionary is locked',
-        pcall_err(request, 'nvim_set_vvar', 'nosuchvar', 42))
-      -- Set writable v: var.
+      eq('Key is read-only: count', pcall_err(request, 'nvim_set_vvar', 'count', 42))
+      eq('Dictionary is locked', pcall_err(request, 'nvim_set_vvar', 'nosuchvar', 42))
       meths.set_vvar('errmsg', 'set by API')
       eq('set by API', meths.get_vvar('errmsg'))
+      meths.set_vvar('errmsg', 42)
+      eq('42', eval('v:errmsg'))
+      meths.set_vvar('oldfiles', { 'one', 'two' })
+      eq({ 'one', 'two' }, eval('v:oldfiles'))
+      meths.set_vvar('oldfiles', {})
+      eq({}, eval('v:oldfiles'))
+      eq('Setting v:oldfiles to value with wrong type', pcall_err(meths.set_vvar, 'oldfiles', 'a'))
+      eq({}, eval('v:oldfiles'))
+
+      feed('i foo foo foo<Esc>0/foo<CR>')
+      eq({1, 1}, meths.win_get_cursor(0))
+      eq(1, eval('v:searchforward'))
+      feed('n')
+      eq({1, 5}, meths.win_get_cursor(0))
+      meths.set_vvar('searchforward', 0)
+      eq(0, eval('v:searchforward'))
+      feed('n')
+      eq({1, 1}, meths.win_get_cursor(0))
+      meths.set_vvar('searchforward', 1)
+      eq(1, eval('v:searchforward'))
+      feed('n')
+      eq({1, 5}, meths.win_get_cursor(0))
+
+      local screen = Screen.new(60, 3)
+      screen:set_default_attr_ids({
+        [0] = {bold = true, foreground = Screen.colors.Blue},
+        [1] = {background = Screen.colors.Yellow},
+      })
+      screen:attach()
+      eq(1, eval('v:hlsearch'))
+      screen:expect{grid=[[
+         {1:foo} {1:^foo} {1:foo}                                                |
+        {0:~                                                           }|
+                                                                    |
+      ]]}
+      meths.set_vvar('hlsearch', 0)
+      eq(0, eval('v:hlsearch'))
+      screen:expect{grid=[[
+         foo ^foo foo                                                |
+        {0:~                                                           }|
+                                                                    |
+      ]]}
+      meths.set_vvar('hlsearch', 1)
+      eq(1, eval('v:hlsearch'))
+      screen:expect{grid=[[
+         {1:foo} {1:^foo} {1:foo}                                                |
+        {0:~                                                           }|
+                                                                    |
+      ]]}
     end)
 
     it('vim_set_var returns the old value', function()
