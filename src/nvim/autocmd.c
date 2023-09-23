@@ -1341,7 +1341,6 @@ void aucmd_restbuf(aco_save_T *aco)
   if (aco->use_aucmd_win_idx >= 0) {
     win_T *awp = aucmd_win[aco->use_aucmd_win_idx].auc_win;
 
-    curbuf->b_nwindows--;
     // Find "awp", it can't be closed, but it may be in another tab page.
     // Do not trigger autocommands here.
     block_autocmds();
@@ -1357,7 +1356,7 @@ void aucmd_restbuf(aco_save_T *aco)
       }
     }
 win_found:
-    ;
+    curbuf->b_nwindows--;
     const bool save_stop_insert_mode = stop_insert_mode;
     // May need to stop Insert mode if we were in a prompt buffer.
     leaving_window(curwin);
