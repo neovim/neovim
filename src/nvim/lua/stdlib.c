@@ -359,6 +359,9 @@ int nlua_setvar(lua_State *lstate)
   Error err = ERROR_INIT;
   dictitem_T *di = dict_check_writable(dict, key, del, &err);
   if (ERROR_SET(&err)) {
+    nlua_push_errstr(lstate, "%s", err.msg);
+    api_clear_error(&err);
+    lua_error(lstate);
     return 0;
   }
 
