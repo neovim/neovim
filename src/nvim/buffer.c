@@ -3619,12 +3619,15 @@ void ex_buffer_all(exarg_T *eap)
                : wp->w_width != Columns)
            || (had_tab > 0 && wp != firstwin))
           && !ONE_WINDOW
-          && !(wp->w_closing
-               || wp->w_buffer->b_locked > 0)) {
-        win_close(wp, false, false);
-        wpnext = firstwin;              // just in case an autocommand does
-                                        // something strange with windows
-        tpnext = first_tabpage;         // start all over...
+          && !(wp->w_closing || wp->w_buffer->b_locked > 0)
+          && !is_aucmd_win(wp)) {
+        if (win_close(wp, false, false) == FAIL) {
+          break;
+        }
+        // Just in case an autocommand does something strange with
+        // windows: start all over...
+        wpnext = firstwin;
+        tpnext = first_tabpage;
         open_wins = 0;
       } else {
         open_wins++;
@@ -3644,7 +3647,7 @@ void ex_buffer_all(exarg_T *eap)
   //
   // Don't execute Win/Buf Enter/Leave autocommands here.
   autocmd_no_enter++;
-  win_enter(lastwin, false);
+  win_enter(lastwin_nofloating(), false);
   autocmd_no_leave++;
   for (buf = firstbuf; buf != NULL && open_wins < count; buf = buf->b_next) {
     // Check if this buffer needs a window
@@ -3736,7 +3739,7 @@ void ex_buffer_all(exarg_T *eap)
   // Close superfluous windows.
   for (wp = lastwin; open_wins > count;) {
     r = (buf_hide(wp->w_buffer) || !bufIsChanged(wp->w_buffer)
-         || autowrite(wp->w_buffer, false) == OK);
+         || autowrite(wp->w_buffer, false) == OK) && !is_aucmd_win(wp);
     if (!win_valid(wp)) {
       // BufWrite Autocommands made the window invalid, start over
       wp = lastwin;
