@@ -1353,6 +1353,9 @@ describe('API', function()
       -- Set readonly v: var.
       eq('Key is read-only: count',
         pcall_err(request, 'nvim_set_vvar', 'count', 42))
+      -- Set non-existent v: var.
+      eq('Dictionary is locked',
+        pcall_err(request, 'nvim_set_vvar', 'nosuchvar', 42))
       -- Set writable v: var.
       meths.set_vvar('errmsg', 'set by API')
       eq('set by API', meths.get_vvar('errmsg'))

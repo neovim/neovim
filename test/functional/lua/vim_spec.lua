@@ -1491,6 +1491,8 @@ describe('lua stdlib', function()
     eq(NIL, funcs.luaeval "vim.v.null")
     matches([[attempt to index .* nil value]],
        pcall_err(exec_lua, 'return vim.v[0].progpath'))
+    eq('Key is read-only: count', pcall_err(exec_lua, 'vim.v.count = 42'))
+    eq('Dictionary is locked', pcall_err(exec_lua, 'vim.v.nosuchvar = 42'))
   end)
 
   it('vim.bo', function()
