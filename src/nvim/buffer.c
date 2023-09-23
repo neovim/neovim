@@ -3221,7 +3221,7 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
               (int)curwin->w_cursor.col + 1, (int)curwin->w_virtcol + 1);
   }
 
-  (void)append_arg_number(curwin, buffer, IOSIZE, !shortmess(SHM_FILE));
+  (void)append_arg_number(curwin, buffer, IOSIZE);
 
   if (dont_truncate) {
     // Temporarily set msg_scroll to avoid the message being truncated.
@@ -3372,7 +3372,7 @@ void maketitle(void)
         *buf_p = NUL;
       }
 
-      append_arg_number(curwin, buf_p, (int)(SPACE_FOR_ARGNR - (size_t)(buf_p - buf)), false);
+      append_arg_number(curwin, buf_p, (int)(SPACE_FOR_ARGNR - (size_t)(buf_p - buf)));
 
       xstrlcat(buf_p, " - NVIM", (sizeof(buf) - (size_t)(buf_p - buf)));
 
@@ -3509,15 +3509,14 @@ void get_rel_pos(win_T *wp, char *buf, int buflen)
   }
 }
 
-/// Append (file 2 of 8) to "buf[buflen]", if editing more than one file.
+/// Append (2 of 8) to "buf[buflen]", if editing more than one file.
 ///
 /// @param          wp        window whose buffers to check
 /// @param[in,out]  buf       string buffer to add the text to
 /// @param          buflen    length of the string buffer
-/// @param          add_file  if true, add "file" before the arg number
 ///
 /// @return  true if it was appended.
-bool append_arg_number(win_T *wp, char *buf, int buflen, bool add_file)
+bool append_arg_number(win_T *wp, char *buf, int buflen)
   FUNC_ATTR_NONNULL_ALL
 {
   // Nothing to do
@@ -3525,17 +3524,7 @@ bool append_arg_number(win_T *wp, char *buf, int buflen, bool add_file)
     return false;
   }
 
-  const char *msg;
-  switch ((wp->w_arg_idx_invalid ? 1 : 0) + (add_file ? 2 : 0)) {
-  case 0:
-    msg = _(" (%d of %d)"); break;
-  case 1:
-    msg = _(" ((%d) of %d)"); break;
-  case 2:
-    msg = _(" (file %d of %d)"); break;
-  case 3:
-    msg = _(" (file (%d) of %d)"); break;
-  }
+  const char *msg = wp->w_arg_idx_invalid ? _(" ((%d) of %d)") : _(" (%d of %d)");
 
   char *p = buf + strlen(buf);  // go to the end of the buffer
   vim_snprintf(p, (size_t)(buflen - (p - buf)), msg, wp->w_arg_idx + 1, ARGCOUNT);

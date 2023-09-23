@@ -727,6 +727,7 @@ Options:
     Everything is allowed in 'exrc' files since they must be explicitly marked
     trusted.
   *'shelltype'*
+  'shortmess' *shm-f* flag (always on, never show "file" in "(3 of 5)")
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*
   *'swapsync'* *'sws'*
   *'termencoding'* *'tenc'* (Vim 7.4.852 also removed this for Windows)
