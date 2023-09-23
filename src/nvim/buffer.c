@@ -3625,9 +3625,12 @@ void ex_buffer_all(exarg_T *eap)
                : wp->w_width != Columns)
            || (had_tab > 0 && wp != firstwin))
           && !ONE_WINDOW
+          && !lastwin->w_floating
           && !(wp->w_closing
                || wp->w_buffer->b_locked > 0)) {
-        win_close(wp, false, false);
+        if (!win_close(wp, false, false)) {
+          return;
+        }
         wpnext = firstwin;              // just in case an autocommand does
                                         // something strange with windows
         tpnext = first_tabpage;         // start all over...

@@ -10637,6 +10637,20 @@ describe('float window', function()
     end)
   end
 
+  it('float window with unhide #17797', function()
+    local bufnr = meths.get_current_buf().id
+    local winid = meths.get_current_win()
+    meths.open_win(bufnr, false, {
+      width = 5,
+      height = 5,
+      relative = 'editor',
+      row = 2,
+      col = 2,
+    })
+    command('unhide '..bufnr)
+    eq({winid}, meths.list_wins())
+  end)
+
   describe('with ext_multigrid', function()
     with_ext_multigrid(true)
   end)
