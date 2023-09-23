@@ -1542,18 +1542,20 @@ return {
       abbreviation = 'cf',
       defaults = { if_true = false },
       desc = [=[
-        When 'confirm' is on, certain operations that would normally
-        fail because of unsaved changes to a buffer, e.g. ":q" and ":e",
-        instead raise a dialog asking if you wish to save the current
-        file(s).  You can still use a ! to unconditionally |abandon| a buffer.
-        If 'confirm' is off you can still activate confirmation for one
-        command only (this is most useful in mappings) with the |:confirm|
-        command.
+        When 'confirm' is on:
+        - operations (":q", ":e", etc.) that would normally fail because of
+          unsaved changes, instead raise a dialog asking if you wish to save the
+          current file(s).  You can still use ! to unconditionally edit or
+          |abandon| a buffer.
+        - ":edit" shows the swapfile prompt (|E325|) before editing a file that
+          has a swapfile.
+        If 'confirm' is off you can use |:confirm| to activate confirmation for
+        one command only (useful in mappings).
         Also see the |confirm()| function and the 'v' flag in 'guioptions'.
       ]=],
       full_name = 'confirm',
       scope = { 'global' },
-      short_desc = N_('ask what to do about unsaved/read-only files'),
+      short_desc = N_('confirm before discarding changes, or editing when a swapfile is present'),
       type = 'bool',
       varname = 'p_confirm',
     },

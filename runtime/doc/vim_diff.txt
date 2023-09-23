@@ -230,6 +230,11 @@ Commands:
   User commands can support |:command-preview| to show results as you type
   |:write| with "++p" flag creates parent directories.
 
+Editor:
+- The swapfile |E325| "ATTENTION" dialog is less noisy. For example, it's
+  skipped if the swapfile is owned by a running Nvim process. If you always
+  want the swapfile dialog, set 'confirm' or use ":confirm edit".
+
 Events:
   |RecordingEnter|
   |RecordingLeave|
