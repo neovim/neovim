@@ -26,7 +26,7 @@
     in
     {
       overlay = final: prev: {
-
+        liblpeg-darwin = final.callPackage ./lpeg.nix { };
         neovim = (final.neovim-unwrapped.override {
           treesitter-parsers = pipe ../cmake.deps/deps.txt [
             readFile
@@ -39,7 +39,7 @@
                   lang = toLower (elemAt matches 0);
                   type = toLower (elemAt matches 1);
                   value = elemAt matches 2;
-                in
+                in 
                 acc // {
                   ${lang} = acc.${lang} or { } // {
                     ${type} = value;
@@ -64,6 +64,8 @@
           '';
           nativeBuildInputs = oa.nativeBuildInputs ++ [
             final.libiconv
+          ] ++ final.lib.optionals final.stdenv.isDarwin [
+            final.liblpeg-darwin
           ];
         });
 
@@ -77,7 +79,6 @@
           lua = final.luajit;
           inherit stdenv;
         }).overrideAttrs (oa: {
-
           dontStrip = true;
           NIX_CFLAGS_COMPILE = " -ggdb -Og";
 
@@ -93,7 +94,7 @@
         }).overrideAttrs (oa: {
           cmakeFlags = oa.cmakeFlags ++ [
             "-DLUACHECK_PRG=${luacheck}/bin/luacheck"
-            "-DENABLE_LTO=OFF"
+            "-DENABLE_LTO=OFF" 
           ] ++ final.lib.optionals final.stdenv.isLinux [
             # https://github.com/google/sanitizers/wiki/AddressSanitizerFlags
             # https://clang.llvm.org/docs/AddressSanitizer.html#symbolizing-the-reports
@@ -131,7 +132,6 @@
 
         devShells = {
           default = pkgs.neovim-developer.overrideAttrs (oa: {
-
             buildInputs = with pkgs;
               oa.buildInputs ++ [
                 cmake
