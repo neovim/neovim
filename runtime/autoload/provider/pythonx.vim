@@ -26,7 +26,7 @@ endfunction
 
 function! s:get_python_candidates(major_version) abort
   return {
-        \ 3: ['python3', 'python3.10', 'python3.9', 'python3.8', 'python3.7', 'python']
+        \ 3: ['python3', 'python3.12', 'python3.11', 'python3.10', 'python3.9', 'python3.8', 'python3.7', 'python']
         \ }[a:major_version]
 endfunction
 
@@ -61,12 +61,11 @@ endfunction
 
 " Returns array: [prog_exitcode, prog_version]
 function! s:import_module(prog, module) abort
-  let prog_version = system([a:prog, '-c' , printf(
-        \ 'import sys; ' .
+  let prog_version = system([a:prog, '-W', 'ignore', '-c', printf(
+        \ 'import sys, importlib; ' .
         \ 'sys.path = [p for p in sys.path if p != ""]; ' .
         \ 'sys.stdout.write(str(sys.version_info[0]) + "." + str(sys.version_info[1])); ' .
-        \ 'import pkgutil; ' .
-        \ 'exit(2*int(pkgutil.get_loader("%s") is None))',
+        \ 'sys.exit(2 * int(importlib.util.find_spec("%s") is None))',
         \ a:module)])
   return [v:shell_error, prog_version]
 endfunction
