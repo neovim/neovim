@@ -522,13 +522,24 @@ describe('float window', function()
     eq(5, meths.get_option_value('scroll', {win=float_win.id}))
   end)
 
-  it(':unhide works when there are floating windows #17797', function()
-    local float_opts = {relative = 'editor', row = 1, col = 1, width = 10, height = 10}
+  it(':unhide works when there are floating windows', function()
+    local float_opts = {relative = 'editor', row = 1, col = 1, width = 5, height = 5}
     local w0 = curwin()
     meths.open_win(0, false, float_opts)
     meths.open_win(0, false, float_opts)
     eq(3, #meths.list_wins())
     command('unhide')
+    eq({ w0 }, meths.list_wins())
+  end)
+
+  it(':all works when there are floating windows', function()
+    command('args Xa.txt')
+    local float_opts = {relative = 'editor', row = 1, col = 1, width = 5, height = 5}
+    local w0 = curwin()
+    meths.open_win(0, false, float_opts)
+    meths.open_win(0, false, float_opts)
+    eq(3, #meths.list_wins())
+    command('all')
     eq({ w0 }, meths.list_wins())
   end)
 
@@ -3220,6 +3231,154 @@ describe('float window', function()
                                                   |
         ]])
       end
+    end)
+
+    describe('no crash when rearranging windows', function()
+      local function test_rearrange_windows(cmd)
+        command('set laststatus=2')
+        screen:try_resize(40, 13)
+
+        command('args X1 X2 X3 X4 X5 X6')
+        command('sargument 2')
+        command('sargument 3')
+        local w3 = curwin()
+        command('sargument 4')
+        local w4 = curwin()
+        command('sargument 5')
+        command('sargument 6')
+
+        local float_opts = { relative = 'editor', row = 6, col = 0, width = 40, height = 1 }
+        meths.win_set_config(w3, float_opts)
+        meths.win_set_config(w4, float_opts)
+        command('wincmd =')
+        if multigrid then
+          screen:expect{grid=[[
+          ## grid 1
+            [8:----------------------------------------]|
+            [8:----------------------------------------]|
+            {4:X6                                      }|
+            [7:----------------------------------------]|
+            [7:----------------------------------------]|
+            {5:X5                                      }|
+            [4:----------------------------------------]|
+            [4:----------------------------------------]|
+            {5:X2                                      }|
+            [2:----------------------------------------]|
+            [2:----------------------------------------]|
+            {5:X1                                      }|
+            [3:----------------------------------------]|
+          ## grid 2
+                                                    |
+            {0:~                                       }|
+          ## grid 3
+                                                    |
+          ## grid 4
+                                                    |
+            {0:~                                       }|
+          ## grid 5
+            {1:                                        }|
+          ## grid 6
+            {1:                                        }|
+          ## grid 7
+                                                    |
+            {0:~                                       }|
+          ## grid 8
+            ^                                        |
+            {0:~                                       }|
+          ]], float_pos={
+            [5] = {{id = 1002}, "NW", 1, 6, 0, true, 50};
+            [6] = {{id = 1003}, "NW", 1, 6, 0, true, 50};
+          }, win_viewport={
+            [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+            [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+            [5] = {win = {id = 1002}, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+            [6] = {win = {id = 1003}, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+            [7] = {win = {id = 1004}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+            [8] = {win = {id = 1005}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          }}
+        else
+          screen:expect{grid=[[
+            ^                                        |
+            {0:~                                       }|
+            {4:X6                                      }|
+                                                    |
+            {0:~                                       }|
+            {5:X5                                      }|
+            {1:                                        }|
+            {0:~                                       }|
+            {5:X2                                      }|
+                                                    |
+            {0:~                                       }|
+            {5:X1                                      }|
+                                                    |
+          ]]}
+        end
+
+        command(cmd)
+        if multigrid then
+          screen:expect{grid=[[
+          ## grid 1
+            [2:----------------------------------------]|
+            {4:X1                                      }|
+            [4:----------------------------------------]|
+            {5:X2                                      }|
+            [9:----------------------------------------]|
+            {5:X3                                      }|
+            [10:----------------------------------------]|
+            {5:X4                                      }|
+            [7:----------------------------------------]|
+            {5:X5                                      }|
+            [8:----------------------------------------]|
+            {5:X6                                      }|
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+          ## grid 3
+                                                    |
+          ## grid 4
+                                                    |
+          ## grid 7
+                                                    |
+          ## grid 8
+                                                    |
+          ## grid 9
+                                                    |
+          ## grid 10
+                                                    |
+          ]], win_viewport={
+            [2] = {win = {id = 1000}, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+            [4] = {win = {id = 1001}, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+            [7] = {win = {id = 1004}, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+            [8] = {win = {id = 1005}, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+            [9] = {win = {id = 1006}, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+            [10] = {win = {id = 1007}, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          }}
+        else
+          screen:expect{grid=[[
+            ^                                        |
+            {4:X1                                      }|
+                                                    |
+            {5:X2                                      }|
+                                                    |
+            {5:X3                                      }|
+                                                    |
+            {5:X4                                      }|
+                                                    |
+            {5:X5                                      }|
+                                                    |
+            {5:X6                                      }|
+                                                    |
+          ]]}
+        end
+      end
+
+      it('using :unhide', function()
+        test_rearrange_windows('unhide')
+      end)
+
+      it('using :all', function()
+        test_rearrange_windows('all')
+      end)
     end)
 
     it('API has proper error messages', function()
