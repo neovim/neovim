@@ -5668,7 +5668,6 @@ vim.bo.sw = vim.bo.shiftwidth
 --- messages, for example  with CTRL-G, and to avoid some other messages.
 --- It is a list of flags:
 ---  flag	meaning when present	~
----   f	use "(3 of 5)" instead of "(file 3 of 5)"		*shm-f*
 ---   i	use "[noeol]" instead of "[Incomplete last line]"	*shm-i*
 ---   l	use "999L, 888B" instead of "999 lines, 888 bytes"	*shm-l*
 ---   m	use "[+]" instead of "[Modified]"			*shm-m*
