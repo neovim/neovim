@@ -3622,6 +3622,7 @@ void ex_buffer_all(exarg_T *eap)
         ? wp->w_prev->w_floating ? wp->w_prev : firstwin
         : (wp->w_next == NULL || wp->w_next->w_floating) ? NULL : wp->w_next;
       if ((wp->w_buffer->b_nwindows > 1
+           || wp->w_floating
            || ((cmdmod.cmod_split & WSP_VERT)
                ? wp->w_height + wp->w_hsep_height + wp->w_status_height < Rows - p_ch
                - tabline_height() - global_stl_height()
@@ -3656,6 +3657,7 @@ void ex_buffer_all(exarg_T *eap)
   //
   // Don't execute Win/Buf Enter/Leave autocommands here.
   autocmd_no_enter++;
+  // lastwin may be aucmd_win
   win_enter(lastwin_nofloating(), false);
   autocmd_no_leave++;
   for (buf = firstbuf; buf != NULL && open_wins < count; buf = buf->b_next) {
@@ -3674,7 +3676,7 @@ void ex_buffer_all(exarg_T *eap)
     } else {
       // Check if this buffer already has a window
       for (wp = firstwin; wp != NULL; wp = wp->w_next) {
-        if (wp->w_buffer == buf) {
+        if (!wp->w_floating && wp->w_buffer == buf) {
           break;
         }
       }
