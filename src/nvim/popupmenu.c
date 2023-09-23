@@ -507,14 +507,14 @@ void pum_redraw(void)
     const int *const attrs = (idx == pum_selected) ? attrsSel : attrsNorm;
     int attr = attrs[0];  // start with "word" highlight
 
-    grid_puts_line_start(&pum_grid, row);
+    grid_line_start(&pum_grid, row);
 
     // prepend a space if there is room
     if (extra_space) {
       if (pum_rl) {
-        grid_putchar(&pum_grid, ' ', row, col_off + 1, attr);
+        grid_line_puts(col_off + 1, " ", 1, attr);
       } else {
-        grid_putchar(&pum_grid, ' ', row, col_off - 1, attr);
+        grid_line_puts(col_off - 1, " ", 1, attr);
       }
     }
 
@@ -580,13 +580,13 @@ void pum_redraw(void)
                   size++;
                 }
               }
-              grid_puts_len(&pum_grid, rt, (int)strlen(rt), row, grid_col - size + 1, attr);
+              grid_line_puts(grid_col - size + 1, rt, -1, attr);
               xfree(rt_start);
               xfree(st);
               grid_col -= width;
             } else {
-              // use grid_puts_len() to truncate the text
-              grid_puts(&pum_grid, st, row, grid_col, attr);
+              // use grid_line_puts() to truncate the text
+              grid_line_puts(grid_col, st, -1, attr);
               xfree(st);
               grid_col += width;
             }
@@ -597,11 +597,10 @@ void pum_redraw(void)
 
             // Display two spaces for a Tab.
             if (pum_rl) {
-              grid_puts_len(&pum_grid, "  ", 2, row, grid_col - 1,
-                            attr);
+              grid_line_puts(grid_col - 1, "  ", 2, attr);
               grid_col -= 2;
             } else {
-              grid_puts_len(&pum_grid, "  ", 2, row, grid_col, attr);
+              grid_line_puts(grid_col, "  ", 2, attr);
               grid_col += 2;
             }
             totwidth += 2;
@@ -632,37 +631,31 @@ void pum_redraw(void)
       }
 
       if (pum_rl) {
-        grid_fill(&pum_grid, row, row + 1, col_off - pum_base_width - n + 1,
-                  grid_col + 1, ' ', ' ', attr);
+        grid_line_fill(col_off - pum_base_width - n + 1, grid_col + 1, ' ', attr);
         grid_col = col_off - pum_base_width - n + 1;
       } else {
-        grid_fill(&pum_grid, row, row + 1, grid_col,
-                  col_off + pum_base_width + n, ' ', ' ', attr);
+        grid_line_fill(grid_col, col_off + pum_base_width + n, ' ', attr);
         grid_col = col_off + pum_base_width + n;
       }
       totwidth = pum_base_width + n;
     }
 
     if (pum_rl) {
-      grid_fill(&pum_grid, row, row + 1, col_off - pum_width + 1, grid_col + 1,
-                ' ', ' ', attr);
+      grid_line_fill(col_off - pum_width + 1, grid_col + 1, ' ', attr);
     } else {
-      grid_fill(&pum_grid, row, row + 1, grid_col, col_off + pum_width, ' ', ' ',
-                attr);
+      grid_line_fill(grid_col, col_off + pum_width, ' ', attr);
     }
 
     if (pum_scrollbar > 0) {
       if (pum_rl) {
-        grid_putchar(&pum_grid, ' ', row, col_off - pum_width,
-                     i >= thumb_pos && i < thumb_pos + thumb_height
-                     ? attr_thumb : attr_scroll);
+        grid_line_puts(col_off - pum_width, " ", 1,
+                       i >= thumb_pos && i < thumb_pos + thumb_height ? attr_thumb : attr_scroll);
       } else {
-        grid_putchar(&pum_grid, ' ', row, col_off + pum_width,
-                     i >= thumb_pos && i < thumb_pos + thumb_height
-                     ? attr_thumb : attr_scroll);
+        grid_line_puts(col_off + pum_width, " ", 1,
+                       i >= thumb_pos && i < thumb_pos + thumb_height ? attr_thumb : attr_scroll);
       }
     }
-    grid_puts_line_flush(false);
+    grid_line_flush(false);
     row++;
   }
 }

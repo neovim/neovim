@@ -2837,12 +2837,6 @@ void intro_message(int colon)
       }
     }
   }
-
-  // Make the wait-return message appear just below the text.
-  if (colon) {
-    assert(row <= INT_MAX);
-    msg_row = (int)row;
-  }
 }
 
 static void do_intro_line(long row, char *mesg, int attr)
@@ -2871,8 +2865,8 @@ static void do_intro_line(long row, char *mesg, int attr)
       l += utfc_ptr2len(p + l) - 1;
     }
     assert(row <= INT_MAX && col <= INT_MAX);
-    grid_puts_len(&default_grid, p, l, (int)row, (int)col,
-                  *p == '<' ? HL_ATTR(HLF_8) : attr);
+    grid_puts(&default_grid, p, l, (int)row, (int)col,
+              *p == '<' ? HL_ATTR(HLF_8) : attr);
     col += clen;
   }
 }

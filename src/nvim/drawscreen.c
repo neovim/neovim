@@ -709,7 +709,7 @@ void end_search_hl(void)
   screen_search_hl.rm.regprog = NULL;
 }
 
-static void win_redr_bordertext(win_T *wp, ScreenGrid *grid, VirtText vt, int row, int col)
+static void win_redr_bordertext(win_T *wp, VirtText vt, int col)
 {
   for (size_t i = 0; i < kv_size(vt);) {
     int attr = 0;
@@ -717,9 +717,7 @@ static void win_redr_bordertext(win_T *wp, ScreenGrid *grid, VirtText vt, int ro
     if (text == NULL) {
       break;
     }
-    int cell = (int)mb_string2cells(text);
-    grid_puts(grid, text, row, col, attr);
-    col += cell;
+    col += grid_line_puts(col, text, -1, attr);
   }
 }
 
@@ -756,60 +754,60 @@ static void win_redr_border(win_T *wp)
   int irow = wp->w_height_inner + wp->w_winbar_height, icol = wp->w_width_inner;
 
   if (adj[0]) {
-    grid_puts_line_start(grid, 0);
+    grid_line_start(grid, 0);
     if (adj[3]) {
-      grid_put_schar(grid, 0, 0, chars[0], attrs[0]);
+      grid_line_put_schar(0, chars[0], attrs[0]);
     }
 
     for (int i = 0; i < icol; i++) {
-      grid_put_schar(grid, 0, i + adj[3], chars[1], attrs[1]);
+      grid_line_put_schar(i + adj[3], chars[1], attrs[1]);
     }
 
     if (wp->w_float_config.title) {
       int title_col = win_get_bordertext_col(icol, wp->w_float_config.title_width,
                                              wp->w_float_config.title_pos);
-      win_redr_bordertext(wp, grid, wp->w_float_config.title_chunks, 0, title_col);
+      win_redr_bordertext(wp, wp->w_float_config.title_chunks, title_col);
     }
     if (adj[1]) {
-      grid_put_schar(grid, 0, icol + adj[3], chars[2], attrs[2]);
+      grid_line_put_schar(icol + adj[3], chars[2], attrs[2]);
     }
-    grid_puts_line_flush(false);
+    grid_line_flush(false);
   }
 
   for (int i = 0; i < irow; i++) {
     if (adj[3]) {
-      grid_puts_line_start(grid, i + adj[0]);
-      grid_put_schar(grid, i + adj[0], 0, chars[7], attrs[7]);
-      grid_puts_line_flush(false);
+      grid_line_start(grid, i + adj[0]);
+      grid_line_put_schar(0, chars[7], attrs[7]);
+      grid_line_flush(false);
     }
     if (adj[1]) {
       int ic = (i == 0 && !adj[0] && chars[2]) ? 2 : 3;
-      grid_puts_line_start(grid, i + adj[0]);
-      grid_put_schar(grid, i + adj[0], icol + adj[3], chars[ic], attrs[ic]);
-      grid_puts_line_flush(false);
+      grid_line_start(grid, i + adj[0]);
+      grid_line_put_schar(icol + adj[3], chars[ic], attrs[ic]);
+      grid_line_flush(false);
     }
   }
 
   if (adj[2]) {
-    grid_puts_line_start(grid, irow + adj[0]);
+    grid_line_start(grid, irow + adj[0]);
     if (adj[3]) {
-      grid_put_schar(grid, irow + adj[0], 0, chars[6], attrs[6]);
+      grid_line_put_schar(0, chars[6], attrs[6]);
     }
 
     for (int i = 0; i < icol; i++) {
       int ic = (i == 0 && !adj[3] && chars[6]) ? 6 : 5;
-      grid_put_schar(grid, irow + adj[0], i + adj[3], chars[ic], attrs[ic]);
+      grid_line_put_schar(i + adj[3], chars[ic], attrs[ic]);
     }
 
     if (wp->w_float_config.footer) {
       int footer_col = win_get_bordertext_col(icol, wp->w_float_config.footer_width,
                                               wp->w_float_config.footer_pos);
-      win_redr_bordertext(wp, grid, wp->w_float_config.footer_chunks, grid->rows - 1, footer_col);
+      win_redr_bordertext(wp, wp->w_float_config.footer_chunks, footer_col);
     }
     if (adj[1]) {
-      grid_put_schar(grid, irow + adj[0], icol + adj[3], chars[4], attrs[4]);
+      grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
     }
-    grid_puts_line_flush(false);
+    grid_line_flush(false);
   }
 }
 
@@ -932,7 +930,9 @@ int showmode(void)
                      || (State & MODE_INSERT)
                      || restart_edit != NUL
                      || VIsual_active));
-  if (do_mode || reg_recording != 0) {
+
+  bool can_show_mode = (p_ch != 0 || ui_has(kUIMessages));
+  if ((do_mode || reg_recording != 0) && can_show_mode) {
     int sub_attr;
     if (skip_showmode()) {
       return 0;  // show mode later
@@ -1307,23 +1307,25 @@ static void draw_hsep_win(win_T *wp)
 }
 
 /// Get the separator connector for specified window corner of window "wp"
-static int get_corner_sep_connector(win_T *wp, WindowCorner corner)
+static schar_T get_corner_sep_connector(win_T *wp, WindowCorner corner)
 {
   // It's impossible for windows to be connected neither vertically nor horizontally
   // So if they're not vertically connected, assume they're horizontally connected
+  int c;
   if (vsep_connected(wp, corner)) {
     if (hsep_connected(wp, corner)) {
-      return wp->w_p_fcs_chars.verthoriz;
+      c = wp->w_p_fcs_chars.verthoriz;
     } else if (corner == WC_TOP_LEFT || corner == WC_BOTTOM_LEFT) {
-      return wp->w_p_fcs_chars.vertright;
+      c = wp->w_p_fcs_chars.vertright;
     } else {
-      return wp->w_p_fcs_chars.vertleft;
+      c = wp->w_p_fcs_chars.vertleft;
     }
   } else if (corner == WC_TOP_LEFT || corner == WC_TOP_RIGHT) {
-    return wp->w_p_fcs_chars.horizdown;
+    c = wp->w_p_fcs_chars.horizdown;
   } else {
-    return wp->w_p_fcs_chars.horizup;
+    c = wp->w_p_fcs_chars.horizup;
   }
+  return schar_from_char(c);
 }
 
 /// Draw separator connecting characters on the corners of window "wp"
@@ -1366,28 +1368,24 @@ static void draw_sep_connectors_win(win_T *wp)
   bool bot_right = !(win_at_bottom || win_at_right);
 
   if (top_left || top_right) {
-    grid_puts_line_start(&default_grid, wp->w_winrow - 1);
+    grid_line_start(&default_grid, wp->w_winrow - 1);
     if (top_left) {
-      grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_TOP_LEFT),
-                   wp->w_winrow - 1, wp->w_wincol - 1, hl);
+      grid_line_put_schar(wp->w_wincol - 1, get_corner_sep_connector(wp, WC_TOP_LEFT), hl);
     }
     if (top_right) {
-      grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_TOP_RIGHT),
-                   wp->w_winrow - 1, W_ENDCOL(wp), hl);
+      grid_line_put_schar(W_ENDCOL(wp), get_corner_sep_connector(wp, WC_TOP_RIGHT), hl);
     }
-    grid_puts_line_flush(false);
+    grid_line_flush(false);
   }
   if (bot_left || bot_right) {
-    grid_puts_line_start(&default_grid, W_ENDROW(wp));
+    grid_line_start(&default_grid, W_ENDROW(wp));
     if (bot_left) {
-      grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_BOTTOM_LEFT),
-                   W_ENDROW(wp), wp->w_wincol - 1, hl);
+      grid_line_put_schar(wp->w_wincol - 1, get_corner_sep_connector(wp, WC_BOTTOM_LEFT), hl);
     }
     if (bot_right) {
-      grid_putchar(&default_grid, get_corner_sep_connector(wp, WC_BOTTOM_RIGHT),
-                   W_ENDROW(wp), W_ENDCOL(wp), hl);
+      grid_line_put_schar(W_ENDCOL(wp), get_corner_sep_connector(wp, WC_BOTTOM_RIGHT), hl);
     }
-    grid_puts_line_flush(false);
+    grid_line_flush(false);
   }
 }
 
@@ -2384,7 +2382,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
       utf_char2bytes(symbol, &fillbuf[charlen]);
 
       // Last line isn't finished: Display "@@@" in the last screen line.
-      grid_puts_len(&wp->w_grid, fillbuf, MIN(wp->w_grid.cols, 2) * charlen, scr_row, 0, at_attr);
+      grid_puts(&wp->w_grid, fillbuf, MIN(wp->w_grid.cols, 2) * charlen, scr_row, 0, at_attr);
       grid_fill(&wp->w_grid, scr_row, scr_row + 1, 2, wp->w_grid.cols, symbol, ' ', at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;

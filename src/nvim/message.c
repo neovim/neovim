@@ -2004,7 +2004,7 @@ static const char *screen_puts_mbyte(const char *s, int l, int attr)
     return s;
   }
 
-  grid_puts_len(&msg_grid_adj, s, l, msg_row, msg_col, attr);
+  grid_puts(&msg_grid_adj, s, l, msg_row, msg_col, attr);
   if (cmdmsg_rl) {
     msg_col -= cw;
     if (msg_col == 0) {
@@ -2705,7 +2705,7 @@ static void t_puts(int *t_col, const char *t_s, const char *s, int attr)
   attr = hl_combine_attr(HL_ATTR(HLF_MSG), attr);
   // Output postponed text.
   msg_didout = true;  // Remember that line is not empty.
-  grid_puts_len(&msg_grid_adj, t_s, (int)(s - t_s), msg_row, msg_col, attr);
+  grid_puts(&msg_grid_adj, t_s, (int)(s - t_s), msg_row, msg_col, attr);
   msg_col += *t_col;
   *t_col = 0;
   // If the string starts with a composing character don't increment the
@@ -3091,9 +3091,9 @@ void msg_moremsg(int full)
   char *s = _("-- More --");
 
   attr = hl_combine_attr(HL_ATTR(HLF_MSG), HL_ATTR(HLF_M));
-  grid_puts(&msg_grid_adj, s, Rows - 1, 0, attr);
+  grid_puts(&msg_grid_adj, s, -1, Rows - 1, 0, attr);
   if (full) {
-    grid_puts(&msg_grid_adj, _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
+    grid_puts(&msg_grid_adj, _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "), -1,
               Rows - 1, vim_strsize(s), attr);
   }
 }

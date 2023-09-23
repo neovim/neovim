@@ -601,10 +601,10 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
     ScreenGrid *grid = (wild_menu_showing == WM_SCROLLED)
                         ? &msg_grid_adj : &default_grid;
 
-    grid_puts(grid, buf, row, 0, attr);
+    grid_puts(grid, buf, -1, row, 0, attr);
     if (selstart != NULL && highlight) {
       *selend = NUL;
-      grid_puts(grid, selstart, row, selstart_col, HL_ATTR(HLF_WM));
+      grid_puts(grid, selstart, -1, row, selstart_col, HL_ATTR(HLF_WM));
     }
 
     grid_fill(grid, row, row + 1, clen, Columns,
