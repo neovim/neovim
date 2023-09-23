@@ -440,6 +440,16 @@ describe('float window', function()
     eq(5, meths.win_get_option(float_win, 'scroll'))
   end)
 
+  it(':unhide works when there are floating windows #17797', function()
+    local float_opts = {relative = 'editor', row = 1, col = 1, width = 10, height = 10}
+    local w0 = curwin()
+    meths.open_win(0, false, float_opts)
+    meths.open_win(0, false, float_opts)
+    eq(3, #meths.list_wins())
+    command('unhide')
+    eq({ w0 }, meths.list_wins())
+  end)
+
   describe('with only one tabpage,', function()
     local float_opts = {relative = 'editor', row = 1, col = 1, width = 1, height = 1}
     local old_buf, old_win
