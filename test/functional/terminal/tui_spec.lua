@@ -1720,7 +1720,15 @@ describe('TUI', function()
 
   it('no assert failure on deadly signal #21896', function()
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
-    screen:expect({any = '%[Process exited 1%]'})
+    screen:expect{grid=[[
+      Vim: Caught deadly signal 'SIGTERM'               |
+                                                        |
+                                                        |
+      [Process exited 1]{1: }                               |
+                                                        |
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
   end)
 
   it('no stack-use-after-scope with cursor color #22432', function()
@@ -2743,7 +2751,15 @@ describe("TUI as a client", function()
     -- No heap-use-after-free when receiving UI events after deadly signal #22184
     server:request('nvim_input', ('a'):rep(1000))
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
-    screen:expect({any = '%[Process exited 1%]'})
+    screen:expect{grid=[[
+      Vim: Caught deadly signal 'SIGTERM'               |
+                                                        |
+                                                        |
+      [Process exited 1]{1: }                               |
+                                                        |
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
 
     eq(0, meths.get_vvar('shell_error'))
     -- exits on input eof #22244
@@ -2771,7 +2787,7 @@ describe("TUI as a client", function()
     ]])
   end)
 
-  it("exits when server quits", function()
+  local function test_remote_tui_quit(status)
     local server_super = spawn_argv(false) -- equivalent to clear()
     local client_super = spawn_argv(true)
 
@@ -2780,6 +2796,15 @@ describe("TUI as a client", function()
     local screen_server = thelpers.screen_setup(0,
       string.format([=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s laststatus=2 background=dark"]]=],
         nvim_prog, server_pipe, nvim_set))
+    screen_server:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
 
     feed_data("iHello, World")
     screen_server:expect{grid=[[
@@ -2819,13 +2844,40 @@ describe("TUI as a client", function()
 
     -- quitting the server
     set_session(server_super)
-    feed_data(":q!\n")
-    screen_server:expect({any="Process exited 0"})
-
+    feed_data(status and ':' .. status .. 'cquit!\n' or ":quit!\n")
+    status = status and status or 0
+    screen_server:expect{grid=[[
+                                                        |
+      [Process exited ]] .. status .. [[]{1: }{MATCH:%s+}|
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
     -- assert that client has exited
-    screen_client:expect({any="Process exited 0"})
+    screen_client:expect{grid=[[
+                                                        |
+      [Process exited ]] .. status .. [[]{1: }{MATCH:%s+}|
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
 
     server_super:close()
     client_super:close()
+  end
+
+  describe("exits when server quits", function()
+    it("with :quit", function()
+      test_remote_tui_quit()
+    end)
+
+    it("with :cquit", function()
+      test_remote_tui_quit(42)
+    end)
   end)
 end)

@@ -386,6 +386,9 @@ static void terminfo_stop(TUIData *tui)
   unibi_out_ext(tui, tui->unibi_ext.disable_extended_keys);
   // May restore old title before exiting alternate screen.
   tui_set_title(tui, (String)STRING_INIT);
+  if (ui_client_exit_status == 0) {
+    ui_client_exit_status = tui->seen_error_exit;
+  }
   // if nvim exited with nonzero status, without indicated this was an
   // intentional exit (like `:1cquit`), it likely was an internal failure.
   // Don't clobber the stderr error message in this case.

@@ -659,6 +659,9 @@ void os_exit(int r)
 
   if (ui_client_channel_id) {
     ui_client_stop();
+    if (r == 0) {
+      r = ui_client_exit_status;
+    }
   } else {
     ui_flush();
     ui_call_stop();
