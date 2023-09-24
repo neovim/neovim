@@ -506,7 +506,7 @@ func Test_listchars_composing()
   set list
 
   set listchars=eol:$,space:_,nbsp:=
-  
+
   let nbsp1 = nr2char(0xa0)
   let nbsp2 = nr2char(0x202f)
   call append(0, [
@@ -533,22 +533,22 @@ endfunc
 func Test_listchars_window_local()
   %bw!
   set list listchars&
-  let l:default_listchars = &listchars  " Accommodate Nvim default
+  let nvim_default = &listchars  " Accommodate Nvim default
   new
   " set a local value for 'listchars'
   setlocal listchars=tab:+-,eol:#
   call s:CheckListCharsValue('tab:+-,eol:#')
   " When local value is reset, global value should be used
   setlocal listchars=
-  call s:CheckListCharsValue(l:default_listchars)  " Accommodate Nvim default
+  call s:CheckListCharsValue(nvim_default)
   " Use 'setlocal <' to copy global value
   setlocal listchars=space:.,extends:>
   setlocal listchars<
-  call s:CheckListCharsValue(l:default_listchars)  " Accommodate Nvim default
+  call s:CheckListCharsValue(nvim_default)
   " Use 'set <' to copy global value
   setlocal listchars=space:.,extends:>
   set listchars<
-  call s:CheckListCharsValue(l:default_listchars)  " Accommodate Nvim default
+  call s:CheckListCharsValue(nvim_default)
   " Changing global setting should not change the local setting
   setlocal listchars=space:.,extends:>
   setglobal listchars=tab:+-,eol:#
@@ -558,7 +558,7 @@ func Test_listchars_window_local()
   call s:CheckListCharsValue('space:.,extends:>')
   " clearing local value in one window should not change the other window
   set listchars&
-  call s:CheckListCharsValue(l:default_listchars)  " Accommodate Nvim default
+  call s:CheckListCharsValue(nvim_default)
   close
   call s:CheckListCharsValue('space:.,extends:>')
 
