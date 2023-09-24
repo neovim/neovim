@@ -865,6 +865,10 @@ describe('XDG defaults', function()
 end)
 
 describe('stdpath()', function()
+  after_each(function()
+    os.remove(testlog)
+  end)
+
   -- Windows appends 'nvim-data' instead of just 'nvim' to prevent collisions
   -- due to XDG_CONFIG_HOME, XDG_DATA_HOME and XDG_STATE_HOME being the same.
   local function maybe_data(name)
@@ -890,7 +894,7 @@ describe('stdpath()', function()
 
   it('reacts to $NVIM_APPNAME', function()
     local appname = 'NVIM_APPNAME_TEST' .. ('_'):rep(106)
-    clear({ env = { NVIM_APPNAME = appname } })
+    clear({ env = { NVIM_APPNAME = appname, NVIM_LOG_FILE = testlog } })
     eq(appname, fn.fnamemodify(fn.stdpath('config'), ':t'))
     eq(appname, fn.fnamemodify(fn.stdpath('cache'), ':t'))
     eq(maybe_data(appname), fn.fnamemodify(fn.stdpath('log'), ':t'))
@@ -928,6 +932,9 @@ describe('stdpath()', function()
     -- Valid appnames:
     test_appname('a/b', 0)
     test_appname('a/b\\c', 0)
+    if not is_os('win') then
+      assert_log('Failed to start server: no such file or directory:', testlog)
+    end
   end)
 
   describe('returns a String', function()

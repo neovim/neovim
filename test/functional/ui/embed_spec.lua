@@ -13,6 +13,10 @@ local fn = helpers.fn
 local nvim_prog = helpers.nvim_prog
 local retry = helpers.retry
 local write_file = helpers.write_file
+local assert_log = helpers.assert_log
+local is_os = helpers.is_os
+
+local testlog = 'Xtest-embed-log'
 
 local function test_embed(ext_linegrid)
   local screen
@@ -93,13 +97,17 @@ describe('--embed UI on startup (ext_linegrid=false)', function()
 end)
 
 describe('--embed UI', function()
+  after_each(function()
+    os.remove(testlog)
+  end)
+
   it('can pass stdin', function()
     local pipe = assert(uv.pipe())
 
     local writer = assert(uv.new_pipe(false))
     writer:open(pipe.write)
 
-    clear { args_rm = { '--headless' }, io_extra = pipe.read }
+    clear { args_rm = { '--headless' }, io_extra = pipe.read, env = { NVIM_LOG_FILE = testlog } }
 
     -- attach immediately after startup, for early UI
     local screen = Screen.new(40, 8)
@@ -131,6 +139,10 @@ describe('--embed UI', function()
       {1:~                                       }|*4
       {2:-- INSERT --}                            |
     ]]
+
+    if not is_os('win') then
+      assert_log('Failed to get flags on descriptor 3: Bad file descriptor', testlog)
+    end
   end)
 
   it('can pass stdin to -q - #17523', function()
