@@ -3442,9 +3442,20 @@ func Test_closing_autocmd_window()
   END
   call CheckScriptFailure(lines, 'E814:')
   au! BufEnter
-  only!
   bwipe Xa.txt
   bwipe Xb.txt
+endfunc
+
+func Test_switch_window_in_autocmd_window()
+  edit Xa.txt
+  tabnew Xb.txt
+  autocmd BufEnter Xa.txt wincmd w
+  doautoall BufEnter
+  au! BufEnter
+  bwipe Xa.txt
+  call assert_false(bufexists('Xa.txt'))
+  bwipe Xb.txt
+  call assert_false(bufexists('Xb.txt'))
 endfunc
 
 func Test_bufwipeout_changes_window()
