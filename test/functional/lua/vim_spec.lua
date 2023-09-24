@@ -1491,8 +1491,60 @@ describe('lua stdlib', function()
     eq(NIL, funcs.luaeval "vim.v.null")
     matches([[attempt to index .* nil value]],
        pcall_err(exec_lua, 'return vim.v[0].progpath'))
-    eq('Key is read-only: count', pcall_err(exec_lua, 'vim.v.count = 42'))
-    eq('Dictionary is locked', pcall_err(exec_lua, 'vim.v.nosuchvar = 42'))
+    eq('Key is read-only: count', pcall_err(exec_lua, [[vim.v.count = 42]]))
+    eq('Dictionary is locked', pcall_err(exec_lua, [[vim.v.nosuchvar = 42]]))
+    eq('Key is fixed: errmsg', pcall_err(exec_lua, [[vim.v.errmsg = nil]]))
+    exec_lua([[vim.v.errmsg = 'set by Lua']])
+    eq('set by Lua', eval('v:errmsg'))
+    exec_lua([[vim.v.errmsg = 42]])
+    eq('42', eval('v:errmsg'))
+    exec_lua([[vim.v.oldfiles = { 'one', 'two' }]])
+    eq({ 'one', 'two' }, eval('v:oldfiles'))
+    exec_lua([[vim.v.oldfiles = {}]])
+    eq({}, eval('v:oldfiles'))
+    eq('Setting v:oldfiles to value with wrong type', pcall_err(exec_lua, [[vim.v.oldfiles = 'a']]))
+    eq({}, eval('v:oldfiles'))
+
+    feed('i foo foo foo<Esc>0/foo<CR>')
+    eq({1, 1}, meths.win_get_cursor(0))
+    eq(1, eval('v:searchforward'))
+    feed('n')
+    eq({1, 5}, meths.win_get_cursor(0))
+    exec_lua([[vim.v.searchforward = 0]])
+    eq(0, eval('v:searchforward'))
+    feed('n')
+    eq({1, 1}, meths.win_get_cursor(0))
+    exec_lua([[vim.v.searchforward = 1]])
+    eq(1, eval('v:searchforward'))
+    feed('n')
+    eq({1, 5}, meths.win_get_cursor(0))
+
+    local screen = Screen.new(60, 3)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},
+      [1] = {background = Screen.colors.Yellow},
+    })
+    screen:attach()
+    eq(1, eval('v:hlsearch'))
+    screen:expect{grid=[[
+       {1:foo} {1:^foo} {1:foo}                                                |
+      {0:~                                                           }|
+                                                                  |
+    ]]}
+    exec_lua([[vim.v.hlsearch = 0]])
+    eq(0, eval('v:hlsearch'))
+    screen:expect{grid=[[
+       foo ^foo foo                                                |
+      {0:~                                                           }|
+                                                                  |
+    ]]}
+    exec_lua([[vim.v.hlsearch = 1]])
+    eq(1, eval('v:hlsearch'))
+    screen:expect{grid=[[
+       {1:foo} {1:^foo} {1:foo}                                                |
+      {0:~                                                           }|
+                                                                  |
+    ]]}
   end)
 
   it('vim.bo', function()
