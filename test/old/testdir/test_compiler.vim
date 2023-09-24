@@ -7,10 +7,8 @@ func Test_compiler()
   CheckExecutable perl
   CheckFeature quickfix
 
-  " $LANG changes the output of Perl.
-  if $LANG != ''
-    unlet $LANG
-  endif
+  let save_LC_ALL = $LC_ALL
+  let $LC_ALL= "C"
 
   " %:S does not work properly with 'shellslash' set
   let save_shellslash = &shellslash
@@ -40,12 +38,13 @@ func Test_compiler()
   let &shellslash = save_shellslash
   call delete('Xfoo.pl')
   bw!
+  let $LC_ALL = save_LC_ALL
 endfunc
 
 func GetCompilerNames()
   return glob('$VIMRUNTIME/compiler/*.vim', 0, 1)
-       \ ->map({i, v -> substitute(v, '.*[\\/]\([a-zA-Z0-9_\-]*\).vim', '\1', '')})
-       \ ->sort()
+        \ ->map({i, v -> substitute(v, '.*[\\/]\([a-zA-Z0-9_\-]*\).vim', '\1', '')})
+        \ ->sort()
 endfunc
 
 func Test_compiler_without_arg()
