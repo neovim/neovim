@@ -33,6 +33,8 @@ local tbl_map = vim.tbl_map
 local tbl_filter = vim.tbl_filter
 local endswith = vim.endswith
 
+local testlog = 'Xtest-startupspec-log'
+
 describe('startup', function()
   it('--clean', function()
     clear()
@@ -120,6 +122,10 @@ end)
 
 describe('startup', function()
   before_each(clear)
+
+  after_each(function()
+    os.remove(testlog)
+  end)
 
   describe('-l Lua', function()
     local function assert_l_out(expected, nvim_args, lua_args, script, input)
@@ -432,6 +438,7 @@ describe('startup', function()
   end)
 
   it('input from pipe (implicit) #7679', function()
+    clear({ env = { NVIM_LOG_FILE = testlog } })
     local screen = Screen.new(25, 4)
     screen:attach()
     screen._default_attr_ids = nil
@@ -457,6 +464,9 @@ describe('startup', function()
       0 1                      |
                                |
     ]])
+    if not is_os('win') then
+      assert_log('Failed to get flags on descriptor 3: Bad file descriptor', testlog)
+    end
   end)
 
   it('input from pipe + file args #7679', function()
