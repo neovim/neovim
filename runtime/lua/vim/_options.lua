@@ -127,7 +127,7 @@ end
 
 --- @param name string
 local function get_options_info(name)
-  local info = api.nvim_get_option_info(name)
+  local info = api.nvim_get_option_info2(name, {})
   info.metatype = get_option_metatype(name, info)
   return info
 end
