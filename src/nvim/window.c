@@ -749,8 +749,7 @@ win_T *win_new_float(win_T *wp, bool last, FloatConfig fconfig, Error *err)
   if (wp == NULL) {
     wp = win_alloc(last ? lastwin : lastwin_nofloating(), false);
     win_init(wp, curwin, 0);
-    // After win init new wp copied the value from curwin
-    // if new win only have one line shouldn't set wbr value
+    // Don't inherit 'winbar' for 1-line window. #19464
     if (wp->w_p_wbr != NULL && fconfig.height == 1) {
       wp->w_p_wbr = xstrdup("");
     }
