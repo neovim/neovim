@@ -1539,6 +1539,25 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       cts.cts_vcol += charsize;
       prev_ptr = cts.cts_ptr;
       MB_PTR_ADV(cts.cts_ptr);
+      if (wp->w_p_list) {
+        in_multispace = *prev_ptr == ' ' && (*cts.cts_ptr == ' '
+                                             || (prev_ptr > line && prev_ptr[-1] == ' '));
+        if (!in_multispace) {
+          multispace_pos = 0;
+        } else if (cts.cts_ptr >= line + leadcol
+                   && wp->w_p_lcs_chars.multispace != NULL) {
+          multispace_pos++;
+          if (wp->w_p_lcs_chars.multispace[multispace_pos] == NUL) {
+            multispace_pos = 0;
+          }
+        } else if (cts.cts_ptr < line + leadcol
+                   && wp->w_p_lcs_chars.leadmultispace != NULL) {
+          multispace_pos++;
+          if (wp->w_p_lcs_chars.leadmultispace[multispace_pos] == NUL) {
+            multispace_pos = 0;
+          }
+        }
+      }
     }
     wlv.vcol = cts.cts_vcol;
     ptr = cts.cts_ptr;
@@ -2367,9 +2386,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           }
         }
 
-        in_multispace = c == ' ' && ((ptr > line + 1 && ptr[-2] == ' ') || *ptr == ' ');
-        if (!in_multispace) {
-          multispace_pos = 0;
+        if (wp->w_p_list) {
+          in_multispace = c == ' ' && (*ptr == ' '
+                                       || (prev_ptr > line && prev_ptr[-1] == ' '));
+          if (!in_multispace) {
+            multispace_pos = 0;
+          }
         }
 
         // 'list': Change char 160 to 'nbsp' and space to 'space'.
