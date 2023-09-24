@@ -54,15 +54,19 @@ local function check_config()
   health.start('Configuration')
   local ok = true
 
-  local vimrc = (
-    empty(vim.env.MYVIMRC) and vim.fn.stdpath('config') .. '/init.vim' or vim.env.MYVIMRC
-  )
-  if not filereadable(vimrc) then
+  local init_lua = vim.fn.stdpath('config') .. '/init.lua'
+  local init_vim = vim.fn.stdpath('config') .. '/init.vim'
+  local vimrc = empty(vim.env.MYVIMRC) and init_lua or vim.env.MYVIMRC
+
+  if not filereadable(vimrc) and not filereadable(init_vim) then
     ok = false
     local has_vim = filereadable(vim.fn.expand('~/.vimrc'))
     health.warn(
-      (-1 == vim.fn.getfsize(vimrc) and 'Missing' or 'Unreadable') .. ' user config file: ' .. vimrc,
-      { has_vim and ':help nvim-from-vim' or ':help init.vim' }
+      ('%s user config file: %s'):format(
+        -1 == vim.fn.getfsize(vimrc) and 'Missing' or 'Unreadable',
+        vimrc
+      ),
+      { has_vim and ':help nvim-from-vim' or ':help config' }
     )
   end
 
