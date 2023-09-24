@@ -157,7 +157,7 @@ int aborted_in_try(void)
 /// When several messages appear in the same command, the first is usually the
 /// most specific one and used as the exception value.  The "severe" flag can be
 /// set to true, if a later but severer message should be used instead.
-bool cause_errthrow(const char *mesg, bool severe, bool *ignore)
+bool cause_errthrow(const char *mesg, bool multiline, bool severe, bool *ignore)
   FUNC_ATTR_NONNULL_ALL
 {
   msglist_T *elem;
@@ -249,6 +249,7 @@ bool cause_errthrow(const char *mesg, bool severe, bool *ignore)
 
       elem = xmalloc(sizeof(msglist_T));
       elem->msg = xstrdup(mesg);
+      elem->multiline = multiline;
       elem->next = NULL;
       elem->throw_msg = NULL;
       *plist = elem;

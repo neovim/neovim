@@ -640,7 +640,7 @@ int emsg_not_now(void)
   return false;
 }
 
-static bool emsg_multiline(const char *s, bool multiline)
+bool emsg_multiline(const char *s, bool multiline)
 {
   int attr;
   bool ignore = false;
@@ -663,7 +663,7 @@ static bool emsg_multiline(const char *s, bool multiline)
     // be found, the message will be displayed later on.)  "ignore" is set
     // when the message should be ignored completely (used for the
     // interrupt message).
-    if (cause_errthrow(s, severe, &ignore)) {
+    if (cause_errthrow(s, multiline, severe, &ignore)) {
       if (!ignore) {
         did_emsg++;
       }
