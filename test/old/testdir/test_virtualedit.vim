@@ -598,6 +598,9 @@ func Test_virtualedit_mouse()
   call Ntest_setmouse(row, 21 + 15)
   call feedkeys("\<LeftMouse>", "xt")
   call assert_equal([0, 1, 10, 2, 15], getcurpos())
+  call Ntest_setmouse(row, 21 + 20)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 10, 7, 20], getcurpos())
 
   setlocal nowrap
   call setline(2, repeat('a', 19))
@@ -653,6 +656,23 @@ func Test_virtualedit_mouse()
     sign unplace 2
     sign undefine Sign1
   endif
+
+  wincmd h
+  4wincmd >
+  normal! gg24I.
+  redraw
+  call Ntest_setmouse(row + 1, 12)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 24 + 9, 0, 24 + 12], getcurpos())
+  call Ntest_setmouse(row + 1, 13)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 24 + 10, 0, 24 + 13], getcurpos())
+  call Ntest_setmouse(row + 1, 15)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 24 + 10, 2, 24 + 15], getcurpos())
+  call Ntest_setmouse(row + 1, 20)
+  call feedkeys("\<LeftMouse>", "xt")
+  call assert_equal([0, 1, 24 + 10, 7, 24 + 20], getcurpos())
 
   bwipe!
   let &mouse = save_mouse
