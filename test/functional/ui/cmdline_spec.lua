@@ -1021,6 +1021,26 @@ describe('cmdheight=0', function()
     screen:attach()
   end)
 
+  it("with redrawdebug=invalid resize -1", function()
+    command("set redrawdebug=invalid cmdheight=0 noruler laststatus=0")
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]]}
+    feed(":resize -1<CR>")
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]]}
+    assert_alive()
+  end)
+
   it("with cmdheight=1 noruler laststatus=2", function()
     command("set cmdheight=1 noruler laststatus=2")
     screen:expect{grid=[[

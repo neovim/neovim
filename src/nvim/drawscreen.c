@@ -471,7 +471,7 @@ int update_screen(void)
       // non-displayed part of msg_grid is considered invalid.
       for (int i = 0; i < MIN(msg_scrollsize(), msg_grid.rows); i++) {
         grid_clear_line(&msg_grid, msg_grid.line_offset[i],
-                        msg_grid.cols, false);
+                        msg_grid.cols, i < p_ch);
       }
     }
     msg_grid.throttled = false;
