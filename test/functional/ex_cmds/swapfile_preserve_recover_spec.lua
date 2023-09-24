@@ -17,14 +17,13 @@ local pesc = helpers.pesc
 local os_kill = helpers.os_kill
 local set_session = helpers.set_session
 local spawn = helpers.spawn
-local nvim_async = helpers.nvim_async
+local async_meths = helpers.async_meths
 local expect_msg_seq = helpers.expect_msg_seq
 local pcall_err = helpers.pcall_err
 local mkdir = helpers.mkdir
 local poke_eventloop = helpers.poke_eventloop
 local meths = helpers.meths
 local retry = helpers.retry
-local trim = helpers.trim
 local write_file = helpers.write_file
 
 describe(':recover', function()
@@ -113,17 +112,17 @@ describe("preserve and (R)ecover with custom 'directory'", function()
 
   it('killing TUI process without :preserve #22096', function()
     helpers.skip(helpers.is_os('win'))
-    local screen = Screen.new()
-    screen:attach()
+    local screen0 = Screen.new()
+    screen0:attach()
     local child_server = new_pipename()
     funcs.termopen({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--listen', child_server})
-    screen:expect({any = pesc('[No Name]')})  -- Wait for the child process to start.
+    screen0:expect({any = pesc('[No Name]')})  -- Wait for the child process to start.
     local child_session = helpers.connect(child_server)
     set_session(child_session)
     local swappath1 = setup_swapname()
     set_session(nvim0)
     command('call chanclose(&channel)')  -- Kill the child process.
-    screen:expect({any = pesc('[Process exited 1]')})  -- Wait for the child process to stop.
+    screen0:expect({any = pesc('[Process exited 1]')})  -- Wait for the child process to stop.
     test_recover(swappath1)
   end)
 
@@ -204,7 +203,7 @@ describe('swapfile detection', function()
     screen2:expect(expected_no_dialog)
 
     -- With API call and shortmess+=F
-    nvim_async('command', 'edit %')
+    async_meths.command('edit %')
     screen2:expect{any=[[Found a swap file by the name ".*]]
                        ..[[Xtest_swapdialog_dir[/\].*]]..testfile..[[%.swp"]]}
     feed('e')  -- Chose "Edit" at the swap dialog.
@@ -415,13 +414,13 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
                                  '--cmd', init_dir, '--cmd', init_set,
                                  testfile})
     retry(nil, nil, function()
-      eq('[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort:', trim(funcs.getline('$')))
+      eq('[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort:',
+         eval("getline('$')->trim(' ', 2)"))
     end)
     meths.chan_send(chan, 'q')
     retry(nil, nil, function()
-      eq({'', '[Process exited 1]', ''}, {
-        trim(funcs.getline(1)), trim(funcs.getline(2)), trim(funcs.getline('$')),
-      })
+      eq({'', '[Process exited 1]', ''},
+         eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})"))
     end)
   end)
 
@@ -430,13 +429,13 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
                                  '--cmd', init_dir, '--cmd', init_set,
                                  '-p', otherfile, testfile})
     retry(nil, nil, function()
-      eq('[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort:', trim(funcs.getline('$')))
+      eq('[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort:',
+         eval("getline('$')->trim(' ', 2)"))
     end)
     meths.chan_send(chan, 'a')
     retry(nil, nil, function()
-      eq({'', '[Process exited 1]', ''}, {
-        trim(funcs.getline(1)), trim(funcs.getline(2)), trim(funcs.getline('$')),
-      })
+      eq({'', '[Process exited 1]', ''},
+         eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})"))
     end)
   end)
 
@@ -450,17 +449,18 @@ describe('quitting swapfile dialog on startup stops TUI properly', function()
                                  '--cmd', init_dir, '--cmd', init_set,
                                  '--cmd', 'set tags='..otherfile, '-tsecond'})
     retry(nil, nil, function()
-      eq('[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort:', trim(funcs.getline('$')))
+      eq('[O]pen Read-Only, (E)dit anyway, (R)ecover, (D)elete it, (Q)uit, (A)bort:',
+         eval("getline('$')->trim(' ', 2)"))
     end)
     meths.chan_send(chan, 'q')
     retry(nil, nil, function()
-      eq('Press ENTER or type command to continue', trim(funcs.getline('$')))
+      eq('Press ENTER or type command to continue',
+         eval("getline('$')->trim(' ', 2)"))
     end)
     meths.chan_send(chan, '\r')
     retry(nil, nil, function()
-      eq({'', '[Process exited 1]', ''}, {
-        trim(funcs.getline(1)), trim(funcs.getline(2)), trim(funcs.getline('$')),
-      })
+      eq({'', '[Process exited 1]', ''},
+         eval("[1, 2, '$']->map({_, lnum -> getline(lnum)->trim(' ', 2)})"))
     end)
   end)
 end)
