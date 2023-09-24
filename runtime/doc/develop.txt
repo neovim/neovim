@@ -232,10 +232,11 @@ Lua documentation lives in the source code, as docstrings on the function
 definitions.  The |lua-vim| :help is generated from the docstrings.
 
 Docstring format:
-- Use LuaLS annotations: https://github.com/LuaLS/lua-language-server/wiki/Annotations
-- Lines in the main description start with `---`
-- Special tokens start with `---@` followed by the token name:
-  `---@see`, `---@param`, `---@returns`
+- Use LuaLS annotations (with minor adjustments, which will be explained
+  below): https://luals.github.io/wiki/annotations/
+- Lines in the main description start with `--- `
+- Special tokens start with `--- @` followed by the token name: `--- @see`,
+  `--- @param`, `--- @returns`. Note the space between `---` and `@`.
 - Limited markdown is supported.
   - List-items start with `-` (useful to nest or "indent")
 - Use ``` for code samples.
@@ -258,11 +259,11 @@ vim.paste in runtime/lua/vim/_editor.lua like this: >
     --- end)()
     --- ```
     ---
-    ---@see |paste|
+    --- @see |paste|
     ---
-    ---@param lines  ...
-    ---@param phase  ...
-    ---@returns false if client should cancel the paste.
+    --- @param lines  ...
+    --- @param phase  ...
+    --- @returns false if client should cancel the paste.
 
 
 LUA STDLIB DESIGN GUIDELINES				*dev-lua*
