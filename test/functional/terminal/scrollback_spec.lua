@@ -5,7 +5,6 @@ local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
 local feed, testprg = helpers.feed, helpers.testprg
 local eval = helpers.eval
 local command = helpers.command
-local matches = helpers.matches
 local poke_eventloop = helpers.poke_eventloop
 local retry = helpers.retry
 local meths = helpers.meths
@@ -457,8 +456,8 @@ describe("'scrollback' option", function()
     expect_lines(58)
 
     -- Verify off-screen state
-    matches((is_os('win') and '^36: line[ ]*$' or '^35: line[ ]*$'), eval("getline(line('w0') - 1)"))
-    matches((is_os('win') and '^27: line[ ]*$' or '^26: line[ ]*$'), eval("getline(line('w0') - 10)"))
+    eq((is_os('win') and '36: line' or '35: line'), eval("getline(line('w0') - 1)->trim(' ', 2)"))
+    eq((is_os('win') and '27: line' or '26: line'), eval("getline(line('w0') - 10)->trim(' ', 2)"))
   end)
 
   it('deletes extra lines immediately', function()
