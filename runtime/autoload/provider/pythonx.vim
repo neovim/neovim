@@ -62,7 +62,7 @@ endfunction
 " Returns array: [prog_exitcode, prog_version]
 function! s:import_module(prog, module) abort
   let prog_version = system([a:prog, '-W', 'ignore', '-c', printf(
-        \ 'import sys, importlib; ' .
+        \ 'import sys, importlib.util; ' .
         \ 'sys.path = [p for p in sys.path if p != ""]; ' .
         \ 'sys.stdout.write(str(sys.version_info[0]) + "." + str(sys.version_info[1])); ' .
         \ 'sys.exit(2 * int(importlib.util.find_spec("%s") is None))',
