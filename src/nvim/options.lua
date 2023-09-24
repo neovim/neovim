@@ -7239,7 +7239,7 @@ return {
     {
       abbreviation = 'shm',
       cb = 'did_set_shortmess',
-      defaults = { if_true = 'filnxtToOCF' },
+      defaults = { if_true = 'ilnxtToOCF' },
       desc = [=[
         This option helps to avoid all the |hit-enter| prompts caused by file
         messages, for example  with CTRL-G, and to avoid some other messages.

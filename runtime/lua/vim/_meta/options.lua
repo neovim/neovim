@@ -5719,7 +5719,7 @@ vim.bo.sw = vim.bo.shiftwidth
 ---     shm=at	Abbreviation, and truncate message when necessary.
 ---
 --- @type string
-vim.o.shortmess = "filnxtToOCF"
+vim.o.shortmess = "ilnxtToOCF"
 vim.o.shm = vim.o.shortmess
 vim.go.shortmess = vim.o.shortmess
 vim.go.shm = vim.go.shortmess
