@@ -9192,6 +9192,7 @@ function vim.fn.strtrans(string) end
 ---     echo strutf16len('😊')    " returns 2
 ---     echo strutf16len('ą́')    " returns 1
 ---     echo strutf16len('ą́', v:true)  " returns 3
+--- <
 ---
 --- @param string string
 --- @param countcc? 0|1
