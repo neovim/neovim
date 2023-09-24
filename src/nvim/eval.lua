@@ -10973,7 +10973,7 @@ M.funcs = {
           echo strutf16len('😊')		" returns 2
           echo strutf16len('ą́')		" returns 1
           echo strutf16len('ą́', v:true)	" returns 3
-
+      <
     ]=],
     name = 'strutf16len',
     params = { { 'string', 'string' }, { 'countcc', '0|1' } },

@@ -7742,6 +7742,7 @@ strutf16len({string} [, {countcc}])                              *strutf16len()*
 		    echo strutf16len('😊')		" returns 2
 		    echo strutf16len('ą́')		" returns 1
 		    echo strutf16len('ą́', v:true)	" returns 3
+<
 
 strwidth({string})                                                  *strwidth()*
 		The result is a Number, which is the number of display cells
