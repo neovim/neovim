@@ -153,11 +153,6 @@ end)
 
 describe("uncaught exception", function()
   before_each(clear)
-  after_each(function()
-    os.remove('throw1.vim')
-    os.remove('throw2.vim')
-    os.remove('throw3.vim')
-  end)
 
   it('is not forgotten #13490', function()
     command('autocmd BufWinEnter * throw "i am error"')
@@ -173,9 +168,44 @@ describe("uncaught exception", function()
         let result ..= 'X'
       ]]):format(i, i))
     end
+    finally(function()
+      for i = 1, 3 do
+        os.remove('throw' .. i .. '.vim')
+      end
+    end)
+
     command('set runtimepath+=. | let result = ""')
     eq('throw1', exc_exec('try | runtime! throw*.vim | endtry'))
     eq('123', eval('result'))
+  end)
+
+  it('multiline exception remains multiline #25350', function()
+    local screen = Screen.new(80, 11)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, reverse = true};  -- MsgSeparator
+      [2] = {foreground = Screen.colors.White, background = Screen.colors.Red};  -- ErrorMsg
+      [3] = {bold = true, foreground = Screen.colors.SeaGreen};  -- MoreMsg
+    })
+    screen:attach()
+    exec_lua([[
+      function _G.Oops()
+        error("oops")
+      end
+    ]])
+    feed(':try\rlua _G.Oops()\rendtry\r')
+    screen:expect{grid=[[
+      {1:                                                                                }|
+      :try                                                                            |
+      :  lua _G.Oops()                                                                |
+      :  endtry                                                                       |
+      {2:Error detected while processing :}                                               |
+      {2:E5108: Error executing lua [string "<nvim>"]:2: oops}                            |
+      {2:stack traceback:}                                                                |
+      {2:        [C]: in function 'error'}                                                |
+      {2:        [string "<nvim>"]:2: in function 'Oops'}                                 |
+      {2:        [string ":lua"]:1: in main chunk}                                        |
+      {3:Press ENTER or type command to continue}^                                         |
+    ]]}
   end)
 end)
 
