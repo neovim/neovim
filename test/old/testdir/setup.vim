@@ -4,7 +4,6 @@ if exists('s:did_load')
   set commentstring=/*%s*/
   set complete=.,w,b,u,t,i
   set define=^\\s*#\\s*define
-  set directory&
   set directory^=.
   set display=
   set fillchars=vert:\|,foldsep:\|,fold:-
@@ -21,13 +20,10 @@ if exists('s:did_load')
   set shortmess=filnxtToOS
   set sidescroll=0
   set tags=./tags,tags
-  set undodir&
   set undodir^=.
   set wildoptions=
   set startofline
-  set sessionoptions&
   set sessionoptions+=options
-  set viewoptions&
   set viewoptions+=options
   set switchbuf=
   if g:testname !~ 'test_mapping.vim$'
@@ -58,7 +54,6 @@ endfunc
 
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
-
 
 " Make sure 'runtimepath' and 'packpath' does not include $HOME.
 set rtp=$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after
