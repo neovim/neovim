@@ -467,8 +467,8 @@ rust.vim Debugging ~
 		register.
 
 :RustInfoToFile [filename]                                   *:RustInfoToFile*
-		Saves debugging info of the Vim Rust plugin to the the given
-		file, overwritting it.
+		Saves debugging info of the Vim Rust plugin to the given file,
+		overwriting it.
 
 ==============================================================================
 MAPPINGS                                                       *rust-mappings*

@@ -482,7 +482,7 @@ The function will be called with the list of arguments so far, and a second
 argument that is the name of the pty.
 							*gdb-version*
 Only debuggers fully compatible with gdb will work.  Vim uses the GDB/MI
-interface.  The "new-ui" command  requires gdb version 7.12 or later.  if you
+interface.  The "new-ui" command requires gdb version 7.12 or later.  If you
 get this error:
 	Undefined command: "new-ui". Try "help".~
 Then your gdb is too old.
