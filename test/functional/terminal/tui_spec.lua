@@ -29,6 +29,9 @@ local spawn_argv = helpers.spawn_argv
 local set_session = helpers.set_session
 local write_file = helpers.write_file
 local eval = helpers.eval
+local assert_log = helpers.assert_log
+
+local testlog = 'Xtest-tui-log'
 
 if helpers.skip(is_os('win')) then
   return
@@ -3000,6 +3003,10 @@ end)
 -- These tests require `thelpers` because --headless/--embed
 -- does not initialize the TUI.
 describe('TUI as a client', function()
+  after_each(function()
+    os.remove(testlog)
+  end)
+
   it('connects to remote instance (with its own TUI)', function()
     local server_super = spawn_argv(false) -- equivalent to clear()
     local client_super = spawn_argv(true)
@@ -3077,7 +3084,7 @@ describe('TUI as a client', function()
 
   it('connects to remote instance (--headless)', function()
     local server = spawn_argv(false) -- equivalent to clear()
-    local client_super = spawn_argv(true)
+    local client_super = spawn_argv(true, { env = { NVIM_LOG_FILE = testlog } })
 
     set_session(server)
     local server_pipe = api.nvim_get_vvar('servername')
@@ -3120,6 +3127,9 @@ describe('TUI as a client', function()
 
     client_super:close()
     server:close()
+    if is_os('mac') then
+      assert_log('uv_tty_set_mode failed: Unknown system error %-102', testlog)
+    end
   end)
 
   it('throws error when no server exists', function()

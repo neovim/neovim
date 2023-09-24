@@ -7,9 +7,17 @@ local api = helpers.api
 local fn = helpers.fn
 local exec = helpers.exec
 local feed = helpers.feed
+local assert_log = helpers.assert_log
+local is_os = helpers.is_os
+
+local testlog = 'Xtest_autocmd_oldtest_log'
 
 describe('oldtests', function()
   before_each(clear)
+
+  after_each(function()
+    os.remove(testlog)
+  end)
 
   local exec_lines = function(str)
     return fn.split(fn.execute(str), '\n')
@@ -49,6 +57,7 @@ describe('oldtests', function()
   end)
 
   it('should fire on unload buf', function()
+    clear({ env = { NVIM_LOG_FILE = testlog } })
     fn.writefile({ 'Test file Xxx1' }, 'Xxx1')
     fn.writefile({ 'Test file Xxx2' }, 'Xxx2')
     local fname = 'Xtest_functional_autocmd_unload'
@@ -81,6 +90,10 @@ describe('oldtests', function()
     fn.delete('Xxx2')
     fn.delete(fname)
     fn.delete('Xout')
+
+    if is_os('win') then
+      assert_log('stream write failed. RPC canceled; closing channel', testlog)
+    end
   end)
 
   -- oldtest: Test_delete_ml_get_errors()
