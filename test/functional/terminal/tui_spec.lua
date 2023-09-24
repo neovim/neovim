@@ -29,7 +29,7 @@ local spawn_argv = helpers.spawn_argv
 local set_session = helpers.set_session
 local write_file = helpers.write_file
 
-if helpers.skip(helpers.is_os('win')) then return end
+if helpers.skip(is_os('win')) then return end
 
 describe('TUI', function()
   local screen
@@ -67,8 +67,7 @@ describe('TUI', function()
   local function expect_child_buf_lines(expected)
     assert(type({}) == type(expected))
     retry(nil, nil, function()
-      local _, buflines = child_session:request(
-        'nvim_buf_get_lines', 0, 0, -1, false)
+      local _, buflines = child_session:request('nvim_buf_get_lines', 0, 0, -1, false)
       eq(expected, buflines)
     end)
   end
@@ -319,13 +318,13 @@ describe('TUI', function()
     local attrs = screen:get_default_attr_ids()
     attrs[11] = {foreground = 81}
     screen:expect([[
-    {11:^G^V^M}{1: }                                           |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {5:[No Name] [+]                                     }|
-    {3:-- INSERT --}                                      |
-    {3:-- TERMINAL --}                                    |
+      {11:^G^V^M}{1: }                                           |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
     ]], attrs)
   end)
 
@@ -949,8 +948,7 @@ describe('TUI', function()
     ]])
     -- Dot-repeat/redo.
     feed_data('2.')
-    expect_child_buf_lines(
-      {'"pasted from terminapasted from terminalpasted from terminall"'})
+    expect_child_buf_lines({'"pasted from terminapasted from terminalpasted from terminall"'})
     screen:expect([[
       "pasted from terminapasted from terminalpasted fro|
       m termina{1:l}l"                                      |
@@ -1003,13 +1001,13 @@ describe('TUI', function()
       'this is line 2',
       'line 3 is here',
       '',
-      }
+    }
     -- Redo.
     feed_data('\18')  -- <C-r>
     expect_child_buf_lines{
       'thisjust paste it™3 is here',
       '',
-      }
+    }
   end)
 
   it('paste: terminal mode', function()
@@ -1071,17 +1069,15 @@ describe('TUI', function()
     screen:expect{grid=expected_grid1, attr_ids=expected_attr}
     -- Dot-repeat/redo.
     feed_data('.')
-    screen:expect{
-      grid=[[
-        ESC:{11:^[} / CR:                                      |
-        xline 1                                           |
-        ESC:{11:^[} / CR:                                      |
-        {1:x}                                                 |
-        {5:[No Name] [+]                   5,1            Bot}|
-                                                          |
-        {3:-- TERMINAL --}                                    |
-      ]],
-      attr_ids=expected_attr}
+    screen:expect{grid=[[
+      ESC:{11:^[} / CR:                                      |
+      xline 1                                           |
+      ESC:{11:^[} / CR:                                      |
+      {1:x}                                                 |
+      {5:[No Name] [+]                   5,1            Bot}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]], attr_ids=expected_attr}
     -- Undo.
     feed_data('u')
     expect_child_buf_lines(expected_crlf)
@@ -1368,8 +1364,7 @@ describe('TUI', function()
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
-    ]],
-    attr_ids={
+    ]], attr_ids={
       [1] = {reverse = true},
       [2] = {background = tonumber('0x00000b')},
       [3] = {bold = true},
@@ -1548,7 +1543,7 @@ describe('TUI', function()
 
   it('forwards :term palette colors with termguicolors', function()
     if is_ci('github') then
-        pending("tty-test complains about not owning the terminal -- actions/runner#241")
+      pending("tty-test complains about not owning the terminal -- actions/runner#241")
     end
     screen:set_rgb_cterm(true)
     screen:set_default_attr_ids({
@@ -1599,26 +1594,26 @@ describe('TUI', function()
     local exp_term = is_os('bsd') and 'builtin_xterm' or 'xterm-256color'
     local expected = {
       {
-         chan = 1,
-         ext_cmdline = false,
-         ext_hlstate = false,
-         ext_linegrid = true,
-         ext_messages = false,
-         ext_multigrid = false,
-         ext_popupmenu = false,
-         ext_tabline = false,
-         ext_termcolors = true,
-         ext_wildmenu = false,
-         height = 6,
-         override = false,
-         rgb = false,
-         stdin_tty = true,
-         stdout_tty = true,
-         term_background = '',
-         term_colors = 256,
-         term_name = exp_term,
-         width = 50
-       },
+        chan = 1,
+        ext_cmdline = false,
+        ext_hlstate = false,
+        ext_linegrid = true,
+        ext_messages = false,
+        ext_multigrid = false,
+        ext_popupmenu = false,
+        ext_tabline = false,
+        ext_termcolors = true,
+        ext_wildmenu = false,
+        height = 6,
+        override = false,
+        rgb = false,
+        stdin_tty = true,
+        stdout_tty = true,
+        term_background = '',
+        term_colors = 256,
+        term_name = exp_term,
+        width = 50
+      },
     }
     local _, rv = child_session:request('nvim_list_uis')
     eq(expected, rv)
@@ -1639,8 +1634,8 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]]
-    -- When grid assumes "℃" to be double-width but host terminal assumes it to be single-width, the
-    -- second cell of "℃" is a space and the attributes of the "℃" are applied to it.
+    -- When grid assumes "℃" to be double-width but host terminal assumes it to be single-width,
+    -- the second cell of "℃" is a space and the attributes of the "℃" are applied to it.
     local doublewidth_screen = [[
       {13:℃}{12: ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ }|
       {12:℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ ℃ }|
@@ -1662,7 +1657,7 @@ describe('TUI', function()
   end)
 
   it('draws correctly when cursor_address overflows #21643', function()
-    helpers.skip(helpers.is_os('mac'), 'FIXME: crashes/errors on macOS')
+    helpers.skip(is_os('mac'), 'FIXME: crashes/errors on macOS')
     screen:try_resize(77, 855)
     retry(nil, nil, function()
       eq({true, 852}, {child_session:request('nvim_win_get_height', 0)})
@@ -2173,7 +2168,7 @@ describe("TUI 't_Co' (terminal colors)", function()
   local screen
 
   local function assert_term_colors(term, colorterm, maxcolors)
-    helpers.clear({env={TERM=term}, args={}})
+    clear({env={TERM=term}, args={}})
     -- This is ugly because :term/termopen() forces TERM=xterm-256color.
     -- TODO: Revisit this after jobstart/termopen accept `env` dict.
     screen = thelpers.screen_setup(0, string.format(
@@ -2538,29 +2533,28 @@ describe("TUI", function()
 
 end)
 
+-- See test/unit/tui_spec.lua for unit tests.
 describe('TUI bg color', function()
   local screen
 
-  local function setup()
-    -- Only single integration test.
-    -- See test/unit/tui_spec.lua for unit tests.
+  local function setup_bg_test()
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
       ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile", '
       ..'"-c", "autocmd OptionSet background echo \\"did OptionSet, yay!\\""]')
   end
 
-  before_each(setup)
+  before_each(setup_bg_test)
 
   it('triggers OptionSet event on unsplit terminal-response', function()
     screen:expect([[
-    {1: }                                                 |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {5:[No Name]                       0,0-1          All}|
-                                                      |
-    {3:-- TERMINAL --}                                    |
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                       0,0-1          All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027]11;rgb:ffff/ffff/ffff\007')
     screen:expect{any='did OptionSet, yay!'}
@@ -2568,15 +2562,15 @@ describe('TUI bg color', function()
     feed_data(':echo "new_bg=".&background\n')
     screen:expect{any='new_bg=light'}
 
-    setup()
+    setup_bg_test()
     screen:expect([[
-    {1: }                                                 |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {5:[No Name]                       0,0-1          All}|
-                                                      |
-    {3:-- TERMINAL --}                                    |
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                       0,0-1          All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027]11;rgba:ffff/ffff/ffff/8000\027\\')
     screen:expect{any='did OptionSet, yay!'}
@@ -2587,13 +2581,13 @@ describe('TUI bg color', function()
 
   it('triggers OptionSet event with split terminal-response', function()
     screen:expect([[
-    {1: }                                                 |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {5:[No Name]                       0,0-1          All}|
-                                                      |
-    {3:-- TERMINAL --}                                    |
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                       0,0-1          All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
     ]])
     -- Send a background response with the OSC command part split.
     feed_data('\027]11;rgb')
@@ -2603,15 +2597,15 @@ describe('TUI bg color', function()
     feed_data(':echo "new_bg=".&background\n')
     screen:expect{any='new_bg=light'}
 
-    setup()
+    setup_bg_test()
     screen:expect([[
-    {1: }                                                 |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {5:[No Name]                       0,0-1          All}|
-                                                      |
-    {3:-- TERMINAL --}                                    |
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                       0,0-1          All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
     ]])
     -- Send a background response with the Pt portion split.
     feed_data('\027]11;rgba:ffff/fff')
@@ -2624,13 +2618,13 @@ describe('TUI bg color', function()
 
   it('not triggers OptionSet event with invalid terminal-response', function()
     screen:expect([[
-    {1: }                                                 |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {5:[No Name]                       0,0-1          All}|
-                                                      |
-    {3:-- TERMINAL --}                                    |
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                       0,0-1          All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027]11;rgb:ffff/ffff/ffff/8000\027\\')
     screen:expect_unchanged()
@@ -2638,15 +2632,15 @@ describe('TUI bg color', function()
     feed_data(':echo "new_bg=".&background\n')
     screen:expect{any='new_bg=dark'}
 
-    setup()
+    setup_bg_test()
     screen:expect([[
-    {1: }                                                 |
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {4:~                                                 }|
-    {5:[No Name]                       0,0-1          All}|
-                                                      |
-    {3:-- TERMINAL --}                                    |
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                       0,0-1          All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027]11;rgba:ffff/foo/ffff/8000\007')
     screen:expect_unchanged()
@@ -2726,7 +2720,7 @@ describe("TUI as a client", function()
   end)
 
   it("connects to remote instance (--headless)", function()
-    local server = helpers.spawn_argv(false) -- equivalent to clear()
+    local server = spawn_argv(false) -- equivalent to clear()
     local client_super = spawn_argv(true)
 
     set_session(server)
@@ -2734,11 +2728,11 @@ describe("TUI as a client", function()
     server:request('nvim_input', 'iHalloj!<Esc>')
 
     set_session(client_super)
-    local screen = thelpers.screen_setup(0,
+    local screen_client = thelpers.screen_setup(0,
       string.format([=[["%s", "--server", "%s", "--remote-ui"]]=],
                     nvim_prog, server_pipe))
 
-    screen:expect{grid=[[
+    screen_client:expect{grid=[[
       Halloj{1:!}                                           |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -2751,7 +2745,7 @@ describe("TUI as a client", function()
     -- No heap-use-after-free when receiving UI events after deadly signal #22184
     server:request('nvim_input', ('a'):rep(1000))
     exec_lua([[vim.uv.kill(vim.fn.jobpid(vim.bo.channel), 'sigterm')]])
-    screen:expect{grid=[[
+    screen_client:expect{grid=[[
       Vim: Caught deadly signal 'SIGTERM'               |
                                                         |
                                                         |
@@ -2865,7 +2859,6 @@ describe("TUI as a client", function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]]}
-
 
     server_super:close()
     client_super:close()
