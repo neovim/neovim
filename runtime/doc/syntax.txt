@@ -5322,8 +5322,6 @@ SpellRare	Word that is recognized by the spellchecker as one that is
 StatusLine	Status line of current window.
 							*hl-StatusLineNC*
 StatusLineNC	Status lines of not-current windows.
-		Note: If this is equal to "StatusLine", Vim will use "^^^" in
-		the status line of the current window.
 							*hl-TabLine*
 TabLine		Tab pages line, not active tab page label.
 							*hl-TabLineFill*
