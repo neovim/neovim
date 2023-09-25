@@ -2810,7 +2810,7 @@ describe('builtin popupmenu', function()
                              │                    |
           {1:                  ~}│{1:                   ~}|
           {s:define         }{c: }{1:  ~}│{1:                   ~}|
-          {n:jump           }{s: }{3:    }{4:[No Name] [+]       }|
+          {n:jump           }{s: }{3:   ▐}{4:[No Name] [+]       }|
           define^                                  |
         ]])
       end

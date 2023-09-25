@@ -652,7 +652,7 @@ describe('local winbar with tabs', function()
     ]])
     command('tabnext')
     screen:expect{grid=[[
-      {1: [No Name]▐}{4: [No Name] }{2:                                     }{4:X}|
+      {1: [No Name] }{4: [No Name] }{2:                                     }{4:X}|
       {1:foo                                                         }|
       ^                                                            |
       {3:~                                                           }|
@@ -686,7 +686,7 @@ describe('local winbar with tabs', function()
     -- this used to throw an E315 ml_get error
     command 'tabedit'
     screen:expect{grid=[[
-      {4: + [No Name]▐}{1: [No Name] }{2:                                   }{4:X}|
+      {4: + [No Name] }{1: [No Name] }{2:                                   }{4:X}|
       ^                                                            |
       {3:~                                                           }|
       {3:~                                                           }|

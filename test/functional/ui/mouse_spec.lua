@@ -924,7 +924,7 @@ describe('ui/mouse/input', function()
       {0:~                         }│lines                     |
       {0:~                         }│to                        |
       {0:~                         }│test                      |
-      {5:[No Name] [+]              }{4:[No Name] [+]             }|
+      {5:[No Name] [+]             ▐}{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
       mouse scrolling                                      |
@@ -946,13 +946,13 @@ describe('ui/mouse/input', function()
       {0:~                         }│lines                     |
       {0:~                         }│to                        |
       {0:~                         }│test                      |
-      {5:[No Name] [+]              }{4:[No Name] [+]             }|
+      {5:[No Name] [+]             ▐}{4:[No Name] [+]             }|
       Inserting                                            |
       text                                                 |
       with                                                 |
       many                                                 |
       lines                                                |
-      {4:[No Name] [+]                                       ▐}|
+      {4:[No Name] [+]                                        }|
       :vsp                                                 |
     ]])
   end
