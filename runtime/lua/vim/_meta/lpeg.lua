@@ -7,7 +7,9 @@
 vim.lpeg = {}
 
 --- @class vim.lpeg.Pattern
+--- @operator unm: vim.lpeg.Pattern
 --- @operator add(vim.lpeg.Pattern): vim.lpeg.Pattern
+--- @operator sub(vim.lpeg.Pattern): vim.lpeg.Pattern
 --- @operator mul(vim.lpeg.Pattern): vim.lpeg.Pattern
 --- @operator mul(vim.lpeg.Capture): vim.lpeg.Pattern
 --- @operator div(string): vim.lpeg.Capture
@@ -15,17 +17,10 @@ vim.lpeg = {}
 --- @operator div(table): vim.lpeg.Capture
 --- @operator div(function): vim.lpeg.Capture
 --- @operator pow(number): vim.lpeg.Pattern
+--- @operator mod(function): nil
 local Pattern = {}
 
 --- @alias vim.lpeg.Capture vim.lpeg.Pattern
---- @operator add(vim.lpeg.Capture): vim.lpeg.Pattern
---- @operator mul(vim.lpeg.Capture): vim.lpeg.Pattern
---- @operator mul(vim.lpeg.Pattern): vim.lpeg.Pattern
---- @operator div(string): vim.lpeg.Capture
---- @operator div(number): vim.lpeg.Capture
---- @operator div(table): vim.lpeg.Capture
---- @operator div(function): vim.lpeg.Capture
---- @operator pow(number): vim.lpeg.Pattern
 
 --- Matches the given `pattern` against the `subject` string. If the match succeeds, returns the index in the
 --- subject of the first character after the match, or the captured values (if the pattern captured any value).
