@@ -105,7 +105,7 @@ void filemess(buf_T *buf, char *name, char *s, int attr)
   // For further ones overwrite the previous one, reset msg_scroll before
   // calling filemess().
   msg_scroll_save = msg_scroll;
-  if (shortmess(SHM_OVERALL) && !exiting && p_verbose == 0) {
+  if (shortmess(SHM_OVERALL) && !msg_listdo_overwrite && !exiting && p_verbose == 0) {
     msg_scroll = false;
   }
   if (!msg_scroll) {    // wait a bit when overwriting an error msg
@@ -316,7 +316,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
     }
   }
 
-  if ((shortmess(SHM_OVER) || curbuf->b_help) && p_verbose == 0) {
+  if (((shortmess(SHM_OVER) && !msg_listdo_overwrite) || curbuf->b_help) && p_verbose == 0) {
     msg_scroll = false;         // overwrite previous file message
   } else {
     msg_scroll = true;          // don't overwrite previous file message
