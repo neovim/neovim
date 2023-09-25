@@ -180,6 +180,12 @@ void win_redr_status(win_T *wp)
   if (wp->w_vsep_width != 0 && wp->w_status_height != 0 && redrawing()) {
     if (stl_connected(wp)) {
       fillchar = fillchar_status(&attr, wp);
+
+      // If stl/stlnc and vert is default replace corner with half block
+      if (fillchar == ' '
+          && (wp->w_p_fcs_chars.vert == utf_ptr2char("│") || wp->w_p_fcs_chars.vert == '|')) {
+          fillchar = utf_ptr2char("▐");
+      }
     } else {
       attr = win_hl_attr(wp, HLF_C);
       fillchar = wp->w_p_fcs_chars.vert;
