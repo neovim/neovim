@@ -539,10 +539,10 @@ set to "dos", otherwise it is set to "unix".  When 'fileformats' includes
 "mac".
 
 If the 'fileformat' option is set to "dos" on non-MS-Windows systems the
-message "[dos format]" is shown to remind you that something unusual is
-happening.  On MS-Windows systems you get the message "[unix format]" if
-'fileformat' is set to "unix".  On all systems but the Macintosh you get the
-message "[mac format]" if 'fileformat' is set to "mac".
+message "[dos]" is shown to remind you that something unusual is happening.  On
+MS-Windows systems you get the message "[unix]" if 'fileformat' is set to
+"unix".  On all systems you get the message "[mac]" if 'fileformat' is set to
+"mac".
 
 If the 'fileformats' option is empty and DOS format is used, but while reading
 a file some lines did not end in <CR><NL>, "[CR missing]" will be included in
@@ -1056,14 +1056,14 @@ lost the original file.
 
 						*DOS-format-write*
 If the 'fileformat' is "dos", <CR><NL> is used for <EOL>.  This is default
-for Windows. On other systems the message "[dos format]" is shown to
+for Windows. On other systems the message "[dos]" is shown to
 remind you that an unusual <EOL> was used.
 						*Unix-format-write*
 If the 'fileformat' is "unix", <NL> is used for <EOL>.  On Windows
-the message "[unix format]" is shown.
+the message "[unix]" is shown.
 						*Mac-format-write*
-If the 'fileformat' is "mac", <CR> is used for <EOL>.  On non-Mac systems the
-message "[mac format]" is shown.
+If the 'fileformat' is "mac", <CR> is used for <EOL>.  The
+message "[mac]" is shown.
 
 See also |file-formats| and the 'fileformat' and 'fileformats' options.
 

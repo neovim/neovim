@@ -247,8 +247,11 @@ The following deprecated functions or APIs were removed.
 
 • Support for legacy treesitter injection queries is removed.
 
-• 'shortmess' flags:
-  - |shm-f| is removed. Always uses "(3 of 5)", never "(file 3 of 5)"
+• Removed 'shortmess' flags:
+  - |shm-f|. Always uses "(3 of 5)", never "(file 3 of 5)"
+  - |shm-i|. Always use "[noeol]".
+  - |shm-x|. Always use "[dos]", "[unix]" and "[mac]"
+  - |shm-n|. Always use "[New]".
 
 ==============================================================================
 DEPRECATIONS                                                *news-deprecations*

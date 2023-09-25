@@ -1766,11 +1766,11 @@ restore_backup:
       xstrlcat(IObuff, _("[Device]"), IOSIZE);
       insert_space = true;
     } else if (newfile) {
-      xstrlcat(IObuff, new_file_message(), IOSIZE);
+      xstrlcat(IObuff, _("[New]"), IOSIZE);
       insert_space = true;
     }
     if (no_eol) {
-      msg_add_eol();
+      xstrlcat(IObuff, _("[noeol]"), IOSIZE);
       insert_space = true;
     }
     // may add [unix/dos/mac]
