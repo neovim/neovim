@@ -888,7 +888,7 @@ end
 --- Example:
 ---
 --- ```lua
---- local hl_normal = vim.print(vim.api.nvim_get_hl_by_name('Normal', true))
+--- local hl_normal = vim.print(vim.api.nvim_get_hl(0, { name = 'Normal' }))
 --- ```
 ---
 --- @see |vim.inspect()|

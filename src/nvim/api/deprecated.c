@@ -518,6 +518,7 @@ static int64_t convert_index(int64_t index)
 /// @return         Option Information
 Dictionary nvim_get_option_info(String name, Error *err)
   FUNC_API_SINCE(7)
+  FUNC_API_DEPRECATED_SINCE(11)
 {
   return get_vimoption(name, OPT_GLOBAL, curbuf, curwin, err);
 }
@@ -531,6 +532,7 @@ Dictionary nvim_get_option_info(String name, Error *err)
 /// @param[out] err Error details, if any
 void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_DEPRECATED_SINCE(11)
 {
   set_option_to(channel_id, NULL, SREQ_GLOBAL, name, value, err);
 }
@@ -543,6 +545,7 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
 /// @return         Option value (global)
 Object nvim_get_option(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_DEPRECATED_SINCE(11)
 {
   return get_option_from(NULL, SREQ_GLOBAL, name, err);
 }
@@ -556,6 +559,7 @@ Object nvim_get_option(String name, Arena *arena, Error *err)
 /// @return Option value
 Object nvim_buf_get_option(Buffer buffer, String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_DEPRECATED_SINCE(11)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -577,6 +581,7 @@ Object nvim_buf_get_option(Buffer buffer, String name, Arena *arena, Error *err)
 /// @param[out] err   Error details, if any
 void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_DEPRECATED_SINCE(11)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -596,6 +601,7 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object
 /// @return Option value
 Object nvim_win_get_option(Window window, String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_DEPRECATED_SINCE(11)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -617,6 +623,7 @@ Object nvim_win_get_option(Window window, String name, Arena *arena, Error *err)
 /// @param[out] err Error details, if any
 void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_DEPRECATED_SINCE(11)
 {
   win_T *win = find_window_by_handle(window, err);
 
