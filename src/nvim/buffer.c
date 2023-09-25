@@ -3182,7 +3182,7 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
                    (curbuf->b_flags & BF_NOTEDITED) && !dontwrite
                    ? _("[Not edited]") : "",
                    (curbuf->b_flags & BF_NEW) && !dontwrite
-                   ? new_file_message() : "",
+                   ? _("[New]") : "",
                    (curbuf->b_flags & BF_READERR)
                    ? _("[Read errors]") : "",
                    curbuf->b_p_ro

@@ -240,11 +240,7 @@ typedef enum {
 enum {
   SHM_RO             = 'r',  ///< Readonly.
   SHM_MOD            = 'm',  ///< Modified.
-  SHM_FILE           = 'f',  ///< (file 1 of 2)
-  SHM_LAST           = 'i',  ///< Last line incomplete.
-  SHM_TEXT           = 'x',  ///< tx instead of textmode.
   SHM_LINES          = 'l',  ///< "L" instead of "lines".
-  SHM_NEW            = 'n',  ///< "[New]" instead of "[New file]".
   SHM_WRI            = 'w',  ///< "[w]" instead of "written".
   SHM_ABBREVIATIONS  = 'a',  ///< Use abbreviations from #SHM_ALL_ABBREVIATIONS.
   SHM_WRITE          = 'W',  ///< Don't use "written" at all.
@@ -260,11 +256,10 @@ enum {
   SHM_RECORDING      = 'q',  ///< Short recording message.
   SHM_FILEINFO       = 'F',  ///< No file info messages.
   SHM_SEARCHCOUNT    = 'S',  ///< No search stats: '[1/10]'
-  SHM_LEN            = 30,   ///< Max length of all flags together plus a NUL character.
 };
 /// Represented by 'a' flag.
 #define SHM_ALL_ABBREVIATIONS ((char[]) { \
-    SHM_RO, SHM_MOD, SHM_FILE, SHM_LAST, SHM_TEXT, SHM_LINES, SHM_NEW, SHM_WRI, \
+    SHM_RO, SHM_MOD, SHM_LINES, SHM_WRI, \
     0 })
 
 // characters for p_go:

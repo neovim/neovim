@@ -40,7 +40,7 @@ blank window. This is what your screen will look like:
 	|~					|
 	|~					|
 	|~					|
-	|"file.txt" [New file]			|
+	|"file.txt" [New]			|
 	+---------------------------------------+
 		('#' is the cursor position.)
 <
