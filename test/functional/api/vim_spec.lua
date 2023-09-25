@@ -2053,6 +2053,19 @@ describe('API', function()
   end)
 
   describe('nvim_out_write', function()
+    local screen
+
+    before_each(function()
+      screen = Screen.new(40, 8)
+      screen:attach()
+      screen:set_default_attr_ids({
+        [0] = {bold = true, foreground = Screen.colors.Blue},
+        [1] = {bold = true, foreground = Screen.colors.SeaGreen},
+        [2] = {bold = true, reverse = true},
+        [3] = {foreground = Screen.colors.Blue},
+      })
+    end)
+
     it('prints long messages correctly #20534', function()
       exec([[
         set more
@@ -2073,14 +2086,7 @@ describe('API', function()
       eq('\naaa\n' .. ('a'):rep(5002) .. '\naaa', meths.get_var('out'))
     end)
 
-    it('blank line in message works', function()
-      local screen = Screen.new(40, 8)
-      screen:attach()
-      screen:set_default_attr_ids({
-        [0] = {bold = true, foreground = Screen.colors.Blue},
-        [1] = {bold = true, foreground = Screen.colors.SeaGreen},
-        [2] = {bold = true, reverse = true},
-      })
+    it('blank line in message', function()
       feed([[:call nvim_out_write("\na\n")<CR>]])
       screen:expect{grid=[[
                                                 |
@@ -2102,6 +2108,20 @@ describe('API', function()
         b                                       |
                                                 |
         c                                       |
+        {1:Press ENTER or type command to continue}^ |
+      ]]}
+    end)
+
+    it('NUL bytes in message', function()
+      feed([[:lua vim.api.nvim_out_write('aaa\0bbb\0\0ccc\nddd\0\0\0eee\n')<CR>]])
+      screen:expect{grid=[[
+                                                |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {2:                                        }|
+        aaa{3:^@}bbb{3:^@^@}ccc                         |
+        ddd{3:^@^@^@}eee                            |
         {1:Press ENTER or type command to continue}^ |
       ]]}
     end)
@@ -2192,6 +2212,20 @@ describe('API', function()
         {2:Press ENTER or type command to continue}^ |
       ]])
       feed('<cr>')  -- exit the press ENTER screen
+    end)
+
+    it('NUL bytes in message', function()
+      nvim_async('err_write', 'aaa\0bbb\0\0ccc\nddd\0\0\0eee\n')
+      screen:expect{grid=[[
+                                                |
+        {0:~                                       }|
+        {0:~                                       }|
+        {0:~                                       }|
+        {3:                                        }|
+        {1:aaa^@bbb^@^@ccc}                         |
+        {1:ddd^@^@^@eee}                            |
+        {2:Press ENTER or type command to continue}^ |
+      ]]}
     end)
   end)
 

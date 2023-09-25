@@ -1709,6 +1709,8 @@ static void write_msg(String message, bool to_err, bool writeln)
     msg_didout = true; \
     kv_drop(line_buf, kv_size(line_buf)); \
     kv_resize(line_buf, LINE_BUFFER_MIN_SIZE); \
+  } else if (c == NUL) { \
+    kv_push(line_buf, NL); \
   } else { \
     kv_push(line_buf, c); \
   }
