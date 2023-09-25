@@ -3671,7 +3671,7 @@ endfunc
 func SetupVimTest_shm()
   let g:bwe = []
   let g:brp = []
-  set shortmess+=F
+  set shortmess-=l
   messages clear
 
   let dirname='XVimTestSHM'
