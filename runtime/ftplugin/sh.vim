@@ -39,8 +39,7 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
 
-if (exists("b:is_bash") && (b:is_bash == 1)) ||
-      \ (exists("b:is_sh") && (b:is_sh == 1))
+if (exists("b:is_bash") && (b:is_bash == 1))
   if !has("gui_running") && executable("less")
     command! -buffer -nargs=1 Help silent exe '!bash -c "{ help "<args>" 2>/dev/null || man "<args>"; } | LESS= less"' | redraw!
   elseif has('terminal')
