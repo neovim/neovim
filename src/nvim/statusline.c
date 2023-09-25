@@ -184,7 +184,7 @@ void win_redr_status(win_T *wp)
       // If stl/stlnc and vert is default replace corner with half block
       if (fillchar == ' '
           && (wp->w_p_fcs_chars.vert == utf_ptr2char("│") || wp->w_p_fcs_chars.vert == '|')) {
-          fillchar = utf_ptr2char("▐");
+        fillchar = utf_ptr2char("▐");
       }
     } else {
       attr = win_hl_attr(wp, HLF_C);
