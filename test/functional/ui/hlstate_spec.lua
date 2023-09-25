@@ -82,7 +82,7 @@ describe('ext_hlstate detailed highlights', function()
       {2:~                   }{1:│}{2:~                  }|
       {2:~                   }{1:│}{2:~                  }|
       {2:~                   }{1:│}{2:~                  }|
-      {3:[No Name]            }{4:[No Name]          }|
+      {3:[No Name]           ▐}{4:[No Name]          }|
       {7:                                        }|
     ]])
 
@@ -94,7 +94,7 @@ describe('ext_hlstate detailed highlights', function()
       {2:~                   }{1:│}{2:~                  }|
       {2:~                   }{1:│}{2:~                  }|
       {2:~                   }{1:│}{2:~                  }|
-      {5:[No Name]            }{6:[No Name]          }|
+      {5:[No Name]           ▐}{6:[No Name]          }|
       {7:                                        }|
     ]])
 
@@ -107,7 +107,7 @@ describe('ext_hlstate detailed highlights', function()
       {2:~                  }{1:│}{2:~                   }|
       {2:~                  }{1:│}{2:~                   }|
       {2:~                  }{1:│}{2:~                   }|
-      {6:[No Name]           }{5:[No Name]           }|
+      {6:[No Name]          ▐}{5:[No Name]           }|
       {7:                                        }|
     ]])
 

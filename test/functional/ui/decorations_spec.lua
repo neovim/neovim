@@ -1456,7 +1456,7 @@ describe('extmark decorations', function()
       {37:  }ddddd                   │{37:  }ddddd                   |
       {37:  }eeeee                   │{37:  }eeee^e                   |
       {1:~                         }│{1:~                         }|
-      {40:[No Name] [+]              }{41:[No Name] [+]             }|
+      {40:[No Name] [+]             ▐}{41:[No Name] [+]             }|
                                                            |
     ]]}
     command('windo set wrap')
@@ -2877,7 +2877,7 @@ describe('decorations: inline virtual text', function()
       {9:aaabbb                   }│{14:!}{9:aaa}{5:    }{9:bbb             }|
       {1:~                        }│{1:~                       }|
       {1:~                        }│{1:~                       }|
-      {15:[No Name] [+]             }{13:[No Name] [+]           }|
+      {15:[No Name] [+]            ▐}{13:[No Name] [+]           }|
                                                         |
     ]]}
     command('wincmd w | set nowrap')
@@ -2891,7 +2891,7 @@ describe('decorations: inline virtual text', function()
       {9:aaabbb                   }│{9:aaa}{5:    }{9:bb^b              }|
       {1:~                        }│{1:~                       }|
       {1:~                        }│{1:~                       }|
-      {13:[No Name] [+]             }{15:[No Name] [+]           }|
+      {13:[No Name] [+]            ▐}{15:[No Name] [+]           }|
                                                         |
     ]]}
   end)

@@ -244,7 +244,7 @@ local function screen_tests(linegrid)
           {0:~                   }│{0:~               }│{0:~              }|
           {0:~                   }│{0:~               }│{0:~              }|
           {0:~                   }│{0:~               }│{0:~              }|
-          {1:[No Name]            }{3:[No Name]        [No Name]      }|
+          {1:[No Name]           ▐}{3:[No Name]       ▐[No Name]      }|
                                                                |
           {0:~                                                    }|
           {0:~                                                    }|
@@ -261,7 +261,7 @@ local function screen_tests(linegrid)
           {0:~                   }│{0:~               }│{0:~              }|
           {0:~                   }│{0:~               }│{0:~              }|
           {0:~                   }│{0:~               }│{0:~              }|
-          {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
+          {1:[No Name] [+]       ▐}{3:[No Name] [+]   ▐[No Name] [+]  }|
           hello                                                |
           {0:~                                                    }|
           {0:~                                                    }|
@@ -287,7 +287,7 @@ local function screen_tests(linegrid)
         {0:~                   }│{0:~               }│{0:~              }|
         {0:~                   }│{0:~               }│{0:~              }|
         {0:~                   }│{0:~               }│{0:~              }|
-        {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
+        {1:[No Name] [+]       ▐}{3:[No Name] [+]   ▐[No Name] [+]  }|
         hello                                                |
         {0:~                                                    }|
         {0:~                                                    }|
@@ -324,7 +324,7 @@ local function screen_tests(linegrid)
         {0:~                   }│{0:~               }│{0:~              }|
         {0:~                   }│{0:~               }│{0:~              }|
         {0:~                   }│{0:~               }│{0:~              }|
-        {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
+        {1:[No Name] [+]       ▐}{3:[No Name] [+]   ▐[No Name] [+]  }|
         hello                                                |
         {0:~                                                    }|
         {0:~                                                    }|
@@ -444,7 +444,7 @@ local function screen_tests(linegrid)
         foo                       │foo                       |
         foo                       │foo                       |
         foo                       │foo                       |
-        {1:[No Name] [+]              }{3:[No Name] [+]             }|
+        {1:[No Name] [+]             ▐}{3:[No Name] [+]             }|
                                                              |
       ]])
 
@@ -462,7 +462,7 @@ local function screen_tests(linegrid)
         bar                       │foo                       |
         bar                       │foo                       |
         bar                       │foo                       |
-        {1:[No Name] [+]              }{3:[No Name] [+]             }|
+        {1:[No Name] [+]             ▐}{3:[No Name] [+]             }|
                                                              |
       ]])
       command('tab split')
@@ -643,7 +643,7 @@ local function screen_tests(linegrid)
         split               │split           │split          |
         windows             │windows         │windows        |
         ^                    │                │               |
-        {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
+        {1:[No Name] [+]       ▐}{3:[No Name] [+]   ▐[No Name] [+]  }|
         clearing                                             |
         in                                                   |
         split                                                |
@@ -663,7 +663,7 @@ local function screen_tests(linegrid)
         in                  │split           │split          |
         split               │windows         │windows        |
         windows             │                │               |
-        {1:[No Name] [+]        }{3:[No Name] [+]    [No Name] [+]  }|
+        {1:[No Name] [+]       ▐}{3:[No Name] [+]   ▐[No Name] [+]  }|
         clearing                                             |
         in                                                   |
         split                                                |
@@ -680,7 +680,7 @@ local function screen_tests(linegrid)
         in                  │split               │split      |
         split               │windows             │windows    |
         windows             │^                    │           |
-        {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
+        {3:[No Name] [+]       ▐}{1:[No Name] [+]       ▐}{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
         split                                                |
@@ -697,7 +697,7 @@ local function screen_tests(linegrid)
         in                  │many                │split      |
         split               │lines               │windows    |
         windows             │to                  │           |
-        {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
+        {3:[No Name] [+]       ▐}{1:[No Name] [+]       ▐}{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
         split                                                |
@@ -714,7 +714,7 @@ local function screen_tests(linegrid)
         in                  │to                  │split      |
         split               │test                │windows    |
         windows             │^scrolling           │           |
-        {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
+        {3:[No Name] [+]       ▐}{1:[No Name] [+]       ▐}{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
         split                                                |
@@ -731,7 +731,7 @@ local function screen_tests(linegrid)
         in                  │scrolling           │split      |
         split               │and                 │windows    |
         windows             │^clearing            │           |
-        {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
+        {3:[No Name] [+]       ▐}{1:[No Name] [+]       ▐}{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
         split                                                |
@@ -748,7 +748,7 @@ local function screen_tests(linegrid)
         in                  │scrolling           │split      |
         split               │and                 │windows    |
         windows             │clearing            │           |
-        {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
+        {3:[No Name] [+]       ▐}{1:[No Name] [+]       ▐}{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
         split                                                |
@@ -765,7 +765,7 @@ local function screen_tests(linegrid)
         in                  │test                │split      |
         split               │scrolling           │windows    |
         windows             │and                 │           |
-        {3:[No Name] [+]        }{1:[No Name] [+]        }{3:<Name] [+] }|
+        {3:[No Name] [+]       ▐}{1:[No Name] [+]       ▐}{3:<Name] [+] }|
         clearing                                             |
         in                                                   |
         split                                                |

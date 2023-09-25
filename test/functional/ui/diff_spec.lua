@@ -74,7 +74,7 @@ describe('Diff mode screen', function()
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
     ]])
 
@@ -94,7 +94,7 @@ describe('Diff mode screen', function()
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
     ]])
   end)
@@ -120,7 +120,7 @@ describe('Diff mode screen', function()
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
     ]])
 
@@ -140,7 +140,7 @@ describe('Diff mode screen', function()
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
     ]])
   end)
@@ -166,7 +166,7 @@ describe('Diff mode screen', function()
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
     ]])
 
@@ -186,7 +186,7 @@ describe('Diff mode screen', function()
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
     ]])
 
@@ -199,7 +199,7 @@ describe('Diff mode screen', function()
       {1:  }8                 │{1:  }8                |
       {1:  }9                 │{1:  }9                |
       {1:  }10                │{1:  }10               |
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
                                               |
     ]])
   end)
@@ -225,7 +225,7 @@ describe('Diff mode screen', function()
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
     ]])
 
@@ -245,7 +245,7 @@ describe('Diff mode screen', function()
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
     ]])
 
@@ -258,7 +258,7 @@ describe('Diff mode screen', function()
       {1:  }8                 │{1:  }8                |
       {1:  }9                 │{1:  }9                |
       {1:  }10                │{1:  }10               |
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
                                               |
     ]])
   end)
@@ -284,7 +284,7 @@ describe('Diff mode screen', function()
       {1:  }{4:11                }│{1:  }{2:-----------------}|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
     ]])
 
@@ -304,7 +304,7 @@ describe('Diff mode screen', function()
       {1:  }{4:11                }│{1:  }{2:-----------------}|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
     ]])
   end)
@@ -330,7 +330,7 @@ describe('Diff mode screen', function()
       {1:  }{2:------------------}│{1:  }{4:11               }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
     ]])
 
@@ -350,7 +350,7 @@ describe('Diff mode screen', function()
       {1:  }{2:------------------}│{1:  }{4:11               }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
     ]])
   end)
@@ -430,7 +430,7 @@ int main(int argc, char **argv)
         {1:  }{2:------------------}│{1:  }{4:    return 1;    }|
         {1:  }}                 │{1:  }}                |
         {1:  }                  │{1:  }                 |
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :set diffopt=internal,filler            |
       ]])
 
@@ -450,7 +450,7 @@ int main(int argc, char **argv)
         {1:  }{                 │{1:  }{                |
         {1:  }{9:    frobnitz(f}{8:act}{9:(}│{1:  }{9:    frobnitz(f}{8:ib}{9:(}|
         {1:  }^}                 │{1:  }}                |
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :set diffopt=internal,filler            |
       ]])
     end)
@@ -473,7 +473,7 @@ int main(int argc, char **argv)
         {1:  }// Frobs foo heart│{1:  }// Frobs foo hear|
         {1:  }int frobnitz(int f│{1:  }int frobnitz(int |
         {1:  }{                 │{1:  }{                |
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
                                                 |
       ]])
 
@@ -493,7 +493,7 @@ int main(int argc, char **argv)
         {1:  }{                 │{1:  }{                |
         {1:  }{9:    frobnitz(f}{8:act}{9:(}│{1:  }{9:    frobnitz(f}{8:ib}{9:(}|
         {1:  }^}                 │{1:  }}                |
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
                                                 |
       ]])
     end)
@@ -516,7 +516,7 @@ int main(int argc, char **argv)
         {1:  }// Frobs foo heart│{1:  }// Frobs foo hear|
         {1:  }int frobnitz(int f│{1:  }int frobnitz(int |
         {1:  }{                 │{1:  }{                |
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
                                                 |
       ]])
 
@@ -536,7 +536,7 @@ int main(int argc, char **argv)
         {1:  }{                 │{1:  }{                |
         {1:  }{9:    frobnitz(f}{8:act}{9:(}│{1:  }{9:    frobnitz(f}{8:ib}{9:(}|
         {1:  }^}                 │{1:  }}                |
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
                                                 |
       ]])
     end)
@@ -583,7 +583,7 @@ int main(int argc, char **argv)
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :set diffopt=internal,filler            |
       ]])
     end)
@@ -606,7 +606,7 @@ int main(int argc, char **argv)
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
                                                 |
       ]])
     end)
@@ -630,7 +630,7 @@ int main(int argc, char **argv)
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :                                       |
       ]])
     end)
@@ -657,7 +657,7 @@ int main(int argc, char **argv)
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
     ]])
 
@@ -677,7 +677,7 @@ int main(int argc, char **argv)
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
     ]])
   end)
@@ -703,7 +703,7 @@ int main(int argc, char **argv)
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt=filler                     |
     ]])
 
@@ -723,7 +723,7 @@ int main(int argc, char **argv)
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
     ]])
   end)
@@ -749,7 +749,7 @@ int main(int argc, char **argv)
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt=filler,icase               |
     ]])
 
@@ -769,7 +769,7 @@ int main(int argc, char **argv)
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
       {6:~                   }│{6:~                  }|
-      {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+      {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
       :set diffopt+=internal                  |
     ]])
   end)
@@ -801,7 +801,7 @@ int main(int argc, char **argv)
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :set diffopt=filler,iwhite              |
       ]])
     end)
@@ -824,7 +824,7 @@ int main(int argc, char **argv)
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :set diffopt=filler,iwhite,internal     |
       ]])
     end)
@@ -855,7 +855,7 @@ int main(int argc, char **argv)
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :set diffopt=internal,filler,iblank     |
       ]])
     end)
@@ -879,7 +879,7 @@ int main(int argc, char **argv)
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :                                       |
       ]])
     end)
@@ -903,7 +903,7 @@ int main(int argc, char **argv)
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :                                       |
       ]])
     end)
@@ -927,7 +927,7 @@ int main(int argc, char **argv)
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :                                       |
       ]])
     end)
@@ -959,7 +959,7 @@ int main(int argc, char **argv)
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :                                       |
       ]])
     end)
@@ -983,7 +983,7 @@ int main(int argc, char **argv)
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :                                       |
       ]])
     end)
@@ -1056,7 +1056,7 @@ int main(int argc, char **argv)
       {1:  }{2:-----------------}│{1:  }{4:dolor             }|
       {1:  }{2:-----------------}│{1:  }{4:sit               }|
       {1:  }{2:-----------------}│{1:  }{4:amet,             }|
-      {3:<nal-diff-screen-1  }{7:<al-diff-screen-1.2 }|
+      {3:<nal-diff-screen-1 ▐}{7:<al-diff-screen-1.2 }|
       :e                                      |
     ]])
     feed('j')
@@ -1071,7 +1071,7 @@ int main(int argc, char **argv)
       {1:  }{2:-----------------}│{1:  }{4:dolor             }|
       {1:  }{2:-----------------}│{1:  }{4:sit               }|
       {1:  }{2:-----------------}│{1:  }{4:amet,             }|
-      {3:<nal-diff-screen-1  }{7:<al-diff-screen-1.2 }|
+      {3:<nal-diff-screen-1 ▐}{7:<al-diff-screen-1.2 }|
       :e                                      |
     ]])
   end)
@@ -1119,7 +1119,7 @@ int main(int argc, char **argv)
   {6:~                   }│{6:~                  }|
   {6:~                   }│{6:~                  }|
   {6:~                   }│{6:~                  }|
-  {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+  {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
   :set diffopt=internal,filler            |
       ]])
 
@@ -1140,7 +1140,7 @@ int main(int argc, char **argv)
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :set diffopt+=linematch:20              |
       ]])
     end)
@@ -1174,7 +1174,7 @@ ccca]]
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
                                                 |
       ]])
       feed(':set diffopt+=icase<cr>')
@@ -1193,7 +1193,7 @@ ccca]]
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :set diffopt+=icase                     |
       ]])
     end)
@@ -1227,7 +1227,7 @@ AAAB]]
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
                                                 |
       ]]}
       feed(':set diffopt+=iwhiteall<cr>')
@@ -1246,7 +1246,7 @@ AAAB]]
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
         {6:~                   }│{6:~                  }|
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        {7:<onal-diff-screen-1 ▐}{3:<l-diff-screen-1.2 }|
         :set diffopt+=iwhiteall                 |
       ]]}
     end)
@@ -1265,7 +1265,7 @@ AAAB]]
       {1:  }                  │{1:  }                 |
       {1:  }{8:xx}{9:                }│{1:  }{8:yy}{9:               }|
       {6:~                   }│{6:~                  }|
-      {3:<onal-diff-screen-1  <l-diff-screen-1.2 }|
+      {3:<onal-diff-screen-1 ▐<l-diff-screen-1.2 }|
       ^                                        |
       {6:~                                       }|
       {6:~                                       }|
@@ -1285,7 +1285,7 @@ AAAB]]
       {1:  }                  │{1:  }                 |
       {1:  }{8:xx}{9:                }│{1:  }{8:yy}{9:               }|
       {6:~                   }│{6:~                  }|
-      {3:<-diff-screen-1 [+]  <l-diff-screen-1.2 }|
+      {3:<-diff-screen-1 [+] ▐<l-diff-screen-1.2 }|
       ^                                        |
       {6:~                                       }|
       {6:~                                       }|
@@ -1311,7 +1311,7 @@ AAAB]]
       {1:  }                  │{1:  }                 |
       {1:  }{8:xx}{9:                }│{1:  }{8:yy}{9:               }|
       {6:~                   }│{6:~                  }|
-      {3:<onal-diff-screen-1  <l-diff-screen-1.2 }|
+      {3:<onal-diff-screen-1 ▐<l-diff-screen-1.2 }|
       ^aaa                                     |
       bbb                                     |
       ccc                                     |
@@ -1331,7 +1331,7 @@ AAAB]]
       {1:  }                  │{1:  }                 |
       {1:  }{8:xx}{9:                }│{1:  }{8:yy}{9:               }|
       {6:~                   }│{6:~                  }|
-      {3:<-diff-screen-1 [+]  <l-diff-screen-1.2 }|
+      {3:<-diff-screen-1 [+] ▐<l-diff-screen-1.2 }|
       ^aaa                                     |
       BBB                                     |
       ccc                                     |
@@ -1395,7 +1395,7 @@ it('win_update redraws lines properly', function()
     {13:  }{15:2b                     }│{13:  }{16:----------------------}|
     {13:  }                       │{13:  }                      |
     {1:~                        }│{1:~                       }|
-    {14:left [+]                  }{12:[No Name] [+]           }|
+    {14:left [+]                 ▐}{12:[No Name] [+]           }|
                                                       |
   ]]}
   feed('<C-e>')
@@ -1412,7 +1412,7 @@ it('win_update redraws lines properly', function()
     {13:  }{15:2b                     }│{13:  }{16:----------------------}|
     {13:  }                       │{13:  }                      |
     {1:~                        }│{1:~                       }|
-    {14:left [+]                  }{12:[No Name] [+]           }|
+    {14:left [+]                 ▐}{12:[No Name] [+]           }|
                                                       |
   ]]}
 end)
@@ -1455,7 +1455,7 @@ it('diff updates line numbers below filler lines', function()
     {1:  }b                │{11:  7 }b               |
     {1:  }b                │{11:  8 }b               |
     {6:~                  }│{6:~                   }|
-    {3:[No Name] [+]       }{7:[No Name] [+]       }|
+    {3:[No Name] [+]      ▐}{7:[No Name] [+]       }|
                                             |
   ]])
   feed('j')
@@ -1472,7 +1472,7 @@ it('diff updates line numbers below filler lines', function()
     {1:  }b                │{11:  6 }b               |
     {1:  }b                │{11:  7 }b               |
     {6:~                  }│{6:~                   }|
-    {3:[No Name] [+]       }{7:[No Name] [+]       }|
+    {3:[No Name] [+]      ▐}{7:[No Name] [+]       }|
                                             |
   ]])
   feed('j')
@@ -1489,7 +1489,7 @@ it('diff updates line numbers below filler lines', function()
     {1:  }b                │{11:  5 }b               |
     {1:  }b                │{11:  6 }b               |
     {6:~                  }│{6:~                   }|
-    {3:[No Name] [+]       }{7:[No Name] [+]       }|
+    {3:[No Name] [+]      ▐}{7:[No Name] [+]       }|
                                             |
   ]])
 end)
@@ -1536,7 +1536,7 @@ it('Align the filler lines when changing text in diff mode', function()
     {7:~                   }│{7:~                  }|
     {7:~                   }│{7:~                  }|
     {7:~                   }│{7:~                  }|
-    {8:[No Name] [+]        }{3:[No Name] [+]      }|
+    {8:[No Name] [+]       ▐}{3:[No Name] [+]      }|
                                             |
   ]]}
   feed('ax<Esc>')
@@ -1559,7 +1559,7 @@ it('Align the filler lines when changing text in diff mode', function()
     {7:~                   }│{7:~                  }|
     {7:~                   }│{7:~                  }|
     {7:~                   }│{7:~                  }|
-    {8:[No Name] [+]        }{3:[No Name] [+]      }|
+    {8:[No Name] [+]       ▐}{3:[No Name] [+]      }|
                                             |
   ]]}
   feed('<C-W>lay<Esc>')
@@ -1582,7 +1582,7 @@ it('Align the filler lines when changing text in diff mode', function()
     {7:~                  }│{7:~                   }|
     {7:~                  }│{7:~                   }|
     {7:~                  }│{7:~                   }|
-    {3:[No Name] [+]       }{8:[No Name] [+]       }|
+    {3:[No Name] [+]      ▐}{8:[No Name] [+]       }|
                                             |
   ]]}
 end)
@@ -1652,7 +1652,7 @@ it('diff mode works properly if file contains NUL bytes vim-patch:8.2.3925', fun
     {6:~                   }│{6:~                  }|
     {6:~                   }│{6:~                  }|
     {6:~                   }│{6:~                  }|
-    {8:[No Name] [+]        }{2:[No Name] [+]      }|
+    {8:[No Name] [+]       ▐}{2:[No Name] [+]      }|
                                             |
   ]])
 
@@ -1678,7 +1678,7 @@ it('diff mode works properly if file contains NUL bytes vim-patch:8.2.3925', fun
     {6:~                   }│{6:~                  }|
     {6:~                   }│{6:~                  }|
     {6:~                   }│{6:~                  }|
-    {8:[No Name] [+]        }{2:[No Name] [+]      }|
+    {8:[No Name] [+]       ▐}{2:[No Name] [+]      }|
                                             |
   ]])
 
@@ -1704,7 +1704,7 @@ it('diff mode works properly if file contains NUL bytes vim-patch:8.2.3925', fun
     {6:~                   }│{6:~                  }|
     {6:~                   }│{6:~                  }|
     {6:~                   }│{6:~                  }|
-    {8:[No Name] [+]        }{2:[No Name] [+]      }|
+    {8:[No Name] [+]       ▐}{2:[No Name] [+]      }|
                                             |
   ]])
 
@@ -1730,7 +1730,7 @@ it('diff mode works properly if file contains NUL bytes vim-patch:8.2.3925', fun
     {6:~                   }│{6:~                  }|
     {6:~                   }│{6:~                  }|
     {6:~                   }│{6:~                  }|
-    {8:[No Name] [+]        }{2:[No Name] [+]      }|
+    {8:[No Name] [+]       ▐}{2:[No Name] [+]      }|
                                             |
   ]])
 end)

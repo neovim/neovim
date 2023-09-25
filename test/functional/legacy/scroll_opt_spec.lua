@@ -977,7 +977,7 @@ describe('smoothscroll', function()
       {2:@}│                                      |
       {2:@}│                                      |
       {2:^@}│                                      |
-      {3:< }{4:[No Name] [+]                         }|
+      {3:<▐}{4:[No Name] [+]                         }|
                                               |
     ]])
   end)

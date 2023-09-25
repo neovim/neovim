@@ -36,7 +36,7 @@ describe("'cursorbind'", function()
                          {4: }│                    {4: }                  |
                          {4: }│                    {4: }                  |
       {1:~                   }│{1:~                                      }|
-      {3:[No Name] [+]        }{2:[No Name] [+]                          }|
+      {3:[No Name] [+]       ▐}{2:[No Name] [+]                          }|
                                                                   |
     ]])
     feed('10l')
@@ -47,7 +47,7 @@ describe("'cursorbind'", function()
                 {4: }         │                              {4: }        |
                 {4: }         │                              {4: }        |
       {1:~                   }│{1:~                                      }|
-      {3:[No Name] [+]        }{2:[No Name] [+]                          }|
+      {3:[No Name] [+]       ▐}{2:[No Name] [+]                          }|
                                                                   |
     ]])
     command('windo :set cursorline')
@@ -60,7 +60,7 @@ describe("'cursorbind'", function()
                          {4: }│                    {4: }                  |
                          {4: }│                    {4: }                  |
       {1:~                   }│{1:~                                      }|
-      {3:[No Name] [+]        }{2:[No Name] [+]                          }|
+      {3:[No Name] [+]       ▐}{2:[No Name] [+]                          }|
                                                                   |
     ]])
     feed('10l')
@@ -71,7 +71,7 @@ describe("'cursorbind'", function()
                 {4: }         │                              {4: }        |
                 {4: }         │                              {4: }        |
       {1:~                   }│{1:~                                      }|
-      {3:[No Name] [+]        }{2:[No Name] [+]                          }|
+      {3:[No Name] [+]       ▐}{2:[No Name] [+]                          }|
                                                                   |
     ]])
     command('windo :set nocursorline nocursorcolumn')
@@ -84,7 +84,7 @@ describe("'cursorbind'", function()
                           │                                       |
                           │                                       |
       {1:~                   }│{1:~                                      }|
-      {3:[No Name] [+]        }{2:[No Name] [+]                          }|
+      {3:[No Name] [+]       ▐}{2:[No Name] [+]                          }|
                                                                   |
     ]])
   end)

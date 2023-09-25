@@ -610,7 +610,7 @@ describe('ui/mouse/input', function()
       {0:~                         }│{0:~                         }|
       {0:~                         }│{0:~                         }|
       {0:~                         }│{0:~                         }|
-      {4:[No Name] [+]              }{5:[No Name] [+]             }|
+      {4:[No Name] [+]             ▐}{5:[No Name] [+]             }|
                                                            |
     ]]}
 
@@ -628,7 +628,7 @@ describe('ui/mouse/input', function()
       {0:~                         }│{0:~                         }|
       {0:~                         }│{0:~                         }|
       {0:~                         }│{0:~                         }|
-      {4:[No Name] [+]              }{5:[No Name] [+]             }|
+      {4:[No Name] [+]             ▐}{5:[No Name] [+]             }|
                                                            |
     ]]}
     meths.input_mouse('left', 'drag', '', 0, 7, 30)
@@ -646,7 +646,7 @@ describe('ui/mouse/input', function()
       {0:~                         }│{0:~                         }|
       {0:~                         }│{0:~                         }|
       {0:~                         }│{0:~                         }|
-      {4:[No Name] [+]              }{5:[No Name] [+]             }|
+      {4:[No Name] [+]             ▐}{5:[No Name] [+]             }|
       {2:-- VISUAL --}                                         |
     ]]}
   end)
@@ -809,7 +809,7 @@ describe('ui/mouse/input', function()
       testing               │{0:^$}                     |
       mouse                 │{0:~                     }|
       support and selection │{0:~                     }|
-      {4:[No Name] [+]          }{5:[No Name]             }|
+      {4:[No Name] [+]         ▐}{5:[No Name]             }|
                                                    |
     ]])
     meths.input_mouse('left', 'press', '', 0, 0, 22)
@@ -819,7 +819,7 @@ describe('ui/mouse/input', function()
       testing     │{0:^$}                               |
       mouse       │{0:~                               }|
       support and │{0:~                               }|
-      {4:< Name] [+]  }{5:[No Name]                       }|
+      {4:< Name] [+] ▐}{5:[No Name]                       }|
                                                    |
     ]])
     meths.input_mouse('left', 'drag', '', 0, 2, 2)
@@ -827,7 +827,7 @@ describe('ui/mouse/input', function()
       te│{0:^$}                                         |
       mo│{0:~                                         }|
       su│{0:~                                         }|
-      {4:<  }{5:[No Name]                                 }|
+      {4:< ▐}{5:[No Name]                                 }|
                                                    |
     ]])
     meths.input_mouse('left', 'release', '', 0, 2, 2)
@@ -836,7 +836,7 @@ describe('ui/mouse/input', function()
       {8:fo}│{0:^$}                                         |
       {8:fo}│{0:~                                         }|
       {8:fo}│{0:~                                         }|
-      {4:<  }{5:[No Name]                                 }|
+      {4:< ▐}{5:[No Name]                                 }|
                                                    |
     ]])
     meths.input_mouse('left', 'press', '', 0, 0, 2)
@@ -846,7 +846,7 @@ describe('ui/mouse/input', function()
       {8:foobar}testin│{0:^$}                               |
       {8:foobar}mouse │{0:~                               }|
       {8:foobar}suppor│{0:~                               }|
-      {4:< Name] [+]  }{5:[No Name]                       }|
+      {4:< Name] [+] ▐}{5:[No Name]                       }|
                                                    |
     ]])
     meths.input_mouse('left', 'drag', '', 0, 2, 22)
@@ -854,7 +854,7 @@ describe('ui/mouse/input', function()
       {8:foobar}testing         │{0:^$}                     |
       {8:foobar}mouse           │{0:~                     }|
       {8:foobar}support and sele│{0:~                     }|
-      {4:[No Name] [+]          }{5:[No Name]             }|
+      {4:[No Name] [+]         ▐}{5:[No Name]             }|
                                                    |
     ]])
     meths.input_mouse('left', 'release', '', 0, 2, 22)
@@ -882,7 +882,7 @@ describe('ui/mouse/input', function()
       ^mouse scrolling           │mouse scrolling           |
                                 │                          |
       {0:~                         }│{0:~                         }|
-      {5:[No Name] [+]              }{4:[No Name] [+]             }|
+      {5:[No Name] [+]             ▐}{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
       mouse scrolling                                      |
@@ -903,7 +903,7 @@ describe('ui/mouse/input', function()
       {0:~                         }│mouse scrolling           |
       {0:~                         }│                          |
       {0:~                         }│{0:~                         }|
-      {5:[No Name] [+]              }{4:[No Name] [+]             }|
+      {5:[No Name] [+]             ▐}{4:[No Name] [+]             }|
       to                                                   |
       test                                                 |
       mouse scrolling                                      |
@@ -952,7 +952,7 @@ describe('ui/mouse/input', function()
       with                                                 |
       many                                                 |
       lines                                                |
-      {4:[No Name] [+]                                        }|
+      {4:[No Name] [+]                                       ▐}|
       :vsp                                                 |
     ]])
   end

@@ -66,7 +66,7 @@ describe('put', function()
                                               │                                       |
       ~                                       │~                                      |
       ~                                       │~                                      |
-      [No Name] [+]                            [No Name] [+]                          |
+      [No Name] [+]                           ▐[No Name] [+]                          |
                                                                                       |
     ]])
   end)

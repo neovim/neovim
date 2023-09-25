@@ -111,7 +111,7 @@ describe('winbar', function()
       {3:~                            }│{6:Set Up The Bars               }|
       {3:~                            }│                              |
       {3:~                            }│{3:~                             }|
-      {2:[No Name]                     [No Name]                     }|
+      {2:[No Name]                    ▐[No Name]                     }|
                                                                   |
     ]])
     -- 'showcmdloc' "statusline" should not interfere with winbar redrawing #23030
@@ -130,7 +130,7 @@ describe('winbar', function()
       {3:~                            }│{6:Set Up The Bars               }|
       {3:~                            }│                              |
       {3:~                            }│{3:~                             }|
-      {2:[No Name]                     [No Name]                     }|
+      {2:[No Name]                    ▐[No Name]                     }|
                                                                   |
     ]])
     feed('w<C-W>W')
@@ -146,7 +146,7 @@ describe('winbar', function()
       {3:~                            }│{6:Set Up The Bars               }|
       {3:~                            }│                              |
       {3:~                            }│{3:~                             }|
-      {2:[No Name]                     [No Name]                     }|
+      {2:[No Name]                    ▐[No Name]                     }|
                                                                   |
     ]])
   end)
@@ -165,7 +165,7 @@ describe('winbar', function()
       {3:~                            }│                              |
       {3:~                            }│{3:~                             }|
       {3:~                            }│{3:~                             }|
-      {2:[No Name]                     [No Name]                     }|
+      {2:[No Name]                    ▐[No Name]                     }|
                                                                   |
     ]])
     command('set winbar=All\\ Your\\ Bar\\ Are\\ Belong\\ To\\ Us')
@@ -181,7 +181,7 @@ describe('winbar', function()
       {3:~                            }│{1:All Your Bar Are Belong To Us }|
       {3:~                            }│                              |
       {3:~                            }│{3:~                             }|
-      {2:[No Name]                     [No Name]                     }|
+      {2:[No Name]                    ▐[No Name]                     }|
                                                                   |
     ]])
     command('set winbar=Changed\\ winbar')
@@ -197,7 +197,7 @@ describe('winbar', function()
       {3:~                            }│{1:Changed winbar                }|
       {3:~                            }│                              |
       {3:~                            }│{3:~                             }|
-      {2:[No Name]                     [No Name]                     }|
+      {2:[No Name]                    ▐[No Name]                     }|
                                                                   |
     ]])
   end)
@@ -539,7 +539,7 @@ describe('winbar', function()
       ^                      │{3:~                     }|
       {3:~                     }│{3:~                     }|
       {3:~                     }│{3:~                     }|
-      {4:[No Name]              }{2:[No Name]             }|
+      {4:[No Name]             ▐}{2:[No Name]             }|
                                                    |
     ]])
 
@@ -549,7 +549,7 @@ describe('winbar', function()
       {3:~                     }│^                      |
       {3:~                     }│{3:~                     }|
       {3:~                     }│{3:~                     }|
-      {2:[No Name]              }{4:[No Name]             }|
+      {2:[No Name]             ▐}{4:[No Name]             }|
                                                    |
     ]])
 
@@ -560,7 +560,7 @@ describe('winbar', function()
                             │{3:~                     }|
       {3:~                     }│{3:~                     }|
       {3:~                     }│{3:~                     }|
-      {2:[No Name]              }{4:[No Name]             }|
+      {2:[No Name]             ▐}{4:[No Name]             }|
                                                    |
     ]])
   end)
@@ -652,7 +652,7 @@ describe('local winbar with tabs', function()
     ]])
     command('tabnext')
     screen:expect{grid=[[
-      {1: [No Name] }{4: [No Name] }{2:                                     }{4:X}|
+      {1: [No Name]▐}{4: [No Name] }{2:                                     }{4:X}|
       {1:foo                                                         }|
       ^                                                            |
       {3:~                                                           }|
@@ -686,7 +686,7 @@ describe('local winbar with tabs', function()
     -- this used to throw an E315 ml_get error
     command 'tabedit'
     screen:expect{grid=[[
-      {4: + [No Name] }{1: [No Name] }{2:                                   }{4:X}|
+      {4: + [No Name]▐}{1: [No Name] }{2:                                   }{4:X}|
       ^                                                            |
       {3:~                                                           }|
       {3:~                                                           }|

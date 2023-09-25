@@ -354,12 +354,12 @@ describe('global statusline', function()
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
       {1:~                   }│{1:~               }│{1:~}│{2:<No Name] 0,0-1  All}|
       {1:~                   }│{1:~               }│{1:~}│                    |
-      {4:<No Name] 0,0-1  All < Name] 0,0-1    <}│{1:~                   }|
+      {4:<No Name] 0,0-1  All▐< Name] 0,0-1   ▐<}│{1:~                   }|
                                              │{1:~                   }|
       {1:~                                      }│{1:~                   }|
       {1:~                                      }│{1:~                   }|
       {1:~                                      }│{1:~                   }|
-      {4:[No Name]            0,0-1          All <No Name] 0,0-1  All}|
+      {4:[No Name]            0,0-1          All▐<No Name] 0,0-1  All}|
                                                                   |
     ]])
 
@@ -619,7 +619,7 @@ it('showcmdloc=statusline does not show if statusline is too narrow', function()
     {0:~}│{0:~                                     }|
     {0:~}│{0:~                                     }|
     {0:~}│{0:~                                     }|
-    {1:< }{2:[No Name]                             }|
+    {1:<▐}{2:[No Name]                             }|
                                             |
   ]])
   feed('1234')

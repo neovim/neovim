@@ -125,7 +125,7 @@ describe("'listchars'", function()
       {1:~                   }│{1:~    }│{1:~                                }|
       {1:~                   }│{1:~    }│{1:~                                }|
       {1:~                   }│{1:~    }│{1:~                                }|
-      {3:[No Name] [+]        <[+]  }{2:[No Name] [+]                    }|
+      {3:[No Name] [+]       ▐<[+] ▐}{2:[No Name] [+]                    }|
                                                                   |
     ]])
     feed('<C-W>>')
@@ -138,7 +138,7 @@ describe("'listchars'", function()
       {1:~                   }│{1:~   }│{1:~                                 }|
       {1:~                   }│{1:~   }│{1:~                                 }|
       {1:~                   }│{1:~   }│{1:~                                 }|
-      {3:[No Name] [+]        <+]  }{2:[No Name] [+]                     }|
+      {3:[No Name] [+]       ▐<+] ▐}{2:[No Name] [+]                     }|
                                                                   |
     ]])
     feed('<C-W>>')
@@ -151,7 +151,7 @@ describe("'listchars'", function()
       {1:~                   }│{1:~  }│{1:~                                  }|
       {1:~                   }│{1:~  }│{1:~                                  }|
       {1:~                   }│{1:~  }│{1:~                                  }|
-      {3:[No Name] [+]        <]  }{2:[No Name] [+]                      }|
+      {3:[No Name] [+]       ▐<] ▐}{2:[No Name] [+]                      }|
                                                                   |
     ]])
     feed('<C-W>>')
@@ -164,7 +164,7 @@ describe("'listchars'", function()
       {1:~                   }│{1:~ }│{1:~                                   }|
       {1:~                   }│{1:~ }│{1:~                                   }|
       {1:~                   }│{1:~ }│{1:~                                   }|
-      {3:[No Name] [+]        <  }{2:[No Name] [+]                       }|
+      {3:[No Name] [+]       ▐< ▐}{2:[No Name] [+]                       }|
                                                                   |
     ]])
     feed('<C-W>>')
@@ -177,7 +177,7 @@ describe("'listchars'", function()
       {1:~                   }│{1:~}│{1:~                                    }|
       {1:~                   }│{1:~}│{1:~                                    }|
       {1:~                   }│{1:~}│{1:~                                    }|
-      {3:[No Name] [+]        < }{2:[No Name] [+]                        }|
+      {3:[No Name] [+]       ▐<▐}{2:[No Name] [+]                        }|
                                                                   |
     ]])
     feed('<C-W>h')
@@ -191,7 +191,7 @@ describe("'listchars'", function()
       {1:~                   }│{1:~                   }│{1:~                 }|
       {1:~                   }│{1:~                   }│{1:~                 }|
       {1:~                   }│{1:~                   }│{1:~                 }|
-      {3:[No Name] [+]        }{2:[No Name] [+]        }{3:[No Name] [+]     }|
+      {3:[No Name] [+]       ▐}{2:[No Name] [+]       ▐}{3:[No Name] [+]     }|
       :set nowrap foldcolumn=4                                    |
     ]])
     feed('15<C-W><lt>')
@@ -204,7 +204,7 @@ describe("'listchars'", function()
       {1:~                   }│{1:~    }│{1:~                                }|
       {1:~                   }│{1:~    }│{1:~                                }|
       {1:~                   }│{1:~    }│{1:~                                }|
-      {3:[No Name] [+]        }{2:<[+]  }{3:[No Name] [+]                    }|
+      {3:[No Name] [+]       ▐}{2:<[+] ▐}{3:[No Name] [+]                    }|
       :set nowrap foldcolumn=4                                    |
     ]])
     feed('4<C-W><lt>')
@@ -217,7 +217,7 @@ describe("'listchars'", function()
       {1:~                   }│{1:~}│{1:~                                    }|
       {1:~                   }│{1:~}│{1:~                                    }|
       {1:~                   }│{1:~}│{1:~                                    }|
-      {3:[No Name] [+]        }{2:< }{3:[No Name] [+]                        }|
+      {3:[No Name] [+]       ▐}{2:<▐}{3:[No Name] [+]                        }|
       :set nowrap foldcolumn=4                                    |
     ]])
   end)
