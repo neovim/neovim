@@ -820,12 +820,10 @@ by the shell before executing the find program.
 When there is an argument list you can see which file you are editing in the
 title of the window (if there is one and 'title' is on) and with the file
 message you get with the "CTRL-G" command.  You will see something like
-	(file 4 of 11)
-If 'shortmess' contains 'f' it will be
 	(4 of 11)
 If you are not really editing the file at the current position in the argument
 list it will be
-	(file (4) of 11)
+	((4) of 11)
 This means that you are position 4 in the argument list, but not editing the
 fourth file in the argument list.  This happens when you do ":e file".
 
