@@ -42,7 +42,7 @@ local Pattern = {}
 --- @param pattern vim.lpeg.Pattern
 --- @param subject string
 --- @param init? integer
---- @return integer|vim.lpeg.Capture
+--- @return integer|vim.lpeg.Capture|nil
 function vim.lpeg.match(pattern, subject, init) end
 
 --- Matches the given `pattern` against the `subject` string. If the match succeeds, returns the
@@ -64,7 +64,7 @@ function vim.lpeg.match(pattern, subject, init) end
 ---
 --- @param subject string
 --- @param init? integer
---- @return integer|vim.lpeg.Capture
+--- @return integer|vim.lpeg.Capture|nil
 function Pattern:match(subject, init) end
 
 --- Returns the string `"pattern"` if the given value is a pattern, otherwise `nil`.
