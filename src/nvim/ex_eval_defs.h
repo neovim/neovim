@@ -1,6 +1,8 @@
 #ifndef NVIM_EX_EVAL_DEFS_H
 #define NVIM_EX_EVAL_DEFS_H
 
+#include <stdbool.h>
+
 #include "nvim/pos.h"
 
 /// There is no CSF_IF, the lack of CSF_WHILE, CSF_FOR and CSF_TRY means ":if"
@@ -41,11 +43,12 @@ enum {
 /// message in the list.  See cause_errthrow().
 typedef struct msglist msglist_T;
 struct msglist {
+  msglist_T *next;  ///< next of several messages in a row
   char *msg;        ///< original message, allocated
   char *throw_msg;  ///< msg to throw: usually original one
   char *sfile;      ///< value from estack_sfile(), allocated
   linenr_T slnum;   ///< line number for "sfile"
-  msglist_T *next;  ///< next of several messages in a row
+  bool multiline;   ///< whether this is a multiline message
 };
 
 /// The exception types.
