@@ -230,7 +230,7 @@ function! tutor#TutorCmdComplete(lead,line,pos)
 endfunction
 
 function! tutor#ApplyTransform()
-    if has('win32')        
+    if has('win32')
         sil! %s/{unix:(\(.\{-}\)),win:(\(.\{-}\))}/\2/g
     else
         sil! %s/{unix:(\(.\{-}\)),win:(\(.\{-}\))}/\1/g
