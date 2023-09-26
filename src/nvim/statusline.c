@@ -741,6 +741,7 @@ void draw_tabline(void)
     int c;
     int len;
     char *p;
+    grid_line_start(&default_grid, 0);
     FOR_ALL_TABS(tp) {
       tabcount++;
     }
@@ -775,14 +776,14 @@ void draw_tabline(void)
         attr = win_hl_attr(cwp, HLF_TPS);
       }
       if (use_sep_chars && col > 0) {
-        grid_putchar(&default_grid, '|', 0, col++, attr);
+        grid_line_put_schar(col++, schar_from_ascii('|'), attr);
       }
 
       if (tp->tp_topframe != topframe) {
         attr = win_hl_attr(cwp, HLF_TP);
       }
 
-      grid_putchar(&default_grid, ' ', 0, col++, attr);
+      grid_line_put_schar(col++, schar_from_ascii(' '), attr);
 
       int modified = false;
 
@@ -799,14 +800,14 @@ void draw_tabline(void)
           if (col + len >= Columns - 3) {
             break;
           }
-          grid_puts(&default_grid, NameBuff, len, 0, col,
-                    hl_combine_attr(attr, win_hl_attr(cwp, HLF_T)));
+          grid_line_puts(col, NameBuff, len,
+                         hl_combine_attr(attr, win_hl_attr(cwp, HLF_T)));
           col += len;
         }
         if (modified) {
-          grid_puts(&default_grid, "+", 1, 0, col++, attr);
+          grid_line_put_schar(col++, schar_from_ascii('+'), attr);
         }
-        grid_putchar(&default_grid, ' ', 0, col++, attr);
+        grid_line_put_schar(col++, schar_from_ascii(' '), attr);
       }
 
       int room = scol - col + tabwidth - 1;
@@ -824,10 +825,10 @@ void draw_tabline(void)
           len = Columns - col - 1;
         }
 
-        grid_puts(&default_grid, p, (int)strlen(p), 0, col, attr);
+        grid_line_puts(col, p, -1, attr);
         col += len;
       }
-      grid_putchar(&default_grid, ' ', 0, col++, attr);
+      grid_line_put_schar(col++, schar_from_ascii(' '), attr);
 
       // Store the tab page number in tab_page_click_defs[], so that
       // jump_to_mouse() knows where each one is.
@@ -846,27 +847,29 @@ void draw_tabline(void)
     } else {
       c = ' ';
     }
-    grid_fill(&default_grid, 0, 1, col, Columns, c, c, attr_fill);
+    grid_line_fill(col, Columns, c, attr_fill);
 
     // Draw the 'showcmd' information if 'showcmdloc' == "tabline".
     if (p_sc && *p_sloc == 't') {
       const int sc_width = MIN(10, (int)Columns - col - (tabcount > 1) * 3);
 
       if (sc_width > 0) {
-        grid_puts(&default_grid, showcmd_buf, sc_width, 0,
-                  Columns - sc_width - (tabcount > 1) * 2, attr_nosel);
+        grid_line_puts(Columns - sc_width - (tabcount > 1) * 2,
+                       showcmd_buf, sc_width, attr_nosel);
       }
     }
 
     // Put an "X" for closing the current tab if there are several.
     if (tabcount > 1) {
-      grid_putchar(&default_grid, 'X', 0, Columns - 1, attr_nosel);
+      grid_line_put_schar(Columns - 1, schar_from_ascii('X'), attr_nosel);
       tab_page_click_defs[Columns - 1] = (StlClickDefinition) {
         .type = kStlClickTabClose,
         .tabnr = 999,
         .func = NULL,
       };
     }
+
+    grid_line_flush(false);
   }
 
   // Reset the flag here again, in case evaluating 'tabline' causes it to be
