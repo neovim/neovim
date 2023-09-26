@@ -165,16 +165,16 @@ end
 ---
 ---@private
 local function parse_line(line)
-  if line:find('^%s*[^ #;]') then
-    local glob = (line:match('%b[]') or ''):match('^%s*%[(.*)%]%s*$')
-    if glob then
-      return glob, nil, nil
-    end
+  line = line:gsub('%s*[#;].*$', '')
 
-    local key, val = line:match('^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$')
-    if key ~= nil and val ~= nil then
-      return nil, key:lower(), val:lower()
-    end
+  local glob = (line:match('%b[]') or ''):match('^%s*%[(.*)%]%s*$')
+  if glob then
+    return glob, nil, nil
+  end
+
+  local key, val = line:match('^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$')
+  if key ~= nil and val ~= nil then
+    return nil, key:lower(), val:lower()
   end
 end
 

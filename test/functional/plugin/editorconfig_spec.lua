@@ -89,6 +89,13 @@ setup(function()
 
     [max_line_length.txt]
     max_line_length = 42
+
+    ; full line comment
+    # full line comment
+    [with_comments.txt] ; end of line comment
+    indent_style = space # end of line comment
+    indent_size = 4
+    tab_width = 4
     ]]
   )
 end)
@@ -217,5 +224,14 @@ But not this one
     ]]))
 
     eq(true, ok, err)
+  end)
+
+  it('strips out comments', function()
+    test_case('with_comments.txt', {
+      expandtab = true,
+      shiftwidth = 4,
+      softtabstop = -1,
+      tabstop = 4,
+    })
   end)
 end)
