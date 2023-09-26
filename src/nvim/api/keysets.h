@@ -169,6 +169,7 @@ typedef struct {
   Integer blend;
   Boolean fg_indexed;
   Boolean bg_indexed;
+  Boolean force;
 } Dict(highlight);
 
 typedef struct {

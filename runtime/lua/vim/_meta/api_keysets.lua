@@ -165,6 +165,7 @@ error('Cannot require a meta file')
 --- @field blend? integer
 --- @field fg_indexed? boolean
 --- @field bg_indexed? boolean
+--- @field force? boolean
 
 --- @class vim.api.keyset.highlight_cterm
 --- @field bold? boolean
