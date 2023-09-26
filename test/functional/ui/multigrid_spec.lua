@@ -2887,7 +2887,7 @@ describe('ext_multigrid', function()
     ## grid 3
                                                            |
     ## grid 4
-      ^Lorem i|
+      Lorem i|
       psum do|
       lor sit|
        amet, |
@@ -2896,7 +2896,7 @@ describe('ext_multigrid', function()
       ipiscin|
       g elit,|
        sed do|
-       eiusmo|
+       ^eiusmo|
       {1:~      }|
     ## grid 5
       some text                     |

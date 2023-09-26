@@ -953,6 +953,7 @@ void win_grid_alloc(win_T *wp)
   if ((resizing_screen || was_resized) && want_allocation) {
     ui_call_grid_resize(grid_allocated->handle,
                         grid_allocated->cols, grid_allocated->rows);
+    ui_check_cursor_grid(grid_allocated->handle);
   }
 }
 
