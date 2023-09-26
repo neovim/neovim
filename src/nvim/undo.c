@@ -324,7 +324,7 @@ bool undo_allowed(buf_T *buf)
 }
 
 /// Get the 'undolevels' value for the current buffer.
-static long get_undolevel(buf_T *buf)
+static OptInt get_undolevel(buf_T *buf)
 {
   if (buf->b_p_ul == NO_LOCAL_UNDOLEVEL) {
     return p_ul;

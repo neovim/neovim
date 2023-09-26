@@ -476,7 +476,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
   char *posptr;  // points to char at pos->col
   int incr;
   int head;
-  long *vts = wp->w_buffer->b_p_vts_array;
+  colnr_T *vts = wp->w_buffer->b_p_vts_array;
   int ts = (int)wp->w_buffer->b_p_ts;
 
   colnr_T vcol = 0;

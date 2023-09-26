@@ -3182,7 +3182,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   if (cur_ve_flags == VE_ALL && y_type == kMTCharWise) {
     if (gchar_cursor() == TAB) {
       int viscol = getviscol();
-      long ts = curbuf->b_p_ts;
+      OptInt ts = curbuf->b_p_ts;
       // Don't need to insert spaces when "p" on the last position of a
       // tab or "P" on the first position.
       if (dir == FORWARD

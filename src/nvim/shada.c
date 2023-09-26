@@ -2506,7 +2506,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
   for (HistoryType i = 0; i < HIST_COUNT; i++) {
     long num_saved = get_shada_parameter(hist_type2char(i));
     if (num_saved == -1) {
-      num_saved = p_hi;
+      num_saved = (long)p_hi;
     }
     if (num_saved > 0) {
       dump_history = true;

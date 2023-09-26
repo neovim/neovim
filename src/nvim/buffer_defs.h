@@ -125,18 +125,18 @@ typedef struct {
 #define w_p_fen_save w_onebuf_opt.wo_fen_save
   char *wo_fdi;
 #define w_p_fdi w_onebuf_opt.wo_fdi    // 'foldignore'
-  long wo_fdl;
+  OptInt wo_fdl;
 #define w_p_fdl w_onebuf_opt.wo_fdl    // 'foldlevel'
-  long wo_fdl_save;
+  OptInt wo_fdl_save;
   // 'foldlevel' state saved for diff mode
 #define w_p_fdl_save w_onebuf_opt.wo_fdl_save
   char *wo_fdm;
 #define w_p_fdm w_onebuf_opt.wo_fdm    // 'foldmethod'
   char *wo_fdm_save;
 #define w_p_fdm_save w_onebuf_opt.wo_fdm_save  // 'fdm' saved for diff mode
-  long wo_fml;
+  OptInt wo_fml;
 #define w_p_fml w_onebuf_opt.wo_fml    // 'foldminlines'
-  long wo_fdn;
+  OptInt wo_fdn;
 #define w_p_fdn w_onebuf_opt.wo_fdn    // 'foldnestmax'
   char *wo_fde;
 #define w_p_fde w_onebuf_opt.wo_fde    // 'foldexpr'
@@ -156,7 +156,7 @@ typedef struct {
 #define w_p_ve w_onebuf_opt.wo_ve       // 'virtualedit'
   unsigned wo_ve_flags;
 #define w_ve_flags w_onebuf_opt.wo_ve_flags  // flags for 'virtualedit'
-  long wo_nuw;
+  OptInt wo_nuw;
 #define w_p_nuw w_onebuf_opt.wo_nuw    // 'numberwidth'
   int wo_wfh;
 #define w_p_wfh w_onebuf_opt.wo_wfh    // 'winfixheight'
@@ -168,7 +168,7 @@ typedef struct {
 #define w_p_rl w_onebuf_opt.wo_rl      // 'rightleft'
   char *wo_rlc;
 #define w_p_rlc w_onebuf_opt.wo_rlc    // 'rightleftcmd'
-  long wo_scr;
+  OptInt wo_scr;
 #define w_p_scr w_onebuf_opt.wo_scr     // 'scroll'
   int wo_sms;
 #define w_p_sms w_onebuf_opt.wo_sms     // 'smoothscroll'
@@ -202,7 +202,7 @@ typedef struct {
 #define w_p_wrap_save w_onebuf_opt.wo_wrap_save
   char *wo_cocu;                 // 'concealcursor'
 #define w_p_cocu w_onebuf_opt.wo_cocu
-  long wo_cole;                         // 'conceallevel'
+  OptInt wo_cole;                         // 'conceallevel'
 #define w_p_cole w_onebuf_opt.wo_cole
   int wo_crb;
 #define w_p_crb w_onebuf_opt.wo_crb    // 'cursorbind'
@@ -210,9 +210,9 @@ typedef struct {
 #define w_p_crb_save w_onebuf_opt.wo_crb_save
   char *wo_scl;
 #define w_p_scl w_onebuf_opt.wo_scl    // 'signcolumn'
-  long wo_siso;
+  OptInt wo_siso;
 #define w_p_siso w_onebuf_opt.wo_siso  // 'sidescrolloff' local value
-  long wo_so;
+  OptInt wo_so;
 #define w_p_so w_onebuf_opt.wo_so      // 'scrolloff' local value
   char *wo_winhl;
 #define w_p_winhl w_onebuf_opt.wo_winhl    // 'winhighlight'
@@ -220,7 +220,7 @@ typedef struct {
 #define w_p_lcs w_onebuf_opt.wo_lcs    // 'listchars'
   char *wo_fcs;
 #define w_p_fcs w_onebuf_opt.wo_fcs    // 'fillchars'
-  long wo_winbl;
+  OptInt wo_winbl;
 #define w_p_winbl w_onebuf_opt.wo_winbl  // 'winblend'
 
   LastSet wo_script_ctx[WV_COUNT];        // SCTXs for window-local options
@@ -504,8 +504,8 @@ struct file_buffer {
   bool b_scanned;               // ^N/^P have scanned this buffer
 
   // flags for use of ":lmap" and IM control
-  long b_p_iminsert;            // input mode for insert
-  long b_p_imsearch;            // input mode for search
+  OptInt b_p_iminsert;          // input mode for insert
+  OptInt b_p_imsearch;          // input mode for search
 #define B_IMODE_USE_INSERT (-1)  //  Use b_p_iminsert value for search
 #define B_IMODE_NONE 0          //  Input via none
 #define B_IMODE_LMAP 1          //  Input via langmap
@@ -534,7 +534,7 @@ struct file_buffer {
   char *b_p_bt;                 ///< 'buftype'
   int b_has_qf_entry;           ///< quickfix exists for buffer
   int b_p_bl;                   ///< 'buflisted'
-  long b_p_channel;             ///< 'channel'
+  OptInt b_p_channel;           ///< 'channel'
   int b_p_cin;                  ///< 'cindent'
   char *b_p_cino;               ///< 'cinoptions'
   char *b_p_cink;               ///< 'cinkeys'
@@ -587,27 +587,27 @@ struct file_buffer {
   int b_p_pi;                   ///< 'preserveindent'
   char *b_p_qe;                 ///< 'quoteescape'
   int b_p_ro;                   ///< 'readonly'
-  long b_p_sw;                  ///< 'shiftwidth'
-  long b_p_scbk;                ///< 'scrollback'
+  OptInt b_p_sw;                ///< 'shiftwidth'
+  OptInt b_p_scbk;              ///< 'scrollback'
   int b_p_si;                   ///< 'smartindent'
-  long b_p_sts;                 ///< 'softtabstop'
-  long b_p_sts_nopaste;         ///< b_p_sts saved for paste mode
+  OptInt b_p_sts;               ///< 'softtabstop'
+  OptInt b_p_sts_nopaste;       ///< b_p_sts saved for paste mode
   char *b_p_sua;                ///< 'suffixesadd'
   int b_p_swf;                  ///< 'swapfile'
-  long b_p_smc;                 ///< 'synmaxcol'
+  OptInt b_p_smc;               ///< 'synmaxcol'
   char *b_p_syn;                ///< 'syntax'
-  long b_p_ts;                  ///< 'tabstop'
-  long b_p_tw;                  ///< 'textwidth'
-  long b_p_tw_nobin;            ///< b_p_tw saved for binary mode
-  long b_p_tw_nopaste;          ///< b_p_tw saved for paste mode
-  long b_p_wm;                  ///< 'wrapmargin'
-  long b_p_wm_nobin;            ///< b_p_wm saved for binary mode
-  long b_p_wm_nopaste;          ///< b_p_wm saved for paste mode
+  OptInt b_p_ts;                ///< 'tabstop'
+  OptInt b_p_tw;                ///< 'textwidth'
+  OptInt b_p_tw_nobin;          ///< b_p_tw saved for binary mode
+  OptInt b_p_tw_nopaste;        ///< b_p_tw saved for paste mode
+  OptInt b_p_wm;                ///< 'wrapmargin'
+  OptInt b_p_wm_nobin;          ///< b_p_wm saved for binary mode
+  OptInt b_p_wm_nopaste;        ///< b_p_wm saved for paste mode
   char *b_p_vsts;               ///< 'varsofttabstop'
-  long *b_p_vsts_array;         ///< 'varsofttabstop' in internal format
+  colnr_T *b_p_vsts_array;      ///< 'varsofttabstop' in internal format
   char *b_p_vsts_nopaste;       ///< b_p_vsts saved for paste mode
   char *b_p_vts;                ///< 'vartabstop'
-  long *b_p_vts_array;          ///< 'vartabstop' in internal format
+  colnr_T *b_p_vts_array;       ///< 'vartabstop' in internal format
   char *b_p_keymap;             ///< 'keymap'
 
   // local values for options which are normally global
@@ -624,7 +624,7 @@ struct file_buffer {
   char *b_p_tsr;                ///< 'thesaurus' local value
   char *b_p_tsrfu;              ///< 'thesaurusfunc' local value
   Callback b_tsrfu_cb;          ///< 'thesaurusfunc' callback
-  long b_p_ul;                  ///< 'undolevels' local value
+  OptInt b_p_ul;                ///< 'undolevels' local value
   int b_p_udf;                  ///< 'undofile'
   char *b_p_lw;                 ///< 'lispwords' local value
 
@@ -789,16 +789,16 @@ struct diffblock_S {
 typedef struct tabpage_S tabpage_T;
 struct tabpage_S {
   handle_T handle;
-  tabpage_T *tp_next;      ///< next tabpage or NULL
-  frame_T *tp_topframe;    ///< topframe for the windows
-  win_T *tp_curwin;        ///< current window in this Tab page
-  win_T *tp_prevwin;       ///< previous window in this Tab page
-  win_T *tp_firstwin;      ///< first window in this Tab page
-  win_T *tp_lastwin;       ///< last window in this Tab page
-  long tp_old_Rows_avail;  ///< ROWS_AVAIL when Tab page was left
-  long tp_old_Columns;     ///< Columns when Tab page was left, -1 when
-                           ///< calling win_new_screen_cols() postponed
-  long tp_ch_used;         ///< value of 'cmdheight' when frame size was set
+  tabpage_T *tp_next;         ///< next tabpage or NULL
+  frame_T *tp_topframe;       ///< topframe for the windows
+  win_T *tp_curwin;           ///< current window in this Tab page
+  win_T *tp_prevwin;          ///< previous window in this Tab page
+  win_T *tp_firstwin;         ///< first window in this Tab page
+  win_T *tp_lastwin;          ///< last window in this Tab page
+  int64_t tp_old_Rows_avail;  ///< ROWS_AVAIL when Tab page was left
+  int64_t tp_old_Columns;        ///< Columns when Tab page was left, -1 when
+                                 ///< calling win_new_screen_cols() postponed
+  OptInt tp_ch_used;          ///< value of 'cmdheight' when frame size was set
 
   diff_T *tp_first_diff;
   buf_T *(tp_diffbuf[DB_COUNT]);

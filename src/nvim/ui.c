@@ -439,7 +439,7 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol, 
     ui_call_grid_cursor_goto(grid->handle, row,
                              MIN(clearcol, (int)grid->cols - 1));
     ui_call_flush();
-    uint64_t wd = (uint64_t)labs(p_wd);
+    uint64_t wd = (uint64_t)llabs(p_wd);
     os_sleep(wd);
     pending_cursor_update = true;  // restore the cursor later
   }
@@ -522,7 +522,7 @@ void ui_flush(void)
   ui_call_flush();
 
   if (p_wd && (rdb_flags & RDB_FLUSH)) {
-    os_sleep((uint64_t)labs(p_wd));
+    os_sleep((uint64_t)llabs(p_wd));
   }
 }
 

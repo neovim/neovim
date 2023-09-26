@@ -2695,9 +2695,9 @@ static int vgetorpeek(bool advance)
             // blocking wait
             wait_time = -1L;
           } else if (keylen == KEYLEN_PART_KEY && p_ttm >= 0) {
-            wait_time = p_ttm;
+            wait_time = (long)p_ttm;
           } else {
-            wait_time = p_tm;
+            wait_time = (long)p_tm;
           }
         }
 

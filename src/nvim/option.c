@@ -125,15 +125,15 @@ static char *p_ttytype = NULL;
 // Saved values for when 'bin' is set.
 static int p_et_nobin;
 static int p_ml_nobin;
-static long p_tw_nobin;
-static long p_wm_nobin;
+static OptInt p_tw_nobin;
+static OptInt p_wm_nobin;
 
 // Saved values for when 'paste' is set.
 static int p_ai_nopaste;
 static int p_et_nopaste;
-static long p_sts_nopaste;
-static long p_tw_nopaste;
-static long p_wm_nopaste;
+static OptInt p_sts_nopaste;
+static OptInt p_tw_nopaste;
+static OptInt p_wm_nopaste;
 static char *p_vsts_nopaste;
 
 #define OPTION_COUNT ARRAY_SIZE(options)
@@ -172,7 +172,7 @@ void set_init_tablocal(void)
 {
   // susy baka: cmdheight calls itself OPT_GLOBAL but is really tablocal!
   int ch_idx = findoption("cmdheight");
-  p_ch = (long)options[ch_idx].def_val;
+  p_ch = (OptInt)(intptr_t)options[ch_idx].def_val;
 }
 
 /// Initialize the 'shell' option to a default value.
@@ -449,19 +449,18 @@ static void set_option_default(const int opt_idx, int opt_flags)
       if (opt->indir == PV_SCROLL) {
         win_comp_scroll(curwin);
       } else {
-        long def_val = (long)opt->def_val;
-        if ((long *)varp == &curwin->w_p_so
-            || (long *)varp == &curwin->w_p_siso) {
+        OptInt def_val = (OptInt)(intptr_t)opt->def_val;
+        if ((OptInt *)varp == &curwin->w_p_so
+            || (OptInt *)varp == &curwin->w_p_siso) {
           // 'scrolloff' and 'sidescrolloff' local values have a
           // different default value than the global default.
-          *(long *)varp = -1;
+          *(OptInt *)varp = -1;
         } else {
-          *(long *)varp = def_val;
+          *(OptInt *)varp = def_val;
         }
         // May also set global value for local option.
         if (both) {
-          *(long *)get_varp_scope(opt, OPT_GLOBAL) =
-            def_val;
+          *(OptInt *)get_varp_scope(opt, OPT_GLOBAL) = def_val;
         }
       }
     } else {  // P_BOOL
@@ -802,25 +801,25 @@ static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, co
   if (nextchar == '&') {
     value = (long)(intptr_t)options[opt_idx].def_val;
   } else if (nextchar == '<') {
-    if ((long *)varp == &curbuf->b_p_ul && opt_flags == OPT_LOCAL) {
+    if ((OptInt *)varp == &curbuf->b_p_ul && opt_flags == OPT_LOCAL) {
       // for 'undolevels' NO_LOCAL_UNDOLEVEL means using the global value
       value = NO_LOCAL_UNDOLEVEL;
     } else if (opt_flags == OPT_LOCAL
-               && ((long *)varp == &curwin->w_p_siso
-                   || (long *)varp == &curwin->w_p_so)) {
+               && ((OptInt *)varp == &curwin->w_p_siso
+                   || (OptInt *)varp == &curwin->w_p_so)) {
       // for 'scrolloff'/'sidescrolloff' -1 means using the global value
       value = -1;
     } else {
-      value = *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
+      value = *(OptInt *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
     }
-  } else if (((long *)varp == &p_wc
-              || (long *)varp == &p_wcm)
+  } else if (((OptInt *)varp == &p_wc
+              || (OptInt *)varp == &p_wcm)
              && (*arg == '<'
                  || *arg == '^'
                  || (*arg != NUL && (!arg[1] || ascii_iswhite(arg[1]))
                      && !ascii_isdigit(*arg)))) {
     value = string_to_key(arg);
-    if (value == 0 && (long *)varp != &p_wcm) {
+    if (value == 0 && (OptInt *)varp != &p_wcm) {
       *errmsg = e_invarg;
       return;
     }
@@ -838,13 +837,13 @@ static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, co
   }
 
   if (op == OP_ADDING) {
-    value = *(long *)varp + value;
+    value = *(OptInt *)varp + value;
   }
   if (op == OP_PREPENDING) {
-    value = *(long *)varp * value;
+    value = *(OptInt *)varp * value;
   }
   if (op == OP_REMOVING) {
-    value = *(long *)varp - value;
+    value = *(OptInt *)varp - value;
   }
   *errmsg = set_num_option(opt_idx, (void *)varp, (long)value,
                            errbuf, errbuflen, opt_flags);
@@ -1979,7 +1978,7 @@ void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
 }
 
 /// Apply the OptionSet autocommand.
-static void apply_optionset_autocmd(int opt_idx, long opt_flags, long oldval, long oldval_g,
+static void apply_optionset_autocmd(int opt_idx, long opt_flags, OptInt oldval, OptInt oldval_g,
                                     long newval, const char *errmsg)
 {
   // Don't do this while starting up, failure or recursively.
@@ -1989,8 +1988,8 @@ static void apply_optionset_autocmd(int opt_idx, long opt_flags, long oldval, lo
 
   char buf_old[12], buf_old_global[12], buf_new[12], buf_type[12];
 
-  vim_snprintf(buf_old, sizeof(buf_old), "%ld", oldval);
-  vim_snprintf(buf_old_global, sizeof(buf_old_global), "%ld", oldval_g);
+  vim_snprintf(buf_old, sizeof(buf_old), "%" PRId64, oldval);
+  vim_snprintf(buf_old_global, sizeof(buf_old_global), "%" PRId64, oldval_g);
   vim_snprintf(buf_new, sizeof(buf_new), "%ld", newval);
   vim_snprintf(buf_type, sizeof(buf_type), "%s",
                (opt_flags & OPT_LOCAL) ? "local" : "global");
@@ -2652,8 +2651,8 @@ static const char *did_set_winwidth(optset_T *args)
 /// Process the new 'laststatus' option value.
 static const char *did_set_laststatus(optset_T *args)
 {
-  long old_value = args->os_oldval.number;
-  long value = args->os_newval.number;
+  OptInt old_value = args->os_oldval.number;
+  OptInt value = args->os_newval.number;
 
   // When switching to global statusline, decrease topframe height
   // Also clear the cmdline to remove the ruler if there is one
@@ -2724,7 +2723,7 @@ static const char *did_set_shiftwidth_tabstop(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
   win_T *win = (win_T *)args->os_win;
-  long *pp = (long *)args->os_varp;
+  OptInt *pp = (OptInt *)args->os_varp;
 
   if (foldmethodIsIndent(win)) {
     foldUpdateAll(win);
@@ -2762,7 +2761,7 @@ static const char *did_set_window(optset_T *args FUNC_ATTR_UNUSED)
 /// Process the new 'titlelen' option value.
 static const char *did_set_titlelen(optset_T *args)
 {
-  long old_value = args->os_oldval.number;
+  OptInt old_value = args->os_oldval.number;
 
   // if 'titlelen' has changed, redraw the title
   if (starting != NO_SCREEN && old_value != p_titlelen) {
@@ -2775,7 +2774,7 @@ static const char *did_set_titlelen(optset_T *args)
 /// Process the new 'cmdheight' option value.
 static const char *did_set_cmdheight(optset_T *args)
 {
-  long old_value = args->os_oldval.number;
+  OptInt old_value = args->os_oldval.number;
 
   if (ui_has(kUIMessages)) {
     p_ch = 0;
@@ -2799,7 +2798,7 @@ static const char *did_set_cmdheight(optset_T *args)
 /// Process the new 'updatecount' option value.
 static const char *did_set_updatecount(optset_T *args)
 {
-  long old_value = args->os_oldval.number;
+  OptInt old_value = args->os_oldval.number;
 
   // when 'updatecount' changes from zero to non-zero, open swap files
   if (p_uc && !old_value) {
@@ -2823,7 +2822,7 @@ static const char *did_set_pumblend(optset_T *args FUNC_ATTR_UNUSED)
 }
 
 /// Process the new global 'undolevels' option value.
-const char *did_set_global_undolevels(long value, long old_value)
+const char *did_set_global_undolevels(OptInt value, OptInt old_value)
 {
   // sync undo before 'undolevels' changes
   // use the old value, otherwise u_sync() may not work properly
@@ -2834,7 +2833,7 @@ const char *did_set_global_undolevels(long value, long old_value)
 }
 
 /// Process the new buffer local 'undolevels' option value.
-const char *did_set_buflocal_undolevels(buf_T *buf, long value, long old_value)
+const char *did_set_buflocal_undolevels(buf_T *buf, OptInt value, OptInt old_value)
 {
   // use the old value, otherwise u_sync() may not work properly
   buf->b_p_ul = old_value;
@@ -2847,8 +2846,8 @@ const char *did_set_buflocal_undolevels(buf_T *buf, long value, long old_value)
 static const char *did_set_scrollback(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  long old_value = args->os_oldval.number;
-  long value = args->os_newval.number;
+  OptInt old_value = args->os_oldval.number;
+  OptInt value = args->os_newval.number;
 
   if (buf->terminal && value < old_value) {
     // Force the scrollback to take immediate effect only when decreasing it.
@@ -2880,8 +2879,8 @@ static const char *did_set_textwidth(optset_T *args FUNC_ATTR_UNUSED)
 static const char *did_set_winblend(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  long old_value = args->os_oldval.number;
-  long value = args->os_newval.number;
+  OptInt old_value = args->os_oldval.number;
+  OptInt value = args->os_newval.number;
 
   if (value != old_value) {
     win->w_p_winbl = MAX(MIN(win->w_p_winbl, 100), 0);
@@ -2896,7 +2895,7 @@ static const char *did_set_winblend(optset_T *args)
 static const char *did_set_undolevels(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  long *pp = (long *)args->os_varp;
+  OptInt *pp = (OptInt *)args->os_varp;
 
   if (pp == &p_ul) {                  // global 'undolevels'
     did_set_global_undolevels(args->os_newval.number, args->os_oldval.number);
@@ -2908,8 +2907,8 @@ static const char *did_set_undolevels(optset_T *args)
 }
 
 /// Check the bounds of numeric options.
-static const char *check_num_option_bounds(long *pp, long old_value, long old_Rows, char *errbuf,
-                                           size_t errbuflen, const char *errmsg)
+static const char *check_num_option_bounds(OptInt *pp, OptInt old_value, long old_Rows,
+                                           char *errbuf, size_t errbuflen, const char *errmsg)
 {
   // Check the (new) bounds for Rows and Columns here.
   if (p_lines < min_rows() && full_screen) {
@@ -2984,7 +2983,7 @@ static const char *check_num_option_bounds(long *pp, long old_value, long old_Ro
 }
 
 /// Options that need some validation.
-static const char *validate_num_option(const long *pp, long *valuep)
+static const char *validate_num_option(const OptInt *pp, long *valuep)
 {
   long value = *valuep;
 
@@ -3147,10 +3146,10 @@ static const char *validate_num_option(const long *pp, long *valuep)
 static const char *set_num_option(int opt_idx, void *varp, long value, char *errbuf,
                                   size_t errbuflen, int opt_flags)
 {
-  long old_value = *(long *)varp;
-  long old_global_value = 0;  // only used when setting a local and global option
+  OptInt old_value = *(OptInt *)varp;
+  OptInt old_global_value = 0;  // only used when setting a local and global option
   long old_Rows = Rows;       // remember old Rows
-  long *pp = (long *)varp;
+  OptInt *pp = (OptInt *)varp;
 
   // Disallow changing some options from secure mode.
   if ((secure || sandbox != 0) && (options[opt_idx].flags & P_SECURE)) {
@@ -3161,7 +3160,7 @@ static const char *set_num_option(int opt_idx, void *varp, long value, char *err
   // a global-only option setting the "local value" in fact sets the global
   // value (since there is only one value).
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    old_global_value = *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
+    old_global_value = *(OptInt *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
   }
 
   const char *errmsg = validate_num_option(pp, &value);
@@ -3171,7 +3170,7 @@ static const char *set_num_option(int opt_idx, void *varp, long value, char *err
     return errmsg;
   }
 
-  *pp = value;
+  *pp = (OptInt)value;
   // Remember where the option was set.
   set_option_sctx_idx(opt_idx, opt_flags, current_sctx);
 
@@ -3182,7 +3181,7 @@ static const char *set_num_option(int opt_idx, void *varp, long value, char *err
       .os_varp = varp,
       .os_flags = opt_flags,
       .os_oldval.number = old_value,
-      .os_newval.number = value,
+      .os_newval.number = (OptInt)value,
       .os_errbuf = NULL,
       .os_errbuflen = 0,
       .os_buf = curbuf,
@@ -3196,7 +3195,7 @@ static const char *set_num_option(int opt_idx, void *varp, long value, char *err
 
   // May set global value for local option.
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
+    *(OptInt *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
   }
 
   options[opt_idx].flags |= P_WAS_SET;
@@ -3581,7 +3580,7 @@ OptVal get_option_value(const char *name, uint32_t *flagsp, int scope, bool *hid
   }
 
   if (options[opt_idx].flags & P_NUM) {
-    return NUMBER_OPTVAL(varp == NULL ? 0 : (*(long *)varp));
+    return NUMBER_OPTVAL(varp == NULL ? 0 : (*(OptInt *)varp));
   } else {
     // Special case: 'modified' is b_changed, but we also want to consider
     // it set when 'ff' or 'fenc' changed.
@@ -3709,7 +3708,7 @@ int get_option_value_strict(char *name, int64_t *numval, char **stringval, int o
     if (p->flags & P_STRING) {
       *stringval = *(char **)(varp);
     } else if (p->flags & P_NUM) {
-      *numval = *(long *)varp;
+      *numval = *(OptInt *)varp;
     } else {
       *numval = *(int *)varp;
     }
@@ -3745,10 +3744,10 @@ static OptVal clear_optval(const char *name, uint32_t flags, void *varp, buf_T *
     }
   } else if (flags & P_NUM) {
     v.type = kOptValTypeNumber;
-    if ((long *)varp == &curbuf->b_p_ul) {
+    if ((OptInt *)varp == &curbuf->b_p_ul) {
       // The one true special case
       v.data.number = NO_LOCAL_UNDOLEVEL;
-    } else if ((long *)varp == &win->w_p_so || (long *)varp == &win->w_p_siso) {
+    } else if ((OptInt *)varp == &win->w_p_so || (OptInt *)varp == &win->w_p_siso) {
       // TODO(lewis6991): replace this with a more general condition that
       // indicates we are setting the local value of a global-local option
       v.data.number = -1;
@@ -3996,7 +3995,7 @@ static int optval_default(vimoption_T *p, const void *varp)
     return true;            // hidden option is always at default
   }
   if (p->flags & P_NUM) {
-    return *(long *)varp == (long)(intptr_t)p->def_val;
+    return *(OptInt *)varp == (OptInt)(intptr_t)p->def_val;
   }
   if (p->flags & P_BOOL) {
     return *(int *)varp == (int)(intptr_t)p->def_val;
@@ -4019,7 +4018,7 @@ void ui_refresh_options(void)
     if (flags & P_BOOL) {
       value = BOOLEAN_OBJ(*(int *)varp);
     } else if (flags & P_NUM) {
-      value = INTEGER_OBJ(*(long *)varp);
+      value = INTEGER_OBJ(*(OptInt *)varp);
     } else if (flags & P_STRING) {
       // cstr_as_string handles NULL string
       value = CSTR_AS_OBJ(*(char **)varp);
@@ -4160,7 +4159,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
               return FAIL;
             }
           } else if (p->flags & P_NUM) {
-            if (put_setnum(fd, cmd, p->fullname, (long *)varp) == FAIL) {
+            if (put_setnum(fd, cmd, p->fullname, (OptInt *)varp) == FAIL) {
               return FAIL;
             }
           } else {    // P_STRING
@@ -4273,12 +4272,12 @@ fail:
   return FAIL;
 }
 
-static int put_setnum(FILE *fd, char *cmd, char *name, long *valuep)
+static int put_setnum(FILE *fd, char *cmd, char *name, OptInt *valuep)
 {
   if (fprintf(fd, "%s %s=", cmd, name) < 0) {
     return FAIL;
   }
-  long wc;
+  OptInt wc;
   if (wc_use_keyname(valuep, &wc)) {
     // print 'wildchar' and 'wildcharm' as a key name
     if (fputs(get_special_key_name((int)wc, 0), fd) < 0) {
@@ -5647,7 +5646,7 @@ static void option_value2string(vimoption_T *opp, int scope)
   void *varp = get_varp_scope(opp, scope);
 
   if (opp->flags & P_NUM) {
-    long wc = 0;
+    OptInt wc = 0;
 
     if (wc_use_keyname(varp, &wc)) {
       xstrlcpy(NameBuff, get_special_key_name((int)wc, 0), sizeof(NameBuff));
@@ -5657,7 +5656,7 @@ static void option_value2string(vimoption_T *opp, int scope)
       snprintf(NameBuff,
                sizeof(NameBuff),
                "%" PRId64,
-               (int64_t)(*(long *)varp));
+               (int64_t)(*(OptInt *)varp));
     }
   } else {  // P_STRING
     varp = *(char **)(varp);
@@ -5674,10 +5673,10 @@ static void option_value2string(vimoption_T *opp, int scope)
 /// Return true if "varp" points to 'wildchar' or 'wildcharm' and it can be
 /// printed as a keyname.
 /// "*wcp" is set to the value of the option if it's 'wildchar' or 'wildcharm'.
-static int wc_use_keyname(const void *varp, long *wcp)
+static int wc_use_keyname(const void *varp, OptInt *wcp)
 {
-  if (((long *)varp == &p_wc) || ((long *)varp == &p_wcm)) {
-    *wcp = *(long *)varp;
+  if (((OptInt *)varp == &p_wc) || ((OptInt *)varp == &p_wcm)) {
+    *wcp = *(OptInt *)varp;
     if (IS_SPECIAL(*wcp) || find_special_key_in_table((int)(*wcp)) >= 0) {
       return true;
     }
@@ -6158,7 +6157,7 @@ dict_T *get_winbuf_options(const int bufopt)
                           *(const char **)varp);
         } else if (opt->flags & P_NUM) {
           tv_dict_add_nr(d, opt->fullname, strlen(opt->fullname),
-                         *(long *)varp);
+                         *(OptInt *)varp);
         } else {
           tv_dict_add_nr(d, opt->fullname, strlen(opt->fullname), *(int *)varp);
         }

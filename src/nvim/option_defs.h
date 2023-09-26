@@ -390,7 +390,7 @@ EXTERN int p_bin;               ///< 'binary'
 EXTERN int p_bomb;              ///< 'bomb'
 EXTERN int p_bl;                ///< 'buflisted'
 EXTERN int p_cin;               ///< 'cindent'
-EXTERN long p_channel;          ///< 'channel'
+EXTERN OptInt p_channel;        ///< 'channel'
 EXTERN char *p_cink;            ///< 'cinkeys'
 EXTERN char *p_cinsd;           ///< 'cinscopedecls'
 EXTERN char *p_cinw;            ///< 'cinwords'
@@ -456,19 +456,19 @@ EXTERN unsigned cb_flags;
 #define CB_UNNAMED             0x001
 #define CB_UNNAMEDPLUS         0x002
 #define CB_UNNAMEDMASK         (CB_UNNAMED | CB_UNNAMEDPLUS)
-EXTERN long p_cwh;              // 'cmdwinheight'
-EXTERN long p_ch;               // 'cmdheight'
+EXTERN OptInt p_cwh;            // 'cmdwinheight'
+EXTERN OptInt p_ch;             // 'cmdheight'
 EXTERN char *p_cms;             ///< 'commentstring'
 EXTERN char *p_cpt;             ///< 'complete'
-EXTERN long p_columns;          // 'columns'
+EXTERN OptInt p_columns;        // 'columns'
 EXTERN int p_confirm;           // 'confirm'
 EXTERN char *p_cot;             // 'completeopt'
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char *p_csl;             // 'completeslash'
 #endif
-EXTERN long p_pb;               // 'pumblend'
-EXTERN long p_ph;               // 'pumheight'
-EXTERN long p_pw;               // 'pumwidth'
+EXTERN OptInt p_pb;             // 'pumblend'
+EXTERN OptInt p_ph;             // 'pumheight'
+EXTERN OptInt p_pw;             // 'pumwidth'
 EXTERN char *p_com;             ///< 'comments'
 EXTERN char *p_cpo;             // 'cpoptions'
 EXTERN char *p_debug;           // 'debug'
@@ -510,7 +510,7 @@ EXTERN char *p_ft;              ///< 'filetype'
 EXTERN char *p_fcs;             ///< 'fillchar'
 EXTERN int p_fixeol;            ///< 'fixendofline'
 EXTERN char *p_fcl;             // 'foldclose'
-EXTERN long p_fdls;             // 'foldlevelstart'
+EXTERN OptInt p_fdls;           // 'foldlevelstart'
 EXTERN char *p_fdo;             // 'foldopen'
 EXTERN unsigned fdo_flags;
 #define FDO_ALL                0x001
@@ -534,18 +534,18 @@ EXTERN char *p_guicursor;       // 'guicursor'
 EXTERN char *p_guifont;         // 'guifont'
 EXTERN char *p_guifontwide;     // 'guifontwide'
 EXTERN char *p_hf;              // 'helpfile'
-EXTERN long p_hh;               // 'helpheight'
+EXTERN OptInt p_hh;             // 'helpheight'
 EXTERN char *p_hlg;             // 'helplang'
 EXTERN int p_hid;               // 'hidden'
 EXTERN char *p_hl;              // 'highlight'
 EXTERN int p_hls;               // 'hlsearch'
-EXTERN long p_hi;               // 'history'
+EXTERN OptInt p_hi;             // 'history'
 EXTERN int p_arshape;           // 'arabicshape'
 EXTERN int p_icon;              // 'icon'
 EXTERN char *p_iconstring;      // 'iconstring'
 EXTERN int p_ic;                // 'ignorecase'
-EXTERN long p_iminsert;         ///< 'iminsert'
-EXTERN long p_imsearch;         ///< 'imsearch'
+EXTERN OptInt p_iminsert;       ///< 'iminsert'
+EXTERN OptInt p_imsearch;       ///< 'imsearch'
 EXTERN int p_inf;               ///< 'infercase'
 EXTERN char *p_inex;            ///< 'includeexpr'
 EXTERN int p_is;                // 'incsearch'
@@ -568,13 +568,13 @@ EXTERN char *p_langmap;         // 'langmap'
 EXTERN int p_lnr;               // 'langnoremap'
 EXTERN int p_lrm;               // 'langremap'
 EXTERN char *p_lm;              // 'langmenu'
-EXTERN long p_lines;            // 'lines'
-EXTERN long p_linespace;        // 'linespace'
+EXTERN OptInt p_lines;          // 'lines'
+EXTERN OptInt p_linespace;      // 'linespace'
 EXTERN int p_lisp;              ///< 'lisp'
 EXTERN char *p_lop;             ///< 'lispoptions'
 EXTERN char *p_lispwords;       // 'lispwords'
-EXTERN long p_ls;               // 'laststatus'
-EXTERN long p_stal;             // 'showtabline'
+EXTERN OptInt p_ls;             // 'laststatus'
+EXTERN OptInt p_stal;           // 'showtabline'
 EXTERN char *p_lcs;             // 'listchars'
 
 EXTERN int p_lz;                // 'lazyredraw'
@@ -584,16 +584,16 @@ EXTERN char *p_menc;            // 'makeencoding'
 EXTERN char *p_mef;             // 'makeef'
 EXTERN char *p_mp;              // 'makeprg'
 EXTERN char *p_mps;             ///< 'matchpairs'
-EXTERN long p_mat;              // 'matchtime'
-EXTERN long p_mco;              // 'maxcombine'
-EXTERN long p_mfd;              // 'maxfuncdepth'
-EXTERN long p_mmd;              // 'maxmapdepth'
-EXTERN long p_mmp;              // 'maxmempattern'
-EXTERN long p_mis;              // 'menuitems'
+EXTERN OptInt p_mat;            // 'matchtime'
+EXTERN OptInt p_mco;            // 'maxcombine'
+EXTERN OptInt p_mfd;            // 'maxfuncdepth'
+EXTERN OptInt p_mmd;            // 'maxmapdepth'
+EXTERN OptInt p_mmp;            // 'maxmempattern'
+EXTERN OptInt p_mis;            // 'menuitems'
 EXTERN char *p_msm;             // 'mkspellmem'
 EXTERN int p_ml;                ///< 'modeline'
 EXTERN int p_mle;               // 'modelineexpr'
-EXTERN long p_mls;              // 'modelines'
+EXTERN OptInt p_mls;            // 'modelines'
 EXTERN int p_ma;                ///< 'modifiable'
 EXTERN int p_mod;               ///< 'modified'
 EXTERN char *p_mouse;           // 'mouse'
@@ -601,9 +601,9 @@ EXTERN char *p_mousem;          // 'mousemodel'
 EXTERN int p_mousemev;          ///< 'mousemoveevent'
 EXTERN int p_mousef;            // 'mousefocus'
 EXTERN char *p_mousescroll;     // 'mousescroll'
-EXTERN long p_mousescroll_vert INIT(= MOUSESCROLL_VERT_DFLT);
-EXTERN long p_mousescroll_hor INIT(= MOUSESCROLL_HOR_DFLT);
-EXTERN long p_mouset;           // 'mousetime'
+EXTERN OptInt p_mousescroll_vert INIT(= MOUSESCROLL_VERT_DFLT);
+EXTERN OptInt p_mousescroll_hor INIT(= MOUSESCROLL_HOR_DFLT);
+EXTERN OptInt p_mouset;         // 'mousetime'
 EXTERN int p_more;              // 'more'
 EXTERN char *p_nf;              ///< 'nrformats'
 EXTERN char *p_opfunc;          // 'operatorfunc'
@@ -614,7 +614,7 @@ EXTERN char *p_pm;              // 'patchmode'
 EXTERN char *p_path;            // 'path'
 EXTERN char *p_cdpath;          // 'cdpath'
 EXTERN int p_pi;                ///< 'preserveindent'
-EXTERN long p_pyx;              // 'pyxversion'
+EXTERN OptInt p_pyx;            // 'pyxversion'
 EXTERN char *p_qe;              ///< 'quoteescape'
 EXTERN int p_ro;                ///< 'readonly'
 EXTERN char *p_rdb;             // 'redrawdebug'
@@ -627,10 +627,10 @@ EXTERN unsigned rdb_flags;
 #define RDB_FLUSH              0x020
 #define RDB_INTERSECT          0x040
 
-EXTERN long p_rdt;            // 'redrawtime'
-EXTERN long p_re;             // 'regexpengine'
-EXTERN long p_report;         // 'report'
-EXTERN long p_pvh;            // 'previewheight'
+EXTERN OptInt p_rdt;          // 'redrawtime'
+EXTERN OptInt p_re;           // 'regexpengine'
+EXTERN OptInt p_report;       // 'report'
+EXTERN OptInt p_pvh;          // 'previewheight'
 EXTERN int p_ari;             // 'allowrevins'
 EXTERN int p_ri;              // 'revins'
 EXTERN int p_ru;              // 'ruler'
@@ -638,9 +638,9 @@ EXTERN char *p_ruf;           // 'rulerformat'
 EXTERN char *p_pp;            // 'packpath'
 EXTERN char *p_qftf;          // 'quickfixtextfunc'
 EXTERN char *p_rtp;           // 'runtimepath'
-EXTERN long p_scbk;           // 'scrollback'
-EXTERN long p_sj;             // 'scrolljump'
-EXTERN long p_so;             // 'scrolloff'
+EXTERN OptInt p_scbk;         // 'scrollback'
+EXTERN OptInt p_sj;           // 'scrolljump'
+EXTERN OptInt p_so;           // 'scrolloff'
 EXTERN char *p_sbo;           // 'scrollopt'
 EXTERN char *p_sections;      // 'sections'
 EXTERN int p_secure;          // 'secure'
@@ -682,7 +682,7 @@ EXTERN int p_ssl;               // 'shellslash'
 EXTERN char *p_stl;             // 'statusline'
 EXTERN char *p_wbr;             // 'winbar'
 EXTERN int p_sr;                // 'shiftround'
-EXTERN long p_sw;               ///< 'shiftwidth'
+EXTERN OptInt p_sw;             ///< 'shiftwidth'
 EXTERN char *p_shm;             // 'shortmess'
 EXTERN char *p_sbr;             // 'showbreak'
 EXTERN int p_sc;                // 'showcmd'
@@ -690,17 +690,17 @@ EXTERN char *p_sloc;            // 'showcmdloc'
 EXTERN int p_sft;               // 'showfulltag'
 EXTERN int p_sm;                // 'showmatch'
 EXTERN int p_smd;               // 'showmode'
-EXTERN long p_ss;               // 'sidescroll'
-EXTERN long p_siso;             // 'sidescrolloff'
+EXTERN OptInt p_ss;             // 'sidescroll'
+EXTERN OptInt p_siso;           // 'sidescrolloff'
 EXTERN int p_scs;               // 'smartcase'
 EXTERN int p_si;                ///< 'smartindent'
 EXTERN int p_sta;               // 'smarttab'
-EXTERN long p_sts;              ///< 'softtabstop'
+EXTERN OptInt p_sts;            ///< 'softtabstop'
 EXTERN int p_sb;                // 'splitbelow'
 EXTERN char *p_sua;             ///< 'suffixesadd'
 EXTERN int p_swf;               ///< 'swapfile'
-EXTERN long p_smc;              ///< 'synmaxcol'
-EXTERN long p_tpm;              // 'tabpagemax'
+EXTERN OptInt p_smc;            ///< 'synmaxcol'
+EXTERN OptInt p_tpm;            // 'tabpagemax'
 EXTERN char *p_tal;             // 'tabline'
 EXTERN char *p_tpf;             // 'termpastefilter'
 EXTERN unsigned tpf_flags;  ///< flags from 'termpastefilter'
@@ -732,7 +732,7 @@ EXTERN unsigned swb_flags;
 #define SWB_VSPLIT              0x010
 #define SWB_USELAST             0x020
 EXTERN char *p_syn;             ///< 'syntax'
-EXTERN long p_ts;               ///< 'tabstop'
+EXTERN OptInt p_ts;             ///< 'tabstop'
 EXTERN int p_tbs;               ///< 'tagbsearch'
 EXTERN char *p_tc;              ///< 'tagcase'
 EXTERN unsigned tc_flags;       ///< flags from 'tagcase'
@@ -741,29 +741,29 @@ EXTERN unsigned tc_flags;       ///< flags from 'tagcase'
 #define TC_MATCH                0x04
 #define TC_FOLLOWSCS            0x08
 #define TC_SMART                0x10
-EXTERN long p_tl;               ///< 'taglength'
+EXTERN OptInt p_tl;             ///< 'taglength'
 EXTERN int p_tr;                ///< 'tagrelative'
 EXTERN char *p_tags;            ///< 'tags'
 EXTERN int p_tgst;              ///< 'tagstack'
 EXTERN int p_tbidi;             ///< 'termbidi'
-EXTERN long p_tw;               ///< 'textwidth'
+EXTERN OptInt p_tw;             ///< 'textwidth'
 EXTERN int p_to;                ///< 'tildeop'
 EXTERN int p_timeout;           ///< 'timeout'
-EXTERN long p_tm;               ///< 'timeoutlen'
+EXTERN OptInt p_tm;             ///< 'timeoutlen'
 EXTERN int p_title;             ///< 'title'
-EXTERN long p_titlelen;         ///< 'titlelen'
+EXTERN OptInt p_titlelen;       ///< 'titlelen'
 EXTERN char *p_titleold;        ///< 'titleold'
 EXTERN char *p_titlestring;     ///< 'titlestring'
 EXTERN char *p_tsr;             ///< 'thesaurus'
 EXTERN int p_tgc;               ///< 'termguicolors'
 EXTERN int p_ttimeout;          ///< 'ttimeout'
-EXTERN long p_ttm;              ///< 'ttimeoutlen'
+EXTERN OptInt p_ttm;            ///< 'ttimeoutlen'
 EXTERN char *p_udir;            ///< 'undodir'
 EXTERN int p_udf;               ///< 'undofile'
-EXTERN long p_ul;               ///< 'undolevels'
-EXTERN long p_ur;               ///< 'undoreload'
-EXTERN long p_uc;               ///< 'updatecount'
-EXTERN long p_ut;               ///< 'updatetime'
+EXTERN OptInt p_ul;             ///< 'undolevels'
+EXTERN OptInt p_ur;             ///< 'undoreload'
+EXTERN OptInt p_uc;             ///< 'updatecount'
+EXTERN OptInt p_ut;             ///< 'updatetime'
 EXTERN char *p_shada;           ///< 'shada'
 EXTERN char *p_shadafile;       ///< 'shadafile'
 EXTERN char *p_vsts;            ///< 'varsofttabstop'
@@ -780,7 +780,7 @@ EXTERN unsigned ve_flags;
 #define VE_ONEMORE     8U
 #define VE_NONE        16U      // "none"
 #define VE_NONEU       32U      // "NONE"
-EXTERN long p_verbose;          // 'verbose'
+EXTERN OptInt p_verbose;        // 'verbose'
 #ifdef IN_OPTION_C
 char *p_vfile = "";             // used before options are initialized
 #else
@@ -792,25 +792,25 @@ EXTERN unsigned wop_flags;
 #define WOP_TAGFILE             0x01
 #define WOP_PUM                 0x02
 #define WOP_FUZZY               0x04
-EXTERN long p_window;           // 'window'
+EXTERN OptInt p_window;         // 'window'
 EXTERN char *p_wak;             // 'winaltkeys'
 EXTERN char *p_wig;             // 'wildignore'
 EXTERN char *p_ww;              // 'whichwrap'
-EXTERN long p_wc;               // 'wildchar'
-EXTERN long p_wcm;              // 'wildcharm'
+EXTERN OptInt p_wc;             // 'wildchar'
+EXTERN OptInt p_wcm;            // 'wildcharm'
 EXTERN int p_wic;               // 'wildignorecase'
 EXTERN char *p_wim;             // 'wildmode'
 EXTERN int p_wmnu;              // 'wildmenu'
-EXTERN long p_wh;               // 'winheight'
-EXTERN long p_wmh;              // 'winminheight'
-EXTERN long p_wmw;              // 'winminwidth'
-EXTERN long p_wiw;              // 'winwidth'
-EXTERN long p_wm;               ///< 'wrapmargin'
+EXTERN OptInt p_wh;             // 'winheight'
+EXTERN OptInt p_wmh;            // 'winminheight'
+EXTERN OptInt p_wmw;            // 'winminwidth'
+EXTERN OptInt p_wiw;            // 'winwidth'
+EXTERN OptInt p_wm;             ///< 'wrapmargin'
 EXTERN int p_ws;                // 'wrapscan'
 EXTERN int p_write;             // 'write'
 EXTERN int p_wa;                // 'writeany'
 EXTERN int p_wb;                // 'writebackup'
-EXTERN long p_wd;               // 'writedelay'
+EXTERN OptInt p_wd;             // 'writedelay'
 EXTERN int p_cdh;               // 'cdhome'
 
 EXTERN int p_force_on;          ///< options that cannot be turned off.
@@ -978,7 +978,7 @@ enum {
 // Argument for the callback function (opt_did_set_cb_T) invoked after an
 // option value is modified.
 typedef struct {
-  // Pointer to the option variable.  The variable can be a long (numeric
+  // Pointer to the option variable.  The variable can be an OptInt (numeric
   // option), an int (boolean option) or a char pointer (string option).
   void *os_varp;
   int os_idx;
@@ -986,14 +986,14 @@ typedef struct {
 
   // old value of the option (can be a string, number or a boolean)
   union {
-    const long number;
+    const OptInt number;
     const bool boolean;
     const char *string;
   } os_oldval;
 
   // new value of the option (can be a string, number or a boolean)
   union {
-    const long number;
+    const OptInt number;
     const bool boolean;
     const char *string;
   } os_newval;
@@ -1091,7 +1091,7 @@ typedef struct {
   union {
     // Vim boolean options are actually tri-states because they have a third "None" value.
     TriState boolean;
-    Integer number;
+    OptInt number;
     String string;
   } data;
 } OptVal;
