@@ -2148,7 +2148,6 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
   bufref_T old_curbuf;
   char *free_fname = NULL;
   int retval = FAIL;
-  long n;
   pos_T orig_pos;
   linenr_T topline = 0;
   int newcol = -1;
@@ -2158,7 +2157,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
   bool did_get_winopts = false;
   int readfile_flags = 0;
   bool did_inc_redrawing_disabled = false;
-  long *so_ptr = curwin->w_p_so >= 0 ? &curwin->w_p_so : &p_so;
+  OptInt *so_ptr = curwin->w_p_so >= 0 ? &curwin->w_p_so : &p_so;
 
   if (eap != NULL) {
     command = eap->do_ecmd_cmd;
@@ -2719,7 +2718,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
   RedrawingDisabled--;
   did_inc_redrawing_disabled = false;
   if (!skip_redraw) {
-    n = *so_ptr;
+    OptInt n = *so_ptr;
     if (topline == 0 && command == NULL) {
       *so_ptr = 999;    // force cursor to be vertically centered in the window
     }

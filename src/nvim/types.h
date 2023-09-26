@@ -52,4 +52,6 @@ typedef struct Decoration Decoration;
 # endif
 #endif
 
+typedef int64_t OptInt;
+
 #endif  // NVIM_TYPES_H

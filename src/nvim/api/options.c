@@ -165,7 +165,7 @@ static OptVal object_as_optval(Object o, bool *error)
   case kObjectTypeBoolean:
     return BOOLEAN_OPTVAL(o.data.boolean);
   case kObjectTypeInteger:
-    return NUMBER_OPTVAL(o.data.integer);
+    return NUMBER_OPTVAL((OptInt)o.data.integer);
   case kObjectTypeString:
     return STRING_OPTVAL(o.data.string);
   default:

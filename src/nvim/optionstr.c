@@ -527,8 +527,8 @@ static bool valid_filetype(const char *val)
 /// @return error message, NULL if it's OK.
 const char *did_set_mousescroll(optset_T *args FUNC_ATTR_UNUSED)
 {
-  long vertical = -1;
-  long horizontal = -1;
+  OptInt vertical = -1;
+  OptInt horizontal = -1;
 
   char *string = p_mousescroll;
 
@@ -542,7 +542,7 @@ const char *did_set_mousescroll(optset_T *args FUNC_ATTR_UNUSED)
       return e_invarg;
     }
 
-    long *direction;
+    OptInt *direction;
 
     if (memcmp(string, "ver:", 4) == 0) {
       direction = &vertical;
@@ -1944,7 +1944,7 @@ const char *did_set_varsofttabstop(optset_T *args)
     return e_invarg;
   }
 
-  long *oldarray = buf->b_p_vsts_array;
+  colnr_T *oldarray = buf->b_p_vsts_array;
   if (tabstop_set(*varp, &(buf->b_p_vsts_array))) {
     xfree(oldarray);
   } else {
@@ -1975,7 +1975,7 @@ const char *did_set_vartabstop(optset_T *args)
     return e_invarg;
   }
 
-  long *oldarray = buf->b_p_vts_array;
+  colnr_T *oldarray = buf->b_p_vts_array;
   if (tabstop_set(*varp, &(buf->b_p_vts_array))) {
     xfree(oldarray);
     if (foldmethodIsIndent(win)) {

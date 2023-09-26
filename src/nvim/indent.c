@@ -51,7 +51,7 @@
 /// "array" will be set, caller must free it if needed.
 ///
 /// @return  false for an error.
-bool tabstop_set(char *var, long **array)
+bool tabstop_set(char *var, colnr_T **array)
 {
   long valcount = 1;
   int t;
@@ -87,8 +87,8 @@ bool tabstop_set(char *var, long **array)
     return false;
   }
 
-  *array = (long *)xmalloc((unsigned)(valcount + 1) * sizeof(long));
-  (*array)[0] = valcount;
+  *array = (colnr_T *)xmalloc((unsigned)(valcount + 1) * sizeof(long));
+  (*array)[0] = (colnr_T)valcount;
 
   t = 1;
   for (cp = var; *cp != NUL;) {
@@ -115,9 +115,9 @@ bool tabstop_set(char *var, long **array)
 /// Calculate the number of screen spaces a tab will occupy.
 /// If "vts" is set then the tab widths are taken from that array,
 /// otherwise the value of ts is used.
-int tabstop_padding(colnr_T col, long ts_arg, const long *vts)
+int tabstop_padding(colnr_T col, OptInt ts_arg, const colnr_T *vts)
 {
-  long ts = ts_arg == 0 ? 8 : ts_arg;
+  OptInt ts = ts_arg == 0 ? 8 : ts_arg;
   colnr_T tabcol = 0;
   int t;
   long padding = 0;
@@ -129,7 +129,7 @@ int tabstop_padding(colnr_T col, long ts_arg, const long *vts)
   const long tabcount = vts[0];
 
   for (t = 1; t <= tabcount; t++) {
-    tabcol += (colnr_T)vts[t];
+    tabcol += vts[t];
     if (tabcol > col) {
       padding = tabcol - col;
       break;
@@ -143,7 +143,7 @@ int tabstop_padding(colnr_T col, long ts_arg, const long *vts)
 }
 
 /// Find the size of the tab that covers a particular column.
-int tabstop_at(colnr_T col, long ts, const long *vts)
+int tabstop_at(colnr_T col, OptInt ts, const colnr_T *vts)
 {
   colnr_T tabcol = 0;
   int t;
@@ -155,7 +155,7 @@ int tabstop_at(colnr_T col, long ts, const long *vts)
 
   const long tabcount = vts[0];
   for (t = 1; t <= tabcount; t++) {
-    tabcol += (colnr_T)vts[t];
+    tabcol += vts[t];
     if (tabcol > col) {
       tab_size = vts[t];
       break;
@@ -169,7 +169,7 @@ int tabstop_at(colnr_T col, long ts, const long *vts)
 }
 
 /// Find the column on which a tab starts.
-colnr_T tabstop_start(colnr_T col, long ts, long *vts)
+colnr_T tabstop_start(colnr_T col, long ts, colnr_T *vts)
 {
   colnr_T tabcol = 0;
   int t;
@@ -180,26 +180,26 @@ colnr_T tabstop_start(colnr_T col, long ts, long *vts)
 
   const long tabcount = vts[0];
   for (t = 1; t <= tabcount; t++) {
-    tabcol += (colnr_T)vts[t];
+    tabcol += vts[t];
     if (tabcol > col) {
-      return (int)(tabcol - vts[t]);
+      return (tabcol - vts[t]);
     }
   }
 
-  const int excess = (int)(tabcol % vts[tabcount]);
-  return (int)(excess + ((col - excess) / vts[tabcount]) * vts[tabcount]);
+  const int excess = (tabcol % vts[tabcount]);
+  return (excess + ((col - excess) / vts[tabcount]) * vts[tabcount]);
 }
 
 /// Find the number of tabs and spaces necessary to get from one column
 /// to another.
-void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, const long *vts, int *ntabs,
+void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, const colnr_T *vts, int *ntabs,
                     int *nspcs)
 {
   int spaces = end_col - start_col;
   colnr_T tabcol = 0;
   long padding = 0;
   int t;
-  long ts = ts_arg == 0 ? curbuf->b_p_ts : ts_arg;
+  long ts = ts_arg == 0 ? (long)curbuf->b_p_ts : ts_arg;
   assert(ts != 0);  // suppress clang "Division by zero"
 
   if (vts == NULL || vts[0] == 0) {
@@ -221,7 +221,7 @@ void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, const long 
   // Find the padding needed to reach the next tabstop.
   const long tabcount = vts[0];
   for (t = 1; t <= tabcount; t++) {
-    tabcol += (colnr_T)vts[t];
+    tabcol += vts[t];
     if (tabcol > start_col) {
       padding = tabcol - start_col;
       break;
@@ -257,7 +257,7 @@ void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, const long 
 }
 
 /// See if two tabstop arrays contain the same values.
-bool tabstop_eq(const long *ts1, const long *ts2)
+bool tabstop_eq(const colnr_T *ts1, const colnr_T *ts2)
 {
   int t;
 
@@ -299,13 +299,13 @@ int *tabstop_copy(const long *oldts)
 }
 
 /// Return a count of the number of tabstops.
-int tabstop_count(long *ts)
+int tabstop_count(colnr_T *ts)
 {
   return ts != NULL ? (int)ts[0] : 0;
 }
 
 /// Return the first tabstop, or 8 if there are no tabstops defined.
-int tabstop_first(long *ts)
+int tabstop_first(colnr_T *ts)
 {
   return ts != NULL ? (int)ts[1] : 8;
 }
@@ -343,7 +343,7 @@ long get_sw_value_indent(buf_T *buf)
 /// Idem, using virtual column "col".
 long get_sw_value_col(buf_T *buf, colnr_T col)
 {
-  return buf->b_p_sw ? buf->b_p_sw
+  return buf->b_p_sw ? (long)buf->b_p_sw
                      : tabstop_at(col, buf->b_p_ts, buf->b_p_vts_array);
 }
 
@@ -351,9 +351,8 @@ long get_sw_value_col(buf_T *buf, colnr_T col)
 /// using the shiftwidth  value when 'softtabstop' is negative.
 int get_sts_value(void)
 {
-  long result = curbuf->b_p_sts < 0 ? get_sw_value(curbuf) : curbuf->b_p_sts;
-  assert(result >= 0 && result <= INT_MAX);
-  return (int)result;
+  int result = curbuf->b_p_sts < 0 ? get_sw_value(curbuf) : (int)curbuf->b_p_sts;
+  return result;
 }
 
 // Count the size (in window cells) of the indent in the current line.
@@ -413,7 +412,7 @@ int get_indent_str(const char *ptr, int ts, bool list)
 /// Count the size (in window cells) of the indent in line "ptr", using
 /// variable tabstops.
 /// if "list" is true, count only screen size for tabs.
-int get_indent_str_vtab(const char *ptr, long ts, long *vts, bool list)
+int get_indent_str_vtab(const char *ptr, OptInt ts, colnr_T *vts, bool list)
 {
   int count = 0;
 
@@ -800,11 +799,11 @@ int get_breakindent_win(win_T *wp, char *line)
   FUNC_ATTR_NONNULL_ALL
 {
   static int prev_indent = 0;  // cached indent value
-  static long prev_ts = 0L;  // cached tabstop value
+  static OptInt prev_ts = 0L;  // cached tabstop value
   static int prev_fnum = 0;  // cached buffer number
   static char *prev_line = NULL;  // cached copy of "line"
   static varnumber_T prev_tick = 0;  // changedtick of cached value
-  static long *prev_vts = NULL;  // cached vartabs values
+  static colnr_T *prev_vts = NULL;  // cached vartabs values
   static int prev_list = 0;  // cached list value
   static int prev_listopt = 0;  // cached w_p_briopt_list value
   static char *prev_flp = NULL;  // cached formatlistpat value
@@ -945,7 +944,7 @@ void ex_retab(exarg_T *eap)
   long start_vcol = 0;                  // For start of white-space string
   long old_len;
   char *new_line = (char *)1;  // init to non-NULL
-  long *new_vts_array = NULL;
+  colnr_T *new_vts_array = NULL;
   char *new_ts_str;  // string value of tab argument
 
   int save_list;
@@ -1000,7 +999,7 @@ void ex_retab(exarg_T *eap)
             int t, s;
 
             tabstop_fromto((colnr_T)start_vcol, (colnr_T)vcol,
-                           curbuf->b_p_ts, new_vts_array, &t, &s);
+                           (long)curbuf->b_p_ts, new_vts_array, &t, &s);
             num_tabs = t;
             num_spaces = s;
           }
@@ -1091,7 +1090,7 @@ void ex_retab(exarg_T *eap)
   if (new_ts_str != NULL) {  // set the new tabstop
     // If 'vartabstop' is in use or if the value given to retab has more
     // than one tabstop then update 'vartabstop'.
-    long *old_vts_ary = curbuf->b_p_vts_array;
+    colnr_T *old_vts_ary = curbuf->b_p_vts_array;
 
     if (tabstop_count(old_vts_ary) > 0 || tabstop_count(new_vts_array) > 1) {
       set_string_option_direct("vts", -1, new_ts_str, OPT_FREE | OPT_LOCAL, 0);

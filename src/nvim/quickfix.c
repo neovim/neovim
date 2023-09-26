@@ -5187,7 +5187,7 @@ static buf_T *vgr_load_dummy_buf(char *fname, char *dirname_start, char *dirname
   // indent scripts, a great speed improvement.
   char *save_ei = au_event_disable(",Filetype");
 
-  long save_mls = p_mls;
+  OptInt save_mls = p_mls;
   p_mls = 0;
 
   // Load file into a buffer, so that 'fileencoding' is detected,

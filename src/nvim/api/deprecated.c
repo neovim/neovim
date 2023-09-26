@@ -729,7 +729,7 @@ static void set_option_to(uint64_t channel_id, void *to, int type, String name, 
              "Option '%s' value is out of range", name.data, {
       return;
     });
-    optval = NUMBER_OPTVAL(value.data.integer);
+    optval = NUMBER_OPTVAL((OptInt)value.data.integer);
   } else {
     VALIDATE(value.type == kObjectTypeString, "Option '%s' value must be String", name.data, {
       return;

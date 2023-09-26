@@ -206,7 +206,7 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
   int flags = flags_arg;
   int retval = OK;
   bufref_T old_curbuf;
-  long old_tw = curbuf->b_p_tw;
+  OptInt old_tw = curbuf->b_p_tw;
   int read_fifo = false;
   bool silent = shortmess(SHM_FILEINFO);
 
@@ -965,7 +965,7 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
 void handle_swap_exists(bufref_T *old_curbuf)
 {
   cleanup_T cs;
-  long old_tw = curbuf->b_p_tw;
+  OptInt old_tw = curbuf->b_p_tw;
   buf_T *buf;
 
   if (swap_exists_action == SEA_QUIT) {
@@ -1532,7 +1532,7 @@ void set_curbuf(buf_T *buf, int action)
   buf_T *prevbuf;
   int unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
                 || action == DOBUF_WIPE);
-  long old_tw = curbuf->b_p_tw;
+  OptInt old_tw = curbuf->b_p_tw;
 
   setpcmark();
   if ((cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {

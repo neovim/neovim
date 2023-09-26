@@ -6840,7 +6840,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         result = false;
         win_T *wp = rex.reg_win == NULL ? curwin : rex.reg_win;
         if (op == 1 && col - 1 > t->state->val && col > 100) {
-          long ts = wp->w_buffer->b_p_ts;
+          long ts = (long)wp->w_buffer->b_p_ts;
 
           // Guess that a character won't use more columns than 'tabstop',
           // with a minimum of 4.

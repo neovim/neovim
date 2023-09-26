@@ -461,7 +461,7 @@ static void compose_debug(Integer startrow, Integer endrow, Integer startcol, In
 static void debug_delay(Integer lines)
 {
   ui_call_flush();
-  uint64_t wd = (uint64_t)labs(p_wd);
+  uint64_t wd = (uint64_t)llabs(p_wd);
   uint64_t factor = (uint64_t)MAX(MIN(lines, 5), 1);
   os_sleep(factor * wd);
 }

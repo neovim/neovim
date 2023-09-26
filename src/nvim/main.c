@@ -367,7 +367,7 @@ int main(int argc, char **argv)
   }
 
   assert(p_ch >= 0 && Rows >= p_ch && Rows - p_ch <= INT_MAX);
-  cmdline_row = (int)(Rows - p_ch);
+  cmdline_row = Rows - (int)p_ch;
   msg_row = cmdline_row;
   default_grid_alloc();  // allocate screen buffers
   set_init_2(headless_mode);
@@ -1265,7 +1265,7 @@ static void command_line_scan(mparm_T *parmp)
         // "-w {scriptout}" write to script
         if (ascii_isdigit((argv[0])[argv_idx])) {
           n = get_number_arg(argv[0], &argv_idx, 10);
-          set_option_value_give_err("window", NUMBER_OPTVAL(n), 0);
+          set_option_value_give_err("window", NUMBER_OPTVAL((OptInt)n), 0);
           break;
         }
         want_argument = true;
@@ -1407,7 +1407,7 @@ scripterror:
           if (ascii_isdigit(*(argv[0]))) {
             argv_idx = 0;
             n = get_number_arg(argv[0], &argv_idx, 10);
-            set_option_value_give_err("window", NUMBER_OPTVAL(n), 0);
+            set_option_value_give_err("window", NUMBER_OPTVAL((OptInt)n), 0);
             argv_idx = -1;
             break;
           }
