@@ -629,7 +629,7 @@ NOTE: All `:`{vim} commands are executed when you press `<Enter>`{normal}.
 
 ** To save the changes made to the text, type `:w`{vim} FILENAME. **
 
- 1. Type `:!ls`{vim} to get a listing of your directory.
+ 1. Type `:!{unix:(ls),win:(dir)}`{vim} to get a listing of your directory.
     You already know you must hit `<Enter>`{normal} after this.
 
  2. Choose a filename that does not exist yet, such as TEST.
@@ -641,14 +641,14 @@ NOTE: All `:`{vim} commands are executed when you press `<Enter>`{normal}.
    (where TEST is the filename you chose.)
 
  4. This saves the current file under the name TEST.
-    To verify this, type `:!ls`{vim} again to see your directory.
+    To verify this, type `:!{unix:(ls),win:(dir)}`{vim} again to see your directory.
 
 NOTE: If you were to exit Neovim and start it again with `nvim TEST`, the file
       would be an exact copy of the tutorial when you saved it.
 
  5. Now remove the file by typing:
 ~~~ cmd
-        :!rm TEST
+        :!{unix:(rm),win:(del)} TEST
 ~~~
 # Lesson 5.3: SELECTING TEXT TO WRITE
 
@@ -675,7 +675,7 @@ NOTE: If you were to exit Neovim and start it again with `nvim TEST`, the file
 
     before you press `<Enter>`{normal}.
 
- 5. Neovim will write the selected lines to the file TEST. Use `:!ls`{vim} to see it.
+ 5. Neovim will write the selected lines to the file TEST. Use `:!{unix:(ls),win:(dir)}`{vim} to see it.
     Do not remove it yet! We will use it in the next lesson.
 
 NOTE: Pressing [v](v) starts [Visual selection](visual-mode). You can move the cursor around to
@@ -703,7 +703,7 @@ NOTE:  After executing Step 2 you will see text from Lesson 5.3. Then move
 
 NOTE: You can also read the output of an external command. For example,
 
-        `:r !ls`{vim}
+        `:r !{unix:(ls),win:(dir)}`{vim}
 
       reads the output of the `ls` command and puts it below the cursor.
 
@@ -712,8 +712,8 @@ NOTE: You can also read the output of an external command. For example,
  1. [:!command](:!cmd) executes an external command.
 
      Some useful examples are:
-     `:!ls`{vim}                    - shows a directory listing
-     `:!rm FILENAME`{vim}           - removes file FILENAME
+     `:!{unix:(ls ),win:(dir)}`{vim}                   - shows a directory listing
+     `:!{unix:(rm ),win:(del)} FILENAME`{vim}          - removes file FILENAME
 
  2. [:w](:w) FILENAME              writes the current Neovim file to disk with
                              name FILENAME.
@@ -724,7 +724,7 @@ NOTE: You can also read the output of an external command. For example,
  4. [:r](:r) FILENAME              retrieves disk file FILENAME and puts it
                              below the cursor position.
 
- 5. [:r !dir](:r!)                  reads the output of the dir command and
+ 5. {unix:([:r !ls](:r!) ),win:([:r !dir](:r!))}                  reads the output of the {unix:(ls),win:(dir)} command and
                              puts it below the cursor position.
 
 # Lesson 6.1: THE OPEN COMMAND
@@ -928,7 +928,7 @@ To start using more features create an "init.vim" file.
 
 ** Command line completion with `<C-d>`{normal} and `<Tab>`{normal}. **
 
- 1. List the contents of the current directory: `:!ls`{vim}
+ 1. List the contents of the current directory: `:!{unix:(ls),win:(dir)}`{vim}
 
  2. Type the start of a command: `:e`{vim}
 
