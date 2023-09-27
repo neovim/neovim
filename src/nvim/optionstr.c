@@ -441,14 +441,13 @@ void set_string_option_direct_in_buf(buf_T *buf, const char *name, int opt_idx, 
 ///                        #OPT_GLOBAL.
 ///
 /// @return NULL on success, an untranslated error message on error.
-const char *set_string_option(const int opt_idx, void *varp_arg, const char *value,
+const char *set_string_option(const int opt_idx, void *varp, const char *value,
                               const int opt_flags, bool *value_checked, char *const errbuf,
                               const size_t errbuflen)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   vimoption_T *opt = get_option(opt_idx);
 
-  void *varp = (char **)varp_arg;
   char *origval_l = NULL;
   char *origval_g = NULL;
 

@@ -822,7 +822,7 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
       if (curval.type == kOptValTypeNumber) {
         newval = NUMBER_OPTVAL(new_n);
       } else {
-        newval = BOOLEAN_OPTVAL(new_n == 0 ? kFalse : (new_n >= 1 ? kTrue : kNone));
+        newval = BOOLEAN_OPTVAL(TRISTATE_FROM_INT(new_n));
       }
     } else if (!hidden && is_string
                && curval.data.string.data != NULL && newval.data.string.data != NULL) {  // string
@@ -1875,8 +1875,7 @@ static OptVal tv_to_optval(typval_T *tv, const char *option, uint32_t flags, boo
         semsg(_("E521: Number required: &%s = '%s'"), option, tv->vval.v_string);
       }
     }
-    value = (flags & P_NUM) ? NUMBER_OPTVAL((OptInt)n)
-                            : BOOLEAN_OPTVAL(n == 0 ? kFalse : (n >= 1 ? kTrue : kNone));
+    value = (flags & P_NUM) ? NUMBER_OPTVAL((OptInt)n) : BOOLEAN_OPTVAL(TRISTATE_FROM_INT(n));
   } else if ((flags & P_STRING) || is_tty_option(option)) {
     // Avoid setting string option to a boolean or a special value.
     if (tv->v_type != VAR_BOOL && tv->v_type != VAR_SPECIAL) {
