@@ -1963,23 +1963,20 @@ describe('extmark decorations', function()
 
   it('works with double width char and rightleft', function()
     screen:try_resize(50, 3)
-    insert('abcdefghij口klmnop')
+    insert('abcdefghij口klmnopqrstu口vwx口yz')
     feed('0')
     command('set rightleft')
     screen:expect{grid=[[
-                                      ponmlk口jihgfedcb^a|
+                        zy口xwv口utsrqponmlk口jihgfedcb^a|
       {1:                                                 ~}|
                                                         |
     ]]}
     meths.buf_set_extmark(0, ns, 0, 2, { virt_text = {{'overlayed', 'Underlined'}}, virt_text_pos = 'overlay' })
+    meths.buf_set_extmark(0, ns, 0, 14, { virt_text = {{'古', 'Underlined'}}, virt_text_pos = 'overlay' })
+    meths.buf_set_extmark(0, ns, 0, 20, { virt_text = {{'\t', 'Underlined'}}, virt_text_pos = 'overlay' })
+    meths.buf_set_extmark(0, ns, 0, 29, { virt_text = {{'古', 'Underlined'}}, virt_text_pos = 'overlay' })
     screen:expect{grid=[[
-                                      ponmlk {28:deyalrevo}b^a|
-      {1:                                                 ~}|
-                                                        |
-    ]]}
-    meths.buf_set_extmark(0, ns, 0, 15, { virt_text = {{'古', 'Underlined'}}, virt_text_pos = 'overlay' })
-    screen:expect{grid=[[
-                                      po{28:古}lk {28:deyalrevo}b^a|
+                        zy {28:古}wv {28:     }qpon{28:古}k {28:deyalrevo}b^a|
       {1:                                                 ~}|
                                                         |
     ]]}

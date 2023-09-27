@@ -207,6 +207,16 @@ static void margin_columns_win(win_T *wp, int *left_col, int *right_col)
   prev_col_off = cur_col_off;
 }
 
+/// If one half of a double-width char will be overwritten,
+/// change the other half to a space so that grid redraws properly.
+static void line_check_overwrite(schar_T *dest, int cells, int maxcells, bool rl)
+{
+  assert(cells > 0);
+  if (cells < maxcells && dest[rl ? -cells + 1 : cells] == 0) {
+    dest[rl ? -cells : cells] = schar_from_ascii(' ');
+  }
+}
+
 /// Put a single char from an UTF-8 buffer into a line buffer.
 ///
 /// Handles composing chars and arabic shaping state.
@@ -216,12 +226,17 @@ static int line_putchar(buf_T *buf, LineState *s, schar_T *dest, int maxcells, b
   int cells = utf_ptr2cells(p);
   int c_len = utfc_ptr2len(p);
   int u8c, u8cc[MAX_MCO];
+  assert(maxcells > 0);
   if (cells > maxcells) {
     return -1;
   }
   u8c = utfc_ptr2char(p, u8cc);
   if (*p == TAB) {
     cells = MIN(tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array), maxcells);
+  }
+
+  line_check_overwrite(dest, cells, maxcells, rl);
+  if (*p == TAB) {
     for (int c = 0; c < cells; c++) {
       dest[rl ? -c : c] = schar_from_ascii(' ');
     }
@@ -304,8 +319,9 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
       kv_push(win_extmark_arr, m);
     }
     if (kv_size(item->decor.virt_text)) {
+      int vcol = wp->w_p_rl ? col_off - item->draw_col : item->draw_col - col_off;
       col = draw_virt_text_item(buf, item->draw_col, item->decor.virt_text,
-                                item->decor.hl_mode, max_col, item->draw_col - col_off, wp->w_p_rl);
+                                item->decor.hl_mode, max_col, vcol, wp->w_p_rl);
     }
     item->draw_col = INT_MIN;  // deactivate
     if (item->decor.virt_text_pos == kVTEndOfLine && do_eol) {
@@ -356,13 +372,15 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
       attr = virt_attr;
     }
     schar_T dummy[2];
-    bool rl_overwrote_double_width = linebuf_char[col] == 0;
+    int maxcells = rl ? col - max_col : max_col - col;
     int cells = line_putchar(buf, &s, through ? dummy : &linebuf_char[col],
-                             rl ? col - max_col : max_col - col, rl, vcol);
+                             maxcells, rl, vcol);
     // If we failed to emit a char, we still need to put a space and advance.
     if (cells < 1) {
-      linebuf_char[col] = schar_from_ascii(' ');
+      assert(!through);
       cells = 1;
+      line_check_overwrite(&linebuf_char[col], cells, maxcells, rl);
+      linebuf_char[col] = schar_from_ascii(' ');
     }
     for (int c = 0; c < cells; c++) {
       linebuf_attr[col] = attr;
@@ -371,13 +389,6 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
       } else {
         col++;
       }
-    }
-    // If one half of a double-width char is overwritten,
-    // change the other half to a space so that grid redraws properly,
-    // but don't advance the current column.
-    if ((rl && col > max_col && rl_overwrote_double_width)
-        || (!rl && col < max_col && linebuf_char[col] == 0)) {
-      linebuf_char[col] = schar_from_ascii(' ');
     }
     vcol += cells;
   }
