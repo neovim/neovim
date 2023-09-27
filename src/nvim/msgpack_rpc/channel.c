@@ -337,6 +337,7 @@ static void parse_msgpack(Channel *channel)
                  "id. Ensure the client is properly synchronized",
                  channel->id);
         chan_close_with_error(channel, buf, LOGLVL_ERR);
+        return;
       }
       frame->returned = true;
       frame->errored = (p->error.type != kObjectTypeNil);
