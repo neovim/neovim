@@ -598,17 +598,17 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
 
     // Tricky: wildmenu can be drawn either over a status line, or at empty
     // scrolled space in the message output
-    ScreenGrid *grid = (wild_menu_showing == WM_SCROLLED)
-                        ? &msg_grid_adj : &default_grid;
+    grid_line_start((wild_menu_showing == WM_SCROLLED) ? &msg_grid_adj : &default_grid, row);
 
-    grid_puts(grid, buf, -1, row, 0, attr);
+    grid_line_puts(0, buf, -1, attr);
     if (selstart != NULL && highlight) {
       *selend = NUL;
-      grid_puts(grid, selstart, -1, row, selstart_col, HL_ATTR(HLF_WM));
+      grid_line_puts(selstart_col, selstart, -1, HL_ATTR(HLF_WM));
     }
 
-    grid_fill(grid, row, row + 1, clen, Columns,
-              fillchar, fillchar, attr);
+    grid_line_fill(clen, Columns, fillchar, attr);
+
+    grid_line_flush(false);
   }
 
   win_redraw_last_status(topframe);

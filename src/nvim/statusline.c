@@ -62,8 +62,6 @@ typedef enum {
 /// If inversion is possible we use it. Else '=' characters are used.
 void win_redr_status(win_T *wp)
 {
-  int row;
-  int col;
   char *p;
   int len;
   int fillchar;
@@ -151,16 +149,15 @@ void win_redr_status(win_T *wp)
       }
     }
 
-    row = is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp);
-    col = is_stl_global ? 0 : wp->w_wincol;
-    int width = grid_puts(&default_grid, p, -1, row, col, attr);
-    grid_fill(&default_grid, row, row + 1, width + col,
-              this_ru_col + col, fillchar, fillchar, attr);
+    grid_line_start(&default_grid, is_stl_global ? (Rows - (int)p_ch - 1) : W_ENDROW(wp));
+    int col = is_stl_global ? 0 : wp->w_wincol;
+
+    int width = grid_line_puts(col, p, -1, attr);
+    grid_line_fill(width + col, this_ru_col + col, fillchar, attr);
 
     if (get_keymap_str(wp, "<%s>", NameBuff, MAXPATHL)
         && this_ru_col - len > (int)(strlen(NameBuff) + 1)) {
-      grid_puts(&default_grid, NameBuff, -1, row,
-                (int)((size_t)this_ru_col - strlen(NameBuff) - 1), attr);
+      grid_line_puts((int)((size_t)this_ru_col - strlen(NameBuff) - 1), NameBuff, -1, attr);
     }
 
     win_redr_ruler(wp);
@@ -170,10 +167,11 @@ void win_redr_status(win_T *wp)
       const int sc_width = MIN(10, this_ru_col - len - 2);
 
       if (sc_width > 0) {
-        grid_puts(&default_grid, showcmd_buf, sc_width, row,
-                  wp->w_wincol + this_ru_col - sc_width - 1, attr);
+        grid_line_puts(wp->w_wincol + this_ru_col - sc_width - 1, showcmd_buf, sc_width, attr);
       }
     }
+
+    grid_line_flush(false);
   }
 
   // May need to draw the character below the vertical separator.
@@ -419,7 +417,9 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   int start_col = col;
 
   // Draw each snippet with the specified highlighting.
-  grid_line_start(grid, row);
+  if (!draw_ruler) {
+    grid_line_start(grid, row);
+  }
 
   int curattr = attr;
   char *p = buf;
@@ -448,7 +448,9 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   // fill up with "fillchar"
   grid_line_fill(col, maxcol, fillchar, curattr);
 
-  grid_line_flush(false);
+  if (!draw_ruler) {
+    grid_line_flush(false);
+  }
 
   // Fill the tab_page_click_defs, w_status_click_defs or w_winbar_click_defs array for clicking
   // in the tab page line, status line or window bar
@@ -481,6 +483,7 @@ void win_redr_winbar(win_T *wp)
   entered = false;
 }
 
+/// must be called after a grid_line_start() at the intended row
 void win_redr_ruler(win_T *wp)
 {
   bool is_stl_global = global_stl_height() > 0;
@@ -516,34 +519,26 @@ void win_redr_ruler(win_T *wp)
                    && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum) == NUL;
 
   int width;
-  int row;
   int fillchar;
   int attr;
   int off;
   bool part_of_status = false;
 
   if (wp->w_status_height) {
-    row = W_ENDROW(wp);
     fillchar = fillchar_status(&attr, wp);
     off = wp->w_wincol;
     width = wp->w_width;
     part_of_status = true;
   } else if (is_stl_global) {
-    row = Rows - (int)p_ch - 1;
     fillchar = fillchar_status(&attr, wp);
     off = 0;
     width = Columns;
     part_of_status = true;
   } else {
-    row = Rows - 1;
     fillchar = ' ';
     attr = HL_ATTR(HLF_MSG);
     width = Columns;
     off = 0;
-  }
-
-  if (!part_of_status && p_ch == 0 && !ui_has(kUIMessages)) {
-    return;
   }
 
   // In list mode virtcol needs to be recomputed
@@ -617,11 +612,8 @@ void win_redr_ruler(win_T *wp)
       }
     }
 
-    ScreenGrid *grid = part_of_status ? &default_grid : &msg_grid_adj;
-    grid_puts(grid, buffer, -1, row, this_ru_col + off, attr);
-    grid_fill(grid, row, row + 1,
-              this_ru_col + off + (int)strlen(buffer), off + width, fillchar,
-              fillchar, attr);
+    int w = grid_line_puts(this_ru_col + off, buffer, -1, attr);
+    grid_line_fill(this_ru_col + off + w, off + width, fillchar, attr);
   }
 }
 
@@ -741,6 +733,7 @@ void draw_tabline(void)
     int c;
     int len;
     char *p;
+    grid_line_start(&default_grid, 0);
     FOR_ALL_TABS(tp) {
       tabcount++;
     }
@@ -775,14 +768,14 @@ void draw_tabline(void)
         attr = win_hl_attr(cwp, HLF_TPS);
       }
       if (use_sep_chars && col > 0) {
-        grid_putchar(&default_grid, '|', 0, col++, attr);
+        grid_line_put_schar(col++, schar_from_ascii('|'), attr);
       }
 
       if (tp->tp_topframe != topframe) {
         attr = win_hl_attr(cwp, HLF_TP);
       }
 
-      grid_putchar(&default_grid, ' ', 0, col++, attr);
+      grid_line_put_schar(col++, schar_from_ascii(' '), attr);
 
       int modified = false;
 
@@ -799,14 +792,14 @@ void draw_tabline(void)
           if (col + len >= Columns - 3) {
             break;
           }
-          grid_puts(&default_grid, NameBuff, len, 0, col,
-                    hl_combine_attr(attr, win_hl_attr(cwp, HLF_T)));
+          grid_line_puts(col, NameBuff, len,
+                         hl_combine_attr(attr, win_hl_attr(cwp, HLF_T)));
           col += len;
         }
         if (modified) {
-          grid_puts(&default_grid, "+", 1, 0, col++, attr);
+          grid_line_put_schar(col++, schar_from_ascii('+'), attr);
         }
-        grid_putchar(&default_grid, ' ', 0, col++, attr);
+        grid_line_put_schar(col++, schar_from_ascii(' '), attr);
       }
 
       int room = scol - col + tabwidth - 1;
@@ -824,10 +817,10 @@ void draw_tabline(void)
           len = Columns - col - 1;
         }
 
-        grid_puts(&default_grid, p, (int)strlen(p), 0, col, attr);
+        grid_line_puts(col, p, -1, attr);
         col += len;
       }
-      grid_putchar(&default_grid, ' ', 0, col++, attr);
+      grid_line_put_schar(col++, schar_from_ascii(' '), attr);
 
       // Store the tab page number in tab_page_click_defs[], so that
       // jump_to_mouse() knows where each one is.
@@ -846,27 +839,29 @@ void draw_tabline(void)
     } else {
       c = ' ';
     }
-    grid_fill(&default_grid, 0, 1, col, Columns, c, c, attr_fill);
+    grid_line_fill(col, Columns, c, attr_fill);
 
     // Draw the 'showcmd' information if 'showcmdloc' == "tabline".
     if (p_sc && *p_sloc == 't') {
       const int sc_width = MIN(10, (int)Columns - col - (tabcount > 1) * 3);
 
       if (sc_width > 0) {
-        grid_puts(&default_grid, showcmd_buf, sc_width, 0,
-                  Columns - sc_width - (tabcount > 1) * 2, attr_nosel);
+        grid_line_puts(Columns - sc_width - (tabcount > 1) * 2,
+                       showcmd_buf, sc_width, attr_nosel);
       }
     }
 
     // Put an "X" for closing the current tab if there are several.
     if (tabcount > 1) {
-      grid_putchar(&default_grid, 'X', 0, Columns - 1, attr_nosel);
+      grid_line_put_schar(Columns - 1, schar_from_ascii('X'), attr_nosel);
       tab_page_click_defs[Columns - 1] = (StlClickDefinition) {
         .type = kStlClickTabClose,
         .tabnr = 999,
         .func = NULL,
       };
     }
+
+    grid_line_flush(false);
   }
 
   // Reset the flag here again, in case evaluating 'tabline' causes it to be
