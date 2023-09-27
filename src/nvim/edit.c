@@ -878,6 +878,10 @@ static int insert_handle_key(InsertState *s)
 
   case K_EVENT:       // some event
     state_handle_k_event();
+    // If CTRL-G U was used apply it to the next typed key.
+    if (dont_sync_undo == kTrue) {
+      dont_sync_undo = kNone;
+    }
     goto check_pum;
 
   case K_COMMAND:     // <Cmd>command<CR>

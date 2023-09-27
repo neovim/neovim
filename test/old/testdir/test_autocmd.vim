@@ -104,6 +104,22 @@ if has('timers')
     set updatetime&
   endfunc
 
+  func Test_cursorhold_insert_ctrl_g_U()
+    au CursorHoldI * :
+    set updatetime=20
+    new
+    call timer_start(100, { -> feedkeys("\<Left>foo\<Esc>", 't') })
+    call feedkeys("i()\<C-g>U", 'tx!')
+    sleep 200m
+    call assert_equal('(foo)', getline(1))
+    undo
+    call assert_equal('', getline(1))
+
+    bwipe!
+    au! CursorHoldI
+    set updatetime&
+  endfunc
+
   func Test_OptionSet_modeline()
     CheckFunction test_override
     call test_override('starting', 1)
