@@ -610,7 +610,7 @@ void ex_history(exarg_T *eap)
   char *arg = eap->arg;
 
   if (hislen == 0) {
-    msg(_("'history' option is zero"));
+    msg(_("'history' option is zero"), 0);
     return;
   }
 

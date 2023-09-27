@@ -1699,21 +1699,26 @@ static void write_msg(String message, bool to_err, bool writeln)
 {
   static StringBuilder out_line_buf = KV_INITIAL_VALUE;
   static StringBuilder err_line_buf = KV_INITIAL_VALUE;
+  StringBuilder *line_buf = to_err ? &err_line_buf : &out_line_buf;
 
-#define PUSH_CHAR(c, line_buf, msg) \
-  if (kv_max(line_buf) == 0) { \
-    kv_resize(line_buf, LINE_BUFFER_MIN_SIZE); \
+#define PUSH_CHAR(c) \
+  if (kv_max(*line_buf) == 0) { \
+    kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \
   } \
   if (c == NL) { \
-    kv_push(line_buf, NUL); \
-    msg(line_buf.items); \
+    kv_push(*line_buf, NUL); \
+    if (to_err) { \
+      emsg(line_buf->items); \
+    } else { \
+      msg(line_buf->items, 0); \
+    } \
     msg_didout = true; \
-    kv_drop(line_buf, kv_size(line_buf)); \
-    kv_resize(line_buf, LINE_BUFFER_MIN_SIZE); \
+    kv_drop(*line_buf, kv_size(*line_buf)); \
+    kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \
   } else if (c == NUL) { \
-    kv_push(line_buf, NL); \
+    kv_push(*line_buf, NL); \
   } else { \
-    kv_push(line_buf, c); \
+    kv_push(*line_buf, c); \
   }
 
   no_wait_return++;
@@ -1721,18 +1726,10 @@ static void write_msg(String message, bool to_err, bool writeln)
     if (got_int) {
       break;
     }
-    if (to_err) {
-      PUSH_CHAR(message.data[i], err_line_buf, emsg);
-    } else {
-      PUSH_CHAR(message.data[i], out_line_buf, msg);
-    }
+    PUSH_CHAR(message.data[i]);
   }
   if (writeln) {
-    if (to_err) {
-      PUSH_CHAR(NL, err_line_buf, emsg);
-    } else {
-      PUSH_CHAR(NL, out_line_buf, msg);
-    }
+    PUSH_CHAR(NL);
   }
   no_wait_return--;
   msg_end();

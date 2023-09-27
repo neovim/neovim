@@ -611,7 +611,7 @@ static void uc_list(char *name, size_t name_len)
   }
 
   if (!found) {
-    msg(_("No user-defined commands found"));
+    msg(_("No user-defined commands found"), 0);
   }
 }
 

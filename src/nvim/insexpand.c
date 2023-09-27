@@ -467,9 +467,8 @@ bool check_compl_option(bool dict_opt)
          && *curbuf->b_p_tsrfu == NUL && *p_tsrfu == NUL)) {
     ctrl_x_mode = CTRL_X_NORMAL;
     edit_submode = NULL;
-    msg_attr((dict_opt
-              ? _("'dictionary' option is empty")
-              : _("'thesaurus' option is empty")), HL_ATTR(HLF_E));
+    msg((dict_opt ? _("'dictionary' option is empty") : _("'thesaurus' option is empty")),
+        HL_ATTR(HLF_E));
     if (emsg_silent == 0 && !in_assert_fails) {
       vim_beep(BO_COMPL);
       setcursor();
@@ -3490,7 +3489,7 @@ static void ins_compl_show_filename(void)
   msg_hist_off = true;
   vim_snprintf(IObuff, IOSIZE, "%s %s%s", lead,
                s > compl_shown_match->cp_fname ? "<" : "", s);
-  msg(IObuff);
+  msg(IObuff, 0);
   msg_hist_off = false;
   redraw_cmdline = false;  // don't overwrite!
 }
@@ -4317,9 +4316,8 @@ static void ins_compl_show_statusmsg(void)
     if (edit_submode_extra != NULL) {
       if (!p_smd) {
         msg_hist_off = true;
-        msg_attr(edit_submode_extra,
-                 (edit_submode_highl < HLF_COUNT
-                  ? HL_ATTR(edit_submode_highl) : 0));
+        msg(edit_submode_extra, (edit_submode_highl < HLF_COUNT
+                                 ? HL_ATTR(edit_submode_highl) : 0));
         msg_hist_off = false;
       }
     } else {

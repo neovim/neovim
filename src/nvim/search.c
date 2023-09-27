@@ -4116,9 +4116,9 @@ exit_matched:
   if (type == CHECK_PATH) {
     if (!did_show) {
       if (action != ACTION_SHOW_ALL) {
-        msg(_("All included files were found"));
+        msg(_("All included files were found"), 0);
       } else {
-        msg(_("No included files"));
+        msg(_("No included files"), 0);
       }
     }
   } else if (!found

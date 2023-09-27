@@ -1527,7 +1527,7 @@ void show_utf8(void)
   char *line = get_cursor_pos_ptr();
   int len = utfc_ptr2len(line);
   if (len == 0) {
-    msg("NUL");
+    msg("NUL", 0);
     return;
   }
 
@@ -1552,7 +1552,7 @@ void show_utf8(void)
     }
   }
 
-  msg(IObuff);
+  msg(IObuff, 0);
 }
 
 /// Return offset from "p" to the start of a character, including composing characters.

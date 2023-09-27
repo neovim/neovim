@@ -443,7 +443,7 @@ int buf_write_all(buf_T *buf, int forceit)
                       false, forceit, true, false));
   if (curbuf != old_curbuf) {
     msg_source(HL_ATTR(HLF_W));
-    msg(_("Warning: Entered other buffer unexpectedly (check autocommands)"));
+    msg(_("Warning: Entered other buffer unexpectedly (check autocommands)"), 0);
   }
   return retval;
 }

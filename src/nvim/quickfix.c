@@ -3308,7 +3308,7 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
     xstrlcat(buf, title, IOSIZE);
   }
   trunc_string(buf, buf, Columns - 1, IOSIZE);
-  msg(buf);
+  msg(buf, 0);
 }
 
 /// ":colder [count]": Up in the quickfix stack.
@@ -3367,7 +3367,7 @@ void qf_history(exarg_T *eap)
   }
 
   if (qf_stack_empty(qi)) {
-    msg(_("No entries"));
+    msg(_("No entries"), 0);
   } else {
     for (int i = 0; i < qi->qf_listcount; i++) {
       qf_msg(qi, i, i == qi->qf_curlist ? "> " : "  ");

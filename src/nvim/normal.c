@@ -689,7 +689,7 @@ static void normal_redraw_mode_message(NormalState *s)
     keep_msg = kmsg;
 
     kmsg = xstrdup(keep_msg);
-    msg_attr(kmsg, keep_msg_attr);
+    msg(kmsg, keep_msg_attr);
     xfree(kmsg);
   }
   setcursor();
@@ -1377,7 +1377,7 @@ static void normal_redraw(NormalState *s)
     // check for duplicates.  Never put this message in
     // history.
     msg_hist_off = true;
-    msg_attr(p, keep_msg_attr);
+    msg(p, keep_msg_attr);
     msg_hist_off = false;
     xfree(p);
   }
@@ -6140,9 +6140,9 @@ static void nv_esc(cmdarg_T *cap)
     if (restart_edit == 0 && cmdwin_type == 0 && !VIsual_active && no_reason) {
       if (anyBufIsChanged()) {
         msg(_("Type  :qa!  and press <Enter> to abandon all changes"
-              " and exit Nvim"));
+              " and exit Nvim"), 0);
       } else {
-        msg(_("Type  :qa  and press <Enter> to exit Nvim"));
+        msg(_("Type  :qa  and press <Enter> to exit Nvim"), 0);
       }
     }
 

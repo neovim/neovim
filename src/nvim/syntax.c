@@ -2713,7 +2713,7 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
   }
   if (timed_out && !syn_win->w_s->b_syn_slow) {
     syn_win->w_s->b_syn_slow = true;
-    msg(_("'redrawtime' exceeded, syntax highlighting disabled"));
+    msg(_("'redrawtime' exceeded, syntax highlighting disabled"), 0);
   }
 
   if (r > 0) {
@@ -2816,9 +2816,9 @@ static void syn_cmd_conceal(exarg_T *eap, int syncing)
   next = skiptowhite(arg);
   if (*arg == NUL) {
     if (curwin->w_s->b_syn_conceal) {
-      msg("syntax conceal on");
+      msg("syntax conceal on", 0);
     } else {
-      msg("syntax conceal off");
+      msg("syntax conceal off", 0);
     }
   } else if (STRNICMP(arg, "on", 2) == 0 && next - arg == 2) {
     curwin->w_s->b_syn_conceal = true;
@@ -2843,9 +2843,9 @@ static void syn_cmd_case(exarg_T *eap, int syncing)
   next = skiptowhite(arg);
   if (*arg == NUL) {
     if (curwin->w_s->b_syn_ic) {
-      msg("syntax case ignore");
+      msg("syntax case ignore", 0);
     } else {
-      msg("syntax case match");
+      msg("syntax case match", 0);
     }
   } else if (STRNICMP(arg, "match", 5) == 0 && next - arg == 5) {
     curwin->w_s->b_syn_ic = false;
@@ -2870,9 +2870,9 @@ static void syn_cmd_foldlevel(exarg_T *eap, int syncing)
   if (*arg == NUL) {
     switch (curwin->w_s->b_syn_foldlevel) {
     case SYNFLD_START:
-      msg("syntax foldlevel start");   break;
+      msg("syntax foldlevel start", 0);   break;
     case SYNFLD_MINIMUM:
-      msg("syntax foldlevel minimum"); break;
+      msg("syntax foldlevel minimum", 0); break;
     default:
       break;
     }
@@ -2909,11 +2909,11 @@ static void syn_cmd_spell(exarg_T *eap, int syncing)
   next = skiptowhite(arg);
   if (*arg == NUL) {
     if (curwin->w_s->b_syn_spell == SYNSPL_TOP) {
-      msg("syntax spell toplevel");
+      msg("syntax spell toplevel", 0);
     } else if (curwin->w_s->b_syn_spell == SYNSPL_NOTOP) {
-      msg("syntax spell notoplevel");
+      msg("syntax spell notoplevel", 0);
     } else {
-      msg("syntax spell default");
+      msg("syntax spell default", 0);
     }
   } else if (STRNICMP(arg, "toplevel", 8) == 0 && next - arg == 8) {
     curwin->w_s->b_syn_spell = SYNSPL_TOP;
@@ -3235,7 +3235,7 @@ static void syn_cmd_list(exarg_T *eap, int syncing)
   }
 
   if (!syntax_present(curwin)) {
-    msg(_(msg_no_items));
+    msg(_(msg_no_items), 0);
     return;
   }
 
@@ -5590,7 +5590,7 @@ static void syntime_clear(void)
   synpat_T *spp;
 
   if (!syntax_present(curwin)) {
-    msg(_(msg_no_items));
+    msg(_(msg_no_items), 0);
     return;
   }
   for (int idx = 0; idx < curwin->w_s->b_syn_patterns.ga_len; idx++) {
@@ -5628,7 +5628,7 @@ static int syn_compare_syntime(const void *v1, const void *v2)
 static void syntime_report(void)
 {
   if (!syntax_present(curwin)) {
-    msg(_(msg_no_items));
+    msg(_(msg_no_items), 0);
     return;
   }
 

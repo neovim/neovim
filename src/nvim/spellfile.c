@@ -1955,9 +1955,9 @@ static void spell_print_node(wordnode_T *node, int depth)
     PRINTSOME(line1, depth, "(%d)", node->wn_nr, 0);
     PRINTSOME(line2, depth, "    ", 0, 0);
     PRINTSOME(line3, depth, "    ", 0, 0);
-    msg(line1);
-    msg(line2);
-    msg(line3);
+    msg(line1, 0);
+    msg(line2, 0);
+    msg(line3, 0);
   } else {
     node->wn_u1.index = true;
 
@@ -1981,9 +1981,9 @@ static void spell_print_node(wordnode_T *node, int depth)
     }
 
     if (node->wn_byte == NUL) {
-      msg(line1);
-      msg(line2);
-      msg(line3);
+      msg(line1, 0);
+      msg(line2, 0);
+      msg(line3, 0);
     }
 
     // do the children
@@ -2726,11 +2726,11 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
   // Check that we didn't use too many renumbered flags.
   if (spin->si_newcompID < spin->si_newprefID) {
     if (spin->si_newcompID == 127 || spin->si_newcompID == 255) {
-      msg(_("Too many postponed prefixes"));
+      msg(_("Too many postponed prefixes"), 0);
     } else if (spin->si_newprefID == 0 || spin->si_newprefID == 127) {
-      msg(_("Too many compound flags"));
+      msg(_("Too many compound flags"), 0);
     } else {
-      msg(_("Too many postponed prefixes and/or compound flags"));
+      msg(_("Too many postponed prefixes and/or compound flags"), 0);
     }
   }
 
@@ -5398,7 +5398,7 @@ static void mkspell(int fcount, char **fnames, bool ascii, bool over_write, bool
     }
 
     if (spin.si_compflags != NULL && spin.si_nobreak) {
-      msg(_("Warning: both compounding and NOBREAK specified"));
+      msg(_("Warning: both compounding and NOBREAK specified"), 0);
     }
 
     if (!error && !got_int) {
@@ -5468,7 +5468,7 @@ static void spell_message(const spellinfo_T *spin, char *str)
     if (!spin->si_verbose) {
       verbose_enter();
     }
-    msg(str);
+    msg(str, 0);
     ui_flush();
     if (!spin->si_verbose) {
       verbose_leave();

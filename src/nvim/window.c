@@ -380,7 +380,7 @@ newwindow:
   case 'T':
     CHECK_CMDWIN;
     if (one_window(curwin)) {
-      msg(_(m_onlyone));
+      msg(_(m_onlyone), 0);
     } else {
       tabpage_T *oldtab = curtab;
 
@@ -3972,7 +3972,7 @@ void close_others(int message, int forceit)
   if (one_nonfloat() && !lastwin->w_floating) {
     if (message
         && !autocmd_busy) {
-      msg(_(m_onlyone));
+      msg(_(m_onlyone), 0);
     }
     return;
   }

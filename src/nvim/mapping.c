@@ -877,9 +877,9 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
       // print entries
       if (!did_it && !did_local) {
         if (is_abbrev) {
-          msg(_("No abbreviation found"));
+          msg(_("No abbreviation found"), 0);
         } else {
-          msg(_("No mapping found"));
+          msg(_("No mapping found"), 0);
         }
       }
       goto theend;  // listing finished

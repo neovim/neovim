@@ -938,7 +938,7 @@ int do_record(int c)
     if (p_ch == 0 || ui_has(kUIMessages)) {
       showmode();
     } else {
-      msg("");
+      msg("", 0);
     }
     if (p == NULL) {
       retval = FAIL;
@@ -5333,7 +5333,7 @@ void cursor_pos_info(dict_T *dict)
   // Compute the length of the file in characters.
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     if (dict == NULL) {
-      msg(_(no_lines_msg));
+      msg(_(no_lines_msg), 0);
       return;
     }
   } else {
@@ -5538,7 +5538,7 @@ void cursor_pos_info(dict_T *dict)
         msg_start();
         msg_scroll = true;
       }
-      msg(IObuff);
+      msg(IObuff, 0);
       p_shm = p;
     }
   }
@@ -6452,7 +6452,7 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
       clipboard_didwarn = true;
       // Do NOT error (emsg()) here--if it interrupts :redir we get into
       // a weird state, stuck in "redirect mode".
-      msg(MSG_NO_CLIP);
+      msg(MSG_NO_CLIP, 0);
     }
     // ... else, be silent (don't flood during :while, :redir, etc.).
     goto end;

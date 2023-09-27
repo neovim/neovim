@@ -1196,18 +1196,18 @@ void ml_recover(bool checkext)
     emsg(_("E311: Recovery Interrupted"));
   } else if (error) {
     no_wait_return++;
-    msg(">>>>>>>>>>>>>");
+    msg(">>>>>>>>>>>>>", 0);
     emsg(_("E312: Errors detected while recovering; look for lines starting with ???"));
     no_wait_return--;
-    msg(_("See \":help E312\" for more information."));
-    msg(">>>>>>>>>>>>>");
+    msg(_("See \":help E312\" for more information."), 0);
+    msg(">>>>>>>>>>>>>", 0);
   } else {
     if (curbuf->b_changed) {
-      msg(_("Recovery completed. You should check if everything is OK."));
+      msg(_("Recovery completed. You should check if everything is OK."), 0);
       msg_puts(_("\n(You might want to write out this file under another name\n"));
       msg_puts(_("and run diff with the original file to check for changes)"));
     } else {
-      msg(_("Recovery completed. Buffer contents equals file contents."));
+      msg(_("Recovery completed. Buffer contents equals file contents."), 0);
     }
     msg_puts(_("\nYou may want to delete the .swp file now."));
     if (swapfile_process_running(b0p, fname_used)) {
@@ -1283,7 +1283,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
 
   if (do_list) {
     // use msg() to start the scrolling properly
-    msg(_("Swap files found:"));
+    msg(_("Swap files found:"), 0);
     msg_putchar('\n');
   }
 
@@ -1785,7 +1785,7 @@ theend:
 
   if (message) {
     if (status == OK) {
-      msg(_("File preserved"));
+      msg(_("File preserved"), 0);
     } else {
       emsg(_("E314: Preserve failed"));
     }

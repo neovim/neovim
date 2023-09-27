@@ -2035,7 +2035,7 @@ static char *readfile_charconvert(char *fname, char *fenc, int *fdp)
   if (errmsg != NULL) {
     // Don't use emsg(), it breaks mappings, the retry with
     // another type of conversion might still work.
-    msg(errmsg);
+    msg(errmsg, 0);
     if (tmpname != NULL) {
       os_remove(tmpname);  // delete converted file
       XFREE_CLEAR(tmpname);

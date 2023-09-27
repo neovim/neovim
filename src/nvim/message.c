@@ -212,15 +212,6 @@ void msg_grid_validate(void)
   }
 }
 
-/// Displays the string 's' on the status line
-/// When terminal not initialized (yet) os_errmsg(..) is used.
-///
-/// @return  true if wait_return() not called
-int msg(const char *s)
-{
-  return msg_attr_keep(s, 0, false, false);
-}
-
 /// Like msg() but keep it silent when 'verbosefile' is set.
 int verb_msg(const char *s)
 {
@@ -231,7 +222,11 @@ int verb_msg(const char *s)
   return n;
 }
 
-int msg_attr(const char *s, const int attr)
+/// Displays the string 's' on the status line
+/// When terminal not initialized (yet) os_errmsg(..) is used.
+///
+/// @return  true if wait_return() not called
+int msg(const char *s, const int attr)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   return msg_attr_keep(s, attr, false, false);
@@ -491,7 +486,7 @@ int smsg(const char *s, ...)
   vim_vsnprintf(IObuff, IOSIZE, s, arglist);
   va_end(arglist);
 
-  return msg(IObuff);
+  return msg(IObuff, 0);
 }
 
 int smsg_attr(int attr, const char *s, ...)
@@ -502,7 +497,7 @@ int smsg_attr(int attr, const char *s, ...)
   va_start(arglist, s);
   vim_vsnprintf(IObuff, IOSIZE, s, arglist);
   va_end(arglist);
-  return msg_attr(IObuff, attr);
+  return msg(IObuff, attr);
 }
 
 int smsg_attr_keep(int attr, const char *s, ...)
@@ -604,12 +599,12 @@ void msg_source(int attr)
   char *p = get_emsg_source();
   if (p != NULL) {
     msg_scroll = true;  // this will take more than one line
-    msg_attr(p, attr);
+    msg(p, attr);
     xfree(p);
   }
   p = get_emsg_lnum();
   if (p != NULL) {
-    msg_attr(p, HL_ATTR(HLF_N));
+    msg(p, HL_ATTR(HLF_N));
     xfree(p);
     last_sourcing_lnum = SOURCING_LNUM;      // only once for each line
   }
@@ -918,7 +913,7 @@ char *msg_trunc_attr(char *s, bool force, int attr)
   char *ts = msg_may_trunc(force, s);
 
   msg_hist_off = true;
-  n = msg_attr(ts, attr);
+  n = msg(ts, attr);
   msg_hist_off = false;
 
   if (n) {
@@ -1400,7 +1395,7 @@ void msgmore(long n)
     if (got_int) {
       xstrlcat(msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
     }
-    if (msg(msg_buf)) {
+    if (msg(msg_buf, 0)) {
       set_keep_msg(msg_buf, 0);
       keep_msg_more = true;
     }
@@ -3457,7 +3452,7 @@ void give_warning(const char *message, bool hl)
     msg_ext_set_kind("wmsg");
   }
 
-  if (msg_attr(message, keep_msg_attr) && msg_scrolled == 0) {
+  if (msg(message, keep_msg_attr) && msg_scrolled == 0) {
     set_keep_msg(message, keep_msg_attr);
   }
   msg_didout = false;  // Overwrite this message.

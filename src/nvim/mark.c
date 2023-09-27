@@ -881,7 +881,7 @@ static void show_one_mark(int c, char *arg, pos_T *p, char *name_arg, int curren
       did_title = false;
     } else {
       if (arg == NULL) {
-        msg(_("No marks set"));
+        msg(_("No marks set"), 0);
       } else {
         semsg(_("E283: No marks matching \"%s\""), arg);
       }

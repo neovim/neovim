@@ -953,11 +953,11 @@ static void nlua_print_event(void **argv)
       }
       break;
     }
-    msg(str + start);
+    msg(str + start, 0);
     msg_didout = true;  // Make blank lines work properly
   }
   if (len && str[len - 1] == NUL) {  // Last was newline
-    msg("");
+    msg("", 0);
   }
   xfree(str);
 }

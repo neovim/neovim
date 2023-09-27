@@ -736,11 +736,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
         }
         if ((num_matches > prev_num_matches || new_tag)
             && num_matches > 1) {
-          if (ic) {
-            msg_attr(IObuff, HL_ATTR(HLF_W));
-          } else {
-            msg(IObuff);
-          }
+          msg(IObuff, ic ? HL_ATTR(HLF_W) : 0);
           msg_scroll = true;  // Don't overwrite this message.
         } else {
           give_warning(IObuff, ic);
@@ -3015,7 +3011,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, int keep_help)
           // Only give a message when really guessed, not when 'ic'
           // is set and match found while ignoring case.
           if (found == 2 || !save_p_ic) {
-            msg(_("E435: Couldn't find tag, just guessing!"));
+            msg(_("E435: Couldn't find tag, just guessing!"), 0);
             if (!msg_scrolled && msg_silent == 0) {
               ui_flush();
               os_delay(1010L, true);
