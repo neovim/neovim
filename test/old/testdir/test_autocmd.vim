@@ -2442,7 +2442,7 @@ endfunc
 
 " Test TextChangedI and TextChangedP
 func Test_ChangedP()
-  throw 'Skipped: use test/functional/editor/completion_spec.lua'
+  throw 'Skipped: use test/functional/autocmd/textchanged_spec.lua'
   new
   call setline(1, ['foo', 'bar', 'foobar'])
   call test_override("char_avail", 1)
@@ -2452,6 +2452,7 @@ func Test_ChangedP()
     let g:autocmd .= a:char
   endfunc
 
+  " TextChanged will not be triggered, only check that it isn't.
   au! TextChanged <buffer> :call TextChangedAutocmd('N')
   au! TextChangedI <buffer> :call TextChangedAutocmd('I')
   au! TextChangedP <buffer> :call TextChangedAutocmd('P')
@@ -2505,7 +2506,7 @@ func SetLineOne()
 endfunc
 
 func Test_TextChangedI_with_setline()
-  CheckFunction test_override
+  throw 'Skipped: use test/functional/autocmd/textchanged_spec.lua'
   new
   call test_override('char_avail', 1)
   autocmd TextChangedI <buffer> call SetLineOne()
@@ -3431,6 +3432,45 @@ func Test_autocmd_vimgrep()
   augroup aucmd_vimgrep
     au!
   augroup END
+endfunc
+
+" Test TextChangedI and TextChanged
+func Test_Changed_ChangedI()
+  throw 'Skipped: use test/functional/autocmd/textchanged_spec.lua'
+  new
+  call test_override("char_avail", 1)
+  let [g:autocmd_i, g:autocmd_n] = ['','']
+
+  func! TextChangedAutocmdI(char)
+    let g:autocmd_{tolower(a:char)} = a:char .. b:changedtick
+  endfunc
+
+  augroup Test_TextChanged
+    au!
+    au TextChanged  <buffer> :call TextChangedAutocmdI('N')
+    au TextChangedI <buffer> :call TextChangedAutocmdI('I')
+  augroup END
+
+  call feedkeys("ifoo\<esc>", 'tnix')
+  " TODO: Test test does not seem to trigger TextChanged autocommand, this
+  " requires running Vim in a terminal window.
+  " call assert_equal('N3', g:autocmd_n)
+  call assert_equal('I3', g:autocmd_i)
+
+  call feedkeys("yyp", 'tnix')
+  " TODO: Test test does not seem to trigger TextChanged autocommand.
+  " call assert_equal('N4', g:autocmd_n)
+  call assert_equal('I3', g:autocmd_i)
+
+  " CleanUp
+  call test_override("char_avail", 0)
+  au! TextChanged  <buffer>
+  au! TextChangedI <buffer>
+  augroup! Test_TextChanged
+  delfu TextChangedAutocmdI
+  unlet! g:autocmd_i g:autocmd_n
+
+  bw!
 endfunc
 
 func Test_closing_autocmd_window()
