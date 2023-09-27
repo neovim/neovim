@@ -990,9 +990,13 @@ void ui_ext_win_position(win_T *wp, bool validate)
     wp->w_grid_alloc.zindex = wp->w_float_config.zindex;
     if (ui_has(kUIMultigrid)) {
       String anchor = cstr_as_string((char *)float_anchor_str[c.anchor]);
-      ui_call_win_float_pos(wp->w_grid_alloc.handle, wp->handle, anchor,
-                            grid->handle, row, col, c.focusable,
-                            wp->w_grid_alloc.zindex);
+      if (!c.hide) {
+        ui_call_win_float_pos(wp->w_grid_alloc.handle, wp->handle, anchor,
+                              grid->handle, row, col, c.focusable,
+                              wp->w_grid_alloc.zindex);
+      } else {
+        ui_call_win_hide(wp->w_grid_alloc.handle);
+      }
     } else {
       bool valid = (wp->w_redr_type == 0);
       if (!valid && !validate) {
@@ -1014,13 +1018,18 @@ void ui_ext_win_position(win_T *wp, bool validate)
       }
       wp->w_winrow = comp_row;
       wp->w_wincol = comp_col;
-      ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
-                       wp->w_height_outer, wp->w_width_outer, valid, false);
-      ui_check_cursor_grid(wp->w_grid_alloc.handle);
-      wp->w_grid_alloc.focusable = wp->w_float_config.focusable;
-      if (!valid) {
-        wp->w_grid_alloc.valid = false;
-        redraw_later(wp, UPD_NOT_VALID);
+
+      if (!c.hide) {
+        ui_comp_put_grid(&wp->w_grid_alloc, comp_row, comp_col,
+                         wp->w_height_outer, wp->w_width_outer, valid, false);
+        ui_check_cursor_grid(wp->w_grid_alloc.handle);
+        wp->w_grid_alloc.focusable = wp->w_float_config.focusable;
+        if (!valid) {
+          wp->w_grid_alloc.valid = false;
+          redraw_later(wp, UPD_NOT_VALID);
+        }
+      } else {
+        ui_comp_remove_grid(&wp->w_grid_alloc);
       }
     }
   } else {
