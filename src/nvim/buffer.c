@@ -354,6 +354,7 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
   // Set last_changedtick to avoid triggering a TextChanged autocommand right
   // after it was added.
   curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
+  curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
   curbuf->b_last_changedtick_pum = buf_get_changedtick(curbuf);
 
   // require "!" to overwrite the file, because it wasn't read completely

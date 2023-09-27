@@ -418,10 +418,10 @@ struct file_buffer {
   /// This is a dictionary item used to store b:changedtick.
   ChangedtickDictItem changedtick_di;
 
-  varnumber_T b_last_changedtick;       // b:changedtick when TextChanged or
-                                        // TextChangedI was last triggered.
-  varnumber_T b_last_changedtick_pum;   // b:changedtick when TextChangedP was
+  varnumber_T b_last_changedtick;       // b:changedtick when TextChanged was
                                         // last triggered.
+  varnumber_T b_last_changedtick_i;     // b:changedtick for TextChangedI
+  varnumber_T b_last_changedtick_pum;   // b:changedtick for TextChangedP
 
   bool b_saving;                // Set to true if we are in the middle of
                                 // saving the buffer.
