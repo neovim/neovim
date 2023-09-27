@@ -186,16 +186,16 @@ windows can be given this behavior by setting the (window-specific)
 other 'scrollbind' windows are scrolled the same amount, if possible.  The
 behavior of 'scrollbind' can be modified by the 'scrollopt' option.
 
-When using the scrollbars, the binding only happens when scrolling the window
-with focus (where the cursor is).  You can use this to avoid scroll-binding
-for a moment without resetting options.
+When using the scrollbars or the mouse wheel, the binding only happens when
+scrolling the window with focus (where the cursor is).  You can use this to
+avoid scroll-binding for a moment without resetting options.
 
 When a window also has the 'diff' option set, the scroll-binding uses the
 differences between the two buffers to synchronize the position precisely.
 Otherwise the following method is used.
 
 							*scrollbind-relative*
-Each 'scrollbind' window keeps track of its "relative offset," which can be
+Each 'scrollbind' window keeps track of its "relative offset", which can be
 thought of as the difference between the current window's vertical scroll
 position and the other window's vertical scroll position.  When one of the
 'scrollbind' windows is asked to vertically scroll past the beginning or end
@@ -219,9 +219,10 @@ option.
 
 							*scrollbind-quickadj*
 The 'scrollbind' flag is meaningful when using keyboard commands to vertically
-scroll a window, and also meaningful when using the vertical scrollbar of the
-window which has the cursor focus.  However, when using the vertical scrollbar
-of a window which doesn't have the cursor focus, 'scrollbind' is ignored.
+scroll a window, and is also meaningful when using the vertical scrollbar or
+the mouse wheel in the window which has the cursor focus.  However, when using
+the vertical scrollbar or the mouse wheel in a window which doesn't have the
+cursor focus, 'scrollbind' is ignored.
 This allows quick adjustment of the relative offset of 'scrollbind' windows.
 
 ==============================================================================
