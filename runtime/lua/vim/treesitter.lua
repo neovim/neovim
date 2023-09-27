@@ -350,6 +350,14 @@ end
 
 --- Returns the smallest named node at the given position
 ---
+--- NOTE: Calling this on an unparsed tree can yield an invalid node.
+--- If the tree is not known to be parsed by, e.g., an active highlighter,
+--- parse the tree first via
+---
+--- ```lua
+--- vim.treesitter.get_parser(bufnr):parse(range)
+--- ```
+---
 ---@param opts table|nil Optional keyword arguments:
 ---             - bufnr integer|nil Buffer number (nil or 0 for current buffer)
 ---             - pos table|nil 0-indexed (row, col) tuple. Defaults to cursor position in the
