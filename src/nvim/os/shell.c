@@ -364,7 +364,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     if (!(flags & EW_SILENT)) {
       msg_putchar('\n');                // clear bottom line quickly
       cmdline_row = Rows - 1;           // continue on last line
-      msg(_(e_wildexpand));
+      msg(_(e_wildexpand), 0);
       msg_start();                    // don't overwrite this message
     }
 
@@ -381,7 +381,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   if (fd == NULL) {
     // Something went wrong, perhaps a file name with a special char.
     if (!(flags & EW_SILENT)) {
-      msg(_(e_wildexpand));
+      msg(_(e_wildexpand), 0);
       msg_start();                      // don't overwrite this message
     }
     xfree(tempname);
@@ -876,9 +876,9 @@ static int do_os_system(char **argv, const char *input, size_t len, char **outpu
     // Failed, probably 'shell' is not executable.
     if (!silent) {
       msg_puts(_("\nshell failed to start: "));
-      msg_outtrans(os_strerror(status));
+      msg_outtrans(os_strerror(status), 0);
       msg_puts(": ");
-      msg_outtrans(prog);
+      msg_outtrans(prog, 0);
       msg_putchar('\n');
     }
     multiqueue_free(events);
@@ -1127,7 +1127,7 @@ static void out_data_append_to_screen(char *output, size_t *count, bool eof)
         goto end;
       }
 
-      (void)msg_outtrans_len_attr(p, i, 0);
+      (void)msg_outtrans_len(p, i, 0);
       p += i;
     }
   }

@@ -212,15 +212,6 @@ void msg_grid_validate(void)
   }
 }
 
-/// Displays the string 's' on the status line
-/// When terminal not initialized (yet) os_errmsg(..) is used.
-///
-/// @return  true if wait_return() not called
-int msg(const char *s)
-{
-  return msg_attr_keep(s, 0, false, false);
-}
-
 /// Like msg() but keep it silent when 'verbosefile' is set.
 int verb_msg(const char *s)
 {
@@ -231,14 +222,18 @@ int verb_msg(const char *s)
   return n;
 }
 
-int msg_attr(const char *s, const int attr)
+/// Displays the string 's' on the status line
+/// When terminal not initialized (yet) os_errmsg(..) is used.
+///
+/// @return  true if wait_return() not called
+int msg(const char *s, const int attr)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   return msg_attr_keep(s, attr, false, false);
 }
 
-/// Similar to msg_outtrans_attr, but support newlines and tabs.
-void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clear)
+/// Similar to msg_outtrans, but support newlines and tabs.
+void msg_multiline(const char *s, int attr, bool check_int, bool *need_clear)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *next_spec = s;
@@ -251,7 +246,7 @@ void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clea
 
     if (next_spec != NULL) {
       // Printing all char that are before the char found by strpbrk
-      msg_outtrans_len_attr(s, (int)(next_spec - s), attr);
+      msg_outtrans_len(s, (int)(next_spec - s), attr);
 
       if (*next_spec != TAB && *need_clear) {
         msg_clr_eos();
@@ -265,7 +260,7 @@ void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clea
   // Print the rest of the message. We know there is no special
   // character because strpbrk returned NULL
   if (*s != NUL) {
-    msg_outtrans_attr(s, attr);
+    msg_outtrans(s, attr);
   }
 }
 
@@ -278,7 +273,7 @@ void msg_multiattr(HlMessage hl_msg, const char *kind, bool history)
   msg_ext_set_kind(kind);
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
-    msg_multiline_attr(chunk.text.data, chunk.attr, true, &need_clear);
+    msg_multiline(chunk.text.data, chunk.attr, true, &need_clear);
   }
   if (history && kv_size(hl_msg)) {
     add_msg_hist_multiattr(NULL, 0, 0, true, hl_msg);
@@ -339,9 +334,9 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
 
   bool need_clear = true;
   if (multiline) {
-    msg_multiline_attr(s, attr, false, &need_clear);
+    msg_multiline(s, attr, false, &need_clear);
   } else {
-    msg_outtrans_attr(s, attr);
+    msg_outtrans(s, attr);
   }
   if (need_clear) {
     msg_clr_eos();
@@ -491,7 +486,7 @@ int smsg(const char *s, ...)
   vim_vsnprintf(IObuff, IOSIZE, s, arglist);
   va_end(arglist);
 
-  return msg(IObuff);
+  return msg(IObuff, 0);
 }
 
 int smsg_attr(int attr, const char *s, ...)
@@ -502,7 +497,7 @@ int smsg_attr(int attr, const char *s, ...)
   va_start(arglist, s);
   vim_vsnprintf(IObuff, IOSIZE, s, arglist);
   va_end(arglist);
-  return msg_attr(IObuff, attr);
+  return msg(IObuff, attr);
 }
 
 int smsg_attr_keep(int attr, const char *s, ...)
@@ -604,12 +599,12 @@ void msg_source(int attr)
   char *p = get_emsg_source();
   if (p != NULL) {
     msg_scroll = true;  // this will take more than one line
-    msg_attr(p, attr);
+    msg(p, attr);
     xfree(p);
   }
   p = get_emsg_lnum();
   if (p != NULL) {
-    msg_attr(p, HL_ATTR(HLF_N));
+    msg(p, HL_ATTR(HLF_N));
     xfree(p);
     last_sourcing_lnum = SOURCING_LNUM;      // only once for each line
   }
@@ -908,7 +903,7 @@ void msg_schedule_semsg_multiline(const char *const fmt, ...)
 /// Careful: The string may be changed by msg_may_trunc()!
 ///
 /// @return  a pointer to the printed message, if wait_return() not called.
-char *msg_trunc_attr(char *s, bool force, int attr)
+char *msg_trunc(char *s, bool force, int attr)
 {
   int n;
 
@@ -918,7 +913,7 @@ char *msg_trunc_attr(char *s, bool force, int attr)
   char *ts = msg_may_trunc(force, s);
 
   msg_hist_off = true;
-  n = msg_attr(ts, attr);
+  n = msg(ts, attr);
   msg_hist_off = false;
 
   if (n) {
@@ -1400,7 +1395,7 @@ void msgmore(long n)
     if (got_int) {
       xstrlcat(msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
     }
-    if (msg(msg_buf)) {
+    if (msg(msg_buf, 0)) {
       set_keep_msg(msg_buf, 0);
       keep_msg_more = true;
     }
@@ -1520,7 +1515,7 @@ void msg_home_replace_hl(const char *fname)
 static void msg_home_replace_attr(const char *fname, int attr)
 {
   char *name = home_replace_save(NULL, fname);
-  msg_outtrans_attr(name, attr);
+  msg_outtrans(name, attr);
   xfree(name);
 }
 
@@ -1529,19 +1524,9 @@ static void msg_home_replace_attr(const char *fname, int attr)
 /// Use attributes 'attr'.
 ///
 /// @return  the number of characters it takes on the screen.
-int msg_outtrans(const char *str)
+int msg_outtrans(const char *str, int attr)
 {
-  return msg_outtrans_attr(str, 0);
-}
-
-int msg_outtrans_attr(const char *str, int attr)
-{
-  return msg_outtrans_len_attr(str, (int)strlen(str), attr);
-}
-
-int msg_outtrans_len(const char *str, int len)
-{
-  return msg_outtrans_len_attr(str, len, 0);
+  return msg_outtrans_len(str, (int)strlen(str), attr);
 }
 
 /// Output one character at "p".
@@ -1553,14 +1538,14 @@ const char *msg_outtrans_one(const char *p, int attr)
   int l;
 
   if ((l = utfc_ptr2len(p)) > 1) {
-    msg_outtrans_len_attr(p, l, attr);
+    msg_outtrans_len(p, l, attr);
     return p + l;
   }
   msg_puts_attr(transchar_byte_buf(NULL, (uint8_t)(*p)), attr);
   return p + 1;
 }
 
-int msg_outtrans_len_attr(const char *msgstr, int len, int attr)
+int msg_outtrans_len(const char *msgstr, int len, int attr)
 {
   int retval = 0;
   const char *str = msgstr;
@@ -2052,10 +2037,10 @@ void msg_outtrans_long_len_attr(const char *longstr, int len, int attr)
   room = Columns - msg_col;
   if (len > room && room >= 20) {
     slen = (room - 3) / 2;
-    msg_outtrans_len_attr(longstr, slen, attr);
+    msg_outtrans_len(longstr, slen, attr);
     msg_puts_attr("...", HL_ATTR(HLF_8));
   }
-  msg_outtrans_len_attr(longstr + len - slen, slen, attr);
+  msg_outtrans_len(longstr + len - slen, slen, attr);
 }
 
 /// Basic function for writing a message with highlight attributes.
@@ -3467,7 +3452,7 @@ void give_warning(const char *message, bool hl)
     msg_ext_set_kind("wmsg");
   }
 
-  if (msg_attr(message, keep_msg_attr) && msg_scrolled == 0) {
+  if (msg(message, keep_msg_attr) && msg_scrolled == 0) {
     set_keep_msg(message, keep_msg_attr);
   }
   msg_didout = false;  // Overwrite this message.

@@ -610,7 +610,7 @@ void ex_history(exarg_T *eap)
   char *arg = eap->arg;
 
   if (hislen == 0) {
-    msg(_("'history' option is zero"));
+    msg(_("'history' option is zero"), 0);
     return;
   }
 
@@ -672,7 +672,7 @@ void ex_history(exarg_T *eap)
           } else {
             xstrlcat(IObuff, hist[i].hisstr, IOSIZE);
           }
-          msg_outtrans(IObuff);
+          msg_outtrans(IObuff, 0);
         }
         if (i == idx) {
           break;

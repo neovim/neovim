@@ -971,7 +971,7 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
   int lastlen = 999;
   for (int j = linenr; j < numMatches; j += lines) {
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
-      msg_outtrans_attr(matches[j], HL_ATTR(HLF_D));
+      msg_outtrans(matches[j], HL_ATTR(HLF_D));
       p = matches[j] + strlen(matches[j]) + 1;
       msg_advance(maxlen + 1);
       msg_puts(p);
@@ -1013,7 +1013,7 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
       isdir = false;
       p = SHOW_MATCH(j);
     }
-    lastlen = msg_outtrans_attr(p, isdir ? dir_attr : 0);
+    lastlen = msg_outtrans(p, isdir ? dir_attr : 0);
   }
   if (msg_col > 0) {  // when not wrapped around
     msg_clr_eos();

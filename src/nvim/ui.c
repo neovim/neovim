@@ -332,7 +332,7 @@ void vim_beep(unsigned val)
   // comes from.
   if (vim_strchr(p_debug, 'e') != NULL) {
     msg_source(HL_ATTR(HLF_W));
-    msg_attr(_("Beep!"), HL_ATTR(HLF_W));
+    msg(_("Beep!"), HL_ATTR(HLF_W));
   }
 }
 

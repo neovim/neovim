@@ -467,9 +467,8 @@ bool check_compl_option(bool dict_opt)
          && *curbuf->b_p_tsrfu == NUL && *p_tsrfu == NUL)) {
     ctrl_x_mode = CTRL_X_NORMAL;
     edit_submode = NULL;
-    msg_attr((dict_opt
-              ? _("'dictionary' option is empty")
-              : _("'thesaurus' option is empty")), HL_ATTR(HLF_E));
+    msg((dict_opt ? _("'dictionary' option is empty") : _("'thesaurus' option is empty")),
+        HL_ATTR(HLF_E));
     if (emsg_silent == 0 && !in_assert_fails) {
       vim_beep(BO_COMPL);
       setcursor();
@@ -1452,10 +1451,10 @@ static void ins_compl_files(int count, char **files, int thesaurus, int flags, r
   for (i = 0; i < count && !got_int && !compl_interrupted; i++) {
     fp = os_fopen(files[i], "r");  // open dictionary file
     if (flags != DICT_EXACT && !shortmess(SHM_COMPLETIONSCAN)) {
-      msg_hist_off = true;  // reset in msg_trunc_attr()
+      msg_hist_off = true;  // reset in msg_trunc()
       vim_snprintf(IObuff, IOSIZE,
                    _("Scanning dictionary: %s"), files[i]);
-      (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+      (void)msg_trunc(IObuff, true, HL_ATTR(HLF_R));
     }
 
     if (fp == NULL) {
@@ -2878,14 +2877,14 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       st->dict_f = DICT_EXACT;
     }
     if (!shortmess(SHM_COMPLETIONSCAN)) {
-      msg_hist_off = true;  // reset in msg_trunc_attr()
+      msg_hist_off = true;  // reset in msg_trunc()
       vim_snprintf(IObuff, IOSIZE, _("Scanning: %s"),
                    st->ins_buf->b_fname == NULL
                    ? buf_spname(st->ins_buf)
                    : st->ins_buf->b_sfname == NULL
                    ? st->ins_buf->b_fname
                    : st->ins_buf->b_sfname);
-      (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+      (void)msg_trunc(IObuff, true, HL_ATTR(HLF_R));
     }
   } else if (*st->e_cpt == NUL) {
     status = INS_COMPL_CPT_END;
@@ -2909,9 +2908,9 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
     } else if (*st->e_cpt == ']' || *st->e_cpt == 't') {
       compl_type = CTRL_X_TAGS;
       if (!shortmess(SHM_COMPLETIONSCAN)) {
-        msg_hist_off = true;  // reset in msg_trunc_attr()
+        msg_hist_off = true;  // reset in msg_trunc()
         vim_snprintf(IObuff, IOSIZE, "%s", _("Scanning tags."));
-        (void)msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+        (void)msg_trunc(IObuff, true, HL_ATTR(HLF_R));
       }
     }
 
@@ -3490,7 +3489,7 @@ static void ins_compl_show_filename(void)
   msg_hist_off = true;
   vim_snprintf(IObuff, IOSIZE, "%s %s%s", lead,
                s > compl_shown_match->cp_fname ? "<" : "", s);
-  msg(IObuff);
+  msg(IObuff, 0);
   msg_hist_off = false;
   redraw_cmdline = false;  // don't overwrite!
 }
@@ -4317,9 +4316,8 @@ static void ins_compl_show_statusmsg(void)
     if (edit_submode_extra != NULL) {
       if (!p_smd) {
         msg_hist_off = true;
-        msg_attr(edit_submode_extra,
-                 (edit_submode_highl < HLF_COUNT
-                  ? HL_ATTR(edit_submode_highl) : 0));
+        msg(edit_submode_extra, (edit_submode_highl < HLF_COUNT
+                                 ? HL_ATTR(edit_submode_highl) : 0));
         msg_hist_off = false;
       }
     } else {

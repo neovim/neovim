@@ -2858,7 +2858,7 @@ void buflist_list(exarg_T *eap)
                    buf == curbuf ? (int64_t)curwin->w_cursor.lnum : (int64_t)buflist_findlnum(buf));
     }
 
-    msg_outtrans(IObuff);
+    msg_outtrans(IObuff, 0);
     line_breakcheck();
   }
 
@@ -3230,10 +3230,10 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
     msg_start();
     n = msg_scroll;
     msg_scroll = true;
-    msg(buffer);
+    msg(buffer, 0);
     msg_scroll = n;
   } else {
-    p = msg_trunc_attr(buffer, false, 0);
+    p = msg_trunc(buffer, false, 0);
     if (restart_edit != 0 || (msg_scrolled && !need_wait_return)) {
       // Need to repeat the message after redrawing when:
       // - When restart_edit is set (otherwise there will be a delay

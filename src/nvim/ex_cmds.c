@@ -135,7 +135,7 @@ void do_ascii(const exarg_T *const eap)
   int cc[MAX_MCO];
   int c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
   if (c == NUL) {
-    msg("NUL");
+    msg("NUL", 0);
     return;
   }
 
@@ -233,7 +233,7 @@ void do_ascii(const exarg_T *const eap)
     xstrlcpy(IObuff + iobuff_len, " ...", sizeof(IObuff) - iobuff_len);
   }
 
-  msg(IObuff);
+  msg(IObuff, 0);
 }
 
 /// ":left", ":center" and ":right": align text.
@@ -1062,7 +1062,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     msg_start();
     msg_putchar(':');
     msg_putchar('!');
-    msg_outtrans(newcmd);
+    msg_outtrans(newcmd, 0);
     msg_clr_eos();
     ui_cursor_goto(msg_row, msg_col);
 
@@ -1274,7 +1274,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
       if (do_in) {
         vim_snprintf(msg_buf, sizeof(msg_buf),
                      _("%" PRId64 " lines filtered"), (int64_t)linecount);
-        if (msg(msg_buf) && !msg_scroll) {
+        if (msg(msg_buf, 0) && !msg_scroll) {
           // save message to display it after redraw
           set_keep_msg(msg_buf, 0);
         }
@@ -4250,7 +4250,7 @@ skip:
         }
       }
       if (cmdpreview_ns <= 0 && !do_sub_msg(subflags.do_count) && subflags.do_ask && p_ch > 0) {
-        msg("");
+        msg("", 0);
       }
     } else {
       global_need_beginline = true;
@@ -4265,7 +4265,7 @@ skip:
     } else if (got_match) {
       // did find something but nothing substituted
       if (p_ch > 0) {
-        msg("");
+        msg("", 0);
       }
     } else if (subflags.do_error) {
       // nothing found
@@ -4339,7 +4339,7 @@ bool do_sub_msg(bool count_only)
     vim_snprintf_add(msg_buf, sizeof(msg_buf),
                      NGETTEXT(msg_single, msg_plural, sub_nlines),
                      (int64_t)sub_nsubs, (int64_t)sub_nlines);
-    if (msg(msg_buf)) {
+    if (msg(msg_buf, 0)) {
       // save message to display it after redraw
       set_keep_msg(msg_buf, 0);
     }
@@ -4468,7 +4468,7 @@ void ex_global(exarg_T *eap)
 
     // pass 2: execute the command for each line that has been marked
     if (got_int) {
-      msg(_(e_interr));
+      msg(_(e_interr), 0);
     } else if (ndone == 0) {
       if (type == 'v') {
         smsg(_("Pattern found in every line: %s"), used_pat);
@@ -4775,7 +4775,7 @@ void ex_oldfiles(exarg_T *eap)
   long nr = 0;
 
   if (l == NULL) {
-    msg(_("No old files"));
+    msg(_("No old files"), 0);
     return;
   }
 
@@ -4790,7 +4790,7 @@ void ex_oldfiles(exarg_T *eap)
     if (!message_filtered(fname)) {
       msg_outnum(nr);
       msg_puts(": ");
-      msg_outtrans(tv_get_string(TV_LIST_ITEM_TV(li)));
+      msg_outtrans(tv_get_string(TV_LIST_ITEM_TV(li)), 0);
       msg_clr_eos();
       msg_putchar('\n');
       os_breakcheck();

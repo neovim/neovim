@@ -2664,7 +2664,7 @@ static void abandon_cmdline(void)
   if (msg_scrolled == 0) {
     compute_cmdrow();
   }
-  msg("");
+  msg("", 0);
   redraw_cmdline = true;
 }
 
@@ -3400,7 +3400,7 @@ static void draw_cmdline(int start, int len)
       }
     }
 
-    msg_outtrans_len(arshape_buf, newlen);
+    msg_outtrans_len(arshape_buf, newlen, 0);
   } else {
 draw_cmdline_no_arabicshape:
     if (kv_size(ccline.last_colors.colors)) {
@@ -3410,12 +3410,10 @@ draw_cmdline_no_arabicshape:
           continue;
         }
         const int chunk_start = MAX(chunk.start, start);
-        msg_outtrans_len_attr(ccline.cmdbuff + chunk_start,
-                              chunk.end - chunk_start,
-                              chunk.attr);
+        msg_outtrans_len(ccline.cmdbuff + chunk_start, chunk.end - chunk_start, chunk.attr);
       }
     } else {
-      msg_outtrans_len(ccline.cmdbuff + start, len);
+      msg_outtrans_len(ccline.cmdbuff + start, len, 0);
     }
   }
 }

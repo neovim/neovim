@@ -3132,7 +3132,7 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   }
 
   msg_putchar('\n');
-  msg_outtrans_attr(IObuff, cursel ? HL_ATTR(HLF_QFL) : qfFileAttr);
+  msg_outtrans(IObuff, cursel ? HL_ATTR(HLF_QFL) : qfFileAttr);
 
   if (qfp->qf_lnum != 0) {
     msg_puts_attr(":", qfSepAttr);
@@ -3308,7 +3308,7 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
     xstrlcat(buf, title, IOSIZE);
   }
   trunc_string(buf, buf, Columns - 1, IOSIZE);
-  msg(buf);
+  msg(buf, 0);
 }
 
 /// ":colder [count]": Up in the quickfix stack.
@@ -3367,7 +3367,7 @@ void qf_history(exarg_T *eap)
   }
 
   if (qf_stack_empty(qi)) {
-    msg(_("No entries"));
+    msg(_("No entries"), 0);
   } else {
     for (int i = 0; i < qi->qf_listcount; i++) {
       qf_msg(qi, i, i == qi->qf_curlist ? "> " : "  ");
@@ -4317,7 +4317,7 @@ static char *make_get_fullcmd(const char *makecmd, const char *fname)
   }
   msg_start();
   msg_puts(":!");
-  msg_outtrans(cmd);  // show what we are doing
+  msg_outtrans(cmd, 0);  // show what we are doing
 
   return cmd;
 }
@@ -5168,9 +5168,9 @@ static void vgr_display_fname(char *fname)
   msg_start();
   char *p = msg_strtrunc(fname, true);
   if (p == NULL) {
-    msg_outtrans(fname);
+    msg_outtrans(fname, 0);
   } else {
-    msg_outtrans(p);
+    msg_outtrans(p, 0);
     xfree(p);
   }
   msg_clr_eos();

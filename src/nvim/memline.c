@@ -845,7 +845,7 @@ void ml_recover(bool checkext)
   if ((hp = mf_get(mfp, 0, 1)) == NULL) {
     msg_start();
     msg_puts_attr(_("Unable to read block 0 from "), attr | MSG_HIST);
-    msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
+    msg_outtrans(mfp->mf_fname, attr | MSG_HIST);
     msg_puts_attr(_("\nMaybe no changes were made or Vim did not update the swap file."),
                   attr | MSG_HIST);
     msg_end();
@@ -854,7 +854,7 @@ void ml_recover(bool checkext)
   b0p = hp->bh_data;
   if (strncmp(b0p->b0_version, "VIM 3.0", 7) == 0) {
     msg_start();
-    msg_outtrans_attr(mfp->mf_fname, MSG_HIST);
+    msg_outtrans(mfp->mf_fname, MSG_HIST);
     msg_puts_attr(_(" cannot be used with this version of Vim.\n"),
                   MSG_HIST);
     msg_puts_attr(_("Use Vim version 3.0.\n"), MSG_HIST);
@@ -867,7 +867,7 @@ void ml_recover(bool checkext)
   }
   if (b0_magic_wrong(b0p)) {
     msg_start();
-    msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
+    msg_outtrans(mfp->mf_fname, attr | MSG_HIST);
     msg_puts_attr(_(" cannot be used on this computer.\n"),
                   attr | MSG_HIST);
     msg_puts_attr(_("The file was created on "), attr | MSG_HIST);
@@ -887,7 +887,7 @@ void ml_recover(bool checkext)
     mf_new_page_size(mfp, (unsigned)char_to_long(b0p->b0_page_size));
     if (mfp->mf_page_size < previous_page_size) {
       msg_start();
-      msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
+      msg_outtrans(mfp->mf_fname, attr | MSG_HIST);
       msg_puts_attr(_(" has been damaged (page size is smaller than minimum value).\n"),
                     attr | MSG_HIST);
       msg_end();
@@ -1196,18 +1196,18 @@ void ml_recover(bool checkext)
     emsg(_("E311: Recovery Interrupted"));
   } else if (error) {
     no_wait_return++;
-    msg(">>>>>>>>>>>>>");
+    msg(">>>>>>>>>>>>>", 0);
     emsg(_("E312: Errors detected while recovering; look for lines starting with ???"));
     no_wait_return--;
-    msg(_("See \":help E312\" for more information."));
-    msg(">>>>>>>>>>>>>");
+    msg(_("See \":help E312\" for more information."), 0);
+    msg(">>>>>>>>>>>>>", 0);
   } else {
     if (curbuf->b_changed) {
-      msg(_("Recovery completed. You should check if everything is OK."));
+      msg(_("Recovery completed. You should check if everything is OK."), 0);
       msg_puts(_("\n(You might want to write out this file under another name\n"));
       msg_puts(_("and run diff with the original file to check for changes)"));
     } else {
-      msg(_("Recovery completed. Buffer contents equals file contents."));
+      msg(_("Recovery completed. Buffer contents equals file contents."), 0);
     }
     msg_puts(_("\nYou may want to delete the .swp file now."));
     if (swapfile_process_running(b0p, fname_used)) {
@@ -1283,7 +1283,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
 
   if (do_list) {
     // use msg() to start the scrolling properly
-    msg(_("Swap files found:"));
+    msg(_("Swap files found:"), 0);
     msg_putchar('\n');
   }
 
@@ -1515,7 +1515,7 @@ static time_t swapfile_info(char *fname)
     // print name of owner of the file
     if (os_get_uname((uv_uid_t)file_info.stat.st_uid, uname, B0_UNAME_SIZE) == OK) {
       msg_puts(_("          owned by: "));
-      msg_outtrans(uname);
+      msg_outtrans(uname, 0);
       msg_puts(_("   dated: "));
     } else {
       msg_puts(_("             dated: "));
@@ -1543,7 +1543,7 @@ static time_t swapfile_info(char *fname)
         if (b0.b0_fname[0] == NUL) {
           msg_puts(_("[No Name]"));
         } else {
-          msg_outtrans(b0.b0_fname);
+          msg_outtrans(b0.b0_fname, 0);
         }
 
         msg_puts(_("\n          modified: "));
@@ -1551,7 +1551,7 @@ static time_t swapfile_info(char *fname)
 
         if (*(b0.b0_uname) != NUL) {
           msg_puts(_("\n         user name: "));
-          msg_outtrans(b0.b0_uname);
+          msg_outtrans(b0.b0_uname, 0);
         }
 
         if (*(b0.b0_hname) != NUL) {
@@ -1560,7 +1560,7 @@ static time_t swapfile_info(char *fname)
           } else {
             msg_puts(_("\n         host name: "));
           }
-          msg_outtrans(b0.b0_hname);
+          msg_outtrans(b0.b0_hname, 0);
         }
 
         if (char_to_long(b0.b0_pid) != 0L) {
@@ -1785,7 +1785,7 @@ theend:
 
   if (message) {
     if (status == OK) {
-      msg(_("File preserved"));
+      msg(_("File preserved"), 0);
     } else {
       emsg(_("E314: Preserve failed"));
     }
@@ -3226,7 +3226,7 @@ static void attention_message(buf_T *buf, char *fname)
   msg_puts("\"\n");
   const time_t swap_mtime = swapfile_info(fname);
   msg_puts(_("While opening file \""));
-  msg_outtrans(buf->b_fname);
+  msg_outtrans(buf->b_fname, 0);
   msg_puts("\"\n");
   FileInfo file_info;
   if (!os_fileinfo(buf->b_fname, &file_info)) {
@@ -3248,10 +3248,10 @@ static void attention_message(buf_T *buf, char *fname)
              "  Quit, or continue with caution.\n"));
   msg_puts(_("(2) An edit session for this file crashed.\n"));
   msg_puts(_("    If this is the case, use \":recover\" or \"vim -r "));
-  msg_outtrans(buf->b_fname);
+  msg_outtrans(buf->b_fname, 0);
   msg_puts(_("\"\n    to recover the changes (see \":help recovery\").\n"));
   msg_puts(_("    If you did this already, delete the swap file \""));
-  msg_outtrans(fname);
+  msg_outtrans(fname, 0);
   msg_puts(_("\"\n    to avoid this message.\n"));
   cmdline_row = msg_row;
   no_wait_return--;

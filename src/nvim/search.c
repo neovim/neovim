@@ -1263,7 +1263,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, int count, in
             memset(msgbuf + pat_len, ' ', (size_t)(r - msgbuf));
           }
         }
-        msg_outtrans(msgbuf);
+        msg_outtrans(msgbuf, 0);
         msg_clr_eos();
         msg_check();
 
@@ -3709,7 +3709,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
           if (new_fname != NULL) {
             // using "new_fname" is more reliable, e.g., when
             // 'includeexpr' is set.
-            msg_outtrans_attr(new_fname, HL_ATTR(HLF_D));
+            msg_outtrans(new_fname, HL_ATTR(HLF_D));
           } else {
             // Isolate the file name.
             // Include the surrounding "" or <> if present.
@@ -3743,7 +3743,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
             }
             save_char = p[i];
             p[i] = NUL;
-            msg_outtrans_attr(p, HL_ATTR(HLF_D));
+            msg_outtrans(p, HL_ATTR(HLF_D));
             p[i] = save_char;
           }
 
@@ -3791,11 +3791,11 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
           files[depth].lnum = 0;
           files[depth].matched = false;
           if (action == ACTION_EXPAND) {
-            msg_hist_off = true;                // reset in msg_trunc_attr()
+            msg_hist_off = true;                // reset in msg_trunc()
             vim_snprintf(IObuff, IOSIZE,
                          _("Scanning included file: %s"),
                          new_fname);
-            msg_trunc_attr(IObuff, true, HL_ATTR(HLF_R));
+            msg_trunc(IObuff, true, HL_ATTR(HLF_R));
           } else if (p_verbose >= 5) {
             verbose_enter();
             smsg(_("Searching included file %s"), new_fname);
@@ -4116,9 +4116,9 @@ exit_matched:
   if (type == CHECK_PATH) {
     if (!did_show) {
       if (action != ACTION_SHOW_ALL) {
-        msg(_("All included files were found"));
+        msg(_("All included files were found"), 0);
       } else {
-        msg(_("No included files"));
+        msg(_("No included files"), 0);
       }
     }
   } else if (!found

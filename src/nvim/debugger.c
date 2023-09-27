@@ -102,7 +102,7 @@ void do_debug(char *cmd)
   debug_mode = true;
 
   if (!debug_did_msg) {
-    msg(_("Entering Debug mode.  Type \"cont\" to continue."));
+    msg(_("Entering Debug mode.  Type \"cont\" to continue."), 0);
   }
   if (debug_oldval != NULL) {
     smsg(_("Oldval = \"%s\""), debug_oldval);
@@ -116,7 +116,7 @@ void do_debug(char *cmd)
   }
   char *sname = estack_sfile(ESTACK_NONE);
   if (sname != NULL) {
-    msg(sname);
+    msg(sname, 0);
   }
   xfree(sname);
   if (SOURCING_LNUM != 0) {
@@ -345,7 +345,7 @@ static void do_checkbacktracelevel(void)
 {
   if (debug_backtrace_level < 0) {
     debug_backtrace_level = 0;
-    msg(_("frame is zero"));
+    msg(_("frame is zero"), 0);
   } else {
     char *sname = estack_sfile(ESTACK_NONE);
     int max = get_maxbacktrace_level(sname);
@@ -719,7 +719,7 @@ void ex_breakdel(exarg_T *eap)
 void ex_breaklist(exarg_T *eap)
 {
   if (GA_EMPTY(&dbg_breakp)) {
-    msg(_("No breakpoints defined"));
+    msg(_("No breakpoints defined"), 0);
     return;
   }
 

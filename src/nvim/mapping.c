@@ -877,9 +877,9 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
       // print entries
       if (!did_it && !did_local) {
         if (is_abbrev) {
-          msg(_("No abbreviation found"));
+          msg(_("No abbreviation found"), 0);
         } else {
-          msg(_("No mapping found"));
+          msg(_("No mapping found"), 0);
         }
       }
       goto theend;  // listing finished
@@ -2504,7 +2504,7 @@ void ex_map(exarg_T *eap)
   // If we are in a secure mode we print the mappings for security reasons.
   if (secure) {
     secure = 2;
-    msg_outtrans(eap->cmd);
+    msg_outtrans(eap->cmd, 0);
     msg_putchar('\n');
   }
   do_exmap(eap, false);

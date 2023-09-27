@@ -2476,7 +2476,7 @@ static const char *did_set_arabic(optset_T *args)
       static char *w_arabic = N_("W17: Arabic requires UTF-8, do ':set encoding=utf-8'");
 
       msg_source(HL_ATTR(HLF_W));
-      msg_attr(_(w_arabic), HL_ATTR(HLF_W));
+      msg(_(w_arabic), HL_ATTR(HLF_W));
       set_vim_var_string(VV_WARNINGMSG, _(w_arabic), -1);
     }
 
@@ -4058,7 +4058,7 @@ static void showoneopt(vimoption_T *p, int opt_flags)
     msg_putchar('=');
     // put value string in NameBuff
     option_value2string(p, opt_flags);
-    msg_outtrans(NameBuff);
+    msg_outtrans(NameBuff, 0);
   }
 
   silent_mode = save_silent;

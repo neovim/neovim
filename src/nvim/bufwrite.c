@@ -352,8 +352,7 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
     msg_scroll = true;  // Don't overwrite messages here.
     msg_silent = 0;     // Must give this prompt.
     // Don't use emsg() here, don't want to flush the buffers.
-    msg_attr(_("WARNING: The file has been changed since reading it!!!"),
-             HL_ATTR(HLF_E));
+    msg(_("WARNING: The file has been changed since reading it!!!"), HL_ATTR(HLF_E));
     if (ask_yesno(_("Do you really want to write to it"), true) == 'n') {
       return FAIL;
     }
@@ -1721,7 +1720,7 @@ restore_backup:
         // This may take a while, if we were interrupted let the user
         // know we got the message.
         if (got_int) {
-          msg(_(e_interr));
+          msg(_(e_interr), 0);
           ui_flush();
         }
 
@@ -1786,7 +1785,7 @@ restore_backup:
       }
     }
 
-    set_keep_msg(msg_trunc_attr(IObuff, false, 0), 0);
+    set_keep_msg(msg_trunc(IObuff, false, 0), 0);
   }
 
   // When written everything correctly: reset 'modified'.  Unless not

@@ -495,7 +495,7 @@ static void uc_list(char *name, size_t name_len)
         msg_putchar(' ');
       }
 
-      msg_outtrans_attr(cmd->uc_name, HL_ATTR(HLF_D));
+      msg_outtrans(cmd->uc_name, HL_ATTR(HLF_D));
       len = strlen(cmd->uc_name) + 4;
 
       do {
@@ -582,7 +582,7 @@ static void uc_list(char *name, size_t name_len)
       } while ((int64_t)len < 25 - over);
 
       IObuff[len] = '\0';
-      msg_outtrans(IObuff);
+      msg_outtrans(IObuff, 0);
 
       if (cmd->uc_luaref != LUA_NOREF) {
         char *fn = nlua_funcref_str(cmd->uc_luaref);
@@ -611,7 +611,7 @@ static void uc_list(char *name, size_t name_len)
   }
 
   if (!found) {
-    msg(_("No user-defined commands found"));
+    msg(_("No user-defined commands found"), 0);
   }
 }
 

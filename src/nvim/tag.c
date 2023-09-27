@@ -736,11 +736,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
         }
         if ((num_matches > prev_num_matches || new_tag)
             && num_matches > 1) {
-          if (ic) {
-            msg_attr(IObuff, HL_ATTR(HLF_W));
-          } else {
-            msg(IObuff);
-          }
+          msg(IObuff, ic ? HL_ATTR(HLF_W) : 0);
           msg_scroll = true;  // Don't overwrite this message.
         } else {
           give_warning(IObuff, ic);
@@ -847,13 +843,10 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
                  mt_names[matches[i][0] & MT_MASK]);
     msg_puts(IObuff);
     if (tagp.tagkind != NULL) {
-      msg_outtrans_len(tagp.tagkind,
-                       (int)(tagp.tagkind_end - tagp.tagkind));
+      msg_outtrans_len(tagp.tagkind, (int)(tagp.tagkind_end - tagp.tagkind), 0);
     }
     msg_advance(13);
-    msg_outtrans_len_attr(tagp.tagname,
-                          (int)(tagp.tagname_end - tagp.tagname),
-                          HL_ATTR(HLF_T));
+    msg_outtrans_len(tagp.tagname, (int)(tagp.tagname_end - tagp.tagname), HL_ATTR(HLF_T));
     msg_putchar(' ');
     taglen_advance(taglen);
 
@@ -861,7 +854,7 @@ static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char 
     // it and put "..." in the middle
     p = tag_full_fname(&tagp);
     if (p != NULL) {
-      msg_outtrans_attr(p, HL_ATTR(HLF_D));
+      msg_outtrans(p, HL_ATTR(HLF_D));
       XFREE_CLEAR(p);
     }
     if (msg_col > 0) {
@@ -1149,9 +1142,8 @@ void do_tags(exarg_T *eap)
                    tagstack[i].cur_match + 1,
                    tagstack[i].tagname,
                    tagstack[i].fmark.mark.lnum);
-      msg_outtrans(IObuff);
-      msg_outtrans_attr(name, tagstack[i].fmark.fnum == curbuf->b_fnum
-                        ? HL_ATTR(HLF_D) : 0);
+      msg_outtrans(IObuff, 0);
+      msg_outtrans(name, tagstack[i].fmark.fnum == curbuf->b_fnum ? HL_ATTR(HLF_D) : 0);
       xfree(name);
     }
   }
@@ -3019,7 +3011,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, int keep_help)
           // Only give a message when really guessed, not when 'ic'
           // is set and match found while ignoring case.
           if (found == 2 || !save_p_ic) {
-            msg(_("E435: Couldn't find tag, just guessing!"));
+            msg(_("E435: Couldn't find tag, just guessing!"), 0);
             if (!msg_scrolled && msg_silent == 0) {
               ui_flush();
               os_delay(1010L, true);
