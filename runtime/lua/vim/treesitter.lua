@@ -508,4 +508,16 @@ function M.foldexpr(lnum)
   return require('vim.treesitter._fold').foldexpr(lnum)
 end
 
+--- Returns the highlighted content of the first line of the fold or falls back to |foldtext()|
+--- if no treesitter parser is found. Can be set directly to 'foldtext':
+---
+--- ```lua
+--- vim.wo.foldtext = 'v:lua.vim.treesitter.foldtext()'
+--- ```
+---
+---@return { [1]: string, [2]: string[] }[] | string
+function M.foldtext()
+  return require('vim.treesitter._fold').foldtext()
+end
+
 return M
