@@ -1378,7 +1378,7 @@ static void list_one_var_a(const char *prefix, const char *name, const ptrdiff_t
     msg_putchar(' ');
   }
 
-  msg_outtrans(string);
+  msg_outtrans(string, 0);
 
   if (type == VAR_FUNC || type == VAR_PARTIAL) {
     msg_puts("()");

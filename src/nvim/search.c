@@ -1263,7 +1263,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, int count, in
             memset(msgbuf + pat_len, ' ', (size_t)(r - msgbuf));
           }
         }
-        msg_outtrans(msgbuf);
+        msg_outtrans(msgbuf, 0);
         msg_clr_eos();
         msg_check();
 
@@ -3709,7 +3709,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
           if (new_fname != NULL) {
             // using "new_fname" is more reliable, e.g., when
             // 'includeexpr' is set.
-            msg_outtrans_attr(new_fname, HL_ATTR(HLF_D));
+            msg_outtrans(new_fname, HL_ATTR(HLF_D));
           } else {
             // Isolate the file name.
             // Include the surrounding "" or <> if present.
@@ -3743,7 +3743,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
             }
             save_char = p[i];
             p[i] = NUL;
-            msg_outtrans_attr(p, HL_ATTR(HLF_D));
+            msg_outtrans(p, HL_ATTR(HLF_D));
             p[i] = save_char;
           }
 

@@ -1663,12 +1663,12 @@ static void sign_list_defined(sign_T *sp)
   smsg("sign %s", sp->sn_name);
   if (sp->sn_icon != NULL) {
     msg_puts(" icon=");
-    msg_outtrans(sp->sn_icon);
+    msg_outtrans(sp->sn_icon, 0);
     msg_puts(_(" (not supported)"));
   }
   if (sp->sn_text != NULL) {
     msg_puts(" text=");
-    msg_outtrans(sp->sn_text);
+    msg_outtrans(sp->sn_text, 0);
   }
   if (sp->sn_line_hl > 0) {
     msg_puts(" linehl=");

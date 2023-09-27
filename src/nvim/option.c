@@ -4058,7 +4058,7 @@ static void showoneopt(vimoption_T *p, int opt_flags)
     msg_putchar('=');
     // put value string in NameBuff
     option_value2string(p, opt_flags);
-    msg_outtrans(NameBuff);
+    msg_outtrans(NameBuff, 0);
   }
 
   silent_mode = save_silent;

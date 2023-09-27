@@ -672,7 +672,7 @@ void ex_history(exarg_T *eap)
           } else {
             xstrlcat(IObuff, hist[i].hisstr, IOSIZE);
           }
-          msg_outtrans(IObuff);
+          msg_outtrans(IObuff, 0);
         }
         if (i == idx) {
           break;

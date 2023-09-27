@@ -2504,7 +2504,7 @@ void ex_map(exarg_T *eap)
   // If we are in a secure mode we print the mappings for security reasons.
   if (secure) {
     secure = 2;
-    msg_outtrans(eap->cmd);
+    msg_outtrans(eap->cmd, 0);
     msg_putchar('\n');
   }
   do_exmap(eap, false);

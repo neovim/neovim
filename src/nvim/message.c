@@ -237,7 +237,7 @@ int msg_attr(const char *s, const int attr)
   return msg_attr_keep(s, attr, false, false);
 }
 
-/// Similar to msg_outtrans_attr, but support newlines and tabs.
+/// Similar to msg_outtrans, but support newlines and tabs.
 void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clear)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -251,7 +251,7 @@ void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clea
 
     if (next_spec != NULL) {
       // Printing all char that are before the char found by strpbrk
-      msg_outtrans_len_attr(s, (int)(next_spec - s), attr);
+      msg_outtrans_len(s, (int)(next_spec - s), attr);
 
       if (*next_spec != TAB && *need_clear) {
         msg_clr_eos();
@@ -265,7 +265,7 @@ void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clea
   // Print the rest of the message. We know there is no special
   // character because strpbrk returned NULL
   if (*s != NUL) {
-    msg_outtrans_attr(s, attr);
+    msg_outtrans(s, attr);
   }
 }
 
@@ -341,7 +341,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   if (multiline) {
     msg_multiline_attr(s, attr, false, &need_clear);
   } else {
-    msg_outtrans_attr(s, attr);
+    msg_outtrans(s, attr);
   }
   if (need_clear) {
     msg_clr_eos();
@@ -1520,7 +1520,7 @@ void msg_home_replace_hl(const char *fname)
 static void msg_home_replace_attr(const char *fname, int attr)
 {
   char *name = home_replace_save(NULL, fname);
-  msg_outtrans_attr(name, attr);
+  msg_outtrans(name, attr);
   xfree(name);
 }
 
@@ -1529,19 +1529,9 @@ static void msg_home_replace_attr(const char *fname, int attr)
 /// Use attributes 'attr'.
 ///
 /// @return  the number of characters it takes on the screen.
-int msg_outtrans(const char *str)
+int msg_outtrans(const char *str, int attr)
 {
-  return msg_outtrans_attr(str, 0);
-}
-
-int msg_outtrans_attr(const char *str, int attr)
-{
-  return msg_outtrans_len_attr(str, (int)strlen(str), attr);
-}
-
-int msg_outtrans_len(const char *str, int len)
-{
-  return msg_outtrans_len_attr(str, len, 0);
+  return msg_outtrans_len(str, (int)strlen(str), attr);
 }
 
 /// Output one character at "p".
@@ -1553,14 +1543,14 @@ const char *msg_outtrans_one(const char *p, int attr)
   int l;
 
   if ((l = utfc_ptr2len(p)) > 1) {
-    msg_outtrans_len_attr(p, l, attr);
+    msg_outtrans_len(p, l, attr);
     return p + l;
   }
   msg_puts_attr(transchar_byte_buf(NULL, (uint8_t)(*p)), attr);
   return p + 1;
 }
 
-int msg_outtrans_len_attr(const char *msgstr, int len, int attr)
+int msg_outtrans_len(const char *msgstr, int len, int attr)
 {
   int retval = 0;
   const char *str = msgstr;
@@ -2052,10 +2042,10 @@ void msg_outtrans_long_len_attr(const char *longstr, int len, int attr)
   room = Columns - msg_col;
   if (len > room && room >= 20) {
     slen = (room - 3) / 2;
-    msg_outtrans_len_attr(longstr, slen, attr);
+    msg_outtrans_len(longstr, slen, attr);
     msg_puts_attr("...", HL_ATTR(HLF_8));
   }
-  msg_outtrans_len_attr(longstr + len - slen, slen, attr);
+  msg_outtrans_len(longstr + len - slen, slen, attr);
 }
 
 /// Basic function for writing a message with highlight attributes.

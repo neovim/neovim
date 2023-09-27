@@ -1062,7 +1062,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     msg_start();
     msg_putchar(':');
     msg_putchar('!');
-    msg_outtrans(newcmd);
+    msg_outtrans(newcmd, 0);
     msg_clr_eos();
     ui_cursor_goto(msg_row, msg_col);
 
@@ -4790,7 +4790,7 @@ void ex_oldfiles(exarg_T *eap)
     if (!message_filtered(fname)) {
       msg_outnum(nr);
       msg_puts(": ");
-      msg_outtrans(tv_get_string(TV_LIST_ITEM_TV(li)));
+      msg_outtrans(tv_get_string(TV_LIST_ITEM_TV(li)), 0);
       msg_clr_eos();
       msg_putchar('\n');
       os_breakcheck();

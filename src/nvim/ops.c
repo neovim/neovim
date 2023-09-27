@@ -3838,7 +3838,7 @@ void ex_display(exarg_T *eap)
           for (p = yb->y_array[j];
                *p != NUL && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019
             clen = utfc_ptr2len(p);
-            msg_outtrans_len(p, clen);
+            msg_outtrans_len(p, clen, 0);
             p += clen - 1;
           }
         }
@@ -3913,10 +3913,10 @@ static void dis_msg(const char *p, bool skip_esc)
          && (n -= ptr2cells(p)) >= 0) {
     int l;
     if ((l = utfc_ptr2len(p)) > 1) {
-      msg_outtrans_len(p, l);
+      msg_outtrans_len(p, l, 0);
       p += l;
     } else {
-      msg_outtrans_len(p++, 1);
+      msg_outtrans_len(p++, 1, 0);
     }
   }
   os_breakcheck();
