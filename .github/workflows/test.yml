@@ -52,8 +52,7 @@ jobs:
           cmake -S cmake.deps -B .deps -G Ninja
           cmake --build .deps
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        run: cmake -B build -G Ninja -D CI_LINT=ON
+      - run: cmake -B build -G Ninja -D CI_LINT=ON
 
       - if: "!cancelled()"
         name: Determine if run should be aborted
@@ -77,6 +76,7 @@ jobs:
         run: cmake --build build --target lintc-clint
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+        name: clang-tidy
         run: cmake --build build --target clang-tidy
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
@@ -228,34 +228,6 @@ jobs:
         name: Show logs
         run: cat $(find "$LOG_DIR" -type f)
 
-  build-types:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: ./.github/scripts/install_deps.sh
-
-      - uses: ./.github/actions/cache
-
-      - name: Build third-party deps
-        run: |
-          cmake -S cmake.deps -B .deps -G "Ninja Multi-Config"
-          cmake --build .deps
-
-      - name: Configure
-        run: cmake -B build -G "Ninja Multi-Config" -D CMAKE_C_COMPILER=gcc -D CI_BUILD=ON
-
-      - name: Release
-        run: cmake --build build --config Release
-
-      - name: RelWithDebInfo
-        run: cmake --build build --config RelWithDebInfo
-
-      - name: MinSizeRel
-        run: cmake --build build --config MinSizeRel
-
   windows:
     runs-on: windows-2022
     timeout-minutes: 45
@@ -320,6 +292,42 @@ jobs:
         run: |
           cd test/old/testdir
           mingw32-make VERBOSE=1
+
+  # This job tests the following things:
+  # - Check if Release, MinSizeRel and RelWithDebInfo compiles correctly.
+  # - Test the above build types with the GCC compiler specifically.
+  #   Empirically the difference in warning levels between GCC and other
+  #   compilers is particularly big.
+  # - Test if the build works with multi-config generators. We mostly use
+  #   single-config generators so it's nice to have a small sanity check for
+  #   multi-config.
+  build-types:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: ./.github/scripts/install_deps.sh
+
+      - uses: ./.github/actions/cache
+
+      - name: Build third-party deps
+        run: |
+          cmake -S cmake.deps -B .deps -G "Ninja Multi-Config"
+          cmake --build .deps
+
+      - name: Configure
+        run: cmake -B build -G "Ninja Multi-Config" -D CMAKE_C_COMPILER=gcc -D CI_BUILD=ON
+
+      - name: Release
+        run: cmake --build build --config Release
+
+      - name: RelWithDebInfo
+        run: cmake --build build --config RelWithDebInfo
+
+      - name: MinSizeRel
+        run: cmake --build build --config MinSizeRel
 
   with-external-deps:
     runs-on: ubuntu-22.04

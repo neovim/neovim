@@ -64,6 +64,10 @@ module.exports = async ({ github, context }) => {
     reviewers.add("mfussenegger");
   }
 
+  if (labels.includes("options")) {
+    reviewers.add("famiu");
+  }
+
   if (labels.includes("platform:nix")) {
     reviewers.add("teto");
   }

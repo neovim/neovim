@@ -22,5 +22,5 @@ runs:
       with:
         path: .deps
         key: ${{ env.CACHE_KEY }}-${{ steps.image.outputs.version }}-${{ hashFiles('cmake**',
-          '.github/workflows/test.yml', 'CMakeLists.txt',
+          '.github/**', 'CMakeLists.txt',
           'runtime/CMakeLists.txt', 'src/nvim/**/CMakeLists.txt') }}
