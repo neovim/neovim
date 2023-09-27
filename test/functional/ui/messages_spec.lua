@@ -333,6 +333,36 @@ describe('ui/ext_messages', function()
     ]]}
   end)
 
+  it(':echoerr multiline', function()
+    exec_lua([[vim.g.multi = table.concat({ "bork", "fail" }, "\n")]])
+    feed(':echoerr g:multi<cr>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]], messages={{
+      content = {{ "bork\nfail", 2 }},
+      kind = "echoerr"
+    }}}
+
+    feed(':messages<cr>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]], messages={{
+      content = {{ "Press ENTER or type command to continue", 4 }},
+      kind = "return_prompt"
+    }}, msg_history={{
+      content = {{ "bork\nfail", 2 }},
+      kind = "echoerr"
+    }}}
+  end)
+
   it('shortmess-=S', function()
     command('set shortmess-=S')
     feed('iline 1\nline 2<esc>')
