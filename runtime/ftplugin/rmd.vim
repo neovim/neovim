@@ -2,7 +2,7 @@
 " Language: R Markdown file
 " Maintainer: Jakson Alves de Aquino <jalvesaq@gmail.com>
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change:	Mon Feb 27, 2023  07:15PM
+" Last Change:	Mon May 29, 2023  06:31AM
 " Original work by Alex Zvoleff (adjusted from R help for rmd by Michel Kuhlmann)
 
 " Only do this when not yet done for this buffer
@@ -32,12 +32,18 @@ function FormatRmd()
   return 1
 endfunction
 
+let s:last_line = 0
 function SetRmdCommentStr()
-    if (search("^[ \t]*```[ ]*{r", "bncW") > search("^[ \t]*```$", "bncW")) || ((search('^---$', 'Wn') || search('^\.\.\.$', 'Wn')) && search('^---$', 'bnW'))
-        set commentstring=#\ %s
-    else
-        set commentstring=<!--\ %s\ -->
-    endif
+  if line('.') == s:last_line
+    return
+  endif
+  let s:last_line = line('.')
+
+  if (search("^[ \t]*```[ ]*{r", "bncW") > search("^[ \t]*```$", "bncW")) || ((search('^---$', 'Wn') || search('^\.\.\.$', 'Wn')) && search('^---$', 'bnW'))
+    set commentstring=#\ %s
+  else
+    set commentstring=<!--\ %s\ -->
+  endif
 endfunction
 
 " If you do not want both 'comments' and 'commentstring' dynamically defined,

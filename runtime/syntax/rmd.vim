@@ -1,7 +1,7 @@
 " Language: Markdown with chunks of R, Python and other languages
 " Maintainer: Jakson Aquino <jalvesaq@gmail.com>
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change: Fri Feb 24, 2023  08:28AM
+" Last Change: Wed May 17, 2023  06:34AM
 "
 "   For highlighting pandoc extensions to markdown like citations and TeX and
 "   many other advanced features like folding of markdown sections, it is
@@ -25,6 +25,8 @@ let g:rmd_syn_hl_chunk = get(g:, 'rmd_syn_hl_chunk', 0)
 " Don't waste time loading syntax that will be discarded:
 let s:save_pandoc_lngs = get(g:, 'pandoc#syntax#codeblocks#embeds#langs', [])
 let g:pandoc#syntax#codeblocks#embeds#langs = []
+
+let g:rmd_dynamic_fenced_languages = get(g:, 'rmd_dynamic_fenced_languages', v:true)
 
 " Step_1: Source pandoc.vim if it is installed:
 runtime syntax/pandoc.vim
@@ -95,6 +97,11 @@ else
     hi def link yamlColonError Error
   endif
 
+  " Conceal char for manual line break
+  if &encoding ==# 'utf-8'
+    syn match rmdNewLine '  $' conceal cchar=↵
+  endif
+
   " You don't need this if either your markdown/syntax.vim already highlights
   " citations or you are writing standard markdown
   if g:rmd_syn_hl_citations
@@ -127,31 +134,77 @@ syn match knitrBodyValue ': \zs.*\ze$' keepend contained containedin=knitrBodyOp
 syn match knitrBodyVar '| \zs\S\{-}\ze:' contained containedin=knitrBodyOptions
 
 let g:rmd_fenced_languages = get(g:, 'rmd_fenced_languages', ['r'])
-for s:type in g:rmd_fenced_languages
-  if s:type =~ '='
-    let s:ft = substitute(s:type, '.*=', '', '')
-    let s:nm = substitute(s:type, '=.*', '', '')
-  else
-    let s:ft = s:type
-    let s:nm  = s:type
-  endif
-  unlet! b:current_syntax
-  exe 'syn include @Rmd'.s:nm.' syntax/'.s:ft.'.vim'
-  if g:rmd_syn_hl_chunk
-    exe 'syn match knitrChunkDelim /```\s*{\s*'.s:nm.'/ contained containedin=knitrChunkBrace contains=knitrChunkLabel'
-    exe 'syn match knitrChunkLabelDelim /```\s*{\s*'.s:nm.',\=\s*[-[:alnum:]]\{-1,}[,}]/ contained containedin=knitrChunkBrace'
-    syn match knitrChunkDelim /}\s*$/ contained containedin=knitrChunkBrace
-    exe 'syn match knitrChunkBrace /```\s*{\s*'.s:nm.'.*$/ contained containedin=rmd'.s:nm.'Chunk contains=knitrChunkDelim,knitrChunkLabelDelim,@Rmd'.s:nm
-    exe 'syn region rmd'.s:nm.'Chunk start="^\s*```\s*{\s*=\?'.s:nm.'\>.*$" matchgroup=rmdCodeDelim end="^\s*```\ze\s*$" keepend contains=knitrChunkBrace,@Rmd'.s:nm
 
-    hi link knitrChunkLabel Identifier
-    hi link knitrChunkDelim rmdCodeDelim
-    hi link knitrChunkLabelDelim rmdCodeDelim
+let s:no_syntax_vim = []
+function IncludeLanguage(lng)
+  if a:lng =~ '='
+    let ftpy = substitute(a:lng, '.*=', '', '')
+    let lnm = substitute(a:lng, '=.*', '', '')
   else
-    exe 'syn region rmd'.s:nm.'Chunk matchgroup=rmdCodeDelim start="^\s*```\s*{\s*=\?'.s:nm.'\>.*$" matchgroup=rmdCodeDelim end="^\s*```\ze\s*$" keepend contains=@Rmd'.s:nm
+    let ftpy = a:lng
+    let lnm  = a:lng
   endif
+  if index(s:no_syntax_vim, ftpy) >= 0
+    return
+  endif
+  if len(globpath(&rtp, "syntax/" . ftpy . ".vim"))
+    unlet! b:current_syntax
+    exe 'syn include @Rmd'.lnm.' syntax/'.ftpy.'.vim'
+    let b:current_syntax = "rmd"
+    if g:rmd_syn_hl_chunk
+      exe 'syn match knitrChunkDelim /```\s*{\s*'.lnm.'/ contained containedin=knitrChunkBrace contains=knitrChunkLabel'
+      exe 'syn match knitrChunkLabelDelim /```\s*{\s*'.lnm.',\=\s*[-[:alnum:]]\{-1,}[,}]/ contained containedin=knitrChunkBrace'
+      syn match knitrChunkDelim /}\s*$/ contained containedin=knitrChunkBrace
+      exe 'syn match knitrChunkBrace /```\s*{\s*'.lnm.'.*$/ contained containedin=rmd'.lnm.'Chunk contains=knitrChunkDelim,knitrChunkLabelDelim,@Rmd'.lnm
+      exe 'syn region rmd'.lnm.'Chunk start="^\s*```\s*{\s*=\?'.lnm.'\>.*$" matchgroup=rmdCodeDelim end="^\s*```\ze\s*$" keepend contains=knitrChunkBrace,@Rmd'.lnm
+
+      hi link knitrChunkLabel Identifier
+      hi link knitrChunkDelim rmdCodeDelim
+      hi link knitrChunkLabelDelim rmdCodeDelim
+    else
+      exe 'syn region rmd'.lnm.'Chunk matchgroup=rmdCodeDelim start="^\s*```\s*{\s*=\?'.lnm.'\>.*$" matchgroup=rmdCodeDelim end="^\s*```\ze\s*$" keepend contains=@Rmd'.lnm
+    endif
+  else
+    " Avoid the cost of running globpath() whenever the buffer is saved
+    let s:no_syntax_vim += [ftpy]
+  endif
+endfunction
+
+for s:type in g:rmd_fenced_languages
+  call IncludeLanguage(s:type)
 endfor
 unlet! s:type
+
+function CheckRmdFencedLanguages()
+  let alines = getline(1, '$')
+  call filter(alines, "v:val =~ '^```{'")
+  call map(alines, "substitute(v:val, '^```{', '', '')")
+  call map(alines, "substitute(v:val, '\\W.*', '', '')")
+  for tpy in alines
+    if len(tpy) == 0
+      continue
+    endif
+    let has_lng = 0
+    for lng in g:rmd_fenced_languages
+      if tpy == lng
+        let has_lng = 1
+        continue
+      endif
+    endfor
+    if has_lng == 0
+      let g:rmd_fenced_languages += [tpy]
+      call IncludeLanguage(tpy)
+    endif
+  endfor
+endfunction
+
+if g:rmd_dynamic_fenced_languages
+  call CheckRmdFencedLanguages()
+  augroup RmdSyntax
+    autocmd!
+    autocmd BufWritePost <buffer> call CheckRmdFencedLanguages()
+  augroup END
+endif
 
 " Step_4: Highlight code recognized by pandoc but not defined in pandoc.vim yet:
 syn match pandocDivBegin '^:::\+ {.\{-}}' contains=pandocHeaderAttr
