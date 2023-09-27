@@ -1762,7 +1762,7 @@ failed:
         if (msg_col > 0) {
           msg_putchar('\r');  // overwrite previous message
         }
-        p = (uint8_t *)msg_trunc_attr(IObuff, false, 0);
+        p = (uint8_t *)msg_trunc(IObuff, false, 0);
       }
 
       if (read_stdin || read_buffer || restart_edit != 0

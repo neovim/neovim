@@ -1785,7 +1785,7 @@ restore_backup:
       }
     }
 
-    set_keep_msg(msg_trunc_attr(IObuff, false, 0), 0);
+    set_keep_msg(msg_trunc(IObuff, false, 0), 0);
   }
 
   // When written everything correctly: reset 'modified'.  Unless not

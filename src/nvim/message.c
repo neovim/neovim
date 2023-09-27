@@ -233,7 +233,7 @@ int msg(const char *s, const int attr)
 }
 
 /// Similar to msg_outtrans, but support newlines and tabs.
-void msg_multiline_attr(const char *s, int attr, bool check_int, bool *need_clear)
+void msg_multiline(const char *s, int attr, bool check_int, bool *need_clear)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *next_spec = s;
@@ -273,7 +273,7 @@ void msg_multiattr(HlMessage hl_msg, const char *kind, bool history)
   msg_ext_set_kind(kind);
   for (uint32_t i = 0; i < kv_size(hl_msg); i++) {
     HlMessageChunk chunk = kv_A(hl_msg, i);
-    msg_multiline_attr(chunk.text.data, chunk.attr, true, &need_clear);
+    msg_multiline(chunk.text.data, chunk.attr, true, &need_clear);
   }
   if (history && kv_size(hl_msg)) {
     add_msg_hist_multiattr(NULL, 0, 0, true, hl_msg);
@@ -334,7 +334,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
 
   bool need_clear = true;
   if (multiline) {
-    msg_multiline_attr(s, attr, false, &need_clear);
+    msg_multiline(s, attr, false, &need_clear);
   } else {
     msg_outtrans(s, attr);
   }
@@ -903,7 +903,7 @@ void msg_schedule_semsg_multiline(const char *const fmt, ...)
 /// Careful: The string may be changed by msg_may_trunc()!
 ///
 /// @return  a pointer to the printed message, if wait_return() not called.
-char *msg_trunc_attr(char *s, bool force, int attr)
+char *msg_trunc(char *s, bool force, int attr)
 {
   int n;
 

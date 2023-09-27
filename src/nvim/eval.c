@@ -8018,7 +8018,7 @@ void ex_echo(exarg_T *eap)
       char *tofree = encode_tv2echo(&rettv, NULL);
       if (*tofree != NUL) {
         msg_ext_set_kind("echo");
-        msg_multiline_attr(tofree, echo_attr, true, &need_clear);
+        msg_multiline(tofree, echo_attr, true, &need_clear);
       }
       xfree(tofree);
     }
