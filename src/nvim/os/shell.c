@@ -134,6 +134,8 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
 #define STYLE_VIMGLOB   2       // use "vimglob", for Posix sh
 #define STYLE_PRINT     3       // use "print -N", for zsh
 #define STYLE_BT        4       // `cmd` expansion, execute the pattern directly
+#define STYLE_GLOBSTAR  5       // use extended shell glob for bash (this uses extended
+                                // globbing functionality with globstar, needs bash > 4)
   int shell_style = STYLE_ECHO;
   int check_spaces;
   static bool did_find_nul = false;
@@ -141,6 +143,9 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   // vimglob() function to define for Posix shell
   static char *sh_vimglob_func =
     "vimglob() { while [ $# -ge 1 ]; do echo \"$1\"; shift; done }; vimglob >";
+  // vimglob() function with globstar setting enabled, only for bash >= 4.X
+  static char *sh_globstar_opt =
+    "[[ ${BASH_VERSINFO[0]} -ge 4 ]] && shopt -s globstar; ";
 
   bool is_fish_shell =
 #if defined(UNIX)
@@ -190,6 +195,8 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   //       If we use *zsh, "print -N" will work better than "glob".
   // STYLE_VIMGLOB:    NL separated
   //       If we use *sh*, we define "vimglob()".
+  // STYLE_GLOBSTAR:   NL separated
+  //       If we use *bash*, we define "vimglob() and enable globstar option".
   // STYLE_ECHO:       space separated.
   //       A shell we don't know, stay safe and use "echo".
   if (num_pat == 1 && *pat[0] == '`'
@@ -203,9 +210,12 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
       shell_style = STYLE_PRINT;
     }
   }
-  if (shell_style == STYLE_ECHO
-      && strstr(path_tail(p_sh), "sh") != NULL) {
-    shell_style = STYLE_VIMGLOB;
+  if (shell_style == STYLE_ECHO) {
+    if (strstr(path_tail(p_sh), "bash") != NULL) {
+      shell_style = STYLE_GLOBSTAR;
+    } else if (strstr(path_tail(p_sh), "sh") != NULL) {
+      shell_style = STYLE_VIMGLOB;
+    }
   }
 
   // Compute the length of the command.  We need 2 extra bytes: for the
@@ -214,6 +224,8 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   len = strlen(tempname) + 29;
   if (shell_style == STYLE_VIMGLOB) {
     len += strlen(sh_vimglob_func);
+  } else if (shell_style == STYLE_GLOBSTAR) {
+    len += strlen(sh_vimglob_func) + strlen(sh_globstar_opt);
   }
 
   for (i = 0; i < num_pat; i++) {
@@ -280,6 +292,9 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     } else if (shell_style == STYLE_PRINT) {
       STRCAT(command, "print -N >");
     } else if (shell_style == STYLE_VIMGLOB) {
+      STRCAT(command, sh_vimglob_func);
+    } else if (shell_style == STYLE_GLOBSTAR) {
+      STRCAT(command, sh_globstar_opt);
       STRCAT(command, sh_vimglob_func);
     } else {
       STRCAT(command, "echo >");
@@ -430,7 +445,9 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
       p = skipwhite(p);                 // skip to next entry
     }
     // file names are separated with NL
-  } else if (shell_style == STYLE_BT || shell_style == STYLE_VIMGLOB) {
+  } else if (shell_style == STYLE_BT
+             || shell_style == STYLE_VIMGLOB
+             || shell_style == STYLE_GLOBSTAR) {
     buffer[len] = NUL;                  // make sure the buffer ends in NUL
     p = buffer;
     for (i = 0; *p != NUL; i++) {       // count number of entries
@@ -496,7 +513,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     (*file)[i] = p;
     // Space or NL separates
     if (shell_style == STYLE_ECHO || shell_style == STYLE_BT
-        || shell_style == STYLE_VIMGLOB) {
+        || shell_style == STYLE_VIMGLOB || shell_style == STYLE_GLOBSTAR) {
       while (!(shell_style == STYLE_ECHO && *p == ' ')
              && *p != '\n' && *p != NUL) {
         p++;

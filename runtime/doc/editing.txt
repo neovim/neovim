@@ -356,7 +356,9 @@ as a wildcard when "[" is in the 'isfname' option.  A simple way to avoid this
 is to use "path\[[]abc]", this matches the file "path\[abc]".
 
 					*starstar-wildcard*
-Expanding "**" is possible on Unix, Win32, macOS and a few other systems.
+Expanding "**" is possible on Unix, Win32, macOS and a few other systems (but
+it may depend on your 'shell' setting. It's known to work correctly for zsh; for
+bash this requires at least bash version >= 4.X).
 This allows searching a directory tree.  This goes up to 100 directories deep.
 Note there are some commands where this works slightly differently, see
 |file-searching|.
