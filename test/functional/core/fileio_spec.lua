@@ -377,4 +377,14 @@ describe('tmpdir', function()
     rm_tmpdir()
     eq('E5431: tempdir disappeared (3 times)', meths.get_vvar('errmsg'))
   end)
+
+  it('$NVIM_APPNAME relative path', function()
+    clear({ env={
+      NVIM_APPNAME='a/b',
+      NVIM_LOG_FILE=testlog,
+      TMPDIR=os_tmpdir,
+    } })
+    matches([=[.*[/\\]a%%b%.[^/\\]+]=], funcs.tempname())
+  end)
+
 end)

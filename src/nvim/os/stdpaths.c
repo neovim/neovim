@@ -69,15 +69,23 @@ const char *get_appname(void)
   return env_val;
 }
 
-/// Ensure that APPNAME is valid. In particular, it cannot contain directory separators.
+/// Ensure that APPNAME is valid. Must be a name or relative path.
 bool appname_is_valid(void)
 {
   const char *appname = get_appname();
-  const size_t appname_len = strlen(appname);
-  for (size_t i = 0; i < appname_len; i++) {
-    if (appname[i] == PATHSEP) {
-      return false;
-    }
+  if (path_is_absolute(appname)
+      // TODO(justinmk): on Windows, path_is_absolute says "/" is NOT absolute. Should it?
+      || strequal(appname, "/")
+      || strequal(appname, "\\")
+      || strequal(appname, ".")
+      || strequal(appname, "..")
+#ifdef BACKSLASH_IN_FILENAME
+      || strstr(appname, "\\..") != NULL
+      || strstr(appname, "..\\") != NULL
+#endif
+      || strstr(appname, "/..") != NULL
+      || strstr(appname, "../") != NULL) {
+    return false;
   }
   return true;
 }
