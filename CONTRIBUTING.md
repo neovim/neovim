@@ -308,11 +308,11 @@ types, etc. See [:help dev-doc-lua][dev-doc-lua].
   ---
   --- {Long explanation}
   ---
-  ---@param arg1 type {description}
-  ---@param arg2 type {description}
+  --- @param arg1 type {description}
+  --- @param arg2 type {description}
   --- ...
   ---
-  ---@return type {description}
+  --- @return type {description}
   ```
 - If possible, add type information (`table`, `string`, `number`, ...). Multiple valid types are separated by a bar (`string|table`). Indicate optional parameters via `type|nil`.
 - If a function in your Lua module should _not_ be documented, add `@nodoc`.
