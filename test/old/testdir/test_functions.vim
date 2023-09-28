@@ -3284,6 +3284,9 @@ endfunc
 " Test for glob() with shell special patterns
 func Test_glob_extended_bash()
   CheckExecutable bash
+  CheckNotMSWindows
+  CheckNotMac   " The default version of bash is old on macOS.
+
   let _shell = &shell
   set shell=bash
 
