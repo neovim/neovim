@@ -570,14 +570,16 @@ a]						*v_a]* *v_a[* *a]* *a[*
 a[			"a [] block", select [count] '[' ']' blocks.  This
 			goes backwards to the [count] unclosed '[', and finds
 			the matching ']'.  The enclosed text is selected,
-			including the '[' and ']'.
+			including the '[' and ']'.  The |cpo-M| option flag
+			is used to handle escaped brackets.
 			When used in Visual mode it is made charwise.
 
 i]						*v_i]* *v_i[* *i]* *i[*
 i[			"inner [] block", select [count] '[' ']' blocks.  This
 			goes backwards to the [count] unclosed '[', and finds
 			the matching ']'.  The enclosed text is selected,
-			excluding the '[' and ']'.
+			excluding the '[' and ']'.  The |cpo-M| option flag
+			is used to handle escaped brackets.
 			When used in Visual mode it is made charwise.
 
 a)							*v_a)* *a)* *a(*
@@ -585,7 +587,8 @@ a(							*vab* *v_ab* *v_a(* *ab*
 ab			"a block", select [count] blocks, from "[count] [(" to
 			the matching ')', including the '(' and ')' (see
 			|[(|).  Does not include white space outside of the
-			parenthesis.
+			parenthesis.  The |cpo-M| option flag is used to
+			handle escaped parenthesis.
 			When used in Visual mode it is made charwise.
 
 i)							*v_i)* *i)* *i(*
@@ -593,19 +596,22 @@ i(							*vib* *v_ib* *v_i(* *ib*
 ib			"inner block", select [count] blocks, from "[count] [("
 			to the matching ')', excluding the '(' and ')' (see
 			|[(|).  If the cursor is not inside a () block, then
-			find the next "(".
+			find the next "(".  The |cpo-M| option flag
+			is used to handle escaped parenthesis.
 			When used in Visual mode it is made charwise.
 
 a>						*v_a>* *v_a<* *a>* *a<*
 a<			"a <> block", select [count] <> blocks, from the
 			[count]'th unmatched '<' backwards to the matching
-			'>', including the '<' and '>'.
+			'>', including the '<' and '>'.  The |cpo-M| option flag
+			is used to handle escaped '<' and '>'.
 			When used in Visual mode it is made charwise.
 
 i>						*v_i>* *v_i<* *i>* *i<*
 i<			"inner <> block", select [count] <> blocks, from
 			the [count]'th unmatched '<' backwards to the matching
-			'>', excluding the '<' and '>'.
+			'>', excluding the '<' and '>'.  The |cpo-M| option flag
+			is used to handle escaped '<' and '>'.
 			When used in Visual mode it is made charwise.
 
 						*v_at* *at*
@@ -626,14 +632,16 @@ a}							*v_a}* *a}* *a{*
 a{							*v_aB* *v_a{* *aB*
 aB			"a Block", select [count] Blocks, from `[count] [{` to
 			the matching "}", including the "{" and "}" (see
-			|[{|).
+			|[{|).  The |cpo-M| option flag is used to handle
+			escaped braces.
 			When used in Visual mode it is made charwise.
 
 i}							*v_i}* *i}* *i{*
 i{							*v_iB* *v_i{* *iB*
 iB			"inner Block", select [count] Blocks, from `[count] [{`
 			to the matching "}", excluding the "{" and "}" (see
-			|[{|).
+			|[{|).  The |cpo-M| option flag is used to handle
+			escaped braces.
 			When used in Visual mode it is made charwise.
 
 a"							*v_aquote* *aquote*
