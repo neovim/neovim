@@ -616,14 +616,14 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
 }
 
 /// Get the next or prev cmdline completion match. The index of the match is set
-/// in "p_findex"
-static char *get_next_or_prev_match(int mode, expand_T *xp, int *p_findex, char *orig_save)
+/// in "xp->xp_selected"
+static char *get_next_or_prev_match(int mode, expand_T *xp, char *orig_save)
 {
   if (xp->xp_numfiles <= 0) {
     return NULL;
   }
 
-  int findex = *p_findex;
+  int findex = xp->xp_selected;
 
   if (mode == WILD_PREV) {
     if (findex == -1) {
@@ -696,7 +696,7 @@ static char *get_next_or_prev_match(int mode, expand_T *xp, int *p_findex, char 
   } else if (p_wmnu) {
     redraw_wildmenu(xp, xp->xp_numfiles, xp->xp_files, findex, cmd_showtail);
   }
-  *p_findex = findex;
+  xp->xp_selected = findex;
 
   return xstrdup(findex == -1 ? orig_save : xp->xp_files[findex]);
 }
@@ -841,7 +841,6 @@ static char *find_longest_match(expand_T *xp, int options)
 char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
 {
   char *ss = NULL;
-  static int findex;                  // TODO(vim): Move into expand_T
   static char *orig_save = NULL;      // kept value of orig
   int orig_saved = false;
 
@@ -849,15 +848,15 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
   if (mode == WILD_NEXT || mode == WILD_PREV
       || mode == WILD_PAGEUP || mode == WILD_PAGEDOWN
       || mode == WILD_PUM_WANT) {
-    return get_next_or_prev_match(mode, xp, &findex, orig_save);
+    return get_next_or_prev_match(mode, xp, orig_save);
   }
 
   if (mode == WILD_CANCEL) {
     ss = xstrdup(orig_save ? orig_save : "");
   } else if (mode == WILD_APPLY) {
-    ss = xstrdup(findex == -1
+    ss = xstrdup(xp->xp_selected == -1
                  ? (orig_save ? orig_save : "")
-                 : xp->xp_files[findex]);
+                 : xp->xp_files[xp->xp_selected]);
   }
 
   // free old names
@@ -871,10 +870,7 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
       cmdline_pum_remove();
     }
   }
-  // TODO(vim): Remove condition if "findex" is part of expand_T ?
-  if (mode != WILD_EXPAND_FREE && mode != WILD_ALL && mode != WILD_ALL_KEEP) {
-    findex = 0;
-  }
+  xp->xp_selected = 0;
 
   if (mode == WILD_FREE) {      // only release file name
     return NULL;
@@ -891,7 +887,7 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
   // Find longest common part
   if (mode == WILD_LONGEST && xp->xp_numfiles > 0) {
     ss = find_longest_match(xp, options);
-    findex = -1;  // next p_wc gets first one
+    xp->xp_selected = -1;  // next p_wc gets first one
   }
 
   // Concatenate all matching names.  Unless interrupted, this can be slow
