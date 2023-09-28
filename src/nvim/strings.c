@@ -33,19 +33,19 @@
 #include "nvim/vim.h"
 
 static const char e_cannot_mix_positional_and_non_positional_str[]
-  = N_("E1400: Cannot mix positional and non-positional arguments: %s");
+  = N_("E1500: Cannot mix positional and non-positional arguments: %s");
 static const char e_fmt_arg_nr_unused_str[]
-  = N_("E1401: format argument %d unused in $-style format: %s");
+  = N_("E1501: format argument %d unused in $-style format: %s");
 static const char e_positional_num_field_spec_reused_str_str[]
-  = N_("E1402: Positional argument %d used as field width reused as different type: %s/%s");
+  = N_("E1502: Positional argument %d used as field width reused as different type: %s/%s");
 static const char e_positional_nr_out_of_bounds_str[]
-  = N_("E1403: Positional argument %d out of bounds: %s");
+  = N_("E1503: Positional argument %d out of bounds: %s");
 static const char e_positional_arg_num_type_inconsistent_str_str[]
-  = N_("E1404: Positional argument %d type used inconsistently: %s/%s");
+  = N_("E1504: Positional argument %d type used inconsistently: %s/%s");
 static const char e_invalid_format_specifier_str[]
-  = N_("E1405: Invalid format specifier: %s");
+  = N_("E1505: Invalid format specifier: %s");
 static const char e_aptypes_is_null_nr_str[]
-  = "E1408: Internal error: ap_types or ap_types[idx] is NULL: %d: %s";
+  = "E1520: Internal error: ap_types or ap_types[idx] is NULL: %d: %s";
 
 static const char typename_unknown[] = N_("unknown");
 static const char typename_int[] = N_("int");
