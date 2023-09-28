@@ -379,7 +379,8 @@ endfunc
 " Test verbose message before echo command
 func Test_echo_verbose_system()
   CheckRunVimInTerminal
-  CheckUnix
+  CheckUnix    " needs the "seq" command
+  CheckNotMac  " doesn't use /tmp
 
   let buf = RunVimInTerminal('', {'rows': 10})
   call term_sendkeys(buf, ":4 verbose echo system('seq 20')\<CR>")
