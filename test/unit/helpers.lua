@@ -137,6 +137,8 @@ local function filter_complex_blocks(body)
     if not (string.find(line, "(^)", 1, true) ~= nil
             or string.find(line, "_ISwupper", 1, true)
             or string.find(line, "_Float")
+            or string.find(line, "__s128")
+            or string.find(line, "__u128")
             or string.find(line, "msgpack_zone_push_finalizer")
             or string.find(line, "msgpack_unpacker_reserve_buffer")
             or string.find(line, "value_init_")
