@@ -1955,20 +1955,6 @@ rename({old_fname}, {new_fname}, {opts})               *vim.lsp.util.rename()*
     Parameters: ~
       • {opts}  (table)
 
-set_lines({lines}, {A}, {B}, {new_lines})           *vim.lsp.util.set_lines()*
-    Replaces text in a range with new text.
-
-    CAUTION: Changes in-place!
-
-    Parameters: ~
-      • {lines}      (table) Original list of strings
-      • {A}          (table) Start position; a 2-tuple of {line,col} numbers
-      • {B}          (table) End position; a 2-tuple of {line,col} numbers
-      • {new_lines}  (table) list of strings to replace the original
-
-    Return: ~
-        (table) The modified {lines} object
-
                                                 *vim.lsp.util.show_document()*
 show_document({location}, {offset_encoding}, {opts})
     Shows document and optionally jumps to the location.
@@ -2032,19 +2018,6 @@ text_document_completion_list_to_complete_items({result}, {prefix})
 
     See also: ~
       • complete-items
-
-                                *vim.lsp.util.try_trim_markdown_code_blocks()*
-try_trim_markdown_code_blocks({lines})
-    Accepts markdown lines and tries to reduce them to a filetype if they
-    comprise just a single code block.
-
-    CAUTION: Modifies the input in-place!
-
-    Parameters: ~
-      • {lines}  (table) list of lines
-
-    Return: ~
-        (string) filetype or "markdown" if it was unchanged.
 
 
 ==============================================================================
