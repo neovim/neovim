@@ -1590,7 +1590,7 @@ int msg_outtrans_len(const char *msgstr, int len, int attr)
         // Unprintable multi-byte char: print the printable chars so
         // far and the translation of the unprintable char.
         if (str > plain_start) {
-          msg_puts_attr_len(plain_start, str - plain_start, attr);
+          msg_puts_len(plain_start, str - plain_start, attr);
         }
         plain_start = str + mb_l;
         msg_puts_attr(transchar_buf(NULL, c), attr == 0 ? HL_ATTR(HLF_8) : attr);
@@ -1604,7 +1604,7 @@ int msg_outtrans_len(const char *msgstr, int len, int attr)
         // Unprintable char: print the printable chars so far and the
         // translation of the unprintable char.
         if (str > plain_start) {
-          msg_puts_attr_len(plain_start, str - plain_start, attr);
+          msg_puts_len(plain_start, str - plain_start, attr);
         }
         plain_start = str + 1;
         msg_puts_attr(s, attr == 0 ? HL_ATTR(HLF_8) : attr);
@@ -1618,7 +1618,7 @@ int msg_outtrans_len(const char *msgstr, int len, int attr)
 
   if (str > plain_start && !got_int) {
     // Print the printable chars at the end.
-    msg_puts_attr_len(plain_start, str - plain_start, attr);
+    msg_puts_len(plain_start, str - plain_start, attr);
   }
 
   got_int |= save_got_int;
@@ -2040,7 +2040,7 @@ void msg_outtrans_long(const char *longstr, int attr)
 /// Basic function for writing a message with highlight attributes.
 void msg_puts_attr(const char *const s, const int attr)
 {
-  msg_puts_attr_len(s, -1, attr);
+  msg_puts_len(s, -1, attr);
 }
 
 /// Write a message with highlight attributes
@@ -2048,7 +2048,7 @@ void msg_puts_attr(const char *const s, const int attr)
 /// @param[in]  str  NUL-terminated message string.
 /// @param[in]  len  Length of the string or -1.
 /// @param[in]  attr  Highlight attribute.
-void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
+void msg_puts_len(const char *const str, const ptrdiff_t len, int attr)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(len < 0 || memchr(str, 0, (size_t)len) == NULL);
@@ -2124,7 +2124,7 @@ void msg_printf_attr(const int attr, const char *const fmt, ...)
   va_end(ap);
 
   msg_scroll = true;
-  msg_puts_attr_len(msgbuf, (ptrdiff_t)len, attr);
+  msg_puts_len(msgbuf, (ptrdiff_t)len, attr);
 }
 
 static void msg_ext_emit_chunk(void)
@@ -2141,7 +2141,7 @@ static void msg_ext_emit_chunk(void)
   ADD(msg_ext_chunks, ARRAY_OBJ(chunk));
 }
 
-/// The display part of msg_puts_attr_len().
+/// The display part of msg_puts_len().
 /// May be called recursively to display scroll-back text.
 static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
 {
@@ -2681,7 +2681,7 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
   return mp->sb_next;
 }
 
-/// Output any postponed text for msg_puts_attr_len().
+/// Output any postponed text for msg_puts_len().
 static void t_puts(int *t_col, const char *t_s, const char *s, int attr)
 {
   attr = hl_combine_attr(HL_ATTR(HLF_MSG), attr);

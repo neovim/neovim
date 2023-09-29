@@ -5731,7 +5731,7 @@ void get_user_input(const typval_T *const argvars, typval_T *const rettv, const 
       p = lastnl + 1;
       msg_start();
       msg_clr_eos();
-      msg_puts_attr_len(prompt, p - prompt, echo_attr);
+      msg_puts_len(prompt, p - prompt, echo_attr);
       msg_didout = false;
       msg_starthere();
     }
