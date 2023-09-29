@@ -987,7 +987,7 @@ void handle_swap_exists(bufref_T *old_curbuf)
         || old_curbuf->br_buf == curbuf) {
       // Block autocommands here because curwin->w_buffer is NULL.
       block_autocmds();
-      buf = buflist_new(NULL, NULL, 1L, BLN_CURBUF | BLN_LISTED);
+      buf = buflist_new(NULL, NULL, 1, BLN_CURBUF | BLN_LISTED);
       unblock_autocmds();
     } else {
       buf = old_curbuf->br_buf;
@@ -1886,7 +1886,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
       emsg(_("W14: Warning: List of file names overflow"));
       if (emsg_silent == 0 && !in_assert_fails) {
         ui_flush();
-        os_delay(3001L, true);  // make sure it is noticed
+        os_delay(3001, true);  // make sure it is noticed
       }
       top_file_num = 1;
     }
@@ -3496,9 +3496,9 @@ void get_rel_pos(win_T *wp, char *buf, int buflen)
   } else if (above <= 0) {
     xstrlcpy(buf, _("Top"), (size_t)buflen);
   } else {
-    int perc = (above > 1000000L
-                ? (int)(above / ((above + below) / 100L))
-                : (int)(above * 100L / (above + below)));
+    int perc = (above > 1000000
+                ? (above / ((above + below) / 100))
+                : (above * 100 / (above + below)));
 
     char *p = buf;
     size_t l = (size_t)buflen;

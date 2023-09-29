@@ -2832,12 +2832,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       }
 
       if (((wp->w_p_cuc
-            && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
-            && (int)wp->w_virtcol <
-            (long)grid->cols * (wlv.row - startrow + 1) + v
+            && wp->w_virtcol >= VCOL_HLC - eol_hl_off
+            && wp->w_virtcol < grid->cols * (ptrdiff_t)(wlv.row - startrow + 1) + v
             && lnum != wp->w_cursor.lnum)
            || draw_color_col || wlv.line_attr_lowprio || wlv.line_attr
-           || wlv.diff_hlf != (hlf_T)0 || has_virttext)) {
+           || wlv.diff_hlf != 0 || has_virttext)) {
         int rightmost_vcol = 0;
 
         if (wp->w_p_cuc) {
@@ -2881,7 +2880,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
           int col_attr = base_attr;
 
-          if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol) {
+          if (wp->w_p_cuc && VCOL_HLC == wp->w_virtcol) {
             col_attr = cuc_attr;
           } else if (draw_color_col && VCOL_HLC == *color_cols) {
             col_attr = hl_combine_attr(wlv.line_attr_lowprio, mc_attr);
@@ -2978,7 +2977,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         && search_attr == 0
         && area_attr == 0
         && wlv.filler_todo <= 0) {
-      if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol
+      if (wp->w_p_cuc && VCOL_HLC == wp->w_virtcol
           && lnum != wp->w_cursor.lnum) {
         vcol_save_attr = wlv.char_attr;
         wlv.char_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUC), wlv.char_attr);

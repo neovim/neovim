@@ -80,7 +80,7 @@ int nlua_spell_check(lua_State *lstate)
       lua_rawseti(lstate, -2, 2);
 
       // +1 for 1-indexing
-      lua_pushinteger(lstate, (long)pos + 1);
+      lua_pushinteger(lstate, (lua_Integer)pos + 1);
       lua_rawseti(lstate, -2, 3);
 
       lua_rawseti(lstate, -2, ++no_res);

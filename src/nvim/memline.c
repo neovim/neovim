@@ -162,9 +162,9 @@ enum {
 // This won't detect a 64 bit machine that only swaps a byte in the top 32
 // bits, but that is crazy anyway.
 enum {
-  B0_MAGIC_LONG = 0x30313233L,
-  B0_MAGIC_INT = 0x20212223L,
-  B0_MAGIC_SHORT = 0x10111213L,
+  B0_MAGIC_LONG = 0x30313233,
+  B0_MAGIC_INT = 0x20212223,
+  B0_MAGIC_SHORT = 0x10111213,
   B0_MAGIC_CHAR = 0x55,
 };
 
@@ -677,8 +677,8 @@ static void set_b0_fname(ZeroBlock *b0p, buf_T *buf)
       buf->b_mtime_read = buf->b_mtime;
       buf->b_mtime_read_ns = buf->b_mtime_ns;
     } else {
-      long_to_char(0L, b0p->b0_mtime);
-      long_to_char(0L, b0p->b0_ino);
+      long_to_char(0, b0p->b0_mtime);
+      long_to_char(0, b0p->b0_ino);
       buf->b_mtime = 0;
       buf->b_mtime_ns = 0;
       buf->b_mtime_read = 0;
@@ -895,7 +895,7 @@ void ml_recover(bool checkext)
       goto theend;
     }
     off_T size;
-    if ((size = vim_lseek(mfp->mf_fd, (off_T)0L, SEEK_END)) <= 0) {
+    if ((size = vim_lseek(mfp->mf_fd, 0, SEEK_END)) <= 0) {
       mfp->mf_blocknr_max = 0;              // no file or empty file
     } else {
       mfp->mf_blocknr_max = size / mfp->mf_page_size;
@@ -932,7 +932,7 @@ void ml_recover(bool checkext)
   // check date of swapfile and original file
   FileInfo org_file_info;
   FileInfo swp_file_info;
-  long mtime = char_to_long(b0p->b0_mtime);
+  int mtime = (int)char_to_long(b0p->b0_mtime);
   if (curbuf->b_ffname != NULL
       && os_fileinfo(curbuf->b_ffname, &org_file_info)
       && ((os_fileinfo(mfp->mf_fname, &swp_file_info)
@@ -983,7 +983,7 @@ void ml_recover(bool checkext)
   linenr_T lnum = 0;        // append after line 0 in curbuf
   linenr_T line_count = 0;
   int idx = 0;              // start with first index in block 1
-  long error = 0;
+  int error = 0;
   buf->b_ml.ml_stack_top = 0;  // -V1048
   buf->b_ml.ml_stack = NULL;
   buf->b_ml.ml_stack_size = 0;  // -V1048
@@ -1565,7 +1565,7 @@ static time_t swapfile_info(char *fname)
           msg_outtrans(b0.b0_hname, 0);
         }
 
-        if (char_to_long(b0.b0_pid) != 0L) {
+        if (char_to_long(b0.b0_pid) != 0) {
           msg_puts(_("\n        process ID: "));
           msg_outnum((int)char_to_long(b0.b0_pid));
           if ((process_running = swapfile_process_running(&b0, fname))) {
@@ -1636,7 +1636,7 @@ static bool swapfile_unchanged(char *fname)
   }
 
   // process must be known and not running.
-  if (char_to_long(b0.b0_pid) == 0L || swapfile_process_running(&b0, fname)) {
+  if (char_to_long(b0.b0_pid) == 0 || swapfile_process_running(&b0, fname)) {
     ret = false;
   }
 

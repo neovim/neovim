@@ -2503,9 +2503,9 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
 
   // Initialize history merger
   for (HistoryType i = 0; i < HIST_COUNT; i++) {
-    long num_saved = get_shada_parameter(hist_type2char(i));
+    int num_saved = get_shada_parameter(hist_type2char(i));
     if (num_saved == -1) {
-      num_saved = (long)p_hi;
+      num_saved = (int)p_hi;
     }
     if (num_saved > 0) {
       dump_history = true;
@@ -3338,7 +3338,6 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
 #define ID(s) s
 #define BINDUP(b) xmemdupz((b).ptr, (b).size)
 #define TOINT(s) ((int)(s))
-#define TOLONG(s) ((long)(s))
 #define TOCHAR(s) ((char)(s))
 #define TOU8(s) ((uint8_t)(s))
 #define TOSIZE(s) ((size_t)(s))
@@ -3964,7 +3963,6 @@ shada_read_next_item_error:
 #undef BINDUP
 #undef TOCHAR
 #undef TOINT
-#undef TOLONG
 #undef TYPED_KEY
 #undef INT_KEY
 #undef INTEGER_KEY

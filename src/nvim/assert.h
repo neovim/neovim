@@ -57,7 +57,7 @@
 
 // the easiest case, when the mode is C11 (generic compiler) or Clang
 // advertises explicit support for c_static_assert, meaning it won't warn.
-#if __STDC_VERSION__ >= 201112L || __has_feature(c_static_assert)
+#if __STDC_VERSION__ >= 201112 || __has_feature(c_static_assert)
 # define STATIC_ASSERT_STATEMENT(cond, msg) _Static_assert(cond, msg)
 // if we're dealing with gcc >= 4.6 in C99 mode, we can still use
 // _Static_assert but we need to suppress warnings, this is pretty ugly.

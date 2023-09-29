@@ -94,9 +94,9 @@ static const char e_search_hit_bottom_without_match_for_str[]
 
 static struct spat spats[2] = {
   // Last used search pattern
-  [0] = { NULL, true, false, 0, { '/', false, false, 0L }, NULL },
+  [0] = { NULL, true, false, 0, { '/', false, false, 0 }, NULL },
   // Last used substitute pattern
-  [1] = { NULL, true, false, 0, { '/', false, false, 0L }, NULL }
+  [1] = { NULL, true, false, 0, { '/', false, false, 0 }, NULL }
 };
 
 static int last_idx = 0;        // index in spats[] for RE_LAST
@@ -564,7 +564,7 @@ int searchit(win_T *win, buf_T *buf, pos_T *pos, pos_T *end_pos, Direction dir, 
   int extra_col;
   int start_char_len;
   bool match_ok;
-  long nmatched;
+  int nmatched;
   int submatch = 0;
   bool first_match = true;
   const int called_emsg_before = called_emsg;
@@ -980,7 +980,7 @@ void set_search_direction(int cdir)
 
 static void set_vv_searchforward(void)
 {
-  set_vim_var_nr(VV_SEARCHFORWARD, (long)(spats[0].off.dir == '/'));
+  set_vim_var_nr(VV_SEARCHFORWARD, spats[0].off.dir == '/');
 }
 
 // Return the number of the first subpat that matched.
@@ -2367,9 +2367,9 @@ void showmatch(int c)
   // brief pause, unless 'm' is present in 'cpo' and a character is
   // available.
   if (vim_strchr(p_cpo, CPO_SHOWMATCH) != NULL) {
-    os_delay((uint64_t)p_mat * 100L + 8, true);
+    os_delay((uint64_t)p_mat * 100 + 8, true);
   } else if (!char_avail()) {
-    os_delay((uint64_t)p_mat * 100L + 9, false);
+    os_delay((uint64_t)p_mat * 100 + 9, false);
   }
   curwin->w_cursor = save_cursor;           // restore cursor position
   *so = save_so;
@@ -2586,7 +2586,7 @@ int linewhite(linenr_T lnum)
 /// Add the search count "[3/19]" to "msgbuf".
 /// See update_search_stat() for other arguments.
 static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, bool show_top_bot_msg,
-                                char *msgbuf, bool recompute, int maxcount, long timeout)
+                                char *msgbuf, bool recompute, int maxcount, int timeout)
 {
   searchstat_T stat;
 
@@ -2658,7 +2658,7 @@ static void cmdline_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, bool sh
 // dirc == '/': find the next match
 // dirc == '?': find the previous match
 static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchstat_T *stat,
-                               bool recompute, int maxcount, long timeout)
+                               bool recompute, int maxcount, int timeout)
 {
   int save_ws = p_ws;
   bool wraparound = false;
@@ -2767,7 +2767,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   pos_T pos = curwin->w_cursor;
   char *pattern = NULL;
   int maxcount = SEARCH_STAT_DEF_MAX_COUNT;
-  long timeout = SEARCH_STAT_DEF_TIMEOUT;
+  int timeout = SEARCH_STAT_DEF_TIMEOUT;
   bool recompute = true;
   searchstat_T stat;
 
@@ -2788,7 +2788,7 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     dict = argvars[0].vval.v_dict;
     di = tv_dict_find(dict, "timeout", -1);
     if (di != NULL) {
-      timeout = (long)tv_get_number_chk(&di->di_tv, &error);
+      timeout = (int)tv_get_number_chk(&di->di_tv, &error);
       if (error) {
         return;
       }
@@ -2824,21 +2824,21 @@ void f_searchcount(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         semsg(_(e_invarg2), "List format should be [lnum, col, off]");
         return;
       }
-      listitem_T *li = tv_list_find(di->di_tv.vval.v_list, 0L);
+      listitem_T *li = tv_list_find(di->di_tv.vval.v_list, 0);
       if (li != NULL) {
         pos.lnum = (linenr_T)tv_get_number_chk(TV_LIST_ITEM_TV(li), &error);
         if (error) {
           return;
         }
       }
-      li = tv_list_find(di->di_tv.vval.v_list, 1L);
+      li = tv_list_find(di->di_tv.vval.v_list, 1);
       if (li != NULL) {
         pos.col = (colnr_T)tv_get_number_chk(TV_LIST_ITEM_TV(li), &error) - 1;
         if (error) {
           return;
         }
       }
-      li = tv_list_find(di->di_tv.vval.v_list, 2L);
+      li = tv_list_find(di->di_tv.vval.v_list, 2);
       if (li != NULL) {
         pos.coladd = (colnr_T)tv_get_number_chk(TV_LIST_ITEM_TV(li), &error);
         if (error) {
@@ -3207,10 +3207,10 @@ static int fuzzy_match_item_compare(const void *const s1, const void *const s2)
 static void fuzzy_match_in_list(list_T *const l, char *const str, const bool matchseq,
                                 const char *const key, Callback *const item_cb,
                                 const bool retmatchpos, list_T *const fmatchlist,
-                                const long max_matches)
+                                const int max_matches)
   FUNC_ATTR_NONNULL_ARG(2, 5, 7)
 {
-  long len = tv_list_len(l);
+  int len = tv_list_len(l);
   if (len == 0) {
     return;
   }
@@ -3219,7 +3219,7 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
   }
 
   fuzzyItem_T *const items = xcalloc((size_t)len, sizeof(fuzzyItem_T));
-  long match_count = 0;
+  int match_count = 0;
   uint32_t matches[MAX_FUZZY_MATCHES];
 
   // For all the string items in items, get the fuzzy matching score
@@ -3303,7 +3303,7 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
     }
 
     // Copy the matching strings with a valid score to the return list
-    for (long i = 0; i < match_count; i++) {
+    for (int i = 0; i < match_count; i++) {
       if (items[i].score == SCORE_NONE) {
         break;
       }
@@ -3316,7 +3316,7 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
       assert(li != NULL && TV_LIST_ITEM_TV(li)->vval.v_list != NULL);
       retlist = TV_LIST_ITEM_TV(li)->vval.v_list;
 
-      for (long i = 0; i < match_count; i++) {
+      for (int i = 0; i < match_count; i++) {
         if (items[i].score == SCORE_NONE) {
           break;
         }
@@ -3327,7 +3327,7 @@ static void fuzzy_match_in_list(list_T *const l, char *const str, const bool mat
       li = tv_list_find(fmatchlist, -1);
       assert(li != NULL && TV_LIST_ITEM_TV(li)->vval.v_list != NULL);
       retlist = TV_LIST_ITEM_TV(li)->vval.v_list;
-      for (long i = 0; i < match_count; i++) {
+      for (int i = 0; i < match_count; i++) {
         if (items[i].score == SCORE_NONE) {
           break;
         }
@@ -3357,7 +3357,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
   Callback cb = CALLBACK_NONE;
   const char *key = NULL;
   bool matchseq = false;
-  long max_matches = 0;
+  int max_matches = 0;
   if (argvars[2].v_type != VAR_UNKNOWN) {
     if (tv_check_for_nonnull_dict_arg(argvars, 2) == FAIL) {
       return;
@@ -3384,7 +3384,7 @@ static void do_fuzzymatch(const typval_T *const argvars, typval_T *const rettv,
         semsg(_(e_invarg2), tv_get_string(&di->di_tv));
         return;
       }
-      max_matches = (long)tv_get_number_chk(&di->di_tv, NULL);
+      max_matches = (int)tv_get_number_chk(&di->di_tv, NULL);
     }
 
     if (tv_dict_find(d, "matchseq", -1) != NULL) {
@@ -3645,11 +3645,11 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
                                            (size_t)(incl_regmatch.endp[0]
                                                     - incl_regmatch.startp[0]),
                                            FNAME_EXP|FNAME_INCL|FNAME_REL,
-                                           1L, p_fname);
+                                           1, p_fname);
       } else {
         // Use text after match with 'include'.
         new_fname = file_name_in_line(incl_regmatch.endp[0], 0,
-                                      FNAME_EXP|FNAME_INCL|FNAME_REL, 1L, p_fname,
+                                      FNAME_EXP|FNAME_INCL|FNAME_REL, 1, p_fname,
                                       NULL);
       }
       already_searched = false;
@@ -3995,7 +3995,7 @@ search_line:
         } else if (action == ACTION_SHOW) {
           show_pat_in_path(line, type, did_show, action,
                            (depth == -1) ? NULL : files[depth].fp,
-                           (depth == -1) ? &lnum : &files[depth].lnum, 1L);
+                           (depth == -1) ? &lnum : &files[depth].lnum, 1);
           did_show = true;
         } else {
           // ":psearch" uses the preview window

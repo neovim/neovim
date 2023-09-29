@@ -939,7 +939,7 @@ static char *get_loop_line(int c, void *cookie, int indent, bool do_concat)
     char *line;
     // First time inside the ":while"/":for": get line normally.
     if (cp->getline == NULL) {
-      line = getcmdline(c, 0L, indent, do_concat);
+      line = getcmdline(c, 0, indent, do_concat);
     } else {
       line = cp->getline(c, cp->cookie, indent, do_concat);
     }
@@ -3431,7 +3431,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         }
         searchcmdlen = 0;
         flags = silent ? 0 : SEARCH_HIS | SEARCH_MSG;
-        if (!do_search(NULL, c, c, cmd, 1L, flags, NULL)) {
+        if (!do_search(NULL, c, c, cmd, 1, flags, NULL)) {
           curwin->w_cursor = pos;
           cmd = NULL;
           goto error;
@@ -3468,7 +3468,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         pos.coladd = 0;
         if (searchit(curwin, curbuf, &pos, NULL,
                      *cmd == '?' ? BACKWARD : FORWARD,
-                     "", 1L, SEARCH_MSG, i, NULL) != FAIL) {
+                     "", 1, SEARCH_MSG, i, NULL) != FAIL) {
           lnum = pos.lnum;
         } else {
           cmd = NULL;
@@ -5576,13 +5576,13 @@ static void ex_read(exarg_T *eap)
       } else {
         lnum = 1;
       }
-      if (*ml_get(lnum) == NUL && u_savedel(lnum, 1L) == OK) {
+      if (*ml_get(lnum) == NUL && u_savedel(lnum, 1) == OK) {
         ml_delete(lnum, false);
         if (curwin->w_cursor.lnum > 1
             && curwin->w_cursor.lnum >= lnum) {
           curwin->w_cursor.lnum--;
         }
-        deleted_lines_mark(lnum, 1L);
+        deleted_lines_mark(lnum, 1);
       }
     }
     redraw_curbuf_later(UPD_VALID);
@@ -5812,7 +5812,7 @@ static void ex_sleep(exarg_T *eap)
   case 'm':
     break;
   case NUL:
-    len *= 1000L; break;
+    len *= 1000; break;
   default:
     semsg(_(e_invarg2), eap->arg); return;
   }
@@ -5877,7 +5877,7 @@ static void ex_wincmd(exarg_T *eap)
     // Pass flags on for ":vertical wincmd ]".
     postponed_split_flags = cmdmod.cmod_split;
     postponed_split_tab = cmdmod.cmod_tab;
-    do_window(*eap->arg, eap->addr_count > 0 ? eap->line2 : 0L, xchar);
+    do_window(*eap->arg, eap->addr_count > 0 ? eap->line2 : 0, xchar);
     postponed_split_flags = 0;
     postponed_split_tab = 0;
   }
@@ -6630,7 +6630,7 @@ void exec_normal(bool was_typed)
 
 static void ex_checkpath(exarg_T *eap)
 {
-  find_pattern_in_path(NULL, 0, 0, false, false, CHECK_PATH, 1L,
+  find_pattern_in_path(NULL, 0, 0, false, false, CHECK_PATH, 1,
                        eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
                        (linenr_T)1, (linenr_T)MAXLNUM);
 }
@@ -6986,7 +6986,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_CFILE:            // file name under cursor
-      result = file_name_at_cursor(FNAME_MESS|FNAME_HYP, 1L, NULL);
+      result = file_name_at_cursor(FNAME_MESS|FNAME_HYP, 1, NULL);
       if (result == NULL) {
         *errormsg = "";
         return NULL;

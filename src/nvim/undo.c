@@ -2009,7 +2009,7 @@ void undo_time(int step, bool sec, bool file, bool absolute)
       }
     }
   }
-  long closest_start = closest;
+  int closest_start = closest;
   int closest_seq = curbuf->b_u_seq_cur;
   int mark;
   int nomark = 0;  // shut up compiler
@@ -2611,7 +2611,7 @@ static void u_undo_end(bool did_undo, bool absolute, bool quiet)
                  u_oldcount < 0 ? (int64_t)-u_oldcount : (int64_t)u_oldcount,
                  _(msgstr),
                  did_undo ? _("before") : _("after"),
-                 uhp == NULL ? (int64_t)0L : (int64_t)uhp->uh_seq,
+                 uhp == NULL ? 0 : (int64_t)uhp->uh_seq,
                  msgbuf);
 }
 
@@ -2622,7 +2622,7 @@ void undo_fmt_time(char *buf, size_t buflen, time_t tt)
     struct tm curtime;
     os_localtime_r(&tt, &curtime);
     size_t n;
-    if (time(NULL) - tt < (60L * 60L * 12L)) {
+    if (time(NULL) - tt < (60 * 60 * 12)) {
       // within 12 hours
       n = strftime(buf, buflen, "%H:%M:%S", &curtime);
     } else {

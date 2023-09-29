@@ -4079,7 +4079,7 @@ static int win_alloc_firstwin(win_T *oldwin)
   if (oldwin == NULL) {
     // Very first window, need to create an empty buffer for it and
     // initialize from scratch.
-    curbuf = buflist_new(NULL, NULL, 1L, BLN_LISTED);
+    curbuf = buflist_new(NULL, NULL, 1, BLN_LISTED);
     if (curbuf == NULL) {
       return FAIL;
     }
@@ -6458,7 +6458,7 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
   redraw_all_later(UPD_NOT_VALID);
 }
 
-#define FRACTION_MULT   16384L
+#define FRACTION_MULT   16384
 
 // Set wp->w_fraction for the current w_wrow and w_height.
 // Has no effect when the window is less than two lines.
@@ -6468,7 +6468,7 @@ void set_fraction(win_T *wp)
     // When cursor is in the first line the percentage is computed as if
     // it's halfway that line.  Thus with two lines it is 25%, with three
     // lines 17%, etc.  Similarly for the last line: 75%, 83%, etc.
-    wp->w_fraction = (int)(wp->w_wrow * FRACTION_MULT + FRACTION_MULT / 2) / wp->w_height_inner;
+    wp->w_fraction = (wp->w_wrow * FRACTION_MULT + FRACTION_MULT / 2) / wp->w_height_inner;
   }
 }
 
@@ -6619,7 +6619,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
     if (lnum < 1) {             // can happen when starting up
       lnum = 1;
     }
-    wp->w_wrow = (int)(wp->w_fraction * height - 1L) / FRACTION_MULT;
+    wp->w_wrow = (wp->w_fraction * height - 1) / FRACTION_MULT;
     int line_size = plines_win_col(wp, lnum, wp->w_cursor.col) - 1;
     int sline = wp->w_wrow - line_size;
 

@@ -301,13 +301,13 @@ void ex_profile(exarg_T *eap)
     profile_fname = expand_env_save_opt(e, true);
     do_profiling = PROF_YES;
     profile_set_wait(profile_zero());
-    set_vim_var_nr(VV_PROFILING, 1L);
+    set_vim_var_nr(VV_PROFILING, 1);
   } else if (do_profiling == PROF_NONE) {
     emsg(_("E750: First use \":profile start {fname}\""));
   } else if (strcmp(eap->arg, "stop") == 0) {
     profile_dump();
     do_profiling = PROF_NONE;
-    set_vim_var_nr(VV_PROFILING, 0L);
+    set_vim_var_nr(VV_PROFILING, 0);
     profile_reset();
   } else if (strcmp(eap->arg, "pause") == 0) {
     if (do_profiling == PROF_YES) {

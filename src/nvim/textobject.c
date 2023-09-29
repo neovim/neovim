@@ -571,7 +571,7 @@ static void find_first_blank(pos_T *posp)
 static void findsent_forward(int count, bool at_start_sent)
 {
   while (count--) {
-    findsent(FORWARD, 1L);
+    findsent(FORWARD, 1);
     if (at_start_sent) {
       find_first_blank(&curwin->w_cursor);
     }
@@ -612,7 +612,7 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
     // (" word"), or start is not on white space, and white space should
     // not be included ("word"), find end of word.
     if ((cls() == 0) == include) {
-      if (end_word(1L, bigword, true, true) == FAIL) {
+      if (end_word(1, bigword, true, true) == FAIL) {
         return FAIL;
       }
     } else {
@@ -621,7 +621,7 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
       // space should not be included ("   "), find start of word.
       // If we end up in the first column of the next line (single char
       // word) back up to end of the line.
-      fwd_word(1L, bigword, true);
+      fwd_word(1, bigword, true);
       if (curwin->w_cursor.col == 0) {
         decl(&curwin->w_cursor);
       } else {
@@ -653,11 +653,11 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
         return FAIL;
       }
       if (include != (cls() != 0)) {
-        if (bck_word(1L, bigword, true) == FAIL) {
+        if (bck_word(1, bigword, true) == FAIL) {
           return FAIL;
         }
       } else {
-        if (bckend_word(1L, bigword, true) == FAIL) {
+        if (bckend_word(1, bigword, true) == FAIL) {
           return FAIL;
         }
         (void)incl(&curwin->w_cursor);
@@ -668,7 +668,7 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
         return FAIL;
       }
       if (include != (cls() == 0)) {
-        if (fwd_word(1L, bigword, true) == FAIL && count > 1) {
+        if (fwd_word(1, bigword, true) == FAIL && count > 1) {
           return FAIL;
         }
         // If end is just past a new-line, we don't want to include
@@ -678,7 +678,7 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
           inclusive = false;
         }
       } else {
-        if (end_word(1L, bigword, true, true) == FAIL) {
+        if (end_word(1, bigword, true, true) == FAIL) {
           return FAIL;
         }
       }
@@ -737,7 +737,7 @@ int current_sent(oparg_T *oap, int count, bool include)
 
   start_pos = curwin->w_cursor;
   pos = start_pos;
-  findsent(FORWARD, 1L);        // Find start of next sentence.
+  findsent(FORWARD, 1);        // Find start of next sentence.
 
   // When the Visual area is bigger than one character: Extend it.
   if (VIsual_active && !equalpos(start_pos, VIsual)) {
@@ -759,12 +759,12 @@ extend:
         incl(&pos);
       }
       if (!at_start_sent) {
-        findsent(BACKWARD, 1L);
+        findsent(BACKWARD, 1);
         if (equalpos(curwin->w_cursor, start_pos)) {
           at_start_sent = true;            // exactly at start of sentence
         } else {
           // inside a sentence, go to its end (start of next)
-          findsent(FORWARD, 1L);
+          findsent(FORWARD, 1);
         }
       }
       if (include) {            // "as" gets twice as much as "is"
@@ -776,7 +776,7 @@ extend:
         }
         c = gchar_cursor();
         if (!at_start_sent || (!include && !ascii_iswhite(c))) {
-          findsent(BACKWARD, 1L);
+          findsent(BACKWARD, 1);
         }
         at_start_sent = !at_start_sent;
       }
@@ -799,7 +799,7 @@ extend:
           incl(&pos);
         }
         if (at_start_sent) {            // in the sentence
-          findsent(BACKWARD, 1L);
+          findsent(BACKWARD, 1);
         } else {  // in/before white before a sentence
           curwin->w_cursor = start_pos;
         }
@@ -826,7 +826,7 @@ extend:
     find_first_blank(&start_pos);       // go back to first blank
   } else {
     start_blank = false;
-    findsent(BACKWARD, 1L);
+    findsent(BACKWARD, 1);
     start_pos = curwin->w_cursor;
   }
   if (include) {
@@ -1146,7 +1146,7 @@ again:
     if (do_searchpair("<[^ \t>/!]\\+\\%(\\_s\\_[^>]\\{-}[^/]>\\|$\\|\\_s\\=>\\)",
                       "",
                       "</[^>]*>", BACKWARD, NULL, 0,
-                      NULL, (linenr_T)0, 0L) <= 0) {
+                      NULL, (linenr_T)0, 0) <= 0) {
       curwin->w_cursor = old_pos;
       goto theend;
     }
@@ -1172,7 +1172,7 @@ again:
            "<%.*s\\>\\%%(\\_s\\_[^>]\\{-}\\_[^/]>\\|\\_s\\?>\\)\\c", len, p);
   snprintf(epat, epat_len, "</%.*s>\\c", len, p);
 
-  const int r = (int)do_searchpair(spat, "", epat, FORWARD, NULL, 0, NULL, (linenr_T)0, 0L);
+  const int r = do_searchpair(spat, "", epat, FORWARD, NULL, 0, NULL, (linenr_T)0, 0);
 
   xfree(spat);
   xfree(epat);

@@ -678,7 +678,7 @@ int tv_list_assign_range(list_T *const dest, list_T *const src, const int idx1_a
   listitem_T *src_li;
 
   // Check whether any of the list items is locked before making any changes.
-  long idx = idx1;
+  int idx = idx1;
   listitem_T *dest_li = first_li;
   for (src_li = tv_list_first(src); src_li != NULL && dest_li != NULL;) {
     if (value_check_lock(TV_LIST_ITEM_TV(dest_li)->v_lock, varname, TV_CSTRING)) {
@@ -738,7 +738,7 @@ int tv_list_assign_range(list_T *const dest, list_T *const src, const int idx1_a
 /// @param[in] maxdepth   Maximum depth that will be flattened
 ///
 /// @return OK or FAIL
-void tv_list_flatten(list_T *list, listitem_T *first, long maxitems, long maxdepth)
+void tv_list_flatten(list_T *list, listitem_T *first, int64_t maxitems, int64_t maxdepth)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   listitem_T *item;

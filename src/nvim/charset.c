@@ -1167,14 +1167,14 @@ long getdigits_long(char **pp, bool strict, long def)
 /// Gets a int32_t number from a string.
 ///
 /// @see getdigits
-int32_t getdigits_int32(char **pp, bool strict, long def)
+int32_t getdigits_int32(char **pp, bool strict, int32_t def)
 {
   intmax_t number = getdigits(pp, strict, def);
 #if SIZEOF_INTMAX_T > 4
   if (strict) {
     assert(number >= INT32_MIN && number <= INT32_MAX);
   } else if (!(number >= INT32_MIN && number <= INT32_MAX)) {
-    return (int32_t)def;
+    return def;
   }
 #endif
   return (int32_t)number;

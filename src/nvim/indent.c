@@ -800,7 +800,7 @@ int get_breakindent_win(win_T *wp, char *line)
   FUNC_ATTR_NONNULL_ALL
 {
   static int prev_indent = 0;  // cached indent value
-  static OptInt prev_ts = 0L;  // cached tabstop value
+  static OptInt prev_ts = 0;  // cached tabstop value
   static int prev_fnum = 0;  // cached buffer number
   static char *prev_line = NULL;  // cached copy of "line"
   static varnumber_T prev_tick = 0;  // changedtick of cached value
@@ -1018,7 +1018,7 @@ void ex_retab(exarg_T *eap)
             // len is actual number of white characters used
             len = num_spaces + num_tabs;
             old_len = (int)strlen(ptr);
-            const long new_len = old_len - col + start_col + len + 1;
+            const int new_len = old_len - col + start_col + len + 1;
             if (new_len <= 0 || new_len >= MAXCOL) {
               emsg_text_too_long();
               break;
@@ -1083,7 +1083,7 @@ void ex_retab(exarg_T *eap)
     redraw_curbuf_later(UPD_NOT_VALID);
   }
   if (first_line != 0) {
-    changed_lines(curbuf, first_line, 0, last_line + 1, 0L, true);
+    changed_lines(curbuf, first_line, 0, last_line + 1, 0, true);
   }
 
   curwin->w_p_list = save_list;         // restore 'list'

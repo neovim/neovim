@@ -106,9 +106,9 @@ typedef struct {
 // used for recording hunks from xdiff
 typedef struct {
   linenr_T lnum_orig;
-  long count_orig;
+  int count_orig;
   linenr_T lnum_new;
-  long count_new;
+  int count_new;
 } diffhunk_T;
 
 // two diff inputs and one result
@@ -771,7 +771,7 @@ static int diff_write_buffer(buf_T *buf, mmfile_t *m, linenr_T start, linenr_T e
     return FAIL;
   }
   m->ptr = ptr;
-  m->size = (long)len;
+  m->size = (int)len;
 
   len = 0;
   for (linenr_T lnum = start; lnum <= end; lnum++) {
@@ -2571,7 +2571,7 @@ int diffopt_changed(void)
 
   // recompute the scroll binding with the new option value, may
   // remove or add filler lines
-  check_scrollbind((linenr_T)0, 0L);
+  check_scrollbind(0, 0);
   return OK;
 }
 
@@ -3217,7 +3217,7 @@ bool diff_mode_buf(buf_T *buf)
 /// @param count
 ///
 /// @return FAIL if there isn't such a diff block.
-int diff_move_to(int dir, long count)
+int diff_move_to(int dir, int count)
 {
   linenr_T lnum = curwin->w_cursor.lnum;
   int idx = diff_buf_idx(curbuf);

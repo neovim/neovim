@@ -227,7 +227,7 @@ static int toggle_Magic(int x)
   return (semsg((m), (c) ? "" : "\\"), rc_did_emsg = true, FAIL)
 #define EMSG_ONE_RET_NULL EMSG2_RET_NULL(_(e_invalid_item_in_str_brackets), reg_magic == MAGIC_ALL)
 
-#define MAX_LIMIT       (32767L << 16L)
+#define MAX_LIMIT       (32767 << 16)
 
 static const char e_invalid_character_after_str_at[]
   = N_("E59: Invalid character after %s@");
@@ -2628,11 +2628,11 @@ static void init_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_
 static int prevchr_len;         ///< byte length of previous char
 static int num_complex_braces;  ///< Complex \{...} count
 static uint8_t *regcode;         ///< Code-emit pointer, or JUST_CALC_SIZE
-static long regsize;            ///< Code size.
+static int64_t regsize;            ///< Code size.
 static int reg_toolong;         ///< true when offset out of range
 static uint8_t had_endbrace[NSUBEXP];  ///< flags, true if end of () found
-static long brace_min[10];        ///< Minimums for complex brace repeats
-static long brace_max[10];        ///< Maximums for complex brace repeats
+static int64_t brace_min[10];        ///< Minimums for complex brace repeats
+static int64_t brace_max[10];        ///< Maximums for complex brace repeats
 static int brace_count[10];       ///< Current counts for complex brace repeats
 static int one_exactly = false;   ///< only do one char for EXACTLY
 
@@ -2656,9 +2656,9 @@ static int classcodes[] = {
 typedef struct regstar_S {
   int nextb;            // next byte
   int nextb_ic;         // next byte reverse case
-  long count;
-  long minval;
-  long maxval;
+  int64_t count;
+  int64_t minval;
+  int64_t maxval;
 } regstar_T;
 
 // used to store input position when a BACK was encountered, so that we now if
@@ -2729,8 +2729,8 @@ static regsave_T behind_pos;
 #define NEXT(p)         (((*((p) + 1) & 0377) << 8) + (*((p) + 2) & 0377))
 #define OPERAND(p)      ((p) + 3)
 // Obtain an operand that was stored as four bytes, MSB first.
-#define OPERAND_MIN(p)  (((long)(p)[3] << 24) + ((long)(p)[4] << 16) \
-                         + ((long)(p)[5] << 8) + (long)(p)[6])
+#define OPERAND_MIN(p)  (((int64_t)(p)[3] << 24) + ((int64_t)(p)[4] << 16) \
+                         + ((int64_t)(p)[5] << 8) + (int64_t)(p)[6])
 // Obtain a second operand stored as four bytes.
 #define OPERAND_MAX(p)  OPERAND_MIN((p) + 4)
 // Obtain a second single-byte operand stored after a four bytes operand.
@@ -3898,7 +3898,7 @@ static void reginsert(int op, uint8_t *opnd)
 
 // Insert an operator in front of already-emitted operand.
 // Add a number to the operator.
-static void reginsert_nr(int op, long val, uint8_t *opnd)
+static void reginsert_nr(int op, int64_t val, uint8_t *opnd)
 {
   uint8_t *src;
   uint8_t *dst;
@@ -3927,7 +3927,7 @@ static void reginsert_nr(int op, long val, uint8_t *opnd)
 // The operator has the given limit values as operands.  Also set next pointer.
 //
 // Means relocating the operand.
-static void reginsert_limits(int op, long minval, long maxval, uint8_t *opnd)
+static void reginsert_limits(int op, int64_t minval, int64_t maxval, uint8_t *opnd)
 {
   uint8_t *src;
   uint8_t *dst;
@@ -5310,8 +5310,8 @@ static void bt_regfree(regprog_T *prog)
 // The arguments from BRACE_LIMITS are stored here.  They are actually local
 // to regmatch(), but they are here to reduce the amount of stack space used
 // (it can be called recursively many times).
-static long bl_minval;
-static long bl_maxval;
+static int64_t bl_minval;
+static int64_t bl_maxval;
 
 // Save the input line and position in a regsave_T.
 static void reg_save(regsave_T *save, garray_T *gap)
@@ -5388,9 +5388,9 @@ static void save_se_one(save_se_T *savep, uint8_t **pp)
 /// Advances rex.input (and rex.lnum) to just after the matched chars.
 ///
 /// @param maxcount  maximum number of matches allowed
-static int regrepeat(uint8_t *p, long maxcount)
+static int regrepeat(uint8_t *p, int64_t maxcount)
 {
-  long count = 0;
+  int64_t count = 0;
   uint8_t *opnd;
   int mask;
   int testval = 0;
@@ -5756,7 +5756,7 @@ static regitem_T *regstack_push(regstate_T state, uint8_t *scan)
 {
   regitem_T *rp;
 
-  if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
+  if ((int64_t)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
     emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
     return NULL;
   }
@@ -6722,7 +6722,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
             // It could match.  Prepare for trying to match what
             // follows.  The code is below.  Parameters are stored in
             // a regstar_T on the regstack.
-            if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
+            if ((int64_t)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
               emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
               status = RA_FAIL;
             } else {
@@ -6759,7 +6759,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
         case BEHIND:
         case NOBEHIND:
           // Need a bit of room to store extra positions.
-          if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
+          if ((int64_t)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
             emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
             status = RA_FAIL;
           } else {
@@ -6998,7 +6998,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
           regstack_pop(&scan);
           regstack.ga_len -= (int)sizeof(regbehind_T);
         } else {
-          long limit;
+          int64_t limit;
 
           // No match or a match that doesn't end where we want it: Go
           // back one character.  May go to previous line once.
@@ -7479,7 +7479,7 @@ static int bt_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T col, bool line_
   rex.reg_nobreak = rmp->regprog->re_flags & RE_NOBREAK;
   rex.reg_maxcol = 0;
 
-  long r = bt_regexec_both(line, col, NULL, NULL);
+  int64_t r = bt_regexec_both(line, col, NULL, NULL);
   assert(r <= INT_MAX);
   return (int)r;
 }
@@ -12826,7 +12826,7 @@ skip_add:
       const int newlen = l->len * 3 / 2 + 50;
       const size_t newsize = (size_t)newlen * sizeof(nfa_thread_T);
 
-      if ((long)(newsize >> 10) >= p_mmp) {
+      if ((int64_t)(newsize >> 10) >= p_mmp) {
         emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
         depth--;
         return NULL;
@@ -13117,7 +13117,7 @@ static regsubs_T *addstate_here(nfa_list_T *l, nfa_state_T *state, regsubs_T *su
       const int newlen = l->len * 3 / 2 + 50;
       const size_t newsize = (size_t)newlen * sizeof(nfa_thread_T);
 
-      if ((long)(newsize >> 10) >= p_mmp) {
+      if ((int64_t)(newsize >> 10) >= p_mmp) {
         emsg(_(e_pattern_uses_more_memory_than_maxmempattern));
         return NULL;
       }
@@ -14740,7 +14740,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         result = false;
         win_T *wp = rex.reg_win == NULL ? curwin : rex.reg_win;
         if (op == 1 && col - 1 > t->state->val && col > 100) {
-          long ts = (long)wp->w_buffer->b_p_ts;
+          int64_t ts = (int64_t)wp->w_buffer->b_p_ts;
 
           // Guess that a character won't use more columns than 'tabstop',
           // with a minimum of 4.

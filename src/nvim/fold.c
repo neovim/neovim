@@ -650,7 +650,7 @@ void foldCreate(win_T *wp, pos_T start, pos_T end)
     // We want the new fold to be closed.  If it would remain open because
     // of using 'foldlevel', need to adjust fd_flags of containing folds.
     if (use_level && !closed && level < wp->w_p_fdl) {
-      closeFold(start, 1L);
+      closeFold(start, 1);
     }
     if (!use_level) {
       wp->w_fold_manual = true;
@@ -748,7 +748,7 @@ void deleteFold(win_T *const wp, const linenr_T start, const linenr_T end, const
   }
 
   if (last_lnum > 0) {
-    changed_lines(wp->w_buffer, first_lnum, (colnr_T)0, last_lnum, 0L, false);
+    changed_lines(wp->w_buffer, first_lnum, (colnr_T)0, last_lnum, 0, false);
 
     // send one nvim_buf_lines_event at the end
     // last_lnum is the line *after* the last line of the outermost fold
@@ -1584,7 +1584,7 @@ static void foldCreateMarkers(win_T *wp, pos_T start, pos_T end)
 
   // Update both changes here, to avoid all folds after the start are
   // changed when the start marker is inserted and the end isn't.
-  changed_lines(buf, start.lnum, (colnr_T)0, end.lnum, 0L, false);
+  changed_lines(buf, start.lnum, (colnr_T)0, end.lnum, 0, false);
 
   // Note: foldAddMarker() may not actually change start and/or end if
   // u_save() is unable to save the buffer line, but we send the
@@ -2295,7 +2295,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
                 // nested folds (with relative line numbers) down.
                 foldMarkAdjustRecurse(flp->wp, &fp->fd_nested,
                                       (linenr_T)0, (linenr_T)MAXLNUM,
-                                      (fp->fd_top - firstlnum), 0L);
+                                      (fp->fd_top - firstlnum), 0);
               } else {
                 // Will move fold down, move nested folds relatively up.
                 foldMarkAdjustRecurse(flp->wp, &fp->fd_nested,
@@ -2367,7 +2367,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *const gap, const int level,
             fp->fd_len = startlnum - fp->fd_top;
             foldMarkAdjustRecurse(flp->wp, &fp->fd_nested,
                                   fp->fd_len, (linenr_T)MAXLNUM,
-                                  (linenr_T)MAXLNUM, 0L);
+                                  (linenr_T)MAXLNUM, 0);
             fold_changed = true;
           }
         } else {
@@ -2861,7 +2861,7 @@ static void foldMerge(win_T *const wp, fold_T *fp1, garray_T *gap, fold_T *fp2)
 
   // If the last nested fold in fp1 touches the first nested fold in fp2,
   // merge them recursively.
-  if (foldFind(gap1, fp1->fd_len - 1, &fp3) && foldFind(gap2, 0L, &fp4)) {
+  if (foldFind(gap1, fp1->fd_len - 1, &fp3) && foldFind(gap2, 0, &fp4)) {
     foldMerge(wp, fp3, gap2, fp4);
   }
 

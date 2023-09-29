@@ -112,7 +112,7 @@ local value_dumpers = {
   string=cstr,
   boolean=function(v) return v and 'true' or 'false' end,
   number=function(v) return ('%iL'):format(v) end,
-  ['nil']=function(_) return '0L' end,
+  ['nil']=function(_) return '0' end,
 }
 
 local get_value = function(v)

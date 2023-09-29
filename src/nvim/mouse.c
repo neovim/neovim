@@ -452,7 +452,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
         if ((State & REPLACE_FLAG) && !yank_register_mline(regname)) {
           insert_reg(regname, true);
         } else {
-          do_put(regname, NULL, BACKWARD, 1L,
+          do_put(regname, NULL, BACKWARD, 1,
                  (fixindent ? PUT_FIXINDENT : 0) | PUT_CURSEND);
 
           // Repeat it with CTRL-R CTRL-O r or CTRL-R CTRL-P r
@@ -710,9 +710,9 @@ popupexit:
       && which_button == MOUSE_LEFT) {
     // open or close a fold at this line
     if (jump_flags & MOUSE_FOLD_OPEN) {
-      openFold(curwin->w_cursor, 1L);
+      openFold(curwin->w_cursor, 1);
     } else {
-      closeFold(curwin->w_cursor, 1L);
+      closeFold(curwin->w_cursor, 1);
     }
     // don't move the cursor if still in the same window
     if (curwin == old_curwin) {
@@ -733,7 +733,7 @@ popupexit:
 
   // When dragging the mouse above the window, scroll down.
   if (is_drag && mouse_row < 0 && !in_status_line) {
-    scroll_redraw(false, 1L);
+    scroll_redraw(false, 1);
     mouse_row = 0;
   }
 

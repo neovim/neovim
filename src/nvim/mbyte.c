@@ -2774,7 +2774,7 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     const listitem_T *lili = tv_list_first(li_l);
     const varnumber_T n1 = TV_LIST_ITEM_TV(lili)->vval.v_number;
     if (item > 0 && n1 <= table[item - 1].last) {
-      semsg(_(e_overlapping_ranges_for_nr), (long)n1);
+      semsg(_(e_overlapping_ranges_for_nr), (size_t)n1);
       xfree((void *)ptrs);
       xfree(table);
       return;

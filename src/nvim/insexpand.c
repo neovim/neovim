@@ -474,7 +474,7 @@ bool check_compl_option(bool dict_opt)
       vim_beep(BO_COMPL);
       setcursor();
       ui_flush();
-      os_delay(2004L, false);
+      os_delay(2004, false);
     }
     return false;
   }
@@ -2986,7 +2986,7 @@ static void get_next_include_file_completion(int compl_type)
                        ((compl_type == CTRL_X_PATH_DEFINES
                          && !(compl_cont_status & CONT_SOL))
                         ? FIND_DEFINE : FIND_ANY),
-                       1L, ACTION_EXPAND, 1, MAXLNUM);
+                       1, ACTION_EXPAND, 1, MAXLNUM);
 }
 
 /// Get the next set of words matching "compl_pattern" in dictionary or
@@ -3208,7 +3208,7 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
                                               compl_direction, compl_pattern);
     } else {
       found_new_match = searchit(NULL, st->ins_buf, st->cur_match_pos,
-                                 NULL, compl_direction, compl_pattern, 1L,
+                                 NULL, compl_direction, compl_pattern, 1,
                                  SEARCH_KEEP + SEARCH_NFMSG, RE_LAST, NULL);
     }
     msg_silent--;
