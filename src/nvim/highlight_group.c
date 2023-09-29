@@ -802,9 +802,10 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
 {
   int idx = id - 1;  // Index is ID minus one.
   bool is_default = attrs.rgb_ae_attr & HL_DEFAULT;
+  bool has_set = hl_has_settings(idx, true);
 
   // Return if "default" was used and the group already has settings
-  if (is_default && hl_has_settings(idx, true) && !dict->force) {
+  if (is_default && has_set && !dict->force) {
     return;
   }
 
@@ -827,9 +828,57 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
 
   g->sg_gui = attrs.rgb_ae_attr &~HL_DEFAULT;
 
-  g->sg_rgb_fg = attrs.rgb_fg_color;
-  g->sg_rgb_bg = attrs.rgb_bg_color;
-  g->sg_rgb_sp = attrs.rgb_sp_color;
+  if (has_set && dict->force) {
+    if (attrs.rgb_fg_color != -1) {
+      g->sg_rgb_fg = attrs.rgb_fg_color;
+    } else {
+      attrs.rgb_fg_color = g->sg_rgb_fg;
+    }
+
+    if (attrs.rgb_bg_color != -1) {
+      g->sg_rgb_bg = attrs.rgb_bg_color;
+    } else {
+      attrs.rgb_bg_color = g->sg_rgb_bg;
+    }
+    if (attrs.rgb_sp_color != -1) {
+      g->sg_rgb_sp = attrs.rgb_sp_color;
+    } else {
+      attrs.rgb_sp_color = g->sg_rgb_sp;
+    }
+
+    if (attrs.cterm_bg_color != 0) {
+      g->sg_cterm_bg = attrs.cterm_bg_color;
+    } else {
+      attrs.cterm_bg_color = g->sg_cterm_bg;
+    }
+
+    if (attrs.cterm_fg_color != 0) {
+      g->sg_cterm_fg = attrs.cterm_fg_color;
+    } else {
+      attrs.cterm_fg_color = g->sg_cterm_fg;
+    }
+
+    if (attrs.hl_blend != -1) {
+      g->sg_blend = attrs.hl_blend;
+    } else {
+      attrs.hl_blend = g->sg_blend;
+    }
+
+    g->sg_gui ^= attrs.rgb_ae_attr;
+  } else {
+    g->sg_gui = attrs.rgb_ae_attr &~HL_DEFAULT;
+
+    g->sg_rgb_fg = attrs.rgb_fg_color;
+    g->sg_rgb_bg = attrs.rgb_bg_color;
+    g->sg_rgb_sp = attrs.rgb_sp_color;
+
+    g->sg_cterm_bg = attrs.cterm_bg_color;
+    g->sg_cterm_fg = attrs.cterm_fg_color;
+    g->sg_blend = attrs.hl_blend;
+  }
+
+  g->sg_cterm = attrs.cterm_ae_attr &~HL_DEFAULT;
+  g->sg_cterm_bold = g->sg_cterm & HL_BOLD;
 
   struct {
     int *dest; RgbValue val; Object name;
@@ -852,11 +901,6 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
     }
   }
 
-  g->sg_cterm = attrs.cterm_ae_attr &~HL_DEFAULT;
-  g->sg_cterm_bg = attrs.cterm_bg_color;
-  g->sg_cterm_fg = attrs.cterm_fg_color;
-  g->sg_cterm_bold = g->sg_cterm & HL_BOLD;
-  g->sg_blend = attrs.hl_blend;
 
   g->sg_script_ctx = current_sctx;
   g->sg_script_ctx.sc_lnum += SOURCING_LNUM;
