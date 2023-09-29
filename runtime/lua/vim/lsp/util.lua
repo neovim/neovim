@@ -168,10 +168,12 @@ end
 
 local _str_utfindex_enc = M._str_utfindex_enc
 local _str_byteindex_enc = M._str_byteindex_enc
+
 --- Replaces text in a range with new text.
 ---
 --- CAUTION: Changes in-place!
 ---
+---@deprecated
 ---@param lines (table) Original list of strings
 ---@param A (table) Start position; a 2-tuple of {line,col} numbers
 ---@param B (table) End position; a 2-tuple of {line,col} numbers
@@ -320,9 +322,7 @@ local function get_line(bufnr, row)
 end
 
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
---- Returns a zero-indexed column, since set_lines() does the conversion to
 ---@param offset_encoding string|nil utf-8|utf-16|utf-32
---- 1-indexed
 ---@return integer
 local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- LSP's line and characters are 0-indexed
@@ -1991,6 +1991,7 @@ end
 ---
 --- CAUTION: Modifies the input in-place!
 ---
+---@deprecated
 ---@param lines table list of lines
 ---@return string filetype or "markdown" if it was unchanged.
 function M.try_trim_markdown_code_blocks(lines)
