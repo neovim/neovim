@@ -1626,7 +1626,7 @@ static void spell_load_lang(char *lang)
                lang);
       do_cmdline_cmd(autocmd_buf);
     } else {
-      smsg(_("Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""),
+      smsg(0, _("Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""),
            lang, spell_enc(), lang);
     }
   } else if (sl.sl_slang != NULL) {
@@ -2076,7 +2076,7 @@ char *parse_spelllang(win_T *wp)
             } else {
               // This is probably an error.  Give a warning and
               // accept the words anyway.
-              smsg(_("Warning: region %s not supported"),
+              smsg(0, _("Warning: region %s not supported"),
                    region);
             }
           } else {

@@ -474,22 +474,8 @@ void trunc_string(const char *s, char *buf, int room_in, int buflen)
   }
 }
 
-// Note: Caller of smsg() and smsg_attr() must check the resulting string is
-// shorter than IOSIZE!!!
-
-int smsg(const char *s, ...)
-  FUNC_ATTR_PRINTF(1, 2)
-{
-  va_list arglist;
-
-  va_start(arglist, s);
-  vim_vsnprintf(IObuff, IOSIZE, s, arglist);
-  va_end(arglist);
-
-  return msg(IObuff, 0);
-}
-
-int smsg_attr(int attr, const char *s, ...)
+// Note: Caller of smsg() must check the resulting string is shorter than IOSIZE!!!
+int smsg(int attr, const char *s, ...)
   FUNC_ATTR_PRINTF(2, 3)
 {
   va_list arglist;
@@ -1590,7 +1576,7 @@ int msg_outtrans_len(const char *msgstr, int len, int attr)
         // Unprintable multi-byte char: print the printable chars so
         // far and the translation of the unprintable char.
         if (str > plain_start) {
-          msg_puts_attr_len(plain_start, str - plain_start, attr);
+          msg_puts_len(plain_start, str - plain_start, attr);
         }
         plain_start = str + mb_l;
         msg_puts_attr(transchar_buf(NULL, c), attr == 0 ? HL_ATTR(HLF_8) : attr);
@@ -1604,7 +1590,7 @@ int msg_outtrans_len(const char *msgstr, int len, int attr)
         // Unprintable char: print the printable chars so far and the
         // translation of the unprintable char.
         if (str > plain_start) {
-          msg_puts_attr_len(plain_start, str - plain_start, attr);
+          msg_puts_len(plain_start, str - plain_start, attr);
         }
         plain_start = str + 1;
         msg_puts_attr(s, attr == 0 ? HL_ATTR(HLF_8) : attr);
@@ -1618,7 +1604,7 @@ int msg_outtrans_len(const char *msgstr, int len, int attr)
 
   if (str > plain_start && !got_int) {
     // Print the printable chars at the end.
-    msg_puts_attr_len(plain_start, str - plain_start, attr);
+    msg_puts_len(plain_start, str - plain_start, attr);
   }
 
   got_int |= save_got_int;
@@ -2024,17 +2010,11 @@ void msg_puts_title(const char *s)
 /// Show a message in such a way that it always fits in the line.  Cut out a
 /// part in the middle and replace it with "..." when necessary.
 /// Does not handle multi-byte characters!
-void msg_outtrans_long_attr(const char *longstr, int attr)
+void msg_outtrans_long(const char *longstr, int attr)
 {
-  msg_outtrans_long_len_attr(longstr, (int)strlen(longstr), attr);
-}
-
-void msg_outtrans_long_len_attr(const char *longstr, int len, int attr)
-{
+  int len = (int)strlen(longstr);
   int slen = len;
-  int room;
-
-  room = Columns - msg_col;
+  int room = Columns - msg_col;
   if (len > room && room >= 20) {
     slen = (room - 3) / 2;
     msg_outtrans_len(longstr, slen, attr);
@@ -2046,7 +2026,7 @@ void msg_outtrans_long_len_attr(const char *longstr, int len, int attr)
 /// Basic function for writing a message with highlight attributes.
 void msg_puts_attr(const char *const s, const int attr)
 {
-  msg_puts_attr_len(s, -1, attr);
+  msg_puts_len(s, -1, attr);
 }
 
 /// Write a message with highlight attributes
@@ -2054,7 +2034,7 @@ void msg_puts_attr(const char *const s, const int attr)
 /// @param[in]  str  NUL-terminated message string.
 /// @param[in]  len  Length of the string or -1.
 /// @param[in]  attr  Highlight attribute.
-void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
+void msg_puts_len(const char *const str, const ptrdiff_t len, int attr)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(len < 0 || memchr(str, 0, (size_t)len) == NULL);
@@ -2130,7 +2110,7 @@ void msg_printf_attr(const int attr, const char *const fmt, ...)
   va_end(ap);
 
   msg_scroll = true;
-  msg_puts_attr_len(msgbuf, (ptrdiff_t)len, attr);
+  msg_puts_len(msgbuf, (ptrdiff_t)len, attr);
 }
 
 static void msg_ext_emit_chunk(void)
@@ -2147,7 +2127,7 @@ static void msg_ext_emit_chunk(void)
   ADD(msg_ext_chunks, ARRAY_OBJ(chunk));
 }
 
-/// The display part of msg_puts_attr_len().
+/// The display part of msg_puts_len().
 /// May be called recursively to display scroll-back text.
 static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
 {
@@ -2687,7 +2667,7 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
   return mp->sb_next;
 }
 
-/// Output any postponed text for msg_puts_attr_len().
+/// Output any postponed text for msg_puts_len().
 static void t_puts(int *t_col, const char *t_s, const char *s, int attr)
 {
   attr = hl_combine_attr(HL_ATTR(HLF_MSG), attr);

@@ -836,8 +836,8 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     ml_delete(line1 + extra, true);
   }
   if (!global_busy && num_lines > p_report) {
-    smsg(NGETTEXT("%" PRId64 " line moved",
-                  "%" PRId64 " lines moved", num_lines),
+    smsg(0, NGETTEXT("%" PRId64 " line moved",
+                     "%" PRId64 " lines moved", num_lines),
          (int64_t)num_lines);
   }
 
@@ -3800,8 +3800,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
                                                         // needed
               msg_no_more = true;
               msg_ext_set_kind("confirm_sub");
-              smsg_attr(HL_ATTR(HLF_R),  // Same highlight as wait_return().
-                        _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
+              // Same highlight as wait_return().
+              smsg(HL_ATTR(HLF_R), _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = false;
               msg_scroll = (int)i;
               if (!ui_has(kUIMessages)) {
@@ -4470,9 +4470,9 @@ void ex_global(exarg_T *eap)
       msg(_(e_interr), 0);
     } else if (ndone == 0) {
       if (type == 'v') {
-        smsg(_("Pattern found in every line: %s"), used_pat);
+        smsg(0, _("Pattern found in every line: %s"), used_pat);
       } else {
-        smsg(_("Pattern not found: %s"), used_pat);
+        smsg(0, _("Pattern not found: %s"), used_pat);
       }
     } else {
       global_exe(cmd);

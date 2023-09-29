@@ -795,7 +795,7 @@ static int shada_read_file(const char *const file, const int flags)
 
   if (p_verbose > 1) {
     verbose_enter();
-    smsg(_("Reading ShaDa file \"%s\"%s%s%s%s"),
+    smsg(0, _("Reading ShaDa file \"%s\"%s%s%s%s"),
          fname,
          (flags & kShaDaWantInfo) ? _(" info") : "",
          (flags & kShaDaWantMarks) ? _(" marks") : "",
@@ -3049,7 +3049,7 @@ shada_write_file_nomerge: {}
 
   if (p_verbose > 1) {
     verbose_enter();
-    smsg(_("Writing ShaDa file \"%s\""), fname);
+    smsg(0, _("Writing ShaDa file \"%s\""), fname);
     verbose_leave();
   }
 

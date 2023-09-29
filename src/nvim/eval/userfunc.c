@@ -1117,7 +1117,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     no_wait_return++;
     verbose_enter_scroll();
 
-    smsg(_("calling %s"), SOURCING_NAME);
+    smsg(0, _("calling %s"), SOURCING_NAME);
     if (p_verbose >= 14) {
       msg_puts("(");
       for (int i = 0; i < argcount; i++) {
@@ -1235,9 +1235,9 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     verbose_enter_scroll();
 
     if (aborting()) {
-      smsg(_("%s aborted"), SOURCING_NAME);
+      smsg(0, _("%s aborted"), SOURCING_NAME);
     } else if (fc->fc_rettv->v_type == VAR_NUMBER) {
-      smsg(_("%s returning #%" PRId64 ""),
+      smsg(0, _("%s returning #%" PRId64 ""),
            SOURCING_NAME, (int64_t)fc->fc_rettv->vval.v_number);
     } else {
       char buf[MSG_BUF_LEN];
@@ -1254,7 +1254,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
           trunc_string(s, buf, MSG_BUF_CLEN, MSG_BUF_LEN);
           s = buf;
         }
-        smsg(_("%s returning %s"), SOURCING_NAME, s);
+        smsg(0, _("%s returning %s"), SOURCING_NAME, s);
         xfree(tofree);
       }
     }
@@ -1277,7 +1277,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     no_wait_return++;
     verbose_enter_scroll();
 
-    smsg(_("continuing in %s"), SOURCING_NAME);
+    smsg(0, _("continuing in %s"), SOURCING_NAME);
     msg_puts("\n");  // don't overwrite this either
 
     verbose_leave_scroll();

@@ -197,7 +197,7 @@ void ex_language(exarg_T *eap)
     if (p == NULL || *p == NUL) {
       p = "Unknown";
     }
-    smsg(_("Current %slanguage: \"%s\""), whatstr, p);
+    smsg(0, _("Current %slanguage: \"%s\""), whatstr, p);
   } else {
 # ifndef LC_MESSAGES
     if (what == VIM_LC_MESSAGES) {

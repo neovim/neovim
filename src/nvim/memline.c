@@ -918,14 +918,14 @@ void ml_recover(bool checkext)
   }
 
   home_replace(NULL, mfp->mf_fname, NameBuff, MAXPATHL, true);
-  smsg(_("Using swap file \"%s\""), NameBuff);
+  smsg(0, _("Using swap file \"%s\""), NameBuff);
 
   if (buf_spname(curbuf) != NULL) {
     xstrlcpy(NameBuff, buf_spname(curbuf), MAXPATHL);
   } else {
     home_replace(NULL, curbuf->b_ffname, NameBuff, MAXPATHL, true);
   }
-  smsg(_("Original file \"%s\""), NameBuff);
+  smsg(0, _("Original file \"%s\""), NameBuff);
   msg_putchar('\n');
 
   // check date of swap file and original file

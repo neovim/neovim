@@ -3798,7 +3798,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
             msg_trunc(IObuff, true, HL_ATTR(HLF_R));
           } else if (p_verbose >= 5) {
             verbose_enter();
-            smsg(_("Searching included file %s"), new_fname);
+            smsg(0, _("Searching included file %s"), new_fname);
             verbose_leave();
           }
         }

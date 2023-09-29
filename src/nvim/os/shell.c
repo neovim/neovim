@@ -732,7 +732,7 @@ int call_shell(char *cmd, ShellOpts opts, char *extra_shell_arg)
 
   if (p_verbose > 3) {
     verbose_enter();
-    smsg(_("Executing command: \"%s\""), cmd == NULL ? p_sh : cmd);
+    smsg(0, _("Executing command: \"%s\""), cmd == NULL ? p_sh : cmd);
     msg_putchar('\n');
     verbose_leave();
   }

@@ -148,7 +148,7 @@ void ex_help(exarg_T *eap)
       // There is no help window yet.
       // Try to open the file specified by the "helpfile" option.
       if ((helpfd = os_fopen(p_hf, READBIN)) == NULL) {
-        smsg(_("Sorry, help file \"%s\" not found"), p_hf);
+        smsg(0, _("Sorry, help file \"%s\" not found"), p_hf);
         goto erret;
       }
       fclose(helpfd);

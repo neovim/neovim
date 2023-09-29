@@ -5458,7 +5458,7 @@ static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args, boo
 
     if (buf == NULL) {
       if (!got_int) {
-        smsg(_("Cannot open file \"%s\""), fname);
+        smsg(0, _("Cannot open file \"%s\""), fname);
       }
     } else {
       // Try for a match in all lines of the buffer.

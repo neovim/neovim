@@ -529,7 +529,7 @@ void spell_suggest(int count)
     msg(_("Sorry, no suggestions"), 0);
   } else if (count > 0) {
     if (count > sug.su_ga.ga_len) {
-      smsg(_("Sorry, only %" PRId64 " suggestions"),
+      smsg(0, _("Sorry, only %" PRId64 " suggestions"),
            (int64_t)sug.su_ga.ga_len);
     }
   } else {
@@ -1480,9 +1480,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
           int j;
 
           // print the stack of changes that brought us here
-          smsg("------ %s -------", fword);
+          smsg(0, "------ %s -------", fword);
           for (j = 0; j < depth; j++) {
-            smsg("%s", changename[j]);
+            smsg(0, "%s", changename[j]);
           }
         }
 #endif
