@@ -291,10 +291,10 @@ static void delete_buff_tail(buffheader_T *buf, int slen)
 }
 
 /// Add number "n" to buffer "buf".
-static void add_num_buff(buffheader_T *buf, long n)
+static void add_num_buff(buffheader_T *buf, int n)
 {
   char number[32];
-  snprintf(number, sizeof(number), "%ld", n);
+  snprintf(number, sizeof(number), "%d", n);
   add_buff(buf, number, -1L);
 }
 
@@ -589,7 +589,7 @@ void AppendCharToRedobuff(int c)
 }
 
 // Append a number to the redo buffer.
-void AppendNumberToRedobuff(long n)
+void AppendNumberToRedobuff(int n)
 {
   if (!block_redo) {
     add_num_buff(&redobuff, n);
@@ -643,7 +643,7 @@ void stuffcharReadbuff(int c)
 }
 
 // Append a number to the stuff buffer.
-void stuffnumReadbuff(long n)
+void stuffnumReadbuff(int n)
 {
   add_num_buff(&readbuf1, n);
 }
@@ -753,7 +753,7 @@ static void copy_redo(bool old_redo)
 /// CTRL-O <.> in insert mode
 ///
 /// @return  FAIL for failure, OK otherwise
-int start_redo(long count, bool old_redo)
+int start_redo(int count, bool old_redo)
 {
   // init the pointers; return if nothing to redo
   if (read_redo(true, old_redo) == FAIL) {

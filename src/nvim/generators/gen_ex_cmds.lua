@@ -102,7 +102,7 @@ for _, cmd in ipairs(defs) do
   end
   local preview_func
   if cmd.preview_func then
-    preview_func = string.format("(ex_preview_func_T)&%s", cmd.preview_func)
+    preview_func = string.format("&%s", cmd.preview_func)
   else
     preview_func = "NULL"
   end

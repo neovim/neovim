@@ -78,8 +78,8 @@ typedef struct {
 } convertStruct;
 
 struct interval {
-  long first;
-  long last;
+  int first;
+  int last;
 };
 
 // uncrustify:off

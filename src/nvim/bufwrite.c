@@ -1368,7 +1368,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   }
 
   int no_eol = false;  // no end-of-line written
-  long nchars;
+  int nchars;
   linenr_T lnum;
   int fileformat;
   int checking_conversion;
@@ -1789,7 +1789,7 @@ restore_backup:
     if (msg_add_fileformat(fileformat)) {
       insert_space = true;
     }
-    msg_add_lines(insert_space, (long)lnum, nchars);       // add line/char count
+    msg_add_lines(insert_space, lnum, nchars);       // add line/char count
     if (!shortmess(SHM_WRITE)) {
       if (append) {
         xstrlcat(IObuff, shortmess(SHM_WRI) ? _(" [a]") : _(" appended"), IOSIZE);

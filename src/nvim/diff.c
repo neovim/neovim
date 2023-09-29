@@ -3135,7 +3135,7 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
 
       if (added != 0) {
         // Adjust marks.  This will change the following entries!
-        mark_adjust(lnum, lnum + count - 1, (long)MAXLNUM, added, kExtmarkNOOP);
+        mark_adjust(lnum, lnum + count - 1, MAXLNUM, added, kExtmarkNOOP);
         if (curwin->w_cursor.lnum >= lnum) {
           // Adjust the cursor position if it's in/after the changed
           // lines.
@@ -3146,7 +3146,7 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
           }
         }
       }
-      extmark_adjust(curbuf, lnum, lnum + count - 1, (long)MAXLNUM, added, kExtmarkUndo);
+      extmark_adjust(curbuf, lnum, lnum + count - 1, MAXLNUM, added, kExtmarkUndo);
       changed_lines(curbuf, lnum, 0, lnum + count, added, true);
 
       if (did_free) {

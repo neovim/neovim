@@ -55,7 +55,7 @@
 /// @return  false for an error.
 bool tabstop_set(char *var, colnr_T **array)
 {
-  long valcount = 1;
+  int valcount = 1;
   int t;
   char *cp;
 
@@ -89,7 +89,7 @@ bool tabstop_set(char *var, colnr_T **array)
     return false;
   }
 
-  *array = (colnr_T *)xmalloc((unsigned)(valcount + 1) * sizeof(long));
+  *array = (colnr_T *)xmalloc((unsigned)(valcount + 1) * sizeof(int));
   (*array)[0] = (colnr_T)valcount;
 
   t = 1;
@@ -122,13 +122,13 @@ int tabstop_padding(colnr_T col, OptInt ts_arg, const colnr_T *vts)
   OptInt ts = ts_arg == 0 ? 8 : ts_arg;
   colnr_T tabcol = 0;
   int t;
-  long padding = 0;
+  int padding = 0;
 
   if (vts == NULL || vts[0] == 0) {
     return (int)(ts - (col % ts));
   }
 
-  const long tabcount = vts[0];
+  const int tabcount = vts[0];
 
   for (t = 1; t <= tabcount; t++) {
     tabcol += vts[t];
@@ -141,7 +141,7 @@ int tabstop_padding(colnr_T col, OptInt ts_arg, const colnr_T *vts)
     padding = vts[tabcount] - ((col - tabcol) % vts[tabcount]);
   }
 
-  return (int)padding;
+  return padding;
 }
 
 /// Find the size of the tab that covers a particular column.
@@ -149,13 +149,13 @@ int tabstop_at(colnr_T col, OptInt ts, const colnr_T *vts)
 {
   colnr_T tabcol = 0;
   int t;
-  long tab_size = 0;
+  int tab_size = 0;
 
   if (vts == NULL || vts[0] == 0) {
     return (int)ts;
   }
 
-  const long tabcount = vts[0];
+  const int tabcount = vts[0];
   for (t = 1; t <= tabcount; t++) {
     tabcol += vts[t];
     if (tabcol > col) {
@@ -167,20 +167,20 @@ int tabstop_at(colnr_T col, OptInt ts, const colnr_T *vts)
     tab_size = vts[tabcount];
   }
 
-  return (int)tab_size;
+  return tab_size;
 }
 
 /// Find the column on which a tab starts.
-colnr_T tabstop_start(colnr_T col, long ts, colnr_T *vts)
+colnr_T tabstop_start(colnr_T col, int ts, colnr_T *vts)
 {
   colnr_T tabcol = 0;
   int t;
 
   if (vts == NULL || vts[0] == 0) {
-    return (int)((col / ts) * ts);
+    return ((col / ts) * ts);
   }
 
-  const long tabcount = vts[0];
+  const int tabcount = vts[0];
   for (t = 1; t <= tabcount; t++) {
     tabcol += vts[t];
     if (tabcol > col) {
@@ -194,26 +194,26 @@ colnr_T tabstop_start(colnr_T col, long ts, colnr_T *vts)
 
 /// Find the number of tabs and spaces necessary to get from one column
 /// to another.
-void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, const colnr_T *vts, int *ntabs,
+void tabstop_fromto(colnr_T start_col, colnr_T end_col, int ts_arg, const colnr_T *vts, int *ntabs,
                     int *nspcs)
 {
   int spaces = end_col - start_col;
   colnr_T tabcol = 0;
-  long padding = 0;
+  int padding = 0;
   int t;
-  long ts = ts_arg == 0 ? (long)curbuf->b_p_ts : ts_arg;
+  int ts = ts_arg == 0 ? (int)curbuf->b_p_ts : ts_arg;
   assert(ts != 0);  // suppress clang "Division by zero"
 
   if (vts == NULL || vts[0] == 0) {
     int tabs = 0;
 
-    const int initspc = (int)(ts - (start_col % ts));
+    const int initspc = (ts - (start_col % ts));
     if (spaces >= initspc) {
       spaces -= initspc;
       tabs++;
     }
-    tabs += (int)(spaces / ts);
-    spaces -= (int)((spaces / ts) * ts);
+    tabs += (spaces / ts);
+    spaces -= ((spaces / ts) * ts);
 
     *ntabs = tabs;
     *nspcs = spaces;
@@ -221,7 +221,7 @@ void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, const colnr
   }
 
   // Find the padding needed to reach the next tabstop.
-  const long tabcount = vts[0];
+  const int tabcount = vts[0];
   for (t = 1; t <= tabcount; t++) {
     tabcol += vts[t];
     if (tabcol > start_col) {
@@ -241,7 +241,7 @@ void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, const colnr
   }
 
   *ntabs = 1;
-  spaces -= (int)padding;
+  spaces -= padding;
 
   // At least one tab has been used. See if any more will fit.
   while (spaces != 0 && ++t <= tabcount) {
@@ -251,7 +251,7 @@ void tabstop_fromto(colnr_T start_col, colnr_T end_col, long ts_arg, const colnr
       return;
     }
     *ntabs += 1;
-    spaces -= (int)padding;
+    spaces -= padding;
   }
 
   *ntabs += spaces / (int)vts[tabcount];
@@ -283,21 +283,21 @@ bool tabstop_eq(const colnr_T *ts1, const colnr_T *ts2)
 }
 
 /// Copy a tabstop array, allocating space for the new array.
-int *tabstop_copy(const long *oldts)
+int *tabstop_copy(const int *oldts)
 {
-  long *newts;
+  int *newts;
   int t;
 
   if (oldts == 0) {
     return 0;
   }
 
-  newts = xmalloc((unsigned)(oldts[0] + 1) * sizeof(long));
+  newts = xmalloc((unsigned)(oldts[0] + 1) * sizeof(int));
   for (t = 0; t <= oldts[0]; t++) {
     newts[t] = oldts[t];
   }
 
-  return (int *)newts;
+  return newts;
 }
 
 /// Return a count of the number of tabstops.
@@ -316,25 +316,23 @@ int tabstop_first(colnr_T *ts)
 /// 'tabstop' value when 'shiftwidth' is zero.
 int get_sw_value(buf_T *buf)
 {
-  long result = get_sw_value_col(buf, 0);
-  assert(result >= 0 && result <= INT_MAX);
-  return (int)result;
+  int result = get_sw_value_col(buf, 0);
+  return result;
 }
 
 /// Idem, using "pos".
-long get_sw_value_pos(buf_T *buf, pos_T *pos)
+int get_sw_value_pos(buf_T *buf, pos_T *pos)
 {
   pos_T save_cursor = curwin->w_cursor;
-  long sw_value;
 
   curwin->w_cursor = *pos;
-  sw_value = get_sw_value_col(buf, get_nolist_virtcol());
+  int sw_value = get_sw_value_col(buf, get_nolist_virtcol());
   curwin->w_cursor = save_cursor;
   return sw_value;
 }
 
 /// Idem, using the first non-black in the current line.
-long get_sw_value_indent(buf_T *buf)
+int get_sw_value_indent(buf_T *buf)
 {
   pos_T pos = curwin->w_cursor;
 
@@ -343,9 +341,9 @@ long get_sw_value_indent(buf_T *buf)
 }
 
 /// Idem, using virtual column "col".
-long get_sw_value_col(buf_T *buf, colnr_T col)
+int get_sw_value_col(buf_T *buf, colnr_T col)
 {
-  return buf->b_p_sw ? (long)buf->b_p_sw
+  return buf->b_p_sw ? (int)buf->b_p_sw
                      : tabstop_at(col, buf->b_p_ts, buf->b_p_vts_array);
 }
 
@@ -940,12 +938,12 @@ void ex_retab(exarg_T *eap)
 {
   linenr_T lnum;
   bool got_tab = false;
-  long num_spaces = 0;
-  long num_tabs;
-  long len;
-  long start_col = 0;                   // For start of white-space string
-  long start_vcol = 0;                  // For start of white-space string
-  long old_len;
+  int num_spaces = 0;
+  int num_tabs;
+  int len;
+  int start_col = 0;                   // For start of white-space string
+  int64_t start_vcol = 0;                  // For start of white-space string
+  int old_len;
   char *new_line = (char *)1;  // init to non-NULL
   colnr_T *new_vts_array = NULL;
   char *new_ts_str;  // string value of tab argument
@@ -976,8 +974,8 @@ void ex_retab(exarg_T *eap)
   }
   for (lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
     char *ptr = ml_get(lnum);
-    long col = 0;
-    long vcol = 0;
+    int col = 0;
+    int64_t vcol = 0;
     bool did_undo = false;  // called u_save for current line
     while (true) {
       if (ascii_iswhite(ptr[col])) {
@@ -996,13 +994,13 @@ void ex_retab(exarg_T *eap)
           // Retabulate this string of white-space
 
           // len is virtual length of white string
-          len = num_spaces = vcol - start_vcol;
+          len = num_spaces = (int)(vcol - start_vcol);
           num_tabs = 0;
           if (!curbuf->b_p_et) {
             int t, s;
 
             tabstop_fromto((colnr_T)start_vcol, (colnr_T)vcol,
-                           (long)curbuf->b_p_ts, new_vts_array, &t, &s);
+                           (int)curbuf->b_p_ts, new_vts_array, &t, &s);
             num_tabs = t;
             num_spaces = s;
           }
@@ -1019,7 +1017,7 @@ void ex_retab(exarg_T *eap)
 
             // len is actual number of white characters used
             len = num_spaces + num_tabs;
-            old_len = (long)strlen(ptr);
+            old_len = (int)strlen(ptr);
             const long new_len = old_len - col + start_col + len + 1;
             if (new_len <= 0 || new_len >= MAXCOL) {
               emsg_text_too_long();
@@ -1031,7 +1029,7 @@ void ex_retab(exarg_T *eap)
               memmove(new_line, ptr, (size_t)start_col);
             }
             memmove(new_line + start_col + len,
-                    ptr + col, (size_t)(old_len - col + 1));
+                    ptr + col, (size_t)old_len - (size_t)col + 1);
             ptr = new_line + start_col;
             for (col = 0; col < len; col++) {
               ptr[col] = (col < num_tabs) ? '\t' : ' ';

@@ -260,10 +260,10 @@ int u_save_buf(buf_T *buf, linenr_T top, linenr_T bot)
   }
 
   if (top + 2 == bot) {
-    u_saveline(buf, (linenr_T)(top + 1));
+    u_saveline(buf, top + 1);
   }
 
-  return u_savecommon(buf, top, bot, (linenr_T)0, false);
+  return u_savecommon(buf, top, bot, 0, false);
 }
 
 /// Save the line "lnum" (used by ":s" and "~" command).
@@ -289,9 +289,9 @@ int u_inssub(linenr_T lnum)
 /// becomes empty.
 /// Careful: may trigger autocommands that reload the buffer.
 /// Returns FAIL when lines could not be saved, OK otherwise.
-int u_savedel(linenr_T lnum, long nlines)
+int u_savedel(linenr_T lnum, linenr_T nlines)
 {
-  return u_savecommon(curbuf, lnum - 1, lnum + (linenr_T)nlines,
+  return u_savecommon(curbuf, lnum - 1, lnum + nlines,
                       nlines == curbuf->b_ml.ml_line_count ? 2 : lnum, false);
 }
 
@@ -378,7 +378,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
 
   u_entry_T *uep;
   u_entry_T *prev_uep;
-  long size = bot - top - 1;
+  linenr_T size = bot - top - 1;
 
   // If curbuf->b_u_synced == true make a new header.
   if (buf->b_u_synced) {
@@ -1488,7 +1488,7 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   time_t seq_time = undo_read_time(&bi);
 
   // Optional header fields.
-  long last_save_nr = 0;
+  int last_save_nr = 0;
   while (true) {
     int len = undo_read_byte(&bi);
 
@@ -1519,7 +1519,7 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
     }
   }
 
-  long num_read_uhps = 0;
+  int num_read_uhps = 0;
 
   int c;
   while ((c = undo_read_2c(&bi)) == UF_HEADER_MAGIC) {
@@ -1655,7 +1655,7 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
 error:
   xfree(line_ptr);
   if (uhp_table != NULL) {
-    for (long i = 0; i < num_read_uhps; i++) {
+    for (int i = 0; i < num_read_uhps; i++) {
       if (uhp_table[i] != NULL) {
         u_free_uhp(uhp_table[i]);
       }
@@ -1920,7 +1920,7 @@ static void u_doit(int startcount, bool quiet, bool do_buf_event)
 // When "file" is true use "step" as a number of file writes.
 // When "absolute" is true use "step" as the sequence number to jump to.
 // "sec" must be false then.
-void undo_time(long step, bool sec, bool file, bool absolute)
+void undo_time(int step, bool sec, bool file, bool absolute)
 {
   if (text_locked()) {
     text_locked_msg();
@@ -1938,8 +1938,8 @@ void undo_time(long step, bool sec, bool file, bool absolute)
     u_oldcount = -1;
   }
 
-  long target;
-  long closest;
+  int target;
+  int closest;
   u_header_T *uhp = NULL;
   bool dosec = sec;
   bool dofile = file;
@@ -1953,7 +1953,7 @@ void undo_time(long step, bool sec, bool file, bool absolute)
     closest = -1;
   } else {
     if (dosec) {
-      target = (long)(curbuf->b_u_time_cur) + step;
+      target = (int)curbuf->b_u_time_cur + step;
     } else if (dofile) {
       if (step < 0) {
         // Going back to a previous write. If there were changes after
@@ -1998,7 +1998,7 @@ void undo_time(long step, bool sec, bool file, bool absolute)
       closest = -1;
     } else {
       if (dosec) {
-        closest = (long)(os_time() + 1);
+        closest = (int)(os_time() + 1);
       } else if (dofile) {
         closest = curbuf->b_u_save_nr_last + 2;
       } else {
@@ -2010,7 +2010,7 @@ void undo_time(long step, bool sec, bool file, bool absolute)
     }
   }
   long closest_start = closest;
-  long closest_seq = curbuf->b_u_seq_cur;
+  int closest_seq = curbuf->b_u_seq_cur;
   int mark;
   int nomark = 0;  // shut up compiler
 
@@ -2042,8 +2042,8 @@ void undo_time(long step, bool sec, bool file, bool absolute)
 
     while (uhp != NULL) {
       uhp->uh_walk = mark;
-      long val = dosec ? (long)(uhp->uh_time) :
-                 dofile ? uhp->uh_save_nr
+      int val = dosec ? (int)(uhp->uh_time) :
+                dofile ? uhp->uh_save_nr
                         : uhp->uh_seq;
 
       if (round == 1 && !(dofile && val == 0)) {
@@ -2298,7 +2298,7 @@ static void u_undoredo(int undo, bool do_buf_event)
     }
 
     linenr_T oldsize = bot - top - 1;        // number of lines before undo
-    linenr_T newsize = (linenr_T)uep->ue_size;         // number of lines after undo
+    linenr_T newsize = uep->ue_size;         // number of lines after undo
 
     if (top < newlnum) {
       // If the saved cursor is somewhere in this undo block, move it to
@@ -2676,13 +2676,13 @@ void ex_undolist(exarg_T *eap)
   while (uhp != NULL) {
     if (uhp->uh_prev.ptr == NULL && uhp->uh_walk != nomark
         && uhp->uh_walk != mark) {
-      vim_snprintf(IObuff, IOSIZE, "%6ld %7d  ", uhp->uh_seq, changes);
+      vim_snprintf(IObuff, IOSIZE, "%6d %7d  ", uhp->uh_seq, changes);
       undo_fmt_time(IObuff + strlen(IObuff), IOSIZE - strlen(IObuff), uhp->uh_time);
       if (uhp->uh_save_nr > 0) {
         while (strlen(IObuff) < 33) {
           xstrlcat(IObuff, " ", IOSIZE);
         }
-        vim_snprintf_add(IObuff, IOSIZE, "  %3ld", uhp->uh_save_nr);
+        vim_snprintf_add(IObuff, IOSIZE, "  %3d", uhp->uh_save_nr);
       }
       GA_APPEND(char *, &ga, xstrdup(IObuff));
     }
@@ -2850,7 +2850,7 @@ static void u_getbot(buf_T *buf)
     // inserted (0 - deleted) since calling u_save. This is equal to the
     // old line count subtracted from the current line count.
     linenr_T extra = buf->b_ml.ml_line_count - uep->ue_lcount;
-    uep->ue_bot = uep->ue_top + (linenr_T)uep->ue_size + 1 + extra;
+    uep->ue_bot = uep->ue_top + uep->ue_size + 1 + extra;
     if (uep->ue_bot < 1 || uep->ue_bot > buf->b_ml.ml_line_count) {
       iemsg(_(e_undo_line_missing));
       uep->ue_bot = uep->ue_top + 1;        // assume all lines deleted, will

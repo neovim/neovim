@@ -1215,7 +1215,7 @@ void ml_recover(bool checkext)
       // Warn there could be an active Vim on the same file, the user may
       // want to kill it.
       msg_puts(_("\nNote: process STILL RUNNING: "));
-      msg_outnum(char_to_long(b0p->b0_pid));
+      msg_outnum((int)char_to_long(b0p->b0_pid));
     }
     msg_puts("\n\n");
     cmdline_row = msg_row;
@@ -1403,7 +1403,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
       if (num_files) {
         for (int i = 0; i < num_files; i++) {
           // print the swap file name
-          msg_outnum((long)++file_count);
+          msg_outnum(++file_count);
           msg_puts(".    ");
           msg_puts(path_tail(files[i]));
           msg_putchar('\n');
@@ -1566,7 +1566,7 @@ static time_t swapfile_info(char *fname)
 
         if (char_to_long(b0.b0_pid) != 0L) {
           msg_puts(_("\n        process ID: "));
-          msg_outnum(char_to_long(b0.b0_pid));
+          msg_outnum((int)char_to_long(b0.b0_pid));
           if (swapfile_process_running(&b0, fname)) {
             msg_puts(_(" (STILL RUNNING)"));
             process_still_running = true;

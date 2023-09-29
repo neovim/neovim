@@ -8290,7 +8290,7 @@ void option_last_set_msg(LastSet last_set)
     msg_puts(p);
     if (last_set.script_ctx.sc_lnum > 0) {
       msg_puts(_(line_msg));
-      msg_outnum((long)last_set.script_ctx.sc_lnum);
+      msg_outnum(last_set.script_ctx.sc_lnum);
     }
     if (should_free) {
       xfree(p);
