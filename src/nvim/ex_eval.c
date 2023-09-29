@@ -497,7 +497,7 @@ static int throw_exception(void *value, except_type_T type, char *cmdname)
     if (debug_break_level > 0 || *p_vfile == NUL) {
       msg_scroll = true;            // always scroll up, don't overwrite
     }
-    smsg(_("Exception thrown: %s"), excp->value);
+    smsg(0, _("Exception thrown: %s"), excp->value);
     msg_puts("\n");  // don't overwrite this either
 
     if (debug_break_level > 0 || *p_vfile == NUL) {
@@ -548,7 +548,7 @@ static void discard_exception(except_T *excp, bool was_finished)
     if (debug_break_level > 0 || *p_vfile == NUL) {
       msg_scroll = true;            // always scroll up, don't overwrite
     }
-    smsg(was_finished ? _("Exception finished: %s") : _("Exception discarded: %s"), excp->value);
+    smsg(0, was_finished ? _("Exception finished: %s") : _("Exception discarded: %s"), excp->value);
     msg_puts("\n");  // don't overwrite this either
     if (debug_break_level > 0 || *p_vfile == NUL) {
       cmdline_row = msg_row;
@@ -615,7 +615,7 @@ static void catch_exception(except_T *excp)
     if (debug_break_level > 0 || *p_vfile == NUL) {
       msg_scroll = true;            // always scroll up, don't overwrite
     }
-    smsg(_("Exception caught: %s"), excp->value);
+    smsg(0, _("Exception caught: %s"), excp->value);
     msg_puts("\n");  // don't overwrite this either
 
     if (debug_break_level > 0 || *p_vfile == NUL) {
@@ -732,7 +732,7 @@ static void report_pending(int action, int pending, void *value)
   }
   no_wait_return++;
   msg_scroll = true;            // always scroll up, don't overwrite
-  smsg(mesg, s);
+  smsg(0, mesg, s);
   msg_puts("\n");  // don't overwrite this either
   cmdline_row = msg_row;
   no_wait_return--;

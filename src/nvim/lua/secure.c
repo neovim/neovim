@@ -76,11 +76,11 @@ static bool nlua_trust(const char *action, const char *path)
   if (msg != NULL) {
     if (success) {
       if (strcmp(action, "allow") == 0) {
-        smsg("Allowed \"%s\" in trust database.", msg);
+        smsg(0, "Allowed \"%s\" in trust database.", msg);
       } else if (strcmp(action, "deny") == 0) {
-        smsg("Denied \"%s\" in trust database.", msg);
+        smsg(0, "Denied \"%s\" in trust database.", msg);
       } else if (strcmp(action, "remove") == 0) {
-        smsg("Removed \"%s\" from trust database.", msg);
+        smsg(0, "Removed \"%s\" from trust database.", msg);
       }
     } else {
       semsg(e_trustfile, msg);

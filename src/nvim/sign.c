@@ -1660,7 +1660,7 @@ static void sign_get_placed(buf_T *buf, linenr_T lnum, int sign_id, const char *
 /// List one sign.
 static void sign_list_defined(sign_T *sp)
 {
-  smsg("sign %s", sp->sn_name);
+  smsg(0, "sign %s", sp->sn_name);
   if (sp->sn_icon != NULL) {
     msg_puts(" icon=");
     msg_outtrans(sp->sn_icon, 0);

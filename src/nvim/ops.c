@@ -656,7 +656,7 @@ void op_reindent(oparg_T *oap, Indenter how)
       if (i > 1
           && (i % 50 == 0 || i == oap->line_count - 1)
           && oap->line_count > p_report) {
-        smsg(_("%" PRId64 " lines to indent... "), (int64_t)i);
+        smsg(0, _("%" PRId64 " lines to indent... "), (int64_t)i);
       }
 
       // Be vi-compatible: For lisp indenting the first line is not
@@ -699,9 +699,7 @@ void op_reindent(oparg_T *oap, Indenter how)
 
   if (oap->line_count > p_report) {
     i = oap->line_count - (i + 1);
-    smsg(NGETTEXT("%" PRId64 " line indented ",
-                  "%" PRId64 " lines indented ", i),
-         (int64_t)i);
+    smsg(0, NGETTEXT("%" PRId64 " line indented ", "%" PRId64 " lines indented ", i), (int64_t)i);
   }
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // set '[ and '] marks
@@ -2109,8 +2107,7 @@ void op_tilde(oparg_T *oap)
   }
 
   if (oap->line_count > p_report) {
-    smsg(NGETTEXT("%" PRId64 " line changed",
-                  "%" PRId64 " lines changed", oap->line_count),
+    smsg(0, NGETTEXT("%" PRId64 " line changed", "%" PRId64 " lines changed", oap->line_count),
          (int64_t)oap->line_count);
   }
 }
@@ -2783,12 +2780,12 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
         update_screen();
       }
       if (yank_type == kMTBlockWise) {
-        smsg(NGETTEXT("block of %" PRId64 " line yanked%s",
-                      "block of %" PRId64 " lines yanked%s", yanklines),
+        smsg(0, NGETTEXT("block of %" PRId64 " line yanked%s",
+                         "block of %" PRId64 " lines yanked%s", yanklines),
              (int64_t)yanklines, namebuf);
       } else {
-        smsg(NGETTEXT("%" PRId64 " line yanked%s",
-                      "%" PRId64 " lines yanked%s", yanklines),
+        smsg(0, NGETTEXT("%" PRId64 " line yanked%s",
+                         "%" PRId64 " lines yanked%s", yanklines),
              (int64_t)yanklines, namebuf);
       }
     }
@@ -4452,8 +4449,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
     }
 
     if (change_cnt > p_report) {
-      smsg(NGETTEXT("%" PRId64 " lines changed",
-                    "%" PRId64 " lines changed", change_cnt),
+      smsg(0, NGETTEXT("%" PRId64 " lines changed", "%" PRId64 " lines changed", change_cnt),
            (int64_t)change_cnt);
     }
   }

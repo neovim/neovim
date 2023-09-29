@@ -474,22 +474,8 @@ void trunc_string(const char *s, char *buf, int room_in, int buflen)
   }
 }
 
-// Note: Caller of smsg() and smsg_attr() must check the resulting string is
-// shorter than IOSIZE!!!
-
-int smsg(const char *s, ...)
-  FUNC_ATTR_PRINTF(1, 2)
-{
-  va_list arglist;
-
-  va_start(arglist, s);
-  vim_vsnprintf(IObuff, IOSIZE, s, arglist);
-  va_end(arglist);
-
-  return msg(IObuff, 0);
-}
-
-int smsg_attr(int attr, const char *s, ...)
+// Note: Caller of smsg() must check the resulting string is shorter than IOSIZE!!!
+int smsg(int attr, const char *s, ...)
   FUNC_ATTR_PRINTF(2, 3)
 {
   va_list arglist;

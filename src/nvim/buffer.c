@@ -1106,13 +1106,13 @@ char *do_bufdel(int command, char *arg, int addr_count, int start_bnr, int end_b
       errormsg = IObuff;
     } else if (deleted >= p_report) {
       if (command == DOBUF_UNLOAD) {
-        smsg(NGETTEXT("%d buffer unloaded", "%d buffers unloaded", deleted),
+        smsg(0, NGETTEXT("%d buffer unloaded", "%d buffers unloaded", deleted),
              deleted);
       } else if (command == DOBUF_DEL) {
-        smsg(NGETTEXT("%d buffer deleted", "%d buffers deleted", deleted),
+        smsg(0, NGETTEXT("%d buffer deleted", "%d buffers deleted", deleted),
              deleted);
       } else {
-        smsg(NGETTEXT("%d buffer wiped out", "%d buffers wiped out", deleted),
+        smsg(0, NGETTEXT("%d buffer wiped out", "%d buffers wiped out", deleted),
              deleted);
       }
     }

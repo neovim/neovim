@@ -76,7 +76,7 @@ int os_chdir(const char *path)
 {
   if (p_verbose >= 5) {
     verbose_enter();
-    smsg("chdir(%s)", path);
+    smsg(0, "chdir(%s)", path);
     verbose_leave();
   }
   return uv_chdir(path);

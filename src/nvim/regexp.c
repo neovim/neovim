@@ -2319,7 +2319,7 @@ regprog_T *vim_regcomp(const char *expr_arg, int re_flags)
       regexp_engine = expr[4] - '0';
       expr += 5;
 #ifdef REGEXP_DEBUG
-      smsg("New regexp mode selected (%d): %s",
+      smsg(0, "New regexp mode selected (%d): %s",
            regexp_engine,
            regname[newengine]);
 #endif

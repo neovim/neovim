@@ -372,7 +372,7 @@ void aubuflocal_remove(buf_T *buf)
 
       if (p_verbose >= 6) {
         verbose_enter();
-        smsg(_("auto-removing autocommand: %s <buffer=%d>"), event_nr2name(event), buf->b_fnum);
+        smsg(0, _("auto-removing autocommand: %s <buffer=%d>"), event_nr2name(event), buf->b_fnum);
         verbose_leave();
       }
     }
@@ -1150,7 +1150,7 @@ int do_doautocmd(char *arg_start, bool do_msg, bool *did_something)
   }
 
   if (nothing_done && do_msg && !aborting()) {
-    smsg(_("No matching autocommands: %s"), arg_start);
+    smsg(0, _("No matching autocommands: %s"), arg_start);
   }
   if (did_something != NULL) {
     *did_something = !nothing_done;
@@ -1946,7 +1946,7 @@ static void aucmd_next(AutoPatCmd *apc)
       snprintf(namep, sourcing_name_len, s, name, ap->pat);
       if (p_verbose >= 8) {
         verbose_enter();
-        smsg(_("Executing %s"), namep);
+        smsg(0, _("Executing %s"), namep);
         verbose_leave();
       }
 
@@ -2045,7 +2045,7 @@ char *getnextac(int c, void *cookie, int indent, bool do_concat)
   if (p_verbose >= 9) {
     verbose_enter_scroll();
     char *exec_to_string = aucmd_exec_to_string(ac, ac->exec);
-    smsg(_("autocommand %s"), exec_to_string);
+    smsg(0, _("autocommand %s"), exec_to_string);
     msg_puts("\n");  // don't overwrite this either
     XFREE_CLEAR(exec_to_string);
     verbose_leave_scroll();

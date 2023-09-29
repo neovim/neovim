@@ -3363,7 +3363,7 @@ int readdir_core(garray_T *gap, const char *path, void *context, CheckItem check
 
   Directory dir;
   if (!os_scandir(&dir, path)) {
-    smsg(_(e_notopen), path);
+    smsg(0, _(e_notopen), path);
     return FAIL;
   }
 

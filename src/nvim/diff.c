@@ -764,7 +764,7 @@ static int diff_write_buffer(buf_T *buf, mmfile_t *m, linenr_T start, linenr_T e
     buf->b_diff_failed = true;
     if (p_verbose > 0) {
       verbose_enter();
-      smsg(_("Not enough memory to use internal diff for buffer \"%s\""),
+      smsg(0, _("Not enough memory to use internal diff for buffer \"%s\""),
            buf->b_fname);
       verbose_leave();
     }
