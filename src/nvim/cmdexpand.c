@@ -608,7 +608,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
 
     grid_line_fill(clen, Columns, fillchar, attr);
 
-    grid_line_flush(false);
+    grid_line_flush();
   }
 
   win_redraw_last_status(topframe);

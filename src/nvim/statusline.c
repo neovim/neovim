@@ -171,7 +171,7 @@ void win_redr_status(win_T *wp)
       }
     }
 
-    grid_line_flush(false);
+    grid_line_flush();
   }
 
   // May need to draw the character below the vertical separator.
@@ -449,7 +449,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   grid_line_fill(col, maxcol, fillchar, curattr);
 
   if (!draw_ruler) {
-    grid_line_flush(false);
+    grid_line_flush();
   }
 
   // Fill the tab_page_click_defs, w_status_click_defs or w_winbar_click_defs array for clicking
@@ -861,7 +861,7 @@ void draw_tabline(void)
       };
     }
 
-    grid_line_flush(false);
+    grid_line_flush();
   }
 
   // Reset the flag here again, in case evaluating 'tabline' causes it to be
