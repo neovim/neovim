@@ -31,7 +31,7 @@ a non-superuser:
 >
   curl -LO https://invisible-island.net/datafiles/current/terminfo.src.gz
   gunzip terminfo.src.gz
-  tic terminfo.src
+  tic -x terminfo.src
 <
 								*$TERM*
 The $TERM environment variable must match the terminal you are using!
