@@ -29,7 +29,7 @@ typedef struct {
   Array virt_text;
   String virt_text_pos;
   Integer virt_text_win_col;
-  Boolean virt_text_hide;
+  Object virt_text_hide;
   Boolean hl_eol;
   String hl_mode;
   Boolean ephemeral;
@@ -49,6 +49,11 @@ typedef struct {
   Boolean spell;
   Boolean ui_watched;
 } Dict(set_extmark);
+
+typedef struct {
+  Boolean visual;
+  Boolean offscreen;
+} Dict(virt_text_hide);
 
 typedef struct {
   OptionalKeys is_set__get_extmarks_;

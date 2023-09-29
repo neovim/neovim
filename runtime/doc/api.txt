@@ -2658,10 +2658,16 @@ nvim_buf_set_extmark({buffer}, {ns_id}, {line}, {col}, {*opts})
                   • virt_text_win_col : position the virtual text at a fixed
                     window column (starting from the first text column of the
                     screen line) instead of "virt_text_pos".
-                  • virt_text_hide : hide the virtual text when the background
-                    text is selected or hidden because of scrolling with
-                    'nowrap' or 'smoothscroll'. Currently only affects
-                    "overlay" virt_text.
+                  • virt_text_hide : control when virt_text should be hidden.
+                    Not supported for "inline" virt_text.
+                    • If a Dictionary, can contain the following Boolean
+                      fields:
+                      • "visual": when the extmark is inside Visual selection.
+                      • "offscreen": when the extmark is out of screen.
+
+                    • If a Boolean and is true, equivalent to the combination
+                      of "visual" and "offscreen".
+
                   • hl_mode : control how highlights are combined with the
                     highlights of the text. Currently only affects virt_text
                     highlights, but might affect `hl_group` in later versions.

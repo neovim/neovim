@@ -38,6 +38,13 @@ typedef enum {
 
 EXTERN const char *const hl_mode_str[] INIT(= { "", "replace", "combine", "blend" });
 
+typedef enum {
+  kVTHideVisual    = 0x0001,
+  kVTHideOffscreen = 0x0002,
+} VirtTextHide;
+
+EXTERN const char *const virt_text_hide_str[] INIT(= { "visual", "offscreen", NULL });
+
 #define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
 
 typedef kvec_t(struct virt_line { VirtText line; bool left_col; }) VirtLines;
@@ -50,8 +57,7 @@ struct Decoration {
   VirtTextPos virt_text_pos;
   HlMode hl_mode;
 
-  // TODO(bfredl): at some point turn this into FLAGS
-  bool virt_text_hide;
+  uint16_t virt_text_hide;  ///< VirtTextHide
   bool hl_eol;
   bool virt_lines_above;
   bool conceal;
