@@ -2422,7 +2422,7 @@ void ex_function(exarg_T *eap)
     } else {
       xfree(line_to_free);
       if (eap->getline == NULL) {
-        theline = getcmdline(':', 0L, indent, do_concat);
+        theline = getcmdline(':', 0, indent, do_concat);
       } else {
         theline = eap->getline(':', eap->cookie, indent, do_concat);
       }

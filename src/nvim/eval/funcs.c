@@ -983,7 +983,7 @@ static void f_count(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     int64_t idx = 0;
     if (argvars[2].v_type != VAR_UNKNOWN
         && argvars[3].v_type != VAR_UNKNOWN) {
-      idx = (long)tv_get_number_chk(&argvars[3], &error);
+      idx = (int64_t)tv_get_number_chk(&argvars[3], &error);
     }
     if (!error) {
       n = count_list(argvars[0].vval.v_list, &argvars[1], idx, ic);
@@ -1860,11 +1860,11 @@ static void flatten_common(typval_T *argvars, typval_T *rettv, bool make_copy)
     return;
   }
 
-  long maxdepth;
+  int maxdepth;
   if (argvars[1].v_type == VAR_UNKNOWN) {
     maxdepth = 999999;
   } else {
-    maxdepth = (long)tv_get_number_chk(&argvars[1], &error);
+    maxdepth = (int)tv_get_number_chk(&argvars[1], &error);
     if (error) {
       return;
     }
@@ -1929,7 +1929,7 @@ static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, 
 
     listitem_T *item;
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      long before = (long)tv_get_number_chk(&argvars[2], &error);
+      int before = (int)tv_get_number_chk(&argvars[2], &error);
       if (error) {
         return;  // Type error; errmsg already given.
       }
@@ -1937,7 +1937,7 @@ static void extend_list(typval_T *argvars, const char *arg_errmsg, bool is_new, 
       if (before == tv_list_len(l1)) {
         item = NULL;
       } else {
-        item = tv_list_find(l1, (int)before);
+        item = tv_list_find(l1, before);
         if (item == NULL) {
           semsg(_(e_list_index_out_of_range_nr), (int64_t)before);
           return;
@@ -3394,7 +3394,7 @@ static void f_indent(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "index()" function
 static void f_index(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  long idx = 0;
+  int idx = 0;
   bool ic = false;
 
   rettv->vval.v_number = -1;
@@ -3421,7 +3421,7 @@ static void f_index(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     for (idx = start; idx < tv_blob_len(b); idx++) {
       typval_T tv;
       tv.v_type = VAR_NUMBER;
-      tv.vval.v_number = tv_blob_get(b, (int)idx);
+      tv.vval.v_number = tv_blob_get(b, idx);
       if (tv_equal(&tv, &argvars[1], ic, false)) {
         rettv->vval.v_number = idx;
         return;
@@ -3447,7 +3447,7 @@ static void f_index(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (error || idx == -1) {
       item = NULL;
     } else {
-      item = tv_list_find(l, (int)idx);
+      item = tv_list_find(l, idx);
       assert(item != NULL);
     }
     if (argvars[3].v_type != VAR_UNKNOWN) {
@@ -3690,11 +3690,11 @@ static void f_insert(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       return;
     }
 
-    long before = 0;
+    int before = 0;
     const int len = tv_blob_len(b);
 
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      before = (long)tv_get_number_chk(&argvars[2], &error);
+      before = (int)tv_get_number_chk(&argvars[2], &error);
       if (error) {
         return;  // type error; errmsg already given
       }
@@ -4511,7 +4511,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
   colnr_T startcol = 0;
   bool match = false;
   list_T *l = NULL;
-  long idx = 0;
+  int idx = 0;
   char *tofree = NULL;
 
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
@@ -4550,7 +4550,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
     li = tv_list_first(l);
   } else {
     expr = str = (char *)tv_get_string(&argvars[0]);
-    len = (long)strlen(str);
+    len = (int64_t)strlen(str);
   }
 
   char patbuf[NUMBUFLEN];
@@ -4571,7 +4571,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
       if (idx == -1) {
         goto theend;
       }
-      li = tv_list_find(l, (int)idx);
+      li = tv_list_find(l, idx);
     } else {
       if (start < 0) {
         start = 0;
@@ -5414,10 +5414,10 @@ static void f_rand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       goto theend;
     }
 
-    typval_T *const tvx = TV_LIST_ITEM_TV(tv_list_find(l, 0L));
-    typval_T *const tvy = TV_LIST_ITEM_TV(tv_list_find(l, 1L));
-    typval_T *const tvz = TV_LIST_ITEM_TV(tv_list_find(l, 2L));
-    typval_T *const tvw = TV_LIST_ITEM_TV(tv_list_find(l, 3L));
+    typval_T *const tvx = TV_LIST_ITEM_TV(tv_list_find(l, 0));
+    typval_T *const tvy = TV_LIST_ITEM_TV(tv_list_find(l, 1));
+    typval_T *const tvz = TV_LIST_ITEM_TV(tv_list_find(l, 2));
+    typval_T *const tvw = TV_LIST_ITEM_TV(tv_list_find(l, 3));
     if (tvx->v_type != VAR_NUMBER) {
       goto theend;
     }
@@ -5861,8 +5861,8 @@ static int list2proftime(typval_T *arg, proftime_T *tm) FUNC_ATTR_NONNULL_ALL
   }
 
   bool error = false;
-  varnumber_T n1 = tv_list_find_nr(arg->vval.v_list, 0L, &error);
-  varnumber_T n2 = tv_list_find_nr(arg->vval.v_list, 1L, &error);
+  varnumber_T n1 = tv_list_find_nr(arg->vval.v_list, 0, &error);
+  varnumber_T n2 = tv_list_find_nr(arg->vval.v_list, 1, &error);
   if (error) {
     return FAIL;
   }
@@ -7050,8 +7050,8 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
     }
   }
 
-  retval = (int)do_searchpair(spat, mpat, epat, dir, skip,
-                              flags, match_pos, lnum_stop, time_limit);
+  retval = do_searchpair(spat, mpat, epat, dir, skip,
+                         flags, match_pos, lnum_stop, time_limit);
 
 theend:
   p_ws = save_p_ws;
@@ -7096,12 +7096,12 @@ static void f_searchpairpos(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
 /// @param time_limit  stop after this many msec
 ///
 /// @returns  0 or -1 for no match,
-long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir,
-                   const typval_T *skip, int flags, pos_T *match_pos, linenr_T lnum_stop,
-                   int64_t time_limit)
+int do_searchpair(const char *spat, const char *mpat, const char *epat, int dir,
+                  const typval_T *skip, int flags, pos_T *match_pos, linenr_T lnum_stop,
+                  int64_t time_limit)
   FUNC_ATTR_NONNULL_ARG(1, 2, 3)
 {
-  long retval = 0;
+  int retval = 0;
   int nest = 1;
   bool use_skip = false;
   int options = SEARCH_KEEP;
@@ -7147,7 +7147,7 @@ long do_searchpair(const char *spat, const char *mpat, const char *epat, int dir
       .sa_tm = &tm,
     };
 
-    int n = searchit(curwin, curbuf, &pos, NULL, dir, pat, 1L,
+    int n = searchit(curwin, curbuf, &pos, NULL, dir, pat, 1,
                      options, RE_SEARCH, &sia);
     if (n == FAIL || (firstpos.lnum != 0 && equalpos(pos, firstpos))) {
       // didn't find it or found the first match again: FAIL
@@ -7489,7 +7489,7 @@ static void f_setpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 /// Translate a register type string to the yank type and block length
-static int get_yank_type(char **const pp, MotionType *const yank_type, long *const block_len)
+static int get_yank_type(char **const pp, MotionType *const yank_type, int *const block_len)
   FUNC_ATTR_NONNULL_ALL
 {
   char *stropt = *pp;
@@ -7507,7 +7507,7 @@ static int get_yank_type(char **const pp, MotionType *const yank_type, long *con
     *yank_type = kMTBlockWise;
     if (ascii_isdigit(stropt[1])) {
       stropt++;
-      *block_len = getdigits_long(&stropt, false, 0) - 1;
+      *block_len = getdigits_int(&stropt, false, 0) - 1;
       stropt--;
     }
     break;
@@ -7523,7 +7523,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   bool append = false;
 
-  long block_len = -1;
+  int block_len = -1;
   MotionType yank_type = kMTUnknown;
 
   rettv->vval.v_number = 1;  // FAIL is default.
@@ -7735,11 +7735,11 @@ static void f_shiftwidth(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_number = 0;
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
-    long col = (long)tv_get_number_chk(argvars, NULL);
+    colnr_T col = (colnr_T)tv_get_number_chk(argvars, NULL);
     if (col < 0) {
       return;  // type error; errmsg already given
     }
-    rettv->vval.v_number = get_sw_value_col(curbuf, (colnr_T)col);
+    rettv->vval.v_number = get_sw_value_col(curbuf, col);
     return;
   }
   rettv->vval.v_number = get_sw_value(curbuf);

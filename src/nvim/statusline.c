@@ -558,7 +558,7 @@ void win_redr_ruler(win_T *wp)
   // To avoid portability problems we use strlen() here.
   vim_snprintf(buffer, RULER_BUF_LEN, "%" PRId64 ",",
                (wp->w_buffer->b_ml.ml_flags &
-                ML_EMPTY) ? (int64_t)0L : (int64_t)wp->w_cursor.lnum);
+                ML_EMPTY) ? 0 : (int64_t)wp->w_cursor.lnum);
   size_t len = strlen(buffer);
   col_print(buffer + len, RULER_BUF_LEN - len,
             empty_line ? 0 : (int)wp->w_cursor.col + 1,
@@ -1514,7 +1514,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
           num = (int)get_vim_var_nr(VV_LNUM);
         }
       } else {
-        num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? 0L : wp->w_cursor.lnum;
+        num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? 0 : wp->w_cursor.lnum;
       }
       break;
 
@@ -1594,8 +1594,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       int l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL,
                                      false);
       num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) || l < 0 ?
-            0L : l + 1 + ((State & MODE_INSERT) == 0 && empty_line ?
-                          0 : (int)wp->w_cursor.col);
+            0 : l + 1 + ((State & MODE_INSERT) == 0 && empty_line ?
+                         0 : (int)wp->w_cursor.col);
       break;
     }
     case STL_BYTEVAL_X:

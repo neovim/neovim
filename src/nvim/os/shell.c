@@ -366,7 +366,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   // When running in the background, give it some time to create the temp
   // file, but don't wait for it to finish.
   if (ampersand) {
-    os_delay(10L, true);
+    os_delay(10, true);
   }
 
   xfree(command);
@@ -401,7 +401,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     xfree(tempname);
     goto notfound;
   }
-  int fseek_res = fseek(fd, 0L, SEEK_END);
+  int fseek_res = fseek(fd, 0, SEEK_END);
   if (fseek_res < 0) {
     xfree(tempname);
     fclose(fd);
@@ -417,7 +417,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   assert(templen <= SIZE_MAX);  // NOLINT(runtime/int)
 #endif
   len = (size_t)templen;
-  fseek(fd, 0L, SEEK_SET);
+  fseek(fd, 0, SEEK_SET);
   buffer = xmalloc(len + 1);
   // fread() doesn't terminate buffer with NUL;
   // appropriate termination (not always NUL) is done below.
@@ -802,9 +802,9 @@ char *get_cmd_output(char *cmd, char *infile, ShellOpts flags, size_t *ret_len)
     goto done;
   }
 
-  fseek(fd, 0L, SEEK_END);
+  fseek(fd, 0, SEEK_END);
   size_t len = (size_t)ftell(fd);  // get size of temp file
-  fseek(fd, 0L, SEEK_SET);
+  fseek(fd, 0, SEEK_SET);
 
   buffer = xmalloc(len + 1);
   size_t i = fread(buffer, 1, len, fd);

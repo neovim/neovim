@@ -3719,7 +3719,7 @@ void msg_check_for_delay(bool check_msg_scroll)
       && emsg_silent == 0
       && !in_assert_fails) {
     ui_flush();
-    os_delay(1006L, true);
+    os_delay(1006, true);
     emsg_on_display = false;
     if (check_msg_scroll) {
       msg_scroll = false;

@@ -453,7 +453,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
     ui_flush();
     emsg_off++;            // So it doesn't beep if bad expr
     // Set the time limit to half a second.
-    tm = profile_setlimit(500L);
+    tm = profile_setlimit(500);
     if (!p_hls) {
       search_flags += SEARCH_KEEP;
     }
@@ -2747,7 +2747,7 @@ char *getcmdline_prompt(const int firstc, const char *const prompt, const int at
   int msg_silent_saved = msg_silent;
   msg_silent = 0;
 
-  char *const ret = (char *)command_line_enter(firstc, 1L, 0, false);
+  char *const ret = (char *)command_line_enter(firstc, 1, 0, false);
 
   if (did_save_ccline) {
     restore_cmdline(&save_ccline);
@@ -2947,7 +2947,7 @@ char *getexline(int c, void *cookie, int indent, bool do_concat)
     (void)vgetc();
   }
 
-  return getcmdline(c, 1L, indent, do_concat);
+  return getcmdline(c, 1, indent, do_concat);
 }
 
 bool cmdline_overstrike(void)

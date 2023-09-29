@@ -122,7 +122,7 @@ typedef struct state_item {
   int si_end_idx;                       // group ID for end pattern or zero
   int si_ends;                          // if match ends before si_m_endpos
   int si_attr;                          // attributes in this state
-  long si_flags;                        // HL_HAS_EOL flag in this state, and
+  int si_flags;                         // HL_HAS_EOL flag in this state, and
                                         // HL_SKIP* for si_next_list
   int si_seqnr;                         // sequence number
   int si_cchar;                         // substitution character for conceal
@@ -265,7 +265,7 @@ static lpos_T next_match_m_endpos;      // position for end of next match
 static lpos_T next_match_h_startpos;    // pos. for highl. start of next match
 static lpos_T next_match_h_endpos;      // pos. for highl. end of next match
 static int next_match_idx;              // index of matched item
-static long next_match_flags;           // flags for next match
+static int next_match_flags;            // flags for next match
 static lpos_T next_match_eos_pos;       // end of start pattn (start region)
 static lpos_T next_match_eoe_pos;       // pos. for end of end pattern
 static int next_match_end_idx;          // ID of group for end pattn or zero
@@ -1209,7 +1209,7 @@ static synstate_T *store_current_state(void)
     }
     for (i = 0; i < sp->sst_stacksize; i++) {
       bp[i].bs_idx = CUR_STATE(i).si_idx;
-      bp[i].bs_flags = (int)CUR_STATE(i).si_flags;
+      bp[i].bs_flags = CUR_STATE(i).si_flags;
       bp[i].bs_seqnr = CUR_STATE(i).si_seqnr;
       bp[i].bs_cchar = CUR_STATE(i).si_cchar;
       bp[i].bs_extmatch = ref_extmatch(CUR_STATE(i).si_extmatch);
@@ -1511,7 +1511,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
   stateitem_T *cur_si, *sip = NULL;
   int startcol;
   int endcol;
-  long flags;
+  int flags;
   int cchar;
   int16_t *next_list;
   bool found_match;                         // found usable match
@@ -1884,7 +1884,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
         current_attr = sip->si_attr;
         current_id = sip->si_id;
         current_trans_id = sip->si_trans_id;
-        current_flags = (int)sip->si_flags;
+        current_flags = sip->si_flags;
         current_seqnr = sip->si_seqnr;
         current_sub_char = sip->si_cchar;
         break;
@@ -2114,7 +2114,7 @@ static void check_state_ends(void)
       // handle next_list, unless at end of line and no "skipnl" or
       // "skipempty"
       current_next_list = cur_si->si_next_list;
-      current_next_flags = (int)cur_si->si_flags;
+      current_next_flags = cur_si->si_flags;
       if (!(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY))
           && syn_getcurline()[current_col] == NUL) {
         current_next_list = NULL;
@@ -2362,8 +2362,8 @@ static void pop_current_state(void)
 /// @param end_endpos  return: end of end pattern match
 /// @param end_idx     return: group ID for end pat. match, or 0
 /// @param start_ext   submatches from the start pattern
-static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_endpos,
-                        long *flagsp, lpos_T *end_endpos, int *end_idx, reg_extmatch_T *start_ext)
+static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_endpos, int *flagsp,
+                        lpos_T *end_endpos, int *end_idx, reg_extmatch_T *start_ext)
 {
   colnr_T matchcol;
   synpat_T *spp, *spp_skip;
@@ -2700,7 +2700,7 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
   }
 
   rmp->rmm_maxcol = (colnr_T)syn_buf->b_p_smc;
-  long r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, syn_tm, &timed_out);
+  int r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, syn_tm, &timed_out);
 
   if (l_syn_time_on) {
     pt = profile_end(pt);
@@ -2737,7 +2737,7 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
 /// @param cur_si      item at the top of the stack
 /// @param ccharp      conceal substitution char
 static int check_keyword_id(char *const line, const int startcol, int *const endcolp,
-                            long *const flagsp, int16_t **const next_listp,
+                            int *const flagsp, int16_t **const next_listp,
                             stateitem_T *const cur_si, int *const ccharp)
 {
   // Find first character after the keyword.  First character was already

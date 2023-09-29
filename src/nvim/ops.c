@@ -283,7 +283,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     }
   }
 
-  changed_lines(curbuf, oap->start.lnum, 0, oap->end.lnum + 1, 0L, true);
+  changed_lines(curbuf, oap->start.lnum, 0, oap->end.lnum + 1, 0, true);
 }
 
 /// Shift the current line one shiftwidth left (if left != 0) or right
@@ -628,7 +628,7 @@ static void block_insert(oparg_T *oap, char *s, int b_insert, struct block_def *
 
   State = oldstate;
 
-  changed_lines(curbuf, oap->start.lnum + 1, 0, oap->end.lnum + 1, 0L, true);
+  changed_lines(curbuf, oap->start.lnum + 1, 0, oap->end.lnum + 1, 0, true);
 }
 
 /// Handle reindenting a block of lines.
@@ -694,7 +694,7 @@ void op_reindent(oparg_T *oap, Indenter how)
   if (last_changed != 0) {
     changed_lines(curbuf, first_changed, 0,
                   oap->is_VIsual ? start_lnum + oap->line_count :
-                  last_changed + 1, 0L, true);
+                  last_changed + 1, 0, true);
   } else if (oap->is_VIsual) {
     redraw_curbuf_later(UPD_INVERTED);
   }
@@ -720,7 +720,7 @@ int get_expr_register(void)
 {
   char *new_line;
 
-  new_line = getcmdline('=', 0L, 0, true);
+  new_line = getcmdline('=', 0, 0, true);
   if (new_line == NULL) {
     return NUL;
   }
@@ -1262,7 +1262,7 @@ int insert_reg(int regname, bool literally_arg)
 
   char *arg;
   if (regname == '.') {  // Insert last inserted text.
-    retval = stuff_inserted(NUL, 1L, true);
+    retval = stuff_inserted(NUL, 1, true);
   } else if (get_spec_reg(regname, &arg, &allocated, true)) {
     if (arg == NULL) {
       return FAIL;
@@ -1280,7 +1280,7 @@ int insert_reg(int regname, bool literally_arg)
         if (regname == '-') {
           AppendCharToRedobuff(Ctrl_R);
           AppendCharToRedobuff(regname);
-          do_put(regname, NULL, BACKWARD, 1L, PUT_CURSEND);
+          do_put(regname, NULL, BACKWARD, 1, PUT_CURSEND);
         } else {
           stuffescaped(reg->y_array[i], literally);
         }
@@ -1354,7 +1354,7 @@ bool get_spec_reg(int regname, char **argp, bool *allocated, bool errmsg)
       return false;
     }
     *argp = file_name_at_cursor(FNAME_MESS | FNAME_HYP | (regname == Ctrl_P ? FNAME_EXP : 0),
-                                1L, NULL);
+                                1, NULL);
     *allocated = true;
     return true;
 
@@ -1596,7 +1596,7 @@ int op_delete(oparg_T *oap)
 
     check_cursor_col();
     changed_lines(curbuf, curwin->w_cursor.lnum, curwin->w_cursor.col,
-                  oap->end.lnum + 1, 0L, true);
+                  oap->end.lnum + 1, 0, true);
     oap->line_count = 0;  // no lines deleted
   } else if (oap->motion_type == kMTLineWise) {
     if (oap->op_type == OP_CHANGE) {
@@ -1936,7 +1936,7 @@ static int op_replace(oparg_T *oap, int c)
       linenr_T baselnum = curwin->w_cursor.lnum;
       if (after_p != NULL) {
         ml_append(curwin->w_cursor.lnum++, after_p, (int)after_p_len, false);
-        appended_lines_mark(curwin->w_cursor.lnum, 1L);
+        appended_lines_mark(curwin->w_cursor.lnum, 1);
         oap->end.lnum++;
         xfree(after_p);
       }
@@ -2032,7 +2032,7 @@ static int op_replace(oparg_T *oap, int c)
 
   curwin->w_cursor = oap->start;
   check_cursor();
-  changed_lines(curbuf, oap->start.lnum, oap->start.col, oap->end.lnum + 1, 0L, true);
+  changed_lines(curbuf, oap->start.lnum, oap->start.col, oap->end.lnum + 1, 0, true);
 
   if ((cmdmod.cmod_flags & CMOD_LOCKMARKS) == 0) {
     // Set "'[" and "']" marks.
@@ -2066,7 +2066,7 @@ void op_tilde(oparg_T *oap)
       did_change |= one_change;
     }
     if (did_change) {
-      changed_lines(curbuf, oap->start.lnum, 0, oap->end.lnum + 1, 0L, true);
+      changed_lines(curbuf, oap->start.lnum, 0, oap->end.lnum + 1, 0, true);
     }
   } else {  // not block mode
     if (oap->motion_type == kMTLineWise) {
@@ -2095,7 +2095,7 @@ void op_tilde(oparg_T *oap)
     }
     if (did_change) {
       changed_lines(curbuf, oap->start.lnum, oap->start.col, oap->end.lnum + 1,
-                    0L, true);
+                    0, true);
     }
   }
 
@@ -2532,7 +2532,7 @@ int op_change(oparg_T *oap)
         }
       }
       check_cursor();
-      changed_lines(curbuf, oap->start.lnum + 1, 0, oap->end.lnum + 1, 0L, true);
+      changed_lines(curbuf, oap->start.lnum + 1, 0, oap->end.lnum + 1, 0, true);
       xfree(ins_text);
     }
   }
@@ -3618,7 +3618,7 @@ error:
       ExtmarkOp kind = (y_type == kMTLineWise && !(flags & PUT_LINE_SPLIT))
                        ? kExtmarkUndo : kExtmarkNOOP;
       mark_adjust(curbuf->b_op_start.lnum + (y_type == kMTCharWise),
-                  (linenr_T)MAXLNUM, nr_lines, 0L, kind);
+                  (linenr_T)MAXLNUM, nr_lines, 0, kind);
 
       // note changed text for displaying and folding
       if (y_type == kMTCharWise) {
@@ -4162,7 +4162,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   // Only report the change in the first line here, del_lines() will report
   // the deleted line.
   changed_lines(curbuf, curwin->w_cursor.lnum, currsize,
-                curwin->w_cursor.lnum + 1, 0L, true);
+                curwin->w_cursor.lnum + 1, 0, true);
 
   // Delete following lines. To do this we move the cursor there
   // briefly, and then move it back. After del_lines() the cursor may
@@ -4381,7 +4381,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
     change_cnt = do_addsub(oap->op_type, &pos, 0, amount);
     disable_fold_update--;
     if (change_cnt) {
-      changed_lines(curbuf, pos.lnum, 0, pos.lnum + 1, 0L, true);
+      changed_lines(curbuf, pos.lnum, 0, pos.lnum + 1, 0, true);
     }
   } else {
     int length;
@@ -4439,7 +4439,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
 
     disable_fold_update--;
     if (change_cnt) {
-      changed_lines(curbuf, oap->start.lnum, 0, oap->end.lnum + 1, 0L, true);
+      changed_lines(curbuf, oap->start.lnum, 0, oap->end.lnum + 1, 0, true);
     }
 
     if (!change_cnt && oap->is_VIsual) {
@@ -5026,7 +5026,7 @@ static void finish_write_reg(int name, yankreg_T *reg, yankreg_T *old_y_previous
 /// @see write_reg_contents_ex
 void write_reg_contents(int name, const char *str, ssize_t len, int must_append)
 {
-  write_reg_contents_ex(name, str, len, must_append, kMTUnknown, 0L);
+  write_reg_contents_ex(name, str, len, must_append, kMTUnknown, 0);
 }
 
 void write_reg_contents_lst(int name, char **strings, bool must_append, MotionType yank_type,
@@ -5340,7 +5340,7 @@ void cursor_pos_info(dict_T *dict)
   } else {
     linenr_T lnum;
     int eol_size;
-    varnumber_T last_check = 100000L;
+    varnumber_T last_check = 100000;
     int line_count_selected = 0;
     if (get_fileformat(curbuf) == EOL_DOS) {
       eol_size = 2;
@@ -5393,14 +5393,14 @@ void cursor_pos_info(dict_T *dict)
         if (got_int) {
           return;
         }
-        last_check = byte_count + 100000L;
+        last_check = byte_count + 100000;
       }
 
       // Do extra processing for VIsual mode.
       if (l_VIsual_active
           && lnum >= min_pos.lnum && lnum <= max_pos.lnum) {
         char *s = NULL;
-        int len = 0L;
+        int len = 0;
 
         switch (l_VIsual_mode) {
         case Ctrl_V:
@@ -6034,9 +6034,9 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
           if (opchar == 'g' && extra_opchar == '@') {
             // also repeat the count for 'operatorfunc'
-            prep_redo_num2(oap->regname, 0L, NUL, 'v', cap->count0, opchar, extra_opchar, nchar);
+            prep_redo_num2(oap->regname, 0, NUL, 'v', cap->count0, opchar, extra_opchar, nchar);
           } else {
-            prep_redo(oap->regname, 0L, NUL, 'v', opchar, extra_opchar, nchar);
+            prep_redo(oap->regname, 0, NUL, 'v', opchar, extra_opchar, nchar);
           }
         }
         if (!redo_VIsual_busy) {

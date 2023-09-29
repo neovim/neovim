@@ -92,7 +92,7 @@ void change_warning(buf_T *buf, int col)
     (void)msg_end();
     if (msg_silent == 0 && !silent_mode && ui_active()) {
       ui_flush();
-      os_delay(1002L, true);  // give the user time to think about it
+      os_delay(1002, true);  // give the user time to think about it
     }
     buf->b_did_warn = true;
     redraw_cmdline = false;  // don't redraw and erase the message
@@ -131,7 +131,7 @@ void changed(buf_T *buf)
       // and don't let the emsg() set msg_scroll.
       if (need_wait_return && emsg_silent == 0 && !in_assert_fails) {
         ui_flush();
-        os_delay(2002L, true);
+        os_delay(2002, true);
         wait_return(true);
         msg_scroll = save_msg_scroll;
       } else {
@@ -457,7 +457,7 @@ void appended_lines(linenr_T lnum, linenr_T count)
 /// Like appended_lines(), but adjust marks first.
 void appended_lines_mark(linenr_T lnum, int count)
 {
-  mark_adjust(lnum + 1, (linenr_T)MAXLNUM, (linenr_T)count, 0L, kExtmarkUndo);
+  mark_adjust(lnum + 1, (linenr_T)MAXLNUM, (linenr_T)count, 0, kExtmarkUndo);
   changed_lines(curbuf, lnum + 1, 0, lnum + 1, (linenr_T)count, true);
 }
 
@@ -552,7 +552,7 @@ void changed_lines(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnume, linen
         wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
           buf_redraw_changed_lines_later(wp->w_buffer, wlnum,
-                                         lnume - lnum + wlnum, 0L);
+                                         lnume - lnum + wlnum, 0);
         }
       }
     }
@@ -823,7 +823,7 @@ int del_char(bool fixpos)
   if (*get_cursor_pos_ptr() == NUL) {
     return FAIL;
   }
-  return del_chars(1L, fixpos);
+  return del_chars(1, fixpos);
 }
 
 /// Like del_bytes(), but delete characters instead of bytes.
@@ -1731,7 +1731,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     }
     // Postpone calling changed_lines(), because it would mess up folding
     // with markers.
-    mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, kExtmarkNOOP);
+    mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1, 0, kExtmarkNOOP);
     did_append = true;
   } else {
     // In MODE_VREPLACE state we are starting to replace the next line.
@@ -1822,14 +1822,14 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
       saved_line = NULL;
       if (did_append) {
         changed_lines(curbuf, curwin->w_cursor.lnum, curwin->w_cursor.col,
-                      curwin->w_cursor.lnum + 1, 1L, true);
+                      curwin->w_cursor.lnum + 1, 1, true);
         did_append = false;
 
         // Move marks after the line break to the new line.
         if (flags & OPENLINE_MARKFIX) {
           mark_col_adjust(curwin->w_cursor.lnum,
                           curwin->w_cursor.col + less_cols_off,
-                          1L, -less_cols, 0);
+                          1, -less_cols, 0);
         }
         // Always move extmarks - Here we move only the line where the
         // cursor is, the previous mark_adjust takes care of the lines after
@@ -1847,7 +1847,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     curwin->w_cursor.lnum = old_cursor.lnum + 1;
   }
   if (did_append) {
-    changed_lines(curbuf, curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1L, true);
+    changed_lines(curbuf, curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1, true);
     // bail out and just get the final length of the line we just manipulated
     bcount_t extra = (bcount_t)strlen(ml_get(curwin->w_cursor.lnum));
     extmark_splice(curbuf, (int)curwin->w_cursor.lnum - 1, 0,

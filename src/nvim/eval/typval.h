@@ -235,7 +235,7 @@ static inline long tv_dict_len(const dict_T *d)
 static inline long tv_dict_len(const dict_T *const d)
 {
   if (d == NULL) {
-    return 0L;
+    return 0;
   }
   return (long)d->dv_hashtab.ht_used;
 }

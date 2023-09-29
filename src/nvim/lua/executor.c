@@ -619,7 +619,7 @@ static bool nlua_init_packages(lua_State *lstate, bool is_standalone)
   lua_getfield(lstate, -1, "preload");  // [package, preload]
   for (size_t i = 0; i < ARRAY_SIZE(builtin_modules); i++) {
     ModuleDef def = builtin_modules[i];
-    lua_pushinteger(lstate, (long)i);  // [package, preload, i]
+    lua_pushinteger(lstate, (lua_Integer)i);  // [package, preload, i]
     lua_pushcclosure(lstate, nlua_module_preloader, 1);  // [package, preload, cclosure]
     lua_setfield(lstate, -2, def.name);  // [package, preload]
 

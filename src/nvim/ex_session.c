@@ -629,7 +629,7 @@ static int makeopens(FILE *fd, char *dirnow)
         && buf->b_p_bl) {
       if (fprintf(fd, "badd +%" PRId64 " ",
                   buf->b_wininfo == NULL
-                  ? (int64_t)1L
+                  ? 1
                   : (int64_t)buf->b_wininfo->wi_mark.mark.lnum) < 0
           || ses_fname(fd, buf, &ssop_flags, true) == FAIL) {
         return FAIL;

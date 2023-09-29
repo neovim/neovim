@@ -718,7 +718,7 @@ retry:
     if (read_buffer) {
       read_buf_lnum = 1;
       read_buf_col = 0;
-    } else if (read_stdin || vim_lseek(fd, (off_T)0L, SEEK_SET) != 0) {
+    } else if (read_stdin || vim_lseek(fd, 0, SEEK_SET) != 0) {
       // Can't rewind the file, give up.
       error = true;
       goto failed;
@@ -880,9 +880,9 @@ retry:
         // Use buffer >= 64K.  Add linerest to double the size if the
         // line gets very long, to avoid a lot of copying. But don't
         // read more than 1 Mbyte at a time, so we can be interrupted.
-        size = 0x10000L + linerest;
-        if (size > 0x100000L) {
-          size = 0x100000L;
+        size = 0x10000 + linerest;
+        if (size > 0x100000) {
+          size = 0x100000;
         }
       }
 
@@ -1531,7 +1531,7 @@ rewind_retry:
                 if (try_unix
                     && !read_stdin
                     && (read_buffer
-                        || vim_lseek(fd, (off_T)0L, SEEK_SET) == 0)) {
+                        || vim_lseek(fd, 0, SEEK_SET) == 0)) {
                   fileformat = EOL_UNIX;
                   if (set_options) {
                     set_fileformat(EOL_UNIX, OPT_LOCAL);
@@ -3054,7 +3054,7 @@ int buf_check_timestamp(buf_T *buf)
         if (emsg_silent == 0 && !in_assert_fails) {
           ui_flush();
           // give the user some time to think about it
-          os_delay(1004L, true);
+          os_delay(1004, true);
 
           // don't redraw and erase the message
           redraw_cmdline = false;

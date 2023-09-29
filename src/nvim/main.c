@@ -585,7 +585,7 @@ int main(int argc, char **argv)
   // 'autochdir' has been postponed.
   do_autochdir();
 
-  set_vim_var_nr(VV_VIM_DID_ENTER, 1L);
+  set_vim_var_nr(VV_VIM_DID_ENTER, 1);
   apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf);
   TIME_MSG("VimEnter autocommands");
   if (use_remote_ui) {
@@ -610,7 +610,7 @@ int main(int argc, char **argv)
   // scrollbind, sync the scrollbind now.
   if (curwin->w_p_diff && curwin->w_p_scb) {
     update_topline(curwin);
-    check_scrollbind((linenr_T)0, 0L);
+    check_scrollbind((linenr_T)0, 0);
     TIME_MSG("diff scrollbinding");
   }
 
@@ -1027,7 +1027,7 @@ static void command_line_scan(mparm_T *parmp)
   int argv_idx;                         // index in argv[n][]
   bool had_minmin = false;              // found "--" argument
   int want_argument;                    // option argument with argument
-  long n;
+  int n;
 
   argc--;
   argv++;

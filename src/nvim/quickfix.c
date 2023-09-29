@@ -2084,7 +2084,7 @@ static int copy_loclist(qf_list_T *from_qfl, qf_list_T *to_qfl)
 
   // Assign a new ID for the location list
   to_qfl->qf_id = ++last_qf_id;
-  to_qfl->qf_changedtick = 0L;
+  to_qfl->qf_changedtick = 0;
 
   // When no valid entries are present in the list, qf_ptr points to
   // the first item in the list
@@ -3450,7 +3450,7 @@ static void qf_free(qf_list_T *qfl)
   qfl->qf_ctx = NULL;
   callback_free(&qfl->qf_qftf_cb);
   qfl->qf_id = 0;
-  qfl->qf_changedtick = 0L;
+  qfl->qf_changedtick = 0;
 }
 
 /// Adjust error list entries for changed line numbers

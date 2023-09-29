@@ -64,12 +64,12 @@ static void lua_pushhunk(lua_State *lstate, long start_a, long count_a, long sta
   lua_rawseti(lstate, -2, (signed)lua_objlen(lstate, -2) + 1);
 }
 
-static void get_linematch_results(lua_State *lstate, mmfile_t *ma, mmfile_t *mb, long start_a,
-                                  long count_a, long start_b, long count_b, bool iwhite)
+static void get_linematch_results(lua_State *lstate, mmfile_t *ma, mmfile_t *mb, int start_a,
+                                  int count_a, int start_b, int count_b, bool iwhite)
 {
   // get the pointer to char of the start of the diff to pass it to linematch algorithm
   const char *diff_begin[2] = { ma->ptr, mb->ptr };
-  int diff_length[2] = { (int)count_a, (int)count_b };
+  int diff_length[2] = { count_a, count_b };
 
   fastforward_buf_to_lnum(&diff_begin[0], (linenr_T)start_a + 1);
   fastforward_buf_to_lnum(&diff_begin[1], (linenr_T)start_b + 1);
@@ -77,12 +77,12 @@ static void get_linematch_results(lua_State *lstate, mmfile_t *ma, mmfile_t *mb,
   int *decisions = NULL;
   size_t decisions_length = linematch_nbuffers(diff_begin, diff_length, 2, &decisions, iwhite);
 
-  long lnuma = start_a, lnumb = start_b;
+  int lnuma = start_a, lnumb = start_b;
 
-  long hunkstarta = lnuma;
-  long hunkstartb = lnumb;
-  long hunkcounta = 0;
-  long hunkcountb = 0;
+  int hunkstarta = lnuma;
+  int hunkstartb = lnumb;
+  int hunkcounta = 0;
+  int hunkcountb = 0;
   for (size_t i = 0; i < decisions_length; i++) {
     if (i && (decisions[i - 1] != decisions[i])) {
       lua_pushhunk(lstate, hunkstarta, hunkcounta, hunkstartb, hunkcountb);
@@ -110,8 +110,8 @@ static int write_string(void *priv, mmbuffer_t *mb, int nbuf)
 {
   luaL_Buffer *buf = (luaL_Buffer *)priv;
   for (int i = 0; i < nbuf; i++) {
-    const long size = mb[i].size;
-    for (long total = 0; total < size; total += LUAL_BUFFERSIZE) {
+    const int size = mb[i].size;
+    for (int total = 0; total < size; total += LUAL_BUFFERSIZE) {
       const int tocopy = MIN((int)(size - total), LUAL_BUFFERSIZE);
       char *p = luaL_prepbuffer(buf);
       if (!p) {

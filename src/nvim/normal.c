@@ -695,9 +695,9 @@ static void normal_redraw_mode_message(NormalState *s)
   ui_cursor_shape();                  // show different cursor shape
   ui_flush();
   if (msg_scroll || emsg_on_display) {
-    os_delay(1003L, true);            // wait at least one second
+    os_delay(1003, true);            // wait at least one second
   }
-  os_delay(3003L, false);             // wait up to three seconds
+  os_delay(3003, false);             // wait up to three seconds
   State = save_State;
 
   msg_scroll = false;
@@ -896,8 +896,8 @@ static bool normal_get_command_count(NormalState *s)
     if (s->c == K_DEL || s->c == K_KDEL) {
       s->ca.count0 /= 10;
       del_from_showcmd(4);            // delete the digit and ~@%
-    } else if (s->ca.count0 > 99999999L) {
-      s->ca.count0 = 999999999L;
+    } else if (s->ca.count0 > 99999999) {
+      s->ca.count0 = 999999999;
     } else {
       s->ca.count0 = s->ca.count0 * 10 + (s->c - '0');
     }
@@ -1035,7 +1035,7 @@ normal_end:
       restart_VIsual_select = 0;
     }
     if (restart_edit != 0 && !VIsual_active && s->old_mapped_len == 0) {
-      (void)edit(restart_edit, false, 1L);
+      (void)edit(restart_edit, false, 1);
     }
   }
 
@@ -1113,8 +1113,8 @@ static int normal_execute(VimState *state, int key)
     // If you give a count before AND after the operator, they are
     // multiplied.
     if (s->ca.count0) {
-      if (s->ca.opcount >= 999999999L / s->ca.count0) {
-        s->ca.count0 = 999999999L;
+      if (s->ca.opcount >= 999999999 / s->ca.count0) {
+        s->ca.count0 = 999999999;
       } else {
         s->ca.count0 *= s->ca.opcount;
       }
@@ -1443,7 +1443,7 @@ static int normal_check(VimState *state)
     // Scroll-binding for diff mode may have been postponed until
     // here.  Avoids doing it for every change.
     if (diff_need_scrollbind) {
-      check_scrollbind(0, 0L);
+      check_scrollbind(0, 0);
       diff_need_scrollbind = false;
     }
 
@@ -1737,7 +1737,7 @@ static void prep_redo_cmd(cmdarg_T *cap)
 /// Note that only the last argument can be a multi-byte char.
 void prep_redo(int regname, int num, int cmd1, int cmd2, int cmd3, int cmd4, int cmd5)
 {
-  prep_redo_num2(regname, num, cmd1, cmd2, 0L, cmd3, cmd4, cmd5);
+  prep_redo_num2(regname, num, cmd1, cmd2, 0, cmd3, cmd4, cmd5);
 }
 
 /// Prepare for redo of any command with extra count after "cmd2".
@@ -2126,7 +2126,7 @@ void do_check_scrollbind(bool check)
       // resync is performed, some of the other 'scrollbind' windows may
       // need to jump so that the current window's relative position is
       // visible on-screen.
-      check_scrollbind(curwin->w_topline - (linenr_T)curwin->w_scbind_pos, 0L);
+      check_scrollbind(curwin->w_topline - (linenr_T)curwin->w_scbind_pos, 0);
     }
     curwin->w_scbind_pos = curwin->w_topline;
   }
@@ -2364,7 +2364,7 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
   // With "gD" go to line 1.
   // With "gd" Search back for the start of the current function, then go
   // back until a blank line.  If this fails go to line 1.
-  if (!locally || !findpar(&incll, BACKWARD, 1L, '{', false)) {
+  if (!locally || !findpar(&incll, BACKWARD, 1, '{', false)) {
     setpcmark();                        // Set in findpar() otherwise
     curwin->w_cursor.lnum = 1;
     par_pos = curwin->w_cursor;
@@ -2381,7 +2381,7 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
   clearpos(&found_pos);
   while (true) {
     t = searchit(curwin, curbuf, &curwin->w_cursor, NULL, FORWARD,
-                 pat, 1L, searchflags, RE_LAST, NULL);
+                 pat, 1, searchflags, RE_LAST, NULL);
     if (curwin->w_cursor.lnum >= old_pos.lnum) {
       t = false;         // match after start is failure too
     }
@@ -2648,13 +2648,13 @@ void scroll_redraw(int up, linenr_T count)
            && curwin->w_topfill == prev_topfill) {
       if (up) {
         if (curwin->w_cursor.lnum > prev_lnum
-            || cursor_down(1L, false) == false) {
+            || cursor_down(1, false) == false) {
           break;
         }
       } else {
         if (curwin->w_cursor.lnum < prev_lnum
-            || prev_topline == 1L
-            || cursor_up(1L, false) == false) {
+            || prev_topline == 1
+            || cursor_up(1, false) == false) {
           break;
         }
       }
@@ -3211,7 +3211,7 @@ static void nv_colon(cmdarg_T *cap)
     stuffcharReadbuff('.');
     if (cap->count0 > 1) {
       stuffReadbuff(",.+");
-      stuffnumReadbuff(cap->count0 - 1L);
+      stuffnumReadbuff(cap->count0 - 1);
     }
   }
 
@@ -4781,7 +4781,7 @@ static void n_swapchar(cmdarg_T *cap)
   curwin->w_set_curswant = true;
   if (did_change) {
     changed_lines(curbuf, startpos.lnum, startpos.col, curwin->w_cursor.lnum + 1,
-                  0L, true);
+                  0, true);
     curbuf->b_op_start = startpos;
     curbuf->b_op_end = curwin->w_cursor;
     if (curbuf->b_op_end.col > 0) {
@@ -5568,7 +5568,7 @@ static void nv_g_cmd(cmdarg_T *cap)
 
   // "gs": Goto sleep.
   case 's':
-    do_sleep(cap->count1 * 1000L);
+    do_sleep(cap->count1 * 1000);
     break;
 
   // "ga": Display the ascii value of the character under the
@@ -5870,7 +5870,7 @@ static void set_op_var(int optype)
 static void nv_lineop(cmdarg_T *cap)
 {
   cap->oap->motion_type = kMTLineWise;
-  if (cursor_down(cap->count1 - 1L, cap->oap->op_type == OP_NOP) == false) {
+  if (cursor_down(cap->count1 - 1, cap->oap->op_type == OP_NOP) == false) {
     clearopbeep(cap->oap);
   } else if ((cap->oap->op_type == OP_DELETE
               // only with linewise motions
@@ -6083,7 +6083,7 @@ static void nv_goto(cmdarg_T *cap)
   if (cap->arg) {
     lnum = curbuf->b_ml.ml_line_count;
   } else {
-    lnum = 1L;
+    lnum = 1;
   }
   cap->oap->motion_type = kMTLineWise;
   setpcmark();
@@ -6092,8 +6092,8 @@ static void nv_goto(cmdarg_T *cap)
   if (cap->count0 != 0) {
     lnum = cap->count0;
   }
-  if (lnum < 1L) {
-    lnum = 1L;
+  if (lnum < 1) {
+    lnum = 1;
   } else if (lnum > curbuf->b_ml.ml_line_count) {
     lnum = curbuf->b_ml.ml_line_count;
   }

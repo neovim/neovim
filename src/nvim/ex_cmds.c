@@ -323,7 +323,7 @@ void ex_align(exarg_T *eap)
     }
     (void)set_indent(new_indent, 0);                    // set indent
   }
-  changed_lines(curbuf, eap->line1, 0, eap->line2 + 1, 0L, true);
+  changed_lines(curbuf, eap->line1, 0, eap->line2 + 1, 0, true);
   curwin->w_cursor = save_curpos;
   beginline(BL_WHITE | BL_FIX);
 }
@@ -696,7 +696,7 @@ void ex_sort(exarg_T *eap)
     mark_adjust(eap->line2 - deleted, eap->line2, MAXLNUM, -deleted, kExtmarkNOOP);
     msgmore(-deleted);
   } else if (deleted < 0) {
-    mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, kExtmarkNOOP);
+    mark_adjust(eap->line2, MAXLNUM, -deleted, 0, kExtmarkNOOP);
   }
 
   if (change_occurred || deleted != 0) {
@@ -783,7 +783,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   // And Finally we adjust the marks we put at the end of the file back to
   // their final destination at the new text position -- webb
   last_line = curbuf->b_ml.ml_line_count;
-  mark_adjust_nofold(line1, line2, last_line - line2, 0L, kExtmarkNOOP);
+  mark_adjust_nofold(line1, line2, last_line - line2, 0, kExtmarkNOOP);
 
   disable_fold_update++;
   changed_lines(curbuf, last_line - num_lines + 1, 0, last_line + 1, num_lines, false);
@@ -792,7 +792,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   int line_off = 0;
   bcount_t byte_off = 0;
   if (dest >= line2) {
-    mark_adjust_nofold(line2 + 1, dest, -num_lines, 0L, kExtmarkNOOP);
+    mark_adjust_nofold(line2 + 1, dest, -num_lines, 0, kExtmarkNOOP);
     FOR_ALL_TAB_WINDOWS(tab, win) {
       if (win->w_buffer == curbuf) {
         foldMoveRange(win, &win->w_folds, line1, line2, dest);
@@ -805,7 +805,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     line_off = -num_lines;
     byte_off = -extent_byte;
   } else {
-    mark_adjust_nofold(dest + 1, line1 - 1, num_lines, 0L, kExtmarkNOOP);
+    mark_adjust_nofold(dest + 1, line1 - 1, num_lines, 0, kExtmarkNOOP);
     FOR_ALL_TAB_WINDOWS(tab, win) {
       if (win->w_buffer == curbuf) {
         foldMoveRange(win, &win->w_folds, dest + 1, line1 - 1, line2);
@@ -820,7 +820,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     curbuf->b_op_start.col = curbuf->b_op_end.col = 0;
   }
   mark_adjust_nofold(last_line - num_lines + 1, last_line,
-                     -(last_line - dest - extra), 0L, kExtmarkNOOP);
+                     -(last_line - dest - extra), 0, kExtmarkNOOP);
 
   disable_fold_update++;
   changed_lines(curbuf, last_line - num_lines + 1, 0, last_line + 1, -extra, false);
@@ -861,9 +861,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     if (dest > last_line + 1) {
       dest = last_line + 1;
     }
-    changed_lines(curbuf, line1, 0, dest, 0L, false);
+    changed_lines(curbuf, line1, 0, dest, 0, false);
   } else {
-    changed_lines(curbuf, dest + 1, 0, line1 + num_lines, 0L, false);
+    changed_lines(curbuf, dest + 1, 0, line1 + num_lines, 0, false);
   }
 
   // send nvim_buf_lines_event regarding lines that were deleted
@@ -1243,13 +1243,13 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
         // end of each line?
         if (read_linecount >= linecount) {
           // move all marks from old lines to new lines
-          mark_adjust(line1, line2, linecount, 0L, kExtmarkNOOP);
+          mark_adjust(line1, line2, linecount, 0, kExtmarkNOOP);
         } else {
           // move marks from old lines to new lines, delete marks
           // that are in deleted lines
-          mark_adjust(line1, line1 + read_linecount - 1, linecount, 0L,
+          mark_adjust(line1, line1 + read_linecount - 1, linecount, 0,
                       kExtmarkNOOP);
-          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0L,
+          mark_adjust(line1 + read_linecount, line2, MAXLNUM, 0,
                       kExtmarkNOOP);
         }
       }
@@ -2283,7 +2283,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
         if (command != NULL) {
           tlnum = (linenr_T)atol(command);
           if (tlnum <= 0) {
-            tlnum = 1L;
+            tlnum = 1;
           }
         }
         // Add BLN_NOCURWIN to avoid a new wininfo items are associated
@@ -2295,7 +2295,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
         }
         goto theend;
       }
-      buf = buflist_new(ffname, sfname, 0L,
+      buf = buflist_new(ffname, sfname, 0,
                         BLN_CURBUF | (flags & ECMD_SET_HELP ? 0 : BLN_LISTED));
       // Autocmds may change curwin and curbuf.
       if (oldwin != NULL) {
@@ -2861,16 +2861,16 @@ void ex_append(exarg_T *eap)
     ml_append(lnum, theline, (colnr_T)0, false);
     if (empty) {
       // there are no marks below the inserted lines
-      appended_lines(lnum, 1L);
+      appended_lines(lnum, 1);
     } else {
-      appended_lines_mark(lnum, 1L);
+      appended_lines_mark(lnum, 1);
     }
 
     xfree(theline);
     lnum++;
 
     if (empty) {
-      ml_delete(2L, false);
+      ml_delete(2, false);
       empty = 0;
     }
   }
@@ -4020,10 +4020,10 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
                 *p1 = NUL;                            // truncate up to the CR
                 ml_append(lnum - 1, new_start,
                           (colnr_T)(p1 - new_start + 1), false);
-                mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, kExtmarkNOOP);
+                mark_adjust(lnum + 1, (linenr_T)MAXLNUM, 1, 0, kExtmarkNOOP);
 
                 if (subflags.do_ask) {
-                  appended_lines(lnum - 1, 1L);
+                  appended_lines(lnum - 1, 1);
                 } else {
                   if (first_line == 0) {
                     first_line = lnum;

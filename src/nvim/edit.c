@@ -760,7 +760,7 @@ static int insert_handle_key(InsertState *s)
   case Ctrl_A:
     // For ^@ the trailing ESC will end the insert, unless there is an
     // error.
-    if (stuff_inserted(NUL, 1L, (s->c == Ctrl_A)) == FAIL
+    if (stuff_inserted(NUL, 1, (s->c == Ctrl_A)) == FAIL
         && s->c != Ctrl_A) {
       return 0;  // exit insert mode
     }
@@ -2066,7 +2066,7 @@ void insertchar(int c, int flags, int second_indent)
 
     if (*curbuf->b_p_fex != NUL && (flags & INSCHAR_NO_FEX) == 0
         && (force_format || virtcol > (colnr_T)textwidth)) {
-      do_internal = (fex_format(curwin->w_cursor.lnum, 1L, c) != 0);
+      do_internal = (fex_format(curwin->w_cursor.lnum, 1, c) != 0);
       // It may be required to save for undo again, e.g. when setline()
       // was called.
       ins_need_undo = true;
@@ -2634,7 +2634,7 @@ int cursor_up(linenr_T n, int upd_topline)
 
 /// Move the cursor down "n" lines in window "wp".
 /// Takes care of closed folds.
-void cursor_down_inner(win_T *wp, long n)
+void cursor_down_inner(win_T *wp, int n)
 {
   linenr_T lnum = wp->w_cursor.lnum;
   linenr_T line_count = wp->w_buffer->b_ml.ml_line_count;
@@ -2667,7 +2667,7 @@ void cursor_down_inner(win_T *wp, long n)
 }
 
 /// @param upd_topline  When true: update topline
-int cursor_down(long n, int upd_topline)
+int cursor_down(int n, int upd_topline)
 {
   // This fails if the cursor is already in the last line.
   if (n > 0 && curwin->w_cursor.lnum >= curwin->w_buffer->b_ml.ml_line_count) {
@@ -2692,7 +2692,7 @@ int cursor_down(long n, int upd_topline)
 /// @param c       Command character to be inserted
 /// @param count   Repeat this many times
 /// @param no_esc  Don't add an ESC at the end
-int stuff_inserted(int c, long count, int no_esc)
+int stuff_inserted(int c, int count, int no_esc)
 {
   char *esc_ptr;
   char *ptr;
@@ -4099,7 +4099,7 @@ static void ins_s_left(void)
     if (!end_change) {
       AppendCharToRedobuff(K_S_LEFT);
     }
-    (void)bck_word(1L, false, false);
+    (void)bck_word(1, false, false);
     curwin->w_set_curswant = true;
   } else {
     vim_beep(BO_CRSR);
@@ -4158,7 +4158,7 @@ static void ins_s_right(void)
     if (!end_change) {
       AppendCharToRedobuff(K_S_RIGHT);
     }
-    (void)fwd_word(1L, false, 0);
+    (void)fwd_word(1, false, 0);
     curwin->w_set_curswant = true;
   } else {
     vim_beep(BO_CRSR);
@@ -4175,7 +4175,7 @@ static void ins_up(bool startcol)
 
   undisplay_dollar();
   tpos = curwin->w_cursor;
-  if (cursor_up(1L, true) == OK) {
+  if (cursor_up(1, true) == OK) {
     if (startcol) {
       coladvance(getvcol_nolist(&Insstart));
     }
@@ -4223,7 +4223,7 @@ static void ins_down(bool startcol)
 
   undisplay_dollar();
   tpos = curwin->w_cursor;
-  if (cursor_down(1L, true) == OK) {
+  if (cursor_down(1, true) == OK) {
     if (startcol) {
       coladvance(getvcol_nolist(&Insstart));
     }

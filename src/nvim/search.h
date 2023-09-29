@@ -52,7 +52,7 @@
 #define RE_LAST         2       // use last used pattern if "pat" is NULL
 
 // Values for searchcount()
-#define SEARCH_STAT_DEF_TIMEOUT 40L
+#define SEARCH_STAT_DEF_TIMEOUT 40
 #define SEARCH_STAT_DEF_MAX_COUNT 99
 #define SEARCH_STAT_BUF_LEN 12
 

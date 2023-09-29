@@ -1088,13 +1088,13 @@ static int do_unlet_var(lval_T *lp, char *name_end, exarg_T *eap, int deep FUNC_
 
 /// Unlet one item or a range of items from a list.
 /// Return OK or FAIL.
-static void tv_list_unlet_range(list_T *const l, listitem_T *const li_first, const long n1_arg,
-                                const bool has_n2, const long n2)
+static void tv_list_unlet_range(list_T *const l, listitem_T *const li_first, const int n1_arg,
+                                const bool has_n2, const int n2)
 {
   assert(l != NULL);
   // Delete a range of List items.
   listitem_T *li_last = li_first;
-  long n1 = n1_arg;
+  int n1 = n1_arg;
   while (true) {
     listitem_T *const li = TV_LIST_ITEM_NEXT(l, li_last);
     n1++;

@@ -2288,7 +2288,7 @@ static void highlight_list_two(int cnt, int attr)
   msg_puts_attr(&("N \bI \b!  \b"[cnt / 11]), attr);
   msg_clr_eos();
   ui_flush();
-  os_delay(cnt == 99 ? 40L : (uint64_t)cnt * 50L, false);
+  os_delay(cnt == 99 ? 40 : (uint64_t)cnt * 50, false);
 }
 
 /// Function given to ExpandGeneric() to obtain the list of group names.

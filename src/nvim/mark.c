@@ -441,11 +441,11 @@ fmark_T *mark_get_motion(buf_T *buf, win_T *win, int name)
   listcmd_busy = true;  // avoid that '' is changed
   if (name == '{' || name == '}') {  // to previous/next paragraph
     oparg_T oa;
-    if (findpar(&oa.inclusive, name == '}' ? FORWARD : BACKWARD, 1L, NUL, false)) {
+    if (findpar(&oa.inclusive, name == '}' ? FORWARD : BACKWARD, 1, NUL, false)) {
       mark = pos_to_mark(buf, NULL, win->w_cursor);
     }
   } else if (name == '(' || name == ')') {  // to previous/next sentence
-    if (findsent(name == ')' ? FORWARD : BACKWARD, 1L)) {
+    if (findsent(name == ')' ? FORWARD : BACKWARD, 1)) {
       mark = pos_to_mark(buf, NULL, win->w_cursor);
     }
   }
@@ -1064,10 +1064,10 @@ void ex_changes(exarg_T *eap)
       if (got_int) {
         break;
       }
-      snprintf(IObuff, IOSIZE, "%c %3d %5ld %4d ",
+      snprintf(IObuff, IOSIZE, "%c %3d %5" PRIdLINENR " %4d ",
                i == curwin->w_changelistidx ? '>' : ' ',
                i > curwin->w_changelistidx ? i - curwin->w_changelistidx : curwin->w_changelistidx - i,
-               (long)curbuf->b_changelist[i].mark.lnum,
+               curbuf->b_changelist[i].mark.lnum,
                curbuf->b_changelist[i].mark.col);
       msg_outtrans(IObuff, 0);
       name = mark_line(&curbuf->b_changelist[i].mark, 17);
@@ -1143,7 +1143,7 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
   linenr_T *lp;
   static pos_T initpos = { 1, 0, 0 };
 
-  if (line2 < line1 && amount_after == 0L) {        // nothing to do
+  if (line2 < line1 && amount_after == 0) {        // nothing to do
     return;
   }
 
@@ -1321,7 +1321,7 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, colnr_
   int fnum = curbuf->b_fnum;
   pos_T *posp;
 
-  if ((col_amount == 0L && lnum_amount == 0L) || (cmdmod.cmod_flags & CMOD_LOCKMARKS)) {
+  if ((col_amount == 0 && lnum_amount == 0) || (cmdmod.cmod_flags & CMOD_LOCKMARKS)) {
     return;     // nothing to do
   }
   // named marks, lower case and upper case
