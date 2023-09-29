@@ -144,9 +144,9 @@ static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite)
   return matched_chars;
 }
 
-void fastforward_buf_to_lnum(const char **s, long lnum)
+void fastforward_buf_to_lnum(const char **s, linenr_T lnum)
 {
-  for (long i = 0; i < lnum - 1; i++) {
+  for (int i = 0; i < lnum - 1; i++) {
     *s = strchr(*s, '\n');
     if (!*s) {
       return;

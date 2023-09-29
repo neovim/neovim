@@ -2208,7 +2208,7 @@ handle_T cmdpreview_get_bufnr(void)
   return cmdpreview_bufnr;
 }
 
-long cmdpreview_get_ns(void)
+int cmdpreview_get_ns(void)
 {
   return cmdpreview_ns;
 }

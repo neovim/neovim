@@ -875,7 +875,7 @@ void draw_tabline(void)
 /// the v:lnum and v:relnum variables don't have to be updated.
 ///
 /// @return  The width of the built status column string for line "lnum"
-int build_statuscol_str(win_T *wp, linenr_T lnum, long relnum, statuscol_T *stcp)
+int build_statuscol_str(win_T *wp, linenr_T lnum, linenr_T relnum, statuscol_T *stcp)
 {
   // Only update click definitions once per window per redraw.
   // Don't update when current width is 0, since it will be redrawn again if not empty.
@@ -1170,7 +1170,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
         // { Determine the number of bytes to remove
 
         // Find the first character that should be included.
-        long n = 0;
+        int n = 0;
         while (group_len >= stl_items[stl_groupitems[groupdepth]].maxwid) {
           group_len -= ptr2cells(t + n);
           n += utfc_ptr2len(t + n);
@@ -1295,7 +1295,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       if (*fmt_p == STL_TABCLOSENR) {
         if (minwid == 0) {
           // %X ends the close label, go back to the previous tab label nr.
-          for (long n = curitem - 1; n >= 0; n--) {
+          for (int n = curitem - 1; n >= 0; n--) {
             if (stl_items[n].type == TabPage && stl_items[n].minwid >= 0) {
               minwid = stl_items[n].minwid;
               break;
@@ -1540,8 +1540,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
     }
 
     case STL_PERCENTAGE:
-      num = (int)(((long)wp->w_cursor.lnum * 100L) /
-                  (long)wp->w_buffer->b_ml.ml_line_count);
+      num = ((wp->w_cursor.lnum * 100) / wp->w_buffer->b_ml.ml_line_count);
       break;
 
     case STL_ALTPERCENT:
@@ -1592,11 +1591,11 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       base = kNumBaseHexadecimal;
       FALLTHROUGH;
     case STL_OFFSET: {
-      long l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL,
-                                      false);
+      int l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL,
+                                     false);
       num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) || l < 0 ?
-            0L : (int)l + 1 + ((State & MODE_INSERT) == 0 && empty_line ?
-                               0 : (int)wp->w_cursor.col);
+            0L : l + 1 + ((State & MODE_INSERT) == 0 && empty_line ?
+                          0 : (int)wp->w_cursor.col);
       break;
     }
     case STL_BYTEVAL_X:
@@ -1778,7 +1777,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       }
       // }
 
-      long l = vim_strsize(t);
+      int l = vim_strsize(t);
 
       // If this item is non-empty, record that the last thing
       // we put in the output buffer was an item
@@ -1881,8 +1880,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       // { Determine how many characters the number will take up when printed
       //  Note: We have to cast the base because the compiler uses
       //        unsigned ints for the enum values.
-      long num_chars = 1;
-      for (long n = num; n >= (int)base; n /= (int)base) {
+      int num_chars = 1;
+      for (int n = num; n >= (int)base; n /= (int)base) {
         num_chars++;
       }
 
@@ -1905,7 +1904,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
         num_chars += 2;
 
         // How many extra characters there are
-        long n = num_chars - maxwid;
+        int n = num_chars - maxwid;
 
         // { Reduce the number by base^n
         while (num_chars-- > maxwid) {
@@ -2029,7 +2028,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       // Truncate at the truncation point we found
     } else {
       // { Determine how many bytes to remove
-      long trunc_len = 0;
+      int trunc_len = 0;
       while (width >= maxwidth) {
         width     -= ptr2cells(trunc_p + trunc_len);
         trunc_len += utfc_ptr2len(trunc_p + trunc_len);
@@ -2049,7 +2048,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
 
       // Note: The offset is one less than the truncation length because
       //       the truncation marker `<` is not counted.
-      long item_offset = trunc_len - 1;
+      int item_offset = trunc_len - 1;
 
       for (int i = item_idx; i < itemcnt; i++) {
         // Items starting at or after the end of the truncated section need
@@ -2124,7 +2123,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
   if (hltab != NULL) {
     *hltab = stl_hltab;
     stl_hlrec_t *sp = stl_hltab;
-    for (long l = 0; l < itemcnt; l++) {
+    for (int l = 0; l < itemcnt; l++) {
       if (stl_items[l].type == Highlight) {
         sp->start = stl_items[l].start;
         sp->userhl = stl_items[l].minwid;
@@ -2139,7 +2138,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
   if (tabtab != NULL) {
     *tabtab = stl_tabtab;
     StlClickRecord *cur_tab_rec = stl_tabtab;
-    for (long l = 0; l < itemcnt; l++) {
+    for (int l = 0; l < itemcnt; l++) {
       if (stl_items[l].type == TabPage) {
         cur_tab_rec->start = stl_items[l].start;
         if (stl_items[l].minwid == 0) {

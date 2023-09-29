@@ -3521,8 +3521,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
        && (cmdpreview_ns <= 0 || preview_lines.lines_needed <= (linenr_T)p_cwh
            || lnum <= curwin->w_botline);
        lnum++) {
-    int nmatch = (int)vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-                                        (colnr_T)0, NULL, NULL);
+    int nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
+                                   (colnr_T)0, NULL, NULL);
     if (nmatch) {
       colnr_T copycol;
       colnr_T matchcol;
@@ -4087,9 +4087,9 @@ skip:
         // need to replace the line first (using \zs after \n).
         if (lastone
             || nmatch_tl > 0
-            || (nmatch = (int)vim_regexec_multi(&regmatch, curwin,
-                                                curbuf, sub_firstlnum,
-                                                matchcol, NULL, NULL)) == 0
+            || (nmatch = vim_regexec_multi(&regmatch, curwin,
+                                           curbuf, sub_firstlnum,
+                                           matchcol, NULL, NULL)) == 0
             || regmatch.startpos[0].lnum > 0) {
           if (new_start != NULL) {
             // Copy the rest of the line, that didn't match.
@@ -4149,8 +4149,8 @@ skip:
             copycol = 0;
           }
           if (nmatch == -1 && !lastone) {
-            nmatch = (int)vim_regexec_multi(&regmatch, curwin, curbuf,
-                                            sub_firstlnum, matchcol, NULL, NULL);
+            nmatch = vim_regexec_multi(&regmatch, curwin, curbuf,
+                                       sub_firstlnum, matchcol, NULL, NULL);
           }
 
           // 5. break if there isn't another match in this line
@@ -4446,7 +4446,7 @@ void ex_global(exarg_T *eap)
 
   if (global_busy) {
     lnum = curwin->w_cursor.lnum;
-    match = (int)vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, NULL, NULL);
+    match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, NULL, NULL);
     if ((type == 'g' && match) || (type == 'v' && !match)) {
       global_exe_one(cmd, lnum);
     }
@@ -4455,7 +4455,7 @@ void ex_global(exarg_T *eap)
     // pass 1: set marks for each (not) matching line
     for (lnum = eap->line1; lnum <= eap->line2 && !got_int; lnum++) {
       // a match on this line?
-      match = (int)vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, NULL, NULL);
+      match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, NULL, NULL);
       if (regmatch.regprog == NULL) {
         break;  // re-compiling regprog failed
       }

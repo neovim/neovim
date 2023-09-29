@@ -893,11 +893,11 @@ static int64_t getoctchrs(void)
 // If the first character is '-', then the range is reversed.
 // Should end with 'end'.  If minval is missing, zero is default, if maxval is
 // missing, a very big number is the default.
-static int read_limits(long *minval, long *maxval)
+static int read_limits(int *minval, int *maxval)
 {
   int reverse = false;
   char *first_char;
-  long tmp;
+  int tmp;
 
   if (*regparse == '-') {
     // Starts with '-', so reverse the range later.
@@ -905,10 +905,10 @@ static int read_limits(long *minval, long *maxval)
     reverse = true;
   }
   first_char = regparse;
-  *minval = getdigits_long(&regparse, false, 0);
+  *minval = getdigits_int(&regparse, false, 0);
   if (*regparse == ',') {           // There is a comma.
     if (ascii_isdigit(*++regparse)) {
-      *maxval = getdigits_long(&regparse, false, MAX_LIMIT);
+      *maxval = getdigits_int(&regparse, false, MAX_LIMIT);
     } else {
       *maxval = MAX_LIMIT;
     }
@@ -2515,8 +2515,8 @@ bool vim_regexec_nl(regmatch_T *rmp, const char *line, colnr_T col)
 ///
 /// @return  zero if there is no match.  Return number of lines contained in the
 ///          match otherwise.
-long vim_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T col,
-                       proftime_T *tm, int *timed_out)
+int vim_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T col,
+                      proftime_T *tm, int *timed_out)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   regexec_T rex_save;
@@ -2535,7 +2535,7 @@ long vim_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, 
   }
   rex_in_use = true;
 
-  long result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col, tm, timed_out);
+  int result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col, tm, timed_out);
   rmp->regprog->re_in_use = false;
 
   // NFA engine aborted because it's very slow, use backtracking engine instead.

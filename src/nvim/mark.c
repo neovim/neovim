@@ -1315,7 +1315,7 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
 // position.
 // "spaces_removed" is the number of spaces that were removed, matters when the
 // cursor is inside them.
-void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, long col_amount,
+void mark_col_adjust(linenr_T lnum, colnr_T mincol, linenr_T lnum_amount, colnr_T col_amount,
                      int spaces_removed)
 {
   int fnum = curbuf->b_fnum;

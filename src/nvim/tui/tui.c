@@ -287,7 +287,7 @@ static void terminfo_start(TUIData *tui)
   const char *colorterm = os_getenv("COLORTERM");
   const char *termprg = os_getenv("TERM_PROGRAM");
   const char *vte_version_env = os_getenv("VTE_VERSION");
-  long vtev = vte_version_env ? strtol(vte_version_env, NULL, 10) : 0;
+  int vtev = vte_version_env ? (int)strtol(vte_version_env, NULL, 10) : 0;
   bool iterm_env = termprg && strstr(termprg, "iTerm.app");
   bool nsterm = (termprg && strstr(termprg, "Apple_Terminal"))
                 || terminfo_is_term_family(term, "nsterm");
@@ -295,7 +295,7 @@ static void terminfo_start(TUIData *tui)
                  || os_getenv("KONSOLE_PROFILE_NAME")
                  || os_getenv("KONSOLE_DBUS_SESSION");
   const char *konsolev_env = os_getenv("KONSOLE_VERSION");
-  long konsolev = konsolev_env ? strtol(konsolev_env, NULL, 10)
+  int konsolev = konsolev_env ? (int)strtol(konsolev_env, NULL, 10)
                                : (konsole ? 1 : 0);
 
   patch_terminfo_bugs(tui, term, colorterm, vtev, konsolev, iterm_env, nsterm);
@@ -1456,7 +1456,7 @@ void tui_option_set(TUIData *tui, String name, Object value)
   } else if (strequal(name.data, "ttimeout")) {
     tui->input.ttimeout = value.data.boolean;
   } else if (strequal(name.data, "ttimeoutlen")) {
-    tui->input.ttimeoutlen = (long)value.data.integer;
+    tui->input.ttimeoutlen = (OptInt)value.data.integer;
   } else if (strequal(name.data, "verbose")) {
     tui->verbose = value.data.integer;
   }
@@ -1689,7 +1689,7 @@ static int unibi_find_ext_bool(unibi_term *ut, const char *name)
 /// Several entries in terminfo are known to be deficient or outright wrong;
 /// and several terminal emulators falsely announce incorrect terminal types.
 static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colorterm,
-                                long vte_version, long konsolev, bool iterm_env, bool nsterm)
+                                int vte_version, int konsolev, bool iterm_env, bool nsterm)
 {
   unibi_term *ut = tui->ut;
   const char *xterm_version = os_getenv("XTERM_VERSION");
@@ -2019,7 +2019,7 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
 
 /// This adds stuff that is not in standard terminfo as extended unibilium
 /// capabilities.
-static void augment_terminfo(TUIData *tui, const char *term, long vte_version, long konsolev,
+static void augment_terminfo(TUIData *tui, const char *term, int vte_version, int konsolev,
                              bool iterm_env, bool nsterm)
 {
   unibi_term *ut = tui->ut;

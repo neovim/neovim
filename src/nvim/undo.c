@@ -147,7 +147,7 @@ static const char e_write_error_in_undo_file_str[]
   = N_("E829: Write error in undo file: %s");
 
 // used in undo_end() to report number of added and deleted lines
-static long u_newcount, u_oldcount;
+static int u_newcount, u_oldcount;
 
 // When 'u' flag included in 'cpoptions', we behave like vi.  Need to remember
 // the action that "u" should do.
@@ -507,7 +507,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
     if (size == 1) {
       uep = u_get_headentry(buf);
       prev_uep = NULL;
-      for (long i = 0; i < 10; i++) {
+      for (int i = 0; i < 10; i++) {
         if (uep == NULL) {
           break;
         }
@@ -589,7 +589,7 @@ int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int re
   if (size > 0) {
     uep->ue_array = xmalloc(sizeof(char *) * (size_t)size);
     linenr_T lnum;
-    long i;
+    int i;
     for (i = 0, lnum = top + 1; i < size; i++) {
       fast_breakcheck();
       if (got_int) {
@@ -2312,7 +2312,7 @@ static void u_undoredo(int undo, bool do_buf_event)
         // Use the first line that actually changed.  Avoids that
         // undoing auto-formatting puts the cursor in the previous
         // line.
-        long i;
+        int i;
         for (i = 0; i < newsize && i < oldsize; i++) {
           if (strcmp(uep->ue_array[i], ml_get(top + 1 + (linenr_T)i)) != 0) {
             break;
@@ -2334,7 +2334,7 @@ static void u_undoredo(int undo, bool do_buf_event)
     if (oldsize > 0) {
       newarray = xmalloc(sizeof(char *) * (size_t)oldsize);
       // delete backwards, it goes faster in most cases
-      long i;
+      int i;
       linenr_T lnum;
       for (lnum = bot - 1, i = oldsize; --i >= 0; lnum--) {
         // what can we do when we run out of memory?
@@ -2352,7 +2352,7 @@ static void u_undoredo(int undo, bool do_buf_event)
 
     // insert the lines in u_array between top and bot
     if (newsize) {
-      long i;
+      int i;
       linenr_T lnum;
       for (lnum = top, i = 0; i < newsize; i++, lnum++) {
         // If the file is empty, there is an empty line 1 that we
@@ -2420,13 +2420,13 @@ static void u_undoredo(int undo, bool do_buf_event)
   // Adjust Extmarks
   ExtmarkUndoObject undo_info;
   if (undo) {
-    for (long i = (int)kv_size(curhead->uh_extmark) - 1; i > -1; i--) {
+    for (int i = (int)kv_size(curhead->uh_extmark) - 1; i > -1; i--) {
       undo_info = kv_A(curhead->uh_extmark, i);
       extmark_apply_undo(undo_info, undo);
     }
     // redo
   } else {
-    for (long i = 0; i < (int)kv_size(curhead->uh_extmark); i++) {
+    for (int i = 0; i < (int)kv_size(curhead->uh_extmark); i++) {
       undo_info = kv_A(curhead->uh_extmark, i);
       extmark_apply_undo(undo_info, undo);
     }
@@ -2457,7 +2457,7 @@ static void u_undoredo(int undo, bool do_buf_event)
   }
 
   // restore marks from before undo/redo
-  for (long i = 0; i < NMARKS; i++) {
+  for (int i = 0; i < NMARKS; i++) {
     if (curhead->uh_namedm[i].mark.lnum != 0) {
       free_fmark(curbuf->b_namedm[i]);
       curbuf->b_namedm[i] = curhead->uh_namedm[i];
@@ -2962,7 +2962,7 @@ static void u_freeentries(buf_T *buf, u_header_T *uhp, u_header_T **uhpp)
 }
 
 /// free entry 'uep' and 'n' lines in uep->ue_array[]
-static void u_freeentry(u_entry_T *uep, long n)
+static void u_freeentry(u_entry_T *uep, int n)
 {
   while (n > 0) {
     xfree(uep->ue_array[--n]);

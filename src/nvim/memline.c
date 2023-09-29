@@ -2396,7 +2396,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
   }
 
   // The line was inserted below 'lnum'
-  ml_updatechunk(buf, lnum + 1, (long)len, ML_CHNK_ADDLINE);
+  ml_updatechunk(buf, lnum + 1, len, ML_CHNK_ADDLINE);
   return OK;
 }
 
@@ -2546,11 +2546,11 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
   buf->b_ml.ml_line_count--;
 
   int line_start = ((dp->db_index[idx]) & DB_INDEX_MASK);
-  long line_size;
+  int line_size;
   if (idx == 0) {               // first line in block, text at the end
-    line_size = dp->db_txt_end - (unsigned)line_start;
+    line_size = (int)(dp->db_txt_end - (unsigned)line_start);
   } else {
-    line_size = ((dp->db_index[idx - 1]) & DB_INDEX_MASK) - (unsigned)line_start;
+    line_size = (int)(((dp->db_index[idx - 1]) & DB_INDEX_MASK) - (unsigned)line_start);
   }
 
   // Line should always have an NL char internally (represented as NUL),
@@ -2788,7 +2788,7 @@ static void ml_flush_line(buf_T *buf)
         memmove(old_line - extra, new_line, (size_t)new_len);
         buf->b_ml.ml_flags |= (ML_LOCKED_DIRTY | ML_LOCKED_POS);
         // The else case is already covered by the insert and delete
-        ml_updatechunk(buf, lnum, (long)extra, ML_CHNK_UPDLINE);
+        ml_updatechunk(buf, lnum, extra, ML_CHNK_UPDLINE);
       } else {
         // Cannot do it in one data block: Delete and append.
         // Append first, because ml_delete_int() cannot delete the
@@ -3705,7 +3705,7 @@ enum {
 ///                         Careful: ML_CHNK_ADDLINE may cause ml_find_line() to be called.
 ///                 ML_CHNK_DELLINE: Subtract len from parent chunk, possibly deleting it
 ///                 ML_CHNK_UPDLINE: Add len to parent chunk, as a signed entity.
-static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
+static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
 {
   static buf_T *ml_upd_lastbuf = NULL;
   static linenr_T ml_upd_lastline;
@@ -3732,8 +3732,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
     // First line in empty buffer from ml_flush_line() -- reset
     buf->b_ml.ml_usedchunks = 1;
     buf->b_ml.ml_chunksize[0].mlcs_numlines = 1;
-    buf->b_ml.ml_chunksize[0].mlcs_totalsize =
-      (long)strlen(buf->b_ml.ml_line_ptr) + 1;
+    buf->b_ml.ml_chunksize[0].mlcs_totalsize = (int)strlen(buf->b_ml.ml_line_ptr) + 1;
     return;
   }
 
@@ -3779,7 +3778,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
               buf->b_ml.ml_chunksize + curix,
               (size_t)(buf->b_ml.ml_usedchunks - curix) * sizeof(chunksize_T));
       // Compute length of first half of lines in the split chunk
-      long size = 0;
+      int size = 0;
       int linecnt = 0;
       while (curline < buf->b_ml.ml_line_count
              && linecnt < MLCS_MINL) {
@@ -3893,14 +3892,14 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
 /// @param no_ff ignore 'fileformat' option, always use one byte for NL.
 ///
 /// @return  -1 if information is not available
-long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
+int ml_find_line_or_offset(buf_T *buf, linenr_T lnum, int *offp, bool no_ff)
 {
   linenr_T curline;
   int curix;
-  long size;
+  int size;
   bhdr_T *hp;
   int text_end;
-  long offset;
+  int offset;
   int ffdos = !no_ff && (get_fileformat(buf) == EOL_DOS);
   int extra = 0;
 
@@ -3918,7 +3917,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
   if (lnum == 0 || buf->b_ml.ml_line_lnum < lnum || !no_ff) {
     ml_flush_line(curbuf);
   } else if (can_cache && buf->b_ml.ml_line_offset > 0) {
-    return (long)buf->b_ml.ml_line_offset;
+    return (int)buf->b_ml.ml_line_offset;
   }
 
   if (buf->b_ml.ml_usedchunks == -1
@@ -3951,7 +3950,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
              || (offset != 0
                  && offset > size +
                  buf->b_ml.ml_chunksize[curix].mlcs_totalsize
-                 + (long)ffdos * buf->b_ml.ml_chunksize[curix].mlcs_numlines))) {
+                 + ffdos * buf->b_ml.ml_chunksize[curix].mlcs_numlines))) {
     curline += buf->b_ml.ml_chunksize[curix].mlcs_numlines;
     size += buf->b_ml.ml_chunksize[curix].mlcs_totalsize;
     if (offset && ffdos) {
@@ -4039,9 +4038,9 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp, bool no_ff)
 }
 
 /// Goto byte in buffer with offset 'cnt'.
-void goto_byte(long cnt)
+void goto_byte(int cnt)
 {
-  long boff = cnt;
+  int boff = cnt;
 
   ml_flush_line(curbuf);  // cached line may be dirty
   setpcmark();

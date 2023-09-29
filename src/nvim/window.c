@@ -6615,8 +6615,8 @@ void scroll_to_fraction(win_T *wp, int prev_height)
     if (lnum < 1) {             // can happen when starting up
       lnum = 1;
     }
-    wp->w_wrow = (int)((long)wp->w_fraction * (long)height - 1L) / FRACTION_MULT;
-    int line_size = plines_win_col(wp, lnum, (long)(wp->w_cursor.col)) - 1;
+    wp->w_wrow = (int)(wp->w_fraction * height - 1L) / FRACTION_MULT;
+    int line_size = plines_win_col(wp, lnum, wp->w_cursor.col) - 1;
     int sline = wp->w_wrow - line_size;
 
     if (sline >= 0) {
@@ -6894,7 +6894,7 @@ char *grab_file_name(int count, linenr_T *file_lnum)
     if (file_lnum != NULL && ptr[len] == ':' && isdigit((uint8_t)ptr[len + 1])) {
       char *p = ptr + len + 1;
 
-      *file_lnum = (linenr_T)getdigits_long(&p, false, 0);
+      *file_lnum = getdigits_int32(&p, false, 0);
     }
     return find_file_name_in_path(ptr, len, options, count, curbuf->b_ffname);
   }

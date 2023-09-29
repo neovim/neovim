@@ -831,7 +831,7 @@ int del_chars(int count, int fixpos)
 {
   int bytes = 0;
   char *p = get_cursor_pos_ptr();
-  for (long i = 0; i < count && *p != NUL; i++) {
+  for (int i = 0; i < count && *p != NUL; i++) {
     int l = utfc_ptr2len(p);
     bytes += l;
     p += l;
@@ -1829,7 +1829,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         if (flags & OPENLINE_MARKFIX) {
           mark_col_adjust(curwin->w_cursor.lnum,
                           curwin->w_cursor.col + less_cols_off,
-                          1L, (long)-less_cols, 0);
+                          1L, -less_cols, 0);
         }
         // Always move extmarks - Here we move only the line where the
         // cursor is, the previous mark_adjust takes care of the lines after

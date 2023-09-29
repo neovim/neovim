@@ -37,19 +37,19 @@ struct u_header {
   // the undo file in u_read_undo()
   union {
     u_header_T *ptr;            // pointer to next undo header in list
-    long seq;
+    int seq;
   } uh_next;
   union {
     u_header_T *ptr;            // pointer to previous header in list
-    long seq;
+    int seq;
   } uh_prev;
   union {
     u_header_T *ptr;            // pointer to next header for alt. redo
-    long seq;
+    int seq;
   } uh_alt_next;
   union {
     u_header_T *ptr;            // pointer to previous header for alt. redo
-    long seq;
+    int seq;
   } uh_alt_prev;
   int uh_seq;                   // sequence number, higher == newer undo
   int uh_walk;                  // used by undo_time()

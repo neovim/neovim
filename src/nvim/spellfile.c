@@ -1678,7 +1678,7 @@ static int *mb_str2wide(const char *s)
 /// @param prefixcnt  when "prefixtree" is true: prefix count
 ///
 /// @return  zero when OK, SP_ value for an error.
-static int spell_read_tree(FILE *fd, uint8_t **bytsp, long *bytsp_len, idx_T **idxsp,
+static int spell_read_tree(FILE *fd, uint8_t **bytsp, int *bytsp_len, idx_T **idxsp,
                            bool prefixtree, int prefixcnt)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
@@ -4214,7 +4214,7 @@ static int node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, int
   wordnode_T *child;
   hash_T hash;
   hashitem_T *hi;
-  long len = 0;
+  int len = 0;
   unsigned nr, n;
   int compressed = 0;
 
@@ -4262,7 +4262,7 @@ static int node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, int
       }
     }
   }
-  *tot += (int)len + 1;      // add one for the node that stores the length
+  *tot += len + 1;      // add one for the node that stores the length
 
   // Make a hash key for the node and its siblings, so that we can quickly
   // find a lookalike node.  This must be done after compressing the sibling

@@ -2541,7 +2541,7 @@ static int nfa_regpiece(void)
   int i;
   int op;
   int ret;
-  long minval, maxval;
+  int minval, maxval;
   bool greedy = true;  // Braces are prefixed with '-' ?
   parse_state_T old_state;
   parse_state_T new_state;
@@ -5792,7 +5792,7 @@ static int skip_to_start(int c, colnr_T *colp)
 // Check for a match with match_text.
 // Called after skip_to_start() has found regstart.
 // Returns zero for no match, 1 for a match.
-static long find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text)
+static int find_match_text(colnr_T *startcol, int regstart, uint8_t *match_text)
 {
 #define PTR2LEN(x) utf_ptr2len(x)
 
@@ -7207,7 +7207,7 @@ theend:
 /// @param timed_out  flag set on timeout or NULL
 ///
 /// @return  <= 0 for failure, number of lines contained in the match otherwise.
-static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_out)
+static int nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_out)
 {
   int i;
   regsubs_T subs, m;
@@ -7334,10 +7334,10 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col, proftime_T *tm, int *ti
 ///
 /// @return <= 0 if there is no match and number of lines contained in the
 /// match otherwise.
-static long nfa_regexec_both(uint8_t *line, colnr_T startcol, proftime_T *tm, int *timed_out)
+static int nfa_regexec_both(uint8_t *line, colnr_T startcol, proftime_T *tm, int *timed_out)
 {
   nfa_regprog_T *prog;
-  long retval = 0L;
+  int retval = 0;
   colnr_T col = startcol;
 
   if (REG_MULTI) {
@@ -7631,8 +7631,8 @@ static int nfa_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T col, bool line
 ///
 /// @par
 /// FIXME if this behavior is not compatible.
-static long nfa_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T col,
-                              proftime_T *tm, int *timed_out)
+static int nfa_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T col,
+                             proftime_T *tm, int *timed_out)
 {
   init_regexec_multi(rmp, win, buf, lnum);
   return nfa_regexec_both(NULL, col, tm, timed_out);
