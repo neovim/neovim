@@ -2202,7 +2202,7 @@ bool swapchar(int op_type, pos_T *pos)
 }
 
 /// Insert and append operators for Visual mode.
-void op_insert(oparg_T *oap, long count1)
+void op_insert(oparg_T *oap, int count1)
 {
   int pre_textlen = 0;
   char *firstline;
@@ -2491,7 +2491,7 @@ int op_change(oparg_T *oap)
 
     ins_len = (int)strlen(firstline) - pre_textlen;
     if (ins_len > 0) {
-      long offset;
+      int offset;
       char *newp;
       char *oldp;
       // Subsequent calls to ml_get() flush the firstline data - take a
@@ -2932,7 +2932,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
   pos_T old_pos;
   char *insert_string = NULL;
   bool allocated = false;
-  long cnt;
+  int cnt;
   const pos_T orig_start = curbuf->b_op_start;
   const pos_T orig_end = curbuf->b_op_end;
   unsigned cur_ve_flags = get_ve_flags();
@@ -3334,7 +3334,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
       ptr += bd.startspaces;
 
       // insert the new text
-      for (long j = 0; j < count; j++) {
+      for (int j = 0; j < count; j++) {
         memmove(ptr, y_array[i], (size_t)yanklen);
         ptr += yanklen;
 
@@ -5339,7 +5339,7 @@ void cursor_pos_info(dict_T *dict)
     linenr_T lnum;
     int eol_size;
     varnumber_T last_check = 100000L;
-    long line_count_selected = 0;
+    int line_count_selected = 0;
     if (get_fileformat(curbuf) == EOL_DOS) {
       eol_size = 2;
     } else {
@@ -5398,7 +5398,7 @@ void cursor_pos_info(dict_T *dict)
       if (l_VIsual_active
           && lnum >= min_pos.lnum && lnum <= max_pos.lnum) {
         char *s = NULL;
-        long len = 0L;
+        int len = 0L;
 
         switch (l_VIsual_mode) {
         case Ctrl_V:
@@ -5406,7 +5406,7 @@ void cursor_pos_info(dict_T *dict)
           block_prep(&oparg, &bd, lnum, false);
           virtual_op = kNone;
           s = bd.textstart;
-          len = (long)bd.textlen;
+          len = bd.textlen;
           break;
         case 'V':
           s = ml_get(lnum);
@@ -5429,7 +5429,7 @@ void cursor_pos_info(dict_T *dict)
           if (lnum == curbuf->b_ml.ml_line_count
               && !curbuf->b_p_eol
               && (curbuf->b_p_bin || !curbuf->b_p_fixeol)
-              && (long)strlen(s) < len) {
+              && (int)strlen(s) < len) {
             byte_count_cursor -= eol_size;
           }
         }

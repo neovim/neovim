@@ -1630,7 +1630,7 @@ static int execute_cmd0(int *retv, exarg_T *eap, const char **errormsg, bool pre
     // Call the function to execute the builtin command or the preview callback.
     eap->errmsg = NULL;
     if (preview) {
-      *retv = (cmdnames[eap->cmdidx].cmd_preview_func)(eap, (int)cmdpreview_get_ns(),
+      *retv = (cmdnames[eap->cmdidx].cmd_preview_func)(eap, cmdpreview_get_ns(),
                                                        cmdpreview_get_bufnr());
     } else {
       (cmdnames[eap->cmdidx].cmd_func)(eap);

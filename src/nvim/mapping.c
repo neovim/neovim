@@ -2074,7 +2074,7 @@ void f_hasmapto(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 ///
 /// @return  A Dictionary.
 static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhsrawalt,
-                                     const long buffer_value, const bool compatible)
+                                     const int buffer_value, const bool compatible)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   Dictionary dict = ARRAY_DICT_INIT;
@@ -2694,7 +2694,7 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
   int int_mode = get_map_mode(&p, 0);
 
   // Determine the desired buffer value
-  long buffer_value = (buf == NULL) ? 0 : buf->handle;
+  int buffer_value = (buf == NULL) ? 0 : buf->handle;
 
   for (int i = 0; i < MAX_MAPHASH; i++) {
     for (const mapblock_T *current_maphash = get_maphash(i, buf);

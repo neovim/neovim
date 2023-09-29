@@ -2554,9 +2554,9 @@ static int is_zero_width(char *pattern, int move, pos_T *cur, Direction directio
     // start and end are in the same position.
     do {
       regmatch.startpos[0].col++;
-      nmatched = (int)vim_regexec_multi(&regmatch, curwin, curbuf,
-                                        pos.lnum, regmatch.startpos[0].col,
-                                        NULL, NULL);
+      nmatched = vim_regexec_multi(&regmatch, curwin, curbuf,
+                                   pos.lnum, regmatch.startpos[0].col,
+                                   NULL, NULL);
       if (nmatched != 0) {
         break;
       }

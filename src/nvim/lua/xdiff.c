@@ -71,8 +71,8 @@ static void get_linematch_results(lua_State *lstate, mmfile_t *ma, mmfile_t *mb,
   const char *diff_begin[2] = { ma->ptr, mb->ptr };
   int diff_length[2] = { (int)count_a, (int)count_b };
 
-  fastforward_buf_to_lnum(&diff_begin[0], start_a + 1);
-  fastforward_buf_to_lnum(&diff_begin[1], start_b + 1);
+  fastforward_buf_to_lnum(&diff_begin[0], (linenr_T)start_a + 1);
+  fastforward_buf_to_lnum(&diff_begin[1], (linenr_T)start_b + 1);
 
   int *decisions = NULL;
   size_t decisions_length = linematch_nbuffers(diff_begin, diff_length, 2, &decisions, iwhite);
@@ -125,7 +125,7 @@ static int write_string(void *priv, mmbuffer_t *mb, int nbuf)
 }
 
 // hunk_func callback used when opts.hunk_lines = true
-static int hunk_locations_cb(long start_a, long count_a, long start_b, long count_b, void *cb_data)
+static int hunk_locations_cb(int start_a, int count_a, int start_b, int count_b, void *cb_data)
 {
   hunkpriv_t *priv = (hunkpriv_t *)cb_data;
   lua_State *lstate = priv->lstate;
@@ -140,7 +140,7 @@ static int hunk_locations_cb(long start_a, long count_a, long start_b, long coun
 }
 
 // hunk_func callback used when opts.on_hunk is given
-static int call_on_hunk_cb(long start_a, long count_a, long start_b, long count_b, void *cb_data)
+static int call_on_hunk_cb(int start_a, int count_a, int start_b, int count_b, void *cb_data)
 {
   // Mimic extra offsets done by xdiff, see:
   // src/xdiff/xemit.c:284

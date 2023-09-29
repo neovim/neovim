@@ -620,7 +620,7 @@ tv_list_copy_error:
 
 /// Get the list item in "l" with index "n1".  "n1" is adjusted if needed.
 /// Return NULL if there is no such item.
-listitem_T *tv_list_check_range_index_one(list_T *const l, long *const n1, const bool quiet)
+listitem_T *tv_list_check_range_index_one(list_T *const l, int *const n1, const bool quiet)
 {
   listitem_T *li = tv_list_find_index(l, n1);
   if (li == NULL) {
@@ -636,11 +636,11 @@ listitem_T *tv_list_check_range_index_one(list_T *const l, long *const n1, const
 /// If "n1" or "n2" is negative it is changed to the positive index.
 /// "li1" is the item for item "n1".
 /// Return OK or FAIL.
-int tv_list_check_range_index_two(list_T *const l, long *const n1, const listitem_T *const li1,
-                                  long *const n2, const bool quiet)
+int tv_list_check_range_index_two(list_T *const l, int *const n1, const listitem_T *const li1,
+                                  int *const n2, const bool quiet)
 {
   if (*n2 < 0) {
-    listitem_T *ni = tv_list_find(l, (int)(*n2));
+    listitem_T *ni = tv_list_find(l, *n2);
     if (ni == NULL) {
       if (!quiet) {
         semsg(_(e_list_index_out_of_range_nr), (int64_t)(*n2));
@@ -670,11 +670,10 @@ int tv_list_check_range_index_two(list_T *const l, long *const n1, const listite
 /// "op" is the operator, normally "=" but can be "+=" and the like.
 /// "varname" is used for error messages.
 /// Returns OK or FAIL.
-int tv_list_assign_range(list_T *const dest, list_T *const src, const long idx1_arg,
-                         const long idx2, const bool empty_idx2, const char *const op,
-                         const char *const varname)
+int tv_list_assign_range(list_T *const dest, list_T *const src, const int idx1_arg, const int idx2,
+                         const bool empty_idx2, const char *const op, const char *const varname)
 {
-  long idx1 = idx1_arg;
+  int idx1 = idx1_arg;
   listitem_T *const first_li = tv_list_find_index(dest, &idx1);
   listitem_T *src_li;
 
@@ -1634,14 +1633,14 @@ const char *tv_list_find_str(list_T *const l, const int n)
 
 /// Like tv_list_find() but when a negative index is used that is not found use
 /// zero and set "idx" to zero.  Used for first index of a range.
-static listitem_T *tv_list_find_index(list_T *const l, long *const idx)
+static listitem_T *tv_list_find_index(list_T *const l, int *const idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  listitem_T *li = tv_list_find(l, (int)(*idx));
+  listitem_T *li = tv_list_find(l, *idx);
   if (li == NULL) {
     if (*idx < 0) {
       *idx = 0;
-      li = tv_list_find(l, (int)(*idx));
+      li = tv_list_find(l, *idx);
     }
   }
   return li;
@@ -1653,7 +1652,7 @@ static listitem_T *tv_list_find_index(list_T *const l, long *const idx)
 /// @param[in]  item  Item to search for.
 ///
 /// @return Index of an item or -1 if item is not in the list.
-long tv_list_idx_of_item(const list_T *const l, const listitem_T *const item)
+int tv_list_idx_of_item(const list_T *const l, const listitem_T *const item)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   if (l == NULL) {

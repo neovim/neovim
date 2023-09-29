@@ -2773,7 +2773,7 @@ void intro_message(int colon)
   size_t lines_size = ARRAY_SIZE(lines);
   assert(lines_size <= LONG_MAX);
 
-  long blanklines = Rows - ((long)lines_size - 1L);
+  int blanklines = Rows - ((int)lines_size - 1);
 
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
   if (p_ls > 1) {
@@ -2790,7 +2790,7 @@ void intro_message(int colon)
   sponsor = ((sponsor & 2) == 0) - ((sponsor & 4) == 0);
 
   // start displaying the message lines after half of the blank lines
-  long row = blanklines / 2;
+  int row = blanklines / 2;
 
   if (((row >= 2) && (Columns >= 50)) || colon) {
     for (int i = 0; i < (int)ARRAY_SIZE(lines); i++) {
@@ -2827,7 +2827,7 @@ void intro_message(int colon)
       }
 
       if (*mesg != NUL) {
-        do_intro_line((int)row, mesg, 0);
+        do_intro_line(row, mesg, 0);
       }
       row++;
 

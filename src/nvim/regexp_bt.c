@@ -2466,8 +2466,8 @@ static uint8_t *regpiece(int *flagp)
   int op;
   uint8_t *next;
   int flags;
-  long minval;
-  long maxval;
+  int minval;
+  int maxval;
 
   ret = regatom(&flags);
   if (ret == NULL) {
@@ -4869,7 +4869,7 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
 /// @param timed_out  flag set on timeout or NULL
 ///
 /// @return  0 for failure, or number of lines contained in the match.
-static long regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_out)
+static int regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_out)
 {
   rex.input = rex.line + col;
   rex.need_clear_subexpr = true;
@@ -4939,12 +4939,12 @@ static long regtry(bt_regprog_T *prog, colnr_T col, proftime_T *tm, int *timed_o
 /// @param timed_out  flag set on timeout or NULL
 ///
 /// @return  0 for failure, or number of lines contained in the match.
-static long bt_regexec_both(uint8_t *line, colnr_T startcol, proftime_T *tm, int *timed_out)
+static int bt_regexec_both(uint8_t *line, colnr_T startcol, proftime_T *tm, int *timed_out)
 {
   bt_regprog_T *prog;
   uint8_t *s;
   colnr_T col = startcol;
-  long retval = 0L;
+  int retval = 0;
 
   // Create "regstack" and "backpos" if they are not allocated yet.
   // We allocate *_INITIAL amount of bytes first and then set the grow size
@@ -5175,8 +5175,8 @@ static int bt_regexec_nl(regmatch_T *rmp, uint8_t *line, colnr_T col, bool line_
 ///
 /// @return zero if there is no match and number of lines contained in the match
 ///         otherwise.
-static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T col,
-                             proftime_T *tm, int *timed_out)
+static int bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T lnum, colnr_T col,
+                            proftime_T *tm, int *timed_out)
 {
   init_regexec_multi(rmp, win, buf, lnum);
   return bt_regexec_both(NULL, col, tm, timed_out);

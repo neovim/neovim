@@ -706,7 +706,7 @@ int parse_compl_arg(const char *value, int vallen, int *complp, uint32_t *argt, 
   return OK;
 }
 
-static int uc_scan_attr(char *attr, size_t len, uint32_t *argt, long *def, int *flags, int *complp,
+static int uc_scan_attr(char *attr, size_t len, uint32_t *argt, int *def, int *flags, int *complp,
                         char **compl_arg, cmd_addr_T *addr_type_arg)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -773,7 +773,7 @@ two_count:
           return FAIL;
         }
 
-        *def = getdigits_long(&p, true, 0);
+        *def = getdigits_int(&p, true, 0);
         *argt |= EX_ZEROR;
 
         if (p != val + vallen || vallen == 0) {
@@ -799,7 +799,7 @@ invalid_count:
           goto two_count;
         }
 
-        *def = getdigits_long(&p, true, 0);
+        *def = getdigits_int(&p, true, 0);
 
         if (p != val + vallen) {
           goto invalid_count;
@@ -975,7 +975,7 @@ void ex_command(exarg_T *eap)
 {
   char *end;
   uint32_t argt = 0;
-  long def = -1;
+  int def = -1;
   int flags = 0;
   int context = EXPAND_NOTHING;
   char *compl_arg = NULL;

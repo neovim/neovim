@@ -567,10 +567,10 @@ static char *get_emsg_lnum(void)
   if (SOURCING_NAME != NULL
       && (other_sourcing_name() || SOURCING_LNUM != last_sourcing_lnum)
       && SOURCING_LNUM != 0) {
-    const char *const p = _("line %4ld:");
+    const char *const p = _("line %4" PRIdLINENR ":");
     const size_t buf_len = 20 + strlen(p);
     char *const buf = xmalloc(buf_len);
-    snprintf(buf, buf_len, p, (long)SOURCING_LNUM);
+    snprintf(buf, buf_len, p, SOURCING_LNUM);
     return buf;
   }
   return NULL;
@@ -693,8 +693,8 @@ bool emsg_multiline(const char *s, bool multiline)
 
       // Log (silent) errors as debug messages.
       if (SOURCING_NAME != NULL && SOURCING_LNUM != 0) {
-        DLOG("(:silent) %s (%s (line %ld))",
-             s, SOURCING_NAME, (long)SOURCING_LNUM);
+        DLOG("(:silent) %s (%s (line %" PRIdLINENR "))",
+             s, SOURCING_NAME, SOURCING_LNUM);
       } else {
         DLOG("(:silent) %s", s);
       }
@@ -704,7 +704,7 @@ bool emsg_multiline(const char *s, bool multiline)
 
     // Log editor errors as INFO.
     if (SOURCING_NAME != NULL && SOURCING_LNUM != 0) {
-      ILOG("%s (%s (line %ld))", s, SOURCING_NAME, (long)SOURCING_LNUM);
+      ILOG("%s (%s (line %" PRIdLINENR "))", s, SOURCING_NAME, SOURCING_LNUM);
     } else {
       ILOG("%s", s);
     }
@@ -1357,7 +1357,7 @@ bool messaging(void)
 
 void msgmore(int n)
 {
-  long pn;
+  int pn;
 
   if (global_busy           // no messages now, wait until global is finished
       || !messaging()) {      // 'lazyredraw' set, don't do messages now
@@ -1380,11 +1380,11 @@ void msgmore(int n)
   if (pn > p_report) {
     if (n > 0) {
       vim_snprintf(msg_buf, MSG_BUF_LEN,
-                   NGETTEXT("%ld more line", "%ld more lines", pn),
+                   NGETTEXT("%d more line", "%d more lines", pn),
                    pn);
     } else {
       vim_snprintf(msg_buf, MSG_BUF_LEN,
-                   NGETTEXT("%ld line less", "%ld fewer lines", pn),
+                   NGETTEXT("%d line less", "%d fewer lines", pn),
                    pn);
     }
     if (got_int) {

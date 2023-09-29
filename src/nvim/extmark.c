@@ -615,7 +615,7 @@ void extmark_splice(buf_T *buf, int start_row, colnr_T start_col, int old_row, c
                     bcount_t old_byte, int new_row, colnr_T new_col, bcount_t new_byte,
                     ExtmarkOp undo)
 {
-  long offset = ml_find_line_or_offset(buf, start_row + 1, NULL, true);
+  int offset = ml_find_line_or_offset(buf, start_row + 1, NULL, true);
 
   // On empty buffers, when editing the first line, the line is buffered,
   // causing offset to be < 0. While the buffer is not actually empty, the

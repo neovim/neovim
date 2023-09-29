@@ -714,7 +714,7 @@ static bool is_filter_char(int c)
   return !!(tpf_flags & flag);
 }
 
-void terminal_paste(long count, char **y_array, size_t y_size)
+void terminal_paste(int count, char **y_array, size_t y_size)
 {
   if (y_size == 0) {
     return;
@@ -1584,7 +1584,7 @@ static void refresh_terminal(Terminal *term)
     }
     return;
   }
-  long ml_before = buf->b_ml.ml_line_count;
+  linenr_T ml_before = buf->b_ml.ml_line_count;
 
   // refresh_ functions assume the terminal buffer is current
   aco_save_T aco;
@@ -1594,7 +1594,7 @@ static void refresh_terminal(Terminal *term)
   refresh_screen(term, buf);
   aucmd_restbuf(&aco);
 
-  long ml_added = buf->b_ml.ml_line_count - ml_before;
+  int ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);
 }
 
@@ -1754,7 +1754,7 @@ static void refresh_screen(Terminal *term, buf_T *buf)
   term->invalid_end = -1;
 }
 
-static void adjust_topline(Terminal *term, buf_T *buf, long added)
+static void adjust_topline(Terminal *term, buf_T *buf, int added)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == buf) {

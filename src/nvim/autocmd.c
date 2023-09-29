@@ -1766,10 +1766,10 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     patcmd.data = data;
 
     // set v:cmdarg (only when there is a matching pattern)
-    save_cmdbang = (long)get_vim_var_nr(VV_CMDBANG);
+    save_cmdbang = get_vim_var_nr(VV_CMDBANG);
     if (eap != NULL) {
       save_cmdarg = set_cmdarg(eap, NULL);
-      set_vim_var_nr(VV_CMDBANG, (long)eap->forceit);
+      set_vim_var_nr(VV_CMDBANG, eap->forceit);
     } else {
       save_cmdarg = NULL;  // avoid gcc warning
     }

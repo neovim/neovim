@@ -1496,7 +1496,7 @@ static int normal_check(VimState *state)
 /// Set v:prevcount only when "set_prevcount" is true.
 static void set_vcount_ca(cmdarg_T *cap, bool *set_prevcount)
 {
-  long count = cap->count0;
+  int64_t count = cap->count0;
 
   // multiply with cap->opcount the same way as above
   if (cap->opcount != 0) {
@@ -1856,7 +1856,7 @@ void clear_showcmd(void)
 
   if (VIsual_active && !char_avail()) {
     int cursor_bot = lt(VIsual, curwin->w_cursor);
-    long lines;
+    int lines;
     colnr_T leftcol, rightcol;
     linenr_T top, bot;
 
@@ -2115,8 +2115,7 @@ void do_check_scrollbind(bool check)
           && (curwin->w_topline != old_topline
               || curwin->w_topfill != old_topfill
               || curwin->w_leftcol != old_leftcol)) {
-        check_scrollbind(curwin->w_topline - old_topline,
-                         (long)(curwin->w_leftcol - old_leftcol));
+        check_scrollbind(curwin->w_topline - old_topline, curwin->w_leftcol - old_leftcol);
       }
     } else if (vim_strchr(p_sbo, 'j')) {  // jump flag set in 'scrollopt'
       // When switching between windows, make sure that the relative
@@ -2142,7 +2141,7 @@ void do_check_scrollbind(bool check)
 /// Synchronize any windows that have "scrollbind" set, based on the
 /// number of rows by which the current window has changed
 /// (1998-11-02 16:21:01  R. Edward Ralston <eralston@computer.org>)
-void check_scrollbind(linenr_T topline_diff, long leftcol_diff)
+void check_scrollbind(linenr_T topline_diff, int leftcol_diff)
 {
   bool want_ver;
   bool want_hor;
@@ -2468,7 +2467,7 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
 /// 'dist' must be positive.
 ///
 /// @return  true if able to move cursor, false otherwise.
-static bool nv_screengo(oparg_T *oap, int dir, long dist)
+static bool nv_screengo(oparg_T *oap, int dir, int dist)
 {
   int linelen = (int)linetabsize(curwin, curwin->w_cursor.lnum);
   bool retval = true;
@@ -2784,7 +2783,7 @@ static void nv_zet(cmdarg_T *cap)
 {
   colnr_T col;
   int nchar = cap->nchar;
-  long old_fdl = (long)curwin->w_p_fdl;
+  int old_fdl = (int)curwin->w_p_fdl;
   int old_fen = curwin->w_p_fen;
 
   int siso = get_sidescrolloff_value(curwin);

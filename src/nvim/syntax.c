@@ -5646,11 +5646,11 @@ static void syntime_report(void)
       p = GA_APPEND_VIA_PTR(time_entry_T, &ga);
       p->total = spp->sp_time.total;
       total_total = profile_add(total_total, spp->sp_time.total);
-      p->count = (int)spp->sp_time.count;
-      p->match = (int)spp->sp_time.match;
-      total_count += (int)spp->sp_time.count;
+      p->count = spp->sp_time.count;
+      p->match = spp->sp_time.match;
+      total_count += spp->sp_time.count;
       p->slowest = spp->sp_time.slowest;
-      proftime_T tm = profile_divide(spp->sp_time.total, (int)spp->sp_time.count);
+      proftime_T tm = profile_divide(spp->sp_time.total, spp->sp_time.count);
       p->average = tm;
       p->id = spp->sp_syn.id;
       p->pattern = spp->sp_pattern;

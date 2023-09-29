@@ -1108,15 +1108,13 @@ void format_lines(linenr_T line_count, bool avoid_fex)
         }
         if (next_leader_len > 0) {
           (void)del_bytes(next_leader_len, false, false);
-          mark_col_adjust(curwin->w_cursor.lnum, (colnr_T)0, 0L,
-                          (long)-next_leader_len, 0);
+          mark_col_adjust(curwin->w_cursor.lnum, 0, 0, -next_leader_len, 0);
         } else if (second_indent > 0) {   // the "leader" for FO_Q_SECOND
           int indent = (int)getwhitecols_curline();
 
           if (indent > 0) {
             (void)del_bytes(indent, false, false);
-            mark_col_adjust(curwin->w_cursor.lnum,
-                            (colnr_T)0, 0L, (long)-indent, 0);
+            mark_col_adjust(curwin->w_cursor.lnum, 0, 0, -indent, 0);
           }
         }
         curwin->w_cursor.lnum--;

@@ -53,11 +53,11 @@ typedef struct lval_S {
   list_T *ll_list;    ///< The list or NULL.
   bool ll_range;      ///< true when a [i:j] range was used.
   bool ll_empty2;     ///< Second index is empty: [i:].
-  long ll_n1;         ///< First index for list.
-  long ll_n2;         ///< Second index for list range.
+  int ll_n1;          ///< First index for list.
+  int ll_n2;          ///< Second index for list range.
   dict_T *ll_dict;    ///< The Dictionary or NULL.
   dictitem_T *ll_di;  ///< The dictitem or NULL.
-  char *ll_newkey;  ///< New key for Dict in allocated memory or NULL.
+  char *ll_newkey;    ///< New key for Dict in allocated memory or NULL.
   blob_T *ll_blob;    ///< The Blob or NULL.
 } lval_T;
 
@@ -225,7 +225,7 @@ typedef struct {
   int repeat_count;
   int refcount;
   int emsg_count;  ///< Errors in a repeating timer.
-  long timeout;
+  int64_t timeout;
   bool stopped;
   bool paused;
   Callback callback;

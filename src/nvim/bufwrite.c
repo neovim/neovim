@@ -339,7 +339,7 @@ static int buf_write_bytes(struct bw_info *ip)
     // Only checking conversion, which is OK if we get here.
     return OK;
   }
-  int wlen = (int)write_eintr(ip->bw_fd, buf, (size_t)len);
+  int wlen = write_eintr(ip->bw_fd, buf, (size_t)len);
   return (wlen < len) ? FAIL : OK;
 }
 
@@ -619,14 +619,14 @@ static void emit_err(Error_T *e)
 
 #if defined(UNIX)
 
-static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwriting, long *perm,
+static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwriting, int *perm,
                            bool *device, bool *newfile, Error_T *err)
 {
   *perm = -1;
   if (!os_fileinfo(fname, file_info_old)) {
     *newfile = true;
   } else {
-    *perm = (long)file_info_old->stat.st_mode;
+    *perm = (int)file_info_old->stat.st_mode;
     if (!S_ISREG(file_info_old->stat.st_mode)) {             // not a file
       if (S_ISDIR(file_info_old->stat.st_mode)) {
         *err = set_err_num("E502", _("is a directory"));
@@ -648,7 +648,7 @@ static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwritin
 
 #else
 
-static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwriting, long *perm,
+static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwriting, int *perm,
                            bool *device, bool *newfile, Error_T *err)
 {
   // Check for a writable device name.
@@ -688,7 +688,7 @@ static int get_fileinfo_os(char *fname, FileInfo *file_info_old, bool overwritin
 /// @param[out] newfile
 /// @param[out] readonly
 static int get_fileinfo(buf_T *buf, char *fname, bool overwriting, bool forceit,
-                        FileInfo *file_info_old, long *perm, bool *device, bool *newfile,
+                        FileInfo *file_info_old, int *perm, bool *device, bool *newfile,
                         bool *readonly, Error_T *err)
 {
   if (get_fileinfo_os(fname, file_info_old, overwriting, perm, device, newfile, err) == FAIL) {
@@ -723,7 +723,7 @@ static int get_fileinfo(buf_T *buf, char *fname, bool overwriting, bool forceit,
 }
 
 static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_old, vim_acl_T acl,
-                                 long perm, unsigned bkc, bool file_readonly, bool forceit,
+                                 int perm, unsigned bkc, bool file_readonly, bool forceit,
                                  int *backup_copyp, char **backupp, Error_T *err)
 {
   FileInfo file_info;
@@ -755,7 +755,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
         }
       }
       int fd = os_open(IObuff,
-                       O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, (int)perm);
+                       O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, perm);
       if (fd < 0) {           // can't write in directory
         *backup_copyp = true;
       } else {
@@ -764,7 +764,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
         if (!os_fileinfo(IObuff, &file_info)
             || file_info.stat.st_uid != file_info_old->stat.st_uid
             || file_info.stat.st_gid != file_info_old->stat.st_gid
-            || (long)file_info.stat.st_mode != perm) {
+            || (int)file_info.stat.st_mode != perm) {
           *backup_copyp = true;
         }
 #endif
@@ -911,7 +911,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
         //
         if (file_info_new.stat.st_gid != file_info_old->stat.st_gid
             && os_chown(*backupp, (uv_uid_t)-1, (uv_gid_t)file_info_old->stat.st_gid) != 0) {
-          os_setperm(*backupp, ((int)perm & 0707) | (((int)perm & 07) << 3));
+          os_setperm(*backupp, (perm & 0707) | ((perm & 07) << 3));
         }
 # ifdef HAVE_XATTR
         os_copy_xattr(fname, *backupp);
@@ -1193,7 +1193,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   }
 
   Error_T err = { 0 };
-  long perm;             // file permissions
+  int perm;              // file permissions
   bool newfile = false;  // true if file doesn't exist yet
   bool device = false;   // writing to a device
   bool file_readonly = false;  // overwritten file is read-only
@@ -1255,7 +1255,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
       && file_info_old.stat.st_uid == getuid()
       && vim_strchr(p_cpo, CPO_FWRITE) == NULL) {
     perm |= 0200;
-    (void)os_setperm(fname, (int)perm);
+    (void)os_setperm(fname, perm);
     made_writable = true;
   }
 #endif
@@ -1658,7 +1658,7 @@ restore_backup:
           || file_info.stat.st_gid != file_info_old.stat.st_gid) {
         os_fchown(fd, (uv_uid_t)file_info_old.stat.st_uid, (uv_gid_t)file_info_old.stat.st_gid);
         if (perm >= 0) {  // Set permission again, may have changed.
-          (void)os_setperm(wfname, (int)perm);
+          (void)os_setperm(wfname, perm);
         }
       }
       buf_set_file_id(buf);
@@ -1679,7 +1679,7 @@ restore_backup:
     }
 #endif
     if (perm >= 0) {  // Set perm. of new file same as old file.
-      (void)os_setperm(wfname, (int)perm);
+      (void)os_setperm(wfname, perm);
     }
     // Probably need to set the ACL before changing the user (can't set the
     // ACL on a file the user doesn't own).

@@ -274,8 +274,8 @@ typedef struct qf_info_S qf_info_T;
 typedef struct {
   proftime_T total;             // total time used
   proftime_T slowest;           // time of slowest call
-  long count;                   // nr of times used
-  long match;                   // nr of times matched
+  int count;                    // nr of times used
+  int match;                    // nr of times matched
 } syn_time_T;
 
 // These are items normally related to a buffer.  But when using ":ownsyntax"
@@ -440,10 +440,10 @@ struct file_buffer {
   disptick_T b_mod_tick_decor;  // last display tick decoration providers
                                 // where invoked
 
-  long b_mtime;                 // last change time of original file
-  long b_mtime_ns;              // nanoseconds of last change time
-  long b_mtime_read;            // last change time when reading
-  long b_mtime_read_ns;         // nanoseconds of last read time
+  int64_t b_mtime;              // last change time of original file
+  int64_t b_mtime_ns;           // nanoseconds of last change time
+  int64_t b_mtime_read;         // last change time when reading
+  int64_t b_mtime_read_ns;      // nanoseconds of last read time
   uint64_t b_orig_size;         // size of original file in bytes
   int b_orig_mode;              // mode of original file
   time_t b_last_used;           // time when the buffer was last used; used
@@ -1268,7 +1268,7 @@ struct window_S {
   int w_briopt_list;                // additional indent for lists
   int w_briopt_vcol;                // indent for specific column
 
-  long w_scbind_pos;
+  int w_scbind_pos;
 
   ScopeDictDictItem w_winvar;  ///< Variable for "w:" dictionary.
   dict_T *w_vars;  ///< Dictionary with w: variables.

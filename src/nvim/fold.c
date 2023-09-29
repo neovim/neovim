@@ -363,7 +363,7 @@ int foldmethodIsDiff(win_T *wp)
 // closeFold() {{{2
 /// Close fold for current window at position "pos".
 /// Repeat "count" times.
-void closeFold(pos_T pos, long count)
+void closeFold(pos_T pos, int count)
 {
   setFoldRepeat(pos, count, false);
 }
@@ -417,7 +417,7 @@ void opFoldRange(pos_T firstpos, pos_T lastpos, int opening, int recurse, int ha
 // openFold() {{{2
 /// Open fold for current window at position "pos".
 /// Repeat "count" times.
-void openFold(pos_T pos, long count)
+void openFold(pos_T pos, int count)
 {
   setFoldRepeat(pos, count, true);
 }
@@ -847,7 +847,7 @@ void foldUpdateAll(win_T *win)
 /// @return FAIL if not moved.
 ///
 /// @param dir  FORWARD or BACKWARD
-int foldMoveTo(const bool updown, const int dir, const long count)
+int foldMoveTo(const bool updown, const int dir, const int count)
 {
   int retval = FAIL;
   linenr_T lnum;
@@ -856,7 +856,7 @@ int foldMoveTo(const bool updown, const int dir, const long count)
   checkupdate(curwin);
 
   // Repeat "count" times.
-  for (long n = 0; n < count; n++) {
+  for (int n = 0; n < count; n++) {
     // Find nested folds.  Stop when a fold is closed.  The deepest fold
     // that moves the cursor is used.
     linenr_T lnum_off = 0;
@@ -1136,7 +1136,7 @@ static void checkupdate(win_T *wp)
 // setFoldRepeat() {{{2
 /// Open or close fold for current window at position `pos`.
 /// Repeat "count" times.
-static void setFoldRepeat(pos_T pos, long count, int do_open)
+static void setFoldRepeat(pos_T pos, int count, int do_open)
 {
   for (int n = 0; n < count; n++) {
     int done = DONE_NOTHING;
@@ -1816,11 +1816,11 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
     }
   }
   if (text == NULL) {
-    long count = lnume - lnum + 1;
+    int count = lnume - lnum + 1;
 
     vim_snprintf(buf, FOLD_TEXT_LEN,
-                 NGETTEXT("+--%3ld line folded",
-                          "+--%3ld lines folded ", count),
+                 NGETTEXT("+--%3d line folded",
+                          "+--%3d lines folded ", count),
                  count);
     text = buf;
   }
@@ -3304,8 +3304,8 @@ void f_foldtext(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         }
       }
     }
-    long count = foldend - foldstart + 1;
-    char *txt = NGETTEXT("+-%s%3ld line: ", "+-%s%3ld lines: ", count);
+    int count = foldend - foldstart + 1;
+    char *txt = NGETTEXT("+-%s%3d line: ", "+-%s%3d lines: ", count);
     size_t len = strlen(txt)
                  + strlen(dashes)  // for %s
                  + 20              // for %3ld

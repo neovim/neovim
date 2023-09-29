@@ -78,7 +78,7 @@ void ex_menu(exarg_T *eap)
   char *arg;
   char *p;
   int i;
-  long pri_tab[MENUDEPTH + 1];
+  int pri_tab[MENUDEPTH + 1];
   TriState enable = kNone;        // kTrue for "menu enable",
                                   // kFalse for "menu disable
   vimmenu_T menuarg;
@@ -129,7 +129,7 @@ void ex_menu(exarg_T *eap)
   }
   if (ascii_iswhite(*p)) {
     for (i = 0; i < MENUDEPTH && !ascii_iswhite(*arg); i++) {
-      pri_tab[i] = getdigits_long(&arg, false, 0);
+      pri_tab[i] = getdigits_int(&arg, false, 0);
       if (pri_tab[i] == 0) {
         pri_tab[i] = 500;
       }
@@ -265,7 +265,7 @@ theend:
 /// @param[out]  menuarg menu entry
 /// @param[] pri_tab priority table
 /// @param[in] call_data Right hand side command
-static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const long *const pri_tab,
+static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const int *const pri_tab,
                          const char *const call_data)
 {
   char *path_name;
@@ -366,7 +366,7 @@ static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const 
         menu->en_name = NULL;
         menu->en_dname = NULL;
       }
-      menu->priority = (int)pri_tab[pri_idx];
+      menu->priority = pri_tab[pri_idx];
       menu->parent = parent;
 
       // Add after menu that has lower priority.

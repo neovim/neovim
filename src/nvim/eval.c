@@ -1645,7 +1645,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
         lp->ll_n1 = 0;
       } else {
         // Is number or string.
-        lp->ll_n1 = (long)tv_get_number(&var1);
+        lp->ll_n1 = (int)tv_get_number(&var1);
       }
       tv_clear(&var1);
 
@@ -1655,7 +1655,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
         return NULL;
       }
       if (lp->ll_range && !lp->ll_empty2) {
-        lp->ll_n2 = (long)tv_get_number(&var2);
+        lp->ll_n2 = (int)tv_get_number(&var2);
         tv_clear(&var2);
         if (tv_blob_check_range(bloblen, lp->ll_n1, lp->ll_n2, quiet) == FAIL) {
           return NULL;
@@ -1670,7 +1670,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
         lp->ll_n1 = 0;
       } else {
         // Is number or string.
-        lp->ll_n1 = (long)tv_get_number(&var1);
+        lp->ll_n1 = (int)tv_get_number(&var1);
       }
       tv_clear(&var1);
 
@@ -1687,7 +1687,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
       // When no index given: "lp->ll_empty2" is true.
       // Otherwise "lp->ll_n2" is set to the second index.
       if (lp->ll_range && !lp->ll_empty2) {
-        lp->ll_n2 = (long)tv_get_number(&var2);  // Is number or string.
+        lp->ll_n2 = (int)tv_get_number(&var2);  // Is number or string.
         tv_clear(&var2);
         if (tv_list_check_range_index_two(lp->ll_list,
                                           &lp->ll_n1, lp->ll_li,
@@ -1746,7 +1746,7 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
         bool error = false;
         const char val = (char)tv_get_number_chk(rettv, &error);
         if (!error) {
-          tv_blob_set_append(lp->ll_blob, (int)lp->ll_n1, (uint8_t)val);
+          tv_blob_set_append(lp->ll_blob, lp->ll_n1, (uint8_t)val);
         }
       }
     } else if (op != NULL && *op != '=') {
@@ -5914,7 +5914,7 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist
   char **argv = tv_to_argv(&argvars[0], NULL, &executable);
   if (!argv) {
     if (!executable) {
-      set_vim_var_nr(VV_SHELL_ERROR, (long)-1);
+      set_vim_var_nr(VV_SHELL_ERROR, -1);
     }
     xfree(input);
     return;  // Already did emsg.
@@ -5944,7 +5944,7 @@ void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, bool retlist
 
   xfree(input);
 
-  set_vim_var_nr(VV_SHELL_ERROR, (long)status);
+  set_vim_var_nr(VV_SHELL_ERROR, status);
 
   if (res == NULL) {
     if (retlist) {
@@ -6231,7 +6231,7 @@ void timer_due_cb(TimeWatcher *tw, void *data)
   timer_decref(timer);
 }
 
-uint64_t timer_start(const long timeout, const int repeat_count, const Callback *const callback)
+uint64_t timer_start(const int64_t timeout, const int repeat_count, const Callback *const callback)
 {
   timer_T *timer = xmalloc(sizeof *timer);
   timer->refcount = 1;
@@ -7122,7 +7122,7 @@ void set_vim_var_char(int c)
 /// Set v:count to "count" and v:count1 to "count1".
 ///
 /// @param set_prevcount  if true, first set v:prevcount from v:count.
-void set_vcount(long count, long count1, int set_prevcount)
+void set_vcount(int64_t count, int64_t count1, bool set_prevcount)
 {
   if (set_prevcount) {
     vimvars[VV_PREVCOUNT].vv_nr = vimvars[VV_COUNT].vv_nr;

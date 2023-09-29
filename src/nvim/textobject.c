@@ -733,7 +733,7 @@ int current_sent(oparg_T *oap, int count, bool include)
   bool start_blank;
   int c;
   bool at_start_sent;
-  long ncount;
+  int ncount;
 
   start_pos = curwin->w_cursor;
   pos = start_pos;
@@ -838,7 +838,7 @@ extend:
     }
   }
   if (ncount > 0) {
-    findsent_forward((int)ncount, true);
+    findsent_forward(ncount, true);
   } else {
     decl(&curwin->w_cursor);
   }
@@ -1142,7 +1142,7 @@ int current_tagblock(oparg_T *oap, int count_arg, bool include)
 again:
   // Search backwards for unclosed "<aaa>".
   // Put this position in start_pos.
-  for (long n = 0; n < count; n++) {
+  for (int n = 0; n < count; n++) {
     if (do_searchpair("<[^ \t>/!]\\+\\%(\\_s\\_[^>]\\{-}[^/]>\\|$\\|\\_s\\=>\\)",
                       "",
                       "</[^>]*>", BACKWARD, NULL, 0,

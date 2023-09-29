@@ -131,7 +131,7 @@ typedef struct qf_list_S {
   bool qf_multiline;
   bool qf_multiignore;
   bool qf_multiscan;
-  long qf_changedtick;
+  int qf_changedtick;
 } qf_list_T;
 
 /// Quickfix/Location list stack definition
@@ -234,7 +234,7 @@ typedef struct {
 
 /// :vimgrep command arguments
 typedef struct vgr_args_S {
-  long tomatch;          ///< maximum number of matches to find
+  int tomatch;          ///< maximum number of matches to find
   char *spat;          ///< search pattern
   int flags;             ///< search modifier
   char **fnames;       ///< list of files to search
@@ -2756,7 +2756,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int
                                int *opened_window)
 {
   qf_list_T *qfl = qf_get_curlist(qi);
-  long old_changetick = qfl->qf_changedtick;
+  int old_changetick = qfl->qf_changedtick;
   int old_qf_curlist = qi->qf_curlist;
   qfltype_T qfl_type = qfl->qfl_type;
   int retval = OK;
@@ -2836,7 +2836,7 @@ static void qf_jump_goto_line(linenr_T qf_lnum, int qf_col, char qf_viscol, char
     // Move the cursor to the first line in the buffer
     pos_T save_cursor = curwin->w_cursor;
     curwin->w_cursor.lnum = 0;
-    if (!do_search(NULL, '/', '/', qf_pattern, (long)1, SEARCH_KEEP, NULL)) {
+    if (!do_search(NULL, '/', '/', qf_pattern, 1, SEARCH_KEEP, NULL)) {
       curwin->w_cursor = save_cursor;
     }
   }
@@ -2891,7 +2891,7 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
 static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, int *opened_window)
 {
   qf_list_T *qfl = qf_get_curlist(qi);
-  long old_changetick = qfl->qf_changedtick;
+  int old_changetick = qfl->qf_changedtick;
   int old_qf_curlist = qi->qf_curlist;
   qfltype_T qfl_type = qfl->qfl_type;
 
@@ -4051,7 +4051,7 @@ static int qf_buf_add_line(qf_list_T *qfl, buf_T *buf, linenr_T lnum, const qfli
 
 // Call the 'quickfixtextfunc' function to get the list of lines to display in
 // the quickfix window for the entries 'start_idx' to 'end_idx'.
-static list_T *call_qftf_func(qf_list_T *qfl, int qf_winid, long start_idx, long end_idx)
+static list_T *call_qftf_func(qf_list_T *qfl, int qf_winid, int start_idx, int end_idx)
 {
   Callback *cb = &qftf_cb;
   list_T *qftf_list = NULL;
@@ -4142,7 +4142,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
       lnum = buf->b_ml.ml_line_count;
     }
 
-    list_T *qftf_list = call_qftf_func(qfl, qf_winid, lnum + 1, (long)qfl->qf_count);
+    list_T *qftf_list = call_qftf_func(qfl, qf_winid, lnum + 1, qfl->qf_count);
     listitem_T *qftf_li = tv_list_first(qftf_list);
 
     int prev_bufnr = -1;
@@ -5227,7 +5227,7 @@ static bool vgr_qflist_valid(win_T *wp, qf_info_T *qi, unsigned qfid, char *titl
 /// Search for a pattern in all the lines in a buffer and add the matching lines
 /// to a quickfix list.
 static bool vgr_match_buflines(qf_list_T *qfl, char *fname, buf_T *buf, char *spat,
-                               regmmatch_T *regmatch, long *tomatch, int duplicate_name, int flags)
+                               regmmatch_T *regmatch, int *tomatch, int duplicate_name, int flags)
   FUNC_ATTR_NONNULL_ARG(1, 3, 4, 5, 6)
 {
   bool found_match = false;

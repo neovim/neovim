@@ -340,9 +340,7 @@ void update_topline(win_T *wp)
     assert(wp->w_buffer != 0);
     if (wp->w_botline <= wp->w_buffer->b_ml.ml_line_count) {
       if (wp->w_cursor.lnum < wp->w_botline) {
-        if (((long)wp->w_cursor.lnum
-             >= (long)wp->w_botline - *so_ptr
-             || hasAnyFolding(wp))) {
+        if ((wp->w_cursor.lnum >= wp->w_botline - *so_ptr || hasAnyFolding(wp))) {
           lineoff_T loff;
 
           // Cursor is (a few lines) above botline, check if there are
@@ -1188,7 +1186,7 @@ void f_virtcol2col(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 ///
 /// @param line_count number of lines to scroll
 /// @param byfold if true, count a closed fold as one line
-bool scrolldown(long line_count, int byfold)
+bool scrolldown(linenr_T line_count, int byfold)
 {
   int done = 0;                // total # of physical lines done
   int width1 = 0;
@@ -1203,7 +1201,7 @@ bool scrolldown(long line_count, int byfold)
   // Make sure w_topline is at the first of a sequence of folded lines.
   (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
   validate_cursor();            // w_wrow needs to be valid
-  for (long todo = line_count; todo > 0; todo--) {
+  for (int todo = line_count; todo > 0; todo--) {
     if (curwin->w_topfill < win_get_fill(curwin, curwin->w_topline)
         && curwin->w_topfill < curwin->w_height_inner - 1) {
       curwin->w_topfill++;
@@ -1301,11 +1299,11 @@ bool scrolldown(long line_count, int byfold)
 
   if (curwin->w_cursor.lnum == curwin->w_topline && do_sms) {
     int so = get_scrolloff_value(curwin);
-    long scrolloff_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
+    colnr_T scrolloff_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
 
     // make sure the cursor is in the visible text
     validate_virtcol();
-    long col = curwin->w_virtcol - curwin->w_skipcol + scrolloff_cols;
+    colnr_T col = curwin->w_virtcol - curwin->w_skipcol + scrolloff_cols;
     int row = 0;
     if (col >= width1) {
       col -= width1;
@@ -1346,7 +1344,7 @@ bool scrollup(linenr_T line_count, int byfold)
     // 'smoothscroll': increase "w_skipcol" until it goes over the end of
     // the line, then advance to the next line.
     // folding: count each sequence of folded lines as one logical line.
-    for (long todo = line_count; todo > 0; todo--) {
+    for (int todo = line_count; todo > 0; todo--) {
       if (curwin->w_topfill > 0) {
         curwin->w_topfill--;
       } else {
@@ -1428,7 +1426,7 @@ bool scrollup(linenr_T line_count, int byfold)
     int width2 = width1 + col_off2;
     int extra2 = col_off - col_off2;
     int so = get_scrolloff_value(curwin);
-    long scrolloff_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
+    colnr_T scrolloff_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
     int space_cols = (curwin->w_height_inner - 1) * width2;
 
     // If we have non-zero scrolloff, just ignore the marker as we are
@@ -1479,7 +1477,7 @@ void adjust_skipcol(void)
   }
   int width2 = width1 + curwin_col_off2();
   int so = get_scrolloff_value(curwin);
-  long scrolloff_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
+  colnr_T scrolloff_cols = so == 0 ? 0 : width1 + (so - 1) * width2;
   bool scrolled = false;
 
   validate_cheight();
@@ -1509,7 +1507,7 @@ void adjust_skipcol(void)
     redraw_later(curwin, UPD_NOT_VALID);
     return;  // don't scroll in the other direction now
   }
-  long col = curwin->w_virtcol - curwin->w_skipcol + scrolloff_cols;
+  colnr_T col = curwin->w_virtcol - curwin->w_skipcol + scrolloff_cols;
   int row = 0;
   if (col >= width1) {
     col -= width1;
@@ -2317,9 +2315,9 @@ void cursor_correct(void)
 /// and update the screen.
 ///
 /// @return  FAIL for failure, OK otherwise.
-int onepage(Direction dir, long count)
+int onepage(Direction dir, int count)
 {
-  long n;
+  int n;
   int retval = OK;
   lineoff_T loff;
   linenr_T old_topline = curwin->w_topline;
@@ -2560,7 +2558,7 @@ static void get_scroll_overlap(lineoff_T *lp, int dir)
 // Scroll 'scroll' lines up or down.
 void halfpage(bool flag, linenr_T Prenum)
 {
-  long scrolled = 0;
+  int scrolled = 0;
   int i;
 
   if (Prenum) {

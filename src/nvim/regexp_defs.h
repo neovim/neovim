@@ -169,7 +169,7 @@ struct regengine {
   /// bt_regexec_nl or nfa_regexec_nl
   int (*regexec_nl)(regmatch_T *, uint8_t *, colnr_T, bool);
   /// bt_regexec_mult or nfa_regexec_mult
-  long (*regexec_multi)(regmmatch_T *, win_T *, buf_T *, linenr_T, colnr_T, proftime_T *, int *);
+  int (*regexec_multi)(regmmatch_T *, win_T *, buf_T *, linenr_T, colnr_T, proftime_T *, int *);
   // uint8_t *expr;
 };
 
