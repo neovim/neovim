@@ -3702,4 +3702,20 @@ func Test_custom_completion()
   delfunc Check_customlist_completion
 endfunc
 
+func Test_custom_completion_with_glob()
+  func TestGlobComplete(A, L, P)
+    return split(glob('Xglob*'), "\n")
+  endfunc
+
+  command -nargs=* -complete=customlist,TestGlobComplete TestGlobComplete :
+  call writefile([], 'Xglob1', 'D')
+  call writefile([], 'Xglob2', 'D')
+
+  call feedkeys(":TestGlobComplete \<Tab> \<Tab>\<C-N> \<Tab>\<C-P>;\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"TestGlobComplete Xglob1 Xglob2 ;', @:)
+
+  delcommand TestGlobComplete
+  delfunc TestGlobComplete
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
