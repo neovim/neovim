@@ -3179,7 +3179,7 @@ static int spell_read_dic(spellinfo_T *spin, char *fname, afffile_T *affile)
                      _("line %6d, word %6ld - %s"),
                      lnum, spin->si_foldwcount + spin->si_keepwcount, w);
         msg_start();
-        msg_outtrans_long_attr(message, 0);
+        msg_outtrans_long(message, 0);
         msg_clr_eos();
         msg_didout = false;
         msg_col = 0;

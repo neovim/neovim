@@ -2024,17 +2024,11 @@ void msg_puts_title(const char *s)
 /// Show a message in such a way that it always fits in the line.  Cut out a
 /// part in the middle and replace it with "..." when necessary.
 /// Does not handle multi-byte characters!
-void msg_outtrans_long_attr(const char *longstr, int attr)
+void msg_outtrans_long(const char *longstr, int attr)
 {
-  msg_outtrans_long_len_attr(longstr, (int)strlen(longstr), attr);
-}
-
-void msg_outtrans_long_len_attr(const char *longstr, int len, int attr)
-{
+  int len = (int)strlen(longstr);
   int slen = len;
-  int room;
-
-  room = Columns - msg_col;
+  int room = Columns - msg_col;
   if (len > room && room >= 20) {
     slen = (room - 3) / 2;
     msg_outtrans_len(longstr, slen, attr);
