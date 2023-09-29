@@ -142,11 +142,11 @@ typedef struct cmdpreview_undo_info {
   u_header_T *save_b_u_curhead;
   int save_b_u_numhead;
   bool save_b_u_synced;
-  long save_b_u_seq_last;
-  long save_b_u_save_nr_last;
-  long save_b_u_seq_cur;
+  int save_b_u_seq_last;
+  int save_b_u_save_nr_last;
+  int save_b_u_seq_cur;
   time_t save_b_u_time_cur;
-  long save_b_u_save_nr_cur;
+  int save_b_u_save_nr_cur;
   char *save_b_u_line_ptr;
   linenr_T save_b_u_line_lnum;
   colnr_T save_b_u_line_colnr;
@@ -207,7 +207,7 @@ static int cedit_key = -1;  ///< key value of 'cedit' option
 #endif
 
 static handle_T cmdpreview_bufnr = 0;
-static long cmdpreview_ns = 0;
+static int cmdpreview_ns = 0;
 
 static void save_viewstate(win_T *wp, viewstate_T *vs)
   FUNC_ATTR_NONNULL_ALL

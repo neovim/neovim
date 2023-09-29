@@ -822,7 +822,7 @@ void op_format(oparg_T *oap, bool keep_cursor)
     saved_cursor = oap->cursor_start;
   }
 
-  format_lines((linenr_T)oap->line_count, keep_cursor);
+  format_lines(oap->line_count, keep_cursor);
 
   // Leave the cursor at the first non-blank of the last formatted line.
   // If the cursor was moved one line back (e.g. with "Q}") go to the next

@@ -364,9 +364,9 @@ static void clear_shape_table(void)
 {
   for (int idx = 0; idx < SHAPE_IDX_COUNT; idx++) {
     shape_table[idx].shape = SHAPE_BLOCK;
-    shape_table[idx].blinkwait = 0L;
-    shape_table[idx].blinkon = 0L;
-    shape_table[idx].blinkoff = 0L;
+    shape_table[idx].blinkwait = 0;
+    shape_table[idx].blinkon = 0;
+    shape_table[idx].blinkoff = 0;
     shape_table[idx].id = 0;
     shape_table[idx].id_lm = 0;
   }

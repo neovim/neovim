@@ -456,7 +456,7 @@ void ex_sort(exarg_T *eap)
   regmatch_T regmatch;
   int len;
   linenr_T lnum;
-  long maxlen = 0;
+  int maxlen = 0;
   size_t count = (size_t)(eap->line2 - eap->line1) + 1;
   size_t i;
   char *p;
@@ -693,7 +693,7 @@ void ex_sort(exarg_T *eap)
   // Adjust marks for deleted (or added) lines and prepare for displaying.
   deleted = (linenr_T)count - (lnum - eap->line2);
   if (deleted > 0) {
-    mark_adjust(eap->line2 - deleted, eap->line2, (long)MAXLNUM, -deleted, kExtmarkNOOP);
+    mark_adjust(eap->line2 - deleted, eap->line2, MAXLNUM, -deleted, kExtmarkNOOP);
     msgmore(-deleted);
   } else if (deleted < 0) {
     mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, kExtmarkNOOP);
@@ -922,7 +922,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
     check_pos(curbuf, &VIsual);
   }
 
-  msgmore((long)count);
+  msgmore(count);
 }
 
 static char *prevcmd = NULL;        // the previous command
@@ -1281,7 +1281,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
           set_keep_msg(msg_buf, 0);
         }
       } else {
-        msgmore((long)linecount);
+        msgmore(linecount);
       }
     }
   } else {
@@ -3291,7 +3291,7 @@ static int check_regexp_delim(int c)
 /// @param cmdpreview_ns  The namespace to show 'inccommand' preview highlights.
 ///                       If <= 0, preview shouldn't be shown.
 /// @return 0, 1 or 2. See show_cmdpreview() for more information on what the return value means.
-static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_ns,
+static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_ns,
                   const handle_T cmdpreview_bufnr)
 {
 #define ADJUST_SUB_FIRSTLNUM() \
@@ -3318,7 +3318,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
     } \
   } while (0)
 
-  long i = 0;
+  int i = 0;
   regmmatch_T regmatch;
   static subflags_T subflags = {
     .do_all = false,
@@ -3346,7 +3346,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
   PreviewLines preview_lines = { KV_INITIAL_VALUE, 0 };
   static int pre_hl_id = 0;
   pos_T old_cursor = curwin->w_cursor;
-  long start_nsubs;
+  int start_nsubs;
 
   bool did_save = false;
 
@@ -3442,7 +3442,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
   // check for a trailing count
   cmd = skipwhite(cmd);
   if (ascii_isdigit(*cmd)) {
-    i = getdigits_long(&cmd, true, 0);
+    i = getdigits_int(&cmd, true, 0);
     if (i <= 0 && !eap->skip && subflags.do_error) {
       emsg(_(e_zerocount));
       return 0;
@@ -3521,8 +3521,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
        && (cmdpreview_ns <= 0 || preview_lines.lines_needed <= (linenr_T)p_cwh
            || lnum <= curwin->w_botline);
        lnum++) {
-    long nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-                                    (colnr_T)0, NULL, NULL);
+    int nmatch = (int)vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
+                                        (colnr_T)0, NULL, NULL);
     if (nmatch) {
       colnr_T copycol;
       colnr_T matchcol;
@@ -3532,7 +3532,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
       char *p1;
       bool did_sub = false;
       int lastone;
-      long nmatch_tl = 0;               // nr of lines matched below lnum
+      linenr_T nmatch_tl = 0;               // nr of lines matched below lnum
       int do_again;                     // do it again after joining lines
       bool skip_match = false;
       linenr_T sub_firstlnum;           // nr of first sub line
@@ -3805,7 +3805,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const long cmdpreview_
               // Same highlight as wait_return().
               smsg(HL_ATTR(HLF_R), _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = false;
-              msg_scroll = (int)i;
+              msg_scroll = i;
               if (!ui_has(kUIMessages)) {
                 ui_cursor_goto(msg_row, msg_col);
               }
@@ -4087,9 +4087,9 @@ skip:
         // need to replace the line first (using \zs after \n).
         if (lastone
             || nmatch_tl > 0
-            || (nmatch = vim_regexec_multi(&regmatch, curwin,
-                                           curbuf, sub_firstlnum,
-                                           matchcol, NULL, NULL)) == 0
+            || (nmatch = (int)vim_regexec_multi(&regmatch, curwin,
+                                                curbuf, sub_firstlnum,
+                                                matchcol, NULL, NULL)) == 0
             || regmatch.startpos[0].lnum > 0) {
           if (new_start != NULL) {
             // Copy the rest of the line, that didn't match.
@@ -4119,13 +4119,12 @@ skip:
               for (i = 0; i < nmatch_tl; i++) {
                 ml_delete(lnum, false);
               }
-              mark_adjust(lnum, lnum + (linenr_T)nmatch_tl - 1,
-                          (long)MAXLNUM, (linenr_T)(-nmatch_tl), kExtmarkNOOP);
+              mark_adjust(lnum, lnum + nmatch_tl - 1, MAXLNUM, -nmatch_tl, kExtmarkNOOP);
               if (subflags.do_ask) {
-                deleted_lines(lnum, (linenr_T)nmatch_tl);
+                deleted_lines(lnum, nmatch_tl);
               }
               lnum--;
-              line2 -= (linenr_T)nmatch_tl;  // nr of lines decreases
+              line2 -= nmatch_tl;  // nr of lines decreases
               nmatch_tl = 0;
             }
 
@@ -4150,8 +4149,8 @@ skip:
             copycol = 0;
           }
           if (nmatch == -1 && !lastone) {
-            nmatch = vim_regexec_multi(&regmatch, curwin, curbuf,
-                                       sub_firstlnum, matchcol, NULL, NULL);
+            nmatch = (int)vim_regexec_multi(&regmatch, curwin, curbuf,
+                                            sub_firstlnum, matchcol, NULL, NULL);
           }
 
           // 5. break if there isn't another match in this line
@@ -4582,7 +4581,7 @@ bool prepare_tagpreview(bool undo_sync)
 ///
 /// @return 1 if preview window isn't needed, 2 if preview window is needed.
 static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, int hl_id,
-                    long cmdpreview_ns, handle_T cmdpreview_bufnr)
+                    int cmdpreview_ns, handle_T cmdpreview_bufnr)
   FUNC_ATTR_NONNULL_ALL
 {
   char *save_shm_p = xstrdup(p_shm);
@@ -4684,9 +4683,9 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
       }
       linenr_origbuf = match.end.lnum;
 
-      bufhl_add_hl_pos_offset(cmdpreview_buf, (int)cmdpreview_ns, hl_id, p_start, p_end, col_width);
+      bufhl_add_hl_pos_offset(cmdpreview_buf, cmdpreview_ns, hl_id, p_start, p_end, col_width);
     }
-    bufhl_add_hl_pos_offset(orig_buf, (int)cmdpreview_ns, hl_id, match.start, match.end, 0);
+    bufhl_add_hl_pos_offset(orig_buf, cmdpreview_ns, hl_id, match.start, match.end, 0);
   }
 
   xfree(str);
@@ -4704,7 +4703,7 @@ void ex_substitute(exarg_T *eap)
 }
 
 /// :substitute command preview callback.
-int ex_substitute_preview(exarg_T *eap, long cmdpreview_ns, handle_T cmdpreview_bufnr)
+int ex_substitute_preview(exarg_T *eap, int cmdpreview_ns, handle_T cmdpreview_bufnr)
 {
   // Only preview once the pattern delimiter has been typed
   if (*eap->arg && !ASCII_ISALNUM(*eap->arg)) {
@@ -4773,7 +4772,7 @@ char *skip_vimgrep_pat(char *p, char **s, int *flags)
 void ex_oldfiles(exarg_T *eap)
 {
   list_T *l = get_vim_var_list(VV_OLDFILES);
-  long nr = 0;
+  int nr = 0;
 
   if (l == NULL) {
     msg(_("No old files"), 0);
@@ -4807,7 +4806,7 @@ void ex_oldfiles(exarg_T *eap)
     nr = prompt_for_number(false);
     msg_starthere();
     if (nr > 0 && nr <= tv_list_len(l)) {
-      const char *const p = tv_list_find_str(l, (int)nr - 1);
+      const char *const p = tv_list_find_str(l, nr - 1);
       if (p == NULL) {
         return;
       }

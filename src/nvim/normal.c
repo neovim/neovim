@@ -1735,13 +1735,13 @@ static void prep_redo_cmd(cmdarg_T *cap)
 
 /// Prepare for redo of any command.
 /// Note that only the last argument can be a multi-byte char.
-void prep_redo(int regname, long num, int cmd1, int cmd2, int cmd3, int cmd4, int cmd5)
+void prep_redo(int regname, int num, int cmd1, int cmd2, int cmd3, int cmd4, int cmd5)
 {
   prep_redo_num2(regname, num, cmd1, cmd2, 0L, cmd3, cmd4, cmd5);
 }
 
 /// Prepare for redo of any command with extra count after "cmd2".
-void prep_redo_num2(int regname, long num1, int cmd1, int cmd2, long num2, int cmd3, int cmd4,
+void prep_redo_num2(int regname, int num1, int cmd1, int cmd2, int num2, int cmd3, int cmd4,
                     int cmd5)
 {
   ResetRedobuff();

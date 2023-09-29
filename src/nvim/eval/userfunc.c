@@ -1126,7 +1126,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
           msg_puts(", ");
         }
         if (argvars[i].v_type == VAR_NUMBER) {
-          msg_outnum((long)argvars[i].vval.v_number);
+          msg_outnum((int)argvars[i].vval.v_number);
         } else {
           // Do not want errors such as E724 here.
           emsg_off++;
@@ -2263,7 +2263,7 @@ void ex_function(exarg_T *eap)
             }
             msg_putchar('\n');
             if (!eap->forceit) {
-              msg_outnum((long)j + 1);
+              msg_outnum(j + 1);
               if (j < 9) {
                 msg_putchar(' ');
               }

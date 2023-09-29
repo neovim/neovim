@@ -73,7 +73,7 @@ typedef struct insert_state {
   int cmdchar;
   int cmdchar_todo;                  // cmdchar to handle once in init_prompt
   int startln;
-  long count;
+  int count;
   int c;
   int lastc;
   int i;
@@ -1230,7 +1230,7 @@ static void insert_do_cindent(InsertState *s)
 /// @param  count    repeat count for the command
 ///
 /// @return true if a CTRL-O command caused the return (insert mode pending).
-bool edit(int cmdchar, bool startln, long count)
+bool edit(int cmdchar, bool startln, int count)
 {
   if (curbuf->terminal) {
     if (ex_normal_busy) {
@@ -3394,7 +3394,7 @@ static void ins_ctrl_hat(void)
 /// @param          nomove   when true, don't move the cursor
 ///
 /// @return true when leaving insert mode, false when repeating the insert.
-static bool ins_esc(long *count, int cmdchar, bool nomove)
+static bool ins_esc(int *count, int cmdchar, bool nomove)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   static bool disabled_redraw = false;

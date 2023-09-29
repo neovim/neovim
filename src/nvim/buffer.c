@@ -3480,8 +3480,8 @@ void get_rel_pos(win_T *wp, char *buf, int buflen)
     return;
   }
 
-  long above;          // number of lines above window
-  long below;          // number of lines below window
+  linenr_T above;          // number of lines above window
+  linenr_T below;          // number of lines below window
 
   above = wp->w_topline - 1;
   above += win_get_fill(wp, wp->w_topline) - wp->w_topfill;
@@ -3580,7 +3580,7 @@ void ex_buffer_all(exarg_T *eap)
   bool p_ea_save;
   int open_wins = 0;
   int r;
-  long count;                   // Maximum number of windows to open.
+  linenr_T count;               // Maximum number of windows to open.
   int all;                      // When true also load inactive buffers.
   int had_tab = cmdmod.cmod_tab;
   tabpage_T *tpnext;

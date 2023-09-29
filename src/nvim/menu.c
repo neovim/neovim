@@ -366,7 +366,7 @@ static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const 
         menu->en_name = NULL;
         menu->en_dname = NULL;
       }
-      menu->priority = pri_tab[pri_idx];
+      menu->priority = (int)pri_tab[pri_idx];
       menu->parent = parent;
 
       // Add after menu that has lower priority.
@@ -659,7 +659,7 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
 
   dict_T *dict = tv_dict_alloc();
   tv_dict_add_str(dict, S_LEN("name"), menu->dname);
-  tv_dict_add_nr(dict, S_LEN("priority"), (int)menu->priority);
+  tv_dict_add_nr(dict, S_LEN("priority"), menu->priority);
   tv_dict_add_nr(dict, S_LEN("hidden"), menu_is_hidden(menu->dname));
 
   if (menu->mnemonic) {
@@ -1847,7 +1847,7 @@ static void menuitem_getinfo(const char *menu_name, const vimmenu_T *menu, int m
   if (menu->actext != NULL) {
     tv_dict_add_str(dict, S_LEN("accel"), menu->actext);
   }
-  tv_dict_add_nr(dict, S_LEN("priority"), (int)menu->priority);
+  tv_dict_add_nr(dict, S_LEN("priority"), menu->priority);
   tv_dict_add_str(dict, S_LEN("modes"), get_menu_mode_str(menu->modes));
 
   char buf[NUMBUFLEN];

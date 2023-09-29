@@ -39,7 +39,7 @@ typedef struct oparg_S {
   pos_T end;                    // end of the operator
   pos_T cursor_start;           // cursor position before motion for "gw"
 
-  long line_count;              // number of lines from op_start to op_end
+  linenr_T line_count;          // number of lines from op_start to op_end
                                 // (inclusive)
   bool empty;                   // op_start and op_end the same (only used by
                                 // op_change())

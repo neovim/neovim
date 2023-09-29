@@ -1941,7 +1941,7 @@ void truncate_line(int fixpos)
 
 /// Delete "nlines" lines at the cursor.
 /// Saves the lines for undo first if "undo" is true.
-void del_lines(long nlines, bool undo)
+void del_lines(linenr_T nlines, bool undo)
 {
   int n;
   linenr_T first = curwin->w_cursor.lnum;

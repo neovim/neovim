@@ -52,7 +52,7 @@ struct VimMenu {
   char *en_dname;             ///< NULL when "dname" untranslated
   int mnemonic;               ///< mnemonic key (after '&')
   char *actext;               ///< accelerator text (after TAB)
-  long priority;              ///< Menu order priority
+  int priority;               ///< Menu order priority
   char *strings[MENU_MODES];  ///< Mapped string for each mode
   int noremap[MENU_MODES];    ///< A \ref REMAP_VALUES flag for each mode
   bool silent[MENU_MODES];    ///< A silent flag for each mode

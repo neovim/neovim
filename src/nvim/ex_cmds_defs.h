@@ -94,7 +94,7 @@ typedef struct exarg exarg_T;
 #define BAD_DROP        (-2)    // erase it
 
 typedef void (*ex_func_T)(exarg_T *eap);
-typedef int (*ex_preview_func_T)(exarg_T *eap, long cmdpreview_ns, handle_T cmdpreview_bufnr);
+typedef int (*ex_preview_func_T)(exarg_T *eap, int cmdpreview_ns, handle_T cmdpreview_bufnr);
 
 // NOTE: These possible could be removed and changed so that
 // Callback could take a "command" style string, and simply

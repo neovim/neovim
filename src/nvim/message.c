@@ -1346,7 +1346,7 @@ bool messaging(void)
   return !(p_lz && char_avail() && !KeyTyped) && (p_ch > 0 || ui_has(kUIMessages));
 }
 
-void msgmore(long n)
+void msgmore(int n)
 {
   long pn;
 
@@ -1480,11 +1480,11 @@ void msg_putchar_attr(int c, int attr)
   msg_puts_attr(buf, attr);
 }
 
-void msg_outnum(long n)
+void msg_outnum(int n)
 {
   char buf[20];
 
-  snprintf(buf, sizeof(buf), "%ld", n);
+  snprintf(buf, sizeof(buf), "%d", n);
   msg_puts(buf);
 }
 

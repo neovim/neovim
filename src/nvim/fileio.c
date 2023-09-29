@@ -1753,7 +1753,7 @@ failed:
         c = true;
       }
 
-      msg_add_lines(c, (long)linecnt, filesize);
+      msg_add_lines(c, linecnt, filesize);
 
       XFREE_CLEAR(keep_msg);
       p = NULL;
@@ -2156,7 +2156,7 @@ bool msg_add_fileformat(int eol_type)
 }
 
 /// Append line and character count to IObuff.
-void msg_add_lines(int insert_space, long lnum, off_T nchars)
+void msg_add_lines(int insert_space, linenr_T lnum, off_T nchars)
 {
   char *p = IObuff + strlen(IObuff);
 
@@ -2700,7 +2700,7 @@ int vim_rename(const char *from, const char *to)
   }
 
   // Rename() failed, try copying the file.
-  long perm = os_getperm(from);
+  int perm = os_getperm(from);
   // For systems that support ACL: get the ACL from the original file.
   vim_acl_T acl = os_get_acl(from);
   int fd_in = os_open(from, O_RDONLY, 0);
@@ -2710,7 +2710,7 @@ int vim_rename(const char *from, const char *to)
   }
 
   // Create the new file with same permissions as the original.
-  int fd_out = os_open(to, O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW, (int)perm);
+  int fd_out = os_open(to, O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW, perm);
   if (fd_out < 0) {
     close(fd_in);
     os_free_acl(acl);
@@ -2905,7 +2905,7 @@ int buf_check_timestamp(buf_T *buf)
       && (!(file_info_ok = os_fileinfo(buf->b_ffname, &file_info))
           || time_differs(&file_info, buf->b_mtime, buf->b_mtime_ns)
           || (int)file_info.stat.st_mode != buf->b_orig_mode)) {
-    const long prev_b_mtime = buf->b_mtime;
+    const int prev_b_mtime = (int)buf->b_mtime;
 
     retval = 1;
 

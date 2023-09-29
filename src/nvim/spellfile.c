@@ -452,24 +452,24 @@ struct wordnode_S {
 // Info used while reading the spell files.
 typedef struct spellinfo_S {
   wordnode_T *si_foldroot;     // tree with case-folded words
-  long si_foldwcount;           // nr of words in si_foldroot
+  int si_foldwcount;           // nr of words in si_foldroot
 
   wordnode_T *si_keeproot;     // tree with keep-case words
-  long si_keepwcount;           // nr of words in si_keeproot
+  int si_keepwcount;           // nr of words in si_keeproot
 
   wordnode_T *si_prefroot;     // tree with postponed prefixes
 
-  long si_sugtree;              // creating the soundfolding trie
+  int si_sugtree;              // creating the soundfolding trie
 
   sblock_T *si_blocks;       // memory blocks used
-  long si_blocks_cnt;           // memory blocks allocated
+  int si_blocks_cnt;           // memory blocks allocated
   int si_did_emsg;              // true when ran out of memory
 
-  long si_compress_cnt;         // words to add before lowering
-                                // compression limit
+  int si_compress_cnt;         // words to add before lowering
+                               // compression limit
   wordnode_T *si_first_free;   // List of nodes that have been freed during
                                // compression, linked by "wn_child" field.
-  long si_free_count;           // number of nodes in si_first_free
+  int si_free_count;           // number of nodes in si_first_free
 #ifdef SPELL_PRINTTREE
   int si_wordnode_nr;           // sequence nr for nodes
 #endif
@@ -1874,24 +1874,24 @@ static void spell_reload_one(char *fname, bool added_word)
 
 // Tunable parameters for when the tree is compressed.  Filled from the
 // 'mkspellmem' option.
-static long compress_start = 30000;     // memory / SBLOCKSIZE
-static long compress_inc = 100;         // memory / SBLOCKSIZE
-static long compress_added = 500000;    // word count
+static int compress_start = 30000;     // memory / SBLOCKSIZE
+static int compress_inc = 100;         // memory / SBLOCKSIZE
+static int compress_added = 500000;    // word count
 
 // Check the 'mkspellmem' option.  Return FAIL if it's wrong.
 // Sets "sps_flags".
 int spell_check_msm(void)
 {
   char *p = p_msm;
-  long start = 0;
-  long incr = 0;
-  long added = 0;
+  int start = 0;
+  int incr = 0;
+  int added = 0;
 
   if (!ascii_isdigit(*p)) {
     return FAIL;
   }
   // block count = (value * 1024) / SBLOCKSIZE (but avoid overflow)
-  start = (getdigits_long(&p, true, 0) * 10) / (SBLOCKSIZE / 102);
+  start = (getdigits_int(&p, true, 0) * 10) / (SBLOCKSIZE / 102);
   if (*p != ',') {
     return FAIL;
   }
@@ -1899,7 +1899,7 @@ int spell_check_msm(void)
   if (!ascii_isdigit(*p)) {
     return FAIL;
   }
-  incr = (getdigits_long(&p, true, 0) * 102) / (SBLOCKSIZE / 10);
+  incr = (getdigits_int(&p, true, 0) * 102) / (SBLOCKSIZE / 10);
   if (*p != ',') {
     return FAIL;
   }
@@ -1907,7 +1907,7 @@ int spell_check_msm(void)
   if (!ascii_isdigit(*p)) {
     return FAIL;
   }
-  added = getdigits_long(&p, true, 0) * 1024;
+  added = getdigits_int(&p, true, 0) * 1024;
   if (*p != NUL) {
     return FAIL;
   }
@@ -3177,7 +3177,7 @@ static int spell_read_dic(spellinfo_T *spin, char *fname, afffile_T *affile)
       if (os_time() > last_msg_time) {
         last_msg_time = os_time();
         vim_snprintf(message, sizeof(message),
-                     _("line %6d, word %6ld - %s"),
+                     _("line %6d, word %6d - %s"),
                      lnum, spin->si_foldwcount + spin->si_keepwcount, w);
         msg_start();
         msg_outtrans_long(message, 0);
@@ -3635,7 +3635,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
 static int spell_read_wordfile(spellinfo_T *spin, char *fname)
 {
   FILE *fd;
-  long lnum = 0;
+  linenr_T lnum = 0;
   char rline[MAXLINELEN];
   char *line;
   char *pc = NULL;
@@ -3682,7 +3682,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
     if (spin->si_conv.vc_type != CONV_NONE) {
       pc = string_convert(&spin->si_conv, rline, NULL);
       if (pc == NULL) {
-        smsg(0, _("Conversion failure for word in %s line %ld: %s"),
+        smsg(0, _("Conversion failure for word in %s line %" PRIdLINENR ": %s"),
              fname, lnum, rline);
         continue;
       }
@@ -3696,10 +3696,10 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
       line++;
       if (strncmp(line, "encoding=", 9) == 0) {
         if (spin->si_conv.vc_type != CONV_NONE) {
-          smsg(0, _("Duplicate /encoding= line ignored in %s line %ld: %s"),
+          smsg(0, _("Duplicate /encoding= line ignored in %s line %" PRIdLINENR ": %s"),
                fname, lnum, line - 1);
         } else if (did_word) {
-          smsg(0, _("/encoding= line after word ignored in %s line %ld: %s"),
+          smsg(0, _("/encoding= line after word ignored in %s line %" PRIdLINENR ": %s"),
                fname, lnum, line - 1);
         } else {
           char *enc;
@@ -3720,12 +3720,12 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
 
       if (strncmp(line, "regions=", 8) == 0) {
         if (spin->si_region_count > 1) {
-          smsg(0, _("Duplicate /regions= line ignored in %s line %ld: %s"),
+          smsg(0, _("Duplicate /regions= line ignored in %s line %" PRIdLINENR ": %s"),
                fname, lnum, line);
         } else {
           line += 8;
           if (strlen(line) > MAXREGIONS * 2) {
-            smsg(0, _("Too many regions in %s line %ld: %s"),
+            smsg(0, _("Too many regions in %s line %" PRIdLINENR ": %s"),
                  fname, lnum, line);
           } else {
             spin->si_region_count = (int)strlen(line) / 2;
@@ -3738,7 +3738,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
         continue;
       }
 
-      smsg(0, _("/ line ignored in %s line %ld: %s"),
+      smsg(0, _("/ line ignored in %s line %" PRIdLINENR ": %s"),
            fname, lnum, line - 1);
       continue;
     }
@@ -3765,13 +3765,13 @@ static int spell_read_wordfile(spellinfo_T *spin, char *fname)
 
           l = (uint8_t)(*p) - '0';
           if (l == 0 || l > spin->si_region_count) {
-            smsg(0, _("Invalid region nr in %s line %ld: %s"),
+            smsg(0, _("Invalid region nr in %s line %" PRIdLINENR ": %s"),
                  fname, lnum, p);
             break;
           }
           regionmask |= 1 << (l - 1);
         } else {
-          smsg(0, _("Unrecognized flags in %s line %ld: %s"),
+          smsg(0, _("Unrecognized flags in %s line %" PRIdLINENR ": %s"),
                fname, lnum, p);
           break;
         }
@@ -4168,7 +4168,7 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root, const char *n
   FUNC_ATTR_NONNULL_ALL
 {
   hashtab_T ht;
-  long tot = 0;
+  int tot = 0;
   long perc;
 
   // Skip the root itself, it's not actually used.  The first sibling is the
@@ -4178,7 +4178,7 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root, const char *n
   }
 
   hash_init(&ht);
-  const long n = node_compress(spin, root->wn_sibling, &ht, &tot);
+  const int n = node_compress(spin, root->wn_sibling, &ht, &tot);
 
 #ifndef SPELL_PRINTTREE
   if (spin->si_verbose || p_verbose > 2)
@@ -4192,7 +4192,7 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root, const char *n
       perc = (tot - n) * 100 / tot;
     }
     vim_snprintf(IObuff, IOSIZE,
-                 _("Compressed %s of %ld nodes; %ld (%ld%%) remaining"),
+                 _("Compressed %s of %d nodes; %d (%ld%%) remaining"),
                  name, tot, tot - n, perc);
     spell_message(spin, IObuff);
   }
@@ -4206,7 +4206,7 @@ static void wordtree_compress(spellinfo_T *spin, wordnode_T *root, const char *n
 /// Returns the number of compressed nodes.
 ///
 /// @param tot  total count of nodes before compressing, incremented while going through the tree
-static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, long *tot)
+static int node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, int *tot)
   FUNC_ATTR_NONNULL_ALL
 {
   wordnode_T *np;
@@ -4216,7 +4216,7 @@ static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, lo
   hashitem_T *hi;
   long len = 0;
   unsigned nr, n;
-  long compressed = 0;
+  int compressed = 0;
 
   // Go through the list of siblings.  Compress each child and then try
   // finding an identical child to replace it.
@@ -4262,7 +4262,7 @@ static long node_compress(spellinfo_T *spin, wordnode_T *node, hashtab_T *ht, lo
       }
     }
   }
-  *tot += len + 1;      // add one for the node that stores the length
+  *tot += (int)len + 1;      // add one for the node that stores the length
 
   // Make a hash key for the node and its siblings, so that we can quickly
   // find a lookalike node.  This must be done after compressing the sibling
@@ -5559,15 +5559,15 @@ void spell_add_word(char *word, int len, SpellAddType what, int idx, bool undo)
   }
 
   if (what == SPELL_ADD_BAD || undo) {
-    long fpos_next = 0;
-    long fpos = 0;
+    int fpos_next = 0;
+    int fpos = 0;
     // When the word appears as good word we need to remove that one,
     // since its flags sort before the one with WF_BANNED.
     fd = os_fopen(fname, "r");
     if (fd != NULL) {
       while (!vim_fgets(line, MAXWLEN * 2, fd)) {
         fpos = fpos_next;
-        fpos_next = ftell(fd);
+        fpos_next = (int)ftell(fd);
         if (fpos_next < 0) {
           break;  // should never happen
         }

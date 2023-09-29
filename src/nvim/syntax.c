@@ -3555,7 +3555,7 @@ static void put_pattern(const char *const s, const int c, const synpat_T *const 
       msg_putchar(',');  // Separate with commas.
     }
     msg_puts(spo_name_tab[i]);
-    const long n = spp->sp_offsets[i];
+    const int n = spp->sp_offsets[i];
     if (i != SPO_LC_OFF) {
       if (spp->sp_off_flags & mask) {
         msg_putchar('s');

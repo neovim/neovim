@@ -488,13 +488,13 @@ struct file_buffer {
   u_header_T *b_u_newhead;     // pointer to newest header; may not be valid
                                // if b_u_curhead is not NULL
   u_header_T *b_u_curhead;     // pointer to current header
-  int b_u_numhead;              // current number of headers
-  bool b_u_synced;              // entry lists are synced
-  long b_u_seq_last;            // last used undo sequence number
-  long b_u_save_nr_last;        // counter for last file write
-  long b_u_seq_cur;             // uh_seq of header below which we are now
-  time_t b_u_time_cur;          // uh_time of header below which we are now
-  long b_u_save_nr_cur;         // file write nr after which we are now
+  int b_u_numhead;             // current number of headers
+  bool b_u_synced;             // entry lists are synced
+  int b_u_seq_last;            // last used undo sequence number
+  int b_u_save_nr_last;        // counter for last file write
+  int b_u_seq_cur;             // uh_seq of header below which we are now
+  time_t b_u_time_cur;         // uh_time of header below which we are now
+  int b_u_save_nr_cur;         // file write nr after which we are now
 
   // variables for "U" command in undo.c
   char *b_u_line_ptr;           // saved line for "U" command

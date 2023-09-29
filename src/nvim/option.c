@@ -558,7 +558,7 @@ static char *find_dup_item(char *origval, const char *newval, uint32_t flags)
 
 /// Set the Vi-default value of a number option.
 /// Used for 'lines' and 'columns'.
-void set_number_default(char *name, long val)
+void set_number_default(char *name, OptInt val)
 {
   int opt_idx = findoption(name);
   if (opt_idx >= 0) {
@@ -800,7 +800,7 @@ static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, co
   // other        error
   arg++;
   if (nextchar == '&') {
-    value = (long)(intptr_t)options[opt_idx].def_val;
+    value = (varnumber_T)options[opt_idx].def_val;
   } else if (nextchar == '<') {
     if ((OptInt *)varp == &curbuf->b_p_ul && opt_flags == OPT_LOCAL) {
       // for 'undolevels' NO_LOCAL_UNDOLEVEL means using the global value
@@ -846,7 +846,7 @@ static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, co
   if (op == OP_REMOVING) {
     value = *(OptInt *)varp - value;
   }
-  *errmsg = set_num_option(opt_idx, (void *)varp, (long)value,
+  *errmsg = set_num_option(opt_idx, (void *)varp, value,
                            errbuf, errbuflen, opt_flags);
 }
 
@@ -1979,8 +1979,8 @@ void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
 }
 
 /// Apply the OptionSet autocommand.
-static void apply_optionset_autocmd(int opt_idx, long opt_flags, OptInt oldval, OptInt oldval_g,
-                                    long newval, const char *errmsg)
+static void apply_optionset_autocmd(int opt_idx, int opt_flags, OptInt oldval, OptInt oldval_g,
+                                    OptInt newval, const char *errmsg)
 {
   // Don't do this while starting up, failure or recursively.
   if (starting || errmsg != NULL || *get_vim_var_str(VV_OPTION_TYPE) != NUL) {
@@ -1991,7 +1991,7 @@ static void apply_optionset_autocmd(int opt_idx, long opt_flags, OptInt oldval, 
 
   vim_snprintf(buf_old, sizeof(buf_old), "%" PRId64, oldval);
   vim_snprintf(buf_old_global, sizeof(buf_old_global), "%" PRId64, oldval_g);
-  vim_snprintf(buf_new, sizeof(buf_new), "%ld", newval);
+  vim_snprintf(buf_new, sizeof(buf_new), "%" PRId64, newval);
   vim_snprintf(buf_type, sizeof(buf_type), "%s",
                (opt_flags & OPT_LOCAL) ? "local" : "global");
   set_vim_var_string(VV_OPTION_NEW, buf_new, -1);
@@ -2902,9 +2902,9 @@ static const char *set_bool_option(const int opt_idx, char *const varp, const in
   options[opt_idx].flags |= P_WAS_SET;
 
   apply_optionset_autocmd(opt_idx, opt_flags,
-                          (long)(old_value ? true : false),
-                          (long)(old_global_value ? true : false),
-                          (long)(value ? true : false), NULL);
+                          (old_value ? true : false),
+                          (old_global_value ? true : false),
+                          (value ? true : false), NULL);
 
   if (options[opt_idx].flags & P_UI_OPTION) {
     ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
@@ -2924,8 +2924,8 @@ static const char *set_bool_option(const int opt_idx, char *const varp, const in
 }
 
 /// Check the bounds of numeric options.
-static const char *check_num_option_bounds(OptInt *pp, OptInt old_value, long old_Rows,
-                                           char *errbuf, size_t errbuflen, const char *errmsg)
+static const char *check_num_option_bounds(OptInt *pp, OptInt old_value, int old_Rows, char *errbuf,
+                                           size_t errbuflen, const char *errmsg)
 {
   // Check the (new) bounds for Rows and Columns here.
   if (p_lines < min_rows() && full_screen) {
@@ -3000,9 +3000,9 @@ static const char *check_num_option_bounds(OptInt *pp, OptInt old_value, long ol
 }
 
 /// Options that need some validation.
-static const char *validate_num_option(const OptInt *pp, long *valuep)
+static const char *validate_num_option(const OptInt *pp, OptInt *valuep)
 {
-  long value = *valuep;
+  OptInt value = *valuep;
 
   // Many number options assume their value is in the signed int range.
   if (value < INT_MIN || value > INT_MAX) {
@@ -3160,12 +3160,12 @@ static const char *validate_num_option(const OptInt *pp, long *valuep)
 /// @param[in]  opt_flags  OPT_LOCAL, OPT_GLOBAL or OPT_MODELINE.
 ///
 /// @return NULL on success, error message on error.
-static const char *set_num_option(int opt_idx, void *varp, long value, char *errbuf,
+static const char *set_num_option(int opt_idx, void *varp, OptInt value, char *errbuf,
                                   size_t errbuflen, int opt_flags)
 {
   OptInt old_value = *(OptInt *)varp;
   OptInt old_global_value = 0;  // only used when setting a local and global option
-  long old_Rows = Rows;       // remember old Rows
+  int old_Rows = Rows;       // remember old Rows
   OptInt *pp = (OptInt *)varp;
 
   // Disallow changing some options from secure mode.
@@ -3187,7 +3187,7 @@ static const char *set_num_option(int opt_idx, void *varp, long value, char *err
     return errmsg;
   }
 
-  *pp = (OptInt)value;
+  *pp = value;
   // Remember where the option was set.
   set_option_sctx_idx(opt_idx, opt_flags, current_sctx);
 
@@ -3198,7 +3198,7 @@ static const char *set_num_option(int opt_idx, void *varp, long value, char *err
       .os_varp = varp,
       .os_flags = opt_flags,
       .os_oldval.number = old_value,
-      .os_newval.number = (OptInt)value,
+      .os_newval.number = value,
       .os_errbuf = NULL,
       .os_errbuflen = 0,
       .os_buf = curbuf,
@@ -3218,7 +3218,7 @@ static const char *set_num_option(int opt_idx, void *varp, long value, char *err
   options[opt_idx].flags |= P_WAS_SET;
 
   apply_optionset_autocmd(opt_idx, opt_flags, old_value, old_global_value,
-                          value, errmsg);
+                          (int)value, errmsg);
 
   if (errmsg == NULL && options[opt_idx].flags & P_UI_OPTION) {
     ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
@@ -3789,7 +3789,7 @@ static const char *set_option(int opt_idx, void *varp, OptVal *v, int opt_flags,
   if (v->type == kOptValTypeBoolean) {
     errmsg = set_bool_option(opt_idx, varp, (int)v->data.boolean, opt_flags);
   } else if (v->type == kOptValTypeNumber) {
-    errmsg = set_num_option(opt_idx, varp, (long)v->data.number, errbuf, errbuflen, opt_flags);
+    errmsg = set_num_option(opt_idx, varp, v->data.number, errbuf, errbuflen, opt_flags);
   } else if (v->type == kOptValTypeString) {
     errmsg = set_string_option(opt_idx, varp, v->data.string.data, opt_flags, &value_checked,
                                errbuf, errbuflen);
