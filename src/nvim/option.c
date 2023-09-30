@@ -2037,83 +2037,72 @@ static const char *did_set_force_off(bool *doskip)
   return NULL;
 }
 
-/// Process the updated 'langremap' option value.
-static const char *did_set_langremap(optset_T *args FUNC_ATTR_UNUSED)
+/// Process the updated 'arabic' option value.
+static const char *did_set_arabic(optset_T *args)
 {
-  // 'langremap' -> !'langnoremap'
-  p_lnr = !p_lrm;
-  return NULL;
-}
+  win_T *win = (win_T *)args->os_win;
+  const char *errmsg = NULL;
 
-/// Process the updated 'langnoremap' option value.
-static const char *did_set_langnoremap(optset_T *args FUNC_ATTR_UNUSED)
-{
-  // 'langnoremap' -> !'langremap'
-  p_lrm = !p_lnr;
-  return NULL;
-}
+  if (win->w_p_arab) {
+    // 'arabic' is set, handle various sub-settings.
+    if (!p_tbidi) {
+      // set rightleft mode
+      if (!win->w_p_rl) {
+        win->w_p_rl = true;
+        changed_window_setting();
+      }
 
-/// Process the updated 'undofile' option value.
-static const char *did_set_undofile(optset_T *args)
-{
-  // Only take action when the option was set.
-  if (!curbuf->b_p_udf && !p_udf) {
-    return NULL;
-  }
-
-  // When reset we do not delete the undo file, the option may be set again
-  // without making any changes in between.
-  uint8_t hash[UNDO_HASH_SIZE];
-
-  FOR_ALL_BUFFERS(bp) {
-    // When 'undofile' is set globally: for every buffer, otherwise
-    // only for the current buffer: Try to read in the undofile,
-    // if one exists, the buffer wasn't changed and the buffer was
-    // loaded
-    if ((curbuf == bp
-         || (args->os_flags & OPT_GLOBAL) || args->os_flags == 0)
-        && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
-      u_compute_hash(bp, hash);
-      u_read_undo(NULL, hash, bp->b_fname);
+      // Enable Arabic shaping (major part of what Arabic requires)
+      if (!p_arshape) {
+        p_arshape = true;
+        redraw_all_later(UPD_NOT_VALID);
+      }
     }
+
+    // Arabic requires a utf-8 encoding, inform the user if it's not
+    // set.
+    if (strcmp(p_enc, "utf-8") != 0) {
+      static char *w_arabic = N_("W17: Arabic requires UTF-8, do ':set encoding=utf-8'");
+
+      msg_source(HL_ATTR(HLF_W));
+      msg(_(w_arabic), HL_ATTR(HLF_W));
+      set_vim_var_string(VV_WARNINGMSG, _(w_arabic), -1);
+    }
+
+    // set 'delcombine'
+    p_deco = true;
+
+    // Force-set the necessary keymap for arabic.
+    errmsg = set_option_value("keymap", STATIC_CSTR_AS_OPTVAL("arabic"), OPT_LOCAL);
+  } else {
+    // 'arabic' is reset, handle various sub-settings.
+    if (!p_tbidi) {
+      // reset rightleft mode
+      if (win->w_p_rl) {
+        win->w_p_rl = false;
+        changed_window_setting();
+      }
+
+      // 'arabicshape' isn't reset, it is a global option and
+      // another window may still need it "on".
+    }
+
+    // 'delcombine' isn't reset, it is a global option and another
+    // window may still want it "on".
+
+    // Revert to the default keymap
+    curbuf->b_p_iminsert = B_IMODE_NONE;
+    curbuf->b_p_imsearch = B_IMODE_USE_INSERT;
   }
 
-  return NULL;
+  return errmsg;
 }
 
-/// Process the updated 'readonly' option value.
-static const char *did_set_readonly(optset_T *args)
+/// Process the updated 'autochdir' option value.
+static const char *did_set_autochdir(optset_T *args FUNC_ATTR_UNUSED)
 {
-  // when 'readonly' is reset globally, also reset readonlymode
-  if (!curbuf->b_p_ro && (args->os_flags & OPT_LOCAL) == 0) {
-    readonlymode = false;
-  }
-
-  // when 'readonly' is set may give W10 again
-  if (curbuf->b_p_ro) {
-    curbuf->b_did_warn = false;
-  }
-
-  redraw_titles();
-
-  return NULL;
-}
-
-/// Process the updated 'modifiable' option value.
-static const char *did_set_modifiable(optset_T *args FUNC_ATTR_UNUSED)
-{
-  // when 'modifiable' is changed, redraw the window title
-  redraw_titles();
-
-  return NULL;
-}
-
-/// Process the updated 'endoffile' or 'endofline' or 'fixendofline' or 'bomb'
-/// option value.
-static const char *did_set_eof_eol_fixeol_bomb(optset_T *args FUNC_ATTR_UNUSED)
-{
-  // redraw the window title and tab page text
-  redraw_titles();
+  // Change directories when the 'acd' option is set now.
+  do_autochdir();
   return NULL;
 }
 
@@ -2125,6 +2114,22 @@ static const char *did_set_binary(optset_T *args)
   // when 'bin' is set also set some other options
   set_options_bin((int)args->os_oldval.boolean, buf->b_p_bin, args->os_flags);
   redraw_titles();
+
+  return NULL;
+}
+
+/// Called when the 'breakat' option changes value.
+static const char *did_set_breakat(optset_T *args FUNC_ATTR_UNUSED)
+{
+  for (int i = 0; i < 256; i++) {
+    breakat_flags[i] = false;
+  }
+
+  if (p_breakat != NULL) {
+    for (char *p = p_breakat; *p; p++) {
+      breakat_flags[(uint8_t)(*p)] = true;
+    }
+  }
 
   return NULL;
 }
@@ -2142,18 +2147,217 @@ static const char *did_set_buflisted(optset_T *args)
   return NULL;
 }
 
-/// Process the updated 'swapfile' option value.
-static const char *did_set_swapfile(optset_T *args)
+/// Process the new 'cmdheight' option value.
+static const char *did_set_cmdheight(optset_T *args)
+{
+  OptInt old_value = args->os_oldval.number;
+
+  if (ui_has(kUIMessages)) {
+    p_ch = 0;
+  }
+  if (p_ch > Rows - min_rows() + 1) {
+    p_ch = Rows - min_rows() + 1;
+  }
+
+  // if p_ch changed value, change the command line height
+  // Only compute the new window layout when startup has been
+  // completed. Otherwise the frame sizes may be wrong.
+  if ((p_ch != old_value
+       || tabline_height() + global_stl_height() + topframe->fr_height != Rows - p_ch)
+      && full_screen) {
+    command_height();
+  }
+
+  return NULL;
+}
+
+/// Process the updated 'diff' option value.
+static const char *did_set_diff(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  // May add or remove the buffer from the list of diff buffers.
+  diff_buf_adjust(win);
+  if (foldmethodIsDiff(win)) {
+    foldUpdateAll(win);
+  }
+  return NULL;
+}
+
+/// Process the updated 'endoffile' or 'endofline' or 'fixendofline' or 'bomb'
+/// option value.
+static const char *did_set_eof_eol_fixeol_bomb(optset_T *args FUNC_ATTR_UNUSED)
+{
+  // redraw the window title and tab page text
+  redraw_titles();
+  return NULL;
+}
+
+/// Process the updated 'equalalways' option value.
+static const char *did_set_equalalways(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  if (p_ea && !args->os_oldval.boolean) {
+    win_equal(win, false, 0);
+  }
+
+  return NULL;
+}
+
+/// Process the new 'foldlevel' option value.
+static const char *did_set_foldlevel(optset_T *args FUNC_ATTR_UNUSED)
+{
+  newFoldLevel();
+  return NULL;
+}
+
+/// Process the new 'foldminlines' option value.
+static const char *did_set_foldminlines(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  foldUpdateAll(win);
+  return NULL;
+}
+
+/// Process the new 'foldnestmax' option value.
+static const char *did_set_foldnestmax(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  if (foldmethodIsSyntax(win) || foldmethodIsIndent(win)) {
+    foldUpdateAll(win);
+  }
+  return NULL;
+}
+
+/// Process the new 'helpheight' option value.
+static const char *did_set_helpheight(optset_T *args)
+{
+  // Change window height NOW
+  if (!ONE_WINDOW) {
+    buf_T *buf = (buf_T *)args->os_buf;
+    win_T *win = (win_T *)args->os_win;
+    if (buf->b_help && win->w_height < p_hh) {
+      win_setheight((int)p_hh);
+    }
+  }
+
+  return NULL;
+}
+
+/// Process the updated 'hlsearch' option value.
+static const char *did_set_hlsearch(optset_T *args FUNC_ATTR_UNUSED)
+{
+  // when 'hlsearch' is set or reset: reset no_hlsearch
+  set_no_hlsearch(false);
+  return NULL;
+}
+
+/// Process the updated 'ignorecase' option value.
+static const char *did_set_ignorecase(optset_T *args FUNC_ATTR_UNUSED)
+{
+  // when 'ignorecase' is set or reset and 'hlsearch' is set, redraw
+  if (p_hls) {
+    redraw_all_later(UPD_SOME_VALID);
+  }
+  return NULL;
+}
+
+/// Process the new 'iminset' option value.
+static const char *did_set_iminsert(optset_T *args FUNC_ATTR_UNUSED)
+{
+  showmode();
+  // Show/unshow value of 'keymap' in status lines.
+  status_redraw_curbuf();
+
+  return NULL;
+}
+
+/// Process the updated 'langnoremap' option value.
+static const char *did_set_langnoremap(optset_T *args FUNC_ATTR_UNUSED)
+{
+  // 'langnoremap' -> !'langremap'
+  p_lrm = !p_lnr;
+  return NULL;
+}
+
+/// Process the updated 'langremap' option value.
+static const char *did_set_langremap(optset_T *args FUNC_ATTR_UNUSED)
+{
+  // 'langremap' -> !'langnoremap'
+  p_lnr = !p_lrm;
+  return NULL;
+}
+
+/// Process the new 'laststatus' option value.
+static const char *did_set_laststatus(optset_T *args)
+{
+  OptInt old_value = args->os_oldval.number;
+  OptInt value = args->os_newval.number;
+
+  // When switching to global statusline, decrease topframe height
+  // Also clear the cmdline to remove the ruler if there is one
+  if (value == 3 && old_value != 3) {
+    frame_new_height(topframe, topframe->fr_height - STATUS_HEIGHT, false, false);
+    (void)win_comp_pos();
+    clear_cmdline = true;
+  }
+  // When switching from global statusline, increase height of topframe by STATUS_HEIGHT
+  // in order to to re-add the space that was previously taken by the global statusline
+  if (old_value == 3 && value != 3) {
+    frame_new_height(topframe, topframe->fr_height + STATUS_HEIGHT, false, false);
+    (void)win_comp_pos();
+  }
+
+  last_status(false);  // (re)set last window status line.
+  return NULL;
+}
+
+/// Process the updated 'lisp' option value.
+static const char *did_set_lisp(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  // when 'swf' is set, create swapfile, when reset remove swapfile
-  if (buf->b_p_swf && p_uc) {
-    ml_open_file(buf);                     // create the swap file
-  } else {
-    // no need to reset curbuf->b_may_swap, ml_open_file() will check
-    // buf->b_p_swf
-    mf_close_file(buf, true);              // remove the swap file
+  // When 'lisp' option changes include/exclude '-' in keyword characters.
+  (void)buf_init_chartab(buf, false);          // ignore errors
+  return NULL;
+}
+
+/// Process the updated 'modifiable' option value.
+static const char *did_set_modifiable(optset_T *args FUNC_ATTR_UNUSED)
+{
+  // when 'modifiable' is changed, redraw the window title
+  redraw_titles();
+
+  return NULL;
+}
+
+/// Process the updated 'modified' option value.
+static const char *did_set_modified(optset_T *args)
+{
+  buf_T *buf = (buf_T *)args->os_buf;
+  if (!args->os_newval.boolean) {
+    save_file_ff(buf);  // Buffer is unchanged
   }
+  redraw_titles();
+  modified_was_set = (int)args->os_newval.boolean;
+  return NULL;
+}
+
+/// Process the updated 'number' or 'relativenumber' option value.
+static const char *did_set_number_relativenumber(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  if (*win->w_p_stc != NUL) {
+    // When 'relativenumber'/'number' is changed and 'statuscolumn' is set, reset width.
+    win->w_nrwidth_line_count = 0;
+  }
+  return NULL;
+}
+
+/// Process the new 'numberwidth' option value.
+static const char *did_set_numberwidth(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+  win->w_nrwidth_line_count = 0;  // trigger a redraw
+
   return NULL;
 }
 
@@ -2286,39 +2490,6 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
-/// Process the updated 'ignorecase' option value.
-static const char *did_set_ignorecase(optset_T *args FUNC_ATTR_UNUSED)
-{
-  // when 'ignorecase' is set or reset and 'hlsearch' is set, redraw
-  if (p_hls) {
-    redraw_all_later(UPD_SOME_VALID);
-  }
-  return NULL;
-}
-
-/// Process the updated 'hlsearch' option value.
-static const char *did_set_hlsearch(optset_T *args FUNC_ATTR_UNUSED)
-{
-  // when 'hlsearch' is set or reset: reset no_hlsearch
-  set_no_hlsearch(false);
-  return NULL;
-}
-
-/// Process the updated 'scrollbind' option value.
-static const char *did_set_scrollbind(optset_T *args)
-{
-  win_T *win = (win_T *)args->os_win;
-
-  // when 'scrollbind' is set: snapshot the current position to avoid a jump
-  // at the end of normal_cmd()
-  if (!win->w_p_scb) {
-    return NULL;
-  }
-  do_check_scrollbind(false);
-  win->w_scbind_pos = win->w_topline;
-  return NULL;
-}
-
 /// Process the updated 'previewwindow' option value.
 static const char *did_set_previewwindow(optset_T *args)
 {
@@ -2340,32 +2511,63 @@ static const char *did_set_previewwindow(optset_T *args)
   return NULL;
 }
 
-/// Process the updated 'lisp' option value.
-static const char *did_set_lisp(optset_T *args)
+/// Process the new 'pumblend' option value.
+static const char *did_set_pumblend(optset_T *args FUNC_ATTR_UNUSED)
 {
-  buf_T *buf = (buf_T *)args->os_buf;
-  // When 'lisp' option changes include/exclude '-' in keyword characters.
-  (void)buf_init_chartab(buf, false);          // ignore errors
-  return NULL;
-}
-
-/// Process the updated 'title' or the 'icon' option value.
-static const char *did_set_title_icon(optset_T *args FUNC_ATTR_UNUSED)
-{
-  // when 'title' changed, may need to change the title; same for 'icon'
-  did_set_title();
-  return NULL;
-}
-
-/// Process the updated 'modified' option value.
-static const char *did_set_modified(optset_T *args)
-{
-  buf_T *buf = (buf_T *)args->os_buf;
-  if (!args->os_newval.boolean) {
-    save_file_ff(buf);  // Buffer is unchanged
+  p_pb = MAX(MIN(p_pb, 100), 0);
+  hl_invalidate_blends();
+  pum_grid.blending = (p_pb > 0);
+  if (pum_drawn()) {
+    pum_redraw();
   }
+
+  return NULL;
+}
+
+/// Process the updated 'readonly' option value.
+static const char *did_set_readonly(optset_T *args)
+{
+  // when 'readonly' is reset globally, also reset readonlymode
+  if (!curbuf->b_p_ro && (args->os_flags & OPT_LOCAL) == 0) {
+    readonlymode = false;
+  }
+
+  // when 'readonly' is set may give W10 again
+  if (curbuf->b_p_ro) {
+    curbuf->b_did_warn = false;
+  }
+
   redraw_titles();
-  modified_was_set = (int)args->os_newval.boolean;
+
+  return NULL;
+}
+
+/// Process the new 'scrollback' option value.
+static const char *did_set_scrollback(optset_T *args)
+{
+  buf_T *buf = (buf_T *)args->os_buf;
+  OptInt old_value = args->os_oldval.number;
+  OptInt value = args->os_newval.number;
+
+  if (buf->terminal && value < old_value) {
+    // Force the scrollback to take immediate effect only when decreasing it.
+    on_scrollback_option_changed(buf->terminal);
+  }
+  return NULL;
+}
+
+/// Process the updated 'scrollbind' option value.
+static const char *did_set_scrollbind(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+
+  // when 'scrollbind' is set: snapshot the current position to avoid a jump
+  // at the end of normal_cmd()
+  if (!win->w_p_scb) {
+    return NULL;
+  }
+  do_check_scrollbind(false);
+  win->w_scbind_pos = win->w_topline;
   return NULL;
 }
 
@@ -2391,46 +2593,43 @@ static const char *did_set_shellslash(optset_T *args FUNC_ATTR_UNUSED)
 }
 #endif
 
-/// Process the updated 'wrap' option value.
-static const char *did_set_wrap(optset_T *args)
+/// Process the new 'shiftwidth' or the 'tabstop' option value.
+static const char *did_set_shiftwidth_tabstop(optset_T *args)
 {
+  buf_T *buf = (buf_T *)args->os_buf;
   win_T *win = (win_T *)args->os_win;
+  OptInt *pp = (OptInt *)args->os_varp;
 
-  // If 'wrap' is set, set w_leftcol to zero.
-  if (win->w_p_wrap) {
-    win->w_leftcol = 0;
-  }
-  return NULL;
-}
-
-/// Process the updated 'equalalways' option value.
-static const char *did_set_equalalways(optset_T *args)
-{
-  win_T *win = (win_T *)args->os_win;
-  if (p_ea && !args->os_oldval.boolean) {
-    win_equal(win, false, 0);
-  }
-
-  return NULL;
-}
-
-/// Process the updated 'autochdir' option value.
-static const char *did_set_autochdir(optset_T *args FUNC_ATTR_UNUSED)
-{
-  // Change directories when the 'acd' option is set now.
-  do_autochdir();
-  return NULL;
-}
-
-/// Process the updated 'diff' option value.
-static const char *did_set_diff(optset_T *args)
-{
-  win_T *win = (win_T *)args->os_win;
-  // May add or remove the buffer from the list of diff buffers.
-  diff_buf_adjust(win);
-  if (foldmethodIsDiff(win)) {
+  if (foldmethodIsIndent(win)) {
     foldUpdateAll(win);
   }
+  // When 'shiftwidth' changes, or it's zero and 'tabstop' changes:
+  // parse 'cinoptions'.
+  if (pp == &buf->b_p_sw || buf->b_p_sw == 0) {
+    parse_cino(buf);
+  }
+
+  return NULL;
+}
+
+/// Process the new 'showtabline' option value.
+static const char *did_set_showtabline(optset_T *args FUNC_ATTR_UNUSED)
+{
+  // (re)set tab page line
+  win_new_screen_rows();  // recompute window positions and heights
+  return NULL;
+}
+
+/// Process the updated 'smoothscroll' option value.
+static const char *did_set_smoothscroll(optset_T *args FUNC_ATTR_UNUSED)
+{
+  win_T *win = (win_T *)args->os_win;
+  if (win->w_p_sms) {
+    return NULL;
+  }
+
+  win->w_skipcol = 0;
+  changed_line_abv_curs_win(win);
   return NULL;
 }
 
@@ -2445,74 +2644,189 @@ static const char *did_set_spell(optset_T *args)
   return NULL;
 }
 
-/// Process the updated 'arabic' option value.
-static const char *did_set_arabic(optset_T *args)
+/// Process the updated 'swapfile' option value.
+static const char *did_set_swapfile(optset_T *args)
 {
-  win_T *win = (win_T *)args->os_win;
-  const char *errmsg = NULL;
-
-  if (win->w_p_arab) {
-    // 'arabic' is set, handle various sub-settings.
-    if (!p_tbidi) {
-      // set rightleft mode
-      if (!win->w_p_rl) {
-        win->w_p_rl = true;
-        changed_window_setting();
-      }
-
-      // Enable Arabic shaping (major part of what Arabic requires)
-      if (!p_arshape) {
-        p_arshape = true;
-        redraw_all_later(UPD_NOT_VALID);
-      }
-    }
-
-    // Arabic requires a utf-8 encoding, inform the user if it's not
-    // set.
-    if (strcmp(p_enc, "utf-8") != 0) {
-      static char *w_arabic = N_("W17: Arabic requires UTF-8, do ':set encoding=utf-8'");
-
-      msg_source(HL_ATTR(HLF_W));
-      msg(_(w_arabic), HL_ATTR(HLF_W));
-      set_vim_var_string(VV_WARNINGMSG, _(w_arabic), -1);
-    }
-
-    // set 'delcombine'
-    p_deco = true;
-
-    // Force-set the necessary keymap for arabic.
-    errmsg = set_option_value("keymap", STATIC_CSTR_AS_OPTVAL("arabic"), OPT_LOCAL);
+  buf_T *buf = (buf_T *)args->os_buf;
+  // when 'swf' is set, create swapfile, when reset remove swapfile
+  if (buf->b_p_swf && p_uc) {
+    ml_open_file(buf);                     // create the swap file
   } else {
-    // 'arabic' is reset, handle various sub-settings.
-    if (!p_tbidi) {
-      // reset rightleft mode
-      if (win->w_p_rl) {
-        win->w_p_rl = false;
-        changed_window_setting();
-      }
-
-      // 'arabicshape' isn't reset, it is a global option and
-      // another window may still need it "on".
-    }
-
-    // 'delcombine' isn't reset, it is a global option and another
-    // window may still want it "on".
-
-    // Revert to the default keymap
-    curbuf->b_p_iminsert = B_IMODE_NONE;
-    curbuf->b_p_imsearch = B_IMODE_USE_INSERT;
+    // no need to reset curbuf->b_may_swap, ml_open_file() will check
+    // buf->b_p_swf
+    mf_close_file(buf, true);              // remove the swap file
   }
-
-  return errmsg;
+  return NULL;
 }
 
-/// Process the updated 'number' or 'relativenumber' option value.
-static const char *did_set_number_relativenumber(optset_T *args)
+/// Process the new 'textwidth' option value.
+static const char *did_set_textwidth(optset_T *args FUNC_ATTR_UNUSED)
+{
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    check_colorcolumn(wp);
+  }
+
+  return NULL;
+}
+
+/// Process the updated 'title' or the 'icon' option value.
+static const char *did_set_title_icon(optset_T *args FUNC_ATTR_UNUSED)
+{
+  // when 'title' changed, may need to change the title; same for 'icon'
+  did_set_title();
+  return NULL;
+}
+
+/// Process the new 'titlelen' option value.
+static const char *did_set_titlelen(optset_T *args)
+{
+  OptInt old_value = args->os_oldval.number;
+
+  // if 'titlelen' has changed, redraw the title
+  if (starting != NO_SCREEN && old_value != p_titlelen) {
+    need_maketitle = true;
+  }
+
+  return NULL;
+}
+
+/// Process the updated 'undofile' option value.
+static const char *did_set_undofile(optset_T *args)
+{
+  // Only take action when the option was set.
+  if (!curbuf->b_p_udf && !p_udf) {
+    return NULL;
+  }
+
+  // When reset we do not delete the undo file, the option may be set again
+  // without making any changes in between.
+  uint8_t hash[UNDO_HASH_SIZE];
+
+  FOR_ALL_BUFFERS(bp) {
+    // When 'undofile' is set globally: for every buffer, otherwise
+    // only for the current buffer: Try to read in the undofile,
+    // if one exists, the buffer wasn't changed and the buffer was
+    // loaded
+    if ((curbuf == bp
+         || (args->os_flags & OPT_GLOBAL) || args->os_flags == 0)
+        && !bufIsChanged(bp) && bp->b_ml.ml_mfp != NULL) {
+      u_compute_hash(bp, hash);
+      u_read_undo(NULL, hash, bp->b_fname);
+    }
+  }
+
+  return NULL;
+}
+
+/// Process the new global 'undolevels' option value.
+const char *did_set_global_undolevels(OptInt value, OptInt old_value)
+{
+  // sync undo before 'undolevels' changes
+  // use the old value, otherwise u_sync() may not work properly
+  p_ul = old_value;
+  u_sync(true);
+  p_ul = value;
+  return NULL;
+}
+
+/// Process the new buffer local 'undolevels' option value.
+const char *did_set_buflocal_undolevels(buf_T *buf, OptInt value, OptInt old_value)
+{
+  // use the old value, otherwise u_sync() may not work properly
+  buf->b_p_ul = old_value;
+  u_sync(true);
+  buf->b_p_ul = value;
+  return NULL;
+}
+
+/// Process the new 'undolevels' option value.
+static const char *did_set_undolevels(optset_T *args)
+{
+  buf_T *buf = (buf_T *)args->os_buf;
+  OptInt *pp = (OptInt *)args->os_varp;
+
+  if (pp == &p_ul) {                  // global 'undolevels'
+    did_set_global_undolevels(args->os_newval.number, args->os_oldval.number);
+  } else if (pp == &curbuf->b_p_ul) {      // buffer local 'undolevels'
+    did_set_buflocal_undolevels(buf, args->os_newval.number, args->os_oldval.number);
+  }
+
+  return NULL;
+}
+
+/// Process the new 'updatecount' option value.
+static const char *did_set_updatecount(optset_T *args)
+{
+  OptInt old_value = args->os_oldval.number;
+
+  // when 'updatecount' changes from zero to non-zero, open swap files
+  if (p_uc && !old_value) {
+    ml_open_files();
+  }
+
+  return NULL;
+}
+
+/// Process the new 'winblend' option value.
+static const char *did_set_winblend(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  if (*win->w_p_stc != NUL) {
-    // When 'relativenumber'/'number' is changed and 'statuscolumn' is set, reset width.
-    win->w_nrwidth_line_count = 0;
+  OptInt old_value = args->os_oldval.number;
+  OptInt value = args->os_newval.number;
+
+  if (value != old_value) {
+    win->w_p_winbl = MAX(MIN(win->w_p_winbl, 100), 0);
+    win->w_hl_needs_update = true;
+    check_blending(curwin);
+  }
+
+  return NULL;
+}
+
+/// Process the new 'window' option value.
+static const char *did_set_window(optset_T *args FUNC_ATTR_UNUSED)
+{
+  if (p_window < 1) {
+    p_window = Rows - 1;
+  } else if (p_window >= Rows) {
+    p_window = Rows - 1;
+  }
+  return NULL;
+}
+
+/// Process the new 'winheight' value.
+static const char *did_set_winheight(optset_T *args)
+{
+  // Change window height NOW
+  if (!ONE_WINDOW) {
+    win_T *win = (win_T *)args->os_win;
+    if (win->w_height < p_wh) {
+      win_setheight((int)p_wh);
+    }
+  }
+
+  return NULL;
+}
+
+/// Process the new 'winwidth' option value.
+static const char *did_set_winwidth(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+
+  if (!ONE_WINDOW && win->w_width < p_wiw) {
+    win_setwidth((int)p_wiw);
+  }
+  return NULL;
+}
+
+/// Process the updated 'wrap' option value.
+static const char *did_set_wrap(optset_T *args)
+{
+  win_T *win = (win_T *)args->os_win;
+
+  // If 'wrap' is set, set w_leftcol to zero.
+  if (win->w_p_wrap) {
+    win->w_leftcol = 0;
   }
   return NULL;
 }
@@ -2604,304 +2918,6 @@ static const char *set_bool_option(const int opt_idx, char *const varp, const in
   check_redraw(options[opt_idx].flags);
 
   return errmsg;
-}
-
-/// Process the new 'winheight' value.
-static const char *did_set_winheight(optset_T *args)
-{
-  // Change window height NOW
-  if (!ONE_WINDOW) {
-    win_T *win = (win_T *)args->os_win;
-    if (win->w_height < p_wh) {
-      win_setheight((int)p_wh);
-    }
-  }
-
-  return NULL;
-}
-
-/// Process the new 'helpheight' option value.
-static const char *did_set_helpheight(optset_T *args)
-{
-  // Change window height NOW
-  if (!ONE_WINDOW) {
-    buf_T *buf = (buf_T *)args->os_buf;
-    win_T *win = (win_T *)args->os_win;
-    if (buf->b_help && win->w_height < p_hh) {
-      win_setheight((int)p_hh);
-    }
-  }
-
-  return NULL;
-}
-
-/// Process the new 'winwidth' option value.
-static const char *did_set_winwidth(optset_T *args)
-{
-  win_T *win = (win_T *)args->os_win;
-
-  if (!ONE_WINDOW && win->w_width < p_wiw) {
-    win_setwidth((int)p_wiw);
-  }
-  return NULL;
-}
-
-/// Process the new 'laststatus' option value.
-static const char *did_set_laststatus(optset_T *args)
-{
-  OptInt old_value = args->os_oldval.number;
-  OptInt value = args->os_newval.number;
-
-  // When switching to global statusline, decrease topframe height
-  // Also clear the cmdline to remove the ruler if there is one
-  if (value == 3 && old_value != 3) {
-    frame_new_height(topframe, topframe->fr_height - STATUS_HEIGHT, false, false);
-    (void)win_comp_pos();
-    clear_cmdline = true;
-  }
-  // When switching from global statusline, increase height of topframe by STATUS_HEIGHT
-  // in order to to re-add the space that was previously taken by the global statusline
-  if (old_value == 3 && value != 3) {
-    frame_new_height(topframe, topframe->fr_height + STATUS_HEIGHT, false, false);
-    (void)win_comp_pos();
-  }
-
-  last_status(false);  // (re)set last window status line.
-  return NULL;
-}
-
-/// Process the new 'showtabline' option value.
-static const char *did_set_showtabline(optset_T *args FUNC_ATTR_UNUSED)
-{
-  // (re)set tab page line
-  win_new_screen_rows();  // recompute window positions and heights
-  return NULL;
-}
-
-/// Process the updated 'smoothscroll' option value.
-static const char *did_set_smoothscroll(optset_T *args FUNC_ATTR_UNUSED)
-{
-  win_T *win = (win_T *)args->os_win;
-  if (win->w_p_sms) {
-    return NULL;
-  }
-
-  win->w_skipcol = 0;
-  changed_line_abv_curs_win(win);
-  return NULL;
-}
-
-/// Process the new 'foldlevel' option value.
-static const char *did_set_foldlevel(optset_T *args FUNC_ATTR_UNUSED)
-{
-  newFoldLevel();
-  return NULL;
-}
-
-/// Process the new 'foldminlines' option value.
-static const char *did_set_foldminlines(optset_T *args)
-{
-  win_T *win = (win_T *)args->os_win;
-  foldUpdateAll(win);
-  return NULL;
-}
-
-/// Process the new 'foldnestmax' option value.
-static const char *did_set_foldnestmax(optset_T *args)
-{
-  win_T *win = (win_T *)args->os_win;
-  if (foldmethodIsSyntax(win) || foldmethodIsIndent(win)) {
-    foldUpdateAll(win);
-  }
-  return NULL;
-}
-
-/// Process the new 'shiftwidth' or the 'tabstop' option value.
-static const char *did_set_shiftwidth_tabstop(optset_T *args)
-{
-  buf_T *buf = (buf_T *)args->os_buf;
-  win_T *win = (win_T *)args->os_win;
-  OptInt *pp = (OptInt *)args->os_varp;
-
-  if (foldmethodIsIndent(win)) {
-    foldUpdateAll(win);
-  }
-  // When 'shiftwidth' changes, or it's zero and 'tabstop' changes:
-  // parse 'cinoptions'.
-  if (pp == &buf->b_p_sw || buf->b_p_sw == 0) {
-    parse_cino(buf);
-  }
-
-  return NULL;
-}
-
-/// Process the new 'iminset' option value.
-static const char *did_set_iminsert(optset_T *args FUNC_ATTR_UNUSED)
-{
-  showmode();
-  // Show/unshow value of 'keymap' in status lines.
-  status_redraw_curbuf();
-
-  return NULL;
-}
-
-/// Process the new 'window' option value.
-static const char *did_set_window(optset_T *args FUNC_ATTR_UNUSED)
-{
-  if (p_window < 1) {
-    p_window = Rows - 1;
-  } else if (p_window >= Rows) {
-    p_window = Rows - 1;
-  }
-  return NULL;
-}
-
-/// Process the new 'titlelen' option value.
-static const char *did_set_titlelen(optset_T *args)
-{
-  OptInt old_value = args->os_oldval.number;
-
-  // if 'titlelen' has changed, redraw the title
-  if (starting != NO_SCREEN && old_value != p_titlelen) {
-    need_maketitle = true;
-  }
-
-  return NULL;
-}
-
-/// Process the new 'cmdheight' option value.
-static const char *did_set_cmdheight(optset_T *args)
-{
-  OptInt old_value = args->os_oldval.number;
-
-  if (ui_has(kUIMessages)) {
-    p_ch = 0;
-  }
-  if (p_ch > Rows - min_rows() + 1) {
-    p_ch = Rows - min_rows() + 1;
-  }
-
-  // if p_ch changed value, change the command line height
-  // Only compute the new window layout when startup has been
-  // completed. Otherwise the frame sizes may be wrong.
-  if ((p_ch != old_value
-       || tabline_height() + global_stl_height() + topframe->fr_height != Rows - p_ch)
-      && full_screen) {
-    command_height();
-  }
-
-  return NULL;
-}
-
-/// Process the new 'updatecount' option value.
-static const char *did_set_updatecount(optset_T *args)
-{
-  OptInt old_value = args->os_oldval.number;
-
-  // when 'updatecount' changes from zero to non-zero, open swap files
-  if (p_uc && !old_value) {
-    ml_open_files();
-  }
-
-  return NULL;
-}
-
-/// Process the new 'pumblend' option value.
-static const char *did_set_pumblend(optset_T *args FUNC_ATTR_UNUSED)
-{
-  p_pb = MAX(MIN(p_pb, 100), 0);
-  hl_invalidate_blends();
-  pum_grid.blending = (p_pb > 0);
-  if (pum_drawn()) {
-    pum_redraw();
-  }
-
-  return NULL;
-}
-
-/// Process the new global 'undolevels' option value.
-const char *did_set_global_undolevels(OptInt value, OptInt old_value)
-{
-  // sync undo before 'undolevels' changes
-  // use the old value, otherwise u_sync() may not work properly
-  p_ul = old_value;
-  u_sync(true);
-  p_ul = value;
-  return NULL;
-}
-
-/// Process the new buffer local 'undolevels' option value.
-const char *did_set_buflocal_undolevels(buf_T *buf, OptInt value, OptInt old_value)
-{
-  // use the old value, otherwise u_sync() may not work properly
-  buf->b_p_ul = old_value;
-  u_sync(true);
-  buf->b_p_ul = value;
-  return NULL;
-}
-
-/// Process the new 'scrollback' option value.
-static const char *did_set_scrollback(optset_T *args)
-{
-  buf_T *buf = (buf_T *)args->os_buf;
-  OptInt old_value = args->os_oldval.number;
-  OptInt value = args->os_newval.number;
-
-  if (buf->terminal && value < old_value) {
-    // Force the scrollback to take immediate effect only when decreasing it.
-    on_scrollback_option_changed(buf->terminal);
-  }
-  return NULL;
-}
-
-/// Process the new 'numberwidth' option value.
-static const char *did_set_numberwidth(optset_T *args)
-{
-  win_T *win = (win_T *)args->os_win;
-  win->w_nrwidth_line_count = 0;  // trigger a redraw
-
-  return NULL;
-}
-
-/// Process the new 'textwidth' option value.
-static const char *did_set_textwidth(optset_T *args FUNC_ATTR_UNUSED)
-{
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    check_colorcolumn(wp);
-  }
-
-  return NULL;
-}
-
-/// Process the new 'winblend' option value.
-static const char *did_set_winblend(optset_T *args)
-{
-  win_T *win = (win_T *)args->os_win;
-  OptInt old_value = args->os_oldval.number;
-  OptInt value = args->os_newval.number;
-
-  if (value != old_value) {
-    win->w_p_winbl = MAX(MIN(win->w_p_winbl, 100), 0);
-    win->w_hl_needs_update = true;
-    check_blending(curwin);
-  }
-
-  return NULL;
-}
-
-/// Process the new 'undolevels' option value.
-static const char *did_set_undolevels(optset_T *args)
-{
-  buf_T *buf = (buf_T *)args->os_buf;
-  OptInt *pp = (OptInt *)args->os_varp;
-
-  if (pp == &p_ul) {                  // global 'undolevels'
-    did_set_global_undolevels(args->os_newval.number, args->os_oldval.number);
-  } else if (pp == &curbuf->b_p_ul) {      // buffer local 'undolevels'
-    did_set_buflocal_undolevels(buf, args->os_newval.number, args->os_oldval.number);
-  }
-
-  return NULL;
 }
 
 /// Check the bounds of numeric options.
@@ -5742,22 +5758,6 @@ void reset_option_was_set(const char *name)
   }
 
   options[idx].flags &= ~P_WAS_SET;
-}
-
-/// Called when the 'breakat' option changes value.
-static const char *did_set_breakat(optset_T *args FUNC_ATTR_UNUSED)
-{
-  for (int i = 0; i < 256; i++) {
-    breakat_flags[i] = false;
-  }
-
-  if (p_breakat != NULL) {
-    for (char *p = p_breakat; *p; p++) {
-      breakat_flags[(uint8_t)(*p)] = true;
-    }
-  }
-
-  return NULL;
 }
 
 /// fill_culopt_flags() -- called when 'culopt' changes value
