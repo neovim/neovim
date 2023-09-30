@@ -85,7 +85,5 @@ valgrind_check() {
 }
 
 check_sanitizer() {
-  if test -n "${CLANG_SANITIZER}"; then
-    check_logs "${1}" "*san.*" | cat
-  fi
+  check_logs "${1}" "*san.*"
 }
