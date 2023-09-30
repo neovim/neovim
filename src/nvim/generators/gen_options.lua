@@ -35,6 +35,8 @@ local redraw_flags={
 local list_flags={
   comma='P_COMMA',
   onecomma='P_ONECOMMA',
+  commacolon='P_COMMA|P_COLON',
+  onecommacolon='P_ONECOMMA|P_COLON',
   flags='P_FLAGLIST',
   flagscomma='P_COMMA|P_FLAGLIST',
 }
@@ -165,6 +167,9 @@ local function dump_option(i, o)
   end
   if o.cb then
     w('    .opt_did_set_cb=' .. o.cb)
+  end
+  if o.expand_cb then
+    w('    .opt_expand_cb=' .. o.expand_cb)
   end
   if o.enable_if then
     w('#else')
