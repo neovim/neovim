@@ -577,10 +577,10 @@ describe('Command-line coloring', function()
                                               |
       {EOB:~                                       }|
       {EOB:~                                       }|
+      {EOB:~                                       }|
       {MSEP:                                        }|
       :+                                      |
       {ERR:E5404: Chunk 1 end 3 not in range (1, 2]}|
-                                              |
       :++^                                     |
     ]])
   end)

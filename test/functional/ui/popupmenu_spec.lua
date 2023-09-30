@@ -2439,14 +2439,14 @@ describe('builtin popupmenu', function()
           prefix      |
           bef{n: word  }  |
           tex{n: }^        |
-          {2:-- INSERT -} |
+          {2:-- INSERT --}|
         ]])
 
         -- can't draw the pum, but check we don't crash
         screen:try_resize(12,2)
         screen:expect([[
           {1:<<<}t^        |
-          {2:-- INSERT -} |
+          {2:-- INSERT --}|
         ]])
 
         -- but state is preserved, pum reappears

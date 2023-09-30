@@ -8094,13 +8094,6 @@ void ex_execute(exarg_T *eap)
   }
 
   if (ret != FAIL && ga.ga_data != NULL) {
-    if (eap->cmdidx == CMD_echomsg || eap->cmdidx == CMD_echoerr) {
-      // Mark the already saved text as finishing the line, so that what
-      // follows is displayed on a new line when scrolling back at the
-      // more prompt.
-      msg_sb_eol();
-    }
-
     if (eap->cmdidx == CMD_echomsg) {
       msg_ext_set_kind("echomsg");
       msg(ga.ga_data, echo_attr);

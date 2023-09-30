@@ -43,7 +43,7 @@ describe('edit', function()
       {0:~           }|
       {0:~           }|
       {0:~           }|
-      {2:-- INSERT -} |
+      {2:-- INSERT --}|
     ]])
     feed('=')
     screen:expect([[
