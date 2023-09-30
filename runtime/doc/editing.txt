@@ -1078,6 +1078,13 @@ will get the ACL info of the original file.
    The ACL info is also used to check if a file is read-only (when opening the
 file).
 
+				*xattr* *E1506* *E1507* *E1508* *E1509*
+xattr stands for Extended Attributes  It is an advanced way to save metadata
+alongside the file in the filesystem.  It depends on the actual filesystem
+being used and Vim supports it only on a Linux system.
+   Vim attempts to preserve the extended attribute info when writing a file.
+The backup file will get the extended attribute of the original file.
+
 						*read-only-share*
 When MS-Windows shares a drive on the network it can be marked as read-only.
 This means that even if the file read-only attribute is absent, and the ACL

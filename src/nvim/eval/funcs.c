@@ -3171,6 +3171,9 @@ static void f_has(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     "windows",
     "winaltkeys",
     "writebackup",
+#ifdef HAVE_XATTR
+    "xattr",
+#endif
     "nvim",
   };
 
