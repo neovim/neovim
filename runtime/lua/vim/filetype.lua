@@ -31,12 +31,12 @@ local function starsetf(ft, opts)
   }
 end
 
----@private
+--- @private
 --- Get a line range from the buffer.
----@param bufnr integer The buffer to get the lines from
----@param start_lnum integer|nil The line number of the first line (inclusive, 1-based)
----@param end_lnum integer|nil The line number of the last line (inclusive, 1-based)
----@return string[] # Array of lines
+--- @param bufnr integer The buffer to get the lines from
+--- @param start_lnum integer|nil The line number of the first line (inclusive, 1-based)
+--- @param end_lnum integer|nil The line number of the last line (inclusive, 1-based)
+--- @return string[] # Array of lines
 function M._getlines(bufnr, start_lnum, end_lnum)
   if start_lnum then
     return api.nvim_buf_get_lines(bufnr, start_lnum - 1, end_lnum or start_lnum, false)
@@ -46,22 +46,22 @@ function M._getlines(bufnr, start_lnum, end_lnum)
   return api.nvim_buf_get_lines(bufnr, 0, -1, false)
 end
 
----@private
+--- @private
 --- Get a single line from the buffer.
----@param bufnr integer The buffer to get the lines from
----@param start_lnum integer The line number of the first line (inclusive, 1-based)
----@return string
+--- @param bufnr integer The buffer to get the lines from
+--- @param start_lnum integer The line number of the first line (inclusive, 1-based)
+--- @return string
 function M._getline(bufnr, start_lnum)
   -- Return a single line
   return api.nvim_buf_get_lines(bufnr, start_lnum - 1, start_lnum, false)[1] or ''
 end
 
----@private
+--- @private
 --- Check whether a string matches any of the given Lua patterns.
 ---
----@param s string? The string to check
----@param patterns string[] A list of Lua patterns
----@return boolean `true` if s matched a pattern, else `false`
+--- @param s string? The string to check
+--- @param patterns string[] A list of Lua patterns
+--- @return boolean `true` if s matched a pattern, else `false`
 function M._findany(s, patterns)
   if not s then
     return false
@@ -74,12 +74,12 @@ function M._findany(s, patterns)
   return false
 end
 
----@private
+--- @private
 --- Get the next non-whitespace line in the buffer.
 ---
----@param bufnr integer The buffer to get the line from
----@param start_lnum integer The line number of the first line to start from (inclusive, 1-based)
----@return string|nil The first non-blank line if found or `nil` otherwise
+--- @param bufnr integer The buffer to get the line from
+--- @param start_lnum integer The line number of the first line to start from (inclusive, 1-based)
+--- @return string|nil The first non-blank line if found or `nil` otherwise
 function M._nextnonblank(bufnr, start_lnum)
   for _, line in ipairs(M._getlines(bufnr, start_lnum, -1)) do
     if not line:find('^%s*$') then
@@ -170,7 +170,7 @@ end
 -- luacheck: push ignore 122
 
 -- Filetypes based on file extension
----@diagnostic disable: unused-local
+--- @diagnostic disable: unused-local
 --- @type vim.filetype.mapping
 local extension = {
   -- BEGIN EXTENSION
@@ -2139,7 +2139,7 @@ end
 --- }
 --- ```
 ---
----@param filetypes vim.filetype.add.filetypes A table containing new filetype maps (see example).
+--- @param filetypes vim.filetype.add.filetypes A table containing new filetype maps (see example).
 function M.add(filetypes)
   for k, v in pairs(filetypes.extension or {}) do
     extension[k] = v
@@ -2274,7 +2274,7 @@ end
 --- vim.filetype.match({ contents = {'#!/usr/bin/env bash'} })
 --- ```
 ---
----@param args vim.filetype.match.args Table specifying which matching strategy to use.
+--- @param args vim.filetype.match.args Table specifying which matching strategy to use.
 ---                 Accepted keys are:
 ---                   * buf (number): Buffer number to use for matching. Mutually exclusive with
 ---                                   {contents}
@@ -2288,8 +2288,8 @@ end
 ---                   * contents (table): An array of lines representing file contents to use for
 ---                                       matching. Can be used with {filename}. Mutually exclusive
 ---                                       with {buf}.
----@return string|nil # If a match was found, the matched filetype.
----@return function|nil # A function that modifies buffer state when called (for example, to set some
+--- @return string|nil # If a match was found, the matched filetype.
+--- @return function|nil # A function that modifies buffer state when called (for example, to set some
 ---                     filetype specific buffer variables). The function accepts a buffer number as
 ---                     its only argument.
 function M.match(args)

@@ -18,12 +18,12 @@ local keymap = {}
 --- vim.keymap.set('n', '[%%', '<Plug>(MatchitNormalMultiBackward)')
 --- ```
 ---
----@param mode string|table    Mode short-name, see |nvim_set_keymap()|.
+--- @param mode string|table    Mode short-name, see |nvim_set_keymap()|.
 ---                            Can also be list of modes to create mapping on multiple modes.
----@param lhs string           Left-hand side |{lhs}| of the mapping.
----@param rhs string|function  Right-hand side |{rhs}| of the mapping, can be a Lua function.
+--- @param lhs string           Left-hand side |{lhs}| of the mapping.
+--- @param rhs string|function  Right-hand side |{rhs}| of the mapping, can be a Lua function.
 ---
----@param opts table|nil Table of |:map-arguments|.
+--- @param opts table|nil Table of |:map-arguments|.
 ---                      - Same as |nvim_set_keymap()| {opts}, except:
 ---                        - "replace_keycodes" defaults to `true` if "expr" is `true`.
 ---                        - "noremap": inverse of "remap" (see below).
@@ -32,10 +32,10 @@ local keymap = {}
 ---                        for current buffer.
 ---                        - "remap": (boolean) Make the mapping recursive. Inverse of "noremap".
 ---                        Defaults to `false`.
----@see |nvim_set_keymap()|
----@see |maparg()|
----@see |mapcheck()|
----@see |mapset()|
+--- @see |nvim_set_keymap()|
+--- @see |maparg()|
+--- @see |mapcheck()|
+--- @see |mapset()|
 function keymap.set(mode, lhs, rhs, opts)
   vim.validate({
     mode = { mode, { 's', 't' } },
@@ -90,10 +90,10 @@ end
 --- vim.keymap.del({'n', 'i', 'v'}, '<leader>w', { buffer = 5 })
 --- ```
 ---
----@param opts table|nil A table of optional arguments:
+--- @param opts table|nil A table of optional arguments:
 ---                      - "buffer": (integer|boolean) Remove a mapping from the given buffer.
 ---                        When `0` or `true`, use the current buffer.
----@see |vim.keymap.set()|
+--- @see |vim.keymap.set()|
 ---
 function keymap.del(modes, lhs, opts)
   vim.validate({

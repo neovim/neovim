@@ -1,4 +1,4 @@
----TODO: This is implemented only for files currently.
+--- TODO: This is implemented only for files currently.
 -- https://tools.ietf.org/html/rfc3986
 -- https://tools.ietf.org/html/rfc2732
 -- https://tools.ietf.org/html/rfc2396
@@ -21,44 +21,44 @@ local PATTERNS = {
   rfc3986 = "^A-Za-z0-9%-._~!$&'()*+,;=:@/",
 }
 
----Converts hex to char
----@param hex string
----@return string
+--- Converts hex to char
+--- @param hex string
+--- @return string
 local function hex_to_char(hex)
   return schar(tonumber(hex, 16))
 end
 
----@param char string
----@return string
+--- @param char string
+--- @return string
 local function percent_encode_char(char)
   return '%' .. tohex(sbyte(char), 2)
 end
 
----@param uri string
----@return boolean
+--- @param uri string
+--- @return boolean
 local function is_windows_file_uri(uri)
   return uri:match('^file:/+[a-zA-Z]:') ~= nil
 end
 
----URI-encodes a string using percent escapes.
----@param str string string to encode
----@param rfc "rfc2396" | "rfc2732" | "rfc3986" | nil
----@return string encoded string
+--- URI-encodes a string using percent escapes.
+--- @param str string string to encode
+--- @param rfc "rfc2396" | "rfc2732" | "rfc3986" | nil
+--- @return string encoded string
 function M.uri_encode(str, rfc)
   local pattern = PATTERNS[rfc] or PATTERNS.rfc3986
   return (str:gsub('([' .. pattern .. '])', percent_encode_char)) -- clamped to 1 retval with ()
 end
 
----URI-decodes a string containing percent escapes.
----@param str string string to decode
----@return string decoded string
+--- URI-decodes a string containing percent escapes.
+--- @param str string string to decode
+--- @return string decoded string
 function M.uri_decode(str)
   return (str:gsub('%%([a-fA-F0-9][a-fA-F0-9])', hex_to_char)) -- clamped to 1 retval with ()
 end
 
----Gets a URI from a file path.
----@param path string Path to file
----@return string URI
+--- Gets a URI from a file path.
+--- @param path string Path to file
+--- @return string URI
 function M.uri_from_fname(path)
   local volume_path, fname = path:match('^([a-zA-Z]:)(.*)') ---@type string?
   local is_windows = volume_path ~= nil
@@ -75,9 +75,9 @@ function M.uri_from_fname(path)
   return table.concat(uri_parts)
 end
 
----Gets a URI from a bufnr.
----@param bufnr integer
----@return string URI
+--- Gets a URI from a bufnr.
+--- @param bufnr integer
+--- @return string URI
 function M.uri_from_bufnr(bufnr)
   local fname = vim.api.nvim_buf_get_name(bufnr)
   local volume_path = fname:match('^([a-zA-Z]:).*')
@@ -96,9 +96,9 @@ function M.uri_from_bufnr(bufnr)
   end
 end
 
----Gets a filename from a URI.
----@param uri string
----@return string filename or unchanged URI for non-file URIs
+--- Gets a filename from a URI.
+--- @param uri string
+--- @return string filename or unchanged URI for non-file URIs
 function M.uri_to_fname(uri)
   local scheme = assert(uri:match(URI_SCHEME_PATTERN), 'URI must contain a scheme: ' .. uri)
   if scheme ~= 'file' then
@@ -114,11 +114,11 @@ function M.uri_to_fname(uri)
   return uri
 end
 
----Gets the buffer for a uri.
----Creates a new unloaded buffer if no buffer for the uri already exists.
+--- Gets the buffer for a uri.
+--- Creates a new unloaded buffer if no buffer for the uri already exists.
 --
----@param uri string
----@return integer bufnr
+--- @param uri string
+--- @return integer bufnr
 function M.uri_to_bufnr(uri)
   return vim.fn.bufadd(M.uri_to_fname(uri))
 end

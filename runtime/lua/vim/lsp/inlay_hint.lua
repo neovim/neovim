@@ -4,12 +4,12 @@ local ms = require('vim.lsp.protocol').Methods
 local api = vim.api
 local M = {}
 
----@class lsp.inlay_hint.bufstate
----@field version? integer
----@field client_hint? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
----@field applied table<integer, integer> Last version of hints applied to this line
----@field enabled boolean Whether inlay hints are enabled for this buffer
----@type table<integer, lsp.inlay_hint.bufstate>
+--- @class lsp.inlay_hint.bufstate
+--- @field version? integer
+--- @field client_hint? table<integer, table<integer, lsp.InlayHint[]>> client_id -> (lnum -> hints)
+--- @field applied table<integer, integer> Last version of hints applied to this line
+--- @field enabled boolean Whether inlay hints are enabled for this buffer
+--- @type table<integer, lsp.inlay_hint.bufstate>
 local bufstates = {}
 
 local namespace = api.nvim_create_namespace('vim_lsp_inlayhint')
@@ -17,7 +17,7 @@ local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
 
 --- |lsp-handler| for the method `textDocument/inlayHint`
 --- Store hints for a specific buffer and client
----@private
+--- @private
 function M.on_inlayhint(err, result, ctx, _)
   if err then
     local _ = log.error() and log.error('inlayhint', err)
@@ -78,7 +78,7 @@ function M.on_inlayhint(err, result, ctx, _)
 end
 
 --- |lsp-handler| for the method `textDocument/inlayHint/refresh`
----@private
+--- @private
 function M.on_refresh(err, _, ctx, _)
   if err then
     return vim.NIL
@@ -99,7 +99,7 @@ function M.on_refresh(err, _, ctx, _)
 end
 
 --- Clear inlay hints
----@param bufnr (integer) Buffer handle, or 0 for current
+--- @param bufnr (integer) Buffer handle, or 0 for current
 local function clear(bufnr)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
@@ -120,7 +120,7 @@ local function clear(bufnr)
 end
 
 --- Disable inlay hints for a buffer
----@param bufnr (integer) Buffer handle, or 0 for current
+--- @param bufnr (integer) Buffer handle, or 0 for current
 local function disable(bufnr)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
@@ -132,9 +132,9 @@ local function disable(bufnr)
 end
 
 --- Refresh inlay hints, only if we have attached clients that support it
----@param bufnr (integer) Buffer handle, or 0 for current
----@param opts? table Additional options to pass to util._refresh
----@private
+--- @param bufnr (integer) Buffer handle, or 0 for current
+--- @param opts? table Additional options to pass to util._refresh
+--- @private
 local function _refresh(bufnr, opts)
   opts = opts or {}
   opts['bufnr'] = bufnr
@@ -142,7 +142,7 @@ local function _refresh(bufnr, opts)
 end
 
 --- Enable inlay hints for a buffer
----@param bufnr (integer) Buffer handle, or 0 for current
+--- @param bufnr (integer) Buffer handle, or 0 for current
 local function enable(bufnr)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
@@ -200,7 +200,7 @@ local function enable(bufnr)
 end
 
 --- Toggle inlay hints for a buffer
----@param bufnr (integer) Buffer handle, or 0 for current
+--- @param bufnr (integer) Buffer handle, or 0 for current
 local function toggle(bufnr)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()

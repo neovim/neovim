@@ -1,22 +1,22 @@
 local api = vim.api
 local language = require('vim.treesitter.language')
 
----@class Query
----@field captures string[] List of captures used in query
----@field info TSQueryInfo Contains used queries, predicates, directives
----@field query userdata Parsed query
+--- @class Query
+--- @field captures string[] List of captures used in query
+--- @field info TSQueryInfo Contains used queries, predicates, directives
+--- @field query userdata Parsed query
 local Query = {}
 Query.__index = Query
 
----@class TSQueryInfo
----@field captures table
----@field patterns table<string,any[][]>
+--- @class TSQueryInfo
+--- @field captures table
+--- @field patterns table<string,any[][]>
 
----@class TSQueryModule
+--- @class TSQueryModule
 local M = {}
 
----@param files string[]
----@return string[]
+--- @param files string[]
+--- @return string[]
 local function dedupe_files(files)
   local result = {}
   ---@type table<string,boolean>
@@ -44,7 +44,7 @@ end
 
 --- Adds {ilang} to {base_langs}, only if {ilang} is different than {lang}
 ---
----@return boolean true If lang == ilang
+--- @return boolean true If lang == ilang
 local function add_included_lang(base_langs, lang, ilang)
   if lang == ilang then
     return true
@@ -53,7 +53,7 @@ local function add_included_lang(base_langs, lang, ilang)
   return false
 end
 
----@deprecated
+--- @deprecated
 function M.get_query_files(...)
   vim.deprecate(
     'vim.treesitter.query.get_query_files()',
@@ -65,10 +65,10 @@ end
 
 --- Gets the list of files used to make up a query
 ---
----@param lang string Language to get query for
----@param query_name string Name of the query to load (e.g., "highlights")
----@param is_included (boolean|nil) Internal parameter, most of the time left as `nil`
----@return string[] query_files List of files to load for given query and language
+--- @param lang string Language to get query for
+--- @param query_name string Name of the query to load (e.g., "highlights")
+--- @param is_included (boolean|nil) Internal parameter, most of the time left as `nil`
+--- @return string[] query_files List of files to load for given query and language
 function M.get_files(lang, query_name, is_included)
   local query_path = string.format('queries/%s/%s.scm', lang, query_name)
   local lang_files = dedupe_files(api.nvim_get_runtime_file(query_path, true))
@@ -150,8 +150,8 @@ function M.get_files(lang, query_name, is_included)
   return query_files
 end
 
----@param filenames string[]
----@return string
+--- @param filenames string[]
+--- @return string
 local function read_query_files(filenames)
   local contents = {}
 
@@ -163,7 +163,7 @@ local function read_query_files(filenames)
 end
 
 -- The explicitly set queries from |vim.treesitter.query.set()|
----@type table<string,table<string,Query>>
+--- @type table<string,table<string,Query>>
 local explicit_queries = setmetatable({}, {
   __index = function(t, k)
     local lang_queries = {}
@@ -173,7 +173,7 @@ local explicit_queries = setmetatable({}, {
   end,
 })
 
----@deprecated
+--- @deprecated
 function M.set_query(...)
   vim.deprecate('vim.treesitter.query.set_query()', 'vim.treesitter.query.set()', '0.10')
   M.set(...)
@@ -184,14 +184,14 @@ end
 --- This allows users to override any runtime files and/or configuration
 --- set by plugins.
 ---
----@param lang string Language to use for the query
----@param query_name string Name of the query (e.g., "highlights")
----@param text string Query text (unparsed).
+--- @param lang string Language to use for the query
+--- @param query_name string Name of the query (e.g., "highlights")
+--- @param text string Query text (unparsed).
 function M.set(lang, query_name, text)
   explicit_queries[lang][query_name] = M.parse(lang, text)
 end
 
----@deprecated
+--- @deprecated
 function M.get_query(...)
   vim.deprecate('vim.treesitter.query.get_query()', 'vim.treesitter.query.get()', '0.10')
   return M.get(...)
@@ -199,10 +199,10 @@ end
 
 --- Returns the runtime query {query_name} for {lang}.
 ---
----@param lang string Language to use for the query
----@param query_name string Name of the query (e.g. "highlights")
+--- @param lang string Language to use for the query
+--- @param query_name string Name of the query (e.g. "highlights")
 ---
----@return Query|nil Parsed query
+--- @return Query|nil Parsed query
 M.get = vim.func._memoize('concat-2', function(lang, query_name)
   if explicit_queries[lang][query_name] then
     return explicit_queries[lang][query_name]
@@ -218,7 +218,7 @@ M.get = vim.func._memoize('concat-2', function(lang, query_name)
   return M.parse(lang, query_string)
 end)
 
----@deprecated
+--- @deprecated
 function M.parse_query(...)
   vim.deprecate('vim.treesitter.query.parse_query()', 'vim.treesitter.query.parse()', '0.10')
   return M.parse(...)
@@ -237,10 +237,10 @@ end
 ---   -` info.captures` also points to `captures`.
 ---   - `info.patterns` contains information about predicates.
 ---
----@param lang string Language to use for the query
----@param query string Query in s-expr syntax
+--- @param lang string Language to use for the query
+--- @param query string Query in s-expr syntax
 ---
----@return Query Parsed query
+--- @return Query Parsed query
 M.parse = vim.func._memoize('concat-2', function(lang, query)
   language.add(lang)
 
@@ -251,25 +251,25 @@ M.parse = vim.func._memoize('concat-2', function(lang, query)
   return self
 end)
 
----@deprecated
+--- @deprecated
 function M.get_range(...)
   vim.deprecate('vim.treesitter.query.get_range()', 'vim.treesitter.get_range()', '0.10')
   return vim.treesitter.get_range(...)
 end
 
----@deprecated
+--- @deprecated
 function M.get_node_text(...)
   vim.deprecate('vim.treesitter.query.get_node_text()', 'vim.treesitter.get_node_text()', '0.10')
   return vim.treesitter.get_node_text(...)
 end
 
----@alias TSMatch table<integer,TSNode>
+--- @alias TSMatch table<integer,TSNode>
 
----@alias TSPredicate fun(match: TSMatch, _, _, predicate: any[]): boolean
+--- @alias TSPredicate fun(match: TSMatch, _, _, predicate: any[]): boolean
 
 -- Predicate handler receive the following arguments
 -- (match, pattern, bufnr, predicate)
----@type table<string,TSPredicate>
+--- @type table<string,TSPredicate>
 local predicate_handlers = {
   ['eq?'] = function(match, _, source, predicate)
     local node = match[predicate[2]]
@@ -407,13 +407,13 @@ local predicate_handlers = {
 -- As we provide lua-match? also expose vim-match?
 predicate_handlers['vim-match?'] = predicate_handlers['match?']
 
----@class TSMetadata
----@field range? Range
----@field conceal? string
----@field [integer] TSMetadata
----@field [string] integer|string
+--- @class TSMetadata
+--- @field range? Range
+--- @field conceal? string
+--- @field [integer] TSMetadata
+--- @field [string] integer|string
 
----@alias TSDirective fun(match: TSMatch, _, _, predicate: (string|integer)[], metadata: TSMetadata)
+--- @alias TSDirective fun(match: TSMatch, _, _, predicate: (string|integer)[], metadata: TSMetadata)
 
 -- Predicate handler receive the following arguments
 -- (match, pattern, bufnr, predicate)
@@ -422,7 +422,7 @@ predicate_handlers['vim-match?'] = predicate_handlers['match?']
 -- Directives should always end with a `!`.
 -- Directive handler receive the following arguments
 -- (match, pattern, bufnr, predicate, metadata)
----@type table<string,TSDirective>
+--- @type table<string,TSDirective>
 local directive_handlers = {
   ['set!'] = function(_, _, _, pred, metadata)
     if #pred >= 3 and type(pred[2]) == 'number' then
@@ -524,10 +524,10 @@ local directive_handlers = {
 
 --- Adds a new predicate to be used in queries
 ---
----@param name string Name of the predicate, without leading #
----@param handler function(match:table<string,TSNode>, pattern:string, bufnr:integer, predicate:string[])
+--- @param name string Name of the predicate, without leading #
+--- @param handler function(match:table<string,TSNode>, pattern:string, bufnr:integer, predicate:string[])
 ---   - see |vim.treesitter.query.add_directive()| for argument meanings
----@param force boolean|nil
+--- @param force boolean|nil
 function M.add_predicate(name, handler, force)
   if predicate_handlers[name] and not force then
     error(string.format('Overriding %s', name))
@@ -543,14 +543,14 @@ end
 --- can set node level data by using the capture id on the
 --- metadata table `metadata[capture_id].key = value`
 ---
----@param name string Name of the directive, without leading #
----@param handler function(match:table<string,TSNode>, pattern:string, bufnr:integer, predicate:string[], metadata:table)
+--- @param name string Name of the directive, without leading #
+--- @param handler function(match:table<string,TSNode>, pattern:string, bufnr:integer, predicate:string[], metadata:table)
 ---   - match: see |treesitter-query|
 ---      - node-level data are accessible via `match[capture_id]`
 ---   - pattern: see |treesitter-query|
 ---   - predicate: list of strings containing the full directive being called, e.g.
 ---     `(node (#set! conceal "-"))` would get the predicate `{ "#set!", "conceal", "-" }`
----@param force boolean|nil
+--- @param force boolean|nil
 function M.add_directive(name, handler, force)
   if directive_handlers[name] and not force then
     error(string.format('Overriding %s', name))
@@ -560,13 +560,13 @@ function M.add_directive(name, handler, force)
 end
 
 --- Lists the currently available directives to use in queries.
----@return string[] List of supported directives.
+--- @return string[] List of supported directives.
 function M.list_directives()
   return vim.tbl_keys(directive_handlers)
 end
 
 --- Lists the currently available predicates to use in queries.
----@return string[] List of supported predicates.
+--- @return string[] List of supported predicates.
 function M.list_predicates()
   return vim.tbl_keys(predicate_handlers)
 end
@@ -579,10 +579,10 @@ local function is_directive(name)
   return string.sub(name, -1) == '!'
 end
 
----@private
----@param match TSMatch
----@param pattern string
----@param source integer|string
+--- @private
+--- @param match TSMatch
+--- @param pattern string
+--- @param source integer|string
 function Query:match_preds(match, pattern, source)
   local preds = self.info.patterns[pattern]
 
@@ -622,9 +622,9 @@ function Query:match_preds(match, pattern, source)
   return true
 end
 
----@private
----@param match TSMatch
----@param metadata TSMetadata
+--- @private
+--- @param match TSMatch
+--- @param metadata TSMetadata
 function Query:apply_directives(match, pattern, source, metadata)
   local preds = self.info.patterns[pattern]
 
@@ -645,10 +645,10 @@ end
 --- Returns the start and stop value if set else the node's range.
 -- When the node's range is used, the stop is incremented by 1
 -- to make the search inclusive.
----@param start integer
----@param stop integer
----@param node TSNode
----@return integer, integer
+--- @param start integer
+--- @param stop integer
+--- @param node TSNode
+--- @return integer, integer
 local function value_or_node_range(start, stop, node)
   if start == nil and stop == nil then
     local node_start, _, node_stop, _ = node:range()
@@ -681,12 +681,12 @@ end
 --- end
 --- ```
 ---
----@param node TSNode under which the search will occur
----@param source (integer|string) Source buffer or string to extract text from
----@param start integer Starting line for the search
----@param stop integer Stopping line for the search (end-exclusive)
+--- @param node TSNode under which the search will occur
+--- @param source (integer|string) Source buffer or string to extract text from
+--- @param start integer Starting line for the search
+--- @param stop integer Stopping line for the search (end-exclusive)
 ---
----@return (fun(end_line: integer|nil): integer, TSNode, TSMetadata):
+--- @return (fun(end_line: integer|nil): integer, TSNode, TSMetadata):
 ---        capture id, capture node, metadata
 function Query:iter_captures(node, source, start, stop)
   if type(source) == 'number' and source == 0 then
@@ -740,16 +740,16 @@ end
 --- end
 --- ```
 ---
----@param node TSNode under which the search will occur
----@param source (integer|string) Source buffer or string to search
----@param start integer Starting line for the search
----@param stop integer Stopping line for the search (end-exclusive)
----@param opts table|nil Options:
+--- @param node TSNode under which the search will occur
+--- @param source (integer|string) Source buffer or string to search
+--- @param start integer Starting line for the search
+--- @param stop integer Stopping line for the search (end-exclusive)
+--- @param opts table|nil Options:
 ---   - max_start_depth (integer) if non-zero, sets the maximum start depth
 ---     for each match. This is used to prevent traversing too deep into a tree.
 ---     Requires treesitter >= 0.20.9.
 ---
----@return (fun(): integer, table<integer,TSNode>, table): pattern id, match, metadata
+--- @return (fun(): integer, table<integer,TSNode>, table): pattern id, match, metadata
 function Query:iter_matches(node, source, start, stop, opts)
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
@@ -776,9 +776,9 @@ function Query:iter_matches(node, source, start, stop, opts)
   return iter
 end
 
----@class QueryLinterOpts
----@field langs (string|string[]|nil)
----@field clear (boolean)
+--- @class QueryLinterOpts
+--- @field langs (string|string[]|nil)
+--- @field clear (boolean)
 
 --- Lint treesitter queries using installed parser, or clear lint errors.
 ---
@@ -792,8 +792,8 @@ end
 --- By default, the parser used for verification is determined by the containing folder
 --- of the query file, e.g., if the path ends in `/lua/highlights.scm`, the parser for the
 --- `lua` language will be used.
----@param buf (integer) Buffer handle
----@param opts (QueryLinterOpts|nil) Optional keyword arguments:
+--- @param buf (integer) Buffer handle
+--- @param opts (QueryLinterOpts|nil) Optional keyword arguments:
 ---   - langs (string|string[]|nil) Language(s) to use for checking the query.
 ---            If multiple languages are specified, queries are validated for all of them
 ---   - clear (boolean) if `true`, just clear current lint errors

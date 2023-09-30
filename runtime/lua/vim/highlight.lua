@@ -1,4 +1,4 @@
----@defgroup vim.highlight
+--- @defgroup vim.highlight
 ---
 --- Nvim includes a function for highlighting a selection on yank.
 ---
@@ -41,12 +41,12 @@ M.priorities = {
 
 --- Apply highlight group to range of text.
 ---
----@param bufnr integer Buffer number to apply highlighting to
----@param ns integer Namespace to add highlight to
----@param higroup string Highlight group to use for highlighting
----@param start integer[]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
----@param finish integer[]|string End of region as a (line, column) tuple or string accepted by |getpos()|
----@param opts table|nil Optional parameters
+--- @param bufnr integer Buffer number to apply highlighting to
+--- @param ns integer Namespace to add highlight to
+--- @param higroup string Highlight group to use for highlighting
+--- @param start integer[]|string Start of region as a (line, column) tuple or string accepted by |getpos()|
+--- @param finish integer[]|string End of region as a (line, column) tuple or string accepted by |getpos()|
+--- @param opts table|nil Optional parameters
 ---            - regtype type of range (see |setreg()|, default charwise)
 ---            - inclusive boolean indicating whether the range is end-inclusive (default false)
 ---            - priority number indicating priority of highlight (default priorities.user)

@@ -8,7 +8,7 @@ local M = {}
 --- to throttle refreshes to at most one at a time
 local active_refreshes = {}
 
----@type table<integer, table<integer, lsp.CodeLens[]>>
+--- @type table<integer, table<integer, lsp.CodeLens[]>>
 --- bufnr -> client_id -> lenses
 local lens_cache_by_buf = setmetatable({}, {
   __index = function(t, b)
@@ -17,8 +17,8 @@ local lens_cache_by_buf = setmetatable({}, {
   end,
 })
 
----@type table<integer, integer>
----client_id -> namespace
+--- @type table<integer, integer>
+--- client_id -> namespace
 local namespaces = setmetatable({}, {
   __index = function(t, key)
     local value = api.nvim_create_namespace('vim_lsp_codelens:' .. key)
@@ -27,7 +27,7 @@ local namespaces = setmetatable({}, {
   end,
 })
 
----@private
+--- @private
 M.__namespaces = namespaces
 
 local augroup = api.nvim_create_augroup('vim_lsp_codelens', {})
@@ -39,9 +39,9 @@ api.nvim_create_autocmd('LspDetach', {
   end,
 })
 
----@param lens lsp.CodeLens
----@param bufnr integer
----@param client_id integer
+--- @param lens lsp.CodeLens
+--- @param bufnr integer
+--- @param client_id integer
 local function execute_lens(lens, bufnr, client_id)
   local line = lens.range.start.line
   api.nvim_buf_clear_namespace(bufnr, namespaces[client_id], line, line + 1)
@@ -56,8 +56,8 @@ end
 
 --- Return all lenses for the given buffer
 ---
----@param bufnr integer  Buffer number. 0 can be used for the current buffer.
----@return lsp.CodeLens[]
+--- @param bufnr integer  Buffer number. 0 can be used for the current buffer.
+--- @return lsp.CodeLens[]
 function M.get(bufnr)
   local lenses_by_client = lens_cache_by_buf[bufnr or 0]
   if not lenses_by_client then
@@ -110,8 +110,8 @@ end
 
 --- Clear the lenses
 ---
----@param client_id integer|nil filter by client_id. All clients if nil
----@param bufnr integer|nil filter by buffer. All buffers if nil
+--- @param client_id integer|nil filter by client_id. All clients if nil
+--- @param bufnr integer|nil filter by buffer. All buffers if nil
 function M.clear(client_id, bufnr)
   bufnr = bufnr and resolve_bufnr(bufnr)
   local buffers = bufnr and { bufnr }
@@ -131,9 +131,9 @@ end
 
 --- Display the lenses using virtual text
 ---
----@param lenses? lsp.CodeLens[] lenses to display
----@param bufnr integer
----@param client_id integer
+--- @param lenses? lsp.CodeLens[] lenses to display
+--- @param bufnr integer
+--- @param client_id integer
 function M.display(lenses, bufnr, client_id)
   if not api.nvim_buf_is_loaded(bufnr) then
     return
@@ -181,9 +181,9 @@ end
 
 --- Store lenses for a specific buffer and client
 ---
----@param lenses? lsp.CodeLens[] lenses to store
----@param bufnr integer
----@param client_id integer
+--- @param lenses? lsp.CodeLens[] lenses to store
+--- @param bufnr integer
+--- @param client_id integer
 function M.save(lenses, bufnr, client_id)
   if not api.nvim_buf_is_loaded(bufnr) then
     return
@@ -206,10 +206,10 @@ function M.save(lenses, bufnr, client_id)
   lenses_by_client[client_id] = lenses
 end
 
----@param lenses? lsp.CodeLens[]
----@param bufnr integer
----@param client_id integer
----@param callback fun()
+--- @param lenses? lsp.CodeLens[]
+--- @param bufnr integer
+--- @param client_id integer
+--- @param callback fun()
 local function resolve_lenses(lenses, bufnr, client_id, callback)
   lenses = lenses or {}
   local num_lens = vim.tbl_count(lenses)

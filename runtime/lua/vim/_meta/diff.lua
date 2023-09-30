@@ -1,4 +1,4 @@
----@meta
+--- @meta
 
 -- luacheck: no unused args
 
@@ -22,9 +22,9 @@
 --- -- }
 --- ```
 ---
----@param a string First string to compare
----@param b string Second string to compare
----@param opts table<string,any> Optional parameters:
+--- @param a string First string to compare
+--- @param b string Second string to compare
+--- @param opts table<string,any> Optional parameters:
 ---     - `on_hunk` (callback):
 ---       Invoked for each hunk in the diff. Return a negative number
 ---       to cancel the callback for any remaining hunks.
@@ -65,6 +65,6 @@
 ---       Use the indent heuristic for the internal
 ---       diff library.
 ---
----@return string|table|nil
+--- @return string|table|nil
 ---     See {opts.result_type}. `nil` if {opts.on_hunk} is given.
 function vim.diff(a, b, opts) end

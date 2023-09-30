@@ -136,7 +136,7 @@ end
 vim.tbl_add_reverse_lookup(log.levels)
 
 --- Sets the current log level.
----@param level (string|integer) One of `vim.lsp.log.levels`
+--- @param level (string|integer) One of `vim.lsp.log.levels`
 function log.set_level(level)
   if type(level) == 'string' then
     current_log_level =
@@ -149,21 +149,21 @@ function log.set_level(level)
 end
 
 --- Gets the current log level.
----@return integer current log level
+--- @return integer current log level
 function log.get_level()
   return current_log_level
 end
 
 --- Sets formatting function used to format logs
----@param handle function function to apply to logging arguments, pass vim.inspect for multi-line formatting
+--- @param handle function function to apply to logging arguments, pass vim.inspect for multi-line formatting
 function log.set_format_func(handle)
   assert(handle == vim.inspect or type(handle) == 'function', 'handle must be a function')
   format_func = handle
 end
 
 --- Checks whether the level is sufficient for logging.
----@param level integer log level
----@returns (bool) true if would log, false if not
+--- @param level integer log level
+--- @returns (bool) true if would log, false if not
 function log.should_log(level)
   return level >= current_log_level
 end

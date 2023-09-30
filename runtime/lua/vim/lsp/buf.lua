@@ -9,17 +9,17 @@ local M = {}
 --- Sends an async request to all active clients attached to the current
 --- buffer.
 ---
----@param method (string) LSP method name
----@param params (table|nil) Parameters to send to the server
----@param handler (function|nil) See |lsp-handler|. Follows |lsp-handler-resolution|
+--- @param method (string) LSP method name
+--- @param params (table|nil) Parameters to send to the server
+--- @param handler (function|nil) See |lsp-handler|. Follows |lsp-handler-resolution|
 --
----@return table<integer, integer> client_request_ids Map of client-id:request-id pairs
----for all successful requests.
----@return function _cancel_all_requests Function which can be used to
----cancel all the requests. You could instead
----iterate all clients and call their `cancel_request()` methods.
+--- @return table<integer, integer> client_request_ids Map of client-id:request-id pairs
+--- for all successful requests.
+--- @return function _cancel_all_requests Function which can be used to
+--- cancel all the requests. You could instead
+--- iterate all clients and call their `cancel_request()` methods.
 ---
----@see |vim.lsp.buf_request()|
+--- @see |vim.lsp.buf_request()|
 local function request(method, params, handler)
   validate({
     method = { method, 's' },
@@ -31,8 +31,8 @@ end
 --- Checks whether the language servers attached to the current buffer are
 --- ready.
 ---
----@return boolean if server responds.
----@deprecated
+--- @return boolean if server responds.
+--- @deprecated
 function M.server_ready()
   vim.deprecate('vim.lsp.buf.server_ready', nil, '0.10.0')
   return not not vim.lsp.buf_notify(0, 'window/progress', {})
@@ -58,9 +58,9 @@ local function request_with_options(name, params, options)
 end
 
 --- Jumps to the declaration of the symbol under the cursor.
----@note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
+--- @note Many servers do not implement this method. Generally, see |vim.lsp.buf.definition()| instead.
 ---
----@param options table|nil additional options
+--- @param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.declaration(options)
@@ -70,7 +70,7 @@ end
 
 --- Jumps to the definition of the symbol under the cursor.
 ---
----@param options table|nil additional options
+--- @param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.definition(options)
@@ -80,7 +80,7 @@ end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
 ---
----@param options table|nil additional options
+--- @param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.type_definition(options)
@@ -91,7 +91,7 @@ end
 --- Lists all the implementations for the symbol under the cursor in the
 --- quickfix window.
 ---
----@param options table|nil additional options
+--- @param options table|nil additional options
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.implementation(options)
   local params = util.make_position_params()
@@ -108,20 +108,20 @@ end
 --- Retrieves the completion items at the current cursor position. Can only be
 --- called in Insert mode.
 ---
----@param context table (context support not yet implemented) Additional information
+--- @param context table (context support not yet implemented) Additional information
 --- about the context in which a completion was triggered (how it was triggered,
 --- and by which trigger character, if applicable)
 ---
----@see vim.lsp.protocol.CompletionTriggerKind
+--- @see vim.lsp.protocol.CompletionTriggerKind
 function M.completion(context)
   local params = util.make_position_params()
   params.context = context
   return request(ms.textDocument_completion, params)
 end
 
----@param bufnr integer
----@param mode "v"|"V"
----@return table {start={row,col}, end={row,col}} using (1, 0) indexing
+--- @param bufnr integer
+--- @param mode "v"|"V"
+--- @return table {start={row,col}, end={row,col}} using (1, 0) indexing
 local function range_from_selection(bufnr, mode)
   -- TODO: Use `vim.region()` instead https://github.com/neovim/neovim/pull/13896
 
@@ -253,9 +253,9 @@ end
 
 --- Renames all references to the symbol under the cursor.
 ---
----@param new_name string|nil If not provided, the user will be prompted for a new
+--- @param new_name string|nil If not provided, the user will be prompted for a new
 ---                name using |vim.ui.input()|.
----@param options table|nil additional options
+--- @param options table|nil additional options
 ---     - filter (function|nil):
 ---         Predicate used to filter clients. Receives a client as argument and
 ---         must return a boolean. Clients matching the predicate are included.
@@ -379,9 +379,9 @@ end
 
 --- Lists all the references to the symbol under the cursor in the quickfix window.
 ---
----@param context (table|nil) Context for the request
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
----@param options table|nil additional options
+--- @param context (table|nil) Context for the request
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_references
+--- @param options table|nil additional options
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.references(context, options)
   validate({ context = { context, 't', true } })
@@ -394,7 +394,7 @@ end
 
 --- Lists all symbols in the current buffer in the quickfix window.
 ---
----@param options table|nil additional options
+--- @param options table|nil additional options
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.document_symbol(options)
   local params = { textDocument = util.make_text_document_params() }
@@ -538,8 +538,8 @@ end
 --- call, the user is prompted to enter a string on the command line. An empty
 --- string means no filtering is done.
 ---
----@param query string|nil optional
----@param options table|nil additional options
+--- @param query string|nil optional
+--- @param options table|nil additional options
 ---     - on_list: (function) handler for list results. See |lsp-on-list-handler|
 function M.workspace_symbol(query, options)
   query = query or npcall(vim.fn.input, 'Query: ')
@@ -703,7 +703,7 @@ end
 --- Selects a code action available at the current
 --- cursor position.
 ---
----@param options table|nil Optional table which holds the following optional fields:
+--- @param options table|nil Optional table which holds the following optional fields:
 ---  - context: (table|nil)
 ---      Corresponds to `CodeActionContext` of the LSP specification:
 ---        - diagnostics (table|nil):
@@ -726,8 +726,8 @@ end
 ---           Table must contain `start` and `end` keys with {row,col} tuples
 ---           using mark-like indexing. See |api-indexing|
 ---
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
----@see vim.lsp.protocol.CodeActionTriggerKind
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction
+--- @see vim.lsp.protocol.CodeActionTriggerKind
 function M.code_action(options)
   validate({ options = { options, 't', true } })
   options = options or {}
@@ -763,8 +763,8 @@ end
 
 --- Executes an LSP server command.
 ---
----@param command_params table A valid `ExecuteCommandParams` object
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
+--- @param command_params table A valid `ExecuteCommandParams` object
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_executeCommand
 function M.execute_command(command_params)
   validate({
     command = { command_params.command, 's' },

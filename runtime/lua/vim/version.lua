@@ -55,15 +55,15 @@
 
 local M = {}
 
----@class Version
----@field [1] number
----@field [2] number
----@field [3] number
----@field major number
----@field minor number
----@field patch number
----@field prerelease? string
----@field build? string
+--- @class Version
+--- @field [1] number
+--- @field [2] number
+--- @field [3] number
+--- @field major number
+--- @field minor number
+--- @field patch number
+--- @field prerelease? string
+--- @field build? string
 local Version = {}
 Version.__index = Version
 
@@ -110,7 +110,7 @@ function Version:__newindex(key, value)
   end
 end
 
----@param other Version
+--- @param other Version
 function Version:__eq(other)
   for i = 1, 3 do
     if self[i] ~= other[i] then
@@ -131,7 +131,7 @@ function Version:__tostring()
   return ret
 end
 
----@param other Version
+--- @param other Version
 function Version:__lt(other)
   for i = 1, 3 do
     if self[i] > other[i] then
@@ -143,7 +143,7 @@ function Version:__lt(other)
   return -1 == cmp_prerel(self.prerelease, other.prerelease)
 end
 
----@param other Version
+--- @param other Version
 function Version:__le(other)
   return self < other or self == other
 end
@@ -199,11 +199,11 @@ function M._version(version, strict) -- Adapted from https://github.com/folke/la
   return nil -- Invalid version string.
 end
 
----TODO: generalize this, move to func.lua
+--- TODO: generalize this, move to func.lua
 ---
----@generic T: Version
----@param versions T[]
----@return T?
+--- @generic T: Version
+--- @param versions T[]
+--- @return T?
 function M.last(versions)
   local last = versions[1]
   for i = 2, #versions do
@@ -214,14 +214,14 @@ function M.last(versions)
   return last
 end
 
----@class VersionRange
----@field from Version
----@field to? Version
+--- @class VersionRange
+--- @field from Version
+--- @field to? Version
 local VersionRange = {}
 
 --- @private
 ---
----@param version string|Version
+--- @param version string|Version
 function VersionRange:has(version)
   if type(version) == 'string' then
     ---@diagnostic disable-next-line: cast-local-type
@@ -335,8 +335,8 @@ function M.range(spec) -- Adapted from https://github.com/folke/lazy.nvim
   end
 end
 
----@param v string|Version
----@return string
+--- @param v string|Version
+--- @return string
 local function create_err_msg(v)
   if type(v) == 'string' then
     return string.format('invalid version: "%s"', tostring(v))
@@ -364,9 +364,9 @@ end
 ---
 --- @note Per semver, build metadata is ignored when comparing two otherwise-equivalent versions.
 ---
----@param v1 Version|number[] Version object.
----@param v2 Version|number[] Version to compare with `v1`.
----@return integer -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
+--- @param v1 Version|number[] Version object.
+--- @param v2 Version|number[] Version to compare with `v1`.
+--- @return integer -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
 function M.cmp(v1, v2)
   local v1_parsed = assert(M._version(v1), create_err_msg(v1))
   local v2_parsed = assert(M._version(v2), create_err_msg(v1))
@@ -379,26 +379,26 @@ function M.cmp(v1, v2)
   return -1
 end
 
----Returns `true` if the given versions are equal. See |vim.version.cmp()| for usage.
----@param v1 Version|number[]
----@param v2 Version|number[]
----@return boolean
+--- Returns `true` if the given versions are equal. See |vim.version.cmp()| for usage.
+--- @param v1 Version|number[]
+--- @param v2 Version|number[]
+--- @return boolean
 function M.eq(v1, v2)
   return M.cmp(v1, v2) == 0
 end
 
----Returns `true` if `v1 < v2`. See |vim.version.cmp()| for usage.
----@param v1 Version|number[]
----@param v2 Version|number[]
----@return boolean
+--- Returns `true` if `v1 < v2`. See |vim.version.cmp()| for usage.
+--- @param v1 Version|number[]
+--- @param v2 Version|number[]
+--- @return boolean
 function M.lt(v1, v2)
   return M.cmp(v1, v2) == -1
 end
 
----Returns `true` if `v1 > v2`. See |vim.version.cmp()| for usage.
----@param v1 Version|number[]
----@param v2 Version|number[]
----@return boolean
+--- Returns `true` if `v1 > v2`. See |vim.version.cmp()| for usage.
+--- @param v1 Version|number[]
+--- @param v2 Version|number[]
+--- @return boolean
 function M.gt(v1, v2)
   return M.cmp(v1, v2) == 1
 end
@@ -412,12 +412,12 @@ end
 ---
 --- @see # https://semver.org/spec/v2.0.0.html
 ---
----@param version string Version string to parse.
----@param opts table|nil Optional keyword arguments:
+--- @param version string Version string to parse.
+--- @param opts table|nil Optional keyword arguments:
 ---                      - strict (boolean):  Default false. If `true`, no coercion is attempted on
 ---                      input not conforming to semver v2.0.0. If `false`, `parse()` attempts to
 ---                      coerce input such as "1.0", "0-x", "tmux 3.2a" into valid versions.
----@return table|nil parsed_version Version object or `nil` if input is invalid.
+--- @return table|nil parsed_version Version object or `nil` if input is invalid.
 function M.parse(version, opts)
   assert(type(version) == 'string', create_err_msg(version))
   opts = opts or { strict = false }

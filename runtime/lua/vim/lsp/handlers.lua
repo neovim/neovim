@@ -9,7 +9,7 @@ local M = {}
 -- FIXME: DOC: Expose in vimdocs
 
 --- Writes to error buffer.
----@param ... string Will be concatenated before being written
+--- @param ... string Will be concatenated before being written
 local function err_message(...)
   vim.notify(table.concat(vim.tbl_flatten({ ... })), vim.log.levels.ERROR)
   api.nvim_command('redraw')
@@ -21,8 +21,8 @@ M[ms.workspace_executeCommand] = function(_, _, _, _)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#progress
----@param result lsp.ProgressParams
----@param ctx lsp.HandlerContext
+--- @param result lsp.ProgressParams
+--- @param ctx lsp.HandlerContext
 M[ms.dollar_progress] = function(_, result, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
@@ -57,8 +57,8 @@ M[ms.dollar_progress] = function(_, result, ctx)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_workDoneProgress_create
----@param result lsp.WorkDoneProgressCreateParams
----@param ctx lsp.HandlerContext
+--- @param result lsp.WorkDoneProgressCreateParams
+--- @param ctx lsp.HandlerContext
 M[ms.window_workDoneProgress_create] = function(_, result, ctx)
   local client = vim.lsp.get_client_by_id(ctx.client_id)
   if not client then
@@ -70,7 +70,7 @@ M[ms.window_workDoneProgress_create] = function(_, result, ctx)
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#window_showMessageRequest
----@param result lsp.ShowMessageRequestParams
+--- @param result lsp.ShowMessageRequestParams
 M[ms.window_showMessageRequest] = function(_, result)
   local actions = result.actions or {}
   local co, is_main = coroutine.running()
@@ -257,9 +257,9 @@ end
 ---
 ---   loclist: (boolean) use the location list (default is to use the quickfix list)
 ---
----@param map_result function `((resp, bufnr) -> list)` to convert the response
----@param entity string name of the resource used in a `not found` error message
----@param title_fn function Function to call to generate list title
+--- @param map_result function `((resp, bufnr) -> list)` to convert the response
+--- @param entity string name of the resource used in a `not found` error message
+--- @param title_fn function Function to call to generate list title
 local function response_to_list(map_result, entity, title_fn)
   return function(_, result, ctx, config)
     if not result or vim.tbl_isempty(result) then
@@ -354,7 +354,7 @@ end
 --- )
 --- ```
 ---
----@param config table Configuration table.
+--- @param config table Configuration table.
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
 ---         - See |vim.lsp.util.open_floating_preview()| for more options.
@@ -392,9 +392,9 @@ end
 M[ms.textDocument_hover] = M.hover
 
 --- Jumps to a location. Used as a handler for multiple LSP methods.
----@param _ nil not used
----@param result (table) result of LSP method; a location or a list of locations.
----@param ctx (table) table containing the context of the request, including the method
+--- @param _ nil not used
+--- @param result (table) result of LSP method; a location or a list of locations.
+--- @param ctx (table) table containing the context of the request, including the method
 ---(`textDocument/definition` can return `Location` or `Location[]`
 local function location_handler(_, result, ctx, config)
   if result == nil or vim.tbl_isempty(result) then
@@ -450,9 +450,9 @@ M[ms.textDocument_implementation] = location_handler
 --- )
 --- ```
 ---
----@param result table Response from the language server
----@param ctx table Client context
----@param config table Configuration table.
+--- @param result table Response from the language server
+--- @param ctx table Client context
+--- @param config table Configuration table.
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
 ---         - See |vim.lsp.util.open_floating_preview()| for more options
@@ -505,12 +505,12 @@ M[ms.textDocument_documentHighlight] = function(_, result, ctx, _)
   util.buf_highlight_references(ctx.bufnr, result, client.offset_encoding)
 end
 
----@private
+--- @private
 ---
 --- Displays call hierarchy in the quickfix window.
 ---
----@param direction `"from"` for incoming calls and `"to"` for outgoing calls
----@return function
+--- @param direction `"from"` for incoming calls and `"to"` for outgoing calls
+--- @return function
 --- `CallHierarchyIncomingCall[]` if {direction} is `"from"`,
 --- `CallHierarchyOutgoingCall[]` if {direction} is `"to"`,
 local make_call_hierarchy_handler = function(direction)
@@ -623,7 +623,7 @@ M[ms.window_showDocument] = function(_, result, ctx, _)
   return { success = success or false }
 end
 
----@see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_inlayHint_refresh
+--- @see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_inlayHint_refresh
 M[ms.workspace_inlayHint_refresh] = function(err, result, ctx, config)
   return require('vim.lsp.inlay_hint').on_refresh(err, result, ctx, config)
 end

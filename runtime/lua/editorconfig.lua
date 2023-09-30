@@ -5,20 +5,20 @@ M.properties = {}
 
 --- Modified version of the builtin assert that does not include error position information
 ---
----@param v any Condition
----@param message string Error message to display if condition is false or nil
----@return any v if not false or nil, otherwise an error is displayed
+--- @param v any Condition
+--- @param message string Error message to display if condition is false or nil
+--- @return any v if not false or nil, otherwise an error is displayed
 ---
----@private
+--- @private
 local function assert(v, message)
   return v or error(message, 0)
 end
 
 --- Show a warning message
 ---
----@param msg string Message to show
+--- @param msg string Message to show
 ---
----@private
+--- @private
 local function warn(msg, ...)
   vim.notify_once(string.format(msg, ...), vim.log.levels.WARN, {
     title = 'editorconfig',
@@ -134,10 +134,10 @@ end
 --- the replacement pattern also gets interpreted by glob2regpat, so we insert a placeholder, pass
 --- it through glob2regpat, then replace the placeholder with the actual regex pattern.
 ---
----@param glob string Glob to convert into a regular expression
----@return string Regular expression
+--- @param glob string Glob to convert into a regular expression
+--- @return string Regular expression
 ---
----@private
+--- @private
 local function glob2regpat(glob)
   local placeholder = '@@PLACEHOLDER@@'
   return (
@@ -158,12 +158,12 @@ end
 
 --- Parse a single line in an EditorConfig file
 ---
----@param line string Line
----@return string|nil If the line contains a pattern, the glob pattern
----@return string|nil If the line contains a key-value pair, the key
----@return string|nil If the line contains a key-value pair, the value
+--- @param line string Line
+--- @return string|nil If the line contains a pattern, the glob pattern
+--- @return string|nil If the line contains a key-value pair, the key
+--- @return string|nil If the line contains a key-value pair, the value
 ---
----@private
+--- @private
 local function parse_line(line)
   if line:find('^%s*[^ #;]') then
     local glob = (line:match('%b[]') or ''):match('^%s*%[(.*)%]%s*$')
@@ -180,11 +180,11 @@ end
 
 --- Parse options from an .editorconfig file
 ---
----@param filepath string File path of the file to apply EditorConfig settings to
----@param dir string Current directory
----@return table<string,string|boolean> Table of options to apply to the given file
+--- @param filepath string File path of the file to apply EditorConfig settings to
+--- @param dir string Current directory
+--- @return table<string,string|boolean> Table of options to apply to the given file
 ---
----@private
+--- @private
 local function parse(filepath, dir)
   local pat --- @type vim.regex?
   local opts = {} --- @type table<string,string|boolean>
@@ -217,9 +217,9 @@ end
 
 --- Configure the given buffer with options from an .editorconfig file
 ---
----@param bufnr integer Buffer number to configure
+--- @param bufnr integer Buffer number to configure
 ---
----@private
+--- @private
 function M.config(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   if not vim.api.nvim_buf_is_valid(bufnr) then

@@ -1656,7 +1656,7 @@ local patterns_hashbang = {
   ['^\\%(rexx\\|regina\\)\\>'] = { 'rexx', { vim_regex = true } },
 }
 
----@private
+--- @private
 --- File starts with "#!".
 --- @param contents string[]
 --- @param path string
@@ -1849,7 +1849,7 @@ local patterns_text = {
   ['^#n$'] = 'sed',
 }
 
----@private
+--- @private
 --- File does not start with "#!".
 --- @param contents string[]
 --- @param path string

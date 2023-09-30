@@ -3,12 +3,12 @@
 -- DO NOT EDIT
 error('Cannot require a meta file')
 
----@class vim.bo
----@field [integer] vim.bo
+--- @class vim.bo
+--- @field [integer] vim.bo
 vim.bo = vim.bo
 
----@class vim.wo
----@field [integer] vim.wo
+--- @class vim.wo
+--- @field [integer] vim.wo
 vim.wo = vim.wo
 
 --- Allow CTRL-_ in Insert and Command-line mode.  This is default off, to

@@ -24,9 +24,9 @@ local default_border = {
 
 --- Check the border given by opts or the default border for the additional
 --- size it adds to a float.
----@param opts table optional options for the floating window
+--- @param opts table optional options for the floating window
 ---            - border (string or table) the border
----@return table size of border in the form of { height = height, width = width }
+--- @return table size of border in the form of { height = height, width = width }
 local function get_border_size(opts)
   local border = opts and opts.border or default_border
   local height = 0
@@ -115,10 +115,10 @@ end
 
 --- Convert byte index to `encoding` index.
 --- Convenience wrapper around vim.str_utfindex
----@param line string line to be indexed
----@param index integer|nil byte index (utf-8), or `nil` for length
----@param encoding string|nil utf-8|utf-16|utf-32|nil defaults to utf-16
----@return integer `encoding` index of `index` in `line`
+--- @param line string line to be indexed
+--- @param index integer|nil byte index (utf-8), or `nil` for length
+--- @param encoding string|nil utf-8|utf-16|utf-32|nil defaults to utf-16
+--- @return integer `encoding` index of `index` in `line`
 function M._str_utfindex_enc(line, index, encoding)
   if not encoding then
     encoding = 'utf-16'
@@ -142,11 +142,11 @@ end
 
 --- Convert UTF index to `encoding` index.
 --- Convenience wrapper around vim.str_byteindex
----Alternative to vim.str_byteindex that takes an encoding.
----@param line string line to be indexed
----@param index integer UTF index
----@param encoding string utf-8|utf-16|utf-32| defaults to utf-16
----@return integer byte (utf-8) index of `encoding` index `index` in `line`
+--- Alternative to vim.str_byteindex that takes an encoding.
+--- @param line string line to be indexed
+--- @param index integer UTF index
+--- @param encoding string utf-8|utf-16|utf-32| defaults to utf-16
+--- @return integer byte (utf-8) index of `encoding` index `index` in `line`
 function M._str_byteindex_enc(line, index, encoding)
   if not encoding then
     encoding = 'utf-16'
@@ -173,12 +173,12 @@ local _str_byteindex_enc = M._str_byteindex_enc
 ---
 --- CAUTION: Changes in-place!
 ---
----@deprecated
----@param lines (table) Original list of strings
----@param A (table) Start position; a 2-tuple of {line,col} numbers
----@param B (table) End position; a 2-tuple of {line,col} numbers
----@param new_lines (table) list of strings to replace the original
----@return table The modified {lines} object
+--- @deprecated
+--- @param lines (table) Original list of strings
+--- @param A (table) Start position; a 2-tuple of {line,col} numbers
+--- @param B (table) End position; a 2-tuple of {line,col} numbers
+--- @param new_lines (table) list of strings to replace the original
+--- @return table The modified {lines} object
 function M.set_lines(lines, A, B, new_lines)
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
@@ -234,9 +234,9 @@ end
 --- Works on unloaded buffers by reading the file using libuv to bypass buf reading events.
 --- Falls back to loading the buffer and nvim_buf_get_lines for buffers with non-file URI.
 ---
----@param bufnr integer bufnr to get the lines from
----@param rows integer[] zero-indexed line numbers
----@return table<integer, string>|string a table mapping rows to lines
+--- @param bufnr integer bufnr to get the lines from
+--- @param rows integer[] zero-indexed line numbers
+--- @return table<integer, string>|string a table mapping rows to lines
 local function get_lines(bufnr, rows)
   rows = type(rows) == 'table' and rows or { rows }
 
@@ -314,16 +314,16 @@ end
 --- Works on unloaded buffers by reading the file using libuv to bypass buf reading events.
 --- Falls back to loading the buffer and nvim_buf_get_lines for buffers with non-file URI.
 ---
----@param bufnr integer
----@param row integer zero-indexed line number
----@return string the line at row in filename
+--- @param bufnr integer
+--- @param row integer zero-indexed line number
+--- @return string the line at row in filename
 local function get_line(bufnr, row)
   return get_lines(bufnr, { row })[row]
 end
 
 --- Position is a https://microsoft.github.io/language-server-protocol/specifications/specification-current/#position
----@param offset_encoding string|nil utf-8|utf-16|utf-32
----@return integer
+--- @param offset_encoding string|nil utf-8|utf-16|utf-32
+--- @return integer
 local function get_line_byte_from_position(bufnr, position, offset_encoding)
   -- LSP's line and characters are 0-indexed
   -- Vim's line and columns are 1-indexed
@@ -343,8 +343,8 @@ local function get_line_byte_from_position(bufnr, position, offset_encoding)
 end
 
 --- Process and return progress reports from lsp server
----@private
----@deprecated Use vim.lsp.status() or access client.progress directly
+--- @private
+--- @deprecated Use vim.lsp.status() or access client.progress directly
 function M.get_progress_messages()
   vim.deprecate('vim.lsp.util.get_progress_messages', 'vim.lsp.status', '0.11.0')
   local new_messages = {}
@@ -405,10 +405,10 @@ function M.get_progress_messages()
 end
 
 --- Applies a list of text edits to a buffer.
----@param text_edits table list of `TextEdit` objects
----@param bufnr integer Buffer id
----@param offset_encoding string utf-8|utf-16|utf-32
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
+--- @param text_edits table list of `TextEdit` objects
+--- @param bufnr integer Buffer id
+--- @param offset_encoding string utf-8|utf-16|utf-32
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
 function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   validate({
     text_edits = { text_edits, 't', false },
@@ -547,9 +547,9 @@ end
 --- Can be used to extract the completion items from a
 --- `textDocument/completion` request, which may return one of
 --- `CompletionItem[]`, `CompletionList` or null.
----@param result table The result of a `textDocument/completion` request
----@return table List of completion items
----@see https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
+--- @param result table The result of a `textDocument/completion` request
+--- @return table List of completion items
+--- @see https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 function M.extract_completion_items(result)
   if type(result) == 'table' and result.items then
     -- result is a `CompletionList`
@@ -566,9 +566,9 @@ end
 --- Applies a `TextDocumentEdit`, which is a list of changes to a single
 --- document.
 ---
----@param text_document_edit table: a `TextDocumentEdit` object
----@param index integer: Optional index of the edit, if from a list of edits (or nil, if not from a list)
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
+--- @param text_document_edit table: a `TextDocumentEdit` object
+--- @param index integer: Optional index of the edit, if from a list of edits (or nil, if not from a list)
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentEdit
 function M.apply_text_document_edit(text_document_edit, index, offset_encoding)
   local text_document = text_document_edit.textDocument
   local bufnr = vim.uri_to_bufnr(text_document.uri)
@@ -606,8 +606,8 @@ end
 
 --- Parses snippets in a completion entry.
 ---
----@param input string unparsed snippet
----@return string parsed snippet
+--- @param input string unparsed snippet
+--- @return string parsed snippet
 function M.parse_snippet(input)
   local ok, parsed = pcall(function()
     return tostring(snippet.parse(input))
@@ -663,9 +663,9 @@ end
 --- the client must handle it properly even if it receives a value outside the
 --- specification.
 ---
----@param completion_item_kind (`vim.lsp.protocol.completionItemKind`)
----@return (`vim.lsp.protocol.completionItemKind`)
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
+--- @param completion_item_kind (`vim.lsp.protocol.completionItemKind`)
+--- @return (`vim.lsp.protocol.completionItemKind`)
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
 function M._get_completion_item_kind_name(completion_item_kind)
   return protocol.CompletionItemKind[completion_item_kind] or 'Unknown'
 end
@@ -673,12 +673,12 @@ end
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
----@param result table The result of a `textDocument/completion` call, e.g.
+--- @param result table The result of a `textDocument/completion` call, e.g.
 --- from |vim.lsp.buf.completion()|, which may be one of `CompletionItem[]`,
 --- `CompletionList` or `null`
----@param prefix (string) the prefix to filter the completion items
----@return table { matches = complete-items table, incomplete = bool }
----@see complete-items
+--- @param prefix (string) the prefix to filter the completion items
+--- @return table { matches = complete-items table, incomplete = bool }
+--- @see complete-items
 function M.text_document_completion_list_to_complete_items(result, prefix)
   local items = M.extract_completion_items(result)
   if vim.tbl_isempty(items) then
@@ -753,7 +753,7 @@ end
 
 --- Rename old_fname to new_fname
 ---
----@param opts (table)
+--- @param opts (table)
 --         overwrite? bool
 --         ignoreIfExists? bool
 function M.rename(old_fname, new_fname, opts)
@@ -834,8 +834,8 @@ end
 
 --- Applies a `WorkspaceEdit`.
 ---
----@param workspace_edit table `WorkspaceEdit`
----@param offset_encoding string utf-8|utf-16|utf-32 (required)
+--- @param workspace_edit table `WorkspaceEdit`
+--- @param offset_encoding string utf-8|utf-16|utf-32 (required)
 --see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_applyEdit
 function M.apply_workspace_edit(workspace_edit, offset_encoding)
   if offset_encoding == nil then
@@ -880,10 +880,10 @@ end
 --- Note that if the input is of type `MarkupContent` and its kind is `plaintext`,
 --- then the corresponding value is returned without further modifications.
 ---
----@param input (`MarkedString` | `MarkedString[]` | `MarkupContent`)
----@param contents (table|nil) List of strings to extend with converted lines. Defaults to {}.
----@return string[] extended with lines of converted markdown.
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
+--- @param input (`MarkedString` | `MarkedString[]` | `MarkupContent`)
+--- @param contents (table|nil) List of strings to extend with converted lines. Defaults to {}.
+--- @return string[] extended with lines of converted markdown.
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_hover
 function M.convert_input_to_markdown_lines(input, contents)
   contents = contents or {}
   -- MarkedString variation 1
@@ -916,12 +916,12 @@ end
 
 --- Converts `textDocument/signatureHelp` response to markdown lines.
 ---
----@param signature_help table Response of `textDocument/SignatureHelp`
----@param ft string|nil filetype that will be use as the `lang` for the label markdown code block
----@param triggers table|nil list of trigger characters from the lsp server. used to better determine parameter offsets
----@return table|nil table list of lines of converted markdown.
----@return table|nil table of active hl
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
+--- @param signature_help table Response of `textDocument/SignatureHelp`
+--- @param ft string|nil filetype that will be use as the `lang` for the label markdown code block
+--- @param triggers table|nil list of trigger characters from the lsp server. used to better determine parameter offsets
+--- @return table|nil table list of lines of converted markdown.
+--- @return table|nil table of active hl
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 function M.convert_signature_help_to_markdown_lines(signature_help, ft, triggers)
   if not signature_help.signatures then
     return
@@ -1025,9 +1025,9 @@ end
 --- Creates a table with sensible default options for a floating window. The
 --- table can be passed to |nvim_open_win()|.
 ---
----@param width integer window width (in character cells)
----@param height integer window height (in character cells)
----@param opts table optional
+--- @param width integer window width (in character cells)
+--- @param height integer window height (in character cells)
+--- @param opts table optional
 ---        - offset_x (integer) offset to add to `col`
 ---        - offset_y (integer) offset to add to `row`
 ---        - border (string or table) override `border`
@@ -1040,7 +1040,7 @@ end
 ---            to display the full window height.
 ---          - "below": place the window below the cursor unless there are not enough lines
 ---            to display the full window height.
----@return table Options
+--- @return table Options
 function M.make_floating_popup_options(width, height, opts)
   validate({
     opts = { opts, 't', true },
@@ -1116,12 +1116,12 @@ end
 
 --- Shows document and optionally jumps to the location.
 ---
----@param location table (`Location`|`LocationLink`)
----@param offset_encoding string|nil utf-8|utf-16|utf-32
----@param opts table|nil options
+--- @param location table (`Location`|`LocationLink`)
+--- @param offset_encoding string|nil utf-8|utf-16|utf-32
+--- @param opts table|nil options
 ---        - reuse_win (boolean) Jump to existing window if buffer is already open.
 ---        - focus (boolean) Whether to focus/jump to location if possible. Defaults to true.
----@return boolean `true` if succeeded
+--- @return boolean `true` if succeeded
 function M.show_document(location, offset_encoding, opts)
   -- location may be Location or LocationLink
   local uri = location.uri or location.targetUri
@@ -1173,10 +1173,10 @@ end
 
 --- Jumps to a location.
 ---
----@param location table (`Location`|`LocationLink`)
----@param offset_encoding string|nil utf-8|utf-16|utf-32
----@param reuse_win boolean|nil Jump to existing window if buffer is already open.
----@return boolean `true` if the jump succeeded
+--- @param location table (`Location`|`LocationLink`)
+--- @param offset_encoding string|nil utf-8|utf-16|utf-32
+--- @param reuse_win boolean|nil Jump to existing window if buffer is already open.
+--- @return boolean `true` if the jump succeeded
 function M.jump_to_location(location, offset_encoding, reuse_win)
   if offset_encoding == nil then
     vim.notify_once(
@@ -1194,9 +1194,9 @@ end
 ---   - for Location, range is shown (e.g., function definition)
 ---   - for LocationLink, targetRange is shown (e.g., body of function definition)
 ---
----@param location table a single `Location` or `LocationLink`
----@return integer|nil buffer id of float window
----@return integer|nil window id of float window
+--- @param location table a single `Location` or `LocationLink`
+--- @return integer|nil buffer id of float window
+--- @return integer|nil window id of float window
 function M.preview_location(location, opts)
   -- location may be LocationLink or Location (more useful for the former)
   local uri = location.targetUri or location.uri
@@ -1229,24 +1229,24 @@ local function find_window_by_var(name, value)
   end
 end
 
----Returns true if the line is empty or only contains whitespace.
----@param line string
----@return boolean
+--- Returns true if the line is empty or only contains whitespace.
+--- @param line string
+--- @return boolean
 local function is_blank_line(line)
   return line and line:match('^%s*$')
 end
 
----Returns true if the line corresponds to a Markdown thematic break.
----@param line string
----@return boolean
+--- Returns true if the line corresponds to a Markdown thematic break.
+--- @param line string
+--- @return boolean
 local function is_separator_line(line)
   return line and line:match('^ ? ? ?%-%-%-+%s*$')
 end
 
----Replaces separator lines by the given divider and removing surrounding blank lines.
----@param contents string[]
----@param divider string
----@return string[]
+--- Replaces separator lines by the given divider and removing surrounding blank lines.
+--- @param contents string[]
+--- @param divider string
+--- @return string[]
 local function replace_separators(contents, divider)
   local trimmed = {}
   local l = 1
@@ -1269,9 +1269,9 @@ local function replace_separators(contents, divider)
   return trimmed
 end
 
----Collapses successive blank lines in the input table into a single one.
----@param contents string[]
----@return string[]
+--- Collapses successive blank lines in the input table into a single one.
+--- @param contents string[]
+--- @return string[]
 local function collapse_blank_lines(contents)
   local collapsed = {}
   local l = 1
@@ -1308,15 +1308,15 @@ end
 ---
 --- If you want to open a popup with fancy markdown, use `open_floating_preview` instead
 ---
----@param contents table of lines to show in window
----@param opts table with optional fields
+--- @param contents table of lines to show in window
+--- @param opts table with optional fields
 ---  - height    of floating window
 ---  - width     of floating window
 ---  - wrap_at   character to wrap at for computing height
 ---  - max_width  maximal width of floating window
 ---  - max_height maximal height of floating window
 ---  - separator insert separator after code block
----@return table stripped content
+--- @return table stripped content
 function M.stylize_markdown(bufnr, contents, opts)
   validate({
     contents = { contents, 't' },
@@ -1514,11 +1514,11 @@ end
 ---   2. Successive empty lines are collapsed into a single empty line
 ---   3. Thematic breaks are expanded to the given width
 ---
----@private
----@param contents string[]
----@param opts? lsp.util.NormalizeMarkdownOptions
----@return string[] table of lines containing normalized Markdown
----@see https://github.github.com/gfm
+--- @private
+--- @param contents string[]
+--- @param opts? lsp.util.NormalizeMarkdownOptions
+--- @return string[] table of lines containing normalized Markdown
+--- @see https://github.github.com/gfm
 function M._normalize_markdown(contents, opts)
   validate({
     contents = { contents, 't' },
@@ -1541,8 +1541,8 @@ end
 
 --- Closes the preview window
 ---
----@param winnr integer window id of preview window
----@param bufnrs table|nil optional list of ignored buffers
+--- @param winnr integer window id of preview window
+--- @param bufnrs table|nil optional list of ignored buffers
 local function close_preview_window(winnr, bufnrs)
   vim.schedule(function()
     -- exit if we are in one of ignored buffers
@@ -1558,10 +1558,10 @@ end
 
 --- Creates autocommands to close a preview window when events happen.
 ---
----@param events table list of events
----@param winnr integer window id of preview window
----@param bufnrs table list of buffers where the preview window will remain visible
----@see autocmd-events
+--- @param events table list of events
+--- @param winnr integer window id of preview window
+--- @param bufnrs table list of buffers where the preview window will remain visible
+--- @see autocmd-events
 local function close_preview_autocmd(events, winnr, bufnrs)
   local augroup = api.nvim_create_augroup('preview_window_' .. winnr, {
     clear = true,
@@ -1587,18 +1587,18 @@ local function close_preview_autocmd(events, winnr, bufnrs)
   end
 end
 
----@internal
+--- @internal
 --- Computes size of float needed to show contents (with optional wrapping)
 ---
----@param contents table of lines to show in window
----@param opts table with optional fields
+--- @param contents table of lines to show in window
+--- @param opts table with optional fields
 ---            - height  of floating window
 ---            - width   of floating window
 ---            - wrap_at character to wrap at for computing height
 ---            - max_width  maximal width of floating window
 ---            - max_height maximal height of floating window
----@return integer width size of float
----@return integer height size of float
+--- @return integer width size of float
+--- @return integer height size of float
 function M._make_floating_popup_size(contents, opts)
   validate({
     contents = { contents, 't' },
@@ -1665,9 +1665,9 @@ end
 
 --- Shows contents in a floating window.
 ---
----@param contents table of lines to show in window
----@param syntax string of syntax to set for opened buffer
----@param opts table with optional fields (additional keys are filtered with |vim.lsp.util.make_floating_popup_options()|
+--- @param contents table of lines to show in window
+--- @param syntax string of syntax to set for opened buffer
+--- @param opts table with optional fields (additional keys are filtered with |vim.lsp.util.make_floating_popup_options()|
 ---                  before they are passed on to |nvim_open_win()|)
 ---             - height: (integer) height of floating window
 ---             - width: (integer) width of floating window
@@ -1681,8 +1681,8 @@ end
 ---             - focus: (boolean, default true) If `true`, and if {focusable}
 ---                      is also `true`, focus an existing floating window with the same
 ---                      {focus_id}
----@return integer bufnr of newly created float window
----@return integer winid of newly created float window preview window
+--- @return integer bufnr of newly created float window
+--- @return integer winid of newly created float window preview window
 function M.open_floating_preview(contents, syntax, opts)
   validate({
     contents = { contents, 't' },
@@ -1853,10 +1853,10 @@ end)
 --- The result can be passed to the {list} argument of |setqflist()| or
 --- |setloclist()|.
 ---
----@param locations table list of `Location`s or `LocationLink`s
----@param offset_encoding string offset_encoding for locations utf-8|utf-16|utf-32
+--- @param locations table list of `Location`s or `LocationLink`s
+--- @param offset_encoding string offset_encoding for locations utf-8|utf-16|utf-32
 ---                              default to first client of buffer
----@return table list of items
+--- @return table list of items
 function M.locations_to_items(locations, offset_encoding)
   if offset_encoding == nil then
     vim.notify_once(
@@ -1926,7 +1926,7 @@ end
 
 --- Converts symbols to quickfix list items.
 ---
----@param symbols table DocumentSymbol[] or SymbolInformation[]
+--- @param symbols table DocumentSymbol[] or SymbolInformation[]
 function M.symbols_to_items(symbols, bufnr)
   local function _symbols_to_items(_symbols, _items, _bufnr)
     for _, symbol in ipairs(_symbols) do
@@ -1965,9 +1965,9 @@ function M.symbols_to_items(symbols, bufnr)
 end
 
 --- Removes empty lines from the beginning and end.
----@deprecated use `vim.split()` with `trimempty` instead
----@param lines table list of lines to trim
----@return table trimmed list of lines
+--- @deprecated use `vim.split()` with `trimempty` instead
+--- @param lines table list of lines to trim
+--- @return table trimmed list of lines
 function M.trim_empty_lines(lines)
   local start = 1
   for i = 1, #lines do
@@ -1991,9 +1991,9 @@ end
 ---
 --- CAUTION: Modifies the input in-place!
 ---
----@deprecated
----@param lines table list of lines
----@return string filetype or "markdown" if it was unchanged.
+--- @deprecated
+--- @param lines table list of lines
+--- @return string filetype or "markdown" if it was unchanged.
 function M.try_trim_markdown_code_blocks(lines)
   local language_id = lines[1]:match('^```(.*)')
   if language_id then
@@ -2015,8 +2015,8 @@ function M.try_trim_markdown_code_blocks(lines)
   return 'markdown'
 end
 
----@param window integer|nil: window handle or 0 for current, defaults to current
----@param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
+--- @param window integer|nil: window handle or 0 for current, defaults to current
+--- @param offset_encoding string utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
 local function make_position_param(window, offset_encoding)
   window = window or 0
   local buf = api.nvim_win_get_buf(window)
@@ -2035,10 +2035,10 @@ end
 
 --- Creates a `TextDocumentPositionParams` object for the current buffer and cursor position.
 ---
----@param window integer|nil: window handle or 0 for current, defaults to current
----@param offset_encoding string|nil utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
----@return table `TextDocumentPositionParams` object
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
+--- @param window integer|nil: window handle or 0 for current, defaults to current
+--- @param offset_encoding string|nil utf-8|utf-16|utf-32|nil defaults to `offset_encoding` of first client of buffer of `window`
+--- @return table `TextDocumentPositionParams` object
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentPositionParams
 function M.make_position_params(window, offset_encoding)
   window = window or 0
   local buf = api.nvim_win_get_buf(window)
@@ -2050,8 +2050,8 @@ function M.make_position_params(window, offset_encoding)
 end
 
 --- Utility function for getting the encoding of the first LSP client on the given buffer.
----@param bufnr (integer) buffer handle or 0 for current, defaults to current
----@return string encoding first client if there is one, nil otherwise
+--- @param bufnr (integer) buffer handle or 0 for current, defaults to current
+--- @return string encoding first client if there is one, nil otherwise
 function M._get_offset_encoding(bufnr)
   validate({
     bufnr = { bufnr, 'n', true },
@@ -2088,9 +2088,9 @@ end
 --- `textDocument/codeAction`, `textDocument/colorPresentation`,
 --- `textDocument/rangeFormatting`.
 ---
----@param window integer|nil: window handle or 0 for current, defaults to current
----@param offset_encoding "utf-8"|"utf-16"|"utf-32"|nil defaults to `offset_encoding` of first client of buffer of `window`
----@return table { textDocument = { uri = `current_file_uri` }, range = { start =
+--- @param window integer|nil: window handle or 0 for current, defaults to current
+--- @param offset_encoding "utf-8"|"utf-16"|"utf-32"|nil defaults to `offset_encoding` of first client of buffer of `window`
+--- @return table { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`current_position`, end = `current_position` } }
 function M.make_range_params(window, offset_encoding)
   local buf = api.nvim_win_get_buf(window or 0)
@@ -2105,13 +2105,13 @@ end
 --- Using the given range in the current buffer, creates an object that
 --- is similar to |vim.lsp.util.make_range_params()|.
 ---
----@param start_pos integer[]|nil {row,col} mark-indexed position.
+--- @param start_pos integer[]|nil {row,col} mark-indexed position.
 --- Defaults to the start of the last visual selection.
----@param end_pos integer[]|nil {row,col} mark-indexed position.
+--- @param end_pos integer[]|nil {row,col} mark-indexed position.
 --- Defaults to the end of the last visual selection.
----@param bufnr integer|nil buffer handle or 0 for current, defaults to current
----@param offset_encoding "utf-8"|"utf-16"|"utf-32"|nil defaults to `offset_encoding` of first client of `bufnr`
----@return table { textDocument = { uri = `current_file_uri` }, range = { start =
+--- @param bufnr integer|nil buffer handle or 0 for current, defaults to current
+--- @param offset_encoding "utf-8"|"utf-16"|"utf-32"|nil defaults to `offset_encoding` of first client of `bufnr`
+--- @return table { textDocument = { uri = `current_file_uri` }, range = { start =
 ---`start_position`, end = `end_position` } }
 function M.make_given_range_params(start_pos, end_pos, bufnr, offset_encoding)
   validate({
@@ -2150,25 +2150,25 @@ end
 
 --- Creates a `TextDocumentIdentifier` object for the current buffer.
 ---
----@param bufnr integer|nil: Buffer handle, defaults to current
----@return table `TextDocumentIdentifier`
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
+--- @param bufnr integer|nil: Buffer handle, defaults to current
+--- @return table `TextDocumentIdentifier`
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocumentIdentifier
 function M.make_text_document_params(bufnr)
   return { uri = vim.uri_from_bufnr(bufnr or 0) }
 end
 
 --- Create the workspace params
----@param added table
----@param removed table
+--- @param added table
+--- @param removed table
 function M.make_workspace_params(added, removed)
   return { event = { added = added, removed = removed } }
 end
 
 --- Returns indentation size.
 ---
----@see 'shiftwidth'
----@param bufnr (integer|nil): Buffer handle, defaults to current
----@return (integer) indentation size
+--- @see 'shiftwidth'
+--- @param bufnr (integer|nil): Buffer handle, defaults to current
+--- @return (integer) indentation size
 function M.get_effective_tabstop(bufnr)
   validate({ bufnr = { bufnr, 'n', true } })
   local bo = bufnr and vim.bo[bufnr] or vim.bo
@@ -2178,9 +2178,9 @@ end
 
 --- Creates a `DocumentFormattingParams` object for the current buffer and cursor position.
 ---
----@param options table|nil with valid `FormattingOptions` entries
----@return `DocumentFormattingParams` object
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
+--- @param options table|nil with valid `FormattingOptions` entries
+--- @return `DocumentFormattingParams` object
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 function M.make_formatting_params(options)
   validate({ options = { options, 't', true } })
   options = vim.tbl_extend('keep', options or {}, {
@@ -2195,11 +2195,11 @@ end
 
 --- Returns the UTF-32 and UTF-16 offsets for a position in a certain buffer.
 ---
----@param buf integer buffer number (0 for current)
----@param row 0-indexed line
----@param col 0-indexed byte offset in line
----@param offset_encoding string utf-8|utf-16|utf-32 defaults to `offset_encoding` of first client of `buf`
----@return integer `offset_encoding` index of the character in line {row} column {col} in buffer {buf}
+--- @param buf integer buffer number (0 for current)
+--- @param row 0-indexed line
+--- @param col 0-indexed byte offset in line
+--- @param offset_encoding string utf-8|utf-16|utf-32 defaults to `offset_encoding` of first client of `buf`
+--- @return integer `offset_encoding` index of the character in line {row} column {col} in buffer {buf}
 function M.character_offset(buf, row, col, offset_encoding)
   local line = get_line(buf, row)
   if offset_encoding == nil then
@@ -2218,9 +2218,9 @@ end
 
 --- Helper function to return nested values in language server settings
 ---
----@param settings table language server settings
----@param section  string indicating the field of the settings table
----@return table|string The value of settings accessed via section
+--- @param settings table language server settings
+--- @param section  string indicating the field of the settings table
+--- @return table|string The value of settings accessed via section
 function M.lookup_section(settings, section)
   for part in vim.gsplit(section, '.', { plain = true }) do
     settings = settings[part]
@@ -2234,11 +2234,11 @@ end
 --- Converts line range (0-based, end-inclusive) to lsp range,
 --- handles absence of a trailing newline
 ---
----@param bufnr integer
----@param start_line integer
----@param end_line integer
----@param offset_encoding lsp.PositionEncodingKind
----@return lsp.Range
+--- @param bufnr integer
+--- @param start_line integer
+--- @param end_line integer
+--- @param offset_encoding lsp.PositionEncodingKind
+--- @return lsp.Range
 local function make_line_range_params(bufnr, start_line, end_line, offset_encoding)
   local last_line = api.nvim_buf_line_count(bufnr) - 1
 
@@ -2260,16 +2260,16 @@ local function make_line_range_params(bufnr, start_line, end_line, offset_encodi
   }
 end
 
----@private
+--- @private
 --- Request updated LSP information for a buffer.
 ---
----@class lsp.util.RefreshOptions
----@field bufnr integer? Buffer to refresh (default: 0)
----@field only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
----@field client_id? integer Client ID to refresh (default: all clients)
+--- @class lsp.util.RefreshOptions
+--- @field bufnr integer? Buffer to refresh (default: 0)
+--- @field only_visible? boolean Whether to only refresh for the visible regions of the buffer (default: false)
+--- @field client_id? integer Client ID to refresh (default: all clients)
 --
----@param method string LSP method to call
----@param opts? lsp.util.RefreshOptions Options table
+--- @param method string LSP method to call
+--- @param opts? lsp.util.RefreshOptions Options table
 function M._refresh(method, opts)
   opts = opts or {}
   local bufnr = opts.bufnr
@@ -2317,7 +2317,7 @@ end
 
 M._get_line_byte_from_position = get_line_byte_from_position
 
----@nodoc
+--- @nodoc
 M.buf_versions = {}
 
 return M

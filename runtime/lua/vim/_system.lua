@@ -39,14 +39,14 @@ local SIG = {
   -- STOP = 17,19,23  -- Stop the process
 }
 
----@param handle uv.uv_handle_t?
+--- @param handle uv.uv_handle_t?
 local function close_handle(handle)
   if handle and not handle:is_closing() then
     handle:close()
   end
 end
 
----@param state vim.SystemState
+--- @param state vim.SystemState
 local function close_handles(state)
   close_handle(state.handle)
   close_handle(state.stdin)
@@ -143,9 +143,9 @@ function SystemObj:is_closing()
   return handle == nil or handle:is_closing()
 end
 
----@param output fun(err:string?, data: string?)|false
----@return uv.uv_stream_t?
----@return fun(err:string?, data: string?)? Handler
+--- @param output fun(err:string?, data: string?)|false
+--- @return uv.uv_stream_t?
+--- @return fun(err:string?, data: string?)? Handler
 local function setup_output(output)
   if output == nil then
     return assert(uv.new_pipe(false)), nil
@@ -159,9 +159,9 @@ local function setup_output(output)
   return nil, nil
 end
 
----@param input string|string[]|true|nil
----@return uv.uv_stream_t?
----@return string|string[]?
+--- @param input string|string[]|true|nil
+--- @return uv.uv_stream_t?
+--- @return string|string[]?
 local function setup_input(input)
   if not input then
     return
@@ -243,9 +243,9 @@ local function spawn(cmd, opts, on_exit, on_error)
   return handle, pid_or_err --[[@as integer]]
 end
 
----@param timeout integer
----@param cb fun()
----@return uv.uv_timer_t
+--- @param timeout integer
+--- @param cb fun()
+--- @return uv.uv_timer_t
 local function timer_oneshot(timeout, cb)
   local timer = assert(uv.new_timer())
   timer:start(timeout, 0, function()

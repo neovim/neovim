@@ -9,15 +9,15 @@ M.FileChangeType = vim.tbl_add_reverse_lookup({
 
 --- Joins filepath elements by static '/' separator
 ---
----@param ... (string) The path elements.
----@return string
+--- @param ... (string) The path elements.
+--- @return string
 local function filepath_join(...)
   return table.concat({ ... }, '/')
 end
 
 --- Stops and closes a libuv |uv_fs_event_t| or |uv_fs_poll_t| handle
 ---
----@param handle (uv.uv_fs_event_t|uv.uv_fs_poll_t) The handle to stop
+--- @param handle (uv.uv_fs_event_t|uv.uv_fs_poll_t) The handle to stop
 local function stop(handle)
   local _, stop_err = handle:stop()
   assert(not stop_err, stop_err)
@@ -30,12 +30,12 @@ end
 
 --- Initializes and starts a |uv_fs_event_t|
 ---
----@param path (string) The path to watch
----@param opts (table|nil) Additional options
+--- @param path (string) The path to watch
+--- @param opts (table|nil) Additional options
 ---     - uvflags (table|nil)
 ---                Same flags as accepted by |uv.fs_event_start()|
----@param callback (function) The function called when new events
----@return (function) Stops the watcher
+--- @param callback (function) The function called when new events
+--- @return (function) Stops the watcher
 function M.watch(path, opts, callback)
   vim.validate({
     path = { path, 'string', false },
@@ -88,10 +88,10 @@ local default_poll_interval_ms = 2000
 
 --- Implementation for poll, hiding internally-used parameters.
 ---
----@param path string
----@param opts watch.PollOpts
----@param callback fun(patch: string, filechangetype: integer)
----@param watches (watch.Watches|nil) A tree structure to maintain state for recursive watches.
+--- @param path string
+--- @param opts watch.PollOpts
+--- @param callback fun(patch: string, filechangetype: integer)
+--- @param watches (watch.Watches|nil) A tree structure to maintain state for recursive watches.
 ---     - handle (uv_fs_poll_t)
 ---               The libuv handle
 ---     - cancel (function)
@@ -104,7 +104,7 @@ local default_poll_interval_ms = 2000
 ---     - started (boolean|nil)
 ---               Whether or not the watcher has first been initialized. Used
 ---               to prevent a flood of Created events on startup.
----@return fun() Cancel function
+--- @return fun() Cancel function
 local function poll_internal(path, opts, callback, watches)
   path = vim.fs.normalize(path)
   local interval = opts and opts.interval or default_poll_interval_ms
@@ -191,8 +191,8 @@ end
 --- Initializes and starts a |uv_fs_poll_t| recursively watching every file underneath the
 --- directory at path.
 ---
----@param path (string) The path to watch. Must refer to a directory.
----@param opts (table|nil) Additional options
+--- @param path (string) The path to watch. Must refer to a directory.
+--- @param opts (table|nil) Additional options
 ---     - interval (number|nil)
 ---                Polling interval in ms as passed to |uv.fs_poll_start()|. Defaults to 2000.
 ---     - include_pattern (LPeg pattern|nil)
@@ -204,8 +204,8 @@ end
 ---                An |lpeg| pattern. Only changes to files and directories whose full path does
 ---                not match the pattern will be reported. Matches against both files and
 ---                directories. When nil, matches nothing.
----@param callback (function) The function called when new events
----@return function Stops the watcher
+--- @param callback (function) The function called when new events
+--- @return function Stops the watcher
 function M.poll(path, opts, callback)
   vim.validate({
     path = { path, 'string', false },

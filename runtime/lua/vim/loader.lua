@@ -6,33 +6,33 @@ local loaders = package.loaders
 
 local M = {}
 
----@alias CacheHash {mtime: {nsec: integer, sec: integer}, size: integer, type?: uv.aliases.fs_stat_types}
----@alias CacheEntry {hash:CacheHash, chunk:string}
+--- @alias CacheHash {mtime: {nsec: integer, sec: integer}, size: integer, type?: uv.aliases.fs_stat_types}
+--- @alias CacheEntry {hash:CacheHash, chunk:string}
 
----@class ModuleFindOpts
----@field all? boolean Search for all matches (defaults to `false`)
----@field rtp? boolean Search for modname in the runtime path (defaults to `true`)
----@field patterns? string[] Patterns to use (defaults to `{"/init.lua", ".lua"}`)
----@field paths? string[] Extra paths to search for modname
+--- @class ModuleFindOpts
+--- @field all? boolean Search for all matches (defaults to `false`)
+--- @field rtp? boolean Search for modname in the runtime path (defaults to `true`)
+--- @field patterns? string[] Patterns to use (defaults to `{"/init.lua", ".lua"}`)
+--- @field paths? string[] Extra paths to search for modname
 
----@class ModuleInfo
----@field modpath string Path of the module
----@field modname string Name of the module
----@field stat? uv.uv_fs_t File stat of the module path
+--- @class ModuleInfo
+--- @field modpath string Path of the module
+--- @field modname string Name of the module
+--- @field stat? uv.uv_fs_t File stat of the module path
 
----@alias LoaderStats table<string, {total:number, time:number, [string]:number?}?>
+--- @alias LoaderStats table<string, {total:number, time:number, [string]:number?}?>
 
----@nodoc
+--- @nodoc
 M.path = vim.fn.stdpath('cache') .. '/luac'
 
----@nodoc
+--- @nodoc
 M.enabled = false
 
----@class Loader
----@field _rtp string[]
----@field _rtp_pure string[]
----@field _rtp_key string
----@field _hashes? table<string, CacheHash>
+--- @class Loader
+--- @field _rtp string[]
+--- @field _rtp_pure string[]
+--- @field _rtp_key string
+--- @field _hashes? table<string, CacheHash>
 local Loader = {
   VERSION = 4,
   ---@type table<string, table<string,ModuleInfo>>
@@ -70,7 +70,7 @@ end
 --- The result is cached, and will be updated if the runtime path changes.
 --- When called from a fast event, the cached value will be returned.
 --- @return string[] rtp, boolean updated
----@private
+--- @private
 function Loader.get_rtp()
   if vim.in_fast_event() then
     return (Loader._rtp or {}), false
@@ -96,18 +96,18 @@ function Loader.get_rtp()
 end
 
 --- Returns the cache file name
----@param name string can be a module name, or a file name
----@return string file_name
----@private
+--- @param name string can be a module name, or a file name
+--- @return string file_name
+--- @private
 function Loader.cache_file(name)
   local ret = ('%s/%s'):format(M.path, uri_encode(name, 'rfc2396'))
   return ret:sub(-4) == '.lua' and (ret .. 'c') or (ret .. '.luac')
 end
 
 --- Saves the cache entry for a given module or file
----@param name string module name or filename
----@param entry CacheEntry
----@private
+--- @param name string module name or filename
+--- @param entry CacheEntry
+--- @private
 function Loader.write(name, entry)
   local cname = Loader.cache_file(name)
   local f = assert(uv.fs_open(cname, 'w', 438))
@@ -136,9 +136,9 @@ local function readfile(path, mode)
 end
 
 --- Loads the cache entry for a given module or file
----@param name string module name or filename
----@return CacheEntry?
----@private
+--- @param name string module name or filename
+--- @return CacheEntry?
+--- @private
 function Loader.read(name)
   local cname = Loader.cache_file(name)
   local data = readfile(cname, 438)
@@ -164,9 +164,9 @@ function Loader.read(name)
 end
 
 --- The `package.loaders` loader for Lua files using the cache.
----@param modname string module name
----@return string|function
----@private
+--- @param modname string module name
+--- @return string|function
+--- @private
 function Loader.loader(modname)
   Loader._hashes = {}
   local ret = M.find(modname)[1]
@@ -182,9 +182,9 @@ function Loader.loader(modname)
 end
 
 --- The `package.loaders` loader for libs
----@param modname string module name
----@return string|function
----@private
+--- @param modname string module name
+--- @return string|function
+--- @private
 function Loader.loader_lib(modname)
   local sysname = uv.os_uname().sysname:lower() or ''
   local is_win = sysname:find('win', 1, true) and not sysname:find('darwin', 1, true)
@@ -206,11 +206,11 @@ end
 
 --- `loadfile` using the cache
 --- Note this has the mode and env arguments which is supported by LuaJIT and is 5.1 compatible.
----@param filename? string
----@param mode? "b"|"t"|"bt"
----@param env? table
----@return function?, string?  error_message
----@private
+--- @param filename? string
+--- @param mode? "b"|"t"|"bt"
+--- @param env? table
+--- @return function?, string?  error_message
+--- @private
 -- luacheck: ignore 312
 function Loader.loadfile(filename, mode, env)
   -- ignore mode, since we byte-compile the Lua source files
@@ -222,9 +222,9 @@ end
 --- * file size
 --- * mtime in seconds
 --- * mtime in nanoseconds
----@param h1 CacheHash
----@param h2 CacheHash
----@private
+--- @param h1 CacheHash
+--- @param h2 CacheHash
+--- @private
 function Loader.eq(h1, h2)
   return h1
     and h2
@@ -234,13 +234,13 @@ function Loader.eq(h1, h2)
 end
 
 --- Loads the given module path using the cache
----@param modpath string
----@param opts? {mode?: "b"|"t"|"bt", env?:table} (table|nil) Options for loading the module:
+--- @param modpath string
+--- @param opts? {mode?: "b"|"t"|"bt", env?:table} (table|nil) Options for loading the module:
 ---    - mode: (string) the mode to load the module with. "b"|"t"|"bt" (defaults to `nil`)
 ---    - env: (table) the environment to load the module in. (defaults to `nil`)
----@see |luaL_loadfile()|
----@return function?, string? error_message
----@private
+--- @see |luaL_loadfile()|
+--- @return function?, string? error_message
+--- @private
 function Loader.load(modpath, opts)
   opts = opts or {}
   local hash = Loader.get_hash(modpath)
@@ -271,15 +271,15 @@ function Loader.load(modpath, opts)
 end
 
 --- Finds Lua modules for the given module name.
----@param modname string Module name, or `"*"` to find the top-level modules instead
----@param opts? ModuleFindOpts (table|nil) Options for finding a module:
+--- @param modname string Module name, or `"*"` to find the top-level modules instead
+--- @param opts? ModuleFindOpts (table|nil) Options for finding a module:
 ---    - rtp: (boolean) Search for modname in the runtime path (defaults to `true`)
 ---    - paths: (string[]) Extra paths to search for modname (defaults to `{}`)
 ---    - patterns: (string[]) List of patterns to use when searching for modules.
 ---                A pattern is a string added to the basename of the Lua module being searched.
 ---                (defaults to `{"/init.lua", ".lua"}`)
 ---    - all: (boolean) Return all matches instead of just the first one (defaults to `false`)
----@return ModuleInfo[] (list) A list of results with the following properties:
+--- @return ModuleInfo[] (list) A list of results with the following properties:
 ---    - modpath: (string) the path to the module
 ---    - modname: (string) the name of the module
 ---    - stat: (table|nil) the fs_stat of the module path. Won't be returned for `modname="*"`
@@ -370,7 +370,7 @@ end
 
 --- Resets the cache for the path, or all the paths
 --- if path is nil.
----@param path string? path to reset
+--- @param path string? path to reset
 function M.reset(path)
   if path then
     Loader._indexed[normalize(path)] = nil
@@ -427,8 +427,8 @@ function M.disable()
 end
 
 --- Return the top-level \`/lua/*` modules for this path
----@param path string path to check for top-level Lua modules
----@private
+--- @param path string path to check for top-level Lua modules
+--- @private
 function Loader.lsmod(path)
   if not Loader._indexed[path] then
     Loader._indexed[path] = {}
@@ -474,12 +474,12 @@ function Loader.track(stat, f)
   end
 end
 
----@class ProfileOpts
----@field loaders? boolean Add profiling to the loaders
+--- @class ProfileOpts
+--- @field loaders? boolean Add profiling to the loaders
 
 --- Debug function that wraps all loaders and tracks stats
----@private
----@param opts ProfileOpts?
+--- @private
+--- @param opts ProfileOpts?
 function M._profile(opts)
   Loader.get_rtp = Loader.track('get_rtp', Loader.get_rtp)
   Loader.read = Loader.track('read', Loader.read)
@@ -499,9 +499,9 @@ function M._profile(opts)
 end
 
 --- Prints all cache stats
----@param opts? {print?:boolean}
----@return LoaderStats
----@private
+--- @param opts? {print?:boolean}
+--- @return LoaderStats
+--- @private
 function M._inspect(opts)
   if opts and opts.print then
     local function ms(nsec)

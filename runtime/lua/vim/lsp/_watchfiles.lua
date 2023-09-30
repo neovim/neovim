@@ -6,13 +6,13 @@ local lpeg = vim.lpeg
 
 local M = {}
 
----@alias lpeg userdata
+--- @alias lpeg userdata
 
 --- Parses the raw pattern into an |lpeg| pattern. LPeg patterns natively support the "this" or "that"
 --- alternative constructions described in the LSP spec that cannot be expressed in a standard Lua pattern.
 ---
----@param pattern string The raw glob pattern
----@return lpeg An |lpeg| representation of the pattern, or nil if the pattern is invalid.
+--- @param pattern string The raw glob pattern
+--- @return lpeg An |lpeg| representation of the pattern, or nil if the pattern is invalid.
 local function parse(pattern)
   local l = lpeg
 
@@ -76,12 +76,12 @@ local function parse(pattern)
   return p:match(pattern)
 end
 
----@private
+--- @private
 --- Implementation of LSP 3.17.0's pattern matching: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#pattern
 ---
----@param pattern string|table The glob pattern (raw or parsed) to match.
----@param s string The string to match against pattern.
----@return boolean Whether or not pattern matches s.
+--- @param pattern string|table The glob pattern (raw or parsed) to match.
+--- @param s string The string to match against pattern.
+--- @return boolean Whether or not pattern matches s.
 function M._match(pattern, s)
   if type(pattern) == 'string' then
     pattern = parse(pattern)
@@ -91,15 +91,15 @@ end
 
 M._watchfunc = (vim.fn.has('win32') == 1 or vim.fn.has('mac') == 1) and watch.watch or watch.poll
 
----@type table<number, table<number, function[]>> client id -> registration id -> cancel function
+--- @type table<number, table<number, function[]>> client id -> registration id -> cancel function
 local cancels = vim.defaulttable()
 
 local queue_timeout_ms = 100
----@type table<number, uv.uv_timer_t> client id -> libuv timer which will send queued changes at its timeout
+--- @type table<number, uv.uv_timer_t> client id -> libuv timer which will send queued changes at its timeout
 local queue_timers = {}
----@type table<number, lsp.FileEvent[]> client id -> set of queued changes to send in a single LSP notification
+--- @type table<number, lsp.FileEvent[]> client id -> set of queued changes to send in a single LSP notification
 local change_queues = {}
----@type table<number, table<string, lsp.FileChangeType>> client id -> URI -> last type of change processed
+--- @type table<number, table<string, lsp.FileChangeType>> client id -> URI -> last type of change processed
 --- Used to prune consecutive events of the same type for the same file
 local change_cache = vim.defaulttable()
 
@@ -111,15 +111,15 @@ local to_lsp_change_type = {
 
 --- Default excludes the same as VSCode's `files.watcherExclude` setting.
 --- https://github.com/microsoft/vscode/blob/eef30e7165e19b33daa1e15e92fa34ff4a5df0d3/src/vs/workbench/contrib/files/browser/files.contribution.ts#L261
----@type lpeg parsed Lpeg pattern
+--- @type lpeg parsed Lpeg pattern
 M._poll_exclude_pattern = parse('**/.git/{objects,subtree-cache}/**')
   + parse('**/node_modules/*/**')
   + parse('**/.hg/store/**')
 
 --- Registers the workspace/didChangeWatchedFiles capability dynamically.
 ---
----@param reg table LSP Registration object.
----@param ctx table Context from the |lsp-handler|.
+--- @param reg table LSP Registration object.
+--- @param ctx table Context from the |lsp-handler|.
 function M.register(reg, ctx)
   local client_id = ctx.client_id
   local client = vim.lsp.get_client_by_id(client_id)
@@ -235,8 +235,8 @@ end
 
 --- Unregisters the workspace/didChangeWatchedFiles capability dynamically.
 ---
----@param unreg table LSP Unregistration object.
----@param ctx table Context from the |lsp-handler|.
+--- @param unreg table LSP Unregistration object.
+--- @param ctx table Context from the |lsp-handler|.
 function M.unregister(unreg, ctx)
   local client_id = ctx.client_id
   local client_cancels = cancels[client_id]

@@ -80,7 +80,7 @@ setmetatable(vim, {
 })
 
 --- <Docs described in |vim.empty_dict()| >
----@private
+--- @private
 --- TODO: should be in vim.shared when vim.shared always uses nvim-lua
 function vim.empty_dict()
   return setmetatable({}, vim._empty_dict_mt)

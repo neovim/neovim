@@ -20,8 +20,8 @@ local M = {}
 --- end)
 --- ```
 ---
----@param items table Arbitrary items
----@param opts table Additional options
+--- @param items table Arbitrary items
+--- @param opts table Additional options
 ---     - prompt (string|nil)
 ---               Text of the prompt. Defaults to `Select one of:`
 ---     - format_item (function item -> text)
@@ -32,7 +32,7 @@ local M = {}
 ---               Plugins reimplementing `vim.ui.select` may wish to
 ---               use this to infer the structure or semantics of
 ---               `items`, or the context in which select() was called.
----@param on_choice function ((item|nil, idx|nil) -> ())
+--- @param on_choice function ((item|nil, idx|nil) -> ())
 ---               Called once the user made a choice.
 ---               `idx` is the 1-based index of `item` within `items`.
 ---               `nil` if the user aborted the dialog.
@@ -66,7 +66,7 @@ end
 --- end)
 --- ```
 ---
----@param opts table Additional options. See |input()|
+--- @param opts table Additional options. See |input()|
 ---     - prompt (string|nil)
 ---               Text of the prompt
 ---     - default (string|nil)
@@ -80,7 +80,7 @@ end
 ---     - highlight (function)
 ---               Function that will be used for highlighting
 ---               user inputs.
----@param on_confirm function ((input|nil) -> ())
+--- @param on_confirm function ((input|nil) -> ())
 ---               Called once the user confirms or abort the input.
 ---               `input` is what the user typed (it might be
 ---               an empty string if nothing was entered), or
@@ -118,12 +118,12 @@ end
 --- vim.ui.open("$VIMRUNTIME")
 --- ```
 ---
----@param path string Path or URL to open
+--- @param path string Path or URL to open
 ---
----@return vim.SystemCompleted|nil # Command result, or nil if not found.
----@return string|nil # Error message on failure
+--- @return vim.SystemCompleted|nil # Command result, or nil if not found.
+--- @return string|nil # Error message on failure
 ---
----@see |vim.system()|
+--- @see |vim.system()|
 function M.open(path)
   vim.validate({
     path = { path, 'string' },

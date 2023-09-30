@@ -50,9 +50,9 @@ local str_utf_end = vim.str_utf_end
 
 -- Given a line, byte idx, and offset_encoding convert to the
 -- utf-8, utf-16, or utf-32 index.
----@param line string the line to index into
----@param byte integer the byte idx
----@param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
+--- @param line string the line to index into
+--- @param byte integer the byte idx
+--- @param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
 --@returns integer the utf idx for the given encoding
 local function byte_to_utf(line, byte, offset_encoding)
   -- convert to 0 based indexing for str_utfindex
@@ -88,11 +88,11 @@ end
 
 -- Given a line, byte idx, alignment, and offset_encoding convert to the aligned
 -- utf-8 index and either the utf-16, or utf-32 index.
----@param line string the line to index into
----@param byte integer the byte idx
----@param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
----@return integer byte_idx of first change position
----@return integer char_idx of first change position
+--- @param line string the line to index into
+--- @param byte integer the byte idx
+--- @param offset_encoding string utf-8|utf-16|utf-32|nil (default: utf-8)
+--- @return integer byte_idx of first change position
+--- @return integer char_idx of first change position
 local function align_end_position(line, byte, offset_encoding)
   local char
   -- If on the first byte, or an empty string: the trivial case
@@ -120,13 +120,13 @@ local function align_end_position(line, byte, offset_encoding)
 end
 
 --- Finds the first line, byte, and char index of the difference between the previous and current lines buffer normalized to the previous codepoint.
----@param prev_lines table list of lines from previous buffer
----@param curr_lines table list of lines from current buffer
----@param firstline integer firstline from on_lines, adjusted to 1-index
----@param lastline integer lastline from on_lines, adjusted to 1-index
----@param new_lastline integer new_lastline from on_lines, adjusted to 1-index
----@param offset_encoding string utf-8|utf-16|utf-32|nil (fallback to utf-8)
----@return table result table include line_idx, byte_idx, and char_idx of first change position
+--- @param prev_lines table list of lines from previous buffer
+--- @param curr_lines table list of lines from current buffer
+--- @param firstline integer firstline from on_lines, adjusted to 1-index
+--- @param lastline integer lastline from on_lines, adjusted to 1-index
+--- @param new_lastline integer new_lastline from on_lines, adjusted to 1-index
+--- @param offset_encoding string utf-8|utf-16|utf-32|nil (fallback to utf-8)
+--- @return table result table include line_idx, byte_idx, and char_idx of first change position
 local function compute_start_range(
   prev_lines,
   curr_lines,
@@ -199,14 +199,14 @@ end
 --- prev_end_range is the text range sent to the server representing the changed region.
 --- curr_end_range is the text that should be collected and sent to the server.
 --
----@param prev_lines table list of lines
----@param curr_lines table list of lines
----@param start_range table
----@param lastline integer
----@param new_lastline integer
----@param offset_encoding string
----@return integer|table end_line_idx and end_col_idx of range
----@return table|nil end_col_idx of range
+--- @param prev_lines table list of lines
+--- @param curr_lines table list of lines
+--- @param start_range table
+--- @param lastline integer
+--- @param new_lastline integer
+--- @param offset_encoding string
+--- @return integer|table end_line_idx and end_col_idx of range
+--- @return table|nil end_col_idx of range
 local function compute_end_range(
   prev_lines,
   curr_lines,
@@ -303,10 +303,10 @@ local function compute_end_range(
 end
 
 --- Get the text of the range defined by start and end line/column
----@param lines table list of lines
----@param start_range table table returned by first_difference
----@param end_range table new_end_range returned by last_difference
----@return string text extracted from defined region
+--- @param lines table list of lines
+--- @param start_range table table returned by first_difference
+--- @param end_range table new_end_range returned by last_difference
+--- @return string text extracted from defined region
 local function extract_text(lines, start_range, end_range, line_ending)
   if not lines[start_range.line_idx] then
     return ''
@@ -381,13 +381,13 @@ local function compute_range_length(lines, start_range, end_range, offset_encodi
 end
 
 --- Returns the range table for the difference between prev and curr lines
----@param prev_lines table list of lines
----@param curr_lines table list of lines
----@param firstline integer line to begin search for first difference
----@param lastline integer line to begin search in old_lines for last difference
----@param new_lastline integer line to begin search in new_lines for last difference
----@param offset_encoding string encoding requested by language server
----@return table TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
+--- @param prev_lines table list of lines
+--- @param curr_lines table list of lines
+--- @param firstline integer line to begin search for first difference
+--- @param lastline integer line to begin search in old_lines for last difference
+--- @param new_lastline integer line to begin search in new_lines for last difference
+--- @param offset_encoding string encoding requested by language server
+--- @return table TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
 function M.compute_diff(
   prev_lines,
   curr_lines,

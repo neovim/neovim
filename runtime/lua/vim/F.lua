@@ -14,8 +14,8 @@ local F = {}
 --- assert(vim.F.if_nil(a, b, c, d) == 42)
 --- ```
 ---
----@param ... any
----@return any
+--- @param ... any
+--- @return any
 function F.if_nil(...)
   local nargs = select('#', ...)
   for i = 1, nargs do

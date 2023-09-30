@@ -1,28 +1,28 @@
 local api = vim.api
 
----@class TSDevModule
+--- @class TSDevModule
 local M = {}
 
----@class TSTreeView
----@field ns integer API namespace
----@field opts table Options table with the following keys:
+--- @class TSTreeView
+--- @field ns integer API namespace
+--- @field opts table Options table with the following keys:
 ---                  - anon (boolean): If true, display anonymous nodes
 ---                  - lang (boolean): If true, display the language alongside each node
----@field nodes TSP.Node[]
----@field named TSP.Node[]
+--- @field nodes TSP.Node[]
+--- @field named TSP.Node[]
 local TSTreeView = {}
 
----@class TSP.Node
----@field id integer Node id
----@field text string Node text
----@field named boolean True if this is a named (non-anonymous) node
----@field depth integer Depth of the node within the tree
----@field lnum integer Beginning line number of this node in the source buffer
----@field col integer Beginning column number of this node in the source buffer
----@field end_lnum integer Final line number of this node in the source buffer
----@field end_col integer Final column number of this node in the source buffer
----@field lang string Source language of this node
----@field root TSNode
+--- @class TSP.Node
+--- @field id integer Node id
+--- @field text string Node text
+--- @field named boolean True if this is a named (non-anonymous) node
+--- @field depth integer Depth of the node within the tree
+--- @field lnum integer Beginning line number of this node in the source buffer
+--- @field col integer Beginning column number of this node in the source buffer
+--- @field end_lnum integer Final line number of this node in the source buffer
+--- @field end_col integer Final column number of this node in the source buffer
+--- @field lang string Source language of this node
+--- @field root TSNode
 
 --- Traverse all child nodes starting at {node}.
 ---
@@ -36,12 +36,12 @@ local TSTreeView = {}
 --- node of each of these trees is contained within a node in the primary tree. The {injections}
 --- table maps nodes in the primary tree to root nodes of injected trees.
 ---
----@param node TSNode Starting node to begin traversal |tsnode|
----@param depth integer Current recursion depth
----@param lang string Language of the tree currently being traversed
----@param injections table<integer,TSP.Node> Mapping of node ids to root nodes of injected language trees (see
+--- @param node TSNode Starting node to begin traversal |tsnode|
+--- @param depth integer Current recursion depth
+--- @param lang string Language of the tree currently being traversed
+--- @param injections table<integer,TSP.Node> Mapping of node ids to root nodes of injected language trees (see
 ---                        explanation above)
----@param tree TSP.Node[] Output table containing a list of tables each representing a node in the tree
+--- @param tree TSP.Node[] Output table containing a list of tables each representing a node in the tree
 local function traverse(node, depth, lang, injections, tree)
   local injection = injections[node:id()]
   if injection then
@@ -83,13 +83,13 @@ end
 
 --- Create a new treesitter view.
 ---
----@param bufnr integer Source buffer number
----@param lang string|nil Language of source buffer
+--- @param bufnr integer Source buffer number
+--- @param lang string|nil Language of source buffer
 ---
----@return TSTreeView|nil
----@return string|nil Error message, if any
+--- @return TSTreeView|nil
+--- @return string|nil Error message, if any
 ---
----@package
+--- @package
 function TSTreeView:new(bufnr, lang)
   local ok, parser = pcall(vim.treesitter.get_parser, bufnr or 0, lang)
   if not ok then
@@ -140,11 +140,11 @@ end
 
 local decor_ns = api.nvim_create_namespace('ts.dev')
 
----@param lnum integer
----@param col integer
----@param end_lnum integer
----@param end_col integer
----@return string
+--- @param lnum integer
+--- @param col integer
+--- @param end_lnum integer
+--- @param end_col integer
+--- @return string
 local function get_range_str(lnum, col, end_lnum, end_col)
   if lnum == end_lnum then
     return string.format('[%d:%d - %d]', lnum + 1, col + 1, end_col)
@@ -152,14 +152,14 @@ local function get_range_str(lnum, col, end_lnum, end_col)
   return string.format('[%d:%d - %d:%d]', lnum + 1, col + 1, end_lnum + 1, end_col)
 end
 
----@param text string
----@return string
+--- @param text string
+--- @return string
 local function escape_quotes(text)
   return string.format('"%s"', text:sub(2, #text - 1):gsub('"', '\\"'))
 end
 
----@param w integer
----@return boolean closed Whether the window was closed.
+--- @param w integer
+--- @return boolean closed Whether the window was closed.
 local function close_win(w)
   if api.nvim_win_is_valid(w) then
     api.nvim_win_close(w, true)
@@ -169,8 +169,8 @@ local function close_win(w)
   return false
 end
 
----@param w integer
----@param b integer
+--- @param w integer
+--- @param b integer
 local function set_dev_properties(w, b)
   vim.wo[w].scrolloff = 5
   vim.wo[w].wrap = false
@@ -183,8 +183,8 @@ end
 
 --- Write the contents of this View into {bufnr}.
 ---
----@param bufnr integer Buffer number to write into.
----@package
+--- @param bufnr integer Buffer number to write into.
+--- @package
 function TSTreeView:draw(bufnr)
   vim.bo[bufnr].modifiable = true
   local lines = {} ---@type string[]
@@ -225,9 +225,9 @@ end
 ---
 --- The node number is dependent on whether or not anonymous nodes are displayed.
 ---
----@param i integer Node number to get
----@return TSP.Node
----@package
+--- @param i integer Node number to get
+--- @return TSP.Node
+--- @package
 function TSTreeView:get(i)
   local t = self.opts.anon and self.nodes or self.named
   return t[i]
@@ -235,10 +235,10 @@ end
 
 --- Iterate over all of the nodes in this View.
 ---
----@return (fun(): integer, TSP.Node) Iterator over all nodes in this View
----@return table
----@return integer
----@package
+--- @return (fun(): integer, TSP.Node) Iterator over all nodes in this View
+--- @return table
+--- @return integer
+--- @package
 function TSTreeView:iter()
   return ipairs(self.opts.anon and self.nodes or self.named)
 end
@@ -466,9 +466,9 @@ end
 
 local edit_ns = api.nvim_create_namespace('treesitter/dev-edit')
 
----@param query_win integer
----@param base_win integer
----@param lang string
+--- @param query_win integer
+--- @param base_win integer
+--- @param lang string
 local function update_editor_highlights(query_win, base_win, lang)
   local base_buf = api.nvim_win_get_buf(base_win)
   local query_buf = api.nvim_win_get_buf(query_win)

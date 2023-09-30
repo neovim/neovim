@@ -4,15 +4,15 @@ local Range = require('vim.treesitter._range')
 
 local api = vim.api
 
----@class TS.FoldInfo
----@field levels table<integer,string>
----@field levels0 table<integer,integer>
----@field private start_counts table<integer,integer>
----@field private stop_counts table<integer,integer>
+--- @class TS.FoldInfo
+--- @field levels table<integer,string>
+--- @field levels0 table<integer,integer>
+--- @field private start_counts table<integer,integer>
+--- @field private stop_counts table<integer,integer>
 local FoldInfo = {}
 FoldInfo.__index = FoldInfo
 
----@private
+--- @private
 function FoldInfo.new()
   return setmetatable({
     start_counts = {},
@@ -22,9 +22,9 @@ function FoldInfo.new()
   }, FoldInfo)
 end
 
----@package
----@param srow integer
----@param erow integer
+--- @package
+--- @param srow integer
+--- @param erow integer
 function FoldInfo:invalidate_range(srow, erow)
   for i = srow, erow do
     self.start_counts[i + 1] = nil
@@ -42,9 +42,9 @@ end
 ---
 --- Based on https://stackoverflow.com/questions/12394841/safely-remove-items-from-an-array-table-while-iterating/53038524#53038524
 ---
----@param t any[]
----@param first integer
----@param last integer
+--- @param t any[]
+--- @param first integer
+--- @param last integer
 local function list_remove(t, first, last)
   local n = #t
   for i = 0, n - first do
@@ -53,9 +53,9 @@ local function list_remove(t, first, last)
   end
 end
 
----@package
----@param srow integer
----@param erow integer
+--- @package
+--- @param srow integer
+--- @param erow integer
 function FoldInfo:remove_range(srow, erow)
   list_remove(self.levels, srow + 1, erow)
   list_remove(self.levels0, srow + 1, erow)
@@ -71,10 +71,10 @@ end
 ---
 --- Based on https://stackoverflow.com/questions/12394841/safely-remove-items-from-an-array-table-while-iterating/53038524#53038524
 ---
----@param t any[]
----@param first integer
----@param last integer
----@param v any
+--- @param t any[]
+--- @param first integer
+--- @param last integer
+--- @param v any
 local function list_insert(t, first, last, v)
   local n = #t
 
@@ -89,9 +89,9 @@ local function list_insert(t, first, last, v)
   end
 end
 
----@package
----@param srow integer
----@param erow integer
+--- @package
+--- @param srow integer
+--- @param erow integer
 function FoldInfo:add_range(srow, erow)
   list_insert(self.levels, srow + 1, erow, '-1')
   list_insert(self.levels0, srow + 1, erow, -1)
@@ -99,28 +99,28 @@ function FoldInfo:add_range(srow, erow)
   list_insert(self.stop_counts, srow + 1, erow, nil)
 end
 
----@package
----@param lnum integer
+--- @package
+--- @param lnum integer
 function FoldInfo:add_start(lnum)
   self.start_counts[lnum] = (self.start_counts[lnum] or 0) + 1
 end
 
----@package
----@param lnum integer
+--- @package
+--- @param lnum integer
 function FoldInfo:add_stop(lnum)
   self.stop_counts[lnum] = (self.stop_counts[lnum] or 0) + 1
 end
 
----@package
----@param lnum integer
----@return integer
+--- @package
+--- @param lnum integer
+--- @return integer
 function FoldInfo:get_start(lnum)
   return self.start_counts[lnum] or 0
 end
 
----@package
----@param lnum integer
----@return integer
+--- @package
+--- @param lnum integer
+--- @return integer
 function FoldInfo:get_stop(lnum)
   return self.stop_counts[lnum] or 0
 end
@@ -149,11 +149,11 @@ end
 
 -- TODO(lewis6991): Setup a decor provider so injections folds can be parsed
 -- as the window is redrawn
----@param bufnr integer
----@param info TS.FoldInfo
----@param srow integer?
----@param erow integer?
----@param parse_injections? boolean
+--- @param bufnr integer
+--- @param info TS.FoldInfo
+--- @param srow integer?
+--- @param erow integer?
+--- @param parse_injections? boolean
 local function get_folds_levels(bufnr, info, srow, erow, parse_injections)
   srow = srow or 0
   erow = normalise_erow(bufnr, erow)
@@ -232,7 +232,7 @@ end
 
 local M = {}
 
----@type table<integer,TS.FoldInfo>
+--- @type table<integer,TS.FoldInfo>
 local foldinfos = {}
 
 local group = api.nvim_create_augroup('treesitter/fold', {})
@@ -279,8 +279,8 @@ end
 --- * to avoid textlock;
 --- * to avoid infinite recursion:
 ---   get_folds_levels → parse → _do_callback → on_changedtree → get_folds_levels.
----@param bufnr integer
----@param fn function
+--- @param bufnr integer
+--- @param fn function
 local function schedule_if_loaded(bufnr, fn)
   vim.schedule(function()
     if not api.nvim_buf_is_loaded(bufnr) then
@@ -290,9 +290,9 @@ local function schedule_if_loaded(bufnr, fn)
   end)
 end
 
----@param bufnr integer
----@param foldinfo TS.FoldInfo
----@param tree_changes Range4[]
+--- @param bufnr integer
+--- @param foldinfo TS.FoldInfo
+--- @param tree_changes Range4[]
 local function on_changedtree(bufnr, foldinfo, tree_changes)
   schedule_if_loaded(bufnr, function()
     for _, change in ipairs(tree_changes) do
@@ -305,11 +305,11 @@ local function on_changedtree(bufnr, foldinfo, tree_changes)
   end)
 end
 
----@param bufnr integer
----@param foldinfo TS.FoldInfo
----@param start_row integer
----@param old_row integer
----@param new_row integer
+--- @param bufnr integer
+--- @param foldinfo TS.FoldInfo
+--- @param start_row integer
+--- @param old_row integer
+--- @param new_row integer
 local function on_bytes(bufnr, foldinfo, start_row, old_row, new_row)
   local end_row_old = start_row + old_row
   local end_row_new = start_row + new_row
@@ -327,9 +327,9 @@ local function on_bytes(bufnr, foldinfo, start_row, old_row, new_row)
   end
 end
 
----@package
----@param lnum integer|nil
----@return string
+--- @package
+--- @param lnum integer|nil
+--- @return string
 function M.foldexpr(lnum)
   lnum = lnum or vim.v.lnum
   local bufnr = api.nvim_get_current_buf()

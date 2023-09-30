@@ -387,7 +387,7 @@ local function process_line(line, in_stream, generics)
 end
 
 -- Processes the file and writes filtered output to stdout.
----@param filename string
+--- @param filename string
 function Lua2DoxFilter:filter(filename)
   local in_stream = StreamRead.new(filename)
 

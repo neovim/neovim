@@ -1,4 +1,4 @@
----@meta
+--- @meta
 
 -- luacheck: no unused args
 

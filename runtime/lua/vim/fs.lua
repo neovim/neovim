@@ -20,10 +20,10 @@ local iswin = vim.uv.os_uname().sysname == 'Windows_NT'
 --- end
 --- ```
 ---
----@param start (string) Initial path.
----@return fun(_, dir: string): string? # Iterator
----@return nil
----@return string|nil
+--- @param start (string) Initial path.
+--- @return fun(_, dir: string): string? # Iterator
+--- @return nil
+--- @return string|nil
 function M.parents(start)
   return function(_, dir)
     local parent = M.dirname(dir)
@@ -39,8 +39,8 @@ end
 
 --- Return the parent directory of the given path
 ---
----@param file (string) Path
----@return string|nil Parent directory of {file}
+--- @param file (string) Path
+--- @return string|nil Parent directory of {file}
 function M.dirname(file)
   if file == nil then
     return nil
@@ -62,8 +62,8 @@ end
 
 --- Return the basename of the given path
 ---
----@param file string Path
----@return string|nil Basename of {file}
+--- @param file string Path
+--- @return string|nil Basename of {file}
 function M.basename(file)
   if file == nil then
     return nil
@@ -78,17 +78,17 @@ end
 --- Concatenate directories and/or file paths into a single path with normalization
 --- (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
 ---
----@param ... string
----@return string
+--- @param ... string
+--- @return string
 function M.joinpath(...)
   return (table.concat({ ... }, '/'):gsub('//+', '/'))
 end
 
----@alias Iterator fun(): string?, string?
+--- @alias Iterator fun(): string?, string?
 
 --- Return an iterator over the items located in {path}
 ---
----@param path (string) An absolute or relative path to the directory to iterate
+--- @param path (string) An absolute or relative path to the directory to iterate
 ---            over. The path is first normalized |vim.fs.normalize()|.
 --- @param opts table|nil Optional keyword arguments:
 ---             - depth: integer|nil How deep the traverse (default 1)
@@ -96,7 +96,7 @@ end
 ---               to control traversal. Return false to stop searching the current directory.
 ---               Only useful when depth > 1
 ---
----@return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
+--- @return Iterator over items in {path}. Each iteration yields two values: "name" and "type".
 ---        "name" is the basename of the item relative to {path}.
 ---        "type" is one of the following:
 ---        "file", "directory", "link", "fifo", "socket", "char", "block", "unknown".
@@ -187,14 +187,14 @@ end
 --- end, {limit = math.huge, type = 'file'})
 --- ```
 ---
----@param names (string|string[]|fun(name: string, path: string): boolean) Names of the items to find.
+--- @param names (string|string[]|fun(name: string, path: string): boolean) Names of the items to find.
 ---             Must be base names, paths and globs are not supported when {names} is a string or a table.
 ---             If {names} is a function, it is called for each traversed item with args:
 ---             - name: base name of the current item
 ---             - path: full path of the current item
 ---             The function should return `true` if the given item is considered a match.
 ---
----@param opts (table) Optional keyword arguments:
+--- @param opts (table) Optional keyword arguments:
 ---                       - path (string): Path to begin searching from. If
 ---                              omitted, the |current-directory| is used.
 ---                       - upward (boolean, default false): If true, search
@@ -208,7 +208,7 @@ end
 ---                       - limit (number, default 1): Stop the search after
 ---                               finding this many matches. Use `math.huge` to
 ---                               place no limit on the number of matches.
----@return (string[]) # Normalized paths |vim.fs.normalize()| of all matching items
+--- @return (string[]) # Normalized paths |vim.fs.normalize()| of all matching items
 function M.find(names, opts)
   opts = opts or {} --[[@as vim.fs.find.opts]]
   vim.validate({
@@ -336,10 +336,10 @@ end
 --- -- '/Users/jdoe/.config/nvim/init.vim'
 --- ```
 ---
----@param path (string) Path to normalize
----@param opts table|nil Options:
+--- @param path (string) Path to normalize
+--- @param opts table|nil Options:
 ---             - expand_env: boolean Expand environment variables (default: true)
----@return (string) Normalized path
+--- @return (string) Normalized path
 function M.normalize(path, opts)
   opts = opts or {}
 

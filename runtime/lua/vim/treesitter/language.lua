@@ -1,9 +1,9 @@
 local api = vim.api
 
----@class TSLanguageModule
+--- @class TSLanguageModule
 local M = {}
 
----@type table<string,string>
+--- @type table<string,string>
 local ft_to_lang = {
   help = 'vimdoc',
 }
@@ -35,7 +35,7 @@ function M.get_lang(filetype)
   return ft_to_lang[filetype]
 end
 
----@deprecated
+--- @deprecated
 function M.require_language(lang, path, silent, symbol_name)
   local opts = {
     silent = silent,
@@ -52,18 +52,18 @@ function M.require_language(lang, path, silent, symbol_name)
   return true
 end
 
----@class treesitter.RequireLangOpts
----@field path? string
----@field silent? boolean
----@field filetype? string|string[]
----@field symbol_name? string
+--- @class treesitter.RequireLangOpts
+--- @field path? string
+--- @field silent? boolean
+--- @field filetype? string|string[]
+--- @field symbol_name? string
 
 --- Load parser with name {lang}
 ---
 --- Parsers are searched in the `parser` runtime directory, or the provided {path}
 ---
----@param lang string Name of the parser (alphanumerical and `_` only)
----@param opts (table|nil) Options:
+--- @param lang string Name of the parser (alphanumerical and `_` only)
+--- @param opts (table|nil) Options:
 ---                        - filetype (string|string[]) Default filetype the parser should be associated with.
 ---                          Defaults to {lang}.
 ---                        - path (string|nil) Optional path the parser is located at
@@ -133,14 +133,14 @@ end
 ---
 --- Inspecting provides some useful information on the language like node names, ...
 ---
----@param lang string Language
----@return table
+--- @param lang string Language
+--- @return table
 function M.inspect(lang)
   M.add(lang)
   return vim._ts_inspect_language(lang)
 end
 
----@deprecated
+--- @deprecated
 function M.inspect_language(...)
   vim.deprecate(
     'vim.treesitter.language.inspect_language()',

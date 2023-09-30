@@ -1,4 +1,4 @@
----@brief lsp-diagnostic
+--- @brief lsp-diagnostic
 
 local util = require('vim.lsp.util')
 local protocol = require('vim.lsp.protocol')
@@ -20,7 +20,7 @@ local function get_client_id(client_id)
   return client_id
 end
 
----@param severity lsp.DiagnosticSeverity
+--- @param severity lsp.DiagnosticSeverity
 local function severity_lsp_to_vim(severity)
   if type(severity) == 'string' then
     severity = protocol.DiagnosticSeverity[severity]
@@ -28,7 +28,7 @@ local function severity_lsp_to_vim(severity)
   return severity
 end
 
----@return lsp.DiagnosticSeverity
+--- @return lsp.DiagnosticSeverity
 local function severity_vim_to_lsp(severity)
   if type(severity) == 'string' then
     severity = vim.diagnostic.severity[severity]
@@ -36,7 +36,7 @@ local function severity_vim_to_lsp(severity)
   return severity
 end
 
----@return integer
+--- @return integer
 local function line_byte_from_position(lines, lnum, col, offset_encoding)
   if not lines or offset_encoding == 'utf-8' then
     return col
@@ -97,10 +97,10 @@ local function tags_lsp_to_vim(diagnostic, client_id)
   return tags
 end
 
----@param diagnostics lsp.Diagnostic[]
----@param bufnr integer
----@param client_id integer
----@return Diagnostic[]
+--- @param diagnostics lsp.Diagnostic[]
+--- @param bufnr integer
+--- @param client_id integer
+--- @return Diagnostic[]
 local function diagnostic_lsp_to_vim(diagnostics, bufnr, client_id)
   local buf_lines = get_buf_lines(bufnr)
   local client = vim.lsp.get_client_by_id(client_id)
@@ -159,15 +159,15 @@ local function diagnostic_vim_to_lsp(diagnostics)
   end, diagnostics)
 end
 
----@type table<integer,integer>
+--- @type table<integer,integer>
 local _client_push_namespaces = {}
----@type table<integer,integer>
+--- @type table<integer,integer>
 local _client_pull_namespaces = {}
 
 --- Get the diagnostic namespace associated with an LSP client |vim.diagnostic| for diagnostics
 ---
----@param client_id integer The id of the LSP client
----@param is_pull boolean Whether the namespace is for a pull or push client
+--- @param client_id integer The id of the LSP client
+--- @param is_pull boolean Whether the namespace is for a pull or push client
 function M.get_namespace(client_id, is_pull)
   vim.validate({ client_id = { client_id, 'n' } })
 
@@ -224,7 +224,7 @@ end
 --- )
 --- ```
 ---
----@param config table Configuration table (see |vim.diagnostic.config()|).
+--- @param config table Configuration table (see |vim.diagnostic.config()|).
 function M.on_publish_diagnostics(_, result, ctx, config)
   local client_id = ctx.client_id
   local uri = result.uri
@@ -285,7 +285,7 @@ end
 --- )
 --- ```
 ---
----@param config table Configuration table (see |vim.diagnostic.config()|).
+--- @param config table Configuration table (see |vim.diagnostic.config()|).
 function M.on_diagnostic(_, result, ctx, config)
   local client_id = ctx.client_id
   local uri = ctx.params.textDocument.uri
@@ -335,9 +335,9 @@ end
 --- this method signature is still used internally in some parts of the LSP
 --- implementation so it's simply marked @private rather than @deprecated.
 ---
----@param client_id integer
----@param buffer_client_map table map of buffers to active clients
----@private
+--- @param client_id integer
+--- @param buffer_client_map table map of buffers to active clients
+--- @private
 function M.reset(client_id, buffer_client_map)
   buffer_client_map = vim.deepcopy(buffer_client_map)
   vim.schedule(function()
@@ -355,17 +355,17 @@ end
 --- Marked private as this is used internally by the LSP subsystem, but
 --- most users should instead prefer |vim.diagnostic.get()|.
 ---
----@param bufnr integer|nil The buffer number
----@param line_nr integer|nil The line number
----@param opts table|nil Configuration keys
+--- @param bufnr integer|nil The buffer number
+--- @param line_nr integer|nil The line number
+--- @param opts table|nil Configuration keys
 ---         - severity: (DiagnosticSeverity, default nil)
 ---             - Only return diagnostics with this severity. Overrides severity_limit
 ---         - severity_limit: (DiagnosticSeverity, default nil)
 ---             - Limit severity of diagnostics found. E.g. "Warning" means { "Error", "Warning" } will be valid.
----@param client_id integer|nil the client id
----@return table Table with map of line number to list of diagnostics.
+--- @param client_id integer|nil the client id
+--- @return table Table with map of line number to list of diagnostics.
 ---              Structured: { [1] = {...}, [5] = {.... } }
----@private
+--- @private
 function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
   opts = opts or {}
   if opts.severity then
@@ -395,9 +395,9 @@ local function clear(bufnr)
   end
 end
 
----@class lsp.diagnostic.bufstate
----@field enabled boolean Whether inlay hints are enabled for this buffer
----@type table<integer, lsp.diagnostic.bufstate>
+--- @class lsp.diagnostic.bufstate
+--- @field enabled boolean Whether inlay hints are enabled for this buffer
+--- @type table<integer, lsp.diagnostic.bufstate>
 local bufstates = {}
 
 --- Disable pull diagnostics for a buffer
@@ -411,9 +411,9 @@ local function disable(bufnr)
 end
 
 --- Refresh diagnostics, only if we have attached clients that support it
----@param bufnr (integer) buffer number
----@param opts? table Additional options to pass to util._refresh
----@private
+--- @param bufnr (integer) buffer number
+--- @param opts? table Additional options to pass to util._refresh
+--- @private
 local function _refresh(bufnr, opts)
   opts = opts or {}
   opts['bufnr'] = bufnr
@@ -421,8 +421,8 @@ local function _refresh(bufnr, opts)
 end
 
 --- Enable pull diagnostics for a buffer
----@param bufnr (integer) Buffer handle, or 0 for current
----@private
+--- @param bufnr (integer) Buffer handle, or 0 for current
+--- @private
 function M._enable(bufnr)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()

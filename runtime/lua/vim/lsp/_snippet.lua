@@ -1,8 +1,8 @@
 local P = {}
 
----Take characters until the target characters (The escape sequence is '\' + char)
----@param targets string[] The character list for stop consuming text.
----@param specials string[] If the character isn't contained in targets/specials, '\' will be left.
+--- Take characters until the target characters (The escape sequence is '\' + char)
+--- @param targets string[] The character list for stop consuming text.
+--- @param specials string[] If the character isn't contained in targets/specials, '\' will be left.
 P.take_until = function(targets, specials)
   targets = targets or {}
   specials = specials or {}
@@ -482,13 +482,13 @@ end)
 
 local M = {}
 
----The snippet node type enum
----@types table<string, integer>
+--- The snippet node type enum
+--- @types table<string, integer>
 M.NodeType = Node.Type
 
----Parse snippet string and returns the AST
----@param input string
----@return table
+--- Parse snippet string and returns the AST
+--- @param input string
+--- @return table
 function M.parse(input)
   local result = S.snippet(input, 1)
   if not result.parsed then

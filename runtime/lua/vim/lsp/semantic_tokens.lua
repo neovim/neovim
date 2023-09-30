@@ -29,13 +29,13 @@ local uv = vim.uv
 --- @field active_request STActiveRequest
 --- @field current_result STCurrentResult
 
----@class STHighlighter
----@field active table<integer, STHighlighter>
----@field bufnr integer
----@field augroup integer augroup for buffer events
----@field debounce integer milliseconds to debounce requests for new tokens
----@field timer table uv_timer for debouncing requests for new tokens
----@field client_state table<integer, STClientState>
+--- @class STHighlighter
+--- @field active table<integer, STHighlighter>
+--- @field bufnr integer
+--- @field augroup integer augroup for buffer events
+--- @field debounce integer milliseconds to debounce requests for new tokens
+--- @field timer table uv_timer for debouncing requests for new tokens
+--- @field client_state table<integer, STClientState>
 local STHighlighter = { active = {} }
 
 --- Do a binary search of the tokens in the half-open range [lo, hi).
@@ -72,7 +72,7 @@ end
 
 --- Extracts modifier strings from the encoded number in the token array
 ---
----@return table<string, boolean>
+--- @return table<string, boolean>
 local function modifiers_from_number(x, modifiers_table)
   local modifiers = {}
   local idx = 1
@@ -89,7 +89,7 @@ end
 
 --- Converts a raw token list to a list of highlight ranges used by the on_win callback
 ---
----@return STTokenRange[]
+--- @return STTokenRange[]
 local function tokens_to_ranges(data, bufnr, client, request)
   local legend = client.server_capabilities.semanticTokensProvider.legend
   local token_types = legend.tokenTypes
@@ -165,8 +165,8 @@ end
 
 --- Construct a new STHighlighter for the buffer
 ---
----@private
----@param bufnr integer
+--- @private
+--- @param bufnr integer
 function STHighlighter.new(bufnr)
   local self = setmetatable({}, { __index = STHighlighter })
 
@@ -221,7 +221,7 @@ function STHighlighter.new(bufnr)
   return self
 end
 
----@private
+--- @private
 function STHighlighter:destroy()
   for client_id, _ in pairs(self.client_state) do
     self:detach(client_id)
@@ -231,7 +231,7 @@ function STHighlighter:destroy()
   STHighlighter.active[self.bufnr] = nil
 end
 
----@private
+--- @private
 function STHighlighter:attach(client_id)
   local state = self.client_state[client_id]
   if not state then
@@ -244,7 +244,7 @@ function STHighlighter:attach(client_id)
   end
 end
 
----@private
+--- @private
 function STHighlighter:detach(client_id)
   local state = self.client_state[client_id]
   if state then
@@ -267,7 +267,7 @@ end
 --- Finally, if the request was successful, the requestId and document version
 --- are saved to facilitate document synchronization in the response.
 ---
----@private
+--- @private
 function STHighlighter:send_request()
   local version = util.buf_versions[self.bufnr]
 
@@ -328,7 +328,7 @@ end
 --- Finally, a redraw command is issued to force nvim to redraw the screen to
 --- pick up changed highlight tokens.
 ---
----@private
+--- @private
 function STHighlighter:process_response(response, client, version)
   local state = self.client_state[client.id]
   if not state then
@@ -404,7 +404,7 @@ end
 --- handler to avoid the "blink" that occurs due to the timing between the
 --- response handler and the actual redraw.
 ---
----@private
+--- @private
 function STHighlighter:on_win(topline, botline)
   for client_id, state in pairs(self.client_state) do
     local current_result = state.current_result
@@ -480,7 +480,7 @@ end
 
 --- Reset the buffer's highlighting state and clears the extmark highlights.
 ---
----@private
+--- @private
 function STHighlighter:reset()
   for client_id, state in pairs(self.client_state) do
     api.nvim_buf_clear_namespace(self.bufnr, state.namespace, 0, -1)
@@ -499,8 +499,8 @@ end
 --- in the on_win callback. The rest of the current results are saved
 --- in case the server supports delta requests.
 ---
----@private
----@param client_id integer
+--- @private
+--- @param client_id integer
 function STHighlighter:mark_dirty(client_id)
   local state = self.client_state[client_id]
   assert(state)
@@ -521,7 +521,7 @@ function STHighlighter:mark_dirty(client_id)
   end
 end
 
----@private
+--- @private
 function STHighlighter:on_change()
   self:reset_timer()
   if self.debounce > 0 then
@@ -533,7 +533,7 @@ function STHighlighter:on_change()
   end
 end
 
----@private
+--- @private
 function STHighlighter:reset_timer()
   local timer = self.timer
   if timer then
@@ -560,9 +560,9 @@ local M = {}
 --- client.server_capabilities.semanticTokensProvider = nil
 --- ```
 ---
----@param bufnr integer
----@param client_id integer
----@param opts (nil|table) Optional keyword arguments
+--- @param bufnr integer
+--- @param client_id integer
+--- @param opts (nil|table) Optional keyword arguments
 ---  - debounce (integer, default: 200): Debounce token requests
 ---        to the server by the given number in milliseconds
 function M.start(bufnr, client_id, opts)
@@ -616,8 +616,8 @@ end
 --- of `start()`, so you should only need this function to manually disengage the semantic
 --- token engine without fully detaching the LSP client from the buffer.
 ---
----@param bufnr integer
----@param client_id integer
+--- @param bufnr integer
+--- @param client_id integer
 function M.stop(bufnr, client_id)
   vim.validate({
     bufnr = { bufnr, 'n', false },
@@ -639,11 +639,11 @@ end
 --- Return the semantic token(s) at the given position.
 --- If called without arguments, returns the token under the cursor.
 ---
----@param bufnr integer|nil Buffer number (0 for current buffer, default)
----@param row integer|nil Position row (default cursor position)
----@param col integer|nil Position column (default cursor position)
+--- @param bufnr integer|nil Buffer number (0 for current buffer, default)
+--- @param row integer|nil Position row (default cursor position)
+--- @param col integer|nil Position column (default cursor position)
 ---
----@return table|nil (table|nil) List of tokens at position. Each token has
+--- @return table|nil (table|nil) List of tokens at position. Each token has
 ---        the following fields:
 ---        - line (integer) line number, 0-based
 ---        - start_col (integer) start column, 0-based
@@ -692,7 +692,7 @@ end
 --- Only has an effect if the buffer is currently active for semantic token
 --- highlighting (|vim.lsp.semantic_tokens.start()| has been called for it)
 ---
----@param bufnr (integer|nil) filter by buffer. All buffers if nil, current
+--- @param bufnr (integer|nil) filter by buffer. All buffers if nil, current
 ---       buffer if 0
 function M.force_refresh(bufnr)
   vim.validate({
@@ -718,11 +718,11 @@ end
 --- mark will be deleted by the semantic token engine when appropriate; for
 --- example, when the LSP sends updated tokens. This function is intended for
 --- use inside |LspTokenUpdate| callbacks.
----@param token (table) a semantic token, found as `args.data.token` in |LspTokenUpdate|.
----@param bufnr (integer) the buffer to highlight
----@param client_id (integer) The ID of the |vim.lsp.client|
----@param hl_group (string) Highlight group name
----@param opts (table|nil) Optional parameters.
+--- @param token (table) a semantic token, found as `args.data.token` in |LspTokenUpdate|.
+--- @param bufnr (integer) the buffer to highlight
+--- @param client_id (integer) The ID of the |vim.lsp.client|
+--- @param hl_group (string) Highlight group name
+--- @param opts (table|nil) Optional parameters.
 ---       - priority: (integer|nil) Priority for the applied extmark. Defaults
 ---         to `vim.highlight.priorities.semantic_tokens + 3`
 function M.highlight_token(token, bufnr, client_id, hl_group, opts)
@@ -755,7 +755,7 @@ end
 --- new request for buffers that are displayed in a window. For those that aren't, a
 --- the BufWinEnter event should take care of it next time it's displayed.
 ---
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
+--- @see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
 handlers[ms.workspace_semanticTokens_refresh] = function(err, _, ctx)
   if err then
     return vim.NIL
@@ -787,7 +787,7 @@ api.nvim_set_decoration_provider(namespace, {
 
 --- for testing only! there is no guarantee of API stability with this!
 ---
----@private
+--- @private
 M.__STHighlighter = STHighlighter
 
 return M

@@ -3,7 +3,7 @@ local api, fn = vim.api, vim.fn
 local FIND_ARG = '-w'
 local localfile_arg = true -- Always use -l if possible. #6683
 
----@type table[]
+--- @type table[]
 local buf_hls = {}
 
 local M = {}
@@ -14,10 +14,10 @@ local function man_error(msg)
 end
 
 -- Run a system command and timeout after 30 seconds.
----@param cmd string[]
----@param silent boolean?
----@param env? table<string,string|number>
----@return string
+--- @param cmd string[]
+--- @param silent boolean?
+--- @param env? table<string,string|number>
+--- @return string
 local function system(cmd, silent, env)
   local r = vim.system(cmd, { env = env, timeout = 10000 }):wait()
 
@@ -29,8 +29,8 @@ local function system(cmd, silent, env)
   return assert(r.stdout)
 end
 
----@param line string
----@param linenr integer
+--- @param line string
+--- @param linenr integer
 local function highlight_line(line, linenr)
   ---@type string[]
   local chars = {}
@@ -213,16 +213,16 @@ end
 -- intended for PostgreSQL, which has man pages like 'CREATE_TABLE(7)';
 -- while editing SQL source code, it's nice to visually select 'CREATE TABLE'
 -- and hit 'K', which requires this transformation
----@param str string
----@return string
+--- @param str string
+--- @return string
 local function spaces_to_underscores(str)
   local res = str:gsub('%s', '_')
   return res
 end
 
----@param sect string|nil
----@param name string|nil
----@param silent boolean
+--- @param sect string|nil
+--- @param name string|nil
+--- @param silent boolean
 local function get_path(sect, name, silent)
   name = name or ''
   sect = sect or ''
@@ -284,8 +284,8 @@ local function get_path(sect, name, silent)
   return fn.substitute(sectmatches[1] or namematches[1] or results[1], [[\n\+$]], '', '')
 end
 
----@param text string
----@param pat_or_re string
+--- @param text string
+--- @param pat_or_re string
 local function matchstr(text, pat_or_re)
   local re = type(pat_or_re) == 'string' and vim.regex(pat_or_re) or pat_or_re
 
@@ -301,8 +301,8 @@ end
 
 -- attempt to extract the name and sect out of 'name(sect)'
 -- otherwise just return the largest string of valid characters in ref
----@param ref string
----@return string, string
+--- @param ref string
+--- @return string, string
 local function extract_sect_and_name_ref(ref)
   ref = ref or ''
   if ref:sub(1, 1) == '-' then -- try ':Man -pandoc' with this disabled.
@@ -334,8 +334,8 @@ end
 -- 3. If still not found but $MANSECT is set, then we try again with $MANSECT
 --    unset.
 -- 4. If a path still wasn't found, return nil.
----@param sect string?
----@param name string
+--- @param sect string?
+--- @param name string
 function M.find_path(sect, name)
   if sect and sect ~= '' then
     local ret = get_path(sect, name, true)
@@ -382,8 +382,8 @@ local EXT_RE = vim.regex([[\.\%([glx]z\|bz2\|lzma\|Z\)$]])
 -- more specific than what we provided to `man` (try `:Man 3 App::CLI`).
 -- Also on linux, name seems to be case-insensitive. So for `:Man PRIntf`, we
 -- still want the name of the buffer to be 'printf'.
----@param path string
----@return string, string
+--- @param path string
+--- @return string, string
 local function extract_sect_and_name_path(path)
   local tail = fn.fnamemodify(path, ':t')
   if EXT_RE:match_str(path) then -- valid extensions
@@ -393,7 +393,7 @@ local function extract_sect_and_name_path(path)
   return sect, name
 end
 
----@return boolean
+--- @return boolean
 local function find_man()
   if vim.bo.filetype == 'man' then
     return true
@@ -411,7 +411,7 @@ local function find_man()
   return false
 end
 
----@param pager boolean
+--- @param pager boolean
 local function set_options(pager)
   vim.bo.swapfile = false
   vim.bo.buftype = 'nofile'
@@ -423,9 +423,9 @@ local function set_options(pager)
   vim.bo.filetype = 'man'
 end
 
----@param path string
----@param silent boolean?
----@return string
+--- @param path string
+--- @param silent boolean?
+--- @return string
 local function get_page(path, silent)
   -- Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   -- Soft-wrap: ftplugin/man.lua sets wrap/breakindent/….
@@ -451,14 +451,14 @@ local function get_page(path, silent)
   })
 end
 
----@param lnum integer
----@return string
+--- @param lnum integer
+--- @return string
 local function getline(lnum)
   ---@diagnostic disable-next-line
   return fn.getline(lnum)
 end
 
----@param page string
+--- @param page string
 local function put_page(page)
   vim.bo.modifiable = true
   vim.bo.readonly = false
@@ -493,10 +493,10 @@ local function format_candidate(path, psect)
   return ''
 end
 
----@generic T
----@param list T[]
----@param elem T
----@return T[]
+--- @generic T
+--- @param list T[]
+--- @param elem T
+--- @return T[]
 local function move_elem_to_head(list, elem)
   ---@diagnostic disable-next-line:no-unknown
   local list1 = vim.tbl_filter(function(v)
@@ -505,9 +505,9 @@ local function move_elem_to_head(list, elem)
   return { elem, unpack(list1) }
 end
 
----@param sect string
----@param name string
----@return string[]
+--- @param sect string
+--- @param name string
+--- @return string[]
 local function get_paths(sect, name)
   -- Try several sources for getting the list man directories:
   --   1. `man -w` (works on most systems)
@@ -534,10 +534,10 @@ local function get_paths(sect, name)
   return paths
 end
 
----@param sect string
----@param psect string
----@param name string
----@return string[]
+--- @param sect string
+--- @param psect string
+--- @param name string
+--- @return string[]
 local function complete(sect, psect, name)
   local pages = get_paths(sect, name)
   -- We remove duplicates in case the same manpage in different languages was found.
@@ -547,8 +547,8 @@ local function complete(sect, psect, name)
 end
 
 -- see extract_sect_and_name_ref on why tolower(sect)
----@param arg_lead string
----@param cmd_line string
+--- @param arg_lead string
+--- @param cmd_line string
 function M.man_complete(arg_lead, cmd_line, _)
   local args = vim.split(cmd_line, '%s+', { trimempty = true })
   local cmd_offset = fn.index(args, 'Man')
@@ -615,8 +615,8 @@ function M.man_complete(arg_lead, cmd_line, _)
   return complete(sect, sect, name)
 end
 
----@param pattern string
----@return {name:string,filename:string,cmd:string}[]
+--- @param pattern string
+--- @return {name:string,filename:string,cmd:string}[]
 function M.goto_tag(pattern, _, _)
   local sect, name = extract_sect_and_name_ref(pattern)
 
@@ -665,8 +665,8 @@ function M.init_pager()
   set_options(true)
 end
 
----@param count integer
----@param args string[]
+--- @param count integer
+--- @param args string[]
 function M.open_page(count, smods, args)
   local ref ---@type string
   if #args == 0 then

@@ -1,6 +1,6 @@
 --- @meta
 
----@type uv
+--- @type uv
 vim.uv = ...
 
 --- The following modules are loaded specially in _init_packages.lua

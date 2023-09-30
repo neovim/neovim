@@ -2,7 +2,7 @@ local M = {}
 
 --- Reads trust database from $XDG_STATE_HOME/nvim/trust.
 ---
----@return table<string, string> Contents of trust database, if it exists. Empty table otherwise.
+--- @return table<string, string> Contents of trust database, if it exists. Empty table otherwise.
 local function read_trust()
   local trust = {} ---@type table<string, string>
   local f = io.open(vim.fn.stdpath('state') .. '/trust', 'r')
@@ -24,7 +24,7 @@ end
 --- Writes provided {trust} table to trust database at
 --- $XDG_STATE_HOME/nvim/trust.
 ---
----@param trust table<string, string> Trust table to write
+--- @param trust table<string, string> Trust table to write
 local function write_trust(trust)
   vim.validate({ trust = { trust, 't' } })
   local f = assert(io.open(vim.fn.stdpath('state') .. '/trust', 'w'))
@@ -41,11 +41,11 @@ end
 --- trusted. The user's choice is persisted in a trust database at
 --- $XDG_STATE_HOME/nvim/trust.
 ---
----@see |:trust|
+--- @see |:trust|
 ---
----@param path (string) Path to a file to read.
+--- @param path (string) Path to a file to read.
 ---
----@return (string|nil) The contents of the given file if it exists and is
+--- @return (string|nil) The contents of the given file if it exists and is
 ---        trusted, or nil otherwise.
 function M.read(path)
   vim.validate({ path = { path, 's' } })
@@ -108,24 +108,24 @@ function M.read(path)
   return contents
 end
 
----@class vim.trust.opts
----@field action string
----@field path? string
----@field bufnr? integer
+--- @class vim.trust.opts
+--- @field action string
+--- @field path? string
+--- @field bufnr? integer
 
 --- Manage the trust database.
 ---
 --- The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
 ---
----@param opts (table):
+--- @param opts (table):
 ---    - action (string): "allow" to add a file to the trust database and trust it,
 ---      "deny" to add a file to the trust database and deny it,
 ---      "remove" to remove file from the trust database
 ---    - path (string|nil): Path to a file to update. Mutually exclusive with {bufnr}.
 ---      Cannot be used when {action} is "allow".
 ---    - bufnr (number|nil): Buffer number to update. Mutually exclusive with {path}.
----@return boolean success true if operation was successful
----@return string msg full path if operation was successful, else error message
+--- @return boolean success true if operation was successful
+--- @return string msg full path if operation was successful, else error message
 function M.trust(opts)
   vim.validate({
     path = { opts.path, 's', true },

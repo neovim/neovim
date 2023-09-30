@@ -189,10 +189,10 @@ end
 
 --- Gets a human-readable representation of the given object.
 ---
----@see |vim.print()|
----@see https://github.com/kikito/inspect.lua
----@see https://github.com/mpeterv/vinspect
----@return string
+--- @see |vim.print()|
+--- @see https://github.com/kikito/inspect.lua
+--- @see https://github.com/mpeterv/vinspect
+--- @return string
 vim.inspect = vim.inspect
 
 do
@@ -329,11 +329,11 @@ end
 --- vim.uv.fs_access(vim.fn.stdpath("config"), "R", vim.schedule_wrap(notify_readable))
 --- ```
 ---
----@see |lua-loop-callbacks|
----@see |vim.schedule()|
----@see |vim.in_fast_event()|
----@param fn function
----@return function
+--- @see |lua-loop-callbacks|
+--- @see |vim.schedule()|
+--- @see |vim.in_fast_event()|
+--- @param fn function
+--- @return function
 function vim.schedule_wrap(fn)
   return function(...)
     local args = vim.F.pack_len(...)
@@ -344,7 +344,7 @@ function vim.schedule_wrap(fn)
 end
 
 -- vim.fn.{func}(...)
----@private
+--- @private
 vim.fn = setmetatable({}, {
   __index = function(t, key)
     local _fn
@@ -403,13 +403,13 @@ local VIM_CMD_ARG_MAX = 20
 --- vim.cmd.colorscheme('blue')
 --- ```
 ---
----@param command string|table Command(s) to execute.
+--- @param command string|table Command(s) to execute.
 ---                            If a string, executes multiple lines of Vim script at once. In this
 ---                            case, it is an alias to |nvim_exec2()|, where `opts.output` is set
 ---                            to false. Thus it works identical to |:source|.
 ---                            If a table, executes a single command. In this case, it is an alias
 ---                            to |nvim_cmd()| where `opts` is empty.
----@see |ex-cmd-index|
+--- @see |ex-cmd-index|
 vim.cmd = setmetatable({}, {
   __call = function(_, command)
     if type(command) == 'table' then
@@ -486,13 +486,13 @@ end
 --- Input and output positions are byte positions, (0,0)-indexed. "End of line" column
 --- position (for example, |linewise| visual selection) is returned as |v:maxcol| (big number).
 ---
----@param bufnr integer Buffer number, or 0 for current buffer
----@param pos1 integer[]|string Start of region as a (line, column) tuple or |getpos()|-compatible string
----@param pos2 integer[]|string End of region as a (line, column) tuple or |getpos()|-compatible string
----@param regtype string \|setreg()|-style selection type
----@param inclusive boolean Controls whether `pos2` column is inclusive (see also 'selection').
----@return table region Dict of the form `{linenr = {startcol,endcol}}`. `endcol` is exclusive, and
----whole lines are returned as `{startcol,endcol} = {0,-1}`.
+--- @param bufnr integer Buffer number, or 0 for current buffer
+--- @param pos1 integer[]|string Start of region as a (line, column) tuple or |getpos()|-compatible string
+--- @param pos2 integer[]|string End of region as a (line, column) tuple or |getpos()|-compatible string
+--- @param regtype string \|setreg()|-style selection type
+--- @param inclusive boolean Controls whether `pos2` column is inclusive (see also 'selection').
+--- @return table region Dict of the form `{linenr = {startcol,endcol}}`. `endcol` is exclusive, and
+--- whole lines are returned as `{startcol,endcol} = {0,-1}`.
 function vim.region(bufnr, pos1, pos2, regtype, inclusive)
   if not vim.api.nvim_buf_is_loaded(bufnr) then
     vim.fn.bufload(bufnr)
@@ -562,9 +562,9 @@ end
 --- Use to do a one-shot timer that calls {fn}
 --- Note: The {fn} is |vim.schedule_wrap()|ped automatically, so API functions are
 --- safe to call.
----@param fn function Callback to call once `timeout` expires
----@param timeout integer Number of milliseconds to wait before calling `fn`
----@return table timer luv timer object
+--- @param fn function Callback to call once `timeout` expires
+--- @param timeout integer Number of milliseconds to wait before calling `fn`
+--- @return table timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate({ fn = { fn, 'c', true } })
   local timer = vim.uv.new_timer()
@@ -589,9 +589,9 @@ end
 --- custom provider (such as the system notification provider). By default,
 --- writes to |:messages|.
 ---
----@param msg string Content of the notification to show to the user.
----@param level integer|nil One of the values from |vim.log.levels|.
----@param opts table|nil Optional parameters. Unused by default.
+--- @param msg string Content of the notification to show to the user.
+--- @param level integer|nil One of the values from |vim.log.levels|.
+--- @param opts table|nil Optional parameters. Unused by default.
 function vim.notify(msg, level, opts) -- luacheck: no unused args
   if level == vim.log.levels.ERROR then
     vim.api.nvim_err_writeln(msg)
@@ -632,17 +632,17 @@ local on_key_cbs = {}
 --- The Nvim command-line option |-w| is related but does not support callbacks
 --- and cannot be toggled dynamically.
 ---
----@note {fn} will be removed on error.
----@note {fn} will not be cleared by |nvim_buf_clear_namespace()|
----@note {fn} will receive the keys after mappings have been evaluated
+--- @note {fn} will be removed on error.
+--- @note {fn} will not be cleared by |nvim_buf_clear_namespace()|
+--- @note {fn} will receive the keys after mappings have been evaluated
 ---
----@param fn fun(key: string) Function invoked on every key press. |i_CTRL-V|
+--- @param fn fun(key: string) Function invoked on every key press. |i_CTRL-V|
 ---                   Returning nil removes the callback associated with namespace {ns_id}.
----@param ns_id integer? Namespace ID. If nil or 0, generates and returns a
+--- @param ns_id integer? Namespace ID. If nil or 0, generates and returns a
 ---                     new |nvim_create_namespace()| id.
 ---
----@return integer Namespace id associated with {fn}. Or count of all callbacks
----if on_key() is called without arguments.
+--- @return integer Namespace id associated with {fn}. Or count of all callbacks
+--- if on_key() is called without arguments.
 function vim.on_key(fn, ns_id)
   if fn == nil and ns_id == nil then
     return #on_key_cbs
@@ -662,7 +662,7 @@ function vim.on_key(fn, ns_id)
 end
 
 --- Executes the on_key callbacks.
----@private
+--- @private
 function vim._on_key(char)
   local failed_ns_ids = {}
   local failed_messages = {}
@@ -877,7 +877,7 @@ do
   end
 end
 
----@private
+--- @private
 function vim.pretty_print(...)
   vim.deprecate('vim.pretty_print', 'vim.print', '0.10')
   return vim.print(...)
@@ -1001,14 +1001,14 @@ end
 
 --- Shows a deprecation message to the user.
 ---
----@param name        string     Deprecated feature (function, API, etc.).
----@param alternative string|nil Suggested alternative feature.
----@param version     string     Version when the deprecated function will be removed.
----@param plugin      string|nil Name of the plugin that owns the deprecated feature.
+--- @param name        string     Deprecated feature (function, API, etc.).
+--- @param alternative string|nil Suggested alternative feature.
+--- @param version     string     Version when the deprecated function will be removed.
+--- @param plugin      string|nil Name of the plugin that owns the deprecated feature.
 ---                              Defaults to "Nvim".
----@param backtrace   boolean|nil Prints backtrace. Defaults to true.
+--- @param backtrace   boolean|nil Prints backtrace. Defaults to true.
 ---
----@return string|nil # Deprecated message, or nil if no message was shown.
+--- @return string|nil # Deprecated message, or nil if no message was shown.
 function vim.deprecate(name, alternative, version, plugin, backtrace)
   local msg = ('%s is deprecated'):format(name)
   plugin = plugin or 'Nvim'
@@ -1162,7 +1162,7 @@ end
 require('vim._options')
 
 -- Remove at Nvim 1.0
----@deprecated
+--- @deprecated
 vim.loop = vim.uv
 
 return vim
