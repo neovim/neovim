@@ -288,6 +288,10 @@ preprocess_patch() {
   LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/keymap\.h/\1\/keycodes.h/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"
 
+  # Rename option.h to option_vars.h
+  LC_ALL=C sed -Ee 's/( [ab]\/src\/nvim)\/option\.h/\1\/option_vars.h/g' \
+    "$file" > "$file".tmp && mv "$file".tmp "$file"
+
   # Rename terminal.txt to nvim_terminal_emulator.txt
   LC_ALL=C sed -Ee 's/( [ab]\/runtime\/doc)\/terminal\.txt/\1\/nvim_terminal_emulator.txt/g' \
     "$file" > "$file".tmp && mv "$file".tmp "$file"

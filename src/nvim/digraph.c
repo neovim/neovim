@@ -31,7 +31,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/normal.h"
-#include "nvim/option_defs.h"
+#include "nvim/option_vars.h"
 #include "nvim/os/input.h"
 #include "nvim/runtime.h"
 #include "nvim/strings.h"

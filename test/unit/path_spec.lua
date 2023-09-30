@@ -15,7 +15,7 @@ local mkdir = helpers.mkdir
 
 cimport('string.h')
 local cimp = cimport('./src/nvim/os/os.h', './src/nvim/path.h')
-local options = cimport('./src/nvim/option_defs.h')
+local options = cimport('./src/nvim/option_vars.h')
 
 local length = 0
 local buffer = nil

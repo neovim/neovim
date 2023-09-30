@@ -17,7 +17,7 @@
 #include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
-#include "nvim/option_defs.h"
+#include "nvim/option_vars.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"

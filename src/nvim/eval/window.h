@@ -11,6 +11,7 @@
 #include "nvim/globals.h"
 #include "nvim/mark.h"
 #include "nvim/option_defs.h"
+#include "nvim/option_vars.h"
 #include "nvim/os/os.h"
 #include "nvim/pos.h"
 #include "nvim/vim.h"

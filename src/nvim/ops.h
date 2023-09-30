@@ -11,6 +11,7 @@
 #include "nvim/extmark.h"
 #include "nvim/macros.h"
 #include "nvim/normal.h"
+#include "nvim/option_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"

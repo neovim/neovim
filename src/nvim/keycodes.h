@@ -5,6 +5,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/option_defs.h"
+#include "nvim/option_vars.h"
 #include "nvim/strings.h"
 
 // Keycode definitions for special keys.

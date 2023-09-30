@@ -25,7 +25,7 @@
 #include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/option_defs.h"
+#include "nvim/option_vars.h"
 #include "nvim/os/time.h"
 #include "nvim/types.h"
 #include "nvim/ui.h"

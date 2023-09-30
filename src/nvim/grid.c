@@ -29,7 +29,7 @@
 #include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/option.h"
+#include "nvim/option_vars.h"
 #include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"

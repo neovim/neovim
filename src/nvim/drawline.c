@@ -38,6 +38,7 @@
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/option_vars.h"
 #include "nvim/plines.h"
 #include "nvim/pos.h"
 #include "nvim/quickfix.h"

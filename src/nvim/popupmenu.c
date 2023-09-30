@@ -31,6 +31,7 @@
 #include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/option_vars.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos.h"
 #include "nvim/strings.h"
