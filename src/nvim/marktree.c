@@ -46,6 +46,7 @@
 // at the repo root.
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,9 +56,10 @@
 #include "nvim/marktree.h"
 #include "nvim/memory.h"
 #include "nvim/pos.h"
-
 // only for debug functions
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/macros.h"
 
 #define T MT_BRANCH_FACTOR
 #define ILEN (sizeof(MTNode) + (2 * T) * sizeof(void *))

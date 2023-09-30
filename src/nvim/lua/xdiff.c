@@ -4,6 +4,7 @@
 #include <lauxlib.h>
 #include <lua.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "luaconf.h"

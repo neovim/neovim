@@ -9,11 +9,9 @@
 //       Map and Set does not make its own copy of the key or value.
 
 #include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "auto/config.h"
-#include "nvim/gettext.h"
 #include "nvim/map.h"
 #include "nvim/memory.h"
 

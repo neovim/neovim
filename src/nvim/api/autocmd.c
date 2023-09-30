@@ -8,17 +8,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "lauxlib.h"
 #include "nvim/api/autocmd.h"
+#include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
-#include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/eval/typval.h"
-#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"

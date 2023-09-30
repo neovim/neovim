@@ -25,7 +25,6 @@
 #include "nvim/event/stream.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
-#include "nvim/grid_defs.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"

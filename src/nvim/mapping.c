@@ -4,14 +4,16 @@
 // mapping.c: Code for mappings and abbreviations.
 
 #include <assert.h>
-#include <inttypes.h>
 #include <lauxlib.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/keysets.h"
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -39,9 +41,11 @@
 #include "nvim/option_defs.h"
 #include "nvim/pos.h"
 #include "nvim/regexp.h"
+#include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 /// List used for abbreviations.

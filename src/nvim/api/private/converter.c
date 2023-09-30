@@ -15,7 +15,6 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
-#include "nvim/garray.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
 #include "nvim/types.h"
@@ -204,6 +203,7 @@ static inline void typval_encode_dict_end(EncodedData *const edata)
 #define TYPVAL_ENCODE_FIRST_ARG_TYPE EncodedData *const
 #define TYPVAL_ENCODE_FIRST_ARG_NAME edata
 #include "nvim/eval/typval_encode.c.h"
+
 #undef TYPVAL_ENCODE_SCOPE
 #undef TYPVAL_ENCODE_NAME
 #undef TYPVAL_ENCODE_FIRST_ARG_TYPE

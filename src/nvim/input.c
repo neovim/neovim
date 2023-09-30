@@ -5,6 +5,7 @@
 // like yes/no or number prompts.
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nvim/ascii.h"
@@ -21,7 +22,6 @@
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/os/input.h"
-#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 

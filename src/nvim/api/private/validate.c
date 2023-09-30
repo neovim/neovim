@@ -1,13 +1,15 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/validate.c.generated.h"
-#endif
+#include "nvim/ascii.h"
+#include "nvim/globals.h"
 
 /// Creates "Invalid …" message and sets it on `err`.
 void api_err_invalid(Error *err, const char *name, const char *val_s, int64_t val_n, bool quote_val)

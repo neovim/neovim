@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <sys/types.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"

@@ -3,9 +3,9 @@
 
 // plines.c: calculate the vertical and horizontal size of text in a window
 
-#include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nvim/ascii.h"

@@ -6,9 +6,11 @@
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/decoration.h"
 #include "nvim/ex_eval_defs.h"
 #include "nvim/getchar.h"
+#include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"

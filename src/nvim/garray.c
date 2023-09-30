@@ -5,6 +5,7 @@
 ///
 /// Functions for handling growing arrays.
 
+#include <stdint.h>
 #include <string.h>
 
 #include "nvim/garray.h"
@@ -12,7 +13,6 @@
 #include "nvim/memory.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
-#include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "garray.c.generated.h"  // IWYU pragma: export

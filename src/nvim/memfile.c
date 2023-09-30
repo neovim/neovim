@@ -45,13 +45,14 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "nvim/assert.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/macros.h"
+#include "nvim/map.h"
 #include "nvim/memfile.h"
 #include "nvim/memfile_defs.h"
 #include "nvim/memline.h"

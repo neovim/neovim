@@ -11,6 +11,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 
 #include "auto/config.h"
 #include "klib/kvec.h"

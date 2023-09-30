@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 
+#include "nvim/buffer_defs.h"
 #include "nvim/drawline.h"
 #include "nvim/macros.h"
 

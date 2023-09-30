@@ -10,6 +10,7 @@
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
+#include "nvim/pos.h"
 
 /// By default, all windows are drawn on a single rectangular grid, represented by
 /// this ScreenGrid instance. In multigrid mode each window will have its own

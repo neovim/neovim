@@ -6,6 +6,7 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/event/multiqueue.h"
+#include "nvim/macros.h"
 
 EXTERN bool used_stdin INIT(= false);
 

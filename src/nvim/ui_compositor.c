@@ -17,7 +17,6 @@
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/ascii.h"
-#include "nvim/buffer_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"

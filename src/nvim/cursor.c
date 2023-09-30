@@ -10,7 +10,6 @@
 #include "nvim/assert.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
-#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/fold.h"
@@ -25,7 +24,6 @@
 #include "nvim/plines.h"
 #include "nvim/pos.h"
 #include "nvim/state.h"
-#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

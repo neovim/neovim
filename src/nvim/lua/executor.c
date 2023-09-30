@@ -7,6 +7,8 @@
 #include <lua.h>
 #include <lualib.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <tree_sitter/api.h>
 #include <uv.h>
@@ -17,7 +19,6 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
-#include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
@@ -59,7 +60,6 @@
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/usercmd.h"
-#include "nvim/version.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 

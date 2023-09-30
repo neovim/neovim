@@ -14,16 +14,16 @@
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
-#include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
+#include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/eval/typval.h"
-#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/window.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
@@ -33,7 +33,7 @@
 #include "nvim/highlight.h"
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
-#include "nvim/memline_defs.h"
+#include "nvim/memline.h"
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"

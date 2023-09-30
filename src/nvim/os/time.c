@@ -4,7 +4,6 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -15,7 +14,6 @@
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
-#include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/os/input.h"

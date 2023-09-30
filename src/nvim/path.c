@@ -2,7 +2,6 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <ctype.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -12,10 +11,10 @@
 
 #include "auto/config.h"
 #include "nvim/ascii.h"
-#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
@@ -35,7 +34,6 @@
 #include "nvim/pos.h"
 #include "nvim/regexp.h"
 #include "nvim/strings.h"
-#include "nvim/types.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 

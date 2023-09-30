@@ -16,7 +16,6 @@
 #include "nvim/lua/spell.h"
 #include "nvim/message.h"
 #include "nvim/spell.h"
-#include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/spell.c.generated.h"  // IWYU pragma: export
