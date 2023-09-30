@@ -749,6 +749,10 @@ win_T *win_new_float(win_T *wp, bool last, FloatConfig fconfig, Error *err)
   if (wp == NULL) {
     wp = win_alloc(last ? lastwin : lastwin_nofloating(), false);
     win_init(wp, curwin, 0);
+    // Don't inherit 'winbar' for 1-line window. #19464
+    if (wp->w_p_wbr != NULL && fconfig.height == 1) {
+      wp->w_p_wbr = xstrdup("");
+    }
   } else {
     assert(!last);
     assert(!wp->w_floating);
