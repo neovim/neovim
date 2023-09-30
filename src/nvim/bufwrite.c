@@ -913,6 +913,9 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
             && os_chown(*backupp, (uv_uid_t)-1, (uv_gid_t)file_info_old->stat.st_gid) != 0) {
           os_setperm(*backupp, ((int)perm & 0707) | (((int)perm & 07) << 3));
         }
+# ifdef HAVE_XATTR
+        os_copy_xattr(fname, *backupp);
+# endif
 #endif
 
         // copy the file
@@ -929,6 +932,9 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
                         (double)file_info_old->stat.st_mtim.tv_sec);
 #endif
         os_set_acl(*backupp, acl);
+#ifdef HAVE_XATTR
+        os_copy_xattr(fname, *backupp);
+#endif
         *err = set_err(NULL);
         break;
       }
@@ -1632,6 +1638,12 @@ restore_backup:
         && error != UV_ENOTSUP) {
       err = set_err_arg(e_fsync, error);
       end = 0;
+    }
+
+    if (!backup_copy) {
+#ifdef HAVE_XATTR
+      os_copy_xattr(backup, wfname);
+#endif
     }
 
 #ifdef UNIX

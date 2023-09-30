@@ -12,7 +12,7 @@ done
 os=$(uname -s)
 if [[ $os == Linux ]]; then
   sudo apt-get update
-  sudo apt-get install -y build-essential cmake curl gettext ninja-build unzip
+  sudo apt-get install -y attr build-essential cmake curl gettext libattr1-dev ninja-build unzip
   if [[ -n $TEST ]]; then
     sudo apt-get install -y locales-all cpanminus
   fi

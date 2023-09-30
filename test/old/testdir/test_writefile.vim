@@ -990,4 +990,28 @@ func Test_wq_quitpre_autocommand()
   call delete('Xsomefile')
 endfunc
 
+func Test_write_with_xattr_support()
+  CheckLinux
+  CheckFeature xattr
+  CheckExecutable setfattr
+
+  let contents = ["file with xattrs", "line two"]
+  call writefile(contents, 'Xwattr.txt', 'D')
+  " write a couple of xattr
+  call system('setfattr -n user.cookie -v chocolate Xwattr.txt')
+  call system('setfattr -n user.frieda -v bar Xwattr.txt')
+  call system('setfattr -n user.empty Xwattr.txt')
+
+  set backupcopy=no writebackup& backup&
+  sp Xwattr.txt
+  w
+  $r! getfattr -d %
+  let expected = ['file with xattrs', 'line two', '# file: Xwattr.txt', 'user.cookie="chocolate"', 'user.empty=""', 'user.frieda="bar"', '']
+  call assert_equal(expected, getline(1,'$'))
+
+  set backupcopy&
+  bw!
+
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

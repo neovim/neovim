@@ -18,6 +18,8 @@
 # include <shlobj.h>
 #endif
 
+#include "auto/config.h"
+
 #if defined(HAVE_ACL)
 # ifdef HAVE_SYS_ACL_H
 #  include <sys/acl.h>
@@ -27,7 +29,11 @@
 # endif
 #endif
 
-#include "auto/config.h"
+#ifdef HAVE_XATTR
+# include <sys/xattr.h>
+# define XATTR_VAL_LEN 1024
+#endif
+
 #include "nvim/ascii.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
@@ -53,6 +59,17 @@
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fs.c.generated.h"
+#endif
+
+#ifdef HAVE_XATTR
+static const char e_xattr_erange[]
+  = N_("E1506: Buffer too small to copy xattr value or key");
+static const char e_xattr_enotsup[]
+  = N_("E1507: Extended attributes are not supported by the filesystem");
+static const char e_xattr_e2big[]
+  = N_("E1508: size of the extended attribute value is larger than the maximum size allowed");
+static const char e_xattr_other[]
+  = N_("E1509: error occured when reading or writing extended attribute");
 #endif
 
 struct iovec;
@@ -742,6 +759,84 @@ int os_setperm(const char *const name, int perm)
   RUN_UV_FS_FUNC(r, uv_fs_chmod, name, perm, NULL);
   return (r == kLibuvSuccess ? OK : FAIL);
 }
+
+#ifdef HAVE_XATTR
+/// Copy extended attributes from_file to to_file
+void os_copy_xattr(const char *from_file, const char *to_file)
+{
+  if (from_file == NULL) {
+    return;
+  }
+
+  // get the length of the extended attributes
+  ssize_t size = listxattr((char *)from_file, NULL, 0);
+  // not supported or no attributes to copy
+  if (errno == ENOTSUP || size <= 0) {
+    return;
+  }
+  char *xattr_buf = xmalloc((size_t)size);
+  size = listxattr(from_file, xattr_buf, (size_t)size);
+  ssize_t tsize = size;
+
+  errno = 0;
+
+  ssize_t max_vallen = 0;
+  char *val = NULL;
+  const char *errmsg = NULL;
+
+  for (int round = 0; round < 2; round++) {
+    char *key = xattr_buf;
+    if (round == 1) {
+      size = tsize;
+    }
+
+    while (size > 0) {
+      ssize_t vallen = getxattr(from_file, key, val, round ? (size_t)max_vallen : 0);
+      // only set the attribute in the second round
+      if (vallen >= 0 && round
+          && setxattr(to_file, key, val, (size_t)vallen, 0) == 0) {
+        //
+      } else if (errno) {
+        switch (errno) {
+        case E2BIG:
+          errmsg = e_xattr_e2big;
+          goto error_exit;
+        case ENOTSUP:
+          errmsg = e_xattr_enotsup;
+          goto error_exit;
+        case ERANGE:
+          errmsg = e_xattr_erange;
+          goto error_exit;
+        default:
+          errmsg = e_xattr_other;
+          goto error_exit;
+        }
+      }
+
+      if (round == 0 && vallen > max_vallen) {
+        max_vallen = vallen;
+      }
+
+      // add one for terminating null
+      ssize_t keylen = (ssize_t)strlen(key) + 1;
+      size -= keylen;
+      key += keylen;
+    }
+    if (round) {
+      break;
+    }
+
+    val = xmalloc((size_t)max_vallen + 1);
+  }
+error_exit:
+  xfree(xattr_buf);
+  xfree(val);
+
+  if (errmsg != NULL) {
+    emsg(errmsg);
+  }
+}
+#endif
 
 // Return a pointer to the ACL of file "fname" in allocated memory.
 // Return NULL if the ACL is not available for whatever reason.

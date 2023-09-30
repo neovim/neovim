@@ -27,6 +27,7 @@
 #cmakedefine HAVE_STRINGS_H
 #cmakedefine HAVE_STRNCASECMP
 #cmakedefine HAVE_STRPTIME
+#cmakedefine HAVE_XATTR
 #cmakedefine HAVE_SYS_SDT_H
 #cmakedefine HAVE_SYS_UTSNAME_H
 #cmakedefine HAVE_SYS_WAIT_H
