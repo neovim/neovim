@@ -1706,6 +1706,7 @@ local pattern = {
   ['.*%.html%.m4'] = 'htmlm4',
   ['.*/%.i3/config'] = 'i3config',
   ['.*/i3/config'] = 'i3config',
+  ['.*/i3/.*%.conf'] = 'i3config',
   ['.*/%.icewm/menu'] = 'icemenu',
   ['.*/etc/initng/.*/.*%.i'] = 'initng',
   ['JAM.*%..*'] = starsetf('jam'),
