@@ -10,7 +10,6 @@
 #include <assert.h>
 #include <limits.h>
 #include <msgpack/pack.h>
-#include <sanitizer/asan_interface.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
