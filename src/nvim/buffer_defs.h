@@ -988,6 +988,45 @@ typedef struct {
   pos_T w_cursor_corr;  // corrected cursor position
 } pos_save_T;
 
+/// Characters from the 'listchars' option.
+typedef struct {
+  int eol;
+  int ext;
+  int prec;
+  int nbsp;
+  int space;
+  int tab1;  ///< first tab character
+  int tab2;  ///< second tab character
+  int tab3;  ///< third tab character
+  int lead;
+  int trail;
+  int *multispace;
+  int *leadmultispace;
+  int conceal;
+} lcs_chars_T;
+
+/// Characters from the 'fillchars' option.
+typedef struct {
+  int stl;
+  int stlnc;
+  int wbr;
+  int horiz;
+  int horizup;
+  int horizdown;
+  int vert;
+  int vertleft;
+  int vertright;
+  int verthoriz;
+  int fold;
+  int foldopen;    ///< when fold is open
+  int foldclosed;  ///< when fold is closed
+  int foldsep;     ///< continuous fold marker
+  int diff;
+  int msgsep;
+  int eob;
+  int lastline;
+} fcs_chars_T;
+
 /// Structure which contains all information that belongs to a window.
 ///
 /// All row numbers are relative to the start of the window, except w_winrow.
@@ -1043,44 +1082,11 @@ struct window_S {
 
   linenr_T w_last_cursor_lnum_rnu;  ///< cursor lnum when 'rnu' was last redrawn
 
-  // 'listchars' characters. Defaults set in set_chars_option().
-  struct {
-    int eol;
-    int ext;
-    int prec;
-    int nbsp;
-    int space;
-    int tab1;                       ///< first tab character
-    int tab2;                       ///< second tab character
-    int tab3;                       ///< third tab character
-    int lead;
-    int trail;
-    int *multispace;
-    int *leadmultispace;
-    int conceal;
-  } w_p_lcs_chars;
+  /// 'listchars' characters. Defaults set in set_chars_option().
+  lcs_chars_T w_p_lcs_chars;
 
-  // 'fillchars' characters. Defaults set in set_chars_option().
-  struct {
-    int stl;
-    int stlnc;
-    int wbr;
-    int horiz;
-    int horizup;
-    int horizdown;
-    int vert;
-    int vertleft;
-    int vertright;
-    int verthoriz;
-    int fold;
-    int foldopen;                    ///< when fold is open
-    int foldclosed;                  ///< when fold is closed
-    int foldsep;                     ///< continuous fold marker
-    int diff;
-    int msgsep;
-    int eob;
-    int lastline;
-  } w_p_fcs_chars;
+  /// 'fillchars' characters. Defaults set in set_chars_option().
+  fcs_chars_T w_p_fcs_chars;
 
   // "w_topline", "w_leftcol" and "w_skipcol" specify the offsets for
   // displaying the buffer.

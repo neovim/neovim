@@ -2299,6 +2299,48 @@ static int get_encoded_char_adv(const char **p)
   return c;
 }
 
+struct chars_tab {
+  int *cp;           ///< char value
+  const char *name;  ///< char id
+  int def;           ///< default value
+  int fallback;      ///< default value when "def" isn't single-width
+};
+
+static fcs_chars_T fcs_chars;
+static const struct chars_tab fcs_tab[] = {
+  { &fcs_chars.stl,        "stl",       ' ',    NUL },
+  { &fcs_chars.stlnc,      "stlnc",     ' ',    NUL },
+  { &fcs_chars.wbr,        "wbr",       ' ',    NUL },
+  { &fcs_chars.horiz,      "horiz",     0x2500, '-' },  // ─
+  { &fcs_chars.horizup,    "horizup",   0x2534, '-' },  // ┴
+  { &fcs_chars.horizdown,  "horizdown", 0x252c, '-' },  // ┬
+  { &fcs_chars.vert,       "vert",      0x2502, '|' },  // │
+  { &fcs_chars.vertleft,   "vertleft",  0x2524, '|' },  // ┤
+  { &fcs_chars.vertright,  "vertright", 0x251c, '|' },  // ├
+  { &fcs_chars.verthoriz,  "verthoriz", 0x253c, '+' },  // ┼
+  { &fcs_chars.fold,       "fold",      0x00b7, '-' },  // ·
+  { &fcs_chars.foldopen,   "foldopen",  '-',    NUL },
+  { &fcs_chars.foldclosed, "foldclose", '+',    NUL },
+  { &fcs_chars.foldsep,    "foldsep",   0x2502, '|' },  // │
+  { &fcs_chars.diff,       "diff",      '-',    NUL },
+  { &fcs_chars.msgsep,     "msgsep",    ' ',    NUL },
+  { &fcs_chars.eob,        "eob",       '~',    NUL },
+  { &fcs_chars.lastline,   "lastline",  '@',    NUL },
+};
+
+static lcs_chars_T lcs_chars;
+static const struct chars_tab lcs_tab[] = {
+  { &lcs_chars.eol,     "eol",      NUL, NUL },
+  { &lcs_chars.ext,     "extends",  NUL, NUL },
+  { &lcs_chars.nbsp,    "nbsp",     NUL, NUL },
+  { &lcs_chars.prec,    "precedes", NUL, NUL },
+  { &lcs_chars.space,   "space",    NUL, NUL },
+  { &lcs_chars.tab2,    "tab",      NUL, NUL },
+  { &lcs_chars.lead,    "lead",     NUL, NUL },
+  { &lcs_chars.trail,   "trail",    NUL, NUL },
+  { &lcs_chars.conceal, "conceal",  NUL, NUL },
+};
+
 /// Handle setting 'listchars' or 'fillchars'.
 /// Assume monocell characters
 ///
@@ -2314,47 +2356,7 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
   int multispace_len = 0;           // Length of lcs-multispace string
   int lead_multispace_len = 0;      // Length of lcs-leadmultispace string
 
-  struct chars_tab {
-    int *cp;     ///< char value
-    char *name;  ///< char id
-    int def;     ///< default value
-  };
-
-  // XXX: Characters taking 2 columns is forbidden (TUI limitation?). Set old defaults in this case.
-  struct chars_tab fcs_tab[] = {
-    { &wp->w_p_fcs_chars.stl,        "stl",       ' ' },
-    { &wp->w_p_fcs_chars.stlnc,      "stlnc",     ' ' },
-    { &wp->w_p_fcs_chars.wbr,        "wbr",       ' ' },
-    { &wp->w_p_fcs_chars.horiz,      "horiz",     char2cells(0x2500) == 1 ? 0x2500 : '-' },  // ─
-    { &wp->w_p_fcs_chars.horizup,    "horizup",   char2cells(0x2534) == 1 ? 0x2534 : '-' },  // ┴
-    { &wp->w_p_fcs_chars.horizdown,  "horizdown", char2cells(0x252c) == 1 ? 0x252c : '-' },  // ┬
-    { &wp->w_p_fcs_chars.vert,       "vert",      char2cells(0x2502) == 1 ? 0x2502 : '|' },  // │
-    { &wp->w_p_fcs_chars.vertleft,   "vertleft",  char2cells(0x2524) == 1 ? 0x2524 : '|' },  // ┤
-    { &wp->w_p_fcs_chars.vertright,  "vertright", char2cells(0x251c) == 1 ? 0x251c : '|' },  // ├
-    { &wp->w_p_fcs_chars.verthoriz,  "verthoriz", char2cells(0x253c) == 1 ? 0x253c : '+' },  // ┼
-    { &wp->w_p_fcs_chars.fold,       "fold",      char2cells(0x00b7) == 1 ? 0x00b7 : '-' },  // ·
-    { &wp->w_p_fcs_chars.foldopen,   "foldopen",  '-' },
-    { &wp->w_p_fcs_chars.foldclosed, "foldclose", '+' },
-    { &wp->w_p_fcs_chars.foldsep,    "foldsep",   char2cells(0x2502) == 1 ? 0x2502 : '|' },  // │
-    { &wp->w_p_fcs_chars.diff,       "diff",      '-' },
-    { &wp->w_p_fcs_chars.msgsep,     "msgsep",    ' ' },
-    { &wp->w_p_fcs_chars.eob,        "eob",       '~' },
-    { &wp->w_p_fcs_chars.lastline,   "lastline",  '@' },
-  };
-
-  struct chars_tab lcs_tab[] = {
-    { &wp->w_p_lcs_chars.eol,     "eol",      NUL },
-    { &wp->w_p_lcs_chars.ext,     "extends",  NUL },
-    { &wp->w_p_lcs_chars.nbsp,    "nbsp",     NUL },
-    { &wp->w_p_lcs_chars.prec,    "precedes", NUL },
-    { &wp->w_p_lcs_chars.space,   "space",    NUL },
-    { &wp->w_p_lcs_chars.tab2,    "tab",      NUL },
-    { &wp->w_p_lcs_chars.lead,    "lead",     NUL },
-    { &wp->w_p_lcs_chars.trail,   "trail",    NUL },
-    { &wp->w_p_lcs_chars.conceal, "conceal",  NUL },
-  };
-
-  struct chars_tab *tab;
+  const struct chars_tab *tab;
   int entries;
   if (is_listchars) {
     tab = lcs_tab;
@@ -2376,31 +2378,32 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
       // After checking that the value is valid: set defaults
       for (int i = 0; i < entries; i++) {
         if (tab[i].cp != NULL) {
-          *(tab[i].cp) = tab[i].def;
+          // XXX: Characters taking 2 columns is forbidden (TUI limitation?).
+          // Set old defaults in this case.
+          *(tab[i].cp) = char2cells(tab[i].def) == 1 ? tab[i].def : tab[i].fallback;
         }
       }
-      if (is_listchars) {
-        wp->w_p_lcs_chars.tab1 = NUL;
-        wp->w_p_lcs_chars.tab3 = NUL;
 
-        xfree(wp->w_p_lcs_chars.multispace);
+      if (is_listchars) {
+        lcs_chars.tab1 = NUL;
+        lcs_chars.tab3 = NUL;
+
         if (multispace_len > 0) {
-          wp->w_p_lcs_chars.multispace = xmalloc(((size_t)multispace_len + 1) * sizeof(int));
-          wp->w_p_lcs_chars.multispace[multispace_len] = NUL;
+          lcs_chars.multispace = xmalloc(((size_t)multispace_len + 1) * sizeof(int));
+          lcs_chars.multispace[multispace_len] = NUL;
         } else {
-          wp->w_p_lcs_chars.multispace = NULL;
+          lcs_chars.multispace = NULL;
         }
 
-        xfree(wp->w_p_lcs_chars.leadmultispace);
         if (lead_multispace_len > 0) {
-          wp->w_p_lcs_chars.leadmultispace
-            = xmalloc(((size_t)lead_multispace_len + 1) * sizeof(int));
-          wp->w_p_lcs_chars.leadmultispace[lead_multispace_len] = NUL;
+          lcs_chars.leadmultispace = xmalloc(((size_t)lead_multispace_len + 1) * sizeof(int));
+          lcs_chars.leadmultispace[lead_multispace_len] = NUL;
         } else {
-          wp->w_p_lcs_chars.leadmultispace = NULL;
+          lcs_chars.leadmultispace = NULL;
         }
       }
     }
+
     const char *p = value;
     while (*p) {
       int i;
@@ -2415,7 +2418,7 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
             return e_invarg;
           }
           int c2 = 0, c3 = 0;
-          if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
+          if (tab[i].cp == &lcs_chars.tab2) {
             if (*s == NUL) {
               return e_invarg;
             }
@@ -2430,12 +2433,13 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
               }
             }
           }
+
           if (*s == ',' || *s == NUL) {
             if (round > 0) {
-              if (tab[i].cp == &wp->w_p_lcs_chars.tab2) {
-                wp->w_p_lcs_chars.tab1 = c1;
-                wp->w_p_lcs_chars.tab2 = c2;
-                wp->w_p_lcs_chars.tab3 = c3;
+              if (tab[i].cp == &lcs_chars.tab2) {
+                lcs_chars.tab1 = c1;
+                lcs_chars.tab2 = c2;
+                lcs_chars.tab3 = c3;
               } else if (tab[i].cp != NULL) {
                 *(tab[i].cp) = c1;
               }
@@ -2475,7 +2479,7 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
             while (*s != NUL && *s != ',') {
               int c1 = get_encoded_char_adv(&s);
               if (p == last_multispace) {
-                wp->w_p_lcs_chars.multispace[multispace_pos++] = c1;
+                lcs_chars.multispace[multispace_pos++] = c1;
               }
             }
             p = s;
@@ -2506,7 +2510,7 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
             while (*s != NUL && *s != ',') {
               int c1 = get_encoded_char_adv(&s);
               if (p == last_lmultispace) {
-                wp->w_p_lcs_chars.leadmultispace[multispace_pos++] = c1;
+                lcs_chars.leadmultispace[multispace_pos++] = c1;
               }
             }
             p = s;
@@ -2520,6 +2524,19 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
         p++;
       }
     }
+  }
+
+  if (apply) {
+    if (is_listchars) {
+      xfree(wp->w_p_lcs_chars.multispace);
+      xfree(wp->w_p_lcs_chars.leadmultispace);
+      wp->w_p_lcs_chars = lcs_chars;
+    } else {
+      wp->w_p_fcs_chars = fcs_chars;
+    }
+  } else if (is_listchars) {
+    xfree(lcs_chars.multispace);
+    xfree(lcs_chars.leadmultispace);
   }
 
   return NULL;          // no error
