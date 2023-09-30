@@ -31,7 +31,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/option_defs.h"
+#include "nvim/option_vars.h"
 #include "nvim/strings.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"

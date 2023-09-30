@@ -23,7 +23,7 @@
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/option_defs.h"
+#include "nvim/option_vars.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"

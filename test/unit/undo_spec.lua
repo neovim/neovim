@@ -11,10 +11,7 @@ local neq = helpers.neq
 local eq = helpers.eq
 local mkdir = helpers.mkdir
 
-cimport('./src/nvim/ex_cmds_defs.h')
-cimport('./src/nvim/buffer_defs.h')
-local options = cimport('./src/nvim/option_defs.h')
--- TODO: remove: local vim = cimport('./src/nvim/vim.h')
+local options = cimport('./src/nvim/option_vars.h')
 local undo = cimport('./src/nvim/undo.h')
 local buffer = cimport('./src/nvim/buffer.h')
 

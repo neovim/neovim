@@ -25,7 +25,7 @@
 #include "nvim/globals.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/option_defs.h"
+#include "nvim/option_vars.h"
 #include "nvim/pos.h"
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"

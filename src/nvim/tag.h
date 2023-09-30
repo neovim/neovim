@@ -2,6 +2,7 @@
 #define NVIM_TAG_H
 
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/option_defs.h"
 #include "nvim/types.h"
 
 // Values for do_tag().

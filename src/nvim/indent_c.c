@@ -20,6 +20,7 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
+#include "nvim/option_vars.h"
 #include "nvim/plines.h"
 #include "nvim/pos.h"
 #include "nvim/search.h"

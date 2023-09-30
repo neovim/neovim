@@ -50,6 +50,14 @@ typedef struct {
   bool item_compare_func_err;
 } sortinfo_T;
 
+/// Structure representing one list item, used for sort array.
+typedef struct {
+  listitem_T *item;  ///< Sorted list item.
+  int idx;  ///< Sorted list item index.
+} ListSortItem;
+
+typedef int (*ListSorter)(const void *, const void *);
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/typval.c.generated.h"
 #endif

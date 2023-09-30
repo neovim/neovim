@@ -29,7 +29,7 @@
 #include "nvim/menu.h"
 #include "nvim/menu_defs.h"
 #include "nvim/message.h"
-#include "nvim/option_defs.h"
+#include "nvim/option_vars.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos.h"
 #include "nvim/state.h"

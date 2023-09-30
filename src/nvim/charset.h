@@ -7,6 +7,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/option_defs.h"
+#include "nvim/option_vars.h"
 #include "nvim/pos.h"
 #include "nvim/strings.h"
 

@@ -20,6 +20,7 @@
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/option.h"
+#include "nvim/option_vars.h"
 #include "nvim/os/input.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"

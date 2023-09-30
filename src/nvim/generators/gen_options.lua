@@ -189,7 +189,6 @@ local function dump_option(i, o)
 end
 
 w([[
-#include "nvim/ex_cmds.h"
 #include "nvim/ex_getln.h"
 #include "nvim/insexpand.h"
 #include "nvim/mapping.h"
@@ -198,8 +197,6 @@ w([[
 #include "nvim/optionstr.h"
 #include "nvim/quickfix.h"
 #include "nvim/runtime.h"
-#include "nvim/spell.h"
-#include "nvim/spellfile.h"
 #include "nvim/tag.h"
 #include "nvim/window.h"
 

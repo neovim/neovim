@@ -22,10 +22,6 @@ local endswith = helpers.endswith
 local NODE_NORMAL = 0
 local NODE_WRITABLE = 1
 
-cimport('./src/nvim/os/shell.h')
-cimport('./src/nvim/option_defs.h')
-cimport('./src/nvim/main.h')
-cimport('./src/nvim/fileio.h')
 local fs = cimport('./src/nvim/os/os.h', './src/nvim/path.h')
 cppimport('sys/stat.h')
 cppimport('fcntl.h')
