@@ -8,6 +8,7 @@
 #include "nvim/decoration_provider.h"
 #include "nvim/fold.h"
 #include "nvim/macros.h"
+#include "nvim/pos.h"
 #include "nvim/types.h"
 
 // Maximum columns for terminal highlight attributes

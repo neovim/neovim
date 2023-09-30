@@ -22,7 +22,6 @@
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/macros.h"
-#include "nvim/memline_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/move.h"

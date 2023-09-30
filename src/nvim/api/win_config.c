@@ -2,15 +2,17 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/extmark.h"
+#include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/win_config.h"
 #include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"

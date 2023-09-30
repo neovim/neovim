@@ -7,9 +7,7 @@
 //   :mkview
 //   :mksession
 
-#include <assert.h>
 #include <inttypes.h>
-#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,7 +28,6 @@
 #include "nvim/globals.h"
 #include "nvim/macros.h"
 #include "nvim/mapping.h"
-#include "nvim/mark_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"

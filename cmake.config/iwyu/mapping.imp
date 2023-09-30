@@ -9,6 +9,7 @@
   { include: [ '"api/private/converter.h.generated.h"', private, '"nvim/api/private/converter.h"', public ] },
   { include: [ '"api/private/dispatch.h.generated.h"', private, '"nvim/api/private/dispatch.h"', public ] },
   { include: [ '"api/private/helpers.h.generated.h"', private, '"nvim/api/private/helpers.h"', public ] },
+  { include: [ '"api/private/validate.h.generated.h"', private, '"nvim/api/private/validate.h"', public ] },
   { include: [ '"api/tabpage.h.generated.h"', private, '"nvim/api/tabpage.h"', public ] },
   { include: [ '"api/ui.h.generated.h"', private, '"nvim/api/ui.h"', public ] },
   { include: [ '"api/vim.h.generated.h"', private, '"nvim/api/vim.h"', public ] },
@@ -85,6 +86,7 @@
   { include: [ '"log.h.generated.h"', private, '"nvim/log.h"', public ] },
   { include: [ '"lua/converter.h.generated.h"', private, '"nvim/lua/converter.h"', public ] },
   { include: [ '"lua/executor.h.generated.h"', private, '"nvim/lua/executor.h"', public ] },
+  { include: [ '"lua/secure.h.generated.h"', private, '"nvim/lua/secure.h"', public ] },
   { include: [ '"lua/spell.h.generated.h"', private, '"nvim/lua/spell.h"', public ] },
   { include: [ '"lua/stdlib.h.generated.h"', private, '"nvim/lua/stdlib.h"', public ] },
   { include: [ '"lua/treesitter.h.generated.h"', private, '"nvim/lua/treesitter.h"', public ] },
@@ -188,12 +190,17 @@
   # headers on the left, it will use the headers on the right if possible. This
   # isn't explicitly mentioned in the IWYU docs, this is just my interpretation
   # of its behavior.
+  { include: [ '"nvim/arglist_defs.h"', public, '"nvim/arglist.h"', public ] },
   { include: [ '"nvim/buffer_defs.h"', public, '"nvim/buffer.h"', public ] },
+  { include: [ '"nvim/eval/typval_defs.h"', public, '"nvim/eval/typval.h"', public ] },
   { include: [ '"nvim/ex_cmds_defs.h"', public, '"nvim/ex_cmds.h"', public ] },
   { include: [ '"nvim/ex_eval_defs.h"', public, '"nvim/ex_eval.h"', public ] },
   { include: [ '"nvim/extmark_defs.h"', public, '"nvim/extmark.h"', public ] },
+  { include: [ '"nvim/fold_defs.h"', public, '"nvim/fold.h"', public ] },
+  { include: [ '"nvim/getchar_defs.h"', public, '"nvim/getchar.h"', public ] },
   { include: [ '"nvim/grid_defs.h"', public, '"nvim/grid.h"', public ] },
   { include: [ '"nvim/highlight_defs.h"', public, '"nvim/highlight.h"', public ] },
+  { include: [ '"nvim/mapping_defs.h"', public, '"nvim/mapping.h"', public ] },
   { include: [ '"nvim/mark_defs.h"', public, '"nvim/mark.h"', public ] },
   { include: [ '"nvim/mbyte_defs.h"', public, '"nvim/mbyte.h"', public ] },
   { include: [ '"nvim/memfile_defs.h"', public, '"nvim/memfile.h"', public ] },

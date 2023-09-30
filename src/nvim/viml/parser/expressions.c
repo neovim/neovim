@@ -61,7 +61,6 @@
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/charset.h"
-#include "nvim/eval/typval.h"
 #include "nvim/gettext.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros.h"
@@ -938,7 +937,6 @@ static const char *intchar2str(const int ch)
 }
 
 #ifdef UNIT_TESTING
-# include <stdio.h>
 
 REAL_FATTR_UNUSED
 static inline void viml_pexpr_debug_print_ast_node(const ExprASTNode *const *const eastnode_p,

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <uv.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -17,7 +18,6 @@
 #include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
-#include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/input_defs.h"

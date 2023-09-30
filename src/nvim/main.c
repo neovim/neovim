@@ -10,13 +10,13 @@
 #include <assert.h>
 #include <limits.h>
 #include <msgpack/pack.h>
+#include <sanitizer/asan_interface.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "auto/config.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
@@ -29,7 +29,6 @@
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
-#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/stream.h"
@@ -53,7 +52,6 @@
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
-#include "nvim/memfile_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -69,7 +67,6 @@
 #include "nvim/os/lang.h"
 #include "nvim/os/os.h"
 #include "nvim/os/stdpaths_defs.h"
-#include "nvim/os/time.h"
 #include "nvim/path.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos.h"

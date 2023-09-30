@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "lauxlib.h"
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
@@ -17,7 +18,6 @@
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
-#include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/socket.h"
 #include "nvim/event/wstream.h"

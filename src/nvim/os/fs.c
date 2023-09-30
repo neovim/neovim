@@ -33,7 +33,6 @@
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
-#include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_defs.h"

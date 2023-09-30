@@ -12,7 +12,6 @@
 #include "nvim/map.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"
-
 // only for debug functions:
 #include "api/private/defs.h"
 

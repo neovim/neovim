@@ -5,6 +5,7 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/getchar_defs.h"
 #include "nvim/globals.h"
 
 // flags for do_cmdline()

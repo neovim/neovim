@@ -8,8 +8,18 @@
 // are always NUL terminated, though. Thus, it is enough to store an index into
 // this array, and use strlen(), to retrive an interned key.
 
+#include <assert.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/ascii.h"
+#include "nvim/macros.h"
 #include "nvim/map.h"
+#include "nvim/memory.h"
 
 uint32_t mh_find_bucket_glyph(Set(glyph) *set, String key, bool put)
 {

@@ -6,12 +6,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/api/window.h"
-#include "nvim/ascii.h"
+#include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
@@ -20,7 +20,8 @@
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
-#include "nvim/memline_defs.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/plines.h"
 #include "nvim/pos.h"

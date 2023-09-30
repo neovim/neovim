@@ -11,13 +11,11 @@
 #include <string.h>
 
 #include "nvim/ascii.h"
-#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/debugger.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
-#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
@@ -35,7 +33,6 @@
 #include "nvim/pos.h"
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"
-#include "nvim/types.h"
 #include "nvim/vim.h"
 
 /// batch mode debugging: don't save and restore typeahead.

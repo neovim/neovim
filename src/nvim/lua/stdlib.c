@@ -15,7 +15,6 @@
 # include "bit.h"
 #endif
 
-#include "auto/config.h"
 #include "cjson/lua_cjson.h"
 #include "mpack/lmpack.h"
 #include "nvim/api/private/defs.h"
@@ -23,7 +22,6 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval.h"
-#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fold.h"

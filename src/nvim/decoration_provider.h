@@ -2,6 +2,7 @@
 #define NVIM_DECORATION_PROVIDER_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "klib/kvec.h"
 #include "nvim/buffer_defs.h"

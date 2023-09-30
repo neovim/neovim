@@ -24,6 +24,7 @@
 #include "nvim/event/rstream.h"
 #include "nvim/event/stream.h"
 #include "nvim/event/wstream.h"
+#include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
 #include "nvim/map.h"

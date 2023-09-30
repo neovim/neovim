@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -45,6 +46,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros.h"
+#include "nvim/map.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"

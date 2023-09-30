@@ -5,11 +5,10 @@
 
 #include <assert.h>
 #include <inttypes.h>
-#include <limits.h>
 #include <string.h>
 
-#include "klib/kvec.h"
 #include "lauxlib.h"
+#include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
@@ -22,7 +21,6 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
-#include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/map.h"

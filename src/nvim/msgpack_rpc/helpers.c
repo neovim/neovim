@@ -11,7 +11,6 @@
 
 #include "klib/kvec.h"
 #include "msgpack/pack.h"
-#include "nvim/api/keysets.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert.h"
 #include "nvim/event/wstream.h"

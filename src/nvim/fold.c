@@ -12,7 +12,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/extmark.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
@@ -24,7 +27,6 @@
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
-#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_session.h"
 #include "nvim/extmark.h"
 #include "nvim/fold.h"
@@ -42,6 +44,7 @@
 #include "nvim/option.h"
 #include "nvim/os/input.h"
 #include "nvim/plines.h"
+#include "nvim/pos.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"

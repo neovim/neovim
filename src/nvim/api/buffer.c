@@ -4,7 +4,6 @@
 // Some of this code was adapted from 'if_py_both.h' from the original
 // vim source
 
-#include <assert.h>
 #include <lauxlib.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -14,6 +13,7 @@
 #include "klib/kvec.h"
 #include "lua.h"
 #include "nvim/api/buffer.h"
+#include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"

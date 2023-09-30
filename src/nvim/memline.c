@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -55,7 +56,6 @@
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
-#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
@@ -65,6 +65,7 @@
 #include "nvim/input.h"
 #include "nvim/macros.h"
 #include "nvim/main.h"
+#include "nvim/map.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"
@@ -82,7 +83,6 @@
 #include "nvim/spell.h"
 #include "nvim/statusline.h"
 #include "nvim/strings.h"
-#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"

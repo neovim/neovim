@@ -56,7 +56,10 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "klib/kvec.h"
@@ -77,6 +80,8 @@
 #include "nvim/ex_getln.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/fold.h"
+#include "nvim/getchar.h"
+#include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
@@ -89,6 +94,7 @@
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/plines.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos.h"
@@ -98,6 +104,7 @@
 #include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/statusline.h"
+#include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/terminal.h"
 #include "nvim/types.h"

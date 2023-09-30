@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "nvim/ascii.h"
-#include "nvim/buffer_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"

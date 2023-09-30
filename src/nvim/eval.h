@@ -10,6 +10,7 @@
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/hashtab.h"
+#include "nvim/macros.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/stdpaths_defs.h"
 

@@ -19,7 +19,6 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/garray.h"
 #include "nvim/gettext.h"
-#include "nvim/hashtab.h"
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"

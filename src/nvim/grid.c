@@ -13,15 +13,21 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/arabic.h"
+#include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/log.h"
+#include "nvim/map.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/types.h"

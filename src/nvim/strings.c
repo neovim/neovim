@@ -21,6 +21,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
 #include "nvim/gettext.h"
+#include "nvim/globals.h"
 #include "nvim/macros.h"
 #include "nvim/math.h"
 #include "nvim/mbyte.h"
