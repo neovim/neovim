@@ -36,11 +36,13 @@ check_symbol_exists(_NSGetEnviron crt_externs.h HAVE__NSGETENVIRON)
 # Headers
 check_include_files(langinfo.h HAVE_LANGINFO_H)
 check_include_files(strings.h HAVE_STRINGS_H)
-check_include_files(attr/xattr.h HAVE_XATTR)
 check_include_files(sys/utsname.h HAVE_SYS_UTSNAME_H)
 check_include_files(termios.h HAVE_TERMIOS_H)
 check_include_files(sys/uio.h HAVE_SYS_UIO_H)
 check_include_files(sys/sdt.h HAVE_SYS_SDT_H)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  check_include_files(sys/xattr.h HAVE_XATTR)
+endif()
 
 # Functions
 check_function_exists(fseeko HAVE_FSEEKO)

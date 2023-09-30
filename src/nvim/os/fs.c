@@ -30,7 +30,7 @@
 #endif
 
 #ifdef HAVE_XATTR
-# include <attr/xattr.h>
+# include <sys/xattr.h>
 # define XATTR_VAL_LEN 1024
 #endif
 

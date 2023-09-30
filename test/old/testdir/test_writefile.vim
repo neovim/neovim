@@ -992,6 +992,7 @@ endfunc
 
 func Test_write_with_xattr_support()
   CheckLinux
+  CheckFeature xattr
   CheckExecutable setfattr
 
   let contents = ["file with xattrs", "line two"]
