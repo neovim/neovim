@@ -967,6 +967,7 @@ typedef struct {
   int footer_width;
   bool noautocmd;
   bool fixed;
+  bool hide;
 } FloatConfig;
 
 #define FLOAT_CONFIG_INIT ((FloatConfig){ .height = 0, .width = 0, \
@@ -977,6 +978,7 @@ typedef struct {
                                           .zindex = kZIndexFloatDefault, \
                                           .style = kWinStyleUnused, \
                                           .noautocmd = false, \
+                                          .hide = false, \
                                           .fixed = false })
 
 // Structure to store last cursor position and topline.  Used by check_lnums()

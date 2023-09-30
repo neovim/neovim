@@ -113,6 +113,7 @@ typedef struct {
   String style;
   Boolean noautocmd;
   Boolean fixed;
+  Boolean hide;
 } Dict(float_config);
 
 typedef struct {

@@ -113,6 +113,7 @@ error('Cannot require a meta file')
 --- @field style? string
 --- @field noautocmd? boolean
 --- @field fixed? boolean
+--- @field hide? boolean
 
 --- @class vim.api.keyset.get_autocmds
 --- @field event? any
