@@ -31,7 +31,6 @@
 
 #ifdef HAVE_XATTR
 # include <sys/xattr.h>
-# define XATTR_VAL_LEN 1024
 #endif
 
 #include "nvim/ascii.h"
