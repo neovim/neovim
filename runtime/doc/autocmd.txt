@@ -118,7 +118,7 @@ manually.  Mostly the screen will not scroll up, thus there is no hit-enter
 prompt.  When one command outputs two messages this can happen anyway.
 
 ==============================================================================
-3. Removing autocommands				*autocmd-remove*
+3. Removing autocommands			*autocmd!* *autocmd-remove*
 
 :au[tocmd]! [group] {event} {aupat} [++once] [++nested] {cmd}
 			Remove all autocommands associated with {event} and

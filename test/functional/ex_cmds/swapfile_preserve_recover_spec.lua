@@ -171,6 +171,7 @@ describe('swapfile detection', function()
     local screen2 = Screen.new(256, 40)
     screen2:attach()
     exec(init)
+    command('autocmd! nvim_swapfile')  -- Delete the default handler (which skips the dialog).
 
     -- With shortmess+=F
     command('set shortmess+=F')
@@ -219,11 +220,29 @@ describe('swapfile detection', function()
     nvim2:close()
   end)
 
+  it('default SwapExists handler selects "(E)dit" and skips prompt', function()
+    exec(init)
+    command('edit Xfile1')
+    command("put ='some text...'")
+    command('preserve')  -- Make sure the swap file exists.
+    local nvimpid = funcs.getpid()
+
+    local nvim1 = spawn(new_argv(), true, nil, true)
+    set_session(nvim1)
+    local screen = Screen.new(75, 18)
+    screen:attach()
+    exec(init)
+    feed(':edit Xfile1\n')
+
+    screen:expect({ any = ('W325: Ignoring swapfile from Nvim process %d'):format(nvimpid) })
+    nvim1:close()
+  end)
+
   -- oldtest: Test_swap_prompt_splitwin()
   it('selecting "q" in the attention prompt', function()
     exec(init)
     command('edit Xfile1')
-    command('preserve')  -- should help to make sure the swap file exists
+    command('preserve')  -- Make sure the swap file exists.
 
     local screen = Screen.new(75, 18)
     screen:set_default_attr_ids({
@@ -235,7 +254,9 @@ describe('swapfile detection', function()
     set_session(nvim1)
     screen:attach()
     exec(init)
+    command('autocmd! nvim_swapfile')  -- Delete the default handler (which skips the dialog).
     feed(':split Xfile1\n')
+    -- The default SwapExists handler does _not_ skip this prompt.
     screen:expect({
       any = pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^')
     })
@@ -267,6 +288,7 @@ describe('swapfile detection', function()
     set_session(nvim2)
     screen:attach()
     exec(init)
+    command('autocmd! nvim_swapfile')  -- Delete the default handler (which skips the dialog).
     command('set more')
     command('au bufadd * let foo_w = wincol()')
     feed(':e Xfile1<CR>')
@@ -300,8 +322,9 @@ describe('swapfile detection', function()
     nvim2:close()
   end)
 
-  -- oldtest: Test_nocatch_process_still_running()
-  it('allows deleting swapfile created before boot vim-patch:8.2.2586', function()
+  --- @param swapexists boolean Enable the default SwapExists handler.
+  --- @param on_swapfile_running fun(screen: any) Called after swapfile ("STILL RUNNING") prompt.
+  local function test_swapfile_after_reboot(swapexists, on_swapfile_running)
     local screen = Screen.new(75, 30)
     screen:set_default_attr_ids({
       [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
@@ -311,6 +334,9 @@ describe('swapfile detection', function()
     screen:attach()
 
     exec(init)
+    if not swapexists then
+      command('autocmd! nvim_swapfile')  -- Delete the default handler (which skips the dialog).
+    end
     command('set nohidden')
 
     exec([=[
@@ -347,12 +373,7 @@ describe('swapfile detection', function()
     os.rename('Xswap', swname)
 
     feed(':edit Xswaptest<CR>')
-    screen:expect({any = table.concat({
-      pesc('{2:E325: ATTENTION}'),
-      'file name: .*Xswaptest',
-      'process ID: %d* %(STILL RUNNING%)',
-      pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
-    }, '.*')})
+    on_swapfile_running(screen)
 
     feed('e')
 
@@ -374,7 +395,26 @@ describe('swapfile detection', function()
     }, '.*')})
 
     feed('e')
+  end
+
+  -- oldtest: Test_nocatch_process_still_running()
+  it('swapfile created before boot vim-patch:8.2.2586', function()
+    test_swapfile_after_reboot(false, function(screen)
+      screen:expect({any = table.concat({
+        pesc('{2:E325: ATTENTION}'),
+        'file name: .*Xswaptest',
+        'process ID: %d* %(STILL RUNNING%)',
+        pesc('{1:[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort: }^'),
+      }, '.*')})
+    end)
   end)
+
+  it('swapfile created before boot + default SwapExists handler', function()
+    test_swapfile_after_reboot(true, function(screen)
+      screen:expect({ any = 'W325: Ignoring swapfile from Nvim process' })
+    end)
+  end)
+
 end)
 
 describe('quitting swapfile dialog on startup stops TUI properly', function()

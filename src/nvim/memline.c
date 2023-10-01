@@ -1462,7 +1462,7 @@ static int process_running;
 /// For Vimscript "swapinfo()".
 ///
 /// @return  information found in swapfile "fname" in dictionary "d".
-void swapfile_info_dict(const char *fname, dict_T *d)
+void swapfile_dict(const char *fname, dict_T *d)
 {
   int fd;
   ZeroBlock b0;
@@ -1483,7 +1483,7 @@ void swapfile_info_dict(const char *fname, dict_T *d)
         tv_dict_add_str_len(d, S_LEN("fname"), b0.b0_fname,
                             B0_FNAME_SIZE_ORG);
 
-        tv_dict_add_nr(d, S_LEN("pid"), char_to_long(b0.b0_pid));
+        tv_dict_add_nr(d, S_LEN("pid"), swapfile_process_running(&b0, fname));
         tv_dict_add_nr(d, S_LEN("mtime"), char_to_long(b0.b0_mtime));
         tv_dict_add_nr(d, S_LEN("dirty"), b0.b0_dirty ? 1 : 0);
         tv_dict_add_nr(d, S_LEN("inode"), char_to_long(b0.b0_ino));
@@ -3401,16 +3401,12 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
         }
 
         // Show the ATTENTION message when:
-        //  - 'confirm' is set, _or_ the swapfile owner died (PID not running).
         //  - there is an old swapfile for the current file
         //  - the buffer was not recovered
-        if ((!process_running || p_confirm || (cmdmod.cmod_flags & CMOD_CONFIRM))
-            && differ == false
-            && !(curbuf->b_flags & BF_RECOVERED)
+        if (differ == false && !(curbuf->b_flags & BF_RECOVERED)
             && vim_strchr(p_shm, SHM_ATTENTION) == NULL) {
           int choice = 0;
 
-          process_running = 0;  // Set by attention_message() below.
           // It's safe to delete the swapfile if all these are true:
           // - the edited file exists
           // - the swapfile has no changes and looks OK
@@ -3429,6 +3425,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             choice = do_swapexists(buf, fname);
           }
 
+          process_running = 0;  // Set by attention_message..swapfile_info.
           if (choice == 0) {
             // Show info about the existing swapfile.
             attention_message(buf, fname);
@@ -3507,8 +3504,6 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
               need_wait_return = true;
             }
           }
-        } else {
-          swmsg(true, _("E325: ignoring swapfile from Nvim process: %d"), process_running);
         }
       }
     }

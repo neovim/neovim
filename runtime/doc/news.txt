@@ -117,7 +117,8 @@ The following new APIs and features were added.
 • Editor
   • By default, the swapfile "ATTENTION" |E325| dialog is skipped if the
     swapfile is owned by a running Nvim process, instead of prompting. If you
-    always want the swapfile dialog, set 'confirm' or use ":confirm edit".
+    always want the swapfile dialog, delete the default SwapExists handler:
+    `autocmd! nvim_swapfile`. |default-autocmds|
 
 • LSP
   • LSP method names are available in |vim.lsp.protocol.Methods|.

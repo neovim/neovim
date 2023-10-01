@@ -11123,8 +11123,8 @@ M.funcs = {
       	user	user name
       	host	host name
       	fname	original file name
-      	pid	PID of the Vim process that created the swap
-      		file
+      	pid	PID of the Nvim process that created the swap
+      		file, or zero if not running.
       	mtime	last modification time in seconds
       	inode	Optional: INODE number of the file
       	dirty	1 if file was modified, 0 if not

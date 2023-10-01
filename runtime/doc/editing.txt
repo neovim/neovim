@@ -189,10 +189,6 @@ If you want to keep the changed buffer without saving it, switch on the
 			'autowriteall' is set and the file can be written.
 			Also see |++opt| and |+cmd|.
 
-:conf[irm] e[dit][!] [++opt] [+cmd] [file]
-			Same as :edit, but show the swapfile dialog (|E325|)
-			if applicable.
-
 							*:edit_#* *:e#*
 :e[dit] [++opt] [+cmd] #[count]
 			Edit the [count]th buffer (as shown by |:files|).

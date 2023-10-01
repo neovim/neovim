@@ -477,7 +477,7 @@ void trunc_string(const char *s, char *buf, int room_in, int buflen)
 
 /// Shows a printf-style message with attributes.
 ///
-/// Note: Caller of smsg() must check the resulting string is shorter than IOSIZE!!!
+/// Note: Caller must check the resulting string is shorter than IOSIZE!!!
 ///
 /// @see semsg
 /// @see swmsg

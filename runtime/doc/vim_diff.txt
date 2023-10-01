@@ -139,6 +139,11 @@ nvim_terminal:
 nvim_cmdwin:
 - CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.
 
+nvim_swapfile:
+- SwapExists: Skips the swapfile prompt (sets |v:swapchoice| to "e") when the
+  swapfile is owned by a running Nvim process. Shows |W325| "Ignoring
+  swapfile…" message.
+
 ==============================================================================
 New Features						       *nvim-features*
 
@@ -229,11 +234,6 @@ Commands:
   |:source| works with Lua
   User commands can support |:command-preview| to show results as you type
   |:write| with "++p" flag creates parent directories.
-
-Editor:
-- The swapfile |E325| "ATTENTION" dialog is less noisy. For example, it's
-  skipped if the swapfile is owned by a running Nvim process. If you always
-  want the swapfile dialog, set 'confirm' or use ":confirm edit".
 
 Events:
   |RecordingEnter|
