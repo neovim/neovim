@@ -11,6 +11,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand.h"
 #include "nvim/cursor.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/diff.h"
@@ -41,6 +42,7 @@
 #include "nvim/optionstr.h"
 #include "nvim/os/os.h"
 #include "nvim/pos.h"
+#include "nvim/regexp.h"
 #include "nvim/runtime.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
@@ -72,12 +74,25 @@ static char *(p_bkc_values[]) = { "yes", "auto", "no", "breaksymlink", "breakhar
 static char *(p_bo_values[]) = { "all", "backspace", "cursor", "complete", "copy", "ctrlg", "error",
                                  "esc", "ex", "hangul", "lang", "mess", "showmatch", "operator",
                                  "register", "shell", "spell", "wildmode", NULL };
+// Note: Keep this in sync with briopt_check()
+static char *(p_briopt_values[]) = { "shift:", "min:", "sbr", "list:", "column:", NULL };
+// Note: Keep this in sync with diffopt_changed()
+static char *(p_dip_values[]) = { "filler", "context:", "iblank", "icase",
+                                  "iwhite", "iwhiteall", "iwhiteeol", "horizontal", "vertical",
+                                  "closeoff", "hiddenoff", "foldcolumn:", "followwrap", "internal",
+                                  "indent-heuristic", "linematch:", "algorithm:", NULL };
+static char *(p_dip_algorithm_values[]) = { "myers", "minimal", "patience", "histogram", NULL };
 static char *(p_nf_values[]) = { "bin", "octal", "hex", "alpha", "unsigned", NULL };
 static char *(p_ff_values[]) = { FF_UNIX, FF_DOS, FF_MAC, NULL };
+static char *(p_cb_values[]) = { "unnamed", "unnamedplus", NULL };
 static char *(p_cmp_values[]) = { "internal", "keepascii", NULL };
+// Note: Keep this in sync with fill_culopt_flags()
+static char *(p_culopt_values[]) = { "line", "screenline", "number", "both", NULL };
 static char *(p_dy_values[]) = { "lastline", "truncate", "uhex", "msgsep", NULL };
 static char *(p_fdo_values[]) = { "all", "block", "hor", "mark", "percent", "quickfix", "search",
                                   "tag", "insert", "undo", "jump", NULL };
+// Note: Keep this in sync with spell_check_sps()
+static char *(p_sps_values[]) = { "best", "fast", "double", "expr:", "file:", "timeout:", NULL };
 /// Also used for 'viewoptions'!  Keep in sync with SSOP_ flags.
 static char *(p_ssop_values[]) = { "buffers", "winpos", "resize", "winsize", "localoptions",
                                    "options", "help", "blank", "globals", "slash", "unix", "sesdir",
@@ -89,7 +104,9 @@ static char *(p_swb_values[]) = { "useopen", "usetab", "split", "newtab", "vspli
 static char *(p_spk_values[]) = { "cursor", "screen", "topline", NULL };
 static char *(p_tc_values[]) = { "followic", "ignore", "match", "followscs", "smart", NULL };
 static char *(p_ve_values[]) = { "block", "insert", "all", "onemore", "none", "NONE", NULL };
-static char *(p_wop_values[]) = { "tagfile", "pum", "fuzzy", NULL };
+// Note: Keep this in sync with check_opt_wim()
+static char *(p_wim_values[]) = { "full", "longest", "list", "lastused", NULL };
+static char *(p_wop_values[]) = { "fuzzy", "tagfile", "pum", NULL };
 static char *(p_wak_values[]) = { "yes", "menu", "no", NULL };
 static char *(p_mousem_values[]) = { "extend", "popup", "popup_setpos", "mac", NULL };
 static char *(p_sel_values[]) = { "inclusive", "exclusive", "old", NULL };
@@ -118,7 +135,6 @@ static char *(p_scl_values[]) = { "yes", "no", "auto", "auto:1", "auto:2", "auto
 static char *(p_fdc_values[]) = { "auto", "auto:1", "auto:2", "auto:3", "auto:4", "auto:5",
                                   "auto:6", "auto:7", "auto:8", "auto:9", "0", "1", "2", "3", "4",
                                   "5", "6", "7", "8", "9", NULL };
-static char *(p_cb_values[]) = { "unnamed", "unnamedplus", NULL };
 static char *(p_spo_values[]) = { "camel", "noplainbuffer", NULL };
 static char *(p_icm_values[]) = { "nosplit", "split", NULL };
 static char *(p_jop_values[]) = { "stack", "view", NULL };
@@ -487,8 +503,9 @@ const char *set_string_option(const int opt_idx, void *varp_arg, const char *val
     secure = 1;
   }
 
-  const char *const errmsg = did_set_string_option(curbuf, curwin, opt_idx, varp, oldval, errbuf,
-                                                   errbuflen, opt_flags, value_checked);
+  const char *const errmsg = did_set_string_option(curbuf, curwin, opt_idx, varp, oldval,
+                                                   errbuf, errbuflen,
+                                                   opt_flags, OP_NONE, value_checked);
 
   secure = secure_saved;
 
@@ -659,6 +676,116 @@ static const char *did_set_option_listflag(char *val, char *flags, char *errbuf,
   return NULL;
 }
 
+/// Expand an option that accepts a list of string values.
+static int expand_set_opt_string(optexpand_T *args, char **values, size_t numValues,
+                                 int *numMatches, char ***matches)
+{
+  regmatch_T *regmatch = args->oe_regmatch;
+  bool include_orig_val = args->oe_include_orig_val;
+  char *option_val = args->oe_opt_value;
+
+  // Assume numValues is small since they are fixed enums, so just allocate
+  // upfront instead of needing two passes to calculate output size.
+  *matches = xmalloc(sizeof(char *) * (numValues + 1));
+
+  int count = 0;
+
+  if (include_orig_val && *option_val != NUL) {
+    (*matches)[count++] = xstrdup(option_val);
+  }
+
+  for (char **val = values; *val != NULL; val++) {
+    if (include_orig_val && *option_val != NUL) {
+      if (strcmp(*val, option_val) == 0) {
+        continue;
+      }
+    }
+    if (vim_regexec(regmatch, *val, (colnr_T)0)) {
+      (*matches)[count++] = xstrdup(*val);
+    }
+  }
+  if (count == 0) {
+    XFREE_CLEAR(*matches);
+    return FAIL;
+  }
+  *numMatches = count;
+  return OK;
+}
+
+static char *set_opt_callback_orig_option = NULL;
+static char *((*set_opt_callback_func)(expand_T *, int));
+
+/// Callback used by expand_set_opt_generic to also include the original value.
+static char *expand_set_opt_callback(expand_T *xp, int idx)
+{
+  if (idx == 0) {
+    if (set_opt_callback_orig_option != NULL) {
+      return set_opt_callback_orig_option;
+    } else {
+      return "";  // empty strings are ignored
+    }
+  }
+  return set_opt_callback_func(xp, idx - 1);
+}
+
+/// Expand an option with a callback that iterates through a list of possible names.
+static int expand_set_opt_generic(optexpand_T *args, CompleteListItemGetter func, int *numMatches,
+                                  char ***matches)
+{
+  set_opt_callback_orig_option = args->oe_include_orig_val ? args->oe_opt_value : NULL;
+  set_opt_callback_func = func;
+
+  // not using fuzzy as currently EXPAND_STRING_SETTING doesn't use it
+  ExpandGeneric("", args->oe_xp, args->oe_regmatch, matches, numMatches,
+                expand_set_opt_callback, false);
+
+  set_opt_callback_orig_option = NULL;
+  set_opt_callback_func = NULL;
+  return OK;
+}
+
+/// Expand an option which is a list of flags.
+static int expand_set_opt_listflag(optexpand_T *args, char *flags, int *numMatches, char ***matches)
+{
+  char *option_val = args->oe_opt_value;
+  char *cmdline_val = args->oe_set_arg;
+  bool append = args->oe_append;
+  bool include_orig_val = args->oe_include_orig_val && (*option_val != NUL);
+
+  size_t num_flags = strlen(flags);
+
+  // Assume we only have small number of flags, so just allocate max size.
+  *matches = xmalloc(sizeof(char *) * (num_flags + 1));
+
+  int count = 0;
+
+  if (include_orig_val) {
+    (*matches)[count++] = xstrdup(option_val);
+  }
+
+  for (char *flag = flags; *flag != NUL; flag++) {
+    if (append && vim_strchr(option_val, *flag) != NULL) {
+      continue;
+    }
+
+    if (vim_strchr(cmdline_val, *flag) == NULL) {
+      if (include_orig_val && option_val[1] == NUL && *flag == option_val[0]) {
+        // This value is already used as the first choice as it's the
+        // existing flag. Just skip it to avoid duplicate.
+        continue;
+      }
+      (*matches)[count++] = xstrnsave(flag, 1);
+    }
+  }
+
+  if (count == 0) {
+    XFREE_CLEAR(*matches);
+    return FAIL;
+  }
+  *numMatches = count;
+  return OK;
+}
+
 /// The 'ambiwidth' option is changed.
 const char *did_set_ambiwidth(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -666,6 +793,15 @@ const char *did_set_ambiwidth(optset_T *args FUNC_ATTR_UNUSED)
     return e_invarg;
   }
   return check_chars_options();
+}
+
+int expand_set_ambiwidth(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_ambw_values,
+                               ARRAY_SIZE(p_ambw_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'background' option is changed.
@@ -692,6 +828,15 @@ const char *did_set_background(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+int expand_set_background(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_bg_values,
+                               ARRAY_SIZE(p_bg_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'backspace' option is changed.
 const char *did_set_backspace(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -703,6 +848,15 @@ const char *did_set_backspace(optset_T *args FUNC_ATTR_UNUSED)
     return e_invarg;
   }
   return NULL;
+}
+
+int expand_set_backspace(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_bs_values,
+                               ARRAY_SIZE(p_bs_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'backupcopy' option is changed.
@@ -739,6 +893,15 @@ const char *did_set_backupcopy(optset_T *args)
   return NULL;
 }
 
+int expand_set_backupcopy(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_bkc_values,
+                               ARRAY_SIZE(p_bkc_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'backupext' or the 'patchmode' option is changed.
 const char *did_set_backupext_or_patchmode(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -756,6 +919,15 @@ const char *did_set_belloff(optset_T *args FUNC_ATTR_UNUSED)
   return did_set_opt_flags(p_bo, p_bo_values, &bo_flags, true);
 }
 
+int expand_set_belloff(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_bo_values,
+                               ARRAY_SIZE(p_bo_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'breakindentopt' option is changed.
 const char *did_set_breakindentopt(optset_T *args)
 {
@@ -771,11 +943,29 @@ const char *did_set_breakindentopt(optset_T *args)
   return NULL;
 }
 
+int expand_set_breakindentopt(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_briopt_values,
+                               ARRAY_SIZE(p_briopt_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'bufhidden' option is changed.
 const char *did_set_bufhidden(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
   return did_set_opt_strings(buf->b_p_bh, p_bufhidden_values, false);
+}
+
+int expand_set_bufhidden(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_bufhidden_values,
+                               ARRAY_SIZE(p_bufhidden_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'buftype' option is changed.
@@ -798,10 +988,28 @@ const char *did_set_buftype(optset_T *args)
   return NULL;
 }
 
+int expand_set_buftype(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_buftype_values,
+                               ARRAY_SIZE(p_buftype_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'casemap' option is changed.
 const char *did_set_casemap(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_flags(p_cmp, p_cmp_values, &cmp_flags, true);
+}
+
+int expand_set_casemap(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_cmp_values,
+                               ARRAY_SIZE(p_cmp_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The global 'listchars' or 'fillchars' option is changed.
@@ -867,6 +1075,17 @@ const char *did_set_chars_option(optset_T *args)
   return errmsg;
 }
 
+/// Expand 'fillchars' or 'listchars' option value.
+int expand_set_chars_option(optexpand_T *args, int *numMatches, char ***matches)
+{
+  char **varp = (char **)args->oe_varp;
+  bool is_lcs = (varp == &p_lcs || varp == &curwin->w_p_lcs);
+  return expand_set_opt_generic(args,
+                                is_lcs ? get_listchars_name : get_fillchars_name,
+                                numMatches,
+                                matches);
+}
+
 /// The 'cinoptions' option is changed.
 const char *did_set_cinoptions(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -880,6 +1099,15 @@ const char *did_set_cinoptions(optset_T *args FUNC_ATTR_UNUSED)
 const char *did_set_clipboard(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_flags(p_cb, p_cb_values, &cb_flags, true);
+}
+
+int expand_set_clipboard(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_cb_values,
+                               ARRAY_SIZE(p_cb_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'colorcolumn' option is changed.
@@ -972,6 +1200,18 @@ const char *did_set_complete(optset_T *args)
   return NULL;
 }
 
+int expand_set_complete(optexpand_T *args, int *numMatches, char ***matches)
+{
+  static char *(p_cpt_values[]) = {
+    ".", "w", "b", "u", "k", "kspell", "s", "i", "d", "]", "t", "U", NULL
+  };
+  return expand_set_opt_string(args,
+                               p_cpt_values,
+                               ARRAY_SIZE(p_cpt_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'completeopt' option is changed.
 const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -980,6 +1220,15 @@ const char *did_set_completeopt(optset_T *args FUNC_ATTR_UNUSED)
   }
   completeopt_was_set();
   return NULL;
+}
+
+int expand_set_completeopt(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_cot_values,
+                               ARRAY_SIZE(p_cot_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 #ifdef BACKSLASH_IN_FILENAME
@@ -993,6 +1242,15 @@ const char *did_set_completeslash(optset_T *args)
   }
   return NULL;
 }
+
+int expand_set_completeslash(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_csl_values,
+                               ARRAY_SIZE(p_csl_values) - 1,
+                               numMatches,
+                               matches);
+}
 #endif
 
 /// The 'concealcursor' option is changed.
@@ -1003,6 +1261,11 @@ const char *did_set_concealcursor(optset_T *args)
   return did_set_option_listflag(*varp, COCU_ALL, args->os_errbuf, args->os_errbuflen);
 }
 
+int expand_set_concealcursor(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_listflag(args, COCU_ALL, numMatches, matches);
+}
+
 /// The 'cpoptions' option is changed.
 const char *did_set_cpoptions(optset_T *args)
 {
@@ -1011,12 +1274,18 @@ const char *did_set_cpoptions(optset_T *args)
   return did_set_option_listflag(*varp, CPO_VI, args->os_errbuf, args->os_errbuflen);
 }
 
+int expand_set_cpoptions(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_listflag(args, CPO_VI, numMatches, matches);
+}
+
 /// The 'cursorlineopt' option is changed.
 const char *did_set_cursorlineopt(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
   char **varp = (char **)args->os_varp;
 
+  // This could be changed to use opt_strings_flags() instead.
   if (**varp == NUL || fill_culopt_flags(*varp, win) != OK) {
     return e_invarg;
   }
@@ -1024,10 +1293,28 @@ const char *did_set_cursorlineopt(optset_T *args)
   return NULL;
 }
 
+int expand_set_cursorlineopt(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_culopt_values,
+                               ARRAY_SIZE(p_culopt_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'debug' option is changed.
 const char *did_set_debug(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_strings(p_debug, p_debug_values, false);
+}
+
+int expand_set_debug(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_debug_values,
+                               ARRAY_SIZE(p_debug_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'diffopt' option is changed.
@@ -1037,6 +1324,31 @@ const char *did_set_diffopt(optset_T *args FUNC_ATTR_UNUSED)
     return e_invarg;
   }
   return NULL;
+}
+
+int expand_set_diffopt(optexpand_T *args, int *numMatches, char ***matches)
+{
+  expand_T *xp = args->oe_xp;
+
+  if (xp->xp_pattern > args->oe_set_arg && *(xp->xp_pattern - 1) == ':') {
+    // Within "algorithm:", we have a subgroup of possible options.
+    const size_t algo_len = strlen("algorithm:");
+    if (xp->xp_pattern - args->oe_set_arg >= (int)algo_len
+        && strncmp(xp->xp_pattern - algo_len, "algorithm:", algo_len) == 0) {
+      return expand_set_opt_string(args,
+                                   p_dip_algorithm_values,
+                                   ARRAY_SIZE(p_dip_algorithm_values) - 1,
+                                   numMatches,
+                                   matches);
+    }
+    return FAIL;
+  }
+
+  return expand_set_opt_string(args,
+                               p_dip_values,
+                               ARRAY_SIZE(p_dip_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'display' option is changed.
@@ -1050,10 +1362,28 @@ const char *did_set_display(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+int expand_set_display(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_dy_values,
+                               ARRAY_SIZE(p_dy_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'eadirection' option is changed.
 const char *did_set_eadirection(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_strings(p_ead, p_ead_values, false);
+}
+
+int expand_set_eadirection(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_ead_values,
+                               ARRAY_SIZE(p_ead_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// One of the 'encoding', 'fileencoding' or 'makeencoding'
@@ -1098,6 +1428,11 @@ const char *did_set_encoding(optset_T *args)
   return NULL;
 }
 
+int expand_set_encoding(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_generic(args, get_encoding_name, numMatches, matches);
+}
+
 /// The 'eventignore' option is changed.
 const char *did_set_eventignore(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -1105,6 +1440,21 @@ const char *did_set_eventignore(optset_T *args FUNC_ATTR_UNUSED)
     return e_invarg;
   }
   return NULL;
+}
+
+static char *get_eventignore_name(expand_T *xp, int idx)
+{
+  // 'eventignore' allows special keyword "all" in addition to
+  // all event names.
+  if (idx == 0) {
+    return "all";
+  }
+  return get_event_name_no_group(xp, idx - 1);
+}
+
+int expand_set_eventignore(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_generic(args, get_eventignore_name, numMatches, matches);
 }
 
 /// The 'fileformat' option is changed.
@@ -1128,6 +1478,15 @@ const char *did_set_fileformat(optset_T *args)
     redraw_buf_later(buf, UPD_NOT_VALID);
   }
   return NULL;
+}
+
+int expand_set_fileformat(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_ff_values,
+                               ARRAY_SIZE(p_ff_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'fileformats' option is changed.
@@ -1160,6 +1519,15 @@ const char *did_set_foldclose(optset_T *args FUNC_ATTR_UNUSED)
   return did_set_opt_strings(p_fcl, p_fcl_values, true);
 }
 
+int expand_set_foldclose(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_fcl_values,
+                               ARRAY_SIZE(p_fcl_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'foldcolumn' option is changed.
 const char *did_set_foldcolumn(optset_T *args)
 {
@@ -1168,6 +1536,15 @@ const char *did_set_foldcolumn(optset_T *args)
     return e_invarg;
   }
   return NULL;
+}
+
+int expand_set_foldcolumn(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_fdc_values,
+                               ARRAY_SIZE(p_fdc_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'foldexpr' option is changed.
@@ -1229,10 +1606,28 @@ const char *did_set_foldmethod(optset_T *args)
   return NULL;
 }
 
+int expand_set_foldmethod(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_fdm_values,
+                               ARRAY_SIZE(p_fdm_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'foldopen' option is changed.
 const char *did_set_foldopen(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_flags(p_fdo, p_fdo_values, &fdo_flags, true);
+}
+
+int expand_set_foldopen(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_fdo_values,
+                               ARRAY_SIZE(p_fdo_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'formatoptions' option is changed.
@@ -1241,6 +1636,11 @@ const char *did_set_formatoptions(optset_T *args)
   char **varp = (char **)args->os_varp;
 
   return did_set_option_listflag(*varp, FO_ALL, args->os_errbuf, args->os_errbuflen);
+}
+
+int expand_set_formatoptions(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_listflag(args, FO_ALL, numMatches, matches);
 }
 
 /// The 'guicursor' option is changed.
@@ -1300,6 +1700,15 @@ const char *did_set_inccommand(optset_T *args FUNC_ATTR_UNUSED)
   return did_set_opt_strings(p_icm, p_icm_values, false);
 }
 
+int expand_set_inccommand(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_icm_values,
+                               ARRAY_SIZE(p_icm_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'isident' or the 'iskeyword' or the 'isprint' or the 'isfname' option is
 /// changed.
 const char *did_set_isopt(optset_T *args)
@@ -1319,6 +1728,15 @@ const char *did_set_isopt(optset_T *args)
 const char *did_set_jumpoptions(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_flags(p_jop, p_jop_values, &jop_flags, true);
+}
+
+int expand_set_jumpoptions(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_jop_values,
+                               ARRAY_SIZE(p_jop_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'keymap' option has changed.
@@ -1384,6 +1802,15 @@ const char *did_set_keymodel(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+int expand_set_keymodel(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_km_values,
+                               ARRAY_SIZE(p_km_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'lispoptions' option is changed.
 const char *did_set_lispoptions(optset_T *args)
 {
@@ -1393,6 +1820,16 @@ const char *did_set_lispoptions(optset_T *args)
     return e_invarg;
   }
   return NULL;
+}
+
+int expand_set_lispoptions(optexpand_T *args, int *numMatches, char ***matches)
+{
+  static char *(p_lop_values[]) = { "expr:0", "expr:1", NULL };
+  return expand_set_opt_string(args,
+                               p_lop_values,
+                               ARRAY_SIZE(p_lop_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'matchpairs' option is changed.
@@ -1439,10 +1876,24 @@ const char *did_set_mouse(optset_T *args)
   return did_set_option_listflag(*varp, MOUSE_ALL, args->os_errbuf, args->os_errbuflen);
 }
 
+int expand_set_mouse(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_listflag(args, MOUSE_ALL, numMatches, matches);
+}
+
 /// The 'mousemodel' option is changed.
 const char *did_set_mousemodel(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_strings(p_mousem, p_mousem_values, false);
+}
+
+int expand_set_mousemodel(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_mousem_values,
+                               ARRAY_SIZE(p_mousem_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// Handle setting 'mousescroll'.
@@ -1510,12 +1961,31 @@ const char *did_set_mousescroll(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+int expand_set_mousescroll(optexpand_T *args, int *numMatches, char ***matches)
+{
+  static char *(p_mousescroll_values[]) = { "hor:", "ver:", NULL };
+  return expand_set_opt_string(args,
+                               p_mousescroll_values,
+                               ARRAY_SIZE(p_mousescroll_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'nrformats' option is changed.
 const char *did_set_nrformats(optset_T *args)
 {
   char **varp = (char **)args->os_varp;
 
   return did_set_opt_strings(*varp, p_nf_values, true);
+}
+
+int expand_set_nrformats(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_nf_values,
+                               ARRAY_SIZE(p_nf_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// One of the '*expr' options is changed:, 'diffexpr', 'foldexpr', 'foldtext',
@@ -1553,6 +2023,16 @@ const char *did_set_rightleftcmd(optset_T *args)
   return NULL;
 }
 
+int expand_set_rightleftcmd(optexpand_T *args, int *numMatches, char ***matches)
+{
+  static char *(p_rlc_values[]) = { "search", NULL };
+  return expand_set_opt_string(args,
+                               p_rlc_values,
+                               ARRAY_SIZE(p_rlc_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'rulerformat' option is changed.
 const char *did_set_rulerformat(optset_T *args)
 {
@@ -1565,6 +2045,15 @@ const char *did_set_scrollopt(optset_T *args FUNC_ATTR_UNUSED)
   return did_set_opt_strings(p_sbo, p_scbopt_values, true);
 }
 
+int expand_set_scrollopt(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_scbopt_values,
+                               ARRAY_SIZE(p_scbopt_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'selection' option is changed.
 const char *did_set_selection(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -1574,10 +2063,28 @@ const char *did_set_selection(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+int expand_set_selection(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_sel_values,
+                               ARRAY_SIZE(p_sel_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'selectmode' option is changed.
 const char *did_set_selectmode(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_strings(p_slm, p_slm_values, true);
+}
+
+int expand_set_selectmode(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_slm_values,
+                               ARRAY_SIZE(p_slm_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'sessionoptions' option is changed.
@@ -1593,6 +2100,15 @@ const char *did_set_sessionoptions(optset_T *args)
     return e_invarg;
   }
   return NULL;
+}
+
+int expand_set_sessionoptions(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_ssop_values,
+                               ARRAY_SIZE(p_ssop_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 static const char *did_set_shada(vimoption_T **opt, int *opt_idx, bool *free_oldval, char *errbuf,
@@ -1661,6 +2177,11 @@ const char *did_set_shortmess(optset_T *args)
   return did_set_option_listflag(*varp, SHM_ALL, args->os_errbuf, args->os_errbuflen);
 }
 
+int expand_set_shortmess(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_listflag(args, SHM_ALL, numMatches, matches);
+}
+
 /// The 'showbreak' option is changed.
 const char *did_set_showbreak(optset_T *args)
 {
@@ -1681,6 +2202,15 @@ const char *did_set_showcmdloc(optset_T *args FUNC_ATTR_UNUSED)
   return did_set_opt_strings(p_sloc, p_sloc_values, true);
 }
 
+int expand_set_showcmdloc(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_sloc_values,
+                               ARRAY_SIZE(p_sloc_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'signcolumn' option is changed.
 const char *did_set_signcolumn(optset_T *args)
 {
@@ -1698,6 +2228,15 @@ const char *did_set_signcolumn(optset_T *args)
     win->w_nrwidth_line_count = 0;
   }
   return NULL;
+}
+
+int expand_set_signcolumn(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_scl_values,
+                               ARRAY_SIZE(p_scl_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'spellcapcheck' option is changed.
@@ -1745,6 +2284,15 @@ const char *did_set_spelloptions(optset_T *args)
   return NULL;
 }
 
+int expand_set_spelloptions(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_spo_values,
+                               ARRAY_SIZE(p_spo_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'spellsuggest' option is changed.
 const char *did_set_spellsuggest(optset_T *args FUNC_ATTR_UNUSED)
 {
@@ -1754,10 +2302,28 @@ const char *did_set_spellsuggest(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+int expand_set_spellsuggest(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_sps_values,
+                               ARRAY_SIZE(p_sps_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'splitkeep' option is changed.
 const char *did_set_splitkeep(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_strings(p_spk, p_spk_values, false);
+}
+
+int expand_set_splitkeep(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_spk_values,
+                               ARRAY_SIZE(p_spk_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'statuscolumn' option is changed.
@@ -1817,6 +2383,15 @@ const char *did_set_switchbuf(optset_T *args FUNC_ATTR_UNUSED)
   return did_set_opt_flags(p_swb, p_swb_values, &swb_flags, true);
 }
 
+int expand_set_switchbuf(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_swb_values,
+                               ARRAY_SIZE(p_swb_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'tabline' option is changed.
 const char *did_set_tabline(optset_T *args)
 {
@@ -1850,10 +2425,28 @@ const char *did_set_tagcase(optset_T *args)
   return NULL;
 }
 
+int expand_set_tagcase(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_tc_values,
+                               ARRAY_SIZE(p_tc_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'termpastefilter' option is changed.
 const char *did_set_termpastefilter(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_flags(p_tpf, p_tpf_values, &tpf_flags, true);
+}
+
+int expand_set_termpastefilter(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_tpf_values,
+                               ARRAY_SIZE(p_tpf_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'titlestring' or the 'iconstring' option is changed.
@@ -1988,12 +2581,28 @@ const char *did_set_virtualedit(optset_T *args)
   return NULL;
 }
 
+int expand_set_virtualedit(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_ve_values,
+                               ARRAY_SIZE(p_ve_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'whichwrap' option is changed.
 const char *did_set_whichwrap(optset_T *args)
 {
   char **varp = (char **)args->os_varp;
 
-  return did_set_option_listflag(*varp, WW_ALL, args->os_errbuf, args->os_errbuflen);
+  // Add ',' to the list flags because 'whichwrap' is a flag
+  // list that is comma-separated.
+  return did_set_option_listflag(*varp, WW_ALL ",", args->os_errbuf, args->os_errbuflen);
+}
+
+int expand_set_whichwrap(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_listflag(args, WW_ALL, numMatches, matches);
 }
 
 /// The 'wildmode' option is changed.
@@ -2005,10 +2614,28 @@ const char *did_set_wildmode(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+int expand_set_wildmode(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_wim_values,
+                               ARRAY_SIZE(p_wim_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'wildoptions' option is changed.
 const char *did_set_wildoptions(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_flags(p_wop, p_wop_values, &wop_flags, true);
+}
+
+int expand_set_wildoptions(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_wop_values,
+                               ARRAY_SIZE(p_wop_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'winaltkeys' option is changed.
@@ -2020,19 +2647,34 @@ const char *did_set_winaltkeys(optset_T *args FUNC_ATTR_UNUSED)
   return NULL;
 }
 
+int expand_set_winaltkeys(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_wak_values,
+                               ARRAY_SIZE(p_wak_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'winbar' option is changed.
 const char *did_set_winbar(optset_T *args)
 {
   return did_set_statustabline_rulerformat(args, false, false);
 }
 
-const char *did_set_winhl(optset_T *args)
+/// The 'winhighlight' option is changed.
+const char *did_set_winhighlight(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
   if (!parse_winhl_opt(win)) {
     return e_invarg;
   }
   return NULL;
+}
+
+int expand_set_winhighlight(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_generic(args, get_highlight_name, numMatches, matches);
 }
 
 // When 'syntax' is set, load the syntax of that name
@@ -2084,11 +2726,12 @@ static void do_spelllang_source(win_T *win)
 /// @param errbuf  buffer for errors, or NULL
 /// @param errbuflen  length of errors buffer
 /// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
+/// @param op OP_ADDING/OP_PREPENDING/OP_REMOVING
 /// @param value_checked  value was checked to be safe, no need to set P_INSECURE
 ///
 /// @return  NULL for success, or an untranslated error message for an error
 const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **varp, char *oldval,
-                                  char *errbuf, size_t errbuflen, int opt_flags,
+                                  char *errbuf, size_t errbuflen, int opt_flags, set_op_T op,
                                   bool *value_checked)
 {
   const char *errmsg = NULL;
@@ -2102,6 +2745,7 @@ const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **va
     .os_varp = varp,
     .os_idx = opt_idx,
     .os_flags = opt_flags,
+    .os_op = op,
     .os_oldval.string = oldval,
     .os_newval.string = *varp,
     .os_value_checked = false,
@@ -2324,15 +2968,17 @@ static const struct chars_tab fcs_tab[] = {
 
 static lcs_chars_T lcs_chars;
 static const struct chars_tab lcs_tab[] = {
-  { &lcs_chars.eol,     "eol",      NUL, NUL },
-  { &lcs_chars.ext,     "extends",  NUL, NUL },
-  { &lcs_chars.nbsp,    "nbsp",     NUL, NUL },
-  { &lcs_chars.prec,    "precedes", NUL, NUL },
-  { &lcs_chars.space,   "space",    NUL, NUL },
-  { &lcs_chars.tab2,    "tab",      NUL, NUL },
-  { &lcs_chars.lead,    "lead",     NUL, NUL },
-  { &lcs_chars.trail,   "trail",    NUL, NUL },
-  { &lcs_chars.conceal, "conceal",  NUL, NUL },
+  { &lcs_chars.eol,     "eol",            NUL, NUL },
+  { &lcs_chars.ext,     "extends",        NUL, NUL },
+  { &lcs_chars.nbsp,    "nbsp",           NUL, NUL },
+  { &lcs_chars.prec,    "precedes",       NUL, NUL },
+  { &lcs_chars.space,   "space",          NUL, NUL },
+  { &lcs_chars.tab2,    "tab",            NUL, NUL },
+  { &lcs_chars.lead,    "lead",           NUL, NUL },
+  { &lcs_chars.trail,   "trail",          NUL, NUL },
+  { &lcs_chars.conceal, "conceal",        NUL, NUL },
+  { NULL,               "multispace",     NUL, NUL },
+  { NULL,               "leadmultispace", NUL, NUL },
 };
 
 /// Handle setting 'listchars' or 'fillchars'.
@@ -2403,54 +3049,13 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
       int i;
       for (i = 0; i < entries; i++) {
         const size_t len = strlen(tab[i].name);
-        if (strncmp(p, tab[i].name, len) == 0
-            && p[len] == ':'
-            && p[len + 1] != NUL) {
-          const char *s = p + len + 1;
-          int c1 = get_encoded_char_adv(&s);
-          if (c1 == 0 || char2cells(c1) > 1) {
-            return e_invarg;
-          }
-          int c2 = 0, c3 = 0;
-          if (tab[i].cp == &lcs_chars.tab2) {
-            if (*s == NUL) {
-              return e_invarg;
-            }
-            c2 = get_encoded_char_adv(&s);
-            if (c2 == 0 || char2cells(c2) > 1) {
-              return e_invarg;
-            }
-            if (!(*s == ',' || *s == NUL)) {
-              c3 = get_encoded_char_adv(&s);
-              if (c3 == 0 || char2cells(c3) > 1) {
-                return e_invarg;
-              }
-            }
-          }
-
-          if (*s == ',' || *s == NUL) {
-            if (round > 0) {
-              if (tab[i].cp == &lcs_chars.tab2) {
-                lcs_chars.tab1 = c1;
-                lcs_chars.tab2 = c2;
-                lcs_chars.tab3 = c3;
-              } else if (tab[i].cp != NULL) {
-                *(tab[i].cp) = c1;
-              }
-            }
-            p = s;
-            break;
-          }
+        if (!(strncmp(p, tab[i].name, len) == 0
+              && p[len] == ':'
+              && p[len + 1] != NUL)) {
+          continue;
         }
-      }
 
-      if (i == entries) {
-        const size_t len = strlen("multispace");
-        const size_t len2 = strlen("leadmultispace");
-        if (is_listchars
-            && strncmp(p, "multispace", len) == 0
-            && p[len] == ':'
-            && p[len + 1] != NUL) {
+        if (is_listchars && strcmp(tab[i].name, "multispace") == 0) {
           const char *s = p + len + 1;
           if (round == 0) {
             // Get length of lcs-multispace string in the first round
@@ -2478,11 +3083,11 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
             }
             p = s;
           }
-        } else if (is_listchars
-                   && strncmp(p, "leadmultispace", len2) == 0
-                   && p[len2] == ':'
-                   && p[len2 + 1] != NUL) {
-          const char *s = p + len2 + 1;
+          break;
+        }
+
+        if (is_listchars && strcmp(tab[i].name, "leadmultispace") == 0) {
+          const char *s = p + len + 1;
           if (round == 0) {
             // get length of lcs-leadmultispace string in first round
             last_lmultispace = p;
@@ -2509,9 +3114,48 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
             }
             p = s;
           }
-        } else {
+          break;
+        }
+
+        const char *s = p + len + 1;
+        int c1 = get_encoded_char_adv(&s);
+        if (c1 == 0 || char2cells(c1) > 1) {
           return e_invarg;
         }
+        int c2 = 0, c3 = 0;
+        if (tab[i].cp == &lcs_chars.tab2) {
+          if (*s == NUL) {
+            return e_invarg;
+          }
+          c2 = get_encoded_char_adv(&s);
+          if (c2 == 0 || char2cells(c2) > 1) {
+            return e_invarg;
+          }
+          if (!(*s == ',' || *s == NUL)) {
+            c3 = get_encoded_char_adv(&s);
+            if (c3 == 0 || char2cells(c3) > 1) {
+              return e_invarg;
+            }
+          }
+        }
+
+        if (*s == ',' || *s == NUL) {
+          if (round > 0) {
+            if (tab[i].cp == &lcs_chars.tab2) {
+              lcs_chars.tab1 = c1;
+              lcs_chars.tab2 = c2;
+              lcs_chars.tab3 = c3;
+            } else if (tab[i].cp != NULL) {
+              *(tab[i].cp) = c1;
+            }
+          }
+          p = s;
+          break;
+        }
+      }
+
+      if (i == entries) {
+        return e_invarg;
       }
 
       if (*p == ',') {
@@ -2536,6 +3180,40 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
   return NULL;          // no error
 }
 
+/// Handle the new value of 'fillchars'.
+const char *set_fillchars_option(win_T *wp, char *val, bool apply)
+{
+  return set_chars_option(wp, val, false, apply);
+}
+
+/// Handle the new value of 'listchars'.
+const char *set_listchars_option(win_T *wp, char *val, bool apply)
+{
+  return set_chars_option(wp, val, true, apply);
+}
+
+/// Function given to ExpandGeneric() to obtain possible arguments of the
+/// 'fillchars' option.
+char *get_fillchars_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  if (idx >= (int)ARRAY_SIZE(fcs_tab)) {
+    return NULL;
+  }
+
+  return (char *)fcs_tab[idx].name;
+}
+
+/// Function given to ExpandGeneric() to obtain possible arguments of the
+/// 'listchars' option.
+char *get_listchars_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  if (idx >= (int)ARRAY_SIZE(lcs_tab)) {
+    return NULL;
+  }
+
+  return (char *)lcs_tab[idx].name;
+}
+
 /// Check all global and local values of 'listchars' and 'fillchars'.
 /// May set different defaults in case character widths change.
 ///
@@ -2557,16 +3235,4 @@ const char *check_chars_options(void)
     }
   }
   return NULL;
-}
-
-/// Handle the new value of 'fillchars'.
-const char *set_fillchars_option(win_T *wp, char *val, bool apply)
-{
-  return set_chars_option(wp, val, false, apply);
-}
-
-/// Handle the new value of 'listchars'.
-const char *set_listchars_option(win_T *wp, char *val, bool apply)
-{
-  return set_chars_option(wp, val, true, apply);
 }

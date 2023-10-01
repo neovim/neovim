@@ -105,6 +105,8 @@ The following new APIs and features were added.
 
 • |nvim_set_keymap()| and |nvim_del_keymap()| now support abbreviations.
 
+• Better cmdline completion for string option value. |complete-set-option|
+
 • Builtin TUI can now recognize "super" (|<D-|) and "meta" (|<T-|) modifiers in a
   terminal emulator that supports |tui-csiu|.
 

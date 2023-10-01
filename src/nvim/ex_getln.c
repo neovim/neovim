@@ -2766,6 +2766,7 @@ int check_opt_wim(void)
   }
 
   for (char *p = p_wim; *p; p++) {
+    // Note: Keep this in sync with p_wim_values.
     for (i = 0; ASCII_ISALPHA(p[i]); i++) {}
     if (p[i] != NUL && p[i] != ',' && p[i] != ':') {
       return FAIL;

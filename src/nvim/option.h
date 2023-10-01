@@ -7,6 +7,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/option_defs.h"
+#include "nvim/search.h"
 
 /// The options that are local to a window or buffer have "indir" set to one of
 /// these values.  Special values:
@@ -45,7 +46,15 @@ typedef struct vimoption {
                      ///< local option: indirect option index
                      ///< callback function to invoke after an option is modified to validate and
                      ///< apply the new value.
+
+  /// callback function to invoke after an option is modified to validate and
+  /// apply the new value.
   opt_did_set_cb_T opt_did_set_cb;
+
+  /// callback function to invoke when expanding possible values on the
+  /// cmdline. Only useful for string options.
+  opt_expand_cb_T opt_expand_cb;
+
   void *def_val;     ///< default values for variable (neovim!!)
   LastSet last_set;  ///< script in which the option was last set
 } vimoption_T;

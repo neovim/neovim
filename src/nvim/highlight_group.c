@@ -2283,10 +2283,10 @@ static void highlight_list_two(int cnt, int attr)
 }
 
 /// Function given to ExpandGeneric() to obtain the list of group names.
-const char *get_highlight_name(expand_T *const xp, int idx)
+char *get_highlight_name(expand_T *const xp, int idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return get_highlight_name_ext(xp, idx, true);
+  return (char *)get_highlight_name_ext(xp, idx, true);
 }
 
 /// Obtain a highlight group name.

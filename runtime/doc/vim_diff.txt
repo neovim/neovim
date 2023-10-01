@@ -287,13 +287,12 @@ Options:
   'diffopt'     "linematch" feature
   'exrc'        searches for ".nvim.lua", ".nvimrc", or ".exrc" files. The
                 user is prompted whether to trust the file.
-  'fillchars'   flags: "msgsep", "horiz", "horizup",
-                "horizdown", "vertleft", "vertright", "verthoriz"
+  'fillchars'   flags: "msgsep", "horiz", "horizup", "horizdown",
+                "vertleft", "vertright", "verthoriz"
   'foldcolumn'  supports up to 9 dynamic/fixed columns
   'guicursor'   works in the terminal (TUI)
   'inccommand'  shows interactive results for |:substitute|-like commands
                 and |:command-preview| commands
-  'jumpoptions' "stack" behavior
   'jumpoptions' "view" tries to restore the |mark-view| when moving through
   the |jumplist|, |changelist|, |alternate-file| or using |mark-motions|.
   'laststatus'  global statusline support
@@ -304,6 +303,7 @@ Options:
   'signcolumn'  supports up to 9 dynamic/fixed columns
   'statuscolumn' full control of columns using 'statusline' format
   'tabline'     %@Func@foo%X can call any function on mouse-click
+  'termpastefilter'
   'ttimeout', 'ttimeoutlen' behavior was simplified
   'winblend'    pseudo-transparency in floating windows |api-floatwin|
   'winhighlight' window-local highlights
@@ -382,6 +382,7 @@ Upstreamed features					 *nvim-upstreamed*
 These Nvim features were later integrated into Vim.
 
 - 'fillchars' flags: "eob"
+- 'jumpoptions' "stack" behavior
 - 'wildoptions' flags: "pum" enables popupmenu for wildmode completion
 - |<Cmd>|
 - |WinClosed|

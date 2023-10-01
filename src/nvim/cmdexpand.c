@@ -69,9 +69,6 @@
 #include "nvim/vim.h"
 #include "nvim/window.h"
 
-/// Type used by ExpandGeneric()
-typedef char *(*CompleteListItemGetter)(expand_T *, int);
-
 /// Type used by call_user_expand_func
 typedef void *(*user_expand_func_T)(const char *, int, typval_T *);
 
@@ -107,6 +104,8 @@ static bool cmdline_fuzzy_completion_supported(const expand_T *const xp)
          && xp->xp_context != EXPAND_HELP
          && xp->xp_context != EXPAND_LUA
          && xp->xp_context != EXPAND_OLD_SETTING
+         && xp->xp_context != EXPAND_STRING_SETTING
+         && xp->xp_context != EXPAND_SETTING_SUBTRACT
          && xp->xp_context != EXPAND_OWNSYNTAX
          && xp->xp_context != EXPAND_PACKADD
          && xp->xp_context != EXPAND_RUNTIME
@@ -2599,7 +2598,7 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     { EXPAND_MENUNAMES, get_menu_names, false, true },
     { EXPAND_SYNTAX, get_syntax_name, true, true },
     { EXPAND_SYNTIME, get_syntime_arg, true, true },
-    { EXPAND_HIGHLIGHT, (ExpandFunc)get_highlight_name, true, false },
+    { EXPAND_HIGHLIGHT, get_highlight_name, true, false },
     { EXPAND_EVENTS, expand_get_event_name, true, false },
     { EXPAND_AUGROUP, expand_get_augroup_name, true, false },
     { EXPAND_SIGN, get_sign_name, true, true },
@@ -2694,8 +2693,7 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
     return OK;
   }
   if (xp->xp_context == EXPAND_OLD_SETTING) {
-    ExpandOldSetting(numMatches, matches);
-    return OK;
+    return ExpandOldSetting(numMatches, matches);
   }
   if (xp->xp_context == EXPAND_BUFFERS) {
     return ExpandBufnames(pat, numMatches, matches, options);
@@ -2765,6 +2763,10 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
   if (xp->xp_context == EXPAND_SETTINGS
       || xp->xp_context == EXPAND_BOOL_SETTINGS) {
     ret = ExpandSettings(xp, &regmatch, pat, numMatches, matches, fuzzy);
+  } else if (xp->xp_context == EXPAND_STRING_SETTING) {
+    ret = ExpandStringSetting(xp, &regmatch, numMatches, matches);
+  } else if (xp->xp_context == EXPAND_SETTING_SUBTRACT) {
+    ret = ExpandSettingSubtract(xp, &regmatch, numMatches, matches);
   } else if (xp->xp_context == EXPAND_MAPPINGS) {
     ret = ExpandMappings(pat, &regmatch, numMatches, matches);
   } else if (xp->xp_context == EXPAND_USER_DEFINED) {
@@ -2788,9 +2790,8 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
 /// program.  Matching strings are copied into an array, which is returned.
 ///
 /// @param func  returns a string from the list
-static void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regmatch,
-                          char ***matches, int *numMatches, CompleteListItemGetter func,
-                          int escaped)
+void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regmatch, char ***matches,
+                   int *numMatches, CompleteListItemGetter func, bool escaped)
 {
   const bool fuzzy = cmdline_fuzzy_complete(pat);
   *matches = NULL;
@@ -2863,6 +2864,7 @@ static void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regma
   // in the specified order.
   const bool sort_matches = !fuzzy
                             && xp->xp_context != EXPAND_MENUNAMES
+                            && xp->xp_context != EXPAND_STRING_SETTING
                             && xp->xp_context != EXPAND_MENUS
                             && xp->xp_context != EXPAND_SCRIPTNAMES;
 
@@ -3221,8 +3223,7 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
 
       char **p;
       int num_p = 0;
-      (void)ExpandFromContext(&xpc, buf, &p, &num_p,
-                              WILD_SILENT | expand_options);
+      (void)ExpandFromContext(&xpc, buf, &p, &num_p, WILD_SILENT | expand_options);
       if (num_p > 0) {
         ExpandEscape(&xpc, buf, num_p, p, WILD_SILENT | expand_options);
 

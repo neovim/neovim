@@ -3,6 +3,7 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/regexp_defs.h"
 #include "nvim/types.h"
 
 /// Option value type
@@ -25,6 +26,14 @@ typedef struct {
   } data;
 } OptVal;
 
+/// :set operator types
+typedef enum {
+  OP_NONE = 0,
+  OP_ADDING,      ///< "opt+=arg"
+  OP_PREPENDING,  ///< "opt^=arg"
+  OP_REMOVING,    ///< "opt-=arg"
+} set_op_T;
+
 /// Argument for the callback function (opt_did_set_cb_T) invoked after an
 /// option value is modified.
 typedef struct {
@@ -33,6 +42,7 @@ typedef struct {
   void *os_varp;
   int os_idx;
   int os_flags;
+  set_op_T os_op;
 
   /// old value of the option (can be a string, number or a boolean)
   union {
@@ -79,5 +89,41 @@ typedef struct {
 /// Returns NULL if the option value is valid and successfully applied.
 /// Otherwise returns an error message.
 typedef const char *(*opt_did_set_cb_T)(optset_T *args);
+
+/// Argument for the callback function (opt_expand_cb_T) invoked after a string
+/// option value is expanded for cmdline completion.
+typedef struct {
+  /// Pointer to the option variable. It's always a string.
+  char *oe_varp;
+  /// The original option value, escaped.
+  char *oe_opt_value;
+
+  /// true if using set+= instead of set=
+  bool oe_append;
+  /// true if we would like to add the original option value as the first choice.
+  bool oe_include_orig_val;
+
+  /// Regex from the cmdline, for matching potential options against.
+  regmatch_T *oe_regmatch;
+  /// The expansion context.
+  expand_T *oe_xp;
+
+  /// The full argument passed to :set. For example, if the user inputs
+  /// ":set dip=icase,algorithm:my<Tab>", oe_xp->xp_pattern will only have
+  /// "my", but oe_set_arg will contain the whole "icase,algorithm:my".
+  char *oe_set_arg;
+} optexpand_T;
+
+/// Type for the callback function that is invoked when expanding possible
+/// string option values during cmdline completion.
+///
+/// Strings in returned matches will be managed and freed by caller.
+///
+/// Returns OK if the expansion succeeded (numMatches and matches have to be
+/// set). Otherwise returns FAIL.
+///
+/// Note: If returned FAIL or *numMatches is 0, *matches will NOT be freed by
+/// caller.
+typedef int (*opt_expand_cb_T)(optexpand_T *args, int *numMatches, char ***matches);
 
 #endif  // NVIM_OPTION_DEFS_H

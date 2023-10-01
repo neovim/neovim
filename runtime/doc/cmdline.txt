@@ -493,16 +493,26 @@ example, to match only files that end in ".c": >
 	:e *.c$
 This will not match a file ending in ".cpp".  Without the "$" it does match.
 
-The old value of an option can be obtained by hitting 'wildchar' just after
-the '='.  For example, typing 'wildchar' after ":set dir=" will insert the
-current value of 'dir'.  This overrules file name completion for the options
-that take a file name.
-
 If you would like using <S-Tab> for CTRL-P in an xterm, put this command in
 your .cshrc: >
 	xmodmap -e "keysym Tab = Tab Find"
 And this in your vimrc: >
 	:cmap <Esc>[1~ <C-P>
+<						*complete-set-option*
+When setting an option using |:set=|, the old value of an option can be
+obtained by hitting 'wildchar' just after the '='.  For example, typing
+'wildchar' after ":set dir=" will insert the current value of 'dir'.  This
+overrules file name completion for the options that take a file name.
+
+When using |:set=|, |:set+=|, or |:set^=|, string options that have
+pre-defined names or syntax (e.g. 'diffopt', 'listchars') or are a list of
+single-character flags (e.g. 'shortmess') will also present a list of possible
+values for completion when using 'wildchar'.
+
+When using |:set-=|, comma-separated options like 'diffopt' or 'backupdir'
+will show each item separately.  Flag list options like 'shortmess' will show
+both the entire old value and the individual flags.  Otherwise completion will
+just fill in with the entire old value.
 
 ==============================================================================
 3. Ex command-lines					*cmdline-lines*

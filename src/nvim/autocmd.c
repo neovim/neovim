@@ -2213,6 +2213,13 @@ char *expand_get_event_name(expand_T *xp, int idx)
   return event_names[idx - next_augroup_id].name;
 }
 
+/// Function given to ExpandGeneric() to obtain the list of event names. Don't
+/// include groups.
+char *get_event_name_no_group(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  return event_names[idx].name;
+}
+
 /// Check whether given autocommand is supported
 ///
 /// @param[in]  event  Event to check.

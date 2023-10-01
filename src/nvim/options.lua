@@ -6,7 +6,7 @@
 --- @field varname? string
 --- @field pv_name? string
 --- @field type 'bool'|'number'|'string'
---- @field list? 'comma'|'onecomma'|'flags'|'flagscomma'
+--- @field list? 'comma'|'onecomma'|'commacolon'|'onecommacolon'|'flags'|'flagscomma'
 --- @field scope vim.option_scope[]
 --- @field deny_duplicates? boolean
 --- @field enable_if? string|false
@@ -25,6 +25,7 @@
 --- @field alloced? true
 --- @field redraw? vim.option_redraw[]
 --- @field cb? string
+--- @field expand_cb? string
 --- @field tags? string[]
 
 --- @class vim.option_defaults
@@ -192,6 +193,7 @@ return {
         set to one of CJK locales.  See Unicode Standard Annex #11
         (https://www.unicode.org/reports/tr11).
       ]=],
+      expand_cb = 'expand_set_ambiwidth',
       full_name = 'ambiwidth',
       redraw = { 'all_windows', 'ui_option' },
       scope = { 'global' },
@@ -331,6 +333,7 @@ return {
         option, you must load syntax.vim again to see the result.  This can be
         done with ":syntax on".
       ]=],
+      expand_cb = 'expand_set_background',
       full_name = 'background',
       scope = { 'global' },
       short_desc = N_('"dark" or "light", used for highlight colors'),
@@ -357,6 +360,7 @@ return {
         When the value is empty, Vi compatible backspacing is used, none of
         the ways mentioned for the items above are possible.
       ]=],
+      expand_cb = 'expand_set_backspace',
       full_name = 'backspace',
       list = 'onecomma',
       scope = { 'global' },
@@ -453,6 +457,7 @@ return {
         the system may refuse to do this.  In that case the "auto" value will
         again not rename the file.
       ]=],
+      expand_cb = 'expand_set_backupcopy',
       full_name = 'backupcopy',
       list = 'onecomma',
       scope = { 'global', 'buffer' },
@@ -621,6 +626,7 @@ return {
         indicate that an error occurred. It can be silenced by adding the
         "error" keyword.
       ]=],
+      expand_cb = 'expand_set_belloff',
       full_name = 'belloff',
       list = 'comma',
       scope = { 'global' },
@@ -763,6 +769,7 @@ return {
         		    added for the 'showbreak' setting.
         		    (default: off)
       ]=],
+      expand_cb = 'expand_set_breakindentopt',
       full_name = 'breakindentopt',
       list = 'onecomma',
       redraw = { 'current_buffer' },
@@ -816,6 +823,7 @@ return {
         This option is used together with 'buftype' and 'swapfile' to specify
         special kinds of buffers.   See |special-buffers|.
       ]=],
+      expand_cb = 'expand_set_bufhidden',
       full_name = 'bufhidden',
       noglob = true,
       scope = { 'buffer' },
@@ -893,6 +901,7 @@ return {
         without saving.  For writing there must be matching |BufWriteCmd|,
         |FileWriteCmd| or |FileAppendCmd| autocommands.
       ]=],
+      expand_cb = 'expand_set_buftype',
       full_name = 'buftype',
       noglob = true,
       scope = { 'buffer' },
@@ -917,6 +926,7 @@ return {
         		case mapping, the current locale is not effective.
         		This probably only matters for Turkish.
       ]=],
+      expand_cb = 'expand_set_casemap',
       full_name = 'casemap',
       list = 'onecomma',
       scope = { 'global' },
@@ -1183,6 +1193,7 @@ return {
         		"*". See |clipboard|.
       ]=],
       deny_duplicates = true,
+      expand_cb = 'expand_set_clipboard',
       full_name = 'clipboard',
       list = 'onecomma',
       scope = { 'global' },
@@ -1369,6 +1380,7 @@ return {
         based expansion (e.g., dictionary |i_CTRL-X_CTRL-K|, included patterns
         |i_CTRL-X_CTRL-I|, tags |i_CTRL-X_CTRL-]| and normal expansions).
       ]=],
+      expand_cb = 'expand_set_complete',
       full_name = 'complete',
       list = 'onecomma',
       scope = { 'buffer' },
@@ -1399,7 +1411,9 @@ return {
         Keep in mind that the cursor position is not always where it's
         displayed.  E.g., when moving vertically it may change column.
       ]=],
+      expand_cb = 'expand_set_concealcursor',
       full_name = 'concealcursor',
+      list = 'flags',
       redraw = { 'current_window' },
       scope = { 'window' },
       short_desc = N_('whether concealable text is hidden in cursor line'),
@@ -1492,6 +1506,7 @@ return {
         	    select one from the menu. Only works in combination with
         	    "menu" or "menuone".
       ]=],
+      expand_cb = 'expand_set_completeopt',
       full_name = 'completeopt',
       list = 'onecomma',
       scope = { 'global' },
@@ -1517,6 +1532,7 @@ return {
         command line completion the global value is used.
       ]=],
       enable_if = 'BACKSLASH_IN_FILENAME',
+      expand_cb = 'expand_set_completeslash',
       full_name = 'completeslash',
       scope = { 'buffer' },
       type = 'string',
@@ -1797,6 +1813,7 @@ return {
         	_	When using |cw| on a word, do not include the
         		whitespace following the word in the motion.
       ]=],
+      expand_cb = 'expand_set_cpoptions',
       full_name = 'cpoptions',
       list = 'flags',
       redraw = { 'all_windows' },
@@ -1878,6 +1895,7 @@ return {
 
         "line" and "screenline" cannot be used together.
       ]=],
+      expand_cb = 'expand_set_cursorlineopt',
       full_name = 'cursorlineopt',
       list = 'onecomma',
       redraw = { 'current_window_only' },
@@ -1900,6 +1918,7 @@ return {
         "msg" and "throw" are useful for debugging 'foldexpr', 'formatexpr' or
         'indentexpr'.
       ]=],
+      expand_cb = 'expand_set_debug',
       full_name = 'debug',
       scope = { 'global' },
       short_desc = N_('to "msg" to see all error messages'),
@@ -2140,8 +2159,9 @@ return {
         	:set diffopt-=internal  " do NOT use the internal diff parser
         <
       ]=],
+      expand_cb = 'expand_set_diffopt',
       full_name = 'diffopt',
-      list = 'onecomma',
+      list = 'onecommacolon',
       redraw = { 'current_window' },
       scope = { 'global' },
       short_desc = N_('options for using diff mode'),
@@ -2242,6 +2262,7 @@ return {
         The "@" character can be changed by setting the "lastline" item in
         'fillchars'.  The character is highlighted with |hl-NonText|.
       ]=],
+      expand_cb = 'expand_set_display',
       full_name = 'display',
       list = 'onecomma',
       redraw = { 'all_windows' },
@@ -2260,6 +2281,7 @@ return {
         	hor	horizontally, height of windows is not affected
         	both	width and height of windows is affected
       ]=],
+      expand_cb = 'expand_set_eadirection',
       full_name = 'eadirection',
       scope = { 'global' },
       short_desc = N_("in which direction 'equalalways' works"),
@@ -2470,6 +2492,7 @@ return {
             :set ei=WinEnter,WinLeave
         <
       ]=],
+      expand_cb = 'expand_set_eventignore',
       full_name = 'eventignore',
       list = 'onecomma',
       scope = { 'global' },
@@ -2558,6 +2581,7 @@ return {
 
         This option cannot be changed when 'modifiable' is off.
       ]=],
+      expand_cb = 'expand_set_encoding',
       full_name = 'fileencoding',
       no_mkrc = true,
       redraw = { 'statuslines', 'current_buffer' },
@@ -2619,6 +2643,7 @@ return {
         Setting this option does not have an effect until the next time a file
         is read.
       ]=],
+      expand_cb = 'expand_set_encoding',
       full_name = 'fileencodings',
       list = 'onecomma',
       scope = { 'global' },
@@ -2651,6 +2676,7 @@ return {
         option is set, because the file would be different when written.
         This option cannot be changed when 'modifiable' is off.
       ]=],
+      expand_cb = 'expand_set_fileformat',
       full_name = 'fileformat',
       no_mkrc = true,
       redraw = { 'curswant', 'statuslines' },
@@ -2714,6 +2740,7 @@ return {
           used.
         Also see |file-formats|.
       ]=],
+      expand_cb = 'expand_set_fileformat',
       full_name = 'fileformats',
       list = 'onecomma',
       scope = { 'global' },
@@ -2846,6 +2873,7 @@ return {
           eob		EndOfBuffer		|hl-EndOfBuffer|
           lastline	NonText			|hl-NonText|
       ]=],
+      expand_cb = 'expand_set_chars_option',
       full_name = 'fillchars',
       list = 'onecomma',
       redraw = { 'current_window' },
@@ -2884,6 +2912,7 @@ return {
         its level is higher than 'foldlevel'.  Useful if you want folds to
         automatically close when moving out of them.
       ]=],
+      expand_cb = 'expand_set_foldclose',
       full_name = 'foldclose',
       list = 'onecomma',
       redraw = { 'current_window' },
@@ -2906,6 +2935,7 @@ return {
             "[1-9]":      to display a fixed number of columns
         See |folding|.
       ]=],
+      expand_cb = 'expand_set_foldcolumn',
       full_name = 'foldcolumn',
       redraw = { 'current_window' },
       scope = { 'window' },
@@ -3045,6 +3075,7 @@ return {
         |fold-syntax|	syntax	    Syntax highlighting items specify folds.
         |fold-diff|	diff	    Fold text that is not changed.
       ]=],
+      expand_cb = 'expand_set_foldmethod',
       full_name = 'foldmethod',
       redraw = { 'current_window' },
       scope = { 'window' },
@@ -3122,6 +3153,7 @@ return {
         To close folds you can re-apply 'foldlevel' with the |zx| command or
         set the 'foldclose' option to "all".
       ]=],
+      expand_cb = 'expand_set_foldopen',
       full_name = 'foldopen',
       list = 'onecomma',
       redraw = { 'curswant' },
@@ -3218,6 +3250,7 @@ return {
         To avoid problems with flags that are added in the future, use the
         "+=" and "-=" feature of ":set" |add-option-flags|.
       ]=],
+      expand_cb = 'expand_set_formatoptions',
       full_name = 'formatoptions',
       list = 'flags',
       scope = { 'buffer' },
@@ -4050,6 +4083,7 @@ return {
         'redrawtime') then 'inccommand' is automatically disabled until
         |Command-line-mode| is done.
       ]=],
+      expand_cb = 'expand_set_inccommand',
       full_name = 'inccommand',
       scope = { 'global' },
       short_desc = N_('Live preview of substitution'),
@@ -4451,6 +4485,7 @@ return {
         		|alternate-file| or using |mark-motions| try to
         		restore the |mark-view| in which the action occurred.
       ]=],
+      expand_cb = 'expand_set_jumpoptions',
       full_name = 'jumpoptions',
       list = 'onecomma',
       scope = { 'global' },
@@ -4495,6 +4530,7 @@ return {
         Special keys in this context are the cursor keys, <End>, <Home>,
         <PageUp> and <PageDown>.
       ]=],
+      expand_cb = 'expand_set_keymodel',
       full_name = 'keymodel',
       list = 'onecomma',
       scope = { 'global' },
@@ -4779,6 +4815,7 @@ return {
         Note that when using 'indentexpr' the `=` operator indents all the
         lines, otherwise the first line is not indented (Vi-compatible).
       ]=],
+      expand_cb = 'expand_set_lispoptions',
       full_name = 'lispoptions',
       list = 'onecomma',
       pv_name = 'p_lop',
@@ -4933,6 +4970,7 @@ return {
         "precedes". |hl-Whitespace| for "nbsp", "space", "tab", "multispace",
         "lead" and "trail".
       ]=],
+      expand_cb = 'expand_set_chars_option',
       full_name = 'listchars',
       list = 'onecomma',
       redraw = { 'current_window' },
@@ -5015,6 +5053,7 @@ return {
         	:set makeencoding=char	" system locale is used
         <
       ]=],
+      expand_cb = 'expand_set_encoding',
       full_name = 'makeencoding',
       scope = { 'global', 'buffer' },
       short_desc = N_('Converts the output of external commands'),
@@ -5377,6 +5416,7 @@ return {
         'mousehide'	hide mouse pointer while typing text
         'selectmode'	whether to start Select mode or Visual mode
       ]=],
+      expand_cb = 'expand_set_mouse',
       full_name = 'mouse',
       list = 'flags',
       scope = { 'global' },
@@ -5468,6 +5508,7 @@ return {
             "g<LeftMouse>"  is "<C-LeftMouse>	(jump to tag under mouse click)
             "g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
       ]=],
+      expand_cb = 'expand_set_mousemodel',
       full_name = 'mousemodel',
       scope = { 'global' },
       short_desc = N_('changes meaning of mouse buttons'),
@@ -5513,6 +5554,7 @@ return {
         <	Will make Nvim scroll 5 lines at a time when scrolling vertically, and
         scroll 2 columns at a time when scrolling horizontally.
       ]=],
+      expand_cb = 'expand_set_mousescroll',
       full_name = 'mousescroll',
       list = 'comma',
       scope = { 'global' },
@@ -5645,6 +5687,7 @@ return {
         considered decimal.  This also happens for numbers that are not
         recognized as octal or hex.
       ]=],
+      expand_cb = 'expand_set_nrformats',
       full_name = 'nrformats',
       list = 'onecomma',
       scope = { 'buffer' },
@@ -6307,6 +6350,7 @@ return {
         This is useful for languages such as Hebrew, Arabic and Farsi.
         The 'rightleft' option must be set for 'rightleftcmd' to take effect.
       ]=],
+      expand_cb = 'expand_set_rightleftcmd',
       full_name = 'rightleftcmd',
       redraw = { 'current_window' },
       scope = { 'window' },
@@ -6634,6 +6678,7 @@ return {
         When 'diff' mode is active there always is vertical scroll binding,
         even when "ver" isn't there.
       ]=],
+      expand_cb = 'expand_set_scrollopt',
       full_name = 'scrollopt',
       list = 'onecomma',
       scope = { 'global' },
@@ -6687,6 +6732,7 @@ return {
         backwards, you cannot include the last character of a line, when
         starting in Normal mode and 'virtualedit' empty.
       ]=],
+      expand_cb = 'expand_set_selection',
       full_name = 'selection',
       scope = { 'global' },
       short_desc = N_('what type of selection to use'),
@@ -6707,6 +6753,7 @@ return {
            cmd		when using "v", "V" or CTRL-V
         See |Select-mode|.
       ]=],
+      expand_cb = 'expand_set_selectmode',
       full_name = 'selectmode',
       list = 'onecomma',
       scope = { 'global' },
@@ -6758,6 +6805,7 @@ return {
         If you leave out "options" many things won't work well after restoring
         the session.
       ]=],
+      expand_cb = 'expand_set_sessionoptions',
       full_name = 'sessionoptions',
       list = 'onecomma',
       scope = { 'global' },
@@ -7292,6 +7340,7 @@ return {
             shm=a	Abbreviation, but no loss of information.
             shm=at	Abbreviation, and truncate message when necessary.
       ]=],
+      expand_cb = 'expand_set_shortmess',
       full_name = 'shortmess',
       list = 'flags',
       scope = { 'global' },
@@ -7368,6 +7417,7 @@ return {
         place the text.  Without a custom 'statusline' or 'tabline' it will be
         displayed in a convenient location.
       ]=],
+      expand_cb = 'expand_set_showcmdloc',
       full_name = 'showcmdloc',
       scope = { 'global' },
       short_desc = N_('change location of partial command'),
@@ -7530,6 +7580,7 @@ return {
         This is done in order for the signcolumn appearance not appear weird
         during line deletion.
       ]=],
+      expand_cb = 'expand_set_signcolumn',
       full_name = 'signcolumn',
       redraw = { 'current_window' },
       scope = { 'window' },
@@ -7828,6 +7879,7 @@ return {
         security reasons.
       ]=],
       expand = true,
+      expand_cb = 'expand_set_spellsuggest',
       full_name = 'spellsuggest',
       list = 'onecomma',
       scope = { 'global' },
@@ -7852,7 +7904,7 @@ return {
         		designated regions of the buffer are spellchecked in
         		this case.
       ]=],
-      expand = true,
+      expand_cb = 'expand_set_spelloptions',
       full_name = 'spelloptions',
       list = 'onecomma',
       redraw = { 'current_buffer' },
@@ -7892,6 +7944,7 @@ return {
         with the previous cursor position. For "screen", the text cannot always
         be kept on the same screen line when 'wrap' is enabled.
       ]=],
+      expand_cb = 'expand_set_splitkeep',
       full_name = 'splitkeep',
       scope = { 'global' },
       short_desc = N_('determines scroll behavior for split windows'),
@@ -8326,6 +8379,7 @@ return {
            uselast	If included, jump to the previously used window when
         		jumping to errors with |quickfix| commands.
       ]=],
+      expand_cb = 'expand_set_switchbuf',
       full_name = 'switchbuf',
       list = 'onecomma',
       scope = { 'global' },
@@ -8580,6 +8634,7 @@ return {
            match	Match case
            smart	Ignore case unless an upper case letter is used
       ]=],
+      expand_cb = 'expand_set_tagcase',
       full_name = 'tagcase',
       scope = { 'global', 'buffer' },
       short_desc = N_('how to handle case when searching in tags files'),
@@ -8728,6 +8783,7 @@ return {
 
            C1	    Control characters 0x80...0x9F
       ]=],
+      expand_cb = 'expand_set_termpastefilter',
       full_name = 'termpastefilter',
       list = 'onecomma',
       scope = { 'global' },
@@ -9275,6 +9331,7 @@ return {
            slash	|deprecated| Always enabled. Uses "/" in filenames.
            unix		|deprecated| Always enabled. Uses "\n" line endings.
       ]=],
+      expand_cb = 'expand_set_sessionoptions',
       full_name = 'viewoptions',
       list = 'onecomma',
       scope = { 'global' },
@@ -9331,6 +9388,7 @@ return {
         not get a warning for it.
         When combined with other words, "none" is ignored.
       ]=],
+      expand_cb = 'expand_set_virtualedit',
       full_name = 'virtualedit',
       list = 'onecomma',
       redraw = { 'curswant' },
@@ -9395,6 +9453,7 @@ return {
         line (not an empty line) then it will not move to the next line.  This
         makes "dl", "cl", "yl" etc. work normally.
       ]=],
+      expand_cb = 'expand_set_whichwrap',
       full_name = 'whichwrap',
       list = 'flagscomma',
       scope = { 'global' },
@@ -9578,8 +9637,9 @@ return {
         <	Complete longest common string, then list alternatives.
         More info here: |cmdline-completion|.
       ]=],
+      expand_cb = 'expand_set_wildmode',
       full_name = 'wildmode',
-      list = 'onecomma',
+      list = 'onecommacolon',
       scope = { 'global' },
       short_desc = N_("mode for 'wildchar' command-line expansion"),
       type = 'string',
@@ -9609,6 +9669,7 @@ return {
         			d	#define
         			f	function
       ]=],
+      expand_cb = 'expand_set_wildoptions',
       full_name = 'wildoptions',
       list = 'onecomma',
       scope = { 'global' },
@@ -9637,6 +9698,7 @@ return {
         key is never used for the menu.
         This option is not used for <F10>; on Win32.
       ]=],
+      expand_cb = 'expand_set_winaltkeys',
       full_name = 'winaltkeys',
       scope = { 'global' },
       short_desc = N_('when the windows system handles ALT keys'),
@@ -9691,7 +9753,7 @@ return {
     {
       abbreviation = 'winhl',
       alloced = true,
-      cb = 'did_set_winhl',
+      cb = 'did_set_winhighlight',
       defaults = { if_true = '' },
       deny_duplicates = true,
       desc = [=[
@@ -9713,8 +9775,9 @@ return {
         	set winhighlight=Normal:MyNormal,NormalNC:MyNormalNC
         <
       ]=],
+      expand_cb = 'expand_set_winhighlight',
       full_name = 'winhighlight',
-      list = 'onecomma',
+      list = 'onecommacolon',
       redraw = { 'current_window' },
       scope = { 'window' },
       short_desc = N_('Setup window-local highlights'),

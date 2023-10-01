@@ -41,6 +41,9 @@ enum {
   BUF_DIFF_FILTER           = 0x2000,
 };
 
+/// Type used by ExpandGeneric()
+typedef char *(*CompleteListItemGetter)(expand_T *, int);
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "cmdexpand.h.generated.h"
 #endif

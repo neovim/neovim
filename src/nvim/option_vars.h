@@ -16,6 +16,7 @@
                                     ///< the same.
 #define P_EXPAND       0x10U        ///< environment expansion.  NOTE: P_EXPAND can
                                     ///< never be used for local or hidden options
+#define P_NO_DEF_EXP   0x20U        ///< do not expand default value
 #define P_NODEFAULT    0x40U        ///< don't set to default value
 #define P_DEF_ALLOCED  0x80U        ///< default value is in allocated memory, must
                                     ///< use free() when assigning new value
@@ -51,8 +52,10 @@
 #define P_RWINONLY     0x10000000U  ///< only redraw current window
 #define P_MLE          0x20000000U  ///< under control of 'modelineexpr'
 #define P_FUNC         0x40000000U  ///< accept a function reference or a lambda
-
-#define P_NO_DEF_EXP   0x80000000U  ///< Do not expand default value.
+#define P_COLON        0x80000000U  ///< values use colons to create sublists
+// Warning: Currently we have used all 32 bits for option flags, and adding more
+//          flags will overflow it. Adding another flag will need to change how
+//          it's stored first.
 
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText,d:Directory,e:ErrorMsg," \
@@ -183,7 +186,7 @@
 #define CPO_VI          "aAbBcCdDeEfFiIJKlLmMnoOpPqrRsStuvWxXyZ$!%+>;_"
 
 // characters for p_ww option:
-#define WW_ALL          "bshl<>[],~"
+#define WW_ALL          "bshl<>[]~"
 
 // characters for p_mouse option:
 #define MOUSE_NORMAL    'n'             // use mouse in Normal mode
@@ -757,9 +760,9 @@ extern char *p_vfile;           ///< 'verbosefile'
 EXTERN int p_warn;              ///< 'warn'
 EXTERN char *p_wop;             ///< 'wildoptions'
 EXTERN unsigned wop_flags;
-#define WOP_TAGFILE             0x01
-#define WOP_PUM                 0x02
-#define WOP_FUZZY               0x04
+#define WOP_FUZZY               0x01
+#define WOP_TAGFILE             0x02
+#define WOP_PUM                 0x04
 EXTERN OptInt p_window;         ///< 'window'
 EXTERN char *p_wak;             ///< 'winaltkeys'
 EXTERN char *p_wig;             ///< 'wildignore'
