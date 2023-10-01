@@ -1,5 +1,5 @@
 local protocol = require('vim.lsp.protocol')
-local snippet = require('vim.lsp._snippet')
+local snippet = require('vim.lsp._snippet_grammar')
 local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
@@ -610,12 +610,41 @@ end
 ---@return string parsed snippet
 function M.parse_snippet(input)
   local ok, parsed = pcall(function()
-    return tostring(snippet.parse(input))
+    return snippet.parse(input)
   end)
   if not ok then
     return input
   end
-  return parsed
+
+  --- @param node vim.snippet.Node<any>
+  --- @return string
+  local function node_to_string(node)
+    local insert_text = {}
+    if node.type == snippet.NodeType.Snippet then
+      for _, child in
+        ipairs((node.data --[[@as vim.snippet.SnippetData]]).children)
+      do
+        table.insert(insert_text, node_to_string(child))
+      end
+    elseif node.type == snippet.NodeType.Choice then
+      table.insert(insert_text, (node.data --[[@as vim.snippet.ChoiceData]]).values[1])
+    elseif node.type == snippet.NodeType.Placeholder then
+      table.insert(
+        insert_text,
+        node_to_string((node.data --[[@as vim.snippet.PlaceholderData]]).value)
+      )
+    elseif node.type == snippet.NodeType.Text then
+      table.insert(
+        insert_text,
+        node
+          .data --[[@as vim.snippet.TextData]]
+          .text
+      )
+    end
+    return table.concat(insert_text)
+  end
+
+  return node_to_string(parsed)
 end
 
 --- Sorts by CompletionItem.sortText.
