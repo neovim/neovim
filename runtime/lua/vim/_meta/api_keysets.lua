@@ -137,6 +137,9 @@ error('Cannot require a meta file')
 --- @field link? boolean
 --- @field create? boolean
 
+--- @class vim.api.keyset.get_ns
+--- @field winid? integer
+
 --- @class vim.api.keyset.highlight
 --- @field bold? boolean
 --- @field standout? boolean

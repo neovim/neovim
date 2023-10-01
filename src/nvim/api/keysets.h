@@ -197,6 +197,11 @@ typedef struct {
 } Dict(get_highlight);
 
 typedef struct {
+  OptionalKeys is_set__get_ns_;
+  Window winid;
+} Dict(get_ns);
+
+typedef struct {
   OptionalKeys is_set__win_text_height_;
   Integer start_row;
   Integer end_row;

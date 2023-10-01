@@ -173,6 +173,29 @@ void nvim_set_hl(Integer ns_id, String name, Dict(highlight) *val, Error *err)
   }
 }
 
+/// Gets the active highlight namespace.
+///
+/// @param opts Optional parameters
+///           - winid: (number) |window-ID| for retrieving a window's highlight
+///             namespace. A value of -1 is returned when |nvim_win_set_hl_ns()|
+///             has not been called for the window (or was called with a namespace
+///             of -1).
+/// @param[out] err Error details, if any
+/// @return Namespace id, or -1
+Integer nvim_get_hl_ns(Dict(get_ns) *opts, Error *err)
+  FUNC_API_SINCE(12)
+{
+  if (HAS_KEY(opts, get_ns, winid)) {
+    win_T *win = find_window_by_handle(opts->winid, err);
+    if (!win) {
+      return 0;
+    }
+    return win->w_ns_hl;
+  } else {
+    return ns_hl_global;
+  }
+}
+
 /// Set active namespace for highlights defined with |nvim_set_hl()|. This can be set for
 /// a single window, see |nvim_win_set_hl_ns()|.
 ///
