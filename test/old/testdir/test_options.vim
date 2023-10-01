@@ -369,13 +369,15 @@ func Test_set_completion()
   call feedkeys(":set spellsuggest=best,file:test_options.v\<Tab>\<C-B>\"\<CR>", 'xt')
   call assert_equal("\"set spellsuggest=best,file:test_options.vim", @:)
 
-  " Expand value for 'key'
-  " set key=abcd
-  " call feedkeys(":set key=\<Tab>\<C-B>\"\<CR>", 'xt')
-  " call assert_equal('"set key=*****', @:)
-  " call feedkeys(":set key-=\<Tab>\<C-B>\"\<CR>", 'xt')
-  " call assert_equal('"set key-=*****', @:)
-  " set key=
+  " Expanding value for 'key' is disallowed
+  if exists('+key')
+    set key=abcd
+    call feedkeys(":set key=\<Tab>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set key=', @:)
+    call feedkeys(":set key-=\<Tab>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set key-=', @:)
+    set key=
+  endif
 
   " Expand values for 'filetype'
   call feedkeys(":set filetype=sshdconfi\<Tab>\<C-B>\"\<CR>", 'xt')

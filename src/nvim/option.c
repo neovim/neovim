@@ -136,13 +136,6 @@ static char *p_vsts_nopaste;
 
 #define OPTION_COUNT ARRAY_SIZE(options)
 
-typedef enum {
-  OP_NONE = 0,
-  OP_ADDING,      ///< "opt+=arg"
-  OP_PREPENDING,  ///< "opt^=arg"
-  OP_REMOVING,    ///< "opt-=arg"
-} set_op_T;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
 #endif
@@ -1168,7 +1161,7 @@ static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int ne
   // be triggered that can cause havoc.
   *errmsg = did_set_string_option(curbuf, curwin, opt_idx, (char **)varp, oldval,
                                   errbuf, errbuflen,
-                                  opt_flags, value_checked);
+                                  opt_flags, op, value_checked);
 
   secure = secure_saved;
 

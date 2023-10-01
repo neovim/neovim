@@ -53,6 +53,9 @@
 #define P_MLE          0x20000000U  ///< under control of 'modelineexpr'
 #define P_FUNC         0x40000000U  ///< accept a function reference or a lambda
 #define P_COLON        0x80000000U  ///< values use colons to create sublists
+// Warning: Currently we have used all 32 bits for option flags, and adding more
+//          flags will overflow it. Adding another flag will need to change how
+//          it's stored first.
 
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText,d:Directory,e:ErrorMsg," \

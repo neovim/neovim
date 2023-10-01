@@ -244,8 +244,13 @@ endfunc
 " Test for making sure the key value is not stored in history
 func Test_history_crypt_key()
   CheckFeature cryptv
+
   call feedkeys(":set bs=2 key=abc ts=8\<CR>", 'xt')
   call assert_equal('set bs=2 key= ts=8', histget(':'))
+
+  call assert_fails("call feedkeys(':set bs=2 key-=abc ts=8\<CR>', 'xt')")
+  call assert_equal('set bs=2 key-= ts=8', histget(':'))
+
   set key& bs& ts&
 endfunc
 

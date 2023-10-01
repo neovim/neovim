@@ -26,6 +26,14 @@ typedef struct {
   } data;
 } OptVal;
 
+/// :set operator types
+typedef enum {
+  OP_NONE = 0,
+  OP_ADDING,      ///< "opt+=arg"
+  OP_PREPENDING,  ///< "opt^=arg"
+  OP_REMOVING,    ///< "opt-=arg"
+} set_op_T;
+
 /// Argument for the callback function (opt_did_set_cb_T) invoked after an
 /// option value is modified.
 typedef struct {
@@ -34,6 +42,7 @@ typedef struct {
   void *os_varp;
   int os_idx;
   int os_flags;
+  set_op_T os_op;
 
   /// old value of the option (can be a string, number or a boolean)
   union {
