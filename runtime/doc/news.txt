@@ -145,6 +145,8 @@ The following new APIs and features were added.
   • Added `vim.treesitter.query.edit()`, for live editing of treesitter
     queries.
   • Improved error messages for query parsing.
+  • Added |vim.treesitter.foldtext()| to apply treesitter highlighting to
+    foldtext.
 
 • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
   Windows `explorer`, Linux `xdg-open`, etc.)

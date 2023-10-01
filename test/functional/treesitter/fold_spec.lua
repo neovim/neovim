@@ -359,3 +359,175 @@ void ui_refresh(void)
   end)
 
 end)
+
+describe('treesitter foldtext', function()
+  local test_text = [[
+void qsort(void *base, size_t nel, size_t width, int (*compar)(const void *, const void *))
+{
+  int width = INT_MAX, height = INT_MAX;
+  bool ext_widgets[kUIExtCount];
+  for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
+    ext_widgets[i] = true;
+  }
+
+  bool inclusive = ui_override();
+  for (size_t i = 0; i < ui_count; i++) {
+    UI *ui = uis[i];
+    width = MIN(ui->width, width);
+    height = MIN(ui->height, height);
+    foo = BAR(ui->bazaar, bazaar);
+    for (UIExtension j = 0; (int)j < kUIExtCount; j++) {
+      ext_widgets[j] &= (ui->ui_ext[j] || inclusive);
+    }
+  }
+}]]
+
+  it('displays highlighted content', function()
+    local screen = Screen.new(60, 21)
+    screen:attach()
+
+    command([[set foldmethod=manual foldtext=v:lua.vim.treesitter.foldtext() updatetime=50]])
+    insert(test_text)
+    exec_lua([[vim.treesitter.get_parser(0, "c")]])
+
+    feed('ggVGzf')
+
+    screen:expect({
+      grid = [[
+{1:^void}{2: }{3:qsort}{4:(}{1:void}{2: }{5:*}{3:base}{4:,}{2: }{1:size_t}{2: }{3:nel}{4:,}{2: }{1:size_t}{2: }{3:width}{4:,}{2: }{1:int}{2: }{4:(}{5:*}{3:compa}|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+{6:~                                                           }|
+                                                            |
+]],
+      attr_ids = {
+        [1] = {
+          foreground = Screen.colors.SeaGreen4,
+          background = Screen.colors.LightGrey,
+          bold = true,
+        },
+        [2] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Blue4 },
+        [3] = { background = Screen.colors.LightGrey, foreground = Screen.colors.DarkCyan },
+        [4] = { background = Screen.colors.LightGrey, foreground = Screen.colors.SlateBlue },
+        [5] = {
+          foreground = Screen.colors.Brown,
+          background = Screen.colors.LightGrey,
+          bold = true,
+        },
+        [6] = { foreground = Screen.colors.Blue, bold = true },
+      },
+    })
+  end)
+
+  it('handles deep nested captures', function()
+    local screen = Screen.new(60, 21)
+    screen:attach()
+
+    command([[set foldmethod=manual foldtext=v:lua.vim.treesitter.foldtext() updatetime=50]])
+    insert([[
+function FoldInfo.new()
+  return setmetatable({
+    start_counts = {},
+    stop_counts = {},
+    levels0 = {},
+    levels = {},
+  }, FoldInfo)
+end
+    ]])
+    exec_lua([[vim.treesitter.get_parser(0, "lua")]])
+
+    feed('ggjVGkzf')
+
+    screen:expect({
+      grid = [[
+function FoldInfo.new()                                     |
+{1:^  }{2:return}{1: }{3:setmetatable({}{1:·····································}|
+                                                            |
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+{4:~                                                           }|
+                                                            |
+]],
+      attr_ids = {
+        [1] = { foreground = Screen.colors.Blue4, background = Screen.colors.LightGray },
+        [2] = {
+          foreground = Screen.colors.Brown,
+          bold = true,
+          background = Screen.colors.LightGray,
+        },
+        [3] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.LightGray },
+        [4] = { bold = true, foreground = Screen.colors.Blue },
+      },
+    })
+  end)
+
+  it('falls back to default', function()
+    local screen = Screen.new(60, 21)
+    screen:attach()
+
+    command([[set foldmethod=manual foldtext=v:lua.vim.treesitter.foldtext()]])
+    insert(test_text)
+
+    feed('ggVGzf')
+
+    screen:expect({
+      grid = [[
+{1:^+-- 19 lines: void qsort(void *base, size_t nel, size_t widt}|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+{2:~                                                           }|
+                                                            |
+]],
+      attr_ids = {
+        [1] = { foreground = Screen.colors.Blue4, background = Screen.colors.LightGray },
+        [2] = { bold = true, foreground = Screen.colors.Blue },
+      },
+    })
+  end)
+end)
