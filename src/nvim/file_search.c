@@ -1468,7 +1468,7 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
 
         // copy next path
         buf[0] = 0;
-        copy_option_part(&dir, buf, MAXPATHL, ",");
+        copy_option_part(&dir, buf, MAXPATHL, " ,");
 
         // get the stopdir string
         r_ptr = vim_findfile_stopdir(buf);

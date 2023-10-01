@@ -1,10 +1,10 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
+local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
-local command = helpers.command
-local insert = helpers.insert
 local feed = helpers.feed
+local insert = helpers.insert
 local is_os = helpers.is_os
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
@@ -128,5 +128,42 @@ describe('file search (gf, <cfile>)', function()
     test_cfile([[\\?\c:\temp\test-file.txt]], [[c:]], [[\\]])
     test_cfile([[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]], [[.]], [[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]])
     test_cfile([[\\127.0.0.1\c$\temp\test-file.txt]], [[127.0.0.1]], [[\\127.0.0.1\c$\temp\test-file.txt]])
+  end)
+end)
+
+describe('file search with vim functions', function()
+  local test_folder = "path_spec_folder"
+
+  setup(function()
+    mkdir(test_folder)
+  end)
+
+  teardown(function()
+    rmdir(test_folder)
+  end)
+
+  ---@param option "dir" | "file"
+  local function test_find_func(option, folder, item)
+    local folder_path = join_path(test_folder, folder)
+    mkdir(folder_path)
+    local expected = join_path(folder_path, item)
+    if option == "dir" then
+      mkdir(expected)
+    else
+      write_file(expected, '')
+    end
+    eq(expected, eval('find'..option..'(fnameescape(\''..item..'\'),fnameescape(\''..folder_path..'\'))'))
+  end
+
+  it('finddir()', function()
+    test_find_func('dir', 'directory', 'folder')
+    -- test_find_func('dir', 'directory', 'folder name')
+    test_find_func('dir', 'folder name', 'directory')
+  end)
+
+  it('findfile()', function()
+    test_find_func('file', 'directory', 'file.txt')
+    -- test_find_func('file', 'directory', 'file name.txt')
+    test_find_func('file', 'folder name', 'file.txt')
   end)
 end)
