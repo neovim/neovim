@@ -2935,6 +2935,7 @@ return {
             "[1-9]":      to display a fixed number of columns
         See |folding|.
       ]=],
+      expand_cb = 'expand_set_foldcolumn',
       full_name = 'foldcolumn',
       redraw = { 'current_window' },
       scope = { 'window' },
@@ -4082,6 +4083,7 @@ return {
         'redrawtime') then 'inccommand' is automatically disabled until
         |Command-line-mode| is done.
       ]=],
+      expand_cb = 'expand_set_inccommand',
       full_name = 'inccommand',
       scope = { 'global' },
       short_desc = N_('Live preview of substitution'),
@@ -5552,6 +5554,7 @@ return {
         <	Will make Nvim scroll 5 lines at a time when scrolling vertically, and
         scroll 2 columns at a time when scrolling horizontally.
       ]=],
+      expand_cb = 'expand_set_mousescroll',
       full_name = 'mousescroll',
       list = 'comma',
       scope = { 'global' },
@@ -8780,6 +8783,7 @@ return {
 
            C1	    Control characters 0x80...0x9F
       ]=],
+      expand_cb = 'expand_set_termpastefilter',
       full_name = 'termpastefilter',
       list = 'onecomma',
       scope = { 'global' },
@@ -9749,7 +9753,7 @@ return {
     {
       abbreviation = 'winhl',
       alloced = true,
-      cb = 'did_set_winhl',
+      cb = 'did_set_winhighlight',
       defaults = { if_true = '' },
       deny_duplicates = true,
       desc = [=[
@@ -9771,8 +9775,9 @@ return {
         	set winhighlight=Normal:MyNormal,NormalNC:MyNormalNC
         <
       ]=],
+      expand_cb = 'expand_set_winhighlight',
       full_name = 'winhighlight',
-      list = 'onecomma',
+      list = 'onecommacolon',
       redraw = { 'current_window' },
       scope = { 'window' },
       short_desc = N_('Setup window-local highlights'),

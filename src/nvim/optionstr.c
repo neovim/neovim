@@ -1538,6 +1538,15 @@ const char *did_set_foldcolumn(optset_T *args)
   return NULL;
 }
 
+int expand_set_foldcolumn(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_fdc_values,
+                               ARRAY_SIZE(p_fdc_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'foldexpr' option is changed.
 const char *did_set_foldexpr(optset_T *args)
 {
@@ -1689,6 +1698,15 @@ const char *did_set_iconstring(optset_T *args)
 const char *did_set_inccommand(optset_T *args FUNC_ATTR_UNUSED)
 {
   return did_set_opt_strings(p_icm, p_icm_values, false);
+}
+
+int expand_set_inccommand(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_icm_values,
+                               ARRAY_SIZE(p_icm_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'isident' or the 'iskeyword' or the 'isprint' or the 'isfname' option is
@@ -1941,6 +1959,16 @@ const char *did_set_mousescroll(optset_T *args FUNC_ATTR_UNUSED)
   p_mousescroll_hor = (horizontal == -1) ? MOUSESCROLL_HOR_DFLT : horizontal;
 
   return NULL;
+}
+
+int expand_set_mousescroll(optexpand_T *args, int *numMatches, char ***matches)
+{
+  static char *(p_mousescroll_values[]) = { "hor:", "ver:", NULL };
+  return expand_set_opt_string(args,
+                               p_mousescroll_values,
+                               ARRAY_SIZE(p_mousescroll_values) - 1,
+                               numMatches,
+                               matches);
 }
 
 /// The 'nrformats' option is changed.
@@ -2412,6 +2440,15 @@ const char *did_set_termpastefilter(optset_T *args FUNC_ATTR_UNUSED)
   return did_set_opt_flags(p_tpf, p_tpf_values, &tpf_flags, true);
 }
 
+int expand_set_termpastefilter(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_string(args,
+                               p_tpf_values,
+                               ARRAY_SIZE(p_tpf_values) - 1,
+                               numMatches,
+                               matches);
+}
+
 /// The 'titlestring' or the 'iconstring' option is changed.
 static const char *did_set_titleiconstring(optset_T *args, int flagval)
 {
@@ -2625,13 +2662,19 @@ const char *did_set_winbar(optset_T *args)
   return did_set_statustabline_rulerformat(args, false, false);
 }
 
-const char *did_set_winhl(optset_T *args)
+/// The 'winhighlight' option is changed.
+const char *did_set_winhighlight(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
   if (!parse_winhl_opt(win)) {
     return e_invarg;
   }
   return NULL;
+}
+
+int expand_set_winhighlight(optexpand_T *args, int *numMatches, char ***matches)
+{
+  return expand_set_opt_generic(args, get_highlight_name, numMatches, matches);
 }
 
 // When 'syntax' is set, load the syntax of that name
