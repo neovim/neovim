@@ -5552,9 +5552,9 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
 ///
 /// If "test_only" is false and "fuzzy" is true and if "str" fuzzy matches
 /// "fuzzystr", then stores the match details in fuzmatch[idx] and returns true.
-bool match_str(char *const str, regmatch_T *const regmatch, char **const matches, const int idx,
-               const bool test_only, const bool fuzzy, const char *const fuzzystr,
-               fuzmatch_str_T *const fuzmatch)
+static bool match_str(char *const str, regmatch_T *const regmatch, char **const matches,
+                      const int idx, const bool test_only, const bool fuzzy,
+                      const char *const fuzzystr, fuzmatch_str_T *const fuzmatch)
 {
   if (!fuzzy) {
     if (vim_regexec(regmatch, str, (colnr_T)0)) {

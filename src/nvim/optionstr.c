@@ -676,8 +676,8 @@ static const char *did_set_option_listflag(char *val, char *flags, char *errbuf,
 }
 
 /// Expand an option that accepts a list of string values.
-int expand_set_opt_string(optexpand_T *args, char **values, size_t numValues, int *numMatches,
-                          char ***matches)
+static int expand_set_opt_string(optexpand_T *args, char **values, size_t numValues,
+                                 int *numMatches, char ***matches)
 {
   regmatch_T *regmatch = args->oe_regmatch;
   bool include_orig_val = args->oe_include_orig_val;
@@ -728,8 +728,8 @@ static char *expand_set_opt_callback(expand_T *xp, int idx)
 }
 
 /// Expand an option with a callback that iterates through a list of possible names.
-int expand_set_opt_generic(optexpand_T *args, CompleteListItemGetter func, int *numMatches,
-                           char ***matches)
+static int expand_set_opt_generic(optexpand_T *args, CompleteListItemGetter func, int *numMatches,
+                                  char ***matches)
 {
   set_opt_callback_orig_option = args->oe_include_orig_val ? args->oe_opt_value : NULL;
   set_opt_callback_func = func;
@@ -744,7 +744,7 @@ int expand_set_opt_generic(optexpand_T *args, CompleteListItemGetter func, int *
 }
 
 /// Expand an option which is a list of flags.
-int expand_set_opt_listflag(optexpand_T *args, char *flags, int *numMatches, char ***matches)
+static int expand_set_opt_listflag(optexpand_T *args, char *flags, int *numMatches, char ***matches)
 {
   char *option_val = args->oe_opt_value;
   char *cmdline_val = args->oe_set_arg;
