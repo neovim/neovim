@@ -405,7 +405,7 @@ buf_found:
 
   // Open the changed buffer in the current window.
   if (buf != curbuf) {
-    set_curbuf(buf, unload ? DOBUF_UNLOAD : DOBUF_GOTO);
+    set_curbuf(buf, unload ? DOBUF_UNLOAD : DOBUF_GOTO, true);
   }
 
 theend:
