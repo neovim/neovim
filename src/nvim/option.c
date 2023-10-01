@@ -136,6 +136,12 @@ static char *p_vsts_nopaste;
 
 #define OPTION_COUNT ARRAY_SIZE(options)
 
+typedef enum {
+  PREFIX_NO = 0,  ///< "no" prefix
+  PREFIX_NONE,    ///< no prefix
+  PREFIX_INV,     ///< "inv" prefix
+} set_prefix_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
 #endif
@@ -745,8 +751,8 @@ void ex_set(exarg_T *eap)
   (void)do_set(eap->arg, flags);
 }
 
-static void do_set_bool(int opt_idx, int opt_flags, int prefix, int nextchar, const void *varp,
-                        const char **errmsg)
+static void do_set_bool(int opt_idx, int opt_flags, set_prefix_T prefix, int nextchar,
+                        const void *varp, const char **errmsg)
 {
   varnumber_T value;
 
@@ -765,10 +771,12 @@ static void do_set_bool(int opt_idx, int opt_flags, int prefix, int nextchar, co
       value = *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
     }
   } else {
-    if (prefix == 2) {
-      value = *(int *)varp ^ 1;  // ":set invopt": invert
+    // ":set invopt": invert
+    // ":set opt" or ":set noopt": set or reset
+    if (prefix == PREFIX_INV) {
+      value = *(int *)varp ^ 1;
     } else {
-      value = prefix;  // ":set opt" or ":set noopt": set or reset
+      value = prefix == PREFIX_NO ? 0 : 1;
     }
   }
 
@@ -1197,17 +1205,17 @@ static set_op_T get_op(const char *arg)
   return op;
 }
 
-static int get_option_prefix(char **argp)
+static set_prefix_T get_option_prefix(char **argp)
 {
   if (strncmp(*argp, "no", 2) == 0) {
     *argp += 2;
-    return 0;
+    return PREFIX_NO;
   } else if (strncmp(*argp, "inv", 3) == 0) {
     *argp += 3;
-    return 2;
+    return PREFIX_INV;
   }
 
-  return 1;
+  return PREFIX_NONE;
 }
 
 /// @param[in]   arg       Pointer to start option name
@@ -1266,11 +1274,11 @@ static int parse_option_name(char *arg, int *keyp, int *lenp, int *opt_idxp)
   return OK;
 }
 
-static int validate_opt_idx(win_T *win, int opt_idx, int opt_flags, uint32_t flags, int prefix,
-                            const char **errmsg)
+static int validate_opt_idx(win_T *win, int opt_idx, int opt_flags, uint32_t flags,
+                            set_prefix_T prefix, const char **errmsg)
 {
   // Only bools can have a prefix of 'inv' or 'no'
-  if (!(flags & P_BOOL) && prefix != 1) {
+  if (!(flags & P_BOOL) && prefix != PREFIX_NONE) {
     *errmsg = e_invarg;
     return FAIL;
   }
@@ -1318,8 +1326,8 @@ static int validate_opt_idx(win_T *win, int opt_idx, int opt_flags, uint32_t fla
   return OK;
 }
 
-static void do_set_option_value(int opt_idx, int opt_flags, char **argp, int prefix, int nextchar,
-                                set_op_T op, uint32_t flags, void *varp, char *errbuf,
+static void do_set_option_value(int opt_idx, int opt_flags, char **argp, set_prefix_T prefix,
+                                int nextchar, set_op_T op, uint32_t flags, void *varp, char *errbuf,
                                 size_t errbuflen, const char **errmsg)
 {
   bool value_checked = false;
@@ -1348,7 +1356,7 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
                           size_t errbuflen, const char **errmsg)
 {
   // 1: nothing, 0: "no", 2: "inv" in front of name
-  int prefix = get_option_prefix(argp);
+  set_prefix_T prefix = get_option_prefix(argp);
 
   char *arg = *argp;
 
@@ -1427,7 +1435,7 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
   // '=' character per "set" command line. grrr. (jw)
   //
   if (nextchar == '?'
-      || (prefix == 1
+      || (prefix == PREFIX_NONE
           && vim_strchr("=:&<", nextchar) == NULL
           && !(flags & P_BOOL))) {
     // print value
