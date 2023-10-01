@@ -1,130 +1,70 @@
 local helpers = require('test.functional.helpers')(after_each)
-local snippet = require('vim.lsp._snippet')
+local snippet = require('vim.lsp._snippet_grammar')
 
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 
-describe('vim.lsp._snippet', function()
+describe('vim.lsp._snippet_grammar', function()
   before_each(helpers.clear)
   after_each(helpers.clear)
 
   local parse = function(...)
-    return exec_lua('return require("vim.lsp._snippet").parse(...)', ...)
+    local res = exec_lua('return require("vim.lsp._snippet_grammar").parse(...)', ...)
+    return res.data.children
   end
 
-  it('should parse only text', function()
+  it('parses only text', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
-      children = {
-        {
-          type = snippet.NodeType.TEXT,
-          raw = 'TE\\$\\}XT',
-          esc = 'TE$}XT',
-        },
-      },
+      { type = snippet.NodeType.Text, data = { text = 'TE$}XT' } },
     }, parse('TE\\$\\}XT'))
   end)
 
-  it('should parse tabstop', function()
+  it('parses tabstops', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
-      children = {
-        {
-          type = snippet.NodeType.TABSTOP,
-          tabstop = 1,
-        },
-        {
-          type = snippet.NodeType.TABSTOP,
-          tabstop = 2,
-        },
-      },
+      { type = snippet.NodeType.Tabstop, data = { tabstop = 1 } },
+      { type = snippet.NodeType.Tabstop, data = { tabstop = 2 } },
     }, parse('$1${2}'))
   end)
 
-  it('should parse placeholders', function()
+  it('parses nested placeholders', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
-      children = {
-        {
-          type = snippet.NodeType.PLACEHOLDER,
+      {
+        type = snippet.NodeType.Placeholder,
+        data = {
           tabstop = 1,
-          children = {
-            {
-              type = snippet.NodeType.PLACEHOLDER,
+          value = {
+            type = snippet.NodeType.Placeholder,
+            data = {
               tabstop = 2,
-              children = {
-                {
-                  type = snippet.NodeType.TEXT,
-                  raw = 'TE\\$\\}XT',
-                  esc = 'TE$}XT',
-                },
-                {
-                  type = snippet.NodeType.TABSTOP,
-                  tabstop = 3,
-                },
-                {
-                  type = snippet.NodeType.TABSTOP,
-                  tabstop = 1,
-                  transform = {
-                    type = snippet.NodeType.TRANSFORM,
-                    pattern = 'regex',
-                    option = 'i',
-                    format = {
-                      {
-                        type = snippet.NodeType.FORMAT,
-                        capture_index = 1,
-                        modifier = 'upcase',
-                      },
-                    },
-                  },
-                },
-                {
-                  type = snippet.NodeType.TEXT,
-                  raw = 'TE\\$\\}XT',
-                  esc = 'TE$}XT',
-                },
-              },
+              value = { type = snippet.NodeType.Tabstop, data = { tabstop = 3 } },
             },
           },
         },
       },
-    }, parse('${1:${2:TE\\$\\}XT$3${1/regex/${1:/upcase}/i}TE\\$\\}XT}}'))
+    }, parse('${1:${2:${3}}}'))
   end)
 
-  it('should parse variables', function()
+  it('parses variables', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
-      children = {
-        {
-          type = snippet.NodeType.VARIABLE,
+      { type = snippet.NodeType.Variable, data = { name = 'VAR' } },
+      { type = snippet.NodeType.Variable, data = { name = 'VAR' } },
+      {
+        type = snippet.NodeType.Variable,
+        data = {
           name = 'VAR',
+          default = { type = snippet.NodeType.Tabstop, data = { tabstop = 1 } },
         },
-        {
-          type = snippet.NodeType.VARIABLE,
+      },
+      {
+        type = snippet.NodeType.Variable,
+        data = {
           name = 'VAR',
-        },
-        {
-          type = snippet.NodeType.VARIABLE,
-          name = 'VAR',
-          children = {
+          regex = 'regex',
+          options = '',
+          format = {
             {
-              type = snippet.NodeType.TABSTOP,
-              tabstop = 1,
-            },
-          },
-        },
-        {
-          type = snippet.NodeType.VARIABLE,
-          name = 'VAR',
-          transform = {
-            type = snippet.NodeType.TRANSFORM,
-            pattern = 'regex',
-            format = {
-              {
-                type = snippet.NodeType.FORMAT,
-                capture_index = 1,
-                modifier = 'upcase',
-              },
+              type = snippet.NodeType.Format,
+              data = { capture = 1, modifier = 'upcase' },
             },
           },
         },
@@ -132,105 +72,82 @@ describe('vim.lsp._snippet', function()
     }, parse('$VAR${VAR}${VAR:$1}${VAR/regex/${1:/upcase}/}'))
   end)
 
-  it('should parse choice', function()
+  it('parses choice', function()
     eq({
-      type = snippet.NodeType.SNIPPET,
-      children = {
-        {
-          type = snippet.NodeType.CHOICE,
-          tabstop = 1,
-          items = {
-            ',',
-            '|',
-          },
-        },
+      {
+        type = snippet.NodeType.Choice,
+        data = { tabstop = 1, values = { ',', '|' } },
       },
     }, parse('${1|\\,,\\||}'))
   end)
 
-  it('should parse format', function()
-    eq({
-      type = snippet.NodeType.SNIPPET,
-      children = {
+  it('parses format', function()
+    eq(
+      {
         {
-          type = snippet.NodeType.VARIABLE,
-          name = 'VAR',
-          transform = {
-            type = snippet.NodeType.TRANSFORM,
-            pattern = 'regex',
+          type = snippet.NodeType.Variable,
+          data = {
+            name = 'VAR',
+            regex = 'regex',
+            options = '',
             format = {
               {
-                type = snippet.NodeType.FORMAT,
-                capture_index = 1,
-                modifier = 'upcase',
+                type = snippet.NodeType.Format,
+                data = { capture = 1, modifier = 'upcase' },
               },
               {
-                type = snippet.NodeType.FORMAT,
-                capture_index = 1,
-                if_text = 'if_text',
-                else_text = '',
+                type = snippet.NodeType.Format,
+                data = { capture = 1, if_text = 'if_text' },
               },
               {
-                type = snippet.NodeType.FORMAT,
-                capture_index = 1,
-                if_text = '',
-                else_text = 'else_text',
+                type = snippet.NodeType.Format,
+                data = { capture = 1, else_text = 'else_text' },
               },
               {
-                type = snippet.NodeType.FORMAT,
-                capture_index = 1,
-                else_text = 'else_text',
-                if_text = 'if_text',
+                type = snippet.NodeType.Format,
+                data = { capture = 1, if_text = 'if_text', else_text = 'else_text' },
               },
               {
-                type = snippet.NodeType.FORMAT,
-                capture_index = 1,
-                if_text = '',
-                else_text = 'else_text',
+                type = snippet.NodeType.Format,
+                data = { capture = 1, else_text = 'else_text' },
               },
             },
           },
         },
       },
-    }, parse('${VAR/regex/${1:/upcase}${1:+if_text}${1:-else_text}${1:?if_text:else_text}${1:else_text}/}'))
+      parse(
+        '${VAR/regex/${1:/upcase}${1:+if_text}${1:-else_text}${1:?if_text:else_text}${1:else_text}/}'
+      )
+    )
   end)
 
-  it('should parse empty strings', function()
+  it('parses empty strings', function()
     eq({
-      children = {
-        {
-          children = { {
-            esc = '',
-            raw = '',
-            type = 7,
-          } },
+      {
+        type = snippet.NodeType.Placeholder,
+        data = {
           tabstop = 1,
-          type = 2,
-        },
-        {
-          esc = ' ',
-          raw = ' ',
-          type = 7,
-        },
-        {
-          name = 'VAR',
-          transform = {
-            format = {
-              {
-                capture_index = 1,
-                else_text = '',
-                if_text = '',
-                type = 6,
-              },
-            },
-            option = 'g',
-            pattern = 'erg',
-            type = 5,
-          },
-          type = 3,
+          value = { type = snippet.NodeType.Text, data = { text = '' } },
         },
       },
-      type = 0,
-    }, parse('${1:} ${VAR/erg/${1:?:}/g}'))
+      {
+        type = snippet.NodeType.Text,
+        data = { text = ' ' },
+      },
+      {
+        type = snippet.NodeType.Variable,
+        data = {
+          name = 'VAR',
+          regex = 'erg',
+          format = {
+            {
+              type = snippet.NodeType.Format,
+              data = { capture = 1, if_text = '' },
+            },
+          },
+          options = 'g',
+        },
+      },
+    }, parse('${1:} ${VAR/erg/${1:+}/g}'))
   end)
 end)
