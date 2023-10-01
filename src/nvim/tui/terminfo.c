@@ -124,6 +124,10 @@ static unibi_term *terminfo_builtin(const char *term, char **termname)
     *termname = xstrdup("builtin_vtpcon");
     return unibi_from_mem((const char *)vtpcon_terminfo,
                           sizeof vtpcon_terminfo);
+  } else if (terminfo_is_term_family(term, "wezterm")) {
+    *termname = xstrdup("builtin_wezterm");
+    return unibi_from_mem((const char *)wezterm_terminfo,
+                          sizeof wezterm_terminfo);
   } else {
     *termname = xstrdup("builtin_ansi");
     return unibi_from_mem((const char *)ansi_terminfo,

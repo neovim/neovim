@@ -12,6 +12,7 @@
 set -e
 
 url='https://invisible-island.net/datafiles/current/terminfo.src.gz'
+wezterm_url='https://raw.githubusercontent.com/wez/wezterm/master/termwiz/data/wezterm.terminfo'
 target='src/nvim/tui/terminfo_defs.h'
 
 readonly -A entries=(
@@ -30,6 +31,7 @@ readonly -A entries=(
   [win32con]=win32con_terminfo
   [conemu]=conemu_terminfo
   [vtpcon]=vtpcon_terminfo
+  [wezterm]=wezterm_terminfo
 )
 
 db="$(mktemp -du)"
@@ -51,7 +53,7 @@ gunzip -f terminfo.src.gz
 # Build terminfo database
 #
 print_bold '[*] Build terminfo database\n'
-cat terminfo.src scripts/windows.ti | tic -x -o "$db" -
+cat terminfo.src scripts/windows.ti <(curl "$wezterm_url") | tic -x -o "$db" -
 rm -f terminfo.src
 
 #
