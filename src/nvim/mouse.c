@@ -645,6 +645,11 @@ popupexit:
     jump_flags |= MOUSE_RELEASED;
   }
 
+  if (is_drag) {
+    jump_flags &= ~MOUSE_DID_MOVE;
+    jump_flags |= MOUSE_FOCUS;
+  }
+
   // JUMP!
   jump_flags = jump_to_mouse(jump_flags,
                              oap == NULL ? NULL : &(oap->inclusive),
@@ -731,12 +736,6 @@ popupexit:
     } else {
       mouse_dragging = 1;
     }
-  }
-
-  // When dragging the mouse above the window, scroll down.
-  if (is_drag && mouse_row < 0 && !in_status_line) {
-    scroll_redraw(false, 1L);
-    mouse_row = 0;
   }
 
   if (start_visual.lnum) {              // right click in visual mode
@@ -1245,7 +1244,8 @@ retnomove:
   old_curwin = curwin;
   old_cursor = curwin->w_cursor;
 
-  if (row < 0 || col < 0) {                   // check if it makes sense
+  // check if it makes sense
+  if (!(flags & MOUSE_FOCUS) && (row < 0 || col < 0)) {
     return IN_UNKNOWN;
   }
 
@@ -1409,6 +1409,11 @@ retnomove:
     } else if (grid != DEFAULT_GRID_HANDLE) {
       row -= curwin->w_grid.row_offset;
       col -= curwin->w_grid.col_offset;
+    }
+
+    if (col < 0 && curwin->w_leftcol > 0) {
+      curwin->w_leftcol = MAX(0, curwin->w_leftcol + col);
+      leftcol_changed();
     }
 
     // When clicking beyond the end of the window, scroll the screen.
