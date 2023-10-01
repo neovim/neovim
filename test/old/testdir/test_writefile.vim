@@ -1011,7 +1011,6 @@ func Test_write_with_xattr_support()
 
   set backupcopy&
   bw!
-
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
