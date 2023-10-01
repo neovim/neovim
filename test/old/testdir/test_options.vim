@@ -527,10 +527,12 @@ func Test_set_completion_string_values()
   " call assert_equal(getcompletion('set printoptions=', 'cmdline')[0], 'top')
   " call assert_equal(getcompletion('set wincolor=', 'cmdline')[0], 'SpecialKey')
 
-  call assert_equal(getcompletion('set listchars+=', 'cmdline')[0], 'eol')
-  call assert_equal(getcompletion('setl listchars+=', 'cmdline')[0], 'eol')
-  call assert_equal(getcompletion('set fillchars+=', 'cmdline')[0], 'stl')
-  call assert_equal(getcompletion('setl fillchars+=', 'cmdline')[0], 'stl')
+  call assert_equal('eol', getcompletion('set listchars+=', 'cmdline')[0])
+  call assert_equal(['multispace', 'leadmultispace'], getcompletion('set listchars+=', 'cmdline')[-2:])
+  call assert_equal('eol', getcompletion('setl listchars+=', 'cmdline')[0])
+  call assert_equal(['multispace', 'leadmultispace'], getcompletion('setl listchars+=', 'cmdline')[-2:])
+  call assert_equal('stl', getcompletion('set fillchars+=', 'cmdline')[0])
+  call assert_equal('stl', getcompletion('setl fillchars+=', 'cmdline')[0])
 
   "
   " Unique string options below

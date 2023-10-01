@@ -2922,15 +2922,17 @@ static const struct chars_tab fcs_tab[] = {
 
 static lcs_chars_T lcs_chars;
 static const struct chars_tab lcs_tab[] = {
-  { &lcs_chars.eol,     "eol",      NUL, NUL },
-  { &lcs_chars.ext,     "extends",  NUL, NUL },
-  { &lcs_chars.nbsp,    "nbsp",     NUL, NUL },
-  { &lcs_chars.prec,    "precedes", NUL, NUL },
-  { &lcs_chars.space,   "space",    NUL, NUL },
-  { &lcs_chars.tab2,    "tab",      NUL, NUL },
-  { &lcs_chars.lead,    "lead",     NUL, NUL },
-  { &lcs_chars.trail,   "trail",    NUL, NUL },
-  { &lcs_chars.conceal, "conceal",  NUL, NUL },
+  { &lcs_chars.eol,     "eol",            NUL, NUL },
+  { &lcs_chars.ext,     "extends",        NUL, NUL },
+  { &lcs_chars.nbsp,    "nbsp",           NUL, NUL },
+  { &lcs_chars.prec,    "precedes",       NUL, NUL },
+  { &lcs_chars.space,   "space",          NUL, NUL },
+  { &lcs_chars.tab2,    "tab",            NUL, NUL },
+  { &lcs_chars.lead,    "lead",           NUL, NUL },
+  { &lcs_chars.trail,   "trail",          NUL, NUL },
+  { &lcs_chars.conceal, "conceal",        NUL, NUL },
+  { NULL,               "multispace",     NUL, NUL },
+  { NULL,               "leadmultispace", NUL, NUL },
 };
 
 /// Handle setting 'listchars' or 'fillchars'.
@@ -3001,54 +3003,13 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
       int i;
       for (i = 0; i < entries; i++) {
         const size_t len = strlen(tab[i].name);
-        if (strncmp(p, tab[i].name, len) == 0
-            && p[len] == ':'
-            && p[len + 1] != NUL) {
-          const char *s = p + len + 1;
-          int c1 = get_encoded_char_adv(&s);
-          if (c1 == 0 || char2cells(c1) > 1) {
-            return e_invarg;
-          }
-          int c2 = 0, c3 = 0;
-          if (tab[i].cp == &lcs_chars.tab2) {
-            if (*s == NUL) {
-              return e_invarg;
-            }
-            c2 = get_encoded_char_adv(&s);
-            if (c2 == 0 || char2cells(c2) > 1) {
-              return e_invarg;
-            }
-            if (!(*s == ',' || *s == NUL)) {
-              c3 = get_encoded_char_adv(&s);
-              if (c3 == 0 || char2cells(c3) > 1) {
-                return e_invarg;
-              }
-            }
-          }
-
-          if (*s == ',' || *s == NUL) {
-            if (round > 0) {
-              if (tab[i].cp == &lcs_chars.tab2) {
-                lcs_chars.tab1 = c1;
-                lcs_chars.tab2 = c2;
-                lcs_chars.tab3 = c3;
-              } else if (tab[i].cp != NULL) {
-                *(tab[i].cp) = c1;
-              }
-            }
-            p = s;
-            break;
-          }
+        if (!(strncmp(p, tab[i].name, len) == 0
+              && p[len] == ':'
+              && p[len + 1] != NUL)) {
+          continue;
         }
-      }
 
-      if (i == entries) {
-        const size_t len = strlen("multispace");
-        const size_t len2 = strlen("leadmultispace");
-        if (is_listchars
-            && strncmp(p, "multispace", len) == 0
-            && p[len] == ':'
-            && p[len + 1] != NUL) {
+        if (is_listchars && strcmp(tab[i].name, "multispace") == 0) {
           const char *s = p + len + 1;
           if (round == 0) {
             // Get length of lcs-multispace string in the first round
@@ -3076,11 +3037,11 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
             }
             p = s;
           }
-        } else if (is_listchars
-                   && strncmp(p, "leadmultispace", len2) == 0
-                   && p[len2] == ':'
-                   && p[len2 + 1] != NUL) {
-          const char *s = p + len2 + 1;
+          break;
+        }
+
+        if (is_listchars && strcmp(tab[i].name, "leadmultispace") == 0) {
+          const char *s = p + len + 1;
           if (round == 0) {
             // get length of lcs-leadmultispace string in first round
             last_lmultispace = p;
@@ -3107,9 +3068,48 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
             }
             p = s;
           }
-        } else {
+          break;
+        }
+
+        const char *s = p + len + 1;
+        int c1 = get_encoded_char_adv(&s);
+        if (c1 == 0 || char2cells(c1) > 1) {
           return e_invarg;
         }
+        int c2 = 0, c3 = 0;
+        if (tab[i].cp == &lcs_chars.tab2) {
+          if (*s == NUL) {
+            return e_invarg;
+          }
+          c2 = get_encoded_char_adv(&s);
+          if (c2 == 0 || char2cells(c2) > 1) {
+            return e_invarg;
+          }
+          if (!(*s == ',' || *s == NUL)) {
+            c3 = get_encoded_char_adv(&s);
+            if (c3 == 0 || char2cells(c3) > 1) {
+              return e_invarg;
+            }
+          }
+        }
+
+        if (*s == ',' || *s == NUL) {
+          if (round > 0) {
+            if (tab[i].cp == &lcs_chars.tab2) {
+              lcs_chars.tab1 = c1;
+              lcs_chars.tab2 = c2;
+              lcs_chars.tab3 = c3;
+            } else if (tab[i].cp != NULL) {
+              *(tab[i].cp) = c1;
+            }
+          }
+          p = s;
+          break;
+        }
+      }
+
+      if (i == entries) {
+        return e_invarg;
       }
 
       if (*p == ',') {
