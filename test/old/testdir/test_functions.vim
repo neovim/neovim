@@ -3303,4 +3303,22 @@ func Test_glob_extended_bash()
   let &shell=_shell
 endfunc
 
+" Test for glob() with extended patterns (MS-Windows)
+" Vim doesn't use 'shell' to expand wildcards on MS-Windows.
+" Unlike bash, it doesn't support {,} expansion.
+func Test_glob_extended_mswin()
+  CheckMSWindows
+
+  call mkdir('Xtestglob/foo/bar/src', 'p')
+  call writefile([], 'Xtestglob/foo/bar/src/foo.sh')
+  call writefile([], 'Xtestglob/foo/bar/src/foo.h')
+  call writefile([], 'Xtestglob/foo/bar/src/foo.cpp')
+
+  " Sort output of glob() otherwise we end up with different
+  " ordering depending on whether file system is case-sensitive.
+  let expected = ['Xtestglob/foo/bar/src/foo.cpp', 'Xtestglob/foo/bar/src/foo.h', 'Xtestglob/foo/bar/src/foo.sh']
+  call assert_equal(expected, sort(glob('Xtestglob/**/foo.*', 0, 1)))
+  call delete('Xtestglob', 'rf')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
