@@ -1226,7 +1226,7 @@ fail:
 ///
 /// @return [allocated] NULL when calling function fails, allocated string
 ///                     otherwise.
-char *call_func_retstr(const char *const func, int argc, typval_T *argv)
+void *call_func_retstr(const char *const func, int argc, typval_T *argv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   typval_T rettv;

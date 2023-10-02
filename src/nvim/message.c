@@ -1025,10 +1025,9 @@ int delete_first_msg(void)
 }
 
 /// :messages command implementation
-void ex_messages(void *const eap_p)
+void ex_messages(exarg_T *eap)
   FUNC_ATTR_NONNULL_ALL
 {
-  const exarg_T *const eap = (const exarg_T *)eap_p;
   struct msg_hist *p;
 
   if (strcmp(eap->arg, "clear") == 0) {

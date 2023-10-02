@@ -131,7 +131,7 @@ static const char e_non_numeric_argument_to_z[]
   = N_("E144: Non-numeric argument to :z");
 
 /// ":ascii" and "ga" implementation
-void do_ascii(const exarg_T *const eap)
+void do_ascii(exarg_T *eap)
 {
   char *dig;
   int cc[MAX_MCO];

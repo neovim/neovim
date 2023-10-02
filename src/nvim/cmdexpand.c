@@ -3078,7 +3078,7 @@ static int ExpandUserDefined(const char *const pat, expand_T *xp, regmatch_T *re
   *matches = NULL;
   *numMatches = 0;
 
-  char *const retstr = call_user_expand_func((user_expand_func_T)call_func_retstr, xp);
+  char *const retstr = call_user_expand_func(call_func_retstr, xp);
   if (retstr == NULL) {
     return FAIL;
   }
@@ -3150,7 +3150,7 @@ static int ExpandUserList(expand_T *xp, char ***matches, int *numMatches)
 {
   *matches = NULL;
   *numMatches = 0;
-  list_T *const retlist = call_user_expand_func((user_expand_func_T)call_func_retlist, xp);
+  list_T *const retlist = call_user_expand_func(call_func_retlist, xp);
   if (retlist == NULL) {
     return FAIL;
   }
