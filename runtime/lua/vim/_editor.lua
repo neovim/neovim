@@ -548,6 +548,9 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
       else
         c2 = #bufline + 1
       end
+    elseif regtype == 'V' then -- linewise selection, always return whole line
+      c1 = 0
+      c2 = -1
     else
       c1 = (l == pos1[1]) and pos1[2] or 0
       c2 = (l == pos2[1]) and (pos2[2] + (inclusive and 1 or 0)) or -1
