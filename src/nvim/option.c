@@ -137,6 +137,7 @@ static char *p_vsts_nopaste;
 
 #define OPTION_COUNT ARRAY_SIZE(options)
 
+/// :set boolean option prefix
 typedef enum {
   PREFIX_NO = 0,  ///< "no" prefix
   PREFIX_NONE,    ///< no prefix

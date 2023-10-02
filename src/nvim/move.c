@@ -2699,7 +2699,7 @@ void do_check_cursorbind(void)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     curwin = wp;
     curbuf = curwin->w_buffer;
-    // skip original window  and windows with 'noscrollbind'
+    // skip original window and windows with 'nocursorbind'
     if (curwin != old_curwin && curwin->w_p_crb) {
       if (curwin->w_p_diff) {
         curwin->w_cursor.lnum =

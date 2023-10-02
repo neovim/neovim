@@ -398,136 +398,136 @@ func Test_set_completion_string_values()
   " Test basic enum string options that have well-defined enum names
   "
 
-  " call assert_equal(getcompletion('set display=', 'cmdline'), ['lastline', 'truncate', 'uhex'])
+  " call assert_equal(['lastline', 'truncate', 'uhex'], getcompletion('set display=', 'cmdline'))
   call assert_equal(['lastline', 'truncate', 'uhex', 'msgsep'], getcompletion('set display=', 'cmdline'))
-  call assert_equal(getcompletion('set display=t', 'cmdline'), ['truncate'])
-  call assert_equal(getcompletion('set display=*ex*', 'cmdline'), ['uhex'])
+  call assert_equal(['truncate'], getcompletion('set display=t', 'cmdline'))
+  call assert_equal(['uhex'], getcompletion('set display=*ex*', 'cmdline'))
 
   " Test that if a value is set, it will populate the results, but only if
   " typed value is empty.
   set display=uhex,lastline
-  " call assert_equal(getcompletion('set display=', 'cmdline'), ['uhex,lastline', 'lastline', 'truncate', 'uhex'])
+  " call assert_equal(['uhex,lastline', 'lastline', 'truncate', 'uhex'], getcompletion('set display=', 'cmdline'))
   call assert_equal(['uhex,lastline', 'lastline', 'truncate', 'uhex', 'msgsep'], getcompletion('set display=', 'cmdline'))
-  call assert_equal(getcompletion('set display=u', 'cmdline'), ['uhex'])
+  call assert_equal(['uhex'], getcompletion('set display=u', 'cmdline'))
   " If the set value is part of the enum list, it will show as the first
   " result with no duplicate.
   set display=uhex
-  " call assert_equal(getcompletion('set display=', 'cmdline'), ['uhex', 'lastline', 'truncate'])
+  " call assert_equal(['uhex', 'lastline', 'truncate'], getcompletion('set display=', 'cmdline'))
   call assert_equal(['uhex', 'lastline', 'truncate', 'msgsep'], getcompletion('set display=', 'cmdline'))
   " If empty value, will just show the normal list without an empty item
   set display=
-  " call assert_equal(getcompletion('set display=', 'cmdline'), ['lastline', 'truncate', 'uhex'])
+  " call assert_equal(['lastline', 'truncate', 'uhex'], getcompletion('set display=', 'cmdline'))
   call assert_equal(['lastline', 'truncate', 'uhex', 'msgsep'], getcompletion('set display=', 'cmdline'))
   " Test escaping of the values
-  " call assert_equal(getcompletion('set fillchars=', 'cmdline')[0], 'vert:\|,fold:-,eob:~,lastline:@')
+  " call assert_equal('vert:\|,fold:-,eob:~,lastline:@', getcompletion('set fillchars=', 'cmdline')[0])
   call assert_equal('vert:\|,foldsep:\|,fold:-', getcompletion('set fillchars=', 'cmdline')[0])
 
   " Test comma-separated lists will expand after a comma.
-  call assert_equal(getcompletion('set display=truncate,*ex*', 'cmdline'), ['uhex'])
+  call assert_equal(['uhex'], getcompletion('set display=truncate,*ex*', 'cmdline'))
   " Also test the positioning of the expansion is correct
   call feedkeys(":set display=truncate,l\<Tab>\<C-B>\"\<CR>", 'xt')
   call assert_equal('"set display=truncate,lastline', @:)
   set display&
 
   " Test single-value options will not expand after a comma
-  call assert_equal(getcompletion('set ambw=single,', 'cmdline'), [])
+  call assert_equal([], getcompletion('set ambw=single,', 'cmdline'))
 
   " Test the other simple options to make sure they have basic auto-complete,
   " but don't exhaustively validate their results.
-  call assert_equal(getcompletion('set ambw=', 'cmdline')[0], 'single')
+  call assert_equal('single', getcompletion('set ambw=', 'cmdline')[0])
   call assert_match('light\|dark', getcompletion('set bg=', 'cmdline')[1])
-  call assert_equal(getcompletion('set backspace=', 'cmdline')[0], 'indent')
-  call assert_equal(getcompletion('set backupcopy=', 'cmdline')[1], 'yes')
-  call assert_equal(getcompletion('set belloff=', 'cmdline')[1], 'backspace')
-  call assert_equal(getcompletion('set briopt=', 'cmdline')[1], 'min:')
+  call assert_equal('indent', getcompletion('set backspace=', 'cmdline')[0])
+  call assert_equal('yes', getcompletion('set backupcopy=', 'cmdline')[1])
+  call assert_equal('backspace', getcompletion('set belloff=', 'cmdline')[1])
+  call assert_equal('min:', getcompletion('set briopt=', 'cmdline')[1])
   if exists('+browsedir')
-    call assert_equal(getcompletion('set browsedir=', 'cmdline')[1], 'current')
+    call assert_equal('current', getcompletion('set browsedir=', 'cmdline')[1])
   endif
-  call assert_equal(getcompletion('set bufhidden=', 'cmdline')[1], 'unload')
-  call assert_equal(getcompletion('set buftype=', 'cmdline')[1], 'nowrite')
-  call assert_equal(getcompletion('set casemap=', 'cmdline')[1], 'internal')
+  call assert_equal('unload', getcompletion('set bufhidden=', 'cmdline')[1])
+  call assert_equal('nowrite', getcompletion('set buftype=', 'cmdline')[1])
+  call assert_equal('internal', getcompletion('set casemap=', 'cmdline')[1])
   if exists('+clipboard')
     " call assert_match('unnamed', getcompletion('set clipboard=', 'cmdline')[1])
     call assert_match('unnamed', getcompletion('set clipboard=', 'cmdline')[0])
   endif
-  call assert_equal(getcompletion('set complete=', 'cmdline')[1], '.')
-  call assert_equal(getcompletion('set completeopt=', 'cmdline')[1], 'menu')
+  call assert_equal('.', getcompletion('set complete=', 'cmdline')[1])
+  call assert_equal('menu', getcompletion('set completeopt=', 'cmdline')[1])
   if exists('+completeslash')
-    call assert_equal(getcompletion('set completeslash=', 'cmdline')[1], 'backslash')
+    call assert_equal('backslash', getcompletion('set completeslash=', 'cmdline')[1])
   endif
   if exists('+cryptmethod')
-    call assert_equal(getcompletion('set cryptmethod=', 'cmdline')[1], 'zip')
+    call assert_equal('zip', getcompletion('set cryptmethod=', 'cmdline')[1])
   endif
   if exists('+cursorlineopt')
-    call assert_equal(getcompletion('set cursorlineopt=', 'cmdline')[1], 'line')
+    call assert_equal('line', getcompletion('set cursorlineopt=', 'cmdline')[1])
   endif
-  call assert_equal(getcompletion('set debug=', 'cmdline')[1], 'throw')
-  call assert_equal(getcompletion('set eadirection=', 'cmdline')[1], 'ver')
-  call assert_equal(getcompletion('set fileformat=', 'cmdline')[2], 'mac')
+  call assert_equal('throw', getcompletion('set debug=', 'cmdline')[1])
+  call assert_equal('ver', getcompletion('set eadirection=', 'cmdline')[1])
+  call assert_equal('mac', getcompletion('set fileformat=', 'cmdline')[2])
   if exists('+foldclose')
-    call assert_equal(getcompletion('set foldclose=', 'cmdline')[0], 'all')
+    call assert_equal('all', getcompletion('set foldclose=', 'cmdline')[0])
   endif
   if exists('+foldmethod')
-    call assert_equal(getcompletion('set foldmethod=', 'cmdline')[1], 'expr')
+    call assert_equal('expr', getcompletion('set foldmethod=', 'cmdline')[1])
   endif
   if exists('+foldopen')
-    call assert_equal(getcompletion('set foldopen=', 'cmdline')[1], 'all')
+    call assert_equal('all', getcompletion('set foldopen=', 'cmdline')[1])
   endif
-  call assert_equal(getcompletion('set jumpoptions=', 'cmdline')[0], 'stack')
-  call assert_equal(getcompletion('set keymodel=', 'cmdline')[1], 'stopsel')
-  call assert_equal(getcompletion('set lispoptions=', 'cmdline')[1], 'expr:1')
+  call assert_equal('stack', getcompletion('set jumpoptions=', 'cmdline')[0])
+  call assert_equal('stopsel', getcompletion('set keymodel=', 'cmdline')[1])
+  call assert_equal('expr:1', getcompletion('set lispoptions=', 'cmdline')[1])
   call assert_match('popup', getcompletion('set mousemodel=', 'cmdline')[2])
-  call assert_equal(getcompletion('set nrformats=', 'cmdline')[1], 'bin')
+  call assert_equal('bin', getcompletion('set nrformats=', 'cmdline')[1])
   if exists('+rightleftcmd')
-    call assert_equal(getcompletion('set rightleftcmd=', 'cmdline')[0], 'search')
+    call assert_equal('search', getcompletion('set rightleftcmd=', 'cmdline')[0])
   endif
-  call assert_equal(getcompletion('set scrollopt=', 'cmdline')[1], 'ver')
-  call assert_equal(getcompletion('set selection=', 'cmdline')[1], 'exclusive')
-  call assert_equal(getcompletion('set selectmode=', 'cmdline')[1], 'key')
+  call assert_equal('ver', getcompletion('set scrollopt=', 'cmdline')[1])
+  call assert_equal('exclusive', getcompletion('set selection=', 'cmdline')[1])
+  call assert_equal('key', getcompletion('set selectmode=', 'cmdline')[1])
   if exists('+ssop')
-    call assert_equal(getcompletion('set ssop=', 'cmdline')[1], 'buffers')
+    call assert_equal('buffers', getcompletion('set ssop=', 'cmdline')[1])
   endif
-  call assert_equal(getcompletion('set showcmdloc=', 'cmdline')[1], 'statusline')
+  call assert_equal('statusline', getcompletion('set showcmdloc=', 'cmdline')[1])
   if exists('+signcolumn')
-    call assert_equal(getcompletion('set signcolumn=', 'cmdline')[1], 'yes')
+    call assert_equal('yes', getcompletion('set signcolumn=', 'cmdline')[1])
   endif
   if exists('+spelloptions')
-    call assert_equal(getcompletion('set spelloptions=', 'cmdline')[0], 'camel')
+    call assert_equal('camel', getcompletion('set spelloptions=', 'cmdline')[0])
   endif
   if exists('+spellsuggest')
-    call assert_equal(getcompletion('set spellsuggest+=', 'cmdline')[0], 'best')
+    call assert_equal('best', getcompletion('set spellsuggest+=', 'cmdline')[0])
   endif
-  call assert_equal(getcompletion('set splitkeep=', 'cmdline')[1], 'screen')
-  " call assert_equal(getcompletion('set swapsync=', 'cmdline')[1], 'sync')
-  call assert_equal(getcompletion('set switchbuf=', 'cmdline')[1], 'usetab')
-  call assert_equal(getcompletion('set tagcase=', 'cmdline')[1], 'ignore')
+  call assert_equal('screen', getcompletion('set splitkeep=', 'cmdline')[1])
+  " call assert_equal('sync', getcompletion('set swapsync=', 'cmdline')[1])
+  call assert_equal('usetab', getcompletion('set switchbuf=', 'cmdline')[1])
+  call assert_equal('ignore', getcompletion('set tagcase=', 'cmdline')[1])
   if exists('+termwintype')
-    call assert_equal(getcompletion('set termwintype=', 'cmdline')[1], 'conpty')
+    call assert_equal('conpty', getcompletion('set termwintype=', 'cmdline')[1])
   endif
   if exists('+toolbar')
-    call assert_equal(getcompletion('set toolbar=', 'cmdline')[1], 'text')
+    call assert_equal('text', getcompletion('set toolbar=', 'cmdline')[1])
   endif
   if exists('+tbis')
-    call assert_equal(getcompletion('set tbis=', 'cmdline')[2], 'medium')
+    call assert_equal('medium', getcompletion('set tbis=', 'cmdline')[2])
   endif
   if exists('+ttymouse')
     set ttymouse=
-    call assert_equal(getcompletion('set ttymouse=', 'cmdline')[1], 'xterm2')
+    call assert_equal('xterm2', getcompletion('set ttymouse=', 'cmdline')[1])
     set ttymouse&
   endif
-  call assert_equal(getcompletion('set virtualedit=', 'cmdline')[1], 'insert')
-  call assert_equal(getcompletion('set wildmode=', 'cmdline')[1], 'longest')
-  call assert_equal(getcompletion('set wildmode=list,longest:', 'cmdline')[0], 'full')
-  call assert_equal(getcompletion('set wildoptions=', 'cmdline')[1], 'tagfile')
+  call assert_equal('insert', getcompletion('set virtualedit=', 'cmdline')[1])
+  call assert_equal('longest', getcompletion('set wildmode=', 'cmdline')[1])
+  call assert_equal('full', getcompletion('set wildmode=list,longest:', 'cmdline')[0])
+  call assert_equal('tagfile', getcompletion('set wildoptions=', 'cmdline')[1])
   if exists('+winaltkeys')
-    call assert_equal(getcompletion('set winaltkeys=', 'cmdline')[1], 'yes')
+    call assert_equal('yes', getcompletion('set winaltkeys=', 'cmdline')[1])
   endif
 
   " Other string options that queries the system rather than fixed enum names
-  call assert_equal(getcompletion('set eventignore=', 'cmdline')[0:1], ['all', 'BufAdd'])
-  call assert_equal(getcompletion('set fileencodings=', 'cmdline')[1], 'latin1')
-  " call assert_equal(getcompletion('set printoptions=', 'cmdline')[0], 'top')
-  " call assert_equal(getcompletion('set wincolor=', 'cmdline')[0], 'SpecialKey')
+  call assert_equal(['all', 'BufAdd'], getcompletion('set eventignore=', 'cmdline')[0:1])
+  call assert_equal('latin1', getcompletion('set fileencodings=', 'cmdline')[1])
+  " call assert_equal('top', getcompletion('set printoptions=', 'cmdline')[0])
+  " call assert_equal('SpecialKey', getcompletion('set wincolor=', 'cmdline')[0])
 
   call assert_equal('eol', getcompletion('set listchars+=', 'cmdline')[0])
   call assert_equal(['multispace', 'leadmultispace'], getcompletion('set listchars+=', 'cmdline')[-2:])
@@ -541,33 +541,33 @@ func Test_set_completion_string_values()
   "
 
   " keyprotocol: only auto-complete when after ':' with known protocol types
-  " call assert_equal(getcompletion('set keyprotocol=', 'cmdline'), [&keyprotocol])
+  " call assert_equal([&keyprotocol], getcompletion('set keyprotocol=', 'cmdline'))
   " call feedkeys(":set keyprotocol+=someterm:m\<Tab>\<C-B>\"\<CR>", 'xt')
   " call assert_equal('"set keyprotocol+=someterm:mok2', @:)
   " set keyprotocol&
 
   " previewpopup / completepopup
-  " call assert_equal(getcompletion('set previewpopup=', 'cmdline')[0], 'height:')
-  " call assert_equal(getcompletion('set previewpopup=highlight:End*Buffer', 'cmdline')[0], 'EndOfBuffer')
+  " call assert_equal('height:', getcompletion('set previewpopup=', 'cmdline')[0])
+  " call assert_equal('EndOfBuffer', getcompletion('set previewpopup=highlight:End*Buffer', 'cmdline')[0])
   " call feedkeys(":set previewpopup+=border:\<Tab>\<C-B>\"\<CR>", 'xt')
   " call assert_equal('"set previewpopup+=border:on', @:)
   " call feedkeys(":set completepopup=height:10,align:\<Tab>\<C-B>\"\<CR>", 'xt')
   " call assert_equal('"set completepopup=height:10,align:item', @:)
-  " call assert_equal(getcompletion('set completepopup=bogusname:', 'cmdline'), [])
+  " call assert_equal([], getcompletion('set completepopup=bogusname:', 'cmdline'))
   " set previewpopup& completepopup&
 
   " diffopt: special handling of algorithm:<alg_list>
-  call assert_equal(getcompletion('set diffopt+=', 'cmdline')[0], 'filler')
-  call assert_equal(getcompletion('set diffopt+=iblank,foldcolumn:', 'cmdline'), [])
-  call assert_equal(getcompletion('set diffopt+=iblank,algorithm:pat*', 'cmdline')[0], 'patience')
+  call assert_equal('filler', getcompletion('set diffopt+=', 'cmdline')[0])
+  call assert_equal([], getcompletion('set diffopt+=iblank,foldcolumn:', 'cmdline'))
+  call assert_equal('patience', getcompletion('set diffopt+=iblank,algorithm:pat*', 'cmdline')[0])
 
   " highlight: special parsing, including auto-completing highlight groups
   " after ':'
-  " call assert_equal(getcompletion('set hl=', 'cmdline')[0:1], [&hl, '8'])
-  " call assert_equal(getcompletion('set hl+=', 'cmdline')[0], '8')
-  " call assert_equal(getcompletion('set hl+=8', 'cmdline')[0:2], ['8:', '8b', '8i'])
-  " call assert_equal(getcompletion('set hl+=8b', 'cmdline')[0], '8bi')
-  " call assert_equal(getcompletion('set hl+=8:No*ext', 'cmdline')[0], 'NonText')
+  " call assert_equal([&hl, '8'], getcompletion('set hl=', 'cmdline')[0:1])
+  " call assert_equal('8', getcompletion('set hl+=', 'cmdline')[0])
+  " call assert_equal(['8:', '8b', '8i'], getcompletion('set hl+=8', 'cmdline')[0:2])
+  " call assert_equal('8bi', getcompletion('set hl+=8b', 'cmdline')[0])
+  " call assert_equal('NonText', getcompletion('set hl+=8:No*ext', 'cmdline')[0])
   " If all the display modes are used up we should be suggesting nothing. Make
   " a hl typed option with all the modes which will look like '8bi-nrsuc2d=t',
   " and make sure nothing is suggested from that.
@@ -576,7 +576,7 @@ func Test_set_completion_string_values()
   "       \            {idx, val -> val[1]}),
   "       \        {idx, val -> val != ':'}),
   "       \ '')
-  " call assert_equal(getcompletion('set hl+=8'..hl_display_modes, 'cmdline'), [])
+  " call assert_equal([], getcompletion('set hl+=8'..hl_display_modes, 'cmdline'))
 
   "
   " Test flag lists
@@ -585,16 +585,16 @@ func Test_set_completion_string_values()
   " Test set=. Show the original value if nothing is typed after '='.
   " Otherwise, the list should avoid showing what's already typed.
   set mouse=v
-  call assert_equal(getcompletion('set mouse=', 'cmdline'), ['v','a','n','i','c','h','r'])
+  call assert_equal(['v','a','n','i','c','h','r'], getcompletion('set mouse=', 'cmdline'))
   set mouse=nvi
-  call assert_equal(getcompletion('set mouse=', 'cmdline'), ['nvi','a','n','v','i','c','h','r'])
-  call assert_equal(getcompletion('set mouse=hn', 'cmdline'), ['a','v','i','c','r'])
+  call assert_equal(['nvi','a','n','v','i','c','h','r'], getcompletion('set mouse=', 'cmdline'))
+  call assert_equal(['a','v','i','c','r'], getcompletion('set mouse=hn', 'cmdline'))
 
   " Test set+=. Never show original value, and it also tries to avoid listing
   " flags that's already in the option value.
-  call assert_equal(getcompletion('set mouse+=', 'cmdline'), ['a','c','h','r'])
-  call assert_equal(getcompletion('set mouse+=hn', 'cmdline'), ['a','c','r'])
-  call assert_equal(getcompletion('set mouse+=acrhn', 'cmdline'), [])
+  call assert_equal(['a','c','h','r'], getcompletion('set mouse+=', 'cmdline'))
+  call assert_equal(['a','c','r'], getcompletion('set mouse+=hn', 'cmdline'))
+  call assert_equal([], getcompletion('set mouse+=acrhn', 'cmdline'))
 
   " Test that the position of the expansion is correct (even if there are
   " additional values after the current cursor)
@@ -605,15 +605,15 @@ func Test_set_completion_string_values()
   " Test that other flag list options have auto-complete, but don't
   " exhaustively validate their results.
   if exists('+concealcursor')
-    call assert_equal(getcompletion('set cocu=', 'cmdline')[0], 'n')
+    call assert_equal('n', getcompletion('set cocu=', 'cmdline')[0])
   endif
-  call assert_equal(getcompletion('set cpo=', 'cmdline')[1], 'a')
-  call assert_equal(getcompletion('set fo=', 'cmdline')[1], 't')
+  call assert_equal('a', getcompletion('set cpo=', 'cmdline')[1])
+  call assert_equal('t', getcompletion('set fo=', 'cmdline')[1])
   if exists('+guioptions')
-    call assert_equal(getcompletion('set go=', 'cmdline')[1], '!')
+    call assert_equal('!', getcompletion('set go=', 'cmdline')[1])
   endif
-  call assert_equal(getcompletion('set shortmess=', 'cmdline')[1], 'r')
-  call assert_equal(getcompletion('set whichwrap=', 'cmdline')[1], 'b')
+  call assert_equal('r', getcompletion('set shortmess=', 'cmdline')[1])
+  call assert_equal('b', getcompletion('set whichwrap=', 'cmdline')[1])
 
   "
   "Test set-=
@@ -621,54 +621,54 @@ func Test_set_completion_string_values()
 
   " Normal single-value option just shows the existing value
   set ambiwidth=double
-  call assert_equal(getcompletion('set ambw-=', 'cmdline'), ['double'])
+  call assert_equal(['double'], getcompletion('set ambw-=', 'cmdline'))
   set ambiwidth&
 
   " Works on numbers and term options as well
-  call assert_equal(getcompletion('set laststatus-=', 'cmdline'), [string(&laststatus)])
+  call assert_equal([string(&laststatus)], getcompletion('set laststatus-=', 'cmdline'))
   set t_Ce=testCe
-  " call assert_equal(getcompletion('set t_Ce-=', 'cmdline'), ['testCe'])
+  " call assert_equal(['testCe'], getcompletion('set t_Ce-=', 'cmdline'))
   set t_Ce&
 
   " Comma-separated lists should present each option
   set diffopt=context:123,,,,,iblank,iwhiteall
-  call assert_equal(getcompletion('set diffopt-=', 'cmdline'), ['context:123', 'iblank', 'iwhiteall'])
-  call assert_equal(getcompletion('set diffopt-=*n*', 'cmdline'), ['context:123', 'iblank'])
-  call assert_equal(getcompletion('set diffopt-=i', 'cmdline'), ['iblank', 'iwhiteall'])
+  call assert_equal(['context:123', 'iblank', 'iwhiteall'], getcompletion('set diffopt-=', 'cmdline'))
+  call assert_equal(['context:123', 'iblank'], getcompletion('set diffopt-=*n*', 'cmdline'))
+  call assert_equal(['iblank', 'iwhiteall'], getcompletion('set diffopt-=i', 'cmdline'))
   " Don't present more than one option as it doesn't make sense in set-=
-  call assert_equal(getcompletion('set diffopt-=iblank,', 'cmdline'), [])
+  call assert_equal([], getcompletion('set diffopt-=iblank,', 'cmdline'))
   " Test empty option
   set diffopt=
-  call assert_equal(getcompletion('set diffopt-=', 'cmdline'), [])
+  call assert_equal([], getcompletion('set diffopt-=', 'cmdline'))
   set diffopt&
 
   " Test escaping output
-  call assert_equal(getcompletion('set fillchars-=', 'cmdline')[0], 'vert:\|')
+  call assert_equal('vert:\|', getcompletion('set fillchars-=', 'cmdline')[0])
 
   " Test files with commas in name are being parsed and escaped properly
   set path=has\\\ space,file\\,with\\,comma,normal_file
   if exists('+completeslash')
-    call assert_equal(getcompletion('set path-=', 'cmdline'), ['has\\\ space', 'file\,with\,comma', 'normal_file'])
+    call assert_equal(['has\\\ space', 'file\,with\,comma', 'normal_file'], getcompletion('set path-=', 'cmdline'))
   else
-    call assert_equal(getcompletion('set path-=', 'cmdline'), ['has\\\ space', 'file\\,with\\,comma', 'normal_file'])
+    call assert_equal(['has\\\ space', 'file\\,with\\,comma', 'normal_file'], getcompletion('set path-=', 'cmdline'))
   endif
   set path&
 
   " Flag list should present orig value, then individual flags
   set mouse=v
-  call assert_equal(getcompletion('set mouse-=', 'cmdline'), ['v'])
+  call assert_equal(['v'], getcompletion('set mouse-=', 'cmdline'))
   set mouse=avn
-  call assert_equal(getcompletion('set mouse-=', 'cmdline'), ['avn','a','v','n'])
+  call assert_equal(['avn','a','v','n'], getcompletion('set mouse-=', 'cmdline'))
   " Don't auto-complete when we have at least one flags already
-  call assert_equal(getcompletion('set mouse-=n', 'cmdline'), [])
+  call assert_equal([], getcompletion('set mouse-=n', 'cmdline'))
   " Test empty option
   set mouse=
-  call assert_equal(getcompletion('set mouse-=', 'cmdline'), [])
+  call assert_equal([], getcompletion('set mouse-=', 'cmdline'))
   set mouse&
 
   " 'whichwrap' is an odd case where it's both flag list and comma-separated
   set ww=b,h
-  call assert_equal(getcompletion('set ww-=', 'cmdline'), ['b','h'])
+  call assert_equal(['b','h'], getcompletion('set ww-=', 'cmdline'))
   set ww&
 endfunc
 
