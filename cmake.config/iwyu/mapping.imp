@@ -192,6 +192,7 @@
   # of its behavior.
   { include: [ '"nvim/arglist_defs.h"', public, '"nvim/arglist.h"', public ] },
   { include: [ '"nvim/buffer_defs.h"', public, '"nvim/buffer.h"', public ] },
+  { include: [ '"nvim/cmdexpand_defs.h"', public, '"nvim/cmdexpand.h"', public ] },
   { include: [ '"nvim/eval/typval_defs.h"', public, '"nvim/eval/typval.h"', public ] },
   { include: [ '"nvim/ex_cmds_defs.h"', public, '"nvim/ex_cmds.h"', public ] },
   { include: [ '"nvim/ex_eval_defs.h"', public, '"nvim/ex_eval.h"', public ] },

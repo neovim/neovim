@@ -1,8 +1,11 @@
 #ifndef NVIM_OPTION_DEFS_H
 #define NVIM_OPTION_DEFS_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
 #include "nvim/api/private/defs.h"
-#include "nvim/eval/typval_defs.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/regexp_defs.h"
 #include "nvim/types.h"
 

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "nvim/buffer_defs.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/globals.h"
 #include "nvim/macros.h"

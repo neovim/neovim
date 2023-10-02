@@ -115,6 +115,19 @@ typedef enum {
   VAR_BLOB,         ///< Blob, .v_blob is used.
 } VarType;
 
+/// Type values for type().
+enum {
+  VAR_TYPE_NUMBER  = 0,
+  VAR_TYPE_STRING  = 1,
+  VAR_TYPE_FUNC    = 2,
+  VAR_TYPE_LIST    = 3,
+  VAR_TYPE_DICT    = 4,
+  VAR_TYPE_FLOAT   = 5,
+  VAR_TYPE_BOOL    = 6,
+  VAR_TYPE_SPECIAL = 7,
+  VAR_TYPE_BLOB    = 10,
+};
+
 /// Structure that holds an internal variable value
 typedef struct {
   VarType v_type;               ///< Variable type.

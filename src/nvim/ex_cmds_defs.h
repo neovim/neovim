@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "nvim/eval/typval_defs.h"
+#include "nvim/ex_eval_defs.h"
 #include "nvim/normal.h"
 #include "nvim/pos.h"
 #include "nvim/regexp_defs.h"
@@ -69,20 +70,20 @@
 #define EX_FILE1 (EX_FILES | EX_NOSPC)  // 1 file, defaults to current file
 #define EX_WORD1 (EX_EXTRA | EX_NOSPC)  // one extra word allowed
 
-// values for cmd_addr_type
+/// values for cmd_addr_type
 typedef enum {
-  ADDR_LINES,           // buffer line numbers
-  ADDR_WINDOWS,         // window number
-  ADDR_ARGUMENTS,       // argument number
-  ADDR_LOADED_BUFFERS,  // buffer number of loaded buffer
-  ADDR_BUFFERS,         // buffer number
-  ADDR_TABS,            // tab page number
-  ADDR_TABS_RELATIVE,   // Tab page that only relative
-  ADDR_QUICKFIX_VALID,  // quickfix list valid entry number
-  ADDR_QUICKFIX,        // quickfix list entry number
-  ADDR_UNSIGNED,        // positive count or zero, defaults to 1
-  ADDR_OTHER,           // something else, use line number for '$', '%', etc.
-  ADDR_NONE,  // no range used
+  ADDR_LINES,           ///< buffer line numbers
+  ADDR_WINDOWS,         ///< window number
+  ADDR_ARGUMENTS,       ///< argument number
+  ADDR_LOADED_BUFFERS,  ///< buffer number of loaded buffer
+  ADDR_BUFFERS,         ///< buffer number
+  ADDR_TABS,            ///< tab page number
+  ADDR_TABS_RELATIVE,   ///< Tab page that only relative
+  ADDR_QUICKFIX_VALID,  ///< quickfix list valid entry number
+  ADDR_QUICKFIX,        ///< quickfix list entry number
+  ADDR_UNSIGNED,        ///< positive count or zero, defaults to 1
+  ADDR_OTHER,           ///< something else, use line number for '$', '%', etc.
+  ADDR_NONE,            ///< no range used
 } cmd_addr_T;
 
 typedef struct exarg exarg_T;
@@ -128,53 +129,12 @@ typedef char *(*LineGetter)(int, void *, int, bool);
 
 /// Structure for command definition.
 typedef struct cmdname {
-  char *cmd_name;                         ///< Name of the command.
-  ex_func_T cmd_func;                     ///< Function with implementation of this command.
-  ex_preview_func_T cmd_preview_func;     ///< Preview callback function of this command.
-  uint32_t cmd_argt;                      ///< Relevant flags from the declared above.
-  cmd_addr_T cmd_addr_type;               ///< Flag for address type.
+  char *cmd_name;                      ///< Name of the command.
+  ex_func_T cmd_func;                  ///< Function with implementation of this command.
+  ex_preview_func_T cmd_preview_func;  ///< Preview callback function of this command.
+  uint32_t cmd_argt;                   ///< Relevant flags from the declared above.
+  cmd_addr_T cmd_addr_type;            ///< Flag for address type.
 } CommandDefinition;
-
-// A list used for saving values of "emsg_silent".  Used by ex_try() to save the
-// value of "emsg_silent" if it was non-zero.  When this is done, the CSF_SILENT
-// flag below is set.
-typedef struct eslist_elem eslist_T;
-struct eslist_elem {
-  int saved_emsg_silent;  // saved value of "emsg_silent"
-  eslist_T *next;         // next element on the list
-};
-
-// For conditional commands a stack is kept of nested conditionals.
-// When cs_idx < 0, there is no conditional command.
-enum {
-  CSTACK_LEN = 50,
-};
-
-typedef struct {
-  int cs_flags[CSTACK_LEN];         // CSF_ flags
-  char cs_pending[CSTACK_LEN];      // CSTP_: what's pending in ":finally"
-  union {
-    void *csp_rv[CSTACK_LEN];       // return typeval for pending return
-    void *csp_ex[CSTACK_LEN];       // exception for pending throw
-  } cs_pend;
-  void *cs_forinfo[CSTACK_LEN];     // info used by ":for"
-  int cs_line[CSTACK_LEN];          // line nr of ":while"/":for" line
-  int cs_idx;                       // current entry, or -1 if none
-  int cs_looplevel;                 // nr of nested ":while"s and ":for"s
-  int cs_trylevel;                  // nr of nested ":try"s
-  eslist_T *cs_emsg_silent_list;    // saved values of "emsg_silent"
-  int cs_lflags;                    // loop flags: CSL_ flags
-} cstack_T;
-#define cs_rettv       cs_pend.csp_rv
-#define cs_exception   cs_pend.csp_ex
-
-// Flags for the cs_lflags item in cstack_T.
-enum {
-  CSL_HAD_LOOP = 1,  // just found ":while" or ":for"
-  CSL_HAD_ENDLOOP = 2,  // just found ":endwhile" or ":endfor"
-  CSL_HAD_CONT = 4,  // just found ":continue"
-  CSL_HAD_FINA = 8,  // just found ":finally"
-};
 
 /// Arguments used for Ex commands.
 struct exarg {
@@ -221,41 +181,6 @@ struct exarg {
 #define EXFLAG_LIST     0x01    // 'l': list
 #define EXFLAG_NR       0x02    // '#': number
 #define EXFLAG_PRINT    0x04    // 'p': print
-
-typedef enum {
-  XP_PREFIX_NONE,  ///< prefix not used
-  XP_PREFIX_NO,    ///< "no" prefix for bool option
-  XP_PREFIX_INV,   ///< "inv" prefix for bool option
-} xp_prefix_T;
-
-// used for completion on the command line
-struct expand {
-  char *xp_pattern;             // start of item to expand
-  int xp_context;               // type of expansion
-  size_t xp_pattern_len;        // bytes in xp_pattern before cursor
-  xp_prefix_T xp_prefix;
-  char *xp_arg;                 // completion function
-  LuaRef xp_luaref;             // Ref to Lua completion function
-  sctx_T xp_script_ctx;         // SCTX for completion function
-  int xp_backslash;             // one of the XP_BS_ values
-#ifndef BACKSLASH_IN_FILENAME
-  int xp_shell;                 // true for a shell command, more
-                                // characters need to be escaped
-#endif
-  int xp_numfiles;              // number of files found by file name completion
-  int xp_col;                   // cursor position in line
-  int xp_selected;              // selected index in completion
-  char *xp_orig;                // originally expanded string
-  char **xp_files;              // list of files
-  char *xp_line;                // text being completed
-#define EXPAND_BUF_LEN 256
-  char xp_buf[EXPAND_BUF_LEN];  // buffer for returned match
-};
-
-// values for xp_backslash
-#define XP_BS_NONE      0       // nothing special for backslashes
-#define XP_BS_ONE       1       // uses one backslash before a space
-#define XP_BS_THREE     2       // uses three backslashes before a space
 
 enum {
   CMOD_SANDBOX      = 0x0001,  ///< ":sandbox"

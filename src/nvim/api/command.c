@@ -17,6 +17,7 @@
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"

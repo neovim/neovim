@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <time.h>
 
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/runtime.h"
 

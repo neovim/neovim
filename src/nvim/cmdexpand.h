@@ -1,6 +1,7 @@
 #ifndef NVIM_CMDEXPAND_H
 #define NVIM_CMDEXPAND_H
 
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_getln.h"
 #include "nvim/garray.h"
@@ -40,9 +41,6 @@ enum {
   WILD_BUFLASTUSED          = 0x1000,
   BUF_DIFF_FILTER           = 0x2000,
 };
-
-/// Type used by ExpandGeneric()
-typedef char *(*CompleteListItemGetter)(expand_T *, int);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "cmdexpand.h.generated.h"

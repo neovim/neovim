@@ -11,6 +11,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/debugger.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
@@ -30,7 +31,6 @@
 #include "nvim/profile.h"
 #include "nvim/runtime.h"
 #include "nvim/types.h"
-#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "profile.c.generated.h"
