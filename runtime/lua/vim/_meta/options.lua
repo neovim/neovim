@@ -1591,7 +1591,8 @@ vim.go.dex = vim.go.diffexpr
 --- 			When omitted a context of six lines is used.
 --- 			When using zero the context is actually one,
 --- 			since folds require a line in between, also
---- 			for a deleted line.
+--- 			for a deleted line. Set it to a very large
+--- 			value (999999) to disable folding completely.
 --- 			See `fold-diff`.
 ---
 --- 	iblank		Ignore changes where lines are all blank.  Adds

@@ -6099,6 +6099,7 @@ function vim.fn.prevnonblank(lnum) end
 --- using a {n$} positional argument specifier. See |printf-$|.
 ---
 ---
+---             *E1520*
 --- The conversion specifiers and their meanings are:
 ---
 ---     *printf-d* *printf-b* *printf-B* *printf-o* *printf-x* *printf-X*

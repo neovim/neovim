@@ -1065,7 +1065,7 @@ match ASCII characters, as indicated by the range.
 
 \(\)	A pattern enclosed by escaped parentheses.	*/\(* */\(\)* */\)*
 	E.g., "\(^a\)" matches 'a' at the start of a line.
-	There can only be ten of these.  You can use "\%(" to add more, but
+	There can only be nine of these.  You can use "\%(" to add more, but
 	not counting it as a sub-expression.
 	*E51* *E54* *E55* *E872* *E873*
 

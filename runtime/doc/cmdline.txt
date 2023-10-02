@@ -742,7 +742,7 @@ An example for subtracting (which isn't very useful): >
 On this text:
 	1 one ~
 	2 two ~
-	3 three FOLDED~
+	3 three FOLDED ~
 	4 four FOLDED ~
 	5 five FOLDED ~
 	6 six FOLDED ~

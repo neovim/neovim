@@ -1542,6 +1542,7 @@ M.funcs = {
   count = {
     args = { 2, 4 },
     base = 1,
+    tags = { 'E706' },
     desc = [=[
       Return the number of times an item with value {expr} appears
       in |String|, |List| or |Dictionary| {comp}.
@@ -7381,6 +7382,7 @@ M.funcs = {
       using a {n$} positional argument specifier. See |printf-$|.
 
 
+      						*E1520*
       The conversion specifiers and their meanings are:
 
       		*printf-d* *printf-b* *printf-B* *printf-o* *printf-x* *printf-X*

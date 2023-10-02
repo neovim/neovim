@@ -925,7 +925,7 @@ cosh({expr})                                                            *cosh()*
 			echo cosh(-0.5)
 <			-1.127626
 
-count({comp}, {expr} [, {ic} [, {start}]])                             *count()*
+count({comp}, {expr} [, {ic} [, {start}]])                        *count()* *E706*
 		Return the number of times an item with value {expr} appears
 		in |String|, |List| or |Dictionary| {comp}.
 
@@ -5116,6 +5116,7 @@ printf({fmt}, {expr1} ...)                                            *printf()*
 		using a {n$} positional argument specifier. See |printf-$|.
 
 
+								*E1520*
 		The conversion specifiers and their meanings are:
 
 				*printf-d* *printf-b* *printf-B* *printf-o* *printf-x* *printf-X*
