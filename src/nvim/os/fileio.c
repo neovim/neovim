@@ -282,9 +282,10 @@ static char writebuf[kRWBufferSize];
 ///
 /// @param[in,out]  rv  RBuffer instance used.
 /// @param[in,out]  fp  File to work with.
-static void file_rb_write_full_cb(RBuffer *const rv, FileDescriptor *const fp)
+static void file_rb_write_full_cb(RBuffer *const rv, void *const fp_in)
   FUNC_ATTR_NONNULL_ALL
 {
+  FileDescriptor *const fp = fp_in;
   assert(fp->wr);
   assert(rv->data == (void *)fp);
   if (rbuffer_size(rv) == 0) {
