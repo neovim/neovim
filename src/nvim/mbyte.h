@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/func_attr.h"
 #include "nvim/mbyte_defs.h"

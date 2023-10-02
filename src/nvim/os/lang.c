@@ -5,6 +5,7 @@
 # define Boolean CFBoolean  // Avoid conflict with API's Boolean
 # define FileInfo CSFileInfo  // Avoid conflict with API's Fileinfo
 # include <CoreServices/CoreServices.h>
+
 # undef Boolean
 # undef FileInfo
 #endif
@@ -17,6 +18,7 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/garray.h"
@@ -30,7 +32,6 @@
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/profile.h"
-#include "nvim/types.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

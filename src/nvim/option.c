@@ -40,6 +40,7 @@
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/diff.h"

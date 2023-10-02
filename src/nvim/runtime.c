@@ -20,6 +20,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/debugger.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"

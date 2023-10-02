@@ -1564,15 +1564,14 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
     break;
   }
   case kSDItemVariable: {
-    if (entry.data.global_var.value.v_type == VAR_TYPE_BLOB) {
+    if (entry.data.global_var.value.v_type == VAR_BLOB) {
       // Strings and Blobs both pack as msgpack BINs; differentiate them by
       // storing an additional VAR_TYPE_BLOB element alongside Blobs
       list_T *const list = tv_list_alloc(1);
       tv_list_append_number(list, VAR_TYPE_BLOB);
       entry.data.global_var.additional_elements = list;
     }
-    const size_t arr_size = 2 + (size_t)(
-                                         tv_list_len(entry.data.global_var.additional_elements));
+    const size_t arr_size = 2 + (size_t)(tv_list_len(entry.data.global_var.additional_elements));
     msgpack_pack_array(spacker, arr_size);
     const String varname = cstr_as_string(entry.data.global_var.name);
     PACK_BIN(varname);

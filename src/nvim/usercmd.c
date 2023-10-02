@@ -16,6 +16,7 @@
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"

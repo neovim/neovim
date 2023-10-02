@@ -22,6 +22,7 @@
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/debugger.h"
 #include "nvim/digraph.h"

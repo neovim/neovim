@@ -14,6 +14,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/window.h"

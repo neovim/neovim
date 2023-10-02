@@ -31,8 +31,6 @@ typedef union {
 
 typedef handle_T NS;
 
-typedef struct expand expand_T;
-
 typedef uint64_t proftime_T;
 
 typedef enum {

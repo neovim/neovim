@@ -33,6 +33,7 @@
 #include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"

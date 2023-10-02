@@ -12,6 +12,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/cmdhist.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"

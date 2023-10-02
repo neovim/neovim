@@ -6,6 +6,7 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds_defs.h"

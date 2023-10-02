@@ -27,6 +27,7 @@
 #include "nvim/change.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/cmdhist.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"

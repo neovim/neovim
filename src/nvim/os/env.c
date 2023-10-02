@@ -17,7 +17,6 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/eval.h"
-#include "nvim/ex_cmds_defs.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
@@ -29,7 +28,6 @@
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
-#include "nvim/types.h"
 #include "nvim/version.h"
 #include "nvim/vim.h"
 

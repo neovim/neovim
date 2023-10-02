@@ -28,7 +28,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
-#include "nvim/ex_cmds.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"

@@ -3,6 +3,7 @@
 
 #include "nvim/api/keysets.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/types.h"
 

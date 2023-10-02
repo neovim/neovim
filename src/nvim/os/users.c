@@ -10,10 +10,10 @@
 
 #include "auto/config.h"
 #include "nvim/ascii.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/garray.h"
 #include "nvim/memory.h"
 #include "nvim/os/os.h"
-#include "nvim/types.h"
 #include "nvim/vim.h"
 #ifdef HAVE_PWD_FUNCS
 # include <pwd.h>

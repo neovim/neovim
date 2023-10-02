@@ -7,6 +7,7 @@
 
 #include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/cmdexpand_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/mapping_defs.h"
