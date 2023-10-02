@@ -652,7 +652,7 @@ local function on_code_action_results(results, ctx, options)
     --  arguments?: any[]
     --
     ---@type lsp.Client
-    local client = vim.lsp.get_client_by_id(action_tuple[1])
+    local client = assert(vim.lsp.get_client_by_id(action_tuple[1]))
     local action = action_tuple[2]
 
     local reg = client.dynamic_capabilities:get(ms.textDocument_codeAction, { bufnr = ctx.bufnr })
@@ -663,10 +663,14 @@ local function on_code_action_results(results, ctx, options)
     if not action.edit and client and supports_resolve then
       client.request(ms.codeAction_resolve, action, function(err, resolved_action)
         if err then
-          vim.notify(err.code .. ': ' .. err.message, vim.log.levels.ERROR)
-          return
+          if action.command then
+            apply_action(action, client)
+          else
+            vim.notify(err.code .. ': ' .. err.message, vim.log.levels.ERROR)
+          end
+        else
+          apply_action(resolved_action, client)
         end
-        apply_action(resolved_action, client)
       end, ctx.bufnr)
     else
       apply_action(action, client)
