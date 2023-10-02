@@ -396,7 +396,7 @@ So to enable this only for ruby, set the following variable: >
 	:let g:ruby_exec = 1
 
 If both, the global `plugin_exec` and the `<filetype>_exec` specific variable
-are set, the filetpe specific variable should have precedent.
+are set, the filetype specific variable should have precedent.
 
 AWK							*ft-awk-plugin*
 
