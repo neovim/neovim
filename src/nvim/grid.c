@@ -455,6 +455,22 @@ void grid_line_flush(void)
                    false, 0, false, invalid_row);
 }
 
+/// flush grid line but only if on a valid row
+///
+/// This is a stopgap until message.c has been refactored to behave
+void grid_line_flush_if_valid_row(void)
+{
+  if (grid_line_row < 0 || grid_line_row >= grid_line_grid->rows) {
+    if (rdb_flags & RDB_INVALID) {
+      abort();
+    } else {
+      grid_line_grid = NULL;
+      return;
+    }
+  }
+  grid_line_flush();
+}
+
 /// Fill the grid from "start_row" to "end_row" (exclusive), from "start_col"
 /// to "end_col" (exclusive) with character "c1" in first column followed by
 /// "c2" in the other columns.  Use attributes "attr".

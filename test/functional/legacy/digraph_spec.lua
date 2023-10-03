@@ -22,7 +22,7 @@ describe('digraph', function()
       {0:~           }|
       {0:~           }|
       {0:~           }|
-      {2:-- INSERT -} |
+      {2:-- INSERT --}|
     ]])
     feed('1')
     screen:expect([[
@@ -31,7 +31,7 @@ describe('digraph', function()
       {0:~           }|
       {0:~           }|
       {0:~           }|
-      {2:-- INSERT -} |
+      {2:-- INSERT --}|
     ]])
     feed('2')
     screen:expect([[
@@ -40,7 +40,7 @@ describe('digraph', function()
       {0:~           }|
       {0:~           }|
       {0:~           }|
-      {2:-- INSERT -} |
+      {2:-- INSERT --}|
     ]])
   end)
 end)

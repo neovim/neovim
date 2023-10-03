@@ -259,8 +259,8 @@ describe('fileio', function()
     screen:expect([[
       {2:WARNING: The file has been changed since}|
       {2: reading it!!!}                          |
-      {3:Do you really want to write to it (y/n)^?}|
-                                              |
+      {3:Do you really want to write to it (y/n)?}|
+      ^                                        |
     ]])
 
     feed("n")

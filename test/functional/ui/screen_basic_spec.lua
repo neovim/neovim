@@ -795,7 +795,7 @@ local function screen_tests(linegrid)
       screen:try_resize(1, 1)
       screen:expect([[
         resize^      |
-        {2:-- INSERT -} |
+        {2:-- INSERT --}|
       ]])
 
       feed('<esc>:ls')
