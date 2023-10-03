@@ -401,7 +401,7 @@ function M.foldtext()
       if start_col > line_pos then
         table.insert(result, {
           line:sub(line_pos + 1, start_col),
-          { { 'Folded', priority } },
+          {},
           range = { line_pos, start_col },
         })
       end
