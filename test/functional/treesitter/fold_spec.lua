@@ -381,64 +381,42 @@ void qsort(void *base, size_t nel, size_t width, int (*compar)(const void *, con
     }
   }
 }]]
+  local screen
+
+  before_each(function()
+    screen = Screen.new(60, 5)
+    screen:set_default_attr_ids({
+      [0] = {foreground = Screen.colors.Blue, bold = true},
+      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGray};
+      [2] = {bold = true, background = Screen.colors.LightGray, foreground = Screen.colors.SeaGreen};
+      [3] = {foreground = Screen.colors.DarkCyan, background = Screen.colors.LightGray};
+      [4] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.LightGray};
+      [5] = {bold = true, background = Screen.colors.LightGray, foreground = Screen.colors.Brown};
+      [6] = {background = Screen.colors.Red1};
+      [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Red};
+      [8] = {foreground = Screen.colors.Brown, bold = true, background = Screen.colors.Red};
+      [9] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.Red};
+      [10] = {bold = true};
+    })
+    screen:attach()
+  end)
 
   it('displays highlighted content', function()
-    local screen = Screen.new(60, 21)
-    screen:attach()
-
     command([[set foldmethod=manual foldtext=v:lua.vim.treesitter.foldtext() updatetime=50]])
     insert(test_text)
     exec_lua([[vim.treesitter.get_parser(0, "c")]])
 
     feed('ggVGzf')
-
-    screen:expect({
-      grid = [[
-{1:^void}{2: }{3:qsort}{4:(}{1:void}{2: }{5:*}{3:base}{4:,}{2: }{1:size_t}{2: }{3:nel}{4:,}{2: }{1:size_t}{2: }{3:width}{4:,}{2: }{1:int}{2: }{4:(}{5:*}{3:compa}|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-{6:~                                                           }|
-                                                            |
-]],
-      attr_ids = {
-        [1] = {
-          foreground = Screen.colors.SeaGreen4,
-          background = Screen.colors.LightGrey,
-          bold = true,
-        },
-        [2] = { background = Screen.colors.LightGrey, foreground = Screen.colors.Blue4 },
-        [3] = { background = Screen.colors.LightGrey, foreground = Screen.colors.DarkCyan },
-        [4] = { background = Screen.colors.LightGrey, foreground = Screen.colors.SlateBlue },
-        [5] = {
-          foreground = Screen.colors.Brown,
-          background = Screen.colors.LightGrey,
-          bold = true,
-        },
-        [6] = { foreground = Screen.colors.Blue, bold = true },
-      },
-    })
+    screen:expect{grid=[[
+      {2:^void}{1: }{3:qsort}{4:(}{2:void}{1: }{5:*}{3:base}{4:,}{1: }{2:size_t}{1: }{3:nel}{4:,}{1: }{2:size_t}{1: }{3:width}{4:,}{1: }{2:int}{1: }{4:(}{5:*}{3:compa}|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+                                                                  |
+    ]]}
   end)
 
   it('handles deep nested captures', function()
-    local screen = Screen.new(60, 21)
-    screen:attach()
-
     command([[set foldmethod=manual foldtext=v:lua.vim.treesitter.foldtext() updatetime=50]])
     insert([[
 function FoldInfo.new()
@@ -448,86 +426,49 @@ function FoldInfo.new()
     levels0 = {},
     levels = {},
   }, FoldInfo)
-end
-    ]])
+end]])
     exec_lua([[vim.treesitter.get_parser(0, "lua")]])
 
-    feed('ggjVGkzf')
+    feed('ggjVGkzfgg')
+    screen:expect{grid=[[
+      ^function FoldInfo.new()                                     |
+      {1:  }{5:return}{1: }{4:setmetatable({}{1:·····································}|
+      end                                                         |
+      {0:~                                                           }|
+                                                                  |
+    ]]}
 
-    screen:expect({
-      grid = [[
-function FoldInfo.new()                                     |
-{1:^  }{2:return}{1: }{3:setmetatable({}{1:·····································}|
-                                                            |
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-{4:~                                                           }|
-                                                            |
-]],
-      attr_ids = {
-        [1] = { foreground = Screen.colors.Blue4, background = Screen.colors.LightGray },
-        [2] = {
-          foreground = Screen.colors.Brown,
-          bold = true,
-          background = Screen.colors.LightGray,
-        },
-        [3] = { foreground = Screen.colors.SlateBlue, background = Screen.colors.LightGray },
-        [4] = { bold = true, foreground = Screen.colors.Blue },
-      },
-    })
+    command('hi! Visual guibg=Red')
+    feed('GVgg')
+    screen:expect{grid=[[
+      ^f{6:unction FoldInfo.new()}                                     |
+      {7:  }{8:return}{7: }{9:setmetatable({}{7:·····································}|
+      {6:end}                                                         |
+      {0:~                                                           }|
+      {10:-- VISUAL LINE --}                                           |
+    ]]}
+
+    feed('10l<C-V>')
+    screen:expect{grid=[[
+      {6:function F}^oldInfo.new()                                     |
+      {7:  }{8:return}{7: }{9:se}{4:tmetatable({}{1:·····································}|
+      {6:end}                                                         |
+      {0:~                                                           }|
+      {10:-- VISUAL BLOCK --}                                          |
+    ]]}
   end)
 
   it('falls back to default', function()
-    local screen = Screen.new(60, 21)
-    screen:attach()
-
     command([[set foldmethod=manual foldtext=v:lua.vim.treesitter.foldtext()]])
     insert(test_text)
 
     feed('ggVGzf')
-
-    screen:expect({
-      grid = [[
-{1:^+-- 19 lines: void qsort(void *base, size_t nel, size_t widt}|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-{2:~                                                           }|
-                                                            |
-]],
-      attr_ids = {
-        [1] = { foreground = Screen.colors.Blue4, background = Screen.colors.LightGray },
-        [2] = { bold = true, foreground = Screen.colors.Blue },
-      },
-    })
+    screen:expect{grid=[[
+      {1:^+-- 19 lines: void qsort(void *base, size_t nel, size_t widt}|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+                                                                  |
+    ]]}
   end)
 end)
