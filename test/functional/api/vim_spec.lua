@@ -2869,6 +2869,18 @@ describe('API', function()
       eq(false, eval('g:fired'))
     end)
 
+    it('TextChanged and TextChangedI do not trigger without changes', function()
+      local buf = meths.create_buf(true, false)
+      command([[let g:changed = '']])
+      meths.create_autocmd({'TextChanged', 'TextChangedI'}, {
+        buffer = buf,
+        command = 'let g:changed ..= mode()',
+      })
+      meths.set_current_buf(buf)
+      feed('i')
+      eq('', meths.get_var('changed'))
+    end)
+
     it('scratch-buffer', function()
       eq({id=2}, meths.create_buf(false, true))
       eq({id=3}, meths.create_buf(true, true))

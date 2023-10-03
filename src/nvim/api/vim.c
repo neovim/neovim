@@ -941,6 +941,12 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
     goto fail;
   }
 
+  // Set last_changedtick to avoid triggering a TextChanged autocommand right
+  // after it was added.
+  buf->b_last_changedtick = buf_get_changedtick(buf);
+  buf->b_last_changedtick_i = buf_get_changedtick(buf);
+  buf->b_last_changedtick_pum = buf_get_changedtick(buf);
+
   // Only strictly needed for scratch, but could just as well be consistent
   // and do this now. buffer is created NOW, not when it latter first happen
   // to reach a window or aucmd_prepbuf() ..
