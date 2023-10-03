@@ -866,9 +866,17 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   if (strcmp(g->sg_name_u, "NORMAL") == 0) {
     cterm_normal_fg_color = g->sg_cterm_fg;
     cterm_normal_bg_color = g->sg_cterm_bg;
+    bool did_changed = false;
+    if (normal_bg != g->sg_rgb_bg || normal_fg != g->sg_rgb_fg || normal_sp != g->sg_rgb_sp) {
+      did_changed = true;
+    }
     normal_fg = g->sg_rgb_fg;
     normal_bg = g->sg_rgb_bg;
     normal_sp = g->sg_rgb_sp;
+
+    if (did_changed) {
+      highlight_attr_set_all();
+    }
     ui_default_colors_set();
   } else {
     // a cursor style uses this syn_id, make sure its attribute is updated.
