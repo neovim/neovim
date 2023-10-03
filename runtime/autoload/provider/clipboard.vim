@@ -93,9 +93,9 @@ function! provider#clipboard#Executable() abort
     let s:cache_enabled = 0
     return 'pbcopy'
   elseif !empty($WAYLAND_DISPLAY) && executable('wl-copy') && executable('wl-paste')
-    let s:copy['+'] = ['wl-copy', '--foreground', '--type', 'text/plain']
+    let s:copy['+'] = ['wl-copy', '--type', 'text/plain']
     let s:paste['+'] = ['wl-paste', '--no-newline']
-    let s:copy['*'] = ['wl-copy', '--foreground', '--primary', '--type', 'text/plain']
+    let s:copy['*'] = ['wl-copy', '--primary', '--type', 'text/plain']
     let s:paste['*'] = ['wl-paste', '--no-newline', '--primary']
     return 'wl-copy'
   elseif !empty($WAYLAND_DISPLAY) && executable('waycopy') && executable('waypaste')
