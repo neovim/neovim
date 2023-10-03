@@ -478,6 +478,14 @@ attribute: >query
     ((super_important_node) @superimportant (#set! "priority" 105))
 <
 
+                                               *treesitter-highlight-hl_group*
+By default, highlight group for a capture is taken from the capture name.
+It is also possible to provide a custom highlight group by setting "hl_group"
+metadata attribute: >query
+
+    ((comment) @comment (#set! hl_group "CustomComment"))
+<
+
 ==============================================================================
 TREESITTER LANGUAGE INJECTIONS                *treesitter-language-injections*
 <

@@ -753,6 +753,67 @@ describe('treesitter highlighting (C)', function()
     ]]}
   end)
 
+  it("supports hl_group attribute", function()
+    insert(hl_text_c)
+
+    exec_lua [=[
+      local parser = vim.treesitter.get_parser(0, "c")
+      test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = [[
+        ("static" @keyword)
+      ]]}})
+    ]=]
+
+    screen:expect{grid=[[
+      /// Schedule Lua callback on main loop's event queue             |
+      {4:static} int nlua_schedule(lua_State *const lstate)                |
+      {                                                                |
+        if (lua_type(lstate, 1) != LUA_TFUNCTION                       |
+            || lstate != lstate) {                                     |
+          lua_pushliteral(lstate, "vim.schedule: expected function");  |
+          return lua_error(lstate);                                    |
+        }                                                              |
+                                                                       |
+        LuaRef cb = nlua_ref(lstate, 1);                               |
+                                                                       |
+        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+                       1, (void *)(ptrdiff_t)cb);                      |
+        return 0;                                                      |
+      ^}                                                                |
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+
+    command [[ hi link CustomHLGroup String ]]
+    exec_lua [=[
+      local parser = vim.treesitter.get_parser(0, "c")
+      test_hl = vim.treesitter.highlighter.new(parser, {queries = {c = [[
+        ("static" @keyword (set! hl_group "CustomHLGroup"))
+      ]]}})
+    ]=]
+
+    screen:expect{grid=[[
+      /// Schedule Lua callback on main loop's event queue             |
+      {5:static} int nlua_schedule(lua_State *const lstate)                |
+      {                                                                |
+        if (lua_type(lstate, 1) != LUA_TFUNCTION                       |
+            || lstate != lstate) {                                     |
+          lua_pushliteral(lstate, "vim.schedule: expected function");  |
+          return lua_error(lstate);                                    |
+        }                                                              |
+                                                                       |
+        LuaRef cb = nlua_ref(lstate, 1);                               |
+                                                                       |
+        multiqueue_put(main_loop.events, nlua_schedule_event,          |
+                       1, (void *)(ptrdiff_t)cb);                      |
+        return 0;                                                      |
+      ^}                                                                |
+      {1:~                                                                }|
+      {1:~                                                                }|
+                                                                       |
+    ]]}
+  end)
+
   it("@foo.bar groups has the correct fallback behavior", function()
     local get_hl = function(name) return meths.get_hl_by_name(name,1).foreground end
     meths.set_hl(0, "@foo", {fg = 1})

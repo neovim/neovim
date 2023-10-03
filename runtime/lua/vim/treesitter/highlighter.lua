@@ -263,6 +263,10 @@ local function on_line_impl(self, buf, line, is_spell_nav)
         -- Give nospell a higher priority so it always overrides spell captures.
         local spell_pri_offset = capture_name == 'nospell' and 1 or 0
 
+        if metadata and metadata.hl_group then
+          hl = metadata.hl_group
+        end
+
         if hl and end_row >= line and (not is_spell_nav or spell ~= nil) then
           local priority = (tonumber(metadata.priority) or vim.highlight.priorities.treesitter)
             + spell_pri_offset
