@@ -165,6 +165,7 @@ CONFIG = {
             'secure.lua',
             'version.lua',
             'iter.lua',
+            'snippet.lua',
         ],
         'files': [
             'runtime/lua/vim/iter.lua',
@@ -181,6 +182,7 @@ CONFIG = {
             'runtime/lua/vim/secure.lua',
             'runtime/lua/vim/version.lua',
             'runtime/lua/vim/_inspector.lua',
+            'runtime/lua/vim/snippet.lua',
             'runtime/lua/vim/_meta/builtin.lua',
             'runtime/lua/vim/_meta/diff.lua',
             'runtime/lua/vim/_meta/mpack.lua',

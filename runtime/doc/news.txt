@@ -189,6 +189,8 @@ The following new APIs and features were added.
 
 • Added |:fclose| command.
 
+• Added |vim.snippet| for snippet expansion support.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

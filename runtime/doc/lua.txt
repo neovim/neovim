@@ -3670,4 +3670,63 @@ totable({f}, {...})                                       *vim.iter.totable()*
     Return: ~
         (table)
 
+
+==============================================================================
+Lua module: vim.snippet                                          *vim.snippet*
+
+active()                                                    *snippet.active()*
+    Returns `true` if there's an active snippet in the current buffer.
+
+    Return: ~
+        (boolean)
+
+exit()                                                        *snippet.exit()*
+    Exits the current snippet.
+
+expand({input})                                             *snippet.expand()*
+    Expands the given snippet text. Refer to https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax for the specification of valid input.
+
+    Tabstops are highlighted with hl-SnippetTabstop.
+
+    Parameters: ~
+      • {input}  (string)
+
+jump({direction})                                             *snippet.jump()*
+    Jumps within the active snippet in the given direction. If the jump isn't
+    possible, the function call does nothing.
+
+    You can use this function to navigate a snippet as follows: >lua
+        vim.keymap.set({ 'i', 's' }, '<Tab>', function()
+           if vim.snippet.jumpable(1) then
+             return '<cmd>lua vim.snippet.jump(1)<cr>'
+           else
+             return '<Tab>'
+           end
+         end, { expr = true })
+<
+
+    Parameters: ~
+      • {direction}  (vim.snippet.Direction) Navigation direction. -1 for
+                     previous, 1 for next.
+
+jumpable({direction})                                     *snippet.jumpable()*
+    Returns `true` if there is an active snippet which can be jumped in the
+    given direction. You can use this function to navigate a snippet as
+    follows: >lua
+        vim.keymap.set({ 'i', 's' }, '<Tab>', function()
+           if vim.snippet.jumpable(1) then
+             return '<cmd>lua vim.snippet.jump(1)<cr>'
+           else
+             return '<Tab>'
+           end
+         end, { expr = true })
+<
+
+    Parameters: ~
+      • {direction}  (vim.snippet.Direction) Navigation direction. -1 for
+                     previous, 1 for next.
+
+    Return: ~
+        (boolean)
+
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

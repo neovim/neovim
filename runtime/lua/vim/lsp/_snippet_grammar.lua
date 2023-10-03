@@ -81,10 +81,10 @@ local Type = {
 M.NodeType = Type
 
 --- @class vim.snippet.Node<T>: { type: vim.snippet.Type, data: T }
---- @class vim.snippet.TabstopData: { tabstop: number }
+--- @class vim.snippet.TabstopData: { tabstop: integer }
 --- @class vim.snippet.TextData: { text: string }
---- @class vim.snippet.PlaceholderData: { tabstop: vim.snippet.TabstopData, value: vim.snippet.Node<any> }
---- @class vim.snippet.ChoiceData: { tabstop: vim.snippet.TabstopData, values: string[] }
+--- @class vim.snippet.PlaceholderData: { tabstop: integer, value: vim.snippet.Node<any> }
+--- @class vim.snippet.ChoiceData: { tabstop: integer, values: string[] }
 --- @class vim.snippet.VariableData: { name: string, default?: vim.snippet.Node<any>, regex?: string, format?: vim.snippet.Node<vim.snippet.FormatData|vim.snippet.TextData>[], options?: string }
 --- @class vim.snippet.FormatData: { capture: number, modifier?: string, if_text?: string, else_text?: string }
 --- @class vim.snippet.SnippetData: { children: vim.snippet.Node<any>[] }
