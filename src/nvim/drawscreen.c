@@ -1519,16 +1519,12 @@ static void win_update(win_T *wp, DecorProviders *providers)
     }
   }
 
-  // Force redraw when width of 'number' or 'relativenumber' column
-  // changes.
-  int nrwidth = (wp->w_p_nu || wp->w_p_rnu || *wp->w_p_stc) ? number_width(wp) : 0;
-  if (wp->w_nrwidth != nrwidth) {
+  const int nrwidth_before = wp->w_nrwidth;
+  int nrwidth_new = (wp->w_p_nu || wp->w_p_rnu || *wp->w_p_stc) ? number_width(wp) : 0;
+  // Force redraw when width of 'number' or 'relativenumber' column changes.
+  if (wp->w_nrwidth != nrwidth_new) {
     type = UPD_NOT_VALID;
-    wp->w_nrwidth = nrwidth;
-
-    if (buf->terminal) {
-      terminal_check_size(buf->terminal);
-    }
+    wp->w_nrwidth = nrwidth_new;
   } else if (buf->b_mod_set
              && buf->b_mod_xlines != 0
              && wp->w_redraw_top != 0) {
@@ -2496,6 +2492,10 @@ static void win_update(win_T *wp, DecorProviders *providers)
       }
       recursive = false;
     }
+  }
+
+  if (nrwidth_before != wp->w_nrwidth && buf->terminal) {
+    terminal_check_size(buf->terminal);
   }
 
   // restore got_int, unless CTRL-C was hit while redrawing

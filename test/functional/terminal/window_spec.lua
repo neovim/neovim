@@ -44,7 +44,7 @@ describe(':terminal window', function()
         {7:6 }                                                |
         {3:-- TERMINAL --}                                    |
       ]])
-      feed_data({'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'})
+      feed_data('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
       screen:expect([[
         {7:1 }tty ready                                       |
         {7:2 }rows: 6, cols: 48                               |
@@ -54,8 +54,6 @@ describe(':terminal window', function()
         {7:6 }                                                |
         {3:-- TERMINAL --}                                    |
       ]])
-
-      skip(is_os('win'), 'win: :terminal resize is unreliable #7007')
 
       -- numberwidth=9
       feed([[<C-\><C-N>]])
@@ -69,7 +67,7 @@ describe(':terminal window', function()
         {7:       6 }                                         |
         {3:-- TERMINAL --}                                    |
       ]])
-      feed_data({' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'})
+      feed_data(' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
       screen:expect([[
         {7:       1 }tty ready                                |
         {7:       2 }rows: 6, cols: 48                        |
@@ -77,6 +75,41 @@ describe(':terminal window', function()
         {7:       4 }PQRSTUVWXYZrows: 6, cols: 41             |
         {7:       5 } abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN|
         {7:       6 }OPQRSTUVWXYZ{1: }                            |
+        {3:-- TERMINAL --}                                    |
+      ]])
+    end)
+  end)
+
+  describe("with 'statuscolumn'", function()
+    it('wraps text', function()
+      command([[set number statuscolumn=++%l\ \ ]])
+      screen:expect([[
+        {7:++1  }tty ready                                    |
+        {7:++2  }rows: 6, cols: 45                            |
+        {7:++3  }{1: }                                            |
+        {7:++4  }                                             |
+        {7:++5  }                                             |
+        {7:++6  }                                             |
+        {3:-- TERMINAL --}                                    |
+      ]])
+      feed_data('\n\n\n\n\nabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+      screen:expect([[
+        {7:++4  }                                             |
+        {7:++5  }                                             |
+        {7:++6  }                                             |
+        {7:++7  }                                             |
+        {7:++8  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS|
+        {7:++9  }TUVWXYZ{1: }                                     |
+        {3:-- TERMINAL --}                                    |
+      ]])
+      feed_data('\nabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+      screen:expect([[
+        {7:++7   }                                            |
+        {7:++8   }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
+        {7:++9   }STUVWXYZ                                    |
+        {7:++10  }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR|
+        {7:++11  }STUVWXYZrows: 6, cols: 44                   |
+        {7:++12  }{1: }                                           |
         {3:-- TERMINAL --}                                    |
       ]])
     end)
