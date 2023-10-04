@@ -2455,11 +2455,11 @@ int onepage(Direction dir, long count)
           if (curwin->w_topfill == loff.fill) {
             curwin->w_topline--;
             curwin->w_topfill = 0;
+            curwin->w_valid &= ~(VALID_WROW|VALID_CROW);
           }
           comp_botline(curwin);
           curwin->w_cursor.lnum = curwin->w_botline - 1;
-          curwin->w_valid &=
-            ~(VALID_WCOL | VALID_CHEIGHT | VALID_WROW | VALID_CROW);
+          curwin->w_valid &= ~(VALID_WCOL|VALID_CHEIGHT|VALID_WROW|VALID_CROW);
         } else {
           curwin->w_topline = loff.lnum;
           curwin->w_topfill = loff.fill;
