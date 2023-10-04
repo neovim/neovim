@@ -2523,6 +2523,8 @@ describe('highlight namespaces', function()
       [6] = {bold = true, reverse = true};
       [7] = {reverse = true};
       [8] = {foreground = Screen.colors.Gray20};
+      [9] = {foreground = Screen.colors.Blue};
+      [10] = {bold = true, foreground = Screen.colors.SeaGreen};
     }
 
     ns1 = meths.create_namespace 'grungy'
@@ -2654,5 +2656,22 @@ describe('highlight namespaces', function()
      "Vim(set):E5248: Invalid character in group name",
      "Normal:Visual",
     },res)
+  end)
+
+  it('Normal in set_hl #25474', function()
+    meths.set_hl(0, 'Normal', {bg='#333333'})
+    command('highlight Ignore')
+    screen:expect{grid=[[
+                               |
+      {1:~                        }|
+      {1:~                        }|
+      {6:                         }|
+                               |
+      Ignore         {8:xxx} {9:ctermf}|
+      {9:g=}15               {9:guifg=}|
+      bg                       |
+      {10:Press ENTER or type comma}|
+      {10:nd to continue}^           |
+    ]]}
   end)
 end)
