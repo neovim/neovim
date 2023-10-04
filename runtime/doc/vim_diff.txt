@@ -139,6 +139,11 @@ nvim_terminal:
 nvim_cmdwin:
 - CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.
 
+nvim_swapfile:
+- SwapExists: Skips the swapfile prompt (sets |v:swapchoice| to "e") when the
+  swapfile is owned by a running Nvim process. Shows |W325| "Ignoring
+  swapfile…" message.
+
 ==============================================================================
 New Features						       *nvim-features*
 

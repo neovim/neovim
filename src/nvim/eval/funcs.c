@@ -8236,7 +8236,7 @@ static void f_swapfilelist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 static void f_swapinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   tv_dict_alloc_ret(rettv);
-  get_b0_dict(tv_get_string(argvars), rettv->vval.v_dict);
+  swapfile_dict(tv_get_string(argvars), rettv->vval.v_dict);
 }
 
 /// "swapname(expr)" function

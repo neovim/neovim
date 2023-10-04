@@ -2491,7 +2491,7 @@ void ex_function(exarg_T *eap)
         } else if (line_arg != NULL && *skipwhite(line_arg) != NUL) {
           nextcmd = line_arg;
         } else if (*p != NUL && *p != '"' && p_verbose > 0) {
-          give_warning2(_("W22: Text found after :endfunction: %s"), p, true);
+          swmsg(true, _("W22: Text found after :endfunction: %s"), p);
         }
         if (nextcmd != NULL) {
           // Another command follows. If the line came from "eap" we

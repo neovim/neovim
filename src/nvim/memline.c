@@ -168,17 +168,15 @@ enum {
   B0_MAGIC_CHAR = 0x55,
 };
 
-// Block zero holds all info about the swap file. This is the first block in
-// the file.
+// Block zero holds all info about the swapfile. This is the first block in the file.
 //
-// NOTE: DEFINITION OF BLOCK 0 SHOULD NOT CHANGE! It would make all existing
-// swap files unusable!
+// NOTE: DEFINITION OF BLOCK 0 SHOULD NOT CHANGE! It would make all existing swapfiles unusable!
 //
 // If size of block0 changes anyway, adjust MIN_SWAP_PAGE_SIZE in vim.h!!
 //
 // This block is built up of single bytes, to make it portable across
 // different machines. b0_magic_* is used to check the byte order and size of
-// variables, because the rest of the swap file is not portable.
+// variables, because the rest of the swapfile is not portable.
 typedef struct {
   char b0_id[2];                     ///< ID for block 0: BLOCK0_ID0 and BLOCK0_ID1.
   char b0_version[10];               // Vim version string
@@ -210,8 +208,7 @@ typedef struct {
 // EOL_MAC + 1.
 #define B0_FF_MASK      3
 
-// Swap file is in directory of edited file.  Used to find the file from
-// different mount points.
+// Swapfile is in directory of edited file.  Used to find the file from different mount points.
 #define B0_SAME_DIR     4
 
 // The 'fileencoding' is at the end of b0_fname[], with a NUL in front of it.
@@ -289,14 +286,14 @@ int ml_open(buf_T *buf)
     buf->b_p_swf = false;
   }
 
-  // When 'updatecount' is non-zero swap file may be opened later.
+  // When 'updatecount' is non-zero swapfile may be opened later.
   if (!buf->terminal && p_uc && buf->b_p_swf) {
     buf->b_may_swap = true;
   } else {
     buf->b_may_swap = false;
   }
 
-  // Open the memfile.  No swap file is created yet.
+  // Open the memfile.  No swapfile is created yet.
   memfile_T *mfp = mf_open(NULL, 0);
   if (mfp == NULL) {
     goto error;
@@ -335,7 +332,7 @@ int ml_open(buf_T *buf)
   }
 
   // Always sync block number 0 to disk, so we can check the file name in
-  // the swap file in findswapname(). Don't do this for a help files or
+  // the swapfile in findswapname(). Don't do this for a help files or
   // a spell buffer though.
   // Only works when there's a swapfile, otherwise it's done when the file
   // is created.
@@ -386,17 +383,17 @@ error:
 }
 
 /// ml_setname() is called when the file name of "buf" has been changed.
-/// It may rename the swap file.
+/// It may rename the swapfile.
 void ml_setname(buf_T *buf)
 {
   bool success = false;
 
   memfile_T *mfp = buf->b_ml.ml_mfp;
-  if (mfp->mf_fd < 0) {             // there is no swap file yet
-    // When 'updatecount' is 0 and 'noswapfile' there is no swap file.
-    // For help files we will make a swap file now.
+  if (mfp->mf_fd < 0) {             // there is no swapfile yet
+    // When 'updatecount' is 0 and 'noswapfile' there is no swapfile.
+    // For help files we will make a swapfile now.
     if (p_uc != 0 && (cmdmod.cmod_flags & CMOD_NOSWAPFILE) == 0) {
-      ml_open_file(buf);  // create a swap file
+      ml_open_file(buf);  // create a swapfile
     }
     return;
   }
@@ -423,13 +420,13 @@ void ml_setname(buf_T *buf)
       success = true;
       break;
     }
-    // need to close the swap file before renaming
+    // need to close the swapfile before renaming
     if (mfp->mf_fd >= 0) {
       close(mfp->mf_fd);
       mfp->mf_fd = -1;
     }
 
-    // try to rename the swap file
+    // try to rename the swapfile
     if (vim_rename(mfp->mf_fname, fname) == 0) {
       success = true;
       mf_free_fnames(mfp);
@@ -440,10 +437,10 @@ void ml_setname(buf_T *buf)
     xfree(fname);                // this fname didn't work, try another
   }
 
-  if (mfp->mf_fd == -1) {           // need to (re)open the swap file
+  if (mfp->mf_fd == -1) {           // need to (re)open the swapfile
     mfp->mf_fd = os_open(mfp->mf_fname, O_RDWR, 0);
     if (mfp->mf_fd < 0) {
-      // could not (re)open the swap file, what can we do????
+      // could not (re)open the swapfile, what can we do????
       emsg(_("E301: Oops, lost the swap file!!!"));
       return;
     }
@@ -466,7 +463,7 @@ void ml_open_files(void)
   }
 }
 
-/// Open a swap file for an existing memfile, if there is no swap file yet.
+/// Open a swapfile for an existing memfile, if there is no swapfile yet.
 /// If we are unable to find a file name, mf_fname will be NULL
 /// and the memfile will be in memory only (no recovery possible).
 void ml_open_file(buf_T *buf)
@@ -495,7 +492,7 @@ void ml_open_file(buf_T *buf)
     if (*dirp == NUL) {
       break;
     }
-    // There is a small chance that between choosing the swap file name
+    // There is a small chance that between choosing the swapfile name
     // and creating it, another Vim creates the file.  In that case the
     // creation will fail and we will use another directory.
     char *fname = findswapname(buf, &dirp, NULL, &found_existing_dir);
@@ -514,7 +511,7 @@ void ml_open_file(buf_T *buf)
       if (mf_sync(mfp, MFS_ZERO) == OK) {
         // Mark all blocks that should be in the swapfile as dirty.
         // Needed for when the 'swapfile' option was reset, so that
-        // the swap file was deleted, and then on again.
+        // the swapfile was deleted, and then on again.
         mf_set_dirty(mfp);
         break;
       }
@@ -531,12 +528,12 @@ void ml_open_file(buf_T *buf)
     no_wait_return--;
   }
 
-  // don't try to open a swap file again
+  // don't try to open a swapfile again
   buf->b_may_swap = false;
 }
 
-/// If still need to create a swap file, and starting to edit a not-readonly
-/// file, or reading into an existing buffer, create a swap file now.
+/// If still need to create a swapfile, and starting to edit a not-readonly
+/// file, or reading into an existing buffer, create a swapfile now.
 ///
 /// @param newfile reading file into new buffer
 void check_need_swap(bool newfile)
@@ -553,7 +550,7 @@ void check_need_swap(bool newfile)
 
 /// Close memline for buffer 'buf'.
 ///
-/// @param del_file  if true, delete the swap file
+/// @param del_file  if true, delete the swapfile
 void ml_close(buf_T *buf, int del_file)
 {
   if (buf->b_ml.ml_mfp == NULL) {               // not open
@@ -643,7 +640,7 @@ static void ml_upd_block0(buf_T *buf, upd_block0_T what)
   mf_put(mfp, hp, true, false);
 }
 
-/// Write file name and timestamp into block 0 of a swap file.
+/// Write file name and timestamp into block 0 of a swapfile.
 /// Also set buf->b_mtime.
 /// Don't use NameBuff[]!!!
 static void set_b0_fname(ZeroBlock *b0p, buf_T *buf)
@@ -695,7 +692,7 @@ static void set_b0_fname(ZeroBlock *b0p, buf_T *buf)
   add_b0_fenc(b0p, curbuf);
 }
 
-/// Update the B0_SAME_DIR flag of the swap file.  It's set if the file and the
+/// Update the B0_SAME_DIR flag of the swapfile.  It's set if the file and the
 /// swapfile for "buf" are in the same directory.
 /// This is fail safe: if we are not sure the directories are equal the flag is
 /// not set.
@@ -724,27 +721,30 @@ static void add_b0_fenc(ZeroBlock *b0p, buf_T *buf)
   }
 }
 
-/// Return true if the process with number "b0p->b0_pid" is still running.
-/// "swap_fname" is the name of the swap file, if it's from before a reboot then
-/// the result is false;
-static bool swapfile_process_running(const ZeroBlock *b0p, const char *swap_fname)
+/// Returns the PID of the process that owns the swapfile, if it is running.
+///
+/// @param b0p swapfile data
+/// @param swap_fname Name of the swapfile. If it's from before a reboot, the result is 0.
+///
+/// @return PID, or 0 if process is not running or the swapfile is from before a reboot.
+static int swapfile_process_running(const ZeroBlock *b0p, const char *swap_fname)
 {
   FileInfo st;
   double uptime;
-  // If the system rebooted after when the swap file was written then the
+  // If the system rebooted after when the swapfile was written then the
   // process can't be running now.
   if (os_fileinfo(swap_fname, &st)
       && uv_uptime(&uptime) == 0
       && (Timestamp)st.stat.st_mtim.tv_sec < os_time() - (Timestamp)uptime) {
-    return false;
+    return 0;
   }
-  return os_proc_running((int)char_to_long(b0p->b0_pid));
+  int pid = (int)char_to_long(b0p->b0_pid);
+  return os_proc_running(pid) ? pid : 0;
 }
 
 /// Try to recover curbuf from the .swp file.
 ///
-/// @param checkext  if true, check the extension and detect whether it is a
-///                  swap file.
+/// @param checkext  if true, check the extension and detect whether it is a swapfile.
 void ml_recover(bool checkext)
 {
   buf_T *buf = NULL;
@@ -766,8 +766,8 @@ void ml_recover(bool checkext)
   int called_from_main = (curbuf->b_ml.ml_mfp == NULL);
   int attr = HL_ATTR(HLF_E);
 
-  // If the file name ends in ".s[a-w][a-z]" we assume this is the swap file.
-  // Otherwise a search is done to find the swap file(s).
+  // If the file name ends in ".s[a-w][a-z]" we assume this is the swapfile.
+  // Otherwise a search is done to find the swapfile(s).
   char *fname = curbuf->b_fname;
   if (fname == NULL) {              // When there is no file name
     fname = "";
@@ -782,17 +782,17 @@ void ml_recover(bool checkext)
   } else {
     directly = false;
 
-    // count the number of matching swap files
+    // count the number of matching swapfiles
     len = recover_names(fname, false, NULL, 0, NULL);
-    if (len == 0) {                 // no swap files found
+    if (len == 0) {                 // no swapfiles found
       semsg(_("E305: No swap file found for %s"), fname);
       goto theend;
     }
     int i;
-    if (len == 1) {                 // one swap file found, use it
+    if (len == 1) {  // one swapfile found, use it
       i = 1;
-    } else {                          // several swap files found, choose
-      // list the names of the swap files
+    } else {  // several swapfiles found, choose
+      // list the names of the swapfiles
       (void)recover_names(fname, true, NULL, 0, NULL);
       msg_putchar('\n');
       msg_puts(_("Enter number of swap file to use (0 to quit): "));
@@ -801,7 +801,7 @@ void ml_recover(bool checkext)
         goto theend;
       }
     }
-    // get the swap file name that will be used
+    // get the swapfile name that will be used
     (void)recover_names(fname, false, NULL, i, &fname_used);
   }
   if (fname_used == NULL) {
@@ -812,7 +812,7 @@ void ml_recover(bool checkext)
     getout(1);
   }
 
-  // Allocate a buffer structure for the swap file that is used for recovery.
+  // Allocate a buffer structure for the swapfile that is used for recovery.
   // Only the memline in it is really used.
   buf = xmalloc(sizeof(buf_T));
 
@@ -825,7 +825,7 @@ void ml_recover(bool checkext)
   buf->b_ml.ml_locked = NULL;           // no locked block
   buf->b_ml.ml_flags = 0;
 
-  // open the memfile from the old swap file
+  // open the memfile from the old swapfile
   p = xstrdup(fname_used);  // save "fname_used" for the message:
   // mf_open() will consume "fname_used"!
   mfp = mf_open(fname_used, O_RDONLY);
@@ -837,7 +837,7 @@ void ml_recover(bool checkext)
   buf->b_ml.ml_mfp = mfp;
 
   // The page size set in mf_open() might be different from the page size
-  // used in the swap file, we must get it from block 0.  But to read block
+  // used in the swapfile, we must get it from block 0.  But to read block
   // 0 we need a page size.  Use the minimal size for block 0 here, it will
   // be set to the real value below.
   mfp->mf_page_size = MIN_SWAP_PAGE_SIZE;
@@ -910,7 +910,7 @@ void ml_recover(bool checkext)
     b0p = hp->bh_data;
   }
 
-  // If .swp file name given directly, use name from swap file for buffer.
+  // If .swp file name given directly, use name from swapfile for buffer.
   if (directly) {
     expand_env(b0p->b0_fname, NameBuff, MAXPATHL);
     if (setfname(curbuf, NameBuff, NULL, true) == FAIL) {
@@ -929,7 +929,7 @@ void ml_recover(bool checkext)
   smsg(0, _("Original file \"%s\""), NameBuff);
   msg_putchar('\n');
 
-  // check date of swap file and original file
+  // check date of swapfile and original file
   FileInfo org_file_info;
   FileInfo swp_file_info;
   long mtime = char_to_long(b0p->b0_mtime);
@@ -968,7 +968,7 @@ void ml_recover(bool checkext)
                                 0, MAXLNUM, NULL, READ_NEW, false);
   }
 
-  // Use the 'fileformat' and 'fileencoding' as stored in the swap file.
+  // Use the 'fileformat' and 'fileencoding' as stored in the swapfile.
   if (b0_ff != 0) {
     set_fileformat(b0_ff - 1, OPT_LOCAL);
   }
@@ -1231,7 +1231,7 @@ theend:
     }
     mf_close(mfp, false);           // will also xfree(mfp->mf_fname)
   }
-  if (buf != NULL) {  // may be NULL if swap file not found.
+  if (buf != NULL) {  // may be NULL if swapfile not found.
     xfree(buf->b_ml.ml_stack);
     xfree(buf);
   }
@@ -1243,20 +1243,20 @@ theend:
   }
 }
 
-/// Find the names of swap files in current directory and the directory given
+/// Find the names of swapfiles in current directory and the directory given
 /// with the 'directory' option.
 ///
 /// Used to:
-/// - list the swap files for "vim -r"
-/// - count the number of swap files when recovering
-/// - list the swap files when recovering
-/// - list the swap files for swapfilelist()
-/// - find the name of the n'th swap file when recovering
+/// - list the swapfiles for "vim -r"
+/// - count the number of swapfiles when recovering
+/// - list the swapfiles when recovering
+/// - list the swapfiles for swapfilelist()
+/// - find the name of the n'th swapfile when recovering
 ///
-/// @param fname  base for swap file name
-/// @param do_list  when true, list the swap file names
+/// @param fname  base for swapfile name
+/// @param do_list  when true, list the swapfile names
 /// @param ret_list  when not NULL add file names to it
-/// @param nr  when non-zero, return nr'th swap file name
+/// @param nr  when non-zero, return nr'th swapfile name
 /// @param fname_out  result when "nr" > 0
 int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fname_out)
 {
@@ -1273,7 +1273,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
 
   if (fname != NULL) {
 #ifdef HAVE_READLINK
-    // Expand symlink in the file name, because the swap file is created
+    // Expand symlink in the file name, because the swapfile is created
     // with the actual file instead of with the symlink.
     if (resolve_symlink(fname, fname_buf) == OK) {
       fname_res = fname_buf;
@@ -1342,9 +1342,9 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
       num_files = 0;
     }
 
-    // When no swap file found, wildcard expansion might have failed (e.g.
+    // When no swapfile found, wildcard expansion might have failed (e.g.
     // not able to execute the shell).
-    // Try finding a swap file by simply adding ".swp" to the file name.
+    // Try finding a swapfile by simply adding ".swp" to the file name.
     if (*dirp == NUL && file_count + num_files == 0 && fname != NULL) {
       char *swapname = modname(fname_res, ".swp", true);
       if (swapname != NULL) {
@@ -1402,7 +1402,7 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
 
       if (num_files) {
         for (int i = 0; i < num_files; i++) {
-          // print the swap file name
+          // print the swapfile name
           msg_outnum(++file_count);
           msg_puts(".    ");
           msg_puts(path_tail(files[i]));
@@ -1456,12 +1456,13 @@ char *make_percent_swname(const char *dir, const char *name)
   return d;
 }
 
-static bool process_still_running;
+// PID of swapfile owner, or zero if not running.
+static int process_running;
 
-/// This is used by the swapinfo() function.
+/// For Vimscript "swapinfo()".
 ///
 /// @return  information found in swapfile "fname" in dictionary "d".
-void get_b0_dict(const char *fname, dict_T *d)
+void swapfile_dict(const char *fname, dict_T *d)
 {
   int fd;
   ZeroBlock b0;
@@ -1482,7 +1483,7 @@ void get_b0_dict(const char *fname, dict_T *d)
         tv_dict_add_str_len(d, S_LEN("fname"), b0.b0_fname,
                             B0_FNAME_SIZE_ORG);
 
-        tv_dict_add_nr(d, S_LEN("pid"), char_to_long(b0.b0_pid));
+        tv_dict_add_nr(d, S_LEN("pid"), swapfile_process_running(&b0, fname));
         tv_dict_add_nr(d, S_LEN("mtime"), char_to_long(b0.b0_mtime));
         tv_dict_add_nr(d, S_LEN("dirty"), b0.b0_dirty ? 1 : 0);
         tv_dict_add_nr(d, S_LEN("inode"), char_to_long(b0.b0_ino));
@@ -1496,7 +1497,7 @@ void get_b0_dict(const char *fname, dict_T *d)
   }
 }
 
-/// Give information about an existing swap file.
+/// Loads info from swapfile `fname`, and displays it to the user.
 ///
 /// @return  timestamp (0 when unknown).
 static time_t swapfile_info(char *fname)
@@ -1509,7 +1510,7 @@ static time_t swapfile_info(char *fname)
   char uname[B0_UNAME_SIZE];
 #endif
 
-  // print the swap file date
+  // print the swapfile date
   FileInfo file_info;
   if (os_fileinfo(fname, &file_info)) {
 #ifdef UNIX
@@ -1567,9 +1568,8 @@ static time_t swapfile_info(char *fname)
         if (char_to_long(b0.b0_pid) != 0L) {
           msg_puts(_("\n        process ID: "));
           msg_outnum((int)char_to_long(b0.b0_pid));
-          if (swapfile_process_running(&b0, fname)) {
+          if ((process_running = swapfile_process_running(&b0, fname))) {
             msg_puts(_(" (STILL RUNNING)"));
-            process_still_running = true;
           }
         }
 
@@ -1589,13 +1589,12 @@ static time_t swapfile_info(char *fname)
   return x;
 }
 
-/// @return  true if the swap file looks OK and there are no changes, thus it
-///          can be safely deleted.
+/// @return  true if the swapfile looks OK and there are no changes, thus it can be safely deleted.
 static bool swapfile_unchanged(char *fname)
 {
   ZeroBlock b0;
 
-  // Swap file must exist.
+  // Swapfile must exist.
   if (!os_path_exists(fname)) {
     return false;
   }
@@ -1653,7 +1652,7 @@ static int recov_file_names(char **names, char *path, int prepend_dot)
 {
   int num_names = 0;
 
-  // May also add the file name with a dot prepended, for swap file in same
+  // May also add the file name with a dot prepended, for swapfile in same
   // dir as original file.
   if (prepend_dot) {
     names[num_names] = modname(path, ".sw?", true);
@@ -1663,7 +1662,7 @@ static int recov_file_names(char **names, char *path, int prepend_dot)
     num_names++;
   }
 
-  // Form the normal swap file name pattern by appending ".sw?".
+  // Form the normal swapfile name pattern by appending ".sw?".
   names[num_names] = concat_fnames(path, ".sw?", false);
   if (num_names >= 1) {     // check if we have the same name twice
     char *p = names[num_names - 1];
@@ -1724,7 +1723,7 @@ void ml_sync_all(int check_file, int check_char, bool do_fsync)
 
 /// sync one buffer, including negative blocks
 ///
-/// after this all the blocks are in the swap file
+/// after this all the blocks are in the swapfile
 ///
 /// Used for the :preserve command and when the original file has been
 /// changed or deleted.
@@ -3132,7 +3131,7 @@ int resolve_symlink(const char *fname, char *buf)
 }
 #endif
 
-/// Make swap file name out of the file name and a directory name.
+/// Make swapfile name out of the file name and a directory name.
 ///
 /// @return  pointer to allocated memory or NULL.
 char *makeswapname(char *fname, char *ffname, buf_T *buf, char *dir_name)
@@ -3141,7 +3140,7 @@ char *makeswapname(char *fname, char *ffname, buf_T *buf, char *dir_name)
 #ifdef HAVE_READLINK
   char fname_buf[MAXPATHL];
 
-  // Expand symlink in the file name, so that we put the swap file with the
+  // Expand symlink in the file name, so that we put the swapfile with the
   // actual file instead of with the symlink.
   if (resolve_symlink(fname, fname_buf) == OK) {
     fname_res = fname_buf;
@@ -3162,7 +3161,7 @@ char *makeswapname(char *fname, char *ffname, buf_T *buf, char *dir_name)
     return r;
   }
 
-  // Prepend a '.' to the swap file name for the current directory.
+  // Prepend a '.' to the swapfile name for the current directory.
   char *r = modname(fname_res, ".swp",
                     dir_name[0] == '.' && dir_name[1] == NUL);
   if (r == NULL) {          // out of memory
@@ -3174,14 +3173,11 @@ char *makeswapname(char *fname, char *ffname, buf_T *buf, char *dir_name)
   return s;
 }
 
-/// Get file name to use for swap file or backup file.
-/// Use the name of the edited file "fname" and an entry in the 'dir' or 'bdir'
-/// option "dname".
-/// - If "dname" is ".", return "fname" (swap file in dir of file).
-/// - If "dname" starts with "./", insert "dname" in "fname" (swap file
-///   relative to dir of file).
-/// - Otherwise, prepend "dname" to the tail of "fname" (swap file in specific
-///   dir).
+/// Get file name to use for swapfile or backup file.
+/// Use the name of the edited file "fname" and an entry in the 'dir' or 'bdir' option "dname".
+/// - If "dname" is ".", return "fname" (swapfile in dir of file).
+/// - If "dname" starts with "./", insert "dname" in "fname" (swapfile relative to dir of file).
+/// - Otherwise, prepend "dname" to the tail of "fname" (swapfile in specific dir).
 ///
 /// The return value is an allocated string and can be NULL.
 ///
@@ -3212,10 +3208,10 @@ char *get_file_in_dir(char *fname, char *dname)
   return retval;
 }
 
-/// Print the ATTENTION message: info about an existing swap file.
+/// Print the ATTENTION message: info about an existing swapfile.
 ///
 /// @param buf  buffer being edited
-/// @param fname  swap file name
+/// @param fname  swapfile name
 static void attention_message(buf_T *buf, char *fname)
 {
   assert(buf->b_fname != NULL);
@@ -3299,7 +3295,7 @@ static int do_swapexists(buf_T *buf, char *fname)
   return 0;
 }
 
-/// Find out what name to use for the swap file for buffer 'buf'.
+/// Find out what name to use for the swapfile for buffer 'buf'.
 ///
 /// Several names are tried to find one that does not exist. Last directory in
 /// option is automatically created.
@@ -3308,20 +3304,20 @@ static int do_swapexists(buf_T *buf, char *fname)
 ///   not being able to open the swap or undo file.
 /// @note May trigger SwapExists autocmd, pointers may change!
 ///
-/// @param[in]  buf  Buffer for which swap file names needs to be found.
+/// @param[in]  buf  Buffer for which swapfile names needs to be found.
 /// @param[in,out]  dirp  Pointer to a list of directories. When out of memory,
 ///                       is set to NULL. Is advanced to the next directory in
 ///                       the list otherwise.
-/// @param[in]  old_fname  Allowed existing swap file name. Except for this
+/// @param[in]  old_fname  Allowed existing swapfile name. Except for this
 ///                        case, name of the non-existing file is used.
 /// @param[in,out]  found_existing_dir  If points to true, then new directory
-///                                     for swap file is not created. At first
+///                                     for swapfile is not created. At first
 ///                                     findswapname() call this argument must
 ///                                     point to false. This parameter may only
 ///                                     be set to true by this function, it is
 ///                                     never set to false.
 ///
-/// @return [allocated] Name of the swap file.
+/// @return [allocated] Name of the swapfile.
 static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_existing_dir)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
@@ -3333,7 +3329,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
   char *dir_name = xmalloc(dir_len);
   (void)copy_option_part(dirp, dir_name, dir_len, ",");
 
-  // we try different names until we find one that does not exist yet
+  // We try different swapfile names until we find one that does not exist yet.
   char *fname = makeswapname(buf_fname, buf->b_ffname, buf, dir_name);
 
   while (true) {
@@ -3346,7 +3342,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
       break;
     }
     // check if the swapfile already exists
-    // Extra security check: When a swap file is a symbolic link, this
+    // Extra security check: When a swapfile is a symbolic link, this
     // is most likely a symlink attack.
     FileInfo file_info;
     bool file_or_link_found = os_fileinfo_link(fname, &file_info);
@@ -3365,17 +3361,17 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
       // Give an error message, unless recovering, no file name, we are
       // viewing a help file or when the path of the file is different
       // (happens when all .swp files are in one directory).
-      if (!recoverymode && buf_fname != NULL
-          && !buf->b_help && !(buf->b_flags & BF_DUMMY)) {
+      if (!recoverymode && buf_fname != NULL && !buf->b_help && !(buf->b_flags & BF_DUMMY)) {
         int fd;
         ZeroBlock b0;
         int differ = false;
 
-        // Try to read block 0 from the swap file to get the original
-        // file name (and inode number).
+        // Try to read block 0 from the swapfile to get the original file name (and inode number).
         fd = os_open(fname, O_RDONLY, 0);
         if (fd >= 0) {
           if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
+            process_running = swapfile_process_running(&b0, fname);
+
             // If the swapfile has the same directory as the
             // buffer don't compare the directory names, they can
             // have a different mountpoint.
@@ -3393,8 +3389,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
                 }
               }
             } else {
-              // The name in the swap file may be
-              // "~user/path/file".  Expand it first.
+              // The name in the swapfile may be "~user/path/file".  Expand it first.
               expand_env(b0.b0_fname, NameBuff, MAXPATHL);
               if (fnamecmp_ino(buf->b_ffname, NameBuff,
                                char_to_long(b0.b0_ino))) {
@@ -3405,16 +3400,16 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
           close(fd);
         }
 
-        // give the ATTENTION message when there is an old swap file
-        // for the current file, and the buffer was not recovered.
+        // Show the ATTENTION message when:
+        //  - there is an old swapfile for the current file
+        //  - the buffer was not recovered
         if (differ == false && !(curbuf->b_flags & BF_RECOVERED)
             && vim_strchr(p_shm, SHM_ATTENTION) == NULL) {
           int choice = 0;
 
-          process_still_running = false;
-          // It's safe to delete the swap file if all these are true:
+          // It's safe to delete the swapfile if all these are true:
           // - the edited file exists
-          // - the swap file has no changes and looks OK
+          // - the swapfile has no changes and looks OK
           if (os_path_exists(buf->b_fname) && swapfile_unchanged(fname)) {
             choice = 4;
             if (p_verbose > 0) {
@@ -3430,8 +3425,9 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             choice = do_swapexists(buf, fname);
           }
 
+          process_running = 0;  // Set by attention_message..swapfile_info.
           if (choice == 0) {
-            // Show info about the existing swap file.
+            // Show info about the existing swapfile.
             attention_message(buf, fname);
 
             // We don't want a 'q' typed at the more-prompt
@@ -3459,15 +3455,15 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             xstrlcat(name, sw_msg_2, name_len);
             choice = do_dialog(VIM_WARNING, _("VIM - ATTENTION"),
                                name,
-                               process_still_running
+                               process_running
                                ? _("&Open Read-Only\n&Edit anyway\n&Recover"
                                    "\n&Quit\n&Abort") :
                                _("&Open Read-Only\n&Edit anyway\n&Recover"
                                  "\n&Delete it\n&Quit\n&Abort"),
                                1, NULL, false);
 
-            if (process_still_running && choice >= 4) {
-              choice++;                 // Skip missing "Delete it" button.
+            if (process_running && choice >= 4) {
+              choice++;  // Skip missing "Delete it" button.
             }
             xfree(name);
 
@@ -3477,27 +3473,27 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 
           if (choice > 0) {
             switch (choice) {
-            case 1:
+            case 1:  // "Open Read-Only"
               buf->b_p_ro = true;
               break;
-            case 2:
+            case 2:  // "Edit anyway"
               break;
-            case 3:
+            case 3:  // "Recover"
               swap_exists_action = SEA_RECOVER;
               break;
-            case 4:
+            case 4:  // "Delete it"
               os_remove(fname);
               break;
-            case 5:
+            case 5:  // "Quit"
               swap_exists_action = SEA_QUIT;
               break;
-            case 6:
+            case 6:  // "Abort"
               swap_exists_action = SEA_QUIT;
               got_int = true;
               break;
             }
 
-            // If the file was deleted this fname can be used.
+            // If the swapfile was deleted this `fname` can be used.
             if (!os_path_exists(fname)) {
               break;
             }
@@ -3512,10 +3508,10 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
       }
     }
 
-    // Change the ".swp" extension to find another file that can be used.
+    // Permute the ".swp" extension to find a unique swapfile name.
     // First decrement the last char: ".swo", ".swn", etc.
     // If that still isn't enough decrement the last but one char: ".svz"
-    // Can happen when editing many "No Name" buffers.
+    // Can happen when many Nvim instances are editing the same file (including "No Name" buffers).
     if (fname[n - 1] == 'a') {          // ".s?a"
       if (fname[n - 2] == 'a') {        // ".saa": tried enough, give up
         emsg(_("E326: Too many swap files found"));
@@ -3553,7 +3549,7 @@ static int b0_magic_wrong(ZeroBlock *b0p)
          || b0p->b0_magic_char != B0_MAGIC_CHAR;
 }
 
-/// Compare current file name with file name from swap file.
+/// Compare current file name with file name from swapfile.
 /// Try to use inode numbers when possible.
 /// Return non-zero when files are different.
 ///
@@ -3563,7 +3559,7 @@ static int b0_magic_wrong(ZeroBlock *b0p)
 ///   because the device number cannot be used over a network.
 /// - When a file does not exist yet (editing a new file) there is no inode
 ///   number.
-/// - The file name in a swap file may not be valid on the current host.  The
+/// - The file name in a swapfile may not be valid on the current host.  The
 ///   "~user" form is used whenever possible to avoid this.
 ///
 /// This is getting complicated, let's make a table:
@@ -3577,7 +3573,7 @@ static int b0_magic_wrong(ZeroBlock *b0p)
 ///              == 0    X       OK       OK     fname_c != fname_s
 ///               X     == 0     OK       OK     fname_c != fname_s
 ///
-/// current file doesn't exist, file for swap file exist, file name(s) not
+/// current file doesn't exist, file for swapfile exist, file name(s) not
 /// available -> probably different
 ///              == 0   != 0    FAIL      X      true
 ///              == 0   != 0     X       FAIL    true
@@ -3600,11 +3596,11 @@ static int b0_magic_wrong(ZeroBlock *b0p)
 /// without making the block 0 incompatible with 32 bit versions.
 ///
 /// @param fname_c  current file name
-/// @param fname_s  file name from swap file
+/// @param fname_s  file name from swapfile
 static bool fnamecmp_ino(char *fname_c, char *fname_s, long ino_block0)
 {
   uint64_t ino_c = 0;               // ino of current file
-  uint64_t ino_s;                   // ino of file from swap file
+  uint64_t ino_s;                   // ino of file from swapfile
   char buf_c[MAXPATHL];             // full path of fname_c
   char buf_s[MAXPATHL];             // full path of fname_s
   int retval_c;                     // flag: buf_c valid
@@ -3616,7 +3612,7 @@ static bool fnamecmp_ino(char *fname_c, char *fname_s, long ino_block0)
   }
 
   // First we try to get the inode from the file name, because the inode in
-  // the swap file may be outdated.  If that fails (e.g. this path is not
+  // the swapfile may be outdated.  If that fails (e.g. this path is not
   // valid on this machine), use the inode from block 0.
   if (os_fileinfo(fname_s, &file_info)) {
     ino_s = os_fileinfo_inode(&file_info);
@@ -3638,7 +3634,7 @@ static bool fnamecmp_ino(char *fname_c, char *fname_s, long ino_block0)
 
   // Can't compare inodes or file names, guess that the files are different,
   // unless both appear not to exist at all, then compare with the file name
-  // in the swap file.
+  // in the swapfile.
   if (ino_s == 0 && ino_c == 0 && retval_c == FAIL && retval_s == FAIL) {
     return strcmp(fname_c, fname_s) != 0;
   }
@@ -3675,7 +3671,7 @@ static long char_to_long(const char *s_in)
   return retval;
 }
 
-/// Set the flags in the first block of the swap file:
+/// Set the flags in the first block of the swapfile:
 /// - file is modified or not: buf->b_changed
 /// - 'fileformat'
 /// - 'fileencoding'

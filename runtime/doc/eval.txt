@@ -2276,12 +2276,13 @@ v:stderr	|channel-id| corresponding to stderr. The value is always 2;
 			:call chansend(v:stderr, "error: toaster empty\n")
 <
 					*v:swapname* *swapname-variable*
-v:swapname	Only valid when executing |SwapExists| autocommands: Name of
-		the swap file found.  Read-only.
+v:swapname	Name of the swapfile found.
+		Only valid during |SwapExists| event.
+		Read-only.
 
 					*v:swapchoice* *swapchoice-variable*
 v:swapchoice	|SwapExists| autocommands can set this to the selected choice
-		for handling an existing swap file:
+		for handling an existing swapfile:
 			'o'	Open read-only
 			'e'	Edit anyway
 			'r'	Recover

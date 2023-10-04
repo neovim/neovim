@@ -114,6 +114,12 @@ The following new APIs and features were added.
 • Builtin TUI can now recognize "super" (|<D-|) and "meta" (|<T-|) modifiers in a
   terminal emulator that supports |tui-csiu|.
 
+• Editor
+  • By default, the swapfile "ATTENTION" |E325| dialog is skipped if the
+    swapfile is owned by a running Nvim process, instead of prompting. If you
+    always want the swapfile dialog, delete the default SwapExists handler:
+    `autocmd! nvim_swapfile`. |default-autocmds|
+
 • LSP
   • LSP method names are available in |vim.lsp.protocol.Methods|.
   • Implemented LSP inlay hints: |vim.lsp.inlay_hint()|
