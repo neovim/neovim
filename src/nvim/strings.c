@@ -1079,7 +1079,7 @@ static int parse_fmt_types(const char ***ap_types, int *num_posarg, const char *
           any_arg = 1;
           CHECK_POS_ARG;
         }
-      } else if (ascii_isdigit((int)(*(arg = p)))) {
+      } else if (ascii_isdigit((int)(*p))) {
         // size_t could be wider than unsigned int; make sure we treat
         // argument like common implementations do
         unsigned uj = (unsigned)(*p++ - '0');
@@ -1126,7 +1126,7 @@ static int parse_fmt_types(const char ***ap_types, int *num_posarg, const char *
             any_arg = 1;
             CHECK_POS_ARG;
           }
-        } else if (ascii_isdigit((int)(*(arg = p)))) {
+        } else if (ascii_isdigit((int)(*p))) {
           // size_t could be wider than unsigned int; make sure we
           // treat argument like common implementations do
           unsigned uj = (unsigned)(*p++ - '0');
@@ -1155,7 +1155,7 @@ static int parse_fmt_types(const char ***ap_types, int *num_posarg, const char *
         p++;
         if (length_modifier == 'l' && *p == 'l') {
           // double l = long long
-          length_modifier = 'L';
+          // length_modifier = 'L';
           p++;
         }
       }
