@@ -32,6 +32,7 @@
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/macros.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
@@ -2684,6 +2685,15 @@ void halfpage(bool flag, linenr_T Prenum)
 
 void do_check_cursorbind(void)
 {
+  static win_T *prev_curwin = NULL;
+  static pos_T prev_cursor = { 0, 0, 0 };
+
+  if (curwin == prev_curwin && equalpos(curwin->w_cursor, prev_cursor)) {
+    return;
+  }
+  prev_curwin = curwin;
+  prev_cursor = curwin->w_cursor;
+
   linenr_T line    = curwin->w_cursor.lnum;
   colnr_T col      = curwin->w_cursor.col;
   colnr_T coladd   = curwin->w_cursor.coladd;

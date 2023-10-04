@@ -50,6 +50,9 @@ tlunmenu *
 " roughly equivalent to test_setmouse() in Vim
 func Ntest_setmouse(row, col)
   call nvim_input_mouse('move', '', '', 0, a:row - 1, a:col - 1)
+  if state('m') == ''
+    call getchar(0)
+  endif
 endfunc
 
 " Prevent Nvim log from writing to stderr.
