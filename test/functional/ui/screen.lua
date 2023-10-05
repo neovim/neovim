@@ -88,6 +88,7 @@ local function isempty(v)
   return type(v) == 'table' and next(v) == nil
 end
 
+--- @class test.functional.ui.screen
 local Screen = {}
 Screen.__index = Screen
 

@@ -98,6 +98,107 @@ function M.on_refresh(err, _, ctx, _)
   return vim.NIL
 end
 
+--- @class vim.lsp.inlay_hint.get.filter
+--- @field bufnr integer?
+--- @field range lsp.Range?
+---
+--- @class vim.lsp.inlay_hint.get.ret
+--- @field bufnr integer
+--- @field client_id integer
+--- @field inlay_hint lsp.InlayHint
+
+--- Get the list of inlay hints, (optionally) restricted by buffer, client, or range.
+---
+--- Example usage:
+---
+--- ```lua
+--- local hint = vim.lsp.inlay_hint.get({ bufnr = 0 })[1] -- 0 for current buffer
+---
+--- local client = vim.lsp.get_client_by_id(hint.client_id)
+--- resolved_hint = client.request_sync('inlayHint/resolve', hint.inlay_hint, 100, 0).result
+--- vim.lsp.util.apply_text_edits(resolved_hint.textEdits, 0, client.encoding)
+---
+--- location = resolved_hint.label[1].location
+--- client.request('textDocument/hover', {
+---   textDocument = { uri = location.uri },
+---   position = location.range.start,
+--- })
+--- ```
+---
+--- @param filter vim.lsp.inlay_hint.get.filter?
+--- Optional filters |kwargs|:
+--- - bufnr (integer?): 0 for current buffer
+--- - range (lsp.Range?)
+---
+--- @return vim.lsp.inlay_hint.get.ret[]
+--- Each list item is a table with the following fields:
+---  - bufnr (integer)
+---  - client_id (integer)
+---  - inlay_hint (lsp.InlayHint)
+function M.get(filter)
+  vim.validate({ filter = { filter, 'table', true } })
+  filter = filter or {}
+
+  local bufnr = filter.bufnr
+  if not bufnr then
+    --- @type vim.lsp.inlay_hint.get.ret[]
+    local hints = {}
+    --- @param buf integer
+    vim.tbl_map(function(buf)
+      vim.list_extend(hints, M.get(vim.tbl_extend('keep', { bufnr = buf }, filter)))
+    end, vim.api.nvim_list_bufs())
+    return hints
+  elseif bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
+
+  local bufstate = bufstates[bufnr]
+  if not (bufstate and bufstate.client_hint) then
+    return {}
+  end
+
+  local clients = vim.lsp.get_clients({
+    bufnr = bufnr,
+    method = ms.textDocument_inlayHint,
+  })
+  if #clients == 0 then
+    return {}
+  end
+
+  local range = filter.range
+  if not range then
+    range = {
+      start = { line = 0, character = 0 },
+      ['end'] = { line = api.nvim_buf_line_count(bufnr), character = 0 },
+    }
+  end
+
+  --- @type vim.lsp.inlay_hint.get.ret[]
+  local hints = {}
+  for _, client in pairs(clients) do
+    local hints_by_lnum = bufstate.client_hint[client.id]
+    if hints_by_lnum then
+      for lnum = range.start.line, range['end'].line do
+        local line_hints = hints_by_lnum[lnum] or {}
+        for _, hint in pairs(line_hints) do
+          local line, char = hint.position.line, hint.position.character
+          if
+            (line > range.start.line or char >= range.start.character)
+            and (line < range['end'].line or char <= range['end'].character)
+          then
+            table.insert(hints, {
+              bufnr = bufnr,
+              client_id = client.id,
+              inlay_hint = hint,
+            })
+          end
+        end
+      end
+    end
+  end
+  return hints
+end
+
 --- Clear inlay hints
 ---@param bufnr (integer) Buffer handle, or 0 for current
 local function clear(bufnr)
@@ -120,8 +221,8 @@ local function clear(bufnr)
 end
 
 --- Disable inlay hints for a buffer
----@param bufnr (integer) Buffer handle, or 0 for current
-local function disable(bufnr)
+---@param bufnr (integer|nil) Buffer handle, or 0 or nil for current
+local function _disable(bufnr)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
@@ -142,8 +243,8 @@ local function _refresh(bufnr, opts)
 end
 
 --- Enable inlay hints for a buffer
----@param bufnr (integer) Buffer handle, or 0 for current
-local function enable(bufnr)
+---@param bufnr (integer|nil) Buffer handle, or 0 or nil for current
+local function _enable(bufnr)
   if bufnr == nil or bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
@@ -175,7 +276,7 @@ local function enable(bufnr)
         end
       end,
       on_detach = function(_, cb_bufnr)
-        disable(cb_bufnr)
+        _disable(cb_bufnr)
       end,
     })
     api.nvim_create_autocmd('LspDetach', {
@@ -188,7 +289,7 @@ local function enable(bufnr)
             return c.id ~= args.data.client_id
           end)
         then
-          disable(bufnr)
+          _disable(bufnr)
         end
       end,
       group = augroup,
@@ -196,20 +297,6 @@ local function enable(bufnr)
   else
     bufstate.enabled = true
     _refresh(bufnr)
-  end
-end
-
---- Toggle inlay hints for a buffer
----@param bufnr (integer) Buffer handle, or 0 for current
-local function toggle(bufnr)
-  if bufnr == nil or bufnr == 0 then
-    bufnr = api.nvim_get_current_buf()
-  end
-  local bufstate = bufstates[bufnr]
-  if bufstate and bufstate.enabled then
-    disable(bufnr)
-  else
-    enable(bufnr)
   end
 end
 
@@ -260,15 +347,27 @@ api.nvim_set_decoration_provider(namespace, {
   end,
 })
 
-return setmetatable(M, {
-  __call = function(_, bufnr, enable_)
-    vim.validate({ enable = { enable_, { 'boolean', 'nil' } }, bufnr = { bufnr, 'number' } })
-    if enable_ then
-      enable(bufnr)
-    elseif enable_ == false then
-      disable(bufnr)
-    else
-      toggle(bufnr)
-    end
-  end,
-})
+--- @param bufnr (integer|nil) Buffer handle, or 0 or nil for current
+--- @return boolean
+function M.is_enabled(bufnr)
+  vim.validate({ bufnr = { bufnr, 'number', true } })
+  if bufnr == nil or bufnr == 0 then
+    bufnr = api.nvim_get_current_buf()
+  end
+  return bufstates[bufnr] and bufstates[bufnr].enabled or false
+end
+
+--- Enable/disable/toggle inlay hints for a buffer
+---
+--- @param bufnr (integer|nil) Buffer handle, or 0 or nil for current
+--- @param enable (boolean|nil) true/nil to enable, false to disable
+function M.enable(bufnr, enable)
+  vim.validate({ enable = { enable, 'boolean', true }, bufnr = { bufnr, 'number', true } })
+  if enable == false then
+    _disable(bufnr)
+  else
+    _enable(bufnr)
+  end
+end
+
+return M

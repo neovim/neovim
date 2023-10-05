@@ -15,6 +15,7 @@ local function shell_quote(str)
   end
 end
 
+--- @class test.helpers
 local module = {
   REMOVE_THIS = {},
 }

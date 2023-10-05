@@ -856,13 +856,6 @@ get_log_path()                                        *vim.lsp.get_log_path()*
     Return: ~
         (string) path to log file
 
-inlay_hint({bufnr}, {enable})                           *vim.lsp.inlay_hint()*
-    Enable/disable/toggle inlay hints for a buffer
-
-    Parameters: ~
-      • {bufnr}   (integer) Buffer handle, or 0 for current
-      • {enable}  (boolean|nil) true/false to enable/disable, nil to toggle
-
 omnifunc({findstart}, {base})                             *vim.lsp.omnifunc()*
     Implements 'omnifunc' compatible LSP completion.
 
@@ -1467,6 +1460,53 @@ save({lenses}, {bufnr}, {client_id})                 *vim.lsp.codelens.save()*
       • {lenses}     lsp.CodeLens[]|nil lenses to store
       • {bufnr}      (integer)
       • {client_id}  (integer)
+
+
+==============================================================================
+Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
+
+enable({bufnr}, {enable})                        *vim.lsp.inlay_hint.enable()*
+    Enable/disable/toggle inlay hints for a buffer
+
+    Parameters: ~
+      • {bufnr}   (integer|nil) Buffer handle, or 0 or nil for current
+      • {enable}  (boolean|nil) true/nil to enable, false to disable
+
+get({filter})                                       *vim.lsp.inlay_hint.get()*
+    Get the list of inlay hints, (optionally) restricted by buffer, client, or
+    range.
+
+    Example usage: >lua
+        local hint = vim.lsp.inlay_hint.get({ bufnr = 0 })[1] -- 0 for current buffer
+
+        local client = vim.lsp.get_client_by_id(hint.client_id)
+        resolved_hint = client.request_sync('inlayHint/resolve', hint.inlay_hint, 100, 0).result
+        vim.lsp.util.apply_text_edits(resolved_hint.textEdits, 0, client.encoding)
+
+        location = resolved_hint.label[1].location
+        client.request("textDocument/hover", {
+          textDocument = { uri = location.uri },
+          position = location.range.start,
+        })
+<
+
+    Parameters: ~
+      • {filter}  vim.lsp.inlay_hint.get.filter ? Optional filters |kwargs|:
+                  • bufnr (integer?): 0 for current buffer
+                  • range (lsp.Range?)
+
+    Return: ~
+        vim.lsp.inlay_hint.get.ret [] Each list item is a table with the following fields:
+        • bufnr (integer)
+        • client_id (integer)
+        • inlay_hint (lsp.InlayHint)
+
+is_enabled({bufnr})                          *vim.lsp.inlay_hint.is_enabled()*
+    Parameters: ~
+      • {bufnr}  (integer|nil) Buffer handle, or 0 or nil for current
+
+    Return: ~
+        (boolean)
 
 
 ==============================================================================
