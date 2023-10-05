@@ -1626,7 +1626,7 @@ static int damage_cmp(const void *s1, const void *s2)
 {
   Damage *d1 = (Damage *)s1, *d2 = (Damage *)s2;
   assert(d1->id != d2->id);
-  return d1->id > d2->id;
+  return d1->id > d2->id ? 1 : -1;
 }
 
 bool marktree_splice(MarkTree *b, int32_t start_line, int start_col, int old_extent_line,
@@ -1792,6 +1792,7 @@ past_continue_same_node:
 
     for (size_t i = 0; i < kv_size(damage); i++) {
       Damage d = kv_A(damage, i);
+      assert(i == 0 || d.id > kv_A(damage, i - 1).id);
       if (!(d.id & MARKTREE_END_FLAG)) {  // start
         if (i + 1 < kv_size(damage) && kv_A(damage, i + 1).id == (d.id | MARKTREE_END_FLAG)) {
           Damage d2 = kv_A(damage, i + 1);
@@ -2267,7 +2268,7 @@ void mt_inspect_dotfile_node(MarkTree *b, garray_T *ga, MTNode *n, MTPos off, ch
   if (parent != NULL) {
     snprintf(namebuf, sizeof namebuf, "%s_%c%d", parent, 'a' + n->level, n->p_idx);
   } else {
-    snprintf(namebuf, sizeof namebuf, "Node");
+    snprintf(namebuf, sizeof namebuf, "MTNode");
   }
 
   GA_PRINT("  %s[shape=plaintext, label=<\n", namebuf);
