@@ -6290,6 +6290,13 @@ function vim.fn.prevnonblank(lnum) end
 --- <  E1505: Invalid format specifier:
 ---   %1$d at width %2$d is: %01$*2$.3$d
 ---
+---           *E1507*
+--- This internal error indicates that the logic to
+--- parse a positional format error ran into a problem
+--- that couldn't be otherwise reported. Please file a
+--- bug against vim if you run into this, copying the
+--- exact format string and parameters that were used.
+---
 --- @param fmt any
 --- @param expr1? any
 --- @return any
