@@ -6885,7 +6885,7 @@ static void f_screenchar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     c = -1;
   } else {
     char buf[MB_MAXBYTES + 1];
-    grid_getbytes(grid, row, col, buf, NULL);
+    schar_get(buf, grid_getchar(grid, row, col, NULL));
     c = utf_ptr2char(buf);
   }
   rettv->vval.v_number = c;
@@ -6906,7 +6906,7 @@ static void f_screenchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   char buf[MB_MAXBYTES + 1];
-  grid_getbytes(grid, row, col, buf, NULL);
+  schar_get(buf, grid_getchar(grid, row, col, NULL));
   int pcc[MAX_MCO];
   int c = utfc_ptr2char(buf, pcc);
   int composing_len = 0;
@@ -6951,7 +6951,7 @@ static void f_screenstring(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   }
 
   char buf[MB_MAXBYTES + 1];
-  grid_getbytes(grid, row, col, buf, NULL);
+  schar_get(buf, grid_getchar(grid, row, col, NULL));
   rettv->vval.v_string = xstrdup(buf);
 }
 

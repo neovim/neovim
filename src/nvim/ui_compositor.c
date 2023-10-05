@@ -532,7 +532,7 @@ void ui_comp_raw_line(Integer grid, Integer row, Integer startcol, Integer endco
     compose_debug(row, row + 1, startcol, clearcol, dbghl_composed, true);
     compose_line(row, startcol, clearcol, flags);
   } else {
-    compose_debug(row, row + 1, startcol, endcol, dbghl_normal, false);
+    compose_debug(row, row + 1, startcol, endcol, dbghl_normal, endcol >= clearcol);
     compose_debug(row, row + 1, endcol, clearcol, dbghl_clear, true);
 #ifndef NDEBUG
     for (int i = 0; i < endcol - startcol; i++) {

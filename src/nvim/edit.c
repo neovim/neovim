@@ -1412,11 +1412,11 @@ static void ins_ctrl_v(void)
 // Put a character directly onto the screen.  It's not stored in a buffer.
 // Used while handling CTRL-K, CTRL-V, etc. in Insert mode.
 static int pc_status;
-#define PC_STATUS_UNSET 0       // pc_bytes was not set
-#define PC_STATUS_RIGHT 1       // right half of double-wide char
-#define PC_STATUS_LEFT  2       // left half of double-wide char
-#define PC_STATUS_SET   3       // pc_bytes was filled
-static char pc_bytes[MB_MAXBYTES + 1];  // saved bytes
+#define PC_STATUS_UNSET 0  // nothing was put on screen
+#define PC_STATUS_RIGHT 1  // right half of double-wide char
+#define PC_STATUS_LEFT  2  // left half of double-wide char
+#define PC_STATUS_SET   3  // pc_schar was filled
+static schar_T pc_schar;   // saved char
 static int pc_attr;
 static int pc_row;
 static int pc_col;
@@ -1433,31 +1433,34 @@ void edit_putchar(int c, bool highlight)
       attr = 0;
     }
     pc_row = curwin->w_wrow;
-    pc_col = 0;
     pc_status = PC_STATUS_UNSET;
+    grid_line_start(&curwin->w_grid, pc_row);
     if (curwin->w_p_rl) {
-      pc_col += curwin->w_grid.cols - 1 - curwin->w_wcol;
-      const int fix_col = grid_fix_col(&curwin->w_grid, pc_col, pc_row);
+      pc_col = curwin->w_grid.cols - 1 - curwin->w_wcol;
 
-      if (fix_col != pc_col) {
-        grid_putchar(&curwin->w_grid, ' ', pc_row, fix_col, attr);
+      if (grid_line_getchar(pc_col, NULL) == NUL) {
+        grid_line_put_schar(pc_col - 1, schar_from_ascii(' '), attr);
         curwin->w_wcol--;
         pc_status = PC_STATUS_RIGHT;
       }
     } else {
-      pc_col += curwin->w_wcol;
-      if (grid_lefthalve(&curwin->w_grid, pc_row, pc_col)) {
+      pc_col = curwin->w_wcol;
+
+      if (grid_line_getchar(pc_col + 1, NULL) == NUL) {
+        // pc_col is the left half of a double-width char
         pc_status = PC_STATUS_LEFT;
       }
     }
 
     // save the character to be able to put it back
     if (pc_status == PC_STATUS_UNSET) {
-      // TODO(bfredl): save the schar_T instead
-      grid_getbytes(&curwin->w_grid, pc_row, pc_col, pc_bytes, &pc_attr);
+      pc_schar = grid_line_getchar(pc_col, &pc_attr);
       pc_status = PC_STATUS_SET;
     }
-    grid_putchar(&curwin->w_grid, c, pc_row, pc_col, attr);
+
+    char buf[MB_MAXBYTES + 1];
+    grid_line_puts(pc_col, buf, utf_char2bytes(c, buf), attr);
+    grid_line_flush();
   }
 }
 
@@ -1537,7 +1540,10 @@ void edit_unputchar(void)
     if (pc_status == PC_STATUS_RIGHT || pc_status == PC_STATUS_LEFT) {
       redrawWinline(curwin, curwin->w_cursor.lnum);
     } else {
-      grid_puts(&curwin->w_grid, pc_bytes, -1, pc_row, pc_col, pc_attr);
+      // TODO(bfredl): this could be smarter and also handle the dubyawidth case
+      grid_line_start(&curwin->w_grid, pc_row);
+      grid_line_put_schar(pc_col, pc_schar, pc_attr);
+      grid_line_flush();
     }
   }
 }
