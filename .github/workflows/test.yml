@@ -83,6 +83,20 @@ jobs:
         name: uncrustify
         run: cmake --build build --target lintc-uncrustify
 
+  clang-analyzer:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./.github/scripts/install_deps.sh
+      - uses: ./.github/actions/cache
+      - name: Build third-party deps
+        run: |
+          cmake -S cmake.deps -B .deps -G Ninja
+          cmake --build .deps
+          cmake -B build -G Ninja
+      - run: cmake --build build --target clang-analyzer
+
   posix:
     name: ${{ matrix.runner }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
     strategy:
