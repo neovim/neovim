@@ -81,7 +81,7 @@ describe('expand wildcard', function()
   end)
 end)
 
-describe('file search', function()
+describe('file search (gf, <cfile>)', function()
   before_each(clear)
 
   it('find multibyte file name in line #20517', function()
@@ -93,78 +93,40 @@ describe('file search', function()
   end)
 
   it('matches Windows drive-letter filepaths (without ":" in &isfname)', function()
-    local os_win = is_os('win')
+    local iswin = is_os('win')
+    local function test_cfile(input, expected, expected_win)
+      expected = (iswin and expected_win or expected) or input
+      command('%delete')
+      insert(input)
+      command('norm! 0')
+      eq(expected, eval('expand("<cfile>")'))
+    end
 
-    insert([[c:/d:/foo/bar.txt]])
-    eq([[c:/d:/foo/bar.txt]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[//share/c:/foo/bar/]])
-    eq([[//share/c:/foo/bar/]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[file://c:/foo/bar]])
-    eq([[file://c:/foo/bar]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[https://c:/foo/bar]])
-    eq([[https://c:/foo/bar]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[\foo\bar]])
-    eq(os_win and [[\foo\bar]] or [[bar]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[/foo/bar]])
-    eq([[/foo/bar]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[c:\foo\bar]])
-    eq(os_win and [[c:\foo\bar]] or [[bar]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[c:/foo/bar]])
-    eq([[c:/foo/bar]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[c:foo\bar]])
-    eq(os_win and [[foo\bar]] or [[bar]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[c:foo/bar]])
-    eq([[foo/bar]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[c:foo]])
-    eq([[foo]], eval('expand("<cfile>")'))
-    command('%delete')
-
+    test_cfile([[c:/d:/foo/bar.txt]]) -- TODO(justinmk): should return "d:/foo/bar.txt" ?
+    test_cfile([[//share/c:/foo/bar/]])
+    test_cfile([[file://c:/foo/bar]])
+    test_cfile([[file://c:/foo/bar:42]])
+    test_cfile([[file://c:/foo/bar:42:666]])
+    test_cfile([[https://c:/foo/bar]])
+    test_cfile([[\foo\bar]], [[foo]], [[\foo\bar]])
+    test_cfile([[/foo/bar]], [[/foo/bar]])
+    test_cfile([[c:\foo\bar]], [[c:]], [[c:\foo\bar]])
+    test_cfile([[c:\foo\bar:42:666]], [[c:]], [[c:\foo\bar]])
+    test_cfile([[c:/foo/bar]])
+    test_cfile([[c:/foo/bar:42]], [[c:/foo/bar]])
+    test_cfile([[c:/foo/bar:42:666]], [[c:/foo/bar]])
+    test_cfile([[c:foo\bar]], [[c]])
+    test_cfile([[c:foo/bar]], [[c]])
+    test_cfile([[c:foo]], [[c]])
     -- Examples from: https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#example-ways-to-refer-to-the-same-file
-    insert([[c:\temp\test-file.txt]])
-    eq(os_win and [[c:\temp\test-file.txt]] or [[test-file.txt]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[\\127.0.0.1\c$\temp\test-file.txt]])
-    eq(os_win and [[\\127.0.0.1\c$\temp\test-file.txt]] or [[test-file.txt]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[\\LOCALHOST\c$\temp\test-file.txt]])
-    eq(os_win and [[\\LOCALHOST\c$\temp\test-file.txt]] or [[test-file.txt]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[\\.\c:\temp\test-file.txt]]) -- not supported yet
-    eq(os_win and [[\\.\c]] or [[test-file.txt]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[\\?\c:\temp\test-file.txt]]) -- not supported yet
-    eq(os_win and [[\c]] or [[test-file.txt]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]])
-    eq(os_win and [[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]] or [[test-file.txt]], eval('expand("<cfile>")'))
-    command('%delete')
-
-    insert([[\\127.0.0.1\c$\temp\test-file.txt]])
-    eq(os_win and [[\\127.0.0.1\c$\temp\test-file.txt]] or [[test-file.txt]], eval('expand("<cfile>")'))
+    test_cfile([[c:\temp\test-file.txt]], [[c:]], [[c:\temp\test-file.txt]])
+    test_cfile([[\\127.0.0.1\c$\temp\test-file.txt]], [[127.0.0.1]], [[\\127.0.0.1\c$\temp\test-file.txt]])
+    test_cfile([[\\LOCALHOST\c$\temp\test-file.txt]], [[LOCALHOST]], [[\\LOCALHOST\c$\temp\test-file.txt]])
+    -- not supported yet
+    test_cfile([[\\.\c:\temp\test-file.txt]], [[.]], [[\\.\c]])
+    -- not supported yet
+    test_cfile([[\\?\c:\temp\test-file.txt]], [[c:]], [[\\]])
+    test_cfile([[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]], [[.]], [[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]])
+    test_cfile([[\\127.0.0.1\c$\temp\test-file.txt]], [[127.0.0.1]], [[\\127.0.0.1\c$\temp\test-file.txt]])
   end)
 end)
