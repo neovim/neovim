@@ -7381,8 +7381,6 @@ M.funcs = {
       precision, the argument(s) to be used must also be specified
       using a {n$} positional argument specifier. See |printf-$|.
 
-
-      						*E1520*
       The conversion specifiers and their meanings are:
 
       		*printf-d* *printf-b* *printf-B* *printf-o* *printf-x* *printf-X*
@@ -7572,6 +7570,14 @@ M.funcs = {
       	echo printf("%1$d at width %2$d is: %01$*2$.3$d", 1, 2)
       <	E1505: Invalid format specifier:
       	%1$d at width %2$d is: %01$*2$.3$d
+
+      					*E1507*
+      This internal error indicates that the logic to parse a
+      positional format argument ran into a problem that couldn't be
+      otherwise reported.  Please file a bug against Vim if you run
+      into this, copying the exact format string and parameters that
+      were used.
+
     ]=],
     name = 'printf',
     params = { { 'fmt', 'any' }, { 'expr1', 'any' } },
