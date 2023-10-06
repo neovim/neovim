@@ -203,6 +203,8 @@ The following changes to existing APIs or features add new behavior.
   option, which allows for rendering e.g., diagnostic severities differently.
 
 • Defaults:
+  • On Windows 'isfname' does not include ":". Drive letters are handled
+    correctly without it. (Use |gF| for filepaths suffixed with ":line:col").
   • 'comments' includes "fb:•".
   • 'shortmess' includes the "C" flag.
   • Automatic linting of treesitter query files (see |ft-query-plugin|).

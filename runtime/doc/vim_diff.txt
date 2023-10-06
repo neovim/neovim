@@ -53,6 +53,8 @@ Defaults					            *nvim-defaults*
 - 'hlsearch' is enabled
 - 'include' defaults to "". The C ftplugin sets it to "^\\s*#\\s*include"
 - 'incsearch' is enabled
+- 'isfname' does not include ":" (on Windows). Drive letters are handled
+  correctly without it. (Use |gF| for filepaths suffixed with ":line:col").
 - 'joinspaces' is disabled
 - 'langnoremap' is enabled
 - 'langremap' is disabled

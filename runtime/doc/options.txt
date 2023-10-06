@@ -3453,7 +3453,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'isfname'* *'isf'*
 'isfname' 'isf'		string	(default for Windows:
-                             "@,48-57,/,\,.,-,_,+,,,#,$,%,{,},[,],:,@-@,!,~,="
+                             "@,48-57,/,\,.,-,_,+,,,#,$,%,{,},[,],@-@,!,~,="
                             otherwise: "@,48-57,/,.,-,_,+,,,#,$,%,~,=")
 			global
 	The characters specified by this option are included in file names and

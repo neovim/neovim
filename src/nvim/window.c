@@ -6943,11 +6943,13 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
   bool is_url = false;
 
   // Search backward for first char of the file name.
-  // Go one char back to ":" before "//" even when ':' is not in 'isfname'.
+  // Go one char back to ":" before "//", or to the drive letter before ":\" (even if ":"
+  // is not in 'isfname').
   while (ptr > line) {
     if ((len = (size_t)(utf_head_off(line, ptr - 1))) > 0) {
       ptr -= len + 1;
     } else if (vim_isfilec((uint8_t)ptr[-1])
+               || (len >= 2 && path_has_drive_letter(ptr - 2))
                || ((options & FNAME_HYP) && path_is_url(ptr - 1))) {
       ptr--;
     } else {
@@ -6957,14 +6959,13 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
 
   // Search forward for the last char of the file name.
   // Also allow ":/" when ':' is not in 'isfname'.
-  len = 0;
+  len = path_has_drive_letter(ptr) ? 2 : 0;
   while (vim_isfilec((uint8_t)ptr[len]) || (ptr[len] == '\\' && ptr[len + 1] == ' ')
          || ((options & FNAME_HYP) && path_is_url(ptr + len))
          || (is_url && vim_strchr(":?&=", (uint8_t)ptr[len]) != NULL)) {
     // After type:// we also include :, ?, & and = as valid characters, so that
     // http://google.com:8080?q=this&that=ok works.
-    if ((ptr[len] >= 'A' && ptr[len] <= 'Z')
-        || (ptr[len] >= 'a' && ptr[len] <= 'z')) {
+    if ((ptr[len] >= 'A' && ptr[len] <= 'Z') || (ptr[len] >= 'a' && ptr[len] <= 'z')) {
       if (in_type && path_is_url(ptr + len + 1)) {
         is_url = true;
       }
