@@ -821,10 +821,32 @@ add_glob_target(
   FILES ${NVIM_SOURCES} ${NVIM_HEADERS}
   FLAGS --quiet
   EXCLUDE ${EXCLUDE_CLANG_TIDY})
+
+# These are the same warnings as https://neovim.io/doc/reports/clang/. The
+# checks we ignore are meant to be removed eventually, but we can only do so
+# after we properly fix the problems without breaking CI.
+add_glob_target(
+  TARGET clang-analyzer
+  COMMAND ${CLANG_TIDY_PRG}
+  FILES ${NVIM_SOURCES} ${NVIM_HEADERS}
+  FLAGS --quiet
+  --checks='
+  -*,
+  clang-analyzer-*,
+  -clang-analyzer-core.NonNullParamChecker,
+  -clang-analyzer-core.NullDereference,
+  -clang-analyzer-core.UndefinedBinaryOperatorResult,
+  -clang-analyzer-core.uninitialized.Assign,
+  -clang-analyzer-optin.performance.Padding,
+  -clang-analyzer-security.insecureAPI.strcpy,
+  '
+  EXCLUDE ${EXCLUDE_CLANG_TIDY})
+
 add_custom_target(copy_compile_commands
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/compile_commands.json ${PROJECT_SOURCE_DIR}/compile_commands.json)
 add_dependencies(copy_compile_commands nvim)
 add_dependencies(clang-tidy copy_compile_commands)
+add_dependencies(clang-analyzer copy_compile_commands)
 
 if(CI_BUILD)
   set(LINT_OUTPUT_FORMAT gh_action)
