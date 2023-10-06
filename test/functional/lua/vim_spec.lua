@@ -2401,6 +2401,14 @@ describe('lua stdlib', function()
       insert([[αα]])
       eq({0,5}, exec_lua[[ return vim.region(0,{0,0},{0,4},'3',true)[0] ]])
     end)
+    it('linewise', function()
+      insert(dedent( [[
+      text tααt tααt text
+      text tαxt txtα tex
+      text tαxt tαxt
+      ]]))
+      eq({0,-1}, exec_lua[[ return vim.region(0,{1,5},{1,14},'V',true)[1] ]])
+    end)
     it('getpos() input', function()
       insert('getpos')
       eq({0,6}, exec_lua[[ return vim.region(0,{0,0},'.','v',true)[0] ]])
