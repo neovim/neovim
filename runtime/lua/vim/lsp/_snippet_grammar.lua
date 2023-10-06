@@ -89,6 +89,32 @@ M.NodeType = Type
 --- @class vim.snippet.FormatData: { capture: number, modifier?: string, if_text?: string, else_text?: string }
 --- @class vim.snippet.SnippetData: { children: vim.snippet.Node<any>[] }
 
+--- @type vim.snippet.Node<any>
+local Node = {}
+
+--- @return string
+--- @diagnostic disable-next-line: inject-field
+function Node:__tostring()
+  local node_text = {}
+  local type, data = self.type, self.data
+  if type == Type.Snippet then
+    --- @cast data vim.snippet.SnippetData
+    for _, child in ipairs(data.children) do
+      table.insert(node_text, tostring(child))
+    end
+  elseif type == Type.Choice then
+    --- @cast data vim.snippet.ChoiceData
+    table.insert(node_text, data.values[1])
+  elseif type == Type.Placeholder then
+    --- @cast data vim.snippet.PlaceholderData
+    table.insert(node_text, tostring(data.value))
+  elseif type == Type.Text then
+    --- @cast data vim.snippet.TextData
+    table.insert(node_text, data.text)
+  end
+  return table.concat(node_text)
+end
+
 --- Returns a function that constructs a snippet node of the given type.
 ---
 --- @generic T
@@ -96,7 +122,7 @@ M.NodeType = Type
 --- @return fun(data: T): vim.snippet.Node<T>
 local function node(type)
   return function(data)
-    return { type = type, data = data }
+    return setmetatable({ type = type, data = data }, Node)
   end
 end
 
