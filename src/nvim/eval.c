@@ -1299,7 +1299,7 @@ int eval_foldexpr(win_T *wp, int *cp)
       // If the result is a string, check if there is a non-digit before
       // the number.
       char *s = tv.vval.v_string;
-      if (!ascii_isdigit(*s) && *s != '-') {
+      if (*s != NUL && !ascii_isdigit(*s) && *s != '-') {
         *cp = (uint8_t)(*s++);
       }
       retval = atol(s);
