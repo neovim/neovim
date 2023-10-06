@@ -3,7 +3,8 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " Previous Maintainer:	Dan Sharp
 " Contributor:		Enno Nagel <ennonagel+vim@gmail.com>
-" Last Change:		2023 Aug 29
+"			Eisuke Kawashima
+" Last Change:		2023 Sep 28
 
 if exists("b:did_ftplugin")
   finish
@@ -39,16 +40,16 @@ if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
 
-if (exists("b:is_bash") && (b:is_bash == 1))
+if get(b:, "is_bash", 0)
   if !has("gui_running") && executable("less")
-    command! -buffer -nargs=1 Help silent exe '!bash -c "{ help "<args>" 2>/dev/null || man "<args>"; } | LESS= less"' | redraw!
-  elseif has('terminal')
-    command! -buffer -nargs=1 Help silent exe ':term bash -c "help "<args>" 2>/dev/null || man "<args>""'
+    command! -buffer -nargs=1 ShKeywordPrg silent exe '!bash -c "{ help "<args>" 2>/dev/null || man "<args>"; } | LESS= less"' | redraw!
+  elseif has("terminal")
+    command! -buffer -nargs=1 ShKeywordPrg silent exe ':term bash -c "help "<args>" 2>/dev/null || man "<args>""'
   else
-    command! -buffer -nargs=1 Help echo system('bash -c "help <args>" 2>/dev/null || man "<args>"')
+    command! -buffer -nargs=1 ShKeywordPrg echo system('bash -c "help <args>" 2>/dev/null || man "<args>"')
   endif
-  setlocal keywordprg=:Help
-  let b:undo_ftplugin ..= " | setl kp< | sil! delc -buffer Help"
+  setlocal keywordprg=:ShKeywordPrg
+  let b:undo_ftplugin ..= " | setl kp< | sil! delc -buffer ShKeywordPrg"
 endif
 
 let &cpo = s:save_cpo
