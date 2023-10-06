@@ -1569,4 +1569,13 @@ func Test_foldcolumn_linebreak_control_char()
   bwipe!
 endfunc
 
+" This used to cause invalid memory access
+func Test_foldexpr_return_empty_string()
+  new
+  setlocal foldexpr='' foldmethod=expr
+  redraw
+
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
