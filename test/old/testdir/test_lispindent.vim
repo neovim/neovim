@@ -50,6 +50,7 @@ func Test_lisp_indent()
 
   set lisp
   set lispwords&
+  throw 'Skipped: cpo+=p not supported'
   let save_copt = &cpoptions
   set cpoptions+=p
   normal 1G=G

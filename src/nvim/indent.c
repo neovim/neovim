@@ -1167,9 +1167,6 @@ int get_lisp_indent(void)
   pos_T paren;
   int amount;
 
-  // Set vi_lisp to use the vi-compatible method.
-  int vi_lisp = (vim_strchr(p_cpo, CPO_LISP) != NULL);
-
   pos_T realpos = curwin->w_cursor;
   curwin->w_cursor.col = 0;
 
@@ -1247,36 +1244,74 @@ int get_lisp_indent(void)
 
       char *that = get_cursor_line_ptr();
 
-      if (vi_lisp && (get_indent() == 0)) {
-        amount = 2;
+      char *line = that;
+      chartabsize_T cts;
+      init_chartabsize_arg(&cts, curwin, pos->lnum, 0, line, line);
+      while (*cts.cts_ptr != NUL && col > 0) {
+        cts.cts_vcol += lbr_chartabsize_adv(&cts);
+        col--;
+      }
+      amount = cts.cts_vcol;
+      that = cts.cts_ptr;
+      clear_chartabsize_arg(&cts);
+
+      // Some keywords require "body" indenting rules (the
+      // non-standard-lisp ones are Scheme special forms):
+      // (let ((a 1))    instead    (let ((a 1))
+      //   (...))       of       (...))
+      if (((*that == '(') || (*that == '[')) && lisp_match(that + 1)) {
+        amount += 2;
       } else {
-        char *line = that;
-        chartabsize_T cts;
-        init_chartabsize_arg(&cts, curwin, pos->lnum, 0, line, line);
-        while (*cts.cts_ptr != NUL && col > 0) {
-          cts.cts_vcol += lbr_chartabsize_adv(&cts);
-          col--;
+        if (*that != NUL) {
+          that++;
+          amount++;
         }
-        amount = cts.cts_vcol;
+        colnr_T firsttry = amount;
+
+        init_chartabsize_arg(&cts, curwin, (colnr_T)(that - line),
+                             amount, line, that);
+        while (ascii_iswhite(*cts.cts_ptr)) {
+          cts.cts_vcol += lbr_chartabsize(&cts);
+          cts.cts_ptr++;
+        }
         that = cts.cts_ptr;
+        amount = cts.cts_vcol;
         clear_chartabsize_arg(&cts);
 
-        // Some keywords require "body" indenting rules (the
-        // non-standard-lisp ones are Scheme special forms):
-        // (let ((a 1))    instead    (let ((a 1))
-        //   (...))       of       (...))
-        if (!vi_lisp && ((*that == '(') || (*that == '['))
-            && lisp_match(that + 1)) {
-          amount += 2;
-        } else {
-          if (*that != NUL) {
-            that++;
-            amount++;
+        if (*that && (*that != ';')) {
+          // Not a comment line.
+          // Test *that != '(' to accommodate first let/do
+          // argument if it is more than one line.
+          if ((*that != '(') && (*that != '[')) {
+            firsttry++;
           }
-          colnr_T firsttry = amount;
 
-          init_chartabsize_arg(&cts, curwin, (colnr_T)(that - line),
-                               amount, line, that);
+          parencount = 0;
+
+          init_chartabsize_arg(&cts, curwin,
+                               (colnr_T)(that - line), amount, line, that);
+          if (((*that != '"') && (*that != '\'') && (*that != '#')
+               && (((uint8_t)(*that) < '0') || ((uint8_t)(*that) > '9')))) {
+            int quotecount = 0;
+            while (*cts.cts_ptr
+                   && (!ascii_iswhite(*cts.cts_ptr) || quotecount || parencount)) {
+              if (*cts.cts_ptr == '"') {
+                quotecount = !quotecount;
+              }
+              if (((*cts.cts_ptr == '(') || (*cts.cts_ptr == '[')) && !quotecount) {
+                parencount++;
+              }
+              if (((*cts.cts_ptr == ')') || (*cts.cts_ptr == ']')) && !quotecount) {
+                parencount--;
+              }
+              if ((*cts.cts_ptr == '\\') && (*(cts.cts_ptr + 1) != NUL)) {
+                cts.cts_vcol += lbr_chartabsize_adv(&cts);
+              }
+
+              cts.cts_vcol += lbr_chartabsize_adv(&cts);
+            }
+          }
+
           while (ascii_iswhite(*cts.cts_ptr)) {
             cts.cts_vcol += lbr_chartabsize(&cts);
             cts.cts_ptr++;
@@ -1285,54 +1320,8 @@ int get_lisp_indent(void)
           amount = cts.cts_vcol;
           clear_chartabsize_arg(&cts);
 
-          if (*that && (*that != ';')) {
-            // Not a comment line.
-            // Test *that != '(' to accommodate first let/do
-            // argument if it is more than one line.
-            if (!vi_lisp && (*that != '(') && (*that != '[')) {
-              firsttry++;
-            }
-
-            parencount = 0;
-
-            init_chartabsize_arg(&cts, curwin,
-                                 (colnr_T)(that - line), amount, line, that);
-            if (vi_lisp || ((*that != '"') && (*that != '\'')
-                            && (*that != '#')
-                            && (((uint8_t)(*that) < '0') || ((uint8_t)(*that) > '9')))) {
-              int quotecount = 0;
-              while (*cts.cts_ptr
-                     && (!ascii_iswhite(*cts.cts_ptr) || quotecount || parencount)
-                     && (!((*cts.cts_ptr == '(' || *cts.cts_ptr == '[')
-                           && !quotecount && !parencount && vi_lisp))) {
-                if (*cts.cts_ptr == '"') {
-                  quotecount = !quotecount;
-                }
-                if (((*cts.cts_ptr == '(') || (*cts.cts_ptr == '[')) && !quotecount) {
-                  parencount++;
-                }
-                if (((*cts.cts_ptr == ')') || (*cts.cts_ptr == ']')) && !quotecount) {
-                  parencount--;
-                }
-                if ((*cts.cts_ptr == '\\') && (*(cts.cts_ptr + 1) != NUL)) {
-                  cts.cts_vcol += lbr_chartabsize_adv(&cts);
-                }
-
-                cts.cts_vcol += lbr_chartabsize_adv(&cts);
-              }
-            }
-
-            while (ascii_iswhite(*cts.cts_ptr)) {
-              cts.cts_vcol += lbr_chartabsize(&cts);
-              cts.cts_ptr++;
-            }
-            that = cts.cts_ptr;
-            amount = cts.cts_vcol;
-            clear_chartabsize_arg(&cts);
-
-            if (!*that || (*that == ';')) {
-              amount = firsttry;
-            }
+          if (!*that || (*that == ';')) {
+            amount = firsttry;
           }
         }
       }
