@@ -1313,7 +1313,6 @@ bool scrolldown(long line_count, int byfold)
     }
     if (col > width2 && width2 > 0) {
       row += (int)col / width2;
-      col = col % width2;
     }
     if (row >= curwin->w_height_inner) {
       curwin->w_curswant = curwin->w_virtcol - (row - curwin->w_height_inner + 1) * width2;
@@ -1518,7 +1517,6 @@ void adjust_skipcol(void)
   }
   if (col > width2) {
     row += (int)col / width2;
-    col = col % width2;
   }
   if (row >= curwin->w_height_inner) {
     if (curwin->w_skipcol == 0) {
