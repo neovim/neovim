@@ -4261,7 +4261,11 @@ int may_open_tabpage(void)
 
   cmdmod.cmod_tab = 0;         // reset it to avoid doing it twice
   postponed_split_tab = 0;
-  return win_new_tabpage(n, NULL);
+  int status = win_new_tabpage(n, NULL);
+  if (status == OK) {
+    apply_autocmds(EVENT_TABNEWENTERED, NULL, NULL, false, curbuf);
+  }
+  return status;
 }
 
 // Create up to "maxcount" tabpages with empty windows.
