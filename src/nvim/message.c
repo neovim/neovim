@@ -2959,15 +2959,15 @@ void os_msg(const char *str)
 
 void msg_moremsg(int full)
 {
-  int attr;
-  char *s = _("-- More --");
-
-  attr = hl_combine_attr(HL_ATTR(HLF_MSG), HL_ATTR(HLF_M));
-  grid_puts(&msg_grid_adj, s, -1, Rows - 1, 0, attr);
+  int attr = hl_combine_attr(HL_ATTR(HLF_MSG), HL_ATTR(HLF_M));
+  grid_line_start(&msg_grid_adj, Rows - 1);
+  int len = grid_line_puts(0, _("-- More --"), -1, attr);
   if (full) {
-    grid_puts(&msg_grid_adj, _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "), -1,
-              Rows - 1, vim_strsize(s), attr);
+    len += grid_line_puts(len, _(" SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "),
+                          -1, attr);
   }
+  grid_line_cursor_goto(len);
+  grid_line_flush();
 }
 
 /// Repeat the message for the current mode: MODE_ASKMORE, MODE_EXTERNCMD,

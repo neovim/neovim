@@ -201,65 +201,23 @@ static bool grid_invalid_row(ScreenGrid *grid, int row)
   return grid->attrs[grid->line_offset[row]] < 0;
 }
 
-/// Return number of display cells for char at grid->chars[off].
-/// We make sure that the offset used is less than "max_off".
-static int grid_off2cells(ScreenGrid *grid, size_t off, size_t max_off)
-{
-  return (off + 1 < max_off && grid->chars[off + 1] == 0) ? 2 : 1;
-}
-
-/// Return true if the character at "row"/"col" on the screen is the left side
-/// of a double-width character.
-///
-/// Caller must make sure "row" and "col" are not invalid!
-bool grid_lefthalve(ScreenGrid *grid, int row, int col)
-{
-  grid_adjust(&grid, &row, &col);
-
-  return grid_off2cells(grid, grid->line_offset[row] + (size_t)col,
-                        grid->line_offset[row] + (size_t)grid->cols) > 1;
-}
-
-/// Correct a position on the screen, if it's the right half of a double-wide
-/// char move it to the left half.  Returns the corrected column.
-int grid_fix_col(ScreenGrid *grid, int col, int row)
-{
-  int coloff = 0;
-  grid_adjust(&grid, &row, &coloff);
-
-  col += coloff;
-  if (grid->chars != NULL && col > 0
-      && grid->chars[grid->line_offset[row] + (size_t)col] == 0) {
-    return col - 1 - coloff;
-  }
-  return col - coloff;
-}
-
-/// output a single character directly to the grid
-void grid_putchar(ScreenGrid *grid, int c, int row, int col, int attr)
-{
-  char buf[MB_MAXBYTES + 1];
-
-  grid_puts(grid, buf, utf_char2bytes(c, buf), row, col, attr);
-}
-
 /// Get a single character directly from grid.chars into "bytes", which must
 /// have a size of "MB_MAXBYTES + 1".
 /// If "attrp" is not NULL, return the character's attribute in "*attrp".
-void grid_getbytes(ScreenGrid *grid, int row, int col, char *bytes, int *attrp)
+schar_T grid_getchar(ScreenGrid *grid, int row, int col, int *attrp)
 {
   grid_adjust(&grid, &row, &col);
 
   // safety check
   if (grid->chars == NULL || row >= grid->rows || col >= grid->cols) {
-    return;
+    return NUL;
   }
 
   size_t off = grid->line_offset[row] + (size_t)col;
   if (attrp != NULL) {
     *attrp = grid->attrs[off];
   }
-  schar_get(bytes, grid->chars[off]);
+  return grid->chars[off];
 }
 
 static ScreenGrid *grid_line_grid = NULL;
@@ -268,38 +226,6 @@ static int grid_line_coloff = 0;
 static int grid_line_maxcol = 0;
 static int grid_line_first = INT_MAX;
 static int grid_line_last = 0;
-
-/// put string 'text' on the window grid at position 'row' and 'col', with
-/// attributes 'attr', and update contents of 'grid'
-/// @param textlen length of string or -1 to use strlen(text)
-/// Note: only outputs within one row!
-int grid_puts(ScreenGrid *grid, const char *text, int textlen, int row, int col, int attr)
-{
-  grid_line_start(grid, row);
-
-  // Safety check. The check for negative row and column is to fix issue
-  // vim/vim#4102. TODO(neovim): find out why row/col could be negative.
-  int off_col = grid_line_coloff + col;
-  if (grid_line_grid->chars == NULL
-      || grid_line_row >= grid_line_grid->rows || grid_line_row < 0
-      || off_col >= grid_line_grid->cols || off_col < 0) {
-    if (rdb_flags & RDB_INVALID) {
-      abort();
-    } else {
-      grid_line_grid = NULL;
-      return 0;
-    }
-  }
-
-  int len = grid_line_puts(col, text, textlen, attr);
-  if (grid_line_last > grid_line_first) {
-    // TODO(bfredl): this is bullshit. message.c should manage its own cursor movements
-    int col_pos = MIN(grid_line_coloff + grid_line_last, grid_line_grid->cols - 1);
-    ui_grid_cursor_goto(grid_line_grid->handle, grid_line_row, col_pos);
-  }
-  grid_line_flush();
-  return len;
-}
 
 /// Start a group of grid_line_puts calls that builds a single grid line.
 ///
@@ -318,6 +244,25 @@ void grid_line_start(ScreenGrid *grid, int row)
   grid_line_last = 0;
 }
 
+/// Get present char from current rendered screen line
+///
+/// This indicates what already is on screen, not the pending render buffer.
+///
+/// @return char or space if out of bounds
+schar_T grid_line_getchar(int col, int *attr)
+{
+  if (col < grid_line_maxcol) {
+    size_t off = grid_line_grid->line_offset[grid_line_row] + (size_t)col;
+    if (attr != NULL) {
+      *attr = grid_line_grid->attrs[off];
+    }
+    return grid_line_grid->chars[off];
+  } else {
+    // NUL is a very special value (right-half of double width), space is True Neutral™
+    return schar_from_ascii(' ');
+  }
+}
+
 void grid_line_put_schar(int col, schar_T schar, int attr)
 {
   assert(grid_line_grid);
@@ -331,8 +276,13 @@ void grid_line_put_schar(int col, schar_T schar, int attr)
   linebuf_vcol[col] = -1;
 }
 
-/// like grid_puts(), but output "text[len]".  When "len" is -1 output up to
-/// a NUL.
+/// Put string "text" at "col" position relative to the grid line from the
+/// recent grid_line_start() call.
+///
+/// @param textlen length of string or -1 to use strlen(text)
+/// Note: only outputs within one row!
+///
+/// @return number of grid cells used
 int grid_line_puts(int col, const char *text, int textlen, int attr)
 {
   const char *ptr = text;
@@ -435,8 +385,16 @@ void grid_line_fill(int start_col, int end_col, int c, int attr)
     linebuf_attr[col] = attr;
     linebuf_vcol[col] = -1;
   }
-  grid_line_first = MIN(grid_line_first, start_col);
-  grid_line_last = MAX(grid_line_last, end_col);
+  if (start_col < end_col) {
+    grid_line_first = MIN(grid_line_first, start_col);
+    grid_line_last = MAX(grid_line_last, end_col);
+  }
+}
+
+/// move the cursor to a position in a currently rendered line.
+void grid_line_cursor_goto(int col)
+{
+  ui_grid_cursor_goto(grid_line_grid->handle, grid_line_row, col);
 }
 
 /// End a group of grid_line_puts calls and send the screen buffer to the UI layer.
@@ -500,27 +458,29 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
   }
 
   for (int row = start_row; row < end_row; row++) {
+    int dirty_first = INT_MAX;
+    int dirty_last = 0;
+    size_t lineoff = grid->line_offset[row];
+
     // When drawing over the right half of a double-wide char clear
     // out the left half.  When drawing over the left half of a
     // double wide-char clear out the right half.  Only needed in a
     // terminal.
-    if (start_col > 0 && grid_fix_col(grid, start_col, row) != start_col) {
-      grid_puts(grid, " ", 1, row, start_col - 1, 0);
+    if (start_col > 0 && grid->chars[lineoff + (size_t)start_col] == NUL) {
+      size_t off = lineoff + (size_t)start_col - 1;
+      grid->chars[off] = schar_from_ascii(' ');
+      grid->attrs[off] = attr;
+      dirty_first = start_col - 1;
     }
-    if (end_col < grid->cols
-        && grid_fix_col(grid, end_col, row) != end_col) {
-      grid_puts(grid, " ", 1, row, end_col, 0);
+    if (end_col < grid->cols && grid->chars[lineoff + (size_t)end_col] == NUL) {
+      size_t off = lineoff + (size_t)end_col;
+      grid->chars[off] = schar_from_ascii(' ');
+      grid->attrs[off] = attr;
+      dirty_last = end_col + 1;
     }
-
-    // if grid was resized (in ext_multigrid mode), the UI has no redraw updates
-    // for the newly resized grid. It is better mark everything as dirty and
-    // send all the updates.
-    int dirty_first = INT_MAX;
-    int dirty_last = 0;
 
     int col = start_col;
     sc = schar_from_char(c1);
-    size_t lineoff = grid->line_offset[row];
     for (col = start_col; col < end_col; col++) {
       size_t off = lineoff + (size_t)col;
       if (grid->chars[off] != sc || grid->attrs[off] != attr || rdb_flags & RDB_NODELTA) {
@@ -600,8 +560,6 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
     endcol = grid->cols;
   }
 
-  grid_adjust(&grid, &row, &coloff);
-
   // Safety check. Avoids clang warnings down the call stack.
   if (grid->chars == NULL || row >= grid->rows || coloff >= grid->cols) {
     DLOG("invalid state, skipped");
@@ -662,12 +620,8 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
       // the right half of the old character.
       // Also required when writing the right half of a double-width
       // char over the left half of an existing one
-      if (col + char_cells == endcol
-          && ((char_cells == 1
-               && grid_off2cells(grid, off, max_off_to) > 1)
-              || (char_cells == 2
-                  && grid_off2cells(grid, off, max_off_to) == 1
-                  && grid_off2cells(grid, off + 1, max_off_to) > 1))) {
+      if (col + char_cells == endcol && off + (size_t)char_cells < max_off_to
+          && grid->chars[off + (size_t)char_cells] == NUL) {
         clear_next = true;
       }
 

@@ -182,7 +182,9 @@ void win_redr_status(win_T *wp)
       attr = win_hl_attr(wp, HLF_C);
       fillchar = wp->w_p_fcs_chars.vert;
     }
-    grid_putchar(&default_grid, fillchar, W_ENDROW(wp), W_ENDCOL(wp), attr);
+    grid_line_start(&default_grid, W_ENDROW(wp));
+    grid_line_put_schar(W_ENDCOL(wp), schar_from_char(fillchar), attr);
+    grid_line_flush();
   }
   busy = false;
 }

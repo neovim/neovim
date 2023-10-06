@@ -2382,26 +2382,20 @@ static void win_update(win_T *wp, DecorProviders *providers)
       wp->w_botline = lnum;
       wp->w_filler_rows = wp->w_grid.rows - srow;
     } else if (dy_flags & DY_TRUNCATE) {      // 'display' has "truncate"
-      int scr_row = wp->w_grid.rows - 1;
-      int symbol = wp->w_p_fcs_chars.lastline;
-      char fillbuf[12];  // 2 characters of 6 bytes
-      int charlen = utf_char2bytes(symbol, &fillbuf[0]);
-      utf_char2bytes(symbol, &fillbuf[charlen]);
-
       // Last line isn't finished: Display "@@@" in the last screen line.
-      grid_puts(&wp->w_grid, fillbuf, MIN(wp->w_grid.cols, 2) * charlen, scr_row, 0, at_attr);
-      grid_fill(&wp->w_grid, scr_row, scr_row + 1, 2, wp->w_grid.cols, symbol, ' ', at_attr);
+      grid_line_start(&wp->w_grid, wp->w_grid.rows - 1);
+      grid_line_fill(0, MIN(wp->w_grid.cols, 3), wp->w_p_fcs_chars.lastline, at_attr);
+      grid_line_fill(3, wp->w_grid.cols, ' ', at_attr);
+      grid_line_flush();
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
-      int start_col = wp->w_grid.cols - 3;
-      int symbol = wp->w_p_fcs_chars.lastline;
-
       // Last line isn't finished: Display "@@@" at the end.
       // TODO(bfredl): this display ">@@@" when ">" was a left-halve
       // maybe "@@@@" is preferred when this happens.
       grid_line_start(&wp->w_grid, wp->w_grid.rows - 1);
-      grid_line_fill(MAX(start_col, 0), wp->w_grid.cols, symbol, at_attr);
+      grid_line_fill(MAX(wp->w_grid.cols - 3, 0), wp->w_grid.cols,
+                     wp->w_p_fcs_chars.lastline, at_attr);
       grid_line_flush();
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;

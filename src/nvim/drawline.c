@@ -3330,5 +3330,6 @@ static void win_put_linebuf(win_T *wp, int row, int coloff, int endcol, int clea
     }
   }
 
+  grid_adjust(&grid, &row, &coloff);
   grid_put_linebuf(grid, row, coloff, 0, endcol, clear_width, wp->w_p_rl, bg_attr, wrap, false);
 }

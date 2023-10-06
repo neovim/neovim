@@ -1366,7 +1366,7 @@ describe('ui/ext_messages', function()
 
     feed(":intro<cr>")
     screen:expect{grid=[[
-                                                                                      |
+      ^                                                                                |
                                                                                       |
                                                                                       |
                                                                                       |
