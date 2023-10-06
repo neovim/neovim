@@ -6098,8 +6098,6 @@ function vim.fn.prevnonblank(lnum) end
 --- precision, the argument(s) to be used must also be specified
 --- using a {n$} positional argument specifier. See |printf-$|.
 ---
----
----             *E1520*
 --- The conversion specifiers and their meanings are:
 ---
 ---     *printf-d* *printf-b* *printf-B* *printf-o* *printf-x* *printf-X*
@@ -6291,11 +6289,11 @@ function vim.fn.prevnonblank(lnum) end
 ---   %1$d at width %2$d is: %01$*2$.3$d
 ---
 ---           *E1507*
---- This internal error indicates that the logic to
---- parse a positional format error ran into a problem
---- that couldn't be otherwise reported. Please file a
---- bug against vim if you run into this, copying the
---- exact format string and parameters that were used.
+--- This internal error indicates that the logic to parse a
+--- positional format argument ran into a problem that couldn't be
+--- otherwise reported.  Please file a bug against Vim if you run
+--- into this, copying the exact format string and parameters that
+--- were used.
 ---
 --- @param fmt any
 --- @param expr1? any
