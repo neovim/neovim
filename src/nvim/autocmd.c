@@ -675,9 +675,9 @@ bool is_aucmd_win(win_T *win)
   return false;
 }
 
-// Return the event number for event name "start".
-// Return NUM_EVENTS if the event name was not found.
-// Return a pointer to the next event name in "end".
+/// Return the event number for event name "start".
+/// Return NUM_EVENTS if the event name was not found.
+/// Return a pointer to the next event name in "end".
 event_T event_name2nr(const char *start, char **end)
 {
   const char *p;
@@ -699,6 +699,18 @@ event_T event_name2nr(const char *start, char **end)
     return NUM_EVENTS;
   }
   return event_names[i].event;
+}
+
+/// Return the event number for event name "str".
+/// Return NUM_EVENTS if the event name was not found.
+event_T event_name2nr_str(String str)
+{
+  for (int i = 0; event_names[i].name != NULL; i++) {
+    if (str.size == event_names[i].len && STRNICMP(str.data, event_names[i].name, str.size) == 0) {
+      return event_names[i].event;
+    }
+  }
+  return NUM_EVENTS;
 }
 
 /// Return the name for event
