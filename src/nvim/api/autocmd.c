@@ -33,13 +33,11 @@
 // Copy string or array of strings into an empty array.
 // Get the event number, unless it is an error. Then goto `goto_name`.
 #define GET_ONE_EVENT(event_nr, event_str, goto_name) \
-  char *__next_ev; \
   event_T event_nr = \
-    event_name2nr(event_str.data.string.data, &__next_ev); \
-  if (event_nr >= NUM_EVENTS) { \
-    api_set_error(err, kErrorTypeValidation, "unexpected event"); \
+    event_name2nr_str(event_str.data.string); \
+  VALIDATE_S((event_nr < NUM_EVENTS), "event", event_str.data.string.data, { \
     goto goto_name; \
-  }
+  });
 
 // ID for associating autocmds created via nvim_create_autocmd
 // Used to delete autocmds from nvim_del_autocmd

@@ -43,6 +43,11 @@ describe('autocmd api', function()
         group = 0,
         command = 'ls',
       }))
+
+      eq("Invalid 'event': 'foo'", pcall_err(meths.create_autocmd, 'foo', { command = '' }))
+      eq("Invalid 'event': 'VimEnter '", pcall_err(meths.create_autocmd, 'VimEnter ', { command = '' }))
+      eq("Invalid 'event': 'VimEnter foo'", pcall_err(meths.create_autocmd, 'VimEnter foo', { command = '' }))
+      eq("Invalid 'event': 'BufAdd,BufDelete'", pcall_err(meths.create_autocmd, 'BufAdd,BufDelete', { command = '' }))
     end)
 
     it('doesnt leak when you use ++once', function()
