@@ -1698,6 +1698,9 @@ const char *did_set_iconstring(optset_T *args)
 /// The 'inccommand' option is changed.
 const char *did_set_inccommand(optset_T *args FUNC_ATTR_UNUSED)
 {
+  if (cmdpreview) {
+    return e_invarg;
+  }
   return did_set_opt_strings(p_icm, p_icm_values, false);
 }
 
