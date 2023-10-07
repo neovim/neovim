@@ -157,12 +157,6 @@ if((ENABLE_ASAN_UBSAN AND ENABLE_MSAN)
   message(FATAL_ERROR "Sanitizers cannot be enabled simultaneously")
 endif()
 
-if(ENABLE_ASAN_UBSAN OR ENABLE_MSAN OR ENABLE_TSAN)
-  if(NOT CMAKE_C_COMPILER_ID MATCHES "Clang" AND NOT CMAKE_C_COMPILER_ID MATCHES "GNU")
-    message(FATAL_ERROR "Sanitizers are only supported for Clang and GCC")
-  endif()
-endif()
-
 # Place targets in bin/ or lib/ for all build configurations
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
