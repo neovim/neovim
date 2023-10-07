@@ -846,7 +846,7 @@ Annotate non-trivial fall-through between cases.
 If not conditional on an enumerated value, switch statements should always
 have a `default` case (in the case of an enumerated value, the compiler will
 warn you if any values are not handled). If the default case should never
-execute, simply `assert`: >c
+execute, simply use `abort()`: >c
 
     switch (var) {
       case 0:
@@ -856,7 +856,7 @@ execute, simply `assert`: >c
         ...
         break;
       default:
-        assert(false);
+        abort();
     }
 
 Return Values ~
