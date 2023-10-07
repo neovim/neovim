@@ -332,7 +332,7 @@ void update_window_hl(win_T *wp, bool invalid)
     wp->w_ns_hl_active = ns_id;
 
     wp->w_ns_hl_attr = *(NSHlAttr *)pmap_get(int)(&ns_hl_attr, ns_id);
-    if (!wp->w_ns_hl_attr) {
+    if (!wp->w_ns_hl_attr) {  // -V547
       // No specific highlights, use the defaults.
       wp->w_ns_hl_attr = highlight_attr;
     }
