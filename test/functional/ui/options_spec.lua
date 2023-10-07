@@ -19,6 +19,7 @@ describe('UI receives option updates', function()
       linespace=0,
       pumblend=0,
       mousefocus=false,
+      mousehide=true,
       mousemoveevent=false,
       showtabline=1,
       termguicolors=false,
@@ -129,6 +130,12 @@ describe('UI receives option updates', function()
 
     command("set mousefocus")
     expected.mousefocus = true
+    screen:expect(function()
+      eq(expected, screen.options)
+    end)
+
+    command("set nomousehide")
+    expected.mousehide = false
     screen:expect(function()
       eq(expected, screen.options)
     end)
