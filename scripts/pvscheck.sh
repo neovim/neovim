@@ -375,6 +375,7 @@ run_analysis() {(
       --threads "$(get_jobs_num)" \
       --exclude-path src/cjson \
       --exclude-path src/xdiff \
+      --exclude-path build \
       --output-file PVS-studio.log \
       --file build/compile_commands.json \
       --sourcetree-root . || true
