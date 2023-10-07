@@ -3309,7 +3309,7 @@ static int ins_compl_get_exp(pos_T *ini)
     xfree(st.e_cpt_copy);
     // Make a copy of 'complete', in case the buffer is wiped out.
     st.e_cpt_copy = xstrdup((compl_cont_status & CONT_LOCAL) ? "." : curbuf->b_p_cpt);
-    st.e_cpt = st.e_cpt_copy == NULL ? "" : st.e_cpt_copy;
+    st.e_cpt = st.e_cpt_copy;
     st.last_match_pos = st.first_match_pos = *ini;
   } else if (st.ins_buf != curbuf && !buf_valid(st.ins_buf)) {
     st.ins_buf = curbuf;  // In case the buffer was wiped out.

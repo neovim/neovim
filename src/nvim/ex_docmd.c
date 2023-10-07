@@ -3142,9 +3142,6 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
-  if (name == NULL) {
-    return;
-  }
 
   while (*name == ':') {
     name++;
