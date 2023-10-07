@@ -125,7 +125,8 @@ Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Acti
 - If any tests fail, the build will fail. See [test/README.md#running-tests][run-tests] to run tests locally.
 - CI runs [ASan] and other analyzers.
     - To run valgrind locally: `VALGRIND=1 make test`
-    - To run Clang ASan/UBSan locally: `CC=clang make CMAKE_FLAGS="-DENABLE_ASAN_UBSAN=ON"`
+    - To run ASan/UBSan locally: `CC=clang make CMAKE_FLAGS="-DENABLE_ASAN_UBSAN=ON"`.
+      Note that MSVC requires Release or RelWithDebInfo build type to work properly.
 - The [lint](#lint) build checks modified lines _and their immediate
   neighbors_, to encourage incrementally updating the legacy style to meet our
   [style](#style). (See [#3174][3174] for background.)
