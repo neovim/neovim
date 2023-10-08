@@ -462,9 +462,9 @@ useful options:
     vim.keymap.set('n', '<Leader>pl1', require('plugin').action,
       { desc = 'Execute action from plugin' })
 <
-• `remap`: By default, all mappings are nonrecursive by default (i.e.,
-  |vim.keymap.set()| behaves like |:noremap|). If the {rhs} is itself a mapping
-  that should be executed, set `remap = true`: >lua
+• `remap`: By default, all mappings are nonrecursive (i.e., |vim.keymap.set()|
+  behaves like |:noremap|). If the {rhs} is itself a mapping that should be
+  executed, set `remap = true`: >lua
     vim.keymap.set('n', '<Leader>ex1', '<cmd>echo "Example 1"<cr>')
     -- add a shorter mapping
     vim.keymap.set('n', 'e', '<Leader>ex1', { remap = true })
