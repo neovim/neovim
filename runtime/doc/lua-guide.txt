@@ -670,8 +670,8 @@ cover only the basics of this advanced topic.
 ------------------------------------------------------------------------------
 Creating user commands                           *lua-guide-commands-create*
 
-User commands can be created through with |nvim_create_user_command()|. This
-function takes three mandatory arguments:
+User commands can be created via |nvim_create_user_command()|. This function
+takes three mandatory arguments:
 • a string that is the name of the command (which must start with an uppercase
   letter to distinguish it from builtin commands);
 • a string containing Vim commands or a Lua function that is executed when the
