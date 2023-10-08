@@ -44,5 +44,5 @@ jobs:
 
           run: |
             apt-get update -y
-            apt-get install -y make
+            apt-get install -y make attr build-essential cmake curl gettext libattr1-dev ninja-build unzip locales-all cpanminus
             make
