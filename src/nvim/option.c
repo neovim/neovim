@@ -3461,9 +3461,8 @@ OptVal optval_copy(OptVal o)
     return o;
   case kOptValTypeString:
     return STRING_OPTVAL(copy_string(o.data.string, NULL));
-  default:
-    abort();
   }
+  UNREACHABLE;
 }
 
 // Match type of OptVal with the type of the target option. Returns true if the types match and
@@ -3482,9 +3481,8 @@ static bool optval_match_type(OptVal o, int opt_idx)
     return flags & P_NUM;
   case kOptValTypeString:
     return flags & P_STRING;
-  default:
-    abort();
   }
+  UNREACHABLE;
 }
 
 // Return C-string representation of OptVal. Caller must free the returned C-string.
@@ -3505,9 +3503,8 @@ static char *optval_to_cstr(OptVal o)
     snprintf(buf, o.data.string.size + 3, "\"%s\"", o.data.string.data);
     return buf;
   }
-  default:
-    abort();
   }
+  UNREACHABLE;
 }
 
 // Get an allocated string containing a list of valid types for an option.

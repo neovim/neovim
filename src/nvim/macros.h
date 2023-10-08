@@ -154,6 +154,14 @@
 # define FALLTHROUGH
 #endif
 
+#if defined(__clang__) || defined(__GNUC__)
+# define UNREACHABLE __builtin_unreachable()
+#elif defined(_MSVC_VER)
+# define UNREACHABLE __assume(false)
+#else
+# define UNREACHABLE
+#endif
+
 // -V:STRUCT_CAST:641
 
 /// Change type of structure pointers: cast `struct a *` to `struct b *`

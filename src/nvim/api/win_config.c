@@ -279,8 +279,6 @@ Dictionary config_put_bordertext(Dictionary config, FloatConfig *fconfig,
     field_name = "footer";
     field_pos_name = "footer_pos";
     break;
-  default:
-    abort();
   }
 
   Array bordertext = virt_text_to_array(vt, true);

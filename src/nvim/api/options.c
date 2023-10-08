@@ -146,16 +146,14 @@ static Object optval_as_object(OptVal o)
       return BOOLEAN_OBJ(o.data.boolean);
     case kNone:
       return NIL;
-    default:
-      abort();
     }
+    UNREACHABLE;
   case kOptValTypeNumber:
     return INTEGER_OBJ(o.data.number);
   case kOptValTypeString:
     return STRING_OBJ(o.data.string);
-  default:
-    abort();
   }
+  UNREACHABLE;
 }
 
 /// Consume an API Object and convert it to an OptVal.
