@@ -20,6 +20,7 @@
 #include "nvim/eval/encode.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
 #include "nvim/eval/window.h"
@@ -1894,6 +1895,45 @@ static OptVal tv_to_optval(typval_T *tv, const char *option, uint32_t flags, boo
     *error = err;
   }
   return value;
+}
+
+/// Convert an option value to typval.
+///
+/// @param[in]  value  Option value to convert.
+///
+/// @return  OptVal converted to typval.
+typval_T optval_as_tv(OptVal value)
+{
+  typval_T rettv = { .v_type = VAR_SPECIAL, .vval = { .v_special = kSpecialVarNull } };
+
+  switch (value.type) {
+  case kOptValTypeNil:
+    break;
+  case kOptValTypeBoolean:
+    switch (value.data.boolean) {
+    case kTrue:
+      rettv.v_type = VAR_BOOL;
+      rettv.vval.v_bool = kBoolVarTrue;
+      break;
+    case kFalse:
+      rettv.v_type = VAR_BOOL;
+      rettv.vval.v_bool = kBoolVarFalse;
+      break;
+    case kNone:
+      break;  // return v:null for None boolean value
+    }
+    break;
+  case kOptValTypeNumber:
+    rettv.v_type = VAR_NUMBER;
+    rettv.vval.v_number = value.data.number;
+    break;
+  case kOptValTypeString:
+    rettv.v_type = VAR_STRING;
+    rettv.vval.v_string = value.data.string.data;
+    break;
+  }
+
+  return rettv;
 }
 
 /// Set option "varname" to the value of "varp" for the current buffer/window.

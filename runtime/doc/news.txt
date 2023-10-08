@@ -71,6 +71,10 @@ The following changes may require adaptations in user config or plugins.
   defined by LSP, and hence previously parsed snippets might now be considered
   invalid input.
 
+• |OptionSet| autocommand args |v:option_new|, |v:option_old|,
+  |v:option_oldlocal|, |v:option_oldglobal| now have the type of the option
+  instead of always being strings.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 

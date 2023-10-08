@@ -7226,6 +7226,17 @@ void set_vim_var_dict(const VimVarIndex idx, dict_T *const val)
   tv_dict_set_keys_readonly(val);
 }
 
+/// Set v:variable to tv.
+///
+/// @param[in]  idx  Index of variable to set.
+/// @param[in,out]  val  Value to set to. Reference count will be incremented.
+///                      Also keys of the dictionary will be made read-only.
+void set_vim_var_tv(const VimVarIndex idx, typval_T *const tv)
+{
+  tv_clear(&vimvars[idx].vv_di.di_tv);
+  vimvars[idx].vv_di.di_tv = *tv;
+}
+
 /// Set the v:argv list.
 void set_argv_var(char **argv, int argc)
 {

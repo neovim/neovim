@@ -379,6 +379,9 @@ UI/Display:
 Variables:
   |v:progpath| is always absolute ("full")
   |v:windowid| is always available (for use by external UIs)
+  |OptionSet| autocommand args |v:option_new|, |v:option_old|,
+  |v:option_oldlocal|, |v:option_oldglobal| have the type of the option
+  instead of always being strings.
 
 Vimscript:
   |:redir| nested in |execute()| works.

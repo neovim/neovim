@@ -46,6 +46,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/vars.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
@@ -1981,40 +1982,40 @@ void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
 }
 
 /// Apply the OptionSet autocommand.
-static void apply_optionset_autocmd(int opt_idx, int opt_flags, OptInt oldval, OptInt oldval_g,
-                                    OptInt newval, const char *errmsg)
+static void apply_optionset_autocmd(int opt_idx, int opt_flags, OptVal oldval, OptVal oldval_g,
+                                    OptVal oldval_l, OptVal newval, const char *errmsg)
 {
   // Don't do this while starting up, failure or recursively.
   if (starting || errmsg != NULL || *get_vim_var_str(VV_OPTION_TYPE) != NUL) {
     return;
   }
 
-  char buf_old[12], buf_old_global[12], buf_new[12], buf_type[12];
+  char buf_type[7];
+  typval_T oldval_tv = optval_as_tv(oldval);
+  typval_T oldval_g_tv = optval_as_tv(oldval_g);
+  typval_T oldval_l_tv = optval_as_tv(oldval_l);
+  typval_T newval_tv = optval_as_tv(newval);
 
-  vim_snprintf(buf_old, sizeof(buf_old), "%" PRId64, oldval);
-  vim_snprintf(buf_old_global, sizeof(buf_old_global), "%" PRId64, oldval_g);
-  vim_snprintf(buf_new, sizeof(buf_new), "%" PRId64, newval);
-  vim_snprintf(buf_type, sizeof(buf_type), "%s",
-               (opt_flags & OPT_LOCAL) ? "local" : "global");
-  set_vim_var_string(VV_OPTION_NEW, buf_new, -1);
-  set_vim_var_string(VV_OPTION_OLD, buf_old, -1);
+  vim_snprintf(buf_type, sizeof(buf_type), "%s", (opt_flags & OPT_LOCAL) ? "local" : "global");
+  set_vim_var_tv(VV_OPTION_NEW, &newval_tv);
+  set_vim_var_tv(VV_OPTION_OLD, &oldval_tv);
   set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
   if (opt_flags & OPT_LOCAL) {
     set_vim_var_string(VV_OPTION_COMMAND, "setlocal", -1);
-    set_vim_var_string(VV_OPTION_OLDLOCAL, buf_old, -1);
+    set_vim_var_tv(VV_OPTION_OLDLOCAL, &oldval_tv);
   }
   if (opt_flags & OPT_GLOBAL) {
     set_vim_var_string(VV_OPTION_COMMAND, "setglobal", -1);
-    set_vim_var_string(VV_OPTION_OLDGLOBAL, buf_old, -1);
+    set_vim_var_tv(VV_OPTION_OLDGLOBAL, &oldval_tv);
   }
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
     set_vim_var_string(VV_OPTION_COMMAND, "set", -1);
-    set_vim_var_string(VV_OPTION_OLDLOCAL, buf_old, -1);
-    set_vim_var_string(VV_OPTION_OLDGLOBAL, buf_old_global, -1);
+    set_vim_var_tv(VV_OPTION_OLDLOCAL, &oldval_l_tv);
+    set_vim_var_tv(VV_OPTION_OLDGLOBAL, &oldval_g_tv);
   }
   if (opt_flags & OPT_MODELINE) {
     set_vim_var_string(VV_OPTION_COMMAND, "modeline", -1);
-    set_vim_var_string(VV_OPTION_OLDLOCAL, buf_old, -1);
+    set_vim_var_tv(VV_OPTION_OLDLOCAL, &oldval_tv);
   }
   apply_autocmds(EVENT_OPTIONSET, options[opt_idx].fullname, NULL, false, NULL);
   reset_v_option_vars();
@@ -3370,7 +3371,7 @@ static char *optval_to_cstr(OptVal o)
   UNREACHABLE;
 }
 
-/// Consume an OptVal and convert it to an API Object.
+/// Convert an OptVal to an API Object.
 Object optval_as_object(OptVal o)
 {
   switch (o.type) {
@@ -3393,7 +3394,7 @@ Object optval_as_object(OptVal o)
   UNREACHABLE;
 }
 
-/// Consume an API Object and convert it to an OptVal.
+/// Convert an API Object to an OptVal.
 OptVal object_as_optval(Object o, bool *error)
 {
   switch (o.type) {
@@ -3694,20 +3695,26 @@ static const char *set_option(int opt_idx, void *varp, OptVal value, int opt_fla
     goto end;
   }
 
-  OptVal old_value = optval_from_varp(value.type, varp);
-  OptVal old_global_value = NIL_OPTVAL;
-
   // Disallow changing some options from secure mode.
   if ((secure || sandbox != 0) && (options[opt_idx].flags & P_SECURE)) {
     return e_secure;
   }
 
-  // Save the global value before changing anything. This is needed as for
-  // a global-only option setting the "local value" in fact sets the global
-  // value (since there is only one value).
+  vimoption_T *opt = &options[opt_idx];
+  OptVal old_value = optval_from_varp(value.type, varp);
+  OptVal old_global_value = NIL_OPTVAL;
+  OptVal old_local_value = NIL_OPTVAL;
+
+  // Save the local and global values before changing anything. This is needed as for a global-only
+  // option setting the "local value" in fact sets the global value (since there is only one value).
+  //
+  // TODO(famiu): This needs to be changed to use the current type of the old value instead of
+  // value.type, when multi-type options are added.
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+    old_local_value =
+      optval_from_varp(value.type, get_varp_scope(opt, OPT_LOCAL));
     old_global_value =
-      optval_from_varp(value.type, get_varp_scope(&(options[opt_idx]), OPT_GLOBAL));
+      optval_from_varp(value.type, get_varp_scope(opt, OPT_GLOBAL));
   }
 
   if (value.type == kOptValTypeNumber) {
@@ -3725,7 +3732,7 @@ static const char *set_option(int opt_idx, void *varp, OptVal value, int opt_fla
   set_option_sctx_idx(opt_idx, opt_flags, current_sctx);
   // May set global value for local option.
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    set_option_varp(get_varp_scope(&(options[opt_idx]), OPT_GLOBAL), value);
+    set_option_varp(get_varp_scope(opt, OPT_GLOBAL), value);
   }
 
   // Invoke the option specific callback function to validate and apply the new value.
@@ -3737,7 +3744,7 @@ static const char *set_option(int opt_idx, void *varp, OptVal value, int opt_fla
   } else if ((int *)varp == &p_force_off) {
     did_set_cb = did_set_force_off;
   } else {
-    did_set_cb = options[opt_idx].opt_did_set_cb;
+    did_set_cb = opt->opt_did_set_cb;
   }
   if (did_set_cb != NULL) {
     // TODO(famiu): make os_oldval and os_newval use OptVal.
@@ -3774,30 +3781,25 @@ static const char *set_option(int opt_idx, void *varp, OptVal value, int opt_fla
       = check_num_option_bounds((OptInt *)varp, old_value.data.number, errbuf, errbuflen, errmsg);
   }
 
-  // Clean this later when set_string_option() is unified with set_option().
-#define NUMERIC_OPTVAL_TO_OPTINT(x) \
-  (OptInt)((x).type == kOptValTypeNumber ? x.data.number : x.data.boolean)
-
   apply_optionset_autocmd(opt_idx, opt_flags,
-                          NUMERIC_OPTVAL_TO_OPTINT(old_value),
-                          NUMERIC_OPTVAL_TO_OPTINT(old_global_value),
-                          NUMERIC_OPTVAL_TO_OPTINT(value),
+                          old_value,
+                          old_global_value,
+                          old_local_value,
+                          value,
                           errmsg);
 
-#undef NUMERIC_OPTVAL_TO_OPTINT
-
-  if (options[opt_idx].flags & P_UI_OPTION) {
+  if (opt->flags & P_UI_OPTION) {
     OptVal value_copy = optval_copy(optval_from_varp(value.type, varp));
-    ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+    ui_call_option_set(cstr_as_string(opt->fullname),
                        optval_as_object(value_copy));
   }
 
   comp_col();  // in case 'columns' or 'ls' changed
   if (curwin->w_curswant != MAXCOL
-      && (options[opt_idx].flags & (P_CURSWANT | P_RALL)) != 0) {
+      && (opt->flags & (P_CURSWANT | P_RALL)) != 0) {
     curwin->w_set_curswant = true;
   }
-  check_redraw(options[opt_idx].flags);
+  check_redraw(opt->flags);
 
 end:
   if (errmsg == NULL) {
