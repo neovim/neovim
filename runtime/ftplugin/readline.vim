@@ -32,17 +32,17 @@ endif
 
 if has('unix') && executable('less')
   if !has('gui_running')
-    command -buffer -nargs=1 Sman
+    command -buffer -nargs=1 ReadlineKeywordPrg
           \ silent exe '!' . 'LESS= MANPAGER="less --pattern=''^\s+' . <q-args> . '\b'' --hilite-search" man ' . '3 readline' |
           \ redraw!
   elseif has('terminal')
-    command -buffer -nargs=1 Sman
+    command -buffer -nargs=1 ReadlineKeywordPrg
           \ silent exe 'term ' . 'env LESS= MANPAGER="less --pattern=''' . escape('^\s+' . <q-args> . '\b', '\') . ''' --hilite-search" man ' . '3 readline'
   endif
-  if exists(':Sman') == 2
+  if exists(':ReadlineKeywordPrg') == 2
     setlocal iskeyword+=-
-    setlocal keywordprg=:Sman
-    let b:undo_ftplugin .= '| setlocal keywordprg< iskeyword< | sil! delc -buffer Sman'
+    setlocal keywordprg=:ReadlineKeywordPrg
+    let b:undo_ftplugin .= '| setlocal keywordprg< iskeyword< | sil! delc -buffer ReadlineKeywordPrg'
   endif
 endif
 
