@@ -2,7 +2,7 @@
 " Language:             Zsh shell script
 " Maintainer:           Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2021-04-03
+" Latest Revision:      2023-10-07
 " License:              Vim (see :h license)
 " Repository:           https://github.com/chrisbra/vim-zsh
 
@@ -20,17 +20,17 @@ let b:undo_ftplugin = "setl com< cms< fo< "
 
 if executable('zsh') && &shell !~# '/\%(nologin\|false\)$'
   if !has('gui_running') && executable('less')
-    command! -buffer -nargs=1 RunHelp silent exe '!MANPAGER= zsh -c "autoload -Uz run-help; run-help <args> 2>/dev/null | LESS= less"' | redraw!
+    command! -buffer -nargs=1 ZshKeywordPrg silent exe '!MANPAGER= zsh -c "autoload -Uz run-help; run-help <args> 2>/dev/null | LESS= less"' | redraw!
   elseif has('terminal')
-    command! -buffer -nargs=1 RunHelp silent exe ':term zsh -c "autoload -Uz run-help; run-help <args>"'
+    command! -buffer -nargs=1 ZshKeywordPrg silent exe ':term zsh -c "autoload -Uz run-help; run-help <args>"'
   else
-    command! -buffer -nargs=1 RunHelp echo system('zsh -c "autoload -Uz run-help; run-help <args> 2>/dev/null"')
+    command! -buffer -nargs=1 ZshKeywordPrg echo system('zsh -c "autoload -Uz run-help; run-help <args> 2>/dev/null"')
   endif
   if !exists('current_compiler')
     compiler zsh
   endif
-  setlocal keywordprg=:RunHelp
-  let b:undo_ftplugin .= 'keywordprg< | sil! delc -buffer RunHelp'
+  setlocal keywordprg=:ZshKeywordPrg
+  let b:undo_ftplugin .= 'keywordprg< | sil! delc -buffer ZshKeywordPrg'
 endif
 
 let b:match_words = '\<if\>:\<elif\>:\<else\>:\<fi\>'
