@@ -43,4 +43,6 @@ jobs:
           githubToken: ${{ github.token }}
 
           run: |
+            apt-get update -y
+            apt-get install -y make
             make
