@@ -32,6 +32,8 @@ jobs:
   lint:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    env:
+      CC: clang
     steps:
       - uses: actions/checkout@v4
 
@@ -86,6 +88,8 @@ jobs:
   clang-analyzer:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
+    env:
+      CC: clang
     steps:
       - uses: actions/checkout@v4
       - run: ./.github/scripts/install_deps.sh
@@ -304,6 +308,8 @@ jobs:
   build-types:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    env:
+      CC: gcc
     steps:
       - uses: actions/checkout@v4
 
@@ -318,7 +324,7 @@ jobs:
           cmake --build .deps
 
       - name: Configure
-        run: cmake -B build -G "Ninja Multi-Config" -D CMAKE_C_COMPILER=gcc -D CI_BUILD=ON
+        run: cmake -B build -G "Ninja Multi-Config" -D CI_BUILD=ON
 
       - name: Release
         run: cmake --build build --config Release
@@ -332,6 +338,8 @@ jobs:
   with-external-deps:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    env:
+      CC: gcc
     steps:
       - uses: actions/checkout@v4
 
