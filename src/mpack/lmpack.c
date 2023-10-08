@@ -207,7 +207,11 @@ static mpack_uint32_t lmpack_objlen(lua_State *L, int *is_array)
 {
   size_t len, max;
   int isarr;
+#if LUA_VERSION_NUM < 503
   lua_Number n;
+#else
+  lua_Integer n;
+#endif
 #ifndef NDEBUG
   int top = lua_gettop(L);
   assert(top);
@@ -233,9 +237,14 @@ static mpack_uint32_t lmpack_objlen(lua_State *L, int *is_array)
   while (lua_next(L, -2)) {
     lua_pop(L, 1);  /* pop value */
     isarr = isarr
-      && lua_isnumber(L, -1)            /* lua number */
+#if LUA_VERSION_NUM < 503
+      && LUA_TNUMBER == lua_type(L, -1) /* lua number */
       && (n = lua_tonumber(L, -1)) > 0  /* greater than 0 */
       && (size_t)n == n;                /* and integer */
+#else
+      && lua_isinteger(L, -1)
+      && (n = lua_tointeger(L, -1)) > 0;
+#endif
     max = isarr && (size_t)n > max ? (size_t)n : max;
     len++;
   }

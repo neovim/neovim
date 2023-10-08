@@ -14,6 +14,13 @@ describe('lua vim.mpack', function()
     ]])
   end)
 
+  it('encodes array-like table with integer and string keys #16837', function()
+    eq({true, true, true}, exec_lua([[
+      local var = vim.mpack.decode(vim.mpack.encode({['1']=0, [2]=1, ['3']='2'}))
+      return {var['1']==0, var[2]==1, var['3']=='2'}
+    ]]))
+  end)
+
   it('encodes vim.empty_dict()', function()
     eq({{{}, "foo", {}}, true, false}, exec_lua [[
       local var = vim.mpack.decode(vim.mpack.encode({{}, "foo", vim.empty_dict()}))
