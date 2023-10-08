@@ -78,8 +78,6 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   case kProcessTypePty:
     status = pty_process_spawn((PtyProcess *)proc);
     break;
-  default:
-    abort();
   }
 
   if (status) {
@@ -239,8 +237,6 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
     process_close_streams(proc);
     pty_process_close_master((PtyProcess *)proc);
     break;
-  default:
-    abort();
   }
 
   // (Re)start timer to verify that stopped process(es) died.
@@ -340,8 +336,6 @@ static void process_close(Process *proc)
   case kProcessTypePty:
     pty_process_close((PtyProcess *)proc);
     break;
-  default:
-    abort();
   }
 }
 

@@ -168,9 +168,6 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
       channel_decref(chan);
     }
     break;
-
-  default:
-    abort();
   }
 
   return true;
@@ -917,9 +914,6 @@ Dictionary channel_info(uint64_t id)
   case kChannelStreamSocket:
     stream_desc = "socket";
     break;
-
-  default:
-    abort();
   }
   PUT(info, "stream", CSTR_TO_OBJ(stream_desc));
 

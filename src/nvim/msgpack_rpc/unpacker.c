@@ -173,9 +173,6 @@ static void api_parse_enter(mpack_parser_t *parser, mpack_node_t *node)
     node->data[0].p = result;
     break;
   }
-
-  default:
-    abort();
   }
 }
 

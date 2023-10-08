@@ -363,9 +363,6 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     tv->vval.v_string = xstrdup(name);
     break;
   }
-
-  default:
-    abort();
   }
 
   return true;

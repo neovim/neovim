@@ -859,6 +859,33 @@ execute, simply use `abort()`: >c
         abort();
     }
 
+Switch statements that are conditional on an enumerated value should not have
+a `default` case if it is exhaustive. Explicit case labels are preferred over
+`default`, even if it leads to multiple case labels for the same code. For
+example, instead of: >c
+
+    case A:
+      ...
+    case B:
+      ...
+    case C:
+      ...
+    default:
+      ...
+
+You should use: >c
+
+    case A:
+      ...
+    case B:
+      ...
+    case C:
+      ...
+    case D:
+    case E:
+    case F:
+      ...
+
 Return Values ~
 
 Do not needlessly surround the `return` expression with parentheses.

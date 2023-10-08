@@ -1135,8 +1135,6 @@ void tui_set_mode(TUIData *tui, ModeShape mode)
 
   int shape;
   switch (c.shape) {
-  default:
-    abort(); break;
   case SHAPE_BLOCK:
     shape = 1; break;
   case SHAPE_HOR:

@@ -738,9 +738,8 @@ int win_get_bordertext_col(int total_col, int text_width, AlignTextPos align)
     return (total_col - text_width) / 2 + 1;
   case kAlignRight:
     return total_col - text_width + 1;
-  default:
-    abort();
   }
+  UNREACHABLE;
 }
 
 static void win_redr_border(win_T *wp)

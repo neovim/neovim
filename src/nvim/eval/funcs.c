@@ -4990,9 +4990,10 @@ static int msgpackparse_convert_item(const msgpack_object data, const msgpack_un
     tv_list_append_owned_tv(ret_list, tv);
     return OK;
   }
-  default:
+  case MSGPACK_UNPACK_EXTRA_BYTES:
     abort();
   }
+  UNREACHABLE;
 }
 
 static void msgpackparse_unpack_list(const list_T *const list, list_T *const ret_list)

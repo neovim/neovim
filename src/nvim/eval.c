@@ -6088,9 +6088,6 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
   case kCallbackNone:
     return false;
     break;
-
-  default:
-    abort();
   }
 
   funcexe_T funcexe = FUNCEXE_INIT;
@@ -6120,7 +6117,7 @@ bool set_ref_in_callback(Callback *callback, int copyID, ht_stack_T **ht_stack,
     return set_ref_in_item(&tv, copyID, ht_stack, list_stack);
     break;
 
-  default:
+  case kCallbackLua:
     abort();
   }
   return false;
