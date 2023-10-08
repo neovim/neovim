@@ -10,6 +10,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
+#include "nvim/api/win_config.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
@@ -18,6 +19,7 @@
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
+#include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/errors.h"
@@ -33,6 +35,7 @@
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/mbyte.h"
@@ -79,6 +82,9 @@ static int pum_row;                 // top row of pum
 static int pum_col;                 // left column of pum, right column if 'rightleft'
 static int pum_left_col;            // left column of pum, before padding or scrollbar
 static bool pum_above;              // pum is drawn above cursor line
+
+static PumInfoAlign pum_align = kInfoAlignMenu;     // float preview align
+static bool pum_has_border = false;  // pum grid has border
 
 static bool pum_is_visible = false;
 static bool pum_is_drawn = false;
@@ -234,11 +240,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     }
 
     // Figure out the size and position of the pum.
-    if (size < PUM_DEF_HEIGHT) {
-      pum_height = size;
-    } else {
-      pum_height = PUM_DEF_HEIGHT;
-    }
+    pum_height = size < PUM_DEF_HEIGHT ? size : PUM_DEF_HEIGHT;
 
     if (p_ph > 0 && pum_height > p_ph) {
       pum_height = (int)p_ph;
@@ -566,17 +568,30 @@ void pum_redraw(void)
     }
   }
 
+  WinConfig fconfig = WIN_CONFIG_INIT;
+  int border_adj[4];
+  parse_completepopup(&fconfig, border_adj);
+  pum_has_border = fconfig.border;
+  // has border
+  int pum_extra_border = fconfig.border ? 2 : 0;
+  // avoid border out of screen
+  if (pum_extra_border && pum_col + pum_extra_border + pum_width > Columns) {
+    pum_col -= 2;
+  }
+
   grid_assign_handle(&pum_grid);
 
   pum_left_col = pum_col - col_off;
   bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_left_col,
-                                pum_height, grid_width, false, true);
+                                pum_height + pum_extra_border, grid_width + pum_extra_border, false,
+                                true);
   bool invalid_grid = moved || pum_invalid;
   pum_invalid = false;
   must_redraw_pum = false;
 
   if (!pum_grid.chars || pum_grid.rows != pum_height || pum_grid.cols != grid_width) {
-    grid_alloc(&pum_grid, pum_height, grid_width, !invalid_grid, false);
+    grid_alloc(&pum_grid, pum_height + pum_extra_border, grid_width + pum_extra_border,
+               !invalid_grid, false);
     ui_call_grid_resize(pum_grid.handle, pum_grid.cols, pum_grid.rows);
   } else if (invalid_grid) {
     grid_invalidate(&pum_grid);
@@ -586,6 +601,19 @@ void pum_redraw(void)
     int row_off = pum_above ? -pum_height : 0;
     ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string(anchor), pum_anchor_grid,
                           pum_row - row_off, pum_left_col, false, pum_grid.zindex);
+  }
+
+  if (fconfig.border) {
+    grid_draw_border(&pum_grid, fconfig, border_adj, 0, NULL);
+    row++;
+    col_off++;
+
+    if (fconfig.title) {
+      clear_virttext(&fconfig.title_chunks);
+    }
+    if (fconfig.footer) {
+      clear_virttext(&fconfig.footer_chunks);
+    }
   }
 
   // Never display more than we have
@@ -816,9 +844,8 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
 /// adjust floating info preview window position
 static void pum_adjust_info_position(win_T *wp, int height, int width)
 {
-  int col = pum_col + pum_width + pum_scrollbar + 1;
-  // TODO(glepnir): support config align border by using completepopup
-  // align menu
+  int extra_width = pum_has_border ? 2 : 0;
+  int col = pum_col + pum_width + pum_scrollbar + 1 + extra_width;
   int right_extra = Columns - col;
   int left_extra = pum_col - 2;
 
@@ -835,7 +862,12 @@ static void pum_adjust_info_position(win_T *wp, int height, int width)
   }
   // when pum_above is SW otherwise is NW
   wp->w_config.anchor = pum_above ? kFloatAnchorSouth : 0;
-  wp->w_config.row = pum_above ? pum_row + height : pum_row;
+  if (pum_align == kInfoAlignMenu) {
+    wp->w_config.row = (pum_above ? pum_row + height : pum_row) + (extra_width > 0 ? 1 : 0);
+  } else {
+    wp->w_config.row = pum_row + pum_selected - pum_first + 1 + (pum_above
+                                                                 && pum_has_border ? 1 : 0);
+  }
   wp->w_config.height = MIN(Rows, height);
   wp->w_config.hide = false;
   win_config_float(wp, wp->w_config);
@@ -1490,4 +1522,107 @@ void pum_make_popup(const char *path_name, int use_mouse_pos)
   if (menu != NULL) {
     pum_show_popupmenu(menu);
   }
+}
+
+static bool pum_parse_title(WinConfig *fconfig, BorderTextType bt, const char *s, size_t len,
+                            bool pos)
+{
+  Error err = ERROR_INIT;
+  char *data = xmemdupz(s, len);
+  if (!data) {
+    return false;
+  }
+  bool result = true;
+  if (pos) {
+    result = parse_bordertext_pos(cstr_as_string(data), bt, fconfig, &err);
+  } else {
+    parse_bordertext(CSTR_AS_OBJ(data), bt, fconfig, &err);
+  }
+  xfree(data);
+  if (ERROR_SET(&err)) {
+    emsg(err.msg);
+    api_clear_error(&err);
+    result = false;
+  }
+  return result;
+}
+
+bool parse_completepopup(WinConfig *fconfig, int *border_adj)
+{
+  const char *p = p_cpp;
+  Error err = ERROR_INIT;
+
+  while (*p != NUL) {
+    const char *s = p;
+
+    const char *e = vim_strchr(p, ':');
+    if (e == NULL || e[1] == NUL) {
+      return FAIL;
+    }
+
+    p = vim_strchr(e, ',');
+    if (p == NULL) {
+      p = e + strlen(e);
+    }
+
+    size_t len = (size_t)(p - e - 1);
+    if (strncmp(s, "border:", 7) == 0) {
+      char *style = xmemdupz(e + 1, len);
+      if (!style) {
+        return false;
+      }
+      parse_border_style(CSTR_AS_OBJ(style), fconfig, &err);
+      xfree(style);
+      if (ERROR_SET(&err)) {
+        emsg(err.msg);
+        api_clear_error(&err);
+        return false;
+      }
+
+      int border_attr = win_hl_attr(curwin, HLF_BORDER);
+      for (int i = 0; i < 8; i++) {
+        fconfig->border_attr[i] = fconfig->border_hl_ids[i]
+                                  ? hl_get_ui_attr(0, HLF_BORDER, fconfig->border_hl_ids[i], false)
+                                  : border_attr;
+        if (i < 4 && fconfig->border_chars[2 * i + 1][0]) {
+          border_adj[i] = 1;
+        }
+      }
+    } else if (strncmp(s, "title:", 6) == 0) {
+      if (!pum_parse_title(fconfig, kBorderTextTitle, e + 1, len, false)) {
+        return false;
+      }
+      fconfig->title = true;
+    } else if (strncmp(s, "titlepos:", 9) == 0) {
+      if (!pum_parse_title(fconfig, kBorderTextTitle, e + 1, len, true)) {
+        return false;
+      }
+    } else if (strncmp(s, "footer:", 7) == 0) {
+      if (!pum_parse_title(fconfig, kBorderTextFooter, e + 1, len, false)) {
+        return false;
+      }
+      fconfig->footer = true;
+    } else if (strncmp(s, "footerpos:", 10) == 0) {
+      if (!pum_parse_title(fconfig, kBorderTextFooter, e + 1, len, true)) {
+        return false;
+      }
+    } else if (strncmp(s, "align:", 6) == 0) {
+      const char *arg = e + 1;
+      if (strncmp(arg, "item", 4) == 0) {
+        pum_align = kInfoAlignItem;
+      } else if (strncmp(arg, "menu", 4) == 0) {
+        pum_align = kInfoAlignMenu;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+
+    if (*p == ',') {
+      p++;
+    }
+  }
+
+  return true;
 }
