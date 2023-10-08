@@ -2151,7 +2151,7 @@ describe('builtin popupmenu', function()
         feed('<C-E><ESC>')
       end)
 
-      it('avoid modified original info text #test', function()
+      it('avoid modified original info text', function()
         command('call Append_multipe()')
         feed('S<C-x><C-o><C-P><C-P>')
         if multigrid then
@@ -8730,6 +8730,407 @@ describe('builtin popupmenu', function()
         ]])
       end)
     end
+
+    describe("'pumborder'", function()
+      before_each(function()
+        screen:try_resize(30, 11)
+        exec([[
+          funct Omni_test(findstart, base)
+            if a:findstart
+              return col(".") - 1
+            endif
+            return [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "three", info: "3info"}]
+          endfunc
+          hi link PmenuBorder FloatBorder
+          set omnifunc=Omni_test
+          set completeopt-=preview
+          set pumborder=rounded
+        ]])
+      end)
+
+      it('can set border', function()
+        feed('Gi<C-x><C-o>')
+        if multigrid then
+          screen:expect({
+            grid = [[
+            ## grid 1
+              [2:------------------------------]|*10
+              [3:------------------------------]|
+            ## grid 2
+              one^                           |
+              {1:~                             }|*9
+            ## grid 3
+              {5:-- }{6:match 1 of 3}               |
+            ## grid 4
+              {n:1info}|
+            ## grid 5
+              ╭───────────────╮|
+              │{12:one            }│|
+              │{n:two            }│|
+              │{n:three          }│|
+              ╰───────────────╯|
+            ]],
+            win_pos = {
+              [2] = {
+                height = 10,
+                startcol = 0,
+                startrow = 0,
+                width = 30,
+                win = 1000,
+              },
+            },
+            float_pos = {
+              [5] = { -1, 'NW', 2, 1, 0, false, 100, 2, 1, 0 },
+              [4] = { 1001, 'NW', 1, 1, 17, false, 50, 1, 1, 17 },
+            },
+            win_viewport = {
+              [2] = {
+                win = 1000,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 3,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+              [4] = {
+                win = 1001,
+                topline = 0,
+                botline = 1,
+                curline = 0,
+                curcol = 0,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+            },
+            win_viewport_margins = {
+              [2] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1000,
+              },
+              [4] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1001,
+              },
+            },
+          })
+        else
+          screen:expect([[
+            one^                           |
+            ╭───────────────╮{n:1info}{1:        }|
+            │{12:one            }│{1:             }|
+            │{n:two            }│{1:             }|
+            │{n:three          }│{1:             }|
+            ╰───────────────╯{1:             }|
+            {1:~                             }|*4
+            {5:-- }{6:match 1 of 3}               |
+          ]])
+        end
+
+        -- avoid out of screen
+        feed(('a'):rep(25) .. '<C-x><C-o>')
+        if multigrid then
+          screen:expect({
+            grid = [[
+            ## grid 1
+              [2:------------------------------]|*10
+              [3:------------------------------]|
+            ## grid 2
+              oneaaaaaaaaaaaaaaaaaaaaaaaaaon|
+              e^                             |
+              {1:~                             }|*8
+            ## grid 3
+              {5:-- }{6:match 1 of 3}               |
+            ## grid 4
+              {n:1info}|
+            ## grid 5
+              ╭─────────────────╮|
+              │{12: one             }│|
+              │{n: two             }│|
+              │{n: three           }│|
+              ╰─────────────────╯|
+            ]],
+            win_pos = {
+              [2] = {
+                height = 10,
+                startcol = 0,
+                startrow = 0,
+                width = 30,
+                win = 1000,
+              },
+            },
+            float_pos = {
+              [5] = { -1, 'NW', 2, 2, 11, false, 100, 2, 2, 11 },
+              [4] = { 1001, 'NW', 1, 2, 6, false, 50, 1, 2, 6 },
+            },
+            win_viewport = {
+              [2] = {
+                win = 1000,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 31,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+              [4] = {
+                win = 1001,
+                topline = 0,
+                botline = 1,
+                curline = 0,
+                curcol = 0,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+            },
+            win_viewport_margins = {
+              [2] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1000,
+              },
+              [4] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1001,
+              },
+            },
+          })
+        else
+          screen:expect([[
+            oneaaaaaaaaaaaaaaaaaaaaaaaaaon|
+            e^                             |
+            {1:~     }{n:1info}╭─────────────────╮|
+            {1:~          }│{12: one             }│|
+            {1:~          }│{n: two             }│|
+            {1:~          }│{n: three           }│|
+            {1:~          }╰─────────────────╯|
+            {1:~                             }|*3
+            {5:-- }{6:match 1 of 3}               |
+          ]])
+        end
+      end)
+
+      it('adjust to above when the below row + border out of win height', function()
+        command('set completeopt+=menuone,noselect')
+        feed('<ESC>Stwo' .. ('<CR>'):rep(6) .. 'tw<C-N>')
+        if multigrid then
+          screen:expect({
+            grid = [[
+            ## grid 1
+              [2:------------------------------]|*10
+              [3:------------------------------]|
+            ## grid 2
+              two                           |
+                                            |*5
+              tw^                            |
+              {1:~                             }|*3
+            ## grid 3
+              {5:-- }{19:Back at original}           |
+            ## grid 4
+              ╭───────────────╮|
+              │{n:two            }│|
+              ╰───────────────╯|
+            ]],
+            win_pos = {
+              [2] = {
+                height = 10,
+                startcol = 0,
+                startrow = 0,
+                width = 30,
+                win = 1000,
+              },
+            },
+            float_pos = {
+              [4] = { -1, 'SW', 2, 4, 0, false, 100, 1, 3, 0 },
+            },
+            win_viewport = {
+              [2] = {
+                win = 1000,
+                topline = 0,
+                botline = 8,
+                curline = 6,
+                curcol = 2,
+                linecount = 7,
+                sum_scroll_delta = 0,
+              },
+            },
+            win_viewport_margins = {
+              [2] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1000,
+              },
+            },
+          })
+        else
+          screen:expect([[
+            two                           |
+                                          |*2
+            ╭───────────────╮             |
+            │{n:two            }│             |
+            ╰───────────────╯             |
+            tw^                            |
+            {1:~                             }|*3
+            {5:-- }{19:Back at original}           |
+          ]])
+        end
+      end)
+
+      it('pum border on cmdline', function()
+        command('set wildoptions=pum')
+        feed(':<TAB>')
+        if multigrid then
+          screen:expect({
+            grid = [[
+            ## grid 1
+              [2:------------------------------]|*10
+              [3:------------------------------]|
+            ## grid 2
+                                            |
+              {1:~                             }|*9
+            ## grid 3
+              :!^                            |
+            ## grid 4
+              ╭─────────────────╮|
+              │{12: !              }{c: }│|
+              │{n: #              }{12: }│|
+              │{n: &              }{12: }│|
+              │{n: <              }{12: }│|
+              │{n: =              }{12: }│|
+              │{n: >              }{12: }│|
+              │{n: @              }{12: }│|
+              │{n: Next           }{12: }│|
+              ╰─────────────────╯|
+            ]],
+            win_pos = {
+              [2] = {
+                height = 10,
+                startcol = 0,
+                startrow = 0,
+                width = 30,
+                win = 1000,
+              },
+            },
+            float_pos = {
+              [4] = { -1, 'SW', 1, 8, 0, false, 250, 2, 0, 0 },
+            },
+            win_viewport = {
+              [2] = {
+                win = 1000,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 0,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+            },
+            win_viewport_margins = {
+              [2] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1000,
+              },
+            },
+          })
+        else
+          screen:expect([[
+            ╭─────────────────╮           |
+            │{12: !              }{c: }│{1:           }|
+            │{n: #              }{12: }│{1:           }|
+            │{n: &              }{12: }│{1:           }|
+            │{n: <              }{12: }│{1:           }|
+            │{n: =              }{12: }│{1:           }|
+            │{n: >              }{12: }│{1:           }|
+            │{n: @              }{12: }│{1:           }|
+            │{n: Next           }{12: }│{1:           }|
+            ╰─────────────────╯{1:           }|
+            :!^                            |
+          ]])
+        end
+      end)
+
+      it('reduce pum height when height is not enough', function()
+        command('set lines=7 laststatus=2')
+        feed('S<C-x><C-o>')
+        if multigrid then
+          screen:expect({
+            grid = [[
+            ## grid 1
+              [2:------------------------------]|*5
+              {3:[No Name] [+]                 }|
+              [3:------------------------------]|
+            ## grid 2
+              one^                           |
+              {1:~                             }|*4
+            ## grid 3
+              {5:-- }{6:match 1 of 3}               |
+            ## grid 4
+              ╭────────────────╮|
+              │{12:one            }{c: }│|
+              ╰────────────────╯|
+            ]],
+            win_pos = {
+              [2] = {
+                height = 5,
+                startcol = 0,
+                startrow = 0,
+                width = 30,
+                win = 1000,
+              },
+            },
+            float_pos = {
+              [4] = { -1, 'NW', 2, 1, 0, false, 100, 1, 1, 0 },
+            },
+            win_viewport = {
+              [2] = {
+                win = 1000,
+                topline = 0,
+                botline = 2,
+                curline = 0,
+                curcol = 3,
+                linecount = 1,
+                sum_scroll_delta = 0,
+              },
+            },
+            win_viewport_margins = {
+              [2] = {
+                bottom = 0,
+                left = 0,
+                right = 0,
+                top = 0,
+                win = 1000,
+              },
+            },
+          })
+        else
+          screen:expect([[
+            one^                           |
+            ╭────────────────╮{1:            }|
+            │{12:one            }{c: }│{1:            }|
+            ╰────────────────╯{1:            }|
+            {1:~                             }|
+            {3:[No Name] [+]                 }|
+            {5:-- }{6:match 1 of 3}               |
+          ]])
+        end
+      end)
+    end)
   end
 
   describe('with ext_multigrid and actual mouse grid', function()

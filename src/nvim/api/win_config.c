@@ -959,7 +959,7 @@ static bool parse_bordertext_pos(win_T *wp, String bordertext_pos, BorderTextTyp
   return true;
 }
 
-static void parse_border_style(Object style, WinConfig *fconfig, Error *err)
+void parse_border_style(Object style, WinConfig *fconfig, Error *err)
 {
   struct {
     const char *name;
@@ -1077,14 +1077,14 @@ static void generate_api_error(win_T *wp, const char *attribute, Error *err)
 }
 
 /// Parses a border style name or custom (comma-separated) style.
-bool parse_winborder(WinConfig *fconfig, Error *err)
+bool parse_winborder(WinConfig *fconfig, const char *border_opt, Error *err)
 {
   if (!fconfig) {
     return false;
   }
   Object style = OBJECT_INIT;
 
-  if (strchr(p_winborder, ',')) {
+  if (strchr(border_opt, ',')) {
     Array border_chars = ARRAY_DICT_INIT;
     char *p = p_winborder;
     char part[MAX_SCHAR_SIZE] = { 0 };
@@ -1362,7 +1362,7 @@ static bool parse_win_config(win_T *wp, Dict(win_config) *config, WinConfig *fco
       }
     }
   } else if (*p_winborder != NUL && (wp == NULL || !wp->w_floating)
-             && !parse_winborder(fconfig, err)) {
+             && !parse_winborder(fconfig, p_winborder, err)) {
     goto fail;
   }
 

@@ -4908,6 +4908,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 <
 	UI-dependent. Works best with RGB colors. 'termguicolors'
 
+							*'pumborder'*
+'pumborder'		string	(default "")
+			global
+	Defines the default border style of popupmenu windows. Same as
+	'winborder'.
+
 						*'pumheight'* *'ph'*
 'pumheight' 'ph'	number	(default 0)
 			global
