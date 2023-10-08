@@ -26,7 +26,7 @@ local default_border = {
 --- size it adds to a float.
 ---@param opts table optional options for the floating window
 ---            - border (string or table) the border
----@return table size of border in the form of { height = height, width = width }
+---@return { height: integer, width: integer }
 local function get_border_size(opts)
   local border = opts and opts.border or default_border
   local height = 0
@@ -1651,8 +1651,10 @@ function M._make_floating_popup_size(contents, opts)
     end
   end
 
-  local border_width = get_border_size(opts).width
+  local border_size = get_border_size(opts)
+  local border_width, border_height = border_size.width, border_size.height
   local screen_width = api.nvim_win_get_width(0)
+  local screen_height = api.nvim_win_get_height(0)
   width = math.min(width, screen_width)
 
   -- make sure borders are always inside the screen
@@ -1685,6 +1687,13 @@ function M._make_floating_popup_size(contents, opts)
       end
     end
   end
+
+  height = math.min(height, screen_height)
+
+  if height + border_height > screen_height then
+    height = height - (height + border_height - screen_height)
+  end
+
   if max_height then
     height = math.min(height, max_height)
   end
