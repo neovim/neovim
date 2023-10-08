@@ -43,4 +43,4 @@ jobs:
           githubToken: ${{ github.token }}
 
           run: |
-            uname -a
+            make
