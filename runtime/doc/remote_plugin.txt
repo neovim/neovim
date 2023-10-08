@@ -40,8 +40,8 @@ fast as possible, even if many plugins/hosts are installed.
 The best way to learn about remote plugins is with an example, so let's see
 what a Python plugin looks like. This plugin exports a command, a function, and
 an autocmd. The plugin is called 'Limit', and all it does is limit the number
-of requests made to it. Here's the plugin source code:
->
+of requests made to it. Here's the plugin source code: >python
+
     import pynvim
 
     @pynvim.plugin
