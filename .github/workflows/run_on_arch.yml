@@ -44,5 +44,5 @@ jobs:
 
           run: |
             apt-get update -q -y
-            apt-get install -q -y make attr build-essential cmake curl gettext libattr1-dev ninja-build unzip locales-all cpanminus
+            apt-get install -q -y make attr build-essential cmake curl gettext libattr1-dev ninja-build unzip locales-all cpanminus git
             make
