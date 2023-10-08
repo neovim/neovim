@@ -44,5 +44,5 @@ jobs:
 
           run: |
             apt-get update -y
-            # apt-get install -y make
-            # make
+            apt-get install -y make
+            make
