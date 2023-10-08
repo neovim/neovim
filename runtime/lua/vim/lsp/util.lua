@@ -1100,13 +1100,14 @@ function M.make_floating_popup_options(width, height, opts)
     anchor_below = lines_below > lines_above
   end
 
+  local border_height = get_border_size(opts).height
   if anchor_below then
     anchor = anchor .. 'N'
-    height = math.min(lines_below, height)
+    height = math.max(math.min(lines_below - border_height, height), 0)
     row = 1
   else
     anchor = anchor .. 'S'
-    height = math.min(lines_above, height)
+    height = math.max(math.min(lines_above - border_height, height), 0)
     row = 0
   end
 
