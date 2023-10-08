@@ -8,8 +8,10 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/win_config.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval/typval.h"
@@ -19,6 +21,7 @@
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/mbyte.h"
@@ -55,6 +58,8 @@ static int pum_anchor_grid;         // grid where position is defined
 static int pum_row;                 // top row of pum
 static int pum_col;                 // left column of pum
 static bool pum_above;              // pum is drawn above cursor line
+
+static PumFloatAlign pum_align;     // float preview align
 
 static bool pum_is_visible = false;
 static bool pum_is_drawn = false;
@@ -211,11 +216,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed, i
     }
 
     // Figure out the size and position of the pum.
-    if (size < PUM_DEF_HEIGHT) {
-      pum_height = size;
-    } else {
-      pum_height = PUM_DEF_HEIGHT;
-    }
+    pum_height = size < PUM_DEF_HEIGHT ? size : PUM_DEF_HEIGHT;
 
     if (p_ph > 0 && pum_height > p_ph) {
       pum_height = (int)p_ph;
@@ -458,17 +459,27 @@ void pum_redraw(void)
     }
   }
 
+  FloatConfig fconfig = FLOAT_CONFIG_INIT;
+  int border_adj[4];
+  parse_completepopup(&fconfig, border_adj);
+  // has border
+  int extra = fconfig.border ? 2 : 0;
+  // avoid border out of screen
+  if (extra && pum_col + extra + pum_width > Columns) {
+    pum_col -= 2;
+  }
+
   grid_assign_handle(&pum_grid);
 
   bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_col - col_off,
-                                pum_height, grid_width, false, true);
+                                pum_height + extra, grid_width + extra, false, true);
   bool invalid_grid = moved || pum_invalid;
   pum_invalid = false;
   must_redraw_pum = false;
 
   if (!pum_grid.chars
       || pum_grid.rows != pum_height || pum_grid.cols != grid_width) {
-    grid_alloc(&pum_grid, pum_height, grid_width, !invalid_grid, false);
+    grid_alloc(&pum_grid, pum_height + extra, grid_width + extra, !invalid_grid, false);
     ui_call_grid_resize(pum_grid.handle, pum_grid.cols, pum_grid.rows);
   } else if (invalid_grid) {
     grid_invalidate(&pum_grid);
@@ -479,6 +490,12 @@ void pum_redraw(void)
     ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string((char *)anchor),
                           pum_anchor_grid, pum_row - row_off, pum_col - col_off,
                           false, pum_grid.zindex);
+  }
+
+  if (fconfig.border) {
+    grid_draw_border(&pum_grid, fconfig, border_adj, 0);
+    row++;
+    col_off++;
   }
 
   // Never display more than we have
@@ -1187,4 +1204,96 @@ void pum_make_popup(const char *path_name, int use_mouse_pos)
   if (menu != NULL) {
     pum_show_popupmenu(menu);
   }
+}
+
+static void pum_parse_title(FloatConfig *fconfig, BorderTextType bt, char *str, size_t len)
+{
+  Error err = ERROR_INIT;
+  if (bt == kBorderTextTitle) {
+    fconfig->title = true;
+  } else {
+    fconfig->footer = true;
+  }
+  Object obj = OBJECT_INIT;
+  obj.type = kObjectTypeString;
+  char *data = xmemdupz(str, len);
+  obj.data.string.data = xstrdup(data);
+  obj.data.string.size = strlen(data);
+  parse_bordertext(obj, bt, fconfig, &err);
+  api_free_object(obj);
+  xfree(data);
+}
+
+static void pum_parse_title_pos(FloatConfig *fconfig, BorderTextType bt, char *s, size_t len)
+{
+  int start = bt == kBorderTextTitle ? 10 : 11;
+  Error err = ERROR_INIT;
+  String str = {
+    .data = xmemdupz(s + start, len),
+    .size = len + 1,
+  };
+  parse_bordertext_pos(str, bt, fconfig, &err);
+  api_free_string(str);
+}
+
+int parse_completepopup(FloatConfig *fconfig, int *border_adj)
+{
+  char *p = p_cpp;
+  Error err = ERROR_INIT;
+
+  for (; *p != NUL; p += (*p == ',' ? 1 : 0)) {
+    char *s = p;
+
+    char *e = vim_strchr(p, ':');
+    if (e == NULL || e[1] == NUL) {
+      return FAIL;
+    }
+
+    p = vim_strchr(e, ',');
+    if (p == NULL) {
+      p = e + strlen(e);
+    }
+
+    if (strncmp(s, "border:", 7) == 0) {
+      Object style = OBJECT_INIT;
+      size_t len = p ? (size_t)(p - s - 7) : (size_t)(s - 7);
+      char *data = xmemdupz(s + 7, len);
+      if (data[0] == 'd' || data[0] == 's' || data[0] == 'r') {
+        style.type = kObjectTypeString;
+        style.data.string.data = xstrdup(data);
+        style.data.string.size = strlen(data);
+      }
+      parse_border_style(style, fconfig, &err);
+      int border_attr = syn_name2attr("FloatBorder");
+      for (int i = 0; i < 8; i++) {
+        fconfig->border_attr[i] = fconfig->border_hl_ids[i]
+                                  ? hl_get_ui_attr(0, HLF_BORDER, fconfig->border_hl_ids[i], false)
+                                  : border_attr;
+        if (i < 4 && fconfig->border_chars[2 * i + 1][0]) {
+          border_adj[i] = 1;
+        }
+      }
+      api_free_object(style);
+      xfree(data);
+    } else if (strncmp(s, "title:", 6) == 0) {
+      size_t len = p ? (size_t)(p - s - 6) : (size_t)(s - 6);
+      pum_parse_title(fconfig, kBorderTextTitle, s + 6, len);
+    } else if (strncmp(s, "title_pos:", 10) == 0) {
+      size_t len = p ? (size_t)(p - s - 10) : (size_t)(s - 10);
+      pum_parse_title_pos(fconfig, kBorderTextTitle, s, len);
+    } else if (strncmp(s, "footer:", 7) == 0) {
+      size_t len = p ? (size_t)(p - s - 7) : (size_t)(s - 7);
+      pum_parse_title(fconfig, kBorderTextFooter, s + 7, len);
+    } else if (strncmp(s, "footer_pos:", 11) == 0) {
+      size_t len = p ? (size_t)(p - s - 11) : (size_t)(s - 11);
+      pum_parse_title_pos(fconfig, kBorderTextFooter, s, len);
+    } else if (strncmp(s, "align:", 7) == 0) {
+      char *arg = s + 6;
+      pum_align = strncmp(arg, "menu", 4) == 0 ? kFloatAlignMenu : kFloatAlignItem;
+    } else {
+      return FAIL;
+    }
+  }
+
+  return OK;
 }

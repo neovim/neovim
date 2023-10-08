@@ -36,6 +36,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/os/os.h"
+#include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/spell.h"
@@ -1100,6 +1101,16 @@ int expand_set_completeopt(optexpand_T *args, int *numMatches, char ***matches)
                                ARRAY_SIZE(p_cot_values) - 1,
                                numMatches,
                                matches);
+}
+
+const char *did_set_completepopup(optset_T *args FUNC_ATTR_UNUSED)
+{
+  FloatConfig config = FLOAT_CONFIG_INIT;
+  int adj[4];
+  if (parse_completepopup(&config, adj) != OK) {
+    return e_invarg;
+  }
+  return NULL;
 }
 
 #ifdef BACKSLASH_IN_FILENAME
