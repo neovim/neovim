@@ -587,7 +587,7 @@ ArrayOf(String) nvim__get_runtime(Array pat, Boolean all, Dict(runtime) *opts, E
   FUNC_API_SINCE(8)
   FUNC_API_FAST
 {
-  VALIDATE((!opts->do_source || nlua_is_deferred_safe()), "%s", "'do_source' used in fast callback",
+  VALIDATE(!opts->do_source || nlua_is_deferred_safe(), "%s", "'do_source' used in fast callback",
            {});
   if (ERROR_SET(err)) {
     return (Array)ARRAY_DICT_INIT;
