@@ -212,6 +212,14 @@ describe('vim.lsp.util', function()
       it('places window below for anchor_bias = "below"', function ()
         assert_anchor('below', 'N')
       end)
+
+      it('bordered window truncates dimensions correctly', function ()
+        local opts = exec_lua([[
+          return vim.lsp.util.make_floating_popup_options(100, 100, { border = 'single' })
+        ]])
+
+        eq(56, opts.height)
+      end)
     end)
   end)
 
