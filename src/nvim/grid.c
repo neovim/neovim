@@ -152,22 +152,29 @@ bool schar_high(schar_T sc)
 #endif
 }
 
+#ifdef ORDER_BIG_ENDIAN
+# define schar_idx(sc) (sc & (0x00FFFFFF))
+#else
+# define schar_idx(sc) (sc >> 8)
+#endif
+
 void schar_get(char *buf_out, schar_T sc)
 {
   if (schar_high(sc)) {
-#ifdef ORDER_BIG_ENDIAN
-    uint32_t idx = sc & (0x00FFFFFF);
-#else
-    uint32_t idx = sc >> 8;
-#endif
-    if (idx >= glyph_cache.h.n_keys) {
-      abort();
-    }
+    uint32_t idx = schar_idx(sc);
+    assert(idx < glyph_cache.h.n_keys);
     xstrlcpy(buf_out, &glyph_cache.keys[idx], 32);
   } else {
     memcpy(buf_out, (char *)&sc, 4);
     buf_out[4] = NUL;
   }
+}
+
+/// gets first raw UTF-8 byte of an schar
+static char schar_get_first_byte(schar_T sc)
+{
+  assert(!(schar_high(sc) && schar_idx(sc) >= glyph_cache.h.n_keys));
+  return schar_high(sc) ? glyph_cache.keys[schar_idx(sc)] : *(char *)&sc;
 }
 
 /// @return ascii char or NUL if not ascii
@@ -179,6 +186,90 @@ char schar_get_ascii(schar_T sc)
   return (sc < 0x80) ? (char)sc : NUL;
 #endif
 }
+
+static bool schar_in_arabic_block(schar_T sc)
+{
+  char first_byte = schar_get_first_byte(sc);
+  return ((uint8_t)first_byte & 0xFE) == 0xD8;
+}
+
+/// Get the first two codepoints of an schar, or NUL when not available
+static void schar_get_first_two_codepoints(schar_T sc, int *c0, int *c1)
+{
+  char sc_buf[MAX_SCHAR_SIZE];
+  schar_get(sc_buf, sc);
+
+  *c0 = utf_ptr2char(sc_buf);
+  int len = utf_ptr2len(sc_buf);
+  if (*c0 == NUL) {
+    *c1 = NUL;
+  } else {
+    *c1 = utf_ptr2char(sc_buf + len);
+  }
+}
+
+void line_do_arabic_shape(schar_T *buf, int cols)
+{
+  int i = 0;
+
+  for (i = 0; i < cols; i++) {
+    // quickly skip over non-arabic text
+    if (schar_in_arabic_block(buf[i])) {
+      break;
+    }
+  }
+
+  if (i == cols) {
+    return;
+  }
+
+  int c0prev = 0;
+  int c0, c1;
+  schar_get_first_two_codepoints(buf[i], &c0, &c1);
+
+  for (; i < cols; i++) {
+    int c0next, c1next;
+    schar_get_first_two_codepoints(i + 1 < cols ? buf[i + 1] : 0, &c0next, &c1next);
+
+    if (!ARABIC_CHAR(c0)) {
+      goto next;
+    }
+
+    int c1new = c1;
+    int c0new = arabic_shape(c0, &c1new, c0next, c1next, c0prev);
+
+    if (c0new == c0 && c1new == c1) {
+      goto next;  // unchanged
+    }
+
+    char scbuf[MAX_SCHAR_SIZE];
+    schar_get(scbuf, buf[i]);
+
+    char scbuf_new[MAX_SCHAR_SIZE];
+    int len = utf_char2bytes(c0new, scbuf_new);
+    if (c1new) {
+      len += utf_char2bytes(c1new, scbuf_new + len);
+    }
+
+    int off = utf_char2len(c0) + (c1 ? utf_char2len(c1) : 0);
+    size_t rest = strlen(scbuf + off);
+    if (rest + (size_t)off + 1 > MAX_SCHAR_SIZE) {
+      // TODO(bfredl): this cannot happen just yet, as we only construct
+      // schar_T values with up to MAX_MCO+1 composing codepoints. When code
+      // is improved so that MAX_SCHAR_SIZE becomes the only/sharp limit,
+      // we need be able to peel off a composing char which doesn't fit anymore.
+      abort();
+    }
+    memcpy(scbuf_new + len, scbuf + off, rest);
+    buf[i] = schar_from_buf(scbuf_new, (size_t)len + rest);
+
+next:
+    c0prev = c0;
+    c0 = c0next;
+    c1 = c1next;
+  }
+}
+
 /// clear a line in the grid starting at "off" until "width" characters
 /// are cleared.
 void grid_clear_line(ScreenGrid *grid, size_t off, int width, bool valid)
@@ -242,6 +333,15 @@ void grid_line_start(ScreenGrid *grid, int row)
   grid_line_first = (int)linebuf_size;
   grid_line_maxcol = grid->cols - grid_line_coloff;
   grid_line_last = 0;
+
+  assert((size_t)grid_line_maxcol <= linebuf_size);
+
+  if (rdb_flags & RDB_INVALID) {
+    // Current batch must not depend on previous contents of linebuf_char.
+    // Set invalid values which will cause assertion failures later if they are used.
+    memset(linebuf_char, 0xFF, sizeof(schar_T) * linebuf_size);
+    memset(linebuf_attr, 0xFF, sizeof(sattr_T) * linebuf_size);
+  }
 }
 
 /// Get present char from current rendered screen line
@@ -287,11 +387,7 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
 {
   const char *ptr = text;
   int len = textlen;
-  int c;
   int u8cc[MAX_MCO];
-  int prev_c = 0;  // previous Arabic character
-  int pc, nc, nc1;
-  int pcc[MAX_MCO];
 
   assert(grid_line_grid);
 
@@ -301,7 +397,6 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
   while (col < max_col
          && (len < 0 || (int)(ptr - text) < len)
          && *ptr != NUL) {
-    c = (unsigned char)(*ptr);
     // check if this is the first byte of a multibyte
     int mbyte_blen = len > 0
       ? utfc_ptr2len_len(ptr, (int)((text + len) - ptr))
@@ -316,37 +411,16 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
       u8cc[0] = 0;
     }
 
-    if (p_arshape && !p_tbidi && ARABIC_CHAR(u8c)) {
-      // Do Arabic shaping.
-      if (len >= 0 && (int)(ptr - text) + mbyte_blen >= len) {
-        // Past end of string to be displayed.
-        nc = NUL;
-        nc1 = NUL;
-      } else {
-        nc = len >= 0
-          ? utfc_ptr2char_len(ptr + mbyte_blen, pcc,
-                              (int)((text + len) - ptr - mbyte_blen))
-          : utfc_ptr2char(ptr + mbyte_blen, pcc);
-        nc1 = pcc[0];
-      }
-      pc = prev_c;
-      prev_c = u8c;
-      u8c = arabic_shape(u8c, &c, &u8cc[0], nc, nc1, pc);
-    } else {
-      prev_c = u8c;
-    }
     if (col + mbyte_cells > max_col) {
       // Only 1 cell left, but character requires 2 cells:
       // display a '>' in the last column to avoid wrapping. */
-      c = '>';
       u8c = '>';
       u8cc[0] = 0;
       mbyte_cells = 1;
     }
 
     schar_T buf;
-    // TODO(bfredl): why not just keep the original byte sequence. arabshape is
-    // an edge case, treat it as such..
+    // TODO(bfredl): why not just keep the original byte sequence.
     buf = schar_from_cc(u8c, u8cc);
 
     // When at the start of the text and overwriting the right half of a
@@ -545,14 +619,12 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int col, size_t off_to, int 
 /// If "wrap" is true, then hint to the UI that "row" contains a line
 /// which has wrapped into the next row.
 void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol, int clear_width,
-                      int rl, int bg_attr, bool wrap, bool invalid_row)
+                      bool rl, int bg_attr, bool wrap, bool invalid_row)
 {
   bool redraw_next;                         // redraw_this for next character
   bool clear_next = false;
   int char_cells;                           // 1: normal char
                                             // 2: occupies two display cells
-  int start_dirty = -1, end_dirty = 0;
-
   assert(0 <= row && row < grid->rows);
   // TODO(bfredl): check all callsites and eliminate
   // Check for illegal col, just in case
@@ -591,6 +663,10 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
     endcol = (clear_width > 0 ? clear_width : -clear_width);
   }
 
+  if (p_arshape && !p_tbidi) {
+    line_do_arabic_shape(linebuf_char + col, endcol - col);
+  }
+
   if (bg_attr) {
     for (int c = col; c < endcol; c++) {
       linebuf_attr[c] = hl_combine_attr(bg_attr, linebuf_attr[c]);
@@ -598,6 +674,8 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
   }
 
   redraw_next = grid_char_needs_redraw(grid, col, (size_t)col + off_to, endcol - col);
+
+  int start_dirty = -1, end_dirty = 0;
 
   while (col < endcol) {
     char_cells = 1;

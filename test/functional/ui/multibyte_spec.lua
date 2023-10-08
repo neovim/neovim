@@ -177,6 +177,57 @@ describe("multibyte rendering", function()
                                                                        |
     ]], reset=true}
   end)
+
+  it('works with arabic input and arabicshape', function()
+    command('set arabic')
+
+    command('set noarabicshape')
+    feed('isghl!<esc>')
+    screen:expect{grid=[[
+                                                             ^!مالس|
+      {1:                                                           ~}|
+      {1:                                                           ~}|
+      {1:                                                           ~}|
+      {1:                                                           ~}|
+                                                                  |
+    ]]}
+
+    command('set arabicshape')
+    screen:expect{grid=[[
+                                                              ^!ﻡﻼﺳ|
+      {1:                                                           ~}|
+      {1:                                                           ~}|
+      {1:                                                           ~}|
+      {1:                                                           ~}|
+                                                                  |
+    ]]}
+  end)
+
+  it('works with arabic input and arabicshape and norightleft', function()
+    command('set arabic norightleft')
+
+    command('set noarabicshape')
+    feed('isghl!<esc>')
+    screen:expect{grid=[[
+      سلام^!                                                       |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+
+    command('set arabicshape')
+    screen:expect{grid=[[
+      ﺱﻼﻣ^!                                                        |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+
+  end)
 end)
 
 describe('multibyte rendering: statusline', function()

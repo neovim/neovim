@@ -2391,10 +2391,10 @@ static void win_update(win_T *wp, DecorProviders *providers)
       wp->w_botline = lnum;
     } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
       // Last line isn't finished: Display "@@@" at the end.
-      // TODO(bfredl): this display ">@@@" when ">" was a left-halve
-      // maybe "@@@@" is preferred when this happens.
+      // If this would split a doublewidth char in two, we need to display "@@@@" instead
       grid_line_start(&wp->w_grid, wp->w_grid.rows - 1);
-      grid_line_fill(MAX(wp->w_grid.cols - 3, 0), wp->w_grid.cols,
+      int width = grid_line_getchar(MAX(wp->w_grid.cols - 3, 0), NULL) == NUL ? 4 : 3;
+      grid_line_fill(MAX(wp->w_grid.cols - width, 0), wp->w_grid.cols,
                      wp->w_p_fcs_chars.lastline, at_attr);
       grid_line_flush();
       set_empty_rows(wp, srow);
