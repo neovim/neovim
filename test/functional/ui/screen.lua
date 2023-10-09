@@ -150,6 +150,7 @@ function Screen.new(width, height)
     msg_grid = nil,
     msg_grid_pos = nil,
     _session = nil,
+    rpc_async = false,
     messages = {},
     msg_history = {},
     showmode = {},
@@ -173,9 +174,13 @@ function Screen.new(width, height)
     _busy = false,
   }, Screen)
   local function ui(method, ...)
-    local status, rv = self._session:request('nvim_ui_'..method, ...)
-    if not status then
-      error(rv[2])
+    if self.rpc_async then
+      self._session:notify('nvim_ui_'..method, ...)
+    else
+      local status, rv = self._session:request('nvim_ui_'..method, ...)
+      if not status then
+        error(rv[2])
+      end
     end
   end
   self.uimeths = create_callindex(ui)

@@ -98,6 +98,7 @@ describe('--embed UI', function()
 
     -- attach immediately after startup, for early UI
     local screen = Screen.new(40, 8)
+    screen.rpc_async = true  -- Avoid hanging. #24888
     screen:attach {stdin_fd=3}
     screen:set_default_attr_ids {
       [1] = {bold = true, foreground = Screen.colors.Blue1};
