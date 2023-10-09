@@ -1,4 +1,4 @@
---- @meta
+--- @meta _
 -- THIS FILE IS GENERATED
 -- DO NOT EDIT
 error('Cannot require a meta file')
@@ -8055,7 +8055,7 @@ function vim.fn.shellescape(string, special) end
 --- will be assumed.
 ---
 --- @param col? integer
---- @return any
+--- @return integer
 function vim.fn.shiftwidth(col) end
 
 --- @param name string

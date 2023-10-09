@@ -1,4 +1,4 @@
---- @meta
+--- @meta _
 -- THIS FILE IS GENERATED
 -- DO NOT EDIT
 error('Cannot require a meta file')

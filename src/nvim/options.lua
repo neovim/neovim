@@ -2932,7 +2932,7 @@ return {
             "auto":       resize to the minimum amount of folds to display.
             "auto:[1-9]": resize to accommodate multiple folds up to the
         		  selected level
-            0:            to disable foldcolumn
+            "0":          to disable foldcolumn
             "[1-9]":      to display a fixed number of columns
         See |folding|.
       ]=],

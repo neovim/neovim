@@ -19,14 +19,14 @@ local DEP_API_DOC  = 'runtime/doc/api.mpack'
 --- @field since integer
 
 local LUA_META_HEADER = {
-  '--- @meta',
+  '--- @meta _',
   '-- THIS FILE IS GENERATED',
   '-- DO NOT EDIT',
   "error('Cannot require a meta file')",
 }
 
 local LUA_API_META_HEADER = {
-  '--- @meta',
+  '--- @meta _',
   '-- THIS FILE IS GENERATED',
   '-- DO NOT EDIT',
   "error('Cannot require a meta file')",
@@ -35,7 +35,7 @@ local LUA_API_META_HEADER = {
 }
 
 local LUA_OPTION_META_HEADER = {
-  '--- @meta',
+  '--- @meta _',
   '-- THIS FILE IS GENERATED',
   '-- DO NOT EDIT',
   "error('Cannot require a meta file')",

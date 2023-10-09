@@ -9636,6 +9636,7 @@ M.funcs = {
     name = 'shiftwidth',
     params = { { 'col', 'integer' } },
     signature = 'shiftwidth([{col}])',
+    returns = 'integer',
   },
   sign_define = {
     args = { 1, 2 },
