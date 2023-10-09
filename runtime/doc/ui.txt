@@ -211,6 +211,7 @@ the editor.
 	- 'guifontwide'
 	- 'linespace'
 	- 'mousefocus'
+	- 'mousehide'
 	- 'mousemoveevent'
 	- 'pumblend'
 	- 'showtabline'

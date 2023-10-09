@@ -571,6 +571,7 @@ EXTERN char *p_mouse;           ///< 'mouse'
 EXTERN char *p_mousem;          ///< 'mousemodel'
 EXTERN int p_mousemev;          ///< 'mousemoveevent'
 EXTERN int p_mousef;            ///< 'mousefocus'
+EXTERN int p_mh;                ///< 'mousehide'
 EXTERN char *p_mousescroll;     ///< 'mousescroll'
 EXTERN OptInt p_mousescroll_vert INIT(= MOUSESCROLL_VERT_DFLT);
 EXTERN OptInt p_mousescroll_hor INIT(= MOUSESCROLL_HOR_DFLT);

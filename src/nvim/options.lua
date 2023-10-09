@@ -5452,9 +5452,11 @@ return {
       ]=],
       enable_if = false,
       full_name = 'mousehide',
+      redraw = { 'ui_option' },
       scope = { 'global' },
       short_desc = N_('hide mouse pointer while typing'),
       type = 'bool',
+      varname = 'p_mh',
     },
     {
       abbreviation = 'mousem',
