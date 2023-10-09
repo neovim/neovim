@@ -657,7 +657,6 @@ Options:
   *'balloondelay'* *'bdlay'*
   *'ballooneval'* *'beval'* *'noballooneval'* *'nobeval'*
   *'balloonexpr'* *'bexpr'*
-  'backupdir': paths can no longer be separated with spaces.
   bioskey (MS-DOS)
   'cdpath': paths can no longer be separated with spaces.
   conskey (MS-DOS)
@@ -724,7 +723,7 @@ Options:
     Use |g8| or |ga|.  See |mbyte-combining|.
   *'maxmem'* Nvim delegates memory-management to the OS.
   *'maxmemtot'* Nvim delegates memory-management to the OS.
-  |'path'|: paths can no longer be separated with spaces.
+  'path': paths can no longer be separated with spaces.
   printoptions
   *'printdevice'*
   *'printencoding'*
