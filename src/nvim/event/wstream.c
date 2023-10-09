@@ -9,6 +9,7 @@
 #include "nvim/event/stream.h"
 #include "nvim/event/wstream.h"
 #include "nvim/macros.h"
+#include "nvim/main.h"
 #include "nvim/memory.h"
 
 #define DEFAULT_MAXMEM 1024 * 1024 * 2000
@@ -95,6 +96,7 @@ bool wstream_write(Stream *stream, WBuffer *buffer)
   }
 
   stream->pending_reqs++;
+  uv_run(&main_loop.uv, UV_RUN_DEFAULT);
   return true;
 
 err:
@@ -146,6 +148,7 @@ static void write_cb(uv_write_t *req, int status)
   }
 
   xfree(data);
+  uv_stop(&main_loop.uv);
 }
 
 void wstream_release_wbuffer(WBuffer *buffer)
