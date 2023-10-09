@@ -111,7 +111,7 @@ set_default_buildtype()
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 9)
 set(NVIM_VERSION_PATCH 3)
-set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
+set(NVIM_VERSION_PRERELEASE "") # for package maintainers
 
 # API level
 set(NVIM_API_LEVEL 11)         # Bump this after any API change.
