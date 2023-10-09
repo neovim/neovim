@@ -644,6 +644,7 @@ describe('Buffer highlighting', function()
         virt_text = s1,
         -- other details
         right_gravity = true,
+        virt_text_repeat_linebreak = false,
         virt_text_pos = 'eol',
         virt_text_hide = false,
       }}}, get_extmarks(id1, {0,0}, {0, -1}, {details=true}))
@@ -656,6 +657,7 @@ describe('Buffer highlighting', function()
         virt_text = s2,
         -- other details
         right_gravity = true,
+        virt_text_repeat_linebreak = false,
         virt_text_pos = 'eol',
         virt_text_hide = false,
       }}}, get_extmarks(id1, {lastline,0}, {lastline, -1}, {details=true}))
