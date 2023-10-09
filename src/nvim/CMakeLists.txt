@@ -102,6 +102,11 @@ else()
     -Wmissing-format-attribute
     -Wmissing-prototypes)
 
+  # This warning on arm architectures gives a lot of false positives.
+  if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "aarch64")
+    target_compile_options(main_lib INTERFACE -Wno-sign-conversion)
+  endif()
+
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_options(main_lib INTERFACE -fno-common
       $<$<CONFIG:Release>:-Wno-unused-result>

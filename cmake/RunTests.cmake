@@ -7,12 +7,6 @@ set(ENV{XDG_DATA_HOME} ${BUILD_DIR}/Xtest_xdg/share)
 unset(ENV{XDG_DATA_DIRS})
 unset(ENV{NVIM})  # Clear $NVIM in case tests are running from Nvim. #11009
 
-# TODO(dundargoc): The CIRRUS_CI environment variable isn't passed to here from
-# the main CMakeLists.txt, so we have to manually pass it to this script and
-# re-set the environment variable. Investigate if we can avoid manually setting
-# it like with the GITHUB_CI environment variable.
-set(ENV{CIRRUS_CI} ${CIRRUS_CI})
-
 if(NOT DEFINED ENV{NVIM_LOG_FILE})
   set(ENV{NVIM_LOG_FILE} ${BUILD_DIR}/.nvimlog)
 endif()

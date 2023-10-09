@@ -183,7 +183,6 @@ describe(':Man', function()
   end)
 
   it('reports non-existent man pages for absolute paths', function()
-    skip(is_ci('cirrus'))
     local actual_file = tmpname()
     -- actual_file must be an absolute path to an existent file for us to test against it
     matches('^/.+', actual_file)

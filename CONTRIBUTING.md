@@ -118,7 +118,7 @@ but is generally recommended.
 
 ### Automated builds (CI)
 
-Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Actions].
+Each pull request must pass the automated builds on [GitHub Actions].
 
 - CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
   will fail the build.
@@ -129,7 +129,6 @@ Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Acti
 - The [lint](#lint) build checks modified lines _and their immediate
   neighbors_, to encourage incrementally updating the legacy style to meet our
   [style](#style). (See [#3174][3174] for background.)
-- CI for FreeBSD runs on [Cirrus CI].
 - To see CI results faster in your PR, you can temporarily set `TEST_FILE` in
   [test.yml](https://github.com/neovim/neovim/blob/e35b9020b16985eee26e942f9a3f6b045bc3809b/.github/workflows/test.yml#L29).
 
@@ -342,7 +341,6 @@ as context, use the `-W` argument as well.
 [1820]: https://github.com/neovim/neovim/pull/1820
 [3174]: https://github.com/neovim/neovim/issues/3174
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
-[Cirrus CI]: https://cirrus-ci.com/github/neovim/neovim
 [Clang report]: https://neovim.io/doc/reports/clang/
 [GitHub Actions]: https://github.com/neovim/neovim/actions
 [clangd]: https://clangd.llvm.org
