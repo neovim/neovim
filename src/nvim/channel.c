@@ -515,8 +515,6 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output, const char **err
   if (embedded_mode && os_has_conpty_working()) {
     stdin_dup_fd = os_dup(STDIN_FILENO);
     os_replace_stdin_to_conin();
-    stdout_dup_fd = os_dup(STDOUT_FILENO);
-    os_replace_stdout_and_stderr_to_conout();
   }
 #else
   if (embedded_mode) {

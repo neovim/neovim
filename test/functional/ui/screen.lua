@@ -173,10 +173,7 @@ function Screen.new(width, height)
     _busy = false,
   }, Screen)
   local function ui(method, ...)
-    local status, rv = self._session:request('nvim_ui_'..method, ...)
-    if not status then
-      error(rv[2])
-    end
+    self._session:notify('nvim_ui_'..method, ...)
   end
   self.uimeths = create_callindex(ui)
   return self

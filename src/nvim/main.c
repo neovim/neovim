@@ -295,6 +295,7 @@ int main(int argc, char **argv)
   TIME_MSG("init lua interpreter");
 
   if (embedded_mode) {
+    stream_set_blocking(STDOUT_FILENO, true);
     const char *err;
     if (!channel_from_stdio(true, CALLBACK_READER_INIT, &err)) {
       abort();
