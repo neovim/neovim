@@ -868,6 +868,7 @@ func Test_undo_after_write()
 
   call StopVimInTerminal(buf)
   call delete('Xtestfile.txt')
+  call delete('.Xtestfile.txt.un~')
 endfunc
 
 func Test_undo_range_normal()
