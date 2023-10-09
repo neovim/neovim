@@ -848,7 +848,7 @@ static void expand_path_option(char *curdir, garray_T *gap)
   char *buf = xmalloc(MAXPATHL);
 
   while (*path_option != NUL) {
-    copy_option_part(&path_option, buf, MAXPATHL, ",");
+    copy_option_part(&path_option, buf, MAXPATHL, " ,");
 
     if (buf[0] == '.' && (buf[1] == NUL || vim_ispathsep(buf[1]))) {
       // Relative to current buffer:
