@@ -136,10 +136,26 @@ To include white space in a string option value it has to be preceded with a
 backslash.  To include a backslash you have to use two.  Effectively this
 means that the number of backslashes in an option value is halved (rounded
 down).
+In options 'path', 'cdpath', and 'tags', spaces have to be preceded with three
+backslashes instead becuase they can be separated by either commas or spaces.
+Comma-separated options like 'backupdir' and 'tags' will also require commas
+to be escaped with two backslashes, whereas this is not needed for
+non-comma-separated ones like 'makeprg'.
+When setting options using |:let| and |literal-string|, you need to use one
+fewer layer of backslash.
 A few examples: >
-   :set tags=tags\ /usr/tags	    results in "tags /usr/tags"
-   :set tags=tags\\,file	    results in "tags\,file"
-   :set tags=tags\\\ file	    results in "tags\ file"
+   :set makeprg=make\ file	    results in "make file"
+   :let &makeprg='make file'	    (same as above)
+   :set makeprg=make\\\ file	    results in "make\ file"
+   :set tags=tags\ /usr/tags	    results in "tags" and "/usr/tags"
+   :set tags=tags\\\ file	    results in "tags file"
+   :let &tags='tags\ file'	    (same as above)
+
+   :set makeprg=make,file	    results in "make,file"
+   :set makeprg=make\\,file	    results in "make\,file"
+   :set tags=tags,file		    results in "tags" and "file"
+   :set tags=tags\\,file	    results in "tags,file"
+   :let &tags='tags\,file'	    (same as above)
 
 The "|" character separates a ":set" command from a following command.  To
 include the "|" in the option value, use "\|" instead.  This example sets the
@@ -6426,8 +6442,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'tags' 'tag'		string	(default "./tags;,tags")
 			global or local to buffer |global-local|
 	Filenames for the tag command, separated by spaces or commas.  To
-	include a space or comma in a file name, precede it with a backslash
-	(see |option-backslash| about including spaces and backslashes).
+	include a space or comma in a file name, precede it with backslashes
+	(see |option-backslash| about including spaces/commas and backslashes).
 	When a file name starts with "./", the '.' is replaced with the path
 	of the current file.  But only when the 'd' flag is not included in
 	'cpoptions'.  Environment variables are expanded |:set_env|.  Also see

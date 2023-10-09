@@ -40,9 +40,10 @@ typedef struct expand {
 
 /// values for xp_backslash
 enum {
-  XP_BS_NONE  = 0,  ///< nothing special for backslashes
-  XP_BS_ONE   = 1,  ///< uses one backslash before a space
-  XP_BS_THREE = 2,  ///< uses three backslashes before a space
+  XP_BS_NONE  = 0,    ///< nothing special for backslashes
+  XP_BS_ONE   = 0x1,  ///< uses one backslash before a space
+  XP_BS_THREE = 0x2,  ///< uses three backslashes before a space
+  XP_BS_COMMA = 0x4,  ///< commas need to be escaped with a backslash
 };
 
 /// values for xp_context when doing command line completion

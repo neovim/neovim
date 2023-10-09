@@ -1176,13 +1176,71 @@ func Test_cmdline_complete_various()
   mapclear
   delcom MyCmd
 
+  " Prepare for path completion
+  call mkdir('Xa b c', 'D')
+  defer delete('Xcomma,foobar.txt')
+  call writefile([], 'Xcomma,foobar.txt')
+
   " completion for :set path= with multiple backslashes
-  call feedkeys(":set path=a\\\\\\ b\<C-A>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"set path=a\\\ b', @:)
+  call feedkeys(':set path=Xa\\\ b' .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"set path=Xa\\\ b\\\ c/', @:)
+  set path&
 
   " completion for :set dir= with a backslash
-  call feedkeys(":set dir=a\\ b\<C-A>\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"set dir=a\ b', @:)
+  call feedkeys(':set dir=Xa\ b' .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"set dir=Xa\ b\ c/', @:)
+  set dir&
+
+  " completion for :set tags= / set dictionary= with escaped commas
+  if has('win32')
+    " In Windows backslashes are rounded up, so both '\,' and '\\,' escape to
+    " '\,'
+    call feedkeys(':set dictionary=Xcomma\,foo' .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set dictionary=Xcomma\,foobar.txt', @:)
+
+    call feedkeys(':set tags=Xcomma\\,foo' .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set tags=Xcomma\,foobar.txt', @:)
+
+    call feedkeys(':set tags=Xcomma\\\,foo' .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set tags=Xcomma\\\,foo', @:) " Didn't find a match
+
+    " completion for :set dictionary= with escaped commas (same behavior, but
+    " different internal code path from 'set tags=' for escaping the output)
+    call feedkeys(':set tags=Xcomma\\,foo' .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set tags=Xcomma\,foobar.txt', @:)
+  else
+    " In other platforms, backslashes are rounded down (since '\,' itself will
+    " be escaped into ','). As a result '\\,' and '\\\,' escape to '\,'.
+    call feedkeys(':set tags=Xcomma\,foo' .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set tags=Xcomma\,foo', @:) " Didn't find a match
+
+    call feedkeys(':set tags=Xcomma\\,foo' .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set tags=Xcomma\\,foobar.txt', @:)
+
+    call feedkeys(':set dictionary=Xcomma\\\,foo' .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set dictionary=Xcomma\\,foobar.txt', @:)
+
+    " completion for :set dictionary= with escaped commas (same behavior, but
+    " different internal code path from 'set tags=' for escaping the output)
+    call feedkeys(':set dictionary=Xcomma\\,foo' .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set dictionary=Xcomma\\,foobar.txt', @:)
+  endif
+  set tags&
+  set dictionary&
+
+  " completion for :set makeprg= with no escaped commas
+  call feedkeys(':set makeprg=Xcomma,foo' .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"set makeprg=Xcomma,foobar.txt', @:)
+
+  if !has('win32')
+    " Cannot create file with backslash in file name in Windows, so only test
+    " this elsewhere.
+    defer delete('Xcomma\,fooslash.txt')
+    call writefile([], 'Xcomma\,fooslash.txt')
+    call feedkeys(':set makeprg=Xcomma\\,foo' .. "\<C-A>\<C-B>\"\<CR>", 'xt')
+    call assert_equal('"set makeprg=Xcomma\\,fooslash.txt', @:)
+  endif
+  set makeprg&
 
   " completion for the :py3 commands
   call feedkeys(":py3\<C-A>\<C-B>\"\<CR>", 'xt')

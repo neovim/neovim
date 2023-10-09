@@ -8679,8 +8679,8 @@ return {
       deny_duplicates = true,
       desc = [=[
         Filenames for the tag command, separated by spaces or commas.  To
-        include a space or comma in a file name, precede it with a backslash
-        (see |option-backslash| about including spaces and backslashes).
+        include a space or comma in a file name, precede it with backslashes
+        (see |option-backslash| about including spaces/commas and backslashes).
         When a file name starts with "./", the '.' is replaced with the path
         of the current file.  But only when the 'd' flag is not included in
         'cpoptions'.  Environment variables are expanded |:set_env|.  Also see

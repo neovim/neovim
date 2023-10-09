@@ -156,8 +156,9 @@ static void wildescape(expand_T *xp, const char *str, int numfiles, char **files
     // and wildmatch characters, except '~'.
     for (int i = 0; i < numfiles; i++) {
       // for ":set path=" we need to escape spaces twice
-      if (xp->xp_backslash == XP_BS_THREE) {
-        p = vim_strsave_escaped(files[i], " ");
+      if (xp->xp_backslash & XP_BS_THREE) {
+        char *pat = (xp->xp_backslash & XP_BS_COMMA) ? " ," : " ";
+        p = vim_strsave_escaped(files[i], pat);
         xfree(files[i]);
         files[i] = p;
 #if defined(BACKSLASH_IN_FILENAME)
@@ -165,6 +166,14 @@ static void wildescape(expand_T *xp, const char *str, int numfiles, char **files
         xfree(files[i]);
         files[i] = p;
 #endif
+      } else if (xp->xp_backslash & XP_BS_COMMA) {
+        if (vim_strchr(files[i], ',') != NULL) {
+          p = vim_strsave_escaped(files[i], ",");
+          if (p != NULL) {
+            xfree(files[i]);
+            files[i] = p;
+          }
+        }
       }
 #ifdef BACKSLASH_IN_FILENAME
       p = vim_strsave_fnameescape(files[i], vse_what);
@@ -2440,15 +2449,23 @@ static int expand_files_and_dirs(expand_T *xp, char *pat, char ***matches, int *
     pat = xstrdup(pat);
     for (int i = 0; pat[i]; i++) {
       if (pat[i] == '\\') {
-        if (xp->xp_backslash == XP_BS_THREE
+        if (xp->xp_backslash & XP_BS_THREE
             && pat[i + 1] == '\\'
             && pat[i + 2] == '\\'
             && pat[i + 3] == ' ') {
           STRMOVE(pat + i, pat + i + 3);
-        }
-        if (xp->xp_backslash == XP_BS_ONE
-            && pat[i + 1] == ' ') {
+        } else if (xp->xp_backslash & XP_BS_ONE
+                   && pat[i + 1] == ' ') {
           STRMOVE(pat + i, pat + i + 1);
+        } else if ((xp->xp_backslash & XP_BS_COMMA)
+                   && pat[i + 1] == '\\'
+                   && pat[i + 2] == ',') {
+          STRMOVE(pat + i, pat + i + 2);
+#ifdef BACKSLASH_IN_FILENAME
+        } else if ((xp->xp_backslash & XP_BS_COMMA)
+                   && pat[i + 1] == ',') {
+          STRMOVE(pat + i, pat + i + 1);
+#endif
         }
       }
     }
