@@ -315,7 +315,7 @@ local function version_info(python)
   local nvim_path = vim.trim(system({
     python,
     '-c',
-    'import sys; sys.path = [p for p in sys.path if p != ""]; import neovim; print(neovim.__file__)',
+    'import sys; sys.path = [p for p in sys.path if p != ""]; import pynvim; print(neovim.__file__)',
   }))
   if shell_error() or is_blank(nvim_path) then
     return { python_version, 'unable to load neovim Python module', pypi_version, nvim_path }
@@ -408,14 +408,14 @@ local function python()
 
   if is_blank(pyname) then
     warn(
-      'No Python executable found that can `import neovim`. '
+      'No Python executable found that can `import pynvim`. '
         .. 'Using the first available executable for diagnostics.'
     )
   elseif vim.g[host_prog_var] then
     python_exe = pyname
   end
 
-  -- No Python executable could `import neovim`, or host_prog_var was used.
+  -- No Python executable could `import pynvim`, or host_prog_var was used.
   if not is_blank(pythonx_warnings) then
     warn(pythonx_warnings, {
       'See :help provider-python for more information.',

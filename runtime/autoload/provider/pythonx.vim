@@ -8,7 +8,7 @@ let s:loaded_pythonx_provider = 1
 function! provider#pythonx#Require(host) abort
   " Python host arguments
   let prog = provider#python3#Prog()
-  let args = [prog, '-c', 'import sys; sys.path = [p for p in sys.path if p != ""]; import neovim; neovim.start_host()']
+  let args = [prog, '-c', 'import sys; sys.path = [p for p in sys.path if p != ""]; import pynvim; neovim.start_host()']
 
 
   " Collect registered Python plugins into args
