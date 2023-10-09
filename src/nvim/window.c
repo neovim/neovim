@@ -6952,9 +6952,7 @@ char *file_name_in_line(char *line, int col, int options, int count, char *rel_f
   while (ptr > line) {
     if ((len = (size_t)(utf_head_off(line, ptr - 1))) > 0) {
       ptr -= len + 1;
-    } else if (vim_isfilec((uint8_t)ptr[-1])
-               || (len >= 2 && path_has_drive_letter(ptr - 2))
-               || ((options & FNAME_HYP) && path_is_url(ptr - 1))) {
+    } else if (vim_isfilec((uint8_t)ptr[-1]) || ((options & FNAME_HYP) && path_is_url(ptr - 1))) {
       ptr--;
     } else {
       break;
