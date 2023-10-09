@@ -392,6 +392,11 @@ CTRL-W CTRL-O					*CTRL-W_CTRL-O* *:on* *:only*
 		given, then they become hidden.  But modified buffers are
 		never abandoned, so changes cannot get lost.
 
+							*:fc* *:fclose*
+:[count]fc[lose][!]
+		Close [count]th floating window by zindex order. '!' to close
+		all floating windows.
+
 ==============================================================================
 4. Moving cursor to other windows			*window-move-cursor*
 
