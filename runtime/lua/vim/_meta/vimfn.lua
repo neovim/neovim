@@ -8055,7 +8055,7 @@ function vim.fn.shellescape(string, special) end
 --- will be assumed.
 ---
 --- @param col? integer
---- @return any
+--- @return integer
 function vim.fn.shiftwidth(col) end
 
 --- @param name string
