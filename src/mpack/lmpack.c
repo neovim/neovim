@@ -233,7 +233,7 @@ static mpack_uint32_t lmpack_objlen(lua_State *L, int *is_array)
   while (lua_next(L, -2)) {
     lua_pop(L, 1);  /* pop value */
     isarr = isarr
-      && lua_isnumber(L, -1)            /* lua number */
+      && lua_type(L, -1) == LUA_TNUMBER /* lua number */
       && (n = lua_tonumber(L, -1)) > 0  /* greater than 0 */
       && (size_t)n == n;                /* and integer */
     max = isarr && (size_t)n > max ? (size_t)n : max;
