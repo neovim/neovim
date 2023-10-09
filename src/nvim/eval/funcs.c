@@ -2129,7 +2129,7 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
       }
       fresult = find_file_in_path_option(first ? (char *)fname : NULL,
                                          first ? strlen(fname) : 0,
-                                         0, first, path,
+                                         FNAME_UNESC, first, path,
                                          find_what, curbuf->b_ffname,
                                          (find_what == FINDFILE_DIR
                                           ? ""
