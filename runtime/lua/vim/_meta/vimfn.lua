@@ -4678,8 +4678,7 @@ function vim.fn.join(list, sep) end
 --- Vim value. In the following cases it will output
 --- |msgpack-special-dict|:
 --- 1. Dictionary contains duplicate key.
---- 2. Dictionary contains empty key.
---- 3. String contains NUL byte.  Two special dictionaries: for
+--- 2. String contains NUL byte.  Two special dictionaries: for
 ---    dictionary and for string will be emitted in case string
 ---    with NUL byte was a dictionary key.
 ---
@@ -5922,7 +5921,6 @@ function vim.fn.msgpackdump(list, type) end
 ---      are binary strings).
 ---   2. String with NUL byte inside.
 ---   3. Duplicate key.
----   4. Empty key.
 --- ext  |List| with two values: first is a signed integer
 ---   representing extension type. Second is
 ---   |readfile()|-style list of strings.

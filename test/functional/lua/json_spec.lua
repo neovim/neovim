@@ -101,6 +101,8 @@ describe('vim.json.decode()', function()
     eq({['1']=2}, exec_lua([[return vim.json.decode('{"1": 2}')]]))
     eq({['1']=2, ['3']={{['4']={['5']={{}, 1}}}}},
        exec_lua([[return vim.json.decode('{"1": 2, "3": [{"4": {"5": [ [], 1]}}]}')]]))
+    -- Empty string is a valid key. #20757
+    eq({['']=42}, exec_lua([[return vim.json.decode('{"": 42}')]]))
   end)
 
   it('parses strings properly', function()
@@ -161,6 +163,8 @@ describe('vim.json.encode()', function()
   it('dumps dictionaries', function()
     eq('{}', exec_lua([[return vim.json.encode(vim.empty_dict())]]))
     eq('{"d":[]}', exec_lua([[return vim.json.encode({d={}})]]))
+    -- Empty string is a valid key. #20757
+    eq('{"":42}', exec_lua([[return vim.json.encode({['']=42})]]))
   end)
 
   it('dumps vim.NIL', function()

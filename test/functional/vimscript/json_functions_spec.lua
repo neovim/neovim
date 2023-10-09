@@ -467,17 +467,16 @@ describe('json_decode() function', function()
                  '[1, {"d": {"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}}]')
     sp_decode_eq({1, {a={}, d={_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}, {'c', 4}}}}},
                  '[1, {"a": [], "d": {"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}}]')
-  end)
-
-  it('parses dictionaries with empty keys to special maps', function()
-    sp_decode_eq({_TYPE='map', _VAL={{'', 4}}},
-                 '{"": 4}')
-    sp_decode_eq({_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'d', 2}, {'', 4}}},
-                 '{"b": 3, "a": 1, "c": 4, "d": 2, "": 4}')
     sp_decode_eq({_TYPE='map', _VAL={{'', 3}, {'a', 1}, {'c', 4}, {'d', 2}, {'', 4}}},
                  '{"": 3, "a": 1, "c": 4, "d": 2, "": 4}')
     sp_decode_eq({{_TYPE='map', _VAL={{'', 3}, {'a', 1}, {'c', 4}, {'d', 2}, {'', 4}}}},
                  '[{"": 3, "a": 1, "c": 4, "d": 2, "": 4}]')
+  end)
+
+  it('parses dictionaries with empty keys', function()
+    eq({[""] = 4}, funcs.json_decode('{"": 4}'))
+    eq({b = 3, a = 1, c = 4, d = 2, [""] = 4},
+       funcs.json_decode('{"b": 3, "a": 1, "c": 4, "d": 2, "": 4}'))
   end)
 
   it('parses dictionaries with keys with NUL bytes to special maps', function()
@@ -577,6 +576,8 @@ describe('json_encode() function', function()
     eq('{}', eval('json_encode({})'))
     eq('{"d": []}', funcs.json_encode({d={}}))
     eq('{"d": [], "e": []}', funcs.json_encode({d={}, e={}}))
+    -- Empty keys not allowed (yet?) in object_to_vim() (since 7c01d5ff9286). #25564
+    -- eq('{"": []}', funcs.json_encode({['']={}}))
   end)
 
   it('cannot dump generic mapping with generic mapping keys and values',
