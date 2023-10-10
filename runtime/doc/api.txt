@@ -3161,7 +3161,7 @@ nvim_open_win({buffer}, {enter}, {*config})                  *nvim_open_win()*
                     • "shadow": A drop shadow effect by blending with the
                       background.
                     • If it is an array, it should have a length of eight or
-                      any divisor of eight. The array will specifify the eight
+                      any divisor of eight. The array will specify the eight
                       chars building up the border in a clockwise fashion
                       starting with the top-left corner. As an example, the
                       double box style could be specified as [ "╔", "═" ,"╗",

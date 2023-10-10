@@ -137,7 +137,7 @@ backslash.  To include a backslash you have to use two.  Effectively this
 means that the number of backslashes in an option value is halved (rounded
 down).
 In options 'path', 'cdpath', and 'tags', spaces have to be preceded with three
-backslashes instead becuase they can be separated by either commas or spaces.
+backslashes instead because they can be separated by either commas or spaces.
 Comma-separated options like 'backupdir' and 'tags' will also require commas
 to be escaped with two backslashes, whereas this is not needed for
 non-comma-separated ones like 'makeprg'.

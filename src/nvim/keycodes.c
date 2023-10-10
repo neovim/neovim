@@ -880,7 +880,7 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 ///                    REPTERM_DO_LT        also translate <lt>
 ///                    REPTERM_NO_SPECIAL   do not accept <key> notation
 ///                    REPTERM_NO_SIMPLIFY  do not simplify <C-H> into 0x08, etc.
-/// @param[out]  did_simplify  set when some <C-H> code was simplied, unless it is NULL.
+/// @param[out]  did_simplify  set when some <C-H> code was simplified, unless it is NULL.
 /// @param[in]  cpo_flags  Relevant flags derived from p_cpo, see CPO_TO_CPO_FLAGS.
 ///
 /// @return  The same as what `*bufp` is set to.

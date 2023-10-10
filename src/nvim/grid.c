@@ -771,7 +771,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
       ui_line(grid, row, start_pos, coloff + end_dirty, coloff + clear_end,
               bg_attr, wrap);
     } else if (grid->dirty_col) {
-      // TODO(bfredl): really get rid of the extra psuedo terminal in message.c
+      // TODO(bfredl): really get rid of the extra pseudo terminal in message.c
       // by using a linebuf_char copy for "throttled message line"
       if (clear_end > grid->dirty_col[row]) {
         grid->dirty_col[row] = clear_end;

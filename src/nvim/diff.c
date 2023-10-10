@@ -3396,10 +3396,9 @@ linenr_T diff_lnum_win(linenr_T lnum, win_T *wp)
   return n;
 }
 
-///
 /// Handle an ED style diff line.
-/// Return FAIL if the line does not contain diff info.
 ///
+/// @return  FAIL if the line does not contain diff info.
 static int parse_diff_ed(char *line, diffhunk_T *hunk)
 {
   int l1, l2;

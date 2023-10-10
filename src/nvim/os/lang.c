@@ -74,7 +74,7 @@ char *get_mess_lang(void)
 /// Get the language used for messages from the environment.
 ///
 /// This uses LC_MESSAGES when available, which it is for most systems we build for
-/// except for windows. Then fallback to get the value from the envirionment
+/// except for windows. Then fallback to get the value from the environment
 /// ourselves, and use LC_CTYPE as a last resort.
 static char *get_mess_env(void)
 {
