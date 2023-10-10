@@ -2409,6 +2409,32 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
 static void cmdpreview_restore_state(CpInfo *cpinfo)
   FUNC_ATTR_NONNULL_ALL
 {
+  Set(ptr_t) saved_bufs = SET_INIT;
+  Set(ptr_t) saved_wins = SET_INIT;
+
+  for (size_t i = 0; i < cpinfo->win_info.size; i++) {
+    CpWinInfo cp_wininfo = cpinfo->win_info.items[i];
+    win_T *win = cp_wininfo.win;
+    set_put(ptr_t, &saved_wins, win);
+  }
+  for (size_t i = 0; i < cpinfo->buf_info.size; i++) {
+    CpBufInfo cp_bufinfo = cpinfo->buf_info.items[i];
+    buf_T *buf = cp_bufinfo.buf;
+    set_put(ptr_t, &saved_bufs, buf);
+  }
+  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+    if (!set_has(ptr_t, &saved_wins, win)) {
+      win_close(win, true, true);
+    }
+
+    buf_T *buf = win->w_buffer;
+    if (!set_has(ptr_t, &saved_bufs, buf)) {
+      do_buffer(DOBUF_WIPE, DOBUF_FIRST, FORWARD, buf->handle, true);
+    }
+  }
+  set_destroy(ptr_t, &saved_bufs);
+  set_destroy(ptr_t, &saved_wins);
+
   for (size_t i = 0; i < cpinfo->buf_info.size; i++) {
     CpBufInfo cp_bufinfo = cpinfo->buf_info.items[i];
     buf_T *buf = cp_bufinfo.buf;
