@@ -899,7 +899,6 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
 
   // Concatenate all matching names.  Unless interrupted, this can be slow
   // and the result probably won't be used.
-  // TODO(philix): use xstpcpy instead of strcat in a loop (ExpandOne)
   if (mode == WILD_ALL && xp->xp_numfiles > 0 && !got_int) {
     size_t len = 0;
     for (int i = 0; i < xp->xp_numfiles; i++) {
@@ -913,19 +912,19 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
       len += strlen(xp->xp_files[i]) + 1;
     }
     ss = xmalloc(len);
-    *ss = NUL;
+    char *ssp = ss;
     for (int i = 0; i < xp->xp_numfiles; i++) {
       if (i > 0) {
         if (xp->xp_prefix == XP_PREFIX_NO) {
-          STRCAT(ss, "no");
+          ssp = xstpcpy(ssp, "no");
         } else if (xp->xp_prefix == XP_PREFIX_INV) {
-          STRCAT(ss, "inv");
+          ssp = xstpcpy(ssp, "inv");
         }
       }
-      STRCAT(ss, xp->xp_files[i]);
+      ssp = xstpcpy(ss, xp->xp_files[i]);
 
       if (i != xp->xp_numfiles - 1) {
-        STRCAT(ss, (options & WILD_USE_NL) ? "\n" : " ");
+        ssp = xstpcpy(ssp, (options & WILD_USE_NL) ? "\n" : " ");
       }
     }
   }
