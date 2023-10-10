@@ -5496,6 +5496,9 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
         xp->xp_backslash = XP_BS_ONE;
       }
     }
+    if (flags & P_COMMA) {
+      xp->xp_backslash |= XP_BS_COMMA;
+    }
   }
 
   // For an option that is a list of file names, or comma/colon-separated
@@ -5511,8 +5514,12 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
         while (s > xp->xp_pattern && *(s - 1) == '\\') {
           s--;
         }
-        if ((*p == ' ' && (xp->xp_backslash == XP_BS_THREE && (p - s) < 3))
-            || (*p == ',' && (flags & P_COMMA) && ((p - s) % 1) == 0)
+        if ((*p == ' ' && ((xp->xp_backslash & XP_BS_THREE) && (p - s) < 3))
+#if defined(BACKSLASH_IN_FILENAME)
+            || (*p == ',' && (flags & P_COMMA) && (p - s) < 1)
+#else
+            || (*p == ',' && (flags & P_COMMA) && (p - s) < 2)
+#endif
             || (*p == ':' && (flags & P_COLON))) {
           xp->xp_pattern = p + 1;
           break;
