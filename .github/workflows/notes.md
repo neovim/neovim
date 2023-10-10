@@ -20,6 +20,8 @@ ${NVIM_VERSION}
 
 ### macOS
 
+`gettext` must be installed to run these releases.
+
 1. Download **nvim-macos.tar.gz**
 2. Run `xattr -c ./nvim-macos.tar.gz` (to avoid "unknown developer" warning)
 3. Extract: `tar xzvf nvim-macos.tar.gz`
