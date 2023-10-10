@@ -922,7 +922,7 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
           ssp = xstpcpy(ssp, "inv");
         }
       }
-      ssp = xstpcpy(ss, xp->xp_files[i]);
+      ssp = xstpcpy(ssp, xp->xp_files[i]);
 
       if (i != xp->xp_numfiles - 1) {
         ssp = xstpcpy(ssp, (options & WILD_USE_NL) ? "\n" : " ");
