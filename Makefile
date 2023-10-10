@@ -152,7 +152,23 @@ distclean:
 	$(MAKE) clean
 
 install: checkprefix nvim
+	ifeq ($(GIT_BRANCH),master)
+	# Backup the existing nvim binary if it exists
+	if [ -f $(INSTALL_DIR)/nvim ]; then \
+		cp $(INSTALL_DIR)/nvim $(INSTALL_DIR)/nvim.backup; \
+		fi
+	# Install the master branch's nvim
 	+$(BUILD_TOOL) -C build install
+	# Rename the master's nvim to nvim-dev
+	mv $(INSTALL_DIR)/nvim $(INSTALL_DIR)/nvim-dev
+	# Restore the original nvim from backup
+	if [ -f $(INSTALL_DIR)/nvim.backup ]; then \
+		mv $(INSTALL_DIR)/nvim.backup $(INSTALL_DIR)/nvim; \
+		fi
+	else
+	# Regular installation for non-master branches
+	+$(BUILD_TOOL) -C build install
+endif
 
 appimage:
 	bash scripts/genappimage.sh
