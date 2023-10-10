@@ -861,6 +861,7 @@ local function is_asan()
   end
 end
 
+--- @class test.unit.helpers.module
 local module = {
   cimport = cimport,
   cppimport = cppimport,
@@ -890,7 +891,9 @@ local module = {
   debug_log = debug_log,
   is_asan = is_asan,
 }
+--- @class test.unit.helpers: test.unit.helpers.module, test.helpers
 module = global_helpers.tbl_extend('error', module, global_helpers)
+
 return function()
   return module
 end
