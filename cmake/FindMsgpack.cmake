@@ -1,4 +1,4 @@
-find_path(MSGPACK_INCLUDE_DIR msgpack/version_master.h)
+find_path2(MSGPACK_INCLUDE_DIR msgpack/version_master.h)
 
 if(MSGPACK_INCLUDE_DIR)
   file(READ ${MSGPACK_INCLUDE_DIR}/msgpack/version_master.h msgpack_version_h)
@@ -10,7 +10,7 @@ else()
   set(MSGPACK_VERSION_STRING)
 endif()
 
-find_library(MSGPACK_LIBRARY NAMES msgpackc msgpack msgpackc_import msgpack-c
+find_library2(MSGPACK_LIBRARY NAMES msgpackc msgpack msgpackc_import msgpack-c
   NAMES_PER_DIR)
 
 mark_as_advanced(MSGPACK_INCLUDE_DIR MSGPACK_LIBRARY)
