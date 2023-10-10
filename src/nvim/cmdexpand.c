@@ -912,6 +912,7 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
       len += strlen(xp->xp_files[i]) + 1;
     }
     ss = xmalloc(len);
+    *ss = NUL;
     char *ssp = ss;
     for (int i = 0; i < xp->xp_numfiles; i++) {
       if (i > 0) {
