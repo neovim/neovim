@@ -46,12 +46,11 @@ option(USE_BUNDLED_LPEG "Use the bundled lpeg." ${USE_BUNDLED})
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
 option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLED})
 option(USE_BUNDLED_TS "Use the bundled treesitter runtime." ${USE_BUNDLED})
+option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ${USE_BUNDLED})
 
 if(USE_BUNDLED AND MSVC)
-  option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
   option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." ON)
 else()
-  option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." OFF)
   option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." OFF)
 endif()
 
