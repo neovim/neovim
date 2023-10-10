@@ -987,7 +987,8 @@ static int stuff_yank(int regname, char *p)
     const size_t pl = strlen(p);
     char *lp = xmalloc(ppl + pl + 1);
     memcpy(lp, *pp, ppl);
-    *((char *)memcpy(lp + ppl, p, pl) + pl) = NUL;
+    memcpy(lp + ppl, p, pl);
+    *(lp + ppl + pl) = NUL;
     xfree(p);
     xfree(*pp);
     *pp = lp;
