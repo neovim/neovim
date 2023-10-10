@@ -983,10 +983,12 @@ static int stuff_yank(int regname, char *p)
   yankreg_T *reg = get_yank_register(regname, YREG_YANK);
   if (is_append_register(regname) && reg->y_array != NULL) {
     char **pp = &(reg->y_array[reg->y_size - 1]);
-    char *lp = xmalloc(strlen(*pp) + strlen(p) + 1);
-    STRCPY(lp, *pp);
-    // TODO(philix): use xstpcpy() in stuff_yank()
-    STRCAT(lp, p);
+    const size_t ppl = strlen(*pp);
+    const size_t pl = strlen(p);
+    char *lp = xmalloc(ppl + pl + 1);
+    memcpy(lp, *pp, ppl);
+    memcpy(lp + ppl, p, pl);
+    *(lp + ppl + pl) = NUL;
     xfree(p);
     xfree(*pp);
     *pp = lp;
