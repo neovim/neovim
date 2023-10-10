@@ -141,11 +141,3 @@ elseif(MSVC)
 else()
   message(FATAL_ERROR "Trying to build luajit in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
-
-if (NOT MSVC)
-  add_custom_target(clean_shared_libraries_luajit ALL
-    COMMAND ${CMAKE_COMMAND}
-      -D REMOVE_FILE_GLOB=${DEPS_LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}*${CMAKE_SHARED_LIBRARY_SUFFIX}*
-      -P ${PROJECT_SOURCE_DIR}/cmake/RemoveFiles.cmake)
-  add_dependencies(clean_shared_libraries_luajit luajit)
-endif()

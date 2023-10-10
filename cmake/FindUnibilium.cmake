@@ -1,5 +1,5 @@
-find_path(UNIBILIUM_INCLUDE_DIR unibilium.h)
-find_library(UNIBILIUM_LIBRARY unibilium)
+find_path2(UNIBILIUM_INCLUDE_DIR unibilium.h)
+find_library2(UNIBILIUM_LIBRARY unibilium)
 
 find_package_handle_standard_args(Unibilium
   REQUIRED_VARS UNIBILIUM_INCLUDE_DIR UNIBILIUM_LIBRARY)

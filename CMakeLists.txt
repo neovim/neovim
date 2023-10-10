@@ -31,6 +31,7 @@ include(FindPackageHandleStandardArgs)
 include(GNUInstallDirs)
 
 include(Deps)
+include(Find)
 include(InstallHelpers)
 include(PreventInTreeBuilds)
 include(Util)
