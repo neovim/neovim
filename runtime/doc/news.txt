@@ -57,8 +57,6 @@ The following changes may require adaptations in user config or plugins.
     • for `backspace=1` set `backspace=indent,eol`
     • for `backspace=2` set `backspace=indent,eol,start` (default behavior in Nvim)
     • for `backspace=3` set `backspace=indent,eol,nostop`
-  • paths in |'path'| and |'cdpath'| can no longer be separated with spaces
-    (but paths themselves may contain spaces now).
   • |'backupdir'| and |'directory'| will no longer remove a `>` at the start
     of the option.
 

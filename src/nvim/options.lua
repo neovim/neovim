@@ -5926,6 +5926,10 @@ return {
         option may be relative or absolute.
         - Use commas to separate directory names: >
         	:set path=.,/usr/local/include,/usr/include
+        <	- Spaces can also be used to separate directory names.  To have a
+          space in a directory name, precede it with an extra backslash, and
+          escape the space: >
+        	:set path=.,/dir/with\\\ space
         <	- To include a comma in a directory name precede it with an extra
           backslash: >
         	:set path=.,/dir/with\\,comma

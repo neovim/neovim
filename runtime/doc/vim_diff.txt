@@ -658,7 +658,6 @@ Options:
   *'ballooneval'* *'beval'* *'noballooneval'* *'nobeval'*
   *'balloonexpr'* *'bexpr'*
   bioskey (MS-DOS)
-  'cdpath': paths can no longer be separated with spaces.
   conskey (MS-DOS)
   *'cp'* *'nocompatible'* *'nocp'* *'compatible'* (Nvim is always "nocompatible".)
   'cpoptions' (gjkHw<*- and all POSIX flags were removed)
@@ -723,7 +722,6 @@ Options:
     Use |g8| or |ga|.  See |mbyte-combining|.
   *'maxmem'* Nvim delegates memory-management to the OS.
   *'maxmemtot'* Nvim delegates memory-management to the OS.
-  'path': paths can no longer be separated with spaces.
   printoptions
   *'printdevice'*
   *'printencoding'*
