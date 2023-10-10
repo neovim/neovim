@@ -29,7 +29,6 @@ readonly -A entries=(
   [cygwin]=cygwin_terminfo
   [win32con]=win32con_terminfo
   [conemu]=conemu_terminfo
-  [vtpcon]=vtpcon_terminfo
 )
 
 db="$(mktemp -du)"

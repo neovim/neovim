@@ -411,6 +411,8 @@ REMOVED FEATURES                                                 *news-removed*
 
 The following deprecated functions or APIs were removed.
 
+• Windows VTP Console terminal is no longer supported.
+
 • Vimball support
   - :Vimuntar command
 
