@@ -138,10 +138,6 @@ struct dbg_stuff {
 # include "ex_docmd.c.generated.h"
 #endif
 
-#ifndef HAVE_WORKING_LIBINTL
-# define ex_language            ex_ni
-#endif
-
 // Declare cmdnames[].
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds_defs.generated.h"

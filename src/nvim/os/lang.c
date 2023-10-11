@@ -70,20 +70,23 @@ char *get_mess_lang(void)
   return is_valid_mess_lang(p) ? p : NULL;
 }
 
-// Complicated #if; matches with where get_mess_env() is used below.
-#ifdef HAVE_WORKING_LIBINTL
 /// Get the language used for messages from the environment.
+///
+/// This uses LC_MESSAGES when available, which it is for most systems we build for
+/// except for windows. Then fallback to get the value from the envirionment
+/// ourselves, and use LC_CTYPE as a last resort.
 static char *get_mess_env(void)
 {
-  char *p;
-
-  p = (char *)os_getenv("LC_ALL");
+#ifdef LC_MESSAGES
+  return get_locale_val(LC_MESSAGES);
+#else
+  char *p = (char *)os_getenv("LC_ALL");
   if (p == NULL) {
     p = (char *)os_getenv("LC_MESSAGES");
     if (p == NULL) {
       p = (char *)os_getenv("LANG");
       if (p != NULL && ascii_isdigit(*p)) {
-        p = NULL;                       // ignore something like "1043"
+        p = NULL;  // ignore something like "1043"
       }
       if (p == NULL) {
         p = get_locale_val(LC_CTYPE);
@@ -91,8 +94,8 @@ static char *get_mess_env(void)
     }
   }
   return p;
-}
 #endif
+}
 
 /// Set the "v:lang" variable according to the current locale setting.
 /// Also do "v:lc_time"and "v:ctype".
@@ -103,16 +106,7 @@ void set_lang_var(void)
   loc = get_locale_val(LC_CTYPE);
   set_vim_var_string(VV_CTYPE, loc, -1);
 
-  // When LC_MESSAGES isn't defined use the value from $LC_MESSAGES, fall
-  // back to LC_CTYPE if it's empty.
-#ifdef HAVE_WORKING_LIBINTL
   loc = get_mess_env();
-#elif defined(LC_MESSAGES)
-  loc = get_locale_val(LC_MESSAGES);
-#else
-  // In Windows LC_MESSAGES is not defined fallback to LC_CTYPE
-  loc = get_locale_val(LC_CTYPE);
-#endif
   set_vim_var_string(VV_LANG, loc, -1);
 
   loc = get_locale_val(LC_TIME);
@@ -144,8 +138,6 @@ void init_locale(void)
   TIME_MSG("locale set");
 }
 
-#ifdef HAVE_WORKING_LIBINTL
-
 /// ":language":  Set the language (locale).
 ///
 /// @param eap
@@ -156,11 +148,11 @@ void ex_language(exarg_T *eap)
   char *name;
   int what = LC_ALL;
   char *whatstr = "";
-# ifdef LC_MESSAGES
-#  define VIM_LC_MESSAGES LC_MESSAGES
-# else
-#  define VIM_LC_MESSAGES 6789
-# endif
+#ifdef LC_MESSAGES
+# define VIM_LC_MESSAGES LC_MESSAGES
+#else
+# define VIM_LC_MESSAGES 6789
+#endif
 
   name = eap->arg;
 
@@ -199,29 +191,29 @@ void ex_language(exarg_T *eap)
     }
     smsg(_("Current %slanguage: \"%s\""), whatstr, p);
   } else {
-# ifndef LC_MESSAGES
+#ifndef LC_MESSAGES
     if (what == VIM_LC_MESSAGES) {
       loc = "";
     } else {
-# endif
+#endif
     loc = setlocale(what, name);
-# ifdef LC_NUMERIC
+#ifdef LC_NUMERIC
     // Make sure strtod() uses a decimal point, not a comma.
     setlocale(LC_NUMERIC, "C");
-# endif
-# ifndef LC_MESSAGES
+#endif
+#ifndef LC_MESSAGES
   }
-# endif
+#endif
     if (loc == NULL) {
       semsg(_("E197: Cannot set language to \"%s\""), name);
     } else {
-# ifdef HAVE_NL_MSG_CAT_CNTR
+#ifdef HAVE_NL_MSG_CAT_CNTR
       // Need to do this for GNU gettext, otherwise cached translations
       // will be used again.
       extern int _nl_msg_cat_cntr;
 
       _nl_msg_cat_cntr++;
-# endif
+#endif
       // Reset $LC_ALL, otherwise it would overrule everything.
       os_setenv("LC_ALL", "", 1);
 
@@ -249,7 +241,7 @@ void ex_language(exarg_T *eap)
 
 static char **locales = NULL;       // Array of all available locales
 
-# ifndef MSWIN
+#ifndef MSWIN
 static bool did_init_locales = false;
 
 /// @return  an array of strings for all available locales + NULL for the
@@ -284,22 +276,22 @@ static char **find_locales(void)
   ((char **)locales_ga.ga_data)[locales_ga.ga_len] = NULL;
   return locales_ga.ga_data;
 }
-# endif
+#endif
 
 /// Lazy initialization of all available locales.
 static void init_locales(void)
 {
-# ifndef MSWIN
+#ifndef MSWIN
   if (did_init_locales) {
     return;
   }
 
   did_init_locales = true;
   locales = find_locales();
-# endif
+#endif
 }
 
-# if defined(EXITFREE)
+#if defined(EXITFREE)
 void free_locales(void)
 {
   if (locales == NULL) {
@@ -311,7 +303,7 @@ void free_locales(void)
   }
   XFREE_CLEAR(locales);
 }
-# endif
+#endif
 
 /// Function given to ExpandGeneric() to obtain the possible arguments of the
 /// ":language" command.
@@ -346,8 +338,6 @@ char *get_locales(expand_T *xp, int idx)
   }
   return locales[idx];
 }
-
-#endif
 
 void lang_init(void)
 {
