@@ -352,6 +352,7 @@ local extension = {
   bat = 'dosbatch',
   wrap = 'dosini',
   ini = 'dosini',
+  INI = 'dosini',
   vbp = 'dosini',
   dot = 'dot',
   gv = 'dot',
