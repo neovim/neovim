@@ -4,6 +4,7 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
+local funcs = helpers.funcs
 local insert = helpers.insert
 local is_os = helpers.is_os
 local mkdir = helpers.mkdir
@@ -152,18 +153,18 @@ describe('file search with vim functions', function()
     else
       write_file(expected, '')
     end
-    eq(expected, eval('find'..option..'(fnameescape(\''..item..'\'),fnameescape(\''..folder_path..'\'))'))
+    eq(expected, funcs['find' .. option](item, folder_path:gsub(' ', [[\ ]])))
   end
 
   it('finddir()', function()
     test_find_func('dir', 'directory', 'folder')
-    -- test_find_func('dir', 'directory', 'folder name')
-    test_find_func('dir', 'folder name', 'directory')
+    test_find_func('dir', 'directory', 'folder name')
+    test_find_func('dir', 'fold#er name', 'directory')
   end)
 
   it('findfile()', function()
     test_find_func('file', 'directory', 'file.txt')
-    -- test_find_func('file', 'directory', 'file name.txt')
-    test_find_func('file', 'folder name', 'file.txt')
+    test_find_func('file', 'directory', 'file name.txt')
+    test_find_func('file', 'fold#er name', 'file.txt')
   end)
 end)

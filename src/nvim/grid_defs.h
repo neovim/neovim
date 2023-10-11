@@ -12,7 +12,7 @@
 // Includes final NUL. at least 4*(MAX_MCO+1)+1
 #define MAX_SCHAR_SIZE 32
 
-// if data[0] is 0xFF, then data[1..4] is a 24-bit index (in machine endianess)
+// if data[0] is 0xFF, then data[1..4] is a 24-bit index (in machine endianness)
 // otherwise it must be a UTF-8 string of length maximum 4 (no NUL when n=4)
 
 typedef uint32_t schar_T;

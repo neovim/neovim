@@ -1288,6 +1288,7 @@ tag		command		action ~
 |:execute|	:exe[cute]	execute result of expressions
 |:exit|		:exi[t]		same as ":xit"
 |:exusage|	:exu[sage]	overview of Ex commands
+|:fclose|	:fc[lose]	close floating window
 |:file|		:f[ile]		show or set the current file name
 |:files|	:files		list all files in the buffer list
 |:filetype|	:filet[ype]	switch file type detection on/off

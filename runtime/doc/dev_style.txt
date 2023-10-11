@@ -886,6 +886,25 @@ You should use: >c
     case F:
       ...
 
+Certain compilers do not recognize an exhaustive enum switch statement as
+exhaustive, which causes compiler warnings when there is a return statement in
+every case of a switch statement, but no catch-all return statement. To fix
+these spurious errors, you are advised to use `UNREACHABLE` after the switch
+statement to explicitly tell the compiler that the switch statement always
+returns and any code after it is unreachable. For example: >c
+
+    enum { A, B, C } var;
+    ...
+    switch (var) {
+      case A:
+        return 1;
+      case B:
+        return 2;
+      case C:
+        return 3;
+    }
+    UNREACHABLE;
+
 Return Values ~
 
 Do not needlessly surround the `return` expression with parentheses.

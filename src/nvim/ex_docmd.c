@@ -7354,6 +7354,12 @@ static void ex_terminal(exarg_T *eap)
   do_cmdline_cmd(ex_cmd);
 }
 
+/// ":fclose"
+static void ex_floatclose(exarg_T *eap)
+{
+  win_float_remove(eap->forceit, eap->line1);
+}
+
 void verify_command(char *cmd)
 {
   if (strcmp("smile", cmd) != 0) {

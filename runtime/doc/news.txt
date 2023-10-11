@@ -187,6 +187,8 @@ The following new APIs and features were added.
 
 • |$NVIM_APPNAME| can be set to a relative path instead of only a name.
 
+• Added |:fclose| command.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

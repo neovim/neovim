@@ -451,7 +451,7 @@ describe('mappings with <Cmd>', function()
     ]])
     eq('s', funcs.mode(1))
 
-    -- visual mapping in select mode restart selct mode after operator
+    -- visual mapping in select mode restart select mode after operator
     feed('<F5>')
     eq('s', funcs.mode(1))
     eq({'some short l'}, funcs.getreg('a',1,1))
