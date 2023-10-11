@@ -189,7 +189,9 @@ lsp.client_errors = tbl_extend(
   'error',
   lsp_rpc.client_errors,
   vim.tbl_add_reverse_lookup({
-    ON_INIT_CALLBACK_ERROR = table.maxn(lsp_rpc.client_errors) + 1,
+    BEFORE_INIT_CALLBACK_ERROR = table.maxn(lsp_rpc.client_errors) + 1,
+    ON_INIT_CALLBACK_ERROR = table.maxn(lsp_rpc.client_errors) + 2,
+    ON_ATTACH_ERROR = table.maxn(lsp_rpc.client_errors) + 3,
   })
 )
 
@@ -1172,6 +1174,16 @@ function lsp.start_client(config)
     return nil, lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
   end
 
+  --- Logs the given error to the LSP log and to the error buffer.
+  --- @param code integer Error code
+  --- @param err any Error arguments
+  local function write_error(code, err)
+    if log.error() then
+      log.error(log_prefix, 'on_error', { code = lsp.client_errors[code], err = err })
+    end
+    err_message(log_prefix, ': Error ', lsp.client_errors[code], ': ', vim.inspect(err))
+  end
+
   ---@private
   --- Invoked when the client operation throws an error.
   ---
@@ -1180,10 +1192,7 @@ function lsp.start_client(config)
   ---@see vim.lsp.rpc.client_errors for possible errors. Use
   ---`vim.lsp.rpc.client_errors[code]` to get a human-friendly name.
   function dispatch.on_error(code, err)
-    if log.error() then
-      log.error(log_prefix, 'on_error', { code = lsp.client_errors[code], err = err })
-    end
-    err_message(log_prefix, ': Error ', lsp.client_errors[code], ': ', vim.inspect(err))
+    write_error(code, err)
     if config.on_error then
       local status, usererr = pcall(config.on_error, code, err)
       if not status then
@@ -1391,8 +1400,10 @@ function lsp.start_client(config)
       trace = valid_traces[config.trace] or 'off',
     }
     if config.before_init then
-      -- TODO(ashkan) handle errors here.
-      pcall(config.before_init, initialize_params, config)
+      local status, err = pcall(config.before_init, initialize_params, config)
+      if not status then
+        write_error(lsp.client_errors.BEFORE_INIT_CALLBACK_ERROR, err)
+      end
     end
 
     --- @param method string
@@ -1440,7 +1451,7 @@ function lsp.start_client(config)
       if config.on_init then
         local status, err = pcall(config.on_init, client, result)
         if not status then
-          pcall(handlers.on_error, lsp.client_errors.ON_INIT_CALLBACK_ERROR, err)
+          write_error(lsp.client_errors.ON_INIT_CALLBACK_ERROR, err)
         end
       end
       local _ = log.info()
@@ -1714,8 +1725,10 @@ function lsp.start_client(config)
     })
 
     if config.on_attach then
-      -- TODO(ashkan) handle errors.
-      pcall(config.on_attach, client, bufnr)
+      local status, err = pcall(config.on_attach, client, bufnr)
+      if not status then
+        write_error(lsp.client_errors.ON_ATTACH_ERROR, err)
+      end
     end
 
     -- schedule the initialization of semantic tokens to give the above
