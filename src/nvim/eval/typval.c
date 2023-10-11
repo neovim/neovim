@@ -625,7 +625,7 @@ listitem_T *tv_list_check_range_index_one(list_T *const l, int *const n1, const 
   listitem_T *li = tv_list_find_index(l, n1);
   if (li == NULL) {
     if (!quiet) {
-      semsg(_(e_list_index_out_of_range_nr), (int64_t)n1);
+      semsg(_(e_list_index_out_of_range_nr), (int64_t)(*n1));
     }
     return NULL;
   }

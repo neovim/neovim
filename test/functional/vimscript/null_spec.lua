@@ -53,17 +53,13 @@ describe('NULL', function()
     end)
   end
   describe('list', function()
-    -- Incorrect behaviour
-    -- FIXME Should error out with different message
-    null_test('makes :unlet act as if it is not a list', ':unlet L[0]',
-              'Vim(unlet):E689: Can only index a List, Dictionary or Blob')
-
     -- Subjectable behaviour
-
     null_expr_test('is equal to empty list', 'L == []', 0, 1)
     null_expr_test('is equal to empty list (reverse order)', '[] == L', 0, 1)
 
     -- Correct behaviour
+    null_test('can be :unlet item with error message for empty list', ':unlet L[0]',
+              'Vim(unlet):E684: List index out of range: 0')
     null_expr_test('can be indexed with error message for empty list', 'L[0]',
                    'E684: List index out of range: 0', nil)
     null_expr_test('can be splice-indexed', 'L[:]', 0, {})
