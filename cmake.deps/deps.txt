@@ -38,8 +38,8 @@ XXD_SHA256 7a581e3882d28161cc52850f9a11d634b3eaf2c029276f093c1ed4c90e45a10c
 WIN32YANK_X86_64_URL https://github.com/equalsraf/win32yank/releases/download/v0.1.1/win32yank-x64.zip
 WIN32YANK_X86_64_SHA256 247c9a05b94387a884b49d3db13f806b1677dfc38020f955f719be6902260cd6
 
-GETTEXT_URL https://ftp.gnu.org/pub/gnu/gettext/gettext-0.20.1.tar.gz
-GETTEXT_SHA256 66415634c6e8c3fa8b71362879ec7575e27da43da562c798a8a2f223e6e47f5c
+GETTEXT_URL https://ftp.gnu.org/pub/gnu/gettext/gettext-0.22.3.tar.gz
+GETTEXT_SHA256 839a260b2314ba66274dae7d245ec19fce190a3aa67869bf31354cb558df42c7
 
 LIBICONV_URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz
 LIBICONV_SHA256 ccf536620a45458d26ba83887a983b96827001e92a13847b45e4925cc8913178
