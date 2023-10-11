@@ -1119,7 +1119,8 @@ any free letter from `a` to `z`) while normally it will create this file,
 write to it and then rename `{basename}.tmp.X` to `{basename}`. Such errors
 include:
 
-- Errors which make Nvim think that read file is not a ShaDa file at all:
+- Errors which make Nvim think that the file being read is not a ShaDa
+  file at all:
   non-ShaDa files are not overwritten for safety reasons to avoid accidentally
   destroying an unrelated file.  This could happen e.g. when typing "nvim -i
   file" in place of "nvim -R file" (yes, somebody did that at least with Vim).
@@ -1337,10 +1338,13 @@ exactly four MessagePack objects:
                        reasons, see |shada-compatibility|.
 
 								*E575* *E576*
-Errors in ShaDa file may have two types: E575 used for all “logical” errors
-and E576 used for all “critical” errors.  Critical errors trigger behaviour
-described in |shada-error-handling| when writing and skipping the rest of the
-file when reading and include:
+Errors in ShaDa file may have two types:
+1. E575 for “logical” errors.
+2. E576 for “critical” errors.
+When writing, critical errors trigger behaviour described in
+|shada-error-handling|.
+When reading, critical errors cause the rest of the file to be skipped.
+Critical errors include:
 					    *shada-critical-contents-errors*
 - Any of first three MessagePack objects being not an unsigned integer.
 - Third object requesting amount of bytes greater then bytes left in the ShaDa
