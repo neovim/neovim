@@ -394,8 +394,8 @@ CTRL-W CTRL-O					*CTRL-W_CTRL-O* *:on* *:only*
 
 							*:fc* *:fclose*
 :[count]fc[lose][!]
-		Close [count]th floating window by zindex order. '!' to close
-		all floating windows.
+		Close [count] floating windows with the highest zindex values.
+		'!' to close all floating windows.
 
 ==============================================================================
 4. Moving cursor to other windows			*window-move-cursor*

@@ -7355,7 +7355,7 @@ static void ex_terminal(exarg_T *eap)
 }
 
 /// ":fclose"
-static void ex_floatclose(exarg_T *eap)
+static void ex_fclose(exarg_T *eap)
 {
   win_float_remove(eap->forceit, eap->line1);
 }

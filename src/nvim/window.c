@@ -7657,7 +7657,7 @@ win_T *lastwin_nofloating(void)
   return res;
 }
 
-static int floating_zindex_compare(const void *a, const void *b)
+static int float_zindex_cmp(const void *a, const void *b)
 {
   return (*(win_T **)b)->w_float_config.zindex - (*(win_T **)a)->w_float_config.zindex;
 }
@@ -7668,7 +7668,7 @@ void win_float_remove(bool bang, int count)
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
     kv_push(float_win_arr, wp);
   }
-  qsort(float_win_arr.items, float_win_arr.size, sizeof(win_T *), floating_zindex_compare);
+  qsort(float_win_arr.items, float_win_arr.size, sizeof(win_T *), float_zindex_cmp);
   for (size_t i = 0; i < float_win_arr.size; i++) {
     if (win_close(float_win_arr.items[i], false, false) == FAIL) {
       break;
