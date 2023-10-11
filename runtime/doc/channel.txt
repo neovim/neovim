@@ -117,7 +117,7 @@ simple example, echoing some data through a cat-process:
     call chansend(id, "hello!")
 <
 
-Here is a example of setting a buffer to the result of grep, but only after
+Here is an example of setting a buffer to the result of grep, but only after
 all data has been processed:
 >vim
     function! s:OnEvent(id, data, event) dict
