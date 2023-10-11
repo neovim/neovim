@@ -503,8 +503,7 @@ const char *set_string_option(const int opt_idx, void *varp, const char *value, 
   }
 
   const char *const errmsg = did_set_string_option(curbuf, curwin, opt_idx, varp, oldval,
-                                                   errbuf, errbuflen,
-                                                   opt_flags, OP_NONE, value_checked);
+                                                   errbuf, errbuflen, opt_flags, value_checked);
 
   secure = secure_saved;
 
@@ -2741,7 +2740,7 @@ static void do_spelllang_source(win_T *win)
 ///
 /// @return  NULL for success, or an untranslated error message for an error
 const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **varp, char *oldval,
-                                  char *errbuf, size_t errbuflen, int opt_flags, set_op_T op,
+                                  char *errbuf, size_t errbuflen, int opt_flags,
                                   bool *value_checked)
 {
   const char *errmsg = NULL;
@@ -2755,7 +2754,6 @@ const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **va
     .os_varp = varp,
     .os_idx = opt_idx,
     .os_flags = opt_flags,
-    .os_op = op,
     .os_oldval.string = oldval,
     .os_newval.string = *varp,
     .os_value_checked = false,

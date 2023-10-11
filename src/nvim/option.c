@@ -1173,8 +1173,7 @@ static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int ne
   // options. Note: when setting 'syntax' or 'filetype' autocommands may
   // be triggered that can cause havoc.
   *errmsg = did_set_string_option(curbuf, curwin, opt_idx, (char **)varp, oldval,
-                                  errbuf, errbuflen,
-                                  opt_flags, op, value_checked);
+                                  errbuf, errbuflen, opt_flags, value_checked);
 
   secure = secure_saved;
 
