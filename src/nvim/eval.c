@@ -1467,14 +1467,22 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
       }
       return NULL;
     }
-    if (!(lp->ll_tv->v_type == VAR_LIST && lp->ll_tv->vval.v_list != NULL)
-        && !(lp->ll_tv->v_type == VAR_DICT && lp->ll_tv->vval.v_dict != NULL)
-        && !(lp->ll_tv->v_type == VAR_BLOB && lp->ll_tv->vval.v_blob != NULL)) {
+    if (lp->ll_tv->v_type != VAR_LIST
+        && lp->ll_tv->v_type != VAR_DICT
+        && lp->ll_tv->v_type != VAR_BLOB) {
       if (!quiet) {
         emsg(_("E689: Can only index a List, Dictionary or Blob"));
       }
       return NULL;
     }
+
+    // a NULL list/blob works like an empty list/blob, allocate one now.
+    if (lp->ll_tv->v_type == VAR_LIST && lp->ll_tv->vval.v_list == NULL) {
+      tv_list_alloc_ret(lp->ll_tv, kListLenUnknown);
+    } else if (lp->ll_tv->v_type == VAR_BLOB && lp->ll_tv->vval.v_blob == NULL) {
+      tv_blob_alloc_ret(lp->ll_tv);
+    }
+
     if (lp->ll_range) {
       if (!quiet) {
         emsg(_("E708: [:] must come last"));
