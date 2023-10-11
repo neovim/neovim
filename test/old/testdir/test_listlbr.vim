@@ -373,4 +373,19 @@ func Test_ctrl_char_on_wrap_column()
   call s:close_windows()
 endfunc
 
+func Test_linebreak_no_break_after_whitespace_only()
+  call s:test_windows('setl ts=4 linebreak wrap')
+  call setline(1, "\tabcdefghijklmnopqrstuvwxyz" ..
+        \ "abcdefghijklmnopqrstuvwxyz")
+  let lines = s:screen_lines([1, 4], winwidth(0))
+  let expect = [
+\ "    abcdefghijklmnop",
+\ "qrstuvwxyzabcdefghij",
+\ "klmnopqrstuvwxyz    ",
+\ "~                   ",
+\ ]
+  call s:compare_lines(expect, lines)
+  call s:close_windows()
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
