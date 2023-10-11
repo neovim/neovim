@@ -127,6 +127,9 @@ typedef struct {
   int filler_lines;          ///< nr of filler lines to be drawn
   int filler_todo;           ///< nr of filler lines still to do + 1
   SignTextAttrs sattrs[SIGN_SHOW_MAX];  ///< sign attributes for the sign column
+  /// do consider wrapping in linebreak mode only after encountering
+  /// a non whitespace char
+  bool need_lbr;
 
   VirtText virt_inline;
   size_t virt_inline_i;
@@ -1018,6 +1021,7 @@ static void win_line_start(win_T *wp, winlinevars_T *wlv, bool save_extra)
 {
   wlv->col = 0;
   wlv->off = 0;
+  wlv->need_lbr = false;
 
   if (wp->w_p_rl) {
     // Rightleft window: process the text in the normal direction, but put
@@ -1038,6 +1042,7 @@ static void win_line_start(win_T *wp, winlinevars_T *wlv, bool save_extra)
     wlv->saved_extra_for_extmark = wlv->extra_for_extmark;
     wlv->saved_c_extra = wlv->c_extra;
     wlv->saved_c_final = wlv->c_final;
+    wlv->need_lbr = true;
     wlv->saved_char_attr = wlv->char_attr;
 
     wlv->n_extra = 0;
@@ -2302,9 +2307,19 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           wlv.char_attr = hl_combine_attr(term_attrs[wlv.vcol], wlv.char_attr);
         }
 
+        // we don't want linebreak to apply for lines that start with
+        // leading spaces, followed by long letters (since it would add
+        // a break at the beginning of a line and this might be unexpected)
+        //
+        // So only allow to linebreak, once we have found chars not in
+        // 'breakat' in the line.
+        if (wp->w_p_lbr && !wlv.need_lbr && c != NUL
+            && !vim_isbreak((uint8_t)(*ptr))) {
+          wlv.need_lbr = true;
+        }
         // Found last space before word: check for line break.
-        if (wp->w_p_lbr && c0 == c && vim_isbreak(c)
-            && !vim_isbreak((int)(*ptr))) {
+        if (wp->w_p_lbr && c0 == c && wlv.need_lbr
+            && vim_isbreak(c) && !vim_isbreak((uint8_t)(*ptr))) {
           int mb_off = utf_head_off(line, ptr - 1);
           char *p = ptr - (mb_off + 1);
           chartabsize_T cts;
