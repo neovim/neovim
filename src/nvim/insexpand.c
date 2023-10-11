@@ -2693,6 +2693,38 @@ static void ins_compl_update_sequence_numbers(void)
   }
 }
 
+static int info_add_completion_info(list_T *li)
+{
+  if (compl_first_match == NULL) {
+    return OK;
+  }
+
+  // Skip the element with the CP_ORIGINAL_TEXT flag at the beginning, in case of
+  // forward completion, or at the end, in case of backward completion.
+  compl_T *match = compl_dir_forward() ? compl_first_match->cp_next
+                                       : compl_first_match->cp_prev->cp_prev;
+  while (match != NULL && !match_at_original_text(match)) {
+    dict_T *di = tv_dict_alloc();
+
+    tv_list_append_dict(li, di);
+    tv_dict_add_str(di, S_LEN("word"), EMPTY_IF_NULL(match->cp_str));
+    tv_dict_add_str(di, S_LEN("abbr"), EMPTY_IF_NULL(match->cp_text[CPT_ABBR]));
+    tv_dict_add_str(di, S_LEN("menu"), EMPTY_IF_NULL(match->cp_text[CPT_MENU]));
+    tv_dict_add_str(di, S_LEN("kind"), EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
+    tv_dict_add_str(di, S_LEN("info"), EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
+    if (match->cp_user_data.v_type == VAR_UNKNOWN) {
+      // Add an empty string for backwards compatibility
+      tv_dict_add_str(di, S_LEN("user_data"), "");
+    } else {
+      tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
+    }
+
+    match = compl_dir_forward() ? match->cp_next : match->cp_prev;
+  }
+
+  return OK;
+}
+
 /// Get complete information
 static void get_complete_info(list_T *what_list, dict_T *retdict)
 {
@@ -2738,29 +2770,9 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
 
   if (ret == OK && (what_flag & CI_WHAT_ITEMS)) {
     list_T *li = tv_list_alloc(get_compl_len());
-
     ret = tv_dict_add_list(retdict, S_LEN("items"), li);
-    if (ret == OK && compl_first_match != NULL) {
-      compl_T *match = compl_first_match;
-      do {
-        if (!match_at_original_text(match)) {
-          dict_T *di = tv_dict_alloc();
-
-          tv_list_append_dict(li, di);
-          tv_dict_add_str(di, S_LEN("word"), EMPTY_IF_NULL(match->cp_str));
-          tv_dict_add_str(di, S_LEN("abbr"), EMPTY_IF_NULL(match->cp_text[CPT_ABBR]));
-          tv_dict_add_str(di, S_LEN("menu"), EMPTY_IF_NULL(match->cp_text[CPT_MENU]));
-          tv_dict_add_str(di, S_LEN("kind"), EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
-          tv_dict_add_str(di, S_LEN("info"), EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
-          if (match->cp_user_data.v_type == VAR_UNKNOWN) {
-            // Add an empty string for backwards compatibility
-            tv_dict_add_str(di, S_LEN("user_data"), "");
-          } else {
-            tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
-          }
-        }
-        match = match->cp_next;
-      } while (match != NULL && !is_first_match(match));
+    if (ret == OK) {
+      ret = info_add_completion_info(li);
     }
   }
 
