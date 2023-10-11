@@ -1048,7 +1048,7 @@ module.cmds = {
     command='fclose',
     flags=bit.bor(BANG, RANGE),
     addr_type='ADDR_OTHER',
-    func='ex_floatclose',
+    func='ex_fclose',
   },
   {
     command='global',

@@ -10928,26 +10928,96 @@ describe('float window', function()
       end
     end)
 
-    it('fclose command #9663', function()
-      local bufA = meths.create_buf(false,false)
-      local bufB = meths.create_buf(false,false)
-      local bufC = meths.create_buf(false,false)
-      local bufD = meths.create_buf(false,false)
-      local config_A = {relative='editor', width=11, height=11, row=5, col=5, border ='single', zindex=50}
-      local config_B = {relative='editor', width=8, height=8, row=7, col=7, border ='single', zindex=70}
-      local config_C = {relative='editor', width=4, height=4, row=9, col=9, border ='single',zindex=90}
-      local config_D = {relative='editor', width=2, height=2, row=10, col=10, border ='single',zindex=100}
-      meths.open_win(bufA, false, config_A)
-      meths.open_win(bufB, false, config_B)
-      meths.open_win(bufC, false, config_C)
-      meths.open_win(bufD, false, config_D)
-      --close window which have higher zindex value
-      command('fclose')
+    it(':fclose command #9663', function()
+      local buf_a = meths.create_buf(false,false)
+      local buf_b = meths.create_buf(false,false)
+      local buf_c = meths.create_buf(false,false)
+      local buf_d = meths.create_buf(false,false)
+      local config_a = {relative='editor', width=11, height=11, row=5, col=5, border ='single', zindex=50}
+      local config_b = {relative='editor', width=8, height=8, row=7, col=7, border ='single', zindex=70}
+      local config_c = {relative='editor', width=4, height=4, row=9, col=9, border ='single',zindex=90}
+      local config_d = {relative='editor', width=2, height=2, row=10, col=10, border ='single',zindex=100}
+      meths.open_win(buf_a, false, config_a)
+      meths.open_win(buf_b, false, config_b)
+      meths.open_win(buf_c, false, config_c)
+      meths.open_win(buf_d, false, config_d)
       local expected_pos = {
           [4]={{id=1001}, 'NW', 1, 5, 5, true, 50},
           [5]={{id=1002}, 'NW', 1, 7, 7, true, 70},
           [6]={{id=1003}, 'NW', 1, 9, 9, true, 90},
+          [7]={{id=1004}, 'NW', 1, 10, 10, true, 100},
       }
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 4
+          {5:┌───────────┐}|
+          {5:│}{1:           }{5:│}|
+          {5:│}{2:~          }{5:│}|
+          {5:│}{2:~          }{5:│}|
+          {5:│}{2:~          }{5:│}|
+          {5:│}{2:~          }{5:│}|
+          {5:│}{2:~          }{5:│}|
+          {5:│}{2:~          }{5:│}|
+          {5:│}{2:~          }{5:│}|
+          {5:│}{2:~          }{5:│}|
+          {5:│}{2:~          }{5:│}|
+          {5:│}{2:~          }{5:│}|
+          {5:└───────────┘}|
+        ## grid 5
+          {5:┌────────┐}|
+          {5:│}{1:        }{5:│}|
+          {5:│}{2:~       }{5:│}|
+          {5:│}{2:~       }{5:│}|
+          {5:│}{2:~       }{5:│}|
+          {5:│}{2:~       }{5:│}|
+          {5:│}{2:~       }{5:│}|
+          {5:│}{2:~       }{5:│}|
+          {5:│}{2:~       }{5:│}|
+          {5:└────────┘}|
+        ## grid 6
+          {5:┌────┐}|
+          {5:│}{1:    }{5:│}|
+          {5:│}{2:~   }{5:│}|
+          {5:│}{2:~   }{5:│}|
+          {5:│}{2:~   }{5:│}|
+          {5:└────┘}|
+        ## grid 7
+          {5:┌──┐}|
+          {5:│}{1:  }{5:│}|
+          {5:│}{2:~ }{5:│}|
+          {5:└──┘}|
+        ]], float_pos=expected_pos}
+      else
+        screen:expect([[
+          ^     {5:┌─┌─┌────┐─┐┐}                      |
+          {0:~    }{5:│}{1: }{5:│}{1: }{5:│}{1:    }{5:│}{1: }{5:││}{0:                      }|
+          {0:~    }{5:│}{2:~}{5:│}{2:~}{5:│┌──┐│}{2: }{5:││}{0:                      }|
+          {0:~    }{5:│}{2:~}{5:│}{2:~}{5:││}{1:  }{5:││}{2: }{5:││}{0:                      }|
+          {0:~    }{5:│}{2:~}{5:│}{2:~}{5:││}{2:~ }{5:││}{2: }{5:││}{0:                      }|
+          {0:~    }{5:│}{2:~}{5:│}{2:~}{5:└└──┘┘}{2: }{5:││}{0:                      }|
+                                                  |
+        ]])
+      end
+      -- close the window with the highest zindex value
+      command('fclose')
+      expected_pos[7] = nil
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -11000,21 +11070,21 @@ describe('float window', function()
           {5:│}{2:~   }{5:│}|
           {5:│}{2:~   }{5:│}|
           {5:└────┘}|
-        ]],float_pos= expected_pos}
+        ]], float_pos=expected_pos}
       else
         screen:expect([[
-        ^     {5:┌─┌─┌────┐─┐┐}                      |
-        {0:~    }{5:│}{1: }{5:│}{1: }{5:│}{1:    }{5:│}{1: }{5:││}{0:                      }|
-        {0:~    }{5:│}{2:~}{5:│}{2:~}{5:│}{2:~   }{5:│}{2: }{5:││}{0:                      }|
-        {0:~    }{5:│}{2:~}{5:│}{2:~}{5:│}{2:~   }{5:│}{2: }{5:││}{0:                      }|
-        {0:~    }{5:│}{2:~}{5:│}{2:~}{5:│}{2:~   }{5:│}{2: }{5:││}{0:                      }|
-        {0:~    }{5:│}{2:~}{5:│}{2:~}{5:└────┘}{2: }{5:││}{0:                      }|
-                                                |
+          ^     {5:┌─┌─┌────┐─┐┐}                      |
+          {0:~    }{5:│}{1: }{5:│}{1: }{5:│}{1:    }{5:│}{1: }{5:││}{0:                      }|
+          {0:~    }{5:│}{2:~}{5:│}{2:~}{5:│}{2:~   }{5:│}{2: }{5:││}{0:                      }|
+          {0:~    }{5:│}{2:~}{5:│}{2:~}{5:│}{2:~   }{5:│}{2: }{5:││}{0:                      }|
+          {0:~    }{5:│}{2:~}{5:│}{2:~}{5:│}{2:~   }{5:│}{2: }{5:││}{0:                      }|
+          {0:~    }{5:│}{2:~}{5:│}{2:~}{5:└────┘}{2: }{5:││}{0:                      }|
+                                                  |
         ]])
       end
       -- with range
       command('1fclose')
-      expected_pos[6]=nil
+      expected_pos[6] = nil
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -11060,19 +11130,19 @@ describe('float window', function()
           {5:│}{2:~       }{5:│}|
           {5:│}{2:~       }{5:│}|
           {5:└────────┘}|
-        ]],float_pos= expected_pos}
+        ]], float_pos=expected_pos}
       else
         screen:expect([[
-        ^     {5:┌─┌────────┐┐}                      |
-        {0:~    }{5:│}{1: }{5:│}{1:        }{5:││}{0:                      }|
-        {0:~    }{5:│}{2:~}{5:│}{2:~       }{5:││}{0:                      }|
-        {0:~    }{5:│}{2:~}{5:│}{2:~       }{5:││}{0:                      }|
-        {0:~    }{5:│}{2:~}{5:│}{2:~       }{5:││}{0:                      }|
-        {0:~    }{5:│}{2:~}{5:│}{2:~       }{5:││}{0:                      }|
-                                                |
+          ^     {5:┌─┌────────┐┐}                      |
+          {0:~    }{5:│}{1: }{5:│}{1:        }{5:││}{0:                      }|
+          {0:~    }{5:│}{2:~}{5:│}{2:~       }{5:││}{0:                      }|
+          {0:~    }{5:│}{2:~}{5:│}{2:~       }{5:││}{0:                      }|
+          {0:~    }{5:│}{2:~}{5:│}{2:~       }{5:││}{0:                      }|
+          {0:~    }{5:│}{2:~}{5:│}{2:~       }{5:││}{0:                      }|
+                                                  |
         ]])
       end
-      --with bang
+      -- with bang
       command('fclose!')
       if multigrid then
         screen:expect{grid=[[
@@ -11094,16 +11164,16 @@ describe('float window', function()
         ## grid 3
                                                   |
 
-        ]],float_pos= {}}
+        ]], float_pos={}}
       else
         screen:expect([[
-        ^                                        |
-        {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
-                                                |
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                                  |
         ]])
       end
     end)
