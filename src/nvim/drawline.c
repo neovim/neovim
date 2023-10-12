@@ -261,12 +261,17 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
     }
     if (item->draw_col == -1) {
       if (item->decor.virt_text_pos == kVTRightAlign) {
-        if (wp->w_p_rl) {
-          right_pos += item->decor.virt_text_width;
+        int available_space = right_pos - state->eol_col;
+        if (item->decor.virt_text_width > available_space) {
+          item->draw_col = state->eol_col;
         } else {
-          right_pos -= item->decor.virt_text_width;
+          if (wp->w_p_rl) {
+            right_pos += item->decor.virt_text_width;
+          } else {
+            right_pos -= item->decor.virt_text_width;
+          }
+          item->draw_col = right_pos;
         }
-        item->draw_col = right_pos;
       } else if (item->decor.virt_text_pos == kVTEndOfLine && do_eol) {
         item->draw_col = state->eol_col;
       } else if (item->decor.virt_text_pos == kVTWinCol) {
