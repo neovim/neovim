@@ -1647,7 +1647,8 @@ function M._make_floating_popup_size(contents, opts)
     width = 0
     for i, line in ipairs(contents) do
       -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
-      line_widths[i] = vim.fn.strdisplaywidth(line)
+      local ok, line_width = pcall(vim.fn.strdisplaywidth, line)
+      line_widths[i] = ok and line_width or line:len()
       width = math.max(line_widths[i], width)
     end
   end
@@ -1676,7 +1677,8 @@ function M._make_floating_popup_size(contents, opts)
       height = 0
       if vim.tbl_isempty(line_widths) then
         for _, line in ipairs(contents) do
-          local line_width = vim.fn.strdisplaywidth(line)
+          local ok, line_width = pcall(vim.fn.strdisplaywidth, line)
+          line_width = ok and line_width or line:len()
           height = height + math.ceil(line_width / wrap_at)
         end
       else
