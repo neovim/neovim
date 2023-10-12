@@ -753,106 +753,6 @@ void ex_set(exarg_T *eap)
   (void)do_set(eap->arg, flags);
 }
 
-static void do_set_bool(int opt_idx, int opt_flags, set_prefix_T prefix, int nextchar,
-                        const void *varp, const char **errmsg)
-{
-  varnumber_T value;
-
-  // ":set opt!": invert
-  // ":set opt&": reset to default value
-  // ":set opt<": reset to global value
-  if (nextchar == '!') {
-    value = *(int *)(varp) ^ 1;
-  } else if (nextchar == '&') {
-    value = (int)(intptr_t)options[opt_idx].def_val;
-  } else if (nextchar == '<') {
-    // For 'autoread' -1 means to use global value.
-    if ((int *)varp == &curbuf->b_p_ar && opt_flags == OPT_LOCAL) {
-      value = -1;
-    } else {
-      value = *(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
-    }
-  } else {
-    // ":set invopt": invert
-    // ":set opt" or ":set noopt": set or reset
-    if (prefix == PREFIX_INV) {
-      value = *(int *)varp ^ 1;
-    } else {
-      value = prefix == PREFIX_NO ? 0 : 1;
-    }
-  }
-
-  static char errbuf[IOSIZE];
-  size_t errbuflen = sizeof(errbuf);
-  *errmsg = set_option(opt_idx, (void *)varp, BOOLEAN_OPTVAL(TRISTATE_FROM_INT(value)), opt_flags,
-                       errbuf, errbuflen);
-}
-
-static void do_set_num(int opt_idx, int opt_flags, char **argp, int nextchar, const set_op_T op,
-                       const void *varp, char *errbuf, size_t errbuflen, const char **errmsg)
-{
-  varnumber_T value;
-  char *arg = *argp;
-
-  // Different ways to set a number option:
-  // &            set to default value
-  // <            set to global value
-  // <xx>         accept special key codes for 'wildchar'
-  // c            accept any non-digit for 'wildchar'
-  // [-]0-9       set number
-  // other        error
-  arg++;
-  if (nextchar == '&') {
-    value = (varnumber_T)options[opt_idx].def_val;
-  } else if (nextchar == '<') {
-    if ((OptInt *)varp == &curbuf->b_p_ul && opt_flags == OPT_LOCAL) {
-      // for 'undolevels' NO_LOCAL_UNDOLEVEL means using the global value
-      value = NO_LOCAL_UNDOLEVEL;
-    } else if (opt_flags == OPT_LOCAL
-               && ((OptInt *)varp == &curwin->w_p_siso
-                   || (OptInt *)varp == &curwin->w_p_so)) {
-      // for 'scrolloff'/'sidescrolloff' -1 means using the global value
-      value = -1;
-    } else {
-      value = *(OptInt *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
-    }
-  } else if (((OptInt *)varp == &p_wc
-              || (OptInt *)varp == &p_wcm)
-             && (*arg == '<'
-                 || *arg == '^'
-                 || (*arg != NUL && (!arg[1] || ascii_iswhite(arg[1]))
-                     && !ascii_isdigit(*arg)))) {
-    value = string_to_key(arg);
-    if (value == 0 && (OptInt *)varp != &p_wcm) {
-      *errmsg = e_invarg;
-      return;
-    }
-  } else if (*arg == '-' || ascii_isdigit(*arg)) {
-    int i;
-    // Allow negative, octal and hex numbers.
-    vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0, true, NULL);
-    if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
-      *errmsg = e_number_required_after_equal;
-      return;
-    }
-  } else {
-    *errmsg = e_number_required_after_equal;
-    return;
-  }
-
-  if (op == OP_ADDING) {
-    value = *(OptInt *)varp + value;
-  }
-  if (op == OP_PREPENDING) {
-    value = *(OptInt *)varp * value;
-  }
-  if (op == OP_REMOVING) {
-    value = *(OptInt *)varp - value;
-  }
-  *errmsg
-    = set_option(opt_idx, (void *)varp, NUMBER_OPTVAL((OptInt)value), opt_flags, errbuf, errbuflen);
-}
-
 /// Get the default value for a string option.
 static char *stropt_get_default_val(int opt_idx, uint64_t flags)
 {
@@ -1098,30 +998,6 @@ static char *stropt_get_newval(int nextchar, int opt_idx, char **argp, void *var
   return newval;
 }
 
-/// Part of do_set() for string options.
-static void do_set_option_string(const int opt_idx, const int opt_flags, char **argp, int nextchar,
-                                 set_op_T op, const uint32_t flags, void *varp, char *errbuf,
-                                 size_t errbuflen, bool *value_checked, const char **errmsg)
-{
-  vimoption_T *opt = get_option(opt_idx);
-  char *origval;
-  // When setting the local value of a global option, the old value may be
-  // the global value.
-  if (((int)opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL)) {
-    origval = *(char **)get_varp(opt);
-  } else {
-    origval = *(char **)varp;
-  }
-
-  // Get the new value for the option
-  char *newval = stropt_get_newval(nextchar, opt_idx, argp, varp, origval, &op, flags);
-  *errmsg = set_string_option(opt_idx, varp, newval, opt_flags, op == OP_NONE, value_checked,
-                              errbuf, errbuflen);
-
-  // `set_string_option` duplicates the value, so we need to free newval
-  xfree(newval);
-}
-
 static set_op_T get_op(const char *arg)
 {
   set_op_T op = OP_NONE;
@@ -1258,34 +1134,145 @@ static int validate_opt_idx(win_T *win, int opt_idx, int opt_flags, uint32_t fla
   return OK;
 }
 
-static void do_set_option_value(int opt_idx, int opt_flags, char **argp, set_prefix_T prefix,
+/// Get new option value from argp. Allocated OptVal must be freed by caller.
+static OptVal get_option_newval(int opt_idx, int opt_flags, set_prefix_T prefix, char **argp,
                                 int nextchar, set_op_T op, uint32_t flags, void *varp, char *errbuf,
-                                size_t errbuflen, const char **errmsg)
+                                const size_t errbuflen, const char **errmsg)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  bool value_checked = false;
-  if (flags & P_BOOL) {        // boolean
-    do_set_bool(opt_idx, opt_flags, prefix, nextchar, varp, errmsg);
-  } else if (flags & P_NUM) {  // numeric
-    do_set_num(opt_idx, opt_flags, argp, nextchar, op, varp, errbuf, errbuflen, errmsg);
-  } else if (opt_idx >= 0) {   // string.
-    do_set_option_string(opt_idx, opt_flags, argp, nextchar, op, flags, varp, errbuf,
-                         errbuflen, &value_checked, errmsg);
-  } else {
-    // key code option(FIXME(tarruda): Show a warning or something
-    // similar)
+  assert(varp != NULL);
+
+  char *arg = *argp;
+  OptVal oldval = optval_from_varp_flags(varp, flags);
+  OptVal newval = NIL_OPTVAL;
+
+  switch (oldval.type) {
+  case kOptValTypeNil:
+    abort();
+  case kOptValTypeBoolean: {
+    TriState newval_bool;
+
+    // ":set opt!": invert
+    // ":set opt&": reset to default value
+    // ":set opt<": reset to global value
+    if (nextchar == '!') {
+      switch (oldval.data.boolean) {
+      case kNone:
+        newval_bool = kNone;
+        break;
+      case kTrue:
+        newval_bool = kFalse;
+        break;
+      case kFalse:
+        newval_bool = kTrue;
+        break;
+      }
+    } else if (nextchar == '&') {
+      newval_bool = TRISTATE_FROM_INT((int)(intptr_t)options[opt_idx].def_val);
+    } else if (nextchar == '<') {
+      // For 'autoread', kNone means to use global value.
+      if ((int *)varp == &curbuf->b_p_ar && opt_flags == OPT_LOCAL) {
+        newval_bool = kNone;
+      } else {
+        newval_bool = TRISTATE_FROM_INT(*(int *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL));
+      }
+    } else {
+      // ":set invopt": invert
+      // ":set opt" or ":set noopt": set or reset
+      if (prefix == PREFIX_INV) {
+        newval_bool = *(int *)varp ^ 1;
+      } else {
+        newval_bool = prefix == PREFIX_NO ? 0 : 1;
+      }
+    }
+
+    newval = BOOLEAN_OPTVAL(newval_bool);
+    break;
+  }
+  case kOptValTypeNumber: {
+    OptInt oldval_num = oldval.data.number;
+    OptInt newval_num;
+
+    // Different ways to set a number option:
+    // &            set to default value
+    // <            set to global value
+    // <xx>         accept special key codes for 'wildchar'
+    // c            accept any non-digit for 'wildchar'
+    // [-]0-9       set number
+    // other        error
+    arg++;
+    if (nextchar == '&') {
+      newval_num = (OptInt)(intptr_t)options[opt_idx].def_val;
+    } else if (nextchar == '<') {
+      if ((OptInt *)varp == &curbuf->b_p_ul && opt_flags == OPT_LOCAL) {
+        // for 'undolevels' NO_LOCAL_UNDOLEVEL means using the global newval_num
+        newval_num = NO_LOCAL_UNDOLEVEL;
+      } else if (opt_flags == OPT_LOCAL
+                 && ((OptInt *)varp == &curwin->w_p_siso || (OptInt *)varp == &curwin->w_p_so)) {
+        // for 'scrolloff'/'sidescrolloff' -1 means using the global newval_num
+        newval_num = -1;
+      } else {
+        newval_num = *(OptInt *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL);
+      }
+    } else if (((OptInt *)varp == &p_wc || (OptInt *)varp == &p_wcm)
+               && (*arg == '<' || *arg == '^'
+                   || (*arg != NUL && (!arg[1] || ascii_iswhite(arg[1]))
+                       && !ascii_isdigit(*arg)))) {
+      newval_num = string_to_key(arg);
+      if (newval_num == 0 && (OptInt *)varp != &p_wcm) {
+        *errmsg = e_invarg;
+        return newval;
+      }
+    } else if (*arg == '-' || ascii_isdigit(*arg)) {
+      int i;
+      // Allow negative, octal and hex numbers.
+      vim_str2nr(arg, NULL, &i, STR2NR_ALL, &newval_num, NULL, 0, true, NULL);
+      if (i == 0 || (arg[i] != NUL && !ascii_iswhite(arg[i]))) {
+        *errmsg = e_number_required_after_equal;
+        return newval;
+      }
+    } else {
+      *errmsg = e_number_required_after_equal;
+      return newval;
+    }
+
+    if (op == OP_ADDING) {
+      newval_num = oldval_num + newval_num;
+    }
+    if (op == OP_PREPENDING) {
+      newval_num = oldval_num * newval_num;
+    }
+    if (op == OP_REMOVING) {
+      newval_num = oldval_num - newval_num;
+    }
+
+    newval = NUMBER_OPTVAL(newval_num);
+    break;
+  }
+  case kOptValTypeString: {
+    char *oldval_str;
+    vimoption_T *opt = get_option(opt_idx);
+
+    // When setting the local value of a global option, the old value may be
+    // the global value.
+    if (((int)opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL)) {
+      oldval_str = *(char **)get_varp(opt);
+    } else {
+      oldval_str = *(char **)varp;
+    }
+
+    // Get the new value for the option
+    char *newval_str = stropt_get_newval(nextchar, opt_idx, argp, varp, oldval_str, &op, flags);
+    newval = CSTR_AS_OPTVAL(newval_str);
+    break;
+  }
   }
 
-  if (*errmsg != NULL) {
-    return;
-  }
-
-  if (opt_idx >= 0) {
-    did_set_option(opt_idx, opt_flags, op == OP_NONE, value_checked);
-  }
+  return newval;
 }
 
-static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errbuf,
-                          size_t errbuflen, const char **errmsg)
+static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *errbuf,
+                              size_t errbuflen, const char **errmsg)
 {
   // 1: nothing, 0: "no", 2: "inv" in front of name
   set_prefix_T prefix = get_option_prefix(argp);
@@ -1416,8 +1403,21 @@ static void do_set_option(int opt_flags, char **argp, bool *did_show, char *errb
     }
   }
 
-  do_set_option_value(opt_idx, opt_flags, argp, prefix, nextchar, op, flags, varp,
-                      errbuf, errbuflen, errmsg);
+  // Don't try to change hidden option.
+  if (varp == NULL) {
+    return;
+  }
+
+  OptVal newval = get_option_newval(opt_idx, opt_flags, prefix, argp, nextchar, op, flags, varp,
+                                    errbuf, errbuflen, errmsg);
+
+  if (newval.type == kOptValTypeNil || *errmsg != NULL) {
+    return;
+  }
+
+  *errmsg = set_option(opt_idx, varp, newval, opt_flags, op == OP_NONE, errbuf, errbuflen);
+  // `set_option` copies the new option value, so it needs to be freed here.
+  optval_free(newval);
 }
 
 /// Parse 'arg' for option settings.
@@ -1466,7 +1466,7 @@ int do_set(char *arg, int opt_flags)
         const char *errmsg = NULL;
         char errbuf[80];
 
-        do_set_option(opt_flags, &arg, &did_show, errbuf, sizeof(errbuf), &errmsg);
+        do_one_set_option(opt_flags, &arg, &did_show, errbuf, sizeof(errbuf), &errmsg);
 
         // Advance to next argument.
         // - skip until a blank found, taking care of backslashes
@@ -1515,29 +1515,6 @@ int do_set(char *arg, int opt_flags)
   }
 
   return OK;
-}
-
-/// Call this when an option has been given a new value through a user command.
-/// Sets the P_WAS_SET flag and takes care of the P_INSECURE flag.
-///
-/// @param opt_flags  possibly with OPT_MODELINE
-/// @param new_value  value was replaced completely
-/// @param value_checked  value was checked to be safe, no need to set P_INSECURE
-void did_set_option(int opt_idx, int opt_flags, bool new_value, bool value_checked)
-{
-  options[opt_idx].flags |= P_WAS_SET;
-
-  // When an option is set in the sandbox, from a modeline or in secure mode
-  // set the P_INSECURE flag.  Otherwise, if a new value is stored reset the
-  // flag.
-  uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
-  if (!value_checked && (secure
-                         || sandbox != 0
-                         || (opt_flags & OPT_MODELINE))) {
-    *p = *p | P_INSECURE;
-  } else if (new_value) {
-    *p = *p & ~P_INSECURE;
-  }
 }
 
 /// Convert a key name or string into a key value.
@@ -3257,6 +3234,24 @@ static OptVal optval_from_varp(OptValType type, void *varp)
   UNREACHABLE;
 }
 
+/// Get option value from var pointer and option flags.
+static OptVal optval_from_varp_flags(void *varp, const uint32_t flags)
+{
+  OptValType type = kOptValTypeNil;
+
+  if (flags & P_BOOL) {
+    type = kOptValTypeBoolean;
+  } else if (flags & P_NUM) {
+    type = kOptValTypeNumber;
+  } else if (flags & P_STRING) {
+    type = kOptValTypeString;
+  } else {
+    abort();
+  }
+
+  return optval_from_varp(type, varp);
+}
+
 /// Set option var pointer value from Optval.
 static void set_option_varp(void *varp, OptVal value)
 {
@@ -3609,11 +3604,25 @@ vimoption_T *get_option(int opt_idx)
   return &options[opt_idx];
 }
 
-static const char *set_option(int opt_idx, void *varp, OptVal value, int opt_flags, char *errbuf,
-                              size_t errbuflen)
+/// Set the value of an option using an OptVal.
+///
+/// @param       opt_idx    Option index. Must be >=0.
+/// @param[in]   varp       Option variable pointer, cannot be NULL.
+/// @param       value      New option value.
+/// @param       opt_flags  Option flags.
+/// @param       new_value  Whether value was replaced completely.
+/// @param[out]  errbuf     Buffer for error message.
+/// @param       errbuflen  Length of error buffer.
+///
+/// @return  Error message. NULL if there are no errors.
+static const char *set_option(const int opt_idx, void *varp, OptVal value, int opt_flags,
+                              const bool new_value, char *errbuf, size_t errbuflen)
 {
+  assert(opt_idx >= 0 && varp != NULL);
+
   const char *errmsg = NULL;
   bool value_checked = false;
+  vimoption_T *opt = &options[opt_idx];
 
   // TODO(famiu): Unify set_string_option with set_option.
   if (value.type == kOptValTypeString) {
@@ -3627,7 +3636,6 @@ static const char *set_option(int opt_idx, void *varp, OptVal value, int opt_fla
     return e_secure;
   }
 
-  vimoption_T *opt = &options[opt_idx];
   OptVal old_value = optval_from_varp(value.type, varp);
   OptVal old_global_value = NIL_OPTVAL;
   OptVal old_local_value = NIL_OPTVAL;
@@ -3730,7 +3738,16 @@ static const char *set_option(int opt_idx, void *varp, OptVal value, int opt_fla
 
 end:
   if (errmsg == NULL) {
-    did_set_option(opt_idx, opt_flags, true, value_checked);
+    opt->flags |= P_WAS_SET;
+
+    // When an option is set in the sandbox, from a modeline or in secure mode set the P_INSECURE
+    // flag.  Otherwise, if a new value is stored reset the flag.
+    uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
+    if (!value_checked && (secure || sandbox != 0 || (opt_flags & OPT_MODELINE))) {
+      *p |= P_INSECURE;
+    } else if (new_value) {
+      *p &= ~P_INSECURE;
+    }
   }
 
   return errmsg;
@@ -3794,7 +3811,7 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
     goto end;
   }
 
-  errmsg = set_option(opt_idx, varp, v, opt_flags, errbuf, sizeof(errbuf));
+  errmsg = set_option(opt_idx, varp, v, opt_flags, true, errbuf, sizeof(errbuf));
 
 end:
   optval_free(v);  // Free the copied OptVal.
