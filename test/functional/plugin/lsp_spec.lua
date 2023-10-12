@@ -3069,6 +3069,18 @@ describe('LSP', function()
     it('calculates size correctly with wrapping', function()
       eq({15,5}, exec_lua[[ return {vim.lsp.util._make_floating_popup_size(contents,{width = 15, wrap_at = 14})} ]])
     end)
+
+    it('handles NUL bytes in text', function()
+      exec_lua([[ contents = {
+        '\000\001\002\003\004\005\006\007\008\009',
+        '\010\011\012\013\014\015\016\017\018\019',
+        '\020\021\022\023\024\025\026\027\028\029',
+      } ]])
+      command('set list listchars=')
+      eq({20,3}, exec_lua[[ return {vim.lsp.util._make_floating_popup_size(contents)} ]])
+      command('set display+=uhex')
+      eq({40,3}, exec_lua[[ return {vim.lsp.util._make_floating_popup_size(contents)} ]])
+    end)
   end)
 
   describe('lsp.util.trim.trim_empty_lines', function()
