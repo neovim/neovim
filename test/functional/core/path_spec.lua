@@ -82,10 +82,20 @@ describe('expand wildcard', function()
   end)
 end)
 
-describe('file search (gf, <cfile>)', function()
+describe('file search', function()
+  local testdir = 'Xtest_path_spec'
+
   before_each(clear)
 
-  it('find multibyte file name in line #20517', function()
+  setup(function()
+    mkdir(testdir)
+  end)
+
+  teardown(function()
+    rmdir(testdir)
+  end)
+
+  it('gf finds multibyte filename in line #20517', function()
     command('cd test/functional/fixtures')
     insert('filename_with_unicode_ααα')
     eq('', eval('expand("%")'))
@@ -93,7 +103,7 @@ describe('file search (gf, <cfile>)', function()
     eq('filename_with_unicode_ααα', eval('expand("%:t")'))
   end)
 
-  it('matches Windows drive-letter filepaths (without ":" in &isfname)', function()
+  it('gf/<cfile> matches Windows drive-letter filepaths (without ":" in &isfname)', function()
     local iswin = is_os('win')
     local function test_cfile(input, expected, expected_win)
       expected = (iswin and expected_win or expected) or input
@@ -130,41 +140,29 @@ describe('file search (gf, <cfile>)', function()
     test_cfile([[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]], [[.]], [[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]])
     test_cfile([[\\127.0.0.1\c$\temp\test-file.txt]], [[127.0.0.1]], [[\\127.0.0.1\c$\temp\test-file.txt]])
   end)
-end)
 
-describe('file search with vim functions', function()
-  local test_folder = "path_spec_folder"
-
-  setup(function()
-    mkdir(test_folder)
-  end)
-
-  teardown(function()
-    rmdir(test_folder)
-  end)
-
-  ---@param option "dir" | "file"
-  local function test_find_func(option, folder, item)
-    local folder_path = join_path(test_folder, folder)
-    mkdir(folder_path)
-    local expected = join_path(folder_path, item)
-    if option == "dir" then
+  ---@param funcname 'finddir' | 'findfile'
+  local function test_find_func(funcname, folder, item)
+    local d = join_path(testdir, folder)
+    mkdir(d)
+    local expected = join_path(d, item)
+    if funcname == 'finddir' then
       mkdir(expected)
     else
       write_file(expected, '')
     end
-    eq(expected, funcs['find' .. option](item, folder_path:gsub(' ', [[\ ]])))
+    eq(expected, funcs[funcname](item, d:gsub(' ', [[\ ]])))
   end
 
   it('finddir()', function()
-    test_find_func('dir', 'directory', 'folder')
-    test_find_func('dir', 'directory', 'folder name')
-    test_find_func('dir', 'fold#er name', 'directory')
+    test_find_func('finddir', 'directory', 'folder')
+    test_find_func('finddir', 'directory', 'folder name')
+    test_find_func('finddir', 'fold#er name', 'directory')
   end)
 
   it('findfile()', function()
-    test_find_func('file', 'directory', 'file.txt')
-    test_find_func('file', 'directory', 'file name.txt')
-    test_find_func('file', 'fold#er name', 'file.txt')
+    test_find_func('findfile', 'directory', 'file.txt')
+    test_find_func('findfile', 'directory', 'file name.txt')
+    test_find_func('findfile', 'fold#er name', 'file.txt')
   end)
 end)
