@@ -8106,7 +8106,7 @@ void ex_execute(exarg_T *eap)
       // We don't want to abort following commands, restore did_emsg.
       int save_did_emsg = did_emsg;
       msg_ext_set_kind("echoerr");
-      emsg(ga.ga_data);
+      emsg_multiline(ga.ga_data, true);
       if (!force_abort) {
         did_emsg = save_did_emsg;
       }
