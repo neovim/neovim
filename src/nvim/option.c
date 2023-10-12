@@ -1099,99 +1099,27 @@ static char *stropt_get_newval(int nextchar, int opt_idx, char **argp, void *var
 }
 
 /// Part of do_set() for string options.
-static void do_set_option_string(int opt_idx, int opt_flags, char **argp, int nextchar,
-                                 set_op_T op_arg, uint32_t flags, void *varp_arg, char *errbuf,
+static void do_set_option_string(const int opt_idx, const int opt_flags, char **argp, int nextchar,
+                                 set_op_T op, const uint32_t flags, void *varp, char *errbuf,
                                  size_t errbuflen, bool *value_checked, const char **errmsg)
 {
   vimoption_T *opt = get_option(opt_idx);
-
-  set_op_T op = op_arg;
-  void *varp = varp_arg;
-  char *origval_l = NULL;
-  char *origval_g = NULL;
-
-  // When using ":set opt=val" for a global option
-  // with a local value the local value will be
-  // reset, use the global value here.
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
-      && ((int)opt->indir & PV_BOTH)) {
-    varp = opt->var;
-  }
-
-  // The old value is kept until we are sure that the new value is valid.
-  char *oldval = *(char **)varp;
-
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    origval_l = *(char **)get_varp_scope(opt, OPT_LOCAL);
-    origval_g = *(char **)get_varp_scope(opt, OPT_GLOBAL);
-
-    // A global-local string option might have an empty option as value to
-    // indicate that the global value should be used.
-    if (((int)opt->indir & PV_BOTH) && origval_l == empty_option) {
-      origval_l = origval_g;
-    }
-  }
-
   char *origval;
   // When setting the local value of a global option, the old value may be
   // the global value.
   if (((int)opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL)) {
     origval = *(char **)get_varp(opt);
   } else {
-    origval = oldval;
+    origval = *(char **)varp;
   }
 
   // Get the new value for the option
   char *newval = stropt_get_newval(nextchar, opt_idx, argp, varp, origval, &op, flags);
+  *errmsg = set_string_option(opt_idx, varp, newval, opt_flags, op == OP_NONE, value_checked,
+                              errbuf, errbuflen);
 
-  // Set the new value.
-  *(char **)(varp) = newval != NULL ? newval : empty_option;
-
-  // origval may be freed by did_set_string_option(), make a copy.
-  char *const saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
-  char *const saved_origval_l = (origval_l != NULL) ? xstrdup(origval_l) : NULL;
-  char *const saved_origval_g = (origval_g != NULL) ? xstrdup(origval_g) : NULL;
-
-  // newval (and varp) may become invalid if the buffer is closed by
-  // autocommands.
-  char *const saved_newval = (newval != NULL) ? xstrdup(newval) : NULL;
-
-  uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
-  const int secure_saved = secure;
-
-  // When an option is set in the sandbox, from a modeline or in secure
-  // mode, then deal with side effects in secure mode.  Also when the
-  // value was set with the P_INSECURE flag and is not completely
-  // replaced.
-  if ((opt_flags & OPT_MODELINE)
-      || sandbox != 0
-      || (op != OP_NONE && (*p & P_INSECURE))) {
-    secure = 1;
-  }
-
-  // Handle side effects, and set the global value for ":set" on local
-  // options. Note: when setting 'syntax' or 'filetype' autocommands may
-  // be triggered that can cause havoc.
-  *errmsg = did_set_string_option(curbuf, curwin, opt_idx, (char **)varp, oldval,
-                                  errbuf, errbuflen, opt_flags, value_checked);
-
-  secure = secure_saved;
-
-  // call autocommand after handling side effects
-  if (*errmsg == NULL) {
-    if (!starting) {
-      trigger_optionset_string(opt_idx, opt_flags, saved_origval, saved_origval_l,
-                               saved_origval_g, saved_newval);
-    }
-    if (options[opt_idx].flags & P_UI_OPTION) {
-      ui_call_option_set(cstr_as_string(opt->fullname),
-                         CSTR_AS_OBJ(saved_newval));
-    }
-  }
-  xfree(saved_origval);
-  xfree(saved_origval_l);
-  xfree(saved_origval_g);
-  xfree(saved_newval);
+  // `set_string_option` duplicates the value, so we need to free newval
+  xfree(newval);
 }
 
 static set_op_T get_op(const char *arg)
@@ -1830,7 +1758,7 @@ int was_set_insecurely(win_T *const wp, char *opt, int opt_flags)
 /// "opt_idx".  For some local options a local flags field is used.
 /// NOTE: Caller must make sure that "wp" is set to the window from which
 /// the option is used.
-static uint32_t *insecure_flag(win_T *const wp, int opt_idx, int opt_flags)
+uint32_t *insecure_flag(win_T *const wp, int opt_idx, int opt_flags)
 {
   if (opt_flags & OPT_LOCAL) {
     assert(wp != NULL);
@@ -3689,8 +3617,8 @@ static const char *set_option(int opt_idx, void *varp, OptVal value, int opt_fla
 
   // TODO(famiu): Unify set_string_option with set_option.
   if (value.type == kOptValTypeString) {
-    errmsg = set_string_option(opt_idx, varp, value.data.string.data, opt_flags, &value_checked,
-                               errbuf, errbuflen);
+    errmsg = set_string_option(opt_idx, varp, value.data.string.data, opt_flags, true,
+                               &value_checked, errbuf, errbuflen);
     goto end;
   }
 

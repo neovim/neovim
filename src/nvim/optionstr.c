@@ -442,7 +442,8 @@ void set_string_option_direct_in_buf(buf_T *buf, const char *name, int opt_idx, 
 ///
 /// @return NULL on success, an untranslated error message on error.
 const char *set_string_option(const int opt_idx, void *varp, const char *value, const int opt_flags,
-                              bool *value_checked, char *const errbuf, const size_t errbuflen)
+                              const bool new_value, bool *value_checked, char *const errbuf,
+                              const size_t errbuflen)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   vimoption_T *opt = get_option(opt_idx);
@@ -492,13 +493,12 @@ const char *set_string_option(const int opt_idx, void *varp, const char *value, 
   char *const saved_newval = xstrdup(*(char **)varp);
 
   const int secure_saved = secure;
+  const uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
 
-  // When an option is set in the sandbox, from a modeline or in secure
-  // mode, then deal with side effects in secure mode.  Also when the
-  // value was set with the P_INSECURE flag and is not completely
-  // replaced.
-  if ((opt_flags & OPT_MODELINE)
-      || sandbox != 0) {
+  // When an option is set in the sandbox, from a modeline or in secure mode, then deal with side
+  // effects in secure mode. Also when the value was set with the P_INSECURE flag and is not
+  // completely replaced.
+  if ((opt_flags & OPT_MODELINE) || sandbox != 0 || (!new_value && (*p & P_INSECURE))) {
     secure = 1;
   }
 
