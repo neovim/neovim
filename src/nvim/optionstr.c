@@ -1171,7 +1171,7 @@ const char *did_set_complete(optset_T *args)
     if (!*s) {
       break;
     }
-    if (vim_strchr(".wbuksid]tU", (uint8_t)(*s)) == NULL) {
+    if (vim_strchr(".wbuksid]tUf", (uint8_t)(*s)) == NULL) {
       return illegal_char(args->os_errbuf, args->os_errbuflen, (uint8_t)(*s));
     }
     if (*++s != NUL && *s != ',' && *s != ' ') {
@@ -1200,7 +1200,7 @@ const char *did_set_complete(optset_T *args)
 int expand_set_complete(optexpand_T *args, int *numMatches, char ***matches)
 {
   static char *(p_cpt_values[]) = {
-    ".", "w", "b", "u", "k", "kspell", "s", "i", "d", "]", "t", "U", NULL
+    ".", "w", "b", "u", "k", "kspell", "s", "i", "d", "]", "t", "U", "f", NULL
   };
   return expand_set_opt_string(args,
                                p_cpt_values,

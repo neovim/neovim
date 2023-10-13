@@ -91,6 +91,7 @@ enum {
   CTRL_X_LOCAL_MSG = 15,       ///< only used in "ctrl_x_msgs"
   CTRL_X_EVAL = 16,            ///< for builtin function complete()
   CTRL_X_CMDLINE_CTRL_X = 17,  ///< CTRL-X typed in CTRL_X_CMDLINE
+  CTRL_X_BUFNAMES = 18,
 };
 
 #define CTRL_X_MSG(i) ctrl_x_msgs[(i) & ~CTRL_X_WANT_IDENT]
@@ -535,6 +536,8 @@ bool vim_is_ctrl_x_key(int c)
   case CTRL_X_SPELL:
     return c == Ctrl_S || c == Ctrl_P || c == Ctrl_N;
   case CTRL_X_EVAL:
+    return (c == Ctrl_P || c == Ctrl_N);
+  case CTRL_X_BUFNAMES:
     return (c == Ctrl_P || c == Ctrl_N);
   }
   internal_error("vim_is_ctrl_x_key()");
@@ -2917,6 +2920,8 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       compl_type = CTRL_X_PATH_PATTERNS;
     } else if (*st->e_cpt == 'd') {
       compl_type = CTRL_X_PATH_DEFINES;
+    } else if (*st->e_cpt == 'f') {
+      compl_type = CTRL_X_BUFNAMES;
     } else if (*st->e_cpt == ']' || *st->e_cpt == 't') {
       compl_type = CTRL_X_TAGS;
       if (!shortmess(SHM_COMPLETIONSCAN)) {
@@ -3274,6 +3279,9 @@ static bool get_next_completion_match(int type, ins_compl_next_state_T *st, pos_
   case CTRL_X_SPELL:
     get_next_spell_completion(st->first_match_pos.lnum);
     break;
+  case CTRL_X_BUFNAMES:
+    get_next_bufname_token();
+    break;
 
   default:            // normal ^P/^N and ^X^L
     found_new_match = get_next_default_completion(st, ini);
@@ -3289,6 +3297,33 @@ static bool get_next_completion_match(int type, ins_compl_next_state_T *st, pos_
   }
 
   return found_new_match;
+}
+
+static void get_next_bufname_token(void)
+{
+  FOR_ALL_BUFFERS(b) {
+    if (b->b_p_bl) {
+      char *start = get_past_head(b->b_sfname);
+      char *current = start;
+      char *p = (char *)path_next_component(start);
+      while (true) {
+        int len = (int)(p - current) - (*p == NUL ? 0 : 1);
+        // treat . as a separator, unless it is the first char in a filename
+        char *dot = strchr(current, '.');
+        if (dot && *p == NUL && *current != '.') {
+          len = (int)(dot - current);
+          p = dot + 1;
+        }
+        ins_compl_add(current, len, NULL, NULL, false, NULL, 0,
+                      p_ic ? CP_ICASE : 0, false);
+        if (*p == NUL) {
+          break;
+        }
+        current = p;
+        p = (char *)path_next_component(p);
+      }
+    }
+  }
 }
 
 /// Get the next expansion(s), using "compl_pattern".

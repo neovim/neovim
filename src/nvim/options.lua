@@ -1370,6 +1370,7 @@ return {
         	|i_CTRL-X_CTRL-D|
         ]	tag completion
         t	same as "]"
+        f	scan the buffer names (as opposed to buffer contents)
 
         Unloaded buffers are not loaded, thus their autocmds |:autocmd| are
         not executed, this may lead to unexpected completions from some files
