@@ -481,11 +481,8 @@ void grid_line_flush(void)
     return;
   }
 
-  int row = grid_line_row;
-
-  bool invalid_row = grid != &default_grid && grid_invalid_row(grid, row) && grid_line_first == 0;
-  grid_put_linebuf(grid, row, grid_line_coloff, grid_line_first, grid_line_last, grid_line_last,
-                   false, 0, false, invalid_row);
+  grid_put_linebuf(grid, grid_line_row, grid_line_coloff, grid_line_first, grid_line_last,
+                   grid_line_last, false, 0, false);
 }
 
 /// flush grid line but only if on a valid row
@@ -620,7 +617,7 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int col, size_t off_to, int 
 /// If "wrap" is true, then hint to the UI that "row" contains a line
 /// which has wrapped into the next row.
 void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol, int clear_width,
-                      bool rl, int bg_attr, bool wrap, bool invalid_row)
+                      bool rl, int bg_attr, bool wrap)
 {
   bool redraw_next;                         // redraw_this for next character
   bool clear_next = false;
@@ -639,6 +636,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
     return;
   }
 
+  bool invalid_row = grid != &default_grid && grid_invalid_row(grid, row) && col == 0;
   size_t off_to = grid->line_offset[row] + (size_t)coloff;
   const size_t max_off_to = grid->line_offset[row] + (size_t)grid->cols;
 

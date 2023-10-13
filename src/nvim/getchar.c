@@ -2861,8 +2861,10 @@ int inchar(uint8_t *buf, int maxlen, long wait_time)
     }
 
     // Always flush the output characters when getting input characters
-    // from the user.
-    ui_flush();
+    // from the user and not just peeking.
+    if (wait_time == -1L || wait_time > 10L) {
+      ui_flush();
+    }
 
     // Fill up to a third of the buffer, because each character may be
     // tripled below.

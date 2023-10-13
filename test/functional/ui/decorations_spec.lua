@@ -1775,30 +1775,36 @@ describe('extmark decorations', function()
     ]])
 
     -- When only one highlight group has an underline attribute, it should always take effect.
-    meths.buf_clear_namespace(0, ns, 0, -1)
-    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUL', priority = 20 })
-    meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestBold', priority = 30 })
-    screen:expect([[
-      {1:aaa}{5:bbb}{1:aa^a}                                         |
-      {0:~                                                 }|
-                                                        |
-    ]])
-    meths.buf_clear_namespace(0, ns, 0, -1)
-    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUL', priority = 30 })
-    meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestBold', priority = 20 })
-    screen:expect_unchanged(true)
-    meths.buf_clear_namespace(0, ns, 0, -1)
-    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUC', priority = 20 })
-    meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestBold', priority = 30 })
-    screen:expect([[
-      {2:aaa}{6:bbb}{2:aa^a}                                         |
-      {0:~                                                 }|
-                                                        |
-    ]])
-    meths.buf_clear_namespace(0, ns, 0, -1)
-    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUC', priority = 30 })
-    meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestBold', priority = 20 })
-    screen:expect_unchanged(true)
+    for _, d in ipairs({-5, 5}) do
+      meths.buf_clear_namespace(0, ns, 0, -1)
+      screen:expect([[
+        aaabbbaa^a                                         |
+        {0:~                                                 }|
+                                                          |
+      ]])
+      meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUL', priority = 25 + d })
+      meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestBold', priority = 25 - d })
+      screen:expect([[
+        {1:aaa}{5:bbb}{1:aa^a}                                         |
+        {0:~                                                 }|
+                                                          |
+      ]])
+    end
+    for _, d in ipairs({-5, 5}) do
+      meths.buf_clear_namespace(0, ns, 0, -1)
+      screen:expect([[
+        aaabbbaa^a                                         |
+        {0:~                                                 }|
+                                                          |
+      ]])
+      meths.buf_set_extmark(0, ns, 0, 0, { end_col = 9, hl_group = 'TestUC', priority = 25 + d })
+      meths.buf_set_extmark(0, ns, 0, 3, { end_col = 6, hl_group = 'TestBold', priority = 25 - d })
+      screen:expect([[
+        {2:aaa}{6:bbb}{2:aa^a}                                         |
+        {0:~                                                 }|
+                                                          |
+      ]])
+    end
   end)
 
   it('highlight is combined with syntax and sign linehl #20004', function()

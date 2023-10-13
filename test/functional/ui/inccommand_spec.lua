@@ -2929,7 +2929,16 @@ it(':substitute with inccommand, allows :redraw before first separator is typed 
   meths.open_win(float_buf, false, {
     relative = 'editor', height = 1, width = 5, row = 3, col = 0, focusable = false,
   })
-  feed(':%s')
+  feed(':')
+  screen:expect([[
+    foo bar baz                   |
+    bar baz fox                   |
+    bar foo baz                   |
+    {16:     }{15:                         }|
+    {15:~                             }|
+    :^                             |
+  ]])
+  feed('%s')
   screen:expect([[
     foo bar baz                   |
     bar baz fox                   |
