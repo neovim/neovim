@@ -192,4 +192,38 @@ describe('insert-mode', function()
     feed('i<C-S-V><C-J><C-S-V><C-@><C-S-V><C-[><C-S-V><C-S-M><C-S-V><M-C-I><C-S-V><C-D-J><Esc>')
     expect('<C-J><C-@><C-[><C-S-M><M-C-I><C-D-J>')
   end)
+
+  it('multi-char mapping updates screen properly #25626', function()
+    local screen = Screen.new(60, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue};  -- NonText
+      [1] = {bold = true, reverse = true};  -- StatusLine
+      [2] = {reverse = true};  -- StatusLineNC
+      [3] = {bold = true};  -- ModeMsg
+    })
+    screen:attach()
+    command('vnew')
+    insert('foo\nfoo\nfoo')
+    command('wincmd w')
+    command('set timeoutlen=10000')
+    command('inoremap jk <Esc>')
+    feed('i<CR>βββ<Left><Left>j')
+    screen:expect{grid=[[
+      foo                           │                             |
+      foo                           │β^jβ                          |
+      foo                           │{0:~                            }|
+      {0:~                             }│{0:~                            }|
+      {2:[No Name] [+]                  }{1:[No Name] [+]                }|
+      {3:-- INSERT --}                                                |
+    ]]}
+    feed('k')
+    screen:expect{grid=[[
+      foo                           │                             |
+      foo                           │^βββ                          |
+      foo                           │{0:~                            }|
+      {0:~                             }│{0:~                            }|
+      {2:[No Name] [+]                  }{1:[No Name] [+]                }|
+                                                                  |
+    ]]}
+  end)
 end)
