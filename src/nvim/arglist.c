@@ -140,7 +140,7 @@ void alist_expand(int *fnum_list, int fnum_len)
   // Don't use 'suffixes' here.  This should work like the shell did the
   // expansion.  Also, the vimrc file isn't read yet, thus the user
   // can't set the options.
-  p_su = empty_option;
+  p_su = empty_string_option;
   for (int i = 0; i < GARGCOUNT; i++) {
     old_arg_files[i] = xstrdup(GARGLIST[i].ae_fname);
   }

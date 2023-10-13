@@ -287,29 +287,28 @@ void check_buf_options(buf_T *buf)
 }
 
 /// Free the string allocated for an option.
-/// Checks for the string being empty_option. This may happen if we're out of
-/// memory, xstrdup() returned NULL, which was replaced by empty_option by
-/// check_options().
+/// Checks for the string being empty_string_option. This may happen if we're out of memory,
+/// xstrdup() returned NULL, which was replaced by empty_string_option by check_options().
 /// Does NOT check for P_ALLOCED flag!
 void free_string_option(char *p)
 {
-  if (p != empty_option) {
+  if (p != empty_string_option) {
     xfree(p);
   }
 }
 
 void clear_string_option(char **pp)
 {
-  if (*pp != empty_option) {
+  if (*pp != empty_string_option) {
     xfree(*pp);
   }
-  *pp = empty_option;
+  *pp = empty_string_option;
 }
 
 void check_string_option(char **pp)
 {
   if (*pp == NULL) {
-    *pp = empty_option;
+    *pp = empty_string_option;
   }
 }
 
@@ -385,7 +384,7 @@ void set_string_option_direct(const char *name, int opt_idx, const char *val, in
     // make the local value empty, so that the global value is used.
     if ((opt->indir & PV_BOTH) && both) {
       free_string_option(*varp);
-      *varp = empty_option;
+      *varp = empty_string_option;
     }
     if (set_sid != SID_NONE) {
       sctx_T script_ctx;
@@ -468,7 +467,7 @@ const char *set_string_option(const int opt_idx, void *varp, const char *value, 
 
     // A global-local string option might have an empty option as value to
     // indicate that the global value should be used.
-    if (((int)opt->indir & PV_BOTH) && origval_l == empty_option) {
+    if (((int)opt->indir & PV_BOTH) && origval_l == empty_string_option) {
       origval_l = origval_g;
     }
   }
@@ -482,7 +481,7 @@ const char *set_string_option(const int opt_idx, void *varp, const char *value, 
     origval = oldval;
   }
 
-  *(char **)varp = xstrdup(value != NULL ? value : empty_option);
+  *(char **)varp = xstrdup(value != NULL ? value : empty_string_option);
 
   char *const saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
   char *const saved_oldval_l = (origval_l != NULL) ? xstrdup(origval_l) : 0;
@@ -2814,7 +2813,7 @@ const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **va
       // the local value and make it empty
       char *p = get_varp_scope(opt, OPT_LOCAL);
       free_string_option(*(char **)p);
-      *(char **)p = empty_option;
+      *(char **)p = empty_string_option;
     } else if (!(opt_flags & OPT_LOCAL) && opt_flags != OPT_GLOBAL) {
       // May set global value for local option.
       set_string_option_global(opt, varp);
