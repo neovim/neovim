@@ -108,7 +108,7 @@ local G = P({
       V('any') +
       (Ct(Cg((text(escapable, '$') ^ 1) / escape_text(), 'text')) / node(Type.Text))
     ) ^ 1), 'children'
-  )) / node(Type.Snippet),
+  ) * -P(1)) / node(Type.Snippet),
   any = V('placeholder') + V('tabstop') + V('choice') + V('variable'),
   any_or_text = V('any') + (Ct(Cg(braced_text, 'text')) / node(Type.Text)),
   tabstop = Ct(dollar * (tabstop + (l_brace * tabstop * r_brace))) / node(Type.Tabstop),
