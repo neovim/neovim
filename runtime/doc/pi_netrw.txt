@@ -1809,7 +1809,7 @@ for local files.
 
 EDIT FILE OR DIRECTORY HIDING LIST	*netrw-ctrl-h* *netrw-edithide* {{{2
 
-The "<ctrl-h>" map brings up a requestor allowing the user to change the
+The "<ctrl-h>" map brings up a requester allowing the user to change the
 file/directory hiding list contained in |g:netrw_list_hide|.  The hiding list
 consists of one or more patterns delimited by commas.  Files and/or
 directories satisfying these patterns will either be hidden (ie. not shown) or
@@ -2932,7 +2932,7 @@ your browsing preferences.  (see also: |netrw-settings|)
 				 default: "NETRWSERVER"
 
   *g:netrw_sort_by*		sort by "name", "time", "size", or
-				"exten".
+				"extent".
 				 default: "name"
 
   *g:netrw_sort_direction*	sorting direction: "normal" or "reverse"
