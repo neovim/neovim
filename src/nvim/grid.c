@@ -352,6 +352,7 @@ void grid_line_start(ScreenGrid *grid, int row)
 schar_T grid_line_getchar(int col, int *attr)
 {
   if (col < grid_line_maxcol) {
+    col += grid_line_coloff;
     size_t off = grid_line_grid->line_offset[grid_line_row] + (size_t)col;
     if (attr != NULL) {
       *attr = grid_line_grid->attrs[off];
