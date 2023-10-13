@@ -13,7 +13,7 @@ local write_file = helpers.write_file
 
 local function join_path(...)
   local pathsep = (is_os('win') and '\\' or '/')
-  return table.concat({...}, pathsep)
+  return table.concat({ ... }, pathsep)
 end
 
 describe('path collapse', function()
@@ -101,6 +101,31 @@ describe('file search', function()
     eq('', eval('expand("%")'))
     feed('gf')
     eq('filename_with_unicode_ααα', eval('expand("%:t")'))
+  end)
+
+  it('finds "file:[/|///]" URI on the local filesystem #24032', function()
+    local iswin = is_os('win')
+    local function test_gf(input, expected_default, expected_win)
+      local expected = (iswin and expected_win or expected_default)
+      command('%delete')
+      insert(input)
+      command('norm! 0')
+      feed('gf')
+      eq(expected, eval('expand("%:p")'))
+    end
+
+    test_gf("file:/a", "/a")
+    test_gf("file:/foo/bar/slash.txt", "/foo/bar/slash.txt")
+    test_gf("file:///foo/bar/3slashes.txt", "///foo/bar/3slashes.txt")
+    test_gf("file:/c:/test/window/slash.txt", "/c:/test/window/slash.txt")
+    test_gf("file:///c:/test/window/3slash.txt", "///c:/test/window/3slash.txt")
+    -- Test out window cases.
+    test_gf("file:///c%3A/test%20with%20%25/path", "///c%3A/test%20with%20%25/path", [[c:\test with %\path]])
+    test_gf("file:///c%3A/documents%20and%24zero%/", "///c%3A/documents%20and%24zero%/", [[c:/documents and$zero$]])
+
+    test_gf("http://foo/bar/file:/with/url", "http://foo/bar/file:/with/url")
+    test_gf("file://host/foo/bar/2slashes.txt", "file://host/foo/bar/2slashes.txt")
+    test_gf("file://host/c:/2slashes.txt", "file://host/c:/2slashes.txt")
   end)
 
   it('gf/<cfile> matches Windows drive-letter filepaths (without ":" in &isfname)', function()

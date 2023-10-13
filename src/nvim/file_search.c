@@ -1396,7 +1396,10 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
     // filename on the first call.
     if (first == true) {
       if (path_with_url(*file_to_find)) {
-        file_name = xstrdup(*file_to_find);
+        file_name =
+          strncmp(*file_to_find, "file:/", 6) == 0 ?
+          xstrdup(handle_file_path_prefix(*file_to_find)) :
+          xstrdup(*file_to_find);
         goto theend;
       }
 

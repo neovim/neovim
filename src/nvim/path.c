@@ -2467,3 +2467,73 @@ void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
     xstrlcpy(buf, argv0, bufsize);
   }
 }
+
+/// Handles file path that starts with `file:[/|///]`
+///
+/// One and three slashes mean that file location is localhost/local.
+/// Example:
+/// - file:/path/to/file refers to /path/to/file
+/// - file:///path/to/file refers to /path/to/file (host is omitted)
+/// But, with two slashes, it refers to a file location on a host machine.
+/// - file://host/path/to/file
+/// Example:
+/// - file://localhost/path/to/file refers to /path/to/file locally
+/// When encountering two slashes, don't alter file_path.
+///
+/// Reference:
+/// https://en.wikipedia.org/wiki/File_URI_scheme#Number_of_slash_characters
+///
+/// @param[in]  file_path     Full name of file path starts with "file:/"
+///
+/// @return either truncated version of file path or its input.
+char *handle_file_path_prefix(char *file_path)
+{
+  const char *reader = file_path + 5;  // file: <- start there
+  int slash_count = 0;
+  while (reader[0] == '/') {
+    slash_count += 1;
+    reader += 1;
+  }
+  if (slash_count == 1 || slash_count == 3) {
+#ifdef MSWIN
+    return decode_window_filepath(file_path, slash_count);
+#else
+    return strchr(file_path, '/');
+#endif
+  }
+  return file_path;
+}
+
+/// Decode hexcode that could be part of file path.
+///
+/// Convert hex code, such as "%3A" into ":"
+/// Example: 'file:///C%3A/My%20Docuemnts' -> 'file:///C:/My Documents'
+///
+/// @param[in]  file_path     Full name of file path starts with "file:/"
+/// @param[in]  slash_count   count of slashes after "file"
+///
+/// @return either truncated version of file path or its input.
+char *decode_window_filepath(char *file_path, int slash_count)
+{
+  char *buf = xmalloc(MAXPATHL);
+  char *starting_point = file_path + 5 + slash_count;
+  int buf_counter = 0;
+  for (char *ptr = starting_point; ptr != NULL; ptr++) {
+    if (ptr[0] == '%'
+        && (('0' <= ptr[1] && ptr[1] <= '9') || ('A' <= ptr[1] && ptr[1] <= 'F'))
+        && (('0' <= ptr[2] && ptr[2] <= '9') || ('A' <= ptr[2] && ptr[2] <= 'F'))) {
+      // Deal with hex code
+      char hex_code[2] = { ptr[1], ptr[2] };
+      buf[buf_counter] = (char)strtol(hex_code, NULL, 16);
+      ptr += 3;
+    } else {
+      // Copy the character
+      buf[buf_counter] = ptr[0];
+    }
+    buf_counter += 1;
+  }
+
+  xstrlcpy(file_path, buf, (unsigned long)buf_counter);  // truncate
+
+  return file_path;
+}
