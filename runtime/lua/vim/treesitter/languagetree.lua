@@ -266,7 +266,7 @@ function LanguageTree:parse()
           tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
 
         -- Pass ranges if this is an initial parse
-        local cb_changes = self._trees[i] and tree_changes or ranges
+        local cb_changes = self._trees[i] and tree_changes or tree:included_ranges(true)
 
         self:_do_callback('changedtree', cb_changes, tree)
         self._trees[i] = tree
