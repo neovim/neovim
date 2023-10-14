@@ -1629,6 +1629,7 @@ local pattern = {
   ['.*/debian/copyright'] = 'debcopyright',
   ['.*/etc/apt/sources%.list%.d/.*%.list'] = 'debsources',
   ['.*/etc/apt/sources%.list'] = 'debsources',
+  ['.*/etc/apt/sources%.list%.d/.*%.sources'] = 'deb822sources',
   ['.*%.directory'] = 'desktop',
   ['.*%.desktop'] = 'desktop',
   ['dictd.*%.conf'] = 'dictdconf',
