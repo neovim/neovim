@@ -10,7 +10,7 @@ vim.api.nvim_create_user_command('Man', function(params)
   else
     local ok, err = pcall(man.open_page, params.count, params.smods, params.fargs)
     vim.api.nvim_set_option_value('bufhidden', 'unload', {
-      scope = 'local'
+      scope = 'local',
     })
     if not ok then
       vim.notify(man.errormsg or err, vim.log.levels.ERROR)
