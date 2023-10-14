@@ -444,7 +444,7 @@ The server will typically provide one token per identifier in the source code.
 The token will have a `type` such as "function" or "variable", and 0 or more
 `modifier`s such as "readonly" or "deprecated." The standard types and
 modifiers are described here:
-https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens
+https://microsoft.github.io/language-server-protocol/specification/#textDocument_semanticTokens
 LSP servers may also use off-spec types and modifiers.
 
 The LSP client adds one or more highlights for each token. The highlight
@@ -1232,7 +1232,7 @@ format({options})                                       *vim.lsp.buf.format()*
                    optional fields:
                    • formatting_options (table|nil): Can be used to specify
                      FormattingOptions. Some unspecified options will be
-                     automatically derived from the current Nvim options. See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions
+                     automatically derived from the current Nvim options. See https://microsoft.github.io/language-server-protocol/specification/#formattingOptions
                    • timeout_ms (integer|nil, default 1000): Time in
                      milliseconds to block for formatting requests. No effect
                      if async=true
@@ -1654,7 +1654,7 @@ buf_highlight_references({bufnr}, {references}, {offset_encoding})
       • {offset_encoding}  (string) One of "utf-8", "utf-16", "utf-32".
 
     See also: ~
-      • https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
+      • https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
 
                                              *vim.lsp.util.character_offset()*
 character_offset({buf}, {row}, {col}, {offset_encoding})

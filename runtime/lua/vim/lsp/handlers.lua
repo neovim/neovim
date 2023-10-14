@@ -623,7 +623,7 @@ M[ms.window_showDocument] = function(_, result, ctx, _)
   return { success = success or false }
 end
 
----@see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_inlayHint_refresh
+---@see https://microsoft.github.io/language-server-protocol/specification/#workspace_inlayHint_refresh
 M[ms.workspace_inlayHint_refresh] = function(err, result, ctx, config)
   return require('vim.lsp.inlay_hint').on_refresh(err, result, ctx, config)
 end

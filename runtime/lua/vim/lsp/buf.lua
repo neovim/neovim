@@ -159,7 +159,7 @@ end
 ---     - formatting_options (table|nil):
 ---         Can be used to specify FormattingOptions. Some unspecified options will be
 ---         automatically derived from the current Nvim options.
----         See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions
+---         See https://microsoft.github.io/language-server-protocol/specification/#formattingOptions
 ---     - timeout_ms (integer|nil, default 1000):
 ---         Time in milliseconds to block for formatting requests. No effect if async=true
 ---     - bufnr (number|nil):
