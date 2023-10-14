@@ -3970,8 +3970,8 @@ return {
       cb = 'did_set_ignorecase',
       defaults = { if_true = false },
       desc = [=[
-        Ignore case in search patterns, completion, and when searching the tags file.
-        See also 'smartcase' and 'tagcase'.
+        Ignore case in search patterns, |cmdline-completion|, when
+        searching in the tags file, and |expr-==|.
         Can be overruled by using "\c" or "\C" in the pattern, see
         |/ignorecase|.
       ]=],
@@ -9568,18 +9568,21 @@ return {
         a completion.
 
         While the menu is active these keys have special meanings:
-
-        CTRL-Y		- accept the currently selected match and stop
-        		  completion.
-        CTRL-E		- end completion, go back to what was there before
-        		  selecting a match.
+        CTRL-P		- go to the previous entry
+        CTRL-N		- go to the next entry
         <Left> <Right>	- select previous/next match (like CTRL-P/CTRL-N)
+        <PageUp>	- select a match several entries back
+        <PageDown>	- select a match several entries further
+        <Up>		- in filename/menu name completion: move up into
+        		  parent directory or parent menu.
         <Down>		- in filename/menu name completion: move into a
         		  subdirectory or submenu.
         <CR>		- in menu completion, when the cursor is just after a
         		  dot: move into a submenu.
-        <Up>		- in filename/menu name completion: move up into
-        		  parent directory or parent menu.
+        CTRL-E		- end completion, go back to what was there before
+        		  selecting a match.
+        CTRL-Y		- accept the currently selected match and stop
+        		  completion.
 
         If you want <Left> and <Right> to move the cursor instead of selecting
         a different match, use this: >

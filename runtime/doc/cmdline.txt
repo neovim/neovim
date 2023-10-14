@@ -81,9 +81,11 @@ CTRL-SHIFT-Q	Works just like CTRL-V, but do not try to include the CTRL
 		modifier into the key.
 
 							*c_<Left>* *c_Left*
-<Left>		cursor left
+<Left>		cursor left.  See 'wildmenu' for behavior during wildmenu
+		completion mode.
 							*c_<Right>* *c_Right*
-<Right>		cursor right
+<Right>		cursor right.  See 'wildmenu' for behavior during wildmenu
+		completion mode.
 							*c_<S-Left>*
 <S-Left> or <C-Left>					*c_<C-Left>*
 		cursor one WORD left
@@ -93,7 +95,8 @@ CTRL-SHIFT-Q	Works just like CTRL-V, but do not try to include the CTRL
 CTRL-B or <Home>				*c_CTRL-B* *c_<Home>* *c_Home*
 		cursor to beginning of command-line
 CTRL-E or <End>					*c_CTRL-E* *c_<End>* *c_End*
-		cursor to end of command-line
+		cursor to end of command-line.  See 'wildmenu' for behavior
+		during wildmenu completion mode.
 
 							*c_<LeftMouse>*
 <LeftMouse>	Move the cursor to the position of the mouse click.
@@ -226,6 +229,7 @@ CTRL-\ e {expr}						*c_CTRL-\_e*
 CTRL-Y		When there is a modeless selection, copy the selection into
 		the clipboard.
 		If there is no selection CTRL-Y is inserted as a character.
+		See 'wildmenu' for behavior during wildmenu completion mode.
 
 							*c_CTRL-Z*
 CTRL-Z		Trigger 'wildmode'. Same as 'wildcharm', but always available.
@@ -248,10 +252,12 @@ CTRL-C		quit command-line without executing
 
 							*c_<Up>* *c_Up*
 <Up>		recall older command-line from history, whose beginning
-		matches the current command-line (see below).
+		matches the current command-line (see below).  See 'wildmenu'
+		for behavior during wildmenu completion mode.
 							*c_<Down>* *c_Down*
 <Down>		recall more recent command-line from history, whose beginning
-		matches the current command-line (see below).
+		matches the current command-line (see below).  See 'wildmenu'
+		for behavior during wildmenu completion mode.
 
 							*c_<S-Up>* *c_<PageUp>*
 <S-Up> or <PageUp>
@@ -439,10 +445,15 @@ When repeating 'wildchar' or CTRL-N you cycle through the matches, eventually
 ending up back to what was typed.  If the first match is not what you wanted,
 you can use <S-Tab> or CTRL-P to go straight back to what you typed.
 
-The 'wildignorecase' option can be set to ignore case in filenames.
-
 The 'wildmenu' option can be set to show the matches just above the command
 line.
+
+The 'wildoptions' option provides additional configuration to use a popup menu
+for 'wildmenu', and to use fuzzy matching.
+
+The 'wildignorecase' option can be set to ignore case in filenames.  For
+completing other texts (e.g. command names), the 'ignorecase' option is used
+instead (fuzzy matching always ignores case, however).
 
 If you like tcsh's autolist completion, you can use this mapping:
 	:cnoremap X <C-L><C-D>

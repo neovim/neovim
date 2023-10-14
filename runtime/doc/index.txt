@@ -1096,6 +1096,22 @@ tag		command		action in Command-line editing mode	~
 |c_<Insert>|	<Insert>	toggle insert/overstrike mode
 |c_<LeftMouse>|	<LeftMouse>	cursor at mouse click
 
+commands in wildmenu mode (see 'wildmenu')
+
+		<Up>		move up to parent
+		<Down>		move down to submenu
+		<Left>		select the previous match
+		<Right>		select the next match
+		<CR>		move into submenu when doing menu completion
+		CTRL-E		stop completion and go back to original text
+		CTRL-Y		accept selected match and stop completion
+		other		stop completion and insert the typed character
+
+commands in wildmenu mode with 'wildoptions' set to "pum"
+
+		<PageUp>	select a match several entries back
+		<PageDown>	select a match several entries forward
+
 ==============================================================================
 5. Terminal mode				*terminal-mode-index*
 
