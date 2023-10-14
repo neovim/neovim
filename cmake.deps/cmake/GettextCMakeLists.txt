@@ -51,11 +51,9 @@ add_definitions(-DLOCALEDIR=\"${LOCALDIR}\"
 
 set(libintl_SOURCES
   bindtextdom.c dcgettext.c dcigettext.c dcngettext.c dgettext.c dngettext.c
-  explodename.c finddomain.c gettext.c hash-string.c intl-compat.c l10nflist.c
-  langprefs.c loadmsgcat.c localcharset.c localealias.c localename-table.c
-  localename.c lock.c log.c ngettext.c osdep.c
-  plural-exp.c plural.c printf.c relocatable.c setlocale.c textdomain.c
-  threadlib.c version.c xsize.c)
+  explodename.c finddomain.c gettext.c hash-string.c intl-compat.c intl-exports.c l10nflist.c
+  langprefs.c loadmsgcat.c localealias.c log.c ngettext.c os2compat.c osdep.c
+  plural-exp.c plural.c printf.c setlocale.c textdomain.c version.c)
 
 PREFIX_LIST_ITEMS(libintl_SOURCES "gettext-runtime/intl/")
 
@@ -115,7 +113,7 @@ set(libgettextsrc_FORMAT_SOURCE
   format.c format-invalid.h format-c.c format-c-parse.h format-sh.c
   format-python.c format-python-brace.c format-lisp.c format-elisp.c
   format-librep.c format-scheme.c format-java.c format-csharp.c format-awk.c
-  format-pascal.c format-ycp.c format-tcl.c format-perl.c format-perl-brace.c
+  format-pascal.c format-tcl.c format-perl.c format-perl-brace.c
   format-php.c format-gcc-internal.c format-gfc-internal.c format-qt.c
   format-qt-plural.c format-kde.c format-kde-kuit.c format-boost.c format-lua.c
   format-javascript.c)
@@ -137,12 +135,12 @@ set(GLIBC_SOURCE
   fd-safer-flag.c fd-safer.c pipe2.c pipe2-safer.c spawn-pipe.c xmemdup0.c
   secure_getenv.c tmpdir.c tempname.c mkdtemp.c fnmatch.c clean-temp.c
   wait-process.c waitpid.c getdelim.c getline.c sigprocmask.c sigaction.c
-  addext.c argmatch.c backupfile.c basename.c c-strcasecmp.c c-strncasecmp.c
+  addext.c argmatch.c backupfile.c basename-lgpl.c c-strcasecmp.c c-strncasecmp.c
   c-strstr.c closeout.c concat-filename.c error-progname.c error.c exitfail.c
   fstrcmp.c full-write.c fwriteerror.c getopt.c getopt1.c hash.c libxml/buf.c
   localcharset.c malloca.c mbchar.c mbslen.c mbsstr.c mbswidth.c obstack.c
   progname.c printf-args.c printf-parse.c propername.c quotearg.c rawmemchr.c
-  safe-read.c safe-write.c stpcpy.c stpncpy.c strchrnul.c striconv.c
+  safe-read.c safe-write.c stpcpy.c stpncpy.c strchrnul.c striconv.c stripslash.c
   striconveh.c striconveha.c strnlen1.c trim.c gcd.c gl_linkedhash_list.c
   uniconv/u8-conv-from-enc.c unictype/ctype_space.c unilbrk/lbrktables.c
   unilbrk/u8-possible-linebreaks.c unilbrk/u8-width-linebreaks.c
@@ -152,7 +150,7 @@ set(GLIBC_SOURCE
   unistr/u8-mbtouc-unsafe.c unistr/u8-mbtouc.c unistr/u8-mbtoucr.c
   unistr/u8-prev.c unistr/u8-uctomb-aux.c unistr/u8-uctomb.c uniwidth/width.c
   vasnprintf.c vasprintf.c wcwidth.c xasprintf.c xconcat-filename.c xerror.c
-  xmalloc.c xstrdup.c xstriconv.c xstriconveh.c xvasprintf.c
+  xmalloc.c xstriconv.c xstriconveh.c xvasprintf.c
   libxml/DOCBparser.c libxml/HTMLparser.c libxml/HTMLtree.c libxml/SAX.c
   libxml/SAX2.c libxml/c14n.c libxml/catalog.c libxml/chvalid.c
   libxml/debugXML.c libxml/dict.c libxml/encoding.c libxml/entities.c
@@ -176,16 +174,16 @@ PREFIX_LIST_ITEMS(LIBGLIB_SOURCES "libtextstyle/lib/glib/")
 set(LIBTEXTSTYLE_SOURCE
   gl_array_list.h gl_array_list.c binary-io.h
   binary-io.c c-ctype.h c-ctype.c c-strcase.h c-strcasecmp.c
-  c-strncasecmp.c concat-filename.c dirname-lgpl.c
-  basename-lgpl.c stripslash.c exitfail.c fatal-signal.h
+  c-strncasecmp.c concat-filename.c
+  basename-lgpl.c exitfail.c fatal-signal.h
   fatal-signal.c fd-hook.c fd-ostream.c file-ostream.c
   full-write.h full-write.c getprogname.h getprogname.c
-  gettext.h hash.h hash.c html-ostream.c html-styled-ostream.c
+  gettext.h html-ostream.c html-styled-ostream.c
   iconv-ostream.c gl_list.h gl_list.c math.c memory-ostream.c
   minmax.h noop-styled-ostream.c ostream.c safe-read.c
   safe-write.c sig-handler.c size_max.h styled-ostream.c
   term-ostream.c term-style-control.c term-styled-ostream.c
-  unistd.c xalloc.h xmalloc.c xstrdup.c
+  unistd.c xalloc.h xmalloc.c
   xconcat-filename.c gl_xlist.h gl_xlist.c xsize.h xsize.c
   xvasprintf.h xvasprintf.c xasprintf.c color.h color.c misc.h
   misc.c version.c isatty.c fsync.c tparm.c tputs.c)
