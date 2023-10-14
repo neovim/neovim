@@ -1,5 +1,5 @@
 add_library(main_lib INTERFACE)
-add_executable(nvim main.c)
+add_executable(nvim)
 
 set_target_properties(nvim
   PROPERTIES
@@ -20,7 +20,7 @@ if(WIN32)
   target_compile_definitions(nlua0 PUBLIC LUA_BUILD_AS_DLL LUA_LIB)
   set_target_properties(nlua0 PROPERTIES ENABLE_EXPORTS TRUE)
 elseif(APPLE)
-  set_target_properties(nlua0 PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+  target_link_options(nlua0 PRIVATE -undefined dynamic_lookup)
 endif()
 
 find_package(Luv 1.43.0 REQUIRED)
@@ -155,7 +155,7 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   # Actually export symbols - symbols may not be visible even though
   # ENABLE_EXPORTS is set to true. See
   # https://github.com/neovim/neovim/issues/25295
-  set_target_properties(nvim PROPERTIES LINK_FLAGS "-Wl,-export_dynamic")
+  target_link_options(nvim PRIVATE "-Wl,-export_dynamic")
 elseif(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
   target_link_libraries(main_lib INTERFACE pthread c++abi)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
@@ -348,10 +348,10 @@ set(LUA_KEYMAP_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/keymap.lua)
 set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LUAJIT_RUNTIME_DIR ${DEPS_PREFIX}/share/luajit-2.1/jit)
 
-glob_wrapper(UNICODE_FILES ${UNICODE_DIR}/*.txt)
-glob_wrapper(API_HEADERS api/*.h)
+file(GLOB UNICODE_FILES CONFIGURE_DEPENDS ${UNICODE_DIR}/*.txt)
+file(GLOB API_HEADERS CONFIGURE_DEPENDS api/*.h)
 list(REMOVE_ITEM API_HEADERS ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h)
-glob_wrapper(MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
+file(GLOB MSGPACK_RPC_HEADERS CONFIGURE_DEPENDS msgpack_rpc/*.h)
 
 target_include_directories(main_lib INTERFACE ${GENERATED_DIR})
 target_include_directories(main_lib INTERFACE ${CACHED_GENERATED_DIR})
@@ -367,12 +367,12 @@ file(MAKE_DIRECTORY ${TOUCHES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
 
-glob_wrapper(NVIM_SOURCES *.c)
-glob_wrapper(NVIM_HEADERS *.h)
-glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c ../termkey/*.c)
-glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h ../termkey/*.h)
+file(GLOB NVIM_SOURCES CONFIGURE_DEPENDS *.c)
+file(GLOB NVIM_HEADERS CONFIGURE_DEPENDS *.h)
+file(GLOB EXTERNAL_SOURCES CONFIGURE_DEPENDS ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c ../termkey/*.c)
+file(GLOB EXTERNAL_HEADERS CONFIGURE_DEPENDS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h ../termkey/*.h)
 
-glob_wrapper(NLUA0_SOURCES ../mpack/*.c)
+file(GLOB NLUA0_SOURCES CONFIGURE_DEPENDS ../mpack/*.c)
 
 if(PREFER_LUA)
   # luajit not used, use a vendored copy of the bit module
@@ -398,8 +398,8 @@ foreach(subdir
 
   file(MAKE_DIRECTORY ${GENERATED_DIR}/${subdir})
   file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/${subdir})
-  glob_wrapper(sources ${subdir}/*.c)
-  glob_wrapper(headers ${subdir}/*.h)
+  file(GLOB sources CONFIGURE_DEPENDS ${subdir}/*.c)
+  file(GLOB headers CONFIGURE_DEPENDS ${subdir}/*.h)
   list(APPEND NVIM_SOURCES ${sources})
   list(APPEND NVIM_HEADERS ${headers})
 endforeach()
@@ -432,10 +432,10 @@ list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 # xdiff, mpack, lua-cjson, termkey: inlined external project, we don't maintain it. #9306
 if(MSVC)
   set_source_files_properties(
-    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -wd4090 -wd4244 -wd4267")
+    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_OPTIONS "-wd4090;-wd4244;-wd4267")
 else()
   set_source_files_properties(
-    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes -Wno-misleading-indentation -Wno-sign-compare -Wno-implicit-fallthrough -Wno-missing-prototypes -Wno-missing-field-initializers")
+    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_OPTIONS "-Wno-conversion;-Wno-missing-noreturn;-Wno-missing-format-attribute;-Wno-double-promotion;-Wno-strict-prototypes;-Wno-misleading-indentation;-Wno-sign-compare;-Wno-implicit-fallthrough;-Wno-missing-prototypes;-Wno-missing-field-initializers")
 endif()
 
 # Log level (NVIM_LOG_DEBUG in log.h)
@@ -685,7 +685,7 @@ endforeach()
 if(PREFER_LUA)
   message(STATUS "luajit not used, skipping unit tests")
 else()
-  glob_wrapper(UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
+  file(GLOB UNIT_TEST_FIXTURES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
   target_sources(nvim PRIVATE ${UNIT_TEST_FIXTURES})
   target_compile_definitions(nvim PRIVATE UNIT_TESTING)
 endif()
@@ -764,7 +764,7 @@ file(MAKE_DIRECTORY ${BINARY_LIB_DIR})
 
 # install treesitter parser if bundled
 if(EXISTS ${DEPS_PREFIX}/lib/nvim/parser)
-  glob_wrapper(TREESITTER_PARSERS ${DEPS_PREFIX}/lib/nvim/parser/*)
+  file(GLOB TREESITTER_PARSERS CONFIGURE_DEPENDS ${DEPS_PREFIX}/lib/nvim/parser/*)
   foreach(parser_lib ${TREESITTER_PARSERS})
     file(COPY ${parser_lib} DESTINATION ${BINARY_LIB_DIR}/parser)
   endforeach()
@@ -910,9 +910,9 @@ set(VIMDOC_FILES
   ${NVIM_RUNTIME_DIR}/doc/treesitter.txt
 )
 
-glob_wrapper(API_SOURCES ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
+file(GLOB API_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
 
-glob_wrapper(LUA_SOURCES
+file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
   ${NVIM_RUNTIME_DIR}/lua/vim/*.lua
   ${NVIM_RUNTIME_DIR}/lua/vim/filetype/*.lua
   ${NVIM_RUNTIME_DIR}/lua/vim/lsp/*.lua
