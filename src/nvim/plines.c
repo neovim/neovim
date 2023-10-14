@@ -345,7 +345,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   // needs a break here
   if (wp->w_p_lbr && wp->w_p_wrap && wp->w_width_inner != 0) {
     char *t = cts->cts_line;
-    while (vim_isbreak((uint8_t)(*t))) {
+    while (vim_isbreak((uint8_t)t[0])) {
       t++;
     }
     vcol_start = (colnr_T)(t - cts->cts_line);
