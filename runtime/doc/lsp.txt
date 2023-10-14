@@ -1356,8 +1356,8 @@ get_namespace({client_id}, {is_pull})
 
     Parameters: ~
       • {client_id}  (integer) The id of the LSP client
-      • {is_pull}    (boolean) Whether the namespace is for a pull or push
-                     client
+      • {is_pull}    boolean? Whether the namespace is for a pull or push
+                     client. Defaults to push
 
                                           *vim.lsp.diagnostic.on_diagnostic()*
 on_diagnostic({_}, {result}, {ctx}, {config})
