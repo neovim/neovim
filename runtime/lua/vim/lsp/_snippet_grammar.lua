@@ -20,11 +20,15 @@ local format_capture = Cg(int / tonumber, 'capture')
 local format_modifier = Cg(P('upcase') + P('downcase') + P('capitalize'), 'modifier')
 local tabstop = Cg(int / tonumber, 'tabstop')
 
+-- These characters are always escapable in text nodes no matter the context.
+local escapable = '$}\\'
+
 --- Returns a function that unescapes occurrences of "special" characters.
 ---
---- @param special string
+--- @param special? string
 --- @return fun(match: string): string
 local function escape_text(special)
+  special = special or escapable
   return function(match)
     local escaped = match:gsub('\\(.)', function(c)
       return special:find(c) and c or '\\' .. c
@@ -33,25 +37,33 @@ local function escape_text(special)
   end
 end
 
--- Text nodes match "any character", but $, \, and } must be escaped.
-local escapable = '$}\\'
-local text = (backslash * S(escapable)) + (P(1) - S(escapable))
-local text_0, text_1 = (text ^ 0) / escape_text(escapable), text ^ 1
+--- Returns a pattern for text nodes. Will match characters in `escape` when preceded by a backslash,
+--- and will stop with characters in `stop_with`.
+---
+--- @param escape string
+--- @param stop_with? string
+--- @return vim.lpeg.Pattern
+local function text(escape, stop_with)
+  stop_with = stop_with or escape
+  return (backslash * S(escape)) + (P(1) - S(stop_with))
+end
+
+-- For text nodes inside curly braces. It stops parsing when reaching an escapable character.
+local braced_text = (text(escapable) ^ 0) / escape_text()
+
 -- Within choice nodes, \ also escapes comma and pipe characters.
-local choice_text = C(((backslash * S(escapable .. ',|')) + (P(1) - S(escapable .. ',|'))) ^ 1)
-  / escape_text(escapable .. ',|')
-local if_text, else_text = Cg(text_0, 'if_text'), Cg(text_0, 'else_text')
+local choice_text = C(text(escapable .. ',|') ^ 1) / escape_text(escapable .. ',|')
+
 -- Within format nodes, make sure we stop at /
-local format_text = C(((backslash * S(escapable)) + (P(1) - S(escapable .. '/'))) ^ 1)
-  / escape_text(escapable)
+local format_text = C(text(escapable, escapable .. '/') ^ 1) / escape_text()
+
+local if_text, else_text = Cg(braced_text, 'if_text'), Cg(braced_text, 'else_text')
+
 -- Within ternary condition format nodes, make sure we stop at :
-local if_till_colon_text = Cg(
-  C(((backslash * S(escapable)) + (P(1) - S(escapable .. ':'))) ^ 1) / escape_text(escapable),
-  'if_text'
-)
+local if_till_colon_text = Cg(C(text(escapable, escapable .. ':') ^ 1) / escape_text(), 'if_text')
 
 -- Matches the string inside //, allowing escaping of the closing slash.
-local regex = Cg(((backslash * slash) + (P(1) - slash)) ^ 1, 'regex')
+local regex = Cg(text('/') ^ 1, 'regex')
 
 -- Regex constructor flags (see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/RegExp#parameters).
 local options = Cg(S('dgimsuvy') ^ 0, 'options')
@@ -94,11 +106,11 @@ local G = P({
   snippet = Ct(Cg(
     Ct((
       V('any') +
-      (Ct(Cg(text_1 / escape_text(escapable), 'text')) / node(Type.Text))
+      (Ct(Cg((text(escapable, '$') ^ 1) / escape_text(), 'text')) / node(Type.Text))
     ) ^ 1), 'children'
-  )) / node(Type.Snippet),
-  any_or_text = V('any') + (Ct(Cg(text_0 / escape_text(escapable), 'text')) / node(Type.Text)),
+  ) * -P(1)) / node(Type.Snippet),
   any = V('placeholder') + V('tabstop') + V('choice') + V('variable'),
+  any_or_text = V('any') + (Ct(Cg(braced_text, 'text')) / node(Type.Text)),
   tabstop = Ct(dollar * (tabstop + (l_brace * tabstop * r_brace))) / node(Type.Tabstop),
   placeholder = Ct(dollar * l_brace * tabstop * colon * Cg(V('any_or_text'), 'value') * r_brace) / node(Type.Placeholder),
   choice = Ct(dollar *

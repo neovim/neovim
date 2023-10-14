@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local snippet = require('vim.lsp._snippet_grammar')
+local type = snippet.NodeType
 
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
@@ -15,28 +16,28 @@ describe('vim.lsp._snippet_grammar', function()
 
   it('parses only text', function()
     eq({
-      { type = snippet.NodeType.Text, data = { text = 'TE$}XT' } },
+      { type = type.Text, data = { text = 'TE$}XT' } },
     }, parse('TE\\$\\}XT'))
   end)
 
   it('parses tabstops', function()
     eq({
-      { type = snippet.NodeType.Tabstop, data = { tabstop = 1 } },
-      { type = snippet.NodeType.Tabstop, data = { tabstop = 2 } },
+      { type = type.Tabstop, data = { tabstop = 1 } },
+      { type = type.Tabstop, data = { tabstop = 2 } },
     }, parse('$1${2}'))
   end)
 
   it('parses nested placeholders', function()
     eq({
       {
-        type = snippet.NodeType.Placeholder,
+        type = type.Placeholder,
         data = {
           tabstop = 1,
           value = {
-            type = snippet.NodeType.Placeholder,
+            type = type.Placeholder,
             data = {
               tabstop = 2,
-              value = { type = snippet.NodeType.Tabstop, data = { tabstop = 3 } },
+              value = { type = type.Tabstop, data = { tabstop = 3 } },
             },
           },
         },
@@ -46,24 +47,24 @@ describe('vim.lsp._snippet_grammar', function()
 
   it('parses variables', function()
     eq({
-      { type = snippet.NodeType.Variable, data = { name = 'VAR' } },
-      { type = snippet.NodeType.Variable, data = { name = 'VAR' } },
+      { type = type.Variable, data = { name = 'VAR' } },
+      { type = type.Variable, data = { name = 'VAR' } },
       {
-        type = snippet.NodeType.Variable,
+        type = type.Variable,
         data = {
           name = 'VAR',
-          default = { type = snippet.NodeType.Tabstop, data = { tabstop = 1 } },
+          default = { type = type.Tabstop, data = { tabstop = 1 } },
         },
       },
       {
-        type = snippet.NodeType.Variable,
+        type = type.Variable,
         data = {
           name = 'VAR',
           regex = 'regex',
           options = '',
           format = {
             {
-              type = snippet.NodeType.Format,
+              type = type.Format,
               data = { capture = 1, modifier = 'upcase' },
             },
           },
@@ -75,7 +76,7 @@ describe('vim.lsp._snippet_grammar', function()
   it('parses choice', function()
     eq({
       {
-        type = snippet.NodeType.Choice,
+        type = type.Choice,
         data = { tabstop = 1, values = { ',', '|' } },
       },
     }, parse('${1|\\,,\\||}'))
@@ -85,30 +86,30 @@ describe('vim.lsp._snippet_grammar', function()
     eq(
       {
         {
-          type = snippet.NodeType.Variable,
+          type = type.Variable,
           data = {
             name = 'VAR',
             regex = 'regex',
             options = '',
             format = {
               {
-                type = snippet.NodeType.Format,
+                type = type.Format,
                 data = { capture = 1, modifier = 'upcase' },
               },
               {
-                type = snippet.NodeType.Format,
+                type = type.Format,
                 data = { capture = 1, if_text = 'if_text' },
               },
               {
-                type = snippet.NodeType.Format,
+                type = type.Format,
                 data = { capture = 1, else_text = 'else_text' },
               },
               {
-                type = snippet.NodeType.Format,
+                type = type.Format,
                 data = { capture = 1, if_text = 'if_text', else_text = 'else_text' },
               },
               {
-                type = snippet.NodeType.Format,
+                type = type.Format,
                 data = { capture = 1, else_text = 'else_text' },
               },
             },
@@ -124,24 +125,24 @@ describe('vim.lsp._snippet_grammar', function()
   it('parses empty strings', function()
     eq({
       {
-        type = snippet.NodeType.Placeholder,
+        type = type.Placeholder,
         data = {
           tabstop = 1,
-          value = { type = snippet.NodeType.Text, data = { text = '' } },
+          value = { type = type.Text, data = { text = '' } },
         },
       },
       {
-        type = snippet.NodeType.Text,
+        type = type.Text,
         data = { text = ' ' },
       },
       {
-        type = snippet.NodeType.Variable,
+        type = type.Variable,
         data = {
           name = 'VAR',
           regex = 'erg',
           format = {
             {
-              type = snippet.NodeType.Format,
+              type = type.Format,
               data = { capture = 1, if_text = '' },
             },
           },
@@ -149,5 +150,22 @@ describe('vim.lsp._snippet_grammar', function()
         },
       },
     }, parse('${1:} ${VAR/erg/${1:+}/g}'))
+  end)
+
+  it('parses closing curly brace as text', function()
+    eq(
+      {
+        { type = type.Text, data = { text = 'function ' } },
+        { type = type.Tabstop, data = { tabstop = 1 } },
+        { type = type.Text, data = { text = '() {\n  ' } },
+        { type = type.Tabstop, data = { tabstop = 0 } },
+        { type = type.Text, data = { text = '\n}' } },
+      },
+      parse(table.concat({
+        'function $1() {',
+        '  $0',
+        '}',
+      }, '\n'))
+    )
   end)
 end)
