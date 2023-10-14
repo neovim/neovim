@@ -24,12 +24,12 @@ add_custom_command(OUTPUT ${GENERATED_SYN_VIM}
     ${FUNCS_DATA}
 )
 
-glob_wrapper(PACKAGES ${PROJECT_SOURCE_DIR}/runtime/pack/dist/opt/*)
+file(GLOB PACKAGES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/runtime/pack/dist/opt/*)
 
 set(GENERATED_PACKAGE_TAGS)
 foreach(PACKAGE ${PACKAGES})
   get_filename_component(PACKNAME ${PACKAGE} NAME)
-  glob_wrapper("${PACKNAME}_DOC_FILES" ${PACKAGE}/doc/*.txt)
+  file(GLOB "${PACKNAME}_DOC_FILES" CONFIGURE_DEPENDS ${PACKAGE}/doc/*.txt)
   if(${PACKNAME}_DOC_FILES)
     file(MAKE_DIRECTORY ${GENERATED_PACKAGE_DIR}/${PACKNAME})
     add_custom_command(OUTPUT "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags"
@@ -57,7 +57,7 @@ foreach(PACKAGE ${PACKAGES})
   endif()
 endforeach()
 
-glob_wrapper(DOCFILES ${PROJECT_SOURCE_DIR}/runtime/doc/*.txt)
+file(GLOB DOCFILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/runtime/doc/*.txt)
 
 set(BUILDDOCFILES)
 foreach(DF ${DOCFILES})
@@ -119,11 +119,11 @@ install_helper(
   FILES ${CMAKE_CURRENT_SOURCE_DIR}/nvim.png
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/128x128/apps)
 
-glob_wrapper(RUNTIME_ROOT_FILES *.vim *.lua *.ico)
+file(GLOB RUNTIME_ROOT_FILES CONFIGURE_DEPENDS *.vim *.lua *.ico)
 install_helper(FILES ${RUNTIME_ROOT_FILES}
                DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/)
 
-glob_wrapper(RUNTIME_DIRS */)
+file(GLOB RUNTIME_DIRS CONFIGURE_DEPENDS */)
 foreach(D ${RUNTIME_DIRS})
   if(IS_DIRECTORY ${D})
     install_helper(DIRECTORY ${D}

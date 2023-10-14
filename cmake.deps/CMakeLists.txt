@@ -1,5 +1,5 @@
 # This is not meant to be included by the top-level.
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.13)
 project(NVIM_DEPS C)
 
 if(POLICY CMP0135)
