@@ -3069,6 +3069,46 @@ func Test_getmousepos()
         \ line: 1,
         \ column: 1,
         \ }, getmousepos())
+  call Ntest_setmouse(1, 2)
+  call assert_equal(#{
+        \ screenrow: 1,
+        \ screencol: 2,
+        \ winid: win_getid(),
+        \ winrow: 1,
+        \ wincol: 2,
+        \ line: 1,
+        \ column: 1,
+        \ }, getmousepos())
+  call Ntest_setmouse(1, 8)
+  call assert_equal(#{
+        \ screenrow: 1,
+        \ screencol: 8,
+        \ winid: win_getid(),
+        \ winrow: 1,
+        \ wincol: 8,
+        \ line: 1,
+        \ column: 1,
+        \ }, getmousepos())
+  call Ntest_setmouse(1, 9)
+  call assert_equal(#{
+        \ screenrow: 1,
+        \ screencol: 9,
+        \ winid: win_getid(),
+        \ winrow: 1,
+        \ wincol: 9,
+        \ line: 1,
+        \ column: 2,
+        \ }, getmousepos())
+  call Ntest_setmouse(1, 12)
+  call assert_equal(#{
+        \ screenrow: 1,
+        \ screencol: 12,
+        \ winid: win_getid(),
+        \ winrow: 1,
+        \ wincol: 12,
+        \ line: 1,
+        \ column: 2,
+        \ }, getmousepos())
   call Ntest_setmouse(1, 25)
   call assert_equal(#{
         \ screenrow: 1,

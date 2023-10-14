@@ -1754,7 +1754,7 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
 }
 
 /// Convert a virtual (screen) column to a character column.
-/// The first column is one.
+/// The first column is zero.
 colnr_T vcol2col(win_T *const wp, const linenr_T lnum, const colnr_T vcol)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -1763,7 +1763,11 @@ colnr_T vcol2col(win_T *const wp, const linenr_T lnum, const colnr_T vcol)
   chartabsize_T cts;
   init_chartabsize_arg(&cts, wp, lnum, 0, line, line);
   while (cts.cts_vcol < vcol && *cts.cts_ptr != NUL) {
-    cts.cts_vcol += win_lbr_chartabsize(&cts, NULL);
+    int size = win_lbr_chartabsize(&cts, NULL);
+    if (cts.cts_vcol + size > vcol) {
+      break;
+    }
+    cts.cts_vcol += size;
     MB_PTR_ADV(cts.cts_ptr);
   }
   clear_chartabsize_arg(&cts);

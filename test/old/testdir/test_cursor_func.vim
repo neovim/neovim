@@ -573,6 +573,11 @@ func Test_virtcol2col()
   call assert_equal(8, virtcol2col(0, 1, 7))
   call assert_equal(8, virtcol2col(0, 1, 8))
 
+  " These used to cause invalid memory access
+  call setline(1, '')
+  call assert_equal(0, virtcol2col(0, 1, 1))
+  call assert_equal(0, virtcol2col(0, 1, 2))
+
   let w = winwidth(0)
   call setline(2, repeat('a', w + 2))
   let win_nosbr = win_getid()
