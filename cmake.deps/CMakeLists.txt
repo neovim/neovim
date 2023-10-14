@@ -32,6 +32,7 @@ set(DEPS_INCLUDE_FLAGS "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/incl
 
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
+option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ${USE_BUNDLED})
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBTERMKEY "Use the bundled libtermkey." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
@@ -47,10 +48,8 @@ option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLE
 option(USE_BUNDLED_TS "Use the bundled treesitter runtime." ${USE_BUNDLED})
 
 if(USE_BUNDLED AND MSVC)
-  option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
   option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." ON)
 else()
-  option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." OFF)
   option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." OFF)
 endif()
 
