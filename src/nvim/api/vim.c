@@ -1744,7 +1744,9 @@ static void write_msg(String message, bool to_err, bool writeln)
     } else { \
       msg(line_buf->items, 0); \
     } \
-    msg_didout = true; \
+    if (msg_silent == 0) { \
+      msg_didout = true; \
+    } \
     kv_drop(*line_buf, kv_size(*line_buf)); \
     kv_resize(*line_buf, LINE_BUFFER_MIN_SIZE); \
   } else if (c == NUL) { \

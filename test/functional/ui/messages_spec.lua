@@ -1061,6 +1061,53 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
     -- luacheck: pop
   end)
 
+  it('no empty line after :silent #12099', function()
+    exec([[
+      func T1()
+        silent !echo
+        echo "message T1"
+      endfunc
+      func T2()
+        silent lua print("lua message")
+        echo "message T2"
+      endfunc
+      func T3()
+        silent call nvim_out_write("api message\n")
+        echo "message T3"
+      endfunc
+    ]])
+    feed(':call T1()<CR>')
+    screen:expect{grid=[[
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      message T1                                                  |
+    ]]}
+    feed(':call T2()<CR>')
+    screen:expect{grid=[[
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      message T2                                                  |
+    ]]}
+    feed(':call T3()<CR>')
+    screen:expect{grid=[[
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      message T3                                                  |
+    ]]}
+  end)
+
   it('supports ruler with laststatus=0', function()
     command("set ruler laststatus=0")
     screen:expect{grid=[[

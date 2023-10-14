@@ -1346,7 +1346,9 @@ void do_shell(char *cmd, int flags)
   // 1" command to the terminal.
   ui_cursor_goto(msg_row, msg_col);
   (void)call_shell(cmd, (ShellOpts)flags, NULL);
-  msg_didout = true;
+  if (msg_silent == 0) {
+    msg_didout = true;
+  }
   did_check_timestamps = false;
   need_check_timestamps = true;
 
