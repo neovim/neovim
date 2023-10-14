@@ -24,6 +24,7 @@ describe('terminal channel is closed and later released if', function()
     -- channel hasn't been released yet
     eq("Vim(call):Can't send data to closed stream",
        pcall_err(command, [[bdelete! | call chansend(id, 'test')]]))
+    feed('<Ignore>')  -- add input to separate two RPC requests
     -- channel has been released after one main loop iteration
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
@@ -40,6 +41,7 @@ describe('terminal channel is closed and later released if', function()
     feed('i<CR>')
     -- need to first process input
     poke_eventloop()
+    feed('<Ignore>')  -- add input to separate two RPC requests
     -- channel has been released after another main loop iteration
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
@@ -55,6 +57,7 @@ describe('terminal channel is closed and later released if', function()
     -- channel still hasn't been released yet
     eq("Vim(call):Can't send data to closed stream",
        pcall_err(command, [[bdelete | call chansend(id, 'test')]]))
+    feed('<Ignore>')  -- add input to separate two RPC requests
     -- channel has been released after one main loop iteration
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
@@ -72,6 +75,7 @@ describe('terminal channel is closed and later released if', function()
     feed('i<CR>')
     -- need to first process input
     poke_eventloop()
+    feed('<Ignore>')  -- add input to separate two RPC requests
     -- channel has been released after another main loop iteration
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
@@ -89,6 +93,7 @@ describe('terminal channel is closed and later released if', function()
     -- channel still hasn't been released yet
     eq("Vim(call):Can't send data to closed stream",
        pcall_err(command, [[bdelete | call chansend(id, 'test')]]))
+    feed('<Ignore>')  -- add input to separate two RPC requests
     -- channel has been released after one main loop iteration
     eq(chans - 1, eval('len(nvim_list_chans())'))
   end)
