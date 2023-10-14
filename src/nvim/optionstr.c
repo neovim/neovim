@@ -860,7 +860,7 @@ int expand_set_backspace(optexpand_T *args, int *numMatches, char ***matches)
 const char *did_set_backupcopy(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  const char *oldval = args->os_oldval.string;
+  const char *oldval = args->os_oldval.string.data;
   int opt_flags = args->os_flags;
   char *bkc = p_bkc;
   unsigned *flags = &bkc_flags;
@@ -1459,7 +1459,7 @@ const char *did_set_fileformat(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
   char **varp = (char **)args->os_varp;
-  const char *oldval = args->os_oldval.string;
+  const char *oldval = args->os_oldval.string.data;
   int opt_flags = args->os_flags;
   if (!MODIFIABLE(buf) && !(opt_flags & OPT_GLOBAL)) {
     return e_modifiable;
@@ -1512,7 +1512,7 @@ const char *did_set_filetype_or_syntax(optset_T *args)
     return e_invarg;
   }
 
-  args->os_value_changed = strcmp(args->os_oldval.string, *varp) != 0;
+  args->os_value_changed = strcmp(args->os_oldval.string.data, *varp) != 0;
 
   // Since we check the value, there is no need to set P_INSECURE,
   // even when the value comes from a modeline.
@@ -2103,7 +2103,7 @@ const char *did_set_sessionoptions(optset_T *args)
   }
   if ((ssop_flags & SSOP_CURDIR) && (ssop_flags & SSOP_SESDIR)) {
     // Don't allow both "sesdir" and "curdir".
-    const char *oldval = args->os_oldval.string;
+    const char *oldval = args->os_oldval.string.data;
     (void)opt_strings_flags(oldval, p_ssop_values, &ssop_flags, true);
     return e_invarg;
   }
@@ -2224,7 +2224,7 @@ const char *did_set_signcolumn(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
   char **varp = (char **)args->os_varp;
-  const char *oldval = args->os_oldval.string;
+  const char *oldval = args->os_oldval.string.data;
   if (check_signcolumn(*varp) != OK) {
     return e_invarg;
   }
@@ -2578,7 +2578,7 @@ const char *did_set_virtualedit(optset_T *args)
   } else {
     if (opt_strings_flags(ve, p_ve_values, flags, true) != OK) {
       return e_invarg;
-    } else if (strcmp(ve, args->os_oldval.string) != 0) {
+    } else if (strcmp(ve, args->os_oldval.string.data) != 0) {
       // Recompute cursor position in case the new 've' setting
       // changes something.
       validate_virtcol_win(win);
@@ -2753,8 +2753,8 @@ const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **va
     .os_varp = varp,
     .os_idx = opt_idx,
     .os_flags = opt_flags,
-    .os_oldval.string = oldval,
-    .os_newval.string = *varp,
+    .os_oldval.string = cstr_as_string(oldval),
+    .os_newval.string = cstr_as_string(*varp),
     .os_value_checked = false,
     .os_value_changed = false,
     .os_restore_chartab = false,

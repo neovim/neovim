@@ -3683,25 +3683,17 @@ static const char *set_option(const int opt_idx, void *varp, OptVal value, int o
   }
   if (did_set_cb != NULL) {
     // TODO(famiu): make os_oldval and os_newval use OptVal.
-    optset_T did_set_cb_args = (value.type == kOptValTypeNumber)
-                                 ? (optset_T){ .os_varp = varp,
-                                               .os_flags = opt_flags,
-                                               .os_oldval.number = old_value.data.number,
-                                               .os_newval.number = value.data.number,
-                                               .os_doskip = false,
-                                               .os_errbuf = NULL,
-                                               .os_errbuflen = 0,
-                                               .os_buf = curbuf,
-                                               .os_win = curwin }
-                                 : (optset_T){ .os_varp = varp,
-                                               .os_flags = opt_flags,
-                                               .os_oldval.boolean = old_value.data.boolean,
-                                               .os_newval.boolean = value.data.boolean,
-                                               .os_doskip = false,
-                                               .os_errbuf = NULL,
-                                               .os_errbuflen = 0,
-                                               .os_buf = curbuf,
-                                               .os_win = curwin };
+    optset_T did_set_cb_args = {
+      .os_varp = varp,
+      .os_flags = opt_flags,
+      .os_oldval = old_value.data,
+      .os_newval = value.data,
+      .os_doskip = false,
+      .os_errbuf = NULL,
+      .os_errbuflen = 0,
+      .os_buf = curbuf,
+      .os_win = curwin
+    };
 
     errmsg = did_set_cb(&did_set_cb_args);
     doskip = did_set_cb_args.os_doskip;
