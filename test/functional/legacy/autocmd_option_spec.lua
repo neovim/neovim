@@ -260,7 +260,7 @@ describe('au OptionSet', function()
       command('setlocal tags=tagpath2')
       expected_combination({'tags', 'tagpath1', 'tagpath1', '', 'tagpath2', 'local', 'setlocal'})
 
-      -- Note: v:option_old is the old global value for global-local string options
+      -- Note: v:option_old is the old global value for global-local options.
       -- but the old local value for all other kinds of options.
       command('noa setglobal tags=tag_global')
       command('noa setlocal tags=tag_local')
@@ -269,12 +269,12 @@ describe('au OptionSet', function()
         'tags', 'tag_global', 'tag_local', 'tag_global', 'tagpath', 'global', 'set'
       })
 
-      -- Note: v:option_old is the old global value for global-local string options
+      -- Note: v:option_old is the old global value for global-local options.
       -- but the old local value for all other kinds of options.
       command('noa set tags=tag_global')
       command('noa setlocal tags=')
       command('set tags=tagpath')
-      expected_combination({'tags', 'tag_global', '', 'tag_global', 'tagpath', 'global', 'set'})
+      expected_combination({'tags', 'tag_global', 'tag_global', 'tag_global', 'tagpath', 'global', 'set'})
     end)
 
     it('with string local (to buffer) option', function()
@@ -295,7 +295,7 @@ describe('au OptionSet', function()
       command('setlocal spelllang=klingon')
       expected_combination({'spelllang', oldval, oldval, '', 'klingon', 'local', 'setlocal'})
 
-      -- Note: v:option_old is the old global value for global-local string options
+      -- Note: v:option_old is the old global value for global-local options.
       -- but the old local value for all other kinds of options.
       command('noa setglobal spelllang=spellglobal')
       command('noa setlocal spelllang=spelllocal')
@@ -311,7 +311,7 @@ describe('au OptionSet', function()
       command('set statusline=foo')
       expected_combination({'statusline', oldval, oldval, '', 'foo', 'global', 'set'})
 
-      -- Note: v:option_old is the old global value for global-local string options
+      -- Note: v:option_old is the old global value for global-local options.
       -- but the old local value for all other kinds of options.
       command('set statusline&')
       expected_combination({'statusline', 'foo', 'foo', 'foo', oldval, 'global', 'set'})
@@ -323,7 +323,7 @@ describe('au OptionSet', function()
       command('setlocal statusline=baz')
       expected_combination({'statusline', oldval, oldval, '', 'baz', 'local', 'setlocal'})
 
-      -- Note: v:option_old is the old global value for global-local string options
+      -- Note: v:option_old is the old global value for global-local options.
       -- but the old local value for all other kinds of options.
       command('noa setglobal statusline=bar')
       command('noa setlocal statusline=baz')
@@ -364,11 +364,15 @@ describe('au OptionSet', function()
       command('setlocal cmdheight=2')
       expected_combination({'cmdheight', 1, 1, '', 2, 'local', 'setlocal'})
 
+      -- Note: v:option_old is the old global value for global-local options.
+      -- but the old local value for all other kinds of options.
       command('noa setglobal cmdheight=8')
       command('noa setlocal cmdheight=1') -- Sets the global(!) value
       command('set cmdheight=2')
       expected_combination({'cmdheight', 1, 1, 1, 2, 'global', 'set'})
 
+      -- Note: v:option_old is the old global value for global-local options.
+      -- but the old local value for all other kinds of options.
       command('noa set cmdheight=8')
       command('set cmdheight=2')
       expected_combination({'cmdheight', 8, 8, 8, 2, 'global', 'set'})
@@ -385,11 +389,15 @@ describe('au OptionSet', function()
       command('setlocal undolevels=2')
       expected_combination({'undolevels', 1, 1, '', 2, 'local', 'setlocal'})
 
+      -- Note: v:option_old is the old global value for global-local options.
+      -- but the old local value for all other kinds of options.
       command('noa setglobal undolevels=8')
       command('noa setlocal undolevels=1')
       command('set undolevels=2')
-      expected_combination({'undolevels', 1, 1, 8, 2, 'global', 'set'})
+      expected_combination({'undolevels', 8, 1, 8, 2, 'global', 'set'})
 
+      -- Note: v:option_old is the old global value for global-local options.
+      -- but the old local value for all other kinds of options.
       command('noa set undolevels=8')
       command('set undolevels=2')
       expected_combination({'undolevels', 8, 8, 8, 2, 'global', 'set'})
@@ -427,11 +435,15 @@ describe('au OptionSet', function()
       command('setlocal scrolloff=2')
       expected_combination({'scrolloff', 1, 1, '', 2, 'local', 'setlocal'})
 
+      -- Note: v:option_old is the old global value for global-local options.
+      -- but the old local value for all other kinds of options.
       command('noa setglobal scrolloff=8')
       command('noa setlocal scrolloff=1')
       command('set scrolloff=2')
-      expected_combination({'scrolloff', 1, 1, 8, 2, 'global', 'set'})
+      expected_combination({'scrolloff', 8, 1, 8, 2, 'global', 'set'})
 
+      -- Note: v:option_old is the old global value for global-local options.
+      -- but the old local value for all other kinds of options.
       command('noa set scrolloff=8')
       command('set scrolloff=2')
       expected_combination({'scrolloff', 8, 8, 8, 2, 'global', 'set'})
@@ -490,11 +502,15 @@ describe('au OptionSet', function()
       command('setlocal noautoread')
       expected_combination({'autoread', true, true, '', false, 'local', 'setlocal'})
 
+      -- Note: v:option_old is the old global value for global-local options.
+      -- but the old local value for all other kinds of options.
       command('noa setglobal noautoread')
       command('noa setlocal autoread')
       command('set autoread')
-      expected_combination({'autoread', true, true, false, true, 'global', 'set'})
+      expected_combination({'autoread', false, true, false, true, 'global', 'set'})
 
+      -- Note: v:option_old is the old global value for global-local options.
+      -- but the old local value for all other kinds of options.
       command('noa set noautoread')
       command('set autoread')
       expected_combination({'autoread', false, false, false, true, 'global', 'set'})

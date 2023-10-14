@@ -778,11 +778,10 @@ OptionSet			After setting an option (except during
 				This does not set |<abuf>|, you could use
 				|bufnr()|.
 
-				Note that when setting a |global-local| string
-				option with |:set|, then |v:option_old| is the
-				old global value. However, for all other kinds
-				of options (local string options, global-local
-				number options, ...) it is the old local
+				Note that when setting a |global-local| option
+				with |:set|, then |v:option_old| is the old
+				global value. However, for all options that
+				are not global-local it is the old local
 				value.
 
 				OptionSet is not triggered on startup and for

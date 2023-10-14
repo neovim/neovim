@@ -574,14 +574,14 @@ void free_all_options(void)
     if (options[i].indir == PV_NONE) {
       // global option: free value and default value.
       if ((options[i].flags & P_ALLOCED) && options[i].var != NULL) {
-        free_string_option(*(char **)options[i].var);
+        optval_free(optval_from_varp(i, options[i].var));
       }
       if (options[i].flags & P_DEF_ALLOCED) {
-        free_string_option(options[i].def_val);
+        optval_free(optval_from_varp(i, &options[i].def_val));
       }
-    } else if (options[i].var != VAR_WIN && (options[i].flags & P_STRING)) {
+    } else if (options[i].var != VAR_WIN) {
       // buffer-local option: free global value
-      clear_string_option((char **)options[i].var);
+      optval_free(optval_from_varp(i, options[i].var));
     }
   }
   free_operatorfunc_option();
@@ -1142,8 +1142,11 @@ static OptVal get_option_newval(int opt_idx, int opt_flags, set_prefix_T prefix,
 {
   assert(varp != NULL);
 
+  vimoption_T *opt = &options[opt_idx];
   char *arg = *argp;
-  OptVal oldval = optval_from_varp(opt_idx, varp);
+  // When setting the local value of a global option, the old value may be the global value.
+  const bool oldval_is_global = ((int)opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL);
+  OptVal oldval = optval_from_varp(opt_idx, oldval_is_global ? get_varp(opt) : varp);
   OptVal newval = NIL_OPTVAL;
 
   switch (oldval.type) {
@@ -1250,17 +1253,7 @@ static OptVal get_option_newval(int opt_idx, int opt_flags, set_prefix_T prefix,
     break;
   }
   case kOptValTypeString: {
-    char *oldval_str;
-    vimoption_T *opt = get_option(opt_idx);
-
-    // When setting the local value of a global option, the old value may be
-    // the global value.
-    if (((int)opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL)) {
-      oldval_str = *(char **)get_varp(opt);
-    } else {
-      oldval_str = *(char **)varp;
-    }
-
+    char *oldval_str = oldval.data.string.data;
     // Get the new value for the option
     char *newval_str = stropt_get_newval(nextchar, opt_idx, argp, varp, oldval_str, &op, flags);
     newval = CSTR_AS_OPTVAL(newval_str);
@@ -1416,8 +1409,6 @@ static void do_one_set_option(int opt_flags, char **argp, bool *did_show, char *
   }
 
   *errmsg = set_option(opt_idx, varp, newval, opt_flags, op == OP_NONE, errbuf, errbuflen);
-  // `set_option` copies the new option value, so it needs to be freed here.
-  optval_free(newval);
 }
 
 /// Parse 'arg' for option settings.
@@ -2753,6 +2744,47 @@ static const char *did_set_wrap(optset_T *args)
 
   return NULL;
 }
+
+// When 'syntax' is set, load the syntax of that name
+static void do_syntax_autocmd(buf_T *buf, bool value_changed)
+{
+  static int syn_recursive = 0;
+
+  syn_recursive++;
+  // Only pass true for "force" when the value changed or not used
+  // recursively, to avoid endless recurrence.
+  apply_autocmds(EVENT_SYNTAX, buf->b_p_syn, buf->b_fname,
+                 value_changed || syn_recursive == 1, buf);
+  buf->b_flags |= BF_SYN_SET;
+  syn_recursive--;
+}
+
+static void do_spelllang_source(win_T *win)
+{
+  char fname[200];
+  char *q = win->w_s->b_p_spl;
+
+  // Skip the first name if it is "cjk".
+  if (strncmp(q, "cjk,", 4) == 0) {
+    q += 4;
+  }
+
+  // Source the spell/LANG.{vim,lua} in 'runtimepath'.
+  // They could set 'spellcapcheck' depending on the language.
+  // Use the first name in 'spelllang' up to '_region' or
+  // '.encoding'.
+  char *p;
+  for (p = q; *p != NUL; p++) {
+    if (!ASCII_ISALNUM(*p) && *p != '-') {
+      break;
+    }
+  }
+  if (p > q) {
+    vim_snprintf(fname, sizeof(fname), "spell/%.*s.*", (int)(p - q), q);
+    source_runtime_vim_lua(fname, DIP_ALL);
+  }
+}
+
 /// Check the bounds of numeric options.
 static const char *check_num_option_bounds(OptInt *pp, OptInt old_value, char *errbuf,
                                            size_t errbuflen, const char *errmsg)
@@ -3193,7 +3225,10 @@ void optval_free(OptVal o)
   case kOptValTypeNumber:
     break;
   case kOptValTypeString:
-    api_free_string(o.data.string);
+    // Don't free empty string option
+    if (o.data.string.data != empty_string_option) {
+      api_free_string(o.data.string);
+    }
     break;
   }
 }
@@ -3271,11 +3306,19 @@ OptVal optval_from_varp(int opt_idx, void *varp)
 
 /// Set option var pointer value from Optval.
 ///
-/// @param  varp   Pointer to option variable.
-/// @param  value  Option value.
-static void set_option_varp(void *varp, OptVal value)
-  FUNC_ATTR_NONNULL_ARG(1)
+/// @param       opt_idx      Option index in options[] table.
+/// @param[out]  varp         Pointer to option variable.
+/// @param[in]   value        New option value.
+/// @param       free_oldval  Free old value.
+static void set_option_varp(int opt_idx, void *varp, OptVal value, bool free_oldval)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
+  assert(optval_match_type(value, opt_idx));
+
+  if (free_oldval) {
+    optval_free(optval_from_varp(opt_idx, varp));
+  }
+
   switch (value.type) {
   case kOptValTypeNil:
     return;
@@ -3356,43 +3399,36 @@ OptVal object_as_optval(Object o, bool *error)
   UNREACHABLE;
 }
 
-/// Clear an option value.
+/// Unset the local value of an option. The exact semantics of this depend on the option.
+/// TODO(famiu): Remove this once we have a dedicated OptVal type for unset local options.
 ///
-/// The exact semantics of this depend on the option.
-static OptVal optval_clear(const char *name, uint32_t flags, void *varp, buf_T *buf, win_T *win)
+/// @param      opt_idx  Option index in options[] table.
+/// @param[in]  varp  Pointer to option variable.
+///
+/// @return [allocated] Option value equal to the unset value for the option.
+static OptVal optval_unset_local(int opt_idx, void *varp)
 {
-  OptVal v = NIL_OPTVAL;
-
-  // Change the type of the OptVal to the type used by the option so that it can be cleared.
-  // TODO(famiu): Clean up all of this after set_(num|bool|string)_option() is unified.
-
-  if (flags & P_BOOL) {
-    v.type = kOptValTypeBoolean;
-    if ((int *)varp == &buf->b_p_ar) {
-      // TODO(lewis6991): replace this with a more general condition that
-      // indicates we are setting the local value of a global-local option
-      v.data.boolean = kNone;
-    } else {
-      v = get_option_value(name, NULL, OPT_GLOBAL, NULL);
+  vimoption_T *opt = &options[opt_idx];
+  // For global-local options, use the unset value of the local value.
+  if (opt->indir & PV_BOTH) {
+    // String global-local options always use an empty string for the unset value.
+    if (opt->flags & P_STRING) {
+      return STATIC_CSTR_TO_OPTVAL("");
     }
-  } else if (flags & P_NUM) {
-    v.type = kOptValTypeNumber;
-    if ((OptInt *)varp == &curbuf->b_p_ul) {
-      // The one true special case
-      v.data.number = NO_LOCAL_UNDOLEVEL;
-    } else if ((OptInt *)varp == &win->w_p_so || (OptInt *)varp == &win->w_p_siso) {
-      // TODO(lewis6991): replace this with a more general condition that
-      // indicates we are setting the local value of a global-local option
-      v.data.number = -1;
+
+    if ((int *)varp == &curbuf->b_p_ar) {
+      return BOOLEAN_OPTVAL(kNone);
+    } else if ((OptInt *)varp == &curwin->w_p_so || (OptInt *)varp == &curwin->w_p_siso) {
+      return NUMBER_OPTVAL(-1);
+    } else if ((OptInt *)varp == &curbuf->b_p_ul) {
+      return NUMBER_OPTVAL(NO_LOCAL_UNDOLEVEL);
     } else {
-      v = get_option_value(name, NULL, OPT_GLOBAL, NULL);
+      // This should never happen.
+      abort();
     }
-  } else if (flags & P_STRING) {
-    v.type = kOptValTypeString;
-    v.data.string.data = NULL;
   }
-
-  return v;
+  // For options that aren't global-local, just set the local value to the global value.
+  return get_option_value(opt->fullname, NULL, OPT_GLOBAL, NULL);
 }
 
 /// Get an allocated string containing a list of valid types for an option.
@@ -3485,36 +3521,254 @@ vimoption_T *get_option(int opt_idx)
   return &options[opt_idx];
 }
 
+/// Check if local value of global-local option is unset for current buffer / window.
+/// Always returns false for options that aren't global-local.
+///
+/// TODO(famiu): Remove this once we have an OptVal type to indicate an unset local value.
+static bool is_option_local_value_unset(vimoption_T *opt, buf_T *buf, win_T *win)
+{
+  // Local value of option that isn't global-local is always considered set.
+  if (!((int)opt->indir & PV_BOTH)) {
+    return false;
+  }
+
+  // Get pointer to local value in varp_local, and a pointer to the currently used value in varp.
+  // If the local value is the one currently being used, that indicates that it's set.
+  // Otherwise it indicates the local value is unset.
+  void *varp = get_varp_from(opt, buf, win);
+  void *varp_local = get_varp_scope_from(opt, OPT_LOCAL, buf, win);
+
+  return varp != varp_local;
+}
+
+/// Handle side-effects of setting an option.
+///
+/// @param       opt_idx         Index in options[] table. Must be >= 0.
+/// @param[in]   varp            Option variable pointer, cannot be NULL.
+/// @param       old_value       Old option value.
+/// @param       new_value       New option value.
+/// @param       opt_flags       Option flags.
+/// @param[out]  doskip          Whether option should be processed further.
+/// @param[out]  value_checked   Value was checked to be safe, no need to set P_INSECURE.
+/// @param       value_replaced  Value was replaced completely.
+/// @param[out]  errbuf          Buffer for error message.
+/// @param       errbuflen       Length of error buffer.
+///
+/// @return  NULL on success, an untranslated error message on error.
+static const char *did_set_option(int opt_idx, void *varp, OptVal old_value, OptVal new_value,
+                                  int opt_flags, bool *doskip, bool *value_checked,
+                                  bool value_replaced, char *errbuf, size_t errbuflen)
+{
+  vimoption_T *opt = &options[opt_idx];
+  const char *errmsg = NULL;
+  bool restore_chartab = false;
+  bool free_oldval = (opt->flags & P_ALLOCED);
+  bool value_changed = false;
+
+  opt_did_set_cb_T did_set_cb;
+  optset_T did_set_cb_args = {
+    .os_varp = varp,
+    .os_idx = opt_idx,
+    .os_flags = opt_flags,
+    .os_oldval = old_value.data,
+    .os_newval = new_value.data,
+    .os_value_checked = false,
+    .os_value_changed = false,
+    .os_restore_chartab = false,
+    .os_doskip = false,
+    .os_errbuf = errbuf,
+    .os_errbuflen = errbuflen,
+    .os_buf = curbuf,
+    .os_win = curwin
+  };
+
+  if ((int *)varp == &p_force_on) {
+    did_set_cb = did_set_force_on;
+  } else if ((int *)varp == &p_force_off) {
+    did_set_cb = did_set_force_off;
+  } else {
+    did_set_cb = opt->opt_did_set_cb;
+  }
+
+  // Disallow changing some options from secure mode
+  if ((secure || sandbox != 0) && (opt->flags & P_SECURE)) {
+    errmsg = e_secure;
+    // Check for a "normal" directory or file name in some string options.
+  } else if (new_value.type == kOptValTypeString
+             && check_illegal_path_names(*(char **)varp, opt->flags)) {
+    errmsg = e_invarg;
+  } else if (did_set_cb != NULL) {
+    // Invoke the option specific callback function to validate and apply the new value.
+    errmsg = did_set_cb(&did_set_cb_args);
+    // Whether option should be processed further or skipped.
+    *doskip = did_set_cb_args.os_doskip;
+    // The 'filetype' and 'syntax' option callback functions may change the os_value_changed field.
+    value_changed = did_set_cb_args.os_value_changed;
+    // The 'keymap', 'filetype' and 'syntax' option callback functions may change the
+    // os_value_checked field.
+    *value_checked = did_set_cb_args.os_value_checked;
+    // The 'isident', 'iskeyword', 'isprint' and 'isfname' options may change the character table.
+    // On failure, this needs to be restored.
+    restore_chartab = did_set_cb_args.os_restore_chartab;
+  }
+
+  // If an error is detected, restore the previous value.
+  if (errmsg != NULL) {
+    set_option_varp(opt_idx, varp, old_value, true);
+    // When resetting some values, need to act on it.
+    if (restore_chartab) {
+      (void)buf_init_chartab(curbuf, true);
+    }
+
+    // Unset new_value as it is no longer valid.
+    new_value = NIL_OPTVAL;  // NOLINT(clang-analyzer-deadcode.DeadStores)
+  } else {
+    // Re-assign the new value as its value may get freed or modified by the option callback.
+    new_value = optval_from_varp(opt_idx, varp);
+
+    // Remember where the option was set.
+    set_option_sctx_idx(opt_idx, opt_flags, current_sctx);
+    // Free options that are in allocated memory.
+    // Use "free_oldval", because recursiveness may change the flags (esp. init_highlight()).
+    if (free_oldval) {
+      optval_free(old_value);
+    }
+    opt->flags |= P_ALLOCED;
+
+    // Check the bound for num options.
+    if (new_value.type == kOptValTypeNumber) {
+      errmsg = check_num_option_bounds((OptInt *)varp, old_value.data.number, errbuf, errbuflen,
+                                       errmsg);
+      // Re-assign new_value because the new value was modified by the bound check.
+      new_value = optval_from_varp(opt_idx, varp);
+    }
+
+    if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0 && (opt->indir & PV_BOTH)) {
+      // Global option with local value set to use global value.
+      // Free the local value and clear it.
+      void *varp_local = get_varp_scope(opt, OPT_LOCAL);
+      OptVal local_unset_value = optval_unset_local(opt_idx, varp_local);
+      set_option_varp(opt_idx, varp_local, local_unset_value, true);
+    } else if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+      // May set global value for local option.
+      void *varp_global = get_varp_scope(opt, OPT_GLOBAL);
+      set_option_varp(opt_idx, varp_global, optval_copy(new_value), true);
+    }
+  }
+
+  // Skip processing the option further if asked to do so.
+  if (*doskip) {
+    return errmsg;
+  }
+
+  if (errmsg == NULL) {
+    // Trigger the autocommand only after setting the flags.
+    if (varp == &curbuf->b_p_syn) {
+      do_syntax_autocmd(curbuf, value_changed);
+    } else if (varp == &curbuf->b_p_ft) {
+      // 'filetype' is set, trigger the FileType autocommand
+      // Skip this when called from a modeline
+      // Force autocmd when the filetype was changed
+      if (!(opt_flags & OPT_MODELINE) || value_changed) {
+        do_filetype_autocmd(curbuf, value_changed);
+      }
+    } else if (varp == &curwin->w_s->b_p_spl) {
+      do_spelllang_source(curwin);
+    }
+  }
+
+  // In case 'columns' or 'ls' changed.
+  comp_col();
+
+  if (varp == &p_mouse) {
+    setmouse();  // in case 'mouse' changed
+  } else if ((varp == &p_flp || varp == &(curbuf->b_p_flp)) && curwin->w_briopt_list) {
+    // Changing Formatlistpattern when briopt includes the list setting:
+    // redraw
+    redraw_all_later(UPD_NOT_VALID);
+  } else if (varp == &p_wbr || varp == &(curwin->w_p_wbr)) {
+    // add / remove window bars for 'winbar'
+    set_winbar(true);
+  }
+
+  if (curwin->w_curswant != MAXCOL && (opt->flags & (P_CURSWANT | P_RALL)) != 0) {
+    curwin->w_set_curswant = true;
+  }
+
+  check_redraw(opt->flags);
+
+  if (errmsg == NULL) {
+    uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
+    opt->flags |= P_WAS_SET;
+
+    // When an option is set in the sandbox, from a modeline or in secure mode set the P_INSECURE
+    // flag.  Otherwise, if a new value is stored reset the flag.
+    if (!value_checked && (secure || sandbox != 0 || (opt_flags & OPT_MODELINE))) {
+      *p |= P_INSECURE;
+    } else if (value_replaced) {
+      *p &= ~P_INSECURE;
+    }
+  }
+
+  return errmsg;
+}
+
 /// Set the value of an option using an OptVal.
 ///
-/// @param       opt_idx    Option index. Must be >=0.
-/// @param[in]   varp       Option variable pointer, cannot be NULL.
-/// @param       value      New option value.
-/// @param       opt_flags  Option flags.
-/// @param       new_value  Whether value was replaced completely.
-/// @param[out]  errbuf     Buffer for error message.
-/// @param       errbuflen  Length of error buffer.
+/// @param       opt_idx         Index in options[] table. Must be >= 0.
+/// @param[in]   varp            Option variable pointer, cannot be NULL.
+/// @param       value           New option value. Might get freed.
+/// @param       opt_flags       Option flags.
+/// @param       value_replaced  Value was replaced completely.
+/// @param[out]  errbuf          Buffer for error message.
+/// @param       errbuflen       Length of error buffer.
 ///
-/// @return  Error message. NULL if there are no errors.
+/// @return  NULL on success, an untranslated error message on error.
 static const char *set_option(const int opt_idx, void *varp, OptVal value, int opt_flags,
-                              const bool new_value, char *errbuf, size_t errbuflen)
+                              const bool value_replaced, char *errbuf, size_t errbuflen)
 {
   assert(opt_idx >= 0 && varp != NULL);
 
   const char *errmsg = NULL;
   bool value_checked = false;
+
   vimoption_T *opt = &options[opt_idx];
 
-  // TODO(famiu): Unify set_string_option with set_option.
-  if (value.type == kOptValTypeString) {
-    errmsg = set_string_option(opt_idx, varp, value.data.string.data, opt_flags, true,
-                               &value_checked, errbuf, errbuflen);
-    goto end;
+  static const char *optval_type_names[] = {
+    [kOptValTypeNil] = "Nil",
+    [kOptValTypeBoolean] = "Boolean",
+    [kOptValTypeNumber] = "Number",
+    [kOptValTypeString] = "String"
+  };
+
+  if (value.type == kOptValTypeNil) {
+    // Don't try to unset local value if scope is global.
+    // TODO(famiu): Change this to forbid changing all non-local scopes when the API scope bug is
+    // fixed.
+    if (opt_flags == OPT_GLOBAL) {
+      errmsg = _("Cannot unset global option value");
+    } else {
+      optval_free(value);
+      value = optval_unset_local(opt_idx, varp);
+    }
+  } else if (!optval_match_type(value, opt_idx)) {
+    char *rep = optval_to_cstr(value);
+    char *valid_types = option_get_valid_types(opt_idx);
+    snprintf(errbuf, IOSIZE, _("Invalid value for option '%s': expected %s, got %s %s"),
+             opt->fullname, valid_types, optval_type_names[value.type], rep);
+    xfree(rep);
+    xfree(valid_types);
+    errmsg = errbuf;
   }
 
-  // Disallow changing some options from secure mode.
-  if ((secure || sandbox != 0) && (options[opt_idx].flags & P_SECURE)) {
-    return e_secure;
+  if (errmsg != NULL) {
+    goto err;
+  }
+
+  // When using ":set opt=val" for a global option with a local value the local value will be reset,
+  // use the global value here.
+  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0 && ((int)opt->indir & PV_BOTH)) {
+    varp = opt->var;
   }
 
   OptVal old_value = optval_from_varp(opt_idx, varp);
@@ -3527,100 +3781,84 @@ static const char *set_option(const int opt_idx, void *varp, OptVal value, int o
   // TODO(famiu): This needs to be changed to use the current type of the old value instead of
   // value.type, when multi-type options are added.
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    old_local_value = optval_from_varp(opt_idx, get_varp_scope(opt, OPT_LOCAL));
     old_global_value = optval_from_varp(opt_idx, get_varp_scope(opt, OPT_GLOBAL));
+    old_local_value = optval_from_varp(opt_idx, get_varp_scope(opt, OPT_LOCAL));
+
+    // If local value of global-local option is unset, use global value as local value.
+    if (is_option_local_value_unset(opt, curbuf, curwin)) {
+      old_local_value = old_global_value;
+    }
   }
+
+  // Value that's actually being used.
+  // For local scope of a global-local option, it is equal to the global value.
+  // In every other case, it is the same as old_value.
+  const bool oldval_is_global = ((int)opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL);
+  OptVal used_old_value = oldval_is_global ? optval_from_varp(opt_idx, get_varp(opt)) : old_value;
 
   if (value.type == kOptValTypeNumber) {
     errmsg = validate_num_option((OptInt *)varp, &value.data.number);
 
     // Don't change the value and return early if validation failed.
     if (errmsg != NULL) {
-      return errmsg;
+      goto err;
     }
   }
 
-  // Set the new option value.
-  set_option_varp(varp, value);
-  // Remember where the option was set.
-  set_option_sctx_idx(opt_idx, opt_flags, current_sctx);
-  // May set global value for local option.
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    set_option_varp(get_varp_scope(opt, OPT_GLOBAL), value);
+  set_option_varp(opt_idx, varp, value, false);
+
+  OptVal saved_used_value = optval_copy(used_old_value);
+  OptVal saved_old_global_value = optval_copy(old_global_value);
+  OptVal saved_old_local_value = optval_copy(old_local_value);
+  // New value (and varp) may become invalid if the buffer is closed by autocommands.
+  OptVal saved_new_value = optval_copy(value);
+
+  uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
+  const int secure_saved = secure;
+
+  // When an option is set in the sandbox, from a modeline or in secure mode, then deal with side
+  // effects in secure mode. Also when the value was set with the P_INSECURE flag and is not
+  // completely replaced.
+  if ((opt_flags & OPT_MODELINE) || sandbox != 0 || (!value_replaced && (*p & P_INSECURE))) {
+    secure = 1;
   }
 
-  // Invoke the option specific callback function to validate and apply the new value.
   bool doskip = false;
-  opt_did_set_cb_T did_set_cb;
 
-  if ((int *)varp == &p_force_on) {
-    did_set_cb = did_set_force_on;
-  } else if ((int *)varp == &p_force_off) {
-    did_set_cb = did_set_force_off;
-  } else {
-    did_set_cb = opt->opt_did_set_cb;
-  }
-  if (did_set_cb != NULL) {
-    // TODO(famiu): make os_oldval and os_newval use OptVal.
-    optset_T did_set_cb_args = {
-      .os_varp = varp,
-      .os_flags = opt_flags,
-      .os_oldval = old_value.data,
-      .os_newval = value.data,
-      .os_doskip = false,
-      .os_errbuf = NULL,
-      .os_errbuflen = 0,
-      .os_buf = curbuf,
-      .os_win = curwin
-    };
+  errmsg = did_set_option(opt_idx, varp, old_value, value, opt_flags, &doskip, &value_checked,
+                          value_replaced, errbuf, errbuflen);
 
-    errmsg = did_set_cb(&did_set_cb_args);
-    doskip = did_set_cb_args.os_doskip;
-  }
+  secure = secure_saved;
+
+  // Stop processing option further if asked to do so.
   if (doskip) {
-    return errmsg;
+    goto end;
   }
 
-  // Check the bound for num options.
-  if (value.type == kOptValTypeNumber) {
-    errmsg
-      = check_num_option_bounds((OptInt *)varp, old_value.data.number, errbuf, errbuflen, errmsg);
-  }
-
-  apply_optionset_autocmd(opt_idx, opt_flags,
-                          old_value,
-                          old_global_value,
-                          old_local_value,
-                          value,
-                          errmsg);
-
-  if (opt->flags & P_UI_OPTION) {
-    OptVal value_copy = optval_copy(optval_from_varp(opt_idx, varp));
-    ui_call_option_set(cstr_as_string(opt->fullname),
-                       optval_as_object(value_copy));
-  }
-
-  comp_col();  // in case 'columns' or 'ls' changed
-  if (curwin->w_curswant != MAXCOL
-      && (opt->flags & (P_CURSWANT | P_RALL)) != 0) {
-    curwin->w_set_curswant = true;
-  }
-  check_redraw(opt->flags);
-
-end:
   if (errmsg == NULL) {
-    opt->flags |= P_WAS_SET;
-
-    // When an option is set in the sandbox, from a modeline or in secure mode set the P_INSECURE
-    // flag.  Otherwise, if a new value is stored reset the flag.
-    uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
-    if (!value_checked && (secure || sandbox != 0 || (opt_flags & OPT_MODELINE))) {
-      *p |= P_INSECURE;
-    } else if (new_value) {
-      *p &= ~P_INSECURE;
+    if (!starting) {
+      apply_optionset_autocmd(opt_idx, opt_flags, saved_used_value, saved_old_global_value,
+                              saved_old_local_value, saved_new_value, errmsg);
+    }
+    if (opt->flags & P_UI_OPTION) {
+      // Calculate saved_new_value again as its value might be changed by bound checks.
+      // NOTE: Currently there are no buffer/window local UI options, but if there ever are buffer
+      // or window local UI options added in the future, varp might become invalid if the buffer or
+      // window is closed during an autocommand, and a check would have to be added for it.
+      optval_free(saved_new_value);
+      saved_new_value = optval_copy(optval_from_varp(opt_idx, varp));
+      ui_call_option_set(cstr_as_string(opt->fullname), optval_as_object(saved_new_value));
     }
   }
-
+end:
+  // Free copied values as they are not needed anymore
+  optval_free(saved_used_value);
+  optval_free(saved_old_local_value);
+  optval_free(saved_old_global_value);
+  optval_free(saved_new_value);
+  return errmsg;
+err:
+  optval_free(value);
   return errmsg;
 }
 
@@ -3630,17 +3868,10 @@ end:
 /// @param[in]  value      Option value. If NIL_OPTVAL, the option value is cleared.
 /// @param[in]  opt_flags  Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
 ///
-/// @return NULL on success, an untranslated error message on error.
+/// @return  NULL on success, an untranslated error message on error.
 const char *set_option_value(const char *const name, const OptVal value, int opt_flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  static const char *optval_type_names[] = {
-    [kOptValTypeNil] = "Nil",
-    [kOptValTypeBoolean] = "Boolean",
-    [kOptValTypeNumber] = "Number",
-    [kOptValTypeString] = "String"
-  };
-
   static char errbuf[IOSIZE];
 
   if (is_tty_option(name)) {
@@ -3666,26 +3897,9 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
   }
 
   const char *errmsg = NULL;
-  // Copy the value so we can modify the copy.
-  OptVal v = optval_copy(value);
 
-  if (v.type == kOptValTypeNil) {
-    v = optval_clear(name, flags, varp, curbuf, curwin);
-  } else if (!optval_match_type(v, opt_idx)) {
-    char *rep = optval_to_cstr(v);
-    char *valid_types = option_get_valid_types(opt_idx);
-    snprintf(errbuf, IOSIZE, _("Invalid value for option '%s': expected %s, got %s %s"),
-             name, valid_types, optval_type_names[v.type], rep);
-    xfree(rep);
-    xfree(valid_types);
-    errmsg = errbuf;
-    goto end;
-  }
+  errmsg = set_option(opt_idx, varp, optval_copy(value), opt_flags, true, errbuf, sizeof(errbuf));
 
-  errmsg = set_option(opt_idx, varp, v, opt_flags, true, errbuf, sizeof(errbuf));
-
-end:
-  optval_free(v);  // Free the copied OptVal.
   return errmsg;
 }
 
@@ -4143,115 +4357,6 @@ static int put_setbool(FILE *fd, char *cmd, char *name, int value)
   return OK;
 }
 
-// Unset local option value, similar to ":set opt<".
-void unset_global_local_option(char *name, void *from)
-{
-  vimoption_T *p;
-  buf_T *buf = (buf_T *)from;
-
-  int opt_idx = findoption(name);
-  if (opt_idx < 0) {
-    semsg(_("E355: Unknown option: %s"), name);
-    return;
-  }
-  p = &(options[opt_idx]);
-
-  switch ((int)p->indir) {
-  // global option with local value: use local value if it's been set
-  case PV_EP:
-    clear_string_option(&buf->b_p_ep);
-    break;
-  case PV_KP:
-    clear_string_option(&buf->b_p_kp);
-    break;
-  case PV_PATH:
-    clear_string_option(&buf->b_p_path);
-    break;
-  case PV_AR:
-    buf->b_p_ar = -1;
-    break;
-  case PV_BKC:
-    clear_string_option(&buf->b_p_bkc);
-    buf->b_bkc_flags = 0;
-    break;
-  case PV_TAGS:
-    clear_string_option(&buf->b_p_tags);
-    break;
-  case PV_TC:
-    clear_string_option(&buf->b_p_tc);
-    buf->b_tc_flags = 0;
-    break;
-  case PV_SISO:
-    curwin->w_p_siso = -1;
-    break;
-  case PV_SO:
-    curwin->w_p_so = -1;
-    break;
-  case PV_DEF:
-    clear_string_option(&buf->b_p_def);
-    break;
-  case PV_INC:
-    clear_string_option(&buf->b_p_inc);
-    break;
-  case PV_DICT:
-    clear_string_option(&buf->b_p_dict);
-    break;
-  case PV_TSR:
-    clear_string_option(&buf->b_p_tsr);
-    break;
-  case PV_TSRFU:
-    clear_string_option(&buf->b_p_tsrfu);
-    break;
-  case PV_FP:
-    clear_string_option(&buf->b_p_fp);
-    break;
-  case PV_EFM:
-    clear_string_option(&buf->b_p_efm);
-    break;
-  case PV_GP:
-    clear_string_option(&buf->b_p_gp);
-    break;
-  case PV_MP:
-    clear_string_option(&buf->b_p_mp);
-    break;
-  case PV_SBR:
-    clear_string_option(&((win_T *)from)->w_p_sbr);
-    break;
-  case PV_STL:
-    clear_string_option(&((win_T *)from)->w_p_stl);
-    break;
-  case PV_WBR:
-    clear_string_option(&((win_T *)from)->w_p_wbr);
-    break;
-  case PV_UL:
-    buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
-    break;
-  case PV_LW:
-    clear_string_option(&buf->b_p_lw);
-    break;
-  case PV_MENC:
-    clear_string_option(&buf->b_p_menc);
-    break;
-  case PV_LCS:
-    clear_string_option(&((win_T *)from)->w_p_lcs);
-    set_listchars_option((win_T *)from, ((win_T *)from)->w_p_lcs, true);
-    redraw_later((win_T *)from, UPD_NOT_VALID);
-    break;
-  case PV_FCS:
-    clear_string_option(&((win_T *)from)->w_p_fcs);
-    set_fillchars_option((win_T *)from, ((win_T *)from)->w_p_fcs, true);
-    redraw_later((win_T *)from, UPD_NOT_VALID);
-    break;
-  case PV_VE:
-    clear_string_option(&((win_T *)from)->w_p_ve);
-    ((win_T *)from)->w_ve_flags = 0;
-    break;
-  case PV_STC:
-    clear_string_option(&((win_T *)from)->w_p_stc);
-    break;
-  }
-}
-
 void *get_varp_scope_from(vimoption_T *p, int scope, buf_T *buf, win_T *win)
 {
   if ((scope & OPT_GLOBAL) && p->indir != PV_NONE) {
@@ -4632,12 +4737,6 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
 static inline void *get_varp(vimoption_T *p)
 {
   return get_varp_from(p, curbuf, curwin);
-}
-
-/// Return the did_set callback function for the option at 'opt_idx'
-opt_did_set_cb_T get_option_did_set_cb(int opt_idx)
-{
-  return options[opt_idx].opt_did_set_cb;
 }
 
 /// Get the value of 'equalprg', either the buffer-local one or the global one.
