@@ -1,3 +1,5 @@
+local ts = vim.treesitter
+
 local Range = require('vim.treesitter._range')
 
 local api = vim.api
@@ -131,21 +133,45 @@ local function trim_level(level)
   return level
 end
 
+--- If a parser doesn't have any ranges explicitly set, treesitter will
+--- return a range with end_row and end_bytes with a value of UINT32_MAX,
+--- so clip end_row to the max buffer line.
+---
+--- TODO(lewis6991): Handle this generally
+---
+--- @param bufnr integer
+--- @param erow integer?
+--- @return integer
+local function normalise_erow(bufnr, erow)
+  local max_erow = api.nvim_buf_line_count(bufnr) - 1
+  return math.min(erow or max_erow, max_erow)
+end
+
 ---@param bufnr integer
 ---@param info TS.FoldInfo
 ---@param srow integer?
 ---@param erow integer?
 local function get_folds_levels(bufnr, info, srow, erow)
+  if not api.nvim_buf_is_valid(bufnr) then
+    return false
+  end
+
   srow = srow or 0
-  erow = erow or api.nvim_buf_line_count(bufnr)
+  erow = normalise_erow(bufnr, erow)
 
   info:invalidate_range(srow, erow)
 
   local prev_start = -1
   local prev_stop = -1
 
-  vim.treesitter.get_parser(bufnr):for_each_tree(function(tree, ltree)
-    local query = vim.treesitter.query.get(ltree:lang(), 'folds')
+  local parser = ts.get_parser(bufnr)
+
+  if not parser:is_valid() then
+    return
+  end
+
+  parser:for_each_tree(function(tree, ltree)
+    local query = ts.query.get(ltree:lang(), 'folds')
     if not query then
       return
     end
@@ -153,9 +179,9 @@ local function get_folds_levels(bufnr, info, srow, erow)
     -- erow in query is end-exclusive
     local q_erow = erow and erow + 1 or -1
 
-    for id, node, metadata in query:iter_captures(tree:root(), bufnr, srow or 0, q_erow) do
+    for id, node, metadata in query:iter_captures(tree:root(), bufnr, srow, q_erow) do
       if query.captures[id] == 'fold' then
-        local range = vim.treesitter.get_range(node, bufnr, metadata[id])
+        local range = ts.get_range(node, bufnr, metadata[id])
         local start, _, stop, stop_col = Range.unpack4(range)
 
         if stop_col == 0 then
