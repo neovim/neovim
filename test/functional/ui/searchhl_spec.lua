@@ -19,7 +19,8 @@ describe('search highlighting', function()
       [1] = {bold=true, foreground=Screen.colors.Blue},
       [2] = {background = Screen.colors.Yellow}, -- Search
       [3] = {reverse = true},
-      [4] = {foreground = Screen.colors.Red}, -- Message
+      [4] = {foreground = Screen.colors.Red}, -- WarningMsg
+      [5] = {bold = true, reverse = true}, -- StatusLine
       [6] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey}, -- Folded
     })
   end)
@@ -326,19 +327,33 @@ describe('search highlighting', function()
 
   it('is preserved during :terminal activity', function()
     feed((':terminal "%s" REP 5000 foo<cr>'):format(testprg('shell-test')))
-
     feed(':file term<CR>')
+    screen:expect([[
+      ^0: foo                                  |
+      1: foo                                  |
+      2: foo                                  |
+      3: foo                                  |
+      4: foo                                  |
+      5: foo                                  |
+      :file term                              |
+    ]])
+
     feed('G')  -- Follow :terminal output.
     feed(':vnew<CR>')
     insert([[
       foo bar baz
       bar baz foo
-      bar foo baz
-    ]])
+      bar foo baz]])
     feed('/foo')
-    helpers.poke_eventloop()
-    screen:sleep(100)
-    screen:expect_unchanged()
+    screen:expect([[
+      {3:foo} bar baz         │{MATCH:%d+}: {2:foo}{MATCH:%s+}|
+      bar baz {2:foo}         │{MATCH:%d+}: {2:foo}{MATCH:%s+}|
+      bar {2:foo} baz         │{MATCH:%d+}: {2:foo}{MATCH:%s+}|
+      {1:~                   }│{MATCH:.*}|
+      {1:~                   }│{MATCH:.*}|
+      {5:[No Name] [+]        }{3:term               }|
+      /foo^                                    |
+    ]])
   end)
 
   it('works with incsearch', function()
