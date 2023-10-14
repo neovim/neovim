@@ -9284,9 +9284,11 @@ describe('float window', function()
       end
 
       -- Also test with global NormalNC highlight
-      meths.set_option_value('winhighlight', '', {win = win})
-      command('hi link NormalNC Visual')
-      screen:expect_unchanged(true)
+      exec_lua([[
+        vim.api.nvim_set_option_value('winhighlight', '', {win = ...})
+        vim.api.nvim_set_hl(0, 'NormalNC', {link = 'Visual'})
+      ]], win)
+      screen:expect_unchanged()
       command('hi clear NormalNC')
 
       command('hi SpecialRegion guifg=Red blend=0')

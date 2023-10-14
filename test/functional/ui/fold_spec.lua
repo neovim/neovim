@@ -169,10 +169,10 @@ describe("folded lines", function()
       end
       -- CursorLine is applied correctly with screenrow motions #22232
       feed("jgk")
-      screen:expect_unchanged(true)
+      screen:expect_unchanged()
       -- CursorLine is applied correctly when closing a fold when cursor is not at fold start
       feed("zo4Gzc")
-      screen:expect_unchanged(true)
+      screen:expect_unchanged()
       command("set cursorlineopt=line")
       if multigrid then
         screen:expect([[

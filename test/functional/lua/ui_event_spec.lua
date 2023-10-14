@@ -77,8 +77,7 @@ describe('vim.ui_attach', function()
     }
 
     feed '<c-y>'
-    -- There is an intermediate state where the 'showmode' message disappears.
-    screen:expect_unchanged(true)
+    screen:expect_unchanged()
     expect_events {
        { "popupmenu_hide" };
     }
