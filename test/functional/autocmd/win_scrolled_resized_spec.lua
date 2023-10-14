@@ -297,7 +297,7 @@ describe('WinScrolled', function()
     eq(0, eval('g:scrolled'))
 
     local buf = meths.create_buf(true, true)
-    meths.buf_set_lines(buf, 0, -1, false, {'a', 'b', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'})
+    meths.buf_set_lines(buf, 0, -1, false, {'@', 'b', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'})
     local win = meths.open_win(buf, false, {
       height = 5,
       width = 10,
@@ -306,6 +306,7 @@ describe('WinScrolled', function()
       relative = 'editor',
       style = 'minimal'
     })
+    screen:expect({ any = '@' })
     local winid_str = tostring(win.id)
     -- WinScrolled should not be triggered when creating a new floating window
     eq(0, eval('g:scrolled'))
