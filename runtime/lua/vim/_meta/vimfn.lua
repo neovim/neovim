@@ -10099,6 +10099,8 @@ function vim.fn.virtcol(expr, list, winid) end
 --- character in window {winid} at buffer line {lnum} and virtual
 --- column {col}.
 ---
+--- If buffer line {lnum} is an empty line, 0 is returned.
+---
 --- If {col} is greater than the last virtual column in line
 --- {lnum}, then the byte index of the character at the last
 --- virtual column is returned.
