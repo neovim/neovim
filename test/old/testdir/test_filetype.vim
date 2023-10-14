@@ -184,6 +184,7 @@ func s:GetFilenameChecks() abort
     \ 'debcontrol': ['/debian/control', 'any/debian/control'],
     \ 'debcopyright': ['/debian/copyright', 'any/debian/copyright'],
     \ 'debsources': ['/etc/apt/sources.list', '/etc/apt/sources.list.d/file.list', 'any/etc/apt/sources.list', 'any/etc/apt/sources.list.d/file.list'],
+    \ 'deb822sources': ['/etc/apt/sources.list.d/file.sources', 'any/etc/apt/sources.list.d/file.sources'],
     \ 'def': ['file.def'],
     \ 'denyhosts': ['denyhosts.conf'],
     \ 'desc': ['file.desc'],
