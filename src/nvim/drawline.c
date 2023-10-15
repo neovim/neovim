@@ -248,10 +248,10 @@ done:
   return cells;
 }
 
-static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int max_col,
-                           int win_row)
+static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int win_row)
 {
   DecorState *state = &decor_state;
+  const int max_col = wp->w_p_rl ? -1 : wp->w_grid.cols;
   int right_pos = max_col;
   bool do_eol = state->eol_col > -1;
   for (size_t i = 0; i < kv_size(state->active); i++) {
@@ -260,6 +260,7 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
       continue;
     }
     if (item->draw_col == -1) {
+      bool updated = true;
       if (item->decor.virt_text_pos == kVTRightAlign) {
         if (wp->w_p_rl) {
           right_pos += item->decor.virt_text_width;
@@ -275,6 +276,12 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
         } else {
           item->draw_col = MAX(col_off + item->decor.col, 0);
         }
+      } else {
+        updated = false;
+      }
+      if (updated && (item->draw_col < 0 || item->draw_col >= wp->w_grid.cols)) {
+        // Out of window, don't draw at all.
+        item->draw_col = INT_MIN;
       }
     }
     if (item->draw_col < 0) {
@@ -1793,7 +1800,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           && wlv.vcol >= wp->w_virtcol)
          || (number_only && wlv.draw_state > WL_STC))
         && wlv.filler_todo <= 0) {
-      draw_virt_text(wp, buf, win_col_offset, &wlv.col, wp->w_p_rl ? -1 : grid->cols, wlv.row);
+      draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
       win_put_linebuf(wp, wlv.row, 0, wlv.col, -grid->cols, bg_attr, false);
       // Pretend we have finished updating the window.  Except when
       // 'cursorcolumn' is set.
@@ -2912,7 +2919,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         draw_virt_text_item(buf, win_col_offset, fold_vt, kHlModeCombine,
                             wp->w_p_rl ? -1 : grid->cols, 0, wp->w_p_rl);
       }
-      draw_virt_text(wp, buf, win_col_offset, &wlv.col, wp->w_p_rl ? -1 : grid->cols, wlv.row);
+      draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
       win_put_linebuf(wp, wlv.row, 0, wlv.col, grid->cols, bg_attr, false);
       wlv.row++;
 
@@ -3183,7 +3190,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         draw_virt_text_item(buf, virt_line_offset, kv_A(virt_lines, virt_line_index).line,
                             kHlModeReplace, wp->w_p_rl ? -1 : grid->cols, 0, wp->w_p_rl);
       } else if (wlv.filler_todo <= 0) {
-        draw_virt_text(wp, buf, win_col_offset, &draw_col, wp->w_p_rl ? -1 : grid->cols, wlv.row);
+        draw_virt_text(wp, buf, win_col_offset, &draw_col, wlv.row);
       }
 
       win_put_linebuf(wp, wlv.row, 0, draw_col, grid->cols, bg_attr, wrap);
