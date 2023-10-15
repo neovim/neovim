@@ -17,7 +17,7 @@
 #  undef setlocale
 # endif
 #else
-# define _(x) (x)
+# define _(x) ((char *)(x))
 # define N_(x) x
 # define NGETTEXT(x, xs, n) ((n) == 1 ? (x) : (xs))
 # define bindtextdomain(x, y)  // empty
