@@ -1717,6 +1717,7 @@ describe('ui/mouse/input', function()
             eq(0, mousepos.wincol)
             eq(0, mousepos.line)
             eq(0, mousepos.column)
+            eq(0, mousepos.coladd)
           end
         end
       end
@@ -1736,15 +1737,18 @@ describe('ui/mouse/input', function()
         eq(win_col + 1, mousepos.wincol)
         local line = 0
         local column = 0
+        local coladd = 0
         if win_row > 0 and win_row < opts.height + 1
             and win_col > 0 and win_col < opts.width + 1 then
           -- Because of border, win_row and win_col don't need to be
           -- incremented by 1.
           line = math.min(win_row, funcs.line('$'))
           column = math.min(win_col, #funcs.getline(line) + 1)
+          coladd = win_col - column
         end
         eq(line, mousepos.line)
         eq(column, mousepos.column)
+        eq(coladd, mousepos.coladd)
       end
     end
 
@@ -1764,8 +1768,10 @@ describe('ui/mouse/input', function()
         eq(win_col + 1, mousepos.wincol)
         local line = math.min(win_row + 1, funcs.line('$'))
         local column = math.min(win_col + 1, #funcs.getline(line) + 1)
+        local coladd = win_col + 1 - column
         eq(line, mousepos.line)
         eq(column, mousepos.column)
+        eq(coladd, mousepos.coladd)
       end
     end
 
@@ -1788,8 +1794,10 @@ describe('ui/mouse/input', function()
           eq(win_col + 1, mousepos.wincol)
           local line = math.min(win_row + 1, funcs.line('$'))
           local column = math.min(win_col + 1, #funcs.getline(line) + 1)
+          local coladd = win_col + 1 - column
           eq(line, mousepos.line)
           eq(column, mousepos.column)
+          eq(coladd, mousepos.coladd)
         end
       end
     end

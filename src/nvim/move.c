@@ -1142,7 +1142,7 @@ void f_screenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// returned.
 static int virtcol2col(win_T *wp, linenr_T lnum, int vcol)
 {
-  int offset = vcol2col(wp, lnum, vcol - 1);
+  int offset = vcol2col(wp, lnum, vcol - 1, NULL);
   char *line = ml_get_buf(wp->w_buffer, lnum);
   char *p = line + offset;
 
