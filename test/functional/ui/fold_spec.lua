@@ -2155,13 +2155,14 @@ describe("folded lines", function()
 
       meths.input_mouse('left', 'press', '', multigrid and 2 or 0, 4, 0)
       eq({
-        column = 1,
-        line = 3,
         screencol = 1,
         screenrow = 5,
-        wincol = 1,
         winid = 1000,
+        wincol = 1,
         winrow = 5,
+        line = 3,
+        column = 1,
+        coladd = 0,
       }, funcs.getmousepos())
 
       meths.buf_set_extmark(0, ns, 1, 0, { virt_lines = {{{"more virt_line below line 2", ""}}} })

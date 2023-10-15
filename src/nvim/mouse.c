@@ -243,9 +243,7 @@ static int get_fpos_of_mouse(pos_T *mpos)
     return IN_UNKNOWN;
   }
 
-  mpos->col = vcol2col(wp, mpos->lnum, col);
-
-  mpos->coladd = 0;
+  mpos->col = vcol2col(wp, mpos->lnum, col, &mpos->coladd);
   return IN_BUFFER;
 }
 
@@ -1755,8 +1753,8 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
 
 /// Convert a virtual (screen) column to a character column.
 /// The first column is zero.
-colnr_T vcol2col(win_T *const wp, const linenr_T lnum, const colnr_T vcol)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+colnr_T vcol2col(win_T *wp, linenr_T lnum, colnr_T vcol, colnr_T *coladdp)
+  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // try to advance to the specified column
   char *line = ml_get_buf(wp->w_buffer, lnum);
@@ -1772,6 +1770,9 @@ colnr_T vcol2col(win_T *const wp, const linenr_T lnum, const colnr_T vcol)
   }
   clear_chartabsize_arg(&cts);
 
+  if (coladdp != NULL) {
+    *coladdp = vcol - cts.cts_vcol;
+  }
   return (colnr_T)(cts.cts_ptr - line);
 }
 
@@ -1927,6 +1928,7 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   varnumber_T wincol = 0;
   linenr_T lnum = 0;
   varnumber_T column = 0;
+  colnr_T coladd = 0;
 
   tv_dict_alloc_ret(rettv);
   dict_T *d = rettv->vval.v_dict;
@@ -1945,7 +1947,7 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       wincol = col + 1 + wp->w_wincol_off;  // Adjust by 1 for left border
       if (row >= 0 && row < wp->w_height && col >= 0 && col < wp->w_width) {
         (void)mouse_comp_pos(wp, &row, &col, &lnum);
-        col = vcol2col(wp, lnum, col);
+        col = vcol2col(wp, lnum, col, &coladd);
         column = col + 1;
       }
     }
@@ -1955,4 +1957,5 @@ void f_getmousepos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   tv_dict_add_nr(d, S_LEN("wincol"), wincol);
   tv_dict_add_nr(d, S_LEN("line"), (varnumber_T)lnum);
   tv_dict_add_nr(d, S_LEN("column"), column);
+  tv_dict_add_nr(d, S_LEN("coladd"), coladd);
 }

@@ -3242,6 +3242,8 @@ function vim.fn.getmatches(win) end
 ---   wincol    column inside "winid"
 ---   line    text line inside "winid"
 ---   column    text column inside "winid"
+---   coladd    offset (in screen columns) from the
+---       start of the clicked char
 --- All numbers are 1-based.
 ---
 --- If not over a window, e.g. when in the command line, then only
