@@ -3257,6 +3257,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Ignore case in search patterns, |cmdline-completion|, when
 	searching in the tags file, and |expr-==|.
+	Also see 'smartcase' and 'tagcase'.
 	Can be overruled by using "\c" or "\C" in the pattern, see
 	|/ignorecase|.
 

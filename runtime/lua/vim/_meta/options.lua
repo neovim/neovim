@@ -3089,6 +3089,7 @@ vim.go.iconstring = vim.o.iconstring
 
 --- Ignore case in search patterns, `cmdline-completion`, when
 --- searching in the tags file, and `expr-==`.
+--- Also see 'smartcase' and 'tagcase'.
 --- Can be overruled by using "\c" or "\C" in the pattern, see
 --- `/ignorecase`.
 ---
