@@ -106,7 +106,7 @@ endif()
 
 # mpack
 add_custom_command(OUTPUT ${ROCKS_DIR}/mpack
-  COMMAND ${CMAKE_COMMAND} -E env "${PATH}" ${LUAROCKS_BINARY} build mpack 1.0.10-0 ${LUAROCKS_BUILDARGS}
+  COMMAND ${CMAKE_COMMAND} -E env "${PATH}" ${LUAROCKS_BINARY} build mpack 1.0.11-0 ${LUAROCKS_BUILDARGS}
   DEPENDS luarocks)
 add_custom_target(mpack ALL DEPENDS ${ROCKS_DIR}/mpack)
 
