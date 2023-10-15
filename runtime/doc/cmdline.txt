@@ -364,6 +364,7 @@ When editing the command-line, a few commands can be used to complete the
 word before the cursor.  This is available for:
 
 - Command names: At the start of the command-line.
+- |++opt| values.
 - Tags: Only after the ":tag" command.
 - File names: Only after a command that accepts a file name or a setting for
   an option that can be set to a file name.  This is called file name

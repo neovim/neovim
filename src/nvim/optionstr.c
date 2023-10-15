@@ -1490,6 +1490,17 @@ int expand_set_fileformat(optexpand_T *args, int *numMatches, char ***matches)
                                matches);
 }
 
+/// Function given to ExpandGeneric() to obtain the possible arguments of the
+/// fileformat options.
+char *get_fileformat_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  if (idx >= (int)ARRAY_SIZE(p_ff_values)) {
+    return NULL;
+  }
+
+  return p_ff_values[idx];
+}
+
 /// The 'fileformats' option is changed.
 const char *did_set_fileformats(optset_T *args)
 {

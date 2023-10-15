@@ -17,7 +17,8 @@ enum { EXPAND_BUF_LEN = 256, };
 
 /// used for completion on the command line
 typedef struct expand {
-  char *xp_pattern;             ///< start of item to expand
+  char *xp_pattern;             ///< start of item to expand, guaranteed
+                                ///< to be part of xp_line
   int xp_context;               ///< type of expansion
   size_t xp_pattern_len;        ///< bytes in xp_pattern before cursor
   xp_prefix_T xp_prefix;
@@ -104,6 +105,7 @@ enum {
   EXPAND_RUNTIME,
   EXPAND_STRING_SETTING,
   EXPAND_SETTING_SUBTRACT,
+  EXPAND_ARGOPT,
   EXPAND_CHECKHEALTH,
   EXPAND_LUA,
 };
