@@ -1456,6 +1456,24 @@ describe('extmark decorations', function()
     ]]}
   end)
 
+  it('virtual text win_col out of window does not break display #25645', function()
+    screen:try_resize(51, 6)
+    command('vnew')
+    meths.buf_set_lines(0, 0, -1, false, { string.rep('a', 50) })
+    screen:expect{grid=[[
+      ^aaaaaaaaaaaaaaaaaaaaaaaaa│                         |
+      aaaaaaaaaaaaaaaaaaaaaaaaa│{1:~                        }|
+      {1:~                        }│{1:~                        }|
+      {1:~                        }│{1:~                        }|
+      {41:[No Name] [+]             }{40:[No Name]                }|
+                                                         |
+    ]]}
+    local extmark_opts = { virt_text_win_col = 35, virt_text = { { ' ', 'Comment' } } }
+    meths.buf_set_extmark(0, ns, 0, 0, extmark_opts)
+    screen:expect_unchanged()
+    assert_alive()
+  end)
+
   it('can have virtual text on folded line', function()
     insert([[
       11111
