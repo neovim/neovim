@@ -1567,6 +1567,20 @@ static void set_context_for_wildcard_arg(exarg_T *eap, const char *arg, bool use
   }
 }
 
+/// Set the completion context for the "++opt=arg" argument.  Always returns NULL.
+static const char *set_context_in_argopt(expand_T *xp, const char *arg)
+{
+  char *p = vim_strchr(arg, '=');
+  if (p == NULL) {
+    xp->xp_pattern = (char *)arg;
+  } else {
+    xp->xp_pattern = p + 1;
+  }
+
+  xp->xp_context = EXPAND_ARGOPT;
+  return NULL;
+}
+
 /// Set the completion context for the :filter command. Returns a pointer to the
 /// next command after the :filter command.
 static const char *set_context_in_filter_cmd(expand_T *xp, const char *arg)
@@ -2238,13 +2252,23 @@ static const char *set_one_cmd_context(expand_T *xp, const char *buff)
 
   const char *arg = skipwhite(p);
 
-  // Skip over ++argopt argument
-  if ((ea.argt & EX_ARGOPT) && *arg != NUL && strncmp(arg, "++", 2) == 0) {
-    p = arg;
-    while (*p && !ascii_isspace(*p)) {
-      MB_PTR_ADV(p);
+  // Does command allow "++argopt" argument?
+  if (ea.argt & EX_ARGOPT) {
+    while (*arg != NUL && strncmp(arg, "++", 2) == 0) {
+      p = arg + 2;
+      while (*p && !ascii_isspace(*p)) {
+        MB_PTR_ADV(p);
+      }
+
+      // Still touching the command after "++"?
+      if (*p == NUL) {
+        if (ea.argt & EX_ARGOPT) {
+          return set_context_in_argopt(xp, arg + 2);
+        }
+      }
+
+      arg = skipwhite(p);
     }
-    arg = skipwhite(p);
   }
 
   if (ea.cmdidx == CMD_write || ea.cmdidx == CMD_update) {
@@ -2786,6 +2810,8 @@ static int ExpandFromContext(expand_T *xp, char *pat, char ***matches, int *numM
     ret = ExpandSettingSubtract(xp, &regmatch, numMatches, matches);
   } else if (xp->xp_context == EXPAND_MAPPINGS) {
     ret = ExpandMappings(pat, &regmatch, numMatches, matches);
+  } else if (xp->xp_context == EXPAND_ARGOPT) {
+    ret = expand_argopt(pat, xp, &regmatch, matches, numMatches);
   } else if (xp->xp_context == EXPAND_USER_DEFINED) {
     ret = ExpandUserDefined(pat, xp, &regmatch, matches, numMatches);
   } else {
@@ -2883,7 +2909,8 @@ void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regmatch, ch
                             && xp->xp_context != EXPAND_MENUNAMES
                             && xp->xp_context != EXPAND_STRING_SETTING
                             && xp->xp_context != EXPAND_MENUS
-                            && xp->xp_context != EXPAND_SCRIPTNAMES;
+                            && xp->xp_context != EXPAND_SCRIPTNAMES
+                            && xp->xp_context != EXPAND_ARGOPT;
 
   // <SNR> functions should be sorted to the end.
   const bool funcsort = xp->xp_context == EXPAND_EXPRESSION

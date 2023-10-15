@@ -4087,6 +4087,22 @@ int get_bad_opt(const char *p, exarg_T *eap)
   return OK;
 }
 
+/// Function given to ExpandGeneric() to obtain the list of bad= names.
+static char *get_bad_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  // Note: Keep this in sync with get_bad_opt().
+  static char *(p_bad_values[]) = {
+    "?",
+    "keep",
+    "drop",
+  };
+
+  if (idx < (int)ARRAY_SIZE(p_bad_values)) {
+    return p_bad_values[idx];
+  }
+  return NULL;
+}
+
 /// Get "++opt=arg" argument.
 ///
 /// @return  FAIL or OK.
@@ -4095,6 +4111,8 @@ static int getargopt(exarg_T *eap)
   char *arg = eap->arg + 2;
   int *pp = NULL;
   int bad_char_idx;
+
+  // Note: Keep this in sync with get_argopt_name.
 
   // ":edit ++[no]bin[ary] file"
   if (strncmp(arg, "bin", 3) == 0 || strncmp(arg, "nobin", 5) == 0) {
@@ -4171,6 +4189,70 @@ static int getargopt(exarg_T *eap)
     }
   }
 
+  return OK;
+}
+
+/// Function given to ExpandGeneric() to obtain the list of ++opt names.
+static char *get_argopt_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  // Note: Keep this in sync with getargopt().
+  static char *(p_opt_values[]) = {
+    "fileformat=",
+    "encoding=",
+    "binary",
+    "nobinary",
+    "bad=",
+    "edit",
+    "p",
+  };
+
+  if (idx < (int)ARRAY_SIZE(p_opt_values)) {
+    return p_opt_values[idx];
+  }
+  return NULL;
+}
+
+/// Command-line expansion for ++opt=name.
+int expand_argopt(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches, int *numMatches)
+{
+  if (xp->xp_pattern > xp->xp_line && *(xp->xp_pattern - 1) == '=') {
+    CompleteListItemGetter cb = NULL;
+
+    char *name_end = xp->xp_pattern - 1;
+    if (name_end - xp->xp_line >= 2
+        && strncmp(name_end - 2, "ff", 2) == 0) {
+      cb = get_fileformat_name;
+    } else if (name_end - xp->xp_line >= 10
+               && strncmp(name_end - 10, "fileformat", 10) == 0) {
+      cb = get_fileformat_name;
+    } else if (name_end - xp->xp_line >= 3
+               && strncmp(name_end - 3, "enc", 3) == 0) {
+      cb = get_encoding_name;
+    } else if (name_end - xp->xp_line >= 8
+               && strncmp(name_end - 8, "encoding", 8) == 0) {
+      cb = get_encoding_name;
+    } else if (name_end - xp->xp_line >= 3
+               && strncmp(name_end - 3, "bad", 3) == 0) {
+      cb = get_bad_name;
+    }
+
+    if (cb != NULL) {
+      ExpandGeneric(pat, xp, rmp, matches, numMatches, cb, false);
+      return OK;
+    }
+    return FAIL;
+  }
+
+  // Special handling of "ff" which acts as a short form of
+  // "fileformat", as "ff" is not a substring of it.
+  if (strcmp(xp->xp_pattern, "ff") == 0) {
+    *matches = xmalloc(sizeof(char *));
+    *numMatches = 1;
+    (*matches)[0] = xstrdup("fileformat=");
+    return OK;
+  }
+
+  ExpandGeneric(pat, xp, rmp, matches, numMatches, get_argopt_name, false);
   return OK;
 }
 

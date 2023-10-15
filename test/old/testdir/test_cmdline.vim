@@ -1039,6 +1039,51 @@ func Test_cmdline_complete_expression()
   unlet g:SomeVar
 endfunc
 
+func Test_cmdline_complete_argopt()
+  " completion for ++opt=arg for file commands
+  call assert_equal('fileformat=', getcompletion('edit ++', 'cmdline')[0])
+  call assert_equal('encoding=', getcompletion('read ++e', 'cmdline')[0])
+  call assert_equal('edit', getcompletion('read ++bin ++edi', 'cmdline')[0])
+
+  call assert_equal(['fileformat='], getcompletion('edit ++ff', 'cmdline'))
+
+  call assert_equal('dos', getcompletion('write ++ff=d', 'cmdline')[0])
+  call assert_equal('mac', getcompletion('args ++fileformat=m', 'cmdline')[0])
+  call assert_equal('utf-8', getcompletion('split ++enc=ut*-8', 'cmdline')[0])
+  call assert_equal('latin1', getcompletion('tabedit ++encoding=lati', 'cmdline')[0])
+  call assert_equal('keep', getcompletion('edit ++bad=k', 'cmdline')[0])
+
+  call assert_equal([], getcompletion('edit ++bogus=', 'cmdline'))
+
+  " completion should skip the ++opt and continue
+  call writefile([], 'Xaaaaa.txt', 'D')
+  call feedkeys(":split ++enc=latin1 Xaaa\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"split ++enc=latin1 Xaaaaa.txt', @:)
+
+  if has('terminal')
+    " completion for terminal's [options]
+    call assert_equal('close', getcompletion('terminal ++cl*e', 'cmdline')[0])
+    call assert_equal('hidden', getcompletion('terminal ++open ++hidd', 'cmdline')[0])
+    call assert_equal('term', getcompletion('terminal ++kill=ter', 'cmdline')[0])
+
+    call assert_equal([], getcompletion('terminal ++bogus=', 'cmdline'))
+
+    " :terminal completion should skip the ++opt when considering what is the
+    " first option, which is a list of shell commands, unlike second option
+    " onwards.
+    let first_param = getcompletion('terminal ', 'cmdline')
+    let second_param = getcompletion('terminal foo ', 'cmdline')
+    let skipped_opt_param = getcompletion('terminal ++close ', 'cmdline')
+    call assert_equal(first_param, skipped_opt_param)
+    call assert_notequal(first_param, second_param)
+  endif
+endfunc
+
+" Unique function name for completion below
+func s:WeirdFunc()
+  echo 'weird'
+endfunc
+
 " Test for various command-line completion
 func Test_cmdline_complete_various()
   " completion for a command starting with a comment
