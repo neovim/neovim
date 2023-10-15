@@ -143,6 +143,9 @@ static void insert_enter(InsertState *s)
   update_Insstart_orig = true;
 
   ins_compl_clear();        // clear stuff for CTRL-X mode
+  // Reset Changedtick_i, so that TextChangedI will only be triggered for stuff
+  // from insert mode
+  curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
 
   // Trigger InsertEnter autocommands.  Do not do this for "r<CR>" or "grx".
   if (s->cmdchar != 'r' && s->cmdchar != 'v') {
@@ -356,6 +359,7 @@ static void insert_enter(InsertState *s)
     ins_apply_autocmds(EVENT_INSERTLEAVE);
   }
   did_cursorhold = false;
+  curbuf->b_last_changedtick = buf_get_changedtick(curbuf);
 }
 
 static int insert_check(VimState *state)
