@@ -6824,6 +6824,7 @@ return {
     },
     {
       abbreviation = 'sd',
+      cb = 'did_set_shada',
       defaults = {
         if_true = "!,'100,<50,s10,h",
         doc = [[for

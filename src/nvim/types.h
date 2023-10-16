@@ -42,6 +42,8 @@ typedef enum {
 #define TRISTATE_TO_BOOL(val, \
                          default) ((val) == kTrue ? true : ((val) == kFalse ? false : (default)))
 
+#define TRISTATE_FROM_INT(val) ((val) == 0 ? kFalse : ((val) >= 1 ? kTrue : kNone))
+
 typedef struct Decoration Decoration;
 
 #ifndef ORDER_BIG_ENDIAN

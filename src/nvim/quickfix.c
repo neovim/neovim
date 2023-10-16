@@ -2596,7 +2596,7 @@ static int qf_open_new_file_win(qf_info_T *ll_ref)
   if (win_split(0, flags) == FAIL) {
     return FAIL;  // not enough room for window
   }
-  p_swb = empty_option;  // don't split again
+  p_swb = empty_string_option;  // don't split again
   swb_flags = 0;
   RESET_BINDING(curwin);
   if (ll_ref != NULL) {
@@ -3073,7 +3073,7 @@ theend:
     qfl->qf_ptr = qf_ptr;
     qfl->qf_index = qf_index;
   }
-  if (p_swb != old_swb && p_swb == empty_option) {
+  if (p_swb != old_swb && p_swb == empty_string_option) {
     // Restore old 'switchbuf' value, but not when an autocommand or
     // modeline has changed the value.
     p_swb = old_swb;
@@ -7201,7 +7201,7 @@ void ex_helpgrep(exarg_T *eap)
   // Make 'cpoptions' empty, the 'l' flag should not be used here.
   char *const save_cpo = p_cpo;
   const bool save_cpo_allocated = is_option_allocated("cpo");
-  p_cpo = empty_option;
+  p_cpo = empty_string_option;
 
   bool new_qi = false;
   if (is_loclist_cmd(eap->cmdidx)) {
@@ -7232,7 +7232,7 @@ void ex_helpgrep(exarg_T *eap)
     updated = true;
   }
 
-  if (p_cpo == empty_option) {
+  if (p_cpo == empty_string_option) {
     p_cpo = save_cpo;
   } else {
     // Darn, some plugin changed the value.  If it's still empty it was

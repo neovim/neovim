@@ -287,29 +287,28 @@ void check_buf_options(buf_T *buf)
 }
 
 /// Free the string allocated for an option.
-/// Checks for the string being empty_option. This may happen if we're out of
-/// memory, xstrdup() returned NULL, which was replaced by empty_option by
-/// check_options().
+/// Checks for the string being empty_string_option. This may happen if we're out of memory,
+/// xstrdup() returned NULL, which was replaced by empty_string_option by check_options().
 /// Does NOT check for P_ALLOCED flag!
 void free_string_option(char *p)
 {
-  if (p != empty_option) {
+  if (p != empty_string_option) {
     xfree(p);
   }
 }
 
 void clear_string_option(char **pp)
 {
-  if (*pp != empty_option) {
+  if (*pp != empty_string_option) {
     xfree(*pp);
   }
-  *pp = empty_option;
+  *pp = empty_string_option;
 }
 
 void check_string_option(char **pp)
 {
   if (*pp == NULL) {
-    *pp = empty_option;
+    *pp = empty_string_option;
   }
 }
 
@@ -385,7 +384,7 @@ void set_string_option_direct(const char *name, int opt_idx, const char *val, in
     // make the local value empty, so that the global value is used.
     if ((opt->indir & PV_BOTH) && both) {
       free_string_option(*varp);
-      *varp = empty_option;
+      *varp = empty_string_option;
     }
     if (set_sid != SID_NONE) {
       sctx_T script_ctx;
@@ -441,14 +440,13 @@ void set_string_option_direct_in_buf(buf_T *buf, const char *name, int opt_idx, 
 ///                        #OPT_GLOBAL.
 ///
 /// @return NULL on success, an untranslated error message on error.
-const char *set_string_option(const int opt_idx, void *varp_arg, const char *value,
-                              const int opt_flags, bool *value_checked, char *const errbuf,
+const char *set_string_option(const int opt_idx, void *varp, const char *value, const int opt_flags,
+                              const bool new_value, bool *value_checked, char *const errbuf,
                               const size_t errbuflen)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   vimoption_T *opt = get_option(opt_idx);
 
-  void *varp = (char **)varp_arg;
   char *origval_l = NULL;
   char *origval_g = NULL;
 
@@ -469,7 +467,7 @@ const char *set_string_option(const int opt_idx, void *varp_arg, const char *val
 
     // A global-local string option might have an empty option as value to
     // indicate that the global value should be used.
-    if (((int)opt->indir & PV_BOTH) && origval_l == empty_option) {
+    if (((int)opt->indir & PV_BOTH) && origval_l == empty_string_option) {
       origval_l = origval_g;
     }
   }
@@ -483,7 +481,7 @@ const char *set_string_option(const int opt_idx, void *varp_arg, const char *val
     origval = oldval;
   }
 
-  *(char **)varp = xstrdup(value != NULL ? value : empty_option);
+  *(char **)varp = xstrdup(value != NULL ? value : empty_string_option);
 
   char *const saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
   char *const saved_oldval_l = (origval_l != NULL) ? xstrdup(origval_l) : 0;
@@ -494,19 +492,17 @@ const char *set_string_option(const int opt_idx, void *varp_arg, const char *val
   char *const saved_newval = xstrdup(*(char **)varp);
 
   const int secure_saved = secure;
+  const uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
 
-  // When an option is set in the sandbox, from a modeline or in secure
-  // mode, then deal with side effects in secure mode.  Also when the
-  // value was set with the P_INSECURE flag and is not completely
-  // replaced.
-  if ((opt_flags & OPT_MODELINE)
-      || sandbox != 0) {
+  // When an option is set in the sandbox, from a modeline or in secure mode, then deal with side
+  // effects in secure mode. Also when the value was set with the P_INSECURE flag and is not
+  // completely replaced.
+  if ((opt_flags & OPT_MODELINE) || sandbox != 0 || (!new_value && (*p & P_INSECURE))) {
     secure = 1;
   }
 
   const char *const errmsg = did_set_string_option(curbuf, curwin, opt_idx, varp, oldval,
-                                                   errbuf, errbuflen,
-                                                   opt_flags, OP_NONE, value_checked);
+                                                   errbuf, errbuflen, opt_flags, value_checked);
 
   secure = secure_saved;
 
@@ -864,7 +860,7 @@ int expand_set_backspace(optexpand_T *args, int *numMatches, char ***matches)
 const char *did_set_backupcopy(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
-  const char *oldval = args->os_oldval.string;
+  const char *oldval = args->os_oldval.string.data;
   int opt_flags = args->os_flags;
   char *bkc = p_bkc;
   unsigned *flags = &bkc_flags;
@@ -1463,7 +1459,7 @@ const char *did_set_fileformat(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
   char **varp = (char **)args->os_varp;
-  const char *oldval = args->os_oldval.string;
+  const char *oldval = args->os_oldval.string.data;
   int opt_flags = args->os_flags;
   if (!MODIFIABLE(buf) && !(opt_flags & OPT_GLOBAL)) {
     return e_modifiable;
@@ -1516,7 +1512,7 @@ const char *did_set_filetype_or_syntax(optset_T *args)
     return e_invarg;
   }
 
-  args->os_value_changed = strcmp(args->os_oldval.string, *varp) != 0;
+  args->os_value_changed = strcmp(args->os_oldval.string.data, *varp) != 0;
 
   // Since we check the value, there is no need to set P_INSECURE,
   // even when the value comes from a modeline.
@@ -2107,7 +2103,7 @@ const char *did_set_sessionoptions(optset_T *args)
   }
   if ((ssop_flags & SSOP_CURDIR) && (ssop_flags & SSOP_SESDIR)) {
     // Don't allow both "sesdir" and "curdir".
-    const char *oldval = args->os_oldval.string;
+    const char *oldval = args->os_oldval.string.data;
     (void)opt_strings_flags(oldval, p_ssop_values, &ssop_flags, true);
     return e_invarg;
   }
@@ -2123,20 +2119,11 @@ int expand_set_sessionoptions(optexpand_T *args, int *numMatches, char ***matche
                                matches);
 }
 
-static const char *did_set_shada(vimoption_T **opt, int *opt_idx, bool *free_oldval, char *errbuf,
-                                 size_t errbuflen)
+const char *did_set_shada(optset_T *args)
 {
-  static int shada_idx = -1;
-  // TODO(ZyX-I): Remove this code in the future, alongside with &viminfo
-  //              option.
-  *opt_idx = (((*opt)->fullname[0] == 'v')
-              ? (shada_idx == -1 ? ((shada_idx = findoption("shada"))) : shada_idx)
-              : *opt_idx);
-  *opt = get_option(*opt_idx);
-  // Update free_oldval now that we have the opt_idx for 'shada', otherwise
-  // there would be a disconnect between the check for P_ALLOCED at the start
-  // of the function and the set of P_ALLOCED at the end of the function.
-  *free_oldval = ((*opt)->flags & P_ALLOCED);
+  char *errbuf = args->os_errbuf;
+  size_t errbuflen = args->os_errbuflen;
+
   for (char *s = p_shada; *s;) {
     // Check it's a valid character
     if (vim_strchr("!\"%'/:<@cfhnrs", (uint8_t)(*s)) == NULL) {
@@ -2228,7 +2215,7 @@ const char *did_set_signcolumn(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
   char **varp = (char **)args->os_varp;
-  const char *oldval = args->os_oldval.string;
+  const char *oldval = args->os_oldval.string.data;
   if (check_signcolumn(*varp) != OK) {
     return e_invarg;
   }
@@ -2582,7 +2569,7 @@ const char *did_set_virtualedit(optset_T *args)
   } else {
     if (opt_strings_flags(ve, p_ve_values, flags, true) != OK) {
       return e_invarg;
-    } else if (strcmp(ve, args->os_oldval.string) != 0) {
+    } else if (strcmp(ve, args->os_oldval.string.data) != 0) {
       // Recompute cursor position in case the new 've' setting
       // changes something.
       validate_virtcol_win(win);
@@ -2743,7 +2730,7 @@ static void do_spelllang_source(win_T *win)
 ///
 /// @return  NULL for success, or an untranslated error message for an error
 const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **varp, char *oldval,
-                                  char *errbuf, size_t errbuflen, int opt_flags, set_op_T op,
+                                  char *errbuf, size_t errbuflen, int opt_flags,
                                   bool *value_checked)
 {
   const char *errmsg = NULL;
@@ -2757,9 +2744,8 @@ const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **va
     .os_varp = varp,
     .os_idx = opt_idx,
     .os_flags = opt_flags,
-    .os_op = op,
-    .os_oldval.string = oldval,
-    .os_newval.string = *varp,
+    .os_oldval.string = cstr_as_string(oldval),
+    .os_newval.string = cstr_as_string(*varp),
     .os_value_checked = false,
     .os_value_changed = false,
     .os_restore_chartab = false,
@@ -2789,8 +2775,6 @@ const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **va
     // The 'isident', 'iskeyword', 'isprint' and 'isfname' options may
     // change the character table.  On failure, this needs to be restored.
     restore_chartab = args.os_restore_chartab;
-  } else if (varp == &p_shada) {                        // 'shada'
-    errmsg = did_set_shada(&opt, &opt_idx, &free_oldval, errbuf, errbuflen);
   }
 
   // If an error is detected, restore the previous value.
@@ -2818,7 +2802,7 @@ const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **va
       // the local value and make it empty
       char *p = get_varp_scope(opt, OPT_LOCAL);
       free_string_option(*(char **)p);
-      *(char **)p = empty_option;
+      *(char **)p = empty_string_option;
     } else if (!(opt_flags & OPT_LOCAL) && opt_flags != OPT_GLOBAL) {
       // May set global value for local option.
       set_string_option_global(opt, varp);
