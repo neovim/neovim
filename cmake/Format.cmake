@@ -1,3 +1,5 @@
+# Returns a list of all files that has been changed in current branch compared
+# to master branch. This includes unstaged, staged and committed files.
 function(get_changed_files outvar)
   set(default_branch master)
 
@@ -11,18 +13,21 @@ function(get_changed_files outvar)
     OUTPUT_VARIABLE ancestor_commit
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+  # Changed files that have been committed
   execute_process(
     COMMAND git diff --diff-filter=d --name-only ${ancestor_commit}...${current_branch}
     OUTPUT_VARIABLE committed_files
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   separate_arguments(committed_files NATIVE_COMMAND ${committed_files})
 
+  # Unstaged files
   execute_process(
     COMMAND git diff --diff-filter=d --name-only
     OUTPUT_VARIABLE unstaged_files
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   separate_arguments(unstaged_files NATIVE_COMMAND ${unstaged_files})
 
+  # Staged files
   execute_process(
     COMMAND git diff --diff-filter=d --cached --name-only
     OUTPUT_VARIABLE staged_files
