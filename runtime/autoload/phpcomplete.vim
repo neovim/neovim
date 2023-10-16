@@ -2924,7 +2924,7 @@ endfor
 " builtin class information
 let g:php_builtin_object_functions = {}
 
-" When completing for 'everyting imaginable' (no class context, not a
+" When completing for 'everything imaginable' (no class context, not a
 " variable) we need a list of built-in classes in a format of {'classname':''}
 " for performance reasons we precompile this too
 let g:php_builtin_classnames = {}

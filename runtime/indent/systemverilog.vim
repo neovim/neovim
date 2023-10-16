@@ -78,10 +78,10 @@ function SystemVerilogIndent()
   " Multiple-line comment count
   if curr_line =~ '^\s*/\*' && curr_line !~ '/\*.\{-}\*/'
     let s:multiple_comment += 1
-    if vverb | echom vverb_str "Start of multiple-line commnt" | endif
+    if vverb | echom vverb_str "Start of multiple-line comment" | endif
   elseif curr_line =~ '\*/\s*$' && curr_line !~ '/\*.\{-}\*/'
     let s:multiple_comment -= 1
-    if vverb | echom vverb_str "End of multiple-line commnt" | endif
+    if vverb | echom vverb_str "End of multiple-line comment" | endif
     return ind
   endif
   " Maintain indentation during commenting.

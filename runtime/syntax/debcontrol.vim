@@ -22,7 +22,7 @@ syn iskeyword @,48-57,-
 " Everything that is not explicitly matched by the rules below
 syn match debcontrolElse "^.*$"
 
-" Common seperators
+" Common separators
 syn match debControlComma ",[ \t]*"
 syn match debControlSpace "[ \t]"
 

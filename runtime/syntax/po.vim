@@ -42,7 +42,7 @@ syn match     poHeaderItem "\(Project-Id-Version\|Report-Msgid-Bugs-To\|POT-Crea
 syn match     poHeaderUndefined "\(PACKAGE VERSION\|YEAR-MO-DA HO:MI+ZONE\|FULL NAME <EMAIL@ADDRESS>\|LANGUAGE <LL@li.org>\|CHARSET\|ENCODING\|INTEGER\|EXPRESSION\)" contained
 syn match     poCopyrightUnset "SOME DESCRIPTIVE TITLE\|FIRST AUTHOR <EMAIL@ADDRESS>, YEAR\|Copyright (C) YEAR Free Software Foundation, Inc\|YEAR THE PACKAGE\'S COPYRIGHT HOLDER\|PACKAGE" contained
 
-" Translation comment block including: translator comment, automatic coments, flags and locations
+" Translation comment block including: translator comment, automatic comments, flags and locations
 syn match     poComment "^#.*$"
 syn keyword   poFlagFuzzy fuzzy contained
 syn match     poCommentTranslator "^# .*$" contains=poCopyrightUnset

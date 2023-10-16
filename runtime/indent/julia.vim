@@ -310,7 +310,7 @@ function IsFunctionArgPar(lnum, c)
 endfunction
 
 function JumpToMatch(lnum, last_closed_bracket)
-  " we use the % command to skip back (tries to ues matchit if possible,
+  " we use the % command to skip back (tries to use matchit if possible,
   " otherwise resorts to vim's default, which is buggy but better than
   " nothing)
   call cursor(a:lnum, a:last_closed_bracket)

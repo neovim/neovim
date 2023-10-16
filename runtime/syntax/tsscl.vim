@@ -22,7 +22,7 @@ syn case ignore
 
 "
 "
-" Begin syntax definitions for tss geomtery file.
+" Begin syntax definitions for tss geometry file.
 "
 
 " Load TSS geometry syntax file

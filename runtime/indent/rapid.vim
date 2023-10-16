@@ -74,7 +74,7 @@ function s:GetRapidIndentIntern() abort
 
   if  l:currentLine =~ '^!' && !get(g:,'rapidCommentIndent',0)
     " If current line is ! line comment, do not change indent
-    " This may be usefull if code is commented out at the first column.
+    " This may be useful if code is commented out at the first column.
     return 0
   endif
 

@@ -1248,7 +1248,7 @@ func s:Run(args)
   call s:SendResumingCommand('-exec-run')
 endfunc
 
-" :Frame - go to a specfic frame in the stack
+" :Frame - go to a specific frame in the stack
 func s:Frame(arg)
   " Note: we explicit do not use mi's command
   " call s:SendCommand('-stack-select-frame "' . a:arg .'"')

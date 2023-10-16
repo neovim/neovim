@@ -34,7 +34,7 @@
 " without having to combine them with letters (usufull for grammarians
 " in particular) (especially for dasia and psiln we use ' for psili
 " (that is apostrophe) and ;' for dasia. This is done in order to
-" preserve the posibility to write a plain < or >.
+" preserve the possibility to write a plain < or >.
 
 " Ypogegrammeni is | following the character (the originally proposed
 " i after the character is problematic: can't write easily ai or vi) :

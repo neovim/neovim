@@ -122,7 +122,7 @@ syn keyword abapStatement TABLES TIMES TRANSFER TRANSLATE TRY TYPE TYPES
 syn keyword abapStatement UNASSIGN ULINE UNPACK UPDATE
 syn keyword abapStatement WHEN WHILE WINDOW WRITE
 
-" More statemets
+" More statements
 syn keyword abapStatement LINES
 syn keyword abapStatement INTO GROUP BY HAVING ORDER BY SINGLE
 syn keyword abapStatement APPENDING CORRESPONDING FIELDS OF TABLE

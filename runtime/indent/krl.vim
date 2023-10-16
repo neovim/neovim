@@ -41,7 +41,7 @@ function GetKrlIndent() abort
   let currentLine = getline(v:lnum)
   if  currentLine =~? '\v^;(\s*(end)?fold>)@!' && !get(g:, 'krlCommentIndent', 0)
     " If current line has a ; in column 1 and is no fold, keep zero indent.
-    " This may be usefull if code is commented out at the first column.
+    " This may be useful if code is commented out at the first column.
     return 0
   endif
 
@@ -117,7 +117,7 @@ function s:KrlPreNoneBlank(lnum) abort
   let nPreNoneBlank = prevnonblank(a:lnum)
 
   while nPreNoneBlank > 0 && getline(nPreNoneBlank) =~? '\v^\s*(\&\w\+|;|continue>)'
-    " Previouse none blank line irrelevant. Look further aback.
+    " Previous none blank line irrelevant. Look further aback.
     let nPreNoneBlank = prevnonblank(nPreNoneBlank - 1)
   endwhile
 

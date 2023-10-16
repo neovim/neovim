@@ -78,7 +78,7 @@ an 50.10.440 &Syntax.AB.Assembly.PIC :cal SetSyn("pic")<CR>
 an 50.10.450 &Syntax.AB.Assembly.Turbo :cal SetSyn("tasm")<CR>
 an 50.10.460 &Syntax.AB.Assembly.VAX\ Macro\ Assembly :cal SetSyn("vmasm")<CR>
 an 50.10.470 &Syntax.AB.Assembly.Z-80 :cal SetSyn("z8a")<CR>
-an 50.10.480 &Syntax.AB.Assembly.xa\ 6502\ cross\ assember :cal SetSyn("a65")<CR>
+an 50.10.480 &Syntax.AB.Assembly.xa\ 6502\ cross\ assembler :cal SetSyn("a65")<CR>
 an 50.10.490 &Syntax.AB.ASN\.1 :cal SetSyn("asn")<CR>
 an 50.10.500 &Syntax.AB.Asterisk\ config :cal SetSyn("asterisk")<CR>
 an 50.10.510 &Syntax.AB.Asterisk\ voicemail\ config :cal SetSyn("asteriskvm")<CR>
@@ -308,7 +308,7 @@ an 50.50.710 &Syntax.HIJK.Kimwitu++ :cal SetSyn("kwt")<CR>
 an 50.50.720 &Syntax.HIJK.Kivy :cal SetSyn("kivy")<CR>
 an 50.50.730 &Syntax.HIJK.KixTart :cal SetSyn("kix")<CR>
 an 50.60.100 &Syntax.L.Lace :cal SetSyn("lace")<CR>
-an 50.60.110 &Syntax.L.LamdaProlog :cal SetSyn("lprolog")<CR>
+an 50.60.110 &Syntax.L.LambdaProlog :cal SetSyn("lprolog")<CR>
 an 50.60.120 &Syntax.L.Latte :cal SetSyn("latte")<CR>
 an 50.60.130 &Syntax.L.Ld\ script :cal SetSyn("ld")<CR>
 an 50.60.140 &Syntax.L.LDAP.LDIF :cal SetSyn("ldif")<CR>

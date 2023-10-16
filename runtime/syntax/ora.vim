@@ -449,7 +449,7 @@ hi def link oraString	  String		"strings
 
 hi def link oraSpecial	  Special		"special characters
 hi def link oraError	  Error			"errors
-hi def link oraParenError	  oraError		"errors caused by mismatching parantheses
+hi def link oraParenError	  oraError		"errors caused by mismatching parentheses
 
 hi def link oraComment	  Comment		"comments
 
