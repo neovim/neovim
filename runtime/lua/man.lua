@@ -415,7 +415,7 @@ end
 local function set_options(pager)
   vim.bo.swapfile = false
   vim.bo.buftype = 'nofile'
-  vim.bo.bufhidden = 'hide'
+  vim.bo.bufhidden = 'unload'
   vim.bo.modified = false
   vim.bo.readonly = true
   vim.bo.modifiable = false
