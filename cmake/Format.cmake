@@ -9,7 +9,7 @@ function(get_changed_files outvar)
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   execute_process(
-    COMMAND git merge-base ${default_branch} ${current_branch}
+    COMMAND git merge-base ${default_branch} origin/${current_branch}
     OUTPUT_VARIABLE ancestor_commit
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
@@ -19,6 +19,7 @@ function(get_changed_files outvar)
     OUTPUT_VARIABLE committed_files
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   separate_arguments(committed_files NATIVE_COMMAND ${committed_files})
+
 
   # Unstaged files
   execute_process(
