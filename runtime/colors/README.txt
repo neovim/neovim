@@ -111,11 +111,11 @@ please check the following items:
 - Do not use hard coded escape sequences, these will not work in other
   terminals.  Always use #RRGGBB for the GUI.
 
-- When targetting 8-16 colors terminals, don't count on "darkblue" to be blue
+- When targeting 8-16 colors terminals, don't count on "darkblue" to be blue
   and dark, or on "2" to be even vaguely reddish.  Names are more portable
   than numbers, though.
 
-- When targetting 256 colors terminals, prefer colors 16-255 to colors 0-15
+- When targeting 256 colors terminals, prefer colors 16-255 to colors 0-15
   for the same reason.
 
 - Typographic attributes (bold, italic, underline, reverse, etc.) are not

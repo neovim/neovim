@@ -1914,7 +1914,7 @@ endfun
 "                        Doing this means that netrw will not come up as having changed a
 "                        setting last when it really didn't actually change it.
 "
-"                        Used by s:NetrwOptionsRestore() to restore each netrw-senstive setting
+"                        Used by s:NetrwOptionsRestore() to restore each netrw-sensitive setting
 "                        keepvars are set up by s:NetrwOptionsSave
 fun! s:NetrwRestoreSetting(keepvar,setting)
 """  call Dfunc("s:NetrwRestoreSetting(a:keepvar<".a:keepvar."> a:setting<".a:setting.">)")
@@ -5515,7 +5515,7 @@ fun! netrw#BrowseX(fname,remote)
   " cleanup: remove temporary file,
   "          delete current buffer if success with handler,
   "          return to prior buffer (directory listing)
-  "          Feb 12, 2008: had to de-activiate removal of
+  "          Feb 12, 2008: had to de-activate removal of
   "          temporary file because it wasn't getting seen.
 "  if remote == 1 && fname != a:fname
 ""   call Decho("deleting temporary file<".fname.">",'~'.expand("<slnum>"))

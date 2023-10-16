@@ -88,7 +88,7 @@ syn match   zshOperator         '||\|&&\|;\|&!\='
 syn match   zshRedir            '\d\=\(<<<\|<&\s*[0-9p-]\=\|<>\?\)'
                                 " >, >>, and variants.
 syn match   zshRedir            '\d\=\(>&\s*[0-9p-]\=\|&>>\?\|>>\?&\?\)[|!]\='
-                                " | and |&, but only if it's not preceeded or
+                                " | and |&, but only if it's not preceded or
                                 " followed by a | to avoid matching ||.
 syn match   zshRedir            '|\@1<!|&\=|\@!'
 

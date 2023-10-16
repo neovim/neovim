@@ -87,7 +87,7 @@ SynMenu AB.Assembly.PIC:pic
 SynMenu AB.Assembly.Turbo:tasm
 SynMenu AB.Assembly.VAX\ Macro\ Assembly:vmasm
 SynMenu AB.Assembly.Z-80:z8a
-SynMenu AB.Assembly.xa\ 6502\ cross\ assember:a65
+SynMenu AB.Assembly.xa\ 6502\ cross\ assembler:a65
 SynMenu AB.ASN\.1:asn
 SynMenu AB.Asterisk\ config:asterisk
 SynMenu AB.Asterisk\ voicemail\ config:asteriskvm
@@ -325,7 +325,7 @@ SynMenu HIJK.Kivy:kivy
 SynMenu HIJK.KixTart:kix
 
 SynMenu L.Lace:lace
-SynMenu L.LamdaProlog:lprolog
+SynMenu L.LambdaProlog:lprolog
 SynMenu L.Latte:latte
 SynMenu L.Ld\ script:ld
 SynMenu L.LDAP.LDIF:ldif

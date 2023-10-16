@@ -15,7 +15,7 @@ syn match	ppdDefine	"\*[a-zA-Z0-9\-_]\+:"
 syn match	ppdUI		"\*[a-zA-Z]*\(Open\|Close\)UI"
 syn match	ppdUIGroup	"\*[a-zA-Z]*\(Open\|Close\)Group"
 syn match	ppdGUIText	"/.*:"
-syn match	ppdContraints	"^*UIConstraints:"
+syn match	ppdConstraints	"^*UIConstraints:"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
@@ -27,7 +27,7 @@ hi def link ppdUI			Function
 hi def link ppdUIGroup		Function
 hi def link ppdDef			String
 hi def link ppdGUIText		Type
-hi def link ppdContraints		Special
+hi def link ppdConstraints		Special
 
 
 let b:current_syntax = "ppd"

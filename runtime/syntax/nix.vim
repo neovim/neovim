@@ -99,7 +99,7 @@ syn match nixArgOperator '[a-zA-Z_][a-zA-Z0-9_'-]*\%(\s\|#.\{-\}\n\|\n\|/\*\_.\{
 "
 " "\%(\s\|#.\{-\}\n\|\n\|/\*\_.\{-\}\*/\)*"
 "
-" It is also used throught the whole file and is marked with 'v's as well.
+" It is also used throughout the whole file and is marked with 'v's as well.
 "
 " Fortunately the matching rules for function arguments are much simpler than
 " for real attribute sets, because we can stop when we hit the first ellipsis or

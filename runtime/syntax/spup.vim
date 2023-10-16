@@ -29,7 +29,7 @@ set cpo&vim
 "let strict_subsections = 1
 
 " highlight types usually found in DECLARE section
-if !exists("hightlight_types")
+if !exists("highlight_types")
     let highlight_types = 1
 endif
 

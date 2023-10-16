@@ -66,7 +66,7 @@ static const char e_xattr_erange[]
 static const char e_xattr_e2big[]
   = N_("E1508: Size of the extended attribute value is larger than the maximum size allowed");
 static const char e_xattr_other[]
-  = N_("E1509: Error occured when reading or writing extended attribute");
+  = N_("E1509: Error occurred when reading or writing extended attribute");
 #endif
 
 struct iovec;

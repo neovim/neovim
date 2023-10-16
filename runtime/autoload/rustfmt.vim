@@ -25,7 +25,7 @@ function! rustfmt#DetectVersion()
     silent let s:rustfmt_help = system(g:rustfmt_command . " --help")
     let s:rustfmt_unstable_features = s:rustfmt_help =~# "--unstable-features"
 
-    " Build a comparable rustfmt version varible out of its `--version` output:
+    " Build a comparable rustfmt version variable out of its `--version` output:
     silent let l:rustfmt_version_full = system(g:rustfmt_command . " --version")
     let l:rustfmt_version_list = matchlist(l:rustfmt_version_full,
         \    '\vrustfmt ([0-9]+[.][0-9]+[.][0-9]+)')
