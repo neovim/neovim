@@ -160,7 +160,7 @@ The following new APIs or features were added.
   `workspace.didChangeWatchedFiles.dynamicRegistration=true` capability.
 
 • |vim.diagnostic| now supports LSP DiagnosticsTag.
-  See: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticTag
+  See: https://microsoft.github.io/language-server-protocol/specification/#diagnosticTag
 
 • |vim.diagnostic.is_disabled()| checks if diagnostics are disabled in a given
   buffer or namespace.

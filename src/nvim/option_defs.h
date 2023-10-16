@@ -17,16 +17,17 @@ typedef enum {
   kOptValTypeString,
 } OptValType;
 
+typedef union {
+  // boolean options are actually tri-states because they have a third "None" value.
+  TriState boolean;
+  OptInt number;
+  String string;
+} OptValData;
+
 /// Option value
 typedef struct {
   OptValType type;
-
-  union {
-    // boolean options are actually tri-states because they have a third "None" value.
-    TriState boolean;
-    OptInt number;
-    String string;
-  } data;
+  OptValData data;
 } OptVal;
 
 /// :set operator types
@@ -45,21 +46,11 @@ typedef struct {
   void *os_varp;
   int os_idx;
   int os_flags;
-  set_op_T os_op;
 
-  /// old value of the option (can be a string, number or a boolean)
-  union {
-    const OptInt number;
-    const bool boolean;
-    const char *string;
-  } os_oldval;
-
-  /// new value of the option (can be a string, number or a boolean)
-  union {
-    const OptInt number;
-    const bool boolean;
-    const char *string;
-  } os_newval;
+  /// Old value of the option.
+  OptValData os_oldval;
+  /// New value of the option.
+  OptValData os_newval;
 
   /// When set by the called function: Stop processing the option further.
   /// Currently only used for boolean options.

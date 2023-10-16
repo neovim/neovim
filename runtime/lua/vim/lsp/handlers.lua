@@ -476,7 +476,7 @@ function M.signature_help(_, result, ctx, config)
     vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
   local ft = vim.bo[ctx.bufnr].filetype
   local lines, hl = util.convert_signature_help_to_markdown_lines(result, ft, triggers)
-  if vim.tbl_isempty(lines) then
+  if not lines or vim.tbl_isempty(lines) then
     if config.silent ~= true then
       print('No signature help available')
     end
@@ -484,7 +484,9 @@ function M.signature_help(_, result, ctx, config)
   end
   local fbuf, fwin = util.open_floating_preview(lines, 'markdown', config)
   if hl then
-    api.nvim_buf_add_highlight(fbuf, -1, 'LspSignatureActiveParameter', 0, unpack(hl))
+    -- Highlight the second line if the signature is wrapped in a Markdown code block.
+    local line = vim.startswith(lines[1], '```') and 1 or 0
+    api.nvim_buf_add_highlight(fbuf, -1, 'LspSignatureActiveParameter', line, unpack(hl))
   end
   return fbuf, fwin
 end
@@ -623,7 +625,7 @@ M[ms.window_showDocument] = function(_, result, ctx, _)
   return { success = success or false }
 end
 
----@see https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_inlayHint_refresh
+---@see https://microsoft.github.io/language-server-protocol/specification/#workspace_inlayHint_refresh
 M[ms.workspace_inlayHint_refresh] = function(err, result, ctx, config)
   return require('vim.lsp.inlay_hint').on_refresh(err, result, ctx, config)
 end

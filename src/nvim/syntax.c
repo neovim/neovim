@@ -729,7 +729,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
 
 static void save_chartab(char *chartab)
 {
-  if (syn_block->b_syn_isk == empty_option) {
+  if (syn_block->b_syn_isk == empty_string_option) {
     return;
   }
 
@@ -739,7 +739,7 @@ static void save_chartab(char *chartab)
 
 static void restore_chartab(char *chartab)
 {
-  if (syn_win->w_s->b_syn_isk != empty_option) {
+  if (syn_win->w_s->b_syn_isk != empty_string_option) {
     memmove(syn_buf->b_chartab, chartab, (size_t)32);
   }
 }
@@ -2946,7 +2946,7 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
   arg = skipwhite(arg);
   if (*arg == NUL) {
     msg_puts("\n");
-    if (curwin->w_s->b_syn_isk != empty_option) {
+    if (curwin->w_s->b_syn_isk != empty_string_option) {
       msg_puts("syntax iskeyword ");
       msg_outtrans(curwin->w_s->b_syn_isk, 0);
     } else {
@@ -4758,7 +4758,7 @@ static char *get_syn_pattern(char *arg, synpat_T *ci)
 
   // Make 'cpoptions' empty, to avoid the 'l' flag
   char *cpo_save = p_cpo;
-  p_cpo = empty_option;
+  p_cpo = empty_string_option;
   ci->sp_prog = vim_regcomp(ci->sp_pattern, RE_MAGIC);
   p_cpo = cpo_save;
 
@@ -4915,7 +4915,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
 
         // Make 'cpoptions' empty, to avoid the 'l' flag
         cpo_save = p_cpo;
-        p_cpo = empty_option;
+        p_cpo = empty_string_option;
         curwin->w_s->b_syn_linecont_prog =
           vim_regcomp(curwin->w_s->b_syn_linecont_pat, RE_MAGIC);
         p_cpo = cpo_save;
@@ -5298,7 +5298,7 @@ void ex_ownsyntax(exarg_T *eap)
     hash_init(&curwin->w_s->b_keywtab_ic);
     // TODO(vim): Keep the spell checking as it was.
     curwin->w_p_spell = false;  // No spell checking
-    // make sure option values are "empty_option" instead of NULL
+    // make sure option values are "empty_string_option" instead of NULL
     clear_string_option(&curwin->w_s->b_p_spc);
     clear_string_option(&curwin->w_s->b_p_spf);
     clear_string_option(&curwin->w_s->b_p_spl);

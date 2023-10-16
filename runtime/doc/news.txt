@@ -71,6 +71,10 @@ The following changes may require adaptations in user config or plugins.
   defined by LSP, and hence previously parsed snippets might now be considered
   invalid input.
 
+• |OptionSet| autocommand args |v:option_new|, |v:option_old|,
+  |v:option_oldlocal|, |v:option_oldglobal| now have the type of the option
+  instead of always being strings.
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 
@@ -122,9 +126,9 @@ The following new APIs and features were added.
 • LSP
   • LSP method names are available in |vim.lsp.protocol.Methods|.
   • Implemented LSP inlay hints: |vim.lsp.inlay_hint()|
-    https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_inlayHint
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_inlayHint
   • Implemented pull diagnostic textDocument/diagnostic: |vim.lsp.diagnostic.on_diagnostic()|
-    https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_diagnostic
+    https://microsoft.github.io/language-server-protocol/specification/#textDocument_diagnostic
   • Added |vim.lsp.status()| to consume the last progress messages as a string.
   • LSP client now always saves and restores named buffer marks when applying
     text edits.

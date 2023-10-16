@@ -48,10 +48,10 @@ end
 local function expected_table(option, oldval, oldval_l, oldval_g, newval, scope, cmd, attr)
   return {
     option   = option,
-    oldval   = tostring(oldval),
-    oldval_l = tostring(oldval_l),
-    oldval_g = tostring(oldval_g),
-    newval   = tostring(newval),
+    oldval   = oldval,
+    oldval_l = oldval_l,
+    oldval_g = oldval_g,
+    newval   = newval,
     scope    = scope,
     cmd      = cmd,
     attr     = attr,
@@ -129,44 +129,44 @@ describe('au OptionSet', function()
 
     it('should be called in setting number option', function()
       command('set nu')
-      expected_combination({'number', 0, 0, 0, 1, 'global', 'set'})
+      expected_combination({'number', false, false, false, true, 'global', 'set'})
 
       command('setlocal nonu')
-      expected_combination({'number', 1, 1, '', 0, 'local', 'setlocal'})
+      expected_combination({'number', true, true, '', false, 'local', 'setlocal'})
 
       command('setglobal nonu')
-      expected_combination({'number', 1, '', 1, 0, 'global', 'setglobal'})
+      expected_combination({'number', true, '', true, false, 'global', 'setglobal'})
     end)
 
     it('should be called in setting autoindent option',function()
       command('setlocal ai')
-      expected_combination({'autoindent', 0, 0, '', 1, 'local', 'setlocal'})
+      expected_combination({'autoindent', false, false, '', true, 'local', 'setlocal'})
 
       command('setglobal ai')
-      expected_combination({'autoindent', 0, '', 0, 1, 'global', 'setglobal'})
+      expected_combination({'autoindent', false, '', false, true, 'global', 'setglobal'})
 
       command('set noai')
-      expected_combination({'autoindent', 1, 1, 1, 0, 'global', 'set'})
+      expected_combination({'autoindent', true, true, true, false, 'global', 'set'})
     end)
 
     it('should be called in inverting global autoindent option',function()
       command('set ai!')
-      expected_combination({'autoindent', 0, 0, 0, 1, 'global', 'set'})
+      expected_combination({'autoindent', false, false, false, true, 'global', 'set'})
     end)
 
     it('should be called in being unset local autoindent option',function()
       command('setlocal ai')
-      expected_combination({'autoindent', 0, 0, '', 1, 'local', 'setlocal'})
+      expected_combination({'autoindent', false, false, '', true, 'local', 'setlocal'})
 
       command('setlocal ai<')
-      expected_combination({'autoindent', 1, 1, '', 0, 'local', 'setlocal'})
+      expected_combination({'autoindent', true, true, '', false, 'local', 'setlocal'})
     end)
 
     it('should be called in setting global list and number option at the same time',function()
       command('set list nu')
       expected_combination(
-        {'list', 0, 0, 0, 1, 'global', 'set'},
-        {'number', 0, 0, 0, 1, 'global', 'set'}
+        {'list', false, false, false, true, 'global', 'set'},
+        {'number', false, false, false, true, 'global', 'set'}
       )
     end)
 
@@ -177,20 +177,20 @@ describe('au OptionSet', function()
 
     it('should be called in setting local acd', function()
       command('setlocal acd')
-      expected_combination({'autochdir', 0, 0, '', 1, 'local', 'setlocal'})
+      expected_combination({'autochdir', false, false, '', true, 'local', 'setlocal'})
     end)
 
     it('should be called in setting autoread', function()
       command('set noar')
-      expected_combination({'autoread', 1, 1, 1, 0, 'global', 'set'})
+      expected_combination({'autoread', true, true, true, false, 'global', 'set'})
 
       command('setlocal ar')
-      expected_combination({'autoread', 0, 0, '', 1, 'local', 'setlocal'})
+      expected_combination({'autoread', false, false, '', true, 'local', 'setlocal'})
     end)
 
     it('should be called in inverting global autoread', function()
       command('setglobal invar')
-      expected_combination({'autoread', 1, '', 1, 0, 'global', 'setglobal'})
+      expected_combination({'autoread', true, '', true, false, 'global', 'setglobal'})
     end)
 
     it('should be called in setting backspace option through :let', function()
@@ -208,7 +208,7 @@ describe('au OptionSet', function()
 
       it('should trigger using correct option name', function()
         command('call setbufvar(1, "&backup", 1)')
-        expected_combination({'backup', 0, 0, '', 1, 'local', 'setlocal'})
+        expected_combination({'backup', false, false, '', true, 'local', 'setlocal'})
       end)
 
       it('should trigger if the current buffer is different from the targeted buffer', function()
@@ -441,105 +441,105 @@ describe('au OptionSet', function()
       command('noa setglobal foldcolumn=8')
       command('noa setlocal foldcolumn=1')
       command('setglobal foldcolumn=2')
-      expected_combination({'foldcolumn', 8, '', 8, 2, 'global', 'setglobal'})
+      expected_combination({'foldcolumn', '8', '', '8', '2', 'global', 'setglobal'})
 
       command('noa setglobal foldcolumn=8')
       command('noa setlocal foldcolumn=1')
       command('setlocal foldcolumn=2')
-      expected_combination({'foldcolumn', 1, 1, '', 2, 'local', 'setlocal'})
+      expected_combination({'foldcolumn', '1', '1', '', '2', 'local', 'setlocal'})
 
       command('noa setglobal foldcolumn=8')
       command('noa setlocal foldcolumn=1')
       command('set foldcolumn=2')
-      expected_combination({'foldcolumn', 1, 1, 8, 2, 'global', 'set'})
+      expected_combination({'foldcolumn', '1', '1', '8', '2', 'global', 'set'})
 
       command('noa set foldcolumn=8')
       command('set foldcolumn=2')
-      expected_combination({'foldcolumn', 8, 8, 8, 2, 'global', 'set'})
+      expected_combination({'foldcolumn', '8', '8', '8', '2', 'global', 'set'})
     end)
 
     it('with boolean global option', function()
       command('noa setglobal nowrapscan')
       command('noa setlocal wrapscan') -- Sets the global(!) value
       command('setglobal nowrapscan')
-      expected_combination({'wrapscan', 1, '', 1, 0, 'global', 'setglobal'})
+      expected_combination({'wrapscan', true, '', true, false, 'global', 'setglobal'})
 
       command('noa setglobal nowrapscan')
       command('noa setlocal wrapscan') -- Sets the global(!) value
       command('setlocal nowrapscan')
-      expected_combination({'wrapscan', 1, 1, '', 0, 'local', 'setlocal'})
+      expected_combination({'wrapscan', true, true, '', false, 'local', 'setlocal'})
 
       command('noa setglobal nowrapscan')
       command('noa setlocal wrapscan') -- Sets the global(!) value
       command('set nowrapscan')
-      expected_combination({'wrapscan', 1, 1, 1, 0, 'global', 'set'})
+      expected_combination({'wrapscan', true, true, true, false, 'global', 'set'})
 
       command('noa set nowrapscan')
       command('set wrapscan')
-      expected_combination({'wrapscan', 0, 0, 0, 1, 'global', 'set'})
+      expected_combination({'wrapscan', false, false, false, true, 'global', 'set'})
     end)
 
     it('with boolean global-local (to buffer) option', function()
       command('noa setglobal noautoread')
       command('noa setlocal autoread')
       command('setglobal autoread')
-      expected_combination({'autoread', 0, '', 0, 1, 'global', 'setglobal'})
+      expected_combination({'autoread', false, '', false, true, 'global', 'setglobal'})
 
       command('noa setglobal noautoread')
       command('noa setlocal autoread')
       command('setlocal noautoread')
-      expected_combination({'autoread', 1, 1, '', 0, 'local', 'setlocal'})
+      expected_combination({'autoread', true, true, '', false, 'local', 'setlocal'})
 
       command('noa setglobal noautoread')
       command('noa setlocal autoread')
       command('set autoread')
-      expected_combination({'autoread', 1, 1, 0, 1, 'global', 'set'})
+      expected_combination({'autoread', true, true, false, true, 'global', 'set'})
 
       command('noa set noautoread')
       command('set autoread')
-      expected_combination({'autoread', 0, 0, 0, 1, 'global', 'set'})
+      expected_combination({'autoread', false, false, false, true, 'global', 'set'})
     end)
 
     it('with boolean local (to buffer) option', function()
       command('noa setglobal nocindent')
       command('noa setlocal cindent')
       command('setglobal cindent')
-      expected_combination({'cindent', 0, '', 0, 1, 'global', 'setglobal'})
+      expected_combination({'cindent', false, '', false, true, 'global', 'setglobal'})
 
       command('noa setglobal nocindent')
       command('noa setlocal cindent')
       command('setlocal nocindent')
-      expected_combination({'cindent', 1, 1, '', 0, 'local', 'setlocal'})
+      expected_combination({'cindent', true, true, '', false, 'local', 'setlocal'})
 
       command('noa setglobal nocindent')
       command('noa setlocal cindent')
       command('set cindent')
-      expected_combination({'cindent', 1, 1, 0, 1, 'global', 'set'})
+      expected_combination({'cindent', true, true, false, true, 'global', 'set'})
 
       command('noa set nocindent')
       command('set cindent')
-      expected_combination({'cindent', 0, 0, 0, 1, 'global', 'set'})
+      expected_combination({'cindent', false, false, false, true, 'global', 'set'})
     end)
 
     it('with boolean local (to window) option', function()
       command('noa setglobal nocursorcolumn')
       command('noa setlocal cursorcolumn')
       command('setglobal cursorcolumn')
-      expected_combination({'cursorcolumn', 0, '', 0, 1, 'global', 'setglobal'})
+      expected_combination({'cursorcolumn', false, '', false, true, 'global', 'setglobal'})
 
       command('noa setglobal nocursorcolumn')
       command('noa setlocal cursorcolumn')
       command('setlocal nocursorcolumn')
-      expected_combination({'cursorcolumn', 1, 1, '', 0, 'local', 'setlocal'})
+      expected_combination({'cursorcolumn', true, true, '', false, 'local', 'setlocal'})
 
       command('noa setglobal nocursorcolumn')
       command('noa setlocal cursorcolumn')
       command('set cursorcolumn')
-      expected_combination({'cursorcolumn', 1, 1, 0, 1, 'global', 'set'})
+      expected_combination({'cursorcolumn', true, true, false, true, 'global', 'set'})
 
       command('noa set nocursorcolumn')
       command('set cursorcolumn')
-      expected_combination({'cursorcolumn', 0, 0, 0, 1, 'global', 'set'})
+      expected_combination({'cursorcolumn', false, false, false, true, 'global', 'set'})
     end)
 
   end)
@@ -559,13 +559,13 @@ describe('au OptionSet', function()
       expected_empty()
 
       command('setlocal ro')
-      expected_combination({'readonly', 0, 0, '', 1, 'local', 'setlocal'})
+      expected_combination({'readonly', false, false, '', true, 'local', 'setlocal'})
 
       command('setglobal ro')
-      expected_combination({'readonly', 0, '', 0, 1, 'global', 'setglobal'})
+      expected_combination({'readonly', false, '', false, true, 'global', 'setglobal'})
 
       command('set noro')
-      expected_combination({'readonly', 1, 1, 1, 0, 'global', 'set'})
+      expected_combination({'readonly', true, true, true, false, 'global', 'set'})
     end)
 
     describe('being set by setbufvar()', function()
@@ -580,7 +580,7 @@ describe('au OptionSet', function()
         set_hook('backup')
 
         command('call setbufvar(1, "&backup", 1)')
-        expected_combination({'backup', 0, 0, '', 1, 'local', 'setlocal'})
+        expected_combination({'backup', false, false, '', true, 'local', 'setlocal'})
       end)
 
       it('should trigger if the current buffer is different from the targeted buffer', function()
@@ -590,7 +590,8 @@ describe('au OptionSet', function()
         local new_bufnr = buf.get_number(new_buffer)
 
         command('call setbufvar(' .. new_bufnr .. ', "&buftype", "nofile")')
-        expected_combination({'buftype', '', '', '', 'nofile', 'local', 'setlocal', {bufnr = new_bufnr}})
+        expected_combination({ 'buftype', '', '', '', 'nofile', 'local', 'setlocal',
+          { bufnr = new_bufnr } })
       end)
     end)
 
@@ -606,7 +607,7 @@ describe('au OptionSet', function()
         set_hook('backup')
 
         command('call setwinvar(1, "&backup", 1)')
-        expected_combination({'backup', 0, 0, '', 1, 'local', 'setlocal'})
+        expected_combination({'backup', false, false, '', true, 'local', 'setlocal'})
       end)
 
       it('should not trigger if the current window is different from the targeted window', function()
@@ -615,7 +616,7 @@ describe('au OptionSet', function()
         local new_winnr = get_new_window_number()
 
         command('call setwinvar(' .. new_winnr .. ', "&cursorcolumn", 1)')
-        -- expected_combination({'cursorcolumn', 0, 1, 'local', {winnr = new_winnr}})
+        -- expected_combination({'cursorcolumn', false, true, 'local', {winnr = new_winnr}})
         expected_empty()
       end)
     end)
@@ -626,7 +627,7 @@ describe('au OptionSet', function()
 
         nvim.set_option_value('autochdir', true, {scope='global'})
         eq(true, nvim.get_option_value('autochdir', {scope='global'}))
-        expected_combination({'autochdir', 0, '', 0, 1, 'global', 'setglobal'})
+        expected_combination({'autochdir', false, '', false, true, 'global', 'setglobal'})
       end)
 
       it('should trigger if a number option be set globally', function()

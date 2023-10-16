@@ -133,47 +133,6 @@ static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
   return ftbuf;
 }
 
-/// Consume an OptVal and convert it to an API Object.
-static Object optval_as_object(OptVal o)
-{
-  switch (o.type) {
-  case kOptValTypeNil:
-    return NIL;
-  case kOptValTypeBoolean:
-    switch (o.data.boolean) {
-    case kFalse:
-    case kTrue:
-      return BOOLEAN_OBJ(o.data.boolean);
-    case kNone:
-      return NIL;
-    }
-    UNREACHABLE;
-  case kOptValTypeNumber:
-    return INTEGER_OBJ(o.data.number);
-  case kOptValTypeString:
-    return STRING_OBJ(o.data.string);
-  }
-  UNREACHABLE;
-}
-
-/// Consume an API Object and convert it to an OptVal.
-static OptVal object_as_optval(Object o, bool *error)
-{
-  switch (o.type) {
-  case kObjectTypeNil:
-    return NIL_OPTVAL;
-  case kObjectTypeBoolean:
-    return BOOLEAN_OPTVAL(o.data.boolean);
-  case kObjectTypeInteger:
-    return NUMBER_OPTVAL((OptInt)o.data.integer);
-  case kObjectTypeString:
-    return STRING_OPTVAL(o.data.string);
-  default:
-    *error = true;
-    return NIL_OPTVAL;
-  }
-}
-
 /// Gets the value of an option. The behavior of this function matches that of
 /// |:set|: the local value of an option is returned if it exists; otherwise,
 /// the global value is returned. Local values always correspond to the current
