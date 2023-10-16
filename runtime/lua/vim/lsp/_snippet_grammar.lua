@@ -1,4 +1,4 @@
---- Grammar for LSP snippets, based on https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#snippet_syntax
+--- Grammar for LSP snippets, based on https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax
 
 local lpeg = vim.lpeg
 local P, S, R, V = lpeg.P, lpeg.S, lpeg.R, lpeg.V
