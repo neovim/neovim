@@ -6098,13 +6098,13 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         }
 
         // Ensure that the result will have a trailing path separator
-        // if the argument has one. */
+        // if the argument has one.
         if (remain == NULL && has_trailing_pathsep) {
           add_pathsep(buf);
         }
 
         // Separate the first path component in the link value and
-        // concatenate the remainders. */
+        // concatenate the remainders.
         q = (char *)path_next_component(vim_ispathsep(*buf) ? buf + 1 : buf);
         if (*q != NUL) {
           cpy = remain;
@@ -6118,7 +6118,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         q = path_tail(p);
         if (q > p && *q == NUL) {
           // Ignore trailing path separator.
-          q[-1] = NUL;
+          p[q - p - 1] = NUL;
           q = path_tail(p);
         }
         if (q > p && !path_is_absolute(buf)) {
