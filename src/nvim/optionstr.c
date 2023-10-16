@@ -2119,20 +2119,11 @@ int expand_set_sessionoptions(optexpand_T *args, int *numMatches, char ***matche
                                matches);
 }
 
-static const char *did_set_shada(vimoption_T **opt, int *opt_idx, bool *free_oldval, char *errbuf,
-                                 size_t errbuflen)
+const char *did_set_shada(optset_T *args)
 {
-  static int shada_idx = -1;
-  // TODO(ZyX-I): Remove this code in the future, alongside with &viminfo
-  //              option.
-  *opt_idx = (((*opt)->fullname[0] == 'v')
-              ? (shada_idx == -1 ? ((shada_idx = findoption("shada"))) : shada_idx)
-              : *opt_idx);
-  *opt = get_option(*opt_idx);
-  // Update free_oldval now that we have the opt_idx for 'shada', otherwise
-  // there would be a disconnect between the check for P_ALLOCED at the start
-  // of the function and the set of P_ALLOCED at the end of the function.
-  *free_oldval = ((*opt)->flags & P_ALLOCED);
+  char *errbuf = args->os_errbuf;
+  size_t errbuflen = args->os_errbuflen;
+
   for (char *s = p_shada; *s;) {
     // Check it's a valid character
     if (vim_strchr("!\"%'/:<@cfhnrs", (uint8_t)(*s)) == NULL) {
@@ -2784,8 +2775,6 @@ const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **va
     // The 'isident', 'iskeyword', 'isprint' and 'isfname' options may
     // change the character table.  On failure, this needs to be restored.
     restore_chartab = args.os_restore_chartab;
-  } else if (varp == &p_shada) {                        // 'shada'
-    errmsg = did_set_shada(&opt, &opt_idx, &free_oldval, errbuf, errbuflen);
   }
 
   // If an error is detected, restore the previous value.
