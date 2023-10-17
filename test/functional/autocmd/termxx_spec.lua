@@ -149,21 +149,21 @@ it('autocmd TermEnter, TermLeave', function()
 
   -- TermLeave is also triggered by :quit.
   command('split foo')
+  feed('<Ignore>')  -- Add input to separate two RPC requests
   command('wincmd w')
   feed('i')
   command('q!')
-  eq(
-    {
-     {'TermOpen',  'n'},
-     {'TermEnter', 't'},
-     {'TermLeave', 'n'},
-     {'TermEnter', 't'},
-     {'TermLeave', 'n'},
-     {'TermEnter', 't'},
-     {'TermClose', 't'},
-     {'TermLeave', 'n'},
-    },
-    eval('g:evs'))
+  feed('<Ignore>')  -- Add input to separate two RPC requests
+  eq({
+    {'TermOpen',  'n'},
+    {'TermEnter', 't'},
+    {'TermLeave', 'n'},
+    {'TermEnter', 't'},
+    {'TermLeave', 'n'},
+    {'TermEnter', 't'},
+    {'TermClose', 't'},
+    {'TermLeave', 'n'},
+  }, eval('g:evs'))
 end)
 
 describe('autocmd TextChangedT', function()
