@@ -2099,6 +2099,10 @@ func Test_trim()
   let chars = join(map(range(1, 0x20) + [0xa0], {n -> n->nr2char()}), '')
   call assert_equal("x", trim(chars . "x" . chars))
 
+  call assert_equal("x", trim(chars . "x" . chars, '', 0))
+  call assert_equal("x" . chars, trim(chars . "x" . chars, '', 1))
+  call assert_equal(chars . "x", trim(chars . "x" . chars, '', 2))
+
   call assert_fails('let c=trim([])', 'E730:')
 endfunc
 
