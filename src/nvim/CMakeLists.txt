@@ -942,7 +942,7 @@ add_custom_command(
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
-add_custom_target(doc
-  DEPENDS ${VIMDOC_FILES} ${GEN_EVAL_FILES}
-)
-
+add_custom_target(doc-eval DEPENDS ${GEN_EVAL_FILES})
+add_custom_target(doc-vim DEPENDS ${VIMDOC_FILES})
+add_custom_target(doc)
+add_dependencies(doc doc-vim doc-eval)
