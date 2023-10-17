@@ -3768,13 +3768,16 @@ describe('builtin popupmenu', function()
         ]])
       end)
 
-      -- oldtest: Test_wildmenu_pum_clear_entries()
-      it('wildoptions=pum when using odd wildchar', function()
+      -- oldtest: Test_wildmenu_pum_odd_wildchar()
+      it('wildoptions=pum with odd wildchar', function()
         screen:try_resize(30, 10)
+        -- Test odd wildchar interactions with pum. Make sure they behave properly
+        -- and don't lead to memory corruption due to improperly cleaned up memory.
         exec([[
           set wildoptions=pum
           set wildchar=<C-E>
         ]])
+
         feed(':sign <C-E>')
         screen:expect([[
                                         |
@@ -3788,7 +3791,97 @@ describe('builtin popupmenu', function()
           {1:~    }{n: unplace        }{1:         }|
           :sign define^                  |
         ]])
-        assert_alive()
+
+        -- <C-E> being a wildchar takes priority over its original functionality
+        feed('<C-E>')
+        screen:expect([[
+                                        |
+          {1:~                             }|
+          {1:~                             }|
+          {1:~    }{n: define         }{1:         }|
+          {1:~    }{s: jump           }{1:         }|
+          {1:~    }{n: list           }{1:         }|
+          {1:~    }{n: place          }{1:         }|
+          {1:~    }{n: undefine       }{1:         }|
+          {1:~    }{n: unplace        }{1:         }|
+          :sign jump^                    |
+        ]])
+
+        feed('<Esc>')
+        screen:expect([[
+          ^                              |
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+                                        |
+        ]])
+
+        -- Escape key can be wildchar too. Double-<Esc> is hard-coded to escape
+        -- command-line, and we need to make sure to clean up properly.
+        command('set wildchar=<Esc>')
+        feed(':sign <Esc>')
+        screen:expect([[
+                                        |
+          {1:~                             }|
+          {1:~                             }|
+          {1:~    }{s: define         }{1:         }|
+          {1:~    }{n: jump           }{1:         }|
+          {1:~    }{n: list           }{1:         }|
+          {1:~    }{n: place          }{1:         }|
+          {1:~    }{n: undefine       }{1:         }|
+          {1:~    }{n: unplace        }{1:         }|
+          :sign define^                  |
+        ]])
+
+        feed('<Esc>')
+        screen:expect([[
+          ^                              |
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+                                        |
+        ]])
+
+        -- <C-\> can also be wildchar. <C-\><C-N> however will still escape cmdline
+        -- and we again need to make sure we clean up properly.
+        command([[set wildchar=<C-\>]])
+        feed([[:sign <C-\><C-\>]])
+        screen:expect([[
+                                        |
+          {1:~                             }|
+          {1:~                             }|
+          {1:~    }{s: define         }{1:         }|
+          {1:~    }{n: jump           }{1:         }|
+          {1:~    }{n: list           }{1:         }|
+          {1:~    }{n: place          }{1:         }|
+          {1:~    }{n: undefine       }{1:         }|
+          {1:~    }{n: unplace        }{1:         }|
+          :sign define^                  |
+        ]])
+
+        feed('<C-N>')
+        screen:expect([[
+          ^                              |
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+          {1:~                             }|
+                                        |
+        ]])
       end)
     end
 

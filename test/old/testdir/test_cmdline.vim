@@ -177,8 +177,9 @@ func Test_wildmenu_screendump()
   let lines =<< trim [SCRIPT]
     set wildmenu hlsearch
   [SCRIPT]
-  call writefile(lines, 'XTest_wildmenu')
+  call writefile(lines, 'XTest_wildmenu', 'D')
 
+  " Test simple wildmenu
   let buf = RunVimInTerminal('-S XTest_wildmenu', {'rows': 8})
   call term_sendkeys(buf, ":vim\<Tab>")
   call VerifyScreenDump(buf, 'Test_wildmenu_1', {})
@@ -189,13 +190,26 @@ func Test_wildmenu_screendump()
   call term_sendkeys(buf, "\<Tab>")
   call VerifyScreenDump(buf, 'Test_wildmenu_3', {})
 
-  call term_sendkeys(buf, "\<Tab>")
+  " Looped back to the original value
+  call term_sendkeys(buf, "\<Tab>\<Tab>")
   call VerifyScreenDump(buf, 'Test_wildmenu_4', {})
+
+  " Test that the wild menu is cleared properly
+  call term_sendkeys(buf, " ")
+  call VerifyScreenDump(buf, 'Test_wildmenu_5', {})
+
+  " Test that a different wildchar still works
+  call term_sendkeys(buf, "\<Esc>:set wildchar=<Esc>\<CR>")
+  call term_sendkeys(buf, ":vim\<Esc>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_1', {})
+
+  " Double-<Esc> is a hard-coded method to escape while wildchar=<Esc>. Make
+  " sure clean up is properly done in edge case like this.
   call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_6', {})
 
   " clean up
   call StopVimInTerminal(buf)
-  call delete('XTest_wildmenu')
 endfunc
 
 func Test_redraw_in_autocmd()
@@ -2789,7 +2803,7 @@ func Test_wildmenu_pum_from_terminal()
   let cmds = ['set wildmenu wildoptions=pum']
   let pcmd = python .. ' -c "import sys; sys.stdout.write(sys.stdin.read())"'
   call add(cmds, "call term_start('" .. pcmd .. "')")
-  call writefile(cmds, 'Xtest')
+  call writefile(cmds, 'Xtest', 'D')
   let buf = RunVimInTerminal('-S Xtest', #{rows: 10})
   call term_sendkeys(buf, "\r\r\r")
   call term_wait(buf)
@@ -2798,13 +2812,13 @@ func Test_wildmenu_pum_from_terminal()
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_term_01', {})
   call term_wait(buf)
   call StopVimInTerminal(buf)
-  call delete('Xtest')
 endfunc
 
-func Test_wildmenu_pum_clear_entries()
+func Test_wildmenu_pum_odd_wildchar()
   CheckRunVimInTerminal
 
-  " This was using freed memory.  Run in a terminal to get the pum to update.
+  " Test odd wildchar interactions with pum. Make sure they behave properly
+  " and don't lead to memory corruption due to improperly cleaned up memory.
   let lines =<< trim END
     set wildoptions=pum
     set wildchar=<C-E>
@@ -2812,10 +2826,35 @@ func Test_wildmenu_pum_clear_entries()
   call writefile(lines, 'XwildmenuTest', 'D')
   let buf = RunVimInTerminal('-S XwildmenuTest', #{rows: 10})
 
-  call term_sendkeys(buf, ":\<C-E>\<C-E>")
-  call VerifyScreenDump(buf, 'Test_wildmenu_pum_clear_entries_1', {})
+  call term_sendkeys(buf, ":\<C-E>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_odd_wildchar_1', {})
 
-  set wildoptions& wildchar&
+  " <C-E> being a wildchar takes priority over its original functionality
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_odd_wildchar_2', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_odd_wildchar_3', {})
+
+  " Escape key can be wildchar too. Double-<Esc> is hard-coded to escape
+  " command-line, and we need to make sure to clean up properly.
+  call term_sendkeys(buf, ":set wildchar=<Esc>\<CR>")
+  call term_sendkeys(buf, ":\<Esc>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_odd_wildchar_1', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_odd_wildchar_3', {})
+
+  " <C-\> can also be wildchar. <C-\><C-N> however will still escape cmdline
+  " and we again need to make sure we clean up properly.
+  call term_sendkeys(buf, ":set wildchar=<C-\\>\<CR>")
+  call term_sendkeys(buf, ":\<C-\>\<C-\>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_odd_wildchar_1', {})
+
+  call term_sendkeys(buf, "\<C-N>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_odd_wildchar_3', {})
+
+  call StopVimInTerminal(buf)
 endfunc
 
 " Test for completion after a :substitute command followed by a pipe (|)

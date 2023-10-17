@@ -2677,6 +2677,19 @@ static const char *did_set_updatecount(optset_T *args)
   return NULL;
 }
 
+/// Process the new 'wildchar' / 'wildcharm' option value.
+static const char *did_set_wildchar(optset_T *args)
+{
+  OptInt c = *(OptInt *)args->os_varp;
+
+  // Don't allow key values that wouldn't work as wildchar.
+  if (c == Ctrl_C || c == '\n' || c == '\r' || c == K_KENTER) {
+    return e_invarg;
+  }
+
+  return NULL;
+}
+
 /// Process the new 'winblend' option value.
 static const char *did_set_winblend(optset_T *args)
 {

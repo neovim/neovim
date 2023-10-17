@@ -17,6 +17,85 @@ describe("'wildmenu'", function()
     screen:attach()
   end)
 
+  -- oldtest: Test_wildmenu_screendump()
+  it('works', function()
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue};  -- NonText
+      [1] = {foreground = Screen.colors.Black, background = Screen.colors.Yellow};  -- WildMenu
+      [2] = {bold = true, reverse = true};  -- StatusLine
+    })
+    -- Test simple wildmenu
+    feed(':sign <Tab>')
+    screen:expect{grid=[[
+                               |
+      {0:~                        }|
+      {0:~                        }|
+      {1:define}{2:  jump  list  >    }|
+      :sign define^             |
+    ]]}
+
+    feed('<Tab>')
+    screen:expect{grid=[[
+                               |
+      {0:~                        }|
+      {0:~                        }|
+      {2:define  }{1:jump}{2:  list  >    }|
+      :sign jump^               |
+    ]]}
+
+    feed('<Tab>')
+    screen:expect{grid=[[
+                               |
+      {0:~                        }|
+      {0:~                        }|
+      {2:define  jump  }{1:list}{2:  >    }|
+      :sign list^               |
+    ]]}
+
+    -- Looped back to the original value
+    feed('<Tab><Tab><Tab><Tab>')
+    screen:expect{grid=[[
+                               |
+      {0:~                        }|
+      {0:~                        }|
+      {2:define  jump  list  >    }|
+      :sign ^                   |
+    ]]}
+
+    -- Test that the wild menu is cleared properly
+    feed('<Space>')
+    screen:expect{grid=[[
+                               |
+      {0:~                        }|
+      {0:~                        }|
+      {0:~                        }|
+      :sign  ^                  |
+    ]]}
+
+    -- Test that a different wildchar still works
+    feed('<Esc>')
+    command('set wildchar=<Esc>')
+    feed(':sign <Esc>')
+    screen:expect{grid=[[
+                               |
+      {0:~                        }|
+      {0:~                        }|
+      {1:define}{2:  jump  list  >    }|
+      :sign define^             |
+    ]]}
+
+    -- Double-<Esc> is a hard-coded method to escape while wildchar=<Esc>. Make
+    -- sure clean up is properly done in edge case like this.
+    feed('<Esc>')
+    screen:expect{grid=[[
+      ^                         |
+      {0:~                        }|
+      {0:~                        }|
+      {0:~                        }|
+                               |
+    ]]}
+  end)
+
   it('C-E to cancel wildmenu completion restore original input', function()
     feed(':sign <tab>')
     screen:expect([[

@@ -232,6 +232,11 @@ func Test_keymap_valid()
   call assert_fails(":set kmp=trunc\x00name", "trunc")
 endfunc
 
+func Test_wildchar_valid()
+  call assert_fails("set wildchar=<CR>", "E474:")
+  call assert_fails("set wildcharm=<C-C>", "E474:")
+endfunc
+
 func Check_dir_option(name)
   " Check that it's possible to set the option.
   exe 'set ' . a:name . '=/usr/share/dict/words'
