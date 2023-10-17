@@ -621,6 +621,9 @@ func Test_set_completion_string_values()
   "       \        {idx, val -> val != ':'}),
   "       \ '')
   " call assert_equal([], getcompletion('set hl+=8'..hl_display_modes, 'cmdline'))
+  " Test completion in middle of the line
+  " call feedkeys(":set hl=8b i\<Left>\<Left>\<Tab>\<C-B>\"\<CR>", 'xt')
+  " call assert_equal("\"set hl=8bi i", @:)
 
   "
   " Test flag lists

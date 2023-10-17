@@ -861,6 +861,16 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
 
   cmdmsg_rl = false;
 
+  // We could have reached here without having a chance to clean up wild menu
+  // if certain special keys like <Esc> or <C-\> were used as wildchar. Make
+  // sure to still clean up to avoid memory corruption.
+  if (cmdline_pum_active()) {
+    cmdline_pum_remove();
+  }
+  wildmenu_cleanup(&ccline);
+  s->did_wild_list = false;
+  s->wim_index = 0;
+
   ExpandCleanup(&s->xpc);
   ccline.xpc = NULL;
 
@@ -1247,13 +1257,14 @@ static int command_line_execute(VimState *state, int key)
     s->c = wildmenu_translate_key(&ccline, s->c, &s->xpc, s->did_wild_list);
   }
 
-  if (cmdline_pum_active() || s->did_wild_list) {
+  int wild_type = 0;
+  const bool key_is_wc = (s->c == p_wc && KeyTyped) || s->c == p_wcm;
+  if ((cmdline_pum_active() || s->did_wild_list) && !key_is_wc) {
     // Ctrl-Y: Accept the current selection and close the popup menu.
     // Ctrl-E: cancel the cmdline popup menu and return the original text.
     if (s->c == Ctrl_E || s->c == Ctrl_Y) {
-      const int wild_type = (s->c == Ctrl_E) ? WILD_CANCEL : WILD_APPLY;
+      wild_type = (s->c == Ctrl_E) ? WILD_CANCEL : WILD_APPLY;
       (void)nextwild(&s->xpc, wild_type, WILD_NO_BEEP, s->firstc != '@');
-      s->c = Ctrl_E;
     }
   }
 
@@ -1262,7 +1273,7 @@ static int command_line_execute(VimState *state, int key)
   // 'wildcharm' or Ctrl-N or Ctrl-P or Ctrl-A or Ctrl-L).
   // If the popup menu is displayed, then PageDown and PageUp keys are
   // also used to navigate the menu.
-  bool end_wildmenu = (!(s->c == p_wc && KeyTyped) && s->c != p_wcm && s->c != Ctrl_Z
+  bool end_wildmenu = (!key_is_wc && s->c != Ctrl_Z
                        && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
                        && s->c != Ctrl_L);
   end_wildmenu = end_wildmenu && (!cmdline_pum_active()
@@ -1366,6 +1377,12 @@ static int command_line_execute(VimState *state, int key)
   }
 
   s->do_abbr = true;             // default: check for abbreviation
+
+  // If already used to cancel/accept wildmenu, don't process the key further.
+  if (wild_type == WILD_CANCEL || wild_type == WILD_APPLY) {
+    return command_line_not_changed(s);
+  }
+
   return command_line_handle_key(s);
 }
 
