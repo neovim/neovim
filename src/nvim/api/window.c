@@ -92,6 +92,10 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
 /// Sets the (1,0)-indexed cursor position in the window. |api-indexing|
 /// This scrolls the window even if it is not the current one.
 ///
+/// Alerts if row outside buffer and col greater than |v:maxcol|
+/// If col is greater than the maximum col of the line and the |'virtualedit'|
+/// option is not set, col will be moved to end of the line while no alert
+///
 /// @param window   Window handle, or 0 for current window
 /// @param pos      (row, col) tuple representing the new position
 /// @param[out] err Error details, if any
