@@ -3635,7 +3635,7 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   }
 
   if (allow_get_expansion && insert_match
-      && (!(compl_get_longest || compl_restarting) || compl_used_match)) {
+      && (!compl_get_longest || compl_used_match)) {
     // Delete old text to be replaced
     ins_compl_delete();
   }
