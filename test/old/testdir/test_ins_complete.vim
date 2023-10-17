@@ -530,10 +530,8 @@ func Test_ins_completeslash()
   CheckMSWindows
 
   call mkdir('Xdir')
-
   let orig_shellslash = &shellslash
   set cpt&
-
   new
 
   set noshellslash
@@ -653,6 +651,24 @@ func Test_pum_with_preview_win()
   call term_sendkeys(buf, "\<Esc>")
   call StopVimInTerminal(buf)
   call delete('Xpreviewscript')
+endfunc
+
+func Test_scrollbar_on_wide_char()
+  CheckScreendump
+
+  let lines =<< trim END
+    call setline(1, ['a', '            啊啊啊',
+                        \ '             哦哦哦',
+                        \ '              呃呃呃'])
+    call setline(5, range(10)->map({i, v -> 'aa' .. v .. 'bb'}))
+  END
+  call writefile(lines, 'Xwidescript')
+  let buf = RunVimInTerminal('-S Xwidescript', #{rows: 10})
+  call term_sendkeys(buf, "A\<C-N>")
+  call VerifyScreenDump(buf, 'Test_scrollbar_on_wide_char', {})
+
+  call StopVimInTerminal(buf)
+  call delete('Xwidescript')
 endfunc
 
 " Test for inserting the tag search pattern in insert mode
