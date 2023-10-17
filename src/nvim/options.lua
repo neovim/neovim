@@ -9473,6 +9473,7 @@ return {
     },
     {
       abbreviation = 'wc',
+      cb = 'did_set_wildchar',
       defaults = {
         if_true = imacros('TAB'),
         doc = '<Tab>',
@@ -9484,6 +9485,8 @@ return {
         The character is not recognized when used inside a macro.  See
         'wildcharm' for that.
         Some keys will not work, such as CTRL-C, <CR> and Enter.
+        <Esc> can be used, but hitting it twice in a row will still exit
+        command-line as a failsafe measure.
         Although 'wc' is a number option, you can set it to a special key: >
         	:set wc=<Tab>
         <
@@ -9496,6 +9499,7 @@ return {
     },
     {
       abbreviation = 'wcm',
+      cb = 'did_set_wildchar',
       defaults = { if_true = 0 },
       desc = [=[
         'wildcharm' works exactly like 'wildchar', except that it is

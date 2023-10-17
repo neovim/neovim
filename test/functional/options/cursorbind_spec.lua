@@ -8,6 +8,7 @@ local feed = helpers.feed
 before_each(clear)
 
 describe("'cursorbind'", function()
+  -- oldtest: Test_cursorline_cursorbind_horizontal_scroll()
   it("behaves consistently whether 'cursorline' is set or not vim-patch:8.2.4795", function()
     local screen = Screen.new(60, 8)
     screen:set_default_attr_ids({
