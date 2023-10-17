@@ -1788,6 +1788,30 @@ describe('builtin popupmenu', function()
           {2:-- }{5:match 1 of 3}                 |
         ]])
       end)
+
+      -- oldtest: Test_scrollbar_on_wide_char()
+      it('scrollbar overwrites half of double-width char below properly', function()
+        screen:try_resize(32, 10)
+        exec([[
+          call setline(1, ['a', '            啊啊啊',
+                              \ '             哦哦哦',
+                              \ '              呃呃呃'])
+          call setline(5, range(10)->map({i, v -> 'aa' .. v .. 'bb'}))
+        ]])
+        feed('A<C-X><C-N>')
+        screen:expect([[
+          aa0bb^                           |
+          {s:aa0bb          }{c: }啊              |
+          {n:aa1bb          }{c: } 哦             |
+          {n:aa2bb          }{c: }呃呃            |
+          {n:aa3bb          }{c: }                |
+          {n:aa4bb          }{c: }                |
+          {n:aa5bb          }{c: }                |
+          {n:aa6bb          }{s: }                |
+          {n:aa7bb          }{s: }                |
+          {2:-- }{5:match 1 of 10}                |
+        ]])
+      end)
     end
 
     it('with vsplits', function()
