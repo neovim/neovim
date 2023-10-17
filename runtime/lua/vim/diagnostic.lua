@@ -652,16 +652,14 @@ function M.config(opts, namespace)
 
   if namespace then
     for bufnr, v in pairs(diagnostic_cache) do
-      if api.nvim_buf_is_loaded(bufnr) and v[namespace] then
+      if v[namespace] then
         M.show(namespace, bufnr)
       end
     end
   else
     for bufnr, v in pairs(diagnostic_cache) do
-      if api.nvim_buf_is_loaded(bufnr) then
-        for ns in pairs(v) do
-          M.show(ns, bufnr)
-        end
+      for ns in pairs(v) do
+        M.show(ns, bufnr)
       end
     end
   end
@@ -693,9 +691,7 @@ function M.set(namespace, bufnr, diagnostics, opts)
     set_diagnostic_cache(namespace, bufnr, diagnostics)
   end
 
-  if api.nvim_buf_is_loaded(bufnr) then
-    M.show(namespace, bufnr, nil, opts)
-  end
+  M.show(namespace, bufnr, nil, opts)
 
   api.nvim_exec_autocmds('DiagnosticChanged', {
     modeline = false,
@@ -928,6 +924,10 @@ M.handlers.underline = {
     bufnr = get_bufnr(bufnr)
     opts = opts or {}
 
+    if not vim.api.nvim_buf_is_loaded(bufnr) then
+      return
+    end
+
     if opts.underline and opts.underline.severity then
       diagnostics = filter_by_severity(opts.underline.severity, diagnostics)
     end
@@ -993,6 +993,10 @@ M.handlers.virtual_text = {
 
     bufnr = get_bufnr(bufnr)
     opts = opts or {}
+
+    if not vim.api.nvim_buf_is_loaded(bufnr) then
+      return
+    end
 
     local severity
     if opts.virtual_text then
