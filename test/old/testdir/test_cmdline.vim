@@ -82,38 +82,38 @@ func Test_complete_list()
 endfunc
 
 func Test_complete_wildmenu()
-  call mkdir('Xdir1/Xdir2', 'p')
-  call writefile(['testfile1'], 'Xdir1/Xtestfile1')
-  call writefile(['testfile2'], 'Xdir1/Xtestfile2')
-  call writefile(['testfile3'], 'Xdir1/Xdir2/Xtestfile3')
-  call writefile(['testfile3'], 'Xdir1/Xdir2/Xtestfile4')
+  call mkdir('Xwilddir1/Xdir2', 'pR')
+  call writefile(['testfile1'], 'Xwilddir1/Xtestfile1')
+  call writefile(['testfile2'], 'Xwilddir1/Xtestfile2')
+  call writefile(['testfile3'], 'Xwilddir1/Xdir2/Xtestfile3')
+  call writefile(['testfile3'], 'Xwilddir1/Xdir2/Xtestfile4')
   set wildmenu
 
   " Pressing <Tab> completes, and moves to next files when pressing again.
-  call feedkeys(":e Xdir1/\<Tab>\<Tab>\<CR>", 'tx')
+  call feedkeys(":e Xwilddir1/\<Tab>\<Tab>\<CR>", 'tx')
   call assert_equal('testfile1', getline(1))
-  call feedkeys(":e Xdir1/\<Tab>\<Tab>\<Tab>\<CR>", 'tx')
+  call feedkeys(":e Xwilddir1/\<Tab>\<Tab>\<Tab>\<CR>", 'tx')
   call assert_equal('testfile2', getline(1))
 
   " <S-Tab> is like <Tab> but begin with the last match and then go to
   " previous.
-  call feedkeys(":e Xdir1/Xtest\<S-Tab>\<CR>", 'tx')
+  call feedkeys(":e Xwilddir1/Xtest\<S-Tab>\<CR>", 'tx')
   call assert_equal('testfile2', getline(1))
-  call feedkeys(":e Xdir1/Xtest\<S-Tab>\<S-Tab>\<CR>", 'tx')
+  call feedkeys(":e Xwilddir1/Xtest\<S-Tab>\<S-Tab>\<CR>", 'tx')
   call assert_equal('testfile1', getline(1))
 
   " <Left>/<Right> to move to previous/next file.
-  call feedkeys(":e Xdir1/\<Tab>\<Right>\<CR>", 'tx')
+  call feedkeys(":e Xwilddir1/\<Tab>\<Right>\<CR>", 'tx')
   call assert_equal('testfile1', getline(1))
-  call feedkeys(":e Xdir1/\<Tab>\<Right>\<Right>\<CR>", 'tx')
+  call feedkeys(":e Xwilddir1/\<Tab>\<Right>\<Right>\<CR>", 'tx')
   call assert_equal('testfile2', getline(1))
-  call feedkeys(":e Xdir1/\<Tab>\<Right>\<Right>\<Left>\<CR>", 'tx')
+  call feedkeys(":e Xwilddir1/\<Tab>\<Right>\<Right>\<Left>\<CR>", 'tx')
   call assert_equal('testfile1', getline(1))
 
   " <Up>/<Down> to go up/down directories.
-  call feedkeys(":e Xdir1/\<Tab>\<Down>\<CR>", 'tx')
+  call feedkeys(":e Xwilddir1/\<Tab>\<Down>\<CR>", 'tx')
   call assert_equal('testfile3', getline(1))
-  call feedkeys(":e Xdir1/\<Tab>\<Down>\<Up>\<Right>\<CR>", 'tx')
+  call feedkeys(":e Xwilddir1/\<Tab>\<Down>\<Up>\<Right>\<CR>", 'tx')
   call assert_equal('testfile1', getline(1))
 
   " this fails in some Unix GUIs, not sure why
@@ -123,9 +123,9 @@ func Test_complete_wildmenu()
     set wildcharm=<C-Z>
     cnoremap <C-J> <Down><C-Z>
     cnoremap <C-K> <Up><C-Z>
-    call feedkeys(":e Xdir1/\<Tab>\<C-J>\<CR>", 'tx')
+    call feedkeys(":e Xwilddir1/\<Tab>\<C-J>\<CR>", 'tx')
     call assert_equal('testfile3', getline(1))
-    call feedkeys(":e Xdir1/\<Tab>\<C-J>\<C-K>\<CR>", 'tx')
+    call feedkeys(":e Xwilddir1/\<Tab>\<C-J>\<C-K>\<CR>", 'tx')
     call assert_equal('testfile1', getline(1))
     set wildcharm=0
     cunmap <C-J>
@@ -134,21 +134,21 @@ func Test_complete_wildmenu()
 
   " Test for canceling the wild menu by adding a character
   redrawstatus
-  call feedkeys(":e Xdir1/\<Tab>x\<C-B>\"\<CR>", 'xt')
-  call assert_equal('"e Xdir1/Xdir2/x', @:)
+  call feedkeys(":e Xwilddir1/\<Tab>x\<C-B>\"\<CR>", 'xt')
+  call assert_equal('"e Xwilddir1/Xdir2/x', @:)
 
   " Completion using a relative path
-  cd Xdir1/Xdir2
+  cd Xwilddir1/Xdir2
   call feedkeys(":e ../\<Tab>\<Right>\<Down>\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"e Xtestfile3 Xtestfile4', @:)
   cd -
 
   " test for wildmenumode()
   cnoremap <expr> <F2> wildmenumode()
-  call feedkeys(":cd Xdir\<Tab>\<F2>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"cd Xdir1/0', @:)
-  call feedkeys(":e Xdir1/\<Tab>\<F2>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"e Xdir1/Xdir2/1', @:)
+  call feedkeys(":cd Xwilddir\<Tab>\<F2>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"cd Xwilddir1/0', @:)
+  call feedkeys(":e Xwilddir1/\<Tab>\<F2>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"e Xwilddir1/Xdir2/1', @:)
   cunmap <F2>
 
   " Test for canceling the wild menu by pressing <PageDown> or <PageUp>.
@@ -159,9 +159,15 @@ func Test_complete_wildmenu()
   call feedkeys(":sign \<Tab>\<PageUp>\<Left>\<Right>\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"TestWildMenu', @:)
 
+  " Test for Ctrl-E/Ctrl-Y being able to cancel / accept a match
+  call feedkeys(":sign un zz\<Left>\<Left>\<Left>\<Tab>\<C-E> yy\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign un yy zz', @:)
+
+  call feedkeys(":sign un zz\<Left>\<Left>\<Left>\<Tab>\<Tab>\<C-Y> yy\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"sign unplace yy zz', @:)
+
   " cleanup
   %bwipe
-  call delete('Xdir1', 'rf')
   set nowildmenu
 endfunc
 
@@ -1046,6 +1052,9 @@ func Test_cmdline_complete_argopt()
   call assert_equal('edit', getcompletion('read ++bin ++edi', 'cmdline')[0])
 
   call assert_equal(['fileformat='], getcompletion('edit ++ff', 'cmdline'))
+  " Test ++ff in the middle of the cmdline
+  call feedkeys(":edit ++ff zz\<Left>\<Left>\<Left>\<C-A>\<C-B>\"\<CR>", 'xt')
+  call assert_equal("\"edit ++fileformat= zz", @:)
 
   call assert_equal('dos', getcompletion('write ++ff=d', 'cmdline')[0])
   call assert_equal('mac', getcompletion('args ++fileformat=m', 'cmdline')[0])
@@ -2513,7 +2522,7 @@ func Test_wildmenu_pum()
       call feedkeys(":edit $VIMRUNTIME/\<Tab>\<Left>\<C-U>ab\<Tab>")
     endfunc
   [CODE]
-  call writefile(commands, 'Xtest')
+  call writefile(commands, 'Xtest', 'D')
 
   let buf = RunVimInTerminal('-S Xtest', #{rows: 10})
 
@@ -2571,12 +2580,12 @@ func Test_wildmenu_pum()
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_13', {})
 
   " Directory name completion
-  call mkdir('Xdir/XdirA/XdirB', 'p')
-  call writefile([], 'Xdir/XfileA')
-  call writefile([], 'Xdir/XdirA/XfileB')
-  call writefile([], 'Xdir/XdirA/XdirB/XfileC')
+  call mkdir('Xnamedir/XdirA/XdirB', 'pR')
+  call writefile([], 'Xnamedir/XfileA')
+  call writefile([], 'Xnamedir/XdirA/XfileB')
+  call writefile([], 'Xnamedir/XdirA/XdirB/XfileC')
 
-  call term_sendkeys(buf, "\<C-U>e Xdi\<Tab>\<Tab>")
+  call term_sendkeys(buf, "\<C-U>e Xnamedi\<Tab>\<Tab>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_14', {})
 
   " Pressing <Right> on a directory name should go into that directory
@@ -2651,13 +2660,13 @@ func Test_wildmenu_pum()
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_31', {})
 
   " Tests a directory name contained full-width characters.
-  call mkdir('Xdir/あいう', 'p')
-  call writefile([], 'Xdir/あいう/abc')
-  call writefile([], 'Xdir/あいう/xyz')
-  call writefile([], 'Xdir/あいう/123')
+  call mkdir('Xnamedir/あいう', 'p')
+  call writefile([], 'Xnamedir/あいう/abc')
+  call writefile([], 'Xnamedir/あいう/xyz')
+  call writefile([], 'Xnamedir/あいう/123')
 
   call term_sendkeys(buf, "\<C-U>set wildmode&\<CR>")
-  call term_sendkeys(buf, ":\<C-U>e Xdir/あいう/\<Tab>")
+  call term_sendkeys(buf, ":\<C-U>e Xnamedir/あいう/\<Tab>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_32', {})
 
   " Pressing <C-A> when the popup menu is displayed should list all the
@@ -2679,7 +2688,7 @@ func Test_wildmenu_pum()
 
   " After using <C-A> to expand all the filename matches, pressing <Up>
   " should not open the popup menu again.
-  call term_sendkeys(buf, "\<C-E>\<C-U>:cd Xdir/XdirA\<CR>")
+  call term_sendkeys(buf, "\<C-E>\<C-U>:cd Xnamedir/XdirA\<CR>")
   call term_sendkeys(buf, ":e \<Tab>\<C-A>\<Up>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_36', {})
   call term_sendkeys(buf, "\<C-E>\<C-U>:cd -\<CR>")
@@ -2737,10 +2746,18 @@ func Test_wildmenu_pum()
   call term_sendkeys(buf, "\<PageUp>")
   call VerifyScreenDump(buf, 'Test_wildmenu_pum_50', {})
 
+  " pressing <C-E> to end completion should work in middle of the line too
+  call term_sendkeys(buf, "\<Esc>:set wildchazz\<Left>\<Left>\<Tab>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_51', {})
+  call term_sendkeys(buf, "\<C-E>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_52', {})
+
+  " pressing <C-Y> should select the current match and end completion
+  call term_sendkeys(buf, "\<Esc>:set wildchazz\<Left>\<Left>\<Tab>\<C-Y>")
+  call VerifyScreenDump(buf, 'Test_wildmenu_pum_53', {})
+
   call term_sendkeys(buf, "\<C-U>\<CR>")
   call StopVimInTerminal(buf)
-  call delete('Xtest')
-  call delete('Xdir', 'rf')
 endfunc
 
 " Test for wildmenumode() with the cmdline popup menu
@@ -3403,6 +3420,17 @@ func Test_fuzzy_completion_custom_func()
   call feedkeys(":Fuzzy ttt\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal("\"Fuzzy TestFOrmat", @:)
   delcom Fuzzy
+  set wildoptions&
+endfunc
+
+" Test for fuzzy completion in the middle of a cmdline instead of at the end
+func Test_fuzzy_completion_in_middle()
+  set wildoptions=fuzzy
+  call feedkeys(":set ildar wrap\<Left>\<Left>\<Left>\<Left>\<Left>\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"set wildchar wildcharm wrap", @:)
+
+  call feedkeys(":args ++odng zz\<Left>\<Left>\<Left>\<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal("\"args ++encoding= zz", @:)
   set wildoptions&
 endfunc
 

@@ -4241,7 +4241,8 @@ int expand_argopt(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches, int
 
   // Special handling of "ff" which acts as a short form of
   // "fileformat", as "ff" is not a substring of it.
-  if (strcmp(xp->xp_pattern, "ff") == 0) {
+  if (xp->xp_pattern_len == 2
+      && strncmp(xp->xp_pattern, "ff", xp->xp_pattern_len) == 0) {
     *matches = xmalloc(sizeof(char *));
     *numMatches = 1;
     (*matches)[0] = xstrdup("fileformat=");

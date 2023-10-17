@@ -267,7 +267,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     char *p1;
     if (cmdline_fuzzy_completion_supported(xp)) {
       // If fuzzy matching, don't modify the search string
-      p1 = xstrdup(xp->xp_pattern);
+      p1 = xstrnsave(xp->xp_pattern, xp->xp_pattern_len);
     } else {
       p1 = addstar(xp->xp_pattern, xp->xp_pattern_len, xp->xp_context);
     }
