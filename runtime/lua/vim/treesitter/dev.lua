@@ -366,6 +366,10 @@ function M.inspect_tree(opts)
     group = group,
     buffer = b,
     callback = function()
+      if not api.nvim_buf_is_loaded(buf) then
+        return true
+      end
+
       api.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
       local row = api.nvim_win_get_cursor(w)[1]
       local pos = pg:get(row)
@@ -438,6 +442,9 @@ function M.inspect_tree(opts)
     group = group,
     buffer = b,
     callback = function()
+      if not api.nvim_buf_is_loaded(buf) then
+        return true
+      end
       api.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
     end,
   })
@@ -449,7 +456,6 @@ function M.inspect_tree(opts)
       if not api.nvim_buf_is_loaded(b) then
         return true
       end
-
       api.nvim_buf_clear_namespace(b, pg.ns, 0, -1)
     end,
   })
