@@ -396,7 +396,7 @@ function M.foldtext()
 
     local priority = tonumber(metadata.priority or vim.highlight.priorities.treesitter)
 
-    if start_row == foldstart - 1 and end_row == foldstart - 1 then
+    if start_row == foldstart - 1 then
       -- check for characters ignored by treesitter
       if start_col > line_pos then
         table.insert(result, {
@@ -405,6 +405,11 @@ function M.foldtext()
           range = { line_pos, start_col },
         })
       end
+
+      if end_row > foldstart - 1 then
+        end_col = #line
+      end
+
       line_pos = end_col
 
       local text = line:sub(start_col + 1, end_col)
