@@ -145,6 +145,13 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'termux-clipboard'
+  elseif executable('pbcopy') && executable('pbpaste') 
+    let s:copy['+'] = ['pbcopy']
+    let s:paste['+'] = ['pbpaste']
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    let s:cache_enabled = 0
+    return 'pbcopy'
   elseif !empty($TMUX) && executable('tmux')
     let tmux_v = v:lua.vim.version.parse(system(['tmux', '-V']))
     if !empty(tmux_v) && !v:lua.vim.version.lt(tmux_v, [3,2,0])
