@@ -3296,7 +3296,22 @@ static void handle_defer_one(funccall_T *funccal)
     char *name = dr->dr_name;
     dr->dr_name = NULL;
 
+    // If the deferred function is called after an exception, then only the
+    // first statement in the function will be executed.  Save and restore
+    // the try/catch/throw exception state.
+    const int save_trylevel = trylevel;
+    const bool save_did_throw = did_throw;
+    const bool save_need_rethrow = need_rethrow;
+
+    trylevel = 0;
+    did_throw = false;
+    need_rethrow = false;
+
     call_func(name, -1, &rettv, dr->dr_argcount, dr->dr_argvars, &funcexe);
+
+    trylevel = save_trylevel;
+    did_throw = save_did_throw;
+    need_rethrow = save_need_rethrow;
 
     tv_clear(&rettv);
     xfree(name);
