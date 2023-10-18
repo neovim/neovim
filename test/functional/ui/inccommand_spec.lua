@@ -3095,6 +3095,36 @@ it(':substitute with inccommand works properly if undo is not synced #20029', fu
     baz]])
 end)
 
+it(':substitute with inccommand does not unexpectedly change viewport #25697', function()
+  clear()
+  local screen = Screen.new(45, 5)
+  common_setup(screen, 'nosplit', long_multiline_text)
+  command('vnew | tabnew | tabclose')
+  screen:expect([[
+    ^                      │£ m n                 |
+    {15:~                     }│t œ ¥                 |
+    {15:~                     }│                      |
+    {11:[No Name]              }{10:[No Name] [+]         }|
+                                                 |
+  ]])
+  feed(':s/')
+  screen:expect([[
+                          │£ m n                 |
+    {15:~                     }│t œ ¥                 |
+    {15:~                     }│                      |
+    {11:[No Name]              }{10:[No Name] [+]         }|
+    :s/^                                          |
+  ]])
+  feed('<Esc>')
+  screen:expect([[
+    ^                      │£ m n                 |
+    {15:~                     }│t œ ¥                 |
+    {15:~                     }│                      |
+    {11:[No Name]              }{10:[No Name] [+]         }|
+                                                 |
+  ]])
+end)
+
 it('long :%s/ with inccommand does not collapse cmdline', function()
   clear()
   local screen = Screen.new(10,5)
