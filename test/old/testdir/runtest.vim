@@ -231,6 +231,8 @@ func RunTheTest(test)
     endtry
   endif
 
+  let skipped = v:false
+
   au VimLeavePre * call EarlyExit(g:testfunc)
   if a:test =~ 'Test_nocatch_'
     " Function handles errors itself.  This avoids skipping commands after the
@@ -240,6 +242,7 @@ func RunTheTest(test)
     if g:skipped_reason != ''
       call add(s:messages, '    Skipped')
       call add(s:skipped, 'SKIPPED ' . a:test . ': ' . g:skipped_reason)
+      let skipped = v:true
     endif
   else
     try
@@ -247,6 +250,7 @@ func RunTheTest(test)
     catch /^\cskipped/
       call add(s:messages, '    Skipped')
       call add(s:skipped, 'SKIPPED ' . a:test . ': ' . substitute(v:exception, '^\S*\s\+', '',  ''))
+      let skipped = v:true
     catch
       call add(v:errors, 'Caught exception in ' . a:test . ': ' . v:exception . ' @ ' . v:throwpoint)
     endtry
@@ -342,14 +346,16 @@ func RunTheTest(test)
     endif
   endwhile
 
-  " Check if the test has left any swap files behind.  Delete them before
-  " running tests again, they might interfere.
-  let swapfiles = s:GetSwapFileList()
-  if len(swapfiles) > 0
-    call add(s:messages, "Found swap files: " .. string(swapfiles))
-    for name in swapfiles
-      call delete(name)
-    endfor
+  if !skipped
+    " Check if the test has left any swap files behind.  Delete them before
+    " running tests again, they might interfere.
+    let swapfiles = s:GetSwapFileList()
+    if len(swapfiles) > 0
+      call add(s:messages, "Found swap files: " .. string(swapfiles))
+      for name in swapfiles
+        call delete(name)
+      endfor
+    endif
   endif
 endfunc
 
