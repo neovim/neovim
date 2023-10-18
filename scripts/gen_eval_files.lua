@@ -211,6 +211,39 @@ local function get_api_meta()
   return ret
 end
 
+---@param text string
+local function fix_indent(text)
+  local lines = vim.split(text, "\n")
+  local indent = 100
+  for l, line in ipairs(lines) do
+    if not line:find("^%s*$") then
+      line = line:gsub("  ", "\t")
+      lines[l] = line
+      local prefix = line:match("^\t+")
+      if prefix then
+        indent = indent and math.min(indent, #prefix) or #prefix
+      end
+    end
+  end
+  if indent and indent > 0 then
+    for l, line in ipairs(lines) do
+      lines[l] = line:gsub("^" .. ("\t"):rep(indent), ""):gsub("\t", "  ")
+    end
+  end
+  return table.concat(lines, "\n")
+end
+
+---@param text string
+---@param str string?
+local function indent(text, str)
+  str = str or "  "
+  local lines = vim.split(text, "\n")
+  for l = 2, #lines do
+    lines[l] = str .. lines[l]
+  end
+  return table.concat(lines, "\n")
+end
+
 --- Convert vimdoc references to markdown literals
 --- Convert vimdoc codeblocks to markdown codeblocks
 ---
@@ -219,15 +252,44 @@ end
 --- @param x string
 --- @return string
 local function norm_text(x)
-  return (
-    x:gsub('|([^ ]+)|', '`%1`')
-      :gsub('\n*>lua', '\n\n```lua')
-      :gsub('\n*>vim', '\n\n```vim')
-      :gsub('\n+<$', '\n```')
-      :gsub('\n+<\n+', '\n```\n\n')
-      :gsub('%s+>\n+', '\n```\n')
-      :gsub('\n+<%s+\n?', '\n```\n')
+  local input = x
+  x = fix_indent(x)
+  x = x:gsub('|([^ ]+)|', '`|%1|`')
+  local lines = vim.split(x, '\n')
+  local block ---@type number?
+  local before, lang ---@type string?, string?
+  for l, line in ipairs(lines) do
+    if block then
+      local after = line:match("^%s*<%s*(.*)%s*$")
+      if not after and l == #lines and lang == "vim" then
+        after = line
+      end
+      if after then
+        lines[block] = before .. '\n```' .. lang
+        lines[l] = '```'
+        table.insert(lines, l+1, after)
+        block = nil
+      end
+    else
+      before, lang = line:match("^(.*)%s*>([a-z]*)%s*$")
+      -- don't match tags
+      if line:find("<[a-zA-Z%-_]+>%s*$") then before = nil end
+      block = before and l or nil
+    end
+  end
+  x = table.concat(lines, '\n')
+  x = (x
+    :gsub("\n%s*```", "\n```")
+    :gsub("```%s*\n", "```\n")
   )
+  if block then
+    print("----input----")
+    print(input:gsub("\t", "  "))
+    print("----output----")
+    print(x:gsub("\t", "  "))
+    error("Failed to parse code block")
+  end
+  return x
 end
 
 --- @param _f string
@@ -262,7 +324,7 @@ local function render_api_meta(_f, fun, write)
     param_names[#param_names + 1] = p[1]
     local pdesc = p[3]
     if pdesc then
-      local pdesc_a = split(norm_text(pdesc))
+      local pdesc_a = split(indent(norm_text(pdesc), " "))
       write('--- @param ' .. p[1] .. ' ' .. p[2] .. ' ' .. pdesc_a[1])
       for i = 2, #pdesc_a do
         if not pdesc_a[i] then
@@ -350,10 +412,7 @@ local function render_eval_meta(f, fun, write)
     local desc = fun.desc
 
     if desc then
-      --- @type string
-      desc = desc:gsub('\n%s*\n%s*$', '\n')
-      for _, l in ipairs(split(desc)) do
-        l = l:gsub('^      ', ''):gsub('\t', '  '):gsub('@', '\\@')
+      for _, l in ipairs(split(norm_text(desc))) do
         write('--- ' .. l)
       end
     end
