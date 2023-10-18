@@ -126,18 +126,24 @@ void remote_ui_disconnect(uint64_t channel_id)
   xfree(ui);
 }
 
-/// Wait until ui has connected on stdio channel.
-void remote_ui_wait_for_attach(void)
+/// Wait until ui has connected on stdio channel if only_stdio
+/// is true, otherwise any channel.
+void remote_ui_wait_for_attach(bool only_stdio)
 {
-  Channel *channel = find_channel(CHAN_STDIO);
-  if (!channel) {
-    // this function should only be called in --embed mode, stdio channel
-    // can be assumed.
-    abort();
-  }
+  if (only_stdio) {
+    Channel *channel = find_channel(CHAN_STDIO);
+    if (!channel) {
+      // this function should only be called in --embed mode, stdio channel
+      // can be assumed.
+      abort();
+    }
 
-  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, channel->events, -1,
-                            map_has(uint64_t, &connected_uis, CHAN_STDIO));
+    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, channel->events, -1,
+                              map_has(uint64_t, &connected_uis, CHAN_STDIO));
+  } else {
+    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, -1,
+                              ui_active());
+  }
 }
 
 /// Activates UI events on the channel.
