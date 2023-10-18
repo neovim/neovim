@@ -90,7 +90,7 @@ local function tags_lsp_to_vim(diagnostic, client_id)
     else
       vim.notify_once(
         string.format('Unknown DiagnosticTag %d from LSP client %d', tag, client_id),
-        vim.log.levels.WARN
+        vim.log.levels.DEBUG
       )
     end
   end
