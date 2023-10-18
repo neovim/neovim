@@ -211,7 +211,7 @@ local function get_api_meta()
   return ret
 end
 
----@param text string
+--- @param text string
 local function fix_indent(text)
   local lines = vim.split(text, "\n")
   local indent = 100
@@ -225,7 +225,7 @@ local function fix_indent(text)
       end
     end
   end
-  if indent and indent > 0 then
+  if indent > 0 then
     for l, line in ipairs(lines) do
       lines[l] = line:gsub("^" .. ("\t"):rep(indent), ""):gsub("\t", "  ")
     end
@@ -233,8 +233,8 @@ local function fix_indent(text)
   return table.concat(lines, "\n")
 end
 
----@param text string
----@param str string?
+--- @param text string
+--- @param str string?
 local function indent(text, str)
   str = str or "  "
   local lines = vim.split(text, "\n")
@@ -254,10 +254,10 @@ end
 local function norm_text(x)
   local input = x
   x = fix_indent(x)
-  x = x:gsub('|([^ ]+)|', '`|%1|`')
+  x = x:gsub('|([^ ]+)|', '[%1](help://%1)')
   local lines = vim.split(x, '\n')
-  local block ---@type number?
-  local before, lang ---@type string?, string?
+  local block --- @type number?
+  local before, lang --- @type string?, string?
   for l, line in ipairs(lines) do
     if block then
       local after = line:match("^%s*<%s*(.*)%s*$")
@@ -273,7 +273,7 @@ local function norm_text(x)
     else
       before, lang = line:match("^(.*)%s*>([a-z]*)%s*$")
       -- don't match tags
-      if line:find("<[a-zA-Z%-_]+>%s*$") then before = nil end
+      if line:find("<[%a%-_]+>%s*$") then before = nil end
       block = before and l or nil
     end
   end
