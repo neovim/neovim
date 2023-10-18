@@ -2,10 +2,13 @@ local uv = require'luv'
 
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local thelpers = require('test.functional.terminal.helpers')
 
 local feed = helpers.feed
 local eq = helpers.eq
 local clear = helpers.clear
+local ok = helpers.ok
+
 
 local function test_embed(ext_linegrid)
   local screen
@@ -131,5 +134,62 @@ describe('--embed UI', function()
       {1:~                                       }|
       {2:-- INSERT --}                            |
     ]]}
+  end)
+end)
+
+describe('--embed --listen UI', function()
+  it('waits for connection on listening address', function()
+    clear()
+    local child_server = assert(helpers.new_pipename())
+
+    local screen = thelpers.screen_setup(0,
+      string.format(
+        [=[["%s", "--embed", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s"]]=],
+        helpers.nvim_prog, child_server, helpers.nvim_set))
+    screen:expect{grid=[[
+      {1: }                                                 |
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    local child_session = helpers.connect(child_server)
+
+    local info_ok, apiinfo = child_session:request('nvim_get_api_info')
+    assert(info_ok)
+    assert(#apiinfo == 2)
+
+    child_session:request('nvim_exec2', [[
+      let g:vim_entered=0
+      autocmd VimEnter * call execute("let g:vim_entered=1")
+    ]], {})
+
+    -- g:vim_entered shouldn't be set to 1 until after attach
+    local var_ok, var = child_session:request('nvim_get_var', 'vim_entered')
+    assert(var_ok)
+    ok(var == 0)
+
+    local child_screen = Screen.new(40, 6)
+    child_screen.rpc_async = true  -- Avoid hanging. #24888
+    child_screen:attach(nil, child_session)
+    child_screen:expect{grid=[[
+      ^                                        |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]], attr_ids={
+      [1] = {foreground = Screen.colors.Blue, bold = true};
+    }}
+
+    -- g:vim_entered should now be set to 1
+    var_ok, var = child_session:request('nvim_get_var', 'vim_entered')
+    assert(var_ok)
+    ok(var == 1)
+
   end)
 end)
