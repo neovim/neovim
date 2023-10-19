@@ -735,10 +735,9 @@ func s:GetFilenameChecks() abort
     \ 'yang': ['file.yang'],
     \ 'yuck': ['file.yuck'],
     \ 'z8a': ['file.z8a'],
-    \ 'zig': ['file.zig'],
+    \ 'zig': ['file.zig', 'build.zig.zon'],
     \ 'zimbu': ['file.zu'],
     \ 'zimbutempl': ['file.zut'],
-    \ 'zir': ['file.zir'],
     \ 'zserio': ['file.zs'],
     \ 'zsh': ['.zprofile', '/etc/zprofile', '.zfbfmarks', 'file.zsh', '.zcompdump', '.zlogin', '.zlogout', '.zshenv', '.zshrc', '.zcompdump-file', '.zlog', '.zlog-file', '.zsh', '.zsh-file', 'any/etc/zprofile', 'zlog', 'zlog-file', 'zsh', 'zsh-file'],
     \
