@@ -28,7 +28,7 @@ setlocal formatoptions-=t formatoptions+=croql
 setlocal suffixesadd=.zig,.zir
 
 if has('comments')
-    setlocal comments=:///,://!,://,:\\\\
+    setlocal comments=:///,://!,://
     setlocal commentstring=//\ %s
 endif
 
@@ -53,7 +53,7 @@ endif
 unlet! s:tmp_cwd
 
 if exists('g:zig_std_dir')
-    let &l:path = &l:path . ',' . g:zig_std_dir
+    let &l:path = g:zig_std_dir . ',' . &l:path
 endif
 
 let b:undo_ftplugin =
