@@ -181,6 +181,42 @@ local function set_dev_properties(w, b)
   vim.bo[b].filetype = 'query'
 end
 
+--- Updates the cursor position in the inspector to match the node under the cursor.
+---
+--- @param pg TSTreeView
+--- @param lang string
+--- @param source_buf integer
+--- @param inspect_buf integer
+--- @param inspect_win integer
+--- @param pos? { [1]: integer, [2]: integer }
+local function set_inspector_cursor(pg, lang, source_buf, inspect_buf, inspect_win, pos)
+  api.nvim_buf_clear_namespace(inspect_buf, pg.ns, 0, -1)
+
+  local cursor_node = vim.treesitter.get_node({
+    bufnr = source_buf,
+    lang = lang,
+    pos = pos,
+    ignore_injections = false,
+  })
+  if not cursor_node then
+    return
+  end
+
+  local cursor_node_id = cursor_node:id()
+  for i, v in pg:iter() do
+    if v.id == cursor_node_id then
+      local start = v.depth
+      local end_col = start + #v.text
+      api.nvim_buf_set_extmark(inspect_buf, pg.ns, i - 1, start, {
+        end_col = end_col,
+        hl_group = 'Visual',
+      })
+      api.nvim_win_set_cursor(inspect_win, { i, 0 })
+      break
+    end
+  end
+end
+
 --- Write the contents of this View into {bufnr}.
 ---
 ---@param bufnr integer Buffer number to write into.
@@ -307,6 +343,9 @@ function M.inspect_tree(opts)
 
   pg:draw(b)
 
+  local cursor = api.nvim_win_get_cursor(win)
+  set_inspector_cursor(pg, opts.lang, buf, b, w, { cursor[1] - 1, cursor[2] })
+
   api.nvim_buf_clear_namespace(buf, pg.ns, 0, -1)
   api.nvim_buf_set_keymap(b, 'n', '<CR>', '', {
     desc = 'Jump to the node under the cursor in the source buffer',
@@ -398,30 +437,7 @@ function M.inspect_tree(opts)
         return true
       end
 
-      api.nvim_buf_clear_namespace(b, pg.ns, 0, -1)
-
-      local cursor_node = vim.treesitter.get_node({
-        bufnr = buf,
-        lang = opts.lang,
-        ignore_injections = false,
-      })
-      if not cursor_node then
-        return
-      end
-
-      local cursor_node_id = cursor_node:id()
-      for i, v in pg:iter() do
-        if v.id == cursor_node_id then
-          local start = v.depth
-          local end_col = start + #v.text
-          api.nvim_buf_set_extmark(b, pg.ns, i - 1, start, {
-            end_col = end_col,
-            hl_group = 'Visual',
-          })
-          api.nvim_win_set_cursor(w, { i, 0 })
-          break
-        end
-      end
+      set_inspector_cursor(pg, opts.lang, buf, b, w)
     end,
   })
 
