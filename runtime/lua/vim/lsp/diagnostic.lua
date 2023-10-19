@@ -89,7 +89,7 @@ local function tags_lsp_to_vim(diagnostic, client_id)
       tags = tags or {}
       tags.deprecated = true
     else
-      log.info('Unknown DiagnosticTag %d from LSP client %d', tag, client_id)
+      log.info(string.format('Unknown DiagnosticTag %d from LSP client %d', tag, client_id))
     end
   end
   return tags
