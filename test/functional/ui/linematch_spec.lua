@@ -1186,6 +1186,108 @@ mnop?
       end)
     end)
   end)
+  describe('show a diff with wordmatch enabled', function()
+    before_each(function()
+      local f1 = [[
+wA w1 wB w1 w2 wC w3 w4
+      ]]
+      local f2 = [[
+w1 w2
+w2 w3
+w4 w5
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+    describe('when the entire hunk is compared, cross-line', function()
+      before_each(function()
+        feed(':set diffopt+=worddiff:30<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {1:  }{10:  1 }{9:^w1 w2                                      }│{1:  }{10:  1 }{8:wA w1 wB }{9:w1 w2}{8: wC}{9: w3}{8: }{9:w4                     }|
+       {1:  }{10:  2 }{8:w2}{9: w3                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  3 }{9:w4}{8: w5}{9:                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  4 }                                           │{1:  }{10:  2 }                                            |
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=worddiff:30                                                                           |
+        ]])
+      end)
+    end)
+    describe('when the single line is compared, cross-line', function()
+      before_each(function()
+        feed(':set diffopt+=worddiff:20<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {1:  }{10:  1 }{9:^w1 w2                                      }│{1:  }{10:  1 }{8:wA w1 wB }{9:w1 w2}{8: wC w3 w4}{9:                     }|
+       {1:  }{10:  2 }{4:w2 w3                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  3 }{4:w4 w5                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  4 }                                           │{1:  }{10:  2 }                                            |
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=worddiff:20                                                                           |
+        ]])
+      end)
+    end)
+    describe('when the diff hunk and the single line are too long to run chardiff', function()
+      before_each(function()
+        feed(':set diffopt+=worddiff:10<cr>')
+      end)
+      it('display results', function()
+        screen:expect([[
+       {1:  }{10:  1 }{9:^w}{8:1 w2}{9:                                      }│{1:  }{10:  1 }{9:w}{8:A w1 wB w1 w2 wC w3 w4}{9:                     }|
+       {1:  }{10:  2 }{4:w2 w3                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  3 }{4:w4 w5                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  4 }                                           │{1:  }{10:  2 }                                            |
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=worddiff:10                                                                           |
+        ]])
+      end)
+    end)
+  end)
   describe('show a diff with charmatch enabled, with and without ignore white', function()
     before_each(function()
       local f1 = [[
