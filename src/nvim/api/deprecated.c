@@ -536,7 +536,7 @@ void nvim_set_option(uint64_t channel_id, String name, Object value, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(11)
 {
-  set_option_to(channel_id, NULL, SREQ_GLOBAL, name, value, err);
+  set_option_to(channel_id, NULL, kOptReqGlobal, name, value, err);
 }
 
 /// Gets the global value of an option.
@@ -549,7 +549,7 @@ Object nvim_get_option(String name, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
   FUNC_API_DEPRECATED_SINCE(11)
 {
-  return get_option_from(NULL, SREQ_GLOBAL, name, err);
+  return get_option_from(NULL, kOptReqGlobal, name, err);
 }
 
 /// Gets a buffer option value
@@ -569,7 +569,7 @@ Object nvim_buf_get_option(Buffer buffer, String name, Arena *arena, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  return get_option_from(buf, SREQ_BUF, name, err);
+  return get_option_from(buf, kOptReqBuf, name, err);
 }
 
 /// Sets a buffer option value. Passing `nil` as value deletes the option (only
@@ -591,7 +591,7 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer, String name, Object
     return;
   }
 
-  set_option_to(channel_id, buf, SREQ_BUF, name, value, err);
+  set_option_to(channel_id, buf, kOptReqBuf, name, value, err);
 }
 
 /// Gets a window option value
@@ -611,7 +611,7 @@ Object nvim_win_get_option(Window window, String name, Arena *arena, Error *err)
     return (Object)OBJECT_INIT;
   }
 
-  return get_option_from(win, SREQ_WIN, name, err);
+  return get_option_from(win, kOptReqWin, name, err);
 }
 
 /// Sets a window option value. Passing `nil` as value deletes the option (only
@@ -633,76 +633,56 @@ void nvim_win_set_option(uint64_t channel_id, Window window, String name, Object
     return;
   }
 
-  set_option_to(channel_id, win, SREQ_WIN, name, value, err);
+  set_option_to(channel_id, win, kOptReqWin, name, value, err);
 }
 
 /// Gets the value of a global or local (buffer, window) option.
 ///
-/// @param from If `type` is `SREQ_WIN` or `SREQ_BUF`, this must be a pointer
-///        to the window or buffer.
-/// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
-/// @param name The option name
-/// @param[out] err Details of an error that may have occurred
-/// @return the option value
-static Object get_option_from(void *from, int type, String name, Error *err)
+/// @param[in]   from       Pointer to buffer or window for local option value.
+/// @param       req_scope  Requested option scope. See OptReqScope in option.h.
+/// @param       name       The option name.
+/// @param[out]  err        Details of an error that may have occurred.
+///
+/// @return  the option value.
+static Object get_option_from(void *from, OptReqScope req_scope, String name, Error *err)
 {
-  Object rv = OBJECT_INIT;
-
   VALIDATE_S(name.size > 0, "option name", "<empty>", {
-    return rv;
+    return (Object)OBJECT_INIT;
   });
 
-  // Return values
-  int64_t numval;
-  char *stringval = NULL;
-
-  int flags = get_option_value_strict(name.data, &numval, &stringval, type, from);
-  VALIDATE_S(flags != 0, "option name", name.data, {
-    return rv;
-  });
-
-  if (flags & SOPT_BOOL) {
-    rv.type = kObjectTypeBoolean;
-    rv.data.boolean = numval ? true : false;
-  } else if (flags & SOPT_NUM) {
-    rv.type = kObjectTypeInteger;
-    rv.data.integer = numval;
-  } else if (flags & SOPT_STRING) {
-    if (!stringval) {
-      api_set_error(err, kErrorTypeException, "Failed to get option '%s'", name.data);
-      return rv;
-    }
-    rv.type = kObjectTypeString;
-    rv.data.string.data = stringval;
-    rv.data.string.size = strlen(stringval);
-  } else {
-    api_set_error(err, kErrorTypeException, "Unknown type for option '%s'", name.data);
+  OptVal value = get_option_value_strict(name.data, req_scope, from, err);
+  if (ERROR_SET(err)) {
+    return (Object)OBJECT_INIT;
   }
 
-  return rv;
+  VALIDATE_S(value.type != kOptValTypeNil, "option name", name.data, {
+    return (Object)OBJECT_INIT;
+  });
+
+  return optval_as_object(value);
 }
 
 /// Sets the value of a global or local (buffer, window) option.
 ///
-/// @param to If `type` is `SREQ_WIN` or `SREQ_BUF`, this must be a pointer
-///        to the window or buffer.
-/// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
-/// @param name The option name
-/// @param[out] err Details of an error that may have occurred
-static void set_option_to(uint64_t channel_id, void *to, int type, String name, Object value,
-                          Error *err)
+/// @param[in]   to         Pointer to buffer or window for local option value.
+/// @param       req_scope  Requested option scope. See OptReqScope in option.h.
+/// @param       name       The option name.
+/// @param       value      New option value.
+/// @param[out]  err        Details of an error that may have occurred.
+static void set_option_to(uint64_t channel_id, void *to, OptReqScope req_scope, String name,
+                          Object value, Error *err)
 {
   VALIDATE_S(name.size > 0, "option name", "<empty>", {
     return;
   });
 
-  int flags = get_option_value_strict(name.data, NULL, NULL, type, to);
+  int flags = get_option_attrs(name.data);
   VALIDATE_S(flags != 0, "option name", name.data, {
     return;
   });
 
   if (value.type == kObjectTypeNil) {
-    if (type == SREQ_GLOBAL) {
+    if (req_scope == kOptReqGlobal) {
       api_set_error(err, kErrorTypeException, "Cannot unset option '%s'", name.data);
       return;
     } else if (!(flags & SOPT_GLOBAL)) {
@@ -716,35 +696,23 @@ static void set_option_to(uint64_t channel_id, void *to, int type, String name, 
     }
   }
 
-  OptVal optval;
+  bool error = false;
+  OptVal optval = object_as_optval(value, &error);
 
-  if (flags & SOPT_BOOL) {
-    VALIDATE(value.type == kObjectTypeBoolean, "Option '%s' value must be Boolean", name.data, {
-      return;
-    });
-    optval = BOOLEAN_OPTVAL(value.data.boolean);
-  } else if (flags & SOPT_NUM) {
-    VALIDATE(value.type == kObjectTypeInteger, "Option '%s' value must be Integer", name.data, {
-      return;
-    });
-    VALIDATE((value.data.integer <= INT_MAX && value.data.integer >= INT_MIN),
-             "Option '%s' value is out of range", name.data, {
-      return;
-    });
-    optval = NUMBER_OPTVAL((OptInt)value.data.integer);
-  } else {
-    VALIDATE(value.type == kObjectTypeString, "Option '%s' value must be String", name.data, {
-      return;
-    });
-    optval = STRING_OPTVAL(value.data.string);
-  }
+  // Handle invalid option value type.
+  // Don't use `name` in the error message here, because `name` can be any String.
+  // No need to check if value type actually matches the types for the option, as set_option_value()
+  // already handles that.
+  VALIDATE_EXP(!error, "value", "valid option type", api_typename(value.type), {
+    return;
+  });
 
   // For global-win-local options -> setlocal
   // For        win-local options -> setglobal and setlocal (opt_flags == 0)
-  const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL)) ? 0 :
-                        (type == SREQ_GLOBAL) ? OPT_GLOBAL : OPT_LOCAL;
+  const int opt_flags = (req_scope == kOptReqWin && !(flags & SOPT_GLOBAL)) ? 0 :
+                        (req_scope == kOptReqGlobal) ? OPT_GLOBAL : OPT_LOCAL;
 
   WITH_SCRIPT_CONTEXT(channel_id, {
-    set_option_value_for(name.data, optval, opt_flags, type, to, err);
+    set_option_value_for(name.data, optval, opt_flags, req_scope, to, err);
   });
 }

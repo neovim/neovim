@@ -1143,7 +1143,7 @@ static OptVal get_option_newval(int opt_idx, int opt_flags, set_prefix_T prefix,
   assert(varp != NULL);
 
   char *arg = *argp;
-  OptVal oldval = optval_from_varp_flags(varp, flags);
+  OptVal oldval = optval_from_varp(opt_idx, varp);
   OptVal newval = NIL_OPTVAL;
 
   switch (oldval.type) {
@@ -3232,8 +3232,24 @@ static bool optval_match_type(OptVal o, int opt_idx)
 }
 
 /// Create OptVal from var pointer.
-static OptVal optval_from_varp(OptValType type, void *varp)
+///
+/// @param       opt_idx  Option index in options[] table.
+/// @param[out]  varp     Pointer to option variable.
+OptVal optval_from_varp(int opt_idx, void *varp)
 {
+  uint32_t flags = options[opt_idx].flags;
+
+  OptValType type = kOptValTypeNil;
+  if (flags & P_BOOL) {
+    type = kOptValTypeBoolean;
+  } else if (flags & P_NUM) {
+    type = kOptValTypeNumber;
+  } else if (flags & P_STRING) {
+    type = kOptValTypeString;
+  } else {
+    abort();
+  }
+
   switch (type) {
   case kOptValTypeNil:
     return NIL_OPTVAL;
@@ -3245,24 +3261,6 @@ static OptVal optval_from_varp(OptValType type, void *varp)
     return STRING_OPTVAL(cstr_as_string(*(char **)varp));
   }
   UNREACHABLE;
-}
-
-/// Get option value from var pointer and option flags.
-static OptVal optval_from_varp_flags(void *varp, const uint32_t flags)
-{
-  OptValType type = kOptValTypeNil;
-
-  if (flags & P_BOOL) {
-    type = kOptValTypeBoolean;
-  } else if (flags & P_NUM) {
-    type = kOptValTypeNumber;
-  } else if (flags & P_STRING) {
-    type = kOptValTypeString;
-  } else {
-    abort();
-  }
-
-  return optval_from_varp(type, varp);
 }
 
 /// Set option var pointer value from Optval.
@@ -3489,128 +3487,6 @@ OptVal get_option_value(const char *name, uint32_t *flagsp, int scope, bool *hid
   }
 }
 
-// Returns the option attributes and its value. Unlike the above function it
-// will return either global value or local value of the option depending on
-// what was requested, but it will never return global value if it was
-// requested to return local one and vice versa. Neither it will return
-// buffer-local value if it was requested to return window-local one.
-//
-// Pretends that option is absent if it is not present in the requested scope
-// (i.e. has no global, window-local or buffer-local value depending on
-// opt_type).
-//
-// Returned flags:
-//       0 hidden or unknown option, also option that does not have requested
-//         type (see SREQ_* in option_defs.h)
-//  see SOPT_* in option_defs.h for other flags
-//
-// Possible opt_type values: see SREQ_* in option_defs.h
-int get_option_value_strict(char *name, int64_t *numval, char **stringval, int opt_type, void *from)
-{
-  if (get_tty_option(name, stringval)) {
-    return SOPT_STRING | SOPT_GLOBAL;
-  }
-
-  int rv = 0;
-  int opt_idx = findoption(name);
-  if (opt_idx < 0) {
-    return 0;
-  }
-
-  vimoption_T *p = &options[opt_idx];
-
-  // Hidden option
-  if (p->var == NULL) {
-    return 0;
-  }
-
-  if (p->flags & P_BOOL) {
-    rv |= SOPT_BOOL;
-  } else if (p->flags & P_NUM) {
-    rv |= SOPT_NUM;
-  } else if (p->flags & P_STRING) {
-    rv |= SOPT_STRING;
-  }
-
-  if (p->indir == PV_NONE) {
-    if (opt_type == SREQ_GLOBAL) {
-      rv |= SOPT_GLOBAL;
-    } else {
-      return 0;  // Did not request global-only option
-    }
-  } else {
-    if (p->indir & PV_BOTH) {
-      rv |= SOPT_GLOBAL;
-    }
-
-    if (p->indir & PV_WIN) {
-      if (opt_type == SREQ_BUF) {
-        return 0;  // Requested buffer-local, not window-local option
-      }
-      rv |= SOPT_WIN;
-    } else if (p->indir & PV_BUF) {
-      if (opt_type == SREQ_WIN) {
-        return 0;  // Requested window-local, not buffer-local option
-      }
-      rv |= SOPT_BUF;
-    }
-  }
-
-  if (stringval == NULL) {
-    return rv;
-  }
-
-  void *varp = NULL;
-
-  if (opt_type == SREQ_GLOBAL) {
-    if (p->var == VAR_WIN) {
-      return 0;
-    }
-    varp = p->var;
-  } else {
-    if (opt_type == SREQ_BUF) {
-      // Special case: 'modified' is b_changed, but we also want to
-      // consider it set when 'ff' or 'fenc' changed.
-      if (p->indir == PV_MOD) {
-        *numval = bufIsChanged((buf_T *)from);
-        varp = NULL;
-      } else {
-        buf_T *save_curbuf = curbuf;
-
-        // only getting a pointer, no need to use aucmd_prepbuf()
-        curbuf = (buf_T *)from;
-        curwin->w_buffer = curbuf;
-        varp = get_varp_scope(p, OPT_LOCAL);
-        curbuf = save_curbuf;
-        curwin->w_buffer = curbuf;
-      }
-    } else if (opt_type == SREQ_WIN) {
-      win_T *save_curwin = curwin;
-      curwin = (win_T *)from;
-      curbuf = curwin->w_buffer;
-      varp = get_varp_scope(p, OPT_LOCAL);
-      curwin = save_curwin;
-      curbuf = curwin->w_buffer;
-    }
-
-    if (varp == p->var) {
-      return (rv | SOPT_UNSET);
-    }
-  }
-
-  if (varp != NULL) {
-    if (p->flags & P_STRING) {
-      *stringval = *(char **)(varp);
-    } else if (p->flags & P_NUM) {
-      *numval = *(OptInt *)varp;
-    } else {
-      *numval = *(int *)varp;
-    }
-  }
-
-  return rv;
-}
-
 /// Return information for option at 'opt_idx'
 vimoption_T *get_option(int opt_idx)
 {
@@ -3649,7 +3525,7 @@ static const char *set_option(const int opt_idx, void *varp, OptVal value, int o
     return e_secure;
   }
 
-  OptVal old_value = optval_from_varp(value.type, varp);
+  OptVal old_value = optval_from_varp(opt_idx, varp);
   OptVal old_global_value = NIL_OPTVAL;
   OptVal old_local_value = NIL_OPTVAL;
 
@@ -3659,10 +3535,8 @@ static const char *set_option(const int opt_idx, void *varp, OptVal value, int o
   // TODO(famiu): This needs to be changed to use the current type of the old value instead of
   // value.type, when multi-type options are added.
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    old_local_value =
-      optval_from_varp(value.type, get_varp_scope(opt, OPT_LOCAL));
-    old_global_value =
-      optval_from_varp(value.type, get_varp_scope(opt, OPT_GLOBAL));
+    old_local_value = optval_from_varp(opt_idx, get_varp_scope(opt, OPT_LOCAL));
+    old_global_value = optval_from_varp(opt_idx, get_varp_scope(opt, OPT_GLOBAL));
   }
 
   if (value.type == kOptValTypeNumber) {
@@ -3729,7 +3603,7 @@ static const char *set_option(const int opt_idx, void *varp, OptVal value, int o
                           errmsg);
 
   if (opt->flags & P_UI_OPTION) {
-    OptVal value_copy = optval_copy(optval_from_varp(value.type, varp));
+    OptVal value_copy = optval_copy(optval_from_varp(opt_idx, varp));
     ui_call_option_set(cstr_as_string(opt->fullname),
                        optval_as_object(value_copy));
   }

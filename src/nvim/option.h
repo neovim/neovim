@@ -91,15 +91,14 @@ enum {
   SOPT_GLOBAL = 0x08,  ///< Option has global value
   SOPT_WIN    = 0x10,  ///< Option has window-local value
   SOPT_BUF    = 0x20,  ///< Option has buffer-local value
-  SOPT_UNSET  = 0x40,  ///< Option does not have local value set
 };
 
-/// Option types for various functions in option.c
-enum {
-  SREQ_GLOBAL = 0,  ///< Request global option value
-  SREQ_WIN    = 1,  ///< Request window-local option value
-  SREQ_BUF    = 2,  ///< Request buffer-local option value
-};
+/// Requested option scopes for various functions in option.c
+typedef enum {
+  kOptReqGlobal = 0,  ///< Request global option value
+  kOptReqWin    = 1,  ///< Request window-local option value
+  kOptReqBuf    = 2,  ///< Request buffer-local option value
+} OptReqScope;
 
 // OptVal helper macros.
 #define NIL_OPTVAL ((OptVal) { .type = kOptValTypeNil })
