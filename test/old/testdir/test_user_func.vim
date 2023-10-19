@@ -796,11 +796,21 @@ endfunc
 " Test for calling a deferred function after an exception
 func Test_defer_after_exception()
   let g:callTrace = []
+  func Bar()
+    let g:callTrace += [1]
+    throw 'InnerException'
+  endfunc
+
   func Defer()
-    let g:callTrace += ['a']
-    let g:callTrace += ['b']
-    let g:callTrace += ['c']
-    let g:callTrace += ['d']
+    let g:callTrace += [2]
+    let g:callTrace += [3]
+    try
+      call Bar()
+    catch /InnerException/
+      let g:callTrace += [4]
+    endtry
+    let g:callTrace += [5]
+    let g:callTrace += [6]
   endfunc
 
   func Foo()
@@ -811,9 +821,9 @@ func Test_defer_after_exception()
   try
     call Foo()
   catch /TestException/
-    let g:callTrace += ['e']
+    let g:callTrace += [7]
   endtry
-  call assert_equal(['a', 'b', 'c', 'd', 'e'], g:callTrace)
+  call assert_equal([2, 3, 1, 4, 5, 6, 7], g:callTrace)
 
   delfunc Defer
   delfunc Foo
