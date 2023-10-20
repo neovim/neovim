@@ -102,38 +102,30 @@ jobs:
       - run: cmake --build build --target clang-analyzer
 
   posix:
-    name: ${{ matrix.runner }} ${{ matrix.flavor }} (cc=${{ matrix.cc }})
+    name: ${{ matrix.build.runner }} ${{ matrix.build.flavor }} ${{ matrix.build.cc }} ${{ matrix.test }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - flavor: asan
-            cc: clang
-            runner: ubuntu-22.04
-            flags: -D ENABLE_ASAN_UBSAN=ON
-          - flavor: tsan
-            cc: clang
-            runner: ubuntu-22.04
-            flags: -D ENABLE_TSAN=ON
-          - flavor: uchar
-            cc: gcc
-            runner: ubuntu-22.04
-            flags: -D UNSIGNED_CHAR=ON
-          - cc: clang
-            runner: macos-12
-            flags: -D CMAKE_FIND_FRAMEWORK=NEVER
-            deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER
-
-            # Check that the tests pass with PUC Lua instead of LuaJIT.
-          - flavor: functionaltest-lua
-            cc: gcc
-            runner: ubuntu-22.04
-            deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON
-            flags: -D PREFER_LUA=ON
-    runs-on: ${{ matrix.runner }}
+        build:
+          [
+            { runner: ubuntu-22.04, flavor: asan, cc: clang, flags: -D ENABLE_ASAN_UBSAN=ON },
+            { runner: ubuntu-22.04, flavor: tsan, cc: clang, flags: -D ENABLE_TSAN=ON },
+            { runner: ubuntu-22.04, flavor: uchar, cc: gcc, flags: -D UNSIGNED_CHAR=ON },
+            { runner: macos-12, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
+            { runner: ubuntu-22.04, flavor: functionaltest-lua, cc: gcc, deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON, flags: -D PREFER_LUA=ON },
+          ]
+        test: [unittest, functionaltest, oldtest]
+        exclude:
+          - test: unittest
+            build: { flavor: tsan }
+          - test: unittest
+            build: { flavor: functionaltest-lua }
+          - test: oldtest
+            build: { flavor: tsan }
+    runs-on: ${{ matrix.build.runner }}
     timeout-minutes: 45
     env:
-      CC: ${{ matrix.cc }}
+      CC: ${{ matrix.build.cc }}
     steps:
       - uses: actions/checkout@v4
 
@@ -148,7 +140,8 @@ jobs:
       - name: Install dependencies
         run: ./.github/scripts/install_deps.sh --test
 
-      - name: Set up interpreter packages
+      - if: ${{ matrix.test != 'unittest' }}
+        name: Set up interpreter packages
         run: |
           # Use default CC to avoid compilation problems when installing Python modules.
           echo "Install neovim module for Python."
@@ -168,40 +161,21 @@ jobs:
 
       - name: Build third-party deps
         run: |
-          cmake -S cmake.deps -B .deps -G Ninja ${{ matrix.deps_flags }}
+          cmake -S cmake.deps -B .deps -G Ninja ${{ matrix.build.deps_flags }}
           cmake --build .deps
 
       - name: Build
         run: |
-          cmake --preset ci -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.flags }}
+          cmake --preset ci -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX ${{ matrix.build.flags }}
           cmake --build build
 
-      - if: "!cancelled()"
-        name: Determine if run should be aborted
-        id: abort_job
-        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
-
-      - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
-        name: Unittest
-        timeout-minutes: 5
-        run: cmake --build build --target unittest
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Functionaltest
+      - name: ${{ matrix.test }}
         timeout-minutes: 20
-        run: cmake --build build --target functionaltest
+        run: make ${{ matrix.test }}
 
-      - if: matrix.flavor != 'tsan' && (success() || failure() && steps.abort_job.outputs.status == 'success')
-        name: Oldtest
-        run: make oldtest
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Install
-        run: cmake --install build
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Installtests
+      - name: Install
         run: |
+          cmake --install build
           "$INSTALL_PREFIX/bin/nvim" --version
           if ! "$INSTALL_PREFIX/bin/nvim" -u NONE -e -c ':help' -c ':qall'; then
             echo "Running ':help' in the installed nvim failed."
@@ -226,14 +200,17 @@ jobs:
             exit 1
           fi
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+      - if: '!cancelled()'
         name: Show logs
         run: cat $(find "$LOG_DIR" -type f)
 
   windows:
     runs-on: windows-2022
     timeout-minutes: 45
-    name: windows
+    strategy:
+      fail-fast: false
+      matrix:
+        test: [functional, old]
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/cache
@@ -269,18 +246,12 @@ jobs:
           Get-Command -CommandType Application neovim-node-host.cmd
           npm.cmd link neovim
 
-      - if: "!cancelled()"
-        name: Determine if run should be aborted
-        id: abort_job
-        run: |
-          "status=${{ job.status }}" >> $env:GITHUB_OUTPUT
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Run functionaltest
+      - if: ${{ matrix.test == 'functional' }}
+        name: functionaltest
         timeout-minutes: 20
         run: cmake --build build --target functionaltest
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
+      - if: ${{ matrix.test == 'old' }}
         uses: msys2/setup-msys2@v2
         with:
           update: true
@@ -288,8 +259,8 @@ jobs:
             make:p gcc:p diffutils:p
           release: false
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Run oldtest
+      - if: ${{ matrix.test == 'old' }}
+        name: oldtest
         shell: msys2 {0}
         run: |
           cd test/old/testdir

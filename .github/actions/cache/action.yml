@@ -10,6 +10,10 @@ runs:
       run: echo "CACHE_KEY=$CACHE_KEY-${{ join(matrix.*, '-') }}" >> $GITHUB_ENV
       shell: bash
 
+    - if: ${{ matrix.build }}
+      run: echo "CACHE_KEY=$CACHE_KEY-${{ join(matrix.build.*, '-') }}" >> $GITHUB_ENV
+      shell: bash
+
     - id: image
       run: echo "version=$ImageVersion" >> $GITHUB_OUTPUT
       shell: bash
