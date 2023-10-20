@@ -59,6 +59,8 @@ getkey:
     if (vpeekc() != NUL || typebuf.tb_len > 0) {
       key = safe_vgetc();
     } else if (!multiqueue_empty(main_loop.events)) {
+      // No input available and processing events may take time, flush now.
+      ui_flush();
       // Event was made available after the last multiqueue_process_events call
       key = K_EVENT;
     } else {
