@@ -37,6 +37,9 @@ func Test_digraphs()
   call Put_Dig("=P")
   call Put_Dig("P=")
   call assert_equal(['Р']+repeat(["₽"],2)+['П'], getline(line('.')-3,line('.')))
+  " Quadruple prime
+  call Put_Dig("'4")
+  call assert_equal("⁗", getline('.'))
   " Not a digraph
   call Put_Dig("a\<bs>")
   call Put_Dig("\<bs>a")

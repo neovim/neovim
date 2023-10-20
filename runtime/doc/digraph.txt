@@ -168,6 +168,13 @@ ROUBLE
 The rouble sign was added in 2014 as 0x20bd.  Vim supports the digraphs =R and
 =P for this.  Note that R= and P= are other characters.
 
+QUADRUPLE PRIME
+
+The quadruple prime using the digraph 4' was added in 2023.  Although it is
+not part of RFC 1345, it supplements the existing digraph implementation as
+there already exist digraphs for PRIME, DOUBLE PRIME and TRIPLE PRIME using
+the 1', 2' and 3' digraphs.
+
 						*digraph-table* *digraph-table-mbyte*
 >
   char  digraph	hex	dec	official name
@@ -920,6 +927,7 @@ The rouble sign was added in 2014 as 0x20bd.  Vim supports the digraphs =R and
   ′	1'	2032	8242	PRIME
   ″	2'	2033	8243	DOUBLE PRIME
   ‴	3'	2034	8244	TRIPLE PRIME
+  ⁗	4'	2057	8279	QUADRUPLE PRIME
   ‵	1"	2035	8245	REVERSED PRIME
   ‶	2"	2036	8246	REVERSED DOUBLE PRIME
   ‷	3"	2037	8247	REVERSED TRIPLE PRIME
