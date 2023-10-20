@@ -161,10 +161,8 @@ jobs:
           npm install -g neovim
           npm link neovim
 
-          if [[ $RUNNER_OS != macOS ]]; then
-            sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
-            perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
-          fi
+          sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
+          perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
 
       - uses: ./.github/actions/cache
 
