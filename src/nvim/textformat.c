@@ -76,7 +76,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
   bool haveto_redraw = false;
   const bool fo_ins_blank = has_format_option(FO_INS_BLANK);
   const bool fo_multibyte = has_format_option(FO_MBYTE_BREAK);
-  const bool fo_rigor_tw  = has_format_option(FO_RIGOROUS_TW);
+  const bool fo_rigor_tw = has_format_option(FO_RIGOROUS_TW);
   const bool fo_white_par = has_format_option(FO_WHITE_PAR);
   bool first_line = true;
   colnr_T leader_len;
@@ -309,7 +309,7 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
             col = curwin->w_cursor.col;
 
             inc_cursor();
-            cc  = ncc;
+            cc = ncc;
             ncc = gchar_cursor();
             // handle insert
             ncc = (ncc != NUL) ? ncc : c;

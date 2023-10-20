@@ -1783,7 +1783,7 @@ char *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T foldinfo
       current_sctx = saved_sctx;
     }
     last_lnum = lnum;
-    last_wp   = wp;
+    last_wp = wp;
     set_vim_var_string(VV_FOLDDASHES, NULL, -1);
 
     if (!did_emsg && save_did_emsg) {

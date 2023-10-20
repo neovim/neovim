@@ -2950,7 +2950,7 @@ void ex_diffgetput(exarg_T *eap)
   }
 
   const int idx_from = eap->cmdidx == CMD_diffget ? idx_other : idx_cur;
-  const int idx_to   = eap->cmdidx == CMD_diffget ? idx_cur : idx_other;
+  const int idx_to = eap->cmdidx == CMD_diffget ? idx_cur : idx_other;
 
   // May give the warning for a changed buffer here, which can trigger the
   // FileChangedRO autocommand, which may do nasty things and mess
@@ -3505,10 +3505,10 @@ static int xdiff_out(int start_a, int count_a, int start_b, int count_b, void *p
 {
   diffout_T *dout = (diffout_T *)priv;
   GA_APPEND(diffhunk_T, &(dout->dout_ga), ((diffhunk_T){
-    .lnum_orig  = (linenr_T)start_a + 1,
+    .lnum_orig = (linenr_T)start_a + 1,
     .count_orig = count_a,
-    .lnum_new   = (linenr_T)start_b + 1,
-    .count_new  = count_b,
+    .lnum_new = (linenr_T)start_b + 1,
+    .count_new = count_b,
   }));
   return 0;
 }

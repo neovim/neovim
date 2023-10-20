@@ -69,8 +69,8 @@ enum bfa_values {
   BFA_IGNORE_ABORT = 8,  // do not abort for aborting()
 };
 
-EXTERN char *msg_loclist INIT(= N_("[Location List]"));
-EXTERN char *msg_qflist INIT(= N_("[Quickfix List]"));
+EXTERN char *msg_loclist INIT( = N_("[Location List]"));
+EXTERN char *msg_qflist INIT( = N_("[Quickfix List]"));
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer.h.generated.h"

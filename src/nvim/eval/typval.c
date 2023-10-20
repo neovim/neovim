@@ -3964,13 +3964,13 @@ bool tv_check_str_or_nr(const typval_T *const tv)
 #define FUNC_ERROR "E703: Using a Funcref as a Number"
 
 static const char *const num_errors[] = {
-  [VAR_PARTIAL]= N_(FUNC_ERROR),
-  [VAR_FUNC]= N_(FUNC_ERROR),
-  [VAR_LIST]= N_("E745: Using a List as a Number"),
-  [VAR_DICT]= N_("E728: Using a Dictionary as a Number"),
-  [VAR_FLOAT]= N_("E805: Using a Float as a Number"),
-  [VAR_BLOB]= N_("E974: Using a Blob as a Number"),
-  [VAR_UNKNOWN]= N_("E685: using an invalid value as a Number"),
+  [VAR_PARTIAL] = N_(FUNC_ERROR),
+  [VAR_FUNC] = N_(FUNC_ERROR),
+  [VAR_LIST] = N_("E745: Using a List as a Number"),
+  [VAR_DICT] = N_("E728: Using a Dictionary as a Number"),
+  [VAR_FLOAT] = N_("E805: Using a Float as a Number"),
+  [VAR_BLOB] = N_("E974: Using a Blob as a Number"),
+  [VAR_UNKNOWN] = N_("E685: using an invalid value as a Number"),
 };
 
 #undef FUNC_ERROR
@@ -4009,12 +4009,12 @@ bool tv_check_num(const typval_T *const tv)
 #define FUNC_ERROR "E729: Using a Funcref as a String"
 
 static const char *const str_errors[] = {
-  [VAR_PARTIAL]= N_(FUNC_ERROR),
-  [VAR_FUNC]= N_(FUNC_ERROR),
-  [VAR_LIST]= N_("E730: Using a List as a String"),
-  [VAR_DICT]= N_("E731: Using a Dictionary as a String"),
-  [VAR_BLOB]= N_("E976: Using a Blob as a String"),
-  [VAR_UNKNOWN]= e_using_invalid_value_as_string,
+  [VAR_PARTIAL] = N_(FUNC_ERROR),
+  [VAR_FUNC] = N_(FUNC_ERROR),
+  [VAR_LIST] = N_("E730: Using a List as a String"),
+  [VAR_DICT] = N_("E731: Using a Dictionary as a String"),
+  [VAR_BLOB] = N_("E976: Using a Blob as a String"),
+  [VAR_UNKNOWN] = e_using_invalid_value_as_string,
 };
 
 #undef FUNC_ERROR

@@ -8,10 +8,10 @@
 # define HPCON VOID *
 #endif
 
-extern HRESULT (WINAPI *pCreatePseudoConsole)  // NOLINT(whitespace/parens)
+extern HRESULT(WINAPI *pCreatePseudoConsole)  // NOLINT(whitespace/parens)
   (COORD, HANDLE, HANDLE, DWORD, HPCON *);
-extern HRESULT (WINAPI *pResizePseudoConsole)(HPCON, COORD);
-extern void (WINAPI *pClosePseudoConsole)(HPCON);
+extern HRESULT(WINAPI *pResizePseudoConsole)(HPCON, COORD);
+extern void(WINAPI *pClosePseudoConsole)(HPCON);
 
 typedef struct conpty {
   HPCON pty;

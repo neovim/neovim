@@ -818,7 +818,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
     while (*dirp) {
       // Isolate one directory name, using an entry in 'bdir'.
       size_t dir_len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
-      char *p  = IObuff + dir_len;
+      char *p = IObuff + dir_len;
       bool trailing_pathseps = after_pathsep(IObuff, p) && p[-1] == p[-2];
       if (trailing_pathseps) {
         IObuff[dir_len - 2] = NUL;

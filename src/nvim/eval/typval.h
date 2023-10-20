@@ -485,8 +485,8 @@ static inline bool tv_is_func(const typval_T tv)
 
 #ifdef UNIT_TESTING
 // Do not use enum constants, see commit message.
-EXTERN const size_t kTVCstring INIT(= TV_CSTRING);
-EXTERN const size_t kTVTranslate INIT(= TV_TRANSLATE);
+EXTERN const size_t kTVCstring INIT( = TV_CSTRING);
+EXTERN const size_t kTVTranslate INIT( = TV_TRANSLATE);
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -224,7 +224,7 @@ bool socket_connect(Loop *loop, Stream *stream, bool is_tcp, const char *address
 
     const struct addrinfo hints = { .ai_family = AF_UNSPEC,
                                     .ai_socktype = SOCK_STREAM,
-                                    .ai_flags  = AI_NUMERICSERV };
+                                    .ai_flags = AI_NUMERICSERV };
     int retval = uv_getaddrinfo(&loop->uv, &addr_req, NULL,
                                 addr, host_end + 1, &hints);
     if (retval != 0) {

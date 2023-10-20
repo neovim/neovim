@@ -1119,8 +1119,8 @@ void f_screenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   pos_T pos = {
-    .lnum   = (linenr_T)tv_get_number(&argvars[1]),
-    .col    = (colnr_T)tv_get_number(&argvars[2]) - 1,
+    .lnum = (linenr_T)tv_get_number(&argvars[1]),
+    .col = (colnr_T)tv_get_number(&argvars[2]) - 1,
     .coladd = 0
   };
   if (pos.lnum > wp->w_buffer->b_ml.ml_line_count) {
@@ -2694,9 +2694,9 @@ void do_check_cursorbind(void)
   prev_curwin = curwin;
   prev_cursor = curwin->w_cursor;
 
-  linenr_T line    = curwin->w_cursor.lnum;
-  colnr_T col      = curwin->w_cursor.col;
-  colnr_T coladd   = curwin->w_cursor.coladd;
+  linenr_T line = curwin->w_cursor.lnum;
+  colnr_T col = curwin->w_cursor.col;
+  colnr_T coladd = curwin->w_cursor.coladd;
   colnr_T curswant = curwin->w_curswant;
   int set_curswant = curwin->w_set_curswant;
   win_T *old_curwin = curwin;

@@ -960,7 +960,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
     from_end = skiptowhite(from_start);
     to_start = skipwhite(from_end);
-    to_end   = skiptowhite(to_start);
+    to_end = skiptowhite(to_start);
 
     if (ends_excmd((uint8_t)(*from_start))
         || ends_excmd((uint8_t)(*to_start))) {

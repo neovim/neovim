@@ -233,21 +233,21 @@ void profile_reset(void)
   for (int id = 1; id <= script_items.ga_len; id++) {
     scriptitem_T *si = SCRIPT_ITEM(id);
     if (si->sn_prof_on) {
-      si->sn_prof_on      = false;
-      si->sn_pr_force     = false;
-      si->sn_pr_child     = profile_zero();
-      si->sn_pr_nest      = 0;
-      si->sn_pr_count     = 0;
-      si->sn_pr_total     = profile_zero();
-      si->sn_pr_self      = profile_zero();
-      si->sn_pr_start     = profile_zero();
-      si->sn_pr_children  = profile_zero();
+      si->sn_prof_on = false;
+      si->sn_pr_force = false;
+      si->sn_pr_child = profile_zero();
+      si->sn_pr_nest = 0;
+      si->sn_pr_count = 0;
+      si->sn_pr_total = profile_zero();
+      si->sn_pr_self = profile_zero();
+      si->sn_pr_start = profile_zero();
+      si->sn_pr_children = profile_zero();
       ga_clear(&si->sn_prl_ga);
-      si->sn_prl_start    = profile_zero();
+      si->sn_prl_start = profile_zero();
       si->sn_prl_children = profile_zero();
-      si->sn_prl_wait     = profile_zero();
-      si->sn_prl_idx      = -1;
-      si->sn_prl_execed   = 0;
+      si->sn_prl_wait = profile_zero();
+      si->sn_prl_idx = -1;
+      si->sn_prl_execed = 0;
     }
   }
 
@@ -261,22 +261,22 @@ void profile_reset(void)
       todo--;
       ufunc_T *uf = HI2UF(hi);
       if (uf->uf_prof_initialized) {
-        uf->uf_profiling    = 0;
-        uf->uf_tm_count     = 0;
-        uf->uf_tm_total     = profile_zero();
-        uf->uf_tm_self      = profile_zero();
-        uf->uf_tm_children  = profile_zero();
+        uf->uf_profiling = 0;
+        uf->uf_tm_count = 0;
+        uf->uf_tm_total = profile_zero();
+        uf->uf_tm_self = profile_zero();
+        uf->uf_tm_children = profile_zero();
 
         for (int i = 0; i < uf->uf_lines.ga_len; i++) {
           uf->uf_tml_count[i] = 0;
           uf->uf_tml_total[i] = uf->uf_tml_self[i] = 0;
         }
 
-        uf->uf_tml_start    = profile_zero();
+        uf->uf_tml_start = profile_zero();
         uf->uf_tml_children = profile_zero();
-        uf->uf_tml_wait     = profile_zero();
-        uf->uf_tml_idx      = -1;
-        uf->uf_tml_execed   = 0;
+        uf->uf_tml_wait = profile_zero();
+        uf->uf_tml_idx = -1;
+        uf->uf_tml_execed = 0;
       }
     }
   }

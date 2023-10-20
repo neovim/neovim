@@ -958,7 +958,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
 
     // Allocate one more, because the last element is used to indicate the
     // end of the list.
-    stl_hltab  = xmalloc(sizeof(stl_hlrec_t) * (stl_items_len + 1));
+    stl_hltab = xmalloc(sizeof(stl_hlrec_t) * (stl_items_len + 1));
     stl_tabtab = xmalloc(sizeof(StlClickRecord) * (stl_items_len + 1));
 
     stl_separator_locations = xmalloc(sizeof(int) * stl_items_len);
@@ -1017,7 +1017,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
   }
 
   int groupdepth = 0;
-  int evaldepth  = 0;
+  int evaldepth = 0;
 
   int curitem = 0;
   int foldsignitem = -1;
@@ -2030,7 +2030,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       // { Determine how many bytes to remove
       int trunc_len = 0;
       while (width >= maxwidth) {
-        width     -= ptr2cells(trunc_p + trunc_len);
+        width -= ptr2cells(trunc_p + trunc_len);
         trunc_len += utfc_ptr2len(trunc_p + trunc_len);
       }
       // }

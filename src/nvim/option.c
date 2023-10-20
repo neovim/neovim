@@ -4681,7 +4681,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_ve = copy_option_val(from->wo_ve);
   to->wo_ve_flags = from->wo_ve_flags;
   to->wo_nuw = from->wo_nuw;
-  to->wo_rl  = from->wo_rl;
+  to->wo_rl = from->wo_rl;
   to->wo_rlc = copy_option_val(from->wo_rlc);
   to->wo_sbr = copy_option_val(from->wo_sbr);
   to->wo_stl = copy_option_val(from->wo_stl);

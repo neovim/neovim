@@ -347,13 +347,13 @@ void restore_last_search_pattern(void)
 static void save_incsearch_state(void)
 {
   saved_search_match_endcol = search_match_endcol;
-  saved_search_match_lines  = search_match_lines;
+  saved_search_match_lines = search_match_lines;
 }
 
 static void restore_incsearch_state(void)
 {
   search_match_endcol = saved_search_match_endcol;
-  search_match_lines  = saved_search_match_lines;
+  search_match_lines = saved_search_match_lines;
 }
 
 char *last_search_pattern(void)
@@ -2467,7 +2467,7 @@ int current_search(int count, bool forward)
       } else {  // try again from end of buffer
                 // searching backwards, so set pos to last line and col
         pos.lnum = curwin->w_buffer->b_ml.ml_line_count;
-        pos.col  = (colnr_T)strlen(ml_get(curwin->w_buffer->b_ml.ml_line_count));
+        pos.col = (colnr_T)strlen(ml_get(curwin->w_buffer->b_ml.ml_line_count));
       }
     }
   }
@@ -2718,7 +2718,7 @@ static void update_search_stat(int dirc, pos_T *pos, pos_T *cursor_pos, searchst
     pos_T endpos = { 0, 0, 0 };
     p_ws = false;
     if (timeout > 0) {
-      start  = profile_setlimit(timeout);
+      start = profile_setlimit(timeout);
     }
     while (!got_int && searchit(curwin, curbuf, &lastpos, &endpos,
                                 FORWARD, NULL, 1, SEARCH_KEEP, RE_LAST,

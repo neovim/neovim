@@ -1119,12 +1119,12 @@ static ff_stack_T *ff_create_stack_element(char *fix_part, char *wc_part, int le
 {
   ff_stack_T *stack = xmalloc(sizeof(ff_stack_T));
 
-  stack->ffs_prev          = NULL;
-  stack->ffs_filearray     = NULL;
+  stack->ffs_prev = NULL;
+  stack->ffs_filearray = NULL;
   stack->ffs_filearray_size = 0;
-  stack->ffs_filearray_cur  = 0;
-  stack->ffs_stage         = 0;
-  stack->ffs_level         = level;
+  stack->ffs_filearray_cur = 0;
+  stack->ffs_stage = 0;
+  stack->ffs_level = level;
   stack->ffs_star_star_empty = star_star_empty;
 
   // the following saves NULL pointer checks in vim_findfile

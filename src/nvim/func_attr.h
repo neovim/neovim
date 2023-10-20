@@ -125,7 +125,7 @@
 #  define REAL_FATTR_NONNULL_ALL __attribute__((nonnull))
 #  define REAL_FATTR_NONNULL_ARG(...) __attribute__((nonnull(__VA_ARGS__)))
 #  define REAL_FATTR_NORETURN __attribute__((noreturn))
-#  define REAL_FATTR_PRINTF(x, y) __attribute__((format (printf, x, y)))
+#  define REAL_FATTR_PRINTF(x, y) __attribute__((format(printf, x, y)))
 
 #  if NVIM_HAS_ATTRIBUTE(returns_nonnull)
 #   define REAL_FATTR_NONNULL_RET __attribute__((returns_nonnull))

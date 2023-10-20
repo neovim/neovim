@@ -26,8 +26,8 @@ typedef enum {
   kVTInline,
 } VirtTextPos;
 
-EXTERN const char *const virt_text_pos_str[] INIT(= { "eol", "overlay", "win_col", "right_align",
-                                                      "inline" });
+EXTERN const char *const virt_text_pos_str[] INIT( = { "eol", "overlay", "win_col", "right_align",
+                                                       "inline" });
 
 typedef enum {
   kHlModeUnknown,
@@ -36,7 +36,7 @@ typedef enum {
   kHlModeBlend,
 } HlMode;
 
-EXTERN const char *const hl_mode_str[] INIT(= { "", "replace", "combine", "blend" });
+EXTERN const char *const hl_mode_str[] INIT( = { "", "replace", "combine", "blend" });
 
 #define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
 
@@ -114,7 +114,7 @@ typedef struct {
   bool running_on_lines;
 } DecorState;
 
-EXTERN DecorState decor_state INIT(= { 0 });
+EXTERN DecorState decor_state INIT( = { 0 });
 
 static inline bool decor_has_sign(Decoration *decor)
 {

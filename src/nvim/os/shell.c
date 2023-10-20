@@ -1022,9 +1022,9 @@ static void system_data_cb(Stream *stream, RBuffer *buf, size_t count, void *dat
 ///          Returns the previous decision if size=0.
 static bool out_data_decide_throttle(size_t size)
 {
-  static uint64_t started     = 0;  // Start time of the current throttle.
-  static size_t received    = 0;  // Bytes observed since last throttle.
-  static size_t visit       = 0;  // "Pulse" count of the current throttle.
+  static uint64_t started = 0;  // Start time of the current throttle.
+  static size_t received = 0;  // Bytes observed since last throttle.
+  static size_t visit = 0;  // "Pulse" count of the current throttle.
   static char pulse_msg[] = { ' ', ' ', ' ', '\0' };
 
   if (!size) {
@@ -1104,7 +1104,7 @@ static void out_data_ring(char *output, size_t size)
     last_skipped_len = MAX_CHUNK_SIZE;
   } else if (size > 0) {
     // Length of the old data that can be kept.
-    size_t keep_len   = MIN(last_skipped_len, MAX_CHUNK_SIZE - size);
+    size_t keep_len = MIN(last_skipped_len, MAX_CHUNK_SIZE - size);
     size_t keep_start = last_skipped_len - keep_len;
     // Shift the kept part of the old data to the start.
     if (keep_start) {

@@ -45,7 +45,7 @@ import re
 import string
 import sys
 import json
-import collections  # for defaultdict
+import collections
 
 
 _USAGE = """
@@ -149,10 +149,8 @@ Syntax: clint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
 # If you add a new error message with a new category, add it to the list
 # here!  cpplint_unittest.py should tell you if you forget to do this.
 _ERROR_CATEGORIES = [
-    'build/deprecated',
     'build/endif_comment',
     'build/header_guard',
-    'build/include_alpha',
     'build/printf_format',
     'build/storage_class',
     'readability/bool',
@@ -169,14 +167,10 @@ _ERROR_CATEGORIES = [
     'runtime/printf_format',
     'runtime/threadsafe_fn',
     'runtime/deprecated',
-    'syntax/parenthesis',
     'whitespace/alignment',
-    'whitespace/braces',
     'whitespace/comments',
     'whitespace/indent',
-    'whitespace/newline',
     'whitespace/operators',
-    'whitespace/parens',
     'whitespace/todo',
     'whitespace/cast',
 ]
@@ -185,7 +179,7 @@ _ERROR_CATEGORIES = [
 # flag. By default all errors are on, so only add here categories that should be
 # off by default (i.e., categories that must be enabled by the --filter= flags).
 # All entries here should start with a '-' or '+', as in the --filter= flag.
-_DEFAULT_FILTERS = ['-build/include_alpha']
+_DEFAULT_FILTERS = []
 
 # These constants define the current inline assembly state
 _NO_ASM = 0       # Outside of inline assembly block
@@ -478,38 +472,6 @@ def _SetFilters(filters):
                Each filter should start with + or -; else we die.
     """
     _cpplint_state.SetFilters(filters)
-
-
-class _FunctionState:
-
-    """Tracks current function name and the number of lines in its body."""
-
-    _NORMAL_TRIGGER = 250  # for --v=0, 500 for --v=1, etc.
-    _TEST_TRIGGER = 400    # about 50% more than _NORMAL_TRIGGER.
-
-    def __init__(self):
-        self.in_a_function = False
-        self.lines_in_function = 0
-        self.current_function = ''
-
-    def Begin(self, function_name):
-        """Start analyzing function body.
-
-        Args:
-          function_name: The name of the function being tracked.
-        """
-        self.in_a_function = True
-        self.lines_in_function = 0
-        self.current_function = function_name
-
-    def Count(self):
-        """Count line in current function body."""
-        if self.in_a_function:
-            self.lines_in_function += 1
-
-    def End(self):
-        """Stop analyzing function body."""
-        self.in_a_function = False
 
 
 class FileInfo:
@@ -1544,82 +1506,6 @@ def CheckForNonStandardConstructs(filename, clean_lines, linenum, error):
         error(filename, linenum, 'build/endif_comment', 5,
               'Uncommented text after #endif is non-standard.  Use a comment.')
 
-    if Search(r'(\w+|[+-]?\d+(\.\d*)?)\s*(<|>)\?=?\s*(\w+|[+-]?\d+)(\.\d*)?',
-              line):
-        error(filename, linenum, 'build/deprecated', 3,
-              '>? and <? (max and min) operators are'
-              ' non-standard and deprecated.')
-
-
-def CheckSpacingForFunctionCall(filename, line, linenum, error):
-    """Checks for the correctness of various spacing around function calls.
-
-    Args:
-      filename: The name of the current file.
-      line: The text of the line to check.
-      linenum: The number of the line to check.
-      error: The function to call with any errors found.
-    """
-
-    # Since function calls often occur inside if/for/while/switch
-    # expressions - which have their own, more liberal conventions - we
-    # first see if we should be looking inside such an expression for a
-    # function call, to which we can apply more strict standards.
-    fncall = line    # if there's no control flow construct, look at whole line
-    for pattern in (r'\bif\s*\((.*)\)\s*{',
-                    r'\bfor\s*\((.*)\)\s*{',
-                    r'\bwhile\s*\((.*)\)\s*[{;]',
-                    r'\bswitch\s*\((.*)\)\s*{'):
-        match = Search(pattern, line)
-        if match:
-            # look inside the parens for function calls
-            fncall = match.group(1)
-            break
-
-    # Except in if/for/while/switch/case, there should never be space
-    # immediately inside parens (eg "f( 3, 4 )").  We make an exception
-    # for nested parens ( (a+b) + c ).  Likewise, there should never be
-    # a space before a ( when it's a function argument.  I assume it's a
-    # function argument when the char before the whitespace is legal in
-    # a function name (alnum + _) and we're not starting a macro. Also ignore
-    # pointers and references to arrays and functions coz they're too tricky:
-    # we use a very simple way to recognize these:
-    # " (something)(maybe-something)" or
-    # " (something)(maybe-something," or
-    # " (something)[something]"
-    # Note that we assume the contents of [] to be short enough that
-    # they'll never need to wrap.
-    if (  # Ignore control structures.
-            not Search(r'\b(if|for|while|switch|case|return|sizeof)\b', fncall) and
-            # Ignore pointers/references to functions.
-            not Search(r' \([^)]+\)\([^)]*(\)|,$)', fncall) and
-            # Ignore pointers/references to arrays.
-            not Search(r' \([^)]+\)\[[^\]]+\]', fncall)):
-        # a ( used for a fn call
-        if Search(r'\w\s*\(\s(?!\s*\\$)', fncall):
-            error(filename, linenum, 'whitespace/parens', 4,
-                  'Extra space after ( in function call')
-        elif Search(r'\(\s+(?!(\s*\\)|\()', fncall):
-            error(filename, linenum, 'whitespace/parens', 2,
-                  'Extra space after (')
-        if (Search(r'\w\s+\(', fncall) and
-                not Search(r'#\s*define|typedef', fncall) and
-                not Search(r'\w\s+\((\w+::)*\*\w+\)\(', fncall)):
-            error(filename, linenum, 'whitespace/parens', 4,
-                  'Extra space before ( in function call')
-        # If the ) is followed only by a newline or a { + newline, assume it's
-        # part of a control statement (if/while/etc), and don't complain
-        if Search(r'[^)]\s+\)\s*[^{\s]', fncall):
-            # If the closing parenthesis is preceded by only whitespaces,
-            # try to give a more descriptive error message.
-            if Search(r'^\s+\)', fncall):
-                error(filename, linenum, 'whitespace/parens', 2,
-                      'Closing ) should be moved to the previous line')
-            else:
-                error(filename, linenum, 'whitespace/parens', 2,
-                      'Extra space before )')
-
-
 def IsBlankLine(line):
     """Returns true if the given line is blank.
 
@@ -1633,75 +1519,6 @@ def IsBlankLine(line):
       True, if the given line is blank.
     """
     return not line or line.isspace()
-
-
-def CheckForFunctionLengths(filename, clean_lines, linenum,
-                            function_state, error):
-    """Reports for long function bodies.
-
-    For an overview why this is done, see:
-    http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml#Write_Short_Functions
-
-    Uses a simplistic algorithm assuming other style guidelines
-    (especially spacing) are followed.
-    Only checks unindented functions, so class members are unchecked.
-    Trivial bodies are unchecked, so constructors with huge initializer lists
-    may be missed.
-    Blank/comment lines are not counted so as to avoid encouraging the removal
-    of vertical space and comments just to get through a lint check.
-    NOLINT *on the last line of a function* disables this check.
-
-    Args:
-      filename: The name of the current file.
-      clean_lines: A CleansedLines instance containing the file.
-      linenum: The number of the line to check.
-      function_state: Current function name and lines in body so far.
-      error: The function to call with any errors found.
-    """
-    lines = clean_lines.lines
-    line = lines[linenum]
-    joined_line = ''
-
-    starting_func = False
-    regexp = r'(\w(\w|::|\*|\&|\s)*)\('  # decls * & space::name( ...
-    match_result = Match(regexp, line)
-    if match_result:
-        # If the name is all caps and underscores, figure it's a macro and
-        # ignore it, unless it's TEST or TEST_F.
-        function_name = match_result.group(1).split()[-1]
-        if function_name == 'TEST' or function_name == 'TEST_F' or (
-                not Match(r'[A-Z_]+$', function_name)):
-            starting_func = True
-
-    if starting_func:
-        body_found = False
-        for start_linenum in range(linenum, clean_lines.NumLines()):
-            start_line = lines[start_linenum]
-            joined_line += ' ' + start_line.lstrip()
-            # Declarations and trivial functions
-            if Search(r'(;|})', start_line):
-                body_found = True
-                break                              # ... ignore
-            elif Search(r'{', start_line):
-                body_found = True
-                function = Search(r'((\w|:)*)\(', line).group(1)
-                if Match(r'TEST', function):    # Handle TEST... macros
-                    parameter_regexp = Search(r'(\(.*\))', joined_line)
-                    if parameter_regexp:             # Ignore bad syntax
-                        function += parameter_regexp.group(1)
-                else:
-                    function += '()'
-                function_state.Begin(function)
-                break
-        if not body_found:
-            # No body for the function (or evidence of a non-function) was
-            # found.
-            error(filename, linenum, 'readability/fn_size', 5,
-                  'Lint failed to find start of function body.')
-    elif Match(r'^\}\s*$', line):  # function end
-        function_state.End()
-    elif not Match(r'^\s*$', line):
-        function_state.Count()  # Count non-blank/non-comment lines.
 
 
 _RE_PATTERN_TODO = re.compile(r'^//(\s*)TODO(\(.+?\))?(:?)(\s|$)?')
@@ -1726,9 +1543,7 @@ def CheckComment(comment, filename, linenum, error):
 
         username = match.group(2)
         if not username:
-            error(filename, linenum, 'readability/todo', 2,
-                  'Missing username in TODO; it should look like '
-                  '"// TODO(my_username): Stuff."')
+            return
 
         colon = match.group(3)
         if not colon:
@@ -1908,8 +1723,6 @@ def CheckExpressionAlignment(filename, clean_lines, linenum, error, startpos=0):
                                          pos + 1)
             return
         elif depth <= 0:
-            error(filename, linenum, 'syntax/parenthesis', 4,
-                  'Unbalanced parenthesis')
             return
         if brace == 's':
             assert firstlinenum != linenum
@@ -2066,8 +1879,7 @@ def CheckSpacing(filename, clean_lines, linenum, error):
     # sometimes people put non-spaces on one side when aligning ='s among
     # many lines (not that this is behavior that I approve of...)
     if Search(r'[\w.]=[\w.]', line) and not Search(r'\b(if|while) ', line):
-        error(filename, linenum, 'whitespace/operators', 4,
-              'Missing spaces around =')
+        return
 
     # It's ok not to have spaces around binary operators like + - * /, but if
     # there's too little whitespace, we get concerned.  It's hard to tell,
@@ -2084,14 +1896,11 @@ def CheckSpacing(filename, clean_lines, linenum, error):
     # check non-include lines for spacing around < and >.
     match = Search(r'[^<>=!\s](==|!=|<=|>=)[^<>=!\s]', line)
     if match:
-        error(filename, linenum, 'whitespace/operators', 3,
-              'Missing spaces around %s' % match.group(1))
+        return
 
     # Boolean operators should be placed on the next line.
     if Search(r'(?:&&|\|\|)$', line):
-        error(filename, linenum, 'whitespace/operators', 4,
-              'Boolean operator should be placed on the same line as the start '
-              'of its right operand')
+        return
 
     # We allow no-spaces around << when used like this: 10<<20, but
     # not otherwise (particularly, not when used as streams)
@@ -2113,8 +1922,7 @@ def CheckSpacing(filename, clean_lines, linenum, error):
         match = Search(r'[^\s<]<([^\s=<].*)', reduced_line)
         if (match and not FindNextMatchingAngleBracket(clean_lines, linenum,
                                                        match.group(1))):
-            error(filename, linenum, 'whitespace/operators', 3,
-                  'Missing spaces around <')
+            return
 
         # Look for > that is not surrounded by spaces.  Similar to the
         # above, we only trigger if both sides are missing spaces to avoid
@@ -2123,8 +1931,7 @@ def CheckSpacing(filename, clean_lines, linenum, error):
         if (match and
             not FindPreviousMatchingAngleBracket(clean_lines, linenum,
                                                  match.group(1))):
-            error(filename, linenum, 'whitespace/operators', 3,
-                  'Missing spaces around >')
+            return
 
     # We allow no-spaces around >> for almost anything.  This is because
     # C++11 allows ">>" to close nested templates, which accounts for
@@ -2162,15 +1969,9 @@ def CheckSpacing(filename, clean_lines, linenum, error):
             if not (match.group(3) == ';' and
                     len(match.group(2)) == 1 + len(match.group(4)) or
                     not match.group(2) and Search(r'\bfor\s*\(.*; \)', line)):
-                error(filename, linenum, 'whitespace/parens', 5,
-                      'Mismatching spaces inside () in %s' % match.group(1))
+                return
         if len(match.group(2)) not in [0, 1]:
-            error(filename, linenum, 'whitespace/parens', 5,
-                  'Should have zero or one spaces inside ( and ) in %s' %
-                  match.group(1))
-
-    # Next we will look for issues with function calls.
-    CheckSpacingForFunctionCall(filename, line, linenum, error)
+            return
 
     # Check whether everything inside expressions is aligned correctly
     if any(line.find(k) >= 0 for k in BRACES if k != '{'):
@@ -2219,21 +2020,17 @@ def CheckSpacing(filename, clean_lines, linenum, error):
 
     # Make sure '} else {' has spaces.
     if Search(r'}else', line):
-        error(filename, linenum, 'whitespace/braces', 5,
-              'Missing space before else')
+        return
 
     # You shouldn't have spaces before your brackets, except maybe after
     # 'delete []' or 'new char * []'.
     if Search(r'\w\s+\[', line):
-        error(filename, linenum, 'whitespace/braces', 5,
-              'Extra space before [')
+        return
 
     if Search(r'\{(?!\})\S', line):
-        error(filename, linenum, 'whitespace/braces', 5,
-              'Missing space after {')
+        return
     if Search(r'\S(?<!\{)\}', line):
-        error(filename, linenum, 'whitespace/braces', 5,
-              'Missing space before }')
+        return
 
     cast_line = re.sub(r'^# *define +\w+\([^)]*\)', '', line)
     match = Search(r'(?<!\bkvec_t)'
@@ -2348,30 +2145,6 @@ def CheckStyle(filename, clean_lines, linenum, error):
       linenum: The number of the line to check.
       error: The function to call with any errors found.
     """
-
-    # Don't use "elided" lines here, otherwise we can't check commented lines.
-    # Don't want to use "raw" either, because we don't want to check inside
-    # C++11 raw strings,
-    raw_lines = clean_lines.lines_without_raw_strings
-    line = raw_lines[linenum]
-
-    # One or three blank spaces at the beginning of the line is weird; it's
-    # hard to reconcile that with 2-space indents.
-    # NOTE: here are the conditions rob pike used for his tests.  Mine aren't
-    # as sophisticated, but it may be worth becoming so:
-    # RLENGTH==initial_spaces
-    # if(RLENGTH > 20) complain = 0;
-    # if(match($0, " +(error|private|public|protected):")) complain = 0;
-    # if(match(prev, "&& *$")) complain = 0;
-    # if(match(prev, "\\|\\| *$")) complain = 0;
-    # if(match(prev, "[\",=><] *$")) complain = 0;
-    # if(match($0, " <<")) complain = 0;
-    # if(match(prev, " +for \\(")) complain = 0;
-    # if(prevodd && match(prevprev, " +for \\(")) complain = 0;
-    initial_spaces = 0
-
-    while initial_spaces < len(line) and line[initial_spaces] == ' ':
-        initial_spaces += 1
 
     # Some more style checks
     CheckBraces(filename, clean_lines, linenum, error)
@@ -2612,7 +2385,7 @@ def CheckLanguage(filename, clean_lines, linenum, error):
 
 
 def ProcessLine(filename, clean_lines, line,
-                function_state, nesting_state, error,
+                nesting_state, error,
                 extra_check_functions=[]):
     """Processes a single line in the file.
 
@@ -2621,8 +2394,6 @@ def ProcessLine(filename, clean_lines, line,
       clean_lines           : An array of strings, each representing a line of
                               the file, with comments stripped.
       line                  : Number of line being processed.
-      function_state        : A _FunctionState instance which counts function
-                              lines, etc.
       nesting_state         : A _NestingState instance which maintains
                               information about the current stack of nested
                               blocks being parsed.
@@ -2639,7 +2410,6 @@ def ProcessLine(filename, clean_lines, line,
     nesting_state.Update(clean_lines, line)
     if nesting_state.stack and nesting_state.stack[-1].inline_asm != _NO_ASM:
         return
-    CheckForFunctionLengths(filename, clean_lines, line, function_state, error)
     CheckForMultilineCommentsAndStrings(filename, clean_lines, line, error)
     CheckForOldStyleComments(filename, init_lines[line], line, error)
     CheckStyle(filename, clean_lines, line, error)
@@ -2670,7 +2440,6 @@ def ProcessFileData(filename, file_extension, lines, error,
     lines = (['// marker so line numbers and indices both start at 1'] + lines +
              ['// marker so line numbers end in a known way'])
 
-    function_state = _FunctionState()
     nesting_state = _NestingState()
 
     ResetNolintSuppressions()
@@ -2700,7 +2469,7 @@ def ProcessFileData(filename, file_extension, lines, error,
     clean_lines = CleansedLines(lines, init_lines)
     for line in range(clean_lines.NumLines()):
         ProcessLine(filename, clean_lines, line,
-                    function_state, nesting_state, error,
+                    nesting_state, error,
                     extra_check_functions)
 
     # We check here rather than inside ProcessLine so that we see raw
@@ -2744,12 +2513,10 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
             lines = codecs.open(
                 filename, 'r', 'utf8', 'replace').read().split('\n')
 
-        carriage_return_found = False
         # Remove trailing '\r'.
         for linenum in range(len(lines)):
             if lines[linenum].endswith('\r'):
                 lines[linenum] = lines[linenum].rstrip('\r')
-                carriage_return_found = True
 
     except OSError:
         sys.stderr.write(
@@ -2768,13 +2535,6 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
     else:
         ProcessFileData(filename, file_extension, lines, Error,
                         extra_check_functions)
-        if carriage_return_found and os.linesep != '\r\n':
-            # Use 0 for linenum since outputting only one error for potentially
-            # several lines.
-            Error(filename, 0, 'whitespace/newline', 1,
-                  'One or more unexpected \\r (^M) found;'
-                  'better to use only a \\n')
-
 
 def PrintUsage(message):
     """Prints a brief usage string and exits, optionally with an error message.

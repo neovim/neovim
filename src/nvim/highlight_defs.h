@@ -127,7 +127,7 @@ typedef enum {
   HLF_COUNT,      // MUST be the last one
 } hlf_T;
 
-EXTERN const char *hlf_names[] INIT(= {
+EXTERN const char *hlf_names[] INIT( = {
   [HLF_8] = "SpecialKey",
   [HLF_EOB] = "EndOfBuffer",
   [HLF_TERM] = "TermCursor",
@@ -200,18 +200,18 @@ EXTERN int highlight_attr[HLF_COUNT + 1];     // Highl. attr for each context.
 EXTERN int highlight_attr_last[HLF_COUNT];  // copy for detecting changed groups
 EXTERN int highlight_user[9];                   // User[1-9] attributes
 EXTERN int highlight_stlnc[9];                  // On top of user
-EXTERN int cterm_normal_fg_color INIT(= 0);
-EXTERN int cterm_normal_bg_color INIT(= 0);
-EXTERN RgbValue normal_fg INIT(= -1);
-EXTERN RgbValue normal_bg INIT(= -1);
-EXTERN RgbValue normal_sp INIT(= -1);
+EXTERN int cterm_normal_fg_color INIT( = 0);
+EXTERN int cterm_normal_bg_color INIT( = 0);
+EXTERN RgbValue normal_fg INIT( = -1);
+EXTERN RgbValue normal_bg INIT( = -1);
+EXTERN RgbValue normal_sp INIT( = -1);
 
-EXTERN NS ns_hl_global INIT(= 0);  // global highlight namespace
-EXTERN NS ns_hl_win INIT(= -1);    // highlight namespace for the current window
-EXTERN NS ns_hl_fast INIT(= -1);   // highlight namespace specified in a fast callback
-EXTERN NS ns_hl_active INIT(= 0);  // currently active/cached namespace
+EXTERN NS ns_hl_global INIT( = 0);  // global highlight namespace
+EXTERN NS ns_hl_win INIT( = -1);    // highlight namespace for the current window
+EXTERN NS ns_hl_fast INIT( = -1);   // highlight namespace specified in a fast callback
+EXTERN NS ns_hl_active INIT( = 0);  // currently active/cached namespace
 
-EXTERN int *hl_attr_active INIT(= highlight_attr);
+EXTERN int *hl_attr_active INIT( = highlight_attr);
 
 typedef enum {
   kHlUnknown,

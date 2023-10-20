@@ -45,7 +45,7 @@ typedef struct {
 # include "lua/executor.h.generated.h"
 #endif
 
-EXTERN nlua_ref_state_t *nlua_global_refs INIT(= NULL);
-EXTERN bool nlua_disable_preload INIT(= false);
+EXTERN nlua_ref_state_t *nlua_global_refs INIT( = NULL);
+EXTERN bool nlua_disable_preload INIT( = false);
 
 #endif  // NVIM_LUA_EXECUTOR_H

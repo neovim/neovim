@@ -2502,7 +2502,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     [kCdScopeTabpage] = 0,  // Number of tab to look at.
   };
 
-  char *cwd  = NULL;    // Current working directory to print
+  char *cwd = NULL;    // Current working directory to print
   char *from = NULL;    // The original string to copy
 
   tabpage_T *tp = curtab;  // The tabpage to look at.
@@ -3281,7 +3281,7 @@ static void f_haslocaldir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     [kCdScopeTabpage] = 0,  // Number of tab to look at.
   };
 
-  tabpage_T *tp  = curtab;  // The tabpage to look at.
+  tabpage_T *tp = curtab;  // The tabpage to look at.
   win_T *win = curwin;  // The window to look at.
 
   rettv->v_type = VAR_NUMBER;
@@ -5258,7 +5258,7 @@ static void f_prompt_setinterrupt(typval_T *argvars, typval_T *rettv, EvalFuncDa
   }
 
   callback_free(&buf->b_prompt_interrupt);
-  buf->b_prompt_interrupt= interrupt_callback;
+  buf->b_prompt_interrupt = interrupt_callback;
 }
 
 /// "prompt_getprompt({buffer})" function
@@ -5589,9 +5589,9 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
   char buf[(IOSIZE/256) * 256];    // rounded to avoid odd + 1
   int io_size = sizeof(buf);
   char *prev = NULL;               // previously read bytes, if any
-  ptrdiff_t prevlen  = 0;               // length of data in prev
+  ptrdiff_t prevlen = 0;               // length of data in prev
   ptrdiff_t prevsize = 0;               // size of prev buffer
-  int64_t maxline  = MAXLNUM;
+  int64_t maxline = MAXLNUM;
   off_T offset = 0;
   off_T size = -1;
 
@@ -5651,7 +5651,7 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
          p < buf + readlen || (readlen <= 0 && (prevlen > 0 || binary));
          p++) {
       if (readlen <= 0 || *p == '\n') {
-        char *s  = NULL;
+        char *s = NULL;
         size_t len = (size_t)(p - start);
 
         // Finished a line.  Remove CRs before NL.
@@ -5754,7 +5754,7 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
           prevsize = p - start;
         } else {
           ptrdiff_t grow50pc = (prevsize * 3) / 2;
-          ptrdiff_t growmin  = (p - start) * 2 + prevlen;
+          ptrdiff_t growmin = (p - start) * 2 + prevlen;
           prevsize = grow50pc > growmin ? grow50pc : growmin;
         }
         prev = xrealloc(prev, (size_t)prevsize);

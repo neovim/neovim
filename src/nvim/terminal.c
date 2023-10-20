@@ -160,13 +160,13 @@ struct terminal {
 };
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
-  .damage      = term_damage,
-  .moverect    = term_moverect,
-  .movecursor  = term_movecursor,
+  .damage = term_damage,
+  .moverect = term_moverect,
+  .movecursor = term_movecursor,
   .settermprop = term_settermprop,
-  .bell        = term_bell,
+  .bell = term_bell,
   .sb_pushline = term_sb_push,  // Called before a line goes offscreen.
-  .sb_popline  = term_sb_pop,
+  .sb_popline = term_sb_pop,
 };
 
 static Set(ptr_t) invalidated_terminals = SET_INIT;

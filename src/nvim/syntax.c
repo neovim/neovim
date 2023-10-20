@@ -511,7 +511,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
   int found_flags = 0;
   int found_match_idx = 0;
   linenr_T found_current_lnum = 0;
-  int found_current_col= 0;
+  int found_current_col = 0;
   lpos_T found_m_endpos;
   colnr_T prev_current_col;
 

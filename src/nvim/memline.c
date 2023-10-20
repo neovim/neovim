@@ -3645,7 +3645,7 @@ static bool fnamecmp_ino(char *fname_c, char *fname_s, long ino_block0)
 /// Used for machine independency in block zero.
 static void long_to_char(long n, char *s_in)
 {
-  uint8_t *s= (uint8_t *)s_in;
+  uint8_t *s = (uint8_t *)s_in;
   s[0] = (uint8_t)(n & 0xff);
   n = (unsigned)n >> 8;
   s[1] = (uint8_t)(n & 0xff);

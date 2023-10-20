@@ -128,9 +128,9 @@
 #define api_free_window(value)
 #define api_free_tabpage(value)
 
-EXTERN PMap(int) buffer_handles INIT(= MAP_INIT);
-EXTERN PMap(int) window_handles INIT(= MAP_INIT);
-EXTERN PMap(int) tabpage_handles INIT(= MAP_INIT);
+EXTERN PMap(int) buffer_handles INIT( = MAP_INIT);
+EXTERN PMap(int) window_handles INIT( = MAP_INIT);
+EXTERN PMap(int) tabpage_handles INIT( = MAP_INIT);
 
 #define handle_get_buffer(h) pmap_get(int)(&buffer_handles, (h))
 #define handle_get_window(h) pmap_get(int)(&window_handles, (h))

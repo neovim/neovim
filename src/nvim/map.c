@@ -78,8 +78,8 @@ static inline bool equal_ColorKey(ColorKey ae1, ColorKey ae2)
 // TODO(bfredl): this could be _less_ for the h->hash part as this is now small (4 bytes per value)
 #define UPPER_FILL 0.77
 
-#define roundup32(x) (--(x), (x)|= (x)>>1, (x)|= (x)>>2, (x)|= (x)>>4, (x)|= (x)>>8, \
-                      (x)|= (x)>>16, ++(x))
+#define roundup32(x) (--(x), (x) |= (x)>>1, (x) |= (x)>>2, (x) |= (x)>>4, (x) |= (x)>>8, \
+                      (x) |= (x)>>16, ++(x))
 
 // h->hash must either be NULL or an already valid pointer
 void mh_realloc(MapHash *h, uint32_t n_min_buckets)

@@ -137,6 +137,6 @@ static inline bool is_literal_register(const int regname)
 # include "ops.h.generated.h"
 #endif
 
-EXTERN LuaRef repeat_luaref INIT(= LUA_NOREF);  ///< LuaRef for "."
+EXTERN LuaRef repeat_luaref INIT( = LUA_NOREF);  ///< LuaRef for "."
 
 #endif  // NVIM_OPS_H

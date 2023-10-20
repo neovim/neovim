@@ -981,13 +981,13 @@ void ex_delmarks(exarg_T *eap)
           clear_fmark(&curbuf->b_last_change, timestamp);
           break;
         case '[':
-          curbuf->b_op_start.lnum    = 0; break;
+          curbuf->b_op_start.lnum = 0; break;
         case ']':
-          curbuf->b_op_end.lnum      = 0; break;
+          curbuf->b_op_end.lnum = 0; break;
         case '<':
           curbuf->b_visual.vi_start.lnum = 0; break;
         case '>':
-          curbuf->b_visual.vi_end.lnum   = 0; break;
+          curbuf->b_visual.vi_end.lnum = 0; break;
         case ' ':
           break;
         default:
