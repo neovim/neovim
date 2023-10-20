@@ -8,6 +8,8 @@ local exec_lua = helpers.exec_lua
 local eq = helpers.eq
 local ok = helpers.ok
 
+if helpers.skip(helpers.is_ci('cirrus'), 'No need to run this on Cirrus') then return end
+
 describe(':help docs', function()
   before_each(clear)
   it('validate', function()
