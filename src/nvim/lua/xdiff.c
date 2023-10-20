@@ -367,18 +367,18 @@ int nlua_xdl_diff(lua_State *lstate)
     cfg.hunk_func = call_on_hunk_cb;
     priv = (hunkpriv_t) {
       .lstate = lstate,
-      .err    = &err,
+      .err = &err,
     };
     ecb.priv = &priv;
     break;
   case kNluaXdiffModeLocations:
     cfg.hunk_func = hunk_locations_cb;
     priv = (hunkpriv_t) {
-      .lstate    = lstate,
-      .ma        = &ma,
-      .mb        = &mb,
+      .lstate = lstate,
+      .ma = &ma,
+      .mb = &mb,
       .linematch = linematch,
-      .iwhite    = (params.flags & XDF_IGNORE_WHITESPACE) > 0
+      .iwhite = (params.flags & XDF_IGNORE_WHITESPACE) > 0
     };
     ecb.priv = &priv;
     lua_createtable(lstate, 0, 0);

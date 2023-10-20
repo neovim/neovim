@@ -230,7 +230,7 @@ void sha256_finish(context_sha256_T *ctx, uint8_t digest[SHA256_SUM_SIZE])
   uint8_t msglen[8];
 
   high = (ctx->total[0] >> 29) | (ctx->total[1] <<  3);
-  low  = (ctx->total[0] <<  3);
+  low = (ctx->total[0] <<  3);
 
   PUT_UINT32(high, msglen, 0);
   PUT_UINT32(low,  msglen, 4);

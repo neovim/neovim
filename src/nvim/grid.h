@@ -19,16 +19,16 @@
 ///
 /// Note: before the screen is initialized and when out of memory these can be
 /// NULL.
-EXTERN ScreenGrid default_grid INIT(= SCREEN_GRID_INIT);
+EXTERN ScreenGrid default_grid INIT( = SCREEN_GRID_INIT);
 
 #define DEFAULT_GRID_HANDLE 1  // handle for the default_grid
 
 /// While resizing the screen this flag is set.
-EXTERN bool resizing_screen INIT(= 0);
+EXTERN bool resizing_screen INIT( = 0);
 
-EXTERN schar_T *linebuf_char INIT(= NULL);
-EXTERN sattr_T *linebuf_attr INIT(= NULL);
-EXTERN colnr_T *linebuf_vcol INIT(= NULL);
+EXTERN schar_T *linebuf_char INIT( = NULL);
+EXTERN sattr_T *linebuf_attr INIT( = NULL);
+EXTERN colnr_T *linebuf_vcol INIT( = NULL);
 
 // Low-level functions to manipulate individual character cells on the
 // screen grid.

@@ -1171,14 +1171,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
   int left_curline_col = 0;
   int right_curline_col = 0;
 
-  int match_conc      = 0;              ///< cchar for match functions
-  bool on_last_col    = false;
-  int syntax_flags    = 0;
-  int syntax_seqnr    = 0;
-  int prev_syntax_id  = 0;
-  int conceal_attr    = win_hl_attr(wp, HLF_CONCEAL);
-  bool is_concealing  = false;
-  int did_wcol        = false;
+  int match_conc = 0;              ///< cchar for match functions
+  bool on_last_col = false;
+  int syntax_flags = 0;
+  int syntax_seqnr = 0;
+  int prev_syntax_id = 0;
+  int conceal_attr = win_hl_attr(wp, HLF_CONCEAL);
+  bool is_concealing = false;
+  int did_wcol = false;
   int old_boguscols = 0;
 #define VCOL_HLC (wlv.vcol - wlv.vcol_off)
 #define FIX_FOR_BOGUSCOLS \

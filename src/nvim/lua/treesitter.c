@@ -361,7 +361,7 @@ static int parser_tostring(lua_State *L)
 static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position,
                             uint32_t *bytes_read)
 {
-  buf_T *bp  = payload;
+  buf_T *bp = payload;
 #define BUFSIZE 256
   static char buf[BUFSIZE];
 
@@ -1585,7 +1585,7 @@ static void query_err_string(const char *src, int error_offset, TSQueryError err
   do {
     const char *src_tmp = src + line_start;
     end_str = strchr(src_tmp, '\n');
-    int line_length  = end_str != NULL ? (int)(end_str - src_tmp) : (int)strlen(src_tmp);
+    int line_length = end_str != NULL ? (int)(end_str - src_tmp) : (int)strlen(src_tmp);
     int line_end = line_start + line_length;
     if (line_end > error_offset) {
       error_line = src_tmp;

@@ -30,7 +30,7 @@ typedef enum {
   kUIExtCount,
 } UIExtension;
 
-EXTERN const char *ui_ext_names[] INIT(= {
+EXTERN const char *ui_ext_names[] INIT( = {
   "ext_cmdline",
   "ext_popupmenu",
   "ext_tabline",

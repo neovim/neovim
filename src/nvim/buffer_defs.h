@@ -361,7 +361,7 @@ typedef struct {
 #define BUF_UPDATE_CALLBACKS_INIT { LUA_NOREF, LUA_NOREF, LUA_NOREF, \
                                     LUA_NOREF, LUA_NOREF, false, false }
 
-EXTERN int curbuf_splice_pending INIT(= 0);
+EXTERN int curbuf_splice_pending INIT( = 0);
 
 #define BUF_HAS_QF_ENTRY 1
 #define BUF_HAS_LL_ENTRY 2
@@ -913,7 +913,7 @@ enum {
 // NE -> kFloatAnchorEast
 // SW -> kFloatAnchorSouth
 // SE -> kFloatAnchorSouth | kFloatAnchorEast
-EXTERN const char *const float_anchor_str[] INIT(= { "NW", "NE", "SW", "SE" });
+EXTERN const char *const float_anchor_str[] INIT( = { "NW", "NE", "SW", "SE" });
 
 typedef enum {
   kFloatRelativeEditor = 0,
@@ -922,8 +922,8 @@ typedef enum {
   kFloatRelativeMouse = 3,
 } FloatRelative;
 
-EXTERN const char *const float_relative_str[] INIT(= { "editor", "win",
-                                                       "cursor", "mouse" });
+EXTERN const char *const float_relative_str[] INIT( = { "editor", "win",
+                                                        "cursor", "mouse" });
 
 typedef enum {
   kWinStyleUnused = 0,

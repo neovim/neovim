@@ -1505,7 +1505,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
     dict_T *const d = (src); \
     if (d != NULL) { \
       size_t todo = d->dv_hashtab.ht_used; \
-      for (const hashitem_T *hi= d->dv_hashtab.ht_array; todo; hi++) { \
+      for (const hashitem_T *hi = d->dv_hashtab.ht_array; todo; hi++) { \
         if (!HASHITEM_EMPTY(hi)) { \
           todo--; \
           dictitem_T *const di = TV_DICT_HI2DI(hi); \

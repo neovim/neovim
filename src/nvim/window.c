@@ -3447,20 +3447,20 @@ static frame_T *win_altframe(win_T *win, tabpage_T *tp)
   // By default the next window will get the space that was abandoned by this
   // window
   frame_T *target_fr = frp->fr_next;
-  frame_T *other_fr  = frp->fr_prev;
+  frame_T *other_fr = frp->fr_prev;
 
   // If this is part of a column of windows and 'splitbelow' is true then the
   // previous window will get the space.
   if (frp->fr_parent != NULL && frp->fr_parent->fr_layout == FR_COL && p_sb) {
     target_fr = frp->fr_prev;
-    other_fr  = frp->fr_next;
+    other_fr = frp->fr_next;
   }
 
   // If this is part of a row of windows, and 'splitright' is true then the
   // previous window will get the space.
   if (frp->fr_parent != NULL && frp->fr_parent->fr_layout == FR_ROW && p_spr) {
     target_fr = frp->fr_prev;
-    other_fr  = frp->fr_next;
+    other_fr = frp->fr_next;
   }
 
   // If 'wfh' or 'wfw' is set for the target and not for the alternate

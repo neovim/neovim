@@ -515,7 +515,7 @@ static int nlua_iconv(lua_State *lstate)
   const char *str = lua_tolstring(lstate, 1, &str_len);
 
   char *from = enc_canonize(enc_skip((char *)lua_tolstring(lstate, 2, NULL)));
-  char *to   = enc_canonize(enc_skip((char *)lua_tolstring(lstate, 3, NULL)));
+  char *to = enc_canonize(enc_skip((char *)lua_tolstring(lstate, 3, NULL)));
 
   vimconv_T vimconv;
   vimconv.vc_type = CONV_NONE;

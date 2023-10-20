@@ -1954,12 +1954,12 @@ static int sign_define_from_dict(const char *name_arg, dict_T *dict)
     goto cleanup;
   }
   if (dict != NULL) {
-    icon   = tv_dict_get_string(dict, "icon", true);
+    icon = tv_dict_get_string(dict, "icon", true);
     linehl = tv_dict_get_string(dict, "linehl", true);
-    text   = tv_dict_get_string(dict, "text", true);
+    text = tv_dict_get_string(dict, "text", true);
     texthl = tv_dict_get_string(dict, "texthl", true);
-    culhl  = tv_dict_get_string(dict, "culhl", true);
-    numhl  = tv_dict_get_string(dict, "numhl", true);
+    culhl = tv_dict_get_string(dict, "culhl", true);
+    numhl = tv_dict_get_string(dict, "numhl", true);
   }
 
   if (sign_define_by_name(name, icon, linehl,

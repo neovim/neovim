@@ -3434,12 +3434,12 @@ static nfa_state_T *alloc_state(int c, nfa_state_T *out, nfa_state_T *out1)
 
   s = &state_ptr[istate++];
 
-  s->c    = c;
-  s->out  = out;
+  s->c = c;
+  s->out = out;
   s->out1 = out1;
-  s->val  = 0;
+  s->val = 0;
 
-  s->id   = istate;
+  s->id = istate;
   s->lastlist[0] = 0;
   s->lastlist[1] = 0;
 
@@ -4053,7 +4053,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
         if (zend == NULL) {
           goto theend;
         }
-        s1->out= skip;
+        s1->out = skip;
         patch(e.out, zend);
         PUSH(frag(s, list1(&skip->out)));
       } else {

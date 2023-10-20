@@ -87,6 +87,6 @@ typedef struct xfilemark {
 #define INIT_XFMARK { INIT_FMARK, NULL }
 
 /// Global marks (marks with file number or name)
-EXTERN xfmark_T namedfm[NGLOBALMARKS] INIT(= { 0 });
+EXTERN xfmark_T namedfm[NGLOBALMARKS] INIT( = { 0 });
 
 #endif  // NVIM_MARK_DEFS_H

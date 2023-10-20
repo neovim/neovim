@@ -335,21 +335,21 @@ static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
   termios->c_lflag |= ECHOKE;
 #endif
 
-  termios->c_cc[VINTR]    = 0x1f & 'C';
-  termios->c_cc[VQUIT]    = 0x1f & '\\';
-  termios->c_cc[VERASE]   = 0x7f;
-  termios->c_cc[VKILL]    = 0x1f & 'U';
-  termios->c_cc[VEOF]     = 0x1f & 'D';
-  termios->c_cc[VEOL]     = _POSIX_VDISABLE;
-  termios->c_cc[VEOL2]    = _POSIX_VDISABLE;
-  termios->c_cc[VSTART]   = 0x1f & 'Q';
-  termios->c_cc[VSTOP]    = 0x1f & 'S';
-  termios->c_cc[VSUSP]    = 0x1f & 'Z';
+  termios->c_cc[VINTR] = 0x1f & 'C';
+  termios->c_cc[VQUIT] = 0x1f & '\\';
+  termios->c_cc[VERASE] = 0x7f;
+  termios->c_cc[VKILL] = 0x1f & 'U';
+  termios->c_cc[VEOF] = 0x1f & 'D';
+  termios->c_cc[VEOL] = _POSIX_VDISABLE;
+  termios->c_cc[VEOL2] = _POSIX_VDISABLE;
+  termios->c_cc[VSTART] = 0x1f & 'Q';
+  termios->c_cc[VSTOP] = 0x1f & 'S';
+  termios->c_cc[VSUSP] = 0x1f & 'Z';
   termios->c_cc[VREPRINT] = 0x1f & 'R';
-  termios->c_cc[VWERASE]  = 0x1f & 'W';
-  termios->c_cc[VLNEXT]   = 0x1f & 'V';
-  termios->c_cc[VMIN]     = 1;
-  termios->c_cc[VTIME]    = 0;
+  termios->c_cc[VWERASE] = 0x1f & 'W';
+  termios->c_cc[VLNEXT] = 0x1f & 'V';
+  termios->c_cc[VMIN] = 1;
+  termios->c_cc[VTIME] = 0;
 }
 
 static int set_duplicating_descriptor(int fd, uv_pipe_t *pipe)

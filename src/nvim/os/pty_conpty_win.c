@@ -14,9 +14,9 @@
 # define PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE 0x00020016
 #endif
 
-HRESULT (WINAPI *pCreatePseudoConsole)(COORD, HANDLE, HANDLE, DWORD, HPCON *);
-HRESULT (WINAPI *pResizePseudoConsole)(HPCON, COORD);
-void (WINAPI *pClosePseudoConsole)(HPCON);
+HRESULT(WINAPI *pCreatePseudoConsole)(COORD, HANDLE, HANDLE, DWORD, HPCON *);
+HRESULT(WINAPI *pResizePseudoConsole)(HPCON, COORD);
+void(WINAPI *pClosePseudoConsole)(HPCON);
 
 bool os_has_conpty_working(void)
 {

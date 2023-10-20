@@ -478,7 +478,7 @@ int hl_get_underline(void)
 /// Get attribute code for forwarded :terminal highlights.
 int hl_get_term_attr(HlAttrs *aep)
 {
-  return get_attr_entry((HlEntry){ .attr= *aep, .kind = kHlTerminal,
+  return get_attr_entry((HlEntry){ .attr = *aep, .kind = kHlTerminal,
                                    .id1 = 0, .id2 = 0 });
 }
 
@@ -842,7 +842,7 @@ void hlattrs2dict(Dictionary *hl, Dictionary *hl_attrs, HlAttrs ae, bool use_rgb
   hl_attrs = hl_attrs ? hl_attrs : hl;
   assert(hl->capacity >= HLATTRS_DICT_SIZE);  // at most 16 items
   assert(hl_attrs->capacity >= HLATTRS_DICT_SIZE);  // at most 16 items
-  int mask  = use_rgb ? ae.rgb_ae_attr : ae.cterm_ae_attr;
+  int mask = use_rgb ? ae.rgb_ae_attr : ae.cterm_ae_attr;
 
   if (mask & HL_INVERSE) {
     PUT_C(*hl_attrs, "reverse", BOOLEAN_OBJ(true));

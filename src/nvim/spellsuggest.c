@@ -311,8 +311,8 @@ static int badword_captype(char *word, char *end)
   }
 
   // Count the number of UPPER and lower case letters.
-  int l= 0;
-  int u= 0;
+  int l = 0;
+  int u = 0;
   bool first = false;
   for (char *p = word; p < end; MB_PTR_ADV(p)) {
     int c = utf_ptr2char(p);

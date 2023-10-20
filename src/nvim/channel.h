@@ -108,9 +108,9 @@ struct Channel {
   bool callback_scheduled;
 };
 
-EXTERN PMap(uint64_t) channels INIT(= MAP_INIT);
+EXTERN PMap(uint64_t) channels INIT( = MAP_INIT);
 
-EXTERN Callback on_print INIT(= CALLBACK_INIT);
+EXTERN Callback on_print INIT( = CALLBACK_INIT);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "channel.h.generated.h"
