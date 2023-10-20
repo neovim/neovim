@@ -1278,11 +1278,10 @@ w4 w5
       write_file(fname_2, f2, false)
       reread()
     end)
+
     describe('when the entire hunk is compared, cross-line', function()
-      before_each(function()
-        feed(':set diffopt+=worddiff:30<cr>')
-      end)
       it('display results', function()
+        feed(':set diffopt+=worddiff:30<cr>')
         screen:expect([[
        {1:  }{10:  1 }{9:^w1 w2                                      }│{1:  }{10:  1 }{8:wA w1 wB }{9:w1 w2}{8: wC}{9: w3}{8: }{9:w4                     }|
        {1:  }{10:  2 }{8:w2}{9: w3                                      }│{1:  }{10:    }{2:--------------------------------------------}|
@@ -1307,11 +1306,10 @@ w4 w5
         ]])
       end)
     end)
+
     describe('when the single line is compared, cross-line', function()
-      before_each(function()
-        feed(':set diffopt+=worddiff:20<cr>')
-      end)
       it('display results', function()
+        feed(':set diffopt+=worddiff:20<cr>')
         screen:expect([[
        {1:  }{10:  1 }{9:^w1 w2                                      }│{1:  }{10:  1 }{8:wA w1 wB }{9:w1 w2}{8: wC w3 w4}{9:                     }|
        {1:  }{10:  2 }{4:w2 w3                                      }│{1:  }{10:    }{2:--------------------------------------------}|
@@ -1337,10 +1335,8 @@ w4 w5
       end)
     end)
     describe('when the diff hunk and the single line are too long to run chardiff', function()
-      before_each(function()
-        feed(':set diffopt+=worddiff:10<cr>')
-      end)
       it('display results', function()
+        feed(':set diffopt+=worddiff:10<cr>')
         screen:expect([[
        {1:  }{10:  1 }{9:^w}{8:1 w2}{9:                                      }│{1:  }{10:  1 }{9:w}{8:A w1 wB w1 w2 wC w3 w4}{9:                     }|
        {1:  }{10:  2 }{4:w2 w3                                      }│{1:  }{10:    }{2:--------------------------------------------}|
