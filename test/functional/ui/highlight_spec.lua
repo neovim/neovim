@@ -2670,4 +2670,18 @@ describe('fg/bg special colors', function()
     eq(new_guifg, eval('synIDattr(hlID("Visual"), "bg#")'))
     eq(new_guibg, eval('synIDattr(hlID("Visual"), "sp#")'))
   end)
+
+  it('changed highlight is reflected in messages before redraw #17832', function()
+    local screen = Screen.new(50, 7, { rgb = true })
+    command('set termguicolors')
+    -- :echomsg in the same request, before the next redraw.
+    command('call nvim_set_hl(0, "MsgArea", {"fg": "Red"}) | echomsg "foo"')
+    screen:expect({
+      grid = [[
+        ^                                                  |
+        {1:~                                                 }|*5
+        {19:foo                                               }|
+      ]],
+    })
+  end)
 end)
