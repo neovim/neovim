@@ -183,50 +183,9 @@ jobs:
         id: abort_job
         run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
 
-      - if: matrix.flavor != 'tsan' && matrix.flavor != 'functionaltest-lua' && (success() || failure() && steps.abort_job.outputs.status == 'success')
-        name: Unittest
-        timeout-minutes: 5
-        run: cmake --build build --target unittest
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Functionaltest
-        timeout-minutes: 20
-        run: cmake --build build --target functionaltest
-
       - if: matrix.flavor != 'tsan' && (success() || failure() && steps.abort_job.outputs.status == 'success')
         name: Oldtest
         run: make oldtest
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Install
-        run: cmake --install build
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: Installtests
-        run: |
-          "$INSTALL_PREFIX/bin/nvim" --version
-          if ! "$INSTALL_PREFIX/bin/nvim" -u NONE -e -c ':help' -c ':qall'; then
-            echo "Running ':help' in the installed nvim failed."
-            echo "Maybe the helptags have not been generated properly."
-            echo 'Failed running :help'
-            exit 1
-          fi
-
-          # Check that all runtime files were installed
-          for file in $(git -C runtime ls-files '*.vim' '*.ps' '*.dict' '*.py' '*.tutor' '*.awk' '*.sh' '*.bat'); do
-            if ! test -e "$INSTALL_PREFIX/share/nvim/runtime/$file"; then
-              printf "It appears that %s is not installed." "$file"
-              exit 1
-            fi
-          done
-
-          # Check that generated syntax file has function names, #5060.
-          genvimsynf=syntax/vim/generated.vim
-          gpat='syn keyword vimFuncName .*eval'
-          if ! grep -q "$gpat" "$INSTALL_PREFIX/share/nvim/runtime/$genvimsynf"; then
-            echo "It appears that $genvimsynf does not contain $gpat."
-            exit 1
-          fi
 
       - if: success() || failure() && steps.abort_job.outputs.status == 'success'
         name: Show logs

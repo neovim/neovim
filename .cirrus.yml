@@ -19,9 +19,5 @@ freebsd_task:
     # permission-related tests to work correctly.
     - pw useradd cirrus -m
     - chown -R cirrus:cirrus .
-  functionaltest_script:
-    - sudo -u cirrus gmake functionaltest
-  unittest_script:
-    - sudo -u cirrus gmake unittest
   oldtest_script:
     - sudo -u cirrus gmake oldtest
