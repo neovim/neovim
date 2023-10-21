@@ -242,6 +242,7 @@ local constants = {
 
   -- Defines whether the insert text in a completion item should be interpreted as
   -- plain text or a snippet.
+  --- @enum lsp.InsertTextFormat
   InsertTextFormat = {
     -- The primary text to be inserted is treated as a plain string.
     PlainText = 1,

@@ -548,7 +548,7 @@ end
 --- `textDocument/completion` request, which may return one of
 --- `CompletionItem[]`, `CompletionList` or null.
 ---@param result table The result of a `textDocument/completion` request
----@return table List of completion items
+---@return lsp.CompletionItem[] List of completion items
 ---@see https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 function M.extract_completion_items(result)
   if type(result) == 'table' and result.items then
@@ -619,47 +619,6 @@ function M.parse_snippet(input)
   return tostring(parsed)
 end
 
---- Sorts by CompletionItem.sortText.
----
---see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
-local function sort_completion_items(items)
-  table.sort(items, function(a, b)
-    return (a.sortText or a.label) < (b.sortText or b.label)
-  end)
-end
-
---- Returns text that should be inserted when selecting completion item. The
---- precedence is as follows: textEdit.newText > insertText > label
---see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
-local function get_completion_word(item)
-  if item.textEdit ~= nil and item.textEdit.newText ~= nil and item.textEdit.newText ~= '' then
-    local insert_text_format = protocol.InsertTextFormat[item.insertTextFormat]
-    if insert_text_format == 'PlainText' or insert_text_format == nil then
-      return item.textEdit.newText
-    else
-      return M.parse_snippet(item.textEdit.newText)
-    end
-  elseif item.insertText ~= nil and item.insertText ~= '' then
-    local insert_text_format = protocol.InsertTextFormat[item.insertTextFormat]
-    if insert_text_format == 'PlainText' or insert_text_format == nil then
-      return item.insertText
-    else
-      return M.parse_snippet(item.insertText)
-    end
-  end
-  return item.label
-end
-
---- Some language servers return complementary candidates whose prefixes do not
---- match are also returned. So we exclude completion candidates whose prefix
---- does not match.
-local function remove_unmatch_completion_items(items, prefix)
-  return vim.tbl_filter(function(item)
-    local word = get_completion_word(item)
-    return vim.startswith(word, prefix)
-  end, items)
-end
-
 --- According to LSP spec, if the client set `completionItemKind.valueSet`,
 --- the client must handle it properly even if it receives a value outside the
 --- specification.
@@ -678,56 +637,10 @@ end
 --- from |vim.lsp.buf.completion()|, which may be one of `CompletionItem[]`,
 --- `CompletionList` or `null`
 ---@param prefix (string) the prefix to filter the completion items
----@return table { matches = complete-items table, incomplete = bool }
+---@return table[] items
 ---@see complete-items
 function M.text_document_completion_list_to_complete_items(result, prefix)
-  local items = M.extract_completion_items(result)
-  if vim.tbl_isempty(items) then
-    return {}
-  end
-
-  items = remove_unmatch_completion_items(items, prefix)
-  sort_completion_items(items)
-
-  local matches = {}
-
-  for _, completion_item in ipairs(items) do
-    local info = ''
-    local documentation = completion_item.documentation
-    if documentation then
-      if type(documentation) == 'string' and documentation ~= '' then
-        info = documentation
-      elseif type(documentation) == 'table' and type(documentation.value) == 'string' then
-        info = documentation.value
-      else
-        vim.notify(
-          ('invalid documentation value %s'):format(vim.inspect(documentation)),
-          vim.log.levels.WARN
-        )
-      end
-    end
-
-    local word = get_completion_word(completion_item)
-    table.insert(matches, {
-      word = word,
-      abbr = completion_item.label,
-      kind = M._get_completion_item_kind_name(completion_item.kind),
-      menu = completion_item.detail or '',
-      info = #info > 0 and info or nil,
-      icase = 1,
-      dup = 1,
-      empty = 1,
-      user_data = {
-        nvim = {
-          lsp = {
-            completion_item = completion_item,
-          },
-        },
-      },
-    })
-  end
-
-  return matches
+  return require('vim.lsp._completion')._lsp_to_complete_items(result, prefix)
 end
 
 --- Like vim.fn.bufwinid except it works across tabpages.
