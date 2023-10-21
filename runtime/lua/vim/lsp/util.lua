@@ -547,10 +547,12 @@ end
 --- Can be used to extract the completion items from a
 --- `textDocument/completion` request, which may return one of
 --- `CompletionItem[]`, `CompletionList` or null.
+---@deprecated
 ---@param result table The result of a `textDocument/completion` request
 ---@return lsp.CompletionItem[] List of completion items
 ---@see https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 function M.extract_completion_items(result)
+  vim.deprecate('vim.lsp.util.extract_completion_items', nil, '0.11')
   if type(result) == 'table' and result.items then
     -- result is a `CompletionList`
     return result.items
@@ -606,9 +608,11 @@ end
 
 --- Parses snippets in a completion entry.
 ---
+---@deprecated
 ---@param input string unparsed snippet
 ---@return string parsed snippet
 function M.parse_snippet(input)
+  vim.deprecate('vim.lsp.util.parse_snippet', nil, '0.11')
   local ok, parsed = pcall(function()
     return snippet.parse(input)
   end)
@@ -619,20 +623,10 @@ function M.parse_snippet(input)
   return tostring(parsed)
 end
 
---- According to LSP spec, if the client set `completionItemKind.valueSet`,
---- the client must handle it properly even if it receives a value outside the
---- specification.
----
----@param completion_item_kind (`vim.lsp.protocol.completionItemKind`)
----@return (`vim.lsp.protocol.completionItemKind`)
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_completion
-function M._get_completion_item_kind_name(completion_item_kind)
-  return protocol.CompletionItemKind[completion_item_kind] or 'Unknown'
-end
-
 --- Turns the result of a `textDocument/completion` request into vim-compatible
 --- |complete-items|.
 ---
+---@deprecated
 ---@param result table The result of a `textDocument/completion` call, e.g.
 --- from |vim.lsp.buf.completion()|, which may be one of `CompletionItem[]`,
 --- `CompletionList` or `null`
@@ -640,6 +634,7 @@ end
 ---@return table[] items
 ---@see complete-items
 function M.text_document_completion_list_to_complete_items(result, prefix)
+  vim.deprecate('vim.lsp.util.text_document_completion_list_to_complete_items', nil, '0.11')
   return require('vim.lsp._completion')._lsp_to_complete_items(result, prefix)
 end
 

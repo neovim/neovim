@@ -144,6 +144,9 @@ LSP FUNCTIONS
 - *vim.lsp.util.trim_empty_lines()*		Use |vim.split()| with `trimempty` instead.
 - *vim.lsp.util.try_trim_markdown_code_blocks()*
 - *vim.lsp.util.set_lines()*
+- *vim.lsp.util.extract_completion_items()*
+- *vim.lsp.util.parse_snippet()*
+- *vim.lsp.util.text_document_completion_list_to_complete_items()*
 
 TREESITTER FUNCTIONS
 - *vim.treesitter.language.require_language()*	Use |vim.treesitter.language.add()|
