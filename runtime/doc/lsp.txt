@@ -1719,7 +1719,7 @@ extract_completion_items({result})
       • {result}  (table) The result of a `textDocument/completion` request
 
     Return: ~
-        (table) List of completion items
+        lsp.CompletionItem[] List of completion items
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
@@ -2014,7 +2014,7 @@ text_document_completion_list_to_complete_items({result}, {prefix})
       • {prefix}  (string) the prefix to filter the completion items
 
     Return: ~
-        (table) { matches = complete-items table, incomplete = bool }
+        table[] items
 
     See also: ~
       • complete-items
