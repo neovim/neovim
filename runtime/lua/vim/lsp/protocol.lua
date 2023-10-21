@@ -742,7 +742,6 @@ function protocol.make_client_capabilities()
           -- this should be disabled out of the box.
           -- However, users can turn this back on if they have a snippet plugin.
           snippetSupport = false,
-
           commitCharactersSupport = false,
           preselectSupport = false,
           deprecatedSupport = false,
