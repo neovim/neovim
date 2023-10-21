@@ -668,17 +668,21 @@ void exception_state_save(exception_state_T *estate)
   estate->estate_did_throw = did_throw;
   estate->estate_need_rethrow = need_rethrow;
   estate->estate_trylevel = trylevel;
+  estate->estate_did_emsg = did_emsg;
 }
 
 /// Restore the current exception state from "estate"
 void exception_state_restore(exception_state_T *estate)
 {
-  if (current_exception == NULL) {
-    current_exception = estate->estate_current_exception;
+  // Handle any outstanding exceptions before restoring the state
+  if (did_throw) {
+    handle_did_throw();
   }
-  did_throw |= estate->estate_did_throw;
-  need_rethrow |= estate->estate_need_rethrow;
-  trylevel |= estate->estate_trylevel;
+  current_exception = estate->estate_current_exception;
+  did_throw = estate->estate_did_throw;
+  need_rethrow = estate->estate_need_rethrow;
+  trylevel = estate->estate_trylevel;
+  did_emsg = estate->estate_did_emsg;
 }
 
 /// Clear the current exception state
@@ -688,6 +692,7 @@ void exception_state_clear(void)
   did_throw = false;
   need_rethrow = false;
   trylevel = 0;
+  did_emsg = 0;
 }
 
 // Flags specifying the message displayed by report_pending.

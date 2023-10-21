@@ -126,6 +126,7 @@ struct exception_state_S {
   bool estate_did_throw;
   bool estate_need_rethrow;
   int estate_trylevel;
+  int estate_did_emsg;
 };
 
 #endif  // NVIM_EX_EVAL_DEFS_H

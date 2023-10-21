@@ -410,7 +410,8 @@ Any return value of the deferred function is discarded.  The function cannot
 be followed by anything, such as "->func" or ".member".  Currently `:defer
 GetArg()->TheFunc()` does not work, it may work in a later version.
 
-Errors are reported but do not cause aborting execution of deferred functions.
+Errors are reported but do not cause aborting execution of deferred functions
+or altering execution outside of deferred functions.
 
 No range is accepted.  The function can be a partial with extra arguments, but
 not with a dictionary. *E1300*
