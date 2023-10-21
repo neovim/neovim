@@ -36,10 +36,10 @@ local function test_embed(ext_linegrid)
                                                                   |
                                                                   |
                                                                   |
-                                                                  |
+      {5:                                                            }|
       Error detected while processing pre-vimrc command line:     |
       E121: Undefined variable: invalid                           |
-      Press ENTER or type command to continue^                     |
+      {2:Press ENTER or type command to continue}^                     |
     ]])
 
     feed('<cr>')
@@ -78,11 +78,11 @@ local function test_embed(ext_linegrid)
                                                                   |
                                                                   |
                                                                   |
-                                                                  |
+      {5:                                                            }|
       Error detected while processing pre-vimrc command line:     |
       foo                                                         |
-      bar                                                         |
-      Press ENTER or type command to continue^                     |
+      {1:bar}                                                         |
+      {2:Press ENTER or type command to continue}^                     |
     ]], condition=function()
       eq(Screen.colors.Green, screen.default_colors.rgb_bg)
     end}

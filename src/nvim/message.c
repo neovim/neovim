@@ -29,6 +29,7 @@
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/input.h"
 #include "nvim/keycodes.h"
@@ -1411,6 +1412,10 @@ void msg_start(void)
   if (!msg_silent) {
     XFREE_CLEAR(keep_msg);              // don't display old message now
     need_fileinfo = false;
+  }
+
+  if (need_highlight_changed) {
+    highlight_changed();
   }
 
   if (need_clr_eos || (p_ch == 0 && redrawing_cmdline)) {
