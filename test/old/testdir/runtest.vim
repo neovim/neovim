@@ -177,7 +177,7 @@ endfunc
 for name in s:GetSwapFileList()
   call delete(name)
 endfor
-unlet name
+unlet! name
 
 
 " Invoked when a test takes too much time.
