@@ -129,7 +129,16 @@ function M.open(path)
     path = { path, 'string' },
   })
   local is_uri = path:match('%w+:')
-  if not is_uri then
+  if is_uri then
+    local help = path:match('^help://(.+)$')
+    if help then
+      local ok, err = pcall(vim.cmd.help, help)
+      return {
+        code = ok and 0 or 1,
+        stderr = not ok and err or nil,
+      }
+    end
+  else
     path = vim.fn.expand(path)
   end
 
