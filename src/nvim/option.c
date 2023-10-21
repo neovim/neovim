@@ -3237,6 +3237,12 @@ static bool optval_match_type(OptVal o, int opt_idx)
 /// @param[out]  varp     Pointer to option variable.
 OptVal optval_from_varp(int opt_idx, void *varp)
 {
+  // Special case: 'modified' is b_changed, but we also want to consider it set when 'ff' or 'fenc'
+  // changed.
+  if ((int *)varp == &curbuf->b_changed) {
+    return BOOLEAN_OPTVAL(curbufIsChanged());
+  }
+
   uint32_t flags = options[opt_idx].flags;
 
   OptValType type = kOptValTypeNil;
@@ -3254,17 +3260,21 @@ OptVal optval_from_varp(int opt_idx, void *varp)
   case kOptValTypeNil:
     return NIL_OPTVAL;
   case kOptValTypeBoolean:
-    return BOOLEAN_OPTVAL(TRISTATE_FROM_INT(*(int *)varp));
+    return BOOLEAN_OPTVAL(varp == NULL ? false : TRISTATE_FROM_INT(*(int *)varp));
   case kOptValTypeNumber:
-    return NUMBER_OPTVAL(*(OptInt *)varp);
+    return NUMBER_OPTVAL(varp == NULL ? 0 : *(OptInt *)varp);
   case kOptValTypeString:
-    return STRING_OPTVAL(cstr_as_string(*(char **)varp));
+    return STRING_OPTVAL(varp == NULL ? (String)STRING_INIT : cstr_as_string(*(char **)varp));
   }
   UNREACHABLE;
 }
 
 /// Set option var pointer value from Optval.
+///
+/// @param  varp   Pointer to option variable.
+/// @param  value  Option value.
 static void set_option_varp(void *varp, OptVal value)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   switch (value.type) {
   case kOptValTypeNil:
@@ -3435,8 +3445,7 @@ static char *option_get_valid_types(int opt_idx)
 /// @param[in]   scope   Option scope (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 /// @param[out]  hidden  Whether option is hidden.
 ///
-/// @return  Option value. Returns NIL_OPTVAL for invalid options. Return value must be freed by
-///          caller.
+/// @return [allocated] Option value. Returns NIL_OPTVAL for invalid options.
 OptVal get_option_value(const char *name, uint32_t *flagsp, int scope, bool *hidden)
 {
   // Make sure that hidden and flagsp are never returned uninitialized
@@ -3467,24 +3476,7 @@ OptVal get_option_value(const char *name, uint32_t *flagsp, int scope, bool *hid
     *flagsp = options[opt_idx].flags;
   }
 
-  if (options[opt_idx].flags & P_STRING) {
-    return varp == NULL ? STRING_OPTVAL(STRING_INIT) : CSTR_TO_OPTVAL(*(char **)(varp));
-  }
-
-  if (options[opt_idx].flags & P_NUM) {
-    return NUMBER_OPTVAL(varp == NULL ? 0 : (*(OptInt *)varp));
-  } else {
-    // Special case: 'modified' is b_changed, but we also want to consider
-    // it set when 'ff' or 'fenc' changed.
-    if (varp == NULL) {
-      return BOOLEAN_OPTVAL(false);
-    } else if ((int *)varp == &curbuf->b_changed) {
-      return BOOLEAN_OPTVAL(curbufIsChanged());
-    } else {
-      int n = *(int *)varp;
-      return BOOLEAN_OPTVAL(TRISTATE_FROM_INT(n));
-    }
-  }
+  return optval_copy(optval_from_varp(opt_idx, varp));
 }
 
 /// Return information for option at 'opt_idx'
