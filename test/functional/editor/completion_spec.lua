@@ -1228,4 +1228,28 @@ describe('completion', function()
     expect('colorscheme NOSUCHCOLORSCHEME')
     assert_alive()
   end)
+
+  it('complete with f flag #25598', function()
+    screen:try_resize(20, 9)
+    local bufname = 'foo/bar.txt'
+    local hidden = 'fooA/.hidden'
+    if helpers.is_os('win') then
+      bufname = 'C:\\foo\\bar.txt'
+      hidden = 'C:\\fooA\\.hidden'
+    end
+    command('set complete+=f | edit '.. bufname ..' | edit '..hidden)
+    feed('i<C-n>')
+
+    screen:expect{grid=[[
+      foo^                 |
+      {2:foo            }{0:     }|
+      {1:bar            }{0:     }|
+      {1:txt            }{0:     }|
+      {1:fooA           }{0:     }|
+      {1:.hidden        }{0:     }|
+      {0:~                   }|
+      {0:~                   }|
+      {3:-- }{4:match 1 of 5}     |
+    ]]}
+  end)
 end)
