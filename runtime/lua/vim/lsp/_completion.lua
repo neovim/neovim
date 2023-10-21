@@ -106,11 +106,12 @@ function M._lsp_to_complete_items(result, prefix)
   return matches
 end
 
+---@param lnum integer 0-indexed
 ---@param items lsp.CompletionItem[]
 local function adjust_start_col(lnum, line, items, encoding)
   local min_start_char = nil
   for _, item in pairs(items) do
-    if item.textEdit and item.textEdit.range.start.line == lnum - 1 then
+    if item.textEdit and item.textEdit.range.start.line == lnum then
       if min_start_char and min_start_char ~= item.textEdit.range.start.character then
         return nil
       end
@@ -124,12 +125,57 @@ local function adjust_start_col(lnum, line, items, encoding)
   end
 end
 
+---@private
+---@param line string line content
+---@param lnum integer 0-indexed line number
+---@param client_start_boundary integer 0-indexed word boundary
+---@param server_start_boundary? integer 0-indexed word boundary, based on textEdit.range.start.character
+---@param result lsp.CompletionList|lsp.CompletionItem[]
+---@param encoding string
+---@return table[] matches
+---@return integer? server_start_boundary
+function M._convert_results(
+  line,
+  lnum,
+  client_start_boundary,
+  server_start_boundary,
+  result,
+  encoding
+)
+  -- Completion response items may be relative to a position different than `client_start_boundary`.
+  -- Concrete example, with lua-language-server:
+  --
+  -- require('plenary.asy|
+  --         ▲       ▲   ▲
+  --         │       │   └── cursor_pos:                     20
+  --         │       └────── client_start_boundary:          17
+  --         └────────────── textEdit.range.start.character: 9
+  --                                 .newText = 'plenary.async'
+  --                  ^^^
+  --                  prefix (We'd remove everything not starting with `asy`,
+  --                  so we'd eliminate the `plenary.async` result
+  --
+  -- `adjust_start_col` is used to prefer the language server boundary.
+  --
+  local candidates = get_items(result)
+  local curstartbyte = adjust_start_col(lnum, line, candidates, encoding)
+  if server_start_boundary == nil then
+    server_start_boundary = curstartbyte
+  elseif curstartbyte ~= nil and curstartbyte ~= server_start_boundary then
+    server_start_boundary = client_start_boundary
+  end
+  local prefix = line:sub((server_start_boundary or client_start_boundary) + 1)
+  local matches = M._lsp_to_complete_items(result, prefix)
+  return matches, server_start_boundary
+end
+
 ---@param findstart integer 0 or 1, decides behavior
 ---@param base integer findstart=0, text to match against
 ---@return integer|table Decided by {findstart}:
 --- - findstart=0: column where the completion starts, or -2 or -3
 --- - findstart=1: list of matches (actually just calls |complete()|)
 function M.omnifunc(findstart, base)
+  assert(base) -- silence luals
   local bufnr = api.nvim_get_current_buf()
   local clients = lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_completion })
   local remaining = #clients
@@ -137,26 +183,20 @@ function M.omnifunc(findstart, base)
     return findstart == 1 and -1 or {}
   end
 
-  local log = require('vim.lsp.log')
-  -- Then, perform standard completion request
-  if log.info() then
-    log.info('base ', base)
-  end
-
   local win = api.nvim_get_current_win()
-  local pos = api.nvim_win_get_cursor(win)
+  local cursor = api.nvim_win_get_cursor(win)
+  local lnum = cursor[1] - 1
+  local cursor_col = cursor[2]
   local line = api.nvim_get_current_line()
-  local line_to_cursor = line:sub(1, pos[2])
-  log.trace('omnifunc.line', pos, line)
-
-  local word_boundary = vim.fn.match(line_to_cursor, '\\k*$') + 1 --[[@as integer]]
+  local line_to_cursor = line:sub(1, cursor_col)
+  local client_start_boundary = vim.fn.match(line_to_cursor, '\\k*$') --[[@as integer]]
+  local server_start_boundary = nil
   local items = {}
-  local startbyte = nil
 
   local function on_done()
     local mode = api.nvim_get_mode()['mode']
     if mode == 'i' or mode == 'ic' then
-      vim.fn.complete(startbyte or word_boundary, items)
+      vim.fn.complete((server_start_boundary or client_start_boundary) + 1, items)
     end
   end
 
@@ -165,34 +205,18 @@ function M.omnifunc(findstart, base)
     local params = util.make_position_params(win, client.offset_encoding)
     client.request(ms.textDocument_completion, params, function(err, result)
       if err then
-        log.warn(err.message)
+        require('vim.lsp.log').warn(err.message)
       end
       if result and vim.fn.mode() == 'i' then
-        -- Completion response items may be relative to a position different than `textMatch`.
-        -- Concrete example, with sumneko/lua-language-server:
-        --
-        -- require('plenary.asy|
-        --         ▲       ▲   ▲
-        --         │       │   └── cursor_pos: 20
-        --         │       └────── textMatch: 17
-        --         └────────────── textEdit.range.start.character: 9
-        --                                 .newText = 'plenary.async'
-        --                  ^^^
-        --                  prefix (We'd remove everything not starting with `asy`,
-        --                  so we'd eliminate the `plenary.async` result
-        --
-        -- `adjust_start_col` is used to prefer the language server boundary.
-        --
-        local encoding = client.offset_encoding
-        local candidates = get_items(result)
-        local curstartbyte = adjust_start_col(pos[1], line, candidates, encoding)
-        if startbyte == nil then
-          startbyte = curstartbyte
-        elseif curstartbyte ~= nil and curstartbyte ~= startbyte then
-          startbyte = word_boundary
-        end
-        local prefix = startbyte and line:sub(startbyte + 1) or line_to_cursor:sub(word_boundary)
-        local matches = M._lsp_to_complete_items(result, prefix)
+        local matches
+        matches, server_start_boundary = M._convert_results(
+          line,
+          lnum,
+          client_start_boundary,
+          server_start_boundary,
+          result,
+          client.offset_encoding
+        )
         vim.list_extend(items, matches)
       end
       remaining = remaining - 1
