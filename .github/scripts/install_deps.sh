@@ -12,7 +12,7 @@ done
 os=$(uname -s)
 if [[ $os == Linux ]]; then
   sudo apt-get update
-  sudo apt-get install -y attr build-essential cmake curl gettext libattr1-dev ninja-build unzip
+  sudo apt-get install -y build-essential cmake curl gettext ninja-build unzip
 
   if [[ $CC == clang ]]; then
     DEFAULT_CLANG_VERSION=$(echo |  clang -dM -E - | grep __clang_major | awk '{print $3}')
@@ -30,7 +30,7 @@ if [[ $os == Linux ]]; then
   fi
 
   if [[ -n $TEST ]]; then
-    sudo apt-get install -y locales-all cpanminus
+    sudo apt-get install -y locales-all cpanminus attr libattr1-dev
   fi
 elif [[ $os == Darwin ]]; then
   brew update --quiet

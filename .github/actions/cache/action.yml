@@ -3,6 +3,9 @@ description: "This action caches neovim dependencies"
 runs:
   using: "composite"
   steps:
+    - run: echo "CACHE_KEY=${{ github.workflow }}" >> $GITHUB_ENV
+      shell: bash
+
     - run: echo "CACHE_KEY=${{ github.job }}" >> $GITHUB_ENV
       shell: bash
 
