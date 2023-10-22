@@ -745,8 +745,20 @@ function M.code_action(options)
     context.triggerKind = vim.lsp.protocol.CodeActionTriggerKind.Invoked
   end
   if not context.diagnostics then
-    local bufnr = api.nvim_get_current_buf()
-    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
+    context.diagnostics = {}
+    local diagnostics = vim.lsp.diagnostic._get(0)
+    local cursor = api.nvim_win_get_cursor(0)
+    local row, col = cursor[1] - 1, cursor[2]
+    for i, v in ipairs(diagnostics) do
+      if
+        v.range.start.line <= row
+        and v.range.start.character <= col
+        and v.range['end'].line >= row
+        and v.range['end'].character >= col
+      then
+        table.insert(context.diagnostics, v)
+      end
+    end
   end
   local params
   local mode = api.nvim_get_mode().mode

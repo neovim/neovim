@@ -22,9 +22,10 @@ local function get_client_id(client_id)
 end
 
 ---@param severity lsp.DiagnosticSeverity
+---@return DiagnosticSeverity
 local function severity_lsp_to_vim(severity)
   if type(severity) == 'string' then
-    severity = protocol.DiagnosticSeverity[severity]
+    severity = protocol.DiagnosticSeverity[severity] ---@type DiagnosticSeverity
   end
   return severity
 end
@@ -365,7 +366,9 @@ end
 ---@return table Table with map of line number to list of diagnostics.
 ---              Structured: { [1] = {...}, [5] = {.... } }
 ---@private
+---@deprecated
 function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
+  vim.deprecate('vim.lsp.diagnostic.get_line_diagnostics()', nil, '0.11')
   opts = opts or {}
   if opts.severity then
     opts.severity = severity_lsp_to_vim(opts.severity)
@@ -384,6 +387,37 @@ function M.get_line_diagnostics(bufnr, line_nr, opts, client_id)
   opts.lnum = line_nr
 
   return diagnostic_vim_to_lsp(vim.diagnostic.get(bufnr, opts))
+end
+
+---@class vim.lsp.diagnostic.GetOpts
+---@field client_id? integer
+---@field lnum? integer
+---@field severity? lsp.DiagnosticSeverity
+---@field severity_limit? lsp.DiagnosticSeverity
+
+--- Get LSP diagnostics.
+---
+--- This function is meant for internal use by the LSP implementation only.
+---
+--- @param bufnr number Buffer number.
+--- @param opts? vim.lsp.diagnostic.GetOpts Options.
+--- @return lsp.Diagnostic[]
+--- @private
+function M._get(bufnr, opts)
+  local opts_ = {}
+  if opts and opts.severity then
+    opts_.severity = severity_lsp_to_vim(opts.severity)
+  elseif opts and opts.severity_limit then
+    opts_.severity = { min = severity_lsp_to_vim(opts.severity_limit) }
+  end
+
+  if opts and opts.client_id then
+    opts_.namespace = M.get_namespace(opts_.client_id, false)
+  end
+
+  opts_.lnum = opts and opts.lnum or nil
+
+  return diagnostic_vim_to_lsp(vim.diagnostic.get(bufnr, opts_))
 end
 
 --- Clear diagnostics from pull based clients
