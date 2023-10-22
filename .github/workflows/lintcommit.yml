@@ -18,7 +18,7 @@ jobs:
       - uses: ./.github/actions/cache
       - name: Build
         run: |
-          cmake -S cmake.deps -B .deps -G Ninja
+          cmake -S cmake.deps --preset ci
           cmake --build .deps
           cmake --preset ci
           cmake --build build

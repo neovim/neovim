@@ -36,9 +36,8 @@ jobs:
       CC: clang
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: ./.github/scripts/install_deps.sh
+      - run: ./.github/scripts/install_deps.sh
+      - uses: ./.github/actions/cache
 
       - name: Install stylua
         run: |
@@ -46,8 +45,6 @@ jobs:
           wget --directory-prefix="$BIN_DIR" "$URL"
           (cd "$BIN_DIR"; unzip stylua*.zip)
           echo "$BIN_DIR" >> $GITHUB_PATH
-
-      - uses: ./.github/actions/cache
 
       - name: Build third-party deps
         run: |
@@ -96,9 +93,9 @@ jobs:
       - uses: ./.github/actions/cache
       - name: Build third-party deps
         run: |
-          cmake -S cmake.deps -B .deps -G Ninja
+          cmake -S cmake.deps --preset ci
           cmake --build .deps
-          cmake -B build -G Ninja
+          cmake --preset ci
       - run: cmake --build build --target clang-analyzer
 
   posix:
@@ -128,6 +125,8 @@ jobs:
       CC: ${{ matrix.build.cc }}
     steps:
       - uses: actions/checkout@v4
+      - run: ./.github/scripts/install_deps.sh --test
+      - uses: ./.github/actions/cache
 
       - name: Set up environment
         run: |
@@ -136,9 +135,6 @@ jobs:
 
       - name: Create log dir
         run: mkdir -p "$LOG_DIR"
-
-      - name: Install dependencies
-        run: ./.github/scripts/install_deps.sh --test
 
       - if: ${{ matrix.test != 'unittest' }}
         name: Set up interpreter packages
@@ -157,11 +153,9 @@ jobs:
           sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
           perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
 
-      - uses: ./.github/actions/cache
-
       - name: Build third-party deps
         run: |
-          cmake -S cmake.deps -B .deps -G Ninja ${{ matrix.build.deps_flags }}
+          cmake -S cmake.deps --preset ci ${{ matrix.build.deps_flags }}
           cmake --build .deps
 
       - name: Build
@@ -281,10 +275,7 @@ jobs:
       CC: gcc
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: ./.github/scripts/install_deps.sh
-
+      - run: ./.github/scripts/install_deps.sh
       - uses: ./.github/actions/cache
 
       - name: Build third-party deps
@@ -293,7 +284,7 @@ jobs:
           cmake --build .deps
 
       - name: Configure
-        run: cmake -B build -G "Ninja Multi-Config" -D CI_BUILD=ON
+        run: cmake --preset ci -G "Ninja Multi-Config"
 
       - name: Release
         run: cmake --build build --config Release
