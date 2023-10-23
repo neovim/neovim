@@ -90,6 +90,18 @@ local function compute_tabstop_range(snippet, placeholder)
   return { start_row, start_col, end_row, end_col }
 end
 
+--- Returns the range spanned by the respective extmark.
+---
+--- @param bufnr integer
+--- @param extmark_id integer
+--- @return Range4
+local function get_extmark_range(bufnr, extmark_id)
+  local mark = vim.api.nvim_buf_get_extmark_by_id(bufnr, snippet_ns, extmark_id, { details = true })
+
+  --- @diagnostic disable-next-line: undefined-field
+  return { mark[1], mark[2], mark[3].end_row, mark[3].end_col }
+end
+
 --- @class vim.snippet.Tabstop
 --- @field extmark_id integer
 --- @field index integer
@@ -125,11 +137,7 @@ end
 --- @package
 --- @return Range4
 function Tabstop:get_range()
-  local mark =
-    vim.api.nvim_buf_get_extmark_by_id(self.bufnr, snippet_ns, self.extmark_id, { details = true })
-
-  --- @diagnostic disable-next-line: undefined-field
-  return { mark[1], mark[2], mark[3].end_row, mark[3].end_col }
+  return get_extmark_range(self.bufnr, self.extmark_id)
 end
 
 --- Returns the text spanned by the tabstop.
@@ -155,6 +163,7 @@ end
 
 --- @class vim.snippet.Session
 --- @field bufnr integer
+--- @field extmark_id integer
 --- @field tabstops table<integer, vim.snippet.Tabstop[]>
 --- @field current_tabstop vim.snippet.Tabstop
 local Session = {}
@@ -162,29 +171,27 @@ local Session = {}
 --- Creates a new snippet session in the current buffer.
 ---
 --- @package
+--- @param bufnr integer
+--- @param snippet_extmark integer
+--- @param tabstop_ranges table<integer, Range4[]>
 --- @return vim.snippet.Session
-function Session.new()
-  local bufnr = vim.api.nvim_get_current_buf()
+function Session.new(bufnr, snippet_extmark, tabstop_ranges)
   local self = setmetatable({
     bufnr = bufnr,
+    extmark_id = snippet_extmark,
     tabstops = {},
     current_tabstop = Tabstop.new(0, bufnr, { 0, 0, 0, 0 }),
   }, { __index = Session })
 
-  return self
-end
-
---- Creates the session tabstops.
----
---- @package
---- @param tabstop_ranges table<integer, Range4[]>
-function Session:set_tabstops(tabstop_ranges)
+  -- Create the tabstops.
   for index, ranges in pairs(tabstop_ranges) do
     for _, range in ipairs(ranges) do
       self.tabstops[index] = self.tabstops[index] or {}
       table.insert(self.tabstops[index], Tabstop.new(index, self.bufnr, range))
     end
   end
+
+  return self
 end
 
 --- Returns the destination tabstop index when jumping in the given direction.
@@ -304,6 +311,15 @@ local function setup_autocmds(bufnr)
     desc = 'Update active tabstops when buffer text changes',
     buffer = bufnr,
     callback = function()
+      -- Check that the snippet hasn't been deleted.
+      local snippet_range = get_extmark_range(M._session.bufnr, M._session.extmark_id)
+      if
+        (snippet_range[1] == snippet_range[3] and snippet_range[2] == snippet_range[4])
+        or snippet_range[3] + 1 > vim.fn.line('$')
+      then
+        M.exit()
+      end
+
       if not M.active() then
         return true
       end
@@ -330,8 +346,6 @@ end
 function M.expand(input)
   local snippet = G.parse(input)
   local snippet_text = {}
-
-  M._session = Session.new()
 
   -- Get the placeholders we should use for each tabstop index.
   --- @type table<integer, string>
@@ -427,19 +441,21 @@ function M.expand(input)
     add_tabstop(0)
   end
 
-  -- Insert the snippet text.
-  local cursor_row, cursor_col = cursor_pos()
-  vim.api.nvim_buf_set_text(
-    M._session.bufnr,
-    cursor_row,
-    cursor_col,
-    cursor_row,
-    cursor_col,
-    text_to_lines(snippet_text)
-  )
+  snippet_text = text_to_lines(snippet_text)
 
-  -- Create the tabstops.
-  M._session:set_tabstops(tabstop_ranges)
+  -- Insert the snippet text.
+  local bufnr = vim.api.nvim_get_current_buf()
+  local cursor_row, cursor_col = cursor_pos()
+  vim.api.nvim_buf_set_text(bufnr, cursor_row, cursor_col, cursor_row, cursor_col, snippet_text)
+
+  -- Create the session.
+  local snippet_extmark = vim.api.nvim_buf_set_extmark(bufnr, snippet_ns, cursor_row, cursor_col, {
+    end_line = cursor_row + #snippet_text - 1,
+    end_col = #snippet_text > 1 and #snippet_text[#snippet_text] or cursor_col + #snippet_text[1],
+    right_gravity = false,
+    end_right_gravity = true,
+  })
+  M._session = Session.new(bufnr, snippet_extmark, tabstop_ranges)
 
   -- Jump to the first tabstop.
   M.jump(1)
