@@ -2845,7 +2845,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
         for (int j = 0; j < dp->df_count[i]; j++) {
           // for each line in that buffer
           // get a pointer to the line
-          char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j, false);
+          char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j);
           while (*diffline != '\0') { diffline++; charcount++; }
           charcount++;
         }
@@ -2864,7 +2864,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
       // if the character count is not null
       size_t hlresult_line_offset = 0;
       // get the offset for the highlight of this line
-      *diffchars_line_len = strlen(ml_get_buf(curtab->tp_diffbuf[idx], dp->df_lnum[idx] + off, false));
+      *diffchars_line_len = strlen(ml_get_buf(curtab->tp_diffbuf[idx], dp->df_lnum[idx] + off));
       hlresult_line_offset = get_buffer_position(idx, dp, off);
       if (*(dp->charmatchp + hlresult_line_offset) == -1) {
         diff_T dp_tmp;
@@ -2884,7 +2884,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
             if (curtab->tp_diffbuf[i] != NULL) {
               // get the offset in the original charmatchp
               if (off < dp->df_count[i]) {
-                size_t length = strlen(ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + off, false)) + 1;
+                size_t length = strlen(ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + off)) + 1;
                 size_t k = get_buffer_position(i, dp, off);
                 for (size_t m = 0; m < length; m++) {
                   int val = dp_tmp.charmatchp[p++];
@@ -3755,7 +3755,7 @@ static size_t get_buffer_position(const int idx, diff_T *dp, linenr_T offset) {
   for (int i = 0; i < DB_COUNT; i++) {
     if ((curtab->tp_diffbuf[i] != NULL)) {
       for (int j = 0; j < ((i == idx) ? offset : dp->df_count[i]); j++) {
-        char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j, false);
+        char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j);
         while (*diffline != '\0') { diffline++; comparison_mem_offset++; }
         comparison_mem_offset++; // count the '\0' character as the newline marker for each line
       }
