@@ -161,6 +161,12 @@ configure_file (
   "${PROJECT_BINARY_DIR}/cmake.config/auto/config.h"
   )
 
+# Prevent double space in --version output if CMAKE_C_FLAGS is empty
+set(C_FLAGS_VERSION_OUTPUT ${CMAKE_C_FLAGS})
+if(C_FLAGS_VERSION_OUTPUT)
+  string(PREPEND C_FLAGS_VERSION_OUTPUT " ")
+endif()
+
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.15)
   configure_file(versiondef.h.in auto/versiondef.h.gen)
 else()
