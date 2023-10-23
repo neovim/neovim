@@ -2034,6 +2034,61 @@ describe('float window', function()
       eq('center', footer_pos)
     end)
 
+    it('center aligned title longer than window width #25746', function()
+      local buf = meths.create_buf(false, false)
+      meths.buf_set_lines(buf, 0, -1, true, {' halloj! ',
+                                             ' BORDAA  '})
+      local win = meths.open_win(buf, false, {
+        relative='editor', width=9, height=2, row=2, col=5, border="double",
+        title = "abcdefghijklmnopqrstuvwxyz",title_pos = "center",
+      })
+
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [3:----------------------------------------]|
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+                                                  |
+        ## grid 4
+          {5:╔}{11:abcdefghi}{5:╗}|
+          {5:║}{1: halloj! }{5:║}|
+          {5:║}{1: BORDAA  }{5:║}|
+          {5:╚═════════╝}|
+        ]], float_pos={
+          [4] = { { id = 1001 }, "NW", 1, 2, 5, true }
+        }, win_viewport={
+          [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = {id = 1001}, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 2, sum_scroll_delta = 0};
+        }}
+      else
+        screen:expect{grid=[[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{5:╔}{11:abcdefghi}{5:╗}{0:                        }|
+          {0:~    }{5:║}{1: halloj! }{5:║}{0:                        }|
+          {0:~    }{5:║}{1: BORDAA  }{5:║}{0:                        }|
+          {0:~    }{5:╚═════════╝}{0:                        }|
+                                                  |
+        ]]}
+      end
+
+      meths.win_close(win, false)
+      assert_alive()
+    end)
+
     it('border with title', function()
       local buf = meths.create_buf(false, false)
       meths.buf_set_lines(buf, 0, -1, true, {' halloj! ',

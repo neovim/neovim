@@ -735,9 +735,9 @@ int win_get_bordertext_col(int total_col, int text_width, AlignTextPos align)
   case kAlignLeft:
     return 1;
   case kAlignCenter:
-    return (total_col - text_width) / 2 + 1;
+    return MAX((total_col - text_width) / 2 + 1, 1);
   case kAlignRight:
-    return total_col - text_width + 1;
+    return MAX(total_col - text_width + 1, 1);
   }
   UNREACHABLE;
 }
