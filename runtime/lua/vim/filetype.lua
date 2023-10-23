@@ -282,7 +282,7 @@ local extension = {
   atg = 'coco',
   recipe = 'conaryrecipe',
   hook = function(path, bufnr)
-    return M._getline(bufnr, 1) == '[Trigger]' and 'conf' or nil
+    return M._getline(bufnr, 1) == '[Trigger]' and 'confini' or nil
   end,
   nmconnection = 'confini',
   mklx = 'context',
