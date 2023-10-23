@@ -111,9 +111,7 @@ static int count_n_matched_chars(const char **sp, const size_t n)
 
 void fastforward_buf_to_lnum(const char **s, linenr_T lnum)
 {
-  // TODO: figure out what this should be
-  for (int i = 0; i < lnum - 1; i++) {
-  // for (long i = 0; i < lnum; i++) {
+  for (long i = 0; i < lnum; i++) {
     *s = strchr(*s, '\n');
     if (!*s) {
       return;
