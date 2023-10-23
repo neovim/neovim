@@ -1227,6 +1227,31 @@ w4 w5
        :set diffopt+=worddiff:30                                                                           |
         ]])
       end)
+      it('display results, with ignore white', function()
+        feed(':set diffopt+=worddiff:20<cr>:set diffopt+=iwhiteall<cr>')
+        screen:expect([[
+       {1:  }{10:  1 }{9:^w1 w2                                      }│{1:  }{10:  1 }{8:wA}{9: }{8:w1}{9: }{8:wB}{9: w1 w2 }{8:wC}{9: w3 w4                     }|
+       {1:  }{10:  2 }{8:w2}{9: w3                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  3 }{9:w4 }{8:w5}{9:                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  4 }                                           │{1:  }{10:  2 }                                            |
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=iwhiteall                                                                             |
+        ]])
+      end)
     end)
 
     describe('when the single line is compared, cross-line', function()
@@ -1255,6 +1280,31 @@ w4 w5
        :set diffopt+=worddiff:20                                                                           |
         ]])
       end)
+      it('display results, with ignore white', function()
+        feed(':set diffopt+=worddiff:15<cr>:set diffopt+=iwhiteall<cr>')
+        screen:expect([[
+       {1:  }{10:  1 }{9:^w1 w2                                      }│{1:  }{10:  1 }{8:wA}{9: }{8:w1}{9: }{8:wB}{9: w1 w2 }{8:wC}{9: }{8:w3}{9: }{8:w4}{9:                     }|
+       {1:  }{10:  2 }{4:w2 w3                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  3 }{4:w4 w5                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+       {1:  }{10:  4 }                                           │{1:  }{10:  2 }                                            |
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {6:~                                                }│{6:~                                                 }|
+       {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+       :set diffopt+=iwhiteall                                                                             |
+        ]])
+      end)
     end)
     describe('when the diff hunk and the single line are too long to run chardiff', function()
       it('display results', function()
@@ -1280,6 +1330,31 @@ w4 w5
        {6:~                                                }│{6:~                                                 }|
        {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
        :set diffopt+=worddiff:10                                                                           |
+        ]])
+      end)
+      it('display results, with ignore white', function()
+        feed(':set diffopt+=worddiff:10<cr>:set diffopt+=iwhiteall<cr>')
+        screen:expect([[
+         {1:  }{10:  1 }{9:^w}{8:1 w2}{9:                                      }│{1:  }{10:  1 }{9:w}{8:A w1 wB w1 w2 wC w3 w4}{9:                     }|
+         {1:  }{10:  2 }{4:w2 w3                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+         {1:  }{10:  3 }{4:w4 w5                                      }│{1:  }{10:    }{2:--------------------------------------------}|
+         {1:  }{10:  4 }                                           │{1:  }{10:  2 }                                            |
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {6:~                                                }│{6:~                                                 }|
+         {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+         :set diffopt+=iwhiteall                                                                             |
         ]])
       end)
     end)
