@@ -325,6 +325,7 @@ func s:GetFilenameChecks() abort
     \ 'j': ['file.ijs'],
     \ 'jal': ['file.jal', 'file.JAL'],
     \ 'jam': ['file.jpl', 'file.jpr', 'JAM-file.file', 'JAM.file', 'Prl-file.file', 'Prl.file'],
+    \ 'janet': ['file.janet'],
     \ 'java': ['file.java', 'file.jav'],
     \ 'javacc': ['file.jj', 'file.jjt'],
     \ 'javascript': ['file.js', 'file.jsm', 'file.javascript', 'file.es', 'file.mjs', 'file.cjs'],
@@ -864,6 +865,7 @@ let s:script_checks = {
       \ 'crystal': [['#!/path/crystal']],
       \ 'rexx': [['#!/path/rexx'],
       \          ['#!/path/regina']],
+      \ 'janet': [['#!/path/janet']],
       \ }
 
 " Various forms of "env" optional arguments.
