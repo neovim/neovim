@@ -536,6 +536,7 @@ local extension = {
   jal = 'jal',
   jpr = 'jam',
   jpl = 'jam',
+  janet = 'janet',
   jav = 'java',
   java = 'java',
   jj = 'javacc',

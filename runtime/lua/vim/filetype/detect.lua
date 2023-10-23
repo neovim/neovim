@@ -1652,8 +1652,9 @@ local patterns_hashbang = {
   ['icon\\>'] = { 'icon', { vim_regex = true } },
   guile = 'scheme',
   ['nix%-shell'] = 'nix',
-  ['crystal\\>'] = { 'crystal', { vim_regex = true } },
+  ['^crystal\\>'] = { 'crystal', { vim_regex = true } },
   ['^\\%(rexx\\|regina\\)\\>'] = { 'rexx', { vim_regex = true } },
+  ['^janet\\>'] = { 'janet', { vim_regex = true } },
 }
 
 ---@private
