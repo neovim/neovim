@@ -1,15 +1,13 @@
 # Returns a list of all files that has been changed in current branch compared
 # to master branch. This includes unstaged, staged and committed files.
 function(get_changed_files outvar)
-  set(default_branch master)
-
   execute_process(
     COMMAND git branch --show-current
     OUTPUT_VARIABLE current_branch
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   execute_process(
-    COMMAND git merge-base ${default_branch} ${current_branch}
+    COMMAND git merge-base master HEAD
     OUTPUT_VARIABLE ancestor_commit
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
