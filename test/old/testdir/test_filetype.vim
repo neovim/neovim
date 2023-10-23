@@ -1388,12 +1388,12 @@ func Test_hook_file()
 
   call writefile(['[Trigger]', 'this is pacman config'], 'Xfile.hook', 'D')
   split Xfile.hook
-  call assert_equal('conf', &filetype)
+  call assert_equal('confini', &filetype)
   bwipe!
 
   call writefile(['not pacman'], 'Xfile.hook')
   split Xfile.hook
-  call assert_notequal('conf', &filetype)
+  call assert_notequal('confini', &filetype)
   bwipe!
 
   filetype off
