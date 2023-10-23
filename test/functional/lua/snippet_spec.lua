@@ -48,6 +48,10 @@ describe('vim.snippet', function()
     )
   end)
 
+  it('adds indentation based on the start of snippet lines', function()
+    test_success({ 'if $1 then', '  $0', 'end' }, { 'if  then', '  ', 'end' })
+  end)
+
   it('replaces tabs with spaces when expandtab is set', function()
     test_success(
       { 'function $1($2)', '\t$0', 'end' },
