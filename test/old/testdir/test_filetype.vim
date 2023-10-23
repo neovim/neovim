@@ -267,6 +267,7 @@ func s:GetFilenameChecks() abort
     \ 'gkrellmrc': ['gkrellmrc', 'gkrellmrc_x'],
     \ 'gleam': ['file.gleam'],
     \ 'glsl': ['file.glsl'],
+    \ 'gn': ['file.gn', 'file.gni'],
     \ 'gnash': ['gnashrc', '.gnashrc', 'gnashpluginrc', '.gnashpluginrc'],
     \ 'gnuplot': ['file.gpi', '.gnuplot'],
     \ 'go': ['file.go'],
