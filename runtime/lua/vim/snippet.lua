@@ -278,13 +278,26 @@ local function setup_autocmds(bufnr)
     desc = 'Update snippet state when the cursor moves',
     buffer = bufnr,
     callback = function()
+      local cursor_row, cursor_col = cursor_pos()
+
+      -- The cursor left the snippet region.
+      local snippet_range = get_extmark_range(bufnr, M._session.extmark_id)
+      if
+        cursor_row < snippet_range[1]
+        or (cursor_row == snippet_range[1] and cursor_col < snippet_range[2])
+        or cursor_row > snippet_range[3]
+        or (cursor_row == snippet_range[3] and cursor_col > snippet_range[4])
+      then
+        M.exit()
+        return true
+      end
+
       -- Just update the tabstop in insert and select modes.
       if not vim.fn.mode():match('^[isS]') then
         return
       end
 
       -- Update the current tabstop to be the one containing the cursor.
-      local cursor_row, cursor_col = cursor_pos()
       for tabstop_index, tabstops in pairs(M._session.tabstops) do
         for _, tabstop in ipairs(tabstops) do
           local range = tabstop:get_range()
