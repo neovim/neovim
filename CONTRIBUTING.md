@@ -8,7 +8,7 @@ If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
 - Try a [complexity:low] issue.
-- Fix bugs found by [Clang](#clang-scan-build) or [Coverity](#coverity).
+- Fix bugs found by [Coverity](#coverity).
 - [Merge a Vim patch] (requires strong familiarity with Vim)
   - NOTE: read the above link before sending improvements to "runtime files" (anything in `runtime/`).
     - Vimscript and documentation files are (mostly) maintained by [Vim](https://github.com/vim/vim), not Nvim.
@@ -131,21 +131,6 @@ Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Acti
 - CI for FreeBSD runs on [Cirrus CI].
 - To see CI results faster in your PR, you can temporarily set `TEST_FILE` in
   [test.yml](https://github.com/neovim/neovim/blob/e35b9020b16985eee26e942f9a3f6b045bc3809b/.github/workflows/test.yml#L29).
-
-### Clang scan-build
-
-View the [Clang report] to see potential bugs found by the Clang
-[scan-build](https://clang-analyzer.llvm.org/scan-build.html) analyzer.
-
-- Search the Neovim commit history to find examples:
-  ```bash
-  git log --oneline --no-merges --grep clang
-  ```
-- To verify a fix locally, run `scan-build` like this:
-  ```bash
-  rm -rf build/
-  scan-build --use-analyzer=/usr/bin/clang make
-  ```
 
 ### Coverity
 
