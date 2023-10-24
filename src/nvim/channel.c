@@ -786,9 +786,8 @@ void channel_terminal_open(buf_T *buf, Channel *chan)
   topts.resize_cb = term_resize;
   topts.close_cb = term_close;
   buf->b_p_channel = (OptInt)chan->id;  // 'channel' option
-  Terminal *term = terminal_open(buf, topts);
-  chan->term = term;
   channel_incref(chan);
+  terminal_open(&chan->term, buf, topts);
 }
 
 static void term_write(char *buf, size_t size, void *data)

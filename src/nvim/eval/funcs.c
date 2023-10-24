@@ -8637,8 +8637,10 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                INTEGER_OBJ(pid), false, false, &err);
   api_clear_error(&err);
 
+  channel_incref(chan);
   channel_terminal_open(curbuf, chan);
   channel_create_event(chan, NULL);
+  channel_decref(chan);
 }
 
 /// "timer_info([timer])" function
