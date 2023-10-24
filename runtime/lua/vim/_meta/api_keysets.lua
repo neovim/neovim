@@ -227,6 +227,7 @@ error('Cannot require a meta file')
 --- @field virt_text_hide? boolean
 --- @field hl_eol? boolean
 --- @field hl_mode? string
+--- @field invalidate? boolean
 --- @field ephemeral? boolean
 --- @field priority? integer
 --- @field right_gravity? boolean
@@ -243,6 +244,7 @@ error('Cannot require a meta file')
 --- @field conceal? string
 --- @field spell? boolean
 --- @field ui_watched? boolean
+--- @field undo_restore? boolean
 
 --- @class vim.api.keyset.user_command
 --- @field addr? any

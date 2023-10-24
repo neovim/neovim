@@ -56,11 +56,12 @@
 /// must not be used during iteration!
 void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col, int end_row,
                  colnr_T end_col, Decoration *decor, bool right_gravity, bool end_right_gravity,
-                 bool no_undo, Error *err)
+                 bool no_undo, bool invalidate, Error *err)
 {
   uint32_t *ns = map_put_ref(uint32_t, uint32_t)(buf->b_extmark_ns, ns_id, NULL, NULL);
   uint32_t id = idp ? *idp : 0;
   bool decor_full = false;
+  bool hl_eol = false;
 
   uint8_t decor_level = kDecorLevelNone;  // no decor
   if (decor) {
@@ -74,10 +75,12 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
       decor = xmemdup(decor, sizeof *decor);
     }
     decor_level = kDecorLevelVisible;  // decor affects redraw
+    hl_eol = decor->hl_eol;
     if (kv_size(decor->virt_lines)) {
       decor_level = kDecorLevelVirtLine;  // decor affects horizontal size
     }
   }
+  uint16_t flags = mt_flags(right_gravity, hl_eol, no_undo, invalidate, decor_level);
 
   if (id == 0) {
     id = ++*ns;
@@ -99,25 +102,20 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
         assert(marktree_itr_valid(itr));
         if (old_mark.pos.row == row && old_mark.pos.col == col) {
           if (marktree_decor_level(old_mark) > kDecorLevelNone) {
-            decor_remove(buf, row, row, old_mark.decor_full);
+            decor_remove(buf, row, row, old_mark.decor_full, false);
             old_mark.decor_full = NULL;
           }
-          old_mark.flags = 0;
+          old_mark.flags = flags;
           if (decor_full) {
             old_mark.decor_full = decor;
           } else if (decor) {
             old_mark.hl_id = decor->hl_id;
-            // Workaround: the gcc compiler of functionaltest-lua build
-            // apparently incapable of handling basic integer constants.
-            // This can be underanged as soon as we bump minimal gcc version.
-            old_mark.flags = (uint16_t)(old_mark.flags
-                                        | (decor->hl_eol ? (uint16_t)MT_FLAG_HL_EOL : (uint16_t)0));
             old_mark.priority = decor->priority;
           }
           marktree_revise(buf->b_marktree, itr, decor_level, old_mark);
           goto revised;
         }
-        decor_remove(buf, old_mark.pos.row, old_mark.pos.row, old_mark.decor_full);
+        decor_remove(buf, old_mark.pos.row, old_mark.pos.row, old_mark.decor_full, false);
         marktree_del_itr(buf->b_marktree, itr, false);
       }
     } else {
@@ -125,37 +123,18 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
     }
   }
 
-  MTKey mark = { { row, col }, ns_id, id, 0,
-                 mt_flags(right_gravity, decor_level, no_undo), 0, NULL };
+  MTKey mark = { { row, col }, ns_id, id, 0, flags, 0, NULL };
   if (decor_full) {
     mark.decor_full = decor;
   } else if (decor) {
     mark.hl_id = decor->hl_id;
-    // workaround: see above
-    mark.flags = (uint16_t)(mark.flags | (decor->hl_eol ? (uint16_t)MT_FLAG_HL_EOL : (uint16_t)0));
     mark.priority = decor->priority;
   }
 
   marktree_put(buf->b_marktree, mark, end_row, end_col, end_right_gravity);
 
 revised:
-  if (decor) {
-    if (kv_size(decor->virt_text) && decor->virt_text_pos == kVTInline) {
-      buf->b_virt_text_inline++;
-    }
-    if (kv_size(decor->virt_lines)) {
-      buf->b_virt_line_blocks++;
-    }
-    if (decor_has_sign(decor)) {
-      buf->b_signs++;
-    }
-    if (decor->sign_text) {
-      buf->b_signs_with_text++;
-      // TODO(lewis6991): smarter invalidation
-      buf_signcols_add_check(buf, NULL);
-    }
-    decor_redraw(buf, row, end_row > -1 ? end_row : row, decor);
-  }
+  decor_add(buf, row, end_row, decor, decor && decor->hl_id);
 
   if (idp) {
     *idp = id;
@@ -215,7 +194,7 @@ linenr_T extmark_del(buf_T *buf, MarkTreeIter *itr, MTKey key, bool restore)
   }
 
   if (marktree_decor_level(key) > kDecorLevelNone) {
-    decor_remove(buf, key.pos.row, key2.pos.row, key.decor_full);
+    decor_remove(buf, key.pos.row, key2.pos.row, key.decor_full, false);
   }
 
   // TODO(bfredl): delete it from current undo header, opportunistically?
@@ -348,6 +327,8 @@ static void push_mark(ExtmarkInfoArray *array, uint32_t ns_id, ExtmarkType type_
                                    .row = mark.pos.row, .col = mark.pos.col,
                                    .end_row = end_pos.row,
                                    .end_col = end_pos.col,
+                                   .invalidate = mt_invalidate(mark),
+                                   .invalid = mt_invalid(mark),
                                    .right_gravity = mt_right(mark),
                                    .end_right_gravity = end_right,
                                    .no_undo = mt_no_undo(mark),
@@ -357,7 +338,7 @@ static void push_mark(ExtmarkInfoArray *array, uint32_t ns_id, ExtmarkType type_
 /// Lookup an extmark by id
 ExtmarkInfo extmark_from_id(buf_T *buf, uint32_t ns_id, uint32_t id)
 {
-  ExtmarkInfo ret = { 0, 0, -1, -1, -1, -1, false, false, false, DECORATION_INIT };
+  ExtmarkInfo ret = EXTMARKINFO_INIT;
   MTKey mark = marktree_lookup_ns(buf->b_marktree, ns_id, id, false, NULL);
   if (!mark.id) {
     return ret;
@@ -374,6 +355,8 @@ ExtmarkInfo extmark_from_id(buf_T *buf, uint32_t ns_id, uint32_t id)
   ret.right_gravity = mt_right(mark);
   ret.end_right_gravity = mt_right(end);
   ret.no_undo = mt_no_undo(mark);
+  ret.invalidate = mt_invalidate(mark);
+  ret.invalid = mt_invalid(mark);
   ret.decor = get_decor(mark);
 
   return ret;
@@ -408,20 +391,17 @@ void extmark_free_all(buf_T *buf)
   *buf->b_extmark_ns = (Map(uint32_t, uint32_t)) MAP_INIT;
 }
 
-/// copy extmarks data between range
+/// invalidate extmarks between range and copy to undo header
 ///
-/// useful when we cannot simply reverse the operation. This will do nothing on
-/// redo, enforces correct position when undo.
-void u_extmark_copy(buf_T *buf, int l_row, colnr_T l_col, int u_row, colnr_T u_col)
+/// copying is useful when we cannot simply reverse the operation. This will do
+/// nothing on redo, enforces correct position when undo.
+void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, colnr_T u_col,
+                           ExtmarkOp op)
 {
   u_header_T *uhp = u_force_get_undo_header(buf);
-  if (!uhp) {
-    return;
-  }
-
+  MarkTreeIter itr[1] = { 0 };
   ExtmarkUndoObject undo;
 
-  MarkTreeIter itr[1] = { 0 };
   marktree_itr_get(buf->b_marktree, (int32_t)l_row, l_col, itr);
   while (true) {
     MTKey mark = marktree_itr_current(itr);
@@ -431,9 +411,33 @@ void u_extmark_copy(buf_T *buf, int l_row, colnr_T l_col, int u_row, colnr_T u_c
       break;
     }
 
-    if (!mt_no_undo(mark)) {
+    bool invalidated = false;
+    // Invalidate/delete mark
+    if (!mt_invalid(mark) && mt_invalidate(mark) && !mt_end(mark)) {
+      MTPos endpos = marktree_get_altpos(buf->b_marktree, mark, NULL);
+      if (endpos.row < 0) {
+        endpos = mark.pos;
+      }
+      if ((endpos.col <= u_col || (!u_col && endpos.row == mark.pos.row))
+          && mark.pos.col >= l_col
+          && mark.pos.row >= l_row && endpos.row <= u_row - (u_col ? 0 : 1)) {
+        if (mt_no_undo(mark)) {
+          extmark_del(buf, itr, mark, true);
+          continue;
+        } else {
+          invalidated = true;
+          mark.flags |= MT_FLAG_INVALID;
+          marktree_revise(curbuf->b_marktree, itr, marktree_decor_level(mark), mark);
+          decor_remove(buf, mark.pos.row, endpos.row, mark.decor_full, true);
+        }
+      }
+    }
+
+    // Push mark to undo header
+    if (uhp && op == kExtmarkUndo && !mt_no_undo(mark)) {
       ExtmarkSavePos pos;
       pos.mark = mt_lookup_key(mark);
+      pos.invalidated = invalidated;
       pos.old_row = mark.pos.row;
       pos.old_col = mark.pos.col;
       pos.row = -1;
@@ -472,6 +476,14 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
   } else if (undo_info.type == kExtmarkSavePos) {
     ExtmarkSavePos pos = undo_info.data.savepos;
     if (undo) {
+      if (pos.invalidated) {
+        MarkTreeIter itr[1] = { 0 };
+        MTKey mark = marktree_lookup(curbuf->b_marktree, pos.mark, itr);
+        MTKey end = marktree_get_alt(curbuf->b_marktree, mark, NULL);
+        mark.flags &= (uint16_t) ~MT_FLAG_INVALID;
+        marktree_revise(curbuf->b_marktree, itr, marktree_decor_level(mark), mark);
+        decor_add(curbuf, mark.pos.row, end.pos.row, mark.decor_full, mark.hl_id);
+      }
       if (pos.old_row >= 0) {
         extmark_setraw(curbuf, pos.mark, pos.old_row, pos.old_col);
       }
@@ -513,7 +525,6 @@ void extmark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount,
     old_row = line2 - line1 + 1;
     // TODO(bfredl): ej kasta?
     old_byte = (bcount_t)buf->deleted_bytes2;
-
     new_row = amount_after + old_row;
   } else {
     // A region is either deleted (amount == MAXLNUM) or
@@ -579,15 +590,15 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
                           old_row, old_col, old_byte,
                           new_row, new_col, new_byte);
 
-  if (undo == kExtmarkUndo && (old_row > 0 || old_col > 0)) {
-    // Copy marks that would be effected by delete
+  if (old_row > 0 || old_col > 0) {
+    // Copy and invalidate marks that would be effected by delete
     // TODO(bfredl): Be "smart" about gravity here, left-gravity at the
     // beginning and right-gravity at the end need not be preserved.
     // Also be smart about marks that already have been saved (important for
     // merge!)
     int end_row = start_row + old_row;
     int end_col = (old_row ? 0 : start_col) + old_col;
-    u_extmark_copy(buf, start_row, start_col, end_row, end_col);
+    extmark_splice_delete(buf, start_row, start_col, end_row, end_col, undo);
   }
 
   marktree_splice(buf->b_marktree, (int32_t)start_row, start_col,

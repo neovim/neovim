@@ -170,6 +170,13 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
       PUT(dict, "undo_restore", BOOLEAN_OBJ(false));
     }
 
+    if (extmark->invalidate) {
+      PUT(dict, "invalidate", BOOLEAN_OBJ(true));
+    }
+    if (extmark->invalid) {
+      PUT(dict, "invalid", BOOLEAN_OBJ(true));
+    }
+
     const Decoration *decor = &extmark->decor;
     if (decor->hl_id) {
       PUT(dict, "hl_group", hl_group_name(decor->hl_id, hl_name));
@@ -526,6 +533,9 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///               - undo_restore : Restore the exact position of the mark
 ///                   if text around the mark was deleted and then restored by undo.
 ///                   Defaults to true.
+///               - invalidate : boolean that indicates whether to hide the
+///                   extmark if the entirety of its range is deleted. If
+///                   "undo_restore" is false, the extmark is deleted instead.
 ///               - priority: a priority value for the highlight group or sign
 ///                   attribute. For example treesitter highlighting uses a
 ///                   value of 100.
@@ -759,8 +769,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     goto error;
   });
 
-  bool end_right_gravity = opts->end_right_gravity;
-
   size_t len = 0;
 
   if (!HAS_KEY(opts, set_extmark, spell)) {
@@ -823,7 +831,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
   // TODO(bfredl): synergize these two branches even more
   if (opts->ephemeral && decor_state.win && decor_state.win->w_buffer == buf) {
-    decor_add_ephemeral((int)line, (int)col, line2, col2, &decor, (uint64_t)ns_id, id);
+    decor_push_ephemeral((int)line, (int)col, line2, col2, &decor, (uint64_t)ns_id, id);
   } else {
     if (opts->ephemeral) {
       api_set_error(err, kErrorTypeException, "not yet implemented");
@@ -831,8 +839,9 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     }
 
     extmark_set(buf, (uint32_t)ns_id, &id, (int)line, (colnr_T)col, line2, col2,
-                has_decor ? &decor : NULL, right_gravity, end_right_gravity,
-                !GET_BOOL_OR_TRUE(opts, set_extmark, undo_restore), err);
+                has_decor ? &decor : NULL, right_gravity, opts->end_right_gravity,
+                !GET_BOOL_OR_TRUE(opts, set_extmark, undo_restore),
+                opts->invalidate, err);
     if (ERROR_SET(err)) {
       goto error;
     }
@@ -959,7 +968,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
   extmark_set(buf, ns, NULL,
               (int)line, (colnr_T)col_start,
               end_line, (colnr_T)col_end,
-              &decor, true, false, false, NULL);
+              &decor, true, false, false, false, NULL);
   return ns_id;
 }
 
@@ -1010,7 +1019,7 @@ void nvim_buf_clear_namespace(Buffer buffer, Integer ns_id, Integer line_start, 
 /// redrawn buffer. |nvim_buf_set_extmark()| can be called to add marks
 /// on a per-window or per-lines basis. Use the `ephemeral` key to only
 /// use the mark for the current screen redraw (the callback will be called
-/// again for the next redraw ).
+/// again for the next redraw).
 ///
 /// Note: this function should not be called often. Rather, the callbacks
 /// themselves can be used to throttle unneeded callbacks. the `on_start`

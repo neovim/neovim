@@ -25,9 +25,13 @@ typedef struct {
   colnr_T end_col;
   bool right_gravity;
   bool end_right_gravity;
+  bool invalidate;
+  bool invalid;
   bool no_undo;
   Decoration decor;  // TODO(bfredl): CHONKY
 } ExtmarkInfo;
+#define EXTMARKINFO_INIT { 0, 0, -1, -1, -1, -1, false, false, false, false, false, \
+                           DECORATION_INIT };
 
 typedef kvec_t(ExtmarkInfo) ExtmarkInfoArray;
 
@@ -67,6 +71,7 @@ typedef struct {
   colnr_T old_col;
   int row;
   colnr_T col;
+  bool invalidated;
 } ExtmarkSavePos;
 
 typedef enum {
