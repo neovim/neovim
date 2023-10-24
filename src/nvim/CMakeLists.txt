@@ -833,9 +833,12 @@ add_glob_target(
   FLAGS --quiet
   EXCLUDE ${EXCLUDE_CLANG_TIDY})
 
-# These are the same warnings as https://neovim.io/doc/reports/clang/. The
-# checks we ignore are meant to be removed eventually, but we can only do so
-# after we properly fix the problems without breaking CI.
+# The checks we ignore are meant to be removed eventually, but we can only
+# enable each warning after we fix all instances of that specific warning as to
+# not break CI.
+if(APPLE)
+  string(APPEND CLANG_ANALYZER_IGNORE "-clang-analyzer-core.NonNullParamChecker,")
+endif()
 add_glob_target(
   TARGET clang-analyzer
   COMMAND ${CLANG_TIDY_PRG}
@@ -849,6 +852,7 @@ add_glob_target(
   -clang-analyzer-core.uninitialized.Assign,
   -clang-analyzer-optin.performance.Padding,
   -clang-analyzer-security.insecureAPI.strcpy,
+  ${CLANG_ANALYZER_IGNORE}
   '
   EXCLUDE ${EXCLUDE_CLANG_TIDY})
 
