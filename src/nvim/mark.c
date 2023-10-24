@@ -520,7 +520,7 @@ static MarkMoveRes switch_to_mark_buf(fmark_T *fm, bool pcmark_on_switch)
   if (fm->fnum != curbuf->b_fnum) {
     // Switch to another file.
     int getfile_flag = pcmark_on_switch ? GETF_SETMARK : 0;
-    bool res = buflist_getfile(fm->fnum, (linenr_T)1, getfile_flag, false) == OK;
+    bool res = buflist_getfile(fm->fnum, fm->mark.lnum, getfile_flag, false) == OK;
     return res == true ? kMarkSwitchedBuf : kMarkMoveFailed;
   }
   return 0;
