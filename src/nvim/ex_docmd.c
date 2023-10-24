@@ -3379,6 +3379,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         fmark_T *fm = mark_get(curbuf, curwin, NULL, flag, *cmd);
         cmd++;
         if (fm != NULL && fm->fnum != curbuf->handle) {
+          (void)mark_move_to(fm, 0);
           // Jumped to another file.
           lnum = curwin->w_cursor.lnum;
         } else {

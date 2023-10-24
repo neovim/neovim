@@ -48,6 +48,48 @@ describe('jumplist', function()
     feed('<C-O>')
     eq(buf1, funcs.bufnr('%'))
   end)
+
+  it('<C-O> scrolls cursor halfway when switching buffer #25763', function()
+    write_file(fname1, ('foobar\n'):rep(100))
+    write_file(fname2, 'baz')
+
+    local screen = Screen.new(5, 25)
+    screen:attach()
+    command('set number')
+    command('edit '..fname1)
+    feed('35gg')
+    command('edit '..fname2)
+    feed('<C-O>')
+    screen:expect{grid=[[
+      {1: 24 }foobar  |
+      {1: 25 }foobar  |
+      {1: 26 }foobar  |
+      {1: 27 }foobar  |
+      {1: 28 }foobar  |
+      {1: 29 }foobar  |
+      {1: 30 }foobar  |
+      {1: 31 }foobar  |
+      {1: 32 }foobar  |
+      {1: 33 }foobar  |
+      {1: 34 }foobar  |
+      {1: 35 }^foobar  |
+      {1: 36 }foobar  |
+      {1: 37 }foobar  |
+      {1: 38 }foobar  |
+      {1: 39 }foobar  |
+      {1: 40 }foobar  |
+      {1: 41 }foobar  |
+      {1: 42 }foobar  |
+      {1: 43 }foobar  |
+      {1: 44 }foobar  |
+      {1: 45 }foobar  |
+      {1: 46 }foobar  |
+      {1: 47 }foobar  |
+                  |
+    ]], attr_ids={
+      [1] = {foreground = Screen.colors.Brown};
+    }}
+  end)
 end)
 
 describe("jumpoptions=stack behaves like 'tagstack'", function()
