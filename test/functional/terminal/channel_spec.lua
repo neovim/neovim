@@ -8,6 +8,10 @@ local pcall_err = helpers.pcall_err
 local feed = helpers.feed
 local poke_eventloop = helpers.poke_eventloop
 local is_os = helpers.is_os
+local meths = helpers.meths
+local async_meths = helpers.async_meths
+local testprg = helpers.testprg
+local assert_alive = helpers.assert_alive
 
 describe('terminal channel is closed and later released if', function()
   local screen
@@ -115,4 +119,83 @@ it('chansend sends lines to terminal channel in proper order', function()
       any='%[No Name%]'
     }
   end
+end)
+
+describe('no crash when TermOpen autocommand', function()
+  local screen
+
+  before_each(function()
+    clear()
+    meths.set_option_value('shell', testprg('shell-test'), {})
+    command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
+    screen = Screen.new(60, 4)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue};
+    })
+    screen:attach()
+  end)
+
+  it('processes job exit event when using termopen()', function()
+    command([[autocmd TermOpen * call input('')]])
+    async_meths.command('terminal foobar')
+    screen:expect{grid=[[
+                                                                  |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      ^                                                            |
+    ]]}
+    feed('<CR>')
+    screen:expect{grid=[[
+      ^ready $ foobar                                              |
+                                                                  |
+      [Process exited 0]                                          |
+                                                                  |
+    ]]}
+    feed('i<CR>')
+    screen:expect{grid=[[
+      ^                                                            |
+      {0:~                                                           }|
+      {0:~                                                           }|
+                                                                  |
+    ]]}
+    assert_alive()
+  end)
+
+  it('wipes buffer and processes events when using termopen()', function()
+    command([[autocmd TermOpen * bwipe! | call input('')]])
+    async_meths.command('terminal foobar')
+    screen:expect{grid=[[
+                                                                  |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      ^                                                            |
+    ]]}
+    feed('<CR>')
+    screen:expect{grid=[[
+      ^                                                            |
+      {0:~                                                           }|
+      {0:~                                                           }|
+                                                                  |
+    ]]}
+    assert_alive()
+  end)
+
+  it('wipes buffer and processes events when using nvim_open_term()', function()
+    command([[autocmd TermOpen * bwipe! | call input('')]])
+    async_meths.open_term(0, {})
+    screen:expect{grid=[[
+                                                                  |
+      {0:~                                                           }|
+      {0:~                                                           }|
+      ^                                                            |
+    ]]}
+    feed('<CR>')
+    screen:expect{grid=[[
+      ^                                                            |
+      {0:~                                                           }|
+      {0:~                                                           }|
+                                                                  |
+    ]]}
+    assert_alive()
+  end)
 end)
