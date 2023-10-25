@@ -31,43 +31,6 @@ jobs:
       - name: Build universal binary
         run: ./.github/scripts/build_universal_macos.sh
 
-  old-cmake:
-    name: Test oldest supported cmake
-    runs-on: ubuntu-22.04
-    timeout-minutes: 15
-    env:
-      CMAKE_URL: 'https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh'
-      CMAKE_VERSION: '3.10.0'
-    steps:
-      - uses: actions/checkout@v4
-      - run: ./.github/scripts/install_deps.sh
-
-      - name: Set up environment
-        run: echo "$BIN_DIR" >> $GITHUB_PATH
-
-
-      - name: Install minimum required version of cmake
-        run: |
-          curl --retry 5 --silent --show-error --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
-          mkdir -p "$BIN_DIR" /opt/cmake-custom
-          chmod a+x /tmp/cmake-installer.sh
-          /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
-          ln -sfn /opt/cmake-custom/bin/cmake "$BIN_DIR/cmake"
-          cmake_version="$(cmake --version | head -1)"
-          echo "$cmake_version" | grep -qF "cmake version $CMAKE_VERSION" || {
-            echo "Unexpected CMake version: $cmake_version"
-            exit 1
-          }
-
-      - name: Build dependencies
-        run: make deps
-
-      - name: Build
-        run: make CMAKE_FLAGS="-D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX"
-
-      - name: Install
-        run: make install
-
   use-existing-src:
     name: Test USE_EXISTING_SRC_DIR=ON builds with no network access
     runs-on: ubuntu-22.04
@@ -92,3 +55,51 @@ jobs:
 
       - name: Build
         run: make CMAKE_FLAGS="-D CI_BUILD=ON"
+
+  minimum:
+    name: Build with minimum dependency versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CMAKE_URL: 'https://cmake.org/files/v3.10/cmake-3.10.0-Linux-x86_64.sh'
+      CMAKE_VERSION: '3.10.0'
+      LIBUV_URL: https://github.com/libuv/libuv/archive/v1.45.0.tar.gz
+      LIBUV_SHA256: 458e34d5ef7f3c0394a2bfd8c39d757cb1553baa5959b9b4b45df63aa027a228
+      MSGPACK_URL: https://github.com/msgpack/msgpack-c/releases/download/cpp-2.1.2/msgpack-2.1.2.tar.gz
+      MSGPACK_SHA256: 4f855ac251e927a478aa69e4d3087ec2d5eb62e034e3a7897c1d5d2df97b7863
+      UNIBILIUM_URL: https://github.com/neovim/unibilium/archive/v2.1.0.tar.gz
+      UNIBILIUM_SHA256: 05bf97e357615e218126f7ac086e7056a23dc013cfac71643b50a18ad390c7d4
+      LUV_URL: https://github.com/luvit/luv/archive/1.43.0-0.tar.gz
+      LUV_SHA256: a36865f34db029e2caa01245a41341a067038c09e94459b50db1346d9fdf82f0
+      TREESITTER_URL: https://github.com/tree-sitter/tree-sitter/archive/v0.20.8.tar.gz
+      TREESITTER_SHA256: 6181ede0b7470bfca37e293e7d5dc1d16469b9485d13f13a605baec4a8b1f791
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./.github/scripts/install_deps.sh
+      - run: echo "$BIN_DIR" >> $GITHUB_PATH
+
+      - name: Install minimum required version of cmake
+        run: |
+          curl --retry 5 --silent --show-error --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
+          mkdir -p "$BIN_DIR" /opt/cmake-custom
+          chmod a+x /tmp/cmake-installer.sh
+          /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
+          ln -sfn /opt/cmake-custom/bin/cmake "$BIN_DIR/cmake"
+          cmake_version="$(cmake --version | head -1)"
+          echo "$cmake_version" | grep -qF "cmake version $CMAKE_VERSION" || {
+            echo "Unexpected CMake version: $cmake_version"
+            exit 1
+          }
+
+      - name: Build
+        run: |
+          DEPS=""
+          for i in LIBUV MSGPACK UNIBILIUM LUV TREESITTER; do
+            url=${i}_URL
+            sha=${i}_SHA256
+            DEPS+="-D ${url}=${!url} "
+            DEPS+="-D ${sha}=${!sha} "
+          done
+          make DEPS_CMAKE_FLAGS="$DEPS" CMAKE_FLAGS="-D CI_BUILD=ON -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX"
+
+      - run: make install
