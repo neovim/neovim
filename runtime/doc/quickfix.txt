@@ -1381,6 +1381,7 @@ rest is ignored.  Items can only be 1023 bytes long.
 Basic items
 
 	%f		file name (finds a string)
+	%b		buffer number (finds a number)
 	%o		module name (finds a string)
 	%l		line number (finds a number)
 	%e		end line number (finds a number)
@@ -1419,6 +1420,11 @@ backslash, it will look for a sequence of 'isfname' characters.
 On Windows a leading "C:" will be included in "%f", even when using "%f:".
 This means that a file name which is a single alphabetical letter will not be
 detected.
+
+The "%b" conversion is used to parse a buffer number.  This is useful for
+referring to lines in a scratch buffer or a buffer with no name.  If a buffer
+with the matching number doesn't exist, then that line is used as a non-error
+line.
 
 The "%p" conversion is normally followed by a "^".  It's used for compilers
 that output a line like: >
