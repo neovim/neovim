@@ -89,7 +89,7 @@ Nvim development is funded separately from Vim:
 ==============================================================================
 Credits							*credits*
 
-Most of Vim was written by Bram Moolenaar <Bram@vim.org> |Bram-Moolenaar|
+Most of Vim was written by Bram Moolenaar <Bram@vim.org> |Bram-Moolenaar|.
 
 Parts of the documentation come from several Vi manuals, written by:
 	W.N. Joy

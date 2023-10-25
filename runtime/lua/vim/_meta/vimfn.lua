@@ -3507,7 +3507,7 @@ function vim.fn.getregtype(regname) end
 ---     Note that this is a copy, the value of
 ---     script-local variables cannot be changed using
 ---     this dictionary.
----     version  Vimscript version, always 1
+---     version  Vim script version, always 1
 ---
 --- Examples: >vim
 ---   echo getscriptinfo({'name': 'myscript'})
