@@ -1658,6 +1658,14 @@ describe('lua stdlib', function()
       eq(false, result[1])
     end)
 
+    it('expand tilde', function ()
+      local undodir = exec_lua[[
+        vim.opt.undodir = '~/test_dir'
+        return vim.opt.undodir:get()[1]
+      ]]
+      eq(table.concat({os.getenv('HOME'), 'test_dir'}, helpers.get_pathsep()), undodir)
+    end)
+
     it('should error when you attempt to setlocal a global value', function()
       local result = exec_lua [[
         return pcall(function() vim.opt_local.clipboard = "hello" end)

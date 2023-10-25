@@ -3671,6 +3671,9 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
 
   if (v.type == kOptValTypeNil) {
     v = optval_clear(name, flags, varp, curbuf, curwin);
+  } else if (v.type == kOptValTypeString && *v.data.string.data == '~') {
+    v.data.string.data = expand_env_save_opt(v.data.string.data, true);
+    v.data.string.size += strlen(v.data.string.data);
   } else if (!optval_match_type(v, opt_idx)) {
     char *rep = optval_to_cstr(v);
     char *valid_types = option_get_valid_types(opt_idx);
