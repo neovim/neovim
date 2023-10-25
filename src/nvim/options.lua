@@ -2797,7 +2797,6 @@ return {
         'S' flag in 'cpoptions'.
         Only normal file name characters can be used, `/\*?[|<>` are illegal.
       ]=],
-      expand = true,
       full_name = 'filetype',
       noglob = true,
       normal_fname_chars = true,
