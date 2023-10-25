@@ -22,7 +22,6 @@ describe('autocmd TermClose', function()
     command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
   end)
 
-
   local function test_termclose_delete_own_buf()
     -- The terminal process needs to keep running so that TermClose isn't triggered immediately.
     nvim('set_option_value', 'shell', string.format('"%s" INTERACT', testprg('shell-test')), {})

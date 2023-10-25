@@ -203,10 +203,11 @@ static void term_output_callback(const char *s, size_t len, void *user_data)
 ///
 /// @param buf Buffer used for presentation of the terminal.
 /// @param opts PTY process channel, various terminal properties and callbacks.
-Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
+void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
+  FUNC_ATTR_NONNULL_ALL
 {
   // Create a new terminal instance and configure it
-  Terminal *rv = xcalloc(1, sizeof(Terminal));
+  Terminal *rv = *termpp = xcalloc(1, sizeof(Terminal));
   rv->opts = opts;
   rv->cursor.visible = true;
   // Associate the terminal instance with the new buffer
@@ -251,18 +252,26 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
   RESET_BINDING(curwin);
   // Reset cursor in current window.
   curwin->w_cursor = (pos_T){ .lnum = 1, .col = 0, .coladd = 0 };
-  // Initialize to check if the scrollback buffer has been allocated inside a TermOpen autocmd
+  // Initialize to check if the scrollback buffer has been allocated in a TermOpen autocmd.
   rv->sb_buffer = NULL;
   // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, buf);
-  // Local 'scrollback' _after_ autocmds.
-  buf->b_p_scbk = (buf->b_p_scbk < 1) ? SB_MAX : buf->b_p_scbk;
 
   aucmd_restbuf(&aco);
 
-  // Configure the scrollback buffer.
-  rv->sb_size = (size_t)buf->b_p_scbk;
-  rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
+  if (*termpp == NULL) {
+    return;  // Terminal has already been destroyed.
+  }
+
+  if (rv->sb_buffer == NULL) {
+    // Local 'scrollback' _after_ autocmds.
+    if (buf->b_p_scbk < 1) {
+      buf->b_p_scbk = SB_MAX;
+    }
+    // Configure the scrollback buffer.
+    rv->sb_size = (size_t)buf->b_p_scbk;
+    rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
+  }
 
   // Configure the color palette. Try to get the color from:
   //
@@ -290,14 +299,13 @@ Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
       }
     }
   }
-
-  return rv;
 }
 
 /// Closes the Terminal buffer.
 ///
 /// May call terminal_destroy, which sets caller storage to NULL.
 void terminal_close(Terminal **termpp, int status)
+  FUNC_ATTR_NONNULL_ALL
 {
   Terminal *term = *termpp;
   if (term->destroy) {
@@ -647,6 +655,7 @@ static int terminal_execute(VimState *state, int key)
 /// Frees the given Terminal structure and sets the caller storage to NULL (in the spirit of
 /// XFREE_CLEAR).
 void terminal_destroy(Terminal **termpp)
+  FUNC_ATTR_NONNULL_ALL
 {
   Terminal *term = *termpp;
   buf_T *buf = handle_get_buffer(term->buf_handle);
