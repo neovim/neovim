@@ -152,7 +152,7 @@ struct qf_info_S {
 static qf_info_T ql_info;         // global quickfix list
 static unsigned last_qf_id = 0;   // Last Used quickfix list id
 
-#define FMT_PATTERNS 13           // maximum number of % recognized
+#define FMT_PATTERNS 14           // maximum number of % recognized
 
 // Structure used to hold the info of one part of 'errorformat'
 typedef struct efm_S efm_T;
@@ -217,6 +217,7 @@ typedef struct {
 
 typedef struct {
   char *namebuf;
+  int bnr;
   char *module;
   char *errmsg;
   size_t errmsglen;
@@ -344,7 +345,7 @@ static int qf_init_process_nextline(qf_list_T *qfl, efm_T *fmt_first, qfstate_T 
                       : ((qfl->qf_currfile != NULL && fields->valid)
                          ? qfl->qf_currfile : NULL),
                       fields->module,
-                      0,
+                      fields->bnr,
                       fields->errmsg,
                       fields->lnum,
                       fields->end_lnum,
@@ -391,20 +392,21 @@ static struct fmtpattern {
   char *pattern;
 } fmt_pat[FMT_PATTERNS] = {
   { 'f', ".\\+" },      // only used when at end
-  { 'n', "\\d\\+" },    // 1
-  { 'l', "\\d\\+" },    // 2
-  { 'e', "\\d\\+" },    // 3
-  { 'c', "\\d\\+" },    // 4
-  { 'k', "\\d\\+" },    // 5
-  { 't', "." },         // 6
-#define FMT_PATTERN_M 7
-  { 'm', ".\\+" },      // 7
-#define FMT_PATTERN_R 8
-  { 'r', ".*" },        // 8
-  { 'p', "[- \t.]*" },  // 9
-  { 'v', "\\d\\+" },    // 10
-  { 's', ".\\+" },      // 11
-  { 'o', ".\\+" }       // 12
+  { 'b', "\\d\\+" },    // 1
+  { 'n', "\\d\\+" },    // 2
+  { 'l', "\\d\\+" },    // 3
+  { 'e', "\\d\\+" },    // 4
+  { 'c', "\\d\\+" },    // 5
+  { 'k', "\\d\\+" },    // 6
+  { 't', "." },         // 7
+#define FMT_PATTERN_M 8
+  { 'm', ".\\+" },      // 8
+#define FMT_PATTERN_R 9
+  { 'r', ".*" },        // 9
+  { 'p', "[-\t .]*" },  // 10
+  { 'v', "\\d\\+" },    // 11
+  { 's', ".\\+" },      // 12
+  { 'o', ".\\+" }       // 13
 };
 
 /// Convert an errorformat pattern to a regular expression pattern.
@@ -1312,6 +1314,21 @@ static int qf_parse_fmt_f(regmatch_T *rmp, int midx, qffields_T *fields, int pre
   return QF_OK;
 }
 
+/// Parse the match for buffer number ('%b') pattern in regmatch.
+/// Return the matched value in "fields->bnr".
+static int qf_parse_fmt_b(regmatch_T *rmp, int midx, qffields_T *fields)
+{
+  if (rmp->startp[midx] == NULL) {
+    return QF_FAIL;
+  }
+  int bnr = (int)atol(rmp->startp[midx]);
+  if (buflist_findnr(bnr) == NULL) {
+    return QF_FAIL;
+  }
+  fields->bnr = bnr;
+  return QF_OK;
+}
+
 /// Parse the match for error number ('%n') pattern in regmatch.
 /// Return the matched value in "fields->enr".
 static int qf_parse_fmt_n(regmatch_T *rmp, int midx, qffields_T *fields)
@@ -1496,6 +1513,7 @@ static int qf_parse_fmt_o(regmatch_T *rmp, int midx, qffields_T *fields)
 /// Keep in sync with fmt_pat[].
 static int (*qf_parse_fmt[FMT_PATTERNS])(regmatch_T *, int, qffields_T *) = {
   NULL,  // %f
+  qf_parse_fmt_b,
   qf_parse_fmt_n,
   qf_parse_fmt_l,
   qf_parse_fmt_e,
@@ -1568,6 +1586,7 @@ static int qf_parse_get_fields(char *linebuf, size_t linelen, efm_T *fmt_ptr, qf
   }
 
   fields->namebuf[0] = NUL;
+  fields->bnr = 0;
   fields->module[0] = NUL;
   fields->pattern[0] = NUL;
   if (!qf_multiscan) {
