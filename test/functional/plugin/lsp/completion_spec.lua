@@ -12,7 +12,8 @@ local exec_lua = helpers.exec_lua
 ---@return {items: table[], server_start_boundary: integer?}
 local function complete(line, candidates, lnum)
   lnum = lnum or 0
-  local cursor_col = line:find("|")
+  -- nvim_win_get_cursor returns 0 based column, line:find returns 1 based
+  local cursor_col = line:find("|") - 1
   line = line:gsub("|", "")
   return exec_lua([[
     local line, cursor_col, lnum, result = ...
@@ -21,6 +22,7 @@ local function complete(line, candidates, lnum)
     local items, server_start_boundary = require("vim.lsp._completion")._convert_results(
       line,
       lnum,
+      cursor_col,
       client_start_boundary,
       nil,
       result,
@@ -176,6 +178,60 @@ describe("vim.lsp._completion", function()
     }
     local result = complete("  std::this|", completion_list)
     eq(7, result.server_start_boundary)
+    local item = result.items[1]
+    item.user_data = nil
+    eq(expected, item)
+  end)
+
+  it("should search from start boundary to cursor position", function()
+    local completion_list = {
+      isIncomplete = false,
+      items = {
+        {
+          filterText = "this_thread",
+          insertText = "this_thread",
+          insertTextFormat = 1,
+          kind = 9,
+          label = " this_thread",
+          score = 1.3205767869949,
+          sortText = "4056f757this_thread",
+          textEdit = {
+            newText = "this_thread",
+            range = {
+              start = { line = 0, character = 7 },
+              ["end"] = { line = 0, character = 11 },
+            },
+          }
+        },
+        {
+          filterText = "notthis_thread",
+          insertText = "notthis_thread",
+          insertTextFormat = 1,
+          kind = 9,
+          label = " notthis_thread",
+          score = 1.3205767869949,
+          sortText = "4056f757this_thread",
+          textEdit = {
+            newText = "notthis_thread",
+            range = {
+              start = { line = 0, character = 7 },
+              ["end"] = { line = 0, character = 11 },
+            },
+          }
+        },
+      }
+    }
+    local expected = {
+      abbr = ' this_thread',
+      dup = 1,
+      empty = 1,
+      icase = 1,
+      kind = 'Module',
+      menu = '',
+      word = 'this_thread',
+    }
+    local result = complete("  std::this|is", completion_list)
+    eq(1, #result.items)
     local item = result.items[1]
     item.user_data = nil
     eq(expected, item)
