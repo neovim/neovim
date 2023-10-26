@@ -13,8 +13,8 @@ include(ExternalProject)
 include(CheckCCompilerFlag)
 
 include(Deps)
-include(Util)
 include(Find)
+include(Util)
 
 set_default_buildtype()
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
