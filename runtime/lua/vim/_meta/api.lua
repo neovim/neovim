@@ -823,6 +823,15 @@ function vim.api.nvim_create_augroup(name, opts) end
 ---     })
 --- ```
 ---
+--- Example using a User autocommand:
+---
+--- ```lua
+---     vim.api.nvim_create_autocmd("User", {
+---       pattern = "MyPlugin",
+---       command = "echo 'got MyPlugin event'",
+---     })
+--- ```
+---
 --- Note: `pattern` is NOT automatically expanded (unlike with `:autocmd`),
 --- thus names like "$HOME" and "~" must be expanded explicitly:
 ---
