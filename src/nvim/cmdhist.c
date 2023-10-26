@@ -34,6 +34,8 @@
 # include "cmdhist.c.generated.h"
 #endif
 
+static const char e_val_too_large[] = N_("E1510: Value too large: %s");
+
 static histentry_T *(history[HIST_COUNT]) = { NULL, NULL, NULL, NULL, NULL };
 static int hisidx[HIST_COUNT] = { -1, -1, -1, -1, -1 };  ///< lastused entry
 /// identifying (unique) number of newest history entry
@@ -637,7 +639,11 @@ void ex_history(exarg_T *eap)
     end = arg;
   }
   if (!get_list_range(&end, &hisidx1, &hisidx2) || *end != NUL) {
-    semsg(_(e_trailing_arg), end);
+    if (*end != NUL) {
+      semsg(_(e_trailing_arg), end);
+    } else {
+      semsg(_(e_val_too_large), arg);
+    }
     return;
   }
 
