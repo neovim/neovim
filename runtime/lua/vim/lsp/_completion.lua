@@ -137,6 +137,7 @@ end
 function M._convert_results(
   line,
   lnum,
+  cursor_col,
   client_start_boundary,
   server_start_boundary,
   result,
@@ -164,7 +165,7 @@ function M._convert_results(
   elseif curstartbyte ~= nil and curstartbyte ~= server_start_boundary then
     server_start_boundary = client_start_boundary
   end
-  local prefix = line:sub((server_start_boundary or client_start_boundary) + 1)
+  local prefix = line:sub((server_start_boundary or client_start_boundary) + 1, cursor_col)
   local matches = M._lsp_to_complete_items(result, prefix)
   return matches, server_start_boundary
 end
@@ -212,6 +213,7 @@ function M.omnifunc(findstart, base)
         matches, server_start_boundary = M._convert_results(
           line,
           lnum,
+          cursor_col,
           client_start_boundary,
           server_start_boundary,
           result,
