@@ -254,7 +254,7 @@ add_custom_target(lintcommit
 add_dependencies(lintcommit nvim)
 
 add_custom_target(lint)
-add_dependencies(lint clang-tidy lintc lintlua lintsh lintcommit)
+add_dependencies(lint lintc lintlua lintsh lintcommit)
 
 # Format
 add_custom_target(formatlua

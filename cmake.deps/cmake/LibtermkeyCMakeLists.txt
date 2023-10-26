@@ -13,16 +13,15 @@ if(EXISTS ${PROJECT_SOURCE_DIR}/termkey.h.in)
   string(REPLACE "@@VERSION_MINOR@@" "${TERMKEY_VERSION_MINOR}" TERMKEY_TEXT "${TERMKEY_TEXT}")
   file(WRITE termkey.h "${TERMKEY_TEXT}")
 endif()
-add_definitions(-D _CRT_SECURE_NO_WARNINGS)
-add_definitions(-DHAVE_UNIBILIUM)
-
-include_directories(${PROJECT_BINARY_DIR}/t)
-include_directories(SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
 
 add_library(termkey termkey.c driver-csi.c driver-ti.c)
+
+target_compile_definitions(termkey PRIVATE _CRT_SECURE_NO_WARNINGS HAVE_UNIBILIUM)
+target_include_directories(termkey PRIVATE SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
+
 set_target_properties(termkey PROPERTIES
   PUBLIC_HEADER ${PROJECT_SOURCE_DIR}/termkey.h)
-target_link_libraries(termkey ${UNIBILIUM_LIBRARIES})
+target_link_libraries(termkey PRIVATE ${UNIBILIUM_LIBRARIES})
 
 include(GNUInstallDirs)
 install(TARGETS termkey

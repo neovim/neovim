@@ -7,7 +7,8 @@ if(TARGET libuv::uv_a)
   target_link_libraries(libuv INTERFACE libuv::uv_a)
   mark_as_advanced(libuv_DIR)
 else()
-  # Fall back to find module for older libuv versions that don't provide config file
+  # Fall back to find module for libuv versions older than v1.45.0 which don't
+  # provide a config file
   find_package(Libuv 1.28.0 REQUIRED MODULE)
   target_include_directories(libuv SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIR})
   target_link_libraries(libuv INTERFACE ${LIBUV_LIBRARIES})
@@ -90,7 +91,7 @@ if(MSVC)
   target_compile_options(main_lib INTERFACE -W3)
 
   # Disable warnings that give too many false positives.
-  target_compile_options(main_lib INTERFACE -wd4311 -wd4146 -wd4003 -wd4715)
+  target_compile_options(main_lib INTERFACE -wd4311 -wd4146 -wd4003 -wd4715 -wd4003)
   target_compile_definitions(main_lib INTERFACE _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE)
 
   target_sources(main_lib INTERFACE ${CMAKE_CURRENT_LIST_DIR}/os/nvim.manifest)
@@ -812,7 +813,7 @@ else()
     os/os_win_console.h)
 endif()
 add_glob_target(
-  TARGET clang-tidy
+  TARGET lintc-clang-tidy
   COMMAND ${CLANG_TIDY_PRG}
   FILES ${NVIM_SOURCES} ${NVIM_HEADERS}
   FLAGS --quiet
@@ -841,7 +842,7 @@ add_glob_target(
 add_custom_target(copy_compile_commands
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/compile_commands.json ${PROJECT_SOURCE_DIR}/compile_commands.json)
 add_dependencies(copy_compile_commands nvim)
-add_dependencies(clang-tidy copy_compile_commands)
+add_dependencies(lintc-clang-tidy copy_compile_commands)
 add_dependencies(clang-analyzer copy_compile_commands)
 
 if(CI_BUILD)
@@ -866,7 +867,7 @@ add_glob_target(
 add_dependencies(lintc-uncrustify uncrustify)
 
 add_custom_target(lintc)
-add_dependencies(lintc lintc-clint lintc-uncrustify)
+add_dependencies(lintc lintc-clint lintc-uncrustify lintc-clang-tidy)
 
 add_custom_target(formatc
   COMMAND ${CMAKE_COMMAND}
