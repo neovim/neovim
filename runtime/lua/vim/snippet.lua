@@ -104,8 +104,9 @@ end
 
 --- @class vim.snippet.Tabstop
 --- @field extmark_id integer
---- @field index integer
 --- @field bufnr integer
+--- @field index integer
+--- @field choices? string[]
 local Tabstop = {}
 
 --- Creates a new tabstop.
@@ -114,8 +115,9 @@ local Tabstop = {}
 --- @param index integer
 --- @param bufnr integer
 --- @param range Range4
+--- @param choices? string[]
 --- @return vim.snippet.Tabstop
-function Tabstop.new(index, bufnr, range)
+function Tabstop.new(index, bufnr, range, choices)
   local extmark_id = vim.api.nvim_buf_set_extmark(bufnr, snippet_ns, range[1], range[2], {
     right_gravity = false,
     end_right_gravity = true,
@@ -125,7 +127,7 @@ function Tabstop.new(index, bufnr, range)
   })
 
   local self = setmetatable(
-    { index = index, bufnr = bufnr, extmark_id = extmark_id },
+    { extmark_id = extmark_id, bufnr = bufnr, index = index, choices = choices },
     { __index = Tabstop }
   )
 
@@ -173,9 +175,9 @@ local Session = {}
 --- @package
 --- @param bufnr integer
 --- @param snippet_extmark integer
---- @param tabstop_ranges table<integer, Range4[]>
+--- @param tabstop_data table<integer, { range: Range4, choices?: string[] }[]>
 --- @return vim.snippet.Session
-function Session.new(bufnr, snippet_extmark, tabstop_ranges)
+function Session.new(bufnr, snippet_extmark, tabstop_data)
   local self = setmetatable({
     bufnr = bufnr,
     extmark_id = snippet_extmark,
@@ -184,10 +186,10 @@ function Session.new(bufnr, snippet_extmark, tabstop_ranges)
   }, { __index = Session })
 
   -- Create the tabstops.
-  for index, ranges in pairs(tabstop_ranges) do
-    for _, range in ipairs(ranges) do
+  for index, ranges in pairs(tabstop_data) do
+    for _, data in ipairs(ranges) do
       self.tabstops[index] = self.tabstops[index] or {}
-      table.insert(self.tabstops[index], Tabstop.new(index, self.bufnr, range))
+      table.insert(self.tabstops[index], Tabstop.new(index, self.bufnr, data.range, data.choices))
     end
   end
 
@@ -222,6 +224,22 @@ end
 --- @field private _session? vim.snippet.Session
 local M = { session = nil }
 
+--- Displays the choices for the given tabstop as completion items.
+---
+--- @param tabstop vim.snippet.Tabstop
+local function display_choices(tabstop)
+  assert(tabstop.choices, 'Tabstop has no choices')
+
+  local start_col = tabstop:get_range()[2] + 1
+  local matches = vim.iter.map(function(choice)
+    return { word = choice }
+  end, tabstop.choices)
+
+  vim.defer_fn(function()
+    vim.fn.complete(start_col, matches)
+  end, 100)
+end
+
 --- Select the given tabstop range.
 ---
 --- @param tabstop vim.snippet.Tabstop
@@ -246,16 +264,24 @@ local function select_tabstop(tabstop)
   local range = tabstop:get_range()
   local mode = vim.fn.mode()
 
+  if vim.fn.pumvisible() ~= 0 then
+    -- Close the choice completion menu if open.
+    vim.fn.complete(vim.fn.col('.'), {})
+  end
+
   -- Move the cursor to the start of the tabstop.
   vim.api.nvim_win_set_cursor(0, { range[1] + 1, range[2] })
 
-  -- For empty and the final tabstop, start insert mode at the end of the range.
-  if tabstop.index == 0 or (range[1] == range[3] and range[2] == range[4]) then
+  -- For empty, choice and the final tabstops, start insert mode at the end of the range.
+  if tabstop.choices or tabstop.index == 0 or (range[1] == range[3] and range[2] == range[4]) then
     if mode ~= 'i' then
       if mode == 's' then
         feedkeys('<Esc>')
       end
       vim.cmd.startinsert({ bang = range[4] >= #vim.api.nvim_get_current_line() })
+    end
+    if tabstop.choices then
+      display_choices(tabstop)
     end
   else
     -- Else, select the tabstop's text.
@@ -297,7 +323,6 @@ local function setup_autocmds(bufnr)
         return true
       end
 
-      -- Update the current tabstop to be the one containing the cursor.
       for tabstop_index, tabstops in pairs(M._session.tabstops) do
         for _, tabstop in ipairs(tabstops) do
           local range = tabstop:get_range()
@@ -305,7 +330,6 @@ local function setup_autocmds(bufnr)
             (cursor_row > range[1] or (cursor_row == range[1] and cursor_col >= range[2]))
             and (cursor_row < range[3] or (cursor_row == range[3] and cursor_col <= range[4]))
           then
-            M._session.current_tabstop = tabstop
             if tabstop_index ~= 0 then
               return
             end
@@ -377,14 +401,16 @@ function M.expand(input)
   end
 
   -- Keep track of tabstop nodes during expansion.
-  --- @type table<integer, Range4[]>
-  local tabstop_ranges = {}
+  --- @type table<integer, { range: Range4, choices?: string[] }[]>
+  local tabstop_data = {}
 
   --- @param index integer
-  --- @param placeholder string?
-  local function add_tabstop(index, placeholder)
-    tabstop_ranges[index] = tabstop_ranges[index] or {}
-    table.insert(tabstop_ranges[index], compute_tabstop_range(snippet_text, placeholder))
+  --- @param placeholder? string
+  --- @param choices? string[]
+  local function add_tabstop(index, placeholder, choices)
+    tabstop_data[index] = tabstop_data[index] or {}
+    local range = compute_tabstop_range(snippet_text, placeholder)
+    table.insert(tabstop_data[index], { range = range, choices = choices })
   end
 
   --- Appends the given text to the snippet, taking care of indentation.
@@ -428,7 +454,7 @@ function M.expand(input)
       append_to_snippet(value)
     elseif type == G.NodeType.Choice then
       --- @cast data vim.snippet.ChoiceData
-      append_to_snippet(data.values[1])
+      add_tabstop(data.tabstop, nil, data.values)
     elseif type == G.NodeType.Variable then
       --- @cast data vim.snippet.VariableData
       -- Try to get the variable's value.
@@ -436,7 +462,7 @@ function M.expand(input)
       if not value then
         -- Unknown variable, make this a tabstop and use the variable name as a placeholder.
         value = data.name
-        local tabstop_indexes = vim.tbl_keys(tabstop_ranges)
+        local tabstop_indexes = vim.tbl_keys(tabstop_data)
         local index = math.max(unpack((#tabstop_indexes == 0 and { 0 }) or tabstop_indexes)) + 1
         add_tabstop(index, value)
       end
@@ -449,8 +475,8 @@ function M.expand(input)
 
   -- $0, which defaults to the end of the snippet, defines the final cursor position.
   -- Make sure the snippet has exactly one of these.
-  if vim.tbl_contains(vim.tbl_keys(tabstop_ranges), 0) then
-    assert(#tabstop_ranges[0] == 1, 'Snippet has multiple $0 tabstops')
+  if vim.tbl_contains(vim.tbl_keys(tabstop_data), 0) then
+    assert(#tabstop_data[0] == 1, 'Snippet has multiple $0 tabstops')
   else
     add_tabstop(0)
   end
@@ -469,7 +495,7 @@ function M.expand(input)
     right_gravity = false,
     end_right_gravity = true,
   })
-  M._session = Session.new(bufnr, snippet_extmark, tabstop_ranges)
+  M._session = Session.new(bufnr, snippet_extmark, tabstop_data)
 
   -- Jump to the first tabstop.
   M.jump(1)
