@@ -404,9 +404,12 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                          the beginning of the virtual text.
                        • prefix: (string or function) prepend diagnostic
                          message with prefix. If a function, it must have the
-                         signature (diagnostic) -> string, where {diagnostic}
-                         is of type |diagnostic-structure|. This can be used
-                         to render diagnostic symbols or error codes.
+                         signature (diagnostic, i, total) -> string, where
+                         {diagnostic} is of type |diagnostic-structure|, {i}
+                         is the index of the diagnostic being evaluated, and
+                         {total} is the total number of diagnostics for the
+                         line. This can be used to render diagnostic symbols
+                         or error codes.
                        • suffix: (string or function) Append diagnostic
                          message with suffix. If a function, it must have the
                          signature (diagnostic) -> string, where {diagnostic}
