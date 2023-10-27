@@ -6,6 +6,7 @@ local exec_lua = helpers.exec_lua
 local feed = helpers.feed
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
+local sleep = helpers.sleep
 
 describe('vim.snippet', function()
   before_each(function()
@@ -170,5 +171,31 @@ describe('vim.snippet', function()
     test_success({ 'local function $1()', '  $0', 'end' }, { '', 'local function ()', '  ', 'end' })
     feed('<esc>O-- A comment')
     eq(false, exec_lua('return vim.snippet.active()'))
+  end)
+
+  it('inserts choice', function ()
+    test_success({ 'console.${1|assert,log,error|}()' }, { 'console.()' })
+    sleep(100)
+    feed('<Down><C-y>')
+    eq({ 'console.log()' }, helpers.buf_lines(0))
+  end)
+
+  it('closes the choice completion menu when jumping', function ()
+    test_success({ 'console.${1|assert,log,error|}($2)' }, { 'console.()' })
+    sleep(100)
+    exec_lua('vim.snippet.jump(1)')
+    eq(0, exec_lua('return vim.fn.pumvisible()'))
+  end)
+
+  it('jumps to next tabstop after inserting choice', function()
+    test_success(
+      { '${1|public,protected,private|} function ${2:name}() {', '\t$0', '}' },
+      { ' function name() {', '\t', '}' }
+    )
+    sleep(100)
+    feed('<C-y><Tab>')
+    sleep(10)
+    feed('foo')
+    eq({ 'public function foo() {', '\t', '}' }, helpers.buf_lines(0))
   end)
 end)
