@@ -716,6 +716,7 @@ local extension = {
   nsi = 'nsis',
   nsh = 'nsis',
   obj = 'obj',
+  objdump = 'objdump',
   obl = 'obse',
   obse = 'obse',
   oblivion = 'obse',
