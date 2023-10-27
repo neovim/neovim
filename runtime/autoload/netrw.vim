@@ -1134,7 +1134,6 @@ fun! netrw#Explore(indx,dosplit,style,...)
    2match none
    if exists("s:explore_match")  | unlet s:explore_match  | endif
    if exists("s:explore_prvdir") | unlet s:explore_prvdir | endif
-   echo " "
 "   call Decho("cleared explore match list",'~'.expand("<slnum>"))
   endif
 
@@ -5688,8 +5687,6 @@ fun! s:NetrwClearExplore()
   if exists("w:netrw_explore_list")   |unlet w:netrw_explore_list   |endif
   if exists("w:netrw_explore_bufnr")  |unlet w:netrw_explore_bufnr  |endif
 "   redraw!
-  echo " "
-  echo " "
 "  call Dret("s:NetrwClearExplore")
 endfun
 
