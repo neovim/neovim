@@ -2399,7 +2399,7 @@ func Test_complete_info_index()
   call assert_equal(6 , len(g:compl_info['items']))
   call assert_equal("fff", g:compl_info['items'][g:compl_info['selected']]['word'])
   call feedkeys("Go\<C-X>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<F5>\<Esc>_dd", 'tx')
-  call assert_equal("aaa", g:compl_info['items'][g:compl_info['selected']]['word']) 
+  call assert_equal("aaa", g:compl_info['items'][g:compl_info['selected']]['word'])
   call assert_equal(6 , len(g:compl_info['items']))
 
   set completeopt&
