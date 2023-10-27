@@ -2702,10 +2702,41 @@ static int info_add_completion_info(list_T *li)
     return OK;
   }
 
+  bool forward = compl_dir_forward();
+  compl_T *match = compl_first_match;
+  // There are four cases to consider here:
+  // 1) when just going forward through the menu,
+  //    compl_first_match should point to the initial entry with
+  //    number zero and CP_ORIGINAL_TEXT flag set
+  // 2) when just going backwards,
+  //    compl-first_match should point to the last entry before
+  //    the entry with the CP_ORIGINAL_TEXT flag set
+  // 3) when first going forwards and then backwards, e.g.
+  //    pressing C-N, C-P, compl_first_match points to the
+  //    last entry before the entry with the CP_ORIGINAL_TEXT
+  //    flag set and next-entry moves opposite through the list
+  //    compared to case 2, so pretend the direction is forward again
+  // 4) when first going backwards and then forwards, e.g.
+  //    pressing C-P, C-N, compl_first_match points to the
+  //    first entry with the CP_ORIGINAL_TEXT
+  //    flag set and next-entry moves in opposite direction through the list
+  //    compared to case 1, so pretend the direction is backwards again
+  //
+  // But only do this when the 'noselect' option is not active!
+
+  if (!compl_no_select) {
+    if (forward && !match_at_original_text(match)) {
+      forward = false;
+    } else if (!forward && match_at_original_text(match)) {
+      forward = true;
+    }
+  }
+
   // Skip the element with the CP_ORIGINAL_TEXT flag at the beginning, in case of
   // forward completion, or at the end, in case of backward completion.
-  compl_T *match = compl_dir_forward() ? compl_first_match->cp_next
-                                       : compl_first_match->cp_prev->cp_prev;
+  match = forward ? match->cp_next
+                  : (compl_no_select ? match->cp_prev : match->cp_prev->cp_prev);
+
   while (match != NULL && !match_at_original_text(match)) {
     dict_T *di = tv_dict_alloc();
 
@@ -2722,7 +2753,7 @@ static int info_add_completion_info(list_T *li)
       tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
     }
 
-    match = compl_dir_forward() ? match->cp_next : match->cp_prev;
+    match = forward ? match->cp_next : match->cp_prev;
   }
 
   return OK;
