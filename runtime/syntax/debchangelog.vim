@@ -3,7 +3,7 @@
 " Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2023 Jan 16
+" Last Change: 2023 Oct 11
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/main/syntax/debchangelog.vim
 
 " Standard syntax initialization
@@ -17,34 +17,19 @@ syn case ignore
 let s:urgency='urgency=\(low\|medium\|high\|emergency\|critical\)\( [^[:space:],][^,]*\)\='
 let s:binNMU='binary-only=yes'
 
-let s:cpo = &cpo
-set cpo-=C
-let s:supported = [
-      \ 'oldstable', 'stable', 'testing', 'unstable', 'experimental', 'sid', 'rc-buggy',
-      \ 'buster', 'bullseye', 'bookworm', 'trixie', 'forky',
-      \
-      \ 'trusty', 'xenial', 'bionic', 'focal', 'jammy', 'kinetic', 'lunar',
-      \ 'devel'
-      \ ]
-let s:unsupported = [
-      \ 'frozen', 'buzz', 'rex', 'bo', 'hamm', 'slink', 'potato',
-      \ 'woody', 'sarge', 'etch', 'lenny', 'squeeze', 'wheezy',
-      \ 'jessie', 'stretch',
-      \
-      \ 'warty', 'hoary', 'breezy', 'dapper', 'edgy', 'feisty',
-      \ 'gutsy', 'hardy', 'intrepid', 'jaunty', 'karmic', 'lucid',
-      \ 'maverick', 'natty', 'oneiric', 'precise', 'quantal', 'raring', 'saucy',
-      \ 'utopic', 'vivid', 'wily', 'yakkety', 'zesty', 'artful', 'cosmic',
-      \ 'disco', 'eoan', 'hirsute', 'impish', 'groovy'
-      \ ]
-let &cpo=s:cpo
+" Include Debian versioning information
+runtime! syntax/shared/debversions.vim
+
+exe 'syn match debchangelogTarget	contained "\%( \%('.join(g:debSharedSupportedVersions, '\|').'\)\>[-[:alnum:]]*\)\+"'
+exe 'syn match debchangelogUnsupportedTarget	contained "\%( \%('.join(g:debSharedUnsupportedVersions, '\|').'\)\>[-[:alnum:]]*\)\+"'
+
+unlet g:debSharedSupportedVersions
+unlet g:debSharedUnsupportedVersions
 
 " Define some common expressions we can use later on
 syn match debchangelogName	contained "^[[:alnum:]][[:alnum:].+-]\+ "
 exe 'syn match debchangelogFirstKV	contained "; \('.s:urgency.'\|'.s:binNMU.'\)"'
 exe 'syn match debchangelogOtherKV	contained ", \('.s:urgency.'\|'.s:binNMU.'\)"'
-exe 'syn match debchangelogTarget	contained "\%( \%('.join(s:supported, '\|').'\)\>[-[:alnum:]]*\)\+"'
-exe 'syn match debchangelogUnsupportedTarget	contained "\%( \%('.join(s:unsupported, '\|').'\)\>[-[:alnum:]]*\)\+"'
 syn match debchangelogUnreleased	contained / UNRELEASED/
 syn match debchangelogVersion	contained "(.\{-})"
 syn match debchangelogCloses	contained "closes:\_s*\(bug\)\=#\=\_s\=\d\+\(,\_s*\(bug\)\=#\=\_s\=\d\+\)*"
@@ -58,19 +43,19 @@ syn region debchangelogFooter start="^ [^ ]" end="$" contains=debchangelogEmail 
 syn region debchangelogEntry start="^  " end="$" contains=debchangelogCloses,debchangelogLP oneline
 
 " Associate our matches and regions with pretty colours
-hi def link debchangelogHeader  Error
-hi def link debchangelogFooter  Identifier
-hi def link debchangelogEntry   Normal
-hi def link debchangelogCloses  Statement
-hi def link debchangelogLP      Statement
-hi def link debchangelogFirstKV Identifier
-hi def link debchangelogOtherKV Identifier
-hi def link debchangelogName    Comment
-hi def link debchangelogVersion Identifier
-hi def link debchangelogTarget  Identifier
-hi def link debchangelogUnsupportedTarget  Identifier
+hi def link debchangelogHeader     Error
+hi def link debchangelogFooter     Identifier
+hi def link debchangelogEntry      Normal
+hi def link debchangelogCloses     Statement
+hi def link debchangelogLP         Statement
+hi def link debchangelogFirstKV    Identifier
+hi def link debchangelogOtherKV    Identifier
+hi def link debchangelogName       Comment
+hi def link debchangelogVersion    Identifier
 hi def link debchangelogUnreleased WarningMsg
-hi def link debchangelogEmail   Special
+hi def link debchangelogEmail      Special
+hi def link debchangelogTarget     Identifier
+hi def link debchangelogUnsupportedTarget Identifier
 
 let b:current_syntax = 'debchangelog'
 
