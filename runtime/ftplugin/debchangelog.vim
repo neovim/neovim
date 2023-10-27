@@ -3,7 +3,7 @@
 " Maintainer:   Debian Vim Maintainers <team+vim@tracker.debian.org>
 " Former Maintainers:   Michael Piefel <piefel@informatik.hu-berlin.de>
 "                       Stefano Zacchiroli <zack@debian.org>
-" Last Change:  2023 Jan 16
+" Last Change:  2023 Aug 18
 " License:      Vim License
 " URL:          https://salsa.debian.org/vim-team/vim-debian/blob/main/ftplugin/debchangelog.vim
 
