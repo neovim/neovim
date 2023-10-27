@@ -592,8 +592,10 @@ end
 ---                       * spacing: (number) Amount of empty spaces inserted at the beginning
 ---                                  of the virtual text.
 ---                       * prefix: (string or function) prepend diagnostic message with prefix.
----                                 If a function, it must have the signature (diagnostic) -> string,
----                                 where {diagnostic} is of type |diagnostic-structure|. This can be
+---                                 If a function, it must have the signature (diagnostic, i, total)
+---                                 -> string, where {diagnostic} is of type |diagnostic-structure|,
+---                                 {i} is the index of the diagnostic being evaluated, and {total}
+---                                 is the total number of diagnostics for the line. This can be
 ---                                 used to render diagnostic symbols or error codes.
 ---                       * suffix: (string or function) Append diagnostic message with suffix.
 ---                                 If a function, it must have the signature (diagnostic) ->
@@ -1072,7 +1074,7 @@ function M._get_virt_text_chunks(line_diags, opts)
   for i = 1, #line_diags do
     local resolved_prefix = prefix
     if type(prefix) == 'function' then
-      resolved_prefix = prefix(line_diags[i]) or ''
+      resolved_prefix = prefix(line_diags[i], i, #line_diags) or ''
     end
     table.insert(
       virt_texts,

@@ -1237,7 +1237,7 @@ end)
         return prefix .. message
       ]])
 
-      eq('[err-code] Some error',  exec_lua [[
+      eq('[(1/1) err-code] Some error',  exec_lua [[
         local diagnostics = {
           make_error('Some error', 0, 0, 0, 0, nil, 'err-code'),
         }
@@ -1245,7 +1245,7 @@ end)
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics, {
           underline = false,
           virtual_text = {
-            prefix = function(diag) return string.format('[%s]', diag.code) end,
+            prefix = function(diag, i, total) return string.format('[(%d/%d) %s]', i, total, diag.code) end,
             suffix = '',
           }
         })
