@@ -694,6 +694,8 @@ vim.go.cmp = vim.go.casemap
 --- current working directory to the `$HOME` directory like in Unix.
 --- When off, those commands just print the current directory name.
 --- On Unix this option has no effect.
+--- This option cannot be set from a `modeline` or in the `sandbox`, for
+--- security reasons.
 ---
 --- @type boolean
 vim.o.cdhome = false
@@ -4122,7 +4124,8 @@ vim.go.mis = vim.go.menuitems
 --- If you have less than 512 Mbyte `:mkspell` may fail for some
 --- languages, no matter what you set 'mkspellmem' to.
 ---
---- This option cannot be set from a `modeline` or in the `sandbox`.
+--- This option cannot be set from a `modeline` or in the `sandbox`, for
+--- security reasons.
 ---
 --- @type string
 vim.o.mkspellmem = "460000,2000,500"
@@ -4567,6 +4570,8 @@ vim.go.opfunc = vim.go.operatorfunc
 
 --- Directories used to find packages.
 --- See `packages` and `packages-runtimepath`.
+--- This option cannot be set from a `modeline` or in the `sandbox`, for
+--- security reasons.
 ---
 --- @type string
 vim.o.packpath = "..."
@@ -4585,6 +4590,8 @@ vim.go.para = vim.go.paragraphs
 
 --- Expression which is evaluated to apply a patch to a file and generate
 --- the resulting new version of the file.  See `diff-patchexpr`.
+--- This option cannot be set from a `modeline` or in the `sandbox`, for
+--- security reasons.
 ---
 --- @type string
 vim.o.patchexpr = ""
@@ -5628,6 +5635,8 @@ vim.go.stmp = vim.go.shelltemp
 --- When 'shellxquote' is set to "(" then the characters listed in this
 --- option will be escaped with a '^' character.  This makes it possible
 --- to execute most external commands with cmd.exe.
+--- This option cannot be set from a `modeline` or in the `sandbox`, for
+--- security reasons.
 ---
 --- @type string
 vim.o.shellxescape = ""
@@ -6855,6 +6864,8 @@ vim.go.tc = vim.go.tagcase
 --- function and an example.  The value can be the name of a function, a
 --- `lambda` or a `Funcref`. See `option-value-function` for more
 --- information.
+--- This option cannot be set from a `modeline` or in the `sandbox`, for
+--- security reasons.
 ---
 --- @type string
 vim.o.tagfunc = ""
@@ -7340,6 +7351,8 @@ vim.go.vbs = vim.go.verbose
 --- Setting 'verbosefile' to a new value is like making it empty first.
 --- The difference with `:redir` is that verbose messages are not
 --- displayed when 'verbosefile' is set.
+--- This option cannot be set from a `modeline` or in the `sandbox`, for
+--- security reasons.
 ---
 --- @type string
 vim.o.verbosefile = ""
