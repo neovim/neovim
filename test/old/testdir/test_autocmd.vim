@@ -2476,28 +2476,27 @@ func Test_ChangedP()
   call cursor(3, 1)
   let g:autocmd = ''
   call feedkeys("o\<esc>", 'tnix')
-  " `TextChangedI` triggers only if text is actually changed in Insert mode
-  call assert_equal('', g:autocmd)
-
-  let g:autocmd = ''
-  call feedkeys("Sf", 'tnix')
   call assert_equal('I', g:autocmd)
 
   let g:autocmd = ''
+  call feedkeys("Sf", 'tnix')
+  call assert_equal('II', g:autocmd)
+
+  let g:autocmd = ''
   call feedkeys("Sf\<C-N>", 'tnix')
-  call assert_equal('IP', g:autocmd)
+  call assert_equal('IIP', g:autocmd)
 
   let g:autocmd = ''
   call feedkeys("Sf\<C-N>\<C-N>", 'tnix')
-  call assert_equal('IPP', g:autocmd)
+  call assert_equal('IIPP', g:autocmd)
 
   let g:autocmd = ''
   call feedkeys("Sf\<C-N>\<C-N>\<C-N>", 'tnix')
-  call assert_equal('IPPP', g:autocmd)
+  call assert_equal('IIPPP', g:autocmd)
 
   let g:autocmd = ''
   call feedkeys("Sf\<C-N>\<C-N>\<C-N>\<C-N>", 'tnix')
-  call assert_equal('IPPPP', g:autocmd)
+  call assert_equal('IIPPPP', g:autocmd)
 
   call assert_equal(['foo', 'bar', 'foobar', 'foo'], getline(1, '$'))
   " TODO: how should it handle completeopt=noinsert,noselect?
@@ -3488,6 +3487,25 @@ func Test_Changed_ChangedI()
   let g:autocmd_n = ''
   call feedkeys("ibar\<esc>", 'tnix')
   call assert_equal('', g:autocmd_n)
+
+  " If change is a mix of Normal and Insert modes, TextChangedI should trigger
+  func s:validate_mixed_textchangedi(keys)
+    call feedkeys("ifoo\<esc>", 'tnix')
+    let g:autocmd_i = ''
+    let g:autocmd_n = ''
+    call feedkeys(a:keys, 'tnix')
+    call assert_notequal('', g:autocmd_i)
+    call assert_equal('', g:autocmd_n)
+  endfunc
+
+  call s:validate_mixed_textchangedi("o\<esc>")
+  call s:validate_mixed_textchangedi("O\<esc>")
+  call s:validate_mixed_textchangedi("ciw\<esc>")
+  call s:validate_mixed_textchangedi("cc\<esc>")
+  call s:validate_mixed_textchangedi("C\<esc>")
+  call s:validate_mixed_textchangedi("s\<esc>")
+  call s:validate_mixed_textchangedi("S\<esc>")
+
 
   " CleanUp
   call test_override("char_avail", 0)

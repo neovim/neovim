@@ -6226,6 +6226,9 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         // Restore linebreak, so that when the user edits it looks as before.
         restore_lbr(lbr_saved);
 
+        // trigger TextChangedI
+        curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
+
         if (op_change(oap)) {           // will call edit()
           cap->retval |= CA_COMMAND_BUSY;
         }
@@ -6323,6 +6326,9 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 
         // Restore linebreak, so that when the user edits it looks as before.
         restore_lbr(lbr_saved);
+
+        // trigger TextChangedI
+        curbuf->b_last_changedtick_i = buf_get_changedtick(curbuf);
 
         op_insert(oap, cap->count1);
 
