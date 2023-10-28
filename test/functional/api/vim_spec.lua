@@ -1477,14 +1477,6 @@ describe('API', function()
       nvim('set_option_value', 'debug', 'beep', {})
       eq(true, nvim('get_option_info2', 'debug', {}).was_set)
     end)
-  end)
-
-  describe('nvim_get_option_value, nvim_set_option_value', function()
-    it('works', function()
-      ok(nvim('get_option_value', 'equalalways', {}))
-      nvim('set_option_value', 'equalalways', false, {})
-      ok(not nvim('get_option_value', 'equalalways', {}))
-    end)
 
     it('validation', function()
       eq("Invalid 'scope': expected 'local' or 'global'",
@@ -1616,6 +1608,15 @@ describe('API', function()
          pcall_err(nvim, 'get_option_value', 'commentstring', { filetype = 'lua' }))
     end)
 
+    it("value of 'modified' is always false for scratch buffers", function()
+      nvim('set_current_buf', nvim('create_buf', true, true))
+      insert([[
+        foo
+        bar
+        baz
+      ]])
+      eq(false, nvim('get_option_value', 'modified', {}))
+    end)
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()
