@@ -2534,12 +2534,10 @@ static const char *did_set_showtabline(optset_T *args FUNC_ATTR_UNUSED)
 static const char *did_set_smoothscroll(optset_T *args FUNC_ATTR_UNUSED)
 {
   win_T *win = (win_T *)args->os_win;
-  if (win->w_p_sms) {
-    return NULL;
+  if (!win->w_p_sms) {
+    win->w_skipcol = 0;
   }
 
-  win->w_skipcol = 0;
-  changed_line_abv_curs_win(win);
   return NULL;
 }
 
@@ -2746,11 +2744,13 @@ static const char *did_set_winwidth(optset_T *args)
 static const char *did_set_wrap(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-
-  // If 'wrap' is set, set w_leftcol to zero.
+  // Set w_leftcol or w_skipcol to zero.
   if (win->w_p_wrap) {
     win->w_leftcol = 0;
+  } else {
+    win->w_skipcol = 0;
   }
+
   return NULL;
 }
 /// Check the bounds of numeric options.
