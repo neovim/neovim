@@ -7436,6 +7436,13 @@ static void f_setenv(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   char valbuf[NUMBUFLEN];
   const char *name = tv_get_string_buf(&argvars[0], namebuf);
 
+  // seting an environment variable may be dangerous, e.g. you could
+  // setenv GCONV_PATH=/tmp and then have iconv() unexpectedly call
+  // a shell command using some shared library:
+  if (check_secure()) {
+    return;
+  }
+
   if (argvars[1].v_type == VAR_SPECIAL
       && argvars[1].vval.v_special == kSpecialVarNull) {
     vim_unsetenv_ext(name);
