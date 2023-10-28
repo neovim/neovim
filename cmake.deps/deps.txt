@@ -13,8 +13,8 @@ LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
 UNIBILIUM_URL https://github.com/neovim/unibilium/archive/d72c3598e7ac5d1ebf86ee268b8b4ed95c0fa628.tar.gz
 UNIBILIUM_SHA256 9c4747c862ab5e3076dcf8fa8f0ea7a6b50f20ec5905618b9536655596797487
 
-LIBTERMKEY_URL https://github.com/neovim/deps/raw/aa004f1b2b6470a92363cba8e1cc1874141dacc4/opt/libtermkey-0.22.tar.gz
-LIBTERMKEY_SHA256 6945bd3c4aaa83da83d80a045c5563da4edd7d0374c62c0d35aec09eb3014600
+LIBTERMKEY_URL https://github.com/neovim/libtermkey/archive/v0.22.tar.gz
+LIBTERMKEY_SHA256 81cac2b685c9ada4ead4ea788fb69ff74fc1947ad188ed0264c646fe12b496ba
 
 LIBVTERM_URL https://github.com/neovim/deps/raw/12c9dcf1d823ac4acbccf494c93c4774a87db11d/opt/libvterm-0.3.3.tar.gz
 LIBVTERM_SHA256 09156f43dd2128bd347cbeebe50d9a571d32c64e0cf18d211197946aff7226e0
