@@ -865,7 +865,8 @@ let s:script_checks = {
       \ 'crystal': [['#!/path/crystal']],
       \ 'rexx': [['#!/path/rexx'],
       \          ['#!/path/regina']],
-      \ 'janet': [['#!/path/janet']],
+      \ 'janet':  [['#!/path/janet']],
+      \ 'dart':   [['#!/path/dart']],
       \ }
 
 " Various forms of "env" optional arguments.
