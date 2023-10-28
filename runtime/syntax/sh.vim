@@ -163,7 +163,7 @@ syn cluster shIdList	contains=shArithmetic,shCommandSub,shCommandSubBQ,shWrapLin
 syn cluster shIfList	contains=@shLoopList,shDblBrace,shDblParen,shFunctionKey,shFunctionOne,shFunctionTwo
 syn cluster shLoopList	contains=@shCaseList,@shErrorList,shCaseEsac,shConditional,shDblBrace,shExpr,shFor,shIf,shOption,shSet,shTest,shTestOpr,shTouch
 if exists("b:is_kornshell") || exists("b:is_bash")
- syn cluster shLoopoList	add=shForPP
+ syn cluster shLoopList	add=shForPP,shDblParen
 endif
 syn cluster shPPSLeftList	contains=shAlias,shArithmetic,shCmdParenRegion,shCommandSub,shCtrlSeq,shDeref,shDerefSimple,shDoubleQuote,shEcho,shEscape,shExDoubleQuote,shExpr,shExSingleQuote,shHereDoc,shNumber,shOperator,shOption,shPosnParm,shHereString,shRedir,shSingleQuote,shSpecial,shStatement,shSubSh,shTest,shVariable
 syn cluster shPPSRightList	contains=shDeref,shDerefSimple,shEscape,shPosnParm
