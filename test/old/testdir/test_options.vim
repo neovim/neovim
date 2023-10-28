@@ -2193,4 +2193,20 @@ func Test_binary_depending_options()
   call delete('Xoutput_bin')
 endfunc
 
+func Test_set_wrap()
+  " Unsetting 'wrap' when 'smoothscroll' is set does not result in incorrect
+  " cursor position.
+  set wrap smoothscroll scrolloff=5
+
+  call setline(1, ['', 'aaaa'->repeat(500)])
+  20 split
+  20 vsplit
+  norm 2G$
+  redraw
+  set nowrap
+  call assert_equal(2, winline())
+
+  set wrap& smoothscroll& scrolloff&
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
