@@ -1512,7 +1512,7 @@ vim.wo                                                                *vim.wo*
 Lua module: vim                                                      *lua-vim*
 
 vim.cmd                                                            *vim.cmd()*
-    Execute Vim script commands.
+    Executes Vim script commands.
 
     Note that `vim.cmd` can be indexed with a command name to return a
     callable function to the command.
@@ -1596,7 +1596,7 @@ vim.inspect                                                    *vim.inspect()*
       • https://github.com/mpeterv/vinspect
 
 vim.keycode({str})                                             *vim.keycode()*
-    Translate keycodes.
+    Translates keycodes.
 
     Example: >lua
         local k = vim.keycode
@@ -1619,7 +1619,7 @@ vim.lua_omnifunc({find_start}, {_})                       *vim.lua_omnifunc()*
     Activate using `set omnifunc=v:lua.vim.lua_omnifunc` in a Lua buffer.
 
 vim.notify({msg}, {level}, {opts})                              *vim.notify()*
-    Display a notification to the user.
+    Displays a notification to the user.
 
     This function can be overridden by plugins to display notifications using
     a custom provider (such as the system notification provider). By default,
@@ -1631,7 +1631,7 @@ vim.notify({msg}, {level}, {opts})                              *vim.notify()*
       • {opts}   (table|nil) Optional parameters. Unused by default.
 
 vim.notify_once({msg}, {level}, {opts})                    *vim.notify_once()*
-    Display a notification only one time.
+    Displays a notification only one time.
 
     Like |vim.notify()|, but subsequent calls with the same message will not
     display a notification.
@@ -1760,7 +1760,7 @@ vim.schedule_wrap({fn})                                  *vim.schedule_wrap()*
       • |vim.in_fast_event()|
 
 vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
-    Run a system command
+    Runs a system command or throws an error if {cmd} cannot be run.
 
     Examples: >lua
         local on_exit = function(obj)
@@ -1770,15 +1770,16 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
           print(obj.stderr)
         end
 
-        -- Run asynchronously
+        -- Runs asynchronously:
         vim.system({'echo', 'hello'}, { text = true }, on_exit)
 
-        -- Run synchronously
+        -- Runs synchronously:
         local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
         -- { code = 0, signal = 0, stdout = 'hello', stderr = '' }
 <
 
-    See |uv.spawn()| for more details.
+    See |uv.spawn()| for more details. Note: unlike |uv.spawn()|, vim.system
+    throws an error if {cmd} cannot be run.
 
     Parameters: ~
       • {cmd}      (string[]) Command to execute

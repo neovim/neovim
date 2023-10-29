@@ -1,4 +1,4 @@
-*matchit.txt*   Extended "%" matching
+*matchit.txt*   Extended |%| matching
 
 For instructions on installing this file, type
 	`:help matchit-install`
