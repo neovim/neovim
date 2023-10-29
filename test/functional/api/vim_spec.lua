@@ -1479,9 +1479,9 @@ describe('API', function()
     end)
 
     it('validation', function()
-      eq("Invalid 'scope': expected 'local' or 'global'",
+      eq("Invalid 'scope': expected 'local', 'global' or 'both'",
         pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 'bogus'}))
-      eq("Invalid 'scope': expected 'local' or 'global'",
+      eq("Invalid 'scope': expected 'local', 'global' or 'both'",
         pcall_err(nvim, 'set_option_value', 'scrolloff', 1, {scope = 'bogus'}))
       eq("Invalid 'scope': expected String, got Integer",
         pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 42}))

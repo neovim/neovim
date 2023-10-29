@@ -30,78 +30,125 @@ static int validate_option_value_args(Dict(option) *opts, char *name, int *scope
                                       OptReqScope *req_scope, void **from, char **filetype,
                                       Error *err)
 {
-#define HAS_KEY_X(d, v) HAS_KEY(d, option, v)
-  if (HAS_KEY_X(opts, scope)) {
-    if (!strcmp(opts->scope.data, "local")) {
-      *scope = OPT_LOCAL;
-    } else if (!strcmp(opts->scope.data, "global")) {
-      *scope = OPT_GLOBAL;
-    } else {
-      VALIDATE_EXP(false, "scope", "'local' or 'global'", NULL, {
-        return FAIL;
-      });
-    }
-  }
-
-  *req_scope = kOptReqGlobal;
-
-  if (filetype != NULL && HAS_KEY_X(opts, filetype)) {
-    *filetype = opts->filetype.data;
-  }
-
-  if (HAS_KEY_X(opts, win)) {
-    *req_scope = kOptReqWin;
-    *from = find_window_by_handle(opts->win, err);
-    if (ERROR_SET(err)) {
-      return FAIL;
-    }
-  }
-
-  if (HAS_KEY_X(opts, buf)) {
-    *scope = OPT_LOCAL;
-    *req_scope = kOptReqBuf;
-    *from = find_buffer_by_handle(opts->buf, err);
-    if (ERROR_SET(err)) {
-      return FAIL;
-    }
-  }
-
-  VALIDATE((!HAS_KEY_X(opts, filetype)
-            || !(HAS_KEY_X(opts, buf) || HAS_KEY_X(opts, scope) || HAS_KEY_X(opts, win))),
-           "%s", "cannot use 'filetype' with 'scope', 'buf' or 'win'", {
-    return FAIL;
-  });
-
-  VALIDATE((!HAS_KEY_X(opts, scope) || !HAS_KEY_X(opts, buf)), "%s",
-           "cannot use both 'scope' and 'buf'", {
-    return FAIL;
-  });
-
-  VALIDATE((!HAS_KEY_X(opts, win) || !HAS_KEY_X(opts, buf)),
-           "%s", "cannot use both 'buf' and 'win'", {
-    return FAIL;
-  });
-
   int flags = get_option_attrs(name);
   if (flags == 0) {
     // hidden or unknown option
     api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name);
-  } else if (*req_scope == kOptReqBuf || *req_scope == kOptReqWin) {
-    // if 'buf' or 'win' is passed, make sure the option supports it
-    int req_flags = *req_scope == kOptReqBuf ? SOPT_BUF : SOPT_WIN;
-    if (!(flags & req_flags)) {
-      char *tgt = *req_scope & kOptReqBuf ? "buf" : "win";
-      char *global = flags & SOPT_GLOBAL ? "global ": "";
-      char *req = flags & SOPT_BUF ? "buffer-local " :
-                  flags & SOPT_WIN ? "window-local " : "";
+    return FAIL;
+  }
 
-      api_set_error(err, kErrorTypeValidation, "'%s' cannot be passed for %s%soption '%s'",
-                    tgt, global, req, name);
+#define HAS_KEY_X(d, v) HAS_KEY(d, option, v)
+  const bool has_buf = HAS_KEY_X(opts, buf);
+  const bool has_win = HAS_KEY_X(opts, win);
+  const bool has_scope = HAS_KEY_X(opts, scope);
+  const bool has_filetype = HAS_KEY_X(opts, filetype);
+#undef HAS_KEY_X
+
+  const bool is_buf_option = (flags & SOPT_BUF);
+  const bool is_win_option = (flags & SOPT_WIN);
+  const bool is_global_option = (flags & SOPT_GLOBAL);
+
+  // Don't allow both 'buf' and 'win' to be used together, except when both are 0.
+  // This workaround is currently needed for vim.o to work for correctly for all options.
+  VALIDATE(!has_win || !has_buf || (opts->buf == 0 && opts->win == 0),
+           "%s", "cannot use both 'buf' and 'win' unless both are 0", {
+    return FAIL;
+  });
+
+  VALIDATE(!has_filetype || !(has_buf || has_scope || has_win),
+           "%s", "cannot use 'filetype' with 'scope', 'buf' or 'win'", {
+    return FAIL;
+  });
+
+  if (has_scope) {
+    if (!strcmp(opts->scope.data, "local")) {
+      *scope = OPT_LOCAL;
+    } else if (!strcmp(opts->scope.data, "global")) {
+      *scope = OPT_GLOBAL;
+    } else if (!strcmp(opts->scope.data, "both")) {
+      *scope = 0;
+    } else {
+      VALIDATE_EXP(false, "scope", "'local', 'global' or 'both'", NULL, {
+        return FAIL;
+      });
+    }
+
+    // Force global scope for global option.
+    VALIDATE(*scope == OPT_GLOBAL || is_win_option || is_buf_option,
+             "Invalid scope for global-only option '%s'", name, {
+      return FAIL;
+    });
+  } else {
+    // For filetype options, use no scope by default.
+    if (has_filetype) {
+      *scope = 0;
+    }
+    // For buffer options, use local scope if buf is passed and global scope otherwise.
+    else if (is_buf_option) {
+      *scope = has_buf ? OPT_LOCAL : OPT_GLOBAL;
+    }
+    // Use global scope for global-local window options and no scope for window-local options.
+    else if (is_win_option) {
+      *scope = is_global_option ? OPT_GLOBAL : 0;
+    }
+    // Use global scope for global-only options.
+    else {
+      *scope = OPT_GLOBAL;
     }
   }
 
+  // For all non-filetype options:
+  // Require 'buf' when using non-global scope for all buffer options.
+  // Require 'win' for window-local options for all scopes, as window-local options have no
+  // global value for all windows.
+  // Also require 'win' for global-local window options when using non-global scopes.
+  if (!has_filetype
+      && ((is_buf_option && !has_buf && *scope != OPT_GLOBAL)
+          || (is_win_option && !has_win && !(is_global_option && *scope == OPT_GLOBAL)))) {
+    char *missing_key = is_buf_option ? "buf" : "win";
+    char *global = is_global_option ? "global " : "";
+    char *local_scope_type = is_buf_option ? "buffer-local " : "window-local ";
+    char *scope_str = *scope == OPT_GLOBAL ? "global" : (*scope == OPT_LOCAL ? "local" : "both");
+
+    api_set_error(err, kErrorTypeValidation,
+                  "'%s' required to access '%s' scope value for %s%soption '%s'",
+                  missing_key, scope_str, global, local_scope_type, name);
+    return FAIL;
+  }
+
+  // If 'buf' or 'win' is passed, make sure the option supports it.
+  // Special case: Allow this when the unsupported key equals 0, this is required to implement the
+  // Lua option interfaces.
+  if ((has_buf && !is_buf_option && opts->buf != 0)
+      || (has_win && !is_win_option && opts->win != 0)) {
+    char *invalid_key = has_buf ? "buf" : "win";
+    char *global = is_global_option ? "global " : "";
+    char *local_scope_type = is_buf_option ? "buffer-local " : is_win_option ? "window-local " : "";
+
+    api_set_error(err, kErrorTypeValidation, "'%s' cannot be passed for %s%soption '%s'",
+                  invalid_key, global, local_scope_type, name);
+    return FAIL;
+  }
+
+  if (!has_filetype && *scope != OPT_GLOBAL) {
+    // We already checked to make sure that all non-filetype options with a non-global scope are
+    // either buffer options or window options, so no need to check it again here.
+    *req_scope = is_buf_option ? kOptReqBuf : kOptReqWin;
+    *from = is_buf_option ? (void *)find_buffer_by_handle(opts->buf, err)
+                          : (void *)find_window_by_handle(opts->win, err);
+
+    if (ERROR_SET(err)) {
+      return FAIL;
+    }
+  } else {
+    *req_scope = kOptReqGlobal;
+  }
+
+  if (filetype != NULL && has_filetype) {
+    *filetype = opts->filetype.data;
+  }
+
   return OK;
-#undef HAS_KEY_X
 }
 
 /// Create a dummy buffer and run the FileType autocmd on it.
