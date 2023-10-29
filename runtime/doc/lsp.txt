@@ -1179,8 +1179,8 @@ declaration({options})                             *vim.lsp.buf.declaration()*
       • {options}  (table|nil) additional options
                    • reuse_win: (boolean) Jump to existing window if buffer is
                      already open.
-                   • on_list: (function) handler for list results. See
-                     |lsp-on-list-handler|
+                   • on_list: (function) |lsp-on-list-handler| replacing the
+                     default handler. Called for any non-empty result.
 
 definition({options})                               *vim.lsp.buf.definition()*
     Jumps to the definition of the symbol under the cursor.
@@ -1189,8 +1189,8 @@ definition({options})                               *vim.lsp.buf.definition()*
       • {options}  (table|nil) additional options
                    • reuse_win: (boolean) Jump to existing window if buffer is
                      already open.
-                   • on_list: (function) handler for list results. See
-                     |lsp-on-list-handler|
+                   • on_list: (function) |lsp-on-list-handler| replacing the
+                     default handler. Called for any non-empty result.
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
     Send request to the server to resolve document highlights for the current
@@ -1271,8 +1271,8 @@ implementation({options})                       *vim.lsp.buf.implementation()*
 
     Parameters: ~
       • {options}  (table|nil) additional options
-                   • on_list: (function) handler for list results. See
-                     |lsp-on-list-handler|
+                   • on_list: (function) |lsp-on-list-handler| replacing the
+                     default handler. Called for any non-empty result.
 
 incoming_calls()                                *vim.lsp.buf.incoming_calls()*
     Lists all the call sites of the symbol under the cursor in the |quickfix|
@@ -1329,8 +1329,8 @@ type_definition({options})                     *vim.lsp.buf.type_definition()*
       • {options}  (table|nil) additional options
                    • reuse_win: (boolean) Jump to existing window if buffer is
                      already open.
-                   • on_list: (function) handler for list results. See
-                     |lsp-on-list-handler|
+                   • on_list: (function) |lsp-on-list-handler| replacing the
+                     default handler. Called for any non-empty result.
 
 workspace_symbol({query}, {options})          *vim.lsp.buf.workspace_symbol()*
     Lists all symbols in the current workspace in the quickfix window.
