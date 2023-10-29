@@ -884,7 +884,7 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_multi_skipcol()
-  it('scrolling mulitple lines and stopping at non-zero skipcol', function()
+  it('scrolling multiple lines and stopping at non-zero skipcol', function()
     screen:try_resize(40, 10)
     screen:set_default_attr_ids({
       [0] = {foreground = Screen.colors.Blue, bold = true},

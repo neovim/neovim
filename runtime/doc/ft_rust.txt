@@ -276,7 +276,6 @@ g:rust_keep_autopairs_default ~
 
 	Don't override auto-pairs default for the Rust filetype. The default
 	is 0.
- 
 
 ==============================================================================
 COMMANDS                                                       *rust-commands*

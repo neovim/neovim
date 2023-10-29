@@ -1333,7 +1333,7 @@ describe('autocmd api', function()
       local without_group = meths.get_autocmds(search)
       eq(2, #without_group)
 
-      -- Doest clear with passing group.
+      -- Doesn't clear with passing group.
       meths.clear_autocmds { buffer = 0, group = search.group }
       local with_group = meths.get_autocmds(search)
       eq(1, #with_group)

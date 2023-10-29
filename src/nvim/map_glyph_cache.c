@@ -6,7 +6,7 @@
 // `String key` lookup keys don't need to be NULL terminated, but they
 // must not contain embedded NUL:s. When reading a key from set->keys, they
 // are always NUL terminated, though. Thus, it is enough to store an index into
-// this array, and use strlen(), to retrive an interned key.
+// this array, and use strlen(), to retrieve an interned key.
 
 #include <assert.h>
 #include <stdbool.h>

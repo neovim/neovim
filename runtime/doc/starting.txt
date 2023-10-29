@@ -1307,7 +1307,7 @@ exactly four MessagePack objects:
    10 (LocalMark)
    11 (Change)         Map containing some position description:
                        Entry      Position ~
-                       GlobaMark  Global mark position. |'A|
+                       GlobalMark Global mark position. |'A|
                        LocalMark  Local mark position. |'a|
                        Jump       One position from the |jumplist|.
                        Change     One position from the |changelist|.
