@@ -355,6 +355,14 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
     return;
   }
 
+  // load buffer first if it's not loaded
+  if (buf->b_ml.ml_mfp == NULL) {
+    if (!buf_ensure_loaded(buf)) {
+      api_set_error(err, kErrorTypeException, "Failed to load buffer");
+      return;
+    }
+  }
+
   bool oob = false;
   start = normalize_index(buf, start, true, &oob);
   end = normalize_index(buf, end, true, &oob);
@@ -525,6 +533,14 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
     return;
+  }
+
+  // load buffer first if it's not loaded
+  if (buf->b_ml.ml_mfp == NULL) {
+    if (!buf_ensure_loaded(buf)) {
+      api_set_error(err, kErrorTypeException, "Failed to load buffer");
+      return;
+    }
   }
 
   bool oob = false;
