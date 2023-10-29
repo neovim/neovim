@@ -396,6 +396,13 @@ static int insert_check(VimState *state)
     Insstart_orig = Insstart;
   }
 
+  if (curbuf->terminal) {
+    // Exit Insert mode and go to Terminal mode.
+    stop_insert_mode = true;
+    restart_edit = 'I';
+    stuffcharReadbuff(K_NOP);
+  }
+
   if (stop_insert_mode && !ins_compl_active()) {
     // ":stopinsert" used
     s->count = 0;
