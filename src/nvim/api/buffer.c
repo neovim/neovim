@@ -359,6 +359,14 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
     return;
   }
 
+  // loaded buffer first if it's not loaded
+  if (buf->b_ml.ml_mfp == NULL) {
+    if (!buf_ensure_loaded(buf)) {
+      api_set_error(err, kErrorTypeException, "Failed to load buffer");
+      return;
+    }
+  }
+
   bool oob = false;
   start = normalize_index(buf, start, true, &oob);
   end = normalize_index(buf, end, true, &oob);
@@ -393,10 +401,6 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
 
   if (!MODIFIABLE(buf)) {
     api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
-    goto end;
-  }
-
-  if (!buf_ensure_loaded(buf)) {
     goto end;
   }
 
@@ -537,6 +541,14 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
     return;
   }
 
+  // loaded buffer first if it's not loaded
+  if (buf->b_ml.ml_mfp == NULL) {
+    if (!buf_ensure_loaded(buf)) {
+      api_set_error(err, kErrorTypeException, "Failed to load buffer");
+      return;
+    }
+  }
+
   bool oob = false;
 
   // check range is ordered and everything!
@@ -642,10 +654,6 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   if (!MODIFIABLE(buf)) {
     api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
-    goto end;
-  }
-
-  if (!buf_ensure_loaded(buf)) {
     goto end;
   }
 
