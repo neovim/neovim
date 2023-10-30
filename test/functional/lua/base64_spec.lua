@@ -35,6 +35,9 @@ describe('vim.base64', function()
     for _, v in ipairs(values) do
       eq(v, decode(encode(v)))
     end
+
+    -- Explicitly check encoded output
+    eq('VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=', encode('The quick brown fox jumps over the lazy dog\n'))
   end)
 
   it('detects invalid input', function()
