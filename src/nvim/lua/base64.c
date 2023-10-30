@@ -159,7 +159,7 @@ static char *base64_decode(const char *src, size_t src_len)
       goto invalid;
     }
 
-    acc = (acc << 6) + (d - 1);
+    acc = ((acc << 6) & 0xFFF) + (d - 1);
     acc_len += 6;
     if (acc_len >= 8) {
       acc_len -= 8;
