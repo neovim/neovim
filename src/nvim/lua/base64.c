@@ -188,9 +188,7 @@ static char *base64_decode(const char *src, size_t src_len)
     }
   }
 
-  if (dest) {
-    dest[out_len] = '\0';
-  }
+  dest[out_len] = '\0';
 
   return dest;
 
