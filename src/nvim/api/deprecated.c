@@ -681,21 +681,6 @@ static void set_option_to(uint64_t channel_id, void *to, OptReqScope req_scope, 
     return;
   });
 
-  if (value.type == kObjectTypeNil) {
-    if (req_scope == kOptReqGlobal) {
-      api_set_error(err, kErrorTypeException, "Cannot unset option '%s'", name.data);
-      return;
-    } else if (!(flags & SOPT_GLOBAL)) {
-      api_set_error(err, kErrorTypeException,
-                    "Cannot unset option '%s' because it doesn't have a global value",
-                    name.data);
-      return;
-    } else {
-      unset_global_local_option(name.data, to);
-      return;
-    }
-  }
-
   bool error = false;
   OptVal optval = object_as_optval(value, &error);
 

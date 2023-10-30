@@ -173,51 +173,7 @@ void didset_string_options(void)
   (void)opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
 }
 
-/// Trigger the OptionSet autocommand.
-/// "opt_idx"   is the index of the option being set.
-/// "opt_flags" can be OPT_LOCAL etc.
-/// "oldval"    the old value
-/// "oldval_l"  the old local value (only non-NULL if global and local value are set)
-/// "oldval_g"  the old global value (only non-NULL if global and local value are set)
-/// "newval"    the new value
-void trigger_optionset_string(int opt_idx, int opt_flags, char *oldval, char *oldval_l,
-                              char *oldval_g, char *newval)
-{
-  // Don't do this recursively.
-  if (oldval == NULL || newval == NULL
-      || *get_vim_var_str(VV_OPTION_TYPE) != NUL) {
-    return;
-  }
-
-  char buf_type[7];
-
-  vim_snprintf(buf_type, ARRAY_SIZE(buf_type), "%s",
-               (opt_flags & OPT_LOCAL) ? "local" : "global");
-  set_vim_var_string(VV_OPTION_OLD, oldval, -1);
-  set_vim_var_string(VV_OPTION_NEW, newval, -1);
-  set_vim_var_string(VV_OPTION_TYPE, buf_type, -1);
-  if (opt_flags & OPT_LOCAL) {
-    set_vim_var_string(VV_OPTION_COMMAND, "setlocal", -1);
-    set_vim_var_string(VV_OPTION_OLDLOCAL, oldval, -1);
-  }
-  if (opt_flags & OPT_GLOBAL) {
-    set_vim_var_string(VV_OPTION_COMMAND, "setglobal", -1);
-    set_vim_var_string(VV_OPTION_OLDGLOBAL, oldval, -1);
-  }
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    set_vim_var_string(VV_OPTION_COMMAND, "set", -1);
-    set_vim_var_string(VV_OPTION_OLDLOCAL, oldval_l, -1);
-    set_vim_var_string(VV_OPTION_OLDGLOBAL, oldval_g, -1);
-  }
-  if (opt_flags & OPT_MODELINE) {
-    set_vim_var_string(VV_OPTION_COMMAND, "modeline", -1);
-    set_vim_var_string(VV_OPTION_OLDLOCAL, oldval, -1);
-  }
-  apply_autocmds(EVENT_OPTIONSET, get_option(opt_idx)->fullname, NULL, false, NULL);
-  reset_v_option_vars();
-}
-
-static char *illegal_char(char *errbuf, size_t errbuflen, int c)
+char *illegal_char(char *errbuf, size_t errbuflen, int c)
 {
   if (errbuf == NULL) {
     return "";
@@ -340,7 +296,9 @@ static void set_string_option_global(vimoption_T *opt, char **varp)
 /// "set_sid" is SID_NONE don't set the scriptID.  Otherwise set the scriptID to
 /// "set_sid".
 ///
-/// @param opt_flags  OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
+/// @param opt_flags  OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL.
+///
+/// TODO(famiu): Remove this and its win/buf variants.
 void set_string_option_direct(const char *name, int opt_idx, const char *val, int opt_flags,
                               int set_sid)
 {
@@ -429,100 +387,6 @@ void set_string_option_direct_in_buf(buf_T *buf, const char *name, int opt_idx, 
   set_string_option_direct(name, opt_idx, val, opt_flags, set_sid);
   curbuf = save_curbuf;
   unblock_autocmds();
-}
-
-/// Set a string option to a new value, handling the effects
-/// Must not be called with a hidden option!
-///
-/// @param[in]  opt_idx  Option to set.
-/// @param[in]  value  New value.
-/// @param[in]  opt_flags  Option flags: expected to contain #OPT_LOCAL and/or
-///                        #OPT_GLOBAL.
-///
-/// @return NULL on success, an untranslated error message on error.
-const char *set_string_option(const int opt_idx, void *varp, const char *value, const int opt_flags,
-                              const bool new_value, bool *value_checked, char *const errbuf,
-                              const size_t errbuflen)
-  FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  vimoption_T *opt = get_option(opt_idx);
-
-  char *origval_l = NULL;
-  char *origval_g = NULL;
-
-  // When using ":set opt=val" for a global option
-  // with a local value the local value will be
-  // reset, use the global value here.
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
-      && ((int)opt->indir & PV_BOTH)) {
-    varp = opt->var;
-  }
-
-  // The old value is kept until we are sure that the new value is valid.
-  char *oldval = *(char **)varp;
-
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    origval_l = *(char **)get_varp_scope(opt, OPT_LOCAL);
-    origval_g = *(char **)get_varp_scope(opt, OPT_GLOBAL);
-
-    // A global-local string option might have an empty option as value to
-    // indicate that the global value should be used.
-    if (((int)opt->indir & PV_BOTH) && origval_l == empty_string_option) {
-      origval_l = origval_g;
-    }
-  }
-
-  char *origval;
-  // When setting the local value of a global option, the old value may be
-  // the global value.
-  if (((int)opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL)) {
-    origval = *(char **)get_varp_from(opt, curbuf, curwin);
-  } else {
-    origval = oldval;
-  }
-
-  *(char **)varp = xstrdup(value != NULL ? value : empty_string_option);
-
-  char *const saved_origval = (origval != NULL) ? xstrdup(origval) : NULL;
-  char *const saved_oldval_l = (origval_l != NULL) ? xstrdup(origval_l) : 0;
-  char *const saved_oldval_g = (origval_g != NULL) ? xstrdup(origval_g) : 0;
-
-  // newval (and varp) may become invalid if the buffer is closed by
-  // autocommands.
-  char *const saved_newval = xstrdup(*(char **)varp);
-
-  const int secure_saved = secure;
-  const uint32_t *p = insecure_flag(curwin, opt_idx, opt_flags);
-
-  // When an option is set in the sandbox, from a modeline or in secure mode, then deal with side
-  // effects in secure mode. Also when the value was set with the P_INSECURE flag and is not
-  // completely replaced.
-  if ((opt_flags & OPT_MODELINE) || sandbox != 0 || (!new_value && (*p & P_INSECURE))) {
-    secure = 1;
-  }
-
-  const char *const errmsg = did_set_string_option(curbuf, curwin, opt_idx, varp, oldval,
-                                                   errbuf, errbuflen, opt_flags, value_checked);
-
-  secure = secure_saved;
-
-  // call autocommand after handling side effects
-  if (errmsg == NULL) {
-    if (!starting) {
-      trigger_optionset_string(opt_idx, opt_flags, saved_origval, saved_oldval_l,
-                               saved_oldval_g, saved_newval);
-    }
-    if (opt->flags & P_UI_OPTION) {
-      ui_call_option_set(cstr_as_string(opt->fullname),
-                         CSTR_AS_OBJ(saved_newval));
-    }
-  }
-  xfree(saved_origval);
-  xfree(saved_oldval_l);
-  xfree(saved_oldval_g);
-  xfree(saved_newval);
-
-  return errmsg;
 }
 
 /// Return true if "val" is a valid 'filetype' name.
@@ -636,7 +500,7 @@ const char *check_stl_option(char *s)
 /// Check for a "normal" directory or file name in some options.  Disallow a
 /// path separator (slash and/or backslash), wildcards and characters that are
 /// often illegal in a file name. Be more permissive if "secure" is off.
-static bool check_illegal_path_names(char *val, uint32_t flags)
+bool check_illegal_path_names(char *val, uint32_t flags)
 {
   return (((flags & P_NFNAME)
            && strpbrk(val, (secure ? "/\\*?[|;&<>\r\n" : "/\\*?[<>\r\n")) != NULL)
@@ -2674,177 +2538,6 @@ const char *did_set_winhighlight(optset_T *args)
 int expand_set_winhighlight(optexpand_T *args, int *numMatches, char ***matches)
 {
   return expand_set_opt_generic(args, get_highlight_name, numMatches, matches);
-}
-
-// When 'syntax' is set, load the syntax of that name
-static void do_syntax_autocmd(buf_T *buf, bool value_changed)
-{
-  static int syn_recursive = 0;
-
-  syn_recursive++;
-  // Only pass true for "force" when the value changed or not used
-  // recursively, to avoid endless recurrence.
-  apply_autocmds(EVENT_SYNTAX, buf->b_p_syn, buf->b_fname,
-                 value_changed || syn_recursive == 1, buf);
-  buf->b_flags |= BF_SYN_SET;
-  syn_recursive--;
-}
-
-static void do_spelllang_source(win_T *win)
-{
-  char fname[200];
-  char *q = win->w_s->b_p_spl;
-
-  // Skip the first name if it is "cjk".
-  if (strncmp(q, "cjk,", 4) == 0) {
-    q += 4;
-  }
-
-  // Source the spell/LANG.{vim,lua} in 'runtimepath'.
-  // They could set 'spellcapcheck' depending on the language.
-  // Use the first name in 'spelllang' up to '_region' or
-  // '.encoding'.
-  char *p;
-  for (p = q; *p != NUL; p++) {
-    if (!ASCII_ISALNUM(*p) && *p != '-') {
-      break;
-    }
-  }
-  if (p > q) {
-    vim_snprintf(fname, sizeof(fname), "spell/%.*s.*", (int)(p - q), q);
-    source_runtime_vim_lua(fname, DIP_ALL);
-  }
-}
-
-/// Handle string options that need some action to perform when changed.
-/// The new value must be allocated.
-///
-/// @param opt_idx  index in options[] table
-/// @param varp  pointer to the option variable
-/// @param oldval  previous value of the option
-/// @param errbuf  buffer for errors, or NULL
-/// @param errbuflen  length of errors buffer
-/// @param opt_flags  OPT_LOCAL and/or OPT_GLOBAL
-/// @param op OP_ADDING/OP_PREPENDING/OP_REMOVING
-/// @param value_checked  value was checked to be safe, no need to set P_INSECURE
-///
-/// @return  NULL for success, or an untranslated error message for an error
-const char *did_set_string_option(buf_T *buf, win_T *win, int opt_idx, char **varp, char *oldval,
-                                  char *errbuf, size_t errbuflen, int opt_flags,
-                                  bool *value_checked)
-{
-  const char *errmsg = NULL;
-  int restore_chartab = false;
-  vimoption_T *opt = get_option(opt_idx);
-  bool free_oldval = (opt->flags & P_ALLOCED);
-  opt_did_set_cb_T did_set_cb = get_option_did_set_cb(opt_idx);
-  bool value_changed = false;
-
-  optset_T args = {
-    .os_varp = varp,
-    .os_idx = opt_idx,
-    .os_flags = opt_flags,
-    .os_oldval.string = cstr_as_string(oldval),
-    .os_newval.string = cstr_as_string(*varp),
-    .os_value_checked = false,
-    .os_value_changed = false,
-    .os_restore_chartab = false,
-    .os_errbuf = errbuf,
-    .os_errbuflen = errbuflen,
-    .os_win = win,
-    .os_buf = buf,
-  };
-
-  // Disallow changing some options from secure mode
-  if ((secure || sandbox != 0) && (opt->flags & P_SECURE)) {
-    errmsg = e_secure;
-    // Check for a "normal" directory or file name in some options.
-  } else if (check_illegal_path_names(*varp, opt->flags)) {
-    errmsg = e_invarg;
-  } else if (did_set_cb != NULL) {
-    // Invoke the option specific callback function to validate and apply
-    // the new option value.
-    errmsg = did_set_cb(&args);
-
-    // The 'filetype' and 'syntax' option callback functions may change
-    // the os_value_changed field.
-    value_changed = args.os_value_changed;
-    // The 'keymap', 'filetype' and 'syntax' option callback functions
-    // may change the os_value_checked field.
-    *value_checked = args.os_value_checked;
-    // The 'isident', 'iskeyword', 'isprint' and 'isfname' options may
-    // change the character table.  On failure, this needs to be restored.
-    restore_chartab = args.os_restore_chartab;
-  }
-
-  // If an error is detected, restore the previous value.
-  if (errmsg != NULL) {
-    free_string_option(*varp);
-    *varp = oldval;
-    // When resetting some values, need to act on it.
-    if (restore_chartab) {
-      (void)buf_init_chartab(buf, true);
-    }
-  } else {
-    // Remember where the option was set.
-    set_option_sctx_idx(opt_idx, opt_flags, current_sctx);
-    // Free string options that are in allocated memory.
-    // Use "free_oldval", because recursiveness may change the flags under
-    // our fingers (esp. init_highlight()).
-    if (free_oldval) {
-      free_string_option(oldval);
-    }
-    opt->flags |= P_ALLOCED;
-
-    if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
-        && (opt->indir & PV_BOTH)) {
-      // global option with local value set to use global value; free
-      // the local value and make it empty
-      char *p = get_varp_scope(opt, OPT_LOCAL);
-      free_string_option(*(char **)p);
-      *(char **)p = empty_string_option;
-    } else if (!(opt_flags & OPT_LOCAL) && opt_flags != OPT_GLOBAL) {
-      // May set global value for local option.
-      set_string_option_global(opt, varp);
-    }
-
-    // Trigger the autocommand only after setting the flags.
-    if (varp == &buf->b_p_syn) {
-      do_syntax_autocmd(buf, value_changed);
-    } else if (varp == &buf->b_p_ft) {
-      // 'filetype' is set, trigger the FileType autocommand
-      // Skip this when called from a modeline
-      // Force autocmd when the filetype was changed
-      if (!(opt_flags & OPT_MODELINE) || value_changed) {
-        do_filetype_autocmd(buf, value_changed);
-      }
-    } else if (varp == &win->w_s->b_p_spl) {
-      do_spelllang_source(win);
-    }
-  }
-
-  if (varp == &p_mouse) {
-    setmouse();  // in case 'mouse' changed
-  }
-
-  if ((varp == &p_flp || varp == &(buf->b_p_flp))
-      && win->w_briopt_list) {
-    // Changing Formatlistpattern when briopt includes the list setting:
-    // redraw
-    redraw_all_later(UPD_NOT_VALID);
-  } else if (varp == &p_wbr || varp == &(win->w_p_wbr)) {
-    // add / remove window bars for 'winbar'
-    set_winbar(true);
-  }
-
-  if (win->w_curswant != MAXCOL
-      && (opt->flags & (P_CURSWANT | P_RALL)) != 0) {
-    win->w_set_curswant = true;
-  }
-
-  check_redraw_for(buf, win, opt->flags);
-
-  return errmsg;
 }
 
 /// Check an option that can be a range of string values.
