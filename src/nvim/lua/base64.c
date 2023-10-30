@@ -150,7 +150,7 @@ static char *base64_decode(const char *src, size_t src_len)
 
   for (; src_i < src_len; src_i++) {
     const uint8_t c = s[src_i];
-    const uint8_t d = char_to_index[c & 0xFF];
+    const uint8_t d = char_to_index[c];
     if (d == 0) {
       if (c == '=') {
         leftover_i = (int)src_i;
