@@ -38,6 +38,24 @@ describe('vim.base64', function()
 
     -- Explicitly check encoded output
     eq('VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=', encode('The quick brown fox jumps over the lazy dog\n'))
+
+    -- Test vectors from rfc4648
+    local rfc4648 = {
+      { '', '' },
+      { 'f', 'Zg==', },
+      { 'fo', 'Zm8=' },
+      { 'foo', 'Zm9v' },
+      { 'foob', 'Zm9vYg==' },
+      { 'fooba', 'Zm9vYmE=' },
+      { 'foobar', 'Zm9vYmFy' },
+    }
+
+    for _, v in ipairs(rfc4648) do
+      local input = v[1]
+      local output = v[2]
+      eq(output, encode(input))
+      eq(input, decode(output))
+    end
   end)
 
   it('detects invalid input', function()
