@@ -70,11 +70,14 @@ static char *base64_encode(const char *src, size_t src_len)
     uint64_t bits_h;
     memcpy(&bits_h, &src[src_i], sizeof(uint64_t));
     const uint64_t bits_be = htobe64(bits_h);
-    for (size_t k = 0; k < sizeof(uint64_t); k++) {
-      const size_t alphabet_index = (bits_be >> (58 - k * 6)) & 0x3F;
-      assert(alphabet_index < sizeof(alphabet) - 1);
-      dest[out_i + k] = alphabet[alphabet_index];
-    }
+    dest[out_i + 0] = alphabet[(bits_be >> 58) & 0x3F];
+    dest[out_i + 1] = alphabet[(bits_be >> 52) & 0x3F];
+    dest[out_i + 2] = alphabet[(bits_be >> 46) & 0x3F];
+    dest[out_i + 3] = alphabet[(bits_be >> 40) & 0x3F];
+    dest[out_i + 4] = alphabet[(bits_be >> 34) & 0x3F];
+    dest[out_i + 5] = alphabet[(bits_be >> 28) & 0x3F];
+    dest[out_i + 6] = alphabet[(bits_be >> 22) & 0x3F];
+    dest[out_i + 7] = alphabet[(bits_be >> 16) & 0x3F];
     out_i += sizeof(uint64_t);
   }
 
@@ -86,7 +89,7 @@ static char *base64_encode(const char *src, size_t src_len)
     dest[out_i + 1] = alphabet[(bits_be >> 20) & 0x3F];
     dest[out_i + 2] = alphabet[(bits_be >> 14) & 0x3F];
     dest[out_i + 3] = alphabet[(bits_be >> 8) & 0x3F];
-    out_i += 4;
+    out_i += sizeof(uint32_t);
   }
 
   if (src_i + 2 < src_len) {
