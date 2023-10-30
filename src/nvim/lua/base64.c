@@ -65,10 +65,12 @@ static char *base64_encode(const char *src, size_t src_len)
   size_t src_i = 0;
   size_t out_i = 0;
 
+  const uint8_t *s = (const uint8_t *)src;
+
   // Read 8 bytes at a time as much as we can
   for (; src_i + 7 < src_len; src_i += 6) {
     uint64_t bits_h;
-    memcpy(&bits_h, &src[src_i], sizeof(uint64_t));
+    memcpy(&bits_h, &s[src_i], sizeof(uint64_t));
     const uint64_t bits_be = htobe64(bits_h);
     dest[out_i + 0] = alphabet[(bits_be >> 58) & 0x3F];
     dest[out_i + 1] = alphabet[(bits_be >> 52) & 0x3F];
@@ -83,7 +85,7 @@ static char *base64_encode(const char *src, size_t src_len)
 
   for (; src_i + 3 < src_len; src_i += 3) {
     uint32_t bits_h;
-    memcpy(&bits_h, &src[src_i], sizeof(uint32_t));
+    memcpy(&bits_h, &s[src_i], sizeof(uint32_t));
     const uint32_t bits_be = htobe32(bits_h);
     dest[out_i + 0] = alphabet[(bits_be >> 26) & 0x3F];
     dest[out_i + 1] = alphabet[(bits_be >> 20) & 0x3F];
@@ -93,19 +95,19 @@ static char *base64_encode(const char *src, size_t src_len)
   }
 
   if (src_i + 2 < src_len) {
-    dest[out_i + 0] = alphabet[src[src_i] >> 2];
-    dest[out_i + 1] = alphabet[((src[src_i] & 0x3) << 4) | (src[src_i + 1] >> 4)];
-    dest[out_i + 2] = alphabet[(src[src_i + 1] & 0xF) << 2 | (src[src_i + 2] >> 6)];
-    dest[out_i + 3] = alphabet[(src[src_i + 2] & 0x3F)];
+    dest[out_i + 0] = alphabet[s[src_i] >> 2];
+    dest[out_i + 1] = alphabet[((s[src_i] & 0x3) << 4) | (s[src_i + 1] >> 4)];
+    dest[out_i + 2] = alphabet[(s[src_i + 1] & 0xF) << 2 | (s[src_i + 2] >> 6)];
+    dest[out_i + 3] = alphabet[(s[src_i + 2] & 0x3F)];
     out_i += 4;
   } else if (src_i + 1 < src_len) {
-    dest[out_i + 0] = alphabet[src[src_i] >> 2];
-    dest[out_i + 1] = alphabet[((src[src_i] & 0x3) << 4) | (src[src_i + 1] >> 4)];
-    dest[out_i + 2] = alphabet[(src[src_i + 1] & 0xF) << 2];
+    dest[out_i + 0] = alphabet[s[src_i] >> 2];
+    dest[out_i + 1] = alphabet[((s[src_i] & 0x3) << 4) | (s[src_i + 1] >> 4)];
+    dest[out_i + 2] = alphabet[(s[src_i + 1] & 0xF) << 2];
     out_i += 3;
   } else if (src_i < src_len) {
-    dest[out_i + 0] = alphabet[src[src_i] >> 2];
-    dest[out_i + 1] = alphabet[(src[src_i] & 0x3) << 4];
+    dest[out_i + 0] = alphabet[s[src_i] >> 2];
+    dest[out_i + 1] = alphabet[(s[src_i] & 0x3) << 4];
     out_i += 2;
   }
 
@@ -136,6 +138,8 @@ static char *base64_decode(const char *src, size_t src_len)
     out_len--;
   }
 
+  const uint8_t *s = (const uint8_t *)src;
+
   dest = xmalloc(out_len + 1);
 
   int acc = 0;
@@ -145,7 +149,7 @@ static char *base64_decode(const char *src, size_t src_len)
   int leftover_i = -1;
 
   for (; src_i < src_len; src_i++) {
-    const char c = src[src_i];
+    const uint8_t c = s[src_i];
     const uint8_t d = char_to_index[c & 0xFF];
     if (d == 0) {
       if (c == '=') {
@@ -172,7 +176,7 @@ static char *base64_decode(const char *src, size_t src_len)
     int padding_len = acc_len / 2;
     int padding_chars = 0;
     for (; (size_t)leftover_i < src_len; leftover_i++) {
-      const char c = src[leftover_i];
+      const uint8_t c = s[leftover_i];
       if (c != '=') {
         goto invalid;
       }
