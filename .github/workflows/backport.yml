@@ -13,4 +13,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Create backport PRs
-        uses: korthout/backport-action@v1
+        uses: korthout/backport-action@v2
