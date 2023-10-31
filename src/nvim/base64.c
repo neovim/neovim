@@ -180,7 +180,7 @@ char *base64_decode(const char *src, size_t src_len)
     goto invalid;
   }
 
-  if (leftover_i >= -1) {
+  if (leftover_i > -1) {
     int padding_len = acc_len / 2;
     int padding_chars = 0;
     for (; (size_t)leftover_i < src_len; leftover_i++) {
