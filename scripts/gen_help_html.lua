@@ -975,13 +975,16 @@ local function gen_css(fname)
     /* Tag pseudo-header common in :help docs. */
     .help-tag-right {
       color: var(--tag-color);
-      margin-left: auto;
-      margin-right: 0;
-      float: right;
+      background-color: inherit;
+      display: flex;
+      justify-content: right;
+      margin-top: 1.5em;
+      margin-bottom: 1em;
     }
     .help-tag a,
     .help-tag-right a {
       color: inherit;
+      background-color: var(--accent-bg-color);
     }
     .help-tag a:not(:hover),
     .help-tag-right a:not(:hover) {
