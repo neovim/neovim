@@ -1506,13 +1506,14 @@ static bool send_mouse_event(Terminal *term, int c)
     return mouse_win == curwin;
   }
 
-  // ignore left release action if it was not processed above
-  // to prevent leaving Terminal mode after entering to it using a mouse
-  if (c == K_LEFTRELEASE && mouse_win->w_buffer->terminal == term) {
+end:
+  // Ignore left release action if it was not forwarded to prevent
+  // leaving Terminal mode after entering to it using a mouse.
+  if ((c == K_LEFTRELEASE && mouse_win != NULL && mouse_win->w_buffer->terminal == term)
+      || c == K_MOUSEMOVE) {
     return false;
   }
 
-end:
   ins_char_typebuf(vgetc_char, vgetc_mod_mask);
   return true;
 }
