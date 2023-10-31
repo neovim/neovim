@@ -472,6 +472,45 @@ void grid_line_cursor_goto(int col)
   ui_grid_cursor_goto(grid_line_grid->handle, grid_line_row, col);
 }
 
+void grid_line_mirror(void)
+{
+  if (grid_line_first >= grid_line_last) {
+    return;
+  }
+
+  size_t n = (size_t)(grid_line_last - grid_line_first);
+  int mirror = grid_line_maxcol - 1;  // Mirrors are more fun than television.
+  schar_T *scratch_char = (schar_T *)linebuf_scratch;
+  memcpy(scratch_char + grid_line_first, linebuf_char + grid_line_first, n * sizeof(schar_T));
+  for (int col = grid_line_first; col < grid_line_last; col++) {
+    int rev = mirror - col;
+    if (col + 1 < grid_line_last && scratch_char[col + 1] == 0) {
+      linebuf_char[rev - 1] = scratch_char[col];
+      linebuf_char[rev] = 0;
+      col++;
+    } else {
+      linebuf_char[rev] = scratch_char[col];
+    }
+  }
+
+  // for attr and vcol: assumes doublewidth chars are self-consistent
+  sattr_T *scratch_attr = (sattr_T *)linebuf_scratch;
+  memcpy(scratch_attr + grid_line_first, linebuf_attr + grid_line_first, n * sizeof(sattr_T));
+  for (int col = grid_line_first; col < grid_line_last; col++) {
+    linebuf_attr[mirror - col] = scratch_attr[col];
+  }
+
+  colnr_T *scratch_vcol = (colnr_T *)linebuf_scratch;
+  memcpy(scratch_vcol + grid_line_first, linebuf_vcol + grid_line_first, n * sizeof(colnr_T));
+  for (int col = grid_line_first; col < grid_line_last; col++) {
+    linebuf_vcol[mirror - col] = scratch_vcol[col];
+  }
+
+  int grid_line_last_copy = grid_line_last;
+  grid_line_last = grid_line_maxcol - grid_line_first;
+  grid_line_first = grid_line_maxcol - grid_line_last_copy;
+}
+
 /// End a group of grid_line_puts calls and send the screen buffer to the UI layer.
 void grid_line_flush(void)
 {
@@ -828,9 +867,11 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
     xfree(linebuf_char);
     xfree(linebuf_attr);
     xfree(linebuf_vcol);
+    xfree(linebuf_scratch);
     linebuf_char = xmalloc((size_t)columns * sizeof(schar_T));
     linebuf_attr = xmalloc((size_t)columns * sizeof(sattr_T));
     linebuf_vcol = xmalloc((size_t)columns * sizeof(colnr_T));
+    linebuf_scratch = xmalloc((size_t)columns * sizeof(sscratch_T));
     linebuf_size = (size_t)columns;
   }
 }
@@ -855,6 +896,7 @@ void grid_free_all_mem(void)
   xfree(linebuf_char);
   xfree(linebuf_attr);
   xfree(linebuf_vcol);
+  xfree(linebuf_scratch);
 }
 
 /// (Re)allocates a window grid if size changed while in ext_multigrid mode.

@@ -16,7 +16,9 @@
 // otherwise it must be a UTF-8 string of length maximum 4 (no NUL when n=4)
 
 typedef uint32_t schar_T;
-typedef int sattr_T;
+typedef int32_t sattr_T;
+// must be at least as big as the biggest of schar_T, sattr_T, col_T
+typedef int32_t sscratch_T;
 
 enum {
   kZIndexDefaultGrid = 0,

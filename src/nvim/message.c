@@ -1231,9 +1231,7 @@ void wait_return(int redraw)
           } else {
             msg_didout = false;
             c = K_IGNORE;
-            msg_col =
-              cmdmsg_rl ? Columns - 1 :
-              0;
+            msg_col = 0;
           }
           if (quit_more) {
             c = CAR;                            // just pretend CR was hit
@@ -1435,7 +1433,7 @@ void msg_start(void)
 
   if (!msg_scroll && full_screen) {     // overwrite last message
     msg_row = cmdline_row;
-    msg_col = cmdmsg_rl ? Columns - 1 : 0;
+    msg_col = 0;
   } else if (msg_didout || (p_ch == 0 && !ui_has(kUIMessages))) {  // start message on next line
     msg_putchar('\n');
     did_return = true;
@@ -2132,7 +2130,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
   int msg_row_pending = -1;
 
   while (true) {
-    if (cmdmsg_rl ? msg_col <= 0 : msg_col >= Columns) {
+    if (msg_col >= Columns) {
       if (p_more && !recurse) {
         // Store text for scrolling back.
         store_sb_text(&sb_str, s, attr, &sb_col, true);
@@ -2141,7 +2139,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
         break;
       }
 
-      msg_col = cmdmsg_rl ? Columns - 1 : 0;
+      msg_col = 0;
       msg_row++;
       msg_didout = false;
     }
@@ -2156,7 +2154,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
 
       if (!recurse) {
         if (msg_row_pending >= 0) {
-          grid_line_flush_if_valid_row();
+          msg_line_flush();
           msg_row_pending = -1;
         }
 
@@ -2196,7 +2194,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
       // TODO(bfredl): this logic is messier that it has to be. What
       // messages really want is its own private linebuf_char buffer.
       if (msg_row_pending >= 0) {
-        grid_line_flush_if_valid_row();
+        msg_line_flush();
       }
       grid_line_start(&msg_grid_adj, msg_row);
       msg_row_pending = msg_row;
@@ -2207,7 +2205,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
       // avoid including composing chars after the end
       int l = (maxlen >= 0) ? utfc_ptr2len_len(s, (int)((str + maxlen) - s)) : utfc_ptr2len(s);
 
-      if (cw > 1 && (cmdmsg_rl ? msg_col <= 1 : msg_col == Columns - 1)) {
+      if (cw > 1 && (msg_col == Columns - 1)) {
         // Doesn't fit, print a highlighted '>' to fill it up.
         grid_line_puts(msg_col, ">", 1, HL_ATTR(HLF_AT));
         cw = 1;
@@ -2216,20 +2214,12 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
         s += l;
       }
       msg_didout = true;  // remember that line is not empty
-      if (cmdmsg_rl) {
-        msg_col -= cw;
-      } else {
-        msg_col += cw;
-      }
+      msg_col += cw;
     } else {
       char c = *s++;
       if (c == '\n') {  // go to next line
         msg_didout = false;  // remember that line is empty
-        if (cmdmsg_rl) {
-          msg_col = Columns - 1;
-        } else {
-          msg_col = 0;
-        }
+        msg_col = 0;
         msg_row++;
         if (p_more && !recurse) {
           // Store text for scrolling back.
@@ -2244,9 +2234,9 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
       } else if (c == TAB) {  // translate Tab into spaces
         do {
           grid_line_puts(msg_col, " ", 1, print_attr);
-          msg_col += cmdmsg_rl ? -1 : 1;
+          msg_col += 1;
 
-          if (msg_col == (cmdmsg_rl ? 0 : Columns)) {
+          if (msg_col == Columns) {
             break;
           }
         } while (msg_col & 7);
@@ -2257,7 +2247,7 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
   }
 
   if (msg_row_pending >= 0) {
-    grid_line_flush_if_valid_row();
+    msg_line_flush();
   }
   msg_cursor_goto(msg_row, msg_col);
 
@@ -2268,9 +2258,20 @@ static void msg_puts_display(const char *str, int maxlen, int attr, int recurse)
   msg_check();
 }
 
+void msg_line_flush(void)
+{
+  if (cmdmsg_rl) {
+    grid_line_mirror();
+  }
+  grid_line_flush_if_valid_row();
+}
+
 void msg_cursor_goto(int row, int col)
 {
   ScreenGrid *grid = &msg_grid_adj;
+  if (cmdmsg_rl) {
+    col = Columns - 1 - col;
+  }
   grid_adjust(&grid, &row, &col);
   ui_grid_cursor_goto(grid->handle, row, col);
 }
@@ -2656,18 +2657,10 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
 
     int cw = utf_char2cells(utf_ptr2char(s));
     // primitive way to compute the current column
-    if (cmdmsg_rl) {
-      if (*s == '\r' || *s == '\n') {
-        msg_col = Columns - 1;
-      } else {
-        msg_col -= cw;
-      }
+    if (*s == '\r' || *s == '\n') {
+      msg_col = 0;
     } else {
-      if (*s == '\r' || *s == '\n') {
-        msg_col = 0;
-      } else {
-        msg_col += cw;
-      }
+      msg_col += cw;
     }
     s += len;
   }
@@ -2915,8 +2908,6 @@ static int do_more_prompt(int typed_char)
   if (quit_more) {
     msg_row = Rows - 1;
     msg_col = 0;
-  } else if (cmdmsg_rl) {
-    msg_col = Columns - 1;
   }
 
   entered = false;
@@ -3014,7 +3005,7 @@ void msg_clr_eos_force(void)
     return;
   }
   int msg_startcol = (cmdmsg_rl) ? 0 : msg_col;
-  int msg_endcol = (cmdmsg_rl) ? msg_col + 1 : Columns;
+  int msg_endcol = (cmdmsg_rl) ? Columns - msg_col : Columns;
 
   if (msg_grid.chars && msg_row < msg_grid_pos) {
     // TODO(bfredl): ugly, this state should already been validated at this
@@ -3028,7 +3019,7 @@ void msg_clr_eos_force(void)
             ' ', ' ', HL_ATTR(HLF_MSG));
 
   redraw_cmdline = true;  // overwritten the command line
-  if (msg_row < Rows - 1 || msg_col == (cmdmsg_rl ? Columns : 0)) {
+  if (msg_row < Rows - 1 || msg_col == 0) {
     clear_cmdline = false;  // command line has been cleared
     mode_displayed = false;  // mode cleared or overwritten
   }
@@ -3383,14 +3374,8 @@ void msg_advance(int col)
   if (col >= Columns) {         // not enough room
     col = Columns - 1;
   }
-  if (cmdmsg_rl) {
-    while (msg_col > Columns - col) {
-      msg_putchar(' ');
-    }
-  } else {
-    while (msg_col < col) {
-      msg_putchar(' ');
-    }
+  while (msg_col < col) {
+    msg_putchar(' ');
   }
 }
 
