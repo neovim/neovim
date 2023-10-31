@@ -338,7 +338,7 @@ describe(':terminal mouse', function()
           {3:-- TERMINAL --}                                    |
         ]])
         command('set mousescroll=ver:10')
-        feed('<ScrollWheelUp><4,0>')
+        feed('<ScrollWheelUp><0,0>')
         screen:expect([[
           {7: 16 }line                 │line30                  |
           {7: 17 }line                 │rows: 5, cols: 25       |
@@ -349,7 +349,7 @@ describe(':terminal mouse', function()
           {3:-- TERMINAL --}                                    |
         ]])
         command('set mousescroll=ver:0')
-        feed('<ScrollWheelUp><4,0>')
+        feed('<ScrollWheelUp><0,0>')
         screen:expect_unchanged()
       end)
 
