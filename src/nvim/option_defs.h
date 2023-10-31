@@ -52,10 +52,6 @@ typedef struct {
   /// New value of the option.
   OptValData os_newval;
 
-  /// When set by the called function: Stop processing the option further.
-  /// Currently only used for boolean options.
-  bool os_doskip;
-
   /// Option value was checked to be safe, no need to set P_INSECURE
   /// Used for the 'keymap', 'filetype' and 'syntax' options.
   bool os_value_checked;

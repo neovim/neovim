@@ -1921,7 +1921,6 @@ static const char *did_set_force_on(optset_T *args FUNC_ATTR_UNUSED)
 {
   if (p_force_on == false) {
     p_force_on = true;
-    args->os_doskip = true;
     return e_unsupportedoption;
   }
   return NULL;
@@ -1932,7 +1931,6 @@ static const char *did_set_force_off(optset_T *args FUNC_ATTR_UNUSED)
 {
   if (p_force_off == true) {
     p_force_off = false;
-    args->os_doskip = true;
     return e_unsupportedoption;
   }
   return NULL;
@@ -2404,7 +2402,6 @@ static const char *did_set_previewwindow(optset_T *args)
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_p_pvw && wp != win) {
       win->w_p_pvw = false;
-      args->os_doskip = true;
       return e_preview_window_already_exists;
     }
   }
@@ -3548,7 +3545,6 @@ static bool is_option_local_value_unset(vimoption_T *opt, buf_T *buf, win_T *win
 /// @param       old_value       Old option value.
 /// @param       new_value       New option value.
 /// @param       opt_flags       Option flags.
-/// @param[out]  doskip          Whether option should be processed further.
 /// @param[out]  value_checked   Value was checked to be safe, no need to set P_INSECURE.
 /// @param       value_replaced  Value was replaced completely.
 /// @param[out]  errbuf          Buffer for error message.
@@ -3556,8 +3552,8 @@ static bool is_option_local_value_unset(vimoption_T *opt, buf_T *buf, win_T *win
 ///
 /// @return  NULL on success, an untranslated error message on error.
 static const char *did_set_option(int opt_idx, void *varp, OptVal old_value, OptVal new_value,
-                                  int opt_flags, bool *doskip, bool *value_checked,
-                                  bool value_replaced, char *errbuf, size_t errbuflen)
+                                  int opt_flags, bool *value_checked, bool value_replaced,
+                                  char *errbuf, size_t errbuflen)
 {
   vimoption_T *opt = &options[opt_idx];
   const char *errmsg = NULL;
@@ -3575,7 +3571,6 @@ static const char *did_set_option(int opt_idx, void *varp, OptVal old_value, Opt
     .os_value_checked = false,
     .os_value_changed = false,
     .os_restore_chartab = false,
-    .os_doskip = false,
     .os_errbuf = errbuf,
     .os_errbuflen = errbuflen,
     .os_buf = curbuf,
@@ -3600,8 +3595,6 @@ static const char *did_set_option(int opt_idx, void *varp, OptVal old_value, Opt
   } else if (did_set_cb != NULL) {
     // Invoke the option specific callback function to validate and apply the new value.
     errmsg = did_set_cb(&did_set_cb_args);
-    // Whether option should be processed further or skipped.
-    *doskip = did_set_cb_args.os_doskip;
     // The 'filetype' and 'syntax' option callback functions may change the os_value_changed field.
     value_changed = did_set_cb_args.os_value_changed;
     // The 'keymap', 'filetype' and 'syntax' option callback functions may change the
@@ -3612,7 +3605,7 @@ static const char *did_set_option(int opt_idx, void *varp, OptVal old_value, Opt
     restore_chartab = did_set_cb_args.os_restore_chartab;
   }
 
-  // If an error is detected, restore the previous value.
+  // If an error is detected, restore the previous value and don't do any further processing.
   if (errmsg != NULL) {
     set_option_varp(opt_idx, varp, old_value, true);
     // When resetting some values, need to act on it.
@@ -3622,59 +3615,53 @@ static const char *did_set_option(int opt_idx, void *varp, OptVal old_value, Opt
 
     // Unset new_value as it is no longer valid.
     new_value = NIL_OPTVAL;  // NOLINT(clang-analyzer-deadcode.DeadStores)
-  } else {
-    // Re-assign the new value as its value may get freed or modified by the option callback.
-    new_value = optval_from_varp(opt_idx, varp);
-
-    // Remember where the option was set.
-    set_option_sctx_idx(opt_idx, opt_flags, current_sctx);
-    // Free options that are in allocated memory.
-    // Use "free_oldval", because recursiveness may change the flags (esp. init_highlight()).
-    if (free_oldval) {
-      optval_free(old_value);
-    }
-    opt->flags |= P_ALLOCED;
-
-    // Check the bound for num options.
-    if (new_value.type == kOptValTypeNumber) {
-      errmsg = check_num_option_bounds((OptInt *)varp, old_value.data.number, errbuf, errbuflen,
-                                       errmsg);
-      // Re-assign new_value because the new value was modified by the bound check.
-      new_value = optval_from_varp(opt_idx, varp);
-    }
-
-    if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0 && (opt->indir & PV_BOTH)) {
-      // Global option with local value set to use global value.
-      // Free the local value and clear it.
-      void *varp_local = get_varp_scope(opt, OPT_LOCAL);
-      OptVal local_unset_value = optval_unset_local(opt_idx, varp_local);
-      set_option_varp(opt_idx, varp_local, local_unset_value, true);
-    } else if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-      // May set global value for local option.
-      void *varp_global = get_varp_scope(opt, OPT_GLOBAL);
-      set_option_varp(opt_idx, varp_global, optval_copy(new_value), true);
-    }
-  }
-
-  // Skip processing the option further if asked to do so.
-  if (*doskip) {
     return errmsg;
   }
 
-  if (errmsg == NULL) {
-    // Trigger the autocommand only after setting the flags.
-    if (varp == &curbuf->b_p_syn) {
-      do_syntax_autocmd(curbuf, value_changed);
-    } else if (varp == &curbuf->b_p_ft) {
-      // 'filetype' is set, trigger the FileType autocommand
-      // Skip this when called from a modeline
-      // Force autocmd when the filetype was changed
-      if (!(opt_flags & OPT_MODELINE) || value_changed) {
-        do_filetype_autocmd(curbuf, value_changed);
-      }
-    } else if (varp == &curwin->w_s->b_p_spl) {
-      do_spelllang_source(curwin);
+  // Re-assign the new value as its value may get freed or modified by the option callback.
+  new_value = optval_from_varp(opt_idx, varp);
+
+  // Remember where the option was set.
+  set_option_sctx_idx(opt_idx, opt_flags, current_sctx);
+  // Free options that are in allocated memory.
+  // Use "free_oldval", because recursiveness may change the flags (esp. init_highlight()).
+  if (free_oldval) {
+    optval_free(old_value);
+  }
+  opt->flags |= P_ALLOCED;
+
+  // Check the bound for num options.
+  if (new_value.type == kOptValTypeNumber) {
+    errmsg = check_num_option_bounds((OptInt *)varp, old_value.data.number, errbuf, errbuflen,
+                                     errmsg);
+    // Re-assign new_value because the new value was modified by the bound check.
+    new_value = optval_from_varp(opt_idx, varp);
+  }
+
+  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0 && (opt->indir & PV_BOTH)) {
+    // Global option with local value set to use global value.
+    // Free the local value and clear it.
+    void *varp_local = get_varp_scope(opt, OPT_LOCAL);
+    OptVal local_unset_value = optval_unset_local(opt_idx, varp_local);
+    set_option_varp(opt_idx, varp_local, local_unset_value, true);
+  } else if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
+    // May set global value for local option.
+    void *varp_global = get_varp_scope(opt, OPT_GLOBAL);
+    set_option_varp(opt_idx, varp_global, optval_copy(new_value), true);
+  }
+
+  // Trigger the autocommand only after setting the flags.
+  if (varp == &curbuf->b_p_syn) {
+    do_syntax_autocmd(curbuf, value_changed);
+  } else if (varp == &curbuf->b_p_ft) {
+    // 'filetype' is set, trigger the FileType autocommand
+    // Skip this when called from a modeline
+    // Force autocmd when the filetype was changed
+    if (!(opt_flags & OPT_MODELINE) || value_changed) {
+      do_filetype_autocmd(curbuf, value_changed);
     }
+  } else if (varp == &curwin->w_s->b_p_spl) {
+    do_spelllang_source(curwin);
   }
 
   // In case 'columns' or 'ls' changed.
@@ -3823,17 +3810,10 @@ static const char *set_option(const int opt_idx, void *varp, OptVal value, int o
     secure = 1;
   }
 
-  bool doskip = false;
-
-  errmsg = did_set_option(opt_idx, varp, old_value, value, opt_flags, &doskip, &value_checked,
+  errmsg = did_set_option(opt_idx, varp, old_value, value, opt_flags, &value_checked,
                           value_replaced, errbuf, errbuflen);
 
   secure = secure_saved;
-
-  // Stop processing option further if asked to do so.
-  if (doskip) {
-    goto end;
-  }
 
   if (errmsg == NULL) {
     if (!starting) {
@@ -3850,7 +3830,7 @@ static const char *set_option(const int opt_idx, void *varp, OptVal value, int o
       ui_call_option_set(cstr_as_string(opt->fullname), optval_as_object(saved_new_value));
     }
   }
-end:
+
   // Free copied values as they are not needed anymore
   optval_free(saved_used_value);
   optval_free(saved_old_local_value);
