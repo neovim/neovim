@@ -202,6 +202,9 @@ The following new APIs and features were added.
 
 • 'complete' option supports "f" flag for completing buffer names.
 
+• Added |vim.base64.encode()| and |vim.base64.decode()| for encoding and decoding
+  strings using Base64 encoding.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

@@ -810,6 +810,28 @@ vim.json.encode({obj})                                     *vim.json.encode()*
 
 
 ==============================================================================
+VIM.BASE64                                                        *vim.base64*
+
+vim.base64.decode({str})                                 *vim.base64.decode()*
+    Decode a Base64 encoded string.
+
+    Parameters: ~
+      • {str}  (string) Base64 encoded string
+
+    Return: ~
+        (string) Decoded string
+
+vim.base64.encode({str})                                 *vim.base64.encode()*
+    Encode {str} using Base64.
+
+    Parameters: ~
+      • {str}  (string) String to encode
+
+    Return: ~
+        (string) Encoded string
+
+
+==============================================================================
 VIM.SPELL                                                          *vim.spell*
 
 vim.spell.check({str})                                     *vim.spell.check()*
