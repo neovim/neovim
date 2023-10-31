@@ -62,7 +62,8 @@ end
 ---
 ---@param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
----     - on_list: (function) handler for list results. See |lsp-on-list-handler|
+---     - on_list: (function) |lsp-on-list-handler| replacing the default handler.
+---        Called for any non-empty result.
 function M.declaration(options)
   local params = util.make_position_params()
   request_with_options(ms.textDocument_declaration, params, options)
@@ -72,7 +73,8 @@ end
 ---
 ---@param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
----     - on_list: (function) handler for list results. See |lsp-on-list-handler|
+---     - on_list: (function) |lsp-on-list-handler| replacing the default handler.
+---       Called for any non-empty result.
 function M.definition(options)
   local params = util.make_position_params()
   request_with_options(ms.textDocument_definition, params, options)
@@ -82,7 +84,8 @@ end
 ---
 ---@param options table|nil additional options
 ---     - reuse_win: (boolean) Jump to existing window if buffer is already open.
----     - on_list: (function) handler for list results. See |lsp-on-list-handler|
+---     - on_list: (function) |lsp-on-list-handler| replacing the default handler.
+---       Called for any non-empty result.
 function M.type_definition(options)
   local params = util.make_position_params()
   request_with_options(ms.textDocument_typeDefinition, params, options)
@@ -92,7 +95,8 @@ end
 --- quickfix window.
 ---
 ---@param options table|nil additional options
----     - on_list: (function) handler for list results. See |lsp-on-list-handler|
+---     - on_list: (function) |lsp-on-list-handler| replacing the default handler.
+---       Called for any non-empty result.
 function M.implementation(options)
   local params = util.make_position_params()
   request_with_options(ms.textDocument_implementation, params, options)

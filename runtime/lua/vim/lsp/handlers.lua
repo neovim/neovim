@@ -407,25 +407,24 @@ local function location_handler(_, result, ctx, config)
 
   -- textDocument/definition can return Location or Location[]
   -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_definition
-
-  if vim.tbl_islist(result) then
-    local title = 'LSP locations'
-    local items = util.locations_to_items(result, client.offset_encoding)
-
-    if config.on_list then
-      assert(type(config.on_list) == 'function', 'on_list is not a function')
-      config.on_list({ title = title, items = items })
-    else
-      if #result == 1 then
-        util.jump_to_location(result[1], client.offset_encoding, config.reuse_win)
-        return
-      end
-      vim.fn.setqflist({}, ' ', { title = title, items = items })
-      api.nvim_command('botright copen')
-    end
-  else
-    util.jump_to_location(result, client.offset_encoding, config.reuse_win)
+  if not vim.tbl_islist(result) then
+    result = { result }
   end
+
+  local title = 'LSP locations'
+  local items = util.locations_to_items(result, client.offset_encoding)
+
+  if config.on_list then
+    assert(type(config.on_list) == 'function', 'on_list is not a function')
+    config.on_list({ title = title, items = items })
+    return
+  end
+  if #result == 1 then
+    util.jump_to_location(result[1], client.offset_encoding, config.reuse_win)
+    return
+  end
+  vim.fn.setqflist({}, ' ', { title = title, items = items })
+  api.nvim_command('botright copen')
 end
 
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_declaration
