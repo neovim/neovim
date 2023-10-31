@@ -100,7 +100,8 @@ else()
     -Wdouble-promotion
     -Wmissing-noreturn
     -Wmissing-format-attribute
-    -Wmissing-prototypes)
+    -Wmissing-prototypes
+    -fsigned-char)
 
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_options(main_lib INTERFACE -fno-common
@@ -170,11 +171,6 @@ if(CI_BUILD)
   else()
     target_compile_options(main_lib INTERFACE -Werror)
   endif()
-endif()
-
-option(UNSIGNED_CHAR "Set char to be unsigned" OFF)
-if(UNSIGNED_CHAR)
-  target_compile_options(main_lib INTERFACE -funsigned-char)
 endif()
 
 target_compile_definitions(main_lib INTERFACE INCLUDE_GENERATED_DECLARATIONS)
