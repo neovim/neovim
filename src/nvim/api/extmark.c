@@ -862,7 +862,7 @@ Boolean nvim_buf_del_extmark(Buffer buffer, Integer ns_id, Integer id, Error *er
     return false;
   }
 
-  return extmark_del(buf, (uint32_t)ns_id, (uint32_t)id);
+  return extmark_del_id(buf, (uint32_t)ns_id, (uint32_t)id);
 }
 
 uint32_t src2ns(Integer *src_id)
