@@ -833,7 +833,7 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
     }
   }
 
-  const char *err = set_option_value(arg, newval, scope);
+  const char *err = set_option_value(arg, newval, scope, 0, false);
   arg_end = p;
   if (err != NULL) {
     emsg(_(err));

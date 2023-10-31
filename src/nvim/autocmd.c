@@ -701,7 +701,7 @@ char *au_event_disable(char *what)
   } else {
     STRCAT(new_ei, what);
   }
-  set_string_option_direct("ei", -1, new_ei, OPT_FREE, SID_NONE);
+  set_option_value("ei", CSTR_AS_OPTVAL(new_ei), OPT_FREE, SID_NONE, true);
   xfree(new_ei);
   return save_ei;
 }
@@ -709,7 +709,7 @@ char *au_event_disable(char *what)
 void au_event_restore(char *old_ei)
 {
   if (old_ei != NULL) {
-    set_string_option_direct("ei", -1, old_ei, OPT_FREE, SID_NONE);
+    set_option_value("ei", CSTR_AS_OPTVAL(old_ei), OPT_FREE, SID_NONE, true);
     xfree(old_ei);
   }
 }

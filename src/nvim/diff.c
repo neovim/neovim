@@ -1435,7 +1435,14 @@ void diff_win_options(win_T *wp, int addbuf)
     }
     wp->w_p_fdm_save = xstrdup(wp->w_p_fdm);
   }
-  set_string_option_direct_in_win(wp, "fdm", -1, "diff", OPT_LOCAL | OPT_FREE, 0);
+
+  Error err;
+  set_option_value_for("fdm", STATIC_CSTR_AS_OPTVAL("diff"), OPT_LOCAL | OPT_FREE, 0, true,
+                       kOptReqWin, (void *)wp, &err);
+
+  if (ERROR_SET(&err)) {
+    abort();
+  }
 
   if (!wp->w_p_diff) {
     wp->w_p_fen_save = wp->w_p_fen;

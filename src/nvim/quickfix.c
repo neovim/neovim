@@ -5089,7 +5089,7 @@ void ex_cfile(exarg_T *eap)
     }
   }
   if (*eap->arg != NUL) {
-    set_string_option_direct("ef", -1, eap->arg, OPT_FREE, 0);
+    set_option_value("ef", CSTR_AS_OPTVAL(eap->arg), OPT_FREE, 0, true);
   }
 
   char *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;

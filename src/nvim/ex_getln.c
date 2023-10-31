@@ -919,7 +919,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     need_wait_return = false;
   }
 
-  set_string_option_direct("icm", -1, s->save_p_icm, OPT_FREE, SID_NONE);
+  set_option_value("icm", CSTR_AS_OPTVAL(s->save_p_icm), OPT_FREE, SID_NONE, true);
   State = s->save_State;
   if (cmdpreview != save_cmdpreview) {
     cmdpreview = save_cmdpreview;  // restore preview state

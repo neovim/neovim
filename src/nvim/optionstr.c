@@ -154,6 +154,8 @@ static char SHM_ALL[] = { SHM_RO, SHM_MOD, SHM_LINES,
 
 /// After setting various option values: recompute variables that depend on
 /// option values.
+///
+/// TODO(famiu): Remove this.
 void didset_string_options(void)
 {
   (void)opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true);
@@ -246,6 +248,8 @@ void check_buf_options(buf_T *buf)
 /// Checks for the string being empty_string_option. This may happen if we're out of memory,
 /// xstrdup() returned NULL, which was replaced by empty_string_option by check_options().
 /// Does NOT check for P_ALLOCED flag!
+///
+/// TODO(famiu): Remove this.
 void free_string_option(char *p)
 {
   if (p != empty_string_option) {
@@ -253,6 +257,7 @@ void free_string_option(char *p)
   }
 }
 
+/// TODO(famiu): Remove this.
 void clear_string_option(char **pp)
 {
   if (*pp != empty_string_option) {
@@ -261,132 +266,12 @@ void clear_string_option(char **pp)
   *pp = empty_string_option;
 }
 
+/// TODO(famiu): Remove this.
 void check_string_option(char **pp)
 {
   if (*pp == NULL) {
     *pp = empty_string_option;
   }
-}
-
-/// Set global value for string option when it's a local option.
-///
-/// @param opt  option
-/// @param varp  pointer to option variable
-static void set_string_option_global(vimoption_T *opt, char **varp)
-{
-  char **p;
-
-  // the global value is always allocated
-  if (opt->var == VAR_WIN) {
-    p = (char **)GLOBAL_WO(varp);
-  } else {
-    p = (char **)opt->var;
-  }
-  if (opt->indir != PV_NONE && p != varp) {
-    char *s = xstrdup(*varp);
-    free_string_option(*p);
-    *p = s;
-  }
-}
-
-/// Set a string option to a new value (without checking the effect).
-/// The string is copied into allocated memory.
-/// if ("opt_idx" == -1) "name" is used, otherwise "opt_idx" is used.
-/// When "set_sid" is zero set the scriptID to current_sctx.sc_sid.  When
-/// "set_sid" is SID_NONE don't set the scriptID.  Otherwise set the scriptID to
-/// "set_sid".
-///
-/// @param opt_flags  OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL.
-///
-/// TODO(famiu): Remove this and its win/buf variants.
-void set_string_option_direct(const char *name, int opt_idx, const char *val, int opt_flags,
-                              int set_sid)
-{
-  char *s;
-  int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
-  int idx = opt_idx;
-
-  if (idx == -1) {  // Use name.
-    idx = findoption(name);
-    if (idx < 0) {  // Not found (should not happen).
-      internal_error("set_string_option_direct()");
-      siemsg(_("For option %s"), name);
-      return;
-    }
-  }
-
-  vimoption_T *opt = get_option(idx);
-
-  if (opt->var == NULL) {  // can't set hidden option
-    return;
-  }
-
-  assert(opt->var != &p_shada);
-
-  s = xstrdup(val);
-  {
-    char **varp = (char **)get_varp_scope(opt, both ? OPT_LOCAL : opt_flags);
-    if ((opt_flags & OPT_FREE) && (opt->flags & P_ALLOCED)) {
-      free_string_option(*varp);
-    }
-    *varp = s;
-
-    // For buffer/window local option may also set the global value.
-    if (both) {
-      set_string_option_global(opt, varp);
-    }
-
-    opt->flags |= P_ALLOCED;
-
-    // When setting both values of a global option with a local value,
-    // make the local value empty, so that the global value is used.
-    if ((opt->indir & PV_BOTH) && both) {
-      free_string_option(*varp);
-      *varp = empty_string_option;
-    }
-    if (set_sid != SID_NONE) {
-      sctx_T script_ctx;
-
-      if (set_sid == 0) {
-        script_ctx = current_sctx;
-      } else {
-        script_ctx.sc_sid = set_sid;
-        script_ctx.sc_seq = 0;
-        script_ctx.sc_lnum = 0;
-      }
-      set_option_sctx_idx(idx, opt_flags, script_ctx);
-    }
-  }
-}
-
-/// Like set_string_option_direct(), but for a window-local option in "wp".
-/// Blocks autocommands to avoid the old curwin becoming invalid.
-void set_string_option_direct_in_win(win_T *wp, const char *name, int opt_idx, const char *val,
-                                     int opt_flags, int set_sid)
-{
-  win_T *save_curwin = curwin;
-
-  block_autocmds();
-  curwin = wp;
-  curbuf = curwin->w_buffer;
-  set_string_option_direct(name, opt_idx, val, opt_flags, set_sid);
-  curwin = save_curwin;
-  curbuf = curwin->w_buffer;
-  unblock_autocmds();
-}
-
-/// Like set_string_option_direct(), but for a buffer-local option in "buf".
-/// Blocks autocommands to avoid the old curwin becoming invalid.
-void set_string_option_direct_in_buf(buf_T *buf, const char *name, int opt_idx, const char *val,
-                                     int opt_flags, int set_sid)
-{
-  buf_T *save_curbuf = curbuf;
-
-  block_autocmds();
-  curbuf = buf;
-  set_string_option_direct(name, opt_idx, val, opt_flags, set_sid);
-  curbuf = save_curbuf;
-  unblock_autocmds();
 }
 
 /// Return true if "val" is a valid 'filetype' name.

@@ -4292,7 +4292,7 @@ skip:
   // Show 'inccommand' preview if there are matched lines.
   if (cmdpreview_ns > 0 && !aborting()) {
     if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
-      set_string_option_direct("icm", -1, "", OPT_FREE, SID_NONE);
+      set_option_value("icm", STATIC_CSTR_AS_OPTVAL(""), OPT_FREE, SID_NONE, true);
     } else if (*p_icm != NUL && pat != NULL) {
       if (pre_hl_id == 0) {
         pre_hl_id = syn_check_group(S_LEN("Substitute"));
@@ -4571,10 +4571,10 @@ bool prepare_tagpreview(bool undo_sync)
   }
   curwin->w_p_pvw = true;
   curwin->w_p_wfh = true;
-  RESET_BINDING(curwin);                // don't take over 'scrollbind' and 'cursorbind'
-  curwin->w_p_diff = false;             // no 'diff'
-  set_string_option_direct("fdc", -1,     // no 'foldcolumn'
-                           "0", OPT_FREE, SID_NONE);
+  RESET_BINDING(curwin);     // Don't take over 'scrollbind' and 'cursorbind'.
+  curwin->w_p_diff = false;  // No 'diff'.
+  // No 'foldcolumn'.
+  set_option_value("fdc", STATIC_CSTR_AS_OPTVAL("0"), OPT_FREE, SID_NONE, true);
   return true;
 }
 
@@ -4593,7 +4593,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
   buf_T *cmdpreview_buf = NULL;
 
   // disable file info message
-  set_string_option_direct("shm", -1, "F", OPT_FREE, SID_NONE);
+  set_option_value("shm", STATIC_CSTR_AS_OPTVAL("F"), OPT_FREE, SID_NONE, true);
 
   // Update the topline to ensure that main window is on the correct line
   update_topline(curwin);
@@ -4692,7 +4692,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
 
   xfree(str);
 
-  set_string_option_direct("shm", -1, save_shm_p, OPT_FREE, SID_NONE);
+  set_option_value("shm", CSTR_AS_OPTVAL(save_shm_p), OPT_FREE, SID_NONE, true);
   xfree(save_shm_p);
 
   return preview ? 2 : 1;

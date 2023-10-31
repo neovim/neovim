@@ -612,7 +612,7 @@ void cleanup_help_tags(int num_file, char **file)
 void prepare_help_buffer(void)
 {
   curbuf->b_help = true;
-  set_string_option_direct("buftype", -1, "help", OPT_FREE|OPT_LOCAL, 0);
+  set_option_value("buftype", STATIC_CSTR_AS_OPTVAL("help"), OPT_FREE|OPT_LOCAL, 0, true);
 
   // Always set these options after jumping to a help tag, because the
   // user may have an autocommand that gets in the way.
@@ -621,13 +621,13 @@ void prepare_help_buffer(void)
   // Only set it when needed, buf_init_chartab() is some work.
   char *p = "!-~,^*,^|,^\",192-255";
   if (strcmp(curbuf->b_p_isk, p) != 0) {
-    set_string_option_direct("isk", -1, p, OPT_FREE|OPT_LOCAL, 0);
+    set_option_value("isk", CSTR_AS_OPTVAL(p), OPT_FREE|OPT_LOCAL, 0, true);
     check_buf_options(curbuf);
     (void)buf_init_chartab(curbuf, false);
   }
 
   // Don't use the global foldmethod.
-  set_string_option_direct("fdm", -1, "manual", OPT_FREE|OPT_LOCAL, 0);
+  set_option_value("fdm", STATIC_CSTR_AS_OPTVAL("manual"), OPT_FREE|OPT_LOCAL, 0, true);
 
   curbuf->b_p_ts = 8;         // 'tabstop' is 8.
   curwin->w_p_list = false;   // No list mode.

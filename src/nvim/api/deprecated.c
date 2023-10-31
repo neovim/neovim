@@ -698,6 +698,6 @@ static void set_option_to(uint64_t channel_id, void *to, OptReqScope req_scope, 
                         (req_scope == kOptReqGlobal) ? OPT_GLOBAL : OPT_LOCAL;
 
   WITH_SCRIPT_CONTEXT(channel_id, {
-    set_option_value_for(name.data, optval, opt_flags, req_scope, to, err);
+    set_option_value_for(name.data, optval, opt_flags, 0, false, req_scope, to, err);
   });
 }

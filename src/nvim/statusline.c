@@ -2184,7 +2184,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
   // matter?
   // if (called_emsg > called_emsg_before)
   if (opt_name && did_emsg > did_emsg_before) {
-    set_string_option_direct(opt_name, -1, "", OPT_FREE | opt_scope, SID_ERROR);
+    set_option_value(opt_name, STATIC_CSTR_AS_OPTVAL(""), OPT_FREE | opt_scope, SID_ERROR, true);
   }
 
   // A user function may reset KeyTyped, restore it.

@@ -230,7 +230,7 @@ void ui_refresh(void)
   p_lz = save_p_lz;
 
   if (ext_widgets[kUIMessages]) {
-    set_option_value("cmdheight", NUMBER_OPTVAL(0), 0);
+    set_option_value("cmdheight", NUMBER_OPTVAL(0), 0, 0, false);
     command_height();
   }
   ui_mode_info_set();

@@ -144,7 +144,7 @@ bool ctx_restore(Context *ctx, const int flags)
   }
 
   OptVal op_shada = get_option_value("shada", NULL, OPT_GLOBAL, NULL);
-  set_option_value("shada", STATIC_CSTR_AS_OPTVAL("!,'100,%"), OPT_GLOBAL);
+  set_option_value("shada", STATIC_CSTR_AS_OPTVAL("!,'100,%"), OPT_GLOBAL, 0, false);
 
   if (flags & kCtxRegs) {
     ctx_restore_regs(ctx);
@@ -170,7 +170,7 @@ bool ctx_restore(Context *ctx, const int flags)
     ctx_free(ctx);
   }
 
-  set_option_value("shada", op_shada, OPT_GLOBAL);
+  set_option_value("shada", op_shada, OPT_GLOBAL, 0, false);
   optval_free(op_shada);
 
   return true;
