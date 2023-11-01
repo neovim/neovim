@@ -14,18 +14,22 @@
 #include "nvim/types.h"
 
 typedef enum {
-  kExtkeysNone,
-  kExtkeysCSIu,
-  kExtkeysXterm,
-} ExtkeysType;
+  kKeyEncodingLegacy,  ///< Legacy key encoding
+  kKeyEncodingKitty,   ///< Kitty keyboard protocol encoding
+  kKeyEncodingXterm,   ///< Xterm's modifyOtherKeys encoding (XTMODKEYS)
+} KeyEncoding;
 
-typedef struct term_input {
+typedef struct {
   int in_fd;
   // Phases: -1=all 0=disabled 1=first-chunk 2=continue 3=last-chunk
   int8_t paste;
   bool ttimeout;
-  int8_t waiting_for_csiu_response;
-  ExtkeysType extkeys_type;
+
+  bool waiting_for_kkp_response;  ///< True if we are expecting to receive a response to a query for
+                                  ///< Kitty keyboard protocol support
+
+  KeyEncoding key_encoding;       ///< The key encoding used by the terminal emulator
+
   OptInt ttimeoutlen;
   TermKey *tk;
   TermKey_Terminfo_Getstr_Hook *tk_ti_hook_fn;  ///< libtermkey terminfo hook
