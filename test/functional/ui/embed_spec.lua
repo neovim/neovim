@@ -139,6 +139,7 @@ end)
 
 describe('--embed --listen UI', function()
   it('waits for connection on listening address', function()
+    helpers.skip(helpers.is_os('win'))
     clear()
     local child_server = assert(helpers.new_pipename())
 
@@ -173,7 +174,6 @@ describe('--embed --listen UI', function()
     ok(var == 0)
 
     local child_screen = Screen.new(40, 6)
-    child_screen.rpc_async = true  -- Avoid hanging. #24888
     child_screen:attach(nil, child_session)
     child_screen:expect{grid=[[
       ^                                        |
