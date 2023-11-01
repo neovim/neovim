@@ -589,7 +589,7 @@ int main(int argc, char **argv)
   apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf);
   TIME_MSG("VimEnter autocommands");
   if (use_remote_ui) {
-    do_autocmd_uienter(CHAN_STDIO, true);
+    do_autocmd_uienter_all();
     TIME_MSG("UIEnter autocommands");
   }
 

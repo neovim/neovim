@@ -337,6 +337,16 @@ void vim_beep(unsigned val)
   }
 }
 
+/// Trigger UIEnter for all attached UIs.
+/// Used on startup after VimEnter.
+void do_autocmd_uienter_all(void)
+{
+  for (size_t i = 0; i < ui_count; i++) {
+    UIData *data = uis[i]->data;
+    do_autocmd_uienter(data->channel_id, true);
+  }
+}
+
 void ui_attach_impl(UI *ui, uint64_t chanid)
 {
   if (ui_count == MAX_UI_COUNT) {

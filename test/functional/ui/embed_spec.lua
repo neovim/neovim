@@ -159,19 +159,21 @@ describe('--embed --listen UI', function()
 
     local child_session = helpers.connect(child_server)
 
-    local info_ok, apiinfo = child_session:request('nvim_get_api_info')
-    assert(info_ok)
-    assert(#apiinfo == 2)
+    local info_ok, api_info = child_session:request('nvim_get_api_info')
+    ok(info_ok)
+    eq(2, #api_info)
+    ok(api_info[1] > 2, 'channel_id > 2', api_info[1])
 
     child_session:request('nvim_exec2', [[
-      let g:vim_entered=0
-      autocmd VimEnter * call execute("let g:vim_entered=1")
+      let g:evs = []
+      autocmd UIEnter * call add(g:evs, $"UIEnter:{v:event.chan}")
+      autocmd VimEnter * call add(g:evs, "VimEnter")
     ]], {})
 
-    -- g:vim_entered shouldn't be set to 1 until after attach
-    local var_ok, var = child_session:request('nvim_get_var', 'vim_entered')
-    assert(var_ok)
-    ok(var == 0)
+    -- VimEnter and UIEnter shouldn't be triggered until after attach
+    local var_ok, var = child_session:request('nvim_get_var', 'evs')
+    ok(var_ok)
+    eq({}, var)
 
     local child_screen = Screen.new(40, 6)
     child_screen:attach(nil, child_session)
@@ -186,10 +188,9 @@ describe('--embed --listen UI', function()
       [1] = {foreground = Screen.colors.Blue, bold = true};
     }}
 
-    -- g:vim_entered should now be set to 1
-    var_ok, var = child_session:request('nvim_get_var', 'vim_entered')
-    assert(var_ok)
-    ok(var == 1)
-
+    -- VimEnter and UIEnter should now be triggered
+    var_ok, var = child_session:request('nvim_get_var', 'evs')
+    ok(var_ok)
+    eq({'VimEnter', ('UIEnter:%d'):format(api_info[1])}, var)
   end)
 end)
