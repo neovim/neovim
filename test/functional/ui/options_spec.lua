@@ -23,6 +23,7 @@ describe('UI receives option updates', function()
       mousemoveevent=false,
       showtabline=1,
       termguicolors=false,
+      termsync=true,
       ttimeout=true,
       ttimeoutlen=50,
       verbose=0,
