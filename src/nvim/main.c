@@ -588,7 +588,7 @@ int main(int argc, char **argv)
   set_vim_var_nr(VV_VIM_DID_ENTER, 1L);
   apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf);
   TIME_MSG("VimEnter autocommands");
-  if (use_remote_ui && !listen_and_embed) {
+  if (use_remote_ui) {
     do_autocmd_uienter(CHAN_STDIO, true);
     TIME_MSG("UIEnter autocommands");
   }
