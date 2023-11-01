@@ -94,7 +94,7 @@ static const char e_list_item_nr_range_invalid[]
 static const char e_list_item_nr_cell_width_invalid[]
   = N_("E1112: List item %d cell width invalid");
 static const char e_overlapping_ranges_for_nr[]
-  = N_("E1113: Overlapping ranges for 0x%lx");
+  = N_("E1113: Overlapping ranges for 0x%" PRId64);
 static const char e_only_values_of_0x80_and_higher_supported[]
   = N_("E1114: Only values of 0x80 and higher supported");
 
@@ -2734,7 +2734,7 @@ void f_setcellwidths(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     const listitem_T *lili = tv_list_first(li_l);
     const varnumber_T n1 = TV_LIST_ITEM_TV(lili)->vval.v_number;
     if (item > 0 && n1 <= table[item - 1].last) {
-      semsg(_(e_overlapping_ranges_for_nr), (size_t)n1);
+      semsg(_(e_overlapping_ranges_for_nr), n1);
       xfree((void *)ptrs);
       xfree(table);
       return;

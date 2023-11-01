@@ -3963,7 +3963,7 @@ static int eval_string(char **arg, typval_T *rettv, bool evaluate, bool interpol
   // Copy the string into allocated memory, handling backslashed
   // characters.
   rettv->v_type = VAR_STRING;
-  const int len = (int)(p - *arg + extra);
+  const int len = (int)(p - *arg + (int)extra);
   rettv->vval.v_string = xmalloc((size_t)len);
   char *end = rettv->vval.v_string;
 
@@ -6178,7 +6178,7 @@ void add_timer_info(typval_T *rettv, timer_T *timer)
 
 void add_timer_info_all(typval_T *rettv)
 {
-  tv_list_alloc_ret(rettv, map_size(&timers));
+  tv_list_alloc_ret(rettv, (ptrdiff_t)map_size(&timers));
   timer_T *timer;
   map_foreach_value(&timers, timer, {
     if (!timer->stopped || timer->refcount > 1) {

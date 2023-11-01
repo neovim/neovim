@@ -19,6 +19,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/globals.h"
+#include "nvim/lua/executor.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
@@ -292,7 +293,7 @@ int tslua_inspect_lang(lua_State *L)
   lua_setfield(L, -2, "fields");  // [retval]
 
   uint32_t lang_version = ts_language_version(lang);
-  lua_pushinteger(L, lang_version);  // [retval, version]
+  nlua_push_int64(L, lang_version);  // [retval, version]
   lua_setfield(L, -2, "_abi_version");
 
   return 1;
@@ -395,20 +396,20 @@ static void push_ranges(lua_State *L, const TSRange *ranges, const size_t length
   for (size_t i = 0; i < length; i++) {
     lua_createtable(L, include_bytes ? 6 : 4, 0);
     int j = 1;
-    lua_pushinteger(L, ranges[i].start_point.row);
+    nlua_push_int64(L, ranges[i].start_point.row);
     lua_rawseti(L, -2, j++);
-    lua_pushinteger(L, ranges[i].start_point.column);
+    nlua_push_int64(L, ranges[i].start_point.column);
     lua_rawseti(L, -2, j++);
     if (include_bytes) {
-      lua_pushinteger(L, ranges[i].start_byte);
+      nlua_push_int64(L, ranges[i].start_byte);
       lua_rawseti(L, -2, j++);
     }
-    lua_pushinteger(L, ranges[i].end_point.row);
+    nlua_push_int64(L, ranges[i].end_point.row);
     lua_rawseti(L, -2, j++);
-    lua_pushinteger(L, ranges[i].end_point.column);
+    nlua_push_int64(L, ranges[i].end_point.column);
     lua_rawseti(L, -2, j++);
     if (include_bytes) {
-      lua_pushinteger(L, ranges[i].end_byte);
+      nlua_push_int64(L, ranges[i].end_byte);
       lua_rawseti(L, -2, j++);
     }
 
@@ -919,19 +920,19 @@ static int node_range(lua_State *L)
   TSPoint end = ts_node_end_point(node);
 
   if (include_bytes) {
-    lua_pushinteger(L, start.row);
-    lua_pushinteger(L, start.column);
-    lua_pushinteger(L, ts_node_start_byte(node));
-    lua_pushinteger(L, end.row);
-    lua_pushinteger(L, end.column);
-    lua_pushinteger(L, ts_node_end_byte(node));
+    nlua_push_int64(L, start.row);
+    nlua_push_int64(L, start.column);
+    nlua_push_int64(L, ts_node_start_byte(node));
+    nlua_push_int64(L, end.row);
+    nlua_push_int64(L, end.column);
+    nlua_push_int64(L, ts_node_end_byte(node));
     return 6;
   }
 
-  lua_pushinteger(L, start.row);
-  lua_pushinteger(L, start.column);
-  lua_pushinteger(L, end.row);
-  lua_pushinteger(L, end.column);
+  nlua_push_int64(L, start.row);
+  nlua_push_int64(L, start.column);
+  nlua_push_int64(L, end.row);
+  nlua_push_int64(L, end.column);
   return 4;
 }
 
@@ -943,9 +944,9 @@ static int node_start(lua_State *L)
   }
   TSPoint start = ts_node_start_point(node);
   uint32_t start_byte = ts_node_start_byte(node);
-  lua_pushinteger(L, start.row);
-  lua_pushinteger(L, start.column);
-  lua_pushinteger(L, start_byte);
+  nlua_push_int64(L, start.row);
+  nlua_push_int64(L, start.column);
+  nlua_push_int64(L, start_byte);
   return 3;
 }
 
@@ -957,9 +958,9 @@ static int node_end(lua_State *L)
   }
   TSPoint end = ts_node_end_point(node);
   uint32_t end_byte = ts_node_end_byte(node);
-  lua_pushinteger(L, end.row);
-  lua_pushinteger(L, end.column);
-  lua_pushinteger(L, end_byte);
+  nlua_push_int64(L, end.row);
+  nlua_push_int64(L, end.column);
+  nlua_push_int64(L, end_byte);
   return 3;
 }
 
@@ -970,7 +971,7 @@ static int node_child_count(lua_State *L)
     return 0;
   }
   uint32_t count = ts_node_child_count(node);
-  lua_pushinteger(L, count);
+  nlua_push_int64(L, count);
   return 1;
 }
 
@@ -981,7 +982,7 @@ static int node_named_child_count(lua_State *L)
     return 0;
   }
   uint32_t count = ts_node_named_child_count(node);
-  lua_pushinteger(L, count);
+  nlua_push_int64(L, count);
   return 1;
 }
 
@@ -1337,7 +1338,7 @@ static int node_byte_length(lua_State *L)
   uint32_t start_byte = ts_node_start_byte(node);
   uint32_t end_byte = ts_node_end_byte(node);
 
-  lua_pushinteger(L, end_byte - start_byte);
+  nlua_push_int64(L, end_byte - start_byte);
   return 1;
 }
 
@@ -1407,7 +1408,7 @@ static int query_next_capture(lua_State *L)
     TSQueryCapture capture = match.captures[capture_index];
 
     // TODO(vigoux): handle capture quantifiers here
-    lua_pushinteger(L, capture.index + 1);  // [index]
+    lua_pushinteger(L, (int)capture.index + 1);  // [index]
     push_node(L, capture.node, lua_upvalueindex(2));  // [index, node]
 
     // Now check if we need to run the predicates
@@ -1682,7 +1683,7 @@ static int query_inspect(lua_State *L)
                                                        &strlen);
         lua_pushlstring(L, str, strlen);  // [retval, patterns, pat, pred, item]
       } else if (step[k].type == TSQueryPredicateStepTypeCapture) {
-        lua_pushinteger(L, step[k].value_id + 1);  // [..., pat, pred, item]
+        nlua_push_int64(L, step[k].value_id + 1);  // [..., pat, pred, item]
       } else {
         abort();
       }

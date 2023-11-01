@@ -5525,7 +5525,7 @@ static void f_range(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  tv_list_alloc_ret(rettv, (end - start) / stride);
+  tv_list_alloc_ret(rettv, (ptrdiff_t)((end - start) / stride));
   for (varnumber_T i = start; stride > 0 ? i <= end : i >= end; i += stride) {
     tv_list_append_number(rettv->vval.v_list, i);
   }
@@ -5978,7 +5978,8 @@ static void f_repeat(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   varnumber_T n = tv_get_number(&argvars[1]);
   if (argvars[0].v_type == VAR_LIST) {
-    tv_list_alloc_ret(rettv, (n > 0) * n * tv_list_len(argvars[0].vval.v_list));
+    tv_list_alloc_ret(rettv,
+                      (ptrdiff_t)((n > 0) * n * tv_list_len(argvars[0].vval.v_list)));
     while (n-- > 0) {
       tv_list_extend(rettv->vval.v_list, argvars[0].vval.v_list, NULL);
     }

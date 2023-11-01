@@ -40,6 +40,12 @@ typedef struct {
     } \
   } while (0)
 
+#ifdef ARCH_64
+# define nlua_push_int64 lua_pushinteger
+#else
+# define nlua_push_int64(L, x) lua_pushnumber((L), (double)(x))
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/executor.h.generated.h"
 #endif
