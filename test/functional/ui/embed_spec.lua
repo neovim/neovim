@@ -172,8 +172,19 @@ describe('--embed --listen UI', function()
     assert(var_ok)
     ok(var == 0)
 
-    child_session:notify('nvim_ui_attach', 10, 10, {})
-    child_session:notify('nvim_input', '<Ignore>')
+    local child_screen = Screen.new(40, 6)
+    child_screen.rpc_async = true  -- Avoid hanging. #24888
+    child_screen:attach(nil, child_session)
+    child_screen:expect{grid=[[
+      ^                                        |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]], attr_ids={
+      [1] = {foreground = Screen.colors.Blue, bold = true};
+    }}
 
     -- g:vim_entered should now be set to 1
     var_ok, var = child_session:request('nvim_get_var', 'vim_entered')
