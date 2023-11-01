@@ -392,9 +392,10 @@ int main(int argc, char **argv)
   // Wait for UIs to set up Nvim or show early messages
   // and prompts (--cmd, swapfile dialog, …).
   bool use_remote_ui = (embedded_mode && !headless_mode);
+  bool listen_and_embed = params.listen_addr != NULL;
   if (use_remote_ui) {
     TIME_MSG("waiting for UI");
-    remote_ui_wait_for_attach();
+    remote_ui_wait_for_attach(!listen_and_embed);
     TIME_MSG("done waiting for UI");
     firstwin->w_prev_height = firstwin->w_height;  // may have changed
   }

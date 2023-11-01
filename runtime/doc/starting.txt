@@ -390,6 +390,10 @@ argument.
 <		Then startup will continue without waiting for `nvim_ui_attach`.
 		This is equivalent to: >
 		    nvim --headless --cmd "call stdioopen({'rpc': v:true})"
+<
+		Embedders that use the UI protocol on a socket connection must
+		pass |--listen| as well as |--embed|: >
+		    nvim --embed --listen addr
 
 <		See also: |ui-startup| |channel-stdio|
 
