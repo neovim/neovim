@@ -800,6 +800,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     tl_ret = true;
   }
   may_trigger_modechanged();
+  update_screen();
 
   init_history();
   s->hiscnt = get_hislen();  // set hiscnt to impossible history value

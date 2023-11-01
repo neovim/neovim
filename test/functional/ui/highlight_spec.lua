@@ -2384,6 +2384,40 @@ describe('highlight namespaces', function()
     }
   end)
 
+  it('#update screen when highlight changed in event callback', function ()
+    command('set cursorline number')
+    exec_lua[[
+      vim.api.nvim_create_autocmd('ModeChanged', {
+        callback = function()
+          vim.api.nvim_set_hl(0, 'CursorLineNr', { bg = 'red' })
+          vim.api.nvim_set_hl(0, 'CursorLine', { bg = 'green' })
+        end,
+      })
+    ]]
+    feed(':')
+    screen:expect({
+      grid = [[
+        {11:  1 }{12:                     }|
+        {1:~                        }|*8
+        :^                        |
+      ]],
+      attr_ids = {
+        [1] = { foreground = Screen.colors.Blue, bold = true },
+        [2] = { background = Screen.colors.DarkGrey },
+        [3] = { italic = true, background = Screen.colors.DarkOrange4, foreground = Screen.colors.DarkCyan },
+        [4] = { background = Screen.colors.Magenta4 },
+        [5] = { background = Screen.colors.Magenta4, foreground = Screen.colors.Crimson },
+        [6] = { bold = true, reverse = true },
+        [7] = { reverse = true },
+        [8] = { foreground = Screen.colors.Grey20 },
+        [9] = { foreground = Screen.colors.Blue },
+        [10] = { bold = true, foreground = Screen.colors.SeaGreen },
+        [11] = { background = Screen.colors.Red },
+        [12] = { background = Screen.colors.Green },
+      },
+    })
+  end)
+
   it('winhl does not accept invalid value #24586', function()
     local res = exec_lua([[
       local curwin = vim.api.nvim_get_current_win()
