@@ -799,6 +799,10 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   }
   may_trigger_modechanged();
 
+  if (need_highlight_changed) {
+    update_screen();
+  }
+
   init_history();
   s->hiscnt = get_hislen();  // set hiscnt to impossible history value
   s->histype = hist_char2type(s->firstc);
