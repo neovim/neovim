@@ -987,12 +987,25 @@ TermClose			When a |terminal| job ends.
 				Sets these |v:event| keys:
 				    status
 							*TermResponse*
-TermResponse			After the response to t_RV is received from
-				the terminal.  The value of |v:termresponse|
-				can be used to do things depending on the
-				terminal version.  May be triggered halfway
-				through another event (file I/O, a shell
-				command, or anything else that takes time).
+TermResponse			When Nvim receives a OSC response from the
+				terminal.  Sets |v:termresponse|. When used
+				from Lua, the response string is included in
+				the "data" field of the autocommand callback.
+				May be triggered halfway through another event
+				(file I/O, a shell command, or anything else
+				that takes time). Example: >lua
+
+				-- Query the terminal palette for the RGB value of color 1
+				-- (red) using OSC 4
+				vim.api.nvim_create_autocmd('TermResponse', {
+				  once = true,
+				  callback = function(args)
+				    local resp = args.data
+				    local r, g, b = resp:match("\x1b%]4;1;rgb:(%w+)/(%w+)/(%w+)")
+				  end,
+				})
+				io.stdout:write("\x1b]4;1;?\x1b\\")
+<
 							*TextChanged*
 TextChanged			After a change was made to the text in the
 				current buffer in Normal mode.  That is after

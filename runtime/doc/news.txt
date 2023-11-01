@@ -205,6 +205,9 @@ The following new APIs and features were added.
 • Added |vim.base64.encode()| and |vim.base64.decode()| for encoding and decoding
   strings using Base64 encoding.
 
+• The |TermResponse| autocommand event can be used with |v:termresponse| to
+  read escape sequence responses from the terminal.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
