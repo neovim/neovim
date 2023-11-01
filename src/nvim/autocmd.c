@@ -2570,6 +2570,9 @@ void do_autocmd_uienter(uint64_t chanid, bool attached)
 {
   static bool recursive = false;
 
+  if (starting == NO_SCREEN) {
+    return;  // user config hasn't been sourced yet
+  }
   if (recursive) {
     return;  // disallow recursion
   }
