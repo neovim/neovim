@@ -37,7 +37,6 @@ target_link_libraries(main_lib INTERFACE ${LUV_LIBRARY})
 
 find_package(Iconv REQUIRED)
 find_package(Lpeg REQUIRED)
-find_package(Libtermkey 0.22 REQUIRED)
 find_package(Libvterm 0.3.3 REQUIRED)
 find_package(Msgpack 1.0.0 REQUIRED)
 find_package(Treesitter 0.20.8 REQUIRED)
@@ -45,7 +44,6 @@ find_package(Unibilium 2.0 REQUIRED)
 
 target_link_libraries(main_lib INTERFACE
   iconv
-  libtermkey
   libvterm
   msgpack
   treesitter
@@ -59,6 +57,8 @@ target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBINTL_INCLUDE_DI
 if (LIBINTL_LIBRARY)
   target_link_libraries(main_lib INTERFACE ${LIBINTL_LIBRARY})
 endif()
+
+target_compile_definitions(main_lib INTERFACE HAVE_UNIBILIUM)
 
 # The unit test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
@@ -376,8 +376,8 @@ file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
 
 glob_wrapper(NVIM_SOURCES *.c)
 glob_wrapper(NVIM_HEADERS *.h)
-glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c)
-glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h)
+glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c ../termkey/*.c)
+glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h ../termkey/*.h)
 
 glob_wrapper(NLUA0_SOURCES ../mpack/*.c)
 
@@ -436,13 +436,13 @@ endforeach()
 
 list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 
-# xdiff, mpack, lua-cjson: inlined external project, we don't maintain it. #9306
+# xdiff, mpack, lua-cjson, termkey: inlined external project, we don't maintain it. #9306
 if(MSVC)
   set_source_files_properties(
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -wd4090 -wd4244 -wd4267")
 else()
   set_source_files_properties(
-    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes -Wno-misleading-indentation")
+    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes -Wno-misleading-indentation -Wno-sign-compare -Wno-implicit-fallthrough -Wno-missing-prototypes -Wno-missing-field-initializers")
 endif()
 
 # Log level (NVIM_LOG_DEBUG in log.h)
