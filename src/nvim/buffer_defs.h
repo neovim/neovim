@@ -1265,6 +1265,7 @@ struct window_S {
   int w_briopt_min;                 // minimum width for breakindent
   int w_briopt_shift;               // additional shift for breakindent
   bool w_briopt_sbr;                // sbr in 'briopt'
+  bool w_briopt_cul;                // cul in 'briopt'
   int w_briopt_list;                // additional indent for lists
   int w_briopt_vcol;                // indent for specific column
 

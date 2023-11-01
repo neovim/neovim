@@ -555,6 +555,8 @@ vim.wo.bri = vim.wo.breakindent
 --- 	sbr	    Display the 'showbreak' value before applying the
 --- 		    additional indent.
 --- 		    (default: off)
+--- 	cul	    Highlight the visual indent with CursorLine.
+--- 		    (default: off)
 --- 	list:{n}    Adds an additional indent for lines that match a
 --- 		    numbered or bulleted list (using the
 --- 		    'formatlistpat' setting).

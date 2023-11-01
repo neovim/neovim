@@ -76,7 +76,7 @@ static char *(p_bo_values[]) = { "all", "backspace", "cursor", "complete", "copy
                                  "esc", "ex", "hangul", "lang", "mess", "showmatch", "operator",
                                  "register", "shell", "spell", "wildmode", NULL };
 // Note: Keep this in sync with briopt_check()
-static char *(p_briopt_values[]) = { "shift:", "min:", "sbr", "list:", "column:", NULL };
+static char *(p_briopt_values[]) = { "shift:", "min:", "sbr", "cul", "list:", "column:", NULL };
 // Note: Keep this in sync with diffopt_changed()
 static char *(p_dip_values[]) = { "filler", "context:", "iblank", "icase",
                                   "iwhite", "iwhiteall", "iwhiteeol", "horizontal", "vertical",

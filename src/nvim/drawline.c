@@ -779,6 +779,9 @@ static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
       if (wlv->diff_hlf != (hlf_T)0) {
         wlv->char_attr = win_hl_attr(wp, (int)wlv->diff_hlf);
       }
+      else if (wlv->cul_attr && wp->w_briopt_cul) {
+        wlv->char_attr = win_hl_attr(wp, HLF_CUL);
+      }
       wlv->p_extra = NULL;
       wlv->c_extra = ' ';
       wlv->c_final = NUL;
