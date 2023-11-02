@@ -579,6 +579,17 @@ function M.clear_references()
   util.buf_clear_references()
 end
 
+---@class vim.lsp.CodeActionResultEntry
+---@field error? lsp.ResponseError
+---@field result? (lsp.Command|lsp.CodeAction)[]
+---@field ctx lsp.HandlerContext
+
+---@class vim.lsp.buf.code_action.opts
+---@field context? lsp.CodeActionContext
+---@field filter? fun(x: lsp.CodeAction|lsp.Command):boolean
+---@field apply? boolean
+---@field range? {start: integer[], end: integer[]}
+
 --- This is not public because the main extension point is
 --- vim.ui.select which can be overridden independently.
 ---
@@ -587,17 +598,18 @@ end
 --- from multiple clients to have 1 single UI prompt for the user, yet we still
 --- need to be able to link a `CodeAction|Command` to the right client for
 --- `codeAction/resolve`
-local function on_code_action_results(results, ctx, options)
-  local action_tuples = {}
-
+---@param results table<integer, vim.lsp.CodeActionResultEntry>
+---@param opts? vim.lsp.buf.code_action.opts
+local function on_code_action_results(results, opts)
+  ---@param a lsp.Command|lsp.CodeAction
   local function action_filter(a)
     -- filter by specified action kind
-    if options and options.context and options.context.only then
+    if opts and opts.context and opts.context.only then
       if not a.kind then
         return false
       end
       local found = false
-      for _, o in ipairs(options.context.only) do
+      for _, o in ipairs(opts.context.only) do
         -- action kinds are hierarchical with . as a separator: when requesting only 'type-annotate'
         -- this filter allows both 'type-annotate' and 'type-annotate.foo', for example
         if a.kind == o or vim.startswith(a.kind, o .. '.') then
@@ -610,26 +622,31 @@ local function on_code_action_results(results, ctx, options)
       end
     end
     -- filter by user function
-    if options and options.filter and not options.filter(a) then
+    if opts and opts.filter and not opts.filter(a) then
       return false
     end
     -- no filter removed this action
     return true
   end
 
-  for client_id, result in pairs(results) do
+  ---@type {action: lsp.Command|lsp.CodeAction, ctx: lsp.HandlerContext}[]
+  local actions = {}
+  for _, result in pairs(results) do
     for _, action in pairs(result.result or {}) do
       if action_filter(action) then
-        table.insert(action_tuples, { client_id, action })
+        table.insert(actions, { action = action, ctx = result.ctx })
       end
     end
   end
-  if #action_tuples == 0 then
+  if #actions == 0 then
     vim.notify('No code actions available', vim.log.levels.INFO)
     return
   end
 
-  local function apply_action(action, client)
+  ---@param action lsp.Command|lsp.CodeAction
+  ---@param client lsp.Client
+  ---@param ctx lsp.HandlerContext
+  local function apply_action(action, client, ctx)
     if action.edit then
       util.apply_workspace_edit(action.edit, client.offset_encoding)
     end
@@ -639,8 +656,9 @@ local function on_code_action_results(results, ctx, options)
     end
   end
 
-  local function on_user_choice(action_tuple)
-    if not action_tuple then
+  ---@param choice {action: lsp.Command|lsp.CodeAction, ctx: lsp.HandlerContext}
+  local function on_user_choice(choice)
+    if not choice then
       return
     end
     -- textDocument/codeAction can return either Command[] or CodeAction[]
@@ -656,10 +674,11 @@ local function on_code_action_results(results, ctx, options)
     --  arguments?: any[]
     --
     ---@type lsp.Client
-    local client = assert(vim.lsp.get_client_by_id(action_tuple[1]))
-    local action = action_tuple[2]
+    local client = assert(vim.lsp.get_client_by_id(choice.ctx.client_id))
+    local action = choice.action
+    local bufnr = assert(choice.ctx.bufnr, 'Must have buffer number')
 
-    local reg = client.dynamic_capabilities:get(ms.textDocument_codeAction, { bufnr = ctx.bufnr })
+    local reg = client.dynamic_capabilities:get(ms.textDocument_codeAction, { bufnr = bufnr })
 
     local supports_resolve = vim.tbl_get(reg or {}, 'registerOptions', 'resolveProvider')
       or client.supports_method(ms.codeAction_resolve)
@@ -668,44 +687,37 @@ local function on_code_action_results(results, ctx, options)
       client.request(ms.codeAction_resolve, action, function(err, resolved_action)
         if err then
           if action.command then
-            apply_action(action, client)
+            apply_action(action, client, choice.ctx)
           else
             vim.notify(err.code .. ': ' .. err.message, vim.log.levels.ERROR)
           end
         else
-          apply_action(resolved_action, client)
+          apply_action(resolved_action, client, choice.ctx)
         end
-      end, ctx.bufnr)
+      end, bufnr)
     else
-      apply_action(action, client)
+      apply_action(action, client, choice.ctx)
     end
   end
 
   -- If options.apply is given, and there are just one remaining code action,
   -- apply it directly without querying the user.
-  if options and options.apply and #action_tuples == 1 then
-    on_user_choice(action_tuples[1])
+  if opts and opts.apply and #actions == 1 then
+    on_user_choice(actions[1])
     return
   end
 
-  vim.ui.select(action_tuples, {
+  ---@param item {action: lsp.Command|lsp.CodeAction}
+  local function format_item(item)
+    local title = item.action.title:gsub('\r\n', '\\r\\n')
+    return title:gsub('\n', '\\n')
+  end
+  local select_opts = {
     prompt = 'Code actions:',
     kind = 'codeaction',
-    format_item = function(action_tuple)
-      local title = action_tuple[2].title:gsub('\r\n', '\\r\\n')
-      return title:gsub('\n', '\\n')
-    end,
-  }, on_user_choice)
-end
-
---- Requests code actions from all clients and calls the handler exactly once
---- with all aggregated results
-local function code_action_request(params, options)
-  local bufnr = api.nvim_get_current_buf()
-  vim.lsp.buf_request_all(bufnr, ms.textDocument_codeAction, params, function(results)
-    local ctx = { bufnr = bufnr, method = ms.textDocument_codeAction, params = params }
-    on_code_action_results(results, ctx, options)
-  end)
+    format_item = format_item,
+  }
+  vim.ui.select(actions, select_opts, on_user_choice)
 end
 
 --- Selects a code action available at the current
@@ -752,21 +764,50 @@ function M.code_action(options)
     local bufnr = api.nvim_get_current_buf()
     context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
   end
-  local params
   local mode = api.nvim_get_mode().mode
-  if options.range then
-    assert(type(options.range) == 'table', 'code_action range must be a table')
-    local start = assert(options.range.start, 'range must have a `start` property')
-    local end_ = assert(options.range['end'], 'range must have a `end` property')
-    params = util.make_given_range_params(start, end_)
-  elseif mode == 'v' or mode == 'V' then
-    local range = range_from_selection(0, mode)
-    params = util.make_given_range_params(range.start, range['end'])
-  else
-    params = util.make_range_params()
+  local bufnr = api.nvim_get_current_buf()
+  local win = api.nvim_get_current_win()
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = ms.textDocument_codeAction })
+  local remaining = #clients
+  if remaining == 0 then
+    if next(vim.lsp.get_clients({ bufnr = bufnr })) then
+      vim.notify(vim.lsp._unsupported_method(ms.textDocument_codeAction), vim.log.levels.WARN)
+    end
+    return
   end
-  params.context = context
-  code_action_request(params, options)
+
+  ---@type table<integer, vim.lsp.CodeActionResultEntry>
+  local results = {}
+
+  ---@param err? lsp.ResponseError
+  ---@param result? (lsp.Command|lsp.CodeAction)[]
+  ---@param ctx lsp.HandlerContext
+  local function on_result(err, result, ctx)
+    results[ctx.client_id] = { error = err, result = result, ctx = ctx }
+    remaining = remaining - 1
+    if remaining == 0 then
+      on_code_action_results(results, options)
+    end
+  end
+
+  for _, client in ipairs(clients) do
+    ---@type lsp.CodeActionParams
+    local params
+    if options.range then
+      assert(type(options.range) == 'table', 'code_action range must be a table')
+      local start = assert(options.range.start, 'range must have a `start` property')
+      local end_ = assert(options.range['end'], 'range must have a `end` property')
+      params = util.make_given_range_params(start, end_, bufnr, client.offset_encoding)
+    elseif mode == 'v' or mode == 'V' then
+      local range = range_from_selection(bufnr, mode)
+      params =
+        util.make_given_range_params(range.start, range['end'], bufnr, client.offset_encoding)
+    else
+      params = util.make_range_params(win, client.offset_encoding)
+    end
+    params.context = context
+    client.request(ms.textDocument_codeAction, params, on_result, bufnr)
+  end
 end
 
 --- Executes an LSP server command.
