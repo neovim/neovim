@@ -69,7 +69,7 @@ vim.log = {
 }
 
 -- TODO(lewis6991): document that the signature is system({cmd}, [{opts},] {on_exit})
---- Run a system command
+--- Runs a system command or throws an error if {cmd} cannot be run.
 ---
 --- Examples:
 ---
@@ -82,16 +82,17 @@ vim.log = {
 ---   print(obj.stderr)
 --- end
 ---
---- -- Run asynchronously
+--- -- Runs asynchronously:
 --- vim.system({'echo', 'hello'}, { text = true }, on_exit)
 ---
---- -- Run synchronously
+--- -- Runs synchronously:
 --- local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
 --- -- { code = 0, signal = 0, stdout = 'hello', stderr = '' }
 ---
 --- ```
 ---
---- See |uv.spawn()| for more details.
+--- See |uv.spawn()| for more details. Note: unlike |uv.spawn()|, vim.system
+--- throws an error if {cmd} cannot be run.
 ---
 --- @param cmd (string[]) Command to execute
 --- @param opts (SystemOpts|nil) Options:
@@ -370,7 +371,7 @@ end
 
 local VIM_CMD_ARG_MAX = 20
 
---- Execute Vim script commands.
+--- Executes Vim script commands.
 ---
 --- Note that `vim.cmd` can be indexed with a command name to return a callable function to the
 --- command.
@@ -587,7 +588,7 @@ function vim.defer_fn(fn, timeout)
   return timer
 end
 
---- Display a notification to the user.
+--- Displays a notification to the user.
 ---
 --- This function can be overridden by plugins to display notifications using a
 --- custom provider (such as the system notification provider). By default,
@@ -609,7 +610,7 @@ end
 do
   local notified = {}
 
-  --- Display a notification only one time.
+  --- Displays a notification only one time.
   ---
   --- Like |vim.notify()|, but subsequent calls with the same message will not
   --- display a notification.
@@ -690,7 +691,7 @@ function vim._on_key(char)
   end
 end
 
---- Generate a list of possible completions for the string.
+--- Generates a list of possible completions for the string.
 --- String has the pattern.
 ---
 ---     1. Can we get it to just return things in the global namespace with that name prefix
@@ -917,7 +918,7 @@ function vim.print(...)
   return ...
 end
 
---- Translate keycodes.
+--- Translates keycodes.
 ---
 --- Example:
 ---
@@ -1030,7 +1031,7 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
   return displayed and msg or nil
 end
 
---- Create builtin mappings (incl. menus).
+--- Creates builtin mappings (incl. menus).
 --- Called once on startup.
 function vim._init_default_mappings()
   -- mappings

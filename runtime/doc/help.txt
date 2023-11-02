@@ -171,7 +171,6 @@ DEVELOPING NVIM
 
 Standard plugins ~
 						*standard-plugin-list*
-|matchit.txt|		Extended |%| matching
 |pi_gzip.txt|		Reading and writing compressed files
 |pi_health.txt|		Healthcheck framework
 |pi_msgpack.txt|	msgpack utilities

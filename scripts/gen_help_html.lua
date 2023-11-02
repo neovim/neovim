@@ -60,18 +60,10 @@ local new_layout = {
 
 -- TODO: These known invalid |links| require an update to the relevant docs.
 local exclude_invalid = {
-  ["'previewpopup'"] = "quickref.txt",
-  ["'pvp'"] = "quickref.txt",
   ["'string'"] = "eval.txt",
   Query = 'treesitter.txt',
-  ['eq?'] = 'treesitter.txt',
   matchit = 'vim_diff.txt',
-  ['matchit.txt'] = 'help.txt',
   ["set!"] = "treesitter.txt",
-  ['v:_null_blob'] = 'builtin.txt',
-  ['v:_null_dict'] = 'builtin.txt',
-  ['v:_null_list'] = 'builtin.txt',
-  ['v:_null_string'] = 'builtin.txt',
 }
 
 -- False-positive "invalid URLs".
