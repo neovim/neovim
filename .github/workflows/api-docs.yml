@@ -18,12 +18,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          sudo apt-get update
           ./.github/scripts/install_deps.sh
-          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack
+          sudo apt-get install -y doxygen python3-msgpack
+      - uses: ./.github/actions/cache
 
       - name: Generate docs
-        id: docs
         run: |
           make doc
           printf 'UPDATED_DOCS=%s\n' $([ -z "$(git diff)" ]; echo $?) >> $GITHUB_OUTPUT
