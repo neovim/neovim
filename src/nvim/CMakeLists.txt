@@ -913,7 +913,10 @@ glob_wrapper(LUA_SOURCES
 add_custom_command(
   OUTPUT ${VIMDOC_FILES}
   COMMAND ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.py
-  DEPENDS ${API_SOURCES} ${LUA_SOURCES}
+  DEPENDS
+    nvim
+    ${API_SOURCES}
+    ${LUA_SOURCES}
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
