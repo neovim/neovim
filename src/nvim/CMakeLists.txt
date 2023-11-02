@@ -928,7 +928,8 @@ set(GEN_EVAL_FILES
 
 add_custom_command(
   OUTPUT ${GEN_EVAL_FILES}
-  COMMAND ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
+  COMMAND nvim
+  ARGS -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
   DEPENDS
     ${API_METADATA}
     ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
