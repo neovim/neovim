@@ -15,19 +15,14 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: rhysd/action-setup-vim@v1
-        with:
-          neovim: true
-          version: nightly
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          sudo apt-get update
           ./.github/scripts/install_deps.sh
-          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen python3 python3-msgpack
+          sudo apt-get install -y doxygen python3-msgpack
+      - uses: ./.github/actions/cache
 
       - name: Generate docs
-        id: docs
         run: |
           make doc
           printf 'UPDATED_DOCS=%s\n' $([ -z "$(git diff)" ]; echo $?) >> $GITHUB_OUTPUT
@@ -35,7 +30,6 @@ jobs:
       - name: FAIL, PR has not committed doc changes
         if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 }}
         run: |
-          echo "Job failed, run ./scripts/gen_vimdoc.py and/or ./scripts/gen_vimfn_types.lua"
-          echo "and commit your doc changes"
+          echo "Job failed, run 'make doc' and commit your doc changes."
           echo "The doc generation produces the following changes:"
           git diff --color --exit-code

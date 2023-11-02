@@ -1,4 +1,3 @@
-#!/usr/bin/env -S nvim -l
 -- Generator for various vimdoc and Lua type files
 
 local DEP_API_METADATA = 'build/api_metadata.mpack'
