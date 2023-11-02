@@ -15,10 +15,6 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: rhysd/action-setup-vim@v1
-        with:
-          neovim: true
-          version: nightly
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
@@ -35,7 +31,6 @@ jobs:
       - name: FAIL, PR has not committed doc changes
         if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 }}
         run: |
-          echo "Job failed, run ./scripts/gen_vimdoc.py and/or ./scripts/gen_vimfn_types.lua"
-          echo "and commit your doc changes"
+          echo "Job failed, run 'make doc' and commit your doc changes."
           echo "The doc generation produces the following changes:"
           git diff --color --exit-code
