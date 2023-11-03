@@ -2,13 +2,15 @@ local uv = require'luv'
 
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local thelpers = require('test.functional.terminal.helpers')
 
 local feed = helpers.feed
 local eq = helpers.eq
+local neq = helpers.neq
 local clear = helpers.clear
 local ok = helpers.ok
-
+local funcs = helpers.funcs
+local nvim_prog = helpers.nvim_prog
+local retry = helpers.retry
 
 local function test_embed(ext_linegrid)
   local screen
@@ -142,20 +144,9 @@ describe('--embed --listen UI', function()
     helpers.skip(helpers.is_os('win'))
     clear()
     local child_server = assert(helpers.new_pipename())
-
-    local screen = thelpers.screen_setup(0,
-      string.format(
-        [=[["%s", "--embed", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s"]]=],
-        helpers.nvim_prog, child_server, helpers.nvim_set))
-    screen:expect{grid=[[
-      {1: }                                                 |
-                                                        |
-                                                        |
-                                                        |
-                                                        |
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]]}
+    uv.fs_unlink(child_server)
+    funcs.jobstart({nvim_prog, '--embed', '--listen', child_server, '--clean'})
+    retry(nil, nil, function() neq(nil, uv.fs_stat(child_server)) end)
 
     local child_session = helpers.connect(child_server)
 
@@ -182,10 +173,11 @@ describe('--embed --listen UI', function()
       {1:~                                       }|
       {1:~                                       }|
       {1:~                                       }|
-      {1:~                                       }|
+      {2:[No Name]             0,0-1          All}|
                                               |
     ]], attr_ids={
       [1] = {foreground = Screen.colors.Blue, bold = true};
+      [2] = {reverse = true, bold = true};
     }}
 
     -- VimEnter and UIEnter should now be triggered
