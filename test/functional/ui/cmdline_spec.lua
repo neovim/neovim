@@ -24,6 +24,7 @@ local function new_screen(opt)
     [7] = {bold = true, foreground = Screen.colors.Brown},
     [8] = {background = Screen.colors.LightGrey},
     [9] = {bold = true},
+    [10] = {background = Screen.colors.Yellow1};
   })
   return screen
 end
@@ -770,6 +771,84 @@ describe('cmdline redraw', function()
       {3:[Command Line]                          }|
       :^abc                                    |
     ]])
+  end)
+
+  it('with rightleftcmd', function()
+    command('set rightleft rightleftcmd=search shortmess+=s')
+    meths.buf_set_lines(0, 0, -1, true, {"let's rock!"})
+    screen:expect{grid=[[
+                    !kcor s'te^l|
+      {1:                        ~}|
+      {1:                        ~}|
+      {1:                        ~}|
+                               |
+    ]]}
+
+    feed '/'
+    screen:expect{grid=[[
+                    !kcor s'tel|
+      {1:                        ~}|
+      {1:                        ~}|
+      {1:                        ~}|
+                             ^ /|
+    ]]}
+
+    feed "let's"
+    -- note: cursor looks off but looks alright in real use
+    -- when rendered as a block so it touches the end of the text
+    screen:expect{grid=[[
+                    !kcor {2:s'tel}|
+      {1:                        ~}|
+      {1:                        ~}|
+      {1:                        ~}|
+                        ^ s'tel/|
+    ]]}
+
+    -- cursor movement
+    feed "<space>"
+    screen:expect{grid=[[
+                    !kcor{2: s'tel}|
+      {1:                        ~}|
+      {1:                        ~}|
+      {1:                        ~}|
+                       ^  s'tel/|
+    ]]}
+
+    feed "rock"
+    screen:expect{grid=[[
+                    !{2:kcor s'tel}|
+      {1:                        ~}|
+      {1:                        ~}|
+      {1:                        ~}|
+                   ^ kcor s'tel/|
+    ]]}
+
+    feed "<right>"
+    screen:expect{grid=[[
+                    !{2:kcor s'tel}|
+      {1:                        ~}|
+      {1:                        ~}|
+      {1:                        ~}|
+                    ^kcor s'tel/|
+    ]]}
+
+    feed "<left>"
+    screen:expect{grid=[[
+                    !{2:kcor s'tel}|
+      {1:                        ~}|
+      {1:                        ~}|
+      {1:                        ~}|
+                   ^ kcor s'tel/|
+    ]]}
+
+    feed "<cr>"
+    screen:expect{grid=[[
+                    !{10:kcor s'te^l}|
+      {1:                        ~}|
+      {1:                        ~}|
+      {1:                        ~}|
+      kcor s'tel/              |
+    ]]}
   end)
 end)
 

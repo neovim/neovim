@@ -537,22 +537,18 @@ void spell_suggest(int count)
   } else {
     // When 'rightleft' is set the list is drawn right-left.
     cmdmsg_rl = curwin->w_p_rl;
-    if (cmdmsg_rl) {
-      msg_col = Columns - 1;
-    }
 
     // List the suggestions.
     msg_start();
     msg_row = Rows - 1;         // for when 'cmdheight' > 1
     lines_left = Rows;          // avoid more prompt
-    vim_snprintf(IObuff, IOSIZE, _("Change \"%.*s\" to:"),
-                 sug.su_badlen, sug.su_badptr);
-    if (cmdmsg_rl && strncmp(IObuff, "Change", 6) == 0) {
+    char *fmt = _("Change \"%.*s\" to:");
+    if (cmdmsg_rl && strncmp(fmt, "Change", 6) == 0) {
       // And now the rabbit from the high hat: Avoid showing the
       // untranslated message rightleft.
-      vim_snprintf(IObuff, IOSIZE, ":ot \"%.*s\" egnahC",
-                   sug.su_badlen, sug.su_badptr);
+      fmt = ":ot \"%.*s\" egnahC";
     }
+    vim_snprintf(IObuff, IOSIZE, fmt, sug.su_badlen, sug.su_badptr);
     msg_puts(IObuff);
     msg_clr_eos();
     msg_putchar('\n');
