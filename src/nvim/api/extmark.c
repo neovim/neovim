@@ -166,6 +166,10 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
       PUT(dict, "end_right_gravity", BOOLEAN_OBJ(extmark->end_right_gravity));
     }
 
+    if (extmark->no_undo) {
+      PUT(dict, "undo_restore", BOOLEAN_OBJ(false));
+    }
+
     const Decoration *decor = &extmark->decor;
     if (decor->hl_id) {
       PUT(dict, "hl_group", hl_group_name(decor->hl_id, hl_name));
@@ -519,6 +523,9 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                   the extmark end position (if it exists) will be shifted
 ///                   in when new text is inserted (true for right, false
 ///                   for left). Defaults to false.
+///               - undo_restore : Restore the exact position of the mark
+///                   if text around the mark was deleted and then restored by undo.
+///                   Defaults to true.
 ///               - priority: a priority value for the highlight group or sign
 ///                   attribute. For example treesitter highlighting uses a
 ///                   value of 100.
@@ -825,7 +832,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
 
     extmark_set(buf, (uint32_t)ns_id, &id, (int)line, (colnr_T)col, line2, col2,
                 has_decor ? &decor : NULL, right_gravity, end_right_gravity,
-                kExtmarkNoUndo, err);
+                !GET_BOOL_OR_TRUE(opts, set_extmark, undo_restore), err);
     if (ERROR_SET(err)) {
       goto error;
     }
@@ -952,7 +959,7 @@ Integer nvim_buf_add_highlight(Buffer buffer, Integer ns_id, String hl_group, In
   extmark_set(buf, ns, NULL,
               (int)line, (colnr_T)col_start,
               end_line, (colnr_T)col_end,
-              &decor, true, false, kExtmarkNoUndo, NULL);
+              &decor, true, false, false, NULL);
   return ns_id;
 }
 

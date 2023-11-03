@@ -77,18 +77,18 @@ typedef struct {
 // orphaned: the other side of this paired mark was deleted. this mark must be deleted very soon!
 #define MT_FLAG_ORPHANED (((uint16_t)1) << 3)
 #define MT_FLAG_HL_EOL (((uint16_t)1) << 4)
+#define MT_FLAG_NO_UNDO (((uint16_t)1) << 5)
 
 #define DECOR_LEVELS 4
-#define MT_FLAG_DECOR_OFFSET 5
+#define MT_FLAG_DECOR_OFFSET 6
 #define MT_FLAG_DECOR_MASK (((uint16_t)(DECOR_LEVELS - 1)) << MT_FLAG_DECOR_OFFSET)
-
-// next flag is (((uint16_t)1) << 6)
 
 // These _must_ be last to preserve ordering of marks
 #define MT_FLAG_RIGHT_GRAVITY (((uint16_t)1) << 14)
 #define MT_FLAG_LAST (((uint16_t)1) << 15)
 
-#define MT_FLAG_EXTERNAL_MASK (MT_FLAG_DECOR_MASK | MT_FLAG_RIGHT_GRAVITY | MT_FLAG_HL_EOL)
+#define MT_FLAG_EXTERNAL_MASK (MT_FLAG_DECOR_MASK | MT_FLAG_RIGHT_GRAVITY | \
+                               MT_FLAG_NO_UNDO | MT_FLAG_HL_EOL)
 
 // this is defined so that start and end of the same range have adjacent ids
 #define MARKTREE_END_FLAG ((uint64_t)1)
@@ -127,16 +127,22 @@ static inline bool mt_right(MTKey key)
   return key.flags & MT_FLAG_RIGHT_GRAVITY;
 }
 
+static inline bool mt_no_undo(MTKey key)
+{
+  return key.flags & MT_FLAG_NO_UNDO;
+}
+
 static inline uint8_t marktree_decor_level(MTKey key)
 {
   return (uint8_t)((key.flags&MT_FLAG_DECOR_MASK) >> MT_FLAG_DECOR_OFFSET);
 }
 
-static inline uint16_t mt_flags(bool right_gravity, uint8_t decor_level)
+static inline uint16_t mt_flags(bool right_gravity, uint8_t decor_level, bool no_undo)
 {
   assert(decor_level < DECOR_LEVELS);
   return (uint16_t)((right_gravity ? MT_FLAG_RIGHT_GRAVITY : 0)
-                    | (decor_level << MT_FLAG_DECOR_OFFSET));
+                    | (decor_level << MT_FLAG_DECOR_OFFSET)
+                    | (no_undo ? MT_FLAG_NO_UNDO : 0));
 }
 
 typedef kvec_withinit_t(uint64_t, 4) Intersection;
