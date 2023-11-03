@@ -566,7 +566,7 @@ void spell_suggest(int count)
       }
       vim_snprintf(IObuff, IOSIZE, "%2d", i + 1);
       if (cmdmsg_rl) {
-        rl_mirror_ascii(IObuff);
+        rl_mirror_ascii(IObuff, NULL);
       }
       msg_puts(IObuff);
 
@@ -592,7 +592,7 @@ void spell_suggest(int count)
         }
         if (cmdmsg_rl) {
           // Mirror the numbers, but keep the leading space.
-          rl_mirror_ascii(IObuff + 1);
+          rl_mirror_ascii(IObuff + 1, NULL);
         }
         msg_advance(30);
         msg_puts(IObuff);

@@ -650,9 +650,9 @@ size_t transchar_hex(char *const buf, const int c)
 
 /// Mirror text "str" for right-left displaying.
 /// Only works for single-byte characters (e.g., numbers).
-void rl_mirror_ascii(char *str)
+void rl_mirror_ascii(char *str, char *end)
 {
-  for (char *p1 = str, *p2 = str + strlen(str) - 1; p1 < p2; p1++, p2--) {
+  for (char *p1 = str, *p2 = (end ? end : str + strlen(str)) - 1; p1 < p2; p1++, p2--) {
     char t = *p1;
     *p1 = *p2;
     *p2 = t;
