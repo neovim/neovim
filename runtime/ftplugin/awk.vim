@@ -37,8 +37,8 @@ if exists("g:awk_is_gawk")
     let b:undo_ftplugin .= " | setl fp<"
   endif
 
-  " Disabled by default for security reasons.  
-  if get(g:, 'awk_exec', get(g:, 'plugin_exec', 0))
+  " Disabled by default for security reasons.
+  if dist#vim#IsSafeExecutable('awk', 'gawk')
     let path = system("gawk 'BEGIN { printf ENVIRON[\"AWKPATH\"] }'")
     let path = substitute(path, '^\.\=:\|:\.\=$\|:\.\=:', ',,', 'g') " POSIX cwd
     let path = substitute(path, ':', ',', 'g')

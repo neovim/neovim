@@ -56,12 +56,8 @@ endif
 
 " Set this once, globally.
 if !exists("perlpath")
-    let s:tmp_cwd = getcwd()
     " safety check: don't execute perl binary by default
-    if executable("perl") && get(g:, 'perl_exec', get(g:, 'plugin_exec', 0))
-        \ && (fnamemodify(exepath("perl"), ":p:h") != s:tmp_cwd
-        \ || (index(split($PATH, has("win32") ? ';' : ':'), s:tmp_cwd) != -1
-        \ && s:tmp_cwd != '.'))
+    if dist#vim#IsSafeExecutable('perl', 'perl')
       try
 	if &shellxquote != '"'
 	    let perlpath = system('perl -e "print join(q/,/,@INC)"')
@@ -77,7 +73,6 @@ if !exists("perlpath")
 	" current directory and the directory of the current file.
 	let perlpath = ".,,"
     endif
-    unlet! s:tmp_cwd
 endif
 
 " Append perlpath to the existing path value, if it is set.  Since we don't

@@ -57,14 +57,10 @@ if !exists("g:zip_extractcmd")
  let g:zip_extractcmd= g:zip_unzipcmd
 endif
 
-let s:tmp_cwd = getcwd()
-if (fnamemodify(exepath(g:zip_unzipcmd), ":p:h") ==# getcwd()
-          \ && (index(split($PATH,has("win32")? ';' : ':'), s:tmp_cwd) == -1 || s:tmp_cwd == '.'))
- unlet s:tmp_cwd
+if !dist#vim#IsSafeExecutable('zip', g:zip_unzipcmd)
  echoerr "Warning: NOT executing " .. g:zip_unzipcmd .. " from current directory!"
  finish
 endif
-unlet s:tmp_cwd
 
 " ----------------
 "  Functions: {{{1

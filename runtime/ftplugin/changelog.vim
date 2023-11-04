@@ -57,8 +57,8 @@ if &filetype == 'changelog'
     endif
     let s:default_login = 'unknown'
 
-    " Disabled by default for security reasons.  
-    if get(g:, 'changelog_exec', get(g:, 'plugin_exec', 0))
+    " Disabled by default for security reasons.
+    if dist#vim#IsSafeExecutable('changelog', 'whoami')
       let login = s:login()
     else
       let login = s:default_login
