@@ -531,7 +531,7 @@ if exists("b:is_kornshell") || exists("b:is_posix")
 endif
 
 " sh ksh bash : ${var[... ]...}  array reference: {{{1
-syn region  shDerefVarArray   contained	matchgroup=shDeref start="\[" end="]"	contains=@shCommandSubList nextgroup=shDerefOp,shDerefOpError
+syn region  shDerefVarArray   contained	matchgroup=shDeref start="\[" end="]"	contains=@shCommandSubList nextgroup=shDerefOp,shDerefOpError,shDerefOffset
 
 " Special ${parameter OPERATOR word} handling: {{{1
 " sh ksh bash : ${parameter:-word}    word is default value
