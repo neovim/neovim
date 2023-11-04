@@ -2392,14 +2392,15 @@ func Test_complete_info_index()
   call feedkeys("Go\<C-X>\<C-P>\<F5>\<Esc>_dd", 'tx')
   call assert_equal(-1, g:compl_info['selected'])
 
-  " Check if index out of range
-  " https://github.com/vim/vim/pull/12971
   call feedkeys("Go\<C-X>\<C-N>\<C-P>\<F5>\<Esc>_dd", 'tx')
   call assert_equal(0, g:compl_info['selected'])
   call assert_equal(6 , len(g:compl_info['items']))
   call assert_equal("fff", g:compl_info['items'][g:compl_info['selected']]['word'])
   call feedkeys("Go\<C-X>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<C-N>\<F5>\<Esc>_dd", 'tx')
   call assert_equal("aaa", g:compl_info['items'][g:compl_info['selected']]['word'])
+  call assert_equal(6 , len(g:compl_info['items']))
+  call feedkeys("Go\<C-X>\<C-N>\<F5>\<Esc>_dd", 'tx')
+  call assert_equal(-1, g:compl_info['selected'])
   call assert_equal(6 , len(g:compl_info['items']))
 
   set completeopt&
