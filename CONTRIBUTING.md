@@ -10,7 +10,6 @@ low-risk/isolated tasks:
 - Try a [complexity:low] issue.
 - Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
   [Coverity](#coverity).
-- [Improve documentation](#documentation)
 - [Merge a Vim patch] (requires strong familiarity with Vim)
   - NOTE: read the above link before sending improvements to "runtime files" (anything in `runtime/`).
     - Vimscript and documentation files are (mostly) maintained by [Vim](https://github.com/vim/vim), not Nvim.
@@ -127,9 +126,8 @@ Each pull request must pass the automated builds on [Cirrus CI] and [GitHub Acti
     - To run valgrind locally: `VALGRIND=1 make test`
     - To run ASan/UBSan locally: `CC=clang make CMAKE_FLAGS="-DENABLE_ASAN_UBSAN=ON"`.
       Note that MSVC requires Release or RelWithDebInfo build type to work properly.
-- The [lint](#lint) build checks modified lines _and their immediate
-  neighbors_, to encourage incrementally updating the legacy style to meet our
-  [style](#style). (See [#3174][3174] for background.)
+- The [lint](#lint) build checks that the code is formatted correctly and
+  passes various linter checks.
 - CI for FreeBSD runs on [Cirrus CI].
 - To see CI results faster in your PR, you can temporarily set `TEST_FILE` in
   [test.yml](https://github.com/neovim/neovim/blob/e35b9020b16985eee26e942f9a3f6b045bc3809b/.github/workflows/test.yml#L29).
@@ -179,7 +177,7 @@ master build. To view the defects, just request access; you will be approved.
   git log --oneline --no-merges --grep coverity
   ```
 
-### Clang sanitizers (ASAN and UBSAN)
+### Sanitizers (ASAN and UBSAN)
 
   ASAN/UBSAN can be used to detect memory errors and other common forms of undefined behavior at runtime in debug builds.
 
@@ -219,7 +217,6 @@ make lint
     setlocal formatprg=uncrustify\ -q\ -l\ C\ -c\ src/uncrustify.cfg\ --no-backup
   endif
   ```
-  The required version of `uncrustify` is specified in `uncrustify.cfg`.
 - There is also `.clang-format` which has drifted from the [style-guide], but
   is available for reference. To use the Nvim `gq` command with `clang-format`:
   ```vim
@@ -324,8 +321,6 @@ types, etc. See [:help dev-doc-lua][dev-doc-lua].
 Reviewing
 ---------
 
-To help review pull requests, start with [this checklist][review-checklist].
-
 Reviewing can be done on GitHub, but you may find it easier to do locally.
 Using [GitHub CLI][gh], you can create a new branch with the contents of a pull
 request, e.g. [#1820][1820]:
@@ -358,19 +353,13 @@ as context, use the `-W` argument as well.
 [git-bisect]: http://git-scm.com/book/en/v2/Git-Tools-Debugging-with-Git
 [git-feature-branch]: https://www.atlassian.com/git/tutorials/comparing-workflows
 [git-history-filtering]: https://www.atlassian.com/git/tutorials/git-log/filtering-the-commit-history
-[git-history-rewriting]: http://git-scm.com/book/en/v2/Git-Tools-Rewriting-History
-[git-rebasing]: http://git-scm.com/book/en/v2/Git-Branching-Rebasing
 [github-issues]: https://github.com/neovim/neovim/issues
 [include-what-you-use-install]: https://github.com/include-what-you-use/include-what-you-use#how-to-install
 [include-what-you-use]: https://github.com/include-what-you-use/include-what-you-use#using-with-cmake
 [lua-language-server]: https://github.com/sumneko/lua-language-server/
-[master error list]: https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json
 [nvim-lspconfig/clangd]: https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#clangd
 [pr-draft]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 [pr-ready]: https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request
-[review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
 [run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
 [style-guide]: https://neovim.io/doc/user/dev_style.html#dev-style
-[uncrustify]: http://uncrustify.sourceforge.net/
-[wiki-contribute-help]: https://github.com/neovim/neovim/wiki/contribute-%3Ahelp
 [wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
