@@ -19,7 +19,6 @@ Checks: >
   -bugprone-not-null-terminated-result,
   -bugprone-reserved-identifier,
   -bugprone-sizeof-expression,
-  -bugprone-suspicious-include,
   -bugprone-suspicious-memory-comparison,
   -bugprone-swapped-arguments,
   -bugprone-switch-missing-default-case,

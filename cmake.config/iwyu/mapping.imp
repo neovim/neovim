@@ -178,7 +178,6 @@
   { include: [ '"os/mem.h.generated.h"', private, '"nvim/os/os.h"', public ] },
   { include: [ '"os/stdpaths.h.generated.h"', private, '"nvim/os/os.h"', public ] },
   { include: [ '"os/users.h.generated.h"', private, '"nvim/os/os.h"', public ] },
-  { include: [ '"regexp_bt.h.generated.h"', private, '"nvim/regexp.h"', public ] },
   { include: [ '"ui_events_call.h.generated.h"', private, '"nvim/ui.h"', public ] },
   { include: [ '"ui_events_client.h.generated.h"', private, '"nvim/ui_client.h"', public ] },
   { include: [ '"ui_events_remote.generated.h"', private, '"nvim/api/ui.h"', public ] },
