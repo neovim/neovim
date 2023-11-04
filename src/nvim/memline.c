@@ -2438,7 +2438,7 @@ int ml_replace(linenr_T lnum, char *line, bool copy)
 /// Do not use it after calling ml_replace().
 ///
 /// Check: The caller of this function should probably also call
-/// changed_lines(), unless update_screen(UPD_NOT_VALID) is used.
+/// changed_lines(), unless redraw_later(UPD_NOT_VALID) is used.
 ///
 /// @return  FAIL for failure, OK otherwise
 int ml_replace_buf(buf_T *buf, linenr_T lnum, char *line, bool copy)

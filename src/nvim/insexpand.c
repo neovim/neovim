@@ -923,7 +923,6 @@ static void ins_compl_longest_match(compl_T *match)
     had_match = (curwin->w_cursor.col > compl_col);
     ins_compl_delete();
     ins_bytes(compl_leader + get_compl_len());
-    ins_redraw(false);
 
     // When the match isn't there (to avoid matching itself) remove it
     // again after redrawing.
@@ -957,7 +956,6 @@ static void ins_compl_longest_match(compl_T *match)
     had_match = (curwin->w_cursor.col > compl_col);
     ins_compl_delete();
     ins_bytes(compl_leader + get_compl_len());
-    ins_redraw(false);
 
     // When the match isn't there (to avoid matching itself) remove it
     // again after redrawing.
@@ -1238,7 +1236,7 @@ static int ins_compl_build_pum(void)
 
 /// Show the popup menu for the list of matches.
 /// Also adjusts "compl_shown_match" to an entry that is actually displayed.
-void ins_compl_show_pum(void)
+void ins_compl_show_pum_later(void)
 {
   if (!pum_wanted() || !pum_enough_matches()) {
     return;
@@ -1246,15 +1244,23 @@ void ins_compl_show_pum(void)
 
   // Dirty hard-coded hack: remove any matchparen highlighting.
   do_cmdline_cmd("if exists('g:loaded_matchparen')|3match none|endif");
+  redraw_pum_later();
+}
 
-  // Update the screen before drawing the popup menu over it.
-  update_screen();
-
+/// Show the popup menu for the list of matches.
+/// Also adjusts "compl_shown_match" to an entry that is actually displayed.
+void ins_compl_redraw_pum(void)
+{
   int cur = -1;
   bool array_changed = false;
 
   if (compl_match_array == NULL) {
     array_changed = true;
+    if (!compl_first_match) {
+      // what if no pum?
+      must_redraw_pum = false;
+      return;
+    }
     // Need to build the popup menu list.
     cur = ins_compl_build_pum();
   } else {
@@ -1668,8 +1674,7 @@ int ins_compl_bs(void)
     ins_compl_restart();
   }
 
-  // ins_compl_restart() calls update_screen() which may invalidate the pointer
-  // TODO(bfredl): get rid of random update_screen() calls deep inside completion logic
+  // ins_compl_restart() may call update_screen() which may invalidate the pointer
   line = get_cursor_line_ptr();
 
   xfree(compl_leader);
@@ -1721,7 +1726,7 @@ static void ins_compl_new_leader(void)
   compl_enter_selects = !compl_used_match;
 
   // Show the popup menu with a different set of matches.
-  ins_compl_show_pum();
+  ins_compl_show_pum_later();
 
   // Don't let Enter select the original text when there is no popup menu.
   // Don't let Enter select when use user function and refresh_always is set
@@ -1776,10 +1781,6 @@ void ins_compl_addleader(int c)
 /// BS or a key was typed while still searching for matches.
 static void ins_compl_restart(void)
 {
-  // update screen before restart.
-  // so if complete is blocked,
-  // will stay to the last popup menu and reduce flicker
-  update_screen();  // TODO(bfredl): no.
   ins_compl_free();
   compl_started = false;
   compl_matches = 0;
@@ -2068,6 +2069,7 @@ static bool ins_compl_stop(const int c, const int prev_mode, bool retval)
   if (c == Ctrl_C && cmdwin_type != 0) {
     // Avoid the popup menu remains displayed when leaving the
     // command line window.
+    // TODO: too early! why not redraw screen without cmdwin  later?
     update_screen();
   }
 
@@ -2573,8 +2575,6 @@ static void set_completion(colnr_T startcol, list_T *list)
   compl_started = true;
   compl_used_match = true;
   compl_cont_status = 0;
-  int save_w_wrow = curwin->w_wrow;
-  int save_w_leftcol = curwin->w_leftcol;
 
   compl_curr_match = compl_first_match;
   bool no_select = compl_no_select || compl_longest;
@@ -2590,7 +2590,7 @@ static void set_completion(colnr_T startcol, list_T *list)
 
   // Lazily show the popup menu, unless we got interrupted.
   if (!compl_interrupted) {
-    show_pum(save_w_wrow, save_w_leftcol);
+    ins_compl_show_pum_later();
   }
 
   may_trigger_modechanged();
@@ -3744,11 +3744,8 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   }
 
   if (!allow_get_expansion) {
-    // redraw to show the user what was inserted
-    update_screen();  // TODO(bfredl): no!
-
     // display the updated popup menu
-    ins_compl_show_pum();
+    ins_compl_show_pum_later();
 
     // Delete old text to be replaced, since we're still searching and
     // don't want to match ourselves!
@@ -4410,8 +4407,6 @@ static void ins_compl_show_statusmsg(void)
 int ins_complete(int c, bool enable_pum)
 {
   int n;
-  int save_w_wrow;
-  int save_w_leftcol;
   int insert_match;
 
   compl_direction = ins_compl_key2dir(c);
@@ -4429,8 +4424,6 @@ int ins_complete(int c, bool enable_pum)
   compl_shows_dir = compl_direction;
 
   // Find next match (and following matches).
-  save_w_wrow = curwin->w_wrow;
-  save_w_leftcol = curwin->w_leftcol;
   n = ins_compl_next(true, ins_compl_key2count(c), insert_match, false);
 
   if (n > 1) {          // all matches have been found
@@ -4471,31 +4464,12 @@ int ins_complete(int c, bool enable_pum)
 
   // Show the popup menu, unless we got interrupted.
   if (enable_pum && !compl_interrupted) {
-    show_pum(save_w_wrow, save_w_leftcol);
+    ins_compl_show_pum_later();
   }
   compl_was_interrupted = compl_interrupted;
   compl_interrupted = false;
 
   return OK;
-}
-
-/// Remove (if needed) and show the popup menu
-static void show_pum(int prev_w_wrow, int prev_w_leftcol)
-{
-  // RedrawingDisabled may be set when invoked through complete().
-  int n = RedrawingDisabled;
-  RedrawingDisabled = 0;
-
-  // If the cursor moved or the display scrolled we need to remove the pum
-  // first.
-  setcursor();
-  if (prev_w_wrow != curwin->w_wrow || prev_w_leftcol != curwin->w_leftcol) {
-    ins_compl_del_pum();
-  }
-
-  ins_compl_show_pum();
-  setcursor();
-  RedrawingDisabled = n;
 }
 
 // Looks in the first "len" chars. of "src" for search-metachars.
