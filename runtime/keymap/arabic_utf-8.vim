@@ -1,7 +1,7 @@
 " Vim Keymap file for Arabic
 " Maintainer   : Arabic Support group <support-at-arabeyes.org>
 " Created by   : Nadim Shaikli <nadim-at-arabeyes.org>
-" Last Updated : 2003 Apr 26
+" Last Updated : 2023-10-27
 " This is for a standard Microsoft Arabic keyboard layout.
 
 " Use this short name in the status line.
@@ -41,16 +41,6 @@ m	<char-0x0629>			" (1577)	- TEH MARBUTA
 ,	<char-0x0648>			" (1608)	- WAW
 .	<char-0x0632>			" (1586)	- ZAIN
 /	<char-0x0638>			" (1592)	- ZAH
-0	<char-0x0660>			" (1632)	- Arabic 0
-1	<char-0x0661>			" (1633)	- Arabic 1
-2	<char-0x0662>			" (1634)	- Arabic 2
-3	<char-0x0663>			" (1635)	- Arabic 3
-4	<char-0x0664>			" (1636)	- Arabic 4
-5	<char-0x0665>			" (1637)	- Arabic 5
-6	<char-0x0666>			" (1638)	- Arabic 6
-7	<char-0x0667>			" (1639)	- Arabic 7
-8	<char-0x0668>			" (1640)	- Arabic 8
-9	<char-0x0669>			" (1641)	- Arabic 9
 `	<char-0x0630>			" (1584)	- THAL
 ~	<char-0x0651>			" (1617)	- Tanween -- SHADDA
 Q	<char-0x064e>			" (1614)	- Tanween -- FATHA
