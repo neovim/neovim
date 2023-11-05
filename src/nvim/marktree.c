@@ -2007,7 +2007,7 @@ void marktree_put_test(MarkTree *b, uint32_t ns, uint32_t id, int row, int col, 
                        int end_row, int end_col, bool end_right)
 {
   MTKey key = { { row, col }, ns, id, 0,
-                mt_flags(right_gravity, 0), 0, NULL };
+                mt_flags(right_gravity, 0, false), 0, NULL };
   marktree_put(b, key, end_row, end_col, end_right);
 }
 

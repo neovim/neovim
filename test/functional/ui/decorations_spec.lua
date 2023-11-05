@@ -11,6 +11,7 @@ local meths = helpers.meths
 local funcs = helpers.funcs
 local curbufmeths = helpers.curbufmeths
 local command = helpers.command
+local eq = helpers.eq
 local assert_alive = helpers.assert_alive
 
 describe('decorations providers', function()
@@ -1995,6 +1996,60 @@ describe('extmark decorations', function()
       {1:~                                                 }|
                                                         |
     ]]}
+  end)
+
+  local function with_undo_restore(val)
+    screen:try_resize(50, 5)
+    insert(example_text)
+    feed'gg'
+    meths.buf_set_extmark(0, ns, 0, 6, { end_col=13, hl_group = 'NonText', undo_restore=val})
+    screen:expect{grid=[[
+      ^for _,{1:item in} ipairs(items) do                    |
+          local text, hl_id_cell, count = unpack(item)  |
+          if hl_id_cell ~= nil then                     |
+              hl_id = hl_id_cell                        |
+                                                        |
+    ]]}
+
+    meths.buf_set_text(0, 0, 4, 0, 8, {''})
+    screen:expect{grid=[[
+      ^for {1:em in} ipairs(items) do                        |
+          local text, hl_id_cell, count = unpack(item)  |
+          if hl_id_cell ~= nil then                     |
+              hl_id = hl_id_cell                        |
+                                                        |
+    ]]}
+  end
+
+  it("highlights do reapply to restored text after delete", function()
+    with_undo_restore(true) -- also default behavior
+
+    feed 'u'
+    screen:expect{grid=[[
+      ^for _,{1:item in} ipairs(items) do                    |
+          local text, hl_id_cell, count = unpack(item)  |
+          if hl_id_cell ~= nil then                     |
+              hl_id = hl_id_cell                        |
+      1 change; before #2  0 seconds ago                |
+    ]]}
+  end)
+
+  it("highlights don't reapply to restored text after delete with no_undo_restore", function()
+    with_undo_restore(false)
+
+    feed 'u'
+    screen:expect{grid=[[
+      ^for _,it{1:em in} ipairs(items) do                    |
+          local text, hl_id_cell, count = unpack(item)  |
+          if hl_id_cell ~= nil then                     |
+              hl_id = hl_id_cell                        |
+      1 change; before #2  0 seconds ago                |
+    ]]}
+
+    eq({ { 1, 0, 8, { end_col = 13, end_right_gravity = false, end_row = 0,
+                       hl_eol = false, hl_group = "NonText", undo_restore = false,
+                       ns_id = 1, priority = 4096, right_gravity = true } } },
+       meths.buf_get_extmarks(0, ns, {0,0}, {0, -1}, {details=true}))
   end)
 
   it('virtual text works with rightleft', function()

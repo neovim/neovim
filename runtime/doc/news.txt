@@ -270,6 +270,9 @@ The following changes to existing APIs or features add new behavior.
   In addition, |nvim_buf_get_extmarks()| has gained an "overlap" option to
   return such ranges even if they started before the specified position.
 
+• Extmarks can opt-out of precise undo tracking using the new "undo_restore"
+  flag to |nvim_buf_set_extmark()|
+
 • LSP hover and signature help now use Treesitter for highlighting of Markdown
   content.
   Note that syntax highlighting of code examples requires a matching parser

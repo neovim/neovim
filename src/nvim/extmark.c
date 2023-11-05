@@ -56,7 +56,7 @@
 /// must not be used during iteration!
 void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col, int end_row,
                  colnr_T end_col, Decoration *decor, bool right_gravity, bool end_right_gravity,
-                 ExtmarkOp op, Error *err)
+                 bool no_undo, Error *err)
 {
   uint32_t *ns = map_put_ref(uint32_t, uint32_t)(buf->b_extmark_ns, ns_id, NULL, NULL);
   uint32_t id = idp ? *idp : 0;
@@ -126,7 +126,7 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
   }
 
   MTKey mark = { { row, col }, ns_id, id, 0,
-                 mt_flags(right_gravity, decor_level), 0, NULL };
+                 mt_flags(right_gravity, decor_level, no_undo), 0, NULL };
   if (decor_full) {
     mark.decor_full = decor;
   } else if (decor) {
@@ -139,15 +139,6 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
   marktree_put(buf->b_marktree, mark, end_row, end_col, end_right_gravity);
 
 revised:
-  if (op != kExtmarkNoUndo) {
-    // TODO(bfredl): this doesn't cover all the cases and probably shouldn't
-    // be done "prematurely". Any movement in undo history might necessitate
-    // adding new marks to old undo headers. add a test case for this (doesn't
-    // fail extmark_spec.lua, and it should)
-    uint64_t mark_id = mt_lookup_id(ns_id, id, false);
-    u_extmark_set(buf, mark_id, row, col);
-  }
-
   if (decor) {
     if (kv_size(decor->virt_text) && decor->virt_text_pos == kVTInline) {
       buf->b_virt_text_inline++;
@@ -359,13 +350,14 @@ static void push_mark(ExtmarkInfoArray *array, uint32_t ns_id, ExtmarkType type_
                                    .end_col = end_pos.col,
                                    .right_gravity = mt_right(mark),
                                    .end_right_gravity = end_right,
+                                   .no_undo = mt_no_undo(mark),
                                    .decor = get_decor(mark) }));
 }
 
 /// Lookup an extmark by id
 ExtmarkInfo extmark_from_id(buf_T *buf, uint32_t ns_id, uint32_t id)
 {
-  ExtmarkInfo ret = { 0, 0, -1, -1, -1, -1, false, false, DECORATION_INIT };
+  ExtmarkInfo ret = { 0, 0, -1, -1, -1, -1, false, false, false, DECORATION_INIT };
   MTKey mark = marktree_lookup_ns(buf->b_marktree, ns_id, id, false, NULL);
   if (!mark.id) {
     return ret;
@@ -381,6 +373,7 @@ ExtmarkInfo extmark_from_id(buf_T *buf, uint32_t ns_id, uint32_t id)
   ret.end_col = end.pos.col;
   ret.right_gravity = mt_right(mark);
   ret.end_right_gravity = mt_right(end);
+  ret.no_undo = mt_no_undo(mark);
   ret.decor = get_decor(mark);
 
   return ret;
@@ -415,27 +408,6 @@ void extmark_free_all(buf_T *buf)
   *buf->b_extmark_ns = (Map(uint32_t, uint32_t)) MAP_INIT;
 }
 
-/// Save info for undo/redo of set marks
-static void u_extmark_set(buf_T *buf, uint64_t mark, int row, colnr_T col)
-{
-  u_header_T *uhp = u_force_get_undo_header(buf);
-  if (!uhp) {
-    return;
-  }
-
-  ExtmarkSavePos pos;
-  pos.mark = mark;
-  pos.old_row = -1;
-  pos.old_col = -1;
-  pos.row = row;
-  pos.col = col;
-
-  ExtmarkUndoObject undo = { .type = kExtmarkSavePos,
-                             .data.savepos = pos };
-
-  kv_push(uhp->uh_extmark, undo);
-}
-
 /// copy extmarks data between range
 ///
 /// useful when we cannot simply reverse the operation. This will do nothing on
@@ -458,16 +430,19 @@ void u_extmark_copy(buf_T *buf, int l_row, colnr_T l_col, int u_row, colnr_T u_c
         || (mark.pos.row == u_row && mark.pos.col > u_col)) {
       break;
     }
-    ExtmarkSavePos pos;
-    pos.mark = mt_lookup_key(mark);
-    pos.old_row = mark.pos.row;
-    pos.old_col = mark.pos.col;
-    pos.row = -1;
-    pos.col = -1;
 
-    undo.data.savepos = pos;
-    undo.type = kExtmarkSavePos;
-    kv_push(uhp->uh_extmark, undo);
+    if (!mt_no_undo(mark)) {
+      ExtmarkSavePos pos;
+      pos.mark = mt_lookup_key(mark);
+      pos.old_row = mark.pos.row;
+      pos.old_col = mark.pos.col;
+      pos.row = -1;
+      pos.col = -1;
+
+      undo.data.savepos = pos;
+      undo.type = kExtmarkSavePos;
+      kv_push(uhp->uh_extmark, undo);
+    }
 
     marktree_itr_next(buf->b_marktree, itr);
   }

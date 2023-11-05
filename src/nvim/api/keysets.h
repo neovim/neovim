@@ -48,6 +48,7 @@ typedef struct {
   String conceal;
   Boolean spell;
   Boolean ui_watched;
+  Boolean undo_restore;
 } Dict(set_extmark);
 
 typedef struct {

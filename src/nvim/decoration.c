@@ -66,7 +66,7 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
     }
     extmark_set(buf, (uint32_t)src_id, NULL,
                 (int)lnum - 1, hl_start, (int)lnum - 1 + end_off, hl_end,
-                &decor, true, false, kExtmarkNoUndo, NULL);
+                &decor, true, false, true, NULL);
   }
 }
 
