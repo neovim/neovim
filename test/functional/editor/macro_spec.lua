@@ -47,6 +47,49 @@ hello]]
 
     feed[[G3Q]]
     eq({'helloFOOFOO', 'hello', 'helloFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+
+    feed[[ggV3jQ]]
+    eq({'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+  end)
+
+  it('can be replayed with @q and @w', function()
+    insert [[hello
+hello
+hello]]
+    feed [[gg]]
+
+    feed [[qqAFOO<esc>qu]]
+    eq({'hello', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+
+    feed [[qwA123<esc>qu]]
+    eq({'hello', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+
+    feed[[V3j@q]]
+    eq({'helloFOO', 'helloFOO', 'helloFOO'}, curbufmeths.get_lines(0, -1, false))
+
+    feed [[gg]]
+    feed[[Vj@w]]
+    eq({'helloFOO123', 'helloFOO123', 'helloFOO'}, curbufmeths.get_lines(0, -1, false))
+  end)
+
+  it('can be replayed with @q and @w visual-block', function()
+    insert [[hello
+hello
+hello]]
+    feed [[gg]]
+
+    feed [[qqAFOO<esc>qu]]
+    eq({'hello', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+
+    feed [[qwA123<esc>qu]]
+    eq({'hello', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+
+    feed[[<C-v>3j@q]]
+    eq({'helloFOO', 'helloFOO', 'helloFOO'}, curbufmeths.get_lines(0, -1, false))
+
+    feed [[gg]]
+    feed[[<C-v>j@w]]
+    eq({'helloFOO123', 'helloFOO123', 'helloFOO'}, curbufmeths.get_lines(0, -1, false))
   end)
 end)
 

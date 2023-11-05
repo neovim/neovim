@@ -14,6 +14,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/assert_defs.h"
+#include "nvim/api/vim.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/change.h"
@@ -24,6 +25,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
@@ -137,6 +139,7 @@ static char opchars[][3] = {
   { 'g', '@', OPF_CHANGE },              // OP_FUNCTION
   { Ctrl_A, NUL, OPF_CHANGE },           // OP_NR_ADD
   { Ctrl_X, NUL, OPF_CHANGE },           // OP_NR_SUB
+  { 'Q', NUL, OPF_LINES },               // OP_REGREPLAY
 };
 
 yankreg_T *get_y_previous(void)
@@ -173,6 +176,9 @@ int get_op_type(int char1, int char2)
   }
   if (char1 == 'z' && char2 == 'y') {  // OP_YANK
     return OP_YANK;
+  }
+  if (char1 == '@')  {
+    return OP_ATREGREPLAY;
   }
   for (i = 0;; i++) {
     if (opchars[i][0] == char1 && opchars[i][1] == char2) {
@@ -2575,6 +2581,44 @@ bool op_yank(oparg_T *oap, bool message)
 
   return true;
 }
+
+void op_at_regreplay(cmdarg_T *cap)
+{
+  int curpos;
+  int clnum = cap->oap->start.lnum;
+
+  // apply the change to each line.
+  for (curpos = 0; curpos < cap->oap->line_count; curpos++) {
+    curwin->w_cursor.lnum = clnum;
+    curwin->w_cursor.col = 0;
+
+    do_execreg(cap->nchar, false, false, false);
+    exec_normal(false);
+
+    line_breakcheck();
+    clnum++;
+  }
+}
+
+
+void op_regreplay(oparg_T *oap)
+{
+  int curpos;
+  int clnum = oap->start.lnum;
+
+  // apply the change to each line.
+  for (curpos = 0; curpos < oap->line_count; curpos++) {
+    curwin->w_cursor.lnum = clnum;
+    curwin->w_cursor.col = 0;
+
+    do_execreg(reg_recorded, false, false, false);
+    exec_normal(false);
+
+    line_breakcheck();
+    clnum++;
+  }
+}
+
 
 static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 {
@@ -6097,7 +6141,6 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     } else {
       oap->end_adjusted = false;
     }
-
     switch (oap->op_type) {
     case OP_LSHIFT:
     case OP_RSHIFT:
@@ -6340,6 +6383,22 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         VIsual_active = false;
       }
       check_cursor_col();
+      break;
+    case OP_ATREGREPLAY:
+      if (curwin->w_cursor.lnum + oap->line_count - 1 >
+          curbuf->b_ml.ml_line_count) {
+        beep_flush();
+      } else {
+        op_at_regreplay(cap);
+      }
+      break;
+    case OP_REGREPLAY:
+      if (curwin->w_cursor.lnum + oap->line_count - 1 >
+          curbuf->b_ml.ml_line_count) {
+        beep_flush();
+      } else {
+        op_regreplay(oap);
+      }
       break;
     default:
       clearopbeep(oap);

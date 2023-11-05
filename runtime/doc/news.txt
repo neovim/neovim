@@ -327,6 +327,9 @@ The following changes to existing APIs or features add new behavior.
 
 • |vim.wait()| is no longer allowed to be called in |api-fast|.
 
+• "Q" now repeats a macro for each line of visual selection.
+• "@" now repeats the indicated macro for each line of visual selection.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

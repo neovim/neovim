@@ -76,8 +76,8 @@ enum {
   OP_FUNCTION     = 27,  ///< "g@" call 'operatorfunc'
   OP_NR_ADD       = 28,  ///< "<C-A>" Add to the number or alphabetic character
   OP_NR_SUB       = 29,  ///< "<C-X>" Subtract from the number or alphabetic character
+  OP_ATREGREPLAY  = 30,  ///< "@r" atregreplay operator
 };
-
 /// Flags for get_reg_contents().
 enum GRegFlags {
   kGRegNoExpr  = 1,  ///< Do not allow expression register.
