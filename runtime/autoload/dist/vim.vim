@@ -15,16 +15,18 @@ if !exists('g:gzip_exec')
   let g:gzip_exec = 1
 endif
 
-if !exists(":def")
-    function dist#vim#IsSafeExecutable(filetype, executable)
+if !has('vim9script')
+  function dist#vim#IsSafeExecutable(filetype, executable)
     let cwd = getcwd()
     return get(g:, a:filetype .. '_exec', get(g:, 'plugin_exec', 0)) &&
           \ (fnamemodify(exepath(a:executable), ':p:h') !=# cwd
           \ || (split($PATH, has('win32') ? ';' : ':')->index(cwd) != -1 &&
           \  cwd != '.'))
-    endfunction
-else
-    def dist#vim#IsSafeExecutable(filetype: string, executable: string): bool
-      return dist#vim9#IsSafeExecutable(filetype, executable)
-    enddef
+  endfunction
+
+  finish
 endif
+
+def dist#vim#IsSafeExecutable(filetype: string, executable: string): bool
+  return dist#vim9#IsSafeExecutable(filetype, executable)
+enddef
