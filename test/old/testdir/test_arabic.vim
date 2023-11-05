@@ -74,9 +74,9 @@ endfunc
 func Test_arabic_toggle_keymap()
   new
   set arabic
-  call feedkeys("i12\<C-^>12\<C-^>12", 'tx')
-  call assert_match("^ *٢١21٢١$", ScreenLines(1, &columns)[0])
-  call assert_equal('١٢12١٢', getline('.'))
+  call feedkeys("i12\<C-^>12\<C-^>12abcd", 'tx')
+  call assert_match("^ *.*ﺷ212121$", ScreenLines(1, &columns)[0])
+  call assert_equal('121212شلاؤي', getline('.'))
   set arabic&
   bwipe!
 endfunc
