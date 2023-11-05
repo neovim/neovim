@@ -25,8 +25,8 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds2.h"
-#include "nvim/ex_docmd.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
 #include "nvim/fold.h"
@@ -177,8 +177,11 @@ int get_op_type(int char1, int char2)
   if (char1 == 'z' && char2 == 'y') {  // OP_YANK
     return OP_YANK;
   }
-  if (char1 == '@')  {
+  if (char1 == '@') {
     return OP_ATREGREPLAY;
+  }
+  if (char1 == 'Q' || (char1 == '@' && char2 == '@')) {
+    return OP_REGREPLAY;
   }
   for (i = 0;; i++) {
     if (opchars[i][0] == char1 && opchars[i][1] == char2) {
@@ -2600,7 +2603,6 @@ void op_at_regreplay(cmdarg_T *cap)
   }
 }
 
-
 void op_regreplay(oparg_T *oap)
 {
   int curpos;
@@ -2618,7 +2620,6 @@ void op_regreplay(oparg_T *oap)
     clnum++;
   }
 }
-
 
 static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 {

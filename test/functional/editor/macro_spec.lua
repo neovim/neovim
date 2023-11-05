@@ -52,6 +52,25 @@ hello]]
     eq({'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
   end)
 
+  it('can be replayed with @', function()
+    insert [[hello
+hello
+hello]]
+    feed [[gg]]
+
+    feed [[qqAFOO<esc>q]]
+    eq({'helloFOO', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+
+    feed[[Q]]
+    eq({'helloFOOFOO', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+
+    feed[[G3@@]]
+    eq({'helloFOOFOO', 'hello', 'helloFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+
+    feed[[ggV2j@@]]
+    eq({'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+  end)
+
   it('can be replayed with @q and @w', function()
     insert [[hello
 hello
