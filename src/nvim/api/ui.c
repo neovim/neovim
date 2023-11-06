@@ -348,15 +348,6 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
     return;
   }
 
-  if (strequal(name.data, "term_background")) {
-    VALIDATE_T("term_background", kObjectTypeString, value.type, {
-      return;
-    });
-    set_tty_background(value.data.string.data);
-    ui->term_background = string_to_cstr(value.data.string);
-    return;
-  }
-
   if (strequal(name.data, "stdin_fd")) {
     VALIDATE_T("stdin_fd", kObjectTypeInteger, value.type, {
       return;

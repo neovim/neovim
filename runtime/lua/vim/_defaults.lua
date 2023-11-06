@@ -164,3 +164,133 @@ do
     end,
   })
 end
+
+--- Guess value of 'background' based on terminal color.
+---
+--- We write Operating System Command (OSC) 11 to the terminal to request the
+--- terminal's background color. We then wait for a response. If the response
+--- matches `rgba:RRRR/GGGG/BBBB/AAAA` where R, G, B, and A are hex digits, then
+--- compute the luminance[1] of the RGB color and classify it as light/dark
+--- accordingly. Note that the color components may have anywhere from one to
+--- four hex digits, and require scaling accordingly as values out of 4, 8, 12,
+--- or 16 bits. Also note the A(lpha) component is optional, and is parsed but
+--- ignored in the calculations.
+---
+--- [1] https://en.wikipedia.org/wiki/Luma_%28video%29
+do
+  --- Parse a string of hex characters as a color.
+  ---
+  --- The string can contain 1 to 4 hex characters. The returned value is
+  --- between 0.0 and 1.0 (inclusive) representing the intensity of the color.
+  ---
+  --- For instance, if only a single hex char "a" is used, then this function
+  --- returns 0.625 (10 / 16), while a value of "aa" would return 0.664 (170 /
+  --- 256).
+  ---
+  --- @param c string Color as a string of hex chars
+  --- @return number? Intensity of the color
+  local function parsecolor(c)
+    local len = #c
+    assert(len > 0 and len <= 4, 'Invalid hex color string')
+    if not c:match('^0x') then
+      c = string.format('0x%s', c)
+    end
+
+    local max = tonumber(string.format('0x%s', string.rep('f', len)))
+    return tonumber(c) / max
+  end
+
+  --- Parse an OSC 11 response
+  ---
+  --- Either of the two formats below are accepted:
+  ---
+  ---   OSC 11 ; rgb:<red>/<green>/<blue>
+  ---
+  --- or
+  ---
+  ---   OSC 11 ; rgba:<red>/<green>/<blue>/<alpha>
+  ---
+  --- where
+  ---
+  ---   <red>, <green>, <blue>, <alpha> := h | hh | hhh | hhhh
+  ---
+  --- The alpha component is ignored, if present.
+  ---
+  --- @param resp string OSC 11 response
+  --- @return string? Red component
+  --- @return string? Green component
+  --- @return string? Blue component
+  local function parseosc11(resp)
+    local r, g, b
+    r, g, b = resp:match('^\027%]11;rgb:(%x+)/(%x+)/(%x+)$')
+    if not r and not g and not b then
+      local a
+      r, g, b, a = resp:match('^\027%]11;rgba:(%x+)/(%x+)/(%x+)/(%x+)$')
+      if not a or #a > 4 then
+        return nil, nil, nil
+      end
+    end
+
+    if r and g and b and #r <= 4 and #g <= 4 and #b <= 4 then
+      return r, g, b
+    end
+
+    return nil, nil, nil
+  end
+
+  local tty = false
+  for _, ui in ipairs(vim.api.nvim_list_uis()) do
+    if ui.chan == 1 and ui.stdout_tty then
+      tty = true
+      break
+    end
+  end
+
+  if tty then
+    local timer = assert(vim.uv.new_timer())
+
+    local id = vim.api.nvim_create_autocmd('TermResponse', {
+      nested = true,
+      callback = function(args)
+        if vim.api.nvim_get_option_info2('background', {}).was_set then
+          -- Don't do anything if 'background' is already set
+          timer:stop()
+          timer:close()
+          return true
+        end
+
+        local resp = args.data ---@type string
+        local r, g, b = parseosc11(resp)
+        if r and g and b then
+          local rr = parsecolor(r)
+          local gg = parsecolor(g)
+          local bb = parsecolor(b)
+
+          if rr and gg and bb then
+            local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
+            local bg = luminance < 0.5 and 'dark' or 'light'
+            if bg ~= vim.o.background then
+              vim.o.background = bg
+            end
+          end
+
+          timer:stop()
+          timer:close()
+
+          return true
+        end
+      end,
+    })
+
+    io.stdout:write('\027]11;?\027\\')
+
+    timer:start(1000, 0, function()
+      -- No response received. Delete the autocommand
+      vim.schedule(function()
+        -- Suppress error if autocommand has already been deleted
+        pcall(vim.api.nvim_del_autocmd, id)
+      end)
+      timer:close()
+    end)
+  end
+end

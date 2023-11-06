@@ -3183,23 +3183,6 @@ bool set_tty_option(const char *name, char *value)
   return false;
 }
 
-void set_tty_background(const char *value)
-{
-  if (option_was_set("bg") || strequal(p_bg, value)) {
-    // background is already set... ignore
-    return;
-  }
-  if (starting) {
-    // Wait until after startup, so OptionSet is triggered.
-    do_cmdline_cmd((value[0] == 'l')
-                   ? "autocmd VimEnter * ++once ++nested :lua if not vim.api.nvim_get_option_info2('bg', {}).was_set then vim.o.bg = 'light' end"
-                   : "autocmd VimEnter * ++once ++nested :lua if not vim.api.nvim_get_option_info2('bg', {}).was_set then vim.o.bg = 'dark' end");
-  } else {
-    set_option_value_give_err("bg", CSTR_AS_OPTVAL((char *)value), 0);
-    reset_option_was_set("bg");
-  }
-}
-
 /// Find index for an option
 ///
 /// @param[in]  arg  Option name.
