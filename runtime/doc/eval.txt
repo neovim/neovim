@@ -4354,6 +4354,33 @@ This is not allowed when the textlock is active:
 	- etc.
 
 ==============================================================================
+Vim script library					*vim-script-library*
+
+Vim comes bundled with a Vim script library, that can be used by runtime,
+script authors.  Currently, it only includes very few functions, but it may
+grow over time.
+
+								*dist#vim*
+The functions make use of the autoloaded prefix "dist#vim".
+
+The following functions are available:
+
+dist#vim#IsSafeExecutable(filetype, executable) ~
+
+This function takes a filetype and an executable and checks whether it is safe
+to execute the given executable.  For security reasons users may not want to
+have Vim execute random executables or may have forbidden to do so for
+specific filetypes by setting the "<filetype>_exec" variable (|plugin_exec|).
+
+It returns |TRUE| or |FALSE| to indicate whether the plugin should run the given
+exectuable.  It takes the following arguments:
+
+	argument	type ~
+
+	filetype	string
+	executable	string
+
+==============================================================================
 Command-line expressions highlighting		*expr-highlight*
 
 Expressions entered by the user in |i_CTRL-R_=|, |c_CTRL-\_e|, |quote=| are
