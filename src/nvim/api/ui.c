@@ -536,8 +536,7 @@ void nvim_ui_pum_set_bounds(uint64_t channel_id, Float width, Float height, Floa
 /// @param event Event name
 /// @param payload Event payload
 /// @param[out] err Error details, if any.
-void nvim_ui_term_event(uint64_t channel_id, String event, Object value,
-                        Error *err)
+void nvim_ui_term_event(uint64_t channel_id, String event, Object value, Error *err)
   FUNC_API_SINCE(12) FUNC_API_REMOTE_ONLY
 {
   if (strequal("osc_response", event.data)) {
