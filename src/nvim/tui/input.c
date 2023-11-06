@@ -695,7 +695,7 @@ static void handle_osc_event(TermInput *input, const TermKeyKey *key)
   if (termkey_interpret_string(input->tk, key, &str) == TERMKEY_RES_KEY) {
     assert(str != NULL);
 
-    // Send an event to the TUI. This will update the v:termresponse variable and fire the
+    // Send an event to nvim core. This will update the v:termresponse variable and fire the
     // TermResponse event
     MAXSIZE_TEMP_ARRAY(args, 2);
     ADD_C(args, STATIC_CSTR_AS_OBJ("osc_response"));
