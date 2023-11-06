@@ -650,7 +650,7 @@ local on_key_cbs = {}
 ---if on_key() is called without arguments.
 function vim.on_key(fn, ns_id)
   if fn == nil and ns_id == nil then
-    return #on_key_cbs
+    return vim.tbl_count(on_key_cbs)
   end
 
   vim.validate({

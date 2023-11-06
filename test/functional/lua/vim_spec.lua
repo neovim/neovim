@@ -2438,6 +2438,12 @@ describe('lua stdlib', function()
     end)
 
     it('allows removing on_key listeners', function()
+      -- Create some unused namespaces
+      meths.create_namespace('unused1')
+      meths.create_namespace('unused2')
+      meths.create_namespace('unused3')
+      meths.create_namespace('unused4')
+
       insert([[hello world]])
 
       exec_lua [[
