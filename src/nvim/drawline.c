@@ -228,14 +228,12 @@ static int line_putchar(buf_T *buf, const char **pp, schar_T *dest, int maxcells
   const char *p = *pp;
   int cells = utf_ptr2cells(p);
   int c_len = utfc_ptr2len(p);
-  int u8c, u8cc[MAX_MCO];
   assert(maxcells > 0);
   if (cells > maxcells) {
     dest[0] = schar_from_ascii(' ');
     return 1;
   }
 
-  u8c = utfc_ptr2char(p, u8cc);
   if (*p == TAB) {
     cells = MIN(tabstop_padding(vcol, buf->b_p_ts, buf->b_p_vts_array), maxcells);
   }
@@ -247,16 +245,14 @@ static int line_putchar(buf_T *buf, const char **pp, schar_T *dest, int maxcells
     for (int c = 0; c < cells; c++) {
       dest[c] = schar_from_ascii(' ');
     }
-    goto done;
-  } else if ((uint8_t)(*p) < 0x80 && u8cc[0] == 0) {
-    dest[0] = schar_from_ascii(*p);
   } else {
-    dest[0] = schar_from_cc(u8c, u8cc);
+    int u8c;
+    dest[0] = utfc_ptr2schar(p, &u8c);
+    if (cells > 1) {
+      dest[1] = 0;
+    }
   }
-  if (cells > 1) {
-    dest[1] = 0;
-  }
-done:
+
   *pp += c_len;
   return cells;
 }
@@ -946,16 +942,6 @@ static void handle_inline_virtual_text(win_T *wp, winlinevars_T *wlv, ptrdiff_t 
   }
 }
 
-static bool check_mb_utf8(int *c, int *u8cc)
-{
-  if (utf_char2len(*c) > 1) {
-    *u8cc = 0;
-    *c = 0xc0;
-    return true;
-  }
-  return false;
-}
-
 static colnr_T get_trailcol(win_T *wp, const char *ptr, const char *line)
 {
   colnr_T trailcol = MAXCOL;
@@ -1051,7 +1037,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 {
   winlinevars_T wlv;                  // variables passed between functions
 
-  int c = 0;                          // init for GCC
   colnr_T vcol_prev = -1;             // "wlv.vcol" of previous character
   char *line;                         // current line
   char *ptr;                          // current position in "line"
@@ -1096,8 +1081,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
   int multi_attr = 0;                   // attributes desired by multibyte
   int mb_l = 1;                         // multi-byte byte length
   int mb_c = 0;                         // decoded multi-byte character
-  bool mb_utf8 = false;                 // screen char is UTF-8 char
-  int u8cc[MAX_MCO];                    // composing UTF-8 chars
+  schar_T mb_schar;                     // complete screen char
   int change_start = MAXCOL;            // first col of changed area
   int change_end = -1;                  // last col of changed area
   bool in_multispace = false;           // in multiple consecutive spaces
@@ -1951,34 +1935,25 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     // For the '$' of the 'list' option, n_extra == 1, p_extra == "".
     if (wlv.n_extra > 0) {
       if (wlv.c_extra != NUL || (wlv.n_extra == 1 && wlv.c_final != NUL)) {
-        c = (wlv.n_extra == 1 && wlv.c_final != NUL) ? wlv.c_final : wlv.c_extra;
-        mb_c = c;               // doesn't handle non-utf-8 multi-byte!
-        mb_utf8 = check_mb_utf8(&c, u8cc);
+        mb_c = (wlv.n_extra == 1 && wlv.c_final != NUL) ? wlv.c_final : wlv.c_extra;
+        mb_schar = schar_from_char(mb_c);
+        wlv.n_extra--;
       } else {
         assert(wlv.p_extra != NULL);
-        c = (uint8_t)(*wlv.p_extra);
-        mb_c = c;
-        // If the UTF-8 character is more than one byte:
-        // Decode it into "mb_c".
         mb_l = utfc_ptr2len(wlv.p_extra);
-        mb_utf8 = false;
-        if (mb_l > wlv.n_extra) {
-          mb_l = 1;
-        } else if (mb_l > 1) {
-          mb_c = utfc_ptr2char(wlv.p_extra, u8cc);
-          mb_utf8 = true;
-          c = 0xc0;
-        }
-        if (mb_l == 0) {          // at the NUL at end-of-line
+        mb_schar = utfc_ptr2schar(wlv.p_extra, &mb_c);
+        // mb_l=0 at the end-of-line NUL
+        if (mb_l > wlv.n_extra || mb_l == 0) {
           mb_l = 1;
         }
 
         // If a double-width char doesn't fit display a '>' in the last column.
+        // Don't advance the pointer but put the character at the start of the next line.
         if (wlv.col >= grid->cols - 1 && utf_char2cells(mb_c) == 2) {
-          c = '>';
-          mb_c = c;
+          mb_c = '>';
           mb_l = 1;
           (void)mb_l;
+          mb_schar = schar_from_ascii(mb_c);
           multi_attr = win_hl_attr(wp, HLF_AT);
 
           if (wlv.cul_attr) {
@@ -1986,18 +1961,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
               ? hl_combine_attr(wlv.cul_attr, multi_attr)
               : hl_combine_attr(multi_attr, wlv.cul_attr);
           }
-
-          // put the pointer back to output the double-width
-          // character at the start of the next line.
-          wlv.n_extra++;
-          wlv.p_extra--;
         } else {
-          wlv.n_extra -= mb_l - 1;
-          wlv.p_extra += mb_l - 1;
+          wlv.n_extra -= mb_l;
+          wlv.p_extra += mb_l;
         }
-        wlv.p_extra++;
       }
-      wlv.n_extra--;
 
       // Only restore search_attr and area_attr after "n_extra" in
       // the next screen line is also done.
@@ -2026,58 +1994,40 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       }
     } else if (has_fold) {
       // skip writing the buffer line itself
-      c = NUL;
+      mb_c = NUL;
     } else {
-      int c0;
       char *prev_ptr = ptr;
 
-      // Get a character from the line itself.
-      c0 = c = (uint8_t)(*ptr);
-      mb_c = c;
-
-      if (c == NUL) {
+      // first byte of next char
+      int c0 = (uint8_t)(*ptr);
+      if (c0 == NUL) {
         // no more cells to skip
         wlv.skip_cells = 0;
       }
 
-      // If the UTF-8 character is more than one byte: Decode it
-      // into "mb_c".
+      // Get a character from the line itself.
       mb_l = utfc_ptr2len(ptr);
-      mb_utf8 = false;
-      if (mb_l > 1) {
-        mb_c = utfc_ptr2char(ptr, u8cc);
-        // Overlong encoded ASCII or ASCII with composing char
-        // is displayed normally, except a NUL.
-        if (mb_c < 0x80) {
-          c0 = c = mb_c;
-        }
-        mb_utf8 = true;
+      mb_schar = utfc_ptr2schar(ptr, &mb_c);
 
-        // At start of the line we can have a composing char.
-        // Draw it as a space with a composing char.
-        if (utf_iscomposing(mb_c)) {
-          for (int i = MAX_MCO - 1; i > 0; i--) {
-            u8cc[i] = u8cc[i - 1];
-          }
-          u8cc[0] = mb_c;
-          mb_c = ' ';
-        }
+      // Overlong encoded ASCII or ASCII with composing char
+      // is displayed normally, except a NUL.
+      if (mb_l > 1 && mb_c < 0x80) {
+        c0 = mb_c;
       }
 
-      if ((mb_l == 1 && c >= 0x80)
+      if ((mb_l == 1 && c0 >= 0x80)
           || (mb_l >= 1 && mb_c == 0)
           || (mb_l > 1 && (!vim_isprintc(mb_c)))) {
         // Illegal UTF-8 byte: display as <xx>.
-        // Non-BMP character : display as ? or fullwidth ?.
+        // Non-printable character : display as ? or fullwidth ?.
         transchar_hex(wlv.extra, mb_c);
         if (wp->w_p_rl) {  // reverse
           rl_mirror_ascii(wlv.extra, NULL);
         }
 
         wlv.p_extra = wlv.extra;
-        c = (uint8_t)(*wlv.p_extra);
         mb_c = mb_ptr2char_adv((const char **)&wlv.p_extra);
-        mb_utf8 = (c >= 0x80);
+        mb_schar = schar_from_char(mb_c);
         wlv.n_extra = (int)strlen(wlv.p_extra);
         wlv.c_extra = NUL;
         wlv.c_final = NUL;
@@ -2093,10 +2043,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       // last column; the character is displayed at the start of the
       // next line.
       if (wlv.col >= grid->cols - 1 && utf_char2cells(mb_c) == 2) {
-        c = '>';
-        mb_c = c;
-        mb_utf8 = false;
+        mb_c = '>';
         mb_l = 1;
+        mb_schar = schar_from_ascii(mb_c);
         multi_attr = win_hl_attr(wp, HLF_AT);
         // Put pointer back so that the character will be
         // displayed at the start of the next line.
@@ -2112,15 +2061,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         wlv.n_extra = 1;
         wlv.c_extra = MB_FILLER_CHAR;
         wlv.c_final = NUL;
-        c = ' ';
+        mb_c = ' ';
+        mb_l = 1;
+        mb_schar = schar_from_ascii(mb_c);
         if (area_attr == 0 && search_attr == 0) {
           wlv.n_attr = wlv.n_extra + 1;
           wlv.extra_attr = win_hl_attr(wp, HLF_AT);
           saved_attr2 = wlv.char_attr;             // save current attr
         }
-        mb_c = c;
-        mb_utf8 = false;
-        mb_l = 1;
       }
       ptr++;
 
@@ -2159,11 +2107,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
           // no concealing past the end of the line, it interferes
           // with line highlighting.
-          if (c == NUL) {
-            syntax_flags = 0;
-          } else {
-            syntax_flags = get_syntax_info(&syntax_seqnr);
-          }
+          syntax_flags = (mb_c == 0) ? 0 : get_syntax_info(&syntax_seqnr);
         }
 
         if (has_decor && v > 0) {
@@ -2198,7 +2142,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           spell_attr = 0;
           // do not calculate cap_col at the end of the line or when
           // only white space is following
-          if (c != 0 && (*skipwhite(prev_ptr) != NUL) && can_spell) {
+          if (mb_c != 0 && (*skipwhite(prev_ptr) != NUL) && can_spell) {
             char *p;
             hlf_T spell_hlf = HLF_COUNT;
             v -= mb_l - 1;
@@ -2272,13 +2216,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         //
         // So only allow to linebreak, once we have found chars not in
         // 'breakat' in the line.
-        if (wp->w_p_lbr && !wlv.need_lbr && c != NUL
+        if (wp->w_p_lbr && !wlv.need_lbr && mb_c != NUL
             && !vim_isbreak((uint8_t)(*ptr))) {
           wlv.need_lbr = true;
         }
         // Found last space before word: check for line break.
-        if (wp->w_p_lbr && c0 == c && wlv.need_lbr
-            && vim_isbreak(c) && !vim_isbreak((uint8_t)(*ptr))) {
+        if (wp->w_p_lbr && c0 == mb_c && mb_c < 128 && wlv.need_lbr
+            && vim_isbreak(mb_c) && !vim_isbreak((uint8_t)(*ptr))) {
           int mb_off = utf_head_off(line, ptr - 1);
           char *p = ptr - (mb_off + 1);
           chartabsize_T cts;
@@ -2289,33 +2233,33 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           wlv.n_extra = win_lbr_chartabsize(&cts, NULL) - 1;
           clear_chartabsize_arg(&cts);
 
-          if (on_last_col && c != TAB) {
+          if (on_last_col && mb_c != TAB) {
             // Do not continue search/match highlighting over the
             // line break, but for TABs the highlighting should
             // include the complete width of the character
             search_attr = 0;
           }
 
-          if (c == TAB && wlv.n_extra + wlv.col > grid->cols) {
+          if (mb_c == TAB && wlv.n_extra + wlv.col > grid->cols) {
             wlv.n_extra = tabstop_padding(wlv.vcol, wp->w_buffer->b_p_ts,
                                           wp->w_buffer->b_p_vts_array) - 1;
           }
           wlv.c_extra = mb_off > 0 ? MB_FILLER_CHAR : ' ';
           wlv.c_final = NUL;
-          if (ascii_iswhite(c)) {
-            if (c == TAB) {
+          if (mb_c < 128 && ascii_iswhite(mb_c)) {
+            if (mb_c == TAB) {
               // See "Tab alignment" below.
               FIX_FOR_BOGUSCOLS;
             }
             if (!wp->w_p_list) {
-              c = ' ';
+              mb_c = ' ';
+              mb_schar = schar_from_ascii(mb_c);
             }
           }
         }
 
         if (wp->w_p_list) {
-          in_multispace = c == ' ' && (*ptr == ' '
-                                       || (prev_ptr > line && prev_ptr[-1] == ' '));
+          in_multispace = mb_c == ' ' && (*ptr == ' ' || (prev_ptr > line && prev_ptr[-1] == ' '));
           if (!in_multispace) {
             multispace_pos = 0;
           }
@@ -2325,61 +2269,56 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         // But not when the character is followed by a composing
         // character (use mb_l to check that).
         if (wp->w_p_list
-            && ((((c == 160 && mb_l == 1)
-                  || (mb_utf8
-                      && ((mb_c == 160 && mb_l == 2)
-                          || (mb_c == 0x202f && mb_l == 3))))
+            && ((((mb_c == 160 && mb_l == 2) || (mb_c == 0x202f && mb_l == 3))
                  && wp->w_p_lcs_chars.nbsp)
-                || (c == ' '
+                || (mb_c == ' '
                     && mb_l == 1
                     && (wp->w_p_lcs_chars.space
                         || (in_multispace && wp->w_p_lcs_chars.multispace != NULL))
                     && ptr - line >= leadcol
                     && ptr - line <= trailcol))) {
           if (in_multispace && wp->w_p_lcs_chars.multispace != NULL) {
-            c = wp->w_p_lcs_chars.multispace[multispace_pos++];
+            mb_c = wp->w_p_lcs_chars.multispace[multispace_pos++];
             if (wp->w_p_lcs_chars.multispace[multispace_pos] == NUL) {
               multispace_pos = 0;
             }
           } else {
-            c = (c == ' ') ? wp->w_p_lcs_chars.space : wp->w_p_lcs_chars.nbsp;
+            mb_c = (mb_c == ' ') ? wp->w_p_lcs_chars.space : wp->w_p_lcs_chars.nbsp;
           }
           wlv.n_attr = 1;
           wlv.extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = wlv.char_attr;  // save current attr
-          mb_c = c;
-          mb_utf8 = check_mb_utf8(&c, u8cc);
+          mb_schar = schar_from_char(mb_c);
         }
 
-        if (c == ' ' && ((trailcol != MAXCOL && ptr > line + trailcol)
-                         || (leadcol != 0 && ptr < line + leadcol))) {
+        if (mb_c == ' ' && mb_l == 1 && ((trailcol != MAXCOL && ptr > line + trailcol)
+                                         || (leadcol != 0 && ptr < line + leadcol))) {
           if (leadcol != 0 && in_multispace && ptr < line + leadcol
               && wp->w_p_lcs_chars.leadmultispace != NULL) {
-            c = wp->w_p_lcs_chars.leadmultispace[multispace_pos++];
+            mb_c = wp->w_p_lcs_chars.leadmultispace[multispace_pos++];
             if (wp->w_p_lcs_chars.leadmultispace[multispace_pos] == NUL) {
               multispace_pos = 0;
             }
           } else if (ptr > line + trailcol && wp->w_p_lcs_chars.trail) {
-            c = wp->w_p_lcs_chars.trail;
+            mb_c = wp->w_p_lcs_chars.trail;
           } else if (ptr < line + leadcol && wp->w_p_lcs_chars.lead) {
-            c = wp->w_p_lcs_chars.lead;
+            mb_c = wp->w_p_lcs_chars.lead;
           } else if (leadcol != 0 && wp->w_p_lcs_chars.space) {
-            c = wp->w_p_lcs_chars.space;
+            mb_c = wp->w_p_lcs_chars.space;
           }
 
           wlv.n_attr = 1;
           wlv.extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = wlv.char_attr;  // save current attr
-          mb_c = c;
-          mb_utf8 = check_mb_utf8(&c, u8cc);
+          mb_schar = schar_from_char(mb_c);
         }
       }
 
       // Handling of non-printable characters.
-      if (!vim_isprintc(c)) {
+      if (!vim_isprintc(mb_c)) {
         // when getting a character from the file, we may have to
         // turn it into something else on the way to putting it on the screen.
-        if (c == TAB && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
+        if (mb_c == TAB && (!wp->w_p_list || wp->w_p_lcs_chars.tab1)) {
           int tab_len = 0;
           colnr_T vcol_adjusted = wlv.vcol;  // removed showbreak length
           char *const sbr = get_showbreak_value(wp);
@@ -2422,7 +2361,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
               if (wlv.n_extra > 0) {
                 len += wlv.n_extra - tab_len;
               }
-              c = wp->w_p_lcs_chars.tab1;
+              mb_c = wp->w_p_lcs_chars.tab1;
               p = get_extra_buf((size_t)len + 1);
               memset(p, ' ', (size_t)len);
               p[len] = NUL;
@@ -2470,11 +2409,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             }
           }
 
-          mb_utf8 = false;  // don't draw as UTF-8
           if (wp->w_p_list) {
-            c = (wlv.n_extra == 0 && wp->w_p_lcs_chars.tab3)
-                 ? wp->w_p_lcs_chars.tab3
-                 : wp->w_p_lcs_chars.tab1;
+            mb_c = (wlv.n_extra == 0 && wp->w_p_lcs_chars.tab3)
+                    ? wp->w_p_lcs_chars.tab3 : wp->w_p_lcs_chars.tab1;
             if (wp->w_p_lbr && wlv.p_extra != NULL && *wlv.p_extra != NUL) {
               wlv.c_extra = NUL;  // using p_extra from above
             } else {
@@ -2484,14 +2421,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             wlv.n_attr = tab_len + 1;
             wlv.extra_attr = win_hl_attr(wp, HLF_0);
             saved_attr2 = wlv.char_attr;  // save current attr
-            mb_c = c;
-            mb_utf8 = check_mb_utf8(&c, u8cc);
           } else {
             wlv.c_final = NUL;
             wlv.c_extra = ' ';
-            c = ' ';
+            mb_c = ' ';
           }
-        } else if (c == NUL
+          mb_schar = schar_from_char(mb_c);
+        } else if (mb_c == NUL
                    && (wp->w_p_list
                        || ((wlv.fromcol >= 0 || fromcol_prev >= 0)
                            && wlv.tocol > wlv.vcol
@@ -2515,20 +2451,19 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             wlv.n_extra = 0;
           }
           if (wp->w_p_list && wp->w_p_lcs_chars.eol > 0) {
-            c = wp->w_p_lcs_chars.eol;
+            mb_c = wp->w_p_lcs_chars.eol;
           } else {
-            c = ' ';
+            mb_c = ' ';
           }
           lcs_eol_one = -1;
           ptr--;  // put it back at the NUL
           wlv.extra_attr = win_hl_attr(wp, HLF_AT);
           wlv.n_attr = 1;
-          mb_c = c;
-          mb_utf8 = check_mb_utf8(&c, u8cc);
-        } else if (c != NUL) {
-          wlv.p_extra = transchar_buf(wp->w_buffer, c);
+          mb_schar = schar_from_char(mb_c);
+        } else if (mb_c != NUL) {
+          wlv.p_extra = transchar_buf(wp->w_buffer, mb_c);
           if (wlv.n_extra == 0) {
-            wlv.n_extra = byte2cells(c) - 1;
+            wlv.n_extra = byte2cells(mb_c) - 1;
           }
           if ((dy_flags & DY_UHEX) && wp->w_p_rl) {
             rl_mirror_ascii(wlv.p_extra, NULL);   // reverse "<12>"
@@ -2538,7 +2473,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           if (wp->w_p_lbr) {
             char *p;
 
-            c = (uint8_t)(*wlv.p_extra);
+            mb_c = (uint8_t)(*wlv.p_extra);
             p = get_extra_buf((size_t)wlv.n_extra + 1);
             memset(p, ' ', (size_t)wlv.n_extra);
             strncpy(p,  // NOLINT(runtime/printf)
@@ -2547,20 +2482,21 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             p[wlv.n_extra] = NUL;
             wlv.p_extra = p;
           } else {
-            wlv.n_extra = byte2cells(c) - 1;
-            c = (uint8_t)(*wlv.p_extra++);
+            wlv.n_extra = byte2cells(mb_c) - 1;
+            mb_c = (uint8_t)(*wlv.p_extra++);
           }
           wlv.n_attr = wlv.n_extra + 1;
           wlv.extra_attr = win_hl_attr(wp, HLF_8);
           saved_attr2 = wlv.char_attr;  // save current attr
-          mb_utf8 = false;   // don't draw as UTF-8
+          mb_schar = schar_from_ascii(mb_c);
         } else if (VIsual_active
                    && (VIsual_mode == Ctrl_V || VIsual_mode == 'v')
                    && virtual_active()
                    && wlv.tocol != MAXCOL
                    && wlv.vcol < wlv.tocol
                    && wlv.col < grid->cols) {
-          c = ' ';
+          mb_c = ' ';
+          mb_schar = schar_from_char(mb_c);
           ptr--;  // put it back at the NUL
         }
       }
@@ -2580,18 +2516,18 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           // First time at this concealed item: display one
           // character.
           if (has_match_conc && match_conc) {
-            c = match_conc;
+            mb_c = match_conc;
           } else if (decor_conceal && decor_state.conceal_char) {
-            c = decor_state.conceal_char;
+            mb_c = decor_state.conceal_char;
             if (decor_state.conceal_attr) {
               wlv.char_attr = decor_state.conceal_attr;
             }
           } else if (syn_get_sub_char() != NUL) {
-            c = syn_get_sub_char();
+            mb_c = syn_get_sub_char();
           } else if (wp->w_p_lcs_chars.conceal != NUL) {
-            c = wp->w_p_lcs_chars.conceal;
+            mb_c = wp->w_p_lcs_chars.conceal;
           } else {
-            c = ' ';
+            mb_c = ' ';
           }
 
           prev_syntax_id = syntax_seqnr;
@@ -2610,8 +2546,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           is_concealing = true;
           wlv.skip_cells = 1;
         }
-        mb_c = c;
-        mb_utf8 = check_mb_utf8(&c, u8cc);
+        mb_schar = schar_from_char(mb_c);
       } else {
         prev_syntax_id = 0;
         is_concealing = false;
@@ -2654,8 +2589,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         && (wp->w_p_wrap ? (wp->w_skipcol > 0 && wlv.row == 0) : wp->w_leftcol > 0)
         && wlv.filler_todo <= 0
         && wlv.draw_state > WL_STC
-        && c != NUL) {
-      c = wp->w_p_lcs_chars.prec;
+        && mb_c != NUL) {
+      mb_c = wp->w_p_lcs_chars.prec;
       lcs_prec_todo = NUL;
       if (utf_char2cells(mb_c) > 1) {
         // Double-width character being overwritten by the "precedes"
@@ -2666,15 +2601,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         wlv.n_attr = 2;
         wlv.extra_attr = win_hl_attr(wp, HLF_AT);
       }
-      mb_c = c;
-      mb_utf8 = check_mb_utf8(&c, u8cc);
+      mb_schar = schar_from_char(mb_c);
       saved_attr3 = wlv.char_attr;  // save current attr
       wlv.char_attr = win_hl_attr(wp, HLF_AT);  // overwriting char_attr
       n_attr3 = 1;
     }
 
     // At end of the text line or just after the last character.
-    if (c == NUL && eol_hl_off == 0) {
+    if (mb_c == NUL && eol_hl_off == 0) {
       // flag to indicate whether prevcol equals startcol of search_hl or
       // one of the matches
       bool prevcol_hl_flag = get_prevcol_hl_flag(wp, &screen_search_hl,
@@ -2728,7 +2662,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     }
 
     // At end of the text line.
-    if (c == NUL) {
+    if (mb_c == NUL) {
       // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
       if (wp->w_p_wrap) {
         v = wlv.startrow == 0 ? wp->w_skipcol : 0;
@@ -2874,10 +2808,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           || lcs_eol_one > 0
           || (wlv.n_extra > 0 && (wlv.c_extra != NUL || *wlv.p_extra != NUL))
           || has_more_inline_virt(&wlv, v)) {
-        c = wp->w_p_lcs_chars.ext;
+        mb_c = wp->w_p_lcs_chars.ext;
         wlv.char_attr = win_hl_attr(wp, HLF_AT);
-        mb_c = c;
-        mb_utf8 = check_mb_utf8(&c, u8cc);
+        mb_schar = schar_from_char(mb_c);
       }
     }
 
@@ -2923,11 +2856,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     // Skip characters that are left of the screen for 'nowrap'.
     if (wlv.draw_state < WL_LINE || wlv.skip_cells <= 0) {
       // Store the character.
-      if (mb_utf8) {
-        linebuf_char[wlv.off] = schar_from_cc(mb_c, u8cc);
-      } else {
-        linebuf_char[wlv.off] = schar_from_ascii((char)c);
-      }
+      linebuf_char[wlv.off] = mb_schar;
       if (multi_attr) {
         linebuf_attr[wlv.off] = multi_attr;
         multi_attr = 0;

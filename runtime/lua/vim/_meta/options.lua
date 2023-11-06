@@ -2576,7 +2576,7 @@ vim.go.fp = vim.go.formatprg
 --- security reasons.
 ---
 --- @type boolean
-vim.o.fsync = false
+vim.o.fsync = true
 vim.o.fs = vim.o.fsync
 vim.go.fsync = vim.o.fsync
 vim.go.fs = vim.go.fsync

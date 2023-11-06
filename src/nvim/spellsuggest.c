@@ -3019,7 +3019,7 @@ static int soundfold_find(slang_T *slang, char *word)
 static bool similar_chars(slang_T *slang, int c1, int c2)
 {
   int m1, m2;
-  char buf[MB_MAXBYTES + 1];
+  char buf[MB_MAXCHAR + 1];
   hashitem_T *hi;
 
   if (c1 >= 256) {

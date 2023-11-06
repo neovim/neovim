@@ -5134,7 +5134,7 @@ static void f_nr2char(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  char buf[MB_MAXBYTES];
+  char buf[MB_MAXCHAR];
   const int len = utf_char2bytes((int)num, buf);
 
   rettv->v_type = VAR_STRING;
@@ -6891,7 +6891,7 @@ static void f_screenchar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (row < 0 || row >= grid->rows || col < 0 || col >= grid->cols) {
     c = -1;
   } else {
-    char buf[MB_MAXBYTES + 1];
+    char buf[MAX_SCHAR_SIZE + 1];
     schar_get(buf, grid_getchar(grid, row, col, NULL));
     c = utf_ptr2char(buf);
   }
@@ -6907,24 +6907,22 @@ static void f_screenchars(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   ScreenGrid *grid;
   screenchar_adjust(&grid, &row, &col);
 
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
   if (row < 0 || row >= grid->rows || col < 0 || col >= grid->cols) {
-    tv_list_alloc_ret(rettv, 0);
     return;
   }
 
-  char buf[MB_MAXBYTES + 1];
+  char buf[MAX_SCHAR_SIZE + 1];
   schar_get(buf, grid_getchar(grid, row, col, NULL));
-  int pcc[MAX_MCO];
-  int c = utfc_ptr2char(buf, pcc);
-  int composing_len = 0;
-  while (composing_len < MAX_MCO && pcc[composing_len] != 0) {
-    composing_len++;
-  }
-  tv_list_alloc_ret(rettv, composing_len + 1);
-  tv_list_append_number(rettv->vval.v_list, c);
-  for (int i = 0; i < composing_len; i++) {
-    tv_list_append_number(rettv->vval.v_list, pcc[i]);
-  }
+
+  // schar values are already processed chars which are always NUL-terminated.
+  // A single [0] is expected when char is NUL.
+  size_t i = 0;
+  do {
+    int c = utf_ptr2char(buf + i);
+    tv_list_append_number(rettv->vval.v_list, c);
+    i += (size_t)utf_ptr2len(buf + i);
+  } while (buf[i] != NUL);
 }
 
 /// "screencol()" function
@@ -6957,7 +6955,7 @@ static void f_screenstring(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
     return;
   }
 
-  char buf[MB_MAXBYTES + 1];
+  char buf[MAX_SCHAR_SIZE + 1];
   schar_get(buf, grid_getchar(grid, row, col, NULL));
   rettv->vval.v_string = xstrdup(buf);
 }
@@ -7413,8 +7411,7 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv, EvalFuncData fpt
 
   char *const csearch = tv_dict_get_string(d, "char", false);
   if (csearch != NULL) {
-    int pcc[MAX_MCO];
-    const int c = utfc_ptr2char(csearch, pcc);
+    int c = utf_ptr2char(csearch);
     set_last_csearch(c, csearch, utfc_ptr2len(csearch));
   }
 

@@ -131,17 +131,22 @@ static const char e_non_numeric_argument_to_z[]
 /// ":ascii" and "ga" implementation
 void do_ascii(exarg_T *eap)
 {
-  char *dig;
-  int cc[MAX_MCO];
-  int c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
-  if (c == NUL) {
+  char *data = get_cursor_pos_ptr();
+  size_t len = (size_t)utfc_ptr2len(data);
+
+  if (len == 0) {
     msg("NUL", 0);
     return;
   }
 
-  size_t iobuff_len = 0;
+  bool need_clear = true;
+  msg_sb_eol();
+  msg_start();
 
-  int ci = 0;
+  int c = utf_ptr2char(data);
+  size_t off = 0;
+
+  // TODO(bfredl): merge this with the main loop
   if (c < 0x80) {
     if (c == NL) {  // NUL is stored as NL.
       c = NUL;
@@ -160,46 +165,29 @@ void do_ascii(exarg_T *eap)
     char buf2[20];
     buf2[0] = NUL;
 
-    dig = get_digraph_for_char(cval);
+    char *dig = get_digraph_for_char(cval);
     if (dig != NULL) {
-      iobuff_len += (size_t)vim_snprintf(IObuff + iobuff_len,
-                                         sizeof(IObuff) - iobuff_len,
-                                         _("<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"),
-                                         transchar(c), buf1, buf2, cval, cval, cval, dig);
+      vim_snprintf(IObuff, sizeof(IObuff),
+                   _("<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"),
+                   transchar(c), buf1, buf2, cval, cval, cval, dig);
     } else {
-      iobuff_len += (size_t)vim_snprintf(IObuff + iobuff_len,
-                                         sizeof(IObuff) - iobuff_len,
-                                         _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
-                                         transchar(c), buf1, buf2, cval, cval, cval);
+      vim_snprintf(IObuff, sizeof(IObuff),
+                   _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
+                   transchar(c), buf1, buf2, cval, cval, cval);
     }
 
-    c = cc[ci++];
+    msg_multiline(IObuff, 0, true, &need_clear);
+
+    off += (size_t)utf_ptr2len(data);  // needed for overlong ascii?
   }
 
-#define SPACE_FOR_DESC (1 + 1 + 1 + MB_MAXBYTES + 16 + 4 + 3 + 3 + 1)
-  // Space for description:
-  // - 1 byte for separator (starting from second entry)
-  // - 1 byte for "<"
-  // - 1 byte for space to draw composing character on (optional, but really
-  //   mostly required)
-  // - up to MB_MAXBYTES bytes for character itself
-  // - 16 bytes for raw text ("> , Hex , Octal ").
-  // - at least 4 bytes for hexadecimal representation
-  // - at least 3 bytes for decimal representation
-  // - at least 3 bytes for octal representation
-  // - 1 byte for NUL
-  //
-  // Taking into account MAX_MCO and characters which need 8 bytes for
-  // hexadecimal representation, but not taking translation into account:
-  // resulting string will occupy less then 400 bytes (conservative estimate).
-  //
-  // Less then 1000 bytes if translation multiplies number of bytes needed for
-  // raw text by 6, so it should always fit into 1025 bytes reserved for IObuff.
-
   // Repeat for combining characters, also handle multiby here.
-  while (c >= 0x80 && iobuff_len < sizeof(IObuff) - SPACE_FOR_DESC) {
+  while (off < len) {
+    c = utf_ptr2char(data + off);
+
+    size_t iobuff_len = 0;
     // This assumes every multi-byte char is printable...
-    if (iobuff_len > 0) {
+    if (off > 0) {
       IObuff[iobuff_len++] = ' ';
     }
     IObuff[iobuff_len++] = '<';
@@ -208,32 +196,30 @@ void do_ascii(exarg_T *eap)
     }
     iobuff_len += (size_t)utf_char2bytes(c, IObuff + iobuff_len);
 
-    dig = get_digraph_for_char(c);
+    char *dig = get_digraph_for_char(c);
     if (dig != NULL) {
-      iobuff_len += (size_t)vim_snprintf(IObuff + iobuff_len,
-                                         sizeof(IObuff) - iobuff_len,
-                                         (c < 0x10000
-                                          ? _("> %d, Hex %04x, Oct %o, Digr %s")
-                                          : _("> %d, Hex %08x, Oct %o, Digr %s")),
-                                         c, c, c, dig);
+      vim_snprintf(IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+                   (c < 0x10000
+                    ? _("> %d, Hex %04x, Oct %o, Digr %s")
+                    : _("> %d, Hex %08x, Oct %o, Digr %s")),
+                   c, c, c, dig);
     } else {
-      iobuff_len += (size_t)vim_snprintf(IObuff + iobuff_len,
-                                         sizeof(IObuff) - iobuff_len,
-                                         (c < 0x10000
-                                          ? _("> %d, Hex %04x, Octal %o")
-                                          : _("> %d, Hex %08x, Octal %o")),
-                                         c, c, c);
+      vim_snprintf(IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
+                   (c < 0x10000
+                    ? _("> %d, Hex %04x, Octal %o")
+                    : _("> %d, Hex %08x, Octal %o")),
+                   c, c, c);
     }
-    if (ci == MAX_MCO) {
-      break;
-    }
-    c = cc[ci++];
-  }
-  if (ci != MAX_MCO && c != 0) {
-    xstrlcpy(IObuff + iobuff_len, " ...", sizeof(IObuff) - iobuff_len);
+
+    msg_multiline(IObuff, 0, true, &need_clear);
+
+    off += (size_t)utf_ptr2len(data + off);  // needed for overlong ascii?
   }
 
-  msg(IObuff, 0);
+  if (need_clear) {
+    msg_clr_eos();
+  }
+  msg_end();
 }
 
 /// ":left", ":center" and ":right": align text.

@@ -1743,7 +1743,7 @@ void ins_compl_addleader(int c)
     return;
   }
   if ((cc = utf_char2len(c)) > 1) {
-    char buf[MB_MAXBYTES + 1];
+    char buf[MB_MAXCHAR + 1];
 
     utf_char2bytes(c, buf);
     buf[cc] = NUL;

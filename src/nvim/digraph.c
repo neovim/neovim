@@ -1654,7 +1654,7 @@ static void registerdigraph(int char1, int char2, int n)
 bool check_digraph_chars_valid(int char1, int char2)
 {
   if (char2 == 0) {
-    char msg[MB_MAXBYTES + 1];
+    char msg[MB_MAXCHAR + 1];
     msg[utf_char2bytes(char1, msg)] = NUL;
     semsg(_(e_digraph_must_be_just_two_characters_str), msg);
     return false;

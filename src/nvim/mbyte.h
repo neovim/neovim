@@ -7,6 +7,7 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/func_attr.h"
+#include "nvim/grid_defs.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/types.h"

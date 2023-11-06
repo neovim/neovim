@@ -7117,7 +7117,7 @@ dict_T *get_vim_var_dict(int idx) FUNC_ATTR_PURE
 /// Set v:char to character "c".
 void set_vim_var_char(int c)
 {
-  char buf[MB_MAXBYTES + 1];
+  char buf[MB_MAXCHAR + 1];
 
   buf[utf_char2bytes(c, buf)] = NUL;
   set_vim_var_string(VV_CHAR, buf, -1);

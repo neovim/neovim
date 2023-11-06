@@ -224,7 +224,7 @@ static int nlua_str_utf_start(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   if (offset < 0 || offset > (intptr_t)s1_len) {
     return luaL_error(lstate, "index out of range");
   }
-  int head_offset = utf_cp_head_off(s1, s1 + offset - 1);
+  int head_offset = -utf_cp_head_off(s1, s1 + offset - 1);
   lua_pushinteger(lstate, head_offset);
   return 1;
 }

@@ -302,15 +302,13 @@ size_t transstr_len(const char *const s, bool untab)
   while (*p) {
     const size_t l = (size_t)utfc_ptr2len(p);
     if (l > 1) {
-      int pcc[MAX_MCO + 1];
-      pcc[0] = utfc_ptr2char(p, &pcc[1]);
-
-      if (vim_isprintc(pcc[0])) {
+      if (vim_isprintc(utf_ptr2char(p))) {
         len += l;
       } else {
-        for (size_t i = 0; i < ARRAY_SIZE(pcc) && pcc[i]; i++) {
+        for (size_t off = 0; off < l; off += (size_t)utf_ptr2len(p + off)) {
+          int c = utf_ptr2char(p + off);
           char hexbuf[9];
-          len += transchar_hex(hexbuf, pcc[i]);
+          len += transchar_hex(hexbuf, c);
         }
       }
       p += l;
@@ -349,16 +347,15 @@ size_t transstr_buf(const char *const s, const ssize_t slen, char *const buf, co
       if (buf_p + l > buf_e) {
         break;  // Exceeded `buf` size.
       }
-      int pcc[MAX_MCO + 1];
-      pcc[0] = utfc_ptr2char(p, &pcc[1]);
 
-      if (vim_isprintc(pcc[0])) {
+      if (vim_isprintc(utf_ptr2char(p))) {
         memmove(buf_p, p, l);
         buf_p += l;
       } else {
-        for (size_t i = 0; i < ARRAY_SIZE(pcc) && pcc[i]; i++) {
+        for (size_t off = 0; off < l; off += (size_t)utf_ptr2len(p + off)) {
+          int c = utf_ptr2char(p + off);
           char hexbuf[9];  // <up to 6 bytes>NUL
-          const size_t hexlen = transchar_hex(hexbuf, pcc[i]);
+          const size_t hexlen = transchar_hex(hexbuf, c);
           if (buf_p + hexlen > buf_e) {
             break;
           }

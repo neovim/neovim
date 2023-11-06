@@ -665,7 +665,7 @@ void ins_bytes_len(char *p, size_t len)
 /// convert bytes to a character.
 void ins_char(int c)
 {
-  char buf[MB_MAXBYTES + 1];
+  char buf[MB_MAXCHAR + 1];
   size_t n = (size_t)utf_char2bytes(c, buf);
 
   // When "c" is 0x100, 0x200, etc. we don't want to insert a NUL byte.
@@ -869,12 +869,9 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 
   // If 'delcombine' is set and deleting (less than) one character, only
   // delete the last combining character.
-  if (p_deco && use_delcombine
-      && utfc_ptr2len(oldp + col) >= count) {
-    int cc[MAX_MCO];
-
-    (void)utfc_ptr2char(oldp + col, cc);
-    if (cc[0] != NUL) {
+  if (p_deco && use_delcombine && utfc_ptr2len(oldp + col) >= count) {
+    char *p0 = oldp + col;
+    if (utf_composinglike(p0, p0 + utf_ptr2len(p0))) {
       // Find the last composing char, there can be several.
       int n = col;
       do {

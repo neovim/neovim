@@ -225,8 +225,8 @@ describe("shell command :!", function()
         å                                                    |
         ref: å̲                                               |
         1: å̲                                                 |
-        2: å ̲                                               |
-        3: å ̲                                               |
+        2: å ̲                                                |
+        3: å ̲                                                |
                                                              |
         {3:Press ENTER or type command to continue}^              |
       ]])

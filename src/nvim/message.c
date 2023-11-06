@@ -139,7 +139,7 @@ static int msg_grid_pos_at_flush = 0;
 
 static void ui_ext_msg_set_pos(int row, bool scrolled)
 {
-  char buf[MAX_MCO + 1];
+  char buf[MB_MAXCHAR + 1];
   size_t size = (size_t)utf_char2bytes(curwin->w_p_fcs_chars.msgsep, buf);
   buf[size] = '\0';
   ui_call_msg_set_pos(msg_grid.handle, row, scrolled,
@@ -1471,7 +1471,7 @@ void msg_putchar(int c)
 
 void msg_putchar_attr(int c, int attr)
 {
-  char buf[MB_MAXBYTES + 1];
+  char buf[MB_MAXCHAR + 1];
 
   if (IS_SPECIAL(c)) {
     buf[0] = (char)K_SPECIAL;
@@ -1558,12 +1558,6 @@ int msg_outtrans_len(const char *msgstr, int len, int attr)
   if (msg_row >= cmdline_row && msg_col == 0) {
     clear_cmdline = false;
     mode_displayed = false;
-  }
-
-  // If the string starts with a composing character first draw a space on
-  // which the composing char can be drawn.
-  if (utf_iscomposing(utf_ptr2char(msgstr))) {
-    msg_puts_attr(" ", attr);
   }
 
   // Go over the string.  Special characters are translated and printed.
