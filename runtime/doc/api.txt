@@ -3591,6 +3591,21 @@ nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
     Attributes: ~
         |RPC| only
 
+nvim_ui_term_event({event}, {value})                    *nvim_ui_term_event()*
+    Tells Nvim when a terminal event has occurred.
+
+    The following terminal events are supported:
+
+    • "osc_response": The terminal sent a OSC response sequence to Nvim. The
+      payload is the received OSC sequence.
+
+    Attributes: ~
+        |RPC| only
+
+    Parameters: ~
+      • {event}    Event name
+      • {payload}  Event payload
+
 nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
     TODO: Documentation
 

@@ -16,6 +16,7 @@
 #include "nvim/api/ui.h"
 #include "nvim/autocmd.h"
 #include "nvim/channel.h"
+#include "nvim/eval.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/wstream.h"
 #include "nvim/globals.h"
@@ -522,6 +523,32 @@ void nvim_ui_pum_set_bounds(uint64_t channel_id, Float width, Float height, Floa
   ui->pum_width = (double)width;
   ui->pum_height = (double)height;
   ui->pum_pos = true;
+}
+
+/// Tells Nvim when a terminal event has occurred.
+///
+/// The following terminal events are supported:
+///
+///   - "osc_response": The terminal sent a OSC response sequence to Nvim. The
+///                     payload is the received OSC sequence.
+///
+/// @param channel_id
+/// @param event Event name
+/// @param payload Event payload
+/// @param[out] err Error details, if any.
+void nvim_ui_term_event(uint64_t channel_id, String event, Object value, Error *err)
+  FUNC_API_SINCE(12) FUNC_API_REMOTE_ONLY
+{
+  if (strequal("osc_response", event.data)) {
+    if (value.type != kObjectTypeString) {
+      api_set_error(err, kErrorTypeValidation, "osc_response must be a string");
+      return;
+    }
+
+    const String osc_response = value.data.string;
+    set_vim_var_string(VV_TERMRESPONSE, osc_response.data, (ptrdiff_t)osc_response.size);
+    apply_autocmds_group(EVENT_TERMRESPONSE, NULL, NULL, false, AUGROUP_ALL, NULL, NULL, &value);
+  }
 }
 
 static void flush_event(UIData *data)

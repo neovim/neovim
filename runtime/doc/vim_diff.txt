@@ -567,6 +567,8 @@ Working directory (Vim implemented some of these after Nvim):
 Autocommands:
 - Fixed inconsistent behavior in execution of nested autocommands:
   https://github.com/neovim/neovim/issues/23368
+- |TermResponse| is fired for any OSC sequence received from the terminal,
+  instead of the Primary Device Attributes response. |v:termresponse|
 
 ==============================================================================
 Missing features					 *nvim-missing*

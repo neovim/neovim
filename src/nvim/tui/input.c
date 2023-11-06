@@ -11,6 +11,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
+#include "nvim/eval.h"
 #include "nvim/event/defs.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
@@ -479,6 +480,8 @@ static void tk_getkeys(TermInput *input, bool force)
           }
         }
       }
+    } else if (key.type == TERMKEY_TYPE_OSC) {
+      handle_osc_event(input, &key);
     }
   }
 
@@ -682,6 +685,29 @@ HandleState handle_background_color(TermInput *input)
     return kNotApplicable;
   }
   return kComplete;
+}
+
+static void handle_osc_event(TermInput *input, const TermKeyKey *key)
+{
+  assert(input);
+
+  const char *str = NULL;
+  if (termkey_interpret_string(input->tk, key, &str) == TERMKEY_RES_KEY) {
+    assert(str != NULL);
+
+    // Send an event to nvim core. This will update the v:termresponse variable and fire the
+    // TermResponse event
+    MAXSIZE_TEMP_ARRAY(args, 2);
+    ADD_C(args, STATIC_CSTR_AS_OBJ("osc_response"));
+
+    // libtermkey strips the OSC bytes from the response. We add it back in so that downstream
+    // consumers of v:termresponse can differentiate between OSC and CSI events.
+    StringBuilder response = KV_INITIAL_VALUE;
+    kv_printf(response, "\x1b]%s", str);
+    ADD_C(args, STRING_OBJ(cbuf_as_string(response.items, response.size)));
+    rpc_send_event(ui_client_channel_id, "nvim_ui_term_event", args);
+    kv_destroy(response);
+  }
 }
 
 static void handle_raw_buffer(TermInput *input, bool force)

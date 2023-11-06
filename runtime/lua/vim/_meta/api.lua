@@ -2059,6 +2059,17 @@ function vim.api.nvim_ui_set_focus(gained) end
 --- @param value any
 function vim.api.nvim_ui_set_option(name, value) end
 
+--- Tells Nvim when a terminal event has occurred.
+--- The following terminal events are supported:
+---
+--- • "osc_response": The terminal sent a OSC response sequence to Nvim. The
+---   payload is the received OSC sequence.
+---
+---
+--- @param event string Event name
+--- @param value any
+function vim.api.nvim_ui_term_event(event, value) end
+
 --- @param width integer
 --- @param height integer
 function vim.api.nvim_ui_try_resize(width, height) end
