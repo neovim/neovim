@@ -11,6 +11,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${PROJECT_SOURCE_DI
 
 include(ExternalProject)
 include(CheckCCompilerFlag)
+include(FindPackageHandleStandardArgs)
 
 include(Deps)
 include(Find)
