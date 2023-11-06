@@ -140,6 +140,7 @@ static char opchars[][3] = {
   { Ctrl_A, NUL, OPF_CHANGE },           // OP_NR_ADD
   { Ctrl_X, NUL, OPF_CHANGE },           // OP_NR_SUB
   { 'Q', NUL, OPF_LINES },               // OP_REGREPLAY
+  { '@', NUL, OPF_LINES },               // OP_ATREGREPLAY
 };
 
 yankreg_T *get_y_previous(void)
@@ -177,11 +178,11 @@ int get_op_type(int char1, int char2)
   if (char1 == 'z' && char2 == 'y') {  // OP_YANK
     return OP_YANK;
   }
-  if (char1 == '@') {
-    return OP_ATREGREPLAY;
-  }
   if (char1 == 'Q' || (char1 == '@' && char2 == '@')) {
     return OP_REGREPLAY;
+  }
+  if (char1 == '@') {
+    return OP_ATREGREPLAY;
   }
   for (i = 0;; i++) {
     if (opchars[i][0] == char1 && opchars[i][1] == char2) {
