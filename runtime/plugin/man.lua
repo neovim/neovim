@@ -16,6 +16,7 @@ vim.api.nvim_create_user_command('Man', function(params)
 end, {
   bang = true,
   bar = true,
+  range = true,
   addr = 'other',
   nargs = '*',
   complete = function(...)
