@@ -91,7 +91,7 @@ if(MSVC)
   target_compile_options(main_lib INTERFACE -W3)
 
   # Disable warnings that give too many false positives.
-  target_compile_options(main_lib INTERFACE -wd4311 -wd4146 -wd4003 -wd4715 -wd4003)
+  target_compile_options(main_lib INTERFACE -wd4311 -wd4146 -wd4003 -wd4715)
   target_compile_definitions(main_lib INTERFACE _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE)
 
   target_sources(main_lib INTERFACE ${CMAKE_CURRENT_LIST_DIR}/os/nvim.manifest)
@@ -420,7 +420,10 @@ if(APPLE AND CMAKE_OSX_SYSROOT)
   list(APPEND gen_cflags "-isysroot")
   list(APPEND gen_cflags "${CMAKE_OSX_SYSROOT}")
 endif()
-set(gen_cflags ${gen_cflags} -O2)
+if(MSVC)
+  list(APPEND gen_cflags -wd4003)
+endif()
+list(APPEND gen_cflags -O2)
 
 set(NVIM_VERSION_GIT_H ${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef_git.h)
 add_custom_target(update_version_stamp
@@ -857,15 +860,16 @@ add_glob_target(
     tui/terminfo_defs.h)
 
 set(UNCRUSTIFY_PRG ${DEPS_BIN_DIR}/uncrustify)
+set(UNCRUSTIFY_CONFIG ${PROJECT_SOURCE_DIR}/src/uncrustify.cfg)
+
+add_custom_target(uncrustify_update_config
+  ${UNCRUSTIFY_PRG} -c ${UNCRUSTIFY_CONFIG} --update-config-with-doc -o ${UNCRUSTIFY_CONFIG})
+
 add_glob_target(
   TARGET lintc-uncrustify
   COMMAND ${UNCRUSTIFY_PRG}
-  FLAGS -c "${PROJECT_SOURCE_DIR}/src/uncrustify.cfg" -q --check
+  FLAGS -c ${UNCRUSTIFY_CONFIG} -q --check
   FILES ${LINT_NVIM_SOURCES})
-add_dependencies(lintc-uncrustify uncrustify)
-
-add_custom_target(lintc)
-add_dependencies(lintc lintc-clint lintc-uncrustify lintc-clang-tidy)
 
 add_custom_target(formatc
   COMMAND ${CMAKE_COMMAND}
@@ -873,7 +877,13 @@ add_custom_target(formatc
     -D LANG=c
     -P ${PROJECT_SOURCE_DIR}/cmake/Format.cmake
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-add_dependencies(formatc uncrustify)
+
+add_dependencies(lintc-uncrustify uncrustify_update_config)
+add_dependencies(formatc uncrustify_update_config)
+add_dependencies(uncrustify_update_config uncrustify)
+
+add_custom_target(lintc)
+add_dependencies(lintc lintc-clint lintc-uncrustify lintc-clang-tidy)
 
 add_custom_target(generated-sources DEPENDS
   ${NVIM_GENERATED_FOR_SOURCES}

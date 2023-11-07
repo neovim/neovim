@@ -247,8 +247,6 @@ add_glob_target(
   FLAGS -x -a
   GLOB_DIRS scripts
   GLOB_PAT *.sh
-  EXCLUDE
-    scripts/pvscheck.sh
   TOUCH_STRATEGY SINGLE)
 
 add_custom_target(lintcommit
@@ -294,7 +292,7 @@ ExternalProject_Add(uncrustify
   CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS}
   EXCLUDE_FROM_ALL TRUE)
 
-option(USE_BUNDLED_BUSTED "Use bundled luarocks" ON)
+option(USE_BUNDLED_BUSTED "Use bundled busted" ON)
 if(USE_BUNDLED_BUSTED)
   ExternalProject_Add(lua-dev-deps
     URL https://github.com/neovim/deps/raw/5a1f71cceb24990a0b15fd9a472a5f549f019248/opt/lua-dev-deps.tar.gz

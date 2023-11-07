@@ -9,8 +9,8 @@ endif()
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${PROJECT_SOURCE_DIR}/../cmake")
 
-include(ExternalProject)
 include(CheckCCompilerFlag)
+include(ExternalProject)
 include(FindPackageHandleStandardArgs)
 
 include(Deps)
