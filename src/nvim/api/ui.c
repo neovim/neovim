@@ -120,7 +120,6 @@ void remote_ui_disconnect(uint64_t channel_id)
 
   // Destroy `ui`.
   XFREE_CLEAR(ui->term_name);
-  XFREE_CLEAR(ui->term_background);
   xfree(ui);
 }
 

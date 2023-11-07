@@ -340,4 +340,8 @@ release.
 • vim.treesitter.languagetree functions:
   - |LanguageTree:for_each_child()|	Use |LanguageTree:children()| (non-recursive) instead.
 
+• The "term_background" UI option |ui-ext-options| is deprecated and no longer
+  populated. Background color detection is now performed in Lua by the Nvim
+  core, not the TUI.
+
  vim:tw=78:ts=8:sw=2:et:ft=help:norl:

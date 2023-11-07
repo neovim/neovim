@@ -202,6 +202,8 @@ UI EXTENSIONS
 			- `["wildmenu_show", items]`
 			- `["wildmenu_select", selected]`
 			- `["wildmenu_hide"]`
+- *term_background*	Unused. The terminal background color is now detected
+			by the Nvim core directly instead of the TUI.
 
 VARIABLES
 - *b:terminal_job_pid*	PID of the top-level process in a |:terminal|.

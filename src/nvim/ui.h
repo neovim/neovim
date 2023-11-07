@@ -104,7 +104,8 @@ struct ui_t {
 
   // TUI fields.
   char *term_name;
-  char *term_background;
+  char *term_background;  ///< Deprecated. No longer needed since background color detection happens
+                          ///< in Lua. To be removed in a future release.
   int term_colors;
   bool stdin_tty;
   bool stdout_tty;
