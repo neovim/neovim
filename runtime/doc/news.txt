@@ -208,6 +208,9 @@ The following new APIs and features were added.
 • The |TermResponse| autocommand event can be used with |v:termresponse| to
   read escape sequence responses from the terminal.
 
+• A clipboard provider which uses OSC 52 to copy the selection to the system
+  clipboard is now bundled by default. |clipboard-osc52|
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

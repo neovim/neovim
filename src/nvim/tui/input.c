@@ -11,7 +11,6 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
-#include "nvim/eval.h"
 #include "nvim/event/defs.h"
 #include "nvim/log.h"
 #include "nvim/macros.h"
@@ -31,6 +30,7 @@
 #include "nvim/event/rstream.h"
 #include "nvim/msgpack_rpc/channel.h"
 
+#define READ_STREAM_SIZE 0xfff
 #define KEY_BUFFER_SIZE 0xfff
 
 static const struct kitty_key_map_entry {
@@ -153,7 +153,9 @@ void tinput_init(TermInput *input, Loop *loop)
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
 
   // setup input handle
-  rstream_init_fd(loop, &input->read_stream, input->in_fd, 0xfff);
+  rstream_init_fd(loop, &input->read_stream, input->in_fd, READ_STREAM_SIZE);
+  termkey_set_buffer_size(input->tk, rbuffer_capacity(input->read_stream.buffer));
+
   // initialize a timer handle for handling ESC with libtermkey
   time_watcher_init(loop, &input->timer_handle, input);
 }
@@ -758,9 +760,9 @@ static void handle_raw_buffer(TermInput *input, bool force)
     RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
       size_t consumed = termkey_push_bytes(input->tk, ptr, MIN(count, len));
       // termkey_push_bytes can return (size_t)-1, so it is possible that
-      // `consumed > input->read_stream.buffer->size`, but since tk_getkeys is
+      // `consumed > rbuffer_size(input->read_stream.buffer)`, but since tk_getkeys is
       // called soon, it shouldn't happen.
-      assert(consumed <= input->read_stream.buffer->size);
+      assert(consumed <= rbuffer_size(input->read_stream.buffer));
       rbuffer_consumed(input->read_stream.buffer, consumed);
       // Process the keys now: there is no guarantee `count` will
       // fit into libtermkey's input buffer.

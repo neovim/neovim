@@ -253,7 +253,35 @@ For Windows WSL, try this g:clipboard definition:
                 \   },
                 \   'cache_enabled': 0,
                 \ }
+<
+							    *clipboard-osc52*
+Nvim bundles a clipboard provider that allows copying to the system clipboard
+using OSC 52. OSC 52 is an Operating System Command control sequence that
+writes the copied text to the terminal emulator. If the terminal emulator
+supports OSC 52 then it will write the copied text into the system clipboard.
 
+This is most useful when using Nvim remotely (e.g. via ssh) as Nvim does not
+have direct access to the system clipboard in that case.
+
+Because not all terminal emulators support OSC 52, this provider must be opted
+into explicitly by setting the following |g:clipboard| definition: >lua
+
+    vim.g.clipboard = {
+      name = 'OSC 52',
+      copy = {
+        ['+'] = require('vim.clipboard.osc52').copy,
+        ['*'] = require('vim.clipboard.osc52').copy,
+      },
+      paste = {
+        ['+'] = require('vim.clipboard.osc52').paste,
+        ['*'] = require('vim.clipboard.osc52').paste,
+      },
+    }
+<
+Note that not all terminal emulators support reading from the system clipboard
+(and even for those that do, users should be aware of the security
+implications), so using OSC 52 for pasting may not be possible.
+<
 ==============================================================================
 Paste							*provider-paste* *paste*
 
