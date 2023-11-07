@@ -2024,26 +2024,26 @@ describe('extmark decorations', function()
   it("highlights do reapply to restored text after delete", function()
     with_undo_restore(true) -- also default behavior
 
-    feed 'u'
+    command('silent undo')
     screen:expect{grid=[[
       ^for _,{1:item in} ipairs(items) do                    |
           local text, hl_id_cell, count = unpack(item)  |
           if hl_id_cell ~= nil then                     |
               hl_id = hl_id_cell                        |
-      1 change; before #2  0 seconds ago                |
+                                                        |
     ]]}
   end)
 
-  it("highlights don't reapply to restored text after delete with no_undo_restore", function()
+  it("highlights don't reapply to restored text after delete with undo_restore=false", function()
     with_undo_restore(false)
 
-    feed 'u'
+    command('silent undo')
     screen:expect{grid=[[
       ^for _,it{1:em in} ipairs(items) do                    |
           local text, hl_id_cell, count = unpack(item)  |
           if hl_id_cell ~= nil then                     |
               hl_id = hl_id_cell                        |
-      1 change; before #2  0 seconds ago                |
+                                                        |
     ]]}
 
     eq({ { 1, 0, 8, { end_col = 13, end_right_gravity = false, end_row = 0,
