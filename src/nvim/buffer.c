@@ -848,7 +848,7 @@ void buf_freeall(buf_T *buf, int flags)
 /// Free a buffer structure and the things it contains related to the buffer
 /// itself (not the file, that must have been done already).
 ///
-/// @param buf buf_T* (Buffer pointer) buffer that is going to be freed
+/// @param buf    Buffer that is going to be freed
 static void free_buffer(buf_T *buf)
 {
   pmap_del(int)(&buffer_handles, buf->b_fnum, NULL);
@@ -888,7 +888,7 @@ static void free_buffer(buf_T *buf)
 
 /// Free the b_wininfo list for buffer "buf".
 ///
-/// @param buf buf_T (Buffer pointer) Buffer with the wininfo
+/// @param buf    Buffer with the wininfo
 static void clear_wininfo(buf_T *buf)
 {
   wininfo_T *wip;
@@ -936,13 +936,13 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
 
 /// Go to another buffer.  Handles the result of the ATTENTION dialog.
 ///
-/// @param start int    Can be the following values:
+/// @param start  Can be the following values:
 /// DOBUF_CURRENT   go to "count" buffer from current buffer
 /// DOBUF_FIRST     go to "count" buffer from first buffer
 /// DOBUF_LAST      go to "count" buffer from last buffer
 /// DOBUF_MOD       go to "count" modified buffer from current buffer
-/// @param dir int      Direction (FORWARD or BACKWARD)
-/// @param count int    Buffer number or number of buffers
+/// @param dir    Direction (FORWARD or BACKWARD)
+/// @param count  Buffer number or number of buffers
 void goto_buffer(exarg_T *eap, int start, int dir, int count)
 {
   bufref_T old_curbuf;
