@@ -544,7 +544,7 @@ local on_key_cbs = {}
 ---@note {fn} will receive the keys after mappings have been evaluated
 function vim.on_key(fn, ns_id)
   if fn == nil and ns_id == nil then
-    return #on_key_cbs
+    return vim.tbl_count(on_key_cbs)
   end
 
   vim.validate({
