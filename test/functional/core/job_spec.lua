@@ -700,7 +700,7 @@ describe('jobs', function()
     os.remove('Xtest_jobstart_env')
   end)
 
-  describe('jobwait', function()
+  describe('jobwait()', function()
     before_each(function()
       if is_os('win') then
         helpers.set_shell_powershell()
@@ -873,6 +873,27 @@ describe('jobs', function()
         ]])
         eq({'notification', 'wait', {{-1, -1}}}, next_msg())
       end)
+    end)
+
+    it('hides cursor when waiting', function()
+      local screen = Screen.new(30, 3)
+      screen:set_default_attr_ids({
+        [0] = {foreground = Screen.colors.Blue1, bold = true};
+      })
+      screen:attach()
+      command([[let g:id = jobstart([v:progpath, '--clean', '--headless'])]])
+      feed_command('call jobwait([g:id], 300)')
+      screen:expect{grid=[[
+                                      |
+        {0:~                             }|
+        :call jobwait([g:id], 300)    |
+      ]], timeout=100}
+      funcs.jobstop(meths.get_var('id'))
+      screen:expect{grid=[[
+        ^                              |
+        {0:~                             }|
+        :call jobwait([g:id], 300)    |
+      ]]}
     end)
   end)
 
