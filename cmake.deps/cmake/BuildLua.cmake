@@ -40,8 +40,6 @@ set(LUA_CONFIGURE_COMMAND
       -i ${DEPS_BUILD_DIR}/src/lua/src/luaconf.h)
 set(LUA_INSTALL_TOP_ARG "INSTALL_TOP=${DEPS_INSTALL_DIR}")
 
-message(STATUS "Lua target is ${LUA_TARGET}")
-
 ExternalProject_Add(lua
   URL ${LUA_URL}
   URL_HASH SHA256=${LUA_SHA256}
