@@ -1,5 +1,6 @@
 " Test for the termdebug plugin
 
+source shared.vim
 source check.vim
 
 CheckUnix
@@ -50,7 +51,7 @@ func Test_termdebug_basic()
 
   edit XTD_basic.c
   Termdebug ./XTD_basic
-  call assert_equal(3, winnr('$'))
+  call WaitForAssert({-> assert_equal(3, winnr('$'))})
   let gdb_buf = winbufnr(1)
   wincmd b
   Break 9
@@ -63,21 +64,22 @@ func Test_termdebug_basic()
   Run
   call Nterm_wait(gdb_buf, 400)
   redraw!
-  call assert_equal([
+  call WaitForAssert({-> assert_equal([
         \ {'lnum': 9, 'id': 12, 'name': 'debugPC', 'priority': 110,
         \  'group': 'TermDebug'},
         \ {'lnum': 9, 'id': 1014, 'name': 'debugBreakpoint1.0',
         \  'priority': 110, 'group': 'TermDebug'}],
-        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)
+        "\ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs->reverse())})
   Finish
   call Nterm_wait(gdb_buf)
   redraw!
-  call assert_equal([
+  call WaitForAssert({-> assert_equal([
         \ {'lnum': 9, 'id': 1014, 'name': 'debugBreakpoint1.0',
         \  'priority': 110, 'group': 'TermDebug'},
         \ {'lnum': 20, 'id': 12, 'name': 'debugPC',
         \  'priority': 110, 'group': 'TermDebug'}],
-        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
   Continue
   wincmd t
   quit!
