@@ -110,11 +110,87 @@ func Test_termdebug_basic()
   set columns&
 
   wincmd t
+  " Nvim: stop GDB process and process pending events
+  call chanclose(&channel)
+  call wait(0, '0')
   quit!
   redraw!
+  call WaitForAssert({-> assert_equal(1, winnr('$'))})
   call assert_equal([], sign_getplaced('', #{group: 'TermDebug'})[0].signs)
 
   call delete('XTD_basic')
+  %bw!
+endfunc
+
+func Test_termdebug_mapping()
+  %bw!
+  call assert_equal(maparg('K', 'n', 0, 1)->empty(), 1)
+  call assert_equal(maparg('-', 'n', 0, 1)->empty(), 1)
+  call assert_equal(maparg('+', 'n', 0, 1)->empty(), 1)
+  Termdebug
+  call WaitForAssert({-> assert_equal(3, winnr('$'))})
+  wincmd b
+  call assert_equal(maparg('K', 'n', 0, 1)->empty(), 0)
+  call assert_equal(maparg('-', 'n', 0, 1)->empty(), 0)
+  call assert_equal(maparg('+', 'n', 0, 1)->empty(), 0)
+  call assert_equal(maparg('K', 'n', 0, 1).buffer, 0)
+  call assert_equal(maparg('-', 'n', 0, 1).buffer, 0)
+  call assert_equal(maparg('+', 'n', 0, 1).buffer, 0)
+  call assert_equal(maparg('K', 'n', 0, 1).rhs, ':Evaluate<CR>')
+  wincmd t
+  quit!
+  redraw!
+  call WaitForAssert({-> assert_equal(1, winnr('$'))})
+  call assert_equal(maparg('K', 'n', 0, 1)->empty(), 1)
+  call assert_equal(maparg('-', 'n', 0, 1)->empty(), 1)
+  call assert_equal(maparg('+', 'n', 0, 1)->empty(), 1)
+
+  %bw!
+  nnoremap K :echom "K"<cr>
+  nnoremap - :echom "-"<cr>
+  nnoremap + :echom "+"<cr>
+  Termdebug
+  call WaitForAssert({-> assert_equal(3, winnr('$'))})
+  wincmd b
+  call assert_equal(maparg('K', 'n', 0, 1)->empty(), 0)
+  call assert_equal(maparg('-', 'n', 0, 1)->empty(), 0)
+  call assert_equal(maparg('+', 'n', 0, 1)->empty(), 0)
+  call assert_equal(maparg('K', 'n', 0, 1).buffer, 0)
+  call assert_equal(maparg('-', 'n', 0, 1).buffer, 0)
+  call assert_equal(maparg('+', 'n', 0, 1).buffer, 0)
+  call assert_equal(maparg('K', 'n', 0, 1).rhs, ':Evaluate<CR>')
+  wincmd t
+  quit!
+  redraw!
+  call WaitForAssert({-> assert_equal(1, winnr('$'))})
+  call assert_equal(maparg('K', 'n', 0, 1)->empty(), 0)
+  call assert_equal(maparg('-', 'n', 0, 1)->empty(), 0)
+  call assert_equal(maparg('+', 'n', 0, 1)->empty(), 0)
+  call assert_equal(maparg('K', 'n', 0, 1).buffer, 0)
+  call assert_equal(maparg('-', 'n', 0, 1).buffer, 0)
+  call assert_equal(maparg('+', 'n', 0, 1).buffer, 0)
+  call assert_equal(maparg('K', 'n', 0, 1).rhs, ':echom "K"<cr>')
+
+  %bw!
+  nnoremap <buffer> K :echom "bK"<cr>
+  nnoremap <buffer> - :echom "b-"<cr>
+  nnoremap <buffer> + :echom "b+"<cr>
+  Termdebug
+  call WaitForAssert({-> assert_equal(3, winnr('$'))})
+  wincmd b
+  call assert_equal(maparg('K', 'n', 0, 1).buffer, 1)
+  call assert_equal(maparg('-', 'n', 0, 1).buffer, 1)
+  call assert_equal(maparg('+', 'n', 0, 1).buffer, 1)
+  call assert_equal(maparg('K', 'n', 0, 1).rhs, ':echom "bK"<cr>')
+  wincmd t
+  quit!
+  redraw!
+  call WaitForAssert({-> assert_equal(1, winnr('$'))})
+  call assert_equal(maparg('K', 'n', 0, 1).buffer, 1)
+  call assert_equal(maparg('-', 'n', 0, 1).buffer, 1)
+  call assert_equal(maparg('+', 'n', 0, 1).buffer, 1)
+  call assert_equal(maparg('K', 'n', 0, 1).rhs, ':echom "bK"<cr>')
+
   %bw!
 endfunc
 
