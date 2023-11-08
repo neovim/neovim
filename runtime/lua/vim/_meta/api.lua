@@ -1005,6 +1005,8 @@ function vim.api.nvim_del_var(name) end
 ---                  option if Nvim was invoked with -V3log_file, the message
 ---                  will be redirected to the log_file and suppressed from
 ---                  direct output.
+---                • flush: Flush the message to be displayed immediately in
+---                  the UI, without waiting for a redraw
 function vim.api.nvim_echo(chunks, history, opts) end
 
 --- Writes a message to the Vim error buffer. Does not append "\n", the

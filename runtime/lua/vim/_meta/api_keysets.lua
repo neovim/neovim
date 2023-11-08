@@ -73,6 +73,7 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.echo_opts
 --- @field verbose? boolean
+--- @field flush? boolean
 
 --- @class vim.api.keyset.eval_statusline
 --- @field winid? integer

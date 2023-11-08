@@ -738,6 +738,8 @@ void nvim_set_vvar(String name, Object value, Error *err)
 ///          - verbose: Message was printed as a result of 'verbose' option
 ///            if Nvim was invoked with -V3log_file, the message will be
 ///            redirected to the log_file and suppressed from direct output.
+///          - flush: Flush the message to be displayed immediately in the UI, without waiting for a
+///                   redraw
 void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
   FUNC_API_SINCE(7)
 {
@@ -755,6 +757,10 @@ void nvim_echo(Array chunks, Boolean history, Dict(echo_opts) *opts, Error *err)
   if (opts->verbose) {
     verbose_leave();
     verbose_stop();  // flush now
+  }
+
+  if (opts->flush) {
+    ui_flush();
   }
 
   if (history) {

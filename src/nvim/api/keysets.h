@@ -309,6 +309,7 @@ typedef struct {
 
 typedef struct {
   Boolean verbose;
+  Boolean flush;
 } Dict(echo_opts);
 
 typedef struct {
