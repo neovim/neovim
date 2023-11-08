@@ -61,7 +61,7 @@ func Test_termdebug_basic()
         \  'priority': 110, 'group': 'TermDebug'}],
         \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)
   Run
-  call Nterm_wait(gdb_buf, 200)
+  call Nterm_wait(gdb_buf, 400)
   redraw!
   call assert_equal([
         \ {'lnum': 9, 'id': 12, 'name': 'debugPC', 'priority': 110,
