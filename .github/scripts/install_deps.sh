@@ -30,7 +30,7 @@ if [[ $os == Linux ]]; then
   fi
 
   if [[ -n $TEST ]]; then
-    sudo apt-get install -y locales-all cpanminus attr libattr1-dev
+    sudo apt-get install -y locales-all cpanminus attr libattr1-dev gdb
   fi
 elif [[ $os == Darwin ]]; then
   brew update --quiet

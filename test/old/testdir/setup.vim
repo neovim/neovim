@@ -58,6 +58,11 @@ func Ntest_setmouse(row, col)
   endif
 endfunc
 
+" roughly equivalent to term_wait() in Vim
+func Nterm_wait(buf, time = 10)
+  execute $'sleep {a:time}m'
+endfunc
+
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
 
