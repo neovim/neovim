@@ -463,6 +463,9 @@ static int nlua_wait(lua_State *lstate)
   int pcall_status = 0;
   bool callback_result = false;
 
+  // Flush UI before blocking
+  ui_flush();
+
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop,
                             loop_events,
                             (int)timeout,
