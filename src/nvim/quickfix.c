@@ -4135,7 +4135,12 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
 
     // delete all existing lines
     while ((curbuf->b_ml.ml_flags & ML_EMPTY) == 0) {
-      (void)ml_delete((linenr_T)1, false);
+      // If deletion fails, this loop may run forever, so
+      // signal error and return.
+      if (ml_delete((linenr_T)1, false) == FAIL) {
+        internal_error("qf_fill_buffer()");
+        return;
+      }
     }
   }
 
