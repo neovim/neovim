@@ -9,12 +9,12 @@ CheckExecutable gcc
 
 let g:GDB = exepath('gdb')
 if g:GDB->empty()
-  throw 'Skpped: gdb is not found in $PATH'
+  throw 'Skipped: gdb is not found in $PATH'
 endif
 
 let g:GCC = exepath('gcc')
 if g:GCC->empty()
-  throw 'Skpped: gcc is not found in $PATH'
+  throw 'Skipped: gcc is not found in $PATH'
 endif
 
 packadd termdebug
