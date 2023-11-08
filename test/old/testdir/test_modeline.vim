@@ -172,6 +172,8 @@ func Test_modeline_colon()
 endfunc
 
 func s:modeline_fails(what, text, error)
+  " Don't use CheckOption(), it would skip the whole test
+  " just for a single un-supported option
   if !exists('+' .. a:what)
     return
   endif

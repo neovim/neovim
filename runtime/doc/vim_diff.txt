@@ -550,10 +550,6 @@ Vimscript compatibility:
   `shell_error` does not alias to |v:shell_error|
   `this_session` does not alias to |v:this_session|
 
-UI/Display:
-  'statusline' always uses the "stl" and "stlnc" fields of 'fillchars', even
-  if they are the same and |hl-StatusLine| and |hl-StatusLineNC| are equal.
-
 Working directory (Vim implemented some of these after Nvim):
 - |DirChanged| and |DirChangedPre| can be triggered when switching to another
   window or tab.

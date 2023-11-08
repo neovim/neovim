@@ -617,4 +617,25 @@ func Test_statusline_showcmd()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_statusline_highlight_group_cleared()
+  CheckScreendump
+
+  " the laststatus option is there to prevent
+  " the code-style test from complaining about
+  " trailing whitespace
+  let lines =<< trim END
+    set fillchars=stl:\ ,stlnc:\  laststatus=2
+    split
+    hi clear StatusLine
+    hi clear StatusLineNC
+  END
+  call writefile(lines, 'XTest_statusline_stl', 'D')
+
+  let buf = RunVimInTerminal('-S XTest_statusline_stl', {})
+
+  call VerifyScreenDump(buf, 'Test_statusline_stl_1', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
