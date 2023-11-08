@@ -66,7 +66,7 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
     }
     extmark_set(buf, (uint32_t)src_id, NULL,
                 (int)lnum - 1, hl_start, (int)lnum - 1 + end_off, hl_end,
-                &decor, true, false, true, NULL);
+                &decor, true, false, true, false, NULL);
   }
 }
 
@@ -95,7 +95,30 @@ void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
   }
 }
 
-void decor_remove(buf_T *buf, int row, int row2, Decoration *decor)
+void decor_add(buf_T *buf, int row, int row2, Decoration *decor, bool hl_id)
+{
+  if (decor) {
+    if (kv_size(decor->virt_text) && decor->virt_text_pos == kVTInline) {
+      buf->b_virt_text_inline++;
+    }
+    if (kv_size(decor->virt_lines)) {
+      buf->b_virt_line_blocks++;
+    }
+    if (decor_has_sign(decor)) {
+      buf->b_signs++;
+    }
+    if (decor->sign_text) {
+      buf->b_signs_with_text++;
+      // TODO(lewis6991): smarter invalidation
+      buf_signcols_add_check(buf, NULL);
+    }
+  }
+  if (decor || hl_id) {
+    decor_redraw(buf, row, row2 > -1 ? row2 : row, decor);
+  }
+}
+
+void decor_remove(buf_T *buf, int row, int row2, Decoration *decor, bool invalidate)
 {
   decor_redraw(buf, row, row2, decor);
   if (decor) {
@@ -119,7 +142,9 @@ void decor_remove(buf_T *buf, int row, int row2, Decoration *decor)
       }
     }
   }
-  decor_free(decor);
+  if (!invalidate) {
+    decor_free(decor);
+  }
 }
 
 void decor_clear(Decoration *decor)
@@ -180,7 +205,7 @@ Decoration *decor_find_virttext(buf_T *buf, int row, uint64_t ns_id)
     MTKey mark = marktree_itr_current(itr);
     if (mark.pos.row < 0 || mark.pos.row > row) {
       break;
-    } else if (marktree_decor_level(mark) < kDecorLevelVisible) {
+    } else if (mt_invalid(mark) || marktree_decor_level(mark) < kDecorLevelVisible) {
       goto next_mark;
     }
     Decoration *decor = mark.decor_full;
@@ -236,14 +261,14 @@ bool decor_redraw_start(win_T *wp, int top_row, DecorState *state)
   MTPair pair;
 
   while (marktree_itr_step_overlap(buf->b_marktree, state->itr, &pair)) {
-    if (marktree_decor_level(pair.start) < kDecorLevelVisible) {
+    if (mt_invalid(pair.start) || marktree_decor_level(pair.start) < kDecorLevelVisible) {
       continue;
     }
 
     Decoration decor = get_decor(pair.start);
 
-    decor_add(state, pair.start.pos.row, pair.start.pos.col, pair.end_pos.row, pair.end_pos.col,
-              &decor, false, pair.start.ns, pair.start.id);
+    decor_push(state, pair.start.pos.row, pair.start.pos.col, pair.end_pos.row, pair.end_pos.col,
+               &decor, false, pair.start.ns, pair.start.id);
   }
 
   return true;  // TODO(bfredl): check if available in the region
@@ -266,8 +291,8 @@ bool decor_redraw_line(win_T *wp, int row, DecorState *state)
   return (k.pos.row >= 0 && k.pos.row <= row);
 }
 
-static void decor_add(DecorState *state, int start_row, int start_col, int end_row, int end_col,
-                      Decoration *decor, bool owned, uint64_t ns_id, uint64_t mark_id)
+static void decor_push(DecorState *state, int start_row, int start_col, int end_row, int end_col,
+                       Decoration *decor, bool owned, uint64_t ns_id, uint64_t mark_id)
 {
   int attr_id = decor->hl_id > 0 ? syn_id2attr(decor->hl_id) : 0;
 
@@ -327,8 +352,7 @@ int decor_redraw_col(win_T *wp, int col, int win_col, bool hidden, DecorState *s
       break;
     }
 
-    if (mt_end(mark)
-        || marktree_decor_level(mark) < kDecorLevelVisible) {
+    if (mt_invalid(mark) || mt_end(mark) || marktree_decor_level(mark) < kDecorLevelVisible) {
       goto next_mark;
     }
 
@@ -339,8 +363,8 @@ int decor_redraw_col(win_T *wp, int col, int win_col, bool hidden, DecorState *s
       endpos = mark.pos;
     }
 
-    decor_add(state, mark.pos.row, mark.pos.col, endpos.row, endpos.col,
-              &decor, false, mark.ns, mark.id);
+    decor_push(state, mark.pos.row, mark.pos.col, endpos.row, endpos.col,
+               &decor, false, mark.ns, mark.id);
 
 next_mark:
     marktree_itr_next(buf->b_marktree, state->itr);
@@ -425,7 +449,7 @@ void decor_redraw_signs(buf_T *buf, int row, int *num_signs, SignTextAttrs sattr
 
   MTPair pair;
   while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
-    if (marktree_decor_level(pair.start) < kDecorLevelVisible) {
+    if (mt_invalid(pair.start) || marktree_decor_level(pair.start) < kDecorLevelVisible) {
       continue;
     }
 
@@ -444,7 +468,7 @@ void decor_redraw_signs(buf_T *buf, int row, int *num_signs, SignTextAttrs sattr
       break;
     }
 
-    if (mt_end(mark) || marktree_decor_level(mark) < kDecorLevelVisible) {
+    if (mt_end(mark) || mt_invalid(mark) || marktree_decor_level(mark) < kDecorLevelVisible) {
       goto next_mark;
     }
 
@@ -605,14 +629,14 @@ bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
   return has_virttext;
 }
 
-void decor_add_ephemeral(int start_row, int start_col, int end_row, int end_col, Decoration *decor,
-                         uint64_t ns_id, uint64_t mark_id)
+void decor_push_ephemeral(int start_row, int start_col, int end_row, int end_col, Decoration *decor,
+                          uint64_t ns_id, uint64_t mark_id)
 {
   if (end_row == -1) {
     end_row = start_row;
     end_col = start_col;
   }
-  decor_add(&decor_state, start_row, start_col, end_row, end_col, decor, true, ns_id, mark_id);
+  decor_push(&decor_state, start_row, start_col, end_row, end_col, decor, true, ns_id, mark_id);
 }
 
 /// @param has_fold  whether line "lnum" has a fold, or kNone when not calculated yet

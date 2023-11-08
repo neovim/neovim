@@ -1146,9 +1146,14 @@ void marktree_revise(MarkTree *b, MarkTreeIter *itr, uint8_t decor_level, MTKey 
   // TODO(bfredl): clean up this mess and re-instantiate &= and |= forms
   // once we upgrade to a non-broken version of gcc in functionaltest-lua CI
   rawkey(itr).flags = (uint16_t)(rawkey(itr).flags & (uint16_t) ~MT_FLAG_DECOR_MASK);
+  rawkey(itr).flags = (uint16_t)(rawkey(itr).flags & (uint16_t) ~MT_FLAG_INVALID);
   rawkey(itr).flags = (uint16_t)(rawkey(itr).flags
                                  | (uint16_t)(decor_level << MT_FLAG_DECOR_OFFSET)
-                                 | (uint16_t)(key.flags & MT_FLAG_DECOR_MASK));
+                                 | (uint16_t)(key.flags & MT_FLAG_DECOR_MASK)
+                                 | (uint16_t)(key.flags & MT_FLAG_HL_EOL)
+                                 | (uint16_t)(key.flags & MT_FLAG_NO_UNDO)
+                                 | (uint16_t)(key.flags & MT_FLAG_INVALID)
+                                 | (uint16_t)(key.flags & MT_FLAG_INVALIDATE));
   rawkey(itr).decor_full = key.decor_full;
   rawkey(itr).hl_id = key.hl_id;
   rawkey(itr).priority = key.priority;
@@ -2006,8 +2011,8 @@ static void marktree_itr_fix_pos(MarkTree *b, MarkTreeIter *itr)
 void marktree_put_test(MarkTree *b, uint32_t ns, uint32_t id, int row, int col, bool right_gravity,
                        int end_row, int end_col, bool end_right)
 {
-  MTKey key = { { row, col }, ns, id, 0,
-                mt_flags(right_gravity, 0, false), 0, NULL };
+  uint16_t flags = mt_flags(right_gravity, false, false, false, 0);
+  MTKey key = { { row, col }, ns, id, 0, flags, 0, NULL };
   marktree_put(b, key, end_row, end_col, end_right);
 }
 

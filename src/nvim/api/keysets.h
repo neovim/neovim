@@ -32,6 +32,7 @@ typedef struct {
   Boolean virt_text_hide;
   Boolean hl_eol;
   String hl_mode;
+  Boolean invalidate;
   Boolean ephemeral;
   Integer priority;
   Boolean right_gravity;

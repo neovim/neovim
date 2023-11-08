@@ -279,6 +279,9 @@ The following changes to existing APIs or features add new behavior.
 • Extmarks can opt-out of precise undo tracking using the new "undo_restore"
   flag to |nvim_buf_set_extmark()|
 
+• Extmarks can be automatically hidden or removed using the new "invalidate"
+  flag to |nvim_buf_set_extmark()|
+
 • LSP hover and signature help now use Treesitter for highlighting of Markdown
   content.
   Note that syntax highlighting of code examples requires a matching parser

@@ -1599,11 +1599,69 @@ describe('API/extmarks', function()
     set_extmark(ns, 3, 0, 0, { sign_text = '>>' })
     set_extmark(ns, 4, 0, 0, { virt_text = {{'text', 'Normal'}}})
     set_extmark(ns, 5, 0, 0, { virt_lines = {{{ 'line', 'Normal' }}}})
-    eq(5, #get_extmarks(-1, 0, -1, { details = true }))
+    eq(5, #get_extmarks(-1, 0, -1, {}))
     eq({{ 2, 0, 0 }}, get_extmarks(-1, 0, -1, { type = 'highlight' }))
     eq({{ 3, 0, 0 }}, get_extmarks(-1, 0, -1, { type = 'sign' }))
     eq({{ 4, 0, 0 }}, get_extmarks(-1, 0, -1, { type = 'virt_text' }))
     eq({{ 5, 0, 0 }}, get_extmarks(-1, 0, -1, { type = 'virt_lines' }))
+  end)
+
+  it("invalidated marks are deleted", function()
+    screen = Screen.new(40, 6)
+    screen:attach()
+    feed('dd6iaaa bbb ccc<CR><ESC>gg')
+    set_extmark(ns, 1, 0, 0, { invalidate = true, sign_text = 'S1' })
+    set_extmark(ns, 2, 1, 0, { invalidate = true, sign_text = 'S2' })
+    -- mark with invalidate is removed
+    command('d')
+    screen:expect([[
+      S2^aaa bbb ccc                           |
+        aaa bbb ccc                           |
+        aaa bbb ccc                           |
+        aaa bbb ccc                           |
+        aaa bbb ccc                           |
+                                              |
+    ]])
+    -- mark is restored with undo_restore == true
+    command('silent undo')
+    screen:expect([[
+      S1^aaa bbb ccc                           |
+      S2aaa bbb ccc                           |
+        aaa bbb ccc                           |
+        aaa bbb ccc                           |
+        aaa bbb ccc                           |
+                                              |
+    ]])
+    -- mark is deleted with undo_restore == false
+    set_extmark(ns, 1, 0, 0, { invalidate = true, undo_restore = false, sign_text = 'S1' })
+    set_extmark(ns, 2, 1, 0, { invalidate = true, undo_restore = false, sign_text = 'S2' })
+    command('1d 2')
+    eq(0, #get_extmarks(-1, 0, -1, {}))
+    -- mark is not removed when deleting bytes before the range
+    set_extmark(ns, 3, 0, 4, { invalidate = true, undo_restore = false,
+                               hl_group = 'Error', end_col = 7 })
+    feed('dw')
+    eq(3, get_extmark_by_id(ns, 3, { details = true })[3].end_col)
+    -- mark is not removed when deleting bytes at the start of the range
+    feed('x')
+    eq(2, get_extmark_by_id(ns, 3, { details = true })[3].end_col)
+    -- mark is not removed when deleting bytes from the end of the range
+    feed('lx')
+    eq(1, get_extmark_by_id(ns, 3, { details = true})[3].end_col)
+    -- mark is not removed when deleting bytes beyond end of the range
+    feed('x')
+    eq(1, get_extmark_by_id(ns, 3, { details = true})[3].end_col)
+    -- mark is removed when all bytes in the range are deleted
+    feed('hx')
+    eq({}, get_extmark_by_id(ns, 3, {}))
+    -- multiline mark is not removed when start of its range is deleted
+    set_extmark(ns, 4, 1, 4, { undo_restore = false, invalidate = true,
+                               hl_group = 'Error', end_col = 7, end_row = 3 })
+    feed('ddDdd')
+    eq({0, 0}, get_extmark_by_id(ns, 4, {}))
+    -- multiline mark is removed when entirety of its range is deleted
+    feed('vj2ed')
+    eq({}, get_extmark_by_id(ns, 4, {}))
   end)
 end)
 
