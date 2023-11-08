@@ -20,19 +20,41 @@ function M.paste()
 
   io.stdout:write('\x1b]52;;?\x1b\\')
 
-  vim.wait(1000, function()
+  local ok, res
+
+  -- Wait 1s first for terminals that respond quickly
+  ok, res = vim.wait(1000, function()
     return contents ~= nil
   end)
 
-  -- Delete the autocommand if it didn't already delete itself
-  pcall(vim.api.nvim_del_autocmd, id)
-
-  if contents then
-    return vim.split(contents, '\n')
+  if res == -1 then
+    -- If no response was received after 1s, print a message and keep waiting
+    vim.api.nvim_echo(
+      { { 'Waiting for OSC 52 response from the terminal. Press Ctrl-C to interrupt...' } },
+      false,
+      {}
+    )
+    ok, res = vim.wait(9000, function()
+      return contents ~= nil
+    end)
   end
 
-  vim.notify('Timed out waiting for a clipboard response from the terminal', vim.log.levels.WARN)
-  return 0
+  if not ok then
+    vim.api.nvim_del_autocmd(id)
+    if res == -1 then
+      vim.notify(
+        'Timed out waiting for a clipboard response from the terminal',
+        vim.log.levels.WARN
+      )
+    elseif res == -2 then
+      -- Clear message area
+      vim.api.nvim_echo({ { '' } }, false, {})
+    end
+    return 0
+  end
+
+  -- If we get here, contents should be non-nil
+  return vim.split(assert(contents), '\n')
 end
 
 return M
