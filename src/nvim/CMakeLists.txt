@@ -290,6 +290,7 @@ set(LUA_LOADER_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/loader.lua)
 set(LUA_INSPECT_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/inspect.lua)
 set(LUA_FS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/fs.lua)
 set(LUA_F_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/F.lua)
+set(LUA_DEFAULTS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_defaults.lua)
 set(LUA_OPTIONS_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_options.lua)
 set(LUA_FILETYPE_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/filetype.lua)
 set(LUA_INIT_PACKAGES_MODULE_SOURCE ${NVIM_RUNTIME_DIR}/lua/vim/_init_packages.lua)
@@ -535,6 +536,7 @@ add_custom_command(
       ${LUA_F_MODULE_SOURCE} "vim.F"
       ${LUA_KEYMAP_MODULE_SOURCE} "vim.keymap"
       ${LUA_LOADER_MODULE_SOURCE} "vim.loader"
+      ${LUA_DEFAULTS_MODULE_SOURCE} "vim._defaults"
       ${LUA_OPTIONS_MODULE_SOURCE} "vim._options"
       ${LUA_SHARED_MODULE_SOURCE} "vim.shared"
   DEPENDS
@@ -547,6 +549,7 @@ add_custom_command(
     ${LUA_F_MODULE_SOURCE}
     ${LUA_KEYMAP_MODULE_SOURCE}
     ${LUA_LOADER_MODULE_SOURCE}
+    ${LUA_DEFAULTS_MODULE_SOURCE}
     ${LUA_OPTIONS_MODULE_SOURCE}
     ${LUA_SHARED_MODULE_SOURCE}
   VERBATIM

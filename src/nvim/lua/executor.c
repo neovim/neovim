@@ -2291,3 +2291,17 @@ plain:
   kv_printf(str, "<Lua %d>", ref);
   return str.items;
 }
+
+/// Execute the vim._defaults module to set up default mappings and autocommands
+void nlua_init_defaults(void)
+{
+  lua_State *const L = global_lstate;
+  assert(L);
+
+  lua_getglobal(L, "require");
+  lua_pushstring(L, "vim._defaults");
+  if (nlua_pcall(L, 1, 0)) {
+    os_errmsg(lua_tostring(L, -1));
+    os_errmsg("\n");
+  }
+}

@@ -413,14 +413,7 @@ int main(int argc, char **argv)
 
   open_script_files(&params);
 
-  // Default mappings (incl. menus) & autocommands
-  Error err = ERROR_INIT;
-  Object o = NLUA_EXEC_STATIC("return vim._init_defaults()",
-                              (Array)ARRAY_DICT_INIT, &err);
-  assert(!ERROR_SET(&err));
-  api_clear_error(&err);
-  assert(o.type == kObjectTypeNil);
-  api_free_object(o);
+  nlua_init_defaults();
 
   TIME_MSG("init default mappings & autocommands");
 
