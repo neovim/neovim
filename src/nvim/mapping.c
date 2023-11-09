@@ -2080,7 +2080,7 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
   Dictionary dict = ARRAY_DICT_INIT;
   char *const lhs = str2special_save(mp->m_keys, compatible, !compatible);
   char *const mapmode = map_mode_to_chars(mp->m_mode);
-  varnumber_T noremap_value;
+  int noremap_value;
 
   if (compatible) {
     // Keep old compatible behavior
@@ -2112,9 +2112,9 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
   PUT(dict, "script", INTEGER_OBJ(mp->m_noremap == REMAP_SCRIPT ? 1 : 0));
   PUT(dict, "expr", INTEGER_OBJ(mp->m_expr ? 1 : 0));
   PUT(dict, "silent", INTEGER_OBJ(mp->m_silent ? 1 : 0));
-  PUT(dict, "sid", INTEGER_OBJ((varnumber_T)mp->m_script_ctx.sc_sid));
-  PUT(dict, "lnum", INTEGER_OBJ((varnumber_T)mp->m_script_ctx.sc_lnum));
-  PUT(dict, "buffer", INTEGER_OBJ((varnumber_T)buffer_value));
+  PUT(dict, "sid", INTEGER_OBJ(mp->m_script_ctx.sc_sid));
+  PUT(dict, "lnum", INTEGER_OBJ(mp->m_script_ctx.sc_lnum));
+  PUT(dict, "buffer", INTEGER_OBJ(buffer_value));
   PUT(dict, "nowait", INTEGER_OBJ(mp->m_nowait ? 1 : 0));
   if (mp->m_replace_keycodes) {
     PUT(dict, "replace_keycodes", INTEGER_OBJ(1));
@@ -2593,30 +2593,21 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
     goto fail_and_free;
   }
 
-  bool is_abbrev = false;
-  if (mode.size > 2) {
-    api_set_error(err, kErrorTypeValidation, "Shortname is too long: %s", mode.data);
-    goto fail_and_free;
-  } else if (mode.size == 2) {
-    if ((mode.data[0] != '!' && mode.data[0] != 'i' && mode.data[0] != 'c')
-        || mode.data[1] != 'a') {
-      api_set_error(err, kErrorTypeValidation, "Shortname is too long: %s", mode.data);
-      goto fail_and_free;
-    }
-    is_abbrev = true;
+  char *p = mode.size > 0 ? mode.data : "m";
+  bool forceit = *p == '!';
+  // integer value of the mapping mode, to be passed to do_map()
+  int mode_val = get_map_mode(&p, forceit);
+  if (forceit) {
+    assert(p == mode.data);
+    p++;
   }
-  int mode_val;  // integer value of the mapping mode, to be passed to do_map()
-  char *p = (mode.size) ? mode.data : "m";
-  if (*p == '!') {
-    mode_val = get_map_mode(&p, true);  // mapmode-ic
-  } else {
-    mode_val = get_map_mode(&p, false);
-    if (mode_val == (MODE_VISUAL | MODE_SELECT | MODE_NORMAL | MODE_OP_PENDING) && mode.size > 0) {
-      // get_map_mode() treats unrecognized mode shortnames as ":map".
-      // This is an error unless the given shortname was empty string "".
-      api_set_error(err, kErrorTypeValidation, "Invalid mode shortname: \"%s\"", p);
-      goto fail_and_free;
-    }
+  bool is_abbrev = (mode_val & (MODE_INSERT | MODE_CMDLINE)) != 0 && *p == 'a';
+  if (is_abbrev) {
+    p++;
+  }
+  if (mode.size > 0 && (size_t)(p - mode.data) != mode.size) {
+    api_set_error(err, kErrorTypeValidation, "Invalid mode shortname: \"%s\"", mode.data);
+    goto fail_and_free;
   }
 
   if (parsed_args.lhs_len == 0) {

@@ -488,18 +488,22 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   end)
 
   it('throws errors when given too-long mode shortnames', function()
-    eq('Shortname is too long: map',
-      pcall_err(meths.set_keymap, 'map', 'lhs', 'rhs', {}))
-
-    eq('Shortname is too long: vmap',
-      pcall_err(meths.set_keymap, 'vmap', 'lhs', 'rhs', {}))
-
-    eq('Shortname is too long: xnoremap',
-      pcall_err(meths.set_keymap, 'xnoremap', 'lhs', 'rhs', {}))
-
-    eq('Shortname is too long: map', pcall_err(meths.del_keymap, 'map', 'lhs'))
-    eq('Shortname is too long: vmap', pcall_err(meths.del_keymap, 'vmap', 'lhs'))
-    eq('Shortname is too long: xnoremap', pcall_err(meths.del_keymap, 'xnoremap', 'lhs'))
+    eq('Invalid mode shortname: "a"', pcall_err(meths.set_keymap, 'a', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "oa"', pcall_err(meths.set_keymap, 'oa', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "!o"', pcall_err(meths.set_keymap, '!o', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "!i"', pcall_err(meths.set_keymap, '!i', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "!!"', pcall_err(meths.set_keymap, '!!', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "map"', pcall_err(meths.set_keymap, 'map', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "vmap"', pcall_err(meths.set_keymap, 'vmap', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "xnoremap"', pcall_err(meths.set_keymap, 'xnoremap', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "a"', pcall_err(meths.del_keymap, 'a', 'lhs'))
+    eq('Invalid mode shortname: "oa"', pcall_err(meths.del_keymap, 'oa', 'lhs'))
+    eq('Invalid mode shortname: "!o"', pcall_err(meths.del_keymap, '!o', 'lhs'))
+    eq('Invalid mode shortname: "!i"', pcall_err(meths.del_keymap, '!i', 'lhs'))
+    eq('Invalid mode shortname: "!!"', pcall_err(meths.del_keymap, '!!', 'lhs'))
+    eq('Invalid mode shortname: "map"', pcall_err(meths.del_keymap, 'map', 'lhs'))
+    eq('Invalid mode shortname: "vmap"', pcall_err(meths.del_keymap, 'vmap', 'lhs'))
+    eq('Invalid mode shortname: "xnoremap"', pcall_err(meths.del_keymap, 'xnoremap', 'lhs'))
   end)
 
   it('error on invalid mode shortname', function()
