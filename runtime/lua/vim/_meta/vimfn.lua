@@ -3175,18 +3175,6 @@ function vim.fn.getline(lnum, end_) end
 --- @return any
 function vim.fn.getloclist(nr, what) end
 
---- Returns a |List| of all mappings.  Each List item is a |Dict|,
---- the same as what is returned by |maparg()|, see
---- |mapping-dict|.
----
---- Example to show all mappings with "MultiMatch" in rhs: >
----   echo getmappings()->filter({_, m ->
----     \ match(get(m, 'rhs', ''), 'MultiMatch') >= 0
----     \ })
----
---- @return any
-function vim.fn.getmappings() end
-
 --- Without the {buf} argument returns a |List| with information
 --- about all the global marks. |mark|
 ---
@@ -5006,7 +4994,8 @@ function vim.fn.map(expr1, expr2) end
 --- When {dict} is omitted or zero: Return the rhs of mapping
 --- {name} in mode {mode}.  The returned String has special
 --- characters translated like in the output of the ":map" command
---- listing.
+--- listing. When {dict} is TRUE a dictionary is returned, see
+--- below. To get a list of all mappings see |maplist()|.
 ---
 --- When there is no mapping for {name}, an empty String is
 --- returned if {dict} is FALSE, otherwise returns an empty Dict.
@@ -5111,6 +5100,19 @@ function vim.fn.maparg(name, mode, abbr, dict) end
 --- @param abbr? any
 --- @return any
 function vim.fn.mapcheck(name, mode, abbr) end
+
+--- Returns a |List| of all mappings.  Each List item is a |Dict|,
+--- the same as what is returned by |maparg()|, see
+--- |mapping-dict|.  When {abbr} is there and it is |TRUE| use
+--- abbreviations instead of mappings.
+---
+--- Example to show all mappings with "MultiMatch" in rhs: >vim
+---   echo maplist()->filter({_, m ->
+---     \ match(get(m, 'rhs', ''), 'MultiMatch') >= 0
+---     \ })
+---
+--- @return any
+function vim.fn.maplist() end
 
 --- Like |map()| but instead of replacing items in {expr1} a new
 --- List or Dictionary is created and returned.  {expr1} remains

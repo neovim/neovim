@@ -2282,9 +2282,10 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 }
 
 /// "maplist()" function
-void f_getmappings(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+void f_maplist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
+  const bool abbr = argvars[0].v_type != VAR_UNKNOWN && tv_get_bool(&argvars[0]);
 
   tv_list_alloc_ret(rettv, kListLenUnknown);
 
@@ -2292,7 +2293,16 @@ void f_getmappings(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   for (int buffer_local = 0; buffer_local <= 1; buffer_local++) {
     for (int hash = 0; hash < 256; hash++) {
       mapblock_T *mp;
-      if (buffer_local) {
+      if (abbr) {
+        if (hash > 0) {  // there is only one abbr list
+          break;
+        }
+        if (buffer_local) {
+          mp = curbuf->b_first_abbr;
+        } else {
+          mp = first_abbr;
+        }
+      } else if (buffer_local) {
         mp = curbuf->b_maphash[hash];
       } else {
         mp = maphash[hash];
