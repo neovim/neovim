@@ -2113,6 +2113,7 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
   PUT(dict, "expr", INTEGER_OBJ(mp->m_expr ? 1 : 0));
   PUT(dict, "silent", INTEGER_OBJ(mp->m_silent ? 1 : 0));
   PUT(dict, "sid", INTEGER_OBJ(mp->m_script_ctx.sc_sid));
+  PUT(dict, "scriptversion", INTEGER_OBJ(1));
   PUT(dict, "lnum", INTEGER_OBJ(mp->m_script_ctx.sc_lnum));
   PUT(dict, "buffer", INTEGER_OBJ(buffer_value));
   PUT(dict, "nowait", INTEGER_OBJ(mp->m_nowait ? 1 : 0));

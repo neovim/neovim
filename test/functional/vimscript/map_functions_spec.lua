@@ -26,6 +26,7 @@ describe('maparg()', function()
       rhs='bar',
       expr=0,
       sid=0,
+      scriptversion=1,
       buffer=0,
       nowait=0,
       mode='n',
@@ -157,8 +158,9 @@ describe('maparg()', function()
         mode = 'n',
         noremap = 1,
         nowait = 0,
-        script=0,
+        script = 0,
         sid = 0,
+        scriptversion = 1,
         silent = 0,
         lnum = 0,
       }

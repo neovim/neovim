@@ -6189,6 +6189,7 @@ M.funcs = {
       		     (|mapmode-ic|)
         "sid"	     The script local ID, used for <sid> mappings
       	     (|<SID>|).  Negative for special contexts.
+        "scriptversion"  The version of the script, always 1.
         "lnum"     The line number in "sid", zero if unknown.
         "nowait"   Do not wait for other, longer mappings.
       	     (|:map-<nowait>|).

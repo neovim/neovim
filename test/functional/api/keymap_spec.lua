@@ -32,6 +32,7 @@ describe('nvim_get_keymap', function()
     rhs='bar',
     expr=0,
     sid=0,
+    scriptversion=1,
     buffer=0,
     nowait=0,
     mode='n',
@@ -258,6 +259,7 @@ describe('nvim_get_keymap', function()
       silent=0,
       expr=0,
       sid=0,
+      scriptversion=1,
       buffer=0,
       nowait=0,
       noremap=1,
@@ -327,6 +329,7 @@ describe('nvim_get_keymap', function()
       silent=0,
       expr=0,
       sid=0,
+      scriptversion=1,
       buffer=0,
       nowait=0,
       noremap=1,
@@ -365,6 +368,7 @@ describe('nvim_get_keymap', function()
       silent=0,
       expr=0,
       sid=sid_lua,
+      scriptversion=1,
       buffer=0,
       nowait=0,
       mode='n',
@@ -373,7 +377,7 @@ describe('nvim_get_keymap', function()
     }, mapargs[1])
   end)
 
-  it ('can handle map descriptions', function()
+  it('can handle map descriptions', function()
     meths.set_keymap('n', 'lhs', 'rhs', {desc="map description"})
     eq({
       lhs='lhs',
@@ -383,6 +387,7 @@ describe('nvim_get_keymap', function()
       silent=0,
       expr=0,
       sid=sid_api_client,
+      scriptversion=1,
       buffer=0,
       nowait=0,
       mode='n',
@@ -429,6 +434,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     to_return.nowait = not opts.nowait and 0 or 1
     to_return.expr = not opts.expr and 0 or 1
     to_return.sid = not opts.sid and sid_api_client or opts.sid
+    to_return.scriptversion = 1
     to_return.buffer = not opts.buffer and 0 or opts.buffer
     to_return.lnum = not opts.lnum and 0 or opts.lnum
     to_return.desc = opts.desc
