@@ -169,10 +169,8 @@ static void wildescape(expand_T *xp, const char *str, int numfiles, char **files
       } else if (xp->xp_backslash & XP_BS_COMMA) {
         if (vim_strchr(files[i], ',') != NULL) {
           p = vim_strsave_escaped(files[i], ",");
-          if (p != NULL) {
-            xfree(files[i]);
-            files[i] = p;
-          }
+          xfree(files[i]);
+          files[i] = p;
         }
       }
 #ifdef BACKSLASH_IN_FILENAME
