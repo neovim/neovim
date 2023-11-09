@@ -1,4 +1,4 @@
-" Tests for maparg(), mapcheck() and mapset().
+" Tests for maparg(), mapcheck(), mapset(), maplist()
 " Also test utf8 map with a 0x80 byte.
 
 source shared.vim
@@ -19,28 +19,41 @@ func Test_maparg()
   call assert_equal("is<F4>foo", maparg('foo<C-V>'))
   call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'foo<C-V>',
         \ 'lhsraw': "foo\x80\xfc\x04V", 'lhsrawalt': "foo\x16",
-        \ 'mode': ' ', 'nowait': 0, 'expr': 0, 'sid': sid, 'lnum': lnum + 1, 
-	\ 'rhs': 'is<F4>foo', 'buffer': 0},
+        \ 'mode': ' ', 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
+        \ 'lnum': lnum + 1, 
+	\ 'rhs': 'is<F4>foo', 'buffer': 0, 'abbr': 0, 'mode_bits': 0x47},
 	\ maparg('foo<C-V>', '', 0, 1))
   call assert_equal({'silent': 1, 'noremap': 1, 'script': 1, 'lhs': 'bar',
         \ 'lhsraw': 'bar', 'mode': 'v',
-        \ 'nowait': 0, 'expr': 1, 'sid': sid, 'lnum': lnum + 2,
-	\ 'rhs': 'isbar', 'buffer': 1},
+        \ 'nowait': 0, 'expr': 1, 'sid': sid, 'scriptversion': 1,
+        \ 'lnum': lnum + 2,
+	\ 'rhs': 'isbar', 'buffer': 1, 'abbr': 0, 'mode_bits': 0x42},
         \ 'bar'->maparg('', 0, 1))
   let lnum = expand('<sflnum>')
   map <buffer> <nowait> foo bar
   call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'foo',
         \ 'lhsraw': 'foo', 'mode': ' ',
-        \ 'nowait': 1, 'expr': 0, 'sid': sid, 'lnum': lnum + 1, 'rhs': 'bar',
-	\ 'buffer': 1},
+        \ 'nowait': 1, 'expr': 0, 'sid': sid, 'scriptversion': 1,
+        \ 'lnum': lnum + 1, 'rhs': 'bar',
+	\ 'buffer': 1, 'abbr': 0, 'mode_bits': 0x47},
         \ maparg('foo', '', 0, 1))
   let lnum = expand('<sflnum>')
   tmap baz foo
   call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'baz',
         \ 'lhsraw': 'baz', 'mode': 't',
-        \ 'nowait': 0, 'expr': 0, 'sid': sid, 'lnum': lnum + 1, 'rhs': 'foo',
-	\ 'buffer': 0},
+        \ 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
+        \ 'lnum': lnum + 1, 'rhs': 'foo',
+        \ 'buffer': 0, 'abbr': 0, 'mode_bits': 0x80},
         \ maparg('baz', 't', 0, 1))
+  let lnum = expand('<sflnum>')
+  iab A B
+  call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'A',
+        \ 'lhsraw': 'A', 'mode': 'i',
+        \ 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
+        \ 'lnum': lnum + 1, 'rhs': 'B',
+	\ 'buffer': 0, 'abbr': 1, 'mode_bits': 0x0010},
+        \ maparg('A', 'i', 1, 1))
+  iuna A
 
   map abc x<char-114>x
   call assert_equal("xrx", maparg('abc'))
@@ -274,6 +287,152 @@ func Test_mapset()
   call assert_fails('call mapset("i", 0, {})', 'E460:')
 endfunc
 
+func Test_mapset_arg1_dir()
+  " This test is mostly about get_map_mode_string.
+  " Once the code gets past that, it's common with the 3 arg mapset.
+
+  " GetModes() return list of modes for 'XZ' lhs using maplist.
+  " There is one list item per mapping
+  func s:GetModes(abbr = v:false)
+    return maplist(a:abbr)->filter({_, m -> m.lhs == 'XZ'})
+              \ ->mapnew({_, m -> m.mode})
+  endfunc
+
+  func s:UnmapAll(lhs)
+    const unmap_cmds = [ 'unmap', 'unmap!', 'tunmap', 'lunmap' ]
+    for cmd in unmap_cmds
+      try | call execute(cmd .. ' ' .. a:lhs) | catch /E31/ | endtry
+    endfor
+  endfunc
+
+  let tmap = {}
+
+  " some mapset(mode, abbr, dict) tests using get_map_mode_str
+  map XZ x
+  let tmap = maplist()->filter({_, m -> m.lhs == 'XZ'})[0]->copy()
+  " this splits the mapping into 2 mappings
+  call mapset('ox', v:false, tmap)
+  call assert_equal(2, len(s:GetModes()))
+  call mapset('o', v:false, tmap)
+  call assert_equal(3, len(s:GetModes()))
+  " test that '' acts like ' ', and that the 3 mappings become 1
+  call mapset('', v:false, tmap)
+  call assert_equal([' '], s:GetModes())
+  " dict's mode/abbr are ignored
+  call s:UnmapAll('XZ')
+  let tmap.mode = '!'
+  let tmap.abbr = v:true
+  call mapset('o', v:false, tmap)
+  call assert_equal(['o'], s:GetModes())
+
+  " test the 3 arg version handles bad mode string, dict not used
+  call assert_fails("call mapset('vi', v:false, {})", 'E1276:')
+
+
+  " get the abbreviations out of the way
+  abbreviate XZ ZX
+  let tmap = maplist(v:true)->filter({_, m -> m.lhs == 'XZ'})[0]->copy()
+
+  abclear
+  " 'ic' is the default ab command, shows up as '!'
+  let tmap.mode = 'ic'
+  call mapset(tmap)
+  call assert_equal(['!'], s:GetModes(v:true))
+
+  abclear
+  let tmap.mode = 'i'
+  call mapset(tmap)
+  call assert_equal(['i'], s:GetModes(v:true))
+
+  abclear
+  let tmap.mode = 'c'
+  call mapset(tmap)
+  call assert_equal(['c'], s:GetModes(v:true))
+
+  abclear
+  let tmap.mode = '!'
+  call mapset(tmap)
+  call assert_equal(['!'], s:GetModes(v:true))
+
+  call assert_fails("call mapset(#{mode: ' !', abbr: 1})", 'E1276:')
+  call assert_fails("call mapset(#{mode: 'cl', abbr: 1})", 'E1276:')
+  call assert_fails("call mapset(#{mode: 'in', abbr: 1})", 'E1276:')
+
+  " the map commands
+  map XZ x
+  let tmap = maplist()->filter({_, m -> m.lhs == 'XZ'})[0]->copy()
+
+  " try the combos
+  call s:UnmapAll('XZ')
+  " 'nxso' is ' ', the unadorned :map
+  let tmap.mode = 'nxso'
+  call mapset(tmap)
+  call assert_equal([' '], s:GetModes())
+
+  cal s:UnmapAll('XZ')
+  " 'ic' is '!'
+  let tmap.mode = 'ic'
+  call mapset(tmap)
+  call assert_equal(['!'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  " 'xs' is really 'v'
+  let tmap.mode = 'xs'
+  call mapset(tmap)
+  call assert_equal(['v'], s:GetModes())
+
+  " try the individual modes
+  call s:UnmapAll('XZ')
+  let tmap.mode = 'n'
+  call mapset(tmap)
+  call assert_equal(['n'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 'x'
+  call mapset(tmap)
+  call assert_equal(['x'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 's'
+  call mapset(tmap)
+  call assert_equal(['s'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 'o'
+  call mapset(tmap)
+  call assert_equal(['o'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 'i'
+  call mapset(tmap)
+  call assert_equal(['i'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 'c'
+  call mapset(tmap)
+  call assert_equal(['c'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 't'
+  call mapset(tmap)
+  call assert_equal(['t'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 'l'
+  call mapset(tmap)
+  call assert_equal(['l'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+
+  " get errors for modes that can't be in one mapping
+  call assert_fails("call mapset(#{mode: 'nxsoi', abbr: 0})", 'E1276:')
+  call assert_fails("call mapset(#{mode: ' !', abbr: 0})", 'E1276:')
+  call assert_fails("call mapset(#{mode: 'ix', abbr: 0})", 'E1276:')
+  call assert_fails("call mapset(#{mode: 'tl', abbr: 0})", 'E1276:')
+  call assert_fails("call mapset(#{mode: ' l', abbr: 0})", 'E1276:')
+  call assert_fails("call mapset(#{mode: ' t', abbr: 0})", 'E1276:')
+endfunc
+
 func Check_ctrlb_map(d, check_alt)
   call assert_equal('<C-B>', a:d.lhs)
   if a:check_alt
@@ -367,5 +526,93 @@ func Test_map_restore_negative_sid()
   endif
   call delete('Xresult')
 endfunc
+
+func Test_maplist()
+  new
+  func s:ClearMappingsAbbreviations()
+    mapclear | nmapclear | vmapclear | xmapclear | smapclear | omapclear
+    mapclear!  | imapclear | lmapclear | cmapclear | tmapclear
+    mapclear <buffer> | nmapclear <buffer> | vmapclear <buffer>
+    xmapclear <buffer> | smapclear <buffer> | omapclear <buffer>
+    mapclear! <buffer> | imapclear <buffer> | lmapclear <buffer>
+    cmapclear <buffer> | tmapclear <buffer>
+    abclear | abclear <buffer>
+  endfunc
+
+  func s:AddMaps(new, accum)
+    if len(a:new) > 0 && a:new[0] != "No mapping found"
+      eval a:accum->extend(a:new)
+    endif
+  endfunc
+
+  call s:ClearMappingsAbbreviations()
+  call assert_equal(0, len(maplist()))
+  call assert_equal(0, len(maplist(v:true)))
+
+  " Set up some mappings.
+  map dup bar
+  map <buffer> dup bufbar
+  map foo<C-V> is<F4>foo
+  vnoremap <script> <buffer> <expr> <silent> bar isbar
+  tmap baz foo
+  omap h w
+  lmap i w
+  nmap j w
+  xmap k w
+  smap l w
+  map abc <Nop>
+  nmap <M-j> x
+  nmap <M-Space> y
+  " And abbreviations
+  abbreviate xy he
+  abbreviate xx she
+  abbreviate <buffer> x they
+
+  " Get a list of the mappings with the ':map' commands.
+  " Check maplist() return a list of the same size.
+  call assert_equal(13, len(maplist()))
+  call assert_equal(3, len(maplist(v:true)))
+  call assert_equal(13, len(maplist(v:false)))
+
+  " collect all the current maps using :map commands
+  let maps_command = []
+  call s:AddMaps(split(execute('map'), '\n'), maps_command)
+  call s:AddMaps(split(execute('map!'), '\n'), maps_command)
+  call s:AddMaps(split(execute('tmap'), '\n'), maps_command)
+  call s:AddMaps(split(execute('lmap'), '\n'), maps_command)
+
+  " Use maplist to get all the maps
+  let maps_maplist = maplist()
+  call assert_equal(len(maps_command), len(maps_maplist))
+
+  " make sure all the mode-lhs are unique, no duplicates
+  let map_set = {}
+  for d in maps_maplist
+    let map_set[d.mode .. "-" .. d.lhs .. "-" .. d.buffer] = 0
+  endfor
+  call assert_equal(len(maps_maplist), len(map_set))
+
+  " For everything returned by maplist, should be the same as from maparg.
+  " Except for "map dup", bacause maparg returns the <buffer> version
+  for d in maps_maplist
+    if d.lhs == 'dup' && d.buffer == 0
+      continue
+    endif
+    let d_maparg = maparg(d.lhs, d.mode, v:false, v:true)
+    call assert_equal(d_maparg, d)
+  endfor
+
+  " Check abbr matches maparg
+  for d in maplist(v:true)
+    " Note, d.mode is '!', but can't use that with maparg
+    let d_maparg = maparg(d.lhs, 'i', v:true, v:true)
+    call assert_equal(d_maparg, d)
+  endfor
+
+  call s:ClearMappingsAbbreviations()
+  call assert_equal(0, len(maplist()))
+  call assert_equal(0, len(maplist(v:true)))
+endfunc
+
 
 " vim: shiftwidth=2 sts=2 expandtab

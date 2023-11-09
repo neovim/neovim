@@ -955,7 +955,7 @@ operator to add quotes around text in the current line: >
 				\ ->setline(".")}'<CR>g@
 
 ==============================================================================
-2. Abbreviations			*abbreviations* *Abbreviations*
+2. Abbreviations		*abbreviation* *abbreviations* *Abbreviations*
 
 Abbreviations are used in Insert mode, Replace mode and Command-line mode.
 If you enter a word that is an abbreviation, it is replaced with the word it

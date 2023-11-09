@@ -6142,7 +6142,8 @@ M.funcs = {
       When {dict} is omitted or zero: Return the rhs of mapping
       {name} in mode {mode}.  The returned String has special
       characters translated like in the output of the ":map" command
-      listing.
+      listing. When {dict} is TRUE a dictionary is returned, see
+      below. To get a list of all mappings see |maplist()|.
 
       When there is no mapping for {name}, an empty String is
       returned if {dict} is FALSE, otherwise returns an empty Dict.
@@ -6170,7 +6171,7 @@ M.funcs = {
 
       When {dict} is there and it is |TRUE| return a dictionary
       containing all the information of the mapping with the
-      following items:
+      following items:			*mapping-dict*
         "lhs"	     The {lhs} of the mapping as it would be typed
         "lhsraw"   The {lhs} of the mapping as raw bytes
         "lhsrawalt" The {lhs} of the mapping as raw bytes, alternate
@@ -6189,9 +6190,16 @@ M.funcs = {
       		     (|mapmode-ic|)
         "sid"	     The script local ID, used for <sid> mappings
       	     (|<SID>|).  Negative for special contexts.
+        "scriptversion"  The version of the script, always 1.
         "lnum"     The line number in "sid", zero if unknown.
         "nowait"   Do not wait for other, longer mappings.
       	     (|:map-<nowait>|).
+        "abbr"     True if this is an |abbreviation|.
+        "mode_bits" Nvim's internal binary representation of "mode".
+      	     |mapset()| ignores this; only "mode" is used.
+      	     See |maplist()| for usage examples. The values
+      	     are from src/nvim/vim.h and may change in the
+      	     future.
 
       The dictionary can be used to restore a mapping with
       |mapset()|.
@@ -6254,6 +6262,43 @@ M.funcs = {
     params = { { 'name', 'string' }, { 'mode', 'string' }, { 'abbr', 'any' } },
     signature = 'mapcheck({name} [, {mode} [, {abbr}]])',
   },
+  maplist = {
+    args = { 0, 1 },
+    desc = [[
+      Returns a |List| of all mappings.  Each List item is a |Dict|,
+      the same as what is returned by |maparg()|, see
+      |mapping-dict|.  When {abbr} is there and it is |TRUE| use
+      abbreviations instead of mappings.
+
+      Example to show all mappings with "MultiMatch" in rhs: >vim
+      	echo maplist()->filter({_, m ->
+      		\ match(get(m, 'rhs', ''), 'MultiMatch') >= 0
+      		\ })
+      <It can be tricky to find mappings for particular |:map-modes|.
+      |mapping-dict|'s "mode_bits" can simplify this. For example,
+      the mode_bits for Normal, Insert or Command-line modes are
+      0x19. To find all the mappings available in those modes you
+      can do: >vim
+      	let saved_maps = []
+      	for m in maplist()
+      	    if and(m.mode_bits, 0x19) != 0
+      		eval saved_maps->add(m)
+      	    endif
+      	endfor
+      	echo saved_maps->mapnew({_, m -> m.lhs})
+      <The values of the mode_bits are defined in Nvim's
+      src/nvim/vim.h file and they can be discovered at runtime
+      using |:map-commands| and "maplist()". Example: >vim
+      	omap xyzzy <Nop>
+      	let op_bit = maplist()->filter(
+      	    \ {_, m -> m.lhs == 'xyzzy'})[0].mode_bits
+      	ounmap xyzzy
+      	echo printf("Operator-pending mode bit: 0x%x", op_bit)
+    ]],
+    name = 'maplist',
+    params = {},
+    signature = 'maplist([{abbr}])'
+  },
   mapnew = {
     args = 2,
     base = 1,
@@ -6268,12 +6313,20 @@ M.funcs = {
     signature = 'mapnew({expr1}, {expr2})',
   },
   mapset = {
-    args = 3,
+    args = { 1, 3 },
     base = 1,
     desc = [=[
-      Restore a mapping from a dictionary returned by |maparg()|.
-      {mode} and {abbr} should be the same as for the call to
-      |maparg()|. *E460*
+      Restore a mapping from a dictionary, possibly returned by
+      |maparg()| or |maplist()|.  A buffer mapping, when dict.buffer
+      is true, is set on the current buffer; it is up to the caller
+      to ensure that the intended buffer is the current buffer. This
+      feature allows copying mappings from one buffer to another.
+      The dict.mode value may restore a single mapping that covers
+      more than one mode, like with mode values of '!', ' ', "nox",
+      or 'v'. *E1276*
+
+      In the first form, {mode} and {abbr} should be the same as
+      for the call to |maparg()|. *E460*
       {mode} is used to define the mode in which the mapping is set,
       not the "mode" entry in {dict}.
       Example for saving and restoring a mapping: >vim
@@ -6282,8 +6335,21 @@ M.funcs = {
       	" ...
       	call mapset('n', 0, save_map)
       <Note that if you are going to replace a map in several modes,
-      e.g. with `:map!`, you need to save the mapping for all of
-      them, since they can differ.
+      e.g. with `:map!`, you need to save/restore the mapping for
+      all of them, when they might differ.
+
+      In the second form, with {dict} as the only argument, mode
+      and abbr are taken from the dict.
+      Example: >vim
+      	let save_maps = maplist()->filter(
+      				\ {_, m -> m.lhs == 'K'})
+      	nnoremap K somethingelse
+      	cnoremap K somethingelse2
+      	" ...
+      	unmap K
+      	for d in save_maps
+      	    call mapset(d)
+      	endfor
     ]=],
     name = 'mapset',
     params = { { 'mode', 'string' }, { 'abbr', 'any' }, { 'dict', 'any' } },
