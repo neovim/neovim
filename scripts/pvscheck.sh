@@ -374,6 +374,8 @@ run_analysis() {(
       --lic-file PVS-Studio.lic \
       --threads "$(get_jobs_num)" \
       --exclude-path src/cjson \
+      --exclude-path src/klib \
+      --exclude-path src/mpack \
       --exclude-path src/xdiff \
       --exclude-path build \
       --output-file PVS-studio.log \
