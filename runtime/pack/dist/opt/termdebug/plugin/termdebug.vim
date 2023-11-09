@@ -2,7 +2,7 @@
 "
 " Author: Bram Moolenaar
 " Copyright: Vim license applies, see ":help license"
-" Last Change: 2023 Aug 23
+" Last Change: 2023 Nov 02
 "
 " WORK IN PROGRESS - The basics works stable, more to come
 " Note: In general you need at least GDB 7.12 because this provides the
@@ -1024,7 +1024,9 @@ func s:InstallCommands()
   endif
   if map
     let s:k_map_saved = maparg('K', 'n', 0, 1)
-    nnoremap K :Evaluate<CR>
+    if !empty(s:k_map_saved) && !s:k_map_saved.buffer || empty(s:k_map_saved)
+      nnoremap K :Evaluate<CR>
+    endif
   endif
 
   let map = 1
@@ -1033,7 +1035,9 @@ func s:InstallCommands()
   endif
   if map
     let s:plus_map_saved = maparg('+', 'n', 0, 1)
-    nnoremap <expr> + $'<Cmd>{v:count1}Up<CR>'
+    if !empty(s:plus_map_saved) && !s:plus_map_saved.buffer || empty(s:plus_map_saved)
+      nnoremap <expr> + $'<Cmd>{v:count1}Up<CR>'
+    endif
   endif
 
   let map = 1
@@ -1042,7 +1046,9 @@ func s:InstallCommands()
   endif
   if map
     let s:minus_map_saved = maparg('-', 'n', 0, 1)
-    nnoremap <expr> - $'<Cmd>{v:count1}Down<CR>'
+    if !empty(s:minus_map_saved) && !s:minus_map_saved.buffer || empty(s:minus_map_saved)
+      nnoremap <expr> - $'<Cmd>{v:count1}Down<CR>'
+    endif
   endif
 
 
@@ -1108,29 +1114,32 @@ func s:DeleteCommands()
   delcommand Winbar
 
   if exists('s:k_map_saved')
-    if empty(s:k_map_saved)
+    if !empty(s:k_map_saved) && !s:k_map_saved.buffer
       nunmap K
-    else
       " call mapset(s:k_map_saved)
       call mapset('n', 0, s:k_map_saved)
+    elseif empty(s:k_map_saved)
+      nunmap K
     endif
     unlet s:k_map_saved
   endif
   if exists('s:plus_map_saved')
-    if empty(s:plus_map_saved)
+    if !empty(s:plus_map_saved) && !s:plus_map_saved.buffer
       nunmap +
-    else
       " call mapset(s:plus_map_saved)
       call mapset('n', 0, s:plus_map_saved)
+    elseif empty(s:plus_map_saved)
+      nunmap +
     endif
     unlet s:plus_map_saved
   endif
   if exists('s:minus_map_saved')
-    if empty(s:minus_map_saved)
+    if !empty(s:minus_map_saved) && !s:minus_map_saved.buffer
       nunmap -
-    else
       " call mapset(s:minus_map_saved)
       call mapset('n', 0, s:minus_map_saved)
+    elseif empty(s:minus_map_saved)
+      nunmap -
     endif
     unlet s:minus_map_saved
   endif
@@ -1926,3 +1935,5 @@ call s:InitAutocmd()
 
 let &cpo = s:keepcpo
 unlet s:keepcpo
+
+" vim: sw=2 sts=2 et
