@@ -1,5 +1,5 @@
 " Vim filetype plugin file
-" Language:     Wget configuration file (/etc/wgetrc ~/.wgetrc)
+" Language:	Wget configuration file (/etc/wgetrc ~/.wgetrc)
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
 " Last Change:	2022 Apr 28
 
@@ -18,7 +18,7 @@ setlocal formatoptions-=t formatoptions+=croql
 let b:undo_ftplugin = "setl fo< com< cms<"
 
 if (has("gui_win32") || has("gui_gtk")) && !exists("b:browsefilter")
-  let b:browsefilter = "Wget Configuration File (wgetrc, .wgetrc)\twgetrc;.wgetrc\n" .
+  let b:browsefilter = "Wget Configuration File (wgetrc, .wgetrc)\twgetrc;.wgetrc\n" ..
 	\	       "All Files (*.*)\t*.*\n"
   let b:undo_ftplugin ..= " | unlet! b:browsefilter"
 endif
