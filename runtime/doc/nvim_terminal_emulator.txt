@@ -401,20 +401,20 @@ If there is no g:termdebug_config you can use: >vim
 <
 Mappings ~
 					*termdebug_map_K* *termdebug-mappings*
-The K key is normally mapped to |:Evaluate| unless there already exists a
-buffer local mapping to K |:map-local|.  If you do not want this use: >vim
+The K key is normally mapped to |:Evaluate| unless a buffer local (|:map-local|)
+mapping to K already exists.  If you do not want this use: >vim
 	let g:termdebug_config['map_K'] = 0
 If there is no g:termdebug_config you can use: >vim
 	let g:termdebug_map_K = 0
 <
 						*termdebug_map_minus*
-The - key is normally mapped to |:Down| unless there already exists a buffer
-local mapping to the - key.  If you do not want this use: >vim
+The - key is normally mapped to |:Down| unless a buffer local mapping to the -
+key already exists.  If you do not want this use: >vim
 	let g:termdebug_config['map_minus'] = 0
 <
 						*termdebug_map_plus*
-The + key is normally mapped to |:Up| unless there already exists a buffer
-local mapping to the + key.  If you do not want this use: >vim
+The + key is normally mapped to |:Up| unless a buffer local mapping to the +
+key already exists.  If you do not want this use: >vim
 	let g:termdebug_config['map_plus'] = 0
 <
 						*termdebug_disasm_window*
