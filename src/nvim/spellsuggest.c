@@ -3146,7 +3146,7 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char *goodword, i
   if (i < 0) {
     // Add a suggestion.
     stp = GA_APPEND_VIA_PTR(suggest_T, gap);
-    stp->st_word = xstrnsave(goodword, (size_t)goodlen);
+    stp->st_word = xmemdupz(goodword, (size_t)goodlen);
     stp->st_wordlen = goodlen;
     stp->st_score = score;
     stp->st_altscore = altscore;

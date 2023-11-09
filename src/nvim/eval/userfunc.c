@@ -1625,7 +1625,7 @@ int call_func(const char *funcname, int len, typval_T *rettv, int argcount_in, t
   if (fp == NULL) {
     // Make a copy of the name, if it comes from a funcref variable it could
     // be changed or deleted in the called function.
-    name = xstrnsave(funcname, (size_t)len);
+    name = xmemdupz(funcname, (size_t)len);
     fname = fname_trans_sid(name, fname_buf, &tofree, &error);
   }
 
@@ -2089,7 +2089,7 @@ char *save_function_name(char **name, bool skip, int flags, funcdict_T *fudi)
   if (strncmp(p, "<lambda>", 8) == 0) {
     p += 8;
     (void)getdigits(&p, false, 0);
-    saved = xstrndup(*name, (size_t)(p - *name));
+    saved = xmemdupz(*name, (size_t)(p - *name));
     if (fudi != NULL) {
       CLEAR_POINTER(fudi);
     }
@@ -2573,12 +2573,12 @@ void ex_function(exarg_T *eap)
         if (strncmp(p, "trim", 4) == 0) {
           // Ignore leading white space.
           p = skipwhite(p + 4);
-          heredoc_trimmed = xstrnsave(theline, (size_t)(skipwhite(theline) - theline));
+          heredoc_trimmed = xmemdupz(theline, (size_t)(skipwhite(theline) - theline));
         }
         if (*p == NUL) {
           skip_until = xstrdup(".");
         } else {
-          skip_until = xstrnsave(p, (size_t)(skiptowhite(p) - p));
+          skip_until = xmemdupz(p, (size_t)(skiptowhite(p) - p));
         }
         do_concat = false;
         is_heredoc = true;
@@ -2598,7 +2598,7 @@ void ex_function(exarg_T *eap)
             if (strncmp(p, "trim", 4) == 0) {
               // Ignore leading white space.
               p = skipwhite(p + 4);
-              heredoc_trimmed = xstrnsave(theline, (size_t)(skipwhite(theline) - theline));
+              heredoc_trimmed = xmemdupz(theline, (size_t)(skipwhite(theline) - theline));
               continue;
             }
             if (strncmp(p, "eval", 4) == 0) {
@@ -2608,7 +2608,7 @@ void ex_function(exarg_T *eap)
             }
             break;
           }
-          skip_until = xstrnsave(p, (size_t)(skiptowhite(p) - p));
+          skip_until = xmemdupz(p, (size_t)(skiptowhite(p) - p));
           do_concat = false;
           is_heredoc = true;
         }

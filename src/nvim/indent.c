@@ -960,7 +960,7 @@ void ex_retab(exarg_T *eap)
     return;
   }
   while (ascii_isdigit(*(eap->arg)) || *(eap->arg) == ',') {
-    (eap->arg)++;
+    eap->arg++;
   }
 
   // This ensures that either new_vts_array and new_ts_str are freshly
@@ -970,7 +970,7 @@ void ex_retab(exarg_T *eap)
     new_vts_array = curbuf->b_p_vts_array;
     new_ts_str = NULL;
   } else {
-    new_ts_str = xstrnsave(new_ts_str, (size_t)(eap->arg - new_ts_str));
+    new_ts_str = xmemdupz(new_ts_str, (size_t)(eap->arg - new_ts_str));
   }
   for (lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
     char *ptr = ml_get(lnum);

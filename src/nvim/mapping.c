@@ -1654,7 +1654,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
     Array args = ARRAY_DICT_INIT;
     Object ret = nlua_call_ref(mp->m_luaref, NULL, args, true, &err);
     if (ret.type == kObjectTypeString) {
-      p = xstrndup(ret.data.string.data, ret.data.string.size);
+      p = string_to_cstr(ret.data.string);
     }
     api_free_object(ret);
     if (err.type != kErrorTypeNone) {

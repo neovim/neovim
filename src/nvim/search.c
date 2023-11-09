@@ -1629,7 +1629,7 @@ static bool find_rawstring_end(char *linep, pos_T *startpos, pos_T *endpos)
   for (p = linep + startpos->col + 1; *p && *p != '('; p++) {}
 
   size_t delim_len = (size_t)((p - linep) - startpos->col - 1);
-  char *delim_copy = xstrnsave(linep + startpos->col + 1, delim_len);
+  char *delim_copy = xmemdupz(linep + startpos->col + 1, delim_len);
   bool found = false;
   for (lnum = startpos->lnum; lnum <= endpos->lnum; lnum++) {
     char *line = ml_get(lnum);

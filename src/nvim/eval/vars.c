@@ -274,7 +274,7 @@ list_T *heredoc_get(exarg_T *eap, char *cmd, bool script_get)
         p++;
         text_indent_len++;
       }
-      text_indent = xstrnsave(theline, (size_t)text_indent_len);
+      text_indent = xmemdupz(theline, (size_t)text_indent_len);
     }
     // with "trim": skip the indent matching the first line
     if (text_indent != NULL) {

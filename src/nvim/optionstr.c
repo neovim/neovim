@@ -635,7 +635,7 @@ static int expand_set_opt_listflag(optexpand_T *args, char *flags, int *numMatch
         // existing flag. Just skip it to avoid duplicate.
         continue;
       }
-      (*matches)[count++] = xstrnsave(flag, 1);
+      (*matches)[count++] = xmemdupz(flag, 1);
     }
   }
 

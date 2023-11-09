@@ -707,7 +707,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
             && tagp2.user_data) {
           XFREE_CLEAR(tagstack[tagstackidx].user_data);
           tagstack[tagstackidx].user_data =
-            xstrnsave(tagp2.user_data, (size_t)(tagp2.user_data_end - tagp2.user_data));
+            xmemdupz(tagp2.user_data, (size_t)(tagp2.user_data_end - tagp2.user_data));
         }
 
         tagstackidx++;

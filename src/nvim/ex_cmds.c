@@ -2816,7 +2816,7 @@ void ex_append(exarg_T *eap)
       if (p == NULL) {
         p = eap->nextcmd + strlen(eap->nextcmd);
       }
-      theline = xstrnsave(eap->nextcmd, (size_t)(p - eap->nextcmd));
+      theline = xmemdupz(eap->nextcmd, (size_t)(p - eap->nextcmd));
       if (*p != NUL) {
         p++;
       }

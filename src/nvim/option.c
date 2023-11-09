@@ -630,7 +630,7 @@ void set_init_3(void)
 
   size_t len = 0;
   char *p = (char *)invocation_path_tail(p_sh, &len);
-  p = xstrnsave(p, len);
+  p = xmemdupz(p, len);
 
   {
     //
@@ -5749,7 +5749,7 @@ int ExpandSettingSubtract(expand_T *xp, regmatch_T *regmatch, int *numMatches, c
       // If more than one flags, split the flags up and expose each
       // character as individual choice.
       for (char *flag = option_val; *flag != NUL; flag++) {
-        (*matches)[count++] = xstrnsave(flag, 1);
+        (*matches)[count++] = xmemdupz(flag, 1);
       }
     }
 

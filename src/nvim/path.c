@@ -1374,7 +1374,7 @@ static int expand_backtick(garray_T *gap, char *pat, int flags)
   int cnt = 0;
 
   // Create the command: lop off the backticks.
-  char *cmd = xstrnsave(pat + 1, strlen(pat) - 2);
+  char *cmd = xmemdupz(pat + 1, strlen(pat) - 2);
 
   if (*cmd == '=') {          // `={expr}`: Expand expression
     buffer = eval_to_string(cmd + 1, true);

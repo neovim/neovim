@@ -1993,7 +1993,7 @@ static char *next_fenc(char **pp, bool *alloced)
     r = enc_canonize(*pp);
     *pp += strlen(*pp);
   } else {
-    r = xstrnsave(*pp, (size_t)(p - *pp));
+    r = xmemdupz(*pp, (size_t)(p - *pp));
     *pp = p + 1;
     p = enc_canonize(r);
     xfree(r);
