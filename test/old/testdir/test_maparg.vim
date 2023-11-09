@@ -372,4 +372,76 @@ func Test_map_restore_negative_sid()
   call delete('Xresult')
 endfunc
 
+func Test_getmappings()
+  new
+  func s:ClearMaps()
+    mapclear | nmapclear | vmapclear | xmapclear | smapclear | omapclear
+    mapclear!  | imapclear | lmapclear | cmapclear | tmapclear
+    mapclear <buffer> | nmapclear <buffer> | vmapclear <buffer>
+    xmapclear <buffer> | smapclear <buffer> | omapclear <buffer>
+    mapclear! <buffer> | imapclear <buffer> | lmapclear <buffer>
+    cmapclear <buffer> | tmapclear <buffer>
+  endfunc
+
+  func s:AddMaps(new, accum)
+    if len(a:new) > 0 && a:new[0] != "No mapping found"
+      eval a:accum->extend(a:new)
+    endif
+  endfunc
+
+  call s:ClearMaps()
+  call assert_equal(0, len(getmappings()))
+
+  " Set up some mappings.
+  map dup bar
+  map <buffer> dup bufbar
+  map foo<C-V> is<F4>foo
+  vnoremap <script> <buffer> <expr> <silent> bar isbar
+  tmap baz foo
+  omap h w
+  lmap i w
+  nmap j w
+  xmap k w
+  smap l w
+  map abc <Nop>
+  nmap <M-j> x
+  nmap <M-Space> y
+
+  " Get a list of the mappings with the ':map' commands.
+  " Check getmappings() return a list of the same size.
+  call assert_equal(13, len(getmappings()))
+
+  " collect all the current maps using :map commands
+  let maps_command = []
+  call s:AddMaps(split(execute('map'), '\n'), maps_command)
+  call s:AddMaps(split(execute('map!'), '\n'), maps_command)
+  call s:AddMaps(split(execute('tmap'), '\n'), maps_command)
+  call s:AddMaps(split(execute('lmap'), '\n'), maps_command)
+
+  " Use getmappings to get all the maps
+  let maps_getmappings = getmappings()
+  call assert_equal(len(maps_command), len(maps_getmappings))
+
+  " make sure all the mode-lhs are unique, no duplicates
+  let map_set = {}
+  for d in maps_getmappings
+    let map_set[d.mode .. "-" .. d.lhs .. "-" .. d.buffer] = 0
+  endfor
+  call assert_equal(len(maps_getmappings), len(map_set))
+
+  " For everything returned by getmappings, should be the same as from maparg.
+  " Except for "map dup", bacause maparg returns the <buffer> version
+  for d in maps_getmappings
+    if d.lhs == 'dup' && d.buffer == 0
+      continue
+    endif
+    let d_maparg = maparg(d.lhs, d.mode, v:false, v:true)
+    call assert_equal(d_maparg, d)
+  endfor
+
+  call s:ClearMaps()
+  call assert_equal(0, len(getmappings()))
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -2281,6 +2281,49 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
           sid, lnum, false);
 }
 
+/// "maplist()" function
+void f_getmappings(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
+{
+  const int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
+
+  tv_list_alloc_ret(rettv, kListLenUnknown);
+
+  // Do it twice: once for global maps and once for local maps.
+  for (int buffer_local = 0; buffer_local <= 1; buffer_local++) {
+    for (int hash = 0; hash < 256; hash++) {
+      mapblock_T *mp;
+      if (buffer_local) {
+        mp = curbuf->b_maphash[hash];
+      } else {
+        mp = maphash[hash];
+      }
+      for (; mp; mp = mp->m_next) {
+        if (mp->m_simplified) {
+          continue;
+        }
+
+        char *keys_buf = NULL;
+        bool did_simplify = false;
+
+        char *lhs = str2special_save(mp->m_keys, true, false);
+        (void)replace_termcodes(lhs, strlen(lhs), &keys_buf, 0, flags, &did_simplify,
+                                CPO_TO_CPO_FLAGS);
+        xfree(lhs);
+
+        Dictionary dict = mapblock_fill_dict(mp,
+                                             did_simplify ? keys_buf : NULL,
+                                             buffer_local, true);
+        typval_T d = TV_INITIAL_VALUE;
+        (void)object_to_vim(DICTIONARY_OBJ(dict), &d, NULL);
+        assert(d.v_type == VAR_DICT);
+        tv_list_append_dict(rettv->vval.v_list, d.vval.v_dict);
+        api_free_dictionary(dict);
+        xfree(keys_buf);
+      }
+    }
+  }
+}
+
 /// "maparg()" function
 void f_maparg(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {

@@ -3175,6 +3175,18 @@ function vim.fn.getline(lnum, end_) end
 --- @return any
 function vim.fn.getloclist(nr, what) end
 
+--- Returns a |List| of all mappings.  Each List item is a |Dict|,
+--- the same as what is returned by |maparg()|, see
+--- |mapping-dict|.
+---
+--- Example to show all mappings with "MultiMatch" in rhs: >
+---   echo getmappings()->filter({_, m ->
+---     \ match(get(m, 'rhs', ''), 'MultiMatch') >= 0
+---     \ })
+---
+--- @return any
+function vim.fn.getmappings() end
+
 --- Without the {buf} argument returns a |List| with information
 --- about all the global marks. |mark|
 ---
@@ -5022,7 +5034,7 @@ function vim.fn.map(expr1, expr2) end
 ---
 --- When {dict} is there and it is |TRUE| return a dictionary
 --- containing all the information of the mapping with the
---- following items:
+--- following items:      *mapping-dict*
 ---   "lhs"       The {lhs} of the mapping as it would be typed
 ---   "lhsraw"   The {lhs} of the mapping as raw bytes
 ---   "lhsrawalt" The {lhs} of the mapping as raw bytes, alternate
