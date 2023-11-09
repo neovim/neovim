@@ -2125,6 +2125,7 @@ static Dictionary mapblock_fill_dict(const mapblock_T *const mp, const char *lhs
   }
   PUT(dict, "mode", CSTR_AS_OBJ(mapmode));
   PUT(dict, "abbr", INTEGER_OBJ(abbr ? 1 : 0));
+  PUT(dict, "mode_bits", INTEGER_OBJ(mp->m_mode));
 
   return dict;
 }

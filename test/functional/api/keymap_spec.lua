@@ -19,6 +19,20 @@ local sleep = helpers.sleep
 local sid_api_client = -9
 local sid_lua = -8
 
+local mode_bits_map = {
+  ['n'] = 0x01,
+  ['x'] = 0x02,
+  ['o'] = 0x04,
+  ['c'] = 0x08,
+  ['i'] = 0x10,
+  ['l'] = 0x20,
+  ['s'] = 0x40,
+  ['t'] = 0x80,
+  [' '] = 0x47,
+  ['v'] = 0x42,
+  ['!'] = 0x18,
+}
+
 describe('nvim_get_keymap', function()
   before_each(clear)
 
@@ -36,6 +50,7 @@ describe('nvim_get_keymap', function()
     buffer=0,
     nowait=0,
     mode='n',
+    mode_bits=0x01,
     abbr=0,
     noremap=1,
     lnum=0,
@@ -83,6 +98,7 @@ describe('nvim_get_keymap', function()
     -- The table will be the same except for the mode
     local insert_table = shallowcopy(foo_bar_map_table)
     insert_table['mode'] = 'i'
+    insert_table['mode_bits'] = 0x10
 
     eq({insert_table}, meths.get_keymap('i'))
   end)
@@ -272,6 +288,7 @@ describe('nvim_get_keymap', function()
       ret.lhs = lhs
       ret.rhs = rhs
       ret.mode = mode
+      ret.mode_bits = mode_bits_map[mode]
       return ret
     end
 
@@ -327,6 +344,7 @@ describe('nvim_get_keymap', function()
       lhsraw='|   |',
       rhs='|    |',
       mode='n',
+      mode_bits=0x01,
       abbr=0,
       script=0,
       silent=0,
@@ -375,6 +393,7 @@ describe('nvim_get_keymap', function()
       buffer=0,
       nowait=0,
       mode='n',
+      mode_bits=0x01,
       abbr=0,
       noremap=0,
       lnum=0,
@@ -395,6 +414,7 @@ describe('nvim_get_keymap', function()
       buffer=0,
       nowait=0,
       mode='n',
+      mode_bits=0x01,
       abbr=0,
       noremap=0,
       lnum=0,
@@ -430,7 +450,9 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     end
 
     local to_return = {}
-    to_return.mode = normalize_mapmode(mode, true)
+    local expected_mode = normalize_mapmode(mode, true)
+    to_return.mode = expected_mode
+    to_return.mode_bits = mode_bits_map[expected_mode]
     to_return.abbr = mode:sub(-1) == 'a' and 1 or 0
     to_return.noremap = not opts.noremap and 0 or 1
     to_return.lhs = lhs
@@ -499,7 +521,12 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
        get_mapargs('', 'lhs'))
   end)
 
-  it('throws errors when given too-long mode shortnames', function()
+  it('error on invalid mode shortname', function()
+    eq('Invalid mode shortname: " "', pcall_err(meths.set_keymap, ' ', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "m"', pcall_err(meths.set_keymap, 'm', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "?"', pcall_err(meths.set_keymap, '?', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "y"', pcall_err(meths.set_keymap, 'y', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "p"', pcall_err(meths.set_keymap, 'p', 'lhs', 'rhs', {}))
     eq('Invalid mode shortname: "a"', pcall_err(meths.set_keymap, 'a', 'lhs', 'rhs', {}))
     eq('Invalid mode shortname: "oa"', pcall_err(meths.set_keymap, 'oa', 'lhs', 'rhs', {}))
     eq('Invalid mode shortname: "!o"', pcall_err(meths.set_keymap, '!o', 'lhs', 'rhs', {}))
@@ -508,6 +535,11 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq('Invalid mode shortname: "map"', pcall_err(meths.set_keymap, 'map', 'lhs', 'rhs', {}))
     eq('Invalid mode shortname: "vmap"', pcall_err(meths.set_keymap, 'vmap', 'lhs', 'rhs', {}))
     eq('Invalid mode shortname: "xnoremap"', pcall_err(meths.set_keymap, 'xnoremap', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: " "', pcall_err(meths.del_keymap, ' ', 'lhs'))
+    eq('Invalid mode shortname: "m"', pcall_err(meths.del_keymap, 'm', 'lhs'))
+    eq('Invalid mode shortname: "?"', pcall_err(meths.del_keymap, '?', 'lhs'))
+    eq('Invalid mode shortname: "y"', pcall_err(meths.del_keymap, 'y', 'lhs'))
+    eq('Invalid mode shortname: "p"', pcall_err(meths.del_keymap, 'p', 'lhs'))
     eq('Invalid mode shortname: "a"', pcall_err(meths.del_keymap, 'a', 'lhs'))
     eq('Invalid mode shortname: "oa"', pcall_err(meths.del_keymap, 'oa', 'lhs'))
     eq('Invalid mode shortname: "!o"', pcall_err(meths.del_keymap, '!o', 'lhs'))
@@ -516,22 +548,6 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq('Invalid mode shortname: "map"', pcall_err(meths.del_keymap, 'map', 'lhs'))
     eq('Invalid mode shortname: "vmap"', pcall_err(meths.del_keymap, 'vmap', 'lhs'))
     eq('Invalid mode shortname: "xnoremap"', pcall_err(meths.del_keymap, 'xnoremap', 'lhs'))
-  end)
-
-  it('error on invalid mode shortname', function()
-    eq('Invalid mode shortname: " "',
-      pcall_err(meths.set_keymap, ' ', 'lhs', 'rhs', {}))
-    eq('Invalid mode shortname: "m"',
-      pcall_err(meths.set_keymap, 'm', 'lhs', 'rhs', {}))
-    eq('Invalid mode shortname: "?"',
-      pcall_err(meths.set_keymap, '?', 'lhs', 'rhs', {}))
-    eq('Invalid mode shortname: "y"',
-      pcall_err(meths.set_keymap, 'y', 'lhs', 'rhs', {}))
-    eq('Invalid mode shortname: "p"',
-      pcall_err(meths.set_keymap, 'p', 'lhs', 'rhs', {}))
-    eq('Invalid mode shortname: "?"', pcall_err(meths.del_keymap, '?', 'lhs'))
-    eq('Invalid mode shortname: "y"', pcall_err(meths.del_keymap, 'y', 'lhs'))
-    eq('Invalid mode shortname: "p"', pcall_err(meths.del_keymap, 'p', 'lhs'))
   end)
 
   it('error on invalid optnames', function()
@@ -839,7 +855,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq(1, exec_lua[[return GlobalCount]])
   end)
 
-  it (':map command shows lua mapping correctly', function()
+  it(':map command shows lua mapping correctly', function()
     exec_lua [[
       vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() print('jkl;') end })
     ]]
@@ -851,7 +867,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     )
   end)
 
-  it ('mapcheck() returns lua mapping correctly', function()
+  it('mapcheck() returns lua mapping correctly', function()
     exec_lua [[
       vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() print('jkl;') end })
     ]]
@@ -859,7 +875,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
                   "^<Lua %d+>"))
   end)
 
-  it ('maparg() returns lua mapping correctly', function()
+  it('maparg() returns lua mapping correctly', function()
     eq(0, exec_lua([[
       GlobalCount = 0
       vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })

@@ -4186,6 +4186,11 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])                       *maparg()*
 		  "nowait"   Do not wait for other, longer mappings.
 			     (|:map-<nowait>|).
 		  "abbr"     True if this is an |abbreviation|.
+		  "mode_bits" Nvim's internal binary representation of "mode".
+			     |mapset()| ignores this; only "mode" is used.
+			     See |maplist()| for usage examples. The values
+			     are from src/nvim/vim.h and may change in the
+			     future.
 
 		The dictionary can be used to restore a mapping with
 		|mapset()|.
@@ -4239,6 +4244,26 @@ maplist([{abbr}])                                                    *maplist()*
 			echo maplist()->filter({_, m ->
 				\ match(get(m, 'rhs', ''), 'MultiMatch') >= 0
 				\ })
+<		It can be tricky to find mappings for particular |:map-modes|.
+		|mapping-dict|'s "mode_bits" can simplify this. For example,
+		the mode_bits for Normal, Insert or Command-line modes are
+		0x19. To find all the mappings available in those modes you
+		can do: >vim
+			let saved_maps = []
+			for m in maplist()
+			    if and(m.mode_bits, 0x19) != 0
+				eval saved_maps->add(m)
+			    endif
+			endfor
+			echo saved_maps->mapnew({_, m -> m.lhs})
+<		The values of the mode_bits are defined in Nvim's
+		src/nvim/vim.h file and they can be discovered at runtime
+		using |:map-commands| and "maplist()". Example: >vim
+			omap xyzzy <Nop>
+			let op_bit = maplist()->filter(
+			    \ {_, m -> m.lhs == 'xyzzy'})[0].mode_bits
+			ounmap xyzzy
+			echo printf("Operator-pending mode bit: 0x%x", op_bit)
 
 mapnew({expr1}, {expr2})                                              *mapnew()*
 		Like |map()| but instead of replacing items in {expr1} a new

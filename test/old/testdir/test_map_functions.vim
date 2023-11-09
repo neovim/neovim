@@ -21,13 +21,13 @@ func Test_maparg()
         \ 'lhsraw': "foo\x80\xfc\x04V", 'lhsrawalt': "foo\x16",
         \ 'mode': ' ', 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
         \ 'lnum': lnum + 1, 
-	\ 'rhs': 'is<F4>foo', 'buffer': 0, 'abbr': 0},
+	\ 'rhs': 'is<F4>foo', 'buffer': 0, 'abbr': 0, 'mode_bits': 0x47},
 	\ maparg('foo<C-V>', '', 0, 1))
   call assert_equal({'silent': 1, 'noremap': 1, 'script': 1, 'lhs': 'bar',
         \ 'lhsraw': 'bar', 'mode': 'v',
         \ 'nowait': 0, 'expr': 1, 'sid': sid, 'scriptversion': 1,
         \ 'lnum': lnum + 2,
-	\ 'rhs': 'isbar', 'buffer': 1, 'abbr': 0},
+	\ 'rhs': 'isbar', 'buffer': 1, 'abbr': 0, 'mode_bits': 0x42},
         \ 'bar'->maparg('', 0, 1))
   let lnum = expand('<sflnum>')
   map <buffer> <nowait> foo bar
@@ -35,7 +35,7 @@ func Test_maparg()
         \ 'lhsraw': 'foo', 'mode': ' ',
         \ 'nowait': 1, 'expr': 0, 'sid': sid, 'scriptversion': 1,
         \ 'lnum': lnum + 1, 'rhs': 'bar',
-	\ 'buffer': 1, 'abbr': 0},
+	\ 'buffer': 1, 'abbr': 0, 'mode_bits': 0x47},
         \ maparg('foo', '', 0, 1))
   let lnum = expand('<sflnum>')
   tmap baz foo
@@ -43,7 +43,7 @@ func Test_maparg()
         \ 'lhsraw': 'baz', 'mode': 't',
         \ 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
         \ 'lnum': lnum + 1, 'rhs': 'foo',
-	\ 'buffer': 0, 'abbr': 0},
+        \ 'buffer': 0, 'abbr': 0, 'mode_bits': 0x80},
         \ maparg('baz', 't', 0, 1))
   let lnum = expand('<sflnum>')
   iab A B
@@ -51,7 +51,7 @@ func Test_maparg()
         \ 'lhsraw': 'A', 'mode': 'i',
         \ 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
         \ 'lnum': lnum + 1, 'rhs': 'B',
-	\ 'buffer': 0, 'abbr': 1},
+	\ 'buffer': 0, 'abbr': 1, 'mode_bits': 0x0010},
         \ maparg('A', 'i', 1, 1))
   iuna A
 
