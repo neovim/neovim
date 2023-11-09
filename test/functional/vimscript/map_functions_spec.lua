@@ -30,6 +30,7 @@ describe('maparg()', function()
       buffer=0,
       nowait=0,
       mode='n',
+      abbr=0,
       noremap=1,
       lnum=0,
     }
@@ -156,6 +157,7 @@ describe('maparg()', function()
         buffer = 0,
         expr = 0,
         mode = 'n',
+        abbr = 0,
         noremap = 1,
         nowait = 0,
         script = 0,

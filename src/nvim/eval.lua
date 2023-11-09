@@ -6194,6 +6194,7 @@ M.funcs = {
         "lnum"     The line number in "sid", zero if unknown.
         "nowait"   Do not wait for other, longer mappings.
       	     (|:map-<nowait>|).
+        "abbr"     True if this is an |abbreviation|.
 
       The dictionary can be used to restore a mapping with
       |mapset()|.
@@ -6287,12 +6288,20 @@ M.funcs = {
     signature = 'mapnew({expr1}, {expr2})',
   },
   mapset = {
-    args = 3,
+    args = { 1, 3 },
     base = 1,
     desc = [=[
-      Restore a mapping from a dictionary returned by |maparg()|.
-      {mode} and {abbr} should be the same as for the call to
-      |maparg()|. *E460*
+      Restore a mapping from a dictionary, possibly returned by
+      |maparg()| or |maplist()|.  A buffer mapping, when dict.buffer
+      is true, is set on the current buffer; it is up to the caller
+      to ensure that the intended buffer is the current buffer. This
+      feature allows copying mappings from one buffer to another.
+      The dict.mode value may restore a single mapping that covers
+      more than one mode, like with mode values of '!', ' ', "nox",
+      or 'v'. *E1276*
+
+      In the first form, {mode} and {abbr} should be the same as
+      for the call to |maparg()|. *E460*
       {mode} is used to define the mode in which the mapping is set,
       not the "mode" entry in {dict}.
       Example for saving and restoring a mapping: >vim
@@ -6301,8 +6310,21 @@ M.funcs = {
       	" ...
       	call mapset('n', 0, save_map)
       <Note that if you are going to replace a map in several modes,
-      e.g. with `:map!`, you need to save the mapping for all of
-      them, since they can differ.
+      e.g. with `:map!`, you need to save/restore the mapping for
+      all of them, when they might differ.
+
+      In the second form, with {dict} as the only argument, mode
+      and abbr are taken from the dict.
+      Example: >vim
+      	let save_maps = maplist()->filter(
+      				\ {_, m -> m.lhs == 'K'})
+      	nnoremap K somethingelse
+      	cnoremap K somethingelse2
+      	" ...
+      	unmap K
+      	for d in save_maps
+      	    call mapset(d)
+      	endfor
     ]=],
     name = 'mapset',
     params = { { 'mode', 'string' }, { 'abbr', 'any' }, { 'dict', 'any' } },

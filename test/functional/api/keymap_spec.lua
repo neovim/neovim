@@ -36,6 +36,7 @@ describe('nvim_get_keymap', function()
     buffer=0,
     nowait=0,
     mode='n',
+    abbr=0,
     noremap=1,
     lnum=0,
   }
@@ -262,6 +263,7 @@ describe('nvim_get_keymap', function()
       scriptversion=1,
       buffer=0,
       nowait=0,
+      abbr=0,
       noremap=1,
       lnum=0,
     }
@@ -325,6 +327,7 @@ describe('nvim_get_keymap', function()
       lhsraw='|   |',
       rhs='|    |',
       mode='n',
+      abbr=0,
       script=0,
       silent=0,
       expr=0,
@@ -372,6 +375,7 @@ describe('nvim_get_keymap', function()
       buffer=0,
       nowait=0,
       mode='n',
+      abbr=0,
       noremap=0,
       lnum=0,
     }, mapargs[1])
@@ -391,6 +395,7 @@ describe('nvim_get_keymap', function()
       buffer=0,
       nowait=0,
       mode='n',
+      abbr=0,
       noremap=0,
       lnum=0,
       desc='map description'
@@ -426,6 +431,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
     local to_return = {}
     to_return.mode = normalize_mapmode(mode, true)
+    to_return.abbr = mode:sub(-1) == 'a' and 1 or 0
     to_return.noremap = not opts.noremap and 0 or 1
     to_return.lhs = lhs
     to_return.rhs = rhs

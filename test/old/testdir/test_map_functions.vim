@@ -21,13 +21,13 @@ func Test_maparg()
         \ 'lhsraw': "foo\x80\xfc\x04V", 'lhsrawalt': "foo\x16",
         \ 'mode': ' ', 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
         \ 'lnum': lnum + 1, 
-	\ 'rhs': 'is<F4>foo', 'buffer': 0},
+	\ 'rhs': 'is<F4>foo', 'buffer': 0, 'abbr': 0},
 	\ maparg('foo<C-V>', '', 0, 1))
   call assert_equal({'silent': 1, 'noremap': 1, 'script': 1, 'lhs': 'bar',
         \ 'lhsraw': 'bar', 'mode': 'v',
         \ 'nowait': 0, 'expr': 1, 'sid': sid, 'scriptversion': 1,
         \ 'lnum': lnum + 2,
-	\ 'rhs': 'isbar', 'buffer': 1},
+	\ 'rhs': 'isbar', 'buffer': 1, 'abbr': 0},
         \ 'bar'->maparg('', 0, 1))
   let lnum = expand('<sflnum>')
   map <buffer> <nowait> foo bar
@@ -35,7 +35,7 @@ func Test_maparg()
         \ 'lhsraw': 'foo', 'mode': ' ',
         \ 'nowait': 1, 'expr': 0, 'sid': sid, 'scriptversion': 1,
         \ 'lnum': lnum + 1, 'rhs': 'bar',
-	\ 'buffer': 1},
+	\ 'buffer': 1, 'abbr': 0},
         \ maparg('foo', '', 0, 1))
   let lnum = expand('<sflnum>')
   tmap baz foo
@@ -43,8 +43,17 @@ func Test_maparg()
         \ 'lhsraw': 'baz', 'mode': 't',
         \ 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
         \ 'lnum': lnum + 1, 'rhs': 'foo',
-	\ 'buffer': 0},
+	\ 'buffer': 0, 'abbr': 0},
         \ maparg('baz', 't', 0, 1))
+  let lnum = expand('<sflnum>')
+  iab A B
+  call assert_equal({'silent': 0, 'noremap': 0, 'script': 0, 'lhs': 'A',
+        \ 'lhsraw': 'A', 'mode': 'i',
+        \ 'nowait': 0, 'expr': 0, 'sid': sid, 'scriptversion': 1,
+        \ 'lnum': lnum + 1, 'rhs': 'B',
+	\ 'buffer': 0, 'abbr': 1},
+        \ maparg('A', 'i', 1, 1))
+  iuna A
 
   map abc x<char-114>x
   call assert_equal("xrx", maparg('abc'))
@@ -276,6 +285,152 @@ func Test_mapset()
   call assert_fails('call mapset([], v:false, {})', 'E730:')
   call assert_fails('call mapset("i", 0, "")', 'E1206:')
   call assert_fails('call mapset("i", 0, {})', 'E460:')
+endfunc
+
+func Test_mapset_arg1_dir()
+  " This test is mostly about get_map_mode_string.
+  " Once the code gets past that, it's common with the 3 arg mapset.
+
+  " GetModes() return list of modes for 'XZ' lhs using maplist.
+  " There is one list item per mapping
+  func s:GetModes(abbr = v:false)
+    return maplist(a:abbr)->filter({_, m -> m.lhs == 'XZ'})
+              \ ->mapnew({_, m -> m.mode})
+  endfunc
+
+  func s:UnmapAll(lhs)
+    const unmap_cmds = [ 'unmap', 'unmap!', 'tunmap', 'lunmap' ]
+    for cmd in unmap_cmds
+      try | call execute(cmd .. ' ' .. a:lhs) | catch /E31/ | endtry
+    endfor
+  endfunc
+
+  let tmap = {}
+
+  " some mapset(mode, abbr, dict) tests using get_map_mode_str
+  map XZ x
+  let tmap = maplist()->filter({_, m -> m.lhs == 'XZ'})[0]->copy()
+  " this splits the mapping into 2 mappings
+  call mapset('ox', v:false, tmap)
+  call assert_equal(2, len(s:GetModes()))
+  call mapset('o', v:false, tmap)
+  call assert_equal(3, len(s:GetModes()))
+  " test that '' acts like ' ', and that the 3 mappings become 1
+  call mapset('', v:false, tmap)
+  call assert_equal([' '], s:GetModes())
+  " dict's mode/abbr are ignored
+  call s:UnmapAll('XZ')
+  let tmap.mode = '!'
+  let tmap.abbr = v:true
+  call mapset('o', v:false, tmap)
+  call assert_equal(['o'], s:GetModes())
+
+  " test the 3 arg version handles bad mode string, dict not used
+  call assert_fails("call mapset('vi', v:false, {})", 'E1276:')
+
+
+  " get the abbreviations out of the way
+  abbreviate XZ ZX
+  let tmap = maplist(v:true)->filter({_, m -> m.lhs == 'XZ'})[0]->copy()
+
+  abclear
+  " 'ic' is the default ab command, shows up as '!'
+  let tmap.mode = 'ic'
+  call mapset(tmap)
+  call assert_equal(['!'], s:GetModes(v:true))
+
+  abclear
+  let tmap.mode = 'i'
+  call mapset(tmap)
+  call assert_equal(['i'], s:GetModes(v:true))
+
+  abclear
+  let tmap.mode = 'c'
+  call mapset(tmap)
+  call assert_equal(['c'], s:GetModes(v:true))
+
+  abclear
+  let tmap.mode = '!'
+  call mapset(tmap)
+  call assert_equal(['!'], s:GetModes(v:true))
+
+  call assert_fails("call mapset(#{mode: ' !', abbr: 1})", 'E1276:')
+  call assert_fails("call mapset(#{mode: 'cl', abbr: 1})", 'E1276:')
+  call assert_fails("call mapset(#{mode: 'in', abbr: 1})", 'E1276:')
+
+  " the map commands
+  map XZ x
+  let tmap = maplist()->filter({_, m -> m.lhs == 'XZ'})[0]->copy()
+
+  " try the combos
+  call s:UnmapAll('XZ')
+  " 'nxso' is ' ', the unadorned :map
+  let tmap.mode = 'nxso'
+  call mapset(tmap)
+  call assert_equal([' '], s:GetModes())
+
+  cal s:UnmapAll('XZ')
+  " 'ic' is '!'
+  let tmap.mode = 'ic'
+  call mapset(tmap)
+  call assert_equal(['!'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  " 'xs' is really 'v'
+  let tmap.mode = 'xs'
+  call mapset(tmap)
+  call assert_equal(['v'], s:GetModes())
+
+  " try the individual modes
+  call s:UnmapAll('XZ')
+  let tmap.mode = 'n'
+  call mapset(tmap)
+  call assert_equal(['n'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 'x'
+  call mapset(tmap)
+  call assert_equal(['x'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 's'
+  call mapset(tmap)
+  call assert_equal(['s'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 'o'
+  call mapset(tmap)
+  call assert_equal(['o'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 'i'
+  call mapset(tmap)
+  call assert_equal(['i'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 'c'
+  call mapset(tmap)
+  call assert_equal(['c'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 't'
+  call mapset(tmap)
+  call assert_equal(['t'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+  let tmap.mode = 'l'
+  call mapset(tmap)
+  call assert_equal(['l'], s:GetModes())
+
+  call s:UnmapAll('XZ')
+
+  " get errors for modes that can't be in one mapping
+  call assert_fails("call mapset(#{mode: 'nxsoi', abbr: 0})", 'E1276:')
+  call assert_fails("call mapset(#{mode: ' !', abbr: 0})", 'E1276:')
+  call assert_fails("call mapset(#{mode: 'ix', abbr: 0})", 'E1276:')
+  call assert_fails("call mapset(#{mode: 'tl', abbr: 0})", 'E1276:')
+  call assert_fails("call mapset(#{mode: ' l', abbr: 0})", 'E1276:')
+  call assert_fails("call mapset(#{mode: ' t', abbr: 0})", 'E1276:')
 endfunc
 
 func Check_ctrlb_map(d, check_alt)

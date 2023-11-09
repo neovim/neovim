@@ -1116,8 +1116,7 @@ func s:DeleteCommands()
   if exists('s:k_map_saved')
     if !empty(s:k_map_saved) && !s:k_map_saved.buffer
       nunmap K
-      " call mapset(s:k_map_saved)
-      call mapset('n', 0, s:k_map_saved)
+      call mapset(s:k_map_saved)
     elseif empty(s:k_map_saved)
       nunmap K
     endif
@@ -1126,8 +1125,7 @@ func s:DeleteCommands()
   if exists('s:plus_map_saved')
     if !empty(s:plus_map_saved) && !s:plus_map_saved.buffer
       nunmap +
-      " call mapset(s:plus_map_saved)
-      call mapset('n', 0, s:plus_map_saved)
+      call mapset(s:plus_map_saved)
     elseif empty(s:plus_map_saved)
       nunmap +
     endif
@@ -1136,8 +1134,7 @@ func s:DeleteCommands()
   if exists('s:minus_map_saved')
     if !empty(s:minus_map_saved) && !s:minus_map_saved.buffer
       nunmap -
-      " call mapset(s:minus_map_saved)
-      call mapset('n', 0, s:minus_map_saved)
+      call mapset(s:minus_map_saved)
     elseif empty(s:minus_map_saved)
       nunmap -
     endif
