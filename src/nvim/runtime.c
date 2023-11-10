@@ -1640,7 +1640,7 @@ char *get_lib_dir(void)
   // Find library path relative to the nvim binary: ../lib/nvim/
   char exe_name[MAXPATHL];
   vim_get_prefix_from_exepath(exe_name);
-  if (append_path(exe_name, "lib" _PATHSEPSTR "nvim", MAXPATHL) == OK) {
+  if (append_path(exe_name, "lib/nvim", MAXPATHL) == OK) {
     return xstrdup(exe_name);
   }
   return NULL;

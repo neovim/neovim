@@ -927,9 +927,7 @@ char *vim_getenv(const char *name)
     // Find runtime path relative to the nvim binary: ../share/nvim/runtime
     if (vim_path == NULL) {
       vim_get_prefix_from_exepath(exe_name);
-      if (append_path(exe_name,
-                      "share" _PATHSEPSTR "nvim" _PATHSEPSTR "runtime" _PATHSEPSTR,
-                      MAXPATHL) == OK) {
+      if (append_path(exe_name, "share/nvim/runtime/", MAXPATHL) == OK) {
         vim_path = exe_name;
       }
     }

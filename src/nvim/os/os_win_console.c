@@ -80,7 +80,7 @@ void os_icon_init(void)
 
   const char *vimruntime = os_getenv("VIMRUNTIME");
   if (vimruntime != NULL) {
-    snprintf(NameBuff, MAXPATHL, "%s" _PATHSEPSTR "neovim.ico", vimruntime);
+    snprintf(NameBuff, MAXPATHL, "%s/neovim.ico", vimruntime);
     if (!os_path_exists(NameBuff)) {
       WLOG("neovim.ico not found: %s", NameBuff);
     } else {

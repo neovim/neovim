@@ -1543,7 +1543,7 @@ static tags_read_status_T findtags_get_next_line(findtags_state_T *st, tagsearch
     sinfo_p->curr_offset -= st->lbuf_size * 2;
     if (sinfo_p->curr_offset < 0) {
       sinfo_p->curr_offset = 0;
-      rewind(st->fp);
+      (void)fseek(st->fp, 0, SEEK_SET);
       st->state = TS_STEP_FORWARD;
     }
   }

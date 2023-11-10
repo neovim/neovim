@@ -1774,9 +1774,6 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
 {
   unibi_term *ut = tui->ut;
   const char *xterm_version = os_getenv("XTERM_VERSION");
-#if 0   // We don't need to identify this specifically, for now.
-  bool roxterm = !!os_getenv("ROXTERM_ID");
-#endif
   bool xterm = terminfo_is_term_family(term, "xterm")
                // Treat Terminal.app as generic xterm-like, for now.
                || nsterm;
