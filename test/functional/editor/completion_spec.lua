@@ -1237,7 +1237,7 @@ describe('completion', function()
       bufname = 'C:\\foo\\bar.txt'
       hidden = 'C:\\fooA\\.hidden'
     end
-    command('set complete+=f | edit '.. bufname ..' | edit '..hidden)
+    command('set complete+=f | edit '..bufname..' | edit '..hidden..' | enew')
     feed('i<C-n>')
 
     screen:expect{grid=[[
