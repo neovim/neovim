@@ -2559,7 +2559,6 @@ describe('lua stdlib', function()
       ]])
     end)
 
-
     it('should not block other events', function()
       eq({time = true, wait_result = true}, exec_lua[[
         start_time = get_time()
@@ -2601,6 +2600,7 @@ describe('lua stdlib', function()
         }
       ]])
     end)
+
     it('should work with vim.defer_fn', function()
       eq({time = true, wait_result = true}, exec_lua[[
         start_time = get_time()

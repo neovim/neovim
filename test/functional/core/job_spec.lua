@@ -875,25 +875,41 @@ describe('jobs', function()
       end)
     end)
 
-    it('hides cursor when waiting', function()
-      local screen = Screen.new(30, 3)
+    it('hides cursor and flushes messages before blocking', function()
+      local screen = Screen.new(50, 6)
       screen:set_default_attr_ids({
-        [0] = {foreground = Screen.colors.Blue1, bold = true};
+        [0] = {foreground = Screen.colors.Blue, bold = true};  -- NonText
+        [1] = {bold = true, reverse = true};  -- MsgSeparator
+        [2] = {bold = true, foreground = Screen.colors.SeaGreen};  -- MoreMsg
       })
       screen:attach()
       command([[let g:id = jobstart([v:progpath, '--clean', '--headless'])]])
-      feed_command('call jobwait([g:id], 300)')
+      source([[
+        func PrintAndWait()
+          echon "aaa\nbbb"
+          call jobwait([g:id], 300)
+          echon "\nccc"
+        endfunc
+      ]])
+      feed_command('call PrintAndWait()')
       screen:expect{grid=[[
-                                      |
-        {0:~                             }|
-        :call jobwait([g:id], 300)    |
+                                                          |
+        {0:~                                                 }|
+        {0:~                                                 }|
+        {1:                                                  }|
+        aaa                                               |
+        bbb                                               |
       ]], timeout=100}
-      funcs.jobstop(meths.get_var('id'))
       screen:expect{grid=[[
-        ^                              |
-        {0:~                             }|
-        :call jobwait([g:id], 300)    |
+                                                          |
+        {1:                                                  }|
+        aaa                                               |
+        bbb                                               |
+        ccc                                               |
+        {2:Press ENTER or type command to continue}^           |
       ]]}
+      feed('<CR>')
+      funcs.jobstop(meths.get_var('id'))
     end)
   end)
 

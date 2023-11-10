@@ -2911,6 +2911,9 @@ static void f_wait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool error = false;
   const int called_emsg_before = called_emsg;
 
+  // Flush screen updates before blocking.
+  ui_flush();
+
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, timeout,
                             eval_expr_typval(&expr, false, &argv, 0, &exprval) != OK
                             || tv_get_number_chk(&exprval, &error)
