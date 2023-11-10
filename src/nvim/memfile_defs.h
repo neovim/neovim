@@ -1,5 +1,4 @@
-#ifndef NVIM_MEMFILE_DEFS_H
-#define NVIM_MEMFILE_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -67,5 +66,3 @@ typedef struct memfile {
   unsigned mf_page_size;             ///< number of bytes in a page
   mfdirty_T mf_dirty;
 } memfile_T;
-
-#endif  // NVIM_MEMFILE_DEFS_H

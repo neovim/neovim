@@ -1,5 +1,4 @@
-#ifndef NVIM_GRID_DEFS_H
-#define NVIM_GRID_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -130,5 +129,3 @@ typedef struct {
   int clear_width;
   bool wrap;
 } GridLineEvent;
-
-#endif  // NVIM_GRID_DEFS_H

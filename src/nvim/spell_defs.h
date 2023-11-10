@@ -1,5 +1,4 @@
-#ifndef NVIM_SPELL_DEFS_H
-#define NVIM_SPELL_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -253,5 +252,3 @@ typedef struct wordcount_S {
 // Remember what "z?" replaced.
 extern char *repl_from;
 extern char *repl_to;
-
-#endif  // NVIM_SPELL_DEFS_H

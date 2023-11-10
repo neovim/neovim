@@ -1,5 +1,4 @@
-#ifndef NVIM_DRAWLINE_H
-#define NVIM_DRAWLINE_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -38,4 +37,3 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "drawline.h.generated.h"
 #endif
-#endif  // NVIM_DRAWLINE_H

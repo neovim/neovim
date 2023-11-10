@@ -1,5 +1,4 @@
-#ifndef NVIM_EXTMARK_H
-#define NVIM_EXTMARK_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -103,5 +102,3 @@ struct undo_object {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "extmark.h.generated.h"
 #endif
-
-#endif  // NVIM_EXTMARK_H

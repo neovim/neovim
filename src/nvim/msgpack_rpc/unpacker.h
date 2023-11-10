@@ -1,5 +1,4 @@
-#ifndef NVIM_MSGPACK_RPC_UNPACKER_H
-#define NVIM_MSGPACK_RPC_UNPACKER_H
+#pragma once
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -49,5 +48,3 @@ struct Unpacker {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/unpacker.h.generated.h"
 #endif
-
-#endif  // NVIM_MSGPACK_RPC_UNPACKER_H

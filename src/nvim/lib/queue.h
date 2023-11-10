@@ -17,8 +17,7 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef NVIM_LIB_QUEUE_H
-#define NVIM_LIB_QUEUE_H
+#pragma once
 
 #include <stddef.h>
 
@@ -91,5 +90,3 @@ static inline void QUEUE_REMOVE(QUEUE *const q) FUNC_ATTR_ALWAYS_INLINE
   q->prev->next = q->next;
   q->next->prev = q->prev;
 }
-
-#endif  // NVIM_LIB_QUEUE_H

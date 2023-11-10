@@ -1,5 +1,4 @@
-#ifndef NVIM_EVENT_PROCESS_H
-#define NVIM_EVENT_PROCESS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -83,4 +82,3 @@ static inline bool process_is_stopped(Process *proc)
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/process.h.generated.h"
 #endif
-#endif  // NVIM_EVENT_PROCESS_H

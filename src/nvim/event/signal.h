@@ -1,5 +1,4 @@
-#ifndef NVIM_EVENT_SIGNAL_H
-#define NVIM_EVENT_SIGNAL_H
+#pragma once
 
 #include <uv.h>
 
@@ -23,4 +22,3 @@ struct signal_watcher {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/signal.h.generated.h"
 #endif
-#endif  // NVIM_EVENT_SIGNAL_H

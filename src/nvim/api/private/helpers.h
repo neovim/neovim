@@ -1,5 +1,4 @@
-#ifndef NVIM_API_PRIVATE_HELPERS_H
-#define NVIM_API_PRIVATE_HELPERS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -199,5 +198,3 @@ typedef struct {
     current_channel_id = save_channel_id; \
     current_sctx = save_current_sctx; \
   } while (0);
-
-#endif  // NVIM_API_PRIVATE_HELPERS_H

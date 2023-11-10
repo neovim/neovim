@@ -1,5 +1,4 @@
-#ifndef NVIM_API_PRIVATE_DEFS_H
-#define NVIM_API_PRIVATE_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -139,5 +138,3 @@ typedef struct {
 } KeySetLink;
 
 typedef KeySetLink *(*FieldHashfn)(const char *str, size_t len);
-
-#endif  // NVIM_API_PRIVATE_DEFS_H

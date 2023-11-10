@@ -12,8 +12,8 @@
 /// - idx_p: get pointer to the element at given index.
 /// - insert: insert element at given position.
 /// - remove: remove element from given position.
-#ifndef NVIM_LIB_RINGBUF_H
-#define NVIM_LIB_RINGBUF_H
+
+#pragma once
 
 #include <assert.h>
 #include <stddef.h>
@@ -288,5 +288,3 @@
       rb->first = _RINGBUF_NEXT(rb, rb->first); \
     } \
   }
-
-#endif  // NVIM_LIB_RINGBUF_H

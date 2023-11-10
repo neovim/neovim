@@ -1,5 +1,4 @@
-#ifndef NVIM_MAPPING_DEFS_H
-#define NVIM_MAPPING_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -25,5 +24,3 @@ struct mapblock {
   char *m_desc;             ///< description of mapping
   bool m_replace_keycodes;  ///< replace keycodes in result of expression
 };
-
-#endif  // NVIM_MAPPING_DEFS_H

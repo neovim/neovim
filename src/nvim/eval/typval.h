@@ -1,5 +1,4 @@
-#ifndef NVIM_EVAL_TYPVAL_H
-#define NVIM_EVAL_TYPVAL_H
+#pragma once
 
 #include <assert.h>
 #include <stdbool.h>
@@ -492,5 +491,3 @@ EXTERN const size_t kTVTranslate INIT( = TV_TRANSLATE);
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/typval.h.generated.h"
 #endif
-
-#endif  // NVIM_EVAL_TYPVAL_H

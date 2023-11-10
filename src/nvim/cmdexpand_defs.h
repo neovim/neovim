@@ -1,5 +1,4 @@
-#ifndef NVIM_CMDEXPAND_DEFS_H
-#define NVIM_CMDEXPAND_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -112,5 +111,3 @@ enum {
 
 /// Type used by ExpandGeneric()
 typedef char *(*CompleteListItemGetter)(expand_T *, int);
-
-#endif  // NVIM_CMDEXPAND_DEFS_H

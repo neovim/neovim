@@ -1,5 +1,4 @@
-#ifndef NVIM_LUA_EXECUTOR_H
-#define NVIM_LUA_EXECUTOR_H
+#pragma once
 
 #include <lauxlib.h>
 #include <lua.h>
@@ -47,5 +46,3 @@ typedef struct {
 
 EXTERN nlua_ref_state_t *nlua_global_refs INIT( = NULL);
 EXTERN bool nlua_disable_preload INIT( = false);
-
-#endif  // NVIM_LUA_EXECUTOR_H

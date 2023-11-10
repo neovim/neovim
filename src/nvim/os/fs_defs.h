@@ -1,5 +1,4 @@
-#ifndef NVIM_OS_FS_DEFS_H
-#define NVIM_OS_FS_DEFS_H
+#pragma once
 
 #include <uv.h>
 
@@ -26,5 +25,3 @@ typedef struct {
 #define NODE_WRITABLE   1  // something we can write to (character
                            // device, fifo, socket, ..)
 #define NODE_OTHER      2  // non-writable thing (e.g., block device)
-
-#endif  // NVIM_OS_FS_DEFS_H

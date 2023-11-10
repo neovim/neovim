@@ -1,5 +1,4 @@
-#ifndef NVIM_MOUSE_H
-#define NVIM_MOUSE_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -56,5 +55,3 @@ enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mouse.h.generated.h"
 #endif
-
-#endif  // NVIM_MOUSE_H

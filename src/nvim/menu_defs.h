@@ -1,5 +1,4 @@
-#ifndef NVIM_MENU_DEFS_H
-#define NVIM_MENU_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -60,5 +59,3 @@ struct VimMenu {
   vimmenu_T *parent;          ///< Parent of menu
   vimmenu_T *next;            ///< Next item in menu
 };
-
-#endif  // NVIM_MENU_DEFS_H

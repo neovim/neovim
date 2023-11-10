@@ -1,5 +1,4 @@
-#ifndef NVIM_API_UI_H
-#define NVIM_API_UI_H
+#pragma once
 
 #include <stdint.h>
 
@@ -11,4 +10,3 @@
 # include "api/ui.h.generated.h"
 # include "ui_events_remote.h.generated.h"
 #endif
-#endif  // NVIM_API_UI_H

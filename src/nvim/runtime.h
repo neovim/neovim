@@ -1,5 +1,4 @@
-#ifndef NVIM_RUNTIME_H
-#define NVIM_RUNTIME_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -120,4 +119,3 @@ typedef kvec_t(char *) CharVec;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "runtime.h.generated.h"
 #endif
-#endif  // NVIM_RUNTIME_H

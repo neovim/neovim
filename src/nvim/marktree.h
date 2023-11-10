@@ -1,5 +1,4 @@
-#ifndef NVIM_MARKTREE_H
-#define NVIM_MARKTREE_H
+#pragma once
 
 #include <assert.h>
 #include <stdbool.h>
@@ -190,5 +189,3 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "marktree.h.generated.h"
 #endif
-
-#endif  // NVIM_MARKTREE_H

@@ -1,5 +1,4 @@
-#ifndef NVIM_MESSAGE_H
-#define NVIM_MESSAGE_H
+#pragma once
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -74,4 +73,3 @@ EXTERN int msg_listdo_overwrite INIT( = 0);
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "message.h.generated.h"
 #endif
-#endif  // NVIM_MESSAGE_H

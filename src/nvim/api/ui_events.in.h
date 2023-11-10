@@ -1,5 +1,4 @@
-#ifndef NVIM_API_UI_EVENTS_IN_H
-#define NVIM_API_UI_EVENTS_IN_H
+#pragma once
 
 // This file is not compiled, just parsed for definitions
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -170,4 +169,3 @@ void msg_history_clear(void)
 
 void error_exit(Integer status)
   FUNC_API_SINCE(12);
-#endif  // NVIM_API_UI_EVENTS_IN_H

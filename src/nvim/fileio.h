@@ -1,5 +1,4 @@
-#ifndef NVIM_FILEIO_H
-#define NVIM_FILEIO_H
+#pragma once
 
 #include "nvim/buffer_defs.h"
 #include "nvim/eval/typval_defs.h"
@@ -47,4 +46,3 @@ enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "fileio.h.generated.h"
 #endif
-#endif  // NVIM_FILEIO_H

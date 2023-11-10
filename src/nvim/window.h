@@ -1,5 +1,4 @@
-#ifndef NVIM_WINDOW_H
-#define NVIM_WINDOW_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -37,4 +36,3 @@ EXTERN bool p_ch_was_zero INIT( = false);
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "window.h.generated.h"
 #endif
-#endif  // NVIM_WINDOW_H

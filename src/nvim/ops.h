@@ -1,5 +1,4 @@
-#ifndef NVIM_OPS_H
-#define NVIM_OPS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -138,5 +137,3 @@ static inline bool is_literal_register(const int regname)
 #endif
 
 EXTERN LuaRef repeat_luaref INIT( = LUA_NOREF);  ///< LuaRef for "."
-
-#endif  // NVIM_OPS_H

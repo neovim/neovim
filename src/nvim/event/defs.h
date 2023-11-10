@@ -1,5 +1,4 @@
-#ifndef NVIM_EVENT_DEFS_H
-#define NVIM_EVENT_DEFS_H
+#pragma once
 
 #include <assert.h>
 #include <stdarg.h>
@@ -34,5 +33,3 @@ static inline Event event_create(argv_callback cb, int argc, ...)
   VA_EVENT_INIT(&event, cb, argc);
   return event;
 }
-
-#endif  // NVIM_EVENT_DEFS_H

@@ -1,5 +1,4 @@
-#ifndef NVIM_OS_PTY_PROCESS_WIN_H
-#define NVIM_OS_PTY_PROCESS_WIN_H
+#pragma once
 
 #include <uv.h>
 
@@ -37,5 +36,3 @@ static inline PtyProcess pty_process_init(Loop *loop, void *data)
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/pty_process_win.h.generated.h"
 #endif
-
-#endif  // NVIM_OS_PTY_PROCESS_WIN_H

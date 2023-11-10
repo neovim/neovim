@@ -1,5 +1,4 @@
-#ifndef NVIM_TUI_INPUT_H
-#define NVIM_TUI_INPUT_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -47,5 +46,3 @@ typedef enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/input.h.generated.h"
 #endif
-
-#endif  // NVIM_TUI_INPUT_H

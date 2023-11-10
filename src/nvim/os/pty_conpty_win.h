@@ -1,5 +1,4 @@
-#ifndef NVIM_OS_PTY_CONPTY_WIN_H
-#define NVIM_OS_PTY_CONPTY_WIN_H
+#pragma once
 
 #include "klib/kvec.h"
 #include "nvim/os/input.h"
@@ -21,5 +20,3 @@ typedef struct conpty {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/pty_conpty_win.h.generated.h"
 #endif
-
-#endif  // NVIM_OS_PTY_CONPTY_WIN_H

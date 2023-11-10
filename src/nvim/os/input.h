@@ -1,5 +1,4 @@
-#ifndef NVIM_OS_INPUT_H
-#define NVIM_OS_INPUT_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -13,4 +12,3 @@ EXTERN bool used_stdin INIT( = false);
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/input.h.generated.h"
 #endif
-#endif  // NVIM_OS_INPUT_H

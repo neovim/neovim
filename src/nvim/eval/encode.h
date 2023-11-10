@@ -1,5 +1,4 @@
-#ifndef NVIM_EVAL_ENCODE_H
-#define NVIM_EVAL_ENCODE_H
+#pragma once
 
 #include <msgpack.h>
 #include <msgpack/pack.h>
@@ -74,4 +73,3 @@ extern const char *const encode_special_var_names[];
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/encode.h.generated.h"
 #endif
-#endif  // NVIM_EVAL_ENCODE_H

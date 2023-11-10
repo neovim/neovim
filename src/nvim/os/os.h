@@ -1,5 +1,4 @@
-#ifndef NVIM_OS_OS_H
-#define NVIM_OS_OS_H
+#pragma once
 
 #include <stdbool.h>
 #include <uv.h>
@@ -21,5 +20,3 @@
 
 #define ENV_LOGFILE "NVIM_LOG_FILE"
 #define ENV_NVIM "NVIM"
-
-#endif  // NVIM_OS_OS_H

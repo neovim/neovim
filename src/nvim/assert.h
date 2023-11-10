@@ -1,5 +1,4 @@
-#ifndef NVIM_ASSERT_H
-#define NVIM_ASSERT_H
+#pragma once
 
 #include "auto/config.h"
 
@@ -165,5 +164,3 @@
 # define STRICT_SUB(a, b, c, t) \
   do { *(c) = (t)((a) - (b)); } while (0)
 #endif
-
-#endif  // NVIM_ASSERT_H

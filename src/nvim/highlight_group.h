@@ -1,5 +1,4 @@
-#ifndef NVIM_HIGHLIGHT_GROUP_H
-#define NVIM_HIGHLIGHT_GROUP_H
+#pragma once
 
 #include "nvim/api/keysets.h"
 #include "nvim/api/private/helpers.h"
@@ -18,5 +17,3 @@ extern color_name_table_T color_name_table[];
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "highlight_group.h.generated.h"
 #endif
-
-#endif  // NVIM_HIGHLIGHT_GROUP_H

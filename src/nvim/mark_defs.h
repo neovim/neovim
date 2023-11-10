@@ -1,5 +1,4 @@
-#ifndef NVIM_MARK_DEFS_H
-#define NVIM_MARK_DEFS_H
+#pragma once
 
 #include "nvim/eval/typval_defs.h"
 #include "nvim/os/time.h"
@@ -88,5 +87,3 @@ typedef struct xfilemark {
 
 /// Global marks (marks with file number or name)
 EXTERN xfmark_T namedfm[NGLOBALMARKS] INIT( = { 0 });
-
-#endif  // NVIM_MARK_DEFS_H

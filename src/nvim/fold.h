@@ -1,5 +1,4 @@
-#ifndef NVIM_FOLD_H
-#define NVIM_FOLD_H
+#pragma once
 
 #include <stdio.h>
 
@@ -15,4 +14,3 @@ EXTERN int disable_fold_update INIT( = 0);
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "fold.h.generated.h"
 #endif
-#endif  // NVIM_FOLD_H

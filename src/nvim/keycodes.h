@@ -1,5 +1,4 @@
-#ifndef NVIM_KEYCODES_H
-#define NVIM_KEYCODES_H
+#pragma once
 
 #include <stddef.h>
 
@@ -501,4 +500,3 @@ enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "keycodes.h.generated.h"
 #endif
-#endif  // NVIM_KEYCODES_H

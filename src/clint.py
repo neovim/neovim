@@ -510,29 +510,6 @@ class FileInfo:
         # Don't know what to do; header guard warnings may be wrong...
         return fullname
 
-    def Split(self):
-        """Splits the file into the directory, basename, and extension.
-
-        For 'chrome/browser/browser.cc', Split() would
-        return ('chrome/browser', 'browser', '.cc')
-
-        Returns:
-          A tuple of (directory, basename, extension).
-        """
-
-        googlename = self.RelativePath()
-        project, rest = os.path.split(googlename)
-        return (project,) + os.path.splitext(rest)
-
-    def BaseName(self):
-        """File base name - text after the final slash, before final period."""
-        return self.Split()[1]
-
-    def Extension(self):
-        """File extension - text following the final period."""
-        return self.Split()[2]
-
-
 def _ShouldPrintError(category, confidence, linenum):
     """If confidence >= verbose, category passes filter and isn't suppressed."""
 
@@ -886,110 +863,8 @@ def CloseExpression(clean_lines, linenum, pos):
     return (line, clean_lines.NumLines(), -1)
 
 
-def FindStartOfExpressionInLine(line, endpos, depth, startchar, endchar):
-    """Find position at the matching startchar.
-
-    This is almost the reverse of FindEndOfExpressionInLine, but note
-    that the input position and returned position differs by 1.
-
-    Args:
-      line: a CleansedLines line.
-      endpos: start searching at this position.
-      depth: nesting level at endpos.
-      startchar: expression opening character.
-      endchar: expression closing character.
-
-    Returns:
-      On finding matching startchar: (index at matching startchar, 0)
-      Otherwise: (-1, new depth at beginning of this line)
-    """
-    for i in range(endpos, -1, -1):
-        if line[i] == endchar:
-            depth += 1
-        elif line[i] == startchar:
-            depth -= 1
-            if depth == 0:
-                return (i, 0)
-    return (-1, depth)
-
-
-def ReverseCloseExpression(clean_lines, linenum, pos):
-    """If input points to ) or } or ] or >, finds the position that opens it.
-
-    If lines[linenum][pos] points to a ')' or '}' or ']' or '>', finds the
-    linenum/pos that correspond to the opening of the expression.
-
-    Args:
-      clean_lines: A CleansedLines instance containing the file.
-      linenum: The number of the line to check.
-      pos: A position on the line.
-
-    Returns:
-      A tuple (line, linenum, pos) pointer *at* the opening brace, or
-      (line, 0, -1) if we never find the matching opening brace.  Note
-      we ignore strings and comments when matching; and the line we
-      return is the 'cleansed' line at linenum.
-    """
-    line = clean_lines.elided[linenum]
-    endchar = line[pos]
-    startchar = None
-    if endchar not in ')}]>':
-        return (line, 0, -1)
-    if endchar == ')':
-        startchar = '('
-    if endchar == ']':
-        startchar = '['
-    if endchar == '}':
-        startchar = '{'
-    if endchar == '>':
-        startchar = '<'
-
-    # Check last line
-    (start_pos, num_open) = FindStartOfExpressionInLine(
-        line, pos, 0, startchar, endchar)
-    if start_pos > -1:
-        return (line, linenum, start_pos)
-
-    # Continue scanning backward
-    while linenum > 0:
-        linenum -= 1
-        line = clean_lines.elided[linenum]
-        (start_pos, num_open) = FindStartOfExpressionInLine(
-            line, len(line) - 1, num_open, startchar, endchar)
-        if start_pos > -1:
-            return (line, linenum, start_pos)
-
-    # Did not find startchar before beginning of file, give up
-    return (line, 0, -1)
-
-
-def GetHeaderGuardCPPVariable(filename):
-    """Returns the CPP variable that should be used as a header guard.
-
-    Args:
-      filename: The name of a C++ header file.
-
-    Returns:
-      The CPP variable that should be used as a header guard in the
-      named file.
-
-    """
-
-    # Restores original filename in case that cpplint is invoked from Emacs's
-    # flymake.
-    filename = re.sub(r'_flymake\.h$', '.h', filename)
-    filename = re.sub(r'/\.flymake/([^/]*)$', r'/\1', filename)
-
-    fileinfo = FileInfo(filename)
-    file_path_from_root = fileinfo.RelativePath()
-    return 'NVIM_' + re.sub(r'[-./\s]', '_', file_path_from_root).upper()
-
-
 def CheckForHeaderGuard(filename, lines, error):
-    """Checks that the file contains a header guard.
-
-    Logs an error if no #ifndef header guard is present.  For other
-    headers, checks that the full pathname is used.
+    """Checks that the file contains "#pragma once".
 
     Args:
       filename: The name of the C++ header file.
@@ -1001,65 +876,9 @@ def CheckForHeaderGuard(filename, lines, error):
     }:
         return
 
-    cppvar = GetHeaderGuardCPPVariable(filename)
-
-    ifndef = None
-    ifndef_linenum = 0
-    define = None
-    endif = None
-    endif_linenum = 0
-    for linenum, line in enumerate(lines):
-        linesplit = line.split()
-        if len(linesplit) >= 2:
-            # find the first occurrence of #ifndef and #define, save arg
-            if not ifndef and linesplit[0] == '#ifndef':
-                # set ifndef to the header guard presented on the #ifndef line.
-                ifndef = linesplit[1]
-                ifndef_linenum = linenum
-            if not define and linesplit[0] == '#define':
-                define = linesplit[1]
-        # find the last occurrence of #endif, save entire line
-        if line.startswith('#endif'):
-            endif = line
-            endif_linenum = linenum
-
-    if not ifndef:
+    if "#pragma once" not in lines:
         error(filename, 0, 'build/header_guard', 5,
-              'No #ifndef header guard found, suggested CPP variable is: %s' %
-              cppvar)
-        return
-
-    if not define:
-        error(filename, 0, 'build/header_guard', 5,
-              'No #define header guard found, suggested CPP variable is: %s' %
-              cppvar)
-        return
-
-    # The guard should be PATH_FILE_H_, but we also allow PATH_FILE_H__
-    # for backward compatibility.
-    if ifndef != cppvar:
-        error_level = 0
-        if ifndef != cppvar + '_':
-            error_level = 5
-
-        ParseNolintSuppressions(lines[ifndef_linenum], ifndef_linenum)
-        error(filename, ifndef_linenum, 'build/header_guard', error_level,
-              '#ifndef header guard has wrong style, please use: %s' % cppvar)
-
-    if define != ifndef:
-        error(filename, 0, 'build/header_guard', 5,
-              '#ifndef and #define don\'t match, suggested CPP variable is: %s'
-              % cppvar)
-        return
-
-    if endif != ('#endif  // %s' % cppvar):
-        error_level = 0
-        if endif != ('#endif  // %s' % (cppvar + '_')):
-            error_level = 5
-
-        ParseNolintSuppressions(lines[endif_linenum], endif_linenum)
-        error(filename, endif_linenum, 'build/header_guard', error_level,
-              '#endif line should be "#endif  // %s"' % cppvar)
+              'No "#pragma once" found in header')
 
 
 def CheckForBadCharacters(filename, lines, error):
@@ -1982,41 +1801,6 @@ def CheckSpacing(filename, clean_lines, linenum, error):
     # braces. And since you should never have braces at the beginning of a line,
     # this is an easy test.
     match = Match(r'^(.*[^ ({]){', line)
-    if match:
-        # Try a bit harder to check for brace initialization.  This
-        # happens in one of the following forms:
-        #   Constructor() : initializer_list_{} { ... }
-        #   Constructor{}.MemberFunction()
-        #   Type variable{};
-        #   FunctionCall(type{}, ...);
-        #   LastArgument(..., type{});
-        #   LOG(INFO) << type{} << " ...";
-        #   map_of_type[{...}] = ...;
-        #
-        # We check for the character following the closing brace, and
-        # silence the warning if it's one of those listed above, i.e.
-        # "{.;,)<]".
-        #
-        # To account for nested initializer list, we allow any number of
-        # closing braces up to "{;,)<".  We can't simply silence the
-        # warning on first sight of closing brace, because that would
-        # cause false negatives for things that are not initializer lists.
-        #   Silence this:         But not this:
-        #     Outer{                if (...) {
-        #       Inner{...}            if (...){  // Missing space before {
-        #     };                    }
-        #
-        # There is a false negative with this approach if people inserted
-        # spurious semicolons, e.g. "if (cond){};", but we will catch the
-        # spurious semicolon with a separate check.
-        (endline, endlinenum, endpos) = CloseExpression(
-            clean_lines, linenum, len(match.group(1)))
-        trailing_text = ''
-        if endpos > -1:
-            trailing_text = endline[endpos:]
-        for offset in range(endlinenum + 1,
-                            min(endlinenum + 3, clean_lines.NumLines() - 1)):
-            trailing_text += clean_lines.elided[offset]
 
     # Make sure '} else {' has spaces.
     if Search(r'}else', line):

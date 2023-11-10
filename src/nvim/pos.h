@@ -1,5 +1,4 @@
-#ifndef NVIM_POS_H
-#define NVIM_POS_H
+#pragma once
 
 #include <inttypes.h>
 
@@ -39,5 +38,3 @@ typedef struct {
   linenr_T lnum;        ///< line number
   colnr_T col;          ///< column number
 } lpos_T;
-
-#endif  // NVIM_POS_H

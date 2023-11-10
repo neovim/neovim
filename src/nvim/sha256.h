@@ -1,5 +1,4 @@
-#ifndef NVIM_SHA256_H
-#define NVIM_SHA256_H
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -18,4 +17,3 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "sha256.h.generated.h"
 #endif
-#endif  // NVIM_SHA256_H

@@ -1,5 +1,4 @@
-#ifndef NVIM_EVAL_USERFUNC_H
-#define NVIM_EVAL_USERFUNC_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -97,4 +96,3 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/userfunc.h.generated.h"
 #endif
-#endif  // NVIM_EVAL_USERFUNC_H

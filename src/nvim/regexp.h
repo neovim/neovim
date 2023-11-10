@@ -1,5 +1,4 @@
-#ifndef NVIM_REGEXP_H
-#define NVIM_REGEXP_H
+#pragma once
 
 #include "nvim/buffer_defs.h"
 #include "nvim/regexp_defs.h"
@@ -20,5 +19,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "regexp.h.generated.h"
 #endif
-
-#endif  // NVIM_REGEXP_H

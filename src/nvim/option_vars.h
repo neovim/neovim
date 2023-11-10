@@ -1,5 +1,4 @@
-#ifndef NVIM_OPTION_VARS_H
-#define NVIM_OPTION_VARS_H
+#pragma once
 
 #include "nvim/macros.h"
 #include "nvim/types.h"
@@ -946,5 +945,3 @@ enum {
 #define MAX_NUMBERWIDTH 20      // used for 'numberwidth' and 'statuscolumn'
 
 #define TABSTOP_MAX 9999
-
-#endif  // NVIM_OPTION_VARS_H

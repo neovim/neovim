@@ -1,5 +1,4 @@
-#ifndef NVIM_SYNTAX_H
-#define NVIM_SYNTAX_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -37,5 +36,3 @@ extern const char *const highlight_init_cmdline[];
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "syntax.h.generated.h"
 #endif
-
-#endif  // NVIM_SYNTAX_H

@@ -1,5 +1,4 @@
-#ifndef NVIM_EVAL_WINDOW_H
-#define NVIM_EVAL_WINDOW_H
+#pragma once
 
 #include <stdbool.h>
 #include <string.h>
@@ -76,4 +75,3 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/window.h.generated.h"
 #endif
-#endif  // NVIM_EVAL_WINDOW_H

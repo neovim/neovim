@@ -1,5 +1,4 @@
-#ifndef NVIM_MSGPACK_RPC_CHANNEL_DEFS_H
-#define NVIM_MSGPACK_RPC_CHANNEL_DEFS_H
+#pragma once
 
 #include <msgpack.h>
 #include <stdbool.h>
@@ -49,5 +48,3 @@ typedef struct {
   Dictionary info;
   ClientType client_type;
 } RpcState;
-
-#endif  // NVIM_MSGPACK_RPC_CHANNEL_DEFS_H

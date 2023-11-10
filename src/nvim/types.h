@@ -1,5 +1,4 @@
-#ifndef NVIM_TYPES_H
-#define NVIM_TYPES_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -47,5 +46,3 @@ typedef enum {
 typedef struct Decoration Decoration;
 
 typedef int64_t OptInt;
-
-#endif  // NVIM_TYPES_H

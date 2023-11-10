@@ -1,5 +1,4 @@
-#ifndef NVIM_STATUSLINE_H
-#define NVIM_STATUSLINE_H
+#pragma once
 
 #include <stddef.h>
 
@@ -15,5 +14,3 @@ EXTERN size_t tab_page_click_defs_size INIT( = 0);
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "statusline.h.generated.h"
 #endif
-
-#endif  // NVIM_STATUSLINE_H

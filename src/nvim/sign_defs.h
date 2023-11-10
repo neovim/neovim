@@ -1,5 +1,4 @@
-#ifndef NVIM_SIGN_DEFS_H
-#define NVIM_SIGN_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -50,5 +49,3 @@ typedef enum {
   SIGN_NUMHL,
   SIGN_TEXT,
 } SignType;
-
-#endif  // NVIM_SIGN_DEFS_H

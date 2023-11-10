@@ -1,5 +1,4 @@
-#ifndef NVIM_MAP_H
-#define NVIM_MAP_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -225,5 +224,3 @@ MAP_DECLS(ColorKey, ColorItem)
   }
 
 void pmap_del2(PMap(cstr_t) *map, const char *key);
-
-#endif  // NVIM_MAP_H

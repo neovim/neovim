@@ -1,5 +1,4 @@
-#ifndef NVIM_GETCHAR_DEFS_H
-#define NVIM_GETCHAR_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -62,5 +61,3 @@ enum RemapValues {
   REMAP_SCRIPT = -2,  ///< Remap script-local mappings only.
   REMAP_SKIP = -3,    ///< No remapping for first char.
 };
-
-#endif  // NVIM_GETCHAR_DEFS_H

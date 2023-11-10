@@ -1,5 +1,4 @@
-#ifndef NVIM_EX_CMDS2_H
-#define NVIM_EX_CMDS2_H
+#pragma once
 
 #include "nvim/ex_cmds_defs.h"
 
@@ -15,4 +14,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds2.h.generated.h"
 #endif
-#endif  // NVIM_EX_CMDS2_H

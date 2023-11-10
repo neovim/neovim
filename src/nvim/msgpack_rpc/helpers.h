@@ -1,5 +1,4 @@
-#ifndef NVIM_MSGPACK_RPC_HELPERS_H
-#define NVIM_MSGPACK_RPC_HELPERS_H
+#pragma once
 
 #include <msgpack.h>
 #include <stdbool.h>
@@ -19,5 +18,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/helpers.h.generated.h"
 #endif
-
-#endif  // NVIM_MSGPACK_RPC_HELPERS_H

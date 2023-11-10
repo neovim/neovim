@@ -1,5 +1,4 @@
-#ifndef NVIM_TUI_INPUT_DEFS_H
-#define NVIM_TUI_INPUT_DEFS_H
+#pragma once
 
 typedef enum {
   KITTY_KEY_ESCAPE               = 57344,
@@ -114,5 +113,3 @@ typedef enum {
   KITTY_KEY_ISO_LEVEL3_SHIFT     = 57453,
   KITTY_KEY_ISO_LEVEL5_SHIFT     = 57454,
 } KittyKey;
-
-#endif  // NVIM_TUI_INPUT_DEFS_H

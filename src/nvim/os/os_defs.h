@@ -1,5 +1,4 @@
-#ifndef NVIM_OS_OS_DEFS_H
-#define NVIM_OS_OS_DEFS_H
+#pragma once
 
 #include <ctype.h>
 #include <stdio.h>
@@ -104,5 +103,3 @@
 #  define S_ISLNK(m)    0
 # endif
 #endif
-
-#endif  // NVIM_OS_OS_DEFS_H

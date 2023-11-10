@@ -1,5 +1,4 @@
-#ifndef NVIM_EX_EVAL_DEFS_H
-#define NVIM_EX_EVAL_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -128,5 +127,3 @@ struct exception_state_S {
   int estate_trylevel;
   int estate_did_emsg;
 };
-
-#endif  // NVIM_EX_EVAL_DEFS_H

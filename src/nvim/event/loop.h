@@ -1,5 +1,4 @@
-#ifndef NVIM_EVENT_LOOP_H
-#define NVIM_EVENT_LOOP_H
+#pragma once
 
 #include <stdint.h>
 #include <uv.h>
@@ -87,5 +86,3 @@ typedef struct loop {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/loop.h.generated.h"
 #endif
-
-#endif  // NVIM_EVENT_LOOP_H

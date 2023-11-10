@@ -1,5 +1,4 @@
-#ifndef NVIM_BUFFER_DEFS_H
-#define NVIM_BUFFER_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -1340,5 +1339,3 @@ struct window_S {
 #define CHANGEDTICK(buf) \
   (=== Include buffer.h & use buf_(get|set|inc) _changedtick ===)
 // uncrustify:on
-
-#endif  // NVIM_BUFFER_DEFS_H

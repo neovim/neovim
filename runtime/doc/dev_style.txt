@@ -32,19 +32,13 @@ but we nonetheless keep things as they are in order to preserve consistency.
 Header Files                                            *dev-style-header*
 
 
-The #define Guard ~
+Header guard ~
 
-All header files should have `#define` guards to prevent multiple inclusion.
-The format of the symbol name should be `NVIM_<DIRECTORY>_<FILE>_H`.
+All header files should start with `#pragma once` to prevent multiple inclusion.
 
     In foo/bar.h:
 >c
-        #ifndef NVIM_FOO_BAR_H
-        #define NVIM_FOO_BAR_H
-
-        ...
-
-        #endif  // NVIM_FOO_BAR_H
+        #pragma once
 <
 
 
@@ -245,15 +239,13 @@ contain only non-static function declarations. >c
 
 
     // src/nvim/foo.h file
-    #ifndef NVIM_FOO_H
-    #define NVIM_FOO_H
+    #pragma once
 
     …
 
     #ifdef INCLUDE_GENERATED_DECLARATIONS
     # include "foo.h.generated.h"
     #endif
-    #endif  // NVIM_FOO_H
 
 
 64-bit Portability ~

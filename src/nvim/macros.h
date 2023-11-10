@@ -1,5 +1,4 @@
-#ifndef NVIM_MACROS_H
-#define NVIM_MACROS_H
+#pragma once
 
 #include "auto/config.h"
 
@@ -227,5 +226,3 @@
 #endif
 
 #define EMPTY_POS(a) ((a).lnum == 0 && (a).col == 0 && (a).coladd == 0)
-
-#endif  // NVIM_MACROS_H

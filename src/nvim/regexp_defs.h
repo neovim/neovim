@@ -7,8 +7,7 @@
 //
 // NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE
 
-#ifndef NVIM_REGEXP_DEFS_H
-#define NVIM_REGEXP_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -177,5 +176,3 @@ struct regengine {
 #define REGSUB_COPY      1
 #define REGSUB_MAGIC     2
 #define REGSUB_BACKSLASH 4
-
-#endif  // NVIM_REGEXP_DEFS_H

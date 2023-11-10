@@ -1,5 +1,4 @@
-#ifndef NVIM_INDENT_H
-#define NVIM_INDENT_H
+#pragma once
 
 #include "nvim/vim.h"
 
@@ -14,4 +13,3 @@ typedef int (*IndentGetter)(void);
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "indent.h.generated.h"
 #endif
-#endif  // NVIM_INDENT_H

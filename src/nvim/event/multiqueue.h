@@ -1,5 +1,4 @@
-#ifndef NVIM_EVENT_MULTIQUEUE_H
-#define NVIM_EVENT_MULTIQUEUE_H
+#pragma once
 
 #include <uv.h>
 
@@ -15,4 +14,3 @@ typedef void (*PutCallback)(MultiQueue *multiq, void *data);
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/multiqueue.h.generated.h"
 #endif
-#endif  // NVIM_EVENT_MULTIQUEUE_H

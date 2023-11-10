@@ -1,5 +1,4 @@
-#ifndef NVIM_GETCHAR_H
-#define NVIM_GETCHAR_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -25,4 +24,3 @@ extern FileDescriptor *scriptin[NSCRIPT];
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "getchar.h.generated.h"
 #endif
-#endif  // NVIM_GETCHAR_H

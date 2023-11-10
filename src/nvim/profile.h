@@ -1,5 +1,4 @@
-#ifndef NVIM_PROFILE_H
-#define NVIM_PROFILE_H
+#pragma once
 
 #include <stdint.h>
 #include <time.h>
@@ -15,5 +14,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "profile.h.generated.h"
 #endif
-
-#endif  // NVIM_PROFILE_H

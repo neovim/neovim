@@ -1,5 +1,4 @@
-#ifndef NVIM_EVENT_RSTREAM_H
-#define NVIM_EVENT_RSTREAM_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -11,4 +10,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/rstream.h.generated.h"
 #endif
-#endif  // NVIM_EVENT_RSTREAM_H

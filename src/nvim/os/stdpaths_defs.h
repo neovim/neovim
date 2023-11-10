@@ -1,5 +1,4 @@
-#ifndef NVIM_OS_STDPATHS_DEFS_H
-#define NVIM_OS_STDPATHS_DEFS_H
+#pragma once
 
 /// List of possible XDG variables
 typedef enum {
@@ -12,5 +11,3 @@ typedef enum {
   kXDGConfigDirs,  ///< XDG_CONFIG_DIRS
   kXDGDataDirs,    ///< XDG_DATA_DIRS
 } XDGVarType;
-
-#endif  // NVIM_OS_STDPATHS_DEFS_H

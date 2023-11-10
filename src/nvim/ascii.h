@@ -1,5 +1,4 @@
-#ifndef NVIM_ASCII_H
-#define NVIM_ASCII_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -184,5 +183,3 @@ static inline bool ascii_isspace(int c)
 {
   return (c >= 9 && c <= 13) || c == ' ';
 }
-
-#endif  // NVIM_ASCII_H

@@ -1,5 +1,4 @@
-#ifndef NVIM_DECORATION_H
-#define NVIM_DECORATION_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -128,5 +127,3 @@ static inline bool decor_has_sign(Decoration *decor)
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration.h.generated.h"
 #endif
-
-#endif  // NVIM_DECORATION_H

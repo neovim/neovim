@@ -1,5 +1,4 @@
-#ifndef NVIM_GRID_H
-#define NVIM_GRID_H
+#pragma once
 
 #include <stdbool.h>
 #include <string.h>
@@ -59,4 +58,3 @@ static inline schar_T schar_from_char(int c)
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "grid.h.generated.h"
 #endif
-#endif  // NVIM_GRID_H
