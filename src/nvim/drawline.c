@@ -101,7 +101,6 @@ typedef struct {
   int n_attr;                ///< chars with special attr
   char *p_extra;             ///< string of extra chars, plus NUL, only used
                              ///< when c_extra and c_final are NUL
-  char *p_extra_free;        ///< p_extra buffer that needs to be freed
   int extra_attr;            ///< attributes for p_extra
   int c_extra;               ///< extra chars, all the same
   int c_final;               ///< final char, mandatory if set
@@ -113,7 +112,6 @@ typedef struct {
   // saved "extra" items for when draw_state becomes WL_LINE (again)
   int saved_n_extra;
   char *saved_p_extra;
-  char *saved_p_extra_free;
   bool saved_extra_for_extmark;
   int saved_c_extra;
   int saved_c_final;
@@ -145,6 +143,27 @@ typedef struct {
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "drawline.c.generated.h"
+#endif
+
+static char *extra_buf = NULL;
+static size_t extra_buf_size = 0;
+
+static char *get_extra_buf(size_t size)
+{
+  size = MAX(size, 64);
+  if (extra_buf_size < size) {
+    xfree(extra_buf);
+    extra_buf = xmalloc(size);
+    extra_buf_size = size;
+  }
+  return extra_buf;
+}
+
+#ifdef EXITFREE
+void drawline_free_all_mem(void)
+{
+  xfree(extra_buf);
+}
 #endif
 
 /// Advance **color_cols
@@ -349,6 +368,8 @@ static bool use_cursor_line_highlight(win_T *wp, linenr_T lnum)
          && (wp->w_p_culopt_flags & CULOPT_NBR);
 }
 
+static char fdc_buf[MB_MAXCHAR * 10 + 1];
+
 /// Setup for drawing the 'foldcolumn', if there is one.
 static void handle_foldcolumn(win_T *wp, winlinevars_T *wlv)
 {
@@ -357,13 +378,11 @@ static void handle_foldcolumn(win_T *wp, winlinevars_T *wlv)
     return;
   }
 
-  // Allocate a buffer, "wlv->extra[]" may already be in use.
-  xfree(wlv->p_extra_free);
-  wlv->p_extra_free = xmalloc(MAX_MCO * (size_t)fdc + 1);
-  wlv->n_extra = (int)fill_foldcolumn(wlv->p_extra_free, wp, wlv->foldinfo, wlv->lnum,
+  // Use a separate buffer as `extra_buf` might be in use.
+  wlv->n_extra = (int)fill_foldcolumn(fdc_buf, wp, wlv->foldinfo, wlv->lnum,
                                       &wlv->n_closing);
-  wlv->p_extra_free[wlv->n_extra] = NUL;
-  wlv->p_extra = wlv->p_extra_free;
+  fdc_buf[wlv->n_extra] = NUL;
+  wlv->p_extra = fdc_buf;
   wlv->c_extra = NUL;
   wlv->c_final = NUL;
   if (use_cursor_line_highlight(wp, wlv->lnum)) {
@@ -393,7 +412,7 @@ size_t fill_foldcolumn(char *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum, i
   int len = 0;
   bool closed = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
   // Init to all spaces.
-  memset(p, ' ', MAX_MCO * (size_t)fdc + 1);
+  memset(p, ' ', MB_MAXCHAR * (size_t)fdc + 1);
 
   level = foldinfo.fi_level;
 
@@ -991,9 +1010,6 @@ static void win_line_start(win_T *wp, winlinevars_T *wlv, bool save_extra)
     wlv->draw_state = WL_START;
     wlv->saved_n_extra = wlv->n_extra;
     wlv->saved_p_extra = wlv->p_extra;
-    xfree(wlv->saved_p_extra_free);
-    wlv->saved_p_extra_free = wlv->p_extra_free;
-    wlv->p_extra_free = NULL;
     wlv->saved_extra_for_extmark = wlv->extra_for_extmark;
     wlv->saved_c_extra = wlv->c_extra;
     wlv->saved_c_final = wlv->c_final;
@@ -1014,9 +1030,6 @@ static void win_line_continue(winlinevars_T *wlv)
     wlv->c_extra = wlv->saved_c_extra;
     wlv->c_final = wlv->saved_c_final;
     wlv->p_extra = wlv->saved_p_extra;
-    xfree(wlv->p_extra_free);
-    wlv->p_extra_free = wlv->saved_p_extra_free;
-    wlv->saved_p_extra_free = NULL;
     wlv->extra_for_extmark = wlv->saved_extra_for_extmark;
     wlv->char_attr = wlv->saved_char_attr;
   } else {
@@ -1111,6 +1124,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
   char buf_fold[FOLD_TEXT_LEN];         // Hold value returned by get_foldtext
   VirtText fold_vt = VIRTTEXT_EMPTY;
+  char *foldtext_free = NULL;
 
   // 'cursorlineopt' has "screenline" and cursor is in this line
   bool cul_screenline = false;
@@ -1908,8 +1922,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       wlv.n_extra = (int)strlen(wlv.p_extra);
 
       if (wlv.p_extra != buf_fold) {
-        xfree(wlv.p_extra_free);
-        wlv.p_extra_free = wlv.p_extra;
+        foldtext_free = wlv.p_extra;
       }
       wlv.c_extra = NUL;
       wlv.c_final = NUL;
@@ -2415,11 +2428,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
                 len += wlv.n_extra - tab_len;
               }
               c = wp->w_p_lcs_chars.tab1;
-              p = xmalloc((size_t)len + 1);
+              p = get_extra_buf((size_t)len + 1);
               memset(p, ' ', (size_t)len);
               p[len] = NUL;
-              xfree(wlv.p_extra_free);
-              wlv.p_extra_free = p;
+              wlv.p_extra = p;
               for (int i = 0; i < tab_len; i++) {
                 if (*p == NUL) {
                   tab_len = i;
@@ -2434,7 +2446,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
                 p += utf_char2bytes(lcs, p);
                 wlv.n_extra += utf_char2len(lcs) - (saved_nextra > 0 ? 1 : 0);
               }
-              wlv.p_extra = wlv.p_extra_free;
 
               // n_extra will be increased by FIX_FOX_BOGUSCOLS
               // macro below, so need to adjust for that here
@@ -2533,14 +2544,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             char *p;
 
             c = (uint8_t)(*wlv.p_extra);
-            p = xmalloc((size_t)wlv.n_extra + 1);
+            p = get_extra_buf((size_t)wlv.n_extra + 1);
             memset(p, ' ', (size_t)wlv.n_extra);
             strncpy(p,  // NOLINT(runtime/printf)
                     wlv.p_extra + 1,
                     (size_t)strlen(wlv.p_extra) - 1);
             p[wlv.n_extra] = NUL;
-            xfree(wlv.p_extra_free);
-            wlv.p_extra_free = wlv.p_extra = p;
+            wlv.p_extra = p;
           } else {
             wlv.n_extra = byte2cells(c) - 1;
             c = (uint8_t)(*wlv.p_extra++);
@@ -3141,8 +3151,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
   clear_virttext(&fold_vt);
   kv_destroy(virt_lines);
-  xfree(wlv.p_extra_free);
-  xfree(wlv.saved_p_extra_free);
+  xfree(foldtext_free);
   return wlv.row;
 }
 
