@@ -1,5 +1,4 @@
-#ifndef NVIM_HASHTAB_H
-#define NVIM_HASHTAB_H
+#pragma once
 
 #include <stddef.h>
 
@@ -94,5 +93,3 @@ typedef struct hashtable_S {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "hashtab.h.generated.h"
 #endif
-
-#endif  // NVIM_HASHTAB_H

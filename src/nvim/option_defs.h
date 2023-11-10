@@ -1,5 +1,4 @@
-#ifndef NVIM_OPTION_DEFS_H
-#define NVIM_OPTION_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -115,5 +114,3 @@ typedef struct {
 /// Note: If returned FAIL or *numMatches is 0, *matches will NOT be freed by
 /// caller.
 typedef int (*opt_expand_cb_T)(optexpand_T *args, int *numMatches, char ***matches);
-
-#endif  // NVIM_OPTION_DEFS_H

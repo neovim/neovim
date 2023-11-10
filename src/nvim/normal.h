@@ -1,5 +1,4 @@
-#ifndef NVIM_NORMAL_H
-#define NVIM_NORMAL_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -82,4 +81,3 @@ EXTERN char showcmd_buf[SHOWCMD_BUFLEN];
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "normal.h.generated.h"
 #endif
-#endif  // NVIM_NORMAL_H

@@ -1,5 +1,4 @@
-#ifndef NVIM_EVENT_STREAM_H
-#define NVIM_EVENT_STREAM_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -61,4 +60,3 @@ struct stream {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/stream.h.generated.h"
 #endif
-#endif  // NVIM_EVENT_STREAM_H

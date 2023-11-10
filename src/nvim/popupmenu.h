@@ -1,5 +1,4 @@
-#ifndef NVIM_POPUPMENU_H
-#define NVIM_POPUPMENU_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -29,4 +28,3 @@ EXTERN struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "popupmenu.h.generated.h"
 #endif
-#endif  // NVIM_POPUPMENU_H

@@ -1,5 +1,4 @@
-#ifndef NVIM_STATUSLINE_DEFS_H
-#define NVIM_STATUSLINE_DEFS_H
+#pragma once
 
 #include <stddef.h>
 
@@ -75,5 +74,3 @@ struct statuscol {
   foldinfo_T foldinfo;                 ///< fold information
   SignTextAttrs *sattrs;               ///< sign attributes
 };
-
-#endif  // NVIM_STATUSLINE_DEFS_H

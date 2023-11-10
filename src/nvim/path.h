@@ -1,5 +1,4 @@
-#ifndef NVIM_PATH_H
-#define NVIM_PATH_H
+#pragma once
 
 #include "nvim/func_attr.h"
 #include "nvim/garray.h"
@@ -40,4 +39,3 @@ typedef enum file_comparison {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "path.h.generated.h"
 #endif
-#endif  // NVIM_PATH_H

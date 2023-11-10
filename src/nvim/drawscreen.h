@@ -1,5 +1,4 @@
-#ifndef NVIM_DRAWSCREEN_H
-#define NVIM_DRAWSCREEN_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -31,4 +30,3 @@ EXTERN match_T screen_search_hl INIT( = { 0 });       // used for 'hlsearch' hig
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "drawscreen.h.generated.h"
 #endif
-#endif  // NVIM_DRAWSCREEN_H

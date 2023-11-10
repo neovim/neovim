@@ -11,8 +11,7 @@
 //   stopped(automatic backpressure handling)
 //
 // Reference: http://en.wikipedia.org/wiki/Circular_buffer
-#ifndef NVIM_RBUFFER_H
-#define NVIM_RBUFFER_H
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -86,5 +85,3 @@ struct rbuffer {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "rbuffer.h.generated.h"
 #endif
-
-#endif  // NVIM_RBUFFER_H

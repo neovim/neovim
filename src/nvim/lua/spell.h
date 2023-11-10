@@ -1,5 +1,4 @@
-#ifndef NVIM_LUA_SPELL_H
-#define NVIM_LUA_SPELL_H
+#pragma once
 
 #include <lauxlib.h>
 #include <lua.h>
@@ -8,5 +7,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/spell.h.generated.h"
 #endif
-
-#endif  // NVIM_LUA_SPELL_H

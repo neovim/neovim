@@ -1,5 +1,4 @@
-#ifndef NVIM_HIGHLIGHT_DEFS_H
-#define NVIM_HIGHLIGHT_DEFS_H
+#pragma once
 
 #include <inttypes.h>
 
@@ -253,5 +252,3 @@ typedef struct {
   int hl_id;
   int priority;
 } HlPriId;
-
-#endif  // NVIM_HIGHLIGHT_DEFS_H

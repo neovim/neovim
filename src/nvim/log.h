@@ -1,5 +1,4 @@
-#ifndef NVIM_LOG_H
-#define NVIM_LOG_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -53,4 +52,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "log.h.generated.h"
 #endif
-#endif  // NVIM_LOG_H

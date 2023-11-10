@@ -1,5 +1,4 @@
-#ifndef NVIM_VIML_PARSER_EXPRESSIONS_H
-#define NVIM_VIML_PARSER_EXPRESSIONS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -387,5 +386,3 @@ extern const char *const expr_asgn_type_tab[];
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "viml/parser/expressions.h.generated.h"
 #endif
-
-#endif  // NVIM_VIML_PARSER_EXPRESSIONS_H

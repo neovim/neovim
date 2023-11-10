@@ -1,5 +1,4 @@
-#ifndef NVIM_UI_H
-#define NVIM_UI_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -127,4 +126,3 @@ typedef struct ui_event_callback {
 // uncrustify:on
 
 EXTERN MultiQueue *resize_events;
-#endif  // NVIM_UI_H

@@ -1,5 +1,4 @@
-#ifndef NVIM_UGRID_H
-#define NVIM_UGRID_H
+#pragma once
 
 #include "nvim/globals.h"
 #include "nvim/grid_defs.h"
@@ -35,4 +34,3 @@ struct ugrid {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ugrid.h.generated.h"
 #endif
-#endif  // NVIM_UGRID_H

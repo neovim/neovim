@@ -1,5 +1,4 @@
-#ifndef NVIM_SYNTAX_DEFS_H
-#define NVIM_SYNTAX_DEFS_H
+#pragma once
 
 #include "nvim/highlight_defs.h"
 
@@ -59,5 +58,3 @@ struct syn_state {
   linenr_T sst_change_lnum;     // when non-zero, change in this line
                                 // may have made the state invalid
 };
-
-#endif  // NVIM_SYNTAX_DEFS_H

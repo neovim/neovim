@@ -1,5 +1,4 @@
-#ifndef NVIM_CMDEXPAND_H
-#define NVIM_CMDEXPAND_H
+#pragma once
 
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/eval/typval_defs.h"
@@ -45,4 +44,3 @@ enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "cmdexpand.h.generated.h"
 #endif
-#endif  // NVIM_CMDEXPAND_H

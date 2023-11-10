@@ -1,5 +1,4 @@
-#ifndef NVIM_MBYTE_DEFS_H
-#define NVIM_MBYTE_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -50,5 +49,3 @@ typedef struct {
   bool vc_fail;   ///< What to do with invalid characters: if true, fail,
                   ///< otherwise use '?'.
 } vimconv_T;
-
-#endif  // NVIM_MBYTE_DEFS_H

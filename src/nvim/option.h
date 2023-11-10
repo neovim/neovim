@@ -1,5 +1,4 @@
-#ifndef NVIM_OPTION_H
-#define NVIM_OPTION_H
+#pragma once
 
 #include <stdint.h>
 
@@ -116,4 +115,3 @@ typedef enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.h.generated.h"
 #endif
-#endif  // NVIM_OPTION_H

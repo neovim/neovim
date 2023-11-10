@@ -1,5 +1,4 @@
-#ifndef NVIM_FOLD_DEFS_H
-#define NVIM_FOLD_DEFS_H
+#pragma once
 
 #include "nvim/pos.h"
 
@@ -13,5 +12,3 @@ typedef struct foldinfo {
                                 // line
   linenr_T fi_lines;
 } foldinfo_T;
-
-#endif  // NVIM_FOLD_DEFS_H

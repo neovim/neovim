@@ -1,5 +1,4 @@
-#ifndef NVIM_CHANNEL_H
-#define NVIM_CHANNEL_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -161,5 +160,3 @@ static inline Stream *channel_outstream(Channel *chan)
   }
   abort();
 }
-
-#endif  // NVIM_CHANNEL_H

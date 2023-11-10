@@ -1,5 +1,4 @@
-#ifndef NVIM_VIML_PARSER_PARSER_H
-#define NVIM_VIML_PARSER_PARSER_H
+#pragma once
 
 #include <assert.h>
 #include <stdbool.h>
@@ -227,5 +226,3 @@ static inline void viml_parser_highlight(ParserState *const pstate, const Parser
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "viml/parser/parser.h.generated.h"
 #endif
-
-#endif  // NVIM_VIML_PARSER_PARSER_H

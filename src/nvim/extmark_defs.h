@@ -1,5 +1,4 @@
-#ifndef NVIM_EXTMARK_DEFS_H
-#define NVIM_EXTMARK_DEFS_H
+#pragma once
 
 #include "klib/kvec.h"
 #include "nvim/types.h"
@@ -28,5 +27,3 @@ typedef enum {
   kDecorLevelVisible = 1,
   kDecorLevelVirtLine = 2,
 } DecorLevel;
-
-#endif  // NVIM_EXTMARK_DEFS_H

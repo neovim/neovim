@@ -1,5 +1,4 @@
-#ifndef NVIM_CHARSET_H
-#define NVIM_CHARSET_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -57,4 +56,3 @@ static inline bool vim_isbreak(int c)
 {
   return breakat_flags[(uint8_t)c];
 }
-#endif  // NVIM_CHARSET_H

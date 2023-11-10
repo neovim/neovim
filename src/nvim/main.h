@@ -1,5 +1,4 @@
-#ifndef NVIM_MAIN_H
-#define NVIM_MAIN_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -51,4 +50,3 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "main.h.generated.h"
 #endif
-#endif  // NVIM_MAIN_H

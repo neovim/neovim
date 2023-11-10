@@ -1,5 +1,4 @@
-#ifndef NVIM_QUICKFIX_H
-#define NVIM_QUICKFIX_H
+#pragma once
 
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/option_defs.h"
@@ -13,4 +12,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "quickfix.h.generated.h"
 #endif
-#endif  // NVIM_QUICKFIX_H

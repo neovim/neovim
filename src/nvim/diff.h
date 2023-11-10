@@ -1,5 +1,4 @@
-#ifndef NVIM_DIFF_H
-#define NVIM_DIFF_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -17,4 +16,3 @@ EXTERN bool need_diff_redraw INIT( = false);  // need to call diff_redraw()
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "diff.h.generated.h"
 #endif
-#endif  // NVIM_DIFF_H

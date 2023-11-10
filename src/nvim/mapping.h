@@ -1,5 +1,4 @@
-#ifndef NVIM_MAPPING_H
-#define NVIM_MAPPING_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -25,4 +24,3 @@ enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mapping.h.generated.h"
 #endif
-#endif  // NVIM_MAPPING_H

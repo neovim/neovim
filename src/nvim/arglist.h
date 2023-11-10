@@ -1,5 +1,4 @@
-#ifndef NVIM_ARGLIST_H
-#define NVIM_ARGLIST_H
+#pragma once
 
 #include "nvim/arglist_defs.h"
 #include "nvim/cmdexpand_defs.h"
@@ -10,5 +9,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "arglist.h.generated.h"
 #endif
-
-#endif  // NVIM_ARGLIST_H

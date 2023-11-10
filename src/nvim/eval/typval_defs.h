@@ -1,5 +1,4 @@
-#ifndef NVIM_EVAL_TYPVAL_DEFS_H
-#define NVIM_EVAL_TYPVAL_DEFS_H
+#pragma once
 
 #include <inttypes.h>
 #include <limits.h>
@@ -385,5 +384,3 @@ typedef struct list_stack_S {
   list_T *list;
   struct list_stack_S *prev;
 } list_stack_T;
-
-#endif  // NVIM_EVAL_TYPVAL_DEFS_H

@@ -1,5 +1,4 @@
-#ifndef NVIM_MENU_H
-#define NVIM_MENU_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -11,4 +10,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "menu.h.generated.h"
 #endif
-#endif  // NVIM_MENU_H

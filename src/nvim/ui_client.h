@@ -1,5 +1,4 @@
-#ifndef NVIM_UI_CLIENT_H
-#define NVIM_UI_CLIENT_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -47,5 +46,3 @@ EXTERN bool ui_client_forward_stdin INIT( = false);
 # include "ui_events_client.h.generated.h"
 #endif
 // uncrustify:on
-
-#endif  // NVIM_UI_CLIENT_H

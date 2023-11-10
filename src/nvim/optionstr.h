@@ -1,5 +1,4 @@
-#ifndef NVIM_OPTIONSTR_H
-#define NVIM_OPTIONSTR_H
+#pragma once
 
 #include "nvim/buffer_defs.h"
 #include "nvim/cmdexpand_defs.h"
@@ -8,4 +7,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "optionstr.h.generated.h"
 #endif
-#endif  // NVIM_OPTIONSTR_H

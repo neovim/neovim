@@ -1,5 +1,4 @@
-#ifndef NVIM_API_PRIVATE_VALIDATE_H
-#define NVIM_API_PRIVATE_VALIDATE_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -95,5 +94,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/validate.h.generated.h"
 #endif
-
-#endif  // NVIM_API_PRIVATE_VALIDATE_H

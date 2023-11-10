@@ -1,5 +1,4 @@
-#ifndef NVIM_EVENT_TIME_H
-#define NVIM_EVENT_TIME_H
+#pragma once
 
 #include <stdbool.h>
 #include <uv.h>
@@ -23,4 +22,3 @@ struct time_watcher {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/time.h.generated.h"
 #endif
-#endif  // NVIM_EVENT_TIME_H

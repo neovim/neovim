@@ -1,5 +1,4 @@
-#ifndef NVIM_DECORATION_PROVIDER_H
-#define NVIM_DECORATION_PROVIDER_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -34,5 +33,3 @@ EXTERN bool provider_active INIT( = false);
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration_provider.h.generated.h"
 #endif
-
-#endif  // NVIM_DECORATION_PROVIDER_H

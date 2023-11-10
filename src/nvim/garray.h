@@ -1,5 +1,4 @@
-#ifndef NVIM_GARRAY_H
-#define NVIM_GARRAY_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -72,5 +71,3 @@ static inline void *ga_append_via_ptr(garray_T *gap, size_t item_size)
 ///
 /// @param gap the garray to be freed
 #define GA_DEEP_CLEAR_PTR(gap) GA_DEEP_CLEAR(gap, void *, FREE_PTR_PTR)
-
-#endif  // NVIM_GARRAY_H

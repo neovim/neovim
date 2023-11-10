@@ -1,5 +1,4 @@
-#ifndef NVIM_TEXTOBJECT_H
-#define NVIM_TEXTOBJECT_H
+#pragma once
 
 #include "nvim/normal.h"
 #include "nvim/pos.h"
@@ -8,4 +7,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "textobject.h.generated.h"
 #endif
-#endif  // NVIM_TEXTOBJECT_H

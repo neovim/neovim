@@ -1,5 +1,4 @@
-#ifndef NVIM_EX_SESSION_H
-#define NVIM_EX_SESSION_H
+#pragma once
 
 #include <stdio.h>
 
@@ -8,5 +7,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_session.h.generated.h"
 #endif
-
-#endif  // NVIM_EX_SESSION_H

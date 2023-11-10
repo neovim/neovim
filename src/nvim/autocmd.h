@@ -1,5 +1,4 @@
-#ifndef NVIM_AUTOCMD_H
-#define NVIM_AUTOCMD_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -101,5 +100,3 @@ EXTERN pos_T last_cursormoved INIT( = { 0, 0, 0 });
 /// Iterates over all the events for auto commands
 #define FOR_ALL_AUEVENTS(event) \
   for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS; event = (event_T)((int)event + 1))  // NOLINT
-
-#endif  // NVIM_AUTOCMD_H

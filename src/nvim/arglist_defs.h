@@ -1,5 +1,4 @@
-#ifndef NVIM_ARGLIST_DEFS_H
-#define NVIM_ARGLIST_DEFS_H
+#pragma once
 
 #include "nvim/garray.h"
 
@@ -18,5 +17,3 @@ typedef struct argentry {
   char *ae_fname;  ///< file name as specified
   int ae_fnum;     ///< buffer number with expanded file name
 } aentry_T;
-
-#endif  // NVIM_ARGLIST_DEFS_H

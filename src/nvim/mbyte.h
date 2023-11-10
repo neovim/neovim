@@ -1,5 +1,4 @@
-#ifndef NVIM_MBYTE_H
-#define NVIM_MBYTE_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -39,4 +38,3 @@ static inline int mb_strcmp_ic(bool ic, const char *s1, const char *s2)
 {
   return (ic ? mb_stricmp(s1, s2) : strcmp(s1, s2));
 }
-#endif  // NVIM_MBYTE_H

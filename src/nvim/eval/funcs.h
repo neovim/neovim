@@ -1,5 +1,4 @@
-#ifndef NVIM_EVAL_FUNCS_H
-#define NVIM_EVAL_FUNCS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -31,4 +30,3 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/funcs.h.generated.h"
 #endif
-#endif  // NVIM_EVAL_FUNCS_H

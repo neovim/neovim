@@ -2,8 +2,7 @@
 ///
 /// Contains common definitions for eval/typval_encode.c.h. Most of time should
 /// not be included directly.
-#ifndef NVIM_EVAL_TYPVAL_ENCODE_H
-#define NVIM_EVAL_TYPVAL_ENCODE_H
+#pragma once
 
 #include <assert.h>
 #include <inttypes.h>
@@ -140,5 +139,3 @@ static inline size_t tv_strlen(const typval_T *const tv)
 /// Name of the dummy const dict_T *const variable
 #define TYPVAL_ENCODE_NODICT_VAR \
   _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _nodict_var)
-
-#endif  // NVIM_EVAL_TYPVAL_ENCODE_H

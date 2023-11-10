@@ -1,5 +1,4 @@
-#ifndef NVIM_GETTEXT_H
-#define NVIM_GETTEXT_H
+#pragma once
 
 #ifdef HAVE_WORKING_LIBINTL
 # include <libintl.h>
@@ -24,5 +23,3 @@
 # define bind_textdomain_codeset(x, y)  // empty
 # define textdomain(x)  // empty
 #endif
-
-#endif  // NVIM_GETTEXT_H

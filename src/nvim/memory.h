@@ -1,5 +1,4 @@
-#ifndef NVIM_MEMORY_H
-#define NVIM_MEMORY_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -72,5 +71,3 @@ typedef struct {
     *ptr_ = NULL; \
     (void)(*ptr_); \
   } while (0)
-
-#endif  // NVIM_MEMORY_H

@@ -1,5 +1,4 @@
-#ifndef NVIM_DEBUGGER_H
-#define NVIM_DEBUGGER_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -8,4 +7,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "debugger.h.generated.h"
 #endif
-#endif  // NVIM_DEBUGGER_H

@@ -1,5 +1,4 @@
-#ifndef NVIM_EDIT_H
-#define NVIM_EDIT_H
+#pragma once
 
 #include "nvim/autocmd.h"
 #include "nvim/vim.h"
@@ -29,4 +28,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "edit.h.generated.h"
 #endif
-#endif  // NVIM_EDIT_H

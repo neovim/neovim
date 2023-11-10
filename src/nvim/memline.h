@@ -1,5 +1,4 @@
-#ifndef NVIM_MEMLINE_H
-#define NVIM_MEMLINE_H
+#pragma once
 
 #include "nvim/buffer_defs.h"
 #include "nvim/pos.h"
@@ -8,4 +7,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memline.h.generated.h"
 #endif
-#endif  // NVIM_MEMLINE_H

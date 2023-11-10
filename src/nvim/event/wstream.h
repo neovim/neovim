@@ -1,5 +1,4 @@
-#ifndef NVIM_EVENT_WSTREAM_H
-#define NVIM_EVENT_WSTREAM_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -23,4 +22,3 @@ struct wbuffer {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/wstream.h.generated.h"
 #endif
-#endif  // NVIM_EVENT_WSTREAM_H

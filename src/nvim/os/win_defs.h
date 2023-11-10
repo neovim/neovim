@@ -1,5 +1,4 @@
-#ifndef NVIM_OS_WIN_DEFS_H
-#define NVIM_OS_WIN_DEFS_H
+#pragma once
 
 #ifndef MSWIN
 # error Header must be included only when compiling for Windows.
@@ -86,5 +85,3 @@ typedef int mode_t;
 #ifndef STDERR_FILENO
 # define STDERR_FILENO 2
 #endif
-
-#endif  // NVIM_OS_WIN_DEFS_H

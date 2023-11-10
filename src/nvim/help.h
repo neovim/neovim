@@ -1,5 +1,4 @@
-#ifndef NVIM_HELP_H
-#define NVIM_HELP_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -8,4 +7,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "help.h.generated.h"
 #endif
-#endif  // NVIM_HELP_H

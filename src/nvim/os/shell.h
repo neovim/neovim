@@ -1,5 +1,4 @@
-#ifndef NVIM_OS_SHELL_H
-#define NVIM_OS_SHELL_H
+#pragma once
 
 #include <stdio.h>
 
@@ -19,4 +18,3 @@ typedef enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/shell.h.generated.h"
 #endif
-#endif  // NVIM_OS_SHELL_H

@@ -1,5 +1,4 @@
-#ifndef NVIM_USERCMD_H
-#define NVIM_USERCMD_H
+#pragma once
 
 #include <stdint.h>
 
@@ -33,4 +32,3 @@ extern garray_T ucmds;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "usercmd.h.generated.h"
 #endif
-#endif  // NVIM_USERCMD_H

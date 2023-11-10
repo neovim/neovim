@@ -1,5 +1,4 @@
-#ifndef NVIM_STRINGS_H
-#define NVIM_STRINGS_H
+#pragma once
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -31,4 +30,3 @@ typedef kvec_t(char) StringBuilder;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "strings.h.generated.h"
 #endif
-#endif  // NVIM_STRINGS_H

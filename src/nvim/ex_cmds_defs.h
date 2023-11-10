@@ -1,5 +1,4 @@
-#ifndef NVIM_EX_CMDS_DEFS_H
-#define NVIM_EX_CMDS_DEFS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -230,5 +229,3 @@ typedef struct {
     bool bar;
   } magic;
 } CmdParseInfo;
-
-#endif  // NVIM_EX_CMDS_DEFS_H

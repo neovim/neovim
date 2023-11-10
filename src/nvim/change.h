@@ -1,5 +1,4 @@
-#ifndef NVIM_CHANGE_H
-#define NVIM_CHANGE_H
+#pragma once
 
 #include "nvim/buffer_defs.h"
 #include "nvim/pos.h"
@@ -15,5 +14,3 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "change.h.generated.h"
 #endif
-
-#endif  // NVIM_CHANGE_H

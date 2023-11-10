@@ -1,5 +1,4 @@
-#ifndef NVIM_TERMINAL_H
-#define NVIM_TERMINAL_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -23,4 +22,3 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "terminal.h.generated.h"
 #endif
-#endif  // NVIM_TERMINAL_H

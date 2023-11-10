@@ -1,5 +1,4 @@
-#ifndef NVIM_API_PRIVATE_DISPATCH_H
-#define NVIM_API_PRIVATE_DISPATCH_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -30,5 +29,3 @@ extern const MsgpackRpcRequestHandler method_handlers[];
 # include "api/private/dispatch_wrappers.h.generated.h"
 # include "keysets_defs.generated.h"
 #endif
-
-#endif  // NVIM_API_PRIVATE_DISPATCH_H
