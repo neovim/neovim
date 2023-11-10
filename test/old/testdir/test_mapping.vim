@@ -1051,7 +1051,6 @@ func Test_map_cmdkey()
     call assert_equal('t', m)
     call assert_equal('t', mode(1))
     call StopShellInTerminal(buf)
-    call TermWait(buf)
     close!
     tunmap <F3>
   endif
