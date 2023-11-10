@@ -374,6 +374,8 @@ run_analysis() {(
       --lic-file PVS-Studio.lic \
       --threads "$(get_jobs_num)" \
       --exclude-path src/cjson \
+      --exclude-path src/klib \
+      --exclude-path src/mpack \
       --exclude-path src/xdiff \
       --exclude-path build \
       --output-file PVS-studio.log \
@@ -381,7 +383,7 @@ run_analysis() {(
       --sourcetree-root . || true
 
   rm -rf PVS-studio.{xml,err,tsk,html.d}
-  local plog_args="PVS-studio.log --srcRoot . --excludedCodes V002,V011,V1028,V1042,V1051,V1074"
+  local plog_args="PVS-studio.log --srcRoot . --excludedCodes V002,V011,V601,V1028,V1042,V1051,V1074"
   plog-converter $plog_args --renderTypes xml       --output PVS-studio.xml
   plog-converter $plog_args --renderTypes errorfile --output PVS-studio.err
   plog-converter $plog_args --renderTypes tasklist  --output PVS-studio.tsk
