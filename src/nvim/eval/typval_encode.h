@@ -62,14 +62,6 @@ typedef struct {
 /// Stack used to convert Vimscript values to messagepack.
 typedef kvec_withinit_t(MPConvStackVal, 8) MPConvStack;
 
-// Defines for MPConvStack
-#define _mp_size kv_size
-#define _mp_init kvi_init
-#define _mp_destroy kvi_destroy
-#define _mp_push kvi_push
-#define _mp_pop kv_pop
-#define _mp_last kv_last
-
 static inline size_t tv_strlen(const typval_T *tv)
   REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT
   REAL_FATTR_NONNULL_ALL;
@@ -95,21 +87,21 @@ static inline size_t tv_strlen(const typval_T *const tv)
 ///                      copyID (variable) it is set to copyID.
 /// @param[in]  copyID  CopyID used by the caller.
 /// @param  conv_type  Type of the conversion, @see MPConvStackValType.
-#define _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(val, copyID_attr, copyID, \
-                                               conv_type) \
+#define TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(val, copyID_attr, copyID, \
+                                              conv_type) \
   do { \
-    const int te_csr_ret = _TYPVAL_ENCODE_CHECK_SELF_REFERENCE(TYPVAL_ENCODE_FIRST_ARG_NAME, \
-                                                               (val), &(val)->copyID_attr, mpstack, \
-                                                               copyID, conv_type, objname); \
+    const int te_csr_ret = TYPVAL_ENCODE_CHECK_SELF_REFERENCE(TYPVAL_ENCODE_FIRST_ARG_NAME, \
+                                                              (val), &(val)->copyID_attr, mpstack, \
+                                                              copyID, conv_type, objname); \
     if (te_csr_ret != NOTDONE) { \
       return te_csr_ret; \
     } \
   } while (0)
 
-#define _TYPVAL_ENCODE_FUNC_NAME_INNER_2(pref, name, suf) \
+#define TYPVAL_ENCODE_FUNC_NAME_INNER_2(pref, name, suf) \
   pref##name##suf
-#define _TYPVAL_ENCODE_FUNC_NAME_INNER(pref, name, suf) \
-  _TYPVAL_ENCODE_FUNC_NAME_INNER_2(pref, name, suf)
+#define TYPVAL_ENCODE_FUNC_NAME_INNER(pref, name, suf) \
+  TYPVAL_ENCODE_FUNC_NAME_INNER_2(pref, name, suf)
 
 /// Construct function name, possibly using macros
 ///
@@ -121,21 +113,21 @@ static inline size_t tv_strlen(const typval_T *const tv)
 /// @param[in]  suf  Suffix.
 ///
 /// @return Concat: pref + #TYPVAL_ENCODE_NAME + suf.
-#define _TYPVAL_ENCODE_FUNC_NAME(pref, suf) \
-  _TYPVAL_ENCODE_FUNC_NAME_INNER(pref, TYPVAL_ENCODE_NAME, suf)
+#define TYPVAL_ENCODE_FUNC_NAME(pref, suf) \
+  TYPVAL_ENCODE_FUNC_NAME_INNER(pref, TYPVAL_ENCODE_NAME, suf)
 
 /// Self reference checker function name
-#define _TYPVAL_ENCODE_CHECK_SELF_REFERENCE \
-  _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _check_self_reference)
+#define TYPVAL_ENCODE_CHECK_SELF_REFERENCE \
+  TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _check_self_reference)
 
 /// Entry point function name
-#define _TYPVAL_ENCODE_ENCODE \
-  _TYPVAL_ENCODE_FUNC_NAME(encode_vim_to_, )
+#define TYPVAL_ENCODE_ENCODE \
+  TYPVAL_ENCODE_FUNC_NAME(encode_vim_to_, )
 
 /// Name of the …convert_one_value function
-#define _TYPVAL_ENCODE_CONVERT_ONE_VALUE \
-  _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _convert_one_value)
+#define TYPVAL_ENCODE_CONVERT_ONE_VALUE \
+  TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _convert_one_value)
 
 /// Name of the dummy const dict_T *const variable
 #define TYPVAL_ENCODE_NODICT_VAR \
-  _TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _nodict_var)
+  TYPVAL_ENCODE_FUNC_NAME(_typval_encode_, _nodict_var)

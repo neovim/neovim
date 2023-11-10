@@ -852,9 +852,6 @@ static void find_word(matchinf_T *mip, int mode)
             mip->mi_compoff = (int)(p - mip->mi_fword);
           }
         }
-#if 0
-        c = mip->mi_compoff;
-#endif
         mip->mi_complen++;
         if (flags & WF_COMPROOT) {
           mip->mi_compextra++;
@@ -880,16 +877,6 @@ static void find_word(matchinf_T *mip, int mode)
             // Find following word in keep-case tree.
             mip->mi_compoff = wlen;
             find_word(mip, FIND_KEEPCOMPOUND);
-
-#if 0       // Disabled, a prefix must not appear halfway through a compound
-            // word, unless the COMPOUNDPERMITFLAG is used, in which case it
-            // can't be a postponed prefix.
-            if (!slang->sl_nobreak || mip->mi_result == SP_BAD) {
-              // Check for following word with prefix.
-              mip->mi_compoff = c;
-              find_prefix(mip, FIND_COMPOUND);
-            }
-#endif
           }
 
           if (!slang->sl_nobreak) {

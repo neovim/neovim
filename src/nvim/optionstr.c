@@ -2566,7 +2566,7 @@ static int opt_strings_flags(const char *val, char **values, unsigned *flagp, bo
       if (strncmp(values[i], val, len) == 0
           && ((list && val[len] == ',') || val[len] == NUL)) {
         val += len + (val[len] == ',');
-        assert(i < sizeof(1U) * 8);
+        assert(i < sizeof(new_flags) * 8);
         new_flags |= (1U << i);
         break;                  // check next item in val list
       }

@@ -1260,11 +1260,10 @@ int recover_names(char *fname, bool do_list, list_T *ret_list, int nr, char **fn
 #ifdef HAVE_READLINK
     // Expand symlink in the file name, because the swapfile is created
     // with the actual file instead of with the symlink.
-    if (resolve_symlink(fname, fname_buf) == OK) {
-      fname_res = fname_buf;
-    } else
-#endif
+    fname_res = (resolve_symlink(fname, fname_buf) == OK) ? fname_buf : fname;
+#else
     fname_res = fname;
+#endif
   }
 
   if (do_list) {

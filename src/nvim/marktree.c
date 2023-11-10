@@ -773,13 +773,14 @@ static void intersect_mov(Intersection *restrict x, Intersection *restrict y,
   kv_size(*y) = yn;
 }
 
-bool intersect_mov_test(uint64_t *x, size_t nx, uint64_t *y, size_t ny, uint64_t *win, size_t nwin,
-                        uint64_t *wout, size_t *nwout, uint64_t *dout, size_t *ndout)
+bool intersect_mov_test(const uint64_t *x, size_t nx, const uint64_t *y, size_t ny,
+                        const uint64_t *win, size_t nwin, uint64_t *wout, size_t *nwout,
+                        uint64_t *dout, size_t *ndout)
 {
   // x is immutable in the context of intersect_mov. y might shrink, but we
   // don't care about it (we get it the deleted ones in d)
-  Intersection xi = { .items = x, .size = nx };
-  Intersection yi = { .items = y, .size = ny };
+  Intersection xi = { .items = (uint64_t *)x, .size = nx };
+  Intersection yi = { .items = (uint64_t *)y, .size = ny };
 
   Intersection w;
   kvi_init(w);

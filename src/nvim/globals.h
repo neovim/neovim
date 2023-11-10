@@ -24,12 +24,6 @@
 #define MSG_BUF_CLEN  (MSG_BUF_LEN / 6)  // cell length (worst case: utf-8
                                          // takes 6 bytes for one cell)
 
-#ifdef MSWIN
-# define _PATHSEPSTR "\\"
-#else
-# define _PATHSEPSTR "/"
-#endif
-
 // FILETYPE_FILE        used for file type detection
 // FTPLUGIN_FILE        used for loading filetype plugin files
 // INDENT_FILE          used for loading indent files
@@ -64,15 +58,15 @@
 #define DFLT_ERRORFILE  "errors.err"
 
 #ifndef SYS_VIMRC_FILE
-# define SYS_VIMRC_FILE "$VIM" _PATHSEPSTR "sysinit.vim"
+# define SYS_VIMRC_FILE "$VIM/sysinit.vim"
 #endif
 
 #ifndef DFLT_HELPFILE
-# define DFLT_HELPFILE  "$VIMRUNTIME" _PATHSEPSTR "doc" _PATHSEPSTR "help.txt"
+# define DFLT_HELPFILE  "$VIMRUNTIME/doc/help.txt"
 #endif
 
 #ifndef SYNTAX_FNAME
-# define SYNTAX_FNAME   "$VIMRUNTIME" _PATHSEPSTR "syntax" _PATHSEPSTR "%s.vim"
+# define SYNTAX_FNAME   "$VIMRUNTIME/syntax/%s.vim"
 #endif
 
 #ifndef EXRC_FILE

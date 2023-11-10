@@ -208,7 +208,7 @@ void ex_language(exarg_T *eap)
 #ifdef HAVE_NL_MSG_CAT_CNTR
       // Need to do this for GNU gettext, otherwise cached translations
       // will be used again.
-      extern int _nl_msg_cat_cntr;
+      extern int _nl_msg_cat_cntr;  // NOLINT(bugprone-reserved-identifier)
 
       _nl_msg_cat_cntr++;
 #endif

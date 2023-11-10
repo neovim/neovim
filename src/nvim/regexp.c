@@ -3826,7 +3826,7 @@ static uint8_t *regnext(uint8_t *p)
 }
 
 // Set the next-pointer at the end of a node chain.
-static void regtail(uint8_t *p, uint8_t *val)
+static void regtail(uint8_t *p, const uint8_t *val)
 {
   int offset;
 
@@ -5843,7 +5843,7 @@ static void restore_subexpr(regbehind_T *bp)
 ///         just after the last matched character.
 ///         - false when there is no match.  Leaves rex.input and rex.lnum in an
 ///         undefined state!
-static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
+static bool regmatch(uint8_t *scan, const proftime_T *tm, int *timed_out)
 {
   uint8_t *next;          // Next node.
   int op;
@@ -7505,7 +7505,7 @@ static int bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf, linenr_T l
 }
 
 // Compare a number with the operand of RE_LNUM, RE_COL or RE_VCOL.
-static int re_num_cmp(uint32_t val, uint8_t *scan)
+static int re_num_cmp(uint32_t val, const uint8_t *scan)
 {
   uint32_t n = (uint32_t)OPERAND_MIN(scan);
 
@@ -8472,7 +8472,7 @@ static void realloc_post_list(void)
 // to the closing brace.
 // Keep in mind that 'ignorecase' applies at execution time, thus [a-z] may
 // need to be interpreted as [a-zA-Z].
-static int nfa_recognize_char_class(uint8_t *start, uint8_t *end, int extra_newl)
+static int nfa_recognize_char_class(uint8_t *start, const uint8_t *end, int extra_newl)
 {
 #define CLASS_not            0x80
 #define CLASS_af             0x40
@@ -13356,7 +13356,7 @@ static void nfa_save_listids(nfa_regprog_T *prog, int *list)
 }
 
 // Restore list IDs from "list" to all NFA states.
-static void nfa_restore_listids(nfa_regprog_T *prog, int *list)
+static void nfa_restore_listids(nfa_regprog_T *prog, const int *list)
 {
   int i;
   nfa_state_T *p;

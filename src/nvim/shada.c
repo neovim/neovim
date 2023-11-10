@@ -54,8 +54,8 @@
 #include "nvim/vim.h"
 
 #ifdef HAVE_BE64TOH
-# define _BSD_SOURCE 1
-# define _DEFAULT_SOURCE 1
+# define _BSD_SOURCE 1  // NOLINT(bugprone-reserved-identifier)
+# define _DEFAULT_SOURCE 1  // NOLINT(bugprone-reserved-identifier)
 # include ENDIAN_INCLUDE_FILE
 #endif
 
