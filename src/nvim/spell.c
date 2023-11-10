@@ -2257,7 +2257,7 @@ static void use_midword(slang_T *lp, win_T *wp)
       wp->w_s->b_spell_ismw[c] = true;
     } else if (wp->w_s->b_spell_ismw_mb == NULL) {
       // First multi-byte char in "b_spell_ismw_mb".
-      wp->w_s->b_spell_ismw_mb = xstrnsave(p, (size_t)l);
+      wp->w_s->b_spell_ismw_mb = xmemdupz(p, (size_t)l);
     } else {
       // Append multi-byte chars to "b_spell_ismw_mb".
       const int n = (int)strlen(wp->w_s->b_spell_ismw_mb);

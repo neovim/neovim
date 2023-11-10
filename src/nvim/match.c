@@ -1216,7 +1216,7 @@ void ex_match(exarg_T *eap)
   } else {
     p = skiptowhite(eap->arg);
     if (!eap->skip) {
-      g = xstrnsave(eap->arg, (size_t)(p - eap->arg));
+      g = xmemdupz(eap->arg, (size_t)(p - eap->arg));
     }
     p = skipwhite(p);
     if (*p == NUL) {

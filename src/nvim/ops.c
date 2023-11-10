@@ -1366,7 +1366,7 @@ bool get_spec_reg(int regname, char **argp, bool *allocated, bool errmsg)
     cnt = find_ident_under_cursor(argp, (regname == Ctrl_W
                                          ? (FIND_IDENT|FIND_STRING)
                                          : FIND_STRING));
-    *argp = cnt ? xstrnsave(*argp, cnt) : NULL;
+    *argp = cnt ? xmemdupz(*argp, cnt) : NULL;
     *allocated = true;
     return true;
 
@@ -2404,7 +2404,7 @@ void op_insert(oparg_T *oap, int count1)
     }
     int ins_len = (int)strlen(firstline) - pre_textlen - offset;
     if (pre_textlen >= 0 && ins_len > 0) {
-      char *ins_text = xstrnsave(firstline, (size_t)ins_len);
+      char *ins_text = xmemdupz(firstline, (size_t)ins_len);
       // block handled here
       if (u_save(oap->start.lnum, (linenr_T)(oap->end.lnum + 1)) == OK) {
         block_insert(oap, ins_text, (oap->op_type == OP_INSERT), &bd);
@@ -3118,7 +3118,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
       if (dir == FORWARD && *p != NUL) {
         MB_PTR_ADV(p);
       }
-      ptr = xstrnsave(oldp, (size_t)(p - oldp));
+      ptr = xmemdupz(oldp, (size_t)(p - oldp));
       ml_replace(curwin->w_cursor.lnum, ptr, false);
       nr_lines++;
       dir = FORWARD;

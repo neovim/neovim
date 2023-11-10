@@ -2033,7 +2033,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     while (ASCII_ISALNUM(*p)) {
       p++;
     }
-    p = xstrnsave(ea.cmd, (size_t)(p - ea.cmd));
+    p = xmemdupz(ea.cmd, (size_t)(p - ea.cmd));
     int ret = apply_autocmds(EVENT_CMDUNDEFINED, p, p, true, NULL);
     xfree(p);
     // If the autocommands did something and didn't cause an error, try
@@ -7121,7 +7121,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
     }
     result = NULL;
   } else {
-    result = xstrnsave(result, resultlen);
+    result = xmemdupz(result, resultlen);
   }
   xfree(resultbuf);
   return result;

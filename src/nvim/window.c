@@ -586,7 +586,7 @@ wingotofile:
     }
 
     // Make a copy, if the line was changed it will be freed.
-    ptr = xstrnsave(ptr, len);
+    ptr = xmemdupz(ptr, len);
 
     find_pattern_in_path(ptr, 0, len, true, Prenum == 0,
                          type, Prenum1, ACTION_SPLIT, 1, MAXLNUM);

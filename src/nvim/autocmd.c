@@ -1031,7 +1031,7 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
     }
 
     ap->refcount = 0;
-    ap->pat = xstrnsave(pat, (size_t)patlen);
+    ap->pat = xmemdupz(pat, (size_t)patlen);
     ap->patlen = patlen;
 
     // need to initialize last_mode for the first ModeChanged autocmd
@@ -2514,7 +2514,7 @@ static int arg_augroup_get(char **argp)
     return AUGROUP_ALL;
   }
 
-  char *group_name = xstrnsave(arg, (size_t)(p - arg));
+  char *group_name = xmemdupz(arg, (size_t)(p - arg));
   int group = augroup_find(group_name);
   if (group == AUGROUP_ERROR) {
     group = AUGROUP_ALL;  // no match, use all groups

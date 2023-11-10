@@ -292,12 +292,11 @@ char *os_getenvname_at_index(size_t index)
 
       // Some Windows env vars start with =, so skip over that to find the
       // separator between name/value
-      const char * const end = strchr(utf8_str + (utf8_str[0] == '=' ? 1 : 0),
-                                      '=');
+      const char *const end = strchr(utf8_str + (utf8_str[0] == '=' ? 1 : 0), '=');
       assert(end != NULL);
       ptrdiff_t len = end - utf8_str;
       assert(len > 0);
-      name = xstrndup(utf8_str, (size_t)len);
+      name = xmemdupz(utf8_str, (size_t)len);
       xfree(utf8_str);
       break;
     }
@@ -328,7 +327,7 @@ char *os_getenvname_at_index(size_t index)
   assert(end != NULL);
   ptrdiff_t len = end - str;
   assert(len > 0);
-  return xstrndup(str, (size_t)len);
+  return xmemdupz(str, (size_t)len);
 #endif
 }
 
@@ -960,7 +959,7 @@ char *vim_getenv(const char *name)
 
       // check that the result is a directory name
       assert(vim_path_end >= vim_path);
-      vim_path = xstrndup(vim_path, (size_t)(vim_path_end - vim_path));
+      vim_path = xmemdupz(vim_path, (size_t)(vim_path_end - vim_path));
 
       if (!os_isdir(vim_path)) {
         xfree(vim_path);

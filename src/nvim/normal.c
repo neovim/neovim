@@ -4232,7 +4232,7 @@ static void nv_brackets(cmdarg_T *cap)
       clearop(cap->oap);
     } else {
       // Make a copy, if the line was changed it will be freed.
-      ptr = xstrnsave(ptr, len);
+      ptr = xmemdupz(ptr, len);
       find_pattern_in_path(ptr, 0, len, true,
                            cap->count0 == 0 ? !isupper(cap->nchar) : false,
                            (((cap->nchar & 0xf) == ('d' & 0xf))

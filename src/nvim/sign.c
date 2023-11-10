@@ -1209,27 +1209,27 @@ static void sign_define_cmd(char *sign_name, char *cmdline)
     if (strncmp(arg, "icon=", 5) == 0) {
       arg += 5;
       XFREE_CLEAR(icon);
-      icon = xstrnsave(arg, (size_t)(p - arg));
+      icon = xmemdupz(arg, (size_t)(p - arg));
     } else if (strncmp(arg, "text=", 5) == 0) {
       arg += 5;
       XFREE_CLEAR(text);
-      text = xstrnsave(arg, (size_t)(p - arg));
+      text = xmemdupz(arg, (size_t)(p - arg));
     } else if (strncmp(arg, "linehl=", 7) == 0) {
       arg += 7;
       XFREE_CLEAR(linehl);
-      linehl = xstrnsave(arg, (size_t)(p - arg));
+      linehl = xmemdupz(arg, (size_t)(p - arg));
     } else if (strncmp(arg, "texthl=", 7) == 0) {
       arg += 7;
       XFREE_CLEAR(texthl);
-      texthl = xstrnsave(arg, (size_t)(p - arg));
+      texthl = xmemdupz(arg, (size_t)(p - arg));
     } else if (strncmp(arg, "culhl=", 6) == 0) {
       arg += 6;
       XFREE_CLEAR(culhl);
-      culhl = xstrnsave(arg, (size_t)(p - arg));
+      culhl = xmemdupz(arg, (size_t)(p - arg));
     } else if (strncmp(arg, "numhl=", 6) == 0) {
       arg += 6;
       XFREE_CLEAR(numhl);
-      numhl = xstrnsave(arg, (size_t)(p - arg));
+      numhl = xmemdupz(arg, (size_t)(p - arg));
     } else {
       semsg(_(e_invarg2), arg);
       failed = true;

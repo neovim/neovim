@@ -293,7 +293,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
       xstrlcpy(ff_expand_buffer, rel_fname, len + 1);
       search_ctx->ffsc_start_dir = FullName_save(ff_expand_buffer, false);
     } else {
-      search_ctx->ffsc_start_dir = xstrnsave(rel_fname, len);
+      search_ctx->ffsc_start_dir = xmemdupz(rel_fname, len);
     }
     if (*++path != NUL) {
       path++;

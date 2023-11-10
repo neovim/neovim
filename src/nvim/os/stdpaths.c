@@ -127,7 +127,7 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
       ret = "/tmp/";
     }
     size_t len = strlen(ret);
-    ret = xstrndup(ret, len >= 2 ? len - 1 : 0);  // Trim trailing slash.
+    ret = xmemdupz(ret, len >= 2 ? len - 1 : 0);  // Trim trailing slash.
   }
 
   return ret;

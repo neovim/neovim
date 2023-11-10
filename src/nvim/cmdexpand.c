@@ -804,7 +804,7 @@ static char *find_longest_match(expand_T *xp, int options)
     }
   }
 
-  return xstrndup(xp->xp_files[0], len);
+  return xmemdupz(xp->xp_files[0], len);
 }
 
 /// Do wildcard expansion on the string "str".
@@ -3156,11 +3156,11 @@ static int ExpandUserDefined(const char *const pat, expand_T *xp, regmatch_T *re
 
     if (match) {
       if (!fuzzy) {
-        GA_APPEND(char *, &ga, xstrnsave(s, (size_t)(e - s)));
+        GA_APPEND(char *, &ga, xmemdupz(s, (size_t)(e - s)));
       } else {
         GA_APPEND(fuzmatch_str_T, &ga, ((fuzmatch_str_T){
           .idx = ga.ga_len,
-          .str = xstrnsave(s, (size_t)(e - s)),
+          .str = xmemdupz(s, (size_t)(e - s)),
           .score = score,
         }));
       }

@@ -2646,7 +2646,7 @@ void f_strcharpart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = xstrndup(p + nbyte, (size_t)len);
+  rettv->vval.v_string = xmemdupz(p + nbyte, (size_t)len);
 }
 
 /// "strpart()" function
