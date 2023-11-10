@@ -274,9 +274,9 @@ describe('Signs', function()
       -- Line 3 checks that with a limit over the maximum number
       -- of signs, the ones with the highest Ids are being picked,
       -- and presented by their sorted Id order.
-      command('sign place 4 line=3 name=pietSearch buffer=1')
-      command('sign place 5 line=3 name=pietWarn buffer=1')
-      command('sign place 3 line=3 name=pietError buffer=1')
+      command('sign place 6 line=3 name=pietSearch buffer=1')
+      command('sign place 7 line=3 name=pietWarn buffer=1')
+      command('sign place 5 line=3 name=pietError buffer=1')
       screen:expect([[
         {1:>>}{8:XX}{6:  1 }a                                            |
         {8:XX}{1:>>}{6:  2 }b                                            |

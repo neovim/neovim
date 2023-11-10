@@ -53,11 +53,10 @@ If 'cursorline' is enabled, then the CursorLineSign highlight group is used
 Each placed sign is identified by a number called the sign identifier. This
 identifier is used to jump to the sign or to remove the sign. The identifier
 is assigned when placing the sign using the |:sign-place| command or the
-|sign_place()| function. Each sign identifier should be a unique number. If
-multiple placed signs use the same identifier, then jumping to or removing a
-sign becomes unpredictable. To avoid overlapping identifiers, sign groups can
-be used. The |sign_place()| function can be called with a zero sign identifier
-to allocate the next available identifier.
+|sign_place()| function. Each sign identifier should be a unique number.
+Placing the same identifier twice will move the previously placed sign. The
+|sign_place()| function can be called with a zero sign identifier to allocate
+the next available identifier.
 
 							*sign-group*
 Each placed sign can be assigned to either the global group or a named group.
@@ -77,9 +76,8 @@ When two signs with the same priority are present, and one has an icon or text
 in the signcolumn while the other has line highlighting, then both are
 displayed.
 
-When the line on which the sign is placed is deleted, the sign is moved to the
-next line (or the last line of the buffer, if there is no next line).  When
-the delete is undone the sign does not move back.
+When the line on which the sign is placed is deleted, the sign is removed along
+with it.
 
 ==============================================================================
 2. Commands					*sign-commands* *:sig* *:sign*
@@ -177,11 +175,8 @@ See |sign_place()| for the equivalent Vim script function.
 		space is ignored.
 
 		The sign is remembered under {id}, this can be used for
-		further manipulation.  {id} must be a number.
-		It's up to the user to make sure the {id} is used only once in
-		each file (if it's used several times unplacing will also have
-		to be done several times and making changes may not work as
-		expected).
+		further manipulation.  {id} must be a number.  Placing the
+		same {id} multiple times will move the sign.
 
 		The following optional sign attributes can be specified before
 		"file=":

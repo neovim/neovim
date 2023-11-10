@@ -2558,7 +2558,7 @@ void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row, int endr
     // draw the sign column
     int count = wp->w_scwidth;
     if (count > 0) {
-      n = win_fill_end(wp, ' ', ' ', n, win_signcol_width(wp) * count, row,
+      n = win_fill_end(wp, ' ', ' ', n, SIGN_WIDTH * count, row,
                        endrow, win_hl_attr(wp, HLF_SC));
     }
     // draw the number column
@@ -2633,7 +2633,7 @@ int number_width(win_T *wp)
 
   // If 'signcolumn' is set to 'number' and there is a sign to display, then
   // the minimal width for the number column is 2.
-  if (n < 2 && (wp->w_buffer->b_signlist != NULL)
+  if (n < 2 && wp->w_buffer->b_signs_with_text
       && (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u')) {
     n = 2;
   }

@@ -22,6 +22,7 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/pos.h"
+#include "nvim/sign.h"
 #include "nvim/strings.h"
 #include "nvim/vim.h"
 
@@ -81,7 +82,7 @@ Dictionary nvim_get_namespaces(void)
   return retval;
 }
 
-const char *describe_ns(NS ns_id)
+const char *describe_ns(NS ns_id, const char *unknown)
 {
   String name;
   handle_T id;
@@ -90,7 +91,7 @@ const char *describe_ns(NS ns_id)
       return name.data;
     }
   })
-  return "(UNKNOWN PLUGIN)";
+  return unknown;
 }
 
 // Is the Namespace in use?
@@ -314,8 +315,8 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   return extmark_to_array(&extmark, false, details, hl_name);
 }
 
-/// Gets |extmarks| in "traversal order" from a |charwise| region defined by
-/// buffer positions (inclusive, 0-indexed |api-indexing|).
+/// Gets |extmarks| (including |signs|) in "traversal order" from a |charwise|
+/// region defined by buffer positions (inclusive, 0-indexed |api-indexing|).
 ///
 /// Region can be given as (row,col) tuples, or valid extmark ids (whose
 /// positions define the bounds). 0 and -1 are understood as (0,0) and (-1,-1)
@@ -750,7 +751,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (HAS_KEY(opts, set_extmark, sign_text)) {
-    VALIDATE_S(init_sign_text(&decor.sign_text, opts->sign_text.data),
+    VALIDATE_S(init_sign_text(NULL, &decor.sign_text, opts->sign_text.data),
                "sign_text", "", {
       goto error;
     });
@@ -1149,41 +1150,6 @@ static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, in
       return false;
     });
   }
-}
-// adapted from sign.c:sign_define_init_text.
-// TODO(lewis6991): Consider merging
-static int init_sign_text(char **sign_text, char *text)
-{
-  char *s;
-
-  char *endp = text + (int)strlen(text);
-
-  // Count cells and check for non-printable chars
-  int cells = 0;
-  for (s = text; s < endp; s += utfc_ptr2len(s)) {
-    if (!vim_isprintc(utf_ptr2char(s))) {
-      break;
-    }
-    cells += utf_ptr2cells(s);
-  }
-  // Currently must be empty, one or two display cells
-  if (s != endp || cells > 2) {
-    return FAIL;
-  }
-  if (cells < 1) {
-    return OK;
-  }
-
-  // Allocate one byte more if we need to pad up
-  // with a space.
-  size_t len = (size_t)(endp - text + ((cells == 1) ? 1 : 0));
-  *sign_text = xstrnsave(text, len);
-
-  if (cells == 1) {
-    STRCPY(*sign_text + len - 1, " ");
-  }
-
-  return OK;
 }
 
 VirtText parse_virt_text(Array chunks, Error *err, int *width)

@@ -33,7 +33,6 @@
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/quickfix.h"
-#include "nvim/sign.h"
 #include "nvim/strings.h"
 #include "nvim/textobject.h"
 #include "nvim/vim.h"
@@ -1190,8 +1189,6 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
     if (!found_one) {
       buf->b_has_qf_entry &= ~BUF_HAS_LL_ENTRY;
     }
-
-    sign_mark_adjust(buf, line1, line2, amount, amount_after);
   }
 
   if (op != kExtmarkNOOP) {

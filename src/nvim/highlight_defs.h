@@ -246,9 +246,3 @@ typedef struct {
 } ColorItem;
 #define COLOR_ITEM_INITIALIZER { .attr_id = -1, .link_id = -1, .version = -1, \
                                  .is_default = false, .link_global = false }
-
-/// highlight attributes with associated priorities
-typedef struct {
-  int hl_id;
-  int priority;
-} HlPriId;

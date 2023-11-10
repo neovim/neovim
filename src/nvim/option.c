@@ -6170,7 +6170,7 @@ bool fish_like_shell(void)
 /// buffer signs and on user configuration.
 int win_signcol_count(win_T *wp)
 {
-  return win_signcol_configured(wp, NULL);
+  return win_signcol_configured(wp);
 }
 
 /// Return true when window "wp" has no sign column.
@@ -6182,13 +6182,9 @@ bool win_no_signcol(win_T *wp)
 }
 
 /// Return the number of requested sign columns, based on user / configuration.
-int win_signcol_configured(win_T *wp, int *is_fixed)
+int win_signcol_configured(win_T *wp)
 {
   const char *scl = wp->w_p_scl;
-
-  if (is_fixed) {
-    *is_fixed = 1;
-  }
 
   if (win_no_signcol(wp)) {
     return 0;
@@ -6201,11 +6197,6 @@ int win_signcol_configured(win_T *wp, int *is_fixed)
   }
   if (*scl == 'y') {
     return 1;
-  }
-
-  if (is_fixed) {
-    // auto or auto:<NUM>
-    *is_fixed = 0;
   }
 
   int minimum = 0, maximum = 1;

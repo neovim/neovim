@@ -340,6 +340,7 @@ Shell:
 
 Signs:
   Signs are removed if the associated line is deleted.
+  Signs placed twice with the same identifier in the same group are moved.
 
 Startup:
   |-e| and |-es| invoke the same "improved Ex mode" as -E and -Es.

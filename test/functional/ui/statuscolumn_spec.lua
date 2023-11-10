@@ -377,6 +377,7 @@ describe('statuscolumn', function()
                                                            |
     ]])
     command('set breakindent')
+    command('sign unplace 2')
     feed('J2gjg0')
     screen:expect([[
       {2: }{4: 0│}{1:>>}{2:                }{4: }{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
