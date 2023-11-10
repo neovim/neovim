@@ -3,6 +3,7 @@ local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local clear = helpers.clear
 local is_os = helpers.is_os
+local skip = helpers.skip
 
 describe('vim._watch', function()
   before_each(function()
@@ -11,6 +12,7 @@ describe('vim._watch', function()
 
   describe('watch', function()
     it('detects file changes', function()
+      skip(is_os('bsd'), "Stopped working on bsd after 3ca967387c49c754561c3b11a574797504d40f38")
       local root_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
 
       local result = exec_lua(
