@@ -3167,3 +3167,31 @@ it("with 'inccommand' typing :filter doesn't segfault or leak memory #19057", fu
   feed('i')
   assert_alive()
 end)
+
+it("'inccommand' cannot be changed during preview #23136", function()
+  clear()
+  local screen = Screen.new(30, 6)
+  common_setup(screen, 'nosplit', 'foo\nbar\nbaz')
+  source([[
+    function! IncCommandToggle()
+      let prev = &inccommand
+
+      if &inccommand ==# 'split'
+        set inccommand=nosplit
+      elseif &inccommand ==# 'nosplit'
+        set inccommand=split
+      elseif &inccommand ==# ''
+        set inccommand=nosplit
+      else
+        throw 'unknown inccommand'
+      endif
+
+      return " \<BS>"
+    endfun
+
+    cnoremap <expr> <C-E> IncCommandToggle()
+  ]])
+
+  feed(':%s/foo/bar<C-E><C-E><C-E>')
+  assert_alive()
+end)
