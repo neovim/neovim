@@ -4371,7 +4371,7 @@ static int open_cmdwin(void)
           i = 0;
         }
         if (get_histentry(histtype)[i].hisstr != NULL) {
-          ml_append(lnum++, get_histentry(histtype)[i].hisstr, (colnr_T)0, false);
+          ml_append(lnum++, get_histentry(histtype)[i].hisstr, 0, false);
         }
       } while (i != *get_hisidx(histtype));
     }

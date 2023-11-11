@@ -1339,7 +1339,7 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
     bool match;
     int score = 0;
     if (!fuzzy) {
-      match = vim_regexec(regmatch, p, (colnr_T)0);
+      match = vim_regexec(regmatch, p, 0);
     } else {
       score = fuzzy_match_str(p, pat);
       match = (score != 0);
@@ -1385,7 +1385,7 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
       bool match;
       int score = 0;
       if (!fuzzy) {
-        match = vim_regexec(regmatch, p, (colnr_T)0);
+        match = vim_regexec(regmatch, p, 0);
       } else {
         score = fuzzy_match_str(p, pat);
         match = (score != 0);

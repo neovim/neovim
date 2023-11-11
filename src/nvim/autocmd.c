@@ -2594,7 +2594,7 @@ void do_autocmd_uienter(uint64_t chanid, bool attached)
 void do_autocmd_focusgained(bool gained)
 {
   static bool recursive = false;
-  static Timestamp last_time = (time_t)0;
+  static Timestamp last_time = 0;
 
   if (recursive) {
     return;  // disallow recursion

@@ -762,7 +762,7 @@ static bool pum_set_selected(int n, int repeat)
             && (curbuf->b_p_bh[0] == 'w')) {
           // Already a "wipeout" buffer, make it empty.
           while (!buf_is_empty(curbuf)) {
-            ml_delete((linenr_T)1, false);
+            ml_delete(1, false);
           }
         } else {
           // Don't want to sync undo in the current buffer.

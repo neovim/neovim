@@ -2284,7 +2284,7 @@ bool message_filtered(const char *msg)
     return false;
   }
 
-  bool match = vim_regexec(&cmdmod.cmod_filter_regmatch, msg, (colnr_T)0);
+  bool match = vim_regexec(&cmdmod.cmod_filter_regmatch, msg, 0);
   return cmdmod.cmod_filter_force ? match : !match;
 }
 

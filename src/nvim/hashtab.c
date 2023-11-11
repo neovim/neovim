@@ -411,7 +411,7 @@ hash_T hash_hash(const char *key)
   hash_T hash = (uint8_t)(*key);
 
   if (hash == 0) {
-    return (hash_T)0;
+    return 0;
   }
 
   // A simplistic algorithm that appears to do very well.

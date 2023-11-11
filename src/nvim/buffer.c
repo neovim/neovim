@@ -146,12 +146,12 @@ static int read_buffer(int read_stdin, exarg_T *eap, int flags)
   line_count = curbuf->b_ml.ml_line_count;
   retval = readfile(read_stdin ? NULL : curbuf->b_ffname,
                     read_stdin ? NULL : curbuf->b_fname,
-                    line_count, (linenr_T)0, (linenr_T)MAXLNUM, eap,
+                    line_count, 0, (linenr_T)MAXLNUM, eap,
                     flags | READ_BUFFER, silent);
   if (retval == OK) {
     // Delete the binary lines.
     while (--line_count >= 0) {
-      ml_delete((linenr_T)1, false);
+      ml_delete(1, false);
     }
   } else {
     // Delete the converted lines.
@@ -294,7 +294,7 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
 #endif
 
     retval = readfile(curbuf->b_ffname, curbuf->b_fname,
-                      (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM, eap,
+                      0, 0, (linenr_T)MAXLNUM, eap,
                       flags | READ_NEW | (read_fifo ? READ_FIFO : 0), silent);
 #ifdef UNIX
     if (read_fifo) {
@@ -317,8 +317,8 @@ int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
     // it possible to retry when 'fileformat' or 'fileencoding' was
     // guessed wrong.
     curbuf->b_p_bin = true;
-    retval = readfile(NULL, NULL, (linenr_T)0,
-                      (linenr_T)0, (linenr_T)MAXLNUM, NULL,
+    retval = readfile(NULL, NULL, 0,
+                      0, (linenr_T)MAXLNUM, NULL,
                       flags | (READ_NEW + READ_STDIN), silent);
     curbuf->b_p_bin = save_bin;
     if (retval == OK) {
@@ -753,7 +753,7 @@ void buf_clear(void)
   linenr_T line_count = curbuf->b_ml.ml_line_count;
   extmark_free_all(curbuf);   // delete any extmarks
   while (!(curbuf->b_ml.ml_flags & ML_EMPTY)) {
-    ml_delete((linenr_T)1, false);
+    ml_delete(1, false);
   }
   deleted_lines_mark(1, line_count);  // prepare for display
 }
@@ -1801,7 +1801,7 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
     xfree(ffname);
     if (lnum != 0) {
       buflist_setfpos(buf, (flags & BLN_NOCURWIN) ? NULL : curwin,
-                      lnum, (colnr_T)0, false);
+                      lnum, 0, false);
     }
     if ((flags & BLN_NOOPT) == 0) {
       // Copy the options now, if 'cpo' doesn't have 's' and not done already.
@@ -2532,12 +2532,12 @@ static char *fname_match(regmatch_T *rmp, char *name, bool ignore_case)
 
   // Ignore case when 'fileignorecase' or the argument is set.
   rmp->rm_ic = p_fic || ignore_case;
-  if (vim_regexec(rmp, name, (colnr_T)0)) {
+  if (vim_regexec(rmp, name, 0)) {
     match = name;
   } else if (rmp->regprog != NULL) {
     // Replace $(HOME) with '~' and try matching again.
     p = home_replace_save(NULL, name);
-    if (vim_regexec(rmp, p, (colnr_T)0)) {
+    if (vim_regexec(rmp, p, 0)) {
       match = name;
     }
     xfree(p);
@@ -3035,7 +3035,7 @@ char *getaltfname(bool errmsg)
 /// Used by qf_init(), main() and doarglist()
 int buflist_add(char *fname, int flags)
 {
-  buf_T *buf = buflist_new(fname, NULL, (linenr_T)0, flags);
+  buf_T *buf = buflist_new(fname, NULL, 0, flags);
   if (buf != NULL) {
     return buf->b_fnum;
   }
@@ -4231,7 +4231,7 @@ bool buf_contents_changed(buf_T *buf)
   bool differ = true;
 
   // Allocate a buffer without putting it in the buffer list.
-  buf_T *newbuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
+  buf_T *newbuf = buflist_new(NULL, NULL, 1, BLN_DUMMY);
   if (newbuf == NULL) {
     return true;
   }
@@ -4246,7 +4246,7 @@ bool buf_contents_changed(buf_T *buf)
 
   if (ml_open(curbuf) == OK
       && readfile(buf->b_ffname, buf->b_fname,
-                  (linenr_T)0, (linenr_T)0, (linenr_T)MAXLNUM,
+                  0, 0, (linenr_T)MAXLNUM,
                   &ea, READ_NEW | READ_DUMMY, false) == OK) {
     // compare the two files line by line
     if (buf->b_ml.ml_line_count == curbuf->b_ml.ml_line_count) {

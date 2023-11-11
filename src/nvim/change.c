@@ -623,7 +623,7 @@ bool file_ff_differs(buf_T *buf, bool ignore_empty)
   if (ignore_empty
       && (buf->b_flags & BF_NEW)
       && buf->b_ml.ml_line_count == 1
-      && *ml_get_buf(buf, (linenr_T)1) == NUL) {
+      && *ml_get_buf(buf, 1) == NUL) {
     return false;
   }
   if (buf->b_start_ffc != *buf->b_p_ff) {
@@ -1726,7 +1726,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     curwin->w_cursor.lnum--;
   }
   if ((State & VREPLACE_FLAG) == 0 || old_cursor.lnum >= orig_line_count) {
-    if (ml_append(curwin->w_cursor.lnum, p_extra, (colnr_T)0, false) == FAIL) {
+    if (ml_append(curwin->w_cursor.lnum, p_extra, 0, false) == FAIL) {
       goto theend;
     }
     // Postpone calling changed_lines(), because it would mess up folding

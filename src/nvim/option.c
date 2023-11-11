@@ -5468,7 +5468,7 @@ static bool match_str(char *const str, regmatch_T *const regmatch, char **const 
                       const char *const fuzzystr, fuzmatch_str_T *const fuzmatch)
 {
   if (!fuzzy) {
-    if (vim_regexec(regmatch, str, (colnr_T)0)) {
+    if (vim_regexec(regmatch, str, 0)) {
       if (!test_only) {
         matches[idx] = xstrdup(str);
       }
@@ -5536,7 +5536,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, char *fuzzystr, int *numM
           count++;
         }
       } else if (!fuzzy && options[opt_idx].shortname != NULL
-                 && vim_regexec(regmatch, options[opt_idx].shortname, (colnr_T)0)) {
+                 && vim_regexec(regmatch, options[opt_idx].shortname, 0)) {
         // Compare against the abbreviated option name (for regular
         // expression match). Fuzzy matching (previous if) already
         // matches against both the expanded and abbreviated names.
@@ -5709,7 +5709,7 @@ int ExpandSettingSubtract(expand_T *xp, regmatch_T *regmatch, int *numMatches, c
         continue;
       }
 
-      if (!vim_regexec(regmatch, item, (colnr_T)0)) {
+      if (!vim_regexec(regmatch, item, 0)) {
         continue;
       }
 

@@ -2241,7 +2241,7 @@ int pattern_match(const char *pat, const char *text, bool ic)
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
     regmatch.rm_ic = ic;
-    matches = vim_regexec_nl(&regmatch, text, (colnr_T)0);
+    matches = vim_regexec_nl(&regmatch, text, 0);
     vim_regfree(regmatch.regprog);
   }
   p_cpo = save_cpo;
@@ -8794,7 +8794,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
     return (typval_T){
       .v_type = VAR_NUMBER,
       .v_lock = VAR_UNLOCKED,
-      .vval.v_number = (varnumber_T)0
+      .vval.v_number = 0
     };
   }
 

@@ -3132,7 +3132,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
     savebuf = NULL;
   } else {
     // Allocate a buffer without putting it in the buffer list.
-    savebuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
+    savebuf = buflist_new(NULL, NULL, 1, BLN_DUMMY);
     set_bufref(&bufref, savebuf);
     if (savebuf != NULL && buf == curbuf) {
       // Open the memline.
@@ -3153,7 +3153,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
   if (saved == OK) {
     curbuf->b_flags |= BF_CHECK_RO;           // check for RO again
     keep_filetype = true;                     // don't detect 'filetype'
-    if (readfile(buf->b_ffname, buf->b_fname, (linenr_T)0, (linenr_T)0,
+    if (readfile(buf->b_ffname, buf->b_fname, 0, 0,
                  (linenr_T)MAXLNUM, &ea, flags, false) != OK) {
       if (!aborting()) {
         semsg(_("E321: Could not reload \"%s\""), buf->b_fname);
@@ -3583,10 +3583,10 @@ bool match_file_pat(char *pattern, regprog_T **prog, char *fname, char *sfname, 
   // 3. the tail of the file name, when the pattern has no '/'.
   if (regmatch.regprog != NULL
       && ((allow_dirs
-           && (vim_regexec(&regmatch, fname, (colnr_T)0)
+           && (vim_regexec(&regmatch, fname, 0)
                || (sfname != NULL
-                   && vim_regexec(&regmatch, sfname, (colnr_T)0))))
-          || (!allow_dirs && vim_regexec(&regmatch, tail, (colnr_T)0)))) {
+                   && vim_regexec(&regmatch, sfname, 0))))
+          || (!allow_dirs && vim_regexec(&regmatch, tail, 0)))) {
     result = true;
   }
 

@@ -995,7 +995,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
     if (pattern[0] == '*' && pattern[1] == '*'
         && vim_ispathsep_nocolon(pattern[2])
         && path_cutoff != NULL
-        && vim_regexec(&regmatch, path_cutoff, (colnr_T)0)
+        && vim_regexec(&regmatch, path_cutoff, 0)
         && is_unique(path_cutoff, gap, i)) {
       sort_again = true;
       memmove(path, path_cutoff, strlen(path_cutoff) + 1);
@@ -1004,7 +1004,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
       // unique path.  We start at the end of the path. */
       pathsep_p = path + len - 1;
       while (find_previous_pathsep(path, &pathsep_p)) {
-        if (vim_regexec(&regmatch, pathsep_p + 1, (colnr_T)0)
+        if (vim_regexec(&regmatch, pathsep_p + 1, 0)
             && is_unique(pathsep_p + 1, gap, i)
             && path_cutoff != NULL && pathsep_p + 1 >= path_cutoff) {
           sort_again = true;

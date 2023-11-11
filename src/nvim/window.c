@@ -228,7 +228,7 @@ void do_window(int nchar, int Prenum, int xchar)
 
     if (!curbuf_locked() && win_split(0, 0) == OK) {
       (void)buflist_getfile(Prenum == 0 ? curwin->w_alt_fnum : Prenum,
-                            (linenr_T)0, GETF_ALT, false);
+                            0, GETF_ALT, false);
     }
     break;
 

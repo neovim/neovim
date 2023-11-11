@@ -3124,7 +3124,7 @@ int cmd_exists(const char *const name)
   // For ":2match" and ":3match" we need to skip the number.
   exarg_T ea;
   ea.cmd = (char *)((*name == '2' || *name == '3') ? name + 1 : name);
-  ea.cmdidx = (cmdidx_T)0;
+  ea.cmdidx = 0;
   ea.flags = 0;
   int full = false;
   char *p = find_ex_command(&ea, &full);
@@ -3155,7 +3155,7 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   exarg_T ea;
   ea.cmd = (*name == '2' || *name == '3') ? name + 1 : name;
-  ea.cmdidx = (cmdidx_T)0;
+  ea.cmdidx = 0;
   ea.flags = 0;
   char *p = find_ex_command(&ea, NULL);
   if (p == NULL || ea.cmdidx == CMD_SIZE) {
@@ -3177,7 +3177,7 @@ cmdidx_T excmd_get_cmdidx(const char *cmd, size_t len)
   cmdidx_T idx;
 
   if (!one_letter_cmd(cmd, &idx)) {
-    for (idx = (cmdidx_T)0; (int)idx < CMD_SIZE; idx = (cmdidx_T)((int)idx + 1)) {
+    for (idx = 0; (int)idx < CMD_SIZE; idx = (cmdidx_T)((int)idx + 1)) {
       if (strncmp(cmdnames[(int)idx].cmd_name, cmd, len) == 0) {
         break;
       }
@@ -5554,13 +5554,13 @@ static void ex_read(exarg_T *eap)
       return;
     }
     i = readfile(curbuf->b_ffname, curbuf->b_fname,
-                 eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
+                 eap->line2, 0, (linenr_T)MAXLNUM, eap, 0, false);
   } else {
     if (vim_strchr(p_cpo, CPO_ALTREAD) != NULL) {
-      (void)setaltfname(eap->arg, eap->arg, (linenr_T)1);
+      (void)setaltfname(eap->arg, eap->arg, 1);
     }
     i = readfile(eap->arg, NULL,
-                 eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
+                 eap->line2, 0, (linenr_T)MAXLNUM, eap, 0, false);
   }
   if (i != OK) {
     if (!aborting()) {
@@ -6632,7 +6632,7 @@ static void ex_checkpath(exarg_T *eap)
 {
   find_pattern_in_path(NULL, 0, 0, false, false, CHECK_PATH, 1,
                        eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
-                       (linenr_T)1, (linenr_T)MAXLNUM);
+                       1, (linenr_T)MAXLNUM);
 }
 
 /// ":psearch"

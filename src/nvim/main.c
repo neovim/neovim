@@ -603,7 +603,7 @@ int main(int argc, char **argv)
   // scrollbind, sync the scrollbind now.
   if (curwin->w_p_diff && curwin->w_p_scb) {
     update_topline(curwin);
-    check_scrollbind((linenr_T)0, 0);
+    check_scrollbind(0, 0);
     TIME_MSG("diff scrollbinding");
   }
 

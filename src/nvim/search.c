@@ -3635,7 +3635,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
 
   while (true) {
     if (incl_regmatch.regprog != NULL
-        && vim_regexec(&incl_regmatch, line, (colnr_T)0)) {
+        && vim_regexec(&incl_regmatch, line, 0)) {
       char *p_fname = (curr_fname == curbuf->b_fname)
                         ? curbuf->b_ffname : curr_fname;
 
@@ -3810,7 +3810,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
 search_line:
       define_matched = false;
       if (def_regmatch.regprog != NULL
-          && vim_regexec(&def_regmatch, line, (colnr_T)0)) {
+          && vim_regexec(&def_regmatch, line, 0)) {
         // Pattern must be first identifier after 'define', so skip
         // to that position before checking for match of pattern.  Also
         // don't let it match beyond the end of this identifier.

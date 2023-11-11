@@ -1903,13 +1903,13 @@ static bool findtags_match_tag(findtags_state_T *st, tagptrs_T *tagpp, findtags_
   if (!match && st->orgpat->regmatch.regprog != NULL) {
     char cc = *tagpp->tagname_end;
     *tagpp->tagname_end = NUL;
-    match = vim_regexec(&st->orgpat->regmatch, tagpp->tagname, (colnr_T)0);
+    match = vim_regexec(&st->orgpat->regmatch, tagpp->tagname, 0);
     if (match) {
       margs->matchoff = (int)(st->orgpat->regmatch.startp[0] - tagpp->tagname);
       if (st->orgpat->regmatch.rm_ic) {
         st->orgpat->regmatch.rm_ic = false;
         margs->match_no_ic = vim_regexec(&st->orgpat->regmatch,
-                                         tagpp->tagname, (colnr_T)0);
+                                         tagpp->tagname, 0);
         st->orgpat->regmatch.rm_ic = true;
       }
     }
@@ -2932,7 +2932,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, int keep_help)
   if (getfile_result == GETFILE_UNUSED) {
     // Careful: getfile() may trigger autocommands and call jumpto_tag()
     // recursively.
-    getfile_result = getfile(0, fname, NULL, true, (linenr_T)0, forceit);
+    getfile_result = getfile(0, fname, NULL, true, 0, forceit);
   }
   keep_help_flag = false;
 

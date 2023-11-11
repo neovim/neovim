@@ -756,8 +756,8 @@ linenr_T dbg_find_breakpoint(bool file, char *fname, linenr_T after)
 /// @returns true if profiling is on for a function or sourced file.
 bool has_profiling(bool file, char *fname, bool *fp)
 {
-  return debuggy_find(file, fname, (linenr_T)0, &prof_ga, fp)
-         != (linenr_T)0;
+  return debuggy_find(file, fname, 0, &prof_ga, fp)
+         != 0;
 }
 
 /// Common code for dbg_find_breakpoint() and has_profiling().
@@ -776,7 +776,7 @@ static linenr_T debuggy_find(bool file, char *fname, linenr_T after, garray_T *g
 
   // Return quickly when there are no breakpoints.
   if (GA_EMPTY(gap)) {
-    return (linenr_T)0;
+    return 0;
   }
 
   // Replace K_SNR in function name with "<SNR>".
@@ -799,7 +799,7 @@ static linenr_T debuggy_find(bool file, char *fname, linenr_T after, garray_T *g
       // while matching should abort it.
       prev_got_int = got_int;
       got_int = false;
-      if (vim_regexec_prog(&bp->dbg_prog, false, name, (colnr_T)0)) {
+      if (vim_regexec_prog(&bp->dbg_prog, false, name, 0)) {
         lnum = bp->dbg_lnum;
         if (fp != NULL) {
           *fp = bp->dbg_forceit;

@@ -923,7 +923,7 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
   FUNC_API_SINCE(6)
 {
   try_start();
-  buf_T *buf = buflist_new(NULL, NULL, (linenr_T)0,
+  buf_T *buf = buflist_new(NULL, NULL, 0,
                            BLN_NOOPT | BLN_NEW | (listed ? BLN_LISTED : 0));
   try_end(err);
   if (buf == NULL) {

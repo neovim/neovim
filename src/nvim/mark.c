@@ -676,7 +676,7 @@ static void fname2fnum(xfmark_T *fm)
   char *p = path_shorten_fname(NameBuff, IObuff);
 
   // buflist_new() will call fmarks_check_names()
-  (void)buflist_new(NameBuff, p, (linenr_T)1, 0);
+  (void)buflist_new(NameBuff, p, 1, 0);
 }
 
 // Check all file marks for a name that matches the file name in buf.

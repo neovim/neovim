@@ -2471,7 +2471,7 @@ int op_change(oparg_T *oap)
   const bool save_finish_op = finish_op;
   finish_op = false;
 
-  retval = edit(NUL, false, (linenr_T)1);
+  retval = edit(NUL, false, 1);
 
   finish_op = save_finish_op;
 
@@ -3110,7 +3110,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
         MB_PTR_ADV(p);
       }
       ptr = xstrdup(p);
-      ml_append(curwin->w_cursor.lnum, ptr, (colnr_T)0, false);
+      ml_append(curwin->w_cursor.lnum, ptr, 0, false);
       xfree(ptr);
 
       oldp = get_cursor_line_ptr();
@@ -3254,8 +3254,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
 
       // add a new line
       if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
-        if (ml_append(curbuf->b_ml.ml_line_count, "",
-                      (colnr_T)1, false) == FAIL) {
+        if (ml_append(curbuf->b_ml.ml_line_count, "", 1, false) == FAIL) {
           break;
         }
         nr_lines++;
@@ -3529,7 +3528,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
           STRCPY(newp, y_array[y_size - 1]);
           STRCAT(newp, ptr);
           // insert second line
-          ml_append(lnum, newp, (colnr_T)0, false);
+          ml_append(lnum, newp, 0, false);
           new_lnum++;
           xfree(newp);
 
@@ -3547,7 +3546,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
 
         for (; i < y_size; i++) {
           if ((y_type != kMTCharWise || i < y_size - 1)) {
-            if (ml_append(lnum, y_array[i], (colnr_T)0, false) == FAIL) {
+            if (ml_append(lnum, y_array[i], 0, false) == FAIL) {
               goto error;
             }
             new_lnum++;
@@ -4130,7 +4129,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
     // what is added if it is inside these spaces.
     const int spaces_removed = (int)((curr - curr_start) - spaces[t]);
     linenr_T lnum = curwin->w_cursor.lnum + t;
-    colnr_T mincol = (colnr_T)0;
+    colnr_T mincol = 0;
     linenr_T lnum_amount = -t;
     colnr_T col_amount = (colnr_T)(cend - newp - spaces_removed);
 
@@ -4703,7 +4702,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     if (do_unsigned && negative) {
       if (subtract) {
         // sticking at zero.
-        n = (uvarnumber_T)0;
+        n = 0;
       } else {
         // sticking at 2^64 - 1.
         n = (uvarnumber_T)(-1);
