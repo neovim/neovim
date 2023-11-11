@@ -758,7 +758,7 @@ static int syn_match_linecont(linenr_T lnum)
 
   regmatch.rmm_ic = syn_block->b_syn_linecont_ic;
   regmatch.regprog = syn_block->b_syn_linecont_prog;
-  int r = syn_regexec(&regmatch, lnum, (colnr_T)0,
+  int r = syn_regexec(&regmatch, lnum, 0,
                       IF_SYN_TIME(&syn_block->b_syn_linecont_time));
   syn_block->b_syn_linecont_prog = regmatch.regprog;
 
@@ -5049,7 +5049,7 @@ static int get_id_list(char **const arg, const int keylen, int16_t **const list,
           regmatch.rm_ic = true;
           id = 0;
           for (int i = highlight_num_groups(); --i >= 0;) {
-            if (vim_regexec(&regmatch, highlight_group_name(i), (colnr_T)0)) {
+            if (vim_regexec(&regmatch, highlight_group_name(i), 0)) {
               if (round == 2) {
                 // Got more items than expected; can happen
                 // when adding items that match:

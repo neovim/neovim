@@ -436,7 +436,7 @@ int buf_write_all(buf_T *buf, int forceit)
   buf_T *old_curbuf = curbuf;
 
   retval = (buf_write(buf, buf->b_ffname, buf->b_fname,
-                      (linenr_T)1, buf->b_ml.ml_line_count, NULL,
+                      1, buf->b_ml.ml_line_count, NULL,
                       false, forceit, true, false));
   if (curbuf != old_curbuf) {
     msg_source(HL_ATTR(HLF_W));

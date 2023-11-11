@@ -463,7 +463,7 @@ static int del_history_entry(int histype, char *str)
     if (hisptr->hisstr == NULL) {
       break;
     }
-    if (vim_regexec(&regmatch, hisptr->hisstr, (colnr_T)0)) {
+    if (vim_regexec(&regmatch, hisptr->hisstr, 0)) {
       found = true;
       hist_free_entry(hisptr);
     } else {

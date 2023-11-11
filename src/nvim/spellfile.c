@@ -3438,7 +3438,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
               && (ae->ae_chop == NULL
                   || strlen(ae->ae_chop) < wordlen)
               && (ae->ae_prog == NULL
-                  || vim_regexec_prog(&ae->ae_prog, false, word, (colnr_T)0))
+                  || vim_regexec_prog(&ae->ae_prog, false, word, 0))
               && (((condit & CONDIT_CFIX) == 0)
                   == ((condit & CONDIT_AFF) == 0
                       || ae->ae_flags == NULL
@@ -4344,7 +4344,7 @@ static int write_vim_spell(spellinfo_T *spin, char *fname)
   // <HEADER>: <fileID> <versionnr>
   // <fileID>
   size_t fwv = fwrite(VIMSPELLMAGIC, VIMSPELLMAGICL, 1, fd);
-  if (fwv != (size_t)1) {
+  if (fwv != 1) {
     // Catch first write error, don't try writing more.
     goto theend;
   }
@@ -4702,7 +4702,7 @@ theend:
     retval = FAIL;
   }
 
-  if (fwv != (size_t)1) {
+  if (fwv != 1) {
     retval = FAIL;
   }
   if (retval == FAIL) {
@@ -5181,7 +5181,7 @@ static void sug_write(spellinfo_T *spin, char *fname)
   spell_message(spin, IObuff);
 
   // <SUGHEADER>: <fileID> <versionnr> <timestamp>
-  if (fwrite(VIMSUGMAGIC, VIMSUGMAGICL, (size_t)1, fd) != 1) {  // <fileID>
+  if (fwrite(VIMSUGMAGIC, VIMSUGMAGICL, 1, fd) != 1) {  // <fileID>
     emsg(_(e_write));
     goto theend;
   }

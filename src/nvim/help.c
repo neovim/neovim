@@ -823,7 +823,7 @@ void fix_help_buffer(void)
                 }
                 convert_setup(&vc, NULL, NULL);
 
-                ml_append(lnum, cp, (colnr_T)0, false);
+                ml_append(lnum, cp, 0, false);
                 if (cp != IObuff) {
                   xfree(cp);
                 }

@@ -2855,7 +2855,7 @@ void ExpandGeneric(const char *const pat, expand_T *xp, regmatch_T *regmatch, ch
     int score = 0;
     if (xp->xp_pattern[0] != NUL) {
       if (!fuzzy) {
-        match = vim_regexec(regmatch, str, (colnr_T)0);
+        match = vim_regexec(regmatch, str, 0);
       } else {
         score = fuzzy_match_str(str, pat);
         match = (score != 0);
@@ -3141,7 +3141,7 @@ static int ExpandUserDefined(const char *const pat, expand_T *xp, regmatch_T *re
     int score = 0;
     if (xp->xp_pattern[0] != NUL) {
       if (!fuzzy) {
-        match = vim_regexec(regmatch, s, (colnr_T)0);
+        match = vim_regexec(regmatch, s, 0);
       } else {
         score = fuzzy_match_str(s, pat);
         match = (score != 0);

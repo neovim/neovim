@@ -3322,7 +3322,7 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
 
   if (do_region && region_names != NULL && pat == NULL) {
     vim_snprintf(IObuff, IOSIZE, "/regions=%s", region_names);
-    ml_append(lnum++, IObuff, (colnr_T)0, false);
+    ml_append(lnum++, IObuff, 0, false);
   } else {
     do_region = false;
   }
@@ -3337,7 +3337,7 @@ void spell_dump_compl(char *pat, int ic, Direction *dir, int dumpflags_arg)
 
     if (pat == NULL) {
       vim_snprintf(IObuff, IOSIZE, "# file: %s", slang->sl_fname);
-      ml_append(lnum++, IObuff, (colnr_T)0, false);
+      ml_append(lnum++, IObuff, 0, false);
     }
 
     // When matching with a pattern and there are no prefixes only use
@@ -3506,7 +3506,7 @@ static void dump_word(slang_T *slang, char *word, char *pat, Direction *dir, int
       }
     }
 
-    ml_append(lnum, p, (colnr_T)0, false);
+    ml_append(lnum, p, 0, false);
   } else if (((dumpflags & DUMPFLAG_ICASE)
               ? mb_strnicmp(p, pat, strlen(pat)) == 0
               : strncmp(p, pat, strlen(pat)) == 0)

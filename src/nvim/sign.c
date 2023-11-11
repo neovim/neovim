@@ -448,7 +448,7 @@ static linenr_T buf_change_sign_type(buf_T *buf, int markId, const char *group, 
     }
   }
 
-  return (linenr_T)0;
+  return 0;
 }
 
 /// Return the sign attrs which has the attribute specified by 'type'. Returns

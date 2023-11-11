@@ -824,7 +824,7 @@ static int diff_write(buf_T *buf, diffin_T *din)
   // so it shouldn't update the '[ and '] marks.
   cmdmod.cmod_flags |= CMOD_LOCKMARKS;
   int r = buf_write(buf, din->din_fname, NULL,
-                    (linenr_T)1, buf->b_ml.ml_line_count,
+                    1, buf->b_ml.ml_line_count,
                     NULL, false, false, false, true);
   cmdmod.cmod_flags = save_cmod_flags;
   free_string_option(buf->b_p_ff);
@@ -1208,7 +1208,7 @@ void ex_diffpatch(exarg_T *eap)
 
   // Write the current buffer to "tmp_orig".
   if (buf_write(curbuf, tmp_orig, NULL,
-                (linenr_T)1, curbuf->b_ml.ml_line_count,
+                1, curbuf->b_ml.ml_line_count,
                 NULL, false, false, false, true) == FAIL) {
     goto theend;
   }
@@ -3106,7 +3106,7 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
           // which results in inaccurate reporting of the byte count of
           // previous contents in buffer-update events.
           buf_empty = false;
-          ml_delete((linenr_T)2, false);
+          ml_delete(2, false);
         }
       }
       linenr_T new_count = dp->df_count[idx_to] + added;
@@ -3360,7 +3360,7 @@ linenr_T diff_lnum_win(linenr_T lnum, win_T *wp)
 
   if (idx == DB_COUNT) {
     // safety check
-    return (linenr_T)0;
+    return 0;
   }
 
   if (curtab->tp_diff_invalid) {
@@ -3386,7 +3386,7 @@ linenr_T diff_lnum_win(linenr_T lnum, win_T *wp)
 
   if (i == DB_COUNT) {
     // safety check
-    return (linenr_T)0;
+    return 0;
   }
 
   linenr_T n = lnum + (dp->df_lnum[i] - dp->df_lnum[idx]);

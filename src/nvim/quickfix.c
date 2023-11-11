@@ -380,7 +380,7 @@ int qf_init(win_T *wp, const char *restrict efile, char *restrict errorformat, i
   }
 
   return qf_init_ext(qi, qi->qf_curlist, efile, curbuf, NULL, errorformat,
-                     newlist, (linenr_T)0, (linenr_T)0, qf_title, enc);
+                     newlist, 0, 0, qf_title, enc);
 }
 
 // Maximum number of bytes allowed per line while reading an errorfile.
@@ -1605,7 +1605,7 @@ static int qf_parse_get_fields(char *linebuf, size_t linelen, efm_T *fmt_ptr, qf
   // Always ignore case when looking for a matching error.
   regmatch.rm_ic = true;
   regmatch.regprog = fmt_ptr->prog;
-  int r = vim_regexec(&regmatch, linebuf, (colnr_T)0);
+  int r = vim_regexec(&regmatch, linebuf, 0);
   fmt_ptr->prog = regmatch.regprog;
   int status = QF_FAIL;
   if (r) {
@@ -2173,7 +2173,7 @@ static int qf_get_fnum(qf_list_T *qfl, char *directory, char *fname)
     xfree(ptr);
   } else {
     xfree(qf_last_bufname);
-    buf = buflist_new(bufname, NULL, (linenr_T)0, BLN_NOOPT);
+    buf = buflist_new(bufname, NULL, 0, BLN_NOOPT);
     qf_last_bufname = (bufname == ptr) ? bufname : xstrdup(bufname);
     set_bufref(&qf_last_bufref, buf);
   }
@@ -2788,11 +2788,11 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int
       no_write_message();
       return FAIL;
     }
-    retval = do_ecmd(qf_ptr->qf_fnum, NULL, NULL, NULL, (linenr_T)1,
+    retval = do_ecmd(qf_ptr->qf_fnum, NULL, NULL, NULL, 1,
                      ECMD_HIDE + ECMD_SET_HELP,
                      prev_winid == curwin->handle ? curwin : NULL);
   } else {
-    retval = buflist_getfile(qf_ptr->qf_fnum, (linenr_T)1,
+    retval = buflist_getfile(qf_ptr->qf_fnum, 1,
                              GETF_SETMARK | GETF_SWITCH, forceit);
   }
   // If a location list, check whether the associated window is still
@@ -4137,7 +4137,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     while ((curbuf->b_ml.ml_flags & ML_EMPTY) == 0) {
       // If deletion fails, this loop may run forever, so
       // signal error and return.
-      if (ml_delete((linenr_T)1, false) == FAIL) {
+      if (ml_delete(1, false) == FAIL) {
         internal_error("qf_fill_buffer()");
         return;
       }
@@ -5450,7 +5450,7 @@ static int vgr_process_files(win_T *wp, qf_info_T *qi, vgr_args_T *cmd_args, boo
   // ":lcd %:p:h" changes the meaning of short path names.
   os_dirname(dirname_start, MAXPATHL);
 
-  time_t seconds = (time_t)0;
+  time_t seconds = 0;
   for (int fi = 0; fi < cmd_args->fcount && !got_int && cmd_args->tomatch > 0; fi++) {
     char *fname = path_try_shorten_fname(cmd_args->fnames[fi]);
     if (time(NULL) > seconds) {
@@ -5688,7 +5688,7 @@ static void restore_start_dir(char *dirname_start)
 static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resulting_dir)
 {
   // Allocate a buffer without putting it in the buffer list.
-  buf_T *newbuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
+  buf_T *newbuf = buflist_new(NULL, NULL, 1, BLN_DUMMY);
   if (newbuf == NULL) {
     return NULL;
   }
@@ -5720,7 +5720,7 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
 
     bufref_T newbuf_to_wipe;
     newbuf_to_wipe.br_buf = NULL;
-    int readfile_result = readfile(fname, NULL, (linenr_T)0, (linenr_T)0,
+    int readfile_result = readfile(fname, NULL, 0, 0,
                                    (linenr_T)MAXLNUM, NULL,
                                    READ_NEW | READ_DUMMY, false);
     newbuf->b_locked--;
@@ -5960,7 +5960,7 @@ static int qf_get_list_from_lines(dict_T *what, dictitem_T *di, dict_T *retdict)
   qf_info_T *const qi = qf_alloc_stack(QFLT_INTERNAL);
 
   if (qf_init_ext(qi, 0, NULL, NULL, &di->di_tv, errorformat,
-                  true, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
+                  true, 0, 0, NULL, NULL) > 0) {
     (void)get_errorlist(qi, NULL, 0, 0, l);
     qf_free(&qi->qf_lists[0]);
   }
@@ -6588,7 +6588,7 @@ static int qf_setprop_items_from_lines(qf_info_T *qi, int qf_idx, const dict_T *
     qf_free_items(&qi->qf_lists[qf_idx]);
   }
   if (qf_init_ext(qi, qf_idx, NULL, NULL, &di->di_tv, errorformat,
-                  false, (linenr_T)0, (linenr_T)0, NULL, NULL) >= 0) {
+                  false, 0, 0, NULL, NULL) >= 0) {
     retval = OK;
   }
 
@@ -7051,7 +7051,7 @@ void ex_cexpr(exarg_T *eap)
     int res = qf_init_ext(qi, qi->qf_curlist, NULL, NULL, tv, p_efm,
                           (eap->cmdidx != CMD_caddexpr
                            && eap->cmdidx != CMD_laddexpr),
-                          (linenr_T)0, (linenr_T)0,
+                          0, 0,
                           qf_cmdtitle(*eap->cmdlinep), NULL);
     if (qf_stack_empty(qi)) {
       decr_quickfix_busy();
@@ -7112,7 +7112,7 @@ static void hgr_search_file(qf_list_T *qfl, char *fname, regmatch_T *p_regmatch)
   while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
     char *line = IObuff;
 
-    if (vim_regexec(p_regmatch, line, (colnr_T)0)) {
+    if (vim_regexec(p_regmatch, line, 0)) {
       int l = (int)strlen(line);
 
       // remove trailing CR, LF, spaces, etc.

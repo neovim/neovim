@@ -7287,7 +7287,7 @@ static int bt_regexec_both(uint8_t *line, colnr_T startcol, proftime_T *tm, int 
 
   if (REG_MULTI) {
     prog = (bt_regprog_T *)rex.reg_mmatch->regprog;
-    line = (uint8_t *)reg_getline((linenr_T)0);
+    line = (uint8_t *)reg_getline(0);
     rex.reg_startpos = rex.reg_mmatch->startpos;
     rex.reg_endpos = rex.reg_mmatch->endpos;
   } else {
@@ -7396,7 +7396,7 @@ static int bt_regexec_both(uint8_t *line, colnr_T startcol, proftime_T *tm, int 
       // if not currently on the first line, get it again
       if (rex.lnum != 0) {
         rex.lnum = 0;
-        rex.line = (uint8_t *)reg_getline((linenr_T)0);
+        rex.line = (uint8_t *)reg_getline(0);
       }
       if (rex.line[col] == NUL) {
         break;
@@ -15242,7 +15242,7 @@ static int nfa_regexec_both(uint8_t *line, colnr_T startcol, proftime_T *tm, int
 
   if (REG_MULTI) {
     prog = (nfa_regprog_T *)rex.reg_mmatch->regprog;
-    line = (uint8_t *)reg_getline((linenr_T)0);  // relative to the cursor
+    line = (uint8_t *)reg_getline(0);  // relative to the cursor
     rex.reg_startpos = rex.reg_mmatch->startpos;
     rex.reg_endpos = rex.reg_mmatch->endpos;
   } else {

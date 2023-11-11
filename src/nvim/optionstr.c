@@ -561,7 +561,7 @@ static int expand_set_opt_string(optexpand_T *args, char **values, size_t numVal
         continue;
       }
     }
-    if (vim_regexec(regmatch, *val, (colnr_T)0)) {
+    if (vim_regexec(regmatch, *val, 0)) {
       (*matches)[count++] = xstrdup(*val);
     }
   }

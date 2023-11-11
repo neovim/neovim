@@ -20,9 +20,9 @@
 #define ECMD_NOWINENTER      0x40    // do not trigger BufWinEnter
 
 // for lnum argument in do_ecmd()
-#define ECMD_LASTL      (linenr_T)0       // use last position in loaded file
-#define ECMD_LAST       ((linenr_T)(-1))  // use last position in all files
-#define ECMD_ONE        (linenr_T)1       // use first line
+#define ECMD_LASTL      0       // use last position in loaded file
+#define ECMD_LAST       (-1)    // use last position in all files
+#define ECMD_ONE        1       // use first line
 
 /// Previous :substitute replacement string definition
 typedef struct {

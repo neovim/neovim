@@ -1002,8 +1002,7 @@ void ml_recover(bool checkext)
         goto theend;
       }
       error++;
-      ml_append(lnum++, _("???MANY LINES MISSING"),
-                (colnr_T)0, true);
+      ml_append(lnum++, _("???MANY LINES MISSING"), 0, true);
     } else {          // there is a block
       pp = hp->bh_data;
       if (pp->pb_id == PTR_ID) {                // it is a pointer block
@@ -1027,14 +1026,12 @@ void ml_recover(bool checkext)
           }
           if (line_count != 0) {
             error++;
-            ml_append(lnum++, _("???LINE COUNT WRONG"),
-                      (colnr_T)0, true);
+            ml_append(lnum++, _("???LINE COUNT WRONG"), 0, true);
           }
         }
 
         if (pp->pb_count == 0) {
-          ml_append(lnum++, _("???EMPTY BLOCK"),
-                    (colnr_T)0, true);
+          ml_append(lnum++, _("???EMPTY BLOCK"), 0, true);
           error++;
         } else if (idx < (int)pp->pb_count) {         // go a block deeper
           if (pp->pb_pointer[idx].pe_bnum < 0) {
@@ -1053,8 +1050,7 @@ void ml_recover(bool checkext)
             }
             if (cannot_open) {
               error++;
-              ml_append(lnum++, _("???LINES MISSING"),
-                        (colnr_T)0, true);
+              ml_append(lnum++, _("???LINES MISSING"), 0, true);
             }
             idx++;                  // get same block again for next index
             continue;
@@ -1081,8 +1077,7 @@ void ml_recover(bool checkext)
             goto theend;
           }
           error++;
-          ml_append(lnum++, _("???BLOCK MISSING"),
-                    (colnr_T)0, true);
+          ml_append(lnum++, _("???BLOCK MISSING"), 0, true);
         } else {
           // It is a data block.
           // Append all the lines in this block.
@@ -1093,7 +1088,7 @@ void ml_recover(bool checkext)
           if (page_count * mfp->mf_page_size != dp->db_txt_end) {
             ml_append(lnum++,
                       _("??? from here until ???END lines" " may be messed up"),
-                      (colnr_T)0, true);
+                      0, true);
             error++;
             has_error = true;
             dp->db_txt_end = page_count * mfp->mf_page_size;
@@ -1109,7 +1104,7 @@ void ml_recover(bool checkext)
             ml_append(lnum++,
                       _("??? from here until ???END lines"
                         " may have been inserted/deleted"),
-                      (colnr_T)0, true);
+                      0, true);
             error++;
             has_error = true;
           }
@@ -1119,7 +1114,7 @@ void ml_recover(bool checkext)
             if ((char *)&(dp->db_index[i]) >= (char *)dp + dp->db_txt_start) {
               // line count must be wrong
               error++;
-              ml_append(lnum++, _("??? lines may be missing"), (colnr_T)0, true);
+              ml_append(lnum++, _("??? lines may be missing"), 0, true);
               break;
             }
 
@@ -1137,10 +1132,10 @@ void ml_recover(bool checkext)
               did_questions = false;
               p = (char *)dp + txt_start;
             }
-            ml_append(lnum++, p, (colnr_T)0, true);
+            ml_append(lnum++, p, 0, true);
           }
           if (has_error) {
-            ml_append(lnum++, _("???END"), (colnr_T)0, true);
+            ml_append(lnum++, _("???END"), 0, true);
           }
         }
       }

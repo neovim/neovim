@@ -1396,7 +1396,7 @@ void ex_catch(exarg_T *eap)
 
           int prev_got_int = got_int;
           got_int = false;
-          caught = vim_regexec_nl(&regmatch, current_exception->value, (colnr_T)0);
+          caught = vim_regexec_nl(&regmatch, current_exception->value, 0);
           got_int |= prev_got_int;
           vim_regfree(regmatch.regprog);
         }

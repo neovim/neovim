@@ -2358,9 +2358,9 @@ static void u_undoredo(int undo, bool do_buf_event)
         // If the file is empty, there is an empty line 1 that we
         // should get rid of, by replacing it with the new line
         if (empty_buffer && lnum == 0) {
-          ml_replace((linenr_T)1, uep->ue_array[i], true);
+          ml_replace(1, uep->ue_array[i], true);
         } else {
-          ml_append(lnum, uep->ue_array[i], (colnr_T)0, false);
+          ml_append(lnum, uep->ue_array[i], 0, false);
         }
         xfree(uep->ue_array[i]);
       }
@@ -3029,7 +3029,7 @@ void u_undoline(void)
 
   // first save the line for the 'u' command
   if (u_savecommon(curbuf, curbuf->b_u_line_lnum - 1,
-                   curbuf->b_u_line_lnum + 1, (linenr_T)0, false) == FAIL) {
+                   curbuf->b_u_line_lnum + 1, 0, false) == FAIL) {
     return;
   }
 

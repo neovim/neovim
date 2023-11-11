@@ -963,7 +963,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   funccall_T *fc = create_funccal(fp, rettv);
   fc->fc_level = ex_nesting_level;
   // Check if this function has a breakpoint.
-  fc->fc_breakpoint = dbg_find_breakpoint(false, fp->uf_name, (linenr_T)0);
+  fc->fc_breakpoint = dbg_find_breakpoint(false, fp->uf_name, 0);
   fc->fc_dbg_tick = debug_tick;
   // Set up fields for closure.
   ga_init(&fc->fc_ufuncs, sizeof(ufunc_T *), 1);
