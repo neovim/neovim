@@ -375,6 +375,12 @@ describe('context functions', function()
       eq(outofbounds, pcall_err(call, 'ctxset', {dummy = 1}, 0))
     end)
 
+    it('errors when context dictionary is invalid', function()
+      call('ctxpush')
+      eq('Vim:E474: Failed to convert list to msgpack string buffer',
+         pcall_err(call, 'ctxset', { regs = { {} } }))
+    end)
+
     it('sets context dictionary at index in context stack', function()
       nvim('set_var', 'one', 1)
       nvim('set_var', 'Two', 2)
