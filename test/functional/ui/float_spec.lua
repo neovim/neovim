@@ -1017,7 +1017,7 @@ describe('float window', function()
           {1:               }|
           {2:~              }|
         ]], float_pos={
-          [5] = {{id = 1002}, "NW", 4, 2, 10, true, 50};
+          [5] = {{id = 1002}, "NW", 4, 2, 10, true};
         }}
       else
         screen:expect([[
@@ -9191,6 +9191,13 @@ describe('float window', function()
         [13] = {background = Screen.colors.LightGray, blend = 30},
         [14] = {foreground = Screen.colors.Grey0, background = Screen.colors.Grey88},
         [15] = {foreground = tonumber('0x939393'), background = Screen.colors.Grey88},
+        [16] = {background = Screen.colors.Grey90};
+        [17] = {blend = 100};
+        [18] = {background = Screen.colors.LightMagenta, blend = 100};
+        [19] = {background = Screen.colors.LightMagenta, bold = true, blend = 100, foreground = Screen.colors.Blue1};
+        [20] = {background = Screen.colors.White, foreground = Screen.colors.Gray0};
+        [21] = {background = Screen.colors.White, bold = true, foreground = tonumber('0x00007f')};
+        [22] = {background = Screen.colors.Gray90, foreground = Screen.colors.Gray0};
       })
       insert([[
         Lorem ipsum dolor sit amet, consectetur
@@ -9321,9 +9328,7 @@ describe('float window', function()
           {13:test           }|
           {13:               }|
           {13:popup    text  }|
-        ]], float_pos={
-          [4] = {{id = 1001}, "NW", 1, 2, 5, true, 50};
-        }}
+        ]], float_pos={[4] = {{id = 1001}, "NW", 1, 2, 5, true}}}
       else
         screen:expect([[
           Ut enim ad minim veniam, quis nostrud             |
@@ -9474,6 +9479,56 @@ describe('float window', function()
           occaecat cupidatat non proident, sunt in culpa    |
           qui officia deserunt mollit anim id est           |
           laborum^.                                          |
+                                                            |
+        ]])
+      end
+
+      -- Check that 'winblend' applies to border
+      meths.win_set_config(win, {border='single'})
+      meths.set_option_value('winblend', 100, {win=win.id})
+      meths.set_option_value("cursorline", true, {win=0})
+      command('hi clear VertSplit')
+      feed('k0')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [3:--------------------------------------------------]|
+        ## grid 2
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea commodo consequat. Duis aute irure dolor in    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          {16:^qui officia deserunt mollit anim id est           }|
+          laborum.                                          |
+        ## grid 3
+                                                            |
+        ## grid 4
+          {17:┌───────────────┐}|
+          {17:│}{11:popup    text}{18:  }{17:│}|
+          {17:│}{19:~              }{17:│}|
+          {17:│}{19:~              }{17:│}|
+          {17:└───────────────┘}|
+        ]], float_pos={[4] = {{id = 1001}, "NW", 1, 2, 5, true}}}
+      else
+        screen:expect([[
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea co{20:┌───────────────┐}Duis aute irure dolor in    |
+          repre{20:│}{5:popup}{6:it i}{5:text}{20:lu│}tate velit esse cillum      |
+          dolor{20:│}{21:~}{20:eu fugiat null│} pariatur. Excepteur sint   |
+          occae{20:│}{21:~}{20:t cupidatat no│} proident, sunt in culpa    |
+          {16:^qui o}{22:└───────────────┘}{16:ollit anim id est           }|
+          laborum.                                          |
                                                             |
         ]])
       end
