@@ -7296,7 +7296,9 @@ static void ex_terminal(exarg_T *eap)
     char shell_argv[512] = { 0 };
 
     while (*p != NULL) {
-      snprintf(tempstring, sizeof(tempstring), ",\"%s\"", *p);
+      char *escaped = vim_strsave_escaped(*p, "\"\\");
+      snprintf(tempstring, sizeof(tempstring), ",\"%s\"", escaped);
+      xfree(escaped);
       xstrlcat(shell_argv, tempstring, sizeof(shell_argv));
       p++;
     }
