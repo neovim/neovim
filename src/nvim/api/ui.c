@@ -77,7 +77,7 @@ static void mpack_uint(char **buf, uint32_t val)
 
 static void mpack_bool(char **buf, bool val)
 {
-  mpack_w(buf, 0xc2 | val);
+  mpack_w(buf, 0xc2 | (val ? 1 : 0));
 }
 
 static void mpack_array(char **buf, uint32_t len)
