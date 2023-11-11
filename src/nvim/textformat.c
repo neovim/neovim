@@ -940,7 +940,7 @@ void format_lines(linenr_T line_count, bool avoid_fex)
   // length of a line to force formatting: 3 * 'tw'
   const int max_len = comp_textwidth(true) * 3;
 
-  // check for 'q', '2' and '1' in 'formatoptions'
+  // check for 'q', '2', 'n' and 'w' in 'formatoptions'
   const bool do_comments = has_format_option(FO_Q_COMS);  // format comments
   int do_comments_list = 0;  // format comments with 'n' or '2'
   const bool do_second_indent = has_format_option(FO_Q_SECOND);
