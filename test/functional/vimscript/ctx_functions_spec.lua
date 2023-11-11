@@ -378,7 +378,7 @@ describe('context functions', function()
     it('errors when context dictionary is invalid', function()
       call('ctxpush')
       eq('Vim:E474: Failed to convert list to msgpack string buffer',
-         pcall_err(call, 'ctxset', { regs = { {} } }))
+         pcall_err(call, 'ctxset', { regs = { {} }, jumps = { {} } }))
     end)
 
     it('sets context dictionary at index in context stack', function()

@@ -380,7 +380,7 @@ int ctx_from_dict(Dictionary dict, Context *ctx, Error *err)
   assert(ctx != NULL);
 
   int types = 0;
-  for (size_t i = 0; i < dict.size; i++) {
+  for (size_t i = 0; i < dict.size && !ERROR_SET(err); i++) {
     KeyValuePair item = dict.items[i];
     if (item.value.type != kObjectTypeArray) {
       continue;

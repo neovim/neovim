@@ -1982,7 +1982,7 @@ describe('API', function()
 
     it('errors when context dictionary is invalid', function()
       eq('E474: Failed to convert list to msgpack string buffer',
-         pcall_err(nvim, 'load_context', { regs = { {} } }))
+         pcall_err(nvim, 'load_context', { regs = { {} }, jumps = { {} } }))
       eq("Empty dictionary keys aren't allowed",
          pcall_err(nvim, 'load_context', { regs = { { [''] = '' } } }))
     end)
