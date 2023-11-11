@@ -333,6 +333,7 @@ local extension = {
   pld = 'cupl',
   si = 'cuplsim',
   cyn = 'cynpp',
+  cypher = 'cypher',
   dart = 'dart',
   drt = 'dart',
   ds = 'datascript',
