@@ -3,7 +3,7 @@
 " Original Author: Josef Litos (JosefLitos/i3config.vim)
 " Maintainer: Quentin Hibon (github user hiqua)
 " Version: 1.0.0
-" Last Change: 2023-09-14
+" Last Change: 2023-11-11
 
 " References:
 " http://i3wm.org/docs/userguide.html#configuring
@@ -182,7 +182,7 @@ syn match i3ConfigKeyword /^smart_gaps \(on\|off\|inverse_outer\)$/ contains=i3C
 
 " 5 Configuring bar
 syn match i3ConfigBarModifier /^\s\+modifier \S\+$/ contained contains=i3ConfigBindModifier,i3ConfigVariable,i3ConfigBindModkey,i3ConfigBarOptVals
-syn keyword i3ConfigBarOpts bar i3bar_command status_command mode hidden_state id position output tray_output tray_padding separator_symbol workspace_buttons workspace_min_width strip_workspace_numbers strip_workspace_name binding_mode_indicator padding contained
+syn keyword i3ConfigBarOpts bar i3bar_command status_command workspace_command mode hidden_state id position output tray_output tray_padding separator_symbol workspace_buttons workspace_min_width strip_workspace_numbers strip_workspace_name binding_mode_indicator padding contained
 syn keyword i3ConfigBarOptVals dock hide invisible show none top bottom primary nonprimary contained
 syn region i3ConfigBarBlock start=/^bar {$/ end=/^}$/ contains=i3ConfigBarOpts,i3ConfigBarOptVals,i3ConfigBarModifier,i3ConfigBind,i3ConfigString,i3ConfigComment,i3ConfigFont,i3ConfigBoolean,i3ConfigNumber,i3ConfigParen,i3ConfigColor,i3ConfigVariable,i3ConfigColorsBlock,i3ConfigShOper,i3ConfigShCommand fold keepend extend
 
@@ -212,7 +212,7 @@ syn region i3ConfigAction start=/layout/ skip=/\\$/ end=/[,;]\|$/ contained cont
 
 " 6.4 Focusing containers
 syn keyword i3ConfigFocusKeyword focus contained
-syn keyword i3ConfigFocusOpts left right up down parent child next prev sibling floating tiling mode_toggle contained
+syn keyword i3ConfigFocusOpts left right up down workspace parent child next prev sibling floating tiling mode_toggle contained
 syn keyword i3ConfigFocusOutputOpts left right down up current primary nonprimary next prev contained
 syn region i3ConfigFocusOutput start=/ output / skip=/\\$/ end=/[,;]\|$/ contained contains=i3ConfigWorkspaceOutput,i3ConfigFocusOutputOpts,i3ConfigString,i3ConfigNumber,i3ConfigSeparator keepend
 syn match i3ConfigFocusOutputLine /^focus output .*$/ contains=i3ConfigFocusKeyword,i3ConfigFocusOutput
