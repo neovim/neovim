@@ -3246,8 +3246,9 @@ return {
       defaults = { if_true = macros('DFLT_FO_VIM') },
       desc = [=[
         This is a sequence of letters which describes how automatic
-        formatting is to be done.  See |fo-table|.  Commas can be inserted for
-        readability.
+        formatting is to be done.
+        See |fo-table| for possible values and |gq| for how to format text.
+        Commas can be inserted for readability.
         To avoid problems with flags that are added in the future, use the
         "+=" and "-=" feature of ":set" |add-option-flags|.
       ]=],
