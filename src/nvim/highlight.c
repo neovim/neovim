@@ -374,10 +374,15 @@ void update_window_hl(win_T *wp, bool invalid)
       if (wp->w_float_config.border_hl_ids[i]) {
         attr = hl_get_ui_attr(ns_id, HLF_BORDER,
                               wp->w_float_config.border_hl_ids[i], false);
-        HlAttrs a = syn_attr2entry(attr);
-        if (a.hl_blend) {
-          wp->w_float_config.shadow = true;
-        }
+      }
+      HlAttrs a = syn_attr2entry(attr);
+      if (a.hl_blend == -1 && wp->w_p_winbl > 0) {
+        HlEntry entry = attr_entry(attr);
+        a.hl_blend = entry.attr.hl_blend = (int)wp->w_p_winbl;
+        attr = get_attr_entry(entry);
+      }
+      if (a.hl_blend > 0) {
+        wp->w_float_config.shadow = true;
       }
       wp->w_float_config.border_attr[i] = attr;
     }

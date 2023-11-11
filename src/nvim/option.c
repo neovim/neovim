@@ -2686,7 +2686,7 @@ static const char *did_set_winblend(optset_T *args)
   if (value != old_value) {
     win->w_p_winbl = MAX(MIN(win->w_p_winbl, 100), 0);
     win->w_hl_needs_update = true;
-    check_blending(curwin);
+    check_blending(win);
   }
 
   return NULL;
