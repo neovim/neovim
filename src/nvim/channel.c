@@ -224,6 +224,7 @@ void channel_create_event(Channel *chan, const char *ext_source)
   // TODO(bfredl): do the conversion in one step. Also would be nice
   // to pretty print top level dict in defined order
   (void)object_to_vim(DICTIONARY_OBJ(info), &tv, NULL);
+  assert(tv.v_type == VAR_DICT);
   char *str = encode_tv2json(&tv, NULL);
   ILOG("new channel %" PRIu64 " (%s) : %s", chan->id, source, str);
   xfree(str);
@@ -849,6 +850,7 @@ static void set_info_event(void **argv)
   Dictionary info = channel_info(chan->id);
   typval_T retval;
   (void)object_to_vim(DICTIONARY_OBJ(info), &retval, NULL);
+  assert(retval.v_type == VAR_DICT);
   tv_dict_add_dict(dict, S_LEN("info"), retval.vval.v_dict);
   tv_dict_set_keys_readonly(dict);
 

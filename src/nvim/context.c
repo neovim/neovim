@@ -321,24 +321,28 @@ static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
 /// Convert readfile()-style array to msgpack_sbuffer.
 ///
 /// @param[in]  array  readfile()-style array to convert.
+/// @param[out]  err   Error object.
 ///
 /// @return msgpack_sbuffer with conversion result.
-static inline msgpack_sbuffer array_to_sbuf(Array array)
+static inline msgpack_sbuffer array_to_sbuf(Array array, Error *err)
+  FUNC_ATTR_NONNULL_ALL
 {
   msgpack_sbuffer sbuf;
   msgpack_sbuffer_init(&sbuf);
 
   typval_T list_tv;
-  Error err = ERROR_INIT;
-  (void)object_to_vim(ARRAY_OBJ(array), &list_tv, &err);
+  if (!object_to_vim(ARRAY_OBJ(array), &list_tv, err)) {
+    return sbuf;
+  }
 
+  assert(list_tv.v_type == VAR_LIST);
   if (!encode_vim_list_to_buf(list_tv.vval.v_list, &sbuf.size, &sbuf.data)) {
-    emsg(_("E474: Failed to convert list to msgpack string buffer"));
+    api_set_error(err, kErrorTypeException, "%s",
+                  "E474: Failed to convert list to msgpack string buffer");
   }
   sbuf.alloc = sbuf.size;
 
   tv_clear(&list_tv);
-  api_clear_error(&err);
   return sbuf;
 }
 
@@ -367,9 +371,10 @@ Dictionary ctx_to_dict(Context *ctx)
 ///
 /// @param[in]   dict  Context Dictionary representation.
 /// @param[out]  ctx   Context object to store conversion result into.
+/// @param[out]  err   Error object.
 ///
 /// @return types of included context items.
-int ctx_from_dict(Dictionary dict, Context *ctx)
+int ctx_from_dict(Dictionary dict, Context *ctx, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(ctx != NULL);
@@ -382,16 +387,16 @@ int ctx_from_dict(Dictionary dict, Context *ctx)
     }
     if (strequal(item.key.data, "regs")) {
       types |= kCtxRegs;
-      ctx->regs = array_to_sbuf(item.value.data.array);
+      ctx->regs = array_to_sbuf(item.value.data.array, err);
     } else if (strequal(item.key.data, "jumps")) {
       types |= kCtxJumps;
-      ctx->jumps = array_to_sbuf(item.value.data.array);
+      ctx->jumps = array_to_sbuf(item.value.data.array, err);
     } else if (strequal(item.key.data, "bufs")) {
       types |= kCtxBufs;
-      ctx->bufs = array_to_sbuf(item.value.data.array);
+      ctx->bufs = array_to_sbuf(item.value.data.array, err);
     } else if (strequal(item.key.data, "gvars")) {
       types |= kCtxGVars;
-      ctx->gvars = array_to_sbuf(item.value.data.array);
+      ctx->gvars = array_to_sbuf(item.value.data.array, err);
     } else if (strequal(item.key.data, "funcs")) {
       types |= kCtxFuncs;
       ctx->funcs = copy_object(item.value, NULL).data.array;

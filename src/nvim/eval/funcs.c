@@ -358,6 +358,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (!object_to_vim(result, rettv, &err)) {
+    assert(ERROR_SET(&err));
     semsg(_("Error converting the call result: %s"), err.msg);
   }
 
@@ -1024,7 +1025,7 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   Dictionary ctx_dict = ctx_to_dict(ctx);
   Error err = ERROR_INIT;
-  object_to_vim(DICTIONARY_OBJ(ctx_dict), rettv, &err);
+  (void)object_to_vim(DICTIONARY_OBJ(ctx_dict), rettv, &err);
   api_free_dictionary(ctx_dict);
   api_clear_error(&err);
 }
@@ -1090,14 +1091,16 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  int save_did_emsg = did_emsg;
+  const int save_did_emsg = did_emsg;
   did_emsg = false;
 
   Dictionary dict = vim_to_object(&argvars[0]).data.dictionary;
   Context tmp = CONTEXT_INIT;
-  ctx_from_dict(dict, &tmp);
+  Error err = ERROR_INIT;
+  ctx_from_dict(dict, &tmp, &err);
 
-  if (did_emsg) {
+  if (ERROR_SET(&err)) {
+    semsg("%s", err.msg);
     ctx_free(&tmp);
   } else {
     ctx_free(ctx);
@@ -1105,6 +1108,7 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   api_free_dictionary(dict);
+  api_clear_error(&err);
   did_emsg = save_did_emsg;
 }
 
@@ -6753,6 +6757,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   if (!object_to_vim(result, rettv, &err)) {
+    assert(ERROR_SET(&err));
     semsg(_("Error converting the call result: %s"), err.msg);
   }
 
