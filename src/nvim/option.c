@@ -3614,7 +3614,7 @@ static const char *did_set_option(int opt_idx, void *varp, OptVal old_value, Opt
     }
 
     // Unset new_value as it is no longer valid.
-    new_value = NIL_OPTVAL;  // NOLINT(clang-analyzer-deadcode.DeadStores)
+    new_value = NIL_OPTVAL;  // -V1001 NOLINT(clang-analyzer-deadcode.DeadStores)
     return errmsg;
   }
 
