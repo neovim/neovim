@@ -24,6 +24,7 @@ local lsp = {
   buf = require('vim.lsp.buf'),
   diagnostic = require('vim.lsp.diagnostic'),
   codelens = require('vim.lsp.codelens'),
+  inlay_hint = require('vim.lsp.inlay_hint'),
   semantic_tokens = semantic_tokens,
   util = util,
 
@@ -2437,13 +2438,6 @@ function lsp.with(handler, override_config)
   return function(err, result, ctx, config)
     return handler(err, result, ctx, vim.tbl_deep_extend('force', config or {}, override_config))
   end
-end
-
---- Enable/disable/toggle inlay hints for a buffer
----@param bufnr (integer) Buffer handle, or 0 for current
----@param enable (boolean|nil) true/false to enable/disable, nil to toggle
-function lsp.inlay_hint(bufnr, enable)
-  return require('vim.lsp.inlay_hint')(bufnr, enable)
 end
 
 --- Helper function to use when implementing a handler.

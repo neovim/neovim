@@ -259,6 +259,7 @@ CONFIG = {
             'buf.lua',
             'diagnostic.lua',
             'codelens.lua',
+            'inlay_hint.lua',
             'tagfunc.lua',
             'semantic_tokens.lua',
             'handlers.lua',

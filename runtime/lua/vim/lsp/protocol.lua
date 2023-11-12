@@ -648,7 +648,12 @@ function protocol.make_client_capabilities()
       inlayHint = {
         dynamicRegistration = true,
         resolveSupport = {
-          properties = {},
+          properties = {
+            'textEdits',
+            'tooltip',
+            'location',
+            'command',
+          },
         },
       },
       semanticTokens = {
