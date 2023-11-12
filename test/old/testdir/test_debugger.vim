@@ -971,6 +971,34 @@ func Test_Backtrace_DefFunction()
   call delete('Xtest2.vim')
 endfunc
 
+func Test_debug_def_function()
+  CheckRunVimInTerminal
+  CheckCWD
+  let file =<< trim END
+    vim9script
+    def g:Func()
+        var n: number
+        def Closure(): number
+            return n + 3
+        enddef
+        n += Closure()
+        echo 'result: ' .. n
+    enddef
+  END
+  call writefile(file, 'Xtest.vim')
+
+  let buf = RunVimInTerminal('-S Xtest.vim', {})
+
+  call RunDbgCmd(buf,
+                \ ':debug call Func()',
+                \ ['cmd: call Func()'])
+  call RunDbgCmd(buf, 'next', ['result: 3'])
+  call term_sendkeys(buf, "\r")
+
+  call StopVimInTerminal(buf)
+  call delete('Xtest.vim')
+endfunc
+
 func Test_debug_backtrace_level()
   CheckRunVimInTerminal
   CheckCWD
