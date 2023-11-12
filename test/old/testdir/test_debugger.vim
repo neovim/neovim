@@ -923,19 +923,20 @@ func Test_Backtrace_DefFunction()
                 \ ':debug call GlobalFunction()',
                 \ ['cmd: call GlobalFunction()'])
 
-  " FIXME: Vim9 lines are not debugged!
-  call RunDbgCmd(buf, 'step', ['line 1: source Xtest2.vim'])
+  call RunDbgCmd(buf, 'step', ['line 1:   CallAFunction()'])
 
-  " But they do appear in the backtrace
+  " FIXME: not quite right
   call RunDbgCmd(buf, 'backtrace', [
         \ '\V>backtrace',
-        \ '\V  2 function GlobalFunction[1]',
-        \ '\V  1 <SNR>\.\*_CallAFunction[1]',
-        \ '\V->0 <SNR>\.\*_SourceAnotherFile',
-        \ '\Vline 1: source Xtest2.vim'],
+        \ '\V->0 function GlobalFunction',
+        \ '\Vline 1:   CallAFunction()',
+        \ ],
         \ #{match: 'pattern'})
 
-
+  call RunDbgCmd(buf, 'step', ['line 1:   SourceAnotherFile()'])
+  call RunDbgCmd(buf, 'step', ['line 1:   source Xtest2.vim'])
+  " FIXME: repeated line
+  call RunDbgCmd(buf, 'step', ['line 1: source Xtest2.vim'])
   call RunDbgCmd(buf, 'step', ['line 1: vim9script'])
   call RunDbgCmd(buf, 'step', ['line 3: def DoAThing(): number'])
   call RunDbgCmd(buf, 'step', ['line 9: export def File2Function()'])
@@ -952,7 +953,7 @@ func Test_Backtrace_DefFunction()
         \ #{match: 'pattern'})
 
   " Don't step into compiled functions...
-  call RunDbgCmd(buf, 'step', ['line 15: End of sourced file'])
+  call RunDbgCmd(buf, 'next', ['line 15: End of sourced file'])
   call RunDbgCmd(buf, 'backtrace', [
         \ '\V>backtrace',
         \ '\V  3 function GlobalFunction[1]',
@@ -961,7 +962,6 @@ func Test_Backtrace_DefFunction()
         \ '\V->0 script ' .. getcwd() .. '/Xtest2.vim',
         \ '\Vline 15: End of sourced file'],
         \ #{match: 'pattern'})
-
 
   call StopVimInTerminal(buf)
   call delete('Xtest1.vim')
@@ -1156,6 +1156,7 @@ func Test_debug_backtrace_level()
         \ [ 'E121: Undefined variable: s:file1_var' ] )
   call RunDbgCmd(buf, 'echo s:file2_var', [ 'file2' ] )
 
+  call RunDbgCmd(buf, 'cont')
   call StopVimInTerminal(buf)
   call delete('Xtest1.vim')
   call delete('Xtest2.vim')
