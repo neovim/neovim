@@ -971,7 +971,7 @@ func Test_Backtrace_DefFunction()
   call delete('Xtest2.vim')
 endfunc
 
-func Test_debug_DefFunction()
+func Test_debug_def_and_legacy_function()
   CheckRunVimInTerminal
   CheckCWD
   let file =<< trim END
@@ -1107,6 +1107,34 @@ func Test_debug_def_function()
   call RunDbgCmd(buf, 'cont')
   call StopVimInTerminal(buf)
   call delete('Xtest.vim')
+endfunc
+
+func Test_debug_def_function_with_lambda()
+  CheckRunVimInTerminal
+  CheckCWD
+  let lines =<< trim END
+     vim9script
+     def g:Func()
+       var s = 'a'
+       ['b']->map((_, v) => s)
+       echo "done"
+     enddef
+     breakadd func 2 g:Func
+  END
+  call writefile(lines, 'XtestLambda.vim')
+
+  let buf = RunVimInTerminal('-S XtestLambda.vim', {})
+
+  call RunDbgCmd(buf,
+                \ ':call g:Func()',
+                \ ['function Func', 'line 2: [''b'']->map((_, v) => s)'])
+  call RunDbgCmd(buf,
+                \ 'next',
+                \ ['function Func', 'line 3: echo "done"'])
+
+  call RunDbgCmd(buf, 'cont')
+  call StopVimInTerminal(buf)
+  call delete('XtestLambda.vim')
 endfunc
 
 func Test_debug_backtrace_level()
