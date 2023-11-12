@@ -225,11 +225,16 @@ add_glob_target(
   TOUCH_STRATEGY SINGLE)
 add_dependencies(lintlua-luacheck lua-dev-deps)
 
-# Don't use add_glob_target as .styluaignore won't be respected.
-# https://github.com/JohnnyMorganz/StyLua/issues/751
-add_custom_target(lintlua-stylua
-  COMMAND ${STYLUA_PRG} --color=always --check .
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+add_glob_target(
+  TARGET lintlua-stylua
+  COMMAND ${STYLUA_PRG}
+  FLAGS --color=always --check --respect-ignores
+  GLOB_DIRS runtime/
+  GLOB_PAT *.lua
+  EXCLUDE
+    /runtime/lua/vim/_meta
+  TOUCH_STRATEGY SINGLE)
+
 add_custom_target(lintlua)
 add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
 
