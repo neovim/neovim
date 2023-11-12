@@ -9198,6 +9198,9 @@ describe('float window', function()
         [20] = {background = Screen.colors.White, foreground = Screen.colors.Gray0};
         [21] = {background = Screen.colors.White, bold = true, foreground = tonumber('0x00007f')};
         [22] = {background = Screen.colors.Gray90, foreground = Screen.colors.Gray0};
+        [23] = {blend = 100, bold = true, foreground = Screen.colors.Magenta};
+        [24] = {foreground = tonumber('0x7f007f'), bold = true, background = Screen.colors.White};
+        [25] = {foreground = tonumber('0x7f007f'), bold = true, background = Screen.colors.Grey90};
       })
       insert([[
         Lorem ipsum dolor sit amet, consectetur
@@ -9483,8 +9486,8 @@ describe('float window', function()
         ]])
       end
 
-      -- Check that 'winblend' applies to border
-      meths.win_set_config(win, {border='single'})
+      -- Check that 'winblend' applies to border/title/footer
+      meths.win_set_config(win, {border='single', title='Title', footer='Footer'})
       meths.set_option_value('winblend', 100, {win=win.id})
       meths.set_option_value("cursorline", true, {win=0})
       command('hi clear VertSplit')
@@ -9513,21 +9516,21 @@ describe('float window', function()
         ## grid 3
                                                             |
         ## grid 4
-          {17:┌───────────────┐}|
+          {17:┌}{23:Title}{17:──────────┐}|
           {17:│}{11:popup    text}{18:  }{17:│}|
           {17:│}{19:~              }{17:│}|
           {17:│}{19:~              }{17:│}|
-          {17:└───────────────┘}|
+          {17:└}{23:Footer}{17:─────────┘}|
         ]], float_pos={[4] = {{id = 1001}, "NW", 1, 2, 5, true}}}
       else
         screen:expect([[
           Ut enim ad minim veniam, quis nostrud             |
           exercitation ullamco laboris nisi ut aliquip ex   |
-          ea co{20:┌───────────────┐}Duis aute irure dolor in    |
+          ea co{20:┌}{24:Title}{20:──────────┐}Duis aute irure dolor in    |
           repre{20:│}{5:popup}{6:it i}{5:text}{20:lu│}tate velit esse cillum      |
           dolor{20:│}{21:~}{20:eu fugiat null│} pariatur. Excepteur sint   |
           occae{20:│}{21:~}{20:t cupidatat no│} proident, sunt in culpa    |
-          {16:^qui o}{22:└───────────────┘}{16:ollit anim id est           }|
+          {16:^qui o}{22:└}{25:Footer}{22:─────────┘}{16:ollit anim id est           }|
           laborum.                                          |
                                                             |
         ]])

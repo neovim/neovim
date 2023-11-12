@@ -725,6 +725,7 @@ static void win_redr_bordertext(win_T *wp, VirtText vt, int col)
     if (text == NULL) {
       break;
     }
+    attr = hl_apply_winblend(wp, attr);
     col += grid_line_puts(col, text, -1, attr);
   }
 }
