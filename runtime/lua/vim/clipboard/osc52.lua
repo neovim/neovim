@@ -2,7 +2,7 @@ local M = {}
 
 function M.copy(lines)
   local s = table.concat(lines, '\n')
-  io.stdout:write(string.format('\x1b]52;;%s\x1b\\', vim.base64.encode(s)))
+  io.stdout:write(string.format('\027]52;;%s\027\\', vim.base64.encode(s)))
 end
 
 function M.paste()
@@ -10,7 +10,7 @@ function M.paste()
   local id = vim.api.nvim_create_autocmd('TermResponse', {
     callback = function(args)
       local resp = args.data ---@type string
-      local encoded = resp:match('\x1b%]52;%w?;([A-Za-z0-9+/=]*)')
+      local encoded = resp:match('\027%]52;%w?;([A-Za-z0-9+/=]*)')
       if encoded then
         contents = vim.base64.decode(encoded)
         return true
@@ -18,7 +18,7 @@ function M.paste()
     end,
   })
 
-  io.stdout:write('\x1b]52;;?\x1b\\')
+  io.stdout:write('\027]52;;?\027\\')
 
   local ok, res
 
