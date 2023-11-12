@@ -1015,8 +1015,7 @@ func Test_debug_def_and_legacy_function()
   call RunDbgCmd(buf, 'cont')
 
   call StopVimInTerminal(buf)
-  call delete('Xtest1.vim')
-  call delete('Xtest2.vim')
+  call delete('XtestDebug.vim')
 endfunc
 
 func Test_debug_def_function()
