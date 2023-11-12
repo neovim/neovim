@@ -987,7 +987,7 @@ func Test_debug_DefFunction()
     def LocalFunc()
       echo "first"
       echo "second"
-      breakadd func 1 LegacyFunc
+      breakadd func LegacyFunc
       LegacyFunc()
     enddef
 
@@ -1051,6 +1051,13 @@ func Test_debug_def_function()
            eval 1
          enddef
     enddef
+    def g:FuncComment()
+      # comment
+      echo "first"
+         .. "one"
+      # comment
+      echo "second"
+    enddef
   END
   call writefile(file, 'Xtest.vim')
 
@@ -1090,6 +1097,12 @@ func Test_debug_def_function()
                 \ ['cmd: call FuncWithDict()'])
   call RunDbgCmd(buf, 'step', ['line 1: var d = {  a: 1,  b: 2,  }'])
   call RunDbgCmd(buf, 'step', ['line 6: def Inner()'])
+  call RunDbgCmd(buf, 'cont')
+
+  call RunDbgCmd(buf, ':breakadd func 1 FuncComment')
+  call RunDbgCmd(buf, ':call FuncComment()', ['function FuncComment', 'line 2: echo "first"  .. "one"'])
+  call RunDbgCmd(buf, ':breakadd func 3 FuncComment')
+  call RunDbgCmd(buf, 'cont', ['function FuncComment', 'line 5: echo "second"'])
 
   call RunDbgCmd(buf, 'cont')
   call StopVimInTerminal(buf)
