@@ -1,7 +1,7 @@
+/build
+/runtime/lua/coxpcall.lua
+/runtime/lua/vim/_meta
+/runtime/lua/vim/re.lua
 /scripts
 /src
 /test
-/build
-/runtime/lua/vim/re.lua
-/runtime/lua/vim/_meta/options.lua
-/runtime/lua/coxpcall.lua
