@@ -980,7 +980,22 @@ func Test_debug_DefFunction()
       echo "here"
       echo "and"
       echo "there"
+      breakadd func 2 LocalFunc
+      LocalFunc()
     enddef
+
+    def LocalFunc()
+      echo "first"
+      echo "second"
+      breakadd func 1 LegacyFunc
+      LegacyFunc()
+    enddef
+
+    func LegacyFunc()
+      echo "legone"
+      echo "legtwo"
+    endfunc
+
     breakadd func 2 g:SomeFunc
   END
   call writefile(file, 'XtestDebug.vim')
@@ -989,6 +1004,13 @@ func Test_debug_DefFunction()
 
   call RunDbgCmd(buf,':call SomeFunc()', ['line 2: echo "and"'])
   call RunDbgCmd(buf,'next', ['line 3: echo "there"'])
+  call RunDbgCmd(buf,'next', ['line 4: breakadd func 2 LocalFunc'])
+
+  " continue, next breakpoint is in LocalFunc()
+  call RunDbgCmd(buf,'cont', ['line 2: echo "second"'])
+
+  " continue, next breakpoint is in LegacyFunc()
+  call RunDbgCmd(buf,'cont', ['line 1: echo "legone"'])
 
   call RunDbgCmd(buf, 'cont')
 
