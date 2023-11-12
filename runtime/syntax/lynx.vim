@@ -1,9 +1,9 @@
 " Vim syntax file
-" Language:	Lynx configuration file (lynx.cfg)
+" Language:	Lynx Web Browser Configuration (lynx.cfg)
 " Maintainer:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:	2013 Jun 20
+" Last Change:	2023 Nov 09
 
-" Lynx 2.8.7
+" Lynx 2.8.9
 
 if exists("b:current_syntax")
   finish
@@ -12,34 +12,35 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-syn match lynxStart "^" transparent skipwhite nextgroup=lynxOption
+syn match lynxStart "^" skipwhite nextgroup=lynxOption
 
-syn match lynxComment "\(^\|\s\+\)#.*$" contains=lynxTodo
+syn match lynxComment "\%(^\|\s\+\)#.*" contains=lynxTodo
 
 syn keyword lynxTodo TODO NOTE FIXME XXX contained
 
-syn match lynxDelimiter ":" skipwhite nextgroup=lynxBoolean,lynxNumber,lynxNone,lynxRCOption
+syn match lynxDelimiter ":" skipwhite nextgroup=lynxBoolean,lynxHttpProtocol,lynxNumber,lynxNone,lynxRCOption
 
 syn case ignore
 syn keyword lynxBoolean TRUE FALSE ON OFF contained
-syn keyword lynxNone    NONE		  contained
+syn keyword lynxNone	NONE		  contained
 syn case match
 
-syn match lynxNumber "-\=\<\d\+\>" contained
+syn match lynxNumber	   "-\=\<\d\+\>" contained
+syn match lynxHttpProtocol "\<1\.[01]\>" contained
 
 "{{{ Options
 syn case ignore
-syn keyword lynxOption ACCEPT_ALL_COOKIES ALERTSECS ALWAYS_RESUBMIT_POSTS
-	\ ALWAYS_TRUSTED_EXEC ANONFTP_PASSWORD ASSUMED_COLOR
-	\ ASSUMED_DOC_CHARSET_CHOICE ASSUME_CHARSET ASSUME_LOCAL_CHARSET
-	\ ASSUME_UNREC_CHARSET AUTO_SESSION AUTO_UNCACHE_DIRLISTS BAD_HTML
-	\ BIBP_BIBHOST BIBP_GLOBAL_SERVER BLOCK_MULTI_BOOKMARKS BOLD_H1
-	\ BOLD_HEADERS BOLD_NAME_ANCHORS BOOKMARK_FILE BROKEN_FTP_EPSV
-	\ BROKEN_FTP_RETR BZIP2_PATH CASE_SENSITIVE_ALWAYS_ON
-	\ CASE_SENSITIVE_SEARCHING CHARACTER_SET CHARSETS_DIRECTORY
-	\ CHARSET_SWITCH_RULES CHECKMAIL CHMOD_PATH COLLAPSE_BR_TAGS COLOR
-	\ COLOR_STYLE COMPRESS_PATH CONNECT_TIMEOUT COOKIE_ACCEPT_DOMAINS
-	\ COOKIE_FILE COOKIE_LOOSE_INVALID_DOMAINS
+syn keyword lynxOption ACCEPT_ALL_COOKIES ALERTSECS
+	\ ALWAYS_RESUBMIT_POSTS ALWAYS_TRUSTED_EXEC ANONFTP_PASSWORD
+	\ ASSUMED_COLOR ASSUMED_DOC_CHARSET_CHOICE ASSUME_CHARSET
+	\ ASSUME_LOCAL_CHARSET ASSUME_UNREC_CHARSET AUTO_SESSION
+	\ AUTO_UNCACHE_DIRLISTS BAD_HTML BIBP_BIBHOST BIBP_GLOBAL_SERVER
+	\ BLOCK_MULTI_BOOKMARKS BOLD_H1 BOLD_HEADERS BOLD_NAME_ANCHORS
+	\ BOOKMARK_FILE BROKEN_FTP_EPSV BROKEN_FTP_RETR BZIP2_PATH
+	\ CASE_SENSITIVE_ALWAYS_ON CASE_SENSITIVE_SEARCHING CHARACTER_SET
+	\ CHARSETS_DIRECTORY CHARSET_SWITCH_RULES CHECKMAIL CHMOD_PATH
+	\ COLLAPSE_BR_TAGS COLOR COLOR_STYLE COMPRESS_PATH CONNECT_TIMEOUT
+	\ COOKIE_ACCEPT_DOMAINS COOKIE_FILE COOKIE_LOOSE_INVALID_DOMAINS
 	\ COOKIE_QUERY_INVALID_DOMAINS COOKIE_REJECT_DOMAINS COOKIE_SAVE_FILE
 	\ COOKIE_STRICT_INVALID_DOMAINS COPY_PATH CSO_PROXY CSWING_PATH
 	\ DEBUGSECS DEFAULT_BOOKMARK_FILE DEFAULT_CACHE_SIZE DEFAULT_COLORS
@@ -97,35 +98,45 @@ syn keyword lynxOption ACCEPT_ALL_COOKIES ALERTSECS ALWAYS_RESUBMIT_POSTS
 	\ USE_FIXED_RECORDS USE_MOUSE USE_SELECT_POPUPS UUDECODE_PATH
 	\ VERBOSE_IMAGES VIEWER VISITED_LINKS VI_KEYS VI_KEYS_ALWAYS_ON
 	\ WAIS_PROXY XHTML_PARSING XLOADIMAGE_COMMAND ZCAT_PATH ZIP_PATH
+	\ TRIM_BLANK_LINES GUESS_SCHEME HTTP_PROTOCOL HTML5_CHARSETS
+	\ TRIM_BLANK_LINES PREFERRED_CONTENT_TYPE SSL_CLIENT_CERT_FILE
+	\ SSL_CLIENT_KEY_FILE MAX_URI_SIZE UNIQUE_URLS MESSAGE_LANGUAGE
+	\ CONV_JISX0201KANA WAIT_VIEWER_TERMINATION BLAT_MAIL ALT_BLAT_MAIL
+	\ DONT_WRAP_PRE TRACK_INTERNAL_LINKS FORCE_HTML HIDDENLINKS SHORT_URL
+	\ LISTONLY LIST_INLINE LOCALHOST WITH_BACKSPACES
 	\ contained nextgroup=lynxDelimiter
 syn keyword lynxRCOption accept_all_cookies assume_charset auto_session
 	\ bookmark_file case_sensitive_searching character_set
-	\ cookie_accept_domains cookie_file cookie_loose_invalid_domains
-	\ cookie_query_invalid_domains cookie_reject_domains
+	\ collapse_br_tags cookie_accept_domains cookie_file
+	\ cookie_loose_invalid_domains cookie_query_invalid_domains
+	\ cookie_reject_domains cookie_strict_invalid_domain
 	\ cookie_strict_invalid_domains dir_list_style display emacs_keys
 	\ file_editor file_sorting_method force_cookie_prompt force_ssl_prompt
-	\ ftp_passive kblayout keypad_mode lineedit_mode locale_charset
-	\ make_links_for_all_images make_pseudo_alts_for_inlines
-	\ multi_bookmark no_pause personal_mail_address preferred_charset
-	\ preferred_encoding preferred_language preferred_media_types raw_mode
-	\ run_all_execution_links run_execution_links_on_local_files scrollbar
-	\ select_popups send_useragent session_file set_cookies show_color
-	\ show_cursor show_dotfiles show_kb_rate sub_bookmarks tagsoup
-	\ underline_links user_mode useragent verbose_images vi_keys
-	\ visited_links
+	\ ftp_passive html5_charsets http_protocol kblayout keypad_mode
+	\ lineedit_mode locale_charset make_links_for_all_images
+	\ make_pseudo_alts_for_inlines multi_bookmark no_pause
+	\ personal_mail_address preferred_charset preferred_encoding
+	\ preferred_language preferred_media_types raw_mode
+	\ run_all_execution_links run_execution_links_local
+	\ run_execution_links_on_local_files scrollbar select_popups
+	\ send_useragent session_file set_cookies show_color show_cursor
+	\ show_dotfiles show_kb_rate sub_bookmarks tagsoup underline_links
+	\ useragent user_mode verbose_images vi_keys visited_links
 	\ contained nextgroup=lynxDelimiter
 syn case match
 " }}}
 
 " cfg2html.pl formatting directives
 syn match lynxFormatDir  "^\.h\d\s.*$"
-syn match lynxFormatDir  "^\.\(ex\|nf\)\(\s\+\d\+\)\=$"
+syn match lynxFormatDir  "^\.\%(ex\|nf\)\%(\s\+\d\+\)\=$"
 syn match lynxFormatDir  "^\.fi$"
+syn match lynxFormatDir  "^\.url\>"
 
 hi def link lynxBoolean		Boolean
 hi def link lynxComment		Comment
 hi def link lynxDelimiter	Special
 hi def link lynxFormatDir	Special
+hi def link lynxHttpProtocol	Constant
 hi def link lynxNone		Constant
 hi def link lynxNumber		Number
 hi def link lynxOption		Identifier
@@ -137,4 +148,4 @@ let b:current_syntax = "lynx"
 let &cpo = s:cpo_save
 unlet s:cpo_save
 
-" vim: ts=8 fdm=marker:
+" vim: nowrap sw=2 sts=2 ts=8 noet fdm=marker:
