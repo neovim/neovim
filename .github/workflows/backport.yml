@@ -1,4 +1,4 @@
-name: Backport
+name: backport
 on:
   pull_request_target:
     types: [closed, labeled]

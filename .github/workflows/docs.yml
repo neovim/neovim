@@ -1,5 +1,4 @@
-# Check if any PR needs to run the autogenerate script
-name: Autogenerate API docs and types
+name: docs
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -8,9 +7,8 @@ on:
       - 'src/nvim/eval.lua'
       - 'runtime/lua/**.lua'
       - 'runtime/doc/**'
-
 jobs:
-  regen-api-docs-and-types:
+  docs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     permissions:

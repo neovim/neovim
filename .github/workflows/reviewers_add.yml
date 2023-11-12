@@ -1,4 +1,4 @@
-name: "Request reviews"
+name: "reviewers: add"
 on:
   pull_request_target:
     types: [labeled, ready_for_review, reopened]
@@ -15,5 +15,5 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const script = require('./.github/scripts/reviews.js')
+            const script = require('./.github/scripts/reviewers_add.js')
             await script({github, context})

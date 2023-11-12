@@ -1,4 +1,4 @@
-name: Coverity
+name: coverity
 on:
   schedule:
     - cron: '10 0 * * *'  # Run every day at 00:10

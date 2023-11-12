@@ -1,4 +1,4 @@
-name: "Remove reviewers"
+name: "reviewers: remove"
 on:
   pull_request_target:
     types: [converted_to_draft, closed]
@@ -13,5 +13,5 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const script = require('./.github/scripts/remove-reviewers.js')
+            const script = require('./.github/scripts/reviewers_remove.js')
             await script({github, context})

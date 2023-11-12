@@ -1,9 +1,9 @@
-name: "Pull Request Labeler"
+name: "labeler: PR"
 on:
   pull_request_target:
     types: [opened]
 jobs:
-  triage:
+  labeler:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -37,4 +37,4 @@ jobs:
     needs: ["triage", "type-scope"]
     permissions:
       pull-requests: write
-    uses: ./.github/workflows/add-reviewers.yml
+    uses: ./.github/workflows/reviewers_add.yml
