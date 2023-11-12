@@ -81,6 +81,32 @@ func Test_termdebug_basic()
         \  'priority': 110, 'group': 'TermDebug'}],
         \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
   Continue
+  call Nterm_wait(gdb_buf)
+
+  let i = 2
+  while i <= 258
+    Break
+    call Nterm_wait(gdb_buf)
+    if i == 2
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint2.0')[0].text, '02')})
+    endif
+    if i == 10
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint10.0')[0].text, '0A')})
+    endif
+    if i == 168
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint168.0')[0].text, 'A8')})
+    endif
+    if i == 255
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint255.0')[0].text, 'FF')})
+    endif
+    if i == 256
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint256.0')[0].text, 'F+')})
+    endif
+    if i == 258
+      call WaitForAssert({-> assert_equal(sign_getdefined('debugBreakpoint258.0')[0].text, 'F+')})
+    endif
+    let i += 1
+  endwhile
 
   let cn = 0
   " 60 is approx spaceBuffer * 3

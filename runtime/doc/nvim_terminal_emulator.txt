@@ -537,9 +537,9 @@ If there is no g:termdebug_config you can use: >vim
 
 Change default signs ~
 							*termdebug_signs*
-Termdebug uses the last two characters of the breakpoint ID in the
-signcolumn to represent breakpoints. For example, breakpoint ID 133
-will be displayed as `33`.
+Termdebug uses the hex number of the breakpoint ID in the signcolumn to
+represent breakpoints. if it is greater than "0xFF", then it will be displayed
+as "F+", due to we really only have two screen cells for the sign.
 
 If you want to customize the breakpoint signs: >vim
 	let g:termdebug_config['sign'] = '>>'
