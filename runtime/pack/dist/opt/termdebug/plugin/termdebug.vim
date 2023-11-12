@@ -1781,9 +1781,9 @@ func s:CreateBreakpoint(id, subid, enabled)
       let label = get(g:termdebug_config, 'sign', '')
     endif
     if label == ''
-      let label = substitute(nr, '\..*', '', '')
-      if strlen(label) > 2
-        let label = strpart(label, strlen(label) - 2)
+      let label = printf('%02X', a:id)
+      if a:id > 255
+        let label = 'F+'
       endif
     endif
     call sign_define('debugBreakpoint' .. nr,
