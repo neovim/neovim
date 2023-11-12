@@ -230,7 +230,7 @@ void do_debug(char *cmd)
       }
 
       if (last_cmd != 0) {
-        // Execute debug command: decided where to break next and return.
+        // Execute debug command: decide where to break next and return.
         switch (last_cmd) {
         case CMD_CONT:
           debug_break_level = -1;

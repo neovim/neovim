@@ -892,6 +892,7 @@ func Test_Backtrace_DefFunction()
     enddef
 
     def g:GlobalFunction()
+      var some = "some var"
       CallAFunction()
     enddef
 
@@ -923,19 +924,21 @@ func Test_Backtrace_DefFunction()
                 \ ':debug call GlobalFunction()',
                 \ ['cmd: call GlobalFunction()'])
 
-  call RunDbgCmd(buf, 'step', ['line 1:   CallAFunction()'])
+  call RunDbgCmd(buf, 'step', ['line 1:   var some = "some var"'])
+  call RunDbgCmd(buf, 'step', ['line 2:   CallAFunction()'])
+  call RunDbgCmd(buf, 'echo some', ['some var'])
 
-  " FIXME: not quite right
   call RunDbgCmd(buf, 'backtrace', [
         \ '\V>backtrace',
         \ '\V->0 function GlobalFunction',
-        \ '\Vline 1:   CallAFunction()',
+        \ '\Vline 2:   CallAFunction()',
         \ ],
         \ #{match: 'pattern'})
 
   call RunDbgCmd(buf, 'step', ['line 1:   SourceAnotherFile()'])
   call RunDbgCmd(buf, 'step', ['line 1:   source Xtest2.vim'])
-  " FIXME: repeated line
+  " Repeated line, because we fist are in the compiled function before the
+  " EXEC and then in do_cmdline() before the :source command.
   call RunDbgCmd(buf, 'step', ['line 1: source Xtest2.vim'])
   call RunDbgCmd(buf, 'step', ['line 1: vim9script'])
   call RunDbgCmd(buf, 'step', ['line 3: def DoAThing(): number'])
@@ -945,7 +948,7 @@ func Test_Backtrace_DefFunction()
   call RunDbgCmd(buf, 'step', ['line 14: File2Function()'])
   call RunDbgCmd(buf, 'backtrace', [
         \ '\V>backtrace',
-        \ '\V  3 function GlobalFunction[1]',
+        \ '\V  3 function GlobalFunction[2]',
         \ '\V  2 <SNR>\.\*_CallAFunction[1]',
         \ '\V  1 <SNR>\.\*_SourceAnotherFile[1]',
         \ '\V->0 script ' .. getcwd() .. '/Xtest2.vim',
@@ -956,7 +959,7 @@ func Test_Backtrace_DefFunction()
   call RunDbgCmd(buf, 'next', ['line 15: End of sourced file'])
   call RunDbgCmd(buf, 'backtrace', [
         \ '\V>backtrace',
-        \ '\V  3 function GlobalFunction[1]',
+        \ '\V  3 function GlobalFunction[2]',
         \ '\V  2 <SNR>\.\*_CallAFunction[1]',
         \ '\V  1 <SNR>\.\*_SourceAnotherFile[1]',
         \ '\V->0 script ' .. getcwd() .. '/Xtest2.vim',
