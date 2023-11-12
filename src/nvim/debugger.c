@@ -550,7 +550,7 @@ static int dbg_parsearg(char *arg, garray_T *gap)
   }
 
   if (bp->dbg_type == DBG_FUNC) {
-    bp->dbg_name = xstrdup(p);
+    bp->dbg_name = xstrdup(strncmp(p, "g:", 2) == 0 ? p + 2 : p);
   } else if (here) {
     bp->dbg_name = xstrdup(curbuf->b_ffname);
   } else if (bp->dbg_type == DBG_EXPR) {

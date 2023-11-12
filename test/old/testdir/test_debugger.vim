@@ -971,6 +971,32 @@ func Test_Backtrace_DefFunction()
   call delete('Xtest2.vim')
 endfunc
 
+func Test_debug_DefFunction()
+  CheckRunVimInTerminal
+  CheckCWD
+  let file =<< trim END
+    vim9script
+    def g:SomeFunc()
+      echo "here"
+      echo "and"
+      echo "there"
+    enddef
+    breakadd func 2 g:SomeFunc
+  END
+  call writefile(file, 'XtestDebug.vim')
+
+  let buf = RunVimInTerminal('-S XtestDebug.vim', {})
+
+  call RunDbgCmd(buf,':call SomeFunc()', ['line 2: echo "and"'])
+  call RunDbgCmd(buf,'next', ['line 3: echo "there"'])
+
+  call RunDbgCmd(buf, 'cont')
+
+  call StopVimInTerminal(buf)
+  call delete('Xtest1.vim')
+  call delete('Xtest2.vim')
+endfunc
+
 func Test_debug_def_function()
   CheckRunVimInTerminal
   CheckCWD
