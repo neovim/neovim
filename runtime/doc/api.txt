@@ -2516,8 +2516,8 @@ nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line}, {col_start},
       • {hl_group}   Name of the highlight group to use
       • {line}       Line to highlight (zero-indexed)
       • {col_start}  Start of (byte-indexed) column range to highlight
-      • {col_end}    End of (byte-indexed) column range to highlight, or -1 to
-                     highlight to end of line
+      • {col_end}    End of (byte-indexed) column range to highlight
+                     (exclusive), or -1 to highlight to end of line
 
     Return: ~
         The ns_id that was used

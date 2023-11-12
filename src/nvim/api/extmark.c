@@ -915,7 +915,7 @@ uint32_t src2ns(Integer *src_id)
 /// @param hl_group   Name of the highlight group to use
 /// @param line       Line to highlight (zero-indexed)
 /// @param col_start  Start of (byte-indexed) column range to highlight
-/// @param col_end    End of (byte-indexed) column range to highlight,
+/// @param col_end    End of (byte-indexed) column range to highlight (exclusive),
 ///                   or -1 to highlight to end of line
 /// @param[out] err   Error details, if any
 /// @return The ns_id that was used
