@@ -977,12 +977,20 @@ func Test_debug_def_function()
   let file =<< trim END
     vim9script
     def g:Func()
-        var n: number
-        def Closure(): number
-            return n + 3
-        enddef
-        n += Closure()
-        echo 'result: ' .. n
+      var n: number
+      def Closure(): number
+          return n + 3
+      enddef
+      n += Closure()
+      echo 'result: ' .. n
+    enddef
+
+    def g:FuncWithArgs(text: string, nr: number, ...items: list<number>)
+      echo text .. nr
+      for it in items
+        echo it
+      endfor
+      echo "done"
     enddef
   END
   call writefile(file, 'Xtest.vim')
@@ -994,7 +1002,30 @@ func Test_debug_def_function()
                 \ ['cmd: call Func()'])
   call RunDbgCmd(buf, 'next', ['result: 3'])
   call term_sendkeys(buf, "\r")
+  call RunDbgCmd(buf, 'cont')
 
+  call RunDbgCmd(buf,
+                \ ':debug call FuncWithArgs("asdf", 42, 1, 2, 3)',
+                \ ['cmd: call FuncWithArgs("asdf", 42, 1, 2, 3)'])
+  call RunDbgCmd(buf, 'step', ['line 1:   echo text .. nr'])
+  call RunDbgCmd(buf, 'echo text', ['asdf'])
+  call RunDbgCmd(buf, 'echo nr', ['42'])
+  call RunDbgCmd(buf, 'echo items', ['[1, 2, 3]'])
+  call RunDbgCmd(buf, 'step', ['asdf42', 'function FuncWithArgs', 'line 2:   for it in items'])
+  call RunDbgCmd(buf, 'echo it', ['1'])
+  call RunDbgCmd(buf, 'step', ['line 3:     echo it'])
+  call RunDbgCmd(buf, 'step', ['1', 'function FuncWithArgs', 'line 4:   endfor'])
+  call RunDbgCmd(buf, 'step', ['line 2:   for it in items'])
+  call RunDbgCmd(buf, 'echo it', ['2'])
+  call RunDbgCmd(buf, 'step', ['line 3:     echo it'])
+  call RunDbgCmd(buf, 'step', ['2', 'function FuncWithArgs', 'line 4:   endfor'])
+  call RunDbgCmd(buf, 'step', ['line 2:   for it in items'])
+  call RunDbgCmd(buf, 'echo it', ['3'])
+  call RunDbgCmd(buf, 'step', ['line 3:     echo it'])
+  call RunDbgCmd(buf, 'step', ['3', 'function FuncWithArgs', 'line 4:   endfor'])
+  call RunDbgCmd(buf, 'step', ['line 5:   echo "done"'])
+
+  call RunDbgCmd(buf, 'cont')
   call StopVimInTerminal(buf)
   call delete('Xtest.vim')
 endfunc
