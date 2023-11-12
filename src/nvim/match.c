@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // match.c: functions for highlighting matches
 
 #include <assert.h>
@@ -536,7 +533,7 @@ void prepare_search_hl(win_T *wp, match_T *search_hl, linenr_T lnum)
       shl = search_hl;
       shl_flag = true;
     } else {
-      shl = &cur->mit_hl;  // -V595
+      shl = &cur->mit_hl;
     }
     if (shl->rm.regprog != NULL
         && shl->lnum == 0
@@ -614,7 +611,7 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char **lin
       shl = search_hl;
       shl_flag = true;
     } else {
-      shl = &cur->mit_hl;  // -V595
+      shl = &cur->mit_hl;
     }
     shl->startcol = MAXCOL;
     shl->endcol = MAXCOL;

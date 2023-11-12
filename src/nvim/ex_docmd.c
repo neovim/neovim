@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // ex_docmd.c: functions for executing an Ex command line.
 
 #include <assert.h>
@@ -1127,7 +1124,7 @@ static void get_wincmd_addr_type(const char *arg, exarg_T *eap)
   case 'd':
   case Ctrl_D:
     // window size or any count
-    eap->addr_type = ADDR_OTHER;  // -V1037
+    eap->addr_type = ADDR_OTHER;
     break;
 
   case Ctrl_HAT:

@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // Compositor: merge floating grids with the main grid for display in
 // TUI and non-multigrid UIs.
 //

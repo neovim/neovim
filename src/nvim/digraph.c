@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /// @file digraph.c
 ///
 /// code for digraphs
@@ -1624,7 +1621,7 @@ int digraph_get(int char1, int char2, bool meta_char)
 
   if (((retval = getexactdigraph(char1, char2, meta_char)) == char2)
       && (char1 != char2)
-      && ((retval = getexactdigraph(char2, char1, meta_char))  // -V764
+      && ((retval = getexactdigraph(char2, char1, meta_char))
           == char1)) {
     return char2;
   }

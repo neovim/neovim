@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -37,9 +34,8 @@ int stream_set_blocking(int fd, bool blocking)
   uv_loop_init(&loop);
   uv_pipe_init(&loop, &stream, 0);
   uv_pipe_open(&stream, fd);
-  int retval = uv_stream_set_blocking(STRUCT_CAST(uv_stream_t, &stream),
-                                      blocking);
-  uv_close(STRUCT_CAST(uv_handle_t, &stream), NULL);
+  int retval = uv_stream_set_blocking((uv_stream_t *)&stream, blocking);
+  uv_close((uv_handle_t *)&stream, NULL);
   uv_run(&loop, UV_RUN_NOWAIT);  // not necessary, but couldn't hurt.
   uv_loop_close(&loop);
   return retval;
@@ -71,12 +67,12 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
           dwMode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
           SetConsoleMode(stream->uv.tty.handle, dwMode);
         }
-        stream->uvstream = STRUCT_CAST(uv_stream_t, &stream->uv.tty);
+        stream->uvstream = (uv_stream_t *)&stream->uv.tty;
       } else {
 #endif
       uv_pipe_init(&loop->uv, &stream->uv.pipe, 0);
       uv_pipe_open(&stream->uv.pipe, fd);
-      stream->uvstream = STRUCT_CAST(uv_stream_t, &stream->uv.pipe);
+      stream->uvstream = (uv_stream_t *)&stream->uv.pipe;
 #ifdef MSWIN
     }
 #endif

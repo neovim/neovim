@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // Tree data structure for storing marks at (row, col) positions and updating
 // them to arbitrary text changes. Derivative work of kbtree in klib, whose
 // copyright notice is reproduced below. Also inspired by the design of the

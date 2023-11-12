@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -736,7 +733,7 @@ static size_t do_path_expand(garray_T *gap, const char *path, size_t wildoff, in
            || starts_with_dot
            || ((flags & EW_DODOT)
                && name[1] != NUL
-               && (name[1] != '.' || name[2] != NUL)))  // -V557
+               && (name[1] != '.' || name[2] != NUL)))
           && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))
               || ((flags & EW_NOTWILD)
                   && path_fnamencmp(path + (s - buf), name, (size_t)(e - s)) == 0))) {

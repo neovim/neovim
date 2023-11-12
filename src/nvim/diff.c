@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /// @file diff.c
 ///
 /// Code for diff'ing two, three or four buffers.
@@ -1579,10 +1576,10 @@ static bool extract_hunk(FILE *fd, diffhunk_T *hunk, diffstyle_T *diffstyle)
         *diffstyle = DIFF_ED;
       } else if ((strncmp(line, "@@ ", 3) == 0)) {
         *diffstyle = DIFF_UNIFIED;
-      } else if ((strncmp(line, "--- ", 4) == 0)  // -V501
-                 && (vim_fgets(line, LBUFLEN, fd) == 0)  // -V501
+      } else if ((strncmp(line, "--- ", 4) == 0)
+                 && (vim_fgets(line, LBUFLEN, fd) == 0)
                  && (strncmp(line, "+++ ", 4) == 0)
-                 && (vim_fgets(line, LBUFLEN, fd) == 0)  // -V501
+                 && (vim_fgets(line, LBUFLEN, fd) == 0)
                  && (strncmp(line, "@@ ", 3) == 0)) {
         *diffstyle = DIFF_UNIFIED;
       } else {

@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <msgpack/object.h>
 #include <stdbool.h>
@@ -964,7 +961,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
     }
     break;
   case MSGPACK_OBJECT_NEGATIVE_INTEGER:
-    if (mobj.via.i64 >= VARNUMBER_MIN) {  // -V547
+    if (mobj.via.i64 >= VARNUMBER_MIN) {
       *rettv = (typval_T) {
         .v_type = VAR_NUMBER,
         .v_lock = VAR_UNLOCKED,

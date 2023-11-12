@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // search.c: code for normal mode searching commands
 
 #include <assert.h>
@@ -1171,7 +1168,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, int count, in
       // Get the offset, so we know how long it is.
       if (!cmd_silent
           && (spats[0].off.line || spats[0].off.end || spats[0].off.off)) {
-        p = off_buf;  // -V507
+        p = off_buf;
         *p++ = (char)dirc;
         if (spats[0].off.end) {
           *p++ = 'e';

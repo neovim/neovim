@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // Code to handle tags and the tag stack
 
 #include <assert.h>
@@ -340,7 +337,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
 
   // Don't add a tag to the tagstack if 'tagstack' has been reset.
   assert(tag != NULL);
-  if (!p_tgst && *tag != NUL) {  // -V522
+  if (!p_tgst && *tag != NUL) {
     use_tagstack = false;
     new_tag = true;
     if (g_do_tagpreview != 0) {
@@ -3021,7 +3018,7 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, int keep_help)
         }
       }
       p_ws = save_p_ws;
-      p_ic = save_p_ic;  // -V519
+      p_ic = save_p_ic;
       p_scs = save_p_scs;
 
       // A search command may have positioned the cursor beyond the end

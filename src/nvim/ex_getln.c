@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // ex_getln.c: Functions for entering and editing an Ex command line.
 
 #include <assert.h>
@@ -609,7 +606,7 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
       curwin->w_cursor = s->save_cursor;
       setpcmark();
     }
-    curwin->w_cursor = s->search_start;  // -V519
+    curwin->w_cursor = s->search_start;
   }
   restore_viewstate(curwin, &s->old_viewstate);
   highlight_match = false;
@@ -3386,7 +3383,7 @@ void ui_ext_cmdline_block_append(size_t indent, const char *line)
 {
   char *buf = xmallocz(indent + strlen(line));
   memset(buf, ' ', indent);
-  memcpy(buf + indent, line, strlen(line));  // -V575
+  memcpy(buf + indent, line, strlen(line));
 
   Array item = ARRAY_DICT_INIT;
   ADD(item, INTEGER_OBJ(0));

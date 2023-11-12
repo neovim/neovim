@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <inttypes.h>
 #include <msgpack/object.h>
@@ -3896,7 +3893,7 @@ shada_read_next_item_start:
           // XXX: Temporarily reassign `i` because the macros depend on it.
           const size_t j = i;
           {
-            for (i = 0; i < unpacked_2.data.via.map.size; i++) {  // -V535
+            for (i = 0; i < unpacked_2.data.via.map.size; i++) {
               CHECK_KEY_IS_STR(unpacked_2, "buffer list entry")
               INTEGER_KEY(unpacked_2, "buffer list entry", KEY_LNUM,
                           entry->data.buffer_list.buffers[j].pos.lnum)

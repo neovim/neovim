@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // VT220/xterm-like terminal emulator.
 // Powered by libvterm http://www.leonerd.org.uk/code/libvterm
 //
@@ -236,7 +233,7 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   aucmd_prepbuf(&aco, buf);
 
   refresh_screen(rv, buf);
-  set_option_value("buftype", STATIC_CSTR_AS_OPTVAL("terminal"), OPT_LOCAL);  // -V666
+  set_option_value("buftype", STATIC_CSTR_AS_OPTVAL("terminal"), OPT_LOCAL);
 
   // Default settings for terminal buffers
   buf->b_p_ma = false;     // 'nomodifiable'
@@ -259,7 +256,7 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
 
   aucmd_restbuf(&aco);
 
-  if (*termpp == NULL) {  // -V547
+  if (*termpp == NULL) {
     return;  // Terminal has already been destroyed.
   }
 
@@ -731,7 +728,7 @@ void terminal_paste(int count, char **y_array, size_t y_size)
   vterm_keyboard_start_paste(curbuf->terminal->vt);
   size_t buff_len = strlen(y_array[0]);
   char *buff = xmalloc(buff_len);
-  for (int i = 0; i < count; i++) {  // -V756
+  for (int i = 0; i < count; i++) {
     // feed the lines to the terminal
     for (size_t j = 0; j < y_size; j++) {
       if (j) {

@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // spellsuggest.c: functions for spelling suggestions
 
 #include <assert.h>
@@ -1173,7 +1170,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
   // word).
   int depth = 0;
   trystate_T *sp = &stack[0];
-  CLEAR_POINTER(sp);  // -V1086
+  CLEAR_POINTER(sp);
   sp->ts_curi = 1;
 
   if (soundfold) {

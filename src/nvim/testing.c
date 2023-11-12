@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // testing.c: Support for tests
 
 #include <inttypes.h>
@@ -703,7 +700,7 @@ static int assert_inrange(typval_T *argvars)
       char expected_str[200];
       vim_snprintf(expected_str, sizeof(expected_str),
                    "range %" PRIdVARNUMBER " - %" PRIdVARNUMBER ",",
-                   lower, upper);  // -V576
+                   lower, upper);
       fill_assert_error(&ga, &argvars[3], expected_str, NULL, &argvars[2], ASSERT_OTHER);
       assert_error(&ga);
       ga_clear(&ga);
