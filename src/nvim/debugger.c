@@ -230,7 +230,7 @@ void do_debug(char *cmd)
       }
 
       if (last_cmd != 0) {
-        // Execute debug command: decided where to break next and return.
+        // Execute debug command: decide where to break next and return.
         switch (last_cmd) {
         case CMD_CONT:
           debug_break_level = -1;
@@ -475,6 +475,7 @@ static garray_T dbg_breakp = { 0, 0, sizeof(struct debuggy), 4, NULL };
 #define BREAKP(idx)             (((struct debuggy *)dbg_breakp.ga_data)[idx])
 #define DEBUGGY(gap, idx)       (((struct debuggy *)(gap)->ga_data)[idx])
 static int last_breakp = 0;     // nr of last defined breakpoint
+static bool has_expr_breakpoint = false;
 
 // Profiling uses file and func names similar to breakpoints.
 static garray_T prof_ga = { 0, 0, sizeof(struct debuggy), 4, NULL };
@@ -550,7 +551,7 @@ static int dbg_parsearg(char *arg, garray_T *gap)
   }
 
   if (bp->dbg_type == DBG_FUNC) {
-    bp->dbg_name = xstrdup(p);
+    bp->dbg_name = xstrdup(strncmp(p, "g:", 2) == 0 ? p + 2 : p);
   } else if (here) {
     bp->dbg_name = xstrdup(curbuf->b_ffname);
   } else if (bp->dbg_type == DBG_EXPR) {
@@ -620,6 +621,9 @@ void ex_breakadd(exarg_T *eap)
     // DBG_EXPR
     DEBUGGY(gap, gap->ga_len++).dbg_nr = ++last_breakp;
     debug_tick++;
+    if (gap == &dbg_breakp) {
+      has_expr_breakpoint = true;
+    }
   }
 }
 
@@ -630,6 +634,17 @@ void ex_debuggreedy(exarg_T *eap)
     debug_greedy = true;
   } else {
     debug_greedy = false;
+  }
+}
+
+static void update_has_expr_breakpoint(void)
+{
+  has_expr_breakpoint = false;
+  for (int i = 0; i < dbg_breakp.ga_len; i++) {
+    if (BREAKP(i).dbg_type == DBG_EXPR) {
+      has_expr_breakpoint = true;
+      break;
+    }
   }
 }
 
@@ -707,6 +722,9 @@ void ex_breakdel(exarg_T *eap)
   // If all breakpoints were removed clear the array.
   if (GA_EMPTY(gap)) {
     ga_clear(gap);
+  }
+  if (gap == &dbg_breakp) {
+    update_has_expr_breakpoint();
   }
 }
 
