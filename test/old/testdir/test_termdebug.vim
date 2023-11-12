@@ -97,6 +97,7 @@ func Test_termdebug_basic()
     bw!
   endif
   set columns=160
+  call Nterm_wait(gdb_buf)
   let winw = winwidth(0)
   Var
   if winwidth(0) < winw
@@ -114,11 +115,9 @@ func Test_termdebug_basic()
     bw!
   endif
   set columns&
+  call Nterm_wait(gdb_buf)
 
   wincmd t
-  " Nvim: stop GDB process and process pending events
-  call chanclose(&channel)
-  call wait(0, '0')
   quit!
   redraw!
   call WaitForAssert({-> assert_equal(1, winnr('$'))})
