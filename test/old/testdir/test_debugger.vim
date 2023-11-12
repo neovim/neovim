@@ -1050,6 +1050,7 @@ func Test_debug_def_function()
            eval 1
          enddef
     enddef
+
     def g:FuncComment()
       # comment
       echo "first"
@@ -1057,12 +1058,18 @@ func Test_debug_def_function()
       # comment
       echo "second"
     enddef
+
     def g:FuncForLoop()
       eval 1
       for i in [11, 22, 33]
         eval i
       endfor
       echo "done"
+    enddef
+
+    def g:FuncWithSplitLine()
+        eval 1
+           | eval 2
     enddef
   END
   call writefile(file, 'Xtest.vim')
@@ -1118,6 +1125,12 @@ func Test_debug_def_function()
   call RunDbgCmd(buf, 'next', ['function FuncForLoop', 'line 4: endfor'])
   call RunDbgCmd(buf, 'next', ['function FuncForLoop', 'line 2: for i in [11, 22, 33]'])
   call RunDbgCmd(buf, 'echo i', ['22'])
+
+  call RunDbgCmd(buf, 'breakdel *')
+  call RunDbgCmd(buf, 'cont')
+
+  call RunDbgCmd(buf, ':breakadd func FuncWithSplitLine')
+  call RunDbgCmd(buf, ':call FuncWithSplitLine()', ['function FuncWithSplitLine', 'line 1: eval 1 | eval 2'])
 
   call RunDbgCmd(buf, 'cont')
   call StopVimInTerminal(buf)
