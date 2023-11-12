@@ -9,34 +9,6 @@ local command = helpers.command
 describe('display', function()
   before_each(clear)
 
-  -- oldtest: Test_visual_block_scroll()
-  it('redraws properly after scrolling with matchparen loaded and scrolloff=1', function()
-    local screen = Screen.new(30, 7)
-    screen:attach()
-    screen:set_default_attr_ids({
-      [1] = {bold = true},
-      [2] = {background = Screen.colors.LightGrey},
-    })
-
-    exec([[
-      source $VIMRUNTIME/plugin/matchparen.vim
-      set scrolloff=1
-      call setline(1, ['a', 'b', 'c', 'd', 'e', '', '{', '}', '{', 'f', 'g', '}'])
-      call cursor(5, 1)
-    ]])
-
-    feed('V<c-d><c-d>')
-    screen:expect([[
-      {2:{}                             |
-      {2:}}                             |
-      {2:{}                             |
-      {2:f}                             |
-      ^g                             |
-      }                             |
-      {1:-- VISUAL LINE --}             |
-    ]])
-  end)
-
   -- oldtest: Test_display_scroll_at_topline()
   it('scroll when modified at topline vim-patch:8.2.1488', function()
     local screen = Screen.new(20, 4)
@@ -84,51 +56,6 @@ describe('display', function()
       {3:  }foo                                                       |
       {1:-- VISUAL LINE --}                                           |
     ]])
-  end)
-
-  -- oldtest: Test_matchparen_clear_highlight()
-  it('matchparen highlight is cleared when switching buffer', function()
-    local screen = Screen.new(20, 5)
-    screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},
-      [1] = {background = Screen.colors.Cyan},
-    })
-    screen:attach()
-
-    local screen1 = [[
-      {1:^()}                  |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-                          |
-    ]]
-    local screen2 = [[
-      ^aa                  |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-                          |
-    ]]
-
-    exec([[
-      source $VIMRUNTIME/plugin/matchparen.vim
-      set hidden
-      call setline(1, ['()'])
-      normal 0
-    ]])
-    screen:expect(screen1)
-
-    exec([[
-      enew
-      exe "normal iaa\<Esc>0"
-    ]])
-    screen:expect(screen2)
-
-    feed('<C-^>')
-    screen:expect(screen1)
-
-    feed('<C-^>')
-    screen:expect(screen2)
   end)
 
   local function run_test_display_lastline(euro)
