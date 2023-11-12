@@ -971,6 +971,28 @@ func Test_Backtrace_DefFunction()
   call delete('Xtest2.vim')
 endfunc
 
+func Test_DefFunction_expr()
+  CheckRunVimInTerminal
+  CheckCWD
+  let file3 =<< trim END
+      vim9script
+      g:someVar = "foo"
+      def g:ChangeVar()
+        g:someVar = "bar"
+        echo "changed"
+      enddef
+      defcompile
+  END
+  call writefile(file3, 'Xtest3.vim')
+  let buf = RunVimInTerminal('-S Xtest3.vim', {})
+
+  call RunDbgCmd(buf, ':breakadd expr g:someVar')
+  call RunDbgCmd(buf, ':call g:ChangeVar()', ['Oldval = "''foo''"', 'Newval = "''bar''"', 'function ChangeVar', 'line 2: echo "changed"'])
+
+  call StopVimInTerminal(buf)
+  call delete('Xtest3.vim')
+endfunc
+
 func Test_debug_def_and_legacy_function()
   CheckRunVimInTerminal
   CheckCWD
