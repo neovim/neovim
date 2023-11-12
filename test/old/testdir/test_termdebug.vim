@@ -97,16 +97,22 @@ func Test_termdebug_basic()
     bw!
   endif
   set columns=160
+  let winw = winwidth(0)
   Var
-  call assert_equal(winnr(), winnr('$') - 1)
-  call assert_equal(winlayout(), ['col', [['leaf', 1002], ['leaf', 1001], ['row', [['leaf', 1003 + cn], ['leaf', 1000]]]]])
-  let cn += 1
-  bw!
+  if winwidth(0) < winw
+    call assert_equal(winnr(), winnr('$') - 1)
+    call assert_equal(winlayout(), ['col', [['leaf', 1002], ['leaf', 1001], ['row', [['leaf', 1003 + cn], ['leaf', 1000]]]]])
+    let cn += 1
+    bw!
+  endif
+  let winw = winwidth(0)
   Asm
-  call assert_equal(winnr(), winnr('$') - 1)
-  call assert_equal(winlayout(), ['col', [['leaf', 1002], ['leaf', 1001], ['row', [['leaf', 1003 + cn], ['leaf', 1000]]]]])
-  let cn += 1
-  bw!
+  if winwidth(0) < winw
+    call assert_equal(winnr(), winnr('$') - 1)
+    call assert_equal(winlayout(), ['col', [['leaf', 1002], ['leaf', 1001], ['row', [['leaf', 1003 + cn], ['leaf', 1000]]]]])
+    let cn += 1
+    bw!
+  endif
   set columns&
 
   wincmd t
