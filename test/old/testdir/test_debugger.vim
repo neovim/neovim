@@ -880,7 +880,7 @@ func Test_Backtrace_DefFunction()
   CheckCWD
   let file1 =<< trim END
     vim9script
-    import File2Function from './Xtest2.vim'
+    import './Xtest2.vim' as imp
 
     def SourceAnotherFile()
       source Xtest2.vim
@@ -888,7 +888,7 @@ func Test_Backtrace_DefFunction()
 
     def CallAFunction()
       SourceAnotherFile()
-      File2Function()
+      imp.File2Function()
     enddef
 
     def g:GlobalFunction()
