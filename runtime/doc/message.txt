@@ -127,6 +127,8 @@ This happens when an Ex command executes an Ex command that executes an Ex
 command, etc.  The limit is 200 or the value of 'maxfuncdepth', whatever is
 larger.  When it's more there probably is an endless loop.  Probably a
 |:execute| or |:source| command is involved.
+Can also happen with a recursive callback function (|channel-callback|).
+A limit of 20 is used here.
 
 							*E254*  >
   Cannot allocate color {name}

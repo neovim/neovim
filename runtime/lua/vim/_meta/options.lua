@@ -4037,7 +4037,6 @@ vim.go.mat = vim.go.matchtime
 --- Increasing this limit above 200 also changes the maximum for Ex
 --- command recursion, see `E169`.
 --- See also `:function`.
---- Also used for maximum depth of callback functions.
 ---
 --- @type integer
 vim.o.maxfuncdepth = 100
