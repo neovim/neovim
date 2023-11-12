@@ -1,4 +1,4 @@
-name: "news.txt check"
+name: "news.txt"
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
