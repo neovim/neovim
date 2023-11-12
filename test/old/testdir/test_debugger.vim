@@ -73,6 +73,13 @@ func Test_Debugger()
 	  endtry
 	  return var1
 	endfunc
+        def Vim9Func()
+          for cmd in ['confirm', 'xxxxxxx']
+            for _ in [1, 2]
+              echo cmd
+            endfor
+          endfor
+        enddef
   END
   call writefile(lines, 'Xtest.vim')
 
@@ -297,6 +304,14 @@ func Test_Debugger()
 	      \ 'function Bazz',
 	      \ 'line 5: catch'])
   call RunDbgCmd(buf, 'c')
+
+  " Test showing local variable in :def function
+  call RunDbgCmd(buf, ':breakadd func 2 Vim9Func')
+  call RunDbgCmd(buf, ':call Vim9Func()', ['line 2:             for _ in [1, 2]'])
+  call RunDbgCmd(buf, 'next', ['line 2: for _ in [1, 2]'])
+  call RunDbgCmd(buf, 'echo cmd', ['confirm'])
+  call RunDbgCmd(buf, 'breakdel *')
+  call RunDbgCmd(buf, 'cont')
 
   " Test for :quit
   call RunDbgCmd(buf, ':debug echo Foo()')
