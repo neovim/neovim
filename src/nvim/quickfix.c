@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // quickfix.c: functions for quickfix mode, using a file with error messages
 
 #include <assert.h>
@@ -2812,8 +2809,8 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int
     return QF_ABORT;
   }
 
-  if (old_qf_curlist != qi->qf_curlist  // -V560
-      || old_changetick != qfl->qf_changedtick  // -V560
+  if (old_qf_curlist != qi->qf_curlist
+      || old_changetick != qfl->qf_changedtick
       || !is_qf_entry_present(qfl, qf_ptr)) {
     if (qfl_type == QFLT_QUICKFIX) {
       emsg(_(e_current_quickfix_list_was_changed));
@@ -2921,7 +2918,7 @@ static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, int
     }
   }
   if (old_qf_curlist != qi->qf_curlist
-      || old_changetick != qfl->qf_changedtick  // -V560
+      || old_changetick != qfl->qf_changedtick
       || !is_qf_entry_present(qfl, qf_ptr)) {
     if (qfl_type == QFLT_QUICKFIX) {
       emsg(_(e_current_quickfix_list_was_changed));

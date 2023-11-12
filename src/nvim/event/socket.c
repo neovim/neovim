@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -64,10 +61,10 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher, const char *endpoint
 
     uv_tcp_init(&loop->uv, &watcher->uv.tcp.handle);
     uv_tcp_nodelay(&watcher->uv.tcp.handle, true);
-    watcher->stream = STRUCT_CAST(uv_stream_t, &watcher->uv.tcp.handle);
+    watcher->stream = (uv_stream_t *)(&watcher->uv.tcp.handle);
   } else {
     uv_pipe_init(&loop->uv, &watcher->uv.pipe.handle, 0);
-    watcher->stream = STRUCT_CAST(uv_stream_t, &watcher->uv.pipe.handle);
+    watcher->stream = (uv_stream_t *)(&watcher->uv.pipe.handle);
   }
 
   watcher->stream->data = watcher;
@@ -102,9 +99,8 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
         // contain 0 in this case, unless uv_tcp_getsockname() is used first.
         uv_tcp_getsockname(&watcher->uv.tcp.handle, (struct sockaddr *)&sas,
                            &(int){ sizeof(sas) });
-        uint16_t port = (uint16_t)((sas.ss_family == AF_INET)
-                                   ? (STRUCT_CAST(struct sockaddr_in, &sas))->sin_port
-                                   : (STRUCT_CAST(struct sockaddr_in6, &sas))->sin6_port);
+        uint16_t port = (sas.ss_family == AF_INET) ? ((struct sockaddr_in *)(&sas))->sin_port
+                                                   : ((struct sockaddr_in6 *)(&sas))->sin6_port;
         // v:servername uses the string from watcher->addr
         size_t len = strlen(watcher->addr);
         snprintf(watcher->addr + len, sizeof(watcher->addr) - len, ":%" PRIu16,
@@ -142,11 +138,11 @@ int socket_watcher_accept(SocketWatcher *watcher, Stream *stream)
   uv_stream_t *client;
 
   if (watcher->stream->type == UV_TCP) {
-    client = STRUCT_CAST(uv_stream_t, &stream->uv.tcp);
+    client = (uv_stream_t *)(&stream->uv.tcp);
     uv_tcp_init(watcher->uv.tcp.handle.loop, (uv_tcp_t *)client);
     uv_tcp_nodelay((uv_tcp_t *)client, true);
   } else {
-    client = STRUCT_CAST(uv_stream_t, &stream->uv.pipe);
+    client = (uv_stream_t *)&stream->uv.pipe;
     uv_pipe_init(watcher->uv.pipe.handle.loop, (uv_pipe_t *)client, 0);
   }
 
@@ -165,7 +161,7 @@ void socket_watcher_close(SocketWatcher *watcher, socket_close_cb cb)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   watcher->close_cb = cb;
-  uv_close(STRUCT_CAST(uv_handle_t, watcher->stream), close_cb);
+  uv_close((uv_handle_t *)watcher->stream, close_cb);
 }
 
 static void connection_event(void **argv)
@@ -242,11 +238,11 @@ tcp_retry:
     uv_pipe_t *pipe = &stream->uv.pipe;
     uv_pipe_init(&loop->uv, pipe, 0);
     uv_pipe_connect(&req,  pipe, address, connect_cb);
-    uv_stream = STRUCT_CAST(uv_stream_t, pipe);
+    uv_stream = (uv_stream_t *)pipe;
   }
   status = 1;
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, timeout, status != 1);
-  if (status == 0) {  // -V547
+  if (status == 0) {
     stream_init(NULL, stream, -1, uv_stream);
     success = true;
   } else if (is_tcp && addrinfo->ai_next) {

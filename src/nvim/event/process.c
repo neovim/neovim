@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <inttypes.h>
 #include <signal.h>
@@ -102,24 +99,21 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   }
 
   if (in) {
-    stream_init(NULL, &proc->in, -1,
-                STRUCT_CAST(uv_stream_t, &proc->in.uv.pipe));
+    stream_init(NULL, &proc->in, -1, (uv_stream_t *)&proc->in.uv.pipe);
     proc->in.internal_data = proc;
     proc->in.internal_close_cb = on_process_stream_close;
     proc->refcount++;
   }
 
   if (out) {
-    stream_init(NULL, &proc->out, -1,
-                STRUCT_CAST(uv_stream_t, &proc->out.uv.pipe));
+    stream_init(NULL, &proc->out, -1, (uv_stream_t *)&proc->out.uv.pipe);
     proc->out.internal_data = proc;
     proc->out.internal_close_cb = on_process_stream_close;
     proc->refcount++;
   }
 
   if (err) {
-    stream_init(NULL, &proc->err, -1,
-                STRUCT_CAST(uv_stream_t, &proc->err.uv.pipe));
+    stream_init(NULL, &proc->err, -1, (uv_stream_t *)&proc->err.uv.pipe);
     proc->err.internal_data = proc;
     proc->err.internal_close_cb = on_process_stream_close;
     proc->refcount++;
@@ -376,7 +370,7 @@ static void flush_stream(Process *proc, Stream *stream)
     }
 
     // Stream can be closed if it is empty.
-    if (num_bytes == stream->num_bytes) {  // -V547
+    if (num_bytes == stream->num_bytes) {
       if (stream->read_cb && !stream->did_eof) {
         // Stream callback could miss EOF handling if a child keeps the stream
         // open. But only send EOF if we haven't already.

@@ -22,8 +22,6 @@ struct ugrid {
   UCell **cells;
 };
 
-// -V:UGRID_FOREACH_CELL:625
-
 #define UGRID_FOREACH_CELL(grid, row, startcol, endcol, code) \
   do { \
     UCell *row_cells = (grid)->cells[row]; \

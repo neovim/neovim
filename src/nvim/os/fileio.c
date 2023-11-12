@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /// @file fileio.c
 ///
 /// Buffered reading/writing to a file. Unlike fileio.c this is not dealing with
@@ -53,7 +50,6 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname, const int f
 {
   int os_open_flags = 0;
   TriState wr = kNone;
-  // -V:FLAG:501
 #define FLAG(flags, flag, fcntl_flags, wrval, cond) \
   do { \
     if (flags & flag) { \

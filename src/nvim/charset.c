@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /// @file charset.c
 ///
 /// Code related to character sets.
@@ -1328,7 +1325,6 @@ void vim_str2nr(const char *const start, int *const prep, int *const len, const 
 
   // Do the conversion manually to avoid sscanf() quirks.
   abort();  // Should’ve used goto earlier.
-  // -V:PARSE_NUMBER:560
 #define PARSE_NUMBER(base, cond, conv) \
   do { \
     const char *const after_prefix = ptr; \

@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // drawscreen.c: Code for updating all the windows on the screen.
 // This is the top level, drawline.c is the middle and grid.c/screen.c the lower level.
 

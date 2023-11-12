@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 //
 // buffer.c: functions for dealing with the buffer structure
 //
@@ -1020,7 +1017,7 @@ void handle_swap_exists(bufref_T *old_curbuf)
     // new aborting error, interrupt, or uncaught exception.
     leave_cleanup(&cs);
   }
-  swap_exists_action = SEA_NONE;  // -V519
+  swap_exists_action = SEA_NONE;
 }
 
 /// do_bufdel() - delete or unload buffer(s)

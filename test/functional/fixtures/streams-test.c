@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /// Helper program to exit and keep stdout open (like "xclip -i -loops 1").
 #include <stdio.h>
 

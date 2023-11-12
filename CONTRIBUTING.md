@@ -8,8 +8,7 @@ If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
 - Try a [complexity:low] issue.
-- Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
-  [Coverity](#coverity).
+- Fix bugs found by [Clang](#clang-scan-build) or [Coverity](#coverity).
 - [Merge a Vim patch] (requires strong familiarity with Vim)
   - NOTE: read the above link before sending improvements to "runtime files" (anything in `runtime/`).
     - Vimscript and documentation files are (mostly) maintained by [Vim](https://github.com/vim/vim), not Nvim.
@@ -146,21 +145,6 @@ View the [Clang report] to see potential bugs found by the Clang
   rm -rf build/
   scan-build --use-analyzer=/usr/bin/clang make
   ```
-
-### PVS-Studio
-
-View the [PVS report](https://neovim.io/doc/reports/pvs/PVS-studio.html.d/) to
-see potential bugs found by [PVS Studio](https://www.viva64.com/en/pvs-studio/).
-
-- Use this format for commit messages (where `{id}` is the PVS warning-id)):
-  ```
-  fix(PVS/V{id}): {description}
-  ```
-- Search the Neovim commit history to find examples:
-  ```bash
-  git log --oneline --no-merges --grep PVS
-  ```
-- Try `./scripts/pvscheck.sh` to run PVS locally.
 
 ### Coverity
 

@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,8 +8,6 @@
 # include <unistd.h>
 #endif
 
-// -V:STRUCT_CAST:641
-#define STRUCT_CAST(Type, obj) ((Type *)(obj))
 #define is_terminal(stream) (uv_guess_handle(fileno(stream)) == UV_TTY)
 #define BUF_SIZE 0xfff
 #define CTRL_C 0x03
@@ -108,10 +103,10 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
     .len = (size_t)cnt
 #endif
   };
-  uv_write(&req, STRUCT_CAST(uv_stream_t, &out), &b, 1, NULL);
+  uv_write(&req, (uv_stream_t *)&out, &b, 1, NULL);
   uv_run(&write_loop, UV_RUN_DEFAULT);
 
-  uv_close(STRUCT_CAST(uv_handle_t, &out), NULL);
+  uv_close((uv_handle_t *)&out, NULL);
   uv_run(&write_loop, UV_RUN_DEFAULT);
   if (uv_loop_close(&write_loop)) {
     abort();
@@ -181,7 +176,7 @@ int main(int argc, char **argv)
 #endif
   uv_tty_set_mode(&tty, UV_TTY_MODE_RAW);
   tty.data = &interrupted;
-  uv_read_start(STRUCT_CAST(uv_stream_t, &tty), alloc_cb, read_cb);
+  uv_read_start((uv_stream_t *)&tty, alloc_cb, read_cb);
 #ifndef MSWIN
   struct sigaction sa;
   sigemptyset(&sa.sa_mask);

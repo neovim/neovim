@@ -252,8 +252,6 @@
 #include "nvim/func_attr.h"
 #include "klib/kvec.h"
 
-// -V::1063
-
 /// Dummy variable used because some macros need lvalue
 ///
 /// Must not be written to, if needed one must check that address of the
@@ -347,8 +345,8 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
   case VAR_PARTIAL: {
     partial_T *const pt = tv->vval.v_partial;
     (void)pt;
-    TYPVAL_ENCODE_CONV_FUNC_START(tv, (pt == NULL ? NULL : partial_name(pt)));  // -V547
-    _mp_push(*mpstack, ((MPConvStackVal) {  // -V779
+    TYPVAL_ENCODE_CONV_FUNC_START(tv, (pt == NULL ? NULL : partial_name(pt)));
+    _mp_push(*mpstack, ((MPConvStackVal) {
         .type = kMPConvPartial,
         .tv = tv,
         .saved_copyID = copyID - 1,
@@ -396,7 +394,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
   case VAR_SPECIAL:
     switch (tv->vval.v_special) {
     case kSpecialVarNull:
-      TYPVAL_ENCODE_CONV_NIL(tv);  // -V1037
+      TYPVAL_ENCODE_CONV_NIL(tv);
       break;
     }
     break;
@@ -509,7 +507,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
         }
         if (is_string) {
           TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len);
-        } else {  // -V523
+        } else {
           TYPVAL_ENCODE_CONV_STRING(tv, buf, len);
         }
         xfree(buf);
@@ -544,8 +542,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
         }
         list_T *const val_list = val_di->di_tv.vval.v_list;
         if (val_list == NULL || tv_list_len(val_list) == 0) {
-          TYPVAL_ENCODE_CONV_EMPTY_DICT(  // -V501
-                                          tv, TYPVAL_ENCODE_NODICT_VAR);
+          TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, TYPVAL_ENCODE_NODICT_VAR);
           break;
         }
         TV_LIST_ITER_CONST(val_list, li, {
@@ -632,7 +629,7 @@ _convert_one_value_regular_dict: {}
 typval_encode_stop_converting_one_item:
   return OK;
   // Prevent “unused label” warnings.
-  goto typval_encode_stop_converting_one_item;  // -V779
+  goto typval_encode_stop_converting_one_item;
 }
 
 TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
@@ -835,5 +832,5 @@ encode_vim_to__error_ret:
   _mp_destroy(mpstack);
   return FAIL;
   // Prevent “unused label” warnings.
-  goto typval_encode_stop_converting_one_item;  // -V779
+  goto typval_encode_stop_converting_one_item;
 }

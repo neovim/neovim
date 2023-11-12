@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <ctype.h>
 #include <inttypes.h>
@@ -6713,7 +6710,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
         // call win_new_height() recursively.
         validate_cursor();
       }
-      if (wp->w_height_inner != prev_height) {  // -V547
+      if (wp->w_height_inner != prev_height) {
         return;  // Recursive call already changed the size, bail out.
       }
       if (wp->w_wrow != wp->w_prev_fraction_row) {

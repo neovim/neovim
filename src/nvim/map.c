@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // map.c: Hash maps and sets
 //
 // parts of the implementation derived from khash.h as part of klib (MIT license)

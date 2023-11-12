@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // Implements extended marks for plugins. Marks sit in a MarkTree
 // datastructure which provides both efficient mark insertations/lookups
 // and adjustment to text changes. See marktree.c for more details.

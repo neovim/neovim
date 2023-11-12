@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // for debugging
 // #define CHECK(c, s) do { if (c) emsg(s); } while (0)
 #define CHECK(c, s) do {} while (0)
@@ -615,7 +612,7 @@ static bool ml_check_b0_strings(ZeroBlock *b0p)
   return (memchr(b0p->b0_version, NUL, 10)
           && memchr(b0p->b0_uname, NUL, B0_UNAME_SIZE)
           && memchr(b0p->b0_hname, NUL, B0_HNAME_SIZE)
-          && memchr(b0p->b0_fname, NUL, B0_FNAME_SIZE_CRYPT));  // -V1086
+          && memchr(b0p->b0_fname, NUL, B0_FNAME_SIZE_CRYPT));
 }
 
 /// Update the timestamp or the B0_SAME_DIR flag of the .swp file.
@@ -984,9 +981,9 @@ void ml_recover(bool checkext)
   linenr_T line_count = 0;
   int idx = 0;              // start with first index in block 1
   int error = 0;
-  buf->b_ml.ml_stack_top = 0;  // -V1048
+  buf->b_ml.ml_stack_top = 0;
   buf->b_ml.ml_stack = NULL;
-  buf->b_ml.ml_stack_size = 0;  // -V1048
+  buf->b_ml.ml_stack_size = 0;
 
   bool cannot_open = (curbuf->b_ffname == NULL);
 

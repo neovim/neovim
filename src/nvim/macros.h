@@ -61,8 +61,6 @@
 /// Don't apply 'langmap' if the character comes from the Stuff buffer or from a
 /// mapping and the langnoremap option was set.
 /// The do-while is just to ignore a ';' after the macro.
-///
-/// -V:LANGMAP_ADJUST:560
 #define LANGMAP_ADJUST(c, condition) \
   do { \
     if (*p_langmap \
@@ -111,8 +109,6 @@
 /// error. A mechanism to detect many (though not all) of those errors at
 /// compile time is implemented. It works by the second division producing
 /// a division by zero in those cases (-Wdiv-by-zero in GCC).
-///
-/// -V:ARRAY_SIZE:1063
 #define ARRAY_SIZE(arr) \
   ((sizeof(arr)/sizeof((arr)[0])) \
    / ((size_t)(!(sizeof(arr) % sizeof((arr)[0])))))
@@ -161,18 +157,6 @@
 #else
 # define UNREACHABLE
 #endif
-
-// -V:STRUCT_CAST:641
-
-/// Change type of structure pointers: cast `struct a *` to `struct b *`
-///
-/// Used to silence PVS errors.
-///
-/// @param  Type  Structure to cast to.
-/// @param  obj  Object to cast.
-///
-/// @return ((Type *)obj).
-#define STRUCT_CAST(Type, obj) ((Type *)(obj))
 
 // Type of uv_buf_t.len is platform-dependent.
 // Related: https://github.com/libuv/libuv/pull/1236

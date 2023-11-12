@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // highlight.c: low level code for UI and syntax highlighting
 
 #include <assert.h>
@@ -349,7 +346,7 @@ void update_window_hl(win_T *wp, bool invalid)
     wp->w_ns_hl_active = ns_id;
 
     wp->w_ns_hl_attr = *(NSHlAttr *)pmap_get(int)(&ns_hl_attr, ns_id);
-    if (!wp->w_ns_hl_attr) {  // -V547
+    if (!wp->w_ns_hl_attr) {
       // No specific highlights, use the defaults.
       wp->w_ns_hl_attr = highlight_attr;
     }

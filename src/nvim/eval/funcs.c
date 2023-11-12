@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <fcntl.h>
 #include <float.h>
@@ -4810,7 +4807,7 @@ static void f_min(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "mkdir()" function
 static void f_mkdir(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  int prot = 0755;  // -V536
+  int prot = 0755;
 
   rettv->vval.v_number = FAIL;
   if (check_secure()) {
@@ -5732,9 +5729,9 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
             // have to shuffle buf to close gap
             int adjust_prevlen = 0;
 
-            if (dest < buf) {  // -V782
+            if (dest < buf) {
               // adjust_prevlen must be 1 or 2.
-              adjust_prevlen = (int)(buf - dest);  // -V782
+              adjust_prevlen = (int)(buf - dest);
               dest = buf;
             }
             if (readlen > p - buf + 1) {

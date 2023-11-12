@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // Terminal UI functions. Invoked (by ui_client.c) on the UI process.
 
 #include <assert.h>
@@ -439,7 +436,7 @@ static void tui_terminal_after_startup(TUIData *tui)
 /// stop the terminal but allow it to restart later (like after suspend)
 static void tui_terminal_stop(TUIData *tui)
 {
-  if (uv_is_closing(STRUCT_CAST(uv_handle_t, &tui->output_handle))) {
+  if (uv_is_closing((uv_handle_t *)&tui->output_handle)) {
     // Race between SIGCONT (tui.c) and SIGHUP (os/signal.c)? #8075
     ELOG("TUI already stopped (race?)");
     tui->stopped = true;
@@ -1174,9 +1171,8 @@ void tui_mode_change(TUIData *tui, String mode, Integer mode_idx)
   tui->showing_mode = (ModeShape)mode_idx;
 }
 
-void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow,  // -V751
-                     Integer endrow, Integer startcol, Integer endcol, Integer rows,
-                     Integer cols FUNC_ATTR_UNUSED)
+void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow, Integer endrow, Integer startcol,
+                     Integer endcol, Integer rows, Integer cols FUNC_ATTR_UNUSED)
 {
   UGrid *grid = &tui->grid;
   int top = (int)startrow, bot = (int)endrow - 1;
@@ -2250,8 +2246,8 @@ static void flush_buf(TUIData *tui)
       fwrite(bufs[i].base, bufs[i].len, 1, tui->screenshot);
     }
   } else {
-    int ret = uv_write(&req, STRUCT_CAST(uv_stream_t, &tui->output_handle),
-                       bufs, (unsigned)(bufp - bufs), NULL);
+    int ret
+      = uv_write(&req, (uv_stream_t *)&tui->output_handle, bufs, (unsigned)(bufp - bufs), NULL);
     if (ret) {
       ELOG("uv_write failed: %s", uv_strerror(ret));
     }

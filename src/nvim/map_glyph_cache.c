@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // Specialized version of Set() where interned strings is stored in a compact,
 // NUL-separated char array.
 // `String key` lookup keys don't need to be NULL terminated, but they

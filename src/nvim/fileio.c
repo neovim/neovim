@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // fileio.c: read from and write to a file
 
 #include <assert.h>
@@ -935,7 +932,7 @@ retry:
 
         if (conv_restlen > 0) {
           // Insert unconverted bytes from previous line.
-          memmove(ptr, conv_rest, (size_t)conv_restlen);  // -V614
+          memmove(ptr, conv_rest, (size_t)conv_restlen);
           ptr += conv_restlen;
           size -= conv_restlen;
         }

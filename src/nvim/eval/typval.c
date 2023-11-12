@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -4422,7 +4419,7 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
 {
   switch (tv->v_type) {
   case VAR_NUMBER:
-    snprintf(buf, NUMBUFLEN, "%" PRIdVARNUMBER, tv->vval.v_number);  // -V576
+    snprintf(buf, NUMBUFLEN, "%" PRIdVARNUMBER, tv->vval.v_number);
     return buf;
   case VAR_FLOAT:
     vim_snprintf(buf, NUMBUFLEN, "%g", tv->vval.v_float);

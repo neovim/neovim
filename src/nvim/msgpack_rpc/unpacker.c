@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -381,7 +378,6 @@ bool unpacker_parse_redraw(Unpacker *p)
   size_t size = p->read_size;
   GridLineEvent *g = p->grid_line_event;
 
-// -V:NEXT_TYPE:501
 #define NEXT_TYPE(tok, typ) \
   result = mpack_rtoken(&data, &size, &tok); \
   if (result == MPACK_EOF) { \

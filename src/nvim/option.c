@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // User-settable options. Checklist for adding a new option:
 // - Put it in options.lua
 // - For a global option: Add a variable for it in option_defs.h.
@@ -3614,7 +3611,7 @@ static const char *did_set_option(int opt_idx, void *varp, OptVal old_value, Opt
     }
 
     // Unset new_value as it is no longer valid.
-    new_value = NIL_OPTVAL;  // -V1001 NOLINT(clang-analyzer-deadcode.DeadStores)
+    new_value = NIL_OPTVAL;  // NOLINT(clang-analyzer-deadcode.DeadStores)
     return errmsg;
   }
 

@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // lua bindings for tree-sitter.
 // NB: this file mostly contains a generic lua interface for tree-sitter
 // trees and nodes, and could be broken out as a reusable lua package

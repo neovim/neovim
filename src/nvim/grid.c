@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // Most of the routines in this file perform screen (grid) manipulations. The
 // given operation is performed physically on the screen. The corresponding
 // change is also made to the internal screen image. In this way, the editor

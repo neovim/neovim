@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -61,9 +58,9 @@ bool loop_uv_run(Loop *loop, int64_t ms, bool once)
     mode = UV_RUN_NOWAIT;
   }
 
-  do {  // -V1044
+  do {
     uv_run(&loop->uv, mode);
-  } while (ms > 0 && !once && !*timeout_expired);  // -V560
+  } while (ms > 0 && !once && !*timeout_expired);
 
   if (ms > 0) {
     uv_timer_stop(&loop->poll_timer);
@@ -163,7 +160,7 @@ bool loop_close(Loop *loop, bool wait)
   while (true) {
     // Run the loop to tickle close-callbacks (which should then free memory).
     // Use UV_RUN_NOWAIT to avoid a hang. #11820
-    uv_run(&loop->uv, didstop ? UV_RUN_DEFAULT : UV_RUN_NOWAIT);  // -V547
+    uv_run(&loop->uv, didstop ? UV_RUN_DEFAULT : UV_RUN_NOWAIT);
     if ((uv_loop_close(&loop->uv) != UV_EBUSY) || !wait) {
       break;
     }
