@@ -156,7 +156,6 @@ bool cause_errthrow(const char *mesg, bool multiline, bool severe, bool *ignore)
   FUNC_ATTR_NONNULL_ALL
 {
   msglist_T *elem;
-  msglist_T **plist;
 
   // Do nothing when displaying the interrupt message or reporting an
   // uncaught exception (which has already been discarded then) at the top
@@ -237,7 +236,7 @@ bool cause_errthrow(const char *mesg, bool multiline, bool severe, bool *ignore)
     // returned.  -  Throw only the first of several errors in a row, except
     // a severe error is following.
     if (msg_list != NULL) {
-      plist = msg_list;
+      msglist_T **plist = msg_list;
       while (*plist != NULL) {
         plist = &(*plist)->next;
       }
@@ -249,10 +248,8 @@ bool cause_errthrow(const char *mesg, bool multiline, bool severe, bool *ignore)
       elem->throw_msg = NULL;
       *plist = elem;
       if (plist == msg_list || severe) {
-        char *tmsg;
-
         // Skip the extra "Vim " prefix for message "E458".
-        tmsg = elem->msg;
+        char *tmsg = elem->msg;
         if (strncmp(tmsg, "Vim E", 5) == 0
             && ascii_isdigit(tmsg[5])
             && ascii_isdigit(tmsg[6])
@@ -277,10 +274,9 @@ bool cause_errthrow(const char *mesg, bool multiline, bool severe, bool *ignore)
 /// Free a "msg_list" and the messages it contains.
 static void free_msglist(msglist_T *l)
 {
-  msglist_T *next;
   msglist_T *messages = l;
   while (messages != NULL) {
-    next = messages->next;
+    msglist_T *next = messages->next;
     xfree(messages->msg);
     xfree(messages->sfile);
     xfree(messages);
@@ -376,13 +372,12 @@ int do_intthrow(cstack_T *cstack)
 /// Get an exception message that is to be stored in current_exception->value.
 char *get_exception_string(void *value, except_type_T type, char *cmdname, int *should_free)
 {
-  char *ret, *mesg;
+  char *ret;
 
   if (type == ET_ERROR) {
-    char *p;
     char *val;
     *should_free = true;
-    mesg = ((msglist_T *)value)->throw_msg;
+    char *mesg = ((msglist_T *)value)->throw_msg;
     if (cmdname != NULL && *cmdname != NUL) {
       size_t cmdlen = strlen(cmdname);
       ret = xstrnsave("Vim(", 4 + cmdlen + 2 + strlen(mesg));
@@ -397,7 +392,7 @@ char *get_exception_string(void *value, except_type_T type, char *cmdname, int *
     // msg_add_fname may have been used to prefix the message with a file
     // name in quotes.  In the exception value, put the file name in
     // parentheses and move it to the end.
-    for (p = mesg;; p++) {
+    for (char *p = mesg;; p++) {
       if (*p == NUL
           || (*p == 'E'
               && ascii_isdigit(p[1])

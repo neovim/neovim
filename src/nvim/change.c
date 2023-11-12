@@ -1696,14 +1696,13 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   // concatenate leader and p_extra, if there is a leader
   if (lead_len > 0) {
     if (flags & OPENLINE_COM_LIST && second_line_indent > 0) {
-      int i;
       int padding = second_line_indent
                     - (newindent + (int)strlen(leader));
 
       // Here whitespace is inserted after the comment char.
       // Below, set_indent(newindent, SIN_INSERT) will insert the
       // whitespace needed before the comment char.
-      for (i = 0; i < padding; i++) {
+      for (int i = 0; i < padding; i++) {
         STRCAT(leader, " ");
         less_cols--;
         newcol++;
@@ -1987,9 +1986,7 @@ int get_leader_len(char *line, char **flags, bool backward, bool include_space)
   int got_com = false;
   char part_buf[COM_MAX_LEN];         // buffer for one option part
   char *string;                  // pointer to comment string
-  char *list;
   int middle_match_len = 0;
-  char *prev_list;
   char *saved_flags = NULL;
 
   int result = 0;
@@ -2002,13 +1999,13 @@ int get_leader_len(char *line, char **flags, bool backward, bool include_space)
   while (line[i] != NUL) {
     // scan through the 'comments' option for a match
     int found_one = false;
-    for (list = curbuf->b_p_com; *list;) {
+    for (char *list = curbuf->b_p_com; *list;) {
       // Get one option part into part_buf[].  Advance "list" to next
       // one.  Put "string" at start of string.
       if (!got_com && flags != NULL) {
         *flags = list;              // remember where flags started
       }
-      prev_list = list;
+      char *prev_list = list;
       (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
       string = vim_strchr(part_buf, ':');
       if (string == NULL) {         // missing ':', ignore this part
@@ -2204,7 +2201,6 @@ int get_last_leader_offset(char *line, char **flags)
 
     if (found_one) {
       char part_buf2[COM_MAX_LEN];            // buffer for one option part
-      int len1, len2, off;
 
       result = i;
       // If this comment nests, continue searching.
@@ -2222,7 +2218,7 @@ int get_last_leader_offset(char *line, char **flags)
       while (ascii_iswhite(*com_leader)) {
         com_leader++;
       }
-      len1 = (int)strlen(com_leader);
+      int len1 = (int)strlen(com_leader);
 
       for (list = curbuf->b_p_com; *list;) {
         char *flags_save = list;
@@ -2236,14 +2232,14 @@ int get_last_leader_offset(char *line, char **flags)
         while (ascii_iswhite(*string)) {
           string++;
         }
-        len2 = (int)strlen(string);
+        int len2 = (int)strlen(string);
         if (len2 == 0) {
           continue;
         }
 
         // Now we have to verify whether string ends with a substring
         // beginning the com_leader.
-        for (off = (len2 > i ? i : len2); off > 0 && off + len1 > len2;) {
+        for (int off = (len2 > i ? i : len2); off > 0 && off + len1 > len2;) {
           off--;
           if (!strncmp(string + off, com_leader, (size_t)(len2 - off))) {
             if (i - off < lower_check_bound) {

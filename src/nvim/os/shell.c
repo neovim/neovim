@@ -1234,12 +1234,12 @@ static size_t word_length(const char *str)
 /// before we finish writing.
 static void read_input(DynamicBuffer *buf)
 {
-  size_t written = 0, l = 0, len = 0;
+  size_t written = 0, len = 0;
   linenr_T lnum = curbuf->b_op_start.lnum;
   char *lp = ml_get(lnum);
 
   while (true) {
-    l = strlen(lp + written);
+    size_t l = strlen(lp + written);
     if (l == 0) {
       len = 0;
     } else if (lp[written] == NL) {

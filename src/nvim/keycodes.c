@@ -469,7 +469,6 @@ char *get_special_key_name(int c, int modifiers)
 
   int i, idx;
   int table_idx;
-  char *s;
 
   string[0] = '<';
   idx = 1;
@@ -536,7 +535,7 @@ char *get_special_key_name(int c, int modifiers)
       } else if (vim_isprintc(c)) {
         string[idx++] = (char)(uint8_t)c;
       } else {
-        s = transchar(c);
+        char *s = transchar(c);
         while (*s) {
           string[idx++] = *s++;
         }
@@ -631,7 +630,6 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
   const char *const end = *srcp + src_len - 1;
   const bool in_string = flags & FSK_IN_STRING;
   int modifiers;
-  int bit;
   uvarnumber_T n;
   int l;
 
@@ -686,7 +684,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
     modifiers = 0x0;
     for (bp = src + 1; bp < last_dash; bp++) {
       if (*bp != '-') {
-        bit = name_to_mod_mask((uint8_t)(*bp));
+        int bit = name_to_mod_mask((uint8_t)(*bp));
         if (bit == 0x0) {
           break;                // Illegal modifier name
         }

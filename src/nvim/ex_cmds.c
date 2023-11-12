@@ -238,12 +238,8 @@ void do_ascii(exarg_T *eap)
 /// ":left", ":center" and ":right": align text.
 void ex_align(exarg_T *eap)
 {
-  pos_T save_curpos;
-  int len;
   int indent = 0;
   int new_indent;
-  int has_tab;
-  int width;
 
   if (curwin->w_p_rl) {
     // switch left and right aligning
@@ -254,8 +250,8 @@ void ex_align(exarg_T *eap)
     }
   }
 
-  width = atoi(eap->arg);
-  save_curpos = curwin->w_cursor;
+  int width = atoi(eap->arg);
+  pos_T save_curpos = curwin->w_cursor;
   if (eap->cmdidx == CMD_left) {    // width is used for new indent
     if (width >= 0) {
       indent = width;
@@ -284,8 +280,8 @@ void ex_align(exarg_T *eap)
     if (eap->cmdidx == CMD_left) {              // left align
       new_indent = indent;
     } else {
-      has_tab = false;          // avoid uninit warnings
-      len = linelen(eap->cmdidx == CMD_right ? &has_tab : NULL) - get_indent();
+      int has_tab = false;          // avoid uninit warnings
+      int len = linelen(eap->cmdidx == CMD_right ? &has_tab : NULL) - get_indent();
 
       if (len <= 0) {                           // skip blank lines
         continue;
@@ -328,26 +324,23 @@ void ex_align(exarg_T *eap)
 /// @return  the length of the current line, excluding trailing white space.
 static int linelen(int *has_tab)
 {
-  char *line;
-  char *first;
   char *last;
-  int len;
 
   // Get the line.  If it's empty bail out early (could be the empty string
   // for an unloaded buffer).
-  line = get_cursor_line_ptr();
+  char *line = get_cursor_line_ptr();
   if (*line == NUL) {
     return 0;
   }
   // find the first non-blank character
-  first = skipwhite(line);
+  char *first = skipwhite(line);
 
   // find the character after the last non-blank character
   for (last = first + strlen(first);
        last > first && ascii_iswhite(last[-1]); last--) {}
   char save = *last;
   *last = NUL;
-  len = linetabsize_str(line);  // Get line length.
+  int len = linetabsize_str(line);  // Get line length.
   if (has_tab != NULL) {        // Check for embedded TAB.
     *has_tab = vim_strchr(first, TAB) != NULL;
   }
@@ -451,19 +444,11 @@ static int sort_compare(const void *s1, const void *s2)
 void ex_sort(exarg_T *eap)
 {
   regmatch_T regmatch;
-  int len;
   linenr_T lnum;
   int maxlen = 0;
   size_t count = (size_t)(eap->line2 - eap->line1) + 1;
   size_t i;
-  char *p;
-  char *s;
-  char *s2;
-  char c;                             // temporary character storage
   bool unique = false;
-  linenr_T deleted;
-  colnr_T start_col;
-  colnr_T end_col;
   int sort_what = 0;
 
   // Sorting one line is really quick!
@@ -483,7 +468,7 @@ void ex_sort(exarg_T *eap)
   size_t format_found = 0;
   bool change_occurred = false;   // Buffer contents changed.
 
-  for (p = eap->arg; *p != NUL; p++) {
+  for (char *p = eap->arg; *p != NUL; p++) {
     if (ascii_iswhite(*p)) {
       // Skip
     } else if (*p == 'i') {
@@ -516,7 +501,7 @@ void ex_sort(exarg_T *eap)
       eap->nextcmd = check_nextcmd(p);
       break;
     } else if (!ASCII_ISALPHA(*p) && regmatch.regprog == NULL) {
-      s = skip_regexp_err(p + 1, *p, true);
+      char *s = skip_regexp_err(p + 1, *p, true);
       if (s == NULL) {
         goto sortend;
       }
@@ -559,14 +544,14 @@ void ex_sort(exarg_T *eap)
   // matching and number conversion only has to be done once per line.
   // Also get the longest line length for allocating "sortbuf".
   for (lnum = eap->line1; lnum <= eap->line2; lnum++) {
-    s = ml_get(lnum);
-    len = (int)strlen(s);
+    char *s = ml_get(lnum);
+    int len = (int)strlen(s);
     if (maxlen < len) {
       maxlen = len;
     }
 
-    start_col = 0;
-    end_col = len;
+    colnr_T start_col = 0;
+    colnr_T end_col = len;
     if (regmatch.regprog != NULL && vim_regexec(&regmatch, s, 0)) {
       if (sort_rx) {
         start_col = (colnr_T)(regmatch.startp[0] - s);
@@ -581,11 +566,11 @@ void ex_sort(exarg_T *eap)
     if (sort_nr || sort_flt) {
       // Make sure vim_str2nr() doesn't read any digits past the end
       // of the match, by temporarily terminating the string there
-      s2 = s + end_col;
-      c = *s2;
+      char *s2 = s + end_col;
+      char c = *s2;  // temporary character storage
       *s2 = NUL;
       // Sorting on number: Store the number itself.
-      p = s + start_col;
+      char *p = s + start_col;
       if (sort_nr) {
         if (sort_what & STR2NR_HEX) {
           s = skiptohex(p);
@@ -660,7 +645,7 @@ void ex_sort(exarg_T *eap)
       change_occurred = true;
     }
 
-    s = ml_get(get_lnum);
+    char *s = ml_get(get_lnum);
     size_t bytelen = strlen(s) + 1;  // include EOL in bytelen
     old_count += (bcount_t)bytelen;
     if (!unique || i == 0 || string_compare(s, sortbuf1) != 0) {
@@ -688,7 +673,7 @@ void ex_sort(exarg_T *eap)
   }
 
   // Adjust marks for deleted (or added) lines and prepare for displaying.
-  deleted = (linenr_T)count - (lnum - eap->line2);
+  linenr_T deleted = (linenr_T)count - (lnum - eap->line2);
   if (deleted > 0) {
     mark_adjust(eap->line2 - deleted, eap->line2, MAXLNUM, -deleted, kExtmarkNOOP);
     msgmore(-deleted);
@@ -954,14 +939,9 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   linenr_T line2 = eap->line2;        // end of range
   char *newcmd = NULL;              // the new command
   bool free_newcmd = false;           // need to free() newcmd
-  char *t;
-  char *p;
-  char *trailarg;
   int scroll_save = msg_scroll;
 
-  //
   // Disallow shell commands in secure mode
-  //
   if (check_secure()) {
     return;
   }
@@ -977,7 +957,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
   bool ins_prevcmd = forceit;
 
   // Skip leading white space to avoid a strange error with some shells.
-  trailarg = skipwhite(arg);
+  char *trailarg = skipwhite(arg);
   do {
     size_t len = strlen(trailarg) + 1;
     if (newcmd != NULL) {
@@ -990,7 +970,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
       }
       len += strlen(prevcmd);
     }
-    t = xmalloc(len);
+    char *t = xmalloc(len);
     *t = NUL;
     if (newcmd != NULL) {
       STRCAT(t, newcmd);
@@ -998,7 +978,7 @@ void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out
     if (ins_prevcmd) {
       STRCAT(t, prevcmd);
     }
-    p = t + strlen(t);
+    char *p = t + strlen(t);
     STRCAT(t, trailarg);
     xfree(newcmd);
     newcmd = t;
@@ -1099,10 +1079,6 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
 {
   char *itmp = NULL;
   char *otmp = NULL;
-  linenr_T linecount;
-  linenr_T read_linecount;
-  pos_T cursor_save;
-  char *cmd_buf;
   buf_T *old_curbuf = curbuf;
   int shell_flags = 0;
   const pos_T orig_start = curbuf->b_op_start;
@@ -1118,8 +1094,8 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
   // regions of the buffer for foldUpdate(), linecount, etc.
   cmdmod.cmod_flags &= ~CMOD_LOCKMARKS;
 
-  cursor_save = curwin->w_cursor;
-  linecount = line2 - line1 + 1;
+  pos_T cursor_save = curwin->w_cursor;
+  linenr_T linecount = line2 - line1 + 1;
   curwin->w_cursor.lnum = line1;
   curwin->w_cursor.col = 0;
   changed_line_abv_curs();
@@ -1184,7 +1160,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
   }
 
   // Create the shell command in allocated memory.
-  cmd_buf = make_filter_cmd(cmd, itmp, otmp);
+  char *cmd_buf = make_filter_cmd(cmd, itmp, otmp);
   ui_cursor_goto(Rows - 1, 0);
 
   if (do_out) {
@@ -1194,7 +1170,7 @@ static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap, char *cmd, b
     }
     redraw_curbuf_later(UPD_VALID);
   }
-  read_linecount = curbuf->b_ml.ml_line_count;
+  linenr_T read_linecount = curbuf->b_ml.ml_line_count;
 
   // Pass on the kShellOptDoOut flag when the output is being redirected.
   call_shell(cmd_buf, (ShellOpts)(kShellOptFilter | shell_flags), NULL);
@@ -1534,10 +1510,7 @@ void print_line(linenr_T lnum, int use_number, int list)
 
 int rename_buffer(char *new_fname)
 {
-  char *fname, *sfname, *xfname;
-  buf_T *buf;
-
-  buf = curbuf;
+  buf_T *buf = curbuf;
   apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
   // buffer changed, don't change name now
   if (buf != curbuf) {
@@ -1551,9 +1524,9 @@ int rename_buffer(char *new_fname)
   // name, which will become the alternate file name.
   // But don't set the alternate file name if the buffer didn't have a
   // name.
-  fname = curbuf->b_ffname;
-  sfname = curbuf->b_sfname;
-  xfname = curbuf->b_fname;
+  char *fname = curbuf->b_ffname;
+  char *sfname = curbuf->b_sfname;
+  char *xfname = curbuf->b_fname;
   curbuf->b_ffname = NULL;
   curbuf->b_sfname = NULL;
   if (setfname(curbuf, new_fname, NULL, true) == FAIL) {
@@ -1647,7 +1620,6 @@ int do_write(exarg_T *eap)
 {
   int other;
   char *fname = NULL;            // init to shut up gcc
-  char *ffname;
   int retval = FAIL;
   char *free_fname = NULL;
   buf_T *alt_buf = NULL;
@@ -1657,7 +1629,7 @@ int do_write(exarg_T *eap)
     return FAIL;
   }
 
-  ffname = eap->arg;
+  char *ffname = eap->arg;
   if (*ffname == NUL) {
     if (eap->cmdidx == CMD_saveas) {
       emsg(_(e_argreq));
@@ -2931,12 +2903,9 @@ void ex_change(exarg_T *eap)
 
 void ex_z(exarg_T *eap)
 {
-  char *x;
   int64_t bigness;
-  char *kind;
   int minus = 0;
   linenr_T start, end, curs, i;
-  int j;
   linenr_T lnum = eap->line2;
 
   // Vi compatible: ":z!" uses display height, without a count uses
@@ -2952,8 +2921,8 @@ void ex_z(exarg_T *eap)
     bigness = 1;
   }
 
-  x = eap->arg;
-  kind = x;
+  char *x = eap->arg;
+  char *kind = x;
   if (*kind == '-' || *kind == '+' || *kind == '='
       || *kind == '^' || *kind == '.') {
     x++;
@@ -3041,7 +3010,7 @@ void ex_z(exarg_T *eap)
     if (minus && i == lnum) {
       msg_putchar('\n');
 
-      for (j = 1; j < Columns; j++) {
+      for (int j = 1; j < Columns; j++) {
         msg_putchar('-');
       }
     }
@@ -3051,7 +3020,7 @@ void ex_z(exarg_T *eap)
     if (minus && i == lnum) {
       msg_putchar('\n');
 
-      for (j = 1; j < Columns; j++) {
+      for (int j = 1; j < Columns; j++) {
         msg_putchar('-');
       }
     }
@@ -4386,7 +4355,6 @@ void ex_global(exarg_T *eap)
   char *pat;
   regmmatch_T regmatch;
   int match;
-  int which_pat;
 
   // When nesting the command works on one line.  This allows for
   // ":g/found/v/notfound/command".
@@ -4403,7 +4371,7 @@ void ex_global(exarg_T *eap)
     type = (uint8_t)(*eap->cmd);
   }
   cmd = eap->arg;
-  which_pat = RE_LAST;              // default: use last used regexp
+  int which_pat = RE_LAST;              // default: use last used regexp
 
   // undocumented vi feature:
   //    "\/" and "\?": use previous search pattern.

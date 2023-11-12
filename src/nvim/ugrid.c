@@ -61,10 +61,8 @@ void ugrid_scroll(UGrid *grid, int top, int bot, int left, int right, int count)
     step = -1;
   }
 
-  int i;
-
   // Copy cell data
-  for (i = start; i != stop; i += step) {
+  for (int i = start; i != stop; i += step) {
     UCell *target_row = grid->cells[i] + left;
     UCell *source_row = grid->cells[i + count] + left;
     assert(right >= left && left >= 0);

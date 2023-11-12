@@ -2583,10 +2583,8 @@ char *getsourceline(int c, void *cookie, int indent, bool do_concat)
   }
 
   if (line != NULL && sp->conv.vc_type != CONV_NONE) {
-    char *s;
-
     // Convert the encoding of the script line.
-    s = string_convert(&sp->conv, line, NULL);
+    char *s = string_convert(&sp->conv, line, NULL);
     if (s != NULL) {
       xfree(line);
       line = s;

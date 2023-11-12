@@ -2074,8 +2074,6 @@ char *keymap_init(void)
 /// @param eap
 void ex_loadkeymap(exarg_T *eap)
 {
-  char *s;
-
 #define KMAP_LLEN 200  // max length of "to" and "from" together
   char buf[KMAP_LLEN + 11];
   char *save_cpo = p_cpo;
@@ -2106,7 +2104,7 @@ void ex_loadkeymap(exarg_T *eap)
 
     if ((*p != '"') && (*p != NUL)) {
       kmap_T *kp = GA_APPEND_VIA_PTR(kmap_T, &curbuf->b_kmap_ga);
-      s = skiptowhite(p);
+      char *s = skiptowhite(p);
       kp->from = xmemdupz(p, (size_t)(s - p));
       p = skipwhite(s);
       s = skiptowhite(p);

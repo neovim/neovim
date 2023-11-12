@@ -800,8 +800,6 @@ static int show_menus(char *const path_name, int modes)
 /// Recursively show the mappings associated with the menus under the given one
 static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
 {
-  int i;
-
   if (menu != NULL && (menu->modes & modes) == 0x0) {
     return;
   }
@@ -811,7 +809,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
     if (got_int) {              // "q" hit for "--more--"
       return;
     }
-    for (i = 0; i < depth; i++) {
+    for (int i = 0; i < depth; i++) {
       msg_puts("  ");
     }
     if (menu->priority) {
@@ -829,7 +827,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
         if (got_int) {                  // "q" hit for "--more--"
           return;
         }
-        for (i = 0; i < depth + 2; i++) {
+        for (int i = 0; i < depth + 2; i++) {
           msg_puts("  ");
         }
         msg_puts(menu_mode_chars[bit]);

@@ -2541,9 +2541,7 @@ int op_change(oparg_T *oap)
 #if defined(EXITFREE)
 void clear_registers(void)
 {
-  int i;
-
-  for (i = 0; i < NUM_REGISTERS; i++) {
+  for (int i = 0; i < NUM_REGISTERS; i++) {
     free_register(&y_regs[i]);
   }
 }

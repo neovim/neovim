@@ -249,14 +249,9 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
                                       int *skiplen, int *patlen)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *cmd;
   char *p;
   bool delim_optional = false;
-  int delim;
-  char *end;
   const char *dummy;
-  pos_T save_cursor;
-  bool use_last_pat;
   bool retval = false;
   magic_T magic = 0;
 
@@ -290,7 +285,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   cmdmod_T dummy_cmdmod;
   parse_command_modifiers(&ea, &dummy, &dummy_cmdmod, true);
 
-  cmd = skip_range(ea.cmd, NULL);
+  char *cmd = skip_range(ea.cmd, NULL);
   if (vim_strchr("sgvl", (uint8_t)(*cmd)) == NULL) {
     goto theend;
   }
@@ -341,11 +336,11 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   }
 
   p = skipwhite(p);
-  delim = (delim_optional && vim_isIDc((uint8_t)(*p))) ? ' ' : *p++;
+  int delim = (delim_optional && vim_isIDc((uint8_t)(*p))) ? ' ' : *p++;
   *search_delim = delim;
-  end = skip_regexp_ex(p, delim, magic_isset(), NULL, NULL, &magic);
+  char *end = skip_regexp_ex(p, delim, magic_isset(), NULL, NULL, &magic);
 
-  use_last_pat = end == p && *end == delim;
+  bool use_last_pat = end == p && *end == delim;
   if (end == p && !use_last_pat) {
     goto theend;
   }
@@ -366,7 +361,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   *patlen = (int)(end - p);
 
   // parse the address range
-  save_cursor = curwin->w_cursor;
+  pos_T save_cursor = curwin->w_cursor;
   curwin->w_cursor = s->search_start;
   parse_cmd_address(&ea, &dummy, true);
   if (ea.addr_count > 0) {
@@ -395,10 +390,7 @@ theend:
 static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state_T *s)
 {
   pos_T end_pos;
-  proftime_T tm;
   int skiplen, patlen;
-  char next_char;
-  bool use_last_pat;
   int search_delim;
 
   // Parsing range may already set the last search pattern.
@@ -435,9 +427,9 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
   int found;  // do_search() result
 
   // Use the previous pattern for ":s//".
-  next_char = ccline.cmdbuff[skiplen + patlen];
-  use_last_pat = patlen == 0 && skiplen > 0
-                 && ccline.cmdbuff[skiplen - 1] == next_char;
+  char next_char = ccline.cmdbuff[skiplen + patlen];
+  bool use_last_pat = patlen == 0 && skiplen > 0
+                      && ccline.cmdbuff[skiplen - 1] == next_char;
 
   // If there is no pattern, don't do anything.
   if (patlen == 0 && !use_last_pat) {
@@ -450,7 +442,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
     ui_flush();
     emsg_off++;            // So it doesn't beep if bad expr
     // Set the time limit to half a second.
-    tm = profile_setlimit(500);
+    proftime_T tm = profile_setlimit(500);
     if (!p_hls) {
       search_flags += SEARCH_KEEP;
     }
@@ -1408,7 +1400,6 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
   pos_T t;
   char *pat;
   int search_flags = SEARCH_NOOF;
-  char save;
 
   if (search_delim == ccline.cmdbuff[skiplen]) {
     pat = last_search_pattern();
@@ -1437,7 +1428,7 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
     search_flags += SEARCH_KEEP;
   }
   emsg_off++;
-  save = pat[patlen];
+  char save = pat[patlen];
   pat[patlen] = NUL;
   int found = searchit(curwin, curbuf, &t, NULL,
                        next_match ? FORWARD : BACKWARD,
@@ -3971,11 +3962,9 @@ void escape_fname(char **pp)
 /// If 'orig_pat' starts with "~/", replace the home directory with "~".
 void tilde_replace(char *orig_pat, int num_files, char **files)
 {
-  char *p;
-
   if (orig_pat[0] == '~' && vim_ispathsep(orig_pat[1])) {
     for (int i = 0; i < num_files; i++) {
-      p = home_replace_save(NULL, files[i]);
+      char *p = home_replace_save(NULL, files[i]);
       xfree(files[i]);
       files[i] = p;
     }

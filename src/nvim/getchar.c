@@ -1952,7 +1952,6 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
   int mp_match_len = 0;
   int max_mlen = 0;
   int tb_c1;
-  int mlen;
   int keylen = *keylenp;
   int local_State = get_real_state();
   bool is_plug_map = false;
@@ -1986,6 +1985,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
       && State != MODE_ASKMORE
       && State != MODE_CONFIRM
       && !at_ins_compl_key()) {
+    int mlen;
     int nolmaplen;
     if (tb_c1 == K_SPECIAL) {
       nolmaplen = 2;

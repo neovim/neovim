@@ -505,7 +505,6 @@ static typval_T *eval_expr_no_emsg(struct debuggy *const bp)
 static int dbg_parsearg(char *arg, garray_T *gap)
 {
   char *p = arg;
-  char *q;
   bool here = false;
 
   ga_grow(gap, 1);
@@ -561,7 +560,7 @@ static int dbg_parsearg(char *arg, garray_T *gap)
     // Expand the file name in the same way as do_source().  This means
     // doing it twice, so that $DIR/file gets expanded when $DIR is
     // "~/dir".
-    q = expand_env_save(p);
+    char *q = expand_env_save(p);
     if (q == NULL) {
       return FAIL;
     }

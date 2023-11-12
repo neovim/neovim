@@ -2837,7 +2837,6 @@ void intro_message(int colon)
 
 static void do_intro_line(int row, char *mesg, int attr)
 {
-  char *p;
   int l;
 
   // Center the message horizontally.
@@ -2851,7 +2850,7 @@ static void do_intro_line(int row, char *mesg, int attr)
 
   grid_line_start(&default_grid, row);
   // Split up in parts to highlight <> items differently.
-  for (p = mesg; *p != NUL; p += l) {
+  for (char *p = mesg; *p != NUL; p += l) {
     for (l = 0;
          p[l] != NUL && (l == 0 || (p[l] != '<' && p[l - 1] != '>'));
          l++) {

@@ -401,8 +401,6 @@ static void handle_foldcolumn(win_T *wp, winlinevars_T *wlv)
 size_t fill_foldcolumn(char *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int *n_closing)
 {
   int i = 0;
-  int level;
-  int first_level;
   int fdc = compute_foldcolumn(wp, 0);    // available cell width
   size_t char_counter = 0;
   int symbol = 0;
@@ -411,11 +409,11 @@ size_t fill_foldcolumn(char *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum, i
   // Init to all spaces.
   memset(p, ' ', MB_MAXCHAR * (size_t)fdc + 1);
 
-  level = foldinfo.fi_level;
+  int level = foldinfo.fi_level;
 
   // If the column is too narrow, we start at the lowest level that
   // fits and use numbers to indicate the depth.
-  first_level = level - fdc - closed + 1;
+  int first_level = level - fdc - closed + 1;
   if (first_level < 1) {
     first_level = 1;
   }

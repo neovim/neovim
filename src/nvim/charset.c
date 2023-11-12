@@ -88,10 +88,6 @@ int init_chartab(void)
 int buf_init_chartab(buf_T *buf, int global)
 {
   int c;
-  int c2;
-  int i;
-  bool tilde;
-  bool do_isalpha;
 
   if (global) {
     // Set the default size for printable characters:
@@ -130,7 +126,7 @@ int buf_init_chartab(buf_T *buf, int global)
   // Walk through the 'isident', 'iskeyword', 'isfname' and 'isprint'
   // options Each option is a list of characters, character numbers or
   // ranges, separated by commas, e.g.: "200-210,x,#-178,-"
-  for (i = global ? 0 : 3; i <= 3; i++) {
+  for (int i = global ? 0 : 3; i <= 3; i++) {
     const char *p;
     if (i == 0) {
       // first round: 'isident'
@@ -147,8 +143,8 @@ int buf_init_chartab(buf_T *buf, int global)
     }
 
     while (*p) {
-      tilde = false;
-      do_isalpha = false;
+      bool tilde = false;
+      bool do_isalpha = false;
 
       if ((*p == '^') && (p[1] != NUL)) {
         tilde = true;
@@ -160,7 +156,7 @@ int buf_init_chartab(buf_T *buf, int global)
       } else {
         c = mb_ptr2char_adv(&p);
       }
-      c2 = -1;
+      int c2 = -1;
 
       if ((*p == '-') && (p[1] != NUL)) {
         p++;
@@ -431,7 +427,6 @@ char *str_foldcase(char *str, int orglen, char *buf, int buflen)
   FUNC_ATTR_NONNULL_RET
 {
   garray_T ga;
-  int i;
   int len = orglen;
 
 #define GA_CHAR(i) ((char *)ga.ga_data)[i]
@@ -461,7 +456,7 @@ char *str_foldcase(char *str, int orglen, char *buf, int buflen)
   }
 
   // Make each character lower case.
-  i = 0;
+  int i = 0;
   while (STR_CHAR(i) != NUL) {
     int c = utf_ptr2char(STR_PTR(i));
     int olen = utf_ptr2len(STR_PTR(i));

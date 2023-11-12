@@ -434,12 +434,11 @@ static void prof_func_line(FILE *fd, int count, const proftime_T *total, const p
 /// @param prefer_self  when equal print only self time
 static void prof_sort_list(FILE *fd, ufunc_T **sorttab, int st_len, char *title, bool prefer_self)
 {
-  int i;
   ufunc_T *fp;
 
   fprintf(fd, "FUNCTIONS SORTED ON %s TIME\n", title);
   fprintf(fd, "count  total (s)   self (s)  function\n");
-  for (i = 0; i < 20 && i < st_len; i++) {
+  for (int i = 0; i < 20 && i < st_len; i++) {
     fp = sorttab[i];
     prof_func_line(fd, fp->uf_tm_count, &fp->uf_tm_total, &fp->uf_tm_self,
                    prefer_self);

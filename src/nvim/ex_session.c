@@ -60,11 +60,9 @@ static int put_view_curpos(FILE *fd, const win_T *wp, char *spaces)
 
 static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
 {
-  win_T *wp;
-
   if (restore_size && (ssop_flags & SSOP_WINSIZE)) {
     int n = 0;
-    for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
+    for (win_T *wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (!ses_do_win(wp)) {
         continue;
       }
@@ -104,7 +102,6 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
 /// @return  FAIL when writing the commands to "fd" fails.
 static int ses_win_rec(FILE *fd, frame_T *fr)
 {
-  frame_T *frc;
   int count = 0;
 
   if (fr->fr_layout == FR_LEAF) {
@@ -113,7 +110,7 @@ static int ses_win_rec(FILE *fd, frame_T *fr)
 
   // Find first frame that's not skipped and then create a window for
   // each following one (first frame is already there).
-  frc = ses_skipframe(fr->fr_child);
+  frame_T *frc = ses_skipframe(fr->fr_child);
   if (frc != NULL) {
     while ((frc = ses_skipframe(frc->fr_next)) != NULL) {
       // Make window as big as possible so that we have lots of room
@@ -315,14 +312,12 @@ static int ses_put_fname(FILE *fd, char *name, unsigned *flagp)
 /// @param current_arg_idx  current argument index of the window, use -1 if unknown
 static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int current_arg_idx)
 {
-  win_T *save_curwin;
   int f;
-  int do_cursor;
   int did_next = false;
 
   // Always restore cursor position for ":mksession".  For ":mkview" only
   // when 'viewoptions' contains "cursor".
-  do_cursor = (flagp == &ssop_flags || *flagp & SSOP_CURSOR);
+  int do_cursor = (flagp == &ssop_flags || *flagp & SSOP_CURSOR);
 
   // Local argument list.
   if (wp->w_alist == &global_alist) {
@@ -428,7 +423,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
   // used and 'sessionoptions' doesn't include "nvim/options".
   // Some folding options are always stored when "folds" is included,
   // otherwise the folds would not be restored correctly.
-  save_curwin = curwin;
+  win_T *save_curwin = curwin;
   curwin = wp;
   curbuf = curwin->w_buffer;
   if (*flagp & (SSOP_OPTIONS | SSOP_LOCALOPTIONS)) {
@@ -534,8 +529,6 @@ static int makeopens(FILE *fd, char *dirnow)
 {
   int only_save_windows = true;
   int restore_size = true;
-  win_T *wp;
-  char *sname;
   win_T *edited_win = NULL;
   win_T *tab_firstwin;
   frame_T *tab_topframe;
@@ -565,7 +558,7 @@ static int makeopens(FILE *fd, char *dirnow)
   if (ssop_flags & SSOP_SESDIR) {
     PUTLINE_FAIL("exe \"cd \" . escape(expand(\"<sfile>:p:h\"), ' ')");
   } else if (ssop_flags & SSOP_CURDIR) {
-    sname = home_replace_save(NULL, globaldir != NULL ? globaldir : dirnow);
+    char *sname = home_replace_save(NULL, globaldir != NULL ? globaldir : dirnow);
     char *fname_esc = ses_escape_fname(sname, &ssop_flags);
     if (fprintf(fd, "cd %s\n", fname_esc) < 0) {
       xfree(fname_esc);
@@ -691,7 +684,7 @@ static int makeopens(FILE *fd, char *dirnow)
     // Before creating the window layout, try loading one file.  If this
     // is aborted we don't end up with a number of useless windows.
     // This may have side effects! (e.g., compressed or network file).
-    for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
+    for (win_T *wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp)
           && wp->w_buffer->b_ffname != NULL
           && !bt_help(wp->w_buffer)
@@ -732,7 +725,7 @@ static int makeopens(FILE *fd, char *dirnow)
     // Check if window sizes can be restored (no windows omitted).
     // Remember the window number of the current window after restoring.
     int nr = 0;
-    for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
+    for (win_T *wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp)) {
         nr++;
       } else {
@@ -781,7 +774,7 @@ static int makeopens(FILE *fd, char *dirnow)
     }
 
     // Restore the view of the window (options, file, cursor, etc.).
-    for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
+    for (win_T *wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (!ses_do_win(wp)) {
         continue;
       }

@@ -307,7 +307,6 @@ void syn_set_timeout(proftime_T *tm)
 // window.
 void syntax_start(win_T *wp, linenr_T lnum)
 {
-  synstate_T *p;
   synstate_T *last_valid = NULL;
   synstate_T *last_min_valid = NULL;
   synstate_T *sp, *prev = NULL;
@@ -362,7 +361,7 @@ void syntax_start(win_T *wp, linenr_T lnum)
   // Only do this if lnum is not before and not to far beyond a saved state.
   if (INVALID_STATE(&current_state) && syn_block->b_sst_array != NULL) {
     // Find last valid saved state before start_lnum.
-    for (p = syn_block->b_sst_first; p != NULL; p = p->sst_next) {
+    for (synstate_T *p = syn_block->b_sst_first; p != NULL; p = p->sst_next) {
       if (p->sst_lnum > lnum) {
         break;
       }
@@ -877,13 +876,11 @@ static void syn_update_ends(bool startofline)
 
 static void syn_stack_free_block(synblock_T *block)
 {
-  synstate_T *p;
-
   if (block->b_sst_array == NULL) {
     return;
   }
 
-  for (p = block->b_sst_first; p != NULL; p = p->sst_next) {
+  for (synstate_T *p = block->b_sst_first; p != NULL; p = p->sst_next) {
     clear_syn_state(p);
   }
   XFREE_CLEAR(block->b_sst_array);
@@ -1037,7 +1034,7 @@ static void syn_stack_apply_changes_block(synblock_T *block, buf_T *buf)
 /// @return  true if at least one entry was freed.
 static bool syn_stack_cleanup(void)
 {
-  synstate_T *p, *prev;
+  synstate_T *prev;
   disptick_T tick;
   int dist;
   bool retval = false;
@@ -1059,7 +1056,7 @@ static bool syn_stack_cleanup(void)
   tick = syn_block->b_sst_lasttick;
   bool above = false;
   prev = syn_block->b_sst_first;
-  for (p = prev->sst_next; p != NULL; prev = p, p = p->sst_next) {
+  for (synstate_T *p = prev->sst_next; p != NULL; prev = p, p = p->sst_next) {
     if (prev->sst_lnum + dist > p->sst_lnum) {
       if (p->sst_tick > syn_block->b_sst_lasttick) {
         if (!above || p->sst_tick < tick) {
@@ -1075,7 +1072,7 @@ static bool syn_stack_cleanup(void)
   // Go through the list to make the entries for the oldest tick at an
   // interval of several lines.
   prev = syn_block->b_sst_first;
-  for (p = prev->sst_next; p != NULL; prev = p, p = p->sst_next) {
+  for (synstate_T *p = prev->sst_next; p != NULL; prev = p, p = p->sst_next) {
     if (p->sst_tick == tick && prev->sst_lnum + dist > p->sst_lnum) {
       // Move this entry from used list to free list
       prev->sst_next = p->sst_next;
@@ -1101,10 +1098,8 @@ static void syn_stack_free_entry(synblock_T *block, synstate_T *p)
 // Returns NULL when there is no entry or the first entry is after "lnum".
 static synstate_T *syn_stack_find_entry(linenr_T lnum)
 {
-  synstate_T *p, *prev;
-
-  prev = NULL;
-  for (p = syn_block->b_sst_first; p != NULL; prev = p, p = p->sst_next) {
+  synstate_T *prev = NULL;
+  for (synstate_T *p = syn_block->b_sst_first; p != NULL; prev = p, p = p->sst_next) {
     if (p->sst_lnum == lnum) {
       return p;
     }

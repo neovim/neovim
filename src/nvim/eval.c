@@ -1867,14 +1867,13 @@ notify:
 void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, evalarg_T *const evalarg)
 {
   forinfo_T *fi = xcalloc(1, sizeof(forinfo_T));
-  const char *expr;
   typval_T tv;
   list_T *l;
   const bool skip = !(evalarg->eval_flags & EVAL_EVALUATE);
 
   *errp = true;  // Default: there is an error.
 
-  expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon);
+  const char *expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon);
   if (expr == NULL) {
     return fi;
   }
@@ -2005,13 +2004,12 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
   FUNC_ATTR_NONNULL_ALL
 {
   bool got_eq = false;
-  char *p;
 
   if (cmdidx == CMD_let || cmdidx == CMD_const) {
     xp->xp_context = EXPAND_USER_VARS;
     if (strpbrk(arg, "\"'+-*/%.=!?~|&$([<>,#") == NULL) {
       // ":let var1 var2 ...": find last space.
-      for (p = arg + strlen(arg); p >= arg;) {
+      for (char *p = arg + strlen(arg); p >= arg;) {
         xp->xp_pattern = p;
         MB_PTR_BACK(arg, p);
         if (ascii_iswhite(*p)) {
@@ -2343,14 +2341,12 @@ void clear_evalarg(evalarg_T *evalarg, exarg_T *eap)
 /// @return OK or FAIL.
 int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
 {
-  int ret;
-  char *p;
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
   bool end_error = false;
 
-  p = skipwhite(arg);
-  ret = eval1(&p, rettv, evalarg);
+  char *p = skipwhite(arg);
+  int ret = eval1(&p, rettv, evalarg);
 
   if (ret != FAIL) {
     end_error = !ends_excmd(*p);
@@ -7239,10 +7235,9 @@ void set_vim_var_tv(const VimVarIndex idx, typval_T *const tv)
 void set_argv_var(char **argv, int argc)
 {
   list_T *l = tv_list_alloc(argc);
-  int i;
 
   tv_list_set_lock(l, VAR_FIXED);
-  for (i = 0; i < argc; i++) {
+  for (int i = 0; i < argc; i++) {
     tv_list_append_string(l, (const char *const)argv[i], -1);
     TV_LIST_ITEM_TV(tv_list_last(l))->v_lock = VAR_FIXED;
   }

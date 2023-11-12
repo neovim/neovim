@@ -420,7 +420,6 @@ void pum_redraw(void)
   int row = 0;
   int attr_scroll = win_hl_attr(curwin, HLF_PSB);
   int attr_thumb = win_hl_attr(curwin, HLF_PST);
-  int i;
   char *s;
   char *p = NULL;
   int width;
@@ -499,7 +498,7 @@ void pum_redraw(void)
                 / (pum_size - pum_height);
   }
 
-  for (i = 0; i < pum_height; i++) {
+  for (int i = 0; i < pum_height; i++) {
     int idx = i + pum_first;
     const int *const attrs = (idx == pum_selected) ? attrsSel : attrsNorm;
     int attr = attrs[0];  // start with "word" highlight
