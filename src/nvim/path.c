@@ -1554,14 +1554,13 @@ void simplify_filename(char *filename)
 
       if (components > 0) {             // strip one preceding component
         bool do_strip = false;
-        char saved_char;
 
         // Don't strip for an erroneous file name.
         if (!stripping_disabled) {
           // If the preceding component does not exist in the file
           // system, we strip it.  On Unix, we don't accept a symbolic
           // link that refers to a non-existent file.
-          saved_char = p[-1];
+          char saved_char = p[-1];
           p[-1] = NUL;
           FileInfo file_info;
           if (!os_fileinfo_link(filename, &file_info)) {
@@ -2186,12 +2185,7 @@ int expand_wildcards_eval(char **pat, int *num_file, char ***file, int flags)
 ///                      NULL or points to "".
 int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int flags)
 {
-  int retval;
-  int i, j;
-  char *p;
-  int non_suf_match;            // number without matching suffix
-
-  retval = gen_expand_wildcards(num_pat, pat, num_files, files, flags);
+  int retval = gen_expand_wildcards(num_pat, pat, num_files, files, flags);
 
   // When keeping all matches, return here
   if ((flags & EW_KEEPALL) || retval == FAIL) {
@@ -2200,18 +2194,16 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
 
   // Remove names that match 'wildignore'.
   if (*p_wig) {
-    char *ffname;
-
     // check all files in (*files)[]
     assert(*num_files == 0 || *files != NULL);
-    for (i = 0; i < *num_files; i++) {
-      ffname = FullName_save((*files)[i], false);
+    for (int i = 0; i < *num_files; i++) {
+      char *ffname = FullName_save((*files)[i], false);
       assert((*files)[i] != NULL);
       assert(ffname != NULL);
       if (match_file_list(p_wig, (*files)[i], ffname)) {
         // remove this matching file from the list
         xfree((*files)[i]);
-        for (j = i; j + 1 < *num_files; j++) {
+        for (int j = i; j + 1 < *num_files; j++) {
           (*files)[j] = (*files)[j + 1];
         }
         (*num_files)--;
@@ -2225,12 +2217,12 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
   // Skip when interrupted, the result probably won't be used.
   assert(*num_files == 0 || *files != NULL);
   if (*num_files > 1 && !got_int) {
-    non_suf_match = 0;
-    for (i = 0; i < *num_files; i++) {
+    int non_suf_match = 0;            // number without matching suffix
+    for (int i = 0; i < *num_files; i++) {
       if (!match_suffix((*files)[i])) {
         // Move the name without matching suffix to the front of the list.
-        p = (*files)[i];
-        for (j = i; j > non_suf_match; j--) {
+        char *p = (*files)[i];
+        for (int j = i; j > non_suf_match; j--) {
           (*files)[j] = (*files)[j - 1];
         }
         (*files)[non_suf_match++] = p;

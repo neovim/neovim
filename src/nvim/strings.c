@@ -485,10 +485,8 @@ void sort_strings(char **files, int count)
 bool has_non_ascii(const char *s)
   FUNC_ATTR_PURE
 {
-  const char *p;
-
   if (s != NULL) {
-    for (p = s; *p != NUL; p++) {
+    for (const char *p = s; *p != NUL; p++) {
       if ((uint8_t)(*p) >= 128) {
         return true;
       }
@@ -1964,7 +1962,6 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
           assert(str_arg_l < sizeof(tmp));
 
           if (remove_trailing_zeroes) {
-            int i;
             char *tp;
 
             // using %g or %G: remove superfluous zeroes
@@ -1979,7 +1976,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
                   STRMOVE(tp + 1, tp + 2);
                   str_arg_l--;
                 }
-                i = (tp[1] == '-') ? 2 : 1;
+                int i = (tp[1] == '-') ? 2 : 1;
                 while (tp[i] == '0') {
                   // change "1.0e07" to "1.0e7"
                   STRMOVE(tp + i, tp + i + 1);

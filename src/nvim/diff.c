@@ -340,8 +340,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
 
       dnext->df_lnum[idx] = line1;
       dnext->df_count[idx] = inserted;
-      int i;
-      for (i = 0; i < DB_COUNT; i++) {
+      for (int i = 0; i < DB_COUNT; i++) {
         if ((tp->tp_diffbuf[i] != NULL) && (i != idx)) {
           if (dprev == NULL) {
             dnext->df_lnum[i] = line1;
@@ -472,8 +471,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
     // check if this block touches the previous one, may merge them.
     if ((dprev != NULL) && !dp->is_linematched
         && (dprev->df_lnum[idx] + dprev->df_count[idx] == dp->df_lnum[idx])) {
-      int i;
-      for (i = 0; i < DB_COUNT; i++) {
+      for (int i = 0; i < DB_COUNT; i++) {
         if (tp->tp_diffbuf[i] != NULL) {
           dprev->df_count[i] += dp->df_count[i];
         }

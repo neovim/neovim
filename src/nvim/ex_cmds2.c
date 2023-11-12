@@ -101,7 +101,6 @@ void ex_perldo(exarg_T *eap)
 /// @return FAIL for failure, OK otherwise
 int autowrite(buf_T *buf, int forceit)
 {
-  int r;
   bufref_T bufref;
 
   if (!(p_aw || p_awa) || !p_write
@@ -111,7 +110,7 @@ int autowrite(buf_T *buf, int forceit)
     return FAIL;
   }
   set_bufref(&bufref, buf);
-  r = buf_write_all(buf, forceit);
+  int r = buf_write_all(buf, forceit);
 
   // Writing may succeed but the buffer still changed, e.g., when there is a
   // conversion error.  We do want to return FAIL then.
@@ -273,9 +272,7 @@ bool can_abandon(buf_T *buf, int forceit)
 /// Add a buffer number to "bufnrs", unless it's already there.
 static void add_bufnum(int *bufnrs, int *bufnump, int nr)
 {
-  int i;
-
-  for (i = 0; i < *bufnump; i++) {
+  for (int i = 0; i < *bufnump; i++) {
     if (bufnrs[i] == nr) {
       return;
     }
@@ -296,11 +293,9 @@ static void add_bufnum(int *bufnrs, int *bufnump, int nr)
 bool check_changed_any(bool hidden, bool unload)
 {
   bool ret = false;
-  int save;
   int i;
   int bufnum = 0;
   size_t bufcount = 0;
-  int *bufnrs;
 
   // Make a list of all buffers, with the most important ones first.
   FOR_ALL_BUFFERS(buf) {
@@ -311,7 +306,7 @@ bool check_changed_any(bool hidden, bool unload)
     return false;
   }
 
-  bufnrs = xmalloc(sizeof(*bufnrs) * bufcount);
+  int *bufnrs = xmalloc(sizeof(*bufnrs) * bufcount);
 
   // curbuf
   bufnrs[bufnum++] = curbuf->b_fnum;
@@ -379,7 +374,7 @@ bool check_changed_any(bool hidden, bool unload)
         ? semsg(_("E947: Job still running in buffer \"%s\""), buf->b_fname)
         : semsg(_("E162: No write since last change for buffer \"%s\""),
                 buf_spname(buf) != NULL ? buf_spname(buf) : buf->b_fname)) {
-      save = no_wait_return;
+      int save = no_wait_return;
       no_wait_return = false;
       wait_return(false);
       no_wait_return = save;
@@ -429,12 +424,11 @@ int check_fname(void)
 /// @return  FAIL for failure, OK otherwise
 int buf_write_all(buf_T *buf, int forceit)
 {
-  int retval;
   buf_T *old_curbuf = curbuf;
 
-  retval = (buf_write(buf, buf->b_ffname, buf->b_fname,
-                      1, buf->b_ml.ml_line_count, NULL,
-                      false, forceit, true, false));
+  int retval = (buf_write(buf, buf->b_ffname, buf->b_fname,
+                          1, buf->b_ml.ml_line_count, NULL,
+                          false, forceit, true, false));
   if (curbuf != old_curbuf) {
     msg_source(HL_ATTR(HLF_W));
     msg(_("Warning: Entered other buffer unexpectedly (check autocommands)"), 0);
@@ -684,9 +678,7 @@ void ex_listdo(exarg_T *eap)
 /// ":compiler[!] {name}"
 void ex_compiler(exarg_T *eap)
 {
-  char *buf;
   char *old_cur_comp = NULL;
-  char *p;
 
   if (*eap->arg == NUL) {
     // List all compiler scripts.
@@ -696,7 +688,7 @@ void ex_compiler(exarg_T *eap)
   }
 
   size_t bufsize = strlen(eap->arg) + 14;
-  buf = xmalloc(bufsize);
+  char *buf = xmalloc(bufsize);
 
   if (eap->forceit) {
     // ":compiler! {name}" sets global options
@@ -726,7 +718,7 @@ void ex_compiler(exarg_T *eap)
   do_cmdline_cmd(":delcommand CompilerSet");
 
   // Set "b:current_compiler" from "current_compiler".
-  p = get_var_value("g:current_compiler");
+  char *p = get_var_value("g:current_compiler");
   if (p != NULL) {
     set_internal_string_var("b:current_compiler", p);
   }
@@ -809,7 +801,6 @@ static void script_host_do_range(char *name, exarg_T *eap)
 void ex_drop(exarg_T *eap)
 {
   bool split = false;
-  buf_T *buf;
 
   // Check if the first argument is already being edited in a window.  If
   // so, jump to that window.
@@ -837,7 +828,7 @@ void ex_drop(exarg_T *eap)
   // ":drop file ...": Edit the first argument.  Jump to an existing
   // window if possible, edit in current window if the current buffer
   // can be abandoned, otherwise open a new window.
-  buf = buflist_findnr(ARGLIST[0].ae_fnum);
+  buf_T *buf = buflist_findnr(ARGLIST[0].ae_fnum);
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == buf) {

@@ -693,9 +693,7 @@ static int utf_safe_read_char_adv(const char **s, size_t *n)
 // Note: composing characters are skipped!
 int mb_ptr2char_adv(const char **const pp)
 {
-  int c;
-
-  c = utf_ptr2char(*pp);
+  int c = utf_ptr2char(*pp);
   *pp += utfc_ptr2len(*pp);
   return c;
 }
@@ -704,9 +702,7 @@ int mb_ptr2char_adv(const char **const pp)
 // Note: composing characters are returned as separate characters.
 int mb_cptr2char_adv(const char **pp)
 {
-  int c;
-
-  c = utf_ptr2char(*pp);
+  int c = utf_ptr2char(*pp);
   *pp += utf_ptr2len(*pp);
   return c;
 }
@@ -716,9 +712,7 @@ int mb_cptr2char_adv(const char **pp)
 /// behaves like a composing character.
 bool utf_composinglike(const char *p1, const char *p2)
 {
-  int c2;
-
-  c2 = utf_ptr2char(p2);
+  int c2 = utf_ptr2char(p2);
   if (utf_iscomposing(c2)) {
     return true;
   }
@@ -842,10 +836,9 @@ int utf_byte2len(int b)
 // Never returns zero.
 int utf_ptr2len_len(const char *p, int size)
 {
-  int len;
   int m;
 
-  len = utf8len_tab[(uint8_t)(*p)];
+  int len = utf8len_tab[(uint8_t)(*p)];
   if (len == 1) {
     return 1;           // NUL, ascii or illegal lead byte
   }
@@ -905,9 +898,6 @@ int utfc_ptr2len(const char *const p)
 /// Returns 1 for an illegal char or an incomplete byte sequence.
 int utfc_ptr2len_len(const char *p, int size)
 {
-  int len;
-  int prevlen;
-
   if (size < 1 || *p == NUL) {
     return 0;
   }
@@ -916,7 +906,7 @@ int utfc_ptr2len_len(const char *p, int size)
   }
 
   // Skip over first UTF-8 char, stopping at a NUL byte.
-  len = utf_ptr2len_len(p, size);
+  int len = utf_ptr2len_len(p, size);
 
   // Check for illegal byte and incomplete byte sequence.
   if ((len == 1 && (uint8_t)p[0] >= 0x80) || len > size) {
@@ -925,17 +915,15 @@ int utfc_ptr2len_len(const char *p, int size)
 
   // Check for composing characters.  We can handle only the first six, but
   // skip all of them (otherwise the cursor would get stuck).
-  prevlen = 0;
+  int prevlen = 0;
   while (len < size) {
-    int len_next_char;
-
     if ((uint8_t)p[len] < 0x80) {
       break;
     }
 
     // Next character length should not go beyond size to ensure that
     // utf_composinglike(...) does not read beyond size.
-    len_next_char = utf_ptr2len_len(p + len, size - len);
+    int len_next_char = utf_ptr2len_len(p + len, size - len);
     if (len_next_char > size - len) {
       break;
     }
@@ -1836,7 +1824,6 @@ int utf_cp_tail_off(const char *base, const char *p_in)
 int utf_cp_head_off(const char *base, const char *p)
 {
   int i;
-  int j;
 
   if (*p == NUL) {
     return 0;
@@ -1850,7 +1837,7 @@ int utf_cp_head_off(const char *base, const char *p)
   }
 
   // Find the last character that is 10xx.xxxx
-  for (j = 0; ((uint8_t)p[j + 1] & 0xc0) == 0x80; j++) {}
+  for (int j = 0; ((uint8_t)p[j + 1] & 0xc0) == 0x80; j++) {}
 
   // Check for illegal sequence.
   if (utf8len_tab[(uint8_t)p[i]] == 1) {
@@ -2118,7 +2105,6 @@ char *enc_skip(char *p)
 char *enc_canonize(char *enc)
   FUNC_ATTR_NONNULL_RET
 {
-  char *p, *s;
   if (strcmp(enc, "default") == 0) {
     // Use the default encoding as found by set_init_1().
     return xstrdup(fenc_default);
@@ -2127,8 +2113,8 @@ char *enc_canonize(char *enc)
   // copy "enc" to allocated memory, with room for two '-'
   char *r = xmalloc(strlen(enc) + 3);
   // Make it all lower case and replace '_' with '-'.
-  p = r;
-  for (s = enc; *s != NUL; s++) {
+  char *p = r;
+  for (char *s = enc; *s != NUL; s++) {
     if (*s == '_') {
       *p++ = '-';
     } else {
@@ -2260,17 +2246,14 @@ enc_locale_copy_enc:
 // (should return iconv_t, but that causes problems with prototypes).
 void *my_iconv_open(char *to, char *from)
 {
-  iconv_t fd;
 #define ICONV_TESTLEN 400
   char tobuf[ICONV_TESTLEN];
-  char *p;
-  size_t tolen;
   static WorkingStatus iconv_working = kUnknown;
 
   if (iconv_working == kBroken) {
     return (void *)-1;          // detected a broken iconv() previously
   }
-  fd = iconv_open(enc_skip(to), enc_skip(from));
+  iconv_t fd = iconv_open(enc_skip(to), enc_skip(from));
 
   if (fd != (iconv_t)-1 && iconv_working == kUnknown) {
     // Do a dummy iconv() call to check if it actually works.  There is a
@@ -2278,8 +2261,8 @@ void *my_iconv_open(char *to, char *from)
     // because it's wide-spread.  The symptoms are that after outputting
     // the initial shift state the "to" pointer is NULL and conversion
     // stops for no apparent reason after about 8160 characters.
-    p = tobuf;
-    tolen = ICONV_TESTLEN;
+    char *p = tobuf;
+    size_t tolen = ICONV_TESTLEN;
     (void)iconv(fd, NULL, NULL, &p, &tolen);
     if (p == NULL) {
       iconv_working = kBroken;
@@ -2301,24 +2284,19 @@ void *my_iconv_open(char *to, char *from)
 static char *iconv_string(const vimconv_T *const vcp, const char *str, size_t slen,
                           size_t *unconvlenp, size_t *resultlenp)
 {
-  const char *from;
-  size_t fromlen;
   char *to;
-  size_t tolen;
   size_t len = 0;
   size_t done = 0;
   char *result = NULL;
-  char *p;
-  int l;
 
-  from = str;
-  fromlen = slen;
+  const char *from = str;
+  size_t fromlen = slen;
   while (true) {
     if (len == 0 || ICONV_ERRNO == ICONV_E2BIG) {
       // Allocate enough room for most conversions.  When re-allocating
       // increase the buffer size.
       len = len + fromlen * 2 + 40;
-      p = xmalloc(len);
+      char *p = xmalloc(len);
       if (done > 0) {
         memmove(p, result, done);
       }
@@ -2327,7 +2305,7 @@ static char *iconv_string(const vimconv_T *const vcp, const char *str, size_t sl
     }
 
     to = result + done;
-    tolen = len - done - 2;
+    size_t tolen = len - done - 2;
     // Avoid a warning for systems with a wrong iconv() prototype by
     // casting the second argument to void *.
     if (iconv(vcp->vc_fd, (void *)&from, &fromlen, &to, &tolen) != SIZE_MAX) {
@@ -2357,7 +2335,7 @@ static char *iconv_string(const vimconv_T *const vcp, const char *str, size_t sl
       if (utf_ptr2cells(from) > 1) {
         *to++ = '?';
       }
-      l = utfc_ptr2len_len(from, (int)fromlen);
+      int l = utfc_ptr2len_len(from, (int)fromlen);
       from += l;
       fromlen -= (size_t)l;
     } else if (ICONV_ERRNO != ICONV_E2BIG) {
@@ -2421,8 +2399,6 @@ int convert_setup(vimconv_T *vcp, char *from, char *to)
 int convert_setup_ext(vimconv_T *vcp, char *from, bool from_unicode_is_utf8, char *to,
                       bool to_unicode_is_utf8)
 {
-  int from_prop;
-  int to_prop;
   int from_is_utf8;
   int to_is_utf8;
 
@@ -2438,8 +2414,8 @@ int convert_setup_ext(vimconv_T *vcp, char *from, bool from_unicode_is_utf8, cha
     return OK;
   }
 
-  from_prop = enc_canon_props(from);
-  to_prop = enc_canon_props(to);
+  int from_prop = enc_canon_props(from);
+  int to_prop = enc_canon_props(to);
   if (from_unicode_is_utf8) {
     from_is_utf8 = from_prop & ENC_UNICODE;
   } else {

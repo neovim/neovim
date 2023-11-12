@@ -2680,7 +2680,6 @@ static int do_more_prompt(int typed_char)
   bool to_redraw = false;
   msgchunk_T *mp_last = NULL;
   msgchunk_T *mp;
-  int i;
 
   // If headless mode is enabled and no input is required, this variable
   // will be true. However If server mode is enabled, the message "--more--"
@@ -2698,7 +2697,7 @@ static int do_more_prompt(int typed_char)
   if (typed_char == 'G') {
     // "g<": Find first line on the last page.
     mp_last = msg_sb_start(last_msgchunk);
-    for (i = 0; i < Rows - 2 && mp_last != NULL
+    for (int i = 0; i < Rows - 2 && mp_last != NULL
          && mp_last->sb_prev != NULL; i++) {
       mp_last = msg_sb_start(mp_last->sb_prev);
     }
@@ -2816,13 +2815,13 @@ static int do_more_prompt(int typed_char)
         }
 
         // go to start of line at top of the screen
-        for (i = 0; i < Rows - 2 && mp != NULL && mp->sb_prev != NULL; i++) {
+        for (int i = 0; i < Rows - 2 && mp != NULL && mp->sb_prev != NULL; i++) {
           mp = msg_sb_start(mp->sb_prev);
         }
 
         if (mp != NULL && (mp->sb_prev != NULL || to_redraw)) {
           // Find line to be displayed at top
-          for (i = 0; i > toscroll; i--) {
+          for (int i = 0; i > toscroll; i--) {
             if (mp == NULL || mp->sb_prev == NULL) {
               break;
             }
@@ -2846,7 +2845,7 @@ static int do_more_prompt(int typed_char)
             // event fragmentization, not unnecessary scroll events).
             grid_fill(&msg_grid_adj, 0, Rows, 0, Columns, ' ', ' ',
                       HL_ATTR(HLF_MSG));
-            for (i = 0; mp != NULL && i < Rows - 1; i++) {
+            for (int i = 0; mp != NULL && i < Rows - 1; i++) {
               mp = disp_sb_line(i, mp);
               msg_scrolled++;
             }

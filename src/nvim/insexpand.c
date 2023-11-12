@@ -910,7 +910,6 @@ static bool ins_compl_equal(compl_T *match, char *str, size_t len)
 static void ins_compl_longest_match(compl_T *match)
 {
   char *p, *s;
-  int c1, c2;
   int had_match;
 
   if (compl_leader == NULL) {
@@ -936,8 +935,8 @@ static void ins_compl_longest_match(compl_T *match)
   p = compl_leader;
   s = match->cp_str;
   while (*p != NUL) {
-    c1 = utf_ptr2char(p);
-    c2 = utf_ptr2char(s);
+    int c1 = utf_ptr2char(p);
+    int c2 = utf_ptr2char(s);
 
     if ((match->cp_flags & CP_ICASE)
         ? (mb_tolower(c1) != mb_tolower(c2))
@@ -1442,11 +1441,10 @@ static void ins_compl_files(int count, char **files, int thesaurus, int flags, r
 {
   char *ptr;
   int i;
-  FILE *fp;
   int add_r;
 
   for (i = 0; i < count && !got_int && !compl_interrupted; i++) {
-    fp = os_fopen(files[i], "r");  // open dictionary file
+    FILE *fp = os_fopen(files[i], "r");  // open dictionary file
     if (flags != DICT_EXACT && !shortmess(SHM_COMPLETIONSCAN)) {
       msg_hist_off = true;  // reset in msg_trunc()
       vim_snprintf(IObuff, IOSIZE,
@@ -2181,7 +2179,6 @@ bool ins_compl_prep(int c)
 static void ins_compl_fixRedoBufForLeader(char *ptr_arg)
 {
   int len;
-  char *p;
   char *ptr = ptr_arg;
 
   if (ptr == NULL) {
@@ -2192,7 +2189,7 @@ static void ins_compl_fixRedoBufForLeader(char *ptr_arg)
     }
   }
   if (compl_orig_text != NULL) {
-    p = compl_orig_text;
+    char *p = compl_orig_text;
     for (len = 0; p[len] != NUL && p[len] == ptr[len]; len++) {}
     if (len > 0) {
       len -= utf_head_off(p, p + len);
@@ -3853,15 +3850,13 @@ static bool ins_compl_pum_key(int c)
 /// Returns 1 for most keys, height of the popup menu for page-up/down keys.
 static int ins_compl_key2count(int c)
 {
-  int h;
-
   if (c == K_EVENT || c == K_COMMAND || c == K_LUA) {
     int offset = pum_want.item - pum_selected_item;
     return abs(offset);
   }
 
   if (ins_compl_pum_key(c) && c != K_UP && c != K_DOWN) {
-    h = pum_get_height();
+    int h = pum_get_height();
     if (h > 3) {
       h -= 2;       // keep some context
     }

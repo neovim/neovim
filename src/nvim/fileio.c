@@ -87,7 +87,6 @@ static const char *e_auchangedbuf = N_("E812: Autocommands changed buffer or buf
 
 void filemess(buf_T *buf, char *name, char *s, int attr)
 {
-  int msg_scroll_save;
   int prev_msg_col = msg_col;
 
   if (msg_silent != 0) {
@@ -102,7 +101,7 @@ void filemess(buf_T *buf, char *name, char *s, int attr)
   // For the first message may have to start a new line.
   // For further ones overwrite the previous one, reset msg_scroll before
   // calling filemess().
-  msg_scroll_save = msg_scroll;
+  int msg_scroll_save = msg_scroll;
   if (shortmess(SHM_OVERALL) && !msg_listdo_overwrite && !exiting && p_verbose == 0) {
     msg_scroll = false;
   }
@@ -1323,7 +1322,6 @@ retry:
         // Reading UTF-8: Check if the bytes are valid UTF-8.
         for (p = (uint8_t *)ptr;; p++) {
           int todo = (int)(((uint8_t *)ptr + size) - p);
-          int l;
 
           if (todo <= 0) {
             break;
@@ -1333,7 +1331,7 @@ retry:
             // an incomplete character at the end though, the next
             // read() will get the next bytes, we'll check it
             // then.
-            l = utf_ptr2len_len((char *)p, todo);
+            int l = utf_ptr2len_len((char *)p, todo);
             if (l > todo && !incomplete_tail) {
               // Avoid retrying with a different encoding when
               // a truncated file is more likely, or attempting
@@ -1905,11 +1903,8 @@ bool is_dev_fd_file(char *fname)
 /// @param endp     end of more bytes read
 static linenr_T readfile_linenr(linenr_T linecnt, char *p, const char *endp)
 {
-  char *s;
-  linenr_T lnum;
-
-  lnum = curbuf->b_ml.ml_line_count - linecnt + 1;
-  for (s = p; s < endp; s++) {
+  linenr_T lnum = curbuf->b_ml.ml_line_count - linecnt + 1;
+  for (char *s = p; s < endp; s++) {
     if (*s == '\n') {
       lnum++;
     }
@@ -1977,7 +1972,6 @@ void set_forced_fenc(exarg_T *eap)
 static char *next_fenc(char **pp, bool *alloced)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  char *p;
   char *r;
 
   *alloced = false;
@@ -1985,7 +1979,7 @@ static char *next_fenc(char **pp, bool *alloced)
     *pp = NULL;
     return "";
   }
-  p = vim_strchr(*pp, ',');
+  char *p = vim_strchr(*pp, ',');
   if (p == NULL) {
     r = enc_canonize(*pp);
     *pp += strlen(*pp);
@@ -2012,10 +2006,9 @@ static char *next_fenc(char **pp, bool *alloced)
 ///               Returns NULL if the conversion failed ("*fdp" is not set) .
 static char *readfile_charconvert(char *fname, char *fenc, int *fdp)
 {
-  char *tmpname;
   char *errmsg = NULL;
 
-  tmpname = vim_tempname();
+  char *tmpname = vim_tempname();
   if (tmpname == NULL) {
     errmsg = _("Can't find temp file for conversion");
   } else {
@@ -3246,12 +3239,10 @@ void write_lnum_adjust(linenr_T offset)
 /// unless when it looks like a URL.
 void forward_slash(char *fname)
 {
-  char *p;
-
   if (path_with_url(fname)) {
     return;
   }
-  for (p = fname; *p != NUL; p++) {
+  for (char *p = fname; *p != NUL; p++) {
     if (*p == '\\') {
       *p = '/';
     }

@@ -112,10 +112,9 @@ const char *parse_shape_opt(int what)
   int len;
   int i;
   int found_ve = false;                 // found "ve" flag
-  int round;
 
   // First round: check for errors; second round: do it for real.
-  for (round = 1; round <= 2; round++) {
+  for (int round = 1; round <= 2; round++) {
     if (round == 2 || *p_guicursor == NUL) {
       // Set all entries to default (block, blinkon0, default color).
       // This is the default for anything that is not set.

@@ -134,13 +134,12 @@ int get_highest_fnum(void)
 static int read_buffer(int read_stdin, exarg_T *eap, int flags)
 {
   int retval = OK;
-  linenr_T line_count;
   bool silent = shortmess(SHM_FILEINFO);
 
   // Read from the buffer which the text is already filled in and append at
   // the end.  This makes it possible to retry when 'fileformat' or
   // 'fileencoding' was guessed wrong.
-  line_count = curbuf->b_ml.ml_line_count;
+  linenr_T line_count = curbuf->b_ml.ml_line_count;
   retval = readfile(read_stdin ? NULL : curbuf->b_ffname,
                     read_stdin ? NULL : curbuf->b_fname,
                     line_count, 0, (linenr_T)MAXLNUM, eap,
@@ -1039,9 +1038,8 @@ char *do_bufdel(int command, char *arg, int addr_count, int start_bnr, int end_b
 {
   int do_current = 0;             // delete current buffer?
   int deleted = 0;                // number of buffers deleted
-  char *errormsg = NULL;   // return value
+  char *errormsg = NULL;          // return value
   int bnr;                        // buffer number
-  char *p;
 
   if (addr_count == 0) {
     (void)do_buffer(command, DOBUF_CURRENT, FORWARD, 0, forceit);
@@ -1078,7 +1076,7 @@ char *do_bufdel(int command, char *arg, int addr_count, int start_bnr, int end_b
           break;
         }
         if (!ascii_isdigit(*arg)) {
-          p = skiptowhite_esc(arg);
+          char *p = skiptowhite_esc(arg);
           bnr = buflist_findpat(arg, p, command == DOBUF_WIPE, false, false);
           if (bnr < 0) {                    // failed
             break;
@@ -1125,7 +1123,6 @@ char *do_bufdel(int command, char *arg, int addr_count, int start_bnr, int end_b
 /// Used when it is wiped out and it's the last buffer.
 static int empty_curbuf(int close_others, int forceit, int action)
 {
-  int retval;
   buf_T *buf = curbuf;
 
   if (action == DOBUF_UNLOAD) {
@@ -1158,8 +1155,7 @@ static int empty_curbuf(int close_others, int forceit, int action)
   }
 
   setpcmark();
-  retval = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE,
-                   forceit ? ECMD_FORCEIT : 0, curwin);
+  int retval = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, forceit ? ECMD_FORCEIT : 0, curwin);
 
   // do_ecmd() may create a new buffer, then we have to delete
   // the old one.  But do_ecmd() may have done that already, check
@@ -2044,12 +2040,11 @@ void free_buf_options(buf_T *buf, int free_p_ff)
 /// Return FAIL for failure, OK for success.
 int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
 {
-  buf_T *buf;
   win_T *wp = NULL;
   fmark_T *fm = NULL;
   colnr_T col;
 
-  buf = buflist_findnr(n);
+  buf_T *buf = buflist_findnr(n);
   if (buf == NULL) {
     if ((options & GETF_ALT) && n == 0) {
       emsg(_(e_noalt));
@@ -2121,9 +2116,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
 /// Go to the last known line number for the current buffer.
 void buflist_getfpos(void)
 {
-  pos_T *fpos;
-
-  fpos = &buflist_findfmark(curbuf)->mark;
+  pos_T *fpos = &buflist_findfmark(curbuf)->mark;
 
   curwin->w_cursor.lnum = fpos->lnum;
   check_cursor_lnum(curwin);
@@ -2143,18 +2136,17 @@ void buflist_getfpos(void)
 /// @return  buffer or NULL if not found
 buf_T *buflist_findname_exp(char *fname)
 {
-  char *ffname;
   buf_T *buf = NULL;
 
   // First make the name into a full path name
-  ffname = FullName_save(fname,
+  char *ffname = FullName_save(fname,
 #ifdef UNIX
-                         // force expansion, get rid of symbolic links
-                         true
+                               // force expansion, get rid of symbolic links
+                               true
 #else
-                         false
+                               false
 #endif
-                         );  // NOLINT(whitespace/parens)
+                               );  // NOLINT(whitespace/parens)
   if (ffname != NULL) {
     buf = buflist_findname(ffname);
     xfree(ffname);
@@ -2204,12 +2196,6 @@ int buflist_findpat(const char *pattern, const char *pattern_end, bool unlisted,
   FUNC_ATTR_NONNULL_ARG(1)
 {
   int match = -1;
-  int find_listed;
-  char *pat;
-  char *patend;
-  int attempt;
-  char *p;
-  int toggledollar;
 
   if (pattern_end == pattern + 1 && (*pattern == '%' || *pattern == '#')) {
     if (*pattern == '%') {
@@ -2230,23 +2216,24 @@ int buflist_findpat(const char *pattern, const char *pattern_end, bool unlisted,
     // Repeat this for finding an unlisted buffer if there was no matching
     // listed buffer.
 
-    pat = file_pat_to_reg_pat(pattern, pattern_end, NULL, false);
+    char *pat = file_pat_to_reg_pat(pattern, pattern_end, NULL, false);
     if (pat == NULL) {
       return -1;
     }
-    patend = pat + strlen(pat) - 1;
-    toggledollar = (patend > pat && *patend == '$');
+    char *patend = pat + strlen(pat) - 1;
+    int toggledollar = (patend > pat && *patend == '$');
 
     // First try finding a listed buffer.  If not found and "unlisted"
     // is true, try finding an unlisted buffer.
-    find_listed = true;
+
+    int find_listed = true;
     while (true) {
-      for (attempt = 0; attempt <= 3; attempt++) {
+      for (int attempt = 0; attempt <= 3; attempt++) {
         // may add '^' and '$'
         if (toggledollar) {
           *patend = (attempt < 2) ? NUL : '$';           // add/remove '$'
         }
-        p = pat;
+        char *p = pat;
         if (*p == '^' && !(attempt & 1)) {               // add/remove '^'
           p++;
         }
@@ -2336,7 +2323,6 @@ int ExpandBufnames(char *pat, int *num_file, char ***file, int options)
   int count = 0;
   int round;
   char *p;
-  int attempt;
   bufmatch_T *matches = NULL;
 
   *num_file = 0;                    // return values in case of FAIL
@@ -2364,7 +2350,7 @@ int ExpandBufnames(char *pat, int *num_file, char ***file, int options)
   fuzmatch_str_T *fuzmatch = NULL;
   // attempt == 0: try match with    '\<', match at start of word
   // attempt == 1: try match without '\<', match anywhere
-  for (attempt = 0; attempt <= (fuzzy ? 0 : 1); attempt++) {
+  for (int attempt = 0; attempt <= (fuzzy ? 0 : 1); attempt++) {
     regmatch_T regmatch;
     if (!fuzzy) {
       if (attempt > 0 && patc == pat) {
@@ -2520,7 +2506,6 @@ static char *buflist_match(regmatch_T *rmp, buf_T *buf, bool ignore_case)
 static char *fname_match(regmatch_T *rmp, char *name, bool ignore_case)
 {
   char *match = NULL;
-  char *p;
 
   // extra check for valid arguments
   if (name == NULL || rmp->regprog == NULL) {
@@ -2533,7 +2518,7 @@ static char *fname_match(regmatch_T *rmp, char *name, bool ignore_case)
     match = name;
   } else if (rmp->regprog != NULL) {
     // Replace $(HOME) with '~' and try matching again.
-    p = home_replace_save(NULL, name);
+    char *p = home_replace_save(NULL, name);
     if (vim_regexec(rmp, p, 0)) {
       match = name;
     }
@@ -3151,10 +3136,8 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
   char *name;
   int n;
   char *p;
-  char *buffer;
-  size_t len;
 
-  buffer = xmalloc(IOSIZE);
+  char *buffer = xmalloc(IOSIZE);
 
   if (fullname > 1) {       // 2 CTRL-G: include buffer number
     vim_snprintf(buffer, IOSIZE, "buf %d: ", curbuf->b_fnum);
@@ -3217,7 +3200,7 @@ void fileinfo(int fullname, int shorthelp, int dont_truncate)
                      (int64_t)curbuf->b_ml.ml_line_count,
                      n);
     validate_virtcol();
-    len = strlen(buffer);
+    size_t len = strlen(buffer);
     col_print(buffer + len, IOSIZE - len,
               (int)curwin->w_cursor.col + 1, (int)curwin->w_virtcol + 1);
   }
@@ -3266,7 +3249,6 @@ void maketitle(void)
   char *icon_str = NULL;
   int maxlen = 0;
   int len;
-  int mustset;
   char buf[IOSIZE];
 
   if (!redrawing()) {
@@ -3389,7 +3371,7 @@ void maketitle(void)
 #undef SPACE_FOR_ARGNR
     }
   }
-  mustset = value_change(title_str, &lasttitle);
+  int mustset = value_change(title_str, &lasttitle);
 
   if (p_icon) {
     icon_str = buf;
@@ -3807,12 +3789,10 @@ static int chk_modeline(linenr_T lnum, int flags)
   char *s;
   char *e;
   char *linecopy;                // local copy of any modeline found
-  int prev;
   intmax_t vers;
-  int end;
   int retval = OK;
 
-  prev = -1;
+  int prev = -1;
   for (s = ml_get(lnum); *s != NUL; s++) {
     if (prev == -1 || ascii_isspace(prev)) {
       if ((prev != -1 && strncmp(s, "ex:", (size_t)3) == 0)
@@ -3858,7 +3838,7 @@ static int chk_modeline(linenr_T lnum, int flags)
   // prepare for emsg()
   estack_push(ETYPE_MODELINE, "modelines", lnum);
 
-  end = false;
+  bool end = false;
   while (end == false) {
     s = skipwhite(s);
     if (*s == NUL) {

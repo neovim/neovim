@@ -549,8 +549,6 @@ void grid_line_flush_if_valid_row(void)
 void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int end_col, int c1,
                int c2, int attr)
 {
-  schar_T sc;
-
   int row_off = 0, col_off = 0;
   grid_adjust(&grid, &row_off, &col_off);
   start_row += row_off;
@@ -594,7 +592,7 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
     }
 
     int col = start_col;
-    sc = schar_from_char(c1);
+    schar_T sc = schar_from_char(c1);
     for (col = start_col; col < end_col; col++) {
       size_t off = lineoff + (size_t)col;
       if (grid->chars[off] != sc || grid->attrs[off] != attr || rdb_flags & RDB_NODELTA) {
