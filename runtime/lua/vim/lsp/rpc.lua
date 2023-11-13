@@ -593,9 +593,9 @@ end
 --- Create a LSP RPC client factory that connects via TCP to the given host
 --- and port
 ---
----@param host string
----@param port integer
----@return fun(dispatchers: Dispatchers): StartServer?
+---@param host string host to connect to
+---@param port integer port to connect to
+---@return fun(dispatchers: vim.lsp.rpc.PrivateDispatchers): vim.lsp.rpc.StartServer? #function intended to be passed to |vim.lsp.rpc.start_client| or |vim.lsp.start| on the field cmd
 function M.connect(host, port)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
@@ -640,25 +640,29 @@ function M.connect(host, port)
   end
 end
 
----@class Dispatchers
----@field notification function
----@field server_request function
----@field on_exit function
----@field on_error function
+---@alias vim.lsp.rpc.Dispatcher fun(method: string, params: table<string, any>)
+---@alias vim.lsp.rpc.on_error fun(code: integer, ...: any)
+---@alias vim.lsp.rpc.on_exit fun(code: integer, signal: integer)
+
+---@class vim.lsp.rpc.PrivateDispatchers
+---@field notification vim.lsp.rpc.Dispatcher
+---@field server_request vim.lsp.rpc.Dispatcher
+---@field on_exit vim.lsp.rpc.on_error
+---@field on_error vim.lsp.rpc.on_exit
 
 -- TODO: better name
----@class StartServer
+---@class vim.lsp.rpc.StartServer
 ---@field request fun(method: string, params: table?, callbackfun: fun(err: lsp.ResponseError | nil, result: any), notify_reply_callback:function?)
 ---@field notify fun(method: string, params: any)
----@field is_closing function
----@field terminate function
+---@field is_closing fun(): boolean
+---@field terminate fun(): nil
 
---- Create a LSP RPC client factory that connects via named pipes (window)
---- or unix domain sockets (unix) to the given pipe_path (file path on
+--- Create a LSP RPC client factory that connects via named pipes (Windows)
+--- or unix domain sockets (Unix) to the given pipe_path (file path on
 --- Unix and name on Windows)
 ---
----@param pipe_path  string
----@return fun(dispatchers: Dispatchers): StartServer?
+---@param pipe_path string file path of the domain socket (Unix) or name of the named pipe (Windows) to connect to
+---@return fun(dispatchers: vim.lsp.rpc.PrivateDispatchers): vim.lsp.rpc.StartServer? #function intended to be passed to |vim.lsp.rpc.start_client| or |vim.lsp.start| on the field cmd
 function M.domain_socket_connect(pipe_path)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
