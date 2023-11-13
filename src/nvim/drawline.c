@@ -3124,16 +3124,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         wlv.need_showbreak = true;
       }
       if (statuscol.draw) {
-        if (wlv.row == startrow + wlv.filler_lines) {
-          statuscol.textp = NULL;  // re-evaluate for first non-filler line
-        } else if (vim_strchr(p_cpo, CPO_NUMCOL) && wlv.row > startrow + wlv.filler_lines) {
+        if (vim_strchr(p_cpo, CPO_NUMCOL) && wlv.row > startrow + wlv.filler_lines) {
           statuscol.draw = false;  // don't draw status column if "n" is in 'cpo'
-        } else if (wlv.row == startrow + wlv.filler_lines + 1) {
-          statuscol.textp = NULL;  // re-evaluate for first wrapped line
         } else {
-          // Draw the already built 'statuscolumn' on the next wrapped or filler line
-          statuscol.textp = statuscol.text;
-          statuscol.hlrecp = statuscol.hlrec;
+          statuscol.textp = NULL;  // re-evaluate with new v:virtnum
         }
       }
       wlv.filler_todo--;

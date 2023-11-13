@@ -429,7 +429,7 @@ describe('statuscolumn', function()
       {1:buffer  0 5}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {1:wrapped 1 5}aaaaaaaa                                  |
       {1:virtual-2 5}virt_line                                 |
-      {1:virtual-2 5}virt_line above                           |
+      {1:virtual-1 5}virt_line above                           |
       {1:buffer  0 6}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {1:wrapped 1 6}aaaaaaaa                                  |
       {1:buffer  0 7}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -443,18 +443,18 @@ describe('statuscolumn', function()
     exec_lua([[
       vim.api.nvim_buf_set_extmark(0, ns, 15, 0, { virt_lines = {{{"END", ""}}} })
     ]])
-    feed('Gzz')
+    feed('GkJzz')
     screen:expect([[
+      {1:buffer  0 12}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      {1:wrapped 1 12}aaaaaaaaa                                |
       {1:buffer  0 13}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {1:wrapped 1 13}aaaaaaaaa                                |
       {1:buffer  0 14}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       {1:wrapped 1 14}aaaaaaaaa                                |
-      {1:buffer  0 15}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {1:wrapped 1 15}aaaaaaaaa                                |
-      {4:buffer  0 16}{5:^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
-      {4:wrapped 1 16}{5:aaaaaaaaa                                }|
-      {1:virtual-1 16}END                                      |
-      {0:~                                                    }|
+      {4:buffer  0 15}{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {4:wrapped 1 15}{5:aaaaaaaaa^ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {4:wrapped 2 15}{5:aaaaaaaaaaaaaaaaaaa                      }|
+      {1:virtual-1 15}END                                      |
       {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
@@ -467,18 +467,18 @@ describe('statuscolumn', function()
       vim.api.nvim_buf_set_extmark(0, ns, 14, 0, { virt_lines = {{{"virt_line2", ""}}} })
     ]])
     screen:expect([[
+      {1:buffer  0 12}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaa                                            |
       {1:buffer  0 13}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaa                                            |
       {1:buffer  0 14}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaa                                            |
-      {1:buffer  0 15}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      aaaaaaaaa                                            |
-      {1:virtual-2 15}virt_line1                               |
+      {4:buffer  0 15}{5:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {5:aaaaaaaaa^ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
+      {5:aaaaaaa                                              }|
+      {1:virtual-3 15}virt_line1                               |
       {1:virtual-2 15}virt_line2                               |
-      {4:buffer  0 16}{5:^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
-      {5:aaaaaaaaa                                            }|
-      {1:virtual-1 16}END                                      |
-      {0:~                                                    }|
+      {1:virtual-1 15}END                                      |
       {0:~                                                    }|
                                                            |
     ]])
