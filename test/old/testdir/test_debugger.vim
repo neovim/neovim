@@ -366,6 +366,8 @@ endfunc
 " Test for expression breakpoint set using ":breakadd expr <expr>"
 func Test_Debugger_breakadd_expr()
   CheckRunVimInTerminal
+  CheckCWD
+
   let lines =<< trim END
     let g:Xtest_var += 1
   END
