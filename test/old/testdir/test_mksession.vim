@@ -353,6 +353,108 @@ func Test_mksession_blank_windows()
   call delete('Xtest_mks.out')
 endfunc
 
+if has('terminal')
+
+func Test_mksession_terminal_shell()
+  terminal
+  mksession! Xtest_mks.out
+  let lines = readfile('Xtest_mks.out')
+  let term_cmd = ''
+  for line in lines
+    if line =~ '^terminal'
+      let term_cmd = line
+    elseif line =~ 'badd.*' . &shell
+      call assert_report('unexpected shell line: ' . line)
+    endif
+  endfor
+  call assert_match('terminal ++curwin ++cols=\d\+ ++rows=\d\+\s*$', term_cmd)
+
+  call Stop_shell_in_terminal(bufnr('%'))
+  call delete('Xtest_mks.out')
+endfunc
+
+func Test_mksession_terminal_no_restore_cmdarg()
+  terminal ++norestore
+  mksession! Xtest_mks.out
+  let lines = readfile('Xtest_mks.out')
+  let term_cmd = ''
+  for line in lines
+    if line =~ '^terminal'
+      call assert_report('session must not restore teminal')
+    endif
+  endfor
+
+  call Stop_shell_in_terminal(bufnr('%'))
+  call delete('Xtest_mks.out')
+endfunc
+
+func Test_mksession_terminal_no_restore_funcarg()
+  call term_start(&shell, {'norestore': 1})
+  mksession! Xtest_mks.out
+  let lines = readfile('Xtest_mks.out')
+  let term_cmd = ''
+  for line in lines
+    if line =~ '^terminal'
+      call assert_report('session must not restore teminal')
+    endif
+  endfor
+
+  call Stop_shell_in_terminal(bufnr('%'))
+  call delete('Xtest_mks.out')
+endfunc
+
+func Test_mksession_terminal_no_restore_func()
+  terminal
+  call term_setrestore(bufnr('%'), 'NONE')
+  mksession! Xtest_mks.out
+  let lines = readfile('Xtest_mks.out')
+  let term_cmd = ''
+  for line in lines
+    if line =~ '^terminal'
+      call assert_report('session must not restore teminal')
+    endif
+  endfor
+
+  call Stop_shell_in_terminal(bufnr('%'))
+  call delete('Xtest_mks.out')
+endfunc
+
+func Test_mksession_terminal_no_ssop()
+  terminal
+  set sessionoptions-=terminal
+  mksession! Xtest_mks.out
+  let lines = readfile('Xtest_mks.out')
+  let term_cmd = ''
+  for line in lines
+    if line =~ '^terminal'
+      call assert_report('session must not restore teminal')
+    endif
+  endfor
+
+  call Stop_shell_in_terminal(bufnr('%'))
+  call delete('Xtest_mks.out')
+  set sessionoptions&
+endfunc
+
+func Test_mksession_terminal_restore_other()
+  terminal
+  call term_setrestore(bufnr('%'), 'other')
+  mksession! Xtest_mks.out
+  let lines = readfile('Xtest_mks.out')
+  let term_cmd = ''
+  for line in lines
+    if line =~ '^terminal'
+      let term_cmd = line
+    endif
+  endfor
+  call assert_match('terminal ++curwin ++cols=\d\+ ++rows=\d\+ other', term_cmd)
+
+  call Stop_shell_in_terminal(bufnr('%'))
+  call delete('Xtest_mks.out')
+endfunc
+
+endif " has('terminal')
+
 func Test_mkview_open_folds()
   enew!
 
