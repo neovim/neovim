@@ -101,6 +101,7 @@
 #include "nvim/version.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer.c.generated.h"

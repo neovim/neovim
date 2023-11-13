@@ -25,6 +25,7 @@
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/win_config.c.generated.h"

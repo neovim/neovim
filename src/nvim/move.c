@@ -45,6 +45,7 @@
 #include "nvim/types.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 typedef struct {
   linenr_T lnum;                // line number
