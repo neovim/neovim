@@ -446,31 +446,31 @@ endfunc
 " terminal.
 func Test_autoindent_remove_indent()
   CheckRunVimInTerminal
-  let buf = RunVimInTerminal('-N Xfile', {'rows': 6, 'cols' : 20})
+  let buf = RunVimInTerminal('-N Xarifile', {'rows': 6, 'cols' : 20})
   call TermWait(buf)
   call term_sendkeys(buf, ":set autoindent\n")
   " leaving insert mode in a new line with indent added by autoindent, should
   " remove the indent.
   call term_sendkeys(buf, "i\<Tab>foo\<CR>\<Esc>")
-  " Need to delay for sometime, otherwise the code in getchar.c will not be
+  " Need to delay for some time, otherwise the code in getchar.c will not be
   " exercised.
   call TermWait(buf, 50)
   " when a line is wrapped and the cursor is at the start of the second line,
   " leaving insert mode, should move the cursor back to the first line.
   call term_sendkeys(buf, "o" .. repeat('x', 20) .. "\<Esc>")
-  " Need to delay for sometime, otherwise the code in getchar.c will not be
+  " Need to delay for some time, otherwise the code in getchar.c will not be
   " exercised.
   call TermWait(buf, 50)
   call term_sendkeys(buf, ":w\n")
   call TermWait(buf)
   call StopVimInTerminal(buf)
-  call assert_equal(["\tfoo", '', repeat('x', 20)], readfile('Xfile'))
-  call delete('Xfile')
+  call assert_equal(["\tfoo", '', repeat('x', 20)], readfile('Xarifile'))
+  call delete('Xarifile')
 endfunc
 
 func Test_edit_CR()
   " Test for <CR> in insert mode
-  " basically only in quickfix mode ist tested, the rest
+  " basically only in quickfix mode it's tested, the rest
   " has been taken care of by other tests
   CheckFeature quickfix
   botright new
@@ -1518,12 +1518,10 @@ func Test_edit_rightleft()
 endfunc
 
 func Test_edit_complete_very_long_name()
-  if !has('unix')
-    " Long directory names only work on Unix.
-    return
-  endif
+  " Long directory names only work on Unix.
+  CheckUnix
 
-  let dirname = getcwd() . "/Xdir"
+  let dirname = getcwd() . "/Xlongdir"
   let longdirname = dirname . repeat('/' . repeat('d', 255), 4)
   try
     call mkdir(longdirname, 'p')
@@ -1561,7 +1559,7 @@ func Test_edit_complete_very_long_name()
   let longfilename = longdirname . '/' . repeat('a', 255)
   call writefile(['Totum', 'Table'], longfilename)
   new
-  exe "next Xfile " . longfilename
+  exe "next Xnofile " . longfilename
   exe "normal iT\<C-N>"
 
   bwipe!
@@ -1760,7 +1758,7 @@ endfunc
 " Test for editing a directory
 func Test_edit_is_a_directory()
   CheckEnglish
-  let dirname = getcwd() . "/Xdir"
+  let dirname = getcwd() . "/Xeditdir"
   call mkdir(dirname, 'p')
 
   new
@@ -1785,19 +1783,19 @@ endfunc
 " Test for editing a file using invalid file encoding
 func Test_edit_invalid_encoding()
   CheckEnglish
-  call writefile([], 'Xfile')
+  call writefile([], 'Xinvfile')
   redir => msg
-  new ++enc=axbyc Xfile
+  new ++enc=axbyc Xinvfile
   redir END
   call assert_match('\[NOT converted\]', msg)
-  call delete('Xfile')
+  call delete('Xinvfile')
   close!
 endfunc
 
 " Test for the "charconvert" option
 func Test_edit_charconvert()
   CheckEnglish
-  call writefile(['one', 'two'], 'Xfile')
+  call writefile(['one', 'two'], 'Xccfile')
 
   " set 'charconvert' to a non-existing function
   set charconvert=NonExitingFunc()
@@ -1805,7 +1803,7 @@ func Test_edit_charconvert()
   let caught_e117 = v:false
   try
     redir => msg
-    edit ++enc=axbyc Xfile
+    edit ++enc=axbyc Xccfile
   catch /E117:/
     let caught_e117 = v:true
   finally
@@ -1823,7 +1821,7 @@ func Test_edit_charconvert()
   set charconvert=Cconv1()
   new
   redir => msg
-  edit ++enc=axbyc Xfile
+  edit ++enc=axbyc Xccfile
   redir END
   call assert_equal(['one', 'two'], getline(1, '$'))
   call assert_match("can't read output of 'charconvert'", msg)
@@ -1838,10 +1836,10 @@ func Test_edit_charconvert()
     call writefile(data, v:fname_out)
   endfunc
   set charconvert=Cconv2()
-  new Xfile
-  write ++enc=ucase Xfile1
-  call assert_equal(['ONE', 'TWO'], readfile('Xfile1'))
-  call delete('Xfile1')
+  new Xccfile
+  write ++enc=ucase Xccfile1
+  call assert_equal(['ONE', 'TWO'], readfile('Xccfile1'))
+  call delete('Xccfile1')
   close!
   delfunc Cconv2
   set charconvert&
@@ -1852,13 +1850,13 @@ func Test_edit_charconvert()
   endfunc
   set charconvert=Cconv3()
   new
-  call assert_fails('edit ++enc=lcase Xfile', 'E202:')
+  call assert_fails('edit ++enc=lcase Xccfile', 'E202:')
   call assert_equal([''], getline(1, '$'))
   close!
   delfunc Cconv3
   set charconvert&
 
-  call delete('Xfile')
+  call delete('Xccfile')
 endfunc
 
 " Test for editing a file without read permission
@@ -1866,17 +1864,17 @@ func Test_edit_file_no_read_perm()
   CheckUnix
   CheckNotRoot
 
-  call writefile(['one', 'two'], 'Xfile')
-  call setfperm('Xfile', '-w-------')
+  call writefile(['one', 'two'], 'Xnrpfile')
+  call setfperm('Xnrpfile', '-w-------')
   new
   redir => msg
-  edit Xfile
+  edit Xnrpfile
   redir END
   call assert_equal(1, &readonly)
   call assert_equal([''], getline(1, '$'))
   call assert_match('\[Permission Denied\]', msg)
   close!
-  call delete('Xfile')
+  call delete('Xnrpfile')
 endfunc
 
 " Using :edit without leaving 'insertmode' should not cause Insert mode to be
