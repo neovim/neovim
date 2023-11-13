@@ -1,5 +1,7 @@
 " Test the :filter command modifier
 
+source check.vim
+
 func Test_filter()
   edit Xdoesnotmatch
   edit Xwillmatch
@@ -97,6 +99,8 @@ func Test_filter_cmd_with_filter()
 endfunction
 
 func Test_filter_commands()
+  CheckFeature quickfix
+
   let g:test_filter_a = 1
   let b:test_filter_b = 2
   let test_filter_c = 3

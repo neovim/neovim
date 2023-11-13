@@ -508,6 +508,8 @@ func Test_equalalways_on_close()
 endfunc
 
 func Test_win_screenpos()
+  CheckFeature quickfix
+
   call assert_equal(1, winnr('$'))
   split
   vsplit

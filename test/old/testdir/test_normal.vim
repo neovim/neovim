@@ -1923,6 +1923,8 @@ func Test_normal24_rot13()
 endfunc
 
 func Test_normal25_tag()
+  CheckFeature quickfix
+
   " Testing for CTRL-] g CTRL-] g]
   " CTRL-W g] CTRL-W CTRL-] CTRL-W g CTRL-]
   h

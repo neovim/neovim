@@ -1137,6 +1137,8 @@ func Test_edit_CTRL_V()
 endfunc
 
 func Test_edit_F1()
+  CheckFeature quickfix
+
   " Pressing <f1>
   new
   " call feedkeys(":set im\<cr>\<f1>\<c-l>", 'tnix')
