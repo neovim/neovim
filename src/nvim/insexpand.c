@@ -3335,24 +3335,27 @@ static void get_next_bufname_token(void)
 {
   FOR_ALL_BUFFERS(b) {
     if (b->b_p_bl && b->b_sfname != NULL) {
-      char *start = get_past_head(b->b_sfname);
-      char *current = start;
-      char *p = (char *)path_next_component(start);
-      while (true) {
-        int len = (int)(p - current) - (*p == NUL ? 0 : 1);
-        // treat . as a separator, unless it is the first char in a filename
-        char *dot = strchr(current, '.');
-        if (dot && *p == NUL && *current != '.') {
-          len = (int)(dot - current);
-          p = dot + 1;
+      char *tail = path_tail(b->b_sfname);
+      if (strncmp(tail, compl_first_match->cp_str, strlen(compl_first_match->cp_str)) == 0) {
+        char *start = get_past_head(b->b_sfname);
+        char *current = start;
+        char *p = (char *)path_next_component(start);
+        while (true) {
+          int len = (int)(p - current) - (*p == NUL ? 0 : 1);
+          // treat . as a separator, unless it is the first char in a filename
+          char *dot = strchr(current, '.');
+          if (dot && *p == NUL && *current != '.') {
+            len = (int)(dot - current);
+            p = dot + 1;
+          }
+          ins_compl_add(current, len, NULL, NULL, false, NULL, 0,
+                        p_ic ? CP_ICASE : 0, false);
+          if (*p == NUL) {
+            break;
+          }
+          current = p;
+          p = (char *)path_next_component(p);
         }
-        ins_compl_add(current, len, NULL, NULL, false, NULL, 0,
-                      p_ic ? CP_ICASE : 0, false);
-        if (*p == NUL) {
-          break;
-        }
-        current = p;
-        p = (char *)path_next_component(p);
       }
     }
   }

@@ -1251,5 +1251,20 @@ describe('completion', function()
       {0:~                   }|
       {3:-- }{4:match 1 of 5}     |
     ]]}
+
+    feed('<Esc>')
+    command('bd '..bufname ..' '..hidden ..' | edit foo | edit fooA | edit Bar')
+    feed('ccf<C-n>')
+    screen:expect{grid=[[
+      foo^                 |
+      {2:foo            }{0:     }|
+      {1:fooA           }{0:     }|
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+      {3:-- }{4:match 1 of 2}     |
+    ]]}
   end)
 end)
