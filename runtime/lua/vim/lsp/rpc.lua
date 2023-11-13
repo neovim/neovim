@@ -666,9 +666,15 @@ end
 function M.domain_socket_connect(pipe_path)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
-    local pipe = uv.new_pipe(false)
+    local pipe, err_msg, err_name = uv.new_pipe(false)
     if not pipe then
-      -- TODO: should an error be reported to the user?
+      local _ = log.error()
+        and log.error(
+          'pipe with name %s could not be opened. Error: %s. Reason: %s',
+          pipe_path,
+          err_name,
+          err_msg
+        )
       return
     end
     local closing = false
