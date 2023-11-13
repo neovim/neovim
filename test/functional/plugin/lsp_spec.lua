@@ -3886,7 +3886,6 @@ describe('LSP', function()
                 assert(init, "server must receive `initialize` request")
                 server:close()
                 server:shutdown()
-                vim.print(vim.json.decode(init))
         end)
       ]]
       eq(result.method, "initialize")
