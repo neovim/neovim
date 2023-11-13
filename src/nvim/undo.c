@@ -2981,7 +2981,7 @@ void u_clearall(buf_T *buf)
   buf->b_u_line_lnum = 0;
 }
 
-/// save the line "lnum" for the "U" command
+/// Save the line "lnum" for the "U" command.
 void u_saveline(buf_T *buf, linenr_T lnum)
 {
   if (lnum == buf->b_u_line_lnum) {      // line is already saved
