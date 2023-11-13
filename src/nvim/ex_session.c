@@ -324,9 +324,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
   // when 'viewoptions' contains "cursor".
   do_cursor = (flagp == &ssop_flags || *flagp & SSOP_CURSOR);
 
-  //
   // Local argument list.
-  //
   if (wp->w_alist == &global_alist) {
     PUTLINE_FAIL("argglobal");
   } else {
@@ -419,21 +417,17 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
     }
   }
 
-  //
   // Local mappings and abbreviations.
-  //
   if ((*flagp & (SSOP_OPTIONS | SSOP_LOCALOPTIONS))
       && makemap(fd, wp->w_buffer) == FAIL) {
     return FAIL;
   }
 
-  //
   // Local options.  Need to go to the window temporarily.
   // Store only local values when using ":mkview" and when ":mksession" is
   // used and 'sessionoptions' doesn't include "nvim/options".
   // Some folding options are always stored when "folds" is included,
   // otherwise the folds would not be restored correctly.
-  //
   save_curwin = curwin;
   curwin = wp;
   curbuf = curwin->w_buffer;
@@ -451,9 +445,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
     return FAIL;
   }
 
-  //
   // Save Folds when 'buftype' is empty and for help files.
-  //
   if ((*flagp & SSOP_FOLDS)
       && wp->w_buffer->b_ffname != NULL
       && (bt_normal(wp->w_buffer)
@@ -463,9 +455,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
     }
   }
 
-  //
   // Set the cursor after creating folds, since that moves the cursor.
-  //
   if (do_cursor) {
     // Restore the cursor line in the file and relatively in the
     // window.  Don't use "G", it changes the jumplist.
@@ -516,10 +506,8 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
     }
   }
 
-  //
   // Local directory, if the current flag is not view options or the "curdir"
   // option is included.
-  //
   if (wp->w_localdir != NULL
       && (flagp != &vop_flags || (*flagp & SSOP_CURDIR))) {
     if (fputs("lcd ", fd) < 0
@@ -574,9 +562,7 @@ static int makeopens(FILE *fd, char *dirnow)
     return FAIL;
   }
 
-  //
   // Now a :cd command to the session directory or the current directory
-  //
   if (ssop_flags & SSOP_SESDIR) {
     PUTLINE_FAIL("exe \"cd \" . escape(expand(\"<sfile>:p:h\"), ' ')");
   } else if (ssop_flags & SSOP_CURDIR) {
@@ -658,11 +644,9 @@ static int makeopens(FILE *fd, char *dirnow)
     restore_stal = true;
   }
 
-  //
   // For each tab:
   // - Put windows for each tab, when "tabpages" is in 'sessionoptions'.
   // - Don't use goto_tabpage(), it may change CWD and trigger autocommands.
-  //
   tab_firstwin = firstwin;      // First window in tab page "tabnr".
   tab_topframe = topframe;
   if ((ssop_flags & SSOP_TABPAGES)) {
@@ -703,11 +687,9 @@ static int makeopens(FILE *fd, char *dirnow)
       }
     }
 
-    //
     // Before creating the window layout, try loading one file.  If this
     // is aborted we don't end up with a number of useless windows.
     // This may have side effects! (e.g., compressed or network file).
-    //
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp)
           && wp->w_buffer->b_ffname != NULL
@@ -785,9 +767,19 @@ static int makeopens(FILE *fd, char *dirnow)
       return FAIL;
     }
 
-    //
+    // Restore the tab-local working directory if specified
+    // Do this before the windows, so that the window-local directory can
+    // override the tab-local directory.
+    if (tp != NULL && tp->tp_localdir != NULL && (ssop_flags & SSOP_CURDIR)) {
+      if (fputs("tcd ", fd) < 0
+          || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
+          || put_eol(fd) == FAIL) {
+        return FAIL;
+      }
+      did_lcd = true;
+    }
+
     // Restore the view of the window (options, file, cursor, etc.).
-    //
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (!ses_do_win(wp)) {
         continue;
@@ -807,29 +799,15 @@ static int makeopens(FILE *fd, char *dirnow)
     // "tabedit".
     cur_arg_idx = next_arg_idx;
 
-    //
     // Restore cursor to the current window if it's not the first one.
-    //
     if (cnr > 1 && (fprintf(fd, "%dwincmd w\n", cnr) < 0)) {
       return FAIL;
     }
 
-    //
     // Restore window sizes again after jumping around in windows, because
     // the current window has a minimum size while others may not.
-    //
     if (nr > 1 && ses_winsizes(fd, restore_size, tab_firstwin) == FAIL) {
       return FAIL;
-    }
-
-    // Take care of tab-local working directories if applicable
-    if (tp->tp_localdir) {
-      if (fputs("if exists(':tcd') == 2 | tcd ", fd) < 0
-          || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
-          || fputs(" | endif\n", fd) < 0) {
-        return FAIL;
-      }
-      did_lcd = true;
     }
 
     // Don't continue in another tab page when doing only the current one
@@ -848,9 +826,7 @@ static int makeopens(FILE *fd, char *dirnow)
     return FAIL;
   }
 
-  //
   // Wipe out an empty unnamed buffer we started in.
-  //
   if (fprintf(fd, "%s",
               "if exists('s:wipebuf') "
               "&& len(win_findbuf(s:wipebuf)) == 0 "
@@ -882,9 +858,7 @@ static int makeopens(FILE *fd, char *dirnow)
     PUTLINE_FAIL("let &winminwidth = s:save_winminwidth");
   }
 
-  //
   // Lastly, execute the x.vim file if it exists.
-  //
   if (fprintf(fd, "%s",
               "let s:sx = expand(\"<sfile>:p:r\").\"x.vim\"\n"
               "if filereadable(s:sx)\n"
@@ -999,9 +973,8 @@ void ex_mkrc(exarg_T *eap)
         char *dirnow;  // current directory
 
         dirnow = xmalloc(MAXPATHL);
-        //
+
         // Change to session file's dir.
-        //
         if (os_dirname(dirnow, MAXPATHL) == FAIL
             || os_chdir(dirnow) != 0) {
           *dirnow = NUL;
