@@ -595,7 +595,7 @@ end
 ---
 ---@param host string
 ---@param port integer
----@return function
+---@return fun(dispatchers: Dispatchers): StartServer?
 function M.connect(host, port)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
@@ -632,6 +632,73 @@ function M.connect(host, port)
         client:handle_body(body)
       end
       tcp:read_start(M.create_read_loop(handle_body, transport.terminate, function(read_err)
+        client:on_error(M.client_errors.READ_ERROR, read_err)
+      end))
+    end)
+
+    return public_client(client)
+  end
+end
+
+---@class Dispatchers
+---@field notification function
+---@field server_request function
+---@field on_exit function
+---@field on_error function
+
+-- TODO: better name
+---@class StartServer
+---@field request fun(method: string, params: table?, callbackfun: fun(err: lsp.ResponseError | nil, result: any), notify_reply_callback:function?)
+---@field notify fun(method: string, params: any)
+---@field is_closing function
+---@field terminate function
+
+--- Create a LSP RPC client factory that connects via named pipes (window)
+--- or unix domain sockets (unix) to the given pipe_path (file path on
+--- Unix and name on Windows)
+---
+---@param pipe_path  string
+---@return fun(dispatchers: Dispatchers): StartServer?
+function M.domain_socket_connect(pipe_path)
+  return function(dispatchers)
+    dispatchers = merge_dispatchers(dispatchers)
+    local pipe = uv.new_pipe(false)
+    if not pipe then
+      -- TODO: should an error be reported to the user?
+      return
+    end
+    local closing = false
+    local transport = {
+      write = vim.schedule_wrap(function(msg)
+        pipe:write(msg)
+      end),
+      is_closing = function()
+        return closing
+      end,
+      terminate = function()
+        if not closing then
+          closing = true
+          pipe:shutdown()
+          pipe:close()
+          dispatchers.on_exit(0, 0)
+        end
+      end,
+    }
+    local client = new_client(dispatchers, transport)
+    pipe:connect(pipe_path, function(err)
+      if err then
+        vim.schedule(function()
+          vim.notify(
+            string.format('Could not connect to :%s, reason: %s', pipe_path, vim.inspect(err)),
+            vim.log.levels.WARN
+          )
+        end)
+        return
+      end
+      local handle_body = function(body)
+        client:handle_body(body)
+      end
+      pipe:read_start(M.create_read_loop(handle_body, transport.terminate, function(read_err)
         client:on_error(M.client_errors.READ_ERROR, read_err)
       end))
     end)
