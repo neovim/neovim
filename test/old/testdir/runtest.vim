@@ -84,7 +84,9 @@ source setup.vim
 set nocp viminfo+=nviminfo
 
 " Use utf-8 by default, instead of whatever the system default happens to be.
-" Individual tests can overrule this at the top of the file.
+" Individual tests can overrule this at the top of the file and use
+" g:orig_encoding if needed.
+let g:orig_encoding = &encoding
 set encoding=utf-8
 
 " REDIR_TEST_TO_NULL has a very permissive SwapExists autocommand which is for
