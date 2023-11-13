@@ -26,6 +26,7 @@ augroup matchparen
   autocmd! WinLeave,BufLeave * call s:Remove_Matches()
   if exists('##TextChanged')
     autocmd! TextChanged,TextChangedI * call s:Highlight_Matching_Pair()
+    autocmd! TextChangedP * call s:Remove_Matches()
   endif
 augroup END
 

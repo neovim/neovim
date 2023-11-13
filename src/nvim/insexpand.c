@@ -1241,9 +1241,6 @@ void ins_compl_show_pum(void)
     return;
   }
 
-  // Dirty hard-coded hack: remove any matchparen highlighting.
-  do_cmdline_cmd("if exists('g:loaded_matchparen')|3match none|endif");
-
   // Update the screen before drawing the popup menu over it.
   update_screen();
 
