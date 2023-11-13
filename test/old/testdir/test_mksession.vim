@@ -411,7 +411,7 @@ func Test_mksession_terminal_shell()
   endfor
   call assert_match('terminal ++curwin ++cols=\d\+ ++rows=\d\+\s*.*$', term_cmd)
 
-  call Stop_shell_in_terminal(bufnr('%'))
+  call StopShellInTerminal(bufnr('%'))
   call delete('Xtest_mks.out')
 endfunc
 
@@ -426,7 +426,7 @@ func Test_mksession_terminal_no_restore_cmdarg()
     endif
   endfor
 
-  call Stop_shell_in_terminal(bufnr('%'))
+  call StopShellInTerminal(bufnr('%'))
   call delete('Xtest_mks.out')
 endfunc
 
@@ -441,7 +441,7 @@ func Test_mksession_terminal_no_restore_funcarg()
     endif
   endfor
 
-  call Stop_shell_in_terminal(bufnr('%'))
+  call StopShellInTerminal(bufnr('%'))
   call delete('Xtest_mks.out')
 endfunc
 
@@ -457,7 +457,7 @@ func Test_mksession_terminal_no_restore_func()
     endif
   endfor
 
-  call Stop_shell_in_terminal(bufnr('%'))
+  call StopShellInTerminal(bufnr('%'))
   call delete('Xtest_mks.out')
 endfunc
 
@@ -473,7 +473,7 @@ func Test_mksession_terminal_no_ssop()
     endif
   endfor
 
-  call Stop_shell_in_terminal(bufnr('%'))
+  call StopShellInTerminal(bufnr('%'))
   call delete('Xtest_mks.out')
   set sessionoptions&
 endfunc
@@ -491,7 +491,7 @@ func Test_mksession_terminal_restore_other()
   endfor
   call assert_match('terminal ++curwin ++cols=\d\+ ++rows=\d\+.*other', term_cmd)
 
-  call Stop_shell_in_terminal(bufnr('%'))
+  call StopShellInTerminal(bufnr('%'))
   call delete('Xtest_mks.out')
 endfunc
 
