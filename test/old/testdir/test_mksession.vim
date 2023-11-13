@@ -168,7 +168,6 @@ func Test_mksession_rtp()
     return
   endif
   new
-  set sessionoptions+=options
   let _rtp=&rtp
   " Make a real long (invalid) runtimepath value,
   " that should exceed PATH_MAX (hopefully)
@@ -188,7 +187,6 @@ func Test_mksession_rtp()
   call assert_equal(expected, li)
 
   call delete('Xtest_mks.out')
-  set sessionoptions&
 endfunc
 
 func Test_mksession_arglist()
@@ -207,7 +205,6 @@ func Test_mksession_arglist()
   enew | only
   argdel *
 endfunc
-
 
 func Test_mksession_one_buffer_two_windows()
   edit Xtest1
@@ -275,21 +272,6 @@ func Test_mksession_blank_tabs()
   call delete('Xtest_mks.out')
 endfunc
 
-func Test_mksession_blank_windows()
-  split
-  split
-  split
-  3 wincmd w
-  mksession! Xtest_mks.out
-  split
-  split
-  2 wincmd w
-  source Xtest_mks.out
-  call assert_equal(4, winnr('$'), 'session restore should restore number of windows')
-  call assert_equal(3, winnr(), 'session restore should restore the active window')
-  call delete('Xtest_mks.out')
-endfunc
-
 func Test_mksession_buffer_count()
   set hidden
 
@@ -310,7 +292,7 @@ func Test_mksession_buffer_count()
   call delete('Xbaz')
   call delete('Xtest_mks.out')
   %bwipe!
-  set nohidden
+  set hidden&
 endfunc
 
 func Test_mksession_buffer_order()
@@ -341,7 +323,6 @@ endfunc
 if has('extra_search')
 
 func Test_mksession_hlsearch()
-  set sessionoptions+=options
   set hlsearch
   mksession! Xtest_mks.out
   nohlsearch
@@ -351,11 +332,26 @@ func Test_mksession_hlsearch()
   mksession! Xtest_mks.out
   source Xtest_mks.out
   call assert_equal(0, v:hlsearch, 'session should restore search highlighting state')
-  set sessionoptions&
   call delete('Xtest_mks.out')
 endfunc
 
 endif
+
+
+func Test_mksession_blank_windows()
+  split
+  split
+  split
+  3 wincmd w
+  mksession! Xtest_mks.out
+  split
+  split
+  2 wincmd w
+  source Xtest_mks.out
+  call assert_equal(4, winnr('$'), 'session restore should restore number of windows')
+  call assert_equal(3, winnr(), 'session restore should restore the active window')
+  call delete('Xtest_mks.out')
+endfunc
 
 func Test_mkview_open_folds()
   enew!
@@ -689,7 +685,6 @@ endfunc
 
 " Test for mksession with a named scratch buffer
 func Test_mksession_scratch()
-  set sessionoptions+=options
   enew | only
   file Xscratch
   set buftype=nofile
@@ -700,7 +695,6 @@ func Test_mksession_scratch()
   call assert_equal('nofile', &buftype)
   %bwipe
   call delete('Xtest_mks.out')
-  set sessionoptions&
 endfunc
 
 " Test for mksession with fold options
