@@ -2756,10 +2756,11 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   return true;
 }
 
-/// Close the buffer of "win" and unload it if "free_buf" is true.
+/// Close the buffer of "win" and unload it if "action" is DOBUF_UNLOAD.
+/// "action" can also be zero (do nothing).
 /// "abort_if_last" is passed to close_buffer(): abort closing if all other
 /// windows are closed.
-static void win_close_buffer(win_T *win, bool free_buf, bool abort_if_last)
+static void win_close_buffer(win_T *win, int action, bool abort_if_last)
 {
   // Free independent synblock before the buffer is freed.
   if (win->w_buffer != NULL) {
@@ -2778,7 +2779,7 @@ static void win_close_buffer(win_T *win, bool free_buf, bool abort_if_last)
     bufref_T bufref;
     set_bufref(&bufref, curbuf);
     win->w_closing = true;
-    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, abort_if_last, true);
+    close_buffer(win, win->w_buffer, action, abort_if_last, true);
     if (win_valid_any_tab(win)) {
       win->w_closing = false;
     }
@@ -2908,7 +2909,7 @@ int win_close(win_T *win, bool free_buf, bool force)
     return OK;
   }
 
-  win_close_buffer(win, free_buf, true);
+  win_close_buffer(win, free_buf ? DOBUF_UNLOAD : 0, true);
 
   if (only_one_window() && win_valid(win) && win->w_buffer == NULL
       && (last_window(win) || curtab != prev_curtab
