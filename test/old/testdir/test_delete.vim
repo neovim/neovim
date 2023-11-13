@@ -3,103 +3,103 @@
 source check.vim
 
 func Test_file_delete()
-  split Xfile
+  split Xfdelfile
   call setline(1, ['a', 'b'])
   wq
-  call assert_equal(['a', 'b'], readfile('Xfile'))
-  call assert_equal(0, delete('Xfile'))
-  call assert_fails('call readfile("Xfile")', 'E484:')
-  call assert_equal(-1, delete('Xfile'))
-  bwipe Xfile
+  call assert_equal(['a', 'b'], readfile('Xfdelfile'))
+  call assert_equal(0, delete('Xfdelfile'))
+  call assert_fails('call readfile("Xfdelfile")', 'E484:')
+  call assert_equal(-1, delete('Xfdelfile'))
+  bwipe Xfdelfile
 endfunc
 
 func Test_dir_delete()
-  call mkdir('Xdir1')
-  call assert_true(isdirectory('Xdir1'))
-  call assert_equal(0, delete('Xdir1', 'd'))
-  call assert_false(isdirectory('Xdir1'))
-  call assert_equal(-1, delete('Xdir1', 'd'))
+  call mkdir('Xdirdel')
+  call assert_true(isdirectory('Xdirdel'))
+  call assert_equal(0, delete('Xdirdel', 'd'))
+  call assert_false(isdirectory('Xdirdel'))
+  call assert_equal(-1, delete('Xdirdel', 'd'))
 endfunc
 
 func Test_recursive_delete()
-  call mkdir('Xdir1')
-  call mkdir('Xdir1/subdir')
-  call mkdir('Xdir1/empty')
-  split Xdir1/Xfile
+  call mkdir('Xrecdel')
+  call mkdir('Xrecdel/subdir')
+  call mkdir('Xrecdel/empty')
+  split Xrecdel/Xfile
   call setline(1, ['a', 'b'])
   w
-  w Xdir1/subdir/Xfile
+  w Xrecdel/subdir/Xfile
   close
-  call assert_true(isdirectory('Xdir1'))
-  call assert_equal(['a', 'b'], readfile('Xdir1/Xfile'))
-  call assert_true(isdirectory('Xdir1/subdir'))
-  call assert_equal(['a', 'b'], readfile('Xdir1/subdir/Xfile'))
-  call assert_true('Xdir1/empty'->isdirectory())
-  call assert_equal(0, delete('Xdir1', 'rf'))
-  call assert_false(isdirectory('Xdir1'))
-  call assert_equal(-1, delete('Xdir1', 'd'))
-  bwipe Xdir1/Xfile
-  bwipe Xdir1/subdir/Xfile
+  call assert_true(isdirectory('Xrecdel'))
+  call assert_equal(['a', 'b'], readfile('Xrecdel/Xfile'))
+  call assert_true(isdirectory('Xrecdel/subdir'))
+  call assert_equal(['a', 'b'], readfile('Xrecdel/subdir/Xfile'))
+  call assert_true('Xrecdel/empty'->isdirectory())
+  call assert_equal(0, delete('Xrecdel', 'rf'))
+  call assert_false(isdirectory('Xrecdel'))
+  call assert_equal(-1, delete('Xrecdel', 'd'))
+  bwipe Xrecdel/Xfile
+  bwipe Xrecdel/subdir/Xfile
 endfunc
 
 func Test_symlink_delete()
   CheckUnix
-  split Xfile
+  split Xslfile
   call setline(1, ['a', 'b'])
   wq
-  silent !ln -s Xfile Xlink
+  silent !ln -s Xslfile Xdellink
   " Delete the link, not the file
-  call assert_equal(0, delete('Xlink'))
-  call assert_equal(-1, delete('Xlink'))
-  call assert_equal(0, delete('Xfile'))
-  bwipe Xfile
+  call assert_equal(0, delete('Xdellink'))
+  call assert_equal(-1, delete('Xdellink'))
+  call assert_equal(0, delete('Xslfile'))
+  bwipe Xslfile
 endfunc
 
 func Test_symlink_dir_delete()
   CheckUnix
-  call mkdir('Xdir1')
-  silent !ln -s Xdir1 Xlink
-  call assert_true(isdirectory('Xdir1'))
-  call assert_true(isdirectory('Xlink'))
+  call mkdir('Xsymdir')
+  silent !ln -s Xsymdir Xdirlink
+  call assert_true(isdirectory('Xsymdir'))
+  call assert_true(isdirectory('Xdirlink'))
   " Delete the link, not the directory
-  call assert_equal(0, delete('Xlink'))
-  call assert_equal(-1, delete('Xlink'))
-  call assert_equal(0, delete('Xdir1', 'd'))
+  call assert_equal(0, delete('Xdirlink'))
+  call assert_equal(-1, delete('Xdirlink'))
+  call assert_equal(0, delete('Xsymdir', 'd'))
 endfunc
 
 func Test_symlink_recursive_delete()
   CheckUnix
-  call mkdir('Xdir3')
-  call mkdir('Xdir3/subdir')
-  call mkdir('Xdir4')
-  split Xdir3/Xfile
+  call mkdir('Xrecdir3')
+  call mkdir('Xrecdir3/subdir')
+  call mkdir('Xrecdir4')
+  split Xrecdir3/Xfile
   call setline(1, ['a', 'b'])
   w
-  w Xdir3/subdir/Xfile
-  w Xdir4/Xfile
+  w Xrecdir3/subdir/Xfile
+  w Xrecdir4/Xfile
   close
-  silent !ln -s ../Xdir4 Xdir3/Xlink
+  silent !ln -s ../Xrecdir4 Xrecdir3/Xreclink
 
-  call assert_true(isdirectory('Xdir3'))
-  call assert_equal(['a', 'b'], readfile('Xdir3/Xfile'))
-  call assert_true(isdirectory('Xdir3/subdir'))
-  call assert_equal(['a', 'b'], readfile('Xdir3/subdir/Xfile'))
-  call assert_true(isdirectory('Xdir4'))
-  call assert_true(isdirectory('Xdir3/Xlink'))
-  call assert_equal(['a', 'b'], readfile('Xdir4/Xfile'))
+  call assert_true(isdirectory('Xrecdir3'))
+  call assert_equal(['a', 'b'], readfile('Xrecdir3/Xfile'))
+  call assert_true(isdirectory('Xrecdir3/subdir'))
+  call assert_equal(['a', 'b'], readfile('Xrecdir3/subdir/Xfile'))
+  call assert_true(isdirectory('Xrecdir4'))
+  call assert_true(isdirectory('Xrecdir3/Xreclink'))
+  call assert_equal(['a', 'b'], readfile('Xrecdir4/Xfile'))
 
-  call assert_equal(0, delete('Xdir3', 'rf'))
-  call assert_false(isdirectory('Xdir3'))
-  call assert_equal(-1, delete('Xdir3', 'd'))
+  call assert_equal(0, delete('Xrecdir3', 'rf'))
+  call assert_false(isdirectory('Xrecdir3'))
+  call assert_equal(-1, delete('Xrecdir3', 'd'))
   " symlink is deleted, not the directory it points to
-  call assert_true(isdirectory('Xdir4'))
-  call assert_equal(['a', 'b'], readfile('Xdir4/Xfile'))
-  call assert_equal(0, delete('Xdir4/Xfile'))
-  call assert_equal(0, delete('Xdir4', 'd'))
+  call assert_true(isdirectory('Xrecdir4'))
+  call assert_equal(['a', 'b'], readfile('Xrecdir4/Xfile'))
+  call assert_equal(0, delete('Xrecdir4/Xfile'))
+  call assert_equal(0, delete('Xrecdir4', 'd'))
 
-  bwipe Xdir3/Xfile
-  bwipe Xdir3/subdir/Xfile
-  bwipe Xdir4/Xfile
+  bwipe Xrecdir3/Xfile
+  bwipe Xrecdir3/subdir/Xfile
+  bwipe Xrecdir4/Xfile
 endfunc
 
 func Test_delete_errors()

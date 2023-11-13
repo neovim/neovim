@@ -130,9 +130,9 @@ func Test_client_server()
 
     " Run a separate instance to send a command to the server
     call remote_expr(name, 'execute("only")')
-    call system(cmd .. ' --remote-send ":new Xfile<CR>"')
+    call system(cmd .. ' --remote-send ":new Xclientfile<CR>"')
     call assert_equal('2', remote_expr(name, 'winnr("$")'))
-    call assert_equal('Xfile', remote_expr(name, 'winbufnr(1)->bufname()'))
+    call assert_equal('Xclientfile', remote_expr(name, 'winbufnr(1)->bufname()'))
     call remote_expr(name, 'execute("only")')
 
     " Invoke a remote-expr. On MS-Windows, the returned value has a carriage
@@ -141,24 +141,24 @@ func Test_client_server()
     call assert_equal(['4'], split(l, "\n"))
 
     " Edit multiple files using --remote
-    call system(cmd .. ' --remote Xfile1 Xfile2 Xfile3')
-    call assert_match(".*Xfile1\n.*Xfile2\n.*Xfile3\n", remote_expr(name, 'argv()'))
+    call system(cmd .. ' --remote Xclientfile1 Xclientfile2 Xclientfile3')
+    call assert_match(".*Xclientfile1\n.*Xclientfile2\n.*Xclientfile3\n", remote_expr(name, 'argv()'))
     eval name->remote_send(":%bw!\<CR>")
 
     " Edit files in separate tab pages
-    call system(cmd .. ' --remote-tab Xfile1 Xfile2 Xfile3')
+    call system(cmd .. ' --remote-tab Xclientfile1 Xclientfile2 Xclientfile3')
     call WaitForAssert({-> assert_equal('3', remote_expr(name, 'tabpagenr("$")'))})
-    call assert_match('.*\<Xfile2', remote_expr(name, 'bufname(tabpagebuflist(2)[0])'))
+    call assert_match('.*\<Xclientfile2', remote_expr(name, 'bufname(tabpagebuflist(2)[0])'))
     eval name->remote_send(":%bw!\<CR>")
 
     " Edit a file using --remote-wait
     eval name->remote_send(":source $VIMRUNTIME/plugin/rrhelper.vim\<CR>")
-    call system(cmd .. ' --remote-wait +enew Xfile1')
-    call assert_match('.*\<Xfile1', remote_expr(name, 'bufname("#")'))
+    call system(cmd .. ' --remote-wait +enew Xclientfile1')
+    call assert_match('.*\<Xclientfile1', remote_expr(name, 'bufname("#")'))
     eval name->remote_send(":%bw!\<CR>")
 
     " Edit files using --remote-tab-wait
-    call system(cmd .. ' --remote-tabwait +tabonly\|enew Xfile1 Xfile2')
+    call system(cmd .. ' --remote-tabwait +tabonly\|enew Xclientfile1 Xclientfile2')
     call assert_equal('1', remote_expr(name, 'tabpagenr("$")'))
     eval name->remote_send(":%bw!\<CR>")
 

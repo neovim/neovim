@@ -134,7 +134,7 @@ func Test_bdelete_cmd()
   call assert_fails('bdelete \)', 'E55:')
 
   " Deleting a unlisted and unloaded buffer
-  edit Xfile1
+  edit Xbdelfile1
   let bnr = bufnr()
   set nobuflisted
   enew
@@ -310,8 +310,8 @@ endfunc
 " Test for trying to load a buffer with text locked
 " <C-\>e in the command line is used to lock the text
 func Test_load_buf_with_text_locked()
-  new Xfile1
-  edit Xfile2
+  new Xlockfile1
+  edit Xlockfile2
   let cmd = ":\<C-\>eexecute(\"normal \<C-O>\")\<CR>\<C-C>"
   call assert_fails("call feedkeys(cmd, 'xt')", 'E565:')
   %bw!

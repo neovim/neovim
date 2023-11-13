@@ -31,17 +31,17 @@ func Test_cpo_A()
   " Wipe out all the buffers, so that the alternate file is empty
   edit Xfoo | %bw
   set cpo-=A
-  new Xfile1
-  write Xfile2
+  new XcpoAfile1
+  write XcpoAfile2
   call assert_equal('', @#)
   %bw
-  call delete('Xfile2')
-  new Xfile1
+  call delete('XcpoAfile2')
+  new XcpoAfile1
   set cpo+=A
-  write Xfile2
-  call assert_equal('Xfile2', @#)
+  write XcpoAfile2
+  call assert_equal('XcpoAfile2', @#)
   close!
-  call delete('Xfile2')
+  call delete('XcpoAfile2')
   let &cpo = save_cpo
 endfunc
 

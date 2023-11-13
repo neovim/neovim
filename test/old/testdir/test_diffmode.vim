@@ -822,12 +822,13 @@ func Test_diff_lastline()
 endfunc
 
 func WriteDiffFiles(buf, list1, list2)
-  call writefile(a:list1, 'Xfile1')
-  call writefile(a:list2, 'Xfile2')
+  call writefile(a:list1, 'Xdifile1')
+  call writefile(a:list2, 'Xdifile2')
   if a:buf
     call term_sendkeys(a:buf, ":checktime\<CR>")
   endif
 endfunc
+
 " Verify a screendump with both the internal and external diff.
 func VerifyBoth(buf, dumpfile, extra)
   " trailing : for leaving the cursor on the command line
@@ -877,12 +878,12 @@ func Test_diff_screen()
   call writefile(lines, 'XdiffSetup')
 
   " clean up already existing swap files, just in case
-  call delete('.Xfile1.swp')
-  call delete('.Xfile2.swp')
+  call delete('.Xdifile1.swp')
+  call delete('.Xdifile2.swp')
 
   " Test 1: Add a line in beginning of file 2
   call WriteDiffFiles(0, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-  let buf = RunVimInTerminal('-d -S XdiffSetup Xfile1 Xfile2', {})
+  let buf = RunVimInTerminal('-d -S XdiffSetup Xdifile1 Xdifile2', {})
   " Set autoread mode, so that Vim won't complain once we re-write the test
   " files
   call term_sendkeys(buf, ":set autoread\<CR>\<c-w>w:set autoread\<CR>\<c-w>w")
@@ -1000,8 +1001,8 @@ func Test_diff_screen()
 
   " clean up
   call StopVimInTerminal(buf)
-  call delete('Xfile1')
-  call delete('Xfile2')
+  call delete('Xdifile1')
+  call delete('Xdifile2')
   call delete('XdiffSetup')
 endfunc
 
@@ -1495,9 +1496,9 @@ endfunc
 " for the issue fixed by patch 6.2.317)
 func Test_diff_foldinvert()
   %bw!
-  edit Xfile1
-  new Xfile2
-  new Xfile3
+  edit Xdoffile1
+  new Xdoffile2
+  new Xdoffile3
   windo diffthis
   " open a non-diff window
   botright new
