@@ -537,7 +537,6 @@ static int makeopens(FILE *fd, char *dirnow)
   win_T *wp;
   char *sname;
   win_T *edited_win = NULL;
-  int tabnr;
   win_T *tab_firstwin;
   frame_T *tab_topframe;
   int cur_arg_idx = 0;
@@ -644,14 +643,10 @@ static int makeopens(FILE *fd, char *dirnow)
     restore_stal = true;
   }
 
-  // For each tab:
-  // - Put windows for each tab, when "tabpages" is in 'sessionoptions'.
-  // - Don't use goto_tabpage(), it may change CWD and trigger autocommands.
-  tab_firstwin = firstwin;      // First window in tab page "tabnr".
-  tab_topframe = topframe;
   if ((ssop_flags & SSOP_TABPAGES)) {
-    // Similar to ses_win_rec() below, populate the tab pages first so
-    // later local options won't be copied to the new tabs.
+    // "tabpages" is in 'sessionoptions': Similar to ses_win_rec() below,
+    // populate the tab pages first so later local options won't be copied
+    // to the new tabs.
     FOR_ALL_TABS(tp) {
       // Use `bufhidden=wipe` to remove empty "placeholder" buffers once
       // they are not needed. This prevents creating extra buffers (see
@@ -665,15 +660,17 @@ static int makeopens(FILE *fd, char *dirnow)
       return FAIL;
     }
   }
-  for (tabnr = 1;; tabnr++) {
-    tabpage_T *tp = find_tabpage(tabnr);
-    if (tp == NULL) {
-      break;  // done all tab pages
-    }
 
+  // Assume "tabpages" is in 'sessionoptions'.  If not then we only do
+  // "curtab" and bail out of the loop.
+  FOR_ALL_TABS(tp) {
     bool need_tabnext = false;
     int cnr = 1;
 
+    // May repeat putting Windows for each tab, when "tabpages" is in
+    // 'sessionoptions'.
+    // Don't use goto_tabpage(), it may change directory and trigger
+    // autocommands.
     if ((ssop_flags & SSOP_TABPAGES)) {
       if (tp == curtab) {
         tab_firstwin = firstwin;
@@ -682,9 +679,13 @@ static int makeopens(FILE *fd, char *dirnow)
         tab_firstwin = tp->tp_firstwin;
         tab_topframe = tp->tp_topframe;
       }
-      if (tabnr > 1) {
+      if (tp != first_tabpage) {
         need_tabnext = true;
       }
+    } else {
+      tp = curtab;
+      tab_firstwin = firstwin;
+      tab_topframe = topframe;
     }
 
     // Before creating the window layout, try loading one file.  If this
@@ -770,7 +771,7 @@ static int makeopens(FILE *fd, char *dirnow)
     // Restore the tab-local working directory if specified
     // Do this before the windows, so that the window-local directory can
     // override the tab-local directory.
-    if (tp != NULL && tp->tp_localdir != NULL && (ssop_flags & SSOP_CURDIR)) {
+    if ((ssop_flags & SSOP_CURDIR) && tp->tp_localdir != NULL) {
       if (fputs("tcd ", fd) < 0
           || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
           || put_eol(fd) == FAIL) {
