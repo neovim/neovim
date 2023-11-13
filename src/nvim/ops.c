@@ -1569,7 +1569,7 @@ int op_delete(oparg_T *oap)
         curwin->w_cursor.coladd = 0;
       }
 
-      // n == number of chars deleted
+      // "n" == number of chars deleted
       // If we delete a TAB, it may be replaced by several characters.
       // Thus the number of characters may increase!
       n = bd.textlen - bd.startspaces - bd.endspaces;
@@ -4025,8 +4025,9 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
     comments = xcalloc(count, sizeof(*comments));
   }
 
-  // Don't move anything, just compute the final line length
+  // Don't move anything yet, just compute the final line length
   // and setup the array of space strings lengths
+  // This loops forward over joined lines.
   for (t = 0; t < (linenr_T)count; t++) {
     curr_start = ml_get(curwin->w_cursor.lnum + t);
     curr = curr_start;
@@ -4107,6 +4108,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   *cend = 0;
 
   // Move affected lines to the new long one.
+  // This loops backwards over the joined lines, including the original line.
   //
   // Move marks from each deleted line to the joined line, adjusting the
   // column.  This is not Vi compatible, but Vi deletes the marks, thus that

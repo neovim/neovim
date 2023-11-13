@@ -420,7 +420,6 @@ void internal_format(int textwidth, int second_indent, int flags, bool format_on
             for (int i = 0; i < padding; i++) {
               ins_str(" ");
             }
-            changed_bytes(curwin->w_cursor.lnum, leader_len);
           } else {
             (void)set_indent(second_indent, SIN_CHANGED);
           }
