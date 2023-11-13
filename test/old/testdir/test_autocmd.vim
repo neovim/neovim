@@ -2548,7 +2548,13 @@ func Test_Changed_FirstTime()
   let buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': 3})
   call assert_equal('running', term_getstatus(buf))
   " Wait for the ruler (in the status line) to be shown.
-  call WaitForAssert({-> assert_match('\<All$', term_getline(buf, 3))})
+  " In ConPTY, there is additional character which is drawn up to the width of
+  " the screen.
+  if has('conpty')
+    call WaitForAssert({-> assert_match('\<All.*$', term_getline(buf, 3))})
+  else
+    call WaitForAssert({-> assert_match('\<All$', term_getline(buf, 3))})
+  endif
   " It's only adding autocmd, so that no event occurs.
   call term_sendkeys(buf, ":au! TextChanged <buffer> call writefile(['No'], 'Xchanged.txt')\<cr>")
   call term_sendkeys(buf, "\<C-\\>\<C-N>:qa!\<cr>")
