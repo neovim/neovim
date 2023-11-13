@@ -1943,14 +1943,12 @@ char *parse_spelllang(win_T *wp)
   int c;
   char lang[MAXWLEN + 1];
   char spf_name[MAXPATHL];
-  int len;
   char *p;
   int round;
   char *spf;
   char *use_region = NULL;
   bool dont_use_region = false;
   bool nobreak = false;
-  langp_T *lp, *lp2;
   static bool recursive = false;
   char *ret_msg = NULL;
   char *spl_copy;
@@ -1980,7 +1978,7 @@ char *parse_spelllang(win_T *wp)
     // Get one language name.
     copy_option_part(&splp, lang, MAXWLEN, ",");
     region = NULL;
-    len = (int)strlen(lang);
+    int len = (int)strlen(lang);
 
     if (!valid_spelllang(lang)) {
       continue;
@@ -2187,7 +2185,7 @@ char *parse_spelllang(win_T *wp)
   // REP items.  If the language doesn't support it itself use another one
   // with the same name.  E.g. for "en-math" use "en".
   for (int i = 0; i < ga.ga_len; i++) {
-    lp = LANGP_ENTRY(ga, i);
+    langp_T *lp = LANGP_ENTRY(ga, i);
 
     // sound folding
     if (!GA_EMPTY(&lp->lp_slang->sl_sal)) {
@@ -2196,7 +2194,7 @@ char *parse_spelllang(win_T *wp)
     } else {
       // find first similar language that does sound folding
       for (int j = 0; j < ga.ga_len; j++) {
-        lp2 = LANGP_ENTRY(ga, j);
+        langp_T *lp2 = LANGP_ENTRY(ga, j);
         if (!GA_EMPTY(&lp2->lp_slang->sl_sal)
             && strncmp(lp->lp_slang->sl_name,
                        lp2->lp_slang->sl_name, 2) == 0) {
@@ -2213,7 +2211,7 @@ char *parse_spelllang(win_T *wp)
     } else {
       // find first similar language that has REP items
       for (int j = 0; j < ga.ga_len; j++) {
-        lp2 = LANGP_ENTRY(ga, j);
+        langp_T *lp2 = LANGP_ENTRY(ga, j);
         if (!GA_EMPTY(&lp2->lp_slang->sl_rep)
             && strncmp(lp->lp_slang->sl_name,
                        lp2->lp_slang->sl_name, 2) == 0) {

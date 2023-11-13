@@ -1183,15 +1183,15 @@ int get_expr_indent(void)
 // I tried to fix the first two issues.
 int get_lisp_indent(void)
 {
-  pos_T *pos, realpos, paren;
+  pos_T *pos;
+  pos_T paren;
   int amount;
   char *that;
-  int vi_lisp;
 
   // Set vi_lisp to use the vi-compatible method.
-  vi_lisp = (vim_strchr(p_cpo, CPO_LISP) != NULL);
+  int vi_lisp = (vim_strchr(p_cpo, CPO_LISP) != NULL);
 
-  realpos = curwin->w_cursor;
+  pos_T realpos = curwin->w_cursor;
   curwin->w_cursor.col = 0;
 
   if ((pos = findmatch(NULL, '(')) == NULL) {

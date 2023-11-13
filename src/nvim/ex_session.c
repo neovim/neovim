@@ -885,7 +885,6 @@ void ex_loadview(exarg_T *eap)
 ///   - SSOP_SLASH: filenames are written with "/" slash
 void ex_mkrc(exarg_T *eap)
 {
-  FILE *fd;
   int view_session = false;  // :mkview, :mksession
   int using_vdir = false;  // using 'viewdir'?
   char *viewFile = NULL;
@@ -925,7 +924,7 @@ void ex_mkrc(exarg_T *eap)
     vim_mkdir_emsg(p_vdir, 0755);
   }
 
-  fd = open_exfile(fname, eap->forceit, WRITEBIN);
+  FILE *fd = open_exfile(fname, eap->forceit, WRITEBIN);
   if (fd != NULL) {
     int failed = false;
     unsigned *flagp;

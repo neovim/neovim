@@ -1500,11 +1500,10 @@ void addfile(garray_T *gap, char *f, int flags)
 void simplify_filename(char *filename)
 {
   int components = 0;
-  char *p, *tail, *start;
   bool stripping_disabled = false;
   bool relative = true;
 
-  p = filename;
+  char *p = filename;
 #ifdef BACKSLASH_IN_FILENAME
   if (p[0] != NUL && p[1] == ':') {        // skip "x:"
     p += 2;
@@ -1517,7 +1516,7 @@ void simplify_filename(char *filename)
       p++;
     } while (vim_ispathsep(*p));
   }
-  start = p;        // remember start after "c:/" or "/" or "///"
+  char *start = p;        // remember start after "c:/" or "/" or "///"
 
   do {
     // At this point "p" is pointing to the char following a single "/"
@@ -1533,7 +1532,7 @@ void simplify_filename(char *filename)
         // and there is no trailing path separator, either strip "/." if
         // we are after "start", or strip "." if we are at the beginning
         // of an absolute path name.
-        tail = p + 1;
+        char *tail = p + 1;
         if (p[1] != NUL) {
           while (vim_ispathsep(*tail)) {
             MB_PTR_ADV(tail);
@@ -1546,7 +1545,7 @@ void simplify_filename(char *filename)
     } else if (p[0] == '.' && p[1] == '.'
                && (vim_ispathsep(p[2]) || p[2] == NUL)) {
       // Skip to after ".." or "../" or "..///".
-      tail = p + 2;
+      char *tail = p + 2;
       while (vim_ispathsep(*tail)) {
         MB_PTR_ADV(tail);
       }
@@ -1981,12 +1980,11 @@ bool same_directory(char *f1, char *f2)
 int pathcmp(const char *p, const char *q, int maxlen)
 {
   int i, j;
-  int c1, c2;
   const char *s = NULL;
 
   for (i = 0, j = 0; maxlen < 0 || (i < maxlen && j < maxlen);) {
-    c1 = utf_ptr2char(p + i);
-    c2 = utf_ptr2char(q + j);
+    int c1 = utf_ptr2char(p + i);
+    int c2 = utf_ptr2char(q + j);
 
     // End of "p": check if "q" also ends or just has a slash.
     if (c1 == NUL) {
@@ -2028,8 +2026,8 @@ int pathcmp(const char *p, const char *q, int maxlen)
     return 0;
   }
 
-  c1 = utf_ptr2char(s + i);
-  c2 = utf_ptr2char(s + i + utfc_ptr2len(s + i));
+  int c1 = utf_ptr2char(s + i);
+  int c2 = utf_ptr2char(s + i + utfc_ptr2len(s + i));
   // ignore a trailing slash, but not "//" or ":/"
   if (c2 == NUL
       && i > 0

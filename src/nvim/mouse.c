@@ -100,15 +100,12 @@ static void find_start_of_word(pos_T *pos)
 /// When 'selection' is "exclusive", the position is just after the word.
 static void find_end_of_word(pos_T *pos)
 {
-  char *line;
-  int cclass;
-
-  line = ml_get(pos->lnum);
+  char *line = ml_get(pos->lnum);
   if (*p_sel == 'e' && pos->col > 0) {
     pos->col--;
     pos->col -= utf_head_off(line, line + pos->col);
   }
-  cclass = get_mouse_class(line + pos->col);
+  int cclass = get_mouse_class(line + pos->col);
   while (line[pos->col] != NUL) {
     int col = pos->col + utfc_ptr2len(line + pos->col);
     if (get_mouse_class(line + col) != cclass) {
@@ -964,11 +961,10 @@ popupexit:
 
 void ins_mouse(int c)
 {
-  pos_T tpos;
   win_T *old_curwin = curwin;
 
   undisplay_dollar();
-  tpos = curwin->w_cursor;
+  pos_T tpos = curwin->w_cursor;
   if (do_mouse(NULL, c, BACKWARD, 1, 0)) {
     win_T *new_curwin = curwin;
 
@@ -1183,8 +1179,6 @@ int jump_to_mouse(int flags, bool *inclusive, int which_button)
   static int prev_col = -1;
   static int did_drag = false;          // drag was noticed
 
-  win_T *wp, *old_curwin;
-  pos_T old_cursor;
   int count;
   bool first;
   int row = mouse_row;
@@ -1237,15 +1231,15 @@ retnomove:
   if (flags & MOUSE_SETPOS) {
     goto retnomove;                             // ugly goto...
   }
-  old_curwin = curwin;
-  old_cursor = curwin->w_cursor;
+  win_T *old_curwin = curwin;
+  pos_T old_cursor = curwin->w_cursor;
 
   if (row < 0 || col < 0) {                   // check if it makes sense
     return IN_UNKNOWN;
   }
 
   // find the window where the row is in
-  wp = mouse_find_win(&grid, &row, &col);
+  win_T *wp = mouse_find_win(&grid, &row, &col);
   if (wp == NULL) {
     return IN_UNKNOWN;
   }

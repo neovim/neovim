@@ -294,7 +294,6 @@ static void set_string_option_global(vimoption_T *opt, char **varp)
 void set_string_option_direct(const char *name, int opt_idx, const char *val, int opt_flags,
                               int set_sid)
 {
-  char *s;
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   int idx = opt_idx;
 
@@ -315,7 +314,7 @@ void set_string_option_direct(const char *name, int opt_idx, const char *val, in
 
   assert(opt->var != &p_shada);
 
-  s = xstrdup(val);
+  char *s = xstrdup(val);
   {
     char **varp = (char **)get_varp_scope(opt, both ? OPT_LOCAL : opt_flags);
     if ((opt_flags & OPT_FREE) && (opt->flags & P_ALLOCED)) {

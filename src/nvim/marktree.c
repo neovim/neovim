@@ -430,11 +430,10 @@ void marktree_put_key(MarkTree *b, MTKey k)
   if (!b->root) {
     b->root = marktree_alloc_node(b, true);
   }
-  MTNode *r, *s;
   b->n_keys++;
-  r = b->root;
+  MTNode *r = b->root;
   if (r->n == 2 * T - 1) {
-    s = marktree_alloc_node(b, true);
+    MTNode *s = marktree_alloc_node(b, true);
     b->root = s; s->level = r->level + 1; s->n = 0;
     s->ptr[0] = r;
     r->parent = s;

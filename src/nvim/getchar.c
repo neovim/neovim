@@ -145,9 +145,9 @@ static const char e_cmd_mapping_must_end_with_cr_before_second_cmd[]
 /// Free and clear a buffer.
 static void free_buff(buffheader_T *buf)
 {
-  buffblock_T *p, *np;
+  buffblock_T *np;
 
-  for (p = buf->bh_first.b_next; p != NULL; p = np) {
+  for (buffblock_T *p = buf->bh_first.b_next; p != NULL; p = np) {
     np = p->b_next;
     xfree(p);
   }
@@ -877,8 +877,6 @@ bool noremap_keys(void)
 /// @return  FAIL for failure, OK otherwise
 int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
 {
-  uint8_t *s1, *s2;
-  int addlen;
   int val;
   int nrm;
 
@@ -888,7 +886,7 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
   }
   state_no_longer_safe("ins_typebuf()");
 
-  addlen = (int)strlen(str);
+  int addlen = (int)strlen(str);
 
   if (offset == 0 && addlen <= typebuf.tb_off) {
     // Easy case: there is room in front of typebuf.tb_buf[typebuf.tb_off]
@@ -914,8 +912,8 @@ int ins_typebuf(char *str, int noremap, int offset, bool nottyped, bool silent)
       return FAIL;
     }
     int newlen = typebuf.tb_len + extra;
-    s1 = xmalloc((size_t)newlen);
-    s2 = xmalloc((size_t)newlen);
+    uint8_t *s1 = xmalloc((size_t)newlen);
+    uint8_t *s2 = xmalloc((size_t)newlen);
     typebuf.tb_buflen = newlen;
 
     // copy the old chars, before the insertion point
@@ -2350,10 +2348,6 @@ static int vgetorpeek(bool advance)
                           // 'ttimeoutlen' for complete key code
   int mapdepth = 0;  // check for recursive mapping
   bool mode_deleted = false;  // set when mode has been deleted
-  int new_wcol, new_wrow;
-  int n;
-  int old_wcol, old_wrow;
-  int wait_tb_len;
 
   // This function doesn't work very well when called recursively.  This may
   // happen though, because of:
@@ -2490,8 +2484,8 @@ static int vgetorpeek(bool advance)
         // have to redisplay the mode. That the cursor is in the wrong
         // place does not matter.
         c = 0;
-        new_wcol = curwin->w_wcol;
-        new_wrow = curwin->w_wrow;
+        int new_wcol = curwin->w_wcol;
+        int new_wrow = curwin->w_wrow;
         if (advance
             && typebuf.tb_len == 1
             && typebuf.tb_buf[typebuf.tb_off] == ESC
@@ -2506,8 +2500,8 @@ static int vgetorpeek(bool advance)
             mode_deleted = true;
           }
           validate_cursor();
-          old_wcol = curwin->w_wcol;
-          old_wrow = curwin->w_wrow;
+          int old_wcol = curwin->w_wcol;
+          int old_wrow = curwin->w_wrow;
 
           // move cursor left, if possible
           if (curwin->w_cursor.col != 0) {
@@ -2570,7 +2564,7 @@ static int vgetorpeek(bool advance)
 
         // Allow mapping for just typed characters. When we get here c
         // is the number of extra bytes and typebuf.tb_len is 1.
-        for (n = 1; n <= c; n++) {
+        for (int n = 1; n <= c; n++) {
           typebuf.tb_noremap[typebuf.tb_off + n] = RM_YES;
         }
         typebuf.tb_len += c;
@@ -2650,8 +2644,8 @@ static int vgetorpeek(bool advance)
               showing_partial = true;
             }
             // need to use the col and row from above here
-            old_wcol = curwin->w_wcol;
-            old_wrow = curwin->w_wrow;
+            int old_wcol = curwin->w_wcol;
+            int old_wrow = curwin->w_wrow;
             curwin->w_wcol = new_wcol;
             curwin->w_wrow = new_wrow;
             push_showcmd();
@@ -2698,7 +2692,7 @@ static int vgetorpeek(bool advance)
           }
         }
 
-        wait_tb_len = typebuf.tb_len;
+        int wait_tb_len = typebuf.tb_len;
         c = inchar(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len,
                    typebuf.tb_buflen - typebuf.tb_off - typebuf.tb_len - 1,
                    wait_time);
@@ -2924,7 +2918,8 @@ int fix_input_buffer(uint8_t *buf, int len)
 char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
 {
   garray_T line_ga;
-  int c1 = -1, c2;
+  int c1 = -1;
+  int c2;
   int cmod = 0;
   bool aborted = false;
 

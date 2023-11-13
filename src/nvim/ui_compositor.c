@@ -314,7 +314,6 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
   sattr_T *bg_attrs = &default_grid.attrs[default_grid.line_offset[row]
                                           + (size_t)startcol];
 
-  int grid_width, grid_height;
   while (col < endcol) {
     int until = 0;
     for (size_t i = 0; i < kv_size(layers); i++) {
@@ -324,8 +323,8 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
       // first check to see if any grids have pending updates to width/height,
       // to ensure that we don't accidentally put any characters into `linebuf`
       // that have been invalidated.
-      grid_width = MIN(g->cols, g->comp_width);
-      grid_height = MIN(g->rows, g->comp_height);
+      int grid_width = MIN(g->cols, g->comp_width);
+      int grid_height = MIN(g->rows, g->comp_height);
       if (g->comp_row > row || row >= g->comp_row + grid_height
           || g->comp_disabled) {
         continue;

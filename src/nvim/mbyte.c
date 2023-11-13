@@ -1248,7 +1248,7 @@ bool mb_isalpha(int a)
 
 static int utf_strnicmp(const char *s1, const char *s2, size_t n1, size_t n2)
 {
-  int c1, c2, cdiff;
+  int c1, c2;
   char buffer[6];
 
   while (true) {
@@ -1263,7 +1263,7 @@ static int utf_strnicmp(const char *s1, const char *s2, size_t n1, size_t n2)
       continue;
     }
 
-    cdiff = utf_fold(c1) - utf_fold(c2);
+    int cdiff = utf_fold(c1) - utf_fold(c2);
     if (cdiff != 0) {
       return cdiff;
     }
@@ -1295,7 +1295,7 @@ static int utf_strnicmp(const char *s1, const char *s2, size_t n1, size_t n2)
   }
 
   while (n1 > 0 && n2 > 0 && *s1 != NUL && *s2 != NUL) {
-    cdiff = (int)((uint8_t)(*s1)) - (int)((uint8_t)(*s2));
+    int cdiff = (int)((uint8_t)(*s1)) - (int)((uint8_t)(*s2));
     if (cdiff != 0) {
       return cdiff;
     }
@@ -1444,11 +1444,11 @@ ssize_t mb_utf_index_to_bytes(const char *s, size_t len, size_t index, bool use_
   FUNC_ATTR_NONNULL_ALL
 {
   size_t count = 0;
-  size_t clen, i;
+  size_t clen;
   if (index == 0) {
     return 0;
   }
-  for (i = 0; i < len; i += clen) {
+  for (size_t i = 0; i < len; i += clen) {
     clen = (size_t)utf_ptr2len_len(s + i, (int)(len - i));
     // NB: gets the byte value of invalid sequence bytes.
     // we only care whether the char fits in the BMP or not
@@ -1841,8 +1841,6 @@ int utf_cp_head_off(const char *base, const char *p)
 void utf_find_illegal(void)
 {
   pos_T pos = curwin->w_cursor;
-  char *p;
-  int len;
   vimconv_T vimconv;
   char *tofree = NULL;
 
@@ -1856,7 +1854,7 @@ void utf_find_illegal(void)
 
   curwin->w_cursor.coladd = 0;
   while (true) {
-    p = get_cursor_pos_ptr();
+    char *p = get_cursor_pos_ptr();
     if (vimconv.vc_type != CONV_NONE) {
       xfree(tofree);
       tofree = string_convert(&vimconv, p, NULL);
@@ -1869,7 +1867,7 @@ void utf_find_illegal(void)
     while (*p != NUL) {
       // Illegal means that there are not enough trail bytes (checked by
       // utf_ptr2len()) or too many of them (overlong sequence).
-      len = utf_ptr2len(p);
+      int len = utf_ptr2len(p);
       if ((uint8_t)(*p) >= 0x80 && (len == 1 || utf_char2len(utf_ptr2char(p)) != len)) {
         if (vimconv.vc_type == CONV_NONE) {
           curwin->w_cursor.col += (colnr_T)(p - get_cursor_pos_ptr());

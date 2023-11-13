@@ -3977,12 +3977,11 @@ shada_read_next_item_error:
 static bool shada_removable(const char *name)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char *p;
   char part[MAXPATHL + 1];
   bool retval = false;
 
   char *new_name = home_replace_save(NULL, name);
-  for (p = p_shada; *p;) {
+  for (char *p = p_shada; *p;) {
     (void)copy_option_part(&p, part, ARRAY_SIZE(part), ", ");
     if (part[0] == 'r') {
       home_replace(NULL, part + 1, NameBuff, MAXPATHL, true);

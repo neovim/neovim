@@ -267,8 +267,6 @@ static const char e_warning_pointer_block_corrupted[]
 /// @return  FAIL for failure, OK otherwise.
 int ml_open(buf_T *buf)
 {
-  bhdr_T *hp = NULL;
-
   // init fields in memline struct
   buf->b_ml.ml_stack_size = 0;   // no stack yet
   buf->b_ml.ml_stack = NULL;    // no stack yet
@@ -301,7 +299,7 @@ int ml_open(buf_T *buf)
   buf->b_ml.ml_line_count = 1;
 
   // fill block0 struct and write page 0
-  hp = mf_new(mfp, false, 1);
+  bhdr_T *hp = mf_new(mfp, false, 1);
   if (hp->bh_bnum != 0) {
     iemsg(_("E298: Didn't get block nr 0?"));
     goto error;
@@ -748,14 +746,9 @@ void ml_recover(bool checkext)
   memfile_T *mfp = NULL;
   char *fname_used = NULL;
   bhdr_T *hp = NULL;
-  ZeroBlock *b0p;
-  int b0_ff;
   char *b0_fenc = NULL;
-  PointerBlock *pp;
-  DataBlock *dp;
   infoptr_T *ip;
   bool directly;
-  char *p;
   bool serious_error = true;
   int orig_file_status = NOTDONE;
 
@@ -823,7 +816,7 @@ void ml_recover(bool checkext)
   buf->b_ml.ml_flags = 0;
 
   // open the memfile from the old swapfile
-  p = xstrdup(fname_used);  // save "fname_used" for the message:
+  char *p = xstrdup(fname_used);  // save "fname_used" for the message:
   // mf_open() will consume "fname_used"!
   mfp = mf_open(fname_used, O_RDONLY);
   fname_used = p;
@@ -849,7 +842,7 @@ void ml_recover(bool checkext)
     msg_end();
     goto theend;
   }
-  b0p = hp->bh_data;
+  ZeroBlock *b0p = hp->bh_data;
   if (strncmp(b0p->b0_version, "VIM 3.0", 7) == 0) {
     msg_start();
     msg_outtrans(mfp->mf_fname, MSG_HIST);
@@ -941,7 +934,7 @@ void ml_recover(bool checkext)
   ui_flush();
 
   // Get the 'fileformat' and 'fileencoding' from block zero.
-  b0_ff = (b0p->b0_flags & B0_FF_MASK);
+  int b0_ff = (b0p->b0_flags & B0_FF_MASK);
   if (b0p->b0_flags & B0_HAS_FENC) {
     int fnsize = B0_FNAME_SIZE_NOCRYPT;
 
@@ -1001,7 +994,7 @@ void ml_recover(bool checkext)
       error++;
       ml_append(lnum++, _("???MANY LINES MISSING"), 0, true);
     } else {          // there is a block
-      pp = hp->bh_data;
+      PointerBlock *pp = hp->bh_data;
       if (pp->pb_id == PTR_ID) {                // it is a pointer block
         bool ptr_block_error = false;
         if (pp->pb_count_max != PB_COUNT_MAX(mfp)) {
@@ -1066,7 +1059,7 @@ void ml_recover(bool checkext)
           continue;
         }
       } else {            // not a pointer block
-        dp = hp->bh_data;
+        DataBlock *dp = hp->bh_data;
         if (dp->db_id != DATA_ID) {             // block id wrong
           if (bnum == 1) {
             semsg(_("E310: Block 1 ID wrong (%s not a .swp file?)"),
@@ -1495,7 +1488,6 @@ void swapfile_dict(const char *fname, dict_T *d)
 static time_t swapfile_info(char *fname)
 {
   assert(fname != NULL);
-  int fd;
   ZeroBlock b0;
   time_t x = (time_t)0;
 #ifdef UNIX
@@ -1523,7 +1515,7 @@ static time_t swapfile_info(char *fname)
   }
 
   // print the original file name
-  fd = os_open(fname, O_RDONLY, 0);
+  int fd = os_open(fname, O_RDONLY, 0);
   if (fd >= 0) {
     if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
       if (strncmp(b0.b0_version, "VIM 3.0", 7) == 0) {
@@ -2108,11 +2100,8 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     int lines_moved;
     int data_moved = 0;                     // init to shut up gcc
     int total_moved = 0;                    // init to shut up gcc
-    DataBlock *dp_right, *dp_left;
     int stack_idx;
     bool in_left;
-    int lineadd;
-    blocknr_T bnum_left, bnum_right;
     linenr_T lnum_left, lnum_right;
     PointerBlock *pp_new;
 
@@ -2158,10 +2147,10 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
       line_count_left = line_count;
       line_count_right = 0;
     }
-    dp_right = hp_right->bh_data;
-    dp_left = hp_left->bh_data;
-    bnum_left = hp_left->bh_bnum;
-    bnum_right = hp_right->bh_bnum;
+    DataBlock *dp_right = hp_right->bh_data;
+    DataBlock *dp_left = hp_left->bh_data;
+    blocknr_T bnum_left = hp_left->bh_bnum;
+    blocknr_T bnum_right = hp_right->bh_bnum;
     page_count_left = (int)hp_left->bh_page_count;
     page_count_right = (int)hp_right->bh_page_count;
 
@@ -2240,7 +2229,7 @@ static int ml_append_int(buf_T *buf, linenr_T lnum, char *line, colnr_T len, boo
     // flush the old data block
     // set ml_locked_lineadd to 0, because the updating of the
     // pointer blocks is done below
-    lineadd = buf->b_ml.ml_locked_lineadd;
+    int lineadd = buf->b_ml.ml_locked_lineadd;
     buf->b_ml.ml_locked_lineadd = 0;
     (void)ml_find_line(buf, 0, ML_FLUSH);  // flush data block
 
@@ -2846,7 +2835,6 @@ static bhdr_T *ml_new_ptr(memfile_T *mfp)
 /// @return  NULL for failure, pointer to block header otherwise
 static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
 {
-  PointerBlock *pp;
   bhdr_T *hp;
   int top;
 
@@ -2933,7 +2921,7 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
       return hp;
     }
 
-    pp = (PointerBlock *)(dp);                // must be pointer block
+    PointerBlock *pp = (PointerBlock *)(dp);                // must be pointer block
     if (pp->pb_id != PTR_ID) {
       iemsg(_(e_pointer_block_id_wrong));
       goto error_block;
@@ -3650,9 +3638,8 @@ static void long_to_char(long n, char *s_in)
 static long char_to_long(const char *s_in)
 {
   const uint8_t *s = (uint8_t *)s_in;
-  long retval;
 
-  retval = s[3];
+  long retval = s[3];
   retval <<= 8;
   retval |= s[2];
   retval <<= 8;
@@ -3669,14 +3656,12 @@ static long char_to_long(const char *s_in)
 /// - 'fileencoding'
 void ml_setflags(buf_T *buf)
 {
-  ZeroBlock *b0p;
-
   if (!buf->b_ml.ml_mfp) {
     return;
   }
   bhdr_T *hp = pmap_get(int64_t)(&buf->b_ml.ml_mfp->mf_hash, 0);
   if (hp) {
-    b0p = hp->bh_data;
+    ZeroBlock *b0p = hp->bh_data;
     b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
     b0p->b0_flags = (char)((b0p->b0_flags & ~B0_FF_MASK) | (uint8_t)(get_fileformat(buf) + 1));
     add_b0_fenc(b0p, buf);
@@ -3706,7 +3691,6 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
 
   linenr_T curline = ml_upd_lastcurline;
   int curix = ml_upd_lastcurix;
-  chunksize_T *curchnk;
   bhdr_T *hp;
 
   if (buf->b_ml.ml_usedchunks == -1 || len == 0) {
@@ -3745,7 +3729,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
     curline += buf->b_ml.ml_chunksize[curix].mlcs_numlines;
     curix++;
   }
-  curchnk = buf->b_ml.ml_chunksize + curix;
+  chunksize_T *curchnk = buf->b_ml.ml_chunksize + curix;
 
   if (updtype == ML_CHNK_DELLINE) {
     len = -len;
@@ -3886,9 +3870,6 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, int len, int updtype)
 /// @return  -1 if information is not available
 int ml_find_line_or_offset(buf_T *buf, linenr_T lnum, int *offp, bool no_ff)
 {
-  linenr_T curline;
-  int curix;
-  int size;
   bhdr_T *hp;
   int text_end;
   int offset;
@@ -3933,9 +3914,9 @@ int ml_find_line_or_offset(buf_T *buf, linenr_T lnum, int *offp, bool no_ff)
   }
   // Find the last chunk before the one containing our line. Last chunk is
   // special because it will never qualify
-  curline = 1;
-  curix = 0;
-  size = 0;
+  linenr_T curline = 1;
+  int curix = 0;
+  int size = 0;
   while (curix < buf->b_ml.ml_usedchunks - 1
          && ((lnum != 0
               && lnum >= curline + buf->b_ml.ml_chunksize[curix].mlcs_numlines)

@@ -1501,10 +1501,8 @@ static int command_line_erase_chars(CommandLineState *s)
   }
 
   if (ccline.cmdpos > 0) {
-    char *p;
-
     int j = ccline.cmdpos;
-    p = mb_prevptr(ccline.cmdbuff, ccline.cmdbuff + j);
+    char *p = mb_prevptr(ccline.cmdbuff, ccline.cmdbuff + j);
 
     if (s->c == Ctrl_W) {
       while (p > ccline.cmdbuff && ascii_isspace(*p)) {

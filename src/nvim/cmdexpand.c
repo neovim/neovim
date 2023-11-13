@@ -1198,7 +1198,6 @@ char *addstar(char *fname, size_t len, int context)
   FUNC_ATTR_NONNULL_RET
 {
   char *retval;
-  size_t i, j;
 
   if (context != EXPAND_FILES
       && context != EXPAND_FILES_IN_PATH
@@ -1224,7 +1223,7 @@ char *addstar(char *fname, size_t len, int context)
       retval = xstrnsave(fname, len);
     } else {
       size_t new_len = len + 2;                // +2 for '^' at start, NUL at end
-      for (i = 0; i < len; i++) {
+      for (size_t i = 0; i < len; i++) {
         if (fname[i] == '*' || fname[i] == '~') {
           new_len++;                    // '*' needs to be replaced by ".*"
                                         // '~' needs to be replaced by "\~"
@@ -1243,8 +1242,8 @@ char *addstar(char *fname, size_t len, int context)
       retval = xmalloc(new_len);
       {
         retval[0] = '^';
-        j = 1;
-        for (i = 0; i < len; i++, j++) {
+        size_t j = 1;
+        for (size_t i = 0; i < len; i++, j++) {
           // Skip backslash.  But why?  At least keep it for custom
           // expansion.
           if (context != EXPAND_USER_DEFINED

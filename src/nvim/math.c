@@ -13,10 +13,9 @@
 int xfpclassify(double d)
 {
   uint64_t m;
-  int e;
 
   memcpy(&m, &d, sizeof(m));
-  e = 0x7ff & (m >> 52);
+  int e = 0x7ff & (m >> 52);
   m = 0xfffffffffffffULL & m;
 
   switch (e) {

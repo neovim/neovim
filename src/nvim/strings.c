@@ -2938,11 +2938,10 @@ void f_trim(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   }
 
-  int c1;
   if (dir == 0 || dir == 1) {
     // Trim leading characters
     while (*head != NUL) {
-      c1 = utf_ptr2char(head);
+      int c1 = utf_ptr2char(head);
       if (mask == NULL) {
         if (c1 > ' ' && c1 != 0xa0) {
           break;
@@ -2967,7 +2966,7 @@ void f_trim(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     for (; tail > head; tail = prev) {
       prev = tail;
       MB_PTR_BACK(head, prev);
-      c1 = utf_ptr2char(prev);
+      int c1 = utf_ptr2char(prev);
       if (mask == NULL) {
         if (c1 > ' ' && c1 != 0xa0) {
           break;

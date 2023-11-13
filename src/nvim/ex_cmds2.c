@@ -439,8 +439,6 @@ int buf_write_all(buf_T *buf, int forceit)
 /// ":argdo", ":windo", ":bufdo", ":tabdo", ":cdo", ":ldo", ":cfdo" and ":lfdo"
 void ex_listdo(exarg_T *eap)
 {
-  win_T *wp;
-  tabpage_T *tp;
   char *save_ei = NULL;
 
   // Temporarily override SHM_OVER and SHM_OVERALL to avoid that file
@@ -466,8 +464,8 @@ void ex_listdo(exarg_T *eap)
     int next_fnum = 0;
     int i = 0;
     // start at the eap->line1 argument/window/buffer
-    wp = firstwin;
-    tp = first_tabpage;
+    win_T *wp = firstwin;
+    tabpage_T *tp = first_tabpage;
     switch (eap->cmdidx) {
     case CMD_windo:
       for (; wp != NULL && i + 1 < eap->line1; wp = wp->w_next) {

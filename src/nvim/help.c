@@ -865,7 +865,6 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
   garray_T ga;
   int filecount;
   char **files;
-  char *p1, *p2;
   char *s;
   TriState utf8 = kNone;
   bool mix = false;             // detected mixed encodings
@@ -970,9 +969,9 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
         }
         in_example = false;
       }
-      p1 = vim_strchr(IObuff, '*');       // find first '*'
+      char *p1 = vim_strchr(IObuff, '*');       // find first '*'
       while (p1 != NULL) {
-        p2 = strchr(p1 + 1, '*');  // Find second '*'.
+        char *p2 = strchr(p1 + 1, '*');  // Find second '*'.
         if (p2 != NULL && p2 > p1 + 1) {         // Skip "*" and "**".
           for (s = p1 + 1; s < p2; s++) {
             if (*s == ' ' || *s == '\t' || *s == '|') {
@@ -1019,8 +1018,8 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
 
     // Check for duplicates.
     for (int i = 1; i < ga.ga_len; i++) {
-      p1 = ((char **)ga.ga_data)[i - 1];
-      p2 = ((char **)ga.ga_data)[i];
+      char *p1 = ((char **)ga.ga_data)[i - 1];
+      char *p2 = ((char **)ga.ga_data)[i];
       while (*p1 == *p2) {
         if (*p2 == '\t') {
           *p2 = NUL;
@@ -1048,7 +1047,7 @@ static void helptags_one(char *dir, const char *ext, const char *tagfname, bool 
         fputs(s, fd_tags);
       } else {
         fprintf(fd_tags, "%s\t/" "*", s);
-        for (p1 = s; *p1 != '\t'; p1++) {
+        for (char *p1 = s; *p1 != '\t'; p1++) {
           // insert backslash before '\\' and '/'
           if (*p1 == '\\' || *p1 == '/') {
             putc('\\', fd_tags);

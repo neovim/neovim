@@ -756,7 +756,8 @@ static void win_redr_border(win_T *wp)
   int *attrs = wp->w_float_config.border_attr;
 
   int *adj = wp->w_border_adj;
-  int irow = wp->w_height_inner + wp->w_winbar_height, icol = wp->w_width_inner;
+  int irow = wp->w_height_inner + wp->w_winbar_height;
+  int icol = wp->w_width_inner;
 
   if (adj[0]) {
     grid_line_start(grid, 0);
@@ -1575,8 +1576,6 @@ static void win_update(win_T *wp, DecorProviders *providers)
       }
     }
     if (mod_top != 0 && hasAnyFolding(wp)) {
-      linenr_T lnumt, lnumb;
-
       // A change in a line can cause lines above it to become folded or
       // unfolded.  Find the top most buffer line that may be affected.
       // If the line was previously folded and displayed, get the first
@@ -1587,8 +1586,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
       // the line below it.  If there is no valid entry, use w_topline.
       // Find the first valid w_lines[] entry below mod_bot.  Set lnumb
       // to this line.  If there is no valid entry, use MAXLNUM.
-      lnumt = wp->w_topline;
-      lnumb = MAXLNUM;
+      linenr_T lnumt = wp->w_topline;
+      linenr_T lnumb = MAXLNUM;
       for (int i = 0; i < wp->w_lines_valid; i++) {
         if (wp->w_lines[i].wl_valid) {
           if (wp->w_lines[i].wl_lastlnum < mod_top) {

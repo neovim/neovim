@@ -467,11 +467,8 @@ char *get_special_key_name(int c, int modifiers)
 {
   static char string[MAX_KEY_NAME_LEN + 1];
 
-  int i, idx;
-  int table_idx;
-
   string[0] = '<';
-  idx = 1;
+  int idx = 1;
 
   // Key that stands for a normal character.
   if (IS_SPECIAL(c) && KEY2TERMCAP0(c) == KS_KEY) {
@@ -481,7 +478,7 @@ char *get_special_key_name(int c, int modifiers)
   // Translate shifted special keys into unshifted keys and set modifier.
   // Same for CTRL and ALT modifiers.
   if (IS_SPECIAL(c)) {
-    for (i = 0; modifier_keys_table[i] != 0; i += MOD_KEYS_ENTRY_SIZE) {
+    for (int i = 0; modifier_keys_table[i] != 0; i += MOD_KEYS_ENTRY_SIZE) {
       if (KEY2TERMCAP0(c) == (int)modifier_keys_table[i + 1]
           && (int)KEY2TERMCAP1(c) == (int)modifier_keys_table[i + 2]) {
         modifiers |= modifier_keys_table[i];
@@ -493,7 +490,7 @@ char *get_special_key_name(int c, int modifiers)
   }
 
   // try to find the key in the special key table
-  table_idx = find_special_key_in_table(c);
+  int table_idx = find_special_key_in_table(c);
 
   // When not a known special key, and not a printable character, try to
   // extract modifiers.
@@ -514,7 +511,7 @@ char *get_special_key_name(int c, int modifiers)
   }
 
   // translate the modifier into a string
-  for (i = 0; mod_mask_table[i].name != 'A'; i++) {
+  for (int i = 0; mod_mask_table[i].name != 'A'; i++) {
     if ((modifiers & mod_mask_table[i].mod_mask)
         == mod_mask_table[i].mod_flag) {
       string[idx++] = mod_mask_table[i].name;
@@ -623,13 +620,9 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
                      const int flags, bool *const did_simplify)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 3)
 {
-  const char *last_dash;
-  const char *end_of_name;
-  const char *src;
   const char *bp;
   const char *const end = *srcp + src_len - 1;
   const bool in_string = flags & FSK_IN_STRING;
-  int modifiers;
   uvarnumber_T n;
   int l;
 
@@ -637,7 +630,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
     return 0;
   }
 
-  src = *srcp;
+  const char *src = *srcp;
   if (src[0] != '<') {
     return 0;
   }
@@ -646,7 +639,7 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
   }
 
   // Find end of modifier list
-  last_dash = src;
+  const char *last_dash = src;
   for (bp = src + 1; bp <= end && (*bp == '-' || ascii_isident(*bp)); bp++) {
     if (*bp == '-') {
       last_dash = bp;
@@ -678,10 +671,10 @@ int find_special_key(const char **const srcp, const size_t src_len, int *const m
 
   if (bp <= end && *bp == '>') {  // found matching '>'
     int key;
-    end_of_name = bp + 1;
+    const char *end_of_name = bp + 1;
 
     // Which modifiers are given?
-    modifiers = 0x0;
+    int modifiers = 0x0;
     for (bp = src + 1; bp < last_dash; bp++) {
       if (*bp != '-') {
         int bit = name_to_mod_mask((uint8_t)(*bp));
@@ -842,9 +835,7 @@ int get_special_key_code(const char *name)
 /// @return  which button is down or was released.
 int get_mouse_button(int code, bool *is_click, bool *is_drag)
 {
-  int i;
-
-  for (i = 0; mouse_table[i].pseudo_code; i++) {
+  for (int i = 0; mouse_table[i].pseudo_code; i++) {
     if (code == mouse_table[i].pseudo_code) {
       *is_click = mouse_table[i].is_click;
       *is_drag = mouse_table[i].is_drag;
@@ -884,13 +875,10 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
                         const int cpo_flags)
   FUNC_ATTR_NONNULL_ARG(1, 3)
 {
-  ssize_t i;
-  size_t slen;
   char key;
   size_t dlen = 0;
   const char *src;
   const char *const end = from + from_len - 1;
-  char *result;          // buffer for resulting string
 
   const bool do_backslash = !(cpo_flags & FLAG_CPO_BSLASH);  // backslash is a special character
   const bool do_special = !(flags & REPTERM_NO_SPECIAL);
@@ -900,7 +888,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
   // Allocate space for the translation.  Worst case a single character is
   // replaced by 6 bytes (shifted special key), plus a NUL at the end.
   const size_t buf_len = allocated ? from_len * 6 + 1 : 128;
-  result = allocated ? xmalloc(buf_len) : *bufp;
+  char *result = allocated ? xmalloc(buf_len) : *bufp;  // buffer for resulting string
 
   src = from;
 
@@ -931,9 +919,9 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
         }
       }
 
-      slen = trans_special(&src, (size_t)(end - src) + 1, result + dlen,
-                           FSK_KEYCODE | ((flags & REPTERM_NO_SIMPLIFY) ? 0 : FSK_SIMPLIFY),
-                           true, did_simplify);
+      size_t slen = trans_special(&src, (size_t)(end - src) + 1, result + dlen,
+                                  FSK_KEYCODE | ((flags & REPTERM_NO_SIMPLIFY) ? 0 : FSK_SIMPLIFY),
+                                  true, did_simplify);
       if (slen) {
         dlen += slen;
         continue;
@@ -989,7 +977,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
     }
 
     // skip multibyte char correctly
-    for (i = utfc_ptr2len_len(src, (int)(end - src) + 1); i > 0; i--) {
+    for (ssize_t i = utfc_ptr2len_len(src, (int)(end - src) + 1); i > 0; i--) {
       // If the character is K_SPECIAL, replace it with K_SPECIAL
       // KS_SPECIAL KE_FILLER.
       if (*src == (char)K_SPECIAL) {

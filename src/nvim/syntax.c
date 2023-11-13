@@ -309,8 +309,8 @@ void syntax_start(win_T *wp, linenr_T lnum)
 {
   synstate_T *last_valid = NULL;
   synstate_T *last_min_valid = NULL;
-  synstate_T *sp, *prev = NULL;
-  linenr_T parsed_lnum;
+  synstate_T *sp;
+  synstate_T *prev = NULL;
   linenr_T first_stored;
   int dist;
   static varnumber_T changedtick = 0;  // remember the last change ID
@@ -425,7 +425,7 @@ void syntax_start(win_T *wp, linenr_T lnum)
       if (sp != NULL
           && sp->sst_lnum == current_lnum
           && syn_stack_equal(sp)) {
-        parsed_lnum = current_lnum;
+        linenr_T parsed_lnum = current_lnum;
         prev = sp;
         while (sp != NULL && sp->sst_change_lnum <= parsed_lnum) {
           if (sp->sst_lnum <= lnum) {
@@ -907,9 +907,6 @@ void syn_stack_free_all(synblock_T *block)
 // Also used to allocate b_sst_array[] for the first time.
 static void syn_stack_alloc(void)
 {
-  synstate_T *to, *from;
-  synstate_T *sstp;
-
   int len = syn_buf->b_ml.ml_line_count / SST_DIST + Rows * 2;
   if (len < SST_MIN_ENTRIES) {
     len = SST_MIN_ENTRIES;
@@ -937,12 +934,12 @@ static void syn_stack_alloc(void)
     }
 
     assert(len >= 0);
-    sstp = xcalloc((size_t)len, sizeof(synstate_T));
+    synstate_T *sstp = xcalloc((size_t)len, sizeof(synstate_T));
 
-    to = sstp - 1;
+    synstate_T *to = sstp - 1;
     if (syn_block->b_sst_array != NULL) {
       // Move the states from the old array to the new one.
-      for (from = syn_block->b_sst_first; from != NULL;
+      for (synstate_T *from = syn_block->b_sst_first; from != NULL;
            from = from->sst_next) {
         to++;
         *to = *from;
@@ -988,16 +985,13 @@ void syn_stack_apply_changes(buf_T *buf)
 
 static void syn_stack_apply_changes_block(synblock_T *block, buf_T *buf)
 {
-  synstate_T *p, *prev, *np;
-  linenr_T n;
-
-  prev = NULL;
-  for (p = block->b_sst_first; p != NULL;) {
+  synstate_T *prev = NULL;
+  for (synstate_T *p = block->b_sst_first; p != NULL;) {
     if (p->sst_lnum + block->b_syn_sync_linebreaks > buf->b_mod_top) {
-      n = p->sst_lnum + buf->b_mod_xlines;
+      linenr_T n = p->sst_lnum + buf->b_mod_xlines;
       if (n <= buf->b_mod_bot) {
         // this state is inside the changed area, remove it
-        np = p->sst_next;
+        synstate_T *np = p->sst_next;
         if (prev == NULL) {
           block->b_sst_first = np;
         } else {
@@ -1260,7 +1254,6 @@ static void load_current_state(synstate_T *from)
 static bool syn_stack_equal(synstate_T *sp)
 {
   bufstate_T *bp;
-  reg_extmatch_T *six, *bsx;
 
   // First a quick check if the stacks have the same size end nextlist.
   if (sp->sst_stacksize != current_state.ga_len
@@ -1286,8 +1279,8 @@ static bool syn_stack_equal(synstate_T *sp)
     }
     // When the extmatch pointers are different, the strings in them can
     // still be the same.  Check if the extmatch references are equal.
-    bsx = bp[i].bs_extmatch;
-    six = CUR_STATE(i).si_extmatch;
+    reg_extmatch_T *bsx = bp[i].bs_extmatch;
+    reg_extmatch_T *six = CUR_STATE(i).si_extmatch;
     // If one of the extmatch pointers is NULL the states are different.
     if (bsx == NULL || six == NULL) {
       break;
@@ -1498,7 +1491,8 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
   lpos_T eos_pos;               // end-of-start match (start region)
   lpos_T eoe_pos;               // end-of-end pattern
   int end_idx;                  // group ID for end pattern
-  stateitem_T *cur_si, *sip = NULL;
+  stateitem_T *cur_si;
+  stateitem_T *sip = NULL;
   int startcol;
   int endcol;
   int flags;
@@ -2355,9 +2349,7 @@ static void pop_current_state(void)
 static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_endpos, int *flagsp,
                         lpos_T *end_endpos, int *end_idx, reg_extmatch_T *start_ext)
 {
-  colnr_T matchcol;
-  synpat_T *spp, *spp_skip;
-  int start_idx;
+  synpat_T *spp_skip;
   int best_idx;
   regmmatch_T regmatch;
   regmmatch_T best_regmatch;        // startpos/endpos of best match
@@ -2374,7 +2366,7 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
   // Check for being called with a START pattern.
   // Can happen with a match that continues to the next line, because it
   // contained a region.
-  spp = &(SYN_ITEMS(syn_block)[idx]);
+  synpat_T *spp = &(SYN_ITEMS(syn_block)[idx]);
   if (spp->sp_type != SPTYPE_START) {
     *hl_endpos = *startpos;
     return;
@@ -2401,8 +2393,8 @@ static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_
   unref_extmatch(re_extmatch_in);
   re_extmatch_in = ref_extmatch(start_ext);
 
-  matchcol = startpos->col;     // start looking for a match at sstart
-  start_idx = idx;              // remember the first END pattern.
+  colnr_T matchcol = startpos->col;     // start looking for a match at sstart
+  int start_idx = idx;              // remember the first END pattern.
   best_regmatch.startpos[0].col = 0;            // avoid compiler warning
 
   // use syntax iskeyword option
@@ -3798,7 +3790,6 @@ static char *get_group_name(char *arg, char **name_end)
 ///              Return NULL for any error;
 static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, int skip)
 {
-  char *gname_start, *gname;
   int syn_id;
   int len = 0;
   char *p;
@@ -3905,12 +3896,12 @@ static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, i
           emsg(_("E393: group[t]here not accepted here"));
           return NULL;
         }
-        gname_start = arg;
+        char *gname_start = arg;
         arg = skiptowhite(arg);
         if (gname_start == arg) {
           return NULL;
         }
-        gname = xstrnsave(gname_start, (size_t)(arg - gname_start));
+        char *gname = xstrnsave(gname_start, (size_t)(arg - gname_start));
         if (strcmp(gname, "NONE") == 0) {
           *opt->sync_idx = NONE_IDX;
         } else {

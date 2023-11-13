@@ -431,7 +431,6 @@ static int sort_compare(const void *s1, const void *s2)
 void ex_sort(exarg_T *eap)
 {
   regmatch_T regmatch;
-  linenr_T lnum;
   int maxlen = 0;
   size_t count = (size_t)(eap->line2 - eap->line1) + 1;
   size_t i;
@@ -530,7 +529,7 @@ void ex_sort(exarg_T *eap)
   // numbers sorting it's the number to sort on.  This means the pattern
   // matching and number conversion only has to be done once per line.
   // Also get the longest line length for allocating "sortbuf".
-  for (lnum = eap->line1; lnum <= eap->line2; lnum++) {
+  for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
     char *s = ml_get(lnum);
     int len = (int)strlen(s);
     if (maxlen < len) {
@@ -622,7 +621,7 @@ void ex_sort(exarg_T *eap)
   bcount_t old_count = 0, new_count = 0;
 
   // Insert the lines in the sorted order below the last one.
-  lnum = eap->line2;
+  linenr_T lnum = eap->line2;
   for (i = 0; i < count; i++) {
     const linenr_T get_lnum = nrs[eap->forceit ? count - i - 1 : i].lnum;
 
@@ -1610,7 +1609,6 @@ int do_write(exarg_T *eap)
   int retval = FAIL;
   char *free_fname = NULL;
   buf_T *alt_buf = NULL;
-  int name_was_missing;
 
   if (not_writing()) {          // check 'write' option
     return FAIL;
@@ -1742,7 +1740,7 @@ int do_write(exarg_T *eap)
       }
     }
 
-    name_was_missing = curbuf->b_ffname == NULL;
+    int name_was_missing = curbuf->b_ffname == NULL;
     retval = buf_write(curbuf, ffname, fname, eap->line1, eap->line2,
                        eap, eap->append, eap->forceit, true, false);
 
@@ -2108,11 +2106,9 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
   bufref_T old_curbuf;
   char *free_fname = NULL;
   int retval = FAIL;
-  pos_T orig_pos;
   linenr_T topline = 0;
   int newcol = -1;
   int solcol = -1;
-  pos_T *pos;
   char *command = NULL;
   bool did_get_winopts = false;
   int readfile_flags = 0;
@@ -2288,7 +2284,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
     // May jump to last used line number for a loaded buffer or when asked
     // for explicitly
     if ((oldbuf && newlnum == ECMD_LASTL) || newlnum == ECMD_LAST) {
-      pos = &buflist_findfmark(buf)->mark;
+      pos_T *pos = &buflist_findfmark(buf)->mark;
       newlnum = pos->lnum;
       solcol = pos->col;
     }
@@ -2543,7 +2539,7 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
 
     // Careful: open_buffer() and apply_autocmds() may change the current
     // buffer and window.
-    orig_pos = curwin->w_cursor;
+    pos_T orig_pos = curwin->w_cursor;
     topline = curwin->w_topline;
     if (!oldbuf) {                          // need to read the file
       swap_exists_action = SEA_DIALOG;
@@ -2892,7 +2888,7 @@ void ex_z(exarg_T *eap)
 {
   int64_t bigness;
   int minus = 0;
-  linenr_T start, end, curs, i;
+  linenr_T start, end, curs;
   linenr_T lnum = eap->line2;
 
   // Vi compatible: ":z!" uses display height, without a count uses
@@ -2993,7 +2989,7 @@ void ex_z(exarg_T *eap)
     curs = 1;
   }
 
-  for (i = start; i <= end; i++) {
+  for (linenr_T i = start; i <= end; i++) {
     if (minus && i == lnum) {
       msg_putchar('\n');
 
@@ -4341,12 +4337,11 @@ void ex_global(exarg_T *eap)
 {
   linenr_T lnum;                // line number according to old situation
   int type;                     // first char of cmd: 'v' or 'g'
-  char *cmd;             // command argument
+  char *cmd;                    // command argument
 
   char delim;                 // delimiter, normally '/'
   char *pat;
   regmmatch_T regmatch;
-  int match;
 
   // When nesting the command works on one line.  This allows for
   // ":g/found/v/notfound/command".
@@ -4405,7 +4400,7 @@ void ex_global(exarg_T *eap)
 
   if (global_busy) {
     lnum = curwin->w_cursor.lnum;
-    match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, NULL, NULL);
+    int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, NULL, NULL);
     if ((type == 'g' && match) || (type == 'v' && !match)) {
       global_exe_one(cmd, lnum);
     }
@@ -4414,7 +4409,7 @@ void ex_global(exarg_T *eap)
     // pass 1: set marks for each (not) matching line
     for (lnum = eap->line1; lnum <= eap->line2 && !got_int; lnum++) {
       // a match on this line?
-      match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, NULL, NULL);
+      int match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum, 0, NULL, NULL);
       if (regmatch.regprog == NULL) {
         break;  // re-compiling regprog failed
       }
