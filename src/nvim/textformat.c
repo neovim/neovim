@@ -516,9 +516,8 @@ static bool ends_in_white(linenr_T lnum)
 static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int leader2_len,
                         char *leader2_flags)
 {
-  int idx1 = 0, idx2 = 0;
-  char *line1;
-  char *line2;
+  int idx1 = 0;
+  int idx2 = 0;
 
   if (leader1_len == 0) {
     return leader2_len == 0;
@@ -557,9 +556,9 @@ static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int
 
   // Get current line and next line, compare the leaders.
   // The first line has to be saved, only one line can be locked at a time.
-  line1 = xstrdup(ml_get(lnum));
+  char *line1 = xstrdup(ml_get(lnum));
   for (idx1 = 0; ascii_iswhite(line1[idx1]); idx1++) {}
-  line2 = ml_get(lnum + 1);
+  char *line2 = ml_get(lnum + 1);
   for (idx2 = 0; idx2 < leader2_len; idx2++) {
     if (!ascii_iswhite(line2[idx2])) {
       if (line1[idx1++] != line2[idx2]) {
@@ -582,7 +581,6 @@ static bool same_leader(linenr_T lnum, int leader1_len, char *leader1_flags, int
 ///          false when the previous line is in the same paragraph.
 static bool paragraph_start(linenr_T lnum)
 {
-  char *p;
   int leader_len = 0;                // leader len of current line
   char *leader_flags = NULL;         // flags for leader of current line
   int next_leader_len = 0;           // leader len of next line
@@ -591,7 +589,7 @@ static bool paragraph_start(linenr_T lnum)
   if (lnum <= 1) {
     return true;                // start of the file
   }
-  p = ml_get(lnum - 1);
+  char *p = ml_get(lnum - 1);
   if (*p == NUL) {
     return true;                // after empty line
   }

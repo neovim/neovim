@@ -833,8 +833,8 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
   // Cleanup if "cs_emsg_silent_list" remains.
   if (cstack.cs_emsg_silent_list != NULL) {
-    eslist_T *elem, *temp;
-    for (elem = cstack.cs_emsg_silent_list; elem != NULL; elem = temp) {
+    eslist_T *temp;
+    for (eslist_T *elem = cstack.cs_emsg_silent_list; elem != NULL; elem = temp) {
       temp = elem->next;
       xfree(elem);
     }

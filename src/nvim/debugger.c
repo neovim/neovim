@@ -650,7 +650,6 @@ static void update_has_expr_breakpoint(void)
 /// ":breakdel" and ":profdel".
 void ex_breakdel(exarg_T *eap)
 {
-  struct debuggy *bp, *bpi;
   int todel = -1;
   bool del_all = false;
   linenr_T best_lnum = 0;
@@ -677,9 +676,9 @@ void ex_breakdel(exarg_T *eap)
     if (dbg_parsearg(eap->arg, gap) == FAIL) {
       return;
     }
-    bp = &DEBUGGY(gap, gap->ga_len);
+    struct debuggy *bp = &DEBUGGY(gap, gap->ga_len);
     for (int i = 0; i < gap->ga_len; i++) {
-      bpi = &DEBUGGY(gap, i);
+      struct debuggy *bpi = &DEBUGGY(gap, i);
       if (bp->dbg_type == bpi->dbg_type
           && strcmp(bp->dbg_name, bpi->dbg_name) == 0
           && (bp->dbg_lnum == bpi->dbg_lnum

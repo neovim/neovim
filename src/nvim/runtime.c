@@ -911,7 +911,6 @@ static int gen_expand_wildcards_and_cb(int num_pat, char **pats, int flags, bool
 static int add_pack_dir_to_rtp(char *fname, bool is_pack)
 {
   char *p;
-  char *buf = NULL;
   char *afterdir = NULL;
   int retval = FAIL;
 
@@ -946,7 +945,7 @@ static int add_pack_dir_to_rtp(char *fname, bool is_pack)
   // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
   // Also stop at the first "after" directory
   size_t fname_len = strlen(ffname);
-  buf = try_malloc(MAXPATHL);
+  char *buf = try_malloc(MAXPATHL);
   if (buf == NULL) {
     goto theend;
   }
@@ -2029,8 +2028,6 @@ int do_source_str(const char *cmd, const char *traceback_name)
 int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
 {
   struct source_cookie cookie;
-  char *p;
-  char *fname_exp;
   uint8_t *firstline = NULL;
   int retval = FAIL;
   int save_debug_break_level = debug_break_level;
@@ -2038,11 +2035,11 @@ int do_source(char *fname, int check_other, int is_vimrc, int *ret_sid)
   proftime_T wait_start;
   bool trigger_source_post = false;
 
-  p = expand_env_save(fname);
+  char *p = expand_env_save(fname);
   if (p == NULL) {
     return retval;
   }
-  fname_exp = fix_fname(p);
+  char *fname_exp = fix_fname(p);
   xfree(p);
   if (fname_exp == NULL) {
     return retval;
@@ -2746,8 +2743,6 @@ void ex_finish(exarg_T *eap)
 /// an extra do_cmdline().  "reanimate" is used in the latter case.
 void do_finish(exarg_T *eap, int reanimate)
 {
-  int idx;
-
   if (reanimate) {
     ((struct source_cookie *)getline_cookie(eap->getline,
                                             eap->cookie))->finished = false;
@@ -2757,7 +2752,7 @@ void do_finish(exarg_T *eap, int reanimate)
   // not in its finally clause (which then is to be executed next) is found.
   // In this case, make the ":finish" pending for execution at the ":endtry".
   // Otherwise, finish normally.
-  idx = cleanup_conditionals(eap->cstack, 0, true);
+  int idx = cleanup_conditionals(eap->cstack, 0, true);
   if (idx >= 0) {
     eap->cstack->cs_pending[idx] = CSTP_FINISH;
     report_make_pending(CSTP_FINISH, NULL);

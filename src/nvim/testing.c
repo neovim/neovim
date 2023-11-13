@@ -152,7 +152,6 @@ static void ga_concat_shorten_esc(garray_T *gap, const char *str)
 static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, const char *exp_str,
                               typval_T *exp_tv_arg, typval_T *got_tv_arg, assert_type_T atype)
 {
-  char *tofree;
   typval_T *exp_tv = exp_tv_arg;
   typval_T *got_tv = got_tv_arg;
   bool did_copy = false;
@@ -162,7 +161,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, const char *e
       && !(opt_msg_tv->v_type == VAR_STRING
            && (opt_msg_tv->vval.v_string == NULL
                || *opt_msg_tv->vval.v_string == NUL))) {
-    tofree = encode_tv2echo(opt_msg_tv, NULL);
+    char *tofree = encode_tv2echo(opt_msg_tv, NULL);
     ga_concat(gap, tofree);
     xfree(tofree);
     ga_concat(gap, ": ");
@@ -223,7 +222,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, const char *e
       }
     }
 
-    tofree = encode_tv2string(exp_tv, NULL);
+    char *tofree = encode_tv2string(exp_tv, NULL);
     ga_concat_shorten_esc(gap, tofree);
     xfree(tofree);
   } else {
@@ -244,7 +243,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv, const char *e
     } else {
       ga_concat(gap, " but got ");
     }
-    tofree = encode_tv2string(got_tv, NULL);
+    char *tofree = encode_tv2string(got_tv, NULL);
     ga_concat_shorten_esc(gap, tofree);
     xfree(tofree);
 

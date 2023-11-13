@@ -55,9 +55,6 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
                      list_T *pos_list, const char *const conceal_char)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  matchitem_T *cur;
-  matchitem_T *prev;
-  matchitem_T *m;
   int hlg_id;
   regprog_T *regprog = NULL;
   int rtype = UPD_SOME_VALID;
@@ -76,7 +73,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
     id = wp->w_next_match_id++;
   } else {
     // check the given ID is not already in use
-    for (cur = wp->w_match_head; cur != NULL; cur = cur->mit_next) {
+    for (matchitem_T *cur = wp->w_match_head; cur != NULL; cur = cur->mit_next) {
       if (cur->mit_id == id) {
         semsg(_("E801: ID already taken: %" PRId64), (int64_t)id);
         return -1;
@@ -100,7 +97,7 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
   }
 
   // Build new match.
-  m = xcalloc(1, sizeof(matchitem_T));
+  matchitem_T *m = xcalloc(1, sizeof(matchitem_T));
   if (pos_list != NULL) {
     m->mit_pos_array = xcalloc((size_t)tv_list_len(pos_list), sizeof(llpos_T));
     m->mit_pos_count = tv_list_len(pos_list);
@@ -211,8 +208,8 @@ static int match_add(win_T *wp, const char *const grp, const char *const pat, in
 
   // Insert new match.  The match list is in ascending order with regard to
   // the match priorities.
-  cur = wp->w_match_head;
-  prev = cur;
+  matchitem_T *cur = wp->w_match_head;
+  matchitem_T *prev = cur;
   while (cur != NULL && prio >= cur->mit_priority) {
     prev = cur;
     cur = cur->mit_next;
@@ -292,10 +289,8 @@ static int match_delete(win_T *wp, int id, bool perr)
 /// Delete all matches in the match list of window 'wp'.
 void clear_matches(win_T *wp)
 {
-  matchitem_T *m;
-
   while (wp->w_match_head != NULL) {
-    m = wp->w_match_head->mit_next;
+    matchitem_T *m = wp->w_match_head->mit_next;
     vim_regfree(wp->w_match_head->mit_match.regprog);
     xfree(wp->w_match_head->mit_pattern);
     xfree(wp->w_match_head->mit_pos_array);
@@ -517,16 +512,13 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
 void prepare_search_hl(win_T *wp, match_T *search_hl, linenr_T lnum)
   FUNC_ATTR_NONNULL_ALL
 {
-  matchitem_T *cur;       // points to the match list
+  matchitem_T *cur = wp->w_match_head;  // points to the match list
   match_T *shl;       // points to search_hl or a match
-  bool shl_flag;  // flag to indicate whether search_hl
-                  // has been processed or not
+  bool shl_flag = false;  // flag to indicate whether search_hl has been processed or not
 
   // When using a multi-line pattern, start searching at the top
   // of the window or just after a closed fold.
   // Do this both for search_hl and the match list.
-  cur = wp->w_match_head;
-  shl_flag = false;
   while (cur != NULL || shl_flag == false) {
     if (shl_flag == false) {
       shl = search_hl;
@@ -806,7 +798,6 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char **line, match_T
 bool get_prevcol_hl_flag(win_T *wp, match_T *search_hl, colnr_T curcol)
 {
   colnr_T prevcol = curcol;
-  matchitem_T *cur;                      // points to the match list
 
   // we're not really at that column when skipping some text
   if ((wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol) {
@@ -821,7 +812,7 @@ bool get_prevcol_hl_flag(win_T *wp, match_T *search_hl, colnr_T curcol)
                                     && search_hl->endcol == MAXCOL))) {
     return true;
   }
-  cur = wp->w_match_head;
+  matchitem_T *cur = wp->w_match_head;  // points to the match list
   while (cur != NULL) {
     if (!cur->mit_hl.is_addpos && (prevcol == cur->mit_hl.startcol
                                    || (prevcol > cur->mit_hl.startcol
@@ -900,7 +891,6 @@ void f_clearmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "getmatches()" function
 void f_getmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  matchitem_T *cur;
   win_T *win = get_optional_window(argvars, 0);
 
   tv_list_alloc_ret(rettv, kListLenMayKnow);
@@ -908,7 +898,7 @@ void f_getmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  cur = win->w_match_head;
+  matchitem_T *cur = win->w_match_head;
   while (cur != NULL) {
     dict_T *dict = tv_dict_alloc();
     if (cur->mit_match.regprog == NULL) {
@@ -1185,10 +1175,8 @@ void f_matchdelete(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// skipping commands to find the next command.
 void ex_match(exarg_T *eap)
 {
-  char *p;
   char *g = NULL;
   char *end;
-  int c;
   int id;
 
   if (eap->line2 <= 3) {
@@ -1209,7 +1197,7 @@ void ex_match(exarg_T *eap)
               && (ascii_iswhite(eap->arg[4]) || ends_excmd(eap->arg[4])))) {
     end = eap->arg + 4;
   } else {
-    p = skiptowhite(eap->arg);
+    char *p = skiptowhite(eap->arg);
     if (!eap->skip) {
       g = xmemdupz(eap->arg, (size_t)(p - eap->arg));
     }
@@ -1233,7 +1221,7 @@ void ex_match(exarg_T *eap)
         return;
       }
 
-      c = (uint8_t)(*end);
+      int c = (uint8_t)(*end);
       *end = NUL;
       match_add(curwin, g, p + 1, 10, id, NULL, NULL);
       xfree(g);

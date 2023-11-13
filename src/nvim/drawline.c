@@ -2961,7 +2961,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       win_put_linebuf(wp, wlv.row, 0, draw_col, grid->cols, bg_attr, wrap);
       if (wrap) {
         ScreenGrid *current_grid = grid;
-        int current_row = wlv.row, dummy_col = 0;  // dummy_col unused
+        int current_row = wlv.row;
+        int dummy_col = 0;  // unused
         grid_adjust(&current_grid, &current_row, &dummy_col);
 
         // Force a redraw of the first column of the next line.

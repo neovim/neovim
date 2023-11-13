@@ -1835,11 +1835,11 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
             return NULL;
           }
         } else if (!cpo_bsl) {
-          int col, bslcnt = 0;
+          int bslcnt = 0;
 
           // Set "match_escaped" if there are an odd number of
           // backslashes.
-          for (col = pos.col; check_prevcol(linep, col, '\\', &col);) {
+          for (int col = pos.col; check_prevcol(linep, col, '\\', &col);) {
             bslcnt++;
           }
           match_escaped = (bslcnt & 1);
@@ -2201,10 +2201,10 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int64_t maxtravel)
       // quotes when the start is also inside of quotes.
       if ((!inquote || start_in_quotes == kTrue)
           && (c == initc || c == findc)) {
-        int col, bslcnt = 0;
+        int bslcnt = 0;
 
         if (!cpo_bsl) {
-          for (col = pos.col; check_prevcol(linep, col, '\\', &col);) {
+          for (int col = pos.col; check_prevcol(linep, col, '\\', &col);) {
             bslcnt++;
           }
         }
@@ -3552,19 +3552,12 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
   int max_path_depth = 50;
   int match_count = 1;
 
-  char *pat;
   char *new_fname;
   char *curr_fname = curbuf->b_fname;
   char *prev_fname = NULL;
-  linenr_T lnum;
-  int depth;
   int depth_displayed;                  // For type==CHECK_PATH
-  int old_files;
   int already_searched;
-  char *file_line;
-  char *line;
   char *p;
-  char save_char;
   bool define_matched;
   regmatch_T regmatch;
   regmatch_T incl_regmatch;
@@ -3582,14 +3575,14 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
   incl_regmatch.regprog = NULL;
   def_regmatch.regprog = NULL;
 
-  file_line = xmalloc(LSIZE);
+  char *file_line = xmalloc(LSIZE);
 
   if (type != CHECK_PATH && type != FIND_DEFINE
       // when CONT_SOL is set compare "ptr" with the beginning of the
       // line is faster than quote_meta/regcomp/regexec "ptr" -- Acevedo
       && !compl_status_sol()) {
     size_t patlen = len + 5;
-    pat = xmalloc(patlen);
+    char *pat = xmalloc(patlen);
     assert(len <= INT_MAX);
     snprintf(pat, patlen, whole ? "\\<%.*s\\>" : "%.*s", (int)len, ptr);
     // ignore case according to p_ic, p_scs and pat
@@ -3618,17 +3611,17 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
     def_regmatch.rm_ic = false;         // don't ignore case in define pat.
   }
   files = xcalloc((size_t)max_path_depth, sizeof(SearchedFile));
-  old_files = max_path_depth;
-  depth = depth_displayed = -1;
+  int old_files = max_path_depth;
+  int depth = depth_displayed = -1;
 
-  lnum = start_lnum;
+  linenr_T lnum = start_lnum;
   if (end_lnum > curbuf->b_ml.ml_line_count) {
     end_lnum = curbuf->b_ml.ml_line_count;
   }
   if (lnum > end_lnum) {                // do at least one line
     lnum = end_lnum;
   }
-  line = get_line_and_copy(lnum, file_line);
+  char *line = get_line_and_copy(lnum, file_line);
 
   while (true) {
     if (incl_regmatch.regprog != NULL
@@ -3739,7 +3732,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
                 i++;
               }
             }
-            save_char = p[i];
+            char save_char = p[i];
             p[i] = NUL;
             msg_outtrans(p, HL_ATTR(HLF_D));
             p[i] = save_char;

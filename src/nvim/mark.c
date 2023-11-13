@@ -791,18 +791,17 @@ char *fm_getname(fmark_T *fmark, int lead_len)
 /// The returned string has been allocated.
 static char *mark_line(pos_T *mp, int lead_len)
 {
-  char *s, *p;
-  int len;
+  char *p;
 
   if (mp->lnum == 0 || mp->lnum > curbuf->b_ml.ml_line_count) {
     return xstrdup("-invalid-");
   }
   assert(Columns >= 0);
   // Allow for up to 5 bytes per character.
-  s = xstrnsave(skipwhite(ml_get(mp->lnum)), (size_t)Columns * 5);
+  char *s = xstrnsave(skipwhite(ml_get(mp->lnum)), (size_t)Columns * 5);
 
   // Truncate the line to fit it in the window
-  len = 0;
+  int len = 0;
   for (p = s; *p != NUL; MB_PTR_ADV(p)) {
     len += ptr2cells(p);
     if (len >= Columns - lead_len) {
@@ -818,7 +817,7 @@ void ex_marks(exarg_T *eap)
 {
   char *arg = eap->arg;
   char *name;
-  pos_T *posp, *startp, *endp;
+  pos_T *posp;
 
   if (arg != NULL && *arg == NUL) {
     arg = NULL;
@@ -850,8 +849,8 @@ void ex_marks(exarg_T *eap)
   show_one_mark('.', arg, &curbuf->b_last_change.mark, NULL, true);
 
   // Show the marks as where they will jump to.
-  startp = &curbuf->b_visual.vi_start;
-  endp = &curbuf->b_visual.vi_end;
+  pos_T *startp = &curbuf->b_visual.vi_start;
+  pos_T *endp = &curbuf->b_visual.vi_end;
   if ((lt(*startp, *endp) || endp->lnum == 0) && startp->lnum != 0) {
     posp = startp;
   } else {
@@ -912,10 +911,7 @@ static void show_one_mark(int c, char *arg, pos_T *p, char *name_arg, int curren
 // ":delmarks[!] [marks]"
 void ex_delmarks(exarg_T *eap)
 {
-  char *p;
   int from, to;
-  int lower;
-  int digit;
   int n;
 
   if (*eap->arg == NUL && eap->forceit) {
@@ -928,9 +924,9 @@ void ex_delmarks(exarg_T *eap)
   } else {
     // clear specified marks only
     const Timestamp timestamp = os_time();
-    for (p = eap->arg; *p != NUL; p++) {
-      lower = ASCII_ISLOWER(*p);
-      digit = ascii_isdigit(*p);
+    for (char *p = eap->arg; *p != NUL; p++) {
+      int lower = ASCII_ISLOWER(*p);
+      int digit = ascii_isdigit(*p);
       if (lower || digit || ASCII_ISUPPER(*p)) {
         if (p[1] == '-') {
           // clear range of marks
@@ -998,14 +994,12 @@ void ex_delmarks(exarg_T *eap)
 // print the jumplist
 void ex_jumps(exarg_T *eap)
 {
-  char *name;
-
   cleanup_jumplist(curwin, true);
   // Highlight title
   msg_puts_title(_("\n jump line  col file/text"));
   for (int i = 0; i < curwin->w_jumplistlen && !got_int; i++) {
     if (curwin->w_jumplist[i].fmark.mark.lnum != 0) {
-      name = fm_getname(&curwin->w_jumplist[i].fmark, 16);
+      char *name = fm_getname(&curwin->w_jumplist[i].fmark, 16);
 
       // Make sure to output the current indicator, even when on an wiped
       // out buffer.  ":filter" may still skip it.
@@ -1049,8 +1043,6 @@ void ex_clearjumps(exarg_T *eap)
 // print the changelist
 void ex_changes(exarg_T *eap)
 {
-  char *name;
-
   // Highlight title
   msg_puts_title(_("\nchange line  col text"));
 
@@ -1066,7 +1058,7 @@ void ex_changes(exarg_T *eap)
                curbuf->b_changelist[i].mark.lnum,
                curbuf->b_changelist[i].mark.col);
       msg_outtrans(IObuff, 0);
-      name = mark_line(&curbuf->b_changelist[i].mark, 17);
+      char *name = mark_line(&curbuf->b_changelist[i].mark, 17);
       msg_outtrans(name, HL_ATTR(HLF_D));
       xfree(name);
       os_breakcheck();

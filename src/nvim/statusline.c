@@ -59,11 +59,8 @@ typedef enum {
 /// If inversion is possible we use it. Else '=' characters are used.
 void win_redr_status(win_T *wp)
 {
-  char *p;
-  int len;
   int fillchar;
   int attr;
-  int this_ru_col;
   bool is_stl_global = global_stl_height() > 0;
   static bool busy = false;
 
@@ -92,8 +89,8 @@ void win_redr_status(win_T *wp)
     const int stl_width = is_stl_global ? Columns : wp->w_width;
 
     get_trans_bufname(wp->w_buffer);
-    p = NameBuff;
-    len = (int)strlen(p);
+    char *p = NameBuff;
+    int len = (int)strlen(p);
 
     if ((bt_help(wp->w_buffer)
          || wp->w_p_pvw
@@ -119,7 +116,7 @@ void win_redr_status(win_T *wp)
       // len += (int)strlen(p + len);  // dead assignment
     }
 
-    this_ru_col = ru_col - (Columns - stl_width);
+    int this_ru_col = ru_col - (Columns - stl_width);
     if (this_ru_col < (stl_width + 1) / 2) {
       this_ru_col = (stl_width + 1) / 2;
     }
@@ -127,10 +124,10 @@ void win_redr_status(win_T *wp)
       p = "<";                // No room for file name!
       len = 1;
     } else {
-      int clen = 0, i;
+      int i;
 
       // Count total number of display cells.
-      clen = (int)mb_string2cells(p);
+      int clen = (int)mb_string2cells(p);
 
       // Find first character that will fit.
       // Going from start to end is much faster for DBCS.
@@ -295,7 +292,6 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   int row;
   int col = 0;
   int maxwidth;
-  int n;
   int fillchar;
   char buf[MAXPATHL];
   char transbuf[MAXPATHL];
@@ -422,7 +418,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 
   int curattr = attr;
   char *p = buf;
-  for (n = 0; hltab[n].start != NULL; n++) {
+  for (int n = 0; hltab[n].start != NULL; n++) {
     int textlen = (int)(hltab[n].start - p);
     // Make all characters printable.
     size_t tsize = transstr_buf(p, textlen, transbuf, sizeof transbuf, true);

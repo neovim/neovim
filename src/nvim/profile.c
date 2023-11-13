@@ -286,11 +286,8 @@ void ex_profile(exarg_T *eap)
 {
   static proftime_T pause_time;
 
-  char *e;
-  int len;
-
-  e = skiptowhite(eap->arg);
-  len = (int)(e - eap->arg);
+  char *e = skiptowhite(eap->arg);
+  int len = (int)(e - eap->arg);
   e = skipwhite(e);
 
   if (len == 5 && strncmp(eap->arg, "start", 5) == 0 && *e != NUL) {
@@ -434,12 +431,10 @@ static void prof_func_line(FILE *fd, int count, const proftime_T *total, const p
 /// @param prefer_self  when equal print only self time
 static void prof_sort_list(FILE *fd, ufunc_T **sorttab, int st_len, char *title, bool prefer_self)
 {
-  ufunc_T *fp;
-
   fprintf(fd, "FUNCTIONS SORTED ON %s TIME\n", title);
   fprintf(fd, "count  total (s)   self (s)  function\n");
   for (int i = 0; i < 20 && i < st_len; i++) {
-    fp = sorttab[i];
+    ufunc_T *fp = sorttab[i];
     prof_func_line(fd, fp->uf_tm_count, &fp->uf_tm_total, &fp->uf_tm_self,
                    prefer_self);
     if ((uint8_t)fp->uf_name[0] == K_SPECIAL) {
@@ -593,23 +588,19 @@ void func_line_end(void *cookie)
 static void func_dump_profile(FILE *fd)
 {
   hashtab_T *const functbl = func_tbl_get();
-  hashitem_T *hi;
-  int todo;
-  ufunc_T *fp;
-  ufunc_T **sorttab;
   int st_len = 0;
 
-  todo = (int)functbl->ht_used;
+  int todo = (int)functbl->ht_used;
   if (todo == 0) {
     return;         // nothing to dump
   }
 
-  sorttab = xmalloc(sizeof(ufunc_T *) * (size_t)todo);
+  ufunc_T **sorttab = xmalloc(sizeof(ufunc_T *) * (size_t)todo);
 
-  for (hi = functbl->ht_array; todo > 0; hi++) {
+  for (hashitem_T *hi = functbl->ht_array; todo > 0; hi++) {
     if (!HASHITEM_EMPTY(hi)) {
       todo--;
-      fp = HI2UF(hi);
+      ufunc_T *fp = HI2UF(hi);
       if (fp->uf_prof_initialized) {
         sorttab[st_len++] = fp;
 
@@ -713,7 +704,6 @@ void script_prof_restore(const proftime_T *tm)
 /// Dump the profiling results for all scripts in file "fd".
 static void script_dump_profile(FILE *fd)
 {
-  FILE *sfd;
   sn_prl_T *pp;
 
   for (int id = 1; id <= script_items.ga_len; id++) {
@@ -730,7 +720,7 @@ static void script_dump_profile(FILE *fd)
       fprintf(fd, "\n");
       fprintf(fd, "count  total (s)   self (s)\n");
 
-      sfd = os_fopen(si->sn_name, "r");
+      FILE *sfd = os_fopen(si->sn_name, "r");
       if (sfd == NULL) {
         fprintf(fd, "Cannot open file!\n");
       } else {

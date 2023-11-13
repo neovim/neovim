@@ -65,14 +65,11 @@ static vimmenu_T **get_root_menu(const char *const name)
 /// @param eap Ex command arguments
 void ex_menu(exarg_T *eap)
 {
-  char *menu_path;
-  int modes;
   char *map_to;            // command mapped to the menu entry
   int noremap;
   bool silent = false;
   int unmenu;
   char *map_buf;
-  char *arg;
   char *p;
   int i;
   int pri_tab[MENUDEPTH + 1];
@@ -80,8 +77,8 @@ void ex_menu(exarg_T *eap)
                                   // kFalse for "menu disable
   vimmenu_T menuarg;
 
-  modes = get_menu_cmd_modes(eap->cmd, eap->forceit, &noremap, &unmenu);
-  arg = eap->arg;
+  int modes = get_menu_cmd_modes(eap->cmd, eap->forceit, &noremap, &unmenu);
+  char *arg = eap->arg;
 
   while (true) {
     if (strncmp(arg, "<script>", 8) == 0) {
@@ -161,7 +158,7 @@ void ex_menu(exarg_T *eap)
     return;
   }
 
-  menu_path = arg;
+  char *menu_path = arg;
   if (*menu_path == '.') {
     semsg(_(e_invarg2), menu_path);
     goto theend;
@@ -265,34 +262,25 @@ theend:
 static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const int *const pri_tab,
                          const char *const call_data)
 {
-  char *path_name;
   int modes = menuarg->modes;
   vimmenu_T *menu = NULL;
-  vimmenu_T *parent;
   vimmenu_T **lower_pri;
-  char *p;
-  char *name;
   char *dname;
-  char *next_name;
-  char c;
-  char d;
   int pri_idx = 0;
   int old_modes = 0;
-  int amenu;
   char *en_name;
-  char *map_to = NULL;
 
   // Make a copy so we can stuff around with it, since it could be const
-  path_name = xstrdup(menu_path);
+  char *path_name = xstrdup(menu_path);
   vimmenu_T **root_menu_ptr = get_root_menu(menu_path);
   vimmenu_T **menup = root_menu_ptr;
-  parent = NULL;
-  name = path_name;
+  vimmenu_T *parent = NULL;
+  char *name = path_name;
   while (*name) {
     // Get name of this element in the menu hierarchy, and the simplified
     // name (without mnemonic and accelerator text).
-    next_name = menu_name_skip(name);
-    map_to = menutrans_lookup(name, (int)strlen(name));
+    char *next_name = menu_name_skip(name);
+    char *map_to = menutrans_lookup(name, (int)strlen(name));
     if (map_to != NULL) {
       en_name = name;
       name = map_to;
@@ -395,14 +383,14 @@ static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const 
 
   // Only add system menu items which have not been defined yet.
   // First check if this was an ":amenu".
-  amenu = ((modes & (MENU_NORMAL_MODE | MENU_INSERT_MODE)) ==
-           (MENU_NORMAL_MODE | MENU_INSERT_MODE));
+  int amenu = ((modes & (MENU_NORMAL_MODE | MENU_INSERT_MODE)) ==
+               (MENU_NORMAL_MODE | MENU_INSERT_MODE));
   if (sys_menu) {
     modes &= ~old_modes;
   }
 
   if (menu != NULL && modes) {
-    p = (call_data == NULL) ? NULL : xstrdup(call_data);
+    char *p = (call_data == NULL) ? NULL : xstrdup(call_data);
 
     // loop over all modes, may add more than one
     for (int i = 0; i < MENU_MODES; i++) {
@@ -412,8 +400,8 @@ static int add_menu_path(const char *const menu_path, vimmenu_T *menuarg, const 
 
         // For "amenu", may insert an extra character.
         // Don't do this for "<Nop>".
-        c = 0;
-        d = 0;
+        char c = 0;
+        char d = 0;
         if (amenu && call_data != NULL && *call_data != NUL) {
           switch (1 << i) {
           case MENU_VISUAL_MODE:
@@ -481,13 +469,11 @@ erret:
 // Called recursively.
 static int menu_enable_recurse(vimmenu_T *menu, char *name, int modes, int enable)
 {
-  char *p;
-
   if (menu == NULL) {
     return OK;                  // Got to bottom of hierarchy
   }
   // Get name of this element in the menu hierarchy
-  p = menu_name_skip(name);
+  char *p = menu_name_skip(name);
 
   // Find the menu
   while (menu != NULL) {
@@ -530,14 +516,12 @@ static int menu_enable_recurse(vimmenu_T *menu, char *name, int modes, int enabl
 static int remove_menu(vimmenu_T **menup, char *name, int modes, bool silent)
 {
   vimmenu_T *menu;
-  vimmenu_T *child;
-  char *p;
 
   if (*menup == NULL) {
     return OK;                  // Got to bottom of hierarchy
   }
   // Get name of this element in the menu hierarchy
-  p = menu_name_skip(name);
+  char *p = menu_name_skip(name);
 
   // Find the menu
   while ((menu = *menup) != NULL) {
@@ -591,7 +575,7 @@ static int remove_menu(vimmenu_T **menup, char *name, int modes, bool silent)
 
     // Recalculate modes for menu based on the new updated children
     menu->modes &= ~modes;
-    child = menu->children;
+    vimmenu_T *child = menu->children;
     for (; child != NULL; child = child->next) {
       menu->modes |= child->modes;
     }
@@ -741,11 +725,9 @@ bool menu_get(char *const path_name, int modes, list_T *list)
 /// @return menu if \p name is null, found menu or NULL
 static vimmenu_T *find_menu(vimmenu_T *menu, char *name, int modes)
 {
-  char *p;
-
   while (*name) {
     // find the end of one dot-separated name and put a NUL at the dot
-    p = menu_name_skip(name);
+    char *p = menu_name_skip(name);
     while (menu != NULL) {
       if (menu_name_equal(name, menu)) {
         // Found menu
@@ -887,7 +869,6 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
   char *path_name = NULL;
   int unmenu;
   vimmenu_T *menu;
-  int expand_menus;
 
   xp->xp_context = EXPAND_UNSUCCESSFUL;
 
@@ -925,7 +906,7 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
   }
 
   // ":popup" only uses menus, not entries
-  expand_menus = !((*cmd == 't' && cmd[1] == 'e') || *cmd == 'p');
+  int expand_menus = !((*cmd == 't' && cmd[1] == 'e') || *cmd == 'p');
   expand_emenu = (*cmd == 'e');
   if (expand_menus && ascii_iswhite(*p)) {
     return NULL;  // TODO(vim): check for next command?
@@ -1298,11 +1279,10 @@ static char *menu_text(const char *str, int *mnemonic, char **actext)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  char *p;
   char *text;
 
   // Locate accelerator text, after the first TAB
-  p = vim_strchr(str, TAB);
+  char *p = vim_strchr(str, TAB);
   if (p != NULL) {
     if (actext != NULL) {
       *actext = xstrdup(p + 1);
@@ -1706,7 +1686,6 @@ static garray_T menutrans_ga = GA_EMPTY_INIT_VALUE;
 void ex_menutranslate(exarg_T *eap)
 {
   char *arg = eap->arg;
-  char *from, *from_noamp, *to;
 
   if (menutrans_ga.ga_itemsize == 0) {
     ga_init(&menutrans_ga, (int)sizeof(menutrans_T), 5);
@@ -1720,16 +1699,16 @@ void ex_menutranslate(exarg_T *eap)
     del_menutrans_vars();
   } else {
     // ":menutrans from to": add translation
-    from = arg;
+    char *from = arg;
     arg = menu_skip_part(arg);
-    to = skipwhite(arg);
+    char *to = skipwhite(arg);
     *arg = NUL;
     arg = menu_skip_part(to);
     if (arg == to) {
       emsg(_(e_invarg));
     } else {
       from = xstrdup(from);
-      from_noamp = menu_text(from, NULL, NULL);
+      char *from_noamp = menu_text(from, NULL, NULL);
       assert(arg >= to);
       to = xmemdupz(to, (size_t)(arg - to));
       menu_translate_tab_and_shift(from);
@@ -1761,7 +1740,6 @@ static char *menu_skip_part(char *p)
 static char *menutrans_lookup(char *name, int len)
 {
   menutrans_T *tp = (menutrans_T *)menutrans_ga.ga_data;
-  char *dname;
 
   for (int i = 0; i < menutrans_ga.ga_len; i++) {
     if (STRNICMP(name, tp[i].from, len) == 0 && tp[i].from[len] == NUL) {
@@ -1772,7 +1750,7 @@ static char *menutrans_lookup(char *name, int len)
   // Now try again while ignoring '&' characters.
   char c = name[len];
   name[len] = NUL;
-  dname = menu_text(name, NULL, NULL);
+  char *dname = menu_text(name, NULL, NULL);
   name[len] = c;
   for (int i = 0; i < menutrans_ga.ga_len; i++) {
     if (STRICMP(dname, tp[i].from_noamp) == 0) {
@@ -1788,9 +1766,7 @@ static char *menutrans_lookup(char *name, int len)
 // Unescape the name in the translate dictionary table.
 static void menu_unescape_name(char *name)
 {
-  char *p;
-
-  for (p = name; *p && *p != '.'; MB_PTR_ADV(p)) {
+  for (char *p = name; *p && *p != '.'; MB_PTR_ADV(p)) {
     if (*p == '\\') {
       STRMOVE(p, p + 1);
     }

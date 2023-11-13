@@ -1265,7 +1265,7 @@ bool edit(int cmdchar, bool startln, int count)
     return false;
   }
 
-  InsertState state, *s = &state;
+  InsertState s[1];
   memset(s, 0, sizeof(InsertState));
   s->state.execute = insert_execute;
   s->state.check = insert_check;
@@ -4296,11 +4296,9 @@ static bool ins_tab(void)
   if (!curbuf->b_p_et && (tabstop_count(curbuf->b_p_vsts_array) > 0
                           || get_sts_value() > 0
                           || (p_sta && ind))) {
-    int i;
     char *ptr;
     char *saved_line = NULL;         // init for GCC
     pos_T pos;
-    pos_T fpos;
     pos_T *cursor;
     colnr_T want_vcol, vcol;
     int change_col = -1;
@@ -4324,7 +4322,7 @@ static bool ins_tab(void)
     }
 
     // Find first white before the cursor
-    fpos = curwin->w_cursor;
+    pos_T fpos = curwin->w_cursor;
     while (fpos.col > 0 && ascii_iswhite(ptr[-1])) {
       fpos.col--;
       ptr--;
@@ -4349,7 +4347,7 @@ static bool ins_tab(void)
     // Use as many TABs as possible.  Beware of 'breakindent', 'showbreak'
     // and 'linebreak' adding extra virtual columns.
     while (ascii_iswhite(*ptr)) {
-      i = lbr_chartabsize(&cts);
+      int i = lbr_chartabsize(&cts);
       if (cts.cts_vcol + i > want_vcol) {
         break;
       }
@@ -4391,7 +4389,7 @@ static bool ins_tab(void)
       fpos.col += repl_off;
 
       // Delete following spaces.
-      i = cursor->col - fpos.col;
+      int i = cursor->col - fpos.col;
       if (i > 0) {
         STRMOVE(ptr, ptr + i);
         // correct replace stack.

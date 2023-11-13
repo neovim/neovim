@@ -1865,7 +1865,6 @@ void set_empty_rows(win_T *wp, int used)
 /// This is messy stuff!!!
 void scroll_cursor_bot(int min_scroll, int set_topbot)
 {
-  int used;
   lineoff_T loff;
   linenr_T old_topline = curwin->w_topline;
   int old_skipcol = curwin->w_skipcol;
@@ -1879,7 +1878,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   if (set_topbot) {
     bool set_skipcol = false;
 
-    used = 0;
+    int used = 0;
     curwin->w_botline = cln + 1;
     loff.fill = 0;
     for (curwin->w_topline = curwin->w_botline;
@@ -1927,7 +1926,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   }
 
   // The lines of the cursor line itself are always used.
-  used = plines_win_nofill(curwin, cln, true);
+  int used = plines_win_nofill(curwin, cln, true);
 
   int scrolled = 0;
   // If the cursor is on or below botline, we will at least scroll by the
@@ -2321,7 +2320,6 @@ void cursor_correct(void)
 /// @return  FAIL for failure, OK otherwise.
 int onepage(Direction dir, int count)
 {
-  int n;
   int retval = OK;
   lineoff_T loff;
   linenr_T old_topline = curwin->w_topline;
@@ -2420,7 +2418,7 @@ int onepage(Direction dir, int count)
 
       // Find the line just above the new topline to get the right line
       // at the bottom of the window.
-      n = 0;
+      int n = 0;
       while (n <= curwin->w_height_inner && loff.lnum >= 1) {
         topline_back(curwin, &loff);
         if (loff.height == MAXCOL) {

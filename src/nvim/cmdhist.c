@@ -451,7 +451,8 @@ static int del_history_entry(int histype, char *str)
   regmatch.rm_ic = false;       // always match case
 
   bool found = false;
-  int i = idx, last = idx;
+  int i = idx;
+  int last = idx;
   do {
     histentry_T *hisptr = &history[histype][i];
     if (hisptr->hisstr == NULL) {

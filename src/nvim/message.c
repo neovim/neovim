@@ -285,7 +285,6 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   FUNC_ATTR_NONNULL_ALL
 {
   static int entered = 0;
-  int retval;
   char *buf = NULL;
 
   if (keep && multiline) {
@@ -339,7 +338,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   if (need_clear) {
     msg_clr_eos();
   }
-  retval = msg_end();
+  int retval = msg_end();
 
   if (keep && retval && vim_strsize(s) < (Rows - cmdline_row - 1) * Columns + sc_col) {
     set_keep_msg(s, 0);
@@ -390,7 +389,6 @@ char *msg_strtrunc(const char *s, int force)
 void trunc_string(const char *s, char *buf, int room_in, int buflen)
 {
   int room = room_in - 3;  // "..." takes 3 chars
-  int half;
   int len = 0;
   int e;
   int i;
@@ -406,7 +404,7 @@ void trunc_string(const char *s, char *buf, int room_in, int buflen)
   if (room_in < 3) {
     room = 0;
   }
-  half = room / 2;
+  int half = room / 2;
 
   // First part: Start of the string.
   for (e = 0; len < half && e < buflen; e++) {
@@ -628,7 +626,6 @@ int emsg_not_now(void)
 
 bool emsg_multiline(const char *s, bool multiline)
 {
-  int attr;
   bool ignore = false;
 
   // Skip this if not giving error messages at the moment.
@@ -725,7 +722,7 @@ bool emsg_multiline(const char *s, bool multiline)
   }
 
   emsg_on_display = true;     // remember there is an error message
-  attr = HL_ATTR(HLF_E);      // set highlight mode for error messages
+  int attr = HL_ATTR(HLF_E);      // set highlight mode for error messages
   if (msg_scrolled != 0) {
     need_wait_return = true;  // needed in case emsg() is called after
   }                           // wait_return() has reset need_wait_return
@@ -898,15 +895,13 @@ void msg_schedule_semsg_multiline(const char *const fmt, ...)
 /// @return  a pointer to the printed message, if wait_return() not called.
 char *msg_trunc(char *s, bool force, int attr)
 {
-  int n;
-
   // Add message to history before truncating.
   add_msg_hist(s, -1, attr, false);
 
   char *ts = msg_may_trunc(force, s);
 
   msg_hist_off = true;
-  n = msg(ts, attr);
+  int n = msg(ts, attr);
   msg_hist_off = false;
 
   if (n) {
@@ -1012,12 +1007,10 @@ static void add_msg_hist_multiattr(const char *s, int len, int attr, bool multil
 /// @return  FAIL if there are no messages.
 int delete_first_msg(void)
 {
-  struct msg_hist *p;
-
   if (msg_hist_len <= 0) {
     return FAIL;
   }
-  p = first_msg_hist;
+  struct msg_hist *p = first_msg_hist;
   first_msg_hist = p->next;
   if (first_msg_hist == NULL) {  // history is becoming empty
     assert(msg_hist_len == 1);
@@ -1034,8 +1027,6 @@ int delete_first_msg(void)
 void ex_messages(exarg_T *eap)
   FUNC_ATTR_NONNULL_ALL
 {
-  struct msg_hist *p;
-
   if (strcmp(eap->arg, "clear") == 0) {
     int keep = eap->addr_count == 0 ? 0 : eap->line2;
 
@@ -1050,7 +1041,7 @@ void ex_messages(exarg_T *eap)
     return;
   }
 
-  p = first_msg_hist;
+  struct msg_hist *p = first_msg_hist;
 
   if (eap->addr_count != 0) {
     int c = 0;
@@ -1132,8 +1123,6 @@ void msg_end_prompt(void)
 void wait_return(int redraw)
 {
   int c;
-  int oldState;
-  int tmpState;
   int had_got_int;
   FILE *save_scriptout;
 
@@ -1167,7 +1156,7 @@ void wait_return(int redraw)
   }
 
   redir_off = true;             // don't redirect this message
-  oldState = State;
+  int oldState = State;
   if (quit_more) {
     c = CAR;                    // just pretend CR was hit
     quit_more = false;
@@ -1282,7 +1271,7 @@ void wait_return(int redraw)
   // If the screen size changed screen_resize() will redraw the screen.
   // Otherwise the screen is only redrawn if 'redraw' is set and no ':'
   // typed.
-  tmpState = State;
+  int tmpState = State;
   State = oldState;  // restore State before screen_resize()
   setmouse();
   msg_check();

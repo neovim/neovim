@@ -1155,9 +1155,8 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
       res = sortinfo->item_compare_ic ? STRICMP(p1, p2) : strcmp(p1, p2);
     }
   } else {
-    double n1, n2;
-    n1 = strtod(p1, &p1);
-    n2 = strtod(p2, &p2);
+    double n1 = strtod(p1, &p1);
+    double n2 = strtod(p2, &p2);
     res = n1 == n2 ? 0 : n1 > n2 ? 1 : -1;
   }
 
@@ -1187,8 +1186,6 @@ static int item_compare_not_keeping_zero(const void *s1, const void *s2)
 
 static int item_compare2(const void *s1, const void *s2, bool keep_zero)
 {
-  ListSortItem *si1, *si2;
-  int res;
   typval_T rettv;
   typval_T argv[3];
   const char *func_name;
@@ -1199,8 +1196,8 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
     return 0;
   }
 
-  si1 = (ListSortItem *)s1;
-  si2 = (ListSortItem *)s2;
+  ListSortItem *si1 = (ListSortItem *)s1;
+  ListSortItem *si2 = (ListSortItem *)s2;
 
   if (partial == NULL) {
     func_name = sortinfo->item_compare_func;
@@ -1218,7 +1215,7 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   funcexe.fe_evaluate = true;
   funcexe.fe_partial = partial;
   funcexe.fe_selfdict = sortinfo->item_compare_selfdict;
-  res = call_func(func_name, -1, &rettv, 2, argv, &funcexe);
+  int res = call_func(func_name, -1, &rettv, 2, argv, &funcexe);
   tv_clear(&argv[0]);
   tv_clear(&argv[1]);
 
