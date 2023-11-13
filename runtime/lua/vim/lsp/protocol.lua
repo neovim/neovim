@@ -855,6 +855,9 @@ function protocol.make_client_capabilities()
         },
       },
       configuration = true,
+      didChangeConfiguration = {
+        dynamicRegistration = false,
+      },
       workspaceFolders = true,
       applyEdit = true,
       workspaceEdit = {
