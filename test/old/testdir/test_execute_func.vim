@@ -124,6 +124,8 @@ func Test_win_execute()
 endfunc
 
 func Test_win_execute_update_ruler()
+  CheckFeature quickfix
+
   enew
   call setline(1, range(500))
   20

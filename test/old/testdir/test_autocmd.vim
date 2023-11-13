@@ -3028,6 +3028,8 @@ func Test_autocmd_CmdWinEnter()
 endfunc
 
 func Test_autocmd_was_using_freed_memory()
+  CheckFeature quickfix
+
   pedit xx
   n x
   augroup winenter

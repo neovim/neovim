@@ -1,7 +1,9 @@
 " Tests for 'makeencoding'.
 
 source shared.vim
+source check.vim
 
+CheckFeature quickfix
 let s:python = PythonProg()
 if s:python == ''
   throw 'Skipped: python program missing'
