@@ -26,6 +26,7 @@ local rmdir = helpers.rmdir
 local write_file = helpers.write_file
 local poke_eventloop = helpers.poke_eventloop
 local assert_alive = helpers.assert_alive
+local expect_exit = helpers.expect_exit
 
 describe('lua stdlib', function()
   before_each(clear)
@@ -2386,6 +2387,18 @@ describe('lua stdlib', function()
     ]])
     exec_lua [[vim.wait(1000, function() return vim.g.test end)]]
     eq(true, exec_lua[[return vim.g.test]])
+  end)
+
+  it('vim.defer_fn does not leak memory or handles on exit #19727', function()
+    expect_exit(exec_lua, [[
+      vim.defer_fn(function()
+        vim.defer_fn(function()
+          vim.defer_fn(function()
+          end, 0)
+        end, 0)
+      end, 0)
+      vim.cmd('quit')
+    ]])
   end)
 
   describe('vim.region', function()
