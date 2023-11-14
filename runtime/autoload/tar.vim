@@ -1,7 +1,7 @@
 " tar.vim: Handles browsing tarfiles
 "            AUTOLOAD PORTION
-" Date:		Nov 05, 2023
-" Version:	32a  (with modifications from the Vim Project)
+" Date:		Nov 14, 2023
+" Version:	32b  (with modifications from the Vim Project)
 " Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " License:	Vim License  (see vim's :help license)
 "
@@ -208,27 +208,24 @@ fun! tar#Browse(tarfile)
 "   call Dret("tar#Browse : a:tarfile<".a:tarfile.">")
    return
   endif
-  " If there was an error message, the last line probably matches some keywords but
-  " should also contain whitespace for readability. Make sure not to match a
-  " filename that contains the keyword (error/warning/unrecognized/inappropriate, etc)
   "
-  " FIXME:is this actually necessary? In case of an error, we should probably
-  "       have noticed in the if statement above since tar should have exited
-  "       with a non-zero exit code.
-  if line("$") == curlast || ( line("$") == (curlast + 1) &&
-        \ getline("$") =~# '\c\<\%(warning\|error\|inappropriate\|unrecognized\)\>' &&
-        \ getline("$") =~  '\s' )
-   redraw!
-   echohl WarningMsg | echo "***warning*** (tar#Browse) ".a:tarfile." doesn't appear to be a tar file" | echohl None
-   keepj sil! %d
-   let eikeep= &ei
-   set ei=BufReadCmd,FileReadCmd
-   exe "r ".fnameescape(a:tarfile)
-   let &ei= eikeep
-   keepj sil! 1d
-"   call Dret("tar#Browse : a:tarfile<".a:tarfile.">")
-   return
-  endif
+  " The following should not be neccessary, since in case of errors the
+  " previous if statement should have caught the problem (because tar exited
+  " with a non-zero exit code).
+  " if line("$") == curlast || ( line("$") == (curlast + 1) &&
+  "       \ getline("$") =~# '\c\<\%(warning\|error\|inappropriate\|unrecognized\)\>' &&
+  "       \ getline("$") =~  '\s' )
+  "  redraw!
+  "  echohl WarningMsg | echo "***warning*** (tar#Browse) ".a:tarfile." doesn't appear to be a tar file" | echohl None
+  "  keepj sil! %d
+  "  let eikeep= &ei
+  "  set ei=BufReadCmd,FileReadCmd
+  "  exe "r ".fnameescape(a:tarfile)
+  "  let &ei= eikeep
+  "  keepj sil! 1d
+  "   call Dret("tar#Browse : a:tarfile<".a:tarfile.">")
+  "  return
+  " endif
 
   " set up maps supported for tar
   setlocal noma nomod ro
