@@ -512,7 +512,7 @@ void nvim_ui_pum_set_bounds(uint64_t channel_id, Float width, Float height, Floa
   ui->pum_pos = true;
 }
 
-/// Tells Nvim when a terminal event has occurred.
+/// Tells Nvim when a terminal event has occurred: sets |v:termresponse| and fires |TermResponse|.
 ///
 /// The following terminal events are supported:
 ///

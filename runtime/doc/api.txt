@@ -3598,7 +3598,8 @@ nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
         |RPC| only
 
 nvim_ui_term_event({event}, {value})                    *nvim_ui_term_event()*
-    Tells Nvim when a terminal event has occurred.
+    Tells Nvim when a terminal event has occurred: sets |v:termresponse| and
+    fires |TermResponse|.
 
     The following terminal events are supported:
 
