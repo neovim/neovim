@@ -982,6 +982,31 @@ describe('smoothscroll', function()
     ]])
   end)
 
+  -- oldtest: Test_smoothscroll_cursor_top()
+  it('resets skipcol when scrolling cursor to top', function()
+    screen:try_resize(40, 12)
+    exec([[
+      set smoothscroll scrolloff=2
+      new | 11resize | wincmd j
+      call setline(1, ['line1', 'line2', 'line3'->repeat(20), 'line4'])
+      exe "norm G3\<C-E>k"
+    ]])
+    screen:expect([[
+                                              |
+      [No Name]                               |
+      line1                                   |
+      line2                                   |
+      ^line3line3line3line3line3line3line3line3|
+      line3line3line3line3line3line3line3line3|
+      line3line3line3line3                    |
+      line4                                   |
+      ~                                       |
+      ~                                       |
+      [No Name] [+]                           |
+                                              |
+    ]])
+  end)
+
   it("works with virt_lines above and below", function()
     screen:try_resize(55, 7)
     exec([=[

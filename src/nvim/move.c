@@ -1816,7 +1816,9 @@ void scroll_cursor_top(int min_scroll, int always)
       }
     }
     check_topfill(curwin, false);
-    if (curwin->w_topline == curwin->w_cursor.lnum) {
+    if (curwin->w_topline != old_topline) {
+      reset_skipcol(curwin);
+    } else if (curwin->w_topline == curwin->w_cursor.lnum) {
       validate_virtcol();
       if (curwin->w_skipcol >= curwin->w_virtcol) {
         // TODO(vim): if the line doesn't fit may optimize w_skipcol instead
