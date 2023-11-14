@@ -2586,17 +2586,23 @@ bool op_yank(oparg_T *oap, bool message)
   return true;
 }
 
-void op_at_regreplay(cmdarg_T *cap)
+void op_macro_replay(cmdarg_T *cap)
 {
   int curpos;
   int clnum = cap->oap->start.lnum;
+  int reg;
 
+  if (cap->nchar == NUL) {
+    reg = reg_recorded;
+  } else {
+    reg = cap->nchar;
+  }
   // apply the change to each line.
   for (curpos = 0; curpos < cap->oap->line_count; curpos++) {
     curwin->w_cursor.lnum = clnum;
     curwin->w_cursor.col = 0;
 
-    do_execreg(cap->nchar, false, false, false);
+    do_execreg(reg, false, false, false);
     exec_normal(false);
 
     line_breakcheck();
@@ -2604,23 +2610,6 @@ void op_at_regreplay(cmdarg_T *cap)
   }
 }
 
-void op_regreplay(oparg_T *oap)
-{
-  int curpos;
-  int clnum = oap->start.lnum;
-
-  // apply the change to each line.
-  for (curpos = 0; curpos < oap->line_count; curpos++) {
-    curwin->w_cursor.lnum = clnum;
-    curwin->w_cursor.col = 0;
-
-    do_execreg(reg_recorded, false, false, false);
-    exec_normal(false);
-
-    line_breakcheck();
-    clnum++;
-  }
-}
 
 static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 {
@@ -6387,19 +6376,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       check_cursor_col();
       break;
     case OP_ATREGREPLAY:
-      if (curwin->w_cursor.lnum + oap->line_count - 1 >
-          curbuf->b_ml.ml_line_count) {
-        beep_flush();
-      } else {
-        op_at_regreplay(cap);
-      }
-      break;
     case OP_REGREPLAY:
-      if (curwin->w_cursor.lnum + oap->line_count - 1 >
-          curbuf->b_ml.ml_line_count) {
+      if (curwin->w_cursor.lnum + oap->line_count - 1 > curbuf->b_ml.ml_line_count) {
         beep_flush();
       } else {
-        op_regreplay(oap);
+        op_macro_replay(cap);
       }
       break;
     default:
