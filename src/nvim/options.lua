@@ -942,7 +942,7 @@ return {
       type='bool', scope={'global'},
       secure=true,
       varname='p_fs',
-      defaults={if_true=false}
+      defaults={if_true=true}
     },
     {
       full_name='gdefault', abbreviation='gd',

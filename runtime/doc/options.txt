@@ -2765,7 +2765,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 					*'fsync'* *'fs'* *'nofsync'* *'nofs'*
-'fsync' 'fs'		boolean	(default off)
+'fsync' 'fs'		boolean	(default on)
 			global
 	When on, the OS function fsync() will be called after saving a file
 	(|:write|, |writefile()|, …), |swap-file|, |undo-persistence| and |shada-file|.
