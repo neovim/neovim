@@ -254,8 +254,6 @@ do
       callback = function(args)
         if vim.api.nvim_get_option_info2('background', {}).was_set then
           -- Don't do anything if 'background' is already set
-          timer:stop()
-          timer:close()
           return true
         end
 
@@ -274,9 +272,6 @@ do
             end
           end
 
-          timer:stop()
-          timer:close()
-
           return true
         end
       end,
@@ -290,7 +285,10 @@ do
         -- Suppress error if autocommand has already been deleted
         pcall(vim.api.nvim_del_autocmd, id)
       end)
-      timer:close()
+
+      if not timer:is_closing() then
+        timer:close()
+      end
     end)
   end
 end
