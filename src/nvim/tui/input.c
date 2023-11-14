@@ -480,6 +480,8 @@ static void tk_getkeys(TermInput *input, bool force)
       }
     } else if (key.type == TERMKEY_TYPE_OSC) {
       handle_osc_event(input, &key);
+    } else if (key.type == TERMKEY_TYPE_MODEREPORT) {
+      handle_modereport(input, &key);
     }
   }
 
@@ -579,9 +581,8 @@ static HandleState handle_bracketed_paste(TermInput *input)
 }
 
 static void handle_osc_event(TermInput *input, const TermKeyKey *key)
+  FUNC_ATTR_NONNULL_ALL
 {
-  assert(input);
-
   const char *str = NULL;
   if (termkey_interpret_string(input->tk, key, &str) == TERMKEY_RES_KEY) {
     assert(str != NULL);
@@ -599,6 +600,16 @@ static void handle_osc_event(TermInput *input, const TermKeyKey *key)
     rpc_send_event(ui_client_channel_id, "nvim_ui_term_event", args);
     kv_destroy(response);
   }
+}
+
+static void handle_modereport(TermInput *input, const TermKeyKey *key)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // termkey_interpret_modereport incorrectly sign extends the mode so we parse the response
+  // ourselves
+  int mode = (uint8_t)key->code.mouse[1] << 8 | (uint8_t)key->code.mouse[2];
+  TerminalModeState value = (uint8_t)key->code.mouse[3];
+  tui_dec_report_mode(input->tui_data, (TerminalDecMode)mode, value);
 }
 
 static void handle_raw_buffer(TermInput *input, bool force)

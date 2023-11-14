@@ -211,6 +211,9 @@ The following new APIs and features were added.
 • A clipboard provider which uses OSC 52 to copy the selection to the system
   clipboard is now bundled by default. |clipboard-osc52|
 
+• The 'termsync' option asks the terminal emulator to buffer screen updates
+  until the redraw cycle is complete. Requires support from the terminal.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

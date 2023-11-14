@@ -6523,6 +6523,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	   C1	    Control characters 0x80...0x9F
 
+					*'termsync'* *'notermsync'*
+'termsync'		boolean	(default on)
+			global
+	If the host terminal supports it, buffer all screen updates
+	made during a redraw cycle so that each screen is displayed in
+	the terminal all at once. This can prevent tearing or flickering
+	when the terminal updates faster than Nvim can redraw.
+
 						*'textwidth'* *'tw'*
 'textwidth' 'tw'	number	(default 0)
 			local to buffer

@@ -6978,6 +6978,15 @@ vim.o.tpf = vim.o.termpastefilter
 vim.go.termpastefilter = vim.o.termpastefilter
 vim.go.tpf = vim.go.termpastefilter
 
+--- If the host terminal supports it, buffer all screen updates
+--- made during a redraw cycle so that each screen is displayed in
+--- the terminal all at once. This can prevent tearing or flickering
+--- when the terminal updates faster than Nvim can redraw.
+---
+--- @type boolean
+vim.o.termsync = true
+vim.go.termsync = vim.o.termsync
+
 --- Maximum width of text that is being inserted.  A longer line will be
 --- broken after white space to get this width.  A zero value disables
 --- this.

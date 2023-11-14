@@ -104,6 +104,7 @@ struct TUIData {
   bool mouse_enabled;
   bool mouse_move_enabled;
   bool title_enabled;
+  bool sync_output;
   bool busy, is_invisible, want_invisible;
   bool cork, overflow;
   bool set_cursor_color_as_str;
@@ -137,6 +138,7 @@ struct TUIData {
     int set_underline_color;
     int enable_extended_keys, disable_extended_keys;
     int get_extkeys;
+    int sync;
   } unibi_ext;
   char *space_buf;
   bool stopped;
@@ -217,6 +219,41 @@ static size_t unibi_pre_fmt_str(TUIData *tui, unsigned unibi_index, char *buf, s
   return unibi_run(str, tui->params, buf, len);
 }
 
+/// Request the terminal's DEC mode (DECRQM).
+///
+/// @see handle_modereport
+static void tui_dec_request_mode(TUIData *tui, TerminalDecMode mode)
+{
+  // 5 bytes for \x1b[?$p, 1 byte for null terminator, 6 bytes for mode digits (more than enough)
+  char buf[12];
+  int len = snprintf(buf, sizeof(buf), "\x1b[?%d$p", (int)mode);
+  assert((len > 0) && (len < (int)sizeof(buf)));
+  out(tui, buf, (size_t)len);
+}
+
+/// Handle a DECRPM response from the terminal.
+void tui_dec_report_mode(TUIData *tui, TerminalDecMode mode, TerminalModeState state)
+{
+  assert(tui);
+  switch (state) {
+  case kTerminalModeNotRecognized:
+  case kTerminalModePermanentlySet:
+  case kTerminalModePermanentlyReset:
+    // If the mode is not recognized, or if the terminal emulator does not allow it to be changed,
+    // then there is nothing to do
+    break;
+  case kTerminalModeSet:
+  case kTerminalModeReset:
+    // The terminal supports changing the given mode
+    switch (mode) {
+    case kDecModeSynchronizedOutput:
+      // Ref: https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
+      tui->unibi_ext.sync = (int)unibi_add_ext_str(tui->ut, "Sync",
+                                                   "\x1b[?2026%?%p1%{1}%-%tl%eh%;");
+    }
+  }
+}
+
 static void terminfo_start(TUIData *tui)
 {
   tui->scroll_region_is_full_screen = true;
@@ -253,6 +290,7 @@ static void terminfo_start(TUIData *tui)
   tui->unibi_ext.enable_extended_keys = -1;
   tui->unibi_ext.disable_extended_keys = -1;
   tui->unibi_ext.get_extkeys = -1;
+  tui->unibi_ext.sync = -1;
   tui->out_fd = STDOUT_FILENO;
   tui->out_isatty = os_isatty(tui->out_fd);
   tui->input.tui_data = tui;
@@ -329,6 +367,11 @@ static void terminfo_start(TUIData *tui)
   // Enable bracketed paste
   unibi_out_ext(tui, tui->unibi_ext.enable_bracketed_paste);
 
+  // Query support for mode 2026 (Synchronized Output). Some terminals also
+  // support an older DCS sequence for synchronized output, but we will only use
+  // mode 2026
+  tui_dec_request_mode(tui, kDecModeSynchronizedOutput);
+
   // Query the terminal to see if it supports CSI u
   tui->input.waiting_for_csiu_response = 5;
   unibi_out_ext(tui, tui->unibi_ext.get_extkeys);
@@ -395,6 +438,11 @@ static void terminfo_stop(TUIData *tui)
   unibi_out_ext(tui, tui->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
   unibi_out_ext(tui, tui->unibi_ext.disable_focus_reporting);
+
+  // Disable synchronized output
+  UNIBI_SET_NUM_VAR(tui->params[0], 0);
+  unibi_out_ext(tui, tui->unibi_ext.sync);
+
   flush_buf(tui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&tui->output_handle, NULL);
@@ -1257,6 +1305,20 @@ void tui_default_colors_set(TUIData *tui, Integer rgb_fg, Integer rgb_bg, Intege
   invalidate(tui, 0, tui->grid.height, 0, tui->grid.width);
 }
 
+/// Enable synchronized output. When enabled, the terminal emulator will preserve the last rendered
+/// state on subsequent re-renders. It will continue to process incoming events. When synchronized
+/// mode is disabled again the emulator renders using the most recent state. This avoids tearing
+/// when the terminal updates the screen faster than Nvim can redraw it.
+static void tui_sync_output(TUIData *tui, bool enable)
+{
+  if (!tui->sync_output) {
+    return;
+  }
+
+  UNIBI_SET_NUM_VAR(tui->params[0], enable ? 1 : 0);
+  unibi_out_ext(tui, tui->unibi_ext.sync);
+}
+
 void tui_flush(TUIData *tui)
 {
   UGrid *grid = &tui->grid;
@@ -1272,6 +1334,8 @@ void tui_flush(TUIData *tui)
     loop_purge(tui->loop);
     tui_busy_stop(tui);  // avoid hidden cursor
   }
+
+  tui_sync_output(tui, true);
 
   while (kv_size(tui->invalid_regions)) {
     Rect r = kv_pop(tui->invalid_regions);
@@ -1299,6 +1363,8 @@ void tui_flush(TUIData *tui)
   }
 
   cursor_goto(tui, tui->row, tui->col);
+
+  tui_sync_output(tui, false);
 
   flush_buf(tui);
 }
@@ -1449,6 +1515,8 @@ void tui_option_set(TUIData *tui, String name, Object value)
     tui->input.ttimeoutlen = (OptInt)value.data.integer;
   } else if (strequal(name.data, "verbose")) {
     tui->verbose = value.data.integer;
+  } else if (strequal(name.data, "termsync")) {
+    tui->sync_output = value.data.boolean;
   }
 }
 
