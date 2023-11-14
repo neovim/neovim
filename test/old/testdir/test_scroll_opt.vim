@@ -912,4 +912,21 @@ func Test_smoothscroll_zero_width_scroll_cursor_bot()
   call StopVimInTerminal(buf)
 endfunc
 
+" scroll_cursor_top() should reset skipcol when it changes topline
+func Test_smoothscroll_cursor_top()
+  CheckScreendump
+
+  let lines =<< trim END
+      set smoothscroll scrolloff=2
+      new | 11resize | wincmd j
+      call setline(1, ['line1', 'line2', 'line3'->repeat(20), 'line4'])
+      exe "norm G3\<C-E>k"
+  END
+  call writefile(lines, 'XSmoothScrollCursorTop', 'D')
+  let buf = RunVimInTerminal('-u NONE -S XSmoothScrollCursorTop', #{rows: 12, cols:40})
+  call VerifyScreenDump(buf, 'Test_smoothscroll_cursor_top', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
