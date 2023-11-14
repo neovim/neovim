@@ -51,6 +51,7 @@ describe('fileio', function()
 
   it('fsync() codepaths #8304', function()
     clear({ args={ '-i', 'Xtest_startup_shada',
+                   '--cmd', 'set nofsync',
                    '--cmd', 'set directory=Xtest_startup_swapdir' } })
 
     -- These cases ALWAYS force fsync (regardless of 'fsync' option):

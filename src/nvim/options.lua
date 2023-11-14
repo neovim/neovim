@@ -3307,7 +3307,7 @@ return {
     },
     {
       abbreviation = 'fs',
-      defaults = { if_true = false },
+      defaults = { if_true = true },
       desc = [=[
         When on, the OS function fsync() will be called after saving a file
         (|:write|, |writefile()|, …), |swap-file|, |undo-persistence| and |shada-file|.
