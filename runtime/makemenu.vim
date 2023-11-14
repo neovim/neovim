@@ -649,7 +649,7 @@ SynMenu UV.VSE\ JCL:vsejcl
 SynMenu WXYZ.WEB.CWEB:cweb
 SynMenu WXYZ.WEB.WEB:web
 SynMenu WXYZ.WEB.WEB\ Changes:change
-SynMenu WXYZ.WebAssembly:wast
+SynMenu WXYZ.WebAssembly:wat
 SynMenu WXYZ.Webmacro:webmacro
 SynMenu WXYZ.Website\ MetaLanguage:wml
 SynMenu WXYZ.wDiff:wdiff

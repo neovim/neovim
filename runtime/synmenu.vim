@@ -623,7 +623,7 @@ an 50.160.330 &Syntax.UV.VSE\ JCL :cal SetSyn("vsejcl")<CR>
 an 50.170.100 &Syntax.WXYZ.WEB.CWEB :cal SetSyn("cweb")<CR>
 an 50.170.110 &Syntax.WXYZ.WEB.WEB :cal SetSyn("web")<CR>
 an 50.170.120 &Syntax.WXYZ.WEB.WEB\ Changes :cal SetSyn("change")<CR>
-an 50.170.130 &Syntax.WXYZ.WebAssembly :cal SetSyn("wast")<CR>
+an 50.170.130 &Syntax.WXYZ.WebAssembly :cal SetSyn("wat")<CR>
 an 50.170.140 &Syntax.WXYZ.Webmacro :cal SetSyn("webmacro")<CR>
 an 50.170.150 &Syntax.WXYZ.Website\ MetaLanguage :cal SetSyn("wml")<CR>
 an 50.170.170 &Syntax.WXYZ.wDiff :cal SetSyn("wdiff")<CR>
