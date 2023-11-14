@@ -22,7 +22,7 @@ executing the executables command when set to "0": >
 <
 
 ==============================================================================
-2. Autocommands						*gzip-autocmd*
+1. Autocommands						*gzip-autocmd*
 
 The plugin installs autocommands to intercept reading and writing of files
 with these extensions:
