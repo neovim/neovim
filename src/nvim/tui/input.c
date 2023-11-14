@@ -124,7 +124,6 @@ void tinput_init(TermInput *input, Loop *loop)
   input->loop = loop;
   input->paste = 0;
   input->in_fd = STDIN_FILENO;
-  input->waiting_for_bg_response = 0;
   input->extkeys_type = kExtkeysNone;
   input->ttimeout = (bool)p_ttimeout;
   input->ttimeoutlen = p_ttm;
@@ -579,113 +578,6 @@ static HandleState handle_bracketed_paste(TermInput *input)
   return kNotApplicable;
 }
 
-static void set_bg(char *bgvalue)
-{
-  if (ui_client_attached) {
-    MAXSIZE_TEMP_ARRAY(args, 2);
-    ADD_C(args, CSTR_AS_OBJ("term_background"));
-    ADD_C(args, CSTR_AS_OBJ(bgvalue));
-    rpc_send_event(ui_client_channel_id, "nvim_ui_set_option", args);
-  }
-}
-
-// During startup, tui.c requests the background color (see `ext.get_bg`).
-//
-// Here in input.c, we watch for the terminal response `\e]11;COLOR\a`.  If
-// COLOR matches `rgb:RRRR/GGGG/BBBB/AAAA` where R, G, B, and A are hex digits,
-// then compute the luminance[1] of the RGB color and classify it as light/dark
-// accordingly. Note that the color components may have anywhere from one to
-// four hex digits, and require scaling accordingly as values out of 4, 8, 12,
-// or 16 bits. Also note the A(lpha) component is optional, and is parsed but
-// ignored in the calculations.
-//
-// [1] https://en.wikipedia.org/wiki/Luma_%28video%29
-HandleState handle_background_color(TermInput *input)
-{
-  if (input->waiting_for_bg_response <= 0) {
-    return kNotApplicable;
-  }
-  size_t count = 0;
-  size_t component = 0;
-  size_t header_size = 0;
-  size_t num_components = 0;
-  size_t buf_size = rbuffer_size(input->read_stream.buffer);
-  uint16_t rgb[] = { 0, 0, 0 };
-  uint16_t rgb_max[] = { 0, 0, 0 };
-  bool eat_backslash = false;
-  bool done = false;
-  bool bad = false;
-  if (buf_size >= 9
-      && !rbuffer_cmp(input->read_stream.buffer, "\x1b]11;rgb:", 9)) {
-    header_size = 9;
-    num_components = 3;
-  } else if (buf_size >= 10
-             && !rbuffer_cmp(input->read_stream.buffer, "\x1b]11;rgba:", 10)) {
-    header_size = 10;
-    num_components = 4;
-  } else if (buf_size < 10
-             && !rbuffer_cmp(input->read_stream.buffer,
-                             "\x1b]11;rgba", buf_size)) {
-    // An incomplete sequence was found, waiting for the next input.
-    return kIncomplete;
-  } else {
-    input->waiting_for_bg_response--;
-    if (input->waiting_for_bg_response == 0) {
-      DLOG("did not get a response for terminal background query");
-    }
-    return kNotApplicable;
-  }
-  RBUFFER_EACH(input->read_stream.buffer, c, i) {
-    count = i + 1;
-    // Skip the header.
-    if (i < header_size) {
-      continue;
-    }
-    if (eat_backslash) {
-      done = true;
-      break;
-    } else if (c == '\x07') {
-      done = true;
-      break;
-    } else if (c == '\x1b') {
-      eat_backslash = true;
-    } else if (bad) {
-      // ignore
-    } else if ((c == '/') && (++component < num_components)) {
-      // work done in condition
-    } else if (ascii_isxdigit(c)) {
-      if (component < 3 && rgb_max[component] != 0xffff) {
-        rgb_max[component] = (uint16_t)((rgb_max[component] << 4) | 0xf);
-        rgb[component] = (uint16_t)((rgb[component] << 4) | hex2nr(c));
-      }
-    } else {
-      bad = true;
-    }
-  }
-  if (done && !bad && rgb_max[0] && rgb_max[1] && rgb_max[2]) {
-    rbuffer_consumed(input->read_stream.buffer, count);
-    double r = (double)rgb[0] / (double)rgb_max[0];
-    double g = (double)rgb[1] / (double)rgb_max[1];
-    double b = (double)rgb[2] / (double)rgb_max[2];
-    double luminance = (0.299 * r) + (0.587 * g) + (0.114 * b);  // CCIR 601
-    bool is_dark = luminance < 0.5;
-    char *bgvalue = is_dark ? "dark" : "light";
-    DLOG("bg response: %s", bgvalue);
-    ui_client_bg_response = is_dark ? kTrue : kFalse;
-    set_bg(bgvalue);
-    input->waiting_for_bg_response = 0;
-  } else if (!done && !bad) {
-    // An incomplete sequence was found, waiting for the next input.
-    return kIncomplete;
-  } else {
-    input->waiting_for_bg_response = 0;
-    rbuffer_consumed(input->read_stream.buffer, count);
-    DLOG("failed to parse bg response");
-    return kNotApplicable;
-  }
-  return kComplete;
-}
-
 static void handle_osc_event(TermInput *input, const TermKeyKey *key)
 {
   assert(input);
@@ -712,14 +604,12 @@ static void handle_osc_event(TermInput *input, const TermKeyKey *key)
 static void handle_raw_buffer(TermInput *input, bool force)
 {
   HandleState is_paste = kNotApplicable;
-  HandleState is_bc = kNotApplicable;
 
   do {
     if (!force
         && (handle_focus_event(input)
-            || (is_paste = handle_bracketed_paste(input)) != kNotApplicable
-            || (is_bc = handle_background_color(input)) != kNotApplicable)) {
-      if (is_paste == kIncomplete || is_bc == kIncomplete) {
+            || (is_paste = handle_bracketed_paste(input)) != kNotApplicable)) {
+      if (is_paste == kIncomplete) {
         // Wait for the next input, leaving it in the raw buffer due to an
         // incomplete sequence.
         return;

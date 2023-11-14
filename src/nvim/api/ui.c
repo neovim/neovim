@@ -120,7 +120,6 @@ void remote_ui_disconnect(uint64_t channel_id)
 
   // Destroy `ui`.
   XFREE_CLEAR(ui->term_name);
-  XFREE_CLEAR(ui->term_background);
   xfree(ui);
 }
 
@@ -345,15 +344,6 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
     });
     t_colors = (int)value.data.integer;
     ui->term_colors = (int)value.data.integer;
-    return;
-  }
-
-  if (strequal(name.data, "term_background")) {
-    VALIDATE_T("term_background", kObjectTypeString, value.type, {
-      return;
-    });
-    set_tty_background(value.data.string.data);
-    ui->term_background = string_to_cstr(value.data.string);
     return;
   }
 

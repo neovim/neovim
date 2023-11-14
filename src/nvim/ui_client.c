@@ -84,10 +84,7 @@ void ui_client_attach(int width, int height, char *term)
   if (term) {
     PUT_C(opts, "term_name", CSTR_AS_OBJ(term));
   }
-  if (ui_client_bg_response != kNone) {
-    bool is_dark = (ui_client_bg_response == kTrue);
-    PUT_C(opts, "term_background", CSTR_AS_OBJ(is_dark ? "dark" : "light"));
-  }
+
   PUT_C(opts, "term_colors", INTEGER_OBJ(t_colors));
   if (!ui_client_is_remote) {
     PUT_C(opts, "stdin_tty", BOOLEAN_OBJ(stdin_isatty));

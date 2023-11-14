@@ -36,8 +36,6 @@ describe('nvim_ui_attach()', function()
       pcall_err(meths.ui_attach, 80, 24, { term_name=true }))
     eq("Invalid 'term_colors': expected Integer, got Boolean",
       pcall_err(meths.ui_attach, 80, 24, { term_colors=true }))
-    eq("Invalid 'term_background': expected String, got Boolean",
-      pcall_err(meths.ui_attach, 80, 24, { term_background=true }))
     eq("Invalid 'stdin_fd': expected Integer, got String",
       pcall_err(meths.ui_attach, 80, 24, { stdin_fd='foo' }))
     eq("Invalid 'stdin_tty': expected Boolean, got String",

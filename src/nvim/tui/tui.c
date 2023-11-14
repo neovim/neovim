@@ -133,7 +133,6 @@ struct TUIData {
     int reset_scroll_region;
     int set_cursor_style, reset_cursor_style;
     int save_title, restore_title;
-    int get_bg;
     int set_underline_style;
     int set_underline_color;
     int enable_extended_keys, disable_extended_keys;
@@ -250,7 +249,6 @@ static void terminfo_start(TUIData *tui)
   tui->unibi_ext.reset_scroll_region = -1;
   tui->unibi_ext.set_cursor_style = -1;
   tui->unibi_ext.reset_cursor_style = -1;
-  tui->unibi_ext.get_bg = -1;
   tui->unibi_ext.set_underline_color = -1;
   tui->unibi_ext.enable_extended_keys = -1;
   tui->unibi_ext.disable_extended_keys = -1;
@@ -327,9 +325,7 @@ static void terminfo_start(TUIData *tui)
   unibi_out(tui, unibi_enter_ca_mode);
   unibi_out(tui, unibi_keypad_xmit);
   unibi_out(tui, unibi_clear_screen);
-  // Ask the terminal to send us the background color.
-  tui->input.waiting_for_bg_response = 5;
-  unibi_out_ext(tui, tui->unibi_ext.get_bg);
+
   // Enable bracketed paste
   unibi_out_ext(tui, tui->unibi_ext.enable_bracketed_paste);
 
@@ -1881,9 +1877,6 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e39%;m"
 #define XTERM_SETAB_16 \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e39%;m"
-
-  tui->unibi_ext.get_bg = (int)unibi_add_ext_str(ut, "ext.get_bg",
-                                                 "\x1b]11;?\x07");
 
   // Query the terminal to see if it supports CSI u key encoding by writing CSI
   // ? u followed by a request for the primary device attributes (CSI c)
