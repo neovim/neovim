@@ -1735,7 +1735,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         wlv.draw_state = WL_LINE;
         if (has_decor && wlv.row == startrow + wlv.filler_lines) {
           // hide virt_text on text hidden by 'nowrap' or 'smoothscroll'
-          decor_redraw_col(wp, (colnr_T)(ptr - line) - 1, wlv.off, true, &decor_state);
+          decor_redraw_col(wp, (colnr_T)(ptr - line) - 1, wlv.off, kVTHideOffscreen, &decor_state);
         }
         win_line_continue(&wlv);  // use wlv.saved_ values
       }
@@ -1799,10 +1799,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         bool selected = (area_active || (area_highlighting && noinvcur
                                          && wlv.vcol == wp->w_virtcol));
         if (decor_need_recheck) {
-          decor_recheck_draw_col(wlv.off, selected, &decor_state);
+          decor_recheck_draw_col(wlv.off, selected ? kVTHideVisual : 0, &decor_state);
           decor_need_recheck = false;
         }
-        extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off, selected, &decor_state);
+        extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off, selected ? kVTHideVisual : 0,
+                                        &decor_state);
 
         if (!has_fold && wp->w_buffer->b_virt_text_inline > 0) {
           handle_inline_virtual_text(wp, &wlv, v);
@@ -2868,7 +2869,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         && !has_fold) {
       if (has_decor && *ptr == NUL && lcs_eol_one == 0) {
         // Tricky: there might be a virtual text just _after_ the last char
-        decor_redraw_col(wp, (colnr_T)v, wlv.off, false, &decor_state);
+        decor_redraw_col(wp, (colnr_T)v, wlv.off, 0, &decor_state);
       }
       if (*ptr != NUL
           || lcs_eol_one > 0
@@ -3046,13 +3047,13 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       // At the end of screen line: might need to peek for decorations just after
       // this position.
       if (!has_fold && wp->w_p_wrap && wlv.n_extra == 0) {
-        decor_redraw_col(wp, (int)(ptr - line), -3, false, &decor_state);
+        decor_redraw_col(wp, (int)(ptr - line), -3, 0, &decor_state);
         // Check position/hiding of virtual text again on next screen line.
         decor_need_recheck = true;
       } else if (has_fold || !wp->w_p_wrap) {
         // Without wrapping, we might need to display right_align and win_col
         // virt_text for the entire text line.
-        decor_redraw_col(wp, MAXCOL, -1, true, &decor_state);
+        decor_redraw_col(wp, MAXCOL, -1, kVTHideOffscreen, &decor_state);
       }
     }
 

@@ -109,6 +109,9 @@ describe('API/extmarks', function()
     eq("Invalid 'virt_text_pos': 'foo'", pcall_err(set_extmark, ns, marks[2], 0, 0, { virt_text_pos = 'foo' }))
     eq("Invalid 'hl_mode': expected String, got Integer", pcall_err(set_extmark, ns, marks[2], 0, 0, { hl_mode = 0 }))
     eq("Invalid 'hl_mode': 'foo'", pcall_err(set_extmark, ns, marks[2], 0, 0, { hl_mode = 'foo' }))
+    eq("cannot use virt_text_hide with inline virtual text", pcall_err(set_extmark, ns, marks[2], 0, 0, { virt_text_pos = 'inline', virt_text_hide = { visual = true } }))
+    eq("cannot use virt_text_hide with inline virtual text", pcall_err(set_extmark, ns, marks[2], 0, 0, { virt_text_pos = 'inline', virt_text_hide = true }))
+    eq("cannot use 'blend' hl_mode with inline virtual text", pcall_err(set_extmark, ns, marks[2], 0, 0, { virt_text_pos = 'inline', hl_mode = 'blend' }))
     eq("Invalid 'id': expected Integer, got Array", pcall_err(set_extmark, ns, {}, 0, 0, { end_col = 1, end_row = 1 }))
     eq("Invalid mark position: expected 2 Integer items", pcall_err(get_extmarks, ns, {}, {-1, -1}))
     eq("Invalid mark position: expected mark id Integer or 2-item Array", pcall_err(get_extmarks, ns, true, {-1, -1}))
@@ -1581,6 +1584,32 @@ describe('API/extmarks', function()
       cursorline_hl_group = "Statement",
       right_gravity = true,
     } }, get_extmark_by_id(ns, marks[3], { details = true }))
+    set_extmark(ns, marks[4], 0, 0, {
+      priority = 42,
+      virt_text = { { "" } },
+      virt_text_hide = { visual = true },
+    })
+    set_extmark(ns, marks[5], 0, 0, {
+      priority = 42,
+      virt_text = { { "" } },
+      virt_text_hide = { offscreen = true },
+    })
+    eq({0, 0, {
+      ns_id = 1,
+      right_gravity = true,
+      priority = 42,
+      virt_text = { { "" } },
+      virt_text_hide = { visual = true },
+      virt_text_pos = "eol",
+    } }, get_extmark_by_id(ns, marks[4], { details = true }))
+    eq({0, 0, {
+      ns_id = 1,
+      right_gravity = true,
+      priority = 42,
+      virt_text = { { "" } },
+      virt_text_hide = { offscreen = true },
+      virt_text_pos = "eol",
+    } }, get_extmark_by_id(ns, marks[5], { details = true }))
   end)
 
   it('can get marks from anonymous namespaces', function()

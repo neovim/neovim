@@ -186,12 +186,23 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
     if (kv_size(decor->virt_text)) {
       Array chunks = virt_text_to_array(decor->virt_text, hl_name);
       PUT(dict, "virt_text", ARRAY_OBJ(chunks));
-      PUT(dict, "virt_text_hide", BOOLEAN_OBJ(decor->virt_text_hide));
+      if (decor->virt_text_hide == 0) {
+        PUT(dict, "virt_text_hide", BOOLEAN_OBJ(false));
+      } else if (decor->virt_text_hide == (kVTHideVisual | kVTHideOffscreen)) {
+        PUT(dict, "virt_text_hide", BOOLEAN_OBJ(true));
+      } else {
+        Dictionary virt_text_hide = ARRAY_DICT_INIT;
+        for (size_t i = 0; virt_text_hide_str[i] != NULL; i++) {
+          if (decor->virt_text_hide & (1 << i)) {
+            PUT(virt_text_hide, virt_text_hide_str[i], BOOLEAN_OBJ(true));
+          }
+        }
+        PUT(dict, "virt_text_hide", DICTIONARY_OBJ(virt_text_hide));
+      }
       if (decor->virt_text_pos == kVTWinCol) {
         PUT(dict, "virt_text_win_col", INTEGER_OBJ(decor->col));
       }
-      PUT(dict, "virt_text_pos",
-          CSTR_TO_OBJ(virt_text_pos_str[decor->virt_text_pos]));
+      PUT(dict, "virt_text_pos", CSTR_TO_OBJ(virt_text_pos_str[decor->virt_text_pos]));
     }
 
     if (decor->ui_watched) {
@@ -487,10 +498,14 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                                     window column (starting from the first
 ///                                     text column of the screen line) instead
 ///                                     of "virt_text_pos".
-///               - virt_text_hide : hide the virtual text when the background
-///                                  text is selected or hidden because of
-///                                  scrolling with 'nowrap' or 'smoothscroll'.
-///                                  Currently only affects "overlay" virt_text.
+///               - virt_text_hide : control when virt_text should be hidden.
+///                                  Not supported for "inline" virt_text.
+///                 - If a Dictionary, can contain the following Boolean fields:
+///                   - "visual": when the extmark is inside Visual selection.
+///                   - "offscreen": when the extmark is out of screen.
+///                 - If a Boolean and is true, equivalent to the combination of
+///                   "visual" and "offscreen".
+///
 ///               - hl_mode : control how highlights are combined with the
 ///                           highlights of the text. Currently only affects
 ///                           virt_text highlights, but might affect `hl_group`
@@ -700,7 +715,35 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   decor.hl_eol = opts->hl_eol;
-  decor.virt_text_hide = opts->virt_text_hide;
+  if (HAS_KEY(opts, set_extmark, virt_text_hide)) {
+    decor.virt_text_hide = 0;
+    if (opts->virt_text_hide.type == kObjectTypeBoolean) {
+      if (opts->virt_text_hide.data.boolean) {
+        decor.virt_text_hide |= kVTHideVisual | kVTHideOffscreen;
+      }
+    } else if (opts->virt_text_hide.type == kObjectTypeDictionary) {
+      Dict(virt_text_hide) virt_text_hide[1] = { 0 };
+      if (!api_dict_to_keydict(virt_text_hide, KeyDict_virt_text_hide_get_field,
+                               opts->virt_text_hide.data.dictionary, err)) {
+        goto error;
+      }
+      if (virt_text_hide->visual) {
+        decor.virt_text_hide |= kVTHideVisual;
+      }
+      if (virt_text_hide->offscreen) {
+        decor.virt_text_hide |= kVTHideOffscreen;
+      }
+    } else {
+      VALIDATE(false, "%s", "virt_text_hide must be a Boolean or a Dictionary", {
+        goto error;
+      });
+    }
+    if (decor.virt_text_hide != 0 && decor.virt_text_pos == kVTInline) {
+      VALIDATE(false, "%s", "cannot use virt_text_hide with inline virtual text", {
+        goto error;
+      });
+    }
+  }
 
   if (HAS_KEY(opts, set_extmark, hl_mode)) {
     String str = opts->hl_mode;

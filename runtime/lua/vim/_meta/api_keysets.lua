@@ -224,7 +224,7 @@ error('Cannot require a meta file')
 --- @field virt_text? any[]
 --- @field virt_text_pos? string
 --- @field virt_text_win_col? integer
---- @field virt_text_hide? boolean
+--- @field virt_text_hide? any
 --- @field hl_eol? boolean
 --- @field hl_mode? string
 --- @field invalidate? boolean
@@ -259,6 +259,10 @@ error('Cannot require a meta file')
 --- @field preview? any
 --- @field range? any
 --- @field register? boolean
+
+--- @class vim.api.keyset.virt_text_hide
+--- @field visual? boolean
+--- @field offscreen? boolean
 
 --- @class vim.api.keyset.win_text_height
 --- @field start_row? integer

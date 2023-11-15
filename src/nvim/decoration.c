@@ -310,28 +310,30 @@ static void decor_push(DecorState *state, int start_row, int start_col, int end_
 }
 
 /// Initialize the draw_col of a newly-added virtual text item.
-static void decor_init_draw_col(int win_col, bool hidden, DecorRange *item)
+static void decor_init_draw_col(int win_col, VirtTextHide hide, DecorRange *item)
 {
-  if (win_col < 0 && item->decor.virt_text_pos != kVTInline) {
-    item->draw_col = win_col;
+  if (win_col == -3 && item->decor.virt_text_pos != kVTInline) {
+    item->draw_col = -3;
   } else if (item->decor.virt_text_pos == kVTOverlay) {
-    item->draw_col = (item->decor.virt_text_hide && hidden) ? INT_MIN : win_col;
+    item->draw_col = (item->decor.virt_text_hide & hide) ? INT_MIN : win_col;
+  } else if (item->decor.virt_text_pos != kVTInline) {
+    item->draw_col = (item->decor.virt_text_hide & hide) ? INT_MIN : -1;
   } else {
     item->draw_col = -1;
   }
 }
 
-void decor_recheck_draw_col(int win_col, bool hidden, DecorState *state)
+void decor_recheck_draw_col(int win_col, VirtTextHide hide, DecorState *state)
 {
   for (size_t i = 0; i < kv_size(state->active); i++) {
     DecorRange *item = &kv_A(state->active, i);
     if (item->draw_col == -3) {
-      decor_init_draw_col(win_col, hidden, item);
+      decor_init_draw_col(win_col, hide, item);
     }
   }
 }
 
-int decor_redraw_col(win_T *wp, int col, int win_col, bool hidden, DecorState *state)
+int decor_redraw_col(win_T *wp, int col, int win_col, VirtTextHide hide, DecorState *state)
 {
   buf_T *buf = wp->w_buffer;
   if (col <= state->col_until) {
@@ -412,7 +414,7 @@ next_mark:
     }
     if (item.start_row == state->row && item.start_col <= col
         && decor_virt_pos(&item.decor) && item.draw_col == -10) {
-      decor_init_draw_col(win_col, hidden, &item);
+      decor_init_draw_col(win_col, hide, &item);
     }
     if (keep) {
       kv_A(state->active, j++) = item;
@@ -610,7 +612,7 @@ void decor_redraw_end(DecorState *state)
 
 bool decor_redraw_eol(win_T *wp, DecorState *state, int *eol_attr, int eol_col)
 {
-  decor_redraw_col(wp, MAXCOL, MAXCOL, false, state);
+  decor_redraw_col(wp, MAXCOL, MAXCOL, 0, state);
   state->eol_col = eol_col;
   bool has_virttext = false;
   for (size_t i = 0; i < kv_size(state->active); i++) {

@@ -936,7 +936,7 @@ describe('extmark decorations', function()
     insert(('ab'):rep(100))
     for i = 0, 9 do
       meths.buf_set_extmark(0, ns, 0, 42 + i, { virt_text={{tostring(i), 'ErrorMsg'}}, virt_text_pos='overlay'})
-      meths.buf_set_extmark(0, ns, 0, 91 + i, { virt_text={{tostring(i), 'ErrorMsg'}}, virt_text_pos='overlay', virt_text_hide=true})
+      meths.buf_set_extmark(0, ns, 0, 91 + i, { virt_text={{tostring(i), 'ErrorMsg'}}, virt_text_pos='overlay', virt_text_hide={visual=true}})
     end
     screen:expect{grid=[[
       ababababababababababababababababababababab{4:01234567}|
@@ -1029,59 +1029,144 @@ describe('extmark decorations', function()
     ]]}
   end)
 
-  it('virt_text_hide hides overlay virtual text when extmark is off-screen', function()
+  -- FIXME: specifying "visual" without "offscreen" doesn't work if
+  -- Visual selection extends off screen
+  it('virt_text_hide works with various types of virtual text', function()
     screen:try_resize(50, 3)
     command('set nowrap')
-    meths.buf_set_lines(0, 0, -1, true, {'-- ' .. ('…'):rep(57)})
-    meths.buf_set_extmark(0, ns, 0, 0, { virt_text={{'?????', 'ErrorMsg'}}, virt_text_pos='overlay', virt_text_hide=true})
-    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'!!!!!', 'ErrorMsg'}}, virt_text_pos='overlay', virt_text_hide=true})
+    meths.buf_set_lines(0, 0, -1, true, {'-- ' .. ('…'):rep(50)})
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text={{'A', 'ErrorMsg'}}, virt_text_pos='overlay', priority=0, virt_text_hide=true})
+    meths.buf_set_extmark(0, ns, 0, 1, { virt_text={{'B', 'ErrorMsg'}}, virt_text_pos='overlay', priority=0, virt_text_hide={offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'C', 'ErrorMsg'}}, virt_text_pos='overlay', priority=0, virt_text_hide={visual=true, offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'A', 'ErrorMsg'}}, virt_text_pos='eol', priority=0, virt_text_hide=true})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'B', 'ErrorMsg'}}, virt_text_pos='eol', priority=0, virt_text_hide=false})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'C', 'ErrorMsg'}}, virt_text_pos='eol', priority=0, virt_text_hide={offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'D', 'ErrorMsg'}}, virt_text_pos='eol', priority=0, virt_text_hide={visual=true}})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'E', 'ErrorMsg'}}, virt_text_pos='eol', priority=0, virt_text_hide={visual=true, offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'A', 'ErrorMsg'}}, virt_text_win_col=30, virt_text_hide=true})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'B', 'ErrorMsg'}}, virt_text_win_col=31, virt_text_hide=false})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'C', 'ErrorMsg'}}, virt_text_win_col=32, virt_text_hide={offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'D', 'ErrorMsg'}}, virt_text_win_col=33, virt_text_hide={visual=true}})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'E', 'ErrorMsg'}}, virt_text_win_col=34, virt_text_hide={visual=true, offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'A', 'ErrorMsg'}}, virt_text_pos='right_align', priority=10, virt_text_hide=true})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'B', 'ErrorMsg'}}, virt_text_pos='right_align', priority=11, virt_text_hide=false})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'C', 'ErrorMsg'}}, virt_text_pos='right_align', priority=12, virt_text_hide={offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'D', 'ErrorMsg'}}, virt_text_pos='right_align', priority=13, virt_text_hide={visual=true}})
+    meths.buf_set_extmark(0, ns, 0, 2, { virt_text={{'E', 'ErrorMsg'}}, virt_text_pos='right_align', priority=14, virt_text_hide={visual=true, offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 117, { virt_text={{'a', 'ErrorMsg'}}, virt_text_pos='overlay', priority=0, virt_text_hide=true})
+    meths.buf_set_extmark(0, ns, 0, 120, { virt_text={{'b', 'ErrorMsg'}}, virt_text_pos='overlay', priority=0, virt_text_hide={offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'c', 'ErrorMsg'}}, virt_text_pos='overlay', priority=0, virt_text_hide={visual=true, offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'a', 'ErrorMsg'}}, virt_text_pos='eol', priority=0, virt_text_hide=true})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'b', 'ErrorMsg'}}, virt_text_pos='eol', priority=0, virt_text_hide=false})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'c', 'ErrorMsg'}}, virt_text_pos='eol', priority=0, virt_text_hide={offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'d', 'ErrorMsg'}}, virt_text_pos='eol', priority=0, virt_text_hide={visual=true}})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'e', 'ErrorMsg'}}, virt_text_pos='eol', priority=0, virt_text_hide={visual=true, offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'a', 'ErrorMsg'}}, virt_text_win_col=35, virt_text_hide=true})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'b', 'ErrorMsg'}}, virt_text_win_col=36, virt_text_hide=false})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'c', 'ErrorMsg'}}, virt_text_win_col=37, virt_text_hide={offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'d', 'ErrorMsg'}}, virt_text_win_col=38, virt_text_hide={visual=true}})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'e', 'ErrorMsg'}}, virt_text_win_col=39, virt_text_hide={visual=true, offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'a', 'ErrorMsg'}}, virt_text_pos='right_align', priority=15, virt_text_hide=true})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'b', 'ErrorMsg'}}, virt_text_pos='right_align', priority=16, virt_text_hide=false})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'c', 'ErrorMsg'}}, virt_text_pos='right_align', priority=17, virt_text_hide={offscreen=true}})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'d', 'ErrorMsg'}}, virt_text_pos='right_align', priority=18, virt_text_hide={visual=true}})
+    meths.buf_set_extmark(0, ns, 0, 123, { virt_text={{'e', 'ErrorMsg'}}, virt_text_pos='right_align', priority=19, virt_text_hide={visual=true, offscreen=true}})
+
     screen:expect{grid=[[
-      {4:^?????}……………………………………………………………………………………………………{4:!!!!!}……|
+      {4:^ABC}………………………………………………………………………{4:ABCDEabcdeedcbaEDCBA}|
       {1:~                                                 }|
                                                         |
     ]]}
-    feed('40zl')
+    feed('10I-<Esc>')
     screen:expect{grid=[[
-      ^………{4:!!!!!}………………………………                              |
+      ---------^-{4:ABC}……………………………………………{4:ABCDE}…{4:b}…{4:d}…………{4:dbEDCBA}|
       {1:~                                                 }|
                                                         |
     ]]}
-    feed('3zl')
+    feed('vl')
     screen:expect{grid=[[
-      {4:^!!!!!}………………………………                                 |
+      ---------{18:-}^-{4:BC}……………………………………………{4:ABCDE}…{4:b}…{4:d}…………{4:dbEDCBA}|
+      {1:~                                                 }|
+      {24:-- VISUAL --}                                      |
+    ]]}
+    feed('2l')
+    screen:expect{grid=[[
+      ---------{18:--}{4:B}^ ………………………………………………{4:BC}………{4:b}…{4:d}…………………{4:dbCB}|
+      {1:~                                                 }|
+      {24:-- VISUAL --}                                      |
+    ]]}
+    feed('<Esc>15zl')
+    screen:expect{grid=[[
+      ^…………………………………………………………………………………{4:B}…{4:D}…{4:abcde}………{4:edcbaDB}|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('35zl')
+    screen:expect{grid=[[
+      ^…{4:abc}……………………… {4:D} {4:B} {4:e} {4:d} {4:c} {4:b} {4:a}    {4:B} {4:D} {4:abcde}   {4:edcbaDB}|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('vl')
+    screen:expect{grid=[[
+      {18:…}^…{4:bc}……………………… {4:D} {4:B} {4:e} {4:d} {4:c} {4:b} {4:a}    {4:B} {4:D} {4:abcde}   {4:edcbaDB}|
+      {1:~                                                 }|
+      {24:-- VISUAL --}                                      |
+    ]]}
+    feed('2l')
+    screen:expect{grid=[[
+      {18:……}{4:b}^………………………… {4:D} {4:B} {4:c} {4:b}          {4:B} {4:D}  {4:bc}        {4:cbDB}|
+      {1:~                                                 }|
+      {24:-- VISUAL --}                                      |
+    ]]}
+    feed('<Esc>3zl')
+    screen:expect{grid=[[
+      {4:^c}……………………… {4:D} {4:B} {4:e} {4:d} {4:c} {4:b} {4:a}       {4:B} {4:D} {4:abcde}   {4:edcbaDB}|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('zl')
+    screen:expect{grid=[[
+      ^……………………… {4:D} {4:B} {4:d} {4:b}              {4:B} {4:D}  {4:b} {4:d}       {4:dbDB}|
       {1:~                                                 }|
                                                         |
     ]]}
     feed('7zl')
     screen:expect{grid=[[
-      ^…………………………                                        |
+      ^…… {4:D} {4:B} {4:d} {4:b}                     {4:B} {4:D}  {4:b} {4:d}       {4:dbDB}|
       {1:~                                                 }|
                                                         |
     ]]}
 
-    command('set wrap smoothscroll')
+    command('setlocal wrap smoothscroll showbreak=+')
     screen:expect{grid=[[
-      {4:?????}……………………………………………………………………………………………………{4:!!!!!}……|
-      ^…………………………                                        |
+      ----------{4:ABC}……………………………………………{4:ABCDE}…………………………{4:EDCBA}|
+      {1:+}…{4:abc}…………………^…… {4:E} {4:D} {4:C} {4:B} {4:A} {4:e} {4:d} {4:c} {4:b} {4:a} {4:abcde}     {4:edcba}|
+                                                        |
+    ]]}
+    feed('V')
+    screen:expect{grid=[[
+      {18:-----------}{4:B}{18: ………………………………………………}{4:BC}{18:………………………………………}{4:CB}|
+      {1:+}{18:……}{4:b}{18:……………………}^…{18:…} {4:C} {4:B} {4:c} {4:b}              {4:bc}          {4:cb}|
+      {24:-- VISUAL LINE --}                                 |
+    ]]}
+    feed('<Esc><C-E>')
+    screen:expect{grid=[[
+      {1:+}…{4:abc}…………………^…… {4:D} {4:B} {4:e} {4:d} {4:c} {4:b} {4:a}   {4:B} {4:D} {4:abcde}   {4:edcbaDB}|
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    command('silent undo')
+    screen:expect{grid=[[
+      {4:^ABC}………………………………………………………………………{4:ABCDEabcdeedcbaEDCBA}|
+      {1:+}……… {4:E} {4:D} {4:C} {4:B} {4:A} {4:e} {4:d} {4:c} {4:b} {4:a}                          |
                                                         |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
-      {1:<<<}………………^…                                        |
+      {1:+}^……… {4:D} {4:B} {4:d} {4:b}                   {4:B} {4:D}  {4:b} {4:d}       {4:dbDB}|
       {1:~                                                 }|
                                                         |
-    ]]}
-    screen:try_resize(40, 3)
-    screen:expect{grid=[[
-      {1:<<<}{4:!!!!!}……………………………^…                    |
-      {1:~                                       }|
-                                              |
-    ]]}
-    feed('<C-Y>')
-    screen:expect{grid=[[
-      {4:?????}……………………………………………………………………………………………|
-      ………{4:!!!!!}……………………………^…                    |
-                                              |
     ]]}
   end)
 
@@ -1134,9 +1219,9 @@ describe('extmark decorations', function()
     meths.buf_set_extmark(0, ns, 2, 5, { virt_text={{'combining color', 'Blendy'}}, virt_text_pos='overlay', hl_mode='combine'})
     meths.buf_set_extmark(0, ns, 3, 5, { virt_text={{'replacing color', 'Blendy'}}, virt_text_pos='overlay', hl_mode='replace'})
 
-    meths.buf_set_extmark(0, ns, 4, 5, { virt_text={{'blendy text - here', 'Blendy'}}, virt_text_pos='overlay', hl_mode='blend', virt_text_hide=true})
-    meths.buf_set_extmark(0, ns, 5, 5, { virt_text={{'combining color', 'Blendy'}}, virt_text_pos='overlay', hl_mode='combine', virt_text_hide=true})
-    meths.buf_set_extmark(0, ns, 6, 5, { virt_text={{'replacing color', 'Blendy'}}, virt_text_pos='overlay', hl_mode='replace', virt_text_hide=true})
+    meths.buf_set_extmark(0, ns, 4, 5, { virt_text={{'blendy text - here', 'Blendy'}}, virt_text_pos='overlay', hl_mode='blend', virt_text_hide={visual=true}})
+    meths.buf_set_extmark(0, ns, 5, 5, { virt_text={{'combining color', 'Blendy'}}, virt_text_pos='overlay', hl_mode='combine', virt_text_hide={visual=true}})
+    meths.buf_set_extmark(0, ns, 6, 5, { virt_text={{'replacing color', 'Blendy'}}, virt_text_pos='overlay', hl_mode='replace', virt_text_hide={visual=true}})
 
     screen:expect{grid=[[
       {5:^for} _,item {5:in} {6:ipairs}(items) {5:do}                    |
