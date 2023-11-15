@@ -139,6 +139,7 @@ function Screen.new(width, height)
     visual_bell = false,
     suspended = false,
     mode = 'normal',
+    visual_change = {},
     options = {},
     popupmenu = nil,
     cmdline = {},
@@ -1015,6 +1016,11 @@ end
 
 function Screen:_handle_set_icon(icon)
   self.icon = icon
+end
+
+function Screen:_handle_visual_change(mode, active_selection, byte_range, char_range)
+  local count = (self.visual_change.count or 0) + 1
+  self.visual_change = {mode=mode, active_selection=active_selection, byte=byte_range, char=char_range, count=count}
 end
 
 function Screen:_handle_option_set(name, value)

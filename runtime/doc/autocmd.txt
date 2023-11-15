@@ -1097,18 +1097,20 @@ VimResume			After Nvim resumes from |suspend| state.
 							*VimSuspend*
 VimSuspend			Before Nvim enters |suspend| state.
 							*VisualChanged*
-VisualChanged			When the boundaries of the selected region
-				in visual mode is changed. Boundaries are
-				char positions.
+VisualChanged			When Visual selection changes. 
+				For `linewise-visual` and `blockwise-visual` 
+				the start is the top-left corner and the end 
+				is the bot-right corner. 
+				Boundaries are byte-index based.
 				Sets these |v:event| keys:
 				    start_line
 				    start_col
 				    end_line
 				    end_col
-				Note: the values in v:event represent the
-				actual boundaries of the region regardless of
-				cursor position, so they might be different
-				than getcharpos("v"), getcharpos(".").
+				Note: since the range represents the corners of
+				the selection, getpos("v") and getpos(".")
+				will have a different range for line and block mode
+				than the range found in v:event
 							*WinClosed*
 WinClosed			When closing a window, just before it is
 				removed from the window layout.  The pattern

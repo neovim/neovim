@@ -243,6 +243,16 @@ the editor.
 	a terminal UI, or embedding into an application where Nvim mouse would
 	conflict with other usages of the mouse. Other UI:s may ignore this event.
 
+["visual_change", mode, active_selection, byte_range, char_range] ~
+	Visual selection changed. The current visual `mode` can be one of: 
+	"char", "line", "block". `active_selection` is a dict with the keys: 
+	`cursor_line`, `cursor_col`, `anchor_line`, `anchor_col` where
+	cursor and anchor are the positinos given by getchar(".") and getchar("v")
+	Both `byte_range` and `char_range` are dicts with the keys: 
+	`start_line`, `start_col`, `end_line`, `enc_col`.
+	`byte_range` has the positions in byte-index and `char_range` in char-index.
+	For "line" and "block", `start` and `end` are the top-left and bot-right corner.
+
 ["busy_start"] ~
 ["busy_stop"] ~
 	Indicates to the UI that it must stop rendering the cursor. This event
