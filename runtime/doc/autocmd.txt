@@ -1096,6 +1096,19 @@ VimResized			After the Vim window was resized, thus 'lines'
 VimResume			After Nvim resumes from |suspend| state.
 							*VimSuspend*
 VimSuspend			Before Nvim enters |suspend| state.
+							*VisualChanged*
+VisualChanged			When the boundaries of the selected region
+				in visual mode is changed. Boundaries are
+				char positions.
+				Sets these |v:event| keys:
+				    start_line
+				    start_col
+				    end_line
+				    end_col
+				Note: the values in v:event represent the
+				actual boundaries of the region regardless of
+				cursor position, so they might be different
+				than getcharpos("v"), getcharpos(".").
 							*WinClosed*
 WinClosed			When closing a window, just before it is
 				removed from the window layout.  The pattern

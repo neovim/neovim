@@ -242,6 +242,8 @@ The following new APIs and features were added.
 • Added |vim.text.hexencode()| and |vim.text.hexdecode()| to convert strings
   to and from byte representations.
 
+• Added |VisualChanged| autocommand that fires when the visual selection changes
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
