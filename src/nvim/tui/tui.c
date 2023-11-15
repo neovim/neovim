@@ -75,9 +75,6 @@ struct TUIData {
   unibi_var_t params[9];
   char buf[OUTBUF_SIZE];
   size_t bufpos;
-  char norm[CNORM_COMMAND_MAX_SIZE];
-  char invis[CNORM_COMMAND_MAX_SIZE];
-  size_t normlen, invislen;
   TermInput input;
   uv_loop_t write_loop;
   unibi_term *ut;
@@ -210,19 +207,11 @@ void tui_enable_extkeys(TUIData *tui)
   unibi_out_ext(tui, tui->unibi_ext.enable_extended_keys);
 }
 
-static size_t unibi_pre_fmt_str(TUIData *tui, unsigned unibi_index, char *buf, size_t len)
-{
-  const char *str = unibi_get_str(tui->ut, unibi_index);
-  if (!str) {
-    return 0U;
-  }
-  return unibi_run(str, tui->params, buf, len);
-}
-
 /// Request the terminal's DEC mode (DECRQM).
 ///
 /// @see handle_modereport
 static void tui_dec_request_mode(TUIData *tui, TerminalDecMode mode)
+  FUNC_ATTR_NONNULL_ALL
 {
   // 5 bytes for \x1b[?$p, 1 byte for null terminator, 6 bytes for mode digits (more than enough)
   char buf[12];
@@ -233,8 +222,8 @@ static void tui_dec_request_mode(TUIData *tui, TerminalDecMode mode)
 
 /// Handle a DECRPM response from the terminal.
 void tui_dec_report_mode(TUIData *tui, TerminalDecMode mode, TerminalModeState state)
+  FUNC_ATTR_NONNULL_ALL
 {
-  assert(tui);
   switch (state) {
   case kTerminalModeNotRecognized:
   case kTerminalModePermanentlySet:
@@ -352,10 +341,6 @@ static void terminfo_start(TUIData *tui)
     || terminfo_is_term_family(term, "win32con")
     || terminfo_is_term_family(term, "interix");
   tui->bce = unibi_get_bool(tui->ut, unibi_back_color_erase);
-  tui->normlen = unibi_pre_fmt_str(tui, unibi_cursor_normal,
-                                   tui->norm, sizeof tui->norm);
-  tui->invislen = unibi_pre_fmt_str(tui, unibi_cursor_invisible,
-                                    tui->invis, sizeof tui->invis);
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(tui->ut, unibi_max_colors);
   // Enter alternate screen, save title, and clear.
@@ -1151,9 +1136,7 @@ void tui_set_mode(TUIData *tui, ModeShape mode)
     HlAttrs aep = kv_A(tui->attrs, c.id);
 
     tui->want_invisible = aep.hl_blend == 100;
-    if (tui->want_invisible) {
-      unibi_out(tui, unibi_cursor_invisible);
-    } else if (aep.rgb_ae_attr & HL_INVERSE) {
+    if (!tui->want_invisible && aep.rgb_ae_attr & HL_INVERSE) {
       // We interpret "inverse" as "default" (no termcode for "inverse"...).
       // Hopefully the user's default cursor color is inverse.
       unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
@@ -1172,6 +1155,14 @@ void tui_set_mode(TUIData *tui, ModeShape mode)
     // No cursor color for this mode; reset to default.
     tui->want_invisible = false;
     unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
+  }
+
+  if (tui->want_invisible && !tui->is_invisible) {
+    unibi_out(tui, unibi_cursor_invisible);
+    tui->is_invisible = true;
+  } else if (!tui->want_invisible && tui->is_invisible) {
+    unibi_out(tui, unibi_cursor_normal);
+    tui->is_invisible = false;
   }
 
   int shape;
@@ -1305,18 +1296,30 @@ void tui_default_colors_set(TUIData *tui, Integer rgb_fg, Integer rgb_bg, Intege
   invalidate(tui, 0, tui->grid.height, 0, tui->grid.width);
 }
 
-/// Enable synchronized output. When enabled, the terminal emulator will preserve the last rendered
-/// state on subsequent re-renders. It will continue to process incoming events. When synchronized
-/// mode is disabled again the emulator renders using the most recent state. This avoids tearing
-/// when the terminal updates the screen faster than Nvim can redraw it.
-static void tui_sync_output(TUIData *tui, bool enable)
+/// Begin flushing the TUI. If 'termsync' is set and the terminal supports synchronized updates,
+/// begin a synchronized update. Otherwise, hide the cursor to avoid cursor jumping.
+static void tui_flush_start(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (!tui->sync_output) {
-    return;
+  if (tui->sync_output && tui->unibi_ext.sync != -1) {
+    UNIBI_SET_NUM_VAR(tui->params[0], 1);
+    unibi_out_ext(tui, tui->unibi_ext.sync);
+  } else {
+    unibi_out(tui, unibi_cursor_invisible);
   }
+}
 
-  UNIBI_SET_NUM_VAR(tui->params[0], enable ? 1 : 0);
-  unibi_out_ext(tui, tui->unibi_ext.sync);
+/// Finish flushing the TUI. If 'termsync' is set and the terminal supports synchronized updates,
+/// end a synchronized update. Otherwise, make the cursor visible again.
+static void tui_flush_end(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (tui->sync_output && tui->unibi_ext.sync != -1) {
+    UNIBI_SET_NUM_VAR(tui->params[0], 0);
+    unibi_out_ext(tui, tui->unibi_ext.sync);
+  } else if (!tui->busy && !tui->want_invisible) {
+    unibi_out(tui, unibi_cursor_normal);
+  }
 }
 
 void tui_flush(TUIData *tui)
@@ -1335,7 +1338,7 @@ void tui_flush(TUIData *tui)
     tui_busy_stop(tui);  // avoid hidden cursor
   }
 
-  tui_sync_output(tui, true);
+  tui_flush_start(tui);
 
   while (kv_size(tui->invalid_regions)) {
     Rect r = kv_pop(tui->invalid_regions);
@@ -1364,7 +1367,7 @@ void tui_flush(TUIData *tui)
 
   cursor_goto(tui, tui->row, tui->col);
 
-  tui_sync_output(tui, false);
+  tui_flush_end(tui);
 
   flush_buf(tui);
 }
@@ -2252,63 +2255,20 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
 static void flush_buf(TUIData *tui)
 {
   uv_write_t req;
-  uv_buf_t bufs[3];
-  uv_buf_t *bufp = &bufs[0];
+  uv_buf_t buf;
 
-  // The content of the output for each condition is shown in the following
-  // table. Therefore, if tui->bufpos == 0 and N/A or invis + norm, there is
-  // no need to output it.
-  //
-  //                         | is_invisible | !is_invisible
-  // ------+-----------------+--------------+---------------
-  // busy  | want_invisible  |     N/A      |    invis
-  //       | !want_invisible |     N/A      |    invis
-  // ------+-----------------+--------------+---------------
-  // !busy | want_invisible  |     N/A      |    invis
-  //       | !want_invisible |     norm     | invis + norm
-  // ------+-----------------+--------------+---------------
-  //
-  if (tui->bufpos <= 0
-      && ((tui->is_invisible && tui->busy)
-          || (tui->is_invisible && !tui->busy && tui->want_invisible)
-          || (!tui->is_invisible && !tui->busy && !tui->want_invisible))) {
+  if (tui->bufpos <= 0) {
     return;
   }
 
-  if (!tui->is_invisible) {
-    // cursor is visible. Write a "cursor invisible" command before writing the
-    // buffer.
-    bufp->base = tui->invis;
-    bufp->len = UV_BUF_LEN(tui->invislen);
-    bufp++;
-    tui->is_invisible = true;
-  }
-
-  if (tui->bufpos > 0) {
-    bufp->base = tui->buf;
-    bufp->len = UV_BUF_LEN(tui->bufpos);
-    bufp++;
-  }
-
-  if (!tui->busy) {
-    assert(tui->is_invisible);
-    // not busy and the cursor is invisible. Write a "cursor normal" command
-    // after writing the buffer.
-    if (!tui->want_invisible) {
-      bufp->base = tui->norm;
-      bufp->len = UV_BUF_LEN(tui->normlen);
-      bufp++;
-      tui->is_invisible = false;
-    }
-  }
+  buf.base = tui->buf;
+  buf.len = UV_BUF_LEN(tui->bufpos);
 
   if (tui->screenshot) {
-    for (size_t i = 0; i < (size_t)(bufp - bufs); i++) {
-      fwrite(bufs[i].base, bufs[i].len, 1, tui->screenshot);
-    }
+    fwrite(buf.base, buf.len, 1, tui->screenshot);
   } else {
     int ret
-      = uv_write(&req, (uv_stream_t *)&tui->output_handle, bufs, (unsigned)(bufp - bufs), NULL);
+      = uv_write(&req, (uv_stream_t *)&tui->output_handle, &buf, 1, NULL);
     if (ret) {
       ELOG("uv_write failed: %s", uv_strerror(ret));
     }
