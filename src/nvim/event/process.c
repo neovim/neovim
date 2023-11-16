@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <signal.h>
-#include <stdlib.h>
 #include <uv.h>
 
 #include "klib/klist.h"
@@ -10,7 +9,6 @@
 #include "nvim/event/process.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
-#include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/os/process.h"
 #include "nvim/os/pty_process.h"

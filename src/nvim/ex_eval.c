@@ -23,7 +23,6 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
-#include "nvim/pos.h"
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"
 #include "nvim/strings.h"

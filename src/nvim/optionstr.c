@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
@@ -15,7 +14,6 @@
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
-#include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
@@ -32,7 +30,6 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
@@ -41,13 +38,11 @@
 #include "nvim/os/os.h"
 #include "nvim/pos.h"
 #include "nvim/regexp.h"
-#include "nvim/runtime.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"
 #include "nvim/spellsuggest.h"
 #include "nvim/strings.h"
 #include "nvim/types.h"
-#include "nvim/ui.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 

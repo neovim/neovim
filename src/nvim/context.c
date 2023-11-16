@@ -16,11 +16,9 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/gettext.h"
 #include "nvim/hashtab.h"
 #include "nvim/keycodes.h"
 #include "nvim/memory.h"
-#include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/shada.h"
 

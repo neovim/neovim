@@ -4,22 +4,20 @@
 #include <string.h>
 #include <uv.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/ascii.h"
-#include "nvim/charset.h"
 #include "nvim/event/defs.h"
-#include "nvim/log.h"
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/os.h"
+#include "nvim/strings.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/input_defs.h"
 #include "nvim/tui/tui.h"
-#include "nvim/types.h"
 #include "nvim/ui_client.h"
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"

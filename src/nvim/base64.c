@@ -1,12 +1,18 @@
 #include <assert.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
+#include "auto/config.h"
 #include "nvim/base64.h"
 #include "nvim/memory.h"
 
 #ifdef HAVE_BE64TOH
 # include ENDIAN_INCLUDE_FILE
+#endif
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "base64.c.generated.h"  // IWYU prgama: export
 #endif
 
 static const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

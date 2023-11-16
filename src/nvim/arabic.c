@@ -19,14 +19,11 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 
 #include "nvim/arabic.h"
 #include "nvim/ascii.h"
 #include "nvim/macros.h"
-#include "nvim/mbyte.h"
 #include "nvim/option_vars.h"
-#include "nvim/vim.h"
 
 // Unicode values for Arabic characters.
 enum {

@@ -7,7 +7,6 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
 #include "nvim/log.h"
-#include "nvim/macros.h"
 #include "nvim/rbuffer.h"
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"

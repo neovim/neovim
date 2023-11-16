@@ -19,6 +19,7 @@
   { include: [ '"arabic.h.generated.h"', private, '"nvim/arabic.h"', public ] },
   { include: [ '"arglist.h.generated.h"', private, '"nvim/arglist.h"', public ] },
   { include: [ '"autocmd.h.generated.h"', private, '"nvim/autocmd.h"', public ] },
+  { include: [ '"base64.h.generated.h"', private, '"nvim/base64.h"', public ] },
   { include: [ '"buffer.h.generated.h"', private, '"nvim/buffer.h"', public ] },
   { include: [ '"buffer_updates.h.generated.h"', private, '"nvim/buffer_updates.h"', public ] },
   { include: [ '"bufwrite.h.generated.h"', private, '"nvim/bufwrite.h"', public ] },
@@ -84,6 +85,7 @@
   { include: [ '"linematch.h.generated.h"', private, '"nvim/linematch.h"', public ] },
   { include: [ '"locale.h.generated.h"', private, '"nvim/locale.h"', public ] },
   { include: [ '"log.h.generated.h"', private, '"nvim/log.h"', public ] },
+  { include: [ '"lua/base64.h.generated.h"', private, '"nvim/lua/base64.h"', public ] },
   { include: [ '"lua/converter.h.generated.h"', private, '"nvim/lua/converter.h"', public ] },
   { include: [ '"lua/executor.h.generated.h"', private, '"nvim/lua/executor.h"', public ] },
   { include: [ '"lua/secure.h.generated.h"', private, '"nvim/lua/secure.h"', public ] },
@@ -162,6 +164,7 @@
   { include: [ '"viml/parser/expressions.h.generated.h"', private, '"nvim/viml/parser/expressions.h"', public ] },
   { include: [ '"viml/parser/parser.h.generated.h"', private, '"nvim/viml/parser/parser.h"', public ] },
   { include: [ '"window.h.generated.h"', private, '"nvim/window.h"', public ] },
+  { include: [ '"winfloat.h.generated.h"', private, '"nvim/winfloat.h"', public ] },
 
   # Generated to normal headers with a different name: header.h.generated.h -> nvim/some_other_header.h
   { include: [ '"api/private/dispatch_wrappers.h.generated.h"', private, '"nvim/api/private/dispatch.h"', public ] },

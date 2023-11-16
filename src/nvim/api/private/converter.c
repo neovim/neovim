@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/converter.h"

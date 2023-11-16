@@ -8,7 +8,6 @@
 #include "nvim/event/process.h"
 #include "nvim/event/stream.h"
 #include "nvim/log.h"
-#include "nvim/macros.h"
 #include "nvim/os/os.h"
 #include "nvim/ui_client.h"
 
