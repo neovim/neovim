@@ -339,13 +339,13 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
 
   // Print the log message.
   int rv = (line_num == -1 || func_name == NULL)
-    ? fprintf(log_file, "%s %s.%03d %-10s %s",
-              log_levels[log_level], date_time, millis, name,
-              (context == NULL ? "?:" : context))
-                               : fprintf(log_file, "%s %s.%03d %-10s %s%s:%d: ",
-                                         log_levels[log_level], date_time, millis, name,
-                                         (context == NULL ? "" : context),
-                                         func_name, line_num);
+           ? fprintf(log_file, "%s %s.%03d %-10s %s",
+                     log_levels[log_level], date_time, millis, name,
+                     (context == NULL ? "?:" : context))
+           : fprintf(log_file, "%s %s.%03d %-10s %s%s:%d: ",
+                     log_levels[log_level], date_time, millis, name,
+                     (context == NULL ? "" : context),
+                     func_name, line_num);
   if (name[0] == '?') {
     // No v:servername yet. Clear `name` so that the next log can try again.
     name[0] = '\0';

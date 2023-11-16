@@ -3437,9 +3437,9 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
                                name,
                                process_running
                                ? _("&Open Read-Only\n&Edit anyway\n&Recover"
-                                   "\n&Quit\n&Abort") :
-                               _("&Open Read-Only\n&Edit anyway\n&Recover"
-                                 "\n&Delete it\n&Quit\n&Abort"),
+                                   "\n&Quit\n&Abort")
+                               : _("&Open Read-Only\n&Edit anyway\n&Recover"
+                                   "\n&Delete it\n&Quit\n&Abort"),
                                1, NULL, false);
 
             if (process_running && choice >= 4) {

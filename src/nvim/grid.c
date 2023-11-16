@@ -378,12 +378,12 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
   while (col < max_col && (len < 0 || (int)(ptr - text) < len) && *ptr != NUL) {
     // check if this is the first byte of a multibyte
     int mbyte_blen = len > 0
-      ? utfc_ptr2len_len(ptr, (int)((text + len) - ptr))
-      : utfc_ptr2len(ptr);
+                     ? utfc_ptr2len_len(ptr, (int)((text + len) - ptr))
+                     : utfc_ptr2len(ptr);
     int firstc;
     schar_T schar = len >= 0
-      ? utfc_ptr2schar_len(ptr, (int)((text + len) - ptr), &firstc)
-      : utfc_ptr2schar(ptr, &firstc);
+                    ? utfc_ptr2schar_len(ptr, (int)((text + len) - ptr), &firstc)
+                    : utfc_ptr2schar(ptr, &firstc);
     int mbyte_cells = utf_char2cells(firstc);
     if (mbyte_cells > 2) {
       mbyte_cells = 1;

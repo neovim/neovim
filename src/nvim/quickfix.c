@@ -821,7 +821,7 @@ retry:
       }
 
       state->growbufsiz = (2 * state->growbufsiz < LINE_MAXLEN)
-        ? 2 * state->growbufsiz : LINE_MAXLEN;
+                          ? 2 * state->growbufsiz : LINE_MAXLEN;
       state->growbuf = xrealloc(state->growbuf, state->growbufsiz);
     }
 
@@ -858,7 +858,7 @@ retry:
         state->linebuf = line;
         state->growbuf = line;
         state->growbufsiz = state->linelen < LINE_MAXLEN
-          ? state->linelen : LINE_MAXLEN;
+                            ? state->linelen : LINE_MAXLEN;
       }
     }
   }

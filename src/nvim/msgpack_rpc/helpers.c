@@ -472,8 +472,8 @@ msgpack_object *msgpack_rpc_method(msgpack_object *req)
 {
   msgpack_object *obj = req->via.array.ptr
                         + (msgpack_rpc_is_notification(req) ? 1 : 2);
-  return obj->type == MSGPACK_OBJECT_STR || obj->type == MSGPACK_OBJECT_BIN ?
-         obj : NULL;
+  return obj->type == MSGPACK_OBJECT_STR || obj->type == MSGPACK_OBJECT_BIN
+         ? obj : NULL;
 }
 
 msgpack_object *msgpack_rpc_args(msgpack_object *req)

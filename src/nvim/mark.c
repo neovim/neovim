@@ -933,8 +933,8 @@ void ex_delmarks(exarg_T *eap)
           from = (uint8_t)(*p);
           to = (uint8_t)p[2];
           if (!(lower ? ASCII_ISLOWER(p[2])
-                : (digit ? ascii_isdigit(p[2])
-                   : ASCII_ISUPPER(p[2])))
+                      : (digit ? ascii_isdigit(p[2])
+                               : ASCII_ISUPPER(p[2])))
               || to < from) {
             semsg(_(e_invarg2), p);
             return;
@@ -1516,9 +1516,9 @@ const void *mark_global_iter(const void *const iter, char *const name, xfmark_T 
     return NULL;
   }
   size_t iter_off = (size_t)(iter_mark - &(namedfm[0]));
-  *name = (char)(iter_off < NMARKS ?
-                 'A' + (char)iter_off :
-                 '0' + (char)(iter_off - NMARKS));
+  *name = (char)(iter_off < NMARKS
+                 ? 'A' + (char)iter_off
+                 : '0' + (char)(iter_off - NMARKS));
   *fm = *iter_mark;
   while ((size_t)(++iter_mark - &(namedfm[0])) < ARRAY_SIZE(namedfm)) {
     if (iter_mark->fmark.mark.lnum) {
@@ -1580,11 +1580,15 @@ const void *mark_buffer_iter(const void *const iter, const buf_T *const buf, cha
   FUNC_ATTR_NONNULL_ARG(2, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   *name = NUL;
-  char mark_name = (char)(iter == NULL ? NUL :
-                          iter == &(buf->b_last_cursor) ? '"' :
-                          iter == &(buf->b_last_insert) ? '^' :
-                          iter == &(buf->b_last_change) ? '.' :
-                          'a' + (char)((const fmark_T *)iter - &(buf->b_namedm[0])));
+  char mark_name = (char)(iter == NULL
+                          ? NUL
+                          : (iter == &(buf->b_last_cursor)
+                             ? '"'
+                             : (iter == &(buf->b_last_insert)
+                                ? '^'
+                                : (iter == &(buf->b_last_change)
+                                   ? '.'
+                                   : 'a' + (const fmark_T *)iter - &(buf->b_namedm[0])))));
   const fmark_T *iter_mark = next_buffer_mark(buf, &mark_name);
   while (iter_mark != NULL && iter_mark->mark.lnum == 0) {
     iter_mark = next_buffer_mark(buf, &mark_name);

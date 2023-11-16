@@ -2250,8 +2250,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
       // When lines are folded, display one line for all of them.
       // Otherwise, display normally (can be several display lines when
       // 'wrap' is on).
-      foldinfo_T foldinfo = wp->w_p_cul && lnum == wp->w_cursor.lnum ?
-                            cursorline_fi : fold_info(wp, lnum);
+      foldinfo_T foldinfo = wp->w_p_cul && lnum == wp->w_cursor.lnum
+                            ? cursorline_fi : fold_info(wp, lnum);
 
       if (foldinfo.fi_lines == 0
           && idx < wp->w_lines_valid
@@ -2312,8 +2312,8 @@ static void win_update(win_T *wp, DecorProviders *providers)
       if (wp->w_p_rnu && wp->w_last_cursor_lnum_rnu != wp->w_cursor.lnum) {
         // 'relativenumber' set and cursor moved vertically: The
         // text doesn't need to be drawn, but the number column does.
-        foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum ?
-                          cursorline_fi : fold_info(wp, lnum);
+        foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum
+                          ? cursorline_fi : fold_info(wp, lnum);
         (void)win_line(wp, lnum, srow, wp->w_grid.rows, true, &spv, info, &line_providers);
       }
 

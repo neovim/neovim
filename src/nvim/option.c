@@ -618,12 +618,12 @@ void set_init_3(void)
   // set, but only if they have not been set before.
   int idx_srr = findoption("srr");
   int do_srr = (idx_srr < 0)
-    ? false
-    : !(options[idx_srr].flags & P_WAS_SET);
+               ? false
+               : !(options[idx_srr].flags & P_WAS_SET);
   int idx_sp = findoption("sp");
   int do_sp = (idx_sp < 0)
-    ? false
-    : !(options[idx_sp].flags & P_WAS_SET);
+              ? false
+              : !(options[idx_sp].flags & P_WAS_SET);
 
   size_t len = 0;
   char *p = (char *)invocation_path_tail(p_sh, &len);
@@ -1645,8 +1645,8 @@ static char *option_expand(int opt_idx, char *val)
   // For 'spellsuggest' expand after "file:".
   expand_env_esc(val, NameBuff, MAXPATHL,
                  (char **)options[opt_idx].var == &p_tags, false,
-                 (char **)options[opt_idx].var == &p_sps ? "file:" :
-                 NULL);
+                 (char **)options[opt_idx].var == &p_sps ? "file:"
+                                                         : NULL);
   if (strcmp(NameBuff, val) == 0) {   // they are the same
     return NULL;
   }
@@ -2281,8 +2281,8 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
           xfree(buf->b_p_vsts_nopaste);
         }
         buf->b_p_vsts_nopaste = buf->b_p_vsts && buf->b_p_vsts != empty_string_option
-                                    ? xstrdup(buf->b_p_vsts)
-                                    : NULL;
+                                ? xstrdup(buf->b_p_vsts)
+                                : NULL;
       }
 
       // save global options

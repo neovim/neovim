@@ -3983,7 +3983,7 @@ int win_new_tabpage(int after, char *filename)
   }
 
   newtp->tp_localdir = old_curtab->tp_localdir
-    ? xstrdup(old_curtab->tp_localdir) : NULL;
+                       ? xstrdup(old_curtab->tp_localdir) : NULL;
 
   curtab = newtp;
 

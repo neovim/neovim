@@ -2479,8 +2479,8 @@ int oneright(void)
 
     // Adjust for multi-wide char (excluding TAB)
     ptr = get_cursor_pos_ptr();
-    coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(utf_ptr2char(ptr))) ?
-                              ptr2cells(ptr) : 1));
+    coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(utf_ptr2char(ptr)))
+                              ? ptr2cells(ptr) : 1));
     curwin->w_set_curswant = true;
     // Return OK if the cursor moved, FAIL otherwise (at window edge).
     return (prevpos.col != curwin->w_cursor.col
@@ -3550,8 +3550,9 @@ static bool ins_start_select(int c)
 // <Insert> key in Insert mode: toggle insert/replace mode.
 static void ins_insert(int replaceState)
 {
-  set_vim_var_string(VV_INSERTMODE, ((State & REPLACE_FLAG) ? "i" :
-                                     replaceState == MODE_VREPLACE ? "v" : "r"), 1);
+  set_vim_var_string(VV_INSERTMODE, ((State & REPLACE_FLAG)
+                                     ? "i"
+                                     : replaceState == MODE_VREPLACE ? "v" : "r"), 1);
   ins_apply_autocmds(EVENT_INSERTCHANGE);
   if (State & REPLACE_FLAG) {
     State = MODE_INSERT | (State & MODE_LANGMAP);

@@ -2897,8 +2897,8 @@ static void f_wait(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   int timeout = (int)argvars[0].vval.v_number;
   typval_T expr = argvars[1];
   int interval = argvars[2].v_type == VAR_NUMBER
-    ? (int)argvars[2].vval.v_number
-    : 200;  // Default.
+                 ? (int)argvars[2].vval.v_number
+                 : 200;  // Default.
   TimeWatcher *tw = xmalloc(sizeof(TimeWatcher));
 
   // Start dummy timer.
@@ -5712,11 +5712,11 @@ static void read_file_or_blob(typval_T *argvars, typval_T *rettv, bool always_bl
         // Find the two bytes before the 0xbf.  If p is at buf, or buf + 1,
         // these may be in the "prev" string.
         char back1 = p >= buf + 1 ? p[-1]
-                                    : prevlen >= 1 ? prev[prevlen - 1] : NUL;
+                                  : prevlen >= 1 ? prev[prevlen - 1] : NUL;
         char back2 = p >= buf + 2 ? p[-2]
-                                    : p == buf + 1 && prevlen >= 1 ? prev[prevlen - 1]
-                                                                   : prevlen >=
-                     2 ? prev[prevlen - 2] : NUL;
+                                  : (p == buf + 1 && prevlen >= 1
+                                     ? prev[prevlen - 1]
+                                     : prevlen >= 2 ? prev[prevlen - 2] : NUL);
 
         if ((uint8_t)back2 == 0xef && (uint8_t)back1 == 0xbb) {
           char *dest = p - 2;
@@ -7914,10 +7914,11 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
   tv_list_alloc_ret(rettv, 2);
   tv_list_append_string(rettv->vval.v_list, word, (ssize_t)len);
   tv_list_append_string(rettv->vval.v_list,
-                        (attr == HLF_SPB ? "bad" :
-                         attr == HLF_SPR ? "rare" :
-                         attr == HLF_SPL ? "local" :
-                         attr == HLF_SPC ? "caps" : NULL), -1);
+                        (attr == HLF_SPB
+                         ? "bad" : (attr == HLF_SPR
+                                    ? "rare" : (attr == HLF_SPL
+                                                ? "local" : (attr == HLF_SPC
+                                                             ? "caps" : NULL)))), -1);
 }
 
 /// "spellsuggest()" function
@@ -8410,8 +8411,8 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
       cchar = syn_get_sub_char();
       if (cchar == NUL && curwin->w_p_cole == 1) {
         cchar = (curwin->w_p_lcs_chars.conceal == NUL)
-          ? ' '
-          : curwin->w_p_lcs_chars.conceal;
+                ? ' '
+                : curwin->w_p_lcs_chars.conceal;
       }
       if (cchar != NUL) {
         utf_char2bytes(cchar, str);

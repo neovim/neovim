@@ -858,8 +858,8 @@ static void arg_all_close_unused_windows(arg_all_state_T *aall)
     for (win_T *wp = lastwin->w_floating ? lastwin : firstwin; wp != NULL; wp = wpnext) {
       int i;
       wpnext = wp->w_floating
-        ? wp->w_prev->w_floating ? wp->w_prev : firstwin
-        : (wp->w_next == NULL || wp->w_next->w_floating) ? NULL : wp->w_next;
+               ? wp->w_prev->w_floating ? wp->w_prev : firstwin
+               : (wp->w_next == NULL || wp->w_next->w_floating) ? NULL : wp->w_next;
       buf_T *buf = wp->w_buffer;
       if (buf->b_ffname == NULL
           || (!aall->keep_tabs

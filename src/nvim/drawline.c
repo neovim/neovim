@@ -477,7 +477,7 @@ static void get_sign_display_info(bool nrcol, win_T *wp, winlinevars_T *wlv, int
     wlv->p_extra = wlv->extra;
     wlv->c_extra = NUL;
     wlv->char_attr = (use_cursor_line_highlight(wp, wlv->lnum) && sign_cul_attr)
-                   ? sign_cul_attr : sattr.hl_id ? syn_id2attr(sattr.hl_id) : 0;
+                     ? sign_cul_attr : sattr.hl_id ? syn_id2attr(sattr.hl_id) : 0;
   } else {
     wlv->c_extra = ' ';
     wlv->n_extra = nrcol ? number_width(wp) + 1 : SIGN_WIDTH;
@@ -1806,9 +1806,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         // Overlay CursorLine onto diff-mode highlight.
         if (wlv.cul_attr) {
           wlv.line_attr = 0 != wlv.line_attr_lowprio  // Low-priority CursorLine
-            ? hl_combine_attr(hl_combine_attr(wlv.cul_attr, wlv.line_attr),
-                              hl_get_underline())
-            : hl_combine_attr(wlv.line_attr, wlv.cul_attr);
+                          ? hl_combine_attr(hl_combine_attr(wlv.cul_attr, wlv.line_attr),
+                                            hl_get_underline())
+                          : hl_combine_attr(wlv.line_attr, wlv.cul_attr);
         }
       }
 
@@ -1905,8 +1905,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
           if (wlv.cul_attr) {
             multi_attr = 0 != wlv.line_attr_lowprio
-              ? hl_combine_attr(wlv.cul_attr, multi_attr)
-              : hl_combine_attr(multi_attr, wlv.cul_attr);
+                         ? hl_combine_attr(wlv.cul_attr, multi_attr)
+                         : hl_combine_attr(multi_attr, wlv.cul_attr);
           }
         } else {
           wlv.n_extra -= mb_l;
@@ -2068,8 +2068,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           if (!attr_pri) {
             if (wlv.cul_attr) {
               wlv.char_attr = 0 != wlv.line_attr_lowprio
-                ? hl_combine_attr(wlv.cul_attr, decor_attr)
-                : hl_combine_attr(decor_attr, wlv.cul_attr);
+                              ? hl_combine_attr(wlv.cul_attr, decor_attr)
+                              : hl_combine_attr(decor_attr, wlv.cul_attr);
             } else {
               wlv.char_attr = decor_attr;
             }
@@ -2358,7 +2358,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
           if (wp->w_p_list) {
             mb_c = (wlv.n_extra == 0 && wp->w_p_lcs_chars.tab3)
-                    ? wp->w_p_lcs_chars.tab3 : wp->w_p_lcs_chars.tab1;
+                   ? wp->w_p_lcs_chars.tab3 : wp->w_p_lcs_chars.tab1;
             if (wp->w_p_lbr && wlv.p_extra != NULL && *wlv.p_extra != NUL) {
               wlv.c_extra = NUL;  // using p_extra from above
             } else {

@@ -1824,8 +1824,8 @@ bool u_undo_and_forget(int count, bool do_buf_event)
   if (curbuf->b_u_curhead) {
     to_forget->uh_alt_next.ptr = NULL;
     curbuf->b_u_curhead->uh_alt_prev.ptr = to_forget->uh_alt_prev.ptr;
-    curbuf->b_u_seq_cur = curbuf->b_u_curhead->uh_next.ptr ?
-                          curbuf->b_u_curhead->uh_next.ptr->uh_seq : 0;
+    curbuf->b_u_seq_cur = curbuf->b_u_curhead->uh_next.ptr
+                          ? curbuf->b_u_curhead->uh_next.ptr->uh_seq : 0;
   } else if (curbuf->b_u_newhead) {
     curbuf->b_u_seq_cur = curbuf->b_u_newhead->uh_seq;
   }
@@ -2039,9 +2039,9 @@ void undo_time(int step, bool sec, bool file, bool absolute)
 
     while (uhp != NULL) {
       uhp->uh_walk = mark;
-      int val = dosec ? (int)(uhp->uh_time) :
-                dofile ? uhp->uh_save_nr
-                        : uhp->uh_seq;
+      int val = dosec ? (int)(uhp->uh_time)
+                      : dofile ? uhp->uh_save_nr
+                               : uhp->uh_seq;
 
       if (round == 1 && !(dofile && val == 0)) {
         // Remember the header that is closest to the target.
@@ -2049,7 +2049,7 @@ void undo_time(int step, bool sec, bool file, bool absolute)
         // "b_u_seq_cur").  When the timestamp is equal find the
         // highest/lowest sequence number.
         if ((step < 0 ? uhp->uh_seq <= curbuf->b_u_seq_cur
-             : uhp->uh_seq > curbuf->b_u_seq_cur)
+                      : uhp->uh_seq > curbuf->b_u_seq_cur)
             && ((dosec && val == closest)
                 ? (step < 0
                    ? uhp->uh_seq < closest_seq
@@ -2505,8 +2505,8 @@ static void u_undoredo(int undo, bool do_buf_event)
   if (undo) {
     // We are below the previous undo.  However, to make ":earlier 1s"
     // work we compute this as being just above the just undone change.
-    curbuf->b_u_seq_cur = curhead->uh_next.ptr ?
-                          curhead->uh_next.ptr->uh_seq : 0;
+    curbuf->b_u_seq_cur = curhead->uh_next.ptr
+                          ? curhead->uh_next.ptr->uh_seq : 0;
   }
 
   // Remember where we are for ":earlier 1f" and ":later 1f".

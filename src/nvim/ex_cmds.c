@@ -397,10 +397,10 @@ static int sort_compare(const void *s1, const void *s2)
       result = l1.st_u.num.is_number - l2.st_u.num.is_number;
     } else {
       result = l1.st_u.num.value == l2.st_u.num.value
-        ? 0
-        : l1.st_u.num.value > l2.st_u.num.value
-          ? 1
-          : -1;
+               ? 0
+               : l1.st_u.num.value > l2.st_u.num.value
+               ? 1
+               : -1;
     }
   } else if (sort_flt) {
     result = l1.st_u.value_flt == l2.st_u.value_flt
@@ -1365,7 +1365,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
 
   if (itmp != NULL) {
     len += is_pwsh ? strlen(itmp) + sizeof("& { Get-Content " " | & " " }") - 1 + 6  // +6: #20530
-                    : strlen(itmp) + sizeof(" { " " < " " } ") - 1;
+                   : strlen(itmp) + sizeof(" { " " < " " } ") - 1;
   }
   if (otmp != NULL) {
     len += strlen(otmp) + strlen(p_srr) + 2;  // two extra spaces ("  "),
@@ -1389,7 +1389,7 @@ char *make_filter_cmd(char *cmd, char *itmp, char *otmp)
     // redirecting input and/or output.
     if (itmp != NULL || otmp != NULL) {
       char *fmt = is_fish_shell ? "begin; %s; end"
-        : "(%s)";
+                                : "(%s)";
       vim_snprintf(buf, len, fmt, cmd);
     } else {
       xstrlcpy(buf, cmd, len);
@@ -4283,15 +4283,15 @@ bool do_sub_msg(bool count_only)
     }
 
     char *msg_single = count_only
-                     ? NGETTEXT("%" PRId64 " match on %" PRId64 " line",
-                                "%" PRId64 " matches on %" PRId64 " line", sub_nsubs)
-                     : NGETTEXT("%" PRId64 " substitution on %" PRId64 " line",
-                                "%" PRId64 " substitutions on %" PRId64 " line", sub_nsubs);
+                       ? NGETTEXT("%" PRId64 " match on %" PRId64 " line",
+                                  "%" PRId64 " matches on %" PRId64 " line", sub_nsubs)
+                       : NGETTEXT("%" PRId64 " substitution on %" PRId64 " line",
+                                  "%" PRId64 " substitutions on %" PRId64 " line", sub_nsubs);
     char *msg_plural = count_only
-                     ? NGETTEXT("%" PRId64 " match on %" PRId64 " lines",
-                                "%" PRId64 " matches on %" PRId64 " lines", sub_nsubs)
-                     : NGETTEXT("%" PRId64 " substitution on %" PRId64 " lines",
-                                "%" PRId64 " substitutions on %" PRId64 " lines", sub_nsubs);
+                       ? NGETTEXT("%" PRId64 " match on %" PRId64 " lines",
+                                  "%" PRId64 " matches on %" PRId64 " lines", sub_nsubs)
+                       : NGETTEXT("%" PRId64 " substitution on %" PRId64 " lines",
+                                  "%" PRId64 " substitutions on %" PRId64 " lines", sub_nsubs);
     vim_snprintf_add(msg_buf, sizeof(msg_buf),
                      NGETTEXT(msg_single, msg_plural, sub_nlines),
                      (int64_t)sub_nsubs, (int64_t)sub_nlines);

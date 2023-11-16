@@ -390,8 +390,8 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
 
       new_tag = true;
     } else {
-      if (g_do_tagpreview != 0 ? ptag_entry.tagname == NULL :
-          tagstacklen == 0) {
+      if (g_do_tagpreview != 0 ? ptag_entry.tagname == NULL
+                               : tagstacklen == 0) {
         // empty stack
         emsg(_(e_tag_stack_empty));
         goto end_do_tag;
@@ -2307,11 +2307,12 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
   int verbose = (flags & TAG_VERBOSE);
   int save_p_ic = p_ic;
 
+  // uncrustify:off
+
   // Change the value of 'ignorecase' according to 'tagcase' for the
   // duration of this function.
   switch (curbuf->b_tc_flags ? curbuf->b_tc_flags : tc_flags) {
-  case TC_FOLLOWIC:
-    break;
+  case TC_FOLLOWIC: break;
   case TC_IGNORE:
     p_ic = true;
     break;
@@ -2327,6 +2328,8 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
   default:
     abort();
   }
+
+  // uncrustify:on
 
   int help_save = curbuf->b_help;
 
@@ -3208,7 +3211,7 @@ int expand_tags(int tagnames, char *pat, int *num_file, char ***file)
       memmove(name_buf, t_p.tagname, len);
       name_buf[len++] = 0;
       name_buf[len++] = (t_p.tagkind != NULL && *t_p.tagkind)
-                                                   ? *t_p.tagkind : 'f';
+                        ? *t_p.tagkind : 'f';
       name_buf[len++] = 0;
       memmove((*file)[i] + len, t_p.fname, (size_t)(t_p.fname_end - t_p.fname));
       (*file)[i][len + (size_t)(t_p.fname_end - t_p.fname)] = 0;

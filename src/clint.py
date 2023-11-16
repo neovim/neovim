@@ -167,7 +167,6 @@ _ERROR_CATEGORIES = [
     'runtime/printf_format',
     'runtime/threadsafe_fn',
     'runtime/deprecated',
-    'whitespace/alignment',
     'whitespace/comments',
     'whitespace/indent',
     'whitespace/operators',
@@ -1504,87 +1503,6 @@ def FindPreviousMatchingAngleBracket(clean_lines, linenum, init_prefix):
     # Exhausted all earlier lines and still no matching angle bracket.
     return False
 
-
-def CheckExpressionAlignment(filename, clean_lines, linenum, error, startpos=0):
-    """Checks for the correctness of alignment inside expressions
-
-    Args:
-      filename: The name of the current file.
-      clean_lines: A CleansedLines instance containing the file.
-      linenum: The number of the line to check.
-      error: The function to call with any errors found.
-      startpos: Position where to start searching for expression start.
-    """
-    level_starts = {}
-    line = clean_lines.elided_with_space_strings[linenum]
-    prev_line_start = Search(r'\S', line).start()
-    depth_line_starts = {}
-    pos = min([
-        idx
-        for idx in (
-            line.find(k, startpos)
-            for k in BRACES
-            if k != '{'
-        )
-        if idx >= 0
-    ] + [len(line) + 1])
-    if pos == len(line) + 1:
-        return
-    ignore_error_levels = set()
-    firstlinenum = linenum
-    for linenum, pos, brace, depth in GetExprBracesPosition(
-        clean_lines, linenum, pos
-    ):
-        line = clean_lines.elided_with_space_strings[linenum]
-        if depth is None:
-            if pos < len(line) - 1:
-                CheckExpressionAlignment(filename, clean_lines, linenum, error,
-                                         pos + 1)
-            return
-        elif depth <= 0:
-            return
-        if brace == 's':
-            assert firstlinenum != linenum
-            if level_starts[depth][1]:
-                if line[pos] == BRACES[depth_line_starts[depth][1]]:
-                    if pos != depth_line_starts[depth][0]:
-                        if depth not in ignore_error_levels:
-                            error(filename, linenum, 'whitespace/indent', 2,
-                                  'End of the inner expression should have '
-                                  'the same indent as start')
-            else:
-                if (pos != level_starts[depth][0] + 1
-                        + (level_starts[depth][2] == '{')):
-                    if depth not in ignore_error_levels:
-                        error(filename, linenum, 'whitespace/alignment', 2,
-                              ('Inner expression should be aligned '
-                               'as opening brace + 1 (+ 2 in case of {{). '
-                               'Relevant opening is on line {0!r}').format(
-                                   level_starts[depth][3]))
-            prev_line_start = pos
-        elif brace == 'e':
-            pass
-        else:
-            opening = brace in BRACES
-            if opening:
-                # Only treat {} as part of the expression if it is preceded by
-                # "=" (brace initializer) or "(type)" (construct like (struct
-                # foo) { ... }).
-                if brace == '{' and not (Search(
-                    r'(?:= *|\((?:struct )?\w+(\s*\[\w*\])?\)) *$',
-                    line[:pos])
-                ):
-                    ignore_error_levels.add(depth)
-                line_ended_with_opening = (
-                    pos == len(line) - 2 * (line.endswith(' \\')) - 1)
-                level_starts[depth] = (pos, line_ended_with_opening, brace,
-                                       linenum)
-                if line_ended_with_opening:
-                    depth_line_starts[depth] = (prev_line_start, brace)
-            else:
-                del level_starts[depth]
-
-
 def CheckSpacing(filename, clean_lines, linenum, error):
     """Checks for the correctness of various spacing issues in the code.
 
@@ -1794,7 +1712,7 @@ def CheckSpacing(filename, clean_lines, linenum, error):
 
     # Check whether everything inside expressions is aligned correctly
     if any(line.find(k) >= 0 for k in BRACES if k != '{'):
-        CheckExpressionAlignment(filename, clean_lines, linenum, error)
+        return
 
     # Except after an opening paren, or after another opening brace (in case of
     # an initializer list, for instance), you should have spaces before your

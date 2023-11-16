@@ -586,8 +586,8 @@ void f_histnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   const char *const histname = tv_get_string_chk(&argvars[0]);
   HistoryType i = histname == NULL
-    ? HIST_INVALID
-    : get_histtype(histname, strlen(histname), false);
+                  ? HIST_INVALID
+                  : get_histtype(histname, strlen(histname), false);
   if (i != HIST_INVALID) {
     i = get_history_idx(i);
   }

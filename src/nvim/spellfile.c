@@ -2488,8 +2488,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
                 // Not found, add a new condition.
                 idx = spin->si_prefcond.ga_len;
                 char **pp = GA_APPEND_VIA_PTR(char *, &spin->si_prefcond);
-                *pp = (aff_entry->ae_cond == NULL) ?
-                      NULL : getroom_save(spin, aff_entry->ae_cond);
+                *pp = (aff_entry->ae_cond == NULL)
+                      ? NULL : getroom_save(spin, aff_entry->ae_cond);
               }
 
               // Add the prefix to the prefix tree.
@@ -2608,7 +2608,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char *fname)
             // when "to" is "_" it means empty
             add_fromto(spin, &spin->si_sal, items[1],
                        strcmp(items[2], "_") == 0 ? ""
-                       : items[2]);
+                                                  : items[2]);
           }
         }
       } else if (is_aff_rule(items, itemcnt, "SOFOFROM", 2)
@@ -5368,8 +5368,9 @@ static void spell_message(const spellinfo_T *spin, char *str)
 void ex_spell(exarg_T *eap)
 {
   spell_add_word(eap->arg, (int)strlen(eap->arg),
-                 eap->cmdidx == CMD_spellwrong ? SPELL_ADD_BAD :
-                 eap->cmdidx == CMD_spellrare ? SPELL_ADD_RARE : SPELL_ADD_GOOD,
+                 eap->cmdidx == CMD_spellwrong
+                 ? SPELL_ADD_BAD
+                 : eap->cmdidx == CMD_spellrare ? SPELL_ADD_RARE : SPELL_ADD_GOOD,
                  eap->forceit ? 0 : (int)eap->line2,
                  eap->cmdidx == CMD_spellundo);
 }

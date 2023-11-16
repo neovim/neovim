@@ -2613,9 +2613,9 @@ void scroll_redraw(int up, linenr_T count)
   int prev_topfill = curwin->w_topfill;
   linenr_T prev_lnum = curwin->w_cursor.lnum;
 
-  bool moved = up ?
-               scrollup(count, true) :
-               scrolldown(count, true);
+  bool moved = up
+               ? scrollup(count, true)
+               : scrolldown(count, true);
 
   if (get_scrolloff_value(curwin) > 0) {
     // Adjust the cursor position for 'scrolloff'.  Mark w_topline as
@@ -4225,9 +4225,9 @@ static void nv_brackets(cmdarg_T *cap)
                             ? FIND_DEFINE
                             : FIND_ANY),
                            cap->count1,
-                           (isupper(cap->nchar) ? ACTION_SHOW_ALL :
-                            islower(cap->nchar) ? ACTION_SHOW :
-                            ACTION_GOTO),
+                           (isupper(cap->nchar) ? ACTION_SHOW_ALL
+                                                : islower(cap->nchar) ? ACTION_SHOW
+                                                                      : ACTION_GOTO),
                            (cap->cmdchar == ']'
                             ? curwin->w_cursor.lnum + 1
                             : 1),
@@ -6463,7 +6463,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
 
   if (fix_indent) {
     dir = (cap->cmdchar == ']' && cap->nchar == 'p')
-      ? FORWARD : BACKWARD;
+          ? FORWARD : BACKWARD;
     flags |= PUT_FIXINDENT;
   } else {
     dir = (cap->cmdchar == 'P'

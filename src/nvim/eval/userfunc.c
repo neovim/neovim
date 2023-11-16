@@ -2446,7 +2446,7 @@ void ex_function(exarg_T *eap)
           p = theline;
         } else if (is_heredoc) {
           p = skipwhite(theline) == theline
-            ? theline : theline + strlen(heredoc_trimmed);
+              ? theline : theline + strlen(heredoc_trimmed);
         } else {
           p = theline + strlen(heredoc_trimmed);
         }
@@ -3573,8 +3573,8 @@ void make_partial(dict_T *const selfdict, typval_T *const rettv)
     fp = rettv->vval.v_partial->pt_func;
   } else {
     char *fname = rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING
-                                      ? rettv->vval.v_string
-                                      : rettv->vval.v_partial->pt_name;
+                  ? rettv->vval.v_string
+                  : rettv->vval.v_partial->pt_name;
     // Translate "s:func" to the stored function name.
     fname = fname_trans_sid(fname, fname_buf, &tofree, &error);
     fp = find_func(fname);

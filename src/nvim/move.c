@@ -757,8 +757,8 @@ void validate_cursor_col(void)
 // fold column and sign column (these don't move when scrolling horizontally).
 int win_col_off(win_T *wp)
 {
-  return ((wp->w_p_nu || wp->w_p_rnu || *wp->w_p_stc != NUL) ?
-          (number_width(wp) + (*wp->w_p_stc == NUL)) : 0)
+  return ((wp->w_p_nu || wp->w_p_rnu || *wp->w_p_stc != NUL)
+          ? (number_width(wp) + (*wp->w_p_stc == NUL)) : 0)
          + ((cmdwin_type == 0 || wp != curwin) ? 0 : 1)
          + win_fdccol_count(wp) + (win_signcol_count(wp) * SIGN_WIDTH);
 }

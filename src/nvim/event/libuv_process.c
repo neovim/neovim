@@ -71,8 +71,8 @@ int libuv_process_spawn(LibuvProcess *uvproc)
     uvproc->uvstdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
 #ifdef MSWIN
     // pipe must be readable for IOCP to work on Windows.
-    uvproc->uvstdio[1].flags |= proc->overlapped ?
-                                (UV_READABLE_PIPE | UV_OVERLAPPED_PIPE) : 0;
+    uvproc->uvstdio[1].flags |= proc->overlapped
+                                ? (UV_READABLE_PIPE | UV_OVERLAPPED_PIPE) : 0;
 #endif
     uvproc->uvstdio[1].data.stream = (uv_stream_t *)(&proc->out.uv.pipe);
   }

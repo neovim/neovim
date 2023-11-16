@@ -2967,11 +2967,11 @@ static void get_next_dict_tsr_completion(int compl_type, char *dict, int dict_f)
   if (thesaurus_func_complete(compl_type)) {
     expand_by_function(compl_type, compl_pattern);
   } else {
-    ins_compl_dictionaries(dict != NULL ? dict
+    ins_compl_dictionaries(dict != NULL
+                           ? dict
                            : (compl_type == CTRL_X_THESAURUS
                               ? (*curbuf->b_p_tsr == NUL ? p_tsr : curbuf->b_p_tsr)
-                              : (*curbuf->b_p_dict ==
-                                 NUL ? p_dict : curbuf->b_p_dict)),
+                              : (*curbuf->b_p_dict == NUL ? p_dict : curbuf->b_p_dict)),
                            compl_pattern,
                            dict != NULL ? dict_f : 0,
                            compl_type == CTRL_X_THESAURUS);
@@ -3427,8 +3427,8 @@ static int ins_compl_get_exp(pos_T *ini)
     // just been made cyclic then we have to move compl_curr_match to the
     // next or previous entry (if any) -- Acevedo
     compl_curr_match = compl_dir_forward()
-                        ? compl_old_match->cp_next
-                        : compl_old_match->cp_prev;
+                       ? compl_old_match->cp_next
+                       : compl_old_match->cp_prev;
     if (compl_curr_match == NULL) {
       compl_curr_match = compl_old_match;
     }
