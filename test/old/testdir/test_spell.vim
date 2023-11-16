@@ -1081,6 +1081,15 @@ func Test_spell_compatible()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_z_equal_with_large_count()
+  split
+  set spell
+  call setline(1, "ff")
+  norm 0z=337203685477580
+  set nospell
+  bwipe!
+endfunc
+
 let g:test_data_aff1 = [
       \"SET ISO8859-1",
       \"TRY esianrtolcdugmphbyfvkwjkqxz-\xEB\xE9\xE8\xEA\xEF\xEE\xE4\xE0\xE2\xF6\xFC\xFB'ESIANRTOLCDUGMPHBYFVKWJKQXZ",

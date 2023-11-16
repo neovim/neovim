@@ -180,6 +180,9 @@ int get_number(int colon, int *mouse_used)
     ui_cursor_goto(msg_row, msg_col);
     int c = safe_vgetc();
     if (ascii_isdigit(c)) {
+      if (n > INT_MAX / 10) {
+        return 0;
+      }
       n = n * 10 + c - '0';
       msg_putchar(c);
       typed++;

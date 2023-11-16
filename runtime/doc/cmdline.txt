@@ -339,6 +339,7 @@ terminals)
 		A positive number represents the absolute index of an entry
 		as it is given in the first column of a :history listing.
 		This number remains fixed even if other entries are deleted.
+		(see |E1510|)
 
 		A negative number means the relative position of an entry,
 		counted from the newest entry (which has index -1) backwards.

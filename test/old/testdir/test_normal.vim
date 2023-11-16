@@ -4164,4 +4164,9 @@ func Test_normal33_g_cmd_nonblank()
   bw!
 endfunc
 
+func Test_normal34_zet_large()
+  " shouldn't cause overflow
+  norm! z9765405999999999999
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

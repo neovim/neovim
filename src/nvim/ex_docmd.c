@@ -3552,7 +3552,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         if (i == '-') {
           lnum -= n;
         } else {
-          if (n >= INT32_MAX - lnum) {
+          if (lnum >= 0 && n >= INT32_MAX - lnum) {
             *errormsg = _(e_line_number_out_of_range);
             goto error;
           }
