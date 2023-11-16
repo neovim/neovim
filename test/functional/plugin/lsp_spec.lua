@@ -3862,12 +3862,16 @@ describe('LSP', function()
       eq(result.method, "initialize")
     end)
     it('can connect to lsp server via rpc.domain_socket_connect', function()
-      local tmpfile = helpers.tmpname()
-      os.remove(tmpfile)
+      local tmpfile
+      if is_os("win") then
+        tmpfile = "\\\\.\\\\pipe\\pipe.test"
+        else
+        tmpfile = helpers.tmpname()
+        os.remove(tmpfile)
+      end
       local result = exec_lua([[
-        local tmpfile = ...
+        local SOCK = ...
         local uv = vim.uv
-        local SOCK = jit.os == "Windows" and "\\\\.\\\\pipe\\pipe.test" or tmpfile
         local server = uv.new_pipe(false)
         server:bind(SOCK)
         local init = nil
