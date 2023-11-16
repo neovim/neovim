@@ -3598,13 +3598,13 @@ nvim_ui_set_option({name}, {value})                     *nvim_ui_set_option()*
         |RPC| only
 
 nvim_ui_term_event({event}, {value})                    *nvim_ui_term_event()*
-    Tells Nvim when a terminal event has occurred: sets |v:termresponse| and
-    fires |TermResponse|.
+    Tells Nvim when a terminal event has occurred
 
     The following terminal events are supported:
 
-    • "osc_response": The terminal sent a OSC response sequence to Nvim. The
-      payload is the received OSC sequence.
+    • "termresponse": The terminal sent an OSC or DCS response sequence to
+      Nvim. The payload is the received response. Sets |v:termresponse| and
+      fires |TermResponse|.
 
     Attributes: ~
         |RPC| only

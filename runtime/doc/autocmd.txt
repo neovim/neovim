@@ -987,8 +987,8 @@ TermClose			When a |terminal| job ends.
 				Sets these |v:event| keys:
 				    status
 							*TermResponse*
-TermResponse			When Nvim receives a OSC response from the
-				terminal.  Sets |v:termresponse|. When used
+TermResponse			When Nvim receives an OSC or DCS response from
+				the terminal.  Sets |v:termresponse|. When used
 				from Lua, the response string is included in
 				the "data" field of the autocommand callback.
 				May be triggered halfway through another event

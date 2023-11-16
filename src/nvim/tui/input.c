@@ -476,8 +476,8 @@ static void tk_getkeys(TermInput *input, bool force)
           }
         }
       }
-    } else if (key.type == TERMKEY_TYPE_OSC) {
-      handle_osc_event(input, &key);
+    } else if (key.type == TERMKEY_TYPE_OSC || key.type == TERMKEY_TYPE_DCS) {
+      handle_term_response(input, &key);
     } else if (key.type == TERMKEY_TYPE_MODEREPORT) {
       handle_modereport(input, &key);
     }
@@ -578,22 +578,34 @@ static HandleState handle_bracketed_paste(TermInput *input)
   return kNotApplicable;
 }
 
-static void handle_osc_event(TermInput *input, const TermKeyKey *key)
+static void handle_term_response(TermInput *input, const TermKeyKey *key)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *str = NULL;
   if (termkey_interpret_string(input->tk, key, &str) == TERMKEY_RES_KEY) {
     assert(str != NULL);
 
-    // Send an event to nvim core. This will update the v:termresponse variable and fire the
-    // TermResponse event
+    // Send an event to nvim core. This will update the v:termresponse variable
+    // and fire the TermResponse event
     MAXSIZE_TEMP_ARRAY(args, 2);
-    ADD_C(args, STATIC_CSTR_AS_OBJ("osc_response"));
+    ADD_C(args, STATIC_CSTR_AS_OBJ("termresponse"));
 
-    // libtermkey strips the OSC bytes from the response. We add it back in so that downstream
-    // consumers of v:termresponse can differentiate between OSC and CSI events.
+    // libtermkey strips the OSC/DCS bytes from the response. We add it back in
+    // so that downstream consumers of v:termresponse can differentiate between
+    // the two.
     StringBuilder response = KV_INITIAL_VALUE;
-    kv_printf(response, "\x1b]%s", str);
+    switch (key->type) {
+    case TERMKEY_TYPE_OSC:
+      kv_printf(response, "\x1b]%s", str);
+      break;
+    case TERMKEY_TYPE_DCS:
+      kv_printf(response, "\x1bP%s", str);
+      break;
+    default:
+      // Key type already checked for OSC/DCS in termkey_interpret_string
+      UNREACHABLE;
+    }
+
     ADD_C(args, STRING_OBJ(cbuf_as_string(response.items, response.size)));
     rpc_send_event(ui_client_channel_id, "nvim_ui_term_event", args);
     kv_destroy(response);
