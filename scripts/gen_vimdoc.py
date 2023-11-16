@@ -246,6 +246,7 @@ CONFIG = {
             'base64': 'vim.base64',
             'regex': 'vim.regex',
             'spell': 'vim.spell',
+            'snippet': 'vim.snippet',
         },
         'append_only': [
             'shared.lua',

@@ -3697,16 +3697,16 @@ totable({f}, {...})                                       *vim.iter.totable()*
 ==============================================================================
 Lua module: vim.snippet                                          *vim.snippet*
 
-active()                                                    *snippet.active()*
+vim.snippet.active()                                    *vim.snippet.active()*
     Returns `true` if there's an active snippet in the current buffer.
 
     Return: ~
         (boolean)
 
-exit()                                                        *snippet.exit()*
+vim.snippet.exit()                                        *vim.snippet.exit()*
     Exits the current snippet.
 
-expand({input})                                             *snippet.expand()*
+vim.snippet.expand({input})                             *vim.snippet.expand()*
     Expands the given snippet text. Refer to https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax for the specification of valid input.
 
     Tabstops are highlighted with hl-SnippetTabstop.
@@ -3714,7 +3714,7 @@ expand({input})                                             *snippet.expand()*
     Parameters: ~
       • {input}  (string)
 
-jump({direction})                                             *snippet.jump()*
+vim.snippet.jump({direction})                             *vim.snippet.jump()*
     Jumps within the active snippet in the given direction. If the jump isn't
     possible, the function call does nothing.
 
@@ -3732,7 +3732,7 @@ jump({direction})                                             *snippet.jump()*
       • {direction}  (vim.snippet.Direction) Navigation direction. -1 for
                      previous, 1 for next.
 
-jumpable({direction})                                     *snippet.jumpable()*
+vim.snippet.jumpable({direction})                     *vim.snippet.jumpable()*
     Returns `true` if there is an active snippet which can be jumped in the
     given direction. You can use this function to navigate a snippet as
     follows: >lua
