@@ -1415,6 +1415,20 @@ func Test_substitute_short_cmd()
   bw!
 endfunc
 
+" Check handling expanding "~" resulting in extremely long text.
+func Test_substitute_tilde_too_long()
+  enew!
+
+  s/.*/ixxx
+  s//~~~~~~~~~AAAAAAA@(
+
+  " Either fails with "out of memory" or "text too long".
+  " This can take a long time.
+  call assert_fails('sil! norm &&&&&&&&&', ['E1240:\|E342:'])
+
+  bwipe!
+endfunc
+
 " This should be done last to reveal a memory leak when vim_regsub_both() is
 " called to evaluate an expression but it is not used in a second call.
 func Test_z_substitute_expr_leak()

@@ -1642,41 +1642,46 @@ static void do_lower(int *d, int c)
 char *regtilde(char *source, int magic, bool preview)
 {
   char *newsub = source;
-  char *tmpsub;
-  char *p;
-  int len;
-  int prevlen;
 
-  for (p = newsub; *p; p++) {
+  for (char *p = newsub; *p; p++) {
     if ((*p == '~' && magic) || (*p == '\\' && *(p + 1) == '~' && !magic)) {
       if (reg_prev_sub != NULL) {
         // length = len(newsub) - 1 + len(prev_sub) + 1
-        prevlen = (int)strlen(reg_prev_sub);
-        tmpsub = xmalloc(strlen(newsub) + (size_t)prevlen);
+        // Avoid making the text longer than MAXCOL, it will cause
+        // trouble at some point.
+        size_t prevsublen = strlen(reg_prev_sub);
+        size_t newsublen = strlen(newsub);
+        if (prevsublen > MAXCOL || newsublen > MAXCOL
+            || newsublen + prevsublen > MAXCOL) {
+          emsg(_(e_resulting_text_too_long));
+          break;
+        }
+
+        char *tmpsub = xmalloc(newsublen + prevsublen);
         // copy prefix
-        len = (int)(p - newsub);              // not including ~
-        memmove(tmpsub, newsub, (size_t)len);
+        size_t prefixlen = (size_t)(p - newsub);  // not including ~
+        memmove(tmpsub, newsub, prefixlen);
         // interpret tilde
-        memmove(tmpsub + len, reg_prev_sub, (size_t)prevlen);
+        memmove(tmpsub + prefixlen, reg_prev_sub, prevsublen);
         // copy postfix
         if (!magic) {
-          p++;                                // back off backslash
+          p++;  // back off backslash
         }
-        STRCPY(tmpsub + len + prevlen, p + 1);
+        STRCPY(tmpsub + prefixlen + prevsublen, p + 1);
 
-        if (newsub != source) {               // already allocated newsub
+        if (newsub != source) {  // allocated newsub before
           xfree(newsub);
         }
         newsub = tmpsub;
-        p = newsub + len + prevlen;
+        p = newsub + prefixlen + prevsublen;
       } else if (magic) {
-        STRMOVE(p, p + 1);              // remove '~'
+        STRMOVE(p, p + 1);  // remove '~'
       } else {
-        STRMOVE(p, p + 2);              // remove '\~'
+        STRMOVE(p, p + 2);  // remove '\~'
       }
       p--;
     } else {
-      if (*p == '\\' && p[1]) {         // skip escaped characters
+      if (*p == '\\' && p[1]) {  // skip escaped characters
         p++;
       }
       p += utfc_ptr2len(p) - 1;
