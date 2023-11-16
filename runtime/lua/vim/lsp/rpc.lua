@@ -712,16 +712,8 @@ end
 function M.domain_socket_connect(pipe_path)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
-    local pipe, err_msg, err_name = uv.new_pipe(false)
-    assert(
-      pipe,
-      string.format(
-        'pipe with name %s could not be opened. Error: %s. Reason: %s',
-        pipe_path,
-        err_name,
-        err_msg
-      )
-    )
+    local pipe =
+      assert(uv.new_pipe(false), string.format('pipe with name %s could not be opened.', pipe_path))
     local closing = false
     local transport = {
       write = vim.schedule_wrap(function(msg)
