@@ -1294,9 +1294,7 @@ static bool reg_match_visual(void)
     rex.line = (uint8_t *)reg_getline(rex.lnum);
     rex.input = rex.line + col;
 
-    unsigned cols_u = win_linetabsize(wp, rex.reg_firstlnum + rex.lnum, (char *)rex.line, col);
-    assert(cols_u <= MAXCOL);
-    colnr_T cols = (colnr_T)cols_u;
+    colnr_T cols = win_linetabsize(wp, rex.reg_firstlnum + rex.lnum, (char *)rex.line, col);
     if (cols < start || cols > end - (*p_sel == 'e')) {
       return false;
     }
@@ -6029,11 +6027,10 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
           break;
 
         case RE_VCOL:
-          if (!re_num_cmp(win_linetabsize(rex.reg_win == NULL
-                                          ? curwin : rex.reg_win,
-                                          rex.reg_firstlnum + rex.lnum,
-                                          (char *)rex.line,
-                                          (colnr_T)(rex.input - rex.line)) + 1,
+          if (!re_num_cmp((unsigned)win_linetabsize(rex.reg_win == NULL ? curwin : rex.reg_win,
+                                                    rex.reg_firstlnum + rex.lnum,
+                                                    (char *)rex.line,
+                                                    (colnr_T)(rex.input - rex.line)) + 1,
                           scan)) {
             status = RA_NOMATCH;
           }
@@ -14754,9 +14751,9 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           result = col > t->state->val * ts;
         }
         if (!result) {
-          uintmax_t lts = win_linetabsize(wp, rex.reg_firstlnum + rex.lnum, (char *)rex.line, col);
+          int lts = win_linetabsize(wp, rex.reg_firstlnum + rex.lnum, (char *)rex.line, col);
           assert(t->state->val >= 0);
-          result = nfa_re_num_cmp((uintmax_t)t->state->val, op, lts + 1);
+          result = nfa_re_num_cmp((uintmax_t)t->state->val, op, (uintmax_t)lts + 1);
         }
         if (result) {
           add_here = true;

@@ -65,8 +65,9 @@ int adjust_plines_for_skipcol(win_T *wp)
   }
 
   int width = wp->w_width_inner - win_col_off(wp);
-  if (wp->w_skipcol >= width) {
-    return (wp->w_skipcol - width) / (width + win_col_off2(wp)) + 1;
+  int w2 = width + win_col_off2(wp);
+  if (wp->w_skipcol >= width && w2 > 0) {
+    return (wp->w_skipcol - width) / w2 + 1;
   }
 
   return 0;
@@ -1238,8 +1239,8 @@ bool scrolldown(linenr_T line_count, int byfold)
           curwin->w_topline = first;
         } else {
           if (do_sms) {
-            int size = (int)win_linetabsize(curwin, curwin->w_topline,
-                                            ml_get(curwin->w_topline), (colnr_T)MAXCOL);
+            int size = win_linetabsize(curwin, curwin->w_topline,
+                                       ml_get(curwin->w_topline), MAXCOL);
             if (size > width1) {
               curwin->w_skipcol = width1;
               size -= width1;
@@ -1335,7 +1336,7 @@ bool scrollup(linenr_T line_count, int byfold)
   if (do_sms || (byfold && hasAnyFolding(curwin)) || win_may_fill(curwin)) {
     int width1 = curwin->w_width_inner - curwin_col_off();
     int width2 = width1 + curwin_col_off2();
-    unsigned size = 0;
+    int size = 0;
     const colnr_T prev_skipcol = curwin->w_skipcol;
 
     if (do_sms) {
@@ -1360,7 +1361,7 @@ bool scrollup(linenr_T line_count, int byfold)
           // the end of the line, then advance to the next line.
           int add = curwin->w_skipcol > 0 ? width2 : width1;
           curwin->w_skipcol += add;
-          if ((unsigned)curwin->w_skipcol >= size) {
+          if (curwin->w_skipcol >= size) {
             if (lnum == curbuf->b_ml.ml_line_count) {
               // at the last screen line, can't scroll further
               curwin->w_skipcol -= add;
