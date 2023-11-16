@@ -3752,4 +3752,26 @@ vim.snippet.jumpable({direction})                     *vim.snippet.jumpable()*
     Return: ~
         (boolean)
 
+
+==============================================================================
+Lua module: vim.text                                                *vim.text*
+
+vim.text.hexdecode({enc})                               *vim.text.hexdecode()*
+    Hex decode a string.
+
+    Parameters: ~
+      • {enc}  (string) String to decode
+
+    Return: ~
+        (string) Decoded string
+
+vim.text.hexencode({str})                               *vim.text.hexencode()*
+    Hex encode a string.
+
+    Parameters: ~
+      • {str}  (string) String to encode
+
+    Return: ~
+        (string) Hex encoded string
+
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

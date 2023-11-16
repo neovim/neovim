@@ -214,6 +214,9 @@ The following new APIs and features were added.
 • The 'termsync' option asks the terminal emulator to buffer screen updates
   until the redraw cycle is complete. Requires support from the terminal.
 
+• Added |vim.text.hexencode()| and |vim.text.hexdecode()| to convert strings
+  to and from byte representations.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
