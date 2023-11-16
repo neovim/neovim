@@ -3862,11 +3862,11 @@ describe('LSP', function()
       eq(result.method, "initialize")
     end)
     it('can connect to lsp server via rpc.domain_socket_connect', function()
-      async()
       local tmpfile = helpers.tmpname()
+      local results = {}
       os.remove(tmpfile)
       exec_lua([[
-        local tmpfile = ...
+        local tmpfile, results = ...
         local uv = vim.uv
         local SOCK = jit.os == "Windows" and "\\\\.\\\\pipe\\pipe.test" or tmpfile
         local server = uv.new_pipe(false)
@@ -3891,11 +3891,13 @@ describe('LSP', function()
                 server:close()
                 server:shutdown()
 
-                local result = vim.json.decode(init)
-                eq(result.method, "initialize")
-                done()
+                table.insert(results, vim.json.decode(init))
         end)
-      ]], tmpfile)
+      ]], tmpfile, results)
+      vim.wait(1000, function()
+              return results[1] ~= nil
+      end)
+      eq(results[1].method, "initialize")
     end)
   end)
 
