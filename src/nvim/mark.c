@@ -1062,7 +1062,8 @@ void ex_changes(exarg_T *eap)
       }
       snprintf(IObuff, IOSIZE, "%c %3d %5" PRIdLINENR " %4d ",
                i == curwin->w_changelistidx ? '>' : ' ',
-               i > curwin->w_changelistidx ? i - curwin->w_changelistidx : curwin->w_changelistidx - i,
+               i >
+               curwin->w_changelistidx ? i - curwin->w_changelistidx : curwin->w_changelistidx - i,
                curbuf->b_changelist[i].mark.lnum,
                curbuf->b_changelist[i].mark.col);
       msg_outtrans(IObuff, 0);
