@@ -260,27 +260,41 @@ using OSC 52. OSC 52 is an Operating System Command control sequence that
 writes the copied text to the terminal emulator. If the terminal emulator
 supports OSC 52 then it will write the copied text into the system clipboard.
 
-This is most useful when using Nvim remotely (e.g. via ssh) as Nvim does not
-have direct access to the system clipboard in that case.
+Nvim will attempt to automatically determine if the host terminal emulator
+supports the OSC 52 sequence and enable the OSC 52 clipboard provider if it
+does as long as all of the following are true:
 
-Because not all terminal emulators support OSC 52, this provider must be opted
-into explicitly by setting the following |g:clipboard| definition: >lua
+  • Nvim is running in the |TUI|
+  • |g:clipboard| is unset
+  • 'clipboard' is not set to "unnamed" or "unnamedplus"
+  • $SSH_TTY is set
+  • $TMUX is unset
+
+If any of the above conditions are not met then the OSC 52 clipboard provider
+will not be used by default and Nvim will fall back to discovering a
+|clipboard-tool| through the usual process.
+
+To force Nvim to use the OSC 52 provider you can use the following
+|g:clipboard| definition: >lua
 
     vim.g.clipboard = {
       name = 'OSC 52',
       copy = {
-        ['+'] = require('vim.ui.clipboard.osc52').copy,
-        ['*'] = require('vim.ui.clipboard.osc52').copy,
+        ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
+        ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
       },
       paste = {
-        ['+'] = require('vim.ui.clipboard.osc52').paste,
-        ['*'] = require('vim.ui.clipboard.osc52').paste,
+        ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
+        ['*'] = require('vim.ui.clipboard.osc52').paste('*'),
       },
     }
 <
 Note that not all terminal emulators support reading from the system clipboard
 (and even for those that do, users should be aware of the security
-implications), so using OSC 52 for pasting may not be possible.
+implications), so using OSC 52 for pasting may not be possible (and not
+necessary, because you can |paste| instead using your system paste function).
+Users may need to configure their terminal emulator to allow reading from the
+clipboard.
 <
 ==============================================================================
 Paste							*provider-paste* *paste*
