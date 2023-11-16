@@ -190,14 +190,17 @@ do
   --- @param c string Color as a string of hex chars
   --- @return number? Intensity of the color
   local function parsecolor(c)
-    local len = #c
-    assert(len > 0 and len <= 4, 'Invalid hex color string')
-    if not c:match('^0x') then
-      c = string.format('0x%s', c)
+    if #c == 0 or #c > 4 then
+      return nil
     end
 
-    local max = tonumber(string.format('0x%s', string.rep('f', len)))
-    return tonumber(c) / max
+    local val = tonumber(c, 16)
+    if not val then
+      return nil
+    end
+
+    local max = tonumber(string.rep('f', #c), 16)
+    return val / max
   end
 
   --- Parse an OSC 11 response
