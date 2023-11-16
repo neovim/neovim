@@ -167,6 +167,7 @@ CONFIG = {
             'version.lua',
             'iter.lua',
             'snippet.lua',
+            'text.lua',
         ],
         'files': [
             'runtime/lua/vim/iter.lua',
@@ -184,6 +185,7 @@ CONFIG = {
             'runtime/lua/vim/version.lua',
             'runtime/lua/vim/_inspector.lua',
             'runtime/lua/vim/snippet.lua',
+            'runtime/lua/vim/text.lua',
             'runtime/lua/vim/_meta/builtin.lua',
             'runtime/lua/vim/_meta/diff.lua',
             'runtime/lua/vim/_meta/mpack.lua',
@@ -247,6 +249,7 @@ CONFIG = {
             'regex': 'vim.regex',
             'spell': 'vim.spell',
             'snippet': 'vim.snippet',
+            'text': 'vim.text',
         },
         'append_only': [
             'shared.lua',
