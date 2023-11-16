@@ -3864,6 +3864,7 @@ describe('LSP', function()
     it('can connect to lsp server via rpc.domain_socket_connect', function()
       async()
       local tmpfile = helpers.tmpname()
+      os.remove(tmpfile)
       exec_lua([[
         local tmpfile = ...
         local uv = vim.uv
