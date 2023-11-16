@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "nvim/buffer_defs.h"
 #include "nvim/channel.h"

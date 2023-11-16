@@ -1,10 +1,15 @@
 #include <assert.h>
 #include <lauxlib.h>
 #include <lua.h>
+#include <stddef.h>
 
 #include "nvim/base64.h"
 #include "nvim/lua/base64.h"
 #include "nvim/memory.h"
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "lua/base64.c.generated.h"
+#endif
 
 static int nlua_base64_encode(lua_State *L)
 {

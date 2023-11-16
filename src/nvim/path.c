@@ -29,7 +29,6 @@
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
-#include "nvim/pos.h"
 #include "nvim/regexp.h"
 #include "nvim/strings.h"
 #include "nvim/vim.h"

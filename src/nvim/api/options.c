@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "nvim/api/keysets.h"
@@ -13,9 +12,10 @@
 #include "nvim/buffer.h"
 #include "nvim/eval/window.h"
 #include "nvim/globals.h"
+#include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
-#include "nvim/types.h"
+#include "nvim/option_vars.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 

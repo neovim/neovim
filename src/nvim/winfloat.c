@@ -1,15 +1,24 @@
+#include <assert.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "klib/kvec.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
+#include "nvim/macros.h"
+#include "nvim/memory.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/optionstr.h"
+#include "nvim/pos.h"
+#include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"

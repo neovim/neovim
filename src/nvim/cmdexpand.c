@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "auto/config.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/arglist.h"
@@ -50,7 +49,6 @@
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/popupmenu.h"
-#include "nvim/pos.h"
 #include "nvim/profile.h"
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"

@@ -65,7 +65,6 @@
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/path.h"
 #include "nvim/popupmenu.h"
-#include "nvim/pos.h"
 #include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/runtime.h"
