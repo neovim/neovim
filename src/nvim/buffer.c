@@ -423,8 +423,8 @@ bool bufref_valid(bufref_T *bufref)
   FUNC_ATTR_PURE
 {
   return bufref->br_buf_free_count == buf_free_count
-    ? true
-    : buf_valid(bufref->br_buf) && bufref->br_fnum == bufref->br_buf->b_fnum;
+         ? true
+         : buf_valid(bufref->br_buf) && bufref->br_fnum == bufref->br_buf->b_fnum;
 }
 
 /// Check that "buf" points to a valid buffer in the buffer list.
@@ -2777,7 +2777,7 @@ void buflist_list(exarg_T *eap)
   for (;
        buf != NULL && !got_int;
        buf = buflist_data != NULL
-       ? (++p < buflist_data + buflist.ga_len ? *p : NULL) : buf->b_next) {
+             ? (++p < buflist_data + buflist.ga_len ? *p : NULL) : buf->b_next) {
     const bool is_terminal = buf->terminal;
     const bool job_running = buf->terminal && terminal_running(buf->terminal);
 
@@ -2811,8 +2811,8 @@ void buflist_list(exarg_T *eap)
     }
 
     const int changed_char = (buf->b_flags & BF_READERR)
-      ? 'x'
-      : (bufIsChanged(buf) ? '+' : ' ');
+                             ? 'x'
+                             : (bufIsChanged(buf) ? '+' : ' ');
     int ro_char = !MODIFIABLE(buf) ? '-' : (buf->b_p_ro ? '=' : ' ');
     if (buf->terminal) {
       ro_char = channel_job_running((uint64_t)buf->b_p_channel) ? 'R' : 'F';
@@ -3592,8 +3592,8 @@ void ex_buffer_all(exarg_T *eap)
     // Try to close floating windows first
     for (wp = lastwin->w_floating ? lastwin : firstwin; wp != NULL; wp = wpnext) {
       wpnext = wp->w_floating
-        ? wp->w_prev->w_floating ? wp->w_prev : firstwin
-        : (wp->w_next == NULL || wp->w_next->w_floating) ? NULL : wp->w_next;
+               ? wp->w_prev->w_floating ? wp->w_prev : firstwin
+               : (wp->w_next == NULL || wp->w_next->w_floating) ? NULL : wp->w_next;
       if ((wp->w_buffer->b_nwindows > 1
            || wp->w_floating
            || ((cmdmod.cmod_split & WSP_VERT)

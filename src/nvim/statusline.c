@@ -1387,7 +1387,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
         xstrlcpy(NameBuff, buf_spname(wp->w_buffer), MAXPATHL);
       } else {
         char *t = (opt == STL_FULLPATH) ? wp->w_buffer->b_ffname
-                                          : wp->w_buffer->b_fname;
+                                        : wp->w_buffer->b_fname;
         home_replace(wp->w_buffer, t, NameBuff, MAXPATHL, true);
       }
       trans_characters(NameBuff, MAXPATHL);
@@ -1586,9 +1586,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
     case STL_OFFSET: {
       int l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL,
                                      false);
-      num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) || l < 0 ?
-            0 : l + 1 + ((State & MODE_INSERT) == 0 && empty_line ?
-                         0 : (int)wp->w_cursor.col);
+      num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) || l < 0
+            ? 0 : l + 1 + ((State & MODE_INSERT) == 0 && empty_line
+                           ? 0 : (int)wp->w_cursor.col);
       break;
     }
     case STL_BYTEVAL_X:
@@ -1654,8 +1654,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
         if (!fold) {
           SignTextAttrs *sattr = virtnum ? NULL : &stcp->sattrs[i];
           p = sattr && sattr->text ? sattr->text : "  ";
-          stl_items[curitem].minwid = -(sattr && sattr->text ? stcp->sign_cul_id ? stcp->sign_cul_id
-                                        : sattr->hl_id : (stcp->use_cul ? HLF_CLS : HLF_SC) + 1);
+          stl_items[curitem].minwid = -(sattr && sattr->text
+                                        ? (stcp->sign_cul_id ? stcp->sign_cul_id : sattr->hl_id)
+                                        : (stcp->use_cul ? HLF_CLS : HLF_SC) + 1);
         }
         stl_items[curitem].type = Highlight;
         stl_items[curitem].start = out_p + buflen;

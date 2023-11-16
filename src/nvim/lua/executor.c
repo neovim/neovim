@@ -450,7 +450,7 @@ static int nlua_wait(lua_State *lstate)
   }
 
   MultiQueue *loop_events = fast_only || in_fast_callback > 0
-    ? main_loop.fast_events : main_loop.events;
+                            ? main_loop.fast_events : main_loop.events;
 
   TimeWatcher *tw = xmalloc(sizeof(TimeWatcher));
 
@@ -474,8 +474,8 @@ static int nlua_wait(lua_State *lstate)
                             (int)timeout,
                             got_int || (is_function ? nlua_wait_condition(lstate,
                                                                           &pcall_status,
-                                                                          &callback_result) :
-                                        false));
+                                                                          &callback_result)
+                                                    : false));
 
   // Stop dummy timer
   time_watcher_stop(tw);

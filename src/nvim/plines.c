@@ -971,8 +971,8 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
     const int64_t row_off = end_vcol == 0
                             ? 0
                             : (end_vcol <= width1 || width2 <= 0)
-                              ? 1
-                              : 1 + (end_vcol - width1 + width2 - 1) / width2;
+                            ? 1
+                            : 1 + (end_vcol - width1 + width2 - 1) / width2;
     height_sum_nofill += MIN(row_off, height_cur_nofill);
   }
 

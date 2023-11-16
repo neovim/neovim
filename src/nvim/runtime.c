@@ -152,8 +152,8 @@ char *estack_sfile(estack_arg_T which)
                                        ? &entry->es_info.ufunc->uf_script_ctx
                                        : &entry->es_info.aucmd->script_ctx);
         return def_ctx->sc_sid > 0
-                ? xstrdup((SCRIPT_ITEM(def_ctx->sc_sid)->sn_name))
-                : NULL;
+               ? xstrdup((SCRIPT_ITEM(def_ctx->sc_sid)->sn_name))
+               : NULL;
       } else if (entry->es_type == ETYPE_SCRIPT) {
         return xstrdup(entry->es_name);
       }
@@ -186,8 +186,8 @@ char *estack_sfile(estack_arg_T which)
       len += strlen(type_name);
       ga_grow(&ga, (int)len);
       linenr_T lnum = idx == exestack.ga_len - 1
-        ? which == ESTACK_STACK ? SOURCING_LNUM : 0
-        : entry->es_lnum;
+                      ? which == ESTACK_STACK ? SOURCING_LNUM : 0
+                      : entry->es_lnum;
       char *dots = idx == exestack.ga_len - 1 ? "" : "..";
       if (lnum == 0) {
         // For the bottom entry of <sfile>: do not add the line number,
@@ -1657,11 +1657,11 @@ char *runtimepath_default(bool clean_arg)
 {
   size_t rtp_size = 0;
   char *const data_home = clean_arg
-    ? NULL
-    : stdpaths_get_xdg_var(kXDGDataHome);
+                          ? NULL
+                          : stdpaths_get_xdg_var(kXDGDataHome);
   char *const config_home = clean_arg
-    ? NULL
-    : stdpaths_get_xdg_var(kXDGConfigHome);
+                            ? NULL
+                            : stdpaths_get_xdg_var(kXDGConfigHome);
   char *const vimruntime = vim_getenv("VIMRUNTIME");
   char *const libdir = get_lib_dir();
   char *const data_dirs = stdpaths_get_xdg_var(kXDGDataDirs);
@@ -2415,8 +2415,8 @@ linenr_T get_sourced_lnum(LineGetter fgetline, void *cookie)
   FUNC_ATTR_PURE
 {
   return fgetline == getsourceline
-        ? ((struct source_cookie *)cookie)->sourcing_lnum
-        : SOURCING_LNUM;
+         ? ((struct source_cookie *)cookie)->sourcing_lnum
+         : SOURCING_LNUM;
 }
 
 /// Return a List of script-local functions defined in the script with id "sid".

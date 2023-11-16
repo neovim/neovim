@@ -579,8 +579,8 @@ static int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   mapblock_T **abbr_table = args->buffer ? &buf->b_first_abbr : &first_abbr;
 
   // For ":noremap" don't remap, otherwise do remap.
-  int noremap = args->script ? REMAP_SCRIPT :
-                maptype == MAPTYPE_NOREMAP ? REMAP_NONE : REMAP_YES;
+  int noremap = args->script ? REMAP_SCRIPT
+                             : maptype == MAPTYPE_NOREMAP ? REMAP_NONE : REMAP_YES;
 
   const bool has_lhs = (args->lhs[0] != NUL);
   const bool has_rhs = args->rhs_lua != LUA_NOREF || (args->rhs[0] != NUL) || args->rhs_is_noop;
@@ -1521,8 +1521,8 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       mp2 = NULL;
     }
     for (; mp;
-         mp->m_next == NULL ? (mp = mp2, mp2 = NULL) :
-         (mp = mp->m_next)) {
+         mp->m_next == NULL ? (mp = mp2, mp2 = NULL)
+                            : (mp = mp->m_next)) {
       int qlen = mp->m_keylen;
       char *q = mp->m_keys;
       int match;
@@ -2621,7 +2621,7 @@ static void do_exmap(exarg_T *eap, int isabbrev)
   int mode = get_map_mode(&cmdp, eap->forceit || isabbrev);
 
   switch (do_map((*cmdp == 'n') ? MAPTYPE_NOREMAP
-                 : (*cmdp == 'u') ? MAPTYPE_UNMAP : MAPTYPE_MAP,
+                                : (*cmdp == 'u') ? MAPTYPE_UNMAP : MAPTYPE_MAP,
                  eap->arg, mode, isabbrev)) {
   case 1:
     emsg(_(e_invarg));

@@ -2755,7 +2755,7 @@ int parse_cmd_address(exarg_T *eap, const char **errormsg, bool silent)
           if (IS_USER_CMDIDX(eap->cmdidx)) {
             eap->line1 = 1;
             eap->line2 = eap->addr_type == ADDR_WINDOWS
-                ? LAST_WIN_NR : LAST_TAB_NR;
+                         ? LAST_WIN_NR : LAST_TAB_NR;
           } else {
             // there is no Vim command which uses '%' and
             // ADDR_WINDOWS or ADDR_TABS
@@ -5209,8 +5209,8 @@ static void ex_tabs(exarg_T *eap)
   msg_scroll = true;
 
   win_T *lastused_win = valid_tabpage(lastused_tabpage)
-    ? lastused_tabpage->tp_curwin
-    : NULL;
+                        ? lastused_tabpage->tp_curwin
+                        : NULL;
 
   FOR_ALL_TABS(tp) {
     if (got_int) {

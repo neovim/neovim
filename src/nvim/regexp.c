@@ -5109,9 +5109,9 @@ static uint8_t *reg(int paren, int *flagp)
   }
 
   // Make a closing node, and hook it on the end.
-  ender = regnode(paren == REG_ZPAREN ? ZCLOSE + parno :
-                  paren == REG_PAREN ? MCLOSE + parno :
-                  paren == REG_NPAREN ? NCLOSE : END);
+  ender = regnode(paren == REG_ZPAREN ? ZCLOSE + parno
+                                      : paren == REG_PAREN ? MCLOSE + parno
+                                                           : paren == REG_NPAREN ? NCLOSE : END);
   regtail(ret, ender);
 
   // Hook the tails of the branches to the closing node.
@@ -5985,8 +5985,8 @@ static bool regmatch(uint8_t *scan, proftime_T *tm, int *timed_out)
             pos = &fm->mark;
             const colnr_T pos_col = pos->lnum == rex.lnum + rex.reg_firstlnum
                                     && pos->col == MAXCOL
-              ? (colnr_T)strlen(reg_getline(pos->lnum - rex.reg_firstlnum))
-              : pos->col;
+                                    ? (colnr_T)strlen(reg_getline(pos->lnum - rex.reg_firstlnum))
+                                    : pos->col;
 
             if (pos->lnum == rex.lnum + rex.reg_firstlnum
                 ? (pos_col == (colnr_T)(rex.input - rex.line)
@@ -10064,8 +10064,8 @@ static int nfa_regatom(void)
             n = curwin->w_cursor.lnum;
           }
           // \%{n}l  \%{n}<l  \%{n}>l
-          EMIT(cmp == '<' ? NFA_LNUM_LT :
-               cmp == '>' ? NFA_LNUM_GT : NFA_LNUM);
+          EMIT(cmp == '<' ? NFA_LNUM_LT
+                          : cmp == '>' ? NFA_LNUM_GT : NFA_LNUM);
           if (save_prev_at_start) {
             at_start = true;
           }
@@ -10075,8 +10075,8 @@ static int nfa_regatom(void)
             n++;
           }
           // \%{n}c  \%{n}<c  \%{n}>c
-          EMIT(cmp == '<' ? NFA_COL_LT :
-               cmp == '>' ? NFA_COL_GT : NFA_COL);
+          EMIT(cmp == '<' ? NFA_COL_LT
+                          : cmp == '>' ? NFA_COL_GT : NFA_COL);
         } else {
           if (cur) {
             colnr_T vcol = 0;
@@ -10084,8 +10084,8 @@ static int nfa_regatom(void)
             n = ++vcol;
           }
           // \%{n}v  \%{n}<v  \%{n}>v
-          EMIT(cmp == '<' ? NFA_VCOL_LT :
-               cmp == '>' ? NFA_VCOL_GT : NFA_VCOL);
+          EMIT(cmp == '<' ? NFA_VCOL_LT
+                          : cmp == '>' ? NFA_VCOL_GT : NFA_VCOL);
           limit = INT32_MAX / MB_MAXBYTES;
         }
         if (n >= limit) {
@@ -10096,8 +10096,8 @@ static int nfa_regatom(void)
         break;
       } else if (c == '\'' && n == 0) {
         // \%'m  \%<'m  \%>'m
-        EMIT(cmp == '<' ? NFA_MARK_LT :
-             cmp == '>' ? NFA_MARK_GT : NFA_MARK);
+        EMIT(cmp == '<' ? NFA_MARK_LT
+                        : cmp == '>' ? NFA_MARK_GT : NFA_MARK);
         EMIT(getchr());
         break;
       }
@@ -10271,7 +10271,7 @@ collection:
 
           if (*regparse == 'n') {
             startc = (reg_string || emit_range || regparse[1] == '-')
-              ? NL : NFA_NEWL;
+                     ? NL : NFA_NEWL;
           } else if (*regparse == 'd'
                      || *regparse == 'o'
                      || *regparse == 'x'
@@ -14435,9 +14435,9 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
               }
             }
           } else if (state->c < 0 ? check_char_class(state->c, curc)
-                     : (curc == state->c
-                        || (rex.reg_ic
-                            && utf_fold(curc) == utf_fold(state->c)))) {
+                                  : (curc == state->c
+                                     || (rex.reg_ic
+                                         && utf_fold(curc) == utf_fold(state->c)))) {
             result = result_if_matched;
             break;
           }
@@ -14780,18 +14780,18 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           pos_T *pos = &fm->mark;
           const colnr_T pos_col = pos->lnum == rex.lnum + rex.reg_firstlnum
                                   && pos->col == MAXCOL
-            ? (colnr_T)strlen(reg_getline(pos->lnum - rex.reg_firstlnum))
-            : pos->col;
+                                  ? (colnr_T)strlen(reg_getline(pos->lnum - rex.reg_firstlnum))
+                                  : pos->col;
 
           result = pos->lnum == rex.lnum + rex.reg_firstlnum
-            ? (pos_col == (colnr_T)(rex.input - rex.line)
-               ? t->state->c == NFA_MARK
-               : (pos_col < (colnr_T)(rex.input - rex.line)
-                  ? t->state->c == NFA_MARK_GT
-                  : t->state->c == NFA_MARK_LT))
-            : (pos->lnum < rex.lnum + rex.reg_firstlnum
-               ? t->state->c == NFA_MARK_GT
-               : t->state->c == NFA_MARK_LT);
+                   ? (pos_col == (colnr_T)(rex.input - rex.line)
+                      ? t->state->c == NFA_MARK
+                      : (pos_col < (colnr_T)(rex.input - rex.line)
+                         ? t->state->c == NFA_MARK_GT
+                         : t->state->c == NFA_MARK_LT))
+                   : (pos->lnum < rex.lnum + rex.reg_firstlnum
+                      ? t->state->c == NFA_MARK_GT
+                      : t->state->c == NFA_MARK_LT);
           if (result) {
             add_here = true;
             add_state = t->state->out;

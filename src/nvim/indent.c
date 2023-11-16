@@ -888,7 +888,7 @@ int get_breakindent_win(win_T *wp, char *line)
     // always leave at least bri_min characters on the left,
     // if text width is sufficient
     bri = (eff_wwidth - wp->w_briopt_min < 0)
-      ? 0 : eff_wwidth - wp->w_briopt_min;
+          ? 0 : eff_wwidth - wp->w_briopt_min;
   }
 
   return bri;

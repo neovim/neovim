@@ -2439,7 +2439,7 @@ int eval1(char **arg, typval_T *rettv, evalarg_T *const evalarg)
     }
     *arg = skipwhite(*arg + 1);
     evalarg_used->eval_flags = (op_falsy ? !result : result)
-                                  ? orig_flags : (orig_flags & ~EVAL_EVALUATE);
+                               ? orig_flags : (orig_flags & ~EVAL_EVALUATE);
     typval_T var2;
     if (eval1(arg, &var2, evalarg_used) == FAIL) {
       evalarg_used->eval_flags = orig_flags;
@@ -7352,7 +7352,7 @@ char *set_cmdarg(exarg_T *eap, char *oldarg)
                   newval_len - xlen,
                   " ++ff=%s",
                   eap->force_ff == 'u' ? "unix"
-                  : eap->force_ff == 'd' ? "dos" : "mac");
+                                       : eap->force_ff == 'd' ? "dos" : "mac");
     if (rc < 0) {
       goto error;
     }
@@ -8086,10 +8086,10 @@ void ex_execute(exarg_T *eap)
 
     if (!eap->skip) {
       const char *const argstr = eap->cmdidx == CMD_execute
-        ? tv_get_string(&rettv)
-        : rettv.v_type == VAR_STRING
-        ? encode_tv2echo(&rettv, NULL)
-        : encode_tv2string(&rettv, NULL);
+                                 ? tv_get_string(&rettv)
+                                 : rettv.v_type == VAR_STRING
+                                 ? encode_tv2echo(&rettv, NULL)
+                                 : encode_tv2string(&rettv, NULL);
       const size_t len = strlen(argstr);
       ga_grow(&ga, (int)len + 2);
       if (!GA_EMPTY(&ga)) {
@@ -8879,8 +8879,8 @@ bool eval_has_provider(const char *feat)
   }
 
   bool ok = (tv.v_type == VAR_NUMBER)
-    ? 2 == tv.vval.v_number  // Value of 2 means "loaded and working".
-    : false;
+            ? 2 == tv.vval.v_number  // Value of 2 means "loaded and working".
+            : false;
 
   if (ok) {
     // Call() must be defined if provider claims to be working.

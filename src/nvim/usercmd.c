@@ -1532,10 +1532,13 @@ static size_t uc_check_code(char *code, size_t len, char *buf, ucmd_T *cmd, exar
   case ct_RANGE:
   case ct_COUNT: {
     char num_buf[20];
-    int64_t num = (type == ct_LINE1) ? eap->line1 :
-                  (type == ct_LINE2) ? eap->line2 :
-                  (type == ct_RANGE) ? eap->addr_count :
-                  (eap->addr_count > 0) ? eap->line2 : cmd->uc_def;
+    int64_t num = type == ct_LINE1
+                  ? eap->line1
+                  : (type == ct_LINE2
+                     ? eap->line2
+                     : (type == ct_RANGE
+                        ? eap->addr_count
+                        : (eap->addr_count > 0 ? eap->line2 : cmd->uc_def)));
     size_t num_len;
 
     snprintf(num_buf, sizeof(num_buf), "%" PRId64, num);

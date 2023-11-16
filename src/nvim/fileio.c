@@ -479,16 +479,17 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
       goto theend;
     }
 #if defined(UNIX) && defined(EOVERFLOW)
-    filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]") :
+    filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]")
+                                               :
                               // libuv only returns -errno
                               // in Unix and in Windows
                               // open() does not set
                               // EOVERFLOW
-                              (fd == -EOVERFLOW) ? _("[File too big]") :
-                              _("[Permission Denied]")), 0);
+                              (fd == -EOVERFLOW) ? _("[File too big]")
+                                                 : _("[Permission Denied]")), 0);
 #else
-    filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]") :
-                              _("[Permission Denied]")), 0);
+    filemess(curbuf, sfname, ((fd == UV_EFBIG) ? _("[File too big]")
+                                               : _("[Permission Denied]")), 0);
 #endif
     curbuf->b_p_ro = true;                  // must use "w!" now
 

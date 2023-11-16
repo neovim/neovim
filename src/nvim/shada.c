@@ -1611,8 +1611,8 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
                              // finally, additional data:
                              + (
                                 entry.data.search_pattern.additional_data
-              ? entry.data.search_pattern.additional_data->dv_hashtab.ht_used
-              : 0));
+                                ? entry.data.search_pattern.additional_data->dv_hashtab.ht_used
+                                : 0));
     msgpack_pack_map(spacker, entry_map_size);
     PACK_STATIC_STR(SEARCH_KEY_PAT);
     PACK_BIN(cstr_as_string(entry.data.search_pattern.pat));
@@ -1645,8 +1645,8 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
                              // Additional entries, if any:
                              + (
                                 entry.data.filemark.additional_data == NULL
-              ? 0
-              : entry.data.filemark.additional_data->dv_hashtab.ht_used));
+                                ? 0
+                                : entry.data.filemark.additional_data->dv_hashtab.ht_used));
     msgpack_pack_map(spacker, entry_map_size);
     PACK_STATIC_STR(KEY_FILE);
     PACK_BIN(cstr_as_string(entry.data.filemark.fname));
@@ -1718,9 +1718,9 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer, ShadaEntr
                                + (
                                   entry.data.buffer_list.buffers[i].additional_data
                                   == NULL
-                ? 0
-                : (entry.data.buffer_list.buffers[i].additional_data
-                   ->dv_hashtab.ht_used)));
+                                  ? 0
+                                  : (entry.data.buffer_list.buffers[i].additional_data
+                                     ->dv_hashtab.ht_used)));
       msgpack_pack_map(spacker, entry_map_size);
       PACK_STATIC_STR(KEY_FILE);
       PACK_BIN(cstr_as_string(entry.data.buffer_list.buffers[i].fname));
@@ -2346,8 +2346,8 @@ static inline void add_search_pattern(PossiblyFreedShadaEntry *const ret_pse,
                                 : pat.off.line),
             .place_cursor_at_end = (
                                     is_substitute_pattern
-                ? defaults.data.search_pattern.place_cursor_at_end
-                : pat.off.end),
+                                    ? defaults.data.search_pattern.place_cursor_at_end
+                                    : pat.off.end),
             .offset = (is_substitute_pattern
                        ? defaults.data.search_pattern.offset
                        : pat.off.off),

@@ -1658,8 +1658,9 @@ void ex_endtry(exarg_T *eap)
 
   if (!skip) {
     report_resume_pending(pending,
-                          (pending == CSTP_RETURN) ? rettv :
-                          (pending & CSTP_THROW) ? (void *)current_exception : NULL);
+                          (pending == CSTP_RETURN)
+                          ? rettv
+                          : (pending & CSTP_THROW) ? (void *)current_exception : NULL);
     switch (pending) {
     case CSTP_NONE:
       break;

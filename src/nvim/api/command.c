@@ -379,8 +379,8 @@ String nvim_cmd(uint64_t channel_id, Dict(cmd) *cmd, Dict(cmd_opts) *opts, Error
     goto end;
   });
   const char *fullname = IS_USER_CMDIDX(ea.cmdidx)
-    ? get_user_command_name(ea.useridx, ea.cmdidx)
-    : get_command_name(NULL, ea.cmdidx);
+                         ? get_user_command_name(ea.useridx, ea.cmdidx)
+                         : get_command_name(NULL, ea.cmdidx);
   VALIDATE(strncmp(fullname, cmdname, strlen(cmdname)) == 0, "Invalid command: \"%s\"", cmdname, {
     goto end;
   });
@@ -836,8 +836,8 @@ static void build_cmdline_str(char **cmdlinep, exarg_T *eap, CmdParseInfo *cmdin
     offset += eap->arglens[i];
   }
   // If there isn't an argument, make eap->arg point to end of cmdline.
-  eap->arg = argc > 0 ? eap->args[0] :
-             cmdline.items + cmdline.size - 1;  // Subtract 1 to account for NUL
+  eap->arg = argc > 0 ? eap->args[0]
+                      : cmdline.items + cmdline.size - 1;  // Subtract 1 to account for NUL
 
   // Finally, make cmdlinep point to the cmdline string.
   *cmdlinep = cmdline.items;

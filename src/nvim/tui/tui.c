@@ -334,7 +334,7 @@ static void terminfo_start(TUIData *tui)
                  || os_getenv("KONSOLE_DBUS_SESSION");
   const char *konsolev_env = os_getenv("KONSOLE_VERSION");
   int konsolev = konsolev_env ? (int)strtol(konsolev_env, NULL, 10)
-                               : (konsole ? 1 : 0);
+                              : (konsole ? 1 : 0);
 
   patch_terminfo_bugs(tui, term, colorterm, vtev, konsolev, iterm_env, nsterm);
   augment_terminfo(tui, term, vtev, konsolev, iterm_env, nsterm);
@@ -792,11 +792,15 @@ static void cursor_goto(TUIData *tui, int row, int col)
   if (grid->row == -1) {
     goto safe_move;
   }
-  if (0 == col ? col != grid->col :
-      row != grid->row ? false :
-      1 == col ? 2 < grid->col && cheap_to_print(tui, grid->row, 0, col) :
-      2 == col ? 5 < grid->col && cheap_to_print(tui, grid->row, 0, col) :
-      false) {
+  if (0 == col
+      ? col != grid->col
+      : (row != grid->row
+         ? false
+         : (1 == col
+            ? (2 < grid->col && cheap_to_print(tui, grid->row, 0, col))
+            : (2 == col
+               ? (5 < grid->col && cheap_to_print(tui, grid->row, 0, col))
+               : false)))) {
     // Motion to left margin from anywhere else, or CR + printing chars is
     // even less expensive than using BSes or CUB.
     unibi_out(tui, unibi_carriage_return);
@@ -2226,9 +2230,9 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
                                                                   "\x1b[?2004l");
   // For urxvt send BOTH xterm and old urxvt sequences. #8695
   tui->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut, "ext.enable_focus",
-                                                                 rxvt ?
-                                                                 "\x1b[?1004h\x1b]777;focus;on\x7" :
-                                                                 "\x1b[?1004h");
+                                                                 rxvt
+                                                                 ? "\x1b[?1004h\x1b]777;focus;on\x7"
+                                                                 : "\x1b[?1004h");
   tui->unibi_ext.disable_focus_reporting =
     (int)unibi_add_ext_str(ut, "ext.disable_focus",
                            rxvt ? "\x1b[?1004l\x1b]777;focus;off\x7" : "\x1b[?1004l");

@@ -1480,7 +1480,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, Direction dir, char *pat)
       // Expanding lines or words.
       assert(ins_compl_len() >= 0);
       if ((p_ic ? mb_strnicmp(p, pat, (size_t)ins_compl_len())
-           : strncmp(p, pat, (size_t)ins_compl_len())) == 0) {
+                : strncmp(p, pat, (size_t)ins_compl_len())) == 0) {
         return OK;
       }
     }
@@ -3627,7 +3627,7 @@ void find_pattern_in_path(char *ptr, Direction dir, size_t len, bool whole, bool
     if (incl_regmatch.regprog != NULL
         && vim_regexec(&incl_regmatch, line, 0)) {
       char *p_fname = (curr_fname == curbuf->b_fname)
-                        ? curbuf->b_ffname : curr_fname;
+                      ? curbuf->b_ffname : curr_fname;
 
       if (inc_opt != NULL && strstr(inc_opt, "\\zs") != NULL) {
         // Use text from '\zs' to '\ze' (or end) of 'include'.

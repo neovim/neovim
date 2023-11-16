@@ -149,8 +149,8 @@ int sign_cmp(const void *p1, const void *p2)
   int n = s1->pos.row - s2->pos.row;
 
   return n ? n : (n = s2->decor_full->priority - s1->decor_full->priority)
-           ? n : (n = (int)(s2->id - s1->id))
-           ? n : (s2->decor_full->sign_add_id - s1->decor_full->sign_add_id);
+         ? n : (n = (int)(s2->id - s1->id))
+         ? n : (s2->decor_full->sign_add_id - s1->decor_full->sign_add_id);
 }
 
 /// Delete the specified signs

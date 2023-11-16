@@ -3719,9 +3719,9 @@ static void add_keyword(char *const name, const int id, const int flags,
 {
   char name_folded[MAXKEYWLEN + 1];
   const char *const name_ic = (curwin->w_s->b_syn_ic)
-      ? str_foldcase(name, (int)strlen(name), name_folded,
-                     sizeof(name_folded))
-      : name;
+                              ? str_foldcase(name, (int)strlen(name), name_folded,
+                                             sizeof(name_folded))
+                              : name;
 
   keyentry_T *const kp = xmalloc(offsetof(keyentry_T, keyword) + strlen(name_ic) + 1);
   STRCPY(kp->keyword, name_ic);
@@ -3737,8 +3737,8 @@ static void add_keyword(char *const name, const int id, const int flags,
 
   const hash_T hash = hash_hash(kp->keyword);
   hashtab_T *const ht = (curwin->w_s->b_syn_ic)
-      ? &curwin->w_s->b_keywtab_ic
-      : &curwin->w_s->b_keywtab;
+                        ? &curwin->w_s->b_keywtab_ic
+                        : &curwin->w_s->b_keywtab;
   hashitem_T *const hi = hash_lookup(ht, kp->keyword,
                                      strlen(kp->keyword), hash);
 
@@ -4385,8 +4385,8 @@ static void syn_cmd_region(exarg_T *eap, int syncing)
             SYN_ITEMS(curwin->w_s)[idx] = *(ppp->pp_synp);
             SYN_ITEMS(curwin->w_s)[idx].sp_syncing = syncing;
             SYN_ITEMS(curwin->w_s)[idx].sp_type =
-              (item == ITEM_START) ? SPTYPE_START :
-              (item == ITEM_SKIP) ? SPTYPE_SKIP : SPTYPE_END;
+              (item == ITEM_START) ? SPTYPE_START
+                                   : (item == ITEM_SKIP) ? SPTYPE_SKIP : SPTYPE_END;
             SYN_ITEMS(curwin->w_s)[idx].sp_flags |= syn_opt_arg.flags;
             SYN_ITEMS(curwin->w_s)[idx].sp_syn.id = (int16_t)syn_id;
             SYN_ITEMS(curwin->w_s)[idx].sp_syn.inc_tag =

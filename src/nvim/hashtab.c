@@ -347,15 +347,15 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   // so that copying is possible.
   hashitem_T temparray[HT_INIT_SIZE];
   hashitem_T *oldarray = keep_smallarray
-    ? memcpy(temparray, ht->ht_smallarray, sizeof(temparray))
-    : ht->ht_array;
+                         ? memcpy(temparray, ht->ht_smallarray, sizeof(temparray))
+                         : ht->ht_array;
 
   if (newarray_is_small) {
     CLEAR_FIELD(ht->ht_smallarray);
   }
   hashitem_T *newarray = newarray_is_small
-    ? ht->ht_smallarray
-    : xcalloc(newsize, sizeof(hashitem_T));
+                         ? ht->ht_smallarray
+                         : xcalloc(newsize, sizeof(hashitem_T));
 
   // Move all the items from the old array to the new one, placing them in
   // the right spot. The new array won't have any removed items, thus this

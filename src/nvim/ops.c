@@ -451,8 +451,8 @@ static void shift_block(oparg_T *oap, int amount)
     const colnr_T block_space_width = non_white_col - oap->start_vcol;
     // We will shift by "total" or "block_space_width", whichever is less.
     const colnr_T shift_amount = block_space_width < total
-        ? block_space_width
-        : total;
+                                 ? block_space_width
+                                 : total;
     // The column to which we will shift the text.
     const colnr_T destination_col = non_white_col - shift_amount;
 
@@ -688,8 +688,8 @@ void op_reindent(oparg_T *oap, Indenter how)
   // there is no change still need to remove the Visual highlighting.
   if (last_changed != 0) {
     changed_lines(curbuf, first_changed, 0,
-                  oap->is_VIsual ? start_lnum + oap->line_count :
-                  last_changed + 1, 0, true);
+                  oap->is_VIsual ? start_lnum + oap->line_count
+                                 : last_changed + 1, 0, true);
   } else if (oap->is_VIsual) {
     redraw_curbuf_later(UPD_INVERTED);
   }
@@ -2067,8 +2067,8 @@ void op_tilde(oparg_T *oap)
     } else {
       while (true) {
         did_change |= swapchars(oap->op_type, &pos,
-                                pos.lnum == oap->end.lnum ? oap->end.col + 1 :
-                                (int)strlen(ml_get_pos(&pos)));
+                                pos.lnum == oap->end.lnum ? oap->end.col + 1
+                                                          : (int)strlen(ml_get_pos(&pos)));
         if (ltoreq(oap->end, pos) || inc(&pos) == -1) {
           break;
         }
@@ -2913,8 +2913,9 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
     bool non_linewise_vis = (VIsual_active && VIsual_mode != 'V');
 
     // PUT_LINE has special handling below which means we use 'i' to start.
-    char command_start_char = non_linewise_vis ? 'c' :
-                              (flags & PUT_LINE ? 'i' : (dir == FORWARD ? 'a' : 'i'));
+    char command_start_char = non_linewise_vis
+                              ? 'c'
+                              : (flags & PUT_LINE ? 'i' : (dir == FORWARD ? 'a' : 'i'));
 
     // To avoid 'autoindent' on linewise puts, create a new line with `:put _`.
     if (flags & PUT_LINE) {
@@ -3125,8 +3126,8 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
     }
     // In an empty buffer the empty line is going to be replaced, include
     // it in the saved lines.
-    if ((buf_is_empty(curbuf) ?
-         u_save(0, 2) : u_save(lnum - 1, lnum)) == FAIL) {
+    if ((buf_is_empty(curbuf)
+         ? u_save(0, 2) : u_save(lnum - 1, lnum)) == FAIL) {
       goto end;
     }
     if (dir == FORWARD) {
@@ -6201,8 +6202,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
           break;
         }
         op_reindent(oap,
-                    *curbuf->b_p_inde != NUL ? get_expr_indent :
-                    get_c_indent);
+                    *curbuf->b_p_inde != NUL ? get_expr_indent
+                                             : get_c_indent);
         break;
       }
 
