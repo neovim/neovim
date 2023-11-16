@@ -2318,10 +2318,10 @@ v:t_string	Value of |String| type.  Read-only.  See: |type()|
 v:t_blob	Value of |Blob| type.  Read-only.  See: |type()|
 
 				*v:termresponse* *termresponse-variable*
-v:termresponse	The value of the most recent OSC escape sequence received by
-		Nvim from the terminal. This can be read in a |TermResponse|
-		event handler after querying the terminal using another escape
-		sequence.
+v:termresponse	The value of the most recent OSC or DCS escape sequence
+		received by Nvim from the terminal. This can be read in a
+		|TermResponse| event handler after querying the terminal using
+		another escape sequence.
 
 					*v:testing* *testing-variable*
 v:testing	Must be set before using `test_garbagecollect_now()`.
