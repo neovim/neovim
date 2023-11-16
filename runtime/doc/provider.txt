@@ -268,7 +268,6 @@ does as long as all of the following are true:
   • |g:clipboard| is unset
   • 'clipboard' is not set to "unnamed" or "unnamedplus"
   • $SSH_TTY is set
-  • $TMUX is unset
 
 If any of the above conditions are not met then the OSC 52 clipboard provider
 will not be used by default and Nvim will fall back to discovering a
