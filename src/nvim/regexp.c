@@ -14162,7 +14162,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 #ifdef REGEXP_DEBUG
           nfa_set_code(skip->c);
           fprintf(log_fd,
-                  "> Not trying to match pattern, output state %d is already in list %d. char %d: %s\n",  // NOLINT(whitespace/line_length)
+                  "> Not trying to match pattern, output state %d is already in list %d. char %d: %s\n",
                   abs(skip->id), skip_lid, skip->c, code);
 #endif
           break;

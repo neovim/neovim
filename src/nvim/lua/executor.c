@@ -474,7 +474,8 @@ static int nlua_wait(lua_State *lstate)
                             (int)timeout,
                             got_int || (is_function ? nlua_wait_condition(lstate,
                                                                           &pcall_status,
-                                                                          &callback_result) : false));
+                                                                          &callback_result) :
+                                        false));
 
   // Stop dummy timer
   time_watcher_stop(tw);

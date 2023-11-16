@@ -2973,8 +2973,8 @@ int buf_check_timestamp(buf_T *buf)
           // checked out of CVS).  Always warn when the buffer was
           // changed.
           if (reason[2] == 'n') {
-            mesg = _(
-                    "W12: Warning: File \"%s\" has changed and the buffer was changed in Vim as well");
+            mesg =
+              _("W12: Warning: File \"%s\" has changed and the buffer was changed in Vim as well");
             mesg2 = _("See \":help W12\" for more info.");
           } else if (reason[1] == 'h') {
             mesg = _("W11: Warning: File \"%s\" has changed since editing started");

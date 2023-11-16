@@ -42,7 +42,8 @@ typedef enum {
 #endif
 
 static const char e_assert_fails_second_arg[]
-  = N_("E856: \"assert_fails()\" second argument must be a string or a list with one or two strings");
+  = N_(
+      "E856: \"assert_fails()\" second argument must be a string or a list with one or two strings");
 static const char e_assert_fails_fourth_argument[]
   = N_("E1115: \"assert_fails()\" fourth argument must be a number");
 static const char e_assert_fails_fifth_argument[]

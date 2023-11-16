@@ -2226,9 +2226,12 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
                                                                   "\x1b[?2004l");
   // For urxvt send BOTH xterm and old urxvt sequences. #8695
   tui->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut, "ext.enable_focus",
-                                                                 rxvt ? "\x1b[?1004h\x1b]777;focus;on\x7" : "\x1b[?1004h");
-  tui->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut, "ext.disable_focus",
-                                                                  rxvt ? "\x1b[?1004l\x1b]777;focus;off\x7" : "\x1b[?1004l");
+                                                                 rxvt ?
+                                                                 "\x1b[?1004h\x1b]777;focus;on\x7" :
+                                                                 "\x1b[?1004h");
+  tui->unibi_ext.disable_focus_reporting =
+    (int)unibi_add_ext_str(ut, "ext.disable_focus",
+                           rxvt ? "\x1b[?1004l\x1b]777;focus;off\x7" : "\x1b[?1004l");
   tui->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, "ext.enable_mouse",
                                                        "\x1b[?1002h\x1b[?1006h");
   tui->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, "ext.disable_mouse",
