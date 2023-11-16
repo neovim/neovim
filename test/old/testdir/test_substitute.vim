@@ -206,6 +206,7 @@ func Test_substitute_count()
   call assert_equal(['foo foo', 'foo foo', 'foo foo', 'bar foo', 'bar foo'],
         \           getline(1, '$'))
 
+  call assert_fails('s/./b/2147483647', 'E1510:')
   bwipe!
 endfunc
 
