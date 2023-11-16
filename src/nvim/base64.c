@@ -12,7 +12,7 @@
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "base64.c.generated.h"  // IWYU prgama: export
+# include "base64.c.generated.h"  // IWYU pragma: export
 #endif
 
 static const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

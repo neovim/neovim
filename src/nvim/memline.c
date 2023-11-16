@@ -334,7 +334,7 @@ int ml_open(buf_T *buf)
   // Only works when there's a swapfile, otherwise it's done when the file
   // is created.
   mf_put(mfp, hp, true, false);
-  if (!buf->b_help && !B_SPELL(buf)) {
+  if (!buf->b_help && !buf->b_spell) {
     (void)mf_sync(mfp, 0);
   }
 

@@ -264,9 +264,6 @@ struct wininfo_S {
 #define SYNFLD_START    0       // use level of item at start of line
 #define SYNFLD_MINIMUM  1       // use lowest local minimum level on line
 
-// avoid #ifdefs for when b_spell is not available
-#define B_SPELL(buf)  ((buf)->b_spell)
-
 typedef struct qf_info_S qf_info_T;
 
 // Used for :syntime: timing of executing a syntax pattern.
@@ -695,8 +692,7 @@ struct file_buffer {
   bool b_help;                  // true for help file buffer (when set b_p_bt
                                 // is "help")
   bool b_spell;                 // True for a spell file buffer, most fields
-                                // are not used!  Use the B_SPELL macro to
-                                // access b_spell without #ifdef.
+                                // are not used!
 
   char *b_prompt_text;          // set by prompt_setprompt()
   Callback b_prompt_callback;   // set by prompt_setcallback()
