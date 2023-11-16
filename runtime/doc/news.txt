@@ -209,7 +209,8 @@ The following new APIs and features were added.
   read escape sequence responses from the terminal.
 
 • A clipboard provider which uses OSC 52 to copy the selection to the system
-  clipboard is now bundled by default. |clipboard-osc52|
+  clipboard is now bundled by default and will be automatically enabled under
+  certain conditions. |clipboard-osc52|
 
 • The 'termsync' option asks the terminal emulator to buffer screen updates
   until the redraw cycle is complete. Requires support from the terminal.
