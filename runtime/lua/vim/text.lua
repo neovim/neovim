@@ -23,7 +23,7 @@ function M.hexdecode(enc)
   assert(#enc % 2 == 0, 'string must have an even number of hex characters')
   local str = {} ---@type string[]
   for i = 1, #enc, 2 do
-    local n = assert(tonumber(string.format('0x%s', enc:sub(i, i + 1))))
+    local n = assert(tonumber(enc:sub(i, i + 1), 16))
     str[#str + 1] = string.char(n)
   end
   return table.concat(str)
