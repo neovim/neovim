@@ -7,7 +7,7 @@ CheckScreendump
 func Test_crash1()
   CheckNotBSD
   CheckExecutable dash
-  " Test 7 fails on Mac ... 
+  " Test 7 fails on Mac ...
   CheckNotMac
 
   " The following used to crash Vim
