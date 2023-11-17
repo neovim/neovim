@@ -46,6 +46,7 @@ func Test_crash1()
 
   let file = 'crash/poc_tagfunc.vim'
   let args = printf(cmn_args, vim, file)
+  " using || because this poc causes vim to exit with exitstatus != 0
   call term_sendkeys(buf, args ..
     \ '  || echo "crash 5: [OK]" >> X_crash1_result.txt' .. "\<cr>")
 
@@ -59,6 +60,12 @@ func Test_crash1()
   call delete('X')
   call TermWait(buf, 3000)
 
+  let file = 'crash/vim_regsub_both_poc'
+  let args = printf(cmn_args, vim, file)
+  call term_sendkeys(buf, args ..
+    \ '  && echo "crash 7: [OK]" >> X_crash1_result.txt' .. "\<cr>")
+  call TermWait(buf, 1000)
+
   " clean up
   exe buf .. "bw!"
 
@@ -71,6 +78,7 @@ func Test_crash1()
       \ 'crash 4: [OK]',
       \ 'crash 5: [OK]',
       \ 'crash 6: [OK]',
+      \ 'crash 7: [OK]',
       \ ]
 
   call assert_equal(expected, getline(1, '$'))
