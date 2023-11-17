@@ -929,4 +929,23 @@ func Test_smoothscroll_cursor_top()
   call StopVimInTerminal(buf)
 endfunc
 
+" Division by zero, shouldn't crash
+func Test_smoothscroll_crash()
+  CheckScreendump
+
+  let lines =<< trim END
+      20 new
+      vsp
+      put =repeat('aaaa', 20)
+      set nu fdc=1  smoothscroll cpo+=n
+      vert resize 0
+      exe "norm! 0\<c-e>"
+  END
+  call writefile(lines, 'XSmoothScrollCrash', 'D')
+  let buf = RunVimInTerminal('-u NONE -S XSmoothScrollCrash', #{rows: 12, cols:40})
+  call term_sendkeys(buf, "2\<C-E>\<C-L>")
+
+  call StopVimInTerminal(buf)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

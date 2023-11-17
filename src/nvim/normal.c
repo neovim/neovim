@@ -2466,7 +2466,7 @@ bool find_decl(char *ptr, size_t len, bool locally, bool thisblock, int flags_ar
 /// @return  true if able to move cursor, false otherwise.
 static bool nv_screengo(oparg_T *oap, int dir, int dist)
 {
-  int linelen = (int)linetabsize(curwin, curwin->w_cursor.lnum);
+  int linelen = linetabsize(curwin, curwin->w_cursor.lnum);
   bool retval = true;
   bool atend = false;
   int col_off1;                 // margin offset for first screen line
@@ -2530,7 +2530,7 @@ static bool nv_screengo(oparg_T *oap, int dir, int dist)
           }
           cursor_up_inner(curwin, 1);
 
-          linelen = (int)linetabsize(curwin, curwin->w_cursor.lnum);
+          linelen = linetabsize(curwin, curwin->w_cursor.lnum);
           if (linelen > width1) {
             int w = (((linelen - width1 - 1) / width2) + 1) * width2;
             assert(curwin->w_curswant <= INT_MAX - w);
@@ -2563,7 +2563,7 @@ static bool nv_screengo(oparg_T *oap, int dir, int dist)
           if (curwin->w_curswant >= width1) {
             curwin->w_curswant -= width2;
           }
-          linelen = (int)linetabsize(curwin, curwin->w_cursor.lnum);
+          linelen = linetabsize(curwin, curwin->w_cursor.lnum);
         }
       }
     }
@@ -5491,7 +5491,7 @@ static void nv_g_cmd(cmdarg_T *cap)
   case 'M':
     oap->motion_type = kMTCharWise;
     oap->inclusive = false;
-    i = (int)linetabsize(curwin, curwin->w_cursor.lnum);
+    i = linetabsize(curwin, curwin->w_cursor.lnum);
     if (cap->count0 > 0 && cap->count0 <= 100) {
       coladvance((colnr_T)(i * cap->count0 / 100));
     } else {
