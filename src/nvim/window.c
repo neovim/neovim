@@ -3776,6 +3776,12 @@ void close_others(int message, int forceit)
       continue;
     }
 
+    // autoccommands messed this one up
+    if (!buf_valid(wp->w_buffer) && win_valid(wp)) {
+      wp->w_buffer = NULL;
+      win_close(wp, false, false);
+      continue;
+    }
     // Check if it's allowed to abandon this window
     int r = can_abandon(wp->w_buffer, forceit);
     if (!win_valid(wp)) {             // autocommands messed wp up

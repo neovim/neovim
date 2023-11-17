@@ -40,7 +40,7 @@ func Test_crash1()
   " clean up
   call delete('Xerr')
   " This test takes a bit longer
-  call TermWait(buf, 500)
+  call TermWait(buf, 1000)
 
   let file = 'crash/poc_tagfunc.vim'
   let args = printf(cmn_args, vim, file)
@@ -55,7 +55,7 @@ func Test_crash1()
     \ '  && echo "crash 6: [OK]" >> X_crash1_result.txt' .. "\<cr>")
   " clean up
   call delete('X')
-  call TermWait(buf, 200)
+  call TermWait(buf, 1000)
 
   " clean up
   exe buf .. "bw!"
