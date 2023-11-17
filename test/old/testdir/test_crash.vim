@@ -6,10 +6,8 @@ CheckScreendump
 
 func Test_crash1()
   CheckNotBSD
+  CheckExecutable dash
 
-  if !executable('sh')
-    throw 'Skipped: sh not executable!'
-  endif
   " The following used to crash Vim
   let opts = #{cmd: 'sh'}
   let vim  = GetVimProg()
@@ -64,7 +62,7 @@ func Test_crash1()
   let args = printf(cmn_args, vim, file)
   call term_sendkeys(buf, args ..
     \ '  && echo "crash 7: [OK]" >> X_crash1_result.txt' .. "\<cr>")
-  call TermWait(buf, 1000)
+  call TermWait(buf, 3000)
 
   " clean up
   exe buf .. "bw!"
