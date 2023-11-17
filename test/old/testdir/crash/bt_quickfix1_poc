@@ -1,0 +1,5 @@
+au BufReadPre * exe 'sn' .. expand("<abuf>")
+call writefile([''],'X')
+sil! e X
+call writefile([''],'X')
+sil! e X

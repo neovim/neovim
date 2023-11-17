@@ -49,6 +49,15 @@ func Test_crash1()
 
   call TermWait(buf, 100)
 
+  let file = 'crash/bt_quickfix1_poc'
+  let args = printf(cmn_args, vim, file)
+  call term_sendkeys(buf, args ..
+    \ '  && echo "crash 6: [OK]" >> X_crash1_result.txt' .. "\<cr>")
+  " clean up
+  call delete('X')
+  " This test takes a bit longer
+  call TermWait(buf, 200)
+
   " clean up
   exe buf .. "bw!"
 
@@ -60,6 +69,7 @@ func Test_crash1()
       \ 'crash 3: [OK]',
       \ 'crash 4: [OK]',
       \ 'crash 5: [OK]',
+      \ 'crash 6: [OK]',
       \ ]
 
   call assert_equal(expected, getline(1, '$'))
