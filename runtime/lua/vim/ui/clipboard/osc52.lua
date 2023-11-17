@@ -10,7 +10,7 @@ local function osc52(clipboard, contents)
 end
 
 function M.copy(reg)
-  local clipboard = reg == '+' and 'c' or 's'
+  local clipboard = reg == '+' and 'c' or 'p'
   return function(lines)
     local s = table.concat(lines, '\n')
     io.stdout:write(osc52(clipboard, vim.base64.encode(s)))
@@ -18,7 +18,7 @@ function M.copy(reg)
 end
 
 function M.paste(reg)
-  local clipboard = reg == '+' and 'c' or 's'
+  local clipboard = reg == '+' and 'c' or 'p'
   return function()
     local contents = nil
     local id = vim.api.nvim_create_autocmd('TermResponse', {
