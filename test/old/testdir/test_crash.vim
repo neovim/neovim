@@ -39,12 +39,17 @@ func Test_crash1()
     \ '  && echo "crash 4: [OK]" >> X_crash1_result.txt' .. "\<cr>")
   " clean up
   call delete('Xerr')
-
   " This test takes a bit longer
   call TermWait(buf, 200)
 
+  let file = 'crash/poc_tagfunc.vim'
+  let args = printf(cmn_args, vim, file)
+  call term_sendkeys(buf, args ..
+    \ '  || echo "crash 5: [OK]" >> X_crash1_result.txt' .. "\<cr>")
+
+  call TermWait(buf, 100)
+
   " clean up
-  call delete('Xerr')
   exe buf .. "bw!"
 
   sp X_crash1_result.txt
@@ -54,6 +59,7 @@ func Test_crash1()
       \ 'crash 2: [OK]',
       \ 'crash 3: [OK]',
       \ 'crash 4: [OK]',
+      \ 'crash 5: [OK]',
       \ ]
 
   call assert_equal(expected, getline(1, '$'))
