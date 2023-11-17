@@ -1785,6 +1785,31 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
   end)
+
+  it('supports hiding cursor', function()
+    child_session:request('nvim_command',
+                          "let g:id = jobstart([v:progpath, '--clean', '--headless'])")
+    feed_data(':call jobwait([g:id])\n')
+    screen:expect([[
+                                                        |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      :call jobwait([g:id])                             |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('\003')
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      Type  :qa  and press <Enter> to exit Nvim         |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
 end)
 
 describe('TUI', function()

@@ -1158,14 +1158,6 @@ void tui_set_mode(TUIData *tui, ModeShape mode)
     unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
   }
 
-  if (tui->want_invisible && !tui->is_invisible) {
-    unibi_out(tui, unibi_cursor_invisible);
-    tui->is_invisible = true;
-  } else if (!tui->want_invisible && tui->is_invisible) {
-    unibi_out(tui, unibi_cursor_normal);
-    tui->is_invisible = false;
-  }
-
   int shape;
   switch (c.shape) {
   case SHAPE_BLOCK:
@@ -1305,8 +1297,9 @@ static void tui_flush_start(TUIData *tui)
   if (tui->sync_output && tui->unibi_ext.sync != -1) {
     UNIBI_SET_NUM_VAR(tui->params[0], 1);
     unibi_out_ext(tui, tui->unibi_ext.sync);
-  } else {
+  } else if (!tui->is_invisible) {
     unibi_out(tui, unibi_cursor_invisible);
+    tui->is_invisible = true;
   }
 }
 
@@ -1318,8 +1311,14 @@ static void tui_flush_end(TUIData *tui)
   if (tui->sync_output && tui->unibi_ext.sync != -1) {
     UNIBI_SET_NUM_VAR(tui->params[0], 0);
     unibi_out_ext(tui, tui->unibi_ext.sync);
-  } else if (!tui->busy && !tui->want_invisible) {
+  }
+  bool should_invisible = tui->busy || tui->want_invisible;
+  if (tui->is_invisible && !should_invisible) {
     unibi_out(tui, unibi_cursor_normal);
+    tui->is_invisible = false;
+  } else if (!tui->is_invisible && should_invisible) {
+    unibi_out(tui, unibi_cursor_invisible);
+    tui->is_invisible = true;
   }
 }
 
