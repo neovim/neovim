@@ -262,10 +262,8 @@ static const char *e_current_location_list_was_changed =
 #define IS_QF_LIST(qfl)       ((qfl)->qfl_type == QFLT_QUICKFIX)
 #define IS_LL_LIST(qfl)       ((qfl)->qfl_type == QFLT_LOCATION)
 
-//
 // Return location list for window 'wp'
 // For location list window, return the referenced location list
-//
 #define GET_LOC_LIST(wp) (IS_LL_WINDOW(wp) ? (wp)->w_llist_ref : (wp)->w_llist)
 
 // Macro to loop through all the items in a quickfix list
@@ -3863,13 +3861,11 @@ static bool qf_win_pos_update(qf_info_T *qi, int old_qf_index)
 static int is_qf_win(const win_T *win, const qf_info_T *qi)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  //
   // A window displaying the quickfix buffer will have the w_llist_ref field
   // set to NULL.
   // A window displaying a location list buffer will have the w_llist_ref
   // pointing to the location list.
-  //
-  if (bt_quickfix(win->w_buffer)) {
+  if (buf_valid(win->w_buffer) && bt_quickfix(win->w_buffer)) {
     if ((IS_QF_STACK(qi) && win->w_llist_ref == NULL)
         || (IS_LL_STACK(qi) && win->w_llist_ref == qi)) {
       return true;
