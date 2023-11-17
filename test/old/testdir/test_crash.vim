@@ -66,6 +66,12 @@ func Test_crash1()
     \ '  && echo "crash 7: [OK]" >> X_crash1_result.txt' .. "\<cr>")
   call TermWait(buf, 3000)
 
+  let file = 'crash/vim_msg_trunc_poc'
+  let args = printf(cmn_args, vim, file)
+  call term_sendkeys(buf, args ..
+    \ '  || echo "crash 8: [OK]" >> X_crash1_result.txt' .. "\<cr>")
+  call TermWait(buf, 3000)
+
   " clean up
   exe buf .. "bw!"
 
@@ -79,6 +85,7 @@ func Test_crash1()
       \ 'crash 5: [OK]',
       \ 'crash 6: [OK]',
       \ 'crash 7: [OK]',
+      \ 'crash 8: [OK]',
       \ ]
 
   call assert_equal(expected, getline(1, '$'))

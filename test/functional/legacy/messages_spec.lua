@@ -6,6 +6,7 @@ local exec = helpers.exec
 local feed = helpers.feed
 local meths = helpers.meths
 local nvim_dir = helpers.nvim_dir
+local assert_alive = helpers.assert_alive
 
 before_each(clear)
 
@@ -757,5 +758,10 @@ describe('messages', function()
       'b' written                             |
     ]])
     os.remove('b.txt')
+  end)
+
+  it('no crash when truncating overlong message', function()
+    pcall(command, 'source test/old/testdir/crash/vim_msg_trunc_poc')
+    assert_alive()
   end)
 end)
