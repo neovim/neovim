@@ -78,6 +78,14 @@ func Test_crash1()
     \ '  && echo "crash 9: [OK]" >> X_crash1_result.txt' .. "\<cr>")
   call TermWait(buf, 1000)
 
+  let file = 'crash/editing_arg_idx_POC_1'
+  let args = printf(cmn_args, vim, file)
+  call term_sendkeys(buf, args ..
+    \ '  || echo "crash 10: [OK]" >> X_crash1_result.txt' .. "\<cr>")
+  call TermWait(buf, 1000)
+  call delete('Xerr')
+  call delete('@')
+
   " clean up
   exe buf .. "bw!"
 
@@ -93,6 +101,7 @@ func Test_crash1()
       \ 'crash 7: [OK]',
       \ 'crash 8: [OK]',
       \ 'crash 9: [OK]',
+      \ 'crash 10: [OK]',
       \ ]
 
   call assert_equal(expected, getline(1, '$'))
