@@ -268,10 +268,8 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
 /// @param[out] err   Error details, if any
 /// @return 0-indexed (row, col) tuple or empty list () if extmark id was
 /// absent
-ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
-                                            Integer id, Dictionary opts,
-                                            Error *err)
-  FUNC_API_SINCE(7)
+Array nvim_buf_get_extmark(Buffer buffer, Integer ns_id, Integer id, Dictionary opts, Error *err)
+  FUNC_API_SINCE(11)
 {
   Array rv = ARRAY_DICT_INIT;
 
@@ -312,6 +310,17 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
     return rv;
   }
   return extmark_to_array(&extmark, false, details, hl_name);
+}
+
+/// @deprecated See nvim_buf_get_extmark() instead
+/// @see nvim_buf_get_extmark
+ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id, Integer id,
+                                            Dictionary opts,
+                                            Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_DEPRECATED_SINCE(11)
+{
+  return nvim_buf_get_extmark(buffer, ns_id, id, opts, err);
 }
 
 /// Gets |extmarks| in "traversal order" from a |charwise| region defined by

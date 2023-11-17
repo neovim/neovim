@@ -54,7 +54,7 @@ describe('vim.lsp.codelens', function()
       local bufnr = ...
       local ns = vim.lsp.codelens.__namespaces[1]
       local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {})
-      return vim.api.nvim_buf_get_extmark_by_id(bufnr, ns, extmarks[1][1], { details = true })[3].virt_text
+      return vim.api.nvim_buf_get_extmark(bufnr, ns, extmarks[1][1], { details = true })[3].virt_text
     ]], bufnr)
 
     eq({[1] = {'Lens1', 'LspCodeLens'}}, virtual_text_chunks)

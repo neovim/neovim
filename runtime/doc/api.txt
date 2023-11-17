@@ -148,7 +148,7 @@ Exception: the following API functions use |extmarks| indexing (0-based
 indices, end-inclusive):
 
 - |nvim_buf_del_extmark()|
-- |nvim_buf_get_extmark_by_id()|
+- |nvim_buf_get_extmark()|
 - |nvim_buf_get_extmarks()|
 - |nvim_buf_set_extmark()|
 
@@ -547,7 +547,7 @@ Let's set an extmark at the first row (row=0) and third column (column=2).
 <
 We can get the mark by its id: >vim
 
-    echo nvim_buf_get_extmark_by_id(0, g:mark_ns, g:mark_id, {})
+    echo nvim_buf_get_extmark(0, g:mark_ns, g:mark_id, {})
     " => [0, 2]
 
 We can get all marks in a buffer by |namespace| (or by a range): >vim
@@ -563,7 +563,7 @@ use |nvim_buf_del_extmark()|. Deleting "x" in our example: >
        ^ extmark position
 <
 >vim
-    echo nvim_buf_get_extmark_by_id(0, g:mark_ns, g:mark_id, {})
+    echo nvim_buf_get_extmark(0, g:mark_ns, g:mark_id, {})
     " => [0, 1]
 <
     Note: Extmark "gravity" decides how it will shift after a text edit.
@@ -2548,8 +2548,8 @@ nvim_buf_del_extmark({buffer}, {ns_id}, {id})         *nvim_buf_del_extmark()*
     Return: ~
         true if the extmark was found, else false
 
-                                                *nvim_buf_get_extmark_by_id()*
-nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id}, {opts})
+                                                      *nvim_buf_get_extmark()*
+nvim_buf_get_extmark({buffer}, {ns_id}, {id}, {opts})
     Gets the position (0-indexed) of an |extmark|.
 
     Parameters: ~

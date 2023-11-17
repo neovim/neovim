@@ -1585,34 +1585,34 @@ describe('api/buf', function()
 
       eq({'foo q', 'baz'}, get_lines(0, 2, true))
       -- mark before replacement point is unaffected
-      eq({0, 1}, curbufmeths.get_extmark_by_id(ns, id1, {}))
+      eq({0, 1}, curbufmeths.get_extmark(ns, id1, {}))
       -- mark gets shifted back because the replacement was shorter
-      eq({0, 5}, curbufmeths.get_extmark_by_id(ns, id2, {}))
+      eq({0, 5}, curbufmeths.get_extmark(ns, id2, {}))
       -- mark on the next line is unaffected
-      eq({1, 1}, curbufmeths.get_extmark_by_id(ns, id3, {}))
+      eq({1, 1}, curbufmeths.get_extmark(ns, id3, {}))
 
       -- replacing the text spanning two lines will adjust the mark on the next line
       set_text(0, 3, 1, 3, {"qux"})
       eq({'fooqux', ''}, get_lines(0, 2, true))
-      eq({0, 6}, curbufmeths.get_extmark_by_id(ns, id3, {}))
+      eq({0, 6}, curbufmeths.get_extmark(ns, id3, {}))
       -- but mark before replacement point is still unaffected
-      eq({0, 1}, curbufmeths.get_extmark_by_id(ns, id1, {}))
+      eq({0, 1}, curbufmeths.get_extmark(ns, id1, {}))
       -- and the mark in the middle was shifted to the end of the insertion
-      eq({0, 6}, curbufmeths.get_extmark_by_id(ns, id2, {}))
+      eq({0, 6}, curbufmeths.get_extmark(ns, id2, {}))
 
       -- marks should be put back into the same place after undoing
       set_text(0, 0, 0, 2, {''})
       feed('u')
-      eq({0, 1}, curbufmeths.get_extmark_by_id(ns, id1, {}))
-      eq({0, 6}, curbufmeths.get_extmark_by_id(ns, id2, {}))
-      eq({0, 6}, curbufmeths.get_extmark_by_id(ns, id3, {}))
+      eq({0, 1}, curbufmeths.get_extmark(ns, id1, {}))
+      eq({0, 6}, curbufmeths.get_extmark(ns, id2, {}))
+      eq({0, 6}, curbufmeths.get_extmark(ns, id3, {}))
 
       -- marks should be shifted over by the correct number of bytes for multibyte
       -- chars
       set_text(0, 0, 0, 0, {'Ø'})
-      eq({0, 3}, curbufmeths.get_extmark_by_id(ns, id1, {}))
-      eq({0, 8}, curbufmeths.get_extmark_by_id(ns, id2, {}))
-      eq({0, 8}, curbufmeths.get_extmark_by_id(ns, id3, {}))
+      eq({0, 3}, curbufmeths.get_extmark(ns, id1, {}))
+      eq({0, 8}, curbufmeths.get_extmark(ns, id2, {}))
+      eq({0, 8}, curbufmeths.get_extmark(ns, id3, {}))
     end)
 
     it("correctly marks changed region for redraw #13890", function()
