@@ -294,6 +294,13 @@ The following changes to existing APIs or features add new behavior.
   Note that syntax highlighting of code examples requires a matching parser
   and may be affected by custom queries.
 
+• Support for rendering multibyte characters using composing characters has been
+  enhanced. The maximum limit have been increased from 1+6 codepoints to
+  31 bytes, which is guaranteed to fit all chars from before but often more.
+
+  NOTE: the regexp engine still has a hard-coded limit of considering
+  6 composing chars only.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

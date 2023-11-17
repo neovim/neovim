@@ -1462,7 +1462,7 @@ void edit_putchar(int c, bool highlight)
       pc_status = PC_STATUS_SET;
     }
 
-    char buf[MB_MAXBYTES + 1];
+    char buf[MB_MAXCHAR + 1];
     grid_line_puts(pc_col, buf, utf_char2bytes(c, buf), attr);
     grid_line_flush();
   }
@@ -2176,7 +2176,7 @@ void insertchar(int c, int flags, int second_indent)
     int cc;
 
     if ((cc = utf_char2len(c)) > 1) {
-      char buf[MB_MAXBYTES + 1];
+      char buf[MB_MAXCHAR + 1];
 
       utf_char2bytes(c, buf);
       buf[cc] = NUL;
@@ -3681,7 +3681,6 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
   int cc;
   int temp = 0;                     // init for GCC
   bool did_backspace = false;
-  int cpc[MAX_MCO];                 // composing characters
   bool call_fix_indent = false;
 
   // can't delete anything in an empty file
@@ -3910,15 +3909,15 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
         if (State & REPLACE_FLAG) {
           replace_do_bs(-1);
         } else {
-          const int l_p_deco = p_deco;
-          if (l_p_deco) {
-            (void)utfc_ptr2char(get_cursor_pos_ptr(), cpc);
+          bool has_composing = false;
+          if (p_deco) {
+            char *p0 = get_cursor_pos_ptr();
+            has_composing = utf_composinglike(p0, p0 + utf_ptr2len(p0));
           }
           (void)del_char(false);
           // If there are combining characters and 'delcombine' is set
-          // move the cursor back.  Don't back up before the base
-          // character.
-          if (l_p_deco && cpc[0] != NUL) {
+          // move the cursor back.  Don't back up before the base character.
+          if (has_composing) {
             inc_cursor();
           }
           if (revins_chars) {

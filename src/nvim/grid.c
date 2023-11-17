@@ -68,21 +68,6 @@ void grid_adjust(ScreenGrid **grid, int *row_off, int *col_off)
   }
 }
 
-/// Put a unicode char, and up to MAX_MCO composing chars, in a screen cell.
-schar_T schar_from_cc(int c, int u8cc[MAX_MCO])
-{
-  char buf[MAX_SCHAR_SIZE];
-  int len = utf_char2bytes(c, buf);
-  for (int i = 0; i < MAX_MCO; i++) {
-    if (u8cc[i] == 0) {
-      break;
-    }
-    len += utf_char2bytes(u8cc[i], buf + len);
-  }
-  buf[len] = 0;
-  return schar_from_buf(buf, (size_t)len);
-}
-
 schar_T schar_from_str(char *str)
 {
   if (str == NULL) {
@@ -243,22 +228,21 @@ void line_do_arabic_shape(schar_T *buf, int cols)
     schar_get(scbuf, buf[i]);
 
     char scbuf_new[MAX_SCHAR_SIZE];
-    int len = utf_char2bytes(c0new, scbuf_new);
+    size_t len = (size_t)utf_char2bytes(c0new, scbuf_new);
     if (c1new) {
-      len += utf_char2bytes(c1new, scbuf_new + len);
+      len += (size_t)utf_char2bytes(c1new, scbuf_new + len);
     }
 
     int off = utf_char2len(c0) + (c1 ? utf_char2len(c1) : 0);
     size_t rest = strlen(scbuf + off);
-    if (rest + (size_t)off + 1 > MAX_SCHAR_SIZE) {
-      // TODO(bfredl): this cannot happen just yet, as we only construct
-      // schar_T values with up to MAX_MCO+1 composing codepoints. When code
-      // is improved so that MAX_SCHAR_SIZE becomes the only/sharp limit,
-      // we need be able to peel off a composing char which doesn't fit anymore.
-      abort();
+    if (rest + len + 1 > MAX_SCHAR_SIZE) {
+      // Too bigly, discard one code-point.
+      // This should be enough as c0 cannot grow more than from 2 to 4 bytes
+      // (base arabic to extended arabic)
+      rest -= (size_t)utf_cp_head_off(scbuf + off, scbuf + off + rest - 1) + 1;
     }
     memcpy(scbuf_new + len, scbuf + off, rest);
-    buf[i] = schar_from_buf(scbuf_new, (size_t)len + rest);
+    buf[i] = schar_from_buf(scbuf_new, len + rest);
 
 next:
     c0prev = c0;
@@ -289,9 +273,9 @@ static bool grid_invalid_row(ScreenGrid *grid, int row)
   return grid->attrs[grid->line_offset[row]] < 0;
 }
 
-/// Get a single character directly from grid.chars into "bytes", which must
-/// have a size of "MB_MAXBYTES + 1".
-/// If "attrp" is not NULL, return the character's attribute in "*attrp".
+/// Get a single character directly from grid.chars
+///
+/// @param[out] attrp  set to the character's attribute (optional)
 schar_T grid_getchar(ScreenGrid *grid, int row, int col, int *attrp)
 {
   grid_adjust(&grid, &row, &col);
@@ -385,41 +369,34 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
 {
   const char *ptr = text;
   int len = textlen;
-  int u8cc[MAX_MCO];
 
   assert(grid_line_grid);
 
   int start_col = col;
 
   int max_col = grid_line_maxcol;
-  while (col < max_col
-         && (len < 0 || (int)(ptr - text) < len)
-         && *ptr != NUL) {
+  while (col < max_col && (len < 0 || (int)(ptr - text) < len) && *ptr != NUL) {
     // check if this is the first byte of a multibyte
     int mbyte_blen = len > 0
       ? utfc_ptr2len_len(ptr, (int)((text + len) - ptr))
       : utfc_ptr2len(ptr);
-    int u8c = len >= 0
-      ? utfc_ptr2char_len(ptr, u8cc, (int)((text + len) - ptr))
-      : utfc_ptr2char(ptr, u8cc);
-    int mbyte_cells = utf_char2cells(u8c);
+    int firstc;
+    schar_T schar = len >= 0
+      ? utfc_ptr2schar_len(ptr, (int)((text + len) - ptr), &firstc)
+      : utfc_ptr2schar(ptr, &firstc);
+    int mbyte_cells = utf_char2cells(firstc);
     if (mbyte_cells > 2) {
       mbyte_cells = 1;
-      u8c = 0xFFFD;
-      u8cc[0] = 0;
+
+      schar = schar_from_char(0xFFFD);
     }
 
     if (col + mbyte_cells > max_col) {
       // Only 1 cell left, but character requires 2 cells:
       // display a '>' in the last column to avoid wrapping. */
-      u8c = '>';
-      u8cc[0] = 0;
+      schar = schar_from_ascii('>');
       mbyte_cells = 1;
     }
-
-    schar_T buf;
-    // TODO(bfredl): why not just keep the original byte sequence.
-    buf = schar_from_cc(u8c, u8cc);
 
     // When at the start of the text and overwriting the right half of a
     // two-cell character in the same grid, truncate that into a '>'.
@@ -428,7 +405,7 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
       linebuf_char[col - 1] = schar_from_ascii('>');
     }
 
-    linebuf_char[col] = buf;
+    linebuf_char[col] = schar;
     linebuf_attr[col] = attr;
     linebuf_vcol[col] = -1;
     if (mbyte_cells == 2) {

@@ -48,6 +48,7 @@
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
+#include "nvim/grid.h"
 #include "nvim/grid_defs.h"
 #include "nvim/iconv.h"
 #include "nvim/keycodes.h"
@@ -722,80 +723,68 @@ bool utf_composinglike(const char *p1, const char *p2)
   return arabic_combine(utf_ptr2char(p1), c2);
 }
 
-/// Convert a UTF-8 string to a wide character
+/// Get the screen char at the beginning of a string
 ///
-/// Also gets up to #MAX_MCO composing characters.
+/// Caller is expected to check for things like unprintable chars etc
+/// If first char in string is a composing char, prepend a space to display it correctly.
 ///
-/// @param[out]  pcc  Location where to store composing characters. Must have
-///                   space at least for #MAX_MCO + 1 elements.
+/// If "p" starts with an invalid sequence, zero is returned.
 ///
-/// @return leading character.
-int utfc_ptr2char(const char *p, int *pcc)
+/// @param[out] firstc (required) The first codepoint of the screen char,
+///                    or the first byte of an invalid sequence
+///
+/// @return the char
+schar_T utfc_ptr2schar(const char *p, int *firstc)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int i = 0;
-
   int c = utf_ptr2char(p);
-  int len = utf_ptr2len(p);
+  *firstc = c;  // NOT optional, you are gonna need it
+  bool first_compose = utf_iscomposing(c);
+  size_t maxlen = MAX_SCHAR_SIZE - 1 - first_compose;
+  size_t len = (size_t)utfc_ptr2len_len(p, (int)maxlen);
 
-  // Only accept a composing char when the first char isn't illegal.
-  if ((len > 1 || (uint8_t)(*p) < 0x80)
-      && (uint8_t)p[len] >= 0x80
-      && utf_composinglike(p, p + len)) {
-    int cc = utf_ptr2char(p + len);
-    while (true) {
-      pcc[i++] = cc;
-      if (i == MAX_MCO) {
-        break;
-      }
-      len += utf_ptr2len(p + len);
-      if ((uint8_t)p[len] < 0x80 || !utf_iscomposing(cc = utf_ptr2char(p + len))) {
-        break;
-      }
-    }
+  if (len == 1 && (uint8_t)(*p) >= 0x80) {
+    return 0;  // invalid sequence
   }
 
-  if (i < MAX_MCO) {    // last composing char must be 0
-    pcc[i] = 0;
-  }
-
-  return c;
+  return schar_from_buf_first(p, len, first_compose);
 }
 
-// Convert a UTF-8 byte string to a wide character.  Also get up to MAX_MCO
-// composing characters.  Use no more than p[maxlen].
-//
-// @param [out] pcc: composing chars, last one is 0
-int utfc_ptr2char_len(const char *p, int *pcc, int maxlen)
+/// Get the screen char at the beginning of a string with length
+///
+/// Like utfc_ptr2schar but use no more than p[maxlen].
+schar_T utfc_ptr2schar_len(const char *p, int maxlen, int *firstc)
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(maxlen > 0);
 
-  int i = 0;
-
-  int len = utf_ptr2len_len(p, maxlen);
-  // Is it safe to use utf_ptr2char()?
-  bool safe = len > 1 && len <= maxlen;
-  int c = safe ? utf_ptr2char(p) : (uint8_t)(*p);
-
-  // Only accept a composing char when the first char isn't illegal.
-  if ((safe || c < 0x80) && len < maxlen && (uint8_t)p[len] >= 0x80) {
-    for (; i < MAX_MCO; i++) {
-      int len_cc = utf_ptr2len_len(p + len, maxlen - len);
-      safe = len_cc > 1 && len_cc <= maxlen - len;
-      if (!safe || (pcc[i] = utf_ptr2char(p + len)) < 0x80
-          || !(i == 0 ? utf_composinglike(p, p + len) : utf_iscomposing(pcc[i]))) {
-        break;
-      }
-      len += len_cc;
-    }
+  size_t len = (size_t)utf_ptr2len_len(p, maxlen);
+  if (len > (size_t)maxlen || (len == 1 && (uint8_t)(*p) >= 0x80) || len == 0) {
+    // invalid or truncated sequence
+    *firstc = (uint8_t)(*p);
+    return 0;
   }
 
-  if (i < MAX_MCO) {
-    // last composing char must be 0
-    pcc[i] = 0;
-  }
+  int c = utf_ptr2char(p);
+  *firstc = c;
+  bool first_compose = utf_iscomposing(c);
+  maxlen = MIN(maxlen, MAX_SCHAR_SIZE - 1 - first_compose);
+  len = (size_t)utfc_ptr2len_len(p, maxlen);
 
-  return c;
-#undef ISCOMPOSING
+  return schar_from_buf_first(p, len, first_compose);
+}
+
+/// Caller must ensure there is space for `first_compose`
+static schar_T schar_from_buf_first(const char *buf, size_t len, bool first_compose)
+{
+  if (first_compose) {
+    char cbuf[MAX_SCHAR_SIZE];
+    cbuf[0] = ' ';
+    memcpy(cbuf + 1, buf, len);
+    return schar_from_buf(cbuf, len + 1);
+  } else {
+    return schar_from_buf(buf, len);
+  }
 }
 
 /// Get the length of a UTF-8 byte sequence representing a single codepoint
@@ -878,8 +867,7 @@ int utfc_ptr2len(const char *const p)
     return 1;
   }
 
-  // Check for composing characters.  We can handle only the first six, but
-  // skip all of them (otherwise the cursor would get stuck).
+  // Check for composing characters.
   int prevlen = 0;
   while (true) {
     if ((uint8_t)p[len] < 0x80 || !utf_composinglike(p + prevlen, p + len)) {
@@ -1815,12 +1803,12 @@ int utf_cp_tail_off(const char *base, const char *p_in)
 /// Return the offset from "p" to the first byte of the codepoint it points
 /// to. Can start anywhere in a stream of bytes.
 /// Note: Unlike `utf_head_off`, this counts individual codepoints of composed characters
-/// separately and returns a negative offset.
+/// separately.
 ///
 /// @param[in] base  Pointer to start of string
 /// @param[in] p     Pointer to byte for which to return the offset to the previous codepoint
 //
-/// @return 0 if invalid sequence, else offset to previous codepoint
+/// @return 0 if invalid sequence, else number of bytes to previous codepoint
 int utf_cp_head_off(const char *base, const char *p)
 {
   int i;
@@ -1830,17 +1818,20 @@ int utf_cp_head_off(const char *base, const char *p)
   }
 
   // Find the first character that is not 10xx.xxxx
-  for (i = 0; p - i > base; i--) {
-    if (((uint8_t)p[i] & 0xc0) != 0x80) {
+  for (i = 0; p - i >= base; i++) {
+    if (((uint8_t)p[-i] & 0xc0) != 0x80) {
       break;
     }
   }
 
-  // Find the last character that is 10xx.xxxx
-  for (int j = 0; ((uint8_t)p[j + 1] & 0xc0) == 0x80; j++) {}
+  // Find the last character that is 10xx.xxxx (condition terminates on NUL)
+  int j = 1;
+  while (((uint8_t)p[j] & 0xc0) == 0x80) {
+    j++;
+  }
 
   // Check for illegal sequence.
-  if (utf8len_tab[(uint8_t)p[i]] == 1) {
+  if (utf8len_tab[(uint8_t)p[-i]] != j + i) {
     return 0;
   }
   return i;

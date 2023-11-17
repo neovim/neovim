@@ -939,7 +939,7 @@ void f_getmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     tv_dict_add_nr(dict, S_LEN("id"), (varnumber_T)cur->mit_id);
 
     if (cur->mit_conceal_char) {
-      char buf[MB_MAXBYTES + 1];
+      char buf[MB_MAXCHAR + 1];
 
       buf[utf_char2bytes(cur->mit_conceal_char, buf)] = NUL;
       tv_dict_add_str(dict, S_LEN("conceal"), buf);

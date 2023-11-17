@@ -228,6 +228,36 @@ describe("multibyte rendering", function()
     ]]}
 
   end)
+
+  it('works with arabicshape and multiple composing chars', function()
+    -- this tests an important edge case: arabicshape might increase the byte size of the base
+    -- character in a way so that the last composing char no longer fits. use "g8" on the text
+    -- to observe what is happening (the final E1 80 B7 gets deleted with 'arabicshape')
+    -- If we would increase the schar_t size, say from 32 to 64 bytes, we need to extend the
+    -- test text with even more zalgo energy to still touch this edge case.
+
+    meths.buf_set_lines(0,0,-1,true, {"سلام့̀́̂̃̄̅̆̇̈̉̊̋̌"})
+    command('set noarabicshape')
+
+    screen:expect{grid=[[
+      ^سلام့̀́̂̃̄̅̆̇̈̉̊̋̌                                                        |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+
+    command('set arabicshape')
+    screen:expect{grid=[[
+      ^ﺱﻼﻣ̀́̂̃̄̅̆̇̈̉̊̋̌                                                         |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+  end)
 end)
 
 describe('multibyte rendering: statusline', function()

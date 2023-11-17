@@ -722,9 +722,16 @@ Options:
 <
   *'macatsui'*
   *'maxcombine'* *'mco'*
-    Nvim always displays up to 6 combining characters.  You can still edit
-    text with more than 6 combining characters, you just can't see them.
-    Use |g8| or |ga|.  See |mbyte-combining|.
+    Nvim counts maximum character sizes in bytes, not codepoints. This is
+    guaranteed to be big enough to always fit all chars properly displayed
+    in vim with 'maxcombine' set to 6.
+
+    You can still edit text with larger characters than fits in the screen buffer,
+    you just can't see them. Use |g8| or |ga|. See |mbyte-combining|.
+
+    NOTE: the rexexp engine still has a hard-coded limit of considering
+    6 composing chars only.
+
   *'maxmem'* Nvim delegates memory-management to the OS.
   *'maxmemtot'* Nvim delegates memory-management to the OS.
   printoptions
