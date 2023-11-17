@@ -145,6 +145,12 @@ nvim_terminal:
 - BufReadCmd: Treats "term://" buffers as |terminal| buffers. |terminal-start|
 - TermClose: A |terminal| buffer started with no arguments (which thus uses
   'shell') and which exits with no error is closed automatically.
+- TermRequest: The terminal emulator responds to OSC background and foreground
+  requests, indicating (1) a black background and white foreground when Nvim
+  option 'background' is "dark" or (2) a white background and black foreground
+  when 'background' is "light". While this may not reflect the actual
+  foreground/background color, it permits 'background' to be retained for a
+  nested Nvim instance running in the terminal emulator.
 
 nvim_cmdwin:
 - CmdwinEnter: Limits syntax sync to maxlines=1 in the |cmdwin|.
