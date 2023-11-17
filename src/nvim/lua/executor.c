@@ -366,15 +366,15 @@ static void nlua_schedule_event(void **argv)
 static int nlua_schedule(lua_State *const lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-  // If Nvim is exiting don't schedule tasks to run in the future. Any refs
-  // allocated here will not be cleaned up otherwise
-  if (exiting) {
-    return 0;
-  }
-
   if (lua_type(lstate, 1) != LUA_TFUNCTION) {
     lua_pushliteral(lstate, "vim.schedule: expected function");
     return lua_error(lstate);
+  }
+
+  // If main_loop is closing don't schedule tasks to run in the future,
+  // otherwise any refs allocated here will not be cleaned up.
+  if (main_loop.closing) {
+    return 0;
   }
 
   LuaRef cb = nlua_ref_global(lstate, 1);

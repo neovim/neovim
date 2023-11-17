@@ -17,6 +17,7 @@ void loop_init(Loop *loop, void *data)
 {
   uv_loop_init(&loop->uv);
   loop->recursive = 0;
+  loop->closing = false;
   loop->uv.data = loop;
   loop->children = kl_init(WatcherPtr);
   loop->events = multiqueue_new_parent(loop_on_put, loop);
@@ -149,6 +150,7 @@ static void loop_walk_cb(uv_handle_t *handle, void *arg)
 bool loop_close(Loop *loop, bool wait)
 {
   bool rv = true;
+  loop->closing = true;
   uv_mutex_destroy(&loop->mutex);
   uv_close((uv_handle_t *)&loop->children_watcher, NULL);
   uv_close((uv_handle_t *)&loop->children_kill_timer, NULL);
