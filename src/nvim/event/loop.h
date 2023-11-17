@@ -40,6 +40,7 @@ typedef struct loop {
   uv_async_t async;
   uv_mutex_t mutex;
   int recursive;
+  bool closing;  ///< Set to true if loop_close() has been called
 } Loop;
 
 #define CREATE_EVENT(multiqueue, handler, argc, ...) \
