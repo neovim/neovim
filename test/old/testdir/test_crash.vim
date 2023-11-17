@@ -110,6 +110,39 @@ func Test_crash1()
   call delete('X_crash1_result.txt')
 endfunc
 
+func Test_crash1_2()
+  CheckNotBSD
+  CheckExecutable dash
+
+  " The following used to crash Vim
+  let opts = #{cmd: 'sh'}
+  let vim  = GetVimProg()
+  let result = 'X_crash1_1_result.txt'
+
+  let buf = RunVimInTerminal('sh', opts)
+
+  let file = 'crash/poc1'
+  let cmn_args = "%s -u NONE -i NONE -n -e -s -S %s -c ':qa!'"
+  let args = printf(cmn_args, vim, file)
+  call term_sendkeys(buf, args ..
+    \ '  && echo "crash 1: [OK]" > '.. result .. "\<cr>")
+  call TermWait(buf, 150)
+
+  " clean up
+  exe buf .. "bw!"
+
+  exe "sp " .. result
+
+  let expected = [
+      \ 'crash 1: [OK]',
+      \ ]
+
+  call assert_equal(expected, getline(1, '$'))
+  bw!
+
+  call delete(result)
+endfunc
+
 func Test_crash2()
   " The following used to crash Vim
   let opts = #{wait_for_ruler: 0, rows: 20}
