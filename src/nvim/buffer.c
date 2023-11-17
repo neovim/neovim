@@ -4223,6 +4223,10 @@ bool buf_contents_changed(buf_T *buf)
   aco_save_T aco;
   aucmd_prepbuf(&aco, newbuf);
 
+  // We don't want to trigger autocommands now, they may have nasty
+  // side-effects like wiping buffers
+  block_autocmds();
+
   if (ml_open(curbuf) == OK
       && readfile(buf->b_ffname, buf->b_fname,
                   0, 0, (linenr_T)MAXLNUM,
@@ -4246,6 +4250,8 @@ bool buf_contents_changed(buf_T *buf)
   if (curbuf != newbuf) {  // safety check
     wipe_buffer(newbuf, false);
   }
+
+  unblock_autocmds();
 
   return differ;
 }

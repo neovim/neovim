@@ -1,0 +1,9 @@
+comman!-narg=* Xexpr <mods>lex<args>
+auto BufReadPre * exe"sn" ..expand("<abuf>") 
+fu Xautocmd_changelist()
+cal writefile(['Xtestfile2:4:4'],'Xerr')
+  sil! edi Xerr
+Xexpr 'Xtestfile:4:4'
+endf
+call Xautocmd_changelist()
+call Xautocmd_changelist()

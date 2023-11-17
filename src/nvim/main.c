@@ -698,7 +698,7 @@ void getout(int exitval)
     for (const tabpage_T *tp = first_tabpage; tp != NULL; tp = next_tp) {
       next_tp = tp->tp_next;
       FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
-        if (wp->w_buffer == NULL) {
+        if (wp->w_buffer == NULL || !buf_valid(wp->w_buffer)) {
           // Autocmd must have close the buffer already, skip.
           continue;
         }

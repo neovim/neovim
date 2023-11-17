@@ -468,7 +468,7 @@ void trunc_string(const char *s, char *buf, int room_in, int buflen)
     buf[e + 3 + len - 1] = NUL;
   } else {
     // can't fit in the "...", just truncate it
-    buf[e - 1] = NUL;
+    buf[buflen - 1] = NUL;
   }
 }
 

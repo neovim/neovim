@@ -3435,7 +3435,7 @@ static int ins_compl_get_exp(pos_T *ini)
       compl_started = true;
     } else {
       // Mark a buffer scanned when it has been scanned completely
-      if (type == 0 || type == CTRL_X_PATH_PATTERNS) {
+      if (buf_valid(st.ins_buf) && (type == 0 || type == CTRL_X_PATH_PATTERNS)) {
         assert(st.ins_buf);
         st.ins_buf->b_scanned = true;
       }
