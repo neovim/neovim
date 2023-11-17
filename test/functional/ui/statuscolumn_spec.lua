@@ -850,4 +850,47 @@ describe('statuscolumn', function()
                                        |
     ]])
   end)
+
+  it('forces a rebuild with :redraw', function()
+    screen:try_resize(40, 4)
+    command([[
+      let g:insert = v:false
+      set nonu stc=%{g:insert?'insert':''}
+      vsplit
+      au InsertEnter * let g:insert = v:true | redrawstatuscolumn
+      au InsertLeave * let g:insert = v:false | redrawstatuscolumn
+    ]])
+    feed('i')
+    screen:expect([[
+      insert^aaaaa         │aaaaa              |
+      insertaaaaa         │aaaaa              |
+      [No Name] [+]        [No Name] [+]      |
+      -- INSERT --                            |
+    ]])
+    feed('<esc>')
+    screen:expect([[
+      ^aaaaa               │aaaaa              |
+      aaaaa               │aaaaa              |
+      [No Name] [+]        [No Name] [+]      |
+                                              |
+    ]])
+    command([[
+      au! InsertEnter * let g:insert = v:true | redrawstatuscolumn!
+      au! InsertLeave * let g:insert = v:false | redrawstatuscolumn!
+    ]])
+    feed('i')
+    screen:expect([[
+      insert^aaaaa         │insertaaaaa        |
+      insertaaaaa         │insertaaaaa        |
+      [No Name] [+]        [No Name] [+]      |
+      -- INSERT --                            |
+    ]])
+    feed('<esc>')
+    screen:expect([[
+      ^aaaaa               │aaaaa              |
+      aaaaa               │aaaaa              |
+      [No Name] [+]        [No Name] [+]      |
+                                              |
+    ]])
+  end)
 end)

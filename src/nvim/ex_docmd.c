@@ -6307,6 +6307,22 @@ static void ex_redrawstatus(exarg_T *eap)
   ui_flush();
 }
 
+/// ":redrawstatuscolumn": force redraw of the status column
+static void ex_redrawstatuscolumn(exarg_T *eap)
+{
+  if (eap->forceit) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (*wp->w_p_stc != NUL) {
+        wp->w_nrwidth_line_count = 0;
+        changed_window_setting_win(wp);
+      }
+    }
+  } else if (*curwin->w_p_stc != NUL) {
+    curwin->w_nrwidth_line_count = 0;
+    changed_window_setting();
+  }
+}
+
 /// ":redrawtabline": force redraw of the tabline
 static void ex_redrawtabline(exarg_T *eap FUNC_ATTR_UNUSED)
 {

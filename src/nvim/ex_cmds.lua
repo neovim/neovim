@@ -2211,6 +2211,12 @@ module.cmds = {
     func = 'ex_redrawstatus',
   },
   {
+    command = 'redrawstatuscolumn',
+    flags = bit.bor(BANG, TRLBAR, CMDWIN, LOCK_OK),
+    addr_type = 'ADDR_NONE',
+    func = 'ex_redrawstatuscolumn',
+  },
+  {
     command = 'redrawtabline',
     flags = bit.bor(TRLBAR, CMDWIN, LOCK_OK),
     addr_type = 'ADDR_NONE',
