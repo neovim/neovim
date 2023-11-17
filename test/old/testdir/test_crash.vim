@@ -5,6 +5,8 @@ source screendump.vim
 CheckScreendump
 
 func Test_crash1()
+  CheckNotBSD
+
   if !executable('sh')
     throw 'Skipped: sh not executable!'
   endif
