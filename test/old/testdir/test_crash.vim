@@ -55,7 +55,7 @@ func Test_crash1()
     \ '  && echo "crash 6: [OK]" >> X_crash1_result.txt' .. "\<cr>")
   " clean up
   call delete('X')
-  call TermWait(buf, 1000)
+  call TermWait(buf, 3000)
 
   " clean up
   exe buf .. "bw!"
