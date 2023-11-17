@@ -211,10 +211,10 @@ static void tui_reset_key_encoding(TUIData *tui)
   }
 }
 
-/// Request the terminal's DEC mode (DECRQM).
+/// Request the terminal's mode (DECRQM).
 ///
 /// @see handle_modereport
-static void tui_dec_request_mode(TUIData *tui, TerminalDecMode mode)
+static void tui_request_term_mode(TUIData *tui, TermMode mode)
   FUNC_ATTR_NONNULL_ALL
 {
   // 5 bytes for \x1b[?$p, 1 byte for null terminator, 6 bytes for mode digits (more than enough)
@@ -224,22 +224,22 @@ static void tui_dec_request_mode(TUIData *tui, TerminalDecMode mode)
   out(tui, buf, (size_t)len);
 }
 
-/// Handle a DECRPM response from the terminal.
-void tui_dec_report_mode(TUIData *tui, TerminalDecMode mode, TerminalModeState state)
+/// Handle a mode report (DECRPM) from the terminal.
+void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
   FUNC_ATTR_NONNULL_ALL
 {
   switch (state) {
-  case kTerminalModeNotRecognized:
-  case kTerminalModePermanentlySet:
-  case kTerminalModePermanentlyReset:
+  case kTermModeNotRecognized:
+  case kTermModePermanentlySet:
+  case kTermModePermanentlyReset:
     // If the mode is not recognized, or if the terminal emulator does not allow it to be changed,
     // then there is nothing to do
     break;
-  case kTerminalModeSet:
-  case kTerminalModeReset:
+  case kTermModeSet:
+  case kTermModeReset:
     // The terminal supports changing the given mode
     switch (mode) {
-    case kDecModeSynchronizedOutput:
+    case kTermModeSynchronizedOutput:
       // Ref: https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
       tui->unibi_ext.sync = (int)unibi_add_ext_str(tui->ut, "Sync",
                                                    "\x1b[?2026%?%p1%{1}%-%tl%eh%;");
@@ -371,7 +371,7 @@ static void terminfo_start(TUIData *tui)
   // Query support for mode 2026 (Synchronized Output). Some terminals also
   // support an older DCS sequence for synchronized output, but we will only use
   // mode 2026
-  tui_dec_request_mode(tui, kDecModeSynchronizedOutput);
+  tui_request_term_mode(tui, kTermModeSynchronizedOutput);
 
   // Query the terminal to see if it supports Kitty's keyboard protocol
   tui_query_kitty_keyboard(tui);

@@ -586,11 +586,13 @@ static void handle_term_response(TermInput *input, const TermKeyKey *key)
 static void handle_modereport(TermInput *input, const TermKeyKey *key)
   FUNC_ATTR_NONNULL_ALL
 {
-  // termkey_interpret_modereport incorrectly sign extends the mode so we parse the response
-  // ourselves
-  int mode = (uint8_t)key->code.mouse[1] << 8 | (uint8_t)key->code.mouse[2];
-  TerminalModeState value = (uint8_t)key->code.mouse[3];
-  tui_dec_report_mode(input->tui_data, (TerminalDecMode)mode, value);
+  int initial;
+  int mode;
+  int value;
+  if (termkey_interpret_modereport(input->tk, key, &initial, &mode, &value) == TERMKEY_RES_KEY) {
+    (void)initial;  // Unused
+    tui_handle_term_mode(input->tui_data, (TermMode)mode, (TermModeState)value);
+  }
 }
 
 /// Handle a CSI sequence from the terminal that is unrecognized by libtermkey.
