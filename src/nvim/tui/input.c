@@ -122,7 +122,7 @@ void tinput_init(TermInput *input, Loop *loop)
   input->loop = loop;
   input->paste = 0;
   input->in_fd = STDIN_FILENO;
-  input->extkeys_type = kExtkeysNone;
+  input->key_encoding = kKeyEncodingLegacy;
   input->ttimeout = (bool)p_ttimeout;
   input->ttimeoutlen = p_ttm;
   input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
@@ -444,38 +444,7 @@ static void tk_getkeys(TermInput *input, bool force)
     } else if (key.type == TERMKEY_TYPE_MOUSE) {
       forward_mouse_event(input, &key);
     } else if (key.type == TERMKEY_TYPE_UNKNOWN_CSI) {
-      // There is no specified limit on the number of parameters a CSI sequence can contain, so just
-      // allocate enough space for a large upper bound
-      long args[16];
-      size_t nargs = 16;
-      unsigned long cmd;
-      if (termkey_interpret_csi(input->tk, &key, args, &nargs, &cmd) == TERMKEY_RES_KEY) {
-        uint8_t intermediate = (cmd >> 16) & 0xFF;
-        uint8_t initial = (cmd >> 8) & 0xFF;
-        uint8_t command = cmd & 0xFF;
-
-        // Currently unused
-        (void)intermediate;
-
-        if (input->waiting_for_csiu_response > 0) {
-          if (initial == '?' && command == 'u') {
-            // The first (and only) argument contains the current progressive
-            // enhancement flags. Only enable CSI u mode if the first bit
-            // (disambiguate escape codes) is not already set
-            if (nargs > 0 && (args[0] & 0x1) == 0) {
-              input->extkeys_type = kExtkeysCSIu;
-            } else {
-              input->extkeys_type = kExtkeysNone;
-            }
-          } else if (initial == '?' && command == 'c') {
-            // Received Primary Device Attributes response
-            input->waiting_for_csiu_response = 0;
-            tui_enable_extkeys(input->tui_data);
-          } else {
-            input->waiting_for_csiu_response--;
-          }
-        }
-      }
+      handle_unknown_csi(input, &key);
     } else if (key.type == TERMKEY_TYPE_OSC || key.type == TERMKEY_TYPE_DCS) {
       handle_term_response(input, &key);
     } else if (key.type == TERMKEY_TYPE_MODEREPORT) {
@@ -578,6 +547,7 @@ static HandleState handle_bracketed_paste(TermInput *input)
   return kNotApplicable;
 }
 
+/// Handle an OSC or DCS response sequence from the terminal.
 static void handle_term_response(TermInput *input, const TermKeyKey *key)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -612,14 +582,70 @@ static void handle_term_response(TermInput *input, const TermKeyKey *key)
   }
 }
 
+/// Handle a mode report (DECRPM) sequence from the terminal.
 static void handle_modereport(TermInput *input, const TermKeyKey *key)
   FUNC_ATTR_NONNULL_ALL
 {
-  // termkey_interpret_modereport incorrectly sign extends the mode so we parse the response
-  // ourselves
-  int mode = (uint8_t)key->code.mouse[1] << 8 | (uint8_t)key->code.mouse[2];
-  TerminalModeState value = (uint8_t)key->code.mouse[3];
-  tui_dec_report_mode(input->tui_data, (TerminalDecMode)mode, value);
+  int initial;
+  int mode;
+  int value;
+  if (termkey_interpret_modereport(input->tk, key, &initial, &mode, &value) == TERMKEY_RES_KEY) {
+    (void)initial;  // Unused
+    tui_handle_term_mode(input->tui_data, (TermMode)mode, (TermModeState)value);
+  }
+}
+
+/// Handle a CSI sequence from the terminal that is unrecognized by libtermkey.
+static void handle_unknown_csi(TermInput *input, const TermKeyKey *key)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // There is no specified limit on the number of parameters a CSI sequence can
+  // contain, so just allocate enough space for a large upper bound
+  long args[16];
+  size_t nargs = 16;
+  unsigned long cmd;
+  if (termkey_interpret_csi(input->tk, key, args, &nargs, &cmd) != TERMKEY_RES_KEY) {
+    return;
+  }
+
+  uint8_t intermediate = (cmd >> 16) & 0xFF;
+  uint8_t initial = (cmd >> 8) & 0xFF;
+  uint8_t command = cmd & 0xFF;
+
+  // Currently unused
+  (void)intermediate;
+
+  switch (command) {
+  case 'u':
+    switch (initial) {
+    case '?':
+      // Kitty keyboard protocol query response.
+      if (input->waiting_for_kkp_response) {
+        input->waiting_for_kkp_response = false;
+        input->key_encoding = kKeyEncodingKitty;
+        tui_set_key_encoding(input->tui_data);
+      }
+
+      break;
+    }
+    break;
+  case 'c':
+    switch (initial) {
+    case '?':
+      // Primary Device Attributes response
+      if (input->waiting_for_kkp_response) {
+        input->waiting_for_kkp_response = false;
+
+        // Enable the fallback key encoding (if any)
+        tui_set_key_encoding(input->tui_data);
+      }
+
+      break;
+    }
+    break;
+  default:
+    break;
+  }
 }
 
 static void handle_raw_buffer(TermInput *input, bool force)

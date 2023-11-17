@@ -6,16 +6,16 @@
 typedef struct TUIData TUIData;
 
 typedef enum {
-  kDecModeSynchronizedOutput = 2026,
-} TerminalDecMode;
+  kTermModeSynchronizedOutput = 2026,
+} TermMode;
 
 typedef enum {
-  kTerminalModeNotRecognized = 0,
-  kTerminalModeSet = 1,
-  kTerminalModeReset = 2,
-  kTerminalModePermanentlySet = 3,
-  kTerminalModePermanentlyReset = 4,
-} TerminalModeState;
+  kTermModeNotRecognized = 0,
+  kTermModeSet = 1,
+  kTermModeReset = 2,
+  kTermModePermanentlySet = 3,
+  kTermModePermanentlyReset = 4,
+} TermModeState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.h.generated.h"

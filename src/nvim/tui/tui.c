@@ -134,8 +134,6 @@ struct TUIData {
     int save_title, restore_title;
     int set_underline_style;
     int set_underline_color;
-    int enable_extended_keys, disable_extended_keys;
-    int get_extkeys;
     int sync;
   } unibi_ext;
   char *space_buf;
@@ -183,35 +181,40 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term)
   *term = tui->term;
 }
 
-void tui_enable_extkeys(TUIData *tui)
+void tui_set_key_encoding(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
 {
-  TermInput input = tui->input;
-  unibi_term *ut = tui->ut;
-
-  switch (input.extkeys_type) {
-  case kExtkeysCSIu:
-    tui->unibi_ext.enable_extended_keys = (int)unibi_add_ext_str(ut, "ext.enable_extended_keys",
-                                                                 "\x1b[>1u");
-    tui->unibi_ext.disable_extended_keys = (int)unibi_add_ext_str(ut, "ext.disable_extended_keys",
-                                                                  "\x1b[<1u");
+  switch (tui->input.key_encoding) {
+  case kKeyEncodingKitty:
+    out(tui, S_LEN("\x1b[>1u"));
     break;
-  case kExtkeysXterm:
-    tui->unibi_ext.enable_extended_keys = (int)unibi_add_ext_str(ut, "ext.enable_extended_keys",
-                                                                 "\x1b[>4;2m");
-    tui->unibi_ext.disable_extended_keys = (int)unibi_add_ext_str(ut, "ext.disable_extended_keys",
-                                                                  "\x1b[>4;0m");
+  case kKeyEncodingXterm:
+    out(tui, S_LEN("\x1b[>4;2m"));
     break;
-  default:
+  case kKeyEncodingLegacy:
     break;
   }
-
-  unibi_out_ext(tui, tui->unibi_ext.enable_extended_keys);
 }
 
-/// Request the terminal's DEC mode (DECRQM).
+static void tui_reset_key_encoding(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  switch (tui->input.key_encoding) {
+  case kKeyEncodingKitty:
+    out(tui, S_LEN("\x1b[<1u"));
+    break;
+  case kKeyEncodingXterm:
+    out(tui, S_LEN("\x1b[>4;0m"));
+    break;
+  case kKeyEncodingLegacy:
+    break;
+  }
+}
+
+/// Request the terminal's mode (DECRQM).
 ///
 /// @see handle_modereport
-static void tui_dec_request_mode(TUIData *tui, TerminalDecMode mode)
+static void tui_request_term_mode(TUIData *tui, TermMode mode)
   FUNC_ATTR_NONNULL_ALL
 {
   // 5 bytes for \x1b[?$p, 1 byte for null terminator, 6 bytes for mode digits (more than enough)
@@ -221,27 +224,42 @@ static void tui_dec_request_mode(TUIData *tui, TerminalDecMode mode)
   out(tui, buf, (size_t)len);
 }
 
-/// Handle a DECRPM response from the terminal.
-void tui_dec_report_mode(TUIData *tui, TerminalDecMode mode, TerminalModeState state)
+/// Handle a mode report (DECRPM) from the terminal.
+void tui_handle_term_mode(TUIData *tui, TermMode mode, TermModeState state)
   FUNC_ATTR_NONNULL_ALL
 {
   switch (state) {
-  case kTerminalModeNotRecognized:
-  case kTerminalModePermanentlySet:
-  case kTerminalModePermanentlyReset:
+  case kTermModeNotRecognized:
+  case kTermModePermanentlySet:
+  case kTermModePermanentlyReset:
     // If the mode is not recognized, or if the terminal emulator does not allow it to be changed,
     // then there is nothing to do
     break;
-  case kTerminalModeSet:
-  case kTerminalModeReset:
+  case kTermModeSet:
+  case kTermModeReset:
     // The terminal supports changing the given mode
     switch (mode) {
-    case kDecModeSynchronizedOutput:
+    case kTermModeSynchronizedOutput:
       // Ref: https://gist.github.com/christianparpart/d8a62cc1ab659194337d73e399004036
       tui->unibi_ext.sync = (int)unibi_add_ext_str(tui->ut, "Sync",
                                                    "\x1b[?2026%?%p1%{1}%-%tl%eh%;");
     }
   }
+}
+
+/// Query the terminal emulator to see if it supports Kitty's keyboard protocol.
+///
+/// Write CSI ? u followed by a primary device attributes request (CSI c). If
+/// a primary device attributes response is received without first receiving an
+/// answer to the progressive enhancement query (CSI u), then the terminal does
+/// not support the Kitty keyboard protocol.
+///
+/// See https://sw.kovidgoyal.net/kitty/keyboard-protocol/#detection-of-support-for-this-protocol
+static void tui_query_kitty_keyboard(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  tui->input.waiting_for_kkp_response = true;
+  out(tui, S_LEN("\x1b[?u\x1b[c"));
 }
 
 static void terminfo_start(TUIData *tui)
@@ -277,9 +295,6 @@ static void terminfo_start(TUIData *tui)
   tui->unibi_ext.set_cursor_style = -1;
   tui->unibi_ext.reset_cursor_style = -1;
   tui->unibi_ext.set_underline_color = -1;
-  tui->unibi_ext.enable_extended_keys = -1;
-  tui->unibi_ext.disable_extended_keys = -1;
-  tui->unibi_ext.get_extkeys = -1;
   tui->unibi_ext.sync = -1;
   tui->out_fd = STDOUT_FILENO;
   tui->out_isatty = os_isatty(tui->out_fd);
@@ -356,11 +371,10 @@ static void terminfo_start(TUIData *tui)
   // Query support for mode 2026 (Synchronized Output). Some terminals also
   // support an older DCS sequence for synchronized output, but we will only use
   // mode 2026
-  tui_dec_request_mode(tui, kDecModeSynchronizedOutput);
+  tui_request_term_mode(tui, kTermModeSynchronizedOutput);
 
-  // Query the terminal to see if it supports CSI u
-  tui->input.waiting_for_csiu_response = 5;
-  unibi_out_ext(tui, tui->unibi_ext.get_extkeys);
+  // Query the terminal to see if it supports Kitty's keyboard protocol
+  tui_query_kitty_keyboard(tui);
 
   int ret;
   uv_loop_init(&tui->write_loop);
@@ -403,8 +417,10 @@ static void terminfo_stop(TUIData *tui)
   // Reset cursor to normal before exiting alternate screen.
   unibi_out(tui, unibi_cursor_normal);
   unibi_out(tui, unibi_keypad_local);
-  // Disable extended keys before exiting alternate screen.
-  unibi_out_ext(tui, tui->unibi_ext.disable_extended_keys);
+
+  // Reset the key encoding
+  tui_reset_key_encoding(tui);
+
   // May restore old title before exiting alternate screen.
   tui_set_title(tui, (String)STRING_INIT);
   if (ui_client_exit_status == 0) {
@@ -1949,12 +1965,6 @@ static void patch_terminfo_bugs(TUIData *tui, const char *term, const char *colo
 #define XTERM_SETAB_16 \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e39%;m"
 
-  // Query the terminal to see if it supports CSI u key encoding by writing CSI
-  // ? u followed by a request for the primary device attributes (CSI c)
-  // See https://sw.kovidgoyal.net/kitty/keyboard-protocol/#detection-of-support-for-this-protocol
-  tui->unibi_ext.get_extkeys = (int)unibi_add_ext_str(ut, "ext.get_extkeys",
-                                                      "\x1b[?u\x1b[c");
-
   // Terminals with 256-colour SGR support despite what terminfo says.
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals
@@ -2247,8 +2257,9 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
   }
 
   if (!kitty && (vte_version == 0 || vte_version >= 5400)) {
-    // Fallback to Xterm's modifyOtherKeys if terminal does not support CSI u
-    tui->input.extkeys_type = kExtkeysXterm;
+    // Fallback to Xterm's modifyOtherKeys if terminal does not support the
+    // Kitty keyboard protocol
+    tui->input.key_encoding = kKeyEncodingXterm;
   }
 }
 
