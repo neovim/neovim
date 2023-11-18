@@ -1022,6 +1022,10 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
       PUT(*dict, "sign_text", CSTR_TO_OBJ(sh_sign.text.ptr));
     }
 
+    if (sh_sign.sign_name) {
+      PUT(*dict, "sign_name", CSTR_TO_OBJ(sh_sign.sign_name));
+    }
+
     // uncrustify:off
 
     struct { char *name; const int val; } hls[] = {
