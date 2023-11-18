@@ -578,11 +578,13 @@ static void sign_define_cmd(char *name, char *cmdline)
   char *texthl = NULL;
   char *culhl = NULL;
   char *numhl = NULL;
-  int failed = false;
 
   // set values for a defined sign.
   while (true) {
     char *arg = skipwhite(cmdline);
+    if (*arg == NUL) {
+      break;
+    }
     cmdline = skiptowhite_esc(arg);
     if (strncmp(arg, "icon=", 5) == 0) {
       icon = arg + 5;
@@ -598,8 +600,7 @@ static void sign_define_cmd(char *name, char *cmdline)
       numhl = arg + 6;
     } else {
       semsg(_(e_invarg2), arg);
-      failed = true;
-      break;
+      return;
     }
     if (*cmdline == NUL) {
       break;
@@ -607,9 +608,7 @@ static void sign_define_cmd(char *name, char *cmdline)
     *cmdline++ = NUL;
   }
 
-  if (!failed) {
-    sign_define_by_name(name, icon, text, linehl, texthl, culhl, numhl);
-  }
+  sign_define_by_name(name, icon, text, linehl, texthl, culhl, numhl);
 }
 
 /// ":sign place" command
