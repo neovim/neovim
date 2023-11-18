@@ -142,40 +142,42 @@ Array virt_text_to_array(VirtText vt, bool hl_name)
   return chunks;
 }
 
-static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict, bool hl_name)
+static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_name)
 {
+  MTKey start = extmark.start;
   Array rv = ARRAY_DICT_INIT;
   if (id) {
-    ADD(rv, INTEGER_OBJ((Integer)extmark->mark_id));
+    ADD(rv, INTEGER_OBJ((Integer)start.id));
   }
-  ADD(rv, INTEGER_OBJ(extmark->row));
-  ADD(rv, INTEGER_OBJ(extmark->col));
+  ADD(rv, INTEGER_OBJ(start.pos.row));
+  ADD(rv, INTEGER_OBJ(start.pos.col));
 
   if (add_dict) {
     Dictionary dict = ARRAY_DICT_INIT;
 
-    PUT(dict, "ns_id", INTEGER_OBJ((Integer)extmark->ns_id));
+    PUT(dict, "ns_id", INTEGER_OBJ((Integer)start.ns));
 
-    PUT(dict, "right_gravity", BOOLEAN_OBJ(extmark->right_gravity));
+    PUT(dict, "right_gravity", BOOLEAN_OBJ(mt_right(start)));
 
-    if (extmark->end_row >= 0) {
-      PUT(dict, "end_row", INTEGER_OBJ(extmark->end_row));
-      PUT(dict, "end_col", INTEGER_OBJ(extmark->end_col));
-      PUT(dict, "end_right_gravity", BOOLEAN_OBJ(extmark->end_right_gravity));
+    if (extmark.end_pos.row >= 0) {
+      PUT(dict, "end_row", INTEGER_OBJ(extmark.end_pos.row));
+      PUT(dict, "end_col", INTEGER_OBJ(extmark.end_pos.col));
+      PUT(dict, "end_right_gravity", BOOLEAN_OBJ(extmark.end_right_gravity));
     }
 
-    if (extmark->no_undo) {
+    if (mt_no_undo(start)) {
       PUT(dict, "undo_restore", BOOLEAN_OBJ(false));
     }
 
-    if (extmark->invalidate) {
+    if (mt_invalidate(start)) {
       PUT(dict, "invalidate", BOOLEAN_OBJ(true));
     }
-    if (extmark->invalid) {
+    if (mt_invalid(start)) {
       PUT(dict, "invalid", BOOLEAN_OBJ(true));
     }
 
-    const Decoration *decor = &extmark->decor;
+    // pretend this is a pointer for a short while, Decoration will be factored away very soon
+    const Decoration decor[1] = { get_decor(start) };
     if (decor->hl_id) {
       PUT(dict, "hl_group", hl_group_name(decor->hl_id, hl_name));
       PUT(dict, "hl_eol", BOOLEAN_OBJ(decor->hl_eol));
@@ -308,11 +310,11 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
     }
   }
 
-  ExtmarkInfo extmark = extmark_from_id(buf, (uint32_t)ns_id, (uint32_t)id);
-  if (extmark.row < 0) {
+  MTPair extmark = extmark_from_id(buf, (uint32_t)ns_id, (uint32_t)id);
+  if (extmark.start.pos.row < 0) {
     return rv;
   }
-  return extmark_to_array(&extmark, false, details, hl_name);
+  return extmark_to_array(extmark, false, details, hl_name);
 }
 
 /// Gets |extmarks| (including |signs|) in "traversal order" from a |charwise|
@@ -432,7 +434,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
                                        u_col, (int64_t)limit, reverse, type, opts->overlap);
 
   for (size_t i = 0; i < kv_size(marks); i++) {
-    ADD(rv, ARRAY_OBJ(extmark_to_array(&kv_A(marks, i), true, details, hl_name)));
+    ADD(rv, ARRAY_OBJ(extmark_to_array(kv_A(marks, i), true, details, hl_name)));
   }
 
   kv_destroy(marks);
@@ -1121,13 +1123,13 @@ static bool extmark_get_index_from_obj(buf_T *buf, Integer ns_id, Object obj, in
       });
     }
 
-    ExtmarkInfo extmark = extmark_from_id(buf, (uint32_t)ns_id, (uint32_t)id);
+    MTPair extmark = extmark_from_id(buf, (uint32_t)ns_id, (uint32_t)id);
 
-    VALIDATE_INT((extmark.row >= 0), "mark id (not found)", id, {
+    VALIDATE_INT((extmark.start.pos.row >= 0), "mark id (not found)", id, {
       return false;
     });
-    *row = extmark.row;
-    *col = extmark.col;
+    *row = extmark.start.pos.row;
+    *col = extmark.start.pos.col;
     return true;
 
     // Check if it is a position

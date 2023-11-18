@@ -257,7 +257,7 @@ ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_co
 
     MTPair pair;
     while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
-      push_mark(&array, ns_id, type_filter, pair.start, pair.end_pos, pair.end_right_gravity);
+      push_mark(&array, ns_id, type_filter, pair);
     }
   } else {
     // Find all the marks beginning with the start position
@@ -278,7 +278,7 @@ ExtmarkInfoArray extmark_get(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_co
     }
 
     MTKey end = marktree_get_alt(buf->b_marktree, mark, NULL);
-    push_mark(&array, ns_id, type_filter, mark, end.pos, mt_right(end));
+    push_mark(&array, ns_id, type_filter, mtpair_from(mark, end));
 next_mark:
     if (reverse) {
       marktree_itr_prev(buf->b_marktree, itr);
@@ -289,15 +289,14 @@ next_mark:
   return array;
 }
 
-static void push_mark(ExtmarkInfoArray *array, uint32_t ns_id, ExtmarkType type_filter, MTKey mark,
-                      MTPos end_pos, bool end_right)
+static void push_mark(ExtmarkInfoArray *array, uint32_t ns_id, ExtmarkType type_filter, MTPair mark)
 {
-  if (!(ns_id == UINT32_MAX || mark.ns == ns_id)) {
+  if (!(ns_id == UINT32_MAX || mark.start.ns == ns_id)) {
     return;
   }
   uint16_t type_flags = kExtmarkNone;
   if (type_filter != kExtmarkNone) {
-    Decoration *decor = mark.decor_full;
+    Decoration *decor = mark.start.decor_full;
     if (decor && (decor->sign_text || decor->number_hl_id)) {
       type_flags |= (kExtmarkSignHL|kExtmarkSign);
     }
@@ -310,7 +309,7 @@ static void push_mark(ExtmarkInfoArray *array, uint32_t ns_id, ExtmarkType type_
     if (decor && decor->virt_lines.size) {
       type_flags |= kExtmarkVirtLines;
     }
-    if (mark.hl_id) {
+    if (mark.start.hl_id) {
       type_flags |= kExtmarkHighlight;
     }
 
@@ -319,44 +318,20 @@ static void push_mark(ExtmarkInfoArray *array, uint32_t ns_id, ExtmarkType type_
     }
   }
 
-  kv_push(*array, ((ExtmarkInfo) { .ns_id = mark.ns,
-                                   .mark_id = mark.id,
-                                   .row = mark.pos.row, .col = mark.pos.col,
-                                   .end_row = end_pos.row,
-                                   .end_col = end_pos.col,
-                                   .invalidate = mt_invalidate(mark),
-                                   .invalid = mt_invalid(mark),
-                                   .right_gravity = mt_right(mark),
-                                   .end_right_gravity = end_right,
-                                   .no_undo = mt_no_undo(mark),
-                                   .decor = get_decor(mark) }));
+  kv_push(*array, mark);
 }
 
 /// Lookup an extmark by id
-ExtmarkInfo extmark_from_id(buf_T *buf, uint32_t ns_id, uint32_t id)
+MTPair extmark_from_id(buf_T *buf, uint32_t ns_id, uint32_t id)
 {
-  ExtmarkInfo ret = EXTMARKINFO_INIT;
   MTKey mark = marktree_lookup_ns(buf->b_marktree, ns_id, id, false, NULL);
   if (!mark.id) {
-    return ret;
+    return mtpair_from(mark, mark);  // invalid
   }
   assert(mark.pos.row >= 0);
   MTKey end = marktree_get_alt(buf->b_marktree, mark, NULL);
 
-  ret.ns_id = ns_id;
-  ret.mark_id = id;
-  ret.row = mark.pos.row;
-  ret.col = mark.pos.col;
-  ret.end_row = end.pos.row;
-  ret.end_col = end.pos.col;
-  ret.right_gravity = mt_right(mark);
-  ret.end_right_gravity = mt_right(end);
-  ret.no_undo = mt_no_undo(mark);
-  ret.invalidate = mt_invalidate(mark);
-  ret.invalid = mt_invalid(mark);
-  ret.decor = get_decor(mark);
-
-  return ret;
+  return mtpair_from(mark, end);
 }
 
 /// free extmarks from the buffer
