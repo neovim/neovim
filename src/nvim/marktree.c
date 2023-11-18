@@ -1503,11 +1503,6 @@ bool marktree_itr_get_overlap(MarkTree *b, int row, int col, MarkTreeIter *itr)
   return true;
 }
 
-static inline MTPair pair_from(MTKey start, MTKey end)
-{
-  return (MTPair){ .start = start, .end_pos = end.pos, .end_right_gravity = mt_right(end) };
-}
-
 /// Step through all overlapping pairs at a position.
 ///
 /// This function must only be used with an iterator from |marktree_itr_step_overlap|
@@ -1526,8 +1521,8 @@ bool marktree_itr_step_overlap(MarkTree *b, MarkTreeIter *itr, MTPair *pair)
   while (itr->i == -1) {
     if (itr->intersect_idx < kv_size(itr->x->intersect)) {
       uint64_t id = kv_A(itr->x->intersect, itr->intersect_idx++);
-      *pair = pair_from(marktree_lookup(b, id, NULL),
-                        marktree_lookup(b, id|MARKTREE_END_FLAG, NULL));
+      *pair = mtpair_from(marktree_lookup(b, id, NULL),
+                          marktree_lookup(b, id|MARKTREE_END_FLAG, NULL));
       return true;
     }
 
@@ -1564,7 +1559,7 @@ bool marktree_itr_step_overlap(MarkTree *b, MarkTreeIter *itr, MTPair *pair)
       }
 
       unrelative(itr->pos, &k.pos);
-      *pair = pair_from(k, end);
+      *pair = mtpair_from(k, end);
       return true;  // it's a start!
     }
   }
@@ -1583,7 +1578,7 @@ bool marktree_itr_step_overlap(MarkTree *b, MarkTreeIter *itr, MTPair *pair)
       if (pos_less(itr->intersect_pos, start.pos)) {
         continue;
       }
-      *pair = pair_from(start, k);
+      *pair = mtpair_from(start, k);
       return true;  // end of a range which began before us!
     }
   }

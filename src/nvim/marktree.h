@@ -159,6 +159,11 @@ static inline uint16_t mt_flags(bool right_gravity, bool hl_eol, bool no_undo, b
                     | (decor_level << MT_FLAG_DECOR_OFFSET));
 }
 
+static inline MTPair mtpair_from(MTKey start, MTKey end)
+{
+  return (MTPair){ .start = start, .end_pos = end.pos, .end_right_gravity = mt_right(end) };
+}
+
 typedef kvec_withinit_t(uint64_t, 4) Intersection;
 
 struct mtnode_s {
