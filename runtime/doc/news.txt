@@ -113,6 +113,8 @@ The following new APIs and features were added.
 • Added |vim.ringbuf()| to create ring buffers.
 
 • Added |vim.keycode()| for translating keycodes in a string.
+• Nvim shows news.txt on startup if it is a prerelease that has news since the previous build.
+builds only).
 
 • |'smoothscroll'| option to scroll by screen line rather than by text line
   when |'wrap'| is set.
