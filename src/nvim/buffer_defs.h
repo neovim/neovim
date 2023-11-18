@@ -704,7 +704,6 @@ struct file_buffer {
                                 // normally points to this, but some windows
                                 // may use a different synblock_T.
 
-  sign_entry_T *b_signlist;     // list of placed signs
   struct {
     int size;                   // last calculated number of sign columns
     bool valid;                 // calculated sign columns is valid

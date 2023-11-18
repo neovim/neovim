@@ -919,7 +919,6 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
     buf_init_changedtick(buf);
   }
   uc_clear(&buf->b_ucmds);               // clear local user commands
-  buf_delete_signs(buf, "*");            // delete any signs
   extmark_free_all(buf);                 // delete any extmarks
   map_clear_mode(buf, MAP_ALL_MODES, true, false);  // clear local mappings
   map_clear_mode(buf, MAP_ALL_MODES, true, true);   // clear local abbrevs
@@ -4023,62 +4022,6 @@ char *buf_spname(buf_T *buf)
   return NULL;
 }
 
-static int buf_signcols_inner(buf_T *buf, int maximum)
-{
-  sign_entry_T *sign;  // a sign in the sign list
-  int signcols = 0;
-  int linesum = 0;
-  linenr_T curline = 0;
-
-  buf->b_signcols.sentinel = 0;
-
-  FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-    if (sign->se_lnum > curline) {
-      // Counted all signs, now add extmark signs
-      if (curline > 0) {
-        linesum += decor_signcols(buf, &decor_state, (int)curline - 1, (int)curline - 1,
-                                  maximum - linesum);
-      }
-      curline = sign->se_lnum;
-      if (linesum > signcols) {
-        signcols = linesum;
-        buf->b_signcols.sentinel = curline;
-        if (signcols >= maximum) {
-          return maximum;
-        }
-      }
-      linesum = 0;
-    }
-    if (sign->se_has_text_or_icon) {
-      linesum++;
-    }
-  }
-
-  if (curline > 0) {
-    linesum += decor_signcols(buf, &decor_state, (int)curline - 1, (int)curline - 1,
-                              maximum - linesum);
-  }
-  if (linesum > signcols) {
-    signcols = linesum;
-    if (signcols >= maximum) {
-      return maximum;
-    }
-  }
-
-  // Check extmarks between signs
-  linesum = decor_signcols(buf, &decor_state, 0, (int)buf->b_ml.ml_line_count - 1, maximum);
-
-  if (linesum > signcols) {
-    signcols = linesum;
-    buf->b_signcols.sentinel = curline;
-    if (signcols >= maximum) {
-      return maximum;
-    }
-  }
-
-  return signcols;
-}
-
 /// Invalidate the signcolumn if needed after deleting
 /// signs between line1 and line2 (inclusive).
 ///
@@ -4108,18 +4051,18 @@ void buf_signcols_del_check(buf_T *buf, linenr_T line1, linenr_T line2)
 ///
 /// @param buf   buffer to check
 /// @param added sign being added
-void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
+void buf_signcols_add_check(buf_T *buf, linenr_T lnum)
 {
   if (!buf->b_signcols.valid) {
     return;
   }
 
-  if (!added || !buf->b_signcols.sentinel) {
+  if (!buf->b_signcols.sentinel) {
     buf->b_signcols.valid = false;
     return;
   }
 
-  if (added->se_lnum == buf->b_signcols.sentinel) {
+  if (lnum == buf->b_signcols.sentinel) {
     if (buf->b_signcols.size == buf->b_signcols.max) {
       buf->b_signcols.max++;
     }
@@ -4128,42 +4071,32 @@ void buf_signcols_add_check(buf_T *buf, sign_entry_T *added)
     return;
   }
 
-  sign_entry_T *s;
+  int signcols = decor_signcols(buf, lnum - 1, lnum - 1, SIGN_SHOW_MAX);
 
-  // Get first sign for added lnum
-  for (s = added; s->se_prev && s->se_lnum == s->se_prev->se_lnum; s = s->se_prev) {}
-
-  // Count signs for lnum
-  int linesum = 1;
-  for (; s->se_next && s->se_lnum == s->se_next->se_lnum; s = s->se_next) {
-    linesum++;
-  }
-  linesum += decor_signcols(buf, &decor_state, (int)s->se_lnum - 1, (int)s->se_lnum - 1,
-                            SIGN_SHOW_MAX - linesum);
-
-  if (linesum > buf->b_signcols.size) {
-    buf->b_signcols.size = linesum;
-    buf->b_signcols.max = linesum;
-    buf->b_signcols.sentinel = added->se_lnum;
+  if (signcols > buf->b_signcols.size) {
+    buf->b_signcols.size = signcols;
+    buf->b_signcols.max = signcols;
+    buf->b_signcols.sentinel = lnum;
     redraw_buf_later(buf, UPD_NOT_VALID);
   }
 }
 
-int buf_signcols(buf_T *buf, int maximum)
+int buf_signcols(buf_T *buf, int max)
 {
   // The maximum can be determined from 'signcolumn' which is window scoped so
   // need to invalidate signcols if the maximum is greater than the previous
-  // maximum.
-  if (maximum > buf->b_signcols.max) {
+  // (valid) maximum.
+  if (buf->b_signcols.max && max > buf->b_signcols.max) {
     buf->b_signcols.valid = false;
   }
 
   if (!buf->b_signcols.valid) {
-    int signcols = buf_signcols_inner(buf, maximum);
+    buf->b_signcols.sentinel = 0;
+    int signcols = decor_signcols(buf, 0, (int)buf->b_ml.ml_line_count - 1, max);
     // Check if we need to redraw
     if (signcols != buf->b_signcols.size) {
       buf->b_signcols.size = signcols;
-      buf->b_signcols.max = maximum;
+      buf->b_signcols.max = max;
       redraw_buf_later(buf, UPD_NOT_VALID);
     }
 

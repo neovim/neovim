@@ -11,7 +11,7 @@
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/pos.h"
-#include "nvim/sign_defs.h"
+#include "nvim/sign.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration.c.generated.h"
@@ -92,6 +92,8 @@ void decor_redraw(buf_T *buf, int row1, int row2, Decoration *decor)
   }
 }
 
+static int sign_add_id = 0;
+
 void decor_add(buf_T *buf, int row, int row2, Decoration *decor, bool hl_id)
 {
   if (decor) {
@@ -102,12 +104,12 @@ void decor_add(buf_T *buf, int row, int row2, Decoration *decor, bool hl_id)
       buf->b_virt_line_blocks++;
     }
     if (decor_has_sign(decor)) {
+      decor->sign_add_id = sign_add_id++;
       buf->b_signs++;
     }
     if (decor->sign_text) {
       buf->b_signs_with_text++;
-      // TODO(lewis6991): smarter invalidation
-      buf_signcols_add_check(buf, NULL);
+      buf_signcols_add_check(buf, row + 1);
     }
   }
   if (decor || hl_id) {
@@ -152,6 +154,7 @@ void decor_clear(Decoration *decor)
   }
   kv_destroy(decor->virt_lines);
   xfree(decor->sign_text);
+  xfree(decor->sign_name);
 }
 
 void decor_free(Decoration *decor)
@@ -429,107 +432,73 @@ next_mark:
   return attr;
 }
 
-void decor_redraw_signs(buf_T *buf, int row, int *num_signs, SignTextAttrs sattrs[],
-                        HlPriId *num_id, HlPriId *line_id, HlPriId *cul_id)
+/// Return the sign attributes on the currently refreshed row.
+///
+/// @param[out] sattrs Output array for sign text and texthl id
+/// @param[out] line_attr Highest priority linehl id
+/// @param[out] cul_attr Highest priority culhl id
+/// @param[out] num_attr Highest priority numhl id
+void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], int *line_id,
+                        int *cul_id, int *num_id)
 {
-  if (!buf->b_signs) {
-    return;
-  }
-
-  MarkTreeIter itr[1] = { 0 };
-  marktree_itr_get(buf->b_marktree, row, 0, itr);
-
-  // TODO(bfredl): integrate with main decor loop.
-  if (!marktree_itr_get_overlap(buf->b_marktree, row, 0, itr)) {
+  MarkTreeIter itr[1];
+  if (!buf->b_signs || !marktree_itr_get_overlap(buf->b_marktree, row, 0, itr)) {
     return;
   }
 
   MTPair pair;
+  int num_text = 0;
+  kvec_t(MTKey) signs = KV_INITIAL_VALUE;
+  // TODO(bfredl): integrate with main decor loop.
   while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
-    if (mt_invalid(pair.start) || marktree_decor_level(pair.start) < kDecorLevelVisible) {
-      continue;
+    if (!mt_invalid(pair.start) && pair.start.decor_full && decor_has_sign(pair.start.decor_full)) {
+      pair.start.pos.row = row;
+      num_text += (pair.start.decor_full->sign_text != NULL);
+      kv_push(signs, pair.start);
     }
-
-    Decoration *decor = pair.start.decor_full;
-
-    if (!decor || !decor_has_sign(decor)) {
-      continue;
-    }
-
-    decor_to_sign(decor, num_signs, sattrs, num_id, line_id, cul_id);
   }
 
-  while (true) {
+  while (itr->x) {
     MTKey mark = marktree_itr_current(itr);
-    if (mark.pos.row < 0 || mark.pos.row > row) {
+    if (mark.pos.row != row) {
       break;
     }
-
-    if (mt_end(mark) || mt_invalid(mark) || marktree_decor_level(mark) < kDecorLevelVisible) {
-      goto next_mark;
+    if (!mt_end(mark) && !mt_invalid(mark) && mark.decor_full && decor_has_sign(mark.decor_full)) {
+      num_text += (mark.decor_full->sign_text != NULL);
+      kv_push(signs, mark);
     }
-
-    Decoration *decor = mark.decor_full;
-
-    if (!decor || !decor_has_sign(decor)) {
-      goto next_mark;
-    }
-
-    decor_to_sign(decor, num_signs, sattrs, num_id, line_id, cul_id);
-
-next_mark:
     marktree_itr_next(buf->b_marktree, itr);
   }
-}
 
-static void decor_to_sign(Decoration *decor, int *num_signs, SignTextAttrs sattrs[],
-                          HlPriId *num_id, HlPriId *line_id, HlPriId *cul_id)
-{
-  if (decor->sign_text) {
-    int j;
-    for (j = (*num_signs); j > 0; j--) {
-      if (sattrs[j - 1].priority >= decor->priority) {
-        break;
-      }
-      if (j < SIGN_SHOW_MAX) {
-        sattrs[j] = sattrs[j - 1];
-      }
-    }
-    if (j < SIGN_SHOW_MAX) {
-      sattrs[j] = (SignTextAttrs) {
-        .text = decor->sign_text,
-        .hl_id = decor->sign_hl_id,
-        .priority = decor->priority
-      };
-      (*num_signs)++;
-    }
-  }
+  if (kv_size(signs)) {
+    int width = (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u') ? 1 : wp->w_scwidth;
+    int idx = MIN(width, num_text) - 1;
+    qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_cmp);
 
-  struct { HlPriId *dest; int hl; } cattrs[] = {
-    { line_id, decor->line_hl_id        },
-    { num_id,  decor->number_hl_id      },
-    { cul_id,  decor->cursorline_hl_id  },
-    { NULL, -1 },
-  };
-  for (int i = 0; cattrs[i].dest; i++) {
-    if (cattrs[i].hl != 0 && decor->priority >= cattrs[i].dest->priority) {
-      *cattrs[i].dest = (HlPriId) {
-        .hl_id = cattrs[i].hl,
-        .priority = decor->priority
-      };
+    for (size_t i = 0; i < kv_size(signs); i++) {
+      Decoration *decor = kv_A(signs, i).decor_full;
+      if (idx >= 0 && decor->sign_text) {
+        sattrs[idx].text = decor->sign_text;
+        sattrs[idx--].hl_id = decor->sign_hl_id;
+      }
+      if (*num_id == 0) {
+        *num_id = decor->number_hl_id;
+      }
+      if (*line_id == 0) {
+        *line_id = decor->line_hl_id;
+      }
+      if (*cul_id == 0) {
+        *cul_id = decor->cursorline_hl_id;
+      }
     }
+    kv_destroy(signs);
   }
 }
 
 // Get the maximum required amount of sign columns needed between row and
 // end_row.
-int decor_signcols(buf_T *buf, DecorState *state, int row, int end_row, int max)
+int decor_signcols(buf_T *buf, int row, int end_row, int max)
 {
-  int count = 0;         // count for the number of signs on a given row
-  int count_remove = 0;  // how much to decrement count by when iterating marks for a new row
-  int signcols = 0;      // highest value of count
-  int currow = -1;       // current row
-
   if (max <= 1 && buf->b_signs_with_text >= (size_t)max) {
     return max;
   }
@@ -538,66 +507,41 @@ int decor_signcols(buf_T *buf, DecorState *state, int row, int end_row, int max)
     return 0;
   }
 
-  MarkTreeIter itr[1] = { 0 };
-  marktree_itr_get(buf->b_marktree, 0, -1, itr);
-  while (true) {
-    MTKey mark = marktree_itr_current(itr);
-    if (mark.pos.row < 0 || mark.pos.row > end_row) {
-      break;
+  int signcols = 0;  // highest value of count
+  for (int currow = row; currow <= end_row; currow++) {
+    MarkTreeIter itr[1];
+    if (!marktree_itr_get_overlap(buf->b_marktree, currow, 0, itr)) {
+      continue;
     }
 
-    if ((mark.pos.row < row && mt_end(mark))
-        || marktree_decor_level(mark) < kDecorLevelVisible
-        || !mark.decor_full) {
-      goto next_mark;
-    }
-
-    Decoration decor = get_decor(mark);
-
-    if (!decor.sign_text) {
-      goto next_mark;
-    }
-
-    if (mark.pos.row > currow) {
-      count -= count_remove;
-      count_remove = 0;
-      currow = mark.pos.row;
-    }
-
-    if (!mt_paired(mark)) {
-      if (mark.pos.row >= row) {
+    int count = 0;
+    MTPair pair;
+    while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
+      if (!mt_invalid(pair.start) && pair.start.decor_full && pair.start.decor_full->sign_text) {
         count++;
-        if (count > signcols) {
-          signcols = count;
-          if (signcols >= max) {
-            return max;
-          }
-        }
-        count_remove++;
       }
-      goto next_mark;
     }
 
-    MTPos altpos = marktree_get_altpos(buf->b_marktree, mark, NULL);
-
-    if (mt_end(mark)) {
-      if (mark.pos.row >= row && altpos.row <= end_row) {
-        count_remove++;
+    while (itr->x) {
+      MTKey mark = marktree_itr_current(itr);
+      if (mark.pos.row != currow) {
+        break;
       }
-    } else {
-      if (altpos.row >= row) {
+      if (!mt_invalid(mark) && !mt_end(mark) && mark.decor_full && mark.decor_full->sign_text) {
         count++;
-        if (count > signcols) {
-          signcols = count;
-          if (signcols >= max) {
-            return max;
-          }
-        }
       }
+      marktree_itr_next(buf->b_marktree, itr);
     }
 
-next_mark:
-    marktree_itr_next(buf->b_marktree, itr);
+    if (count > signcols) {
+      if (row != end_row) {
+        buf->b_signcols.sentinel = currow + 1;
+      }
+      if (count >= max) {
+        return max;
+      }
+      signcols = count;
+    }
   }
 
   return signcols;

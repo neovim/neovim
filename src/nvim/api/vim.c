@@ -2196,13 +2196,12 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
       }
     }
     if (statuscol_lnum) {
-      HlPriId line = { 0 };
-      HlPriId cul = { 0 };
-      HlPriId num = { 0 };
+      int line_id = 0;
+      int cul_id = 0;
+      int num_id = 0;
       linenr_T lnum = statuscol_lnum;
-      int num_signs = buf_get_signattrs(wp->w_buffer, lnum, sattrs, &num, &line, &cul);
-      decor_redraw_signs(wp->w_buffer, lnum - 1, &num_signs, sattrs, &num, &line, &cul);
       wp->w_scwidth = win_signcol_count(wp);
+      decor_redraw_signs(wp, wp->w_buffer, lnum - 1, sattrs, &line_id, &cul_id, &num_id);
 
       statuscol.sattrs = sattrs;
       statuscol.foldinfo = fold_info(wp, lnum);
@@ -2215,9 +2214,9 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
         statuscol.use_cul = lnum == wp->w_cursorline && (wp->w_p_culopt_flags & CULOPT_NBR);
       }
 
-      statuscol.sign_cul_id = statuscol.use_cul ? cul.hl_id : 0;
-      if (num.hl_id) {
-        stc_hl_id = num.hl_id;
+      statuscol.sign_cul_id = statuscol.use_cul ? cul_id : 0;
+      if (num_id) {
+        stc_hl_id = num_id;
       } else if (statuscol.use_cul) {
         stc_hl_id = HLF_CLN + 1;
       } else if (wp->w_p_rnu) {

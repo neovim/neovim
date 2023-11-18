@@ -87,6 +87,14 @@ The following changes may require adaptations in user config or plugins.
   the option is set (e.g. using |:set| or |nvim_set_option_value()|) without a
   scope, which means they now behave the same way as string options.
 
+• Signs placed through the legacy |sign-commands| are now stored and displayed
+  as |extmarks| internally. Along with the following changes:
+  • A sign placed twice in the same group with the same identifier will be moved.
+  • Legacy signs are always deleted along with the line it is placed on.
+  • Legacy and extmark signs will show up in both |:sign-place-list| and |nvim_buf_get_extmarks()|.
+  • Legacy and extmark signs are displayed and listed with the same priority:
+      line number -> priority -> sign id -> recently placed
+
 ==============================================================================
 NEW FEATURES                                                    *news-features*
 

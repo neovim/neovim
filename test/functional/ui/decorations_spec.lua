@@ -4680,7 +4680,7 @@ l5
 
     screen:expect{grid=[[
       {1:    }^l1                                            |
-      S2S1l2                                            |
+      S1S2l2                                            |
       {1:    }l3                                            |
       {1:    }l4                                            |
       {1:    }l5                                            |
@@ -4720,7 +4720,7 @@ l5
     screen:expect{grid=[[
       {1:    }^l1                                            |
       S1{1:  }l2                                            |
-      S2S1l3                                            |
+      S1S2l3                                            |
       S2{1:  }l4                                            |
       {1:    }l5                                            |
       {1:    }                                              |
@@ -4765,7 +4765,7 @@ l5
     meths.buf_set_extmark(0, ns, 2, -1, {sign_text='S5'})
 
     screen:expect{grid=[[
-      S4S1^l1                                            |
+      S1S4^l1                                            |
       x S2l2                                            |
       S5{1:  }l3                                            |
       {1:    }l4                                            |
@@ -4792,9 +4792,9 @@ l5
     meths.buf_set_extmark(0, ns, 2, -1, {sign_text='S5'})
 
     screen:expect{grid=[[
-      S3S4S1^l1                                          |
+      S1S3S4^l1                                          |
       x S2S3l2                                          |
-      S5S3{1:  }l3                                          |
+      S3S5{1:  }l3                                          |
       S3{1:    }l4                                          |
       S3{1:    }l5                                          |
       {1:      }                                            |
@@ -4848,15 +4848,15 @@ l5
     end
 
     screen:expect{grid=[[
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      X Y Z W {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:^h}                 |
+      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:^h}                 |
                                               |
     ]]}
   end)

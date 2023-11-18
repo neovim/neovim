@@ -1656,9 +1656,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       varnumber_T virtnum = get_vim_var_nr(VV_VIRTNUM);
       for (int i = 0; i < width; i++) {
         if (!fold) {
-          SignTextAttrs *sattr = virtnum ? NULL : sign_get_attr(i, stcp->sattrs, wp->w_scwidth);
+          SignTextAttrs *sattr = virtnum ? NULL : &stcp->sattrs[i];
           p = sattr && sattr->text ? sattr->text : "  ";
-          stl_items[curitem].minwid = -(sattr ? stcp->sign_cul_id ? stcp->sign_cul_id
+          stl_items[curitem].minwid = -(sattr && sattr->text ? stcp->sign_cul_id ? stcp->sign_cul_id
                                         : sattr->hl_id : (stcp->use_cul ? HLF_CLS : HLF_SC) + 1);
         }
         stl_items[curitem].type = Highlight;

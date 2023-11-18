@@ -456,83 +456,35 @@ size_t fill_foldcolumn(char *p, win_T *wp, foldinfo_T foldinfo, linenr_T lnum, i
 
 /// Get information needed to display the sign in line "wlv->lnum" in window "wp".
 /// If "nrcol" is true, the sign is going to be displayed in the number column.
-/// Otherwise the sign is going to be displayed in the sign column.
+/// Otherwise the sign is going to be displayed in the sign column. If there is no
+/// sign, draw blank cells instead.
 static void get_sign_display_info(bool nrcol, win_T *wp, winlinevars_T *wlv, int sign_idx,
                                   int sign_cul_attr)
 {
-  // Draw cells with the sign value or blank.
-  wlv->c_extra = ' ';
+  SignTextAttrs sattr = wlv->sattrs[sign_idx];
   wlv->c_final = NUL;
-  if (nrcol) {
-    wlv->n_extra = number_width(wp) + 1;
+
+  if (sattr.text && wlv->row == wlv->startrow + wlv->filler_lines && wlv->filler_todo <= 0) {
+    size_t fill = nrcol ? (size_t)number_width(wp) - SIGN_WIDTH : 0;
+    size_t sign_len = strlen(sattr.text);
+
+    // Spaces + sign:    "  " + ">>"     + ' '
+    wlv->n_extra = (int)(fill + sign_len + nrcol);
+    if (nrcol) {
+      memset(wlv->extra, ' ', (size_t)wlv->n_extra);
+    }
+    memcpy(wlv->extra + fill, sattr.text, sign_len);
+    wlv->p_extra = wlv->extra;
+    wlv->c_extra = NUL;
+    wlv->char_attr = (use_cursor_line_highlight(wp, wlv->lnum) && sign_cul_attr)
+                   ? sign_cul_attr : sattr.hl_id ? syn_id2attr(sattr.hl_id) : 0;
   } else {
-    if (use_cursor_line_highlight(wp, wlv->lnum)) {
-      wlv->char_attr = win_hl_attr(wp, HLF_CLS);
-    } else {
-      wlv->char_attr = win_hl_attr(wp, HLF_SC);
-    }
-    wlv->n_extra = win_signcol_width(wp);
-  }
-
-  if (wlv->row == wlv->startrow + wlv->filler_lines && wlv->filler_todo <= 0) {
-    SignTextAttrs *sattr = sign_get_attr(sign_idx, wlv->sattrs, wp->w_scwidth);
-    if (sattr != NULL) {
-      wlv->p_extra = sattr->text;
-      if (wlv->p_extra != NULL) {
-        wlv->c_extra = NUL;
-        wlv->c_final = NUL;
-
-        if (nrcol) {
-          int width = number_width(wp) - 2;
-          size_t n;
-          for (n = 0; (int)n < width; n++) {
-            wlv->extra[n] = ' ';
-          }
-          wlv->extra[n] = NUL;
-          snprintf(wlv->extra + n, sizeof(wlv->extra) - n, "%s ", wlv->p_extra);
-          wlv->p_extra = wlv->extra;
-          wlv->n_extra = (int)strlen(wlv->p_extra);
-        } else {
-          size_t symbol_blen = strlen(wlv->p_extra);
-
-          // TODO(oni-link): Is sign text already extended to
-          // full cell width?
-          assert((size_t)win_signcol_width(wp) >= mb_string2cells(wlv->p_extra));
-          // symbol(s) bytes + (filling spaces) (one byte each)
-          wlv->n_extra = (int)symbol_blen + win_signcol_width(wp) -
-                         (int)mb_string2cells(wlv->p_extra);
-
-          assert(sizeof(wlv->extra) > symbol_blen);
-          memset(wlv->extra, ' ', sizeof(wlv->extra));
-          memcpy(wlv->extra, wlv->p_extra, symbol_blen);
-
-          wlv->p_extra = wlv->extra;
-          wlv->p_extra[wlv->n_extra] = NUL;
-        }
-      }
-
-      if (use_cursor_line_highlight(wp, wlv->lnum) && sign_cul_attr > 0) {
-        wlv->char_attr = sign_cul_attr;
-      } else {
-        wlv->char_attr = sattr->hl_id ? syn_id2attr(sattr->hl_id) : 0;
-      }
+    wlv->c_extra = ' ';
+    wlv->n_extra = nrcol ? number_width(wp) + 1 : SIGN_WIDTH;
+    if (!nrcol) {
+      wlv->char_attr = win_hl_attr(wp, use_cursor_line_highlight(wp, wlv->lnum) ? HLF_CLS : HLF_SC);
     }
   }
-}
-
-/// Returns width of the signcolumn that should be used for the whole window
-///
-/// @param wp window we want signcolumn width from
-/// @return max width of signcolumn (cell unit)
-///
-/// @note Returns a constant for now but hopefully we can improve neovim so that
-///       the returned value width adapts to the maximum number of marks to draw
-///       for the window
-/// TODO(teto)
-int win_signcol_width(win_T *wp)
-{
-  // 2 is vim default value
-  return 2;
 }
 
 static inline void get_line_number_str(win_T *wp, linenr_T lnum, char *buf, size_t buf_len)
@@ -598,8 +550,7 @@ static int get_line_number_attr(win_T *wp, winlinevars_T *wlv)
 
 /// Display the absolute or relative line number.  After the first row fill with
 /// blanks when the 'n' flag isn't in 'cpo'.
-static void handle_lnum_col(win_T *wp, winlinevars_T *wlv, int num_signs, int sign_idx,
-                            int sign_num_attr, int sign_cul_attr)
+static void handle_lnum_col(win_T *wp, winlinevars_T *wlv, int sign_num_attr, int sign_cul_attr)
 {
   bool has_cpo_n = vim_strchr(p_cpo, CPO_NUMCOL) != NULL;
 
@@ -610,8 +561,8 @@ static void handle_lnum_col(win_T *wp, winlinevars_T *wlv, int num_signs, int si
       && !((has_cpo_n && !wp->w_p_bri) && wp->w_skipcol > 0 && wlv->lnum == wp->w_topline)) {
     // If 'signcolumn' is set to 'number' and a sign is present in "lnum",
     // then display the sign instead of the line number.
-    if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u' && num_signs > 0) {
-      get_sign_display_info(true, wp, wlv, sign_idx, sign_cul_attr);
+    if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u' && wlv->sattrs[0].text) {
+      get_sign_display_info(true, wp, wlv, 0, sign_cul_attr);
     } else {
       // Draw the line number (empty space after wrapping).
       if (wlv->row == wlv->startrow + wlv->filler_lines
@@ -1317,15 +1268,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     area_highlighting = true;
   }
 
-  HlPriId line_id = { 0 };
-  HlPriId sign_cul = { 0 };
-  HlPriId sign_num = { 0 };
-  // TODO(bfredl, vigoux): line_attr should not take priority over decoration!
-  int num_signs = buf_get_signattrs(buf, wlv.lnum, wlv.sattrs, &sign_num, &line_id, &sign_cul);
-  decor_redraw_signs(buf, wlv.lnum - 1, &num_signs, wlv.sattrs, &sign_num, &line_id, &sign_cul);
-
+  int line_attr = 0;
   int sign_cul_attr = 0;
   int sign_num_attr = 0;
+  // TODO(bfredl, vigoux): line_attr should not take priority over decoration!
+  decor_redraw_signs(wp, buf, wlv.lnum - 1, wlv.sattrs, &line_attr, &sign_cul_attr, &sign_num_attr);
+
   statuscol_T statuscol = { 0 };
   if (*wp->w_p_stc != NUL) {
     // Draw the 'statuscolumn' if option is set.
@@ -1334,18 +1282,18 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     statuscol.foldinfo = foldinfo;
     statuscol.width = win_col_off(wp) - (cmdwin_type != 0 && wp == curwin);
     statuscol.use_cul = use_cursor_line_highlight(wp, lnum);
-    statuscol.sign_cul_id = statuscol.use_cul ? sign_cul.hl_id : 0;
-    statuscol.num_attr = sign_num.hl_id > 0 ? syn_id2attr(sign_num.hl_id) : 0;
+    statuscol.sign_cul_id = statuscol.use_cul ? sign_cul_attr : 0;
+    statuscol.num_attr = sign_num_attr > 0 ? syn_id2attr(sign_num_attr) : 0;
   } else {
-    if (sign_cul.hl_id > 0) {
-      sign_cul_attr = syn_id2attr(sign_cul.hl_id);
+    if (sign_cul_attr > 0) {
+      sign_cul_attr = syn_id2attr(sign_cul_attr);
     }
-    if (sign_num.hl_id > 0) {
-      sign_num_attr = syn_id2attr(sign_num.hl_id);
+    if (sign_num_attr > 0) {
+      sign_num_attr = syn_id2attr(sign_num_attr);
     }
   }
-  if (line_id.hl_id > 0) {
-    wlv.line_attr = syn_id2attr(line_id.hl_id);
+  if (line_attr > 0) {
+    wlv.line_attr = syn_id2attr(line_attr);
   }
 
   // Highlight the current line in the quickfix window.
@@ -1661,8 +1609,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         wlv.draw_state = WL_SIGN;
         if (wp->w_scwidth > 0) {
           get_sign_display_info(false, wp, &wlv, sign_idx, sign_cul_attr);
-          sign_idx++;
-          if (sign_idx < wp->w_scwidth) {
+          if (++sign_idx < wp->w_scwidth) {
             wlv.draw_state = WL_SIGN - 1;
           } else {
             sign_idx = 0;
@@ -1673,14 +1620,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       if (wlv.draw_state == WL_NR - 1 && wlv.n_extra == 0) {
         // Show the line number, if desired.
         wlv.draw_state = WL_NR;
-        handle_lnum_col(wp, &wlv, num_signs, sign_idx, sign_num_attr, sign_cul_attr);
+        handle_lnum_col(wp, &wlv, sign_num_attr, sign_cul_attr);
       }
 
       if (wlv.draw_state == WL_STC - 1 && wlv.n_extra == 0) {
         wlv.draw_state = WL_STC;
         // Draw the 'statuscolumn' if option is set.
         if (statuscol.draw) {
-          if (sign_num.hl_id == 0) {
+          if (sign_num_attr == 0) {
             statuscol.num_attr = get_line_number_attr(wp, &wlv);
           }
           if (statuscol.textp == NULL) {

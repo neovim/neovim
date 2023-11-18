@@ -69,7 +69,6 @@
 #include "nvim/quickfix.h"
 #include "nvim/runtime.h"
 #include "nvim/shada.h"
-#include "nvim/sign.h"
 #include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
@@ -217,8 +216,6 @@ void early_init(mparm_T *paramp)
   TIME_MSG("inits 1");
 
   set_lang_var();               // set v:lang and v:ctype
-
-  init_signs();
 }
 
 #ifdef MAKE_LIB
