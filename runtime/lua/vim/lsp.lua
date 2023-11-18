@@ -1320,7 +1320,7 @@ function lsp.start_client(config)
     --- - lsp.WorkDoneProgressBegin,
     --- - lsp.WorkDoneProgressReport (extended with title from Begin)
     --- - lsp.WorkDoneProgressEnd    (extended with title from Begin)
-    progress = vim.ringbuf(50),
+    progress = vim.ringbuf(1024),
 
     --- @type lsp.ServerCapabilities
     server_capabilities = {},
