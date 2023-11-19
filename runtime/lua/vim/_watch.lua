@@ -117,7 +117,6 @@ local function recurse_watch(path, opts, callback)
           fullpath = fullpath,
           events = events,
         })
-        timer:stop()
         timer:start(debounce, 0, process_changes)
       end
     end
@@ -144,9 +143,12 @@ local function recurse_watch(path, opts, callback)
           end
         end
         if stat.type == 'directory' then
-          local handle = assert(uv.new_fs_event())
-          handles[fullpath] = handle
-          handle:start(fullpath, uvflags, create_on_change(fullpath))
+          local handle = handles[fullpath]
+          if not handle then
+            handle = assert(uv.new_fs_event())
+            handles[fullpath] = handle
+            handle:start(fullpath, uvflags, create_on_change(fullpath))
+          end
         end
       else
         local handle = handles[fullpath]
@@ -165,7 +167,7 @@ local function recurse_watch(path, opts, callback)
   handles[path] = root_handle
   root_handle:start(path, uvflags, create_on_change(path))
 
-  --- 640K ought to be enough for anyone
+  --- "640K ought to be enough for anyone"
   --- Who has folders this deep?
   local max_depth = 100
 
