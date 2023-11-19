@@ -108,25 +108,23 @@ describe('vim._watch', function()
 
         local events = {}
 
-        local poll_interval_ms = 1000
-        local poll_wait_ms = poll_interval_ms+200
+        local debounce = 100
+        local wait_ms = debounce + 200
 
         local expected_events = 0
         local function wait_for_events()
-          assert(vim.wait(poll_wait_ms, function() return #events == expected_events end), 'Timed out waiting for expected number of events. Current events seen so far: ' .. vim.inspect(events))
+          assert(vim.wait(wait_ms, function() return #events == expected_events end), 'Timed out waiting for expected number of events. Current events seen so far: ' .. vim.inspect(events))
         end
 
         local incl = lpeg.P(root_dir) * lpeg.P("/file")^-1
         local excl = lpeg.P(root_dir..'/file.unwatched')
         local stop = vim._watch.poll(root_dir, {
-            interval = poll_interval_ms,
+            debounce = debounce,
             include_pattern = incl,
             exclude_pattern = excl,
           }, function(path, change_type)
           table.insert(events, { path = path, change_type = change_type })
         end)
-
-        vim.wait(100)
 
         local watched_path = root_dir .. '/file'
         local watched, err = io.open(watched_path, 'w')
@@ -135,7 +133,7 @@ describe('vim._watch', function()
         local unwatched, err = io.open(unwatched_path, 'w')
         assert(not err, err)
 
-        expected_events = expected_events + 2
+        expected_events = expected_events + 1
         wait_for_events()
 
         watched:close()
@@ -143,7 +141,7 @@ describe('vim._watch', function()
         unwatched:close()
         os.remove(unwatched_path)
 
-        expected_events = expected_events + 2
+        expected_events = expected_events + 1
         wait_for_events()
 
         stop()
@@ -153,8 +151,6 @@ describe('vim._watch', function()
         local watched, err = io.open(watched_path, 'w')
         assert(not err, err)
 
-        vim.wait(poll_wait_ms)
-
         watched:close()
         os.remove(watched_path)
 
@@ -163,36 +159,19 @@ describe('vim._watch', function()
         root_dir
       )
 
-      eq(4, #result)
-      eq({
-        change_type = exec_lua([[return vim._watch.FileChangeType.Created]]),
-        path = root_dir .. '/file',
-      }, result[1])
-      eq({
-        change_type = exec_lua([[return vim._watch.FileChangeType.Changed]]),
-        path = root_dir,
-      }, result[2])
-      -- The file delete and corresponding directory change events do not happen in any
-      -- particular order, so allow either
-      if result[3].path == root_dir then
-        eq({
-          change_type = exec_lua([[return vim._watch.FileChangeType.Changed]]),
-          path = root_dir,
-        }, result[3])
-        eq({
-          change_type = exec_lua([[return vim._watch.FileChangeType.Deleted]]),
-          path = root_dir .. '/file',
-        }, result[4])
-      else
-        eq({
-          change_type = exec_lua([[return vim._watch.FileChangeType.Deleted]]),
-          path = root_dir .. '/file',
-        }, result[3])
-        eq({
-          change_type = exec_lua([[return vim._watch.FileChangeType.Changed]]),
-          path = root_dir,
-        }, result[4])
-      end
+      local created = exec_lua([[return vim._watch.FileChangeType.Created]])
+      local deleted = exec_lua([[return vim._watch.FileChangeType.Deleted]])
+      local expected = {
+        {
+          change_type = created,
+          path = root_dir .. "/file",
+        },
+        {
+          change_type = deleted,
+          path = root_dir .. "/file",
+        }
+      }
+      eq(expected, result)
     end)
   end)
 end)
