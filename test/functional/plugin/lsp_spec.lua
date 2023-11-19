@@ -4026,6 +4026,7 @@ describe('LSP', function()
 
   describe('vim.lsp._watchfiles', function()
     it('sends notifications when files change', function()
+      skip(is_os('bsd'), "bsd only reports rename on folders if file inside change")
       local root_dir = helpers.tmpname()
       os.remove(root_dir)
       mkdir(root_dir)
