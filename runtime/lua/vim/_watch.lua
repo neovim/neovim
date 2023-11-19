@@ -76,12 +76,10 @@ function M.watch(path, opts, callback)
   end
 end
 
-
 --- @class watch.PollOpts
 --- @field debounce? integer
 --- @field include_pattern? vim.lpeg.Pattern
 --- @field exclude_pattern? vim.lpeg.Pattern
-
 
 ---@param path string
 ---@param opts watch.PollOpts
@@ -91,10 +89,8 @@ local function recurse_watch(path, opts, callback)
   opts = opts or {}
   local debounce = opts.debounce or 500
   local uvflags = {}
-  ---@type uv.uv_fs_event_t[]
+  ---@type table<string, uv.uv_fs_event_t> handle by fullpath
   local handles = {}
-  local root_handle = assert(uv.new_fs_event())
-  table.insert(handles, root_handle)
 
   local timer = assert(uv.new_timer())
 
@@ -119,7 +115,7 @@ local function recurse_watch(path, opts, callback)
       if is_included(fullpath) and not is_excluded(filepath) then
         table.insert(changesets, {
           fullpath = fullpath,
-          events = events
+          events = events,
         })
         timer:stop()
         timer:start(debounce, 0, process_changes)
@@ -147,36 +143,46 @@ local function recurse_watch(path, opts, callback)
             change_type = FileChangeType.Changed
           end
         end
-        if stat.type == "directory" then
+        if stat.type == 'directory' then
           local handle = assert(uv.new_fs_event())
-          table.insert(handles, handle)
+          handles[fullpath] = handle
           handle:start(fullpath, uvflags, create_on_change(fullpath))
         end
       else
+        local handle = handles[fullpath]
+        if handle then
+          if not handle:is_closing() then
+            handle:close()
+          end
+          handles[fullpath] = nil
+        end
         change_type = FileChangeType.Deleted
       end
       callback(fullpath, change_type)
     end
   end
+  local root_handle = assert(uv.new_fs_event())
+  handles[path] = root_handle
   root_handle:start(path, uvflags, create_on_change(path))
 
   --- 640K ought to be enough for anyone
   --- Who has folders this deep?
   local max_depth = 100
 
-  for name, type in vim.fs.dir(path, {depth = max_depth}) do
+  for name, type in vim.fs.dir(path, { depth = max_depth }) do
     local filepath = vim.fs.joinpath(path, name)
-    if type == "directory" and not is_excluded(filepath) then
+    if type == 'directory' and not is_excluded(filepath) then
       local handle = assert(uv.new_fs_event())
-      table.insert(handles, handle)
+      handles[filepath] = handle
       handle:start(filepath, uvflags, create_on_change(filepath))
     end
   end
   local function cancel()
-    for _, handle in ipairs(handles) do
+    for fullpath, handle in pairs(handles) do
       if not handle:is_closing() then
         handle:close()
       end
+      handles[fullpath] = nil
     end
     timer:stop()
     timer:close()
