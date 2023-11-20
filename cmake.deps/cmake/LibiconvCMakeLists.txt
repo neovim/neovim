@@ -31,7 +31,7 @@ set(USE_MBSTATE_T 0)
 configure_file(libcharset/include/localcharset.h.build.in localcharset.h)
 configure_file(include/iconv.h.build.in iconv.h)
 
-add_definitions(-DLIBDIR -D_CRT_SECURE_NO_WARNINGS)
+add_definitions(-DLIBDIR)
 
 add_library(libcharset libcharset/lib/localcharset.c)
 

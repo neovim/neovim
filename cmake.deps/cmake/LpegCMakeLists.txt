@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project (lpeg C)
 
+add_compile_options(-w)
+
 include(GNUInstallDirs)
 
 file(GLOB LPEG_SOURCES ${CMAKE_SOURCE_DIR}/*.c)
