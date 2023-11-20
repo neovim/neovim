@@ -1295,7 +1295,6 @@ static pos_T last_visualchanged_anchor;
 static void normal_check_visual_changed(void)
 {
   if (!finish_op && VIsual_active && (has_event(EVENT_VISUALCHANGED) || ui_active())) {
-
     // we want start, end as top-left, bot-right corners
     pos_T start = VIsual;
     pos_T end = curwin->w_cursor;
@@ -1321,10 +1320,10 @@ static void normal_check_visual_changed(void)
     }
 
     // trigger if mode or range has changed
-    if (has_event(EVENT_VISUALCHANGED) && 
-        (VIsual_mode != last_visualchanged_mode
-        || !equalpos(start, last_visualchanged_start)
-        || !equalpos(end, last_visualchanged_end))) {
+    if (has_event(EVENT_VISUALCHANGED)
+        && (VIsual_mode != last_visualchanged_mode
+            || !equalpos(start, last_visualchanged_start)
+            || !equalpos(end, last_visualchanged_end))) {
       // save byte positinos
       last_visualchanged_start = start;
       last_visualchanged_end = end;
@@ -1338,7 +1337,7 @@ static void normal_check_visual_changed(void)
       tv_dict_add_nr(v_event, S_LEN("end_col"), end.col);
       tv_dict_set_keys_readonly(v_event);
 
-      /* fill ev.data field for lua callback */
+      // fill ev.data field for lua callback
       // MAXSIZE_TEMP_DICT(content, 3);
       // PUT_C(content, "byte", DICTIONARY_OBJ(byte_range));
       // PUT_C(content, "char", DICTIONARY_OBJ(char_range));
@@ -1349,49 +1348,52 @@ static void normal_check_visual_changed(void)
       // else
       //   PUT_C(content, "mode", STATIC_CSTR_AS_OBJ("block"));
       // Object value = DICTIONARY_OBJ(content);
-      //apply_autocmds_group(EVENT_VISUALCHANGED, NULL, NULL, false, AUGROUP_ALL, NULL, NULL, &value);
+      // apply_autocmds_group(EVENT_VISUALCHANGED, NULL, NULL, false, AUGROUP_ALL, NULL, NULL, &value);
 
       apply_autocmds(EVENT_VISUALCHANGED, NULL, NULL, false, curbuf);
 
       restore_v_event(v_event, &save_v_event);
     }
 
-    if (ui_active() && (
-        VIsual_mode != last_visualchanged_mode
-        || !equalpos(last_visualchanged_anchor, VIsual)
-        || !equalpos(last_visualchanged_cursor, curwin->w_cursor))) {
-
+    if (ui_active()
+        && (VIsual_mode != last_visualchanged_mode
+            || !equalpos(last_visualchanged_anchor, VIsual)
+            || !equalpos(last_visualchanged_cursor, curwin->w_cursor))) {
       last_visualchanged_anchor = VIsual;
       last_visualchanged_cursor = curwin->w_cursor;
 
-      MAXSIZE_TEMP_DICT(byte_range, 4);
-      PUT_C(byte_range, "start_line", INTEGER_OBJ(start.lnum));
-      PUT_C(byte_range, "start_col", INTEGER_OBJ(start.col));
-      PUT_C(byte_range, "end_line", INTEGER_OBJ(end.lnum));
-      PUT_C(byte_range, "end_col", INTEGER_OBJ(end.col));
+      MAXSIZE_TEMP_DICT(range, 10);
 
-      MAXSIZE_TEMP_DICT(char_range, 4);
-      colnr_T start_col_char = buf_byteidx_to_charidx(curbuf, start.lnum, start.col);
-      colnr_T end_col_char = buf_byteidx_to_charidx(curbuf, end.lnum, end.col);
-      PUT_C(char_range, "start_line", INTEGER_OBJ(start.lnum));
-      PUT_C(char_range, "start_col", INTEGER_OBJ(start_col_char));
-      PUT_C(char_range, "end_line", INTEGER_OBJ(end.lnum));
-      PUT_C(char_range, "end_col", INTEGER_OBJ(end_col_char));
+      PUT_C(range, "anchor_line", INTEGER_OBJ(VIsual.lnum));
+      PUT_C(range, "anchor_col", INTEGER_OBJ(VIsual.col + 1));
+      PUT_C(range, "cursor_line", INTEGER_OBJ(curwin->w_cursor.lnum));
+      PUT_C(range, "cursor_col", INTEGER_OBJ(curwin->w_cursor.col + 1));
 
-      MAXSIZE_TEMP_DICT(active_selection, 4);
-      PUT_C(active_selection, "anchor_line", INTEGER_OBJ(VIsual.lnum));
-      PUT_C(active_selection, "anchor_col", INTEGER_OBJ(VIsual.col + 1));
-      PUT_C(active_selection, "cursor_line", INTEGER_OBJ(curwin->w_cursor.lnum));
-      PUT_C(active_selection, "cursor_col", INTEGER_OBJ(curwin->w_cursor.col + 1));
+      PUT_C(range, "start_line", INTEGER_OBJ(start.lnum));
+      PUT_C(range, "start_col", INTEGER_OBJ(start.col));
+      PUT_C(range, "end_line", INTEGER_OBJ(end.lnum));
+      PUT_C(range, "end_col", INTEGER_OBJ(end.col));
+
+      colnr_T start_col = buf_byteidx_to_charidx(curbuf, start.lnum, start.col);
+      colnr_T end_col = buf_byteidx_to_charidx(curbuf, end.lnum, end.col);
+      PUT_C(range, "start_charcol", INTEGER_OBJ(start_col));
+      PUT_C(range, "end_charcol", INTEGER_OBJ(end_col));
+
+      // screen position, use getvvcol?
+      // getvvcol(curwin, &start, &start_col, NULL, NULL);
+      // getvvcol(curwin, &end, &end_col, NULL, NULL);
+      // PUT_C(range, "start_virtcol", INTEGER_OBJ(start_col));
+      // PUT_C(range, "end_virtcol", INTEGER_OBJ(end_col));
 
       String vmode = STRING_INIT;
-      if (VIsual_mode == 'v')
+      if (VIsual_mode == 'v') {
         vmode = STATIC_CSTR_AS_STRING("char");
-      else if (VIsual_mode == 'V')
+      } else if (VIsual_mode == 'V') {
         vmode = STATIC_CSTR_AS_STRING("line");
-      else
+      } else {
         vmode = STATIC_CSTR_AS_STRING("block");
-      ui_call_visual_change(vmode, active_selection, byte_range, char_range);
+      }
+      ui_call_visual_change(vmode, range);
     }
     last_visualchanged_mode = VIsual_mode;
   } else {

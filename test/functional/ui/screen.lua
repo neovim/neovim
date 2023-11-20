@@ -1018,9 +1018,10 @@ function Screen:_handle_set_icon(icon)
   self.icon = icon
 end
 
-function Screen:_handle_visual_change(mode, active_selection, byte_range, char_range)
+function Screen:_handle_visual_change(mode, range)
   local count = (self.visual_change.count or 0) + 1
-  self.visual_change = {mode=mode, active_selection=active_selection, byte=byte_range, char=char_range, count=count}
+  local byte = {start_line=range.start_line, end_line=range.end_line, start_col=range.start_col, end_col=range.end_col}
+  self.visual_change = {mode=mode, range=range, count=count, byte=byte}
 end
 
 function Screen:_handle_option_set(name, value)
