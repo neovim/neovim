@@ -606,7 +606,7 @@ int update_screen(void)
     }
 
     // Reset 'statuscolumn' if there is no dedicated signcolumn but it is invalid.
-    if (*wp->w_p_stc != NUL && !wp->w_buffer->b_signcols.valid && win_no_signcol(wp)) {
+    if (*wp->w_p_stc != NUL && !wp->w_buffer->b_signcols.valid && wp->w_minscwidth <= SCL_NO) {
       wp->w_nrwidth_line_count = 0;
       wp->w_valid &= ~VALID_WCOL;
       wp->w_redr_type = UPD_NOT_VALID;
@@ -619,7 +619,7 @@ int update_screen(void)
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     // Validate b_signcols if there is no dedicated signcolumn but 'statuscolumn' is set.
-    if (*wp->w_p_stc != NUL && win_no_signcol(wp)) {
+    if (*wp->w_p_stc != NUL && wp->w_minscwidth <= SCL_NO) {
       buf_signcols(wp->w_buffer, 0);
     }
 
@@ -2632,8 +2632,7 @@ int number_width(win_T *wp)
 
   // If 'signcolumn' is set to 'number' and there is a sign to display, then
   // the minimal width for the number column is 2.
-  if (n < 2 && wp->w_buffer->b_signs_with_text
-      && (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u')) {
+  if (n < 2 && wp->w_buffer->b_signs_with_text && wp->w_minscwidth == SCL_NUM) {
     n = 2;
   }
 

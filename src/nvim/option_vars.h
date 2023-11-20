@@ -947,3 +947,6 @@ enum {
 #define MAX_NUMBERWIDTH 20      // used for 'numberwidth' and 'statuscolumn'
 
 #define TABSTOP_MAX 9999
+
+#define SCL_NO  -1  // 'signcolumn' set to "no"
+#define SCL_NUM -2  // 'signcolumn' set to "number"

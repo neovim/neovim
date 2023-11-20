@@ -561,7 +561,7 @@ static void handle_lnum_col(win_T *wp, winlinevars_T *wlv, int sign_num_attr, in
       && !((has_cpo_n && !wp->w_p_bri) && wp->w_skipcol > 0 && wlv->lnum == wp->w_topline)) {
     // If 'signcolumn' is set to 'number' and a sign is present in "lnum",
     // then display the sign instead of the line number.
-    if (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u' && wlv->sattrs[0].text) {
+    if (wp->w_minscwidth == SCL_NUM && wlv->sattrs[0].text) {
       get_sign_display_info(true, wp, wlv, 0, sign_cul_attr);
     } else {
       // Draw the line number (empty space after wrapping).

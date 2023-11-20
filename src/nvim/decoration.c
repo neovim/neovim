@@ -442,7 +442,9 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
                         int *cul_id, int *num_id)
 {
   MarkTreeIter itr[1];
-  if (!buf->b_signs || !marktree_itr_get_overlap(buf->b_marktree, row, 0, itr)) {
+  if (!buf->b_signs
+      || wp->w_minscwidth == SCL_NO
+      || !marktree_itr_get_overlap(buf->b_marktree, row, 0, itr)) {
     return;
   }
 
@@ -471,7 +473,7 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
   }
 
   if (kv_size(signs)) {
-    int width = (*wp->w_p_scl == 'n' && *(wp->w_p_scl + 1) == 'u') ? 1 : wp->w_scwidth;
+    int width = wp->w_minscwidth == SCL_NUM ? 1 : wp->w_scwidth;
     int idx = MIN(width, num_text) - 1;
     qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_cmp);
 

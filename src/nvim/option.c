@@ -2245,6 +2245,7 @@ static const char *did_set_number_relativenumber(optset_T *args)
     // When 'relativenumber'/'number' is changed and 'statuscolumn' is set, reset width.
     win->w_nrwidth_line_count = 0;
   }
+  check_signcolumn(win);
   return NULL;
 }
 
@@ -4861,6 +4862,7 @@ void didset_window_options(win_T *wp, bool valid_cursor)
   parse_winhl_opt(wp);  // sets w_hl_needs_update also for w_p_winbl
   check_blending(wp);
   set_winbar_win(wp, false, valid_cursor);
+  check_signcolumn(wp);
   wp->w_grid_alloc.blending = wp->w_p_winbl > 0;
 }
 
@@ -6170,49 +6172,12 @@ bool fish_like_shell(void)
 /// buffer signs and on user configuration.
 int win_signcol_count(win_T *wp)
 {
-  return win_signcol_configured(wp);
-}
-
-/// Return true when window "wp" has no sign column.
-bool win_no_signcol(win_T *wp)
-{
-  const char *scl = wp->w_p_scl;
-  return (*scl == 'n' && (*(scl + 1) == 'o' || (*(scl + 1) == 'u'
-                                                && (wp->w_p_nu || wp->w_p_rnu))));
-}
-
-/// Return the number of requested sign columns, based on user / configuration.
-int win_signcol_configured(win_T *wp)
-{
-  const char *scl = wp->w_p_scl;
-
-  if (win_no_signcol(wp)) {
+  if (wp->w_minscwidth <= SCL_NO) {
     return 0;
   }
 
-  // yes or yes
-  if (!strncmp(scl, "yes:", 4)) {
-    // Fixed amount of columns
-    return scl[4] - '0';
-  }
-  if (*scl == 'y') {
-    return 1;
-  }
-
-  int minimum = 0, maximum = 1;
-
-  if (!strncmp(scl, "auto:", 5)) {
-    // Variable depending on a configuration
-    maximum = scl[5] - '0';
-    // auto:<NUM>-<NUM>
-    if (strlen(scl) == 8 && *(scl + 6) == '-') {
-      minimum = maximum;
-      maximum = scl[7] - '0';
-    }
-  }
-
-  int needed_signcols = buf_signcols(wp->w_buffer, maximum);
-  int ret = MAX(minimum, MIN(maximum, needed_signcols));
+  int needed_signcols = buf_signcols(wp->w_buffer, wp->w_maxscwidth);
+  int ret = MAX(wp->w_minscwidth, MIN(wp->w_maxscwidth, needed_signcols));
   assert(ret <= SIGN_SHOW_MAX);
   return ret;
 }
