@@ -16,7 +16,7 @@ endif()
 
 add_library(termkey termkey.c driver-csi.c driver-ti.c)
 
-target_compile_definitions(termkey PRIVATE _CRT_SECURE_NO_WARNINGS HAVE_UNIBILIUM)
+target_compile_definitions(termkey PRIVATE HAVE_UNIBILIUM)
 target_include_directories(termkey PRIVATE SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
 
 set_target_properties(termkey PROPERTIES

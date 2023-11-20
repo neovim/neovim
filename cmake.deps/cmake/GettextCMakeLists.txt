@@ -73,8 +73,7 @@ set_property(TARGET libintl APPEND PROPERTY COMPILE_DEFINITIONS
   NO_XMALLOC
   set_relocation_prefix=libintl_set_relocation_prefix
   relocate=libintl_relocate
-  HAVE_CONFIG_H
-  _CRT_SECURE_NO_WARNINGS)
+  HAVE_CONFIG_H)
 
 
 file(READ gettext-tools/config.h.in CONFIG_CONTENT)
