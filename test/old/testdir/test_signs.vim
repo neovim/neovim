@@ -194,6 +194,11 @@ func Test_sign()
   sign undefine Sign3
   call assert_fails("sign place 41 line=3 name=Sign1 buffer=" .
 			  \ bufnr('%'), 'E155:')
+
+  " Defining a sign without attributes is allowed.
+  sign define Sign1
+  call assert_equal([{'name': 'Sign1'}], sign_getdefined())
+  sign undefine Sign1
 endfunc
 
 func Test_sign_many_bytes()
