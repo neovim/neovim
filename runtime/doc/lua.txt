@@ -1728,7 +1728,7 @@ vim.region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})
       • {pos2}       integer[]|string End of region as a (line, column) tuple
                      or |getpos()|-compatible string
       • {regtype}    (string) |setreg()|-style selection type
-      • {inclusive}  (boolean) Controls whether `pos2` column is inclusive
+      • {inclusive}  (boolean) Controls whether the ending column is inclusive
                      (see also 'selection').
 
     Return: ~
