@@ -1012,9 +1012,6 @@ describe('TUI', function()
   end)
 
   it('paste: terminal mode', function()
-    if is_ci('github') then
-        pending("tty-test complains about not owning the terminal -- actions/runner#241")
-    end
     child_exec_lua('vim.o.statusline="^^^^^^^"')
     child_exec_lua('vim.cmd.terminal(...)', testprg('tty-test'))
     feed_data('i')
@@ -1543,9 +1540,6 @@ describe('TUI', function()
   end)
 
   it('forwards :term palette colors with termguicolors', function()
-    if is_ci('github') then
-      pending("tty-test complains about not owning the terminal -- actions/runner#241")
-    end
     screen:set_rgb_cterm(true)
     screen:set_default_attr_ids({
       [1] = {{reverse = true}, {reverse = true}},
