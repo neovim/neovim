@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
+
+# Can be removed once minimum version is at least 3.15
+if(POLICY CMP0092)
+  cmake_policy(SET CMP0092 NEW)
+endif()
 project(gettext C)
+
+add_compile_options(-w)
+set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /ignore:4006")
 
 # Adds PREFIX to each item in LIST
 macro(PREFIX_LIST_ITEMS LIST PREFIX)

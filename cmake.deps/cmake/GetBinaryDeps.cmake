@@ -18,13 +18,13 @@ function(GetBinaryDep)
   ExternalProject_Add(${_gettool_TARGET}
     URL ${URL}
     URL_HASH SHA256=${HASH}
-    DOWNLOAD_NO_PROGRESS TRUE
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND ""
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}
-    COMMAND "${_gettool_INSTALL_COMMAND}")
+    COMMAND "${_gettool_INSTALL_COMMAND}"
+    ${EXTERNALPROJECT_OPTIONS})
 endfunction()
 
 # Download executable and move it to DEPS_BIN_DIR
@@ -43,11 +43,11 @@ function(GetExecutable)
   ExternalProject_Add(${ARG_TARGET}
     URL ${URL}
     URL_HASH SHA256=${HASH}
-    DOWNLOAD_NO_PROGRESS TRUE
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}
     DOWNLOAD_NO_EXTRACT TRUE
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_BIN_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy <DOWNLOADED_FILE> ${DEPS_BIN_DIR})
+    COMMAND ${CMAKE_COMMAND} -E copy <DOWNLOADED_FILE> ${DEPS_BIN_DIR}
+    ${EXTERNALPROJECT_OPTIONS})
 endfunction()
