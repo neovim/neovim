@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
+# Can be removed once minimum version is at least 3.15
+if(POLICY CMP0092)
+  cmake_policy(SET CMP0092 NEW)
+endif()
 project(parser C)
+
+add_compile_options(-w)
 
 file(GLOB source_files src/*.c)
 

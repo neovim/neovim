@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
+# Can be removed once minimum version is at least 3.15
+if(POLICY CMP0092)
+  cmake_policy(SET CMP0092 NEW)
+endif()
 project(libtermkey C)
+
+add_compile_options(-w)
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/termkey.h.in)
   file(STRINGS Makefile TERMKEY_VERSION_MAJOR REGEX "VERSION_MAJOR")

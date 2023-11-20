@@ -24,14 +24,14 @@ function(BuildTSParser)
   ExternalProject_Add(${NAME}
     URL ${URL}
     URL_HASH SHA256=${HASH}
-    DOWNLOAD_NO_PROGRESS TRUE
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/${NAME}
     PATCH_COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${TS_CMAKE_FILE}
       ${DEPS_BUILD_DIR}/src/${NAME}/CMakeLists.txt
     CMAKE_ARGS ${DEPS_CMAKE_ARGS}
       -D PARSERLANG=${TS_LANG}
-    CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS})
+    CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS}
+    ${EXTERNALPROJECT_OPTIONS})
 endfunction()
 
 foreach(lang c lua vim vimdoc query python bash)
