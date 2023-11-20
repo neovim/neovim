@@ -388,34 +388,53 @@ static bool valid_filetype(const char *val)
   return valid_name(val, ".-_");
 }
 
-/// Handle setting 'signcolumn' for value 'val'
+/// Handle setting 'signcolumn' for value 'val'. Store minimum and maximum width.
 ///
 /// @return OK when the value is valid, FAIL otherwise
-static int check_signcolumn(char *val)
+int check_signcolumn(win_T *wp)
 {
+  char *val = wp->w_p_scl;
   if (*val == NUL) {
     return FAIL;
   }
-  // check for basic match
-  if (check_opt_strings(val, p_scl_values, false) == OK) {
-    return OK;
-  }
 
-  // check for 'auto:<NUMBER>-<NUMBER>'
-  if (strlen(val) == 8
-      && !strncmp(val, "auto:", 5)
-      && ascii_isdigit(val[5])
-      && val[6] == '-'
-      && ascii_isdigit(val[7])) {
-    int min = val[5] - '0';
-    int max = val[7] - '0';
-    if (min < 1 || max < 2 || min > 8 || max > 9 || min >= max) {
-      return FAIL;
+  if (check_opt_strings(val, p_scl_values, false) == OK) {
+    if (!strncmp(val, "no", 2)) {  // no
+      wp->w_minscwidth = wp->w_maxscwidth = SCL_NO;
+    } else if (!strncmp(val, "nu", 2) && (wp->w_p_nu || wp->w_p_rnu)) {  // number
+      wp->w_minscwidth = wp->w_maxscwidth = SCL_NUM;
+    } else if (!strncmp(val, "yes:", 4)) {  // yes:<NUM>
+      wp->w_minscwidth = wp->w_maxscwidth = val[4] - '0';
+    } else if (*val == 'y') {  // yes
+      wp->w_minscwidth = wp->w_maxscwidth = 1;
+    } else if (!strncmp(val, "auto:", 5)) {  // auto:<NUM>
+      wp->w_minscwidth = 0;
+      wp->w_maxscwidth = val[5] - '0';
+    } else {  // auto
+      wp->w_minscwidth = 0;
+      wp->w_maxscwidth = 1;
     }
     return OK;
   }
 
-  return FAIL;
+  if (strncmp(val, "auto:", 5) != 0
+      || strlen(val) != 8
+      || !ascii_isdigit(val[5])
+      || val[6] != '-'
+      || !ascii_isdigit(val[7])) {
+    return FAIL;
+  }
+
+  // auto:<NUM>-<NUM>
+  int min = val[5] - '0';
+  int max = val[7] - '0';
+  if (min < 1 || max < 2 || min > 8 || min >= max) {
+    return FAIL;
+  }
+
+  wp->w_minscwidth = min;
+  wp->w_maxscwidth = max;
+  return OK;
 }
 
 /// Check validity of options with the 'statusline' format.
@@ -2072,16 +2091,13 @@ int expand_set_showcmdloc(optexpand_T *args, int *numMatches, char ***matches)
 const char *did_set_signcolumn(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  char **varp = (char **)args->os_varp;
   const char *oldval = args->os_oldval.string.data;
-  if (check_signcolumn(*varp) != OK) {
+  if (check_signcolumn(win) != OK) {
     return e_invarg;
   }
   // When changing the 'signcolumn' to or from 'number', recompute the
   // width of the number column if 'number' or 'relativenumber' is set.
-  if (((*oldval == 'n' && *(oldval + 1) == 'u')
-       || (*win->w_p_scl == 'n' && *(win->w_p_scl + 1) == 'u'))
-      && (win->w_p_nu || win->w_p_rnu)) {
+  if ((*oldval == 'n' && *(oldval + 1) == 'u') || win->w_minscwidth == SCL_NUM) {
     win->w_nrwidth_line_count = 0;
   }
   return NULL;
