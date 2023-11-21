@@ -3871,27 +3871,6 @@ Examples: >lua
     -- { "a", "b" }
 <
 
-In addition to the |vim.iter()| function, the |vim.iter| module provides
-convenience functions like |vim.iter.filter()| and |vim.iter.totable()|.
-
-
-filter({f}, {src})                                         *vim.iter.filter()*
-    Filters a table or other |iterable|. >lua
-        -- Equivalent to:
-        vim.iter(src):filter(f):totable()
-<
-
-    Parameters: ~
-      • {f}    (`fun(...):boolean`) Filter function. Accepts the current
-               iterator or table values as arguments and returns true if those
-               values should be kept in the final table
-      • {src}  (`table|function`) Table or iterator function to filter
-
-    Return: ~
-        (`table`)
-
-    See also: ~
-      • |Iter:filter()|
 
 Iter:all({pred})                                                  *Iter:all()*
     Returns true if all items in the iterator match the given predicate.
@@ -4315,36 +4294,6 @@ Iter:totable()                                                *Iter:totable()*
     The generated table is a list-like table with consecutive, numeric
     indices. To create a map-like table with arbitrary keys, use
     |Iter:fold()|.
-
-    Return: ~
-        (`table`)
-
-map({f}, {src})                                               *vim.iter.map()*
-    Maps a table or other |iterable|. >lua
-        -- Equivalent to:
-        vim.iter(src):map(f):totable()
-<
-
-    Parameters: ~
-      • {f}    (`fun(...): any?`) Map function. Accepts the current iterator
-               or table values as arguments and returns one or more new
-               values. Nil values are removed from the final table.
-      • {src}  (`table|function`) Table or iterator function to filter
-
-    Return: ~
-        (`table`)
-
-    See also: ~
-      • |Iter:map()|
-
-totable({f})                                              *vim.iter.totable()*
-    Collects an |iterable| into a table. >lua
-        -- Equivalent to:
-        vim.iter(f):totable()
-<
-
-    Parameters: ~
-      • {f}  (`function`) Iterator function
 
     Return: ~
         (`table`)
