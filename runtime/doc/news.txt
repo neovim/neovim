@@ -325,6 +325,8 @@ The following changes to existing APIs or features add new behavior.
   NOTE: the regexp engine still has a hard-coded limit of considering
   6 composing chars only.
 
+• |vim.wait()| is no longer allowed to be called in |api-fast|.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

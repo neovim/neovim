@@ -1143,6 +1143,8 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
     milliseconds (default 200). Nvim still processes other events during this
     time.
 
+    Cannot be called while in an |api-fast| event.
+
     Examples: >lua
         ---
         -- Wait for 100 ms, allowing other events to process
@@ -1173,8 +1175,7 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
       • {interval}   (integer|nil) (Approximate) number of milliseconds to
                      wait between polls
       • {fast_only}  (boolean|nil) If true, only |api-fast| events will be
-                     processed. If called from while in an |api-fast| event,
-                     will automatically be set to `true`.
+                     processed.
 
     Return: ~
         boolean, nil|-1|-2
@@ -1828,7 +1829,8 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
         • pid (integer) Process ID
         • wait (fun(timeout: integer|nil): SystemCompleted) Wait for the
           process to complete. Upon timeout the process is sent the KILL
-          signal (9) and the exit code is set to 124.
+          signal (9) and the exit code is set to 124. Cannot be called in
+          |api-fast|.
           • SystemCompleted is an object with the fields:
             • code: (integer)
             • signal: (integer)

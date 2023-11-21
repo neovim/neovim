@@ -2769,6 +2769,19 @@ describe('lua stdlib', function()
         eq({'notification', 'wait', {-2}}, next_msg(500))
       end)
     end)
+
+    it('should not run in fast callbacks #26122', function()
+      exec_lua([[
+        vim.uv.new_timer():start(0, 100, function()
+          local count = 0
+          vim.wait(100, function()
+            count = count + 1
+            return count == 10
+          end, 100)
+        end)
+      ]])
+      assert_alive()
+    end)
   end)
 
   it('vim.notify_once', function()
