@@ -1000,12 +1000,13 @@ end
 ---
 ---@see |Iter:filter()|
 ---
+---@param src table|function Table or iterator function to filter
 ---@param f function(...):bool Filter function. Accepts the current iterator or table values as
 ---                            arguments and returns true if those values should be kept in the
 ---                            final table
----@param src table|function Table or iterator function to filter
 ---@return table
-function M.filter(f, src, ...)
+function M.filter(src, f, ...)
+  assert(type(f) == 'function', 'arg2 must be the callback function. :help news-breaking-dev')
   return Iter.new(src, ...):filter(f):totable()
 end
 
@@ -1019,12 +1020,13 @@ end
 ---
 ---@see |Iter:map()|
 ---
+---@param src table|function Table or iterator function to filter
 ---@param f function(...):?any Map function. Accepts the current iterator or table values as
 ---                            arguments and returns one or more new values. Nil values are removed
 ---                            from the final table.
----@param src table|function Table or iterator function to filter
 ---@return table
-function M.map(f, src, ...)
+function M.map(src, f, ...)
+  assert(type(f) == 'function', 'arg2 must be the callback function. :help news-breaking-dev')
   return Iter.new(src, ...):map(f):totable()
 end
 

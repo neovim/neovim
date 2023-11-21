@@ -231,9 +231,9 @@ local function display_choices(tabstop)
   assert(tabstop.choices, 'Tabstop has no choices')
 
   local start_col = tabstop:get_range()[2] + 1
-  local matches = vim.iter.map(function(choice)
+  local matches = vim.iter.map(tabstop.choices, function(choice)
     return { word = choice }
-  end, tabstop.choices)
+  end)
 
   vim.defer_fn(function()
     vim.fn.complete(start_col, matches)
@@ -423,7 +423,7 @@ function M.expand(input)
       base_indent = base_indent .. (snippet_lines[#snippet_lines]:match('(^%s*)%S') or '') --- @type string
     end
 
-    local lines = vim.iter.map(function(i, line)
+    local lines = vim.iter.map(ipairs(text_to_lines(text)), function(i, line)
       -- Replace tabs by spaces.
       if vim.o.expandtab then
         line = line:gsub('\t', (' '):rep(vim.fn.shiftwidth())) --- @type string
@@ -433,7 +433,7 @@ function M.expand(input)
         line = base_indent .. line
       end
       return line
-    end, ipairs(text_to_lines(text)))
+    end)
 
     table.insert(snippet_text, table.concat(lines, '\n'))
   end
