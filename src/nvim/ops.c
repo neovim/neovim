@@ -139,7 +139,6 @@ static char opchars[][3] = {
   { 'g', '@', OPF_CHANGE },              // OP_FUNCTION
   { Ctrl_A, NUL, OPF_CHANGE },           // OP_NR_ADD
   { Ctrl_X, NUL, OPF_CHANGE },           // OP_NR_SUB
-  { 'Q', NUL, OPF_LINES },               // OP_REGREPLAY
   { '@', NUL, OPF_LINES },               // OP_ATREGREPLAY
 };
 
@@ -178,10 +177,7 @@ int get_op_type(int char1, int char2)
   if (char1 == 'z' && char2 == 'y') {  // OP_YANK
     return OP_YANK;
   }
-  if (char1 == 'Q' || (char1 == '@' && char2 == '@')) {
-    return OP_REGREPLAY;
-  }
-  if (char1 == '@') {
+  if (char1 == '@'|| char1 == 'Q' || (char1 == '@' && char2 == '@')) {
     return OP_ATREGREPLAY;
   }
   for (i = 0;; i++) {
@@ -6376,7 +6372,6 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       check_cursor_col();
       break;
     case OP_ATREGREPLAY:
-    case OP_REGREPLAY:
       if (curwin->w_cursor.lnum + oap->line_count - 1 > curbuf->b_ml.ml_line_count) {
         beep_flush();
       } else {

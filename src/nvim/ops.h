@@ -43,7 +43,6 @@ enum {
   PLUS_REGISTER       = 38,
   NUM_REGISTERS       = 39,
 };
-
 /// Operator IDs; The order must correspond to opchars[] in ops.c!
 enum {
   OP_NOP          = 0,   ///< no pending operation
