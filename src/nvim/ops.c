@@ -12,9 +12,9 @@
 #include <sys/types.h>
 
 #include "nvim/api/private/defs.h"
+#include "nvim/api/vim.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/assert_defs.h"
-#include "nvim/api/vim.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/change.h"
@@ -177,7 +177,7 @@ int get_op_type(int char1, int char2)
   if (char1 == 'z' && char2 == 'y') {  // OP_YANK
     return OP_YANK;
   }
-  if (char1 == '@'|| char1 == 'Q' || (char1 == '@' && char2 == '@')) {
+  if (char1 == '@' || char1 == 'Q' || (char1 == '@' && char2 == '@')) {
     return OP_ATREGREPLAY;
   }
   for (i = 0;; i++) {
@@ -2605,7 +2605,6 @@ void op_macro_replay(cmdarg_T *cap)
     clnum++;
   }
 }
-
 
 static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 {
