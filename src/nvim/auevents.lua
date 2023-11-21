@@ -81,6 +81,7 @@ return {
     'OptionSet',              -- after setting any option
     'QuickFixCmdPost',        -- after :make, :grep etc.
     'QuickFixCmdPre',         -- before :make, :grep etc.
+    'QuickFixJump',           -- after :cprev, :cc, :cnext, etc
     'QuitPre',                -- before :quit
     'RecordingEnter',         -- when starting to record a macro
     'RecordingLeave',         -- just before a macro stops recording

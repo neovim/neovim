@@ -3094,6 +3094,11 @@ theend:
     swb_flags = old_swb_flags;
   }
   decr_quickfix_busy();
+
+  // Trigger QuickFixJump events only if the jump was successful
+  if (retval == QF_OK) {
+    apply_autocmds(EVENT_QUICKFIXJUMP, NULL, NULL, false, curbuf);
+  }
 }
 
 // Highlight attributes used for displaying entries from the quickfix list.
