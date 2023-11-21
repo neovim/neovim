@@ -96,6 +96,15 @@ The following changes may require adaptations in user config or plugins.
       line number -> priority -> sign id -> recently placed
 
 ==============================================================================
+BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
+
+The following breaking changes were made during the development cycle to
+unreleased features on Nvim HEAD.
+
+• ...
+• ...
+
+==============================================================================
 NEW FEATURES                                                    *news-features*
 
 The following new APIs and features were added.

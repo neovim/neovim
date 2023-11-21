@@ -288,7 +288,13 @@ Interface conventions ~
 - When accepting a buffer id, etc., 0 means "current buffer", nil means "all
   buffers".  Likewise for window id, tabpage id, etc.
   - Examples: |vim.lsp.codelens.clear()| |vim.diagnostic.enable()|
-
+- Any function signature that accepts a callback function should define the
+  callback as the LAST parameter, if possible. This improves readability of
+  calls by placing the less "noisy" arguments near the start. >
+    GOOD:
+    filter(table, opts, function() … end)
+    BAD:
+    filter(function() … end, table, opts)
 
 API DESIGN GUIDELINES					*dev-api*
 
