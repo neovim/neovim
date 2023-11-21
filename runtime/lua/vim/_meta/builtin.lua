@@ -205,6 +205,8 @@ function vim.schedule(fn) end
 --- milliseconds (default 200). Nvim still processes other events during
 --- this time.
 ---
+--- Cannot be called while in an |api-fast| event.
+---
 --- Examples:
 ---
 --- ```lua
@@ -235,8 +237,6 @@ function vim.schedule(fn) end
 --- @param callback? fun(): boolean Optional callback. Waits until {callback} returns true
 --- @param interval? integer (Approximate) number of milliseconds to wait between polls
 --- @param fast_only? boolean If true, only |api-fast| events will be processed.
----                           If called from while in an |api-fast| event, will
----                           automatically be set to `true`.
 --- @return boolean, nil|-1|-2
 ---     - If {callback} returns `true` during the {time}: `true, nil`
 ---     - If {callback} never returns `true` during the {time}: `false, -1`

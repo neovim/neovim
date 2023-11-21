@@ -411,6 +411,10 @@ static bool nlua_wait_condition(lua_State *lstate, int *status, bool *callback_r
 static int nlua_wait(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (in_fast_callback) {
+    return luaL_error(lstate, e_luv_api_disabled, "vim.wait");
+  }
+
   intptr_t timeout = luaL_checkinteger(lstate, 1);
   if (timeout < 0) {
     return luaL_error(lstate, "timeout must be >= 0");
@@ -449,8 +453,7 @@ static int nlua_wait(lua_State *lstate)
     fast_only = lua_toboolean(lstate, 4);
   }
 
-  MultiQueue *loop_events = fast_only || in_fast_callback > 0
-                            ? main_loop.fast_events : main_loop.events;
+  MultiQueue *loop_events = fast_only ? main_loop.fast_events : main_loop.events;
 
   TimeWatcher *tw = xmalloc(sizeof(TimeWatcher));
 
