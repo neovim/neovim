@@ -132,35 +132,36 @@ local function recurse_watch(path, opts, callback)
       end
     end
     for fullpath, events_list in pairs(filechanges) do
-      local stat = uv.fs_stat(fullpath)
-      ---@type vim._watch.FileChangeType
-      local change_type
-      if stat then
-        change_type = FileChangeType.Created
-        for _, event in ipairs(events_list) do
-          if event.change then
-            change_type = FileChangeType.Changed
+      uv.fs_stat(fullpath, function(_, stat)
+        ---@type vim._watch.FileChangeType
+        local change_type
+        if stat then
+          change_type = FileChangeType.Created
+          for _, event in ipairs(events_list) do
+            if event.change then
+              change_type = FileChangeType.Changed
+            end
           end
-        end
-        if stat.type == 'directory' then
+          if stat.type == 'directory' then
+            local handle = handles[fullpath]
+            if not handle then
+              handle = assert(uv.new_fs_event())
+              handles[fullpath] = handle
+              handle:start(fullpath, uvflags, create_on_change(fullpath))
+            end
+          end
+        else
           local handle = handles[fullpath]
-          if not handle then
-            handle = assert(uv.new_fs_event())
-            handles[fullpath] = handle
-            handle:start(fullpath, uvflags, create_on_change(fullpath))
+          if handle then
+            if not handle:is_closing() then
+              handle:close()
+            end
+            handles[fullpath] = nil
           end
+          change_type = FileChangeType.Deleted
         end
-      else
-        local handle = handles[fullpath]
-        if handle then
-          if not handle:is_closing() then
-            handle:close()
-          end
-          handles[fullpath] = nil
-        end
-        change_type = FileChangeType.Deleted
-      end
-      callback(fullpath, change_type)
+        callback(fullpath, change_type)
+      end)
     end
   end
   local root_handle = assert(uv.new_fs_event())
