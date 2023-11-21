@@ -4096,10 +4096,10 @@ int buf_signcols(buf_T *buf, int max)
     // Check if we need to redraw
     if (signcols != buf->b_signcols.size) {
       buf->b_signcols.size = signcols;
-      buf->b_signcols.max = max;
       redraw_buf_later(buf, UPD_NOT_VALID);
     }
 
+    buf->b_signcols.max = max;
     buf->b_signcols.valid = true;
   }
 
