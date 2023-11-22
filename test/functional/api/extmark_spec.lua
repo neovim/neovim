@@ -1579,6 +1579,7 @@ describe('API/extmarks', function()
     eq({0, 0, {
       ns_id = 1,
       cursorline_hl_group = "Statement",
+      priority = 4096,
       right_gravity = true,
     } }, get_extmark_by_id(ns, marks[3], { details = true }))
   end)

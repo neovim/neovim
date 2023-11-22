@@ -50,67 +50,35 @@
 ///
 /// must not be used during iteration!
 void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col, int end_row,
-                 colnr_T end_col, Decoration *decor, bool right_gravity, bool end_right_gravity,
-                 bool no_undo, bool invalidate, Error *err)
+                 colnr_T end_col, DecorInline decor, uint16_t decor_flags, bool right_gravity,
+                 bool end_right_gravity, bool no_undo, bool invalidate, Error *err)
 {
   uint32_t *ns = map_put_ref(uint32_t, uint32_t)(buf->b_extmark_ns, ns_id, NULL, NULL);
   uint32_t id = idp ? *idp : 0;
-  bool decor_full = false;
-  bool hl_eol = false;
 
-  uint8_t decor_level = kDecorLevelNone;  // no decor
-  if (decor) {
-    if (kv_size(decor->virt_text)
-        || kv_size(decor->virt_lines)
-        || decor->conceal
-        || decor_has_sign(decor)
-        || decor->ui_watched
-        || decor->spell != kNone) {
-      decor_full = true;
-      decor = xmemdup(decor, sizeof *decor);
-    }
-    decor_level = kDecorLevelVisible;  // decor affects redraw
-    hl_eol = decor->hl_eol;
-    if (kv_size(decor->virt_lines)) {
-      decor_level = kDecorLevelVirtLine;  // decor affects horizontal size
-    }
-  }
-  uint16_t flags = mt_flags(right_gravity, hl_eol, no_undo, invalidate, decor_level);
-
+  uint16_t flags = mt_flags(right_gravity, no_undo, invalidate, decor.ext) | decor_flags;
   if (id == 0) {
     id = ++*ns;
   } else {
     MarkTreeIter itr[1] = { 0 };
     MTKey old_mark = marktree_lookup_ns(buf->b_marktree, ns_id, id, false, itr);
     if (old_mark.id) {
-      if (decor_state.running_on_lines) {
-        if (err) {
-          api_set_error(err, kErrorTypeException,
-                        "Cannot change extmarks during on_line callbacks");
-        }
-        goto error;
-      }
       if (mt_paired(old_mark) || end_row > -1) {
         extmark_del_id(buf, ns_id, id);
       } else {
-        // TODO(bfredl): we need to do more if "revising" a decoration mark.
         assert(marktree_itr_valid(itr));
         if (old_mark.pos.row == row && old_mark.pos.col == col) {
-          if (marktree_decor_level(old_mark) > kDecorLevelNone) {
-            decor_remove(buf, row, row, old_mark.decor_full, false);
-            old_mark.decor_full = NULL;
+          if (mt_decor_any(old_mark)) {
+            buf_decor_remove(buf, row, row, mt_decor(old_mark), true);
           }
-          old_mark.flags = flags;
-          if (decor_full) {
-            old_mark.decor_full = decor;
-          } else if (decor) {
-            old_mark.hl_id = decor->hl_id;
-            old_mark.priority = decor->priority;
-          }
-          marktree_revise(buf->b_marktree, itr, decor_level, old_mark);
+
+          // not paired: we can revise in place
+          mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_EXTERNAL_MASK;
+          mt_itr_rawkey(itr).flags |= flags;
+          mt_itr_rawkey(itr).decor_data = decor.data;
           goto revised;
         }
-        decor_remove(buf, old_mark.pos.row, old_mark.pos.row, old_mark.decor_full, false);
+        buf_decor_remove(buf, old_mark.pos.row, old_mark.pos.row, mt_decor(old_mark), true);
         marktree_del_itr(buf->b_marktree, itr, false);
       }
     } else {
@@ -118,28 +86,18 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
     }
   }
 
-  MTKey mark = { { row, col }, ns_id, id, 0, flags, 0, NULL };
-  if (decor_full) {
-    mark.decor_full = decor;
-  } else if (decor) {
-    mark.hl_id = decor->hl_id;
-    mark.priority = decor->priority;
-  }
+  MTKey mark = { { row, col }, ns_id, id, flags, decor.data };
 
   marktree_put(buf->b_marktree, mark, end_row, end_col, end_right_gravity);
 
 revised:
-  decor_add(buf, row, end_row, decor, decor && decor->hl_id);
+  if (decor_flags || decor.ext) {
+    buf_put_decor(buf, decor, row);
+    decor_redraw(buf, row, end_row > -1 ? end_row : row, decor);
+  }
 
   if (idp) {
     *idp = id;
-  }
-
-  return;
-
-error:
-  if (decor_full) {
-    decor_free(decor);
   }
 }
 
@@ -189,8 +147,8 @@ void extmark_del(buf_T *buf, MarkTreeIter *itr, MTKey key, bool restore)
     }
   }
 
-  if (marktree_decor_level(key) > kDecorLevelNone) {
-    decor_remove(buf, key.pos.row, key2.pos.row, key.decor_full, false);
+  if (mt_decor_any(key)) {
+    buf_decor_remove(buf, key.pos.row, key2.pos.row, mt_decor(key), true);
   }
 
   // TODO(bfredl): delete it from current undo header, opportunistically?
@@ -231,7 +189,6 @@ bool extmark_clear(buf_T *buf, uint32_t ns_id, int l_row, colnr_T l_col, int u_r
       marktree_itr_next(buf->b_marktree, itr);
     }
   }
-
   return marks_cleared;
 }
 
@@ -294,24 +251,11 @@ static void push_mark(ExtmarkInfoArray *array, uint32_t ns_id, ExtmarkType type_
   if (!(ns_id == UINT32_MAX || mark.start.ns == ns_id)) {
     return;
   }
-  uint16_t type_flags = kExtmarkNone;
   if (type_filter != kExtmarkNone) {
-    Decoration *decor = mark.start.decor_full;
-    if (decor && (decor->sign_text || decor->number_hl_id)) {
-      type_flags |= (kExtmarkSignHL|kExtmarkSign);
+    if (!mt_decor_any(mark.start)) {
+      return;
     }
-    if (decor && (decor->line_hl_id || decor->cursorline_hl_id)) {
-      type_flags |= (kExtmarkSignHL|kExtmarkHighlight);
-    }
-    if (decor && decor->virt_text.size) {
-      type_flags |= kExtmarkVirtText;
-    }
-    if (decor && decor->virt_lines.size) {
-      type_flags |= kExtmarkVirtLines;
-    }
-    if (mark.start.hl_id) {
-      type_flags |= kExtmarkHighlight;
-    }
+    uint16_t type_flags = decor_type_flags(mt_decor(mark.start));
 
     if (!(type_flags & type_filter)) {
       return;
@@ -349,9 +293,9 @@ void extmark_free_all(buf_T *buf)
       break;
     }
 
-    // don't free mark.decor_full twice for a paired mark.
+    // don't free mark.decor twice for a paired mark.
     if (!(mt_paired(mark) && mt_end(mark))) {
-      decor_free(mark.decor_full);
+      decor_free(mt_decor(mark));
     }
 
     marktree_itr_next(buf->b_marktree, itr);
@@ -398,9 +342,8 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
           continue;
         } else {
           invalidated = true;
-          mark.flags |= MT_FLAG_INVALID;
-          marktree_revise(curbuf->b_marktree, itr, marktree_decor_level(mark), mark);
-          decor_remove(buf, mark.pos.row, endpos.row, mark.decor_full, true);
+          mt_itr_rawkey(itr).flags |= MT_FLAG_INVALID;
+          buf_decor_remove(buf, mark.pos.row, endpos.row, mt_decor(mark), false);
         }
       }
     }
@@ -451,10 +394,8 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
       if (pos.invalidated) {
         MarkTreeIter itr[1] = { 0 };
         MTKey mark = marktree_lookup(curbuf->b_marktree, pos.mark, itr);
-        MTKey end = marktree_get_alt(curbuf->b_marktree, mark, NULL);
-        mark.flags &= (uint16_t) ~MT_FLAG_INVALID;
-        marktree_revise(curbuf->b_marktree, itr, marktree_decor_level(mark), mark);
-        decor_add(curbuf, mark.pos.row, end.pos.row, mark.decor_full, mark.hl_id);
+        mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
+        buf_put_decor(curbuf, mt_decor(mark), mark.pos.row);
       }
       if (pos.old_row >= 0) {
         extmark_setraw(curbuf, pos.mark, pos.old_row, pos.old_col);

@@ -663,7 +663,7 @@ describe('decorations providers', function()
     ]])
   end)
 
-  it('does not allow removing extmarks during on_line callbacks', function()
+  it('does allow removing extmarks during on_line callbacks', function()
     exec_lua([[
       eok = true
     ]])
@@ -676,7 +676,7 @@ describe('decorations providers', function()
       end
     ]])
     exec_lua([[
-      assert(eok == false)
+      assert(eok == true)
     ]])
   end)
 
