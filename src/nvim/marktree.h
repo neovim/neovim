@@ -48,7 +48,7 @@ typedef struct {
 } MarkTreeIter;
 
 #define marktree_itr_valid(itr) ((itr)->x != NULL)
-// accces raw key: flags in MT_FLAG_EXTERNAL_MASK and decor_data are safe to modify.
+// access raw key: flags in MT_FLAG_EXTERNAL_MASK and decor_data are safe to modify.
 #define mt_itr_rawkey(itr) ((itr)->x->key[(itr)->i])
 
 // Internal storage

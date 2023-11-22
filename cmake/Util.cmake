@@ -162,8 +162,8 @@ endfunction()
 # cmake -B build
 # cmake --build build --config Release
 #
-# Passing CMAKE_BUILD_TYPE for multi-config generators will now not only
-# not be used, but also generate a warning for the user.
+# Passing CMAKE_BUILD_TYPE for multi-config generators will not only not be
+# used, but also generate a warning for the user.
 function(set_default_buildtype)
   set(allowableBuildTypes Debug Release MinSizeRel RelWithDebInfo)
 

@@ -6998,11 +6998,11 @@ sign_place({id}, {group}, {name}, {buf} [, {dict}])               *sign_place()*
 		similar to the |:sign-place| command.
 
 		If the sign identifier {id} is zero, then a new identifier is
-		allocated (first available id in a buffer).  Otherwise the
-		specified number is used. {group} is the sign group name. To use
-		the global sign group, use an empty string.  {group} functions
-		as a namespace for {id}, thus two groups can use the same IDs.
-		Refer to |sign-identifier| and |sign-group| for more information.
+		allocated.  Otherwise the specified number is used. {group} is
+		the sign group name. To use the global sign group, use an
+		empty string.  {group} functions as a namespace for {id}, thus
+		two groups can use the same IDs. Refer to |sign-identifier|
+		and |sign-group| for more information.
 
 		{name} refers to a defined sign.
 		{buf} refers to a buffer name or number. For the accepted

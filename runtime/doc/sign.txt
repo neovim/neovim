@@ -54,9 +54,9 @@ Each placed sign is identified by a number called the sign identifier. This
 identifier is used to jump to the sign or to remove the sign. The identifier
 is assigned when placing the sign using the |:sign-place| command or the
 |sign_place()| function. Each sign identifier should be a unique number (per
-buffer). Placing the same identifier twice will move the previously placed sign.
-The |sign_place()| function can be called with a zero sign identifier to allocate
-the next available identifier.
+buffer). Placing the same identifier twice will move the previously placed
+sign. The |sign_place()| function can be called with a zero sign identifier to
+allocate the next available identifier.
 
 							*sign-group*
 Each placed sign can be assigned to either the global group or a named group.
