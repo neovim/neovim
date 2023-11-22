@@ -59,11 +59,7 @@ typedef struct {
   uint16_t flags;
   DecorPriority priority;
   int hl_id;  // if sign: highlight of sign text
-  // TODO(bfredl): Later signs should use sc[2] as well.
-  union {
-    char *ptr;  // sign
-    schar_T sc[2];  // conceal text (only sc[0] used)
-  } text;
+  schar_T text[SIGN_WIDTH];  // conceal text only uses text[0]
   // NOTE: if more functionality is added to a Highlight these should be overloaded
   // or restructured
   char *sign_name;
@@ -74,7 +70,7 @@ typedef struct {
   uint32_t next;
 } DecorSignHighlight;
 
-#define DECOR_SIGN_HIGHLIGHT_INIT { 0, DECOR_PRIORITY_BASE, 0, { .ptr = NULL }, NULL, 0, 0, 0, 0, \
+#define DECOR_SIGN_HIGHLIGHT_INIT { 0, DECOR_PRIORITY_BASE, 0, { 0, 0 }, NULL, 0, 0, 0, 0, \
                                     DECOR_ID_INVALID }
 
 enum {

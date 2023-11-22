@@ -56,6 +56,8 @@ typedef struct {
 } SignRange;
 #define SIGNRANGE_INIT { 0, 0 }
 
+enum { SIGN_WIDTH = 2, };  ///< Number of display cells for a sign in the signcolumn
+
 typedef struct file_buffer buf_T;
 typedef struct syn_state synstate_T;
 typedef struct terminal Terminal;
