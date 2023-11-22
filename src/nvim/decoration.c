@@ -179,11 +179,17 @@ DecorSignHighlight decor_sh_from_inline(DecorHighlightInline item, String concea
 void buf_put_decor(buf_T *buf, DecorInline decor, int row)
 {
   if (decor.ext) {
-    if (decor.data.ext.vt) {
-      buf_put_decor_virt(buf, decor.data.ext.vt);
+    DecorVirtText *vt = decor.data.ext.vt;
+    while (vt) {
+      buf_put_decor_virt(buf, vt);
+      vt = vt->next;
     }
-    if (decor.data.ext.sh_idx != DECOR_ID_INVALID) {
-      buf_put_decor_sh(buf, &kv_A(decor_items, decor.data.ext.sh_idx), row);
+
+    uint32_t idx = decor.data.ext.sh_idx;
+    while (idx != DECOR_ID_INVALID) {
+      DecorSignHighlight *sh = &kv_A(decor_items, idx);
+      buf_put_decor_sh(buf, sh, row);
+      idx = sh->next;
     }
   }
 }
