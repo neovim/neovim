@@ -3411,9 +3411,10 @@ static void qf_free_items(qf_list_T *qfl)
         // to avoid crashing when it's wrong.
         // TODO(vim): Avoid qf_count being incorrect.
         qfl->qf_count = 1;
+      } else {
+        qfl->qf_start = qfpnext;
       }
     }
-    qfl->qf_start = qfpnext;
     qfl->qf_count--;
   }
 
