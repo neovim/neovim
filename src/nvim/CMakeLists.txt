@@ -83,6 +83,36 @@ endif()
 # Compiler and linker options
 #-------------------------------------------------------------------------------
 
+if(NOT MSVC)
+  target_compile_options(main_lib INTERFACE -Wall -Wextra -pedantic -Wno-unused-parameter
+    -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion -Wvla
+    -Wdouble-promotion
+    -Wmissing-noreturn
+    -Wmissing-format-attribute
+    -Wmissing-prototypes
+    -fsigned-char)
+
+  # For O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW flags on older systems
+  # (pre POSIX.1-2008: glibc 2.11 and earlier). #4042
+  # For ptsname(). #6743
+  target_compile_definitions(main_lib INTERFACE _GNU_SOURCE)
+endif()
+
+# -fstack-protector breaks Mingw-w64 builds
+if(NOT MINGW)
+  check_c_compiler_flag(-fstack-protector-strong HAS_FSTACK_PROTECTOR_STRONG_FLAG)
+  if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
+    target_compile_options(main_lib INTERFACE -fstack-protector-strong)
+    target_link_libraries(main_lib INTERFACE -fstack-protector-strong)
+  else()
+    check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
+    if(HAS_FSTACK_PROTECTOR_FLAG)
+      target_compile_options(main_lib INTERFACE -fstack-protector --param ssp-buffer-size=4)
+      target_link_libraries(main_lib INTERFACE -fstack-protector --param ssp-buffer-size=4)
+    endif()
+  endif()
+endif()
+
 # Compiler specific options
 if(MSVC)
   target_compile_options(main_lib INTERFACE -W3)
@@ -116,61 +146,28 @@ elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
   endif()
 endif()
 
-if(NOT MSVC)
-  target_compile_options(main_lib INTERFACE -Wall -Wextra -pedantic -Wno-unused-parameter
-    -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion -Wvla
-    -Wdouble-promotion
-    -Wmissing-noreturn
-    -Wmissing-format-attribute
-    -Wmissing-prototypes
-    -fsigned-char)
-
-  # For O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW flags on older systems
-  # (pre POSIX.1-2008: glibc 2.11 and earlier). #4042
-  # For ptsname(). #6743
-  target_compile_definitions(main_lib INTERFACE _GNU_SOURCE)
+# Platform specific options
+if(UNIX)
+  target_link_libraries(main_lib INTERFACE m)
+  if (NOT CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+    target_link_libraries(main_lib INTERFACE util)
+  endif()
 endif()
 
-if(WIN32)
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   target_compile_definitions(main_lib INTERFACE _WIN32_WINNT=0x0602 MSWIN)
   target_link_libraries(main_lib INTERFACE netapi32)
-endif()
-
-if(APPLE)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
   target_link_libraries(nvim PRIVATE "-framework CoreServices")
 
   # Actually export symbols - symbols may not be visible even though
   # ENABLE_EXPORTS is set to true. See
   # https://github.com/neovim/neovim/issues/25295
   set_target_properties(nvim PROPERTIES LINK_FLAGS "-Wl,-export_dynamic")
-endif()
-
-if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+elseif(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
   target_link_libraries(main_lib INTERFACE pthread c++abi)
-endif()
-
-if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
   target_link_libraries(nvim PRIVATE -lsocket)
-endif()
-
-if(UNIX)
-  target_link_libraries(main_lib INTERFACE m)
-  if (NOT CMAKE_SYSTEM_NAME STREQUAL "SunOS")
-    target_link_libraries(main_lib INTERFACE util)
-  endif()
-
-  # -fstack-protector breaks non Unix builds even in Mingw-w64
-  check_c_compiler_flag(-fstack-protector-strong HAS_FSTACK_PROTECTOR_STRONG_FLAG)
-  if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
-    target_compile_options(main_lib INTERFACE -fstack-protector-strong)
-    target_link_libraries(main_lib INTERFACE -fstack-protector-strong)
-  else()
-    check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
-    if(HAS_FSTACK_PROTECTOR_FLAG)
-      target_compile_options(main_lib INTERFACE -fstack-protector --param ssp-buffer-size=4)
-      target_link_libraries(main_lib INTERFACE -fstack-protector --param ssp-buffer-size=4)
-    endif()
-  endif()
 endif()
 
 check_c_compiler_flag(-Wimplicit-fallthrough HAVE_WIMPLICIT_FALLTHROUGH_FLAG)
@@ -210,6 +207,38 @@ endif()
 #-------------------------------------------------------------------------------
 # Cmake options
 #-------------------------------------------------------------------------------
+
+if(ENABLE_ASAN_UBSAN)
+  message(STATUS "Enabling address sanitizer and undefined behavior sanitizer for nvim.")
+  if(NOT MSVC)
+    if(CI_BUILD)
+      # Try to recover from all sanitize issues so we get reports about all failures
+      target_compile_options(nvim PRIVATE -fsanitize-recover=all)
+    else()
+      target_compile_options(nvim PRIVATE -fno-sanitize-recover=all)
+    endif()
+    target_compile_options(nvim PRIVATE
+      -fno-omit-frame-pointer
+      -fno-optimize-sibling-calls
+      -fsanitize=undefined)
+  endif()
+
+  target_compile_options(nvim PRIVATE -fsanitize=address)
+  target_link_libraries(nvim PRIVATE -fsanitize=address -fsanitize=undefined)
+  target_compile_definitions(nvim PRIVATE ENABLE_ASAN_UBSAN)
+elseif(ENABLE_MSAN)
+  message(STATUS "Enabling memory sanitizer for nvim.")
+  target_compile_options(nvim PRIVATE
+    -fsanitize=memory
+    -fsanitize-memory-track-origins
+    -fno-omit-frame-pointer
+    -fno-optimize-sibling-calls)
+  target_link_libraries(nvim PRIVATE -fsanitize=memory -fsanitize-memory-track-origins)
+elseif(ENABLE_TSAN)
+  message(STATUS "Enabling thread sanitizer for nvim.")
+  target_compile_options(nvim PRIVATE -fsanitize=thread -fPIE)
+  target_link_libraries(nvim PRIVATE -fsanitize=thread)
+endif()
 
 option(CI_BUILD "CI, extra flags will be set" OFF)
 if(CI_BUILD)
@@ -775,42 +804,6 @@ set_target_properties(
 )
 target_compile_definitions(libnvim PRIVATE MAKE_LIB)
 target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv)
-
-#-------------------------------------------------------------------------------
-# Cmake options
-#-------------------------------------------------------------------------------
-
-if(ENABLE_ASAN_UBSAN)
-  message(STATUS "Enabling address sanitizer and undefined behavior sanitizer for nvim.")
-  if(NOT MSVC)
-    if(CI_BUILD)
-      # Try to recover from all sanitize issues so we get reports about all failures
-      target_compile_options(nvim PRIVATE -fsanitize-recover=all)
-    else()
-      target_compile_options(nvim PRIVATE -fno-sanitize-recover=all)
-    endif()
-    target_compile_options(nvim PRIVATE
-      -fno-omit-frame-pointer
-      -fno-optimize-sibling-calls
-      -fsanitize=undefined)
-  endif()
-
-  target_compile_options(nvim PRIVATE -fsanitize=address)
-  target_link_libraries(nvim PRIVATE -fsanitize=address -fsanitize=undefined)
-  target_compile_definitions(nvim PRIVATE ENABLE_ASAN_UBSAN)
-elseif(ENABLE_MSAN)
-  message(STATUS "Enabling memory sanitizer for nvim.")
-  target_compile_options(nvim PRIVATE
-    -fsanitize=memory
-    -fsanitize-memory-track-origins
-    -fno-omit-frame-pointer
-    -fno-optimize-sibling-calls)
-  target_link_libraries(nvim PRIVATE -fsanitize=memory -fsanitize-memory-track-origins)
-elseif(ENABLE_TSAN)
-  message(STATUS "Enabling thread sanitizer for nvim.")
-  target_compile_options(nvim PRIVATE -fsanitize=thread -fPIE)
-  target_link_libraries(nvim PRIVATE -fsanitize=thread)
-endif()
 
 #-------------------------------------------------------------------------------
 # Lint
