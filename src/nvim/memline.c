@@ -3398,9 +3398,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 
           // If there is a SwapExists autocommand and we can handle the
           // response, trigger it.  It may return 0 to ask the user anyway.
-          if (choice == 0
-              && swap_exists_action != SEA_NONE
-              && has_autocmd(EVENT_SWAPEXISTS, buf_fname, buf)) {
+          if (choice == 0 && has_autocmd(EVENT_SWAPEXISTS, buf_fname, buf)) {
             choice = do_swapexists(buf, fname);
           }
 
