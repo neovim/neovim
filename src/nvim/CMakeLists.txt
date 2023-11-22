@@ -377,8 +377,8 @@ file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
 
 glob_wrapper(NVIM_SOURCES *.c)
 glob_wrapper(NVIM_HEADERS *.h)
-glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c)
-glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h)
+glob_wrapper(EXTERNAL_SOURCES ../xdiff/*.c ../mpack/*.c ../cjson/*.c ../klib/*.c ../sds/*.c)
+glob_wrapper(EXTERNAL_HEADERS ../xdiff/*.h ../mpack/*.h ../cjson/*.h ../klib/*.h ../sds/*.h)
 
 glob_wrapper(NLUA0_SOURCES ../mpack/*.c)
 
@@ -443,7 +443,7 @@ if(MSVC)
     ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -wd4090 -wd4244 -wd4267")
 else()
   set_source_files_properties(
-    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes -Wno-misleading-indentation")
+    ${EXTERNAL_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-missing-noreturn -Wno-missing-format-attribute -Wno-double-promotion -Wno-strict-prototypes -Wno-misleading-indentation -Wno-missing-prototypes")
 endif()
 
 # Log level (NVIM_LOG_DEBUG in log.h)
