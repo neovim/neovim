@@ -171,12 +171,12 @@ int sign_cmp(const void *p1, const void *p2)
          ? n : (sh2->sign_add_id - sh1->sign_add_id);
 }
 
-/// Delete the specified signs
+/// Delete the specified sign(s)
 ///
 /// @param buf  buffer sign is stored in or NULL for all buffers
 /// @param group  sign group
 /// @param id  sign id
-/// @param atlnum  sign at this line, -1 at any line
+/// @param atlnum  single sign at this line, specified signs at any line when -1
 static int buf_delete_signs(buf_T *buf, char *group, int id, linenr_T atlnum)
 {
   int64_t ns = group_get_ns(group);
@@ -187,7 +187,7 @@ static int buf_delete_signs(buf_T *buf, char *group, int id, linenr_T atlnum)
   MarkTreeIter itr[1];
   int row = atlnum > 0 ? atlnum - 1 : 0;
   kvec_t(MTKey) signs = KV_INITIAL_VALUE;
-  // Store and sort when removing a single sign at a specific line number.
+  // Store signs at a specific line number to remove one later.
   if (atlnum > 0) {
     if (!marktree_itr_get_overlap(buf->b_marktree, row, 0, itr)) {
       return FAIL;
@@ -222,6 +222,7 @@ static int buf_delete_signs(buf_T *buf, char *group, int id, linenr_T atlnum)
     }
   }
 
+  // Sort to remove the highest priority sign at a specific line number.
   if (kv_size(signs)) {
     qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_cmp);
     extmark_del_id(buf, kv_A(signs, 0).ns, kv_A(signs, 0).id);
@@ -1198,11 +1199,7 @@ static int sign_define_from_dict(char *name, dict_T *dict)
     numhl = tv_dict_get_string(dict, "numhl", false);
   }
 
-  if (sign_define_by_name(name, icon, text, linehl, texthl, culhl, numhl) == OK) {
-    return 0;
-  }
-
-  return -1;
+  return sign_define_by_name(name, icon, text, linehl, texthl, culhl, numhl) - 1;
 }
 
 /// Define multiple signs using attributes from list 'l' and store the return
@@ -1563,7 +1560,7 @@ static int sign_unplace_from_dict(typval_T *group_tv, dict_T *dict)
     }
   }
 
-  return sign_unplace(buf, id, group, 0) ? 0 : -1;
+  return sign_unplace(buf, id, group, 0) - 1;
 }
 
 /// "sign_unplace()" function
