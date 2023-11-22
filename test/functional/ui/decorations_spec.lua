@@ -4628,6 +4628,27 @@ l5
 
   end)
 
+  it('can add a single sign and text highlight', function()
+    insert(example_test3)
+    feed 'gg'
+
+    meths.buf_set_extmark(0, ns, 1, 0, {sign_text='S', hl_group='Todo', end_col=1})
+    screen:expect{grid=[[
+      {1:  }^l1                                              |
+      S {3:l}2                                              |
+      {1:  }l3                                              |
+      {1:  }l4                                              |
+      {1:  }l5                                              |
+      {1:  }                                                |
+      {2:~                                                 }|
+      {2:~                                                 }|
+      {2:~                                                 }|
+                                                        |
+    ]]}
+
+    meths.buf_clear_namespace(0, ns, 0, -1)
+  end)
+
   it('can add multiple signs (single extmark)', function()
     insert(example_test3)
     feed 'gg'
