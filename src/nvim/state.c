@@ -212,7 +212,7 @@ void get_mode(char *buf)
     if (exmode_active) {
       buf[i++] = 'v';
     }
-    if (cmdline_overstrike()){
+    if (cmdline_overstrike()) {
       buf[i++] = 'r';
     }
   } else if (State & MODE_TERMINAL) {
