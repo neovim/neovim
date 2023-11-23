@@ -903,11 +903,14 @@ bool vim_isprintc_strict(int c)
 /// @param[in]  p  String to skip in.
 ///
 /// @return Pointer to character after the skipped whitespace.
-char *skipwhite(const char *const p)
+char *skipwhite(const char *p)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
   FUNC_ATTR_NONNULL_RET
 {
-  return skipwhite_len(p, strlen(p));
+  while (ascii_iswhite(*p)) {
+    p++;
+  }
+  return (char *)p;
 }
 
 /// Like `skipwhite`, but skip up to `len` characters.
