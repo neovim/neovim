@@ -46,22 +46,17 @@ describe('statuscolumn', function()
   end)
 
   it("widens with irregular 'statuscolumn' width", function()
-    command([[set stc=%{v:relnum?v:relnum:(v:lnum==5?'bbbbb':v:lnum)}]])
-    command('norm 5G | redraw!')
+    screen:try_resize(screen._width, 4)
+    command([=[
+      set stc=%{v:relnum?v:relnum:(v:lnum==5?'bbbbb':v:lnum)}
+      let ns = nvim_create_namespace('')
+      call nvim_buf_set_extmark(0, ns, 3, 0, {'virt_text':[['virt_text']]})
+      norm 5G | redraw!
+    ]=])
     screen:expect([[
-      1    aaaaa                                           |
+      1    aaaaa virt_text                                 |
       bbbbba^eaaa                                           |
       1    aaaaa                                           |
-      2    aaaaa                                           |
-      3    aaaaa                                           |
-      4    aaaaa                                           |
-      5    aaaaa                                           |
-      6    aaaaa                                           |
-      7    aaaaa                                           |
-      8    aaaaa                                           |
-      9    aaaaa                                           |
-      10   aaaaa                                           |
-      11   aaaaa                                           |
                                                            |
     ]])
   end)
