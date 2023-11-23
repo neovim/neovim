@@ -3222,6 +3222,25 @@ static char *sub_parse_flags(char *cmd, subflags_T *subflags, int *which_pat)
   return cmd;
 }
 
+/// Skip over the "sub" part in :s/pat/sub/ where "delimiter" is the separating
+/// character.
+static char *skip_substitute(char *start, int delimiter)
+{
+  char *p = start;
+
+  while (p[0]) {
+    if (p[0] == delimiter) {  // end delimiter found
+      *p++ = NUL;  // replace it with a NUL
+      break;
+    }
+    if (p[0] == '\\' && p[1] != 0) {  // skip escaped characters
+      p++;
+    }
+    MB_PTR_ADV(p);
+  }
+  return p;
+}
+
 static int check_regexp_delim(int c)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -3349,17 +3368,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     // Small incompatibility: vi sees '\n' as end of the command, but in
     // Vim we want to use '\n' to find/substitute a NUL.
     sub = cmd;              // remember the start of the substitution
-
-    while (cmd[0]) {
-      if (cmd[0] == delimiter) {                // end delimiter found
-        *cmd++ = NUL;                           // replace it with a NUL
-        break;
-      }
-      if (cmd[0] == '\\' && cmd[1] != 0) {      // skip escaped characters
-        cmd++;
-      }
-      MB_PTR_ADV(cmd);
-    }
+    cmd = skip_substitute(cmd, delimiter);
 
     if (!eap->skip && cmdpreview_ns <= 0) {
       sub_set_replacement((SubReplacementString) {
