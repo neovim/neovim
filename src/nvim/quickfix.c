@@ -3096,7 +3096,7 @@ theend:
   decr_quickfix_busy();
 
   // Trigger QuickFixJump events only if the jump was successful
-  if (retval == QF_OK) {
+  if (qf_ptr != NULL && retval == QF_OK) {
     apply_autocmds(EVENT_QUICKFIXJUMP, NULL, NULL, false, curbuf);
   }
 }
