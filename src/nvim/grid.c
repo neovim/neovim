@@ -348,6 +348,9 @@ schar_T grid_line_getchar(int col, int *attr)
 void grid_line_put_schar(int col, schar_T schar, int attr)
 {
   assert(grid_line_grid);
+  if (col >= grid_line_maxcol) {
+    return;
+  }
 
   linebuf_char[col] = schar;
   linebuf_attr[col] = attr;
@@ -374,7 +377,7 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
 
   int start_col = col;
 
-  int max_col = grid_line_maxcol;
+  const int max_col = grid_line_maxcol;
   while (col < max_col && (len < 0 || (int)(ptr - text) < len) && *ptr != NUL) {
     // check if this is the first byte of a multibyte
     int mbyte_blen = len > 0
@@ -428,16 +431,20 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
 
 void grid_line_fill(int start_col, int end_col, int c, int attr)
 {
+  end_col = MIN(end_col, grid_line_maxcol);
+  if (start_col >= end_col) {
+    return;
+  }
+
   schar_T sc = schar_from_char(c);
   for (int col = start_col; col < end_col; col++) {
     linebuf_char[col] = sc;
     linebuf_attr[col] = attr;
     linebuf_vcol[col] = -1;
   }
-  if (start_col < end_col) {
-    grid_line_first = MIN(grid_line_first, start_col);
-    grid_line_last = MAX(grid_line_last, end_col);
-  }
+
+  grid_line_first = MIN(grid_line_first, start_col);
+  grid_line_last = MAX(grid_line_last, end_col);
 }
 
 /// move the cursor to a position in a currently rendered line.
@@ -496,7 +503,8 @@ void grid_line_flush(void)
 {
   ScreenGrid *grid = grid_line_grid;
   grid_line_grid = NULL;
-  if (!(grid_line_first < grid_line_last)) {
+  assert(grid_line_last <= grid_line_maxcol);
+  if (grid_line_first >= grid_line_last) {
     return;
   }
 
