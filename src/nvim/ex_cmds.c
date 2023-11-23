@@ -3222,6 +3222,25 @@ static char *sub_parse_flags(char *cmd, subflags_T *subflags, int *which_pat)
   return cmd;
 }
 
+/// Skip over the "sub" part in :s/pat/sub/ where "delimiter" is the separating
+/// character.
+static char *skip_substitute(char *start, int delimiter)
+{
+  char *p = start;
+
+  while (p[0]) {
+    if (p[0] == delimiter) {  // end delimiter found
+      *p++ = NUL;  // replace it with a NUL
+      break;
+    }
+    if (p[0] == '\\' && p[1] != 0) {  // skip escaped characters
+      p++;
+    }
+    MB_PTR_ADV(p);
+  }
+  return p;
+}
+
 static int check_regexp_delim(int c)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -3348,18 +3367,9 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
 
     // Small incompatibility: vi sees '\n' as end of the command, but in
     // Vim we want to use '\n' to find/substitute a NUL.
-    sub = cmd;              // remember the start of the substitution
-
-    while (cmd[0]) {
-      if (cmd[0] == delimiter) {                // end delimiter found
-        *cmd++ = NUL;                           // replace it with a NUL
-        break;
-      }
-      if (cmd[0] == '\\' && cmd[1] != 0) {      // skip escaped characters
-        cmd++;
-      }
-      MB_PTR_ADV(cmd);
-    }
+    char *p = cmd;  // remember the start of the substitution
+    cmd = skip_substitute(cmd, delimiter);
+    sub = xstrdup(p);
 
     if (!eap->skip && cmdpreview_ns <= 0) {
       sub_set_replacement((SubReplacementString) {
@@ -3374,7 +3384,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
       return 0;
     }
     pat = NULL;                 // search_regcomp() will use previous pattern
-    sub = old_sub.sub;
+    sub = xstrdup(old_sub.sub);
 
     // Vi compatibility quirk: repeating with ":s" keeps the cursor in the
     // last column after using "$".
@@ -3382,6 +3392,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
   }
 
   if (sub != NULL && sub_joining_lines(eap, pat, sub, cmd, cmdpreview_ns <= 0)) {
+    xfree(sub);
     return 0;
   }
 
@@ -3396,11 +3407,13 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     i = getdigits_int(&cmd, true, INT_MAX);
     if (i <= 0 && !eap->skip && subflags.do_error) {
       emsg(_(e_zerocount));
+      xfree(sub);
       return 0;
     } else if (i >= INT_MAX) {
       char buf[20];
       vim_snprintf(buf, sizeof(buf), "%d", i);
       semsg(_(e_val_too_large), buf);
+      xfree(sub);
       return 0;
     }
     eap->line1 = eap->line2;
@@ -3416,17 +3429,20 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     eap->nextcmd = check_nextcmd(cmd);
     if (eap->nextcmd == NULL) {
       semsg(_(e_trailing_arg), cmd);
+      xfree(sub);
       return 0;
     }
   }
 
   if (eap->skip) {          // not executing commands, only parsing
+    xfree(sub);
     return 0;
   }
 
   if (!subflags.do_count && !MODIFIABLE(curbuf)) {
     // Substitution is not allowed in non-'modifiable' buffer
     emsg(_(e_modifiable));
+    xfree(sub);
     return 0;
   }
 
@@ -3435,6 +3451,7 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     if (subflags.do_error) {
       emsg(_(e_invcmd));
     }
+    xfree(sub);
     return 0;
   }
 
@@ -3449,22 +3466,20 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
 
   assert(sub != NULL);
 
-  char *sub_copy = NULL;
-
   // If the substitute pattern starts with "\=" then it's an expression.
   // Make a copy, a recursive function may free it.
   // Otherwise, '~' in the substitute pattern is replaced with the old
   // pattern.  We do it here once to avoid it to be replaced over and over
   // again.
   if (sub[0] == '\\' && sub[1] == '=') {
-    sub = xstrdup(sub);
-    sub_copy = sub;
+    char *p = xstrdup(sub);
+    xfree(sub);
+    sub = p;
   } else {
-    char *newsub = regtilde(sub, magic_isset(), cmdpreview_ns > 0);
-    if (newsub != sub) {
-      // newsub was allocated, free it later.
-      sub_copy = newsub;
-      sub = newsub;
+    char *p = regtilde(sub, magic_isset(), cmdpreview_ns > 0);
+    if (p != sub) {
+      xfree(sub);
+      sub = p;
     }
   }
 
@@ -4235,7 +4250,7 @@ skip:
   }
 
   vim_regfree(regmatch.regprog);
-  xfree(sub_copy);
+  xfree(sub);
 
   // Restore the flag values, they can be used for ":&&".
   subflags.do_all = save_do_all;
