@@ -265,6 +265,11 @@ func Test_listchars()
   call Check_listchars(expected, 5, 12)
   call assert_equal(expected, split(execute("%list"), "\n"))
 
+  " Changing the value of 'ambiwidth' twice shouldn't cause double-free when
+  " "leadmultispace" is specified.
+  set ambiwidth=double
+  set ambiwidth&
+
   " Test leadmultispace and lead and space
   normal ggdG
   set listchars=eol:$  " Accommodate Nvim default

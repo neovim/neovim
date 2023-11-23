@@ -2871,9 +2871,6 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
     } else {
       wp->w_p_fcs_chars = fcs_chars;
     }
-  } else if (is_listchars) {
-    xfree(lcs_chars.multispace);
-    xfree(lcs_chars.leadmultispace);
   }
 
   return NULL;          // no error
