@@ -458,13 +458,13 @@ accordingly, proceeding as follows:
 	|$XDG_CONFIG_HOME|	$XDG_CONFIG_HOME/nvim/init.vim	(or init.lua)
 
 	If Nvim was started with "-u {file}" then {file} is used as the config
-	and all initializations until 5. are skipped. $MYVIMRC is not set.
+	and all initializations until 8. are skipped. $MYVIMRC is not set.
 	"nvim -u NORC" can be used to skip these initializations without
 	reading a file.  "nvim -u NONE" also skips plugins and syntax
 	highlighting.  |-u|
 
-	If Nvim was started with |-es| all initializations until 5. are
-	skipped.
+	If Nvim was started with |-es| or |-Es| or |-l| all initializations until 8.
+	are skipped.
 						*system-vimrc* *sysinit.vim*
      a. The system vimrc file is read for initializations.  If
 	nvim/sysinit.vim file exists in one of $XDG_CONFIG_DIRS, it will be
