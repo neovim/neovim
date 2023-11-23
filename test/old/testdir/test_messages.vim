@@ -485,6 +485,29 @@ func Test_echo_string_partial()
   call assert_equal("function('CountSpaces', [{'ccccccccccc': ['ab', 'cd'], 'aaaaaaaaaaa': v:false, 'bbbbbbbbbbbb': ''}])", string(function('CountSpaces', [#{aaaaaaaaaaa: v:false, bbbbbbbbbbbb: '', ccccccccccc: ['ab', 'cd']}])))
 endfunc
 
+" Test that fileinfo is shown properly when 'cmdheight' has just decreased
+" due to switching tabpage and 'shortmess' doesn't contain 'o' or 'O'.
+func Test_fileinfo_tabpage_cmdheight()
+  CheckRunVimInTerminal
+
+  let content =<< trim END
+    set shortmess-=o
+    set shortmess-=O
+    set shortmess-=F
+    tabnew
+    set cmdheight=2
+    tabprev
+    edit Xfileinfo.txt
+  END
+
+  call writefile(content, 'Xtest_fileinfo_tabpage_cmdheight', 'D')
+  let buf = RunVimInTerminal('-S Xtest_fileinfo_tabpage_cmdheight', #{rows: 6})
+  call WaitForAssert({-> assert_match('^"Xfileinfo.txt" \[New\]', term_getline(buf, 6))})
+
+  " clean up
+  call StopVimInTerminal(buf)
+endfunc
+
 " Message output was previously overwritten by the fileinfo display, shown
 " when switching buffers. If a buffer is switched to, then a message if
 " echoed, we should show the message, rather than overwriting it with
