@@ -26,6 +26,7 @@
 #include "nvim/memory.h"
 #include "nvim/menu.h"
 #include "nvim/message.h"
+#include "nvim/mouse.h"
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
@@ -1147,6 +1148,7 @@ void pum_show_popupmenu(vimmenu_T *menu)
       // right mouse release: select clicked item, close if any
       pum_select_mouse_pos();
       if (pum_selected >= 0) {
+        reset_mouse_got_click();
         pum_execute_menu(menu, mode);
         break;
       }

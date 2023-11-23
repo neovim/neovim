@@ -589,6 +589,33 @@ describe('statuscolumn', function()
         meths.input_mouse('left', 'press', '', 0, 7, 7)
         eq('0 1 l 11', eval("g:testvar"))
       end)
+
+      it('selecting popupmenu does not drag mouse', function()
+        screen:try_resize(screen._width, 2)
+        screen:set_default_attr_ids({
+          [0] = {foreground = Screen.colors.Brown},
+          [1] = {background = Screen.colors.Plum1},
+        })
+        meths.set_option_value('statuscolumn', '%0@MyClickFunc@%l%T', {})
+        exec([[
+          function! MyClickFunc(minwid, clicks, button, mods)
+            let g:testvar = printf("%d %d %s %d", a:minwid, a:clicks, a:button, getmousepos().line)
+            menu PopupStc.Echo <cmd>echo g:testvar<CR>
+            popup PopupStc
+          endfunction
+        ]])
+        meths.input_mouse('left', 'press', '', 0, 0, 0)
+        screen:expect([[
+          {0:8 }^aaaaa                                              |
+           {1: Echo }                                              |
+        ]])
+        meths.input_mouse('left', 'press', '', 0, 1, 5)
+        meths.input_mouse('left', 'release', '', 0, 1, 5)
+        screen:expect([[
+          {0:8 }^aaaaa                                              |
+          0 1 l 8                                              |
+        ]])
+      end)
     end)
   end
 
