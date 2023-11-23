@@ -42,6 +42,7 @@ find_package(Libvterm 0.3.3 REQUIRED)
 find_package(Msgpack 1.0.0 REQUIRED)
 find_package(Treesitter 0.20.8 REQUIRED)
 find_package(Unibilium 2.0 REQUIRED)
+find_package(UTF8proc REQUIRED)
 
 target_link_libraries(main_lib INTERFACE
   iconv
@@ -50,6 +51,7 @@ target_link_libraries(main_lib INTERFACE
   msgpack
   treesitter
   unibilium
+  utf8proc
   lpeg)
 target_link_libraries(nlua0 PUBLIC lpeg)
 
