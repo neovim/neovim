@@ -869,6 +869,9 @@ function module.new_pipename()
   -- HACK: Start a server temporarily, get the name, then stop it.
   local pipename = module.eval('serverstart()')
   module.funcs.serverstop(pipename)
+  -- Remove the pipe so that trying to connect to it without a server listening
+  -- will be an error instead of a hang.
+  os.remove(pipename)
   return pipename
 end
 

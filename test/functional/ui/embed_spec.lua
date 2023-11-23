@@ -144,7 +144,6 @@ describe('--embed --listen UI', function()
     helpers.skip(helpers.is_os('win'))
     clear()
     local child_server = assert(helpers.new_pipename())
-    uv.fs_unlink(child_server)
     funcs.jobstart({nvim_prog, '--embed', '--listen', child_server, '--clean'})
     retry(nil, nil, function() neq(nil, uv.fs_stat(child_server)) end)
 
