@@ -476,6 +476,8 @@ coerced to strings. See |id()| for more details, currently it uses
 
 |CursorMoved| triggers when moving between windows.
 
+|c_CTRL-W| uses global 'iskeyword' instead of buffer-local
+
 Lua interface (|lua.txt|):
 
 - `:lua print("a\0b")` will print `a^@b`, like with `:echomsg "a\nb"` . In Vim

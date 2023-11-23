@@ -4,6 +4,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, insert, funcs, eq, feed =
   helpers.clear, helpers.insert, helpers.funcs, helpers.eq, helpers.feed
 local eval = helpers.eval
+local command = helpers.command
 local meths = helpers.meths
 
 describe('cmdline', function()
@@ -71,6 +72,27 @@ describe('cmdline', function()
       eq(1, funcs.histdel(':', -2))
       eq(1, funcs.histdel(':'))
       eq('', funcs.histget(':', -1))
+    end)
+  end)
+
+  describe('Ctrl-W', function()
+    it('local option lisp decoupled', function()
+      command('setlocal lisp')
+      feed(':-a<C-w>')
+      eq('-', funcs.getcmdline())
+      command('setlocal nolisp')
+      command('setglobal lisp')
+      feed('a<C-w>')
+      eq('', funcs.getcmdline())
+    end)
+    it('local option iskeyword decoupled', function()
+      command('setlocal iskeyword=_')
+      feed(':a_<C-w>')
+      eq('', funcs.getcmdline())
+      command('setlocal iskeyword&')
+      command('setglobal iskeyword=_')
+      feed('a_<C-w>')
+      eq('a', funcs.getcmdline())
     end)
   end)
 end)
