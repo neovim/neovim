@@ -45,6 +45,7 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/types.h"
+#include "nvim/ui.h"
 #include "nvim/vim.h"
 
 /// List used for abbreviations.
@@ -220,7 +221,8 @@ static void showmap(mapblock_T *mp, bool local)
     return;
   }
 
-  if (msg_didout || msg_silent != 0) {
+  // When ext_messages is active, msg_didout is never set.
+  if (msg_didout || msg_silent != 0 || ui_has(kUIMessages)) {
     msg_putchar('\n');
     if (got_int) {          // 'q' typed at MORE prompt
       return;

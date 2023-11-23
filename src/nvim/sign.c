@@ -71,9 +71,9 @@ static int64_t group_get_ns(const char *group)
   return ns ? ns : -1;
 }
 
-static const char *sign_get_name(MTKey mark)
+static const char *sign_get_name(DecorSignHighlight *sh)
 {
-  char *name = mark.decor_full->sign_name;
+  char *name = sh->sign_name;
   return !name ? "" : map_has(cstr_t, &sign_map, name) ? name : "[Deleted]";
 }
 
@@ -92,15 +92,24 @@ static void buf_set_sign(buf_T *buf, uint32_t *id, char *group, int prio, linenr
   }
 
   uint32_t ns = group ? (uint32_t)nvim_create_namespace(cstr_as_string(group)) : 0;
-  Decoration decor = DECORATION_INIT;
-  decor.sign_text = sp->sn_text ? xstrdup(sp->sn_text) : NULL;
-  decor.sign_name = xstrdup(sp->sn_name);
-  decor.sign_hl_id = sp->sn_text_hl;
-  decor.line_hl_id = sp->sn_line_hl;
-  decor.number_hl_id = sp->sn_num_hl;
-  decor.cursorline_hl_id = sp->sn_cul_hl;
-  decor.priority = (DecorPriority)prio;
-  extmark_set(buf, ns, id, lnum - 1, 0, -1, -1, &decor, true, false, true, true, NULL);
+  DecorSignHighlight sign = DECOR_SIGN_HIGHLIGHT_INIT;
+
+  sign.flags |= kSHIsSign;
+  sign.text.ptr = sp->sn_text ? xstrdup(sp->sn_text) : NULL;
+  sign.sign_name = xstrdup(sp->sn_name);
+  sign.hl_id = sp->sn_text_hl;
+  sign.line_hl_id = sp->sn_line_hl;
+  sign.number_hl_id = sp->sn_num_hl;
+  sign.cursorline_hl_id = sp->sn_cul_hl;
+  sign.priority = (DecorPriority)prio;
+
+  bool has_hl = (sp->sn_line_hl || sp->sn_num_hl || sp->sn_cul_hl);
+  uint16_t decor_flags = (sp->sn_text ? MT_FLAG_DECOR_SIGNTEXT : 0)
+                         | (has_hl ? MT_FLAG_DECOR_SIGNHL : 0);
+
+  DecorInline decor = { .ext = true, .data.ext = { .vt = NULL, .sh_idx = decor_put_sh(sign) } };
+  extmark_set(buf, ns, id, lnum - 1, 0, -1, -1, decor, decor_flags, true,
+              false, true, true, NULL);
 }
 
 /// For an existing, placed sign with "id", modify the sign, group or priority.
@@ -148,17 +157,26 @@ int sign_cmp(const void *p1, const void *p2)
   const MTKey *s2 = (MTKey *)p2;
   int n = s1->pos.row - s2->pos.row;
 
-  return n ? n : (n = s2->decor_full->priority - s1->decor_full->priority)
-         ? n : (n = (int)(s2->id - s1->id))
-         ? n : (s2->decor_full->sign_add_id - s1->decor_full->sign_add_id);
+  if (n) {
+    return n;
+  }
+
+  DecorSignHighlight *sh1 = decor_find_sign(mt_decor(*s1));
+  DecorSignHighlight *sh2 = decor_find_sign(mt_decor(*s2));
+  assert(sh1 && sh2);
+
+  n = sh2->priority - sh1->priority;
+
+  return n ? n : (n = (int)(s2->id - s1->id))
+         ? n : (sh2->sign_add_id - sh1->sign_add_id);
 }
 
-/// Delete the specified signs
+/// Delete the specified sign(s)
 ///
 /// @param buf  buffer sign is stored in or NULL for all buffers
 /// @param group  sign group
 /// @param id  sign id
-/// @param atlnum  sign at this line, -1 at any line
+/// @param atlnum  single sign at this line, specified signs at any line when -1
 static int buf_delete_signs(buf_T *buf, char *group, int id, linenr_T atlnum)
 {
   int64_t ns = group_get_ns(group);
@@ -169,7 +187,7 @@ static int buf_delete_signs(buf_T *buf, char *group, int id, linenr_T atlnum)
   MarkTreeIter itr[1];
   int row = atlnum > 0 ? atlnum - 1 : 0;
   kvec_t(MTKey) signs = KV_INITIAL_VALUE;
-  // Store and sort when removing a single sign at a specific line number.
+  // Store signs at a specific line number to remove one later.
   if (atlnum > 0) {
     if (!marktree_itr_get_overlap(buf->b_marktree, row, 0, itr)) {
       return FAIL;
@@ -177,8 +195,7 @@ static int buf_delete_signs(buf_T *buf, char *group, int id, linenr_T atlnum)
 
     MTPair pair;
     while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
-      if ((ns == UINT32_MAX || ns == pair.start.ns)
-          && pair.start.decor_full && decor_has_sign(pair.start.decor_full)) {
+      if ((ns == UINT32_MAX || ns == pair.start.ns) && mt_decor_sign(pair.start)) {
         kv_push(signs, pair.start);
       }
     }
@@ -191,7 +208,7 @@ static int buf_delete_signs(buf_T *buf, char *group, int id, linenr_T atlnum)
     if (row && mark.pos.row > row) {
       break;
     }
-    if (!mt_end(mark) && mark.decor_full && decor_has_sign(mark.decor_full)
+    if (!mt_end(mark) && mt_decor_sign(mark)
         && (id == 0 || (int)mark.id == id)
         && (ns == UINT32_MAX || ns == mark.ns)) {
       if (atlnum > 0) {
@@ -205,6 +222,7 @@ static int buf_delete_signs(buf_T *buf, char *group, int id, linenr_T atlnum)
     }
   }
 
+  // Sort to remove the highest priority sign at a specific line number.
   if (kv_size(signs)) {
     qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_cmp);
     extmark_del_id(buf, kv_A(signs, 0).ns, kv_A(signs, 0).id);
@@ -248,7 +266,7 @@ static void sign_list_placed(buf_T *rbuf, char *group)
 
       while (itr->x) {
         MTKey mark = marktree_itr_current(itr);
-        if (!mt_end(mark) && mark.decor_full && decor_has_sign(mark.decor_full)
+        if (!mt_end(mark) && mt_decor_sign(mark)
             && (ns == UINT32_MAX || ns == mark.ns)) {
           kv_push(signs, mark);
         }
@@ -262,14 +280,16 @@ static void sign_list_placed(buf_T *rbuf, char *group)
           namebuf[0] = '\0';
           groupbuf[0] = '\0';
           MTKey mark = kv_A(signs, i);
-          if (mark.decor_full->sign_name != NULL) {
-            vim_snprintf(namebuf, MSG_BUF_LEN, _("  name=%s"), sign_get_name(mark));
+
+          DecorSignHighlight *sh = decor_find_sign(mt_decor(mark));
+          if (sh->sign_name != NULL) {
+            vim_snprintf(namebuf, MSG_BUF_LEN, _("  name=%s"), sign_get_name(sh));
           }
           if (mark.ns != 0) {
             vim_snprintf(groupbuf, MSG_BUF_LEN, _("  group=%s"), describe_ns((int)mark.ns, ""));
           }
           vim_snprintf(lbuf, MSG_BUF_LEN, _("    line=%" PRIdLINENR "  id=%u%s%s  priority=%d"),
-                       mark.pos.row + 1, mark.id, groupbuf, namebuf, mark.decor_full->priority);
+                       mark.pos.row + 1, mark.id, groupbuf, namebuf, sh->priority);
           msg_puts(lbuf);
           msg_putchar('\n');
         }
@@ -841,21 +861,12 @@ void ex_sign(exarg_T *eap)
   }
 }
 
-/// Append dictionary of information for a defined sign "sp", or placed
-/// sign "mark" to "retlist". Either "sp", or "mark" is NULL.
-static void sign_list_append_info(sign_T *sp, MTKey *mark, list_T *retlist)
+/// Get dictionary of information for a defined sign "sp"
+static dict_T *sign_get_info_dict(sign_T *sp)
 {
   dict_T *d = tv_dict_alloc();
-  tv_list_append_dict(retlist, d);
 
-  tv_dict_add_str(d, S_LEN("name"), sp ? sp->sn_name : sign_get_name(*mark));
-  if (mark != NULL) {
-    tv_dict_add_nr(d,  S_LEN("id"), (int)mark->id);
-    tv_dict_add_str(d, S_LEN("group"), describe_ns((int)mark->ns, ""));
-    tv_dict_add_nr(d,  S_LEN("lnum"), mark->pos.row + 1);
-    tv_dict_add_nr(d,  S_LEN("priority"), mark->decor_full->priority);
-    return;
-  }
+  tv_dict_add_str(d, S_LEN("name"), sp->sn_name);
 
   if (sp->sn_icon != NULL) {
     tv_dict_add_str(d, S_LEN("icon"), sp->sn_icon);
@@ -871,6 +882,22 @@ static void sign_list_append_info(sign_T *sp, MTKey *mark, list_T *retlist)
       tv_dict_add_str(d, arg[i], strlen(arg[i]), p ? p : "NONE");
     }
   }
+  return d;
+}
+
+/// Get dictionary of information for placed sign "mark"
+static dict_T *sign_get_placed_info_dict(MTKey mark)
+{
+  dict_T *d = tv_dict_alloc();
+
+  DecorSignHighlight *sh = decor_find_sign(mt_decor(mark));
+
+  tv_dict_add_str(d, S_LEN("name"), sign_get_name(sh));
+  tv_dict_add_nr(d,  S_LEN("id"), (int)mark.id);
+  tv_dict_add_str(d, S_LEN("group"), describe_ns((int)mark.ns, ""));
+  tv_dict_add_nr(d,  S_LEN("lnum"), mark.pos.row + 1);
+  tv_dict_add_nr(d,  S_LEN("priority"), sh->priority);
+  return d;
 }
 
 /// Returns information about signs placed in a buffer as list of dicts.
@@ -883,8 +910,8 @@ list_T *get_buffer_signs(buf_T *buf)
 
   while (itr->x) {
     MTKey mark = marktree_itr_current(itr);
-    if (!mt_end(mark) && mark.decor_full && decor_has_sign(mark.decor_full)) {
-      sign_list_append_info(NULL, &mark, l);
+    if (!mt_end(mark) && mt_decor_sign(mark)) {
+      tv_list_append_dict(l, sign_get_placed_info_dict(mark));
     }
     marktree_itr_next(buf->b_marktree, itr);
   }
@@ -918,13 +945,15 @@ static void sign_get_placed_in_buf(buf_T *buf, linenr_T lnum, int sign_id, const
     if (lnum && mark.pos.row >= lnum) {
       break;
     }
-    if (!mt_end(mark) && mark.decor_full && decor_has_sign(mark.decor_full)
+    if (!mt_end(mark)
         && (ns == UINT32_MAX || ns == mark.ns)
         && ((lnum == 0 && sign_id == 0)
             || (sign_id == 0 && lnum == mark.pos.row + 1)
             || (lnum == 0 && sign_id == (int)mark.id)
             || (lnum == mark.pos.row + 1 && sign_id == (int)mark.id))) {
-      kv_push(signs, mark);
+      if (mt_decor_sign(mark)) {
+        kv_push(signs, mark);
+      }
     }
     marktree_itr_next(buf->b_marktree, itr);
   }
@@ -932,7 +961,7 @@ static void sign_get_placed_in_buf(buf_T *buf, linenr_T lnum, int sign_id, const
   if (kv_size(signs)) {
     qsort((void *)&kv_A(signs, 0), kv_size(signs), sizeof(MTKey), sign_cmp);
     for (size_t i = 0; i < kv_size(signs); i++) {
-      sign_list_append_info(NULL, &kv_A(signs, i), l);
+      tv_list_append_dict(l, sign_get_placed_info_dict(kv_A(signs, i)));
     }
     kv_destroy(signs);
   }
@@ -1170,11 +1199,7 @@ static int sign_define_from_dict(char *name, dict_T *dict)
     numhl = tv_dict_get_string(dict, "numhl", false);
   }
 
-  if (sign_define_by_name(name, icon, text, linehl, texthl, culhl, numhl) == OK) {
-    return 0;
-  }
-
-  return -1;
+  return sign_define_by_name(name, icon, text, linehl, texthl, culhl, numhl) - 1;
 }
 
 /// Define multiple signs using attributes from list 'l' and store the return
@@ -1222,18 +1247,17 @@ void f_sign_define(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 /// "sign_getdefined()" function
 void f_sign_getdefined(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  sign_T *sp;
-
   tv_list_alloc_ret(rettv, 0);
 
   if (argvars[0].v_type == VAR_UNKNOWN) {
+    sign_T *sp;
     map_foreach_value(&sign_map, sp, {
-      sign_list_append_info(sp, NULL, rettv->vval.v_list);
+      tv_list_append_dict(rettv->vval.v_list, sign_get_info_dict(sp));
     });
   } else {
-    sp = pmap_get(cstr_t)(&sign_map, tv_get_string(&argvars[0]));
+    sign_T *sp = pmap_get(cstr_t)(&sign_map, tv_get_string(&argvars[0]));
     if (sp != NULL) {
-      sign_list_append_info(sp, NULL, rettv->vval.v_list);
+      tv_list_append_dict(rettv->vval.v_list, sign_get_info_dict(sp));
     }
   }
 }
@@ -1536,7 +1560,7 @@ static int sign_unplace_from_dict(typval_T *group_tv, dict_T *dict)
     }
   }
 
-  return sign_unplace(buf, id, group, 0) ? 0 : -1;
+  return sign_unplace(buf, id, group, 0) - 1;
 }
 
 /// "sign_unplace()" function

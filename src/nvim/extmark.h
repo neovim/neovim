@@ -64,6 +64,8 @@ typedef enum {
   kExtmarkClear,
 } UndoObjectType;
 
+// TODO(bfredl): if possible unify these with marktree flags,
+// so it is possible to filter extmarks directly on top-level flags
 typedef enum {
   kExtmarkNone = 0x1,
   kExtmarkSign = 0x2,

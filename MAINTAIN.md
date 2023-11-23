@@ -126,10 +126,9 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
 * [libuv](https://github.com/libuv/libuv)
 * [libvterm](http://www.leonerd.org.uk/code/libvterm/)
 * [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
-* [msys2](https://github.com/msys2/MINGW-packages) (for mingw Windows build)
-    * Changes to mingw can [break our mingw build](https://github.com/msys2/MINGW-packages/issues/9946).
 * [tree-sitter](https://github.com/tree-sitter/tree-sitter)
 * [unibilium](https://github.com/neovim/unibilium)
+* [treesitter parsers](https://github.com/neovim/neovim/blob/7e97c773e3ba78fcddbb2a0b9b0d572c8210c83e/cmake.deps/deps.txt#L47-L62)
 
 ### Vendored dependencies
 
@@ -147,8 +146,9 @@ These dependencies are "vendored" (inlined), we must update the sources manually
     * Run `scripts/gen_lsp.lua` to update.
 * `runtime/lua/vim/_meta/lpeg.lua`: LPeg definitions.
     * Refer to [`LuaCATS/lpeg`](https://github.com/LuaCATS/lpeg) for updates.
+* `runtime/lua/vim/re.lua`: LPeg regex module.
+    * Vendored from LPeg. Needs to be updated when LPeg is updated.
 * `src/bit.c`: only for PUC lua: port of `require'bit'` from luajit https://bitop.luajit.org/
-* [treesitter parsers](https://github.com/neovim/neovim/blob/fcc24e43e0b5f9d801a01ff2b8f78ce8c16dd551/cmake.deps/CMakeLists.txt#L197-L210)
 * `runtime/lua/coxpcall.lua`: coxpcall (only needed for PUC lua, builtin to luajit)
 
 ### Forks

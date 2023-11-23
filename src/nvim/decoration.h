@@ -6,91 +6,54 @@
 
 #include "klib/kvec.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/macros.h"
 #include "nvim/marktree.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"
 
-// actual Decoration data is in extmark_defs.h
-
-typedef uint16_t DecorPriority;
-#define DECOR_PRIORITY_BASE 0x1000
-
-typedef enum {
-  kVTEndOfLine,
-  kVTOverlay,
-  kVTWinCol,
-  kVTRightAlign,
-  kVTInline,
-} VirtTextPos;
+// actual Decor* data is in decoration_defs.h
 
 EXTERN const char *const virt_text_pos_str[] INIT( = { "eol", "overlay", "win_col", "right_align",
                                                        "inline" });
 
-typedef enum {
-  kHlModeUnknown,
-  kHlModeReplace,
-  kHlModeCombine,
-  kHlModeBlend,
-} HlMode;
-
 EXTERN const char *const hl_mode_str[] INIT( = { "", "replace", "combine", "blend" });
 
-#define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
-
-typedef kvec_t(struct virt_line { VirtText line; bool left_col; }) VirtLines;
-
-struct Decoration {
-  VirtText virt_text;
-  VirtLines virt_lines;
-
-  int hl_id;  // highlight group
-  VirtTextPos virt_text_pos;
-  HlMode hl_mode;
-
-  // TODO(bfredl): at some point turn this into FLAGS
-  bool virt_text_hide;
-  bool hl_eol;
-  bool virt_lines_above;
-  bool conceal;
-  TriState spell;
-  // TODO(bfredl): style, etc
-  DecorPriority priority;
-  int col;  // fixed col value, like win_col
-  int virt_text_width;  // width of virt_text
-  char *sign_text;
-  char *sign_name;
-  int sign_hl_id;
-  int sign_add_id;
-  int number_hl_id;
-  int line_hl_id;
-  int cursorline_hl_id;
-  // TODO(bfredl): in principle this should be a schar_T, but we
-  // probably want some kind of glyph cache for that..
-  int conceal_char;
-  bool ui_watched;  // watched for win_extmark
-};
-#define DECORATION_INIT { KV_INITIAL_VALUE, KV_INITIAL_VALUE, 0, kVTEndOfLine, \
-                          kHlModeUnknown, false, false, false, false, kNone, \
-                          DECOR_PRIORITY_BASE, 0, 0, NULL, NULL, 0, 0, 0, 0, 0, 0, false }
+typedef enum {
+  kDecorKindHighlight,
+  kDecorKindSign,
+  kDecorKindVirtText,
+  kDecorKindVirtLines,
+  kDecorKindUIWatched,
+} DecorRangeKind;
 
 typedef struct {
   int start_row;
   int start_col;
   int end_row;
   int end_col;
-  Decoration decor;
-  int attr_id;  // cached lookup of decor.hl_id
-  bool virt_text_owned;
+  // next pointers MUST NOT be used, these are separate ranges
+  // vt->next could be pointing to freelist memory at this point
+  union {
+    DecorSignHighlight sh;
+    DecorVirtText *vt;
+    struct {
+      uint32_t ns_id;
+      uint32_t mark_id;
+      VirtTextPos pos;
+    } ui;
+  } data;
+  int attr_id;  // cached lookup of inl.hl_id if it was a highlight
+  bool owned;  // ephemeral decoration, free memory immediately
+  DecorPriority priority;
+  DecorRangeKind kind;
   /// Screen column to draw the virtual text.
   /// When -1, the virtual text may be drawn after deciding where.
   /// When -3, the virtual text should be drawn on the next screen line.
   /// When -10, the virtual text has just been added.
   /// When INT_MIN, the virtual text should no longer be drawn.
   int draw_col;
-  uint64_t ns_id;
-  uint64_t mark_id;
 } DecorRange;
 
 typedef struct {
@@ -109,22 +72,10 @@ typedef struct {
 
   TriState spell;
 
-  // This is used to prevent removing/updating extmarks inside
-  // on_lines callbacks which is not allowed since it can lead to
-  // heap-use-after-free errors.
-  bool running_on_lines;
+  bool running_decor_provider;
 } DecorState;
 
 EXTERN DecorState decor_state INIT( = { 0 });
-
-static inline bool decor_has_sign(Decoration *decor)
-{
-  return decor->sign_text
-         || decor->sign_hl_id
-         || decor->number_hl_id
-         || decor->line_hl_id
-         || decor->cursorline_hl_id;
-}
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration.h.generated.h"

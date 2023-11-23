@@ -834,6 +834,19 @@ stack traceback:
     end}
   end)
 
+  it('supports multiline messages for :map', function()
+    command('mapclear')
+    command('nmap Y y$')
+    command('nmap Q @@')
+    command('nnoremap j k')
+    feed(':map<cr>')
+
+    screen:expect{messages={{
+      content = {{ "\nn  Q             @@\nn  Y             y$\nn  j           " }, { "*", 5 }, { " k" }},
+      kind = ''
+    }}}
+  end)
+
   it('wildmode=list', function()
     screen:try_resize(25, 7)
     screen:set_option('ext_popupmenu', false)

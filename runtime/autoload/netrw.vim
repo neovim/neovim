@@ -1,7 +1,9 @@
 " netrw.vim: Handles file transfer and remote directory listing across
 "            AUTOLOAD SECTION
 " Date:		May 03, 2023
-" Version:	173
+" Version:	173a
+" Last Change:
+" 	2023 Nov 21 by Vim Project: ignore wildignore when expanding $COMSPEC	(v173a)
 " Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
@@ -398,7 +400,7 @@ if !exists("g:netrw_localcopycmd")
   if g:netrw_cygwin
    let g:netrw_localcopycmd= "cp"
   else
-   let g:netrw_localcopycmd   = expand("$COMSPEC")
+   let g:netrw_localcopycmd   = expand("$COMSPEC", v:true)
    let g:netrw_localcopycmdopt= " /c copy"
   endif
  elseif has("unix") || has("macunix")
@@ -413,7 +415,7 @@ if !exists("g:netrw_localcopydircmd")
    let g:netrw_localcopydircmd   = "cp"
    let g:netrw_localcopydircmdopt= " -R"
   else
-   let g:netrw_localcopydircmd   = expand("$COMSPEC")
+   let g:netrw_localcopydircmd   = expand("$COMSPEC", v:true)
    let g:netrw_localcopydircmdopt= " /c xcopy /e /c /h /i /k"
   endif
  elseif has("unix")
@@ -434,7 +436,7 @@ if has("win32") || has("win95") || has("win64") || has("win16")
   if g:netrw_cygwin
    call s:NetrwInit("g:netrw_localmkdir","mkdir")
   else
-   let g:netrw_localmkdir   = expand("$COMSPEC")
+   let g:netrw_localmkdir   = expand("$COMSPEC", v:true)
    let g:netrw_localmkdiropt= " /c mkdir"
   endif
 else
@@ -450,7 +452,7 @@ if !exists("g:netrw_localmovecmd")
   if g:netrw_cygwin
    let g:netrw_localmovecmd= "mv"
   else
-   let g:netrw_localmovecmd   = expand("$COMSPEC")
+   let g:netrw_localmovecmd   = expand("$COMSPEC", v:true)
    let g:netrw_localmovecmdopt= " /c move"
   endif
  elseif has("unix") || has("macunix")

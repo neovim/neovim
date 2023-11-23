@@ -1579,8 +1579,26 @@ describe('API/extmarks', function()
     eq({0, 0, {
       ns_id = 1,
       cursorline_hl_group = "Statement",
+      priority = 4096,
       right_gravity = true,
     } }, get_extmark_by_id(ns, marks[3], { details = true }))
+    curbufmeths.clear_namespace(ns, 0, -1)
+    -- legacy sign mark includes sign name
+    command('sign define sign1 text=s1 texthl=Title linehl=LineNR numhl=Normal culhl=CursorLine')
+    command('sign place 1 name=sign1 line=1')
+    eq({ {1, 0, 0, {
+      cursorline_hl_group = 'CursorLine',
+      invalidate = true,
+      line_hl_group = 'LineNr',
+      ns_id = 0,
+      number_hl_group = 'Normal',
+      priority = 10,
+      right_gravity = true,
+      sign_hl_group = 'Title',
+      sign_name = 'sign1',
+      sign_text = 's1',
+      undo_restore = false
+    } } }, get_extmarks(-1, 0, -1, { details = true }))
   end)
 
   it('can get marks from anonymous namespaces', function()

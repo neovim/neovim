@@ -762,8 +762,6 @@ describe('Buffer highlighting', function()
       local s1 = {{'Köttbullar', 'Comment'}, {'Kräuterbutter'}}
       local s2 = {{'こんにちは', 'Comment'}}
 
-      -- TODO: only a virtual text from the same ns currently overrides
-      -- an existing virtual text. We might add a prioritation system.
       set_virtual_text(id1, 0, s1, {})
       eq({{1, 0, 0, {
         ns_id = 1,
@@ -775,7 +773,6 @@ describe('Buffer highlighting', function()
         virt_text_hide = false,
       }}}, get_extmarks(id1, {0,0}, {0, -1}, {details=true}))
 
-      -- TODO: is this really valid? shouldn't the max be line_count()-1?
       local lastline = line_count()
       set_virtual_text(id1, line_count(), s2, {})
       eq({{3, lastline, 0, {
