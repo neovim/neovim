@@ -74,6 +74,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
+#include "sds/sds.h"
 
 typedef struct normal_state {
   VimState state;
@@ -1958,12 +1959,12 @@ bool add_to_showcmd(int c)
     }
   }
 
-  char *p = transchar(c);
+  sds p = sdsnew(transchar(c));
   if (*p == ' ') {
-    STRCPY(p, "<20>");
+    sdscpy(p, "<20>");
   }
   size_t old_len = strlen(showcmd_buf);
-  size_t extra_len = strlen(p);
+  size_t extra_len = sdslen(p);
   size_t limit = ui_has(kUIMessages) ? SHOWCMD_BUFLEN - 1 : SHOWCMD_COLS;
   if (old_len + extra_len > limit) {
     size_t overflow = old_len + extra_len - limit;
