@@ -743,6 +743,7 @@ Options:
   *'printheader'*
   *'printmbcharset'*
   *'prompt'* *'noprompt'*
+  *'pyxversion'* *'pyx'*
   *'remap'* *'noremap'*
   *'restorescreen'* *'rs'* *'norestorescreen'* *'nors'*
   *'secure'*

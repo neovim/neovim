@@ -4622,16 +4622,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	cursor column + 'pumwidth' exceeds screen width, the popup menu is
 	nudged to fit on the screen.
 
-						*'pyxversion'* *'pyx'*
-'pyxversion' 'pyx'	number	(default 3)
-			global
-	Specifies the python version used for pyx* functions and commands
-	|python_x|.  As only Python 3 is supported, this always has the value
-	`3`. Setting any other value is an error.
-
-	This option cannot be set from a |modeline| or in the |sandbox|, for
-	security reasons.
-
 					*'quickfixtextfunc'* *'qftf'*
 'quickfixtextfunc' 'qftf'	string	(default "")
 			global

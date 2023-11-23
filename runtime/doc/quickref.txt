@@ -820,7 +820,6 @@ Short explanation of each option:		*option-list*
 'previewwindow'   'pvw'     identifies the preview window
 'pumheight'	  'ph'	    maximum number of items to show in the popup menu
 'pumwidth'	  'pw'	    minimum width of the popup menu
-'pyxversion'	  'pyx'	    Python version used for pyx* commands
 'quoteescape'	  'qe'	    escape characters used in a string
 'readonly'	  'ro'	    disallow writing the buffer
 'redrawtime'	  'rdt'     timeout for 'hlsearch' and |:match| highlighting

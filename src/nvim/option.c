@@ -2921,12 +2921,6 @@ static const char *validate_num_option(const OptInt *pp, OptInt *valuep)
     } else if (value > 10000) {
       return e_invarg;
     }
-  } else if (pp == &p_pyx) {
-    if (value == 0) {
-      *valuep = 3;
-    } else if (value != 3) {
-      return e_invarg;
-    }
   } else if (pp == &p_re) {
     if (value < 0 || value > 2) {
       return e_invarg;

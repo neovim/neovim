@@ -6110,9 +6110,9 @@ return {
       full_name = 'pyxversion',
       scope = { 'global' },
       secure = true,
-      short_desc = N_('selects default python version to use'),
+      short_desc = N_('No description'),
       type = 'number',
-      varname = 'p_pyx',
+      varname = 'p_force_off',
     },
     {
       abbreviation = 'qftf',
