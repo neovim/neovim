@@ -727,6 +727,46 @@ describe('messages', function()
     ]])
   end)
 
+  -- oldtest: Test_fileinfo_tabpage_cmdheight()
+  it("fileinfo works when 'cmdheight' has just decreased", function()
+    screen = Screen.new(40, 6)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue};  -- NonText
+      [1] = {bold = true};  -- TabLineSel
+      [2] = {underline = true, background = Screen.colors.LightGrey};  -- TabLine
+      [3] = {reverse = true};  -- TabLineFill
+    })
+    screen:attach()
+
+    exec([[
+      set shortmess-=o
+      set shortmess-=O
+      set shortmess-=F
+      tabnew
+      set cmdheight=2
+    ]])
+    command('mode')  -- FIXME: bottom is invalid after scrolling
+    screen:expect([[
+      {2: [No Name] }{1: [No Name] }{3:                 }{2:X}|
+      ^                                        |
+      {0:~                                       }|
+      {0:~                                       }|
+                                              |
+                                              |
+    ]])
+
+    feed(':tabprev | edit Xfileinfo.txt<CR>')
+    screen:expect([[
+      {1: Xfileinfo.txt }{2: [No Name] }{3:             }{2:X}|
+      ^                                        |
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      "Xfileinfo.txt" [New]                   |
+    ]])
+    assert_alive()
+  end)
+
   -- oldtest: Test_fileinfo_after_echo()
   it('fileinfo does not overwrite echo message vim-patch:8.2.4156', function()
     screen = Screen.new(40, 6)
@@ -734,6 +774,7 @@ describe('messages', function()
       [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
     })
     screen:attach()
+
     exec([[
       set shortmess-=F
 
@@ -747,6 +788,7 @@ describe('messages', function()
 
       autocmd CursorHold * buf b.txt | w | echo "'b' written"
     ]])
+
     command('set updatetime=50')
     feed('0$')
     screen:expect([[
