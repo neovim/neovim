@@ -1402,7 +1402,11 @@ void msg_ext_set_kind(const char *msg_kind)
 /// Prepare for outputting characters in the command line.
 void msg_start(void)
 {
-  int did_return = false;
+  bool did_return = false;
+
+  if (msg_row < cmdline_row) {
+    msg_row = cmdline_row;
+  }
 
   if (!msg_silent) {
     XFREE_CLEAR(keep_msg);              // don't display old message now
