@@ -685,4 +685,21 @@ describe('Signs', function()
                                                            |
     ]])
   end)
+
+  it('numhl highlight is applied when signcolumn=no', function()
+    screen:try_resize(screen._width, 4)
+    command([[
+      set nu scl=no
+      call setline(1, ['line1', 'line2', 'line3'])
+      call nvim_buf_set_extmark(0, nvim_create_namespace('test'), 0, 0, {'number_hl_group':'Error'})
+      call sign_define('foo', { 'text':'F', 'numhl':'Error' })
+      call sign_place(0, '', 'foo', bufnr(''), { 'lnum':2 })
+    ]])
+    screen:expect([[
+      {8:  1 }^line1                                            |
+      {8:  2 }line2                                            |
+      {6:  3 }line3                                            |
+                                                           |
+    ]])
+  end)
 end)
