@@ -4,6 +4,7 @@
 " Version:	173a
 " Last Change:
 " 	2023 Nov 21 by Vim Project: ignore wildignore when expanding $COMSPEC	(v173a)
+" 	2023 Nov 22 by Vim Project: fix handling of very long filename on longlist style	(v173a)
 " Maintainer:	Charles E Campbell <NcampObell@SdrPchip.AorgM-NOSPAM>
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 2016 Charles E. Campbell {{{1
@@ -11077,16 +11078,16 @@ fun! s:LocalListing()
 "   call Decho("pfile   <".pfile.">",'~'.expand("<slnum>"))
 
    if w:netrw_liststyle == s:LONGLIST
+    let longfile= printf("%-".g:netrw_maxfilenamelen."S",pfile)
     let sz   = getfsize(filename)
 	let szlen = 15 - (strdisplaywidth(longfile) - g:netrw_maxfilenamelen)
     let szlen = (szlen > 0) ? szlen : 0
-    let fsz  = printf("%".szlen."S",sz)
 
     if g:netrw_sizestyle =~# "[hH]"
      let sz= s:NetrwHumanReadable(sz)
     endif
-	let longfile= printf("%-".g:netrw_maxfilenamelen."S",pfile)
-    let pfile   = longfile."  ".sz." ".strftime(g:netrw_timefmt,getftime(filename))
+    let fsz  = printf("%".szlen."S",sz)
+    let pfile   = longfile."  ".fsz." ".strftime(g:netrw_timefmt,getftime(filename))
 "    call Decho("longlist support: sz=".sz." fsz=".fsz,'~'.expand("<slnum>"))
    endif
 
@@ -11096,7 +11097,7 @@ fun! s:LocalListing()
 "    call Decho("implementing g:netrw_sort_by=".g:netrw_sort_by." (time)")
 "    call Decho("getftime(".filename.")=".getftime(filename),'~'.expand("<slnum>"))
     let t  = getftime(filename)
-    let ft = strpart("000000000000000000",1,18-strlen(t)).t
+    let ft = printf("%018d",t)
 "    call Decho("exe NetrwKeepj put ='".ft.'/'.pfile."'",'~'.expand("<slnum>"))
     let ftpfile= ft.'/'.pfile
     sil! NetrwKeepj put=ftpfile
@@ -11106,10 +11107,7 @@ fun! s:LocalListing()
 "    call Decho("implementing g:netrw_sort_by=".g:netrw_sort_by." (size)")
 "    call Decho("getfsize(".filename.")=".getfsize(filename),'~'.expand("<slnum>"))
     let sz   = getfsize(filename)
-    if g:netrw_sizestyle =~# "[hH]"
-     let sz= s:NetrwHumanReadable(sz)
-    endif
-    let fsz  = strpart("000000000000000000",1,18-strlen(sz)).sz
+    let fsz  = printf("%018d",sz)
 "    call Decho("exe NetrwKeepj put ='".fsz.'/'.filename."'",'~'.expand("<slnum>"))
     let fszpfile= fsz.'/'.pfile
     sil! NetrwKeepj put =fszpfile
