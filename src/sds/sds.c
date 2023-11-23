@@ -87,7 +87,7 @@ static inline char sdsReqType(size_t string_size) {
  * end of the string. However the string is binary safe and can contain
  * \0 characters in the middle, as the length is stored in the sds header. */
 sds sdsnewlen(const void *init, size_t initlen) {
-    void *sh;
+    void *newsh;
     sds s;
     char type = sdsReqType(initlen);
     /* Empty strings are usually created in order to append. Use type 8
@@ -96,13 +96,13 @@ sds sdsnewlen(const void *init, size_t initlen) {
     int hdrlen = sdsHdrSize(type);
     unsigned char *fp; /* flags pointer. */
 
-    sh = s_malloc(hdrlen+initlen+1);
-    if (sh == NULL) return NULL;
+    newsh = s_malloc(hdrlen+initlen+1);
+    if (newsh == NULL) return NULL;
     if (init==SDS_NOINIT)
         init = NULL;
     else if (!init)
-        memset(sh, 0, hdrlen+initlen+1);
-    s = (char*)sh+hdrlen;
+        memset(newsh, 0, hdrlen+initlen+1);
+    s = (char*)newsh+hdrlen;
     fp = ((unsigned char*)s)-1;
     switch(type) {
         case SDS_TYPE_5: {
