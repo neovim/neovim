@@ -6,7 +6,6 @@ endif()
 project(${PARSERLANG} C)
 
 add_compile_options(-w)
-set(CMAKE_C_STANDARD 99)
 
 add_library(markdown MODULE
 tree-sitter-markdown/src/parser.c

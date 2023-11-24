@@ -1,31 +1,25 @@
 add_subdirectory(functional/fixtures)  # compile test programs
 get_directory_property(GENERATED_HELP_TAGS DIRECTORY ${PROJECT_SOURCE_DIR}/runtime DEFINITION GENERATED_HELP_TAGS)
 
-if(NOT BUSTED_OUTPUT_TYPE)
-  set(BUSTED_OUTPUT_TYPE "nvim")
-endif()
-
 get_target_property(TEST_INCLUDE_DIRS main_lib INTERFACE_INCLUDE_DIRECTORIES)
 
-set(UNITTEST_PREREQS nvim)
-set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS})
-set(BENCHMARK_PREREQS nvim tty-test)
+set(TEST_OPTIONS
+      -D BUILD_DIR=${CMAKE_BINARY_DIR}
+      -D CIRRUS_CI=$ENV{CIRRUS_CI}
+      -D CI_BUILD=${CI_BUILD}
+      -D DEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
+      -D NVIM_PRG=$<TARGET_FILE:nvim>
+      -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+      -D WORKING_DIR=${PROJECT_SOURCE_DIR})
 
 check_lua_module(${LUA_PRG} "ffi" LUA_HAS_FFI)
 if(LUA_HAS_FFI)
   add_custom_target(unittest
     COMMAND ${CMAKE_COMMAND}
-      -D NVIM_PRG=$<TARGET_FILE:nvim>
-      -D WORKING_DIR=${PROJECT_SOURCE_DIR}
-      -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-      -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-      -D BUILD_DIR=${CMAKE_BINARY_DIR}
-      -D DEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
       -D TEST_TYPE=unit
-      -D CIRRUS_CI=$ENV{CIRRUS_CI}
-      -D CI_BUILD=${CI_BUILD}
+      ${TEST_OPTIONS}
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${UNITTEST_PREREQS}
+    DEPENDS nvim
     USES_TERMINAL)
   add_dependencies(unittest lua-dev-deps)
 else()
@@ -38,32 +32,18 @@ configure_file(
 
 add_custom_target(functionaltest
   COMMAND ${CMAKE_COMMAND}
-    -D NVIM_PRG=$<TARGET_FILE:nvim>
-    -D WORKING_DIR=${PROJECT_SOURCE_DIR}
-    -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-    -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-    -D BUILD_DIR=${CMAKE_BINARY_DIR}
-    -D DEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
     -D TEST_TYPE=functional
-    -D CIRRUS_CI=$ENV{CIRRUS_CI}
-    -D CI_BUILD=${CI_BUILD}
+    ${TEST_OPTIONS}
     -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-  DEPENDS ${FUNCTIONALTEST_PREREQS}
+  DEPENDS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS}
   USES_TERMINAL)
 
 add_custom_target(benchmark
   COMMAND ${CMAKE_COMMAND}
-    -D NVIM_PRG=$<TARGET_FILE:nvim>
-    -D WORKING_DIR=${PROJECT_SOURCE_DIR}
-    -D BUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-    -D TEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-    -D BUILD_DIR=${CMAKE_BINARY_DIR}
-    -D DEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
     -D TEST_TYPE=benchmark
-    -D CIRRUS_CI=$ENV{CIRRUS_CI}
-    -D CI_BUILD=${CI_BUILD}
+    ${TEST_OPTIONS}
     -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-  DEPENDS ${BENCHMARK_PREREQS}
+  DEPENDS nvim tty-test
   USES_TERMINAL)
 
 add_dependencies(functionaltest lua-dev-deps)

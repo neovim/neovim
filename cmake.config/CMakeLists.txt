@@ -170,7 +170,7 @@ function(append_target_expression)
   set(VERSION_STRING "${VERSION_STRING} ${TARGET_EXPRESSION} " PARENT_SCOPE)
 endfunction()
 append_target_expression(PROPERTY COMPILE_OPTIONS)
-append_target_expression(PROPERTY LINK_FLAGS) # TODO(dundargoc): Replace/complement with LINK_OPTIONS when minimum version is 3.13+
+append_target_expression(PROPERTY LINK_OPTIONS)
 append_target_expression(PREFIX "-D" PROPERTY COMPILE_DEFINITIONS)
 append_target_expression(PREFIX "-I" PROPERTY INCLUDE_DIRECTORIES)
 string(REPLACE "  " " " VERSION_STRING "${VERSION_STRING}") # Remove duplicate whitespace

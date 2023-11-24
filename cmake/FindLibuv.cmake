@@ -61,3 +61,7 @@ find_package_handle_standard_args(Libuv DEFAULT_MSG
                                   LIBUV_LIBRARY LIBUV_INCLUDE_DIR)
 
 mark_as_advanced(LIBUV_INCLUDE_DIR LIBUV_LIBRARY)
+
+add_library(libuv INTERFACE)
+target_include_directories(libuv SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIR})
+target_link_libraries(libuv INTERFACE ${LIBUV_LIBRARIES})
