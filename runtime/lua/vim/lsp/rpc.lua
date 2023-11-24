@@ -774,8 +774,8 @@ end
 ---@param extra_spawn_params vim.lsp.rpc.ExtraSpawnParams? Additional context for the LSP
 --- server process. May contain:
 --- - {cwd} (string) Working directory for the LSP server process
---- - {detached} (boolean) Detach the LSP server process from the current process
---- - {env} (table) Additional environment variables for LSP server process
+--- - {detached} (boolean|nil) Detach the LSP server process from the current process. Defaults to false on Windows and true otherwise.
+--- - {env} (table|nil) Additional environment variables for LSP server process
 ---@return vim.lsp.rpc.PublicRpcClient? #Client RPC object, with these methods:
 --- - `notify()` |vim.lsp.rpc.notify()|
 --- - `request()` |vim.lsp.rpc.request()|
