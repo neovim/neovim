@@ -15,9 +15,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/cursor_shape.h"
-#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
-#include "nvim/event/multiqueue.h"
 #include "nvim/event/signal.h"
 #include "nvim/event/stream.h"
 #include "nvim/globals.h"
@@ -36,7 +34,6 @@
 #include "nvim/tui/tui.h"
 #include "nvim/types.h"
 #include "nvim/ugrid.h"
-#include "nvim/ui.h"
 #include "nvim/ui_client.h"
 
 #ifdef MSWIN
@@ -1424,10 +1421,10 @@ static void show_verbose_terminfo(TUIData *tui)
   api_free_array(args);
 }
 
-#ifdef UNIX
-static void suspend_event(void **argv)
+void tui_suspend(TUIData *tui)
 {
-  TUIData *tui = argv[0];
+// on a non-UNIX system, this is a no-op
+#ifdef UNIX
   ui_client_detach();
   bool enable_mouse = tui->mouse_enabled;
   tui_terminal_stop(tui);
@@ -1442,18 +1439,6 @@ static void suspend_event(void **argv)
   }
   stream_set_blocking(tui->input.in_fd, false);  // libuv expects this
   ui_client_attach(tui->width, tui->height, tui->term);
-}
-#endif
-
-void tui_suspend(TUIData *tui)
-{
-// on a non-UNIX system, this is a no-op
-#ifdef UNIX
-  // kill(0, SIGTSTP) won't stop the UI thread, so we must poll for SIGCONT
-  // before continuing. This is done in another callback to avoid
-  // loop_poll_events recursion
-  multiqueue_put_event(resize_events,
-                       event_create(suspend_event, 1, tui));
 #endif
 }
 
