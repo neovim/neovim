@@ -39,8 +39,7 @@ jobs:
 
       - name: Install stylua
         run: |
-          URL=$(curl -L https://api.github.com/repos/JohnnyMorganz/StyLua/releases/latest | jq -r '.assets[] | select(.name == "stylua-linux-x86_64.zip") | .browser_download_url')
-          wget --directory-prefix="$BIN_DIR" "$URL"
+          wget --directory-prefix="$BIN_DIR" https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-x86_64.zip
           (cd "$BIN_DIR"; unzip stylua*.zip)
 
       - name: Build third-party deps
