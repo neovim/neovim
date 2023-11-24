@@ -9,6 +9,17 @@ filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
 all: nvim
 
+panvimdoc:
+	git -C build/panvimdoc pull || git clone --depth=1 git@github.com:kdheepak/panvimdoc.git build/panvimdoc
+	mkdir -p doc
+	build/panvimdoc/panvimdoc.sh  \
+		--project-name luv \
+		--input-file .deps/build/src/luv/docs.md \
+		--toc false \
+		--description Nvim \
+		--dedup-subheadings false
+	mv doc/luv.txt runtime/doc/luvref.txt
+
 CMAKE_PRG ?= $(shell (command -v cmake3 || echo cmake))
 CMAKE_BUILD_TYPE ?= Debug
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
