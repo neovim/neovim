@@ -160,11 +160,10 @@ int nlua_pcall(lua_State *lstate, int nargs, int nresults)
   lua_remove(lstate, -2);
   lua_insert(lstate, -2 - nargs);
   int status = lua_pcall(lstate, nargs, nresults, -2 - nargs);
-  if (status) {
-    lua_remove(lstate, -2);
-  } else {
-    lua_remove(lstate, -1 - nresults);
-  }
+
+  // Remove status so only results remain on the stack
+  lua_remove(lstate, status == LUA_OK ? -1 - nresults : -2);
+
   return status;
 }
 
@@ -199,24 +198,38 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags
   in_fast_callback++;
 
   int top = lua_gettop(lstate);
-  int status = nlua_pcall(lstate, nargs, nresult);
-  if (status) {
+
+  lua_State *co = lua_newthread(lstate);
+  lua_insert(lstate, -1 - top);
+
+  lua_xmove(lstate, co, top);
+  int status = lua_resume(co, nargs);
+  int nres = lua_gettop(co);
+  lua_xmove(co, lstate, nres);
+
+  if (status == LUA_YIELD) {
+    nlua_schedule_yield(lstate);
+    retval = 0;
+  } else if (status == LUA_OK) {
+    if (nresult == LUA_MULTRET) {
+      nresult = nres;
+    }
+    retval = nresult;
+  } else {
+    // REVISIT lewrus01 (24/11/23): handle LUA_YIELD
     if (status == LUA_ERRMEM && !(flags & LUVF_CALLBACK_NOEXIT)) {
       // consider out of memory errors unrecoverable, just like xmalloc()
       preserve_exit(e_outofmem);
     }
-    const char *error = lua_tostring(lstate, -1);
+    const char *error = lua_tostring(co, -1);
 
     multiqueue_put(main_loop.events, nlua_luv_error_event,
                    2, xstrdup(error), (intptr_t)kCallback);
-    lua_pop(lstate, 1);  // error message
+    // lua_pop(lstate, 1);  // error message
     retval = -status;
-  } else {  // LUA_OK
-    if (nresult == LUA_MULTRET) {
-      nresult = lua_gettop(lstate) - top + nargs + 1;
-    }
-    retval = nresult;
   }
+
+  lua_pop(lstate, 1);  // thread
 
   in_fast_callback--;
   return retval;
@@ -358,6 +371,75 @@ static void nlua_schedule_event(void **argv)
   if (nlua_pcall(lstate, 0, 0)) {
     nlua_error(lstate, _("Error executing vim.schedule lua callback: %.*s"));
   }
+}
+
+static void nlua_schedule_yield_event(void **argv)
+{
+  LuaRef thread = (LuaRef)(ptrdiff_t)argv[0];
+  LuaRef argstable = (LuaRef)(ptrdiff_t)argv[1];
+  lua_State *const lstate = global_lstate;
+
+  nlua_pushref(lstate, thread);  // [thread]
+  nlua_unref_global(lstate, thread);
+
+  nlua_pushref(lstate, argstable);  // [thread, argstable]
+  nlua_unref_global(lstate, argstable);
+
+  int nargs = (int)lua_objlen(lstate, 2);
+  for (int i = 0; i < nargs; i++) {
+    lua_rawgeti(lstate, 2, i);  // [thread, argstable, args...]
+  }
+
+  lua_State *co = lua_tothread(lstate, 1);
+
+  lua_remove(lstate, 2);  // [thread, args...]
+  lua_xmove(lstate, co, nargs);  // [thread]
+
+  int status = lua_resume(co, nargs);  // [thread, results...]
+  lua_xmove(co, lstate, lua_gettop(co));
+
+  if (status == LUA_YIELD) {
+    nlua_schedule_yield(lstate);
+  } else if (status != LUA_OK) {
+    lua_remove(co, 1);  // [results...]
+    nlua_error(lstate, _("Error executing vim.schedule lua callback: %.*s"));
+  }
+}
+
+/// Schedule a yielded result of a coroutine onto the main loop.
+/// Stack should be: [thread, args...]
+static int nlua_schedule_yield(lua_State *const lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (lua_type(lstate, 1) != LUA_TTHREAD) {
+    lua_pushliteral(lstate, "expected thread");
+    return lua_error(lstate);
+  }
+
+  // If main_loop is closing don't schedule tasks to run in the future,
+  // otherwise any refs allocated here will not be cleaned up.
+  if (main_loop.closing) {
+    return 0;
+  }
+
+  // [thread, args...]
+  int nargs = lua_gettop(lstate) - 1;
+
+  lua_createtable(lstate, nargs, 0);  // [thread, args..., argstable]
+  lua_insert(lstate, 2);  // [thread, argstable, args...]
+  for (int i = 0; i < nargs; i++) {
+    lua_pushvalue(lstate, 3 + i);  // [thread, argstable, args..., args[i]]
+    lua_settable(lstate, 2);
+  }
+
+  lua_insert(lstate, 2);  // [thread, argstable, args...]
+
+  LuaRef thread = nlua_ref_global(lstate, 1);
+  LuaRef args = nlua_ref_global(lstate, 2);
+
+  multiqueue_put(main_loop.events, nlua_schedule_yield_event,
+                 2, (void *)(ptrdiff_t)thread, (void *)(ptrdiff_t)args);
+  return 0;
 }
 
 /// Schedule Lua callback on main loop's event queue
