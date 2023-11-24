@@ -221,30 +221,6 @@ local underline_highlight_map = make_highlight_map('Underline')
 local floating_highlight_map = make_highlight_map('Floating')
 local sign_highlight_map = make_highlight_map('Sign')
 
----@private
-local define_default_signs = (function()
-  local signs_defined = false
-  return function()
-    if signs_defined then
-      return
-    end
-
-    for severity, sign_hl_name in pairs(sign_highlight_map) do
-      if vim.tbl_isempty(vim.fn.sign_getdefined(sign_hl_name)) then
-        local severity_name = M.severity[severity]
-        vim.fn.sign_define(sign_hl_name, {
-          text = (severity_name or 'U'):sub(1, 1),
-          texthl = sign_hl_name,
-          linehl = '',
-          numhl = '',
-        })
-      end
-    end
-
-    signs_defined = true
-  end
-end)()
-
 local function get_bufnr(bufnr)
   if not bufnr or bufnr == 0 then
     return api.nvim_get_current_buf()
@@ -618,6 +594,14 @@ end
 ---                * priority: (number, default 10) Base priority to use for signs. When
 ---                {severity_sort} is used, the priority of a sign is adjusted based on
 ---                its severity. Otherwise, all signs use the same priority.
+---                * text: (table) A table mapping |diagnostic-severity| to the sign text
+---                to display in the sign column. The default is to use "E", "W", "I", and "H"
+---                for errors, warnings, information, and hints, respectively. Example:
+---                   <pre>lua
+---                     vim.diagnostic.config({
+---                       sign = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
+---                     })
+---                   </pre>
 ---       - float: Options for floating windows. See |vim.diagnostic.open_float()|.
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
 ---                           diagnostics are updated on InsertLeave)
@@ -868,8 +852,6 @@ M.handlers.signs = {
       diagnostics = filter_by_severity(opts.signs.severity, diagnostics)
     end
 
-    define_default_signs()
-
     -- 10 is the default sign priority when none is explicitly specified
     local priority = opts.signs and opts.signs.priority or 10
     local get_priority
@@ -890,22 +872,33 @@ M.handlers.signs = {
     end
 
     local ns = M.get_namespace(namespace)
-    if not ns.user_data.sign_group then
-      ns.user_data.sign_group = string.format('vim.diagnostic.%s', ns.name)
+    if not ns.user_data.sign_ns then
+      ns.user_data.sign_ns = api.nvim_create_namespace('')
     end
 
-    local sign_group = ns.user_data.sign_group
+    local text = {}
+    for k in pairs(M.severity) do
+      if opts.signs.text and opts.signs.text[k] then
+        text[k] = opts.signs.text[k]
+      elseif type(k) == 'string' and not text[k] then
+        text[k] = string.sub(k, 1, 1):upper()
+      end
+    end
+
     for _, diagnostic in ipairs(diagnostics) do
-      vim.fn.sign_place(0, sign_group, sign_highlight_map[diagnostic.severity], bufnr, {
-        priority = get_priority(diagnostic.severity),
-        lnum = diagnostic.lnum + 1,
-      })
+      if api.nvim_buf_is_loaded(diagnostic.bufnr) then
+        api.nvim_buf_set_extmark(bufnr, ns.user_data.sign_ns, diagnostic.lnum, 0, {
+          sign_text = text[diagnostic.severity] or text[M.severity[diagnostic.severity]] or 'U',
+          sign_hl_group = sign_highlight_map[diagnostic.severity],
+          priority = get_priority(diagnostic.severity),
+        })
+      end
     end
   end,
   hide = function(namespace, bufnr)
     local ns = M.get_namespace(namespace)
     if ns.user_data.sign_group and api.nvim_buf_is_valid(bufnr) then
-      vim.fn.sign_unplace(ns.user_data.sign_group, { buffer = bufnr })
+      api.nvim_buf_clear_namespace(bufnr, ns.user_data.sign_ns, 0, -1)
     end
   end,
 }

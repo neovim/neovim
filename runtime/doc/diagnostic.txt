@@ -435,6 +435,16 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                          for signs. When {severity_sort} is used, the priority
                          of a sign is adjusted based on its severity.
                          Otherwise, all signs use the same priority.
+                       • text: (table) A table mapping |diagnostic-severity|
+                         to the sign text to display in the sign column. The
+                         default is to use "E", "W", "I", and "H" for errors,
+                         warnings, information, and hints, respectively.
+                         Example: >lua
+
+                         vim.diagnostic.config({
+                           sign = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
+                         })
+<
 
                      • float: Options for floating windows. See
                        |vim.diagnostic.open_float()|.
