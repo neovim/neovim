@@ -132,6 +132,8 @@ static void move_tab_to_mouse(void)
   }
 }
 
+static bool got_click = false;  // got a click some time back
+
 /// Call click definition function for column "col" in the "click_defs" array for button
 /// "which_button".
 static void call_click_def_func(StlClickDefinition *click_defs, int col, int which_button)
@@ -187,6 +189,8 @@ static void call_click_def_func(StlClickDefinition *click_defs, int col, int whi
   typval_T rettv;
   (void)call_vim_function(click_defs[col].func, ARRAY_SIZE(argv), argv, &rettv);
   tv_clear(&rettv);
+  // Make sure next click does not register as drag when callback absorbs the release event.
+  got_click = false;
 }
 
 /// Translate window coordinates to buffer position without any side effects.
@@ -239,14 +243,6 @@ static int get_fpos_of_mouse(pos_T *mpos)
 
   mpos->col = vcol2col(wp, mpos->lnum, col, &mpos->coladd);
   return IN_BUFFER;
-}
-
-static bool mouse_got_click = false;  ///< got a click some time back
-
-/// Reset the flag that a mouse click was seen.
-void reset_mouse_got_click(void)
-{
-  mouse_got_click = false;
 }
 
 /// Do the appropriate action for the current mouse click in the current mode.
@@ -347,13 +343,13 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
 
   // Ignore drag and release events if we didn't get a click.
   if (is_click) {
-    mouse_got_click = true;
+    got_click = true;
   } else {
-    if (!mouse_got_click) {             // didn't get click, ignore
+    if (!got_click) {                   // didn't get click, ignore
       return false;
     }
     if (!is_drag) {                     // release, reset got_click
-      mouse_got_click = false;
+      got_click = false;
       if (in_tab_line) {
         in_tab_line = false;
         return false;
@@ -370,7 +366,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
       stuffnumReadbuff(count);
     }
     stuffcharReadbuff(Ctrl_T);
-    mouse_got_click = false;            // ignore drag&release now
+    got_click = false;            // ignore drag&release now
     return false;
   }
 
@@ -594,7 +590,7 @@ bool do_mouse(oparg_T *oap, int c, int dir, int count, bool fixindent)
         ui_flush();  // Update before showing popup menu
       }
       show_popupmenu();
-      mouse_got_click = false;  // ignore release events
+      got_click = false;  // ignore release events
       return (jump_flags & CURSOR_MOVED) != 0;
     }
     if (which_button == MOUSE_LEFT
@@ -634,7 +630,7 @@ popupexit:
 
   // If an operator is pending, ignore all drags and releases until the next mouse click.
   if (!is_drag && oap != NULL && oap->op_type != OP_NOP) {
-    mouse_got_click = false;
+    got_click = false;
     oap->motion_type = kMTCharWise;
   }
 
@@ -844,7 +840,7 @@ popupexit:
     } else {                                    // location list window
       do_cmdline_cmd(".ll");
     }
-    mouse_got_click = false;                    // ignore drag&release now
+    got_click = false;                          // ignore drag&release now
   } else if ((mod_mask & MOD_MASK_CTRL)
              || (curbuf->b_help && (mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK)) {
     // Ctrl-Mouse click (or double click in a help window) jumps to the tag
@@ -853,7 +849,7 @@ popupexit:
       stuffcharReadbuff(Ctrl_O);
     }
     stuffcharReadbuff(Ctrl_RSB);
-    mouse_got_click = false;                    // ignore drag&release now
+    got_click = false;                          // ignore drag&release now
   } else if ((mod_mask & MOD_MASK_SHIFT)) {
     // Shift-Mouse click searches for the next occurrence of the word under
     // the mouse pointer
