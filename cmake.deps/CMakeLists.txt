@@ -34,18 +34,16 @@ set(DEPS_INCLUDE_FLAGS "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/incl
 
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
-option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
-option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
-option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
+option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
+option(USE_BUNDLED_LPEG "Use the bundled lpeg." ${USE_BUNDLED})
+option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
-option(USE_BUNDLED_LPEG "Use the bundled lpeg." ${USE_BUNDLED})
-#XXX(tarruda): Lua is only used for debugging the functional test client, don't
-# build it unless explicitly requested
-option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
-option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLED})
+option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_TS "Use the bundled treesitter runtime." ${USE_BUNDLED})
+option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLED})
+option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
 
 if(USE_BUNDLED AND MSVC)
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)

@@ -5,8 +5,6 @@ set(GENERATED_HELP_TAGS ${GENERATED_RUNTIME_DIR}/doc/tags)
 set(GENERATED_PACKAGE_DIR ${GENERATED_RUNTIME_DIR}/pack/dist/opt)
 set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
 
-file(MAKE_DIRECTORY ${GENERATED_RUNTIME_DIR})
-file(MAKE_DIRECTORY ${GENERATED_RUNTIME_DIR}/syntax)
 file(MAKE_DIRECTORY ${GENERATED_RUNTIME_DIR}/syntax/vim)
 
 get_directory_property(LUA_GEN DIRECTORY ${PROJECT_SOURCE_DIR}/src/nvim DEFINITION LUA_GEN)
@@ -76,7 +74,6 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
     nvim_runtime_deps
   WORKING_DIRECTORY "${GENERATED_RUNTIME_DIR}"
 )
-
 
 # TODO: This doesn't work. wait for "nvim -l" to land?
 add_custom_target(doc_html

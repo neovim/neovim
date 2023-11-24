@@ -10,11 +10,6 @@ set_target_properties(nvim
 # Dependencies
 #-------------------------------------------------------------------------------
 
-add_library(libuv INTERFACE)
-find_package(Libuv 1.28.0 REQUIRED)
-target_include_directories(libuv SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIR})
-target_link_libraries(libuv INTERFACE ${LIBUV_LIBRARIES})
-
 add_library(nlua0 MODULE)
 if(WIN32)
   target_compile_definitions(nlua0 PUBLIC LUA_BUILD_AS_DLL LUA_LIB)
@@ -23,32 +18,30 @@ elseif(APPLE)
   target_link_options(nlua0 PRIVATE -undefined dynamic_lookup)
 endif()
 
+# TODO(dundargoc): unittest stops working if I create an pseudo-imported
+# library "luv" as with the other dependencies. Figure out why and fix.
 find_package(Luv 1.43.0 REQUIRED)
 target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUV_INCLUDE_DIR})
 target_link_libraries(main_lib INTERFACE ${LUV_LIBRARY})
 
 find_package(Iconv REQUIRED)
-find_package(Lpeg REQUIRED)
+find_package(Libintl REQUIRED) # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
+find_package(Libuv 1.28.0 REQUIRED)
 find_package(Libvterm 0.3.3 REQUIRED)
+find_package(Lpeg REQUIRED)
 find_package(Msgpack 1.0.0 REQUIRED)
 find_package(Treesitter 0.20.8 REQUIRED)
 find_package(Unibilium 2.0 REQUIRED)
 
 target_link_libraries(main_lib INTERFACE
   iconv
+  libintl
   libvterm
+  lpeg
   msgpack
   treesitter
-  unibilium
-  lpeg)
+  unibilium)
 target_link_libraries(nlua0 PUBLIC lpeg)
-
-# Libintl (not Intl) selects our FindLibintl.cmake script. #8464
-find_package(Libintl REQUIRED)
-target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBINTL_INCLUDE_DIR})
-if (LIBINTL_LIBRARY)
-  target_link_libraries(main_lib INTERFACE ${LIBINTL_LIBRARY})
-endif()
 
 target_compile_definitions(main_lib INTERFACE HAVE_UNIBILIUM)
 
@@ -218,7 +211,9 @@ if(ENABLE_ASAN_UBSAN)
   target_compile_options(nvim PRIVATE -fsanitize=address)
   target_link_libraries(nvim PRIVATE -fsanitize=address -fsanitize=undefined)
   target_compile_definitions(nvim PRIVATE ENABLE_ASAN_UBSAN)
-elseif(ENABLE_MSAN)
+endif()
+
+if(ENABLE_MSAN)
   message(STATUS "Enabling memory sanitizer for nvim.")
   target_compile_options(nvim PRIVATE
     -fsanitize=memory
@@ -226,7 +221,9 @@ elseif(ENABLE_MSAN)
     -fno-omit-frame-pointer
     -fno-optimize-sibling-calls)
   target_link_libraries(nvim PRIVATE -fsanitize=memory -fsanitize-memory-track-origins)
-elseif(ENABLE_TSAN)
+endif()
+
+if(ENABLE_TSAN)
   message(STATUS "Enabling thread sanitizer for nvim.")
   target_compile_options(nvim PRIVATE -fsanitize=thread -fPIE)
   target_link_libraries(nvim PRIVATE -fsanitize=thread)
@@ -244,11 +241,7 @@ endif()
 
 option(ENABLE_IWYU "Run include-what-you-use with the compiler." OFF)
 if(ENABLE_IWYU)
-  find_program(IWYU_PRG NAMES include-what-you-use iwyu)
-  if(NOT IWYU_PRG)
-    message(FATAL_ERROR "ENABLE_IWYU is ON but include-what-you-use is not found!")
-  endif()
-
+  find_program(IWYU_PRG NAMES include-what-you-use iwyu REQUIRED)
   set(iwyu_flags "${IWYU_PRG};")
   string(APPEND iwyu_flags "-Xiwyu;--no_default_mappings;")
   string(APPEND iwyu_flags "-Xiwyu;--no_fwd_decls;")
@@ -260,26 +253,11 @@ endif()
 
 option(ENABLE_COMPILER_SUGGESTIONS "Enable -Wsuggest compiler warnings" OFF)
 if(ENABLE_COMPILER_SUGGESTIONS)
-  # Clang doesn't have -Wsuggest-attribute so check for each one.
-  check_c_compiler_flag(-Wsuggest-attribute=pure HAVE_WSUGGEST_ATTRIBUTE_PURE)
-  if(HAVE_WSUGGEST_ATTRIBUTE_PURE)
-    target_compile_options(main_lib INTERFACE -Wsuggest-attribute=pure)
-  endif()
-
-  check_c_compiler_flag(-Wsuggest-attribute=const HAVE_WSUGGEST_ATTRIBUTE_CONST)
-  if(HAVE_WSUGGEST_ATTRIBUTE_CONST)
-    target_compile_options(main_lib INTERFACE -Wsuggest-attribute=const)
-  endif()
-
-  check_c_compiler_flag(-Wsuggest-attribute=malloc HAVE_WSUGGEST_ATTRIBUTE_MALLOC)
-  if(HAVE_WSUGGEST_ATTRIBUTE_MALLOC)
-    target_compile_options(main_lib INTERFACE -Wsuggest-attribute=malloc)
-  endif()
-
-  check_c_compiler_flag(-Wsuggest-attribute=cold HAVE_WSUGGEST_ATTRIBUTE_COLD)
-  if(HAVE_WSUGGEST_ATTRIBUTE_COLD)
-    target_compile_options(main_lib INTERFACE -Wsuggest-attribute=cold)
-  endif()
+  target_compile_options(main_lib INTERFACE
+    -Wsuggest-attribute=cold
+    -Wsuggest-attribute=const
+    -Wsuggest-attribute=malloc
+    -Wsuggest-attribute=pure)
 endif()
 
 option(ENABLE_GCOV "Enable gcov support" OFF)
@@ -353,19 +331,19 @@ file(GLOB API_HEADERS CONFIGURE_DEPENDS api/*.h)
 list(REMOVE_ITEM API_HEADERS ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h)
 file(GLOB MSGPACK_RPC_HEADERS CONFIGURE_DEPENDS msgpack_rpc/*.h)
 
-target_include_directories(main_lib INTERFACE ${GENERATED_DIR})
-target_include_directories(main_lib INTERFACE ${CACHED_GENERATED_DIR})
-target_include_directories(main_lib INTERFACE ${GENERATED_INCLUDES_DIR})
-target_include_directories(main_lib INTERFACE "${PROJECT_BINARY_DIR}/cmake.config")
-target_include_directories(main_lib INTERFACE "${PROJECT_SOURCE_DIR}/src")
+target_include_directories(main_lib INTERFACE
+  ${GENERATED_DIR}
+  ${CACHED_GENERATED_DIR}
+  ${GENERATED_INCLUDES_DIR}
+  "${PROJECT_BINARY_DIR}/cmake.config"
+  "${PROJECT_SOURCE_DIR}/src")
 
-target_include_directories(nlua0 PUBLIC "${PROJECT_SOURCE_DIR}/src")
-target_include_directories(nlua0 PUBLIC "${PROJECT_BINARY_DIR}/cmake.config")
-target_include_directories(nlua0 PUBLIC ${GENERATED_INCLUDES_DIR})
+target_include_directories(nlua0 PUBLIC
+  "${PROJECT_SOURCE_DIR}/src"
+  "${PROJECT_BINARY_DIR}/cmake.config"
+  ${GENERATED_INCLUDES_DIR})
 
-file(MAKE_DIRECTORY ${TOUCHES_DIR})
-file(MAKE_DIRECTORY ${GENERATED_DIR})
-file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
+file(MAKE_DIRECTORY ${TOUCHES_DIR} ${GENERATED_DIR} ${GENERATED_INCLUDES_DIR})
 
 file(GLOB NVIM_SOURCES CONFIGURE_DEPENDS *.c)
 file(GLOB NVIM_HEADERS CONFIGURE_DEPENDS *.h)
@@ -885,6 +863,10 @@ add_dependencies(uncrustify_update_config uncrustify)
 add_custom_target(lintc)
 add_dependencies(lintc lintc-clint lintc-uncrustify lintc-clang-tidy)
 
+#-------------------------------------------------------------------------------
+# Docs
+#-------------------------------------------------------------------------------
+
 add_custom_target(generated-sources DEPENDS
   ${NVIM_GENERATED_FOR_SOURCES}
   ${NVIM_GENERATED_FOR_HEADERS}
@@ -892,10 +874,6 @@ add_custom_target(generated-sources DEPENDS
 )
 
 add_subdirectory(po)
-
-#-------------------------------------------------------------------------------
-# Docs
-#-------------------------------------------------------------------------------
 
 set(VIMDOC_FILES
   ${NVIM_RUNTIME_DIR}/doc/api.mpack

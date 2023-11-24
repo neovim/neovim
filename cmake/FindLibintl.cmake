@@ -78,3 +78,9 @@ endif()
 find_package_handle_standard_args(Libintl DEFAULT_MSG
   ${REQUIRED_VARIABLES})
 mark_as_advanced(LIBINTL_LIBRARY LIBINTL_INCLUDE_DIR)
+
+add_library(libintl INTERFACE)
+target_include_directories(libintl SYSTEM BEFORE INTERFACE ${LIBINTL_INCLUDE_DIR})
+if (LIBINTL_LIBRARY)
+  target_link_libraries(libintl INTERFACE ${LIBINTL_LIBRARY})
+endif()
