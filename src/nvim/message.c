@@ -2990,10 +2990,13 @@ void msg_clr_eos_force(void)
   int msg_startcol = (cmdmsg_rl) ? 0 : msg_col;
   int msg_endcol = (cmdmsg_rl) ? Columns - msg_col : Columns;
 
+  // TODO(bfredl): ugly, this state should already been validated at this
+  // point. But msg_clr_eos() is called in a lot of places.
   if (msg_grid.chars && msg_row < msg_grid_pos) {
-    // TODO(bfredl): ugly, this state should already been validated at this
-    // point. But msg_clr_eos() is called in a lot of places.
-    msg_row = msg_grid_pos;
+    msg_grid_validate();
+    if (msg_row < msg_grid_pos) {
+      msg_row = msg_grid_pos;
+    }
   }
 
   grid_fill(&msg_grid_adj, msg_row, msg_row + 1, msg_startcol, msg_endcol,

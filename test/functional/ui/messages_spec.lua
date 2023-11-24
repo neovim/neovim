@@ -1402,6 +1402,19 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
     ]])
     eq(1, meths.get_option_value('cmdheight', {}))
   end)
+
+  it('using nvim_echo in VimResized does not cause hit-enter prompt #26139', function()
+    command([[au VimResized * lua vim.api.nvim_echo({ { '123456' } }, true, {})]])
+    screen:try_resize(60, 5)
+    screen:expect([[
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]])
+    eq({ mode = 'n', blocking = false }, meths.get_mode())
+  end)
 end)
 
 it('calling screenstring() after redrawing between messages without UI #20999', function()
