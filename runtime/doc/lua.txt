@@ -571,12 +571,182 @@ A subset of the `vim.*` API is available in threads. This includes:
 ------------------------------------------------------------------------------
 VIM.LPEG                                                            *lua-lpeg*
 
-                                                             *vim.lpeg* *vim.re*
+                                                                     *vim.lpeg*
 The Lpeg library for parsing expression grammars is being included as
-`vim.lpeg` (https://www.inf.puc-rio.br/~roberto/lpeg/). In addition, its regex-like
-interface is available as `vim.re` (https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
+`vim.lpeg` (https://www.inf.puc-rio.br/~roberto/lpeg/).
+==============================================================================
+
+vim.lpeg.Pattern                                             *vim.lpeg.Pattern*
+    A pattern-matching library for Lua based on Parsing Expression Grammars (PEGs).
+
+vim.lpeg.match(pattern, subject, init)           *vim.lpeg.match()*
+    Matches the given `pattern` against the `subject` string.
+
+    Parameters: ~
+      • {pattern} (vim.lpeg.Pattern) The pattern to match.
+      • {subject} (string) The input string to match against.
+      • {init} (integer|nil) Optional starting position in the subject.
+
+vim.lpeg.R(...)                                                    *vim.lpeg.R()*
+    Returns a pattern that matches any single character belonging to the given ranges.
+
+    Parameters: ~
+      • {...} (string) Ranges of characters as strings.
+
+vim.lpeg.S(string)                                               *vim.lpeg.S()*
+    Returns a pattern that matches any single character that appears in the given string.
+
+    Parameters: ~
+      • {string} (string) The characters to match.
+
+vim.lpeg.P(value)                                                  *vim.lpeg.P()*
+    Converts the given value into a proper pattern.
+
+    Parameters: ~
+      • {value} (vim.lpeg.Pattern|string|integer|boolean|table|function) The value to convert.
+
+vim.lpeg.B(pattern)                                              *vim.lpeg.B()*
+    Returns a pattern that matches only if the input string at the current position is preceded by `patt`.
+
+    Parameters: ~
+      • {pattern} (vim.lpeg.Pattern) The preceding pattern.
+
+vim.lpeg.V(v)                                                         *vim.lpeg.V()*
+    Creates a non-terminal (a variable) for a grammar.
+
+    Parameters: ~
+      • {v} (string|integer) The rule index or name.
+
+vim.lpeg.locale(tab)                                          *vim.lpeg.locale()*
+    Returns a table with patterns for matching character classes according to the current locale.
+
+    Parameters: ~
+      • {tab} (table|nil) Optional table to create fields in.
+
+vim.lpeg.C(patt)                                                   *vim.lpeg.C()*
+    Creates a simple capture, which captures the substring of the subject that matches `patt`.
+
+    Parameters: ~
+      • {patt} (vim.lpeg.Pattern) The pattern to capture.
+
+vim.lpeg.Carg(n)                                                   *vim.lpeg.Carg()*
+    Creates an argument capture.
+
+    Parameters: ~
+      • {n} (integer) The index of the extra argument.
+
+vim.lpeg.Cb(name)                                                 *vim.lpeg.Cb()*
+    Creates a back capture.
+
+    Parameters: ~
+      • {name} (any) The name of the capture.
+
+vim.lpeg.Cc(...)                                                   *vim.lpeg.Cc()*
+    Creates a constant capture.
+
+    Parameters: ~
+      • {...} (any) Values to capture.
+
+vim.lpeg.Cf(patt, func)                                       *vim.lpeg.Cf()*
+    Creates a fold capture.
+
+    Parameters: ~
+      • {patt} (vim.lpeg.Pattern) The pattern to fold.
+      • {func} (function) The fold function.
+
+vim.lpeg.Cg(patt, name)                                     *vim.lpeg.Cg()*
+    Creates a group capture.
+
+    Parameters: ~
+      • {patt} (vim.lpeg.Pattern) The pattern to group.
+      • {name} (string|nil) The name of the group.
+
+vim.lpeg.Cp()                                                          *vim.lpeg.Cp()*
+    Creates a position capture.
+
+vim.lpeg.Cs(patt)                                                  *vim.lpeg.Cs()*
+    Creates a substitution capture.
+
+    Parameters: ~
+      • {patt} (vim.lpeg.Pattern) The pattern to capture.
+
+vim.lpeg.Ct(patt)                                                  *vim.lpeg.Ct()*
+    Creates a table capture.
+
+    Parameters: ~
+      • {patt} (vim.lpeg.Pattern|'') The pattern to capture.
+
+vim.lpeg.Cmt(patt, fn)                                         *vim.lpeg.Cmt()*
+    Creates a match-time capture.
+
+    Parameters: ~
+      • {patt} (vim.lpeg.Pattern) The pattern to capture.
+      • {fn} (function) The match-time function.
+
+vim.lpeg.version()                                                *vim.lpeg.version()*
+    Returns a string with the running version of LPeg.
+
+vim.lpeg.setmaxstack(max)                                 *vim.lpeg.setmaxstack()*
+    Sets a limit for the size of the backtrack stack used by LPeg.
+
+    Parameters: ~
+      • {max} (integer) The maximum size of the stack.
+
+------------------------------------------------------------------------------
+VIM.RE                                                              *vim.re*
+
+Vim.re provides a regex-like interface built on top of the Lpeg library. It is
+accessible through `vim.re` (https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
 
 ==============================================================================
+
+vim.re.compile(pattern, opts)                          *vim.re.compile()*
+    Compiles a regex pattern into a pattern object that can be used with LPeg.
+
+    Parameters: ~
+      • {pattern} (string) The regex pattern to compile.
+      • {opts} (table|nil) Optional parameters:
+          • `nomagic` (boolean) If true, treats the pattern as a plain string with
+            no regex metacharacters.
+
+vim.re.find(str, pattern, start, final)              *vim.re.find()*
+    Searches for the first occurrence of the regex pattern in the given string.
+
+    Parameters: ~
+      • {str} (string) The input string to search.
+      • {pattern} (string) The regex pattern to find.
+      • {start} (integer) The starting index for the search.
+      • {final} (integer) The final index for the search.
+
+vim.re.match(str, pattern, pos)                        *vim.re.match()*
+    Attempts to match the entire input string against the regex pattern.
+
+    Parameters: ~
+      • {str} (string) The input string to match.
+      • {pattern} (string) The regex pattern to match.
+      • {pos} (integer) The starting position for the match.
+
+vim.re.gsub(str, pattern, replace, opts)            *vim.re.gsub()*
+    Replaces all occurrences of the regex pattern in the given string with the
+    replacement string.
+
+    Parameters: ~
+      • {str} (string) The input string for replacement.
+      • {pattern} (string) The regex pattern to search for.
+      • {replace} (string|function) The replacement string or function.
+      • {opts} (table|nil) Optional parameters:
+          • `limit` (integer) The maximum number of replacements to perform.
+          • `start` (integer) The starting index for replacements.
+
+vim.re.split(str, pattern)                              *vim.re.split()*
+    Splits the input string into a table of substrings based on the regex pattern.
+
+    Parameters: ~
+      • {str} (string) The input string to split.
+      • {pattern} (string) The regex pattern to use for splitting.
+
+==============================================================================
+
 VIM.HIGHLIGHT                                                  *vim.highlight*
 
 
