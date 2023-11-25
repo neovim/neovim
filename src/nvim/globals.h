@@ -684,6 +684,7 @@ EXTERN bool in_assert_fails INIT( = false);  // assert_fails() active
 #define SEA_DIALOG      1       // use dialog when possible
 #define SEA_QUIT        2       // quit editing the file
 #define SEA_RECOVER     3       // recover the file
+#define SEA_READONLY    4       // no dialog, mark buffer as read-only
 
 EXTERN int swap_exists_action INIT( = SEA_NONE);  ///< For dialog when swap file already exists.
 EXTERN bool swap_exists_did_quit INIT( = false);  ///< Selected "quit" at the dialog.
