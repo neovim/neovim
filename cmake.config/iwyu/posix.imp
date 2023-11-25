@@ -85,15 +85,65 @@
   { symbol: ["EWOULDBLOCK", private, "<errno.h>", public ] },
   { symbol: ["EXDEV", private, "<errno.h>", public ] },
 
+  # fcntl.h
+  { symbol: ["O_CLOEXEC", private, "<fcntl.h>", public ] },
+  { symbol: ["O_CREAT", private, "<fcntl.h>", public ] },
+  { symbol: ["O_DIRECTORY", private, "<fcntl.h>", public ] },
+  { symbol: ["O_EXCL", private, "<fcntl.h>", public ] },
+  { symbol: ["O_NOCTTY", private, "<fcntl.h>", public ] },
+  { symbol: ["O_NOFOLLOW", private, "<fcntl.h>", public ] },
+  { symbol: ["O_TRUNC", private, "<fcntl.h>", public ] },
+  { symbol: ["O_TTY_INIT", private, "<fcntl.h>", public ] },
+
+  { symbol: ["O_APPEND", private, "<fcntl.h>", public ] },
+  { symbol: ["O_DSYNC", private, "<fcntl.h>", public ] },
+  { symbol: ["O_NONBLOCK", private, "<fcntl.h>", public ] },
+  { symbol: ["O_RSYNC", private, "<fcntl.h>", public ] },
+  { symbol: ["O_SYNC", private, "<fcntl.h>", public ] },
+
+  { symbol: ["O_EXEC", private, "<fcntl.h>", public ] },
+  { symbol: ["O_RDONLY", private, "<fcntl.h>", public ] },
+  { symbol: ["O_RDWR", private, "<fcntl.h>", public ] },
+  { symbol: ["O_SEARCH", private, "<fcntl.h>", public ] },
+  { symbol: ["O_WRONLY", private, "<fcntl.h>", public ] },
+
   # limits.h
   { symbol: ["SSIZE_MAX", private, "<limits.h>", public ] },
 
   # signal.h
   { symbol: [ "sigset_t", private, "<signal.h>", public ] },
+  { symbol: ["SIGABRT", private, "<signal.h>", public ] },
+  { symbol: ["SIGALRM", private, "<signal.h>", public ] },
+  { symbol: ["SIGBUS", private, "<signal.h>", public ] },
+  { symbol: ["SIGCHLD", private, "<signal.h>", public ] },
+  { symbol: ["SIGCONT", private, "<signal.h>", public ] },
+  { symbol: ["SIGFPE", private, "<signal.h>", public ] },
+  { symbol: ["SIGHUP", private, "<signal.h>", public ] },
+  { symbol: ["SIGILL", private, "<signal.h>", public ] },
+  { symbol: ["SIGINT", private, "<signal.h>", public ] },
+  { symbol: ["SIGKILL", private, "<signal.h>", public ] },
+  { symbol: ["SIGPIPE", private, "<signal.h>", public ] },
+  { symbol: ["SIGQUIT", private, "<signal.h>", public ] },
+  { symbol: ["SIGSEGV", private, "<signal.h>", public ] },
+  { symbol: ["SIGSTOP", private, "<signal.h>", public ] },
+  { symbol: ["SIGTERM", private, "<signal.h>", public ] },
+  { symbol: ["SIGTSTP", private, "<signal.h>", public ] },
+  { symbol: ["SIGTTIN", private, "<signal.h>", public ] },
+  { symbol: ["SIGTTOU", private, "<signal.h>", public ] },
+  { symbol: ["SIGUSR1", private, "<signal.h>", public ] },
+  { symbol: ["SIGUSR2", private, "<signal.h>", public ] },
+  { symbol: ["SIGTRAP", private, "<signal.h>", public ] },
+  { symbol: ["SIGURG", private, "<signal.h>", public ] },
+  { symbol: ["SIGXCPU", private, "<signal.h>", public ] },
+  { symbol: ["SIGXFSZ", private, "<signal.h>", public ] },
 
   # sys/socket.h
   { symbol: [ "iovec", private, "<sys/socket.h>", public ] },
   { symbol: ["SOCK_STREAM", private, "<sys/socket.h>", public ] },
+
+  # sys/types.h
+  { symbol: [ "ssize_t", private, "<sys/types.h>", public ] },
+  { symbol: ["mode_t", private, "<sys/types.h>", public ] },
 
   # termios.h
   { include: [ "<bits/termios-c_lflag.h>", private, "<termios.h>", public ] },

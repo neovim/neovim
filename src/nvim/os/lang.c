@@ -2,7 +2,6 @@
 # define Boolean CFBoolean  // Avoid conflict with API's Boolean
 # define FileInfo CSFileInfo  // Avoid conflict with API's Fileinfo
 # include <CoreServices/CoreServices.h>
-
 # undef Boolean
 # undef FileInfo
 #endif
