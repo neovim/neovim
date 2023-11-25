@@ -476,6 +476,31 @@ describe('treesitter highlighting (C)', function()
     screen:expect{grid=injection_grid_expected_c}
   end)
 
+  it('keeps parser in a valid state with injections present', function()
+    insert([[
+      # Heading
+
+      ```lua
+      local question = {}
+      local answer = 42
+      ```
+    ]])
+    exec_lua [[
+      vim.o.ft = "markdown"
+      vim.treesitter.start()
+    ]]
+
+    eq(true, exec_lua('return vim.treesitter.get_parser():is_valid()'))
+
+    -- modify injection
+    feed([[Gkkdd]])
+
+    -- modify outer lang
+    feed([[GO<cr>A text]])
+
+    eq(true, exec_lua('return vim.treesitter.get_parser():is_valid()'))
+  end)
+
   it("supports injecting by ft name in metadata['injection.language']", function()
     insert(injection_text_c)
 
