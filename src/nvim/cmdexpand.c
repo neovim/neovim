@@ -855,6 +855,8 @@ char *ExpandOne(expand_T *xp, char *str, char *orig, int options, int mode)
                  : xp->xp_files[xp->xp_selected]);
   }
 
+  apply_autocmds(EVENT_WILDCOMPLETEDONE, ss, NULL, false, curbuf);
+
   // free old names
   if (xp->xp_numfiles != -1 && mode != WILD_ALL && mode != WILD_LONGEST) {
     FreeWild(xp->xp_numfiles, xp->xp_files);
