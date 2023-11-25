@@ -806,11 +806,11 @@ local function node()
       .. current_npm
       .. ' latest: '
       .. latest_npm
-    warn(message({
+    warn(message, {
       'Run in shell: npm install -g neovim',
       'Run in shell (if you use yarn): yarn global add neovim',
       'Run in shell (if you use pnpm): pnpm install -g neovim',
-    }))
+    })
   else
     ok('Latest "neovim" npm/yarn/pnpm package is installed: ' .. current_npm)
   end
