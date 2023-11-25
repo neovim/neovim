@@ -619,6 +619,31 @@ function M.hw(_, bufnr)
   return 'virata'
 end
 
+-- This function checks for an assembly comment or a SWIG keyword or verbatim
+-- block in the first 50 lines.
+-- If not found, assume Progress.
+--- @type vim.filetype.mapfn
+function M.i(path, bufnr)
+  if vim.g.filetype_i then
+    return vim.g.filetype_i
+  end
+
+  -- These include the leading '%' sign
+  local ft_swig_keywords =
+    [[^\s*%\%(addmethods\|apply\|beginfile\|clear\|constant\|define\|echo\|enddef\|endoffile\|extend\|feature\|fragment\|ignore\|import\|importfile\|include\|includefile\|inline\|insert\|keyword\|module\|name\|namewarn\|native\|newobject\|parms\|pragma\|rename\|template\|typedef\|typemap\|types\|varargs\|warn\)]]
+  -- This is the start/end of a block that is copied literally to the processor file (C/C++)
+  local ft_swig_verbatim_block_start = '^%s*%%{'
+
+  for _, line in ipairs(getlines(bufnr, 1, 50)) do
+    if line:find('^%s*;') or line:find('^%*') then
+      return M.asm(path, bufnr)
+    elseif matchregex(line, ft_swig_keywords) or line:find(ft_swig_verbatim_block_start) then
+      return 'swig'
+    end
+  end
+  return 'progress'
+end
+
 --- @type vim.filetype.mapfn
 function M.idl(_, bufnr)
   for _, line in ipairs(getlines(bufnr, 1, 50)) do
@@ -1014,26 +1039,6 @@ function M.printcap(ptcap_type)
       vim.b[bufnr].ptcap_type = ptcap_type
     end
   end
-end
-
--- This function checks for an assembly comment in the first ten lines.
--- If not found, assume Progress.
---- @type vim.filetype.mapfn
-function M.progress_asm(path, bufnr)
-  if vim.g.filetype_i then
-    return vim.g.filetype_i
-  end
-
-  for _, line in ipairs(getlines(bufnr, 1, 10)) do
-    if line:find('^%s*;') or line:find('^/%*') then
-      return M.asm(path, bufnr)
-    elseif not line:find('^%s*$') or line:find('^/%*') then
-      -- Not an empty line: doesn't look like valid assembly code
-      -- or it looks like a Progress /* comment.
-      break
-    end
-  end
-  return 'progress'
 end
 
 --- @type vim.filetype.mapfn
