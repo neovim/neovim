@@ -10,6 +10,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/assert_defs.h"
 #include "nvim/charset.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/executor.h"

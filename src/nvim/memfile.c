@@ -46,6 +46,7 @@
 
 #include "nvim/assert_defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/errors.h"
 #include "nvim/fileio.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"

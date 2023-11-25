@@ -14,6 +14,7 @@
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"

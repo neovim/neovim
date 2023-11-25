@@ -22,6 +22,7 @@
 #include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_session.h"

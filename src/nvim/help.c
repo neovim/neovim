@@ -13,6 +13,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
+#include "nvim/errors.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"

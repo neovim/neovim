@@ -72,6 +72,7 @@
 #include "nvim/decoration.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"

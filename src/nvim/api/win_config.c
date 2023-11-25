@@ -17,6 +17,7 @@
 #include "nvim/decoration.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval/window.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/globals.h"

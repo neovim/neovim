@@ -8,6 +8,7 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/charset.h"
+#include "nvim/errors.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
 #include "nvim/gettext_defs.h"

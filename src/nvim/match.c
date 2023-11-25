@@ -10,6 +10,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/window.h"

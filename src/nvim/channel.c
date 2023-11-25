@@ -13,6 +13,7 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"

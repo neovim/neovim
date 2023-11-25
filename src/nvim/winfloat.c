@@ -11,6 +11,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/grid_defs.h"

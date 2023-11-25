@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "nvim/charset.h"
+#include "nvim/errors.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"

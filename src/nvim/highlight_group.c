@@ -22,6 +22,7 @@
 #include "nvim/cursor_shape.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"

@@ -18,6 +18,7 @@
 #include "nvim/bufwrite.h"
 #include "nvim/change.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds.h"

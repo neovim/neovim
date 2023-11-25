@@ -7,6 +7,7 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/errors.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_defs.h"

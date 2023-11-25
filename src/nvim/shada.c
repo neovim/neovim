@@ -19,6 +19,7 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/cmdhist.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/decode.h"
 #include "nvim/eval/encode.h"

@@ -13,6 +13,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cursor.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"

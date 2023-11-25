@@ -18,6 +18,7 @@
 #include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/drawscreen.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"

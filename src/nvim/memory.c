@@ -19,6 +19,7 @@
 #include "nvim/context.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawline.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"

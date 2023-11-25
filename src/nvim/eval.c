@@ -24,6 +24,7 @@
 #include "nvim/cmdhist.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
+#include "nvim/errors.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/executor.h"

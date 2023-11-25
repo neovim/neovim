@@ -11,6 +11,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/cmdhist.h"
+#include "nvim/errors.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
