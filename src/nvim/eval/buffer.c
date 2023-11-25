@@ -298,7 +298,9 @@ void f_bufload(typval_T *argvars, typval_T *unused, EvalFuncData fptr)
   buf_T *buf = get_buf_arg(&argvars[0]);
 
   if (buf != NULL) {
-    swap_exists_action = SEA_NONE;
+    if (swap_exists_action != SEA_READONLY) {
+      swap_exists_action = SEA_NONE;
+    }
     buf_ensure_loaded(buf);
   }
 }

@@ -930,10 +930,14 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
 /// Go to another buffer.  Handles the result of the ATTENTION dialog.
 void goto_buffer(exarg_T *eap, int start, int dir, int count)
 {
+  const int save_sea = swap_exists_action;
+
   bufref_T old_curbuf;
   set_bufref(&old_curbuf, curbuf);
-  swap_exists_action = SEA_DIALOG;
 
+  if (swap_exists_action == SEA_NONE) {
+    swap_exists_action = SEA_DIALOG;
+  }
   (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
                   start, dir, count, eap->forceit);
 
@@ -946,7 +950,7 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
 
     // Quitting means closing the split window, nothing else.
     win_close(curwin, true, false);
-    swap_exists_action = SEA_NONE;
+    swap_exists_action = save_sea;
     swap_exists_did_quit = true;
 
     // Restore the error/interrupt/exception state if not discarded by a

@@ -235,6 +235,16 @@ typedef enum {
   UB_SAME_DIR,  // update the B0_SAME_DIR flag
 } upd_block0_T;
 
+typedef enum {
+  SEA_CHOICE_NONE = 0,
+  SEA_CHOICE_READONLY = 1,
+  SEA_CHOICE_EDIT = 2,
+  SEA_CHOICE_RECOVER = 3,
+  SEA_CHOICE_DELETE = 4,
+  SEA_CHOICE_QUIT = 5,
+  SEA_CHOICE_ABORT = 6,
+} sea_choice_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memline.c.generated.h"
 #endif
@@ -3235,15 +3245,8 @@ static void attention_message(buf_T *buf, char *fname)
 
 /// Trigger the SwapExists autocommands.
 ///
-/// @return  a value for equivalent to do_dialog() (see below):
-///          0: still need to ask for a choice
-///          1: open read-only
-///          2: edit anyway
-///          3: recover
-///          4: delete it
-///          5: quit
-///          6: abort
-static int do_swapexists(buf_T *buf, char *fname)
+/// @return  a value for equivalent to do_dialog().
+static sea_choice_T do_swapexists(buf_T *buf, char *fname)
 {
   set_vim_var_string(VV_SWAPNAME, fname, -1);
   set_vim_var_string(VV_SWAPCHOICE, NULL, -1);
@@ -3258,20 +3261,20 @@ static int do_swapexists(buf_T *buf, char *fname)
 
   switch (*get_vim_var_str(VV_SWAPCHOICE)) {
   case 'o':
-    return 1;
+    return SEA_CHOICE_READONLY;
   case 'e':
-    return 2;
+    return SEA_CHOICE_EDIT;
   case 'r':
-    return 3;
+    return SEA_CHOICE_RECOVER;
   case 'd':
-    return 4;
+    return SEA_CHOICE_DELETE;
   case 'q':
-    return 5;
+    return SEA_CHOICE_QUIT;
   case 'a':
-    return 6;
+    return SEA_CHOICE_ABORT;
   }
 
-  return 0;
+  return SEA_CHOICE_NONE;
 }
 
 /// Find out what name to use for the swapfile for buffer 'buf'.
@@ -3384,13 +3387,13 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
         //  - the buffer was not recovered
         if (differ == false && !(curbuf->b_flags & BF_RECOVERED)
             && vim_strchr(p_shm, SHM_ATTENTION) == NULL) {
-          int choice = 0;
+          sea_choice_T choice = SEA_CHOICE_NONE;
 
           // It's safe to delete the swapfile if all these are true:
           // - the edited file exists
           // - the swapfile has no changes and looks OK
           if (os_path_exists(buf->b_fname) && swapfile_unchanged(fname)) {
-            choice = 4;
+            choice = SEA_CHOICE_DELETE;
             if (p_verbose > 0) {
               verb_msg(_("Found a swap file that is not useful, deleting it"));
             }
@@ -3398,14 +3401,19 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
 
           // If there is a SwapExists autocommand and we can handle the
           // response, trigger it.  It may return 0 to ask the user anyway.
-          if (choice == 0
+          if (choice == SEA_CHOICE_NONE
               && swap_exists_action != SEA_NONE
               && has_autocmd(EVENT_SWAPEXISTS, buf_fname, buf)) {
             choice = do_swapexists(buf, fname);
           }
 
+          if (choice == SEA_CHOICE_NONE && swap_exists_action == SEA_READONLY) {
+            // always open readonly.
+            choice = SEA_CHOICE_READONLY;
+          }
+
           process_running = 0;  // Set by attention_message..swapfile_info.
-          if (choice == 0) {
+          if (choice == SEA_CHOICE_NONE) {
             // Show info about the existing swapfile.
             attention_message(buf, fname);
 
@@ -3418,7 +3426,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             flush_buffers(FLUSH_TYPEAHEAD);
           }
 
-          if (swap_exists_action != SEA_NONE && choice == 0) {
+          if (swap_exists_action != SEA_NONE && choice == SEA_CHOICE_NONE) {
             const char *const sw_msg_1 = _("Swap file \"");
             const char *const sw_msg_2 = _("\" already exists!");
 
@@ -3432,56 +3440,57 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname, bool *found_
             memcpy(name, sw_msg_1, sw_msg_1_len + 1);
             home_replace(NULL, fname, &name[sw_msg_1_len], fname_len, true);
             xstrlcat(name, sw_msg_2, name_len);
-            choice = do_dialog(VIM_WARNING, _("VIM - ATTENTION"),
-                               name,
-                               process_running
-                               ? _("&Open Read-Only\n&Edit anyway\n&Recover"
-                                   "\n&Quit\n&Abort")
-                               : _("&Open Read-Only\n&Edit anyway\n&Recover"
-                                   "\n&Delete it\n&Quit\n&Abort"),
-                               1, NULL, false);
+            int dialog_result
+              = do_dialog(VIM_WARNING,
+                          _("VIM - ATTENTION"),
+                          name,
+                          process_running
+                          ? _("&Open Read-Only\n&Edit anyway\n&Recover\n&Quit\n&Abort")
+                          : _("&Open Read-Only\n&Edit anyway\n&Recover\n&Delete it\n&Quit\n&Abort"),
+                          1, NULL, false);
 
-            if (process_running && choice >= 4) {
-              choice++;  // Skip missing "Delete it" button.
+            if (process_running && dialog_result >= 4) {
+              // compensate for missing "Delete it" button
+              dialog_result++;
             }
+            choice = (sea_choice_T)dialog_result;
             xfree(name);
 
             // pretend screen didn't scroll, need redraw anyway
             msg_reset_scroll();
           }
 
-          if (choice > 0) {
-            switch (choice) {
-            case 1:  // "Open Read-Only"
-              buf->b_p_ro = true;
-              break;
-            case 2:  // "Edit anyway"
-              break;
-            case 3:  // "Recover"
-              swap_exists_action = SEA_RECOVER;
-              break;
-            case 4:  // "Delete it"
-              os_remove(fname);
-              break;
-            case 5:  // "Quit"
-              swap_exists_action = SEA_QUIT;
-              break;
-            case 6:  // "Abort"
-              swap_exists_action = SEA_QUIT;
-              got_int = true;
-              break;
-            }
-
-            // If the swapfile was deleted this `fname` can be used.
-            if (!os_path_exists(fname)) {
-              break;
-            }
-          } else {
+          switch (choice) {
+          case SEA_CHOICE_READONLY:  // "Open Read-Only"
+            buf->b_p_ro = true;
+            break;
+          case SEA_CHOICE_EDIT:  // "Edit anyway"
+            break;
+          case SEA_CHOICE_RECOVER:  // "Recover"
+            swap_exists_action = SEA_RECOVER;
+            break;
+          case SEA_CHOICE_DELETE:  // "Delete it"
+            os_remove(fname);
+            break;
+          case SEA_CHOICE_QUIT:  // "Quit"
+            swap_exists_action = SEA_QUIT;
+            break;
+          case SEA_CHOICE_ABORT:  // "Abort"
+            swap_exists_action = SEA_QUIT;
+            got_int = true;
+            break;
+          case SEA_CHOICE_NONE:
             msg_puts("\n");
             if (msg_silent == 0) {
               // call wait_return() later
               need_wait_return = true;
             }
+            break;
+          }
+
+          // If the swapfile was deleted this `fname` can be used.
+          if (choice != SEA_CHOICE_NONE && !os_path_exists(fname)) {
+            break;
           }
         }
       }
