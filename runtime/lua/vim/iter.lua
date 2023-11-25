@@ -2,17 +2,23 @@
 ---
 --- \*vim.iter()\* is an interface for |iterable|s: it wraps a table or function argument into an
 --- \*Iter\* object with methods (such as |Iter:filter()| and |Iter:map()|) that transform the
---- underlying source data. These methods can be chained together to create iterator "pipelines".
---- Each pipeline stage receives as input the output values from the prior stage. The values used in
---- the first stage of the pipeline depend on the type passed to this function:
+--- underlying source data. These methods can be chained to create iterator "pipelines": the output
+--- of each pipeline stage is input to the next stage. The first stage depends on the type passed to
+--- `vim.iter()`:
 ---
---- - List tables (arrays) pass only the value of each element
---- - Non-list tables (dictionaries) pass both the key and value of each element
---- - Function |iterator|s pass all of the values returned by their respective function
---- - Tables with a metatable implementing |__call()| are treated as function iterators
+--- - List tables (arrays, |lua-list|) yield only the value of each element.
+---   - Use |Iter:enumerate()| to also pass the index to the next stage.
+---   - Or initialize with ipairs(): `vim.iter(ipairs(…))`.
+--- - Non-list tables (|lua-dict|) yield both the key and value of each element.
+--- - Function |iterator|s yield all values returned by the underlying function.
+--- - Tables with a |__call()| metamethod are treated as function iterators.
 ---
---- The iterator pipeline terminates when the original table or function iterator runs out of values
---- (for function iterators, this means that the first value returned by the function is nil).
+--- The iterator pipeline terminates when the underlying |iterable| is exhausted (for function
+--- iterators this means it returned nil).
+---
+--- Note: `vim.iter()` scans table input to decide if it is a list or a dict; to avoid this cost you
+--- can wrap the table with an iterator e.g. `vim.iter(ipairs({…}))`, but that precludes the use of
+--- |list-iterator| operations such as |Iter:rev()|).
 ---
 --- Examples:
 ---
@@ -138,7 +144,7 @@ local function apply(f, ...)
   return false
 end
 
---- Add a filter step to the iterator pipeline.
+--- Filters an iterator pipeline.
 ---
 --- Example:
 ---
@@ -173,7 +179,7 @@ function ListIter.filter(self, f)
   return self
 end
 
---- Add a map step to the iterator pipeline.
+--- Maps the items of an iterator pipeline to the values returned by `f`.
 ---
 --- If the map function returns nil, the value is filtered from the iterator.
 ---
@@ -253,12 +259,9 @@ function ListIter.map(self, f)
   return self
 end
 
---- Call a function once for each item in the pipeline.
+--- Calls a function once for each item in the pipeline, draining the iterator.
 ---
---- This is used for functions which have side effects. To modify the values in
---- the iterator, use |Iter:map()|.
----
---- This function drains the iterator.
+--- For functions with side effects. To modify the values in the iterator, use |Iter:map()|.
 ---
 ---@param f function(...) Function to execute for each item in the pipeline.
 ---                       Takes all of the values returned by the previous stage
@@ -353,7 +356,7 @@ function ListIter.totable(self)
   return self._table
 end
 
---- Fold ("reduce") an iterator or table into a single value.
+--- Folds ("reduces") an iterator into a single value.
 ---
 --- Examples:
 ---
@@ -400,7 +403,7 @@ function ListIter.fold(self, init, f)
   return acc
 end
 
---- Return the next value from the iterator.
+--- Gets the next value from the iterator.
 ---
 --- Example:
 ---
@@ -432,9 +435,7 @@ function ListIter.next(self)
   end
 end
 
---- Reverse an iterator.
----
---- Only supported for iterators on list-like tables.
+--- Reverses a |list-iterator| pipeline.
 ---
 --- Example:
 ---
@@ -459,9 +460,7 @@ function ListIter.rev(self)
   return self
 end
 
---- Peek at the next value in the iterator without consuming it.
----
---- Only supported for iterators on list-like tables.
+--- Gets the next value in a |list-iterator| without consuming it.
 ---
 --- Example:
 ---
@@ -538,11 +537,9 @@ function Iter.find(self, f)
   return unpack(result)
 end
 
---- Find the first value in the iterator that satisfies the given predicate, starting from the end.
+--- Gets the first value in a |list-iterator| that satisfies a predicate, starting from the end.
 ---
 --- Advances the iterator. Returns nil and drains the iterator if no value is found.
----
---- Only supported for iterators on list-like tables.
 ---
 --- Examples:
 ---
@@ -583,9 +580,7 @@ function ListIter.rfind(self, f) -- luacheck: no unused args
   self._head = self._tail
 end
 
---- Return the next value from the end of the iterator.
----
---- Only supported for iterators on list-like tables.
+--- "Pops" a value from a |list-iterator| (gets the last value and decrements the tail).
 ---
 --- Example:
 ---
@@ -610,9 +605,9 @@ function ListIter.nextback(self)
   end
 end
 
---- Return the next value from the end of the iterator without consuming it.
+--- Gets the last value of a |list-iterator| without consuming it.
 ---
---- Only supported for iterators on list-like tables.
+--- See also |Iter:last()|.
 ---
 --- Example:
 ---
@@ -638,7 +633,7 @@ function ListIter.peekback(self)
   end
 end
 
---- Skip values in the iterator.
+--- Skips `n` values of an iterator pipeline.
 ---
 --- Example:
 ---
@@ -669,9 +664,7 @@ function ListIter.skip(self, n)
   return self
 end
 
---- Skip values in the iterator starting from the end.
----
---- Only supported for iterators on list-like tables.
+--- Skips `n` values backwards from the end of a |list-iterator| pipeline.
 ---
 --- Example:
 ---
@@ -700,9 +693,7 @@ function ListIter.skipback(self, n)
   return self
 end
 
---- Return the nth value in the iterator.
----
---- This function advances the iterator.
+--- Gets the nth value of an iterator (and advances to it).
 ---
 --- Example:
 ---
@@ -724,11 +715,7 @@ function Iter.nth(self, n)
   end
 end
 
---- Return the nth value from the end of the iterator.
----
---- This function advances the iterator.
----
---- Only supported for iterators on list-like tables.
+--- Gets the nth value from the end of a |list-iterator| (and advances to it).
 ---
 --- Example:
 ---
@@ -750,11 +737,9 @@ function Iter.nthback(self, n)
   end
 end
 
---- Slice an iterator, changing its start and end positions.
+--- Sets the start and end of a |list-iterator| pipeline.
 ---
---- This is equivalent to :skip(first - 1):skipback(len - last + 1)
----
---- Only supported for iterators on list-like tables.
+--- Equivalent to `:skip(first - 1):skipback(len - last + 1)`.
 ---
 ---@param first number
 ---@param last number
@@ -769,7 +754,7 @@ function ListIter.slice(self, first, last)
   return self:skip(math.max(0, first - 1)):skipback(math.max(0, self._tail - last - 1))
 end
 
---- Return true if any of the items in the iterator match the given predicate.
+--- Returns true if any of the items in the iterator match the given predicate.
 ---
 ---@param pred function(...):bool Predicate function. Takes all values returned from the previous
 ---                                stage in the pipeline as arguments and returns true if the
@@ -793,7 +778,7 @@ function Iter.any(self, pred)
   return any
 end
 
---- Return true if all of the items in the iterator match the given predicate.
+--- Returns true if all items in the iterator match the given predicate.
 ---
 ---@param pred function(...):bool Predicate function. Takes all values returned from the previous
 ---                                stage in the pipeline as arguments and returns true if the
@@ -816,9 +801,7 @@ function Iter.all(self, pred)
   return all
 end
 
---- Return the last item in the iterator.
----
---- Drains the iterator.
+--- Drains the iterator and returns the last item.
 ---
 --- Example:
 ---
@@ -853,21 +836,19 @@ function ListIter.last(self)
   return v
 end
 
---- Add an iterator stage that returns the current iterator count as well as the iterator value.
+--- Yields the item index (count) and value for each item of an iterator pipeline.
 ---
---- For list tables, prefer
+--- For list tables, this is more efficient:
 ---
 --- ```lua
 --- vim.iter(ipairs(t))
 --- ```
 ---
---- over
+--- instead of:
 ---
 --- ```lua
 --- vim.iter(t):enumerate()
 --- ```
----
---- as the former is faster.
 ---
 --- Example:
 ---
@@ -902,7 +883,7 @@ function ListIter.enumerate(self)
   return self
 end
 
---- Create a new Iter object from a table or iterator.
+--- Creates a new Iter object from a table or other |iterable|.
 ---
 ---@param src table|function Table or iterator to drain values from
 ---@return Iter
@@ -923,8 +904,7 @@ function Iter.new(src, ...)
 
     local t = {}
 
-    -- Check if source table can be treated like a list (indices are consecutive integers
-    -- starting from 1)
+    -- O(n): scan the source table to decide if it is a list (consecutive integer indices 1…n).
     local count = 0
     for _ in pairs(src) do
       count = count + 1
@@ -976,11 +956,10 @@ function ListIter.new(t)
   return it
 end
 
---- Collect an iterator into a table.
----
---- This is a convenience function that performs:
+--- Collects an |iterable| into a table.
 ---
 --- ```lua
+--- -- Equivalent to:
 --- vim.iter(f):totable()
 --- ```
 ---
@@ -990,11 +969,10 @@ function M.totable(f, ...)
   return Iter.new(f, ...):totable()
 end
 
---- Filter a table or iterator.
----
---- This is a convenience function that performs:
+--- Filters a table or other |iterable|.
 ---
 --- ```lua
+--- -- Equivalent to:
 --- vim.iter(src):filter(f):totable()
 --- ```
 ---
@@ -1009,11 +987,10 @@ function M.filter(f, src, ...)
   return Iter.new(src, ...):filter(f):totable()
 end
 
---- Map and filter a table or iterator.
----
---- This is a convenience function that performs:
+--- Maps a table or other |iterable|.
 ---
 --- ```lua
+--- -- Equivalent to:
 --- vim.iter(src):map(f):totable()
 --- ```
 ---
