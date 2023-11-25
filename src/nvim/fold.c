@@ -20,6 +20,7 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"

@@ -5,8 +5,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
 
 #ifdef NVIM_VENDOR_BIT
 # include "bit.h"

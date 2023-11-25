@@ -34,6 +34,7 @@
 #include "nvim/tui/tui.h"
 #include "nvim/types.h"
 #include "nvim/ugrid.h"
+#include "nvim/ui.h"
 #include "nvim/ui_client.h"
 
 #ifdef MSWIN

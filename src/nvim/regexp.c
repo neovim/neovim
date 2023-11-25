@@ -24,7 +24,6 @@
 #include "nvim/garray.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/grid_defs.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros.h"
 #include "nvim/mark.h"
