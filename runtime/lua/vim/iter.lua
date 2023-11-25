@@ -15,9 +15,10 @@
 ---
 --- The iterator pipeline terminates when the underlying |iterable| is exhausted (for function
 --- iterators this means it returned nil).
---- 
---- Note: `vim.iter()` scans table input to decide if it is a list or a dict (see |list-iterator|).
---- To avoid this cost, wrap the table in an iterator such as ipairs(): `vim.iter(ipairs({…}))`.
+---
+--- Note: `vim.iter()` scans table input to decide if it is a list or a dict; to avoid this cost you
+--- can wrap the table with an iterator e.g. `vim.iter(ipairs({…}))`, but that precludes the use of
+--- |list-iterator| operations such as |Iter:rev()|).
 ---
 --- Examples:
 ---
