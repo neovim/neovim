@@ -266,7 +266,7 @@ func Test_recover_corrupted_swap_file()
 
   " set the block number in a pointer entry to a negative number
   let b = copy(save_b)
-  if system_64bit
+  if v:true  " Nvim changed this field from a long to an int64_t
     let b[4104:4111] = little_endian ? 0z00000000.00000080 : 0z80000000.00000000
   else
     let b[4104:4107] = little_endian ? 0z00000080 : 0z80000000
