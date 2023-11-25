@@ -7,7 +7,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <uv.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"

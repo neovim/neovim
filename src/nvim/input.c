@@ -1,6 +1,7 @@
 // input.c: high level functions for prompting the user or input
 // like yes/no or number prompts.
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>

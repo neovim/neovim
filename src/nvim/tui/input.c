@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <uv.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"

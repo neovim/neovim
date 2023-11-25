@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <float.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -46,7 +47,6 @@
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/grid_defs.h"
 #include "nvim/help.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"

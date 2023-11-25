@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <locale.h>
 #include <stdint.h>
 #include <uv.h>
 

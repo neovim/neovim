@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sys/param.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #if defined(HAVE_TERMIOS_H)
 # include <termios.h>

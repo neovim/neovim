@@ -8,6 +8,7 @@
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/diff.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"

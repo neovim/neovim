@@ -1,4 +1,7 @@
 [
+  { ref: "c99.imp" },
+  { ref: "posix.imp" },
+
   # Generated to normal headers: header.h.generated.h -> nvim/header.h
   { include: [ '"api/autocmd.h.generated.h"', private, '"nvim/api/autocmd.h"', public ] },
   { include: [ '"api/buffer.h.generated.h"', private, '"nvim/api/buffer.h"', public ] },
@@ -221,28 +224,19 @@
   { include: [ '"nvim/tui/input_defs.h"', public, '"nvim/tui/input.h"', public ] },
   { include: [ '"nvim/undo_defs.h"', public, '"nvim/undo.h"', public ] },
 
-  # Third party headers
-  { include: [ "<bits/types/wint_t.h>", private, "<wchar.h>", public ] },
-  { include: [ '<arpa/inet.h>', private, '<uv/unix.h>', private ] },
-  { include: [ '<bits/termios-c_cc.h>', private, '<termios.h>', private ] },
-  { include: [ '<bits/termios-c_cflag.h>', private, '<termios.h>', private ] },
-  { include: [ '<bits/termios-c_iflag.h>', private, '<termios.h>', private ] },
-  { include: [ '<bits/termios-c_oflag.h>', private, '<termios.h>', private ] },
-  { include: [ '<libintl.h>', private, '"nvim/gettext.h"', public ] },
-  { include: [ '<netdb.h>', private, '<uv/unix.h>', private ] },
-  { include: [ '<netinet/in.h>', private, '<uv/unix.h>', private ] },
-  { include: [ '<pthread.h>', private, '"nvim/os/unix_defs.h"', private ] },
-  { include: [ '<sys/socket.h>', private, '<uv/unix.h>', private ] },
-  { include: [ '<termios.h>', private, '"nvim/os/unix_defs.h"', private ] },
-  { include: [ '<unistd.h>', private, '"nvim/os/unix_defs.h"', private ] },
-  { include: [ '<uv/unix.h>', private, '<uv.h>', public ] },
-
   # Symbols
   { symbol: [ "MAX", private, '"nvim/macros.h"', public ] },
   { symbol: [ "MIN", private, '"nvim/macros.h"', public ] },
-  { symbol: [ "SEEK_END", private, '<stdio.h>', public ] },
-  { symbol: [ "SEEK_SET", private, '<stdio.h>', public ] },
-  { symbol: [ "time_fd", private, '"nvim/globals.h"', public ] },
+
+  # Third party headers
+  { include: [ '<libintl.h>', public, '"nvim/gettext.h"', public ] },
+  { include: [ '<netdb.h>', public, '"nvim/os/unix_defs.h"', private ] },
+  { include: [ '<netinet/in.h>', public, '"nvim/os/unix_defs.h"', private ] },
+  { include: [ '<pthread.h>', public, '"nvim/os/unix_defs.h"', private ] },
+  { include: [ '<sys/socket.h>', public, '"nvim/os/unix_defs.h"', private ] },
+  { include: [ '<termios.h>', public, '"nvim/os/unix_defs.h"', private ] },
+  { include: [ '<unistd.h>', public, '"nvim/os/unix_defs.h"', private ] },
+  { include: [ '<uv/unix.h>', public, '<uv.h>', public ] },
 ]
 
 # vim: set ft=toml:

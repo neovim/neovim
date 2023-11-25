@@ -28,17 +28,16 @@
 #include <assert.h>
 
 #include "nvim/api/private/defs.h"
-#include "nvim/api/private/helpers.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/globals.h"
 #include "nvim/map.h"
 #include "nvim/marktree.h"
 #include "nvim/memline.h"
-#include "nvim/memory.h"
 #include "nvim/pos.h"
 #include "nvim/undo.h"
 
