@@ -456,7 +456,6 @@ EXTERN unsigned dy_flags;
 #define DY_UHEX                 0x004
 // legacy flag, not used
 #define DY_MSGSEP               0x008
-EXTERN int p_ed;                ///< 'edcompatible'
 EXTERN char *p_ead;             ///< 'eadirection'
 EXTERN int p_emoji;             ///< 'emoji'
 EXTERN int p_ea;                ///< 'equalalways'
@@ -785,9 +784,6 @@ EXTERN int p_wa;                ///< 'writeany'
 EXTERN int p_wb;                ///< 'writebackup'
 EXTERN OptInt p_wd;             ///< 'writedelay'
 EXTERN int p_cdh;               ///< 'cdhome'
-
-EXTERN int p_force_on;          ///< options that cannot be turned off.
-EXTERN int p_force_off;         ///< options that cannot be turned on.
 
 /// "indir" values for buffer-local options.
 /// These need to be defined globally, so that the BV_COUNT can be used with

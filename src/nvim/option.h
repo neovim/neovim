@@ -46,6 +46,7 @@ typedef struct vimoption {
                      ///< local option: indirect option index
                      ///< callback function to invoke after an option is modified to validate and
                      ///< apply the new value.
+  bool immutable;    ///< option value cannot be changed from the default value.
 
   /// callback function to invoke after an option is modified to validate and
   /// apply the new value.
