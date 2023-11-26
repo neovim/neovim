@@ -33,6 +33,7 @@ jobs:
     timeout-minutes: 20
     env:
       CC: clang
+      CXX: clang++
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
