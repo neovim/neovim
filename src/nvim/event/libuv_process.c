@@ -5,7 +5,6 @@
 
 #include "nvim/eval/typval.h"
 #include "nvim/event/libuv_process.h"
-#include "nvim/event/loop.h"
 #include "nvim/event/process.h"
 #include "nvim/event/stream.h"
 #include "nvim/log.h"
