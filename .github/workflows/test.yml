@@ -38,4 +38,11 @@ jobs:
       - run: ./.github/scripts/install_deps.sh
       - uses: ./.github/actions/cache
       - run: |
-          ls /usr/bin
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew install include-what-you-use
+          make iwyu
+          if git diff-index --quiet HEAD; then
+            echo "Headers are incorrect, either manually adjust headers or run"
+            echo "'make iwyu' with 'include-what-you-use' and 'iwyu-fix-includes' installed"
+            git diff --color --exit-code
+          fi
