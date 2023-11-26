@@ -1,0 +1,261 @@
+*channel.txt*    Nvim
+
+
+		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+
+
+Nvim asynchronous IO					*channel*
+
+				      Type |gO| to see the table of contents.
+
+==============================================================================
+1. Introduction						    *channel-intro*
+
+Channels are nvim's way of communicating with external processes.
+
+There are several ways to open a channel:
+
+  1. Through stdin/stdout when `nvim` is started with `--headless`, and a startup
+     script or --cmd  command opens the stdio channel using |stdioopen()|.
+
+  2. Through stdin, stdout and stderr of a process spawned by |jobstart()|.
+
+  3. Through the PTY master end of a PTY opened with
+     `jobstart(..., {'pty': v:true})` or |termopen()|.
+
+  4. By connecting to a TCP/IP socket or named pipe with |sockconnect()|.
+
+  5. By another process connecting to a socket listened to by nvim. This only
+     supports RPC channels, see |rpc-connecting|.
+
+Channels support multiple modes or protocols. In the most basic
+mode of operation, raw bytes are read and written to the channel.
+The |RPC| protocol, based on the msgpack-rpc standard, enables nvim and the
+process at the other end to send remote calls and events to each other.
+The builtin |terminal-emulator| is also implemented on top of PTY channels.
+
+Channel Id						*channel-id*
+
+Each channel is identified by an integer id, unique for the life of the
+current Nvim session. Functions like |stdioopen()| return channel ids;
+functions like |chansend()| consume channel ids.
+
+==============================================================================
+2. Reading and writing raw bytes			      *channel-bytes*
+
+Channels opened by Vimscript functions operate with raw bytes by default. For
+a job channel using RPC, bytes can still be read over its stderr. Similarly,
+only bytes can be written to Nvim's own stderr.
+
+						*channel-callback*
+- on_stdout({chan-id}, {data}, {name})		*on_stdout*
+- on_stderr({chan-id}, {data}, {name})		*on_stderr*
+- on_stdin({chan-id}, {data}, {name})		*on_stdin*
+- on_data({chan-id}, {data}, {name})		*on_data*
+
+    Scripts can react to channel activity (received data) via callback
+    functions assigned to the `on_stdout`, `on_stderr`, `on_stdin`, or
+    `on_data` option keys. Callbacks should be fast: avoid potentially
+    slow/expensive work.
+
+    Parameters: ~
+      - {chan-id}   Channel handle. |channel-id|
+      - {data}	    Raw data (|readfile()|-style list of strings) read from
+		    the channel. EOF is a single-item list: `['']`. First and
+		    last items may be partial lines! |channel-lines|
+      - {name}	    Stream name (string) like "stdout", so the same function
+		    can handle multiple streams. Event names depend on how the
+		    channel was opened and in what mode/protocol.
+
+						*channel-buffered*
+    The callback is invoked immediately as data is available, where
+    a single-item list `['']` indicates EOF (stream closed).  Alternatively
+    set the `stdout_buffered`, `stderr_buffered`, `stdin_buffered`, or
+    `data_buffered` option keys to invoke the callback only after all output
+    was gathered and the stream was closed.
+						*E5210*
+    If a buffering mode is used without a callback, the data is saved in the
+    stream {name} key of the options dict. It is an error if the key exists.
+
+							      *channel-lines*
+    Stream event handlers receive data as it becomes available from the OS,
+    thus the first and last items in the {data} list may be partial lines.
+    Empty string completes the previous partial line. Examples (not including
+    the final `['']` emitted at EOF):
+      - `foobar` may arrive as `['fo'], ['obar']`
+      - `foo\nbar` may arrive as
+	- `['foo','bar']`
+	- or `['foo',''], ['bar']`
+	- or `['foo'], ['','bar']`
+	- or `['fo'], ['o','bar']`
+
+    There are two ways to deal with this:
+    - 1. To wait for the entire output, use |channel-buffered| mode.
+    - 2. To read line-by-line, use the following code: >vim
+	let s:lines = ['']
+	func! s:on_event(job_id, data, event) dict
+	  let eof = (a:data == [''])
+	  " Complete the previous line.
+	  let s:lines[-1] .= a:data[0]
+	  " Append (last item may be a partial line, until EOF).
+	  call extend(s:lines, a:data[1:])
+	endf
+<
+
+If the callback functions are |Dictionary-function|s, |self| refers to the
+options dictionary containing the callbacks. |Partial|s can also be used as
+callbacks.
+
+Data can be sent to the channel using the |chansend()| function. Here is a
+simple example, echoing some data through a cat-process:
+>vim
+    function! s:OnEvent(id, data, event) dict
+      let str = join(a:data, "\n")
+      echomsg str
+    endfunction
+    let id = jobstart(['cat'], {'on_stdout': function('s:OnEvent') } )
+    call chansend(id, "hello!")
+<
+
+Here is an example of setting a buffer to the result of grep, but only after
+all data has been processed:
+>vim
+    function! s:OnEvent(id, data, event) dict
+      call nvim_buf_set_lines(2, 0, -1, v:true, a:data)
+    endfunction
+    let id = jobstart(['grep', '^[0-9]'], { 'on_stdout': function('s:OnEvent'),
+					  \ 'stdout_buffered':v:true } )
+
+    call chansend(id, "stuff\n10 PRINT \"NVIM\"\nxx")
+    " no output is received, buffer is empty
+
+    call chansend(id, "xx\n20 GOTO 10\nzz\n")
+    call chanclose(id, 'stdin')
+    " now buffer has result
+<
+For additional examples with jobs, see |job-control|.
+
+							      *channel-pty*
+Special case: PTY channels opened with `jobstart(..., {'pty': v:true})` do not
+preprocess ANSI escape sequences, these will be sent raw to the callback.
+However, change of PTY size can be signaled to the slave using |jobresize()|.
+See also |terminal-emulator|.
+
+Terminal characteristics (termios) for |:terminal| and PTY channels are copied
+from the host TTY, or if Nvim is |--headless| it uses default values: >vim
+    :echo system('nvim --headless +"te stty -a" +"sleep 1" +"1,/^$/print" +q')
+
+==============================================================================
+3. Communicating using msgpack-rpc			      *channel-rpc*
+
+When channels are opened with the `rpc` option set to true, the channel can be
+used for remote method calls in both directions, see |msgpack-rpc|. Note that
+rpc channels are implicitly trusted and the process at the other end can
+invoke any |API| function!
+
+==============================================================================
+4. Standard IO channel					    *channel-stdio*
+
+Nvim uses stdin/stdout to interact with the user over the terminal interface
+(TUI). If Nvim is |--headless| the TUI is not started and stdin/stdout can be
+used as a channel. See also |--embed|.
+
+Call |stdioopen()| during |startup| to open the stdio channel as |channel-id| 1.
+Nvim's stderr is always available as |v:stderr|, a write-only bytes channel.
+
+Example: >vim
+    func! OnEvent(id, data, event)
+      if a:data == [""]
+        quit
+      end
+      call chansend(a:id, map(a:data, {i,v -> toupper(v)}))
+    endfunc
+    call stdioopen({'on_stdin': 'OnEvent'})
+<
+Put this in `uppercase.vim` and run:  >bash
+    nvim --headless --cmd "source uppercase.vim"
+
+==============================================================================
+5. Using a prompt buffer				*prompt-buffer*
+
+If you want to type input for the job in a Vim window you have a few options:
+- Use a normal buffer and handle all possible commands yourself.
+  This will be complicated, since there are so many possible commands.
+- Use a terminal window.  This works well if what you type goes directly to
+  the job and the job output is directly displayed in the window.
+  See |terminal|.
+- Use a window with a prompt buffer. This works well when entering a line for
+  the job in Vim while displaying (possibly filtered) output from the job.
+
+A prompt buffer is created by setting 'buftype' to "prompt". You would
+normally only do that in a newly created buffer.
+
+The user can edit and enter one line of text at the very last line of the
+buffer.  When pressing Enter in the prompt line the callback set with
+|prompt_setcallback()| is invoked.  It would normally send the line to a job.
+Another callback would receive the output from the job and display it in the
+buffer, below the prompt (and above the next prompt).
+
+Only the text in the last line, after the prompt, is editable. The rest of the
+buffer is not modifiable with Normal mode commands.  It can be modified by
+calling functions, such as |append()|.  Using other commands may mess up the
+buffer.
+
+After setting 'buftype' to "prompt" Vim does not automatically start Insert
+mode, use `:startinsert` if you want to enter Insert mode, so that the user
+can start typing a line.
+
+The text of the prompt can be set with the |prompt_setprompt()| function. If
+no prompt is set with |prompt_setprompt()|, "% " is used. You can get the
+effective prompt text for a buffer, with |prompt_getprompt()|.
+
+The user can go to Normal mode and navigate through the buffer.  This can be
+useful to see older output or copy text.
+
+The CTRL-W key can be used to start a window command, such as CTRL-W w to
+switch to the next window.  This also works in Insert mode (use Shift-CTRL-W
+to delete a word). When leaving the window Insert mode will be stopped.  When
+coming back to the prompt window Insert mode will be restored.
+
+Any command that starts Insert mode, such as "a", "i", "A" and "I", will move
+the cursor to the last line.  "A" will move to the end of the line, "I" to the
+start of the line.
+
+Here is an example for Unix.  It starts a shell in the background and prompts
+for the next shell command.  Output from the shell is displayed above the
+prompt. >vim
+
+	" Function handling a line of text that has been typed.
+	func TextEntered(text)
+	  " Send the text to a shell with Enter appended.
+	  call chansend(g:shell_job, [a:text, ''])
+	endfunc
+
+	" Function handling output from the shell: Add it above the prompt.
+	func GotOutput(channel, msg, name)
+	  call append(line("$") - 1, a:msg)
+	endfunc
+
+	" Function handling the shell exits: close the window.
+	func JobExit(job, status, event)
+	  quit!
+	endfunc
+
+	" Start a shell in the background.
+	let shell_job = jobstart(["/bin/sh"], #{
+		\ on_stdout: function('GotOutput'),
+		\ on_stderr: function('GotOutput'),
+		\ on_exit: function('JobExit'),
+		\ })
+
+	new
+	set buftype=prompt
+	let buf = bufnr('')
+	call prompt_setcallback(buf, function("TextEntered"))
+	call prompt_setprompt(buf, "shell command: ")
+
+	" start accepting shell commands
+	startinsert
+<
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

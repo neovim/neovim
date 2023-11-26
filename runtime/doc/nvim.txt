@@ -1,0 +1,74 @@
+*nvim.txt*	Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+Nvim                                                       *nvim* *nvim-intro*
+
+Nvim is based on Vim by Bram Moolenaar.
+
+If you already use Vim see |nvim-from-vim| for a quickstart.
+If you are new to Vim, try the 30-minute tutorial: >vim
+
+    :Tutor<Enter>
+
+Nvim is emphatically a fork of Vim, not a clone: compatibility with Vim
+(especially editor and Vimscript features) is maintained where possible. See
+|vim-differences| for the complete reference of differences from Vim.
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+Transitioning from Vim                          *nvim-from-vim*
+
+1. To start the transition, create your |init.vim| (user config) file: >vim
+
+    :exe 'edit '.stdpath('config').'/init.vim'
+    :write ++p
+
+2. Add these contents to the file: >vim
+
+    set runtimepath^=~/.vim runtimepath+=~/.vim/after
+    let &packpath = &runtimepath
+    source ~/.vimrc
+
+3. Restart Nvim, your existing Vim config will be loaded.
+
+See |provider-python| and |provider-clipboard| for additional software you
+might need to use some features.
+
+Your Vim configuration might not be entirely Nvim-compatible (see
+|vim-differences|). For example the |'ttymouse'| option was removed from Nvim,
+because mouse support is always enabled if possible. If you use the same
+|vimrc| for Vim and Nvim you could guard |'ttymouse'| in your configuration
+like so:
+>vim
+    if !has('nvim')
+        set ttymouse=xterm2
+    endif
+
+And for Nvim-specific configuration, you can do this:
+>vim
+    if has('nvim')
+        tnoremap <Esc> <C-\><C-n>
+    endif
+
+For a more granular approach use |exists()|:
+>vim
+    if exists(':tnoremap')
+        tnoremap <Esc> <C-\><C-n>
+    endif
+
+Now you should be able to explore Nvim more comfortably. Check |nvim-features|
+for more information.
+
+                                                        *portable-config*
+Because Nvim follows the XDG |base-directories| standard, configuration on
+Windows is stored in ~/AppData instead of ~/.config. But you can still share
+the same Nvim configuration on all of your machines, by creating
+~/AppData/Local/nvim/init.vim containing just this line: >vim
+    source ~/.config/nvim/init.vim
+
+==============================================================================
+ vim:tw=78:ts=8:et:ft=help:norl:

@@ -1,0 +1,41 @@
+name: optional
+on:
+  pull_request:
+    types: [labeled, opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
+env:
+  INSTALL_PREFIX: ${{ github.workspace }}/nvim-install
+  # TEST_FILE: test/functional/shada
+  # TEST_FILTER: foo
+
+jobs:
+  s390x:
+    if: contains(github.event.pull_request.labels.*.name, 'ci-s390x')
+    strategy:
+      fail-fast: false
+      matrix:
+        test: [functionaltest, oldtest]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
+      - uses: docker://multiarch/ubuntu-core:s390x-focal
+        with:
+          args: >
+            bash -c
+            "
+            apt-get -y update &&
+            DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential cmake curl gettext ninja-build locales-all cpanminus git attr libattr1-dev  &&
+            git clone --depth=1 https://github.com/neovim/neovim.git &&
+            cd neovim &&
+            git fetch origin ${{ github.ref }}:pr &&
+            git switch pr &&
+            cmake -S cmake.deps -B .deps -G Ninja -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON &&
+            cmake --build .deps &&
+            cmake -B build -G Ninja -D PREFER_LUA=ON &&
+            make ${{ matrix.test }}
+            "

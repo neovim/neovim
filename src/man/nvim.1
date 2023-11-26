@@ -1,0 +1,420 @@
+.Dd December 17, 2017
+.Dt NVIM 1
+.Os
+.Sh NAME
+.Nm nvim
+.Nd edit text
+.Sh SYNOPSIS
+.Nm
+.Op Ar options
+.Op Ar file ...
+.Nm
+.Op Ar options
+.Fl
+.Nm
+.Op Ar options
+.Fl t Ar tag
+.Nm
+.Op Ar options
+.Fl q Op Ar errorfile
+.Sh DESCRIPTION
+.Nm
+is a text editor based on Vim.
+Start
+.Nm
+followed by any number of options and/or files:
+.Pp
+.Dl nvim [options] [file ...]
+.Pp
+Commands in
+.Nm
+begin with colon
+.Pq Sq \&: .
+Type ":help subject" to get help on a specific subject.
+Use <Tab> and CTRL-D to complete subjects (":help cmdline\-completion").
+.Pp
+The "quickref" help section is a condensed reference of editor features:
+.Dl :help quickref
+.Pp
+If you are new to Vim/Nvim, start with the 30-minute tutorial:
+.Dl :Tutor
+.Pp
+After installing/updating Nvim, it's a good idea to run the self-check:
+.Dl :checkhealth
+.Pp
+.Bl -tag -width Fl
+.It Ar file ...
+File(s) to edit.
+Opens one buffer per file.
+To switch between buffers, use the
+.Ic :next
+and
+.Ic :previous
+commands.
+.It Fl
+Reads text from standard input until
+.Dv EOF ,
+then opens a buffer with that text.
+User input is read from standard error, which should be a terminal.
+.El
+.Sh OPTIONS
+.Bl -tag -width Fl
+.It Fl t Ar tag
+Finds
+.Ar tag
+in the tags file, the associated file becomes the current
+file and the associated command is executed.
+Cursor is positioned at the tag location in the file.
+.Ic ":help tag-commands"
+.It Fl q Op Ar errorfile
+QuickFix mode.
+Display the first error in
+.Ar errorfile .
+If
+.Ar errorfile
+is omitted, the value of the 'errorfile' option is used (defaults to
+.Cm errors.err ) .
+Further errors can be jumped to with the
+.Ic :cnext
+command.
+.Ic ":help quickfix"
+.It Fl -
+End of options.
+Remaining arguments are treated as literal file names, including filenames starting with hyphen
+.Pq Sq - .
+.It Fl e
+Ex mode, reading stdin as Ex commands.
+.Ic ":help Ex-mode"
+.It Fl E
+Ex mode, reading stdin as text.
+.Ic :help Ex-mode
+.It Fl es
+Silent (non-interactive) Ex mode, reading stdin as Ex commands.
+Useful for scripting because it does NOT start a UI, unlike
+.Fl e .
+.Ic :help silent-mode
+.It Fl \&Es
+Silent (non-interactive) Ex mode, reading stdin as text.
+Useful for scripting because it does NOT start a UI, unlike
+.Fl E .
+.Ic :help silent-mode
+.It Fl d
+Diff mode.
+Show the difference between two to eight files, similar to
+.Xr sdiff 1 .
+.Ic ":help diff"
+.It Fl R
+Read-only mode.
+Sets the 'readonly' option.
+Implies
+.Fl n .
+Buffers can still be edited, but cannot be written to disk if already
+associated with a file.
+To overwrite a file, add an exclamation mark to the relevant Ex command, such as
+.Ic :w! .
+.Ic ":help 'readonly'"
+.It Fl m
+Resets the 'write' option, to disable file modifications.
+Writing to a file is disabled, but buffers can still be modified.
+.It Fl M
+Resets the 'write' and 'modifiable' options, to disable file and buffer
+modifications.
+.It Fl b
+Binary mode.
+.Ic ":help edit-binary"
+.It Fl A
+Arabic mode.
+Sets the 'arabic' option.
+.It Fl H
+Hebrew mode.
+Sets the 'hkmap' and 'rightleft' options.
+.It Fl V Ns Oo Ar N Oc Ns Op Ar file
+Verbose mode.
+Prints debug messages.
+.Ar N
+is the 'verbose' level, defaults to
+.Cm 10 .
+If
+.Ar file
+is specified, append messages to
+.Ar file
+instead of printing them.
+.Ic ":help 'verbose'"
+.It Fl D
+Vimscript debug mode.
+Started when executing the first command from a script.
+:help debug-mode
+.It Fl n
+Disable the use of swap files.
+Sets the 'updatecount' option to
+.Cm 0 .
+Can be useful for editing files on a slow medium.
+.It Fl r Op Ar file
+Recovery mode.
+If
+.Ar file
+is omitted
+then list swap files with recovery information.
+Otherwise the swap file
+.Ar file
+is used to recover a crashed session.
+The swap file has the same name as the file it's associated with, but with
+.Sq .swp
+appended.
+.Ic ":help recovery"
+.It Fl L Op Ar file
+Alias for
+.Fl r .
+.It Fl u Ar vimrc
+Use
+.Ar vimrc
+instead of the default
+.Pa ~/.config/nvim/init.vim .
+If
+.Ar vimrc
+is
+.Cm NORC ,
+do not load any initialization files (except plugins).
+If
+.Ar vimrc
+is
+.Cm NONE ,
+loading plugins is also skipped.
+.Ic ":help initialization"
+.It Fl i Ar shada
+Use
+.Ar shada
+instead of the default
+.Pa ~/.local/state/nvim/shada/main.shada .
+If
+.Ar shada
+is
+.Cm NONE ,
+do not read or write a ShaDa file.
+.Ic ":help shada"
+.It Fl -noplugin
+Skip loading plugins (by setting the 'noloadplugins' option).
+Implied by
+.Cm -u NONE .
+.It Fl -clean
+Start Nvim with "factory defaults" (no user config and plugins, no shada).
+.Ic ":help --clean"
+.It Fl o Ns Op Ar N
+Open
+.Ar N
+windows stacked horizontally.
+If
+.Ar N
+is omitted, open one window for each file.
+If
+.Ar N
+is less than the number of file arguments, allocate windows for the first
+.Ar N
+files and hide the rest.
+.It Fl O Ns Op Ar N
+Like
+.Fl o ,
+but tile windows vertically.
+.It Fl p Ns Op Ar N
+Like
+.Fl o ,
+but for tab pages.
+.It Cm + Ns Op Ar linenum
+For the first file, position the cursor on line
+.Ar linenum .
+If
+.Ar linenum
+is omitted, position the cursor on the last line of the file.
+.Cm +5
+and
+.Cm -c 5
+on the command-line are equivalent to
+.Ic :5
+inside
+.Nm .
+.It Cm +/ Ns Op Ar pattern
+For the first file, position the cursor on the first occurrence of
+.Ar pattern .
+If
+.Ar pattern
+is omitted, the most recent search pattern is used (if any).
+.Cm +/foo
+and
+.Cm -c /foo
+on the command-line are equivalent to
+.Ic /foo
+and
+.Ic :/foo
+inside
+.Nm .
+.Ic ":help search-pattern"
+.It \fB\+\fR\fI\,command\/\fR , Fl c Ar command
+Execute
+.Ar command
+after reading the first file.
+Up to 10 instances allowed.
+.Qq Cm +foo
+and
+.Cm -c \(dqfoo\(dq
+are equivalent.
+.It Fl -cmd Ar command
+Like
+.Fl c ,
+but execute
+.Ar command
+before processing any vimrc.
+Up to 10 instances of these can be used independently from instances of
+.Fl c .
+.It Fl l Ar script Op Ar args
+Execute Lua
+.Ar script
+with optional
+.Op Ar args
+after processing any preceding Nvim startup arguments.
+All
+.Op Ar args
+are treated as script arguments and are passed literally to Lua, that is,
+.Fl l
+stops processing of Nvim arguments.
+.Ic ":help -l"
+.It Fl S Op Ar session
+Execute
+.Ar session
+after the first file argument has been read. If
+.Ar session
+filename ends with
+.Pa .lua
+it is executed as Lua instead of Vimscript.
+Equivalent to
+.Cm -c \(dqsource session\(dq .
+.Ar session
+cannot start with a hyphen
+.Pq Sq - .
+If
+.Ar session
+is omitted then
+.Pa Session.vim
+is used, if found.
+.Ic ":help session-file"
+.It Fl s Ar scriptin
+Read normal mode commands from
+.Ar scriptin .
+The same can be done with the command
+.Ic ":source! scriptin" .
+If the end of the file is reached before
+.Nm
+exits, further characters are read from the keyboard.
+.It Fl w Ar scriptout
+Append all typed characters to
+.Ar scriptout .
+Can be used for creating a script to be used with
+.Fl s
+or
+.Ic :source! .
+.It Fl W Ar scriptout
+Like
+.Fl w ,
+but truncate
+.Ar scriptout .
+.It Fl -startuptime Ar file
+During startup, append timing messages to
+.Ar file .
+Can be used to diagnose slow startup times.
+.It Fl -api-info
+Dump API metadata serialized to msgpack and exit.
+.It Fl -embed
+Use standard input and standard output as a msgpack-rpc channel.
+:help --embed
+.It Fl -headless
+Do not start a UI.
+When supplied with --embed this implies that the embedding application does not intend to (immediately) start a UI.
+Also useful for "scraping" messages in a pipe.
+:help --headless
+.It Fl -listen Ar address
+Start RPC server on this pipe or TCP socket.
+.It Fl h , -help
+Print usage information and exit.
+.It Fl v , -version
+Print version information and exit.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width Fl
+.It Ev NVIM_APPNAME
+The name of sub-directories used within each XDG user directory.
+Defaults to
+.Cm nvim .
+:help $NVIM_APPNAME
+.It Ev NVIM_LOG_FILE
+Low-level log file, usually found at ~/.local/state/nvim/log.
+:help $NVIM_LOG_FILE
+.It Ev VIM
+Used to locate user files, such as init.vim.
+System-dependent.
+:help $VIM
+.It Ev VIMRUNTIME
+Used to locate runtime files (documentation, syntax highlighting, etc.).
+.It Ev XDG_CONFIG_HOME
+Path to the user-local configuration directory, see
+.Sx FILES .
+Defaults to
+.Pa ~/.config .
+:help xdg
+.It Ev XDG_STATE_HOME
+Like
+.Ev XDG_CONFIG_HOME ,
+but used to store data not generally edited by the user,
+namely swap, backup, and ShaDa files.
+Defaults to
+.Pa ~/.local/state .
+:help xdg
+.It Ev XDG_DATA_HOME
+Like
+.Ev XDG_CONFIG_HOME ,
+but used to store data not generally edited by the user,
+things like runtime files.
+Defaults to
+.Pa ~/.local/share .
+:help xdg
+.It Ev VIMINIT
+Ex commands to be executed at startup.
+.Ic ":help VIMINIT"
+.It Ev SHELL
+Used to initialize the 'shell' option, which decides the default shell used by
+features like
+.Ic :terminal ,
+.Ic :! , and
+.Ic system() .
+.El
+.Sh FILES
+.Bl -tag -width "~/.config/nvim/init.vim"
+.It Pa ~/.config/nvim/init.vim
+User-local
+.Nm
+configuration file.
+.It Pa ~/.config/nvim
+User-local
+.Nm
+configuration directory.
+See also
+.Ev XDG_CONFIG_HOME .
+.It Pa $VIM/sysinit.vim
+System-global
+.Nm
+configuration file.
+.It Pa $VIM
+System-global
+.Nm
+runtime directory.
+.El
+.Sh AUTHORS
+Nvim was started by
+.An Thiago de Arruda .
+Most of Vim was written by
+.An -nosplit
+.An Bram Moolenaar .
+Vim is based on Stevie, worked on by
+.An Tim Thompson ,
+.An Tony Andrews ,
+and
+.An G.R. (Fred) Walter .
+.Ic ":help credits"

@@ -1,0 +1,39 @@
+name: "Pull Request Labeler"
+on:
+  pull_request_target:
+    types: [opened]
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+    - uses: actions/labeler@v4
+      with:
+        sync-labels: ""
+
+  type-scope:
+    needs: triage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+    steps:
+    - name: "Extract commit type and add as label"
+      run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|([[:alpha:]]+)(\(.*\))?!?:.*|\1|')" || true
+    - name: "Extract commit scope and add as label"
+      run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+\((.+)\)!?:.*|\1|')" || true
+    - name: "Extract if the PR is a breaking change and add it as label"
+      run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')" || true
+
+  request-reviewer:
+    needs: ["triage", "type-scope"]
+    permissions:
+      pull-requests: write
+    uses: ./.github/workflows/add-reviewers.yml

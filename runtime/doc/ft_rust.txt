@@ -1,0 +1,478 @@
+*ft_rust.txt*      Filetype plugin for Rust
+
+==============================================================================
+CONTENTS                                                      *rust*
+
+1. Introduction                                                   |rust-intro|
+2. Settings                                                    |rust-settings|
+3. Commands                                                    |rust-commands|
+4. Mappings                                                    |rust-mappings|
+
+==============================================================================
+INTRODUCTION                                                      *rust-intro*
+
+This plugin provides syntax and supporting functionality for the Rust
+filetype. It requires Vim 8 or higher for full functionality. Some commands
+will not work on earlier versions.
+
+==============================================================================
+SETTINGS                                                       *rust-settings*
+
+This plugin has a few variables you can define in your vimrc that change the
+behavior of the plugin.
+
+Some variables can be set buffer local (`:b` prefix), and the buffer local
+will take precedence over the global `g:` counterpart.
+
+                                                                *g:rustc_path*
+g:rustc_path ~
+	Set this option to the path to rustc for use in the |:RustRun| and
+	|:RustExpand| commands. If unset, `rustc` will be located in $PATH: >vim
+	    let g:rustc_path = $HOME."/bin/rustc"
+<
+
+                                                  *g:rustc_makeprg_no_percent*
+g:rustc_makeprg_no_percent ~
+	Set this option to 1 to have 'makeprg' default to `rustc` instead of
+	`rustc %`: >vim
+	    let g:rustc_makeprg_no_percent = 1
+<
+
+                                                              *g:rust_conceal*
+g:rust_conceal ~
+	Set this option to turn on the basic |conceal| support: >vim
+	    let g:rust_conceal = 1
+<
+
+                                                     *g:rust_conceal_mod_path*
+g:rust_conceal_mod_path ~
+	Set this option to turn on |conceal| for the path connecting token
+	"::": >vim
+	    let g:rust_conceal_mod_path = 1
+<
+
+                                                          *g:rust_conceal_pub*
+g:rust_conceal_pub ~
+	Set this option to turn on |conceal| for the "pub" token: >vim
+	    let g:rust_conceal_pub = 1
+<
+
+                                                     *g:rust_recommended_style*
+g:rust_recommended_style ~
+        Set this option to enable vim indentation and textwidth settings to
+        conform to style conventions of the rust standard library (i.e. use 4
+        spaces for indents and sets 'textwidth' to 99). This option is enabled
+	by default. To disable it: >vim
+	    let g:rust_recommended_style = 0
+<
+
+                                                                 *g:rust_fold*
+g:rust_fold ~
+	Set this option to turn on |folding|: >vim
+	    let g:rust_fold = 1
+<
+	Value		Effect ~
+	0		No folding
+	1		Braced blocks are folded. All folds are open by
+			default.
+	2		Braced blocks are folded. 'foldlevel' is left at the
+			global value (all folds are closed by default).
+
+						  *g:rust_bang_comment_leader*
+g:rust_bang_comment_leader ~
+	Set this option to 1 to preserve the leader on multi-line doc comments
+	using the `/*!` syntax: >vim
+	    let g:rust_bang_comment_leader = 1
+<
+
+                                                *g:rust_use_custom_ctags_defs*
+g:rust_use_custom_ctags_defs ~
+	Set this option to 1 if you have customized ctags definitions for Rust
+	and do not wish for those included with rust.vim to be used: >vim
+	    let g:rust_use_custom_ctags_defs = 1
+<
+
+	NOTE: rust.vim's built-in definitions are only used for the Tagbar Vim
+	plugin, if you have it installed, AND if Universal Ctags is not
+	detected. This is because Universal Ctags already has built-in
+	support for Rust when used with Tagbar.
+
+	Also, note that when using ctags other than Universal Ctags, it is not
+	automatically used when generating |tags| files that Vim can use to
+	navigate to definitions across different source files. Feel free to
+	copy `rust.vim/ctags/rust.ctags` into your own `~/.ctags` if you wish
+	to generate |tags| files.
+
+                                                 *g:ftplugin_rust_source_path*
+g:ftplugin_rust_source_path ~
+	Set this option to a path that should be prepended to 'path' for Rust
+	source files: >vim
+	    let g:ftplugin_rust_source_path = $HOME . '/dev/rust'
+<
+
+						       *g:rustfmt_command*
+g:rustfmt_command ~
+	Set this option to the name of the "rustfmt" executable in your $PATH. If
+	not specified it defaults to "rustfmt" : >vim
+	    let g:rustfmt_command = 'rustfmt'
+<
+						       *g:rustfmt_autosave*
+g:rustfmt_autosave ~
+	Set this option to 1 to run |:RustFmt| automatically when saving a
+	buffer. If not specified it defaults to 0 : >vim
+	    let g:rustfmt_autosave = 0
+<
+	There is also a buffer-local b:rustfmt_autosave that can be set for
+	the same purpose, and can override the global setting.
+
+                                        *g:rustfmt_autosave_if_config_present*
+g:rustfmt_autosave_if_config_present ~
+	Set this option to 1 to have *b:rustfmt_autosave* be set automatically
+	if a `rustfmt.toml` file is present in any parent directly leading to
+	the file being edited. If not set, default to 0: >vim
+	    let g:rustfmt_autosave_if_config_present = 0
+<
+	This is useful to have `rustfmt` only execute on save, on projects
+	that have `rustfmt.toml` configuration.
+
+	There is also a buffer-local b:rustfmt_autosave_if_config_present
+	that can be set for the same purpose, which can overrides the global
+	setting.
+
+						       *g:rustfmt_fail_silently*
+g:rustfmt_fail_silently ~
+	Set this option to 1 to prevent "rustfmt" from populating the
+	|location-list| with errors. If not specified it defaults to 0: >vim
+	    let g:rustfmt_fail_silently = 0
+<
+						       *g:rustfmt_options*
+g:rustfmt_options ~
+	Set this option to a string of options to pass to "rustfmt". The
+	write-mode is already set to "overwrite". If not specified it
+	defaults to '' : >vim
+	    let g:rustfmt_options = ''
+<
+                                                       *g:rustfmt_emit_files*
+g:rustfmt_emit_files ~
+	If not specified rust.vim tries to detect the right parameter to
+	pass to rustfmt based on its reported version. Otherwise, it
+	determines whether to run rustfmt with '--emit=files' (when 1 is
+	provided) instead of '--write-mode=overwrite'. >vim
+	    let g:rustfmt_emit_files = 0
+<
+
+							  *g:rust_playpen_url*
+g:rust_playpen_url ~
+	Set this option to override the url for the playpen to use: >vim
+	    let g:rust_playpen_url = 'https://play.rust-lang.org/'
+<
+
+							*g:rust_shortener_url*
+g:rust_shortener_url ~
+	Set this option to override the url for the url shortener: >vim
+	    let g:rust_shortener_url = 'https://is.gd/'
+<
+                                                        *g:rust_clip_command*
+g:rust_clip_command ~
+	Set this option to the command used in your OS to copy the Rust Play
+	url to the clipboard: >vim
+	    let g:rust_clip_command = 'xclip -selection clipboard'
+<
+
+                                                       *g:cargo_makeprg_params*
+g:cargo_makeprg_params ~
+	Set this option to the string of parameters to pass to cargo. If not
+	specified it defaults to `$*` : >vim
+	    let g:cargo_makeprg_params = 'build'
+<
+
+                                                  *g:cargo_shell_command_runner*
+g:cargo_shell_command_runner ~
+	Set this option to change how to run shell commands for cargo commands
+	|:Cargo|, |:Cbuild|, |:Crun|, ...
+	By default, |:terminal| is used to run shell command in terminal window
+	asynchronously. But if you prefer |:!| for running the commands, it can
+	be specified: >vim
+	    let g:cargo_shell_command_runner = '!'
+<
+
+------------------------------------------------------------------------------
+Integration with Syntastic                                    *rust-syntastic*
+
+This plugin automatically integrates with the Syntastic checker. There are two
+checkers provided: `rustc`, and `cargo`. The latter invokes `cargo` in order to
+build code, and the former delivers a single edited '.rs' file as a compilation
+target directly to the Rust compiler, `rustc`.
+
+Because Cargo is almost exclusively being used for building Rust code these
+days, `cargo` is the default checker. >vim
+
+    let g:syntastic_rust_checkers = ['cargo']
+<
+If you would like to change it, you can set `g:syntastic_rust_checkers` to a
+different value.
+                                          *g:rust_cargo_avoid_whole_workspace*
+                                          *b:rust_cargo_avoid_whole_workspace*
+g:rust_cargo_avoid_whole_workspace ~
+	When editing a crate that is part of a Cargo workspace, and this
+	option is set to 1 (the default), then `cargo` will be executed
+	directly in that crate directory instead of in the workspace
+	directory. Setting 0 prevents this behavior - however be aware that if
+	you are working in large workspace, Cargo commands may take more time,
+	plus the Syntastic error list may include all the crates in the
+	workspace. >vim
+            let g:rust_cargo_avoid_whole_workspace = 0
+<
+                                              *g:rust_cargo_check_all_targets*
+                                              *b:rust_cargo_check_all_targets*
+g:rust_cargo_check_all_targets ~
+	When set to 1, the `--all-targets` option will be passed to cargo when
+	Syntastic executes it, allowing the linting of all targets under the
+	package.
+	The default is 0.
+
+                                              *g:rust_cargo_check_all_features*
+                                              *b:rust_cargo_check_all_features*
+g:rust_cargo_check_all_features ~
+	When set to 1, the `--all-features` option will be passed to cargo when
+	Syntastic executes it, allowing the linting of all features of the
+	package.
+	The default is 0.
+
+                                                 *g:rust_cargo_check_examples*
+                                                 *b:rust_cargo_check_examples*
+g:rust_cargo_check_examples ~
+	When set to 1, the `--examples` option will be passed to cargo when
+	Syntastic executes it, to prevent the exclusion of examples from
+	linting. The examples are normally under the `examples/` directory of
+	the crate.
+	The default is 0.
+
+                                                    *g:rust_cargo_check_tests*
+                                                    *b:rust_cargo_check_tests*
+g:rust_cargo_check_tests ~
+	When set to 1, the `--tests` option will be passed to cargo when
+	Syntastic executes it, to prevent the exclusion of tests from linting.
+	The tests are normally under the `tests/` directory of the crate.
+	The default is 0.
+
+                                                  *g:rust_cargo_check_benches*
+                                                  *b:rust_cargo_check_benches*
+g:rust_cargo_check_benches ~
+	When set to 1, the `--benches` option will be passed to cargo when
+	Syntastic executes it.  The benches are normally under the `benches/`
+	directory of the crate.
+	The default is 0.
+
+------------------------------------------------------------------------------
+Integration with auto-pairs                                    *rust-auto-pairs*
+
+This plugin automatically configures the auto-pairs plugin not to duplicate
+single quotes, which are used more often for lifetime annotations than for
+single character literals.
+
+                                                  *g:rust_keep_autopairs_default*
+g:rust_keep_autopairs_default ~
+
+	Don't override auto-pairs default for the Rust filetype. The default
+	is 0.
+
+==============================================================================
+COMMANDS                                                       *rust-commands*
+
+Invoking Cargo ~
+
+This plug defines very simple shortcuts for invoking Cargo from with Vim.
+
+:Cargo <args>                                                       *:Cargo*
+                Runs `cargo` with the provided arguments.
+
+:Cbuild <args>                                                     *:Cbuild*
+                Shortcut for `cargo build` .
+
+:Cclean <args>                                                     *:Cclean*
+                Shortcut for `cargo clean` .
+
+:Cdoc <args>                                                         *:Cdoc*
+                Shortcut for `cargo doc` .
+
+:Cinit <args>                                                       *:Cinit*
+                Shortcut for `cargo init` .
+
+:Crun <args>                                                         *:Crun*
+                Shortcut for `cargo run` .
+
+:Ctest <args>                                                       *:Ctest*
+                Shortcut for `cargo test` .
+
+:Cupdate <args>                                                   *:Cupdate*
+                Shortcut for `cargo update` .
+
+:Cbench <args>                                                     *:Cbench*
+                Shortcut for `cargo bench` .
+
+:Csearch <args>                                                   *:Csearch*
+                Shortcut for `cargo search` .
+
+:Cpublish <args>                                                 *:Cpublish*
+                Shortcut for `cargo publish` .
+
+:Cinstall <args>                                                 *:Cinstall*
+                Shortcut for `cargo install` .
+
+:Cruntarget <args>                                                 *:Cruntarget*
+                Shortcut for `cargo run --bin` or `cargo run --example`,
+                depending on the currently open buffer.
+
+Formatting ~
+
+:RustFmt                                                       *:RustFmt*
+		Runs |g:rustfmt_command| on the current buffer. If
+		|g:rustfmt_options| is set then those will be passed to the
+		executable.
+
+		If |g:rustfmt_fail_silently| is 0 (the default) then it
+		will populate the |location-list| with the errors from
+		|g:rustfmt_command|. If |g:rustfmt_fail_silently| is set to 1
+		then it will not populate the |location-list|.
+
+:RustFmtRange                                                  *:RustFmtRange*
+		Runs |g:rustfmt_command| with selected range. See
+		|:RustFmt| for any other information.
+
+
+Playpen integration ~
+
+:RustPlay                                                          *:RustPlay*
+		This command will only work if you have web-api.vim installed
+		(available at https://github.com/mattn/webapi-vim).  It sends the
+		current selection, or if nothing is selected, the entirety of the
+		current buffer to the Rust playpen, and emits a message with the
+		shortened URL to the playpen.
+
+		|g:rust_playpen_url| is the base URL to the playpen, by default
+		"https://play.rust-lang.org/".
+
+		|g:rust_shortener_url| is the base url for the shorterner, by
+		default "https://is.gd/"
+
+		|g:rust_clip_command| is the command to run to copy the
+		playpen url to the clipboard of your system.
+
+
+Evaluation of a single Rust file ~
+
+NOTE: These commands are useful only when working with standalone Rust files,
+which is usually not the case for common Rust development. If you wish to
+building Rust crates from with Vim can should use Vim's make, Syntastic, or
+functionality from other plugins.
+
+
+:RustRun  [args]                                                    *:RustRun*
+:RustRun! [rustc-args] [--] [args]
+		Compiles and runs the current file. If it has unsaved changes,
+		it will be saved first using |:update|. If the current file is
+		an unnamed buffer, it will be written to a temporary file
+		first. The compiled binary is always placed in a temporary
+		directory, but is run from the current directory.
+
+		The arguments given to |:RustRun| will be passed to the
+		compiled binary.
+
+		If ! is specified, the arguments are passed to rustc instead.
+		A "--" argument will separate the rustc arguments from the
+		arguments passed to the binary.
+
+		If |g:rustc_path| is defined, it is used as the path to rustc.
+		Otherwise it is assumed rustc can be found in $PATH.
+
+:RustExpand  [args]                                              *:RustExpand*
+:RustExpand! [TYPE] [args]
+		Expands the current file using `--pretty` and displays the
+		results in a new split. If the current file has unsaved
+		changes, it will be saved first using |:update|. If the
+		current file is an unnamed buffer, it will be written to a
+		temporary file first.
+
+		The arguments given to |:RustExpand| will be passed to rustc.
+		This is largely intended for specifying various `--cfg`
+		configurations.
+
+		If ! is specified, the first argument is the expansion type to
+		pass to `rustc --pretty` . Otherwise it will default to
+		"expanded".
+
+		If |g:rustc_path| is defined, it is used as the path to rustc.
+		Otherwise it is assumed rustc can be found in $PATH.
+
+:RustEmitIr [args]                                               *:RustEmitIr*
+		Compiles the current file to LLVM IR and displays the results
+		in a new split. If the current file has unsaved changes, it
+		will be saved first using |:update|. If the current file is an
+		unnamed buffer, it will be written to a temporary file first.
+
+		The arguments given to |:RustEmitIr| will be passed to rustc.
+
+		If |g:rustc_path| is defined, it is used as the path to rustc.
+		Otherwise it is assumed rustc can be found in $PATH.
+
+:RustEmitAsm [args]                                             *:RustEmitAsm*
+		Compiles the current file to assembly and displays the results
+		in a new split. If the current file has unsaved changes, it
+		will be saved first using |:update|. If the current file is an
+		unnamed buffer, it will be written to a temporary file first.
+
+		The arguments given to |:RustEmitAsm| will be passed to rustc.
+
+		If |g:rustc_path| is defined, it is used as the path to rustc.
+		Otherwise it is assumed rustc can be found in $PATH.
+
+
+Running test(s) ~
+
+:[N]RustTest[!] [options]                                       *:RustTest*
+		Runs a test under the cursor when the current buffer is in a
+		cargo project with "cargo test" command. If the command did
+		not find any test function under the cursor, it stops with an
+		error message.
+
+		When N is given, adjust the size of the new window to N lines
+		or columns.
+
+		When ! is given, runs all tests regardless of current cursor
+		position.
+
+		When [options] is given, it is passed to "cargo" command
+		arguments.
+
+		When the current buffer is outside cargo project, the command
+		runs `rustc --test` command instead of "cargo test" as
+		fallback. All tests are run regardless of adding ! since there
+		is no way to run specific test function with rustc. [options]
+		is passed to `rustc` command arguments in the case.
+
+		Takes optional modifiers (see |<mods>|):  >vim
+		    :tab RustTest
+		    :belowright 16RustTest
+		    :leftabove vert 80RustTest
+<
+rust.vim Debugging ~
+
+:RustInfo                                                          *:RustInfo*
+		Emits debugging info of the Vim Rust plugin.
+
+:RustInfoToClipboard                                      *:RustInfoClipboard*
+		Saves debugging info of the Vim Rust plugin to the default
+		register.
+
+:RustInfoToFile [filename]                                   *:RustInfoToFile*
+		Saves debugging info of the Vim Rust plugin to the given file,
+		overwriting it.
+
+==============================================================================
+MAPPINGS                                                       *rust-mappings*
+
+This plugin defines mappings for |[[| and |]]| to support hanging indents.
+
+
+vim:tw=78:sw=4:noet:ts=8:ft=help:norl:
