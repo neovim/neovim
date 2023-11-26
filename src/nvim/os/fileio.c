@@ -28,6 +28,10 @@
 # include "nvim/os/os_win_console.h"
 #endif
 
+#ifdef HAVE_SYS_UIO_H
+# include <sys/uio.h>
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fileio.c.generated.h"
 #endif

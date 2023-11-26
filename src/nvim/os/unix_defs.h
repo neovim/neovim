@@ -1,15 +1,18 @@
 #pragma once
 // IWYU pragma: private, include "nvim/os/os_defs.h"
 
-#include <sys/param.h>  // IWYU pragma: export
-#include <sys/socket.h>  // IWYU pragma: export
-#include <unistd.h>  // IWYU pragma: export
+// IWYU pragma: begin_exports
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <pthread.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #if defined(HAVE_TERMIOS_H)
-# include <termios.h>  // IWYU pragma: export
+# include <termios.h>
 #endif
-
-// POSIX.1-2008 says that NAME_MAX should be in here
-#include <limits.h>
+// IWYU pragma: end_exports
 
 #define TEMP_DIR_NAMES { "$TMPDIR", "/tmp", ".", "~" }
 #define TEMP_FILE_PATH_MAXLEN 256

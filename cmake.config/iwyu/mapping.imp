@@ -17,12 +17,11 @@
   # Symbols
   { symbol: [ "MAX", private, '"nvim/macros.h"', public ] },
   { symbol: [ "MIN", private, '"nvim/macros.h"', public ] },
+  { symbol: [ "extern_proc", private, '<uv.h>', public ] },
+  { symbol: [ "iovec", private, '<sys/uio.h>', public ] },
 
   # Third party headers
-  { include: [ '<netdb.h>', public, '"nvim/os/unix_defs.h"', private ] },
-  { include: [ '<netinet/in.h>', public, '"nvim/os/unix_defs.h"', private ] },
-  { include: [ '<pthread.h>', public, '"nvim/os/unix_defs.h"', private ] },
-  { include: [ '<uv/unix.h>', public, '<uv.h>', public ] },
+  { include: [ '<uv/unix.h>', private, '<uv.h>', public ] },
 ]
 
 # vim: set ft=toml:
