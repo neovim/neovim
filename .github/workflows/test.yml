@@ -29,25 +29,14 @@ env:
 
 jobs:
   iwyu:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     timeout-minutes: 20
-    env:
-      CC: clang
-      CXX: clang++-17
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
-        with:
-          repository: include-what-you-use/include-what-you-use
-          ref: clang_17
-          path: iwyu
       - run: ./.github/scripts/install_deps.sh
       - uses: ./.github/actions/cache
-      - run: echo "$BIN_DIR" >> $GITHUB_PATH
-      - run: |
-          cmake -S iwyu -B iwyu/build -G Ninja -D CMAKE_BUILD_TYPE=Release
-          cmake --build iwyu/build
-          cmake --install iwyu/build --prefix $BIN_DIR
+      - run: brew install include-what-you-use
       - run: |
           make iwyu
           if git diff-index --quiet HEAD; then
