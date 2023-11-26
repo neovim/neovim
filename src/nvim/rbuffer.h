@@ -16,8 +16,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct rbuffer;
-
 // Macros that simplify working with the read/write pointers directly by hiding
 // ring buffer wrap logic. Some examples:
 //

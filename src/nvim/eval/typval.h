@@ -8,7 +8,7 @@
 
 #include "nvim/eval/typval_defs.h"
 #include "nvim/func_attr.h"
-#include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/gettext.h"
 #include "nvim/hashtab.h"
 #include "nvim/lib/queue.h"

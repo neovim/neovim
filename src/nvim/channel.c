@@ -18,6 +18,7 @@
 #include "nvim/event/rstream.h"
 #include "nvim/event/socket.h"
 #include "nvim/event/wstream.h"
+#include "nvim/garray.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 
 /// Argument list: Array of file names.
 /// Used for the global argument list and the argument lists local to a window.

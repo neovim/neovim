@@ -13,7 +13,6 @@
 #include "nvim/api/vimscript.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
-#include "nvim/decoration_defs.h"
 #include "nvim/extmark.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"

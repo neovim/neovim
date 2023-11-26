@@ -19,7 +19,7 @@ typedef struct {
 #include "nvim/arglist_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/extmark_defs.h"
-#include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/grid_defs.h"
 #include "nvim/hashtab.h"
 #include "nvim/highlight_defs.h"

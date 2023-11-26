@@ -4,7 +4,7 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/fold_defs.h"
-#include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/macros.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"
