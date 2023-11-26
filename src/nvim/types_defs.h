@@ -6,8 +6,12 @@
 // dummy to pass an ACL to a function
 typedef void *vim_acl_T;
 
-// Can hold one decoded UTF-8 character.
-typedef uint32_t u8char_T;
+// if data[0] is 0xFF, then data[1..4] is a 24-bit index (in machine endianness)
+// otherwise it must be a UTF-8 string of length maximum 4 (no NUL when n=4)
+typedef uint32_t schar_T;
+typedef int32_t sattr_T;
+// must be at least as big as the biggest of schar_T, sattr_T, colnr_T
+typedef int32_t sscratch_T;
 
 // Opaque handle used by API clients to refer to various objects in vim
 typedef int handle_T;

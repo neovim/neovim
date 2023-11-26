@@ -80,6 +80,9 @@ function vim.api.nvim__id_float(flt) end
 function vim.api.nvim__inspect_cell(grid, row, col) end
 
 --- @private
+--- For testing. The condition in schar_cache_clear_if_full is hard to reach,
+--- so this function can be used to force a cache clear in a test.
+---
 function vim.api.nvim__invalidate_glyph_cache() end
 
 --- @private
