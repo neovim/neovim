@@ -296,6 +296,15 @@ ExternalProject_Add(uncrustify
   CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS}
   EXCLUDE_FROM_ALL TRUE)
 
+ExternalProject_Add(iwyu-ci
+  URL https://github.com/include-what-you-use/include-what-you-use/archive/0.21.tar.gz
+  URL_HASH SHA256=a472fe8587376d041585c72e5643200f8929899f787725f0ba9e5b3d3820d401
+  DOWNLOAD_NO_PROGRESS TRUE
+  DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/iwyu
+  CMAKE_ARGS ${DEPS_CMAKE_ARGS}
+  CMAKE_CACHE_ARGS ${DEPS_CMAKE_CACHE_ARGS}
+  EXCLUDE_FROM_ALL TRUE)
+
 option(USE_BUNDLED_BUSTED "Use bundled busted" ON)
 if(USE_BUNDLED_BUSTED)
   ExternalProject_Add(lua-dev-deps

@@ -141,7 +141,7 @@ test: $(TEST)
 iwyu: build/.ran-cmake
 	cmake --preset iwyu
 	cmake --build build > build/iwyu.log
-	iwyu-fix-includes --only_re="src/nvim" --ignore_re="(src/nvim/eval/encode.c|src/nvim/auto/\
+	fix-includes.py --only_re="src/nvim" --ignore_re="(src/nvim/eval/encode.c|src/nvim/auto/\
 	|src/nvim/api/autocmd.h\
 	|src/nvim/api/buffer.h\
 	|src/nvim/api/command.h\

@@ -35,11 +35,19 @@ jobs:
       CC: clang
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: include-what-you-use/include-what-you-use
+          ref: 0.21
+          path: iwyu
       - run: ./.github/scripts/install_deps.sh
       - uses: ./.github/actions/cache
+      - run: echo "$BIN_DIR" >> $GITHUB_PATH
       - run: |
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          brew install include-what-you-use
+          cmake -S iwyu -B iwyu/build -G Ninja -D CMAKE_BUILD_TYPE=Release
+          cmake --build iwyu/build
+          cmake --install iwyu/build --prefix $BIN_DIR
+      - run: |
           make iwyu
           if git diff-index --quiet HEAD; then
             echo "Headers are incorrect, either manually adjust headers or run"
