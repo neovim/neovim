@@ -39,7 +39,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: include-what-you-use/include-what-you-use
-          ref: 0.21
+          ref: clang_17
           path: iwyu
       - run: ./.github/scripts/install_deps.sh
       - uses: ./.github/actions/cache
