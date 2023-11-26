@@ -3881,7 +3881,7 @@ static char *get_syn_options(char *arg, syn_opt_arg_T *opt, int *conceal_char, i
       // cchar=?
       *conceal_char = utf_ptr2char(arg + 6);
       arg += utfc_ptr2len(arg + 6) - 1;
-      if (!vim_isprintc_strict(*conceal_char)) {
+      if (!vim_isprintc(*conceal_char)) {
         emsg(_(e_invalid_cchar_value));
         return NULL;
       }

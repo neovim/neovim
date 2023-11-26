@@ -155,7 +155,7 @@ void do_ascii(exarg_T *eap)
                       ? NL  // NL is stored as CR.
                       : c);
     char buf1[20];
-    if (vim_isprintc_strict(c) && (c < ' ' || c > '~')) {
+    if (vim_isprintc(c) && (c < ' ' || c > '~')) {
       char buf3[7];
       transchar_nonprint(curbuf, buf3, c);
       vim_snprintf(buf1, sizeof(buf1), "  <%s>", buf3);
