@@ -21,6 +21,11 @@
 #include "nvim/vim.h"
 // uncrustify:on
 
+#include "auto/config.h"  // IWYU pragma: keep
+#include "nvim/api/extmark.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/ui.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
@@ -34,7 +39,9 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
+#include "nvim/event/process.h"
 #include "nvim/event/stream.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
@@ -61,6 +68,9 @@
 #include "nvim/message.h"
 #include "nvim/mouse.h"
 #include "nvim/move.h"
+#include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/msgpack_rpc/server.h"
 #include "nvim/normal.h"
 #include "nvim/ops.h"
 #include "nvim/option.h"
@@ -71,6 +81,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/lang.h"
 #include "nvim/os/os.h"
+#include "nvim/os/signal.h"
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/path.h"
 #include "nvim/popupmenu.h"
@@ -91,16 +102,6 @@
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
 #endif
-#include "nvim/api/extmark.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/api/ui.h"
-#include "nvim/event/loop.h"
-#include "nvim/event/process.h"
-#include "nvim/msgpack_rpc/channel.h"
-#include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/msgpack_rpc/server.h"
-#include "nvim/os/signal.h"
 
 // values for "window_layout"
 enum {

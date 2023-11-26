@@ -259,6 +259,7 @@ if(ENABLE_IWYU)
 
   set(iwyu_flags "${IWYU_PRG};")
   string(APPEND iwyu_flags "-Xiwyu;--no_default_mappings;")
+  string(APPEND iwyu_flags "-Xiwyu;--no_fwd_decls;")
   string(APPEND iwyu_flags "-Xiwyu;--mapping_file=${PROJECT_SOURCE_DIR}/cmake.config/iwyu/mapping.imp")
 
   set_target_properties(nvim PROPERTIES C_INCLUDE_WHAT_YOU_USE "${iwyu_flags}")

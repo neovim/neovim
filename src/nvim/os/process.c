@@ -3,18 +3,19 @@
 /// psutil is a good reference for cross-platform syscall voodoo:
 /// https://github.com/giampaolo/psutil/tree/master/psutil/arch
 
+// IWYU pragma: no_include <sys/param.h>
+
 #include <assert.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <uv.h>
 
 #ifdef MSWIN
 # include <tlhelp32.h>
 #endif
 
-#if defined(__FreeBSD__)  // XXX: OpenBSD ?
+#if defined(__FreeBSD__)
 # include <string.h>
 # include <sys/types.h>
 # include <sys/user.h>
@@ -25,8 +26,13 @@
 #endif
 
 #if defined(__APPLE__) || defined(BSD)
-# include <pwd.h>
 # include <sys/sysctl.h>
+
+# include "nvim/macros.h"
+#endif
+
+#if defined(__linux__)
+# include <stdio.h>
 #endif
 
 #include "nvim/log.h"

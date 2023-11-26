@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-typedef struct file_buffer buf_T;  // Forward declaration
+typedef struct file_buffer buf_T;
 
 /// Reference to a buffer that stores the value of buf_free_count.
 /// bufref_valid() only needs to check "buf" when the count differs.

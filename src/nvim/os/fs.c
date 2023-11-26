@@ -67,8 +67,6 @@ static const char e_xattr_other[]
   = N_("E1509: Error occurred when reading or writing extended attribute");
 #endif
 
-struct iovec;
-
 #define RUN_UV_FS_FUNC(ret, func, ...) \
   do { \
     uv_fs_t req; \

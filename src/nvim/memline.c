@@ -39,6 +39,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include <time.h>
 #include <uv.h>
 
