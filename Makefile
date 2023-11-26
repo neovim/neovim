@@ -136,6 +136,8 @@ generated-sources benchmark $(FORMAT) $(LINT) $(TEST) doc: | build/.ran-cmake
 
 test: $(TEST)
 
+# The ignored header files should be synced with the `check_includes_ignore`
+# array in src/clint.py
 iwyu: build/.ran-cmake
 	cmake --preset iwyu
 	cmake --build build > build/iwyu.log
@@ -163,7 +165,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/arglist_defs.h\
 	|src/nvim/ascii.h\
 	|src/nvim/assert.h\
-	|src/nvim/autocmd.c\
 	|src/nvim/autocmd.h\
 	|src/nvim/base64.h\
 	|src/nvim/buffer.h\
@@ -338,7 +339,8 @@ iwyu: build/.ran-cmake
 	|src/nvim/viml/parser/expressions.h\
 	|src/nvim/viml/parser/parser.h\
 	|src/nvim/window.h\
-	|src/nvim/winfloat.h)" --nosafe_headers < build/iwyu.log
+	|src/nvim/winfloat.h\
+	)" --nosafe_headers < build/iwyu.log
 	cmake -B build -U ENABLE_IWYU
 	cmake --build build
 
