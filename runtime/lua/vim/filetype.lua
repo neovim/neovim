@@ -716,6 +716,7 @@ local extension = {
   tr = 'nroff',
   nsi = 'nsis',
   nsh = 'nsis',
+  nu = 'nu',
   obj = 'obj',
   objdump = 'objdump',
   cppobjdump = 'objdump',
