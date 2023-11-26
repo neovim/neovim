@@ -534,7 +534,7 @@ char *transchar_buf(const buf_T *buf, int c)
   }
 
   if ((!chartab_initialized && (c >= ' ' && c <= '~'))
-      || ((c <= 0xFF) && vim_isprintc_strict(c))) {
+      || ((c <= 0xFF) && vim_isprintc(c))) {
     // printable character
     transchar_charbuf[i] = (uint8_t)c;
     transchar_charbuf[i + 1] = NUL;
@@ -870,25 +870,9 @@ bool vim_isfilec_or_wc(int c)
 }
 
 /// Check that "c" is a printable character.
-/// Assume characters above 0x100 are printable for double-byte encodings.
 ///
 /// @param  c  character to check
 bool vim_isprintc(int c)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (c >= 0x100) {
-    return utf_printable(c);
-  }
-  return c > 0 && (g_chartab[c] & CT_PRINT_CHAR);
-}
-
-/// Strict version of vim_isprintc(c), don't return true if "c" is the head
-/// byte of a double-byte character.
-///
-/// @param  c  character to check
-///
-/// @return true if "c" is a printable character.
-bool vim_isprintc_strict(int c)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (c >= 0x100) {
