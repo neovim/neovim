@@ -73,6 +73,7 @@ typedef int (*Indenter)(void);
                                 // character (OP_ADD conflicts with Perl)
 #define OP_NR_SUB       29      // "<C-X>" Subtract from the number or
                                 // alphabetic character
+#define OP_REGREPLAY    30      // "Q" replay register
 
 /// Flags for get_reg_contents().
 enum GRegFlags {

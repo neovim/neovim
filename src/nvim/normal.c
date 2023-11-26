@@ -3169,6 +3169,11 @@ static void nv_regreplay(cmdarg_T *cap)
     return;
   }
 
+  if (VIsual_active) {  // execute macro per visual line
+    nv_operator(cap);
+    return;
+  }
+
   while (cap->count1-- && !got_int) {
     if (do_execreg(reg_recorded, false, false, false) == false) {
       clearopbeep(cap->oap);
