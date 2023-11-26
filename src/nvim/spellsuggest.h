@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "spellsuggest.h.generated.h"

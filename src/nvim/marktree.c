@@ -56,6 +56,7 @@
 // only for debug functions
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/garray_defs.h"
 #include "nvim/macros.h"
 
 #define T MT_BRANCH_FACTOR

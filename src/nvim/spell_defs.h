@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "nvim/buffer_defs.h"
-#include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/regexp_defs.h"
 #include "nvim/types.h"
 

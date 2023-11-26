@@ -3,7 +3,7 @@
 #include <inttypes.h>
 #include <limits.h>
 
-#include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/hashtab.h"
 #include "nvim/lib/queue.h"
 #include "nvim/pos.h"

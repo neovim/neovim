@@ -8,7 +8,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval_defs.h"
-#include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/option_defs.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"

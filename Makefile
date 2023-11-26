@@ -162,7 +162,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/api/window.h\
 	|src/nvim/arabic.h\
 	|src/nvim/arglist.h\
-	|src/nvim/arglist_defs.h\
 	|src/nvim/ascii.h\
 	|src/nvim/assert.h\
 	|src/nvim/autocmd.h\
@@ -313,7 +312,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/spell.h\
 	|src/nvim/spell_defs.h\
 	|src/nvim/spellfile.h\
-	|src/nvim/spellsuggest.h\
 	|src/nvim/state.h\
 	|src/nvim/statusline.h\
 	|src/nvim/statusline_defs.h\

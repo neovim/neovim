@@ -1,6 +1,7 @@
 #pragma once
 
 #include "auto/config.h"
+#include "nvim/log.h"
 
 // support static asserts (aka compile-time asserts)
 

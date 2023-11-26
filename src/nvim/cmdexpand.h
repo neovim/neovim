@@ -3,7 +3,7 @@
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_getln.h"
-#include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/types.h"
 
 // Values for nextwild() and ExpandOne().  See ExpandOne() for meaning.

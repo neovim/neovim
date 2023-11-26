@@ -10,7 +10,7 @@
 #include "nvim/event/process.h"
 #include "nvim/event/socket.h"
 #include "nvim/event/stream.h"
-#include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/map.h"
