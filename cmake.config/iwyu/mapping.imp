@@ -195,6 +195,7 @@
   # headers on the left, it will use the headers on the right if possible. This
   # isn't explicitly mentioned in the IWYU docs, this is just my interpretation
   # of its behavior.
+  { include: [ '"nvim/arabic_defs.h"', public, '"nvim/arabic.h"', public ] },
   { include: [ '"nvim/arglist_defs.h"', public, '"nvim/arglist.h"', public ] },
   { include: [ '"nvim/buffer_defs.h"', public, '"nvim/buffer.h"', public ] },
   { include: [ '"nvim/cmdexpand_defs.h"', public, '"nvim/cmdexpand.h"', public ] },

@@ -160,7 +160,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/api/vimscript.h\
 	|src/nvim/api/win_config.h\
 	|src/nvim/api/window.h\
-	|src/nvim/arabic.h\
 	|src/nvim/arglist.h\
 	|src/nvim/ascii.h\
 	|src/nvim/assert.h\
