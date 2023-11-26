@@ -13,7 +13,7 @@
 #include "nvim/pos.h"
 #include "nvim/types.h"
 // only for debug functions:
-#include "api/private/defs.h"
+#include "nvim/api/private/defs.h"
 
 struct mtnode_s;
 
