@@ -4,7 +4,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: export
 #include "nvim/os/time.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 /// Present history tables
 typedef enum {

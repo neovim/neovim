@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include "nvim/eval/typval_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 #include "nvim/viml/parser/parser.h"
 
 struct expr_ast_node;

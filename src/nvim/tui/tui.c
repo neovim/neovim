@@ -33,7 +33,7 @@
 #include "nvim/tui/input.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/tui/tui.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 #include "nvim/ugrid.h"
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"

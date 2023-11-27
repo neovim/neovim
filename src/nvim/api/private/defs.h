@@ -6,7 +6,7 @@
 
 #include "klib/kvec.h"
 #include "nvim/func_attr.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 #define ARRAY_DICT_INIT KV_INITIAL_VALUE
 #define STRING_INIT { .data = NULL, .size = 0 }

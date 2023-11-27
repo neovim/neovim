@@ -5,7 +5,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/highlight_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 #define MAX_HL_ID 20000   // maximum value for a highlight ID.
 

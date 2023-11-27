@@ -22,7 +22,7 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/rbuffer.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"

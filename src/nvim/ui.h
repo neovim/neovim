@@ -10,7 +10,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 struct ui_t;
 

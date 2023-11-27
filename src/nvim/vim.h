@@ -1,7 +1,7 @@
 #pragma once
 
 #include "nvim/pos_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 // Some defines from the old feature.h
 #define SESSION_FILE "Session.vim"

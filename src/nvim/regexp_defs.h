@@ -12,7 +12,7 @@
 #include <stdbool.h>
 
 #include "nvim/pos_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 /// Used for "magic_overruled".
 typedef enum {

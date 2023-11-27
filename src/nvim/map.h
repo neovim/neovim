@@ -7,7 +7,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/assert.h"
 #include "nvim/highlight_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 #if defined(__NetBSD__)
 # undef uint64_t

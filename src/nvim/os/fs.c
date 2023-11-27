@@ -43,7 +43,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 #include "nvim/vim.h"
 
 #ifdef HAVE_SYS_UIO_H

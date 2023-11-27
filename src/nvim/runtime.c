@@ -52,7 +52,7 @@
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"
 #include "nvim/strings.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 #include "nvim/usercmd.h"
 #include "nvim/vim.h"
 

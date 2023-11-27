@@ -5,7 +5,7 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/memory.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 typedef Object (*ApiDispatchWrapper)(uint64_t channel_id, Array args, Arena *arena, Error *error);
 

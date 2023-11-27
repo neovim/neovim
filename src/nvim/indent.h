@@ -3,7 +3,7 @@
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/pos_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 typedef int (*IndentGetter)(void);
 

@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #include "nvim/eval/typval_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 /// Structure used for mappings and abbreviations.
 typedef struct mapblock mapblock_T;

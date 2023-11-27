@@ -7,7 +7,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/eval/typval_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 /// Prototype of C function that implements Vimscript function
 typedef void (*VimLFunc)(typval_T *args, typval_T *rvar, EvalFuncData data);

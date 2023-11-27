@@ -25,7 +25,7 @@
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/popupmenu.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
 

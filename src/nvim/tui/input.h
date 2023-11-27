@@ -11,7 +11,7 @@
 #include "nvim/rbuffer.h"
 #include "nvim/tui/input_defs.h"  // IWYU pragma: export
 #include "nvim/tui/tui.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 typedef enum {
   kKeyEncodingLegacy,  ///< Legacy key encoding

@@ -10,7 +10,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/regexp_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 // event_T definition
 #ifdef INCLUDE_GENERATED_DECLARATIONS

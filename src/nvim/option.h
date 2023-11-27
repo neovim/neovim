@@ -9,7 +9,7 @@
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/option_defs.h"  // IWYU pragma: export
 #include "nvim/search.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 /// The options that are local to a window or buffer have "indir" set to one of
 /// these values.  Special values:
