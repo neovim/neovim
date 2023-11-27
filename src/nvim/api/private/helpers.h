@@ -2,11 +2,13 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/decoration.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_eval_defs.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
@@ -14,7 +16,7 @@
 #include "nvim/macros.h"
 #include "nvim/map.h"
 #include "nvim/memory.h"
-#include "nvim/vim.h"
+#include "nvim/message.h"
 
 #define OBJECT_OBJ(o) o
 

@@ -17,6 +17,10 @@
 # include <sanitizer/ubsan_interface.h>
 #endif
 
+// uncrustify:off
+#include "nvim/vim.h"
+// uncrustify:on
+
 #include "nvim/arglist.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
@@ -82,7 +86,6 @@
 #include "nvim/ui_client.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/version.h"
-#include "nvim/vim.h"
 #include "nvim/window.h"
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
