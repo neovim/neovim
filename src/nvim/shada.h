@@ -1,6 +1,6 @@
 #pragma once
 
-#include <msgpack.h>
+#include <msgpack.h>  // IWYU pragma: keep
 
 /// Flags for shada_read_file and children
 typedef enum {

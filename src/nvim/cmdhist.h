@@ -1,9 +1,10 @@
 #pragma once
 
-#include "nvim/cmdexpand_defs.h"
+#include "nvim/cmdexpand_defs.h"  // IWYU pragma: export
 #include "nvim/eval/typval_defs.h"
-#include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: export
 #include "nvim/os/time.h"
+#include "nvim/types.h"
 
 /// Present history tables
 typedef enum {

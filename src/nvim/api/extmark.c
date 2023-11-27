@@ -1,10 +1,10 @@
 #include <assert.h>
+#include <lauxlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 
 #include "klib/kvec.h"
-#include "lauxlib.h"
 #include "nvim/api/extmark.h"
 #include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"

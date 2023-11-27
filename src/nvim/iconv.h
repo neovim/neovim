@@ -3,8 +3,6 @@
 #include <errno.h>
 #include <iconv.h>
 
-#include "auto/config.h"
-
 // define some missing constants if necessary
 #ifndef EILSEQ
 # define EILSEQ 123

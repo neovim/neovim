@@ -1,7 +1,9 @@
 #pragma once
 
-#include "nvim/ex_cmds_defs.h"
-#include "nvim/option_defs.h"
+#include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
+#include "nvim/option_defs.h"  // IWYU pragma: keep
+#include "nvim/pos.h"
 #include "nvim/types.h"
 
 // flags for skip_vimgrep_pat()

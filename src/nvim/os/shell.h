@@ -1,8 +1,6 @@
 #pragma once
 
-#include <stdio.h>
-
-#include "nvim/types.h"
+#include <stddef.h>  // IWYU pragma: keep
 
 // Flags for os_call_shell() second argument
 typedef enum {

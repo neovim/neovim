@@ -1,9 +1,7 @@
 #pragma once
 
-#include <stddef.h>
+#include <stddef.h>  // IWYU pragma: keep
 #include <stdint.h>
-
-#include "nvim/types.h"
 
 #define SHA256_BUFFER_SIZE 64
 #define SHA256_SUM_SIZE    32

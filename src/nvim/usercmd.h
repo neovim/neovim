@@ -2,9 +2,9 @@
 
 #include <stdint.h>
 
-#include "nvim/cmdexpand_defs.h"
+#include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
-#include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/garray_defs.h"
 #include "nvim/types.h"
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nvim/buffer_defs.h"
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/pos.h"
 
 // flags for open_line()

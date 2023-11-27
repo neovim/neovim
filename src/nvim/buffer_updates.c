@@ -1,9 +1,9 @@
 #include <inttypes.h>
+#include <lauxlib.h>
 #include <stdbool.h>
 #include <stddef.h>
 
 #include "klib/kvec.h"
-#include "lauxlib.h"
 #include "nvim/api/buffer.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"

@@ -2,9 +2,9 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <lauxlib.h>
 #include <string.h>
 
-#include "lauxlib.h"
 #include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/dispatch.h"

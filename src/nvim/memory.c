@@ -577,7 +577,9 @@ void alloc_block(Arena *arena)
 
 static size_t arena_align_offset(uint64_t off)
 {
+#define ARENA_ALIGN MAX(sizeof(void *), sizeof(double))
   return ((off + (ARENA_ALIGN - 1)) & ~(ARENA_ALIGN - 1));
+#undef ARENA_ALIGN
 }
 
 /// @param arena if NULL, do a global allocation. caller must then free the value!

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "nvim/autocmd_defs.h"
-#include "nvim/vim.h"
+#include "nvim/autocmd_defs.h"  // IWYU pragma: keep
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
+#include "nvim/pos.h"
 
 // Values for in_cinkeys()
 #define KEY_OPEN_FORW   0x101
