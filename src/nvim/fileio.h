@@ -1,12 +1,16 @@
 #pragma once
 
-#include "nvim/buffer_defs.h"
+#include <stdint.h>  // IWYU pragma: keep
+#include <stdio.h>  // IWYU pragma: keep
+#include <time.h>  // IWYU pragma: keep
+
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
-#include "nvim/ex_cmds_defs.h"
-#include "nvim/garray_defs.h"
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
+#include "nvim/garray_defs.h"  // IWYU pragma: keep
 #include "nvim/globals.h"
-#include "nvim/os/fs_defs.h"
-#include "nvim/os/os.h"
+#include "nvim/os/fs_defs.h"  // IWYU pragma: keep
+#include "nvim/pos.h"
 
 // Values for readfile() flags
 #define READ_NEW        0x01    // read a file into a new buffer

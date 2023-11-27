@@ -171,7 +171,7 @@ static functions into static.h and declarations for non-static functions into
 non-static.h. File `definitions.i' should contain an already preprocessed
 version of definitions.c and it is the only one which is actually parsed,
 definitions.c is needed only to determine functions from which file out of all
-functions found in definitions.i are needed.
+functions found in definitions.i are needed and to generate an IWYU comment.
 
 Additionally uses the following environment variables:
 
@@ -224,6 +224,18 @@ local non_static = header .. [[
 
 local static = header
 
+if fname:find('.*/src/nvim/.*%.c$') then
+  -- Add an IWYU pragma comment if the corresponding .h file exists.
+  local header_fname = fname:sub(1, -3) .. '.h'
+  local header_f = io.open(header_fname, 'r')
+  if header_f ~= nil then
+    header_f:close()
+    non_static = ([[
+// IWYU pragma: private, include "%s"
+]]):format(header_fname:gsub('.*/src/nvim/', 'nvim/')) .. non_static
+  end
+end
+
 local filepattern = '^#%a* (%d+) "([^"]-)/?([^"/]+)"'
 
 local init = 1
@@ -241,12 +253,7 @@ while init ~= nil do
       curfile = file
       is_needed_file = (curfile == neededfile)
       declline = tonumber(line) - 1
-      local curdir_start = dir:find('src/nvim/')
-      if curdir_start ~= nil then
-        curdir = dir:sub(curdir_start + #('src/nvim/'))
-      else
-        curdir = dir
-      end
+      curdir = dir:gsub('.*/src/nvim/', '')
     else
       declline = declline - 1
     end
@@ -308,7 +315,7 @@ F = io.open(static_fname, 'w')
 F:write(static)
 F:close()
 
--- Before generating the non-static headers, check if the current file(if
+-- Before generating the non-static headers, check if the current file (if
 -- exists) is different from the new one. If they are the same, we won't touch
 -- the current version to avoid triggering an unnecessary rebuilds of modules
 -- that depend on this one

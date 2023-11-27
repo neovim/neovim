@@ -36,7 +36,7 @@
 #include "nvim/event/process.h"
 #include "nvim/event/stream.h"
 #include "nvim/log.h"
-#include "nvim/os/os.h"
+#include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/os/pty_process_unix.h"

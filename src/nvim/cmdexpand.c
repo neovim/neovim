@@ -46,6 +46,7 @@
 #include "nvim/message.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
+#include "nvim/os/fs.h"
 #include "nvim/os/lang.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"

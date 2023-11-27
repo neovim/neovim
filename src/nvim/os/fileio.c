@@ -19,7 +19,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/os/fileio.h"
-#include "nvim/os/os.h"
+#include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/rbuffer.h"
 #include "nvim/types.h"
