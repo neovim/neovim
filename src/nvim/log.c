@@ -19,6 +19,7 @@
 #include "auto/config.h"
 #include "nvim/ascii.h"
 #include "nvim/eval.h"
+#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/memory.h"

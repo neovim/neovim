@@ -15,6 +15,23 @@
   { include: [ '"ui_events_remote.h.generated.h"', private, '"nvim/api/ui.h"', public ] },
 
   # Symbols
+  { symbol: [ "FUNC_ATTR_ALLOC_ALIGN", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_ALLOC_SIZE", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_ALLOC_SIZE_PROD", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_ALWAYS_INLINE", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_CONST", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_MALLOC", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_NONNULL_ALL", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_NONNULL_ARG", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_NONNULL_RET", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_NORETURN", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_NO_SANITIZE_ADDRESS", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_NO_SANITIZE_UNDEFINED", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_PRINTF", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_PURE", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_UNUSED", private, '"nvim/func_attr.h"', public ] },
+  { symbol: [ "FUNC_ATTR_WARN_UNUSED_RESULT", private, '"nvim/func_attr.h"', public ] },
+
   { symbol: [ "MAX", private, '"nvim/macros.h"', public ] },
   { symbol: [ "MIN", private, '"nvim/macros.h"', public ] },
   { symbol: [ "extern_proc", private, '<uv.h>', public ] },

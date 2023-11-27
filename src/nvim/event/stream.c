@@ -6,6 +6,7 @@
 
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
+#include "nvim/func_attr.h"
 #include "nvim/log.h"
 #include "nvim/rbuffer.h"
 #ifdef MSWIN

@@ -4,6 +4,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/fileio.h"
+#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/memory.h"
 #include "nvim/os/os.h"

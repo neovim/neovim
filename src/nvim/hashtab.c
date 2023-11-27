@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "nvim/ascii.h"
+#include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/hashtab.h"
 #include "nvim/memory.h"

@@ -59,6 +59,7 @@
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"

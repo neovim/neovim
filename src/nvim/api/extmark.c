@@ -16,6 +16,7 @@
 #include "nvim/decoration_provider.h"
 #include "nvim/drawscreen.h"
 #include "nvim/extmark.h"
+#include "nvim/func_attr.h"
 #include "nvim/highlight_group.h"
 #include "nvim/marktree.h"
 #include "nvim/mbyte.h"

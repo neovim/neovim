@@ -26,6 +26,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/extmark.h"
 #include "nvim/fold.h"
+#include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_defs.h"

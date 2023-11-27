@@ -18,6 +18,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/signal.h"
 #include "nvim/event/stream.h"
+#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight_defs.h"
