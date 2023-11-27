@@ -2833,7 +2833,7 @@ static int do_more_prompt(int typed_char)
           } else {
             // redisplay all lines
             // TODO(bfredl): this case is not optimized (though only concerns
-            // event fragmentization, not unnecessary scroll events).
+            // event fragmentation, not unnecessary scroll events).
             grid_fill(&msg_grid_adj, 0, Rows, 0, Columns, ' ', ' ',
                       HL_ATTR(HLF_MSG));
             for (int i = 0; mp != NULL && i < Rows - 1; i++) {

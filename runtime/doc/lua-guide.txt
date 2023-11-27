@@ -157,7 +157,7 @@ its functions if this succeeds and prints an error message otherwise:
     end
 <
 In contrast to |:source|, |require()| not only searches through all `lua/` directories
-under |'runtimepath'|, it also cache the module on first use. Calling
+under |'runtimepath'|, it also caches the module on first use. Calling
 `require()` a second time will therefore _not_ execute the script again and
 instead return the cached file. To rerun the file, you need to remove it from
 the cache manually first:

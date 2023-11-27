@@ -212,7 +212,7 @@ local function cimport(...)
         -- give each #pragma pack an unique id, so that they don't get removed
         -- if they are inserted into the set
         -- (they are needed in the right order with the struct definitions,
-        -- otherwise luajit has wrong memory layouts for the sturcts)
+        -- otherwise luajit has wrong memory layouts for the structs)
         if line:match('#pragma%s+pack') then
           --- @type string
           line = line .. ' // ' .. pragma_pack_id

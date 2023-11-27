@@ -623,9 +623,9 @@ Short explanation of each option:		*option-list*
 'aleph'		  'al'	    ASCII code of the letter Aleph (Hebrew)
 'allowrevins'	  'ari'     allow CTRL-_ in Insert and Command-line mode
 'ambiwidth'	  'ambw'    what to do with Unicode chars of ambiguous width
-'autochdir'	  'acd'     change directory to the file in the current window
 'arabic'	  'arab'    for Arabic as a default second language
 'arabicshape'	  'arshape' do shaping for Arabic characters
+'autochdir'	  'acd'     change directory to the file in the current window
 'autoindent'	  'ai'	    take indent for new line from previous line
 'autoread'	  'ar'	    autom. read file when changed outside of Vim
 'autowrite'	  'aw'	    automatically write file if changed
@@ -655,8 +655,8 @@ Short explanation of each option:		*option-list*
 'cindent'	  'cin'     do C program indenting
 'cinkeys'	  'cink'    keys that trigger indent when 'cindent' is set
 'cinoptions'	  'cino'    how to do indenting when 'cindent' is set
-'cinwords'	  'cinw'    words where 'si' and 'cin' add an indent
 'cinscopedecls'	  'cinsd'   words that are recognized by 'cino-g'
+'cinwords'	  'cinw'    words where 'si' and 'cin' add an indent
 'clipboard'	  'cb'	    use the clipboard as the unnamed register
 'cmdheight'	  'ch'	    number of lines to use for the command-line
 'cmdwinheight'	  'cwh'     height of the command-line window
@@ -738,10 +738,10 @@ Short explanation of each option:		*option-list*
 'helpheight'	  'hh'	    minimum height of a new help window
 'helplang'	  'hlg'     preferred help languages
 'hidden'	  'hid'     don't unload buffer when it is |abandon|ed
-'hlsearch'	  'hls'     highlight matches with last search pattern
 'history'	  'hi'	    number of command-lines that are remembered
 'hkmap'		  'hk'	    Hebrew keyboard mapping
 'hkmapp'	  'hkp'     phonetic Hebrew keyboard mapping
+'hlsearch'	  'hls'     highlight matches with last search pattern
 'icon'			    let Vim set the text of the window icon
 'iconstring'		    string to use for the Vim icon text
 'ignorecase'	  'ic'	    ignore case in search patterns
@@ -939,10 +939,10 @@ Short explanation of each option:		*option-list*
 'wildoptions'	  'wop'     specifies how command line completion is done
 'winaltkeys'	  'wak'     when the windows system handles ALT keys
 'window'	  'wi'	    nr of lines to scroll for CTRL-F and CTRL-B
-'winheight'	  'wh'	    minimum number of lines for the current window
-'winhighlight'	  'winhl'   window-local highlighting
 'winfixheight'	  'wfh'     keep window height when opening/closing windows
 'winfixwidth'	  'wfw'     keep window width when opening/closing windows
+'winheight'	  'wh'	    minimum number of lines for the current window
+'winhighlight'	  'winhl'   window-local highlighting
 'winminheight'	  'wmh'     minimum number of lines for any window
 'winminwidth'	  'wmw'     minimal number of columns for any window
 'winwidth'	  'wiw'     minimal number of columns for current window

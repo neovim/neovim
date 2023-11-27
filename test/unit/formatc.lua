@@ -209,7 +209,7 @@ local C_keywords = set { -- luacheck: ignore
 
 -- Very primitive C formatter that tries to put "things" inside braces on one
 -- line. This is a step done after preprocessing the C source to ensure that
--- the duplicate line detecter can more reliably pick out identical declarations.
+-- the duplicate line detector can more reliably pick out identical declarations.
 --
 -- an example:
 --   struct mystruct

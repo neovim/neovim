@@ -4365,7 +4365,7 @@ have Vim execute random executables or may have forbidden to do so for
 specific filetypes by setting the "<filetype>_exec" variable (|plugin_exec|).
 
 It returns |TRUE| or |FALSE| to indicate whether the plugin should run the given
-exectuable.  It takes the following arguments:
+executable.  It takes the following arguments:
 
 	argument	type ~
 
