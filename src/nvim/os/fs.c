@@ -17,6 +17,7 @@
 #endif
 
 #include "auto/config.h"
+#include "nvim/os/fs.h"
 
 #if defined(HAVE_ACL)
 # ifdef HAVE_SYS_ACL_H
@@ -39,7 +40,6 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
-#include "nvim/os/fs_defs.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/types.h"

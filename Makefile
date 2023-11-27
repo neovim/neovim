@@ -262,7 +262,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/os/fs.h\
 	|src/nvim/os/input.h\
 	|src/nvim/os/lang.h\
-	|src/nvim/os/os.h\
 	|src/nvim/os/pty_conpty_win.h\
 	|src/nvim/os/pty_process_unix.h\
 	|src/nvim/os/pty_process_win.h\

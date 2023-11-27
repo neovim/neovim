@@ -20,7 +20,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/os/os.h"
+#include "nvim/os/fs.h"
 #include "nvim/runtime.h"
 #include "nvim/strings.h"
 #include "nvim/testing.h"
