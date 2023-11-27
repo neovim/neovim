@@ -36,7 +36,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/path.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/quickfix.h"
 #include "nvim/runtime.h"
 #include "nvim/undo.h"

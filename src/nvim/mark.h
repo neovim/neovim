@@ -12,7 +12,7 @@
 #include "nvim/mark_defs.h"  // IWYU pragma: export
 #include "nvim/memory.h"
 #include "nvim/os/time.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 
 /// Set fmark using given value
 #define SET_FMARK(fmarkp_, mark_, fnum_, view_) \

@@ -33,7 +33,7 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/os.h"
 #include "nvim/path.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"

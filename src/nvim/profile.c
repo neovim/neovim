@@ -26,7 +26,7 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/profile.h"
 #include "nvim/runtime.h"
 #include "nvim/types.h"

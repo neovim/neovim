@@ -24,7 +24,7 @@
 #include "nvim/map.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types.h"
 

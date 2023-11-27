@@ -4,7 +4,7 @@
 
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/macros.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 
 // Value set from 'diffopt'.
 EXTERN int diff_context INIT( = 6);  // context for folds

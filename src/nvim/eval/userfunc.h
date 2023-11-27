@@ -9,7 +9,7 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/garray_defs.h"
 #include "nvim/hashtab.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/types.h"
 
 struct funccal_entry;

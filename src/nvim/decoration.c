@@ -19,7 +19,7 @@
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/option_vars.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/sign.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

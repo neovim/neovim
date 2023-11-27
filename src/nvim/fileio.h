@@ -10,7 +10,7 @@
 #include "nvim/garray_defs.h"  // IWYU pragma: keep
 #include "nvim/globals.h"
 #include "nvim/os/fs_defs.h"  // IWYU pragma: keep
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 
 // Values for readfile() flags
 #define READ_NEW        0x01    // read a file into a new buffer

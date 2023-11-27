@@ -10,7 +10,7 @@
 #include "nvim/ex_eval_defs.h"
 #include "nvim/garray_defs.h"
 #include "nvim/option_defs.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/types.h"
 
 typedef enum {

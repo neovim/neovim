@@ -79,7 +79,7 @@
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/state.h"
 #include "nvim/terminal.h"
 #include "nvim/types.h"

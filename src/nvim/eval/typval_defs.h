@@ -6,7 +6,7 @@
 #include "nvim/garray_defs.h"
 #include "nvim/hashtab.h"
 #include "nvim/lib/queue.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/types.h"
 
 /// Type used for Vimscript VAR_NUMBER values

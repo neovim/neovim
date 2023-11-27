@@ -37,7 +37,7 @@
 #include "nvim/map.h"
 #include "nvim/marktree.h"
 #include "nvim/memline.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/undo.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

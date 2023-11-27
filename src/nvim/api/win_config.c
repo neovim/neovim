@@ -20,7 +20,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"

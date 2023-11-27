@@ -2,7 +2,7 @@
 
 #include "nvim/autocmd_defs.h"  // IWYU pragma: keep
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 
 // Values for in_cinkeys()
 #define KEY_OPEN_FORW   0x101
