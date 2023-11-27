@@ -357,7 +357,7 @@ function M.is_enabled(bufnr)
   return bufstates[bufnr] and bufstates[bufnr].enabled or false
 end
 
---- Enable/disable/toggle inlay hints for a buffer
+--- Enable/disable inlay hints for a buffer
 ---
 --- @param bufnr (integer|nil) Buffer handle, or 0 or nil for current
 --- @param enable (boolean|nil) true/nil to enable, false to disable
