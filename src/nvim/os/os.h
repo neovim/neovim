@@ -11,10 +11,12 @@
 #include "nvim/os/stdpaths_defs.h"  // IWYU pragma: keep
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
+// IWYU pragma: begin_exports
 # include "os/env.h.generated.h"
 # include "os/mem.h.generated.h"
 # include "os/stdpaths.h.generated.h"
 # include "os/users.h.generated.h"
+// IWYU pragma: end_exports
 #endif
 
 #define ENV_LOGFILE "NVIM_LOG_FILE"
