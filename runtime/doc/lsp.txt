@@ -1468,13 +1468,15 @@ Lua module: vim.lsp.inlay_hint                                *lsp-inlay_hint*
 enable({bufnr}, {enable})                        *vim.lsp.inlay_hint.enable()*
     Enable/disable/toggle inlay hints for a buffer
 
+    Note: ~
+        This API is pre-release (unstable).
+
     Parameters: ~
       • {bufnr}   (integer|nil) Buffer handle, or 0 or nil for current
       • {enable}  (boolean|nil) true/nil to enable, false to disable
 
 get({filter})                                       *vim.lsp.inlay_hint.get()*
-    Get the list of inlay hints, (optionally) restricted by buffer, client, or
-    range.
+    Get the list of inlay hints, (optionally) restricted by buffer or range.
 
     Example usage: >lua
         local hint = vim.lsp.inlay_hint.get({ bufnr = 0 })[1] -- 0 for current buffer
@@ -1490,6 +1492,9 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
         })
 <
 
+    Note: ~
+        This API is pre-release (unstable).
+
     Parameters: ~
       • {filter}  vim.lsp.inlay_hint.get.filter ? Optional filters |kwargs|:
                   • bufnr (integer?): 0 for current buffer
@@ -1502,6 +1507,9 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
         • inlay_hint (lsp.InlayHint)
 
 is_enabled({bufnr})                          *vim.lsp.inlay_hint.is_enabled()*
+    Note: ~
+        This API is pre-release (unstable).
+
     Parameters: ~
       • {bufnr}  (integer|nil) Buffer handle, or 0 or nil for current
 

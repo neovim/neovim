@@ -107,7 +107,7 @@ end
 --- @field client_id integer
 --- @field inlay_hint lsp.InlayHint
 
---- Get the list of inlay hints, (optionally) restricted by buffer, client, or range.
+--- Get the list of inlay hints, (optionally) restricted by buffer or range.
 ---
 --- Example usage:
 ---
@@ -135,6 +135,8 @@ end
 ---  - bufnr (integer)
 ---  - client_id (integer)
 ---  - inlay_hint (lsp.InlayHint)
+---
+--- @since 12
 function M.get(filter)
   vim.validate({ filter = { filter, 'table', true } })
   filter = filter or {}
@@ -349,6 +351,7 @@ api.nvim_set_decoration_provider(namespace, {
 
 --- @param bufnr (integer|nil) Buffer handle, or 0 or nil for current
 --- @return boolean
+--- @since 12
 function M.is_enabled(bufnr)
   vim.validate({ bufnr = { bufnr, 'number', true } })
   if bufnr == nil or bufnr == 0 then
@@ -361,6 +364,7 @@ end
 ---
 --- @param bufnr (integer|nil) Buffer handle, or 0 or nil for current
 --- @param enable (boolean|nil) true/nil to enable, false to disable
+--- @since 12
 function M.enable(bufnr, enable)
   vim.validate({ enable = { enable, 'boolean', true }, bufnr = { bufnr, 'number', true } })
   if enable == false then

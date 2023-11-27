@@ -42,6 +42,7 @@ import subprocess
 import collections
 import msgpack
 import logging
+from typing import Tuple
 from pathlib import Path
 
 from xml.dom import minidom
@@ -361,6 +362,30 @@ annotation_map = {
     'FUNC_API_REMOTE_ONLY': '|RPC| only',
     'FUNC_API_LUA_ONLY': 'Lua |vim.api| only',
 }
+
+
+def nvim_api_info() -> Tuple[int, bool]:
+    """Returns NVIM_API_LEVEL, NVIM_API_PRERELEASE from CMakeLists.txt"""
+    if not hasattr(nvim_api_info, 'LEVEL'):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        cmake_file_path = os.path.join(script_dir, '..', 'CMakeLists.txt')
+        with open(cmake_file_path, 'r') as cmake_file:
+            cmake_content = cmake_file.read()
+
+        api_level_match = re.search(r'set\(NVIM_API_LEVEL (\d+)\)', cmake_content)
+        api_prerelease_match = re.search(
+            r'set\(NVIM_API_PRERELEASE (\w+)\)', cmake_content
+        )
+
+        if not api_level_match or not api_prerelease_match:
+            raise RuntimeError(
+                'Could not find NVIM_API_LEVEL or NVIM_API_PRERELEASE in CMakeLists.txt'
+            )
+
+        nvim_api_info.LEVEL = int(api_level_match.group(1))
+        nvim_api_info.PRERELEASE = api_prerelease_match.group(1).lower() == 'true'
+
+    return nvim_api_info.LEVEL, nvim_api_info.PRERELEASE
 
 
 # Raises an error with details about `o`, if `cond` is in object `o`,
@@ -691,6 +716,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
         'params': collections.OrderedDict(),
         'return': [],
         'seealso': [],
+        'prerelease': False,
         'xrefs': []
     }
 
@@ -729,6 +755,14 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
                 elif kind == 'warning':
                     text += render_node(child, text, indent=indent,
                                         width=width, fmt_vimhelp=fmt_vimhelp)
+                elif kind == 'since':
+                    since_match = re.match(r'^(\d+)', get_text(child))
+                    since = int(since_match.group(1)) if since_match else 0
+                    NVIM_API_LEVEL, NVIM_API_PRERELEASE = nvim_api_info()
+                    if since > NVIM_API_LEVEL or (
+                        since == NVIM_API_LEVEL and NVIM_API_PRERELEASE
+                    ):
+                        chunks['prerelease'] = True
                 else:
                     raise RuntimeError('unhandled simplesect: {}\n{}'.format(
                         child.nodeName, child.toprettyxml(indent='  ', newl='\n')))
@@ -837,9 +871,11 @@ def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent=
 
         # Generate text from the gathered items.
         chunks = [para['text']]
-        if len(para['note']) > 0:
+        notes = ["    This API is pre-release (unstable)."] if para['prerelease'] else []
+        notes += para['note']
+        if len(notes) > 0:
             chunks.append('\nNote: ~')
-            for s in para['note']:
+            for s in notes:
                 chunks.append(s)
         if len(para['params']) > 0 and has_nonexcluded_params(para['params']):
             chunks.append('\nParameters: ~')
