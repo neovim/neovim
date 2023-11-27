@@ -5,7 +5,7 @@
 #include "nvim/api/buffer.h"
 #include "nvim/api/deprecated.h"
 #include "nvim/api/extmark.h"
-#include "nvim/api/keysets.h"
+#include "nvim/api/keysets_defs.h"
 #include "nvim/api/options.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"

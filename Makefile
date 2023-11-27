@@ -142,7 +142,6 @@ iwyu: build/.ran-cmake
 	cmake --preset iwyu
 	cmake --build build > build/iwyu.log
 	iwyu-fix-includes --only_re="src/nvim" --ignore_re="(src/nvim/eval/encode.c|src/nvim/auto/|src/nvim/os/lang.c|src/nvim/map.c\
-	|src/nvim/api/autocmd.h\
 	|src/nvim/api/buffer.h\
 	|src/nvim/api/command.h\
 	|src/nvim/api/extmark.h\

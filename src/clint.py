@@ -897,7 +897,6 @@ def CheckIncludes(filename, lines, error):
     # These should be synced with the ignored headers in the `iwyu` target in
     # the Makefile.
     check_includes_ignore = [
-            "src/nvim/api/autocmd.h",
             "src/nvim/api/buffer.h",
             "src/nvim/api/command.h",
             "src/nvim/api/extmark.h",

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "nvim/api/keysets.h"
+#include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/channel.h"
