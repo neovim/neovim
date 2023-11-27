@@ -90,7 +90,7 @@ void extmark_set(buf_T *buf, uint32_t ns_id, uint32_t *idp, int row, colnr_T col
 
 revised:
   if (decor_flags || decor.ext) {
-    buf_put_decor(buf, decor, row);
+    buf_put_decor(buf, decor, row, end_row > -1 ? end_row : row);
     decor_redraw(buf, row, end_row > -1 ? end_row : row, decor);
   }
 
@@ -393,7 +393,8 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
         MarkTreeIter itr[1] = { 0 };
         MTKey mark = marktree_lookup(curbuf->b_marktree, pos.mark, itr);
         mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
-        buf_put_decor(curbuf, mt_decor(mark), mark.pos.row);
+        MTPos end = marktree_get_altpos(curbuf->b_marktree, mark, itr);
+        buf_put_decor(curbuf, mt_decor(mark), mark.pos.row, end.row < 0 ? mark.pos.row : end.row);
       }
       if (pos.old_row >= 0) {
         extmark_setraw(curbuf, pos.mark, pos.old_row, pos.old_col);

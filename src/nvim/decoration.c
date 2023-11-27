@@ -184,7 +184,7 @@ DecorSignHighlight decor_sh_from_inline(DecorHighlightInline item, String concea
   return conv;
 }
 
-void buf_put_decor(buf_T *buf, DecorInline decor, int row)
+void buf_put_decor(buf_T *buf, DecorInline decor, int row, int row2)
 {
   if (decor.ext) {
     DecorVirtText *vt = decor.data.ext.vt;
@@ -196,7 +196,7 @@ void buf_put_decor(buf_T *buf, DecorInline decor, int row)
     uint32_t idx = decor.data.ext.sh_idx;
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
-      buf_put_decor_sh(buf, sh, row);
+      buf_put_decor_sh(buf, sh, row, row2);
       idx = sh->next;
     }
   }
@@ -217,14 +217,14 @@ void buf_put_decor_virt(buf_T *buf, DecorVirtText *vt)
 }
 
 static int sign_add_id = 0;
-void buf_put_decor_sh(buf_T *buf, DecorSignHighlight *sh, int row)
+void buf_put_decor_sh(buf_T *buf, DecorSignHighlight *sh, int row, int row2)
 {
   if (sh->flags & kSHIsSign) {
     sh->sign_add_id = sign_add_id++;
     buf->b_signs++;
     if (sh->text.ptr) {
       buf->b_signs_with_text++;
-      buf_signcols_add_check(buf, row + 1);
+      buf_signcols_add_check(buf, row + 1, row2 + 1);
     }
   }
 }
@@ -842,7 +842,7 @@ int decor_signcols(buf_T *buf, int row, int end_row, int max)
     }
 
     if (count > signcols) {
-      if (row != end_row) {
+      if (count > buf->b_signcols.size) {
         buf->b_signcols.sentinel = currow + 1;
       }
       if (count >= max) {
