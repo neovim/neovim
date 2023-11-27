@@ -977,7 +977,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/highlight.h",
             "src/nvim/highlight_defs.h",
             "src/nvim/highlight_group.h",
-            "src/nvim/iconv.h",
             "src/nvim/indent.h",
             "src/nvim/indent_c.h",
             "src/nvim/input.h",
