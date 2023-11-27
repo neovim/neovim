@@ -6,7 +6,7 @@
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/getchar_defs.h"  // IWYU pragma: export
 #include "nvim/os/fileio.h"
-#include "nvim/types_defs.h"
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 
 /// Argument for flush_buffers().
 typedef enum {

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <stdarg.h>
-#include <stdbool.h>
+#include <stdarg.h>  // IWYU pragma: keep
+#include <stddef.h>
 #include <string.h>
 
 #include "klib/kvec.h"
-#include "nvim/eval/typval_defs.h"
-#include "nvim/types_defs.h"
+#include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 
 /// Append string to string and return pointer to the next byte
 ///

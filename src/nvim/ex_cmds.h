@@ -6,7 +6,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: export
 #include "nvim/os/time.h"
-#include "nvim/pos_defs.h"
+#include "nvim/pos_defs.h"  // IWYU pragma: keep
 
 // flags for do_ecmd()
 #define ECMD_HIDE            0x01    // don't free the current buffer

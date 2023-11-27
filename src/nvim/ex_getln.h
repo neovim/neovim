@@ -5,9 +5,9 @@
 #include "klib/kvec.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/eval/typval_defs.h"
-#include "nvim/ex_cmds_defs.h"
-#include "nvim/option_defs.h"
-#include "nvim/types_defs.h"
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
+#include "nvim/option_defs.h"  // IWYU pragma: keep
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 
 struct cmdline_info;
 

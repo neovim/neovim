@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "nvim/globals.h"
-#include "nvim/types_defs.h"
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 
 // Flags for find_file_*() functions.
 #define FINDFILE_FILE   0       // only files

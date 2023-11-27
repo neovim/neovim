@@ -3,18 +3,20 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nvim/api/private/dispatch.h"
-#include "nvim/buffer_defs.h"
-#include "nvim/cmdexpand_defs.h"
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
+#include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
+#include "nvim/pos_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"
 
 /// Prototype of C function that implements Vimscript function
 typedef void (*VimLFunc)(typval_T *args, typval_T *rvar, EvalFuncData data);
 
 /// Special flags for base_arg @see EvalFuncDef
-#define BASE_NONE 0          ///< Not a method (no base argument).
-#define BASE_LAST UINT8_MAX  ///< Use the last argument as the method base.
+enum {
+  BASE_NONE = 0,          ///< Not a method (no base argument).
+  BASE_LAST = UINT8_MAX,  ///< Use the last argument as the method base.
+};
 
 /// Structure holding Vimscript function definition
 typedef struct {
