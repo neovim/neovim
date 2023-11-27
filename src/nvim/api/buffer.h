@@ -3,7 +3,7 @@
 #include <lua.h>  // IWYU pragma: keep
 #include <stdint.h>  // IWYU pragma: keep
 
-#include "nvim/api/keysets.h"
+#include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/buffer_defs.h"
 

@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#include "nvim/api/keysets.h"
+#include "nvim/api/keysets_defs.h"
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/highlight_defs.h"  // IWYU pragma: export
