@@ -272,7 +272,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/quickfix.h\
 	|src/nvim/regexp.h\
 	|src/nvim/regexp_defs.h\
-	|src/nvim/runtime.h\
 	|src/nvim/search.h\
 	|src/nvim/sign.h\
 	|src/nvim/spell.h\
