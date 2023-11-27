@@ -1,7 +1,7 @@
 #pragma once
 
-#include "nvim/buffer_defs.h"
-#include "nvim/memfile_defs.h"
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
+#include "nvim/memfile_defs.h"  // IWYU pragma: export
 
 /// flags for mf_sync()
 #define MFS_ALL         1       /// also sync blocks with negative numbers

@@ -5,7 +5,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/grid_defs.h"
+#include "nvim/grid_defs.h"  // IWYU pragma: export
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"

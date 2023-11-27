@@ -1,4 +1,5 @@
 #pragma once
+// IWYU pragma: private, include "nvim/os/os_defs.h"
 
 #ifndef MSWIN
 # error Header must be included only when compiling for Windows.

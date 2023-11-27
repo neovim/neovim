@@ -175,10 +175,6 @@
   { include: [ '"ex_cmds_enum.generated.h"', private, '"nvim/ex_cmds_defs.h"', public ] },
   { include: [ '"keysets.h.generated.h"', private, '"nvim/api/private/helpers.h"', public ] },
   { include: [ '"keysets_defs.generated.h"', private, '"nvim/api/private/defs.h"', public ] },
-  { include: [ '"nvim/os/pty_process_unix.h"', private, '"nvim/os/pty_process.h"', public ] },
-  { include: [ '"nvim/os/pty_process_win.h"', private, '"nvim/os/pty_process.h"', public ] },
-  { include: [ '"nvim/os/unix_defs.h"', private, '"nvim/os/os_defs.h"', public ] },
-  { include: [ '"nvim/os/win_defs.h"', private, '"nvim/os/os_defs.h"', public ] },
   { include: [ '"os/env.h.generated.h"', private, '"nvim/os/os.h"', public ] },
   { include: [ '"os/fs.h.generated.h"', private, '"nvim/os/os.h"', public ] },
   { include: [ '"os/mem.h.generated.h"', private, '"nvim/os/os.h"', public ] },
@@ -189,55 +185,14 @@
   { include: [ '"ui_events_remote.generated.h"', private, '"nvim/api/ui.h"', public ] },
   { include: [ '"ui_events_remote.h.generated.h"', private, '"nvim/api/ui.h"', public ] },
 
-  # Def to normal headers: nvim/header_defs.h -> nvim/header.h
-  #
-  # This is a public to public mapping, meaning that while IWYU can use the
-  # headers on the left, it will use the headers on the right if possible. This
-  # isn't explicitly mentioned in the IWYU docs, this is just my interpretation
-  # of its behavior.
-  { include: [ '"nvim/arglist_defs.h"', public, '"nvim/arglist.h"', public ] },
-  { include: [ '"nvim/buffer_defs.h"', public, '"nvim/buffer.h"', public ] },
-  { include: [ '"nvim/cmdexpand_defs.h"', public, '"nvim/cmdexpand.h"', public ] },
-  { include: [ '"nvim/decoration_defs.h"', public, '"nvim/decoration.h"', public ] },
-  { include: [ '"nvim/eval/typval_defs.h"', public, '"nvim/eval/typval.h"', public ] },
-  { include: [ '"nvim/ex_cmds_defs.h"', public, '"nvim/ex_cmds.h"', public ] },
-  { include: [ '"nvim/ex_eval_defs.h"', public, '"nvim/ex_eval.h"', public ] },
-  { include: [ '"nvim/extmark_defs.h"', public, '"nvim/extmark.h"', public ] },
-  { include: [ '"nvim/fold_defs.h"', public, '"nvim/fold.h"', public ] },
-  { include: [ '"nvim/garray_defs.h"', public, '"nvim/garray.h"', public ] },
-  { include: [ '"nvim/getchar_defs.h"', public, '"nvim/getchar.h"', public ] },
-  { include: [ '"nvim/grid_defs.h"', public, '"nvim/grid.h"', public ] },
-  { include: [ '"nvim/highlight_defs.h"', public, '"nvim/highlight.h"', public ] },
-  { include: [ '"nvim/mapping_defs.h"', public, '"nvim/mapping.h"', public ] },
-  { include: [ '"nvim/mark_defs.h"', public, '"nvim/mark.h"', public ] },
-  { include: [ '"nvim/mbyte_defs.h"', public, '"nvim/mbyte.h"', public ] },
-  { include: [ '"nvim/memfile_defs.h"', public, '"nvim/memfile.h"', public ] },
-  { include: [ '"nvim/memline_defs.h"', public, '"nvim/memline.h"', public ] },
-  { include: [ '"nvim/menu_defs.h"', public, '"nvim/menu.h"', public ] },
-  { include: [ '"nvim/msgpack/channel_defs.h"', public, '"nvim/msgpack/channel.h"', public ] },
-  { include: [ '"nvim/option_defs.h"', public, '"nvim/option.h"', public ] },
-  { include: [ '"nvim/os/fs_defs.h"', public, '"nvim/os/fs.h"', public ] },
-  { include: [ '"nvim/os/os_defs.h"', public, '"nvim/os/os.h"', public ] },
-  { include: [ '"nvim/regexp_defs.h"', public, '"nvim/regexp.h"', public ] },
-  { include: [ '"nvim/sign_defs.h"', public, '"nvim/sign.h"', public ] },
-  { include: [ '"nvim/spell_defs.h"', public, '"nvim/spell.h"', public ] },
-  { include: [ '"nvim/statusline_defs.h"', public, '"nvim/statusline.h"', public ] },
-  { include: [ '"nvim/syntax_defs.h"', public, '"nvim/syntax.h"', public ] },
-  { include: [ '"nvim/tui/input_defs.h"', public, '"nvim/tui/input.h"', public ] },
-  { include: [ '"nvim/undo_defs.h"', public, '"nvim/undo.h"', public ] },
-
   # Symbols
   { symbol: [ "MAX", private, '"nvim/macros.h"', public ] },
   { symbol: [ "MIN", private, '"nvim/macros.h"', public ] },
 
   # Third party headers
-  { include: [ '<libintl.h>', public, '"nvim/gettext.h"', public ] },
   { include: [ '<netdb.h>', public, '"nvim/os/unix_defs.h"', private ] },
   { include: [ '<netinet/in.h>', public, '"nvim/os/unix_defs.h"', private ] },
   { include: [ '<pthread.h>', public, '"nvim/os/unix_defs.h"', private ] },
-  { include: [ '<sys/socket.h>', public, '"nvim/os/unix_defs.h"', private ] },
-  { include: [ '<termios.h>', public, '"nvim/os/unix_defs.h"', private ] },
-  { include: [ '<unistd.h>', public, '"nvim/os/unix_defs.h"', private ] },
   { include: [ '<uv/unix.h>', public, '<uv.h>', public ] },
 ]
 

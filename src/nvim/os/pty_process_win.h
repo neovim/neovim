@@ -1,4 +1,5 @@
 #pragma once
+// IWYU pragma: private, include "nvim/os/pty_process.h"
 
 #include <uv.h>
 

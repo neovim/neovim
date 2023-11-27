@@ -2,9 +2,9 @@
 
 #include <stdio.h>
 
-#include "nvim/buffer_defs.h"
-#include "nvim/fold_defs.h"
-#include "nvim/garray_defs.h"
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
+#include "nvim/fold_defs.h"  // IWYU pragma: export
+#include "nvim/garray_defs.h"  // IWYU pragma: keep
 #include "nvim/macros.h"
 #include "nvim/pos.h"
 #include "nvim/types.h"

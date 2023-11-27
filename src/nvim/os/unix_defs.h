@@ -1,10 +1,11 @@
 #pragma once
+// IWYU pragma: private, include "nvim/os/os_defs.h"
 
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <unistd.h>
+#include <sys/param.h>  // IWYU pragma: export
+#include <sys/socket.h>  // IWYU pragma: export
+#include <unistd.h>  // IWYU pragma: export
 #if defined(HAVE_TERMIOS_H)
-# include <termios.h>
+# include <termios.h>  // IWYU pragma: export
 #endif
 
 // POSIX.1-2008 says that NAME_MAX should be in here

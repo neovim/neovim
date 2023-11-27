@@ -1,7 +1,7 @@
 #pragma once
 
-#include "nvim/buffer_defs.h"
-#include "nvim/regexp_defs.h"
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
+#include "nvim/regexp_defs.h"  // IWYU pragma: export
 #include "nvim/types.h"
 
 // Second argument for vim_regcomp().

@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "nvim/garray_defs.h"
+#include "nvim/garray_defs.h"  // IWYU pragma: export
 #include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/types.h"
