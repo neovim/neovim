@@ -13,6 +13,7 @@
 #include "nvim/api/keysets.h"
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"

@@ -10,6 +10,7 @@
 #include "nvim/api/autocmd.h"
 #include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/autocmd.h"
