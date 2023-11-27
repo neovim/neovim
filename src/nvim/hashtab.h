@@ -2,8 +2,6 @@
 
 #include <stddef.h>
 
-#include "nvim/types_defs.h"
-
 /// Magic number used for hashitem "hi_key" value indicating a deleted item
 ///
 /// Only the address is used.

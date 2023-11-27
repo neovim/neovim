@@ -5,7 +5,7 @@
 
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
-#include "nvim/runtime.h"
+#include "nvim/runtime_defs.h"  // IWYU pragma: keep
 
 #define TIME_MSG(s) do { \
   if (time_fd != NULL) time_msg(s, NULL); \

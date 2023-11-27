@@ -4,7 +4,7 @@
 
 #include "nvim/func_attr.h"
 #include "nvim/garray_defs.h"  // IWYU pragma: keep
-#include "nvim/types_defs.h"
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 
 // Flags for expand_wildcards()
 #define EW_DIR          0x01    // include directory names

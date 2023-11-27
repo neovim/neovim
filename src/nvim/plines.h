@@ -5,7 +5,7 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/marktree.h"
-#include "nvim/pos_defs.h"
+#include "nvim/pos_defs.h"  // IWYU pragma: keep
 
 /// Argument for lbr_chartabsize().
 typedef struct {

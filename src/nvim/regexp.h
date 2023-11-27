@@ -1,9 +1,9 @@
 #pragma once
 
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
-#include "nvim/pos_defs.h"
+#include "nvim/pos_defs.h"  // IWYU pragma: keep
 #include "nvim/regexp_defs.h"  // IWYU pragma: export
-#include "nvim/types_defs.h"
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 
 // Second argument for vim_regcomp().
 #define RE_MAGIC        1       ///< 'magic' option
