@@ -733,6 +733,9 @@ hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
 is_enabled({filter})                             *vim.diagnostic.is_enabled()*
     Check whether diagnostics are enabled.
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {filter}  (`table?`) Optional filters |kwargs|, or `nil` for all.
                   • {ns_id}? (`integer`) Diagnostic namespace, or `nil` for

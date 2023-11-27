@@ -1103,7 +1103,9 @@ vim.stricmp({a}, {b})                                          *vim.stricmp()*
         lesser than {b}, respectively.
 
 vim.ui_attach({ns}, {options}, {callback})                   *vim.ui_attach()*
-    Attach to ui events, similar to |nvim_ui_attach()| but receive events as
+    WARNING: This feature is experimental/unstable.
+
+    Attach to |ui-events|, similar to |nvim_ui_attach()| but receive events as
     Lua callback. Can be used to implement screen elements like popupmenu or
     message handling in Lua.
 
@@ -1856,6 +1858,9 @@ vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
 
     Can also be pretty-printed with `:Inspect!`.                   *:Inspect!*
 
+    Attributes: ~
+        Since: 0.9.0
+
     Parameters: ~
       • {bufnr}   (`integer?`) defaults to the current buffer
       • {row}     (`integer?`) row to inspect, 0-based. Defaults to the row of
@@ -1888,6 +1893,9 @@ vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
     Show all the items at a given buffer position.
 
     Can also be shown with `:Inspect`.                              *:Inspect*
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {bufnr}   (`integer?`) defaults to the current buffer
@@ -2461,11 +2469,15 @@ vim.validate({opt})                                           *vim.validate()*
 Lua module: vim.loader                                            *vim.loader*
 
 vim.loader.disable()                                    *vim.loader.disable()*
+    WARNING: This feature is experimental/unstable.
+
     Disables the experimental Lua module loader:
     • removes the loaders
     • adds the default Nvim loader
 
 vim.loader.enable()                                      *vim.loader.enable()*
+    WARNING: This feature is experimental/unstable.
+
     Enables the experimental Lua module loader:
     • overrides loadfile
     • adds the Lua loader using the byte-compilation cache
@@ -2473,6 +2485,8 @@ vim.loader.enable()                                      *vim.loader.enable()*
     • removes the default Nvim loader
 
 vim.loader.find({modname}, {opts})                         *vim.loader.find()*
+    WARNING: This feature is experimental/unstable.
+
     Finds Lua modules for the given module name.
 
     Parameters: ~
@@ -2498,6 +2512,8 @@ vim.loader.find({modname}, {opts})                         *vim.loader.find()*
           returned for `modname="*"`
 
 vim.loader.reset({path})                                  *vim.loader.reset()*
+    WARNING: This feature is experimental/unstable.
+
     Resets the cache for the path, or all the paths if path is nil.
 
     Parameters: ~
@@ -2766,6 +2782,9 @@ vim.filetype.get_option({filetype}, {option})
     Note: this uses |nvim_get_option_value()| but caches the result. This
     means |ftplugin| and |FileType| autocommands are only triggered once and
     may not reflect later changes.
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {filetype}  (`string`) Filetype
@@ -3649,6 +3668,9 @@ vim.secure.read({path})                                    *vim.secure.read()*
     be trusted. The user's choice is persisted in a trust database at
     $XDG_STATE_HOME/nvim/trust.
 
+    Attributes: ~
+        Since: 0.9.0
+
     Parameters: ~
       • {path}  (`string`) Path to a file to read.
 
@@ -3663,6 +3685,9 @@ vim.secure.trust({opts})                                  *vim.secure.trust()*
     Manage the trust database.
 
     The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {opts}  (`table`) A table with the following fields:
@@ -3755,6 +3780,9 @@ vim.version.cmp({v1}, {v2})                                *vim.version.cmp()*
       • Per semver, build metadata is ignored when comparing two
         otherwise-equivalent versions.
 
+    Attributes: ~
+        Since: 0.9.0
+
     Parameters: ~
       • {v1}  (`vim.Version|number[]|string`) Version object.
       • {v2}  (`vim.Version|number[]|string`) Version to compare with `v1`.
@@ -3766,6 +3794,9 @@ vim.version.eq({v1}, {v2})                                  *vim.version.eq()*
     Returns `true` if the given versions are equal. See |vim.version.cmp()|
     for usage.
 
+    Attributes: ~
+        Since: 0.9.0
+
     Parameters: ~
       • {v1}  (`vim.Version|number[]|string`)
       • {v2}  (`vim.Version|number[]|string`)
@@ -3776,6 +3807,9 @@ vim.version.eq({v1}, {v2})                                  *vim.version.eq()*
 vim.version.ge({v1}, {v2})                                  *vim.version.ge()*
     Returns `true` if `v1 >= v2`. See |vim.version.cmp()| for usage.
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {v1}  (`vim.Version|number[]|string`)
       • {v2}  (`vim.Version|number[]|string`)
@@ -3785,6 +3819,9 @@ vim.version.ge({v1}, {v2})                                  *vim.version.ge()*
 
 vim.version.gt({v1}, {v2})                                  *vim.version.gt()*
     Returns `true` if `v1 > v2`. See |vim.version.cmp()| for usage.
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {v1}  (`vim.Version|number[]|string`)
@@ -3805,6 +3842,9 @@ vim.version.last({versions})                              *vim.version.last()*
 vim.version.le({v1}, {v2})                                  *vim.version.le()*
     Returns `true` if `v1 <= v2`. See |vim.version.cmp()| for usage.
 
+    Attributes: ~
+        Since: 0.10.0
+
     Parameters: ~
       • {v1}  (`vim.Version|number[]|string`)
       • {v2}  (`vim.Version|number[]|string`)
@@ -3814,6 +3854,9 @@ vim.version.le({v1}, {v2})                                  *vim.version.le()*
 
 vim.version.lt({v1}, {v2})                                  *vim.version.lt()*
     Returns `true` if `v1 < v2`. See |vim.version.cmp()| for usage.
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {v1}  (`vim.Version|number[]|string`)
@@ -3828,6 +3871,9 @@ vim.version.parse({version}, {opts})                     *vim.version.parse()*
     returns: >
         { major = 1, minor = 0, patch = 1, prerelease = "rc1", build = "build.2" }
 <
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {version}  (`string`) Version string to parse.
@@ -3868,6 +3914,9 @@ vim.version.range({spec})                                *vim.version.range()*
         local r = vim.version.range('1.0.0 - 2.0.0') -- >=1.0, <2.0
         print(vim.version.ge({1,0,3}, r.from) and vim.version.lt({1,0,3}, r.to))
 <
+
+    Attributes: ~
+        Since: 0.9.0
 
     Parameters: ~
       • {spec}  (`string`) Version range "spec"

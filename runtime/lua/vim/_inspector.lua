@@ -27,6 +27,7 @@ local defaults = {
 ---
 ---Can also be pretty-printed with `:Inspect!`. [:Inspect!]()
 ---
+---@since 11
 ---@param bufnr? integer defaults to the current buffer
 ---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
 ---@param col? integer col to inspect, 0-based. Defaults to the col of the current cursor
@@ -145,6 +146,7 @@ end
 ---
 ---Can also be shown with `:Inspect`. [:Inspect]()
 ---
+---@since 11
 ---@param bufnr? integer defaults to the current buffer
 ---@param row? integer row to inspect, 0-based. Defaults to the row of the current cursor
 ---@param col? integer col to inspect, 0-based. Defaults to the col of the current cursor

@@ -309,7 +309,7 @@ end
 local function render_api_meta(_f, fun, write)
   write('')
 
-  local text_utils = require('scripts.text_utils')
+  local util = require('scripts.util')
 
   if vim.startswith(fun.name, 'nvim__') then
     write('--- @private')
@@ -321,7 +321,7 @@ local function render_api_meta(_f, fun, write)
 
   local desc = fun.desc
   if desc then
-    desc = text_utils.md_to_vimdoc(desc, 0, 0, 74)
+    desc = util.md_to_vimdoc(desc, 0, 0, 74)
     for _, l in ipairs(split(norm_text(desc))) do
       write('--- ' .. l)
     end
@@ -332,7 +332,7 @@ local function render_api_meta(_f, fun, write)
     write('--- Note:')
     for _, note in ipairs(fun.notes) do
       -- XXX: abuse md_to_vimdoc() to force-fit the markdown list. Need norm_md()?
-      note = text_utils.md_to_vimdoc(' - ' .. note, 0, 0, 74)
+      note = util.md_to_vimdoc(' - ' .. note, 0, 0, 74)
       for _, l in ipairs(split(vim.trim(norm_text(note)))) do
         write('--- ' .. l:gsub('\n*$', ''))
       end
@@ -341,7 +341,7 @@ local function render_api_meta(_f, fun, write)
   end
 
   for _, see in ipairs(fun.see or {}) do
-    see = text_utils.md_to_vimdoc('@see ' .. see, 0, 0, 74)
+    see = util.md_to_vimdoc('@see ' .. see, 0, 0, 74)
     for _, l in ipairs(split(vim.trim(norm_text(see)))) do
       write('--- ' .. l:gsub([[\s*$]], ''))
     end
@@ -355,7 +355,7 @@ local function render_api_meta(_f, fun, write)
     if pdesc then
       local s = '--- @param ' .. p[1] .. ' ' .. p[2] .. ' '
       local indent = #('@param ' .. p[1] .. ' ')
-      pdesc = text_utils.md_to_vimdoc(pdesc, #s, indent, 74, true)
+      pdesc = util.md_to_vimdoc(pdesc, #s, indent, 74, true)
       local pdesc_a = split(vim.trim(norm_text(pdesc)))
       write(s .. pdesc_a[1])
       for i = 2, #pdesc_a do
@@ -371,7 +371,7 @@ local function render_api_meta(_f, fun, write)
 
   if fun.returns ~= '' then
     local ret_desc = fun.returns_desc and ' : ' .. fun.returns_desc or ''
-    ret_desc = text_utils.md_to_vimdoc(ret_desc, 0, 0, 74)
+    ret_desc = util.md_to_vimdoc(ret_desc, 0, 0, 74)
     local ret = LUA_API_RETURN_OVERRIDES[fun.name] or fun.returns
     write('--- @return ' .. ret .. ret_desc)
   end

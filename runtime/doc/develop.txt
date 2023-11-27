@@ -247,6 +247,10 @@ Docstring format:
 - References are written as `[tag]`
 - Use ``` for code samples.
   Code samples can be annotated as `vim` or `lua`
+- Use `@since <api-level>` to note the |api-level| when the function became
+  "stable". If `<api-level>` is greater than the current stable release (or
+  0), it is marked as "experimental".
+  - See scripts/util.lua for the mapping of api-level to Nvim version.
 - Use `@nodoc` to prevent documentation generation.
 - Use `@inlinedoc` to inline `@class` blocks into `@param` blocks.
   E.g. >lua
@@ -271,7 +275,7 @@ Docstring format:
                       - {somefield}? (integer) Documentation
                         for some field
 <
-- Files which has `@meta` are only used for typing and documentation.
+- Files declared as `@meta` are only used for typing and documentation (similar to "*.d.ts" typescript files).
 
 Example: the help for |vim.paste()| is generated from a docstring decorating
 vim.paste in runtime/lua/vim/_editor.lua like this: >
@@ -288,6 +292,7 @@ vim.paste in runtime/lua/vim/_editor.lua like this: >
     --- end)()
     --- ```
     ---
+    --- @since 12
     --- @see |paste|
     ---
     --- @param lines  ...
