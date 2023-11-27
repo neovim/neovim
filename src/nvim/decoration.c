@@ -27,7 +27,7 @@
 #endif
 
 // TODO(bfredl): These should maybe be per-buffer, so that all resources
-// asssociated with a buffer can be freed when the buffer is unloaded.
+// associated with a buffer can be freed when the buffer is unloaded.
 kvec_t(DecorSignHighlight) decor_items = KV_INITIAL_VALUE;
 uint32_t decor_freelist = UINT32_MAX;
 
