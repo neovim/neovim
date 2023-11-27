@@ -145,16 +145,12 @@ iwyu: build/.ran-cmake
 	|src/nvim/api/autocmd.h\
 	|src/nvim/api/buffer.h\
 	|src/nvim/api/command.h\
-	|src/nvim/api/deprecated.h\
 	|src/nvim/api/extmark.h\
-	|src/nvim/api/keysets.h\
 	|src/nvim/api/options.h\
-	|src/nvim/api/private/converter.h\
 	|src/nvim/api/private/defs.h\
 	|src/nvim/api/private/dispatch.h\
 	|src/nvim/api/private/helpers.h\
 	|src/nvim/api/private/validate.h\
-	|src/nvim/api/tabpage.h\
 	|src/nvim/api/ui.h\
 	|src/nvim/api/vim.h\
 	|src/nvim/api/vimscript.h\
@@ -226,7 +222,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/fold_defs.h\
 	|src/nvim/garray.h\
 	|src/nvim/getchar.h\
-	|src/nvim/getchar_defs.h\
 	|src/nvim/globals.h\
 	|src/nvim/grid.h\
 	|src/nvim/grid_defs.h\
@@ -244,7 +239,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/linematch.h\
 	|src/nvim/log.h\
 	|src/nvim/lua/base64.h\
-	|src/nvim/lua/converter.h\
 	|src/nvim/lua/executor.h\
 	|src/nvim/lua/secure.h\
 	|src/nvim/lua/spell.h\
@@ -288,7 +282,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/os/input.h\
 	|src/nvim/os/lang.h\
 	|src/nvim/os/os.h\
-	|src/nvim/os/process.h\
 	|src/nvim/os/pty_conpty_win.h\
 	|src/nvim/os/pty_process_unix.h\
 	|src/nvim/os/pty_process_win.h\
@@ -322,7 +315,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/textformat.h\
 	|src/nvim/textobject.h\
 	|src/nvim/tui/input.h\
-	|src/nvim/tui/terminfo.h\
 	|src/nvim/tui/tui.h\
 	|src/nvim/ugrid.h\
 	|src/nvim/ui.h\
@@ -336,7 +328,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/viml/parser/expressions.h\
 	|src/nvim/viml/parser/parser.h\
 	|src/nvim/window.h\
-	|src/nvim/winfloat.h\
 	)" --nosafe_headers < build/iwyu.log
 	cmake -B build -U ENABLE_IWYU
 	cmake --build build

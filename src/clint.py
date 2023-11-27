@@ -890,6 +890,7 @@ def CheckIncludes(filename, lines, error):
     """
     if filename.endswith('.c.h') or filename.endswith('.in.h') or FileInfo(filename).RelativePath() in {
         'func_attr.h',
+        'os/pty_process.h',
     }:
         return
 
@@ -899,16 +900,12 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/api/autocmd.h",
             "src/nvim/api/buffer.h",
             "src/nvim/api/command.h",
-            "src/nvim/api/deprecated.h",
             "src/nvim/api/extmark.h",
-            "src/nvim/api/keysets.h",
             "src/nvim/api/options.h",
-            "src/nvim/api/private/converter.h",
             "src/nvim/api/private/defs.h",
             "src/nvim/api/private/dispatch.h",
             "src/nvim/api/private/helpers.h",
             "src/nvim/api/private/validate.h",
-            "src/nvim/api/tabpage.h",
             "src/nvim/api/ui.h",
             "src/nvim/api/vim.h",
             "src/nvim/api/vimscript.h",
@@ -980,7 +977,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/fold_defs.h",
             "src/nvim/garray.h",
             "src/nvim/getchar.h",
-            "src/nvim/getchar_defs.h",
             "src/nvim/globals.h",
             "src/nvim/grid.h",
             "src/nvim/grid_defs.h",
@@ -998,7 +994,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/linematch.h",
             "src/nvim/log.h",
             "src/nvim/lua/base64.h",
-            "src/nvim/lua/converter.h",
             "src/nvim/lua/executor.h",
             "src/nvim/lua/secure.h",
             "src/nvim/lua/spell.h",
@@ -1042,7 +1037,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/os/input.h",
             "src/nvim/os/lang.h",
             "src/nvim/os/os.h",
-            "src/nvim/os/process.h",
             "src/nvim/os/pty_conpty_win.h",
             "src/nvim/os/pty_process_unix.h",
             "src/nvim/os/pty_process_win.h",
@@ -1076,7 +1070,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/textformat.h",
             "src/nvim/textobject.h",
             "src/nvim/tui/input.h",
-            "src/nvim/tui/terminfo.h",
             "src/nvim/tui/tui.h",
             "src/nvim/ugrid.h",
             "src/nvim/ui.h",
@@ -1090,7 +1083,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/viml/parser/expressions.h",
             "src/nvim/viml/parser/parser.h",
             "src/nvim/window.h",
-            "src/nvim/winfloat.h",
                              ]
 
     for i in check_includes_ignore:
@@ -1098,10 +1090,12 @@ def CheckIncludes(filename, lines, error):
             return
 
     for i, line in enumerate(lines):
-        if("#include" in line):
-            if("#include <" in line):
-                continue
-            if "_defs" not in line:
+        matched = Match(r'#\s*include\s*"([^"]*)"$', line)
+        if matched:
+            name = matched.group(1)
+            if (not name.endswith('.h.generated.h') and
+                    not name.endswith('_defs.h') and
+                    not name.endswith('/defs.h')):
                 error(filename, i, 'build/include_defs', 5,
                       'Headers should not include non-"_defs" headers')
 
