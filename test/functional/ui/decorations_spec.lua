@@ -4718,21 +4718,19 @@ l5
       {2:~                                                 }|
                                                         |
     ]]}
-
   end)
 
   it('can add multiple signs (multiple extmarks) 2', function()
     insert(example_test3)
     feed 'gg'
 
-    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S1'})
-    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S2'})
-
+    meths.buf_set_extmark(0, ns, 3, -1, {sign_text='S1'})
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S2', end_row = 3})
     screen:expect{grid=[[
       {1:    }^l1                                            |
-      S1S2l2                                            |
-      {1:    }l3                                            |
-      {1:    }l4                                            |
+      S2{1:  }l2                                            |
+      S2{1:  }l3                                            |
+      S1S2l4                                            |
       {1:    }l5                                            |
       {1:    }                                              |
       {2:~                                                 }|
@@ -4740,23 +4738,6 @@ l5
       {2:~                                                 }|
                                                         |
     ]]}
-
-    -- TODO(lewis6991): Support ranged signs
-    -- meths.buf_set_extmark(1, ns, 1, -1, {sign_text='S3', end_row = 2})
-
-    -- screen:expect{grid=[[
-    --   {1:      }^l1                                          |
-    --   S3S2S1l2                                          |
-    --   S3{1:    }l3                                          |
-    --   {1:      }l4                                          |
-    --   {1:      }l5                                          |
-    --   {1:      }                                            |
-    --   {2:~                                                 }|
-    --   {2:~                                                 }|
-    --   {2:~                                                 }|
-    --                                                     |
-    -- ]]}
-
   end)
 
   it('can add multiple signs (multiple extmarks) 3', function()
