@@ -9,6 +9,7 @@
 #include "nvim/event/process.h"
 #include "nvim/event/socket.h"
 #include "nvim/macros.h"
+#include "nvim/msgpack_rpc/channel_defs.h"  // IWYU pragma: export
 #include "nvim/vim.h"
 
 #define METHOD_MAXLEN 512

@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef HAVE_WORKING_LIBINTL
-# include <libintl.h>
+# include <libintl.h>  // IWYU pragma: export
 # define _(x) gettext(x)  // NOLINT(bugprone-reserved-identifier)
 // XXX do we actually need this?
 # ifdef gettext_noop

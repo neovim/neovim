@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nvim/os/fs_defs.h"
+#include "nvim/os/fs_defs.h"  // IWYU pragma: export
 #include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

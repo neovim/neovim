@@ -2,11 +2,12 @@
 
 #include <stdbool.h>
 
-#include "nvim/buffer_defs.h"
-#include "nvim/cmdexpand_defs.h"
-#include "nvim/ex_cmds_defs.h"
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
+#include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/globals.h"
 #include "nvim/macros.h"
+#include "nvim/syntax_defs.h"  // IWYU pragma: export
 
 #define HL_CONTAINED   0x01    // not used on toplevel
 #define HL_TRANSP      0x02    // has no highlighting

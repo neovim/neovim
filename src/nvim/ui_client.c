@@ -17,7 +17,6 @@
 #include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/tui/tui.h"
 #include "nvim/ui.h"

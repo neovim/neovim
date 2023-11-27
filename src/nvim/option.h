@@ -3,10 +3,10 @@
 #include <stdint.h>
 
 #include "nvim/api/private/helpers.h"
-#include "nvim/cmdexpand_defs.h"
+#include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
-#include "nvim/ex_cmds_defs.h"
-#include "nvim/option_defs.h"
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
+#include "nvim/option_defs.h"  // IWYU pragma: export
 #include "nvim/search.h"
 
 /// The options that are local to a window or buffer have "indir" set to one of

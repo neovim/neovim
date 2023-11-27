@@ -1090,7 +1090,7 @@ def CheckIncludes(filename, lines, error):
             return
 
     for i, line in enumerate(lines):
-        matched = Match(r'#\s*include\s*"([^"]*)"$', line)
+        matched = Match(r'#\s*include\s*"([^"]*)"', line)
         if matched:
             name = matched.group(1)
             if (not name.endswith('.h.generated.h') and
