@@ -454,7 +454,7 @@ func s:GetFilenameChecks() abort
     \ 'nqc': ['file.nqc'],
     \ 'nroff': ['file.tr', 'file.nr', 'file.roff', 'file.tmac', 'file.mom', 'tmac.file'],
     \ 'nsis': ['file.nsi', 'file.nsh'],
-    \ 'nu': ['env.nu', 'config.nu'],
+    \ 'nu': ['file.nu'],
     \ 'obj': ['file.obj'],
     \ 'objdump': ['file.objdump', 'file.cppobjdump'],
     \ 'obse': ['file.obl', 'file.obse', 'file.oblivion', 'file.obscript'],
