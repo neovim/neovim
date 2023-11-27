@@ -10,7 +10,7 @@
 #include "msgpack/pack.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert.h"
-#include "nvim/event/wstream.h"
+#include "nvim/func_attr.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/types.h"

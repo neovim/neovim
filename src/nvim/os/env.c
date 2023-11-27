@@ -14,6 +14,7 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/eval.h"
+#include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"

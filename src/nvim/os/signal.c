@@ -9,6 +9,7 @@
 #include "nvim/autocmd.h"
 #include "nvim/eval.h"
 #include "nvim/event/signal.h"
+#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/main.h"

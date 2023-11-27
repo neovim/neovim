@@ -14,6 +14,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/eval/window.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"

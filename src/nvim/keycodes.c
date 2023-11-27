@@ -10,6 +10,7 @@
 #include "nvim/charset.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
+#include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/keycodes.h"
@@ -18,7 +19,6 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/mouse.h"
-#include "nvim/strings.h"
 #include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

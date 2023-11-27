@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/log.h"
 #include "nvim/memory.h"

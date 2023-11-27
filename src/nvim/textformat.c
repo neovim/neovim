@@ -14,6 +14,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"

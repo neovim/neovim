@@ -7,6 +7,7 @@
 #include "nvim/channel.h"
 #include "nvim/eval.h"
 #include "nvim/event/socket.h"
+#include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/log.h"
 #include "nvim/main.h"

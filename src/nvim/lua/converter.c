@@ -19,6 +19,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/eval/userfunc.h"
+#include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"

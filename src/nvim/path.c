@@ -15,6 +15,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
+#include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/garray_defs.h"
 #include "nvim/gettext.h"

@@ -7,6 +7,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/event/defs.h"
+#include "nvim/func_attr.h"
 #include "nvim/macros.h"
 #include "nvim/main.h"
 #include "nvim/map.h"

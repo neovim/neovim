@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "nvim/func_attr.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
 #include "nvim/rbuffer.h"

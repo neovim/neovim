@@ -11,6 +11,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/event/loop.h"
+#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
 #include "nvim/log.h"

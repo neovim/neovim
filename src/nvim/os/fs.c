@@ -17,6 +17,7 @@
 #endif
 
 #include "auto/config.h"
+#include "nvim/func_attr.h"
 #include "nvim/os/fs.h"
 
 #if defined(HAVE_ACL)

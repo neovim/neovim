@@ -5,6 +5,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
 #include "nvim/event/wstream.h"
+#include "nvim/func_attr.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
 

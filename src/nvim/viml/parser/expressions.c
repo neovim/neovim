@@ -58,6 +58,7 @@
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/charset.h"
+#include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros.h"
