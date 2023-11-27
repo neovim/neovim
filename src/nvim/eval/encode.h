@@ -9,7 +9,6 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/garray_defs.h"
-#include "nvim/vim.h"
 
 /// Convert Vimscript value to msgpack string
 ///

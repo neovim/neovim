@@ -10,7 +10,6 @@
 #include "nvim/event/process.h"
 #include "nvim/event/socket.h"
 #include "nvim/map.h"
-#include "nvim/vim.h"
 
 typedef struct Channel Channel;
 typedef struct Unpacker Unpacker;
