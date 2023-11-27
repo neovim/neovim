@@ -11,6 +11,7 @@ local insert = helpers.insert
 local clear = helpers.clear
 local eq = helpers.eq
 local ok = helpers.ok
+local pesc = helpers.pesc
 local eval = helpers.eval
 local feed = helpers.feed
 local pcall_err = helpers.pcall_err
@@ -2771,15 +2772,19 @@ describe('lua stdlib', function()
     end)
 
     it('should not run in fast callbacks #26122', function()
+      local screen = Screen.new(80, 10)
+      screen:attach()
       exec_lua([[
-        vim.uv.new_timer():start(0, 100, function()
-          local count = 0
-          vim.wait(100, function()
-            count = count + 1
-            return count == 10
-          end, 100)
+        local timer = vim.uv.new_timer()
+        timer:start(0, 0, function()
+          timer:close()
+          vim.wait(100, function() end)
         end)
       ]])
+      screen:expect({
+        any = pesc('E5560: vim.wait must not be called in a lua loop callback'),
+      })
+      feed('<CR>')
       assert_alive()
     end)
   end)
