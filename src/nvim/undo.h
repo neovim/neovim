@@ -2,7 +2,7 @@
 
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/types.h"
 #include "nvim/undo_defs.h"  // IWYU pragma: export
 

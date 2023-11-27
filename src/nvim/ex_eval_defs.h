@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 
 /// A list used for saving values of "emsg_silent".  Used by ex_try() to save the
 /// value of "emsg_silent" if it was non-zero.  When this is done, the CSF_SILENT

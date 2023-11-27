@@ -7,7 +7,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 
 /// Return the folded-case equivalent of the given character

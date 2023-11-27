@@ -1046,7 +1046,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/ui_client.h",
             "src/nvim/ui_compositor.h",
             "src/nvim/undo.h",
-            "src/nvim/undo_defs.h",
             "src/nvim/usercmd.h",
             "src/nvim/version.h",
             "src/nvim/vim.h",

@@ -13,7 +13,7 @@
 #include "nvim/macros.h"
 #include "nvim/memline.h"
 #include "nvim/memline_defs.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 
 // Values for buflist_getfile()
 enum getf_values {

@@ -33,7 +33,7 @@
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/ops.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/types.h"
 #include "nvim/undo.h"
 #include "nvim/vim.h"

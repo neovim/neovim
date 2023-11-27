@@ -22,7 +22,7 @@
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/option_vars.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/textobject.h"

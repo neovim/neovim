@@ -1,7 +1,7 @@
 #pragma once
 
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 
 // flags for open_line()
 #define OPENLINE_DELSPACES  0x01  // delete spaces after cursor

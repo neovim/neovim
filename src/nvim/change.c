@@ -39,7 +39,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/os/time.h"
 #include "nvim/plines.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/state.h"

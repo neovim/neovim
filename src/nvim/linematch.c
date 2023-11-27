@@ -8,7 +8,7 @@
 #include "nvim/linematch.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 
 #define LN_MAX_BUFS 8
 #define LN_DECISION_MAX 255  // pow(2, LN_MAX_BUFS(8)) - 1 = 255

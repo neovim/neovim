@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 
 // Info used to pass info about a fold from the fold-detection code to the
 // code that displays the foldcolumn.

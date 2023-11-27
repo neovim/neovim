@@ -4,7 +4,7 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/macros.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 
 // Values for find_ident_under_cursor()
 #define FIND_IDENT      1       // find identifier (word)

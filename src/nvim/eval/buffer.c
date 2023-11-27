@@ -21,7 +21,7 @@
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/path.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/sign.h"
 #include "nvim/types.h"
 #include "nvim/undo.h"

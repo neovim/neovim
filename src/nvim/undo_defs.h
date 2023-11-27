@@ -4,7 +4,7 @@
 
 #include "nvim/extmark_defs.h"
 #include "nvim/mark_defs.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 
 typedef struct u_header u_header_T;
 

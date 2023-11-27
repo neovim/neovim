@@ -26,7 +26,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/ops.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/strings.h"
 #include "nvim/types.h"

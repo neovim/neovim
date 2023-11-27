@@ -20,7 +20,7 @@
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
 #include "nvim/plines.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/state.h"
 #include "nvim/vim.h"
 

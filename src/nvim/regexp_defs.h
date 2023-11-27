@@ -11,7 +11,7 @@
 
 #include <stdbool.h>
 
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/types.h"
 
 /// Used for "magic_overruled".

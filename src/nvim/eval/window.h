@@ -12,7 +12,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 

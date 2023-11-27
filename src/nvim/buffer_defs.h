@@ -28,7 +28,7 @@ typedef struct {
 #include "nvim/mark_defs.h"
 #include "nvim/marktree.h"
 #include "nvim/option_vars.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/statusline_defs.h"
 #include "nvim/undo_defs.h"
 

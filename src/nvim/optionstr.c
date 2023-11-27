@@ -37,7 +37,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/os/os.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/spell.h"
 #include "nvim/spellfile.h"

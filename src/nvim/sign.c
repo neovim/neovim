@@ -38,7 +38,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/sign.h"
 #include "nvim/sign_defs.h"
 #include "nvim/strings.h"

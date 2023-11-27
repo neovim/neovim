@@ -6,7 +6,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_eval_defs.h"
 #include "nvim/normal.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/regexp_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

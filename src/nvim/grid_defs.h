@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/types.h"
 
 // Includes final NUL. MAX_MCO is no longer used, but at least 4*(MAX_MCO+1)+1=29

@@ -25,7 +25,7 @@
 #include "nvim/memory.h"
 #include "nvim/option.h"
 #include "nvim/path.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/vim.h"
 

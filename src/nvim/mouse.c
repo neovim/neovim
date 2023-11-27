@@ -34,7 +34,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/plines.h"
 #include "nvim/popupmenu.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
 #include "nvim/statusline.h"

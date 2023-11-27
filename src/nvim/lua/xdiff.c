@@ -13,7 +13,7 @@
 #include "nvim/lua/xdiff.h"
 #include "nvim/macros.h"
 #include "nvim/memory.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/vim.h"
 #include "xdiff/xdiff.h"
 

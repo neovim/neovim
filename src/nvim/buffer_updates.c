@@ -19,7 +19,7 @@
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/types.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

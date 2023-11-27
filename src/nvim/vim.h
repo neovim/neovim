@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nvim/pos.h"
+#include "nvim/pos_defs.h"
 #include "nvim/types.h"
 
 // Some defines from the old feature.h
