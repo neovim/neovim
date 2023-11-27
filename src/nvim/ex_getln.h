@@ -7,7 +7,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/option_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 struct cmdline_info;
 

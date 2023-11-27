@@ -25,7 +25,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/macros.h"
 #include "nvim/message.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 #include "nvim/vim.h"
 
 /// Determine, which keys lua table contains

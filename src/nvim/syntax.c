@@ -43,7 +43,7 @@
 #include "nvim/runtime.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 #include "nvim/vim.h"
 
 static bool did_syntax_onoff = false;

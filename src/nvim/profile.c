@@ -29,7 +29,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/profile.h"
 #include "nvim/runtime.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "profile.c.generated.h"

@@ -12,7 +12,7 @@
 #include "nvim/mapping_defs.h"  // IWYU pragma: export
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/regexp_defs.h"  // IWYU pragma: keep
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 /// Used for the first argument of do_map()
 enum {

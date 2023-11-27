@@ -17,7 +17,7 @@
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/terminal.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 #define CHAN_STDIO 1
 #define CHAN_STDERR 2

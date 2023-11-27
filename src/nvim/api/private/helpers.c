@@ -32,7 +32,7 @@
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/pos_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
 

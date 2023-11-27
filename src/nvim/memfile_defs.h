@@ -6,7 +6,7 @@
 
 #include "nvim/map.h"
 #include "nvim/pos_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 /// A block number.
 ///

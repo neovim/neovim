@@ -7,7 +7,7 @@
 #include "nvim/hashtab.h"
 #include "nvim/lib/queue.h"
 #include "nvim/pos_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 /// Type used for Vimscript VAR_NUMBER values
 typedef int64_t varnumber_T;

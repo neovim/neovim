@@ -122,7 +122,7 @@
 #include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 #include "nvim/undo.h"
 #include "nvim/undo_defs.h"
 #include "nvim/vim.h"

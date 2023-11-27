@@ -6,7 +6,7 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/garray_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 typedef struct ucmd {
   char *uc_name;                // The command name

@@ -33,7 +33,7 @@
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/os/input.h"
 #include "nvim/rbuffer.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
 

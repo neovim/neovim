@@ -6,7 +6,7 @@
 #include "nvim/garray_defs.h"  // IWYU pragma: keep
 #include "nvim/macros.h"
 #include "nvim/option_defs.h"  // IWYU pragma: keep
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 // Values for file_name_in_line()
 #define FNAME_MESS      1       // give error message

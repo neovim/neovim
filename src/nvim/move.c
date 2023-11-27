@@ -43,7 +43,7 @@
 #include "nvim/search.h"
 #include "nvim/sign_defs.h"
 #include "nvim/strings.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 #include "nvim/winfloat.h"

@@ -6,7 +6,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/regexp_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 /// Option value type
 typedef enum {

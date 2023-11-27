@@ -13,7 +13,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/memory.h"
 #include "nvim/msgpack_rpc/helpers.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "msgpack_rpc/helpers.c.generated.h"

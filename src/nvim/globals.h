@@ -16,7 +16,7 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/syntax_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 #define IOSIZE         (1024 + 1)          // file I/O and sprintf buffer size
 

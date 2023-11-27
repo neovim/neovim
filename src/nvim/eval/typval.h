@@ -15,7 +15,7 @@
 #include "nvim/macros.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/message.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 // In a hashtab item "hi_key" points to "di_key" in a dictitem.
 // This avoids adding a pointer to the hashtab item.

@@ -4,7 +4,7 @@
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/pos_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 // flags for skip_vimgrep_pat()
 #define VGR_GLOBAL      1

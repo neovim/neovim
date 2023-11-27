@@ -2,7 +2,7 @@
 
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/ex_cmds_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/lang.h.generated.h"

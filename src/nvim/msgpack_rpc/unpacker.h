@@ -12,7 +12,7 @@
 #include "nvim/grid_defs.h"
 #include "nvim/memory_defs.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 #include "nvim/ui_client.h"
 
 struct Unpacker {

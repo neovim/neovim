@@ -3,7 +3,7 @@
 #include <inttypes.h>
 
 #include "nvim/macros.h"
-#include "nvim/types.h"
+#include "nvim/types_defs.h"
 
 typedef int32_t RgbValue;
 
