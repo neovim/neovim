@@ -34,6 +34,8 @@ static const uint8_t cmdidxs2[%u][%u] = {
 ]], a_to_z, a_to_z)
 
 enumfile:write([[
+// IWYU pragma: private, include "nvim/ex_cmds_defs.h"
+
 typedef enum CMD_index {
 ]])
 defsfile:write(string.format([[

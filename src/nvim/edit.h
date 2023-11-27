@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/vim.h"
 
 // Values for in_cinkeys()

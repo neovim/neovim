@@ -8,7 +8,10 @@ local aliases = auevents.aliases
 local enum_tgt = io.open(fileio_enum_file, 'w')
 local names_tgt = io.open(names_file, 'w')
 
-enum_tgt:write('typedef enum auto_event {')
+enum_tgt:write([[
+// IWYU pragma: private, include "nvim/autocmd_defs.h"
+
+typedef enum auto_event {]])
 names_tgt:write([[
 static const struct event_name {
   size_t len;

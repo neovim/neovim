@@ -171,8 +171,6 @@
 
   # Generated to normal headers with a different name: header.h.generated.h -> nvim/some_other_header.h
   { include: [ '"api/private/dispatch_wrappers.h.generated.h"', private, '"nvim/api/private/dispatch.h"', public ] },
-  { include: [ '"auevents_enum.generated.h"', private, '"nvim/autocmd.h"', public ] },
-  { include: [ '"ex_cmds_enum.generated.h"', private, '"nvim/ex_cmds_defs.h"', public ] },
   { include: [ '"keysets.h.generated.h"', private, '"nvim/api/private/helpers.h"', public ] },
   { include: [ '"keysets_defs.generated.h"', private, '"nvim/api/private/defs.h"', public ] },
   { include: [ '"os/env.h.generated.h"', private, '"nvim/os/os.h"', public ] },
