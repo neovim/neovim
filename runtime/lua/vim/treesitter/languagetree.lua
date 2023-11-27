@@ -508,7 +508,6 @@ function LanguageTree:add_child(lang)
   end
 
   self._children[lang] = child
-  self:invalidate()
   self:_do_callback('child_added', self._children[lang])
 
   return self._children[lang]
@@ -524,7 +523,6 @@ function LanguageTree:remove_child(lang)
   if child then
     self._children[lang] = nil
     child:destroy()
-    self:invalidate()
     self:_do_callback('child_removed', child)
   end
 end
