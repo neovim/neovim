@@ -160,6 +160,7 @@ iwyu: build/.ran-cmake
 	|src/nvim/ascii.h\
 	|src/nvim/assert.h\
 	|src/nvim/autocmd.h\
+	|src/nvim/autocmd_defs.h\
 	|src/nvim/base64.h\
 	|src/nvim/buffer.h\
 	|src/nvim/buffer_defs.h\
