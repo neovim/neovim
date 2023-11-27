@@ -1,11 +1,12 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stddef.h>
 
-#include "nvim/buffer_defs.h"
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
+#include "nvim/garray_defs.h"  // IWYU pragma: keep
 #include "nvim/macros.h"
-#include "nvim/option_defs.h"
+#include "nvim/option_defs.h"  // IWYU pragma: keep
+#include "nvim/types.h"
 
 // Values for file_name_in_line()
 #define FNAME_MESS      1       // give error message

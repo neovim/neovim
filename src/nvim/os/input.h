@@ -1,9 +1,9 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stdint.h>
+#include <stdint.h>  // IWYU pragma: keep
 
-#include "nvim/api/private/defs.h"
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/event/multiqueue.h"
 #include "nvim/macros.h"
 

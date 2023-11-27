@@ -2,12 +2,12 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <lauxlib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "auto/config.h"
-#include "lauxlib.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"

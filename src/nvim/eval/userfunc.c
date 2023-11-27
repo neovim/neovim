@@ -3,11 +3,11 @@
 #include <assert.h>
 #include <ctype.h>
 #include <inttypes.h>
+#include <lauxlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "lauxlib.h"
 #include "nvim/ascii.h"
 #include "nvim/autocmd.h"
 #include "nvim/charset.h"

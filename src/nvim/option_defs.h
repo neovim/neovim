@@ -114,3 +114,10 @@ typedef struct {
 /// Note: If returned FAIL or *numMatches is 0, *matches will NOT be freed by
 /// caller.
 typedef int (*opt_expand_cb_T)(optexpand_T *args, int *numMatches, char ***matches);
+
+/// Requested option scopes for various functions in option.c
+typedef enum {
+  kOptReqGlobal = 0,  ///< Request global option value
+  kOptReqWin    = 1,  ///< Request window-local option value
+  kOptReqBuf    = 2,  ///< Request buffer-local option value
+} OptReqScope;

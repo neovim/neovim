@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include "nvim/macros.h"
+#include "nvim/memory_defs.h"  // IWYU pragma: export
 
 /// `malloc()` function signature
 typedef void *(*MemMalloc)(size_t);
@@ -39,20 +40,6 @@ extern bool entered_free_all_mem;
 #endif
 
 EXTERN size_t arena_alloc_count INIT( = 0);
-
-typedef struct consumed_blk {
-  struct consumed_blk *prev;
-} *ArenaMem;
-
-#define ARENA_ALIGN MAX(sizeof(void *), sizeof(double))
-
-typedef struct {
-  char *cur_blk;
-  size_t pos, size;
-} Arena;
-
-// inits an empty arena.
-#define ARENA_EMPTY { .cur_blk = NULL, .pos = 0, .size = 0 }
 
 #define kv_fixsize_arena(a, v, s) \
   ((v).capacity = (s), \

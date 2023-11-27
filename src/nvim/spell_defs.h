@@ -5,8 +5,8 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/garray_defs.h"
+#include "nvim/hashtab.h"
 #include "nvim/regexp_defs.h"
-#include "nvim/types.h"
 
 #define MAXWLEN 254             // Assume max. word len is this many bytes.
                                 // Some places assume a word length fits in a
@@ -221,18 +221,6 @@ typedef struct {
 
 #define SPELL_ISUPPER(c) ((c) >= 128 ? mb_isupper(c) : spelltab.st_isu[c])
 
-// First language that is loaded, start of the linked list of loaded
-// languages.
-extern slang_T *first_lang;
-
-// file used for "zG" and "zW"
-extern char *int_wordlist;
-
-extern spelltab_T spelltab;
-extern int did_set_spelltab;
-
-extern char *e_format;
-
 // Values for "what" argument of spell_add_word()
 typedef enum {
   SPELL_ADD_GOOD = 0,
@@ -248,7 +236,3 @@ typedef struct wordcount_S {
 #define WC_KEY_OFF   offsetof(wordcount_T, wc_word)
 #define HI2WC(hi)    ((wordcount_T *)((hi)->hi_key - WC_KEY_OFF))
 #define MAXWORDCOUNT 0xffff
-
-// Remember what "z?" replaced.
-extern char *repl_from;
-extern char *repl_to;

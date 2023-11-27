@@ -1,14 +1,13 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stddef.h>  // IWYU pragma: keep
 #include <string.h>
 
-#include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/grid_defs.h"  // IWYU pragma: export
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
-#include "nvim/memory.h"
 #include "nvim/pos.h"
 
 /// By default, all windows are drawn on a single rectangular grid, represented by

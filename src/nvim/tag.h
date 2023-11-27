@@ -1,39 +1,42 @@
 #pragma once
 
-#include "nvim/ex_cmds_defs.h"
-#include "nvim/option_defs.h"
-#include "nvim/types.h"
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
+#include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
+#include "nvim/option_defs.h"  // IWYU pragma: keep
 
-// Values for do_tag().
-#define DT_TAG          1       // jump to newer position or same tag again
-#define DT_POP          2       // jump to older position
-#define DT_NEXT         3       // jump to next match of same tag
-#define DT_PREV         4       // jump to previous match of same tag
-#define DT_FIRST        5       // jump to first match of same tag
-#define DT_LAST         6       // jump to first match of same tag
-#define DT_SELECT       7       // jump to selection from list
-#define DT_HELP         8       // like DT_TAG, but no wildcards
-#define DT_JUMP         9       // jump to new tag or selection from list
-#define DT_LTAG         11      // tag using location list
-#define DT_FREE         99      // free cached matches
+/// Values for do_tag().
+enum {
+  DT_TAG    = 1,   ///< jump to newer position or same tag again
+  DT_POP    = 2,   ///< jump to older position
+  DT_NEXT   = 3,   ///< jump to next match of same tag
+  DT_PREV   = 4,   ///< jump to previous match of same tag
+  DT_FIRST  = 5,   ///< jump to first match of same tag
+  DT_LAST   = 6,   ///< jump to first match of same tag
+  DT_SELECT = 7,   ///< jump to selection from list
+  DT_HELP   = 8,   ///< like DT_TAG, but no wildcards
+  DT_JUMP   = 9,   ///< jump to new tag or selection from list
+  DT_LTAG   = 11,  ///< tag using location list
+  DT_FREE   = 99,  ///< free cached matches
+};
 
-// flags for find_tags().
-#define TAG_HELP        1       // only search for help tags
-#define TAG_NAMES       2       // only return name of tag
-#define TAG_REGEXP      4       // use tag pattern as regexp
-#define TAG_NOIC        8       // don't always ignore case
-#define TAG_VERBOSE     32      // message verbosity
-#define TAG_INS_COMP    64      // Currently doing insert completion
-#define TAG_KEEP_LANG   128     // keep current language
-#define TAG_NO_TAGFUNC  256     // do not use 'tagfunc'
+/// flags for find_tags().
+enum {
+  TAG_HELP       = 1,    ///< only search for help tags
+  TAG_NAMES      = 2,    ///< only return name of tag
+  TAG_REGEXP     = 4,    ///< use tag pattern as regexp
+  TAG_NOIC       = 8,    ///< don't always ignore case
+  TAG_VERBOSE    = 32,   ///< message verbosity
+  TAG_INS_COMP   = 64,   ///< Currently doing insert completion
+  TAG_KEEP_LANG  = 128,  ///< keep current language
+  TAG_NO_TAGFUNC = 256,  ///< do not use 'tagfunc'
+  TAG_MANY       = 300,  ///< When finding many tags (for completion), find up to this many tags
+};
 
-#define TAG_MANY        300     // When finding many tags (for completion),
-                                // find up to this many tags
-
-// Structure used for get_tagfname().
+/// Structure used for get_tagfname().
 typedef struct {
-  char *tn_tags;           // value of 'tags' when starting
-  char *tn_np;             // current position in tn_tags
+  char *tn_tags;           ///< value of 'tags' when starting
+  char *tn_np;             ///< current position in tn_tags
   int tn_did_filefind_init;
   int tn_hf_idx;
   void *tn_search_ctx;

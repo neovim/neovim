@@ -1,7 +1,9 @@
 #pragma once
 
+#include <stddef.h>  // IWYU pragma: keep
+
 #include "nvim/func_attr.h"
-#include "nvim/garray_defs.h"
+#include "nvim/garray_defs.h"  // IWYU pragma: keep
 #include "nvim/types.h"
 
 // Flags for expand_wildcards()

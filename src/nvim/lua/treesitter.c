@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <tree_sitter/api.h>
 #include <uv.h>
 
 #include "klib/kvec.h"
@@ -26,7 +27,6 @@
 #include "nvim/pos.h"
 #include "nvim/strings.h"
 #include "nvim/types.h"
-#include "tree_sitter/api.h"
 
 #define TS_META_PARSER "treesitter_parser"
 #define TS_META_TREE "treesitter_tree"

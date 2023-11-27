@@ -2,6 +2,7 @@
 // file, manipulations with redo buffer and stuff buffer.
 
 #include <assert.h>
+#include <lauxlib.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -10,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lauxlib.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"

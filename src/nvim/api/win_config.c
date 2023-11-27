@@ -255,8 +255,8 @@ void nvim_win_set_config(Window window, Dict(float_config) *config, Error *err)
   }
 }
 
-Dictionary config_put_bordertext(Dictionary config, FloatConfig *fconfig,
-                                 BorderTextType bordertext_type)
+static Dictionary config_put_bordertext(Dictionary config, FloatConfig *fconfig,
+                                        BorderTextType bordertext_type)
 {
   VirtText vt;
   AlignTextPos align;

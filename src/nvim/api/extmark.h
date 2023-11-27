@@ -1,8 +1,10 @@
 #pragma once
 
+#include <stdint.h>  // IWYU pragma: keep
+
 #include "nvim/api/keysets.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/decoration.h"
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
+#include "nvim/decoration_defs.h"  // IWYU pragma: keep
 #include "nvim/macros.h"
 #include "nvim/map.h"
 #include "nvim/types.h"

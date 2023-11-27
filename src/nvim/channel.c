@@ -1,11 +1,11 @@
 #include <assert.h>
 #include <inttypes.h>
+#include <lauxlib.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "klib/kvec.h"
-#include "lauxlib.h"
 #include "nvim/api/private/converter.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"

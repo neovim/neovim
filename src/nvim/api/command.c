@@ -1,10 +1,10 @@
 #include <inttypes.h>
+#include <lauxlib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "klib/kvec.h"
-#include "lauxlib.h"
 #include "nvim/api/command.h"
 #include "nvim/api/keysets.h"
 #include "nvim/api/private/defs.h"
@@ -15,7 +15,6 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/cmdexpand_defs.h"
-#include "nvim/decoration.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"

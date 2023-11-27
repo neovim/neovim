@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stddef.h>
+#include <stddef.h>  // IWYU pragma: keep
 
 #include "nvim/pos.h"
 

@@ -1,6 +1,9 @@
 #pragma once
 
-#include "nvim/vim.h"
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
+#include "nvim/pos.h"
+#include "nvim/types.h"
 
 typedef int (*IndentGetter)(void);
 

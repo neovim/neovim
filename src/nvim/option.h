@@ -2,12 +2,14 @@
 
 #include <stdint.h>
 
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/api/private/helpers.h"
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/option_defs.h"  // IWYU pragma: export
 #include "nvim/search.h"
+#include "nvim/types.h"
 
 /// The options that are local to a window or buffer have "indir" set to one of
 /// these values.  Special values:
@@ -93,13 +95,6 @@ enum {
   SOPT_WIN    = 0x10,  ///< Option has window-local value
   SOPT_BUF    = 0x20,  ///< Option has buffer-local value
 };
-
-/// Requested option scopes for various functions in option.c
-typedef enum {
-  kOptReqGlobal = 0,  ///< Request global option value
-  kOptReqWin    = 1,  ///< Request window-local option value
-  kOptReqBuf    = 2,  ///< Request buffer-local option value
-} OptReqScope;
 
 // OptVal helper macros.
 #define NIL_OPTVAL ((OptVal) { .type = kOptValTypeNil })

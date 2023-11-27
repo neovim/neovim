@@ -1,8 +1,8 @@
 #pragma once
 
-#include <stdbool.h>
+#include <stddef.h>  // IWYU pragma: keep
 #include <stdint.h>
-#include <time.h>
+#include <time.h>  // IWYU pragma: keep
 
 typedef uint64_t Timestamp;
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "nvim/api/private/defs.h"
-#include "nvim/types.h"
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
+#include "nvim/memory_defs.h"  // IWYU pragma: keep
 
 /// struct to store values from 'guicursor' and 'mouseshape'
 /// Indexes in shape_table[]
