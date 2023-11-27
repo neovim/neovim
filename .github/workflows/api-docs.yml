@@ -27,11 +27,8 @@ jobs:
       - name: Generate docs
         run: |
           make doc
-          printf 'UPDATED_DOCS=%s\n' $([ -z "$(git diff)" ]; echo $?) >> $GITHUB_OUTPUT
-
-      - name: FAIL, PR has not committed doc changes
-        if: ${{ steps.docs.outputs.UPDATED_DOCS != 0 }}
-        run: |
-          echo "Job failed, run 'make doc' and commit your doc changes."
-          echo "The doc generation produces the following changes:"
-          git diff --color --exit-code
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Job failed, run 'make doc' and commit your doc changes."
+            echo "::error::The doc generation produces the following changes:"
+            git diff --color --exit-code
+          fi
