@@ -42,6 +42,7 @@
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/grid_defs.h"
+#include "nvim/hashtab.h"
 #include "nvim/highlight_group.h"
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"

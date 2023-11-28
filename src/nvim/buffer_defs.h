@@ -21,7 +21,7 @@ typedef struct {
 #include "nvim/extmark_defs.h"
 #include "nvim/garray_defs.h"
 #include "nvim/grid_defs.h"
-#include "nvim/hashtab.h"
+#include "nvim/hashtab_defs.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/map.h"
 #include "nvim/mapping_defs.h"
