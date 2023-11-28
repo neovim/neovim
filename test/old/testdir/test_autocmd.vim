@@ -3656,8 +3656,6 @@ func Test_mode_changes()
   call assert_equal(len(g:mode_seq) - 1, g:index)
   call assert_equal(2, g:n_to_c)
   call assert_equal(2, g:c_to_n)
-  unlet g:n_to_c
-  unlet g:c_to_n
 
   let g:n_to_v = 0
   au ModeChanged n:v let g:n_to_v += 1
@@ -3668,8 +3666,10 @@ func Test_mode_changes()
   call assert_equal(len(g:mode_seq) - 1, g:index)
   call assert_equal(1, g:n_to_v)
   call assert_equal(1, g:v_to_n)
-  unlet g:n_to_v
-  unlet g:v_to_n
+
+  let g:mode_seq += ['c', 'cr', 'c', 'cr', 'n']
+  call feedkeys(":\<Insert>\<Insert>\<Insert>\<CR>", 'tnix')
+  call assert_equal(len(g:mode_seq) - 1, g:index)
 
   au! ModeChanged
   delfunc TestMode
@@ -3684,6 +3684,10 @@ func Test_mode_changes()
   unlet! g:i_to_n
   unlet! g:nori_to_any
   unlet! g:i_to_any
+  unlet! g:n_to_c
+  unlet! g:c_to_n
+  unlet! g:n_to_v
+  unlet! g:v_to_n
 endfunc
 
 func Test_recursive_ModeChanged()
