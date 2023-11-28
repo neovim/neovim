@@ -34,10 +34,6 @@ function M.query(caps, cb)
         local seq =
           vim.text.hexdecode(v):gsub('\\E', '\027'):gsub('%%p%d', ''):gsub('\\(%d+)', string.char)
 
-        -- TODO: When libtermkey is patched to accept BEL as an OSC terminator, this workaround can
-        -- be removed
-        seq = seq:gsub('\007$', '\027\\')
-
         cb(cap, seq)
 
         count = count - 1
@@ -54,6 +50,12 @@ function M.query(caps, cb)
   end
 
   local query = string.format('\027P+q%s\027\\', table.concat(encoded, ';'))
+
+  -- If running in tmux, wrap with the passthrough sequence
+  if os.getenv('TMUX') then
+    query = string.format('\027Ptmux;\027%s\027\\', query)
+  end
+
   io.stdout:write(query)
 end
 
