@@ -172,7 +172,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/eval/typval_defs.h\
 	|src/nvim/eval/typval_encode.h\
 	|src/nvim/eval/userfunc.h\
-	|src/nvim/eval/vars.h\
 	|src/nvim/eval/window.h\
 	|src/nvim/event/libuv_process.h\
 	|src/nvim/event/loop.h\
@@ -236,7 +235,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/popupmenu.h\
 	|src/nvim/search.h\
 	|src/nvim/spell.h\
-	|src/nvim/spell_defs.h\
 	|src/nvim/statusline.h\
 	|src/nvim/statusline_defs.h\
 	|src/nvim/strings.h\
