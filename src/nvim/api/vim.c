@@ -1999,9 +1999,12 @@ void nvim__screenshot(String path)
   ui_call_screenshot(path);
 }
 
+/// For testing. The condition in schar_cache_clear_if_full is hard to
+/// reach, so this function can be used to force a cache clear in a test.
 void nvim__invalidate_glyph_cache(void)
 {
-  schar_cache_clear_force();
+  schar_cache_clear();
+  must_redraw = UPD_CLEAR;
 }
 
 Object nvim__unpack(String str, Error *err)

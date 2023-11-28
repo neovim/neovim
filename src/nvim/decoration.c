@@ -13,6 +13,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/extmark.h"
 #include "nvim/fold.h"
+#include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/mbyte.h"
@@ -115,7 +116,7 @@ void decor_redraw(buf_T *buf, int row1, int row2, DecorInline decor)
       idx = sh->next;
     }
   } else {
-    decor_redraw_sh(buf, row1, row2, decor_sh_from_inline(decor.data.hl, (String)STRING_INIT));
+    decor_redraw_sh(buf, row1, row2, decor_sh_from_inline(decor.data.hl));
   }
 }
 
@@ -153,14 +154,14 @@ DecorVirtText *decor_put_vt(DecorVirtText vt, DecorVirtText *next)
   return decor_alloc;
 }
 
-DecorSignHighlight decor_sh_from_inline(DecorHighlightInline item, String conceal_large)
+DecorSignHighlight decor_sh_from_inline(DecorHighlightInline item)
 {
   // TODO(bfredl): Eventually simple signs will be inlinable as well
   assert(!(item.flags & kSHIsSign));
   DecorSignHighlight conv = {
     .flags = item.flags,
     .priority = item.priority,
-    .text.data = { 0 },
+    .text.sc[0] = item.conceal_char,
     .hl_id = item.hl_id,
     .number_hl_id = 0,
     .line_hl_id = 0,
@@ -168,19 +169,6 @@ DecorSignHighlight decor_sh_from_inline(DecorHighlightInline item, String concea
     .next = DECOR_ID_INVALID,
   };
 
-  // TODO(bfredl): 'tis a little bullshit. Won't need it once conceals and signs to use schar_T
-  if (conceal_large.size) {
-    String c = conceal_large;
-    if (c.size <= 8) {
-      memcpy(conv.text.data, c.data, c.size + (c.size < 8 ? 1 : 0));
-    } else {
-      conv.flags |= kSHConcealAlloc;
-      conv.text.ptr = xstrdup(conceal_large.data);
-    }
-  } else {
-    memcpy(conv.text.data, item.conceal_char, 4);
-    conv.text.data[4] = NUL;
-  }
   return conv;
 }
 
@@ -326,12 +314,13 @@ void decor_free_inner(DecorVirtText *vt, uint32_t first_idx)
   uint32_t idx = first_idx;
   while (idx != DECOR_ID_INVALID) {
     DecorSignHighlight *sh = &kv_A(decor_items, idx);
-    if (sh->flags & (kSHIsSign | kSHConcealAlloc)) {
+    if (sh->flags & kSHIsSign) {
       xfree(sh->text.ptr);
     }
     if (sh->flags & kSHIsSign) {
       xfree(sh->sign_name);
     }
+    sh->flags = 0;
     if (sh->next == DECOR_ID_INVALID) {
       sh->next = decor_freelist;
       decor_freelist = first_idx;
@@ -370,6 +359,16 @@ void clear_virtlines(VirtLines *lines)
   }
   kv_destroy(*lines);
   *lines = (VirtLines)KV_INITIAL_VALUE;
+}
+
+void decor_check_invalid_glyphs(void)
+{
+  for (size_t i = 0; i < kv_size(decor_items); i++) {
+    DecorSignHighlight *it = &kv_A(decor_items, i);
+    if ((it->flags & kSHConceal) && schar_high(it->text.sc[0])) {
+      it->text.sc[0] = schar_from_char(schar_get_first_codepoint(it->text.sc[0]));
+    }
+  }
 }
 
 /// Get the next chunk of a virtual text item.
@@ -503,7 +502,7 @@ static void decor_range_add_from_inline(DecorState *state, int start_row, int st
       idx = sh->next;
     }
   } else {
-    DecorSignHighlight sh = decor_sh_from_inline(decor.data.hl, (String)STRING_INIT);
+    DecorSignHighlight sh = decor_sh_from_inline(decor.data.hl);
     decor_range_add_sh(state, start_row, start_col, end_row, end_col, &sh, owned, ns, mark_id);
   }
 }
@@ -628,7 +627,7 @@ next_mark:
   int attr = 0;
   size_t j = 0;
   int conceal = 0;
-  int conceal_char = 0;
+  schar_T conceal_char = 0;
   int conceal_attr = 0;
   TriState spell = kNone;
 
@@ -661,10 +660,7 @@ next_mark:
       if (item.start_row == state->row && item.start_col == col) {
         DecorSignHighlight *sh = &item.data.sh;
         conceal = 2;
-        char *text = (sh->flags & kSHConcealAlloc) ? sh->text.ptr : sh->text.data;
-        // TODO(bfredl): kSHConcealAlloc is obviously a waste unless we change
-        // `conceal_char` to schar_T
-        conceal_char = utf_ptr2char(text);
+        conceal_char = sh->text.sc[0];
         state->col_until = MIN(state->col_until, item.start_col);
         conceal_attr = item.attr_id;
       }
@@ -964,20 +960,16 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
       idx = sh->next;
     }
   } else {
-    sh_hl = decor_sh_from_inline(decor.data.hl, (String)STRING_INIT);
+    sh_hl = decor_sh_from_inline(decor.data.hl);
   }
 
   if (sh_hl.hl_id) {
     PUT(*dict, "hl_group", hl_group_name(sh_hl.hl_id, hl_name));
     PUT(*dict, "hl_eol", BOOLEAN_OBJ(sh_hl.flags & kSHHlEol));
     if (sh_hl.flags & kSHConceal) {
-      String name;
-      if (sh_hl.flags & kSHConcealAlloc) {
-        name = cstr_to_string(sh_hl.text.ptr);
-      } else {
-        name = cbuf_to_string(sh_hl.text.data, strnlen(sh_hl.text.data, 8));
-      }
-      PUT(*dict, "conceal", STRING_OBJ(name));
+      char buf[MAX_SCHAR_SIZE];
+      schar_get(buf, sh_hl.text.sc[0]);
+      PUT(*dict, "conceal", CSTR_TO_OBJ(buf));
     }
 
     if (sh_hl.flags & kSHSpellOn) {

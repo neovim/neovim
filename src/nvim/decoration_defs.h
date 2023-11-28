@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "klib/kvec.h"
+#include "nvim/types_defs.h"
 
 #define DECOR_ID_INVALID UINT32_MAX
 
@@ -42,29 +43,24 @@ enum {
   kSHSpellOn = 16,
   kSHSpellOff = 32,
   kSHConceal = 64,
-  kSHConcealAlloc = 128,
 };
 
 typedef struct {
   uint16_t flags;
   DecorPriority priority;
   int hl_id;
-  char conceal_char[4];
+  schar_T conceal_char;
 } DecorHighlightInline;
 
-#define DECOR_HIGHLIGHT_INLINE_INIT { 0, DECOR_PRIORITY_BASE, 0, { 0 } }
+#define DECOR_HIGHLIGHT_INLINE_INIT { 0, DECOR_PRIORITY_BASE, 0,  0 }
 typedef struct {
   uint16_t flags;
   DecorPriority priority;
   int hl_id;  // if sign: highlight of sign text
-  // TODO(bfredl): Later this should be schar_T[2], but then it needs to handle
-  // invalidations of the cache
+  // TODO(bfredl): Later signs should use sc[2] as well.
   union {
-    // for now:
-    // 1. sign is always allocated (drawline.c expects a `char *` for a sign)
-    // 2. conceal char is allocated if larger than 8 bytes.
-    char *ptr;  // sign or conceal text
-    char data[8];
+    char *ptr;  // sign
+    schar_T sc[2];  // conceal text (only sc[0] used)
   } text;
   // NOTE: if more functionality is added to a Highlight these should be overloaded
   // or restructured

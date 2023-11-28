@@ -18,7 +18,7 @@
 #include "nvim/arabic.h"
 #include "nvim/ascii.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/drawscreen.h"
+#include "nvim/decoration.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
@@ -111,18 +111,16 @@ bool schar_cache_clear_if_full(void)
   // note: critical max is really (1<<24)-1. This gives us some marginal
   // until next time update_screen() is called
   if (glyph_cache.h.n_keys > (1<<21)) {
-    set_clear(glyph, &glyph_cache);
+    schar_cache_clear();
     return true;
   }
   return false;
 }
 
-/// For testing. The condition in schar_cache_clear_force is hard to
-/// reach, so this function can be used to force a cache clear in a test.
-void schar_cache_clear_force(void)
+void schar_cache_clear(void)
 {
+  decor_check_invalid_glyphs();
   set_clear(glyph, &glyph_cache);
-  must_redraw = UPD_CLEAR;
 }
 
 bool schar_high(schar_T sc)
@@ -157,6 +155,13 @@ static char schar_get_first_byte(schar_T sc)
 {
   assert(!(schar_high(sc) && schar_idx(sc) >= glyph_cache.h.n_keys));
   return schar_high(sc) ? glyph_cache.keys[schar_idx(sc)] : *(char *)&sc;
+}
+
+int schar_get_first_codepoint(schar_T sc)
+{
+  char sc_buf[MAX_SCHAR_SIZE];
+  schar_get(sc_buf, sc);
+  return utf_ptr2char(sc_buf);
 }
 
 /// @return ascii char or NUL if not ascii

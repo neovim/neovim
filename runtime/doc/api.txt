@@ -645,6 +645,10 @@ nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
     NB: if your UI doesn't use hlstate, this will not return hlstate first
     time.
 
+nvim__invalidate_glyph_cache()                *nvim__invalidate_glyph_cache()*
+    For testing. The condition in schar_cache_clear_if_full is hard to reach,
+    so this function can be used to force a cache clear in a test.
+
 nvim__stats()                                                  *nvim__stats()*
     Gets internal stats.
 

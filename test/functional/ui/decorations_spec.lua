@@ -13,6 +13,7 @@ local curbufmeths = helpers.curbufmeths
 local command = helpers.command
 local eq = helpers.eq
 local assert_alive = helpers.assert_alive
+local pcall_err = helpers.pcall_err
 
 describe('decorations providers', function()
   local screen
@@ -1650,6 +1651,34 @@ describe('extmark decorations', function()
     ]])
     command('set conceallevel=1')
     screen:expect_unchanged()
+
+    eq("conceal char has to be printable", pcall_err(meths.buf_set_extmark, 0, ns, 0, 0, {end_col=0, end_row=2, conceal='\255'}))
+  end)
+
+  it('conceal with composed conceal char', function()
+    screen:try_resize(50, 5)
+    insert('foo\n')
+    meths.buf_set_extmark(0, ns, 0, 0, {end_col=0, end_row=2, conceal='ẍ̲'})
+    command('set conceallevel=2')
+    screen:expect([[
+      {26:ẍ̲}                                                 |
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+    command('set conceallevel=1')
+    screen:expect_unchanged()
+
+    -- this is rare, but could happen. Save at least the first codepoint
+    meths._invalidate_glyph_cache()
+    screen:expect{grid=[[
+      {26:x}                                                 |
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]]}
   end)
 
   it('conceal without conceal char #24782', function()

@@ -67,7 +67,7 @@ typedef struct {
   int eol_col;
 
   int conceal;
-  int conceal_char;
+  schar_T conceal_char;
   int conceal_attr;
 
   TriState spell;

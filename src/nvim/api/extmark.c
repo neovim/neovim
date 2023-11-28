@@ -18,6 +18,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/extmark.h"
 #include "nvim/func_attr.h"
+#include "nvim/grid.h"
 #include "nvim/highlight_group.h"
 #include "nvim/marktree.h"
 #include "nvim/mbyte.h"
@@ -503,7 +504,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   DecorVirtText virt_text = DECOR_VIRT_TEXT_INIT;
   DecorVirtText virt_lines = DECOR_VIRT_LINES_INIT;
   bool has_hl = false;
-  String conceal_char_large = STRING_INIT;
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -593,10 +593,11 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     has_hl = true;
     String c = opts->conceal;
     if (c.size > 0) {
-      if (c.size <= 4) {
-        memcpy(hl.conceal_char, c.data, c.size + (c.size < 4 ? 1 : 0));
-      } else {
-        conceal_char_large = c;
+      int ch;
+      hl.conceal_char = utfc_ptr2schar_len(c.data, (int)c.size, &ch);
+      if (!hl.conceal_char || !vim_isprintc(ch)) {
+        api_set_error(err, kErrorTypeValidation, "conceal char has to be printable");
+        goto error;
       }
     }
   }
@@ -777,7 +778,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       decor_range_add_virt(&decor_state, r, c, line2, col2, decor_put_vt(virt_lines, NULL), true);
     }
     if (has_hl) {
-      DecorSignHighlight sh = decor_sh_from_inline(hl, conceal_char_large);
+      DecorSignHighlight sh = decor_sh_from_inline(hl);
       decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id);
     }
     if (sign.flags & kSHIsSign) {
@@ -815,9 +816,9 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     }
 
     DecorInline decor = DECOR_INLINE_INIT;
-    if (decor_alloc || decor_indexed != DECOR_ID_INVALID || conceal_char_large.size) {
+    if (decor_alloc || decor_indexed != DECOR_ID_INVALID || schar_high(hl.conceal_char)) {
       if (has_hl) {
-        DecorSignHighlight sh = decor_sh_from_inline(hl, conceal_char_large);
+        DecorSignHighlight sh = decor_sh_from_inline(hl);
         sh.next = decor_indexed;
         decor_indexed = decor_put_sh(sh);
       }

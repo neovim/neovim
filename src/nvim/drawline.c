@@ -2459,6 +2459,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0 || decor_conceal > 0)
           && !(lnum_in_visual_area && vim_strchr(wp->w_p_cocu, 'v') == NULL)) {
         wlv.char_attr = conceal_attr;
+        bool is_conceal_char = false;
         if (((prev_syntax_id != syntax_seqnr && (syntax_flags & HL_CONCEAL) != 0)
              || has_match_conc > 1 || decor_conceal > 1)
             && (syn_get_sub_char() != NUL
@@ -2471,7 +2472,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           if (has_match_conc && match_conc) {
             mb_c = match_conc;
           } else if (decor_conceal && decor_state.conceal_char) {
-            mb_c = decor_state.conceal_char;
+            mb_schar = decor_state.conceal_char;
+            mb_c = schar_get_first_codepoint(mb_schar);
+            is_conceal_char = true;
             if (decor_state.conceal_attr) {
               wlv.char_attr = decor_state.conceal_attr;
             }
@@ -2499,7 +2502,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           is_concealing = true;
           wlv.skip_cells = 1;
         }
-        mb_schar = schar_from_char(mb_c);
+        if (!is_conceal_char) {
+          mb_schar = schar_from_char(mb_c);
+        }
       } else {
         prev_syntax_id = 0;
         is_concealing = false;

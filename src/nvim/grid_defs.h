@@ -11,14 +11,6 @@
 // ensures we can fit all composed chars which did fit before.
 #define MAX_SCHAR_SIZE 32
 
-// if data[0] is 0xFF, then data[1..4] is a 24-bit index (in machine endianness)
-// otherwise it must be a UTF-8 string of length maximum 4 (no NUL when n=4)
-
-typedef uint32_t schar_T;
-typedef int32_t sattr_T;
-// must be at least as big as the biggest of schar_T, sattr_T, col_T
-typedef int32_t sscratch_T;
-
 enum {
   kZIndexDefaultGrid = 0,
   kZIndexFloatDefault = 50,
