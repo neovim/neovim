@@ -791,22 +791,15 @@ DecorSignHighlight *decor_find_sign(DecorInline decor)
   }
 }
 
-// Get the maximum required amount of sign columns needed between row and
-// end_row.
-int decor_signcols(buf_T *buf, int row, int end_row, int max)
+// Increase the signcolumn size and update the sentinel line if necessary for
+// the invalidated range.
+void decor_validate_signcols(buf_T *buf, int max)
 {
-  if (max <= 1 && buf->b_signs_with_text >= (size_t)max) {
-    return max;
-  }
-
-  if (buf->b_signs_with_text == 0) {
-    return 0;
-  }
-
   int signcols = 0;  // highest value of count
+  int currow = buf->b_signcols.invalid_top - 1;
   // TODO(bfredl): only need to use marktree_itr_get_overlap once.
   // then we can process both start and end events and update state for each row
-  for (int currow = row; currow <= end_row; currow++) {
+  for (; currow < buf->b_signcols.invalid_bot; currow++) {
     MarkTreeIter itr[1];
     if (!marktree_itr_get_overlap(buf->b_marktree, currow, 0, itr)) {
       continue;
@@ -835,17 +828,16 @@ int decor_signcols(buf_T *buf, int row, int end_row, int max)
     }
 
     if (count > signcols) {
-      if (count > buf->b_signcols.size) {
+      if (count >= buf->b_signcols.size) {
+        buf->b_signcols.size = count;
         buf->b_signcols.sentinel = currow + 1;
       }
       if (count >= max) {
-        return max;
+        return;
       }
       signcols = count;
     }
   }
-
-  return signcols;
 }
 
 void decor_redraw_end(DecorState *state)

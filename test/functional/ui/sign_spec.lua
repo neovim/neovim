@@ -467,6 +467,27 @@ describe('Signs', function()
         {0:~                                                    }|
                                                              |
       ]])
+      -- should not increase size because sign with existing id is moved
+      command('sign place 4 line=1 name=pietSearch buffer=1')
+      screen:expect_unchanged()
+      command('sign unplace 4')
+      screen:expect([[
+        {1:>>>>>>}{6:  1 }a                                          |
+        {2:      }{6:  2 }b                                          |
+        {2:      }{6:  3 }c                                          |
+        {2:      }{6:  4 }^                                           |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+      command('sign place 4 line=1 name=pietSearch buffer=1')
       -- should keep the column at maximum size when signs are
       -- exceeding the maximum
       command('sign place 5 line=1 name=pietSearch buffer=1')

@@ -607,10 +607,12 @@ int update_screen(void)
     }
 
     // Reset 'statuscolumn' if there is no dedicated signcolumn but it is invalid.
-    if (*wp->w_p_stc != NUL && !wp->w_buffer->b_signcols.valid && wp->w_minscwidth <= SCL_NO) {
+    if (*wp->w_p_stc != NUL && wp->w_minscwidth <= SCL_NO
+        && (wp->w_buffer->b_signcols.invalid_bot || !wp->w_buffer->b_signcols.sentinel)) {
       wp->w_nrwidth_line_count = 0;
       wp->w_valid &= ~VALID_WCOL;
       wp->w_redr_type = UPD_NOT_VALID;
+      wp->w_buffer->b_signcols.invalid_bot = 0;
     }
   }
 
@@ -619,11 +621,6 @@ int update_screen(void)
   screen_search_hl.rm.regprog = NULL;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    // Validate b_signcols if there is no dedicated signcolumn but 'statuscolumn' is set.
-    if (*wp->w_p_stc != NUL && wp->w_minscwidth <= SCL_NO) {
-      buf_signcols(wp->w_buffer, 0);
-    }
-
     if (wp->w_redr_type == UPD_CLEAR && wp->w_floating && wp->w_grid_alloc.chars) {
       grid_invalidate(&wp->w_grid_alloc);
       wp->w_redr_type = UPD_NOT_VALID;
@@ -1214,6 +1211,7 @@ static void redraw_win_signcol(win_T *wp)
   wp->w_scwidth = win_signcol_count(wp);
   if (wp->w_scwidth != scwidth) {
     changed_line_abv_curs_win(wp);
+    redraw_later(wp, UPD_NOT_VALID);
   }
 }
 
