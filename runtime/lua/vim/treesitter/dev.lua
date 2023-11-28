@@ -77,8 +77,9 @@ local function traverse(node, depth, lang, injections, tree)
 
     traverse(child, depth + 1, lang, injections, tree)
 
-    -- Add closing parens to final child
-    tree[#tree].text = string.format('%s)', tree[#tree].text)
+    if named then
+      tree[#tree].text = string.format('%s)', tree[#tree].text)
+    end
   end
 
   return tree
