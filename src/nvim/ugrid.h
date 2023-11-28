@@ -1,25 +1,17 @@
 #pragma once
 
-#include "nvim/globals.h"
 #include "nvim/grid_defs.h"
-#include "nvim/ui.h"
 
-struct ucell;
-struct ugrid;
-
-typedef struct ucell UCell;
-typedef struct ugrid UGrid;
-
-struct ucell {
+typedef struct ucell {
   schar_T data;
   sattr_T attr;
-};
+} UCell;
 
-struct ugrid {
+typedef struct ugrid {
   int row, col;
   int width, height;
   UCell **cells;
-};
+} UGrid;
 
 #define UGRID_FOREACH_CELL(grid, row, startcol, endcol, code) \
   do { \
