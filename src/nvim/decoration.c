@@ -725,10 +725,8 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
   while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
     if (!mt_invalid(pair.start) && mt_decor_sign(pair.start)) {
       DecorSignHighlight *sh = decor_find_sign(mt_decor(pair.start));
-      if (sh) {
-        num_text += (sh->text.ptr != NULL);
-        kv_push(signs, ((SignItem){ sh, pair.start.id }));
-      }
+      num_text += (sh->text.ptr != NULL);
+      kv_push(signs, ((SignItem){ sh, pair.start.id }));
     }
   }
 
@@ -739,10 +737,8 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
     }
     if (!mt_end(mark) && !mt_invalid(mark) && mt_decor_sign(mark)) {
       DecorSignHighlight *sh = decor_find_sign(mt_decor(mark));
-      if (sh) {
-        num_text += (sh->text.ptr != NULL);
-        kv_push(signs, ((SignItem){ sh, mark.id }));
-      }
+      num_text += (sh->text.ptr != NULL);
+      kv_push(signs, ((SignItem){ sh, mark.id }));
     }
 
     marktree_itr_next(buf->b_marktree, itr);
@@ -826,10 +822,7 @@ int decor_signcols(buf_T *buf, int row, int end_row, int max)
         break;
       }
       if (!mt_invalid(mark) && !mt_end(mark) && (mark.flags & MT_FLAG_DECOR_SIGNTEXT)) {
-        DecorSignHighlight *sh = decor_find_sign(mt_decor(mark));
-        if (sh && sh->text.ptr) {
-          count++;
-        }
+        count++;
       }
       marktree_itr_next(buf->b_marktree, itr);
     }
