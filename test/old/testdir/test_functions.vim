@@ -637,7 +637,7 @@ func Test_mode()
   " Only complete from the current buffer.
   set complete=.
 
-  inoremap <F2> <C-R>=Save_mode()<CR>
+  noremap! <F2> <C-R>=Save_mode()<CR>
   xnoremap <F2> <Cmd>call Save_mode()<CR>
 
   normal! 3G
@@ -796,17 +796,24 @@ func Test_mode()
   exe "normal g\<C-H>\<C-O>\<F2>\<Esc>"
   call assert_equal("\<C-V>-\<C-V>s", g:current_modes)
 
-  call feedkeys(":echo \<C-R>=Save_mode()\<C-U>\<CR>", 'xt')
+  call feedkeys(":\<F2>\<CR>", 'xt')
   call assert_equal('c-c', g:current_modes)
-  call feedkeys(":\<insert>\<C-r>=Save_mode()\<CR>",'xt')
+  call feedkeys(":\<Insert>\<F2>\<CR>", 'xt')
   call assert_equal("c-cr", g:current_modes)
-  call feedkeys("gQecho \<C-R>=Save_mode()\<CR>\<CR>vi\<CR>", 'xt')
+  call feedkeys("gQ\<F2>vi\<CR>", 'xt')
   call assert_equal('c-cv', g:current_modes)
-  call feedkeys("gQ\<insert>\<C-r>=Save_mode()\<CR>",'xt')
+  call feedkeys("gQ\<Insert>\<F2>vi\<CR>", 'xt')
   call assert_equal("c-cvr", g:current_modes)
+
+  " Executing commands in Vim Ex mode should return "cv", never "cvr",
+  " as Cmdline editing has already ended.
+  call feedkeys("gQcall Save_mode()\<CR>vi\<CR>", 'xt')
+  call assert_equal('c-cv', g:current_modes)
+  call feedkeys("gQ\<Insert>call Save_mode()\<CR>vi\<CR>", 'xt')
+  call assert_equal('c-cv', g:current_modes)
+
   " call feedkeys("Qcall Save_mode()\<CR>vi\<CR>", 'xt')
   " call assert_equal('c-ce', g:current_modes)
-  " How to test Ex mode?
 
   " Test mode in operatorfunc (it used to be Operator-pending).
   set operatorfunc=OperatorFunc
@@ -821,14 +828,15 @@ func Test_mode()
   call assert_equal('n-niR', g:current_modes)
   execute "normal! gR\<C-o>g@l\<Esc>"
   call assert_equal('n-niV', g:current_modes)
-  " Test statusline updates for overstike mode
+
+  " Test statusline updates for overstrike mode
   if CanRunVimInTerminal()
     let buf = RunVimInTerminal('', {'rows': 12})
     call term_sendkeys(buf, ":set laststatus=2 statusline=%!mode(1)\<CR>")
     call term_sendkeys(buf, ":")
     call TermWait(buf)
     call VerifyScreenDump(buf, 'Test_mode_1', {})
-    call term_sendkeys(buf, "\<insert>")
+    call term_sendkeys(buf, "\<Insert>")
     call TermWait(buf)
     call VerifyScreenDump(buf, 'Test_mode_2', {})
     call StopVimInTerminal(buf)
@@ -843,7 +851,7 @@ func Test_mode()
   endif
 
   bwipe!
-  iunmap <F2>
+  unmap! <F2>
   xunmap <F2>
   set complete&
   set operatorfunc&
