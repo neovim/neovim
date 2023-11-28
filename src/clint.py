@@ -998,7 +998,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/textobject.h",
             "src/nvim/tui/input.h",
             "src/nvim/tui/tui.h",
-            "src/nvim/ugrid.h",
             "src/nvim/ui.h",
             "src/nvim/ui_client.h",
             "src/nvim/ui_compositor.h",
