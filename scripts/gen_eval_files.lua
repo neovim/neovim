@@ -178,34 +178,36 @@ local function get_api_meta()
   local doc_metadata = vim.mpack.decode(doc_mpack_f:read('*all')) --[[@as table<string,vim.gen_vim_doc_fun>]]
 
   for _, fun in ipairs(metadata) do
-    local fdoc = doc_metadata[fun.name]
+    if fun.lua then
+      local fdoc = doc_metadata[fun.name]
 
-    local params = {} --- @type {[1]:string,[2]:string}[]
-    for _, p in ipairs(fun.parameters) do
-      local ptype, pname = p[1], p[2]
-      params[#params + 1] = {
-        pname,
-        api_type(ptype),
-        fdoc and fdoc.parameters_doc[pname] or nil,
-      }
-    end
-
-    local r = {
-      signature = 'NA',
-      name = fun.name,
-      params = params,
-      returns = api_type(fun.return_type),
-      deprecated = fun.deprecated_since ~= nil,
-    }
-
-    if fdoc then
-      if #fdoc.doc > 0 then
-        r.desc = table.concat(fdoc.doc, '\n')
+      local params = {} --- @type {[1]:string,[2]:string}[]
+      for _, p in ipairs(fun.parameters) do
+        local ptype, pname = p[1], p[2]
+        params[#params + 1] = {
+          pname,
+          api_type(ptype),
+          fdoc and fdoc.parameters_doc[pname] or nil,
+        }
       end
-      r.return_desc = (fdoc['return'] or {})[1]
-    end
 
-    ret[fun.name] = r
+      local r = {
+        signature = 'NA',
+        name = fun.name,
+        params = params,
+        returns = api_type(fun.return_type),
+        deprecated = fun.deprecated_since ~= nil,
+      }
+
+      if fdoc then
+        if #fdoc.doc > 0 then
+          r.desc = table.concat(fdoc.doc, '\n')
+        end
+        r.return_desc = (fdoc['return'] or {})[1]
+      end
+
+      ret[fun.name] = r
+    end
   end
   return ret
 end
