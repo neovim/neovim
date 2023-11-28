@@ -2,12 +2,10 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
@@ -16,7 +14,6 @@
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
-#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/move.h"
 #include "nvim/option_vars.h"

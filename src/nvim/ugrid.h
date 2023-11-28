@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nvim/grid_defs.h"
+#include "nvim/types_defs.h"
 
 typedef struct ucell {
   schar_T data;
