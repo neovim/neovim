@@ -706,9 +706,10 @@ struct file_buffer {
 
   struct {
     int size;                   // last calculated number of sign columns
-    bool valid;                 // calculated sign columns is valid
+    int max;                    // maximum value size is valid for.
     linenr_T sentinel;          // a line number which is holding up the signcolumn
-    int max;                    // Maximum value size is valid for.
+    linenr_T invalid_top;       // first invalid line number that needs to be checked
+    linenr_T invalid_bot;       // last invalid line number that needs to be checked
   } b_signcols;
 
   Terminal *terminal;           // Terminal instance associated with the buffer
