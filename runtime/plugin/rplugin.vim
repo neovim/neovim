@@ -14,7 +14,9 @@ function! s:GetManifestPath() abort
   let dest = stdpath('data')
   if !empty(dest)
     if !isdirectory(dest)
-      call mkdir(dest, 'p', 0700)
+      if getftype(dest) != "link"
+        call mkdir(dest, 'p', 0700)
+      endif
     endif
     let manifest_base = dest
   endif
