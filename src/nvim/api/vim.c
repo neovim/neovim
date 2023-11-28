@@ -345,7 +345,8 @@ Integer nvim_input(String keys)
 ///       mouse input in a GUI. The deprecated pseudokey form
 ///       ("<LeftMouse><col,row>") of |nvim_input()| has the same limitation.
 ///
-/// @param button Mouse button: one of "left", "right", "middle", "wheel", "move".
+/// @param button Mouse button: one of "left", "right", "middle", "wheel", "move",
+///               "x1", "x2".
 /// @param action For ordinary buttons, one of "press", "drag", "release".
 ///               For the wheel, one of "up", "down", "left", "right". Ignored for "move".
 /// @param modifier String of modifiers each represented by a single char.
@@ -376,6 +377,10 @@ void nvim_input_mouse(String button, String action, String modifier, Integer gri
     code = KE_RIGHTMOUSE;
   } else if (strequal(button.data, "wheel")) {
     code = KE_MOUSEDOWN;
+  } else if (strequal(button.data, "x1")) {
+    code = KE_X1MOUSE;
+  } else if (strequal(button.data, "x2")) {
+    code = KE_X2MOUSE;
   } else if (strequal(button.data, "move")) {
     code = KE_MOUSEMOVE;
   } else {
