@@ -1,6 +1,8 @@
 " Test for delete().
 
 source check.vim
+source term_util.vim
+source screendump.vim
 
 func Test_file_delete()
   split Xfdelfile
@@ -105,6 +107,27 @@ endfunc
 func Test_delete_errors()
   call assert_fails('call delete('''')', 'E474:')
   call assert_fails('call delete(''foo'', 0)', 'E15:')
+endfunc
+
+" This should no longer trigger ml_get errors
+func Test_delete_ml_get_errors()
+  CheckRunVimInTerminal
+  let lines =<< trim END
+    set noshowcmd noruler scrolloff=0
+    source samples/matchparen.vim
+  END
+  call writefile(lines, 'XDelete_ml_get_error', 'D')
+  let buf = RunVimInTerminal('-S XDelete_ml_get_error samples/box.txt', #{rows: 10, wait_for_ruler: 0})
+  call TermWait(buf)
+  call term_sendkeys(buf, "249GV\<C-End>d")
+  call TermWait(buf)
+  " The following used to trigger ml_get errors
+  call term_sendkeys(buf, "\<PageUp>")
+  call TermWait(buf)
+  call term_sendkeys(buf, ":mess\<cr>")
+  call VerifyScreenDump(buf, 'Test_delete_ml_get_errors_1', {})
+  call term_sendkeys(buf, ":q!\<cr>")
+  call StopVimInTerminal(buf)
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
