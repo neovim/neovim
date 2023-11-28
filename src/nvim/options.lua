@@ -6,6 +6,7 @@
 --- @field varname? string
 --- @field pv_name? string
 --- @field type 'bool'|'number'|'string'
+--- @field immutable? boolean
 --- @field list? 'comma'|'onecomma'|'commacolon'|'onecommacolon'|'flags'|'flagscomma'
 --- @field scope vim.option_scope[]
 --- @field deny_duplicates? boolean
@@ -1341,7 +1342,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'bool',
-      varname = 'p_force_off',
+      immutable = true,
     },
     {
       abbreviation = 'cpt',
@@ -2299,7 +2300,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'bool',
-      varname = 'p_force_off',
+      immutable = true,
     },
     {
       abbreviation = 'emo',
@@ -3885,7 +3886,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'bool',
-      varname = 'p_force_off',
+      immutable = true,
     },
     {
       abbreviation = 'hkp',
@@ -3894,7 +3895,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'bool',
-      varname = 'p_force_off',
+      immutable = true,
     },
     {
       abbreviation = 'hls',
@@ -4292,7 +4293,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'bool',
-      varname = 'p_force_off',
+      immutable = true,
     },
     {
       abbreviation = 'isf',
@@ -6042,7 +6043,7 @@ return {
       scope = { 'global' },
       short_desc = N_('enable prompt in Ex mode'),
       type = 'bool',
-      varname = 'p_force_on',
+      immutable = true,
     },
     {
       abbreviation = 'pb',
@@ -6299,7 +6300,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'bool',
-      varname = 'p_force_on',
+      immutable = true,
     },
     {
       defaults = { if_true = 2 },
@@ -8824,7 +8825,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'bool',
-      varname = 'p_force_off',
+      immutable = true,
     },
     {
       abbreviation = 'tw',
@@ -9069,7 +9070,7 @@ return {
       scope = { 'global' },
       short_desc = N_('No description'),
       type = 'bool',
-      varname = 'p_force_on',
+      immutable = true,
     },
     {
       abbreviation = 'udir',

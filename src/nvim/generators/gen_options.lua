@@ -143,9 +143,13 @@ local function dump_option(i, o)
   end
   if o.varname then
     w('    .var=&' .. o.varname)
+  -- Immutable options should directly point to the default value
+  elseif o.immutable then
+    w(('    .var=&options[%u].def_val'):format(i - 1))
   elseif #o.scope == 1 and o.scope[1] == 'window' then
     w('    .var=VAR_WIN')
   end
+  w('    .immutable=' .. (o.immutable and 'true' or 'false'))
   if #o.scope == 1 and o.scope[1] == 'global' then
     w('    .indir=PV_NONE')
   else

@@ -1913,26 +1913,6 @@ static void apply_optionset_autocmd(int opt_idx, int opt_flags, OptVal oldval, O
   reset_v_option_vars();
 }
 
-/// Ensure that options set to p_force_on cannot be disabled.
-static const char *did_set_force_on(optset_T *args FUNC_ATTR_UNUSED)
-{
-  if (p_force_on == false) {
-    p_force_on = true;
-    return e_unsupportedoption;
-  }
-  return NULL;
-}
-
-/// Ensure that options set to p_force_off cannot be enabled.
-static const char *did_set_force_off(optset_T *args FUNC_ATTR_UNUSED)
-{
-  if (p_force_off == true) {
-    p_force_off = false;
-    return e_unsupportedoption;
-  }
-  return NULL;
-}
-
 /// Process the updated 'arabic' option value.
 static const char *did_set_arabic(optset_T *args)
 {
@@ -3195,6 +3175,7 @@ int findoption(const char *const arg)
   return findoption_len(arg, strlen(arg));
 }
 
+/// Free an allocated OptVal.
 void optval_free(OptVal o)
 {
   switch (o.type) {
@@ -3211,6 +3192,7 @@ void optval_free(OptVal o)
   }
 }
 
+/// Copy an OptVal.
 OptVal optval_copy(OptVal o)
 {
   switch (o.type) {
@@ -3220,6 +3202,27 @@ OptVal optval_copy(OptVal o)
     return o;
   case kOptValTypeString:
     return STRING_OPTVAL(copy_string(o.data.string, NULL));
+  }
+  UNREACHABLE;
+}
+
+/// Check if two option values are equal.
+bool optval_equal(OptVal o1, OptVal o2)
+{
+  if (o1.type != o2.type) {
+    return false;
+  }
+
+  switch (o1.type) {
+  case kOptValTypeNil:
+    return true;
+  case kOptValTypeBoolean:
+    return o1.data.boolean == o2.data.boolean;
+  case kOptValTypeNumber:
+    return o1.data.number == o2.data.number;
+  case kOptValTypeString:
+    return o1.data.string.size == o2.data.string.size
+           && strequal(o1.data.string.data, o2.data.string.data);
   }
   UNREACHABLE;
 }
@@ -3480,14 +3483,16 @@ OptVal get_option_value(const char *name, uint32_t *flagsp, int scope, bool *hid
     return NIL_OPTVAL;
   }
 
-  void *varp = get_varp_scope(&(options[opt_idx]), scope);
+  vimoption_T *opt = &options[opt_idx];
+  void *varp = get_varp_scope(opt, scope);
+
   if (hidden != NULL) {
     *hidden = varp == NULL;
   }
 
   if (flagsp != NULL) {
     // Return the P_xxxx option flags.
-    *flagsp = options[opt_idx].flags;
+    *flagsp = opt->flags;
   }
 
   return optval_copy(optval_from_varp(opt_idx, varp));
@@ -3542,7 +3547,6 @@ static const char *did_set_option(int opt_idx, void *varp, OptVal old_value, Opt
   bool free_oldval = (opt->flags & P_ALLOCED);
   bool value_changed = false;
 
-  opt_did_set_cb_T did_set_cb;
   optset_T did_set_cb_args = {
     .os_varp = varp,
     .os_idx = opt_idx,
@@ -3558,24 +3562,21 @@ static const char *did_set_option(int opt_idx, void *varp, OptVal old_value, Opt
     .os_win = curwin
   };
 
-  if ((int *)varp == &p_force_on) {
-    did_set_cb = did_set_force_on;
-  } else if ((int *)varp == &p_force_off) {
-    did_set_cb = did_set_force_off;
-  } else {
-    did_set_cb = opt->opt_did_set_cb;
+  // Disallow changing immutable options.
+  if (opt->immutable && !optval_equal(old_value, new_value)) {
+    errmsg = e_unsupportedoption;
   }
-
-  // Disallow changing some options from secure mode
-  if ((secure || sandbox != 0) && (opt->flags & P_SECURE)) {
+  // Disallow changing some options from secure mode.
+  else if ((secure || sandbox != 0) && (opt->flags & P_SECURE)) {
     errmsg = e_secure;
-    // Check for a "normal" directory or file name in some string options.
-  } else if (new_value.type == kOptValTypeString
-             && check_illegal_path_names(*(char **)varp, opt->flags)) {
+  }
+  // Check for a "normal" directory or file name in some string options.
+  else if (new_value.type == kOptValTypeString
+           && check_illegal_path_names(*(char **)varp, opt->flags)) {
     errmsg = e_invarg;
-  } else if (did_set_cb != NULL) {
+  } else if (opt->opt_did_set_cb != NULL) {
     // Invoke the option specific callback function to validate and apply the new value.
-    errmsg = did_set_cb(&did_set_cb_args);
+    errmsg = opt->opt_did_set_cb(&did_set_cb_args);
     // The 'filetype' and 'syntax' option callback functions may change the os_value_changed field.
     value_changed = did_set_cb_args.os_value_changed;
     // The 'keymap', 'filetype' and 'syntax' option callback functions may change the
