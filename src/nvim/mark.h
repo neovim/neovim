@@ -3,12 +3,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/func_attr.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/mark_defs.h"  // IWYU pragma: export
 #include "nvim/memory.h"
 #include "nvim/os/time.h"

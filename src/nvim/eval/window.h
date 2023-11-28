@@ -13,7 +13,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
 #include "nvim/pos_defs.h"
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
 /// Structure used by switch_win() to pass values to restore_win()

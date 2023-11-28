@@ -28,7 +28,7 @@
 #if defined(__APPLE__) || defined(BSD)
 # include <sys/sysctl.h>
 
-# include "nvim/macros.h"
+# include "nvim/macros_defs.h"
 #endif
 
 #if defined(__linux__)

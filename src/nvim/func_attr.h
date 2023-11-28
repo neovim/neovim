@@ -41,7 +41,7 @@
 // $ gcc -E -dM - </dev/null
 // $ echo | clang -dM -E -
 
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 
 #ifdef FUNC_ATTR_MALLOC
 # undef FUNC_ATTR_MALLOC

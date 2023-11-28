@@ -1,11 +1,10 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <time.h>
+#include <stdint.h>  // IWYU pragma: keep
+#include <time.h>  // IWYU pragma: keep
 
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/memory_defs.h"  // IWYU pragma: export
 
 /// `malloc()` function signature

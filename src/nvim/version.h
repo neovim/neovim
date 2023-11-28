@@ -1,7 +1,7 @@
 #pragma once
 
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 
 // defined in version.c
 extern char *Version;

@@ -43,7 +43,7 @@ local dict_watchers = eval_helpers.dict_watchers
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
                     './src/nvim/mbyte.h', './src/nvim/garray.h',
-                    './src/nvim/eval.h', './src/nvim/vim.h',
+                    './src/nvim/eval.h', './src/nvim/vim_defs.h',
                     './src/nvim/globals.h')
 
 local function vimconv_alloc()

@@ -2,7 +2,7 @@
 
 #include "nvim/os/os.h"
 #include "nvim/os/pty_conpty_win.h"
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 
 #ifndef EXTENDED_STARTUPINFO_PRESENT
 # define EXTENDED_STARTUPINFO_PRESENT 0x00080000

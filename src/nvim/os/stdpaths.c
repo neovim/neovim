@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/globals.h"

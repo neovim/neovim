@@ -18,7 +18,7 @@
 #endif
 
 // uncrustify:off
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 // uncrustify:on
 
 #include "auto/config.h"  // IWYU pragma: keep
@@ -27,7 +27,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
 #include "nvim/arglist.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
@@ -61,7 +61,7 @@
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/secure.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"

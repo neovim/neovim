@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #include "nvim/func_attr.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/os/os_defs.h"
 
 // Definitions of various common control characters.

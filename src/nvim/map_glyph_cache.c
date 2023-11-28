@@ -13,9 +13,9 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/ascii.h"
-#include "nvim/macros.h"
-#include "nvim/map.h"
+#include "nvim/ascii_defs.h"
+#include "nvim/macros_defs.h"
+#include "nvim/map_defs.h"
 #include "nvim/memory.h"
 
 uint32_t mh_find_bucket_glyph(Set(glyph) *set, String key, bool put)

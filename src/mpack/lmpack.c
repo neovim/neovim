@@ -24,7 +24,7 @@
 #include <lua.h>
 #include <luaconf.h>
 
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 
 #include "lmpack.h"
 

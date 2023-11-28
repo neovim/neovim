@@ -4,7 +4,7 @@
 
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/highlight_defs.h"  // IWYU pragma: keep
-#include "nvim/map.h"
+#include "nvim/map_defs.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 #include "nvim/ui.h"
 

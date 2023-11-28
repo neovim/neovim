@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/types_defs.h"
 
 // option_vars.h: definition of global variables for settable options

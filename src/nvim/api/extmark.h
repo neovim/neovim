@@ -5,8 +5,8 @@
 #include "nvim/api/keysets_defs.h"  // IWYU pragma: keep
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/decoration_defs.h"  // IWYU pragma: keep
-#include "nvim/macros.h"
-#include "nvim/map.h"
+#include "nvim/macros_defs.h"
+#include "nvim/map_defs.h"
 #include "nvim/types_defs.h"
 
 EXTERN Map(String, int) namespace_ids INIT( = MAP_INIT);

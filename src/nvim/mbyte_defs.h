@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#include "nvim/iconv.h"
+#include "nvim/iconv_defs.h"
 
 /// max length of an unicode char
 enum { MB_MAXCHAR = 6, };

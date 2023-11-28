@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "klib/kvec.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
 #include "nvim/eval/decode.h"
@@ -17,12 +17,12 @@
 #include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/gettext.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 
 /// Helper structure for container_struct
 typedef struct {

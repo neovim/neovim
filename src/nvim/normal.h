@@ -2,8 +2,8 @@
 
 #include <stdbool.h>
 
-#include "nvim/buffer_defs.h"
-#include "nvim/macros.h"
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
+#include "nvim/macros_defs.h"
 #include "nvim/pos_defs.h"
 
 // Values for find_ident_under_cursor()

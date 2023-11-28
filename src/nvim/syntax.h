@@ -6,7 +6,7 @@
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/globals.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/syntax_defs.h"  // IWYU pragma: export
 
 #define HL_CONTAINED   0x01    // not used on toplevel

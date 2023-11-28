@@ -10,7 +10,7 @@
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 

@@ -5,8 +5,8 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/assert.h"
-#include "nvim/macros.h"
+#include "nvim/assert_defs.h"
+#include "nvim/macros_defs.h"
 
 #define VALIDATE(cond, fmt_, fmt_arg1, code) \
   do { \

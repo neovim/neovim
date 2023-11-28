@@ -83,7 +83,7 @@
 
 #include "auto/config.h"
 #include "klib/kvec.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_updates.h"
@@ -105,7 +105,7 @@
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_defs.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -125,7 +125,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/undo.h"
 #include "nvim/undo_defs.h"
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 
 /// Structure passed around between undofile functions.
 typedef struct {

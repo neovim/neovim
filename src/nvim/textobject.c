@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
@@ -14,7 +14,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -26,7 +26,7 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/textobject.h"
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "textobject.c.generated.h"

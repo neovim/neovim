@@ -8,7 +8,7 @@
 #include "nvim/event/multiqueue.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_defs.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/types_defs.h"
 

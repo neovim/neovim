@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "nvim/linematch.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/pos_defs.h"
 

@@ -12,7 +12,7 @@
 #include "nvim/gettext.h"
 #include "nvim/hashtab.h"
 #include "nvim/lib/queue.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/message.h"
 #include "nvim/types_defs.h"

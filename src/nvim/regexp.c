@@ -15,7 +15,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
@@ -26,7 +26,7 @@
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/keycodes.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -41,7 +41,7 @@
 #include "nvim/regexp_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 
 // Structure used to save the current input state, when it needs to be
 // restored after trying a match.  Used by reg_save() and reg_restore().

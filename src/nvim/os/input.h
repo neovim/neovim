@@ -5,7 +5,7 @@
 
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/event/multiqueue.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 
 EXTERN bool used_stdin INIT( = false);
 

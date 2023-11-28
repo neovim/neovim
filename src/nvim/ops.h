@@ -4,11 +4,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/normal.h"
 #include "nvim/option_defs.h"
 #include "nvim/os/time.h"

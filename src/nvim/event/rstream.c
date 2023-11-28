@@ -10,7 +10,7 @@
 #include "nvim/event/stream.h"
 #include "nvim/func_attr.h"
 #include "nvim/log.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/rbuffer.h"
