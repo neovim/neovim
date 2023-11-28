@@ -4,7 +4,7 @@
 
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/garray_defs.h"  // IWYU pragma: keep
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 

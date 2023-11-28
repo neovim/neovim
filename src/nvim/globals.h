@@ -4,13 +4,13 @@
 #include <stdbool.h>
 
 #include "nvim/arglist_defs.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_eval_defs.h"
 #include "nvim/getchar_defs.h"
-#include "nvim/iconv.h"
-#include "nvim/macros.h"
+#include "nvim/iconv_defs.h"
+#include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/menu_defs.h"
 #include "nvim/os/os_defs.h"

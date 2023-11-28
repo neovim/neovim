@@ -13,7 +13,7 @@
 // FIXME: vim.h is not actually needed, but otherwise it states MAXPATHL is
 //        redefined
 #include "klib/kvec.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/eval/decode.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
@@ -23,10 +23,10 @@
 #include "nvim/gettext.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/message.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 
 /// Determine, which keys lua table contains
 typedef struct {

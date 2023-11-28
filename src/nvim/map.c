@@ -9,7 +9,7 @@
 #include <string.h>
 
 #include "auto/config.h"
-#include "nvim/map.h"
+#include "nvim/map_defs.h"
 #include "nvim/memory.h"
 
 #define equal_simple(x, y) ((x) == (y))

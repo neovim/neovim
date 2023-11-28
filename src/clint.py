@@ -903,8 +903,8 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/api/private/helpers.h",
             "src/nvim/api/private/validate.h",
             "src/nvim/api/ui.h",
-            "src/nvim/ascii.h",
-            "src/nvim/assert.h",
+            "src/nvim/ascii_defs.h",
+            "src/nvim/assert_defs.h",
             "src/nvim/autocmd.h",
             "src/nvim/autocmd_defs.h",
             "src/nvim/buffer.h",
@@ -916,7 +916,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/cmdhist.h",
             "src/nvim/context.h",
             "src/nvim/decoration.h",
-            "src/nvim/decoration_defs.h",
             "src/nvim/decoration_provider.h",
             "src/nvim/diff.h",
             "src/nvim/drawline.h",
@@ -943,7 +942,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/ex_docmd.h",
             "src/nvim/ex_getln.h",
             "src/nvim/extmark.h",
-            "src/nvim/extmark_defs.h",
             "src/nvim/file_search.h",
             "src/nvim/fileio.h",
             "src/nvim/fold.h",
@@ -952,23 +950,15 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/globals.h",
             "src/nvim/grid.h",
             "src/nvim/highlight.h",
-            "src/nvim/highlight_defs.h",
             "src/nvim/highlight_group.h",
             "src/nvim/input.h",
             "src/nvim/insexpand.h",
             "src/nvim/keycodes.h",
             "src/nvim/log.h",
             "src/nvim/lua/executor.h",
-            "src/nvim/macros.h",
             "src/nvim/main.h",
-            "src/nvim/map.h",
             "src/nvim/mark.h",
-            "src/nvim/mark_defs.h",
             "src/nvim/marktree.h",
-            "src/nvim/mbyte.h",
-            "src/nvim/mbyte_defs.h",
-            "src/nvim/memfile_defs.h",
-            "src/nvim/memory.h",
             "src/nvim/message.h",
             "src/nvim/mouse.h",
             "src/nvim/move.h",
@@ -976,10 +966,8 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/msgpack_rpc/channel_defs.h",
             "src/nvim/msgpack_rpc/helpers.h",
             "src/nvim/msgpack_rpc/unpacker.h",
-            "src/nvim/normal.h",
             "src/nvim/ops.h",
             "src/nvim/option.h",
-            "src/nvim/option_vars.h",
             "src/nvim/os/fileio.h",
             "src/nvim/os/input.h",
             "src/nvim/os/pty_conpty_win.h",
@@ -990,9 +978,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/popupmenu.h",
             "src/nvim/search.h",
             "src/nvim/spell.h",
-            "src/nvim/statusline.h",
-            "src/nvim/statusline_defs.h",
-            "src/nvim/strings.h",
             "src/nvim/syntax.h",
             "src/nvim/textformat.h",
             "src/nvim/textobject.h",
@@ -1001,12 +986,18 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/ui.h",
             "src/nvim/ui_client.h",
             "src/nvim/ui_compositor.h",
-            "src/nvim/version.h",
-            "src/nvim/vim.h",
+            "src/nvim/vim_defs.h",
             "src/nvim/viml/parser/expressions.h",
             "src/nvim/viml/parser/parser.h",
             "src/nvim/window.h",
                              ]
+
+    skip_headers = [
+            "klib/kvec.h",
+            "klib/klist.h",
+            "auto/config.h",
+            "nvim/func_attr.h"
+            ]
 
     for i in check_includes_ignore:
         if filename.endswith(i):
@@ -1016,6 +1007,8 @@ def CheckIncludes(filename, lines, error):
         matched = Match(r'#\s*include\s*"([^"]*)"', line)
         if matched:
             name = matched.group(1)
+            if name in skip_headers:
+                continue
             if (not name.endswith('.h.generated.h') and
                     not name.endswith('_defs.h') and
                     not name.endswith('/defs.h')):

@@ -8,7 +8,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/grid_defs.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/types_defs.h"
 
 /// Types of dialogs passed to do_dialog().

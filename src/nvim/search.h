@@ -9,7 +9,7 @@
 #include "nvim/os/time.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 
 // Values for the find_pattern_in_path() function args 'type' and 'action':
 #define FIND_ANY        1

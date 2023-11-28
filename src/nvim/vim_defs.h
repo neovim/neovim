@@ -38,7 +38,7 @@ enum { NUMBUFLEN = 65, };
 
 #include "nvim/gettext.h"
 #include "nvim/keycodes.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 
 // special attribute addition: Put message in history
 #define MSG_HIST                0x1000

@@ -12,7 +12,7 @@
 #include "nvim/message.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/executor.c.generated.h"  // IWYU pragma: export

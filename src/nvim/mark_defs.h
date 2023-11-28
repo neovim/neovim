@@ -1,7 +1,7 @@
 #pragma once
 
 #include "nvim/eval/typval_defs.h"
-#include "nvim/os/time.h"
+#include "nvim/os/time_defs.h"
 #include "nvim/pos_defs.h"
 
 // marks: positions in a file

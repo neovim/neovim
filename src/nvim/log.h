@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "auto/config.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 
 // USDT probes. Example invocation:
 //     NVIM_PROBE(nvim_foo_bar, 1, string.data);

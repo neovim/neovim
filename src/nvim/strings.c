@@ -9,8 +9,8 @@
 #include <string.h>
 
 #include "auto/config.h"
-#include "nvim/ascii.h"
-#include "nvim/assert.h"
+#include "nvim/ascii_defs.h"
+#include "nvim/assert_defs.h"
 #include "nvim/charset.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
@@ -19,7 +19,7 @@
 #include "nvim/garray.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
@@ -28,7 +28,7 @@
 #include "nvim/plines.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 
 static const char e_cannot_mix_positional_and_non_positional_str[]
   = N_("E1500: Cannot mix positional and non-positional arguments: %s");

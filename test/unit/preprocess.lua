@@ -66,9 +66,9 @@ end
 --- #include <stdio.h>
 --- #include <math.h>
 ---
---- headerize({"vim.h", "memory.h"}, false)
+--- headerize({"vim_defs.h", "memory.h"}, false)
 --- produces:
---- #include "vim.h"
+--- #include "vim_defs.h"
 --- #include "memory.h"
 --- @param headers string[]
 --- @param global? boolean

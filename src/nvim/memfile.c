@@ -44,12 +44,12 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "nvim/assert.h"
+#include "nvim/assert_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/fileio.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/map.h"
+#include "nvim/map_defs.h"
 #include "nvim/memfile.h"
 #include "nvim/memfile_defs.h"
 #include "nvim/memline.h"
@@ -60,7 +60,7 @@
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 
 #define MEMFILE_PAGE_SIZE 4096       /// default page size
 

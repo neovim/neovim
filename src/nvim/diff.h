@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #include "nvim/ex_cmds_defs.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/pos_defs.h"
 
 // Value set from 'diffopt'.

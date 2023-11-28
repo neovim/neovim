@@ -4,7 +4,7 @@
 
 #include "nvim/buffer_defs.h"
 #include "nvim/normal.h"
-#include "nvim/vim.h"
+#include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
 /// jump_to_mouse() returns one of first five these values, possibly with

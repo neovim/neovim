@@ -12,7 +12,7 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab_defs.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/os/fileio.h"
 #include "nvim/os/stdpaths_defs.h"
 

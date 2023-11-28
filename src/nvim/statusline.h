@@ -3,7 +3,7 @@
 #include <stddef.h>
 
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/statusline_defs.h"  // IWYU pragma: export
 
 /// Array defining what should be done when tabline is clicked

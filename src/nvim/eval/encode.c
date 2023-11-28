@@ -14,7 +14,7 @@
 
 #include "klib/kvec.h"
 #include "msgpack/pack.h"
-#include "nvim/ascii.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
@@ -22,14 +22,14 @@
 #include "nvim/garray.h"
 #include "nvim/gettext.h"
 #include "nvim/hashtab.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim.h"  // For _()
+#include "nvim/vim_defs.h"  // For _()
 
 const char *const encode_bool_var_names[] = {
   [kBoolVarTrue] = "v:true",

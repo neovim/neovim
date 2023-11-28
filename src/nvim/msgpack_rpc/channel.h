@@ -8,7 +8,7 @@
 #include "nvim/event/process.h"
 #include "nvim/event/socket.h"
 #include "nvim/event/wstream.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 #include "nvim/memory_defs.h"  // IWYU pragma: keep
 #include "nvim/msgpack_rpc/channel_defs.h"  // IWYU pragma: export
 

@@ -23,7 +23,7 @@ typedef struct {
 #include "nvim/grid_defs.h"
 #include "nvim/hashtab_defs.h"
 #include "nvim/highlight_defs.h"
-#include "nvim/map.h"
+#include "nvim/map_defs.h"
 #include "nvim/mapping_defs.h"
 #include "nvim/mark_defs.h"
 #include "nvim/marktree.h"

@@ -58,7 +58,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/garray_defs.h"
-#include "nvim/macros.h"
+#include "nvim/macros_defs.h"
 
 #define T MT_BRANCH_FACTOR
 #define ILEN (sizeof(MTNode) + (2 * T) * sizeof(void *))

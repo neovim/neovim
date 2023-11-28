@@ -1,5 +1,5 @@
-#include "nvim/assert.h"
-#include "nvim/map.h"
+#include "nvim/assert_defs.h"
+#include "nvim/map_defs.h"
 
 #if !defined(KEY_NAME) || !defined(VAL_NAME)
 // Don't error out. it is nice to type-check the file in isolation, in clangd or otherwise
