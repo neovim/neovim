@@ -225,7 +225,7 @@ function TSTreeView:draw(bufnr)
   local lines = {} ---@type string[]
   local lang_hl_marks = {} ---@type table[]
 
-  local indent  ---@type string
+  local indent ---@type string
   if vim.bo[bufnr].expandtab then
     local sw = vim.bo[bufnr].shiftwidth
     if sw == 0 then
