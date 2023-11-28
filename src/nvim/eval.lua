@@ -7038,7 +7038,9 @@ M.funcs = {
          Rvc	    Virtual Replace mode completion |compl-generic|
          Rvx	    Virtual Replace mode |i_CTRL-X| completion
          c	    Command-line editing
+         cr	    Command-line while in overstrike mode |c_<Insert>|
          cv	    Vim Ex mode |gQ|
+         cvr	    Vim Ex while in overstrike mode |c_<Insert>|
          r	    Hit-enter prompt
          rm	    The -- more -- prompt
          r?	    A |:confirm| query of some sort

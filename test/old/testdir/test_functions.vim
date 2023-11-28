@@ -798,8 +798,12 @@ func Test_mode()
 
   call feedkeys(":echo \<C-R>=Save_mode()\<C-U>\<CR>", 'xt')
   call assert_equal('c-c', g:current_modes)
+  call feedkeys(":\<insert>\<C-r>=Save_mode()\<CR>",'xt')
+  call assert_equal("c-cr", g:current_modes)
   call feedkeys("gQecho \<C-R>=Save_mode()\<CR>\<CR>vi\<CR>", 'xt')
   call assert_equal('c-cv', g:current_modes)
+  call feedkeys("gQ\<insert>\<C-r>=Save_mode()\<CR>",'xt')
+  call assert_equal("c-cvr", g:current_modes)
   " call feedkeys("Qcall Save_mode()\<CR>vi\<CR>", 'xt')
   " call assert_equal('c-ce', g:current_modes)
   " How to test Ex mode?
@@ -817,6 +821,18 @@ func Test_mode()
   call assert_equal('n-niR', g:current_modes)
   execute "normal! gR\<C-o>g@l\<Esc>"
   call assert_equal('n-niV', g:current_modes)
+  " Test statusline updates for overstike mode
+  if CanRunVimInTerminal()
+    let buf = RunVimInTerminal('', {'rows': 12})
+    call term_sendkeys(buf, ":set laststatus=2 statusline=%!mode(1)\<CR>")
+    call term_sendkeys(buf, ":")
+    call TermWait(buf)
+    call VerifyScreenDump(buf, 'Test_mode_1', {})
+    call term_sendkeys(buf, "\<insert>")
+    call TermWait(buf)
+    call VerifyScreenDump(buf, 'Test_mode_2', {})
+    call StopVimInTerminal(buf)
+  endif
 
   if has('terminal')
     term

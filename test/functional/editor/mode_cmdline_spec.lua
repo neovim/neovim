@@ -1,9 +1,11 @@
 -- Cmdline-mode tests.
 
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 local clear, insert, funcs, eq, feed =
   helpers.clear, helpers.insert, helpers.funcs, helpers.eq, helpers.feed
 local eval = helpers.eval
+local command = helpers.command
 local meths = helpers.meths
 
 describe('cmdline', function()
@@ -41,6 +43,30 @@ describe('cmdline', function()
     feed(':"<C-S-V><C-J><C-S-V><C-@><C-S-V><C-[><C-S-V><C-S-M><C-S-V><M-C-I><C-S-V><C-D-J><CR>')
 
     eq('"<C-J><C-@><C-[><C-S-M><M-C-I><C-D-J>', eval('@:'))
+  end)
+
+  it('redraws statusline when toggling overstrike', function()
+    local screen = Screen.new(60, 4)
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [1] = {reverse = true, bold = true},  -- StatusLine
+    })
+    screen:attach()
+    command('set laststatus=2 statusline=%!mode(1)')
+    feed(':')
+    screen:expect{grid=[[
+                                                                  |
+      {0:~                                                           }|
+      {1:c                                                           }|
+      :^                                                           |
+    ]]}
+    feed('<Insert>')
+    screen:expect{grid=[[
+                                                                  |
+      {0:~                                                           }|
+      {1:cr                                                          }|
+      :^                                                           |
+    ]]}
   end)
 
   describe('history', function()

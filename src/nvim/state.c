@@ -8,6 +8,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/multiqueue.h"
+#include "nvim/ex_getln.h"
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
 #include "nvim/insexpand.h"
@@ -209,6 +210,9 @@ void get_mode(char *buf)
     buf[i++] = 'c';
     if (exmode_active) {
       buf[i++] = 'v';
+    }
+    if ((State & MODE_CMDLINE) && cmdline_overstrike()) {
+      buf[i++] = 'r';
     }
   } else if (State & MODE_TERMINAL) {
     buf[i++] = 't';
