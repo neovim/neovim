@@ -252,14 +252,33 @@ do
   if tty then
     local timer = assert(vim.uv.new_timer())
 
+    ---@param bg string New value of the 'background' option
+    local function setbg(bg)
+      if vim.api.nvim_get_option_info2('background', {}).was_set then
+        -- Don't do anything if 'background' is already set
+        return
+      end
+
+      -- Wait until Nvim is finished starting to set 'background' to ensure the
+      -- OptionSet event fires.
+      if vim.v.vim_did_enter == 1 then
+        if vim.o.background ~= bg then
+          vim.o.background = bg
+        end
+      else
+        vim.api.nvim_create_autocmd('VimEnter', {
+          once = true,
+          nested = true,
+          callback = function()
+            setbg(bg)
+          end,
+        })
+      end
+    end
+
     local id = vim.api.nvim_create_autocmd('TermResponse', {
       nested = true,
       callback = function(args)
-        if vim.api.nvim_get_option_info2('background', {}).was_set then
-          -- Don't do anything if 'background' is already set
-          return true
-        end
-
         local resp = args.data ---@type string
         local r, g, b = parseosc11(resp)
         if r and g and b then
@@ -270,9 +289,7 @@ do
           if rr and gg and bb then
             local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
             local bg = luminance < 0.5 and 'dark' or 'light'
-            if bg ~= vim.o.background then
-              vim.o.background = bg
-            end
+            setbg(bg)
           end
 
           return true
