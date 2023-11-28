@@ -2,7 +2,7 @@
 
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: export
 #include "nvim/eval/typval_defs.h"
-#include "nvim/ex_cmds_defs.h"  // IWYU pragma: export
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/types_defs.h"
 

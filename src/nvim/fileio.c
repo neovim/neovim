@@ -37,7 +37,7 @@
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/iconv_defs.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
@@ -64,7 +64,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #ifdef BACKSLASH_IN_FILENAME
 # include "nvim/charset.h"

@@ -65,7 +65,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 

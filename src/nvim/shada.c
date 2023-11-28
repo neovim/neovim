@@ -31,7 +31,7 @@
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
 #include "nvim/macros_defs.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
@@ -52,7 +52,7 @@
 #include "nvim/shada.h"
 #include "nvim/strings.h"
 #include "nvim/version.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #ifdef HAVE_BE64TOH
 # define _BSD_SOURCE 1  // NOLINT(bugprone-reserved-identifier)

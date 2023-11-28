@@ -67,7 +67,7 @@
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -84,7 +84,7 @@
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 typedef struct terminal_state {
   VimState state;

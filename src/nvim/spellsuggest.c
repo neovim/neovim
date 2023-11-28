@@ -36,6 +36,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/input.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/profile.h"
 #include "nvim/spell.h"
@@ -45,7 +46,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 // Use this to adjust the score after finding suggestions, based on the
 // suggested word sounding like the bad word.  This is much faster than doing

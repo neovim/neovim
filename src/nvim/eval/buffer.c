@@ -25,7 +25,7 @@
 #include "nvim/sign.h"
 #include "nvim/types_defs.h"
 #include "nvim/undo.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 typedef struct {
   win_T *cob_curwin_save;

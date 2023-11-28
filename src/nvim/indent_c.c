@@ -23,7 +23,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 // Find result cache for cpp_baseclass
 typedef struct {

@@ -24,7 +24,7 @@
 #include "nvim/move.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 

@@ -41,7 +41,7 @@
 #include "nvim/regexp_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 // Structure used to save the current input state, when it needs to be
 // restored after trying a match.  Used by reg_save() and reg_restore().

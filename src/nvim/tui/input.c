@@ -10,7 +10,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/os.h"

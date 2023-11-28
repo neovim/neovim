@@ -1,5 +1,14 @@
 #pragma once
 
+#include "auto/config.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/ex_cmds_defs.h"
+#include "nvim/gettext.h"
+#include "nvim/keycodes.h"
+#include "nvim/macros_defs.h"
+#include "nvim/message.h"
+#include "nvim/os/os_defs.h"
+#include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 
@@ -9,7 +18,6 @@
 #define SYS_OPTWIN_FILE "$VIMRUNTIME/optwin.vim"
 #define RUNTIME_DIRNAME "runtime"
 
-#include "auto/config.h"
 #define HAVE_PATHDEF
 
 // Some file names are stored in pathdef.c, which is generated from the
@@ -27,18 +35,12 @@ extern char *default_lib_dir;
 # error Configure did not run properly.
 #endif
 
-#include "nvim/os/os_defs.h"       // bring lots of system header files
-
 /// length of a buffer to store a number in ASCII (64 bits binary + NUL)
 enum { NUMBUFLEN = 65, };
 
 #define MAX_TYPENR 65535
 
 #define ROOT_UID 0
-
-#include "nvim/gettext.h"
-#include "nvim/keycodes.h"
-#include "nvim/macros_defs.h"
 
 // special attribute addition: Put message in history
 #define MSG_HIST                0x1000
@@ -128,8 +130,6 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 #define CLEAR_FIELD(field)  memset(&(field), 0, sizeof(field))
 #define CLEAR_POINTER(ptr)  memset((ptr), 0, sizeof(*(ptr)))
 
-// (vim_strchr() is now in strings.c)
-
 #ifndef HAVE_STRNLEN
 # define strnlen xstrnlen  // Older versions of SunOS may not have strnlen
 #endif
@@ -163,13 +163,9 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 // Character used as separated in autoload function/variable names.
 #define AUTOLOAD_CHAR '#'
 
-#include "nvim/message.h"
-
 // Prefer using semsg(), because perror() may send the output to the wrong
 // destination and mess up the screen.
 #define PERROR(msg) (void)semsg("%s: %s", (msg), strerror(errno))
-
-#include "nvim/path.h"
 
 // Enums need a typecast to be used as array index.
 #define HL_ATTR(n)      hl_attr_active[(int)(n)]
@@ -186,9 +182,7 @@ enum { FOLD_TEXT_LEN = 51, };  //!< buffer size for get_foldtext()
 # define os_msg(str)           printf("%s", (str))
 #endif
 
-#include "nvim/buffer_defs.h"    // buffer and windows
-#include "nvim/ex_cmds_defs.h"   // Ex command defines
-#include "nvim/globals.h"        // global variables and messages
+#include "nvim/globals.h"
 
 // Lowest number used for window ID. Cannot have this many windows per tab.
 #define LOWEST_WIN_ID 1000

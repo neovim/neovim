@@ -26,7 +26,7 @@
 #include "nvim/strings.h"
 #include "nvim/testing.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 /// Type of assert_* check being performed
 typedef enum {

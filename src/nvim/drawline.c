@@ -46,7 +46,7 @@
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #define MB_FILLER_CHAR '<'  // character used when a double-width character
                             // doesn't fit.

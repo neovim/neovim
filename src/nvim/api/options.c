@@ -17,7 +17,7 @@
 #include "nvim/memory.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -21,7 +21,7 @@
 #include "nvim/globals.h"
 #include "nvim/lua/treesitter.h"
 #include "nvim/macros_defs.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/pos_defs.h"

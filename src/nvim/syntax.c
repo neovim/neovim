@@ -25,7 +25,7 @@
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent_c.h"
 #include "nvim/macros_defs.h"
@@ -44,7 +44,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 static bool did_syntax_onoff = false;
 

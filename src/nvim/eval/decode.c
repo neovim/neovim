@@ -22,7 +22,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 /// Helper structure for container_struct
 typedef struct {

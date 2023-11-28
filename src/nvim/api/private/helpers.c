@@ -25,7 +25,7 @@
 #include "nvim/globals.h"
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"

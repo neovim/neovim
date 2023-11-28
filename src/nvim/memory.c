@@ -32,7 +32,7 @@
 #include "nvim/sign.h"
 #include "nvim/ui.h"
 #include "nvim/usercmd.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #ifdef UNIT_TESTING
 # define malloc(size) mem_malloc(size)

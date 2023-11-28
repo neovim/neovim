@@ -29,7 +29,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/profile.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/lang.c.generated.h"

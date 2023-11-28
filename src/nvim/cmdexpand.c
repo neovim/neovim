@@ -35,7 +35,7 @@
 #include "nvim/grid.h"
 #include "nvim/hashtab.h"
 #include "nvim/help.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"
@@ -65,7 +65,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/usercmd.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 /// Type used by call_user_expand_func

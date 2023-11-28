@@ -29,7 +29,7 @@
 #include "nvim/hashtab.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 // Magic value for algorithm that walks through the array.
 #define PERTURB_SHIFT 5

@@ -32,7 +32,7 @@
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
@@ -42,7 +42,7 @@
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 /// \addtogroup SG_SET
 /// @{

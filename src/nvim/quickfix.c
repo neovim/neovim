@@ -34,7 +34,7 @@
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/help.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
@@ -59,7 +59,7 @@
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 struct dir_stack_T {

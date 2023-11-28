@@ -32,7 +32,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 /// batch mode debugging: don't save and restore typeahead.
 static bool debug_greedy = false;

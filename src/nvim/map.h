@@ -2,12 +2,11 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
 
 #include "nvim/api/private/defs.h"
-#include "nvim/assert_defs.h"
 #include "nvim/highlight_defs.h"
-#include "nvim/types_defs.h"
 
 #if defined(__NetBSD__)
 # undef uint64_t

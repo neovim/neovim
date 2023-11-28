@@ -57,7 +57,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 /// Index in scriptin
 static int curscript = 0;

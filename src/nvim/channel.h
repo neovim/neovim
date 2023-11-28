@@ -13,7 +13,7 @@
 #include "nvim/garray_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/terminal.h"

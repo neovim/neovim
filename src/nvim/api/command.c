@@ -31,7 +31,7 @@
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/usercmd.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

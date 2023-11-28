@@ -18,7 +18,7 @@
 #endif
 
 // uncrustify:off
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 // uncrustify:on
 
 #include "auto/config.h"  // IWYU pragma: keep

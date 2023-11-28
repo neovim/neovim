@@ -29,10 +29,10 @@
 #include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/macros_defs.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/marktree.h"
 #include "nvim/mbyte.h"
 #include "nvim/memory.h"
@@ -43,7 +43,7 @@
 #include "nvim/sign_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 static PMap(cstr_t) sign_map INIT( = MAP_INIT);

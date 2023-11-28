@@ -33,7 +33,7 @@
 #include "nvim/path.h"
 #include "nvim/regexp.h"
 #include "nvim/strings.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 enum {

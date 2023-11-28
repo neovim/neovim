@@ -60,11 +60,11 @@
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/input.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"
@@ -86,7 +86,7 @@
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #ifndef UNIX            // it's in os/unix_defs.h for Unix
 # include <time.h>

@@ -35,7 +35,7 @@
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/runtime.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

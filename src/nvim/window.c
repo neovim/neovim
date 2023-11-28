@@ -43,7 +43,7 @@
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/mapping.h"  // IWYU pragma: keep (langmap_adjust_mb)
 #include "nvim/mark.h"
 #include "nvim/match.h"
@@ -57,6 +57,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
@@ -71,7 +72,7 @@
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/undo.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 

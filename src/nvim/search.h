@@ -10,7 +10,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/regexp_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 // Values for the find_pattern_in_path() function args 'type' and 'action':
 #define FIND_ANY        1

@@ -1,4 +1,4 @@
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/memory.h"
 
 #ifndef KEY_NAME

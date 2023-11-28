@@ -17,7 +17,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "cursor_shape.c.generated.h"

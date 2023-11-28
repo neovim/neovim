@@ -13,7 +13,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/lua/converter.h"
 #include "nvim/macros_defs.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/types_defs.h"
 #include "nvim/usercmd.h"
 

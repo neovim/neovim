@@ -24,7 +24,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/state.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "plines.c.generated.h"

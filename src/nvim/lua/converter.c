@@ -26,7 +26,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/message.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 /// Determine, which keys lua table contains
 typedef struct {

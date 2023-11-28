@@ -19,7 +19,7 @@
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
@@ -28,7 +28,7 @@
 #include "nvim/path.h"
 #include "nvim/strings.h"
 #include "nvim/version.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #ifdef MSWIN
 # include "nvim/mbyte.h"

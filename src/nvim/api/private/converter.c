@@ -15,7 +15,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 /// Helper structure for vim_to_object
 typedef struct {

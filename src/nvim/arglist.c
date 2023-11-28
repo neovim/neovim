@@ -38,7 +38,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 /// State used by the :all command to open all the files in the argument list in

@@ -23,7 +23,7 @@
 #include "nvim/highlight_defs.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
@@ -33,7 +33,7 @@
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
 #include "nvim/ui_compositor.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 

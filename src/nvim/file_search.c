@@ -67,7 +67,7 @@
 #include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 static char *ff_expand_buffer = NULL;  // used for expanding filenames

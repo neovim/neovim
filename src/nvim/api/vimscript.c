@@ -20,7 +20,7 @@
 #include "nvim/globals.h"
 #include "nvim/memory.h"
 #include "nvim/runtime.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 

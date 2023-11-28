@@ -36,7 +36,7 @@
 #include "nvim/textformat.h"
 #include "nvim/textobject.h"
 #include "nvim/undo.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -33,7 +33,7 @@
 #include "nvim/regexp.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "match.c.generated.h"

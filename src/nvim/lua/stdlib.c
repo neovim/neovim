@@ -29,7 +29,7 @@
 #include "nvim/lua/spell.h"
 #include "nvim/lua/stdlib.h"
 #include "nvim/lua/xdiff.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -37,7 +37,7 @@
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/stdlib.c.generated.h"

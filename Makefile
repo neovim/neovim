@@ -142,13 +142,9 @@ iwyu: build/.ran-cmake
 	cmake --preset iwyu
 	cmake --build build > build/iwyu.log
 	iwyu-fix-includes --only_re="src/nvim" --ignore_re="(src/nvim/eval/encode.c|src/nvim/auto/|src/nvim/os/lang.c|src/nvim/map.c\
-	|src/nvim/api/extmark.h\
-	|src/nvim/api/private/defs.h\
-	|src/nvim/api/private/dispatch.h\
 	|src/nvim/api/private/helpers.h\
 	|src/nvim/api/private/validate.h\
 	|src/nvim/api/ui.h\
-	|src/nvim/ascii_defs.h\
 	|src/nvim/assert_defs.h\
 	|src/nvim/autocmd.h\
 	|src/nvim/autocmd_defs.h\
@@ -189,7 +185,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/extmark.h\
 	|src/nvim/file_search.h\
 	|src/nvim/fileio.h\
-	|src/nvim/fold.h\
 	|src/nvim/garray.h\
 	|src/nvim/getchar.h\
 	|src/nvim/globals.h\
@@ -220,7 +215,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/os/pty_process_win.h\
 	|src/nvim/path.h\
 	|src/nvim/plines.h\
-	|src/nvim/popupmenu.h\
 	|src/nvim/search.h\
 	|src/nvim/spell.h\
 	|src/nvim/syntax.h\
@@ -230,7 +224,7 @@ iwyu: build/.ran-cmake
 	|src/nvim/ui.h\
 	|src/nvim/ui_client.h\
 	|src/nvim/ui_compositor.h\
-	|src/nvim/vim_defs.h\
+	|src/nvim/vim.h\
 	|src/nvim/viml/parser/expressions.h\
 	|src/nvim/viml/parser/parser.h\
 	|src/nvim/window.h\

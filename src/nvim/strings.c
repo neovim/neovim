@@ -28,7 +28,7 @@
 #include "nvim/plines.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 static const char e_cannot_mix_positional_and_non_positional_str[]
   = N_("E1500: Cannot mix positional and non-positional arguments: %s");

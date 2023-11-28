@@ -1,13 +1,9 @@
 #pragma once
 
-#include <stdio.h>
-
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/fold_defs.h"  // IWYU pragma: export
 #include "nvim/garray_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
-#include "nvim/pos_defs.h"
-#include "nvim/types_defs.h"
 
 EXTERN int disable_fold_update INIT( = 0);
 

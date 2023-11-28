@@ -34,7 +34,7 @@
 #include "nvim/hashtab.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -54,7 +54,7 @@
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/usercmd.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 /// Structure used to store info for each sourced file.
 /// It is shared between do_source() and getsourceline().

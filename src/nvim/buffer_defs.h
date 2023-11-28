@@ -4,16 +4,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-typedef struct file_buffer buf_T;
-
-/// Reference to a buffer that stores the value of buf_free_count.
-/// bufref_valid() only needs to check "buf" when the count differs.
-typedef struct {
-  buf_T *br_buf;
-  int br_fnum;
-  int br_buf_free_count;
-} bufref_T;
-
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/arglist_defs.h"
@@ -23,7 +13,7 @@ typedef struct {
 #include "nvim/grid_defs.h"
 #include "nvim/hashtab_defs.h"
 #include "nvim/highlight_defs.h"
-#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/mapping_defs.h"
 #include "nvim/mark_defs.h"
 #include "nvim/marktree.h"
@@ -31,6 +21,16 @@ typedef struct {
 #include "nvim/pos_defs.h"
 #include "nvim/statusline_defs.h"
 #include "nvim/undo_defs.h"
+
+typedef struct file_buffer buf_T;
+
+/// Reference to a buffer that stores the value of buf_free_count.
+/// bufref_valid() only needs to check "buf" when the count differs.
+typedef struct {
+  buf_T *br_buf;
+  int br_fnum;
+  int br_buf_free_count;
+} bufref_T;
 
 #define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)

@@ -34,7 +34,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 /// struct storing information about current sort
 typedef struct {

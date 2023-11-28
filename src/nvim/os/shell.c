@@ -31,6 +31,7 @@
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
 #include "nvim/os/time.h"
@@ -42,7 +43,7 @@
 #include "nvim/tag.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #define DYNAMIC_BUFFER_INIT { NULL, 0, 0 }
 #define NS_1_SECOND         1000000000U     // 1 second, in nanoseconds

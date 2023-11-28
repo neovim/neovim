@@ -25,7 +25,7 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/textobject.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "textobject.c.generated.h"

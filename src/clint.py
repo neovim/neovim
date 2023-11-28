@@ -897,13 +897,9 @@ def CheckIncludes(filename, lines, error):
     # These should be synced with the ignored headers in the `iwyu` target in
     # the Makefile.
     check_includes_ignore = [
-            "src/nvim/api/extmark.h",
-            "src/nvim/api/private/defs.h",
-            "src/nvim/api/private/dispatch.h",
             "src/nvim/api/private/helpers.h",
             "src/nvim/api/private/validate.h",
             "src/nvim/api/ui.h",
-            "src/nvim/ascii_defs.h",
             "src/nvim/assert_defs.h",
             "src/nvim/autocmd.h",
             "src/nvim/autocmd_defs.h",
@@ -975,7 +971,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/os/pty_process_win.h",
             "src/nvim/path.h",
             "src/nvim/plines.h",
-            "src/nvim/popupmenu.h",
             "src/nvim/search.h",
             "src/nvim/spell.h",
             "src/nvim/syntax.h",
@@ -985,17 +980,18 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/ui.h",
             "src/nvim/ui_client.h",
             "src/nvim/ui_compositor.h",
-            "src/nvim/vim_defs.h",
+            "src/nvim/vim.h",
             "src/nvim/viml/parser/expressions.h",
             "src/nvim/viml/parser/parser.h",
             "src/nvim/window.h",
                              ]
 
     skip_headers = [
-            "klib/kvec.h",
-            "klib/klist.h",
             "auto/config.h",
-            "nvim/func_attr.h"
+            "klib/klist.h",
+            "klib/kvec.h",
+            "nvim/func_attr.h",
+            "nvim/map.h",
             ]
 
     for i in check_includes_ignore:
@@ -1008,12 +1004,17 @@ def CheckIncludes(filename, lines, error):
             name = matched.group(1)
             if name in skip_headers:
                 continue
-            if (not name.endswith('.h.generated.h') and
+            if (not name.endswith('.generated.h') and
                     not name.endswith('_defs.h') and
                     not name.endswith('/defs.h')):
                 error(filename, i, 'build/include_defs', 5,
                       'Headers should not include non-"_defs" headers')
 
+    if filename.endswith("defs.h"):
+        for i, line in enumerate(lines):
+            if line.strip().startswith("extern") or line.strip().startswith("EXTERN"):
+                error(filename, i, 'build/include_defs', 5,
+                    '_defs.h headers should not have the extern or EXTERN keyword')
 
 def CheckForBadCharacters(filename, lines, error):
     """Logs an error for each line containing bad characters.

@@ -26,7 +26,7 @@
 #include "nvim/fileio.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/memory.h"
@@ -40,7 +40,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/runtime.h"
 #include "nvim/undo.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -114,7 +114,7 @@
 #include "nvim/tag.h"
 #include "nvim/ui.h"
 #include "nvim/version.h"
-#include "nvim/vim_defs.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
 
 /// Describe data to return from find_some_match()

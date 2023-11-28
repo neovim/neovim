@@ -29,7 +29,7 @@
 #include "nvim/message.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"
-#include "nvim/vim_defs.h"  // For _()
+#include "nvim/vim.h"  // For _()
 
 const char *const encode_bool_var_names[] = {
   [kBoolVarTrue] = "v:true",
