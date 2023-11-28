@@ -1,8 +1,8 @@
 #pragma once
 
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
-#include "nvim/grid_defs.h"  // IWYU pragma: keep
 #include "nvim/highlight_defs.h"  // IWYU pragma: keep
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 #include "nvim/ui.h"
 
 typedef struct TUIData TUIData;
