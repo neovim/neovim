@@ -9,7 +9,7 @@ end
 
 vim.cmd([[
 syn match tsInspectorComment /;.*$/
-syn region tsInspectorAnonymous start=/"/ end=/"/
+syn region tsInspectorAnonymous start=/"/ end=/"/ skip=/\\"/
 
 hi def link tsInspectorComment   Comment
 hi def link tsInspectorAnonymous String
