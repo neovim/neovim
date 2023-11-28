@@ -165,6 +165,10 @@ TSNode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col}
 TSNode:equal({node})
     Check if {node} refers to the same node within the same tree.
 
+                                                        *TSNode:byte_length()*
+TSNode:byte_length()
+    Return the number of bytes spanned by this node.
+
 ==============================================================================
 TREESITTER QUERIES                                          *treesitter-query*
 
