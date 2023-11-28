@@ -1,10 +1,13 @@
 -- Neovim indent file
--- Language:    Tree-sitter playground
--- Last Change: 2023 Apr 4
+-- Language:    Tree-sitter inspector
+-- Last Change: 2023 Nov 28
 
--- it's a lisp!
-vim.cmd([[ runtime! indent/lisp.vim ]])
+-- Only load this indent file when no other was loaded
+if vim.b.did_indent then
+  return
+end
+vim.b.did_indent = 1
 
 vim.bo.expandtab = true
 vim.bo.shiftwidth = 2
-vim.b.undo_indent = vim.b.undo_indent .. '|setl et< sw<'
+vim.b.undo_indent = 'setl et< sw<'
