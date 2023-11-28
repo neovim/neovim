@@ -1835,8 +1835,10 @@ static int command_line_handle_key(CommandLineState *s)
   case K_INS:
   case K_KINS:
     ccline.overstrike = !ccline.overstrike;
-
     ui_cursor_shape();                // may show different cursor shape
+    may_trigger_modechanged();
+    status_redraw_curbuf();
+    redraw_statuslines();
     return command_line_not_changed(s);
 
   case Ctrl_HAT:
