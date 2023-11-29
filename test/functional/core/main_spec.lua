@@ -70,17 +70,18 @@ describe('command-line option', function()
       -- data from the terminal #18181
       funcs.termopen(string.format([[echo "" | %s]], table.concat(args, " ")))
       screen:expect([[
-        ^                                        |
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
-        {1:~                                       }|
-        {2:[No Name]             0,0-1          All}|
-                                                |
+        {1:^                                        }|
+        {2:~                                       }|
+        {2:~                                       }|
+        {2:~                                       }|
+        {2:~                                       }|
+        {3:[No Name]             0,0-1          All}|
+        {1:                                        }|
                                                 |
       ]], {
-        [1] = {foreground = tonumber('0x4040ff'), fg_indexed=true},
-        [2] = {bold = true, reverse = true}
+        [1] = {bg_indexed = true, foreground = Screen.colors.Grey91, background = tonumber('0x161616'), fg_indexed = true},
+        [2] = {bg_indexed = true, foreground = Screen.colors.Gray30, background = tonumber('0x161616'), fg_indexed = true},
+        [3] = {bg_indexed = true, foreground = tonumber('0xd2d2d2'), background = Screen.colors.Black , fg_indexed = true},
       })
       feed('i:cq<CR>')
       screen:expect([[

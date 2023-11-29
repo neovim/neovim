@@ -214,7 +214,7 @@ endfunc
 func Test_echohl_completion()
   call feedkeys(":echohl no\<C-A>\<C-B>\"\<CR>", 'tx')
   " call assert_equal('"echohl NonText Normal none', @:)
-  call assert_equal('"echohl NonText Normal NormalFloat none', @:)
+  call assert_equal('"echohl NonText Normal NormalFloat NormalNC none', @:)
 endfunc
 
 func Test_syntax_arg_skipped()

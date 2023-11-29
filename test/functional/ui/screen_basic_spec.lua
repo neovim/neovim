@@ -8,9 +8,15 @@ local funcs, meths = helpers.funcs, helpers.meths
 
 describe('screen', function()
   local screen
-  local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                     '--cmd', 'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
-                     '--embed'}
+  local nvim_argv = {
+    helpers.nvim_prog,
+    '-u', 'NONE',
+    '-i', 'NONE',
+    '-N',
+    '--cmd', 'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
+    '--cmd', 'colorscheme vim',
+    '--embed',
+  }
 
   before_each(function()
     local screen_nvim = spawn(nvim_argv)
@@ -997,9 +1003,15 @@ describe('Screen default colors', function()
   local function startup(light, termcolors)
     local extra = (light and ' background=light') or ''
 
-    local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                       '--cmd', 'set shortmess+=I noswapfile belloff= noshowcmd noruler'..extra,
-                       '--embed'}
+    local nvim_argv = {
+      helpers.nvim_prog,
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '-N',
+      '--cmd', 'set shortmess+=I noswapfile belloff= noshowcmd noruler'..extra,
+      '--cmd', 'colorscheme vim',
+      '--embed',
+    }
     local screen_nvim = spawn(nvim_argv)
     set_session(screen_nvim)
     screen = Screen.new()
@@ -1017,7 +1029,7 @@ describe('Screen default colors', function()
   it('can be set to light', function()
     startup(true, false)
     screen:expect{condition=function()
-      eq({rgb_fg=Screen.colors.White, rgb_bg=0, rgb_sp=Screen.colors.Red,
+      eq({rgb_bg=Screen.colors.White, rgb_fg=0, rgb_sp=Screen.colors.Red,
           cterm_bg=0, cterm_fg=0}, screen.default_colors)
     end}
   end)

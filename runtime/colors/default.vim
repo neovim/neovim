@@ -1,12 +1,10 @@
-" Vim color file
-" Maintainer:	The Vim Project <https://github.com/vim/vim>
-" Last Change:	2023 Aug 10
-" Former Maintainer:	Bram Moolenaar <Bram@vim.org>
+" Neovim color file
+" Maintainer:	The Neovim Project <https://github.com/neovim/neovim>
+" Last Change:	2023 Dec 01
 
-" This is the default color scheme.  It doesn't define the Normal
-" highlighting, it uses whatever the colors used to be.
+" This is the default color scheme.
 
-" Set 'background' back to the default.  The value can't always be estimated
+" Set 'background' back to the default. The value can't always be estimated
 " and is then guessed.
 hi clear Normal
 set bg&

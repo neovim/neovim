@@ -22,7 +22,7 @@ describe("shell command :!", function()
   before_each(function()
     clear()
     screen = child_session.screen_setup(0, '["'..helpers.nvim_prog..
-      '", "-u", "NONE", "-i", "NONE", "--cmd", "'..helpers.nvim_set..'"]')
+      '", "-u", "NONE", "-i", "NONE", "--cmd", "colorscheme vim", "--cmd", "'..helpers.nvim_set..'"]')
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|

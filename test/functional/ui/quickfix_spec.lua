@@ -89,7 +89,7 @@ describe('quickfix selection highlight', function()
   end)
 
   it('using QuickFixLine highlight group', function()
-    command('highlight QuickFixLine guibg=Red')
+    command('highlight QuickFixLine guibg=Red guifg=NONE gui=NONE')
 
     command('copen')
 
@@ -124,7 +124,7 @@ describe('quickfix selection highlight', function()
 
   it('combines with CursorLine', function()
     command('set cursorline')
-    command('highlight QuickFixLine guifg=Red')
+    command('highlight QuickFixLine guifg=Red guibg=NONE gui=NONE')
     command('highlight CursorLine guibg=Fuchsia')
 
     command('copen')
@@ -160,7 +160,7 @@ describe('quickfix selection highlight', function()
 
   it('QuickFixLine background takes precedence over CursorLine', function()
     command('set cursorline')
-    command('highlight QuickFixLine guibg=Red')
+    command('highlight QuickFixLine guibg=Red guifg=NONE gui=NONE')
     command('highlight CursorLine guibg=Fuchsia')
 
     command('copen')

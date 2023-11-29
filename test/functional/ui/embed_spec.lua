@@ -26,6 +26,12 @@ local function test_embed(ext_linegrid)
       [3] = {bold = true, foreground = Screen.colors.Blue1},
       [4] = {bold = true, foreground = Screen.colors.Green},
       [5] = {bold = true, reverse = true},
+      [6] = {foreground = Screen.colors.NvimDarkGrey3, background = Screen.colors.NvimLightGrey1};
+      [7] = {foreground = Screen.colors.NvimDarkRed};
+      [8] = {foreground = Screen.colors.NvimDarkCyan};
+      [9] = {foreground = Screen.colors.NvimLightGrey3, background = Screen.colors.NvimDarkGrey1};
+      [10] = {foreground = Screen.colors.NvimLightRed};
+      [11] = {foreground = Screen.colors.NvimLightCyan};
     })
   end
 
@@ -36,10 +42,10 @@ local function test_embed(ext_linegrid)
                                                                   |
                                                                   |
                                                                   |
-                                                                  |
-      Error detected while processing pre-vimrc command line:     |
-      E121: Undefined variable: invalid                           |
-      Press ENTER or type command to continue^                     |
+      {6:                                                            }|
+      {7:Error detected while processing pre-vimrc command line:}     |
+      {7:E121: Undefined variable: invalid}                           |
+      {8:Press ENTER or type command to continue}^                     |
     ]])
 
     feed('<cr>')
@@ -64,11 +70,11 @@ local function test_embed(ext_linegrid)
                                                                   |
                                                                   |
                                                                   |
-      {5:                                                            }|
-      Error detected while processing pre-vimrc command line:     |
-      foo                                                         |
-      {1:bar}                                                         |
-      {4:Press ENTER or type command to continue}^                     |
+      {9:                                                            }|
+      {7:Error detected while processing pre-vimrc command line:}     |
+      {7:foo}                                                         |
+      {10:bar}                                                         |
+      {11:Press ENTER or type command to continue}^                     |
     ]])
   end)
 
@@ -78,11 +84,11 @@ local function test_embed(ext_linegrid)
                                                                   |
                                                                   |
                                                                   |
-                                                                  |
-      Error detected while processing pre-vimrc command line:     |
-      foo                                                         |
-      bar                                                         |
-      Press ENTER or type command to continue^                     |
+      {6:                                                            }|
+      {7:Error detected while processing pre-vimrc command line:}     |
+      {7:foo}                                                         |
+      {7:bar}                                                         |
+      {8:Press ENTER or type command to continue}^                     |
     ]], condition=function()
       eq(Screen.colors.Green, screen.default_colors.rgb_bg)
     end}
@@ -144,7 +150,7 @@ describe('--embed --listen UI', function()
     helpers.skip(helpers.is_os('win'))
     clear()
     local child_server = assert(helpers.new_pipename())
-    funcs.jobstart({nvim_prog, '--embed', '--listen', child_server, '--clean'})
+    funcs.jobstart({nvim_prog, '--embed', '--listen', child_server, '--clean', '--cmd', 'colorscheme vim'})
     retry(nil, nil, function() neq(nil, uv.fs_stat(child_server)) end)
 
     local child_session = helpers.connect(child_server)

@@ -14,8 +14,10 @@ describe('autoread TUI FocusGained/FocusLost', function()
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
+    screen = thelpers.screen_setup(
+      0,
+      '["'..nvim_prog..'", "-u", "NONE", "-i", "NONE", "--cmd", "colorscheme vim", "--cmd", "set noswapfile noshowcmd noruler"]'
+    )
   end)
 
   teardown(function()

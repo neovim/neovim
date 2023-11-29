@@ -446,8 +446,10 @@ end)
 describe('terminal input', function()
   it('sends various special keys with modifiers', function()
     clear()
-    local screen = thelpers.screen_setup(0,
-      string.format([=[["%s", "-u", "NONE", "-i", "NONE", "--cmd", "startinsert"]]=], nvim_prog))
+    local screen = thelpers.screen_setup(
+      0,
+      string.format([=[["%s", "-u", "NONE", "-i", "NONE", "--cmd", 'colorscheme vim', "--cmd", "startinsert"]]=], nvim_prog)
+    )
     screen:expect{grid=[[
       {1: }                                                 |
       {4:~                                                 }|

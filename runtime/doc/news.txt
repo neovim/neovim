@@ -95,6 +95,9 @@ The following changes may require adaptations in user config or plugins.
   • Legacy and extmark signs are displayed and listed with the same priority:
       line number -> priority -> sign id -> recently placed
 
+• Default color scheme has been updated to be "Neovim branded" and accessible.
+  Use `:colorscheme vim` to revert to the old legacy color scheme.
+
 ==============================================================================
 BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
 
