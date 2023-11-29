@@ -7101,8 +7101,9 @@ void reset_lnums(void)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == curbuf) {
-      // Restore the value if the autocommand didn't change it and it was
-      // set.
+      // Restore the value if the autocommand didn't change it and it was set.
+      // Note: This triggers e.g. on BufReadPre, when the buffer is not yet
+      //       loaded, so cannot validate the buffer line
       if (equalpos(wp->w_save_cursor.w_cursor_corr, wp->w_cursor)
           && wp->w_save_cursor.w_cursor_save.lnum != 0) {
         wp->w_cursor = wp->w_save_cursor.w_cursor_save;
@@ -7110,6 +7111,9 @@ void reset_lnums(void)
       if (wp->w_save_cursor.w_topline_corr == wp->w_topline
           && wp->w_save_cursor.w_topline_save != 0) {
         wp->w_topline = wp->w_save_cursor.w_topline_save;
+      }
+      if (wp->w_save_cursor.w_topline_save > wp->w_buffer->b_ml.ml_line_count) {
+        wp->w_valid &= ~VALID_TOPLINE;
       }
     }
   }
