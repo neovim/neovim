@@ -31,6 +31,7 @@
 #include "nvim/option_vars.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
+#include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/ui_compositor.h"

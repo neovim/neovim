@@ -21,6 +21,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/fold.h"
+#include "nvim/fold_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
@@ -48,8 +49,7 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
-#define MB_FILLER_CHAR '<'  // character used when a double-width character
-                            // doesn't fit.
+#define MB_FILLER_CHAR '<'  // character used when a double-width character doesn't fit.
 
 /// possible draw states in win_line(), drawn in sequence.
 typedef enum {

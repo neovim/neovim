@@ -15,6 +15,7 @@
 #include "nvim/menu_defs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/runtime.h"
+#include "nvim/state_defs.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/types_defs.h"
 

@@ -1,16 +1,15 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stddef.h>
+#include <stddef.h>  // IWYU pragma: keep
 #include <stdint.h>
 
 #include "klib/kvec.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration_defs.h"  // IWYU pragma: export
-#include "nvim/extmark_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/marktree.h"
-#include "nvim/pos_defs.h"
+#include "nvim/pos_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"
 
 // actual Decor* data is in decoration_defs.h

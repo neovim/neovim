@@ -1,8 +1,10 @@
+#include <string.h>
+
+#include "nvim/globals.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/os_win_console.h"
-#include "nvim/vim_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/os_win_console.c.generated.h"

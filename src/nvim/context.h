@@ -1,6 +1,5 @@
 #pragma once
 
-#include <msgpack.h>
 #include <msgpack/sbuffer.h>
 #include <stddef.h>
 

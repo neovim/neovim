@@ -34,7 +34,7 @@
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/help.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
@@ -251,6 +251,8 @@ static const char *e_current_quickfix_list_was_changed =
   N_("E925: Current quickfix list was changed");
 static const char *e_current_location_list_was_changed =
   N_("E926: Current location list was changed");
+
+enum { QF_WINHEIGHT = 10, };  ///< default height for quickfix window
 
 // Quickfix window check helper macro
 #define IS_QF_WINDOW(wp) (bt_quickfix((wp)->w_buffer) && (wp)->w_llist_ref == NULL)

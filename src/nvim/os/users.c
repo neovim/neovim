@@ -17,6 +17,9 @@
 #endif
 #ifdef MSWIN
 # include <lm.h>
+
+# include "nvim/mbyte.h"
+# include "nvim/message.h"
 #endif
 
 // All user names (for ~user completion as done by shell).

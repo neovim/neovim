@@ -29,7 +29,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"

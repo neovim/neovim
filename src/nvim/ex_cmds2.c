@@ -26,7 +26,7 @@
 #include "nvim/fileio.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
 #include "nvim/memory.h"

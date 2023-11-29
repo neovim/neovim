@@ -60,7 +60,7 @@
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/input.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"
@@ -167,29 +167,29 @@ enum {
   B0_MAGIC_CHAR = 0x55,
 };
 
-// Block zero holds all info about the swapfile. This is the first block in the file.
-//
-// NOTE: DEFINITION OF BLOCK 0 SHOULD NOT CHANGE! It would make all existing swapfiles unusable!
-//
-// If size of block0 changes anyway, adjust MIN_SWAP_PAGE_SIZE in vim.h!!
-//
-// This block is built up of single bytes, to make it portable across
-// different machines. b0_magic_* is used to check the byte order and size of
-// variables, because the rest of the swapfile is not portable.
+/// Block zero holds all info about the swapfile. This is the first block in the file.
+///
+/// NOTE: DEFINITION OF BLOCK 0 SHOULD NOT CHANGE! It would make all existing swapfiles unusable!
+///
+/// If size of block0 changes anyway, adjust MIN_SWAP_PAGE_SIZE in memfile.h!!
+///
+/// This block is built up of single bytes, to make it portable across
+/// different machines. b0_magic_* is used to check the byte order and size of
+/// variables, because the rest of the swapfile is not portable.
 typedef struct {
   char b0_id[2];                     ///< ID for block 0: BLOCK0_ID0 and BLOCK0_ID1.
-  char b0_version[10];               // Vim version string
-  char b0_page_size[4];              // number of bytes per page
-  char b0_mtime[4];                  // last modification time of file
-  char b0_ino[4];                    // inode of b0_fname
-  char b0_pid[4];                    // process id of creator (or 0)
-  char b0_uname[B0_UNAME_SIZE];      // name of user (uid if no name)
-  char b0_hname[B0_HNAME_SIZE];      // host name (if it has a name)
-  char b0_fname[B0_FNAME_SIZE_ORG];  // name of file being edited
-  long b0_magic_long;                // check for byte order of long
-  int b0_magic_int;                  // check for byte order of int
-  int16_t b0_magic_short;            // check for byte order of short
-  char b0_magic_char;                // check for last char
+  char b0_version[10];               ///< Vim version string
+  char b0_page_size[4];              ///< number of bytes per page
+  char b0_mtime[4];                  ///< last modification time of file
+  char b0_ino[4];                    ///< inode of b0_fname
+  char b0_pid[4];                    ///< process id of creator (or 0)
+  char b0_uname[B0_UNAME_SIZE];      ///< name of user (uid if no name)
+  char b0_hname[B0_HNAME_SIZE];      ///< host name (if it has a name)
+  char b0_fname[B0_FNAME_SIZE_ORG];  ///< name of file being edited
+  long b0_magic_long;                ///< check for byte order of long
+  int b0_magic_int;                  ///< check for byte order of int
+  int16_t b0_magic_short;            ///< check for byte order of short
+  char b0_magic_char;                ///< check for last char
 } ZeroBlock;
 
 // Note: b0_dirty and b0_flags are put at the end of the file name.  For very

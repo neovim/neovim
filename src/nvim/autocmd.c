@@ -29,7 +29,7 @@
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/hashtab.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/insexpand.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"

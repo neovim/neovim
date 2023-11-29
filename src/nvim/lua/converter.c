@@ -7,12 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/memory.h"
-// FIXME: vim.h is not actually needed, but otherwise it states MAXPATHL is
-//        redefined
-#include "klib/kvec.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/eval/decode.h"
 #include "nvim/eval/typval.h"
@@ -24,6 +21,7 @@
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"

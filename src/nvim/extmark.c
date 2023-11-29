@@ -26,6 +26,7 @@
 // code for redrawing the line with the deleted decoration.
 
 #include <assert.h>
+#include <stddef.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/buffer_defs.h"

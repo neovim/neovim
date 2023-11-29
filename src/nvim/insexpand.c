@@ -29,7 +29,7 @@
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/insexpand.h"

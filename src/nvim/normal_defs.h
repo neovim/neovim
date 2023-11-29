@@ -64,6 +64,12 @@ enum {
   CA_NO_ADJ_OP_END = 2,  ///< don't adjust operator end
 };
 
+/// Replacement for nchar used by nv_replace().
+enum {
+  REPLACE_CR_NCHAR  = -1,
+  REPLACE_NL_NCHAR  = -2,
+};
+
 /// columns needed by shown command
 enum { SHOWCMD_COLS = 10, };
 enum { SHOWCMD_BUFLEN = SHOWCMD_COLS + 1 + 30, };

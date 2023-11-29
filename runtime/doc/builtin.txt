@@ -4189,8 +4189,8 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])                       *maparg()*
 		  "mode_bits" Nvim's internal binary representation of "mode".
 			     |mapset()| ignores this; only "mode" is used.
 			     See |maplist()| for usage examples. The values
-			     are from src/nvim/vim.h and may change in the
-			     future.
+			     are from src/nvim/state_defs.h and may change in
+			     the future.
 
 		The dictionary can be used to restore a mapping with
 		|mapset()|.
@@ -4257,8 +4257,8 @@ maplist([{abbr}])                                                    *maplist()*
 			endfor
 			echo saved_maps->mapnew({_, m -> m.lhs})
 <		The values of the mode_bits are defined in Nvim's
-		src/nvim/vim.h file and they can be discovered at runtime
-		using |:map-commands| and "maplist()". Example: >vim
+		src/nvim/state_defs.h file and they can be discovered at
+		runtime using |:map-commands| and "maplist()". Example: >vim
 			omap xyzzy <Nop>
 			let op_bit = maplist()->filter(
 			    \ {_, m -> m.lhs == 'xyzzy'})[0].mode_bits

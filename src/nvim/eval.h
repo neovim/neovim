@@ -277,6 +277,9 @@ enum {
   EVAL_EVALUATE = 1,  ///< when missing don't actually evaluate
 };
 
+// Character used as separated in autoload function/variable names.
+#define AUTOLOAD_CHAR '#'
+
 /// Passed to an eval() function to enable evaluation.
 EXTERN evalarg_T EVALARG_EVALUATE INIT( = { EVAL_EVALUATE, NULL, NULL, NULL });
 

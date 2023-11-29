@@ -3,6 +3,9 @@
 #include "klib/kvec.h"
 #include "nvim/types_defs.h"
 
+// TODO(bfredl): good enough name for now.
+typedef ptrdiff_t bcount_t;
+
 typedef struct undo_object ExtmarkUndoObject;
 typedef kvec_t(ExtmarkUndoObject) extmark_undo_vec_t;
 

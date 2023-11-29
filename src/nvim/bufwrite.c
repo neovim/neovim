@@ -26,7 +26,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/iconv_defs.h"
 #include "nvim/input.h"
 #include "nvim/macros_defs.h"

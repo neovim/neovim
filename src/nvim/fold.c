@@ -45,6 +45,7 @@
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/search.h"
+#include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/types_defs.h"
