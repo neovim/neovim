@@ -35,7 +35,7 @@
 #include "nvim/grid.h"
 #include "nvim/hashtab.h"
 #include "nvim/help.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/keycodes.h"
 #include "nvim/log.h"

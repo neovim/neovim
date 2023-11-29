@@ -199,7 +199,7 @@ describe('server -> client', function()
 
     it('can communicate buffers, tabpages, and windows', function()
       eq({1}, eval("rpcrequest(vim, 'nvim_list_tabpages')"))
-      -- Window IDs start at 1000 (LOWEST_WIN_ID in vim.h)
+      -- Window IDs start at 1000 (LOWEST_WIN_ID in window.h)
       eq({1000}, eval("rpcrequest(vim, 'nvim_list_wins')"))
 
       local buf = eval("rpcrequest(vim, 'nvim_list_bufs')")[1]

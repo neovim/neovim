@@ -9,8 +9,6 @@
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
-struct cmdline_info;
-
 /// Command-line colors: one chunk
 ///
 /// Defines a region which has the same highlighting.

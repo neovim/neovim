@@ -34,6 +34,7 @@
 #include "nvim/move.h"
 #include "nvim/ops.h"
 #include "nvim/pos_defs.h"
+#include "nvim/state_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"

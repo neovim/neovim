@@ -30,6 +30,7 @@
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
 #include "nvim/sign.h"
+#include "nvim/state_defs.h"
 #include "nvim/ui.h"
 #include "nvim/usercmd.h"
 #include "nvim/vim_defs.h"

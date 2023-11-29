@@ -40,7 +40,7 @@
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/help.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"

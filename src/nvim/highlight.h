@@ -29,3 +29,6 @@ static inline int win_hl_attr(win_T *wp, int hlf)
     rgb_bg = rgb_bg != -1 ? rgb_bg : (dark_ ? 0x000000 : 0xFFFFFF); \
     rgb_sp = rgb_sp != -1 ? rgb_sp : 0xFF0000; \
   } while (0);
+
+// Enums need a typecast to be used as array index.
+#define HL_ATTR(n)      hl_attr_active[(int)(n)]

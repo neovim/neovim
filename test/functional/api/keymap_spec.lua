@@ -487,7 +487,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   end)
 
   it('error if LHS longer than MAXMAPLEN', function()
-    -- assume MAXMAPLEN of 50 chars, as declared in vim.h
+    -- assume MAXMAPLEN of 50 chars, as declared in mapping_defs.h
     local MAXMAPLEN = 50
     local lhs = ''
     for i=1,MAXMAPLEN do

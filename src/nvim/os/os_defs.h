@@ -41,6 +41,8 @@
 // Command-processing buffer. Use large buffers for all platforms.
 #define CMDBUFFSIZE 1024
 
+#define ROOT_UID 0
+
 /// Converts libuv error (negative int) to error description string.
 #define os_strerror uv_strerror
 

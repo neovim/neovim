@@ -5,6 +5,8 @@
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 
+enum { LSIZE = 512, };  ///< max. size of a line in the tags file
+
 /// Values for do_tag().
 enum {
   DT_TAG    = 1,   ///< jump to newer position or same tag again

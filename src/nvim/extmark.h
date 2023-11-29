@@ -17,9 +17,6 @@ EXTERN int extmark_splice_pending INIT( = 0);
 
 typedef kvec_t(MTPair) ExtmarkInfoArray;
 
-// TODO(bfredl): good enough name for now.
-typedef ptrdiff_t bcount_t;
-
 // delete the columns between mincol and endcol
 typedef struct {
   int start_row;

@@ -11,7 +11,6 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
-#include "nvim/extmark.h"
 #include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"

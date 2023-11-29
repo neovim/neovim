@@ -1,15 +1,15 @@
 #pragma once
 
-#include <stdarg.h>
+#include <errno.h>
 #include <stdbool.h>
-#include <stddef.h>
+#include <stddef.h>  // IWYU pragma: keep
+#include <stdio.h>
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/ex_cmds_defs.h"
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/grid_defs.h"
 #include "nvim/macros_defs.h"
-#include "nvim/types_defs.h"
 
 /// Types of dialogs passed to do_dialog().
 enum {
@@ -29,6 +29,9 @@ enum {
   VIM_ALL        = 5,
   VIM_DISCARDALL = 6,
 };
+
+/// special attribute addition: Put message in history
+enum { MSG_HIST = 0x1000, };
 
 typedef struct {
   String text;
@@ -76,4 +79,15 @@ EXTERN int msg_listdo_overwrite INIT( = 0);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "message.h.generated.h"
+#endif
+
+// Prefer using semsg(), because perror() may send the output to the wrong
+// destination and mess up the screen.
+#define PERROR(msg) (void)semsg("%s: %s", (msg), strerror(errno))
+
+#ifndef MSWIN
+/// Headless (no UI) error message handler.
+# define os_errmsg(str)        fprintf(stderr, "%s", (str))
+/// Headless (no UI) message handler.
+# define os_msg(str)           printf("%s", (str))
 #endif

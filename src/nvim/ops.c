@@ -32,7 +32,7 @@
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
-#include "nvim/highlight_defs.h"
+#include "nvim/highlight.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/keycodes.h"
@@ -103,9 +103,9 @@ static const char e_search_pattern_and_expression_register_may_not_contain_two_o
 #define OPF_LINES  1  // operator always works on lines
 #define OPF_CHANGE 2  // operator changes text
 
-// The names of operators.
-// IMPORTANT: Index must correspond with defines in vim.h!!!
-// The third field indicates whether the operator always works on lines.
+/// The names of operators.
+/// IMPORTANT: Index must correspond with defines in ops.h!!!
+/// The third field indicates whether the operator always works on lines.
 static char opchars[][3] = {
   { NUL, NUL, 0 },                       // OP_NOP
   { 'd', NUL, OPF_CHANGE },              // OP_DELETE

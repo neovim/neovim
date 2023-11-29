@@ -32,11 +32,14 @@ enum {
   WSP_NEWLOC = 0x100,  ///< don't copy location list
 };
 
-/// Minimum screen size
 enum {
-  MIN_COLUMNS = 12,  ///< minimal columns for screen
-  MIN_LINES   = 2,   ///< minimal lines for screen
+  MIN_COLUMNS = 12,   ///< minimal columns for screen
+  MIN_LINES   = 2,    ///< minimal lines for screen
+  STATUS_HEIGHT = 1,  ///< height of a status line under a window
 };
+
+/// Lowest number used for window ID. Cannot have this many windows per tab.
+enum { LOWEST_WIN_ID = 1000, };
 
 /// Set to true if 'cmdheight' was explicitly set to 0.
 EXTERN bool p_ch_was_zero INIT( = false);

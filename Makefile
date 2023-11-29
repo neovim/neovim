@@ -143,7 +143,6 @@ iwyu: build/.ran-cmake
 	cmake --build build > build/iwyu.log
 	iwyu-fix-includes --only_re="src/nvim" --ignore_re="(src/nvim/eval/encode.c|src/nvim/auto/|src/nvim/os/lang.c|src/nvim/map.c\
 	|src/nvim/api/extmark.h\
-	|src/nvim/api/private/defs.h\
 	|src/nvim/api/private/dispatch.h\
 	|src/nvim/api/private/helpers.h\
 	|src/nvim/api/private/validate.h\
@@ -154,14 +153,11 @@ iwyu: build/.ran-cmake
 	|src/nvim/autocmd_defs.h\
 	|src/nvim/buffer.h\
 	|src/nvim/buffer_defs.h\
-	|src/nvim/buffer_updates.h\
 	|src/nvim/channel.h\
 	|src/nvim/charset.h\
 	|src/nvim/cmdexpand.h\
 	|src/nvim/cmdhist.h\
-	|src/nvim/context.h\
 	|src/nvim/decoration.h\
-	|src/nvim/decoration_provider.h\
 	|src/nvim/diff.h\
 	|src/nvim/drawline.h\
 	|src/nvim/drawscreen.h\
@@ -169,7 +165,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/eval/encode.h\
 	|src/nvim/eval/typval.h\
 	|src/nvim/eval/typval_defs.h\
-	|src/nvim/eval/typval_encode.h\
 	|src/nvim/eval/userfunc.h\
 	|src/nvim/eval/window.h\
 	|src/nvim/event/libuv_process.h\
@@ -185,7 +180,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/ex_cmds.h\
 	|src/nvim/ex_cmds_defs.h\
 	|src/nvim/ex_docmd.h\
-	|src/nvim/ex_getln.h\
 	|src/nvim/extmark.h\
 	|src/nvim/file_search.h\
 	|src/nvim/fileio.h\
@@ -203,15 +197,12 @@ iwyu: build/.ran-cmake
 	|src/nvim/lua/executor.h\
 	|src/nvim/main.h\
 	|src/nvim/mark.h\
-	|src/nvim/marktree.h\
-	|src/nvim/message.h\
 	|src/nvim/mouse.h\
 	|src/nvim/move.h\
 	|src/nvim/msgpack_rpc/channel.h\
 	|src/nvim/msgpack_rpc/channel_defs.h\
 	|src/nvim/msgpack_rpc/helpers.h\
 	|src/nvim/msgpack_rpc/unpacker.h\
-	|src/nvim/ops.h\
 	|src/nvim/option.h\
 	|src/nvim/os/fileio.h\
 	|src/nvim/os/input.h\

@@ -38,6 +38,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/profile.h"
 #include "nvim/rbuffer.h"
+#include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/types_defs.h"

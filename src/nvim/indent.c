@@ -36,6 +36,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
 #include "nvim/search.h"
+#include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/textformat.h"
 #include "nvim/types_defs.h"
@@ -1369,11 +1370,11 @@ int get_lisp_indent(void)
 
 static int lisp_match(char *p)
 {
-  char buf[LSIZE];
+  char buf[512];
   char *word = *curbuf->b_p_lw != NUL ? curbuf->b_p_lw : p_lispwords;
 
   while (*word != NUL) {
-    (void)copy_option_part(&word, buf, LSIZE, ",");
+    (void)copy_option_part(&word, buf, sizeof(buf), ",");
     int len = (int)strlen(buf);
 
     if ((strncmp(buf, p, (size_t)len) == 0) && ascii_iswhite_or_nul(p[len])) {

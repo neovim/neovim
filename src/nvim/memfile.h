@@ -11,6 +11,15 @@ enum {
   MFS_ZERO  = 8,  ///< only write block 0
 };
 
+enum {
+  /// Minimal size for block 0 of a swap file.
+  /// NOTE: This depends on size of struct block0! It's not done with a sizeof(),
+  /// because struct block0 is defined in memline.c (Sorry).
+  /// The maximal block size is arbitrary.
+  MIN_SWAP_PAGE_SIZE = 1048,
+  MAX_SWAP_PAGE_SIZE = 50000,
+};
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memfile.h.generated.h"
 #endif
