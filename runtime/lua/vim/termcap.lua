@@ -53,7 +53,7 @@ function M.query(caps, cb)
 
   -- If running in tmux, wrap with the passthrough sequence
   if os.getenv('TMUX') then
-    query = string.format('\027Ptmux;\027%s\027\\', query)
+    query = string.format('\027Ptmux;%s\027\\', query:gsub('\027', '\027\027'))
   end
 
   io.stdout:write(query)
