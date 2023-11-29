@@ -74,7 +74,11 @@ local function validate_commit(commit_message)
   if after_idx > vim.tbl_count(commit_split) then
     return [[Commit message does not include colons.]]
   end
-  local after_colon = commit_split[after_idx]
+  local after_colon = ''
+  while after_idx <= vim.tbl_count(commit_split) do
+    after_colon = after_colon .. commit_split[after_idx]
+    after_idx = after_idx + 1
+  end
 
   -- Check if commit introduces a breaking change.
   if vim.endswith(before_colon, "!") then
@@ -239,11 +243,14 @@ function M._test()
     ['refactor(): empty scope'] = false,
     ['ci( ): whitespace as scope'] = false,
     ['ci: period at end of sentence.'] = false,
+    ['ci: period: at end of sentence.'] = false,
     ['ci: Capitalized first word'] = false,
     ['ci: UPPER_CASE First Word'] = true,
     ['unknown: using unknown type'] = false,
     ['feat: foo:bar'] = true,
+    ['feat: :foo:bar'] = true,
     ['feat(something): foo:bar'] = true,
+    ['feat(something): :foo:bar'] = true,
     ['feat(:grep): read from pipe'] = true,
     ['feat(:grep/:make): read from pipe'] = true,
     ['feat(:grep): foo:bar'] = true,
