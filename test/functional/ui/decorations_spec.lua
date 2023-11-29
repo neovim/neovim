@@ -2155,6 +2155,17 @@ describe('extmark decorations', function()
                                                         |
     ]]}
   end)
+
+  it('works with both hl_group and sign_hl_group', function()
+    screen:try_resize(screen._width, 3)
+    insert('abcdefghijklmn')
+    meths.buf_set_extmark(0, ns, 0, 0, {sign_text='S', sign_hl_group='NonText', hl_group='Error', end_col=14})
+    screen:expect{grid=[[
+      {1:S }{4:abcdefghijklm^n}                                  |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
 end)
 
 describe('decorations: inline virtual text', function()
@@ -4966,7 +4977,6 @@ l5
                           |
     ]]}
   end)
-
 end)
 
 describe('decorations: virt_text', function()

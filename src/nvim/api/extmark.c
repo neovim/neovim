@@ -781,9 +781,6 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       DecorSignHighlight sh = decor_sh_from_inline(hl);
       decor_range_add_sh(&decor_state, r, c, line2, col2, &sh, true, (uint32_t)ns_id, id);
     }
-    if (sign.flags & kSHIsSign) {
-      decor_range_add_sh(&decor_state, r, c, line2, col2, &sign, true, (uint32_t)ns_id, id);
-    }
   } else {
     if (opts->ephemeral) {
       api_set_error(err, kErrorTypeException, "not yet implemented");
