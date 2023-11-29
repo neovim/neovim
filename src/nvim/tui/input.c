@@ -28,6 +28,11 @@
 #define READ_STREAM_SIZE 0xfff
 #define KEY_BUFFER_SIZE 0xfff
 
+/// Size of libtermkey's internal input buffer. The buffer may grow larger than
+/// this when processing very long escape sequences, but will shrink back to
+/// this size afterward
+#define INPUT_BUFFER_SIZE 256
+
 static const struct kitty_key_map_entry {
   int key;
   const char *name;
@@ -140,6 +145,7 @@ void tinput_init(TermInput *input, Loop *loop)
 
   input->tk = termkey_new_abstract(term,
                                    TERMKEY_FLAG_UTF8 | TERMKEY_FLAG_NOSTART);
+  termkey_set_buffer_size(input->tk, INPUT_BUFFER_SIZE);
   termkey_hook_terminfo_getstr(input->tk, input->tk_ti_hook_fn, input);
   termkey_start(input->tk);
 
@@ -148,7 +154,6 @@ void tinput_init(TermInput *input, Loop *loop)
 
   // setup input handle
   rstream_init_fd(loop, &input->read_stream, input->in_fd, READ_STREAM_SIZE);
-  termkey_set_buffer_size(input->tk, rbuffer_capacity(input->read_stream.buffer));
 
   // initialize a timer handle for handling ESC with libtermkey
   time_watcher_init(loop, &input->timer_handle, input);
@@ -692,20 +697,42 @@ static void handle_raw_buffer(TermInput *input, bool force)
     }
     // Push through libtermkey (translates to "<keycode>" strings, etc.).
     RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
-      size_t consumed = termkey_push_bytes(input->tk, ptr, MIN(count, len));
-      // termkey_push_bytes can return (size_t)-1, so it is possible that
-      // `consumed > rbuffer_size(input->read_stream.buffer)`, but since tk_getkeys is
-      // called soon, it shouldn't happen.
+      const size_t size = MIN(count, len);
+      if (size > termkey_get_buffer_remaining(input->tk)) {
+        // We are processing a very long escape sequence. Increase termkey's
+        // internal buffer size. We don't handle out of memory situations so
+        // assert the result
+        const size_t delta = size - termkey_get_buffer_remaining(input->tk);
+        const size_t bufsize = termkey_get_buffer_size(input->tk);
+        const bool success = termkey_set_buffer_size(input->tk, MAX(bufsize + delta, bufsize * 2));
+        assert(success);
+      }
+
+      size_t consumed = termkey_push_bytes(input->tk, ptr, size);
+
+      // We resize termkey's buffer when it runs out of space, so this should
+      // never happen
       assert(consumed <= rbuffer_size(input->read_stream.buffer));
       rbuffer_consumed(input->read_stream.buffer, consumed);
-      // Process the keys now: there is no guarantee `count` will
-      // fit into libtermkey's input buffer.
+
+      // Process the input buffer now for any keys
       tk_getkeys(input, false);
+
       if (!(count -= consumed)) {
         break;
       }
     }
   } while (rbuffer_size(input->read_stream.buffer));
+
+  const size_t tk_size = termkey_get_buffer_size(input->tk);
+  const size_t tk_remaining = termkey_get_buffer_remaining(input->tk);
+  const size_t tk_count = tk_size - tk_remaining;
+  if (tk_count < INPUT_BUFFER_SIZE && tk_size > INPUT_BUFFER_SIZE) {
+    // If the termkey buffer was resized to handle a large input sequence then
+    // shrink it back down to its original size.
+    const bool success = termkey_set_buffer_size(input->tk, INPUT_BUFFER_SIZE);
+    assert(success);
+  }
 }
 
 static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_, void *data, bool eof)

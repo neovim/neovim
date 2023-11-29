@@ -2557,6 +2557,31 @@ describe("TUI", function()
     end)
   end)
 
+  it('does not crash on large inputs #26099', function()
+    nvim_tui()
+
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    feed_data(string.format('\027]52;c;%s\027\\', string.rep('A', 8192)))
+
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]], unchanged=true}
+  end)
 end)
 
 -- See test/unit/tui_spec.lua for unit tests.
