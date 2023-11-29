@@ -537,6 +537,10 @@ void decor_range_add_virt(DecorState *state, int start_row, int start_col, int e
 void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end_row, int end_col,
                         DecorSignHighlight *sh, bool owned, uint32_t ns, uint32_t mark_id)
 {
+  if (sh->flags & kSHIsSign) {
+    return;
+  }
+
   DecorRange range = {
     .start_row = start_row, .start_col = start_col, .end_row = end_row, .end_col = end_col,
     .kind = kDecorKindHighlight,
@@ -547,7 +551,7 @@ void decor_range_add_sh(DecorState *state, int start_row, int start_col, int end
     .draw_col = -10,
   };
 
-  if (sh->hl_id || (sh->flags & (kSHIsSign | kSHConceal | kSHSpellOn | kSHSpellOff))) {
+  if (sh->hl_id || (sh->flags & (kSHConceal | kSHSpellOn | kSHSpellOff))) {
     if (sh->hl_id) {
       range.attr_id = syn_id2attr(sh->hl_id);
     }
