@@ -38,7 +38,6 @@
 #include "nvim/option_vars.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/input.h"
-#include "nvim/os/os.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/sha256.h"

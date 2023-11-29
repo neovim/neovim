@@ -979,7 +979,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/search.h",
             "src/nvim/spell.h",
             "src/nvim/syntax.h",
-            "src/nvim/textformat.h",
             "src/nvim/textobject.h",
             "src/nvim/tui/input.h",
             "src/nvim/tui/tui.h",
