@@ -237,6 +237,14 @@ The following predicates are built in:
         This is the recommended way to check if the node matches one of many
         keywords, as it has been optimized for this.
 
+    `if?`                                            *treesitter-predicate-of?*
+        Apply the pattern if the specified variable is truthy. If the
+        corresponding buffer variable is not `nil`, use its value; otherwise
+        the global variable is checked). For example, the following pattern is
+        only applied if `vim.g.identifier-foo` is `true` and
+        `vim.b.identifier-foo` is not `false`: >query
+            ((identifier) @foo (#if? "identifier-foo"))
+<
     `has-ancestor?`                        *treesitter-predicate-has-ancestor?*
         Match any of the given node types against all ancestors of a node: >query
             ((identifier) @variable.builtin
