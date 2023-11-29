@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdio.h>  // IWYU pragma: keep
 
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/api/private/helpers.h"
@@ -8,7 +9,6 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/option_defs.h"  // IWYU pragma: export
-#include "nvim/search.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 /// The options that are local to a window or buffer have "indir" set to one of
