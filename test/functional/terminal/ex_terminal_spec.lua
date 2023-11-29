@@ -160,7 +160,6 @@ describe(':terminal (with fake shell)', function()
   end
 
   it('with no argument, acts like termopen()', function()
-    skip(is_os('win'))
     terminal_with_fake_shell()
     retry(nil, 4 * screen.timeout, function()
     screen:expect([[
@@ -184,7 +183,6 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it("with no argument, but 'shell' has arguments, acts like termopen()", function()
-    skip(is_os('win'))
     nvim('set_option', 'shell', testprg('shell-test')..' -t jeff')
     terminal_with_fake_shell()
     screen:expect([[
@@ -196,7 +194,6 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('executes a given command through the shell', function()
-    skip(is_os('win'))
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell('echo hi')
     screen:expect([[
@@ -208,7 +205,6 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it("executes a given command through the shell, when 'shell' has arguments", function()
-    skip(is_os('win'))
     nvim('set_option', 'shell', testprg('shell-test')..' -t jeff')
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell('echo hi')
@@ -221,7 +217,6 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('allows quotes and slashes', function()
-    skip(is_os('win'))
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo 'hello' \ "world"]])
     screen:expect([[
@@ -258,7 +253,6 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('works with :find', function()
-    skip(is_os('win'))
     terminal_with_fake_shell()
     screen:expect([[
       ^ready $                                           |
@@ -277,7 +271,6 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('works with gf', function()
-    skip(is_os('win'))
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
     retry(nil, 4 * screen.timeout, function()
