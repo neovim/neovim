@@ -18,13 +18,19 @@ static int nlua_base64_encode(lua_State *L)
   }
 
   if (lua_type(L, 1) != LUA_TSTRING) {
-    luaL_argerror(L, 1, "expected string");
+    luaL_argerror(L, 1, "Expected string");
   }
 
   size_t src_len = 0;
   const char *src = lua_tolstring(L, 1, &src_len);
 
   const char *ret = base64_encode(src, src_len);
+
+  
+  if (ret == NULL) {
+    return luaL_error(L, "Invalid input");
+  }
+  
   assert(ret != NULL);
   lua_pushstring(L, ret);
   xfree((void *)ret);
@@ -39,13 +45,15 @@ static int nlua_base64_decode(lua_State *L)
   }
 
   if (lua_type(L, 1) != LUA_TSTRING) {
-    luaL_argerror(L, 1, "expected string");
+    luaL_argerror(L, 1, "Expected string");
   }
 
   size_t src_len = 0;
   const char *src = lua_tolstring(L, 1, &src_len);
 
   const char *ret = base64_decode(src, src_len);
+
+ 
   if (ret == NULL) {
     return luaL_error(L, "Invalid input");
   }
