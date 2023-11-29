@@ -8,6 +8,7 @@ local M = {}
 ---@field opts table Options table with the following keys:
 ---                  - anon (boolean): If true, display anonymous nodes
 ---                  - lang (boolean): If true, display the language alongside each node
+---                  - indent (number): Number of spaces to indent nested lines. Default is 2.
 ---@field nodes TSP.Node[]
 ---@field named TSP.Node[]
 local TSTreeView = {}
@@ -143,6 +144,7 @@ function TSTreeView:new(bufnr, lang)
     opts = {
       anon = false,
       lang = false,
+      indent = 2,
     },
   }
 
@@ -212,7 +214,7 @@ local function set_inspector_cursor(treeview, lang, source_buf, inspect_buf, ins
   local cursor_node_id = cursor_node:id()
   for i, v in treeview:iter() do
     if v.id == cursor_node_id then
-      local start = v.depth
+      local start = v.depth * treeview.opts.indent ---@type integer
       local end_col = start + #v.text
       api.nvim_buf_set_extmark(inspect_buf, treeview.ns, i - 1, start, {
         end_col = end_col,
@@ -236,8 +238,13 @@ function TSTreeView:draw(bufnr)
   for _, item in self:iter() do
     local range_str = get_range_str(item.lnum, item.col, item.end_lnum, item.end_col)
     local lang_str = self.opts.lang and string.format(' %s', item.lang) or ''
-    local line =
-      string.format('%s%s ; %s%s', string.rep('  ', item.depth), item.text, range_str, lang_str)
+    local line = string.format(
+      '%s%s ; %s%s',
+      string.rep(' ', item.depth * self.opts.indent),
+      item.text,
+      range_str,
+      lang_str
+    )
 
     if self.opts.lang then
       lang_hl_marks[#lang_hl_marks + 1] = {
