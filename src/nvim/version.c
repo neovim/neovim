@@ -30,9 +30,9 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
+#include "nvim/os/os.h"
 #include "nvim/strings.h"
 #include "nvim/version.h"
-#include "nvim/vim_defs.h"
 
 // for ":version", ":intro", and "nvim --version"
 #ifndef NVIM_VERSION_MEDIUM

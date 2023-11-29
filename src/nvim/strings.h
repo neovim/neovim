@@ -3,9 +3,11 @@
 #include <stdarg.h>  // IWYU pragma: keep
 #include <string.h>
 
+#include "auto/config.h"
 #include "klib/kvec.h"
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/func_attr.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 /// Append string to string and return pointer to the next byte
@@ -29,4 +31,24 @@ typedef kvec_t(char) StringBuilder;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "strings.h.generated.h"
+#endif
+
+#ifdef HAVE_STRCASECMP
+# define STRICMP(d, s)      strcasecmp((char *)(d), (char *)(s))
+#else
+# ifdef HAVE_STRICMP
+#  define STRICMP(d, s)     stricmp((char *)(d), (char *)(s))
+# else
+#  define STRICMP(d, s)     vim_stricmp((char *)(d), (char *)(s))
+# endif
+#endif
+
+#ifdef HAVE_STRNCASECMP
+# define STRNICMP(d, s, n)  strncasecmp((char *)(d), (char *)(s), (size_t)(n))
+#else
+# ifdef HAVE_STRNICMP
+#  define STRNICMP(d, s, n) strnicmp((char *)(d), (char *)(s), (size_t)(n))
+# else
+#  define STRNICMP(d, s, n) vim_strnicmp((char *)(d), (char *)(s), (size_t)(n))
+# endif
 #endif

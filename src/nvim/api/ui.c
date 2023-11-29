@@ -31,7 +31,6 @@
 #include "nvim/option.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
-#include "nvim/vim_defs.h"
 
 #define BUF_POS(data) ((size_t)((data)->buf_wptr - (data)->buf))
 

@@ -380,18 +380,6 @@ void del_trailing_spaces(char *ptr)
   }
 }
 
-#if !defined(HAVE_STRNLEN)
-size_t xstrnlen(const char *s, size_t n)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
-{
-  const char *end = memchr(s, '\0', n);
-  if (end == NULL) {
-    return n;
-  }
-  return (size_t)(end - s);
-}
-#endif
-
 #if (!defined(HAVE_STRCASECMP) && !defined(HAVE_STRICMP))
 // Compare two strings, ignoring case, using current locale.
 // Doesn't work for multi-byte characters.
@@ -440,6 +428,13 @@ int vim_strnicmp(const char *s1, const char *s2, size_t len)
   return 0;                                 // strings match
 }
 #endif
+
+/// Case-insensitive `strequal`.
+bool striequal(const char *a, const char *b)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (a == NULL && b == NULL) || (a && b && STRICMP(a, b) == 0);
+}
 
 /// strchr() version which handles multibyte strings
 ///

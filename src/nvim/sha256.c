@@ -15,8 +15,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "nvim/memory.h"
 #include "nvim/sha256.h"
-#include "nvim/vim_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "sha256.c.generated.h"

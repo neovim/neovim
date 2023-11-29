@@ -42,7 +42,6 @@
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
-#include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
 // Determines how deeply nested %{} blocks will be evaluated in statusline.

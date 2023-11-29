@@ -53,6 +53,7 @@
 #ifdef MSWIN
 # include "nvim/mbyte.h"
 # include "nvim/option.h"
+# include "nvim/strings.h"
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
