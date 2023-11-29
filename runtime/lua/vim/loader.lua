@@ -188,7 +188,14 @@ end
 function Loader.loader_lib(modname)
   local sysname = uv.os_uname().sysname:lower() or ''
   local is_win = sysname:find('win', 1, true) and not sysname:find('darwin', 1, true)
-  local ret = M.find(modname, { patterns = is_win and { '.dll' } or { '.so' } })[1]
+  -- strip first dot (if it exists) and all characters after it to get
+  -- the library-name from the modname.
+  -- (see https://www.lua.org/manual/5.1/manual.html#pdf-require)
+  local dot_at = modname:find('.', 1, true)
+  local ret = M.find(
+    modname:sub(1, dot_at and (dot_at - 1)),
+    { patterns = is_win and { '.dll' } or { '.so' } }
+  )[1]
   ---@type function?, string?
   if ret then
     -- Making function name in Lua 5.1 (see src/loadlib.c:mkfuncname) is
