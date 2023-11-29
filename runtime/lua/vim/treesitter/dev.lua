@@ -105,18 +105,23 @@ function TSTreeView:new(bufnr, lang)
   -- the root in the child tree to the {injections} table.
   local root = parser:parse(true)[1]:root()
   local injections = {} ---@type table<integer,table>
-  for _, child in pairs(parser:children()) do
-    child:for_each_tree(function(tree, ltree)
-      local r = tree:root()
-      local node = root:named_descendant_for_range(r:range())
-      if node then
-        injections[node:id()] = {
-          lang = ltree:lang(),
-          root = r,
-        }
-      end
-    end)
-  end
+
+  parser:for_each_tree(function(parent_tree, parent_ltree)
+    local parent = parent_tree:root()
+    for _, child in pairs(parent_ltree:children()) do
+      child:for_each_tree(function(tree, ltree)
+        local r = tree:root()
+        local node = assert(parent:named_descendant_for_range(r:range()))
+        local id = node:id()
+        if not injections[id] or r:byte_length() > injections[id].root:byte_length() then
+          injections[id] = {
+            lang = ltree:lang(),
+            root = r,
+          }
+        end
+      end)
+    end
+  end)
 
   local nodes = traverse(root, 0, parser:lang(), injections, {})
 
