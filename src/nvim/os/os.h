@@ -10,6 +10,16 @@
 #include "nvim/os/os_defs.h"  // IWYU pragma: export
 #include "nvim/os/stdpaths_defs.h"  // IWYU pragma: keep
 
+#define HAVE_PATHDEF
+
+// Some file names are stored in pathdef.c, which is generated from the
+// Makefile to make their value depend on the Makefile.
+#ifdef HAVE_PATHDEF
+extern char *default_vim_dir;
+extern char *default_vimruntime_dir;
+extern char *default_lib_dir;
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 // IWYU pragma: begin_exports
 # include "os/env.h.generated.h"

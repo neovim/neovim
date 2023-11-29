@@ -14,7 +14,6 @@
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/pos_defs.h"
-#include "nvim/vim_defs.h"
 #include "xdiff/xdiff.h"
 
 #define COMPARED_BUFFER0 (1 << 0)

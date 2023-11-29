@@ -18,7 +18,6 @@
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
-#include "nvim/vim_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "cursor_shape.c.generated.h"

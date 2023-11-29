@@ -221,7 +221,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/ui.h\
 	|src/nvim/ui_client.h\
 	|src/nvim/ui_compositor.h\
-	|src/nvim/vim_defs.h\
 	|src/nvim/viml/parser/expressions.h\
 	|src/nvim/viml/parser/parser.h\
 	|src/nvim/window.h\

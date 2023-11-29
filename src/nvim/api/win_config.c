@@ -22,6 +22,7 @@
 #include "nvim/memory.h"
 #include "nvim/option.h"
 #include "nvim/pos_defs.h"
+#include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
