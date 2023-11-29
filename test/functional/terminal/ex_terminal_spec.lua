@@ -141,15 +141,20 @@ describe(':terminal', function()
   end)
 end)
 
-describe(':terminal (with fake shell)', function()
+local function test_terminal_with_fake_shell(backslash)
+  -- shell-test.c is a fake shell that prints its arguments and exits.
+  local shell_path = testprg('shell-test')
+  if backslash then
+    shell_path = shell_path:gsub('/', [[\]])
+  end
+
   local screen
 
   before_each(function()
     clear()
     screen = Screen.new(50, 4)
     screen:attach({rgb=false})
-    -- shell-test.c is a fake shell that prints its arguments and exits.
-    nvim('set_option_value', 'shell', testprg('shell-test'), {})
+    nvim('set_option_value', 'shell', shell_path, {})
     nvim('set_option_value', 'shellcmdflag', 'EXE', {})
     nvim('set_option_value', 'shellxquote', '', {})
   end)
@@ -189,7 +194,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it("with no argument, but 'shell' has arguments, acts like termopen()", function()
-    nvim('set_option_value', 'shell', testprg('shell-test')..' -t jeff', {})
+    nvim('set_option_value', 'shell', shell_path ..' -t jeff', {})
     terminal_with_fake_shell()
     screen:expect([[
       ^jeff $                                            |
@@ -211,7 +216,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it("executes a given command through the shell, when 'shell' has arguments", function()
-    nvim('set_option_value', 'shell', testprg('shell-test')..' -t jeff', {})
+    nvim('set_option_value', 'shell', shell_path ..' -t jeff', {})
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell('echo hi')
     screen:expect([[
@@ -304,4 +309,13 @@ describe(':terminal (with fake shell)', function()
       terminal]])
     end
   end)
+end
+
+describe(':terminal (with fake shell)', function()
+  test_terminal_with_fake_shell(false)
+  if is_os('win') then
+    describe("when 'shell' uses backslashes", function()
+      test_terminal_with_fake_shell(true)
+    end)
+  end
 end)
