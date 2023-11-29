@@ -24,6 +24,10 @@ local TSTreeView = {}
 ---@field lang string Source language of this node
 ---@field root TSNode
 
+---@class TSP.Injection
+---@field lang string Source language of this injection
+---@field root TSNode Root node of the injection
+
 --- Traverse all child nodes starting at {node}.
 ---
 --- This is a recursive function. The {depth} parameter indicates the current recursion level.
@@ -39,8 +43,8 @@ local TSTreeView = {}
 ---@param node TSNode Starting node to begin traversal |tsnode|
 ---@param depth integer Current recursion depth
 ---@param lang string Language of the tree currently being traversed
----@param injections table<integer,TSP.Node> Mapping of node ids to root nodes of injected language trees (see
----                        explanation above)
+---@param injections table<string, TSP.Injection> Mapping of node ids to root nodes
+---                  of injected language trees (see explanation above)
 ---@param tree TSP.Node[] Output table containing a list of tables each representing a node in the tree
 local function traverse(node, depth, lang, injections, tree)
   local injection = injections[node:id()]
@@ -104,7 +108,7 @@ function TSTreeView:new(bufnr, lang)
   -- the primary tree that contains that root. Add a mapping from the node in the primary tree to
   -- the root in the child tree to the {injections} table.
   local root = parser:parse(true)[1]:root()
-  local injections = {} ---@type table<integer,table>
+  local injections = {} ---@type table<string, TSP.Injection>
 
   parser:for_each_tree(function(parent_tree, parent_ltree)
     local parent = parent_tree:root()

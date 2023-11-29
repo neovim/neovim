@@ -1,7 +1,7 @@
 ---@meta
 
 ---@class TSNode: userdata
----@field id fun(self: TSNode): integer
+---@field id fun(self: TSNode): string
 ---@field tree fun(self: TSNode): TSTree
 ---@field range fun(self: TSNode, include_bytes: false?): integer, integer, integer, integer
 ---@field range fun(self: TSNode, include_bytes: true): integer, integer, integer, integer, integer, integer
@@ -30,6 +30,7 @@
 ---@field equal fun(self: TSNode, other: TSNode): boolean
 ---@field iter_children fun(self: TSNode): fun(): TSNode, string
 ---@field field fun(self: TSNode, name: string): TSNode[]
+---@field byte_length fun(self: TSNode): integer
 local TSNode = {}
 
 ---@param query userdata
