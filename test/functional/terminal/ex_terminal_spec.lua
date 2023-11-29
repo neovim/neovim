@@ -163,7 +163,6 @@ describe(':terminal (with fake shell)', function()
   end
 
   it('with no argument, acts like termopen()', function()
-    skip(is_os('win'))
     -- Use the EXIT subcommand to end the process with a non-zero exit code to
     -- prevent the buffer from closing automatically
     nvim('set_option_value', 'shellcmdflag', 'EXIT', {})
@@ -190,7 +189,6 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it("with no argument, but 'shell' has arguments, acts like termopen()", function()
-    skip(is_os('win'))
     nvim('set_option_value', 'shell', testprg('shell-test')..' -t jeff', {})
     terminal_with_fake_shell()
     screen:expect([[
@@ -202,7 +200,6 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('executes a given command through the shell', function()
-    skip(is_os('win'))
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell('echo hi')
     screen:expect([[
@@ -214,7 +211,6 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it("executes a given command through the shell, when 'shell' has arguments", function()
-    skip(is_os('win'))
     nvim('set_option_value', 'shell', testprg('shell-test')..' -t jeff', {})
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell('echo hi')
@@ -227,7 +223,6 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('allows quotes and slashes', function()
-    skip(is_os('win'))
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo 'hello' \ "world"]])
     screen:expect([[
@@ -247,14 +242,14 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('ignores writes if the backing stream closes', function()
-      terminal_with_fake_shell()
-      feed('iiXXXXXXX')
-      poke_eventloop()
-      -- Race: Though the shell exited (and streams were closed by SIGCHLD
-      -- handler), :terminal cleanup is pending on the main-loop.
-      -- This write should be ignored (not crash, #5445).
-      feed('iiYYYYYYY')
-      assert_alive()
+    terminal_with_fake_shell()
+    feed('iiXXXXXXX')
+    poke_eventloop()
+    -- Race: Though the shell exited (and streams were closed by SIGCHLD
+    -- handler), :terminal cleanup is pending on the main-loop.
+    -- This write should be ignored (not crash, #5445).
+    feed('iiYYYYYYY')
+    assert_alive()
   end)
 
   it('works with findfile()', function()
@@ -264,7 +259,6 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('works with :find', function()
-    skip(is_os('win'))
     nvim('set_option_value', 'shellcmdflag', 'EXIT', {})
     terminal_with_fake_shell(1)
     screen:expect([[
@@ -284,7 +278,6 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('works with gf', function()
-    skip(is_os('win'))
     command('set shellxquote=')   -- win: avoid extra quotes
     terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
     retry(nil, 4 * screen.timeout, function()
