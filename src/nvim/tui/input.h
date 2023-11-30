@@ -2,7 +2,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <termkey.h>
 #include <uv.h>
 
 #include "nvim/event/loop.h"
@@ -12,6 +11,7 @@
 #include "nvim/tui/input_defs.h"  // IWYU pragma: export
 #include "nvim/tui/tui.h"
 #include "nvim/types_defs.h"
+#include "termkey/termkey.h"
 
 typedef enum {
   kKeyEncodingLegacy,  ///< Legacy key encoding

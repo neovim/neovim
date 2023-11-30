@@ -35,7 +35,6 @@ set(DEPS_INCLUDE_FLAGS "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/incl
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
-option(USE_BUNDLED_LIBTERMKEY "Use the bundled libtermkey." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
 option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
@@ -91,13 +90,6 @@ endforeach()
 
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
-endif()
-
-if(USE_BUNDLED_LIBTERMKEY)
-  include(BuildLibtermkey)
-  if(USE_BUNDLED_UNIBILIUM)
-    add_dependencies(libtermkey unibilium)
-  endif()
 endif()
 
 if(USE_BUNDLED_LIBVTERM)
