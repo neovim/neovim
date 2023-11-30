@@ -3,7 +3,9 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#define EVENT_HANDLER_MAX_ARGC 10
+#include "nvim/func_attr.h"
+
+enum { EVENT_HANDLER_MAX_ARGC = 10, };
 
 typedef void (*argv_callback)(void **argv);
 typedef struct message {
@@ -25,6 +27,9 @@ typedef void (*event_scheduler)(Event event, void *data);
       va_end(args); \
     } \
   } while (0)
+
+static inline Event event_create(argv_callback cb, int argc, ...)
+  REAL_FATTR_ALWAYS_INLINE;
 
 static inline Event event_create(argv_callback cb, int argc, ...)
 {
