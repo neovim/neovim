@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - run: ./.github/scripts/install_deps.sh
+      - uses: ./.github/actions/setup
       - run: printf 'NVIM_BUILD_TYPE=Release\n' >> $GITHUB_ENV
 
       - name: Build universal binary
@@ -40,11 +40,7 @@ jobs:
       CMAKE_VERSION: '3.10.0'
     steps:
       - uses: actions/checkout@v4
-      - run: ./.github/scripts/install_deps.sh
-
-      - name: Set up environment
-        run: echo "$BIN_DIR" >> $GITHUB_PATH
-
+      - uses: ./.github/actions/setup
 
       - name: Install minimum required version of cmake
         run: |
@@ -73,7 +69,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - run: ./.github/scripts/install_deps.sh
+      - uses: ./.github/actions/setup
 
       - name: Build bundled dependencies
         run: make deps

@@ -20,18 +20,13 @@ jobs:
       security-events: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Install dependencies
-      run: ./.github/scripts/install_deps.sh
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/setup
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
       with:
         languages: cpp
-
-    - uses: ./.github/actions/cache
 
     - run: make
 

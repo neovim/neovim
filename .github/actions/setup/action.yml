@@ -1,0 +1,29 @@
+name: 'setup'
+description: "Creates necessary setup for CI"
+inputs:
+  install_flags:
+    description: 'Install script flags'
+    required: false
+    default: ''
+runs:
+  using: "composite"
+  steps:
+    - name: Set $BIN_DIR
+      shell: bash
+      run: echo "$BIN_DIR" >> $GITHUB_PATH
+
+    - if: ${{ runner.os != 'Windows' }}
+      name: Set ulimit
+      shell: bash
+      run: ulimit -c unlimited
+
+    - if: ${{ runner.os == 'Windows' }}
+      run: .github/scripts/env.ps1
+      shell: pwsh
+
+    - name: Install dependencies
+      run: ./.github/scripts/install_deps.sh ${{ inputs.install_flags }}
+      shell: bash
+
+    - name: Cache
+      uses: ./.github/actions/cache
