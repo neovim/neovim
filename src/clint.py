@@ -898,14 +898,10 @@ def CheckIncludes(filename, lines, error):
     # the Makefile.
     check_includes_ignore = [
             "src/nvim/api/extmark.h",
-            "src/nvim/api/private/dispatch.h",
             "src/nvim/api/private/helpers.h",
             "src/nvim/api/private/validate.h",
-            "src/nvim/api/ui.h",
-            "src/nvim/ascii_defs.h",
             "src/nvim/assert_defs.h",
             "src/nvim/autocmd.h",
-            "src/nvim/autocmd_defs.h",
             "src/nvim/buffer.h",
             "src/nvim/buffer_defs.h",
             "src/nvim/channel.h",
@@ -933,7 +929,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/event/time.h",
             "src/nvim/event/wstream.h",
             "src/nvim/ex_cmds.h",
-            "src/nvim/ex_cmds_defs.h",
             "src/nvim/ex_docmd.h",
             "src/nvim/extmark.h",
             "src/nvim/file_search.h",
@@ -972,10 +967,7 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/syntax.h",
             "src/nvim/textobject.h",
             "src/nvim/tui/input.h",
-            "src/nvim/tui/tui.h",
             "src/nvim/ui.h",
-            "src/nvim/ui_client.h",
-            "src/nvim/ui_compositor.h",
             "src/nvim/viml/parser/expressions.h",
             "src/nvim/viml/parser/parser.h",
             "src/nvim/window.h",
@@ -999,8 +991,10 @@ def CheckIncludes(filename, lines, error):
             if name in skip_headers:
                 continue
             if (not name.endswith('.h.generated.h') and
+                    not name.endswith('/defs.h') and
                     not name.endswith('_defs.h') and
-                    not name.endswith('/defs.h')):
+                    not name.endswith('_defs.generated.h') and
+                    not name.endswith('_enum.generated.h')):
                 error(filename, i, 'build/include_defs', 5,
                       'Headers should not include non-"_defs" headers')
 

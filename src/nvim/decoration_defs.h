@@ -15,6 +15,7 @@ typedef struct {
 typedef kvec_t(VirtTextChunk) VirtText;
 #define VIRTTEXT_EMPTY ((VirtText)KV_INITIAL_VALUE)
 
+/// Keep in sync with virt_text_pos_str[] in decoration.h
 typedef enum {
   kVPosEndOfLine,
   kVPosOverlay,
@@ -28,6 +29,7 @@ typedef kvec_t(struct virt_line { VirtText line; bool left_col; }) VirtLines;
 typedef uint16_t DecorPriority;
 #define DECOR_PRIORITY_BASE 0x1000
 
+/// Keep in sync with hl_mode_str[] in decoration.h
 typedef enum {
   kHlModeUnknown,
   kHlModeReplace,

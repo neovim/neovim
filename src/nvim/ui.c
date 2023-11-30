@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +35,11 @@
 #include "nvim/ui_compositor.h"
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
+
+typedef struct ui_event_callback {
+  LuaRef cb;
+  bool ext_widgets[kUIGlobalCount];
+} UIEventCallback;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.c.generated.h"
@@ -692,7 +696,7 @@ void ui_call_event(char *name, Array args)
   ui_log(name);
 }
 
-void ui_cb_update_ext(void)
+static void ui_cb_update_ext(void)
 {
   memset(ui_cb_ext, 0, ARRAY_SIZE(ui_cb_ext));
 
@@ -708,7 +712,7 @@ void ui_cb_update_ext(void)
   }
 }
 
-void free_ui_event_callback(UIEventCallback *event_cb)
+static void free_ui_event_callback(UIEventCallback *event_cb)
 {
   api_free_luaref(event_cb->cb);
   xfree(event_cb);

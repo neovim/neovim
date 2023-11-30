@@ -14,9 +14,11 @@
 
 // actual Decor* data is in decoration_defs.h
 
-EXTERN const char *const virt_text_pos_str[] INIT( = { "eol", "overlay", "win_col", "right_align",
-                                                       "inline" });
+/// Keep in sync with VirtTextPos in decoration_defs.h
+EXTERN const char *const virt_text_pos_str[]
+INIT( = { "eol", "overlay", "win_col", "right_align", "inline" });
 
+/// Keep in sync with HlMode in decoration_defs.h
 EXTERN const char *const hl_mode_str[] INIT( = { "", "replace", "combine", "blend" });
 
 typedef enum {
@@ -43,8 +45,8 @@ typedef struct {
       VirtTextPos pos;
     } ui;
   } data;
-  int attr_id;  // cached lookup of inl.hl_id if it was a highlight
-  bool owned;  // ephemeral decoration, free memory immediately
+  int attr_id;  ///< cached lookup of inl.hl_id if it was a highlight
+  bool owned;   ///< ephemeral decoration, free memory immediately
   DecorPriority priority;
   DecorRangeKind kind;
   /// Screen column to draw the virtual text.
