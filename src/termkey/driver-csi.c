@@ -322,7 +322,7 @@ TermKeyResult termkey_interpret_modereport(TermKey *tk, const TermKeyKey *key, i
     *initial = key->code.mouse[0];
 
   if(mode)
-    *mode = (key->code.mouse[1] << 8) | key->code.mouse[2];
+    *mode = ((uint8_t)key->code.mouse[1] << 8) | (uint8_t)key->code.mouse[2];
 
   if(value)
     *value = key->code.mouse[3];
