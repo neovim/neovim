@@ -3,7 +3,7 @@
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/highlight_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
-#include "nvim/ui.h"
+#include "nvim/ui_defs.h"  // IWYU pragma: keep
 
 typedef struct TUIData TUIData;
 

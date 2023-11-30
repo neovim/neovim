@@ -7,7 +7,7 @@
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/highlight_defs.h"  // IWYU pragma: export
 #include "nvim/option_vars.h"
-#include "nvim/ui.h"
+#include "nvim/ui_defs.h"  // IWYU pragma: keep
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "highlight.h.generated.h"

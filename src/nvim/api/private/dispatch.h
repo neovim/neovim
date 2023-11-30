@@ -14,12 +14,12 @@ typedef Object (*ApiDispatchWrapper)(uint64_t channel_id, Array args, Arena *are
 struct MsgpackRpcRequestHandler {
   const char *name;
   ApiDispatchWrapper fn;
-  bool fast;  // Function is safe to be executed immediately while running the
-              // uv loop (the loop is run very frequently due to breakcheck).
-              // If "fast" is false, the function is deferred, i e the call will
-              // be put in the event queue, for safe handling later.
-  bool arena_return;  // return value is allocated in the arena (or statically)
-                      // and should not be freed as such.
+  bool fast;  ///< Function is safe to be executed immediately while running the
+              ///< uv loop (the loop is run very frequently due to breakcheck).
+              ///< If "fast" is false, the function is deferred, i e the call will
+              ///< be put in the event queue, for safe handling later.
+  bool arena_return;  ///< return value is allocated in the arena (or statically)
+                      ///< and should not be freed as such.
 };
 
 extern const MsgpackRpcRequestHandler method_handlers[];

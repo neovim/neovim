@@ -4,9 +4,8 @@
 
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/highlight_defs.h"  // IWYU pragma: keep
-#include "nvim/map_defs.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
-#include "nvim/ui.h"
+#include "nvim/ui_defs.h"  // IWYU pragma: keep
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.h.generated.h"
