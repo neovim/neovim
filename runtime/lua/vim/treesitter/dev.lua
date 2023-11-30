@@ -14,16 +14,12 @@ local M = {}
 local TSTreeView = {}
 
 ---@class TSP.Node
----@field id integer Node id
----@field text string Node text
----@field named boolean True if this is a named (non-anonymous) node
----@field depth integer Depth of the node within the tree
----@field lnum integer Beginning line number of this node in the source buffer
----@field col integer Beginning column number of this node in the source buffer
----@field end_lnum integer Final line number of this node in the source buffer
----@field end_col integer Final column number of this node in the source buffer
+---@field node TSNode Tree-sitter node
+---@field field string? Node field
+---@field depth integer Depth of this node in the tree
+---@field text string? Text displayed in the inspector for this node. Not computed until the
+---                    inspector is drawn.
 ---@field lang string Source language of this node
----@field root TSNode
 
 ---@class TSP.Injection
 ---@field lang string Source language of this injection
@@ -54,37 +50,14 @@ local function traverse(node, depth, lang, injections, tree)
   end
 
   for child, field in node:iter_children() do
-    local type = child:type()
-    local lnum, col, end_lnum, end_col = child:range()
-    local named = child:named()
-    local text ---@type string
-    if named then
-      if field then
-        text = string.format('%s: (%s', field, type)
-      else
-        text = string.format('(%s', type)
-      end
-    else
-      text = string.format('"%s"', type:gsub('\n', '\\n'):gsub('"', '\\"'))
-    end
-
     table.insert(tree, {
-      id = child:id(),
-      text = text,
-      named = named,
+      node = child,
+      field = field,
       depth = depth,
-      lnum = lnum,
-      col = col,
-      end_lnum = end_lnum,
-      end_col = end_col,
       lang = lang,
     })
 
     traverse(child, depth + 1, lang, injections, tree)
-
-    if named then
-      tree[#tree].text = string.format('%s)', tree[#tree].text)
-    end
   end
 
   return tree
@@ -132,7 +105,7 @@ function TSTreeView:new(bufnr, lang)
 
   local named = {} ---@type TSP.Node[]
   for _, v in ipairs(nodes) do
-    if v.named then
+    if v.node:named() then
       named[#named + 1] = v
     end
   end
@@ -213,7 +186,7 @@ local function set_inspector_cursor(treeview, lang, source_buf, inspect_buf, ins
 
   local cursor_node_id = cursor_node:id()
   for i, v in treeview:iter() do
-    if v.id == cursor_node_id then
+    if v.node:id() == cursor_node_id then
       local start = v.depth * treeview.opts.indent ---@type integer
       local end_col = start + #v.text
       api.nvim_buf_set_extmark(inspect_buf, treeview.ns, i - 1, start, {
@@ -228,6 +201,8 @@ end
 
 --- Write the contents of this View into {bufnr}.
 ---
+--- Calling this function computes the text that is displayed for each node.
+---
 ---@param bufnr integer Buffer number to write into.
 ---@package
 function TSTreeView:draw(bufnr)
@@ -235,13 +210,35 @@ function TSTreeView:draw(bufnr)
   local lines = {} ---@type string[]
   local lang_hl_marks = {} ---@type table[]
 
-  for _, item in self:iter() do
-    local range_str = get_range_str(item.lnum, item.col, item.end_lnum, item.end_col)
+  for i, item in self:iter() do
+    local range_str = get_range_str(item.node:range())
     local lang_str = self.opts.lang and string.format(' %s', item.lang) or ''
+
+    local text ---@type string
+    if item.node:named() then
+      if item.field then
+        text = string.format('%s: (%s', item.field, item.node:type())
+      else
+        text = string.format('(%s', item.node:type())
+      end
+    else
+      text = string.format('"%s"', item.node:type():gsub('\n', '\\n'):gsub('"', '\\"'))
+    end
+
+    local next = self:get(i + 1)
+    if not next or next.depth <= item.depth then
+      local parens = item.depth - (next and next.depth or 0) + (item.node:named() and 1 or 0)
+      if parens > 0 then
+        text = string.format('%s%s', text, string.rep(')', parens))
+      end
+    end
+
+    item.text = text
+
     local line = string.format(
       '%s%s ; %s%s',
       string.rep(' ', item.depth * self.opts.indent),
-      item.text,
+      text,
       range_str,
       lang_str
     )
@@ -253,7 +250,7 @@ function TSTreeView:draw(bufnr)
       }
     end
 
-    lines[#lines + 1] = line
+    lines[i] = line
   end
 
   api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
@@ -364,9 +361,9 @@ function M.inspect_tree(opts)
     desc = 'Jump to the node under the cursor in the source buffer',
     callback = function()
       local row = api.nvim_win_get_cursor(w)[1]
-      local pos = treeview:get(row)
+      local lnum, col = treeview:get(row).node:start()
       api.nvim_set_current_win(win)
-      api.nvim_win_set_cursor(win, { pos.lnum + 1, pos.col })
+      api.nvim_win_set_cursor(win, { lnum + 1, col })
     end,
   })
   api.nvim_buf_set_keymap(b, 'n', 'a', '', {
@@ -374,7 +371,7 @@ function M.inspect_tree(opts)
     callback = function()
       local row, col = unpack(api.nvim_win_get_cursor(w)) ---@type integer, integer
       local curnode = treeview:get(row)
-      while curnode and not curnode.named do
+      while curnode and not curnode.node:named() do
         row = row - 1
         curnode = treeview:get(row)
       end
@@ -386,9 +383,9 @@ function M.inspect_tree(opts)
         return
       end
 
-      local id = curnode.id
+      local id = curnode.node:id()
       for i, node in treeview:iter() do
-        if node.id == id then
+        if node.node:id() == id then
           api.nvim_win_set_cursor(w, { i, col })
           break
         end
@@ -424,20 +421,20 @@ function M.inspect_tree(opts)
 
       api.nvim_buf_clear_namespace(buf, treeview.ns, 0, -1)
       local row = api.nvim_win_get_cursor(w)[1]
-      local pos = treeview:get(row)
-      api.nvim_buf_set_extmark(buf, treeview.ns, pos.lnum, pos.col, {
-        end_row = pos.end_lnum,
-        end_col = math.max(0, pos.end_col),
+      local lnum, col, end_lnum, end_col = treeview:get(row).node:range()
+      api.nvim_buf_set_extmark(buf, treeview.ns, lnum, col, {
+        end_row = end_lnum,
+        end_col = math.max(0, end_col),
         hl_group = 'Visual',
       })
 
       local topline, botline = vim.fn.line('w0', win), vim.fn.line('w$', win)
 
       -- Move the cursor if highlighted range is completely out of view
-      if pos.lnum < topline and pos.end_lnum < topline then
-        api.nvim_win_set_cursor(win, { pos.end_lnum + 1, 0 })
-      elseif pos.lnum > botline and pos.end_lnum > botline then
-        api.nvim_win_set_cursor(win, { pos.lnum + 1, 0 })
+      if lnum < topline and end_lnum < topline then
+        api.nvim_win_set_cursor(win, { end_lnum + 1, 0 })
+      elseif lnum > botline and end_lnum > botline then
+        api.nvim_win_set_cursor(win, { lnum + 1, 0 })
       end
     end,
   })
