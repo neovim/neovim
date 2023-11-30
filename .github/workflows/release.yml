@@ -23,6 +23,9 @@ jobs:
       version: ${{ steps.build.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Perform a full checkout #13471
+          fetch-depth: 0
       - run: ./.github/scripts/install_deps.sh
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
         run: |
@@ -60,6 +63,9 @@ jobs:
     runs-on: macos-11
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Perform a full checkout #13471
+          fetch-depth: 0
       - name: Install dependencies
         run: ./.github/scripts/install_deps.sh
       - if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != 'nightly')
@@ -79,6 +85,9 @@ jobs:
     name: windows (MSVC_64)
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Perform a full checkout #13471
+          fetch-depth: 0
       - run: .github/scripts/env.ps1
       - name: Build deps
         run: |
