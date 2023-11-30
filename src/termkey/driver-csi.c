@@ -653,6 +653,8 @@ static TermKeyResult peekkey_ctrlstring(TermKey *tk, TermKeyCsi *csi, size_t int
   size_t str_end = introlen;
 
   while(str_end < tk->buffcount) {
+    if(CHARAT(str_end) == 0x07) // BEL
+      break;
     if(CHARAT(str_end) == 0x9c) // ST
       break;
     if(CHARAT(str_end) == 0x1b &&
