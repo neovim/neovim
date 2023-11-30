@@ -151,7 +151,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/buffer_defs.h\
 	|src/nvim/channel.h\
 	|src/nvim/charset.h\
-	|src/nvim/cmdexpand.h\
 	|src/nvim/decoration.h\
 	|src/nvim/drawline.h\
 	|src/nvim/eval.h\
@@ -172,7 +171,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/event/wstream.h\
 	|src/nvim/extmark.h\
 	|src/nvim/garray.h\
-	|src/nvim/getchar.h\
 	|src/nvim/globals.h\
 	|src/nvim/grid.h\
 	|src/nvim/highlight.h\
@@ -187,7 +185,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/msgpack_rpc/helpers.h\
 	|src/nvim/msgpack_rpc/unpacker.h\
 	|src/nvim/option.h\
-	|src/nvim/os/fileio.h\
 	|src/nvim/os/input.h\
 	|src/nvim/os/pty_conpty_win.h\
 	|src/nvim/os/pty_process_unix.h\

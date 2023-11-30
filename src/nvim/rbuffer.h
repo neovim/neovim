@@ -16,6 +16,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "nvim/rbuffer_defs.h"  // IWYU pragma: export
+
 // Macros that simplify working with the read/write pointers directly by hiding
 // ring buffer wrap logic. Some examples:
 //
@@ -63,22 +65,6 @@
   for (char c = 0;  /* NOLINT(readability/braces) */ \
        i-- > 0 ? ((int)(c = *rbuffer_get(buf, i))) || 1 : 0; \
        )
-
-typedef struct rbuffer RBuffer;
-/// Type of function invoked during certain events:
-///   - When the RBuffer switches to the full state
-///   - When the RBuffer switches to the non-full state
-typedef void (*rbuffer_callback)(RBuffer *buf, void *data);
-
-struct rbuffer {
-  rbuffer_callback full_cb, nonfull_cb;
-  void *data;
-  size_t size;
-  // helper memory used to by rbuffer_reset if required
-  char *temp;
-  char *end_ptr, *read_ptr, *write_ptr;
-  char start_ptr[];
-};
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "rbuffer.h.generated.h"

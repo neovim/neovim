@@ -2,8 +2,9 @@
 
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: export
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
-#include "nvim/ex_getln.h"
+#include "nvim/ex_getln_defs.h"  // IWYU pragma: keep
 #include "nvim/garray_defs.h"  // IWYU pragma: keep
+#include "nvim/regexp_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 // Values for nextwild() and ExpandOne().  See ExpandOne() for meaning.

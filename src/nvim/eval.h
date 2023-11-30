@@ -13,8 +13,8 @@
 #include "nvim/hashtab_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte_defs.h"  // IWYU pragma: keep
-#include "nvim/os/fileio.h"
-#include "nvim/os/stdpaths_defs.h"
+#include "nvim/os/fileio_defs.h"  // IWYU pragma: keep
+#include "nvim/os/stdpaths_defs.h"  // IWYU pragma: keep
 #include "nvim/vim_defs.h"  // IWYU pragma: keep
 
 #define COPYID_INC 2

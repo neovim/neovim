@@ -29,25 +29,10 @@ RBuffer *rbuffer_new(size_t capacity)
   return rv;
 }
 
-void rbuffer_free(RBuffer *buf)
+void rbuffer_free(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
 {
   xfree(buf->temp);
   xfree(buf);
-}
-
-size_t rbuffer_size(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
-{
-  return buf->size;
-}
-
-size_t rbuffer_capacity(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
-{
-  return (size_t)(buf->end_ptr - buf->start_ptr);
-}
-
-size_t rbuffer_space(RBuffer *buf) FUNC_ATTR_NONNULL_ALL
-{
-  return rbuffer_capacity(buf) - buf->size;
 }
 
 /// Return a pointer to a raw buffer containing the first empty slot available

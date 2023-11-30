@@ -1,11 +1,11 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <stddef.h>  // IWYU pragma: keep
+#include <stdint.h>  // IWYU pragma: keep
 
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/getchar_defs.h"  // IWYU pragma: export
-#include "nvim/os/fileio.h"
+#include "nvim/os/fileio_defs.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 /// Argument for flush_buffers().

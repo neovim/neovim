@@ -13,6 +13,7 @@
 #include "nvim/memory.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/os.h"
+#include "nvim/rbuffer.h"
 #include "nvim/strings.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/input_defs.h"
