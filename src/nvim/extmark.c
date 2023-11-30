@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <stddef.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
@@ -389,6 +390,9 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
   } else if (undo_info.type == kExtmarkSavePos) {
     ExtmarkSavePos pos = undo_info.data.savepos;
     if (undo) {
+      if (pos.old_row >= 0) {
+        extmark_setraw(curbuf, pos.mark, pos.old_row, pos.old_col);
+      }
       if (pos.invalidated) {
         MarkTreeIter itr[1] = { 0 };
         MTKey mark = marktree_lookup(curbuf->b_marktree, pos.mark, itr);
@@ -396,11 +400,7 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
         MTPos end = marktree_get_altpos(curbuf->b_marktree, mark, itr);
         buf_put_decor(curbuf, mt_decor(mark), mark.pos.row, end.row < 0 ? mark.pos.row : end.row);
       }
-      if (pos.old_row >= 0) {
-        extmark_setraw(curbuf, pos.mark, pos.old_row, pos.old_col);
-      }
-      // Redo
-    } else {
+    } else {  // Redo
       if (pos.row >= 0) {
         extmark_setraw(curbuf, pos.mark, pos.row, pos.col);
       }
@@ -515,23 +515,7 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
     extmark_splice_delete(buf, start_row, start_col, end_row, end_col, uvp, false, undo);
   }
 
-  // Move the signcolumn sentinel line
-  if (buf->b_signs_with_text && buf->b_signcols.sentinel) {
-    linenr_T se_lnum = buf->b_signcols.sentinel;
-    if (se_lnum >= start_row) {
-      if (old_row != 0 && se_lnum > old_row + start_row) {
-        buf->b_signcols.sentinel += new_row - old_row;
-      } else if (new_row == 0) {
-        buf->b_signcols.sentinel = 0;
-      } else {
-        buf->b_signcols.sentinel += new_row;
-      }
-    }
-  }
-
-  marktree_splice(buf->b_marktree, (int32_t)start_row, start_col,
-                  old_row, old_col,
-                  new_row, new_col);
+  marktree_splice(buf, (int32_t)start_row, start_col, old_row, old_col, new_row, new_col);
 
   if (undo == kExtmarkUndo) {
     u_header_T *uhp = u_force_get_undo_header(buf);
@@ -611,9 +595,7 @@ void extmark_move_region(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
                           extent_row, extent_col, extent_byte,
                           0, 0, 0);
 
-  marktree_move_region(buf->b_marktree, start_row, start_col,
-                       extent_row, extent_col,
-                       new_row, new_col);
+  marktree_move_region(buf, start_row, start_col, extent_row, extent_col, new_row, new_col);
 
   buf_updates_send_splice(buf, new_row, new_col, new_byte,
                           0, 0, 0,

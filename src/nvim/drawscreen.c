@@ -406,6 +406,22 @@ bool redrawing(void)
          && !(p_lz && char_avail() && !KeyTyped && !do_redraw);
 }
 
+/// If "b_signcols" is invalid, update its size and redraw if necessary.
+static void buf_validate_signcols(buf_T *buf)
+{
+  if (!buf->b_signcols.valid) {
+    int size;
+    int max = 0;
+    map_foreach_value(&buf->b_signcols.lines, size, {
+      max = MAX(size, max);
+    });
+    if (max != buf->b_signcols.size) {
+      buf_redraw_signcols(buf, max);
+    }
+    buf->b_signcols.valid = true;
+  }
+}
+
 /// Redraw the parts of the screen that is marked for redraw.
 ///
 /// Most code shouldn't call this directly, rather use redraw_later() and
@@ -602,15 +618,6 @@ int update_screen(void)
         decor_providers_invoke_buf(buf, &providers);
         buf->b_mod_tick_decor = display_tick;
       }
-    }
-
-    // Reset 'statuscolumn' if there is no dedicated signcolumn but it is invalid.
-    if (*wp->w_p_stc != NUL && wp->w_minscwidth <= SCL_NO
-        && (wp->w_buffer->b_signcols.invalid_bot || !wp->w_buffer->b_signcols.sentinel)) {
-      wp->w_nrwidth_line_count = 0;
-      wp->w_valid &= ~VALID_WCOL;
-      wp->w_redr_type = UPD_NOT_VALID;
-      wp->w_buffer->b_signcols.invalid_bot = 0;
     }
   }
 
@@ -1200,19 +1207,6 @@ void comp_col(void)
   set_vim_var_nr(VV_ECHOSPACE, sc_col - 1);
 }
 
-static void redraw_win_signcol(win_T *wp)
-{
-  // If we can compute a change in the automatic sizing of the sign column
-  // under 'signcolumn=auto:X' and signs currently placed in the buffer, better
-  // figuring it out here so we can redraw the entire screen for it.
-  int scwidth = wp->w_scwidth;
-  wp->w_scwidth = win_signcol_count(wp);
-  if (wp->w_scwidth != scwidth) {
-    changed_line_abv_curs_win(wp);
-    redraw_later(wp, UPD_NOT_VALID);
-  }
-}
-
 /// Check if horizontal separator of window "wp" at specified window corner is connected to the
 /// horizontal separator of another window
 /// Assumes global statusline is enabled
@@ -1490,7 +1484,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
   DecorProviders line_providers;
   decor_providers_invoke_win(wp, providers, &line_providers);
 
-  redraw_win_signcol(wp);
+  buf_validate_signcols(buf);
 
   init_search_hl(wp, &screen_search_hl);
 

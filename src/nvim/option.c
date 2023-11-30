@@ -2226,6 +2226,7 @@ static const char *did_set_number_relativenumber(optset_T *args)
     win->w_nrwidth_line_count = 0;
   }
   check_signcolumn(win);
+  win_redraw_signcols(win);
   return NULL;
 }
 
@@ -6177,8 +6178,7 @@ int win_signcol_count(win_T *wp)
     return 0;
   }
 
-  int needed_signcols = buf_signcols(wp->w_buffer, wp->w_maxscwidth);
-  int ret = MAX(wp->w_minscwidth, MIN(wp->w_maxscwidth, needed_signcols));
+  int ret = MAX(wp->w_minscwidth, MIN(wp->w_maxscwidth, wp->w_buffer->b_signcols.size));
   assert(ret <= SIGN_SHOW_MAX);
   return ret;
 }

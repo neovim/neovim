@@ -791,52 +791,6 @@ DecorSignHighlight *decor_find_sign(DecorInline decor)
   }
 }
 
-// Increase the signcolumn size and update the sentinel line if necessary for
-// the invalidated range.
-void decor_validate_signcols(buf_T *buf, int max)
-{
-  int signcols = 0;  // highest value of count
-  int currow = buf->b_signcols.invalid_top - 1;
-  // TODO(bfredl): only need to use marktree_itr_get_overlap once.
-  // then we can process both start and end events and update state for each row
-  for (; currow < buf->b_signcols.invalid_bot; currow++) {
-    MarkTreeIter itr[1];
-    if (!marktree_itr_get_overlap(buf->b_marktree, currow, 0, itr)) {
-      continue;
-    }
-
-    int count = 0;
-    MTPair pair;
-    while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
-      if (!mt_invalid(pair.start) && (pair.start.flags & MT_FLAG_DECOR_SIGNTEXT)) {
-        count++;
-      }
-    }
-
-    while (itr->x) {
-      MTKey mark = marktree_itr_current(itr);
-      if (mark.pos.row != currow) {
-        break;
-      }
-      if (!mt_invalid(mark) && !mt_end(mark) && (mark.flags & MT_FLAG_DECOR_SIGNTEXT)) {
-        count++;
-      }
-      marktree_itr_next(buf->b_marktree, itr);
-    }
-
-    if (count > signcols) {
-      if (count >= buf->b_signcols.size) {
-        buf->b_signcols.size = count;
-        buf->b_signcols.sentinel = currow + 1;
-      }
-      if (count >= max) {
-        return;
-      }
-      signcols = count;
-    }
-  }
-}
-
 void decor_redraw_end(DecorState *state)
 {
   state->win = NULL;

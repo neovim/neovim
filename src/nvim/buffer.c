@@ -745,11 +745,18 @@ void buf_clear_file(buf_T *buf)
   buf->b_ml.ml_flags = ML_EMPTY;                // empty buffer
 }
 
+static void buf_free_signcols(buf_T *buf)
+{
+  map_destroy(int, &buf->b_signcols.lines);
+  buf->b_signcols.lines = (Map(int, int)) MAP_INIT;
+}
+
 /// Clears the current buffer contents.
 void buf_clear(void)
 {
   linenr_T line_count = curbuf->b_ml.ml_line_count;
   extmark_free_all(curbuf);   // delete any extmarks
+  buf_free_signcols(curbuf);
   while (!(curbuf->b_ml.ml_flags & ML_EMPTY)) {
     ml_delete(1, false);
   }
@@ -920,6 +927,7 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
   }
   uc_clear(&buf->b_ucmds);               // clear local user commands
   extmark_free_all(buf);                 // delete any extmarks
+  buf_free_signcols(buf);
   map_clear_mode(buf, MAP_ALL_MODES, true, false);  // clear local mappings
   map_clear_mode(buf, MAP_ALL_MODES, true, true);   // clear local abbrevs
   XFREE_CLEAR(buf->b_start_fenc);
@@ -1844,7 +1852,6 @@ buf_T *buflist_new(char *ffname_arg, char *sfname_arg, linenr_T lnum, int flags)
     buf = xcalloc(1, sizeof(buf_T));
     // init b: variables
     buf->b_vars = tv_dict_alloc();
-    buf->b_signcols.sentinel = 0;
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
     buf_init_changedtick(buf);
   }
@@ -4026,65 +4033,57 @@ char *buf_spname(buf_T *buf)
   return NULL;
 }
 
-/// Invalidate the signcolumn if needed after deleting a sign ranging from line1 to line2.
+/// Redraw entire window "wp" if configured 'signcolumn' width changes.
+void win_redraw_signcols(win_T *wp)
+{
+  int scwidth = wp->w_scwidth;
+  wp->w_scwidth = MAX(wp->w_minscwidth, MIN(wp->w_maxscwidth, wp->w_buffer->b_signcols.size));
+  if (scwidth != wp->w_scwidth || (*wp->w_p_stc != NUL && wp->w_minscwidth <= SCL_NO)) {
+    // Rebuild 'statuscolumn' if it has no dedicated signcolumn but it would have changed in size.
+    if (*wp->w_p_stc != NUL && wp->w_minscwidth <= SCL_NO) {
+      wp->w_nrwidth_line_count = 0;
+    }
+    changed_line_abv_curs_win(wp);
+    redraw_later(wp, UPD_NOT_VALID);
+  }
+}
+
+/// "b_signcols" size changed, only redraw entire window if necessary.
+void buf_redraw_signcols(buf_T *buf, int size)
+{
+  buf->b_signcols.size = size;
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer == buf) {
+      win_redraw_signcols(wp);
+    }
+  }
+}
+
+/// Update "b_signcols" lines after deleting a sign ranging from "line1" to
+/// "line2" and check if its size changes.
 void buf_signcols_del_check(buf_T *buf, linenr_T line1, linenr_T line2)
 {
-  linenr_T sent = buf->b_signcols.sentinel;
-  if (sent >= line1 && sent <= line2) {
-    // When removed sign overlaps the sentinel line, entire buffer needs to be checked.
-    buf->b_signcols.sentinel = buf->b_signcols.size = 0;
+  for (int i = line1; i <= line2; i++) {
+    int *size = map_ref(int, int)(&buf->b_signcols.lines, i, NULL);
+    if ((*size)-- == buf->b_signcols.size) {
+      buf->b_signcols.valid = false;  // sign deleted from a sentinel line
+    }
+    if (*size == 0) {
+      map_del(int, int)(&buf->b_signcols.lines, i, NULL);
+    }
   }
 }
 
-/// Invalidate the signcolumn if needed after adding a sign ranging from line1 to line2.
+/// Update "b_signcols" lines after adding a sign ranging from "line1" to
+/// "line2" and check if its size changes.
 void buf_signcols_add_check(buf_T *buf, linenr_T line1, linenr_T line2)
 {
-  if (!buf->b_signcols.sentinel) {
-    return;
-  }
-
-  linenr_T sent = buf->b_signcols.sentinel;
-  if (sent >= line1 && sent <= line2) {
-    // If added sign overlaps sentinel line, increment without invalidating.
-    if (buf->b_signcols.size == buf->b_signcols.max) {
-      buf->b_signcols.max++;
-    }
-    buf->b_signcols.size++;
-    return;
-  }
-
-  if (line1 < buf->b_signcols.invalid_top) {
-    buf->b_signcols.invalid_top = line1;
-  }
-  if (line2 > buf->b_signcols.invalid_bot) {
-    buf->b_signcols.invalid_bot = line2;
-  }
-}
-
-int buf_signcols(buf_T *buf, int max)
-{
-  if (!buf->b_signs_with_text) {
-    buf->b_signcols.size = 0;
-  } else if (max <= 1 && buf->b_signs_with_text >= (size_t)max) {
-    buf->b_signcols.size = max;
-  } else {
-    linenr_T sent = buf->b_signcols.sentinel;
-    if (!sent || max > buf->b_signcols.max) {
-      // Recheck if the window scoped maximum 'signcolumn' is greater than the
-      // previous maximum or if there is no sentinel line yet.
-      buf->b_signcols.invalid_top = sent ? sent : 1;
-      buf->b_signcols.invalid_bot = sent ? sent : buf->b_ml.ml_line_count;
-    }
-
-    if (buf->b_signcols.invalid_bot) {
-      decor_validate_signcols(buf, max);
+  for (int i = line1; i <= line2; i++) {
+    int *size = map_put_ref(int, int)(&buf->b_signcols.lines, i, NULL, NULL);
+    if ((*size)++ == buf->b_signcols.size) {
+      buf_redraw_signcols(buf, *size);  // sign added to a sentinel line
     }
   }
-
-  buf->b_signcols.max = max;
-  buf->b_signcols.invalid_top = MAXLNUM;
-  buf->b_signcols.invalid_bot = 0;
-  return buf->b_signcols.size;
 }
 
 /// Get "buf->b_fname", use "[No Name]" if it is NULL.

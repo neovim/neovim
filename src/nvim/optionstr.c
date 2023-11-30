@@ -5,7 +5,7 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
-#include "nvim/buffer_defs.h"
+#include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/cmdexpand_defs.h"
@@ -2100,6 +2100,7 @@ const char *did_set_signcolumn(optset_T *args)
   if ((*oldval == 'n' && *(oldval + 1) == 'u') || win->w_minscwidth == SCL_NUM) {
     win->w_nrwidth_line_count = 0;
   }
+  win_redraw_signcols(win);
   return NULL;
 }
 

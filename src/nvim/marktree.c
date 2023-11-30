@@ -50,6 +50,7 @@
 #include <sys/types.h>
 
 #include "klib/kvec.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/garray.h"
 #include "nvim/marktree.h"
 #include "nvim/memory.h"
@@ -1609,15 +1610,41 @@ static int damage_cmp(const void *s1, const void *s2)
   return d1->id > d2->id ? 1 : -1;
 }
 
-bool marktree_splice(MarkTree *b, int32_t start_line, int start_col, int old_extent_line,
+typedef struct {
+  int lnum;
+  int size;
+} SignLine;
+
+bool marktree_splice(buf_T *buf, int32_t start_line, int start_col, int old_extent_line,
                      int old_extent_col, int new_extent_line, int new_extent_col)
 {
+  MarkTree *b = buf->b_marktree;
   MTPos start = { start_line, start_col };
   MTPos old_extent = { old_extent_line, old_extent_col };
   MTPos new_extent = { new_extent_line, new_extent_col };
 
   bool may_delete = (old_extent.row != 0 || old_extent.col != 0);
   bool same_line = old_extent.row == 0 && new_extent.row == 0;
+
+  // Move the signcolumn line map for inserted and deleted lines.
+  if (!same_line && buf->b_signs_with_text) {
+    int lnum, size;
+    kvec_t(SignLine) lines = KV_INITIAL_VALUE;
+    map_foreach(&buf->b_signcols.lines, lnum, size, {
+      if (lnum > start.row && (!old_extent.row || lnum > start.row + old_extent.row)) {
+        kv_push(lines, ((SignLine){ lnum, size }));
+      }
+    });
+    for (size_t i = 0; i < kv_size(lines); i++) {
+      map_del(int, int)(&buf->b_signcols.lines, kv_A(lines, i).lnum, NULL);
+    }
+    for (size_t i = 0; i < kv_size(lines); i++) {
+      lnum = kv_A(lines, i).lnum + new_extent.row - old_extent.row;
+      map_put(int, int)(&buf->b_signcols.lines, lnum, kv_A(lines, i).size);
+    }
+    kv_destroy(lines);
+  }
+
   unrelative(start, &old_extent);
   unrelative(start, &new_extent);
   MarkTreeIter itr[1] = { 0 }, enditr[1] = { 0 };
@@ -1822,9 +1849,10 @@ past_continue_same_node:
   return moved;
 }
 
-void marktree_move_region(MarkTree *b, int start_row, colnr_T start_col, int extent_row,
+void marktree_move_region(buf_T *buf, int start_row, colnr_T start_col, int extent_row,
                           colnr_T extent_col, int new_row, colnr_T new_col)
 {
+  MarkTree *b = buf->b_marktree;
   MTPos start = { start_row, start_col }, size = { extent_row, extent_col };
   MTPos end = size;
   unrelative(start, &end);
@@ -1842,10 +1870,31 @@ void marktree_move_region(MarkTree *b, int start_row, colnr_T start_col, int ext
     marktree_del_itr(b, itr, false);
   }
 
-  marktree_splice(b, start.row, start.col, size.row, size.col, 0, 0);
+  kvec_t(SignLine) lines = KV_INITIAL_VALUE;
+  // Move the signcolumn line map for the moved region.
+  if (buf->b_signs_with_text) {
+    int lnum, width;
+    map_foreach(&buf->b_signcols.lines, lnum, width, {
+      if (lnum > start_row && lnum <= end.row) {
+        kv_push(lines, ((SignLine){ lnum, width }));
+      }
+    });
+    for (size_t i = 0; i < kv_size(lines); i++) {
+      map_del(int, int)(&buf->b_signcols.lines, kv_A(lines, i).lnum, NULL);
+    }
+  }
+
+  marktree_splice(buf, start.row, start.col, size.row, size.col, 0, 0);
   MTPos new = { new_row, new_col };
-  marktree_splice(b, new.row, new.col,
-                  0, 0, size.row, size.col);
+  marktree_splice(buf, new.row, new.col, 0, 0, size.row, size.col);
+
+  if (buf->b_signs_with_text) {
+    for (size_t i = 0; i < kv_size(lines); i++) {
+      int lnum = kv_A(lines, i).lnum + new_row;
+      map_put(int, int)(&buf->b_signcols.lines, lnum, kv_A(lines, i).size);
+    }
+    kv_destroy(lines);
+  }
 
   for (size_t i = 0; i < kv_size(saved); i++) {
     MTKey item = kv_A(saved, i);
