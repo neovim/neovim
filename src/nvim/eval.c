@@ -4548,7 +4548,7 @@ bool garbage_collect(bool testing)
 
   // history items (ShaDa additional elements)
   if (p_hi) {
-    for (HistoryType i = 0; i < HIST_COUNT; i++) {
+    for (int i = 0; i < HIST_COUNT; i++) {
       const void *iter = NULL;
       do {
         histentry_T hist;

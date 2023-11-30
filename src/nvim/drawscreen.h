@@ -3,7 +3,6 @@
 #include <stdbool.h>
 
 #include "nvim/buffer_defs.h"
-#include "nvim/drawline.h"
 #include "nvim/macros_defs.h"
 
 /// flags for update_screen()
@@ -22,7 +21,7 @@ enum {
 /// ('lines' and 'rows') must not be changed.
 EXTERN bool updating_screen INIT( = 0);
 
-EXTERN match_T screen_search_hl INIT( = { 0 });       // used for 'hlsearch' highlight matching
+EXTERN match_T screen_search_hl INIT( = { 0 });  ///< used for 'hlsearch' highlight matching
 
 #define W_ENDCOL(wp)   ((wp)->w_wincol + (wp)->w_width)
 #define W_ENDROW(wp)   ((wp)->w_winrow + (wp)->w_height)

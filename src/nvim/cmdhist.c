@@ -21,6 +21,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
+#include "nvim/os/time.h"
 #include "nvim/regexp.h"
 #include "nvim/strings.h"
 #include "nvim/types_defs.h"

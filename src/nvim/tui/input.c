@@ -705,6 +705,7 @@ static void handle_raw_buffer(TermInput *input, bool force)
         const size_t bufsize = termkey_get_buffer_size(input->tk);
         const bool success = termkey_set_buffer_size(input->tk, MAX(bufsize + delta, bufsize * 2));
         assert(success);
+        (void)success;
       }
 
       size_t consumed = termkey_push_bytes(input->tk, ptr, size);
@@ -731,6 +732,7 @@ static void handle_raw_buffer(TermInput *input, bool force)
     // shrink it back down to its original size.
     const bool success = termkey_set_buffer_size(input->tk, INPUT_BUFFER_SIZE);
     assert(success);
+    (void)success;
   }
 }
 
