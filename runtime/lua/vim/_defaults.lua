@@ -297,7 +297,7 @@ do
       end,
     })
 
-    io.stdout:write('\027]11;?\027\\')
+    io.stdout:write('\027]11;?\007')
 
     timer:start(1000, 0, function()
       -- No response received. Delete the autocommand
