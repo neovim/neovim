@@ -7,6 +7,8 @@
 # include <poll.h>
 # include <unistd.h>
 # include <strings.h>
+#else
+# include <io.h>
 #endif
 #include <string.h>
 
