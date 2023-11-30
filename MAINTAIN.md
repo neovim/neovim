@@ -122,7 +122,6 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
     * When bumping, also sync [our bundled documentation](https://github.com/neovim/neovim/blob/master/runtime/doc/luvref.txt) with [the upstream documentation](https://github.com/luvit/luv/blob/master/docs.md).
 * [gettext](https://ftp.gnu.org/pub/gnu/gettext/)
 * [libiconv](https://ftp.gnu.org/pub/gnu/libiconv)
-* [libtermkey](https://github.com/neovim/libtermkey)
 * [libuv](https://github.com/libuv/libuv)
 * [libvterm](http://www.leonerd.org.uk/code/libvterm/)
 * [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
@@ -150,6 +149,7 @@ These dependencies are "vendored" (inlined), we must update the sources manually
     * Vendored from LPeg. Needs to be updated when LPeg is updated.
 * `src/bit.c`: only for PUC lua: port of `require'bit'` from luajit https://bitop.luajit.org/
 * `runtime/lua/coxpcall.lua`: coxpcall (only needed for PUC lua, builtin to luajit)
+* `src/termkey`: [libtermkey](https://github.com/neovim/libtermkey)
 
 ### Forks
 
