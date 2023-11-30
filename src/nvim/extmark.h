@@ -13,7 +13,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 
-EXTERN int extmark_splice_pending INIT( = 0);
+EXTERN int curbuf_splice_pending INIT( = 0);
 
 typedef kvec_t(MTPair) ExtmarkInfoArray;
 

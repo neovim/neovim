@@ -357,8 +357,6 @@ typedef struct {
 #define BUF_UPDATE_CALLBACKS_INIT { LUA_NOREF, LUA_NOREF, LUA_NOREF, \
                                     LUA_NOREF, LUA_NOREF, false, false }
 
-EXTERN int curbuf_splice_pending INIT( = 0);
-
 #define BUF_HAS_QF_ENTRY 1
 #define BUF_HAS_LL_ENTRY 2
 
@@ -904,21 +902,13 @@ enum {
   kFloatAnchorSouth = 2,
 };
 
-// NW -> 0
-// NE -> kFloatAnchorEast
-// SW -> kFloatAnchorSouth
-// SE -> kFloatAnchorSouth | kFloatAnchorEast
-EXTERN const char *const float_anchor_str[] INIT( = { "NW", "NE", "SW", "SE" });
-
+/// Keep in sync with float_relative_str in winfloat.h
 typedef enum {
   kFloatRelativeEditor = 0,
   kFloatRelativeWindow = 1,
   kFloatRelativeCursor = 2,
   kFloatRelativeMouse = 3,
 } FloatRelative;
-
-EXTERN const char *const float_relative_str[] INIT( = { "editor", "win",
-                                                        "cursor", "mouse" });
 
 typedef enum {
   kWinStyleUnused = 0,
