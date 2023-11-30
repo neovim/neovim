@@ -8,7 +8,6 @@
 
 #include "auto/config.h"
 #include "nvim/event/loop.h"
-#include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
@@ -19,7 +18,7 @@
 #include "nvim/os/time.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/time.c.generated.h"  // IWYU pragma: export
+# include "os/time.c.generated.h"
 #endif
 
 /// Gets a high-resolution (nanosecond), monotonically-increasing time relative

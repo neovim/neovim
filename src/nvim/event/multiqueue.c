@@ -48,7 +48,6 @@
 
 #include "nvim/event/defs.h"
 #include "nvim/event/multiqueue.h"
-#include "nvim/func_attr.h"
 #include "nvim/lib/queue.h"
 #include "nvim/memory.h"
 

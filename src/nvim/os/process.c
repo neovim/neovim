@@ -44,7 +44,7 @@
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/process.c.generated.h"  // IWYU pragma: export
+# include "os/process.c.generated.h"
 #endif
 
 #ifdef MSWIN
@@ -114,6 +114,7 @@ bool os_proc_tree_kill(int pid, int sig)
 /// @param[out] proc_count Number of child processes.
 /// @return 0 on success, 1 if process not found, 2 on other error.
 int os_proc_children(int ppid, int **proc_list, size_t *proc_count)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (ppid < 0) {
     return 2;

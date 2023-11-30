@@ -11,7 +11,6 @@
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
-#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
@@ -22,7 +21,7 @@
 #include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "buffer_updates.c.generated.h"  // IWYU pragma: export
+# include "buffer_updates.c.generated.h"
 #endif
 
 // Register a channel. Return True if the channel was added, or already added.

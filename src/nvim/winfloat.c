@@ -9,7 +9,6 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/drawscreen.h"
-#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/macros_defs.h"

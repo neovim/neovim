@@ -16,7 +16,6 @@
 #include "nvim/decoration_provider.h"
 #include "nvim/drawline.h"
 #include "nvim/eval.h"
-#include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"

@@ -22,7 +22,6 @@
 
 #include "nvim/arabic.h"
 #include "nvim/ascii_defs.h"
-#include "nvim/func_attr.h"
 #include "nvim/macros_defs.h"
 #include "nvim/option_vars.h"
 

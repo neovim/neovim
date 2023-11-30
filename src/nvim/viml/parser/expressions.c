@@ -59,7 +59,6 @@
 #include "nvim/assert_defs.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
-#include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"

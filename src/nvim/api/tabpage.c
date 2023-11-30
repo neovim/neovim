@@ -6,10 +6,13 @@
 #include "nvim/api/tabpage.h"
 #include "nvim/api/vim.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/memory.h"
 #include "nvim/window.h"
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "api/tabpage.c.generated.h"
+#endif
 
 /// Gets the windows in a tabpage
 ///

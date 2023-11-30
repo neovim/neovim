@@ -13,7 +13,6 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
-#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight_group.h"

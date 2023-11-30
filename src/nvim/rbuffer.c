@@ -3,13 +3,12 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "nvim/func_attr.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/rbuffer.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "rbuffer.c.generated.h"  // IWYU pragma: export
+# include "rbuffer.c.generated.h"
 #endif
 
 /// Creates a new `RBuffer` instance.
@@ -214,7 +213,7 @@ size_t rbuffer_read(RBuffer *buf, char *dst, size_t dst_size)
 }
 
 char *rbuffer_get(RBuffer *buf, size_t index)
-    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   assert(index < buf->size);
   char *rptr = buf->read_ptr + index;

@@ -7,10 +7,11 @@
 #include "nvim/math.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "math.c.generated.h"  // IWYU pragma: export
+# include "math.c.generated.h"
 #endif
 
 int xfpclassify(double d)
+  FUNC_ATTR_CONST
 {
   uint64_t m;
 
@@ -29,11 +30,13 @@ int xfpclassify(double d)
 }
 
 int xisinf(double d)
+  FUNC_ATTR_CONST
 {
   return FP_INFINITE == xfpclassify(d);
 }
 
 int xisnan(double d)
+  FUNC_ATTR_CONST
 {
   return FP_NAN == xfpclassify(d);
 }

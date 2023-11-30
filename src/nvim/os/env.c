@@ -14,7 +14,6 @@
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
 #include "nvim/eval.h"
-#include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
@@ -44,6 +43,10 @@
 
 #ifdef HAVE_SYS_UTSNAME_H
 # include <sys/utsname.h>
+#endif
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/env.c.generated.h"
 #endif
 
 // Because `uv_os_getenv` requires allocating, we must manage a map to maintain

@@ -10,7 +10,6 @@
 #include "nvim/decoration.h"
 #include "nvim/diff.h"
 #include "nvim/fold.h"
-#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
 #include "nvim/macros_defs.h"

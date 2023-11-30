@@ -24,7 +24,6 @@
 #include "nvim/drawscreen.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/extmark.h"
-#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
 #include "nvim/mapping.h"

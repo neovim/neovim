@@ -44,22 +44,29 @@ typedef struct _queue {
   }
 
 // ffi.cdef is unable to swallow `bool` in place of `int` here.
+static inline int QUEUE_EMPTY(const QUEUE *q)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+
 static inline int QUEUE_EMPTY(const QUEUE *const q)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return q == q->next;
 }
 
 #define QUEUE_HEAD(q) (q)->next
 
-static inline void QUEUE_INIT(QUEUE *const q) FUNC_ATTR_ALWAYS_INLINE
+static inline void QUEUE_INIT(QUEUE *q)
+  REAL_FATTR_ALWAYS_INLINE;
+
+static inline void QUEUE_INIT(QUEUE *const q)
 {
   q->next = q;
   q->prev = q;
 }
 
+static inline void QUEUE_ADD(QUEUE *h, QUEUE *n)
+  REAL_FATTR_ALWAYS_INLINE;
+
 static inline void QUEUE_ADD(QUEUE *const h, QUEUE *const n)
-  FUNC_ATTR_ALWAYS_INLINE
 {
   h->prev->next = n->next;
   n->next->prev = h->prev;
@@ -67,8 +74,10 @@ static inline void QUEUE_ADD(QUEUE *const h, QUEUE *const n)
   h->prev->next = h;
 }
 
+static inline void QUEUE_INSERT_HEAD(QUEUE *h, QUEUE *q)
+  REAL_FATTR_ALWAYS_INLINE;
+
 static inline void QUEUE_INSERT_HEAD(QUEUE *const h, QUEUE *const q)
-  FUNC_ATTR_ALWAYS_INLINE
 {
   q->next = h->next;
   q->prev = h;
@@ -76,8 +85,10 @@ static inline void QUEUE_INSERT_HEAD(QUEUE *const h, QUEUE *const q)
   h->next = q;
 }
 
+static inline void QUEUE_INSERT_TAIL(QUEUE *h, QUEUE *q)
+  REAL_FATTR_ALWAYS_INLINE;
+
 static inline void QUEUE_INSERT_TAIL(QUEUE *const h, QUEUE *const q)
-  FUNC_ATTR_ALWAYS_INLINE
 {
   q->next = h;
   q->prev = h->prev;
@@ -85,7 +96,10 @@ static inline void QUEUE_INSERT_TAIL(QUEUE *const h, QUEUE *const q)
   h->prev = q;
 }
 
-static inline void QUEUE_REMOVE(QUEUE *const q) FUNC_ATTR_ALWAYS_INLINE
+static inline void QUEUE_REMOVE(QUEUE *q)
+  REAL_FATTR_ALWAYS_INLINE;
+
+static inline void QUEUE_REMOVE(QUEUE *const q)
 {
   q->prev->next = q->next;
   q->next->prev = q->prev;

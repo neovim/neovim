@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "auto/config.h"  // IWYU pragma: keep
+#include "auto/config.h"
 #include "nvim/base64.h"
 #include "nvim/memory.h"
 
@@ -12,7 +12,7 @@
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "base64.c.generated.h"  // IWYU pragma: export
+# include "base64.c.generated.h"
 #endif
 
 static const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -65,6 +65,7 @@ static inline uint32_t htobe32(uint32_t host_32bits)
 /// @param src_len Length of the string
 /// @return Base64 encoded string
 char *base64_encode(const char *src, size_t src_len)
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(src != NULL);
 
