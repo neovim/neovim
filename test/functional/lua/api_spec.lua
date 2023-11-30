@@ -245,4 +245,8 @@ describe('luaeval(vim.api.…)', function()
     eq('', funcs.luaeval('vim.api.nvim_replace_termcodes("", 0, 1.5, "test")'))
     eq('', funcs.luaeval('vim.api.nvim_replace_termcodes("", true, {}, {[vim.type_idx]=vim.types.array})'))
   end)
+
+  it('serializes sparse arrays in Lua', function()
+    eq({ [1] = vim.NIL, [2] = 2 }, exec_lua [[ return { [2] = 2 } ]])
+  end)
 end)
