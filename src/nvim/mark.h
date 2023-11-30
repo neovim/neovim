@@ -121,6 +121,9 @@ static inline void clearpos(pos_T *a)
   a->coladd = 0;
 }
 
+/// Global marks (marks with file number or name)
+EXTERN xfmark_T namedfm[NGLOBALMARKS] INIT( = { 0 });
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mark.h.generated.h"
 #endif

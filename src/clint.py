@@ -880,18 +880,21 @@ def CheckForHeaderGuard(filename, lines, error):
         error(filename, 0, 'build/header_guard', 5,
               'No "#pragma once" found in header')
 
+
 def CheckIncludes(filename, lines, error):
-    """Checks that headers only include _defs headers
+    """Checks that headers only include _defs headers.
 
     Args:
       filename: The name of the C++ header file.
       lines: An array of strings, each representing a line of the file.
       error: The function to call with any errors found.
     """
-    if filename.endswith('.c.h') or filename.endswith('.in.h') or FileInfo(filename).RelativePath() in {
+    if (filename.endswith('.c.h')
+            or filename.endswith('.in.h')
+            or FileInfo(filename).RelativePath() in {
         'func_attr.h',
         'os/pty_process.h',
-    }:
+    }):
         return
 
     # These should be synced with the ignored headers in the `iwyu` target in
@@ -997,6 +1000,21 @@ def CheckIncludes(filename, lines, error):
                     not name.endswith('_enum.generated.h')):
                 error(filename, i, 'build/include_defs', 5,
                       'Headers should not include non-"_defs" headers')
+
+
+def CheckNonSymbols(filename, lines, error):
+    """Checks that a _defs.h header only contains non-symbols.
+
+    Args:
+      filename: The name of the C++ header file.
+      lines: An array of strings, each representing a line of the file.
+      error: The function to call with any errors found.
+    """
+    for i, line in enumerate(lines):
+        # Only a check against extern variables for now.
+        if line.startswith('EXTERN ') or line.startswith('extern '):
+            error(filename, i, 'build/defs_header', 5,
+                  '"_defs" headers should not contain extern variables')
 
 
 def CheckForBadCharacters(filename, lines, error):
@@ -2286,6 +2304,8 @@ def ProcessFileData(filename, file_extension, lines, error,
     if file_extension == 'h':
         CheckForHeaderGuard(filename, lines, error)
         CheckIncludes(filename, lines, error)
+        if filename.endswith('/defs.h') or filename.endswith('_defs.h'):
+            CheckNonSymbols(filename, lines, error)
 
     RemoveMultiLineComments(filename, lines, error)
     clean_lines = CleansedLines(lines, init_lines)
