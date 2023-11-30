@@ -173,11 +173,7 @@ iwyu: build/.ran-cmake
 	|src/nvim/event/stream.h\
 	|src/nvim/event/time.h\
 	|src/nvim/event/wstream.h\
-	|src/nvim/ex_cmds.h\
-	|src/nvim/ex_docmd.h\
 	|src/nvim/extmark.h\
-	|src/nvim/file_search.h\
-	|src/nvim/fileio.h\
 	|src/nvim/fold.h\
 	|src/nvim/garray.h\
 	|src/nvim/getchar.h\
@@ -186,14 +182,11 @@ iwyu: build/.ran-cmake
 	|src/nvim/highlight.h\
 	|src/nvim/highlight_group.h\
 	|src/nvim/input.h\
-	|src/nvim/insexpand.h\
 	|src/nvim/keycodes.h\
 	|src/nvim/log.h\
 	|src/nvim/lua/executor.h\
 	|src/nvim/main.h\
 	|src/nvim/mark.h\
-	|src/nvim/mouse.h\
-	|src/nvim/move.h\
 	|src/nvim/msgpack_rpc/channel.h\
 	|src/nvim/msgpack_rpc/channel_defs.h\
 	|src/nvim/msgpack_rpc/helpers.h\
@@ -207,10 +200,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/path.h\
 	|src/nvim/plines.h\
 	|src/nvim/popupmenu.h\
-	|src/nvim/search.h\
-	|src/nvim/spell.h\
-	|src/nvim/syntax.h\
-	|src/nvim/textobject.h\
 	|src/nvim/tui/input.h\
 	|src/nvim/ui.h\
 	|src/nvim/viml/parser/expressions.h\

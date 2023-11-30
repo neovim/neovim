@@ -15,11 +15,10 @@
 # error Configure did not run properly.
 #endif
 
-// bring lots of system header files
-#include "nvim/os/os_defs.h"  // IWYU pragma: keep
-
-/// length of a buffer to store a number in ASCII (64 bits binary + NUL)
-enum { NUMBUFLEN = 65, };
+enum {
+  /// length of a buffer to store a number in ASCII (64 bits binary + NUL)
+  NUMBUFLEN = 65,
+};
 
 #define MAX_TYPENR 65535
 
@@ -31,6 +30,41 @@ typedef enum {
   FORWARD_FILE = 3,
   BACKWARD_FILE = -3,
 } Direction;
+
+/// Used to track the status of external functions.
+/// Currently only used for iconv().
+typedef enum {
+  kUnknown,
+  kWorking,
+  kBroken,
+} WorkingStatus;
+
+/// The scope of a working-directory command like `:cd`.
+///
+/// Scopes are enumerated from lowest to highest. When adding a scope make sure
+/// to update all functions using scopes as well, such as the implementation of
+/// `getcwd()`. When using scopes as limits (e.g. in loops) don't use the scopes
+/// directly, use `MIN_CD_SCOPE` and `MAX_CD_SCOPE` instead.
+typedef enum {
+  kCdScopeInvalid = -1,
+  kCdScopeWindow,   ///< Affects one window.
+  kCdScopeTabpage,  ///< Affects one tab page.
+  kCdScopeGlobal,   ///< Affects the entire Nvim instance.
+} CdScope;
+
+#define MIN_CD_SCOPE  kCdScopeWindow
+#define MAX_CD_SCOPE  kCdScopeGlobal
+
+/// What caused the current directory to change.
+typedef enum {
+  kCdCauseOther = -1,
+  kCdCauseManual,  ///< Using `:cd`, `:tcd`, `:lcd` or `chdir()`.
+  kCdCauseWindow,  ///< Switching to another window.
+  kCdCauseAuto,    ///< On 'autochdir'.
+} CdCause;
+
+// bring lots of system header files
+#include "nvim/os/os_defs.h"  // IWYU pragma: keep
 
 // return values for functions
 #if !(defined(OK) && (OK == 1))

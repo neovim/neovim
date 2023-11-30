@@ -4,7 +4,7 @@
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/normal_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
-#include "nvim/vim_defs.h"
+#include "nvim/vim_defs.h"  // IWYU pragma: keep
 
 /// jump_to_mouse() returns one of first five these values, possibly with
 /// some of the other five added.

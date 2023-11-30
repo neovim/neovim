@@ -6,8 +6,8 @@
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/getchar_defs.h"
-#include "nvim/globals.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
+#include "nvim/vim_defs.h"  // IWYU pragma: keep
 
 /// flags for do_cmdline()
 enum {

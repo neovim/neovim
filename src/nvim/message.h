@@ -30,8 +30,7 @@ enum {
   VIM_DISCARDALL = 6,
 };
 
-/// special attribute addition: Put message in history
-enum { MSG_HIST = 0x1000, };
+enum { MSG_HIST = 0x1000, };  ///< special attribute addition: Put message in history
 
 typedef struct {
   String text;

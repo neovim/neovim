@@ -8,12 +8,13 @@
 #include "nvim/hashtab_defs.h"
 #include "nvim/regexp_defs.h"
 
-/// Assume max. word len is this many bytes.
-/// Some places assume a word length fits in a byte, thus it can't be above 255.
-enum { MAXWLEN = 254, };
+enum {
+  /// Assume max. word len is this many bytes.
+  /// Some places assume a word length fits in a byte, thus it can't be above 255.
+  MAXWLEN = 254,
+};
 
-/// Number of regions supported.
-enum { MAXREGIONS = 8, };
+enum { MAXREGIONS = 8, };  ///< Number of regions supported.
 
 /// Type used for indexes in the word tree need to be at least 4 bytes.  If int
 /// is 8 bytes we could use something smaller, but what?

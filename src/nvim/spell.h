@@ -1,11 +1,8 @@
 #pragma once
 
-#include <stdbool.h>
-
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
-#include "nvim/globals.h"
 #include "nvim/spell_defs.h"  // IWYU pragma: export
-#include "nvim/vim_defs.h"
+#include "nvim/vim_defs.h"  // IWYU pragma: keep
 
 /// First language that is loaded, start of the linked list of loaded languages.
 extern slang_T *first_lang;
