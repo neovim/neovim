@@ -700,12 +700,12 @@ static void handle_raw_buffer(TermInput *input, bool force)
       if (size > termkey_get_buffer_remaining(input->tk)) {
         // We are processing a very long escape sequence. Increase termkey's
         // internal buffer size. We don't handle out of memory situations so
-        // assert the result
+        // abort if it fails
         const size_t delta = size - termkey_get_buffer_remaining(input->tk);
         const size_t bufsize = termkey_get_buffer_size(input->tk);
-        const bool success = termkey_set_buffer_size(input->tk, MAX(bufsize + delta, bufsize * 2));
-        assert(success);
-        (void)success;
+        if (!termkey_set_buffer_size(input->tk, MAX(bufsize + delta, bufsize * 2))) {
+          abort();
+        }
       }
 
       size_t consumed = termkey_push_bytes(input->tk, ptr, size);
@@ -730,9 +730,9 @@ static void handle_raw_buffer(TermInput *input, bool force)
   if (tk_count < INPUT_BUFFER_SIZE && tk_size > INPUT_BUFFER_SIZE) {
     // If the termkey buffer was resized to handle a large input sequence then
     // shrink it back down to its original size.
-    const bool success = termkey_set_buffer_size(input->tk, INPUT_BUFFER_SIZE);
-    assert(success);
-    (void)success;
+    if (!termkey_set_buffer_size(input->tk, INPUT_BUFFER_SIZE)) {
+      abort();
+    }
   }
 }
 
