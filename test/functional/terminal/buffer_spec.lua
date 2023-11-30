@@ -261,7 +261,6 @@ describe(':terminal buffer', function()
   end)
 
   it('it works with set rightleft #11438', function()
-    skip(is_os('win'))
     local columns = eval('&columns')
     feed(string.rep('a', columns))
     command('set rightleft')
