@@ -160,10 +160,12 @@
    (v).size = 0, \
    (v).items = (v).init_array)
 
+static inline void *_memcpy_free(void *restrict dest, void *restrict src, size_t size)
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_NONNULL_RET REAL_FATTR_ALWAYS_INLINE;
+
 /// Move data to a new destination and free source
 static inline void *_memcpy_free(void *const restrict dest, void *const restrict src,
                                  const size_t size)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_ALWAYS_INLINE
 {
   memcpy(dest, src, size);
   XFREE_CLEAR(src);

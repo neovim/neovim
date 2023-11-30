@@ -5,7 +5,6 @@
 #include "nvim/eval/executor.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
-#include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
@@ -15,7 +14,7 @@
 #include "nvim/vim_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "eval/executor.c.generated.h"  // IWYU pragma: export
+# include "eval/executor.c.generated.h"
 #endif
 
 char *e_list_index_out_of_range_nr

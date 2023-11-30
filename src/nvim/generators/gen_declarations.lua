@@ -164,7 +164,7 @@ if fname == '--help' then
   print([[
 Usage:
 
-    gendeclarations.lua definitions.c static.h non-static.h definitions.i
+    gen_declarations.lua definitions.c static.h non-static.h definitions.i
 
 Generates declarations for a C file definitions.c, putting declarations for
 static functions into static.h and declarations for non-static functions into
@@ -202,17 +202,10 @@ local text = preproc_f:read("*all")
 preproc_f:close()
 
 
-local header = [[
+local non_static = [[
 #define DEFINE_FUNC_ATTRIBUTES
 #include "nvim/func_attr.h"
 #undef DEFINE_FUNC_ATTRIBUTES
-]]
-
-local footer = [[
-#include "nvim/func_attr.h"
-]]
-
-local non_static = header .. [[
 #ifndef DLLEXPORT
 #  ifdef MSWIN
 #    define DLLEXPORT __declspec(dllexport)
@@ -222,7 +215,20 @@ local non_static = header .. [[
 #endif
 ]]
 
-local static = header
+local static = [[
+#define DEFINE_FUNC_ATTRIBUTES
+#include "nvim/func_attr.h"
+#undef DEFINE_FUNC_ATTRIBUTES
+]]
+
+local non_static_footer = [[
+#include "nvim/func_attr.h"
+]]
+
+local static_footer = [[
+#define DEFINE_EMPTY_ATTRIBUTES
+#include "nvim/func_attr.h"  // IWYU pragma: export
+]]
 
 if fname:find('.*/src/nvim/.*%.c$') then
   -- Add an IWYU pragma comment if the corresponding .h file exists.
@@ -307,8 +313,8 @@ while init ~= nil do
   end
 end
 
-non_static = non_static .. footer
-static = static .. footer
+non_static = non_static .. non_static_footer
+static = static .. static_footer
 
 local F
 F = io.open(static_fname, 'w')

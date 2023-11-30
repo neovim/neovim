@@ -22,6 +22,10 @@
 # include "nvim/message.h"
 #endif
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/users.c.generated.h"
+#endif
+
 // All user names (for ~user completion as done by shell).
 static garray_T ga_users = GA_EMPTY_INIT_VALUE;
 

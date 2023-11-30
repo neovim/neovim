@@ -107,6 +107,10 @@ static inline bool ascii_isbdigit(int c)
   REAL_FATTR_CONST
   REAL_FATTR_ALWAYS_INLINE;
 
+static inline bool ascii_isodigit(int c)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
+
 static inline bool ascii_isspace(int c)
   REAL_FATTR_CONST
   REAL_FATTR_ALWAYS_INLINE;

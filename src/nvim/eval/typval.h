@@ -85,6 +85,9 @@ static inline void tv_list_set_lock(list_T *const l, const VarLockStatus lock)
   l->lv_lock = lock;
 }
 
+static inline void tv_list_set_copyid(list_T *l, int copyid)
+  REAL_FATTR_NONNULL_ALL;
+
 /// Set list copyID
 ///
 /// Does not expect NULL list, be careful.
@@ -92,7 +95,6 @@ static inline void tv_list_set_lock(list_T *const l, const VarLockStatus lock)
 /// @param[out]  l  List to modify.
 /// @param[in]  copyid  New copyID.
 static inline void tv_list_set_copyid(list_T *const l, const int copyid)
-  FUNC_ATTR_NONNULL_ALL
 {
   l->lv_copyID = copyid;
 }
@@ -442,22 +444,20 @@ static inline bool tv_get_float_chk(const typval_T *const tv, float_T *const ret
 }
 
 static inline DictWatcher *tv_dict_watcher_node_data(QUEUE *q)
-  REAL_FATTR_NONNULL_ALL REAL_FATTR_NONNULL_RET REAL_FATTR_PURE
-  REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE
-  FUNC_ATTR_NO_SANITIZE_ADDRESS;
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL REAL_FATTR_NONNULL_RET
+    REAL_FATTR_NO_SANITIZE_ADDRESS REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Compute the `DictWatcher` address from a QUEUE node.
 ///
 /// This only exists for .asan-blacklist (ASAN doesn't handle QUEUE_DATA pointer
 /// arithmetic).
 static inline DictWatcher *tv_dict_watcher_node_data(QUEUE *q)
-  FUNC_ATTR_NO_SANITIZE_ADDRESS
 {
   return QUEUE_DATA(q, DictWatcher, node);
 }
 
 static inline bool tv_is_func(typval_T tv)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
+  REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
 
 /// Check whether given typval_T contains a function
 ///

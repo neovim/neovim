@@ -5,6 +5,7 @@
 #endif
 
 void parser_simple_get_line(void *cookie, ParserLine *ret_pline)
+  FUNC_ATTR_NONNULL_ALL
 {
   ParserLine **plines_p = (ParserLine **)cookie;
   *ret_pline = **plines_p;

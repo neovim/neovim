@@ -36,9 +36,11 @@ typedef struct {
   size_t li_length;  ///< Length of the string inside the read item.
 } ListReaderState;
 
+static inline ListReaderState encode_init_lrstate(const list_T *list)
+  REAL_FATTR_NONNULL_ALL;
+
 /// Initialize ListReaderState structure
 static inline ListReaderState encode_init_lrstate(const list_T *const list)
-  FUNC_ATTR_NONNULL_ALL
 {
   return (ListReaderState) {
     .list = list,

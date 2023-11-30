@@ -30,6 +30,10 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "strings.c.generated.h"
+#endif
+
 static const char e_cannot_mix_positional_and_non_positional_str[]
   = N_("E1500: Cannot mix positional and non-positional arguments: %s");
 static const char e_fmt_arg_nr_unused_str[]
@@ -461,9 +465,6 @@ char *vim_strchr(const char *const string, const int c)
 
 // Sort an array of strings.
 
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "strings.c.generated.h"
-#endif
 static int sort_compare(const void *s1, const void *s2)
   FUNC_ATTR_NONNULL_ALL
 {

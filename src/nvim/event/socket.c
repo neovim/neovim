@@ -10,7 +10,6 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/socket.h"
 #include "nvim/event/stream.h"
-#include "nvim/func_attr.h"
 #include "nvim/gettext.h"
 #include "nvim/log.h"
 #include "nvim/main.h"

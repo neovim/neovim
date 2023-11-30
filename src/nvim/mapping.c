@@ -24,7 +24,6 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_session.h"
-#include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
@@ -143,7 +142,7 @@ mapblock_T *get_buf_maphash_list(int state, int c)
 /// @param  index  The index in the maphash[]
 /// @param  buf  The buffer to get the maphash from. NULL for global
 mapblock_T *get_maphash(int index, buf_T *buf)
-    FUNC_ATTR_PURE
+  FUNC_ATTR_PURE
 {
   if (index >= MAX_MAPHASH) {
     return NULL;

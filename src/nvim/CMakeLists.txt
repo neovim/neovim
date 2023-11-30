@@ -463,7 +463,7 @@ endif()
 #-------------------------------------------------------------------------------
 
 get_target_property(prop main_lib INTERFACE_COMPILE_DEFINITIONS)
-foreach(gen_cdef DO_NOT_DEFINE_EMPTY_ATTRIBUTES ${prop})
+foreach(gen_cdef ${prop})
   if(NOT ${gen_cdef} MATCHES "INCLUDE_GENERATED_DECLARATIONS")
     list(APPEND gen_cflags "-D${gen_cdef}")
   endif()

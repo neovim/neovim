@@ -26,10 +26,11 @@
 #include "nvim/ui.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "state.c.generated.h"  // IWYU pragma: export
+# include "state.c.generated.h"
 #endif
 
 void state_enter(VimState *s)
+  FUNC_ATTR_NONNULL_ALL
 {
   while (true) {
     int check_result = s->check ? s->check(s) : 1;
@@ -168,6 +169,7 @@ int get_real_state(void)
 /// The first character represents the major mode, the following ones the minor
 /// ones.
 void get_mode(char *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
   int i = 0;
 

@@ -17,7 +17,6 @@
 #include "nvim/buffer.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds_defs.h"
-#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"

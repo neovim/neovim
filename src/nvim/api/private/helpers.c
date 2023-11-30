@@ -20,7 +20,6 @@
 #include "nvim/eval/typval_defs.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_eval.h"
-#include "nvim/func_attr.h"
 #include "nvim/garray.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_group.h"

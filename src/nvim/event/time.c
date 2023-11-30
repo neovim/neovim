@@ -3,7 +3,6 @@
 
 #include "nvim/event/loop.h"
 #include "nvim/event/time.h"
-#include "nvim/func_attr.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/time.c.generated.h"

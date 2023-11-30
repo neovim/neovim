@@ -11,7 +11,6 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/eval/window.h"
-#include "nvim/func_attr.h"
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"

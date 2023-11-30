@@ -190,7 +190,7 @@ Function declarations ~
 
 Every function must not have a separate declaration.
 
-Function declarations are created by the gendeclarations.lua script. >c
+Function declarations are created by the gen_declarations.lua script. >c
 
     static void f(void);
 

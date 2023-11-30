@@ -7,7 +7,6 @@
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/process.h"
 #include "nvim/event/stream.h"
-#include "nvim/func_attr.h"
 #include "nvim/log.h"
 #include "nvim/os/os.h"
 #include "nvim/ui_client.h"
