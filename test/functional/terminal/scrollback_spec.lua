@@ -600,21 +600,24 @@ describe("pending scrollback line handling", function()
     assert_alive()
   end)
 
-  it("does not crash after nvim_buf_call #14891", function()
-    skip(is_os('win'))
-    exec_lua [[
+  it('does not crash after nvim_buf_call #14891', function()
+    exec_lua([[
       local bufnr = vim.api.nvim_create_buf(false, true)
+      local args = ...
       vim.api.nvim_buf_call(bufnr, function()
-        vim.fn.termopen({"echo", ("hi\n"):rep(11)})
+        vim.fn.termopen(args)
       end)
       vim.api.nvim_win_set_buf(0, bufnr)
-      vim.cmd("startinsert")
-    ]]
+      vim.cmd('startinsert')
+    ]], is_os('win')
+          and {'cmd.exe', '/c', 'for /L %I in (1,1,12) do @echo hi'}
+          or {'printf', ('hi\n'):rep(12)}
+    )
     screen:expect [[
       hi                            |
       hi                            |
       hi                            |
-                                    |
+      hi                            |
                                     |
       [Process exited 0]{2: }           |
       {3:-- TERMINAL --}                |
