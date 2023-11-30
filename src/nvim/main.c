@@ -30,6 +30,7 @@
 #include "nvim/decoration.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
+#include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"

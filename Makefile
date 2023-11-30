@@ -152,11 +152,8 @@ iwyu: build/.ran-cmake
 	|src/nvim/channel.h\
 	|src/nvim/charset.h\
 	|src/nvim/cmdexpand.h\
-	|src/nvim/cmdhist.h\
 	|src/nvim/decoration.h\
-	|src/nvim/diff.h\
 	|src/nvim/drawline.h\
-	|src/nvim/drawscreen.h\
 	|src/nvim/eval.h\
 	|src/nvim/eval/encode.h\
 	|src/nvim/eval/typval.h\
@@ -174,7 +171,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/event/time.h\
 	|src/nvim/event/wstream.h\
 	|src/nvim/extmark.h\
-	|src/nvim/fold.h\
 	|src/nvim/garray.h\
 	|src/nvim/getchar.h\
 	|src/nvim/globals.h\
@@ -183,7 +179,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/highlight_group.h\
 	|src/nvim/input.h\
 	|src/nvim/keycodes.h\
-	|src/nvim/log.h\
 	|src/nvim/lua/executor.h\
 	|src/nvim/main.h\
 	|src/nvim/mark.h\
@@ -197,14 +192,11 @@ iwyu: build/.ran-cmake
 	|src/nvim/os/pty_conpty_win.h\
 	|src/nvim/os/pty_process_unix.h\
 	|src/nvim/os/pty_process_win.h\
-	|src/nvim/path.h\
 	|src/nvim/plines.h\
-	|src/nvim/popupmenu.h\
 	|src/nvim/tui/input.h\
 	|src/nvim/ui.h\
 	|src/nvim/viml/parser/expressions.h\
 	|src/nvim/viml/parser/parser.h\
-	|src/nvim/window.h\
 	)" --nosafe_headers < build/iwyu.log
 	cmake -B build -U ENABLE_IWYU
 	cmake --build build
