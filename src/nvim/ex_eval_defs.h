@@ -13,9 +13,11 @@ struct eslist_elem {
   eslist_T *next;         ///< next element on the list
 };
 
-/// For conditional commands a stack is kept of nested conditionals.
-/// When cs_idx < 0, there is no conditional command.
-enum { CSTACK_LEN = 50, };
+enum {
+  /// For conditional commands a stack is kept of nested conditionals.
+  /// When cs_idx < 0, there is no conditional command.
+  CSTACK_LEN = 50,
+};
 
 typedef struct {
   int cs_flags[CSTACK_LEN];       ///< CSF_ flags

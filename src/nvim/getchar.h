@@ -15,8 +15,7 @@ typedef enum {
   FLUSH_INPUT,      ///< flush typebuf and inchar() input
 } flush_buffers_T;
 
-/// Maximum number of streams to read script from
-enum { NSCRIPT = 15, };
+enum { NSCRIPT = 15, };  ///< Maximum number of streams to read script from
 
 /// Streams to read script from
 extern FileDescriptor *scriptin[NSCRIPT];

@@ -70,6 +70,5 @@ enum {
   REPLACE_NL_NCHAR  = -2,
 };
 
-/// columns needed by shown command
-enum { SHOWCMD_COLS = 10, };
+enum { SHOWCMD_COLS = 10, };  ///< columns needed by shown command
 enum { SHOWCMD_BUFLEN = SHOWCMD_COLS + 1 + 30, };

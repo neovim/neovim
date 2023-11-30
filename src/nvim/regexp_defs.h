@@ -33,18 +33,22 @@ typedef enum {
   MAGIC_ALL = 4,   ///< "\v" very magic
 } magic_T;
 
-/// The number of sub-matches is limited to 10.
-/// The first one (index 0) is the whole match, referenced with "\0".
-/// The second one (index 1) is the first sub-match, referenced with "\1".
-/// This goes up to the tenth (index 9), referenced with "\9".
-enum { NSUBEXP = 10, };
-
-/// In the NFA engine: how many braces are allowed.
-/// TODO(RE): Use dynamic memory allocation instead of static, like here
-enum { NFA_MAX_BRACES = 20, };
-
-/// In the NFA engine: how many states are allowed.
 enum {
+  /// The number of sub-matches is limited to 10.
+  /// The first one (index 0) is the whole match, referenced with "\0".
+  /// The second one (index 1) is the first sub-match, referenced with "\1".
+  /// This goes up to the tenth (index 9), referenced with "\9".
+  NSUBEXP = 10,
+};
+
+enum {
+  /// In the NFA engine: how many braces are allowed.
+  /// TODO(RE): Use dynamic memory allocation instead of static, like here
+  NFA_MAX_BRACES = 20,
+};
+
+enum {
+  /// In the NFA engine: how many states are allowed.
   NFA_MAX_STATES = 100000,
   NFA_TOO_EXPENSIVE = -1,
 };

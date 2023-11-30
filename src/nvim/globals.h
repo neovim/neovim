@@ -103,34 +103,6 @@ EXTERN struct nvim_stats_s {
 EXTERN int Rows INIT( = DFLT_ROWS);     // nr of rows in the screen
 EXTERN int Columns INIT( = DFLT_COLS);  // nr of columns in the screen
 
-// We use 64-bit file functions here, if available.  E.g. ftello() returns
-// off_t instead of long, which helps if long is 32 bit and off_t is 64 bit.
-// We assume that when fseeko() is available then ftello() is too.
-// Note that Windows has different function names.
-#if (defined(_MSC_VER) && (_MSC_VER >= 1300)) || defined(__MINGW32__)
-typedef __int64 off_T;
-# ifdef __MINGW32__
-#  define vim_lseek lseek64
-#  define vim_fseek fseeko64
-#  define vim_ftell ftello64
-# else
-#  define vim_lseek _lseeki64
-#  define vim_fseek _fseeki64
-#  define vim_ftell _ftelli64
-# endif
-#else
-typedef off_t off_T;
-# ifdef HAVE_FSEEKO
-#  define vim_lseek lseek
-#  define vim_ftell ftello
-#  define vim_fseek fseeko
-# else
-#  define vim_lseek lseek
-#  define vim_ftell ftell
-#  define vim_fseek(a, b, c) fseek(a, (long)b, c)
-# endif
-#endif
-
 // When vgetc() is called, it sets mod_mask to the set of modifiers that are
 // held down based on the MOD_MASK_* symbols that are read first.
 EXTERN int mod_mask INIT( = 0);  // current key modifiers
@@ -370,24 +342,7 @@ EXTERN bool did_check_timestamps INIT( = false);   // did check timestamps
                                                    // recently
 EXTERN int no_check_timestamps INIT( = 0);         // Don't check timestamps
 
-EXTERN bool autocmd_busy INIT( = false);          // Is apply_autocmds() busy?
-EXTERN int autocmd_no_enter INIT( = false);       // *Enter autocmds disabled
-EXTERN int autocmd_no_leave INIT( = false);       // *Leave autocmds disabled
 EXTERN int modified_was_set;                     // did ":set modified"
-EXTERN bool did_filetype INIT( = false);          // FileType event found
-// value for did_filetype when starting to execute autocommands
-EXTERN bool keep_filetype INIT( = false);
-
-// When deleting the current buffer, another one must be loaded.
-// If we know which one is preferred, au_new_curbuf is set to it.
-EXTERN bufref_T au_new_curbuf INIT( = { NULL, 0, 0 });
-
-// When deleting a buffer/window and autocmd_busy is true, do not free the
-// buffer/window. but link it in the list starting with
-// au_pending_free_buf/ap_pending_free_win, using b_next/w_next.
-// Free the buffer/window when autocmd_busy is being set to false.
-EXTERN buf_T *au_pending_free_buf INIT( = NULL);
-EXTERN win_T *au_pending_free_win INIT( = NULL);
 
 // Mouse coordinates, set by handle_mouse_event()
 EXTERN int mouse_grid;
@@ -425,19 +380,6 @@ EXTERN win_T *prevwin INIT( = NULL);  // previous window
        wp != NULL; wp = wp->w_next)
 
 EXTERN win_T *curwin;        // currently active window
-
-typedef struct {
-  win_T *auc_win;     ///< Window used in aucmd_prepbuf().  When not NULL the
-                      ///< window has been allocated.
-  bool auc_win_used;  ///< This auc_win is being used.
-} aucmdwin_T;
-
-/// When executing autocommands for a buffer that is not in any window, a
-/// special window is created to handle the side effects.  When autocommands
-/// nest we may need more than one.
-EXTERN kvec_t(aucmdwin_T) aucmd_win_vec INIT( = KV_INITIAL_VALUE);
-#define aucmd_win (aucmd_win_vec.items)
-#define AUCMD_WIN_COUNT ((int)aucmd_win_vec.size)
 
 // The window layout is kept in a tree of frames.  topframe points to the top
 // of the tree.
@@ -758,11 +700,6 @@ EXTERN char last_mode[MODE_MAX_LENGTH] INIT( = "n");
 EXTERN char *last_cmdline INIT( = NULL);        // last command line (for ":)
 EXTERN char *repeat_cmdline INIT( = NULL);      // command line for "."
 EXTERN char *new_last_cmdline INIT( = NULL);    // new value for last_cmdline
-EXTERN char *autocmd_fname INIT( = NULL);       // fname for <afile> on cmdline
-EXTERN bool autocmd_fname_full INIT( = false);  // autocmd_fname is full path
-EXTERN int autocmd_bufnr INIT( = 0);            // fnum for <abuf> on cmdline
-EXTERN char *autocmd_match INIT( = NULL);       // name for <amatch> on cmdline
-EXTERN bool did_cursorhold INIT( = false);      // set when CursorHold t'gerd
 
 EXTERN int postponed_split INIT( = 0);        // for CTRL-W CTRL-] command
 EXTERN int postponed_split_flags INIT( = 0);  // args for win_split()
@@ -1051,39 +988,7 @@ EXTERN bool headless_mode INIT(= false);
 
 // uncrustify:on
 
-/// Used to track the status of external functions.
-/// Currently only used for iconv().
-typedef enum {
-  kUnknown,
-  kWorking,
-  kBroken,
-} WorkingStatus;
-
-/// The scope of a working-directory command like `:cd`.
-///
-/// Scopes are enumerated from lowest to highest. When adding a scope make sure
-/// to update all functions using scopes as well, such as the implementation of
-/// `getcwd()`. When using scopes as limits (e.g. in loops) don't use the scopes
-/// directly, use `MIN_CD_SCOPE` and `MAX_CD_SCOPE` instead.
-typedef enum {
-  kCdScopeInvalid = -1,
-  kCdScopeWindow,   ///< Affects one window.
-  kCdScopeTabpage,  ///< Affects one tab page.
-  kCdScopeGlobal,   ///< Affects the entire Nvim instance.
-} CdScope;
-
-#define MIN_CD_SCOPE  kCdScopeWindow
-#define MAX_CD_SCOPE  kCdScopeGlobal
-
-/// What caused the current directory to change.
-typedef enum {
-  kCdCauseOther = -1,
-  kCdCauseManual,  ///< Using `:cd`, `:tcd`, `:lcd` or `chdir()`.
-  kCdCauseWindow,  ///< Switching to another window.
-  kCdCauseAuto,    ///< On 'autochdir'.
-} CdCause;
-
-// Only filled for Win32.
+/// Only filled for Win32.
 EXTERN char windowsVersion[20] INIT( = { 0 });
 
 /// While executing a regexp and set to OPTION_MAGIC_ON or OPTION_MAGIC_OFF this

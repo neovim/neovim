@@ -12,19 +12,15 @@ typedef int colnr_T;
 /// Format used to print values which have colnr_T type
 #define PRIdCOLNR "d"
 
-/// Maximal (invalid) line number
-enum { MAXLNUM = 0x7fffffff, };
+enum { MAXLNUM = 0x7fffffff, };  ///< Maximal (invalid) line number
 
-/// Maximal column number
-/// MAXCOL used to be INT_MAX, but with 64 bit ints that results in running
-/// out of memory when trying to allocate a very long line.
-enum { MAXCOL = 0x7fffffff, };
+// MAXCOL used to be INT_MAX, but with 64 bit ints that results in running
+// out of memory when trying to allocate a very long line.
+enum { MAXCOL = 0x7fffffff, };   ///< Maximal column number
 
-/// Minimum line number
-enum { MINLNUM = 1, };
+enum { MINLNUM = 1, };           ///< Minimum line number
 
-/// Minimum column number
-enum { MINCOL = 1, };
+enum { MINCOL = 1, };            ///< Minimum column number
 
 /// position in file or buffer
 typedef struct {

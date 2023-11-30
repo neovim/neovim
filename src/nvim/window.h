@@ -38,8 +38,10 @@ enum {
   STATUS_HEIGHT = 1,  ///< height of a status line under a window
 };
 
-/// Lowest number used for window ID. Cannot have this many windows per tab.
-enum { LOWEST_WIN_ID = 1000, };
+enum {
+  /// Lowest number used for window ID. Cannot have this many windows per tab.
+  LOWEST_WIN_ID = 1000,
+};
 
 /// Set to true if 'cmdheight' was explicitly set to 0.
 EXTERN bool p_ch_was_zero INIT( = false);

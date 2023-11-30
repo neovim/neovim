@@ -21,6 +21,7 @@
 #include "nvim/eval/typval_encode.h"
 #include "nvim/garray.h"
 #include "nvim/gettext.h"
+#include "nvim/globals.h"
 #include "nvim/hashtab.h"
 #include "nvim/macros_defs.h"
 #include "nvim/math.h"

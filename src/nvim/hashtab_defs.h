@@ -34,11 +34,13 @@ typedef struct hashitem_S {
   char *hi_key;
 } hashitem_T;
 
-/// Initial size for a hashtable.
-/// Our items are relatively small and growing is expensive, thus start with 16.
-/// Must be a power of 2.
-/// This allows for storing 10 items (2/3 of 16) before a resize is needed.
-enum { HT_INIT_SIZE = 16, };
+enum {
+  /// Initial size for a hashtable.
+  /// Our items are relatively small and growing is expensive, thus start with 16.
+  /// Must be a power of 2.
+  /// This allows for storing 10 items (2/3 of 16) before a resize is needed.
+  HT_INIT_SIZE = 16,
+};
 
 /// An array-based hashtable.
 ///
