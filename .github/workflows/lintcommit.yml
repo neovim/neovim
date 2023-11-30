@@ -14,8 +14,8 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - run: ./.github/scripts/install_deps.sh
-      - uses: ./.github/actions/cache
+      - uses: ./.github/actions/setup
+
       - name: Build
         run: |
           cmake -S cmake.deps --preset ci

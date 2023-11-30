@@ -18,11 +18,11 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
       - name: Install dependencies
         run: |
-          ./.github/scripts/install_deps.sh
           sudo apt-get install -y doxygen python3-msgpack
-      - uses: ./.github/actions/cache
 
       - name: Generate docs
         run: |
