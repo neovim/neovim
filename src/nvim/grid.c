@@ -879,15 +879,20 @@ void grid_free(ScreenGrid *grid)
   grid->line_offset = NULL;
 }
 
+#ifdef EXITFREE
 /// Doesn't allow reinit, so must only be called by free_all_mem!
 void grid_free_all_mem(void)
 {
   grid_free(&default_grid);
+  grid_free(&msg_grid);
+  XFREE_CLEAR(msg_grid.dirty_col);
   xfree(linebuf_char);
   xfree(linebuf_attr);
   xfree(linebuf_vcol);
   xfree(linebuf_scratch);
+  set_destroy(glyph, &glyph_cache);
 }
+#endif
 
 /// (Re)allocates a window grid if size changed while in ext_multigrid mode.
 /// Updates size, offsets and handle for the grid regardless.

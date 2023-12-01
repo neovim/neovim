@@ -583,6 +583,9 @@ void free_all_options(void)
   }
   free_operatorfunc_option();
   free_tagfunc_option();
+  XFREE_CLEAR(fenc_default);
+  XFREE_CLEAR(p_term);
+  XFREE_CLEAR(p_ttytype);
 }
 #endif
 

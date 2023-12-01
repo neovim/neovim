@@ -210,3 +210,12 @@ void ui_client_event_raw_line(GridLineEvent *g)
   tui_raw_line(tui, grid, row, startcol, endcol, clearcol, g->cur_attr, lineflags,
                (const schar_T *)grid_line_buf_char, grid_line_buf_attr);
 }
+
+#ifdef EXITFREE
+void ui_client_free_all_mem(void)
+{
+  tui_free_all_mem(tui);
+  xfree(grid_line_buf_char);
+  xfree(grid_line_buf_attr);
+}
+#endif

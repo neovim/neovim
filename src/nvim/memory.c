@@ -9,9 +9,12 @@
 #include <time.h>
 
 #include "nvim/api/extmark.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/ui.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_updates.h"
+#include "nvim/channel.h"
 #include "nvim/context.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/drawline.h"
@@ -23,14 +26,19 @@
 #include "nvim/insexpand.h"
 #include "nvim/lua/executor.h"
 #include "nvim/main.h"
+#include "nvim/map_defs.h"
 #include "nvim/mapping.h"
 #include "nvim/memfile.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
+#include "nvim/os/input.h"
 #include "nvim/sign.h"
 #include "nvim/state_defs.h"
+#include "nvim/statusline.h"
 #include "nvim/ui.h"
+#include "nvim/ui_client.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/usercmd.h"
 #include "nvim/vim_defs.h"
 
@@ -670,6 +678,7 @@ char *arena_memdupz(Arena *arena, const char *buf, size_t size)
 # include "nvim/grid.h"
 # include "nvim/mark.h"
 # include "nvim/msgpack_rpc/channel.h"
+# include "nvim/msgpack_rpc/helpers.h"
 # include "nvim/ops.h"
 # include "nvim/option.h"
 # include "nvim/os/os.h"
@@ -738,6 +747,7 @@ void free_all_mem(void)
   free_all_marks();
   alist_clear(&global_alist);
   free_homedir();
+  free_envmap();
   free_users();
   free_search_patterns();
   free_old_sub();
@@ -792,6 +802,7 @@ void free_all_mem(void)
     }
   }
 
+  channel_free_all_mem();
   eval_clear();
   api_extmark_free_all_mem();
   ctx_free_all();
@@ -815,8 +826,14 @@ void free_all_mem(void)
     buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
   }
 
+  map_destroy(int, &buffer_handles);
+  map_destroy(int, &window_handles);
+  map_destroy(int, &tabpage_handles);
+
   // free screenlines (can't display anything now!)
   grid_free_all_mem();
+  stl_clear_click_defs(tab_page_click_defs, tab_page_click_defs_size);
+  xfree(tab_page_click_defs);
 
   clear_hl_tables(false);
 
@@ -824,10 +841,18 @@ void free_all_mem(void)
 
   decor_free_all_mem();
   drawline_free_all_mem();
+  input_free_all_mem();
 
+  if (ui_client_channel_id) {
+    ui_client_free_all_mem();
+  }
+
+  remote_ui_free_all_mem();
   ui_free_all_mem();
+  ui_comp_free_all_mem();
   nlua_free_all_mem();
   rpc_free_all_mem();
+  msgpack_rpc_helpers_free_all_mem();
 
   // should be last, in case earlier free functions deallocates arenas
   arena_free_reuse_blks();

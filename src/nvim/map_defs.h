@@ -172,9 +172,14 @@ MAP_DECLS(ColorKey, ColorItem)
 #define set_put_ref(T, set, key, key_alloc) set_put_##T(set, key, key_alloc)
 #define set_put_idx(T, set, key, status) mh_put_##T(set, key, status)
 #define set_del(T, set, key) set_del_##T(set, key)
-#define set_destroy(T, set) (xfree((set)->keys), xfree((set)->h.hash))
-#define set_clear(T, set) mh_clear(&(set)->h)
 #define set_size(set) ((set)->h.size)
+#define set_clear(T, set) mh_clear(&(set)->h)
+#define set_destroy(T, set) \
+  do { \
+    xfree((set)->keys); \
+    xfree((set)->h.hash); \
+    *(set) = (Set(T)) SET_INIT; \
+  } while (0)
 
 #define map_get(T, U) map_get_##T##U
 #define map_has(T, map, key) set_has(T, &(map)->set, key)
@@ -182,9 +187,13 @@ MAP_DECLS(ColorKey, ColorItem)
 #define map_ref(T, U) map_ref_##T##U
 #define map_put_ref(T, U) map_put_ref_##T##U
 #define map_del(T, U) map_del_##T##U
-#define map_destroy(T, map) (set_destroy(T, &(map)->set), xfree((map)->values))
-#define map_clear(T, map) set_clear(T, &(map)->set)
 #define map_size(map) set_size(&(map)->set)
+#define map_clear(T, map) set_clear(T, &(map)->set)
+#define map_destroy(T, map) \
+  do { \
+    set_destroy(T, &(map)->set); \
+    XFREE_CLEAR((map)->values); \
+  } while (0)
 
 #define pmap_get(T) map_get(T, ptr_t)
 #define pmap_put(T) map_put(T, ptr_t)

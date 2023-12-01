@@ -751,6 +751,7 @@ const char *get_client_info(Channel *chan, const char *key)
   return NULL;
 }
 
+#ifdef EXITFREE
 void rpc_free_all_mem(void)
 {
   cstr_t key;
@@ -758,4 +759,8 @@ void rpc_free_all_mem(void)
     xfree((void *)key);
   });
   set_destroy(cstr_t, &event_strings);
+
+  msgpack_sbuffer_destroy(&out_buffer);
+  multiqueue_free(ch_before_blocking_events);
 }
+#endif
