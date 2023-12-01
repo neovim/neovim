@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/garray_defs.h"
