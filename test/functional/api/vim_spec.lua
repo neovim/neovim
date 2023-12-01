@@ -4547,5 +4547,24 @@ describe('API', function()
         ok(luv.now() - start <= 300)
       end)
     end)
+    it(':call with unknown function does not crash #26289', function()
+      eq('Vim:E117: Unknown function: UnknownFunc',
+         pcall_err(meths.cmd, {cmd = 'call', args = {'UnknownFunc()'}}, {}))
+    end)
+    it(':throw does not crash #24556', function()
+      eq('42', pcall_err(meths.cmd, {cmd = 'throw', args = {'42'}}, {}))
+    end)
+    it('can use :return #24556', function()
+      exec([[
+        func Foo()
+          let g:pos = 'before'
+          call nvim_cmd({'cmd': 'return', 'args': ['[1, 2, 3]']}, {})
+          let g:pos = 'after'
+        endfunc
+        let g:result = Foo()
+      ]])
+      eq('before', meths.get_var('pos'))
+      eq({1, 2, 3}, meths.get_var('result'))
+    end)
   end)
 end)

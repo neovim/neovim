@@ -1711,6 +1711,9 @@ int execute_cmd(exarg_T *eap, CmdParseInfo *cmdinfo, bool preview)
     goto end;
   }
 
+  cstack_T cstack = { .cs_idx = -1 };
+  eap->cstack = &cstack;
+
   // Execute the command
   execute_cmd0(&retv, eap, &errormsg, preview);
 
