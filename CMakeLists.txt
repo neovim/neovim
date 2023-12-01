@@ -299,8 +299,8 @@ ExternalProject_Add(uncrustify
 option(USE_BUNDLED_BUSTED "Use bundled busted" ON)
 if(USE_BUNDLED_BUSTED)
   ExternalProject_Add(lua-dev-deps
-    URL https://github.com/neovim/deps/raw/5a1f71cceb24990a0b15fd9a472a5f549f019248/opt/lua-dev-deps.tar.gz
-    URL_HASH SHA256=27db2495f5eddc7fc191701ec9b291486853530c6125609d3197d03481e8d5a2
+    URL https://github.com/dundargoc/deps/raw/70fed4c446453f4c9723c78de4151511de11ce7c/opt/lua-dev-deps.tar.gz
+    URL_HASH SHA256=5e5a0350cf39c102a690482ae61a9f0020f9b0e45f6d5ace16cf6d72b0e69649
     DOWNLOAD_NO_PROGRESS TRUE
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/lua-dev-deps
     SOURCE_DIR ${DEPS_SHARE_DIR}

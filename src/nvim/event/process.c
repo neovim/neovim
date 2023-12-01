@@ -25,11 +25,6 @@
 // For PTY processes SIGTERM is sent first (in case SIGHUP was not enough).
 #define KILL_TIMEOUT_MS 2000
 
-/// Externally defined with gcov.
-#ifdef USE_GCOV
-void __gcov_flush(void);
-#endif
-
 static bool process_is_tearing_down = false;
 
 // Delay exit until handles are closed, to avoid deadlocks
@@ -59,11 +54,6 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   } else {
     proc->err.closed = true;
   }
-
-#ifdef USE_GCOV
-  // Flush coverage data before forking, to avoid "Merge mismatch" errors.
-  __gcov_flush();
-#endif
 
   int status;
   switch (proc->type) {
