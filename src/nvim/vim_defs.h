@@ -8,13 +8,6 @@
 
 #include "auto/config.h"
 
-// Check if configure correctly managed to find sizeof(int).  If this failed,
-// it becomes zero.  This is likely a problem of not being able to run the
-// test program.  Other items from configure may also be wrong then!
-#if (SIZEOF_INT == 0)
-# error Configure did not run properly.
-#endif
-
 enum {
   /// length of a buffer to store a number in ASCII (64 bits binary + NUL)
   NUMBUFLEN = 65,
