@@ -902,7 +902,7 @@ enum {
   kFloatAnchorSouth = 2,
 };
 
-/// Keep in sync with float_relative_str in winfloat.h
+/// Keep in sync with float_relative_str[] in nvim_win_get_config()
 typedef enum {
   kFloatRelativeEditor = 0,
   kFloatRelativeWindow = 1,
