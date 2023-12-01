@@ -1,9 +1,16 @@
 #!/bin/bash
 
+ARCH=native
+
 while (($# > 0)); do
   case $1 in
   --test) # install test dependencies
     TEST=1
+    shift
+    ;;
+  --arch)
+    shift
+    ARCH="$1"
     shift
     ;;
   esac
@@ -11,8 +18,11 @@ done
 
 os=$(uname -s)
 if [[ $os == Linux ]]; then
+  sudo dpkg --add-architecture "$ARCH"
   sudo apt-get update
-  sudo apt-get install -y build-essential cmake curl gettext ninja-build
+  for i in "build-essential:$ARCH" cmake curl gettext ninja-build; do
+    sudo apt-get install -y "$i"
+  done
 
   if [[ $CC == clang ]]; then
     DEFAULT_CLANG_VERSION=$(echo |  clang -dM -E - | grep __clang_major | awk '{print $3}')
@@ -30,7 +40,9 @@ if [[ $os == Linux ]]; then
   fi
 
   if [[ -n $TEST ]]; then
-    sudo apt-get install -y locales-all cpanminus attr libattr1-dev gdb
+    for i in locales-all cpanminus attr libattr1-dev:"$ARCH" gdb; do
+      sudo apt-get install -y "$i"
+    done
   fi
 elif [[ $os == Darwin ]]; then
   brew update --quiet

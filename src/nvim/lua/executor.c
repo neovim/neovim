@@ -2168,7 +2168,7 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   if (eap->addr_count > 0) {
     lua_pushinteger(lstate, eap->line2);
   } else {
-    lua_pushinteger(lstate, cmd->uc_def);
+    nlua_push_int64(lstate, cmd->uc_def);
   }
   lua_setfield(lstate, -2, "count");
 

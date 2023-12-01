@@ -899,7 +899,7 @@ void ml_recover(bool checkext)
     if ((size = vim_lseek(mfp->mf_fd, 0, SEEK_END)) <= 0) {
       mfp->mf_blocknr_max = 0;              // no file or empty file
     } else {
-      mfp->mf_blocknr_max = size / mfp->mf_page_size;
+      mfp->mf_blocknr_max = size / (off_T)mfp->mf_page_size;
     }
     mfp->mf_infile_count = mfp->mf_blocknr_max;
 
@@ -3632,9 +3632,10 @@ static bool fnamecmp_ino(char *fname_c, char *fname_s, long ino_block0)
 
 /// Move a long integer into a four byte character array.
 /// Used for machine independency in block zero.
-static void long_to_char(long n, char *s_in)
+static void long_to_char(long n_in, char *s_in)
 {
   uint8_t *s = (uint8_t *)s_in;
+  uint64_t n = (uint64_t)n_in;
   s[0] = (uint8_t)(n & 0xff);
   n = (unsigned)n >> 8;
   s[1] = (uint8_t)(n & 0xff);
