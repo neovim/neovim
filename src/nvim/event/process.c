@@ -132,7 +132,7 @@ void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
     Process *proc = (*current)->data;
     if (proc->detach || proc->type == kProcessTypePty) {
       // Close handles to process without killing it.
-      CREATE_EVENT(loop->events, process_close_handles, 1, proc);
+      CREATE_EVENT(loop->events, process_close_handles, proc);
     } else {
       process_stop(proc);
     }
@@ -300,7 +300,7 @@ static void decref(Process *proc)
   }
   assert(node);
   kl_shift_at(WatcherPtr, loop->children, node);
-  CREATE_EVENT(proc->events, process_close_event, 1, proc);
+  CREATE_EVENT(proc->events, process_close_event, proc);
 }
 
 static void process_close(Process *proc)
@@ -395,7 +395,7 @@ static void process_close_handles(void **argv)
 static void exit_delay_cb(uv_timer_t *handle)
 {
   uv_timer_stop(&main_loop.exit_delay_timer);
-  multiqueue_put(main_loop.fast_events, exit_event, 1, main_loop.exit_delay_timer.data);
+  multiqueue_put(main_loop.fast_events, exit_event, main_loop.exit_delay_timer.data);
 }
 
 static void exit_event(void **argv)
@@ -420,7 +420,7 @@ static void exit_event(void **argv)
 
 void exit_from_channel(int status)
 {
-  multiqueue_put(main_loop.fast_events, exit_event, 1, status);
+  multiqueue_put(main_loop.fast_events, exit_event, (void *)(intptr_t)status);
 }
 
 static void on_process_exit(Process *proc)
@@ -438,7 +438,7 @@ static void on_process_exit(Process *proc)
   // more data directly. Instead delay the reading after the libuv loop by
   // queueing process_close_handles() as an event.
   MultiQueue *queue = proc->events ? proc->events : loop->events;
-  CREATE_EVENT(queue, process_close_handles, 1, proc);
+  CREATE_EVENT(queue, process_close_handles, proc);
 }
 
 static void on_process_stream_close(Stream *stream, void *data)

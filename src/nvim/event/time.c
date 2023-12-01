@@ -52,7 +52,7 @@ static void time_watcher_cb(uv_timer_t *handle)
     // the timer blocked and there already is an unprocessed event waiting
     return;
   }
-  CREATE_EVENT(watcher->events, time_event, 1, watcher);
+  CREATE_EVENT(watcher->events, time_event, watcher);
 }
 
 static void close_event(void **argv)
@@ -66,6 +66,6 @@ static void close_cb(uv_handle_t *handle)
 {
   TimeWatcher *watcher = handle->data;
   if (watcher->close_cb) {
-    CREATE_EVENT(watcher->events, close_event, 1, watcher);
+    CREATE_EVENT(watcher->events, close_event, watcher);
   }
 }

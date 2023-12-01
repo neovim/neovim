@@ -2564,7 +2564,7 @@ void may_trigger_vim_suspend_resume(bool suspend)
     pending_vimresume = kTrue;
   } else if (!suspend && pending_vimresume == kTrue) {
     pending_vimresume = kNone;
-    multiqueue_put(main_loop.events, vimresume_event, 0);
+    multiqueue_put(main_loop.events, vimresume_event, NULL);
   }
 }
 

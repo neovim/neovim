@@ -6,7 +6,7 @@
 
 void ut_multiqueue_put(MultiQueue *self, const char *str)
 {
-  multiqueue_put(self, NULL, 1, str);
+  multiqueue_put(self, NULL, (void *)str);
 }
 
 const char *ut_multiqueue_get(MultiQueue *self)

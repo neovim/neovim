@@ -208,7 +208,7 @@ static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult, int flags
     const char *error = lua_tostring(lstate, -1);
 
     multiqueue_put(main_loop.events, nlua_luv_error_event,
-                   2, xstrdup(error), (intptr_t)kCallback);
+                   xstrdup(error), (void *)(intptr_t)kCallback);
     lua_pop(lstate, 1);  // error message
     retval = -status;
   } else {  // LUA_OK
@@ -266,11 +266,11 @@ static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nres
     const char *error = lua_tostring(lstate, -1);
 
     loop_schedule_deferred(&main_loop,
-                           event_create(nlua_luv_error_event, 2,
+                           event_create(nlua_luv_error_event,
                                         xstrdup(error),
-                                        is_callback
-                                        ? (intptr_t)kThreadCallback
-                                        : (intptr_t)kThread));
+                                        (void *)(intptr_t)(is_callback
+                                                           ? kThreadCallback
+                                                           : kThread)));
     lua_pop(lstate, 1);  // error message
     retval = -status;
   } else {  // LUA_OK
@@ -379,8 +379,7 @@ static int nlua_schedule(lua_State *const lstate)
 
   LuaRef cb = nlua_ref_global(lstate, 1);
 
-  multiqueue_put(main_loop.events, nlua_schedule_event,
-                 1, (void *)(ptrdiff_t)cb);
+  multiqueue_put(main_loop.events, nlua_schedule_event, (void *)(ptrdiff_t)cb);
   return 0;
 }
 
@@ -1022,15 +1021,14 @@ static int nlua_print(lua_State *const lstate)
 
   if (is_thread) {
     loop_schedule_deferred(&main_loop,
-                           event_create(nlua_print_event, 2,
+                           event_create(nlua_print_event,
                                         msg_ga.ga_data,
-                                        (intptr_t)msg_ga.ga_len));
+                                        (void *)(intptr_t)msg_ga.ga_len));
   } else if (in_fast_callback) {
     multiqueue_put(main_loop.events, nlua_print_event,
-                   2, msg_ga.ga_data, (intptr_t)msg_ga.ga_len);
+                   msg_ga.ga_data, (void *)(intptr_t)msg_ga.ga_len);
   } else {
-    nlua_print_event((void *[]){ msg_ga.ga_data,
-                                 (void *)(intptr_t)msg_ga.ga_len });
+    nlua_print_event((void *[]){ msg_ga.ga_data, (void *)(intptr_t)msg_ga.ga_len });
   }
   return 0;
 

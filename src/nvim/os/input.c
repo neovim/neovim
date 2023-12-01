@@ -88,7 +88,7 @@ static void create_cursorhold_event(bool events_enabled)
   // TODO(tarruda): Cursorhold should be implemented as a timer set during the
   // `state_check` callback for the states where it can be triggered.
   assert(!events_enabled || multiqueue_empty(main_loop.events));
-  multiqueue_put(main_loop.events, cursorhold_event, 0);
+  multiqueue_put(main_loop.events, cursorhold_event, NULL);
 }
 
 static void restart_cursorhold_wait(int tb_change_cnt)
