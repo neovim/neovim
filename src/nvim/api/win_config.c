@@ -311,6 +311,9 @@ static Dictionary config_put_bordertext(Dictionary config, FloatConfig *fconfig,
 Dictionary nvim_win_get_config(Window window, Error *err)
   FUNC_API_SINCE(6)
 {
+  /// Keep in sync with FloatRelative in buffer_defs.h
+  static const char *const float_relative_str[] = { "editor", "win", "cursor", "mouse" };
+
   Dictionary rv = ARRAY_DICT_INIT;
 
   win_T *wp = find_window_by_handle(window, err);
