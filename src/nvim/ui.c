@@ -134,6 +134,8 @@ void ui_free_all_mem(void)
     free_ui_event_callback(event_cb);
   })
   map_destroy(uint32_t, &ui_event_cbs);
+
+  multiqueue_free(resize_events);
 }
 #endif
 

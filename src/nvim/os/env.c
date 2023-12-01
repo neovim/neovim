@@ -510,6 +510,17 @@ void free_homedir(void)
   xfree(homedir);
 }
 
+void free_envmap(void)
+{
+  cstr_t name;
+  ptr_t e;
+  map_foreach(&envmap, name, e, {
+    xfree((char *)name);
+    xfree(e);
+  });
+  map_destroy(cstr_t, &envmap);
+}
+
 #endif
 
 /// Call expand_env() and store the result in an allocated string.

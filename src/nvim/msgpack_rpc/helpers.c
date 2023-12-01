@@ -27,6 +27,14 @@ void msgpack_rpc_helpers_init(void)
   msgpack_sbuffer_init(&sbuffer);
 }
 
+#ifdef EXITFREE
+void msgpack_rpc_helpers_free_all_mem(void)
+{
+  msgpack_zone_destroy(&zone);
+  msgpack_sbuffer_destroy(&sbuffer);
+}
+#endif
+
 typedef struct {
   const msgpack_object *mobj;
   Object *aobj;

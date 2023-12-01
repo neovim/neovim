@@ -60,6 +60,15 @@ void ui_comp_init(void)
   curgrid = &default_grid;
 }
 
+#ifdef EXITFREE
+void ui_comp_free_all_mem(void)
+{
+  kv_destroy(layers);
+  xfree(linebuf);
+  xfree(attrbuf);
+}
+#endif
+
 void ui_comp_syn_init(void)
 {
   dbghl_normal = syn_check_group(S_LEN("RedrawDebugNormal"));

@@ -53,12 +53,24 @@ static uint64_t next_chan_id = CHAN_STDERR + 1;
 /// Teardown the module
 void channel_teardown(void)
 {
-  Channel *channel;
-
-  map_foreach_value(&channels, channel, {
-    channel_close(channel->id, kChannelPartAll, NULL);
+  Channel *chan;
+  map_foreach_value(&channels, chan, {
+    channel_close(chan->id, kChannelPartAll, NULL);
   });
 }
+
+#ifdef EXITFREE
+void channel_free_all_mem(void)
+{
+  Channel *chan;
+  map_foreach_value(&channels, chan, {
+    channel_destroy(chan);
+  });
+  map_destroy(uint64_t, &channels);
+
+  callback_free(&on_print);
+}
+#endif
 
 /// Closes a channel
 ///
@@ -260,9 +272,8 @@ void callback_reader_start(CallbackReader *reader, const char *type)
   reader->type = type;
 }
 
-static void free_channel_event(void **argv)
+static void channel_destroy(Channel *chan)
 {
-  Channel *chan = argv[0];
   if (chan->is_rpc) {
     rpc_free(chan);
   }
@@ -275,9 +286,15 @@ static void free_channel_event(void **argv)
   callback_reader_free(&chan->on_stderr);
   callback_free(&chan->on_exit);
 
-  pmap_del(uint64_t)(&channels, chan->id, NULL);
   multiqueue_free(chan->events);
   xfree(chan);
+}
+
+static void free_channel_event(void **argv)
+{
+  Channel *chan = argv[0];
+  pmap_del(uint64_t)(&channels, chan->id, NULL);
+  channel_destroy(chan);
 }
 
 static void channel_destroy_early(Channel *chan)

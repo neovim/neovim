@@ -1117,7 +1117,6 @@ void marktree_clear(MarkTree *b)
     b->root = NULL;
   }
   map_destroy(uint64_t, b->id2node);
-  *b->id2node = (PMap(uint64_t)) MAP_INIT;
   b->n_keys = 0;
   assert(b->n_nodes == 0);
 }

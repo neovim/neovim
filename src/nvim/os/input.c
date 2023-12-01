@@ -74,6 +74,13 @@ void input_stop(void)
   stream_close(&read_stream, NULL, NULL);
 }
 
+#ifdef EXITFREE
+void input_free_all_mem(void)
+{
+  rbuffer_free(input_buffer);
+}
+#endif
+
 static void cursorhold_event(void **argv)
 {
   event_T event = State & MODE_INSERT ? EVENT_CURSORHOLDI : EVENT_CURSORHOLD;

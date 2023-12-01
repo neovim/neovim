@@ -106,21 +106,36 @@ static void mpack_str(char **buf, const char *str)
   *buf += len;
 }
 
+static void remote_ui_destroy(UI *ui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  UIData *data = ui->data;
+  kv_destroy(data->call_buf);
+  XFREE_CLEAR(ui->term_name);
+  xfree(ui);
+}
+
 void remote_ui_disconnect(uint64_t channel_id)
 {
   UI *ui = pmap_get(uint64_t)(&connected_uis, channel_id);
   if (!ui) {
     return;
   }
-  UIData *data = ui->data;
-  kv_destroy(data->call_buf);
   pmap_del(uint64_t)(&connected_uis, channel_id, NULL);
   ui_detach_impl(ui, channel_id);
-
-  // Destroy `ui`.
-  XFREE_CLEAR(ui->term_name);
-  xfree(ui);
+  remote_ui_destroy(ui);
 }
+
+#ifdef EXITFREE
+void remote_ui_free_all_mem(void)
+{
+  UI *ui;
+  map_foreach_value(&connected_uis, ui, {
+    remote_ui_destroy(ui);
+  });
+  map_destroy(uint64_t, &connected_uis);
+}
+#endif
 
 /// Wait until ui has connected on stdio channel if only_stdio
 /// is true, otherwise any channel.
