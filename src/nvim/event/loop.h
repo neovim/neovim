@@ -44,12 +44,12 @@ typedef struct loop {
   bool closing;  ///< Set to true if loop_close() has been called
 } Loop;
 
-#define CREATE_EVENT(multiqueue, handler, argc, ...) \
+#define CREATE_EVENT(multiqueue, handler, ...) \
   do { \
     if (multiqueue) { \
-      multiqueue_put((multiqueue), (handler), argc, __VA_ARGS__); \
+      multiqueue_put((multiqueue), (handler), __VA_ARGS__); \
     } else { \
-      void *argv[argc] = { __VA_ARGS__ }; \
+      void *argv[] = { __VA_ARGS__ }; \
       (handler)(argv); \
     } \
   } while (0)

@@ -871,7 +871,7 @@ void msg_schedule_semsg(const char *const fmt, ...)
   va_end(ap);
 
   char *s = xstrdup(IObuff);
-  loop_schedule_deferred(&main_loop, event_create(msg_semsg_event, 1, s));
+  loop_schedule_deferred(&main_loop, event_create(msg_semsg_event, s));
 }
 
 static void msg_semsg_multiline_event(void **argv)
@@ -889,7 +889,7 @@ void msg_schedule_semsg_multiline(const char *const fmt, ...)
   va_end(ap);
 
   char *s = xstrdup(IObuff);
-  loop_schedule_deferred(&main_loop, event_create(msg_semsg_multiline_event, 1, s));
+  loop_schedule_deferred(&main_loop, event_create(msg_semsg_multiline_event, s));
 }
 
 /// Like msg(), but truncate to a single line if p_shm contains 't', or when

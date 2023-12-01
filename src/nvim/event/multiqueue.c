@@ -260,7 +260,7 @@ Event event_create_oneshot(Event ev, int num)
   data->event = ev;
   data->fired = false;
   data->refcount = num;
-  return event_create(multiqueue_oneshot_event, 1, data);
+  return event_create(multiqueue_oneshot_event, data);
 }
 static void multiqueue_oneshot_event(void **argv)
 {

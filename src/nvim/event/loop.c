@@ -111,7 +111,7 @@ void loop_schedule_deferred(Loop *loop, Event event)
 {
   Event *eventp = xmalloc(sizeof(*eventp));
   *eventp = event;
-  loop_schedule_fast(loop, event_create(loop_deferred_event, 2, loop, eventp));
+  loop_schedule_fast(loop, event_create(loop_deferred_event, loop, eventp));
 }
 static void loop_deferred_event(void **argv)
 {

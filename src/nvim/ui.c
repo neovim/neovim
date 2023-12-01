@@ -276,7 +276,7 @@ static void ui_refresh_event(void **argv)
 
 void ui_schedule_refresh(void)
 {
-  multiqueue_put(resize_events, ui_refresh_event, 0);
+  multiqueue_put(resize_events, ui_refresh_event, NULL);
 }
 
 void ui_default_colors_set(void)

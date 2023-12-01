@@ -174,8 +174,7 @@ static void connection_event(void **argv)
 static void connection_cb(uv_stream_t *handle, int status)
 {
   SocketWatcher *watcher = handle->data;
-  CREATE_EVENT(watcher->events, connection_event, 2, watcher,
-               (void *)(uintptr_t)status);
+  CREATE_EVENT(watcher->events, connection_event, watcher, (void *)(uintptr_t)status);
 }
 
 static void close_cb(uv_handle_t *handle)

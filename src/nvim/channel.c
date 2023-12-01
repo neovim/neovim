@@ -244,7 +244,7 @@ void channel_decref(Channel *chan)
 {
   if (!(--chan->refcount)) {
     // delay free, so that libuv is done with the handles
-    multiqueue_put(main_loop.events, free_channel_event, 1, chan);
+    multiqueue_put(main_loop.events, free_channel_event, chan);
   }
 }
 
@@ -293,7 +293,7 @@ static void channel_destroy_early(Channel *chan)
   }
 
   // uv will keep a reference to handles until next loop tick, so delay free
-  multiqueue_put(main_loop.events, free_channel_event, 1, chan);
+  multiqueue_put(main_loop.events, free_channel_event, chan);
 }
 
 static void close_cb(Stream *stream, void *data)
@@ -657,7 +657,7 @@ static void schedule_channel_event(Channel *chan)
 {
   if (!chan->callback_scheduled) {
     if (!chan->callback_busy) {
-      multiqueue_put(chan->events, on_channel_event, 1, chan);
+      multiqueue_put(chan->events, on_channel_event, chan);
       channel_incref(chan);
     }
     chan->callback_scheduled = true;
@@ -682,7 +682,7 @@ static void on_channel_event(void **args)
   chan->callback_busy = false;
   if (chan->callback_scheduled) {
     // further callback was deferred to avoid recursion.
-    multiqueue_put(chan->events, on_channel_event, 1, chan);
+    multiqueue_put(chan->events, on_channel_event, chan);
     channel_incref(chan);
   }
 
@@ -812,7 +812,7 @@ static inline void term_delayed_free(void **argv)
 {
   Channel *chan = argv[0];
   if (chan->stream.proc.in.pending_reqs || chan->stream.proc.out.pending_reqs) {
-    multiqueue_put(chan->events, term_delayed_free, 1, chan);
+    multiqueue_put(chan->events, term_delayed_free, chan);
     return;
   }
 
@@ -826,7 +826,7 @@ static void term_close(void *data)
 {
   Channel *chan = data;
   process_stop(&chan->stream.proc);
-  multiqueue_put(chan->events, term_delayed_free, 1, data);
+  multiqueue_put(chan->events, term_delayed_free, data);
 }
 
 void channel_info_changed(Channel *chan, bool new_chan)
@@ -834,7 +834,7 @@ void channel_info_changed(Channel *chan, bool new_chan)
   event_T event = new_chan ? EVENT_CHANOPEN : EVENT_CHANINFO;
   if (has_event(event)) {
     channel_incref(chan);
-    multiqueue_put(main_loop.events, set_info_event, 2, chan, event);
+    multiqueue_put(main_loop.events, set_info_event, chan, (void *)(intptr_t)event);
   }
 }
 
