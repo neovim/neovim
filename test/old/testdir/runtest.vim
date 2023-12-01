@@ -120,6 +120,8 @@ lang mess C
 
 " Nvim: append runtime from build dir, which contains the generated doc/tags.
 let &runtimepath ..= ',' .. expand($BUILD_DIR) .. '/runtime/'
+" Nvim: append libdir from build dir, which contains the bundled TS parsers.
+let &runtimepath ..= ',' .. expand($BUILD_DIR) .. '/lib/nvim/'
 
 let s:t_bold = &t_md
 let s:t_normal = &t_me
