@@ -6,7 +6,7 @@
 
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
-#include "nvim/rbuffer.h"
+#include "nvim/rbuffer_defs.h"
 
 struct stream;
 
