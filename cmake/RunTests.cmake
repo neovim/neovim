@@ -77,6 +77,7 @@ execute_process(
     --lpath=${BUILD_DIR}/?.lua
     --lpath=${WORKING_DIR}/runtime/lua/?.lua
     --lpath=?.lua
+    --coverage
     ${BUSTED_ARGS}
     ${TEST_PATH}
   TIMEOUT $ENV{TEST_TIMEOUT}

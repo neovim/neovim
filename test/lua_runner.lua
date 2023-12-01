@@ -75,6 +75,7 @@ function lfs.mkdir(dir)
 end
 
 if subcommand == "busted" then
+  require 'luacov'
   require 'busted.runner'({ standalone = false })
 elseif subcommand == "luacheck" then
   require 'luacheck.main'

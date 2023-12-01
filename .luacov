@@ -17,6 +17,7 @@ return {
   modules = {
     ['vim'] = 'runtime/lua/vim/shared.lua'
   },
+  runreport=true,
 }
 
 -- vim: ft=lua tw=80 sw=2 et
