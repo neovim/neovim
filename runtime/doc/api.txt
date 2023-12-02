@@ -1006,7 +1006,7 @@ nvim_get_keymap({mode})                                    *nvim_get_keymap()*
         Array of |maparg()|-like dictionaries describing mappings. The
         "buffer" key is always zero.
 
-nvim_get_mark({name}, {opts})                                *nvim_get_mark()*
+nvim_get_mark({name}, {*opts})                               *nvim_get_mark()*
     Returns a `(row, col, buffer, buffername)` tuple representing the position
     of the uppercase/file named mark. "End of line" column position is
     returned as |v:maxcol| (big number). See |mark-motions|.
@@ -1204,7 +1204,7 @@ nvim_notify({msg}, {log_level}, {opts})                        *nvim_notify()*
       • {log_level}  The log level
       • {opts}       Reserved for future use.
 
-nvim_open_term({buffer}, {opts})                            *nvim_open_term()*
+nvim_open_term({buffer}, {*opts})                           *nvim_open_term()*
     Open a terminal instance in a buffer
 
     By default (and currently the only option) the terminal will not be
@@ -1305,7 +1305,7 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
       • cpoptions
 
                                                 *nvim_select_popupmenu_item()*
-nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
+nvim_select_popupmenu_item({item}, {insert}, {finish}, {*opts})
     Selects an item in the completion popup menu.
 
     If neither |ins-completion| nor |cmdline-completion| popup menu is active
@@ -1878,7 +1878,7 @@ nvim_get_commands({*opts})                               *nvim_get_commands()*
     See also: ~
       • |nvim_get_all_options_info()|
 
-nvim_parse_cmd({str}, {opts})                               *nvim_parse_cmd()*
+nvim_parse_cmd({str}, {*opts})                              *nvim_parse_cmd()*
     Parse command line.
 
     Doesn't check the validity of command arguments.
@@ -2057,7 +2057,7 @@ affected.
 You can use |nvim_buf_is_loaded()| or |nvim_buf_line_count()| to check
 whether a buffer is loaded.
 
-nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
+nvim_buf_attach({buffer}, {send_buffer}, {*opts})          *nvim_buf_attach()*
     Activates buffer-update events on a channel, or as Lua callbacks.
 
     Example (Lua): capture buffer updates in a global `events` variable (use
@@ -2193,7 +2193,7 @@ nvim_buf_del_var({buffer}, {name})                        *nvim_buf_del_var()*
       • {buffer}  Buffer handle, or 0 for current buffer
       • {name}    Variable name
 
-nvim_buf_delete({buffer}, {opts})                          *nvim_buf_delete()*
+nvim_buf_delete({buffer}, {*opts})                         *nvim_buf_delete()*
     Deletes the buffer. See |:bwipeout|
 
     Attributes: ~
@@ -2310,7 +2310,7 @@ nvim_buf_get_offset({buffer}, {index})                 *nvim_buf_get_offset()*
 
                                                          *nvim_buf_get_text()*
 nvim_buf_get_text({buffer}, {start_row}, {start_col}, {end_row}, {end_col},
-                  {opts})
+                  {*opts})
     Gets a range from the buffer.
 
     This differs from |nvim_buf_get_lines()| in that it allows retrieving only
@@ -2412,7 +2412,7 @@ nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing}, {replacement})
       • |nvim_buf_set_text()|
 
                                                          *nvim_buf_set_mark()*
-nvim_buf_set_mark({buffer}, {name}, {line}, {col}, {opts})
+nvim_buf_set_mark({buffer}, {name}, {line}, {col}, {*opts})
     Sets a named mark in the given buffer, all marks are allowed
     file/uppercase, visual, last change, etc. See |mark-motions|.
 
@@ -2553,7 +2553,7 @@ nvim_buf_del_extmark({buffer}, {ns_id}, {id})         *nvim_buf_del_extmark()*
         true if the extmark was found, else false
 
                                                 *nvim_buf_get_extmark_by_id()*
-nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id}, {opts})
+nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id}, {*opts})
     Gets the position (0-indexed) of an |extmark|.
 
     Parameters: ~

@@ -187,7 +187,7 @@ static Array extmark_to_array(MTPair extmark, bool id, bool add_dict, bool hl_na
 /// @return 0-indexed (row, col) tuple or empty list () if extmark id was
 /// absent
 ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
-                                            Integer id, Dictionary opts,
+                                            Integer id, Dict(get_extmark) *opts,
                                             Error *err)
   FUNC_API_SINCE(7)
 {
@@ -203,27 +203,9 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
     return rv;
   });
 
-  bool details = false;
-  bool hl_name = true;
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object *v = &opts.items[i].value;
-    if (strequal("details", k.data)) {
-      details = api_object_to_bool(*v, "details", false, err);
-      if (ERROR_SET(err)) {
-        return rv;
-      }
-    } else if (strequal("hl_name", k.data)) {
-      hl_name = api_object_to_bool(*v, "hl_name", false, err);
-      if (ERROR_SET(err)) {
-        return rv;
-      }
-    } else {
-      VALIDATE_S(false, "'opts' key", k.data, {
-        return rv;
-      });
-    }
-  }
+  bool details = opts->details;
+
+  bool hl_name = GET_BOOL_OR_TRUE(opts, get_extmark, hl_name);
 
   MTPair extmark = extmark_from_id(buf, (uint32_t)ns_id, (uint32_t)id);
   if (extmark.start.pos.row < 0) {

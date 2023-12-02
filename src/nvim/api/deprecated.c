@@ -126,7 +126,7 @@ void nvim_buf_clear_highlight(Buffer buffer, Integer ns_id, Integer line_start, 
 /// @param[out] err   Error details, if any
 /// @return The ns_id that was used
 Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, Array chunks,
-                                  Dictionary opts, Error *err)
+                                  Dict(empty) *opts, Error *err)
   FUNC_API_SINCE(5)
   FUNC_API_DEPRECATED_SINCE(8)
 {
@@ -137,11 +137,6 @@ Integer nvim_buf_set_virtual_text(Buffer buffer, Integer src_id, Integer line, A
 
   if (line < 0 || line >= MAXLNUM) {
     api_set_error(err, kErrorTypeValidation, "Line number outside range");
-    return 0;
-  }
-
-  if (opts.size > 0) {
-    api_set_error(err, kErrorTypeValidation, "opts dict isn't empty");
     return 0;
   }
 

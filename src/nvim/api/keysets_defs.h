@@ -52,6 +52,12 @@ typedef struct {
 } Dict(set_extmark);
 
 typedef struct {
+  OptionalKeys is_set__get_extmark_;
+  Boolean details;
+  Boolean hl_name;
+} Dict(get_extmark);
+
+typedef struct {
   OptionalKeys is_set__get_extmarks_;
   Integer limit;
   Boolean details;
@@ -313,3 +319,29 @@ typedef struct {
 typedef struct {
   Boolean output;
 } Dict(exec_opts);
+
+typedef struct {
+  OptionalKeys is_set__buf_attach_;
+  LuaRef on_lines;
+  LuaRef on_bytes;
+  LuaRef on_changedtick;
+  LuaRef on_detach;
+  LuaRef on_reload;
+  Boolean utf_sizes;
+  Boolean preview;
+} Dict(buf_attach);
+
+typedef struct {
+  OptionalKeys is_set__buf_delete_;
+  Boolean force;
+  Boolean unload;
+} Dict(buf_delete);
+
+typedef struct {
+  OptionalKeys is_set__empty_;
+} Dict(empty);
+
+typedef struct {
+  OptionalKeys is_set__open_term_;
+  LuaRef on_input;
+} Dict(open_term);
