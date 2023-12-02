@@ -2643,7 +2643,6 @@ int number_width(win_T *wp)
 /// Set must_redraw only if not already set to a higher value.
 /// e.g. if must_redraw is UPD_CLEAR, type UPD_NOT_VALID will do nothing.
 void redraw_later(win_T *wp, int type)
-  FUNC_ATTR_NONNULL_ALL
 {
   if (!exiting && wp->w_redr_type < type) {
     wp->w_redr_type = type;

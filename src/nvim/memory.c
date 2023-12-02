@@ -782,6 +782,25 @@ void free_all_mem(void)
   // Free all option values.  Must come after closing windows.
   free_all_options();
 
+  // Free all buffers.  Reset 'autochdir' to avoid accessing things that
+  // were freed already.
+  // Must be after eval_clear to avoid it trying to access b:changedtick after
+  // freeing it.
+  p_acd = false;
+  for (buf = firstbuf; buf != NULL;) {
+    bufref_T bufref;
+    set_bufref(&bufref, buf);
+    nextbuf = buf->b_next;
+
+    // Since options (in addition to other stuff) have been freed above we need to ensure no
+    // callbacks are called, so free them before closing the buffer.
+    buf_free_callbacks(buf);
+
+    close_buffer(NULL, buf, DOBUF_WIPE, false, false);
+    // Didn't work, try next one.
+    buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
+  }
+
   // Clear registers.
   clear_registers();
   ResetRedobuff();
@@ -806,25 +825,6 @@ void free_all_mem(void)
   eval_clear();
   api_extmark_free_all_mem();
   ctx_free_all();
-
-  // Free all buffers.  Reset 'autochdir' to avoid accessing things that
-  // were freed already.
-  // Must be after eval_clear to avoid it trying to access b:changedtick after
-  // freeing it.
-  p_acd = false;
-  for (buf = firstbuf; buf != NULL;) {
-    bufref_T bufref;
-    set_bufref(&bufref, buf);
-    nextbuf = buf->b_next;
-
-    // Since options (in addition to other stuff) have been freed above we need to ensure no
-    // callbacks are called, so free them before closing the buffer.
-    buf_free_callbacks(buf);
-
-    close_buffer(NULL, buf, DOBUF_WIPE, false, false);
-    // Didn't work, try next one.
-    buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
-  }
 
   map_destroy(int, &buffer_handles);
   map_destroy(int, &window_handles);
