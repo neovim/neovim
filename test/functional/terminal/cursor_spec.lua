@@ -195,7 +195,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                             |
                                                                             |
                                                                             |
-                                                                            |
+      {5:                                                                      }|
       Entering Ex mode.  Type "visual" to go to Normal mode.                |
       :{1:^ }                                                                    |
       {3:-- TERMINAL --}                                                        |
@@ -215,7 +215,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :aaaaaaaa{1:^ }                                                            |
         {3:-- TERMINAL --}                                                        |
@@ -226,7 +226,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :aaaaaaa^a{2: }                                                            |
                                                                               |
@@ -240,7 +240,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :aaaaaa{1:^a}a                                                             |
         {3:-- TERMINAL --}                                                        |
@@ -251,7 +251,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :aaaaa^a{2:a}a                                                             |
                                                                               |
@@ -265,7 +265,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :a{1:^a}aaaaaa                                                             |
         {3:-- TERMINAL --}                                                        |
@@ -276,7 +276,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :^a{2:a}aaaaaa                                                             |
                                                                               |
@@ -296,7 +296,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µµµµµµµµ{1:^ }                                                            |
         {3:-- TERMINAL --}                                                        |
@@ -307,7 +307,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µµµµµµµ^µ{2: }                                                            |
                                                                               |
@@ -321,7 +321,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µµµµµµ{1:^µ}µ                                                             |
         {3:-- TERMINAL --}                                                        |
@@ -332,7 +332,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µµµµµ^µ{2:µ}µ                                                             |
                                                                               |
@@ -346,7 +346,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ{1:^µ}µµµµµµ                                                             |
         {3:-- TERMINAL --}                                                        |
@@ -357,7 +357,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :^µ{2:µ}µµµµµµ                                                             |
                                                                               |
@@ -379,7 +379,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳{1:^ }                                                            |
         {3:-- TERMINAL --}                                                        |
@@ -390,7 +390,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳µ̳µ̳µ̳µ̳µ̳µ̳^µ̳{2: }                                                            |
                                                                               |
@@ -404,7 +404,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳µ̳µ̳µ̳µ̳µ̳{1:^µ̳}µ̳                                                             |
         {3:-- TERMINAL --}                                                        |
@@ -415,7 +415,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳µ̳µ̳µ̳µ̳^µ̳{2:µ̳}µ̳                                                             |
                                                                               |
@@ -429,7 +429,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳{1:^µ̳}µ̳µ̳µ̳µ̳µ̳µ̳                                                             |
         {3:-- TERMINAL --}                                                        |
@@ -440,7 +440,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :^µ̳{2:µ̳}µ̳µ̳µ̳µ̳µ̳µ̳                                                             |
                                                                               |
@@ -462,7 +462,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :哦哦哦哦哦哦哦哦{1:^ }                                                    |
         {3:-- TERMINAL --}                                                        |
@@ -473,7 +473,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :哦哦哦哦哦哦哦^哦{2: }                                                    |
                                                                               |
@@ -487,7 +487,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :哦哦哦哦哦哦{1:^哦}哦                                                     |
         {3:-- TERMINAL --}                                                        |
@@ -498,7 +498,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :哦哦哦哦哦^哦{2:哦}哦                                                     |
                                                                               |
@@ -512,7 +512,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :哦{1:^哦}哦哦哦哦哦哦                                                     |
         {3:-- TERMINAL --}                                                        |
@@ -523,7 +523,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                               |
                                                                               |
                                                                               |
-                                                                              |
+        {5:                                                                      }|
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :^哦{2:哦}哦哦哦哦哦哦                                                     |
                                                                               |
@@ -539,7 +539,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                             |
                                                                             |
                                                                             |
-                                                                            |
+      {5:                                                                      }|
       Entering Ex mode.  Type "visual" to go to Normal mode.                |
       :aaaaaaaa    {1:^ }                                                        |
       {3:-- TERMINAL --}                                                        |
@@ -551,7 +551,7 @@ describe('buffer cursor position is correct in terminal without number column', 
                                                                             |
                                                                             |
                                                                             |
-                                                                            |
+      {5:                                                                      }|
       Entering Ex mode.  Type "visual" to go to Normal mode.                |
       :aaaaaaaa   ^ {2: }                                                        |
                                                                             |
@@ -575,7 +575,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
       {7:  1 }                                                                  |
       {7:  2 }                                                                  |
       {7:  3 }                                                                  |
-      {7:  4 }                                                                  |
+      {7:  4 }{5:                                                                  }|
       {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
       {7:  6 }:{1:^ }                                                                |
       {3:-- TERMINAL --}                                                        |
@@ -598,7 +598,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:aaaaaaaa{1:^ }                                                        |
         {3:-- TERMINAL --}                                                        |
@@ -609,7 +609,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:aaaaaaa^a{2: }                                                        |
                                                                               |
@@ -623,7 +623,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:aaaaaa{1:^a}a                                                         |
         {3:-- TERMINAL --}                                                        |
@@ -634,7 +634,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:aaaaa^a{2:a}a                                                         |
                                                                               |
@@ -648,7 +648,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:a{1:^a}aaaaaa                                                         |
         {3:-- TERMINAL --}                                                        |
@@ -659,7 +659,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:^a{2:a}aaaaaa                                                         |
                                                                               |
@@ -679,7 +679,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:µµµµµµµµ{1:^ }                                                        |
         {3:-- TERMINAL --}                                                        |
@@ -690,7 +690,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:µµµµµµµ^µ{2: }                                                        |
                                                                               |
@@ -704,7 +704,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:µµµµµµ{1:^µ}µ                                                         |
         {3:-- TERMINAL --}                                                        |
@@ -715,7 +715,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:µµµµµ^µ{2:µ}µ                                                         |
                                                                               |
@@ -729,7 +729,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:µ{1:^µ}µµµµµµ                                                         |
         {3:-- TERMINAL --}                                                        |
@@ -740,7 +740,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:^µ{2:µ}µµµµµµ                                                         |
                                                                               |
@@ -762,7 +762,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳{1:^ }                                                        |
         {3:-- TERMINAL --}                                                        |
@@ -773,7 +773,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:µ̳µ̳µ̳µ̳µ̳µ̳µ̳^µ̳{2: }                                                        |
                                                                               |
@@ -787,7 +787,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:µ̳µ̳µ̳µ̳µ̳µ̳{1:^µ̳}µ̳                                                         |
         {3:-- TERMINAL --}                                                        |
@@ -798,7 +798,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:µ̳µ̳µ̳µ̳µ̳^µ̳{2:µ̳}µ̳                                                         |
                                                                               |
@@ -812,7 +812,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:µ̳{1:^µ̳}µ̳µ̳µ̳µ̳µ̳µ̳                                                         |
         {3:-- TERMINAL --}                                                        |
@@ -823,7 +823,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:^µ̳{2:µ̳}µ̳µ̳µ̳µ̳µ̳µ̳                                                         |
                                                                               |
@@ -845,7 +845,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:哦哦哦哦哦哦哦哦{1:^ }                                                |
         {3:-- TERMINAL --}                                                        |
@@ -856,7 +856,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:哦哦哦哦哦哦哦^哦{2: }                                                |
                                                                               |
@@ -870,7 +870,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:哦哦哦哦哦哦{1:^哦}哦                                                 |
         {3:-- TERMINAL --}                                                        |
@@ -881,7 +881,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:哦哦哦哦哦^哦{2:哦}哦                                                 |
                                                                               |
@@ -895,7 +895,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:哦{1:^哦}哦哦哦哦哦哦                                                 |
         {3:-- TERMINAL --}                                                        |
@@ -906,7 +906,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
-        {7:  4 }                                                                  |
+        {7:  4 }{5:                                                                  }|
         {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
         {7:  6 }:^哦{2:哦}哦哦哦哦哦哦                                                 |
                                                                               |
@@ -922,7 +922,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
       {7:  1 }                                                                  |
       {7:  2 }                                                                  |
       {7:  3 }                                                                  |
-      {7:  4 }                                                                  |
+      {7:  4 }{5:                                                                  }|
       {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
       {7:  6 }:aaaaaaaa    {1:^ }                                                    |
       {3:-- TERMINAL --}                                                        |
@@ -934,7 +934,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
       {7:  1 }                                                                  |
       {7:  2 }                                                                  |
       {7:  3 }                                                                  |
-      {7:  4 }                                                                  |
+      {7:  4 }{5:                                                                  }|
       {7:  5 }Entering Ex mode.  Type "visual" to go to Normal mode.            |
       {7:  6 }:aaaaaaaa   ^ {2: }                                                    |
                                                                             |

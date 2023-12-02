@@ -2525,6 +2525,7 @@ describe('highlight namespaces', function()
       [8] = {foreground = Screen.colors.Gray20};
       [9] = {foreground = Screen.colors.Blue};
       [10] = {bold = true, foreground = Screen.colors.SeaGreen};
+      [11] = {foreground = Screen.colors.Red};
     }
 
     ns1 = meths.create_namespace 'grungy'
@@ -2672,6 +2673,22 @@ describe('highlight namespaces', function()
       bg                       |
       {10:Press ENTER or type comma}|
       {10:nd to continue}^           |
+    ]]}
+  end)
+
+  it('refresh cmdline after MsgArea set #17832', function()
+    command('set termguicolors |call nvim_set_hl(0, "MsgArea", {"fg": "Red"}) | echomsg "foo"')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {11:foo                      }|
     ]]}
   end)
 end)
