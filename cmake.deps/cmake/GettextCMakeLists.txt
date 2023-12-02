@@ -10,7 +10,6 @@ add_compile_options(-w)
 set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /ignore:4006")
 
 include(CheckFunctionExists)
-
 function(check_function_exists2)
   check_function_exists(${ARGV})
   if(NOT ${ARGV1})
