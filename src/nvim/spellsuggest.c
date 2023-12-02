@@ -1941,6 +1941,12 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
       // - Skip the byte if it's equal to the byte in the word,
       //   accepting that byte is always better.
       n += sp->ts_curi++;
+
+      // break out, if we would be accessing byts buffer out of bounds
+      if (byts == slang->sl_fbyts && n >= slang->sl_fbyts_len) {
+        got_int = true;
+        break;
+      }
       c = byts[n];
       if (soundfold && sp->ts_twordlen == 0 && c == '*') {
         // Inserting a vowel at the start of a word counts less,

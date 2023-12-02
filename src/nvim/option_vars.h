@@ -938,6 +938,8 @@ enum {
 // Value for b_p_ul indicating the global value must be used.
 #define NO_LOCAL_UNDOLEVEL (-123456)
 
+#define ERR_BUFLEN 80
+
 #define SB_MAX 100000  // Maximum 'scrollback' value.
 
 #define MAX_NUMBERWIDTH 20      // used for 'numberwidth' and 'statuscolumn'
