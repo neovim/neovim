@@ -117,7 +117,7 @@ func Test_crash1_2()
   " The following used to crash Vim
   let opts = #{cmd: 'sh'}
   let vim  = GetVimProg()
-  let result = 'X_crash1_1_result.txt'
+  let result = 'X_crash1_2_result.txt'
 
   let buf = RunVimInTerminal('sh', opts)
 
@@ -147,6 +147,17 @@ func Test_crash1_2()
   let args = printf(cmn_args, vim, file)
   call term_sendkeys(buf, args ..
     \ ' ; echo "crash 4: [OK]" >> '.. result .. "\<cr>")
+  call TermWait(buf, 150)
+
+  let file = 'crash/poc_ex_substitute'
+  let cmn_args = "%s -u NONE -i NONE -n -e -s -S %s -c ':qa!'"
+  let args = printf(cmn_args, vim, file)
+  " just make sure it runs, we don't care about the resulting echo
+  call term_sendkeys(buf, args .. "\<cr>")
+  " There is no output generated in Github CI for the asan clang build.
+  " so just skip generating the ouput.
+  " call term_sendkeys(buf, args ..
+  "   \ ' &&  echo "crash 5: [OK]" >> '.. result .. "\<cr>")
   call TermWait(buf, 150)
 
   " clean up

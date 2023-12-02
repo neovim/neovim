@@ -3144,7 +3144,7 @@ static char *sub_grow_buf(char **new_start, int *new_start_len, int needed_len)
     // substitution into (and some extra space to avoid
     // too many calls to xmalloc()/free()).
     *new_start_len = needed_len + 50;
-    *new_start = xmalloc((size_t)(*new_start_len));
+    *new_start = xcalloc(1, (size_t)(*new_start_len));
     **new_start = NUL;
     new_end = *new_start;
   } else {
@@ -3154,8 +3154,11 @@ static char *sub_grow_buf(char **new_start, int *new_start_len, int needed_len)
     size_t len = strlen(*new_start);
     needed_len += (int)len;
     if (needed_len > *new_start_len) {
+      size_t prev_new_start_len = (size_t)(*new_start_len);
       *new_start_len = needed_len + 50;
+      size_t added_len = (size_t)(*new_start_len) - prev_new_start_len;
       *new_start = xrealloc(*new_start, (size_t)(*new_start_len));
+      memset(*new_start + prev_new_start_len, 0, added_len);
     }
     new_end = *new_start + len;
   }
