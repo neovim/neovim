@@ -15,6 +15,7 @@ local Screen = require('test.functional.ui.screen')
 local mkdir = helpers.mkdir
 local clear = helpers.clear
 local eq = helpers.eq
+local exec = helpers.exec
 local exc_exec = helpers.exc_exec
 local exec_lua = helpers.exec_lua
 local exec_capture = helpers.exec_capture
@@ -28,6 +29,7 @@ local pcall_err = helpers.pcall_err
 local assert_alive = helpers.assert_alive
 local poke_eventloop = helpers.poke_eventloop
 local feed = helpers.feed
+local expect_exit = helpers.expect_exit
 
 describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
   local max_func_args = 20  -- from eval.h
@@ -311,4 +313,15 @@ it('no double-free in garbage collection #16287', function()
   command('source Xgarbagecollect.vim')
   sleep(10)
   assert_alive()
+end)
+
+it('no heap-use-after-free with EXITFREE and partial as prompt callback', function()
+  clear()
+  exec([[
+    func PromptCallback(text)
+    endfunc
+    setlocal buftype=prompt
+    call prompt_setcallback('', funcref('PromptCallback'))
+  ]])
+  expect_exit(command, 'qall!')
 end)
