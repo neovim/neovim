@@ -128,6 +128,13 @@ func Test_crash1_2()
     \ '  && echo "crash 1: [OK]" > '.. result .. "\<cr>")
   call TermWait(buf, 150)
 
+  let file = 'crash/poc_win_enter_ext'
+  let cmn_args = "%s -u NONE -i NONE -n -e -s -S %s -c ':qa!'"
+  let args = printf(cmn_args, vim, file)
+  call term_sendkeys(buf, args ..
+    \ '  && echo "crash 2: [OK]" >> '.. result .. "\<cr>")
+  call TermWait(buf, 350)
+
   " clean up
   exe buf .. "bw!"
 
@@ -135,6 +142,7 @@ func Test_crash1_2()
 
   let expected = [
       \ 'crash 1: [OK]',
+      \ 'crash 2: [OK]',
       \ ]
 
   call assert_equal(expected, getline(1, '$'))
