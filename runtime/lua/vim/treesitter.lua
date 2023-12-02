@@ -355,6 +355,7 @@ end
 ---             - bufnr integer|nil Buffer number (nil or 0 for current buffer)
 ---             - pos table|nil 0-indexed (row, col) tuple. Defaults to cursor position in the
 ---                             current window. Required if {bufnr} is not the current buffer
+---             - lang string|nil Parser language. (default: from buffer filetype)
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---
 ---@return TSNode | nil Node at the given position
@@ -385,7 +386,7 @@ function M.get_node(opts)
 
   local ts_range = { row, col, row, col }
 
-  local root_lang_tree = M.get_parser(bufnr)
+  local root_lang_tree = M.get_parser(bufnr, opts.lang)
   if not root_lang_tree then
     return
   end
