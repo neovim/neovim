@@ -1717,7 +1717,6 @@ local pattern = {
   ['.*/etc/host%.conf'] = 'hostconf',
   ['.*/etc/hosts%.deny'] = 'hostsaccess',
   ['.*/etc/hosts%.allow'] = 'hostsaccess',
-  ['.*%.component%.html'] = 'html.angular',
   ['.*%.html%.m4'] = 'htmlm4',
   ['.*/%.i3/config'] = 'i3config',
   ['.*/i3/config'] = 'i3config',
