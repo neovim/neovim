@@ -442,7 +442,7 @@ int check_signcolumn(win_T *wp)
 const char *check_stl_option(char *s)
 {
   int groupdepth = 0;
-  static char errbuf[80];
+  static char errbuf[ERR_BUFLEN];
 
   while (*s) {
     // Check for valid keys after % sequences

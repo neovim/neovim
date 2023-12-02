@@ -21,3 +21,13 @@ it('no crash when ending Visual mode close the window to switch to', function()
   command('wincmd p')
   assert_alive()
 end)
+
+it('no crash when truncating overlong message', function()
+  pcall(command, 'source test/old/testdir/crash/vim_msg_trunc_poc')
+  assert_alive()
+end)
+
+it('no crash with very long option error message', function()
+  pcall(command, 'source test/old/testdir/crash/poc_did_set_langmap')
+  assert_alive()
+end)

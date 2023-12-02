@@ -1455,7 +1455,7 @@ int do_set(char *arg, int opt_flags)
       } else {
         char *startarg = arg;             // remember for error message
         const char *errmsg = NULL;
-        char errbuf[80];
+        char errbuf[ERR_BUFLEN];
 
         do_one_set_option(opt_flags, &arg, &did_show, errbuf, sizeof(errbuf), &errmsg);
 
@@ -3845,7 +3845,7 @@ const char *set_option_value(const char *const name, const OptVal value, int opt
 
   int opt_idx = findoption(name);
   if (opt_idx < 0) {
-    snprintf(errbuf, IOSIZE, _(e_unknown_option2), name);
+    snprintf(errbuf, sizeof(errbuf), _(e_unknown_option2), name);
     return errbuf;
   }
 
