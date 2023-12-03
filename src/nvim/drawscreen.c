@@ -2644,6 +2644,8 @@ int number_width(win_T *wp)
 /// e.g. if must_redraw is UPD_CLEAR, type UPD_NOT_VALID will do nothing.
 void redraw_later(win_T *wp, int type)
 {
+  // curwin may have been set to NULL when exiting
+  assert(wp != NULL || exiting);
   if (!exiting && wp->w_redr_type < type) {
     wp->w_redr_type = type;
     if (type >= UPD_NOT_VALID) {

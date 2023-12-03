@@ -1096,6 +1096,26 @@ describe('smoothscroll', function()
     ]])
   end)
 
+  it('works in Insert mode at bottom of window', function()
+    screen:try_resize(40, 9)
+    exec([[
+      call setline(1, repeat([repeat('A very long line ...', 10)], 5))
+      set wrap smoothscroll scrolloff=0
+    ]])
+    feed('Go123456789<CR>')
+    screen:expect([[
+      <<<ery long line ...A very long line ...|
+      A very long line ...A very long line ...|
+      A very long line ...A very long line ...|
+      A very long line ...A very long line ...|
+      A very long line ...A very long line ...|
+      A very long line ...A very long line ...|
+      123456789                               |
+      ^                                        |
+      -- INSERT --                            |
+    ]])
+  end)
+
   it('<<< marker shows with tabline, winbar and splits', function()
     screen:try_resize(40, 12)
     exec([[
