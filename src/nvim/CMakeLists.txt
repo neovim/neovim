@@ -25,7 +25,6 @@ target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LUV_INCLUDE_DIR})
 target_link_libraries(main_lib INTERFACE ${LUV_LIBRARY})
 
 find_package(Iconv REQUIRED)
-find_package(Libintl REQUIRED) # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
 find_package(Libuv 1.28.0 REQUIRED)
 find_package(Libvterm 0.3.3 REQUIRED)
 find_package(Lpeg REQUIRED)
@@ -35,13 +34,17 @@ find_package(Unibilium 2.0 REQUIRED)
 
 target_link_libraries(main_lib INTERFACE
   iconv
-  libintl
   libvterm
   lpeg
   msgpack
   treesitter
   unibilium)
 target_link_libraries(nlua0 PUBLIC lpeg)
+
+if(ENABLE_LIBINTL)
+  find_package(Libintl REQUIRED) # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
+  target_link_libraries(main_lib INTERFACE libintl)
+endif()
 
 target_compile_definitions(main_lib INTERFACE HAVE_UNIBILIUM)
 
