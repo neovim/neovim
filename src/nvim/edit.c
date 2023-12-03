@@ -444,8 +444,11 @@ static int insert_check(VimState *state)
   // is detected when the cursor column is smaller after inserting something.
   // Don't do this when the topline changed already, it has already been
   // adjusted (by insertchar() calling open_line())).
+  // Also don't do this when 'smoothscroll' is set, as the window should then
+  // be scrolled by screen lines.
   if (curbuf->b_mod_set
       && curwin->w_p_wrap
+      && !curwin->w_p_sms
       && !s->did_backspace
       && curwin->w_topline == s->old_topline
       && curwin->w_topfill == s->old_topfill) {
