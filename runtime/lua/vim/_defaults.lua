@@ -163,6 +163,30 @@ do
       vim.notify(('W325: Ignoring swapfile from Nvim process %d'):format(info.pid))
     end,
   })
+
+  local original = vim.g.colors_name or 'default'
+  vim.api.nvim_create_autocmd({ 'CmdLineChanged', 'CmdlineLeave' }, {
+    desc = 'colorscheme preview and restore when cancel',
+    group = vim.api.nvim_create_augroup('nvim_colorscheme_preview', {}),
+    callback = function(data)
+      local line = vim.fn.getcmdline()
+      if vim.v.event.cmdtype ~= ':' or not vim.startswith(line, 'color') then
+        return
+      end
+      local item = vim.split(line, '%s+')[2]
+      if data.event == 'CmdlineLeave' then
+        if not vim.v.event.abort and item then
+          original = item
+        end
+        vim.cmd.color(original)
+      else
+        if not pcall(vim.cmd.colorscheme, { item, mods = { noautocmd = true } }) then
+          vim.cmd.color(original)
+        end
+      end
+      vim.cmd.redraw()
+    end,
+  })
 end
 
 --- Guess value of 'background' based on terminal color.

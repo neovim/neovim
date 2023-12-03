@@ -242,6 +242,8 @@ The following new APIs and features were added.
 • Added |vim.text.hexencode()| and |vim.text.hexdecode()| to convert strings
   to and from byte representations.
 
+• 'colorscheme' command support preview when scroll in colors wild menu.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
