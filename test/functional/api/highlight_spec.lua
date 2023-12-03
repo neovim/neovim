@@ -561,7 +561,7 @@ describe('API: get highlight', function()
   end)
 
   it('can correctly detect links', function()
-    command('hi String guifg=#a6e3a1')
+    command('hi String guifg=#a6e3a1 ctermfg=NONE')
     command('hi link @string string')
     command('hi link @string.cpp @string')
     eq({ fg = 10937249 }, meths.get_hl(0, { name = 'String' }))

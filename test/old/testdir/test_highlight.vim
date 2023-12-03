@@ -810,6 +810,7 @@ endfunc
 " Test for :highlight command errors
 func Test_highlight_cmd_errors()
   if has('gui_running') || has('nvim')
+    hi! Normal ctermfg=NONE ctermbg=NONE
     " This test doesn't fail in the MS-Windows console version.
     call assert_fails('hi Xcomment ctermfg=fg', 'E419:')
     call assert_fails('hi Xcomment ctermfg=bg', 'E420:')

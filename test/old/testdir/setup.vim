@@ -93,3 +93,6 @@ let $HOME = expand(getcwd() . '/XfakeHOME')
 if !isdirectory($HOME)
   call mkdir($HOME)
 endif
+
+" Use Vim's default color scheme
+colorscheme vim

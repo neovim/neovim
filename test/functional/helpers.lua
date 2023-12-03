@@ -38,6 +38,11 @@ module.nvim_argv = {
   '--cmd', module.nvim_set,
   '--cmd', 'mapclear',
   '--cmd', 'mapclear!',
+  -- Make screentest work after changing to the new default color scheme
+  -- Source 'vim' color scheme without side effects
+  -- TODO: rewrite tests
+  '--cmd', 'lua f=io.open("runtime/colors/vim.vim", "r"); l=f:read("*a"); f:close(); vim.api.nvim_exec2(l, {})',
+  '--cmd', 'unlet g:colors_name',
   '--embed'}
 
 -- Directory containing nvim.

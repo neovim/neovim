@@ -30,6 +30,8 @@ Defaults					            *nvim-defaults*
   ":filetype off" to |init.vim|.
 - Syntax highlighting is enabled by default. This can be disabled by adding
   ":syntax off" to |init.vim|.
+- Default color scheme has been updated. This can be reversed by adding
+  ":colorscheme vim" to |init.vim|.
 
 - 'autoindent' is enabled
 - 'autoread' is enabled (works in all UIs, including terminal)

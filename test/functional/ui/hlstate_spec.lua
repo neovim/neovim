@@ -72,7 +72,7 @@ describe('ext_hlstate detailed highlights', function()
       [6] = {{}, {{hi_name = "StatusLineNC", ui_name = "StatusLineNC", kind = "ui"}}},
       [7] = {{}, {{hi_name = "MsgArea", ui_name = "MsgArea", kind = "ui"}}},
     })
-    command("hi clear VertSplit")
+    command("hi clear WinSeparator")
     command("vsplit")
 
     screen:expect([[
