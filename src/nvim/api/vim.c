@@ -1017,18 +1017,19 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
     }
   }
 
-  TerminalOptions topts;
   Channel *chan = channel_alloc(kChannelStreamInternal);
   chan->stream.internal.cb = cb;
   chan->stream.internal.closed = false;
-  topts.data = chan;
-  // NB: overridden in terminal_check_size if a window is already
-  // displaying the buffer
-  topts.width = (uint16_t)MAX(curwin->w_width_inner - win_col_off(curwin), 0);
-  topts.height = (uint16_t)curwin->w_height_inner;
-  topts.write_cb = term_write;
-  topts.resize_cb = term_resize;
-  topts.close_cb = term_close;
+  TerminalOptions topts = {
+    .data = chan,
+    // NB: overridden in terminal_check_size if a window is already
+    // displaying the buffer
+    .width = (uint16_t)MAX(curwin->w_width_inner - win_col_off(curwin), 0),
+    .height = (uint16_t)curwin->w_height_inner,
+    .write_cb = term_write,
+    .resize_cb = term_resize,
+    .close_cb = term_close,
+  };
   channel_incref(chan);
   terminal_open(&chan->term, buf, topts);
   if (chan->term != NULL) {
@@ -1038,7 +1039,7 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   return (Integer)chan->id;
 }
 
-static void term_write(char *buf, size_t size, void *data)  // NOLINT(readability-non-const-parameter)
+static void term_write(const char *buf, size_t size, void *data)
 {
   Channel *chan = data;
   LuaRef cb = chan->stream.internal.cb;
@@ -1048,7 +1049,7 @@ static void term_write(char *buf, size_t size, void *data)  // NOLINT(readabilit
   MAXSIZE_TEMP_ARRAY(args, 3);
   ADD_C(args, INTEGER_OBJ((Integer)chan->id));
   ADD_C(args, BUFFER_OBJ(terminal_buf(chan->term)));
-  ADD_C(args, STRING_OBJ(((String){ .data = buf, .size = size })));
+  ADD_C(args, STRING_OBJ(((String){ .data = (char *)buf, .size = size })));
   textlock++;
   nlua_call_ref(cb, "input", args, false, NULL);
   textlock--;
