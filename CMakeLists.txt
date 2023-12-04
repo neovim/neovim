@@ -226,9 +226,6 @@ add_glob_target(
   FLAGS -ll ${PROJECT_SOURCE_DIR}/test/lua_runner.lua ${CMAKE_BINARY_DIR}/usr luacheck -q
   GLOB_DIRS runtime/ scripts/ src/ test/
   GLOB_PAT *.lua
-  EXCLUDE
-    runtime/lua/vim/_meta/.*
-    runtime/lua/coxpcall.lua
   TOUCH_STRATEGY SINGLE)
 add_dependencies(lintlua-luacheck lua-dev-deps)
 
@@ -238,8 +235,6 @@ add_glob_target(
   FLAGS --color=always --check --respect-ignores
   GLOB_DIRS runtime/
   GLOB_PAT *.lua
-  EXCLUDE
-    /runtime/lua/vim/_meta
   TOUCH_STRATEGY SINGLE)
 
 add_custom_target(lintlua)
@@ -261,12 +256,12 @@ add_custom_target(lint)
 add_dependencies(lint lintc lintlua lintsh lintcommit)
 
 # Format
-add_custom_target(formatlua
-  COMMAND ${CMAKE_COMMAND}
-    -D FORMAT_PRG=${STYLUA_PRG}
-    -D LANG=lua
-    -P ${PROJECT_SOURCE_DIR}/cmake/Format.cmake
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+add_glob_target(
+  TARGET formatlua
+  COMMAND ${STYLUA_PRG}
+  FLAGS --respect-ignores
+  GLOB_DIRS runtime
+  GLOB_PAT *.lua)
 
 add_custom_target(format)
 add_dependencies(format formatc formatlua)

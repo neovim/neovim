@@ -879,12 +879,11 @@ add_glob_target(
   FLAGS -c ${UNCRUSTIFY_CONFIG} -q --check
   FILES ${LINT_NVIM_SOURCES})
 
-add_custom_target(formatc
-  COMMAND ${CMAKE_COMMAND}
-    -D FORMAT_PRG=${UNCRUSTIFY_PRG}
-    -D LANG=c
-    -P ${PROJECT_SOURCE_DIR}/cmake/Format.cmake
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+add_glob_target(
+  TARGET formatc
+  COMMAND ${UNCRUSTIFY_PRG}
+  FLAGS -c ${UNCRUSTIFY_CONFIG} --replace --no-backup
+  FILES ${LINT_NVIM_SOURCES})
 
 add_dependencies(lintc-uncrustify uncrustify_update_config)
 add_dependencies(formatc uncrustify_update_config)
