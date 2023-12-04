@@ -40,6 +40,20 @@ describe('treesitter node API', function()
     assert_alive()
   end)
 
+  it('get_node() with lang given', function()
+    -- this buffer doesn't have filetype set!
+    insert('local foo = function() end')
+    exec_lua([[
+      node = vim.treesitter.get_node({
+        bufnr = 0,
+        pos = { 0, 6 },  -- on "foo"
+        lang = 'lua',
+      })
+    ]])
+    eq('foo', lua_eval('vim.treesitter.query.get_node_text(node, 0)'))
+    eq('identifier', lua_eval('node:type()'))
+  end)
+
   it('can move between siblings', function()
     insert([[
       int main(int x, int y, int z) {
