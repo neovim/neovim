@@ -536,11 +536,14 @@ static int nlua_iconv(lua_State *lstate)
   return 1;
 }
 
-// Like 'zx' but don't call newFoldLevel()
+// Update foldlevels (e.g., by evaluating 'foldexpr') for all lines in the current window without
+// invoking other side effects. Unlike `zx`, it does not close manually opened folds and does not
+// open folds under the cursor.
 static int nlua_foldupdate(lua_State *lstate)
 {
   curwin->w_foldinvalid = true;  // recompute folds
-  foldOpenCursor();
+  foldUpdate(curwin, 1, (linenr_T)MAXLNUM);
+  curwin->w_foldinvalid = false;
 
   return 0;
 }
