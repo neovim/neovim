@@ -10,11 +10,11 @@ local client_output = io.open(arg[5], 'wb')
 local c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
 
-local hashy = require'generators.hashy'
+local hashy = require 'generators.hashy'
 
 local function write_signature(output, ev, prefix, notype)
-  output:write('('..prefix)
-  if prefix == "" and #ev.parameters == 0 then
+  output:write('(' .. prefix)
+  if prefix == '' and #ev.parameters == 0 then
     output:write('void')
   end
   for j = 1, #ev.parameters do
@@ -23,7 +23,7 @@ local function write_signature(output, ev, prefix, notype)
     end
     local param = ev.parameters[j]
     if not notype then
-      output:write(param[1]..' ')
+      output:write(param[1] .. ' ')
     end
     output:write(param[2])
   end
@@ -35,26 +35,28 @@ local function write_arglist(output, ev)
     local param = ev.parameters[j]
     local kind = string.upper(param[1])
     output:write('  ADD_C(args, ')
-    output:write(kind..'_OBJ('..param[2]..')')
+    output:write(kind .. '_OBJ(' .. param[2] .. ')')
     output:write(');\n')
   end
 end
 
 local function call_ui_event_method(output, ev)
-  output:write('void ui_client_event_'..ev.name..'(Array args)\n{\n')
+  output:write('void ui_client_event_' .. ev.name .. '(Array args)\n{\n')
 
   local hlattrs_args_count = 0
   if #ev.parameters > 0 then
-    output:write('  if (args.size < '..(#ev.parameters))
+    output:write('  if (args.size < ' .. #ev.parameters)
     for j = 1, #ev.parameters do
       local kind = ev.parameters[j][1]
-      if kind ~= "Object" then
-        if kind == 'HlAttrs' then kind = 'Dictionary' end
-        output:write('\n      || args.items['..(j-1)..'].type != kObjectType'..kind..'')
+      if kind ~= 'Object' then
+        if kind == 'HlAttrs' then
+          kind = 'Dictionary'
+        end
+        output:write('\n      || args.items[' .. (j - 1) .. '].type != kObjectType' .. kind .. '')
       end
     end
     output:write(') {\n')
-    output:write('    ELOG("Error handling ui event \''..ev.name..'\'");\n')
+    output:write('    ELOG("Error handling ui event \'' .. ev.name .. '\'");\n')
     output:write('    return;\n')
     output:write('  }\n')
   end
@@ -62,23 +64,29 @@ local function call_ui_event_method(output, ev)
   for j = 1, #ev.parameters do
     local param = ev.parameters[j]
     local kind = param[1]
-    output:write('  '..kind..' arg_'..j..' = ')
+    output:write('  ' .. kind .. ' arg_' .. j .. ' = ')
     if kind == 'HlAttrs' then
       -- The first HlAttrs argument is rgb_attrs and second is cterm_attrs
-      output:write('ui_client_dict2hlattrs(args.items['..(j-1)..'].data.dictionary, '..(hlattrs_args_count == 0 and 'true' or 'false')..');\n')
+      output:write(
+        'ui_client_dict2hlattrs(args.items['
+          .. (j - 1)
+          .. '].data.dictionary, '
+          .. (hlattrs_args_count == 0 and 'true' or 'false')
+          .. ');\n'
+      )
       hlattrs_args_count = hlattrs_args_count + 1
     elseif kind == 'Object' then
-      output:write('args.items['..(j-1)..'];\n')
+      output:write('args.items[' .. (j - 1) .. '];\n')
     elseif kind == 'Window' then
-      output:write('(Window)args.items['..(j-1)..'].data.integer;\n')
+      output:write('(Window)args.items[' .. (j - 1) .. '].data.integer;\n')
     else
-      output:write('args.items['..(j-1)..'].data.'..string.lower(kind)..';\n')
+      output:write('args.items[' .. (j - 1) .. '].data.' .. string.lower(kind) .. ';\n')
     end
   end
 
-  output:write('  tui_'..ev.name..'(tui')
+  output:write('  tui_' .. ev.name .. '(tui')
   for j = 1, #ev.parameters do
-    output:write(', arg_'..j)
+    output:write(', arg_' .. j)
   end
   output:write(');\n')
 
@@ -90,78 +98,81 @@ for i = 1, #events do
   assert(ev.return_type == 'void')
 
   if ev.since == nil and not ev.noexport then
-    print("Ui event "..ev.name.." lacks since field.\n")
+    print('Ui event ' .. ev.name .. ' lacks since field.\n')
     os.exit(1)
   end
   ev.since = tonumber(ev.since)
 
   if not ev.remote_only then
-
     if not ev.remote_impl and not ev.noexport then
-      remote_output:write('void remote_ui_'..ev.name)
+      remote_output:write('void remote_ui_' .. ev.name)
       write_signature(remote_output, ev, 'UI *ui')
       remote_output:write('\n{\n')
       remote_output:write('  UIData *data = ui->data;\n')
       remote_output:write('  Array args = data->call_buf;\n')
       write_arglist(remote_output, ev)
-      remote_output:write('  push_call(ui, "'..ev.name..'", args);\n')
+      remote_output:write('  push_call(ui, "' .. ev.name .. '", args);\n')
       remote_output:write('}\n\n')
     end
   end
 
   if not (ev.remote_only and ev.remote_impl) then
-    call_output:write('void ui_call_'..ev.name)
+    call_output:write('void ui_call_' .. ev.name)
     write_signature(call_output, ev, '')
     call_output:write('\n{\n')
     if ev.remote_only then
       call_output:write('  Array args = call_buf;\n')
       write_arglist(call_output, ev)
-      call_output:write('  ui_call_event("'..ev.name..'", args);\n')
+      call_output:write('  ui_call_event("' .. ev.name .. '", args);\n')
     elseif ev.compositor_impl then
-      call_output:write('  ui_comp_'..ev.name)
+      call_output:write('  ui_comp_' .. ev.name)
       write_signature(call_output, ev, '', true)
-      call_output:write(";\n")
+      call_output:write(';\n')
       call_output:write('  UI_CALL')
-      write_signature(call_output, ev, '!ui->composed, '..ev.name..', ui', true)
-      call_output:write(";\n")
+      write_signature(call_output, ev, '!ui->composed, ' .. ev.name .. ', ui', true)
+      call_output:write(';\n')
     else
       call_output:write('  UI_CALL')
-      write_signature(call_output, ev, 'true, '..ev.name..', ui', true)
-      call_output:write(";\n")
+      write_signature(call_output, ev, 'true, ' .. ev.name .. ', ui', true)
+      call_output:write(';\n')
     end
-    call_output:write("}\n\n")
+    call_output:write('}\n\n')
   end
 
   if ev.compositor_impl then
-    call_output:write('void ui_composed_call_'..ev.name)
+    call_output:write('void ui_composed_call_' .. ev.name)
     write_signature(call_output, ev, '')
     call_output:write('\n{\n')
     call_output:write('  UI_CALL')
-    write_signature(call_output, ev, 'ui->composed, '..ev.name..', ui', true)
-    call_output:write(";\n")
-    call_output:write("}\n\n")
+    write_signature(call_output, ev, 'ui->composed, ' .. ev.name .. ', ui', true)
+    call_output:write(';\n')
+    call_output:write('}\n\n')
   end
 
-  if (not ev.remote_only) and (not ev.noexport) and (not ev.client_impl) and (not ev.client_ignore) then
+  if (not ev.remote_only) and not ev.noexport and not ev.client_impl and not ev.client_ignore then
     call_ui_event_method(client_output, ev)
   end
 end
 
 local client_events = {}
-for _,ev in ipairs(events) do
-  if (not ev.noexport) and ((not ev.remote_only) or ev.client_impl) and (not ev.client_ignore) then
+for _, ev in ipairs(events) do
+  if (not ev.noexport) and ((not ev.remote_only) or ev.client_impl) and not ev.client_ignore then
     client_events[ev.name] = ev
   end
 end
 
-local hashorder, hashfun = hashy.hashy_hash("ui_client_handler", vim.tbl_keys(client_events), function (idx)
-  return "event_handlers["..idx.."].name"
-end)
+local hashorder, hashfun = hashy.hashy_hash(
+  'ui_client_handler',
+  vim.tbl_keys(client_events),
+  function(idx)
+    return 'event_handlers[' .. idx .. '].name'
+  end
+)
 
-client_output:write("static const UIClientHandler event_handlers[] = {\n")
+client_output:write('static const UIClientHandler event_handlers[] = {\n')
 
 for _, name in ipairs(hashorder) do
-  client_output:write('  { .name = "'..name..'", .fn = ui_client_event_'..name..'},\n')
+  client_output:write('  { .name = "' .. name .. '", .fn = ui_client_event_' .. name .. '},\n')
 end
 
 client_output:write('\n};\n\n')
@@ -172,25 +183,24 @@ remote_output:close()
 client_output:close()
 
 -- don't expose internal attributes like "impl_name" in public metadata
-local exported_attributes = {'name', 'parameters',
-                       'since', 'deprecated_since'}
+local exported_attributes = { 'name', 'parameters', 'since', 'deprecated_since' }
 local exported_events = {}
-for _,ev in ipairs(events) do
+for _, ev in ipairs(events) do
   local ev_exported = {}
-  for _,attr in ipairs(exported_attributes) do
+  for _, attr in ipairs(exported_attributes) do
     ev_exported[attr] = ev[attr]
   end
-  for _,p in ipairs(ev_exported.parameters) do
+  for _, p in ipairs(ev_exported.parameters) do
     if p[1] == 'HlAttrs' then
       p[1] = 'Dictionary'
     end
   end
   if not ev.noexport then
-    exported_events[#exported_events+1] = ev_exported
+    exported_events[#exported_events + 1] = ev_exported
   end
 end
 
 local packed = mpack.encode(exported_events)
-local dump_bin_array = require("generators.dump_bin_array")
+local dump_bin_array = require('generators.dump_bin_array')
 dump_bin_array(metadata_output, 'ui_events_metadata', packed)
 metadata_output:close()

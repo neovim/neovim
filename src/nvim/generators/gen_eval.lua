@@ -8,7 +8,7 @@ local funcsfname = autodir .. '/funcs.generated.h'
 
 --Will generate funcs.generated.h with definition of functions static const array.
 
-local hashy = require'generators.hashy'
+local hashy = require 'generators.hashy'
 
 local hashpipe = assert(io.open(funcsfname, 'wb'))
 
@@ -48,18 +48,18 @@ hashpipe:write([[
 local funcs = require('eval').funcs
 for _, func in pairs(funcs) do
   if func.float_func then
-    func.func = "float_op_wrapper"
-    func.data = "{ .float_func = &"..func.float_func.." }"
+    func.func = 'float_op_wrapper'
+    func.data = '{ .float_func = &' .. func.float_func .. ' }'
   end
 end
 
-local metadata = mpack.decode(io.open(metadata_file, 'rb'):read("*all"))
-for _,fun in ipairs(metadata) do
+local metadata = mpack.decode(io.open(metadata_file, 'rb'):read('*all'))
+for _, fun in ipairs(metadata) do
   if fun.eval then
     funcs[fun.name] = {
-      args=#fun.parameters,
-      func='api_wrapper',
-      data='{ .api_handler = &method_handlers['..fun.handler_id..'] }'
+      args = #fun.parameters,
+      func = 'api_wrapper',
+      data = '{ .api_handler = &method_handlers[' .. fun.handler_id .. '] }',
     }
   end
 end
@@ -74,28 +74,37 @@ local funcsdata = assert(io.open(funcs_file, 'w'))
 funcsdata:write(mpack.encode(func_names))
 funcsdata:close()
 
-local neworder, hashfun = hashy.hashy_hash("find_internal_func", func_names, function (idx)
-  return "functions["..idx.."].name"
+local neworder, hashfun = hashy.hashy_hash('find_internal_func', func_names, function(idx)
+  return 'functions[' .. idx .. '].name'
 end)
 
-hashpipe:write("static const EvalFuncDef functions[] = {\n")
+hashpipe:write('static const EvalFuncDef functions[] = {\n')
 
 for _, name in ipairs(neworder) do
   local def = funcs[name]
   local args = def.args or 0
   if type(args) == 'number' then
-    args = {args, args}
+    args = { args, args }
   elseif #args == 1 then
     args[2] = 'MAX_FUNC_ARGS'
   end
-  local base = def.base or "BASE_NONE"
+  local base = def.base or 'BASE_NONE'
   local func = def.func or ('f_' .. name)
-  local data = def.data or "{ .null = NULL }"
+  local data = def.data or '{ .null = NULL }'
   local fast = def.fast and 'true' or 'false'
-  hashpipe:write(('  { "%s", %s, %s, %s, %s, &%s, %s },\n')
-                  :format(name, args[1], args[2], base, fast, func, data))
+  hashpipe:write(
+    ('  { "%s", %s, %s, %s, %s, &%s, %s },\n'):format(
+      name,
+      args[1],
+      args[2],
+      base,
+      fast,
+      func,
+      data
+    )
+  )
 end
 hashpipe:write('  { NULL, 0, 0, BASE_NONE, false, NULL, { .null = NULL } },\n')
-hashpipe:write("};\n\n")
+hashpipe:write('};\n\n')
 hashpipe:write(hashfun)
 hashpipe:close()

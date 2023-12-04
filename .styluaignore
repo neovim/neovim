@@ -2,5 +2,4 @@
 /runtime/lua/coxpcall.lua
 /runtime/lua/vim/_meta
 /runtime/lua/vim/re.lua
-/src
 /test
