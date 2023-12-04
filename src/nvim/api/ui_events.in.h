@@ -39,6 +39,9 @@ void screenshot(String path)
   FUNC_API_SINCE(7);
 void option_set(String name, Object value)
   FUNC_API_SINCE(4);
+void visual_change(String mode, Dictionary range)
+  FUNC_API_SINCE(12) FUNC_API_REMOTE_ONLY;
+
 // Stop event is not exported as such, represented by EOF in the msgpack stream.
 void stop(void)
   FUNC_API_NOEXPORT;
