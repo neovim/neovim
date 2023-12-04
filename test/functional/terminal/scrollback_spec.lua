@@ -576,21 +576,21 @@ describe("pending scrollback line handling", function()
     ]]
     screen:expect [[
       {1:  1 }^a                         |
-      {1:  2 } a                        |
-      {1:  3 }  a                       |
-      {1:  4 }   a                      |
-      {1:  5 }    a                     |
-      {1:  6 }     a                    |
+      {1:  2 }a                         |
+      {1:  3 }a                         |
+      {1:  4 }a                         |
+      {1:  5 }a                         |
+      {1:  6 }a                         |
                                     |
     ]]
     feed('G')
     screen:expect [[
-      {1:  7 }      a                   |
-      {1:  8 }       a                  |
-      {1:  9 }        a                 |
-      {1: 10 }         a                |
-      {1: 11 }          a               |
-      {1: 12 }           ^a              |
+      {1:  7 }a                         |
+      {1:  8 }a                         |
+      {1:  9 }a                         |
+      {1: 10 }a                         |
+      {1: 11 }a                         |
+      {1: 12 }^a                         |
                                     |
     ]]
     assert_alive()

@@ -985,6 +985,7 @@ fail:
 ///            as a "\r", not as a "\n". |textlock| applies. It is possible
 ///            to call |nvim_chan_send()| directly in the callback however.
 ///                 ["input", term, bufnr, data]
+///          - force_crlf: (boolean, default true) Convert "\n" to "\r\n".
 /// @param[out] err Error details, if any
 /// @return Channel id, or 0 on error
 Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
@@ -1002,7 +1003,6 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
   }
 
   LuaRef cb = LUA_NOREF;
-
   if (HAS_KEY(opts, open_term, on_input)) {
     cb = opts->on_input;
     opts->on_input = LUA_NOREF;
@@ -1020,6 +1020,7 @@ Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
     .write_cb = term_write,
     .resize_cb = term_resize,
     .close_cb = term_close,
+    .force_crlf = GET_BOOL_OR_TRUE(opts, open_term, force_crlf),
   };
   channel_incref(chan);
   terminal_open(&chan->term, buf, topts);

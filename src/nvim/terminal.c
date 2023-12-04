@@ -43,6 +43,7 @@
 #include <vterm.h>
 #include <vterm_keycodes.h>
 
+#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
@@ -80,6 +81,7 @@
 #include "nvim/optionstr.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state.h"
+#include "nvim/strings.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
@@ -786,7 +788,21 @@ void terminal_receive(Terminal *term, const char *data, size_t len)
     return;
   }
 
-  vterm_input_write(term->vt, data, len);
+  if (term->opts.force_crlf) {
+    StringBuilder crlf_data = KV_INITIAL_VALUE;
+
+    for (size_t i = 0; i < len; i++) {
+      if (data[i] == '\n' && (i == 0 || (i > 0 && data[i - 1] != '\r'))) {
+        kv_push(crlf_data, '\r');
+      }
+      kv_push(crlf_data, data[i]);
+    }
+
+    vterm_input_write(term->vt, crlf_data.items, kv_size(crlf_data));
+    kv_destroy(crlf_data);
+  } else {
+    vterm_input_write(term->vt, data, len);
+  }
   vterm_screen_flush_damage(term->vts);
 }
 

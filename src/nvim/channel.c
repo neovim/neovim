@@ -801,6 +801,7 @@ void channel_terminal_open(buf_T *buf, Channel *chan)
     .write_cb = term_write,
     .resize_cb = term_resize,
     .close_cb = term_close,
+    .force_crlf = false,
   };
   buf->b_p_channel = (OptInt)chan->id;  // 'channel' option
   channel_incref(chan);

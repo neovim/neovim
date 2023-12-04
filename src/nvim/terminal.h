@@ -16,6 +16,7 @@ typedef struct {
   terminal_write_cb write_cb;
   terminal_resize_cb resize_cb;
   terminal_close_cb close_cb;
+  bool force_crlf;
 } TerminalOptions;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
