@@ -47,6 +47,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/change.h"
@@ -54,6 +55,7 @@
 #include "nvim/cursor.h"
 #include "nvim/drawline.h"
 #include "nvim/drawscreen.h"
+#include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/event/multiqueue.h"
@@ -633,6 +635,9 @@ static int terminal_execute(VimState *state, int key)
     }
 
     s->got_bsl = false;
+    if (has_event(EVENT_INSERTCHARPRE) && au_exists("InsertCharPre#term://")) {
+      ins_apply_autocmds(EVENT_INSERTCHARPRE);
+    }
     terminal_send_key(s->term, key);
   }
 

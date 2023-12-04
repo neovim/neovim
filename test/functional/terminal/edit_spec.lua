@@ -11,6 +11,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local matches = helpers.matches
 local pesc = helpers.pesc
+local feed = helpers.feed
 
 describe(':edit term://*', function()
   local get_screen = function(columns, lines)
@@ -68,5 +69,13 @@ describe(':edit term://*', function()
     exp_screen = exp_screen..(' '):rep(columns)..'|\n'
     scr:expect(exp_screen)
     eq(bufcontents, curbufmeths.get_lines(0, -1, true))
+  end)
+
+  it('runs InserCharPre', function()
+    meths.set_var('charpre_runs', {})
+    command('autocmd InsertCharPre * :call add(g:charpre_runs, expand("<amatch>"))')
+    command('term')
+    feed('if')
+    eq(1, #meths.get_var('charpre_runs'))
   end)
 end)
