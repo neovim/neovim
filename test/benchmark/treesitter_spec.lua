@@ -4,14 +4,13 @@ local clear = helpers.clear
 local exec_lua = helpers.exec_lua
 
 describe('treesitter perf', function()
-
   setup(function()
     clear()
   end)
 
   it('can handle large folds', function()
-    helpers.command'edit ./src/nvim/eval.c'
-    exec_lua[[
+    helpers.command 'edit ./src/nvim/eval.c'
+    exec_lua [[
       local parser = vim.treesitter.get_parser(0, "c", {})
       vim.treesitter.highlighter.new(parser)
 
@@ -47,7 +46,5 @@ describe('treesitter perf', function()
 
       return vim.uv.hrtime() - start
     ]]
-
   end)
-
 end)

@@ -8,8 +8,7 @@ local eq = helpers.eq
 
 local eval0 = eval_helpers.eval0
 
-local eval = cimport('./src/nvim/eval.h', './src/nvim/eval/typval.h',
-                     './src/nvim/memory.h')
+local eval = cimport('./src/nvim/eval.h', './src/nvim/eval/typval.h', './src/nvim/memory.h')
 
 describe('NULL typval_T', function()
   itp('is produced by $XXX_UNEXISTENT_VAR_XXX', function()

@@ -1,24 +1,23 @@
-local helpers = require("test.unit.helpers")(after_each)
+local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 --{:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
 
-local eq      = helpers.eq
-local ffi     = helpers.ffi
+local eq = helpers.eq
+local ffi = helpers.ffi
 local to_cstr = helpers.to_cstr
-local NULL    = helpers.NULL
+local NULL = helpers.NULL
 
-local fileio = helpers.cimport("./src/nvim/fileio.h")
+local fileio = helpers.cimport('./src/nvim/fileio.h')
 
 describe('file_pat functions', function()
   describe('file_pat_to_reg_pat', function()
-
     local file_pat_to_reg_pat = function(pat)
       local res = fileio.file_pat_to_reg_pat(to_cstr(pat), NULL, NULL, 0)
       return ffi.string(res)
     end
 
     itp('returns ^path$ regex for literal path input', function()
-      eq( '^path$', file_pat_to_reg_pat('path'))
+      eq('^path$', file_pat_to_reg_pat('path'))
     end)
 
     itp('does not prepend ^ when there is a starting glob (*)', function()
@@ -34,13 +33,15 @@ describe('file_pat functions', function()
     end)
 
     itp('replaces the bash any character (?) with the regex any character (.)', function()
-     eq('^foo.bar$', file_pat_to_reg_pat('foo?bar'))
+      eq('^foo.bar$', file_pat_to_reg_pat('foo?bar'))
     end)
 
-    itp('replaces a glob (*) in the middle of a path with regex multiple any character (.*)',
-       function()
-      eq('^foo.*bar$', file_pat_to_reg_pat('foo*bar'))
-    end)
+    itp(
+      'replaces a glob (*) in the middle of a path with regex multiple any character (.*)',
+      function()
+        eq('^foo.*bar$', file_pat_to_reg_pat('foo*bar'))
+      end
+    )
 
     itp([[unescapes \? to ?]], function()
       eq('^foo?bar$', file_pat_to_reg_pat([[foo\?bar]]))

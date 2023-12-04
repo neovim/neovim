@@ -23,7 +23,7 @@ local buffer_hash = nil
 
 child_call_once(function()
   if old_p_udir == nil then
-    old_p_udir = options.p_udir  -- save the old value of p_udir (undodir)
+    old_p_udir = options.p_udir -- save the old value of p_udir (undodir)
   end
 
   -- create a new buffer
@@ -39,21 +39,20 @@ child_call_once(function()
   undo.u_compute_hash(file_buffer, buffer_hash)
 end)
 
-
 describe('u_write_undo', function()
   setup(function()
     mkdir('unit-test-directory')
     luv.chdir('unit-test-directory')
-    options.p_udir = to_cstr(luv.cwd())  -- set p_udir to be the test dir
+    options.p_udir = to_cstr(luv.cwd()) -- set p_udir to be the test dir
   end)
 
   teardown(function()
     luv.chdir('..')
     local success, err = luv.fs_rmdir('unit-test-directory')
     if not success then
-      print(err)  -- inform tester if directory fails to delete
+      print(err) -- inform tester if directory fails to delete
     end
-    options.p_udir = old_p_udir  --restore old p_udir
+    options.p_udir = old_p_udir --restore old p_udir
   end)
 
   -- Lua wrapper for u_write_undo
@@ -68,24 +67,24 @@ describe('u_write_undo', function()
   itp('writes an undo file to undodir given a buffer and hash', function()
     u_write_undo(nil, false, file_buffer, buffer_hash)
     local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
-    local undo_file = io.open(correct_name, "r")
+    local undo_file = io.open(correct_name, 'r')
 
     neq(undo_file, nil)
-    local success, err = os.remove(correct_name)  -- delete the file now that we're done with it.
+    local success, err = os.remove(correct_name) -- delete the file now that we're done with it.
     if not success then
-      print(err)  -- inform tester if undofile fails to delete
+      print(err) -- inform tester if undofile fails to delete
     end
   end)
 
   itp('writes a correctly-named undo file to undodir given a name, buffer, and hash', function()
-    local correct_name = "undofile.test"
+    local correct_name = 'undofile.test'
     u_write_undo(correct_name, false, file_buffer, buffer_hash)
-    local undo_file = io.open(correct_name, "r")
+    local undo_file = io.open(correct_name, 'r')
 
     neq(undo_file, nil)
-    local success, err = os.remove(correct_name)  -- delete the file now that we're done with it.
+    local success, err = os.remove(correct_name) -- delete the file now that we're done with it.
     if not success then
-      print(err)  -- inform tester if undofile fails to delete
+      print(err) -- inform tester if undofile fails to delete
     end
   end)
 
@@ -96,9 +95,9 @@ describe('u_write_undo', function()
 
   itp('writes the undofile with the same permissions as the original file', function()
     -- Create Test file and set permissions
-    local test_file_name = "./test.file"
-    local test_permission_file = io.open(test_file_name, "w")
-    test_permission_file:write("testing permissions")
+    local test_file_name = './test.file'
+    local test_permission_file = io.open(test_file_name, 'w')
+    test_permission_file:write('testing permissions')
     test_permission_file:close()
     local test_permissions = luv.fs_stat(test_file_name).mode
 
@@ -119,17 +118,17 @@ describe('u_write_undo', function()
     -- delete the file now that we're done with it.
     local success, err = os.remove(test_file_name)
     if not success then
-      print(err)  -- inform tester if undofile fails to delete
+      print(err) -- inform tester if undofile fails to delete
     end
     success, err = os.remove(undo_file_name)
     if not success then
-      print(err)  -- inform tester if undofile fails to delete
+      print(err) -- inform tester if undofile fails to delete
     end
   end)
 
   itp('writes an undofile only readable by the user if the buffer is unnamed', function()
     local correct_permissions = 33152
-    local undo_file_name = "test.undo"
+    local undo_file_name = 'test.undo'
 
     -- Create vim buffer
     file_buffer = buffer.buflist_new(nil, nil, 1, buffer.BLN_LISTED)
@@ -144,12 +143,12 @@ describe('u_write_undo', function()
     -- delete the file now that we're done with it.
     local success, err = os.remove(undo_file_name)
     if not success then
-      print(err)  -- inform tester if undofile fails to delete
+      print(err) -- inform tester if undofile fails to delete
     end
   end)
 
   itp('forces writing undo file for :wundo! command', function()
-    local file_contents = "testing permissions"
+    local file_contents = 'testing permissions'
     -- Write a text file where the undofile should go
     local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
     helpers.write_file(correct_name, file_contents, true, false)
@@ -160,9 +159,9 @@ describe('u_write_undo', function()
     local undo_file_contents = helpers.read_file(correct_name)
 
     neq(file_contents, undo_file_contents)
-    local success, deletion_err = os.remove(correct_name)  -- delete the file now that we're done with it.
+    local success, deletion_err = os.remove(correct_name) -- delete the file now that we're done with it.
     if not success then
-      print(deletion_err)  -- inform tester if undofile fails to delete
+      print(deletion_err) -- inform tester if undofile fails to delete
     end
   end)
 
@@ -172,17 +171,17 @@ describe('u_write_undo', function()
 
     local file_last_modified = luv.fs_stat(correct_name).mtime.sec
 
-    sleep(1000)  -- Ensure difference in timestamps.
-    file_buffer.b_u_numhead = 1  -- Mark it as if there are changes
+    sleep(1000) -- Ensure difference in timestamps.
+    file_buffer.b_u_numhead = 1 -- Mark it as if there are changes
     u_write_undo(nil, false, file_buffer, buffer_hash)
 
     local file_last_modified_2 = luv.fs_stat(correct_name).mtime.sec
 
     -- print(file_last_modified, file_last_modified_2)
     neq(file_last_modified, file_last_modified_2)
-    local success, err = os.remove(correct_name)  -- delete the file now that we're done with it.
+    local success, err = os.remove(correct_name) -- delete the file now that we're done with it.
     if not success then
-      print(err)  -- inform tester if undofile fails to delete
+      print(err) -- inform tester if undofile fails to delete
     end
   end)
 
@@ -195,16 +194,16 @@ describe('u_write_undo', function()
   end)
 
   itp('does not write an undo file if there is no undo information for the buffer', function()
-    file_buffer.b_u_numhead = 0  -- Mark it as if there is no undo information
+    file_buffer.b_u_numhead = 0 -- Mark it as if there is no undo information
     local correct_name = ffi.string(undo.u_get_undo_file_name(file_buffer.b_ffname, false))
 
-    local existing_file = io.open(correct_name,"r")
+    local existing_file = io.open(correct_name, 'r')
     if existing_file then
       existing_file:close()
       os.remove(correct_name)
     end
     u_write_undo(nil, false, file_buffer, buffer_hash)
-    local undo_file = io.open(correct_name, "r")
+    local undo_file = io.open(correct_name, 'r')
 
     eq(undo_file, nil)
   end)

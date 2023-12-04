@@ -27,7 +27,8 @@ describe('autocmd perf', function()
   end)
 
   it('nvim_create_autocmd, nvim_del_autocmd (same pattern)', function()
-    exec_lua([[
+    exec_lua(
+      [[
       local N = ...
       local ids = {}
 
@@ -45,11 +46,14 @@ describe('autocmd perf', function()
           vim.api.nvim_del_autocmd(ids[i])
         end
       stop('nvim_del_autocmd')
-    ]], N)
+    ]],
+      N
+    )
   end)
 
   it('nvim_create_autocmd, nvim_del_autocmd (unique patterns)', function()
-    exec_lua([[
+    exec_lua(
+      [[
       local N = ...
       local ids = {}
 
@@ -67,11 +71,14 @@ describe('autocmd perf', function()
           vim.api.nvim_del_autocmd(ids[i])
         end
       stop('nvim_del_autocmd')
-    ]], N)
+    ]],
+      N
+    )
   end)
 
   it('nvim_create_autocmd + nvim_del_autocmd', function()
-    exec_lua([[
+    exec_lua(
+      [[
       local N = ...
 
       start()
@@ -83,11 +90,14 @@ describe('autocmd perf', function()
           vim.api.nvim_del_autocmd(id)
         end
       stop('nvim_create_autocmd + nvim_del_autocmd')
-    ]], N)
+    ]],
+      N
+    )
   end)
 
   it('nvim_exec_autocmds (same pattern)', function()
-    exec_lua([[
+    exec_lua(
+      [[
       local N = ...
 
       for i = 1, N do
@@ -100,11 +110,14 @@ describe('autocmd perf', function()
       start()
         vim.api.nvim_exec_autocmds('User', { pattern = 'Benchmark', modeline = false })
       stop('nvim_exec_autocmds')
-    ]], N)
+    ]],
+      N
+    )
   end)
 
   it('nvim_del_augroup_by_id', function()
-    exec_lua([[
+    exec_lua(
+      [[
       local N = ...
       local group = vim.api.nvim_create_augroup('Benchmark', {})
 
@@ -119,11 +132,14 @@ describe('autocmd perf', function()
       start()
         vim.api.nvim_del_augroup_by_id(group)
       stop('nvim_del_augroup_by_id')
-    ]], N)
+    ]],
+      N
+    )
   end)
 
   it('nvim_del_augroup_by_name', function()
-    exec_lua([[
+    exec_lua(
+      [[
       local N = ...
       local group = vim.api.nvim_create_augroup('Benchmark', {})
 
@@ -138,11 +154,14 @@ describe('autocmd perf', function()
       start()
         vim.api.nvim_del_augroup_by_name('Benchmark')
       stop('nvim_del_augroup_by_id')
-    ]], N)
+    ]],
+      N
+    )
   end)
 
   it(':autocmd, :autocmd! (same pattern)', function()
-    exec_lua([[
+    exec_lua(
+      [[
       local N = ...
 
       start()
@@ -154,11 +173,14 @@ describe('autocmd perf', function()
       start()
         vim.cmd('autocmd! User Benchmark')
       stop(':autocmd!')
-    ]], N)
+    ]],
+      N
+    )
   end)
 
   it(':autocmd, :autocmd! (unique patterns)', function()
-    exec_lua([[
+    exec_lua(
+      [[
       local N = ...
 
       start()
@@ -170,6 +192,8 @@ describe('autocmd perf', function()
       start()
         vim.cmd('autocmd! User')
       stop(':autocmd!')
-    ]], N)
+    ]],
+      N
+    )
   end)
 end)

@@ -26,7 +26,7 @@ local linkb = dir .. '/broken.lnk'
 local filec = dir .. '/created-file.dat'
 
 before_each(function()
-  mkdir(dir);
+  mkdir(dir)
 
   local f1 = io.open(file1, 'w')
   f1:write(fcontents)
@@ -56,7 +56,7 @@ local function file_open(fname, flags, mode)
 end
 
 local function file_open_new(fname, flags, mode)
-  local ret1 = ffi.new('int[?]', 1, {0})
+  local ret1 = ffi.new('int[?]', 1, { 0 })
   local ret2 = ffi.gc(m.file_open_new(ret1, fname, flags, mode), nil)
   return ret1[0], ret2
 end
@@ -68,7 +68,7 @@ local function file_open_fd(fd, flags)
 end
 
 local function file_open_fd_new(fd, flags)
-  local ret1 = ffi.new('int[?]', 1, {0})
+  local ret1 = ffi.new('int[?]', 1, { 0 })
   local ret2 = ffi.gc(m.file_open_fd_new(ret1, fd, flags), nil)
   return ret1[0], ret2
 end
@@ -116,7 +116,7 @@ describe('file_open_fd', function()
     local fd = m.os_open(file1, m.kO_RDONLY, 0)
     local err, fp = file_open_fd(fd, m.kFileReadOnly)
     eq(0, err)
-    eq({#fcontents, fcontents}, {file_read(fp, #fcontents)})
+    eq({ #fcontents, fcontents }, { file_read(fp, #fcontents) })
     eq(0, m.file_close(fp, false))
   end)
   itp('can use file descriptor returned by os_open for writing', function()
@@ -136,7 +136,7 @@ describe('file_open_fd_new', function()
     local fd = m.os_open(file1, m.kO_RDONLY, 0)
     local err, fp = file_open_fd_new(fd, m.kFileReadOnly)
     eq(0, err)
-    eq({#fcontents, fcontents}, {file_read(fp, #fcontents)})
+    eq({ #fcontents, fcontents }, { file_read(fp, #fcontents) })
     eq(0, m.file_free(fp, false))
   end)
   itp('can use file descriptor returned by os_open for writing', function()
@@ -193,7 +193,9 @@ describe('file_open', function()
     local err, _ = file_open(linkf, m.kFileNoSymlink, 384)
     -- err is UV_EMLINK in FreeBSD, but if I use `ok(err == m.UV_ELOOP or err ==
     -- m.UV_EMLINK)`, then I loose the ability to see actual `err` value.
-    if err ~= m.UV_ELOOP then eq(m.UV_EMLINK, err) end
+    if err ~= m.UV_ELOOP then
+      eq(m.UV_EMLINK, err)
+    end
   end)
 
   itp('can open an existing file write-only with kFileCreate', function()
@@ -249,8 +251,7 @@ describe('file_open', function()
     eq(nil, attrs)
   end)
 
-  itp('can truncate an existing file with kFileTruncate when opening a symlink',
-  function()
+  itp('can truncate an existing file with kFileTruncate when opening a symlink', function()
     local err, fp = file_open(linkf, m.kFileTruncate, 384)
     eq(0, err)
     eq(true, fp.wr)
@@ -356,10 +357,9 @@ describe('file_read', function()
       local exp_s = fcontents:sub(shift + 1, shift + size)
       if shift + size >= #fcontents then
         exp_err = #fcontents - shift
-        exp_s = (fcontents:sub(shift + 1, shift + size)
-                 .. (('\0'):rep(size - exp_err)))
+        exp_s = (fcontents:sub(shift + 1, shift + size) .. (('\0'):rep(size - exp_err)))
       end
-      eq({exp_err, exp_s}, {file_read(fp, size)})
+      eq({ exp_err, exp_s }, { file_read(fp, size) })
       shift = shift + size
     end
     eq(0, m.file_close(fp, false))
@@ -369,8 +369,8 @@ describe('file_read', function()
     local err, fp = file_open(file1, 0, 384)
     eq(0, err)
     eq(false, fp.wr)
-    eq({#fcontents, fcontents}, {file_read(fp, #fcontents)})
-    eq({0, ('\0'):rep(#fcontents)}, {file_read(fp, #fcontents)})
+    eq({ #fcontents, fcontents }, { file_read(fp, #fcontents) })
+    eq({ 0, ('\0'):rep(#fcontents) }, { file_read(fp, #fcontents) })
     eq(0, m.file_close(fp, false))
   end)
 
@@ -378,9 +378,8 @@ describe('file_read', function()
     local err, fp = file_open(file1, 0, 384)
     eq(0, err)
     eq(false, fp.wr)
-    eq({5, fcontents:sub(1, 5)}, {file_read(fp, 5)})
-    eq({#fcontents - 5, fcontents:sub(6) .. (('\0'):rep(5))},
-       {file_read(fp, #fcontents)})
+    eq({ 5, fcontents:sub(1, 5) }, { file_read(fp, 5) })
+    eq({ #fcontents - 5, fcontents:sub(6) .. (('\0'):rep(5)) }, { file_read(fp, #fcontents) })
     eq(0, m.file_close(fp, false))
   end)
 
@@ -395,10 +394,9 @@ describe('file_read', function()
       local exp_s = fcontents:sub(shift + 1, shift + size)
       if shift + size >= #fcontents then
         exp_err = #fcontents - shift
-        exp_s = (fcontents:sub(shift + 1, shift + size)
-                 .. (('\0'):rep(size - exp_err)))
+        exp_s = (fcontents:sub(shift + 1, shift + size) .. (('\0'):rep(size - exp_err)))
       end
-      eq({exp_err, exp_s}, {file_read(fp, size)})
+      eq({ exp_err, exp_s }, { file_read(fp, size) })
       shift = shift + size
     end
     eq(0, m.file_close(fp, false))

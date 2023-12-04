@@ -76,7 +76,7 @@ local function pstate_set_str(pstate, start, len, ret)
   ret = ret or {}
   ret.start = {
     line = tonumber(start.line),
-    col = tonumber(start.col)
+    col = tonumber(start.col),
   }
   ret.len = tonumber(len)
   ret.str, ret.error = pstate_str(pstate, start, len)
@@ -84,36 +84,57 @@ local function pstate_set_str(pstate, start, len, ret)
 end
 
 local eltkn_cmp_type_tab
-make_enum_conv_tab(lib, {
-  'kExprCmpEqual',
-  'kExprCmpMatches',
-  'kExprCmpGreater',
-  'kExprCmpGreaterOrEqual',
-  'kExprCmpIdentical',
-}, 'kExprCmp', function(ret) eltkn_cmp_type_tab = ret end)
+make_enum_conv_tab(
+  lib,
+  {
+    'kExprCmpEqual',
+    'kExprCmpMatches',
+    'kExprCmpGreater',
+    'kExprCmpGreaterOrEqual',
+    'kExprCmpIdentical',
+  },
+  'kExprCmp',
+  function(ret)
+    eltkn_cmp_type_tab = ret
+  end
+)
 
 local function conv_cmp_type(typ)
   return conv_enum(eltkn_cmp_type_tab, typ)
 end
 
 local ccs_tab
-make_enum_conv_tab(lib, {
-  'kCCStrategyUseOption',
-  'kCCStrategyMatchCase',
-  'kCCStrategyIgnoreCase',
-}, 'kCCStrategy', function(ret) ccs_tab = ret end)
+make_enum_conv_tab(
+  lib,
+  {
+    'kCCStrategyUseOption',
+    'kCCStrategyMatchCase',
+    'kCCStrategyIgnoreCase',
+  },
+  'kCCStrategy',
+  function(ret)
+    ccs_tab = ret
+  end
+)
 
 local function conv_ccs(ccs)
   return conv_enum(ccs_tab, ccs)
 end
 
 local expr_asgn_type_tab
-make_enum_conv_tab(lib, {
-  'kExprAsgnPlain',
-  'kExprAsgnAdd',
-  'kExprAsgnSubtract',
-  'kExprAsgnConcat',
-}, 'kExprAsgn', function(ret) expr_asgn_type_tab = ret end)
+make_enum_conv_tab(
+  lib,
+  {
+    'kExprAsgnPlain',
+    'kExprAsgnAdd',
+    'kExprAsgnSubtract',
+    'kExprAsgnConcat',
+  },
+  'kExprAsgn',
+  function(ret)
+    expr_asgn_type_tab = ret
+  end
+)
 
 local function conv_expr_asgn_type(expr_asgn_type)
   return conv_enum(expr_asgn_type_tab, expr_asgn_type)

@@ -33,7 +33,7 @@ end
 
 --- @return Set
 function Set:copy()
-  local obj = {nelem = self.nelem, tbl = {}, items = {}} --- @type Set
+  local obj = { nelem = self.nelem, tbl = {}, items = {} } --- @type Set
   for k, v in pairs(self.tbl) do
     obj.tbl[k] = v
   end
@@ -128,13 +128,13 @@ function Set:to_table()
   -- there might be gaps in @tbl, so we have to be careful and sort first
   local keys = {} --- @type string[]
   for idx, _ in pairs(self.tbl) do
-    keys[#keys+1] = idx
+    keys[#keys + 1] = idx
   end
 
   table.sort(keys)
   local copy = {} --- @type string[]
   for _, idx in ipairs(keys) do
-    copy[#copy+1] = self.tbl[idx]
+    copy[#copy + 1] = self.tbl[idx]
   end
   return copy
 end

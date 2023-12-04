@@ -4,12 +4,12 @@ local REMOVE_THIS = global_helpers.REMOVE_THIS
 
 return function(itp, _check_parsing, hl, fmtn)
   local function check_parsing(...)
-    return _check_parsing({flags={0, 1, 2, 3}, funcname='check_parsing'}, ...)
+    return _check_parsing({ flags = { 0, 1, 2, 3 }, funcname = 'check_parsing' }, ...)
   end
   local function check_asgn_parsing(...)
     return _check_parsing({
-      flags={4, 5, 6, 7},
-      funcname='check_asgn_parsing',
+      flags = { 4, 5, 6, 7 },
+      funcname = 'check_asgn_parsing',
     }, ...)
   end
   itp('works with + and @a', function()
@@ -142,7 +142,7 @@ return function(itp, _check_parsing, hl, fmtn)
           len = 2,
           err = REMOVE_THIS,
           ast = {
-            'Register(name=a):0:0:@a'
+            'Register(name=a):0:0:@a',
           },
         },
         hl_fs = {
@@ -174,7 +174,7 @@ return function(itp, _check_parsing, hl, fmtn)
           len = 6,
           err = REMOVE_THIS,
           ast = {
-            'Register(name=a):0:0: @a'
+            'Register(name=a):0:0: @a',
           },
         },
         hl_fs = {
@@ -541,7 +541,7 @@ return function(itp, _check_parsing, hl, fmtn)
                   children = {
                     {
                       'Nested:0:4:(',
-                      children = { 'Register(name=b):0:5:@b' }
+                      children = { 'Register(name=b):0:5:@b' },
                     },
                   },
                 },
@@ -579,7 +579,7 @@ return function(itp, _check_parsing, hl, fmtn)
                   children = {
                     {
                       'Nested:0:4:(',
-                      children = { 'Register(name=b):0:5:@b' }
+                      children = { 'Register(name=b):0:5:@b' },
                     },
                   },
                 },
@@ -600,13 +600,13 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('BinaryPlus', '+'),
       hl('Register', '@c'),
     })
-    check_parsing(
-      '@a + (@b + @c) + @d(@e) + (+@f) + ((+@g(@h))(@j)(@k))(@l)', {--[[
+    check_parsing('@a + (@b + @c) + @d(@e) + (+@f) + ((+@g(@h))(@j)(@k))(@l)', {--[[
        | | | | | |   | |  ||  | | ||  | | ||| ||   ||  ||   ||
        000000000011111111112222222222333333333344444444445555555
        012345678901234567890123456789012345678901234567890123456
       ]]
-        ast = {{
+      ast = {
+        {
           'BinaryPlus:0:31: +',
           children = {
             {
@@ -696,45 +696,46 @@ return function(itp, _check_parsing, hl, fmtn)
               },
             },
           },
-        }},
-      }, {
-        hl('Register', '@a'),
-        hl('BinaryPlus', '+', 1),
-        hl('NestingParenthesis', '(', 1),
-        hl('Register', '@b'),
-        hl('BinaryPlus', '+', 1),
-        hl('Register', '@c', 1),
-        hl('NestingParenthesis', ')'),
-        hl('BinaryPlus', '+', 1),
-        hl('Register', '@d', 1),
-        hl('CallingParenthesis', '('),
-        hl('Register', '@e'),
-        hl('CallingParenthesis', ')'),
-        hl('BinaryPlus', '+', 1),
-        hl('NestingParenthesis', '(', 1),
-        hl('UnaryPlus', '+'),
-        hl('Register', '@f'),
-        hl('NestingParenthesis', ')'),
-        hl('BinaryPlus', '+', 1),
-        hl('NestingParenthesis', '(', 1),
-        hl('NestingParenthesis', '('),
-        hl('UnaryPlus', '+'),
-        hl('Register', '@g'),
-        hl('CallingParenthesis', '('),
-        hl('Register', '@h'),
-        hl('CallingParenthesis', ')'),
-        hl('NestingParenthesis', ')'),
-        hl('CallingParenthesis', '('),
-        hl('Register', '@j'),
-        hl('CallingParenthesis', ')'),
-        hl('CallingParenthesis', '('),
-        hl('Register', '@k'),
-        hl('CallingParenthesis', ')'),
-        hl('NestingParenthesis', ')'),
-        hl('CallingParenthesis', '('),
-        hl('Register', '@l'),
-        hl('CallingParenthesis', ')'),
-      })
+        },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('BinaryPlus', '+', 1),
+      hl('NestingParenthesis', '(', 1),
+      hl('Register', '@b'),
+      hl('BinaryPlus', '+', 1),
+      hl('Register', '@c', 1),
+      hl('NestingParenthesis', ')'),
+      hl('BinaryPlus', '+', 1),
+      hl('Register', '@d', 1),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@e'),
+      hl('CallingParenthesis', ')'),
+      hl('BinaryPlus', '+', 1),
+      hl('NestingParenthesis', '(', 1),
+      hl('UnaryPlus', '+'),
+      hl('Register', '@f'),
+      hl('NestingParenthesis', ')'),
+      hl('BinaryPlus', '+', 1),
+      hl('NestingParenthesis', '(', 1),
+      hl('NestingParenthesis', '('),
+      hl('UnaryPlus', '+'),
+      hl('Register', '@g'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@h'),
+      hl('CallingParenthesis', ')'),
+      hl('NestingParenthesis', ')'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@j'),
+      hl('CallingParenthesis', ')'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@k'),
+      hl('CallingParenthesis', ')'),
+      hl('NestingParenthesis', ')'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@l'),
+      hl('CallingParenthesis', ')'),
+    })
     check_parsing('@a)', {
       --           012
       ast = {
@@ -1078,25 +1079,25 @@ return function(itp, _check_parsing, hl, fmtn)
   end)
   itp('works with variable names, including curly braces ones', function()
     check_parsing('var', {
-        ast = {
-          'PlainIdentifier(scope=0,ident=var):0:0:var',
-        },
+      ast = {
+        'PlainIdentifier(scope=0,ident=var):0:0:var',
+      },
     }, {
       hl('IdentifierName', 'var'),
     })
     check_parsing('g:var', {
-        ast = {
-          'PlainIdentifier(scope=g,ident=var):0:0:g:var',
-        },
+      ast = {
+        'PlainIdentifier(scope=g,ident=var):0:0:g:var',
+      },
     }, {
       hl('IdentifierScope', 'g'),
       hl('IdentifierScopeDelimiter', ':'),
       hl('IdentifierName', 'var'),
     })
     check_parsing('g:', {
-        ast = {
-          'PlainIdentifier(scope=g,ident=):0:0:g:',
-        },
+      ast = {
+        'PlainIdentifier(scope=g,ident=):0:0:g:',
+      },
     }, {
       hl('IdentifierScope', 'g'),
       hl('IdentifierScopeDelimiter', ':'),
@@ -1141,7 +1142,7 @@ return function(itp, _check_parsing, hl, fmtn)
           children = {
             {
               'OpMissing:0:3:',
-              children={
+              children = {
                 'PlainIdentifier(scope=a,ident=):0:1:a:',
                 'Register(name=b):0:3:@b',
               },
@@ -1783,7 +1784,7 @@ return function(itp, _check_parsing, hl, fmtn)
             {
               'Comma:0:3:,',
               children = {
-              'PlainIdentifier(scope=0,ident=b):0:2:b',
+                'PlainIdentifier(scope=0,ident=b):0:2:b',
                 {
                   'Comma:0:5:,',
                   children = {
@@ -1819,7 +1820,7 @@ return function(itp, _check_parsing, hl, fmtn)
             {
               'Comma:0:3:,',
               children = {
-              'PlainIdentifier(scope=0,ident=b):0:2:b',
+                'PlainIdentifier(scope=0,ident=b):0:2:b',
                 {
                   'Comma:0:5:,',
                   children = {
@@ -2851,7 +2852,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = '{a : b',
-        msg = 'E723: Missing end of Dictionary \'}\': %.*s',
+        msg = "E723: Missing end of Dictionary '}': %.*s",
       },
     }, {
       hl('Dict', '{'),
@@ -3182,7 +3183,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = '?b',
-        msg = 'E109: Missing \':\' after \'?\': %.*s',
+        msg = "E109: Missing ':' after '?': %.*s",
       },
     }, {
       hl('IdentifierName', 'a'),
@@ -3207,7 +3208,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = '?b:',
-        msg = 'E109: Missing \':\' after \'?\': %.*s',
+        msg = "E109: Missing ':' after '?': %.*s",
       },
     }, {
       hl('IdentifierName', 'a'),
@@ -4840,7 +4841,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = '[1',
-        msg = 'E697: Missing end of List \']\': %.*s',
+        msg = "E697: Missing end of List ']': %.*s",
       },
     }, {
       hl('List', '['),
@@ -4848,15 +4849,15 @@ return function(itp, _check_parsing, hl, fmtn)
     })
   end)
   itp('works with strings', function()
-    check_parsing('\'abc\'', {
+    check_parsing("'abc'", {
       --           01234
       ast = {
-        fmtn('SingleQuotedString', 'val="abc"', ':0:0:\'abc\''),
+        fmtn('SingleQuotedString', 'val="abc"', ":0:0:'abc'"),
       },
     }, {
-      hl('SingleQuote', '\''),
+      hl('SingleQuote', "'"),
       hl('SingleQuotedBody', 'abc'),
-      hl('SingleQuote', '\''),
+      hl('SingleQuote', "'"),
     })
     check_parsing('"abc"', {
       --           01234
@@ -4868,14 +4869,14 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('DoubleQuotedBody', 'abc'),
       hl('DoubleQuote', '"'),
     })
-    check_parsing('\'\'', {
+    check_parsing("''", {
       --           01
       ast = {
-        fmtn('SingleQuotedString', 'val=NULL', ':0:0:\'\''),
+        fmtn('SingleQuotedString', 'val=NULL', ":0:0:''"),
       },
     }, {
-      hl('SingleQuote', '\''),
-      hl('SingleQuote', '\''),
+      hl('SingleQuote', "'"),
+      hl('SingleQuote', "'"),
     })
     check_parsing('""', {
       --           01
@@ -4898,17 +4899,17 @@ return function(itp, _check_parsing, hl, fmtn)
     }, {
       hl('InvalidDoubleQuote', '"'),
     })
-    check_parsing('\'', {
+    check_parsing("'", {
       --           0
       ast = {
-        fmtn('SingleQuotedString', 'val=NULL', ':0:0:\''),
+        fmtn('SingleQuotedString', 'val=NULL', ":0:0:'"),
       },
       err = {
-        arg = '\'',
+        arg = "'",
         msg = 'E115: Missing single quote: %.*s',
       },
     }, {
-      hl('InvalidSingleQuote', '\''),
+      hl('InvalidSingleQuote', "'"),
     })
     check_parsing('"a', {
       --           01
@@ -4923,71 +4924,71 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedBody', 'a'),
     })
-    check_parsing('\'a', {
+    check_parsing("'a", {
       --           01
       ast = {
-        fmtn('SingleQuotedString', 'val="a"', ':0:0:\'a'),
+        fmtn('SingleQuotedString', 'val="a"', ":0:0:'a"),
       },
       err = {
-        arg = '\'a',
+        arg = "'a",
         msg = 'E115: Missing single quote: %.*s',
       },
     }, {
-      hl('InvalidSingleQuote', '\''),
+      hl('InvalidSingleQuote', "'"),
       hl('InvalidSingleQuotedBody', 'a'),
     })
-    check_parsing('\'abc\'\'def\'', {
+    check_parsing("'abc''def'", {
       --           0123456789
       ast = {
-        fmtn('SingleQuotedString', 'val="abc\'def"', ':0:0:\'abc\'\'def\''),
+        fmtn('SingleQuotedString', 'val="abc\'def"', ":0:0:'abc''def'"),
       },
     }, {
-      hl('SingleQuote', '\''),
+      hl('SingleQuote', "'"),
       hl('SingleQuotedBody', 'abc'),
-      hl('SingleQuotedQuote', '\'\''),
+      hl('SingleQuotedQuote', "''"),
       hl('SingleQuotedBody', 'def'),
-      hl('SingleQuote', '\''),
+      hl('SingleQuote', "'"),
     })
-    check_parsing('\'abc\'\'', {
+    check_parsing("'abc''", {
       --           012345
       ast = {
-        fmtn('SingleQuotedString', 'val="abc\'"', ':0:0:\'abc\'\''),
+        fmtn('SingleQuotedString', 'val="abc\'"', ":0:0:'abc''"),
       },
       err = {
-        arg = '\'abc\'\'',
+        arg = "'abc''",
         msg = 'E115: Missing single quote: %.*s',
       },
     }, {
-      hl('InvalidSingleQuote', '\''),
+      hl('InvalidSingleQuote', "'"),
       hl('InvalidSingleQuotedBody', 'abc'),
-      hl('InvalidSingleQuotedQuote', '\'\''),
+      hl('InvalidSingleQuotedQuote', "''"),
     })
-    check_parsing('\'\'\'\'\'\'\'\'', {
+    check_parsing("''''''''", {
       --           01234567
       ast = {
-        fmtn('SingleQuotedString', 'val="\'\'\'"', ':0:0:\'\'\'\'\'\'\'\''),
+        fmtn('SingleQuotedString', "val=\"'''\"", ":0:0:''''''''"),
       },
     }, {
-      hl('SingleQuote', '\''),
-      hl('SingleQuotedQuote', '\'\''),
-      hl('SingleQuotedQuote', '\'\''),
-      hl('SingleQuotedQuote', '\'\''),
-      hl('SingleQuote', '\''),
+      hl('SingleQuote', "'"),
+      hl('SingleQuotedQuote', "''"),
+      hl('SingleQuotedQuote', "''"),
+      hl('SingleQuotedQuote', "''"),
+      hl('SingleQuote', "'"),
     })
-    check_parsing('\'\'\'a\'\'\'\'bc\'', {
+    check_parsing("'''a''''bc'", {
       --           01234567890
       --           0         1
       ast = {
-        fmtn('SingleQuotedString', 'val="\'a\'\'bc"', ':0:0:\'\'\'a\'\'\'\'bc\''),
+        fmtn('SingleQuotedString', "val=\"'a''bc\"", ":0:0:'''a''''bc'"),
       },
     }, {
-      hl('SingleQuote', '\''),
-      hl('SingleQuotedQuote', '\'\''),
+      hl('SingleQuote', "'"),
+      hl('SingleQuotedQuote', "''"),
       hl('SingleQuotedBody', 'a'),
-      hl('SingleQuotedQuote', '\'\''),
-      hl('SingleQuotedQuote', '\'\''),
+      hl('SingleQuotedQuote', "''"),
+      hl('SingleQuotedQuote', "''"),
       hl('SingleQuotedBody', 'bc'),
-      hl('SingleQuote', '\''),
+      hl('SingleQuote', "'"),
     })
     check_parsing('"\\"\\"\\"\\""', {
       --           0123456789
@@ -5006,7 +5007,11 @@ return function(itp, _check_parsing, hl, fmtn)
       --           0123456789012345678901234
       --           0         1         2
       ast = {
-        fmtn('DoubleQuotedString', 'val="abc\\"def\\"ghi\\"jkl\\"mno"', ':0:0:"abc\\"def\\"ghi\\"jkl\\"mno"'),
+        fmtn(
+          'DoubleQuotedString',
+          'val="abc\\"def\\"ghi\\"jkl\\"mno"',
+          ':0:0:"abc\\"def\\"ghi\\"jkl\\"mno"'
+        ),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -6977,8 +6982,7 @@ return function(itp, _check_parsing, hl, fmtn)
         arg = '\0002&A:\000',
         msg = 'E15: Expected value, got EOC: %.*s',
       },
-    }, {
-    }, {
+    }, {}, {
       [2] = {
         ast = {
           len = REMOVE_THIS,
@@ -7025,7 +7029,7 @@ return function(itp, _check_parsing, hl, fmtn)
         },
       },
     })
-    check_parsing({data='01', size=1}, {
+    check_parsing({ data = '01', size = 1 }, {
       len = 1,
       ast = {
         'Integer(val=0):0:0:0',
@@ -7033,7 +7037,7 @@ return function(itp, _check_parsing, hl, fmtn)
     }, {
       hl('Number', '0'),
     })
-    check_parsing({data='001', size=2}, {
+    check_parsing({ data = '001', size = 2 }, {
       len = 2,
       ast = {
         'Integer(val=0):0:0:00',
@@ -7076,8 +7080,7 @@ return function(itp, _check_parsing, hl, fmtn)
         arg = '|"\\U\\',
         msg = 'E15: Expected value, got EOC: %.*s',
       },
-    }, {
-    }, {
+    }, {}, {
       [2] = {
         ast = {
           len = REMOVE_THIS,
@@ -7109,8 +7112,7 @@ return function(itp, _check_parsing, hl, fmtn)
         arg = '|"\\e"',
         msg = 'E15: Expected value, got EOC: %.*s',
       },
-    }, {
-    }, {
+    }, {}, {
       [2] = {
         ast = {
           len = REMOVE_THIS,
@@ -7142,8 +7144,7 @@ return function(itp, _check_parsing, hl, fmtn)
         arg = '|\029',
         msg = 'E15: Expected value, got EOC: %.*s',
       },
-    }, {
-    }, {
+    }, {}, {
       [2] = {
         ast = {
           len = REMOVE_THIS,
@@ -7373,7 +7374,7 @@ return function(itp, _check_parsing, hl, fmtn)
         hl_fs = {
           [2] = REMOVE_THIS,
           [3] = REMOVE_THIS,
-        }
+        },
       },
     })
 

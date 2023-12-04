@@ -35,32 +35,36 @@ end
 
 describe('msgpack', function()
   describe('unpacker', function()
-    itp('does not crash when paused between `cells` and `wrap` params of `grid_line` #25184', function()
-      -- [kMessageTypeNotification, "redraw", [
-      --   ["grid_line",
-      --     [2, 0, 0, [[" " , 0, 77]], false]
-      --   ]
-      -- ]]
-      local payload =
-        '\x93\x02\xa6\x72\x65\x64\x72\x61\x77\x91\x92\xa9\x67\x72\x69\x64\x5f\x6c\x69\x6e\x65\x95\x02\x00\x00\x91\x93\xa1\x20\x00\x4d\xc2'
+    itp(
+      'does not crash when paused between `cells` and `wrap` params of `grid_line` #25184',
+      function()
+        -- [kMessageTypeNotification, "redraw", [
+        --   ["grid_line",
+        --     [2, 0, 0, [[" " , 0, 77]], false]
+        --   ]
+        -- ]]
+        local payload =
+          '\x93\x02\xa6\x72\x65\x64\x72\x61\x77\x91\x92\xa9\x67\x72\x69\x64\x5f\x6c\x69\x6e\x65\x95\x02\x00\x00\x91\x93\xa1\x20\x00\x4d\xc2'
 
-      local unpacker = make_unpacker()
-      lib.unpacker_init(unpacker)
+        local unpacker = make_unpacker()
+        lib.unpacker_init(unpacker)
 
-      unpacker_goto(unpacker, payload, payload:len() - 1)
-      local finished = unpacker_advance(unpacker)
-      eq(finished, false)
+        unpacker_goto(unpacker, payload, payload:len() - 1)
+        local finished = unpacker_advance(unpacker)
+        eq(finished, false)
 
-      unpacker[0].read_size = unpacker[0].read_size + 1
-      finished = unpacker_advance(unpacker)
-      eq(finished, true)
-    end)
+        unpacker[0].read_size = unpacker[0].read_size + 1
+        finished = unpacker_advance(unpacker)
+        eq(finished, true)
+      end
+    )
 
     itp('does not crash when parsing grid_line event with 0 `cells` #25184', function()
       local unpacker = make_unpacker()
       lib.unpacker_init(unpacker)
 
-      unpacker_goto(unpacker,
+      unpacker_goto(
+        unpacker,
         -- [kMessageTypeNotification, "redraw", [
         --   ["grid_line",
         --     [2, 0, 0, [], false]
