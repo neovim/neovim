@@ -293,162 +293,162 @@ static const char *highlight_init_both[] = {
 
 // Default colors only used with a light background.
 static const char *highlight_init_light[] = {
-  "Normal guifg=NvimDarkGrey2 ctermfg=234 guibg=NvimLightGrey2 ctermbg=253",
+  "Normal guifg=NvimDarkGrey2 ctermfg=0 guibg=NvimLightGrey2 ctermbg=15",
 
   // UI
-  "ColorColumn          guibg=NvimLightGrey4 ctermbg=247",
-  "Conceal              guifg=NvimLightGrey4 ctermfg=247",
-  "CursorColumn         guibg=NvimLightGrey3 ctermbg=251",
-  "CursorLine           guibg=NvimLightGrey3 ctermbg=251",
-  "DiffAdd              guifg=NvimDarkGrey1  ctermfg=232   guibg=NvimLightGreen  ctermbg=158",
-  "DiffChange           guifg=NvimDarkGrey1  ctermfg=232   guibg=NvimLightGrey4  ctermbg=247",
-  "DiffDelete           guifg=NvimDarkRed    ctermfg=52    gui=bold              cterm=bold",
-  "DiffText             guifg=NvimDarkGrey1  ctermfg=232   guibg=NvimLightCyan   ctermbg=123",
-  "Directory            guifg=NvimDarkCyan   ctermfg=30",
-  "ErrorMsg             guifg=NvimDarkRed    ctermfg=52",
-  "FloatShadow          guibg=NvimLightGrey1 ctermbg=255   blend=80",
-  "FloatShadowThrough   guibg=NvimLightGrey1 ctermbg=255   blend=100",
-  "Folded               guifg=NvimDarkGrey4  ctermfg=239   guibg=NvimLightGrey3  ctermbg=251",
-  "LineNr               guifg=NvimLightGrey4 ctermfg=247",
-  "MatchParen           guibg=NvimLightGrey4 ctermbg=247   gui=bold              cterm=bold",
-  "ModeMsg              guifg=NvimDarkGreen  ctermfg=22",
-  "MoreMsg              guifg=NvimDarkCyan   ctermfg=30",
-  "NonText              guifg=NvimLightGrey4 ctermfg=247",
-  "NormalFloat          guifg=NvimDarkGrey2  ctermfg=234   guibg=NvimLightGrey1  ctermbg=255",
-  "Pmenu                guifg=NvimDarkGrey2  ctermfg=234   guibg=NvimLightGrey3  ctermbg=251",
-  "PmenuSel             guifg=NvimLightGrey3 ctermfg=251   guibg=NvimDarkGrey2   ctermbg=234 blend=0",
-  "PmenuThumb           guibg=NvimLightGrey4 ctermbg=247",
-  "Question             guifg=NvimDarkCyan   ctermfg=30",
-  "RedrawDebugClear     guibg=NvimLightCyan  ctermbg=123",
-  "RedrawDebugComposed  guibg=NvimLightGreen ctermbg=158",
-  "RedrawDebugRecompose guibg=NvimLightRed   ctermbg=217",
-  "Search               guifg=NvimDarkGrey1  ctermfg=232   guibg=NvimLightYellow ctermbg=222",
-  "SignColumn           guifg=NvimLightGrey4 ctermfg=247",
-  "SpecialKey           guifg=NvimLightGrey4 ctermfg=247",
+  "ColorColumn          guibg=NvimLightGrey4 ctermbg=7",
+  "Conceal              guifg=NvimLightGrey4 ctermfg=7",
+  "CursorColumn         guibg=NvimLightGrey3 ctermbg=7",
+  "CursorLine           guibg=NvimLightGrey3 ctermbg=7",
+  "DiffAdd              guifg=NvimDarkGrey1  ctermfg=0   guibg=NvimLightGreen  ctermbg=10",
+  "DiffChange           guifg=NvimDarkGrey1  ctermfg=0   guibg=NvimLightGrey4  ctermbg=7",
+  "DiffDelete           guifg=NvimDarkRed    ctermfg=1    gui=bold              cterm=bold",
+  "DiffText             guifg=NvimDarkGrey1  ctermfg=0   guibg=NvimLightCyan   ctermbg=14",
+  "Directory            guifg=NvimDarkCyan   ctermfg=6",
+  "ErrorMsg             guifg=NvimDarkRed    ctermfg=1",
+  "FloatShadow          guibg=NvimLightGrey1 ctermbg=15   blend=80",
+  "FloatShadowThrough   guibg=NvimLightGrey1 ctermbg=15   blend=100",
+  "Folded               guifg=NvimDarkGrey4  ctermfg=8   guibg=NvimLightGrey3  ctermbg=7",
+  "LineNr               guifg=NvimLightGrey4 ctermfg=7",
+  "MatchParen           guibg=NvimLightGrey4 ctermbg=7   gui=bold              cterm=bold",
+  "ModeMsg              guifg=NvimDarkGreen  ctermfg=2",
+  "MoreMsg              guifg=NvimDarkCyan   ctermfg=6",
+  "NonText              guifg=NvimLightGrey4 ctermfg=7",
+  "NormalFloat          guifg=NvimDarkGrey2  ctermfg=0   guibg=NvimLightGrey1  ctermbg=15",
+  "Pmenu                guifg=NvimDarkGrey2  ctermfg=0   guibg=NvimLightGrey3  ctermbg=7",
+  "PmenuSel             guifg=NvimLightGrey3 ctermfg=7   guibg=NvimDarkGrey2   ctermbg=0 blend=0",
+  "PmenuThumb           guibg=NvimLightGrey4 ctermbg=7",
+  "Question             guifg=NvimDarkCyan   ctermfg=6",
+  "RedrawDebugClear     guibg=NvimLightCyan  ctermbg=14",
+  "RedrawDebugComposed  guibg=NvimLightGreen ctermbg=10",
+  "RedrawDebugRecompose guibg=NvimLightRed   ctermbg=9",
+  "Search               guifg=NvimDarkGrey1  ctermfg=0   guibg=NvimLightYellow ctermbg=11",
+  "SignColumn           guifg=NvimLightGrey4 ctermfg=7",
+  "SpecialKey           guifg=NvimLightGrey4 ctermfg=7",
   "SpellBad             guisp=NvimDarkRed    gui=undercurl cterm=undercurl",
   "SpellCap             guisp=NvimDarkYellow gui=undercurl cterm=undercurl",
   "SpellLocal           guisp=NvimDarkGreen  gui=undercurl cterm=undercurl",
   "SpellRare            guisp=NvimDarkCyan   gui=undercurl cterm=undercurl",
-  "StatusLine           guifg=NvimDarkGrey3  ctermfg=236   guibg=NvimLightGrey1  ctermbg=255",
-  "StatusLineNC         guifg=NvimDarkGrey4  ctermfg=239   guibg=NvimLightGrey1  ctermbg=255",
-  "TabLine              guifg=NvimDarkGrey3  ctermfg=236   guibg=NvimLightGrey1  ctermbg=255",
-  "Visual               guibg=NvimLightGrey4 ctermbg=247",
-  "WarningMsg           guifg=NvimDarkYellow ctermfg=52",  // In 256 colors fall back to red
+  "StatusLine           guifg=NvimDarkGrey3  ctermfg=8   guibg=NvimLightGrey1  ctermbg=15",
+  "StatusLineNC         guifg=NvimDarkGrey4  ctermfg=8   guibg=NvimLightGrey1  ctermbg=15",
+  "TabLine              guifg=NvimDarkGrey3  ctermfg=8   guibg=NvimLightGrey1  ctermbg=15",
+  "Visual               guibg=NvimLightGrey4 ctermbg=7",
+  "WarningMsg           guifg=NvimDarkYellow ctermfg=1",  // In 256 colors fall back to red
 
   // Syntax
-  "Comment    guifg=NvimDarkGrey4 ctermfg=239",
-  "Constant   guifg=NvimDarkGrey2 ctermfg=234",
-  "String     guifg=NvimDarkGreen ctermfg=22",
+  "Comment    guifg=NvimDarkGrey4 ctermfg=8",
+  "Constant   guifg=NvimDarkGrey2 ctermfg=0",
+  "String     guifg=NvimDarkGreen ctermfg=2",
   "Identifier guifg=NvimDarkBlue  ctermfg=NONE",  // No fallback in 256 colors to reduce noise
-  "Function   guifg=NvimDarkCyan  ctermfg=30",
-  "Statement  guifg=NvimDarkGrey2 ctermfg=234 gui=bold           cterm=bold",
-  "Operator   guifg=NvimDarkGrey2 ctermfg=234",
-  "PreProc    guifg=NvimDarkGrey2 ctermfg=234",
-  "Type       guifg=NvimDarkGrey2 ctermfg=234",
-  "Special    guifg=NvimDarkGrey2 ctermfg=234",
-  "Delimiter  guifg=NvimDarkGrey2 ctermfg=234",
-  "Error      guifg=NvimDarkGrey1 ctermfg=232 guibg=NvimLightRed ctermbg=217",
-  "Todo       guifg=NvimDarkGrey1 ctermfg=232 gui=bold           cterm=bold",
+  "Function   guifg=NvimDarkCyan  ctermfg=6",
+  "Statement  guifg=NvimDarkGrey2 ctermfg=0 gui=bold           cterm=bold",
+  "Operator   guifg=NvimDarkGrey2 ctermfg=0",
+  "PreProc    guifg=NvimDarkGrey2 ctermfg=0",
+  "Type       guifg=NvimDarkGrey2 ctermfg=0",
+  "Special    guifg=NvimDarkGrey2 ctermfg=0",
+  "Delimiter  guifg=NvimDarkGrey2 ctermfg=0",
+  "Error      guifg=NvimDarkGrey1 ctermfg=0 guibg=NvimLightRed ctermbg=9",
+  "Todo       guifg=NvimDarkGrey1 ctermfg=0 gui=bold           cterm=bold",
 
   // Diagnostic
-  "DiagnosticError          guifg=NvimDarkRed    ctermfg=52",
-  "DiagnosticWarn           guifg=NvimDarkYellow ctermfg=52",  // In 256 colors fall back to red
-  "DiagnosticInfo           guifg=NvimDarkCyan   ctermfg=30",
-  "DiagnosticHint           guifg=NvimDarkBlue   ctermfg=30",  // In 256 colors fall back to cyan
-  "DiagnosticOk             guifg=NvimDarkGreen  ctermfg=22",
+  "DiagnosticError          guifg=NvimDarkRed    ctermfg=1",
+  "DiagnosticWarn           guifg=NvimDarkYellow ctermfg=1",  // In 256 colors fall back to red
+  "DiagnosticInfo           guifg=NvimDarkCyan   ctermfg=6",
+  "DiagnosticHint           guifg=NvimDarkBlue   ctermfg=6",  // In 256 colors fall back to cyan
+  "DiagnosticOk             guifg=NvimDarkGreen  ctermfg=2",
   "DiagnosticUnderlineError guisp=NvimDarkRed    gui=underline     cterm=underline",
   "DiagnosticUnderlineWarn  guisp=NvimDarkYellow gui=underline     cterm=underline",
   "DiagnosticUnderlineInfo  guisp=NvimDarkCyan   gui=underline     cterm=underline",
   "DiagnosticUnderlineHint  guisp=NvimDarkBlue   gui=underline     cterm=underline",  // In 256 colors fall back to cyan
   "DiagnosticUnderlineOk    guisp=NvimDarkGreen  gui=underline     cterm=underline",
-  "DiagnosticFloatingError  guifg=NvimDarkRed    ctermfg=52        guibg=NvimLightGrey1 ctermbg=255",
+  "DiagnosticFloatingError  guifg=NvimDarkRed    ctermfg=1        guibg=NvimLightGrey1 ctermbg=15",
   //  In 256 colors fall back to red
-  "DiagnosticFloatingWarn   guifg=NvimDarkYellow ctermfg=52        guibg=NvimLightGrey1 ctermbg=255",
-  "DiagnosticFloatingInfo   guifg=NvimDarkCyan   ctermfg=30        guibg=NvimLightGrey1 ctermbg=255",
+  "DiagnosticFloatingWarn   guifg=NvimDarkYellow ctermfg=1        guibg=NvimLightGrey1 ctermbg=15",
+  "DiagnosticFloatingInfo   guifg=NvimDarkCyan   ctermfg=6        guibg=NvimLightGrey1 ctermbg=15",
   // In 256 colors fall back to cyan
-  "DiagnosticFloatingHint   guifg=NvimDarkBlue   ctermfg=30        guibg=NvimLightGrey1 ctermbg=255",
-  "DiagnosticFloatingOk     guifg=NvimDarkGreen  ctermfg=22        guibg=NvimLightGrey1 ctermbg=255",
+  "DiagnosticFloatingHint   guifg=NvimDarkBlue   ctermfg=6        guibg=NvimLightGrey1 ctermbg=15",
+  "DiagnosticFloatingOk     guifg=NvimDarkGreen  ctermfg=2        guibg=NvimLightGrey1 ctermbg=15",
   "DiagnosticDeprecated     guisp=NvimDarkRed    gui=strikethrough cterm=strikethrough",
   NULL
 };
 
 // Default colors only used with a dark background.
 static const char *highlight_init_dark[] = {
-  "Normal guifg=NvimLightGrey2 ctermfg=253 guibg=NvimDarkGrey2 ctermbg=234",
+  "Normal guifg=NvimLightGrey2 ctermfg=15 guibg=NvimDarkGrey2 ctermbg=0",
 
   // UI
-  "ColorColumn          guibg=NvimDarkGrey4   ctermbg=239",
-  "Conceal              guifg=NvimDarkGrey4   ctermfg=239",
-  "CursorColumn         guibg=NvimDarkGrey3   ctermbg=236",
-  "CursorLine           guibg=NvimDarkGrey3   ctermbg=236",
-  "DiffAdd              guifg=NvimLightGrey1  ctermfg=255   guibg=NvimDarkGreen  ctermbg=22",
-  "DiffChange           guifg=NvimLightGrey1  ctermfg=255   guibg=NvimDarkGrey4  ctermbg=239",
-  "DiffDelete           guifg=NvimLightRed    ctermfg=217   gui=bold             cterm=bold",
-  "DiffText             guifg=NvimLightGrey1  ctermfg=255   guibg=NvimDarkCyan   ctermbg=30",
-  "Directory            guifg=NvimLightCyan   ctermfg=123",
-  "ErrorMsg             guifg=NvimLightRed    ctermfg=217",
-  "FloatShadow          guibg=NvimDarkGrey1   ctermbg=232   blend=80",
-  "FloatShadowThrough   guibg=NvimDarkGrey1   ctermbg=232   blend=100",
-  "Folded               guifg=NvimLightGrey4  ctermfg=247   guibg=NvimDarkGrey3  ctermbg=236",
-  "LineNr               guifg=NvimDarkGrey4   ctermfg=239",
-  "MatchParen           guibg=NvimDarkGrey4   ctermbg=239   gui=bold             cterm=bold",
-  "ModeMsg              guifg=NvimLightGreen  ctermfg=158",
-  "MoreMsg              guifg=NvimLightCyan   ctermfg=123",
-  "NonText              guifg=NvimDarkGrey4   ctermfg=239",
-  "NormalFloat          guifg=NvimLightGrey2  ctermfg=253   guibg=NvimDarkGrey1  ctermbg=232",
-  "Pmenu                guifg=NvimLightGrey2  ctermfg=253   guibg=NvimDarkGrey3  ctermbg=236",
-  "PmenuSel             guifg=NvimDarkGrey3   ctermfg=236   guibg=NvimLightGrey2 ctermbg=253 blend=0",
-  "PmenuThumb           guibg=NvimDarkGrey4   ctermbg=239",
-  "Question             guifg=NvimLightCyan   ctermfg=123",
-  "RedrawDebugClear     guibg=NvimDarkCyan    ctermbg=30",
-  "RedrawDebugComposed  guibg=NvimDarkGreen   ctermbg=22",
-  "RedrawDebugRecompose guibg=NvimDarkRed     ctermbg=52",
-  "Search               guifg=NvimLightGrey1  ctermfg=255   guibg=NvimDarkYellow ctermbg=58",
-  "SignColumn           guifg=NvimDarkGrey4   ctermfg=239",
-  "SpecialKey           guifg=NvimDarkGrey4   ctermfg=239",
+  "ColorColumn          guibg=NvimDarkGrey4   ctermbg=8",
+  "Conceal              guifg=NvimDarkGrey4   ctermfg=8",
+  "CursorColumn         guibg=NvimDarkGrey3   ctermbg=8",
+  "CursorLine           guibg=NvimDarkGrey3   ctermbg=8",
+  "DiffAdd              guifg=NvimLightGrey1  ctermfg=15   guibg=NvimDarkGreen  ctermbg=2",
+  "DiffChange           guifg=NvimLightGrey1  ctermfg=15   guibg=NvimDarkGrey4  ctermbg=8",
+  "DiffDelete           guifg=NvimLightRed    ctermfg=9   gui=bold             cterm=bold",
+  "DiffText             guifg=NvimLightGrey1  ctermfg=15   guibg=NvimDarkCyan   ctermbg=6",
+  "Directory            guifg=NvimLightCyan   ctermfg=14",
+  "ErrorMsg             guifg=NvimLightRed    ctermfg=9",
+  "FloatShadow          guibg=NvimDarkGrey1   ctermbg=0   blend=80",
+  "FloatShadowThrough   guibg=NvimDarkGrey1   ctermbg=0   blend=100",
+  "Folded               guifg=NvimLightGrey4  ctermfg=7   guibg=NvimDarkGrey3  ctermbg=8",
+  "LineNr               guifg=NvimDarkGrey4   ctermfg=8",
+  "MatchParen           guibg=NvimDarkGrey4   ctermbg=8   gui=bold             cterm=bold",
+  "ModeMsg              guifg=NvimLightGreen  ctermfg=10",
+  "MoreMsg              guifg=NvimLightCyan   ctermfg=14",
+  "NonText              guifg=NvimDarkGrey4   ctermfg=8",
+  "NormalFloat          guifg=NvimLightGrey2  ctermfg=15   guibg=NvimDarkGrey1  ctermbg=0",
+  "Pmenu                guifg=NvimLightGrey2  ctermfg=15   guibg=NvimDarkGrey3  ctermbg=8",
+  "PmenuSel             guifg=NvimDarkGrey3   ctermfg=8   guibg=NvimLightGrey2 ctermbg=15 blend=0",
+  "PmenuThumb           guibg=NvimDarkGrey4   ctermbg=8",
+  "Question             guifg=NvimLightCyan   ctermfg=14",
+  "RedrawDebugClear     guibg=NvimDarkCyan    ctermbg=6",
+  "RedrawDebugComposed  guibg=NvimDarkGreen   ctermbg=2",
+  "RedrawDebugRecompose guibg=NvimDarkRed     ctermbg=1",
+  "Search               guifg=NvimLightGrey1  ctermfg=15   guibg=NvimDarkYellow ctermbg=58",
+  "SignColumn           guifg=NvimDarkGrey4   ctermfg=8",
+  "SpecialKey           guifg=NvimDarkGrey4   ctermfg=8",
   "SpellBad             guisp=NvimLightRed    gui=undercurl cterm=undercurl",
   "SpellCap             guisp=NvimLightYellow gui=undercurl cterm=undercurl",
   "SpellLocal           guisp=NvimLightGreen  gui=undercurl cterm=undercurl",
   "SpellRare            guisp=NvimLightCyan   gui=undercurl cterm=undercurl",
-  "StatusLine           guifg=NvimLightGrey3  ctermfg=251   guibg=NvimDarkGrey1  ctermbg=232",
-  "StatusLineNC         guifg=NvimLightGrey4  ctermfg=247   guibg=NvimDarkGrey1  ctermbg=232",
-  "TabLine              guifg=NvimLightGrey3  ctermfg=251   guibg=NvimDarkGrey1  ctermbg=232",
-  "Visual               guibg=NvimDarkGrey4   ctermbg=239",
-  "WarningMsg           guifg=NvimLightYellow ctermfg=217",  // In 256 colors fall back to red
+  "StatusLine           guifg=NvimLightGrey3  ctermfg=7   guibg=NvimDarkGrey1  ctermbg=0",
+  "StatusLineNC         guifg=NvimLightGrey4  ctermfg=7   guibg=NvimDarkGrey1  ctermbg=0",
+  "TabLine              guifg=NvimLightGrey3  ctermfg=7   guibg=NvimDarkGrey1  ctermbg=0",
+  "Visual               guibg=NvimDarkGrey4   ctermbg=8",
+  "WarningMsg           guifg=NvimLightYellow ctermfg=9",  // In 256 colors fall back to red
 
   // Syntax
-  "Comment    guifg=NvimLightGrey4   ctermfg=247",
-  "Constant   guifg=NvimLightGrey2   ctermfg=253",
-  "String     guifg=NvimLightGreen   ctermfg=158",
+  "Comment    guifg=NvimLightGrey4   ctermfg=7",
+  "Constant   guifg=NvimLightGrey2   ctermfg=15",
+  "String     guifg=NvimLightGreen   ctermfg=10",
   "Identifier guifg=NvimLightBlue    ctermfg=NONE",  // No fallback in 256 colors to reduce noise
-  "Function   guifg=NvimLightCyan    ctermfg=123",
-  "Statement  guifg=NvimLightGrey2   ctermfg=253 gui=bold          cterm=bold",
-  "Operator   guifg=NvimLightGrey2   ctermfg=253",
-  "PreProc    guifg=NvimLightGrey2   ctermfg=253",
-  "Type       guifg=NvimLightGrey2   ctermfg=253",
-  "Special    guifg=NvimLightGrey2   ctermfg=253",
-  "Delimiter  guifg=NvimLightGrey2   ctermfg=253",
-  "Error      guifg=NvimLightGrey1   ctermfg=255 guibg=NvimDarkRed ctermbg=52",
-  "Todo       guifg=NvimLightGrey1   ctermfg=255 gui=bold          cterm=bold",
+  "Function   guifg=NvimLightCyan    ctermfg=14",
+  "Statement  guifg=NvimLightGrey2   ctermfg=15 gui=bold          cterm=bold",
+  "Operator   guifg=NvimLightGrey2   ctermfg=15",
+  "PreProc    guifg=NvimLightGrey2   ctermfg=15",
+  "Type       guifg=NvimLightGrey2   ctermfg=15",
+  "Special    guifg=NvimLightGrey2   ctermfg=15",
+  "Delimiter  guifg=NvimLightGrey2   ctermfg=15",
+  "Error      guifg=NvimLightGrey1   ctermfg=15 guibg=NvimDarkRed ctermbg=1",
+  "Todo       guifg=NvimLightGrey1   ctermfg=15 gui=bold          cterm=bold",
 
   // Diagnostic
-  "DiagnosticError          guifg=NvimLightRed    ctermfg=217",
-  "DiagnosticWarn           guifg=NvimLightYellow ctermfg=217",  // In 256 colors fall back to red
-  "DiagnosticInfo           guifg=NvimLightCyan   ctermfg=123",
-  "DiagnosticHint           guifg=NvimLightBlue   ctermfg=123",  // In 256 colors fall back to cyan
-  "DiagnosticOk             guifg=NvimLightGreen  ctermfg=158",
+  "DiagnosticError          guifg=NvimLightRed    ctermfg=9",
+  "DiagnosticWarn           guifg=NvimLightYellow ctermfg=9",  // In 256 colors fall back to red
+  "DiagnosticInfo           guifg=NvimLightCyan   ctermfg=14",
+  "DiagnosticHint           guifg=NvimLightBlue   ctermfg=14",  // In 256 colors fall back to cyan
+  "DiagnosticOk             guifg=NvimLightGreen  ctermfg=10",
   "DiagnosticUnderlineError guisp=NvimLightRed    gui=underline     cterm=underline",
   "DiagnosticUnderlineWarn  guisp=NvimLightYellow gui=underline     cterm=underline",  // In 256 colors fall back to red
   "DiagnosticUnderlineInfo  guisp=NvimLightCyan   gui=underline     cterm=underline",
   "DiagnosticUnderlineHint  guisp=NvimLightBlue   gui=underline     cterm=underline",
   "DiagnosticUnderlineOk    guisp=NvimLightGreen  gui=underline     cterm=underline",
-  "DiagnosticFloatingError  guifg=NvimLightRed    ctermfg=217       guibg=NvimDarkGrey1 ctermbg=232",
+  "DiagnosticFloatingError  guifg=NvimLightRed    ctermfg=9       guibg=NvimDarkGrey1 ctermbg=0",
   // In 256 colors fall back to red
-  "DiagnosticFloatingWarn   guifg=NvimLightYellow ctermfg=217       guibg=NvimDarkGrey1 ctermbg=232",
-  "DiagnosticFloatingInfo   guifg=NvimLightCyan   ctermfg=123       guibg=NvimDarkGrey1 ctermbg=232",
+  "DiagnosticFloatingWarn   guifg=NvimLightYellow ctermfg=9       guibg=NvimDarkGrey1 ctermbg=0",
+  "DiagnosticFloatingInfo   guifg=NvimLightCyan   ctermfg=14       guibg=NvimDarkGrey1 ctermbg=0",
   // In 256 colors fall back to cyan
-  "DiagnosticFloatingHint   guifg=NvimLightBlue   ctermfg=123       guibg=NvimDarkGrey1 ctermbg=232",
-  "DiagnosticFloatingOk     guifg=NvimLightGreen  ctermfg=158       guibg=NvimDarkGrey1 ctermbg=232",
+  "DiagnosticFloatingHint   guifg=NvimLightBlue   ctermfg=14       guibg=NvimDarkGrey1 ctermbg=0",
+  "DiagnosticFloatingOk     guifg=NvimLightGreen  ctermfg=10       guibg=NvimDarkGrey1 ctermbg=0",
   "DiagnosticDeprecated     guisp=NvimLightRed    gui=strikethrough cterm=strikethrough",
   NULL
 };
@@ -2889,26 +2889,26 @@ color_name_table_T color_name_table[] = {
   // Default Neovim palettes.
   // Dark/light palette is used for background in dark/light color scheme and
   // for foreground in light/dark color scheme.
-  { "NvimDarkBlue", RGB_(0x00, 0x50, 0x78) },      // cterm=24
-  { "NvimDarkCyan", RGB_(0x00, 0x76, 0x76) },      // cterm=30
-  { "NvimDarkGreen", RGB_(0x01, 0x58, 0x25) },     // cterm=22
-  { "NvimDarkGrey1", RGB_(0x0a, 0x0b, 0x10) },     // cterm=232
-  { "NvimDarkGrey2", RGB_(0x1c, 0x1d, 0x23) },     // cterm=234
-  { "NvimDarkGrey3", RGB_(0x2c, 0x2e, 0x33) },     // cterm=236
-  { "NvimDarkGrey4", RGB_(0x4f, 0x52, 0x58) },     // cterm=239
+  { "NvimDarkBlue", RGB_(0x00, 0x50, 0x78) },      // cterm=4
+  { "NvimDarkCyan", RGB_(0x00, 0x76, 0x76) },      // cterm=6
+  { "NvimDarkGreen", RGB_(0x01, 0x58, 0x25) },     // cterm=2
+  { "NvimDarkGrey1", RGB_(0x0a, 0x0b, 0x10) },     // cterm=0
+  { "NvimDarkGrey2", RGB_(0x1c, 0x1d, 0x23) },     // cterm=0
+  { "NvimDarkGrey3", RGB_(0x2c, 0x2e, 0x33) },     // cterm=8
+  { "NvimDarkGrey4", RGB_(0x4f, 0x52, 0x58) },     // cterm=8
   { "NvimDarkMagenta", RGB_(0x4c, 0x00, 0x49) },   // cterm=53
-  { "NvimDarkRed", RGB_(0x5e, 0x00, 0x09) },       // cterm=52
-  { "NvimDarkYellow", RGB_(0x6e, 0x56, 0x00) },    // cterm=58
-  { "NvimLightBlue", RGB_(0x9f, 0xd8, 0xff) },     // cterm=153
-  { "NvimLightCyan", RGB_(0x83, 0xef, 0xef) },     // cterm=123
-  { "NvimLightGreen", RGB_(0xaa, 0xed, 0xb7) },    // cterm=158
-  { "NvimLightGrey1", RGB_(0xeb, 0xee, 0xf5) },    // cterm=255
-  { "NvimLightGrey2", RGB_(0xd7, 0xda, 0xe1) },    // cterm=253
-  { "NvimLightGrey3", RGB_(0xc4, 0xc6, 0xcd) },    // cterm=251
-  { "NvimLightGrey4", RGB_(0x9b, 0x9e, 0xa4) },    // cterm=247
-  { "NvimLightMagenta", RGB_(0xff, 0xc3, 0xfa) },  // cterm=189
-  { "NvimLightRed", RGB_(0xff, 0xbc, 0xb5) },      // cterm=217
-  { "NvimLightYellow", RGB_(0xf4, 0xd8, 0x8c) },   // cterm=222
+  { "NvimDarkRed", RGB_(0x5e, 0x00, 0x09) },       // cterm=2
+  { "NvimDarkYellow", RGB_(0x6e, 0x56, 0x00) },    // cterm=3
+  { "NvimLightBlue", RGB_(0x9f, 0xd8, 0xff) },     // cterm=12
+  { "NvimLightCyan", RGB_(0x83, 0xef, 0xef) },     // cterm=14
+  { "NvimLightGreen", RGB_(0xaa, 0xed, 0xb7) },    // cterm=10
+  { "NvimLightGrey1", RGB_(0xeb, 0xee, 0xf5) },    // cterm=15
+  { "NvimLightGrey2", RGB_(0xd7, 0xda, 0xe1) },    // cterm=15
+  { "NvimLightGrey3", RGB_(0xc4, 0xc6, 0xcd) },    // cterm=7
+  { "NvimLightGrey4", RGB_(0x9b, 0x9e, 0xa4) },    // cterm=7
+  { "NvimLightMagenta", RGB_(0xff, 0xc3, 0xfa) },  // cterm=13
+  { "NvimLightRed", RGB_(0xff, 0xbc, 0xb5) },      // cterm=9
+  { "NvimLightYellow", RGB_(0xf4, 0xd8, 0x8c) },   // cterm=11
   { "OldLace", RGB_(0xfd, 0xf5, 0xe6) },
   { "Olive", RGB_(0x80, 0x80, 0x00) },
   { "OliveDrab", RGB_(0x6b, 0x8e, 0x23) },

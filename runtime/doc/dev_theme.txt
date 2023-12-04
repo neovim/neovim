@@ -18,7 +18,7 @@ Design
 - Be "Neovim branded", i.e. have mostly "green-blue" feel plus one or two
   colors reserved for very occasional user attention.
 
-- Be extra minimal for 'notermguicolors' (256 colors) while allowing a bit
+- Be extra minimal for 'notermguicolors' (16 colors) while allowing a bit
   more shades when 'termguicolors' is set (true colors).
 
 - Be accessible, i.e. have high enough contrast ratio (as defined in
@@ -49,7 +49,7 @@ Palettes
 - Each palette has the following colors (descriptions are for dark background;
   reverse for light one):
 
-    - Four shades of "colored" greys for general UI. In 256 colors they are
+    - Four shades of "colored" greys for general UI. In 16 colors they are
       exact greys; in true colors they are shades of "cold" grey.
 
         - Dark ones (from darkest to lightest) are reserved as background for
@@ -67,8 +67,7 @@ Palettes
   (which is used for |hl-Normal|) as possible. They should have (reasonably)
   different hues to make them visually separable.
 
-- Each palette color should have a 256 colors variant with closest color
-  computed based on the perceptually uniform distance measure.
+- Each palette color should have a 16 colors variant.
 
 
 ==============================================================================
