@@ -794,19 +794,20 @@ static void channel_callback_call(Channel *chan, CallbackReader *reader)
 /// and `buf` is assumed to be a new, unmodified buffer.
 void channel_terminal_open(buf_T *buf, Channel *chan)
 {
-  TerminalOptions topts;
-  topts.data = chan;
-  topts.width = chan->stream.pty.width;
-  topts.height = chan->stream.pty.height;
-  topts.write_cb = term_write;
-  topts.resize_cb = term_resize;
-  topts.close_cb = term_close;
+  TerminalOptions topts = {
+    .data = chan,
+    .width = chan->stream.pty.width,
+    .height = chan->stream.pty.height,
+    .write_cb = term_write,
+    .resize_cb = term_resize,
+    .close_cb = term_close,
+  };
   buf->b_p_channel = (OptInt)chan->id;  // 'channel' option
   channel_incref(chan);
   terminal_open(&chan->term, buf, topts);
 }
 
-static void term_write(char *buf, size_t size, void *data)
+static void term_write(const char *buf, size_t size, void *data)
 {
   Channel *chan = data;
   if (chan->stream.proc.in.closed) {

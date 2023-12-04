@@ -188,7 +188,7 @@ void terminal_teardown(void)
 
 static void term_output_callback(const char *s, size_t len, void *user_data)
 {
-  terminal_send((Terminal *)user_data, (char *)s, len);
+  terminal_send((Terminal *)user_data, s, len);
 }
 
 // public API {{{
@@ -680,7 +680,7 @@ void terminal_destroy(Terminal **termpp)
   }
 }
 
-void terminal_send(Terminal *term, char *data, size_t size)
+static void terminal_send(Terminal *term, const char *data, size_t size)
 {
   if (term->closed) {
     return;
@@ -762,7 +762,7 @@ void terminal_paste(int count, char **y_array, size_t y_size)
   vterm_keyboard_end_paste(curbuf->terminal->vt);
 }
 
-void terminal_send_key(Terminal *term, int c)
+static void terminal_send_key(Terminal *term, int c)
 {
   VTermModifier mod = VTERM_MOD_NONE;
 
@@ -780,7 +780,7 @@ void terminal_send_key(Terminal *term, int c)
   }
 }
 
-void terminal_receive(Terminal *term, char *data, size_t len)
+void terminal_receive(Terminal *term, const char *data, size_t len)
 {
   if (!data) {
     return;
