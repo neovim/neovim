@@ -10,13 +10,13 @@ local function systemlist(...)
   local err = nvim.nvim_get_vvar('shell_error')
   local args_str = nvim.nvim_call_function('string', ...)
   if 0 ~= err then
-    error('command failed: '..args_str)
+    error('command failed: ' .. args_str)
   end
   return rv
 end
 
 local function vimpatch_sh_list_numbers()
-  return systemlist( { { 'bash', '-c', 'scripts/vim-patch.sh -M', } } )
+  return systemlist({ { 'bash', '-c', 'scripts/vim-patch.sh -M' } })
 end
 
 -- Generates the lines to be inserted into the src/version.c
@@ -55,9 +55,9 @@ local function patch_version_c()
   nvim.nvim_command('silent normal! j0d/};\rk')
   -- Insert the lines.
   nvim.nvim_call_function('append', {
-      nvim.nvim_eval('line(".")'),
-      lines,
-    })
+    nvim.nvim_eval('line(".")'),
+    lines,
+  })
   nvim.nvim_command('silent write')
 end
 
