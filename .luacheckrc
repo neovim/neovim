@@ -47,5 +47,6 @@ exclude_files = {
   'runtime/lua/vim/_meta/vimfn.lua',
   'runtime/lua/vim/_meta/api.lua',
   'runtime/lua/vim/re.lua',
+  'runtime/lua/coxpcall.lua',
   'src/nvim/eval.lua',
 }

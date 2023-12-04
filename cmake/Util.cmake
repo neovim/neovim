@@ -75,6 +75,7 @@ function(add_glob_target)
     list(APPEND ARG_FILES ${globfiles})
   endforeach()
 
+  list(APPEND ARG_EXCLUDE runtime/lua/vim/_meta) # only generated files, always ignore
   foreach(exclude_pattern ${ARG_EXCLUDE})
     list(FILTER ARG_FILES EXCLUDE REGEX ${exclude_pattern})
   endforeach()
