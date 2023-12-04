@@ -10,11 +10,11 @@ local prof = cimport('./src/nvim/profile.h')
 
 local function split(inputstr, sep)
   if sep == nil then
-    sep = "%s"
+    sep = '%s'
   end
 
   local t, i = {}, 1
-  for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+  for str in string.gmatch(inputstr, '([^' .. sep .. ']+)') do
     t[i] = str
     i = i + 1
   end
@@ -23,36 +23,44 @@ local function split(inputstr, sep)
 end
 
 local function trim(s)
-  local from = s:match"^%s*()"
-  return from > #s and "" or s:match(".*%S", from)
+  local from = s:match '^%s*()'
+  return from > #s and '' or s:match('.*%S', from)
 end
 
 local function starts(str, start)
-   return string.sub(str, 1, string.len(start)) == start
+  return string.sub(str, 1, string.len(start)) == start
 end
 
 local function cmp_assert(v1, v2, op, opstr)
   local res = op(v1, v2)
   if res == false then
-    print(string.format("expected: %f %s %f", v1, opstr, v2))
+    print(string.format('expected: %f %s %f', v1, opstr, v2))
   end
   assert.is_true(res)
 end
 
-local function lt(a, b)  -- luacheck: ignore
-  cmp_assert(a, b, function(x, y) return x < y end, "<")
+local function lt(a, b) -- luacheck: ignore
+  cmp_assert(a, b, function(x, y)
+    return x < y
+  end, '<')
 end
 
-local function lte(a, b)  -- luacheck: ignore
-  cmp_assert(a, b, function(x, y) return x <= y end, "<=")
+local function lte(a, b) -- luacheck: ignore
+  cmp_assert(a, b, function(x, y)
+    return x <= y
+  end, '<=')
 end
 
-local function gt(a, b)  -- luacheck: ignore
-  cmp_assert(a, b, function(x, y) return x > y end, ">")
+local function gt(a, b) -- luacheck: ignore
+  cmp_assert(a, b, function(x, y)
+    return x > y
+  end, '>')
 end
 
 local function gte(a, b)
-  cmp_assert(a, b, function(x, y) return x >= y end, ">=")
+  cmp_assert(a, b, function(x, y)
+    return x >= y
+  end, '>=')
 end
 
 -- missing functions:
@@ -61,21 +69,43 @@ end
 --  profile_set_wait
 --  profile_sub_wait
 describe('profiling related functions', function()
-  local function profile_start() return prof.profile_start() end
-  local function profile_end(t) return prof.profile_end(t) end
-  local function profile_zero() return prof.profile_zero() end
-  local function profile_setlimit(ms) return prof.profile_setlimit(ms) end
-  local function profile_passed_limit(t) return prof.profile_passed_limit(t) end
-  local function profile_add(t1, t2) return prof.profile_add(t1, t2) end
-  local function profile_sub(t1, t2) return prof.profile_sub(t1, t2) end
-  local function profile_divide(t, cnt) return prof.profile_divide(t, cnt) end
-  local function profile_cmp(t1, t2) return prof.profile_cmp(t1, t2) end
-  local function profile_equal(t1, t2) return prof.profile_equal(t1, t2) end
-  local function profile_msg(t) return ffi.string(prof.profile_msg(t)) end
+  local function profile_start()
+    return prof.profile_start()
+  end
+  local function profile_end(t)
+    return prof.profile_end(t)
+  end
+  local function profile_zero()
+    return prof.profile_zero()
+  end
+  local function profile_setlimit(ms)
+    return prof.profile_setlimit(ms)
+  end
+  local function profile_passed_limit(t)
+    return prof.profile_passed_limit(t)
+  end
+  local function profile_add(t1, t2)
+    return prof.profile_add(t1, t2)
+  end
+  local function profile_sub(t1, t2)
+    return prof.profile_sub(t1, t2)
+  end
+  local function profile_divide(t, cnt)
+    return prof.profile_divide(t, cnt)
+  end
+  local function profile_cmp(t1, t2)
+    return prof.profile_cmp(t1, t2)
+  end
+  local function profile_equal(t1, t2)
+    return prof.profile_equal(t1, t2)
+  end
+  local function profile_msg(t)
+    return ffi.string(prof.profile_msg(t))
+  end
 
-  local function toseconds(t)  -- luacheck: ignore
+  local function toseconds(t) -- luacheck: ignore
     local str = trim(profile_msg(t))
-    local spl = split(str, ".")
+    local spl = split(str, '.')
     local s, us = spl[1], spl[2]
     return tonumber(s) + tonumber(us) / 1000000
   end
@@ -199,14 +229,14 @@ describe('profiling related functions', function()
   describe('profile_msg', function()
     itp('prints the zero time as 0.00000', function()
       local str = trim(profile_msg(profile_zero()))
-      eq(str, "0.000000")
+      eq(str, '0.000000')
     end)
 
     itp('prints the time passed, in seconds.microsends', function()
       local start = profile_start()
       local endt = profile_end(start)
       local str = trim(profile_msg(endt))
-      local spl = split(str, ".")
+      local spl = split(str, '.')
 
       -- string has two parts (before dot and after dot)
       eq(2, #spl)
@@ -215,11 +245,11 @@ describe('profiling related functions', function()
 
       -- zero seconds have passed (if this is not true, either LuaJIT is too
       -- slow or the profiling functions are too slow and need to be fixed)
-      eq(s, "0")
+      eq(s, '0')
 
       -- more or less the same goes for the microsecond part, if it doesn't
       -- start with 0, it's too slow.
-      assert.is_true(starts(us, "0"))
+      assert.is_true(starts(us, '0'))
     end)
   end)
 

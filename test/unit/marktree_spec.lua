@@ -1,15 +1,17 @@
-local helpers = require("test.unit.helpers")(after_each)
+local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 
-local ffi     = helpers.ffi
-local eq      = helpers.eq
-local ok      = helpers.ok
+local ffi = helpers.ffi
+local eq = helpers.eq
+local ok = helpers.ok
 
-local lib = helpers.cimport("./src/nvim/marktree.h")
+local lib = helpers.cimport('./src/nvim/marktree.h')
 
 local function tablelength(t)
   local count = 0
-  for _ in pairs(t) do count = count + 1 end
+  for _ in pairs(t) do
+    count = count + 1
+  end
   return count
 end
 
@@ -32,15 +34,27 @@ local function shadoworder(tree, shadow, iter, giveorder)
     local mark = lib.marktree_itr_current(iter)
     local id = tonumber(mark.id)
     local spos = shadow[id]
-    if (mark.pos.row ~= spos[1] or mark.pos.col ~= spos[2]) then
-      error("invalid pos for "..id..":("..mark.pos.row..", "..mark.pos.col..") instead of ("..spos[1]..", "..spos[2]..")")
+    if mark.pos.row ~= spos[1] or mark.pos.col ~= spos[2] then
+      error(
+        'invalid pos for '
+          .. id
+          .. ':('
+          .. mark.pos.row
+          .. ', '
+          .. mark.pos.col
+          .. ') instead of ('
+          .. spos[1]
+          .. ', '
+          .. spos[2]
+          .. ')'
+      )
     end
     if lib.mt_right_test(mark) ~= spos[3] then
-        error("invalid gravity for "..id..":("..mark.pos.row..", "..mark.pos.col..")")
+      error('invalid gravity for ' .. id .. ':(' .. mark.pos.row .. ', ' .. mark.pos.col .. ')')
     end
     if count > 0 then
       if not pos_leq(last, spos) then
-        error("DISORDER")
+        error('DISORDER')
       end
     end
     count = count + 1
@@ -52,17 +66,21 @@ local function shadoworder(tree, shadow, iter, giveorder)
   until not lib.marktree_itr_next(tree, iter)
   local shadowlen = tablelength(shadow)
   if shadowlen ~= count then
-    error("missed some keys? (shadow "..shadowlen..", tree "..count..")")
+    error('missed some keys? (shadow ' .. shadowlen .. ', tree ' .. count .. ')')
   end
   return id2pos, pos2id
 end
 
 local function shadowsplice(shadow, start, old_extent, new_extent)
-  local old_end = {start[1] + old_extent[1],
-                      (old_extent[1] == 0 and start[2] or 0) + old_extent[2]}
-  local new_end = {start[1] + new_extent[1],
-                      (new_extent[1] == 0 and start[2] or 0) + new_extent[2]}
-  local delta = {new_end[1] - old_end[1], new_end[2] - old_end[2]}
+  local old_end = {
+    start[1] + old_extent[1],
+    (old_extent[1] == 0 and start[2] or 0) + old_extent[2],
+  }
+  local new_end = {
+    start[1] + new_extent[1],
+    (new_extent[1] == 0 and start[2] or 0) + new_extent[2],
+  }
+  local delta = { new_end[1] - old_end[1], new_end[2] - old_end[2] }
   for _, pos in pairs(shadow) do
     if pos_leq(start, pos) then
       if pos_leq(pos, old_end) then
@@ -83,7 +101,15 @@ local function shadowsplice(shadow, start, old_extent, new_extent)
 end
 
 local function dosplice(tree, shadow, start, old_extent, new_extent)
-  lib.marktree_splice(tree, start[1], start[2], old_extent[1], old_extent[2], new_extent[1], new_extent[2])
+  lib.marktree_splice(
+    tree,
+    start[1],
+    start[2],
+    old_extent[1],
+    old_extent[2],
+    new_extent[1],
+    new_extent[2]
+  )
   shadowsplice(shadow, start, old_extent, new_extent)
 end
 
@@ -98,7 +124,7 @@ local function put(tree, row, col, gravitate, end_row, end_col, end_gravitate)
   end_col = end_col or -1
   end_gravitate = end_gravitate or false
 
-  lib.marktree_put_test(tree, ns, my_id, row, col, gravitate, end_row, end_col, end_gravitate);
+  lib.marktree_put_test(tree, ns, my_id, row, col, gravitate, end_row, end_col, end_gravitate)
   return my_id
 end
 
@@ -108,18 +134,18 @@ describe('marktree', function()
   end)
 
   itp('works', function()
-    local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
+    local tree = ffi.new('MarkTree[1]') -- zero initialized by luajit
     local shadow = {}
-    local iter = ffi.new("MarkTreeIter[1]")
-    local iter2 = ffi.new("MarkTreeIter[1]")
+    local iter = ffi.new('MarkTreeIter[1]')
+    local iter2 = ffi.new('MarkTreeIter[1]')
 
-    for i = 1,100 do
-      for j = 1,100 do
-        local gravitate = (i%2) > 0
+    for i = 1, 100 do
+      for j = 1, 100 do
+        local gravitate = (i % 2) > 0
         local id = put(tree, j, i, gravitate)
         ok(id > 0)
         eq(nil, shadow[id])
-        shadow[id] = {j,i,gravitate}
+        shadow[id] = { j, i, gravitate }
       end
       -- checking every insert is too slow, but this is ok
       lib.marktree_check(tree)
@@ -133,7 +159,7 @@ describe('marktree', function()
     eq({}, pos2id) -- not set if not requested
     eq({}, id2pos)
 
-    for i,ipos in pairs(shadow) do
+    for i, ipos in pairs(shadow) do
       local p = lib.marktree_lookup_ns(tree, ns, i, false, iter)
       eq(ipos[1], p.pos.row)
       eq(ipos[2], p.pos.col)
@@ -145,7 +171,7 @@ describe('marktree', function()
       -- local k2 = lib.marktree_itr_current(iter)
     end
 
-    for i,ipos in pairs(shadow) do
+    for i, ipos in pairs(shadow) do
       lib.marktree_itr_get(tree, ipos[1], ipos[2], iter)
       local k = lib.marktree_itr_current(iter)
       eq(i, tonumber(k.id))
@@ -160,9 +186,9 @@ describe('marktree', function()
     shadow[tonumber(del.id)] = nil
     shadoworder(tree, shadow, iter)
 
-    for _, ci in ipairs({0,-1,1,-2,2,-10,10}) do
-      for i = 1,100 do
-        lib.marktree_itr_get(tree, i, 50+ci, iter)
+    for _, ci in ipairs({ 0, -1, 1, -2, 2, -10, 10 }) do
+      for i = 1, 100 do
+        lib.marktree_itr_get(tree, i, 50 + ci, iter)
         local k = lib.marktree_itr_current(iter)
         local id = tonumber(k.id)
         eq(shadow[id][1], k.pos.row)
@@ -177,14 +203,14 @@ describe('marktree', function()
     -- NB: this is quite rudimentary. We rely on
     -- functional tests exercising splicing quite a bit
     lib.marktree_check(tree)
-    dosplice(tree, shadow, {2,2}, {0,5}, {1, 2})
+    dosplice(tree, shadow, { 2, 2 }, { 0, 5 }, { 1, 2 })
     lib.marktree_check(tree)
     shadoworder(tree, shadow, iter)
-    dosplice(tree, shadow, {30,2}, {30,5}, {1, 2})
+    dosplice(tree, shadow, { 30, 2 }, { 30, 5 }, { 1, 2 })
     lib.marktree_check(tree)
     shadoworder(tree, shadow, iter)
 
-    dosplice(tree, shadow, {5,3}, {0,2}, {0, 5})
+    dosplice(tree, shadow, { 5, 3 }, { 0, 2 }, { 0, 5 })
     shadoworder(tree, shadow, iter)
     lib.marktree_check(tree)
 
@@ -209,7 +235,7 @@ describe('marktree', function()
     -- Check iterator validity for 2 specific edge cases:
     -- https://github.com/neovim/neovim/pull/14719
     lib.marktree_clear(tree)
-    for i = 1,20 do
+    for i = 1, 20 do
       put(tree, i, i, false)
     end
 
@@ -224,45 +250,59 @@ describe('marktree', function()
 
   itp("'intersect_mov' function works correctly", function()
     local function mov(x, y, w)
-      local xa = ffi.new("uint64_t[?]", #x)
-      for i, xi in ipairs(x) do xa[i-1] = xi end
-      local ya = ffi.new("uint64_t[?]", #y)
-      for i, yi in ipairs(y) do ya[i-1] = yi end
-      local wa = ffi.new("uint64_t[?]", #w)
-      for i, wi in ipairs(w) do wa[i-1] = wi end
+      local xa = ffi.new('uint64_t[?]', #x)
+      for i, xi in ipairs(x) do
+        xa[i - 1] = xi
+      end
+      local ya = ffi.new('uint64_t[?]', #y)
+      for i, yi in ipairs(y) do
+        ya[i - 1] = yi
+      end
+      local wa = ffi.new('uint64_t[?]', #w)
+      for i, wi in ipairs(w) do
+        wa[i - 1] = wi
+      end
 
       local dummy_size = #x + #y + #w
-      local wouta = ffi.new("uint64_t[?]", dummy_size)
-      local douta = ffi.new("uint64_t[?]", dummy_size)
-      local wsize = ffi.new("size_t[1]")
+      local wouta = ffi.new('uint64_t[?]', dummy_size)
+      local douta = ffi.new('uint64_t[?]', dummy_size)
+      local wsize = ffi.new('size_t[1]')
       wsize[0] = dummy_size
-      local dsize = ffi.new("size_t[1]")
+      local dsize = ffi.new('size_t[1]')
       dsize[0] = dummy_size
 
       local status = lib.intersect_mov_test(xa, #x, ya, #y, wa, #w, wouta, wsize, douta, dsize)
-      if status == 0 then error'wowza' end
+      if status == 0 then
+        error 'wowza'
+      end
 
       local wout, dout = {}, {}
-      for i = 0,tonumber(wsize[0])-1 do table.insert(wout, tonumber(wouta[i])) end
-      for i = 0,tonumber(dsize[0])-1 do table.insert(dout, tonumber(douta[i])) end
-      return {wout, dout}
+      for i = 0, tonumber(wsize[0]) - 1 do
+        table.insert(wout, tonumber(wouta[i]))
+      end
+      for i = 0, tonumber(dsize[0]) - 1 do
+        table.insert(dout, tonumber(douta[i]))
+      end
+      return { wout, dout }
     end
 
-    eq({{}, {}}, mov({}, {2, 3}, {2, 3}))
-    eq({{2, 3}, {}}, mov({}, {}, {2, 3}))
-    eq({{2, 3}, {}}, mov({2, 3}, {}, {}))
-    eq({{}, {2,3}}, mov({}, {2,3}, {}))
+    eq({ {}, {} }, mov({}, { 2, 3 }, { 2, 3 }))
+    eq({ { 2, 3 }, {} }, mov({}, {}, { 2, 3 }))
+    eq({ { 2, 3 }, {} }, mov({ 2, 3 }, {}, {}))
+    eq({ {}, { 2, 3 } }, mov({}, { 2, 3 }, {}))
 
-    eq({{1, 5}, {}}, mov({1,2,5}, {2, 3}, {3}))
-    eq({{1, 2}, {}}, mov({1,2,5}, {5, 10}, {10}))
-    eq({{1, 2}, {5}}, mov({1,2}, {5, 10}, {10}))
-    eq({{1,3,5,7,9}, {2,4,6,8,10}}, mov({1,3,5,7,9}, {2,4,6,8,10}, {}))
-    eq({{1,3,5,7,9}, {2,6,10}}, mov({1,3,5,7,9}, {2,4,6,8,10}, {4, 8}))
-    eq({{1,4,7}, {2,5,8}}, mov({1,3,4,6,7,9}, {2,3,5,6,8,9}, {}))
-    eq({{1,4,7}, {}}, mov({1,3,4,6,7,9}, {2,3,5,6,8,9}, {2,5,8}))
-    eq({{0,1,4,7,10}, {}}, mov({1,3,4,6,7,9}, {2,3,5,6,8,9}, {0,2,5,8,10}))
+    eq({ { 1, 5 }, {} }, mov({ 1, 2, 5 }, { 2, 3 }, { 3 }))
+    eq({ { 1, 2 }, {} }, mov({ 1, 2, 5 }, { 5, 10 }, { 10 }))
+    eq({ { 1, 2 }, { 5 } }, mov({ 1, 2 }, { 5, 10 }, { 10 }))
+    eq({ { 1, 3, 5, 7, 9 }, { 2, 4, 6, 8, 10 } }, mov({ 1, 3, 5, 7, 9 }, { 2, 4, 6, 8, 10 }, {}))
+    eq({ { 1, 3, 5, 7, 9 }, { 2, 6, 10 } }, mov({ 1, 3, 5, 7, 9 }, { 2, 4, 6, 8, 10 }, { 4, 8 }))
+    eq({ { 1, 4, 7 }, { 2, 5, 8 } }, mov({ 1, 3, 4, 6, 7, 9 }, { 2, 3, 5, 6, 8, 9 }, {}))
+    eq({ { 1, 4, 7 }, {} }, mov({ 1, 3, 4, 6, 7, 9 }, { 2, 3, 5, 6, 8, 9 }, { 2, 5, 8 }))
+    eq(
+      { { 0, 1, 4, 7, 10 }, {} },
+      mov({ 1, 3, 4, 6, 7, 9 }, { 2, 3, 5, 6, 8, 9 }, { 0, 2, 5, 8, 10 })
+    )
   end)
-
 
   local function check_intersections(tree)
     lib.marktree_check(tree)
@@ -279,13 +319,13 @@ describe('marktree', function()
     if not val then
       local str2 = lib.mt_inspect(tree, true, true)
       local dot2 = ffi.string(str2.data, str2.size)
-      print("actual:\n\n".."Xafile.dot".."\n\nexpected:\n\n".."Xefile.dot".."\n")
-      print("nivå", tree[0].root.level);
+      print('actual:\n\n' .. 'Xafile.dot' .. '\n\nexpected:\n\n' .. 'Xefile.dot' .. '\n')
+      print('nivå', tree[0].root.level)
       io.stdout:flush()
-      local afil = io.open("Xafile.dot", "wb")
+      local afil = io.open('Xafile.dot', 'wb')
       afil:write(dot1)
       afil:close()
-      local efil = io.open("Xefile.dot", "wb")
+      local efil = io.open('Xefile.dot', 'wb')
       efil:write(dot2)
       efil:close()
       ok(false)
@@ -295,28 +335,28 @@ describe('marktree', function()
   end
 
   itp('works with intersections', function()
-    local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
+    local tree = ffi.new('MarkTree[1]') -- zero initialized by luajit
 
     local ids = {}
 
-    for i = 1,80 do
-      table.insert(ids, put(tree, 1, i, false, 2, 100-i, false))
+    for i = 1, 80 do
+      table.insert(ids, put(tree, 1, i, false, 2, 100 - i, false))
       check_intersections(tree)
     end
-    for i = 1,80 do
+    for i = 1, 80 do
       lib.marktree_del_pair_test(tree, ns, ids[i])
       check_intersections(tree)
     end
     ids = {}
 
-    for i = 1,80 do
-      table.insert(ids, put(tree, 1, i, false, 2, 100-i, false))
+    for i = 1, 80 do
+      table.insert(ids, put(tree, 1, i, false, 2, 100 - i, false))
       check_intersections(tree)
     end
 
-    for i = 1,10 do
-      for j = 1,8 do
-        local ival = (j-1)*10+i
+    for i = 1, 10 do
+      for j = 1, 8 do
+        local ival = (j - 1) * 10 + i
         lib.marktree_del_pair_test(tree, ns, ids[ival])
         check_intersections(tree)
       end
@@ -324,12 +364,12 @@ describe('marktree', function()
   end)
 
   itp('works with intersections with a big tree', function()
-    local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
+    local tree = ffi.new('MarkTree[1]') -- zero initialized by luajit
 
     local ids = {}
 
-    for i = 1,1000 do
-      table.insert(ids, put(tree, 1, i, false, 2, 1000-i, false))
+    for i = 1, 1000 do
+      table.insert(ids, put(tree, 1, i, false, 2, 1000 - i, false))
       if i % 10 == 1 then
         check_intersections(tree)
       end
@@ -339,13 +379,13 @@ describe('marktree', function()
     eq(2000, tree[0].n_keys)
     ok(tree[0].root.level >= 2)
 
-    local iter = ffi.new("MarkTreeIter[1]")
+    local iter = ffi.new('MarkTreeIter[1]')
 
     local k = 0
-    for i = 1,20 do
-      for j = 1,50 do
+    for i = 1, 20 do
+      for j = 1, 50 do
         k = k + 1
-        local ival = (j-1)*20+i
+        local ival = (j - 1) * 20 + i
         if false == true then -- if there actually is a failure, this branch will fail out at the actual spot of the error
           lib.marktree_lookup_ns(tree, ns, ids[ival], false, iter)
           lib.marktree_del_itr(tree, iter, false)
@@ -367,10 +407,10 @@ describe('marktree', function()
   end)
 
   itp('works with intersections and marktree_splice', function()
-    local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
+    local tree = ffi.new('MarkTree[1]') -- zero initialized by luajit
 
-    for i = 1,1000 do
-      put(tree, 1, i, false, 2, 1000-i, false)
+    for i = 1, 1000 do
+      put(tree, 1, i, false, 2, 1000 - i, false)
       if i % 10 == 1 then
         check_intersections(tree)
       end
@@ -380,15 +420,15 @@ describe('marktree', function()
     eq(2000, tree[0].n_keys)
     ok(tree[0].root.level >= 2)
 
-    for _ = 1,10 do
+    for _ = 1, 10 do
       lib.marktree_splice(tree, 0, 0, 0, 100, 0, 0)
       check_intersections(tree)
     end
   end)
 
   itp('marktree_move should preserve key order', function()
-    local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
-    local iter = ffi.new("MarkTreeIter[1]")
+    local tree = ffi.new('MarkTree[1]') -- zero initialized by luajit
+    local iter = ffi.new('MarkTreeIter[1]')
     local ids = {}
 
     -- new index and old index look the same, but still have to move because
@@ -405,31 +445,30 @@ describe('marktree', function()
   end)
 
   itp('works with intersections and marktree_move', function()
-    local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
+    local tree = ffi.new('MarkTree[1]') -- zero initialized by luajit
 
     local ids = {}
 
-    for i = 1,1000 do
-      table.insert(ids, put(tree, 1, i, false, 2, 1000-i, false))
+    for i = 1, 1000 do
+      table.insert(ids, put(tree, 1, i, false, 2, 1000 - i, false))
       if i % 10 == 1 then
         check_intersections(tree)
       end
     end
 
-    local iter = ffi.new("MarkTreeIter[1]")
-    for i = 1,1000 do
-      local which = i%2
+    local iter = ffi.new('MarkTreeIter[1]')
+    for i = 1, 1000 do
+      local which = i % 2
       lib.marktree_lookup_ns(tree, ns, ids[i], which, iter)
-      lib.marktree_move(tree, iter, 1+which, 500+i)
+      lib.marktree_move(tree, iter, 1 + which, 500 + i)
       if i % 10 == 1 then
         check_intersections(tree)
       end
     end
-
   end)
 
   itp('works with intersections with a even bigger tree', function()
-    local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
+    local tree = ffi.new('MarkTree[1]') -- zero initialized by luajit
 
     local ids = {}
 
@@ -441,21 +480,21 @@ describe('marktree', function()
       at_row[i] = {}
     end
 
-    local size = 1000*size_factor
+    local size = 1000 * size_factor
     local k = 1
     while k <= size do
-      for row1 = 1,9 do
-        for row2 = row1,10 do -- note row2 can be == row1, leads to empty ranges being tested when k > size/2
+      for row1 = 1, 9 do
+        for row2 = row1, 10 do -- note row2 can be == row1, leads to empty ranges being tested when k > size/2
           if k > size then
             break
           end
-          local id = put(tree, row1, k, false, row2, size-k, false)
+          local id = put(tree, row1, k, false, row2, size - k, false)
           table.insert(ids, id)
-          for i = row1+1, row2 do
+          for i = row1 + 1, row2 do
             table.insert(at_row[i], id)
           end
           --if tree[0].root.level == 4 then error("kk"..k) end
-          if k % 100*size_factor == 1 or (k < 2000 and k%100 == 1) then
+          if k % 100 * size_factor == 1 or (k < 2000 and k % 100 == 1) then
             check_intersections(tree)
           end
           k = k + 1
@@ -463,13 +502,13 @@ describe('marktree', function()
       end
     end
 
-    eq(2*size, tree[0].n_keys)
+    eq(2 * size, tree[0].n_keys)
     ok(tree[0].root.level >= 3)
     check_intersections(tree)
 
-    local iter = ffi.new("MarkTreeIter[1]")
-    local pair = ffi.new("MTPair[1]")
-    for i = 1,10 do
+    local iter = ffi.new('MarkTreeIter[1]')
+    local pair = ffi.new('MTPair[1]')
+    for i = 1, 10 do
       -- use array as set and not {[id]=true} map, to detect duplicates
       local set = {}
       eq(true, ffi.C.marktree_itr_get_overlap(tree, i, 0, iter))
@@ -482,14 +521,14 @@ describe('marktree', function()
     end
 
     k = 0
-    for i = 1,100 do
-      for j = 1,(10*size_factor) do
+    for i = 1, 100 do
+      for j = 1, (10 * size_factor) do
         k = k + 1
-        local ival = (j-1)*100+i
+        local ival = (j - 1) * 100 + i
         lib.marktree_del_pair_test(tree, ns, ids[ival])
         -- just a few stickprov, if there is trouble we need to check
         -- everyone using the code in the "big tree" case above
-        if k % 100*size_factor == 0 or (k > 3000 and k % 200 == 0) then
+        if k % 100 * size_factor == 0 or (k > 3000 and k % 200 == 0) then
           check_intersections(tree)
         end
       end
@@ -499,7 +538,7 @@ describe('marktree', function()
   end)
 
   itp('works with intersections with a even bigger tree and splice', function()
-    local tree = ffi.new("MarkTree[1]") -- zero initialized by luajit
+    local tree = ffi.new('MarkTree[1]') -- zero initialized by luajit
 
     -- too much overhead on ASAN
     local size_factor = helpers.is_asan() and 3 or 10
@@ -509,20 +548,20 @@ describe('marktree', function()
       at_row[i] = {}
     end
 
-    local size = 1000*size_factor
+    local size = 1000 * size_factor
     local k = 1
     while k <= size do
-      for row1 = 1,9 do
-        for row2 = row1,10 do -- note row2 can be == row1, leads to empty ranges being tested when k > size/2
+      for row1 = 1, 9 do
+        for row2 = row1, 10 do -- note row2 can be == row1, leads to empty ranges being tested when k > size/2
           if k > size then
             break
           end
-          local id = put(tree, row1, k, false, row2, size-k, false)
-          for i = row1+1, row2 do
+          local id = put(tree, row1, k, false, row2, size - k, false)
+          for i = row1 + 1, row2 do
             table.insert(at_row[i], id)
           end
           --if tree[0].root.level == 4 then error("kk"..k) end
-          if k % 100*size_factor == 1 or (k < 2000 and k%100 == 1) then
+          if k % 100 * size_factor == 1 or (k < 2000 and k % 100 == 1) then
             check_intersections(tree)
           end
           k = k + 1
@@ -530,11 +569,11 @@ describe('marktree', function()
       end
     end
 
-    eq(2*size, tree[0].n_keys)
+    eq(2 * size, tree[0].n_keys)
     ok(tree[0].root.level >= 3)
     check_intersections(tree)
 
-    for _ = 1,10 do
+    for _ = 1, 10 do
       for j = 3, 8 do
         lib.marktree_splice(tree, j, 0, 0, 200, 0, 0)
         check_intersections(tree)

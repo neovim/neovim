@@ -184,7 +184,7 @@ describe('path.c', function()
 
     itp('returns the executable name of an invocation given a relative invocation', function()
       local invk, len = invocation_path_tail('directory/exe a b c')
-      compare("exe a b c", invk, len)
+      compare('exe a b c', invk, len)
       eq(3, len)
     end)
 
@@ -202,7 +202,7 @@ describe('path.c', function()
 
     itp('does not count arguments to the executable as part of its path', function()
       local invk, len = invocation_path_tail('exe a/b\\c')
-      compare("exe a/b\\c", invk, len)
+      compare('exe a/b\\c', invk, len)
       eq(3, len)
     end)
 
@@ -212,17 +212,17 @@ describe('path.c', function()
     end)
 
     itp('is equivalent to path_tail when args do not contain a path separator', function()
-      local ptail = cimp.path_tail(to_cstr("a/b/c x y z"))
+      local ptail = cimp.path_tail(to_cstr('a/b/c x y z'))
       neq(NULL, ptail)
       local tail = ffi.string(ptail)
-      local invk, _ = invocation_path_tail("a/b/c x y z")
+      local invk, _ = invocation_path_tail('a/b/c x y z')
       eq(tail, ffi.string(invk))
     end)
 
     itp('is not equivalent to path_tail when args contain a path separator', function()
-      local ptail = cimp.path_tail(to_cstr("a/b/c x y/z"))
+      local ptail = cimp.path_tail(to_cstr('a/b/c x y/z'))
       neq(NULL, ptail)
-      local invk, _ = invocation_path_tail("a/b/c x y/z")
+      local invk, _ = invocation_path_tail('a/b/c x y/z')
       neq((ffi.string(ptail)), (ffi.string(invk)))
     end)
   end)
@@ -304,12 +304,12 @@ end)
 describe('path.c path_guess_exepath', function()
   local cwd = luv.cwd()
 
-  for _,name in ipairs({'./nvim', '.nvim', 'foo/nvim'}) do
-    itp('"'..name..'" returns name catenated with CWD', function()
+  for _, name in ipairs({ './nvim', '.nvim', 'foo/nvim' }) do
+    itp('"' .. name .. '" returns name catenated with CWD', function()
       local bufsize = 255
       local buf = cstr(bufsize, '')
       cimp.path_guess_exepath(name, buf, bufsize)
-      eq(cwd..'/'..name, ffi.string(buf))
+      eq(cwd .. '/' .. name, ffi.string(buf))
     end)
   end
 
@@ -331,10 +331,10 @@ describe('path.c path_guess_exepath', function()
 
   itp('does not crash if $PATH item exceeds MAXPATHL', function()
     local orig_path_env = os.getenv('PATH')
-    local name = 'cat'  -- Some executable in $PATH.
+    local name = 'cat' -- Some executable in $PATH.
     local bufsize = 255
     local buf = cstr(bufsize, '')
-    local insane_path = orig_path_env..':'..(("x/"):rep(4097))
+    local insane_path = orig_path_env .. ':' .. (('x/'):rep(4097))
 
     cimp.os_setenv('PATH', insane_path, true)
     cimp.path_guess_exepath(name, buf, bufsize)
@@ -345,7 +345,7 @@ describe('path.c path_guess_exepath', function()
   end)
 
   itp('returns full path found in $PATH', function()
-    local name = 'cat'  -- Some executable in $PATH.
+    local name = 'cat' -- Some executable in $PATH.
     local bufsize = 255
     local buf = cstr(bufsize, '')
     cimp.path_guess_exepath(name, buf, bufsize)
@@ -356,7 +356,7 @@ end)
 
 describe('path.c', function()
   setup(function()
-    mkdir('unit-test-directory');
+    mkdir('unit-test-directory')
     io.open('unit-test-directory/test.file', 'w'):close()
 
     -- Since the tests are executed, they are called by an executable. We use
@@ -365,7 +365,7 @@ describe('path.c', function()
 
     -- Split absolute_executable into a directory and the actual file name for
     -- later usage.
-    local directory, executable_name = string.match(absolute_executable, '^(.*)/(.*)$')  -- luacheck: ignore
+    local directory, executable_name = string.match(absolute_executable, '^(.*)/(.*)$') -- luacheck: ignore
   end)
 
   teardown(function()
@@ -441,18 +441,21 @@ describe('path.c', function()
       eq(OK, result)
     end)
 
-    itp('enters given directory (instead of just concatenating the strings) if possible and if path contains a slash', function()
-      local old_dir = luv.cwd()
-      luv.chdir('..')
-      local expected = luv.cwd() .. '/test.file'
-      luv.chdir(old_dir)
-      local filename = '../test.file'
-      local buflen = get_buf_len(expected, filename)
-      local do_expand = 1
-      local buf, result = vim_FullName(filename, buflen, do_expand)
-      eq(expected, ffi.string(buf))
-      eq(OK, result)
-    end)
+    itp(
+      'enters given directory (instead of just concatenating the strings) if possible and if path contains a slash',
+      function()
+        local old_dir = luv.cwd()
+        luv.chdir('..')
+        local expected = luv.cwd() .. '/test.file'
+        luv.chdir(old_dir)
+        local filename = '../test.file'
+        local buflen = get_buf_len(expected, filename)
+        local do_expand = 1
+        local buf, result = vim_FullName(filename, buflen, do_expand)
+        eq(expected, ffi.string(buf))
+        eq(OK, result)
+      end
+    )
 
     itp('just copies the path if it is already absolute and force=0', function()
       local absolute_path = '/absolute/path'
@@ -544,8 +547,12 @@ describe('path.c', function()
       return ffi.string(c_file)
     end
 
-    before_each(function() mkdir('CamelCase') end)
-    after_each(function() luv.fs_rmdir('CamelCase') end)
+    before_each(function()
+      mkdir('CamelCase')
+    end)
+    after_each(function()
+      luv.fs_rmdir('CamelCase')
+    end)
 
     if ffi.os == 'Windows' or ffi.os == 'OSX' then
       itp('Corrects the case of file names in Mac and Windows', function()
@@ -565,14 +572,14 @@ describe('path.c', function()
       local path1 = cstr(100, 'path1')
       local to_append = to_cstr('path2')
       eq(OK, (cimp.append_path(path1, to_append, 100)))
-      eq("path1/path2", (ffi.string(path1)))
+      eq('path1/path2', (ffi.string(path1)))
     end)
 
     itp('joins given paths without adding an unnecessary slash', function()
       local path1 = cstr(100, 'path1/')
       local to_append = to_cstr('path2')
       eq(OK, cimp.append_path(path1, to_append, 100))
-      eq("path1/path2", (ffi.string(path1)))
+      eq('path1/path2', (ffi.string(path1)))
     end)
 
     itp('fails and uses filename if there is not enough space left for to_append', function()

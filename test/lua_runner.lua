@@ -1,9 +1,13 @@
 local platform = vim.uv.os_uname()
 local deps_install_dir = table.remove(_G.arg, 1)
 local subcommand = table.remove(_G.arg, 1)
-local suffix = (platform and platform.sysname:lower():find'windows') and '.dll' or '.so'
-package.path = deps_install_dir.."/share/lua/5.1/?.lua;"..deps_install_dir.."/share/lua/5.1/?/init.lua;"..package.path
-package.cpath = deps_install_dir.."/lib/lua/5.1/?"..suffix..";"..package.cpath;
+local suffix = (platform and platform.sysname:lower():find 'windows') and '.dll' or '.so'
+package.path = deps_install_dir
+  .. '/share/lua/5.1/?.lua;'
+  .. deps_install_dir
+  .. '/share/lua/5.1/?/init.lua;'
+  .. package.path
+package.cpath = deps_install_dir .. '/lib/lua/5.1/?' .. suffix .. ';' .. package.cpath
 
 local uv = vim.uv
 
@@ -15,14 +19,14 @@ local system = {}
 package.loaded['system.core'] = system
 function system.monotime()
   uv.update_time()
-  return uv.now()*1e-3
+  return uv.now() * 1e-3
 end
 function system.gettime()
   local sec, usec = uv.gettimeofday()
-  return sec+usec*1e-6
+  return sec + usec * 1e-6
 end
 function system.sleep(sec)
-  uv.sleep(sec*1e3)
+  uv.sleep(sec * 1e3)
 end
 
 local term = {}
@@ -31,7 +35,7 @@ function term.isatty(_)
   return uv.guess_handle(1) == 'tty'
 end
 
-local lfs = {_VERSION = 'fake'}
+local lfs = { _VERSION = 'fake' }
 package.loaded['lfs'] = lfs
 
 function lfs.attributes(path, attr)
@@ -39,9 +43,11 @@ function lfs.attributes(path, attr)
   if attr == 'mode' then
     return stat and stat.type or ''
   elseif attr == 'modification' then
-    if not stat then return nil end
+    if not stat then
+      return nil
+    end
     local mtime = stat.mtime
-    return mtime.sec + mtime.nsec*1e-9
+    return mtime.sec + mtime.nsec * 1e-9
   else
     error('not implemented')
   end
@@ -74,9 +80,9 @@ function lfs.mkdir(dir)
   return uv.fs_mkdir(dir, 493) -- octal 755
 end
 
-if subcommand == "busted" then
+if subcommand == 'busted' then
   require 'busted.runner'({ standalone = false })
-elseif subcommand == "luacheck" then
+elseif subcommand == 'luacheck' then
   require 'luacheck.main'
 else
   error 'unknown subcommand'

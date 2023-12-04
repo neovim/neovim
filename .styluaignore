@@ -2,4 +2,10 @@
 /runtime/lua/coxpcall.lua
 /runtime/lua/vim/_meta
 /runtime/lua/vim/re.lua
-/test
+
+/test/functional
+/test/functional/fixtures/lua/syntax_error.lua
+/test/functional/legacy/030_fileformats_spec.lua
+/test/functional/legacy/044_099_regexp_multibyte_magic_spec.lua
+/test/functional/legacy/093_mksession_cursor_cols_latin1_spec.lua
+/test/functional/lua/luaeval_spec.lua

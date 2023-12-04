@@ -1,4 +1,4 @@
-local helpers = require("test.unit.helpers")(after_each)
+local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
@@ -6,8 +6,7 @@ local eq = helpers.eq
 local ffi = helpers.ffi
 local to_cstr = helpers.to_cstr
 
-local strings = cimport('stdlib.h', './src/nvim/strings.h',
-                        './src/nvim/memory.h')
+local strings = cimport('stdlib.h', './src/nvim/strings.h', './src/nvim/memory.h')
 
 describe('vim_strsave_escaped()', function()
   local vim_strsave_escaped = function(s, chars)
@@ -21,19 +20,19 @@ describe('vim_strsave_escaped()', function()
   end
 
   itp('precedes by a backslash all chars from second argument', function()
-    eq([[\a\b\c\d]], vim_strsave_escaped('abcd','abcd'))
+    eq([[\a\b\c\d]], vim_strsave_escaped('abcd', 'abcd'))
   end)
 
   itp('precedes by a backslash chars only from second argument', function()
-    eq([[\a\bcd]], vim_strsave_escaped('abcd','ab'))
+    eq([[\a\bcd]], vim_strsave_escaped('abcd', 'ab'))
   end)
 
   itp('returns a copy of passed string if second argument is empty', function()
-    eq('text \n text', vim_strsave_escaped('text \n text',''))
+    eq('text \n text', vim_strsave_escaped('text \n text', ''))
   end)
 
   itp('returns an empty string if first argument is empty string', function()
-    eq('', vim_strsave_escaped('','\r'))
+    eq('', vim_strsave_escaped('', '\r'))
   end)
 
   itp('returns a copy of passed string if it does not contain chars from 2nd argument', function()
@@ -148,14 +147,30 @@ describe('vim_snprintf()', function()
     end
   end
 
-  local function i(n) return ffi.cast('int', n) end
-  local function l(n) return ffi.cast('long', n) end
-  local function ll(n) return ffi.cast('long long', n) end
-  local function z(n) return ffi.cast('ptrdiff_t', n) end
-  local function u(n) return ffi.cast('unsigned', n) end
-  local function ul(n) return ffi.cast('unsigned long', n) end
-  local function ull(n) return ffi.cast('unsigned long long', n) end
-  local function uz(n) return ffi.cast('size_t', n) end
+  local function i(n)
+    return ffi.cast('int', n)
+  end
+  local function l(n)
+    return ffi.cast('long', n)
+  end
+  local function ll(n)
+    return ffi.cast('long long', n)
+  end
+  local function z(n)
+    return ffi.cast('ptrdiff_t', n)
+  end
+  local function u(n)
+    return ffi.cast('unsigned', n)
+  end
+  local function ul(n)
+    return ffi.cast('unsigned long', n)
+  end
+  local function ull(n)
+    return ffi.cast('unsigned long long', n)
+  end
+  local function uz(n)
+    return ffi.cast('size_t', n)
+  end
 
   itp('truncation', function()
     for bsize = 0, 14 do
@@ -232,49 +247,51 @@ describe('vim_snprintf()', function()
   end)
 end)
 
-describe('strcase_save()' , function()
+describe('strcase_save()', function()
   local strcase_save = function(input_string, upper)
     local res = strings.strcase_save(to_cstr(input_string), upper)
     return ffi.string(res)
   end
 
   itp('decodes overlong encoded characters.', function()
-    eq("A", strcase_save("\xc1\x81", true))
-    eq("a", strcase_save("\xc1\x81", false))
+    eq('A', strcase_save('\xc1\x81', true))
+    eq('a', strcase_save('\xc1\x81', false))
   end)
 end)
 
-describe("reverse_text", function()
+describe('reverse_text', function()
   local reverse_text = function(str)
     return helpers.internalize(strings.reverse_text(to_cstr(str)))
   end
 
-  itp("handles empty string", function()
-    eq("", reverse_text(""))
+  itp('handles empty string', function()
+    eq('', reverse_text(''))
   end)
 
-  itp("handles simple cases", function()
-    eq("a", reverse_text("a"))
-    eq("ba", reverse_text("ab"))
+  itp('handles simple cases', function()
+    eq('a', reverse_text('a'))
+    eq('ba', reverse_text('ab'))
   end)
 
-  itp("handles multibyte characters", function()
-    eq("bα", reverse_text("αb"))
-    eq("Yötön yö", reverse_text("öy nötöY"))
+  itp('handles multibyte characters', function()
+    eq('bα', reverse_text('αb'))
+    eq('Yötön yö', reverse_text('öy nötöY'))
   end)
 
-  itp("handles combining chars", function()
-    local utf8_COMBINING_RING_ABOVE = "\204\138"
-    local utf8_COMBINING_RING_BELOW = "\204\165"
-    eq("bba" .. utf8_COMBINING_RING_ABOVE .. utf8_COMBINING_RING_BELOW .. "aa",
-       reverse_text("aaa" .. utf8_COMBINING_RING_ABOVE .. utf8_COMBINING_RING_BELOW .. "bb"))
+  itp('handles combining chars', function()
+    local utf8_COMBINING_RING_ABOVE = '\204\138'
+    local utf8_COMBINING_RING_BELOW = '\204\165'
+    eq(
+      'bba' .. utf8_COMBINING_RING_ABOVE .. utf8_COMBINING_RING_BELOW .. 'aa',
+      reverse_text('aaa' .. utf8_COMBINING_RING_ABOVE .. utf8_COMBINING_RING_BELOW .. 'bb')
+    )
   end)
 
-  itp("treats invalid utf as separate characters", function()
-    eq("\192ba", reverse_text("ab\192"))
+  itp('treats invalid utf as separate characters', function()
+    eq('\192ba', reverse_text('ab\192'))
   end)
 
-  itp("treats an incomplete utf continuation sequence as valid", function()
-    eq("\194ba", reverse_text("ab\194"))
+  itp('treats an incomplete utf continuation sequence as valid', function()
+    eq('\194ba', reverse_text('ab\194'))
   end)
 end)

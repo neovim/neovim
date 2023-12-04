@@ -10,8 +10,7 @@ local result_file = 'benchmark.out'
 local sample_file = 'test/old/testdir/samples/re.freeze.txt'
 
 -- Vim script code that does both the work and the benchmarking of that work.
-local measure_cmd =
-    [[call Measure(%d, ']] .. sample_file .. [[', '\s\+\%%#\@<!$', '+5')]]
+local measure_cmd = [[call Measure(%d, ']] .. sample_file .. [[', '\s\+\%%#\@<!$', '+5')]]
 local measure_script = [[
     func Measure(re, file, pattern, arg)
       let sstart = reltime()
