@@ -138,9 +138,10 @@ local function get_archive_info(repo, ref)
     'Failed to download archive from GitHub'
   )
 
-  local shacmd = (vim.fn.executable('sha256sum') == 1
-    and{ 'sha256sum', archive_path }
-    or { 'shasum', '-a', '256', archive_path })
+  local shacmd = (
+    vim.fn.executable('sha256sum') == 1 and { 'sha256sum', archive_path }
+    or { 'shasum', '-a', '256', archive_path }
+  )
   local archive_sha = run(shacmd):gmatch('%w+')()
   return { url = archive_url, sha = archive_sha }
 end
@@ -152,18 +153,7 @@ local function write_cmakelists_line(symbol, kind, value)
     'sed',
     '-i',
     '-e',
-    's/'
-      .. symbol
-      .. '_'
-      .. kind
-      .. '.*$'
-      .. '/'
-      .. symbol
-      .. '_'
-      .. kind
-      .. ' '
-      .. value
-      .. '/',
+    's/' .. symbol .. '_' .. kind .. '.*$' .. '/' .. symbol .. '_' .. kind .. ' ' .. value .. '/',
     deps_file,
   }, 'Failed to write ' .. deps_file)
 end
@@ -203,16 +193,13 @@ local function update_cmakelists(dependency, archive, comment)
   p('Updating ' .. dependency.name .. ' to ' .. archive.url .. '\n')
   write_cmakelists_line(dependency.symbol, 'URL', archive.url:gsub('/', '\\/'))
   write_cmakelists_line(dependency.symbol, 'SHA256', archive.sha)
-  run_die(
-    {
-      'git',
-      'commit',
-      deps_file,
-      '-m',
-      commit_prefix .. 'bump ' .. dependency.name .. ' to ' .. comment,
-    },
-    'git failed to commit'
-  )
+  run_die({
+    'git',
+    'commit',
+    deps_file,
+    '-m',
+    commit_prefix .. 'bump ' .. dependency.name .. ' to ' .. comment,
+  }, 'git failed to commit')
 end
 
 local function verify_cmakelists_committed()
@@ -318,9 +305,9 @@ function M.commit(dependency_name, commit)
 end
 
 function M.version(dependency_name, version)
-  vim.validate{
-    dependency_name={dependency_name,'s'},
-    version={version,'s'},
+  vim.validate {
+    dependency_name = { dependency_name, 's' },
+    version = { version, 's' },
   }
   local dependency = assert(get_dependency(dependency_name))
   verify_cmakelists_committed()
@@ -384,7 +371,7 @@ function M.submit_pr()
 end
 
 local function usage()
-  local this_script = _G.arg[0]:match("[^/]*.lua$")
+  local this_script = _G.arg[0]:match('[^/]*.lua$')
   print(([=[
     Bump Nvim dependencies
 
@@ -421,13 +408,13 @@ local function parseargs()
     elseif _G.arg[i] == '--pr' then
       args.pr = true
     elseif _G.arg[i] == '--branch' then
-      args.branch = _G.arg[i+1]
+      args.branch = _G.arg[i + 1]
     elseif _G.arg[i] == '--dep' then
-      args.dep = _G.arg[i+1]
+      args.dep = _G.arg[i + 1]
     elseif _G.arg[i] == '--version' then
-      args.version = _G.arg[i+1]
+      args.version = _G.arg[i + 1]
     elseif _G.arg[i] == '--commit' then
-      args.commit = _G.arg[i+1]
+      args.commit = _G.arg[i + 1]
     elseif _G.arg[i] == '--head' then
       args.head = true
     end

@@ -60,26 +60,26 @@ local new_layout = {
 
 -- TODO: These known invalid |links| require an update to the relevant docs.
 local exclude_invalid = {
-  ["'string'"] = "eval.txt",
+  ["'string'"] = 'eval.txt',
   Query = 'treesitter.txt',
   matchit = 'vim_diff.txt',
-  ["set!"] = "treesitter.txt",
+  ['set!'] = 'treesitter.txt',
 }
 
 -- False-positive "invalid URLs".
 local exclude_invalid_urls = {
-  ["http://"] = "usr_23.txt",
-  ["http://."] = "usr_23.txt",
-  ["http://aspell.net/man-html/Affix-Compression.html"] = "spell.txt",
-  ["http://aspell.net/man-html/Phonetic-Code.html"] = "spell.txt",
-  ["http://canna.sourceforge.jp/"] = "mbyte.txt",
-  ["http://gnuada.sourceforge.net"] = "ft_ada.txt",
-  ["http://lua-users.org/wiki/StringLibraryTutorial"] = "lua.txt",
-  ["http://michael.toren.net/code/"] = "pi_tar.txt",
-  ["http://papp.plan9.de"] = "syntax.txt",
-  ["http://wiki.services.openoffice.org/wiki/Dictionaries"] = "spell.txt",
-  ["http://www.adapower.com"] = "ft_ada.txt",
-  ["http://www.jclark.com/"] = "quickfix.txt",
+  ['http://'] = 'usr_23.txt',
+  ['http://.'] = 'usr_23.txt',
+  ['http://aspell.net/man-html/Affix-Compression.html'] = 'spell.txt',
+  ['http://aspell.net/man-html/Phonetic-Code.html'] = 'spell.txt',
+  ['http://canna.sourceforge.jp/'] = 'mbyte.txt',
+  ['http://gnuada.sourceforge.net'] = 'ft_ada.txt',
+  ['http://lua-users.org/wiki/StringLibraryTutorial'] = 'lua.txt',
+  ['http://michael.toren.net/code/'] = 'pi_tar.txt',
+  ['http://papp.plan9.de'] = 'syntax.txt',
+  ['http://wiki.services.openoffice.org/wiki/Dictionaries'] = 'spell.txt',
+  ['http://www.adapower.com'] = 'ft_ada.txt',
+  ['http://www.jclark.com/'] = 'quickfix.txt',
 }
 
 -- Deprecated, brain-damaged files that I don't care about.
@@ -98,19 +98,18 @@ local function tofile(fname, text)
 end
 
 local function html_esc(s)
-  return s:gsub(
-    '&', '&amp;'):gsub(
-    '<', '&lt;'):gsub(
-    '>', '&gt;')
+  return s:gsub('&', '&amp;'):gsub('<', '&lt;'):gsub('>', '&gt;')
 end
 
 local function url_encode(s)
   -- Credit: tpope / vim-unimpaired
   -- NOTE: these chars intentionally *not* escaped: ' ( )
-  return vim.fn.substitute(vim.fn.iconv(s, 'latin1', 'utf-8'),
+  return vim.fn.substitute(
+    vim.fn.iconv(s, 'latin1', 'utf-8'),
     [=[[^A-Za-z0-9()'_.~-]]=],
     [=[\="%".printf("%02X",char2nr(submatch(0)))]=],
-    'g')
+    'g'
+  )
 end
 
 local function expandtabs(s)
@@ -131,7 +130,7 @@ local function to_heading_tag(text)
 end
 
 local function basename_noext(f)
- return vim.fs.basename(f:gsub('%.txt', ''))
+  return vim.fs.basename(f:gsub('%.txt', ''))
 end
 
 local function is_blank(s)
@@ -151,7 +150,7 @@ local function fix_url(url)
   local removed_chars = ''
   local fixed_url = url
   -- Remove up to one of each char from end of the URL, in this order.
-  for _, c in ipairs({ '.', ')', }) do
+  for _, c in ipairs({ '.', ')' }) do
     if fixed_url:sub(-1) == c then
       removed_chars = c .. removed_chars
       fixed_url = fixed_url:sub(1, -2)
@@ -162,7 +161,7 @@ end
 
 --- Checks if a given line is a "noise" line that doesn't look good in HTML form.
 local function is_noise(line, noise_lines)
-  if (
+  if
     -- First line is always noise.
     (noise_lines ~= nil and vim.tbl_count(noise_lines) == 0)
     or line:find('Type .*gO.* to see the table of contents')
@@ -177,7 +176,7 @@ local function is_noise(line, noise_lines)
     or line:find('^%s*vim?%:.*ft=help')
     or line:find('^%s*vim?%:.*filetype=help')
     or line:find('[*>]local%-additions[*<]')
-  ) then
+  then
     -- table.insert(stats.noise_lines, getbuflinestr(root, opt.buf, 0))
     table.insert(noise_lines or {}, line)
     return true
@@ -188,28 +187,32 @@ end
 --- Creates a github issue URL at neovim/tree-sitter-vimdoc with prefilled content.
 local function get_bug_url_vimdoc(fname, to_fname, sample_text)
   local this_url = string.format('https://neovim.io/doc/user/%s', vim.fs.basename(to_fname))
-  local bug_url = ('https://github.com/neovim/tree-sitter-vimdoc/issues/new?labels=bug&title=parse+error%3A+'
-    ..vim.fs.basename(fname)
-    ..'+&body=Found+%60tree-sitter-vimdoc%60+parse+error+at%3A+'
-    ..this_url
-    ..'%0D%0DContext%3A%0D%0D%60%60%60%0D'
-    ..url_encode(sample_text)
-    ..'%0D%60%60%60')
+  local bug_url = (
+    'https://github.com/neovim/tree-sitter-vimdoc/issues/new?labels=bug&title=parse+error%3A+'
+    .. vim.fs.basename(fname)
+    .. '+&body=Found+%60tree-sitter-vimdoc%60+parse+error+at%3A+'
+    .. this_url
+    .. '%0D%0DContext%3A%0D%0D%60%60%60%0D'
+    .. url_encode(sample_text)
+    .. '%0D%60%60%60'
+  )
   return bug_url
 end
 
 --- Creates a github issue URL at neovim/neovim with prefilled content.
 local function get_bug_url_nvim(fname, to_fname, sample_text, token_name)
   local this_url = string.format('https://neovim.io/doc/user/%s', vim.fs.basename(to_fname))
-  local bug_url = ('https://github.com/neovim/neovim/issues/new?labels=bug&title=user+docs+HTML%3A+'
-    ..vim.fs.basename(fname)
-    ..'+&body=%60gen_help_html.lua%60+problem+at%3A+'
-    ..this_url
-    ..'%0D'
-    ..(token_name and '+unhandled+token%3A+%60'..token_name..'%60' or '')
-    ..'%0DContext%3A%0D%0D%60%60%60%0D'
-    ..url_encode(sample_text)
-    ..'%0D%60%60%60')
+  local bug_url = (
+    'https://github.com/neovim/neovim/issues/new?labels=bug&title=user+docs+HTML%3A+'
+    .. vim.fs.basename(fname)
+    .. '+&body=%60gen_help_html.lua%60+problem+at%3A+'
+    .. this_url
+    .. '%0D'
+    .. (token_name and '+unhandled+token%3A+%60' .. token_name .. '%60' or '')
+    .. '%0DContext%3A%0D%0D%60%60%60%0D'
+    .. url_encode(sample_text)
+    .. '%0D%60%60%60'
+  )
   return bug_url
 end
 
@@ -274,9 +277,11 @@ end
 
 local function get_tagname(node, bufnr)
   local text = vim.treesitter.get_node_text(node, bufnr)
-  local tag = (node:type() == 'optionlink' or node:parent():type() == 'optionlink') and ("'%s'"):format(text) or text
-  local helpfile = vim.fs.basename(tagmap[tag]) or nil  -- "api.txt"
-  local helppage = get_helppage(helpfile)               -- "api.html"
+  local tag = (node:type() == 'optionlink' or node:parent():type() == 'optionlink')
+      and ("'%s'"):format(text)
+    or text
+  local helpfile = vim.fs.basename(tagmap[tag]) or nil -- "api.txt"
+  local helppage = get_helppage(helpfile) -- "api.html"
   return helppage, tag
 end
 
@@ -295,11 +300,9 @@ local function ignore_parse_error(fname, s)
   if ignore_errors[vim.fs.basename(fname)] then
     return true
   end
-  return (
-    -- Ignore parse errors for unclosed tag.
-    -- This is common in vimdocs and is treated as plaintext by :help.
-    s:find("^[`'|*]")
-  )
+  -- Ignore parse errors for unclosed tag.
+  -- This is common in vimdocs and is treated as plaintext by :help.
+  return s:find("^[`'|*]")
 end
 
 local function has_ancestor(node, ancestor_name)
@@ -377,10 +380,11 @@ local function visit_validate(root, level, lang_tree, opt, stats)
     -- Flatten the sample text to a single, truncated line.
     sample_text = vim.trim(sample_text):gsub('[\t\n]', ' '):sub(1, 80)
     table.insert(stats.parse_errors, sample_text)
-  elseif (node_name == 'word' or node_name == 'uppercase_name')
-    and (not vim.tbl_contains({'codespan', 'taglink', 'tag'}, parent))
+  elseif
+    (node_name == 'word' or node_name == 'uppercase_name')
+    and (not vim.tbl_contains({ 'codespan', 'taglink', 'tag' }, parent))
   then
-    local text_nopunct = vim.fn.trim(text, '.,', 0)  -- Ignore some punctuation.
+    local text_nopunct = vim.fn.trim(text, '.,', 0) -- Ignore some punctuation.
     if spell_dict[text_nopunct] then
       invalid_spelling[text_nopunct] = invalid_spelling[text_nopunct] or {}
       invalid_spelling[text_nopunct][vim.fs.basename(opt.fname)] = node_text(root:parent())
@@ -399,7 +403,7 @@ local function fix_tab_after_conceal(text, next_node_text)
   -- Vim tabs take into account the two concealed characters even though they
   -- are invisible, so we need to add back in the two spaces if this is
   -- followed by a tab to make the tab alignment to match Vim's behavior.
-  if string.sub(next_node_text,1,1) == '\t' then
+  if string.sub(next_node_text, 1, 1) == '\t' then
     text = text .. '  '
   end
   return text
@@ -411,9 +415,15 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
 
   local node_name = (root.named and root:named()) and root:type() or nil
   -- Previous sibling kind (string).
-  local prev = root:prev_sibling() and (root:prev_sibling().named and root:prev_sibling():named()) and root:prev_sibling():type() or nil
+  local prev = root:prev_sibling()
+      and (root:prev_sibling().named and root:prev_sibling():named())
+      and root:prev_sibling():type()
+    or nil
   -- Next sibling kind (string).
-  local next_ = root:next_sibling() and (root:next_sibling().named and root:next_sibling():named()) and root:next_sibling():type() or nil
+  local next_ = root:next_sibling()
+      and (root:next_sibling().named and root:next_sibling():named())
+      and root:next_sibling():type()
+    or nil
   -- Parent kind (string).
   local parent = root:parent() and root:parent():type() or nil
   local text = ''
@@ -450,7 +460,7 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     trimmed = trim(text)
   end
 
-  if node_name == 'help_file' then  -- root node
+  if node_name == 'help_file' then -- root node
     return text
   elseif node_name == 'url' then
     local fixed_url, removed_chars = fix_url(trimmed)
@@ -459,18 +469,22 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     return text
   elseif node_name == 'h1' or node_name == 'h2' or node_name == 'h3' then
     if is_noise(text, stats.noise_lines) then
-      return ''  -- Discard common "noise" lines.
+      return '' -- Discard common "noise" lines.
     end
     -- Remove "===" and tags from ToC text.
     local hname = (node_text():gsub('%-%-%-%-+', ''):gsub('%=%=%=%=+', ''):gsub('%*.*%*', ''))
     -- Use the first *tag* node as the heading anchor, if any.
     local tagnode = first(root, 'tag')
     -- Use the *tag* as the heading anchor id, if possible.
-    local tagname = tagnode and url_encode(node_text(tagnode:child(1), false)) or to_heading_tag(hname)
+    local tagname = tagnode and url_encode(node_text(tagnode:child(1), false))
+      or to_heading_tag(hname)
     if node_name == 'h1' or #headings == 0 then
       table.insert(headings, { name = hname, subheadings = {}, tag = tagname })
     else
-      table.insert(headings[#headings].subheadings, { name = hname, subheadings = {}, tag = tagname })
+      table.insert(
+        headings[#headings].subheadings,
+        { name = hname, subheadings = {}, tag = tagname }
+      )
     end
     local el = node_name == 'h1' and 'h2' or 'h3'
     return ('<%s id="%s" class="help-heading">%s</%s>\n'):format(el, tagname, text, el)
@@ -490,11 +504,16 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     return string.format('<div class="help-para">\n%s\n</div>\n', text)
   elseif node_name == 'line' then
-    if (parent ~= 'codeblock' or parent ~= 'code') and (is_blank(text) or is_noise(text, stats.noise_lines)) then
-      return ''  -- Discard common "noise" lines.
+    if
+      (parent ~= 'codeblock' or parent ~= 'code')
+      and (is_blank(text) or is_noise(text, stats.noise_lines))
+    then
+      return '' -- Discard common "noise" lines.
     end
     -- XXX: Avoid newlines (too much whitespace) after block elements in old (preformatted) layout.
-    local div = opt.old and root:child(0) and vim.list_contains({'column_heading', 'h1', 'h2', 'h3'}, root:child(0):type())
+    local div = opt.old
+      and root:child(0)
+      and vim.list_contains({ 'column_heading', 'h1', 'h2', 'h3' }, root:child(0):type())
     return string.format('%s%s', div and trim(text) or text, div and '' or '\n')
   elseif node_name == 'line_li' then
     local sib = root:prev_sibling()
@@ -520,12 +539,17 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     if ignored then
       return text
     end
-    local s = ('%s<a href="%s#%s">%s</a>'):format(ws(), helppage, url_encode(tagname), html_esc(tagname))
+    local s = ('%s<a href="%s#%s">%s</a>'):format(
+      ws(),
+      helppage,
+      url_encode(tagname),
+      html_esc(tagname)
+    )
     if opt.old and node_name == 'taglink' then
       s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
     return s
-  elseif vim.list_contains({'codespan', 'keycode'}, node_name) then
+  elseif vim.list_contains({ 'codespan', 'keycode' }, node_name) then
     if root:has_error() then
       return text
     end
@@ -541,24 +565,28 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
   elseif node_name == 'language' then
     language = node_text(root)
     return ''
-  elseif node_name == 'code' then  -- Highlighted codeblock (child).
+  elseif node_name == 'code' then -- Highlighted codeblock (child).
     if is_blank(text) then
       return ''
     end
     local code
     if language then
-      code = ('<pre><code class="language-%s">%s</code></pre>'):format(language,trim(trim_indent(text), 2))
+      code = ('<pre><code class="language-%s">%s</code></pre>'):format(
+        language,
+        trim(trim_indent(text), 2)
+      )
       language = nil
     else
       code = ('<pre>%s</pre>'):format(trim(trim_indent(text), 2))
     end
     return code
-  elseif node_name == 'tag' then  -- anchor
+  elseif node_name == 'tag' then -- anchor
     if root:has_error() then
       return text
     end
-    local in_heading = vim.list_contains({'h1', 'h2', 'h3'}, parent)
-    local cssclass = (not in_heading and get_indent(node_text()) > 8) and 'help-tag-right' or 'help-tag'
+    local in_heading = vim.list_contains({ 'h1', 'h2', 'h3' }, parent)
+    local cssclass = (not in_heading and get_indent(node_text()) > 8) and 'help-tag-right'
+      or 'help-tag'
     local tagname = node_text(root:child(1), false)
     if vim.tbl_count(stats.first_tags) < 2 then
       -- Force the first 2 tags in the doc to be anchored at the main heading.
@@ -567,14 +595,29 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     end
     local el = in_heading and 'span' or 'code'
     local encoded_tagname = url_encode(tagname)
-    local s = ('%s<%s id="%s" class="%s"><a href="#%s">%s</a></%s>'):format(ws(), el, encoded_tagname, cssclass, encoded_tagname, trimmed, el)
+    local s = ('%s<%s id="%s" class="%s"><a href="#%s">%s</a></%s>'):format(
+      ws(),
+      el,
+      encoded_tagname,
+      cssclass,
+      encoded_tagname,
+      trimmed,
+      el
+    )
     if opt.old then
-        s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
+      s = fix_tab_after_conceal(s, node_text(root:next_sibling()))
     end
 
     if in_heading and prev ~= 'tag' then
       -- Don't set "id", let the heading use the tag as its "id" (used by search engines).
-      s = ('%s<%s class="%s"><a href="#%s">%s</a></%s>'):format(ws(), el, cssclass, encoded_tagname, trimmed, el)
+      s = ('%s<%s class="%s"><a href="#%s">%s</a></%s>'):format(
+        ws(),
+        el,
+        cssclass,
+        encoded_tagname,
+        trimmed,
+        el
+      )
       -- Start the <span> container for tags in a heading.
       -- This makes "justify-content:space-between" right-align the tags.
       --    <h2>foo bar<span>tag1 tag2</span></h2>
@@ -593,11 +636,17 @@ local function visit_node(root, level, lang_tree, headings, opt, stats)
     local sample_text = level > 0 and getbuflinestr(root, opt.buf, 3) or '[top level!]'
     table.insert(stats.parse_errors, sample_text)
     return ('<a class="parse-error" target="_blank" title="Report bug... (parse error)" href="%s">%s</a>'):format(
-      get_bug_url_vimdoc(opt.fname, opt.to_fname, sample_text), trimmed)
-  else  -- Unknown token.
+      get_bug_url_vimdoc(opt.fname, opt.to_fname, sample_text),
+      trimmed
+    )
+  else -- Unknown token.
     local sample_text = level > 0 and getbuflinestr(root, opt.buf, 3) or '[top level!]'
     return ('<a class="unknown-token" target="_blank" title="Report bug... (unhandled token "%s")" href="%s">%s</a>'):format(
-      node_name, get_bug_url_nvim(opt.fname, opt.to_fname, sample_text, node_name), trimmed), ('unknown-token:"%s"'):format(node_name)
+      node_name,
+      get_bug_url_nvim(opt.fname, opt.to_fname, sample_text, node_name),
+      trimmed
+    ),
+      ('unknown-token:"%s"'):format(node_name)
   end
 end
 
@@ -605,9 +654,11 @@ local function get_helpfiles(include)
   local dir = './build/runtime/doc'
   local rv = {}
   for f, type in vim.fs.dir(dir) do
-    if (vim.endswith(f, '.txt')
-        and type == 'file'
-        and (not include or vim.list_contains(include, f))) then
+    if
+      vim.endswith(f, '.txt')
+      and type == 'file'
+      and (not include or vim.list_contains(include, f))
+    then
       local fullpath = vim.fn.fnamemodify(('%s/%s'):format(dir, f), ':p')
       table.insert(rv, fullpath)
     end
@@ -633,7 +684,7 @@ end
 --- Use the vimdoc parser defined in the build, not whatever happens to be installed on the system.
 local function ensure_runtimepath()
   if not vim.o.runtimepath:find('build/lib/nvim/') then
-    vim.cmd[[set runtimepath^=./build/lib/nvim/]]
+    vim.cmd [[set runtimepath^=./build/lib/nvim/]]
   end
 end
 
@@ -645,11 +696,11 @@ end
 local function parse_buf(fname, parser_path)
   local buf
   if type(fname) == 'string' then
-    vim.cmd('split '..vim.fn.fnameescape(fname))  -- Filename.
+    vim.cmd('split ' .. vim.fn.fnameescape(fname)) -- Filename.
     buf = vim.api.nvim_get_current_buf()
   else
     buf = fname
-    vim.cmd('sbuffer '..tostring(fname))          -- Buffer number.
+    vim.cmd('sbuffer ' .. tostring(fname)) -- Buffer number.
   end
   if parser_path then
     vim.treesitter.language.add('vimdoc', { path = parser_path })
@@ -671,7 +722,7 @@ local function validate_one(fname, parser_path)
   }
   local lang_tree, buf = parse_buf(fname, parser_path)
   for _, tree in ipairs(lang_tree:trees()) do
-    visit_validate(tree:root(), 0, tree, { buf = buf, fname = fname, }, stats)
+    visit_validate(tree:root(), 0, tree, { buf = buf, fname = fname }, stats)
   end
   lang_tree:destroy()
   vim.cmd.close()
@@ -690,10 +741,10 @@ local function gen_one(fname, to_fname, old, commit, parser_path)
   local stats = {
     noise_lines = {},
     parse_errors = {},
-    first_tags = {},  -- Track the first few tags in doc.
+    first_tags = {}, -- Track the first few tags in doc.
   }
   local lang_tree, buf = parse_buf(fname, parser_path)
-  local headings = {}  -- Headings (for ToC). 2-dimensional: h1 contains h2/h3.
+  local headings = {} -- Headings (for ToC). 2-dimensional: h1 contains h2/h3.
   local title = to_titlecase(basename_noext(fname))
 
   local html = ([[
@@ -777,9 +828,17 @@ local function gen_one(fname, to_fname, old, commit, parser_path)
 
   local main = ''
   for _, tree in ipairs(lang_tree:trees()) do
-    main = main .. (visit_node(tree:root(), 0, tree, headings,
-      { buf = buf, old = old, fname = fname, to_fname = to_fname, indent = 1, },
-      stats))
+    main = main
+      .. (
+        visit_node(
+          tree:root(),
+          0,
+          tree,
+          headings,
+          { buf = buf, old = old, fname = fname, to_fname = to_fname, indent = 1 },
+          stats
+        )
+      )
   end
 
   main = ([[
@@ -809,7 +868,14 @@ local function gen_one(fname, to_fname, old, commit, parser_path)
   <hr/>
   %s
   </div>
-  ]]):format(logo_svg, stats.first_tags[2] or '', stats.first_tags[1] or '', title, vim.fs.basename(fname), main)
+  ]]):format(
+    logo_svg,
+    stats.first_tags[2] or '',
+    stats.first_tags[1] or '',
+    title,
+    vim.fs.basename(fname),
+    main
+  )
 
   local toc = [[
     <div class="col-narrow toc">
@@ -819,13 +885,16 @@ local function gen_one(fname, to_fname, old, commit, parser_path)
       <hr/>
   ]]
 
-  local n = 0  -- Count of all headings + subheadings.
-  for _, h1 in ipairs(headings) do n = n + 1 + #h1.subheadings end
+  local n = 0 -- Count of all headings + subheadings.
+  for _, h1 in ipairs(headings) do
+    n = n + 1 + #h1.subheadings
+  end
   for _, h1 in ipairs(headings) do
     toc = toc .. ('<div class="help-toc-h1"><a href="#%s">%s</a>\n'):format(h1.tag, h1.name)
-    if n < 30 or #headings < 10 then  -- Show subheadings only if there aren't too many.
+    if n < 30 or #headings < 10 then -- Show subheadings only if there aren't too many.
       for _, h2 in ipairs(h1.subheadings) do
-        toc = toc .. ('<div class="help-toc-h2"><a href="#%s">%s</a></div>\n'):format(h2.tag, h2.name)
+        toc = toc
+          .. ('<div class="help-toc-h2"><a href="#%s">%s</a></div>\n'):format(h2.tag, h2.name)
       end
     end
     toc = toc .. '</div>'
@@ -859,11 +928,16 @@ local function gen_one(fname, to_fname, old, commit, parser_path)
 
   </footer>
   ]]):format(
-    os.date('%Y-%m-%d %H:%M'), commit, commit:sub(1, 7), #stats.parse_errors, bug_link,
-    html_esc(table.concat(stats.noise_lines, '\n')), #stats.noise_lines)
+    os.date('%Y-%m-%d %H:%M'),
+    commit,
+    commit:sub(1, 7),
+    #stats.parse_errors,
+    bug_link,
+    html_esc(table.concat(stats.noise_lines, '\n')),
+    #stats.noise_lines
+  )
 
-  html = ('%s%s%s</div>\n%s</body>\n</html>\n'):format(
-    html, main, toc, footer)
+  html = ('%s%s%s</div>\n%s</body>\n</html>\n'):format(html, main, toc, footer)
   vim.cmd('q!')
   lang_tree:destroy()
   return html, stats
@@ -1038,9 +1112,15 @@ function M._test()
   helpfiles = get_helpfiles()
 
   local function ok(cond, expected, actual)
-    assert((not expected and not actual) or (expected and actual), 'if "expected" is given, "actual" is also required')
+    assert(
+      (not expected and not actual) or (expected and actual),
+      'if "expected" is given, "actual" is also required'
+    )
     if expected then
-      return assert(cond, ('expected %s, got: %s'):format(vim.inspect(expected), vim.inspect(actual)))
+      return assert(
+        cond,
+        ('expected %s, got: %s'):format(vim.inspect(expected), vim.inspect(actual))
+      )
     else
       return assert(cond)
     end
@@ -1050,7 +1130,11 @@ function M._test()
   end
 
   ok(vim.tbl_count(tagmap) > 3000, '>3000', vim.tbl_count(tagmap))
-  ok(vim.endswith(tagmap['vim.diagnostic.set()'], 'diagnostic.txt'), tagmap['vim.diagnostic.set()'], 'diagnostic.txt')
+  ok(
+    vim.endswith(tagmap['vim.diagnostic.set()'], 'diagnostic.txt'),
+    tagmap['vim.diagnostic.set()'],
+    'diagnostic.txt'
+  )
   ok(vim.endswith(tagmap['%:s'], 'cmdline.txt'), tagmap['%:s'], 'cmdline.txt')
   ok(is_noise([[vim:tw=78:isk=!-~,^*,^\|,^\":ts=8:noet:ft=help:norl:]]))
   ok(is_noise([[          NVIM  REFERENCE  MANUAL     by  Thiago  de  Arruda      ]]))
@@ -1060,7 +1144,10 @@ function M._test()
   eq(1, get_indent(' a'))
   eq(2, get_indent('  a\n  b\n  c\n'))
   eq(5, get_indent('     a\n      \n        b\n      c\n      d\n      e\n'))
-  eq('a\n        \n   b\n c\n d\n e\n', trim_indent('     a\n             \n        b\n      c\n      d\n      e\n'))
+  eq(
+    'a\n        \n   b\n c\n d\n e\n',
+    trim_indent('     a\n             \n        b\n      c\n      d\n      e\n')
+  )
 
   local fixed_url, removed_chars = fix_url('https://example.com).')
   eq('https://example.com', fixed_url)
@@ -1093,12 +1180,24 @@ end
 ---
 --- @returns info dict
 function M.gen(help_dir, to_dir, include, commit, parser_path)
-  vim.validate{
-    help_dir={help_dir, function(d) return vim.fn.isdirectory(vim.fn.expand(d)) == 1 end, 'valid directory'},
-    to_dir={to_dir, 's'},
-    include={include, 't', true},
-    commit={commit, 's', true},
-    parser_path={parser_path, function(f) return f == nil or vim.fn.filereadable(vim.fn.expand(f)) == 1 end, 'valid vimdoc.{so,dll} filepath'},
+  vim.validate {
+    help_dir = {
+      help_dir,
+      function(d)
+        return vim.fn.isdirectory(vim.fn.expand(d)) == 1
+      end,
+      'valid directory',
+    },
+    to_dir = { to_dir, 's' },
+    include = { include, 't', true },
+    commit = { commit, 's', true },
+    parser_path = {
+      parser_path,
+      function(f)
+        return f == nil or vim.fn.filereadable(vim.fn.expand(f)) == 1
+      end,
+      'valid vimdoc.{so,dll} filepath',
+    },
   }
 
   local err_count = 0
@@ -1117,7 +1216,13 @@ function M.gen(help_dir, to_dir, include, commit, parser_path)
     local to_fname = ('%s/%s'):format(to_dir, get_helppage(helpfile))
     local html, stats = gen_one(f, to_fname, not new_layout[helpfile], commit or '?', parser_path)
     tofile(to_fname, html)
-    print(('generated (%-4s errors): %-15s => %s'):format(#stats.parse_errors, helpfile, vim.fs.basename(to_fname)))
+    print(
+      ('generated (%-4s errors): %-15s => %s'):format(
+        #stats.parse_errors,
+        helpfile,
+        vim.fs.basename(to_fname)
+      )
+    )
     err_count = err_count + #stats.parse_errors
   end
   print(('generated %d html pages'):format(#helpfiles))
@@ -1139,10 +1244,22 @@ end
 --
 -- @returns results dict
 function M.validate(help_dir, include, parser_path)
-  vim.validate{
-    help_dir={help_dir, function(d) return vim.fn.isdirectory(vim.fn.expand(d)) == 1 end, 'valid directory'},
-    include={include, 't', true},
-    parser_path={parser_path, function(f) return f == nil or vim.fn.filereadable(vim.fn.expand(f)) == 1 end, 'valid vimdoc.{so,dll} filepath'},
+  vim.validate {
+    help_dir = {
+      help_dir,
+      function(d)
+        return vim.fn.isdirectory(vim.fn.expand(d)) == 1
+      end,
+      'valid directory',
+    },
+    include = { include, 't', true },
+    parser_path = {
+      parser_path,
+      function(f)
+        return f == nil or vim.fn.filereadable(vim.fn.expand(f)) == 1
+      end,
+      'valid vimdoc.{so,dll} filepath',
+    },
   }
   local err_count = 0
   local files_to_errors = {}
@@ -1157,7 +1274,9 @@ function M.validate(help_dir, include, parser_path)
     print(('validated (%-4s errors): %s'):format(#rv.parse_errors, helpfile))
     if #rv.parse_errors > 0 then
       files_to_errors[helpfile] = rv.parse_errors
-      vim.print(('%s'):format(vim.iter(rv.parse_errors):fold('', function(s, v) return s..'\n    '..v end)))
+      vim.print(('%s'):format(vim.iter(rv.parse_errors):fold('', function(s, v)
+        return s .. '\n    ' .. v
+      end)))
     end
     err_count = err_count + #rv.parse_errors
   end

@@ -1,7 +1,7 @@
 -- Generator for various vimdoc and Lua type files
 
 local DEP_API_METADATA = 'build/api_metadata.mpack'
-local DEP_API_DOC  = 'runtime/doc/api.mpack'
+local DEP_API_DOC = 'runtime/doc/api.mpack'
 
 --- @class vim.api.metadata
 --- @field name string
@@ -302,7 +302,7 @@ local function get_api_keysets_meta()
   for _, k in ipairs(keysets) do
     local params = {}
     for _, key in ipairs(k.keys) do
-      table.insert(params, {key..'?', api_type(k.types[key] or 'any')})
+      table.insert(params, { key .. '?', api_type(k.types[key] or 'any') })
     end
     ret[k.name] = {
       signature = 'NA',
@@ -396,7 +396,7 @@ local function render_sig_and_tag(name, fun, write)
 
   local tag = table.concat(tags, ' ')
   local siglen = #fun.signature
-  local conceal_offset = 2*(#tags - 1)
+  local conceal_offset = 2 * (#tags - 1)
   local tag_pad_len = math.max(1, 80 - #tag + conceal_offset)
 
   if siglen + #tag > 80 then
@@ -473,7 +473,7 @@ local function render_option_default(d, vimdoc)
     end
   end
 
-  if dt == "" or dt == nil or type(dt) == 'function' then
+  if dt == '' or dt == nil or type(dt) == 'function' then
     dt = d.meta
   end
 
@@ -481,22 +481,22 @@ local function render_option_default(d, vimdoc)
   if not vimdoc then
     v = vim.inspect(dt) --[[@as string]]
   else
-    v = type(dt) == 'string' and '"'..dt..'"' or tostring(dt)
+    v = type(dt) == 'string' and '"' .. dt .. '"' or tostring(dt)
   end
 
   --- @type table<string, string|false>
   local envvars = {
     TMPDIR = false,
     VIMRUNTIME = false,
-    XDG_CONFIG_HOME = vim.env.HOME..'/.local/config',
-    XDG_DATA_HOME = vim.env.HOME..'/.local/share',
-    XDG_STATE_HOME = vim.env.HOME..'/.local/state',
+    XDG_CONFIG_HOME = vim.env.HOME .. '/.local/config',
+    XDG_DATA_HOME = vim.env.HOME .. '/.local/share',
+    XDG_STATE_HOME = vim.env.HOME .. '/.local/state',
   }
 
   for name, default in pairs(envvars) do
     local value = vim.env[name] or default
     if value then
-      v = v:gsub(vim.pesc(value), '$'..name)
+      v = v:gsub(vim.pesc(value), '$' .. name)
     end
   end
 
@@ -509,26 +509,26 @@ end
 local function render_option_meta(_f, opt, write)
   write('')
   for _, l in ipairs(split(norm_text(opt.desc))) do
-    write('--- '..l)
+    write('--- ' .. l)
   end
 
-  write('--- @type '..OPTION_TYPES[opt.type])
-  write('vim.o.'..opt.full_name..' = '..render_option_default(opt.defaults))
+  write('--- @type ' .. OPTION_TYPES[opt.type])
+  write('vim.o.' .. opt.full_name .. ' = ' .. render_option_default(opt.defaults))
   if opt.abbreviation then
-    write('vim.o.'..opt.abbreviation..' = vim.o.'..opt.full_name)
+    write('vim.o.' .. opt.abbreviation .. ' = vim.o.' .. opt.full_name)
   end
 
   for _, s in pairs {
-    {'wo', 'window'},
-    {'bo', 'buffer'},
-    {'go', 'global'},
+    { 'wo', 'window' },
+    { 'bo', 'buffer' },
+    { 'go', 'global' },
   } do
     local id, scope = s[1], s[2]
     if vim.list_contains(opt.scope, scope) or (id == 'go' and #opt.scope > 1) then
-      local pfx = 'vim.'..id..'.'
-      write(pfx..opt.full_name..' = vim.o.'..opt.full_name)
+      local pfx = 'vim.' .. id .. '.'
+      write(pfx .. opt.full_name .. ' = vim.o.' .. opt.full_name)
       if opt.abbreviation then
-        write(pfx..opt.abbreviation..' = '..pfx..opt.full_name)
+        write(pfx .. opt.abbreviation .. ' = ' .. pfx .. opt.full_name)
       end
     end
   end
@@ -541,14 +541,14 @@ local function scope_to_doc(s)
     global = 'global',
     buffer = 'local to buffer',
     window = 'local to window',
-    tab = 'local to tab page'
+    tab = 'local to tab page',
   }
 
   if #s == 1 then
     return m[s[1]]
   end
   assert(s[1] == 'global')
-  return 'global or '..m[s[2]]..' |global-local|'
+  return 'global or ' .. m[s[2]] .. ' |global-local|'
 end
 
 -- @param o vim.option_meta
@@ -602,23 +602,23 @@ local function build_option_tags(opt)
   --- @type string[]
   local tags = { opt.full_name }
 
-  tags[#tags+1] = opt.abbreviation
+  tags[#tags + 1] = opt.abbreviation
   if opt.type == 'bool' then
     for i = 1, #tags do
-      tags[#tags+1] = 'no'..tags[i]
+      tags[#tags + 1] = 'no' .. tags[i]
     end
   end
 
   for i, t in ipairs(tags) do
-    tags[i] = "'"..t.."'"
+    tags[i] = "'" .. t .. "'"
   end
 
   for _, t in ipairs(opt.tags or {}) do
-    tags[#tags+1] = t
+    tags[#tags + 1] = t
   end
 
   for i, t in ipairs(tags) do
-    tags[i] = "*"..t.."*"
+    tags[i] = '*' .. t .. '*'
   end
 
   return tags
@@ -630,10 +630,10 @@ end
 local function render_option_doc(_f, opt, write)
   local tags = build_option_tags(opt)
   local tag_str = table.concat(tags, ' ')
-  local conceal_offset = 2*(#tags - 1)
+  local conceal_offset = 2 * (#tags - 1)
   local tag_pad = string.rep('\t', math.ceil((64 - #tag_str + conceal_offset) / 8))
   -- local pad = string.rep(' ', 80 - #tag_str + conceal_offset)
-  write(tag_pad..tag_str)
+  write(tag_pad .. tag_str)
 
   local name_str --- @type string
   if opt.abbreviation then
@@ -649,19 +649,19 @@ local function render_option_doc(_f, opt, write)
     if opt.defaults.doc then
       local deflen = #string.format('%s%s%s (', name_str, pad, otype)
       --- @type string
-      v = v:gsub('\n', '\n'..string.rep(' ', deflen - 2))
+      v = v:gsub('\n', '\n' .. string.rep(' ', deflen - 2))
     end
     write(string.format('%s%s%s\t(default %s)', name_str, pad, otype, v))
   else
     write(string.format('%s\t%s', name_str, otype))
   end
 
-  write('\t\t\t'..scope_to_doc(opt.scope)..scope_more_doc(opt))
+  write('\t\t\t' .. scope_to_doc(opt.scope) .. scope_more_doc(opt))
   for _, l in ipairs(split(opt.desc)) do
     if l == '<' or l:match('^<%s') then
       write(l)
     else
-      write('\t'..l:gsub('\\<', '<'))
+      write('\t' .. l:gsub('\\<', '<'))
     end
   end
 end
@@ -751,21 +751,21 @@ local CONFIG = {
     header = { '' },
     from = 'A jump table for the options with a short description can be found at |Q_op|.',
     footer = {
-      ' vim:tw=78:ts=8:noet:ft=help:norl:'
+      ' vim:tw=78:ts=8:noet:ft=help:norl:',
     },
     funcs = get_option_meta,
     render = render_option_doc,
-  }
+  },
 }
 
 --- @param elem nvim.gen_eval_files.elem
 local function render(elem)
-  print('Rendering '..elem.path)
-  local from_lines = {}  --- @type string[]
+  print('Rendering ' .. elem.path)
+  local from_lines = {} --- @type string[]
   local from = elem.from
   if from then
     for line in io.lines(elem.path) do
-      from_lines[#from_lines+1] = line
+      from_lines[#from_lines + 1] = line
       if line:match(from) then
         break
       end

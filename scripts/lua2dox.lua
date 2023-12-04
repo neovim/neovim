@@ -59,9 +59,12 @@ local TAGGED_TYPES = { 'TSNode', 'LanguageTree' }
 
 -- Document these as 'table'
 local ALIAS_TYPES = {
-  'Range', 'Range4', 'Range6', 'TSMetadata',
+  'Range',
+  'Range4',
+  'Range6',
+  'TSMetadata',
   'vim.filetype.add.filetypes',
-  'vim.filetype.match.args'
+  'vim.filetype.match.args',
 }
 
 local debug_outfile = nil --- @type string?
@@ -103,7 +106,7 @@ function StreamRead.new(filename)
   -- syphon lines to our table
   local filecontents = {} --- @type string[]
   for line in io.lines(filename) do
-    filecontents[#filecontents+1] = line
+    filecontents[#filecontents + 1] = line
   end
 
   return setmetatable({
@@ -176,9 +179,15 @@ local function process_magic(line, generics)
   local magic_split = vim.split(magic, ' ', { plain = true })
   local directive = magic_split[1]
 
-  if vim.list_contains({
-    'cast', 'diagnostic', 'overload', 'meta', 'type'
-  }, directive) then
+  if
+    vim.list_contains({
+      'cast',
+      'diagnostic',
+      'overload',
+      'meta',
+      'type',
+    }, directive)
+  then
     -- Ignore LSP directives
     return '// gg:"' .. line .. '"'
   end
@@ -202,8 +211,7 @@ local function process_magic(line, generics)
   if directive == 'param' then
     for _, type in ipairs(TYPES) do
       magic = magic:gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. ')%)', 'param %1 %2')
-      magic =
-        magic:gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. '|nil)%)', 'param %1 %2')
+      magic = magic:gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. '|nil)%)', 'param %1 %2')
     end
     magic_split = vim.split(magic, ' ', { plain = true })
     type_index = 3
@@ -225,7 +233,7 @@ local function process_magic(line, generics)
     -- fix optional parameters
     if magic_split[2]:find('%?$') then
       if not ty:find('nil') then
-        ty = ty  .. '|nil'
+        ty = ty .. '|nil'
       end
       magic_split[2] = magic_split[2]:sub(1, -2)
     end
@@ -240,18 +248,15 @@ local function process_magic(line, generics)
     end
 
     for _, type in ipairs(ALIAS_TYPES) do
-      ty = ty:gsub('^'..type..'$', 'table') --- @type string
+      ty = ty:gsub('^' .. type .. '$', 'table') --- @type string
     end
 
     -- surround some types by ()
     for _, type in ipairs(TYPES) do
-      ty = ty
-        :gsub('^(' .. type .. '|nil):?$', '(%1)')
-        :gsub('^(' .. type .. '):?$', '(%1)')
+      ty = ty:gsub('^(' .. type .. '|nil):?$', '(%1)'):gsub('^(' .. type .. '):?$', '(%1)')
     end
 
     magic_split[type_index] = ty
-
   end
 
   magic = table.concat(magic_split, ' ')
@@ -281,7 +286,7 @@ local function process_block_comment(line, in_stream)
       -- easier to program
       in_stream:ungetLine(vim.trim(line:sub(closeSquare + 2)))
     end
-    comment_parts[#comment_parts+1] = thisComment
+    comment_parts[#comment_parts + 1] = thisComment
   end
 
   local comment = table.concat(comment_parts)
@@ -303,7 +308,7 @@ local function process_function_header(line)
 
   if fn:sub(1, 1) == '(' then
     -- it's an anonymous function
-    return '// ZZ: '..line
+    return '// ZZ: ' .. line
   end
   -- fn has a name, so is interesting
 
@@ -330,10 +335,7 @@ local function process_function_header(line)
       comma = ', '
     end
 
-    fn = fn:sub(1, paren_start)
-      .. 'self'
-      .. comma
-      .. fn:sub(paren_start + 1)
+    fn = fn:sub(1, paren_start) .. 'self' .. comma .. fn:sub(paren_start + 1)
   end
 
   if line:match('local') then
@@ -357,7 +359,7 @@ local function process_line(line, in_stream, generics)
     return process_magic(line:sub(4), generics)
   end
 
-  if vim.startswith(line, '--'..'[[') then -- it's a long comment
+  if vim.startswith(line, '--' .. '[[') then -- it's a long comment
     return process_block_comment(line:sub(5), in_stream)
   end
 
@@ -375,7 +377,7 @@ local function process_line(line, in_stream, generics)
     local v = line_raw:match('^([A-Za-z][.a-zA-Z_]*)%s+%=')
     if v and v:match('%.') then
       -- Special: this lets gen_vimdoc.py handle tables.
-      return 'table '..v..'() {}'
+      return 'table ' .. v .. '() {}'
     end
   end
 
@@ -418,7 +420,7 @@ local TApp = {
   timestamp = os.date('%c %Z', os.time()),
   name = 'Lua2DoX',
   version = '0.2 20130128',
-  copyright = 'Copyright (c) Simon Dales 2012-13'
+  copyright = 'Copyright (c) Simon Dales 2012-13',
 }
 
 setmetatable(TApp, { __index = TApp })
@@ -447,12 +449,15 @@ if arg[1] == '--help' then
 elseif arg[1] == '--version' then
   writeln(TApp:getVersion())
   writeln(TApp.copyright)
-else  -- It's a filter.
+else -- It's a filter.
   local filename = arg[1]
 
   if arg[2] == '--outdir' then
     local outdir = arg[3]
-    if type(outdir) ~= 'string' or (0 ~= vim.fn.filereadable(outdir) and 0 == vim.fn.isdirectory(outdir)) then
+    if
+      type(outdir) ~= 'string'
+      or (0 ~= vim.fn.filereadable(outdir) and 0 == vim.fn.isdirectory(outdir))
+    then
       error(('invalid --outdir: "%s"'):format(tostring(outdir)))
     end
     vim.fn.mkdir(outdir, 'p')
