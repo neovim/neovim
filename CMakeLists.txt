@@ -233,7 +233,7 @@ add_glob_target(
   TARGET lintlua-stylua
   COMMAND ${STYLUA_PRG}
   FLAGS --color=always --check --respect-ignores
-  GLOB_DIRS runtime/ scripts/
+  GLOB_DIRS runtime/ scripts/ src/
   GLOB_PAT *.lua
   TOUCH_STRATEGY SINGLE)
 
@@ -260,7 +260,7 @@ add_glob_target(
   TARGET formatlua
   COMMAND ${STYLUA_PRG}
   FLAGS --respect-ignores
-  GLOB_DIRS runtime/ scripts/
+  GLOB_DIRS runtime/ scripts/ src/
   GLOB_PAT *.lua)
 
 add_custom_target(format)

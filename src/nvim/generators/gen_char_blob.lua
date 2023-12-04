@@ -1,6 +1,6 @@
 if arg[1] == '--help' then
   print('Usage:')
-  print('  '..arg[0]..' [-c] target source varname [source varname]...')
+  print('  ' .. arg[0] .. ' [-c] target source varname [source varname]...')
   print('')
   print('Generates C file with big uint8_t blob.')
   print('Blob will be stored in a static const array named varname.')
@@ -12,7 +12,7 @@ end
 local options = {}
 
 while true do
-  local opt = string.match(arg[1], "^-(%w)")
+  local opt = string.match(arg[1], '^-(%w)')
   if not opt then
     break
   end
@@ -36,33 +36,33 @@ for argi = 2, #arg, 2 do
   local source_file = arg[argi]
   local modname = arg[argi + 1]
   if modnames[modname] then
-    error(string.format("modname %q is already specified for file %q", modname, modnames[modname]))
+    error(string.format('modname %q is already specified for file %q', modname, modnames[modname]))
   end
   modnames[modname] = source_file
 
-  local varname = string.gsub(modname,'%.','_dot_').."_module"
+  local varname = string.gsub(modname, '%.', '_dot_') .. '_module'
   target:write(('static const uint8_t %s[] = {\n'):format(varname))
 
   local output
   if options.c then
-    local luac = os.getenv("LUAC_PRG")
-    if luac and luac ~= "" then
-      output = io.popen(luac:format(source_file), "r"):read("*a")
+    local luac = os.getenv('LUAC_PRG')
+    if luac and luac ~= '' then
+      output = io.popen(luac:format(source_file), 'r'):read('*a')
     elseif warn_on_missing_compiler then
-      print("LUAC_PRG is missing, embedding raw source")
+      print('LUAC_PRG is missing, embedding raw source')
       warn_on_missing_compiler = false
     end
   end
 
   if not output then
-    local source = io.open(source_file, "r")
-        or error(string.format("source_file %q doesn't exist", source_file))
-    output = source:read("*a")
+    local source = io.open(source_file, 'r')
+      or error(string.format("source_file %q doesn't exist", source_file))
+    output = source:read('*a')
     source:close()
   end
 
   local num_bytes = 0
-  local MAX_NUM_BYTES = 15  -- 78 / 5: maximum number of bytes on one line
+  local MAX_NUM_BYTES = 15 -- 78 / 5: maximum number of bytes on one line
   target:write(' ')
 
   local increase_num_bytes
@@ -81,8 +81,11 @@ for argi = 2, #arg, 2 do
   end
 
   target:write('  0};\n')
-  if modname ~= "_" then
-    table.insert(index_items, '  { "'..modname..'", '..varname..', sizeof '..varname..' },\n\n')
+  if modname ~= '_' then
+    table.insert(
+      index_items,
+      '  { "' .. modname .. '", ' .. varname .. ', sizeof ' .. varname .. ' },\n\n'
+    )
   end
 end
 
