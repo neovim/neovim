@@ -9,9 +9,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-    - uses: actions/labeler@v4
-      with:
-        sync-labels: ""
+    - uses: actions/labeler@v5
 
   type-scope:
     needs: triage
