@@ -1394,6 +1394,7 @@ local filename = {
   octaverc = 'octave',
   ['octave.conf'] = 'octave',
   opam = 'opam',
+  ['pacman.log'] = 'pacmanlog',
   ['/etc/pam.conf'] = 'pamconf',
   ['pam_env.conf'] = 'pamenv',
   ['.pam_environment'] = 'pamenv',
