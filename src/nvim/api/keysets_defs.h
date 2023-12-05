@@ -3,6 +3,10 @@
 #include "nvim/api/private/defs.h"
 
 typedef struct {
+  OptionalKeys is_set__empty_;
+} Dict(empty);
+
+typedef struct {
   OptionalKeys is_set__context_;
   Array types;
 } Dict(context);
@@ -336,10 +340,6 @@ typedef struct {
   Boolean force;
   Boolean unload;
 } Dict(buf_delete);
-
-typedef struct {
-  OptionalKeys is_set__empty_;
-} Dict(empty);
 
 typedef struct {
   OptionalKeys is_set__open_term_;

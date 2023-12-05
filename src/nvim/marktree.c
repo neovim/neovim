@@ -50,15 +50,15 @@
 #include <sys/types.h>
 
 #include "klib/kvec.h"
-#include "nvim/garray.h"
+#include "nvim/macros_defs.h"
+#include "nvim/map_defs.h"
 #include "nvim/marktree.h"
 #include "nvim/memory.h"
 #include "nvim/pos_defs.h"
 // only for debug functions
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/garray_defs.h"
-#include "nvim/macros_defs.h"
+#include "nvim/garray.h"
 
 #define T MT_BRANCH_FACTOR
 #define ILEN (sizeof(MTNode) + (2 * T) * sizeof(void *))
@@ -2200,7 +2200,12 @@ String mt_inspect(MarkTree *b, bool keys, bool dot)
   return ga_take_string(ga);
 }
 
-void mt_inspect_node(MarkTree *b, garray_T *ga, bool keys, MTNode *n, MTPos off)
+static inline uint64_t mt_dbg_id(uint64_t id)
+{
+  return (id >> 1) & 0xffffffff;
+}
+
+static void mt_inspect_node(MarkTree *b, garray_T *ga, bool keys, MTNode *n, MTPos off)
 {
   static char buf[1024];
   GA_PUT("[");
@@ -2240,7 +2245,7 @@ void mt_inspect_node(MarkTree *b, garray_T *ga, bool keys, MTNode *n, MTPos off)
   ga_concat(ga, "]");
 }
 
-void mt_inspect_dotfile_node(MarkTree *b, garray_T *ga, MTNode *n, MTPos off, char *parent)
+static void mt_inspect_dotfile_node(MarkTree *b, garray_T *ga, MTNode *n, MTPos off, char *parent)
 {
   static char buf[1024];
   char namebuf[64];
