@@ -39,13 +39,13 @@ describe('TUI', function()
   before_each(function()
     clear()
     local child_server = new_pipename()
-    screen = thelpers.screen_setup(0,
-      string.format(
-        [=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s laststatus=2 background=dark", "--cmd", "colorscheme vim"]]=],
-        nvim_prog,
-        child_server,
-        nvim_set
-      ))
+    screen = thelpers.setup_child_nvim({
+      '--listen', child_server,
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', string.format('%s laststatus=2 background=dark', nvim_set),
+      '--cmd', 'colorscheme vim'
+    })
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -1830,7 +1830,7 @@ describe('TUI', function()
     })
     screen:attach()
     exec([[
-      call termopen([v:progpath, '--clean', '--cmd', 'colorscheme vim', '--cmd', 'let start = reltime() | while v:true | if reltimefloat(reltime(start)) > 2 | break | endif | endwhile'])
+      call termopen([v:progpath, '--clean', '--cmd', 'set notermguicolors', '--cmd', 'colorscheme vim', '--cmd', 'let start = reltime() | while v:true | if reltimefloat(reltime(start)) > 2 | break | endif | endwhile'])
       sleep 500m
       vs new
     ]])
@@ -1856,30 +1856,29 @@ describe('TUI', function()
     write_file(script_file, [=[
       local ffi = require('ffi')
       ffi.cdef([[int execl(const char *, const char *, ...);]])
-      ffi.C.execl(vim.v.progpath, 'Xargv0nvim', '--clean', '--cmd', 'colorscheme vim')
+      ffi.C.execl(vim.v.progpath, 'Xargv0nvim', '--clean')
     ]=])
     finally(function()
       os.remove(script_file)
     end)
-    local screen = thelpers.screen_setup(0, string.format([=[["%s", "--clean", "-l", "%s"]]=],
-                                                          nvim_prog, script_file))
+    local screen = thelpers.setup_child_nvim({'--clean', '-l', script_file})
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {5:[No Name]                       0,0-1          All}|
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      [No Name]                       0,0-1          All|
                                                         |
       {3:-- TERMINAL --}                                    |
     ]]}
     feed_data(':put =v:argv + [v:progname]\n')
     screen:expect{grid=[[
+      Xargv0nvim                                        |
+      --embed                                           |
       --clean                                           |
-      --cmd                                             |
-      colorscheme vim                                   |
       {1:X}argv0nvim                                        |
-      {5:[No Name] [+]                   7,1            Bot}|
-      6 more lines                                      |
+      [No Name] [+]                   5,1            Bot|
+      4 more lines                                      |
       {3:-- TERMINAL --}                                    |
     ]]}
   end)
@@ -1903,11 +1902,13 @@ describe('TUI', function()
   end)
 
   it('<C-h> #10134', function()
-    local screen = thelpers.screen_setup(
-      0,
-      '["'..nvim_prog..[[", "-u", "NONE", "-i", "NONE", "--cmd", "colorscheme vim", ]]
-      ..[["--cmd", "set noruler", "--cmd", ':nnoremap <C-h> :echomsg "\<C-h\>"<CR>']]..']'
-    )
+    local screen = thelpers.setup_child_nvim({
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', 'colorscheme vim',
+      '--cmd', 'set noruler notermguicolors',
+      '--cmd', ':nnoremap <C-h> :echomsg "\\<C-h\\>"<CR>',
+    })
     screen:expect{grid=[[
       {1: }                                                 |
       {4:~                                                 }|
@@ -1931,12 +1932,13 @@ describe('TUI', function()
   end)
 
   it('draws line with many trailing spaces correctly #24955', function()
-    local screen = thelpers.screen_setup(
-      0,
-      '["'..nvim_prog..[[", "-u", "NONE", "-i", "NONE", "--cmd", "colorscheme vim"]]
-      ..[[, "--cmd", "call setline(1, ['1st line' .. repeat(' ', 153), '2nd line'])"]]..']',
-      80
-    )
+    local screen = thelpers.setup_child_nvim({
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', 'set notermguicolors',
+      '--cmd', 'colorscheme vim',
+      '--cmd', 'call setline(1, ["1st line" .. repeat(" ", 153), "2nd line"])',
+    }, { cols = 80 })
     screen:expect{grid=[[
       {1:1}st line                                                                        |
                                                                                       |
@@ -1962,16 +1964,16 @@ end)
 describe('TUI UIEnter/UILeave', function()
   it('fires exactly once, after VimEnter', function()
     clear()
-    local screen = thelpers.screen_setup(0,
-      '["'..nvim_prog..'", "-u", "NONE", "-i", "NONE"'
-      ..[[, "--cmd", "colorscheme vim"]]
-      ..[[, "--cmd", "set noswapfile noshowcmd noruler"]]
-      ..[[, "--cmd", "let g:evs = []"]]
-      ..[[, "--cmd", "autocmd UIEnter  * :call add(g:evs, 'UIEnter')"]]
-      ..[[, "--cmd", "autocmd UILeave  * :call add(g:evs, 'UILeave')"]]
-      ..[[, "--cmd", "autocmd VimEnter * :call add(g:evs, 'VimEnter')"]]
-      ..']'
-    )
+    local screen = thelpers.setup_child_nvim({
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', 'colorscheme vim',
+      '--cmd', 'set noswapfile noshowcmd noruler notermguicolors',
+      '--cmd', 'let g:evs = []',
+      '--cmd', 'autocmd UIEnter *  :call add(g:evs, "UIEnter")',
+      '--cmd', 'autocmd UILeave *  :call add(g:evs, "UILeave")',
+      '--cmd', 'autocmd VimEnter * :call add(g:evs, "VimEnter")',
+    })
     screen:expect{grid=[[
       {1: }                                                 |
       {4:~                                                 }|
@@ -2001,11 +2003,14 @@ describe('TUI FocusGained/FocusLost', function()
   before_each(function()
     clear()
     local child_server = new_pipename()
-    screen = thelpers.screen_setup(0,
-      string.format(
-        '["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "colorscheme vim", '
-        ..'"--cmd", "set noswapfile noshowcmd noruler"]',
-        nvim_prog, child_server))
+    screen = thelpers.setup_child_nvim({
+      '--listen', child_server,
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', 'colorscheme vim',
+      '--cmd', 'set noswapfile noshowcmd noruler notermguicolors',
+    })
+
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -2208,14 +2213,18 @@ describe("TUI 't_Co' (terminal colors)", function()
 
   local function assert_term_colors(term, colorterm, maxcolors)
     clear({env={TERM=term}, args={}})
-    -- This is ugly because :term/termopen() forces TERM=xterm-256color.
-    -- TODO: Revisit this after jobstart/termopen accept `env` dict.
-    screen = thelpers.screen_setup(0, string.format(
-      [=[['sh', '-c', 'LANG=C TERM=%s %s %s -u NONE -i NONE --cmd "colorscheme vim" --cmd "%s"']]=],
-      term or "",
-      (colorterm ~= nil and "COLORTERM="..colorterm or ""),
-      nvim_prog,
-      nvim_set))
+    screen = thelpers.setup_child_nvim({
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', 'colorscheme vim',
+      '--cmd', nvim_set,
+    }, {
+      env = {
+        LANG = 'C',
+        TERM = term or '',
+        COLORTERM = colorterm or '',
+      },
+    })
 
     local tline
     if maxcolors == 8 then
@@ -2483,14 +2492,16 @@ describe("TUI 'term' option", function()
 
   local function assert_term(term_envvar, term_expected)
     clear()
-    -- This is ugly because :term/termopen() forces TERM=xterm-256color.
-    -- TODO: Revisit this after jobstart/termopen accept `env` dict.
-    local cmd = string.format(
-      [=[['sh', '-c', 'LANG=C TERM=%s %s -u NONE -i NONE --cmd "%s"']]=],
-      term_envvar or "",
-      nvim_prog,
-      nvim_set)
-    screen = thelpers.screen_setup(0, cmd)
+    screen = thelpers.setup_child_nvim({
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', nvim_set,
+    }, {
+      env = {
+        LANG = 'C',
+        TERM = term_envvar or '',
+      },
+    })
 
     local full_timeout = screen.timeout
     screen.timeout = 250  -- We want screen:expect() to fail quickly.
@@ -2540,14 +2551,17 @@ describe("TUI", function()
   -- Runs (child) `nvim` in a TTY (:terminal), to start the builtin TUI.
   local function nvim_tui(extra_args)
     clear()
-    -- This is ugly because :term/termopen() forces TERM=xterm-256color.
-    -- TODO: Revisit this after jobstart/termopen accept `env` dict.
-    local cmd = string.format(
-      [=[['sh', '-c', 'LANG=C %s -u NONE -i NONE %s --cmd "colorscheme vim" --cmd "%s"']]=],
-      nvim_prog,
-      extra_args or "",
-      nvim_set)
-    screen = thelpers.screen_setup(0, cmd)
+    screen = thelpers.setup_child_nvim({
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', 'colorscheme vim',
+      '--cmd', nvim_set,
+      extra_args,
+    }, {
+      env = {
+        LANG = 'C',
+      },
+    })
   end
 
   it('-V3log logs terminfo values', function()
@@ -2604,9 +2618,18 @@ describe('TUI bg color', function()
 
   local function setup_bg_test()
     clear()
-    screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "colorscheme vim", "--cmd", "set noswapfile", '
-      ..'"-c", "autocmd OptionSet background echo \\"did OptionSet, yay!\\""]')
+    screen = thelpers.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--cmd',
+      'colorscheme vim',
+      '--cmd',
+      'set noswapfile notermguicolors',
+      '-c',
+      'autocmd OptionSet background echo "did OptionSet, yay!"',
+    })
   end
 
   before_each(setup_bg_test)
@@ -2725,14 +2748,13 @@ describe("TUI as a client", function()
 
     set_session(server_super)
     local server_pipe = new_pipename()
-    local screen_server = thelpers.screen_setup(0,
-      string.format(
-        '["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "colorscheme vim", '
-        ..'"--cmd", "%s laststatus=2 background=dark"]',
-        nvim_prog,
-        server_pipe,
-        nvim_set
-      ))
+    local screen_server = thelpers.setup_child_nvim({
+      '--listen', server_pipe,
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', 'colorscheme vim',
+      '--cmd', string.format('%s laststatus=2 background=dark', nvim_set),
+    })
 
     feed_data("iHello, World")
     screen_server:expect{grid=[[
@@ -2756,9 +2778,10 @@ describe("TUI as a client", function()
     ]]}
 
     set_session(client_super)
-    local screen_client = thelpers.screen_setup(0,
-      string.format([=[["%s", "--server", "%s", "--remote-ui"]]=],
-                    nvim_prog, server_pipe))
+    local screen_client = thelpers.setup_child_nvim({
+      '--server', server_pipe,
+      '--remote-ui',
+    })
 
     screen_client:expect{grid=[[
       Hello, Worl{1:d}                                      |
@@ -2798,9 +2821,10 @@ describe("TUI as a client", function()
     server:request('nvim_input', 'iHalloj!<Esc>')
 
     set_session(client_super)
-    local screen_client = thelpers.screen_setup(0,
-      string.format([=[["%s", "--server", "%s", "--remote-ui"]]=],
-                    nvim_prog, server_pipe))
+    local screen_client = thelpers.setup_child_nvim({
+      '--server', server_pipe,
+      '--remote-ui',
+    })
 
     screen_client:expect{grid=[[
       Halloj{1:!}                                           |
@@ -2836,9 +2860,10 @@ describe("TUI as a client", function()
 
   it("throws error when no server exists", function()
     clear()
-    local screen = thelpers.screen_setup(0,
-      string.format([=[["%s", "--server", "127.0.0.1:2436546", "--remote-ui"]]=],
-                    nvim_prog), 60)
+    local screen = thelpers.setup_child_nvim({
+      '--server', '127.0.0.1:2436546',
+      '--remote-ui',
+    }, { cols = 60 })
 
     screen:expect([[
       Remote ui failed to start: {MATCH:.*}|
@@ -2857,14 +2882,13 @@ describe("TUI as a client", function()
 
     set_session(server_super)
     local server_pipe = new_pipename()
-    local screen_server = thelpers.screen_setup(0,
-      string.format(
-        '["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "colorscheme vim", '
-        ..'"--cmd", "%s laststatus=2 background=dark"]',
-        nvim_prog,
-        server_pipe,
-        nvim_set
-      ))
+    local screen_server = thelpers.setup_child_nvim({
+      '--listen', server_pipe,
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', 'colorscheme vim',
+      '--cmd', string.format('%s laststatus=2 background=dark', nvim_set),
+    })
     screen_server:expect{grid=[[
       {1: }                                                 |
       {4:~                                                 }|
@@ -2897,9 +2921,10 @@ describe("TUI as a client", function()
     ]]}
 
     set_session(client_super)
-    local screen_client = thelpers.screen_setup(0,
-      string.format([=[["%s", "--server", "%s", "--remote-ui"]]=],
-                    nvim_prog, server_pipe))
+    local screen_client = thelpers.setup_child_nvim({
+      '--server', server_pipe,
+      '--remote-ui',
+    })
 
     screen_client:expect{grid=[[
       Hello, Worl{1:d}                                      |

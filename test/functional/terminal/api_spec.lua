@@ -11,8 +11,12 @@ describe('api', function()
   before_each(function()
     helpers.clear()
     os.remove(socket_name)
-    screen = child_session.screen_setup(0, '["'..helpers.nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "colorscheme vim", "--cmd", "'..helpers.nvim_set..'"]')
+    screen = child_session.setup_child_nvim({
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', 'colorscheme vim',
+      '--cmd', helpers.nvim_set,
+    })
   end)
   after_each(function()
     os.remove(socket_name)

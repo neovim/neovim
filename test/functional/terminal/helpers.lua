@@ -6,6 +6,7 @@ local Screen = require('test.functional.ui.screen')
 local testprg = helpers.testprg
 local exec_lua = helpers.exec_lua
 local nvim = helpers.nvim
+local nvim_prog = helpers.nvim_prog
 
 local function feed_data(data)
   if type(data) == 'table' then
@@ -122,6 +123,26 @@ local function screen_setup(extra_rows, command, cols, opts)
   return screen
 end
 
+local function setup_child_nvim(args, opts)
+  opts = opts or {}
+
+  local argv = { nvim_prog, unpack(args) }
+  local cmd = string.format('[%s]', vim.iter(argv):map(function(s)
+    return string.format('\'%s\'', s)
+  end):join(', '))
+
+  if opts.env then
+    local s = {}
+    for k, v in pairs(opts.env) do
+      table.insert(s, string.format('%s: \'%s\'', k, v))
+    end
+
+    cmd = string.format('%s, #{env: #{%s}}', cmd, table.concat(s, ', '))
+  end
+
+  return screen_setup(0, cmd, opts.cols)
+end
+
 return {
   feed_data = feed_data,
   feed_termcode = feed_termcode,
@@ -141,5 +162,6 @@ return {
   clear_attrs = clear_attrs,
   enable_mouse = enable_mouse,
   disable_mouse = disable_mouse,
-  screen_setup = screen_setup
+  screen_setup = screen_setup,
+  setup_child_nvim = setup_child_nvim,
 }
