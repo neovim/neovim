@@ -6495,6 +6495,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	attributes instead of "cterm" attributes. |guifg|
 	Requires an ISO-8613-3 compatible terminal.
 
+	Nvim will automatically attempt to determine if the host terminal
+	supports 24-bit color and will enable this option if it does
+	(unless explicitly disabled by the user).
+
 					*'termpastefilter'* *'tpf'*
 'termpastefilter' 'tpf'	string	(default "BS,HT,ESC,DEL")
 			global

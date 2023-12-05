@@ -98,6 +98,9 @@ The following changes may require adaptations in user config or plugins.
 • Default color scheme has been updated to be "Neovim branded" and accessible.
   Use `:colorscheme vim` to revert to the old legacy color scheme.
 
+• 'termguicolors' is enabled by default when Nvim is able to determine that
+  the host terminal emulator supports 24-bit color.
+
 ==============================================================================
 BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
 

@@ -12,7 +12,10 @@ local M = {}
 --- emulator supports the XTGETTCAP sequence.
 ---
 --- @param caps string|table A terminal capability or list of capabilities to query
---- @param cb function(cap:string, seq:string) Function to call when a response is received
+--- @param cb function(cap:string, found:bool, seq:string?) Callback function which is called for
+---           each capability in {caps}. {found} is set to true if the capability was found or false
+---           otherwise. {seq} is the control sequence for the capability if found, or nil for
+---           boolean capabilities.
 function M.query(caps, cb)
   vim.validate({
     caps = { caps, { 'string', 'table' } },
@@ -23,21 +26,33 @@ function M.query(caps, cb)
     caps = { caps }
   end
 
-  local count = #caps
+  local pending = {} ---@type table<string, boolean>
+  for _, v in ipairs(caps) do
+    pending[v] = true
+  end
 
-  vim.api.nvim_create_autocmd('TermResponse', {
+  local timer = assert(vim.uv.new_timer())
+
+  local id = vim.api.nvim_create_autocmd('TermResponse', {
     callback = function(args)
       local resp = args.data ---@type string
-      local k, v = resp:match('^\027P1%+r(%x+)=(%x+)$')
-      if k and v then
+      local k, rest = resp:match('^\027P1%+r(%x+)(.*)$')
+      if k and rest then
         local cap = vim.text.hexdecode(k)
-        local seq =
-          vim.text.hexdecode(v):gsub('\\E', '\027'):gsub('%%p%d', ''):gsub('\\(%d+)', string.char)
+        local seq ---@type string?
+        if rest:match('^=%x+$') then
+          seq = vim.text
+            .hexdecode(rest:sub(2))
+            :gsub('\\E', '\027')
+            :gsub('%%p%d', '')
+            :gsub('\\(%d+)', string.char)
+        end
 
-        cb(cap, seq)
+        cb(cap, true, seq)
 
-        count = count - 1
-        if count == 0 then
+        pending[cap] = nil
+
+        if next(pending) == nil then
           return true
         end
       end
@@ -57,6 +72,23 @@ function M.query(caps, cb)
   end
 
   io.stdout:write(query)
+
+  timer:start(1000, 0, function()
+    -- Delete the autocommand if no response was received
+    vim.schedule(function()
+      -- Suppress error if autocommand has already been deleted
+      pcall(vim.api.nvim_del_autocmd, id)
+
+      -- Call the callback for all capabilities that were not found
+      for k in pairs(pending) do
+        cb(k, false, nil)
+      end
+    end)
+
+    if not timer:is_closing() then
+      timer:close()
+    end
+  end)
 end
 
 return M

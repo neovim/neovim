@@ -6941,6 +6941,10 @@ vim.go.tbidi = vim.go.termbidi
 --- attributes instead of "cterm" attributes. `guifg`
 --- Requires an ISO-8613-3 compatible terminal.
 ---
+--- Nvim will automatically attempt to determine if the host terminal
+--- supports 24-bit color and will enable this option if it does
+--- (unless explicitly disabled by the user).
+---
 --- @type boolean
 vim.o.termguicolors = false
 vim.o.tgc = vim.o.termguicolors

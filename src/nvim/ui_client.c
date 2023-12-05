@@ -70,14 +70,14 @@ uint64_t ui_client_start_server(int argc, char **argv)
   return channel->id;
 }
 
-void ui_client_attach(int width, int height, char *term)
+void ui_client_attach(int width, int height, char *term, bool rgb)
 {
   MAXSIZE_TEMP_ARRAY(args, 3);
   ADD_C(args, INTEGER_OBJ(width));
   ADD_C(args, INTEGER_OBJ(height));
 
   MAXSIZE_TEMP_DICT(opts, 9);
-  PUT_C(opts, "rgb", BOOLEAN_OBJ(true));
+  PUT_C(opts, "rgb", BOOLEAN_OBJ(rgb));
   PUT_C(opts, "ext_linegrid", BOOLEAN_OBJ(true));
   PUT_C(opts, "ext_termcolors", BOOLEAN_OBJ(true));
   if (term) {
@@ -111,9 +111,10 @@ void ui_client_run(bool remote_ui)
   ui_client_is_remote = remote_ui;
   int width, height;
   char *term;
-  tui_start(&tui, &width, &height, &term);
+  bool rgb;
+  tui_start(&tui, &width, &height, &term, &rgb);
 
-  ui_client_attach(width, height, term);
+  ui_client_attach(width, height, term, rgb);
 
   // os_exit() will be invoked when the client channel detaches
   while (true) {
