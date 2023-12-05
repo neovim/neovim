@@ -1301,4 +1301,26 @@ describe('completion', function()
       {3:-- INSERT --}                                                |
     ]])
   end)
+
+  it('CTRL-L can work #7225', function ()
+    source([[
+      func Foo()
+        call complete(1, ['ffffoo'])
+        return ""
+      endfunc
+      imap <silent> .  <c-r>=Foo()<CR>
+      set completeopt=menu,menuone,noinsert,noselect
+    ]])
+    feed('if.<C-l>')
+    screen:expect{grid=[[
+      ff^                                                          |
+      {1:ffffoo         }{0:                                             }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {0:~                                                           }|
+      {3:-- INSERT --}                                                |
+    ]]}
+  end)
 end)

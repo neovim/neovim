@@ -1023,7 +1023,7 @@ bool ins_compl_has_shown_match(void)
 bool ins_compl_long_shown_match(void)
 {
   return compl_shown_match != NULL && compl_shown_match->cp_str != NULL
-         && (colnr_T)strlen(compl_shown_match->cp_str) > curwin->w_cursor.col - compl_col;
+         && (colnr_T)strlen(compl_shown_match->cp_str) >= curwin->w_cursor.col - compl_col;
 }
 
 /// Set variables that store noselect and noinsert behavior from the
