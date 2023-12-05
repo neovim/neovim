@@ -94,14 +94,10 @@
 ///               - "belowright": |:belowright|.
 ///               - "topleft": |:topleft|.
 ///               - "botright": |:botright|.
-Dictionary nvim_parse_cmd(String str, Dictionary opts, Error *err)
+Dictionary nvim_parse_cmd(String str, Dict(empty) *opts, Error *err)
   FUNC_API_SINCE(10) FUNC_API_FAST
 {
   Dictionary result = ARRAY_DICT_INIT;
-
-  VALIDATE((opts.size == 0), "%s", "opts dict isn't empty", {
-    return result;
-  });
 
   // Parse command line
   exarg_T ea;

@@ -152,7 +152,7 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
 /// @return False if attach failed (invalid parameter, or buffer isn't loaded);
 ///         otherwise True. TODO: LUA_API_NO_EVAL
 Boolean nvim_buf_attach(uint64_t channel_id, Buffer buffer, Boolean send_buffer,
-                        DictionaryOf(LuaRef) opts, Error *err)
+                        Dict(buf_attach) *opts, Error *err)
   FUNC_API_SINCE(4)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -161,64 +161,40 @@ Boolean nvim_buf_attach(uint64_t channel_id, Buffer buffer, Boolean send_buffer,
     return false;
   }
 
-  bool is_lua = (channel_id == LUA_INTERNAL_CALL);
   BufUpdateCallbacks cb = BUF_UPDATE_CALLBACKS_INIT;
-  struct {
-    const char *name;
-    LuaRef *dest;
-  } cbs[] = {
-    { "on_lines", &cb.on_lines },
-    { "on_bytes", &cb.on_bytes },
-    { "on_changedtick", &cb.on_changedtick },
-    { "on_detach", &cb.on_detach },
-    { "on_reload", &cb.on_reload },
-    { NULL, NULL },
-  };
 
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object *v = &opts.items[i].value;
-    bool key_used = false;
-    if (is_lua) {
-      for (size_t j = 0; cbs[j].name; j++) {
-        if (strequal(cbs[j].name, k.data)) {
-          VALIDATE_T(cbs[j].name, kObjectTypeLuaRef, v->type, {
-            goto error;
-          });
-          *(cbs[j].dest) = v->data.luaref;
-          v->data.luaref = LUA_NOREF;
-          key_used = true;
-          break;
-        }
-      }
-
-      if (key_used) {
-        continue;
-      } else if (strequal("utf_sizes", k.data)) {
-        VALIDATE_T("utf_sizes", kObjectTypeBoolean, v->type, {
-          goto error;
-        });
-        cb.utf_sizes = v->data.boolean;
-        key_used = true;
-      } else if (strequal("preview", k.data)) {
-        VALIDATE_T("preview", kObjectTypeBoolean, v->type, {
-          goto error;
-        });
-        cb.preview = v->data.boolean;
-        key_used = true;
-      }
+  if (channel_id == LUA_INTERNAL_CALL) {
+    if (HAS_KEY(opts, buf_attach, on_lines)) {
+      cb.on_lines = opts->on_lines;
+      opts->on_lines = LUA_NOREF;
     }
 
-    VALIDATE_S(key_used, "'opts' key", k.data, {
-      goto error;
-    });
+    if (HAS_KEY(opts, buf_attach, on_bytes)) {
+      cb.on_bytes = opts->on_bytes;
+      opts->on_bytes = LUA_NOREF;
+    }
+
+    if (HAS_KEY(opts, buf_attach, on_changedtick)) {
+      cb.on_changedtick = opts->on_changedtick;
+      opts->on_changedtick = LUA_NOREF;
+    }
+
+    if (HAS_KEY(opts, buf_attach, on_detach)) {
+      cb.on_detach = opts->on_detach;
+      opts->on_detach = LUA_NOREF;
+    }
+
+    if (HAS_KEY(opts, buf_attach, on_reload)) {
+      cb.on_reload = opts->on_reload;
+      opts->on_reload = LUA_NOREF;
+    }
+
+    cb.utf_sizes = opts->utf_sizes;
+
+    cb.preview = opts->preview;
   }
 
   return buf_updates_register(buf, channel_id, cb, send_buffer);
-
-error:
-  buffer_update_callbacks_free(cb);
-  return false;
 }
 
 /// Deactivates buffer-update events on the channel.
@@ -781,15 +757,11 @@ early_end:
 ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buffer,
                                   Integer start_row, Integer start_col,
                                   Integer end_row, Integer end_col,
-                                  Dictionary opts, lua_State *lstate,
+                                  Dict(empty) *opts, lua_State *lstate,
                                   Error *err)
   FUNC_API_SINCE(9)
 {
   Array rv = ARRAY_DICT_INIT;
-
-  VALIDATE((opts.size == 0), "%s", "opts dict isn't empty", {
-    return rv;
-  });
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -1081,7 +1053,7 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
 /// @param opts  Optional parameters. Keys:
 ///          - force:  Force deletion and ignore unsaved changes.
 ///          - unload: Unloaded only, do not delete. See |:bunload|
-void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
+void nvim_buf_delete(Buffer buffer, Dict(buf_delete) *opts, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_TEXTLOCK
 {
@@ -1091,25 +1063,9 @@ void nvim_buf_delete(Buffer buffer, Dictionary opts, Error *err)
     return;
   }
 
-  bool force = false;
-  bool unload = false;
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object v = opts.items[i].value;
-    if (strequal("force", k.data)) {
-      force = api_object_to_bool(v, "force", false, err);
-    } else if (strequal("unload", k.data)) {
-      unload = api_object_to_bool(v, "unload", false, err);
-    } else {
-      VALIDATE_S(false, "'opts' key", k.data, {
-        return;
-      });
-    }
-  }
+  bool force = opts->force;
 
-  if (ERROR_SET(err)) {
-    return;
-  }
+  bool unload = opts->unload;
 
   int result = do_buffer(unload ? DOBUF_UNLOAD : DOBUF_WIPE,
                          DOBUF_FIRST,
@@ -1193,7 +1149,7 @@ Boolean nvim_buf_del_mark(Buffer buffer, String name, Error *err)
 /// @return true if the mark was set, else false.
 /// @see |nvim_buf_del_mark()|
 /// @see |nvim_buf_get_mark()|
-Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col, Dictionary opts,
+Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col, Dict(empty) *opts,
                           Error *err)
   FUNC_API_SINCE(8)
 {

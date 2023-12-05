@@ -3,6 +3,19 @@
 -- DO NOT EDIT
 error('Cannot require a meta file')
 
+--- @class vim.api.keyset.buf_attach
+--- @field on_lines? function
+--- @field on_bytes? function
+--- @field on_changedtick? function
+--- @field on_detach? function
+--- @field on_reload? function
+--- @field utf_sizes? boolean
+--- @field preview? boolean
+
+--- @class vim.api.keyset.buf_delete
+--- @field force? boolean
+--- @field unload? boolean
+
 --- @class vim.api.keyset.clear_autocmds
 --- @field buffer? integer
 --- @field event? any
@@ -74,6 +87,8 @@ error('Cannot require a meta file')
 --- @class vim.api.keyset.echo_opts
 --- @field verbose? boolean
 
+--- @class vim.api.keyset.empty
+
 --- @class vim.api.keyset.eval_statusline
 --- @field winid? integer
 --- @field maxwidth? integer
@@ -123,6 +138,10 @@ error('Cannot require a meta file')
 
 --- @class vim.api.keyset.get_commands
 --- @field builtin? boolean
+
+--- @class vim.api.keyset.get_extmark
+--- @field details? boolean
+--- @field hl_name? boolean
 
 --- @class vim.api.keyset.get_extmarks
 --- @field limit? integer
@@ -195,6 +214,9 @@ error('Cannot require a meta file')
 --- @field callback? function
 --- @field desc? string
 --- @field replace_keycodes? boolean
+
+--- @class vim.api.keyset.open_term
+--- @field on_input? function
 
 --- @class vim.api.keyset.option
 --- @field scope? string

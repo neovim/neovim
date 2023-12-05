@@ -151,7 +151,7 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---                    `nvim_buf_lines_event`. Else the first notification
 ---                    will be `nvim_buf_changedtick_event`. Not for Lua
 ---                    callbacks.
---- @param opts table<string,function> Optional parameters.
+--- @param opts vim.api.keyset.buf_attach Optional parameters.
 ---                    • on_lines: Lua callback invoked on change. Return `true` to detach. Args:
 ---                      • the string "lines"
 ---                      • buffer handle
@@ -284,7 +284,7 @@ function vim.api.nvim_buf_del_var(buffer, name) end
 --- Deletes the buffer. See `:bwipeout`
 ---
 --- @param buffer integer Buffer handle, or 0 for current buffer
---- @param opts table<string,any> Optional parameters. Keys:
+--- @param opts vim.api.keyset.buf_delete Optional parameters. Keys:
 ---               • force: Force deletion and ignore unsaved changes.
 ---               • unload: Unloaded only, do not delete. See `:bunload`
 function vim.api.nvim_buf_delete(buffer, opts) end
@@ -307,7 +307,7 @@ function vim.api.nvim_buf_get_commands(buffer, opts) end
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param ns_id integer Namespace id from `nvim_create_namespace()`
 --- @param id integer Extmark id
---- @param opts table<string,any> Optional parameters. Keys:
+--- @param opts vim.api.keyset.get_extmark Optional parameters. Keys:
 ---               • details: Whether to include the details dict
 ---               • hl_name: Whether to include highlight group name instead
 ---                 of id, true if omitted
@@ -440,7 +440,7 @@ function vim.api.nvim_buf_get_option(buffer, name) end
 --- @param start_col integer Starting column (byte offset) on first line
 --- @param end_row integer Last line index, inclusive
 --- @param end_col integer Ending column (byte offset) on last line, exclusive
---- @param opts table<string,any> Optional parameters. Currently unused.
+--- @param opts vim.api.keyset.empty Optional parameters. Currently unused.
 --- @return string[]
 function vim.api.nvim_buf_get_text(buffer, start_row, start_col, end_row, end_col, opts) end
 
@@ -626,7 +626,7 @@ function vim.api.nvim_buf_set_lines(buffer, start, end_, strict_indexing, replac
 --- @param name string Mark name
 --- @param line integer Line number
 --- @param col integer Column/row number
---- @param opts table<string,any> Optional parameters. Reserved for future use.
+--- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
 --- @return boolean
 function vim.api.nvim_buf_set_mark(buffer, name, line, col, opts) end
 
@@ -675,7 +675,7 @@ function vim.api.nvim_buf_set_var(buffer, name, value) end
 --- @param src_id integer
 --- @param line integer
 --- @param chunks any[]
---- @param opts table<string,any>
+--- @param opts vim.api.keyset.empty
 --- @return integer
 function vim.api.nvim_buf_set_virtual_text(buffer, src_id, line, chunks, opts) end
 
@@ -1241,7 +1241,7 @@ function vim.api.nvim_get_keymap(mode) end
 --- Marks are (1,0)-indexed. `api-indexing`
 ---
 --- @param name string Mark name
---- @param opts table<string,any> Optional parameters. Reserved for future use.
+--- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
 --- @return any[]
 function vim.api.nvim_get_mark(name, opts) end
 
@@ -1439,7 +1439,7 @@ function vim.api.nvim_notify(msg, log_level, opts) end
 --- virtual terminal having the intended size.
 ---
 --- @param buffer integer the buffer to use (expected to be empty)
---- @param opts table<string,function> Optional parameters.
+--- @param opts vim.api.keyset.open_term Optional parameters.
 ---               • on_input: Lua callback for input sent, i e keypresses in
 ---                 terminal mode. Note: keypresses are sent raw as they would
 ---                 be to the pty master end. For instance, a carriage return
@@ -1602,7 +1602,7 @@ function vim.api.nvim_out_write(str) end
 --- Doesn't check the validity of command arguments.
 ---
 --- @param str string Command line string to parse. Cannot contain "\n".
---- @param opts table<string,any> Optional parameters. Reserved for future use.
+--- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
 --- @return table<string,any>
 function vim.api.nvim_parse_cmd(str, opts) end
 
@@ -1685,7 +1685,7 @@ function vim.api.nvim_replace_termcodes(str, from_part, do_lt, special) end
 ---               inserted in the buffer. Ignored for `cmdline-completion`.
 --- @param finish boolean Finish the completion and dismiss the popup menu. Implies
 ---               {insert}.
---- @param opts table<string,any> Optional parameters. Reserved for future use.
+--- @param opts vim.api.keyset.empty Optional parameters. Reserved for future use.
 function vim.api.nvim_select_popupmenu_item(item, insert, finish, opts) end
 
 --- Sets the current buffer.

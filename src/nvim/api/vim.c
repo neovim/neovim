@@ -987,7 +987,7 @@ fail:
 ///                 ["input", term, bufnr, data]
 /// @param[out] err Error details, if any
 /// @return Channel id, or 0 on error
-Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
+Integer nvim_open_term(Buffer buffer, Dict(open_term) *opts, Error *err)
   FUNC_API_SINCE(7)
   FUNC_API_TEXTLOCK_ALLOW_CMDWIN
 {
@@ -1002,19 +1002,10 @@ Integer nvim_open_term(Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   }
 
   LuaRef cb = LUA_NOREF;
-  for (size_t i = 0; i < opts.size; i++) {
-    String k = opts.items[i].key;
-    Object *v = &opts.items[i].value;
-    if (strequal("on_input", k.data)) {
-      VALIDATE_T("on_input", kObjectTypeLuaRef, v->type, {
-        return 0;
-      });
-      cb = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-      break;
-    } else {
-      VALIDATE_S(false, "'opts' key", k.data, {});
-    }
+
+  if (HAS_KEY(opts, open_term, on_input)) {
+    cb = opts->on_input;
+    opts->on_input = LUA_NOREF;
   }
 
   Channel *chan = channel_alloc(kChannelStreamInternal);
@@ -1941,14 +1932,10 @@ Object nvim_get_proc(Integer pid, Error *err)
 /// @param finish  Finish the completion and dismiss the popup menu. Implies {insert}.
 /// @param opts    Optional parameters. Reserved for future use.
 /// @param[out] err Error details, if any
-void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish, Dictionary opts,
+void nvim_select_popupmenu_item(Integer item, Boolean insert, Boolean finish, Dict(empty) *opts,
                                 Error *err)
   FUNC_API_SINCE(6)
 {
-  VALIDATE((opts.size == 0), "%s", "opts dict isn't empty", {
-    return;
-  });
-
   if (finish) {
     insert = true;
   }
@@ -2049,7 +2036,7 @@ Boolean nvim_del_mark(String name, Error *err)
 /// not set.
 /// @see |nvim_buf_set_mark()|
 /// @see |nvim_del_mark()|
-Array nvim_get_mark(String name, Dictionary opts, Error *err)
+Array nvim_get_mark(String name, Dict(empty) *opts, Error *err)
   FUNC_API_SINCE(8)
 {
   Array rv = ARRAY_DICT_INIT;
