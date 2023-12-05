@@ -1839,11 +1839,11 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     curwin->w_cursor.lnum = old_cursor.lnum + 1;
   }
   if (did_append) {
-    changed_lines(curbuf, curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1, true);
     // bail out and just get the final length of the line we just manipulated
     bcount_t extra = (bcount_t)strlen(ml_get(curwin->w_cursor.lnum));
     extmark_splice(curbuf, (int)curwin->w_cursor.lnum - 1, 0,
                    0, 0, 0, 1, 0, 1 + extra, kExtmarkUndo);
+    changed_lines(curbuf, curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1, true);
   }
   curbuf_splice_pending--;
 

@@ -418,7 +418,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
         -- meths.set_option_value('autoindent', true, {})
         feed 'Go'
         check_events {
-          { "test1", "bytes", 1, 4, 7, 0, 114, 0, 0, 0, 1, 0, 1 };
+          { "test1", "bytes", 1, 3, 7, 0, 114, 0, 0, 0, 1, 0, 1 };
         }
         feed '<cr>'
         check_events {
@@ -431,7 +431,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
         meths.set_option_value('autoindent', true, {})
         feed 'Go'
         check_events {
-          { "test1", "bytes", 1, 4, 7, 0, 114, 0, 0, 0, 1, 0, 5 };
+          { "test1", "bytes", 1, 3, 7, 0, 114, 0, 0, 0, 1, 0, 5 };
         }
         feed '<cr>'
         check_events {
@@ -476,7 +476,7 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
       feed 'ggo' -- goto first line to continue testing
       check_events {
-        { "test1", "bytes", 1, 6, 1, 0, 11, 0, 0, 0, 1, 0, 4 };
+        { "test1", "bytes", 1, 5, 1, 0, 11, 0, 0, 0, 1, 0, 4 };
       }
 
       feed '<CR>'
