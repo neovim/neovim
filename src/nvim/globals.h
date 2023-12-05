@@ -672,7 +672,7 @@ EXTERN bool must_redraw_pum INIT( = false);  // redraw pum. NB: must_redraw
 
 EXTERN bool need_highlight_changed INIT( = true);
 
-EXTERN FILE *scriptout INIT( = NULL);  ///< Stream to write script to.
+EXTERN FILE *scriptout INIT( = NULL);  ///< Write input to this file ("nvim -w").
 
 // Note that even when handling SIGINT, volatile is not necessary because the
 // callback is not called directly from the signal handlers.
