@@ -485,7 +485,7 @@ SHIFTING LINES LEFT OR RIGHT				*shift-left-right*
 			lines to [indent] (default 0).
 
 							*:>*
-:[range]> [flags]	Shift {count} [range] lines one 'shiftwidth' right.
+:[range]> [flags]	Shift [range] lines one 'shiftwidth' right.
 			Repeat '>' for shifting multiple 'shiftwidth's.
 			See |ex-flags| for [flags].
 
