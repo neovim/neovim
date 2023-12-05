@@ -704,8 +704,8 @@ static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
   if (wlv->draw_state == WL_BRI - 1 && wlv->n_extra == 0) {
     wlv->draw_state = WL_BRI;
     // if wlv->need_showbreak is set, breakindent also applies
-    if (wp->w_p_bri && (wlv->row != wlv->startrow || wlv->need_showbreak)
-        && wlv->filler_lines == 0) {
+    if (wp->w_p_bri && (wlv->row > wlv->startrow + wlv->filler_lines
+                        || wlv->need_showbreak)) {
       wlv->char_attr = 0;
       if (wlv->diff_hlf != (hlf_T)0) {
         wlv->char_attr = win_hl_attr(wp, (int)wlv->diff_hlf);

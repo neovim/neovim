@@ -11,6 +11,8 @@ local exec = helpers.exec
 local eq = helpers.eq
 local meths = helpers.meths
 
+before_each(clear)
+
 describe('Diff mode screen', function()
   local fname = 'Xtest-functional-diff-screen-1'
   local fname_2 = fname .. '.2'
@@ -21,7 +23,6 @@ describe('Diff mode screen', function()
   end
 
   setup(function()
-    clear()
     os.remove(fname)
     os.remove(fname_2)
   end)
@@ -32,7 +33,6 @@ describe('Diff mode screen', function()
   end)
 
   before_each(function()
-    clear()
     feed(':e ' .. fname_2 .. '<cr>')
     feed(':vnew ' .. fname .. '<cr>')
     feed(':diffthis<cr>')
@@ -1347,7 +1347,6 @@ end)
 
 it('win_update redraws lines properly', function()
   local screen
-  clear()
   screen = Screen.new(50, 10)
   screen:attach()
   screen:set_default_attr_ids({
@@ -1419,7 +1418,6 @@ end)
 
 -- oldtest: Test_diff_rnu()
 it('diff updates line numbers below filler lines', function()
-  clear()
   local screen = Screen.new(40, 14)
   screen:attach()
   screen:set_default_attr_ids({
@@ -1496,7 +1494,6 @@ end)
 
 -- oldtest: Test_diff_with_scroll_and_change()
 it('Align the filler lines when changing text in diff mode', function()
-  clear()
   local screen = Screen.new(40, 20)
   screen:attach()
   screen:set_default_attr_ids({
@@ -1588,7 +1585,6 @@ it('Align the filler lines when changing text in diff mode', function()
 end)
 
 it("diff mode doesn't restore invalid 'foldcolumn' value #21647", function()
-  clear()
   local screen = Screen.new(60, 6)
   screen:set_default_attr_ids({
     [0] = {foreground = Screen.colors.Blue, bold = true};
@@ -1609,7 +1605,6 @@ end)
 
 -- oldtest: Test_diff_binary()
 it('diff mode works properly if file contains NUL bytes vim-patch:8.2.3925', function()
-  clear()
   local screen = Screen.new(40, 20)
   screen:set_default_attr_ids({
     [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray};
@@ -1732,5 +1727,35 @@ it('diff mode works properly if file contains NUL bytes vim-patch:8.2.3925', fun
     {6:~                   }│{6:~                  }|
     {8:[No Name] [+]        }{2:[No Name] [+]      }|
                                             |
+  ]])
+end)
+
+-- oldtest: Test_diff_breakindent_after_filler()
+it("diff mode draws 'breakindent' correctly after filler lines", function()
+  local screen = Screen.new(45, 8)
+  screen:attach()
+  screen:set_default_attr_ids({
+    [1] = {background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue};
+    [2] = {background = Screen.colors.LightBlue};
+    [3] = {background = Screen.colors.LightCyan, bold = true, foreground = Screen.colors.Blue};
+    [4] = {foreground = Screen.colors.Blue, bold = true};
+  })
+  exec([[
+    set laststatus=0 diffopt+=followwrap breakindent
+    call setline(1, ['a', '  ' .. repeat('c', 50)])
+    vnew
+    call setline(1, ['a', 'b', '  ' .. repeat('c', 50)])
+    windo diffthis
+    norm! G$
+  ]])
+  screen:expect([[
+    {1:  }a                   │{1:  }a                   |
+    {1:  }{2:b                   }│{1:  }{3:--------------------}|
+    {1:  }  cccccccccccccccccc│{1:  }  cccccccccccccccccc|
+    {1:  }  cccccccccccccccccc│{1:  }  cccccccccccccccccc|
+    {1:  }  cccccccccccccc    │{1:  }  ccccccccccccc^c    |
+    {4:~                     }│{4:~                     }|
+    {4:~                     }│{4:~                     }|
+                                                 |
   ]])
 end)
