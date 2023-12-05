@@ -1086,18 +1086,19 @@ endfunc
 func Test_diff_with_cursorline_breakindent()
   CheckScreendump
 
-  call writefile([
-	\ 'hi CursorLine ctermbg=red ctermfg=white',
-	\ 'set noequalalways wrap diffopt=followwrap cursorline breakindent',
-	\ '50vnew',
-	\ 'call setline(1, ["  ","  ","  ","  "])',
-	\ 'exe "norm 20Afoo\<Esc>j20Afoo\<Esc>j20Afoo\<Esc>j20Abar\<Esc>"',
-	\ 'vnew',
-	\ 'call setline(1, ["  ","  ","  ","  "])',
-	\ 'exe "norm 20Abee\<Esc>j20Afoo\<Esc>j20Afoo\<Esc>j20Abaz\<Esc>"',
-	\ 'windo diffthis',
-	\ '2wincmd w',
-	\ ], 'Xtest_diff_cursorline_breakindent')
+  let lines =<< trim END
+    hi CursorLine ctermbg=red ctermfg=white
+    set noequalalways wrap diffopt=followwrap cursorline breakindent
+    50vnew
+    call setline(1, ['  ', '  ', '  ', '  '])
+    exe "norm! 20Afoo\<Esc>j20Afoo\<Esc>j20Afoo\<Esc>j20Abar\<Esc>"
+    vnew
+    call setline(1, ['  ', '  ', '  ', '  '])
+    exe "norm! 20Abee\<Esc>j20Afoo\<Esc>j20Afoo\<Esc>j20Abaz\<Esc>"
+    windo diffthis
+    2wincmd w
+  END
+  call writefile(lines, 'Xtest_diff_cursorline_breakindent', 'D')
   let buf = RunVimInTerminal('-S Xtest_diff_cursorline_breakindent', {})
 
   call term_sendkeys(buf, "gg0")
@@ -1111,7 +1112,25 @@ func Test_diff_with_cursorline_breakindent()
 
   " clean up
   call StopVimInTerminal(buf)
-  call delete('Xtest_diff_cursorline_breakindent')
+endfunc
+
+func Test_diff_breakindent_after_filler()
+  CheckScreendump
+
+  let lines =<< trim END
+    set laststatus=0 diffopt+=followwrap breakindent
+    call setline(1, ['a', '  ' .. repeat('c', 50)])
+    vnew
+    call setline(1, ['a', 'b', '  ' .. repeat('c', 50)])
+    windo diffthis
+    norm! G$
+  END
+  call writefile(lines, 'Xtest_diff_breakindent_after_filler', 'D')
+  let buf = RunVimInTerminal('-S Xtest_diff_breakindent_after_filler', #{rows: 8, cols: 45})
+  call VerifyScreenDump(buf, 'Test_diff_breakindent_after_filler', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc
 
 func Test_diff_with_syntax()
