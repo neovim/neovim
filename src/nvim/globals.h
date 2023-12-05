@@ -953,7 +953,7 @@ EXTERN const char e_highlight_group_name_invalid_char[] INIT(= N_("E5248: Invali
 
 EXTERN const char e_highlight_group_name_too_long[] INIT(= N_("E1249: Highlight group name too long"));
 
-EXTERN const char e_invalid_line_number_nr[] INIT(= N_("E966: Invalid line number: %ld"));
+EXTERN const char e_invalid_line_number_nr[] INIT(= N_("E966: Invalid line number: %lld"));
 
 EXTERN const char e_stray_closing_curly_str[]
 INIT(= N_("E1278: Stray '}' without a matching '{': %s"));

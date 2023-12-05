@@ -1116,15 +1116,26 @@ void f_screenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  pos_T pos = {
-    .lnum = (linenr_T)tv_get_number(&argvars[1]),
-    .col = (colnr_T)tv_get_number(&argvars[2]) - 1,
-    .coladd = 0
-  };
-  if (pos.lnum > wp->w_buffer->b_ml.ml_line_count) {
-    semsg(_(e_invalid_line_number_nr), pos.lnum);
+  bool lnum_err = false, col_err = false;
+  varnumber_T input_lnum = (linenr_T)tv_get_number_chk(&argvars[1], &lnum_err);
+  varnumber_T input_col = (linenr_T)tv_get_number_chk(&argvars[2], &col_err);
+
+  if (lnum_err || col_err) return; // tv_get_number_chk() prints the error
+  if (input_lnum <= 0 || input_lnum > wp->w_buffer->b_ml.ml_line_count) {
+    semsg(_(e_invalid_line_number_nr), input_lnum);
     return;
   }
+  // input_col = clamp(input_col-1, 0, MAXCOL)
+  if (input_col <= 1) input_col = 0;
+  else if (input_col > MAXCOL) input_col = MAXCOL;
+  else input_col = input_col - 1;
+
+
+  pos_T pos = {
+    .lnum = (linenr_T)input_lnum,
+    .col = (colnr_T)input_col,
+    .coladd = 0
+  };
   int row = 0;
   int scol = 0, ccol = 0, ecol = 0;
   textpos2screenpos(wp, &pos, &row, &scol, &ccol, &ecol, false);

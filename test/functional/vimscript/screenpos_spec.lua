@@ -70,4 +70,8 @@ describe('screenpos() function', function()
     eq({row = 1, col = 1, endcol = 1, curscol = 1}, funcs.screenpos(0, 3, 1))
     eq({row = 2, col = 1, endcol = 1, curscol = 1}, funcs.screenpos(0, 4, 1))
   end)
+
+  it('handles negative column values', function()
+    eq({ row = 1, col = 1, endcol = 1, curscol = 1 }, funcs.screenpos(0, 1, -2000000000))
+  end)
 end)
