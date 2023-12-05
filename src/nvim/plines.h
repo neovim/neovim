@@ -1,10 +1,10 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stdint.h>
+#include <stdint.h>  // IWYU pragma: keep
 
 #include "nvim/buffer_defs.h"
-#include "nvim/marktree.h"
+#include "nvim/marktree_defs.h"
 #include "nvim/pos_defs.h"  // IWYU pragma: keep
 
 /// Argument for lbr_chartabsize().

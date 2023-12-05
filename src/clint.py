@@ -900,16 +900,13 @@ def CheckIncludes(filename, lines, error):
     # These should be synced with the ignored headers in the `iwyu` target in
     # the Makefile.
     check_includes_ignore = [
-            "src/nvim/api/extmark.h",
             "src/nvim/api/private/helpers.h",
             "src/nvim/api/private/validate.h",
             "src/nvim/assert_defs.h",
-            "src/nvim/autocmd.h",
             "src/nvim/buffer.h",
             "src/nvim/buffer_defs.h",
             "src/nvim/channel.h",
             "src/nvim/charset.h",
-            "src/nvim/decoration.h",
             "src/nvim/drawline.h",
             "src/nvim/eval.h",
             "src/nvim/eval/encode.h",
@@ -927,7 +924,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/event/stream.h",
             "src/nvim/event/time.h",
             "src/nvim/event/wstream.h",
-            "src/nvim/extmark.h",
             "src/nvim/garray.h",
             "src/nvim/globals.h",
             "src/nvim/grid.h",
@@ -946,7 +942,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/os/pty_conpty_win.h",
             "src/nvim/os/pty_process_unix.h",
             "src/nvim/os/pty_process_win.h",
-            "src/nvim/plines.h",
             "src/nvim/tui/input.h",
             "src/nvim/ui.h",
             "src/nvim/viml/parser/expressions.h",

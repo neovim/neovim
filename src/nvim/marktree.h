@@ -1,68 +1,14 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stddef.h>
+#include <stddef.h>  // IWYU pragma: keep
 #include <stdint.h>
 
-#include "klib/kvec.h"
 #include "nvim/decoration_defs.h"
-#include "nvim/garray_defs.h"  // IWYU pragma: keep
-#include "nvim/map_defs.h"
+#include "nvim/marktree_defs.h"  // IWYU pragma: export
 #include "nvim/pos_defs.h"  // IWYU pragma: keep
 // only for debug functions:
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
-
-#define MT_MAX_DEPTH 20
-#define MT_BRANCH_FACTOR 10
-// note max branch is actually 2*MT_BRANCH_FACTOR
-// and strictly this is ceil(log2(2*MT_BRANCH_FACTOR + 1))
-// as we need a pseudo-index for "right before this node"
-#define MT_LOG2_BRANCH 5
-
-typedef struct {
-  int32_t row;
-  int32_t col;
-} MTPos;
-#define MTPos(r, c) ((MTPos){ .row = (r), .col = (c) })
-
-typedef struct mtnode_s MTNode;
-
-typedef struct {
-  MTPos pos;
-  int lvl;
-  MTNode *x;
-  int i;
-  struct {
-    int oldcol;
-    int i;
-  } s[MT_MAX_DEPTH];
-
-  size_t intersect_idx;
-  MTPos intersect_pos;
-  MTPos intersect_pos_x;
-} MarkTreeIter;
-
-#define marktree_itr_valid(itr) ((itr)->x != NULL)
-// access raw key: flags in MT_FLAG_EXTERNAL_MASK and decor_data are safe to modify.
-#define mt_itr_rawkey(itr) ((itr)->x->key[(itr)->i])
-
-// Internal storage
-//
-// NB: actual marks have flags > 0, so we can use (row,col,0) pseudo-key for
-// "space before (row,col)"
-typedef struct {
-  MTPos pos;
-  uint32_t ns;
-  uint32_t id;
-  uint16_t flags;
-  DecorInlineData decor_data;  // "ext" tag in flags
-} MTKey;
-
-typedef struct {
-  MTKey start;
-  MTPos end_pos;
-  bool end_right_gravity;
-} MTPair;
 
 #define MT_INVALID_KEY (MTKey) { { -1, -1 }, 0, 0, 0, { .hl = DECOR_HIGHLIGHT_INLINE_INIT } }
 
@@ -178,31 +124,6 @@ static inline DecorInline mt_decor(MTKey key)
 {
   return (DecorInline){ .ext = key.flags & MT_FLAG_DECOR_EXT, .data = key.decor_data };
 }
-
-typedef kvec_withinit_t(uint64_t, 4) Intersection;
-
-struct mtnode_s {
-  int32_t n;
-  int16_t level;
-  int16_t p_idx;  // index in parent
-  Intersection intersect;
-  // TODO(bfredl): we could consider having a only-sometimes-valid
-  // index into parent for faster "cached" lookup.
-  MTNode *parent;
-  MTKey key[2 * MT_BRANCH_FACTOR - 1];
-  MTNode *ptr[];
-};
-
-static inline uint64_t mt_dbg_id(uint64_t id)
-{
-  return (id>>1)&0xffffffff;
-}
-
-typedef struct {
-  MTNode *root;
-  size_t n_keys, n_nodes;
-  PMap(uint64_t) id2node[1];
-} MarkTree;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "marktree.h.generated.h"

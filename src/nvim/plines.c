@@ -14,6 +14,7 @@
 #include "nvim/indent.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mark.h"
+#include "nvim/marktree.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/move.h"
