@@ -1628,26 +1628,27 @@ describe('API/extmarks', function()
     screen = Screen.new(40, 6)
     screen:attach()
     feed('dd6iaaa bbb ccc<CR><ESC>gg')
-    set_extmark(ns, 1, 0, 0, { invalidate = true, sign_text = 'S1' })
-    set_extmark(ns, 2, 1, 0, { invalidate = true, sign_text = 'S2' })
+    meths.set_option_value('signcolumn', 'auto:2', {})
+    set_extmark(ns, 1, 0, 0, { invalidate = true, sign_text = 'S1', end_row = 1 })
+    set_extmark(ns, 2, 1, 0, { invalidate = true, sign_text = 'S2', end_row = 2 })
     -- mark with invalidate is removed
-    command('d')
+    command('d2')
     screen:expect([[
       S2^aaa bbb ccc                           |
         aaa bbb ccc                           |
         aaa bbb ccc                           |
         aaa bbb ccc                           |
-        aaa bbb ccc                           |
+                                              |
                                               |
     ]])
     -- mark is restored with undo_restore == true
     command('silent undo')
     screen:expect([[
-      S1^aaa bbb ccc                           |
-      S2aaa bbb ccc                           |
-        aaa bbb ccc                           |
-        aaa bbb ccc                           |
-        aaa bbb ccc                           |
+      S1  ^aaa bbb ccc                         |
+      S1S2aaa bbb ccc                         |
+      S2  aaa bbb ccc                         |
+          aaa bbb ccc                         |
+          aaa bbb ccc                         |
                                               |
     ]])
     -- mark is deleted with undo_restore == false
