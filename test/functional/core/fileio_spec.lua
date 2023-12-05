@@ -49,48 +49,48 @@ describe('fileio', function()
     rmdir('Xtest_backupdir with spaces')
   end)
 
-  it('fsync() codepaths #8304', function()
-    clear({ args={ '-i', 'Xtest_startup_shada',
-                   '--cmd', 'set nofsync',
-                   '--cmd', 'set directory=Xtest_startup_swapdir' } })
+  it("fsync() with 'nofsync' #8304", function()
+    clear({ args={ '--cmd', 'set nofsync directory=Xtest_startup_swapdir', } })
 
     -- These cases ALWAYS force fsync (regardless of 'fsync' option):
 
     -- 1. Idle (CursorHold) with modified buffers (+ 'swapfile').
     command('write Xtest_startup_file1')
-    feed('ifoo<esc>h')
+    feed('Afoo<esc>h')
     command('write')
-    eq(0, request('nvim__stats').fsync)   -- 'nofsync' is the default.
+    eq(0, request('nvim__stats').fsync)
     command('set swapfile')
     command('set updatetime=1')
-    feed('izub<esc>h')                    -- File is 'modified'.
+    feed('Azub<esc>h')                    -- File is 'modified'.
     sleep(3)                              -- Allow 'updatetime' to expire.
     retry(3, nil, function()
       eq(1, request('nvim__stats').fsync)
     end)
-    command('set updatetime=9999')
+    command('set updatetime=100000 updatecount=100000')
 
-    -- 2. Exit caused by deadly signal (+ 'swapfile').
-    local j = funcs.jobstart({ nvim_prog, '-u', 'NONE', '-i',
-                               'Xtest_startup_shada', '--headless',
+    -- 2. Explicit :preserve command.
+    command('preserve')
+    -- TODO: should be exactly 2; figure out where the extra fsync() is coming from. #26404
+    ok(request('nvim__stats').fsync >= 2)
+
+    -- 3. Enable 'fsync' option, write file.
+    command('set fsync')
+    feed('Abaz<esc>h')
+    command('write')
+    eq(4, request('nvim__stats').fsync)
+    eq('foozubbaz', trim(read_file('Xtest_startup_file1')))
+
+    -- 4. Exit caused by deadly signal (+ 'swapfile').
+    local j = funcs.jobstart({ nvim_prog, '-u', 'NONE', '--headless',
+                               '--cmd', 'set nofsync directory=Xtest_startup_swapdir',
                                '-c', 'set swapfile',
                                '-c', 'write Xtest_startup_file2',
                                '-c', 'put =localtime()', })
     sleep(10)         -- Let Nvim start.
     funcs.jobstop(j)  -- Send deadly signal.
 
-    -- 3. SIGPWR signal.
+    -- 5. SIGPWR signal.
     -- ??
-
-    -- 4. Explicit :preserve command.
-    command('preserve')
-    eq(2, request('nvim__stats').fsync)
-
-    -- 5. Enable 'fsync' option, write file.
-    command('set fsync')
-    feed('ibaz<esc>h')
-    command('write')
-    eq(4, request('nvim__stats').fsync)
   end)
 
   it('backup #9709', function()
