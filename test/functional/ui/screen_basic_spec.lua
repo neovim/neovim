@@ -12,7 +12,7 @@ describe('screen', function()
     helpers.nvim_prog,
     '-u', 'NONE',
     '-i', 'NONE',
-    '-N',
+    '-n',
     '--cmd', 'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
     '--cmd', 'colorscheme vim',
     '--embed',
