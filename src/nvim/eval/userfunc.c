@@ -3818,7 +3818,7 @@ bool set_ref_in_previous_funccal(int copyID)
     fc->fc_copyID = copyID + 1;
     if (set_ref_in_ht(&fc->fc_l_vars.dv_hashtab, copyID + 1, NULL)
         || set_ref_in_ht(&fc->fc_l_avars.dv_hashtab, copyID + 1, NULL)
-        || set_ref_in_list(&fc->fc_l_varlist, copyID + 1, NULL)) {
+        || set_ref_in_list_items(&fc->fc_l_varlist, copyID + 1, NULL)) {
       return true;
     }
   }
@@ -3831,7 +3831,7 @@ static bool set_ref_in_funccal(funccall_T *fc, int copyID)
     fc->fc_copyID = copyID;
     if (set_ref_in_ht(&fc->fc_l_vars.dv_hashtab, copyID, NULL)
         || set_ref_in_ht(&fc->fc_l_avars.dv_hashtab, copyID, NULL)
-        || set_ref_in_list(&fc->fc_l_varlist, copyID, NULL)
+        || set_ref_in_list_items(&fc->fc_l_varlist, copyID, NULL)
         || set_ref_in_func(NULL, fc->fc_func, copyID)) {
       return true;
     }

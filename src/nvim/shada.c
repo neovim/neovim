@@ -2604,7 +2604,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
       case VAR_LIST: {
         list_T *l = vartv.vval.v_list;
         int copyID = get_copyID();
-        if (!set_ref_in_list(l, copyID, NULL)
+        if (!set_ref_in_list_items(l, copyID, NULL)
             && copyID == l->lv_copyID) {
           tv_clear(&vartv);
           continue;
