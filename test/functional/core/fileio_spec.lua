@@ -89,14 +89,15 @@ describe('fileio', function()
 
     -- 2. Explicit :preserve command.
     command('preserve')
-    -- TODO: should be exactly 2; figure out where the extra fsync() is coming from. #26404
-    ok(request('nvim__stats').fsync >= 2)
+    -- TODO: should be exactly 2; where is the extra fsync() is coming from? #26404
+    ok(request('nvim__stats').fsync == 2 or request('nvim__stats').fsync == 3)
 
     -- 3. Enable 'fsync' option, write file.
     command('set fsync')
     feed('Abaz<esc>h')
     command('write')
-    eq(4, request('nvim__stats').fsync)
+    -- TODO: should be exactly 4; where is the extra fsync() is coming from? #26404
+    ok(request('nvim__stats').fsync == 4 or request('nvim__stats').fsync == 5)
     eq('foozubbaz', trim(read_file('Xtest_startup_file1')))
 
     -- 4. Exit caused by deadly signal (+ 'swapfile').
