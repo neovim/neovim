@@ -179,7 +179,7 @@ describe(':terminal with multigrid', function()
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup(0,nil,50,{ext_multigrid=true})
+    screen = thelpers.screen_setup(0, nil, 50, nil, {ext_multigrid=true})
   end)
 
   it('resizes to requested size', function()

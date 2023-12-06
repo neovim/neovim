@@ -487,7 +487,7 @@ if is_os('win') then
       clear()
       feed_command('set modifiable swapfile undolevels=20')
       poke_eventloop()
-      local cmd = '["cmd.exe","/K","PROMPT=$g$s"]'
+      local cmd = { "cmd.exe", "/K", "PROMPT=$g$s" }
       screen = thelpers.screen_setup(nil, cmd)
     end)
 
