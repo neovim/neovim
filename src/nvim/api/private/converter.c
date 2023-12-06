@@ -328,15 +328,6 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     for (uint32_t i = 0; i < obj.data.dictionary.size; i++) {
       KeyValuePair item = obj.data.dictionary.items[i];
       String key = item.key;
-
-      if (key.size == 0) {
-        api_set_error(err, kErrorTypeValidation,
-                      "Empty dictionary keys aren't allowed");
-        // cleanup
-        tv_dict_free(dict);
-        return false;
-      }
-
       dictitem_T *const di = tv_dict_item_alloc(key.data);
 
       if (!object_to_vim(item.value, &di->di_tv, err)) {
