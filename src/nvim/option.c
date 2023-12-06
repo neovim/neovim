@@ -6172,20 +6172,6 @@ bool fish_like_shell(void)
   return strstr(path_tail(p_sh), "fish") != NULL;
 }
 
-/// Return the number of requested sign columns, based on current
-/// buffer signs and on user configuration.
-int win_signcol_count(win_T *wp)
-{
-  if (wp->w_minscwidth <= SCL_NO) {
-    return 0;
-  }
-
-  int needed_signcols = buf_signcols(wp->w_buffer, wp->w_maxscwidth);
-  int ret = MAX(wp->w_minscwidth, MIN(wp->w_maxscwidth, needed_signcols));
-  assert(ret <= SIGN_SHOW_MAX);
-  return ret;
-}
-
 /// Get window or buffer local options
 dict_T *get_winbuf_options(const int bufopt)
   FUNC_ATTR_WARN_UNUSED_RESULT

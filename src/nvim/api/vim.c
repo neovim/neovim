@@ -2189,7 +2189,6 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
       int cul_id = 0;
       int num_id = 0;
       linenr_T lnum = statuscol_lnum;
-      wp->w_scwidth = win_signcol_count(wp);
       decor_redraw_signs(wp, wp->w_buffer, lnum - 1, sattrs, &line_id, &cul_id, &num_id);
 
       statuscol.sattrs = sattrs;
