@@ -3099,51 +3099,36 @@ int findoption_len(const char *const arg, const size_t len)
 bool is_tty_option(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return (name[0] == 't' && name[1] == '_')
-         || strequal(name, "term")
-         || strequal(name, "ttytype");
+  return (name[0] == 't' && name[1] == '_') || strequal(name, "term") || strequal(name, "ttytype");
 }
 
 #define TCO_BUFFER_SIZE 8
-/// @param name TUI-related option
-/// @param[out,allocated] value option string value
-bool get_tty_option(const char *name, char **value)
+/// Get value of TTY option.
+///
+/// @param  name  Name of TTY option.
+///
+/// @return [allocated] TTY option value. Returns NIL_OPTVAL if option isn't a TTY option.
+OptVal get_tty_option(const char *name)
 {
+  char *value = NULL;
+
   if (strequal(name, "t_Co")) {
-    if (value) {
-      if (t_colors <= 1) {
-        *value = xstrdup("");
-      } else {
-        *value = xmalloc(TCO_BUFFER_SIZE);
-        snprintf(*value, TCO_BUFFER_SIZE, "%d", t_colors);
-      }
+    if (t_colors <= 1) {
+      value = xstrdup("");
+    } else {
+      value = xmalloc(TCO_BUFFER_SIZE);
+      snprintf(value, TCO_BUFFER_SIZE, "%d", t_colors);
     }
-    return true;
+  } else if (strequal(name, "term")) {
+    value = p_term ? xstrdup(p_term) : xstrdup("nvim");
+  } else if (strequal(name, "ttytype")) {
+    value = p_ttytype ? xstrdup(p_ttytype) : xstrdup("nvim");
+  } else if (is_tty_option(name)) {
+    // XXX: All other t_* options were removed in 3baba1e7.
+    value = xstrdup("");
   }
 
-  if (strequal(name, "term")) {
-    if (value) {
-      *value = p_term ? xstrdup(p_term) : xstrdup("nvim");
-    }
-    return true;
-  }
-
-  if (strequal(name, "ttytype")) {
-    if (value) {
-      *value = p_ttytype ? xstrdup(p_ttytype) : xstrdup("nvim");
-    }
-    return true;
-  }
-
-  if (is_tty_option(name)) {
-    if (value) {
-      // XXX: All other t_* options were removed in 3baba1e7.
-      *value = xstrdup("");
-    }
-    return true;
-  }
-
-  return false;
+  return value == NULL ? NIL_OPTVAL : CSTR_AS_OPTVAL(value);
 }
 
 bool set_tty_option(const char *name, char *value)
@@ -3412,7 +3397,7 @@ static OptVal optval_unset_local(int opt_idx, void *varp)
     }
   }
   // For options that aren't global-local, just set the local value to the global value.
-  return get_option_value(opt->fullname, NULL, OPT_GLOBAL, NULL);
+  return get_option_value(opt_idx, OPT_GLOBAL);
 }
 
 /// Get an allocated string containing a list of valid types for an option.
@@ -3458,45 +3443,40 @@ static char *option_get_valid_types(int opt_idx)
 #undef OPTION_ADD_TYPE
 }
 
+/// Check if option is hidden.
+///
+/// @param  opt_idx  Option index in options[] table.
+///
+/// @return  True if option is hidden, false otherwise. Returns false if option name is invalid.
+bool is_option_hidden(int opt_idx)
+{
+  return opt_idx < 0 ? false : get_varp(&options[opt_idx]) == NULL;
+}
+
+/// Get option flags.
+///
+/// @param  opt_idx  Option index in options[] table.
+///
+/// @return  Option flags. Returns 0 for invalid option name.
+uint32_t get_option_flags(int opt_idx)
+{
+  return opt_idx < 0 ? 0 : options[opt_idx].flags;
+}
+
 /// Gets the value for an option.
 ///
-/// @param[in]   name    Option name.
-/// @param[out]  flagsp  Set to the option flags (P_xxxx) (if not NULL).
-/// @param[in]   scope   Option scope (can be OPT_LOCAL, OPT_GLOBAL or a combination).
-/// @param[out]  hidden  Whether option is hidden.
+/// @param       opt_idx  Option index in options[] table.
+/// @param[in]   scope    Option scope (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 ///
-/// @return [allocated] Option value. Returns NIL_OPTVAL for invalid options.
-OptVal get_option_value(const char *name, uint32_t *flagsp, int scope, bool *hidden)
+/// @return [allocated] Option value. Returns NIL_OPTVAL for invalid option index.
+OptVal get_option_value(int opt_idx, int scope)
 {
-  // Make sure that hidden and flagsp are never returned uninitialized
-  if (hidden != NULL) {
-    *hidden = false;
-  }
-  if (flagsp != NULL) {
-    *flagsp = 0;
-  }
-
-  char *str;
-  if (get_tty_option(name, &str)) {
-    return CSTR_AS_OPTVAL(str);
-  }
-
-  int opt_idx = findoption(name);
-  if (opt_idx < 0) {  // option not in the table
+  if (opt_idx < 0) {  // option not in the options[] table.
     return NIL_OPTVAL;
   }
 
   vimoption_T *opt = &options[opt_idx];
   void *varp = get_varp_scope(opt, scope);
-
-  if (hidden != NULL) {
-    *hidden = varp == NULL;
-  }
-
-  if (flagsp != NULL) {
-    // Return the P_xxxx option flags.
-    *flagsp = opt->flags;
-  }
 
   return optval_copy(optval_from_varp(opt_idx, varp));
 }
