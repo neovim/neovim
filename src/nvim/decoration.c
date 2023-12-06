@@ -203,21 +203,21 @@ void buf_put_decor_virt(buf_T *buf, DecorVirtText *vt)
 }
 
 static int sign_add_id = 0;
-void buf_put_decor_sh(buf_T *buf, DecorSignHighlight *sh, int row, int row2)
+void buf_put_decor_sh(buf_T *buf, DecorSignHighlight *sh, int row1, int row2)
 {
   if (sh->flags & kSHIsSign) {
     sh->sign_add_id = sign_add_id++;
     buf->b_signs++;
     if (sh->text.ptr) {
       buf->b_signs_with_text++;
-      buf_signcols_add_check(buf, row + 1, row2 + 1);
+      buf_signcols_invalidate_range(buf, row1, row2, 1);
     }
   }
 }
 
-void buf_decor_remove(buf_T *buf, int row, int row2, DecorInline decor, bool free)
+void buf_decor_remove(buf_T *buf, int row1, int row2, DecorInline decor, bool free)
 {
-  decor_redraw(buf, row, row2, decor);
+  decor_redraw(buf, row1, row2, decor);
   if (decor.ext) {
     DecorVirtText *vt = decor.data.ext.vt;
     while (vt) {
@@ -227,7 +227,7 @@ void buf_decor_remove(buf_T *buf, int row, int row2, DecorInline decor, bool fre
     uint32_t idx = decor.data.ext.sh_idx;
     while (idx != DECOR_ID_INVALID) {
       DecorSignHighlight *sh = &kv_A(decor_items, idx);
-      buf_remove_decor_sh(buf, row, row2, sh);
+      buf_remove_decor_sh(buf, row1, row2, sh);
       idx = sh->next;
     }
     if (free) {
@@ -249,7 +249,7 @@ void buf_remove_decor_virt(buf_T *buf, DecorVirtText *vt)
   }
 }
 
-void buf_remove_decor_sh(buf_T *buf, int row, int row2, DecorSignHighlight *sh)
+void buf_remove_decor_sh(buf_T *buf, int row1, int row2, DecorSignHighlight *sh)
 {
   if (sh->flags & kSHIsSign) {
     assert(buf->b_signs > 0);
@@ -257,8 +257,8 @@ void buf_remove_decor_sh(buf_T *buf, int row, int row2, DecorSignHighlight *sh)
     if (sh->text.ptr) {
       assert(buf->b_signs_with_text > 0);
       buf->b_signs_with_text--;
-      if (row2 >= row) {
-        buf_signcols_del_check(buf, row + 1, row2 + 1);
+      if (row2 >= row1) {
+        buf_signcols_invalidate_range(buf, row1, row2, -1);
       }
     }
   }
@@ -792,50 +792,128 @@ DecorSignHighlight *decor_find_sign(DecorInline decor)
   }
 }
 
-// Increase the signcolumn size and update the sentinel line if necessary for
-// the invalidated range.
-void decor_validate_signcols(buf_T *buf, int max)
+/// If "count" is greater than current max, set it and reset "max_count".
+static void buf_signcols_validate_row(buf_T *buf, int count, int add)
 {
-  int signcols = 0;  // highest value of count
-  int currow = buf->b_signcols.invalid_top - 1;
-  // TODO(bfredl): only need to use marktree_itr_get_overlap once.
-  // then we can process both start and end events and update state for each row
-  for (; currow < buf->b_signcols.invalid_bot; currow++) {
-    MarkTreeIter itr[1];
-    if (!marktree_itr_get_overlap(buf->b_marktree, currow, 0, itr)) {
-      continue;
-    }
+  int del = add < 0 ? -add : 0;
+  if (count > buf->b_signcols.max) {
+    buf->b_signcols.max = count;
+    buf->b_signcols.max_count = 0;
+    buf->b_signcols.resized = true;
+  }
+  /// Add sign of "add" to "max_count"
+  if (count == buf->b_signcols.max - del) {
+    buf->b_signcols.max_count += (add > 0) - (add < 0);
+  }
+}
 
-    int count = 0;
-    MTPair pair;
-    while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
-      if (!mt_invalid(pair.start) && (pair.start.flags & MT_FLAG_DECOR_SIGNTEXT)) {
-        count++;
-      }
-    }
+/// Validate a range by counting the number of overlapping signs and adjusting
+/// "b_signcols" accordingly.
+static void buf_signcols_validate_range(buf_T *buf, int row1, int row2, int add)
+{
+  int count = 0;  // Number of signs on the current line
+  int currow = row1;
+  MTPair pair = { 0 };
+  MarkTreeIter itr[1];
 
-    while (itr->x) {
-      MTKey mark = marktree_itr_current(itr);
-      if (mark.pos.row != currow) {
-        break;
-      }
-      if (!mt_invalid(mark) && !mt_end(mark) && (mark.flags & MT_FLAG_DECOR_SIGNTEXT)) {
-        count++;
-      }
-      marktree_itr_next(buf->b_marktree, itr);
-    }
+  // Allocate an array of integers holding the overlapping signs in the range.
+  assert(row2 >= row1);
+  int *overlap = xcalloc(sizeof(int), (size_t)(row2 + 1 - row1));
 
-    if (count > signcols) {
-      if (count >= buf->b_signcols.size) {
-        buf->b_signcols.size = count;
-        buf->b_signcols.sentinel = currow + 1;
-      }
-      if (count >= max) {
-        return;
-      }
-      signcols = count;
+  // First find the number of overlapping signs at "row1".
+  marktree_itr_get_overlap(buf->b_marktree, currow, 0, itr);
+  while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
+    if (!mt_invalid(pair.start) && pair.start.flags & MT_FLAG_DECOR_SIGNTEXT) {
+      overlap[0]++;
     }
   }
+
+  // Continue traversing the marktree until beyond "row2". Increment "count" for
+  // the start of a mark, increment the overlap array until the end of a paired mark.
+  while (itr->x) {
+    MTKey mark = marktree_itr_current(itr);
+    if (mark.pos.row > row2) {
+      break;
+    }
+    // Finish the count at the previous row.
+    if (mark.pos.row != currow) {
+      buf_signcols_validate_row(buf, count + overlap[currow - row1], add);
+      currow = mark.pos.row;
+      count = 0;
+    }
+
+    // Increment count and overlap array for the range of a paired sign mark.
+    if (!mt_invalid(mark) && !mt_end(mark) && (mark.flags & MT_FLAG_DECOR_SIGNTEXT)) {
+      count++;
+      if (mt_paired(mark)) {
+        MTPos end = marktree_get_altpos(buf->b_marktree, mark, NULL);
+        for (int i = mark.pos.row; i < MIN(row2, end.row); i++) {
+          overlap[row2 - i]++;
+        }
+      }
+    }
+
+    marktree_itr_next(buf->b_marktree, itr);
+  }
+  buf_signcols_validate_row(buf, count + overlap[currow - row1], add);
+  xfree(overlap);
+}
+
+int buf_signcols_validate(win_T *wp, buf_T *buf, bool stc_check)
+{
+  int start;
+  SignRange range;
+  map_foreach(buf->b_signcols.invalid, start, range, {
+    // Leave rest of the ranges invalid if max is already greater than
+    // configured maximum or resize is detected for 'statuscolumn' rebuild.
+    if ((!stc_check || buf->b_signcols.resized)
+        && (range.add > 0 && buf->b_signcols.max >= wp->w_maxscwidth)) {
+      return wp->w_maxscwidth;
+    }
+    buf_signcols_validate_range(buf, start, range.end, range.add);
+  });
+
+  // Check if we need to scan the entire buffer.
+  if (buf->b_signcols.max_count == 0) {
+    buf->b_signcols.max = 0;
+    buf->b_signcols.resized = true;
+    buf_signcols_validate_range(buf, 0, buf->b_ml.ml_line_count, 0);
+  }
+
+  map_clear(int, buf->b_signcols.invalid);
+  return buf->b_signcols.max;
+}
+
+static void buf_signcols_invalidate_range(buf_T *buf, int row1, int row2, int add)
+{
+  if (!buf->b_signs_with_text) {
+    buf->b_signcols.max = buf->b_signcols.max_count = 0;
+    buf->b_signcols.resized = true;
+    map_clear(int, buf->b_signcols.invalid);
+    return;
+  }
+
+  // Remove an invalid range if sum of added/removed signs is now 0.
+  SignRange *srp = map_ref(int, SignRange)(buf->b_signcols.invalid, row1, NULL);
+  if (srp && srp->end == row2 && srp->add + add == 0) {
+    map_del(int, SignRange)(buf->b_signcols.invalid, row1, NULL);
+    return;
+  }
+
+  // Merge with overlapping invalid range.
+  int start;
+  SignRange range;
+  map_foreach(buf->b_signcols.invalid, start, range, {
+    if (row1 <= range.end && start <= row2) {
+      row1 = MIN(row1, start);
+      row2 = MAX(row2, range.end);
+      break;
+    }
+  });
+
+  srp = map_put_ref(int, SignRange)(buf->b_signcols.invalid, row1, NULL, NULL);
+  srp->end = row2;
+  srp->add += add;
 }
 
 void decor_redraw_end(DecorState *state)

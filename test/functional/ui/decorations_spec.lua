@@ -4644,7 +4644,6 @@ l5
       {2:~                                                 }|
                                                         |
     ]]}
-
   end)
 
   it('can add a single sign (with end row)', function()
@@ -4665,7 +4664,6 @@ l5
       {2:~                                                 }|
                                                         |
     ]]}
-
   end)
 
   it('can add a single sign and text highlight', function()
@@ -4707,7 +4705,6 @@ l5
       {2:~                                                 }|
                                                         |
     ]]}
-
   end)
 
   it('can add multiple signs (multiple extmarks)', function()
@@ -4867,7 +4864,6 @@ l5
       {2:~                                                 }|
                                                         |
     ]]}
-
   end)
 
   it('can add lots of signs', function()
@@ -4977,6 +4973,22 @@ l5
                           |
     ]]}
   end)
+
+  it('correct width when removing multiple signs from sentinel line', function()
+    screen:try_resize(20, 4)
+    insert(example_test3)
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S1', end_row=3})
+    meths.buf_set_extmark(0, ns, 1, -1, {invalidate = true, sign_text='S2'})
+    meths.buf_set_extmark(0, ns, 1, -1, {invalidate = true, sign_text='S3'})
+    feed('2Gdd')
+
+    screen:expect{grid=[[
+      S1l1                |
+      S1^l3                |
+      S1l4                |
+                          |
+    ]]}
+  end)
 end)
 
 describe('decorations: virt_text', function()
@@ -5073,5 +5085,4 @@ describe('decorations: virt_text', function()
                                                         |
     ]]}
   end)
-
 end)

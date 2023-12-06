@@ -703,11 +703,10 @@ struct file_buffer {
                                 // may use a different synblock_T.
 
   struct {
-    int size;                   // last calculated number of sign columns
-    int max;                    // maximum value size is valid for.
-    linenr_T sentinel;          // a line number which is holding up the signcolumn
-    linenr_T invalid_top;       // first invalid line number that needs to be checked
-    linenr_T invalid_bot;       // last invalid line number that needs to be checked
+    int max;                         // maximum number of signs on a single line
+    int max_count;                   // number of lines with max number of signs
+    bool resized;                    // whether max changed at start of redraw
+    Map(int, SignRange) invalid[1];  // map of invalid ranges to be checked
   } b_signcols;
 
   Terminal *terminal;           // Terminal instance associated with the buffer
