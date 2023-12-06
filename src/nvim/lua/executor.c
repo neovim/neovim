@@ -115,7 +115,7 @@ lua_State *get_global_lstate(void)
 /// Convert lua error into a Vim error message
 ///
 /// @param  lstate  Lua interpreter state.
-/// @param[in]  msg  Message base, must contain one `%*s`.
+/// @param[in]  msg  Message base, must contain one `%.*s`.
 void nlua_error(lua_State *const lstate, const char *const msg)
   FUNC_ATTR_NONNULL_ALL
 {

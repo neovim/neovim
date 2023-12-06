@@ -456,6 +456,25 @@ func Test_dict_func_remove()
   call CheckLegacyAndVim9Failure(lines, 'E716:')
 
   let lines =<< trim END
+      let d = {'a-b': 55}
+      echo d.a-b
+  END
+  call CheckScriptFailure(lines, 'E716: Key not present in Dictionary: "a"')
+
+  let lines =<< trim END
+      vim9script
+      var d = {'a-b': 55}
+      echo d.a-b
+  END
+  call CheckScriptFailure(lines, 'E716: Key not present in Dictionary: "a"')
+
+  let lines =<< trim END
+      var d = {'a-b': 55}
+      echo d.a-b
+  END
+  call CheckDefFailure(lines, 'E1004: White space required before and after ''-''')
+
+  let lines =<< trim END
       let d = {1: 'a', 3: 'c'}
       call remove(d, [])
   END
