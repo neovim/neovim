@@ -4,20 +4,34 @@
 #   pitfalls: https://izzys.casa/2019/02/everything-you-never-wanted-to-know-about-cmake/
 
 # Version should match the tested CMAKE_URL in .github/workflows/build.yml.
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 
 # Can be removed once minimum version is at least 3.15
 if(POLICY CMP0092)
   cmake_policy(SET CMP0092 NEW)
 endif()
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
+
+include(FetchContent)
+
+set(ENV{VCPKG_DISABLE_METRICS} TRUE)
+set(VCPKG_DIR ${CMAKE_BINARY_DIR}/vcpkg)
+FetchContent_Declare(vcpkg
+    GIT_REPOSITORY https://github.com/microsoft/vcpkg.git
+    GIT_TAG        3135b990681223c46d2bce0793e04036d88f307c
+    SOURCE_DIR ${VCPKG_DIR}
+)
+if(NOT vcpkg_POPULATED)
+  FetchContent_Populate(vcpkg)
+endif()
+set(CMAKE_TOOLCHAIN_FILE ${VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake)
 
 project(nvim C)
 
 if(POLICY CMP0075)
   cmake_policy(SET CMP0075 NEW)
-endif()
-if(POLICY CMP0135)
-  cmake_policy(SET CMP0135 NEW)
 endif()
 
 # Point CMake at any custom modules we may ship
