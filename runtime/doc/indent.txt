@@ -711,26 +711,25 @@ FORTRAN							*ft-fortran-indent*
 Block if, select case, where, and forall constructs are indented.  So are
 type, interface, associate, block, and enum constructs.  The indenting of
 subroutines, functions, modules, and program blocks is optional.  Comments,
-labelled statements and continuation lines are indented if the Fortran is in
+labeled statements, and continuation lines are indented if the Fortran is in
 free source form, whereas they are not indented if the Fortran is in fixed
 source form because of the left margin requirements.  Hence manual indent
-corrections will be necessary for labelled statements and continuation lines
+corrections will be necessary for labeled statements and continuation lines
 when fixed source form is being used.  For further discussion of the method
 used for the detection of source format see |ft-fortran-syntax|.
 
 Do loops ~
 All do loops are left unindented by default.  Do loops can be unstructured in
-Fortran with (possibly multiple) loops ending on a labelled executable
+Fortran with (possibly multiple) loops ending on a labeled executable
 statement of almost arbitrary type.  Correct indentation requires
-compiler-quality parsing.  Old code with do loops ending on labelled statements
-of arbitrary type can be indented with elaborate programs such as Tidy
-(https://www.unb.ca/chem/ajit/f_tidy.htm).  Structured do/continue loops are
-also left unindented because continue statements are also used for purposes
-other than ending a do loop.  Programs such as Tidy can convert structured
-do/continue loops to the do/enddo form.  Do loops of the do/enddo variety can
-be indented.  If you use only structured loops of the do/enddo form, you should
-declare this by setting the fortran_do_enddo variable in your vimrc as
-follows >
+compiler-quality parsing.  Old code with do loops ending on labeled statements
+of arbitrary type can be indented with elaborate programs such as Tidy.
+Structured do/continue loops are also left unindented because continue
+statements are used for purposes other than ending a do loop.  Programs such
+as Tidy can convert structured do/continue loops to the do/enddo form.  Do
+loops of the do/enddo variety can be indented.  If you use only structured
+loops of the do/enddo form, you should declare this by setting the
+fortran_do_enddo variable in your vimrc as follows >
 
    let fortran_do_enddo=1
 
@@ -744,15 +743,14 @@ to get do loops indented in .f90 files and left alone in Fortran files with
 other extensions such as .for.
 
 Program units ~
-The indenting of program units (subroutines, functions, modules, and program
-blocks) is enabled by default but can be suppressed if a lighter, screen-width
-preserving indent style is desired.  To suppress the indenting of program
-units for all fortran files set the global fortran_indent_less variable in
-your vimrc as follows >
+Indenting of program units (subroutines, functions, modules, and program
+blocks) can be increased by setting the variable fortran_indent_more and can
+be decreased by setting the variable fortran_indent_less.  These variables
+can be set for all fortran files in your vimrc as follows >
 
   let fortran_indent_less=1
 
-A finer level of suppression can be achieved by setting the corresponding
+A finer level of control can be achieved by setting the corresponding
 buffer-local variable as follows >
 
   let b:fortran_indent_less=1

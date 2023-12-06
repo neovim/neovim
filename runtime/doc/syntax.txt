@@ -1554,7 +1554,15 @@ FORTRAN					*fortran.vim* *ft-fortran-syntax*
 Default highlighting and dialect ~
 Highlighting appropriate for Fortran 2008 is used by default.  This choice
 should be appropriate for most users most of the time because Fortran 2008 is
-almost a superset of previous versions (Fortran 2003, 95, 90, and 77).
+almost a superset of previous versions (Fortran 2003, 95, 90, and 77).  A
+small number of features new to Fortran 2018 and Fortran 2023 are supported
+and the complete transition to Fortran 2023 will be completed in the future.
+A few legacy constructs deleted or declared obsolescent in recent Fortran
+standards are highlighted as todo items.
+
+The syntax script no longer supports Fortran dialects.  The variable
+fortran_dialect is now silently ignored.  Since computers are much faster now,
+the variable fortran_more_precise is no longer needed and is silently ignored.
 
 Fortran source code form ~
 Fortran code can be in either fixed or free source form.  Note that the
@@ -1563,10 +1571,8 @@ syntax highlighting will not be correct if the form is incorrectly set.
 When you create a new fortran file, the syntax script assumes fixed source
 form.  If you always use free source form, then >
     :let fortran_free_source=1
-in your vimrc prior to the :syntax on command.  If you always use fixed
-source form, then >
+If you always use fixed source form, then >
     :let fortran_fixed_source=1
-in your vimrc prior to the :syntax on command.
 
 If the form of the source code depends, in a non-standard way, upon the file
 extension, then it is most convenient to set fortran_free_source in a ftplugin
@@ -1582,14 +1588,33 @@ neither of these variables have been set, the syntax script attempts to
 determine which source form has been used by examining the file extension
 using conventions common to the ifort, gfortran, Cray, NAG, and PathScale
 compilers (.f, .for, .f77 for fixed-source, .f90, .f95, .f03, .f08 for
-free-source). If none of this works, then the script examines the first five
-columns of the first 500 lines of your file.  If no signs of free source form
-are detected, then the file is assumed to be in fixed source form.  The
-algorithm should work in the vast majority of cases.  In some cases, such as a
-file that begins with 500 or more full-line comments, the script may
-incorrectly decide that the fortran code is in fixed form.  If that happens,
-just add a non-comment statement beginning anywhere in the first five columns
-of the first twenty-five lines, save (:w) and then reload (:e!) the file.
+free-source). No default is used for the .fpp and .ftn file extensions because
+different compilers treat them differently. If none of this works, then the
+script examines the first five columns of the first 500 lines of your file. If
+no signs of free source form are detected, then the file is assumed to be in
+fixed source form.  The algorithm should work in the vast majority of cases.
+In some cases, such as a file that begins with 500 or more full-line comments,
+the script may incorrectly decide that the code is in fixed form.  If that
+happens, just add a non-comment statement beginning anywhere in the first five
+columns of the first twenty-five lines, save (:w), and then reload (:e!) the
+file.
+
+Vendor extensions ~
+Fixed-form Fortran requires a maximum line length of 72 characters but the
+script allows a maximum line length of 80 characters as do all compilers
+created in the last three decades.  An even longer line length of 132
+characters is allowed if you set the variable fortran_extended_line_length
+with a command such as >
+    :let fortran_extended_line_length=1
+
+If you want additional highlighting of the CUDA Fortran extensions, you should
+set the variable fortran_CUDA with a command such as >
+    :let fortran_CUDA=1
+
+To activate recognition of some common, non-standard, vendor-supplied
+intrinsics, you should set the variable fortran_vendor_intrinsics with a
+command such as >
+    :let fortran_vendor_intrinsics=1
 
 Tabs in fortran files ~
 Tabs are not recognized by the Fortran standards.  Tabs are not a good idea in
@@ -1598,8 +1623,8 @@ Therefore, tabs are marked as errors.  Nevertheless, some programmers like
 using tabs.  If your fortran files contain tabs, then you should set the
 variable fortran_have_tabs in your vimrc with a command such as >
     :let fortran_have_tabs=1
-placed prior to the :syntax on command.  Unfortunately, the use of tabs will
-mean that the syntax file will not be able to detect incorrect margins.
+Unfortunately, the use of tabs will mean that the syntax file will not be able
+to detect incorrect margins.
 
 Syntax folding of fortran files ~
 If you wish to use foldmethod=syntax, then you must first set the variable
@@ -1611,8 +1636,8 @@ subprograms, block data subprograms, interface blocks, and modules.  If you
 also set the variable fortran_fold_conditionals with a command such as >
     :let fortran_fold_conditionals=1
 then fold regions will also be defined for do loops, if blocks, and select
-case constructs.  If you also set the variable
-fortran_fold_multilinecomments with a command such as >
+case constructs.  If you also set the variable fortran_fold_multilinecomments
+with a command such as >
     :let fortran_fold_multilinecomments=1
 then fold regions will also be defined for three or more consecutive comment
 lines.  Note that defining fold regions can be slow for large files.
@@ -1622,58 +1647,6 @@ fortran_fold_multilinecomments, have been set, then vim will fold your file if
 you set foldmethod=syntax.  Comments or blank lines placed between two program
 units are not folded because they are seen as not belonging to any program
 unit.
-
-More precise fortran syntax ~
-If you set the variable fortran_more_precise with a command such as >
-    :let fortran_more_precise=1
-then the syntax coloring will be more precise but slower.  In particular,
-statement labels used in do, goto and arithmetic if statements will be
-recognized, as will construct names at the end of a do, if, select or forall
-construct.
-
-Non-default fortran dialects ~
-The syntax script supports two Fortran dialects: f08 and F. You will probably
-find the default highlighting (f08) satisfactory.  A few legacy constructs
-deleted or declared obsolescent in the 2008 standard are highlighted as todo
-items.
-
-If you use F, the advantage of setting the dialect appropriately is that
-other legacy features excluded from F will be highlighted as todo items and
-that free source form will be assumed.
-
-The dialect can be selected in various ways.  If all your fortran files use
-the same dialect, set the global variable fortran_dialect in your vimrc prior
-to your syntax on statement.  The case-sensitive, permissible values of
-fortran_dialect are "f08" or "F".  Invalid values of fortran_dialect are
-ignored.
-
-If the dialect depends upon the file extension, then it is most convenient to
-set a buffer-local variable in a ftplugin file.  For more information on
-ftplugin files, see |ftplugin|.  For example, if all your fortran files with
-an .f90 extension are written in the F subset, your ftplugin file should
-contain the code >
-    let s:extfname = expand("%:e")
-    if s:extfname ==? "f90"
-	let b:fortran_dialect="F"
-    else
-	unlet! b:fortran_dialect
-    endif
-Note that this will work only if the "filetype plugin indent on" command
-precedes the "syntax on" command in your vimrc file.
-
-Finer control is necessary if the file extension does not uniquely identify
-the dialect.  You can override the default dialect, on a file-by-file basis,
-by including a comment with the directive "fortran_dialect=xx" (where xx=F or
-f08) in one of the first three lines in your file.  For example, your older .f
-files may be legacy code but your newer ones may be F codes, and you would
-identify the latter by including in the first three lines of those files a
-Fortran comment of the form >
-  ! fortran_dialect=F
-
-For previous versions of the syntax, you may have set fortran_dialect to the
-now-obsolete values "f77", "f90", "f95", or "elf". Such settings will be
-silently handled as "f08". Users of "elf" may wish to experiment with "F"
-instead.
 
 The syntax/fortran.vim script contains embedded comments that tell you how to
 comment and/or uncomment some lines to (a) activate recognition of some
