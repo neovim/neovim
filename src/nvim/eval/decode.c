@@ -141,9 +141,7 @@ static inline int json_decoder_pop(ValuesStackItem obj, ValuesStack *const stack
     ValuesStackItem key = kv_pop(*stack);
     if (last_container.special_val == NULL) {
       // These cases should have already been handled.
-      assert(!(key.is_special_string
-               || key.val.vval.v_string == NULL
-               || *key.val.vval.v_string == NUL));
+      assert(!(key.is_special_string || key.val.vval.v_string == NULL));
       dictitem_T *const obj_di = tv_dict_item_alloc(key.val.vval.v_string);
       tv_clear(&key.val);
       if (tv_dict_add(last_container.container.vval.v_dict, obj_di)
@@ -170,11 +168,10 @@ static inline int json_decoder_pop(ValuesStackItem obj, ValuesStack *const stack
       tv_clear(&obj.val);
       return FAIL;
     }
-    // Handle empty key and key represented as special dictionary
+    // Handle special dictionaries
     if (last_container.special_val == NULL
         && (obj.is_special_string
             || obj.val.vval.v_string == NULL
-            || *obj.val.vval.v_string == NUL
             || tv_dict_find(last_container.container.vval.v_dict, obj.val.vval.v_string, -1))) {
       tv_clear(&obj.val);
 
@@ -403,13 +400,6 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
   if (p == e || *p != '"') {
     semsg(_("E474: Expected string end: %.*s"), (int)buf_len, buf);
     goto parse_json_string_fail;
-  }
-  if (len == 0) {
-    POP(((typval_T) {
-      .v_type = VAR_STRING,
-      .vval = { .v_string = NULL },
-    }), false);
-    goto parse_json_string_ret;
   }
   char *str = xmalloc(len + 1);
   int fst_in_pair = 0;
