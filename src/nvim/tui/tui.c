@@ -148,7 +148,8 @@ static bool cursor_style_enabled = false;
 # include "tui/tui.c.generated.h"
 #endif
 
-void tui_start(TUIData **tui_p, int *width, int *height, char **term)
+void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
+  FUNC_ATTR_NONNULL_ALL
 {
   TUIData *tui = xcalloc(1, sizeof(TUIData));
   tui->is_starting = true;
@@ -177,6 +178,7 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term)
   *width = tui->width;
   *height = tui->height;
   *term = tui->term;
+  *rgb = tui->rgb;
 }
 
 void tui_set_key_encoding(TUIData *tui)
@@ -333,6 +335,9 @@ static void terminfo_start(TUIData *tui)
   const char *konsolev_env = os_getenv("KONSOLE_VERSION");
   int konsolev = konsolev_env ? (int)strtol(konsolev_env, NULL, 10)
                               : (konsole ? 1 : 0);
+
+  // truecolor support must be checked before patching/augmenting terminfo
+  tui->rgb = term_has_truecolor(tui, colorterm);
 
   patch_terminfo_bugs(tui, term, colorterm, vtev, konsolev, iterm_env, nsterm);
   augment_terminfo(tui, term, vtev, konsolev, iterm_env, nsterm);
@@ -1439,7 +1444,7 @@ void tui_suspend(TUIData *tui)
     tui_mouse_on(tui);
   }
   stream_set_blocking(tui->input.in_fd, false);  // libuv expects this
-  ui_client_attach(tui->width, tui->height, tui->term);
+  ui_client_attach(tui->width, tui->height, tui->term, tui->rgb);
 #endif
 }
 
@@ -1750,6 +1755,44 @@ static int unibi_find_ext_bool(unibi_term *ut, const char *name)
     }
   }
   return -1;
+}
+
+/// Determine if the terminal supports truecolor or not:
+///
+/// 1. If $COLORTERM is "24bit" or "truecolor", return true
+/// 2. Else, check terminfo for Tc, RGB, setrgbf, or setrgbb capabilities. If
+///    found, return true
+/// 3. Else, return false
+static bool term_has_truecolor(TUIData *tui, const char *colorterm)
+{
+  // Check $COLORTERM
+  if (strequal(colorterm, "truecolor") || strequal(colorterm, "24bit")) {
+    return true;
+  }
+
+  // Check for Tc and RGB
+  for (size_t i = 0; i < unibi_count_ext_bool(tui->ut); i++) {
+    const char *n = unibi_get_ext_bool_name(tui->ut, i);
+    if (n && (!strcmp(n, "Tc") || !strcmp(n, "RGB"))) {
+      return true;
+    }
+  }
+
+  // Check for setrgbf and setrgbb
+  bool setrgbf = false;
+  bool setrgbb = false;
+  for (size_t i = 0; i < unibi_count_ext_str(tui->ut) && (!setrgbf || !setrgbb); i++) {
+    const char *n = unibi_get_ext_str_name(tui->ut, i);
+    if (n) {
+      if (!setrgbf && !strcmp(n, "setrgbf")) {
+        setrgbf = true;
+      } else if (!setrgbb && !strcmp(n, "setrgbb")) {
+        setrgbb = true;
+      }
+    }
+  }
+
+  return setrgbf && setrgbb;
 }
 
 /// Patches the terminfo records after loading from system or built-in db.

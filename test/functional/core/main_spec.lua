@@ -62,7 +62,7 @@ describe('command-line option', function()
       screen:attach()
       local args = {
         nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE',
-        '--cmd', '"set noswapfile shortmess+=IFW fileformats=unix"',
+        '--cmd', '"set noswapfile shortmess+=IFW fileformats=unix notermguicolors"',
         '-s', '-'
       }
 

@@ -3,7 +3,6 @@ local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local testprg, command = helpers.testprg, helpers.command
-local nvim_prog = helpers.nvim_prog
 local eq, eval = helpers.eq, helpers.eval
 local matches = helpers.matches
 local poke_eventloop = helpers.poke_eventloop
@@ -184,10 +183,18 @@ describe('buffer cursor position is correct in terminal without number column', 
   local screen
 
   local function setup_ex_register(str)
-    screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..[[", "-u", "NONE", "-i", "NONE", "-E", "--cmd", "let @r = ']]..str..[['", ]]
+    screen = thelpers.setup_child_nvim({
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '-E',
+      '--cmd', string.format('let @r = "%s"', str),
       -- <Left> and <Right> don't always work
-      ..[["--cmd", "cnoremap <C-X> <Left>", "--cmd", "cnoremap <C-O> <Right>"]]..']', 70)
+      '--cmd', 'cnoremap <C-X> <Left>',
+      '--cmd', 'cnoremap <C-O> <Right>',
+      '--cmd', 'set notermguicolors',
+    }, {
+      cols = 70,
+    })
     screen:set_default_attr_ids({
       [1] = {foreground = 253, background = 11};
       [3] = {bold = true},
@@ -570,10 +577,18 @@ describe('buffer cursor position is correct in terminal with number column', fun
   local screen
 
   local function setup_ex_register(str)
-    screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..[[", "-u", "NONE", "-i", "NONE", "-E", "--cmd", "let @r = ']]..str..[['", ]]
+    screen = thelpers.setup_child_nvim({
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '-E',
+      '--cmd', string.format('let @r = "%s"', str),
       -- <Left> and <Right> don't always work
-      ..[["--cmd", "cnoremap <C-X> <Left>", "--cmd", "cnoremap <C-O> <Right>"]]..']', 70)
+      '--cmd', 'cnoremap <C-X> <Left>',
+      '--cmd', 'cnoremap <C-O> <Right>',
+      '--cmd', 'set notermguicolors',
+    }, {
+      cols = 70,
+    })
     screen:set_default_attr_ids({
       [1] = {foreground = 253, background = 11};
       [3] = {bold = true},

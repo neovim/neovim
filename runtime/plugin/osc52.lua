@@ -6,7 +6,11 @@ if not tty or vim.g.clipboard ~= nil or vim.o.clipboard ~= '' or not os.getenv('
   return
 end
 
-require('vim.termcap').query('Ms', function(cap, seq)
+require('vim.termcap').query('Ms', function(cap, found, seq)
+  if not found then
+    return
+  end
+
   assert(cap == 'Ms')
 
   -- Check 'clipboard' and g:clipboard again to avoid a race condition
@@ -16,7 +20,7 @@ require('vim.termcap').query('Ms', function(cap, seq)
 
   -- If the terminal reports a sequence other than OSC 52 for the Ms capability
   -- then ignore it. We only support OSC 52 (for now)
-  if not seq:match('^\027%]52') then
+  if not seq or not seq:match('^\027%]52') then
     return
   end
 
