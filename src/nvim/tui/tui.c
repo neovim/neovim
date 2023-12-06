@@ -170,8 +170,7 @@ void tui_start(TUIData **tui_p, int *width, int *height, char **term, bool *rgb)
 
   uv_timer_init(&tui->loop->uv, &tui->startup_delay_timer);
   tui->startup_delay_timer.data = tui;
-  uv_timer_start(&tui->startup_delay_timer, after_startup_cb,
-                 100, 0);
+  uv_timer_start(&tui->startup_delay_timer, after_startup_cb, 100, 0);
 
   *tui_p = tui;
   loop_poll_events(&main_loop, 1);
