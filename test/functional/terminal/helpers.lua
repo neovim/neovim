@@ -52,9 +52,9 @@ local function clear_attrs() feed_termcode('[0;10m') end
 local function enable_mouse() feed_termcode('[?1002h') end
 local function disable_mouse() feed_termcode('[?1002l') end
 
-local default_command = '["'..testprg('tty-test')..'"]'
+local default_command = { testprg('tty-test') }
 
-local function screen_setup(extra_rows, command, cols, opts)
+local function screen_setup(extra_rows, command, cols, env, screen_opts)
   extra_rows = extra_rows and extra_rows or 0
   command = command and command or default_command
   cols = cols and cols or 50
@@ -81,9 +81,10 @@ local function screen_setup(extra_rows, command, cols, opts)
     [15] = {underline = true, foreground = 12},
   })
 
-  screen:attach(opts or {rgb=false})
+  screen:attach(screen_opts or {rgb=false})
 
-  nvim('command', 'enew | call termopen('..command..')')
+  nvim('command', 'enew')
+  nvim('call_function', 'termopen', {command, env and {env = env} or nil})
   nvim('input', '<CR>')
   local vim_errmsg = nvim('eval', 'v:errmsg')
   if vim_errmsg and "" ~= vim_errmsg then
@@ -96,7 +97,7 @@ local function screen_setup(extra_rows, command, cols, opts)
 
   -- tty-test puts the terminal into raw mode and echoes input. Tests work by
   -- feeding termcodes to control the display and asserting by screen:expect.
-  if command == default_command and opts == nil then
+  if command == default_command and screen_opts == nil then
     -- Wait for "tty ready" to be printed before each test or the terminal may
     -- still be in canonical mode (will echo characters for example).
     local empty_line = (' '):rep(cols)
@@ -125,22 +126,8 @@ end
 
 local function setup_child_nvim(args, opts)
   opts = opts or {}
-
   local argv = { nvim_prog, unpack(args) }
-  local cmd = string.format('[%s]', vim.iter(argv):map(function(s)
-    return string.format('\'%s\'', s)
-  end):join(', '))
-
-  if opts.env then
-    local s = {}
-    for k, v in pairs(opts.env) do
-      table.insert(s, string.format('%s: \'%s\'', k, v))
-    end
-
-    cmd = string.format('%s, #{env: #{%s}}', cmd, table.concat(s, ', '))
-  end
-
-  return screen_setup(0, cmd, opts.cols)
+  return screen_setup(0, argv, opts.cols, opts.env)
 end
 
 return {

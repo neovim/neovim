@@ -392,9 +392,9 @@ describe("'scrollback' option", function()
   it('set to 0 behaves as 1', function()
     local screen
     if is_os('win') then
-      screen = thelpers.screen_setup(nil, "['cmd.exe']", 30)
+      screen = thelpers.screen_setup(nil, { 'cmd.exe' }, 30)
     else
-      screen = thelpers.screen_setup(nil, "['sh']", 30)
+      screen = thelpers.screen_setup(nil, { 'sh' }, 30)
     end
 
     meths.set_option_value('scrollback', 0, {})
@@ -407,10 +407,10 @@ describe("'scrollback' option", function()
     local screen
     if is_os('win') then
       command([[let $PROMPT='$$']])
-      screen = thelpers.screen_setup(nil, "['cmd.exe']", 30)
+      screen = thelpers.screen_setup(nil, { 'cmd.exe' }, 30)
     else
       command('let $PS1 = "$"')
-      screen = thelpers.screen_setup(nil, "['sh']", 30)
+      screen = thelpers.screen_setup(nil, { 'sh' }, 30)
     end
 
     meths.set_option_value('scrollback', 200, {})

@@ -1887,8 +1887,8 @@ describe('TUI', function()
     finally(function()
       os.remove('testF')
     end)
-    local screen = thelpers.screen_setup(0, '"'..nvim_prog
-      ..' -u NONE -i NONE --cmd \'set noswapfile noshowcmd noruler\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF"')
+    local screen = thelpers.screen_setup(0, nvim_prog
+      ..' -u NONE -i NONE --cmd \'set noswapfile noshowcmd noruler\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF')
     feed_data(':w testF\n:q\n')
     screen:expect([[
       :w testF                                          |
