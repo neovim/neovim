@@ -171,6 +171,7 @@ static inline int json_decoder_pop(ValuesStackItem obj, ValuesStack *const stack
     // Handle special dictionaries
     if (last_container.special_val == NULL
         && (obj.is_special_string
+            || obj.val.vval.v_string == NULL
             || tv_dict_find(last_container.container.vval.v_dict, obj.val.vval.v_string, -1))) {
       tv_clear(&obj.val);
 
