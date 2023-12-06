@@ -156,14 +156,15 @@ void tinput_init(TermInput *input, Loop *loop)
   rstream_init_fd(loop, &input->read_stream, input->in_fd, READ_STREAM_SIZE);
 
   // initialize a timer handle for handling ESC with libtermkey
-  time_watcher_init(loop, &input->timer_handle, input);
+  uv_timer_init(&loop->uv, &input->timer_handle);
+  input->timer_handle.data = input;
 }
 
 void tinput_destroy(TermInput *input)
 {
   map_destroy(int, &kitty_key_map);
   rbuffer_free(input->key_buffer);
-  time_watcher_close(&input->timer_handle, NULL);
+  uv_close((uv_handle_t *)&input->timer_handle, NULL);
   stream_close(&input->read_stream, NULL, NULL);
   termkey_destroy(input->tk);
 }
@@ -176,7 +177,7 @@ void tinput_start(TermInput *input)
 void tinput_stop(TermInput *input)
 {
   rstream_stop(&input->read_stream);
-  time_watcher_stop(&input->timer_handle);
+  uv_timer_stop(&input->timer_handle);
 }
 
 static void tinput_done_event(void **argv)
@@ -466,17 +467,16 @@ static void tk_getkeys(TermInput *input, bool force)
 
   if (input->ttimeout && input->ttimeoutlen >= 0) {
     // Stop the current timer if already running
-    time_watcher_stop(&input->timer_handle);
-    time_watcher_start(&input->timer_handle, tinput_timer_cb,
-                       (uint64_t)input->ttimeoutlen, 0);
+    uv_timer_stop(&input->timer_handle);
+    uv_timer_start(&input->timer_handle, tinput_timer_cb, (uint64_t)input->ttimeoutlen, 0);
   } else {
     tk_getkeys(input, true);
   }
 }
 
-static void tinput_timer_cb(TimeWatcher *watcher, void *data)
+static void tinput_timer_cb(uv_timer_t *handle)
 {
-  TermInput *input = (TermInput *)data;
+  TermInput *input = handle->data;
   // If the raw buffer is not empty, process the raw buffer first because it is
   // processing an incomplete bracketed paster sequence.
   if (rbuffer_size(input->read_stream.buffer)) {
@@ -489,8 +489,8 @@ static void tinput_timer_cb(TimeWatcher *watcher, void *data)
 /// Handle focus events.
 ///
 /// If the upcoming sequence of bytes in the input stream matches the termcode
-/// for "focus gained" or "focus lost", consume that sequence and schedule an
-/// event on the main loop.
+/// for "focus gained" or "focus lost", consume that sequence and send an event
+/// to Nvim server.
 ///
 /// @param input the input stream
 /// @return true iff handle_focus_event consumed some input
@@ -757,8 +757,8 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_, void *da
     int64_t ms = input->ttimeout
                  ? (input->ttimeoutlen >= 0 ? input->ttimeoutlen : 0) : 0;
     // Stop the current timer if already running
-    time_watcher_stop(&input->timer_handle);
-    time_watcher_start(&input->timer_handle, tinput_timer_cb, (uint32_t)ms, 0);
+    uv_timer_stop(&input->timer_handle);
+    uv_timer_start(&input->timer_handle, tinput_timer_cb, (uint32_t)ms, 0);
     return;
   }
 

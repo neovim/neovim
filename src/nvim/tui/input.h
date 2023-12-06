@@ -6,7 +6,6 @@
 
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
-#include "nvim/event/time.h"
 #include "nvim/rbuffer_defs.h"
 #include "nvim/tui/input_defs.h"  // IWYU pragma: export
 #include "nvim/tui/tui.h"
@@ -33,7 +32,7 @@ typedef struct {
   OptInt ttimeoutlen;
   TermKey *tk;
   TermKey_Terminfo_Getstr_Hook *tk_ti_hook_fn;  ///< libtermkey terminfo hook
-  TimeWatcher timer_handle;
+  uv_timer_t timer_handle;
   Loop *loop;
   Stream read_stream;
   RBuffer *key_buffer;
