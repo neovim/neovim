@@ -8,6 +8,7 @@
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
+#include "nvim/math.h"
 #include "nvim/option_defs.h"  // IWYU pragma: export
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
@@ -38,17 +39,16 @@ typedef enum {
 #define VAR_WIN ((char *)-1)
 
 typedef struct vimoption {
-  char *fullname;    ///< full option name
-  char *shortname;   ///< permissible abbreviation
-  uint32_t flags;    ///< see above
-  void *var;         ///< global option: pointer to variable;
-                     ///< window-local option: VAR_WIN;
-                     ///< buffer-local option: global value
-  idopt_T indir;     ///< global option: PV_NONE;
-                     ///< local option: indirect option index
-                     ///< callback function to invoke after an option is modified to validate and
-                     ///< apply the new value.
-  bool immutable;    ///< option value cannot be changed from the default value.
+  char *fullname;           ///< full option name
+  char *shortname;          ///< permissible abbreviation
+  uint32_t flags;           ///< see above
+  OptTypeFlags type_flags;  ///< option type flags, see OptValType
+  void *var;                ///< global option: pointer to variable;
+                            ///< window-local option: VAR_WIN;
+                            ///< buffer-local option: global value
+  idopt_T indir;            ///< global option: PV_NONE;
+                            ///< local option: indirect option index
+  bool immutable;           ///< option value cannot be changed from the default value.
 
   /// callback function to invoke after an option is modified to validate and
   /// apply the new value.
@@ -85,7 +85,7 @@ typedef enum {
   OPT_ONECOLUMN = 0x40,   ///< list options one per line
   OPT_NO_REDRAW = 0x80,   ///< ignore redraw flags on option
   OPT_SKIPRTP   = 0x100,  ///< "skiprtp" in 'sessionoptions'
-} OptionFlags;
+} OptionSetFlags;
 
 /// Return value from get_option_attrs().
 enum {
@@ -93,6 +93,22 @@ enum {
   SOPT_WIN    = 0x02,  ///< Option has window-local value
   SOPT_BUF    = 0x04,  ///< Option has buffer-local value
 };
+
+/// Get name of OptValType as a string.
+static inline const char *optval_type_get_name(const OptValType type)
+{
+  switch (type) {
+  case kOptValTypeNil:
+    return "nil";
+  case kOptValTypeBoolean:
+    return "boolean";
+  case kOptValTypeNumber:
+    return "number";
+  case kOptValTypeString:
+    return "string";
+  }
+  UNREACHABLE;
+}
 
 // OptVal helper macros.
 #define NIL_OPTVAL ((OptVal) { .type = kOptValTypeNil })
@@ -108,3 +124,24 @@ enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.h.generated.h"
 #endif
+
+/// Check if option supports a specific type.
+static inline bool option_has_type(OptIndex opt_idx, OptValType type)
+{
+  // Ensure that type flags variable can hold all types.
+  STATIC_ASSERT(kOptValTypeSize <= sizeof(OptTypeFlags) * 8,
+                "Option type_flags cannot fit all option types");
+  // Ensure that the type is valid before accessing type_flags.
+  assert(type > kOptValTypeNil && type < kOptValTypeSize);
+  // Bitshift 1 by the value of type to get the type's corresponding flag, and check if it's set in
+  // the type_flags bit_field.
+  return get_option(opt_idx)->type_flags & (1 << type);
+}
+
+/// Check if option is multitype (supports multiple types).
+static inline bool option_is_multitype(OptIndex opt_idx)
+{
+  const OptTypeFlags type_flags = get_option(opt_idx)->type_flags;
+  assert(type_flags != 0);
+  return !is_power_of_two(type_flags);
+}

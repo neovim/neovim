@@ -3767,10 +3767,12 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
   FUNC_ATTR_NONNULL_ARG(1)
 {
   const bool working = (**arg == '+');  // has("+option")
+  OptIndex opt_idx;
   int scope;
 
   // Isolate the option name and find its value.
-  char *option_end = (char *)find_option_end(arg, &scope);
+  char *const option_end = (char *)find_option_var_end(arg, &opt_idx, &scope);
+
   if (option_end == NULL) {
     if (rettv != NULL) {
       semsg(_("E112: Option name missing: %s"), *arg);
@@ -3783,12 +3785,11 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
     return OK;
   }
 
-  int ret = OK;
   char c = *option_end;
   *option_end = NUL;
 
+  int ret = OK;
   bool is_tty_opt = is_tty_option(*arg);
-  OptIndex opt_idx = is_tty_opt ? kOptInvalid : findoption(*arg);
 
   if (opt_idx == kOptInvalid && !is_tty_opt) {
     // Only give error if result is going to be used.
@@ -3801,13 +3802,7 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
     OptVal value = is_tty_opt ? get_tty_option(*arg) : get_option_value(opt_idx, scope);
     assert(value.type != kOptValTypeNil);
 
-    *rettv = optval_as_tv(value);
-
-    // Convert boolean option value to number for backwards compatibility.
-    if (rettv->v_type == VAR_BOOL) {
-      rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = rettv->vval.v_bool == kBoolVarTrue ? 1 : 0;
-    }
+    *rettv = optval_as_tv(value, true);
   } else if (working && !is_tty_opt && is_option_hidden(opt_idx)) {
     ret = FAIL;
   }
@@ -8138,13 +8133,14 @@ void ex_execute(exarg_T *eap)
   eap->nextcmd = check_nextcmd(arg);
 }
 
-/// Skip over the name of an option: "&option", "&g:option" or "&l:option".
+/// Skip over the name of an option variable: "&option", "&g:option" or "&l:option".
 ///
-/// @param arg  points to the "&" or '+' when called, to "option" when returning.
+/// @param[in,out]  arg       Points to the "&" or '+' when called, to "option" when returning.
+/// @param[out]     opt_idxp  Set to option index in options[] table.
+/// @param[out]     scope     Set to option scope.
 ///
-/// @return  NULL when no option name found.  Otherwise pointer to the char
-///          after the option name.
-const char *find_option_end(const char **const arg, int *const scope)
+/// @return NULL when no option name found. Otherwise pointer to the char after the option name.
+const char *find_option_var_end(const char **const arg, OptIndex *const opt_idxp, int *const scope)
 {
   const char *p = *arg;
 
@@ -8159,19 +8155,9 @@ const char *find_option_end(const char **const arg, int *const scope)
     *scope = 0;
   }
 
-  if (!ASCII_ISALPHA(*p)) {
-    return NULL;
-  }
-  *arg = p;
-
-  if (p[0] == 't' && p[1] == '_' && p[2] != NUL && p[3] != NUL) {
-    p += 4;  // t_xx/termcap option
-  } else {
-    while (ASCII_ISALPHA(*p)) {
-      p++;
-    }
-  }
-  return p;
+  const char *end = find_option_end(p, opt_idxp);
+  *arg = end == NULL ? *arg : p;
+  return end;
 }
 
 static var_flavour_T var_flavour(char *varname)

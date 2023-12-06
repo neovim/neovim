@@ -16,12 +16,6 @@ local options = require('options')
 
 local cstr = options.cstr
 
-local type_flags = {
-  bool = 'P_BOOL',
-  number = 'P_NUM',
-  string = 'P_STRING',
-}
-
 local redraw_flags = {
   ui_option = 'P_UI_OPTION',
   tabline = 'P_RTABL',
@@ -51,11 +45,14 @@ end
 --- @param o vim.option_meta
 --- @return string
 local function get_flags(o)
-  --- @type string[]
-  local ret = { type_flags[o.type] }
+  --- @type string
+  local flags = '0'
+
+  --- @param f string
   local add_flag = function(f)
-    ret[1] = ret[1] .. '|' .. f
+    flags = flags .. '|' .. f
   end
+
   if o.list then
     add_flag(list_flags[o.list])
   end
@@ -91,7 +88,22 @@ local function get_flags(o)
       add_flag(def_name)
     end
   end
-  return ret[1]
+  return flags
+end
+
+--- @param o vim.option_meta
+--- @return string
+local function get_type_flags(o)
+  local opt_types = (type(o.type) == 'table') and o.type or { o.type }
+  local type_flags = '0'
+  assert(type(opt_types) == 'table')
+
+  for _, opt_type in ipairs(opt_types) do
+    assert(type(opt_type) == 'string')
+    type_flags = ('%s | (1 << kOptValType%s)'):format(type_flags, lowercase_to_titlecase(opt_type))
+  end
+
+  return type_flags
 end
 
 --- @param c string|string[]
@@ -153,6 +165,7 @@ local function dump_option(i, o)
     w('    .shortname=' .. cstr(o.abbreviation))
   end
   w('    .flags=' .. get_flags(o))
+  w('    .type_flags=' .. get_type_flags(o))
   if o.enable_if then
     w(get_cond(o.enable_if))
   end

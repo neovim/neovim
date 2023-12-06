@@ -813,7 +813,7 @@ func Test_set_option_errors()
   call assert_fails('set winwidth=9 winminwidth=10', 'E592:')
   set winwidth& winminwidth&
   call assert_fails("set showbreak=\x01", 'E595:')
-  call assert_fails('set t_foo=', 'E846:')
+  " call assert_fails('set t_foo=', 'E846:')
   call assert_fails('set tabstop??', 'E488:')
   call assert_fails('set wrapscan!!', 'E488:')
   call assert_fails('set tabstop&&', 'E488:')
@@ -1446,8 +1446,10 @@ endfunc
 
 " Test for setting keycodes using set
 func Test_opt_set_keycode()
-  call assert_fails('set <t_k1=l', 'E474:')
-  call assert_fails('set <Home=l', 'E474:')
+  " call assert_fails('set <t_k1=l', 'E474:')
+  " call assert_fails('set <Home=l', 'E474:')
+  call assert_fails('set <t_k1=l', 'E518:')
+  call assert_fails('set <Home=l', 'E518:')
   set <t_k9>=abcd
   " call assert_equal('abcd', &t_k9)
   set <t_k9>&
