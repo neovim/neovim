@@ -3410,6 +3410,19 @@ Iter:fold({init}, {f})                                           *Iter:fold()*
     Return: ~
         any
 
+Iter:join({delim})                                               *Iter:join()*
+    Collect the iterator into a delimited string.
+
+    Each element in the iterator is joined into a string separated by {delim}.
+
+    Consumes the iterator.
+
+    Parameters: ~
+      • {delim}  (string) Delimiter
+
+    Return: ~
+        (string)
+
 Iter:last()                                                      *Iter:last()*
     Drains the iterator and returns the last item.
 

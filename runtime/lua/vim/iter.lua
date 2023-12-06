@@ -356,6 +356,18 @@ function ListIter.totable(self)
   return self._table
 end
 
+--- Collect the iterator into a delimited string.
+---
+--- Each element in the iterator is joined into a string separated by {delim}.
+---
+--- Consumes the iterator.
+---
+--- @param delim string Delimiter
+--- @return string
+function Iter.join(self, delim)
+  return table.concat(self:totable(), delim)
+end
+
 --- Folds ("reduces") an iterator into a single value.
 ---
 --- Examples:

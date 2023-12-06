@@ -91,6 +91,11 @@ describe('vim.iter', function()
     end
   end)
 
+  it('join()', function()
+    eq('1, 2, 3', vim.iter({1, 2, 3}):join(', '))
+    eq('a|b|c|d', vim.iter(vim.gsplit('a|b|c|d', '|')):join('|'))
+  end)
+
   it('next()', function()
     local it = vim.iter({1, 2, 3}):map(function(v) return 2 * v end)
     eq(2, it:next())
