@@ -358,7 +358,7 @@ end
 
 --- Collect the iterator into a delimited string.
 ---
---- Each element in the iterator is joined into a string seperated by {delim}.
+--- Each element in the iterator is joined into a string separated by {delim}.
 ---
 --- Consumes the iterator.
 ---
