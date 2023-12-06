@@ -3218,7 +3218,7 @@ void ex_spelldump(exarg_T *eap)
   if (no_spell_checking(curwin)) {
     return;
   }
-  OptVal spl = get_option_value("spl", NULL, OPT_LOCAL, NULL);
+  OptVal spl = get_option_value(findoption("spl"), OPT_LOCAL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");

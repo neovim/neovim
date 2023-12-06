@@ -152,23 +152,20 @@ static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
 Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
-  Object rv = OBJECT_INIT;
-  OptVal value = NIL_OPTVAL;
-
   int scope = 0;
   OptReqScope req_scope = kOptReqGlobal;
   void *from = NULL;
   char *filetype = NULL;
 
   if (!validate_option_value_args(opts, name.data, &scope, &req_scope, &from, &filetype, err)) {
-    goto err;
+    return (Object)OBJECT_INIT;
   }
 
   aco_save_T aco;
 
   buf_T *ftbuf = do_ft_buf(filetype, &aco, err);
   if (ERROR_SET(err)) {
-    goto err;
+    return (Object)OBJECT_INIT;
   }
 
   if (ftbuf != NULL) {
@@ -176,8 +173,9 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
     from = ftbuf;
   }
 
-  bool hidden;
-  value = get_option_value_for(name.data, NULL, scope, &hidden, req_scope, from, err);
+  int opt_idx = findoption(name.data);
+  OptVal value = get_option_value_for(opt_idx, scope, req_scope, from, err);
+  bool hidden = is_option_hidden(opt_idx);
 
   if (ftbuf != NULL) {
     // restore curwin/curbuf and a few other things
@@ -198,7 +196,7 @@ Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   return optval_as_object(value);
 err:
   optval_free(value);
-  return rv;
+  return (Object)OBJECT_INIT;
 }
 
 /// Sets the value of an option. The behavior of this function matches that of
@@ -391,6 +389,10 @@ static void restore_option_context(void *const ctx, OptReqScope req_scope)
 ///          See SOPT_* in option_defs.h for other flags.
 int get_option_attrs(char *name)
 {
+  if (is_tty_option(name)) {
+    return SOPT_GLOBAL;
+  }
+
   int opt_idx = findoption(name);
 
   if (opt_idx < 0) {
@@ -398,10 +400,6 @@ int get_option_attrs(char *name)
   }
 
   vimoption_T *opt = get_option(opt_idx);
-
-  if (is_tty_option(opt->fullname)) {
-    return SOPT_GLOBAL;
-  }
 
   // Hidden option
   if (opt->var == NULL) {
@@ -470,14 +468,11 @@ static bool option_has_scope(char *name, OptReqScope req_scope)
 /// buffer-local value depending on opt_scope).
 OptVal get_option_value_strict(char *name, OptReqScope req_scope, void *from, Error *err)
 {
-  OptVal retv = NIL_OPTVAL;
-
   if (!option_has_scope(name, req_scope)) {
-    return retv;
+    return NIL_OPTVAL;
   }
-  if (get_tty_option(name, &retv.data.string.data)) {
-    retv.type = kOptValTypeString;
-    return retv;
+  if (is_tty_option(name)) {
+    return get_tty_option(name);
   }
 
   int opt_idx = findoption(name);
@@ -490,11 +485,11 @@ OptVal get_option_value_strict(char *name, OptReqScope req_scope, void *from, Er
                                       : (req_scope == kOptReqBuf ? (void *)&aco : NULL);
   bool switched = switch_option_context(ctx, req_scope, from, err);
   if (ERROR_SET(err)) {
-    return retv;
+    return NIL_OPTVAL;
   }
 
   char *varp = get_varp_scope(opt, req_scope == kOptReqGlobal ? OPT_GLOBAL : OPT_LOCAL);
-  retv = optval_from_varp(opt_idx, varp);
+  OptVal retv = optval_from_varp(opt_idx, varp);
 
   if (switched) {
     restore_option_context(ctx, req_scope);
@@ -505,7 +500,7 @@ OptVal get_option_value_strict(char *name, OptReqScope req_scope, void *from, Er
 
 /// Get option value for buffer / window.
 ///
-/// @param[in]   name       Option name.
+/// @param       opt_idx    Option index in options[] table.
 /// @param[out]  flagsp     Set to the option flags (P_xxxx) (if not NULL).
 /// @param[in]   scope      Option scope (can be OPT_LOCAL, OPT_GLOBAL or a combination).
 /// @param[out]  hidden     Whether option is hidden.
@@ -514,8 +509,8 @@ OptVal get_option_value_strict(char *name, OptReqScope req_scope, void *from, Er
 /// @param[out]  err        Error message, if any.
 ///
 /// @return  Option value. Must be freed by caller.
-OptVal get_option_value_for(const char *const name, uint32_t *flagsp, int scope, bool *hidden,
-                            const OptReqScope req_scope, void *const from, Error *err)
+OptVal get_option_value_for(int opt_idx, int scope, const OptReqScope req_scope, void *const from,
+                            Error *err)
 {
   switchwin_T switchwin;
   aco_save_T aco;
@@ -527,7 +522,7 @@ OptVal get_option_value_for(const char *const name, uint32_t *flagsp, int scope,
     return NIL_OPTVAL;
   }
 
-  OptVal retv = get_option_value(name, flagsp, scope, hidden);
+  OptVal retv = get_option_value(opt_idx, scope);
 
   if (switched) {
     restore_option_context(ctx, req_scope);

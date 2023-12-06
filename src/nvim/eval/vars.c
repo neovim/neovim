@@ -773,11 +773,14 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
   const char c1 = *p;
   *p = NUL;
 
-  uint32_t opt_p_flags;
-  bool hidden;
-  OptVal curval = get_option_value(arg, &opt_p_flags, scope, &hidden);
+  bool is_tty_opt = is_tty_option(arg);
+  int opt_idx = is_tty_opt ? -1 : findoption(arg);
+  uint32_t opt_p_flags = get_option_flags(opt_idx);
+  bool hidden = is_option_hidden(opt_idx);
+  OptVal curval = is_tty_opt ? get_tty_option(arg) : get_option_value(opt_idx, scope);
   OptVal newval = NIL_OPTVAL;
-  if (curval.type == kOptValTypeNil && arg[0] != 't' && arg[1] != '_') {
+
+  if (curval.type == kOptValTypeNil) {
     semsg(_(e_unknown_option2), arg);
     goto theend;
   }

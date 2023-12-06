@@ -3784,37 +3784,32 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
   }
 
   int ret = OK;
-  bool hidden;
   char c = *option_end;
   *option_end = NUL;
-  OptVal value = get_option_value(*arg, NULL, scope, &hidden);
 
-  if (rettv != NULL) {
-    switch (value.type) {
-    case kOptValTypeNil:
+  bool is_tty_opt = is_tty_option(*arg);
+  int opt_idx = is_tty_opt ? -1 : findoption(*arg);
+
+  if (opt_idx < 0 && !is_tty_opt) {
+    // Only give error if result is going to be used.
+    if (rettv != NULL) {
       semsg(_("E113: Unknown option: %s"), *arg);
-      ret = FAIL;
-      break;
-    case kOptValTypeBoolean:
-      rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = value.data.boolean;
-      break;
-    case kOptValTypeNumber:
-      rettv->v_type = VAR_NUMBER;
-      rettv->vval.v_number = value.data.number;
-      break;
-    case kOptValTypeString:
-      rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = value.data.string.data;
-      break;
     }
-  } else {
-    // Value isn't being used, free it.
-    optval_free(value);
 
-    if (value.type == kOptValTypeNil || (working && hidden)) {
-      ret = FAIL;
+    ret = FAIL;
+  } else if (rettv != NULL) {
+    OptVal value = is_tty_opt ? get_tty_option(*arg) : get_option_value(opt_idx, scope);
+    assert(value.type != kOptValTypeNil);
+
+    *rettv = optval_as_tv(value);
+
+    // Convert boolean option value to number for backwards compatibility.
+    if (rettv->v_type == VAR_BOOL) {
+      rettv->v_type = VAR_NUMBER;
+      rettv->vval.v_number = rettv->vval.v_bool == kBoolVarTrue ? 1 : 0;
     }
+  } else if (working && !is_tty_opt && is_option_hidden(opt_idx)) {
+    ret = FAIL;
   }
 
   *option_end = c;                  // put back for error messages
