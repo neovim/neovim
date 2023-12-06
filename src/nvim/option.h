@@ -89,12 +89,9 @@ typedef enum {
 
 /// Return value from get_option_value_strict
 enum {
-  SOPT_BOOL   = 0x01,  ///< Boolean option
-  SOPT_NUM    = 0x02,  ///< Number option
-  SOPT_STRING = 0x04,  ///< String option
-  SOPT_GLOBAL = 0x08,  ///< Option has global value
-  SOPT_WIN    = 0x10,  ///< Option has window-local value
-  SOPT_BUF    = 0x20,  ///< Option has buffer-local value
+  SOPT_GLOBAL = 0x01,  ///< Option has global value
+  SOPT_WIN    = 0x02,  ///< Option has window-local value
+  SOPT_BUF    = 0x04,  ///< Option has buffer-local value
 };
 
 // OptVal helper macros.

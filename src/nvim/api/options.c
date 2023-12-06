@@ -400,7 +400,7 @@ int get_option_attrs(char *name)
   vimoption_T *opt = get_option(opt_idx);
 
   if (is_tty_option(opt->fullname)) {
-    return SOPT_STRING | SOPT_GLOBAL;
+    return SOPT_GLOBAL;
   }
 
   // Hidden option
@@ -409,14 +409,6 @@ int get_option_attrs(char *name)
   }
 
   int attrs = 0;
-
-  if (opt->flags & P_BOOL) {
-    attrs |= SOPT_BOOL;
-  } else if (opt->flags & P_NUM) {
-    attrs |= SOPT_NUM;
-  } else if (opt->flags & P_STRING) {
-    attrs |= SOPT_STRING;
-  }
 
   if (opt->indir == PV_NONE || (opt->indir & PV_BOTH)) {
     attrs |= SOPT_GLOBAL;
