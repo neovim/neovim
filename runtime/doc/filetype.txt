@@ -530,8 +530,9 @@ FORTRAN							*ft-fortran-plugin*
 Options:
 'expandtab'	is switched on to avoid tabs as required by the Fortran
 		standards unless the user has set fortran_have_tabs in vimrc.
-'textwidth'	is set to 72 for fixed source format as required by the
-		Fortran standards and to 80 for free source format.
+'textwidth'	is set to 80 for fixed source format whereas it is set to 132
+		for free source format. Setting the fortran_extended_line_length
+		variable increases the width to 132 for fixed source format.
 'formatoptions' is set to break code and comment lines and to preserve long
 		lines.  You can format comments with |gq|.
 For further discussion of fortran_have_tabs and the method used for the
