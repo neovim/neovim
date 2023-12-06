@@ -63,6 +63,7 @@ bool ui_cb_ext[kUIExtCount];  ///< Internalized UI capabilities.
 
 static bool has_mouse = false;
 static int pending_has_mouse = -1;
+static bool pending_default_colors = false;
 
 static Array call_buf = ARRAY_DICT_INIT;
 
@@ -283,8 +284,21 @@ void ui_schedule_refresh(void)
 
 void ui_default_colors_set(void)
 {
-  ui_call_default_colors_set(normal_fg, normal_bg, normal_sp,
-                             cterm_normal_fg_color, cterm_normal_bg_color);
+  // Throttle setting of default colors at startup, so it only happens once
+  // if the user sets the colorscheme in startup.
+  pending_default_colors = true;
+  if (starting == 0) {
+    ui_may_set_default_colors();
+  }
+}
+
+static void ui_may_set_default_colors(void)
+{
+  if (pending_default_colors) {
+    pending_default_colors = false;
+    ui_call_default_colors_set(normal_fg, normal_bg, normal_sp,
+                               cterm_normal_fg_color, cterm_normal_bg_color);
+  }
 }
 
 void ui_busy_start(void)
@@ -441,6 +455,9 @@ void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol, 
     startcol = 0;
     flags |= kLineFlagInvalid;
   }
+
+  // set default colors now so that that text won't have to be repainted later
+  ui_may_set_default_colors();
 
   size_t off = grid->line_offset[row] + (size_t)startcol;
 

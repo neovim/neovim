@@ -143,6 +143,39 @@ describe('--embed UI', function()
       {2:-- INSERT --}                            |
     ]]}
   end)
+
+  it("only sets background colors once even if overridden", function()
+    local screen, current, seen
+    local function handle_default_colors_set(_, _, rgb_bg, _, _, _)
+      seen[rgb_bg] = true
+      current = rgb_bg
+    end
+    local function startup(...)
+      seen = {}
+      current = nil
+      clear {args_rm={'--headless'}, args={...}}
+
+      -- attach immediately after startup, for early UI
+      screen = Screen.new(40, 8)
+      screen._handle_default_colors_set = handle_default_colors_set
+      screen:attach()
+    end
+
+    startup()
+    screen:expect{condition=function()
+      eq(16777215, current)
+    end}
+    eq({[16777215]=true}, seen)
+
+    -- NB: by accident how functional/helpers.lua currently handles the default color scheme, the
+    -- above is sufficient to test the behavior. But in case that workaround is removed, we need
+    -- a test with an explicit override like below, so do it to remain safe.
+    startup('--cmd', 'hi NORMAL guibg=#FF00FF')
+    screen:expect{condition=function()
+      eq(16711935, current)
+    end}
+    eq({[16711935]=true}, seen) -- we only saw the last one, despite 16777215 was set internally earlier
+  end)
 end)
 
 describe('--embed --listen UI', function()
