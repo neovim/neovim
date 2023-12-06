@@ -2599,7 +2599,6 @@ describe("TUI", function()
   end)
 end)
 
--- See test/unit/tui_spec.lua for unit tests.
 describe('TUI bg color', function()
   local screen
 

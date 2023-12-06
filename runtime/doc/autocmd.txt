@@ -1001,10 +1001,10 @@ TermResponse			When Nvim receives an OSC or DCS response from
 				  once = true,
 				  callback = function(args)
 				    local resp = args.data
-				    local r, g, b = resp:match("\x1b%]4;1;rgb:(%w+)/(%w+)/(%w+)")
+				    local r, g, b = resp:match("\027%]4;1;rgb:(%w+)/(%w+)/(%w+)")
 				  end,
 				})
-				io.stdout:write("\x1b]4;1;?\x1b\\")
+				io.stdout:write("\027]4;1;?\027\\")
 <
 							*TextChanged*
 TextChanged			After a change was made to the text in the
