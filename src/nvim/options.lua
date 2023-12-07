@@ -1441,11 +1441,11 @@ return {
         	    completion in the preview window.  Only works in
         	    combination with "menu" or "menuone".
 
-          noinsert  Do not insert any text for a match until the user selects
+           noinsert Do not insert any text for a match until the user selects
         	    a match from the menu. Only works in combination with
         	    "menu" or "menuone". No effect if "longest" is present.
 
-          noselect  Do not select a match in the menu, force the user to
+           noselect Do not select a match in the menu, force the user to
         	    select one from the menu. Only works in combination with
         	    "menu" or "menuone".
 

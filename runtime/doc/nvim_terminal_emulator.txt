@@ -140,9 +140,9 @@ Example: >vim
 - |'channel'|  Terminal PTY |job-id|.  Can be used with |chansend()| to send
   input to the terminal.
 - The |TermClose| event gives the terminal job exit code in the |v:event|
-  "status" field. For example, this autocmd closes terminal buffers if the job
-  exited without error: >vim
-    autocmd TermClose * if !v:event.status | exe 'bdelete! '..expand('<abuf>') | endif
+  "status" field. For example, this autocommand outputs the terminal's exit
+  code to |:messages|: >vim
+    autocmd TermClose * echom 'Terminal exited with status '..v:event.status
 
 Use |jobwait()| to check if the terminal job has finished: >vim
     let running = jobwait([&channel], 0)[0] == -1
