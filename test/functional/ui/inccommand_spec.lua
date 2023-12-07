@@ -8,6 +8,7 @@ local feed_command = helpers.feed_command
 local expect = helpers.expect
 local feed = helpers.feed
 local insert = helpers.insert
+local funcs = helpers.funcs
 local meths = helpers.meths
 local neq = helpers.neq
 local ok = helpers.ok
@@ -151,6 +152,29 @@ describe(":substitute, 'inccommand' preserves", function()
       {13:Press ENTER or type command to}|
       {13: continue}^                     |
     ]])
+  end)
+
+  it("'[ and '] marks #26439", function()
+    local screen = Screen.new(30, 10)
+    common_setup(screen, 'nosplit', ('abc\ndef\n'):rep(50))
+
+    feed('ggyG')
+    local X = meths.get_vvar('maxcol')
+    eq({0, 1, 1, 0}, funcs.getpos("'["))
+    eq({0, 101, X, 0}, funcs.getpos("']"))
+
+    feed(":'[,']s/def/")
+    poke_eventloop()
+    eq({0, 1, 1, 0}, funcs.getpos("'["))
+    eq({0, 101, X, 0}, funcs.getpos("']"))
+
+    feed('DEF/g')
+    poke_eventloop()
+    eq({0, 1, 1, 0}, funcs.getpos("'["))
+    eq({0, 101, X, 0}, funcs.getpos("']"))
+
+    feed('<CR>')
+    expect(('abc\nDEF\n'):rep(50))
   end)
 
   for _, case in pairs{"", "split", "nosplit"} do
