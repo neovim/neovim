@@ -143,7 +143,7 @@ it(':terminal highlight has lower precedence than editor #9964', function()
   screen:attach({rgb=true})
   -- Child nvim process in :terminal (with cterm colors).
   funcs.termopen({
-    nvim_prog_abs(), '-n', '-u', 'NORC', '-i', 'NONE', '--cmd', nvim_set,
+    nvim_prog_abs(), '-n', '-u', 'NORC', '-i', 'NONE', '--cmd', nvim_set .. ' notermguicolors',
     '+hi Normal ctermfg=Blue ctermbg=Yellow',
     '+norm! ichild nvim',
     '+norm! oline 2',
