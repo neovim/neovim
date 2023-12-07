@@ -3903,6 +3903,8 @@ static const char *pty_ignored_env_vars[] = {
   "COLORFGBG",
   "COLORTERM",
 #endif
+  "VIM",
+  "VIMRUNTIME",
   NULL
 };
 
