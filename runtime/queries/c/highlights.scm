@@ -123,15 +123,6 @@
 ((preproc_arg) @function.macro (#set! "priority" 90))
 (preproc_defined) @function.macro
 
-(((field_expression
-     (field_identifier) @property)) @_parent
- (#not-has-parent? @_parent template_method function_declarator call_expression))
-
-(field_designator) @property
-(((field_identifier) @property)
- (#has-ancestor? @property field_declaration)
- (#not-has-ancestor? @property function_declarator))
-
 (statement_identifier) @label
 
 [
