@@ -101,7 +101,7 @@ describe('vim.ui_attach', function()
   end)
 
   it('does not crash on exit', function()
-    helpers.funcs.system({
+    funcs.system({
       helpers.nvim_prog,
       '-u', 'NONE',
       '-i', 'NONE',

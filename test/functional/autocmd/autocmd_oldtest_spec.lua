@@ -75,7 +75,7 @@ describe('oldtests', function()
     funcs.writefile(funcs.split(content, "\n"), fname)
 
     funcs.delete('Xout')
-    funcs.system(string.format('%s -u NORC -i NONE -N -S %s', meths.get_vvar('progpath'), fname))
+    funcs.system(string.format('%s --clean -N -S %s', meths.get_vvar('progpath'), fname))
     eq(1, funcs.filereadable('Xout'))
 
     funcs.delete('Xxx1')

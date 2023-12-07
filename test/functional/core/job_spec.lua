@@ -676,7 +676,7 @@ describe('jobs', function()
           on_stderr = function(chan, data, name) stderr = data end,
           on_stdout = function(chan, data, name) stdout = data end,
         }
-        local j1 = vim.fn.jobstart({ vim.v.progpath, '-es', '-V1',( '+echo "%s="..getenv("%s")'):format(envname, envname), '+qa!' }, opt)
+        local j1 = vim.fn.jobstart({ vim.v.progpath, '-es', '-V1',('+echo "%s="..getenv("%s")'):format(envname, envname), '+qa!' }, opt)
         vim.fn.jobwait({ j1 }, 10000)
         return join({ join(stdout), join(stderr) })
       ]],
@@ -1162,11 +1162,12 @@ describe("pty process teardown", function()
   it("does not prevent/delay exit. #4798 #4900", function()
     skip(is_os('win'))
     -- Use a nested nvim (in :term) to test without --headless.
-    feed_command(":terminal '"..helpers.nvim_prog
-      .."' -u NONE -i NONE --cmd '"..nvim_set.."' "
+    funcs.termopen({
+      helpers.nvim_prog, '-u', 'NONE', '-i', "NONE", '--cmd', nvim_set,
       -- Use :term again in the _nested_ nvim to get a PTY process.
       -- Use `sleep` to simulate a long-running child of the PTY.
-      .."+terminal +'!(sleep 300 &)' +qa")
+      '+terminal', '+!(sleep 300 &)', '+qa',
+    }, { env = { VIMRUNTIME = os.getenv('VIMRUNTIME') } })
 
     -- Exiting should terminate all descendants (PTY, its children, ...).
     screen:expect([[

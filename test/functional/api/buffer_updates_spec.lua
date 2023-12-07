@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq, ok = helpers.eq, helpers.ok
+local funcs = helpers.funcs
 local buffer, command, eval, nvim, next_msg = helpers.buffer,
   helpers.command, helpers.eval, helpers.nvim, helpers.next_msg
 local nvim_prog = helpers.nvim_prog
@@ -832,7 +833,10 @@ describe('API: buffer events:', function()
   it('when :terminal lines change', function()
     local buffer_lines = {}
     local expected_lines = {}
-    command('terminal "'..nvim_prog..'" -u NONE -i NONE -n -c "set shortmess+=A"')
+    funcs.termopen({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '-n', '-c', 'set shortmess+=A' }, {
+      env = { VIMRUNTIME = os.getenv('VIMRUNTIME') }
+    })
+
     local b = nvim('get_current_buf')
     ok(buffer('attach', b, true, {}))
 
