@@ -1902,11 +1902,8 @@ describe('TUI', function()
       os.remove('testF')
     end)
     local screen = thelpers.screen_setup(0,
-      string.format(
-        'VIMRUNTIME=%s %s -u NONE -i NONE --cmd \'set noswapfile noshowcmd noruler\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF',
-        os.getenv('VIMRUNTIME'),
-        nvim_prog
-    ))
+      ('"%s" -u NONE -i NONE --cmd "set noswapfile noshowcmd noruler" --cmd "normal iabc" > /dev/null 2>&1 && cat testF && rm testF'):format(nvim_prog),
+      nil, { VIMRUNTIME = os.getenv('VIMRUNTIME') })
     feed_data(':w testF\n:q\n')
     screen:expect([[
       :w testF                                          |
