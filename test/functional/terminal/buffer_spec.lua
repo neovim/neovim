@@ -1,8 +1,10 @@
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local assert_alive = helpers.assert_alive
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local poke_eventloop = helpers.poke_eventloop
+local nvim_prog = helpers.nvim_prog
 local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
 local pcall_err = helpers.pcall_err
 local eq, neq = helpers.eq, helpers.neq
@@ -558,5 +560,53 @@ describe('termopen()', function()
     feed("q:")
     eq("Vim:E11: Invalid in command-line window; <CR> executes, CTRL-C quits",
       pcall_err(funcs.termopen, "bar"))
+  end)
+
+  describe('$COLORTERM value', function()
+    if skip(is_os('win'), 'Not applicable for Windows') then return end
+
+    before_each(function()
+      -- Outer value should never be propagated to :terminal
+      funcs.setenv('COLORTERM', 'wrongvalue')
+    end)
+
+    local function test_term_colorterm(expected, opts)
+      local screen = Screen.new(50, 4)
+      screen:attach()
+      funcs.termopen({
+        nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
+        '-c', 'echo $COLORTERM | quit',
+      }, opts)
+      screen:expect(([[
+        ^%s{MATCH:%%s+}|
+        [Process exited 0]                                |
+                                                          |
+                                                          |
+      ]]):format(expected))
+    end
+
+    describe("with 'notermguicolors'", function()
+      before_each(function()
+        command('set notermguicolors')
+      end)
+      it('is empty by default', function()
+        test_term_colorterm('')
+      end)
+      it('can be overridden', function()
+        test_term_colorterm('expectedvalue', { env = { COLORTERM = 'expectedvalue' } })
+      end)
+    end)
+
+    describe("with 'termguicolors'", function()
+      before_each(function()
+        command('set termguicolors')
+      end)
+      it('is "truecolor" by default', function()
+        test_term_colorterm('truecolor')
+      end)
+      it('can be overridden', function()
+        test_term_colorterm('expectedvalue', { env = { COLORTERM = 'expectedvalue' } })
+      end)
+    end)
   end)
 end)
