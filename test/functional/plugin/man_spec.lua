@@ -10,8 +10,6 @@ local write_file = helpers.write_file
 local tmpname = helpers.tmpname
 local eq = helpers.eq
 local pesc = helpers.pesc
-local skip = helpers.skip
-local is_ci = helpers.is_ci
 
 -- Collects all names passed to find_path() after attempting ":Man foo".
 local function get_search_history(name)
@@ -178,7 +176,6 @@ describe(':Man', function()
   end)
 
   it('reports non-existent man pages for absolute paths', function()
-    skip(is_ci('cirrus'))
     local actual_file = tmpname()
     -- actual_file must be an absolute path to an existent file for us to test against it
     matches('^/.+', actual_file)

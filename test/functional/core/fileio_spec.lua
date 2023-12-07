@@ -29,7 +29,6 @@ local Screen = require('test.functional.ui.screen')
 local feed_command = helpers.feed_command
 local skip = helpers.skip
 local is_os = helpers.is_os
-local is_ci = helpers.is_ci
 local spawn = helpers.spawn
 local set_session = helpers.set_session
 
@@ -122,7 +121,6 @@ describe('fileio', function()
   end)
 
   it('backup #9709', function()
-    skip(is_ci('cirrus'))
     clear({ args={ '-i', 'Xtest_startup_shada',
                    '--cmd', 'set directory=Xtest_startup_swapdir' } })
 
@@ -142,7 +140,6 @@ describe('fileio', function()
   end)
 
   it('backup with full path #11214', function()
-    skip(is_ci('cirrus'))
     clear()
     mkdir('Xtest_backupdir')
     command('set backup')
@@ -164,7 +161,6 @@ describe('fileio', function()
   end)
 
   it('backup with full path with spaces', function()
-    skip(is_ci('cirrus'))
     clear()
     mkdir('Xtest_backupdir with spaces')
     command('set backup')
@@ -186,7 +182,6 @@ describe('fileio', function()
   end)
 
   it('backup symlinked files #11349', function()
-    skip(is_ci('cirrus'))
     clear()
 
     local initial_content = 'foo'
@@ -208,7 +203,6 @@ describe('fileio', function()
 
 
   it('backup symlinked files in first available backupdir #11349', function()
-    skip(is_ci('cirrus'))
     clear()
 
     local initial_content = 'foo'

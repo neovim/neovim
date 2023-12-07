@@ -10,7 +10,6 @@ local funcs = helpers.funcs
 local meths = helpers.meths
 local skip = helpers.skip
 local is_os = helpers.is_os
-local is_ci = helpers.is_ci
 
 local fname = 'Xtest-functional-ex_cmds-write'
 local fname_bak = fname .. '~'
@@ -57,7 +56,6 @@ describe(':write', function()
   end)
 
   it('&backupcopy=no replaces symlink with new file', function()
-    skip(is_ci('cirrus'))
     command('set backupcopy=no')
     write_file('test_bkc_file.txt', 'content0')
     if is_os('win') then
@@ -121,7 +119,6 @@ describe(':write', function()
   end)
 
   it('errors out correctly', function()
-    skip(is_ci('cirrus'))
     command('let $HOME=""')
     eq(funcs.fnamemodify('.', ':p:h'), funcs.fnamemodify('.', ':p:h:~'))
     -- Message from check_overwrite
