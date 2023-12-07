@@ -355,10 +355,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     goto end;
   }
 
-  if (!object_to_vim(result, rettv, &err)) {
-    assert(ERROR_SET(&err));
-    semsg(_("Error converting the call result: %s"), err.msg);
-  }
+  object_to_vim(result, rettv, &err);
 
 end:
   api_free_array(args);
@@ -428,7 +425,7 @@ static void f_and(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_api_info(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   Dictionary metadata = api_metadata();
-  (void)object_to_vim(DICTIONARY_OBJ(metadata), rettv, NULL);
+  object_to_vim(DICTIONARY_OBJ(metadata), rettv, NULL);
 }
 
 /// "atan2()" function
@@ -1023,7 +1020,7 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   Dictionary ctx_dict = ctx_to_dict(ctx);
   Error err = ERROR_INIT;
-  (void)object_to_vim(DICTIONARY_OBJ(ctx_dict), rettv, &err);
+  object_to_vim(DICTIONARY_OBJ(ctx_dict), rettv, &err);
   api_free_dictionary(ctx_dict);
   api_clear_error(&err);
 }
@@ -6751,10 +6748,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     goto end;
   }
 
-  if (!object_to_vim(result, rettv, &err)) {
-    assert(ERROR_SET(&err));
-    semsg(_("Error converting the call result: %s"), err.msg);
-  }
+  object_to_vim(result, rettv, &err);
 
 end:
   arena_mem_free(res_mem);

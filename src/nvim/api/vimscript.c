@@ -207,9 +207,7 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
   typval_T vim_args[MAX_FUNC_ARGS + 1];
   size_t i = 0;  // also used for freeing the variables
   for (; i < args.size; i++) {
-    if (!object_to_vim(args.items[i], &vim_args[i], err)) {
-      goto free_vim_args;
-    }
+    object_to_vim(args.items[i], &vim_args[i], err);
   }
 
   // Initialize `force_abort`  and `suppress_errthrow` at the top level.
@@ -243,7 +241,6 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
   tv_clear(&rettv);
   recursive--;
 
-free_vim_args:
   while (i > 0) {
     tv_clear(&vim_args[--i]);
   }
@@ -297,9 +294,7 @@ Object nvim_call_dict_function(Object dict, String fn, Array args, Error *err)
     mustfree = true;
     break;
   case kObjectTypeDictionary:
-    if (!object_to_vim(dict, &rettv, err)) {
-      goto end;
-    }
+    object_to_vim(dict, &rettv, err);
     break;
   default:
     api_set_error(err, kErrorTypeValidation,

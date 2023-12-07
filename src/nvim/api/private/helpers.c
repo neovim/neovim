@@ -253,9 +253,7 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del, bool retva
     typval_T tv;
 
     // Convert the object to a vimscript type in the temporary variable
-    if (!object_to_vim(value, &tv, err)) {
-      return rv;
-    }
+    object_to_vim(value, &tv, err);
 
     typval_T oldtv = TV_INITIAL_VALUE;
 

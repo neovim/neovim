@@ -326,9 +326,7 @@ static inline msgpack_sbuffer array_to_sbuf(Array array, Error *err)
   msgpack_sbuffer_init(&sbuf);
 
   typval_T list_tv;
-  if (!object_to_vim(ARRAY_OBJ(array), &list_tv, err)) {
-    return sbuf;
-  }
+  object_to_vim(ARRAY_OBJ(array), &list_tv, err);
 
   assert(list_tv.v_type == VAR_LIST);
   if (!encode_vim_list_to_buf(list_tv.vval.v_list, &sbuf.size, &sbuf.data)) {
