@@ -127,7 +127,13 @@ end
 local function setup_child_nvim(args, opts)
   opts = opts or {}
   local argv = { nvim_prog, unpack(args) }
-  return screen_setup(0, argv, opts.cols, opts.env)
+
+  local env = opts.env or {}
+  if not env.VIMRUNTIME then
+    env.VIMRUNTIME = os.getenv('VIMRUNTIME')
+  end
+
+  return screen_setup(0, argv, opts.cols, env)
 end
 
 return {

@@ -24,6 +24,7 @@ local funcs = helpers.funcs
 local meths = helpers.meths
 local is_ci = helpers.is_ci
 local is_os = helpers.is_os
+local is_arch = helpers.is_arch
 local new_pipename = helpers.new_pipename
 local spawn_argv = helpers.spawn_argv
 local set_session = helpers.set_session
@@ -1829,8 +1830,18 @@ describe('TUI', function()
       [5] = {bold = true, reverse = true},
     })
     screen:attach()
+    funcs.termopen({
+      nvim_prog,
+      '--clean',
+      '--cmd', 'colorscheme vim',
+      '--cmd', 'set notermguicolors',
+      '--cmd', 'let start = reltime() | while v:true | if reltimefloat(reltime(start)) > 2 | break | endif | endwhile',
+    }, {
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+      },
+    })
     exec([[
-      call termopen([v:progpath, '--clean', '--cmd', 'set notermguicolors', '--cmd', 'colorscheme vim', '--cmd', 'let start = reltime() | while v:true | if reltimefloat(reltime(start)) > 2 | break | endif | endwhile'])
       sleep 500m
       vs new
     ]])
@@ -1849,6 +1860,9 @@ describe('TUI', function()
   end)
 
   it('argv[0] can be overridden #23953', function()
+    if is_arch('aarch64') then
+      pending('execl does not work on aarch64')
+    end
     if not exec_lua('return pcall(require, "ffi")') then
       pending('missing LuaJIT FFI')
     end
@@ -1887,8 +1901,12 @@ describe('TUI', function()
     finally(function()
       os.remove('testF')
     end)
-    local screen = thelpers.screen_setup(0, nvim_prog
-      ..' -u NONE -i NONE --cmd \'set noswapfile noshowcmd noruler\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF')
+    local screen = thelpers.screen_setup(0,
+      string.format(
+        'VIMRUNTIME=%s %s -u NONE -i NONE --cmd \'set noswapfile noshowcmd noruler\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF',
+        os.getenv('VIMRUNTIME'),
+        nvim_prog
+    ))
     feed_data(':w testF\n:q\n')
     screen:expect([[
       :w testF                                          |

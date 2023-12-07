@@ -376,6 +376,19 @@ function module.is_os(s)
   )
 end
 
+function module.is_arch(s)
+  local machine = luv.os_uname().machine
+  if s == 'arm64' or s == 'aarch64' then
+    return machine == 'arm64' or machine == 'aarch64'
+  end
+
+  if s == 'x86' or s == 'x86_64' or s == 'amd64' then
+    return machine == 'x86_64'
+  end
+
+  return machine == s
+end
+
 local function tmpdir_get()
   return os.getenv('TMPDIR') and os.getenv('TMPDIR') or os.getenv('TEMP')
 end

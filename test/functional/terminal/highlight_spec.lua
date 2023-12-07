@@ -147,6 +147,10 @@ it(':terminal highlight has lower precedence than editor #9964', function()
     '+hi Normal ctermfg=Blue ctermbg=Yellow',
     '+norm! ichild nvim',
     '+norm! oline 2',
+  }, {
+    env = {
+      VIMRUNTIME = os.getenv('VIMRUNTIME'),
+    },
   })
   screen:expect([[
     {N_child:^child nvim                    }|
