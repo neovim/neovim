@@ -71,9 +71,6 @@ The following changes may require adaptations in user config or plugins.
   now requires an explicit range argument to be passed. If injections are
   required, provide an explicit range via `parser:parse({ start_row, end_row })`.
 
-• Float window support hide and show by setting `hide` on `nvim_open_win` and
-  `nvim_win_set_config`.
-
 • |vim.lsp.util.parse_snippet()| will now strictly follow the snippet grammar
   defined by LSP, and hence previously parsed snippets might now be considered
   invalid input.
@@ -225,6 +222,9 @@ The following new APIs and features were added.
   original LSP `Location` or `LocationLink`.
 
 • |$NVIM_APPNAME| can be set to a relative path instead of only a name.
+
+• Float window support hide and show by setting `hide` on `nvim_open_win` and
+  `nvim_win_set_config`.
 
 • Added |:fclose| command.
 
