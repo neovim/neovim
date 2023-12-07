@@ -800,7 +800,12 @@ local function cppimport(path)
   return cimport(Paths.test_source_path .. '/test/includes/pre/' .. path)
 end
 
-cimport('./src/nvim/types.h', './src/nvim/main.h', './src/nvim/os/time.h', './src/nvim/os/fs.h')
+cimport(
+  './src/nvim/types_defs.h',
+  './src/nvim/main.h',
+  './src/nvim/os/time.h',
+  './src/nvim/os/fs.h'
+)
 
 local function conv_enum(etab, eval)
   local n = tonumber(eval)
