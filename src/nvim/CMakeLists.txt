@@ -11,17 +11,9 @@ set_target_properties(nvim
 #-------------------------------------------------------------------------------
 
 add_library(libuv INTERFACE)
-find_package(libuv CONFIG QUIET)
-if(TARGET libuv::uv_a)
-  target_link_libraries(libuv INTERFACE libuv::uv_a)
-  mark_as_advanced(libuv_DIR)
-else()
-  # Fall back to find module for libuv versions older than v1.45.0 which don't
-  # provide a config file
-  find_package(Libuv 1.28.0 REQUIRED MODULE)
-  target_include_directories(libuv SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIR})
-  target_link_libraries(libuv INTERFACE ${LIBUV_LIBRARIES})
-endif()
+find_package(Libuv 1.28.0 REQUIRED)
+target_include_directories(libuv SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIR})
+target_link_libraries(libuv INTERFACE ${LIBUV_LIBRARIES})
 
 add_library(nlua0 MODULE)
 if(WIN32)
