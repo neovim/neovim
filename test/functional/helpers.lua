@@ -38,8 +38,6 @@ module.nvim_argv = {
   '--cmd', module.nvim_set,
   -- Remove default mappings.
   '--cmd', 'mapclear | mapclear!',
-  -- Unset $COLORTERM so that it won't propagate to :terminal when 'notermguicolors'.
-  '--cmd', 'unlet $COLORTERM',
   -- Make screentest work after changing to the new default color scheme
   -- Source 'vim' color scheme without side effects
   -- TODO: rewrite tests

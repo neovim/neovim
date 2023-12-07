@@ -2213,8 +2213,6 @@ describe("TUI 't_Co' (terminal colors)", function()
 
   local function assert_term_colors(term, colorterm, maxcolors)
     clear({env={TERM=term}, args={}})
-    -- Allow overriding $COLORTERM in :terminal
-    command('set notermguicolors')
     screen = thelpers.setup_child_nvim({
       '-u', 'NONE',
       '-i', 'NONE',
