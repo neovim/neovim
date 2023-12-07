@@ -25,7 +25,7 @@ describe("shell command :!", function()
       '-u', 'NONE',
       '-i', 'NONE',
       '--cmd', 'colorscheme vim',
-      '--cmd', helpers.nvim_set,
+      '--cmd', helpers.nvim_set .. ' notermguicolors',
     })
     screen:expect([[
       {1: }                                                 |

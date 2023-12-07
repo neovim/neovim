@@ -28,17 +28,18 @@ module.nvim_prog = (
 )
 -- Default settings for the test session.
 module.nvim_set = (
-  'set shortmess+=IS background=light noswapfile noautoindent startofline'
+  'set shortmess+=IS background=light termguicolors noswapfile noautoindent startofline'
   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
-  ..' belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid'
-  ..' notermguicolors')
+  ..' belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid')
 module.nvim_argv = {
   module.nvim_prog, '-u', 'NONE', '-i', 'NONE',
   -- XXX: find treesitter parsers.
   '--cmd', runtime_set,
   '--cmd', module.nvim_set,
-  '--cmd', 'mapclear',
-  '--cmd', 'mapclear!',
+  -- Remove default mappings.
+  '--cmd', 'mapclear | mapclear!',
+  -- Unset $COLORTERM so that it won't propagate to :terminal when 'notermguicolors'.
+  '--cmd', 'unlet $COLORTERM',
   -- Make screentest work after changing to the new default color scheme
   -- Source 'vim' color scheme without side effects
   -- TODO: rewrite tests

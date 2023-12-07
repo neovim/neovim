@@ -15,7 +15,7 @@ describe('api', function()
       '-u', 'NONE',
       '-i', 'NONE',
       '--cmd', 'colorscheme vim',
-      '--cmd', helpers.nvim_set,
+      '--cmd', helpers.nvim_set .. ' notermguicolors',
     })
   end)
   after_each(function()
