@@ -156,6 +156,12 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'tmux'
+  elseif executable('cb')
+    let s:copy['+'] = ['cb', 'copy']
+    let s:paste['+'] = ['cb', 'paste']
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    return 'cb'
   endif
 
   let s:err = 'clipboard: No clipboard tool. :help clipboard'

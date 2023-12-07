@@ -196,6 +196,7 @@ registers. Nvim looks for these clipboard tools, in order of priority:
   - win32yank (Windows)
   - termux (via termux-clipboard-set, termux-clipboard-set)
   - tmux (if $TMUX is set)
+  - cb https://github.com/Slackadays/Clipboard
 
 								 *g:clipboard*
 To configure a custom clipboard tool, set g:clipboard to a dictionary.
