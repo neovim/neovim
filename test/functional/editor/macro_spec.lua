@@ -11,9 +11,11 @@ local meths = helpers.meths
 local insert = helpers.insert
 local curbufmeths = helpers.curbufmeths
 
-before_each(clear)
 
 describe('macros', function()
+  before_each(function()
+    clear({args_rm = {'--cmd'}})
+  end)
   it('can be recorded and replayed', function()
     feed('qiahello<esc>q')
     expect('hello')
@@ -47,11 +49,75 @@ hello]]
 
     feed[[G3Q]]
     eq({'helloFOOFOO', 'hello', 'helloFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+
+    feed[[ggV3jQ]]
+    eq({'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+  end)
+
+  it('can be replayed with @', function()
+    insert [[hello
+hello
+hello]]
+    feed [[gg]]
+
+    feed [[qqAFOO<esc>q]]
+    eq({'helloFOO', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+
+    feed[[Q]]
+    eq({'helloFOOFOO', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+
+    feed[[G3@@]]
+    eq({'helloFOOFOO', 'hello', 'helloFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+
+    feed[[ggV2j@@]]
+    eq({'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+  end)
+
+  it('can be replayed with @q and @w', function()
+
+    insert [[hello
+hello
+hello]]
+    feed [[gg]]
+
+    feed [[qqAFOO<esc>qu]]
+    eq({'hello', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+
+    feed [[qwA123<esc>qu]]
+    eq({'hello', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+
+    feed[[V3j@q]]
+    eq({'helloFOO', 'helloFOO', 'helloFOO'}, curbufmeths.get_lines(0, -1, false))
+
+    feed [[gg]]
+    feed[[Vj@w]]
+    eq({'helloFOO123', 'helloFOO123', 'helloFOO'}, curbufmeths.get_lines(0, -1, false))
+  end)
+
+  it('can be replayed with @q and @w visual-block', function()
+    insert [[hello
+hello
+hello]]
+    feed [[gg]]
+
+    feed [[qqAFOO<esc>qu]]
+    eq({'hello', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+
+    feed [[qwA123<esc>qu]]
+    eq({'hello', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+
+    feed[[<C-v>3j@q]]
+    eq({'helloFOO', 'helloFOO', 'helloFOO'}, curbufmeths.get_lines(0, -1, false))
+
+    feed [[gg]]
+    feed[[<C-v>j@w]]
+    eq({'helloFOO123', 'helloFOO123', 'helloFOO'}, curbufmeths.get_lines(0, -1, false))
   end)
 end)
 
 describe('immediately after a macro has finished executing,', function()
   before_each(function()
+    clear()
     command([[let @a = 'gg0']])
   end)
 
@@ -91,6 +157,7 @@ describe('immediately after a macro has finished executing,', function()
 end)
 
 describe('reg_recorded()', function()
+  before_each(clear)
   it('returns the correct value', function()
     feed [[qqyyq]]
     eq('q', eval('reg_recorded()'))

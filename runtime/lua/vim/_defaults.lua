@@ -67,6 +67,21 @@ do
   --- See |&-default|
   vim.keymap.set('n', '&', ':&&<CR>', { desc = ':help &-default' })
 
+  --- Use Q in visual mode to execute a macro on each line of the selection. #21422
+  ---
+  --- Applies to @x and includes @@ too.
+  vim.keymap.set(
+    'x',
+    'Q',
+    ':normal! @<C-R>=reg_recorded()<CR><CR>',
+    { silent = true, desc = ':help v_Q-default' }
+  )
+  vim.keymap.set(
+    'x',
+    '@',
+    "':normal! @'.getcharstr().'<CR>'",
+    { silent = true, expr = true, desc = ':help v_@-default' }
+  )
   --- Map |gx| to call |vim.ui.open| on the identifier under the cursor
   do
     -- TODO: use vim.region() when it lands... #13896 #16843

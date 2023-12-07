@@ -112,6 +112,9 @@ The following changes may require adaptations in user config or plugins.
 • 'termguicolors' is enabled by default when Nvim is able to determine that
   the host terminal emulator supports 24-bit color.
 
+• `Q` now repeats a macro for each line of a visual selection.
+• `@` now repeats the indicated macro for each line of a visual selection.
+
 ==============================================================================
 BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
 

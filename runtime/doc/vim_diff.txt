@@ -129,6 +129,8 @@ of these in your config by simply removing the mapping, e.g. ":unmap Y".
 - <C-W> |i_CTRL-W-default|
 - <C-L> |CTRL-L-default|
 - & |&-default|
+- Q |v_Q-default|
+- @ |v_@-default|
 - # |v_#-default|
 - * |v_star-default|
 - Nvim LSP client defaults |lsp-defaults|
