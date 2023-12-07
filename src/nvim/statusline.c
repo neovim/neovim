@@ -296,7 +296,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   char buf[MAXPATHL];
   char transbuf[MAXPATHL];
   char *stl;
-  int opt_idx = -1;
+  OptIndex opt_idx = kOptInvalid;
   int opt_scope = 0;
   stl_hlrec_t *hltab;
   StlClickRecord *tabtab;
@@ -922,9 +922,9 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, linenr_T relnum, statuscol_T *
 /// @param stcp  Status column attributes (can be NULL)
 ///
 /// @return  The final width of the statusline
-int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int opt_idx, int opt_scope,
-                     int fillchar, int maxwidth, stl_hlrec_t **hltab, StlClickRecord **tabtab,
-                     statuscol_T *stcp)
+int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex opt_idx,
+                     int opt_scope, int fillchar, int maxwidth, stl_hlrec_t **hltab,
+                     StlClickRecord **tabtab, statuscol_T *stcp)
 {
   static size_t stl_items_len = 20;  // Initial value, grows as needed.
   static stl_item_t *stl_items = NULL;
@@ -958,8 +958,9 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int opt_idx
   }
 
   // If "fmt" was set insecurely it needs to be evaluated in the sandbox.
-  // "opt_idx" will be -1 when caller is nvim_eval_statusline().
-  const int use_sandbox = (opt_idx != -1) ? was_set_insecurely(wp, opt_idx, opt_scope) : false;
+  // "opt_idx" will be kOptInvalid when caller is nvim_eval_statusline().
+  const int use_sandbox = (opt_idx != kOptInvalid) ? was_set_insecurely(wp, opt_idx, opt_scope)
+                                                   : false;
 
   // When the format starts with "%!" then evaluate it as an expression and
   // use the result as the actual format string.
@@ -1544,7 +1545,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int opt_idx
       break;
 
     case STL_SHOWCMD:
-      if (p_sc && (opt_idx == -1 || findoption(p_sloc) == opt_idx)) {
+      if (p_sc && (opt_idx == kOptInvalid || findoption(p_sloc) == opt_idx)) {
         str = showcmd_buf;
       }
       break;
@@ -2176,7 +2177,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, int opt_idx
   // TODO(Bram): find out why using called_emsg_before makes tests fail, does it
   // matter?
   // if (called_emsg > called_emsg_before)
-  if (opt_idx != -1 && did_emsg > did_emsg_before) {
+  if (opt_idx != kOptInvalid && did_emsg > did_emsg_before) {
     set_string_option_direct(opt_idx, "", OPT_FREE | opt_scope, SID_ERROR);
   }
 

@@ -283,7 +283,7 @@ static void set_string_option_global(vimoption_T *opt, char **varp)
 
 /// Set a string option to a new value (without checking the effect).
 /// The string is copied into allocated memory.
-/// if ("opt_idx" == -1) "name" is used, otherwise "opt_idx" is used.
+/// if ("opt_idx" == kOptInvalid) "name" is used, otherwise "opt_idx" is used.
 /// When "set_sid" is zero set the scriptID to current_sctx.sc_sid.  When
 /// "set_sid" is SID_NONE don't set the scriptID.  Otherwise set the scriptID to
 /// "set_sid".
@@ -291,7 +291,7 @@ static void set_string_option_global(vimoption_T *opt, char **varp)
 /// @param opt_flags  OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL.
 ///
 /// TODO(famiu): Remove this and its win/buf variants.
-void set_string_option_direct(int opt_idx, const char *val, int opt_flags, int set_sid)
+void set_string_option_direct(OptIndex opt_idx, const char *val, int opt_flags, int set_sid)
 {
   vimoption_T *opt = get_option(opt_idx);
 
@@ -339,7 +339,7 @@ void set_string_option_direct(int opt_idx, const char *val, int opt_flags, int s
 
 /// Like set_string_option_direct(), but for a window-local option in "wp".
 /// Blocks autocommands to avoid the old curwin becoming invalid.
-void set_string_option_direct_in_win(win_T *wp, int opt_idx, const char *val, int opt_flags,
+void set_string_option_direct_in_win(win_T *wp, OptIndex opt_idx, const char *val, int opt_flags,
                                      int set_sid)
 {
   win_T *save_curwin = curwin;
@@ -355,7 +355,7 @@ void set_string_option_direct_in_win(win_T *wp, int opt_idx, const char *val, in
 
 /// Like set_string_option_direct(), but for a buffer-local option in "buf".
 /// Blocks autocommands to avoid the old curwin becoming invalid.
-void set_string_option_direct_in_buf(buf_T *buf, int opt_idx, const char *val, int opt_flags,
+void set_string_option_direct_in_buf(buf_T *buf, OptIndex opt_idx, const char *val, int opt_flags,
                                      int set_sid)
 {
   buf_T *save_curbuf = curbuf;

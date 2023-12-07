@@ -774,7 +774,7 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
   *p = NUL;
 
   bool is_tty_opt = is_tty_option(arg);
-  int opt_idx = is_tty_opt ? -1 : findoption(arg);
+  OptIndex opt_idx = is_tty_opt ? kOptInvalid : findoption(arg);
   uint32_t opt_p_flags = get_option_flags(opt_idx);
   bool hidden = is_option_hidden(opt_idx);
   OptVal curval = is_tty_opt ? get_tty_option(arg) : get_option_value(opt_idx, scope);
@@ -1940,8 +1940,8 @@ typval_T optval_as_tv(OptVal value)
 /// Set option "varname" to the value of "varp" for the current buffer/window.
 static void set_option_from_tv(const char *varname, typval_T *varp)
 {
-  int opt_idx = findoption(varname);
-  if (opt_idx < 0) {
+  OptIndex opt_idx = findoption(varname);
+  if (opt_idx == kOptInvalid) {
     semsg(_(e_unknown_option2), varname);
     return;
   }

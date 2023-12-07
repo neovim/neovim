@@ -3788,9 +3788,9 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
   *option_end = NUL;
 
   bool is_tty_opt = is_tty_option(*arg);
-  int opt_idx = is_tty_opt ? -1 : findoption(*arg);
+  OptIndex opt_idx = is_tty_opt ? kOptInvalid : findoption(*arg);
 
-  if (opt_idx < 0 && !is_tty_opt) {
+  if (opt_idx == kOptInvalid && !is_tty_opt) {
     // Only give error if result is going to be used.
     if (rettv != NULL) {
       semsg(_("E113: Unknown option: %s"), *arg);

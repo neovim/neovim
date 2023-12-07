@@ -23,9 +23,9 @@
 # include "api/options.c.generated.h"
 #endif
 
-static int validate_option_value_args(Dict(option) *opts, char *name, int *opt_idx, int *scope,
-                                      OptReqScope *req_scope, void **from, char **filetype,
-                                      Error *err)
+static int validate_option_value_args(Dict(option) *opts, char *name, OptIndex *opt_idxp,
+                                      int *scope, OptReqScope *req_scope, void **from,
+                                      char **filetype, Error *err)
 {
 #define HAS_KEY_X(d, v) HAS_KEY(d, option, v)
   if (HAS_KEY_X(opts, scope)) {
@@ -79,8 +79,8 @@ static int validate_option_value_args(Dict(option) *opts, char *name, int *opt_i
     return FAIL;
   });
 
-  *opt_idx = findoption(name);
-  int flags = get_option_attrs(*opt_idx);
+  *opt_idxp = findoption(name);
+  int flags = get_option_attrs(*opt_idxp);
   if (flags == 0) {
     // hidden or unknown option
     api_set_error(err, kErrorTypeValidation, "Unknown option '%s'", name);
@@ -153,7 +153,7 @@ static buf_T *do_ft_buf(char *filetype, aco_save_T *aco, Error *err)
 Object nvim_get_option_value(String name, Dict(option) *opts, Error *err)
   FUNC_API_SINCE(9)
 {
-  int opt_idx = 0;
+  OptIndex opt_idx = 0;
   int scope = 0;
   OptReqScope req_scope = kOptReqGlobal;
   void *from = NULL;
@@ -219,7 +219,7 @@ void nvim_set_option_value(uint64_t channel_id, String name, Object value, Dict(
                            Error *err)
   FUNC_API_SINCE(9)
 {
-  int opt_idx = 0;
+  OptIndex opt_idx = 0;
   int scope = 0;
   OptReqScope req_scope = kOptReqGlobal;
   void *to = NULL;
@@ -306,7 +306,7 @@ Dictionary nvim_get_all_options_info(Error *err)
 Dictionary nvim_get_option_info2(String name, Dict(option) *opts, Error *err)
   FUNC_API_SINCE(11)
 {
-  int opt_idx = 0;
+  OptIndex opt_idx = 0;
   int scope = 0;
   OptReqScope req_scope = kOptReqGlobal;
   void *from = NULL;
@@ -392,9 +392,9 @@ static void restore_option_context(void *const ctx, OptReqScope req_scope)
 /// @return  Option attributes.
 ///          0 for hidden or unknown option.
 ///          See SOPT_* in option_defs.h for other flags.
-int get_option_attrs(int opt_idx)
+int get_option_attrs(OptIndex opt_idx)
 {
-  if (opt_idx < 0) {
+  if (opt_idx == kOptInvalid) {
     return 0;
   }
 
@@ -425,9 +425,9 @@ int get_option_attrs(int opt_idx)
 /// @param  req_scope  Requested option scope. See OptReqScope in option.h.
 ///
 /// @return  true if option has a value in the requested scope, false otherwise.
-static bool option_has_scope(int opt_idx, OptReqScope req_scope)
+static bool option_has_scope(OptIndex opt_idx, OptReqScope req_scope)
 {
-  if (opt_idx < 0) {
+  if (opt_idx == kOptInvalid) {
     return false;
   }
 
@@ -463,9 +463,9 @@ static bool option_has_scope(int opt_idx, OptReqScope req_scope)
 /// @return  Option value in the requested scope. Returns a Nil option value if option is not found,
 /// hidden or if it isn't present in the requested scope. (i.e. has no global, window-local or
 /// buffer-local value depending on opt_scope).
-OptVal get_option_value_strict(int opt_idx, OptReqScope req_scope, void *from, Error *err)
+OptVal get_option_value_strict(OptIndex opt_idx, OptReqScope req_scope, void *from, Error *err)
 {
-  if (opt_idx < 0 || !option_has_scope(opt_idx, req_scope)) {
+  if (opt_idx == kOptInvalid || !option_has_scope(opt_idx, req_scope)) {
     return NIL_OPTVAL;
   }
 
@@ -500,8 +500,8 @@ OptVal get_option_value_strict(int opt_idx, OptReqScope req_scope, void *from, E
 /// @param[out]  err        Error message, if any.
 ///
 /// @return  Option value. Must be freed by caller.
-OptVal get_option_value_for(int opt_idx, int scope, const OptReqScope req_scope, void *const from,
-                            Error *err)
+OptVal get_option_value_for(OptIndex opt_idx, int scope, const OptReqScope req_scope,
+                            void *const from, Error *err)
 {
   switchwin_T switchwin;
   aco_save_T aco;
@@ -531,7 +531,7 @@ OptVal get_option_value_for(int opt_idx, int scope, const OptReqScope req_scope,
 /// @param       req_scope   Requested option scope. See OptReqScope in option.h.
 /// @param[in]   from        Target buffer/window.
 /// @param[out]  err         Error message, if any.
-void set_option_value_for(const char *name, int opt_idx, OptVal value, const int opt_flags,
+void set_option_value_for(const char *name, OptIndex opt_idx, OptVal value, const int opt_flags,
                           const OptReqScope req_scope, void *const from, Error *err)
   FUNC_ATTR_NONNULL_ARG(1)
 {

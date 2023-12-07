@@ -241,6 +241,7 @@ end
 opt_fd = assert(io.open(options_enum_file, 'w'))
 
 w('typedef enum {')
+w('  kOptInvalid = -1,')
 for i, o in ipairs(options.options) do
   w(('  kOpt%s = %u,'):format(title_case(o.full_name), i - 1))
 end

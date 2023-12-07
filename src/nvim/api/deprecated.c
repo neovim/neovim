@@ -669,8 +669,8 @@ static void set_option_to(uint64_t channel_id, void *to, OptReqScope req_scope, 
     return;
   });
 
-  int opt_idx = findoption(name.data);
-  VALIDATE_S(opt_idx >= 0, "option name", name.data, {
+  OptIndex opt_idx = findoption(name.data);
+  VALIDATE_S(opt_idx != kOptInvalid, "option name", name.data, {
     return;
   });
 
