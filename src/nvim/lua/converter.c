@@ -148,7 +148,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
     }
   } else {
     if (tsize == 0
-        || (tsize == ret.maxidx
+        || (tsize <= ret.maxidx
             && other_keys_num == 0
             && ret.string_keys_num == 0)) {
       ret.type = kObjectTypeArray;
@@ -1129,10 +1129,6 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
         }
         const size_t idx = cur.obj->data.array.size++;
         lua_rawgeti(lstate, -1, (int)idx + 1);
-        if (lua_isnil(lstate, -1)) {
-          lua_pop(lstate, 2);
-          continue;
-        }
         kvi_push(stack, cur);
         cur = (ObjPopStackItem) {
           .obj = &cur.obj->data.array.items[idx],
