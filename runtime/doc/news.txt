@@ -242,6 +242,8 @@ The following new APIs and features were added.
   clipboard is now bundled by default and will be automatically enabled under
   certain conditions. |clipboard-osc52|
 
+• Added cb as a clipboard provider |provider-clipboard|
+
 • The 'termsync' option asks the terminal emulator to buffer screen updates
   until the redraw cycle is complete. Requires support from the terminal.
 
