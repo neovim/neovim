@@ -7,6 +7,8 @@ function s:logger.on_exit(id, data, event)
   call add(self.d_events, [a:event, ['']])
 endfunction
 
+let s:logger.env = #{VIMRUNTIME: $VIMRUNTIME}
+
 " Replace non-printable chars by special sequence, or "<%x>".
 let s:escaped_char = {"\n": '\n', "\r": '\r', "\t": '\t'}
 function! s:escape_non_printable(char) abort

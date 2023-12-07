@@ -866,7 +866,11 @@ describe('user config init', function()
 
         local screen = Screen.new(50, 8)
         screen:attach()
-        funcs.termopen({nvim_prog})
+        funcs.termopen({nvim_prog}, {
+          env = {
+            VIMRUNTIME = os.getenv('VIMRUNTIME'),
+          },
+        })
         screen:expect({ any = pesc('[i]gnore, (v)iew, (d)eny, (a)llow:') })
         -- `i` to enter Terminal mode, `a` to allow
         feed('ia')
