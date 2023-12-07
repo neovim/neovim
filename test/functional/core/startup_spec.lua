@@ -69,8 +69,17 @@ describe('startup', function()
     local screen
     screen = Screen.new(60, 7)
     screen:attach()
-    command([[let g:id = termopen('"]]..nvim_prog..
-    [[" -u NONE -i NONE --cmd "set noruler" -D')]])
+    local id = funcs.termopen({
+      nvim_prog,
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', 'set noruler',
+      '-D'
+    }, {
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+      },
+    })
     screen:expect([[
       ^                                                            |
                                                                   |
@@ -80,7 +89,7 @@ describe('startup', function()
       >                                                           |
                                                                   |
     ]])
-    command([[call chansend(g:id, "cont\n")]])
+    funcs.chansend(id, 'cont\n')
     screen:expect([[
       ^                                                            |
       ~                                                           |
@@ -285,10 +294,17 @@ describe('startup', function()
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
-    command([[exe printf("terminal %s -u NONE -i NONE --cmd \"]]
-            ..nvim_set..[[\"]]
-            ..[[ -c \"echo has('ttyin') has('ttyout')\""]]
-            ..[[, shellescape(v:progpath))]])
+    funcs.termopen({
+      nvim_prog,
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', nvim_set,
+      '-c', 'echo has("ttyin") has("ttyout")',
+    }, {
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+      },
+    })
     screen:expect([[
       ^                         |
       ~                        |
@@ -306,11 +322,13 @@ describe('startup', function()
       os.remove('Xtest_startup_ttyout')
     end)
     -- Running in :terminal
-    command([[exe printf("terminal %s -u NONE -i NONE --cmd \"]]
-            ..nvim_set..[[\"]]
-            ..[[ -c \"call writefile([has('ttyin'), has('ttyout')], 'Xtest_startup_ttyout')\"]]
-            ..[[ -c q | cat -v"]]  -- Output to a pipe.
-            ..[[, shellescape(v:progpath))]])
+    funcs.termopen(([["%s" -u NONE -i NONE --cmd "%s"]]
+            ..[[ -c "call writefile([has('ttyin'), has('ttyout')], 'Xtest_startup_ttyout')"]]
+            ..[[ -c q | cat -v]]):format(nvim_prog, nvim_set), {
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+      },
+    })
     retry(nil, 3000, function()
       sleep(1)
       eq('1\n0\n',  -- stdin is a TTY, stdout is a pipe
@@ -327,12 +345,14 @@ describe('startup', function()
       os.remove('Xtest_startup_ttyout')
     end)
     -- Running in :terminal
-    command([[exe printf("terminal echo foo | ]]  -- Input from a pipe.
-            ..[[%s -u NONE -i NONE --cmd \"]]
-            ..nvim_set..[[\"]]
-            ..[[ -c \"call writefile([has('ttyin'), has('ttyout')], 'Xtest_startup_ttyout')\"]]
-            ..[[ -c q -- -"]]
-            ..[[, shellescape(v:progpath))]])
+    funcs.termopen(([[echo foo | ]]  -- Input from a pipe.
+            ..[["%s" -u NONE -i NONE --cmd "%s"]]
+            ..[[ -c "call writefile([has('ttyin'), has('ttyout')], 'Xtest_startup_ttyout')"]]
+            ..[[ -c q -- -]]):format(nvim_prog, nvim_set), {
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+      },
+    })
     retry(nil, 3000, function()
       sleep(1)
       eq('0\n1\n',  -- stdin is a pipe, stdout is a TTY
@@ -347,11 +367,13 @@ describe('startup', function()
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
-    command([[exe printf("terminal echo foo | ]]  -- Input from a pipe.
-            ..[[%s -u NONE -i NONE --cmd \"]]
-            ..nvim_set..[[\"]]
-            ..[[ -c \"echo has('ttyin') has('ttyout')\""]]
-            ..[[, shellescape(v:progpath))]])
+    funcs.termopen(([[echo foo | ]]
+            .. [["%s" -u NONE -i NONE --cmd "%s"]]
+            .. [[ -c "echo has('ttyin') has('ttyout')"]]):format(nvim_prog, nvim_set), {
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+      },
+    })
     screen:expect([[
       ^foo                      |
       ~                        |
@@ -453,8 +475,17 @@ describe('startup', function()
     local screen
     screen = Screen.new(60, 6)
     screen:attach()
-    command([[let g:id = termopen('"]]..nvim_prog..
-    [[" -u NONE -i NONE --cmd "set noruler" --cmd "let g:foo = g:bar"')]])
+    local id = funcs.termopen({
+      nvim_prog,
+      '-u', 'NONE',
+      '-i', 'NONE',
+      '--cmd', 'set noruler',
+      '--cmd', 'let g:foo = g:bar',
+    }, {
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+      },
+    })
     screen:expect([[
       ^                                                            |
                                                                   |
@@ -463,7 +494,7 @@ describe('startup', function()
       Press ENTER or type command to continue                     |
                                                                   |
     ]])
-    command([[call chansend(g:id, "\n")]])
+    funcs.chansend(id, '\n')
     screen:expect([[
       ^                                                            |
       ~                                                           |
