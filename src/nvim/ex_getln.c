@@ -149,6 +149,8 @@ typedef struct cmdpreview_buf_info {
   buf_T *buf;
   long save_b_p_ul;
   int save_b_changed;
+  pos_T save_b_op_start;
+  pos_T save_b_op_end;
   varnumber_T save_changedtick;
   CpUndoInfo undo_info;
 } CpBufInfo;
@@ -2348,6 +2350,8 @@ static void cmdpreview_prepare(CpInfo *cpinfo)
       cp_bufinfo.buf = buf;
       cp_bufinfo.save_b_p_ul = buf->b_p_ul;
       cp_bufinfo.save_b_changed = buf->b_changed;
+      cp_bufinfo.save_b_op_start = buf->b_op_start;
+      cp_bufinfo.save_b_op_end = buf->b_op_end;
       cp_bufinfo.save_changedtick = buf_get_changedtick(buf);
       cmdpreview_save_undo(&cp_bufinfo.undo_info, buf);
       kv_push(cpinfo->buf_info, cp_bufinfo);
@@ -2422,6 +2426,9 @@ static void cmdpreview_restore_state(CpInfo *cpinfo)
 
     u_blockfree(buf);
     cmdpreview_restore_undo(&cp_bufinfo.undo_info, buf);
+
+    buf->b_op_start = cp_bufinfo.save_b_op_start;
+    buf->b_op_end = cp_bufinfo.save_b_op_end;
 
     if (cp_bufinfo.save_changedtick != buf_get_changedtick(buf)) {
       buf_set_changedtick(buf, cp_bufinfo.save_changedtick);
