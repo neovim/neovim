@@ -902,6 +902,8 @@ describe('put command', function()
           end
         end
       end, unchanged=(not should_ring)}
+      screen.bell = false
+      screen.visualbell = false
     end
 
     it('should not ring the bell with gp at end of line', function()

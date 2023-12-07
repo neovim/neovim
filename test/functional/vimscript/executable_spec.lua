@@ -137,12 +137,16 @@ describe('executable() (Windows)', function()
   end)
 
   it('system([…]), jobstart([…]) use $PATHEXT #9569', function()
+    -- Empty $PATHEXT defaults to ".com;.exe;.bat;.cmd".
+    clear({env={PATHEXT=''}})
     -- Invoking `cmdscript` should find/execute `cmdscript.cmd`.
     eq('much success\n', call('system', {'test/functional/fixtures/cmdscript'}))
     assert(0 < call('jobstart', {'test/functional/fixtures/cmdscript'}))
   end)
 
   it('full path with extension', function()
+    -- Empty $PATHEXT defaults to ".com;.exe;.bat;.cmd".
+    clear({env={PATHEXT=''}})
     -- Some executable we can expect in the test env.
     local exe = 'printargs-test'
     local exedir = eval("fnamemodify(v:progpath, ':h')")
@@ -153,6 +157,8 @@ describe('executable() (Windows)', function()
   end)
 
   it('full path without extension', function()
+    -- Empty $PATHEXT defaults to ".com;.exe;.bat;.cmd".
+    clear({env={PATHEXT=''}})
     -- Some executable we can expect in the test env.
     local exe = 'printargs-test'
     local exedir = eval("fnamemodify(v:progpath, ':h')")
