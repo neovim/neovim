@@ -295,7 +295,7 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
   FUNC_ATTR_PRINTF(7, 0)
 {
   // Name of the Nvim instance that produced the log.
-  static char name[16] = { 0 };
+  static char name[32] = { 0 };
 
   static const char *log_levels[] = {
     [LOGLVL_DBG] = "DBG",
