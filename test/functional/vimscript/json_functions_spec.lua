@@ -576,8 +576,8 @@ describe('json_encode() function', function()
     eq('{}', eval('json_encode({})'))
     eq('{"d": []}', funcs.json_encode({d={}}))
     eq('{"d": [], "e": []}', funcs.json_encode({d={}, e={}}))
-    -- Empty keys not allowed (yet?) in object_to_vim() (since 7c01d5ff9286). #25564
-    -- eq('{"": []}', funcs.json_encode({['']={}}))
+    -- Empty keys are allowed per JSON spec (and Vim dicts, and msgpack).
+    eq('{"": []}', funcs.json_encode({['']={}}))
   end)
 
   it('cannot dump generic mapping with generic mapping keys and values',

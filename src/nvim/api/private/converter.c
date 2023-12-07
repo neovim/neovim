@@ -258,9 +258,7 @@ Object vim_to_object(typval_T *obj)
 /// @param tv   Conversion result is placed here. On failure member v_type is
 ///             set to VAR_UNKNOWN (no allocation was made for this variable).
 /// @param err  Error object.
-///
-/// @returns    true if conversion is successful, otherwise false.
-bool object_to_vim(Object obj, typval_T *tv, Error *err)
+void object_to_vim(Object obj, typval_T *tv, Error *err)
 {
   tv->v_type = VAR_UNKNOWN;
   tv->v_lock = VAR_UNLOCKED;
@@ -307,12 +305,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     for (uint32_t i = 0; i < obj.data.array.size; i++) {
       Object item = obj.data.array.items[i];
       typval_T li_tv;
-
-      if (!object_to_vim(item, &li_tv, err)) {
-        tv_list_free(list);
-        return false;
-      }
-
+      object_to_vim(item, &li_tv, err);
       tv_list_append_owned_tv(list, li_tv);
     }
     tv_list_ref(list);
@@ -328,24 +321,8 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     for (uint32_t i = 0; i < obj.data.dictionary.size; i++) {
       KeyValuePair item = obj.data.dictionary.items[i];
       String key = item.key;
-
-      if (key.size == 0) {
-        api_set_error(err, kErrorTypeValidation,
-                      "Empty dictionary keys aren't allowed");
-        // cleanup
-        tv_dict_free(dict);
-        return false;
-      }
-
       dictitem_T *const di = tv_dict_item_alloc(key.data);
-
-      if (!object_to_vim(item.value, &di->di_tv, err)) {
-        // cleanup
-        tv_dict_item_free(di);
-        tv_dict_free(dict);
-        return false;
-      }
-
+      object_to_vim(item.value, &di->di_tv, err);
       tv_dict_add(dict, di);
     }
     dict->dv_refcount++;
@@ -362,6 +339,4 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     break;
   }
   }
-
-  return true;
 }

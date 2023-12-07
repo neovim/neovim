@@ -1319,6 +1319,10 @@ describe('API', function()
       eq("Key not found: lua", pcall_err(meths.del_var, 'lua'))
       meths.set_var('lua', 1)
 
+      -- Empty keys are allowed in Vim dicts (and msgpack).
+      nvim('set_var', 'dict_empty_key', {[''] = 'empty key'})
+      eq({[''] = 'empty key'}, nvim('get_var', 'dict_empty_key'))
+
       -- Set locked g: var.
       command('lockvar lua')
       eq('Key is locked: lua', pcall_err(meths.del_var, 'lua'))
@@ -1983,7 +1987,7 @@ describe('API', function()
     it('errors when context dictionary is invalid', function()
       eq('E474: Failed to convert list to msgpack string buffer',
          pcall_err(nvim, 'load_context', { regs = { {} }, jumps = { {} } }))
-      eq("Empty dictionary keys aren't allowed",
+      eq('E474: Failed to convert list to msgpack string buffer',
          pcall_err(nvim, 'load_context', { regs = { { [''] = '' } } }))
     end)
   end)

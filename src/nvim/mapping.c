@@ -2199,7 +2199,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
       Dictionary dict = mapblock_fill_dict(mp,
                                            did_simplify ? keys_simplified : NULL,
                                            buffer_local, abbr, true);
-      (void)object_to_vim(DICTIONARY_OBJ(dict), rettv, NULL);
+      object_to_vim(DICTIONARY_OBJ(dict), rettv, NULL);
       api_free_dictionary(dict);
     } else {
       // Return an empty dictionary.
@@ -2407,7 +2407,7 @@ void f_maplist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
                                              did_simplify ? keys_buf : NULL,
                                              buffer_local, abbr, true);
         typval_T d = TV_INITIAL_VALUE;
-        (void)object_to_vim(DICTIONARY_OBJ(dict), &d, NULL);
+        object_to_vim(DICTIONARY_OBJ(dict), &d, NULL);
         assert(d.v_type == VAR_DICT);
         tv_list_append_dict(rettv->vval.v_list, d.vval.v_dict);
         api_free_dictionary(dict);
