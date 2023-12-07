@@ -4,7 +4,6 @@ local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
-local feed_command = helpers.feed_command
 local expect = helpers.expect
 local feed = helpers.feed
 local insert = helpers.insert
@@ -137,8 +136,10 @@ describe(":substitute, 'inccommand' preserves", function()
     local screen = Screen.new(30,10)
     common_setup(screen, "split", "ABC")
 
-    feed_command("%s/AB/BA/")
-    feed_command("ls")
+    feed(':%s/AB/BA/')
+    poke_eventloop()
+    feed('<CR>')
+    feed(':ls<CR>')
 
     screen:expect([[
       BAC                           |
@@ -180,26 +181,28 @@ describe(":substitute, 'inccommand' preserves", function()
   for _, case in pairs{"", "split", "nosplit"} do
     it("various delimiters (inccommand="..case..")", function()
       insert(default_text)
-      feed_command("set inccommand=" .. case)
+      command("set inccommand=" .. case)
 
       local delims = { '/', '#', ';', '%', ',', '@', '!' }
       for _,delim in pairs(delims) do
-        feed_command("%s"..delim.."lines"..delim.."LINES"..delim.."g")
+        feed(":%s"..delim.."lines"..delim.."LINES"..delim.."g")
+        poke_eventloop()
+        feed('<CR>')
         expect([[
           Inc substitution on
           two LINES
           ]])
-        feed_command("undo")
+        command("undo")
       end
     end)
   end
 
   for _, case in pairs{"", "split", "nosplit"} do
     it("'undolevels' (inccommand="..case..")", function()
-      feed_command("set undolevels=139")
-      feed_command("setlocal undolevels=34")
-      feed_command("split")  -- Show the buffer in multiple windows
-      feed_command("set inccommand=" .. case)
+      command("set undolevels=139")
+      command("setlocal undolevels=34")
+      command("split")  -- Show the buffer in multiple windows
+      command("set inccommand=" .. case)
       insert("as")
       feed(":%s/as/glork/")
       poke_eventloop()
@@ -211,8 +214,8 @@ describe(":substitute, 'inccommand' preserves", function()
 
   for _, case in ipairs({"", "split", "nosplit"}) do
     it("empty undotree() (inccommand="..case..")", function()
-      feed_command("set undolevels=1000")
-      feed_command("set inccommand=" .. case)
+      command("set undolevels=1000")
+      command("set inccommand=" .. case)
       local expected_undotree = eval("undotree()")
 
       -- Start typing an incomplete :substitute command.
@@ -229,8 +232,8 @@ describe(":substitute, 'inccommand' preserves", function()
 
   for _, case in ipairs({"", "split", "nosplit"}) do
     it("undotree() with branches (inccommand="..case..")", function()
-      feed_command("set undolevels=1000")
-      feed_command("set inccommand=" .. case)
+      command("set undolevels=1000")
+      command("set inccommand=" .. case)
       -- Make some changes.
       feed([[isome text 1<C-\><C-N>]])
       feed([[osome text 2<C-\><C-N>]])
@@ -264,7 +267,7 @@ describe(":substitute, 'inccommand' preserves", function()
 
   for _, case in pairs{"", "split", "nosplit"} do
     it("b:changedtick (inccommand="..case..")", function()
-      feed_command("set inccommand=" .. case)
+      command("set inccommand=" .. case)
       feed([[isome text 1<C-\><C-N>]])
       feed([[osome text 2<C-\><C-N>]])
       local expected_tick = eval("b:changedtick")
@@ -350,37 +353,41 @@ describe(":substitute, 'inccommand' preserves undo", function()
   local cases = { "", "split", "nosplit" }
 
   local substrings = {
-    ":%s/1",
-    ":%s/1/",
-    ":%s/1/<bs>",
-    ":%s/1/a",
-    ":%s/1/a<bs>",
-    ":%s/1/ax",
-    ":%s/1/ax<bs>",
-    ":%s/1/ax<bs><bs>",
-    ":%s/1/ax<bs><bs><bs>",
-    ":%s/1/ax/",
-    ":%s/1/ax/<bs>",
-    ":%s/1/ax/<bs>/",
-    ":%s/1/ax/g",
-    ":%s/1/ax/g<bs>",
-    ":%s/1/ax/g<bs><bs>"
+    { ':%s/', '1' },
+    { ':%s/', '1', '/' },
+    { ':%s/', '1', '/', '<bs>' },
+    { ':%s/', '1', '/', 'a' },
+    { ':%s/', '1', '/', 'a', '<bs>' },
+    { ':%s/', '1', '/', 'a', 'x' },
+    { ':%s/', '1', '/', 'a', 'x', '<bs>' },
+    { ':%s/', '1', '/', 'a', 'x', '<bs>', '<bs>' },
+    { ':%s/', '1', '/', 'a', 'x', '<bs>', '<bs>', '<bs>' },
+    { ':%s/', '1', '/', 'a', 'x', '/' },
+    { ':%s/', '1', '/', 'a', 'x', '/', '<bs>' },
+    { ':%s/', '1', '/', 'a', 'x', '/', '<bs>', '/' },
+    { ':%s/', '1', '/', 'a', 'x', '/', 'g' },
+    { ':%s/', '1', '/', 'a', 'x', '/', 'g', '<bs>' },
+    { ':%s/', '1', '/', 'a', 'x', '/', 'g', '<bs>', '<bs>' },
   }
 
   local function test_sub(substring, split, redoable)
     command('bwipe!')
-    feed_command("set inccommand=" .. split)
+    command("set inccommand=" .. split)
 
     insert("1")
     feed("o2<esc>")
-    feed_command("undo")
+    command("undo")
     feed("o3<esc>")
     if redoable then
       feed("o4<esc>")
-      feed_command("undo")
+      command("undo")
     end
-    feed(substring.. "<enter>")
-    feed_command("undo")
+    for _, s in pairs(substring) do
+      feed(s)
+    end
+    poke_eventloop()
+    feed("<enter>")
+    command("undo")
 
     feed("g-")
     expect([[
@@ -395,17 +402,21 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
   local function test_notsub(substring, split, redoable)
     command('bwipe!')
-    feed_command("set inccommand=" .. split)
+    command("set inccommand=" .. split)
 
     insert("1")
     feed("o2<esc>")
-    feed_command("undo")
+    command("undo")
     feed("o3<esc>")
     if redoable then
       feed("o4<esc>")
-      feed_command("undo")
+      command("undo")
     end
-    feed(substring .. "<esc>")
+    for _, s in pairs(substring) do
+      feed(s)
+    end
+    poke_eventloop()
+    feed("<esc>")
 
     feed("g-")
     expect([[
@@ -429,7 +440,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
   local function test_threetree(substring, split)
     command('bwipe!')
-    feed_command("set inccommand=" .. split)
+    command("set inccommand=" .. split)
 
     insert("1")
     feed("o2<esc>")
@@ -449,7 +460,11 @@ describe(":substitute, 'inccommand' preserves undo", function()
     --  1 - 2 - 3
 
     feed("2u")
-    feed(substring .. "<esc>")
+    for _, s in pairs(substring) do
+      feed(s)
+      poke_eventloop()
+    end
+    feed("<esc>")
     expect([[
       1]])
     feed("g-")
@@ -465,7 +480,11 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
     feed("g-") -- go to b
     feed("2u")
-    feed(substring .. "<esc>")
+    for _, s in pairs(substring) do
+      feed(s)
+      poke_eventloop()
+    end
+    feed("<esc>")
     feed("<c-r>")
     expect([[
       1
@@ -473,7 +492,11 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
     feed("g-") -- go to 3
     feed("2u")
-    feed(substring .. "<esc>")
+    for _, s in pairs(substring) do
+      feed(s)
+      poke_eventloop()
+    end
+    feed("<esc>")
     feed("<c-r>")
     expect([[
       1
@@ -524,22 +547,26 @@ describe(":substitute, 'inccommand' preserves undo", function()
     for _, case in pairs(cases) do
       clear()
       common_setup(nil, case, default_text)
-      feed_command("set undolevels=0")
+      command("set undolevels=0")
 
       feed("1G0")
       insert("X")
-      feed(":%s/tw/MO/<esc>")
-      feed_command("undo")
+      feed(":%s/tw/MO/")
+      poke_eventloop()
+      feed("<esc>")
+      command("undo")
       expect(default_text)
-      feed_command("undo")
+      command("undo")
       expect(default_text:gsub("Inc", "XInc"))
-      feed_command("undo")
+      command("undo")
 
-      feed_command("%s/tw/MO/g")
+      feed(":%s/tw/MO/g")
+      poke_eventloop()
+      feed("<CR>")
       expect(default_text:gsub("tw", "MO"))
-      feed_command("undo")
+      command("undo")
       expect(default_text)
-      feed_command("undo")
+      command("undo")
       expect(default_text:gsub("tw", "MO"))
     end
   end)
@@ -562,21 +589,28 @@ describe(":substitute, 'inccommand' preserves undo", function()
         {15:~                   }|
                             |
       ]])
-      feed_command("set undolevels=1")
+      command("set undolevels=1")
 
       feed("1G0")
       insert("X")
       feed("IY<esc>")
-      feed(":%s/tw/MO/<esc>")
-      -- feed_command("undo") here would cause "Press ENTER".
+      feed(":%s/tw/MO/")
+      poke_eventloop()
+      feed("<esc>")
       feed("u")
       expect(default_text:gsub("Inc", "XInc"))
       feed("u")
       expect(default_text)
 
-      feed(":%s/tw/MO/g<enter>")
-      feed(":%s/MO/GO/g<enter>")
-      feed(":%s/GO/NO/g<enter>")
+      feed(":%s/tw/MO/g")
+      poke_eventloop()
+      feed("<enter>")
+      feed(":%s/MO/GO/g")
+      poke_eventloop()
+      feed("<enter>")
+      feed(":%s/GO/NO/g")
+      poke_eventloop()
+      feed("<enter>")
       feed("u")
       expect(default_text:gsub("tw", "GO"))
       feed("u")
@@ -619,13 +653,14 @@ describe(":substitute, 'inccommand' preserves undo", function()
     for _, case in pairs(cases) do
       clear()
       common_setup(screen, case, default_text)
-      feed_command("set undolevels=2")
+      command("set undolevels=2")
 
       feed("2GAx<esc>")
       feed("Ay<esc>")
       feed("Az<esc>")
-      feed(":%s/tw/AR<esc>")
-      -- feed_command("undo") here would cause "Press ENTER".
+      feed(":%s/tw/AR")
+      poke_eventloop()
+      feed("<esc>")
       feed("u")
       expect(default_text:gsub("lines", "linesxy"))
       feed("u")
@@ -662,10 +697,18 @@ describe(":substitute, 'inccommand' preserves undo", function()
         ]])
       end
 
-      feed(":%s/tw/MO/g<enter>")
-      feed(":%s/MO/GO/g<enter>")
-      feed(":%s/GO/NO/g<enter>")
-      feed(":%s/NO/LO/g<enter>")
+      feed(":%s/tw/MO/g")
+      poke_eventloop()
+      feed("<enter>")
+      feed(":%s/MO/GO/g")
+      poke_eventloop()
+      feed("<enter>")
+      feed(":%s/GO/NO/g")
+      poke_eventloop()
+      feed("<enter>")
+      feed(":%s/NO/LO/g")
+      poke_eventloop()
+      feed("<enter>")
       feed("u")
       expect(default_text:gsub("tw", "NO"))
       feed("u")
@@ -711,9 +754,10 @@ describe(":substitute, 'inccommand' preserves undo", function()
       clear()
       common_setup(screen, case, default_text)
 
-      feed_command("set undolevels=-1")
-      feed(":%s/tw/MO/g<enter>")
-      -- feed_command("undo") here will result in a "Press ENTER" prompt
+      command("set undolevels=-1")
+      feed(":%s/tw/MO/g")
+      poke_eventloop()
+      feed("<enter>")
       feed("u")
       if case == "split" then
         screen:expect([[
@@ -747,10 +791,12 @@ describe(":substitute, 'inccommand' preserves undo", function()
       clear()
       common_setup(screen, case, default_text)
 
-      feed_command("set undolevels=-1")
+      command("set undolevels=-1")
       feed("1G")
       feed("IL<esc>")
-      feed(":%s/tw/MO/g<esc>")
+      feed(":%s/tw/MO/g")
+      poke_eventloop()
+      feed("<esc>")
       feed("u")
 
       screen:expect([[
@@ -780,7 +826,7 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it("preserves 'modified' buffer flag", function()
-    feed_command("set nomodified")
+    command("set nomodified")
     feed(":%s/tw")
     screen:expect([[
       Inc substitution on           |
@@ -1015,7 +1061,7 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it("'hlsearch' is active, 'cursorline' is not", function()
-    feed_command("set hlsearch cursorline")
+    command("set hlsearch cursorline")
     feed("gg")
 
     -- Assert that 'cursorline' is active.
@@ -1034,7 +1080,7 @@ describe(":substitute, inccommand=split", function()
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
-      :set hlsearch cursorline      |
+                                    |
     ]])
 
     feed(":%s/tw")
@@ -1104,8 +1150,8 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it('previews correctly when previewhight is small', function()
-    feed_command('set cwh=3')
-    feed_command('set hls')
+    command('set cwh=3')
+    command('set hls')
     feed('ggdG')
     insert(string.rep('abc abc abc\n', 20))
     feed(':%s/abc/MMM/g')
@@ -1129,7 +1175,9 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it('actually replaces text', function()
-    feed(":%s/tw/XX/g<Enter>")
+    feed(":%s/tw/XX/g")
+    poke_eventloop()
+    feed("<Enter>")
 
     screen:expect([[
       Inc substitution on           |
@@ -1154,7 +1202,7 @@ describe(":substitute, inccommand=split", function()
     feed("gg")
     feed("2yy")
     feed("2000p")
-    feed_command("1,1000s/tw/BB/g")
+    command("1,1000s/tw/BB/g")
 
     feed(":%s/tw/X")
     screen:expect([[
@@ -1192,11 +1240,13 @@ describe(":substitute, inccommand=split", function()
     feed("<CR>")
     poke_eventloop()
     feed(":vs tmp<enter>")
-    eq(3, helpers.call('bufnr', '$'))
+    eq(3, funcs.bufnr('$'))
   end)
 
   it('works with the n flag', function()
-    feed(":%s/tw/Mix/n<Enter>")
+    feed(":%s/tw/Mix/n")
+    poke_eventloop()
+    feed("<Enter>")
     screen:expect([[
       Inc substitution on           |
       two lines                     |
@@ -1222,9 +1272,9 @@ describe(":substitute, inccommand=split", function()
     -- Assert that 'inccommand' is ENABLED initially.
     eq("split", eval("&inccommand"))
     -- Set 'redrawtime' to minimal value, to ensure timeout is triggered.
-    feed_command("set redrawtime=1 nowrap")
+    command("set redrawtime=1 nowrap")
     -- Load a big file.
-    feed_command("silent edit! test/functional/fixtures/bigfile_oneline.txt")
+    command("silent edit! test/functional/fixtures/bigfile_oneline.txt")
     -- Start :substitute with a slow pattern.
     feed([[:%s/B.*N/x]])
     poke_eventloop()
@@ -1291,7 +1341,7 @@ describe(":substitute, inccommand=split", function()
   it("clears preview if non-previewable command is edited #5585", function()
     feed('gg')
     -- Put a non-previewable command in history.
-    feed_command("echo 'foo'")
+    feed(":echo 'foo'<CR>")
     -- Start an incomplete :substitute command.
     feed(":1,2s/t/X")
 
@@ -1449,7 +1499,7 @@ describe("inccommand=nosplit", function()
   end)
 
   it("works with :smagic, :snomagic", function()
-    feed_command("set hlsearch")
+    command("set hlsearch")
     insert("Line *.3.* here")
 
     feed(":%smagic/3.*/X")    -- start :smagic command
@@ -1535,7 +1585,7 @@ describe("inccommand=nosplit", function()
   end)
 
   it('never shows preview buffer', function()
-    feed_command("set hlsearch")
+    command("set hlsearch")
 
     feed(":%s/tw")
     screen:expect([[
@@ -1596,7 +1646,7 @@ describe("inccommand=nosplit", function()
 
   it("clears preview if non-previewable command is edited", function()
     -- Put a non-previewable command in history.
-    feed_command("echo 'foo'")
+    feed(":echo 'foo'<CR>")
     -- Start an incomplete :substitute command.
     feed(":1,2s/t/X")
 
@@ -1684,8 +1734,10 @@ describe(":substitute, 'inccommand' with a failing expression", function()
   it('in the pattern does nothing', function()
     for _, case in pairs(cases) do
       refresh(case)
-      feed_command("set inccommand=" .. case)
-      feed(":silent! %s/tw\\(/LARD/<enter>")
+      command("set inccommand=" .. case)
+      feed(":silent! %s/tw\\(/LARD/")
+      poke_eventloop()
+      feed("<enter>")
       expect(default_text)
     end
   end)
@@ -1696,10 +1748,12 @@ describe(":substitute, 'inccommand' with a failing expression", function()
       local replacements = { "\\='LARD", "\\=xx_novar__xx" }
 
       for _, repl in pairs(replacements) do
-        feed_command("set inccommand=" .. case)
-        feed(":silent! %s/tw/" .. repl .. "/<enter>")
+        command("set inccommand=" .. case)
+        feed(":silent! %s/tw/" .. repl .. "/")
+        poke_eventloop()
+        feed("<enter>")
         expect(default_text:gsub("tw", ""))
-        feed_command("undo")
+        command("undo")
       end
     end
   end)
@@ -1757,10 +1811,12 @@ describe("'inccommand' and :cnoremap", function()
 
       for i = 1, string.len(cmd) do
         local c = string.sub(cmd, i, i)
-        feed_command("cnoremap ".. c .. " " .. c)
+        command("cnoremap ".. c .. " " .. c)
       end
 
-      feed_command(cmd)
+      feed(':' .. cmd)
+      poke_eventloop()
+      feed('<CR>')
       expect([[
         Inc substitution on
         two LINES
@@ -1771,30 +1827,47 @@ describe("'inccommand' and :cnoremap", function()
   it('work when mappings move the cursor', function()
     for _, case in pairs(cases) do
       refresh(case)
-      feed_command("cnoremap ,S LINES/<left><left><left><left><left><left>")
+      command("cnoremap ,S LINES/<left><left><left><left><left><left>")
 
-      feed(":%s/lines/,Sor three <enter>")
+      feed(":%s/lines/")
+      poke_eventloop()
+      feed(",S")
+      poke_eventloop()
+      feed("or three <enter>")
+      poke_eventloop()
       expect([[
         Inc substitution on
         two or three LINES
         ]])
 
-      feed_command("cnoremap ;S /X/<left><left><left>")
-      feed(":%s/;SI<enter>")
+      command("cnoremap ;S /X/<left><left><left>")
+      feed(":%s/")
+      poke_eventloop()
+      feed(";S")
+      poke_eventloop()
+      feed("I<enter>")
       expect([[
         Xnc substitution on
         two or three LXNES
         ]])
 
-      feed_command("cnoremap ,T //Y/<left><left><left>")
-      feed(":%s,TX<enter>")
+      command("cnoremap ,T //Y/<left><left><left>")
+      feed(":%s")
+      poke_eventloop()
+      feed(",T")
+      poke_eventloop()
+      feed("X<enter>")
       expect([[
         Ync substitution on
         two or three LYNES
         ]])
 
-      feed_command("cnoremap ;T s//Z/<left><left><left>")
-      feed(":%;TY<enter>")
+      command("cnoremap ;T s//Z/<left><left><left>")
+      feed(":%")
+      poke_eventloop()
+      feed(";T")
+      poke_eventloop()
+      feed("Y<enter>")
       expect([[
         Znc substitution on
         two or three LZNES
@@ -1805,7 +1878,7 @@ describe("'inccommand' and :cnoremap", function()
   it('still works with a broken mapping', function()
     for _, case in pairs(cases) do
       refresh(case, true)
-      feed_command("cnoremap <expr> x execute('bwipeout!')[-1].'x'")
+      command("cnoremap <expr> x execute('bwipeout!')[-1].'x'")
 
       feed(":%s/tw/tox<enter>")
       screen:expect{any=[[{14:^E565:]]}
@@ -1823,9 +1896,11 @@ describe("'inccommand' and :cnoremap", function()
   it('work when temporarily moving the cursor', function()
     for _, case in pairs(cases) do
       refresh(case)
-      feed_command("cnoremap <expr> x cursor(1, 1)[-1].'x'")
+      command("cnoremap <expr> x cursor(1, 1)[-1].'x'")
 
-      feed(":%s/tw/tox/g<enter>")
+      feed(":%s/tw/tox")
+      poke_eventloop()
+      feed("/g<enter>")
       expect(default_text:gsub("tw", "tox"))
     end
   end)
@@ -1833,9 +1908,11 @@ describe("'inccommand' and :cnoremap", function()
   it("work when a mapping disables 'inccommand'", function()
     for _, case in pairs(cases) do
       refresh(case)
-      feed_command("cnoremap <expr> x execute('set inccommand=')[-1]")
+      command("cnoremap <expr> x execute('set inccommand=')[-1]")
 
-      feed(":%s/tw/toxa/g<enter>")
+      feed(":%s/tw/tox")
+      poke_eventloop()
+      feed("a/g<enter>")
       expect(default_text:gsub("tw", "toa"))
     end
   end)
@@ -1847,6 +1924,7 @@ describe("'inccommand' and :cnoremap", function()
       \.fo<CR><C-c>:new<CR>:bw!<CR>:<C-r>=remove(g:, 'fo')<CR>x]])
 
       feed(":%s/tw/tox")
+      poke_eventloop()
       feed("/<enter>")
       expect(default_text:gsub("tw", "tox"))
     end
@@ -1907,7 +1985,7 @@ describe("'inccommand' autocommands", function()
 
   local function register_autocmd(event)
     meths.set_var(event .. "_fired", {})
-    feed_command("autocmd " .. event .. " * call add(g:" .. event .. "_fired, expand('<abuf>'))")
+    command("autocmd " .. event .. " * call add(g:" .. event .. "_fired, expand('<abuf>'))")
   end
 
   it('are not fired when splitting', function()
@@ -1954,8 +2032,8 @@ describe("'inccommand' split windows", function()
     refresh()
 
     feed("gg")
-    feed_command("vsplit")
-    feed_command("split")
+    command("vsplit")
+    command("split")
     feed(":%s/tw")
     screen:expect([[
       Inc substitution on │Inc substitution on|
@@ -1991,9 +2069,9 @@ describe("'inccommand' split windows", function()
     ]])
 
     feed("<esc>")
-    feed_command("only")
-    feed_command("split")
-    feed_command("vsplit")
+    command("only")
+    command("split")
+    command("vsplit")
 
     feed(":%s/tw")
     screen:expect([[
@@ -2031,18 +2109,18 @@ describe("'inccommand' split windows", function()
   end)
 
   local settings = {
-  "splitbelow",
-  "splitright",
-  "noequalalways",
-  "equalalways eadirection=ver",
-  "equalalways eadirection=hor",
-  "equalalways eadirection=both",
+    "splitbelow",
+    "splitright",
+    "noequalalways",
+    "equalalways eadirection=ver",
+    "equalalways eadirection=hor",
+    "equalalways eadirection=both",
   }
 
   it("are not affected by various settings", function()
     for _, setting in pairs(settings) do
       refresh()
-      feed_command("set " .. setting)
+      command("set " .. setting)
 
       feed(":%s/tw")
 
