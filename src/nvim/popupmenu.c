@@ -767,11 +767,11 @@ static bool pum_set_selected(int n, int repeat)
           if (res == OK) {
             // Edit a new, empty buffer. Set options for a "wipeout"
             // buffer.
-            set_option_value_give_err("swf", BOOLEAN_OPTVAL(false), OPT_LOCAL);
-            set_option_value_give_err("bl", BOOLEAN_OPTVAL(false), OPT_LOCAL);
-            set_option_value_give_err("bt", STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
-            set_option_value_give_err("bh", STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL);
-            set_option_value_give_err("diff", BOOLEAN_OPTVAL(false), OPT_LOCAL);
+            set_option_value_give_err(kOptSwapfile, BOOLEAN_OPTVAL(false), OPT_LOCAL);
+            set_option_value_give_err(kOptBuflisted, BOOLEAN_OPTVAL(false), OPT_LOCAL);
+            set_option_value_give_err(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
+            set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL);
+            set_option_value_give_err(kOptDiff, BOOLEAN_OPTVAL(false), OPT_LOCAL);
           }
         }
 

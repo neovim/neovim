@@ -87,7 +87,7 @@ typedef enum {
   OPT_SKIPRTP   = 0x100,  ///< "skiprtp" in 'sessionoptions'
 } OptionFlags;
 
-/// Return value from get_option_value_strict
+/// Return value from get_option_attrs().
 enum {
   SOPT_GLOBAL = 0x01,  ///< Option has global value
   SOPT_WIN    = 0x02,  ///< Option has window-local value

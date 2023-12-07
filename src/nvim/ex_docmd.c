@@ -2653,7 +2653,7 @@ static void apply_cmdmod(cmdmod_T *cmod)
     // Set 'eventignore' to "all".
     // First save the existing option value for restoring it later.
     cmod->cmod_save_ei = xstrdup(p_ei);
-    set_string_option_direct("ei", -1, "all", OPT_FREE, SID_NONE);
+    set_string_option_direct(kOptEventignore, "all", OPT_FREE, SID_NONE);
   }
 }
 
@@ -2673,7 +2673,7 @@ void undo_cmdmod(cmdmod_T *cmod)
 
   if (cmod->cmod_save_ei != NULL) {
     // Restore 'eventignore' to the value before ":noautocmd".
-    set_string_option_direct("ei", -1, cmod->cmod_save_ei, OPT_FREE, SID_NONE);
+    set_string_option_direct(kOptEventignore, cmod->cmod_save_ei, OPT_FREE, SID_NONE);
     free_string_option(cmod->cmod_save_ei);
     cmod->cmod_save_ei = NULL;
   }
@@ -7306,7 +7306,7 @@ static void ex_setfiletype(exarg_T *eap)
     arg += 9;
   }
 
-  set_option_value_give_err("filetype", CSTR_AS_OPTVAL(arg), OPT_LOCAL);
+  set_option_value_give_err(kOptFiletype, CSTR_AS_OPTVAL(arg), OPT_LOCAL);
   if (arg != eap->arg) {
     did_filetype = false;
   }

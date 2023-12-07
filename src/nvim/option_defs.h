@@ -122,3 +122,8 @@ typedef enum {
   kOptReqWin    = 1,  ///< Request window-local option value
   kOptReqBuf    = 2,  ///< Request buffer-local option value
 } OptReqScope;
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+// Initialize the OptIndex enum.
+# include "options_enum.generated.h"
+#endif

@@ -834,7 +834,7 @@ static char *ex_let_option(char *arg, typval_T *const tv, const bool is_const,
     }
   }
 
-  const char *err = set_option_value(arg, newval, scope);
+  const char *err = set_option_value_handle_tty(arg, opt_idx, newval, scope);
   arg_end = p;
   if (err != NULL) {
     emsg(_(err));
@@ -1945,15 +1945,18 @@ static void set_option_from_tv(const char *varname, typval_T *varp)
     semsg(_(e_unknown_option2), varname);
     return;
   }
-  uint32_t opt_p_flags = get_option(opt_idx)->flags;
 
   bool error = false;
+  uint32_t opt_p_flags = get_option_flags(opt_idx);
   OptVal value = tv_to_optval(varp, varname, opt_p_flags, &error);
 
   if (!error) {
-    set_option_value_give_err(varname, value, OPT_LOCAL);
-  }
+    const char *errmsg = set_option_value_handle_tty(varname, opt_idx, value, OPT_LOCAL);
 
+    if (errmsg) {
+      emsg(errmsg);
+    }
+  }
   optval_free(value);
 }
 

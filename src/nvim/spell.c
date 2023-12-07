@@ -3218,14 +3218,14 @@ void ex_spelldump(exarg_T *eap)
   if (no_spell_checking(curwin)) {
     return;
   }
-  OptVal spl = get_option_value(findoption("spl"), OPT_LOCAL);
+  OptVal spl = get_option_value(kOptSpelllang, OPT_LOCAL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");
 
   // enable spelling locally in the new window
-  set_option_value_give_err("spell", BOOLEAN_OPTVAL(true), OPT_LOCAL);
-  set_option_value_give_err("spl", spl, OPT_LOCAL);
+  set_option_value_give_err(kOptSpell, BOOLEAN_OPTVAL(true), OPT_LOCAL);
+  set_option_value_give_err(kOptSpelllang, spl, OPT_LOCAL);
   optval_free(spl);
 
   if (!buf_is_empty(curbuf)) {

@@ -1389,7 +1389,7 @@ static void set_diff_option(win_T *wp, bool value)
   curwin = wp;
   curbuf = curwin->w_buffer;
   curbuf->b_ro_locked++;
-  set_option_value_give_err("diff", BOOLEAN_OPTVAL(value), OPT_LOCAL);
+  set_option_value_give_err(kOptDiff, BOOLEAN_OPTVAL(value), OPT_LOCAL);
   curbuf->b_ro_locked--;
   curwin = old_curwin;
   curbuf = curwin->w_buffer;
@@ -1430,7 +1430,7 @@ void diff_win_options(win_T *wp, int addbuf)
     }
     wp->w_p_fdm_save = xstrdup(wp->w_p_fdm);
   }
-  set_string_option_direct_in_win(wp, "fdm", -1, "diff", OPT_LOCAL | OPT_FREE, 0);
+  set_string_option_direct_in_win(wp, kOptFoldmethod, "diff", OPT_LOCAL | OPT_FREE, 0);
 
   if (!wp->w_p_diff) {
     wp->w_p_fen_save = wp->w_p_fen;

@@ -3281,7 +3281,7 @@ void maketitle(void)
     if (*p_titlestring != NUL) {
       if (stl_syntax & STL_IN_TITLE) {
         build_stl_str_hl(curwin, buf, sizeof(buf), p_titlestring,
-                         "titlestring", 0, 0, maxlen, NULL, NULL, NULL);
+                         kOptTitlestring, 0, 0, maxlen, NULL, NULL, NULL);
         title_str = buf;
       } else {
         title_str = p_titlestring;
@@ -3386,7 +3386,7 @@ void maketitle(void)
     if (*p_iconstring != NUL) {
       if (stl_syntax & STL_IN_ICON) {
         build_stl_str_hl(curwin, icon_str, sizeof(buf), p_iconstring,
-                         "iconstring", 0, 0, 0, NULL, NULL, NULL);
+                         kOptIconstring, 0, 0, 0, NULL, NULL, NULL);
       } else {
         icon_str = p_iconstring;
       }
@@ -4147,9 +4147,9 @@ int buf_open_scratch(handle_T bufnr, char *bufname)
   apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
   (void)setfname(curbuf, bufname, NULL, true);
   apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
-  set_option_value_give_err("bh", STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
-  set_option_value_give_err("bt", STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
-  set_option_value_give_err("swf", BOOLEAN_OPTVAL(false), OPT_LOCAL);
+  set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("hide"), OPT_LOCAL);
+  set_option_value_give_err(kOptBuftype, STATIC_CSTR_AS_OPTVAL("nofile"), OPT_LOCAL);
+  set_option_value_give_err(kOptSwapfile, BOOLEAN_OPTVAL(false), OPT_LOCAL);
   RESET_BINDING(curwin);
   return OK;
 }

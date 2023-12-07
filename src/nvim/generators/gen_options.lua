@@ -1,4 +1,5 @@
 local options_file = arg[1]
+local options_enum_file = arg[2]
 
 local opt_fd = assert(io.open(options_file, 'w'))
 
@@ -40,6 +41,12 @@ local list_flags = {
   flags = 'P_FLAGLIST',
   flagscomma = 'P_COMMA|P_FLAGLIST',
 }
+
+--- @param s string
+--- @return string
+local title_case = function(s)
+  return s:sub(1, 1):upper() .. s:sub(2):lower()
+end
 
 --- @param o vim.option_meta
 --- @return string
@@ -229,4 +236,14 @@ w('')
 for _, v in ipairs(defines) do
   w('#define ' .. v[1] .. ' ' .. v[2])
 end
+
+-- Generate options enum file
+opt_fd = assert(io.open(options_enum_file, 'w'))
+
+w('typedef enum {')
+for i, o in ipairs(options.options) do
+  w(('  kOpt%s = %u,'):format(title_case(o.full_name), i - 1))
+end
+w('} OptIndex;')
+
 opt_fd:close()
