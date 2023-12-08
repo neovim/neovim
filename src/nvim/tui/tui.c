@@ -76,8 +76,9 @@ struct TUIData {
   size_t bufpos;
   TermInput input;
   uv_loop_t write_loop;
+  bool dirty;  ///< whether there has been drawing since the last tui_flush()
   unibi_term *ut;
-  char *term;  // value of $TERM
+  char *term;  ///< value of $TERM
   union {
     uv_tty_t tty;
     uv_pipe_t pipe;
@@ -900,6 +901,8 @@ static void print_cell_at_pos(TUIData *tui, int row, int col, UCell *cell, bool 
     return;
   }
 
+  tui_set_dirty(tui);
+
   cursor_goto(tui, row, col);
 
   char buf[MAX_SCHAR_SIZE];
@@ -924,6 +927,8 @@ static void print_cell_at_pos(TUIData *tui, int row, int col, UCell *cell, bool 
 static void clear_region(TUIData *tui, int top, int bot, int left, int right, int attr_id)
 {
   UGrid *grid = &tui->grid;
+
+  tui_set_dirty(tui);
 
   update_attrs(tui, attr_id);
 
@@ -1242,6 +1247,8 @@ void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow, Integer endrow, 
                                 || tui->can_set_left_right_margin)));
 
   if (can_scroll) {
+    tui_set_dirty(tui);
+
     // Change terminal scroll region and move cursor to the top
     if (!tui->scroll_region_is_full_screen) {
       set_scroll_region(tui, top, bot, left, right);
@@ -1311,6 +1318,15 @@ void tui_default_colors_set(TUIData *tui, Integer rgb_fg, Integer rgb_bg, Intege
   invalidate(tui, 0, tui->grid.height, 0, tui->grid.width);
 }
 
+static void tui_set_dirty(TUIData *tui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (!tui->dirty) {
+    tui->dirty = true;
+    tui_flush_start(tui);
+  }
+}
+
 /// Begin flushing the TUI. If 'termsync' is set and the terminal supports synchronized updates,
 /// begin a synchronized update. Otherwise, hide the cursor to avoid cursor jumping.
 static void tui_flush_start(TUIData *tui)
@@ -1360,7 +1376,7 @@ void tui_flush(TUIData *tui)
     tui_busy_stop(tui);  // avoid hidden cursor
   }
 
-  tui_flush_start(tui);
+  tui_set_dirty(tui);
 
   while (kv_size(tui->invalid_regions)) {
     Rect r = kv_pop(tui->invalid_regions);
@@ -1389,9 +1405,10 @@ void tui_flush(TUIData *tui)
 
   cursor_goto(tui, tui->row, tui->col);
 
+  assert(tui->dirty);
   tui_flush_end(tui);
-
   flush_buf(tui);
+  tui->dirty = false;
 }
 
 /// Dumps termcap info to the messages area, if 'verbose' >= 3.
