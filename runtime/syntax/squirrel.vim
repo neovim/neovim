@@ -2,7 +2,7 @@
 " Language: squirrel
 " Current Maintainer: Matt Dunford (zenmatic@gmail.com)
 " URL: https://github.com/zenmatic/vim-syntax-squirrel
-" Last Change:	2021 Nov 28
+" Last Change:	2023 Dec 08
 
 " http://squirrel-lang.org/
 
@@ -17,6 +17,7 @@ let b:filetype_in_cpp_family = 1
 " Read the C syntax to start with
 runtime! syntax/c.vim
 unlet b:current_syntax
+unlet b:filetype_in_cpp_family
 
 " squirrel extensions
 syn keyword squirrelStatement	delete this in yield resume base clone
