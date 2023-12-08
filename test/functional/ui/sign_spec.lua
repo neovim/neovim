@@ -367,11 +367,12 @@ describe('Signs', function()
                                                              |
       ]]}
       -- line deletion deletes signs.
+      command('3move1')
       command('2d')
       screen:expect([[
-        {1:>>}{8:XX}{2:  }{6:  1 }a                                          |
-        {8:XX}{1:>>}WW{6:  2 }^c                                          |
-        {2:      }{6:  3 }                                           |
+        {1:>>}{8:XX}{6:  1 }a                                            |
+        {8:XX}{1:>>}{6:  2 }^b                                            |
+        {2:    }{6:  3 }                                             |
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|

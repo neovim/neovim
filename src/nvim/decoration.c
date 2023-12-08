@@ -792,17 +792,16 @@ DecorSignHighlight *decor_find_sign(DecorInline decor)
   }
 }
 
-/// If "count" is greater than current max, set it and reset "max_count".
 static void buf_signcols_validate_row(buf_T *buf, int count, int add)
 {
-  int del = add < 0 ? -add : 0;
+  // If "count" is greater than current max, set it and reset "max_count".
   if (count > buf->b_signcols.max) {
     buf->b_signcols.max = count;
     buf->b_signcols.max_count = 0;
     buf->b_signcols.resized = true;
   }
-  /// Add sign of "add" to "max_count"
-  if (count == buf->b_signcols.max - del) {
+  // If row has or had "max" signs, adjust "max_count" with sign of "add".
+  if (count == buf->b_signcols.max - (add < 0 ? -add : 0)) {
     buf->b_signcols.max_count += (add > 0) - (add < 0);
   }
 }
@@ -811,7 +810,12 @@ static void buf_signcols_validate_row(buf_T *buf, int count, int add)
 /// "b_signcols" accordingly.
 static void buf_signcols_validate_range(buf_T *buf, int row1, int row2, int add)
 {
-  int count = 0;  // Number of signs on the current line
+  if (-add == buf->b_signcols.max) {
+    buf->b_signcols.max_count -= (row2 + 1 - row1);
+    return;  // max signs were removed from the range, no need to count.
+  }
+
+  int count = 0;  // Number of signs on the current row
   int currow = row1;
   MTPair pair = { 0 };
   MarkTreeIter itr[1];
@@ -847,8 +851,8 @@ static void buf_signcols_validate_range(buf_T *buf, int row1, int row2, int add)
       count++;
       if (mt_paired(mark)) {
         MTPos end = marktree_get_altpos(buf->b_marktree, mark, NULL);
-        for (int i = mark.pos.row; i < MIN(row2, end.row); i++) {
-          overlap[row2 - i]++;
+        for (int i = mark.pos.row + 1; i <= MIN(row2, end.row); i++) {
+          overlap[i - row1]++;
         }
       }
     }
@@ -861,13 +865,17 @@ static void buf_signcols_validate_range(buf_T *buf, int row1, int row2, int add)
 
 int buf_signcols_validate(win_T *wp, buf_T *buf, bool stc_check)
 {
+  if (!map_size(buf->b_signcols.invalid)) {
+    return buf->b_signcols.max;
+  }
+
   int start;
   SignRange range;
   map_foreach(buf->b_signcols.invalid, start, range, {
-    // Leave rest of the ranges invalid if max is already greater than
-    // configured maximum or resize is detected for 'statuscolumn' rebuild.
-    if ((!stc_check || buf->b_signcols.resized)
-        && (range.add > 0 && buf->b_signcols.max >= wp->w_maxscwidth)) {
+    // Leave rest of the ranges invalid if max is already at configured
+    // maximum or resize is detected for a 'statuscolumn' rebuild.
+    if ((stc_check && buf->b_signcols.resized)
+        || (!stc_check && range.add > 0 && buf->b_signcols.max >= wp->w_maxscwidth)) {
       return wp->w_maxscwidth;
     }
     buf_signcols_validate_range(buf, start, range.end, range.add);
@@ -877,7 +885,7 @@ int buf_signcols_validate(win_T *wp, buf_T *buf, bool stc_check)
   if (buf->b_signcols.max_count == 0) {
     buf->b_signcols.max = 0;
     buf->b_signcols.resized = true;
-    buf_signcols_validate_range(buf, 0, buf->b_ml.ml_line_count, 0);
+    buf_signcols_validate_range(buf, 0, buf->b_ml.ml_line_count, 1);
   }
 
   map_clear(int, buf->b_signcols.invalid);
