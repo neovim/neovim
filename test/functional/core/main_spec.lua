@@ -68,7 +68,9 @@ describe('command-line option', function()
 
       -- Need to explicitly pipe to stdin so that the embedded Nvim instance doesn't try to read
       -- data from the terminal #18181
-      funcs.termopen(string.format([[echo "" | %s]], table.concat(args, " ")))
+      funcs.termopen(string.format([[echo "" | %s]], table.concat(args, " ")), {
+        env = { VIMRUNTIME = os.getenv('VIMRUNTIME') }
+      })
       screen:expect([[
         {1:^                                        }|
         {2:~                                       }|

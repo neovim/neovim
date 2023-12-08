@@ -2396,7 +2396,11 @@ describe('API', function()
       eq(info, meths.get_chan_info(3))
 
       -- :terminal with args + running process.
-      command(':exe "terminal" shellescape(v:progpath) "-u NONE -i NONE"')
+      command('enew')
+      local progpath_esc = eval('shellescape(v:progpath)')
+      funcs.termopen(('%s -u NONE -i NONE'):format(progpath_esc), {
+        env = { VIMRUNTIME = os.getenv('VIMRUNTIME') }
+      })
       eq(-1, eval('jobwait([&channel], 0)[0]'))  -- Running?
       local expected2 = {
         stream = 'job',
@@ -2406,11 +2410,11 @@ describe('API', function()
             eval('&shell'),
             '/s',
             '/c',
-            fmt('"%s -u NONE -i NONE"', eval('shellescape(v:progpath)')),
+            fmt('"%s -u NONE -i NONE"', progpath_esc),
           } or {
             eval('&shell'),
             eval('&shellcmdflag'),
-            fmt('%s -u NONE -i NONE', eval('shellescape(v:progpath)')),
+            fmt('%s -u NONE -i NONE', progpath_esc),
           }
         ),
         mode = 'terminal',
