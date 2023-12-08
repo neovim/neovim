@@ -1,14 +1,17 @@
 local helpers = require('test.functional.helpers')(after_each)
-
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 
-describe('vim.lsp._watchfiles', function()
+describe('glob', function()
   before_each(helpers.clear)
   after_each(helpers.clear)
 
   local match = function(...)
-    return exec_lua('return require("vim.lsp._watchfiles")._match(...)', ...)
+    return exec_lua([[
+      local pattern = select(1, ...)
+      local str = select(2, ...)
+      return require("vim.glob").to_lpeg(pattern):match(str) ~= nil
+    ]], ...)
   end
 
   describe('glob matching', function()

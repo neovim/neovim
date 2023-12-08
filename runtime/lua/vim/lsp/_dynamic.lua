@@ -1,4 +1,4 @@
-local wf = require('vim.lsp._watchfiles')
+local glob = require('vim.glob')
 
 --- @class lsp.DynamicCapabilities
 --- @field capabilities table<string, lsp.Registration[]>
@@ -97,7 +97,7 @@ function M.match(bufnr, documentSelector)
     if matches and filter.scheme and not vim.startswith(uri, filter.scheme .. ':') then
       matches = false
     end
-    if matches and filter.pattern and not wf._match(filter.pattern, fname) then
+    if matches and filter.pattern and not glob.to_lpeg(filter.pattern):match(fname) then
       matches = false
     end
     if matches then
