@@ -3065,10 +3065,13 @@ int findoption_len(const char *const arg, const size_t len)
     opt_idx = quick_tab[CHAR_ORD_LOW(arg[0])];
   }
   // Match full name
-  for (; (s = options[opt_idx].fullname) != NULL; opt_idx++) {
+  for (; (s = options[opt_idx].fullname) != NULL && s[0] == arg[0]; opt_idx++) {
     if (strncmp(arg, s, len) == 0 && s[len] == NUL) {
       break;
     }
+  }
+  if (s != NULL && s[0] != arg[0]) {
+    s = NULL;
   }
   if (s == NULL && !is_term_opt) {
     opt_idx = quick_tab[CHAR_ORD_LOW(arg[0])];
