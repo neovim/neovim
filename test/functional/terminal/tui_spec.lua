@@ -1671,11 +1671,12 @@ describe('TUI', function()
     -- Use full screen message so that redrawing afterwards is more deterministic.
     child_session:notify('nvim_command', 'intro')
     screen:expect({any = 'Nvim'})
+    -- Hiding the cursor needs 6 bytes.
     -- Going to top-left corner needs 3 bytes.
     -- Setting underline attribute needs 9 bytes.
-    -- The whole line needs 3 + 9 + 65515 + 3 = 65530 bytes.
+    -- The whole line needs 6 + 3 + 9 + 65513 + 3 = 65534 bytes.
     -- The cursor_address that comes after will overflow the 65535-byte buffer.
-    local line = ('a'):rep(65515) .. '℃'
+    local line = ('a'):rep(65513) .. '℃'
     child_session:notify('nvim_exec_lua', [[
       vim.api.nvim_buf_set_lines(0, 0, -1, true, {...})
       vim.o.cursorline = true
@@ -1685,7 +1686,7 @@ describe('TUI', function()
     screen:expect(
       '{13:a}{12:' .. ('a'):rep(76) .. '}|\n'
       .. ('{12:' .. ('a'):rep(77) .. '}|\n'):rep(849)
-      .. '{12:' .. ('a'):rep(65) .. '℃' .. (' '):rep(11) .. '}|\n' .. dedent([[
+      .. '{12:' .. ('a'):rep(63) .. '℃' .. (' '):rep(13) .. '}|\n' .. dedent([[
       b                                                                            |
       {5:[No Name] [+]                                                                }|
                                                                                    |
