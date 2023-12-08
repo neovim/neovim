@@ -9,9 +9,10 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-    - uses: actions/labeler@v4
+    - uses: actions/checkout@v4
+    - uses: actions/labeler@v5
       with:
-        sync-labels: ""
+        configuration-path: .github/scripts/labeler_configuration.yml
 
   type-scope:
     needs: triage
