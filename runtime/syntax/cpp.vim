@@ -2,7 +2,7 @@
 " Language:	C++
 " Current Maintainer:	vim-jp (https://github.com/vim-jp/vim-cpp)
 " Previous Maintainer:	Ken Shan <ccshan@post.harvard.edu>
-" Last Change:	2021 Aug 23
+" Last Change:	2023 Dec 08
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -15,6 +15,7 @@ let b:filetype_in_cpp_family = 1
 " Read the C syntax to start with
 runtime! syntax/c.vim
 unlet b:current_syntax
+unlet b:filetype_in_cpp_family
 
 " C++ extensions
 syn keyword cppStatement	new delete this friend using
