@@ -94,56 +94,6 @@ return {
       type = 'number',
     },
     {
-      abbreviation = 'arab',
-      cb = 'did_set_arabic',
-      defaults = { if_true = false },
-      desc = [=[
-        This option can be set to start editing Arabic text.
-        Setting this option will:
-        - Set the 'rightleft' option, unless 'termbidi' is set.
-        - Set the 'arabicshape' option, unless 'termbidi' is set.
-        - Set the 'keymap' option to "arabic"; in Insert mode CTRL-^ toggles
-          between typing English and Arabic key mapping.
-        - Set the 'delcombine' option
-
-        Resetting this option will:
-        - Reset the 'rightleft' option.
-        - Disable the use of 'keymap' (without changing its value).
-        Note that 'arabicshape' and 'delcombine' are not reset (it is a global
-        option).
-        Also see |arabic.txt|.
-      ]=],
-      full_name = 'arabic',
-      redraw = { 'curswant' },
-      scope = { 'window' },
-      short_desc = N_('Arabic as a default second language'),
-      type = 'bool',
-    },
-    {
-      abbreviation = 'arshape',
-      defaults = { if_true = true },
-      desc = [=[
-        When on and 'termbidi' is off, the required visual character
-        corrections that need to take place for displaying the Arabic language
-        take effect.  Shaping, in essence, gets enabled; the term is a broad
-        one which encompasses:
-          a) the changing/morphing of characters based on their location
-             within a word (initial, medial, final and stand-alone).
-          b) the enabling of the ability to compose characters
-          c) the enabling of the required combining of some characters
-        When disabled the display shows each character's true stand-alone
-        form.
-        Arabic is a complex language which requires other settings, for
-        further details see |arabic.txt|.
-      ]=],
-      full_name = 'arabicshape',
-      redraw = { 'all_windows', 'ui_option' },
-      scope = { 'global' },
-      short_desc = N_('do shaping for Arabic characters'),
-      type = 'bool',
-      varname = 'p_arshape',
-    },
-    {
       abbreviation = 'ari',
       defaults = { if_true = false },
       desc = [=[
@@ -201,6 +151,56 @@ return {
       short_desc = N_('what to do with Unicode chars of ambiguous width'),
       type = 'string',
       varname = 'p_ambw',
+    },
+    {
+      abbreviation = 'arab',
+      cb = 'did_set_arabic',
+      defaults = { if_true = false },
+      desc = [=[
+        This option can be set to start editing Arabic text.
+        Setting this option will:
+        - Set the 'rightleft' option, unless 'termbidi' is set.
+        - Set the 'arabicshape' option, unless 'termbidi' is set.
+        - Set the 'keymap' option to "arabic"; in Insert mode CTRL-^ toggles
+          between typing English and Arabic key mapping.
+        - Set the 'delcombine' option
+
+        Resetting this option will:
+        - Reset the 'rightleft' option.
+        - Disable the use of 'keymap' (without changing its value).
+        Note that 'arabicshape' and 'delcombine' are not reset (it is a global
+        option).
+        Also see |arabic.txt|.
+      ]=],
+      full_name = 'arabic',
+      redraw = { 'curswant' },
+      scope = { 'window' },
+      short_desc = N_('Arabic as a default second language'),
+      type = 'bool',
+    },
+    {
+      abbreviation = 'arshape',
+      defaults = { if_true = true },
+      desc = [=[
+        When on and 'termbidi' is off, the required visual character
+        corrections that need to take place for displaying the Arabic language
+        take effect.  Shaping, in essence, gets enabled; the term is a broad
+        one which encompasses:
+          a) the changing/morphing of characters based on their location
+             within a word (initial, medial, final and stand-alone).
+          b) the enabling of the ability to compose characters
+          c) the enabling of the required combining of some characters
+        When disabled the display shows each character's true stand-alone
+        form.
+        Arabic is a complex language which requires other settings, for
+        further details see |arabic.txt|.
+      ]=],
+      full_name = 'arabicshape',
+      redraw = { 'all_windows', 'ui_option' },
+      scope = { 'global' },
+      short_desc = N_('do shaping for Arabic characters'),
+      type = 'bool',
+      varname = 'p_arshape',
     },
     {
       abbreviation = 'acd',
@@ -1129,6 +1129,25 @@ return {
       varname = 'p_cino',
     },
     {
+      abbreviation = 'cinsd',
+      alloced = true,
+      defaults = { if_true = 'public,protected,private' },
+      deny_duplicates = true,
+      desc = [=[
+        Keywords that are interpreted as a C++ scope declaration by |cino-g|.
+        Useful e.g. for working with the Qt framework that defines additional
+        scope declarations "signals", "public slots" and "private slots": >
+        	set cinscopedecls+=signals,public\ slots,private\ slots
+        <
+      ]=],
+      full_name = 'cinscopedecls',
+      list = 'onecomma',
+      scope = { 'buffer' },
+      short_desc = N_("words that are recognized by 'cino-g'"),
+      type = 'string',
+      varname = 'p_cinsd',
+    },
+    {
       abbreviation = 'cinw',
       alloced = true,
       defaults = { if_true = 'if,else,while,do,for,switch' },
@@ -1147,25 +1166,6 @@ return {
       short_desc = N_("words where 'si' and 'cin' add an indent"),
       type = 'string',
       varname = 'p_cinw',
-    },
-    {
-      abbreviation = 'cinsd',
-      alloced = true,
-      defaults = { if_true = 'public,protected,private' },
-      deny_duplicates = true,
-      desc = [=[
-        Keywords that are interpreted as a C++ scope declaration by |cino-g|.
-        Useful e.g. for working with the Qt framework that defines additional
-        scope declarations "signals", "public slots" and "private slots": >
-        	set cinscopedecls+=signals,public\ slots,private\ slots
-        <
-      ]=],
-      full_name = 'cinscopedecls',
-      list = 'onecomma',
-      scope = { 'buffer' },
-      short_desc = N_("words that are recognized by 'cino-g'"),
-      type = 'string',
-      varname = 'p_cinsd',
     },
     {
       abbreviation = 'cb',
@@ -1394,65 +1394,6 @@ return {
       varname = 'p_cpt',
     },
     {
-      abbreviation = 'cocu',
-      alloced = true,
-      cb = 'did_set_concealcursor',
-      defaults = { if_true = '' },
-      desc = [=[
-        Sets the modes in which text in the cursor line can also be concealed.
-        When the current mode is listed then concealing happens just like in
-        other lines.
-          n		Normal mode
-          v		Visual mode
-          i		Insert mode
-          c		Command line editing, for 'incsearch'
-
-        'v' applies to all lines in the Visual area, not only the cursor.
-        A useful value is "nc".  This is used in help files.  So long as you
-        are moving around text is concealed, but when starting to insert text
-        or selecting a Visual area the concealed text is displayed, so that
-        you can see what you are doing.
-        Keep in mind that the cursor position is not always where it's
-        displayed.  E.g., when moving vertically it may change column.
-      ]=],
-      expand_cb = 'expand_set_concealcursor',
-      full_name = 'concealcursor',
-      list = 'flags',
-      redraw = { 'current_window' },
-      scope = { 'window' },
-      short_desc = N_('whether concealable text is hidden in cursor line'),
-      type = 'string',
-    },
-    {
-      abbreviation = 'cole',
-      defaults = { if_true = 0 },
-      desc = [=[
-        Determine how text with the "conceal" syntax attribute |:syn-conceal|
-        is shown:
-
-        Value		Effect ~
-        0		Text is shown normally
-        1		Each block of concealed text is replaced with one
-        		character.  If the syntax item does not have a custom
-        		replacement character defined (see |:syn-cchar|) the
-        		character defined in 'listchars' is used.
-        		It is highlighted with the "Conceal" highlight group.
-        2		Concealed text is completely hidden unless it has a
-        		custom replacement character defined (see
-        		|:syn-cchar|).
-        3		Concealed text is completely hidden.
-
-        Note: in the cursor line concealed text is not hidden, so that you can
-        edit and copy the text.  This can be changed with the 'concealcursor'
-        option.
-      ]=],
-      full_name = 'conceallevel',
-      redraw = { 'current_window' },
-      scope = { 'window' },
-      short_desc = N_('whether concealable text is shown or hidden'),
-      type = 'number',
-    },
-    {
       abbreviation = 'cfu',
       alloced = true,
       cb = 'did_set_completefunc',
@@ -1541,6 +1482,65 @@ return {
       scope = { 'buffer' },
       type = 'string',
       varname = 'p_csl',
+    },
+    {
+      abbreviation = 'cocu',
+      alloced = true,
+      cb = 'did_set_concealcursor',
+      defaults = { if_true = '' },
+      desc = [=[
+        Sets the modes in which text in the cursor line can also be concealed.
+        When the current mode is listed then concealing happens just like in
+        other lines.
+          n		Normal mode
+          v		Visual mode
+          i		Insert mode
+          c		Command line editing, for 'incsearch'
+
+        'v' applies to all lines in the Visual area, not only the cursor.
+        A useful value is "nc".  This is used in help files.  So long as you
+        are moving around text is concealed, but when starting to insert text
+        or selecting a Visual area the concealed text is displayed, so that
+        you can see what you are doing.
+        Keep in mind that the cursor position is not always where it's
+        displayed.  E.g., when moving vertically it may change column.
+      ]=],
+      expand_cb = 'expand_set_concealcursor',
+      full_name = 'concealcursor',
+      list = 'flags',
+      redraw = { 'current_window' },
+      scope = { 'window' },
+      short_desc = N_('whether concealable text is hidden in cursor line'),
+      type = 'string',
+    },
+    {
+      abbreviation = 'cole',
+      defaults = { if_true = 0 },
+      desc = [=[
+        Determine how text with the "conceal" syntax attribute |:syn-conceal|
+        is shown:
+
+        Value		Effect ~
+        0		Text is shown normally
+        1		Each block of concealed text is replaced with one
+        		character.  If the syntax item does not have a custom
+        		replacement character defined (see |:syn-cchar|) the
+        		character defined in 'listchars' is used.
+        		It is highlighted with the "Conceal" highlight group.
+        2		Concealed text is completely hidden unless it has a
+        		custom replacement character defined (see
+        		|:syn-cchar|).
+        3		Concealed text is completely hidden.
+
+        Note: in the cursor line concealed text is not hidden, so that you can
+        edit and copy the text.  This can be changed with the 'concealcursor'
+        option.
+      ]=],
+      full_name = 'conceallevel',
+      redraw = { 'current_window' },
+      scope = { 'window' },
+      short_desc = N_('whether concealable text is shown or hidden'),
+      type = 'number',
     },
     {
       abbreviation = 'cf',
@@ -3241,27 +3241,6 @@ return {
       varname = 'p_fex',
     },
     {
-      abbreviation = 'fo',
-      alloced = true,
-      cb = 'did_set_formatoptions',
-      defaults = { if_true = macros('DFLT_FO_VIM') },
-      desc = [=[
-        This is a sequence of letters which describes how automatic
-        formatting is to be done.
-        See |fo-table| for possible values and |gq| for how to format text.
-        Commas can be inserted for readability.
-        To avoid problems with flags that are added in the future, use the
-        "+=" and "-=" feature of ":set" |add-option-flags|.
-      ]=],
-      expand_cb = 'expand_set_formatoptions',
-      full_name = 'formatoptions',
-      list = 'flags',
-      scope = { 'buffer' },
-      short_desc = N_('how automatic formatting is to be done'),
-      type = 'string',
-      varname = 'p_fo',
-    },
-    {
       abbreviation = 'flp',
       alloced = true,
       defaults = { if_true = '^\\s*\\d\\+[\\]:.)}\\t ]\\s*' },
@@ -3281,6 +3260,27 @@ return {
       short_desc = N_('pattern used to recognize a list header'),
       type = 'string',
       varname = 'p_flp',
+    },
+    {
+      abbreviation = 'fo',
+      alloced = true,
+      cb = 'did_set_formatoptions',
+      defaults = { if_true = macros('DFLT_FO_VIM') },
+      desc = [=[
+        This is a sequence of letters which describes how automatic
+        formatting is to be done.
+        See |fo-table| for possible values and |gq| for how to format text.
+        Commas can be inserted for readability.
+        To avoid problems with flags that are added in the future, use the
+        "+=" and "-=" feature of ":set" |add-option-flags|.
+      ]=],
+      expand_cb = 'expand_set_formatoptions',
+      full_name = 'formatoptions',
+      list = 'flags',
+      scope = { 'buffer' },
+      short_desc = N_('how automatic formatting is to be done'),
+      type = 'string',
+      varname = 'p_fo',
     },
     {
       abbreviation = 'fp',
@@ -6557,27 +6557,6 @@ return {
       type = 'number',
     },
     {
-      abbreviation = 'sms',
-      cb = 'did_set_smoothscroll',
-      defaults = { if_true = false },
-      desc = [=[
-        Scrolling works with screen lines.  When 'wrap' is set and the first
-        line in the window wraps part of it may not be visible, as if it is
-        above the window. "<<<" is displayed at the start of the first line,
-        highlighted with |hl-NonText|.
-        You may also want to add "lastline" to the 'display' option to show as
-        much of the last line as possible.
-        NOTE: only partly implemented, currently works with CTRL-E, CTRL-Y
-        and scrolling with the mouse.
-      ]=],
-      full_name = 'smoothscroll',
-      pv_name = 'p_sms',
-      redraw = { 'current_window' },
-      scope = { 'window' },
-      short_desc = N_("scroll by screen lines when 'wrap' is set"),
-      type = 'bool',
-    },
-    {
       abbreviation = 'scbk',
       cb = 'did_set_scrollback',
       defaults = {
@@ -7230,6 +7209,23 @@ return {
       varname = 'p_stmp',
     },
     {
+      abbreviation = 'sxe',
+      defaults = { if_true = '' },
+      desc = [=[
+        When 'shellxquote' is set to "(" then the characters listed in this
+        option will be escaped with a '^' character.  This makes it possible
+        to execute most external commands with cmd.exe.
+        This option cannot be set from a |modeline| or in the |sandbox|, for
+        security reasons.
+      ]=],
+      full_name = 'shellxescape',
+      scope = { 'global' },
+      secure = true,
+      short_desc = N_("characters to escape when 'shellxquote' is ("),
+      type = 'string',
+      varname = 'p_sxe',
+    },
+    {
       abbreviation = 'sxq',
       defaults = {
         condition = 'MSWIN',
@@ -7254,23 +7250,6 @@ return {
       short_desc = N_("like 'shellquote', but include redirection"),
       type = 'string',
       varname = 'p_sxq',
-    },
-    {
-      abbreviation = 'sxe',
-      defaults = { if_true = '' },
-      desc = [=[
-        When 'shellxquote' is set to "(" then the characters listed in this
-        option will be escaped with a '^' character.  This makes it possible
-        to execute most external commands with cmd.exe.
-        This option cannot be set from a |modeline| or in the |sandbox|, for
-        security reasons.
-      ]=],
-      full_name = 'shellxescape',
-      scope = { 'global' },
-      secure = true,
-      short_desc = N_("characters to escape when 'shellxquote' is ("),
-      type = 'string',
-      varname = 'p_sxe',
     },
     {
       abbreviation = 'sr',
@@ -7668,6 +7647,27 @@ return {
       varname = 'p_sta',
     },
     {
+      abbreviation = 'sms',
+      cb = 'did_set_smoothscroll',
+      defaults = { if_true = false },
+      desc = [=[
+        Scrolling works with screen lines.  When 'wrap' is set and the first
+        line in the window wraps part of it may not be visible, as if it is
+        above the window. "<<<" is displayed at the start of the first line,
+        highlighted with |hl-NonText|.
+        You may also want to add "lastline" to the 'display' option to show as
+        much of the last line as possible.
+        NOTE: only partly implemented, currently works with CTRL-E, CTRL-Y
+        and scrolling with the mouse.
+      ]=],
+      full_name = 'smoothscroll',
+      pv_name = 'p_sms',
+      redraw = { 'current_window' },
+      scope = { 'window' },
+      short_desc = N_("scroll by screen lines when 'wrap' is set"),
+      type = 'bool',
+    },
+    {
       abbreviation = 'sts',
       defaults = { if_true = 0 },
       desc = [=[
@@ -7821,6 +7821,31 @@ return {
       varname = 'p_spl',
     },
     {
+      abbreviation = 'spo',
+      cb = 'did_set_spelloptions',
+      defaults = { if_true = '' },
+      deny_duplicates = true,
+      desc = [=[
+        A comma-separated list of options for spell checking:
+        camel		When a word is CamelCased, assume "Cased" is a
+        		separate word: every upper-case character in a word
+        		that comes after a lower case character indicates the
+        		start of a new word.
+        noplainbuffer	Only spellcheck a buffer when 'syntax' is enabled,
+        		or when extmarks are set within the buffer. Only
+        		designated regions of the buffer are spellchecked in
+        		this case.
+      ]=],
+      expand_cb = 'expand_set_spelloptions',
+      full_name = 'spelloptions',
+      list = 'onecomma',
+      redraw = { 'current_buffer' },
+      scope = { 'buffer' },
+      secure = true,
+      type = 'string',
+      varname = 'p_spo',
+    },
+    {
       abbreviation = 'sps',
       cb = 'did_set_spellsuggest',
       defaults = { if_true = 'best' },
@@ -7899,31 +7924,6 @@ return {
       short_desc = N_('method(s) used to suggest spelling corrections'),
       type = 'string',
       varname = 'p_sps',
-    },
-    {
-      abbreviation = 'spo',
-      cb = 'did_set_spelloptions',
-      defaults = { if_true = '' },
-      deny_duplicates = true,
-      desc = [=[
-        A comma-separated list of options for spell checking:
-        camel		When a word is CamelCased, assume "Cased" is a
-        		separate word: every upper-case character in a word
-        		that comes after a lower case character indicates the
-        		start of a new word.
-        noplainbuffer	Only spellcheck a buffer when 'syntax' is enabled,
-        		or when extmarks are set within the buffer. Only
-        		designated regions of the buffer are spellchecked in
-        		this case.
-      ]=],
-      expand_cb = 'expand_set_spelloptions',
-      full_name = 'spelloptions',
-      list = 'onecomma',
-      redraw = { 'current_buffer' },
-      scope = { 'buffer' },
-      secure = true,
-      type = 'string',
-      varname = 'p_spo',
     },
     {
       abbreviation = 'sb',
@@ -8456,28 +8456,6 @@ return {
       varname = 'p_syn',
     },
     {
-      abbreviation = 'tfu',
-      cb = 'did_set_tagfunc',
-      defaults = { if_true = '' },
-      desc = [=[
-        This option specifies a function to be used to perform tag searches.
-        The function gets the tag pattern and should return a List of matching
-        tags.  See |tag-function| for an explanation of how to write the
-        function and an example.  The value can be the name of a function, a
-        |lambda| or a |Funcref|. See |option-value-function| for more
-        information.
-        This option cannot be set from a |modeline| or in the |sandbox|, for
-        security reasons.
-      ]=],
-      full_name = 'tagfunc',
-      func = true,
-      scope = { 'buffer' },
-      secure = true,
-      short_desc = N_('function used to perform tag searches'),
-      type = 'string',
-      varname = 'p_tfu',
-    },
-    {
       abbreviation = 'tal',
       cb = 'did_set_tabline',
       defaults = { if_true = '' },
@@ -8654,6 +8632,28 @@ return {
       short_desc = N_('how to handle case when searching in tags files'),
       type = 'string',
       varname = 'p_tc',
+    },
+    {
+      abbreviation = 'tfu',
+      cb = 'did_set_tagfunc',
+      defaults = { if_true = '' },
+      desc = [=[
+        This option specifies a function to be used to perform tag searches.
+        The function gets the tag pattern and should return a List of matching
+        tags.  See |tag-function| for an explanation of how to write the
+        function and an example.  The value can be the name of a function, a
+        |lambda| or a |Funcref|. See |option-value-function| for more
+        information.
+        This option cannot be set from a |modeline| or in the |sandbox|, for
+        security reasons.
+      ]=],
+      full_name = 'tagfunc',
+      func = true,
+      scope = { 'buffer' },
+      secure = true,
+      short_desc = N_('function used to perform tag searches'),
+      type = 'string',
+      varname = 'p_tfu',
     },
     {
       abbreviation = 'tl',
@@ -9793,39 +9793,6 @@ return {
       type = 'number',
     },
     {
-      abbreviation = 'winhl',
-      alloced = true,
-      cb = 'did_set_winhighlight',
-      defaults = { if_true = '' },
-      deny_duplicates = true,
-      desc = [=[
-        Window-local highlights.  Comma-delimited list of highlight
-        |group-name| pairs "{hl-from}:{hl-to},..." where each {hl-from} is
-        a |highlight-groups| item to be overridden by {hl-to} group in
-        the window.
-
-        Note: highlight namespaces take precedence over 'winhighlight'.
-        See |nvim_win_set_hl_ns()| and |nvim_set_hl()|.
-
-        Highlights of vertical separators are determined by the window to the
-        left of the separator.  The 'tabline' highlight of a tabpage is
-        decided by the last-focused window of the tabpage.  Highlights of
-        the popupmenu are determined by the current window.  Highlights in the
-        message area cannot be overridden.
-
-        Example: show a different color for non-current windows: >
-        	set winhighlight=Normal:MyNormal,NormalNC:MyNormalNC
-        <
-      ]=],
-      expand_cb = 'expand_set_winhighlight',
-      full_name = 'winhighlight',
-      list = 'onecommacolon',
-      redraw = { 'current_window' },
-      scope = { 'window' },
-      short_desc = N_('Setup window-local highlights'),
-      type = 'string',
-    },
-    {
       abbreviation = 'wi',
       cb = 'did_set_window',
       defaults = {
@@ -9848,6 +9815,35 @@ return {
       short_desc = N_('nr of lines to scroll for CTRL-F and CTRL-B'),
       type = 'number',
       varname = 'p_window',
+    },
+    {
+      abbreviation = 'wfh',
+      defaults = { if_true = false },
+      desc = [=[
+        Keep the window height when windows are opened or closed and
+        'equalalways' is set.  Also for |CTRL-W_=|.  Set by default for the
+        |preview-window| and |quickfix-window|.
+        The height may be changed anyway when running out of room.
+      ]=],
+      full_name = 'winfixheight',
+      redraw = { 'statuslines' },
+      scope = { 'window' },
+      short_desc = N_('keep window height when opening/closing windows'),
+      type = 'bool',
+    },
+    {
+      abbreviation = 'wfw',
+      defaults = { if_true = false },
+      desc = [=[
+        Keep the window width when windows are opened or closed and
+        'equalalways' is set.  Also for |CTRL-W_=|.
+        The width may be changed anyway when running out of room.
+      ]=],
+      full_name = 'winfixwidth',
+      redraw = { 'statuslines' },
+      scope = { 'window' },
+      short_desc = N_('keep window width when opening/closing windows'),
+      type = 'bool',
     },
     {
       abbreviation = 'wh',
@@ -9879,33 +9875,37 @@ return {
       varname = 'p_wh',
     },
     {
-      abbreviation = 'wfh',
-      defaults = { if_true = false },
+      abbreviation = 'winhl',
+      alloced = true,
+      cb = 'did_set_winhighlight',
+      defaults = { if_true = '' },
+      deny_duplicates = true,
       desc = [=[
-        Keep the window height when windows are opened or closed and
-        'equalalways' is set.  Also for |CTRL-W_=|.  Set by default for the
-        |preview-window| and |quickfix-window|.
-        The height may be changed anyway when running out of room.
+        Window-local highlights.  Comma-delimited list of highlight
+        |group-name| pairs "{hl-from}:{hl-to},..." where each {hl-from} is
+        a |highlight-groups| item to be overridden by {hl-to} group in
+        the window.
+
+        Note: highlight namespaces take precedence over 'winhighlight'.
+        See |nvim_win_set_hl_ns()| and |nvim_set_hl()|.
+
+        Highlights of vertical separators are determined by the window to the
+        left of the separator.  The 'tabline' highlight of a tabpage is
+        decided by the last-focused window of the tabpage.  Highlights of
+        the popupmenu are determined by the current window.  Highlights in the
+        message area cannot be overridden.
+
+        Example: show a different color for non-current windows: >
+        	set winhighlight=Normal:MyNormal,NormalNC:MyNormalNC
+        <
       ]=],
-      full_name = 'winfixheight',
-      redraw = { 'statuslines' },
+      expand_cb = 'expand_set_winhighlight',
+      full_name = 'winhighlight',
+      list = 'onecommacolon',
+      redraw = { 'current_window' },
       scope = { 'window' },
-      short_desc = N_('keep window height when opening/closing windows'),
-      type = 'bool',
-    },
-    {
-      abbreviation = 'wfw',
-      defaults = { if_true = false },
-      desc = [=[
-        Keep the window width when windows are opened or closed and
-        'equalalways' is set.  Also for |CTRL-W_=|.
-        The width may be changed anyway when running out of room.
-      ]=],
-      full_name = 'winfixwidth',
-      redraw = { 'statuslines' },
-      scope = { 'window' },
-      short_desc = N_('keep window width when opening/closing windows'),
-      type = 'bool',
+      short_desc = N_('Setup window-local highlights'),
+      type = 'string',
     },
     {
       abbreviation = 'wmh',
