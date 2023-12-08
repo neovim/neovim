@@ -42,9 +42,7 @@ local function resolve_variable(var, default)
   elseif var == 'TM_FILENAME' then
     return expand_or_default('%:t')
   elseif var == 'TM_FILENAME_BASE' then
-    -- Not using '%:t:r' since we want to remove all extensions.
-    local filename_base = expand_or_default('%:t'):gsub('%.[^%.]*$', '')
-    return filename_base
+    return expand_or_default('%:t:r')
   elseif var == 'TM_DIRECTORY' then
     return expand_or_default('%:p:h:t')
   elseif var == 'TM_FILEPATH' then
