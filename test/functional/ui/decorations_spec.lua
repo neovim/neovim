@@ -4989,6 +4989,21 @@ l5
                           |
     ]]}
   end)
+
+  it('correct width with multiple overlapping signs', function()
+    screen:try_resize(20, 4)
+    insert(example_test3)
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S1', end_row=2})
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S2', end_row=2})
+    feed('gg')
+
+    screen:expect{grid=[[
+      S1{1:  }^l1              |
+      S1S2l2              |
+      S1S2l3              |
+                          |
+    ]]}
+  end)
 end)
 
 describe('decorations: virt_text', function()

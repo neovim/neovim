@@ -1195,15 +1195,13 @@ void comp_col(void)
 /// Redraw entire window "wp" if configured 'signcolumn' width changes.
 static bool win_redraw_signcols(win_T *wp)
 {
+  int width;
   bool rebuild_stc = false;
   buf_T *buf = wp->w_buffer;
-  int width = buf->b_signcols.max;
 
   if (wp->w_minscwidth <= SCL_NO) {
     if (*wp->w_p_stc) {
-      if (map_size(buf->b_signcols.invalid)) {
-        buf_signcols_validate(wp, buf, true);
-      }
+      buf_signcols_validate(wp, buf, true);
       if (buf->b_signcols.resized) {
         rebuild_stc = true;
         wp->w_nrwidth_line_count = 0;
@@ -1212,7 +1210,7 @@ static bool win_redraw_signcols(win_T *wp)
     width = 0;
   } else if (wp->w_maxscwidth <= 1 && buf->b_signs_with_text >= (size_t)wp->w_maxscwidth) {
     width = wp->w_maxscwidth;
-  } else if (map_size(buf->b_signcols.invalid)) {
+  } else {
     width = buf_signcols_validate(wp, buf, false);
   }
 
