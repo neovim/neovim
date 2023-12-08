@@ -288,7 +288,7 @@ static void set_init_default_cdpath(void)
 /// default.
 static void set_init_expand_env(void)
 {
-  for (OptIndex opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
+  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
     vimoption_T *opt = &options[opt_idx];
     if (opt->flags & P_NO_DEF_EXP) {
       continue;
@@ -487,9 +487,9 @@ static void set_option_default(const OptIndex opt_idx, int opt_flags)
 /// @param opt_flags  OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
 static void set_options_default(int opt_flags)
 {
-  for (int i = 0; options[i].fullname; i++) {
-    if (!(options[i].flags & P_NODEFAULT)) {
-      set_option_default(i, opt_flags);
+  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+    if (!(options[opt_idx].flags & P_NODEFAULT)) {
+      set_option_default(opt_idx, opt_flags);
     }
   }
 
@@ -567,18 +567,18 @@ void set_number_default(OptIndex opt_idx, OptInt val)
 /// Free all options.
 void free_all_options(void)
 {
-  for (int i = 0; options[i].fullname; i++) {
-    if (options[i].indir == PV_NONE) {
+  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+    if (options[opt_idx].indir == PV_NONE) {
       // global option: free value and default value.
-      if ((options[i].flags & P_ALLOCED) && options[i].var != NULL) {
-        optval_free(optval_from_varp(i, options[i].var));
+      if ((options[opt_idx].flags & P_ALLOCED) && options[opt_idx].var != NULL) {
+        optval_free(optval_from_varp(opt_idx, options[opt_idx].var));
       }
-      if (options[i].flags & P_DEF_ALLOCED) {
-        optval_free(optval_from_varp(i, &options[i].def_val));
+      if (options[opt_idx].flags & P_DEF_ALLOCED) {
+        optval_free(optval_from_varp(opt_idx, &options[opt_idx].def_val));
       }
-    } else if (options[i].var != VAR_WIN) {
+    } else if (options[opt_idx].var != VAR_WIN) {
       // buffer-local option: free global value
-      optval_free(optval_from_varp(i, options[i].var));
+      optval_free(optval_from_varp(opt_idx, options[opt_idx].var));
     }
   }
   free_operatorfunc_option();
@@ -1689,7 +1689,7 @@ static void didset_options2(void)
 /// Check for string options that are NULL (normally only termcap options).
 void check_options(void)
 {
-  for (OptIndex opt_idx = 0; options[opt_idx].fullname != NULL; opt_idx++) {
+  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
     if ((options[opt_idx].flags & P_STRING) && options[opt_idx].var != NULL) {
       check_string_option((char **)get_varp(&(options[opt_idx])));
     }
@@ -3024,7 +3024,9 @@ OptIndex findoption_len(const char *const arg, const size_t len)
   // letter.  There are 26 letters, plus the first "t_" option.
   if (quick_tab[1] == 0) {
     const char *p = options[0].fullname;
-    for (uint16_t i = 1; (s = options[i].fullname) != NULL; i++) {
+    for (OptIndex i = 1; i < kOptIndexCount; i++) {
+      s = options[i].fullname;
+
       if (s[0] != p[0]) {
         if (s[0] == 't' && s[1] == '_') {
           quick_tab[26] = i;
@@ -3049,26 +3051,30 @@ OptIndex findoption_len(const char *const arg, const size_t len)
     opt_idx = quick_tab[CHAR_ORD_LOW(arg[0])];
   }
   // Match full name
-  for (; (s = options[opt_idx].fullname) != NULL && s[0] == arg[0]; opt_idx++) {
+  for (; opt_idx < kOptIndexCount; opt_idx++) {
+    s = options[opt_idx].fullname;
+
+    // Break if first character no longer matches.
+    if (s[0] != arg[0]) {
+      opt_idx = kOptIndexCount;
+      break;
+    }
+
     if (strncmp(arg, s, len) == 0 && s[len] == NUL) {
       break;
     }
   }
-  if (s != NULL && s[0] != arg[0]) {
-    s = NULL;
-  }
-  if (s == NULL && !is_term_opt) {
+  if (opt_idx == kOptIndexCount && !is_term_opt) {
     opt_idx = quick_tab[CHAR_ORD_LOW(arg[0])];
     // Match short name
-    for (; options[opt_idx].fullname != NULL; opt_idx++) {
+    for (; opt_idx < kOptIndexCount; opt_idx++) {
       s = options[opt_idx].shortname;
       if (s != NULL && strncmp(arg, s, len) == 0 && s[len] == NUL) {
         break;
       }
-      s = NULL;
     }
   }
-  if (s == NULL) {
+  if (opt_idx == kOptIndexCount) {
     opt_idx = kOptInvalid;
   } else {
     // Nvim: handle option aliases.
@@ -3921,33 +3927,35 @@ static void showoptions(bool all, int opt_flags)
   for (int run = 1; run <= 2 && !got_int; run++) {
     // collect the items in items[]
     int item_count = 0;
-    for (vimoption_T *p = &options[0]; p->fullname != NULL; p++) {
+    vimoption_T *opt;
+    for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+      opt = &options[opt_idx];
       // apply :filter /pat/
-      if (message_filtered(p->fullname)) {
+      if (message_filtered(opt->fullname)) {
         continue;
       }
 
       void *varp = NULL;
       if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) != 0) {
-        if (p->indir != PV_NONE) {
-          varp = get_varp_scope(p, opt_flags);
+        if (opt->indir != PV_NONE) {
+          varp = get_varp_scope(opt, opt_flags);
         }
       } else {
-        varp = get_varp(p);
+        varp = get_varp(opt);
       }
-      if (varp != NULL && (all || !optval_default(p, varp))) {
+      if (varp != NULL && (all || !optval_default(opt, varp))) {
         int len;
         if (opt_flags & OPT_ONECOLUMN) {
           len = Columns;
-        } else if (p->flags & P_BOOL) {
+        } else if (opt->flags & P_BOOL) {
           len = 1;                      // a toggle option fits always
         } else {
-          option_value2string(p, opt_flags);
-          len = (int)strlen(p->fullname) + vim_strsize(NameBuff) + 1;
+          option_value2string(opt, opt_flags);
+          len = (int)strlen(opt->fullname) + vim_strsize(NameBuff) + 1;
         }
         if ((len <= INC - GAP && run == 1)
             || (len > INC - GAP && run == 2)) {
-          items[item_count++] = p;
+          items[item_count++] = opt;
         }
       }
     }
@@ -4004,7 +4012,7 @@ static int optval_default(vimoption_T *p, const void *varp)
 /// Send update to UIs with values of UI relevant options
 void ui_refresh_options(void)
 {
-  for (OptIndex opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
+  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
     uint32_t flags = options[opt_idx].flags;
     if (!(flags & P_UI_OPTION)) {
       continue;
@@ -4091,39 +4099,42 @@ int makeset(FILE *fd, int opt_flags, int local_only)
   // Do the loop over "options[]" twice: once for options with the
   // P_PRI_MKRC flag and once without.
   for (int pri = 1; pri >= 0; pri--) {
-    for (vimoption_T *p = &options[0]; p->fullname; p++) {
-      if (!(p->flags & P_NO_MKRC)
-          && ((pri == 1) == ((p->flags & P_PRI_MKRC) != 0))) {
+    vimoption_T *opt;
+    for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+      opt = &options[opt_idx];
+
+      if (!(opt->flags & P_NO_MKRC)
+          && ((pri == 1) == ((opt->flags & P_PRI_MKRC) != 0))) {
         // skip global option when only doing locals
-        if (p->indir == PV_NONE && !(opt_flags & OPT_GLOBAL)) {
+        if (opt->indir == PV_NONE && !(opt_flags & OPT_GLOBAL)) {
           continue;
         }
 
         // Do not store options like 'bufhidden' and 'syntax' in a vimrc
         // file, they are always buffer-specific.
-        if ((opt_flags & OPT_GLOBAL) && (p->flags & P_NOGLOB)) {
+        if ((opt_flags & OPT_GLOBAL) && (opt->flags & P_NOGLOB)) {
           continue;
         }
 
-        void *varp = get_varp_scope(p, opt_flags);  // currently used value
+        void *varp = get_varp_scope(opt, opt_flags);  // currently used value
         // Hidden options are never written.
         if (!varp) {
           continue;
         }
         // Global values are only written when not at the default value.
-        if ((opt_flags & OPT_GLOBAL) && optval_default(p, varp)) {
+        if ((opt_flags & OPT_GLOBAL) && optval_default(opt, varp)) {
           continue;
         }
 
         if ((opt_flags & OPT_SKIPRTP)
-            && (p->var == &p_rtp || p->var == &p_pp)) {
+            && (opt->var == &p_rtp || opt->var == &p_pp)) {
           continue;
         }
 
         int round = 2;
         void *varp_local = NULL;  // fresh value
-        if (p->indir != PV_NONE) {
-          if (p->var == VAR_WIN) {
+        if (opt->indir != PV_NONE) {
+          if (opt->var == VAR_WIN) {
             // skip window-local option when only doing globals
             if (!(opt_flags & OPT_LOCAL)) {
               continue;
@@ -4131,8 +4142,8 @@ int makeset(FILE *fd, int opt_flags, int local_only)
             // When fresh value of window-local option is not at the
             // default, need to write it too.
             if (!(opt_flags & OPT_GLOBAL) && !local_only) {
-              void *varp_fresh = get_varp_scope(p, OPT_GLOBAL);  // local value
-              if (!optval_default(p, varp_fresh)) {
+              void *varp_fresh = get_varp_scope(opt, OPT_GLOBAL);  // local value
+              if (!optval_default(opt, varp_fresh)) {
                 round = 1;
                 varp_local = varp;
                 varp = varp_fresh;
@@ -4151,12 +4162,12 @@ int makeset(FILE *fd, int opt_flags, int local_only)
             cmd = "setlocal";
           }
 
-          if (p->flags & P_BOOL) {
-            if (put_setbool(fd, cmd, p->fullname, *(int *)varp) == FAIL) {
+          if (opt->flags & P_BOOL) {
+            if (put_setbool(fd, cmd, opt->fullname, *(int *)varp) == FAIL) {
               return FAIL;
             }
-          } else if (p->flags & P_NUM) {
-            if (put_setnum(fd, cmd, p->fullname, (OptInt *)varp) == FAIL) {
+          } else if (opt->flags & P_NUM) {
+            if (put_setnum(fd, cmd, opt->fullname, (OptInt *)varp) == FAIL) {
               return FAIL;
             }
           } else {    // P_STRING
@@ -4164,15 +4175,15 @@ int makeset(FILE *fd, int opt_flags, int local_only)
 
             // Don't set 'syntax' and 'filetype' again if the value is
             // already right, avoids reloading the syntax file.
-            if (p->indir == PV_SYN || p->indir == PV_FT) {
-              if (fprintf(fd, "if &%s != '%s'", p->fullname,
+            if (opt->indir == PV_SYN || opt->indir == PV_FT) {
+              if (fprintf(fd, "if &%s != '%s'", opt->fullname,
                           *(char **)(varp)) < 0
                   || put_eol(fd) < 0) {
                 return FAIL;
               }
               do_endif = true;
             }
-            if (put_setstring(fd, cmd, p->fullname, (char **)varp, p->flags) == FAIL) {
+            if (put_setstring(fd, cmd, opt->fullname, (char **)varp, opt->flags) == FAIL) {
               return FAIL;
             }
             if (do_endif) {
@@ -4862,7 +4873,7 @@ static void init_buf_opt_idx(void)
     return;
   }
   did_init_buf_opt_idx = true;
-  for (OptIndex i = 0; options[i].fullname != NULL; i++) {
+  for (OptIndex i = 0; i < kOptIndexCount; i++) {
     if (options[i].indir & PV_BUF) {
       buf_opt_idx[options[i].indir & PV_MASK] = i;
     }
@@ -5477,8 +5488,8 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, char *fuzzystr, int *numM
       }
     }
     char *str;
-    for (size_t opt_idx = 0; (str = options[opt_idx].fullname) != NULL;
-         opt_idx++) {
+    for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+      str = options[opt_idx].fullname;
       if (options[opt_idx].var == NULL) {
         continue;
       }
@@ -6136,7 +6147,7 @@ dict_T *get_winbuf_options(const int bufopt)
 {
   dict_T *const d = tv_dict_alloc();
 
-  for (OptIndex opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
+  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
     struct vimoption *opt = &options[opt_idx];
 
     if ((bufopt && (opt->indir & PV_BUF))
@@ -6191,9 +6202,9 @@ Dictionary get_vimoption(String name, int scope, buf_T *buf, win_T *win, Error *
 Dictionary get_all_vimoptions(void)
 {
   Dictionary retval = ARRAY_DICT_INIT;
-  for (size_t i = 0; options[i].fullname != NULL; i++) {
-    Dictionary opt_dict = vimoption2dict(&options[i], OPT_GLOBAL, curbuf, curwin);
-    PUT(retval, options[i].fullname, DICTIONARY_OBJ(opt_dict));
+  for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
+    Dictionary opt_dict = vimoption2dict(&options[opt_idx], OPT_GLOBAL, curbuf, curwin);
+    PUT(retval, options[opt_idx].fullname, DICTIONARY_OBJ(opt_dict));
   }
   return retval;
 }

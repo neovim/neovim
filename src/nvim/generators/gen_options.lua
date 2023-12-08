@@ -44,8 +44,8 @@ local list_flags = {
 
 --- @param s string
 --- @return string
-local title_case = function(s)
-  return s:sub(1, 1):upper() .. s:sub(2):lower()
+local lowercase_to_titlecase = function(s)
+  return s:sub(1, 1):upper() .. s:sub(2)
 end
 
 --- @param o vim.option_meta
@@ -229,7 +229,6 @@ static vimoption_T options[] = {]])
 for i, o in ipairs(options.options) do
   dump_option(i, o)
 end
-w('  [' .. ('%u'):format(#options.options) .. ']={.fullname=NULL}')
 w('};')
 w('')
 
@@ -242,9 +241,13 @@ opt_fd = assert(io.open(options_enum_file, 'w'))
 
 w('typedef enum {')
 w('  kOptInvalid = -1,')
+
 for i, o in ipairs(options.options) do
-  w(('  kOpt%s = %u,'):format(title_case(o.full_name), i - 1))
+  w(('  kOpt%s = %u,'):format(lowercase_to_titlecase(o.full_name), i - 1))
 end
+
+w('  // Option count, used when iterating through options')
+w('#define kOptIndexCount ' .. tostring(#options.options))
 w('} OptIndex;')
 
 opt_fd:close()
