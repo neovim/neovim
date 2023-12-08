@@ -3,6 +3,7 @@ local snippet = require('vim.lsp._snippet_grammar')
 local validate = vim.validate
 local api = vim.api
 local list_extend = vim.list_extend
+local lpeg = vim.lpeg
 local highlight = require('vim.highlight')
 local uv = vim.uv
 
@@ -543,6 +544,74 @@ end
 -- https://stackoverflow.com/questions/1976007/what-characters-are-forbidden-in-windows-and-linux-directory-names
 -- function M.glob_to_regex(glob)
 -- end
+
+--- Parses the raw glob into an |lpeg| pattern. LPeg patterns natively support the "this" or "that"
+--- alternative constructions described in the LSP spec that cannot be expressed in a standard Lua pattern.
+---
+---@param pattern string The raw glob pattern
+---@return vim.lpeg.Pattern? pattern An |lpeg| representation of the pattern, or nil if the pattern is invalid.
+function M.glob_to_lpeg(pattern)
+  local l = lpeg
+
+  local P, S, V = lpeg.P, lpeg.S, lpeg.V
+  local C, Cc, Ct, Cf = lpeg.C, lpeg.Cc, lpeg.Ct, lpeg.Cf
+
+  local pathsep = '/'
+
+  local function class(inv, ranges)
+    for i, r in ipairs(ranges) do
+      ranges[i] = r[1] .. r[2]
+    end
+    local patt = l.R(unpack(ranges))
+    if inv == '!' then
+      patt = P(1) - patt
+    end
+    return patt
+  end
+
+  local function add(acc, a)
+    return acc + a
+  end
+
+  local function mul(acc, m)
+    return acc * m
+  end
+
+  local function star(stars, after)
+    return (-after * (l.P(1) - pathsep)) ^ #stars * after
+  end
+
+  local function dstar(after)
+    return (-after * l.P(1)) ^ 0 * after
+  end
+
+  local p = P({
+    'Pattern',
+    Pattern = V('Elem') ^ -1 * V('End'),
+    Elem = Cf(
+      (V('DStar') + V('Star') + V('Ques') + V('Class') + V('CondList') + V('Literal'))
+        * (V('Elem') + V('End')),
+      mul
+    ),
+    DStar = P('**') * (P(pathsep) * (V('Elem') + V('End')) + V('End')) / dstar,
+    Star = C(P('*') ^ 1) * (V('Elem') + V('End')) / star,
+    Ques = P('?') * Cc(l.P(1) - pathsep),
+    Class = P('[') * C(P('!') ^ -1) * Ct(Ct(C(1) * '-' * C(P(1) - ']')) ^ 1 * ']') / class,
+    CondList = P('{') * Cf(V('Cond') * (P(',') * V('Cond')) ^ 0, add) * '}',
+    -- TODO: '*' inside a {} condition is interpreted literally but should probably have the same
+    -- wildcard semantics it usually has.
+    -- Fixing this is non-trivial because '*' should match non-greedily up to "the rest of the
+    -- pattern" which in all other cases is the entire succeeding part of the pattern, but at the end of a {}
+    -- condition means "everything after the {}" where several other options separated by ',' may
+    -- exist in between that should not be matched by '*'.
+    Cond = Cf((V('Ques') + V('Class') + V('CondList') + (V('Literal') - S(',}'))) ^ 1, mul)
+      + Cc(l.P(0)),
+    Literal = P(1) / l.P,
+    End = P(-1) * Cc(l.P(-1)),
+  })
+
+  return p:match(pattern) --[[@as vim.lpeg.Pattern?]]
+end
 
 --- Can be used to extract the completion items from a
 --- `textDocument/completion` request, which may return one of

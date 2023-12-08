@@ -367,4 +367,33 @@ function M.normalize(path, opts)
   return (path:gsub('(.)/$', '%1'))
 end
 
+--- Check if a path is contained within another path.
+---@param container string The path being checked to see if it is the parent
+---@param path string The path being checked to see if it is contained within the parent
+---@return boolean
+function M.path_contains(container, path)
+  -- Normalize both paths so we don't have to deal with different path separators
+  container = M.normalize(vim.fn.fnamemodify(container, ':p'))
+  path = M.normalize(vim.fn.fnamemodify(path, ':p'))
+  -- Trim trailing "/" from the root
+  if container:find('/', -1) then
+    container = container:sub(1, -2)
+  end
+  -- Assume windows filesystem is case-insensitive
+  if iswin then
+    container = container:lower()
+    path = path:lower()
+  end
+  if container == path then
+    return true
+  end
+  local prefix = path:sub(1, container:len())
+  if prefix ~= container then
+    return false
+  end
+
+  -- Ensure the first character after the root is a '/'
+  return path:find('/', container:len() + 1, true) == container:len() + 1
+end
+
 return M

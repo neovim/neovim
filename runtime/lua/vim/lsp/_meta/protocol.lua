@@ -343,7 +343,7 @@ error('Cannot require a meta file')
 ---
 ---If a client neither supports `documentChanges` nor `workspace.workspaceEdit.resourceOperations` then
 ---only plain `TextEdit`s using the `changes` property are supported.
----@field documentChanges? lsp.TextDocumentEdit|lsp.CreateFile|lsp.RenameFile|lsp.DeleteFile[]
+---@field documentChanges? (lsp.TextDocumentEdit|lsp.CreateFile|lsp.RenameFile|lsp.DeleteFile)[]
 ---A map of change annotations that can be referenced in `AnnotatedTextEdit`s or create, rename and
 ---delete file / folder operations.
 ---

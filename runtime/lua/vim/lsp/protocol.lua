@@ -873,6 +873,15 @@ function protocol.make_client_capabilities()
       inlayHint = {
         refreshSupport = true,
       },
+      fileOperations = {
+        dynamicRegistration = false,
+        didCreate = true,
+        willCreate = true,
+        didRename = true,
+        willRename = true,
+        didDelete = true,
+        willDelete = true,
+      },
     },
     experimental = nil,
     window = {

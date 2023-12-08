@@ -25,6 +25,7 @@ local lsp = {
   diagnostic = require('vim.lsp.diagnostic'),
   codelens = require('vim.lsp.codelens'),
   inlay_hint = require('vim.lsp.inlay_hint'),
+  workspace = require('vim.lsp.workspace'),
   semantic_tokens = semantic_tokens,
   util = util,
 
