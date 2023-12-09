@@ -265,6 +265,7 @@ local ext_keys = {
 --              row. Last character of each row (typically "|") is stripped.
 --              Common indentation is stripped.
 --              "{MATCH:x}" in a line is matched against Lua pattern `x`.
+--              "*count" at the end of a line means it repeats `count` times.
 -- attr_ids:    Expected text attributes. Screen rows are transformed according
 --              to this table, as follows: each substring S composed of
 --              characters having the same attributes will be substituted by
@@ -381,14 +382,26 @@ function Screen:expect(expected, attr_ids, ...)
     end
 
     if grid ~= nil then
-      local err_msg, msg_expected_rows = nil, {}
+      for i, row in ipairs(expected_rows) do
+        local count
+        row, count = row:match('^(.*%|)%*(%d+)$')
+        if row then
+          count = tonumber(count)
+          table.remove(expected_rows, i)
+          for _ = 1, count do
+            table.insert(expected_rows, i, row)
+          end
+        end
+      end
+      local err_msg = nil
       -- `expected` must match the screen lines exactly.
       if #actual_rows ~= #expected_rows then
         err_msg = "Expected screen height " .. #expected_rows
         .. ' differs from actual height ' .. #actual_rows .. '.'
       end
+      local msg_expected_rows = shallowcopy(expected_rows)
+      local msg_actual_rows = shallowcopy(actual_rows)
       for i, row in ipairs(expected_rows) do
-        msg_expected_rows[i] = row
         local pat = nil
         if actual_rows[i] and row ~= actual_rows[i] then
           local after = row
@@ -405,7 +418,7 @@ function Screen:expect(expected, attr_ids, ...)
         if row ~= actual_rows[i] and (not pat or not actual_rows[i]:match(pat)) then
           msg_expected_rows[i] = '*' .. msg_expected_rows[i]
           if i <= #actual_rows then
-            actual_rows[i] = '*' .. actual_rows[i]
+            msg_actual_rows[i] = '*' .. msg_actual_rows[i]
           end
           if err_msg == nil then
             err_msg = 'Row ' .. tostring(i) .. ' did not match.'
@@ -415,10 +428,10 @@ function Screen:expect(expected, attr_ids, ...)
       if err_msg ~= nil then
         return (
           err_msg..'\nExpected:\n  |'..table.concat(msg_expected_rows, '\n  |')..'\n'
-          ..'Actual:\n  |'..table.concat(actual_rows, '\n  |')..'\n\n'..[[
+          ..'Actual:\n  |'..table.concat(msg_actual_rows, '\n  |')..'\n\n'..[[
 To print the expect() call that would assert the current screen state, use
 screen:snapshot_util(). In case of non-deterministic failures, use
-screen:redraw_debug() to show all intermediate screen states.  ]])
+screen:redraw_debug() to show all intermediate screen states.]])
       end
     end
 
@@ -625,7 +638,7 @@ between asynchronous (feed(), nvim_input()) and synchronous API calls.
 
   if err then
     if eof then err = err..'\n\n'..eof[2] end
-    busted.fail(err, 3)
+    busted.fail(err .. '\n\nSnapshot:\n' .. self:_print_snapshot(), 3)
   elseif did_warn then
     if eof then print(eof[2]) end
     local tb = debug.traceback()
@@ -1301,7 +1314,6 @@ end
 -- Returns the current screen state in the form of a screen:expect()
 -- keyword-args map.
 function Screen:get_snapshot(attrs, ignore)
-  attrs = attrs or self._default_attr_ids
   if ignore == nil then
     ignore = self._default_attr_ignore
   end
@@ -1310,6 +1322,11 @@ function Screen:get_snapshot(attrs, ignore)
       ignore = ignore,
       mutable = true, -- allow _row_repr to add missing highlights
   }
+  if attrs == nil then
+    attrs = self._default_attr_ids
+  else
+    attr_state.modified = true
+  end
 
   if attrs ~= nil then
     for i, a in pairs(attrs) do
@@ -1321,6 +1338,17 @@ function Screen:get_snapshot(attrs, ignore)
   end
 
   local lines = self:render(true, attr_state, true)
+
+  for i, row in ipairs(lines) do
+    local count = 1
+    while i < #lines and lines[i + 1] == row do
+      count = count + 1
+      table.remove(lines, i + 1)
+    end
+    if count > 1 then
+      lines[i] = lines[i] .. '*' .. count
+    end
+  end
 
   local ext_state = self:_extstate_repr(attr_state)
   for k, v in pairs(ext_state) do
@@ -1377,7 +1405,7 @@ local function fmt_ext_state(name, state)
   end
 end
 
-function Screen:print_snapshot(attrs, ignore)
+function Screen:_print_snapshot(attrs, ignore)
   local kwargs, ext_state, attr_state = self:get_snapshot(attrs, ignore)
   local attrstr = ""
   if attr_state.modified then
@@ -1395,16 +1423,19 @@ function Screen:print_snapshot(attrs, ignore)
     attrstr = (", attr_ids={\n"..table.concat(attrstrs, "\n").."\n}")
   end
 
-  print( "\nscreen:expect{grid=[[")
-  print(kwargs.grid)
-  io.stdout:write( "]]"..attrstr)
+  local result = 'screen:expect{grid=[[\n' .. kwargs.grid .. '\n]]' .. attrstr
   for _, k in ipairs(ext_keys) do
     if ext_state[k] ~= nil and not (k == "win_viewport" and not self.options.ext_multigrid) then
-      io.stdout:write(", "..k.."="..fmt_ext_state(k, ext_state[k]))
+      result = result .. ', ' .. k .. '=' ..  fmt_ext_state(k, ext_state[k])
     end
   end
-  print("}\n")
-  io.stdout:flush()
+  result = result .. '}'
+
+  return result
+end
+
+function Screen:print_snapshot(attrs, ignore)
+  print('\n' .. self:_print_snapshot(attrs, ignore) .. '\n')
 end
 
 function Screen:_insert_hl_id(attr_state, hl_id)
