@@ -265,12 +265,13 @@ local ext_keys = {
 --              row. Last character of each row (typically "|") is stripped.
 --              Common indentation is stripped.
 --              "{MATCH:x}" in a line is matched against Lua pattern `x`.
---              "*count" at the end of a line means it repeats `count` times.
+--              "*n" at the end of a line means it repeats `n` times.
 -- attr_ids:    Expected text attributes. Screen rows are transformed according
 --              to this table, as follows: each substring S composed of
 --              characters having the same attributes will be substituted by
 --              "{K:S}", where K is a key in `attr_ids`. Any unexpected
 --              attributes in the final state are an error.
+--              Use an empty table for a text-only (no attributes) expectation.
 --              Use screen:set_default_attr_ids() to define attributes for many
 --              expect() calls.
 -- extmarks:    Expected win_extmarks accumulated for the grids. For each grid,
@@ -350,8 +351,11 @@ function Screen:expect(expected, attr_ids, ...)
     end
   end
   local attr_state = {
-      ids = attr_ids or self._default_attr_ids,
+    ids = attr_ids or self._default_attr_ids,
   }
+  if isempty(attr_ids) then
+    attr_state.ids = nil
+  end
   if self._options.ext_linegrid then
     attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids or {})
   end
@@ -1258,7 +1262,7 @@ end
 
 -- Generates tests. Call it where Screen:expect() would be. Waits briefly, then
 -- dumps the current screen state in the form of Screen:expect().
--- Use snapshot_util({},true) to generate a text-only (no attributes) test.
+-- Use snapshot_util({}) to generate a text-only (no attributes) test.
 --
 -- @see Screen:redraw_debug()
 function Screen:snapshot_util(attrs, ignore, request_cb)
@@ -1318,12 +1322,15 @@ function Screen:get_snapshot(attrs, ignore)
     ignore = self._default_attr_ignore
   end
   local attr_state = {
-      ids = {},
-      ignore = ignore,
-      mutable = true, -- allow _row_repr to add missing highlights
+    ids = {},
+    ignore = ignore,
+    mutable = true, -- allow _row_repr to add missing highlights
   }
   if attrs == nil then
     attrs = self._default_attr_ids
+  elseif isempty(attrs) then
+    attrs = nil
+    attr_state.ids = nil
   else
     attr_state.modified = true
   end
@@ -1334,7 +1341,7 @@ function Screen:get_snapshot(attrs, ignore)
     end
   end
   if self._options.ext_linegrid then
-    attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids)
+    attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids or {})
   end
 
   local lines = self:render(true, attr_state, true)
@@ -1421,6 +1428,8 @@ function Screen:_print_snapshot(attrs, ignore)
       table.insert(attrstrs, "  "..keyval.." = "..dict..";")
     end
     attrstr = (", attr_ids={\n"..table.concat(attrstrs, "\n").."\n}")
+  elseif isempty(attrs) then
+    attrstr = ', attr_ids={}'
   end
 
   local result = 'screen:expect{grid=[[\n' .. kwargs.grid .. '\n]]' .. attrstr
@@ -1436,6 +1445,7 @@ end
 
 function Screen:print_snapshot(attrs, ignore)
   print('\n' .. self:_print_snapshot(attrs, ignore) .. '\n')
+  io.stdout:flush()
 end
 
 function Screen:_insert_hl_id(attr_state, hl_id)
