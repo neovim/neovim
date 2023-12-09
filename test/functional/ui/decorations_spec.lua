@@ -4832,16 +4832,28 @@ l5
   it('correct width with multiple overlapping signs', function()
     screen:try_resize(20, 4)
     insert(example_test3)
-    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S1', end_row=2})
-    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S2', end_row=2})
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S1'})
+    meths.buf_set_extmark(0, ns, 0, -1, {sign_text='S2', end_row=2})
+    meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S3', end_row=2})
     feed('gg')
 
+    local s1 = [[
+      S1S2^l1              |
+      S2S3l2              |
+      S2S3l3              |
+                          |
+    ]]
+    screen:expect{grid=s1}
+    -- Correct width when :move'ing a line with signs
+    command('move2')
     screen:expect{grid=[[
-      S1{1:  }^l1              |
-      S1S2l2              |
-      S1S2l3              |
+      S3{1:    }l2            |
+      S1S2S3^l1            |
+      {1:      }l3            |
                           |
     ]]}
+    command('move0')
+    screen:expect{grid=s1}
   end)
 end)
 

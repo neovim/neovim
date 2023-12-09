@@ -2420,13 +2420,13 @@ static void u_undoredo(bool undo, bool do_buf_event)
   if (undo) {
     for (int i = (int)kv_size(curhead->uh_extmark) - 1; i > -1; i--) {
       undo_info = kv_A(curhead->uh_extmark, i);
-      extmark_apply_undo(undo_info, undo);
+      extmark_apply_undo(curwin, undo_info, undo);
     }
     // redo
   } else {
     for (int i = 0; i < (int)kv_size(curhead->uh_extmark); i++) {
       undo_info = kv_A(curhead->uh_extmark, i);
-      extmark_apply_undo(undo_info, undo);
+      extmark_apply_undo(curwin, undo_info, undo);
     }
   }
   if (curhead->uh_flags & UH_RELOAD) {

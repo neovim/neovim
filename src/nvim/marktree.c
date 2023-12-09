@@ -50,6 +50,7 @@
 #include <uv.h>
 
 #include "klib/kvec.h"
+#include "nvim/decoration.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
 #include "nvim/marktree.h"
@@ -1835,41 +1836,61 @@ past_continue_same_node:
   return moved;
 }
 
-void marktree_move_region(MarkTree *b, int start_row, colnr_T start_col, int extent_row,
+void marktree_move_region(win_T *wp, int start_row, colnr_T start_col, int extent_row,
                           colnr_T extent_col, int new_row, colnr_T new_col)
 {
   MTPos start = { start_row, start_col };
   MTPos size = { extent_row, extent_col };
+  MarkTree *b = wp->w_buffer->b_marktree;
+  MTPos new = { new_row, new_col };
   MTPos end = size;
   unrelative(start, &end);
   MarkTreeIter itr[1] = { 0 };
   marktree_itr_get_ext(b, start, itr, false, true, NULL);
   kvec_t(MTKey) saved = KV_INITIAL_VALUE;
+  kvec_t(MTKey) signs = KV_INITIAL_VALUE;
+
   while (itr->x) {
     MTKey k = marktree_itr_current(itr);
-    if (!pos_leq(k.pos, end) || (k.pos.row == end.row && k.pos.col == end.col
-                                 && mt_right(k))) {
+    if (!pos_leq(k.pos, end)
+        || (k.pos.row == end.row && k.pos.col == end.col && mt_right(k))) {
       break;
     }
+
+    if (k.flags & MT_FLAG_DECOR_SIGNTEXT) {
+      int row2 = marktree_get_altpos(b, k, NULL).row;
+      buf_signcols_invalidate_range(wp->w_buffer, k.pos.row, row2, -1);
+    }
+
     relative(start, &k.pos);
+    unrelative(new, &k.pos);
+
+    if (k.flags & MT_FLAG_DECOR_SIGNTEXT) {
+      kv_push(signs, k);
+    }
     kv_push(saved, k);
+
     marktree_del_itr(b, itr, false);
   }
+  buf_signcols_validate(wp, wp->w_buffer, false);
 
   marktree_splice(b, start.row, start.col, size.row, size.col, 0, 0);
-  MTPos new = { new_row, new_col };
-  marktree_splice(b, new.row, new.col,
-                  0, 0, size.row, size.col);
+  marktree_splice(b, new.row, new.col, 0, 0, size.row, size.col);
 
   for (size_t i = 0; i < kv_size(saved); i++) {
     MTKey item = kv_A(saved, i);
-    unrelative(new, &item.pos);
     marktree_put_key(b, item);
     if (mt_paired(item)) {
       // other end might be later in `saved`, this will safely bail out then
       marktree_restore_pair(b, item);
     }
   }
+  for (size_t i = 0; i < kv_size(signs); i++) {
+    MTKey item = kv_A(signs, i);
+    int row2 = marktree_get_altpos(b, item, NULL).row;
+    buf_signcols_invalidate_range(wp->w_buffer, item.pos.row, row2, 1);
+  }
+  kv_destroy(signs);
   kv_destroy(saved);
 }
 
@@ -1971,13 +1992,10 @@ MTPos marktree_get_altpos(MarkTree *b, MTKey mark, MarkTreeIter *itr)
   return marktree_get_alt(b, mark, itr).pos;
 }
 
+/// @return paired mark or mark itself
 MTKey marktree_get_alt(MarkTree *b, MTKey mark, MarkTreeIter *itr)
 {
-  MTKey end = MT_INVALID_KEY;
-  if (mt_paired(mark)) {
-    end = marktree_lookup_ns(b, mark.ns, mark.id, !mt_end(mark), itr);
-  }
-  return end;
+  return mt_paired(mark) ? marktree_lookup_ns(b, mark.ns, mark.id, !mt_end(mark), itr) : mark;
 }
 
 static void marktree_itr_fix_pos(MarkTree *b, MarkTreeIter *itr)

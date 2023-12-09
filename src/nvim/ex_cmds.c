@@ -812,7 +812,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
          (int64_t)num_lines);
   }
 
-  extmark_move_region(curbuf, line1 - 1, 0, start_byte,
+  extmark_move_region(curwin, line1 - 1, 0, start_byte,
                       line2 - line1 + 1, 0, extent_byte,
                       dest + line_off, 0, dest_byte + byte_off,
                       kExtmarkUndo);

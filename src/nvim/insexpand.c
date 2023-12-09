@@ -2545,7 +2545,7 @@ static void restore_orig_extmarks(void)
 {
   for (long i = (int)kv_size(compl_orig_extmarks) - 1; i > -1; i--) {
     ExtmarkUndoObject undo_info = kv_A(compl_orig_extmarks, i);
-    extmark_apply_undo(undo_info, true);
+    extmark_apply_undo(curwin, undo_info, true);
   }
 }
 

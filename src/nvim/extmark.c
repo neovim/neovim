@@ -330,9 +330,6 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
     // Invalidate/delete mark
     if (!only_copy && !mt_invalid(mark) && mt_invalidate(mark) && !mt_end(mark)) {
       MTPos endpos = marktree_get_altpos(buf->b_marktree, mark, NULL);
-      if (endpos.row < 0) {
-        endpos = mark.pos;
-      }
       // Invalidate unpaired marks in deleted lines and paired marks whose entire
       // range has been deleted.
       if ((!mt_paired(mark) && mark.pos.row < u_row)
@@ -371,7 +368,7 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
 }
 
 /// undo or redo an extmark operation
-void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
+void extmark_apply_undo(win_T *wp, ExtmarkUndoObject undo_info, bool undo)
 {
   // splice: any text operation changing position (except :move)
   if (undo_info.type == kExtmarkSplice) {
@@ -402,7 +399,7 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
         MTKey mark = marktree_lookup(curbuf->b_marktree, pos.mark, itr);
         mt_itr_rawkey(itr).flags &= (uint16_t) ~MT_FLAG_INVALID;
         MTPos end = marktree_get_altpos(curbuf->b_marktree, mark, itr);
-        buf_put_decor(curbuf, mt_decor(mark), mark.pos.row, end.row < 0 ? mark.pos.row : end.row);
+        buf_put_decor(curbuf, mt_decor(mark), mark.pos.row, end.row);
       }
       // Redo
     } else {
@@ -413,14 +410,12 @@ void extmark_apply_undo(ExtmarkUndoObject undo_info, bool undo)
   } else if (undo_info.type == kExtmarkMove) {
     ExtmarkMove move = undo_info.data.move;
     if (undo) {
-      extmark_move_region(curbuf,
-                          move.new_row, move.new_col, move.new_byte,
+      extmark_move_region(wp, move.new_row, move.new_col, move.new_byte,
                           move.extent_row, move.extent_col, move.extent_byte,
                           move.start_row, move.start_col, move.start_byte,
                           kExtmarkNoUndo);
     } else {
-      extmark_move_region(curbuf,
-                          move.start_row, move.start_col, move.start_byte,
+      extmark_move_region(wp, move.start_row, move.start_col, move.start_byte,
                           move.extent_row, move.extent_col, move.extent_byte,
                           move.new_row, move.new_col, move.new_byte,
                           kExtmarkNoUndo);
@@ -592,10 +587,11 @@ void extmark_splice_cols(buf_T *buf, int start_row, colnr_T start_col, colnr_T o
                  0, new_col, new_col, undo);
 }
 
-void extmark_move_region(buf_T *buf, int start_row, colnr_T start_col, bcount_t start_byte,
+void extmark_move_region(win_T *wp, int start_row, colnr_T start_col, bcount_t start_byte,
                          int extent_row, colnr_T extent_col, bcount_t extent_byte, int new_row,
                          colnr_T new_col, bcount_t new_byte, ExtmarkOp undo)
 {
+  buf_T *buf = wp->w_buffer;
   buf->deleted_bytes2 = 0;
   // TODO(bfredl): this is not synced to the buffer state inside the callback.
   // But unless we make the undo implementation smarter, this is not ensured
@@ -604,7 +600,7 @@ void extmark_move_region(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
                           extent_row, extent_col, extent_byte,
                           0, 0, 0);
 
-  marktree_move_region(buf->b_marktree, start_row, start_col,
+  marktree_move_region(wp, start_row, start_col,
                        extent_row, extent_col,
                        new_row, new_col);
 
