@@ -10,10 +10,10 @@ set_target_properties(nvim
 # Dependencies
 #-------------------------------------------------------------------------------
 
-add_library(libuv INTERFACE)
+add_library(libuv_lib INTERFACE)
 find_package(Libuv 1.28.0 REQUIRED)
-target_include_directories(libuv SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIR})
-target_link_libraries(libuv INTERFACE ${LIBUV_LIBRARIES})
+target_include_directories(libuv_lib SYSTEM BEFORE INTERFACE ${LIBUV_INCLUDE_DIR})
+target_link_libraries(libuv_lib INTERFACE ${LIBUV_LIBRARIES})
 
 add_library(nlua0 MODULE)
 if(WIN32)
@@ -35,13 +35,13 @@ find_package(Treesitter 0.20.8 REQUIRED)
 find_package(Unibilium 2.0 REQUIRED)
 
 target_link_libraries(main_lib INTERFACE
-  iconv
-  libvterm
-  msgpack
-  treesitter
-  unibilium
-  lpeg)
-target_link_libraries(nlua0 PUBLIC lpeg)
+  iconv_lib
+  libvterm_lib
+  msgpack_lib
+  treesitter_lib
+  unibilium_lib
+  lpeg_lib)
+target_link_libraries(nlua0 PUBLIC lpeg_lib)
 
 # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
 find_package(Libintl REQUIRED)
@@ -700,7 +700,7 @@ target_sources(main_lib INTERFACE
 
 target_sources(nlua0 PUBLIC ${NLUA0_SOURCES})
 
-target_link_libraries(nvim PRIVATE main_lib PUBLIC libuv)
+target_link_libraries(nvim PRIVATE main_lib PUBLIC libuv_lib)
 install_helper(TARGETS nvim)
 if(MSVC)
   install(FILES $<TARGET_PDB_FILE:nvim> DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
@@ -794,7 +794,7 @@ set_target_properties(
     OUTPUT_NAME ${LIBNVIM_NAME}
 )
 target_compile_definitions(libnvim PRIVATE MAKE_LIB)
-target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv)
+target_link_libraries(libnvim PRIVATE main_lib PUBLIC libuv_lib)
 
 #-------------------------------------------------------------------------------
 # Lint

@@ -40,10 +40,6 @@ endif
 
 CMAKE_GENERATOR ?= $(shell (command -v ninja > /dev/null 2>&1 && echo "Ninja") || \
     echo "Unix Makefiles")
-DEPS_BUILD_DIR ?= .deps
-ifneq (1,$(words [$(DEPS_BUILD_DIR)]))
-  $(error DEPS_BUILD_DIR must not contain whitespace)
-endif
 
 ifeq (,$(BUILD_TOOL))
   ifeq (Ninja,$(CMAKE_GENERATOR))
@@ -64,7 +60,6 @@ ifeq ($(CMAKE_GENERATOR),Ninja)
   endif
 endif
 
-DEPS_CMAKE_FLAGS ?=
 USE_BUNDLED ?=
 
 ifneq (,$(USE_BUNDLED))
@@ -73,42 +68,25 @@ endif
 
 ifneq (,$(findstring functionaltest-lua,$(MAKECMDGOALS)))
   BUNDLED_LUA_CMAKE_FLAG := -DUSE_BUNDLED_LUA=ON
-  $(shell [ -x $(DEPS_BUILD_DIR)/usr/bin/lua ] || rm build/.ran-*)
 endif
 
 # For use where we want to make sure only a single job is run.  This does issue 
 # a warning, but we need to keep SCRIPTS argument.
 SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
-nvim: build/.ran-cmake deps
+nvim: build/.ran-cmake
 	+$(BUILD_TOOL) -C build
 
-libnvim: build/.ran-cmake deps
+libnvim: build/.ran-cmake
 	+$(BUILD_TOOL) -C build libnvim
 
 cmake:
 	touch CMakeLists.txt
 	$(MAKE) build/.ran-cmake
 
-build/.ran-cmake: | deps
-	cd build && $(CMAKE_PRG) -G '$(CMAKE_GENERATOR)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(MAKEFILE_DIR)
-	touch $@
-
-deps: | build/.ran-deps-cmake
-ifeq ($(call filter-true,$(USE_BUNDLED)),)
-	+$(BUILD_TOOL) -C $(DEPS_BUILD_DIR)
-endif
-
-ifeq ($(call filter-true,$(USE_BUNDLED)),)
-$(DEPS_BUILD_DIR):
-	mkdir -p "$@"
-build/.ran-deps-cmake:: $(DEPS_BUILD_DIR)
-	cd $(DEPS_BUILD_DIR) && \
-		$(CMAKE_PRG) -G '$(CMAKE_GENERATOR)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
-		$(DEPS_CMAKE_FLAGS) $(MAKEFILE_DIR)/cmake.deps
-endif
-build/.ran-deps-cmake::
+build/.ran-cmake:
 	mkdir -p build
+	cd build && $(CMAKE_PRG) -G '$(CMAKE_GENERATOR)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(MAKEFILE_DIR)
 	touch $@
 
 # TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
@@ -198,7 +176,7 @@ clean:
 	$(MAKE) -C runtime/indent clean
 
 distclean:
-	rm -rf $(DEPS_BUILD_DIR) build
+	rm -rf build
 	$(MAKE) clean
 
 install: checkprefix nvim
@@ -218,9 +196,6 @@ appimage-%:
 ifeq ($(CMAKE_GENERATOR),Ninja)
 build/%: phony_force
 	$(BUILD_TOOL) -C build $(patsubst build/%,%,$@)
-
-$(DEPS_BUILD_DIR)/%: phony_force
-	$(BUILD_TOOL) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
 endif
 
-.PHONY: test clean distclean nvim libnvim cmake deps install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST)
+.PHONY: test clean distclean nvim libnvim cmake install appimage checkprefix benchmark $(FORMAT) $(LINT) $(TEST)

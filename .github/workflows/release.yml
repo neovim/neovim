@@ -89,10 +89,6 @@ jobs:
           # Perform a full checkout #13471
           fetch-depth: 0
       - run: .github/scripts/env.ps1
-      - name: Build deps
-        run: |
-          cmake -S cmake.deps -B .deps -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
-          cmake --build .deps
       - name: build package
         run: |
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'

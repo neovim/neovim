@@ -4,7 +4,7 @@
 #   pitfalls: https://izzys.casa/2019/02/everything-you-never-wanted-to-know-about-cmake/
 
 # Version should match the tested CMAKE_URL in .github/workflows/build.yml.
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 
 # Can be removed once minimum version is at least 3.15
 if(POLICY CMP0092)
@@ -27,6 +27,7 @@ include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
 include(CheckLibraryExists)
 include(ExternalProject)
+include(FetchContent)
 include(FindPackageHandleStandardArgs)
 include(GNUInstallDirs)
 
@@ -122,9 +123,114 @@ message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 set_default_buildtype()
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(NOT isMultiConfig)
-  # Unlike build dependencies in cmake.deps, we assume we want dev dependencies
-  # such as Uncrustify to always be built with Release.
-  list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=Release)
+  # TODO(dundargoc): we always want Release for dev dependencies like uncrustify,
+  # but this'll do for now.
+  list(APPEND DEPS_CMAKE_ARGS -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+endif()
+
+#-------------------------------------------------------------------------------
+# Deps
+#-------------------------------------------------------------------------------
+set_directory_properties(PROPERTIES
+  CMAKE_CONFIGURE_DEPENDS deps.txt)
+
+file(READ deps.txt DEPENDENCIES)
+STRING(REGEX REPLACE "\n" ";" DEPENDENCIES "${DEPENDENCIES}")
+foreach(dep ${DEPENDENCIES})
+  STRING(REGEX REPLACE " " ";" dep "${dep}")
+  list(GET dep 0 name)
+  list(GET dep 1 value)
+  if(NOT ${name})
+    # _URL variables must NOT be set when USE_EXISTING_SRC_DIR is set,
+    # otherwise ExternalProject will try to re-download the sources.
+    if(NOT USE_EXISTING_SRC_DIR)
+      set(${name} ${value})
+    endif()
+  endif()
+endforeach()
+
+set(DEPS_INCLUDE_FLAGS "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.1")
+
+option(USE_BUNDLED "Use bundled dependencies." ON)
+
+option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
+option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
+option(USE_BUNDLED_LPEG "Use the bundled lpeg." ${USE_BUNDLED})
+option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
+option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
+option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
+option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
+option(USE_BUNDLED_TS "Use the bundled treesitter runtime." ${USE_BUNDLED})
+option(USE_BUNDLED_TS_PARSERS "Use the bundled treesitter parsers." ${USE_BUNDLED})
+option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
+
+if(USE_BUNDLED AND MSVC)
+  option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
+  option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." ON)
+else()
+  option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." OFF)
+  option(USE_BUNDLED_LIBICONV "Use the bundled version of libiconv." OFF)
+endif()
+
+option(USE_EXISTING_SRC_DIR "Skip download of deps sources in case of existing source directory." OFF)
+
+if(USE_BUNDLED_UNIBILIUM)
+  include(BuildUnibilium)
+endif()
+
+if(USE_BUNDLED_MSGPACK)
+  include(BuildMsgpack)
+endif()
+
+if(USE_BUNDLED_LIBVTERM)
+  include(BuildLibvterm)
+endif()
+
+if(USE_BUNDLED_LIBUV)
+  include(BuildLibuv)
+endif()
+
+if(USE_BUNDLED_LUAJIT)
+  include(BuildLuajit)
+endif()
+
+if(USE_BUNDLED_LUA)
+  include(BuildLua)
+endif()
+
+if(USE_BUNDLED_LUV)
+  include(BuildLuv)
+endif()
+
+if(USE_BUNDLED_LPEG)
+  include(BuildLpeg)
+endif()
+
+if(USE_BUNDLED_GETTEXT)
+  include(BuildGettext)
+endif()
+
+if(USE_BUNDLED_LIBICONV)
+  include(BuildLibiconv)
+endif()
+
+if(WIN32)
+  include(GetBinaryDeps)
+
+  GetExecutable(TARGET cat)
+  GetExecutable(TARGET tee)
+  GetExecutable(TARGET xxd)
+
+  GetBinaryDep(TARGET win32yank_X86_64
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_BIN_DIR})
+endif()
+
+if(USE_BUNDLED_TS_PARSERS)
+  include(BuildTreesitterParsers)
+endif()
+
+if(USE_BUNDLED_TS)
+  include(BuildTreesitter)
 endif()
 
 # If not in a git repo (e.g., a tarball) these tokens define the complete
