@@ -71,9 +71,6 @@ The following changes may require adaptations in user config or plugins.
   now requires an explicit range argument to be passed. If injections are
   required, provide an explicit range via `parser:parse({ start_row, end_row })`.
 
-• Float window support hide and show by setting `hide` on `nvim_open_win` and
-  `nvim_win_set_config`.
-
 • |vim.lsp.util.parse_snippet()| will now strictly follow the snippet grammar
   defined by LSP, and hence previously parsed snippets might now be considered
   invalid input.
@@ -125,14 +122,14 @@ The following new APIs and features were added.
 • |vim.iter()| provides a generic iterator interface for tables and Lua
   iterators |for-in|.
 
-• Added |vim.ringbuf()| to create ring buffers.
+• |vim.ringbuf()| creates ring buffers.
 
-• Added |vim.keycode()| for translating keycodes in a string.
+• |vim.keycode()| translates keycodes in a string.
 
 • |'smoothscroll'| option to scroll by screen line rather than by text line
   when |'wrap'| is set.
 
-• Added inline virtual text support to |nvim_buf_set_extmark()|.
+• |nvim_buf_set_extmark()| supports inline virtual text.
 
 • 'foldtext' now supports virtual text format. |fold-foldtext|
 
@@ -142,7 +139,10 @@ The following new APIs and features were added.
 
 • |vim.system()| for running system commands.
 
-• Added |nvim_win_text_height()| to compute the number of screen lines occupied
+• |vim.lpeg| and |vim.re| expose the bundled Lpeg expression grammar parser
+  and its regex interface.
+
+• |nvim_win_text_height()| computes the number of screen lines occupied
   by a range of text in a given window.
 
 • |nvim_set_keymap()| and |nvim_del_keymap()| now support abbreviations.
@@ -164,7 +164,7 @@ The following new APIs and features were added.
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_inlayHint
   • Implemented pull diagnostic textDocument/diagnostic: |vim.lsp.diagnostic.on_diagnostic()|
     https://microsoft.github.io/language-server-protocol/specification/#textDocument_diagnostic
-  • Added |vim.lsp.status()| to consume the last progress messages as a string.
+  • |vim.lsp.status()| consumes the last progress messages as a string.
   • LSP client now always saves and restores named buffer marks when applying
     text edits.
   • LSP client now supports the `positionEncoding` server capability. If a server
@@ -175,25 +175,29 @@ The following new APIs and features were added.
     indicator to see if a server supports a feature. Instead use
     `client.supports_method(<method>)`. It considers both the dynamic
     capabilities and static `server_capabilities`.
-  • Added a new `anchor_bias` option to |lsp-handlers| to aid in positioning of
-    floating windows.
+  • `anchor_bias` option to |lsp-handlers| aids in positioning of floating
+    windows.
+  • |vim.lsp.util.locations_to_items()| sets the `user_data` of each item to
+    the original LSP `Location` or `LocationLink`.
 
 • Treesitter
   • Bundled parsers and queries (highlight, folds) for Markdown, Python, and
     Bash.
-  • Added |vim.treesitter.query.omnifunc()| for treesitter query files (set by
+  • |vim.treesitter.query.omnifunc()| for treesitter query files (set by
     default).
   • |Query:iter_matches()| now has the ability to set the maximum start depth
     for matches.
-  • `@injection.language` now has smarter resolution and will now fallback to language aliases and/or attempt lower case variants of the text.
-    language via aliases (e.g., filetype) registered via
-    `vim.treesitter.language.register`.
-  • The `#set!` directive now supports `injection.self` and `injection.parent` for injecting either the current node's language
-    or the parent LanguageTree's language, respectively.
-  • Added `vim.treesitter.query.edit()`, for live editing of treesitter
+  • `@injection.language` now has smarter resolution and will fall back to
+    language aliases (e.g., filetype or custom shorthands) registered via
+    |vim.treesitter.language.register()| and/or attempt lower case variants of
+    the text.
+  • The `#set!` directive now supports `injection.self` and `injection.parent`
+    for injecting either the current node's language or the parent
+    |LanguageTree|'s language, respectively.
+  • |vim.treesitter.query.edit()| allows live editing of treesitter
     queries.
   • Improved error messages for query parsing.
-  • Added |vim.treesitter.foldtext()| to apply treesitter highlighting to
+  • |vim.treesitter.foldtext()| applies treesitter highlighting to
     foldtext.
 
 • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
@@ -212,28 +216,28 @@ The following new APIs and features were added.
 • Functions that take a severity as an optional parameter (e.g.
   |vim.diagnostic.get()|) now also accept a list of severities |vim.diagnostic.severity|
 
-• New RPC client type `msgpack-rpc` is added for `nvim_set_client_info` to
+• New RPC client type `msgpack-rpc` is added for |nvim_set_client_info()| to
   support fully MessagePack-RPC compliant clients.
 
 • Floating windows can now show footer with new `footer` and `footer_pos`
   config fields. Uses |hl-FloatFooter| by default.
 
+• Floating windows can now be hidden by setting `hide` in |nvim_open_win()| or
+  |nvim_win_set_config()|.
+
 • The |:terminal| command now accepts some |:command-modifiers| (specifically
   |:horizontal| and those that affect splitting a window).
 
-• |vim.lsp.util.locations_to_items()| sets the `user_data` of each item to the
-  original LSP `Location` or `LocationLink`.
-
 • |$NVIM_APPNAME| can be set to a relative path instead of only a name.
 
-• Added |:fclose| command.
+• |:fclose| command.
 
-• Added |vim.snippet| for snippet expansion support.
+• |vim.snippet| handles expansion of snippets in LSP format.
 
 • 'complete' option supports "f" flag for completing buffer names.
 
-• Added |vim.base64.encode()| and |vim.base64.decode()| for encoding and decoding
-  strings using Base64 encoding.
+• |vim.base64.encode()| and |vim.base64.decode()| encode and decode strings
+  using Base64 encoding.
 
 • The |TermResponse| autocommand event can be used with |v:termresponse| to
   read escape sequence responses from the terminal.
@@ -245,8 +249,8 @@ The following new APIs and features were added.
 • The 'termsync' option asks the terminal emulator to buffer screen updates
   until the redraw cycle is complete. Requires support from the terminal.
 
-• Added |vim.text.hexencode()| and |vim.text.hexdecode()| to convert strings
-  to and from byte representations.
+• |vim.text.hexencode()| and |vim.text.hexdecode()| convert strings to and
+  from byte representations.
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
@@ -259,7 +263,7 @@ The following changes to existing APIs or features add new behavior.
 
 • |vim.region()| can use a string accepted by |getpos()| as position.
 
-• vim.diagnostic.config() now accepts a function for the virtual_text.prefix
+• |vim.diagnostic.config()| now accepts a function for the virtual_text.prefix
   option, which allows for rendering e.g., diagnostic severities differently.
 
 • Defaults:
@@ -280,7 +284,7 @@ The following changes to existing APIs or features add new behavior.
 • |LspRequest| autocmd callbacks now contain additional information about the LSP
   request status update that occurred.
 
-• `:source` without arguments treats a buffer with its 'filetype' set to "lua"
+• |:source| without arguments treats a buffer with its 'filetype' set to "lua"
   as Lua code regardless of its extension.
 
 • |:checkhealth| buffer now implements |folding|. The initial folding status is
@@ -290,6 +294,7 @@ The following changes to existing APIs or features add new behavior.
 
 • |gx| now uses |vim.ui.open()| and not netrw. To customize, you can redefine
   `vim.ui.open` or remap `gx`. To continue using netrw (deprecated): >vim
+
   :call netrw#BrowseX(expand(exists("g:netrw_gx")? g:netrw_gx : '<cfile>'), netrw#CheckIfRemote())<CR>
 
 • |vim.lsp.start()| now maps |K| to use |vim.lsp.buf.hover()| if the server
@@ -339,12 +344,12 @@ REMOVED FEATURES                                                 *news-removed*
 
 The following deprecated functions or APIs were removed.
 
-• Vimball support is removed.
-  - :Vimuntar command removed.
+• Vimball support
+  - :Vimuntar command
 
-• Support for legacy treesitter injection queries is removed.
+• Support for legacy treesitter injection queries
 
-• Removed 'shortmess' flags:
+• 'shortmess' flags:
   - |shm-f|. Always uses "(3 of 5)", never "(file 3 of 5)"
   - |shm-i|. Always use "[noeol]".
   - |shm-x|. Always use "[dos]", "[unix]" and "[mac]"
@@ -382,7 +387,7 @@ release.
   - |vim.lsp.util.parse_snippet()|
   - |vim.lsp.util.text_document_completion_list_to_complete_items()|
 
-• `vim.loop` has been renamed to `vim.uv`.
+• `vim.loop` has been renamed to |vim.uv|.
 
 • vim.treesitter.languagetree functions:
   - |LanguageTree:for_each_child()|	Use |LanguageTree:children()| (non-recursive) instead.
