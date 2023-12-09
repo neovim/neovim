@@ -25,10 +25,7 @@ describe('api', function()
   it("qa! RPC request during insert-mode", function()
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:~                                                 }|*4
                                                         |
       {3:-- TERMINAL --}                                    |
     ]]}
@@ -39,10 +36,7 @@ describe('api', function()
     -- Wait for socket creation.
     screen:expect([[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:~                                                 }|*4
       ]]..socket_name..[[                       |
       {3:-- TERMINAL --}                                    |
     ]])
@@ -54,10 +48,7 @@ describe('api', function()
     -- Wait for stdin to be processed.
     screen:expect([[
       [tui] insert-mode{1: }                                |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:~                                                 }|*4
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])

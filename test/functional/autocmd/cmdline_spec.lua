@@ -68,9 +68,7 @@ describe('cmdline autocommands', function()
     feed(':')
     screen:expect([[
                                                                               |
-      {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
+      {1:~                                                                       }|*3
       {4:                                                                        }|
       :                                                                       |
       {2:CmdlineEnter Autocommands for "*": Vim(echoerr):FAIL}                    |
@@ -94,11 +92,7 @@ describe('cmdline autocommands', function()
     screen:expect([[
                                                                               |
       ^lorem ipsum                                                             |
-      {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
+      {1:~                                                                       }|*5
                                                                               |
     ]])
 
@@ -160,10 +154,7 @@ describe('cmdline autocommands', function()
                                                                               |
       lorem ipsum                                                             |
       ^lorem ipsum.                                                            |
-      {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
-      {1:~                                                                       }|
+      {1:~                                                                       }|*4
                                                                               |
     ]])
   end)

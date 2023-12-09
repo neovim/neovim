@@ -416,10 +416,7 @@ describe('Conceal', function()
       two two two two |hidden| ^here two two   |
       three  three three three {1:t}hree          |
       {0: >>> }thre{2:e} three three three            |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:~                                       }|*4
       /here                                   |
     ]])
 
@@ -431,10 +428,7 @@ describe('Conceal', function()
       two two two two |hidden| here two tw^o   |
       three  three three three three          |
       {0: >>> }thre{2:e} three three three            |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:~                                       }|*4
       /here                                   |
     ]])
   end)
@@ -455,21 +449,14 @@ describe('Conceal', function()
     ]])
     screen:expect([[
       one two three four five, the ^backticks should be concealed                 |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:~                                                                          }|*4
                                                                                  |
     ]])
 
     screen:try_resize(75, 7)
     screen:expect([[
       one two three four five, the ^backticks should be concealed                 |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:~                                                                          }|*5
                                                                                  |
     ]])
   end)
@@ -501,8 +488,7 @@ describe('Conceal', function()
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa           |
       {0:+ }bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb      |
       {0:+ }cccccc                                                                   |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:~                                                                          }|*2
                                                                                  |
     ]])
   end)

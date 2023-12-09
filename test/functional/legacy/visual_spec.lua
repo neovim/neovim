@@ -33,8 +33,7 @@ describe('Visual highlight', function()
       {2:aaaaaa}^                                            |
       {2:bbbb   }                                           |
       {2:cc     }                                           |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*2
       {1:-- VISUAL BLOCK --}                                |
     ]])
 
@@ -43,8 +42,7 @@ describe('Visual highlight', function()
       {2:aaaaaa }                                           |
       {2:bbbb   }                                           |
       {2:cc}^ {2:    }                                           |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*2
       {1:-- VISUAL BLOCK --}                                |
     ]])
   end)
@@ -60,9 +58,7 @@ describe('Visual highlight', function()
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^a|
       {0:+}{2:aaaa}aaaaaa                                       |
-      {0:~                                                 }|
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*3
       {1:-- VISUAL --}                                      |
     ]])
   end)

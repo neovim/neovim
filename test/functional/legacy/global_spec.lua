@@ -28,10 +28,7 @@ describe(':global', function()
     feed('<C-C>')
     screen:expect([[
       ^foo                                                                        |
-      foo                                                                        |
-      foo                                                                        |
-      foo                                                                        |
-      foo                                                                        |
+      foo                                                                        |*4
       {1:Interrupted}                                                                |
     ]])
 

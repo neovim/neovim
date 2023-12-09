@@ -33,10 +33,7 @@ describe('argument list commands', function()
     feed('N')
     screen:expect([[
       ^                                                            |
-      ~                                                           |
-      ~                                                           |
-      ~                                                           |
-      ~                                                           |
+      ~                                                           |*4
                                                                   |
     ]])
     feed(':confirm quit\n')

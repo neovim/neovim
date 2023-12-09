@@ -66,17 +66,7 @@ describe('set', function()
     command('verbose set scroll?')
     screen:expect([[
                                                 |
-      ~                                         |
-      ~                                         |
-      ~                                         |
-      ~                                         |
-      ~                                         |
-      ~                                         |
-      ~                                         |
-      ~                                         |
-      ~                                         |
-      ~                                         |
-      ~                                         |
+      ~                                         |*11
                                                 |
         scroll=7                                |
               Last set from changed window size |

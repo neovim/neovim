@@ -451,9 +451,7 @@ describe('statuscolumn', function()
       {4:wrapped 1 15}{5:aaaaaaaaa^ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|
       {4:wrapped 2 15}{5:aaaaaaaaaaaaaaaaaaa                      }|
       {1:virtual-1 15}END                                      |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*3
                                                            |
     ]])
     -- Also test virt_lines when 'cpoptions' includes "n"
@@ -562,19 +560,9 @@ describe('statuscolumn', function()
       it('clicks and highlights work with control characters', function()
         meths.set_option_value('statuscolumn', '\t%#NonText#\1%0@MyClickFunc@\t\1%T\t%##\1', {})
         screen:expect{grid=[[
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |
+          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |*4
           {1:^I}{0:^A^I^A^I}{1:^A}^aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |
-          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |
+          {1:^I}{0:^A^I^A^I}{1:^A}aaaaa                                    |*8
                                                                |
         ]], attr_ids={
           [0] = {foreground = Screen.colors.Blue, bold = true};  -- NonText
@@ -702,8 +690,7 @@ describe('statuscolumn', function()
       ---------8 aaaaa                                     |
       virt                                                 |
       ---------9 aaaaa                                     |
-      ~                                                    |
-      ~                                                    |
+      ~                                                    |*2
                                                            |
     ]])
   end)
@@ -718,11 +705,7 @@ describe('statuscolumn', function()
       [No Name] [+]                                        |
       :1set stc=%^l                                         |
       :2                                                   |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
+      ~                                                    |*5
       [Command Line]                                       |
       :                                                    |
     ]])
@@ -749,9 +732,7 @@ describe('statuscolumn', function()
     screen:expect([[
       aaaaa                                                |
       ^aaaaa                                                |
-      aaaaa                                                |
-      aaaaa                                                |
-      aaaaa                                                |
+      aaaaa                                                |*3
                                                            |
     ]])
     -- width correctly estimated with "w_nrwidth_line_count" when setting 'nu'

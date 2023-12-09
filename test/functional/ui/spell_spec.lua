@@ -125,8 +125,7 @@ describe("'spell'", function()
       Not                                                                             |
       and her^e                                                                        |
       and here.                                                                       |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*2
                                                                                       |
     ]])
     -- Undo also updates the next line (go to command line to remove message)
@@ -137,8 +136,7 @@ describe("'spell'", function()
       Not                                                                             |
       and here^.                                                                       |
       {2:and} here.                                                                       |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*2
                                                                                       |
     ]])
     -- Folding an empty line does not remove Cap in next line
@@ -149,8 +147,7 @@ describe("'spell'", function()
       Not                                                                             |
       {10:^+--  2 lines: and here.·························································}|
       {2:and} here.                                                                       |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*2
                                                                                       |
     ]])
     -- Folding the end of a sentence does not remove Cap in next line
@@ -161,9 +158,7 @@ describe("'spell'", function()
       {2:another} missing cap her^e                                                        |
       {10:+--  2 lines: Not·······························································}|
       {2:and} here.                                                                       |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*3
                                                                                       |
     ]])
     -- Cap is correctly applied in the first row of a window
@@ -172,10 +167,7 @@ describe("'spell'", function()
       {2:another} missing cap her^e                                                        |
       {10:+--  2 lines: Not·······························································}|
       {2:and} here.                                                                       |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
                                                                                       |
     ]])
     -- Adding an empty line does not remove Cap in "mod_bot" area
@@ -186,8 +178,7 @@ describe("'spell'", function()
       {2:another} missing cap here                                                        |
       {10:+--  2 lines: Not·······························································}|
       {2:and} here.                                                                       |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*2
                                                                                       |
     ]])
     -- Multiple empty lines does not remove Cap in the line after
@@ -220,9 +211,7 @@ describe("'spell'", function()
       test test test test$                                                            |
                                                                                       |
       {2:end}                                                                             |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*3
       {9:-- INSERT --}                                                                    |
     ]])
     feed('x')
@@ -231,9 +220,7 @@ describe("'spell'", function()
       test test test test$                                                            |
                                                                                       |
       {2:end}                                                                             |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*3
       {9:-- INSERT --}                                                                    |
     ]])
   end)
@@ -251,10 +238,7 @@ describe("'spell'", function()
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} func({5:void});                                                                |
       {7:// I am a }{8:spelin^g}{7: }{8:mistakke}                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
                                                                                       |
     ]])
     feed(']s')
@@ -262,10 +246,7 @@ describe("'spell'", function()
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} func({5:void});                                                                |
       {7:// I am a }{8:speling}{7: }{8:^mistakke}                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
                                                                                       |
     ]])
     feed(']s')
@@ -273,10 +254,7 @@ describe("'spell'", function()
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} func({5:void});                                                                |
       {7:// I am a }{8:^speling}{7: }{8:mistakke}                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
       {6:search hit BOTTOM, continuing at TOP}                                            |
     ]])
     exec('echo ""')
@@ -287,10 +265,7 @@ describe("'spell'", function()
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} {1:func}({5:void});                                                                |
       {7:// I am a }{8:^speling}{7: }{8:mistakke}                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
                                                                                       |
     ]])
     feed('[s')
@@ -298,10 +273,7 @@ describe("'spell'", function()
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} {1:^func}({5:void});                                                                |
       {7:// I am a }{8:speling}{7: }{8:mistakke}                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
                                                                                       |
     ]])
     curbufmeths.del_extmark(ns, id)
@@ -311,10 +283,7 @@ describe("'spell'", function()
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} ^func({5:void});                                                                |
       {7:// I am a }{8:speling}{7: mistakke}                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
                                                                                       |
     ]])
     feed('[s')
@@ -322,10 +291,7 @@ describe("'spell'", function()
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} func({5:void});                                                                |
       {7:// I am a }{8:^speling}{7: mistakke}                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
       {6:search hit TOP, continuing at BOTTOM}                                            |
     ]])
     exec('echo ""')
@@ -334,10 +300,7 @@ describe("'spell'", function()
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} func({5:void});                                                                |
       {7:// I am a }{8:^speling}{7: }{8:mistakke}                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
                                                                                       |
     ]])
     feed(']s')
@@ -345,10 +308,7 @@ describe("'spell'", function()
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} func({5:void});                                                                |
       {7:// I am a }{8:speling}{7: }{8:^mistakke}                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
                                                                                       |
     ]])
     -- "noplainbuffer" shouldn't change spellchecking behavior with syntax enabled
@@ -359,10 +319,7 @@ describe("'spell'", function()
       {3:#include }{4:<stdbool.h>}                                                            |
       {5:bool} func({5:void});                                                                |
       {7:// I am a }{8:^speling}{7: }{8:mistakke}                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
                                                                                       |
     ]])
     -- no spellchecking with "noplainbuffer" and syntax disabled
@@ -371,10 +328,7 @@ describe("'spell'", function()
       #include <stdbool.h>                                                            |
       bool func(void);                                                                |
       // I am a ^speling mistakke                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
                                                                                       |
     ]])
     feed(']s')
@@ -382,10 +336,7 @@ describe("'spell'", function()
       #include <stdbool.h>                                                            |
       bool func(void);                                                                |
       // I am a ^speling mistakke                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
       {6:search hit BOTTOM, continuing at TOP}                                            |
     ]])
     exec('echo ""')
@@ -395,10 +346,7 @@ describe("'spell'", function()
       #include <{1:stdbool}.h>                                                            |
       {1:bool} {1:func}(void);                                                                |
       // I am a {1:^speling} {1:mistakke}                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
                                                                                       |
     ]])
     feed('[s')
@@ -406,10 +354,7 @@ describe("'spell'", function()
       #include <{1:stdbool}.h>                                                            |
       {1:bool} {1:^func}(void);                                                                |
       // I am a {1:speling} {1:mistakke}                                                      |
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
-      {0:~                                                                               }|
+      {0:~                                                                               }|*4
                                                                                       |
     ]])
   end)

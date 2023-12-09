@@ -44,9 +44,7 @@ describe('tabline', function()
       {3:g                                                 }|
       {5:+--  2 lines: a···································}|
       ^c                                                 |
-      {0:~                                                 }|
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*3
                                                         |
     ]])
 
@@ -57,8 +55,7 @@ describe('tabline', function()
       ^a                                                 |
       b                                                 |
       c                                                 |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*2
                                                         |
     ]])
 
@@ -68,8 +65,7 @@ describe('tabline', function()
       {1:a}                                                 |
       {1:b}                                                 |
       {1:c}^                                                 |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*2
       {2:-- VISUAL BLOCK --}                                |
     ]])
 
@@ -79,8 +75,7 @@ describe('tabline', function()
       a                                                 |
       b                                                 |
       ^c                                                 |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*2
                                                         |
     ]])
 
@@ -92,8 +87,7 @@ describe('tabline', function()
       a                                                 |
       b                                                 |
       ^c                                                 |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*2
       :                                                 |
     ]])
   end)

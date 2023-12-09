@@ -170,10 +170,7 @@ describe('api/buf', function()
 
         screen:expect{grid=[[
                               |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {3:[No Name]           }|
           www                 |
           xxx                 |
@@ -186,10 +183,7 @@ describe('api/buf', function()
         meths.buf_set_lines(buf, 0, 2, true, {"aaabbb"})
         screen:expect{grid=[[
                               |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {3:[No Name]           }|
           www                 |
           xxx                 |
@@ -203,10 +197,7 @@ describe('api/buf', function()
         meths.buf_set_lines(buf, 3, 4, true, {"wwweeee"})
         screen:expect{grid=[[
                               |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {3:[No Name]           }|
           wwweeee             |
           xxx                 |
@@ -220,10 +211,7 @@ describe('api/buf', function()
         meths.buf_set_lines(buf, 3, 3, true, {"mmm"})
         screen:expect{grid=[[
                               |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {3:[No Name]           }|
           wwweeee             |
           xxx                 |
@@ -236,10 +224,7 @@ describe('api/buf', function()
         meths.win_set_cursor(0, {7, 0})
         screen:expect{grid=[[
                               |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {3:[No Name]           }|
           wwweeee             |
           xxx                 |
@@ -252,10 +237,7 @@ describe('api/buf', function()
         meths.buf_set_lines(buf, 4, 4, true, {"mmmeeeee"})
         screen:expect{grid=[[
                               |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {3:[No Name]           }|
           mmmeeeee            |
           wwweeee             |
@@ -275,10 +257,7 @@ describe('api/buf', function()
 
         screen:expect{grid=[[
           ^                    |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {2:[No Name]           }|
           www                 |
           xxx                 |
@@ -291,10 +270,7 @@ describe('api/buf', function()
         meths.buf_set_lines(buf, 0, 2, true, {"aaabbb"})
         screen:expect{grid=[[
           ^                    |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {2:[No Name]           }|
           www                 |
           xxx                 |
@@ -308,10 +284,7 @@ describe('api/buf', function()
         meths.buf_set_lines(buf, 3, 4, true, {"wwweeee"})
         screen:expect{grid=[[
           ^                    |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {2:[No Name]           }|
           wwweeee             |
           xxx                 |
@@ -325,10 +298,7 @@ describe('api/buf', function()
         meths.buf_set_lines(buf, 3, 3, true, {"mmm"})
         screen:expect{grid=[[
           ^                    |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {2:[No Name]           }|
           mmm                 |
           wwweeee             |
@@ -1690,10 +1660,7 @@ describe('api/buf', function()
 
         screen:expect{grid=[[
                               |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {3:[No Name]           }|
           www                 |
           xxx                 |
@@ -1706,10 +1673,7 @@ describe('api/buf', function()
 
         screen:expect{grid=[[
                               |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {3:[No Name]           }|
           www                 |
           xxx                 |
@@ -1729,10 +1693,7 @@ describe('api/buf', function()
 
         screen:expect{grid=[[
           ^                    |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {2:[No Name]           }|
           www                 |
           xxx                 |
@@ -1745,10 +1706,7 @@ describe('api/buf', function()
         meths.buf_set_text(buf, 0,3, 1,0, {"X"})
         screen:expect{grid=[[
           ^                    |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
           {2:[No Name]           }|
           www                 |
           xxx                 |

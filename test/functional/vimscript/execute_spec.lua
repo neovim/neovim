@@ -114,8 +114,7 @@ describe('execute()', function()
     feed(':echo execute("hi ErrorMsg")<CR>')
     screen:expect([[
                                                                             |
-      {1:~                                                                     }|
-      {1:~                                                                     }|
+      {1:~                                                                     }|*2
       {2:                                                                      }|
                                                                             |
       ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red         |
@@ -187,30 +186,21 @@ describe('execute()', function()
     feed([[:call Test1()<cr>]])
     screen:expect([[
       ^                                        |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*4
       ABCD                                    |
     ]])
 
     feed([[:call Test2()<cr>]])
     screen:expect([[
       ^                                        |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*4
       1234ABCD                                |
     ]])
 
     feed([[:call Test3()<cr>]])
     screen:expect([[
       ^                                        |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*4
       1234ABCDXZYZ                            |
     ]])
 
@@ -231,10 +221,7 @@ describe('execute()', function()
     feed([[:call Test5()<cr>]])
     screen:expect([[
       ^                                        |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*4
       1234ABCD                                |
     ]])
 
@@ -273,9 +260,7 @@ describe('execute()', function()
       command('let g:mes = execute("echon 42", "")')
       screen:expect([[
       ^                                        |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*3
       42                                      |
       ]])
       eq('42', eval('g:mes'))
@@ -295,9 +280,7 @@ describe('execute()', function()
       command('let g:mes = execute("echon 42")')
       screen:expect([[
       ^                                        |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*3
                                               |
       ]])
       eq('42', eval('g:mes'))
@@ -305,9 +288,7 @@ describe('execute()', function()
       command('let g:mes = execute("echon 13", "silent")')
       screen:expect{grid=[[
       ^                                        |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*3
                                               |
       ]], unchanged=true}
       eq('13', eval('g:mes'))

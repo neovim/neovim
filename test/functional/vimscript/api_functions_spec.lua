@@ -182,10 +182,7 @@ describe('eval-API', function()
       {1:call} {2:bufnr}{3:(}{4:'%'}{3:)}                         |
       {1:call} {2:nvim_input}{3:(}{4:'typing...'}{3:)}            |
       {1:call} not_a_function{3:(}{4:42}{3:^)}                 |
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
+      {5:~                                       }|*4
                                               |
     ]])
   end)

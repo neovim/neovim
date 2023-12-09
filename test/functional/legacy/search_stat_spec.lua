@@ -35,8 +35,7 @@ describe('search stat', function()
       {2:^find this}                     |
       fooooobar                     |
       foba                          |
-      foobar                        |
-      foobar                        |
+      foobar                        |*2
       foo                           |
       fooooobar                     |
       foba                          |
@@ -49,8 +48,7 @@ describe('search stat', function()
       {2:^find this}                     |
       fooooobar                     |
       foba                          |
-      foobar                        |
-      foobar                        |
+      foobar                        |*2
       foo                           |
       fooooobar                     |
       foba                          |
@@ -73,11 +71,7 @@ describe('search stat', function()
       {3:^+--  2 lines: foo·············}|
       endif                         |
                                     |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*5
       /foo                   [1/2]  |
     ]])
     -- Note: there is an intermediate state where the search stat disappears.
@@ -99,12 +93,7 @@ describe('search stat', function()
       int cat;                      |
       int {2:^dog};                      |
       cat = {2:dog};                    |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*6
       /dog                   [1/2]  |
     ]])
     feed('G0gD')
@@ -112,12 +101,7 @@ describe('search stat', function()
       int {2:^cat};                      |
       int dog;                      |
       {2:cat} = dog;                    |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*6
                                     |
     ]])
   end)
@@ -148,11 +132,7 @@ describe('search stat', function()
       {2:abc}--c                        |
       --------{4:abc}                   |
       --{2:abc}                         |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*5
       /abc^                          |
     ]])
 
@@ -162,11 +142,7 @@ describe('search stat', function()
       {2:abc}--c                        |
       --------{2:abc}                   |
       --{4:abc}                         |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*5
       /abc^                          |
     ]])
 
@@ -176,11 +152,7 @@ describe('search stat', function()
       {4:abc}--c                        |
       --------{2:abc}                   |
       --{2:abc}                         |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*5
       /abc^                          |
     ]])
   end)
@@ -197,13 +169,7 @@ describe('search stat', function()
     screen:expect([[
       {2:^test}                                                        |
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*7
       /\<test\>                                            [1/1]  |
     ]])
 
@@ -211,13 +177,7 @@ describe('search stat', function()
     screen:expect([[
       {2:^test}                                                        |
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*7
       ?\<test\>                                            [1/1]  |
     ]])
 
@@ -227,13 +187,7 @@ describe('search stat', function()
     screen:expect([[
       {2:^test}                                                        |
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*7
       {5:search hit TOP, continuing at BOTTOM}                        |
     ]])
   end)

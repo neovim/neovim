@@ -45,15 +45,9 @@ describe('Screen', function()
 
       it("double characters.", function()
         screen:expect([[
-            {1:∧}                                                    |
-            {1:∧}                                                    |
-            {1:∧}                                                    |
-            {1:∧}                                                    |
-            {1:∧}                                                    |
-            {1:∧}                                                    |
+            {1:∧}                                                    |*6
             ^                                                     |
-            {0:~                                                    }|
-            {0:~                                                    }|
+            {0:~                                                    }|*2
                                                                  |
           ]])
       end)
@@ -61,15 +55,10 @@ describe('Screen', function()
       it('double characters and move the cursor one line up.', function()
         feed("k")
         screen:expect([[
-          {1:∧}                                                    |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
+          {1:∧}                                                    |*5
           ^&&                                                   |
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*2
                                                                |
         ]])
       end)
@@ -78,14 +67,9 @@ describe('Screen', function()
         feed("gg")
         screen:expect([[
           ^&&                                                   |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
+          {1:∧}                                                    |*5
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*2
                                                                |
         ]])
       end)
@@ -95,13 +79,9 @@ describe('Screen', function()
         screen:expect([[
           {1:∧}                                                    |
           ^&&                                                   |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
+          {1:∧}                                                    |*4
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*2
                                                                |
         ]])
       end)
@@ -109,15 +89,9 @@ describe('Screen', function()
       it('double characters and then move the cursor to the beginning of the file and back to the end of the file.', function()
         feed("ggG")
         screen:expect([[
-          {1:∧}                                                    |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
-          {1:∧}                                                    |
+          {1:∧}                                                    |*6
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*2
                                                                |
         ]])
       end)
@@ -128,15 +102,9 @@ describe('Screen', function()
       command("let &conceallevel=1")
       command("syn keyword kLambda lambda conceal cchar=λ")
       screen:expect([[
-        {1:λ}                                                    |
-        {1:λ}                                                    |
+        {1:λ}                                                    |*2
         ^                                                     |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*6
                                                              |
       ]])
     end) -- Keyword
@@ -152,15 +120,9 @@ describe('Screen', function()
       it('initially and conceal it.', function()
         command("syn region rText start='<r>' end='</r>' conceal cchar=R")
         screen:expect([[
-          {1:R}                                                    |
-          {1:R}                                                    |
+          {1:R}                                                    |*2
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*6
                                                                |
         ]])
       end)
@@ -170,15 +132,9 @@ describe('Screen', function()
         -- be replaced with cchar.
         command("syn region rText matchgroup=rMatch start='<r>' end='</r>' concealends cchar=-")
         screen:expect([[
-          {1: } a region of text {1:-}                                 |
-          {1: } a region of text {1:-}                                 |
+          {1: } a region of text {1:-}                                 |*2
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*6
                                                                |
         ]])
       end)
@@ -187,15 +143,11 @@ describe('Screen', function()
         command("syn region rText contains=rText matchgroup=rMatch start='<r>' end='</r>' concealends cchar=-")
         insert("<r> A region with <r> a nested <r> nested region.</r> </r> </r>\n")
         screen:expect([[
-          {1: } a region of text {1:-}                                 |
-          {1: } a region of text {1:-}                                 |
+          {1: } a region of text {1:-}                                 |*2
           {1: } A region with {1: } a nested {1: } nested region.{1:-}         |
            {1:-} {1:-}                                                 |
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*4
                                                                |
         ]])
       end)
@@ -211,15 +163,9 @@ describe('Screen', function()
 
       it("and turn on implicit concealing", function()
         screen:expect([[
-          {1:-}                                                    |
-          {1:-}                                                    |
+          {1:-}                                                    |*2
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*6
                                                                |
         ]])
       end)
@@ -230,29 +176,19 @@ describe('Screen', function()
         insert("<i> italian text </i>\n")
         command("syn region iText start='<i>' end='</i>' cchar=*")
         screen:expect([[
-          {1:-}                                                    |
-          {1:-}                                                    |
-          <i> italian text </i>                                |
-          <i> italian text </i>                                |
+          {1:-}                                                    |*2
+          <i> italian text </i>                                |*2
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*4
                                                                |
         ]])
         command("syntax conceal on")
         command("syn region iText start='<i>' end='</i>' cchar=*")
         screen:expect([[
-          {1:-}                                                    |
-          {1:-}                                                    |
-          {1:*}                                                    |
-          {1:*}                                                    |
+          {1:-}                                                    |*2
+          {1:*}                                                    |*2
           ^                                                     |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*4
                                                                |
         ]])
       end)
@@ -266,28 +202,14 @@ describe('Screen', function()
       command("syn match Foo /foobar/ conceal cchar=&")
       screen:expect([[
         {1:&&&}^                                                  |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*8
                                                              |
       ]])
       feed("i")
       -- cursor should stay in place, not jump to column 16
       screen:expect([[
         {1:&&&}^                                                  |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*8
         {4:-- INSERT --}                                         |
       ]])
     end)
@@ -311,10 +233,7 @@ describe('Screen', function()
         + With cchar                                         |
                                                              |
         ^                                                     |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*4
                                                              |
       ]])
     end)
@@ -327,10 +246,7 @@ describe('Screen', function()
         {1:C}                                                    |
                                                              |
         ^                                                     |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*4
                                                              |
       ]])
     end)
@@ -343,10 +259,7 @@ describe('Screen', function()
         {1:C}                                                    |
                                                              |
         ^                                                     |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*4
                                                              |
       ]])
     end)
@@ -355,14 +268,9 @@ describe('Screen', function()
       command("let &conceallevel=3")
       screen:expect([[
         // No Conceal                                        |
-                                                             |
-                                                             |
-                                                             |
+                                                             |*3
         ^                                                     |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*4
                                                              |
       ]])
     end)
@@ -375,15 +283,10 @@ describe('Screen', function()
       command("set cole=2")
       feed('5Ofoo barf bar barf eggs<esc>')
       screen:expect([[
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
         foo barf bar barf egg^s                               |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
                                                              |
       ]])
 
@@ -398,18 +301,14 @@ describe('Screen', function()
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
         {2:[No Name] [+]                                        }|
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*3
         {3:[No Name] [+]                                        }|
                                                              |
       ]])
       feed('<c-w>w')
 
       screen:expect([[
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*3
                                                              |
         {3:[No Name] [+]                                        }|
         foo {1:b} bar {1:b} eggs                                     |
@@ -423,29 +322,20 @@ describe('Screen', function()
     it('in insert mode', function()
       feed('i')
       screen:expect([[
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
         foo barf bar barf egg^s                               |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
         {4:-- INSERT --}                                         |
       ]])
 
       feed('<up>')
       screen:expect([[
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*3
         foo barf bar barf egg^s                               |
         foo {1:b} bar {1:b} eggs                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
         {4:-- INSERT --}                                         |
       ]])
     end)
@@ -455,70 +345,45 @@ describe('Screen', function()
       feed('gg')
       screen:expect([[
         ^foo barf bar barf eggs                               |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
                                                              |
       ]])
 
       feed('i')
       screen:expect([[
         ^foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
         {4:-- INSERT --}                                         |
       ]])
 
       feed('<esc>')
       screen:expect([[
         ^foo barf bar barf eggs                               |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
                                                              |
       ]])
 
       feed('v')
       screen:expect([[
         ^foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
         {4:-- VISUAL --}                                         |
       ]])
 
       feed('<esc>')
       screen:expect([[
         ^foo barf bar barf eggs                               |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
                                                              |
       ]])
 
@@ -529,42 +394,27 @@ describe('Screen', function()
       feed('gg')
       screen:expect([[
         ^foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
                                                              |
       ]])
 
       feed('i')
       screen:expect([[
         ^foo barf bar barf eggs                               |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
         {4:-- INSERT --}                                         |
       ]])
 
       feed('<esc>')
       screen:expect([[
         ^foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
                                                              |
       ]])
 
@@ -572,28 +422,18 @@ describe('Screen', function()
       feed('v')
       screen:expect([[
         ^foo barf bar barf eggs                               |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
         {4:-- VISUAL --}                                         |
       ]])
 
       feed('<esc>')
       screen:expect([[
         ^foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*4
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*3
                                                              |
       ]])
     end)
@@ -601,15 +441,10 @@ describe('Screen', function()
     it('and open line', function()
       feed('o')
       screen:expect([[
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*5
         ^                                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*2
         {4:-- INSERT --}                                         |
       ]])
     end)
@@ -618,15 +453,10 @@ describe('Screen', function()
       command('set cocu=i')
       feed('o')
       screen:expect([[
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*5
         ^                                                     |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*2
         {4:-- INSERT --}                                         |
       ]])
     end)
@@ -639,12 +469,9 @@ describe('Screen', function()
           ^foo barf bar barf eggs                               |
           foo {1:b} bar {1:b} eggs x                                   |
           foo {1:b} bar {1:b} eggs xy                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
                                                                |
         ]])
       end)
@@ -655,12 +482,9 @@ describe('Screen', function()
           foo barf bar barf eggs                               |
           foo {1:b} bar {1:b} eggs x                                   |
           foo {1:b} bar {1:b} eggs xy                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
           /^                                                    |
         ]])
 
@@ -669,12 +493,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo barf bar barf eggs {3:x}                             |
           foo {1:b} bar {1:b} eggs {5:x}y                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
           /x^                                                   |
         ]])
 
@@ -683,12 +504,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs x                                   |
           foo barf bar barf eggs {3:xy}                            |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
           /xy^                                                  |
         ]])
 
@@ -697,12 +515,9 @@ describe('Screen', function()
           foo barf bar barf eggs                               |
           foo {1:b} bar {1:b} eggs x                                   |
           foo {1:b} bar {1:b} eggs xy                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
           /^                                                    |
         ]])
       end)
@@ -717,12 +532,9 @@ describe('Screen', function()
           foo barf bar barf eggs                               |
           foo {1:b} bar {1:b} eggs x                                   |
           foo {1:b} bar {1:b} eggs xy                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
           /^                                                    |
         ]])
 
@@ -731,12 +543,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs {3:x}                                   |
           foo {1:b} bar {1:b} eggs {5:x}y                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
           /x^                                                   |
         ]])
 
@@ -745,12 +554,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs x                                   |
           foo {1:b} bar {1:b} eggs {3:xy}                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
           /xy^                                                  |
         ]])
 
@@ -759,12 +565,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs x                                   |
           foo {1:b} bar {1:b} eggs xy                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
           /^                                                    |
         ]])
 
@@ -773,12 +576,9 @@ describe('Screen', function()
           ^foo barf bar barf eggs                               |
           foo {1:b} bar {1:b} eggs x                                   |
           foo {1:b} bar {1:b} eggs xy                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
                                                                |
         ]])
       end)
@@ -789,12 +589,9 @@ describe('Screen', function()
           ^foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs x                                   |
           foo {1:b} bar {1:b} eggs xy                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
                                                                |
         ]])
 
@@ -805,12 +602,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs x                                   |
           foo {1:b} bar {1:b} eggs xy                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
           /^                                                    |
         ]])
 
@@ -819,12 +613,9 @@ describe('Screen', function()
           foo {1:b} bar {1:b} eggs                                     |
           foo barf bar barf eggs {3:x}                             |
           foo {1:b} bar {1:b} eggs {5:x}y                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
           /x^                                                   |
         ]])
 
@@ -833,12 +624,9 @@ describe('Screen', function()
           foo barf bar barf eggs                               |
           foo {1:b} bar {1:b} eggs x                                   |
           foo {1:b} bar {1:b} eggs xy                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
           /^                                                    |
         ]])
 
@@ -847,12 +635,9 @@ describe('Screen', function()
           ^foo {1:b} bar {1:b} eggs                                     |
           foo {1:b} bar {1:b} eggs x                                   |
           foo {1:b} bar {1:b} eggs xy                                  |
-          foo {1:b} bar {1:b} eggs                                     |
-          foo {1:b} bar {1:b} eggs                                     |
+          foo {1:b} bar {1:b} eggs                                     |*2
                                                                |
-          {0:~                                                    }|
-          {0:~                                                    }|
-          {0:~                                                    }|
+          {0:~                                                    }|*3
                                                                |
         ]])
       end)
@@ -865,40 +650,23 @@ describe('Screen', function()
       feed(':3<cr>o    a<Esc>ggV')
       screen:expect{grid=[[
         ^f{6:oo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*2
             a                                                |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*5
         {4:-- VISUAL LINE --}                                    |
       ]]}
       feed(string.rep('j', 15))
       screen:expect{grid=[[
-        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
-        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
-        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
-        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
-        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
-        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
-        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
-        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |*8
         ^f{6:oo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
         {4:-- VISUAL LINE --}                                    |
       ]]}
       feed(string.rep('k', 15))
       screen:expect{grid=[[
         ^f{6:oo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*2
             a                                                |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |*5
         {4:-- VISUAL LINE --}                                    |
       ]]}
     end)
@@ -918,11 +686,7 @@ describe('Screen', function()
       bbb                                                  |
       ccc                                                  |
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*5
                                                            |
     ]]}
 
@@ -940,11 +704,7 @@ describe('Screen', function()
       bbb                                                  |
       ^ccc                                                  |
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*5
                                                            |
     ]]}
     eq({{2, 0, {{'c', 0, 3}, {' ', 0, 50}}}, {3, 0, {{' ', 0, 53}}}}, grid_lines)
@@ -965,11 +725,7 @@ describe('Screen', function()
       bbb                                                  |
       ccc                                                  |
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*5
                                                            |
     ]]}
 
@@ -987,11 +743,7 @@ describe('Screen', function()
       bbb                                                  |
       ^ccc                                                  |
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*5
                                                            |
     ]]}
     eq({{2, 0, {{'c', 0, 3}, {' ', 0, 50}}}}, grid_lines)
@@ -1067,13 +819,7 @@ describe('Screen', function()
       screen:expect{grid=[[
         ^c                                                    |
                                                              |
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
-        {0:~                                                    }|
+        {0:~                                                    }|*7
                                                              |
       ]]}
     end)

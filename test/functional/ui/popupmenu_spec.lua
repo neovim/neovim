@@ -48,11 +48,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -64,11 +60,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -81,11 +73,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -97,11 +85,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       bar^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]]}
   end)
@@ -111,11 +95,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -127,11 +107,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -143,11 +119,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       spam^                                                        |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -159,11 +131,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect([[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]])
 
@@ -172,11 +140,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -188,11 +152,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -204,11 +164,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       bar^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -220,11 +176,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -236,11 +188,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -252,11 +200,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect([[
                                                                   |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]])
 
@@ -272,13 +216,8 @@ describe('ui/ext_popupmenu', function()
     }
     feed('<Esc>:sign <Tab>')
     screen:expect({grid = [[
-                                                                  |
-                                                                  |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+                                                                  |*2
+      {1:~                                                           }|*5
       :sign define^                                                |
     ]], popupmenu = {
       items = expected_wildpum,
@@ -288,13 +227,8 @@ describe('ui/ext_popupmenu', function()
 
     meths.select_popupmenu_item(-1, true, false, {})
     screen:expect({grid = [[
-                                                                  |
-                                                                  |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+                                                                  |*2
+      {1:~                                                           }|*5
       :sign ^                                                      |
     ]], popupmenu = {
       items = expected_wildpum,
@@ -304,13 +238,8 @@ describe('ui/ext_popupmenu', function()
 
     meths.select_popupmenu_item(5, true, false, {})
     screen:expect({grid = [[
-                                                                  |
-                                                                  |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+                                                                  |*2
+      {1:~                                                           }|*5
       :sign unplace^                                               |
     ]], popupmenu = {
       items = expected_wildpum,
@@ -320,25 +249,15 @@ describe('ui/ext_popupmenu', function()
 
     meths.select_popupmenu_item(-1, true, true, {})
     screen:expect({grid = [[
-                                                                  |
-                                                                  |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+                                                                  |*2
+      {1:~                                                           }|*5
       :sign ^                                                      |
     ]]})
 
     feed('<Tab>')
     screen:expect({grid = [[
-                                                                  |
-                                                                  |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+                                                                  |*2
+      {1:~                                                           }|*5
       :sign define^                                                |
     ]], popupmenu = {
       items = expected_wildpum,
@@ -348,13 +267,8 @@ describe('ui/ext_popupmenu', function()
 
     meths.select_popupmenu_item(5, true, true, {})
     screen:expect({grid = [[
-                                                                  |
-                                                                  |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+                                                                  |*2
+      {1:~                                                           }|*5
       :sign unplace^                                               |
     ]]})
 
@@ -364,11 +278,7 @@ describe('ui/ext_popupmenu', function()
       screen:expect{grid=[[
                                                                     |
         foo^                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*5
         {2:-- INSERT --}                                                |
       ]], popupmenu={
         items=expected,
@@ -380,11 +290,7 @@ describe('ui/ext_popupmenu', function()
       screen:expect{grid=[[
                                                                     |
         spam^                                                        |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*5
         {2:-- INSERT --}                                                |
       ]], popupmenu={
         items=expected,
@@ -396,11 +302,7 @@ describe('ui/ext_popupmenu', function()
       screen:expect{grid=[[
                                                                     |
         spam^                                                        |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*5
         {2:-- INSERT --}                                                |
       ]], popupmenu={
         items=expected,
@@ -412,11 +314,7 @@ describe('ui/ext_popupmenu', function()
       screen:expect([[
                                                                     |
         bar^                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*5
         {2:-- INSERT --}                                                |
       ]])
 
@@ -424,11 +322,7 @@ describe('ui/ext_popupmenu', function()
       screen:expect({grid = [[
                                                                     |
         bar                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*5
         :sign define^                                                |
       ]], popupmenu = {
         items = expected_wildpum,
@@ -440,11 +334,7 @@ describe('ui/ext_popupmenu', function()
       screen:expect({grid = [[
                                                                     |
         bar                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*5
         :sign list^                                                  |
       ]], popupmenu = {
         items = expected_wildpum,
@@ -456,11 +346,7 @@ describe('ui/ext_popupmenu', function()
       screen:expect({grid = [[
                                                                     |
         bar                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*5
         :sign ^                                                      |
       ]], popupmenu = {
         items = expected_wildpum,
@@ -472,11 +358,7 @@ describe('ui/ext_popupmenu', function()
       screen:expect({grid = [[
                                                                     |
         bar                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*5
         :sign jump^                                                  |
       ]]})
 
@@ -489,8 +371,7 @@ describe('ui/ext_popupmenu', function()
         {6:fo   x the foo }{1:                                             }|
         {7:bar            }{1:                                             }|
         {7:spam           }{1:                                             }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*2
         {2:-- INSERT --}                                                |
       ]])
 
@@ -501,8 +382,7 @@ describe('ui/ext_popupmenu', function()
         {7:fo   x the foo }{1:                                             }|
         {7:bar            }{1:                                             }|
         {6:spam           }{1:                                             }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*2
         {2:-- INSERT --}                                                |
       ]])
 
@@ -513,8 +393,7 @@ describe('ui/ext_popupmenu', function()
         {7:fo   x the foo }{1:                                             }|
         {7:bar            }{1:                                             }|
         {7:spam           }{1:                                             }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*2
         {2:-- INSERT --}                                                |
       ]])
 
@@ -522,11 +401,7 @@ describe('ui/ext_popupmenu', function()
       screen:expect([[
                                                                     |
         bar^                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*5
         {2:-- INSERT --}                                                |
       ]])
 
@@ -570,11 +445,7 @@ describe('ui/ext_popupmenu', function()
       screen:expect([[
                                                                     |
         bar                                                         |
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
-        {1:~                                                           }|
+        {1:~                                                           }|*5
         :sign jump^                                                  |
       ]])
     end
@@ -602,8 +473,7 @@ describe('ui/ext_popupmenu', function()
       {6:aa             }{1:                                             }|
       {7:bb             }{1:                                             }|
       {7:cc             }{1:                                             }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
       {2:-- Keyword Local completion (^N^P) }{5:match 1 of 3}             |
     ]])
 
@@ -614,8 +484,7 @@ describe('ui/ext_popupmenu', function()
       {7:aa             }{1:                                             }|
       {7:bb             }{1:                                             }|
       {6:cc             }{1:                                             }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
       {2:-- Keyword Local completion (^N^P) }{5:match 3 of 3}             |
     ]])
 
@@ -626,8 +495,7 @@ describe('ui/ext_popupmenu', function()
       {7:aa             }{1:                                             }|
       {7:bb             }{1:                                             }|
       {7:cc             }{1:                                             }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
       {2:-- Keyword Local completion (^N^P) }{8:Back at original}         |
     ]])
 
@@ -635,11 +503,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect([[
       aa bb cc                                                    |
       bb^                                                          |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]])
   end)
@@ -681,11 +545,7 @@ describe('ui/ext_popupmenu', function()
       screen:expect{grid=[[
                                                                   |
       January^                                                     |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
       ]], popupmenu={
         items=month_expected,
@@ -736,11 +596,7 @@ describe('ui/ext_popupmenu', function()
       screen:expect{grid=[[
                                                                   |
       January^                                                     |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
       ]], popupmenu={
         items=month_expected,
@@ -792,11 +648,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                 |
     January^                                                     |
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
+    {1:~                                                           }|*5
     {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=month_expected,
@@ -807,11 +659,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                 |
     January^                                                     |
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
+    {1:~                                                           }|*5
     {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=month_expected,
@@ -837,14 +685,7 @@ describe('ui/ext_popupmenu', function()
     feed(':sign ')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:~                               }|*8
       :sign ^                          |
     ]])
     eq(0, funcs.wildmenumode())
@@ -852,14 +693,7 @@ describe('ui/ext_popupmenu', function()
     feed('<tab>')
     screen:expect{grid=[[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:~                               }|*8
       :sign define^                    |
     ]], popupmenu={items=wild_expected, pos=0, anchor={1, 9, 6}}}
     eq(1, funcs.wildmenumode())
@@ -867,42 +701,21 @@ describe('ui/ext_popupmenu', function()
     feed('<left>')
     screen:expect{grid=[[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:~                               }|*8
       :sign ^                          |
     ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
 
     feed('<left>')
     screen:expect{grid=[[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:~                               }|*8
       :sign unplace^                   |
     ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
 
     feed('x')
     screen:expect([[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:~                               }|*8
       :sign unplacex^                  |
     ]])
     feed('<esc>')
@@ -911,14 +724,7 @@ describe('ui/ext_popupmenu', function()
     feed(':sign <S-tab>')
     screen:expect{grid=[[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:~                               }|*8
       :sign unplace^                   |
     ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
     feed('<esc>')
@@ -930,13 +736,10 @@ describe('ui/ext_popupmenu', function()
     feed(':b lå<tab>')
     screen:expect{grid=[[
                                       |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
+      {1:~                               }|*3
       {4:långfile2                       }|
                                       |
-      {1:~                               }|
-      {1:~                               }|
+      {1:~                               }|*2
       {3:långfile1                       }|
       :b långfile1^                    |
     ]], popupmenu={
@@ -960,11 +763,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       foo^                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -976,11 +775,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]], popupmenu={
       items=expected,
@@ -992,11 +787,7 @@ describe('ui/ext_popupmenu', function()
     screen:expect{grid=[[
                                                                   |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
                                                                   |
     ]]}
     feed('<RightMouse><0,0>')
@@ -1005,20 +796,14 @@ describe('ui/ext_popupmenu', function()
       {7:^foo }                                                        |
       {7:bar }{1:                                                        }|
       {7:baz }{1:                                                        }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*3
                                                                   |
     ]])
     feed('<esc>')
     screen:expect([[
                                                                   |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
                                                                   |
     ]])
   end)
@@ -1295,47 +1080,21 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
+          [4:--------------------------------]|*8
           {3:[No Name] [Preview][+]          }|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*9
           {4:[No Name] [+]                   }|
           [3:--------------------------------]|
         ## grid 2
           aa bb cc dd ee ff gg hh ii jj   |
           aa^                              |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*7
         ## grid 3
           {2:-- }{5:match 1 of 10}                |
         ## grid 4
           aa bb cc dd ee ff gg hh ii jj   |
           aa                              |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
         ## grid 5
           {s:aa             }{c: }|
           {n:bb             }{c: }|
@@ -1352,12 +1111,7 @@ describe('builtin popupmenu', function()
         screen:expect([[
           aa bb cc dd ee ff gg hh ii jj   |
           aa                              |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
           {3:[No Name] [Preview][+]          }|
           aa bb cc dd ee ff gg hh ii jj   |
           aa^                              |
@@ -1381,47 +1135,21 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*9
           {4:[No Name] [+]                   }|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
+          [4:--------------------------------]|*8
           {3:[No Name] [Preview][+]          }|
           [3:--------------------------------]|
         ## grid 2
           aa bb cc dd ee ff gg hh ii jj   |
           aa^                              |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*7
         ## grid 3
           {2:-- }{5:match 1 of 10}                |
         ## grid 4
           aa bb cc dd ee ff gg hh ii jj   |
           aa                              |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
         ## grid 5
           {s:aa             }{c: }|
           {n:bb             }{c: }|
@@ -1448,12 +1176,7 @@ describe('builtin popupmenu', function()
           {n:hh             }{s: }{4:                }|
           aa bb cc dd ee ff gg hh ii jj   |
           aa                              |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
           {3:[No Name] [Preview][+]          }|
           {2:-- }{5:match 1 of 10}                |
         ]])
@@ -1469,24 +1192,9 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
+          [4:--------------------------------]|*4
           {3:[No Name] [Preview][+]          }|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*13
           {4:[No Name] [+]                   }|
           [3:--------------------------------]|
         ## grid 2
@@ -1561,24 +1269,9 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
+          [4:--------------------------------]|*8
           {3:[No Name] [Preview][+]          }|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*9
           {4:[No Name] [+]                   }|
           [3:--------------------------------]|
         ## grid 2
@@ -1649,24 +1342,9 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*9
           {4:[No Name] [+]                   }|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
-          [4:--------------------------------]|
+          [4:--------------------------------]|*8
           {3:[No Name] [Preview][+]          }|
           [3:--------------------------------]|
         ## grid 2
@@ -1747,21 +1425,7 @@ describe('builtin popupmenu', function()
           {n:one            }{1:                 }|
           {n:two            }{1:                 }|
           {n:three          }{1:                 }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*15
           {2:-- }{8:Back at original}             |
         ]])
         feed('<C-N>')
@@ -1774,16 +1438,7 @@ describe('builtin popupmenu', function()
           {s:one            }{1:                 }|
           {n:two            }{1:                 }|
           {n:three          }{1:                 }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*10
           {4:[No Name] [+]                   }|
           {2:-- }{5:match 1 of 3}                 |
         ]])
@@ -1821,39 +1476,25 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [4:--------------------]│[2:-----------]|
-          [4:--------------------]│[2:-----------]|
-          [4:--------------------]│[2:-----------]|
-          [4:--------------------]│[2:-----------]|
-          [4:--------------------]│[2:-----------]|
-          [4:--------------------]│[2:-----------]|
+          [4:--------------------]│[2:-----------]|*6
           {4:[No Name] [+]        }{3:<Name] [+] }|
           [3:--------------------------------]|
         ## grid 2
           aaa aab aac|
                      |
-          {1:~          }|
-          {1:~          }|
-          {1:~          }|
-          {1:~          }|
+          {1:~          }|*4
         ## grid 3
           :vsplit                         |
         ## grid 4
           aaa aab aac         |
           ^                    |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
         ]]}
       else
         screen:expect([[
           aaa aab aac         │aaa aab aac|
           ^                    │           |
-          {1:~                   }│{1:~          }|
-          {1:~                   }│{1:~          }|
-          {1:~                   }│{1:~          }|
-          {1:~                   }│{1:~          }|
+          {1:~                   }│{1:~          }|*4
           {4:[No Name] [+]        }{3:<Name] [+] }|
           :vsplit                         |
         ]])
@@ -1863,30 +1504,19 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [4:--------------------]│[2:-----------]|
-          [4:--------------------]│[2:-----------]|
-          [4:--------------------]│[2:-----------]|
-          [4:--------------------]│[2:-----------]|
-          [4:--------------------]│[2:-----------]|
-          [4:--------------------]│[2:-----------]|
+          [4:--------------------]│[2:-----------]|*6
           {4:[No Name] [+]        }{3:<Name] [+] }|
           [3:--------------------------------]|
         ## grid 2
           aaa aab aac|
           bbb aaa    |
-          {1:~          }|
-          {1:~          }|
-          {1:~          }|
-          {1:~          }|
+          {1:~          }|*4
         ## grid 3
           {2:-- }{5:match 1 of 3}                 |
         ## grid 4
           aaa aab aac         |
           bbb aaa^             |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*4
         ## grid 5
           {s: aaa            }|
           {n: aab            }|
@@ -1911,30 +1541,21 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|*6
           {3:<Name] [+]  }{4:[No Name] [+]       }|
           [3:--------------------------------]|
         ## grid 2
           aaa aab aac         |
           bbb aaa             |
           c aaa^               |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*3
         ## grid 3
           {2:-- }{5:match 1 of 3}                 |
         ## grid 4
           aaa aab aac|
           bbb aaa    |
           c aaa      |
-          {1:~          }|
-          {1:~          }|
-          {1:~          }|
+          {1:~          }|*3
         ## grid 5
           {s: aaa            }|
           {n: aab            }|
@@ -1959,21 +1580,14 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|*6
           {3:<Name] [+]  }{4:[No Name] [+]       }|
           [3:--------------------------------]|
         ## grid 2
           aaa aab aac         |
           bbb aaa             |
           c aaabcdef ccc aaa^  |
-          {1:~                   }|
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*3
         ## grid 3
           {2:-- }{5:match 1 of 4}                 |
         ## grid 4
@@ -1981,8 +1595,7 @@ describe('builtin popupmenu', function()
           bbb aaa    |
           c aaabcdef |
           ccc aaa    |
-          {1:~          }|
-          {1:~          }|
+          {1:~          }|*2
         ## grid 5
           {s: aaa     }|
           {n: aab     }|
@@ -2008,12 +1621,7 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
-          [4:-----------]│[2:--------------------]|
+          [4:-----------]│[2:--------------------]|*6
           {3:<Name] [+]  }{4:[No Name] [+]       }|
           [3:--------------------------------]|
         ## grid 2
@@ -2021,8 +1629,7 @@ describe('builtin popupmenu', function()
           bbb aaa             |
           c aaabcdef ccc aaa  |
           aaa^                 |
-          {1:~                   }|
-          {1:~                   }|
+          {1:~                   }|*2
         ## grid 3
           {2:-- }{5:match 1 of 6}                 |
         ## grid 4
@@ -2354,20 +1961,7 @@ describe('builtin popupmenu', function()
           {1:~                        }{n: choice}|
           {1:~                        }{n: text  }|
           {1:~                        }{n: thing }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*14
           {2:-- INSERT --}                    |
         ]])
 
@@ -2379,19 +1973,7 @@ describe('builtin popupmenu', function()
           {n:choice         }{1:                 }|
           {n:text           }{1:                 }|
           {s:thing          }{1:                 }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*13
           {2:-- INSERT --}                    |
         ]])
 
@@ -2402,20 +1984,7 @@ describe('builtin popupmenu', function()
           {1:~                        }{n: choice}|
           {1:~                        }{s: text  }|
           {1:~                        }{n: thing }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*14
           {2:-- INSERT --}                    |
         ]])
 
@@ -2438,8 +2007,7 @@ describe('builtin popupmenu', function()
           {1:~                          }{n: choice         }{1:       }|
           {1:~                          }{s: text           }{1:       }|
           {1:~                          }{n: thing          }{1:       }|
-          {1:~                                                 }|
-          {1:~                                                 }|
+          {1:~                                                 }|*2
           {2:-- INSERT --}                                      |
         ]])
 
@@ -2451,9 +2019,7 @@ describe('builtin popupmenu', function()
           {1:~  }{n: choice         }{1:      }|
           {1:~  }{s: text           }{1:      }|
           {1:~  }{n: thing          }{1:      }|
-          {1:~                        }|
-          {1:~                        }|
-          {1:~                        }|
+          {1:~                        }|*3
           {2:-- INSERT --}             |
         ]])
 
@@ -2499,20 +2065,7 @@ describe('builtin popupmenu', function()
           {1:~                        }{n: choice}|
           {1:~                        }{n: text  }|
           {1:~                        }{n: thing }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*14
           {2:-- INSERT --}                    |
         ]])
 
@@ -2525,8 +2078,7 @@ describe('builtin popupmenu', function()
           {1:~  }{n: choice      }|
           {1:~  }{n: text        }|
           {1:~  }{n: thing       }|
-          {1:~               }|
-          {1:~               }|
+          {1:~               }|*2
           {2:-- INSERT --}    |
         ]])
       end)
@@ -2536,24 +2088,7 @@ describe('builtin popupmenu', function()
         feed('isome rightleft ')
         screen:expect([[
                           ^  tfelthgir emos|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
+          {1:                               ~}|*18
           {2:-- INSERT --}                    |
         ]])
 
@@ -2565,20 +2100,7 @@ describe('builtin popupmenu', function()
           {1:  }{n:         eciohc }{1:             ~}|
           {1:  }{n:           txet }{1:             ~}|
           {1:  }{n:          gniht }{1:             ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
+          {1:                               ~}|*14
           {2:-- INSERT --}                    |
         ]])
 
@@ -2589,44 +2111,14 @@ describe('builtin popupmenu', function()
           {1:  }{n:         eciohc }{1:             ~}|
           {1:  }{n:           txet }{1:             ~}|
           {1:  }{n:          gniht }{1:             ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
+          {1:                               ~}|*14
           {2:-- INSERT --}                    |
         ]])
 
         feed('<c-y>')
         screen:expect([[
                       ^ drow tfelthgir emos|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
+          {1:                               ~}|*18
           {2:-- INSERT --}                    |
         ]])
 
@@ -2634,42 +2126,14 @@ describe('builtin popupmenu', function()
         feed('<esc>:sign ')
         screen:expect{grid=[[
                        drow tfelthgir emos|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
+          {1:                               ~}|*18
           :sign ^                          |
         ]]}
 
         feed('<tab>')
         screen:expect{grid=[[
                        drow tfelthgir emos|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
-          {1:                               ~}|
+          {1:                               ~}|*12
           {1:     }{s: define         }{1:          ~}|
           {1:     }{n: jump           }{1:          ~}|
           {1:     }{n: list           }{1:          ~}|
@@ -2692,24 +2156,17 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|*4
           {3:[No Name] [+]       }{4:[No Name] [+]       }|
           [3:----------------------------------------]|
         ## grid 2
                tfelthgir emos|
-          {1:                  ~}|
-          {1:                  ~}|
-          {1:                  ~}|
+          {1:                  ~}|*3
         ## grid 3
           {2:-- INSERT --}                            |
         ## grid 4
               ^  tfelthgir emos|
-          {1:                   ~}|
-          {1:                   ~}|
-          {1:                   ~}|
+          {1:                   ~}|*3
         ## grid 5
           {c: }{n:           drow }|
           {s: }{n:         eciohc }|
@@ -2731,24 +2188,19 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|*4
           {3:[No Name] [+]       }{4:[No Name] [+]       }|
           [3:----------------------------------------]|
         ## grid 2
                tfelthgir emos|
                              |
-          {1:                  ~}|
-          {1:                  ~}|
+          {1:                  ~}|*2
         ## grid 3
           {2:-- INSERT --}                            |
         ## grid 4
                 tfelthgir emos|
                              ^ |
-          {1:                   ~}|
-          {1:                   ~}|
+          {1:                   ~}|*2
         ## grid 5
           {c: }{n:           drow}|
           {s: }{n:         eciohc}|
@@ -2770,31 +2222,25 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|*4
           {3:[No Name] [+]       }{4:[No Name] [+]       }|
           [3:----------------------------------------]|
         ## grid 2
                tfelthgir emos|
                              |
-          {1:                  ~}|
-          {1:                  ~}|
+          {1:                  ~}|*2
         ## grid 3
           ^                                        |
         ## grid 4
                 tfelthgir emos|
                               |
-          {1:                   ~}|
-          {1:                   ~}|
+          {1:                   ~}|*2
         ]]}
       else
         screen:expect([[
                tfelthgir emos│      tfelthgir emos|
                              │                    |
-          {1:                  ~}│{1:                   ~}|
-          {1:                  ~}│{1:                   ~}|
+          {1:                  ~}│{1:                   ~}|*2
           {3:[No Name] [+]       }{4:[No Name] [+]       }|
           ^                                        |
         ]])
@@ -2804,24 +2250,19 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
-          [2:-------------------]│[4:--------------------]|
+          [2:-------------------]│[4:--------------------]|*4
           {3:[No Name] [+]       }{4:[No Name] [+]       }|
           [3:----------------------------------------]|
         ## grid 2
                tfelthgir emos|
                              |
-          {1:                  ~}|
-          {1:                  ~}|
+          {1:                  ~}|*2
         ## grid 3
           define^                                  |
         ## grid 4
                 tfelthgir emos|
                               |
-          {1:                   ~}|
-          {1:                   ~}|
+          {1:                   ~}|*2
         ## grid 5
           {s:define         }{c: }|
           {n:jump           }{s: }|
@@ -2927,9 +2368,7 @@ describe('builtin popupmenu', function()
           {1:~ }{s: wordey x extrainfo }{1:                  }|
           {1:~ }{n: thing              }{1:                  }|
           {1:~ }{n: sneaky   bar       }{1:                  }|
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
+          {1:~                                       }|*3
           {2:-- INSERT --}                            |
         ]])
 
@@ -2939,9 +2378,7 @@ describe('builtin popupmenu', function()
           {1:~ }{n: wordey x extrainfo }{1:                  }|
           {1:~ }{n: thing              }{1:                  }|
           {1:~ }{n: sneaky   bar       }{1:                  }|
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
+          {1:~                                       }|*3
           {2:-- INSERT --}                            |
         ]])
 
@@ -2951,21 +2388,14 @@ describe('builtin popupmenu', function()
           {1:~ }{n: wordey x extrainfo }{1:                  }|
           {1:~ }{n: thing              }{1:                  }|
           {1:~ }{s: sneaky   bar       }{1:                  }|
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
+          {1:~                                       }|*3
           {2:-- INSERT --}                            |
         ]])
 
         feed('<esc>')
         screen:expect([[
           xx secre^t                               |
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
+          {1:~                                       }|*6
                                                   |
         ]])
       end)
@@ -2980,22 +2410,14 @@ describe('builtin popupmenu', function()
         feed(':sign ')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*8
           :sign ^                          |
         ]])
 
         feed('<Tab>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{s: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3008,8 +2430,7 @@ describe('builtin popupmenu', function()
         feed('<Right><Right>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{n: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{s: list           }{1:           }|
@@ -3022,8 +2443,7 @@ describe('builtin popupmenu', function()
         feed('<C-N>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{n: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3036,8 +2456,7 @@ describe('builtin popupmenu', function()
         feed('<C-P>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{n: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{s: list           }{1:           }|
@@ -3050,8 +2469,7 @@ describe('builtin popupmenu', function()
         feed('<Left>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{n: define         }{1:           }|
           {1:~    }{s: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3065,14 +2483,7 @@ describe('builtin popupmenu', function()
         feed('<C-E>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*8
           :sign ^                          |
         ]])
 
@@ -3080,14 +2491,7 @@ describe('builtin popupmenu', function()
         feed('<Tab><C-P><C-P><C-Y>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*8
           :sign unplace^                   |
         ]])
 
@@ -3095,8 +2499,7 @@ describe('builtin popupmenu', function()
         feed('<C-U>sign define <Tab>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~           }{s: culhl=         }{1:    }|
           {1:~           }{n: icon=          }{1:    }|
           {1:~           }{n: linehl=        }{1:    }|
@@ -3109,8 +2512,7 @@ describe('builtin popupmenu', function()
         feed('<Space><Tab>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~                  }{s: culhl=     }{1: }|
           {1:~                  }{n: icon=      }{1: }|
           {1:~                  }{n: linehl=    }{1: }|
@@ -3123,12 +2525,7 @@ describe('builtin popupmenu', function()
         feed('<C-U>e Xnamedi<Tab><Tab>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
           {1:~          }{s: XdirA/         }{1:     }|
           {1:~          }{n: XfileA         }{1:     }|
           :e Xnamedir/XdirA/^              |
@@ -3138,12 +2535,7 @@ describe('builtin popupmenu', function()
         feed('<Down>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
           {1:~                }{s: XdirB/       }{1: }|
           {1:~                }{n: XfileB       }{1: }|
           :e Xnamedir/XdirA/XdirB/^        |
@@ -3153,12 +2545,7 @@ describe('builtin popupmenu', function()
         feed('<Up>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
           {1:~          }{s: XdirA/         }{1:     }|
           {1:~          }{n: XfileA         }{1:     }|
           :e Xnamedir/XdirA/^              |
@@ -3169,12 +2556,7 @@ describe('builtin popupmenu', function()
         feed(':<C-U>sign <Tab><C-A>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
           {4:                                }|
           :sign define jump list place und|
           efine unplace^                   |
@@ -3184,12 +2566,7 @@ describe('builtin popupmenu', function()
         feed('<Left>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
           {4:                                }|
           :sign define jump list place und|
           efine unplac^e                   |
@@ -3201,11 +2578,7 @@ describe('builtin popupmenu', function()
         feed('<C-U>sign <Tab><C-D>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*5
           {4:                                }|
           :sign define                    |
           define                          |
@@ -3216,8 +2589,7 @@ describe('builtin popupmenu', function()
         feed('<C-U><CR>:sign <S-Tab><C-P>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{n: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3231,14 +2603,7 @@ describe('builtin popupmenu', function()
         feed('<C-U><CR>:sign <Tab><Esc>')
         screen:expect([[
           ^                                |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*8
                                           |
         ]])
 
@@ -3246,14 +2611,7 @@ describe('builtin popupmenu', function()
         feed(':sign <Tab>x')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*8
           :sign definex^                   |
         ]])
 
@@ -3264,10 +2622,7 @@ describe('builtin popupmenu', function()
           {3:[No Name]                       }|
           {1::}sign define                    |
           {1::}sign defin^e                    |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
           {4:[Command Line]                  }|
           :sign define                    |
         ]])
@@ -3277,12 +2632,7 @@ describe('builtin popupmenu', function()
         feed(':sign u<Tab><C-N><C-N>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
           {1:~    }{n: undefine       }{1:           }|
           {1:~    }{n: unplace        }{1:           }|
           :sign u^                         |
@@ -3292,10 +2642,7 @@ describe('builtin popupmenu', function()
         feed('<C-U>bu<Tab>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
           {s: bufdo          }{1:                }|
           {n: buffer         }{1:                }|
           {n: buffers        }{1:                }|
@@ -3307,14 +2654,7 @@ describe('builtin popupmenu', function()
         feed('<C-E><C-U>sign <Tab><BS>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*8
           :sign defin^                     |
         ]])
 
@@ -3322,14 +2662,7 @@ describe('builtin popupmenu', function()
         feed('<C-E><C-U>sign <Tab><C-W>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*8
           :sign ^                          |
         ]])
 
@@ -3337,14 +2670,7 @@ describe('builtin popupmenu', function()
         feed('<C-E><C-U>sign <Tab><C-U>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*8
           :^                               |
         ]])
 
@@ -3353,14 +2679,7 @@ describe('builtin popupmenu', function()
         feed('sign xyz<Esc>:sign <Tab><C-E><Up>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*8
           :sign xyz^                       |
         ]])
 
@@ -3371,9 +2690,7 @@ describe('builtin popupmenu', function()
         feed(':cn<Tab>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*3
           {4:                                }|
           :cn                             |
           cnewer       cnoreabbrev        |
@@ -3384,9 +2701,7 @@ describe('builtin popupmenu', function()
         feed('s')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*3
           {4:                                }|
           :cn                             |
           cnewer       cnoreabbrev        |
@@ -3402,11 +2717,7 @@ describe('builtin popupmenu', function()
         feed(':e あいう/<Tab>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*5
           {1:~        }{s: 123            }{1:       }|
           {1:~        }{n: abc            }{1:       }|
           {1:~        }{n: xyz            }{1:       }|
@@ -3418,8 +2729,7 @@ describe('builtin popupmenu', function()
         feed(':sign <Tab><PageDown>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{n: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3431,8 +2741,7 @@ describe('builtin popupmenu', function()
         feed('<PageDown>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{n: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3444,8 +2753,7 @@ describe('builtin popupmenu', function()
         feed('<PageDown>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{n: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3457,8 +2765,7 @@ describe('builtin popupmenu', function()
         feed('<PageDown>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{s: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3470,8 +2777,7 @@ describe('builtin popupmenu', function()
         feed('<C-U>sign <Tab><Right><Right><PageDown>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{n: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3485,8 +2791,7 @@ describe('builtin popupmenu', function()
         feed('<C-U>sign <Tab><PageUp>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{n: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3498,8 +2803,7 @@ describe('builtin popupmenu', function()
         feed('<PageUp>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{n: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3511,8 +2815,7 @@ describe('builtin popupmenu', function()
         feed('<PageUp>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{n: define         }{1:           }|
           {1:~    }{s: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3524,8 +2827,7 @@ describe('builtin popupmenu', function()
         feed('<PageUp>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~    }{s: define         }{1:           }|
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3539,12 +2841,7 @@ describe('builtin popupmenu', function()
         feed('<Esc>:set wildchazz<Left><Left><Tab>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
           {1:~   }{s: wildchar       }{1:            }|
           {1:~   }{n: wildcharm      }{1:            }|
           :set wildchar^zz                 |
@@ -3552,14 +2849,7 @@ describe('builtin popupmenu', function()
         feed('<C-E>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*8
           :set wildcha^zz                  |
         ]])
 
@@ -3567,14 +2857,7 @@ describe('builtin popupmenu', function()
         feed('<Esc>:set wildchazz<Left><Left><Tab><C-Y>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*8
           :set wildchar^zz                 |
         ]])
 
@@ -3586,9 +2869,7 @@ describe('builtin popupmenu', function()
         feed(':b lå<tab>')
         screen:expect([[
                                           |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*3
           {4:långfile2                       }|
                                           |
           {1:~                               }|
@@ -3614,14 +2895,7 @@ describe('builtin popupmenu', function()
           {1:~                                                 }|
           {4:långfile2                                         }|
                                                             |
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
+          {1:~                                                 }|*8
           {1:~ }{s: långfile1      }{1:                                }|
           {3:lå}{n: långfile2      }{3:                                }|
           :b långfile1^                                      |
@@ -3636,14 +2910,7 @@ describe('builtin popupmenu', function()
           {1:~                                                 }|
           {4:långfile2                                         }|
                                                             |
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
+          {1:~                                                 }|*8
           {1:~ }{n: långfile1      }{1:                                }|
           {3:lå}{n: långfile2      }{3:                                }|
           :b långfile^                                       |
@@ -3658,17 +2925,7 @@ describe('builtin popupmenu', function()
         feed(':e compdir/<tab>')
         screen:expect([[
                                                             |
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
-          {1:~                                                 }|
+          {1:~                                                 }|*11
           {1:~         }{s: file1          }{1:                        }|
           {1:~         }{n: file2          }{1:                        }|
           :e compdir/file1^                                  |
@@ -3683,11 +2940,7 @@ describe('builtin popupmenu', function()
         feed(':echoerr "fail"|echoerr "error"<cr>')
         screen:expect{grid=[[
                                                   |
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
+          {1:~                                       }|*5
           {4:                                        }|
           {6:fail}                                    |
           {6:error}                                   |
@@ -3697,8 +2950,7 @@ describe('builtin popupmenu', function()
         feed(':sign <tab>')
         screen:expect{grid=[[
                                                   |
-          {1:~                                       }|
-          {1:~                                       }|
+          {1:~                                       }|*2
           {1:~    }{s: define         }{1:                   }|
           {1:~    }{n: jump           }{1:                   }|
           {1:~    }{n: list           }{1:                   }|
@@ -3711,11 +2963,7 @@ describe('builtin popupmenu', function()
         feed('d')
         screen:expect{grid=[[
                                                   |
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
-          {1:~                                       }|
+          {1:~                                       }|*5
           {4:                                        }|
           {6:fail}                                    |
           {6:error}                                   |
@@ -3734,12 +2982,7 @@ describe('builtin popupmenu', function()
         feed(':sign u<Tab>')
         screen:expect{grid=[[
                                         |
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
+          {1:~                             }|*6
           :sign un^                      |
         ]]}
         eq(0, funcs.wildmenumode())
@@ -3748,10 +2991,7 @@ describe('builtin popupmenu', function()
         feed('<Tab>')
         screen:expect{grid=[[
                                         |
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
+          {1:~                             }|*4
           {1:~    }{s: undefine       }{1:         }|
           {1:~    }{n: unplace        }{1:         }|
           :sign undefine^                |
@@ -3762,10 +3002,7 @@ describe('builtin popupmenu', function()
         feed('<Tab>')
         screen:expect{grid=[[
                                         |
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
+          {1:~                             }|*4
           {1:~    }{n: undefine       }{1:         }|
           {1:~    }{s: unplace        }{1:         }|
           :sign unplace^                 |
@@ -3779,9 +3016,7 @@ describe('builtin popupmenu', function()
         feed('$')
         feed(':sign <Tab>')
         screen:expect([[
-          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+          aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|*3
           aaaa {s: define         }           |
           {1:~    }{n: jump           }{1:           }|
           {1:~    }{n: list           }{1:           }|
@@ -3805,8 +3040,7 @@ describe('builtin popupmenu', function()
         feed(':sign <C-E>')
         screen:expect([[
                                         |
-          {1:~                             }|
-          {1:~                             }|
+          {1:~                             }|*2
           {1:~    }{s: define         }{1:         }|
           {1:~    }{n: jump           }{1:         }|
           {1:~    }{n: list           }{1:         }|
@@ -3820,8 +3054,7 @@ describe('builtin popupmenu', function()
         feed('<C-E>')
         screen:expect([[
                                         |
-          {1:~                             }|
-          {1:~                             }|
+          {1:~                             }|*2
           {1:~    }{n: define         }{1:         }|
           {1:~    }{s: jump           }{1:         }|
           {1:~    }{n: list           }{1:         }|
@@ -3834,14 +3067,7 @@ describe('builtin popupmenu', function()
         feed('<Esc>')
         screen:expect([[
           ^                              |
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
+          {1:~                             }|*8
                                         |
         ]])
 
@@ -3851,8 +3077,7 @@ describe('builtin popupmenu', function()
         feed(':sign <Esc>')
         screen:expect([[
                                         |
-          {1:~                             }|
-          {1:~                             }|
+          {1:~                             }|*2
           {1:~    }{s: define         }{1:         }|
           {1:~    }{n: jump           }{1:         }|
           {1:~    }{n: list           }{1:         }|
@@ -3865,14 +3090,7 @@ describe('builtin popupmenu', function()
         feed('<Esc>')
         screen:expect([[
           ^                              |
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
+          {1:~                             }|*8
                                         |
         ]])
 
@@ -3882,8 +3100,7 @@ describe('builtin popupmenu', function()
         feed([[:sign <C-\><C-\>]])
         screen:expect([[
                                         |
-          {1:~                             }|
-          {1:~                             }|
+          {1:~                             }|*2
           {1:~    }{s: define         }{1:         }|
           {1:~    }{n: jump           }{1:         }|
           {1:~    }{n: list           }{1:         }|
@@ -3896,14 +3113,7 @@ describe('builtin popupmenu', function()
         feed('<C-N>')
         screen:expect([[
           ^                              |
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
-          {1:~                             }|
+          {1:~                             }|*8
                                         |
         ]])
       end)
@@ -3919,22 +3129,11 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*7
           [3:--------------------------------]|
         ## grid 2
           some long prefix before the ^    |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
         ## grid 3
           {2:-- INSERT --}                    |
         ## grid 4
@@ -3948,10 +3147,7 @@ describe('builtin popupmenu', function()
           some long prefix before the ^    |
           {1:~                       }{n: word  }{c: }|
           {1:~                       }{n: choice}{s: }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
           {2:-- INSERT --}                    |
         ]])
       end
@@ -3967,22 +3163,11 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*7
           [3:--------------------------------]|
         ## grid 2
           some long prefix before the ^    |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
         ## grid 3
           {2:-- INSERT --}                    |
         ## grid 4
@@ -4000,8 +3185,7 @@ describe('builtin popupmenu', function()
           {1:~                        }{n: choice}|
           {1:~                        }{n: text  }|
           {1:~                        }{n: thing }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {2:-- INSERT --}                    |
         ]])
       end
@@ -4031,22 +3215,11 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect({grid=[[
           ## grid 1
-            [2:--------------------------------]|
-            [2:--------------------------------]|
-            [2:--------------------------------]|
-            [2:--------------------------------]|
-            [2:--------------------------------]|
-            [2:--------------------------------]|
-            [2:--------------------------------]|
+            [2:--------------------------------]|*7
             [3:--------------------------------]|
           ## grid 2
                          ^                   |
-            {1:~                               }|
-            {1:~                               }|
-            {1:~                               }|
-            {1:~                               }|
-            {1:~                               }|
-            {1:~                               }|
+            {1:~                               }|*6
           ## grid 3
             {2:-- INSERT --}                    |
           ## grid 4
@@ -4056,11 +3229,7 @@ describe('builtin popupmenu', function()
         screen:expect([[
                        ^                   |
           {1:~           }{n: 哦哦哦哦哦哦哦哦哦>}|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*5
           {2:-- INSERT --}                    |
         ]])
       end
@@ -4079,39 +3248,23 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect({grid=[[
           ## grid 1
-            [2:--------------------------------]|
-            [2:--------------------------------]|
-            [2:--------------------------------]|
-            [2:--------------------------------]|
-            [2:--------------------------------]|
-            [2:--------------------------------]|
-            [2:--------------------------------]|
+            [2:--------------------------------]|*7
             [3:--------------------------------]|
           ## grid 2
                         ^                    |
-            {1:~                               }|
-            {1:~                               }|
-            {1:~                               }|
-            {1:~                               }|
-            {1:~                               }|
-            {1:~                               }|
+            {1:~                               }|*6
           ## grid 3
             {2:-- INSERT --}                    |
           ## grid 4
-            {n: 哦哦哦哦哦哦哦哦哦>}{c: }|
-            {n: 哦哦哦哦哦哦哦哦哦>}{c: }|
-            {n: 哦哦哦哦哦哦哦哦哦>}{s: }|
-            {n: 哦哦哦哦哦哦哦哦哦>}{s: }|
+            {n: 哦哦哦哦哦哦哦哦哦>}{c: }|*2
+            {n: 哦哦哦哦哦哦哦哦哦>}{s: }|*2
         ]], float_pos={[4] = {{id = -1}, 'NW', 2, 1, 11, false, 100}}})
       else
         screen:expect([[
                       ^                    |
-          {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
-          {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|
-          {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
-          {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{c: }|*2
+          {1:~          }{n: 哦哦哦哦哦哦哦哦哦>}{s: }|*2
+          {1:~                               }|*2
           {2:-- INSERT --}                    |
         ]])
       end
@@ -4133,18 +3286,11 @@ describe('builtin popupmenu', function()
         meths.input_mouse('right', 'press', '', 2, 0, 4)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*5
           [3:--------------------------------]|
         ## grid 2
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
         ## grid 3
                                           |
         ## grid 4
@@ -4167,18 +3313,11 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*5
           [3:--------------------------------]|
         ## grid 2
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
         ## grid 3
                                           |
         ## grid 4
@@ -4200,18 +3339,11 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*5
           [3:--------------------------------]|
         ## grid 2
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
         ## grid 3
                                           |
         ## grid 4
@@ -4233,28 +3365,18 @@ describe('builtin popupmenu', function()
       if multigrid then
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*5
           [3:--------------------------------]|
         ## grid 2
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
         ## grid 3
           :let g:menustr = 'bar'          |
         ]]})
       else
         screen:expect([[
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
           :let g:menustr = 'bar'          |
         ]])
       end
@@ -4264,18 +3386,11 @@ describe('builtin popupmenu', function()
         meths.input_mouse('right', 'press', '', 2, 2, 20)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*5
           [3:--------------------------------]|
         ## grid 2
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
         ## grid 3
           :let g:menustr = 'bar'          |
         ## grid 4
@@ -4287,8 +3402,7 @@ describe('builtin popupmenu', function()
         feed('<RightMouse><20,2>')
         screen:expect([[
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*2
           {1:~                  }{n: foo }{1:        }|
           {1:~                  }{n: bar }{1:        }|
           :let g:menustr = 'b{n: baz }        |
@@ -4298,18 +3412,11 @@ describe('builtin popupmenu', function()
         meths.input_mouse('left', 'press', '', 4, 2, 2)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*5
           [3:--------------------------------]|
         ## grid 2
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
         ## grid 3
           :let g:menustr = 'baz'          |
         ]]})
@@ -4317,10 +3424,7 @@ describe('builtin popupmenu', function()
         feed('<LeftMouse><22,5>')
         screen:expect([[
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
           :let g:menustr = 'baz'          |
         ]])
       end
@@ -4330,18 +3434,11 @@ describe('builtin popupmenu', function()
         meths.input_mouse('right', 'press', '', 2, 0, 4)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*5
           [3:--------------------------------]|
         ## grid 2
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
         ## grid 3
           :let g:menustr = 'baz'          |
         ## grid 4
@@ -4364,18 +3461,11 @@ describe('builtin popupmenu', function()
         meths.input_mouse('right', 'drag', '', 2, 3, 6)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*5
           [3:--------------------------------]|
         ## grid 2
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
         ## grid 3
           :let g:menustr = 'baz'          |
         ## grid 4
@@ -4398,18 +3488,11 @@ describe('builtin popupmenu', function()
         meths.input_mouse('right', 'release', '', 2, 1, 6)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*5
           [3:--------------------------------]|
         ## grid 2
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
         ## grid 3
           :let g:menustr = 'foo'          |
         ]]})
@@ -4417,10 +3500,7 @@ describe('builtin popupmenu', function()
         feed('<RightRelease><6,1>')
         screen:expect([[
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
           :let g:menustr = 'foo'          |
         ]])
       end
@@ -4431,18 +3511,11 @@ describe('builtin popupmenu', function()
         meths.input_mouse('right', 'press', '', 2, 0, 4)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*5
           [3:--------------------------------]|
         ## grid 2
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
         ## grid 3
           :let g:menustr = 'foo'          |
         ## grid 4
@@ -4466,18 +3539,11 @@ describe('builtin popupmenu', function()
         meths.input_mouse('move', '', '', 2, 3, 6)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*5
           [3:--------------------------------]|
         ## grid 2
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
         ## grid 3
           :let g:menustr = 'foo'          |
         ## grid 4
@@ -4501,18 +3567,11 @@ describe('builtin popupmenu', function()
         meths.input_mouse('left', 'press', '', 2, 2, 6)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*5
           [3:--------------------------------]|
         ## grid 2
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
         ## grid 3
           :let g:menustr = 'bar'          |
         ]]})
@@ -4520,10 +3579,7 @@ describe('builtin popupmenu', function()
         feed('<LeftMouse><6,2>')
         screen:expect([[
           ^popup menu test                 |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*4
           :let g:menustr = 'bar'          |
         ]])
       end
@@ -4535,11 +3591,9 @@ describe('builtin popupmenu', function()
         meths.input_mouse('right', 'press', '', 5, 1, 20)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*2
           {3:[No Name] [+]                   }|
-          [5:--------------------------------]|
-          [5:--------------------------------]|
+          [5:--------------------------------]|*2
           [3:--------------------------------]|
         ## grid 2
           popup menu test                 |
@@ -4569,11 +3623,9 @@ describe('builtin popupmenu', function()
         meths.input_mouse('left', 'press', '', 4, 2, 2)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*2
           {3:[No Name] [+]                   }|
-          [5:--------------------------------]|
-          [5:--------------------------------]|
+          [5:--------------------------------]|*2
           [3:--------------------------------]|
         ## grid 2
           popup menu test                 |
@@ -4602,11 +3654,9 @@ describe('builtin popupmenu', function()
         meths.input_mouse('right', 'press', '', 6, 1, 14)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*2
           {3:[No Name] [+]                   }|
-          [5:---------------]│[6:----------------]|
-          [5:---------------]│[6:----------------]|
+          [5:---------------]│[6:----------------]|*2
           [3:--------------------------------]|
         ## grid 2
           popup menu test                 |
@@ -4639,11 +3689,9 @@ describe('builtin popupmenu', function()
         meths.input_mouse('left', 'press', '', 4, 0, 2)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*2
           {3:[No Name] [+]                   }|
-          [5:---------------]│[6:----------------]|
-          [5:---------------]│[6:----------------]|
+          [5:---------------]│[6:----------------]|*2
           [3:--------------------------------]|
         ## grid 2
           popup menu test                 |
@@ -4675,11 +3723,9 @@ describe('builtin popupmenu', function()
         meths.input_mouse('right', 'press', '', 6, 1, 14)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*2
           {3:[No Name] [+]                   }|
-          [5:---------------]│[6:----------------]|
-          [5:---------------]│[6:----------------]|
+          [5:---------------]│[6:----------------]|*2
           [3:--------------------------------]|
         ## grid 2
           popup menu test                 |
@@ -4712,11 +3758,9 @@ describe('builtin popupmenu', function()
         meths.input_mouse('left', 'press', '', 4, 1, 2)
         screen:expect({grid=[[
         ## grid 1
-          [2:--------------------------------]|
-          [2:--------------------------------]|
+          [2:--------------------------------]|*2
           {3:[No Name] [+]                   }|
-          [5:---------------]│[6:----------------]|
-          [5:---------------]│[6:----------------]|
+          [5:---------------]│[6:----------------]|*2
           [3:--------------------------------]|
         ## grid 2
           popup menu test                 |
@@ -4779,13 +3823,7 @@ describe('builtin popupmenu', function()
           {1:~          }{n: Select Line      }{1:   }|
           {1:~          }{n: Select Block     }{1:   }|
           {1:~          }{n: Select All       }{1:   }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*7
           :popup PopUp                    |
         ]])
 
@@ -4804,13 +3842,7 @@ describe('builtin popupmenu', function()
           {1:~          }{n: Select Line      }{1:   }|
           {1:~          }{n: Select Block     }{1:   }|
           {1:~          }{n: Select All       }{1:   }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*7
           :popup PopUp                    |
         ]])
 
@@ -4829,13 +3861,7 @@ describe('builtin popupmenu', function()
           {1:~          }{n: Select Line      }{1:   }|
           {1:~          }{n: Select Block     }{1:   }|
           {1:~          }{n: Select All       }{1:   }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*7
           :popup PopUp                    |
         ]])
 
@@ -4859,13 +3885,7 @@ describe('builtin popupmenu', function()
           {1:~          }{n: Select Line      }{1:   }|
           {1:~          }{n: Select Block     }{1:   }|
           {1:~          }{n: Select All       }{1:   }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*7
           changed                         |
         ]])
 
@@ -4875,22 +3895,7 @@ describe('builtin popupmenu', function()
           one two three four five         |
           and one two {7:^X}three four five    |
           one more two three four five    |
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*16
           pasted                          |
         ]])
 
@@ -4911,12 +3916,7 @@ describe('builtin popupmenu', function()
           {1:~          }{n: Select Line      }{1:   }|
           {1:~          }{n: Select Block     }{1:   }|
           {1:~          }{n: Select All       }{1:   }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
-          {1:~                               }|
+          {1:~                               }|*6
           :popup PopUp                    |
         ]])
 
@@ -4951,9 +3951,7 @@ describe('builtin popupmenu', function()
             {s:aword1 W extra text 1 }{1:        }|
             {n:aword2 W extra text 2 }{1:        }|
             {n:aword3 W extra text 3 }{1:        }|
-            {1:~                             }|
-            {1:~                             }|
-            {1:~                             }|
+            {1:~                             }|*3
             {2:-- }{5:match 1 of 3}               |
           ]])
         end)
@@ -4977,9 +3975,7 @@ describe('builtin popupmenu', function()
             {s:aword1 }{ks:W }{xs:extra text 1 }{1:        }|
             {n:aword2 }{kn:W }{xn:extra text 2 }{1:        }|
             {n:aword3 }{kn:W }{xn:extra text 3 }{1:        }|
-            {1:~                             }|
-            {1:~                             }|
-            {1:~                             }|
+            {1:~                             }|*3
             {2:-- }{5:match 1 of 3}               |
           ]], attrs)
         end)

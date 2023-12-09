@@ -38,16 +38,7 @@ describe('winbar', function()
     screen:expect([[
       {1:Set Up The Bars                                             }|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*10
                                                                   |
     ]])
     -- winbar is excluded from the heights returned by winheight() and getwininfo()
@@ -62,16 +53,7 @@ describe('winbar', function()
     screen:expect([[
       {1:Set Up The Bars+++++++++++++++++++++++++++++++++++++++++++++}|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*10
                                                                   |
     ]])
   end)
@@ -81,16 +63,7 @@ describe('winbar', function()
     screen:expect([[
       {5:Set Up The Bars                                             }|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*10
                                                                   |
     ]])
   end)
@@ -155,16 +128,13 @@ describe('winbar', function()
     command('belowright vsplit | split | split | set winbar=')
     screen:expect([[
                                    │^                              |
-      {3:~                            }│{3:~                             }|
-      {3:~                            }│{3:~                             }|
+      {3:~                            }│{3:~                             }|*2
       {3:~                            }│{4:[No Name]                     }|
       {3:~                            }│                              |
-      {3:~                            }│{3:~                             }|
-      {3:~                            }│{3:~                             }|
+      {3:~                            }│{3:~                             }|*2
       {3:~                            }│{2:[No Name]                     }|
       {3:~                            }│                              |
-      {3:~                            }│{3:~                             }|
-      {3:~                            }│{3:~                             }|
+      {3:~                            }│{3:~                             }|*2
       {2:[No Name]                     [No Name]                     }|
                                                                   |
     ]])
@@ -211,15 +181,7 @@ describe('winbar', function()
       {1:Hello, I am a ruler: 2,11                                   }|
       just some                                                   |
       random tex^t                                                 |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*9
                                                                   |
     ]]}
     feed 'b'
@@ -227,15 +189,7 @@ describe('winbar', function()
       {1:Hello, I am a ruler: 2,8                                    }|
       just some                                                   |
       random ^text                                                 |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*9
                                                                   |
     ]]}
     feed 'k'
@@ -243,15 +197,7 @@ describe('winbar', function()
       {1:Hello, I am a ruler: 1,8                                    }|
       just so^me                                                   |
       random text                                                 |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*9
                                                                   |
     ]]}
   end)
@@ -261,15 +207,7 @@ describe('winbar', function()
     screen:expect([[
       {1:Set Up The Bars                                             }|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*9
       {4:[No Name]                                                   }|
                                                                   |
     ]])
@@ -295,14 +233,7 @@ describe('winbar', function()
       {10: }{11:4}{10: [No Name] }{1: [No Name] }{2:                                   }{10:X}|
       {1:Set Up The Bars                                             }|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*8
       {4:[No Name]                                                   }|
                                                                   |
     ]])
@@ -330,9 +261,7 @@ describe('winbar', function()
       line i                                                      |
       line sin(theta)                                             |
       line 8                                                      |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*3
                                                                   |
     ]])
     eq({5, 1}, meths.win_get_cursor(0))
@@ -348,9 +277,7 @@ describe('winbar', function()
       {7:li}^ne i                                                      |
       line sin(theta)                                             |
       line 8                                                      |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*3
       {1:-- VISUAL --}                                                |
     ]])
     eq({6, 2}, meths.win_get_cursor(0))
@@ -366,9 +293,7 @@ describe('winbar', function()
       line i                                                      |
       line sin(theta)                                             |
       line 8                                                      |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*3
       {1:-- VISUAL --}                                                |
     ]])
     eq({1, 2}, meths.win_get_cursor(0))
@@ -383,15 +308,11 @@ describe('winbar', function()
     screen:expect([[
       {1:Set Up The Bars                                             }|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*3
       {4:[No Name]                                                   }|
       {1:Set Up The Bars                                             }|
                                                                   |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*3
       {2:[No Name]                                                   }|
                                                                   |
     ]])
@@ -402,15 +323,11 @@ describe('winbar', function()
     screen:expect([[
       {1:Set Up The Bars                                             }|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*4
       {4:[No Name]                                                   }|
       {1:Set Up The Bars                                             }|
                                                                   |
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*2
       {2:[No Name]                                                   }|
                                                                   |
     ]])
@@ -419,15 +336,11 @@ describe('winbar', function()
     screen:expect([[
       {1:Set Up The Bars                                             }|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*2
       {4:[No Name]                                                   }|
       {1:Set Up The Bars                                             }|
                                                                   |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*4
       {2:[No Name]                                                   }|
                                                                   |
     ]])
@@ -438,17 +351,13 @@ describe('winbar', function()
     screen:expect([[
       {1:Set Up The Bars                                             }|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*2
       {4:[No Name]                                                   }|
       {1:Set Up The Bars                                             }|
                                                                   |
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*2
       {2:[No Name]                                                   }|
-                                                                  |
-                                                                  |
-                                                                  |
+                                                                  |*3
     ]])
     eq(3, meths.get_option_value('cmdheight', {}))
 
@@ -456,15 +365,11 @@ describe('winbar', function()
     screen:expect([[
       {1:Set Up The Bars                                             }|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*2
       {4:[No Name]                                                   }|
       {1:Set Up The Bars                                             }|
                                                                   |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*4
       {2:[No Name]                                                   }|
                                                                   |
     ]])
@@ -500,15 +405,8 @@ describe('winbar', function()
       {1:bar                                                         }|
       ^                                                            |
       {3:~         }{8:                              }{3:                    }|
-      {3:~         }{9:~                             }{3:                    }|
-      {3:~         }{9:~                             }{3:                    }|
-      {3:~         }{9:~                             }{3:                    }|
-      {3:~         }{9:~                             }{3:                    }|
-      {3:~         }{9:~                             }{3:                    }|
-      {3:~         }{9:~                             }{3:                    }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~         }{9:~                             }{3:                    }|*6
+      {3:~                                                           }|*3
                                                                   |
     ]]}
     meths.set_option_value('winbar', 'floaty bar', { scope = 'local', win = win.id })
@@ -517,14 +415,8 @@ describe('winbar', function()
       ^                                                            |
       {3:~         }{1:floaty bar                    }{3:                    }|
       {3:~         }{8:                              }{3:                    }|
-      {3:~         }{9:~                             }{3:                    }|
-      {3:~         }{9:~                             }{3:                    }|
-      {3:~         }{9:~                             }{3:                    }|
-      {3:~         }{9:~                             }{3:                    }|
-      {3:~         }{9:~                             }{3:                    }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~         }{9:~                             }{3:                    }|*5
+      {3:~                                                           }|*3
                                                                   |
     ]]}
   end)
@@ -537,8 +429,7 @@ describe('winbar', function()
     screen:expect([[
       {1:foo                   }│                      |
       ^                      │{3:~                     }|
-      {3:~                     }│{3:~                     }|
-      {3:~                     }│{3:~                     }|
+      {3:~                     }│{3:~                     }|*2
       {4:[No Name]              }{2:[No Name]             }|
                                                    |
     ]])
@@ -547,8 +438,7 @@ describe('winbar', function()
     screen:expect([[
                             │{1:foo                   }|
       {3:~                     }│^                      |
-      {3:~                     }│{3:~                     }|
-      {3:~                     }│{3:~                     }|
+      {3:~                     }│{3:~                     }|*2
       {2:[No Name]              }{4:[No Name]             }|
                                                    |
     ]])
@@ -558,8 +448,7 @@ describe('winbar', function()
     screen:expect([[
       {1:foo                   }│^                      |
                             │{3:~                     }|
-      {3:~                     }│{3:~                     }|
-      {3:~                     }│{3:~                     }|
+      {3:~                     }│{3:~                     }|*2
       {2:[No Name]              }{4:[No Name]             }|
                                                    |
     ]])
@@ -571,14 +460,7 @@ describe('winbar', function()
       ^                                                            |
       {4:[No Name]                                                   }|
                                                                   |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*8
       {2:[No Name]                                                   }|
                                                                   |
     ]])
@@ -589,12 +471,7 @@ describe('winbar', function()
       {4:[No Name]                                                   }|
       {1:a                                                           }|
                                                                   |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*6
       {2:[No Name]                                                   }|
                                                                   |
     ]])
@@ -641,13 +518,7 @@ describe('local winbar with tabs', function()
     screen:expect([[
       {4: [No Name] }{1: [No Name] }{2:                                     }{4:X}|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*7
                                                                   |
     ]])
     command('tabnext')
@@ -655,12 +526,7 @@ describe('local winbar with tabs', function()
       {1: [No Name] }{4: [No Name] }{2:                                     }{4:X}|
       {1:foo                                                         }|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*6
                                                                   |
     ]]}
   end)
@@ -675,11 +541,7 @@ describe('local winbar with tabs', function()
       some                                                        |
       goofy                                                       |
       tex^t                                                        |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*5
                                                                   |
     ]]}
 
@@ -688,13 +550,7 @@ describe('local winbar with tabs', function()
     screen:expect{grid=[[
       {4: + [No Name] }{1: [No Name] }{2:                                   }{4:X}|
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*7
                                                                   |
     ]]}
 
@@ -705,10 +561,7 @@ describe('local winbar with tabs', function()
       some                                                        |
       goofy                                                       |
       tex^t                                                        |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*4
                                                                   |
     ]]}
   end)
@@ -730,8 +583,7 @@ it('winbar works properly when redrawing is postponed #23534', function()
   screen:expect([[
     {1:(winbar)                                                    }|
     ^                                                            |
-    {0:~                                                           }|
-    {0:~                                                           }|
+    {0:~                                                           }|*2
     {2:(statusline)                                                }|
                                                                 |
   ]])

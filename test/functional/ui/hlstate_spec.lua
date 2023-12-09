@@ -36,11 +36,7 @@ describe('ext_hlstate detailed highlights', function()
     screen:expect([[
       these are {1:some} lines                    |
       ^wi{2:th }{4:co}{3:lorful text}                      |
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
+      {5:~                                       }|*5
       {8:search hit BOTTOM, continuing at TOP}{7:    }|
     ]], {
     [1] = {{foreground = Screen.colors.Magenta},
@@ -77,11 +73,7 @@ describe('ext_hlstate detailed highlights', function()
 
     screen:expect([[
       ^                    {1:│}                   |
-      {2:~                   }{1:│}{2:~                  }|
-      {2:~                   }{1:│}{2:~                  }|
-      {2:~                   }{1:│}{2:~                  }|
-      {2:~                   }{1:│}{2:~                  }|
-      {2:~                   }{1:│}{2:~                  }|
+      {2:~                   }{1:│}{2:~                  }|*5
       {3:[No Name]            }{4:[No Name]          }|
       {7:                                        }|
     ]])
@@ -89,11 +81,7 @@ describe('ext_hlstate detailed highlights', function()
     command("hi clear StatusLine | hi clear StatuslineNC")
     screen:expect([[
       ^                    {1:│}                   |
-      {2:~                   }{1:│}{2:~                  }|
-      {2:~                   }{1:│}{2:~                  }|
-      {2:~                   }{1:│}{2:~                  }|
-      {2:~                   }{1:│}{2:~                  }|
-      {2:~                   }{1:│}{2:~                  }|
+      {2:~                   }{1:│}{2:~                  }|*5
       {5:[No Name]            }{6:[No Name]          }|
       {7:                                        }|
     ]])
@@ -102,11 +90,7 @@ describe('ext_hlstate detailed highlights', function()
     command("wincmd w")
     screen:expect([[
                          {1:│}^                    |
-      {2:~                  }{1:│}{2:~                   }|
-      {2:~                  }{1:│}{2:~                   }|
-      {2:~                  }{1:│}{2:~                   }|
-      {2:~                  }{1:│}{2:~                   }|
-      {2:~                  }{1:│}{2:~                   }|
+      {2:~                  }{1:│}{2:~                   }|*5
       {6:[No Name]           }{5:[No Name]           }|
       {7:                                        }|
     ]])
@@ -136,8 +120,7 @@ describe('ext_hlstate detailed highlights', function()
     -- NormalNC is not applied if not set, to avoid spurious redraws
     screen:expect([[
       {1:  1 }^                                    |
-      {2:~                                       }|
-      {2:~                                       }|
+      {2:~                                       }|*2
       {3:[No Name]                               }|
       {1:  1 }                                    |
       {2:~                                       }|
@@ -148,8 +131,7 @@ describe('ext_hlstate detailed highlights', function()
     command("set winhl=LineNr:ErrorMsg")
     screen:expect{grid=[[
       {13:  1 }^                                    |
-      {14:~                                       }|
-      {14:~                                       }|
+      {14:~                                       }|*2
       {3:[No Name]                               }|
       {1:  1 }                                    |
       {2:~                                       }|
@@ -160,8 +142,7 @@ describe('ext_hlstate detailed highlights', function()
     command("set winhl=Normal:MsgSeparator,NormalNC:Statement")
     screen:expect([[
       {7:  1 }{6:^                                    }|
-      {8:~                                       }|
-      {8:~                                       }|
+      {8:~                                       }|*2
       {3:[No Name]                               }|
       {1:  1 }                                    |
       {2:~                                       }|
@@ -172,8 +153,7 @@ describe('ext_hlstate detailed highlights', function()
     command("wincmd w")
     screen:expect([[
       {10:  1 }{9:                                    }|
-      {11:~                                       }|
-      {11:~                                       }|
+      {11:~                                       }|*2
       {4:[No Name]                               }|
       {1:  1 }^                                    |
       {2:~                                       }|
@@ -198,11 +178,7 @@ describe('ext_hlstate detailed highlights', function()
     screen:expect([[
       ^tty ready                               |
       {1: }                                       |
-                                              |
-                                              |
-                                              |
-                                              |
-                                              |
+                                              |*5
       {7:                                        }|
     ]])
 
@@ -217,10 +193,7 @@ describe('ext_hlstate detailed highlights', function()
         ^tty ready                               |
         x {5:y z}                                   |
         {1: }                                       |
-                                                |
-                                                |
-                                                |
-                                                |
+                                                |*4
         {7:                                        }|
       ]])
     else
@@ -228,10 +201,7 @@ describe('ext_hlstate detailed highlights', function()
         ^tty ready                               |
         x {2:y }{3:z}                                   |
         {1: }                                       |
-                                                |
-                                                |
-                                                |
-                                                |
+                                                |*4
         {7:                                        }|
       ]])
     end
@@ -242,22 +212,14 @@ describe('ext_hlstate detailed highlights', function()
       screen:expect([[
         ^tty ready                               |
         x {6:y}{5: z}                                   |
-                                                |
-                                                |
-                                                |
-                                                |
-                                                |
+                                                |*5
         {7:                                        }|
       ]])
     else
       screen:expect([[
         ^tty ready                               |
         x {4:y}{2: }{3:z}                                   |
-                                                |
-                                                |
-                                                |
-                                                |
-                                                |
+                                                |*5
         {7:                                        }|
       ]])
     end
@@ -274,24 +236,14 @@ describe('ext_hlstate detailed highlights', function()
     })
     screen:expect([[
       ^                                        |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*6
       {3:                                        }|
     ]])
 
     command("hi NonText guifg=Red gui=reverse ctermfg=Green cterm=italic")
     screen:expect([[
       ^                                        |
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
+      {2:~                                       }|*6
       {3:                                        }|
     ]])
 

@@ -209,9 +209,7 @@ describe(':mksession', function()
       ^/                                                 |
                                                         |
       [Process exited 0]                                |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*3
     ]]
 
     command('cd /')

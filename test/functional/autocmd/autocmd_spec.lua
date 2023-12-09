@@ -272,42 +272,22 @@ describe('autocmd', function()
     ]])
     screen:expect([[
       ^bb                                                |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*8
                                                         |
     ]])
 
     feed(":enew | doautoall User<cr>")
     screen:expect([[
       {2:bb                                                }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {3:~                                                 }|*4
+      {1:~                                                 }|*4
       ^:enew | doautoall User                            |
     ]])
 
     feed('<cr>')
     screen:expect([[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*8
       13                                                |
     ]])
     eq(7, eval('g:test'))
@@ -323,28 +303,15 @@ describe('autocmd', function()
     feed(":doautoall User<cr>")
     screen:expect([[
       {2:bb                                                }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {3:~                                                 }|*4
+      {1:~                                                 }|*4
       ^:doautoall User                                   |
     ]])
 
     feed('<cr>')
     screen:expect([[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*8
       13                                                |
     ]])
     -- win vars in aucmd_win should have been reset
@@ -373,11 +340,7 @@ describe('autocmd', function()
     ]]
     screen:expect [[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*5
       {3:[No Name]                                         }|
                                                         |
       {2:[No Name]                                         }|

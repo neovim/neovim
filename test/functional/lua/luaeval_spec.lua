@@ -521,9 +521,7 @@ describe('v:lua', function()
       {1:~   }{2: stuff          }{1:                                        }|
       {1:~   }{3: steam          }{1:                                        }|
       {1:~   }{3: strange things }{1:                                        }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*3
       {4:-- Omni completion (^O^N^P) }{5:match 1 of 3}                    |
     ]]}
     meths.set_option_value('operatorfunc', 'v:lua.mymod.noisy', {})

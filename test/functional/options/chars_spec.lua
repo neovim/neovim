@@ -27,36 +27,27 @@ describe("'fillchars'", function()
       eq('', eval('&fillchars'))
       screen:expect([[
         ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
+        ~                        |*3
                                  |
       ]])
     end)
     it('supports whitespace', function()
       screen:expect([[
         ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
+        ~                        |*3
                                  |
       ]])
       command('set fillchars=eob:\\ ')
       screen:expect([[
         ^                         |
-                                 |
-                                 |
-                                 |
-                                 |
+                                 |*4
       ]])
     end)
     it('supports multibyte char', function()
       command('set fillchars=eob:ñ')
       screen:expect([[
         ^                         |
-        ñ                        |
-        ñ                        |
-        ñ                        |
+        ñ                        |*3
                                  |
       ]])
     end)
@@ -77,9 +68,7 @@ describe("'fillchars'", function()
     command('set fillchars=fold:x')
     screen:expect([[
       ^+--  2 lines: fooxxxxxxxx│+--  2 lines: fooxxxxxxx|
-      ~                        │~                       |
-      ~                        │~                       |
-      ~                        │~                       |
+      ~                        │~                       |*3
                                                         |
     ]])
   end)
@@ -92,9 +81,7 @@ describe("'fillchars'", function()
     command('setl fillchars=fold:x')
     screen:expect([[
       ^+--  2 lines: fooxxxxxxxx│+--  2 lines: foo·······|
-      ~                        │~                       |
-      ~                        │~                       |
-      ~                        │~                       |
+      ~                        │~                       |*3
                                                         |
     ]])
   end)
@@ -108,9 +95,7 @@ describe("'fillchars'", function()
     command('set fillchars&')
     screen:expect([[
       ^+--  2 lines: foo········│+--  2 lines: fooxxxxxxx|
-      ~                        │~                       |
-      ~                        │~                       |
-      ~                        │~                       |
+      ~                        │~                       |*3
                                                         |
     ]])
   end)
@@ -132,9 +117,7 @@ describe("'listchars'", function()
     command('set listchars=tab:<->')
     screen:expect([[
       <------><------>^<------> │<------><------><------>|
-      ~                        │~                       |
-      ~                        │~                       |
-      ~                        │~                       |
+      ~                        │~                       |*3
                                                         |
     ]])
   end)
@@ -146,9 +129,7 @@ describe("'listchars'", function()
     command('setl listchars<')
     screen:expect([[
       >       >       ^>        │<------><------><------>|
-      ~                        │~                       |
-      ~                        │~                       |
-      ~                        │~                       |
+      ~                        │~                       |*3
                                                         |
     ]])
   end)
@@ -160,9 +141,7 @@ describe("'listchars'", function()
     command('set listchars=tab:>-,eol:$')
     screen:expect([[
       >------->-------^>-------$│<------><------><------>|
-      ~                        │~                       |
-      ~                        │~                       |
-      ~                        │~                       |
+      ~                        │~                       |*3
                                                         |
     ]])
   end)

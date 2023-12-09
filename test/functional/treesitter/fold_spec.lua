@@ -157,10 +157,7 @@ void ui_refresh(void)
       {1:3}    }                                                      |
       {1:2}  }                                                        |
       {1:│}^}                                                          |
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
+      {2:~                                                           }|*4
       {3:[No Name] [+]                                               }|
       {1:-}void ui_refresh(void)                                      |
       {1:│}{                                                          |
@@ -181,9 +178,7 @@ void ui_refresh(void)
       {1:3}    }                                                      |
       {1:2}  }                                                        |
       {1:│}}                                                          |
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
+      {2:~                                                           }|*3
       {4:[No Name] [+]                                               }|
                                                                   |
     ]]}
@@ -208,12 +203,7 @@ void ui_refresh(void)
       {1:2}    }                                                      |
       {1:│}  }                                                        |
       {1: }}                                                          |
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
+      {2:~                                                           }|*6
       {3:[No Name] [+]                                               }|
       {1: }  int width = INT_MAX, height = INT_MAX;                   |
       {1: }  bool ext_widgets[kUIExtCount];                           |
@@ -232,11 +222,7 @@ void ui_refresh(void)
       {1:2}    }                                                      |
       {1:│}  }                                                        |
       {1: }}                                                          |
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
+      {2:~                                                           }|*5
       {4:[No Name] [+]                                               }|
                                                                   |
     ]]}
@@ -264,10 +250,7 @@ void ui_refresh(void)
       {1:3}    }                                                      |
       {1:2}  }                                                        |
       {1:│}}                                                          |
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
+      {2:~                                                           }|*4
       {3:[No Name] [+]                                               }|
       {1:-}void ui_refresh(void)                                      |
       {1:│}{                                                          |
@@ -288,9 +271,7 @@ void ui_refresh(void)
       {1:3}    }                                                      |
       {1:2}  }                                                        |
       {1:│}}                                                          |
-      {2:~                                                           }|
-      {2:~                                                           }|
-      {2:~                                                           }|
+      {2:~                                                           }|*3
       {4:[No Name] [+]                                               }|
                                                                   |
     ]]}
@@ -324,12 +305,7 @@ void ui_refresh(void)
       {1:  }    }                                                     |
       {1:  }  }                                                       |
       {1:  }}                                                         |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*6
       {4:[No Name] [+]                                               }|
       {1:+ }{2:+--  9 lines: void ui_refresh(void)·······················}|
       {1:  }  for (size_t i = 0; i < ui_count; i++) {                 |
@@ -342,11 +318,7 @@ void ui_refresh(void)
       {1:  }    ^}                                                     |
       {1:  }  }                                                       |
       {1:  }}                                                         |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*5
       {5:[No Name] [+]                                               }|
                                                                   |
     ]], attr_ids={
@@ -409,9 +381,7 @@ void qsort(void *base, size_t nel, size_t width, int (*compar)(const void *, con
     feed('ggVGzf')
     screen:expect{grid=[[
       {2:^void}{1: }{3:qsort}{4:(}{2:void}{1: }{5:*}{3:base}{4:,}{1: }{2:size_t}{1: }{3:nel}{4:,}{1: }{2:size_t}{1: }{3:width}{4:,}{1: }{2:int}{1: }{4:(}{5:*}{3:compa}|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*3
                                                                   |
     ]]}
   end)
@@ -465,9 +435,7 @@ end]])
     feed('ggVGzf')
     screen:expect{grid=[[
       {1:^+-- 19 lines: void qsort(void *base, size_t nel, size_t widt}|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*3
                                                                   |
     ]]}
   end)

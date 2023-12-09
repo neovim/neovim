@@ -140,8 +140,7 @@ describe('no crash when TermOpen autocommand', function()
     async_meths.command('terminal foobar')
     screen:expect{grid=[[
                                                                   |
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*2
       ^                                                            |
     ]]}
     feed('<CR>')
@@ -154,8 +153,7 @@ describe('no crash when TermOpen autocommand', function()
     feed('i<CR>')
     screen:expect{grid=[[
       ^                                                            |
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*2
                                                                   |
     ]]}
     assert_alive()
@@ -166,15 +164,13 @@ describe('no crash when TermOpen autocommand', function()
     async_meths.command('terminal foobar')
     screen:expect{grid=[[
                                                                   |
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*2
       ^                                                            |
     ]]}
     feed('<CR>')
     screen:expect{grid=[[
       ^                                                            |
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*2
                                                                   |
     ]]}
     assert_alive()
@@ -185,15 +181,13 @@ describe('no crash when TermOpen autocommand', function()
     async_meths.open_term(0, {})
     screen:expect{grid=[[
                                                                   |
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*2
       ^                                                            |
     ]]}
     feed('<CR>')
     screen:expect{grid=[[
       ^                                                            |
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*2
                                                                   |
     ]]}
     assert_alive()

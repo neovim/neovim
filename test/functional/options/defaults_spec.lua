@@ -32,8 +32,7 @@ describe('startup defaults', function()
       command('filetype')
       screen:expect([[
         ^                                                  |
-        ~                                                 |
-        ~                                                 |
+        ~                                                 |*2
         ]]..expected
       )
     end

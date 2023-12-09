@@ -296,10 +296,7 @@ describe('splitkeep', function()
       a                                                    |
       b                                                    |
       c                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
+      ~                                                    |*4
       [No Name]                                            |
       ^a                                                    |
       b                                                    |
@@ -328,8 +325,7 @@ describe('splitkeep', function()
       <<<e line with lots of text in one line |
       ^with lots of text in one line with lots |
       of text in one line                     |
-      ~                                       |
-      ~                                       |
+      ~                                       |*2
       [No Name] [+]                           |
                                               |
     ]])

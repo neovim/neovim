@@ -137,10 +137,7 @@ it(':vimgrep can specify Unicode pattern without delimiters', function()
   feed('i→<Esc>:vimgrep →')
   screen:expect([[
     {1:→}                                       |
-    {0:~                                       }|
-    {0:~                                       }|
-    {0:~                                       }|
-    {0:~                                       }|
+    {0:~                                       }|*4
     :vimgrep →^                              |
   ]])
 end)

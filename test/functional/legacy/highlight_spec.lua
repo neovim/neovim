@@ -112,10 +112,7 @@ describe('Visual selection highlight', function()
     feed('v$')
     screen:expect([[
       {0:>}{1:n, no sea takimata sanctus est Lorem ipsum dolor sit amet.}^ |
-                                                                  |
-                                                                  |
-                                                                  |
-                                                                  |
+                                                                  |*4
       {2:-- VISUAL --}                                                |
     ]])
   end)

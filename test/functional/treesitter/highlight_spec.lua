@@ -100,17 +100,7 @@ local injection_grid_c = [[
                 return 42;  \                                      |
               }                                                    |
   ^                                                                 |
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
+  {1:~                                                                }|*11
                                                                    |
 ]]
 
@@ -121,17 +111,7 @@ local injection_grid_expected_c = [[
                 {4:return} {5:42};  \                                      |
               }                                                    |
   ^                                                                 |
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
-  {1:~                                                                }|
+  {1:~                                                                }|*11
                                                                    |
 ]]
 
@@ -178,8 +158,7 @@ describe('treesitter highlighting (C)', function()
                        1, (void *)(ptrdiff_t)cb);                      |
         return 0;                                                      |
       ^}                                                                |
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*2
                                                                        |
     ]]}
 
@@ -204,8 +183,7 @@ describe('treesitter highlighting (C)', function()
                        {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
         {4:return} {5:0};                                                      |
       ^}                                                                |
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*2
                                                                        |
     ]]}
 
@@ -227,8 +205,7 @@ describe('treesitter highlighting (C)', function()
                        {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
         {4:return} {5:0};                                                      |
       }                                                                |
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*2
                                                                        |
     ]]}
 
@@ -366,8 +343,7 @@ describe('treesitter highlighting (C)', function()
         {4:for} ({3:UIExtension} i = {5:0}; ({3:int})i < kUIExtCount; i++) {           |
         {4:for} ({3:size_t} i = {5:0}; i < ui_count; i++) {                        |
         {3:int} width = {5:INT_MAX}, height = {5:INT_MAX};                         |
-        }                                                              |
-        }                                                              |
+        }                                                              |*2
       {3:void} ui_refresh({3:void})                                            |
       :sort                                                            |
     ]]}
@@ -517,17 +493,7 @@ describe('treesitter highlighting (C)', function()
                     {4:return} {5:42};  \                                      |
                   }                                                    |
       ^                                                                 |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*11
                                                                        |
     ]]}
   end)
@@ -556,8 +522,7 @@ describe('treesitter highlighting (C)', function()
                        {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
         {4:return} {5:0};                                                      |
       ^}                                                                |
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*2
                                                                        |
     ]]}
 
@@ -580,8 +545,7 @@ describe('treesitter highlighting (C)', function()
                        {5:1}, ({3:void} *)({3:ptrdiff_t})cb);                      |
         {4:return} {5:0};                                                      |
       ^}                                                                |
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*2
                                                                        |
     ]]}
     screen:expect{ unchanged=true }
@@ -608,17 +572,7 @@ describe('treesitter highlighting (C)', function()
       {8:              }{12:return}{8: 42;  \}                                      |
       {8:            }}                                                    |
       ^                                                                 |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*11
                                                                        |
     ]], attr_ids={
       [1] = {bold = true, foreground = Screen.colors.Blue1};
@@ -641,21 +595,7 @@ describe('treesitter highlighting (C)', function()
     screen:expect{grid=[[
       char* x = "Will somebody ever read this?";                       |
       ^                                                                 |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*15
                                                                        |
     ]]}
 
@@ -672,21 +612,7 @@ describe('treesitter highlighting (C)', function()
     screen:expect{grid=[[
       {3:char}* x = {5:"Will somebody ever read this?"};                       |
       ^                                                                 |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*15
                                                                        |
     ]]}
 
@@ -695,21 +621,7 @@ describe('treesitter highlighting (C)', function()
     screen:expect{grid=[[
       {5:char}* x = {5:"Will somebody ever read this?"};                       |
       ^                                                                 |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*15
                                                                        |
     ]]}
   end)
@@ -747,8 +659,7 @@ describe('treesitter highlighting (C)', function()
                        1, (void *)(ptrdiff_t)cb);                      |
         return 0;                                                      |
       ^}                                                                |
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*2
                                                                        |
     ]]}
   end)

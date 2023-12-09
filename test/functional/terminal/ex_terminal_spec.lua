@@ -177,8 +177,7 @@ local function test_terminal_with_fake_shell(backslash)
     feed_command('terminal')
     screen:expect([[
       ^                                                  |
-      ~                                                 |
-      ~                                                 |
+      ~                                                 |*2
       E91: 'shell' option is empty                      |
     ]])
   end)
@@ -188,8 +187,7 @@ local function test_terminal_with_fake_shell(backslash)
     feed_command('terminal')
     screen:expect([[
       ^interact $                                        |
-                                                        |
-                                                        |
+                                                        |*2
       :terminal                                         |
     ]])
   end)
