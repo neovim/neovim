@@ -5,12 +5,18 @@ local insert = helpers.insert
 local exec_lua = helpers.exec_lua
 local command = helpers.command
 local feed = helpers.feed
+local poke_eventloop = helpers.poke_eventloop
 local Screen = require('test.functional.ui.screen')
 
 before_each(clear)
 
 describe('treesitter foldexpr', function()
   clear()
+
+  before_each(function()
+    -- open folds to avoid deleting entire folded region
+    exec_lua([[vim.opt.foldlevel = 9]])
+  end)
 
   local test_text = [[
 void ui_refresh(void)
@@ -33,6 +39,10 @@ void ui_refresh(void)
   }
 }]]
 
+  local function parse(lang)
+    exec_lua(([[vim.treesitter.get_parser(0, %s):parse()]]):format(lang and '"' .. lang .. '"' or 'nil'))
+  end
+
   local function get_fold_levels()
     return exec_lua([[
     local res = {}
@@ -46,7 +56,7 @@ void ui_refresh(void)
   it("can compute fold levels", function()
     insert(test_text)
 
-    exec_lua([[vim.treesitter.get_parser(0, "c")]])
+    parse('c')
 
     eq({
       [1] = '>1',
@@ -67,16 +77,18 @@ void ui_refresh(void)
       [16] = '3',
       [17] = '3',
       [18] = '2',
-      [19] = '1' }, get_fold_levels())
+      [19] = '1',
+    }, get_fold_levels())
 
   end)
 
   it("recomputes fold levels after lines are added/removed", function()
     insert(test_text)
 
-    exec_lua([[vim.treesitter.get_parser(0, "c")]])
+    parse('c')
 
     command('1,2d')
+    poke_eventloop()
 
     eq({
       [1] = '0',
@@ -95,9 +107,11 @@ void ui_refresh(void)
       [14] = '2',
       [15] = '2',
       [16] = '1',
-      [17] = '0' }, get_fold_levels())
+      [17] = '0',
+    }, get_fold_levels())
 
     command('1put!')
+    poke_eventloop()
 
     eq({
       [1] = '>1',
@@ -118,7 +132,274 @@ void ui_refresh(void)
       [16] = '3',
       [17] = '3',
       [18] = '2',
-      [19] = '1' }, get_fold_levels())
+      [19] = '1',
+    }, get_fold_levels())
+  end)
+
+  it("handles changes close to start/end of folds", function()
+    insert([[
+# h1
+t1
+# h2
+t2]])
+
+    exec_lua([[vim.treesitter.query.set('markdown', 'folds', '(section) @fold')]])
+    parse('markdown')
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '>1',
+      [4] = '1',
+    }, get_fold_levels())
+
+    feed('2ggo<Esc>')
+    poke_eventloop()
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '1',
+      [4] = '>1',
+      [5] = '1',
+    }, get_fold_levels())
+
+    feed('dd')
+    poke_eventloop()
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '>1',
+      [4] = '1',
+    }, get_fold_levels())
+
+    feed('2ggdd')
+    poke_eventloop()
+
+    eq({
+      [1] = '0',
+      [2] = '>1',
+      [3] = '1',
+    }, get_fold_levels())
+
+    feed('u')
+    poke_eventloop()
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '>1',
+      [4] = '1',
+    }, get_fold_levels())
+
+    feed('3ggdd')
+    poke_eventloop()
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '1',
+    }, get_fold_levels())
+
+    feed('u')
+    poke_eventloop()
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '>1',
+      [4] = '1',
+    }, get_fold_levels())
+
+    feed('3ggI#<Esc>')
+    parse()
+    poke_eventloop()
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '>2',
+      [4] = '2',
+    }, get_fold_levels())
+
+    feed('x')
+    parse()
+    poke_eventloop()
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '>1',
+      [4] = '1',
+    }, get_fold_levels())
+
+  end)
+
+  it("handles changes that trigger multiple on_bytes", function()
+    insert([[
+function f()
+  asdf()
+  asdf()
+end
+-- comment]])
+
+    exec_lua([[vim.treesitter.query.set('lua', 'folds', '[(function_declaration) (parameters) (arguments)] @fold')]])
+    parse('lua')
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '1',
+      [4] = '1',
+      [5] = '0',
+    }, get_fold_levels())
+
+    command('1,4join')
+    poke_eventloop()
+
+    eq({
+      [1] = '0',
+      [2] = '0',
+    }, get_fold_levels())
+
+    feed('u')
+    poke_eventloop()
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '1',
+      [4] = '1',
+      [5] = '0',
+    }, get_fold_levels())
+
+  end)
+
+  it("handles multiple folds that overlap at the end and start", function()
+    insert([[
+function f()
+  g(
+    function()
+      asdf()
+    end, function()
+    end
+  )
+end]])
+
+    exec_lua([[vim.treesitter.query.set('lua', 'folds', '[(function_declaration) (function_definition) (parameters) (arguments)] @fold')]])
+    parse('lua')
+
+    -- If fold1.stop = fold2.start, then move fold1's stop up so that fold2.start gets proper level.
+    eq({
+      [1] = '>1',
+      [2] = '>2',
+      [3] = '>3',
+      [4] = '3',
+      [5] = '>3',
+      [6] = '3',
+      [7] = '2',
+      [8] = '1',
+    }, get_fold_levels())
+
+    command('1,8join')
+    feed('u')
+    poke_eventloop()
+
+    eq({
+      [1] = '>1',
+      [2] = '>2',
+      [3] = '>3',
+      [4] = '3',
+      [5] = '>3',
+      [6] = '3',
+      [7] = '2',
+      [8] = '1',
+    }, get_fold_levels())
+
+  end)
+
+  it("handles multiple folds that start at the same line", function()
+    insert([[
+function f(a)
+  if #(g({
+    k = v,
+  })) > 0 then
+    return
+  end
+end]])
+
+    exec_lua([[vim.treesitter.query.set('lua', 'folds', '[(if_statement) (function_declaration) (parameters) (arguments) (table_constructor)] @fold')]])
+    parse('lua')
+
+    eq({
+      [1] = '>1',
+      [2] = '>3',
+      [3] = '3',
+      [4] = '3',
+      [5] = '2',
+      [6] = '2',
+      [7] = '1',
+    }, get_fold_levels())
+
+    command('2,6join')
+    poke_eventloop()
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '1',
+    }, get_fold_levels())
+
+    feed('u')
+    poke_eventloop()
+
+    eq({
+      [1] = '>1',
+      [2] = '>3',
+      [3] = '3',
+      [4] = '3',
+      [5] = '2',
+      [6] = '2',
+      [7] = '1',
+    }, get_fold_levels())
+
+  end)
+
+  it("takes account of relevant options", function()
+    insert([[
+# h1
+t1
+## h2
+t2
+### h3
+t3]])
+
+    exec_lua([[vim.treesitter.query.set('markdown', 'folds', '(section) @fold')]])
+    parse('markdown')
+
+    command([[set foldminlines=2]])
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '>2',
+      [4] = '2',
+      [5] = '2',
+      [6] = '2',
+    }, get_fold_levels())
+
+    command([[set foldminlines=1 foldnestmax=1]])
+
+    eq({
+      [1] = '>1',
+      [2] = '1',
+      [3] = '1',
+      [4] = '1',
+      [5] = '1',
+      [6] = '1',
+    }, get_fold_levels())
+
   end)
 
   it("updates folds in all windows", function()
@@ -131,8 +412,8 @@ void ui_refresh(void)
       [4] = {reverse = true};
     })
 
-    exec_lua([[vim.treesitter.get_parser(0, "c")]])
-    command([[set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldcolumn=1 foldlevel=9]])
+    parse("c")
+    command([[set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldcolumn=1]])
     command('split')
 
     insert(test_text)
@@ -301,7 +582,7 @@ void ui_refresh(void)
     local screen = Screen.new(60, 36)
     screen:attach()
 
-    exec_lua([[vim.treesitter.get_parser(0, "c")]])
+    parse("c")
     command([[set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldcolumn=1 foldlevel=9]])
     insert(test_text)
     command('16d')
@@ -358,6 +639,58 @@ void ui_refresh(void)
     }}
   end)
 
+  it("doesn't open folds that are not touched", function()
+    local screen = Screen.new(40, 8)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Gray};
+      [2] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGray};
+      [3] = {foreground = Screen.colors.Blue1, bold = true};
+      [4] = {bold = true};
+    })
+    screen:attach()
+
+    insert([[
+# h1
+t1
+# h2
+t2]])
+    exec_lua([[vim.treesitter.query.set('markdown', 'folds', '(section) @fold')]])
+    parse('markdown')
+    command([[set foldmethod=expr foldexpr=v:lua.vim.treesitter.foldexpr() foldcolumn=1 foldlevel=0]])
+
+
+    feed('ggzojo')
+    poke_eventloop()
+
+    screen:expect{grid=[[
+      {1:-}# h1                                   |
+      {1:│}t1                                     |
+      {1:│}^                                       |
+      {1:+}{2:+--  2 lines: # h2·····················}|
+      {3:~                                       }|
+      {3:~                                       }|
+      {3:~                                       }|
+      {4:-- INSERT --}                            |
+    ]]}
+
+    feed('<Esc>u')
+    -- TODO(tomtomjhj): `u` spuriously opens the fold (#26499).
+    feed('zMggzo')
+
+    feed('dd')
+    poke_eventloop()
+
+    screen:expect{grid=[[
+      {1:-}^t1                                     |
+      {1:-}# h2                                   |
+      {1:│}t2                                     |
+      {3:~                                       }|
+      {3:~                                       }|
+      {3:~                                       }|
+      {3:~                                       }|
+      1 line less; before #2  0 seconds ago   |
+    ]]}
+  end)
 end)
 
 describe('treesitter foldtext', function()
