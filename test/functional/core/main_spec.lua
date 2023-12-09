@@ -73,10 +73,7 @@ describe('command-line option', function()
       })
       screen:expect([[
         {1:^                                        }|
-        {2:~                                       }|
-        {2:~                                       }|
-        {2:~                                       }|
-        {2:~                                       }|
+        {2:~                                       }|*4
         {3:[No Name]             0,0-1          All}|
         {1:                                        }|
                                                 |
@@ -89,11 +86,7 @@ describe('command-line option', function()
       screen:expect([[
                                                 |
         [Process exited 1]                      |
-                                                |
-                                                |
-                                                |
-                                                |
-                                                |
+                                                |*5
         -- TERMINAL --                          |
       ]])
       --[=[ Example of incorrect output:
@@ -104,8 +97,7 @@ describe('command-line option', function()
         LENO' failed.                           |
                                                 |
         [Process exited 6]                      |
-                                                |
-                                                |
+                                                |*2
       ]])
       ]=]
     end)

@@ -49,9 +49,7 @@ describe('quickfix selection highlight', function()
       Line 4                   |
       Line 5                   |
                                |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
+      {1:~                        }|*3
                                |
     ]])
   end)

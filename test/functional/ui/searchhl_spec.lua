@@ -32,10 +32,7 @@ describe('search highlighting', function()
     screen:expect([[
       some ^text                               |
       more text                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*4
       /text                                   |
     ]])
   end)
@@ -46,11 +43,7 @@ describe('search highlighting', function()
     feed("gg/text")
     screen:expect{grid=[[
       {6:+--  2 lines: some text·················}|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*5
       /text^                                   |
     ]], win_viewport={
       [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 8, linecount = 2, sum_scroll_delta = 0};
@@ -279,22 +272,16 @@ describe('search highlighting', function()
     screen:expect([[
       {2: }                                       |
       {2:^ }                                       |
-      {2: }                                       |
-      {2: }                                       |
-      {2: }                                       |
-      {2: }                                       |
+      {2: }                                       |*4
       /^                                      |
     ]])
 
     -- Test that highlights are preserved after moving the cursor.
     feed("j")
     screen:expect([[
-      {2: }                                       |
-      {2: }                                       |
+      {2: }                                       |*2
       {2:^ }                                       |
-      {2: }                                       |
-      {2: }                                       |
-      {2: }                                       |
+      {2: }                                       |*3
       /^                                      |
     ]])
 
@@ -306,21 +293,15 @@ describe('search highlighting', function()
     screen:expect([[
                                              {2: }|
                                              {2:^ }|
-                                             {2: }|
-                                             {2: }|
-                                             {2: }|
-                                             {2: }|
+                                             {2: }|*4
       ^/                                      |
     ]])
 
     feed("j")
     screen:expect([[
-                                             {2: }|
-                                             {2: }|
+                                             {2: }|*2
                                              {2:^ }|
-                                             {2: }|
-                                             {2: }|
-                                             {2: }|
+                                             {2: }|*3
       ^/                                      |
     ]])
   end)
@@ -349,8 +330,7 @@ describe('search highlighting', function()
       {3:foo} bar baz         │{MATCH:%d+}: {2:foo}{MATCH:%s+}|
       bar baz {2:foo}         │{MATCH:%d+}: {2:foo}{MATCH:%s+}|
       bar {2:foo} baz         │{MATCH:%d+}: {2:foo}{MATCH:%s+}|
-      {1:~                   }│{MATCH:.*}|
-      {1:~                   }│{MATCH:.*}|
+      {1:~                   }│{MATCH:.*}|*2
       {5:[No Name] [+]        }{3:term               }|
       /foo^                                    |
     ]])
@@ -368,10 +348,7 @@ describe('search highlighting', function()
     screen:expect([[
       the first {3:li}ne      │the first {2:li}ne     |
       in a {2:li}ttle file    │in a {2:li}ttle file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       /li^                                     |
     ]])
 
@@ -380,10 +357,7 @@ describe('search highlighting', function()
     screen:expect([[
       the first {2:li}ne      │the first {2:li}ne     |
       in a {3:li}ttle file    │in a {2:li}ttle file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       /li^                                     |
     ]])
 
@@ -391,10 +365,7 @@ describe('search highlighting', function()
     screen:expect([[
       the first {3:li}ne      │the first {2:li}ne     |
       in a {2:li}ttle file    │in a {2:li}ttle file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       /li^                                     |
     ]])
 
@@ -402,10 +373,7 @@ describe('search highlighting', function()
     screen:expect([[
       the first line      │the first line     |
       in a {3:lit}tle file    │in a {2:lit}tle file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       /lit^                                    |
     ]])
 
@@ -413,10 +381,7 @@ describe('search highlighting', function()
     screen:expect([[
       the first line      │the first line     |
       in a {2:^lit}tle file    │in a {2:lit}tle file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       /lit                                    |
     ]])
 
@@ -424,10 +389,7 @@ describe('search highlighting', function()
     screen:expect([[
       the {3:fir}st line      │the {2:fir}st line     |
       in a little file    │in a little file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       /fir^                                    |
     ]])
 
@@ -436,10 +398,7 @@ describe('search highlighting', function()
     screen:expect([[
       the first line      │the first line     |
       in a li{3:ttle} file    │in a li{2:ttle} file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       /ttle^                                   |
     ]])
 
@@ -448,10 +407,7 @@ describe('search highlighting', function()
     screen:expect([[
       the first line      │the first line     |
       in a {2:^lit}tle file    │in a {2:lit}tle file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
                                               |
     ]])
     eq('lit', eval('@/'))
@@ -461,10 +417,7 @@ describe('search highlighting', function()
     screen:expect([[
       the first line      │the first line     |
       in a ^little file    │in a little file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       :noh                                    |
     ]])
 
@@ -472,20 +425,14 @@ describe('search highlighting', function()
     screen:expect([[
       the {3:first} line      │the {2:first} line     |
       in a little file    │in a little file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       /first^                                  |
     ]])
     feed('<esc>')
     screen:expect([[
       the first line      │the first line     |
       in a ^little file    │in a little file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
                                               |
     ]])
 
@@ -507,30 +454,21 @@ describe('search highlighting', function()
     screen:expect([[
       the {2:fi}rst line      │the {2:fi}rst line     |
       in a little {2:^fi}le    │in a little {2:fi}le   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       /fi                                     |
     ]])
     feed('//')
     screen:expect([[
       the {3:fi}rst line      │the {2:fi}rst line     |
       in a little {2:fi}le    │in a little {2:fi}le   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       //^                                      |
     ]])
     feed('<C-g>')
     screen:expect([[
       the {2:fi}rst line      │the {2:fi}rst line     |
       in a little {3:fi}le    │in a little {2:fi}le   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       //^                                      |
     ]])
     feed('<Esc>')
@@ -541,10 +479,7 @@ describe('search highlighting', function()
     screen:expect([[
       the first line      │the first line     |
       in a little {3:file}    │in a little {2:file}   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       /file^                                   |
     ]])
     feed('<Esc>')
@@ -557,10 +492,7 @@ describe('search highlighting', function()
     screen:expect([[
       the {3:first} line      │the {2:first} line     |
       in a little file    │in a little file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       /first^                                  |
     ]])
     feed('<Esc>')
@@ -570,10 +502,7 @@ describe('search highlighting', function()
     screen:expect([[
       the first line      │the first line     |
       in a {3:little} file    │in a {2:little} file   |
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
-      {1:~                   }│{1:~                  }|
+      {1:~                   }│{1:~                  }|*4
       /little^                                 |
     ]])
     feed('<Esc>')
@@ -590,10 +519,7 @@ describe('search highlighting', function()
     screen:expect([[
       not the {3:mat}ch you're looking for        |
       the {2:mat}ch is here                       |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*4
       /mat/e^                                  |
     ]])
 
@@ -602,10 +528,7 @@ describe('search highlighting', function()
     screen:expect([[
       not the {2:mat}ch you're looking for        |
       the {3:mat}ch is here                       |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*4
       /mat/e^                                  |
     ]])
 
@@ -613,10 +536,7 @@ describe('search highlighting', function()
     screen:expect([[
       not the {2:mat}ch you're looking for        |
       the {2:ma^t}ch is here                       |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*4
       /mat/e                                  |
     ]])
   end)
@@ -628,8 +548,7 @@ describe('search highlighting', function()
     screen:expect([[
                                               |
       a  repeated {2:^line }                       |
-      {2:a}  repeated {2:line }                       |
-      {2:a}  repeated {2:line }                       |
+      {2:a}  repeated {2:line }                       |*2
       {2:a}  repeated line                        |
       {1:~                                       }|
       {4:search hit BOTTOM, continuing at TOP}    |
@@ -675,10 +594,7 @@ describe('search highlighting', function()
     screen:expect{grid=[[
         very {5:spec^ial}{2: te}{6:xt}                     |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*4
       {4:search hit BOTTOM, continuing at TOP}    |
     ]], win_viewport={
       [2] = {win = {id = 1000}, topline = 0, botline = 3, curline = 0, curcol = 11, linecount = 2, sum_scroll_delta = 0};
@@ -688,21 +604,14 @@ describe('search highlighting', function()
     feed("zf4j")
     screen:expect{grid=[[
       {8:^+--  2 lines: very special text·········}|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*5
       {4:search hit BOTTOM, continuing at TOP}    |
     ]]}
     command("%foldopen")
     screen:expect([[
         very {5:spec^ial}{2: te}{6:xt}                     |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*4
       {4:search hit BOTTOM, continuing at TOP}    |
     ]])
 
@@ -710,10 +619,7 @@ describe('search highlighting', function()
     screen:expect([[
         very spec{2:^ial te}xt                     |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*4
       :call clearmatches()                    |
     ]])
 
@@ -723,10 +629,7 @@ describe('search highlighting', function()
     screen:expect([[
         very {5:spec}{7:^ial}{2: te}xt                     |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*4
       :syntax keyword MyGroup special         |
     ]])
   end)
@@ -737,11 +640,7 @@ describe('search highlighting', function()
     feed(':%g@a/b')
     screen:expect([[
       {3:a/b}/c                                   |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*5
       :%g@a/b^                                 |
     ]])
   end)

@@ -148,9 +148,7 @@ describe('matchaddpos()', function()
     }}, funcs.getmatches())
     screen:expect([[
       ^a{1:b}cdef                                  |
-      {2:~                                       }|
-      {2:~                                       }|
-      {2:~                                       }|
+      {2:~                                       }|*3
                                               |
     ]], {[1] = {foreground = Screen.colors.Red}, [2] = {bold = true, foreground = Screen.colors.Blue1}})
   end)

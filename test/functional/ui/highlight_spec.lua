@@ -58,9 +58,7 @@ describe('highlight: `:syntax manual`', function()
     feed_command('bp')
     screen:expect([[
       {1:^echo} 1              |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*3
       :bp                 |
     ]])
   end)
@@ -82,9 +80,7 @@ describe('highlight: `:syntax manual`', function()
     eq("Xtest-functional-ui-highlight.tmp.vim", eval("fnamemodify(bufname('%'), ':t')"))
     screen:expect([[
       {1:^echo} 1              |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*3
       :silent bp          |
     ]])
   end)
@@ -116,17 +112,10 @@ describe('highlight defaults', function()
     feed_command('sp', 'vsp', 'vsp')
     screen:expect([[
       ^                    │                │               |
-      {0:~                   }│{0:~               }│{0:~              }|
-      {0:~                   }│{0:~               }│{0:~              }|
-      {0:~                   }│{0:~               }│{0:~              }|
-      {0:~                   }│{0:~               }│{0:~              }|
-      {0:~                   }│{0:~               }│{0:~              }|
+      {0:~                   }│{0:~               }│{0:~              }|*5
       {1:[No Name]            }{2:[No Name]        [No Name]      }|
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*4
       {2:[No Name]                                            }|
       :vsp                                                 |
     ]])
@@ -134,17 +123,10 @@ describe('highlight defaults', function()
     feed('<c-w>j')
     screen:expect([[
                           │                │               |
-      {0:~                   }│{0:~               }│{0:~              }|
-      {0:~                   }│{0:~               }│{0:~              }|
-      {0:~                   }│{0:~               }│{0:~              }|
-      {0:~                   }│{0:~               }│{0:~              }|
-      {0:~                   }│{0:~               }│{0:~              }|
+      {0:~                   }│{0:~               }│{0:~              }|*5
       {2:[No Name]            [No Name]        [No Name]      }|
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*4
       {1:[No Name]                                            }|
       :vsp                                                 |
     ]])
@@ -154,51 +136,30 @@ describe('highlight defaults', function()
     feed('<c-w>k<c-w>l')
     screen:expect([[
                           │^                    │           |
-      {0:~                   }│{0:~                   }│{0:~          }|
-      {0:~                   }│{0:~                   }│{0:~          }|
-      {0:~                   }│{0:~                   }│{0:~          }|
-      {0:~                   }│{0:~                   }│{0:~          }|
-      {0:~                   }│{0:~                   }│{0:~          }|
+      {0:~                   }│{0:~                   }│{0:~          }|*5
       {2:[No Name]            }{1:[No Name]            }{2:[No Name]  }|
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*4
       {2:[No Name]                                            }|
       :vsp                                                 |
     ]])
     feed('<c-w>l')
     screen:expect([[
                           │           │^                    |
-      {0:~                   }│{0:~          }│{0:~                   }|
-      {0:~                   }│{0:~          }│{0:~                   }|
-      {0:~                   }│{0:~          }│{0:~                   }|
-      {0:~                   }│{0:~          }│{0:~                   }|
-      {0:~                   }│{0:~          }│{0:~                   }|
+      {0:~                   }│{0:~          }│{0:~                   }|*5
       {2:[No Name]            [No Name]   }{1:[No Name]           }|
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*4
       {2:[No Name]                                            }|
       :vsp                                                 |
     ]])
     feed('<c-w>h<c-w>h')
     screen:expect([[
       ^                    │                    │           |
-      {0:~                   }│{0:~                   }│{0:~          }|
-      {0:~                   }│{0:~                   }│{0:~          }|
-      {0:~                   }│{0:~                   }│{0:~          }|
-      {0:~                   }│{0:~                   }│{0:~          }|
-      {0:~                   }│{0:~                   }│{0:~          }|
+      {0:~                   }│{0:~                   }│{0:~          }|*5
       {1:[No Name]            }{2:[No Name]            [No Name]  }|
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*4
       {2:[No Name]                                            }|
       :vsp                                                 |
     ]])
@@ -209,8 +170,7 @@ describe('highlight defaults', function()
     screen:try_resize(53, 4)
     screen:expect([[
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*2
       {3:-- INSERT --}                                         |
     ]])
   end)
@@ -219,8 +179,7 @@ describe('highlight defaults', function()
     screen:try_resize(53, 4)
     screen:expect([[
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*2
                                                            |
     ]])
   end)
@@ -243,8 +202,7 @@ describe('highlight defaults', function()
     feed('i')
     screen:expect([[
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*2
       -- INSERT --                                         |
     ]])
     feed('<esc>')
@@ -253,8 +211,7 @@ describe('highlight defaults', function()
     feed('i')
     screen:expect([[
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*2
       {5:-- INSERT --}                                         |
     ]])
   end)
@@ -266,16 +223,14 @@ describe('highlight defaults', function()
     insert('neovim')
     screen:expect([[
       {6:neovi^m}                                               |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*2
                                                            |
     ]])
     feed_command("hi ErrorMsg term=NONE cterm=NONE ctermfg=NONE ctermbg=NONE"
             .. " gui=NONE guifg=NONE guibg=NONE guisp=NONE")
     screen:expect([[
       neovi^m                                               |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*2
                                                            |
     ]])
   end)
@@ -284,16 +239,14 @@ describe('highlight defaults', function()
     screen:try_resize(53, 4)
     screen:expect([[
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*2
                                                            |
     ]])
     feed_command("hi NonTextAlt guifg=Red")
     feed_command("hi! link NonText NonTextAlt")
     screen:expect([[
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*2
       :hi! link NonText NonTextAlt                         |
     ]], {[0] = {foreground=Screen.colors.Red}})
   end)
@@ -310,15 +263,13 @@ describe('highlight defaults', function()
     insert('   ne \t o\tv  im  ')
     screen:expect([[
       ne{7:.>----.}o{7:>-----}v{7:..}im{7:*^*¬}                             |
-      {7:~                                                    }|
-      {7:~                                                    }|
+      {7:~                                                    }|*2
                                                            |
     ]])
     feed_command('highlight Whitespace gui=NONE guifg=#0000FF')
     screen:expect([[
       ne{8:.>----.}o{8:>-----}v{8:..}im{8:*^*}{7:¬}                             |
-      {7:~                                                    }|
-      {7:~                                                    }|
+      {7:~                                                    }|*2
       :highlight Whitespace gui=NONE guifg=#0000FF         |
     ]])
   end)
@@ -327,24 +278,21 @@ describe('highlight defaults', function()
     screen:try_resize(53, 4)
     screen:expect{grid=[[
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*2
                                                            |
     ]], hl_groups={EndOfBuffer=0, MsgSeparator=1}}
 
     command('highlight EndOfBuffer gui=italic')
     screen:expect{grid=[[
       ^                                                     |
-      {9:~                                                    }|
-      {9:~                                                    }|
+      {9:~                                                    }|*2
                                                            |
     ]], hl_groups={EndOfBuffer=9, MsgSeparator=1}}
 
     command('highlight clear EndOfBuffer')
     screen:expect{grid=[[
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*2
                                                            |
     ]], hl_groups={EndOfBuffer=0, MsgSeparator=1}}
   end)
@@ -452,11 +400,9 @@ describe('highlight', function()
       foobar
       ]])
     screen:expect{grid=[[
-      {1:foobar}                   |
-      {1:foobar}                   |
+      {1:foobar}                   |*2
       ^                         |
-      {2:~                        }|
-      {2:~                        }|
+      {2:~                        }|*2
                                |
     ]]}
 
@@ -465,8 +411,7 @@ describe('highlight', function()
       {3:foo}{1:bar}                   |
       {4:foo}{1:bar}                   |
                                |
-      {2:~                        }|
-      {2:~                        }|
+      {2:~                        }|*2
       /foo^                     |
     ]]}
     feed('<cr>')
@@ -474,8 +419,7 @@ describe('highlight', function()
       {4:^foo}{1:bar}                   |
       {4:foo}{1:bar}                   |
                                |
-      {2:~                        }|
-      {2:~                        }|
+      {2:~                        }|*2
       {5:search hit...uing at TOP} |
     ]]}
   end)
@@ -542,8 +486,7 @@ describe('highlight', function()
     screen:expect([[
       {1:  }^                       |
       {1:  }{2:01}{3:234 67}{2:89}{5:             }|
-      {4:~                        }|
-      {4:~                        }|
+      {4:~                        }|*2
       {7:[No Name] [+]            }|
       {1:  }                       |
       {1:  }{6:-----------------------}|
@@ -583,48 +526,41 @@ describe("'listchars' highlight", function()
     feed('i')
     screen:expect([[
       {1:^                    }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*3
       -- INSERT --        |
     ]])
     feed('abcdefg<cr>kkasdf')
     screen:expect([[
       abcdefg             |
       {1:kkasdf^              }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       -- INSERT --        |
     ]])
     feed('<esc>')
     screen:expect([[
       abcdefg             |
       {1:kkasd^f              }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
                           |
     ]])
     feed_command('set nocursorline')
     screen:expect([[
       abcdefg             |
       kkasd^f              |
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       :set nocursorline   |
     ]])
     feed('k')
     screen:expect([[
       abcde^fg             |
       kkasdf              |
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       :set nocursorline   |
     ]])
     feed('jjji<cr><cr><cr><esc>')
     screen:expect([[
       kkasd               |
-                          |
-                          |
+                          |*2
       ^f                   |
                           |
     ]])
@@ -717,8 +653,7 @@ describe("'listchars' highlight", function()
     feed('$')
     screen:expect([[
       {3:<}{1:r}{2:.}{1:sit}{2:.}{1:ame^t}{3:¬}{1:        }|
-      {4:<}                   |
-      {4:<}                   |
+      {4:<}                   |*2
       {4:~                   }|
       :set cursorline     |
     ]])
@@ -741,17 +676,14 @@ describe("'listchars' highlight", function()
     feed('90ia<esc>')
     screen:expect([[
       {0:<}aaaaaaaaaaaaaaaaaaa|
-      aaaaaaaaaaaaaaaaaaaa|
-      aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|*2
       aaaaaaaaa^a{0:¬}         |
                           |
     ]])
     feed('0')
     screen:expect([[
       ^aaaaaaaaaaaaaaaaaaaa|
-      aaaaaaaaaaaaaaaaaaaa|
-      aaaaaaaaaaaaaaaaaaaa|
-      aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|*3
                           |
     ]])
   end)
@@ -842,25 +774,19 @@ describe("'listchars' highlight", function()
     feed('ia \t bc \t  <esc>')
     screen:expect([[
       a        bc      ^   |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*3
                           |
     ]])
     feed_command('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
     screen:expect([[
       a{2:.>-----.}bc{2:*>---*^*}{0:¬} |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*3
                           |
     ]])
     feed_command('match Error /\\s\\+$/')
     screen:expect([[
       a{2:.>-----.}bc{3:*>---*^*}{0:¬} |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*3
                           |
     ]])
   end)
@@ -1142,8 +1068,7 @@ describe('CursorLine and CursorLineNr highlights', function()
     screen:expect([[
       {9:abc}                                               |
       ^a{9:bc}                                               |
-      abc                                               |
-      abc                                               |
+      abc                                               |*2
       {10:-- VISUAL LINE --}                                 |
     ]])
   end)
@@ -1172,9 +1097,7 @@ describe('CursorLine and CursorLineNr highlights', function()
       bbbbb                                             |
       ccccc                                             |
       {1:^ddddd                                             }|
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]], timeout = 100})
     screen:expect({grid = [[
@@ -1182,9 +1105,7 @@ describe('CursorLine and CursorLineNr highlights', function()
       {1:^bbbbb                                             }|
       ccccc                                             |
       ddddd                                             |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]})
   end)
@@ -1217,13 +1138,10 @@ describe('CursorLine and CursorLineNr highlights', function()
       {1:  }{7:line 1 some text       }│{1:  }{7:^line 1 some text      }|
       {1:  }{3:line 2 mo}{2:Re text!}{3:      }│{1:  }{3:line 2 mo}{2:re text}{3:      }|
       {1:  }{5:extra line!            }│{1:  }{6:----------------------}|
-      {1:  }extra line!            │{1:  }extra line!           |
-      {1:  }extra line!            │{1:  }extra line!           |
+      {1:  }extra line!            │{1:  }extra line!           |*2
       {1:  }last line ...          │{1:  }last line ...         |
       {1:  }                       │{1:  }                      |
-      {8:~                        }│{8:~                       }|
-      {8:~                        }│{8:~                       }|
-      {8:~                        }│{8:~                       }|
+      {8:~                        }│{8:~                       }|*3
       {4:[No Name] [+]             }{9:[No Name] [+]           }|
                                                         |
     ]])
@@ -1232,13 +1150,10 @@ describe('CursorLine and CursorLineNr highlights', function()
       {1:  }line 1 some text       │{1:  }line 1 some text      |
       {1:  }{3:line 2 mo}{2:Re text!}{3:      }│{1:  }{3:line 2 mo}{2:re text}{3:      }|
       {1:  }{5:extra line!            }│{1:  }{6:----------------------}|
-      {1:  }extra line!            │{1:  }extra line!           |
-      {1:  }extra line!            │{1:  }extra line!           |
+      {1:  }extra line!            │{1:  }extra line!           |*2
       {1:  }last line ...          │{1:  }last line ...         |
       {1:  }{7:                       }│{1:  }{7:^                      }|
-      {8:~                        }│{8:~                       }|
-      {8:~                        }│{8:~                       }|
-      {8:~                        }│{8:~                       }|
+      {8:~                        }│{8:~                       }|*3
       {4:[No Name] [+]             }{9:[No Name] [+]           }|
                                                         |
     ]])
@@ -1251,13 +1166,10 @@ describe('CursorLine and CursorLineNr highlights', function()
       {1:  }line 1 some text       │{1:  }line 1 some text      |
       {1:  }{11:line 2 mo}{12:Re text!}{11:      }│{1:  }{11:^line 2 mo}{12:re text}{11:      }|
       {1:  }{5:extra line!            }│{1:  }{6:----------------------}|
-      {1:  }extra line!            │{1:  }extra line!           |
-      {1:  }extra line!            │{1:  }extra line!           |
+      {1:  }extra line!            │{1:  }extra line!           |*2
       {1:  }last line ...          │{1:  }last line ...         |
       {1:  }                       │{1:  }                      |
-      {8:~                        }│{8:~                       }|
-      {8:~                        }│{8:~                       }|
-      {8:~                        }│{8:~                       }|
+      {8:~                        }│{8:~                       }|*3
       {4:[No Name] [+]             }{9:[No Name] [+]           }|
                                                         |
     ]], {
@@ -1308,12 +1220,7 @@ describe('CursorLine and CursorLineNr highlights', function()
       {1:  }{6:  1 }{5:^foo                }│{1:  }{6:  2 }{5:foo               }|
       {1:  }{9:  2 }foo                │{1:  }{9:  3 }foo               |
       {1:  }{9:  3 }bar                │{1:  }{9:  4 }bar               |
-      {7:~                        }│{7:~                       }|
-      {7:~                        }│{7:~                       }|
-      {7:~                        }│{7:~                       }|
-      {7:~                        }│{7:~                       }|
-      {7:~                        }│{7:~                       }|
-      {7:~                        }│{7:~                       }|
+      {7:~                        }│{7:~                       }|*6
       {8:[No Name] [+]             }{3:[No Name] [+]           }|
                                                         |
     ]])
@@ -1323,12 +1230,7 @@ describe('CursorLine and CursorLineNr highlights', function()
       {1:  }{6:  1 }^foo                │{1:  }{6:  2 }{5:foo               }|
       {1:  }{9:  2 }foo                │{1:  }{9:  3 }foo               |
       {1:  }{9:  3 }bar                │{1:  }{9:  4 }bar               |
-      {7:~                        }│{7:~                       }|
-      {7:~                        }│{7:~                       }|
-      {7:~                        }│{7:~                       }|
-      {7:~                        }│{7:~                       }|
-      {7:~                        }│{7:~                       }|
-      {7:~                        }│{7:~                       }|
+      {7:~                        }│{7:~                       }|*6
       {8:[No Name] [+]             }{3:[No Name] [+]           }|
                                                         |
     ]])
@@ -1357,44 +1259,28 @@ describe('CursorColumn highlight', function()
     screen:expect([[
       1234567{1:8}9                                         |
       a      ^ b                                         |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*5
                                                         |
     ]])
     feed('i')
     screen:expect([[
       1{1:2}3456789                                         |
       a^       b                                         |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*5
       {3:-- INSERT --}                                      |
     ]])
     feed('<C-O>')
     screen:expect([[
       1234567{1:8}9                                         |
       a      ^ b                                         |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*5
       {3:-- (insert) --}                                    |
     ]])
     feed('i')
     screen:expect([[
       1{1:2}3456789                                         |
       a^       b                                         |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*5
       {3:-- INSERT --}                                      |
     ]])
   end)
@@ -1417,9 +1303,7 @@ describe('CursorColumn highlight', function()
       bbbb{1:b}                                             |
       cccc{1:c}                                             |
       dddd^d                                             |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]], timeout = 100})
     screen:expect({grid = [[
@@ -1427,9 +1311,7 @@ describe('CursorColumn highlight', function()
       {1:b}bbbb                                             |
       {1:c}cccc                                             |
       {1:d}dddd                                             |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]})
   end)
@@ -1472,16 +1354,12 @@ describe('ColorColumn highlight', function()
       {4:  1 }11{1:1}11111{1:1}1                          |
       {3:  2 }22{1:2}22222{1:2}22                         |
       {3:  3 }33{1:3}33333{1:3}3                          |
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
+      {5:~                                       }|*3
       {8:X                                       }|
       {4:  1 }^11{1:1}11111{1:1}1                          |
       {3:  2 }22{1:2}22222{1:2}22                         |
       {3:  3 }33{1:3}33333{1:3}3                          |
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
+      {5:~                                       }|*3
       {7:X                                       }|
                                               |
     ]])
@@ -1496,18 +1374,7 @@ describe('ColorColumn highlight', function()
     screen:expect([[
       ^The quick brown fox jumped over the    {1: }|
       {1: } {1:l}azy dogs                             |
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
+      {5:~                                       }|*12
                                               |
     ]])
   end)
@@ -1521,18 +1388,7 @@ describe('ColorColumn highlight', function()
     screen:expect([[
       ^The quick brown fox jumped over the laz{1:y}|
       {6:+}{5:+}{6:+}{5:>\} dogs                              |
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
-      {5:~                                       }|
+      {5:~                                       }|*12
                                               |
     ]])
   end)
@@ -1631,17 +1487,13 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
     feed_command("hi MsgArea guibg=Gray")
     screen:expect{grid=[[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*3
       {6:                                                  }|
     ]]}
     feed(":ls")
     screen:expect{grid=[[
                                                         |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*3
       {6::ls^                                               }|
     ]]}
     feed(":<cr>")
@@ -1659,17 +1511,13 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
     feed_command("hi MsgSeparator blend=30 guibg=Magenta")
     screen:expect{grid=[[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*3
       {8::hi}{9: }{8:MsgSeparator}{9: }{8:blend=30}{9: }{8:guibg=Magenta}{9:           }|
     ]]}
     feed(":ls")
     screen:expect{grid=[[
                                                         |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*3
       {8::ls}{9:^                                               }|
     ]]}
     feed("<cr>")
@@ -1775,9 +1623,7 @@ describe("'number' and 'relativenumber' highlight", function()
       {1:  2 }bbbbb                                         |
       {1:  1 }ccccc                                         |
       {1:  0 }^ddddd                                         |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]], timeout = 100})
     screen:expect({grid = [[
@@ -1785,9 +1631,7 @@ describe("'number' and 'relativenumber' highlight", function()
       {1:  1 }bbbbb                                         |
       {1:  2 }ccccc                                         |
       {1:  3 }ddddd                                         |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]})
   end)
@@ -1844,8 +1688,7 @@ describe("'winhighlight' highlight", function()
     command("set winhl=Normal:Background1")
     screen:expect([[
       {1:a^a                  }|
-      {2:~                   }|
-      {2:~                   }|
+      {2:~                   }|*2
       {3:[No Name] [+]       }|
       aa                  |
       {0:~                   }|
@@ -1856,8 +1699,7 @@ describe("'winhighlight' highlight", function()
     command("enew")
     screen:expect([[
       {1:^                    }|
-      {2:~                   }|
-      {2:~                   }|
+      {2:~                   }|*2
       {3:[No Name]           }|
       aa                  |
       {0:~                   }|
@@ -1874,18 +1716,13 @@ describe("'winhighlight' highlight", function()
     command('setlocal winhl=Normal:Background1')
     screen:expect([[
       {1:                                                                              ^aa}|
-      {2:                                                                               ~}|
-      {2:                                                                               ~}|
-      {2:                                                                               ~}|
-      {2:                                                                               ~}|
+      {2:                                                                               ~}|*4
                                                                                       |
     ]])
     command('botright vsplit')
     screen:expect([[
       {1:                                     aa│                                      ^aa}|
-      {2:                                      ~}{1:│}{2:                                       ~}|
-      {2:                                      ~}{1:│}{2:                                       ~}|
-      {2:                                      ~}{1:│}{2:                                       ~}|
+      {2:                                      ~}{1:│}{2:                                       ~}|*3
       {4:[No Name] [+]                           }{3:[No Name] [+]                           }|
                                                                                       |
     ]])
@@ -1895,12 +1732,7 @@ describe("'winhighlight' highlight", function()
     command("set winhl=Normal:Background1")
     screen:expect([[
       {1:^                    }|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
+      {2:~                   }|*6
                           |
     ]])
 
@@ -1908,12 +1740,7 @@ describe("'winhighlight' highlight", function()
     eq('xxx:yyy', eval('&winhl'))
     screen:expect{grid=[[
       ^                    |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*6
                           |
     ]]}
   end)
@@ -1922,24 +1749,14 @@ describe("'winhighlight' highlight", function()
     command("set winhl=EndOfBuffer:Background1")
     screen:expect{grid=[[
       ^                    |
-      {1:~                   }|
-      {1:~                   }|
-      {1:~                   }|
-      {1:~                   }|
-      {1:~                   }|
-      {1:~                   }|
+      {1:~                   }|*6
                           |
     ]]}
 
     command("set winhl=Normal:ErrorMsg")
     screen:expect{grid=[[
       {15:^                    }|
-      {29:~                   }|
-      {29:~                   }|
-      {29:~                   }|
-      {29:~                   }|
-      {29:~                   }|
-      {29:~                   }|
+      {29:~                   }|*6
                           |
     ]]}
   end)
@@ -1950,8 +1767,7 @@ describe("'winhighlight' highlight", function()
     command("setlocal winhl=Normal:Background1")
     screen:expect([[
       {1:a^a                  }|
-      {2:~                   }|
-      {2:~                   }|
+      {2:~                   }|*2
       {3:[No Name] [+]       }|
       aa                  |
       {0:~                   }|
@@ -1962,8 +1778,7 @@ describe("'winhighlight' highlight", function()
     command("enew")
     screen:expect([[
       ^                    |
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       {3:[No Name]           }|
       aa                  |
       {0:~                   }|
@@ -1974,8 +1789,7 @@ describe("'winhighlight' highlight", function()
     command("bnext")
     screen:expect([[
       {1:^aa                  }|
-      {2:~                   }|
-      {2:~                   }|
+      {2:~                   }|*2
       {3:[No Name] [+]       }|
       aa                  |
       {0:~                   }|
@@ -1990,8 +1804,7 @@ describe("'winhighlight' highlight", function()
     command("split")
     screen:expect([[
       {1:^                    }|
-      {2:~                   }|
-      {2:~                   }|
+      {2:~                   }|*2
       {3:[No Name]           }|
       {5:                    }|
       {6:~                   }|
@@ -2002,8 +1815,7 @@ describe("'winhighlight' highlight", function()
     feed("<c-w><c-w>")
     screen:expect([[
       {5:                    }|
-      {6:~                   }|
-      {6:~                   }|
+      {6:~                   }|*2
       {4:[No Name]           }|
       {1:^                    }|
       {2:~                   }|
@@ -2014,8 +1826,7 @@ describe("'winhighlight' highlight", function()
     feed("<c-w><c-w>")
     screen:expect([[
       {1:^                    }|
-      {2:~                   }|
-      {2:~                   }|
+      {2:~                   }|*2
       {3:[No Name]           }|
       {5:                    }|
       {6:~                   }|
@@ -2030,8 +1841,7 @@ describe("'winhighlight' highlight", function()
     command("split")
     screen:expect([[
       ^                    |
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       {3:[No Name]           }|
       {7:                    }|
       {8:~                   }|
@@ -2042,8 +1852,7 @@ describe("'winhighlight' highlight", function()
     command("wincmd w")
     screen:expect([[
       {7:                    }|
-      {8:~                   }|
-      {8:~                   }|
+      {8:~                   }|*2
       {4:[No Name]           }|
       ^                    |
       {0:~                   }|
@@ -2056,8 +1865,7 @@ describe("'winhighlight' highlight", function()
     command("set winhl=Normal:Background1")
     screen:expect([[
       {7:                    }|
-      {8:~                   }|
-      {8:~                   }|
+      {8:~                   }|*2
       {4:[No Name]           }|
       {1:^                    }|
       {2:~                   }|
@@ -2068,8 +1876,7 @@ describe("'winhighlight' highlight", function()
     command("wincmd w")
     screen:expect([[
       ^                    |
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       {3:[No Name]           }|
       {1:                    }|
       {2:~                   }|
@@ -2081,8 +1888,7 @@ describe("'winhighlight' highlight", function()
     command("set winhl=Normal:Background1,NormalNC:Background2")
     screen:expect([[
       {7:                    }|
-      {8:~                   }|
-      {8:~                   }|
+      {8:~                   }|*2
       {4:[No Name]           }|
       {1:^                    }|
       {2:~                   }|
@@ -2093,8 +1899,7 @@ describe("'winhighlight' highlight", function()
     command("wincmd w")
     screen:expect([[
       ^                    |
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       {3:[No Name]           }|
       {5:                    }|
       {6:~                   }|
@@ -2108,8 +1913,7 @@ describe("'winhighlight' highlight", function()
     command("setlocal winhl=Normal:FancyGroup") -- does not yet exist
     screen:expect{grid=[[
       ^                    |
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       {3:[No Name]           }|
                           |
       {0:~                   }|
@@ -2120,8 +1924,7 @@ describe("'winhighlight' highlight", function()
     command("hi FancyGroup guibg=#FF8800") -- nice orange
     screen:expect{grid=[[
       {30:^                    }|
-      {31:~                   }|
-      {31:~                   }|
+      {31:~                   }|*2
       {3:[No Name]           }|
                           |
       {0:~                   }|
@@ -2144,10 +1947,7 @@ describe("'winhighlight' highlight", function()
       {9:  1 }  ^Lorem ipsum do|
       {9:    }       {0:↪}lor sit |
       {9:    }       {0:↪}amet{0:-}   |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*4
                           |
     ]])
 
@@ -2156,10 +1956,7 @@ describe("'winhighlight' highlight", function()
       {10:  1 }{1:  ^Lorem ipsum do}|
       {10:    }{1:       }{2:↪}{1:lor sit }|
       {10:    }{1:       }{2:↪}{1:amet}{2:-}{1:   }|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
+      {2:~                   }|*4
                           |
     ]])
 
@@ -2168,12 +1965,7 @@ describe("'winhighlight' highlight", function()
     feed('3w')
     screen:expect([[
       {10:  1 }{2:❮}{1: dolor ^sit ame}{2:❯}|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
+      {2:~                   }|*6
                           |
     ]])
   end)
@@ -2188,11 +1980,7 @@ describe("'winhighlight' highlight", function()
     screen:expect([[
       {25:the} {26:foobar} was {26:fooba}|
       {26:^r}                   |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*5
                           |
     ]])
 
@@ -2202,11 +1990,7 @@ describe("'winhighlight' highlight", function()
     screen:expect([[
       {27:the}{1: }{26:foobar}{1: was }{26:fooba}|
       {26:^r}{1:                   }|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
-      {2:~                   }|
+      {2:~                   }|*5
                           |
     ]])
   end)
@@ -2222,8 +2006,7 @@ describe("'winhighlight' highlight", function()
 
     screen:expect([[
       ^r{5:#}a{15:^@}               |
-      {1:~                   }|
-      {1:~                   }|
+      {1:~                   }|*2
       {3:[No Name] [+]       }|
       r{19:#}a{16:^@}               |
       {0:~                   }|
@@ -2261,22 +2044,14 @@ describe("'winhighlight' highlight", function()
     screen:expect([[
       {20: No Name] }{15: No Name]}{20:X}|
       ^                    |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*5
                           |
     ]])
     command("tabnext")
     screen:expect([[
       {21: No Name] }{1: No Name]}{20:X}|
       ^                    |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*5
                           |
     ]])
   end)
@@ -2288,8 +2063,7 @@ describe("'winhighlight' highlight", function()
             ..'PmenuSbar:ErrorMsg,PmenuThumb:Normal')
     screen:expect([[
       word wording word^y  |
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       {3:[No Name] [+]       }|
       word wording wordy  |
       {0:~                   }|
@@ -2329,8 +2103,7 @@ describe("'winhighlight' highlight", function()
     command('set winhl=CursorLine:Background1')
     screen:expect{grid=[[
       {28:  1 }{1:^                }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       {3:[No Name]           }|
       {28:  1 }{18:                }|
       {0:~                   }|
@@ -2341,8 +2114,7 @@ describe("'winhighlight' highlight", function()
     command('set winhl=CursorLineNr:Background2,CursorLine:Background1')
     screen:expect{grid=[[
       {5:  1 }{1:^                }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       {3:[No Name]           }|
       {28:  1 }{18:                }|
       {0:~                   }|
@@ -2353,8 +2125,7 @@ describe("'winhighlight' highlight", function()
     feed('<c-w>w')
     screen:expect{grid=[[
       {5:  1 }{1:                }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       {4:[No Name]           }|
       {28:  1 }{18:^                }|
       {0:~                   }|
@@ -2368,8 +2139,7 @@ describe("'winhighlight' highlight", function()
     command('split')
     screen:expect([[
       ^                    |
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       {1:[No Name]           }|
                           |
       {0:~                   }|
@@ -2405,11 +2175,7 @@ describe("'winhighlight' highlight", function()
     screen:expect([[
       {25:the} {26:foobar} was {26:fooba}|
       {26:^r}                   |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*5
                           |
     ]])
 
@@ -2431,8 +2197,7 @@ describe("'winhighlight' highlight", function()
     command('split | set winhl=Normal:ErrorMsg | set winhl=')
     screen:expect{grid=[[
       ^                    |
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       {3:[No Name]           }|
                           |
       {0:~                   }|
@@ -2495,8 +2260,7 @@ describe("'winhighlight' highlight", function()
 
     screen:expect{grid=[[
       ^                    |
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*2
       {3:[No Name]           }|
                           |
       {0:~                   }|
@@ -2539,56 +2303,28 @@ describe('highlight namespaces', function()
   it('can be used globally', function()
     screen:expect{grid=[[
       ^                         |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
+      {1:~                        }|*8
                                |
     ]]}
 
     meths.set_hl_ns(ns1)
     screen:expect{grid=[[
       {2:^                         }|
-      {3:~                        }|
-      {3:~                        }|
-      {3:~                        }|
-      {3:~                        }|
-      {3:~                        }|
-      {3:~                        }|
-      {3:~                        }|
-      {3:~                        }|
+      {3:~                        }|*8
                                |
     ]]}
 
     meths.set_hl_ns(ns2)
     screen:expect{grid=[[
       {4:^                         }|
-      {5:~                        }|
-      {5:~                        }|
-      {5:~                        }|
-      {5:~                        }|
-      {5:~                        }|
-      {5:~                        }|
-      {5:~                        }|
-      {5:~                        }|
+      {5:~                        }|*8
                                |
     ]]}
 
     meths.set_hl_ns(0)
     screen:expect{grid=[[
       ^                         |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
+      {1:~                        }|*8
                                |
     ]]}
   end)
@@ -2619,28 +2355,14 @@ describe('highlight namespaces', function()
   it('redraws correctly when ns=0', function()
     screen:expect{grid=[[
       ^                         |
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
-      {1:~                        }|
+      {1:~                        }|*8
                                |
     ]]}
 
     meths.set_hl(0, 'EndOfBuffer', {fg='#333333'})
     screen:expect{grid=[[
       ^                         |
-      {8:~                        }|
-      {8:~                        }|
-      {8:~                        }|
-      {8:~                        }|
-      {8:~                        }|
-      {8:~                        }|
-      {8:~                        }|
-      {8:~                        }|
+      {8:~                        }|*8
                                |
     ]]}
   end)
@@ -2663,8 +2385,7 @@ describe('highlight namespaces', function()
     command('highlight Ignore')
     screen:expect{grid=[[
                                |
-      {1:~                        }|
-      {1:~                        }|
+      {1:~                        }|*2
       {6:                         }|
                                |
       Ignore         {8:xxx} {9:ctermf}|

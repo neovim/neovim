@@ -37,10 +37,7 @@ describe(':terminal highlight', function()
     screen:expect([[
       tty ready                                         |
       {10: }                                                 |
-                                                        |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*4
       {5:-- TERMINAL --}                                    |
     ]])
   end)
@@ -64,10 +61,7 @@ describe(':terminal highlight', function()
         screen:expect(sub([[
           tty ready                                         |
           {NUM:text}text{10: }                                         |
-                                                            |
-                                                            |
-                                                            |
-                                                            |
+                                                            |*4
           {5:-- TERMINAL --}                                    |
         ]]))
       end
@@ -194,10 +188,7 @@ describe(':terminal highlight forwarding', function()
     screen:expect([[
       tty ready                                         |
       {1: }                                                 |
-                                                        |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*4
       {2:-- TERMINAL --}                                    |
     ]])
   end)
@@ -213,10 +204,7 @@ describe(':terminal highlight forwarding', function()
     screen:expect{grid=[[
       tty ready                                         |
       {3:text}{4:color}text{1: }                                    |
-                                                        |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*4
       {2:-- TERMINAL --}                                    |
     ]]}
   end)
@@ -246,10 +234,7 @@ describe(':terminal highlight with custom palette', function()
     screen:expect([[
       tty ready                                         |
       {7: }                                                 |
-                                                        |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*4
       {9:-- TERMINAL --}                                    |
     ]])
   end)
@@ -263,10 +248,7 @@ describe(':terminal highlight with custom palette', function()
     screen:expect([[
       tty ready                                         |
       {1:text}text{7: }                                         |
-                                                        |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*4
       {9:-- TERMINAL --}                                    |
     ]])
   end)

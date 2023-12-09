@@ -65,19 +65,13 @@ describe('insert-mode', function()
       feed('i<C-R>')
       screen:expect([[
         {1:^"}                                                           |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:~                                                           }|*4
         {3:-- INSERT --}                                                |
       ]])
       feed('={}')
       screen:expect([[
         {1:"}                                                           |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:~                                                           }|*4
         ={2:{}}^                                                         |
       ]])
       feed('<CR>')
@@ -92,10 +86,7 @@ describe('insert-mode', function()
       feed('<CR>')
       screen:expect([[
         ^                                                            |
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
-        {0:~                                                           }|
+        {0:~                                                           }|*4
         {3:-- INSERT --}                                                |
       ]])
     end)

@@ -38,10 +38,7 @@ local function test_embed(ext_linegrid)
   it('can display errors', function()
     startup('--cmd', 'echoerr invalid+')
     screen:expect([[
-                                                                  |
-                                                                  |
-                                                                  |
-                                                                  |
+                                                                  |*4
       {6:                                                            }|
       {7:Error detected while processing pre-vimrc command line:}     |
       {7:E121: Undefined variable: invalid}                           |
@@ -51,12 +48,7 @@ local function test_embed(ext_linegrid)
     feed('<cr>')
     screen:expect([[
       ^                                                            |
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
-      {3:~                                                           }|
+      {3:~                                                           }|*6
                                                                   |
     ]])
   end)
@@ -67,9 +59,7 @@ local function test_embed(ext_linegrid)
     end
     startup('--cmd', 'echoerr "foo"', '--cmd', 'color default', '--cmd', 'echoerr "bar"')
     screen:expect([[
-                                                                  |
-                                                                  |
-                                                                  |
+                                                                  |*3
       {9:                                                            }|
       {7:Error detected while processing pre-vimrc command line:}     |
       {7:foo}                                                         |
@@ -81,9 +71,7 @@ local function test_embed(ext_linegrid)
   it("doesn't erase output when setting Normal colors", function()
     startup('--cmd', 'echoerr "foo"', '--cmd', 'hi Normal guibg=Green', '--cmd', 'echoerr "bar"')
     screen:expect{grid=[[
-                                                                  |
-                                                                  |
-                                                                  |
+                                                                  |*3
       {6:                                                            }|
       {7:Error detected while processing pre-vimrc command line:}     |
       {7:foo}                                                         |
@@ -122,11 +110,7 @@ describe('--embed UI', function()
     screen:expect{grid=[[
       ^hello nvim                              |
       from external input                     |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*5
                                               |
     ]]}
 
@@ -136,10 +120,7 @@ describe('--embed UI', function()
       hello nvim                              |
       ^                                        |
       from external input                     |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*4
       {2:-- INSERT --}                            |
     ]]}
   end)
@@ -208,9 +189,7 @@ describe('--embed --listen UI', function()
     child_screen:attach(nil, child_session)
     child_screen:expect{grid=[[
       ^                                        |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*3
       {2:[No Name]             0,0-1          All}|
                                               |
     ]], attr_ids={

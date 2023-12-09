@@ -21,10 +21,7 @@ describe(':source!', function()
     feed(':source! Xscript.vim\n')
     screen:expect([[
       ^                                                                           |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:~                                                                          }|*4
       {1:E22: Scripts nested too deep}                                               |
     ]])
     os.remove('Xscript.vim')

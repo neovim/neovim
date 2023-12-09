@@ -15,19 +15,13 @@ describe('cpoptions', function()
     feed('c2w')
     screen:expect([[
       ^one tw$ three                 |
-      ~                             |
-      ~                             |
-      ~                             |
-      ~                             |
+      ~                             |*4
       -- INSERT --                  |
     ]])
     feed('vim<Esc>')
     screen:expect([[
       vi^m three                     |
-      ~                             |
-      ~                             |
-      ~                             |
-      ~                             |
+      ~                             |*4
                                     |
     ]])
   end)

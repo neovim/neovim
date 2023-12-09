@@ -688,27 +688,18 @@ describe('search cmdline', function()
     local s = [[
       {tilde:<<<} 18 19 20 21 22 2|
       ^3 24                |
-                          |
-                          |
-                          |
-                          |
+                          |*4
     ]]
     screen:expect(s)
     feed('/xx')
     screen:expect([[
-                          |
-                          |
-                          |
-                          |
+                          |*4
       {inc:xx}x                 |
       /xx^                 |
     ]])
     feed('x')
     screen:expect([[
-                          |
-                          |
-                          |
-                          |
+                          |*4
       {inc:xxx}                 |
       /xxx^                |
     ]])
@@ -737,11 +728,9 @@ describe('Search highlight', function()
     ]])
     feed([[/\_.*<CR>]])
     screen:expect([[
-      {2:xxx }                                              |
-      {2:xxx }                                              |
+      {2:xxx }                                              |*2
       {2:^xxx }{3:                                              }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
       /\_.*                                             |
     ]])
   end)
@@ -769,8 +758,7 @@ describe('Search highlight', function()
       xxx {4:y}{5:yy}{3: zzz}                             |
       {3:xxx }{5:yyy}{3: zzz}                             |
       {3:xxx }{5:y}{4:^yy} zzz                             |
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*2
       {2:-- VISUAL --}                            |
     ]])
   end)

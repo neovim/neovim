@@ -217,18 +217,14 @@ describe('listlbr', function()
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb {1:c}^                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*3
                                                        2          |
     ]])
     feed('zo')
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb ^c                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*3
       {2:E490: No fold found}                                         |
     ]])
 
@@ -236,18 +232,14 @@ describe('listlbr', function()
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb {1:c}^                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*3
       {2:E490: No fold found}                              2          |
     ]])
     feed('gq')
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb ^c                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*3
       {2:E490: No fold found}                                         |
     ]])
 
@@ -255,18 +247,14 @@ describe('listlbr', function()
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb {1:c}^                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*3
       {2:E490: No fold found}                              1x2        |
     ]])
     feed('I')
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb ^c                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*3
       {2:E490: No fold found}                                         |
     ]])
 
@@ -274,18 +262,14 @@ describe('listlbr', function()
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb {1:c}^                                                |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*3
       {2:E490: No fold found}                              2          |
     ]])
     feed('s')
     screen:expect([[
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa          |
       bbbbbbbbbb ^                                                 |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*3
       {2:E490: No fold found}                                         |
     ]])
   end)

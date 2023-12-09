@@ -273,9 +273,7 @@ it('typing a simplifiable key at hit-enter prompt triggers mapping vim-patch:8.2
   feed_command('ls')
   screen:expect([[
                                                                 |
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
+    {1:~                                                           }|*3
     {2:                                                            }|
     :ls                                                         |
       1 %a   "[No Name]"                    line 1              |
@@ -284,12 +282,7 @@ it('typing a simplifiable key at hit-enter prompt triggers mapping vim-patch:8.2
   feed('<C-6>')
   screen:expect([[
     ^                                                            |
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
-    {1:~                                                           }|
+    {1:~                                                           }|*6
     hit ctrl-6                                                  |
   ]])
 end)
@@ -333,12 +326,7 @@ describe('input non-printable chars', function()
     feed_command("e Xtest-overwrite")
     screen:expect([[
       ^foobar                                                      |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*6
       "Xtest-overwrite" [noeol] 1L, 6B                            |
     ]])
 
@@ -348,9 +336,7 @@ describe('input non-printable chars', function()
     feed_command("w")
     screen:expect([[
       foobar                                                      |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*3
       {4:                                                            }|
       "Xtest-overwrite"                                           |
       {2:WARNING: The file has been changed since reading it!!!}      |
@@ -360,8 +346,7 @@ describe('input non-printable chars', function()
     feed("u")
     screen:expect([[
       foobar                                                      |
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
       {4:                                                            }|
       "Xtest-overwrite"                                           |
       {2:WARNING: The file has been changed since reading it!!!}      |
@@ -396,12 +381,7 @@ describe('input non-printable chars', function()
     feed("<cr>")
     screen:expect([[
       ^foobar                                                      |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*6
                                                                   |
     ]])
   end)
@@ -449,11 +429,7 @@ describe('display is updated', function()
     screen:expect([[
       abc                                                         |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]])
   end)
@@ -465,11 +441,7 @@ describe('display is updated', function()
     screen:expect([[
       abc                                                         |
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       {2:-- INSERT --}                                                |
     ]])
   end)

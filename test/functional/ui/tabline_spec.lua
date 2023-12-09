@@ -30,9 +30,7 @@ describe('ui/ext_tabline', function()
     }
     screen:expect{grid=[[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      ~                        |*3
                                |
     ]], condition=function()
       eq({ id = 2 }, event_curtab)
@@ -42,9 +40,7 @@ describe('ui/ext_tabline', function()
     command("tabNext")
     screen:expect{grid=[[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      ~                        |*3
                                |
     ]], condition=function()
       eq({ id = 1 }, event_curtab)
@@ -59,9 +55,7 @@ describe('ui/ext_tabline', function()
 
     screen:expect{grid=[[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      ~                        |*3
                                |
     ]], condition=function()
       eq({ id = 1}, event_curbuf)
@@ -77,9 +71,7 @@ describe('ui/ext_tabline', function()
     }
     screen:expect{grid=[[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      ~                        |*3
                                |
     ]], condition=function()
       eq({ id = 2 }, event_curbuf)
@@ -107,16 +99,14 @@ describe("tabline", function()
     screen:expect{grid=[[
       {1:asdf                                      }|
       ^                                          |
-      {0:~                                         }|
-      {0:~                                         }|
+      {0:~                                         }|*2
                                                 |
     ]]}
     command('set tabline=jkl')
     screen:expect{grid=[[
       {1:jkl                                       }|
       ^                                          |
-      {0:~                                         }|
-      {0:~                                         }|
+      {0:~                                         }|*2
                                                 |
     ]]}
   end)
@@ -136,8 +126,7 @@ describe("tabline", function()
     screen:expect{grid=[[
       {1:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
       tab^1                                      |
-      {0:~                                         }|
-      {0:~                                         }|
+      {0:~                                         }|*2
                                                 |
     ]]}
     assert_alive()
@@ -145,32 +134,27 @@ describe("tabline", function()
     screen:expect{grid=[[
       {1:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
       tab^2                                      |
-      {0:~                                         }|
-      {0:~                                         }|
+      {0:~                                         }|*2
                                                 |
     ]]}
     meths.input_mouse('left', 'press', '', 0, 0, 0)
     screen:expect{grid=[[
       {1:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
       tab^1                                      |
-      {0:~                                         }|
-      {0:~                                         }|
+      {0:~                                         }|*2
                                                 |
     ]]}
     meths.input_mouse('left', 'press', '', 0, 0, 39)
     screen:expect{grid=[[
       {1:<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbc }|
       tab^2                                      |
-      {0:~                                         }|
-      {0:~                                         }|
+      {0:~                                         }|*2
                                                 |
     ]]}
     meths.input_mouse('left', 'press', '', 0, 0, 40)
     screen:expect{grid=[[
       tab^1                                      |
-      {0:~                                         }|
-      {0:~                                         }|
-      {0:~                                         }|
+      {0:~                                         }|*3
                                                 |
     ]]}
   end)

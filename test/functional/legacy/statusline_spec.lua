@@ -60,10 +60,7 @@ describe('statusline', function()
     ]])
     screen:expect([[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*4
       {3:<F}{2:GHI                                             }|
                                                         |
     ]])
@@ -97,9 +94,7 @@ describe('statusline', function()
     screen:expect([[
       {5:+--  2 lines: a···································}|
       ^c                                                 |
-      {0:~                                                 }|
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*3
       {3:g                                                 }|
                                                         |
     ]])
@@ -110,8 +105,7 @@ describe('statusline', function()
       ^a                                                 |
       b                                                 |
       c                                                 |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*2
       {3:                                                  }|
                                                         |
     ]])
@@ -121,8 +115,7 @@ describe('statusline', function()
       {1:a}                                                 |
       {1:b}                                                 |
       {1:c}^                                                 |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*2
       {3:3x2                                               }|
       {2:-- VISUAL BLOCK --}                                |
     ]])
@@ -132,8 +125,7 @@ describe('statusline', function()
       a                                                 |
       b                                                 |
       ^c                                                 |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*2
       {3:1234                                              }|
                                                         |
     ]])
@@ -145,8 +137,7 @@ describe('statusline', function()
       a                                                 |
       b                                                 |
       ^c                                                 |
-      {0:~                                                 }|
-      {0:~                                                 }|
+      {0:~                                                 }|*2
       {3:[No Name] [+]                          1234       }|
       :                                                 |
     ]])

@@ -148,9 +148,7 @@ describe('print', function()
     feed([[:lua print('\na')<CR>]])
     screen:expect{grid=[[
                                               |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:~                                       }|*3
       {2:                                        }|
                                               |
       a                                       |
@@ -160,8 +158,7 @@ describe('print', function()
     feed([[:lua print('b\n\nc')<CR>]])
     screen:expect{grid=[[
                                               |
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:~                                       }|*2
       {2:                                        }|
       b                                       |
                                               |
@@ -196,16 +193,7 @@ describe('debug.debug', function()
     feed(':lua Test()\n')
     screen:expect{grid=[[
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*10
       {1:                                                     }|
       nil                                                  |
       lua_debug> ^                                          |
@@ -213,14 +201,7 @@ describe('debug.debug', function()
     feed('print("TEST")\n')
     screen:expect([[
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*8
       {1:                                                     }|
       nil                                                  |
       lua_debug> print("TEST")                             |
@@ -230,8 +211,7 @@ describe('debug.debug', function()
     feed('<C-c>')
     screen:expect{grid=[[
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*2
       {1:                                                     }|
       nil                                                  |
       lua_debug> print("TEST")                             |
@@ -247,16 +227,7 @@ describe('debug.debug', function()
     feed('<C-l>:lua Test()\n')
     screen:expect([[
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*10
       {1:                                                     }|
       nil                                                  |
       lua_debug> ^                                          |
@@ -264,10 +235,7 @@ describe('debug.debug', function()
     feed('\n')
     screen:expect{grid=[[
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*4
       {1:                                                     }|
       nil                                                  |
       lua_debug>                                           |
@@ -285,32 +253,14 @@ describe('debug.debug', function()
     feed(':lua debug.debug() print("x")<cr>')
     screen:expect{grid=[[
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*12
       lua_debug> ^                                          |
     ]]}
 
     feed("conttt<cr>") -- misspelled cont; invalid syntax
     screen:expect{grid=[[
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*8
       {1:                                                     }|
       lua_debug> conttt                                    |
       {E:E5115: Error while loading debug string: (debug comma}|
@@ -321,12 +271,7 @@ describe('debug.debug', function()
     feed("cont<cr>") -- exactly "cont", exit now
     screen:expect{grid=[[
                                                            |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*6
       {1:                                                     }|
       lua_debug> conttt                                    |
       {E:E5115: Error while loading debug string: (debug comma}|
@@ -339,18 +284,7 @@ describe('debug.debug', function()
     feed('<cr>')
     screen:expect{grid=[[
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+      {0:~                                                    }|*12
                                                            |
     ]]}
   end)

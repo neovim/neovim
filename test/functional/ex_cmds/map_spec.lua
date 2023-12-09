@@ -105,25 +105,19 @@ describe('Screen', function()
     command('map <expr> x input("> ")')
     screen:expect([[
       ^                    |
-      ~                   |
-      ~                   |
-      ~                   |
+      ~                   |*3
                           |
     ]])
     feed('x')
     screen:expect([[
                           |
-      ~                   |
-      ~                   |
-      ~                   |
+      ~                   |*3
       > ^                  |
     ]])
     feed('\n')
     screen:expect([[
       ^                    |
-      ~                   |
-      ~                   |
-      ~                   |
+      ~                   |*3
       >                   |
     ]])
   end)
@@ -133,25 +127,19 @@ describe('Screen', function()
     feed('i')
     screen:expect([[
       ^                    |
-      ~                   |
-      ~                   |
-      ~                   |
+      ~                   |*3
       -- INSERT --        |
     ]])
     feed('x')
     screen:expect([[
                           |
-      ~                   |
-      ~                   |
-      ~                   |
+      ~                   |*3
       > ^                  |
     ]])
     feed('\n')
     screen:expect([[
       ^                    |
-      ~                   |
-      ~                   |
-      ~                   |
+      ~                   |*3
       -- INSERT --        |
     ]])
   end)
@@ -161,9 +149,7 @@ describe('Screen', function()
     feed(':<F2>')
     screen:expect([[
                           |
-      ~                   |
-      ~                   |
-      ~                   |
+      ~                   |*3
       :^                   |
     ]])
   end)
@@ -201,8 +187,7 @@ describe('Screen', function()
     command('nmap <expr> <F2> execute("throw 42")')
     feed('<F2>')
     screen:expect([[
-                                              |
-                                              |
+                                              |*2
       Error detected while processing :       |
       E605: Exception not caught: 42          |
       Press ENTER or type command to continue^ |
@@ -210,9 +195,7 @@ describe('Screen', function()
     feed('<CR>')
     screen:expect([[
       ^                                        |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*3
                                               |
     ]])
   end)
@@ -223,9 +206,7 @@ describe('Screen', function()
     feed(':echo "foo')
     screen:expect([[
                                               |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*3
       :echo "foo^                              |
     ]])
     feed('<F2>')
@@ -261,9 +242,7 @@ describe('Screen', function()
     feed(':                      nmap a<CR>')
     screen:expect([[
       ^                                        |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*3
       n  a             b                      |
     ]])
   end)

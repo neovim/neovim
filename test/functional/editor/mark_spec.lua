@@ -419,9 +419,7 @@ describe('named marks view', function()
       feed("<C-w>p'a")
       screen:expect([[
                   |
-      ~           |
-      ~           |
-      ~           |
+      ~           |*3
       [No Name]   |
       6 line      |
       ^7 line      |
@@ -454,10 +452,7 @@ describe('named marks view', function()
     command('bwipe!')
     screen:expect([[
       ^            |
-      ~           |
-      ~           |
-      ~           |
-      ~           |
+      ~           |*4
                   |
     ]])
     command('rshada!')

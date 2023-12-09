@@ -23,13 +23,7 @@ describe(":drop", function()
     feed_command("drop tmp1.vim")
     screen:expect([[
       ^                                   |
-      {0:~                                  }|
-      {0:~                                  }|
-      {0:~                                  }|
-      {0:~                                  }|
-      {0:~                                  }|
-      {0:~                                  }|
-      {0:~                                  }|
+      {0:~                                  }|*7
       {1:tmp1.vim                           }|
       "tmp1.vim" [New]                   |
     ]])
@@ -42,13 +36,7 @@ describe(":drop", function()
     feed_command("drop tmp1")
     screen:expect([[
                     │^                    |
-      {0:~             }│{0:~                   }|
-      {0:~             }│{0:~                   }|
-      {0:~             }│{0:~                   }|
-      {0:~             }│{0:~                   }|
-      {0:~             }│{0:~                   }|
-      {0:~             }│{0:~                   }|
-      {0:~             }│{0:~                   }|
+      {0:~             }│{0:~                   }|*7
       {2:tmp2           }{1:tmp1                }|
       :drop tmp1                         |
     ]])
@@ -63,13 +51,10 @@ describe(":drop", function()
     feed_command("drop tmp3")
     screen:expect([[
       ^                    │              |
-      {0:~                   }│{0:~             }|
-      {0:~                   }│{0:~             }|
-      {0:~                   }│{0:~             }|
+      {0:~                   }│{0:~             }|*3
       {1:tmp3                }│{0:~             }|
       ABC                 │{0:~             }|
-      {0:~                   }│{0:~             }|
-      {0:~                   }│{0:~             }|
+      {0:~                   }│{0:~             }|*2
       {2:tmp2 [+]             tmp1          }|
       "tmp3" [New]                       |
     ]])

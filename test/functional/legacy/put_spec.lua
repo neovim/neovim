@@ -64,8 +64,7 @@ describe('put', function()
         three more text                       │  three more text                      |
         ^four more text                        │  four more text                       |
                                               │                                       |
-      ~                                       │~                                      |
-      ~                                       │~                                      |
+      ~                                       │~                                      |*2
       [No Name] [+]                            [No Name] [+]                          |
                                                                                       |
     ]])

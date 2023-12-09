@@ -49,8 +49,7 @@ describe('startup', function()
     funcs.termopen({ nvim_prog, '-u', 'NONE', '--server', eval('v:servername'), '--remote-ui' })
     screen:expect([[
       ^Cannot attach UI of :terminal child to its parent. (Unset $NVIM to skip this check) |
-                                                                                          |
-                                                                                          |
+                                                                                          |*2
     ]])
   end)
 
@@ -92,12 +91,9 @@ describe('startup', function()
     funcs.chansend(id, 'cont\n')
     screen:expect([[
       ^                                                            |
-      ~                                                           |
-      ~                                                           |
-      ~                                                           |
+      ~                                                           |*3
       [No Name]                                                   |
-                                                                  |
-                                                                  |
+                                                                  |*2
     ]])
   end)
 end)
@@ -497,11 +493,9 @@ describe('startup', function()
     funcs.chansend(id, '\n')
     screen:expect([[
       ^                                                            |
-      ~                                                           |
-      ~                                                           |
+      ~                                                           |*2
       [No Name]                                                   |
-                                                                  |
-                                                                  |
+                                                                  |*2
     ]])
   end)
 
@@ -907,10 +901,7 @@ describe('user config init', function()
         feed('ia')
         screen:expect([[
                                                             |
-          ~                                                 |
-          ~                                                 |
-          ~                                                 |
-          ~                                                 |
+          ~                                                 |*4
           [No Name]                       0,0-1          All|
                                                             |
           -- TERMINAL --                                    |
@@ -918,10 +909,7 @@ describe('user config init', function()
         feed(':echo g:exrc_file<CR>')
         screen:expect(string.format([[
                                                             |
-          ~                                                 |
-          ~                                                 |
-          ~                                                 |
-          ~                                                 |
+          ~                                                 |*4
           [No Name]                       0,0-1          All|
           %s%s|
           -- TERMINAL --                                    |

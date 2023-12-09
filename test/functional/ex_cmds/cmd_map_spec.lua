@@ -69,11 +69,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       ^some short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
          {6:<F3>}        {6:*} {6:<Cmd>}let m = mode(1){6:<CR>}                        |
     ]])
   end)
@@ -85,11 +81,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       ^some short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {2:E1136: <Cmd> mapping must end with <CR> before second <Cmd>}      |
     ]])
 
@@ -98,11 +90,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       ^some short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {2:E1255: <Cmd> mapping must end with <CR>}                          |
     ]])
     eq(0, eval('x'))
@@ -114,11 +102,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       some short lines                                                 |
       ^of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
                                                                        |
     ]])
 
@@ -127,11 +111,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       some short lines                                                 |
       of ^test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
                                                                        |
     ]])
   end)
@@ -247,11 +227,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       so{5:me short lines}                                                 |
       {5:of }^test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- VISUAL --}                                                     |
     ]])
     feed('<esc>')
@@ -269,11 +245,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       some short lines                                                 |
       of alpha^test text                                                |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- INSERT --}                                                     |
     ]])
     -- feedkeys were not executed immediately
@@ -285,11 +257,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       some short lines                                                 |
       of alphabet^atest text                                            |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
                                                                        |
     ]])
     -- feedkeys(..., 'x') was executed immediately, but insert mode gets aborted
@@ -310,9 +278,7 @@ describe('mappings with <Cmd>', function()
       aa                                                               |
       xx                                                               |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*3
       :normal ,x                                                       |
     ]])
 
@@ -325,9 +291,7 @@ describe('mappings with <Cmd>', function()
       aa                                                               |
       xx                                                               |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*3
       :normal ,x                                                       |
     ]])
 
@@ -336,11 +300,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       ^                                                                 |
       0                                                                |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       --No lines in buffer--                                           |
     ]])
 
@@ -364,11 +324,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       {5:some short }^lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- VISUAL --}                                                     |
     ]])
     eq('v', funcs.mode(1))
@@ -383,8 +339,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       {5:some }short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*2
       {7:                                                                 }|
       {2:Error detected while processing :}                                |
       {2:E605: Exception not caught: very error}                           |
@@ -396,11 +351,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       {5:some }^short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- VISUAL --}                                                     |
     ]])
     eq('v', funcs.mode(1))
@@ -408,11 +359,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       so{5:me short lines}                                                 |
       {5:of }^test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- VISUAL --}                                                     |
     ]])
     eq('v', funcs.mode(1))
@@ -422,11 +369,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       so{5:me short lines}                                                 |
       {5:of }^test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- (insert) VISUAL --}                                            |
     ]])
     eq('v', eval('mode(1)'))
@@ -442,11 +385,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       {5:some short }^lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- SELECT --}                                                     |
     ]])
     eq('s', funcs.mode(1))
@@ -466,8 +405,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       {5:some }short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*2
       {7:                                                                 }|
       {2:Error detected while processing :}                                |
       {2:E605: Exception not caught: very error}                           |
@@ -479,11 +417,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       {5:some }^short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- VISUAL --}                                                     |
     ]])
     -- quirk: restoration of select mode is not performed
@@ -494,8 +428,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       {5:some }short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*2
       {7:                                                                 }|
       {2:Error detected while processing :}                                |
       {2:E605: Exception not caught: very error}                           |
@@ -507,11 +440,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       {5:some }^short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- SELECT --}                                                     |
     ]])
     -- quirk: restoration of select mode is not performed
@@ -521,11 +450,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       so{5:me short lines}                                                 |
       {5:of }^test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- SELECT --}                                                     |
     ]])
     eq('s', funcs.mode(1))
@@ -535,11 +460,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       so{5:me short lines}                                                 |
       {5:of }^test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- (insert) SELECT --}                                            |
     ]])
     eq('s', eval('mode(1)'))
@@ -568,8 +489,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       some short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*2
       {7:                                                                 }|
       {2:Error detected while processing :}                                |
       {2:E605: Exception not caught: very error}                           |
@@ -600,11 +520,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       indeed some short little ^lines                                   |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- INSERT --}                                                     |
     ]])
 
@@ -612,8 +528,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       indeed some short little lines                                   |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*2
       {7:                                                                 }|
       {2:Error detected while processing :}                                |
       {2:E605: Exception not caught: very error}                           |
@@ -627,11 +542,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       indeed some short little ^lines                                   |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- INSERT --}                                                     |
     ]])
     eq('i', eval('mode(1)'))
@@ -643,11 +554,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       in{5:deed some short little lines}                                   |
       {5:of stuff }^test text                                               |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- INSERT VISUAL --}                                              |
     ]])
     expect([[
@@ -661,11 +568,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       in^deed some short little lines                                   |
       of stuff test text                                               |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- INSERT --}                                                     |
     ]])
     eq('i', eval('mode(1)'))
@@ -675,11 +578,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       in bar ^deed some short little lines                              |
       of stuff test text                                               |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- INSERT --}                                                     |
     ]])
     eq(17, eval('g:y'))
@@ -700,9 +599,7 @@ describe('mappings with <Cmd>', function()
       some^                                                             |
       {8:some           }                                                  |
       {9:short          }{1:                                                  }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*3
       {4:-- Keyword Local completion (^N^P) }{3:match 1 of 2}                  |
     ]])
 
@@ -717,9 +614,7 @@ describe('mappings with <Cmd>', function()
       some^                                                             |
       {9:some           }                                                  |
       {9:short          }{1:                                                  }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*3
       {4:-- Keyword Local completion (^N^P) }{10:Back at original}              |
     ]])
   end)
@@ -734,11 +629,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       ^some short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {2:E492: Not an editor command: text}                                |
     ]])
 
@@ -773,11 +664,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       ^some short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
                                                                        |
     ]])
     eq('n', eval('mode(1)'))
@@ -786,11 +673,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       some short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       :let g:x = 3^                                                     |
     ]])
     feed('+2<cr>')
@@ -798,11 +681,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       some short ^lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       :let g:x = 3+2                                                   |
     ]])
     eq(5, eval('g:x'))
@@ -811,11 +690,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       some short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       :let g:y = 7^                                                     |
     ]])
     eq('c', eval('mode(1)'))
@@ -824,11 +699,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       some short ^lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       {4:-- INSERT --}                                                     |
     ]])
     eq('i', eval('mode(1)'))
@@ -842,11 +713,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       some short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       :bar^                                                             |
     ]])
 
@@ -854,11 +721,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       some short lines                                                 |
       of test text                                                     |
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
-      {1:~                                                                }|
+      {1:~                                                                }|*5
       :barx^                                                            |
     ]])
   end)

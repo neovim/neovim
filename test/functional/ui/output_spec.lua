@@ -29,10 +29,7 @@ describe("shell command :!", function()
     })
     screen:expect([[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:~                                                 }|*4
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
@@ -49,8 +46,7 @@ describe("shell command :!", function()
     child_session.feed_data(":!printf foo; sleep 200\n")
     screen:expect([[
                                                         |
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:~                                                 }|*2
       {5:                                                  }|
       :!printf foo; sleep 200                           |
       foo                                               |
@@ -147,8 +143,7 @@ describe("shell command :!", function()
     feed([[:!printf '\n'<CR>]])
     screen:expect([[
       :!printf '\n'                                     |
-                                                        |
-                                                        |
+                                                        |*2
       {2:Press ENTER or type command to continue}^           |
     ]])
     feed([[<CR>]])
@@ -186,8 +181,7 @@ describe("shell command :!", function()
       feed([[\l]])
       screen:expect([[
                                                              |
-        {1:~                                                    }|
-        {1:~                                                    }|
+        {1:~                                                    }|*2
         {4:                                                     }|
         ]]..result..[[                            |
         f1                                                   |

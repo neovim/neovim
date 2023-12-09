@@ -143,9 +143,7 @@ describe(":substitute, 'inccommand' preserves", function()
 
     screen:expect([[
       BAC                           |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*3
       {11:                              }|
       :ls                           |
         1 %a + "[No Name]"          |
@@ -581,12 +579,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
         Inc substitution on |
         two lines           |
         ^                    |
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
+        {15:~                   }|*6
                             |
       ]])
       command("set undolevels=1")
@@ -622,12 +615,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
+          {15:~                   }|*6
           Already ...t change |
         ]])
       else
@@ -635,12 +623,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
+          {15:~                   }|*6
           Already ...t change |
         ]])
       end
@@ -674,12 +657,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           two line^s           |
                               |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
+          {15:~                   }|*6
           Already ...t change |
         ]])
       else
@@ -687,12 +665,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           two line^s           |
                               |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
+          {15:~                   }|*6
           Already ...t change |
         ]])
       end
@@ -722,12 +695,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
+          {15:~                   }|*6
           Already ...t change |
         ]])
       else
@@ -735,12 +703,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
+          {15:~                   }|*6
           Already ...t change |
         ]])
       end
@@ -764,12 +727,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
+          {15:~                   }|*6
           Already ...t change |
         ]])
       else
@@ -777,12 +735,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Inc substitution on |
           ^MOo lines           |
                               |
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
-          {15:~                   }|
+          {15:~                   }|*6
           Already ...t change |
         ]])
       end
@@ -803,12 +756,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
         ^LInc substitution on|
         two lines           |
                             |
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
+        {15:~                   }|*6
         Already ...t change |
       ]])
     end
@@ -837,11 +785,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name]                     }|
       |2| {12:tw}o lines                 |
       |4| {12:tw}o lines                 |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :%s/tw^                        |
     ]])
@@ -870,15 +814,7 @@ describe(":substitute, inccommand=split", function()
       Inc substitution on           |
       two lines                     |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*9
       :silent tabedit %s/tw/to^      |
     ]])
     feed('<Esc>')
@@ -902,11 +838,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |2| {12:to}o lines                 |
       |4| {12:to}o lines                 |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :topleft %s/tw/to^             |
     ]])
@@ -924,11 +856,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |2| {12:to}o lines                 |
       |4| {12:to}o lines                 |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :topleft vert %s/tw/to^        |
     ]])
@@ -947,11 +875,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |2| {12:tw}o lines                 |
       |4| {12:tw}o lines                 |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :%s/tw^                        |
     ]])
@@ -968,11 +892,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |2| o lines                   |
       |4| o lines                   |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :%s/tw/^                       |
     ]])
@@ -987,11 +907,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |2| {12:x}o lines                  |
       |4| {12:x}o lines                  |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :%s/tw/x^                      |
     ]])
@@ -1006,11 +922,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |2| o lines                   |
       |4| o lines                   |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :%s/tw/^                       |
     ]])
@@ -1028,11 +940,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |2| {12:XX}o lines                 |
       |4| {12:XX}o lines                 |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :%s/tw/XX^                     |
     ]])
@@ -1047,15 +955,7 @@ describe(":substitute, inccommand=split", function()
       Inc substitution on           |
       two lines                     |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*9
       :s/tw^                         |
     ]])
   end)
@@ -1071,15 +971,7 @@ describe(":substitute, inccommand=split", function()
       Inc substitution on           |
       two lines                     |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*9
                                     |
     ]])
 
@@ -1094,11 +986,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |2| {12:tw}o lines                 |
       |4| {12:tw}o lines                 |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :%s/tw^                        |
     ]])
@@ -1116,12 +1004,7 @@ describe(":substitute, inccommand=split", function()
       two lines                     |
       {11:[No Name] [+]                 }|
       |1| {12:123}     {12:123}       {12:123}     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*6
       {10:[Preview]                     }|
       :%s/M/123/g^                   |
     ]])
@@ -1138,12 +1021,7 @@ describe(":substitute, inccommand=split", function()
                                     |
       {11:[No Name] [+]                 }|
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*6
       {10:[Preview]                     }|
       :%s/Inx^                       |
     ]])
@@ -1156,15 +1034,7 @@ describe(":substitute, inccommand=split", function()
     insert(string.rep('abc abc abc\n', 20))
     feed(':%s/abc/MMM/g')
     screen:expect([[
-      {12:MMM} {12:MMM} {12:MMM}                   |
-      {12:MMM} {12:MMM} {12:MMM}                   |
-      {12:MMM} {12:MMM} {12:MMM}                   |
-      {12:MMM} {12:MMM} {12:MMM}                   |
-      {12:MMM} {12:MMM} {12:MMM}                   |
-      {12:MMM} {12:MMM} {12:MMM}                   |
-      {12:MMM} {12:MMM} {12:MMM}                   |
-      {12:MMM} {12:MMM} {12:MMM}                   |
-      {12:MMM} {12:MMM} {12:MMM}                   |
+      {12:MMM} {12:MMM} {12:MMM}                   |*9
       {11:[No Name] [+]                 }|
       | 1| {12:MMM} {12:MMM} {12:MMM}              |
       | 2| {12:MMM} {12:MMM} {12:MMM}              |
@@ -1185,15 +1055,7 @@ describe(":substitute, inccommand=split", function()
       Inc substitution on           |
       ^XXo lines                     |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*9
       :%s/tw/XX/g                   |
     ]])
   end)
@@ -1253,15 +1115,7 @@ describe(":substitute, inccommand=split", function()
       Inc substitution on           |
       two lines                     |
       ^                              |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*9
       2 matches on 2 lines          |
     ]])
   end)
@@ -1354,11 +1208,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |1| Inc subs{12:X}itution on       |
       |2| {12:X}wo lines                 |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :1,2s/t/X^                     |
     ]])
@@ -1372,15 +1222,7 @@ describe(":substitute, inccommand=split", function()
       Inc substitution on           |
       two lines                     |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*9
       :echo 'foo'^                   |
     ]])
   end)
@@ -1397,11 +1239,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |1| Inc subs{12:X}itution on       |
       |2| {12:X}wo lines                 |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :1,2s/t/X^                     |
     ]])
@@ -1417,11 +1255,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |1| Inc subs{12:X}itution on       |
       |2| {12:X}wo lines                 |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       ={1:'Y'}^                          |
     ]])
@@ -1437,11 +1271,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |1| Inc subs{12:XY}itution on      |
       |2| {12:XY}wo lines                |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :1,2s/t/XY^                    |
     ]])
@@ -1457,11 +1287,7 @@ describe(":substitute, inccommand=split", function()
       {11:[No Name] [+]                 }|
       |1| Inc subs{12:XY}itution on      |
       |2| {12:XY}wo lines                |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       ={1:'echo'}^                       |
     ]])
@@ -1474,15 +1300,7 @@ describe(":substitute, inccommand=split", function()
       Inc substitution on           |
       two lines                     |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*9
       :echo^                         |
     ]])
   end)
@@ -1509,10 +1327,7 @@ describe("inccommand=nosplit", function()
       Inc substitution on |
       two lines           |
       Line *.{12:X}            |
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
+      {15:~                   }|*4
       :%smagic/3.*/X^      |
     ]])
 
@@ -1524,10 +1339,7 @@ describe("inccommand=nosplit", function()
       Inc substitution on |
       two lines           |
       Line *.{12:X} here       |
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
+      {15:~                   }|*4
       :%snomagic/3.*/X^    |
     ]])
   end)
@@ -1553,8 +1365,7 @@ describe("inccommand=nosplit", function()
       Inc substitution on |
       two lines           |
                           |
-      {15:~                   }|
-      {15:~                   }|
+      {15:~                   }|*2
       {11:                    }|
       :silent tabedit %s/t|
       w/to^                |
@@ -1576,10 +1387,7 @@ describe("inccommand=nosplit", function()
       Inc substitution on |
       {12:OKOK}o lines         |
                           |
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
+      {15:~                   }|*4
       :%s/tw/OKOK^         |
     ]])
   end)
@@ -1594,10 +1402,7 @@ describe("inccommand=nosplit", function()
       Inc substitution on |
       {12:tw}o lines           |
                           |
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
+      {15:~                   }|*4
       :%s/tw^              |
     ]])
 
@@ -1608,10 +1413,7 @@ describe("inccommand=nosplit", function()
       Inc substitution on |
       {12:BM}o lines           |
                           |
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
+      {15:~                   }|*4
       :%s/tw/BM^           |
     ]])
 
@@ -1622,10 +1424,7 @@ describe("inccommand=nosplit", function()
       Inc substitution on |
       {12:BM}o lines           |
                           |
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
+      {15:~                   }|*4
       :%s/tw/BM/^          |
     ]])
 
@@ -1636,10 +1435,7 @@ describe("inccommand=nosplit", function()
       Inc substitution on |
       ^BMo lines           |
                           |
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
+      {15:~                   }|*4
       :%s/tw/BM/          |
     ]])
   end)
@@ -1656,10 +1452,7 @@ describe("inccommand=nosplit", function()
       Inc substitution on |
       two lines           |
                           |
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
+      {15:~                   }|*4
       :1,2s/t/X^           |
     ]])
 
@@ -1672,10 +1465,7 @@ describe("inccommand=nosplit", function()
       Inc substitution on |
       two lines           |
                           |
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
+      {15:~                   }|*4
       :echo 'foo'^         |
     ]])
   end)
@@ -1688,10 +1478,7 @@ describe("inccommand=nosplit", function()
       Inc substitution on |
       {12:three} lines         |
                           |
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
+      {15:~                   }|*4
       :%s/two/three/g|q!^  |
     ]])
     eq(eval('v:null'), eval('v:exiting'))
@@ -1712,10 +1499,7 @@ describe("inccommand=nosplit", function()
       Inc substitution on |
       two lines           |
                           |
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
-      {15:~                   }|
+      {15:~                   }|*4
       :%s/^                |
     ]])
   end)
@@ -1767,12 +1551,7 @@ describe(":substitute, 'inccommand' with a failing expression", function()
         Inc substitution on |
         two lines           |
                             |
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
+        {15:~                   }|*6
         :100s/^              |
       ]])
 
@@ -1781,12 +1560,7 @@ describe(":substitute, 'inccommand' with a failing expression", function()
         Inc substitution on |
         two lines           |
         ^                    |
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
-        {15:~                   }|
+        {15:~                   }|*6
         {14:E16: Invalid range}  |
       ]])
     end
@@ -2039,31 +1813,15 @@ describe("'inccommand' split windows", function()
       Inc substitution on │Inc substitution on|
       {12:tw}o lines           │{12:tw}o lines          |
                           │                   |
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
+      {15:~                   }│{15:~                  }|*11
       {11:[No Name] [+]       }│{15:~                  }|
       Inc substitution on │{15:~                  }|
       {12:tw}o lines           │{15:~                  }|
                           │{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
+      {15:~                   }│{15:~                  }|*2
       {10:[No Name] [+]        [No Name] [+]      }|
       |2| {12:tw}o lines                           |
-      {15:~                                       }|
-      {15:~                                       }|
-      {15:~                                       }|
-      {15:~                                       }|
-      {15:~                                       }|
-      {15:~                                       }|
+      {15:~                                       }|*6
       {10:[Preview]                               }|
       :%s/tw^                                  |
     ]])
@@ -2078,31 +1836,15 @@ describe("'inccommand' split windows", function()
       Inc substitution on │Inc substitution on|
       {12:tw}o lines           │{12:tw}o lines          |
                           │                   |
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
-      {15:~                   }│{15:~                  }|
+      {15:~                   }│{15:~                  }|*11
       {11:[No Name] [+]        }{10:[No Name] [+]      }|
       Inc substitution on                     |
       {12:tw}o lines                               |
                                               |
-      {15:~                                       }|
-      {15:~                                       }|
+      {15:~                                       }|*2
       {10:[No Name] [+]                           }|
       |2| {12:tw}o lines                           |
-      {15:~                                       }|
-      {15:~                                       }|
-      {15:~                                       }|
-      {15:~                                       }|
-      {15:~                                       }|
-      {15:~                                       }|
+      {15:~                                       }|*6
       {10:[Preview]                               }|
       :%s/tw^                                  |
     ]])
@@ -2128,31 +1870,10 @@ describe("'inccommand' split windows", function()
         Inc substitution on                     |
         {12:tw}o lines                               |
                                                 |
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
+        {15:~                                       }|*17
         {11:[No Name] [+]                           }|
         |2| {12:tw}o lines                           |
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
-        {15:~                                       }|
+        {15:~                                       }|*6
         {10:[Preview]                               }|
         :%s/tw^                                  |
       ]])
@@ -2256,9 +1977,7 @@ describe(":substitute", function()
       |2|{12: A B C}                     |
       |3|{12: 4 5 6}                     |
       |4|{12: X} Y Z                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*3
       {10:[Preview]                     }|
       :%s/2\_.*X^                    |
     ]])
@@ -2268,16 +1987,10 @@ describe(":substitute", function()
       1 {12:MMM} Y Z                     |
       7 8 9                         |
                                     |
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*2
       {11:[No Name] [+]                 }|
       |1| 1 {12:MMM} Y Z                 |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*6
       {10:[Preview]                     }|
       :%s/2\_.*X/MMM^                |
     ]])
@@ -2293,10 +2006,7 @@ describe(":substitute", function()
       |1| 1 {12:MMM}                     |
       |2|{12: K}                         |
       |3|{12: LLL} Y Z                   |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*4
       {10:[Preview]                     }|
       :%s/2\_.*X/MMM\rK\rLLL^        |
     ]])
@@ -2311,17 +2021,7 @@ describe(":substitute", function()
       1 {12:MMM} Y Z                     |
       7 8 9                         |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*11
       :%s/2\_.*X/MMM^                |
     ]])
 
@@ -2332,15 +2032,7 @@ describe(":substitute", function()
       {12:LLL} Y Z                       |
       7 8 9                         |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*9
       :%s/2\_.*X/MMM\rK\rLLL^        |
     ]])
   end)
@@ -2355,16 +2047,11 @@ describe(":substitute", function()
       {12:XLK} bdc e{12:XLK}e {12:XLK} fgl lzi{12:XLK} r|
       x                             |
                                     |
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*2
       {11:[No Name] [+]                 }|
       |1| {12:XLK} bdc e{12:XLK}e {12:XLK} fgl lzi{12:X}|
       {12:LK} r                          |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :%s/a/XLK^                     |
     ]])
@@ -2380,17 +2067,7 @@ describe(":substitute", function()
       {12:XLK} bdc e{12:XLK}e {12:XLK} fgl lzi{12:XLK} r|
       x                             |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*11
       :%s/a/XLK^                     |
     ]])
   end)
@@ -2411,9 +2088,7 @@ describe(":substitute", function()
       |2| {12:OKO} B C                   |
       |3| 4 5 6                     |
       |4| {12:OKO} Y Z                   |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*3
       {10:[Preview]                     }|
       :%s/[0-9]\n\zs[A-Z]/OKO^       |
     ]])
@@ -2431,14 +2106,7 @@ describe(":substitute", function()
       {12:OKO} Y Z                       |
       7 8 9                         |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*8
       :%s/[0-9]\n\zs[A-Z]/OKO^       |
     ]])
   end)
@@ -2450,17 +2118,11 @@ describe(":substitute", function()
     screen:expect([[
       T {12:123123} {12:22}T TTT {12:090804090804} |
       x                             |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*3
       {11:[No Name] [+]                 }|
       |1| T {12:123123} {12:22}T TTT {12:090804090}|
       {12:804}                           |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       {10:[Preview]                     }|
       :%s/T\([0-9]\+\)/\1\1/g^       |
     ]])
@@ -2473,18 +2135,7 @@ describe(":substitute", function()
     screen:expect([[
       T {12:123123} {12:22}T TTT {12:090804090804} |
       x                             |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*12
       :%s/T\([0-9]\+\)/\1\1/g^       |
     ]])
   end)
@@ -2510,10 +2161,7 @@ describe(":substitute", function()
       |3| afa {12:Q}                     |
       |4|{12: }adf la;lkd {12:R}              |
       |5|{12: }alx                       |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*4
       {10:[Preview]                     }|
       :%s/[QR]\n^                    |
     ]])
@@ -2527,12 +2175,7 @@ describe(":substitute", function()
       {15:~                             }|
       {11:[No Name] [+]                 }|
       |3| afa {12:KKK}adf la;lkd {12:KKK}alx  |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*6
       {10:[Preview]                     }|
       :%s/[QR]\n/KKK^                |
     ]])
@@ -2554,16 +2197,7 @@ describe(":substitute", function()
       x                             |
       afa {12:KKK}adf la;lkd {12:KKK}alx      |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*10
       :%s/[QR]\n/KKK^                |
     ]])
   end)
@@ -2647,10 +2281,7 @@ describe(":substitute", function()
       |1|  {12:X¥¥} PEPPERS              |
       |2| {12:X¥¥}                       |
       |3|  a{12:X¥¥}¥KOL                 |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*4
       {10:[Preview]                     }|
       :%s/£.*ѫ/X¥¥^                  |
     ]])
@@ -2685,14 +2316,7 @@ describe(":substitute", function()
       £ ¥  libm                     |
       £ ¥                           |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*8
       :%s/£.*ѫ/X¥¥^                  |
     ]])
 
@@ -2707,11 +2331,7 @@ describe(":substitute", function()
       £ ¥  libm                     |
       £ ¥                           |
                                     |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*5
       :%s/£.*ѫ/X¥¥\ra££   ¥^         |
     ]])
   end)
@@ -2847,16 +2467,10 @@ describe(":substitute", function()
       some{12:one}                       |
       everything                    |
       someone                       |
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*2
       {11:[No Name] [+]                 }|
       |1| some{12:one}                   |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*6
       {10:[Preview]                     }|
       :%s/\(some\)\@<=thing/one/^    |
     ]])
@@ -2869,16 +2483,10 @@ describe(":substitute", function()
       something                     |
       every{12:one}                      |
       someone                       |
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*2
       {11:[No Name] [+]                 }|
       |2| every{12:one}                  |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*6
       {10:[Preview]                     }|
       :%s/\(some\)\@<!thing/one/^    |
     ]])
@@ -2890,16 +2498,10 @@ describe(":substitute", function()
       {12:every}thing                    |
       everything                    |
       someone                       |
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*2
       {11:[No Name] [+]                 }|
       |1| {12:every}thing                |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*6
       {10:[Preview]                     }|
       :%s/some\(thing\)\@=/every/^   |
     ]])
@@ -2911,16 +2513,10 @@ describe(":substitute", function()
       something                     |
       everything                    |
       {12:every}one                      |
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*2
       {11:[No Name] [+]                 }|
       |3| {12:every}one                  |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
+      {15:~                             }|*6
       {10:[Preview]                     }|
       :%s/some\(thing\)\@!/every/^   |
     ]])
@@ -2936,9 +2532,7 @@ describe(":substitute", function()
       {12:MO}o lines                                         |
       {11:[No Name] [+]                                     }|
       |2| {12:MO}o lines                                     |
-      {15:~                                                 }|
-      {15:~                                                 }|
-      {15:~                                                 }|
+      {15:~                                                 }|*3
       {10:[Preview]                                         }|
       :2,1s/tw/MO/g^                                     |
     ]])
@@ -2949,9 +2543,7 @@ describe(":substitute", function()
       {12:MO}o lines                                         |
       {11:[No Name] [+]                                     }|
       |2| {12:MO}o lines                                     |
-      {15:~                                                 }|
-      {15:~                                                 }|
-      {15:~                                                 }|
+      {15:~                                                 }|*3
       {10:[Preview]                                         }|
       {13:Backwards range given, OK to swap (y/n)?}^          |
     ]])
@@ -2961,10 +2553,7 @@ describe(":substitute", function()
       Inc substitution on                               |
       ^MOo lines                                         |
                                                         |
-      {15:~                                                 }|
-      {15:~                                                 }|
-      {15:~                                                 }|
-      {15:~                                                 }|
+      {15:~                                                 }|*4
       {13:Backwards range given, OK to swap (y/n)?}y         |
     ]])
   end)
@@ -3010,9 +2599,7 @@ it(':substitute with inccommand, timer-induced :redraw #9777', function()
     {12:ZZZ} bar baz                   |
     bar baz fox                   |
     bar {12:ZZZ} baz                   |
-    {15:~                             }|
-    {15:~                             }|
-    {15:~                             }|
+    {15:~                             }|*3
     {11:[No Name] [+]                 }|
     |1| {12:ZZZ} bar baz               |
     |3| bar {12:ZZZ} baz               |
@@ -3068,10 +2655,7 @@ it(':substitute with inccommand, does not crash if range contains invalid marks'
   feed([[:'a,'bs]])
   screen:expect([[
     test                          |
-    {15:~                             }|
-    {15:~                             }|
-    {15:~                             }|
-    {15:~                             }|
+    {15:~                             }|*4
     :'a,'bs^                       |
   ]])
   -- v:errmsg shouldn't be set either before the first separator is typed
@@ -3079,10 +2663,7 @@ it(':substitute with inccommand, does not crash if range contains invalid marks'
   feed('/')
   screen:expect([[
     test                          |
-    {15:~                             }|
-    {15:~                             }|
-    {15:~                             }|
-    {15:~                             }|
+    {15:~                             }|*4
     :'a,'bs/^                      |
   ]])
 end)
@@ -3132,10 +2713,7 @@ it(':substitute with inccommand, no unnecessary redraw if preview is not shown',
   -- now inccommand is shown, so screen is redrawn
   screen:expect([[
     {12:test}                                                        |
-    {15:~                                                           }|
-    {15:~                                                           }|
-    {15:~                                                           }|
-    {15:~                                                           }|
+    {15:~                                                           }|*4
     :s/test^                                                     |
   ]])
 end)
@@ -3152,9 +2730,7 @@ it(":substitute doesn't crash with inccommand, if undo is empty #12932", functio
   feed('f')
   screen:expect([[
   {12:f}           |
-  {15:~           }|
-  {15:~           }|
-  {15:~           }|
+  {15:~           }|*3
   :%s/test/f^  |
   ]])
   assert_alive()
@@ -3249,10 +2825,7 @@ it("with 'inccommand' typing invalid `={expr}` does not show error", function()
   feed(':edit `=`')
   screen:expect([[
                                   |
-    {15:~                             }|
-    {15:~                             }|
-    {15:~                             }|
-    {15:~                             }|
+    {15:~                             }|*4
     :edit `=`^                     |
   ]])
 end)

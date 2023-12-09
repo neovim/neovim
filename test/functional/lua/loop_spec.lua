@@ -112,14 +112,7 @@ describe('vim.uv', function()
 
     screen:expect([[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*8
       howdy                                             |
     ]])
     eq(true, eval("get(g:, 'valid', v:false)"))
@@ -137,14 +130,7 @@ describe('vim.uv', function()
     ]])
     screen:expect([[
       sneaky^                                            |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*8
       {5:-- INSERT --}                                      |
     ]])
     eq({blocking=false, mode='n'}, exec_lua("return _G.mode"))

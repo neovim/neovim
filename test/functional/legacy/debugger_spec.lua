@@ -32,14 +32,7 @@ describe('debugger', function()
     feed(':source %<CR>')
     screen:expect{grid=[[
       ^let g:Xtest_var += 1{MATCH: *}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
+      {0:~{MATCH: *}}|*8
       :source %{MATCH: *}|
     ]]}
     feed(':source %<CR>')
@@ -58,14 +51,7 @@ describe('debugger', function()
     feed('cont<CR>')
     screen:expect{grid=[[
       ^let g:Xtest_var += 1{MATCH: *}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
-      {0:~{MATCH: *}}|
+      {0:~{MATCH: *}}|*8
       {MATCH: *}|
     ]]}
     feed(':source %<CR>')

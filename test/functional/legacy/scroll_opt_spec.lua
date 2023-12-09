@@ -36,17 +36,14 @@ describe('smoothscroll', function()
       :5
     ]])
     local s1 = [[
-      word word word word word word word word |
-      word word word word word word word word |
+      word word word word word word word word |*2
       word word word word                     |
       line three                              |
       long word long word long word long word |
       long word long word long word           |
       ^line                                    |
-      line                                    |
-      line                                    |
-      ~                                       |
-      ~                                       |
+      line                                    |*2
+      ~                                       |*2
                                               |
     ]]
     local s2 = [[
@@ -56,11 +53,8 @@ describe('smoothscroll', function()
       long word long word long word long word |
       long word long word long word           |
       ^line                                    |
-      line                                    |
-      line                                    |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      line                                    |*2
+      ~                                       |*3
                                               |
     ]]
     local s3 = [[
@@ -69,26 +63,17 @@ describe('smoothscroll', function()
       long word long word long word long word |
       long word long word long word           |
       ^line                                    |
-      line                                    |
-      line                                    |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      line                                    |*2
+      ~                                       |*4
                                               |
     ]]
     local s4 = [[
       line three                              |
       long word long word long word long word |
       long word long word long word           |
-      line                                    |
-      line                                    |
+      line                                    |*2
       ^line                                    |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*5
                                               |
     ]]
     local s5 = [[
@@ -96,13 +81,9 @@ describe('smoothscroll', function()
       line three                              |
       long word long word long word long word |
       long word long word long word           |
-      line                                    |
-      line                                    |
+      line                                    |*2
       ^line                                    |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*4
                                               |
     ]]
     local s6 = [[
@@ -111,38 +92,30 @@ describe('smoothscroll', function()
       line three                              |
       long word long word long word long word |
       long word long word long word           |
-      line                                    |
-      line                                    |
+      line                                    |*2
       ^line                                    |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*3
                                               |
     ]]
     local s7 = [[
-      word word word word word word word word |
-      word word word word word word word word |
+      word word word word word word word word |*2
       word word word word                     |
       line three                              |
       long word long word long word long word |
       long word long word long word           |
-      line                                    |
-      line                                    |
+      line                                    |*2
       ^line                                    |
-      ~                                       |
-      ~                                       |
+      ~                                       |*2
                                               |
     ]]
     local s8 = [[
       line one                                |
-      word word word word word word word word |
-      word word word word word word word word |
+      word word word word word word word word |*2
       word word word word                     |
       line three                              |
       long word long word long word long word |
       long word long word long word           |
-      line                                    |
-      line                                    |
+      line                                    |*2
       ^line                                    |
       ~                                       |
                                               |
@@ -187,8 +160,7 @@ describe('smoothscroll', function()
       ϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛϛ^ϛϛϛϛϛ|
       ϛϛϛϛϛ                                   |
       222222222222222222222222222222222222    |
-      ~                                       |
-      ~                                       |
+      ~                                       |*2
                                               |
     ]])
   end)
@@ -217,9 +189,7 @@ describe('smoothscroll', function()
         3 ^line                                |
         4 line                                |
         5 line                                |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*3
                                               |
     ]])
     feed('<C-E>')
@@ -231,10 +201,7 @@ describe('smoothscroll', function()
         3 ^line                                |
         4 line                                |
         5 line                                |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*4
                                               |
     ]])
     feed('<C-E>')
@@ -245,11 +212,7 @@ describe('smoothscroll', function()
         3 ^line                                |
         4 line                                |
         5 line                                |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*5
                                               |
     ]])
     exec('set cpo-=n')
@@ -261,10 +224,7 @@ describe('smoothscroll', function()
         3 ^line                                |
         4 line                                |
         5 line                                |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*4
                                               |
     ]])
     feed('<C-Y>')
@@ -277,9 +237,7 @@ describe('smoothscroll', function()
         3 ^line                                |
         4 line                                |
         5 line                                |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*3
                                               |
     ]])
     feed('<C-Y>')
@@ -293,8 +251,7 @@ describe('smoothscroll', function()
         3 ^line                                |
         4 line                                |
         5 line                                |
-      ~                                       |
-      ~                                       |
+      ~                                       |*2
                                               |
     ]])
     exec('botright split')
@@ -351,12 +308,7 @@ describe('smoothscroll', function()
           y long text very long text very long|
            text very long text very long text |
         1 three                               |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*6
       --No lines in buffer--                  |
     ]])
   end)
@@ -376,8 +328,7 @@ describe('smoothscroll', function()
       very long text very long text very long |
       text very long text-                    |
       three                                   |
-      ~                                       |
-      ~                                       |
+      ~                                       |*2
                                               |
     ]])
     exec('set listchars+=precedes:#')
@@ -387,8 +338,7 @@ describe('smoothscroll', function()
       very long text very long text very long |
       text very long text-                    |
       three                                   |
-      ~                                       |
-      ~                                       |
+      ~                                       |*2
                                               |
     ]])
   end)
@@ -408,8 +358,7 @@ describe('smoothscroll', function()
     ]])
     screen:expect([[
       - ^just some text here                   |
-      ~                                       |
-      ~                                       |
+      ~                                       |*2
       [No Name] [+]                           |
       - just some text here                   |
       ~                                       |
@@ -580,10 +529,7 @@ describe('smoothscroll', function()
     feed('zt')
     screen:expect([[
       ^four                                    |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*4
                                               |
     ]])
     feed('zz')
@@ -591,8 +537,7 @@ describe('smoothscroll', function()
       <<<of text with lots of text with lots o|
       f text with lots of text end            |
       ^four                                    |
-      ~                                       |
-      ~                                       |
+      ~                                       |*2
                                               |
     ]])
     feed('zb')
@@ -650,8 +595,7 @@ describe('smoothscroll', function()
       <<<ts of text with lots of text with lot|
       ^s of text with lots of text with lots of|
        text                                   |
-      ~                                       |
-      ~                                       |
+      ~                                       |*2
                                               |
     ]])
     feed('0')
@@ -696,18 +640,13 @@ describe('smoothscroll', function()
     screen:expect([[
       ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       口口口口口口口口口口                    |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*3
                                               |
     ]])
     feed('<C-E>')
     screen:expect([[
       <<< 口口口口口口口^口                    |
-      ~                                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      ~                                       |*4
                                               |
     ]])
   end)
@@ -795,14 +734,7 @@ describe('smoothscroll', function()
     ]])
     -- does not scroll halfway when scrolling to end of buffer
     screen:expect([[
-                                              |
-                                              |
-                                              |
-                                              |
-                                              |
-                                              |
-                                              |
-                                              |
+                                              |*8
       ^                                        |
                                               |
     ]])
@@ -811,13 +743,7 @@ describe('smoothscroll', function()
     -- cursor is not placed below window
     screen:expect([[
       <<<aaaaaaaaaaaaaaaaa                    |
-                                              |
-                                              |
-                                              |
-                                              |
-                                              |
-                                              |
-                                              |
+                                              |*7
       ^                                        |
                                               |
     ]])
@@ -907,8 +833,7 @@ describe('smoothscroll', function()
       aaaaaaaaaa                              |
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaa                              |
-                                              |
-                                              |
+                                              |*2
       bbb                                     |
                                               |
     ]])
@@ -917,25 +842,19 @@ describe('smoothscroll', function()
       {0:<<<}{1:aaaaaa^a                              }|
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       aaaaaaaaaa                              |
-                                              |
-                                              |
+                                              |*2
       bbb                                     |
       ccc                                     |
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:~                                       }|*2
                                               |
     ]])
     feed('2<C-E>')
     screen:expect([[
       {0:<<<}{1:aaaaaa^a                              }|
-                                              |
-                                              |
+                                              |*2
       bbb                                     |
       ccc                                     |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:~                                       }|*4
                                               |
     ]])
   end)
@@ -962,21 +881,7 @@ describe('smoothscroll', function()
     ]])
     screen:expect([[
       {1: }│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
-      {2:@}│                                      |
+      {2:@}│                                      |*15
       {2:^@}│                                      |
       {3:< }{4:[No Name] [+]                         }|
                                               |
@@ -1001,8 +906,7 @@ describe('smoothscroll', function()
       line3line3line3line3line3line3line3line3|
       line3line3line3line3                    |
       line4                                   |
-      ~                                       |
-      ~                                       |
+      ~                                       |*2
       [No Name] [+]                           |
                                               |
     ]])
@@ -1105,11 +1009,7 @@ describe('smoothscroll', function()
     feed('Go123456789<CR>')
     screen:expect([[
       <<<ery long line ...A very long line ...|
-      A very long line ...A very long line ...|
-      A very long line ...A very long line ...|
-      A very long line ...A very long line ...|
-      A very long line ...A very long line ...|
-      A very long line ...A very long line ...|
+      A very long line ...A very long line ...|*5
       123456789                               |
       ^                                        |
       -- INSERT --                            |

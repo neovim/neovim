@@ -35,9 +35,7 @@ describe("multibyte rendering", function()
     screen:expect([[
       ^ ̊                                                           |
       x                                                           |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*3
       < ̊> 778, Hex 030a, Octal 1412                               |
     ]])
 
@@ -47,9 +45,7 @@ describe("multibyte rendering", function()
     screen:expect([[
       ^å                                                           |
       x                                                           |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*3
       <a>  97,  Hex 61,  Octal 141 < ̊> 778, Hex 030a, Octal 1412  |
     ]])
   end)
@@ -58,10 +54,7 @@ describe("multibyte rendering", function()
     feed('58a <esc>a馬<esc>')
     screen:expect([[
                                                                 ^馬|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*4
                                                                   |
     ]])
 
@@ -69,9 +62,7 @@ describe("multibyte rendering", function()
     screen:expect([[
                                                                 ^ {1:>}|
       馬                                                          |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*3
                                                                   |
     ]])
 
@@ -79,9 +70,7 @@ describe("multibyte rendering", function()
     screen:expect([[
                                                                  {1:>}|
       ^馬                                                          |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*3
                                                                   |
     ]])
   end)
@@ -91,9 +80,7 @@ describe("multibyte rendering", function()
     screen:expect([[
       ab ^                                                         |
       -馬                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*3
       {4:-- INSERT --}                                                |
     ]])
 
@@ -103,8 +90,7 @@ describe("multibyte rendering", function()
       ab xx^                                                       |
       - {2: xx             }                                          |
       {1:~ }{3: yy             }{1:                                          }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
       {4:-- INSERT --}                                                |
     ]])
 
@@ -113,9 +99,7 @@ describe("multibyte rendering", function()
     screen:expect([[
       ab xxz^                                                      |
       -馬                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*3
       {4:-- INSERT --}                                                |
     ]])
   end)
@@ -125,10 +109,7 @@ describe("multibyte rendering", function()
     feed('$')
     screen:expect{grid=[[
       {5:<ffff>}!!^!                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*4
                                                                   |
     ]]}
   end)
@@ -185,20 +166,14 @@ describe("multibyte rendering", function()
     feed('isghl!<esc>')
     screen:expect{grid=[[
                                                              ^!مالس|
-      {1:                                                           ~}|
-      {1:                                                           ~}|
-      {1:                                                           ~}|
-      {1:                                                           ~}|
+      {1:                                                           ~}|*4
                                                                   |
     ]]}
 
     command('set arabicshape')
     screen:expect{grid=[[
                                                               ^!ﻡﻼﺳ|
-      {1:                                                           ~}|
-      {1:                                                           ~}|
-      {1:                                                           ~}|
-      {1:                                                           ~}|
+      {1:                                                           ~}|*4
                                                                   |
     ]]}
   end)
@@ -210,20 +185,14 @@ describe("multibyte rendering", function()
     feed('isghl!<esc>')
     screen:expect{grid=[[
       سلام^!                                                       |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*4
                                                                   |
     ]]}
 
     command('set arabicshape')
     screen:expect{grid=[[
       ﺱﻼﻣ^!                                                        |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*4
                                                                   |
     ]]}
 
@@ -241,20 +210,14 @@ describe("multibyte rendering", function()
 
     screen:expect{grid=[[
       ^سلام့̀́̂̃̄̅̆̇̈̉̊̋̌                                                        |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*4
                                                                   |
     ]]}
 
     command('set arabicshape')
     screen:expect{grid=[[
       ^ﺱﻼﻣ̀́̂̃̄̅̆̇̈̉̊̋̌                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*4
                                                                   |
     ]]}
   end)

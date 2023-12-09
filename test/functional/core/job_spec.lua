@@ -894,8 +894,7 @@ describe('jobs', function()
       feed_command('call PrintAndWait()')
       screen:expect{grid=[[
                                                           |
-        {0:~                                                 }|
-        {0:~                                                 }|
+        {0:~                                                 }|*2
         {1:                                                  }|
         aaa                                               |
         bbb                                               |
@@ -1151,10 +1150,7 @@ describe("pty process teardown", function()
     screen:attach()
     screen:expect([[
       ^                              |
-      ~                             |
-      ~                             |
-      ~                             |
-      ~                             |
+      ~                             |*4
                                     |
     ]])
   end)
@@ -1173,10 +1169,7 @@ describe("pty process teardown", function()
     screen:expect([[
       ^                              |
       [Process exited 0]            |
-                                    |
-                                    |
-                                    |
-                                    |
+                                    |*4
     ]])
   end)
 end)

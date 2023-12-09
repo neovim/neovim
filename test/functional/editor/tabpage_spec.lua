@@ -116,10 +116,7 @@ describe('tabpage', function()
     screen:expect([[
       {4: [No Name] }{3: [No Name] }{2:                 }{4:X}|
       ^                                        |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:~                                       }|*4
       {1:[No Name]                               }|
       "[No Name]" --No lines in buffer--      |
     ]])
@@ -127,10 +124,7 @@ describe('tabpage', function()
     screen:expect([[
       {4: [No Name] }{3: }{5:2}{3: [No Name] }{2:               }{4:X}|
       ^                    │                   |
-      {0:~                   }│{0:~                  }|
-      {0:~                   }│{0:~                  }|
-      {0:~                   }│{0:~                  }|
-      {0:~                   }│{0:~                  }|
+      {0:~                   }│{0:~                  }|*4
       {1:[No Name]                               }|
       "[No Name]" --No lines in buffer--      |
     ]])

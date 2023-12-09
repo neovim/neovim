@@ -39,19 +39,13 @@ describe('edit', function()
     feed('a<C-R>')
     screen:expect([[
       {1:^"}           |
-      {0:~           }|
-      {0:~           }|
-      {0:~           }|
-      {0:~           }|
+      {0:~           }|*4
       {2:-- INSERT --}|
     ]])
     feed('=')
     screen:expect([[
       {1:"}           |
-      {0:~           }|
-      {0:~           }|
-      {0:~           }|
-      {0:~           }|
+      {0:~           }|*4
       =^           |
     ]])
   end)
@@ -73,19 +67,13 @@ describe('edit', function()
     feed('i<C-R>')
     screen:expect([[
       {1:^"}                                                           |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*4
       {3:-- INSERT --}                                                |
     ]])
     feed('={}')
     screen:expect([[
       {1:"}                                                           |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*4
       ={2:{}}^                                                         |
     ]])
     -- trying to insert a dictionary produces an error
@@ -102,20 +90,14 @@ describe('edit', function()
     feed(':')
     screen:expect([[
       :^                                                           |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*4
       {3:-- INSERT --}                                                |
     ]])
     -- ending Insert mode should put the cursor back on the ':'
     feed('<Esc>')
     screen:expect([[
       ^:                                                           |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*4
                                                                   |
     ]])
   end)

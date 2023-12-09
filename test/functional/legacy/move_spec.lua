@@ -22,11 +22,7 @@ describe(':move', function()
       ^First                                                       |
       Third                                                       |
       Fourth                                                      |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*5
       :move +1                                                    |
     ]])
 
@@ -38,11 +34,7 @@ describe(':move', function()
       Second                                                      |
       Third                                                       |
       Fourth                                                      |
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*5
                                                                   |
     ]])
   end)

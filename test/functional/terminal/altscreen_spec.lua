@@ -27,11 +27,7 @@ describe(':terminal altscreen', function()
     ]])
     enter_altscreen()
     screen:expect([[
-                                                        |
-                                                        |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*5
       {1: }                                                 |
       {3:-- TERMINAL --}                                    |
     ]])
@@ -45,9 +41,7 @@ describe(':terminal altscreen', function()
       line1                                             |
       line2                                             |
       line3                                             |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*3
     ]])
   end)
 
@@ -114,8 +108,7 @@ describe(':terminal altscreen', function()
     local function wait_removal()
       screen:try_resize(screen._width, screen._height - 2)
       screen:expect([[
-                                                          |
-                                                          |
+                                                          |*2
         rows: 4, cols: 50                                 |
         {1: }                                                 |
         {3:-- TERMINAL --}                                    |
@@ -127,8 +120,7 @@ describe(':terminal altscreen', function()
       feed('<c-\\><c-n>4k')
       screen:expect([[
         ^                                                  |
-                                                          |
-                                                          |
+                                                          |*2
         rows: 4, cols: 50                                 |
                                                           |
       ]])

@@ -64,10 +64,7 @@ describe("CTRL-C (mapped)", function()
     feed('i')
     screen:expect([[
       ^                                                    |
-      ~                                                   |
-      ~                                                   |
-      ~                                                   |
-      ~                                                   |
+      ~                                                   |*4
       -- INSERT --                                        |
     ]])
   end)
@@ -82,10 +79,7 @@ describe("CTRL-C (mapped)", function()
     feed('i')
     screen:expect([[
       ^                                                    |
-      ~                                                   |
-      ~                                                   |
-      ~                                                   |
-      ~                                                   |
+      ~                                                   |*4
       -- INSERT --                                        |
     ]])
   end)

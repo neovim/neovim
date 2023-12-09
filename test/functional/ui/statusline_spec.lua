@@ -66,11 +66,7 @@ for _, model in ipairs(mousemodels) do
       meths.set_option_value('statusline',  '\t%#NonText#\1%0@MyClickFunc@\t\1%T\t%##\1', {})
       screen:expect{grid=[[
         ^                                        |
-        {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
-        {0:~                                       }|
+        {0:~                                       }|*5
         {1:^I}{0:^A^I^A^I}{1:^A                            }|
                                                 |
       ]]}
@@ -178,11 +174,7 @@ for _, model in ipairs(mousemodels) do
       command('vsplit')
       screen:expect{grid=[[
         ^                    │                   |
-        {0:~                   }│{0:~                  }|
-        {0:~                   }│{0:~                  }|
-        {0:~                   }│{0:~                  }|
-        {0:~                   }│{0:~                  }|
-        {0:~                   }│{0:~                  }|
+        {0:~                   }│{0:~                  }|*5
         {1:Clicky stuff                Clicky stuff}|
                                                 |
       ]]}
@@ -241,39 +233,16 @@ describe('global statusline', function()
   it('works', function()
     screen:expect([[
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*13
       {2:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
 
     feed('i<CR><CR>')
     screen:expect([[
-                                                                  |
-                                                                  |
+                                                                  |*2
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*11
       {2:[No Name] [+]                             3,1            All}|
       {3:-- INSERT --}                                                |
     ]])
@@ -283,9 +252,7 @@ describe('global statusline', function()
     command('vsplit | split | vsplit | vsplit | wincmd l | split | 2wincmd l | split')
     screen:expect([[
                           │                │ │^                    |
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
+      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|*3
       {1:~                   }├────────────────┤{1:~}│{1:~                   }|
       {1:~                   }│                │{1:~}│{1:~                   }|
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
@@ -293,9 +260,7 @@ describe('global statusline', function()
       {1:~                   }│{1:~               }│{1:~}│                    |
       ────────────────────┴────────────────┴─┤{1:~                   }|
                                              │{1:~                   }|
-      {1:~                                      }│{1:~                   }|
-      {1:~                                      }│{1:~                   }|
-      {1:~                                      }│{1:~                   }|
+      {1:~                                      }│{1:~                   }|*3
       {2:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
@@ -305,39 +270,14 @@ describe('global statusline', function()
     command('set laststatus=1')
     screen:expect([[
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*14
                                                 0,0-1         All |
     ]])
 
     command('set laststatus=3')
     screen:expect([[
       ^                                                            |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*13
       {2:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
@@ -346,9 +286,7 @@ describe('global statusline', function()
     command('set laststatus=2')
     screen:expect([[
                           │                │ │^                    |
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
+      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|*3
       {1:~                   }│{4:< Name] 0,0-1   }│{1:~}│{1:~                   }|
       {1:~                   }│                │{1:~}│{1:~                   }|
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
@@ -356,9 +294,7 @@ describe('global statusline', function()
       {1:~                   }│{1:~               }│{1:~}│                    |
       {4:<No Name] 0,0-1  All < Name] 0,0-1    <}│{1:~                   }|
                                              │{1:~                   }|
-      {1:~                                      }│{1:~                   }|
-      {1:~                                      }│{1:~                   }|
-      {1:~                                      }│{1:~                   }|
+      {1:~                                      }│{1:~                   }|*3
       {4:[No Name]            0,0-1          All <No Name] 0,0-1  All}|
                                                                   |
     ]])
@@ -366,9 +302,7 @@ describe('global statusline', function()
     command('set laststatus=3')
     screen:expect([[
                           │                │ │^                    |
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
+      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|*3
       {1:~                   }├────────────────┤{1:~}│{1:~                   }|
       {1:~                   }│                │{1:~}│{1:~                   }|
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
@@ -376,9 +310,7 @@ describe('global statusline', function()
       {1:~                   }│{1:~               }│{1:~}│                    |
       ────────────────────┴────────────────┴─┤{1:~                   }|
                                              │{1:~                   }|
-      {1:~                                      }│{1:~                   }|
-      {1:~                                      }│{1:~                   }|
-      {1:~                                      }│{1:~                   }|
+      {1:~                                      }│{1:~                   }|*3
       {2:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
@@ -386,9 +318,7 @@ describe('global statusline', function()
     command('set laststatus=0')
     screen:expect([[
                           │                │ │^                    |
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
+      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|*3
       {1:~                   }│{4:< Name] 0,0-1   }│{1:~}│{1:~                   }|
       {1:~                   }│                │{1:~}│{1:~                   }|
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
@@ -396,19 +326,14 @@ describe('global statusline', function()
       {1:~                   }│{1:~               }│{1:~}│                    |
       {4:<No Name] 0,0-1  All < Name] 0,0-1    <}│{1:~                   }|
                                              │{1:~                   }|
-      {1:~                                      }│{1:~                   }|
-      {1:~                                      }│{1:~                   }|
-      {1:~                                      }│{1:~                   }|
-      {1:~                                      }│{1:~                   }|
+      {1:~                                      }│{1:~                   }|*4
                                                 0,0-1         All |
     ]])
 
     command('set laststatus=3')
     screen:expect([[
                           │                │ │^                    |
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
-      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
+      {1:~                   }│{1:~               }│{1:~}│{1:~                   }|*3
       {1:~                   }├────────────────┤{1:~}│{1:~                   }|
       {1:~                   }│                │{1:~}│{1:~                   }|
       {1:~                   }│{1:~               }│{1:~}│{1:~                   }|
@@ -416,9 +341,7 @@ describe('global statusline', function()
       {1:~                   }│{1:~               }│{1:~}│                    |
       ────────────────────┴────────────────┴─┤{1:~                   }|
                                              │{1:~                   }|
-      {1:~                                      }│{1:~                   }|
-      {1:~                                      }│{1:~                   }|
-      {1:~                                      }│{1:~                   }|
+      {1:~                                      }│{1:~                   }|*3
       {2:[No Name]                                 0,0-1          All}|
                                                                   |
     ]])
@@ -460,11 +383,7 @@ describe('global statusline', function()
     feed('L')
     screen:expect([[
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       ────────────────────────────────────────────────────────────|
       0000;<control>;Cc;0;BN;;;;;N;NULL;;;;                       |
       0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;;           |
@@ -479,11 +398,7 @@ describe('global statusline', function()
     feed('j')
     screen:expect([[
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       ────────────────────────────────────────────────────────────|
       0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;;           |
       0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
@@ -499,11 +414,7 @@ describe('global statusline', function()
     screen:expect([[
       {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       ────────────────────────────────────────────────────────────|
       0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
       0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;                |
@@ -518,11 +429,7 @@ describe('global statusline', function()
     screen:expect([[
       {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       ────────────────────────────────────────────────────────────|
       0001;<control>;Cc;0;BN;;;;;N;START OF HEADING;;;;           |
       0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
@@ -537,11 +444,7 @@ describe('global statusline', function()
     screen:expect([[
       {3: }{5:2}{3: t/f/f/bigfile.txt }{4:                                       }|
                                                                   |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*5
       ────────────────────────────────────────────────────────────|
       0002;<control>;Cc;0;BN;;;;;N;START OF TEXT;;;;              |
       0003;<control>;Cc;0;BN;;;;;N;END OF TEXT;;;;                |
@@ -579,22 +482,14 @@ it('statusline is redrawn with :resize from <Cmd> mapping #19629', function()
   feed('<Up>')
   screen:expect([[
     ^                                        |
-    {0:~                                       }|
-    {0:~                                       }|
-    {0:~                                       }|
-    {0:~                                       }|
+    {0:~                                       }|*4
     {1:[No Name]                               }|
-                                            |
-                                            |
+                                            |*2
   ]])
   feed('<Down>')
   screen:expect([[
     ^                                        |
-    {0:~                                       }|
-    {0:~                                       }|
-    {0:~                                       }|
-    {0:~                                       }|
-    {0:~                                       }|
+    {0:~                                       }|*5
     {1:[No Name]                               }|
                                             |
   ]])
@@ -614,11 +509,7 @@ it('showcmdloc=statusline does not show if statusline is too narrow', function()
   command('1vsplit')
   screen:expect([[
     ^ │                                      |
-    {0:~}│{0:~                                     }|
-    {0:~}│{0:~                                     }|
-    {0:~}│{0:~                                     }|
-    {0:~}│{0:~                                     }|
-    {0:~}│{0:~                                     }|
+    {0:~}│{0:~                                     }|*5
     {1:< }{2:[No Name]                             }|
                                             |
   ]])
@@ -668,8 +559,7 @@ it('statusline is redrawn on various state changes', function()
   screen:expect([[
     ^                                        |
     ~                                       |
-                                            |
-                                            |
+                                            |*2
   ]])
   feed('qQ')
   screen:expect([[
@@ -682,8 +572,7 @@ it('statusline is redrawn on various state changes', function()
   screen:expect([[
     ^                                        |
     ~                                       |
-                                            |
-                                            |
+                                            |*2
   ]])
 
   -- Visual mode change #23932
@@ -765,12 +654,10 @@ it("shows correct ruler in cmdline with no statusline", function()
   command '1wincmd w'
   screen:expect [[
     ^                              |
-    {1:~                             }|
-    {1:~                             }|
+    {1:~                             }|*2
     {2:[No Name]      1longlonglong  }|
                    │              |
-    {1:~              }│{1:~             }|
-    {1:~              }│{1:~             }|
+    {1:~              }│{1:~             }|*2
                    3longlonglong  |
   ]]
   -- Window 2 is current. It has no statusline, so cmdline should show its
@@ -778,24 +665,20 @@ it("shows correct ruler in cmdline with no statusline", function()
   command '2wincmd w'
   screen:expect [[
                                   |
-    {1:~                             }|
-    {1:~                             }|
+    {1:~                             }|*2
     {3:[No Name]      1longlonglong  }|
     ^               │              |
-    {1:~              }│{1:~             }|
-    {1:~              }│{1:~             }|
+    {1:~              }│{1:~             }|*2
                    2longlonglong  |
   ]]
   -- Window 3 is current. Cmdline should again show its ruler.
   command '3wincmd w'
   screen:expect [[
                                   |
-    {1:~                             }|
-    {1:~                             }|
+    {1:~                             }|*2
     {3:[No Name]      1longlonglong  }|
                    │^              |
-    {1:~              }│{1:~             }|
-    {1:~              }│{1:~             }|
+    {1:~              }│{1:~             }|*2
                    3longlonglong  |
   ]]
 end)

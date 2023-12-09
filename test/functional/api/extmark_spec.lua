@@ -435,14 +435,7 @@ describe('API/extmarks', function()
     -- This shouldn't seg fault
     screen:expect([[
       12345^ 1        |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
+      ~              |*8
                      |
     ]])
   end)
@@ -495,14 +488,7 @@ describe('API/extmarks', function()
     insert('abc')
     screen:expect([[
       ab^c12345       |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
-      ~              |
+      ~              |*8
                      |
     ]])
     local rv = get_extmark_by_id(ns, marks[1])
@@ -1635,11 +1621,8 @@ describe('API/extmarks', function()
     command('d2')
     screen:expect([[
       S2^aaa bbb ccc                           |
-        aaa bbb ccc                           |
-        aaa bbb ccc                           |
-        aaa bbb ccc                           |
-                                              |
-                                              |
+        aaa bbb ccc                           |*3
+                                              |*2
     ]])
     -- mark is restored with undo_restore == true
     command('silent undo')
@@ -1647,8 +1630,7 @@ describe('API/extmarks', function()
       S1  ^aaa bbb ccc                         |
       S1S2aaa bbb ccc                         |
       S2  aaa bbb ccc                         |
-          aaa bbb ccc                         |
-          aaa bbb ccc                         |
+          aaa bbb ccc                         |*2
                                               |
     ]])
     -- mark is deleted with undo_restore == false
@@ -1923,12 +1905,9 @@ describe('API/win_extmark', function()
     screen:expect({
       grid = [[
         ## grid 1
-          [4:--------------------]|
-          [4:--------------------]|
-          [4:--------------------]|
+          [4:--------------------]|*3
           [No Name] [+]       |
-          [2:--------------------]|
-          [2:--------------------]|
+          [2:--------------------]|*2
           [No Name] [+]       |
           [3:--------------------]|
         ## grid 2
@@ -1959,12 +1938,9 @@ describe('API/win_extmark', function()
     screen:expect({
       grid = [[
         ## grid 1
-          [4:--------------------]|
-          [4:--------------------]|
-          [4:--------------------]|
+          [4:--------------------]|*3
           [No Name] [+]       |
-          [2:--------------------]|
-          [2:--------------------]|
+          [2:--------------------]|*2
           [No Name] [+]       |
           [3:--------------------]|
         ## grid 2

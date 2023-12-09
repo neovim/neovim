@@ -212,9 +212,7 @@ describe('decorations providers', function()
       {15:i} am not capitalized.                   |
       I am a {16:speling} {16:mistakke}.                |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*3
                                               |
     ]]}
 
@@ -227,9 +225,7 @@ describe('decorations providers', function()
       {15:^i} am not capitalized.                   |
       I am a {16:speling} {16:mistakke}.                |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*3
                                               |
     ]]}
 
@@ -242,9 +238,7 @@ describe('decorations providers', function()
       {15:i} am not capitalized.                   |
       I am a {16:^speling} {16:mistakke}.                |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*3
                                               |
     ]]}
 
@@ -257,9 +251,7 @@ describe('decorations providers', function()
       i am not capitalized.                   |
       I am a ^speling mistakke.                |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*3
                                               |
     ]]}
 
@@ -269,9 +261,7 @@ describe('decorations providers', function()
       i am not capitalized.                   |
       I am a ^speling mistakke.                |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*3
       {17:search hit BOTTOM, continuing at TOP}    |
     ]]}
     command('echo ""')
@@ -284,9 +274,7 @@ describe('decorations providers', function()
       {15:i} am not capitalized.                   |
       I am a {16:^speling} {16:mistakke}.                |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*3
                                               |
     ]]}
 
@@ -296,9 +284,7 @@ describe('decorations providers', function()
       {15:i} am not capitalized.                   |
       I am a {16:speling} {16:^mistakke}.                |
                                               |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*3
                                               |
     ]]}
 
@@ -787,8 +773,7 @@ describe('extmark decorations', function()
               colpos = colpos+1              {25: }          |
           end                                {25: }          |
       end                                    {25: }          |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]])
     meths.buf_set_extmark(0, ns, 4, 0, { virt_text={{''}}, virt_text_pos='eol'})
@@ -827,8 +812,7 @@ describe('extmark decorations', function()
       {2:|}   {1:|}   cofoo{3:bar}{4:!!}olpos+1                         |
           end                                           |
       end                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]]}
 
@@ -857,8 +841,7 @@ describe('extmark decorations', function()
       s+1                   |
           end               |
       end                   |
-      {1:~                     }|
-      {1:~                     }|
+      {1:~                     }|*2
                             |
     ]]}
 
@@ -892,8 +875,7 @@ describe('extmark decorations', function()
       s+1                   |
           end  -- ???????{4:口 }|
       end  -- {4:口口} 古古{4:口口 }|
-      {1:~                     }|
-      {1:~                     }|
+      {1:~                     }|*2
                             |
     ]]}
 
@@ -1125,8 +1107,7 @@ describe('extmark decorations', function()
               colpos {5:=} colpos{5:+}{13:1}                         |
           {5:end}                                           |
       {5:end}                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]]}
 
@@ -1152,8 +1133,7 @@ describe('extmark decorations', function()
               colpos {5:=} colpos{5:+}{13:1}                         |
           {5:end}                                           |
       {5:end}                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]]}
 
@@ -1171,8 +1151,7 @@ describe('extmark decorations', function()
               colpos {5:=} colpos{5:+}{13:1}                         |
           {5:end}                                           |
       {5:end}                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
       {24:-- VISUAL LINE --}                                 |
     ]]}
 
@@ -1190,8 +1169,7 @@ describe('extmark decorations', function()
               colpos {5:=} colpos{5:+}{13:1}                         |
           {5:end}                                           |
       {5:end}                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
       {24:-- VISUAL LINE --}                                 |
     ]]}
   end)
@@ -1224,8 +1202,7 @@ describe('extmark decorations', function()
               colpos = colpos+1                         |
           end                                           |
       end                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]]}
 
@@ -1262,8 +1239,7 @@ describe('extmark decorations', function()
               colpos = colpos+1                         |
           end                                           |
       end                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
       :                                                 |
     ]]}
 
@@ -1465,8 +1441,7 @@ describe('extmark decorations', function()
     screen:expect{grid=[[
       ^aaaaaaaaaaaaaaaaaaaaaaaaa│                         |
       aaaaaaaaaaaaaaaaaaaaaaaaa│{1:~                        }|
-      {1:~                        }│{1:~                        }|
-      {1:~                        }│{1:~                        }|
+      {1:~                        }│{1:~                        }|*2
       {41:[No Name] [+]             }{40:[No Name]                }|
                                                          |
     ]]}
@@ -1583,8 +1558,7 @@ describe('extmark decorations', function()
     meths.buf_set_extmark(0, ns, 0, 0, { virt_lines = { vt, vt } })
     screen:expect{grid=[[
       {2:a}{3:b}{4:c}{5:d}{6:X}#^# {2:a}{3:b}{4:c}{5:d}{6:X}  {2:a}{3:b}{4:c}{5:d}{6:X}|
-      {2:a}{3:b}{4:c}{5:d}{6:X}               |
-      {2:a}{3:b}{4:c}{5:d}{6:X}               |
+      {2:a}{3:b}{4:c}{5:d}{6:X}               |*2
       {1:~                   }|
                           |
     ]]}
@@ -1597,19 +1571,7 @@ describe('extmark decorations', function()
     ]]
     screen:expect{grid=[[
       ^ a                                                |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*13
                                                         |
     ]]}
 
@@ -1619,19 +1581,7 @@ describe('extmark decorations', function()
     ]]
     screen:expect{grid=[[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*13
                                                         |
     ]]}
     assert_alive()
@@ -1645,8 +1595,7 @@ describe('extmark decorations', function()
     screen:expect([[
       {26:X}                                                 |
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]])
     command('set conceallevel=1')
@@ -1663,8 +1612,7 @@ describe('extmark decorations', function()
     screen:expect([[
       {26:ẍ̲}                                                 |
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]])
     command('set conceallevel=1')
@@ -1675,8 +1623,7 @@ describe('extmark decorations', function()
     screen:expect{grid=[[
       {26:x}                                                 |
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]]}
   end)
@@ -1690,16 +1637,14 @@ describe('extmark decorations', function()
     screen:expect([[
       {26:?}bar                                              |
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]])
     command('let &conceallevel=2')
     screen:expect([[
       bar                                               |
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]])
   end)
@@ -1754,19 +1699,10 @@ describe('extmark decorations', function()
 
     screen:expect{grid=[[
       {27: }                                                 |
-      XXX                                               |
-      XXX                                               |
+      XXX                                               |*2
       ^XXX HELLO                                         |
-      XXX                                               |
-      XXX                                               |
-      XXX                                               |
-      XXX                                               |
-      XXX                                               |
-      XXX                                               |
-      XXX                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      XXX                                               |*7
+      {1:~                                                 }|*3
                                                         |
     ]]}
 
@@ -1942,23 +1878,17 @@ describe('extmark decorations', function()
     meths.buf_set_extmark(0, ns, 0, 0, {end_row = 5, end_col = 0, hl_group = 'Underlined'})
     screen:expect([[
       {28:^asdf}                                              |
-      {28:        asdf}                                      |
-      {28:        asdf}                                      |
-      {28:        asdf}                                      |
+      {28:        asdf}                                      |*3
       {28:asdf}                                              |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]])
     feed('<C-V>Gll')
     screen:expect([[
       {29:asd}{28:f}                                              |
-      {29:   }{28:     asdf}                                      |
-      {29:   }{28:     asdf}                                      |
-      {29:   }{28:     asdf}                                      |
+      {29:   }{28:     asdf}                                      |*3
       {29:as}{28:^df}                                              |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
       {24:-- VISUAL BLOCK --}                                |
     ]])
   end)
@@ -1984,8 +1914,7 @@ describe('extmark decorations', function()
               colpos = colpos+1                         |
           end                                           |
       end                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]]}
     feed'5<c-e>'
@@ -1997,13 +1926,7 @@ describe('extmark decorations', function()
               colpos = colpos+1                         |
           end                                           |
       end                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*7
                                                         |
     ]]}
 
@@ -2016,13 +1939,7 @@ describe('extmark decorations', function()
               colpos = colpos+1                         |
           end                                           |
       end                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*7
                                                         |
     ]]}
   end)
@@ -2504,8 +2421,7 @@ describe('decorations: inline virtual text', function()
       {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
       {10:X}                                                           |
       bbbbbb                                                      |
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
                                                                   |
     ]]}
     feed('j')
@@ -2515,8 +2431,7 @@ describe('decorations: inline virtual text', function()
       {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
       {10:X}                                                           |
       bbbbbb                                                      |
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
                                                                   |
     ]]}
     feed('j')
@@ -2526,8 +2441,7 @@ describe('decorations: inline virtual text', function()
       {10:^XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
       {10:X}                                                           |
       bbbbbb                                                      |
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
                                                                   |
     ]]}
     feed('j')
@@ -2537,8 +2451,7 @@ describe('decorations: inline virtual text', function()
       {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
       {10:X}                                                           |
       bbbbb^b                                                      |
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
                                                                   |
     ]]}
     feed('0<C-V>2l2k')
@@ -2548,8 +2461,7 @@ describe('decorations: inline virtual text', function()
       {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
       {10:X}                                                           |
       {7:bbb}bbb                                                      |
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
       {8:-- VISUAL BLOCK --}                                          |
     ]]}
     feed([[<Esc>/aaa\n\%V<CR>]])
@@ -2559,8 +2471,7 @@ describe('decorations: inline virtual text', function()
       {10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
       {10:X}                                                           |
       bbbbbb                                                      |
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
       {16:search hit BOTTOM, continuing at TOP}                        |
     ]]}
     feed('3ggic')
@@ -2570,8 +2481,7 @@ describe('decorations: inline virtual text', function()
       c{10:^XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
       {10:XX}                                                          |
       bbbbbb                                                      |
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
       {8:-- INSERT --}                                                |
     ]]}
     feed([[<Esc>/aaa\nc\%V<CR>]])
@@ -2581,8 +2491,7 @@ describe('decorations: inline virtual text', function()
       {12:c}{10:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}|
       {10:XX}                                                          |
       bbbbbb                                                      |
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*2
       {16:search hit BOTTOM, continuing at TOP}                        |
     ]]}
   end)
@@ -3052,13 +2961,11 @@ describe('decorations: inline virtual text', function()
     feed('gg0')
     screen:expect{grid=[[
       {9:^000                      }│{5:9}{14:test}{9:000                }|
-      {9:000                      }│{9:000}{5:9}{9:                    }|
-      {9:000                      }│{9:000}{5:9}{9:                    }|
+      {9:000                      }│{9:000}{5:9}{9:                    }|*2
       {9:000                      }│{5:9}{9:000                    }|
       {9:000                      }│{9:000}{5:9}{9:                    }|
       {9:aaabbb                   }│{14:!}{9:aaa}{5:    }{9:bbb             }|
-      {1:~                        }│{1:~                       }|
-      {1:~                        }│{1:~                       }|
+      {1:~                        }│{1:~                       }|*2
       {15:[No Name] [+]             }{13:[No Name] [+]           }|
                                                         |
     ]]}
@@ -3066,13 +2973,11 @@ describe('decorations: inline virtual text', function()
     feed('zl')
     screen:expect{grid=[[
       {9:000                      }│{14:test}{9:000                 }|
-      {9:000                      }│{9:00}{5:9}{9:                     }|
-      {9:000                      }│{9:00}{5:9}{9:                     }|
+      {9:000                      }│{9:00}{5:9}{9:                     }|*2
       {9:000                      }│{9:000                     }|
       {9:000                      }│{9:00}{5:9}{9:                     }|
       {9:aaabbb                   }│{9:aaa}{5:    }{9:bb^b              }|
-      {1:~                        }│{1:~                       }|
-      {1:~                        }│{1:~                       }|
+      {1:~                        }│{1:~                       }|*2
       {13:[No Name] [+]             }{15:[No Name] [+]           }|
                                                         |
     ]]}
@@ -3141,16 +3046,14 @@ describe('decorations: inline virtual text', function()
     screen:expect{grid=[[
       {18:^+--  2 lines: aaaaa·······························································}|
       {17:+--  2 lines: ccccc·······························································}|
-      {1:~                                                                                 }|
-      {1:~                                                                                 }|
+      {1:~                                                                                 }|*2
                                                                                         |
     ]]}
     feed('j')
     screen:expect{grid=[[
       {17:+--  2 lines: aaaaa·······························································}|
       {18:^+--  2 lines: ccccc·······························································}|
-      {1:~                                                                                 }|
-      {1:~                                                                                 }|
+      {1:~                                                                                 }|*2
                                                                                         |
     ]]}
   end)
@@ -3161,24 +3064,19 @@ describe('decorations: inline virtual text', function()
     screen:expect{grid=[[
       ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
       b                                                                                 |
-      {1:~                                                                                 }|
-      {1:~                                                                                 }|
+      {1:~                                                                                 }|*2
                                                                                         |
     ]]}
     command('set nowrap')
     screen:expect{grid=[[
       ^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-      {1:~                                                                                 }|
-      {1:~                                                                                 }|
-      {1:~                                                                                 }|
+      {1:~                                                                                 }|*3
                                                                                         |
     ]]}
     feed('82i0<Esc>0')
     screen:expect{grid=[[
       ^0000000000000000000000000000000000000000000000000000000000000000000000000000000000|
-      {1:~                                                                                 }|
-      {1:~                                                                                 }|
-      {1:~                                                                                 }|
+      {1:~                                                                                 }|*3
                                                                                         |
     ]]}
     command('set wrap')
@@ -3416,26 +3314,20 @@ describe('decorations: inline virtual text', function()
             {1:+}23123123123123123123123|
             {1:+}12312312312312312312312|
             {1:+}3^a                     |
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*2
       :                             |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
             {1:+}12312312312312312312312|
             {1:+}3^a                     |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*3
       :                             |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
             {1:+}3^a                     |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*4
       :                             |
     ]]}
     feed('zbi')
@@ -3480,26 +3372,20 @@ describe('decorations: inline virtual text', function()
             {1:+}31231231231231231231231|
             {1:+}23123123123123123123123|
             {1:+}^a                      |
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*2
       :                             |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
             {1:+}23123123123123123123123|
             {1:+}^a                      |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*3
       :                             |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
             {1:+}^a                      |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*4
       :                             |
     ]]}
     feed('023x$')
@@ -3516,26 +3402,20 @@ describe('decorations: inline virtual text', function()
             {1:+}31231231231231231231231|
             {1:+}23123123123123123123123|
             {1:+}^a                      |
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*2
       :                             |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
             {1:+}23123123123123123123123|
             {1:+}^a                      |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*3
       :                             |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
             {1:+}^a                      |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*4
       :                             |
     ]]}
     feed('zbi')
@@ -3552,8 +3432,7 @@ describe('decorations: inline virtual text', function()
         1 ^12312312312312312312312312|
             {1:+}31231231231231231231231|
             {1:+}23123123123123123123a  |
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*2
       {8:-- INSERT --}                  |
     ]]}
     feed('<Esc>')
@@ -3561,26 +3440,20 @@ describe('decorations: inline virtual text', function()
         1 12312312312312312312312312|
             {1:+}31231231231231231231231|
             {1:+}23123123123123123123^a  |
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*2
                                     |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
             {1:+}31231231231231231231231|
             {1:+}23123123123123123123^a  |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*3
                                     |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
             {1:+}23123123123123123123^a  |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*4
                                     |
     ]]}
     feed('zbx')
@@ -3588,8 +3461,7 @@ describe('decorations: inline virtual text', function()
         1 ^12312312312312312312312312|
             {1:+}31231231231231231231231|
             {1:+}23123123123123123123   |
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*2
                                     |
     ]]}
     feed('26ia<Esc>a')
@@ -3645,26 +3517,20 @@ describe('decorations: inline virtual text', function()
       {1:<<<}212121212121212121212121212|
       1212121212121212121212121212{1:<-}|
       {1:----->}^a                       |
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*2
                                     |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
       {1:<<<}2121212121212121212121212{1:<-}|
       {1:----->}^a                       |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*3
                                     |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
       {1:<<<-->}^a                       |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*4
                                     |
     ]]}
     feed('zbh')
@@ -3708,26 +3574,20 @@ describe('decorations: inline virtual text', function()
       {1:<<<}212121212121212121212121212|
       1212121212121212121212121212  |
            ^ a                       |
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*2
                                     |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
       {1:<<<}2121212121212121212121212  |
            ^ a                       |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*3
                                     |
     ]]}
     feed('<C-E>')
     screen:expect{grid=[[
       {1:<<<}  ^ a                       |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*4
                                     |
     ]]}
   end)
@@ -3744,8 +3604,7 @@ describe('decorations: inline virtual text', function()
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
         {1:+}bbbbbbbbbb                                     |
         {1:+}cccccccccccccccccccccccccccccccccccccccccccc^c  |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]]}
     feed('05x$')
@@ -3753,8 +3612,7 @@ describe('decorations: inline virtual text', function()
       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbb|
         {1:+}bbbbb                                          |
         {1:+}cccccccccccccccccccccccccccccccccccccccccccc^c  |
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*2
                                                         |
     ]]}
   end)
@@ -4158,9 +4016,7 @@ if (h->n_buckets < new_n_buckets) { // expand
           ^char *new_vals = krealloc( h->vals_buf, new_n_|
       buckets * val_size);                              |
       Grugg                                             |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*3
                                                         |
     ]]}
 
@@ -4168,31 +4024,14 @@ if (h->n_buckets < new_n_buckets) { // expand
     screen:expect{grid=[[
       ^                                                  |
       Grugg                                             |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*9
       --No lines in buffer--                            |
     ]]}
 
     meths.buf_del_extmark(0, ns, id)
     screen:expect{grid=[[
       ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*10
       --No lines in buffer--                            |
     ]]}
   end)
@@ -4205,15 +4044,7 @@ if (h->n_buckets < new_n_buckets) { // expand
     screen:expect([[
       fo^o                                               |
       {6:bar}                                               |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*9
                                                         |
     ]])
   end)
@@ -4325,8 +4156,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       they                          |
       {7:hatin'}                        |
       ^hh                            |
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*2
                                     |
     ]]}
 
@@ -4335,9 +4165,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       they                          |
       {7:hatin'}                        |
       ^hh                            |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*3
                                     |
     ]]}
 
@@ -4345,21 +4173,14 @@ if (h->n_buckets < new_n_buckets) { // expand
     screen:expect{grid=[[
       {7:hatin'}                        |
       ^hh                            |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*4
                                     |
     ]]}
 
     feed '<c-e>'
     screen:expect{grid=[[
       ^hh                            |
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
-      {1:~                             }|
+      {1:~                             }|*5
                                     |
     ]]}
   end)
@@ -4560,9 +4381,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       line3                                             |
       line4                                             |
       line^5                                             |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*3
                                                         |
     ]]}
 
@@ -4576,10 +4395,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       line3                                             |
       line4                                             |
       line5                                             |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*4
                                                         |
     ]]}
 
@@ -4593,9 +4409,7 @@ if (h->n_buckets < new_n_buckets) { // expand
       line3                                             |
       line4                                             |
       line5                                             |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
+      {1:~                                                 }|*3
                                                         |
     ]]}
   end)
@@ -4639,9 +4453,7 @@ l5
       {1:  }l4                                              |
       {1:  }l5                                              |
       {1:  }                                                |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]}
   end)
@@ -4659,9 +4471,7 @@ l5
       {1:  }l4                                              |
       {1:  }l5                                              |
       {1:  }                                                |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]}
   end)
@@ -4678,9 +4488,7 @@ l5
       {1:  }l4                                              |
       {1:  }l5                                              |
       {1:  }                                                |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]}
 
@@ -4700,9 +4508,7 @@ l5
       {1:  }l4                                              |
       {1:  }l5                                              |
       {1:  }                                                |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]}
   end)
@@ -4721,9 +4527,7 @@ l5
       S2l4                                              |
       S2l5                                              |
       {1:  }                                                |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]}
   end)
@@ -4741,9 +4545,7 @@ l5
       S1S2l4                                            |
       {1:    }l5                                            |
       {1:    }                                              |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]}
   end)
@@ -4763,9 +4565,7 @@ l5
       S2{1:  }l4                                            |
       {1:    }l5                                            |
       {1:    }                                              |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]}
   end)
@@ -4784,9 +4584,7 @@ l5
       {1:  }l4                                              |
       {1:  }l5                                              |
       {1:  }                                                |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]}
   end)
@@ -4810,9 +4608,7 @@ l5
       {1:    }l4                                            |
       {1:    }l5                                            |
       {1:    }                                              |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]}
   end)
@@ -4837,9 +4633,7 @@ l5
       S3{1:    }l4                                          |
       S3{1:    }l5                                          |
       {1:      }                                            |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*3
                                                         |
     ]]}
   end)
@@ -4857,11 +4651,7 @@ l5
       X {1:  }l4                                            |
       {1:    }l5                                            |
       {1:    }                                              |
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
-      {2:~                                                 }|
+      {2:~                                                 }|*5
                                                         |
     ]]}
   end)
@@ -4886,14 +4676,7 @@ l5
     end
 
     screen:expect{grid=[[
-      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
-      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |
+      W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:h}                 |*8
       W X Y Z {3:a} {3:b} {3:c} {3:d} {3:e} {3:f} {3:g} {3:^h}                 |
                                               |
     ]]}
@@ -5042,10 +4825,7 @@ describe('decorations: virt_text', function()
       {1:  2 }hello               {2:hello}                     |
       {1:  1 }hello                                         |
       {1:5   }helloVIRTUA^L                                  |
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
+      {3:~                                                 }|*4
                                                         |
     ]]}
 
@@ -5058,10 +4838,7 @@ describe('decorations: virt_text', function()
       {1:  1 }hello               {2:hello}                     |
       {1:4   }hell^o                                         |
       {1:  1 }helloVIRTUAL                                  |
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
+      {3:~                                                 }|*4
                                                         |
     ]]}
   end)
@@ -5071,14 +4848,9 @@ describe('decorations: virt_text', function()
 
     screen:expect{grid=[[
                                                         |
-      hello                                             |
-      hello                                             |
-      hello                                             |
-      hello                                             |
+      hello                                             |*4
       hell^o                                             |
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
+      {3:~                                                 }|*3
                                                         |
     ]]}
 
@@ -5089,14 +4861,9 @@ describe('decorations: virt_text', function()
 
     screen:expect{grid=[[
                                                         |
-      hello                                             |
-      hello                                             |
-      hello                                             |
-      hello                                             |
+      hello                                             |*4
       hell^o world                                       |
-      {3:~                                                 }|
-      {3:~                                                 }|
-      {3:~                                                 }|
+      {3:~                                                 }|*3
                                                         |
     ]]}
   end)

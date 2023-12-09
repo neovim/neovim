@@ -271,8 +271,7 @@ describe('fileio', function()
     command("e Xtest-overwrite-forced")
     screen:expect([[
       ^foobar                                  |
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*2
       "Xtest-overwrite-forced" [noeol] 1L, 6B |
     ]])
 
@@ -296,16 +295,14 @@ describe('fileio', function()
     feed("<cr>")
     screen:expect([[
       ^foobar                                  |
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*2
                                               |
     ]])
     -- Use a screen test because the warning does not set v:errmsg.
     command("w!")
     screen:expect([[
       ^foobar                                  |
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*2
       <erwrite-forced" [noeol] 1L, 6B written |
     ]])
   end)

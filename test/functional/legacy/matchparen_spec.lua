@@ -47,16 +47,12 @@ describe('matchparen', function()
 
     local screen1 = [[
       {1:^()}                  |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*3
                           |
     ]]
     local screen2 = [[
       ^aa                  |
-      {0:~                   }|
-      {0:~                   }|
-      {0:~                   }|
+      {0:~                   }|*3
                           |
     ]]
 

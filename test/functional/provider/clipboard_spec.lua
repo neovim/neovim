@@ -112,15 +112,13 @@ describe('clipboard', function()
     feed('"+yl')
     screen:expect([[
       ^a                                                                       |
-      {0:~                                                                       }|
-      {0:~                                                                       }|
+      {0:~                                                                       }|*2
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
     ]])
     feed('"+p')
     screen:expect([[
       a^a                                                                      |
-      {0:~                                                                       }|
-      {0:~                                                                       }|
+      {0:~                                                                       }|*2
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
     ]])
   end)
@@ -132,22 +130,19 @@ describe('clipboard', function()
     feed('yl')
     screen:expect([[
       ^a                                                                       |
-      {0:~                                                                       }|
-      {0:~                                                                       }|
+      {0:~                                                                       }|*2
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
     ]])
     feed(':<CR>')
     screen:expect([[
       ^a                                                                       |
-      {0:~                                                                       }|
-      {0:~                                                                       }|
+      {0:~                                                                       }|*2
       :                                                                       |
     ]])
     feed('p')
     screen:expect([[
       a^a                                                                      |
-      {0:~                                                                       }|
-      {0:~                                                                       }|
+      {0:~                                                                       }|*2
       :                                                                       |
     ]])
   end)
@@ -157,8 +152,7 @@ describe('clipboard', function()
     feed_command('redir @+> | :silent echo system("cat CONTRIBUTING.md") | redir END')
     screen:expect([[
       ^                                                                        |
-      {0:~                                                                       }|
-      {0:~                                                                       }|
+      {0:~                                                                       }|*2
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
     ]])
   end)
@@ -184,8 +178,7 @@ describe('clipboard', function()
     feed_command('let @+="foo"')
     screen:expect([[
       ^                                                                        |
-      {0:~                                                                       }|
-      {0:~                                                                       }|
+      {0:~                                                                       }|*2
       clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
     ]])
   end)
@@ -336,8 +329,7 @@ describe('clipboard (with fake clipboard.vim)', function()
     feed_command('redir @+> | bogus_cmd | redir END')
     screen:expect([[
       ^                                                                        |
-      {0:~                                                                       }|
-      {0:~                                                                       }|
+      {0:~                                                                       }|*2
       {1:E492: Not an editor command: bogus_cmd | redir END}                      |
     ]])
   end)
@@ -663,8 +655,7 @@ describe('clipboard (with fake clipboard.vim)', function()
     feed_command("registers")
     screen:expect([[
                                                                   |
-      {0:~                                                           }|
-      {0:~                                                           }|
+      {0:~                                                           }|*2
       {4:                                                            }|
       :registers                                                  |
       {1:Type Name Content}                                           |
@@ -728,8 +719,7 @@ describe('clipboard (with fake clipboard.vim)', function()
     screen:expect([[
       the ^source                    |
       a target                      |
-      {0:~                             }|
-      {0:~                             }|
+      {0:~                             }|*2
                                     |
     ]])
 

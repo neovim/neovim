@@ -186,9 +186,7 @@ describe('ui/cursor', function()
     command("echo 'test'")
     screen:expect{grid=[[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      ~                        |*3
       test                     |
     ]], condition=function()
       eq(nil, screen._mode_info)
@@ -255,9 +253,7 @@ describe('ui/cursor', function()
     end
     screen:expect{grid=[[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      ~                        |*3
       test                     |
     ]], condition=function()
       eq(expected_mode_info, screen._mode_info)

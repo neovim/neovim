@@ -30,9 +30,7 @@ describe('breakindent', function()
     screen:expect([[
       {1:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
       {1:  }^second line                                                              |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:~                                                                          }|*3
       {2:-- INSERT --}                                                               |
     ]])
     -- No line wraps, so changing 'showbreak' should lead to the same screen.
@@ -47,8 +45,7 @@ describe('breakindent', function()
       {1:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
       {1:  }  {0:+^$}                                                                     |
       {1:  }second line{0:$}                                                             |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:~                                                                          }|*2
       {2:-- INSERT --}                                                               |
     ]]}
     command('setlocal nobreakindent')
@@ -56,8 +53,7 @@ describe('breakindent', function()
       {1:  }xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxX|
       {1:  }{0:+^$}                                                                       |
       {1:  }second line{0:$}                                                             |
-      {0:~                                                                          }|
-      {0:~                                                                          }|
+      {0:~                                                                          }|*2
       {2:-- INSERT --}                                                               |
     ]]}
   end)

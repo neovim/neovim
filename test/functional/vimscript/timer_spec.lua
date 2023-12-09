@@ -133,9 +133,7 @@ describe('timers', function()
     screen:expect([[
       ^ITEM 1                                  |
       ITEM 2                                  |
-      {1:~                                       }|
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*3
                                               |
     ]])
     nvim_async("command", "let g:cont = 1")
@@ -144,8 +142,7 @@ describe('timers', function()
       ^ITEM 1                                  |
       ITEM 2                                  |
       ITEM 3                                  |
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*2
                                               |
     ]])
 
@@ -155,8 +152,7 @@ describe('timers', function()
       ^ITEM 1                                  |
       ITEM 2                                  |
       ITEM 3                                  |
-      {1:~                                       }|
-      {1:~                                       }|
+      {1:~                                       }|*2
                                               |
     ]], unchanged=true}
   end)
@@ -244,10 +240,7 @@ describe('timers', function()
     feed(":good")
     screen:expect([[
                                               |
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
-      {0:~                                       }|
+      {0:~                                       }|*4
       :good^                                   |
     ]])
     command('let g:val = 1')

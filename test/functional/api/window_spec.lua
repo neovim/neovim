@@ -96,14 +96,7 @@ describe('API/win', function()
 
       screen:expect{grid=[[
         ^prologue                      |
-                                      |
-                                      |
-                                      |
-                                      |
-                                      |
-                                      |
-                                      |
-                                      |
+                                      |*8
       ]]}
       -- cursor position is at beginning
       eq({1, 0}, window('get_cursor', win))
@@ -111,13 +104,7 @@ describe('API/win', function()
       -- move cursor to end
       window('set_cursor', win, {101, 0})
       screen:expect{grid=[[
-                                      |
-                                      |
-                                      |
-                                      |
-                                      |
-                                      |
-                                      |
+                                      |*7
         ^epilogue                      |
                                       |
       ]]}
@@ -126,14 +113,7 @@ describe('API/win', function()
       window('set_cursor', win, {1, 0})
       screen:expect{grid=[[
         ^prologue                      |
-                                      |
-                                      |
-                                      |
-                                      |
-                                      |
-                                      |
-                                      |
-                                      |
+                                      |*8
       ]]}
 
       -- move focus to new window
@@ -144,12 +124,10 @@ describe('API/win', function()
       eq({1, 0}, window('get_cursor', win))
       screen:expect{grid=[[
         ^                              |
-        {1:~                             }|
-        {1:~                             }|
+        {1:~                             }|*2
         {2:[No Name]                     }|
         prologue                      |
-                                      |
-                                      |
+                                      |*2
         {3:[No Name] [+]                 }|
                                       |
       ]]}
@@ -158,11 +136,9 @@ describe('API/win', function()
       window('set_cursor', win, {101, 0})
       screen:expect{grid=[[
         ^                              |
-        {1:~                             }|
-        {1:~                             }|
+        {1:~                             }|*2
         {2:[No Name]                     }|
-                                      |
-                                      |
+                                      |*2
         epilogue                      |
         {3:[No Name] [+]                 }|
                                       |
@@ -172,12 +148,10 @@ describe('API/win', function()
       window('set_cursor', win, {1, 0})
       screen:expect{grid=[[
         ^                              |
-        {1:~                             }|
-        {1:~                             }|
+        {1:~                             }|*2
         {2:[No Name]                     }|
         prologue                      |
-                                      |
-                                      |
+                                      |*2
         {3:[No Name] [+]                 }|
                                       |
       ]]}
@@ -232,8 +206,7 @@ describe('API/win', function()
         bbb                           │bbb                          |
         ccc                           │ccc                          |
         {2:dd^d                           }│{2:ddd                          }|
-        {1:~                             }│{1:~                            }|
-        {1:~                             }│{1:~                            }|
+        {1:~                             }│{1:~                            }|*2
         {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  4,3        All}|
                                                                     |
       ]])
@@ -243,8 +216,7 @@ describe('API/win', function()
         bbb                           │bbb                          |
         ccc                           │ccc                          |
         {2:dd^d                           }│ddd                          |
-        {1:~                             }│{1:~                            }|
-        {1:~                             }│{1:~                            }|
+        {1:~                             }│{1:~                            }|*2
         {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  1,1        All}|
                                                                     |
       ]])
@@ -272,8 +244,7 @@ describe('API/win', function()
         bb{2:b}                           │bb{2:b}                          |
         cc{2:c}                           │cc{2:c}                          |
         dd^d                           │ddd                          |
-        {1:~                             }│{1:~                            }|
-        {1:~                             }│{1:~                            }|
+        {1:~                             }│{1:~                            }|*2
         {3:[No Name] [+]                  }{4:[No Name] [+]                }|
                                                                     |
       ]])
@@ -283,8 +254,7 @@ describe('API/win', function()
         bb{2:b}                           │bbb                          |
         cc{2:c}                           │{2:c}cc                          |
         dd^d                           │{2:d}dd                          |
-        {1:~                             }│{1:~                            }|
-        {1:~                             }│{1:~                            }|
+        {1:~                             }│{1:~                            }|*2
         {3:[No Name] [+]                  }{4:[No Name] [+]                }|
                                                                     |
       ]])

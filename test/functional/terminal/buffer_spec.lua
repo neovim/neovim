@@ -60,11 +60,7 @@ describe(':terminal buffer', function()
       feed('<c-\\><c-n>:set bufhidden=wipe<cr>:enew<cr>')
       screen:expect([[
         ^                                                  |
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
+        {4:~                                                 }|*5
         :enew                                             |
       ]])
     end)
@@ -73,11 +69,7 @@ describe(':terminal buffer', function()
       feed(':bnext:l<esc>')
       screen:expect([[
         ^                                                  |
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
+        {4:~                                                 }|*5
                                                           |
       ]])
     end)
@@ -89,11 +81,7 @@ describe(':terminal buffer', function()
       screen:expect([[
         tty ready                                         |
         {2:^ }                                                 |
-                                                          |
-                                                          |
-                                                          |
-                                                          |
-                                                          |
+                                                          |*5
       ]])
     end)
 
@@ -113,10 +101,7 @@ describe(':terminal buffer', function()
     screen:expect([[
       tty ready                                         |
       {2:^ }                                                 |
-                                                        |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*4
       {8:E21: Cannot make changes, 'modifiable' is off}     |
     ]])
   end)
@@ -127,22 +112,16 @@ describe(':terminal buffer', function()
     feed('"ap"ap')
     screen:expect([[
       ^tty ready                                         |
-      appended tty ready                                |
-      appended tty ready                                |
+      appended tty ready                                |*2
       {2: }                                                 |
-                                                        |
-                                                        |
+                                                        |*2
       :let @a = "appended " . @a                        |
     ]])
     -- operator count is also taken into consideration
     feed('3"ap')
     screen:expect([[
       ^tty ready                                         |
-      appended tty ready                                |
-      appended tty ready                                |
-      appended tty ready                                |
-      appended tty ready                                |
-      appended tty ready                                |
+      appended tty ready                                |*5
       :let @a = "appended " . @a                        |
     ]])
   end)
@@ -155,17 +134,14 @@ describe(':terminal buffer', function()
       ^tty ready                                         |
       appended tty ready                                |
       {2: }                                                 |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*3
       :put a                                            |
     ]])
     -- line argument is only used to move the cursor
     feed_command('6put a')
     screen:expect([[
       tty ready                                         |
-      appended tty ready                                |
-      appended tty ready                                |
+      appended tty ready                                |*2
       {2: }                                                 |
                                                         |
       ^                                                  |
@@ -177,21 +153,13 @@ describe(':terminal buffer', function()
     feed('<c-\\><c-n>:bd!<cr>')
     screen:expect([[
       ^                                                  |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:~                                                 }|*5
       :bd!                                              |
     ]])
     feed_command('bnext')
     screen:expect([[
       ^                                                  |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:~                                                 }|*5
       :bnext                                            |
     ]])
   end)
@@ -268,10 +236,7 @@ describe(':terminal buffer', function()
     screen:expect([[
                                                ydaer ytt|
       {1:a}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-                                                        |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*4
       {3:-- TERMINAL --}                                    |
     ]])
     command('bdelete!')
@@ -309,10 +274,7 @@ describe(':terminal buffer', function()
     screen:expect{grid=[[
       tty ready                                         |
       {2:^ }                                                 |
-                                                        |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*4
       {3:-- (terminal) --}                                  |
     ]]}
     eq('ntT', funcs.mode(1))
@@ -321,10 +283,7 @@ describe(':terminal buffer', function()
     screen:expect{grid=[[
       tty ready                                         |
       {2: }                                                 |
-                                                        |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*4
       :let g:x = 17^                                     |
     ]]}
 
@@ -332,10 +291,7 @@ describe(':terminal buffer', function()
     screen:expect{grid=[[
       tty ready                                         |
       {1: }                                                 |
-                                                        |
-                                                        |
-                                                        |
-                                                        |
+                                                        |*4
       {3:-- TERMINAL --}                                    |
     ]]}
     eq('t', funcs.mode(1))
@@ -456,9 +412,7 @@ describe('terminal input', function()
     })
     screen:expect{grid=[[
       {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
+      {4:~                                                 }|*3
       {5:[No Name]                       0,1            All}|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
@@ -580,8 +534,7 @@ describe('termopen()', function()
       screen:expect(([[
         ^%s{MATCH:%%s+}|
         [Process exited 0]                                |
-                                                          |
-                                                          |
+                                                          |*2
       ]]):format(expected))
     end
 

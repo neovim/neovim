@@ -118,8 +118,7 @@ describe('Ex mode', function()
       {1:  1 }foo bar                                                 |
       {1:  2 }foo foo                                                 |
       {1:  3 }^foo foo                                                 |
-      {2:~                                                           }|
-      {2:~                                                           }|
+      {2:~                                                           }|*2
                                                                   |
     ]])
   end)
@@ -166,10 +165,7 @@ describe('Ex mode', function()
     feed('vi<CR>')
     screen:expect([[
       ^foo                                                         |
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
-      {1:~                                                           }|
+      {1:~                                                           }|*4
                                                                   |
     ]])
   end)

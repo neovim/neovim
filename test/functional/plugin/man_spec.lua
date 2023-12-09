@@ -71,8 +71,7 @@ describe(':Man', function()
       screen:expect{grid=[[
         this i{c:^H}is{c:^H}s a{c:^H}a test                             |
         with _{c:^H}o_{c:^H}v_{c:^H}e_{c:^H}r_{c:^H}s_{c:^H}t_{c:^H}r_{c:^H}u_{c:^H}c_{c:^H}k tex^t  |
-        {eob:~                                                   }|
-        {eob:~                                                   }|
+        {eob:~                                                   }|*2
                                                             |
       ]]}
 
@@ -81,8 +80,7 @@ describe(':Man', function()
       screen:expect([[
       ^this {b:is} {b:a} test                                      |
       with {i:overstruck} text                                |
-      {eob:~                                                   }|
-      {eob:~                                                   }|
+      {eob:~                                                   }|*2
                                                           |
       ]])
     end)
@@ -95,8 +93,7 @@ describe(':Man', function()
       screen:expect{grid=[=[
         this {c:^[}[1mis {c:^[}[3ma {c:^[}[4mtest{c:^[}[0m                  |
         {c:^[}[4mwith{c:^[}[24m {c:^[}[4mescaped{c:^[}[24m {c:^[}[4mtext{c:^[}[24^m  |
-        {eob:~                                                   }|
-        {eob:~                                                   }|
+        {eob:~                                                   }|*2
                                                             |
       ]=]}
 
@@ -105,8 +102,7 @@ describe(':Man', function()
       screen:expect([[
       ^this {b:is }{bi:a }{biu:test}                                      |
       {u:with} {u:escaped} {u:text}                                   |
-      {eob:~                                                   }|
-      {eob:~                                                   }|
+      {eob:~                                                   }|*2
                                                           |
       ]])
     end)
@@ -120,8 +116,7 @@ describe(':Man', function()
       screen:expect([[
       ^this {b:is} {b:あ} test                                     |
       with {i:överstrũck} te{i:xt¶}                               |
-      {eob:~                                                   }|
-      {eob:~                                                   }|
+      {eob:~                                                   }|*2
                                                           |
       ]])
     end)

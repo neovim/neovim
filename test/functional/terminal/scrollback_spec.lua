@@ -362,11 +362,7 @@ describe(':terminal prints more lines than the screen height and exits', functio
     -- closes the buffer correctly after pressing a key
     screen:expect([[
       ^                              |
-      ~                             |
-      ~                             |
-      ~                             |
-      ~                             |
-      ~                             |
+      ~                             |*5
                                     |
     ]])
   end)
@@ -614,10 +610,7 @@ describe("pending scrollback line handling", function()
           or {'printf', ('hi\n'):rep(12)}
     )
     screen:expect [[
-      hi                            |
-      hi                            |
-      hi                            |
-      hi                            |
+      hi                            |*4
                                     |
       [Process exited 0]{2: }           |
       {3:-- TERMINAL --}                |
