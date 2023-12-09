@@ -3,7 +3,7 @@ on:
   pull_request_target:
     types: [opened]
 jobs:
-  labeler:
+  changed-files:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -15,7 +15,7 @@ jobs:
         configuration-path: .github/scripts/labeler_configuration.yml
 
   type-scope:
-    needs: triage
+    needs: changed-files
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -34,7 +34,7 @@ jobs:
       run: gh pr edit "$PR_NUMBER" --add-label "$(echo "$PR_TITLE" | sed -E 's|[[:alpha:]]+(\(.*\))?!:.*|breaking-change|')" || true
 
   request-reviewer:
-    needs: ["triage", "type-scope"]
+    needs: ["changed-files", "type-scope"]
     permissions:
       pull-requests: write
     uses: ./.github/workflows/reviewers_add.yml
