@@ -1292,7 +1292,10 @@ function Screen:render(headers, attr_state, preview)
     for i = 1, height do
       local cursor = self._cursor.grid == igrid and self._cursor.row == i
       local prefix = (headers or preview) and "  " or ""
-      table.insert(rv, prefix..self:_row_repr(igrid, i, attr_state, cursor).."|")
+      local row_repr = prefix..self:_row_repr(igrid, i, attr_state, cursor).."|"
+      if not row_repr:match("{?%d*:?~%s*}?") then
+        table.insert(rv, prefix..self:_row_repr(igrid, i, attr_state, cursor).."|")
+      end
     end
   end
   return rv
