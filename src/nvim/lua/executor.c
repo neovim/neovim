@@ -2313,3 +2313,21 @@ void nlua_init_defaults(void)
     os_errmsg("\n");
   }
 }
+
+/// check lua function exist
+bool nlua_func_exists(const char *lua_funcname)
+{
+  MAXSIZE_TEMP_ARRAY(args, 1);
+  size_t length = strlen(lua_funcname) + 8;
+  char *str = xmalloc(length);
+  vim_snprintf(str, length, "return %s", lua_funcname);
+  ADD_C(args, CSTR_AS_OBJ(str));
+  Error err = ERROR_INIT;
+  Object result = NLUA_EXEC_STATIC("return type(loadstring(...)()) =='function'", args, &err);
+  xfree(str);
+
+  if (result.type != kObjectTypeBoolean) {
+    return false;
+  }
+  return result.data.boolean;
+}
