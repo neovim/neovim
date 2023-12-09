@@ -1254,7 +1254,7 @@ handle_T nlua_pop_handle(lua_State *lstate, Error *err)
   handle_T ret;
   if (lua_type(lstate, -1) != LUA_TNUMBER) {
     api_set_error(err, kErrorTypeValidation, "Expected Lua number");
-    ret = (handle_T) - 1;
+    ret = (handle_T)(-1);
   } else {
     ret = (handle_T)lua_tonumber(lstate, -1);
   }

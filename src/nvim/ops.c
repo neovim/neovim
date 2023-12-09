@@ -4630,13 +4630,13 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     if (!pre) {
       if (subtract) {
         if (n > oldn) {
-          n = 1 + (n ^ (uvarnumber_T) - 1);
+          n = 1 + (n ^ (uvarnumber_T)(-1));
           negative ^= true;
         }
       } else {
         // add
         if (n < oldn) {
-          n = (n ^ (uvarnumber_T) - 1);
+          n = (n ^ (uvarnumber_T)(-1));
           negative ^= true;
         }
       }

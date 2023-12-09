@@ -1288,12 +1288,12 @@ void mark_adjust_buf(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount
     if (posp->lnum == lnum && posp->col >= mincol) { \
       posp->lnum += lnum_amount; \
       assert(col_amount > INT_MIN && col_amount <= INT_MAX); \
-      if (col_amount < 0 && posp->col <= (colnr_T) - col_amount) { \
+      if (col_amount < 0 && posp->col <= -col_amount) { \
         posp->col = 0; \
       } else if (posp->col < spaces_removed) { \
-        posp->col = (int)col_amount + spaces_removed; \
+        posp->col = col_amount + spaces_removed; \
       } else { \
-        posp->col += (colnr_T)col_amount; \
+        posp->col += col_amount; \
       } \
     } \
   }

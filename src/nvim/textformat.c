@@ -678,7 +678,7 @@ void auto_format(bool trailblank, bool prev_line)
   // Do the formatting and restore the cursor position.  "saved_cursor" will
   // be adjusted for the text formatting.
   saved_cursor = pos;
-  format_lines((linenr_T) - 1, false);
+  format_lines(-1, false);
   curwin->w_cursor = saved_cursor;
   saved_cursor.lnum = 0;
 

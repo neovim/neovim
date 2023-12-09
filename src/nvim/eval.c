@@ -5029,7 +5029,7 @@ size_t string2float(const char *const text, float_T *const ret_value)
     return 3;
   }
   if (STRNICMP(text, "-inf", 3) == 0) {
-    *ret_value = (float_T) - INFINITY;
+    *ret_value = (float_T)(-INFINITY);
     return 4;
   }
   if (STRNICMP(text, "nan", 3) == 0) {

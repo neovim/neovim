@@ -2171,7 +2171,7 @@ static void f_float2nr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  if (f <= (float_T) - VARNUMBER_MAX + DBL_EPSILON) {
+  if (f <= (float_T)(-VARNUMBER_MAX) + DBL_EPSILON) {
     rettv->vval.v_number = -VARNUMBER_MAX;
   } else if (f >= (float_T)VARNUMBER_MAX - DBL_EPSILON) {
     rettv->vval.v_number = VARNUMBER_MAX;
