@@ -188,7 +188,7 @@ function M.format_rpc_error(err)
 end
 
 ---@class vim.lsp.rpc.RpcError
----@field code integer RPC error code defined in |vim.lsp.protocol.ErrorCodes|
+---@field code integer RPC error code defined by JSON RPC
 ---@field message string? arbitrary message to send to server
 ---@field data any? arbitrary data to send to server
 
@@ -708,7 +708,7 @@ end
 --- Unix and name on Windows)
 ---
 ---@param pipe_path string file path of the domain socket (Unix) or name of the named pipe (Windows) to connect to
----@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicRpcClient #function intended to be passed to |vim.lsp.rpc.start_client| or |vim.lsp.start| on the field cmd
+---@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicRpcClient #function intended to be passed to |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
 function M.domain_socket_connect(pipe_path)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
