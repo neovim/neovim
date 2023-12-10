@@ -1736,7 +1736,10 @@ function lsp.start_client(config)
     -- on_attach and LspAttach callbacks the ability to schedule wrap the
     -- opt-out (deleting the semanticTokensProvider from capabilities)
     vim.schedule(function()
-      if vim.tbl_get(client.server_capabilities, 'semanticTokensProvider', 'full') then
+      if
+        vim.tbl_get(client.server_capabilities, 'semanticTokensProvider', 'full')
+        or vim.tbl_get(client.server_capabilities, 'semanticTokensProvider', 'range')
+      then
         semantic_tokens.start(bufnr, client.id)
       end
     end)
