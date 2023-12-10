@@ -19,6 +19,6 @@ find_package_handle_standard_args(Msgpack
   REQUIRED_VARS MSGPACK_LIBRARY MSGPACK_INCLUDE_DIR
   VERSION_VAR MSGPACK_VERSION_STRING)
 
-add_library(msgpack INTERFACE)
-target_include_directories(msgpack SYSTEM BEFORE INTERFACE ${MSGPACK_INCLUDE_DIR})
-target_link_libraries(msgpack INTERFACE ${MSGPACK_LIBRARY})
+add_library(msgpack_lib INTERFACE)
+target_include_directories(msgpack_lib SYSTEM BEFORE INTERFACE ${MSGPACK_INCLUDE_DIR})
+target_link_libraries(msgpack_lib INTERFACE ${MSGPACK_LIBRARY})

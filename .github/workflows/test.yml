@@ -42,11 +42,6 @@ jobs:
           wget --directory-prefix="$BIN_DIR" https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-x86_64.zip
           (cd "$BIN_DIR"; unzip stylua*.zip)
 
-      - name: Build third-party deps
-        run: |
-          cmake -S cmake.deps -B .deps -G Ninja
-          cmake --build .deps
-
       - run: cmake -B build -G Ninja -D CI_LINT=ON
 
       - if: "!cancelled()"
@@ -86,11 +81,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - name: Build third-party deps
-        run: |
-          cmake -S cmake.deps --preset ci
-          cmake --build .deps
-          cmake --preset ci
+      - run: cmake --preset ci
       - run: cmake --build build --target clang-analyzer
 
   posix:
@@ -103,8 +94,8 @@ jobs:
             { runner: ubuntu-22.04, flavor: asan, cc: clang, flags: -D ENABLE_ASAN_UBSAN=ON },
             { runner: ubuntu-22.04, flavor: tsan, cc: clang, flags: -D ENABLE_TSAN=ON },
             { runner: ubuntu-22.04, cc: gcc },
-            { runner: macos-12, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER, deps_flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
-            { runner: ubuntu-22.04, flavor: puc-lua, cc: gcc, deps_flags: -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON, flags: -D PREFER_LUA=ON },
+            { runner: macos-12, cc: clang, flags: -D CMAKE_FIND_FRAMEWORK=NEVER },
+            { runner: ubuntu-22.04, flavor: puc-lua, cc: gcc, flags: -D PREFER_LUA=ON -D USE_BUNDLED_LUAJIT=OFF -D USE_BUNDLED_LUA=ON },
           ]
         test: [unittest, functionaltest, oldtest]
         exclude:
@@ -143,11 +134,6 @@ jobs:
 
           sudo cpanm -n Neovim::Ext || cat "$HOME/.cpanm/build.log"
           perl -W -e 'use Neovim::Ext; print $Neovim::Ext::VERSION'
-
-      - name: Build third-party deps
-        run: |
-          cmake -S cmake.deps --preset ci ${{ matrix.build.deps_flags }}
-          cmake --build .deps
 
       - name: Build
         run: |
@@ -199,11 +185,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-
-      - name: Build deps
-        run: |
-          cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE='RelWithDebInfo'
-          cmake --build .deps
 
       - name: Build
         run: |
@@ -267,11 +248,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
-      - name: Build third-party deps
-        run: |
-          cmake -S cmake.deps -B .deps -G "Ninja Multi-Config"
-          cmake --build .deps
-
       - name: Configure
         run: cmake --preset ci -G "Ninja Multi-Config"
 
@@ -312,12 +288,7 @@ jobs:
             # Remove comments from packages once we start using these external
             # dependencies.
 
-      - name: Build third-party deps
-        run: |
-          cmake -S cmake.deps --preset external_deps
-          cmake --build .deps
-
       - name: Build
         run: |
-          cmake --preset ci
+          cmake --preset ci -D USE_BUNDLED=OFF
           cmake --build build

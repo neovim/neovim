@@ -5,5 +5,5 @@ mark_as_advanced(LPEG_LIBRARY)
 
 # Workaround: use an imported library to prevent cmake from modifying library
 # link path. See #23395.
-add_library(lpeg UNKNOWN IMPORTED)
-set_target_properties(lpeg PROPERTIES IMPORTED_LOCATION ${LPEG_LIBRARY})
+add_library(lpeg_lib UNKNOWN IMPORTED)
+set_target_properties(lpeg_lib PROPERTIES IMPORTED_LOCATION ${LPEG_LIBRARY})

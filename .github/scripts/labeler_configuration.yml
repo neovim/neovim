@@ -14,10 +14,6 @@ diagnostic:
   - changed-files:
     - any-glob-to-any-file: [ runtime/lua/vim/diagnostic.lua ]
 
-dependencies:
-  - changed-files:
-    - any-glob-to-any-file: [ cmake.deps/**/* ]
-
 spell:
   - changed-files:
     - any-glob-to-any-file: [ src/nvim/spell* ]

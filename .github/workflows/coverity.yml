@@ -19,9 +19,6 @@ jobs:
         env:
           TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
 
-      - name: Build dependencies
-        run: make deps
-
       - name: Build/scan neovim
         run: |
           env PATH=$(pwd)/cov-scan/bin:$PATH cov-build --dir cov-int make

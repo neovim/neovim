@@ -4,9 +4,9 @@ find_package_handle_standard_args(Treesitter DEFAULT_MSG
   TREESITTER_LIBRARY TREESITTER_INCLUDE_DIR)
 mark_as_advanced(TREESITTER_LIBRARY TREESITTER_INCLUDE_DIR)
 
-add_library(treesitter INTERFACE)
-target_include_directories(treesitter SYSTEM BEFORE INTERFACE ${TREESITTER_INCLUDE_DIR})
-target_link_libraries(treesitter INTERFACE ${TREESITTER_LIBRARY})
+add_library(treesitter_lib INTERFACE)
+target_include_directories(treesitter_lib SYSTEM BEFORE INTERFACE ${TREESITTER_INCLUDE_DIR})
+target_link_libraries(treesitter_lib INTERFACE ${TREESITTER_LIBRARY})
 
 # TODO(lewis6991): remove when min TS version is 0.20.9
 list(APPEND CMAKE_REQUIRED_INCLUDES "${TREESITTER_INCLUDE_DIR}")
