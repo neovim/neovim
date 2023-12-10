@@ -1666,7 +1666,7 @@ static char *eval_includeexpr(const char *const ptr, const size_t len)
   current_sctx = curbuf->b_p_script_ctx[BV_INEX].script_ctx;
 
   char *res = eval_to_string_safe(curbuf->b_p_inex,
-                                  was_set_insecurely(curwin, "includeexpr", OPT_LOCAL));
+                                  was_set_insecurely(curwin, kOptIncludeexpr, OPT_LOCAL));
 
   set_vim_var_string(VV_FNAME, NULL, 0);
   current_sctx = save_sctx;

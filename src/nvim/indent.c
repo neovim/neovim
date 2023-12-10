@@ -1091,7 +1091,7 @@ void ex_retab(exarg_T *eap)
     colnr_T *old_vts_ary = curbuf->b_p_vts_array;
 
     if (tabstop_count(old_vts_ary) > 0 || tabstop_count(new_vts_array) > 1) {
-      set_string_option_direct("vts", -1, new_ts_str, OPT_FREE | OPT_LOCAL, 0);
+      set_string_option_direct(kOptVartabstop, new_ts_str, OPT_FREE | OPT_LOCAL, 0);
       curbuf->b_p_vts_array = new_vts_array;
       xfree(old_vts_ary);
     } else {
@@ -1115,7 +1115,7 @@ int get_expr_indent(void)
   colnr_T save_curswant;
   int save_set_curswant;
   int save_State;
-  int use_sandbox = was_set_insecurely(curwin, "indentexpr", OPT_LOCAL);
+  int use_sandbox = was_set_insecurely(curwin, kOptIndentexpr, OPT_LOCAL);
   const sctx_T save_sctx = current_sctx;
 
   // Save and restore cursor position and curswant, in case it was changed

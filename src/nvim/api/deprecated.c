@@ -643,7 +643,7 @@ static Object get_option_from(void *from, OptReqScope req_scope, String name, Er
     return (Object)OBJECT_INIT;
   });
 
-  OptVal value = get_option_value_strict(name.data, req_scope, from, err);
+  OptVal value = get_option_value_strict(findoption(name.data), req_scope, from, err);
   if (ERROR_SET(err)) {
     return (Object)OBJECT_INIT;
   }
@@ -669,8 +669,8 @@ static void set_option_to(uint64_t channel_id, void *to, OptReqScope req_scope, 
     return;
   });
 
-  int flags = get_option_attrs(name.data);
-  VALIDATE_S(flags != 0, "option name", name.data, {
+  OptIndex opt_idx = findoption(name.data);
+  VALIDATE_S(opt_idx != kOptInvalid, "option name", name.data, {
     return;
   });
 
@@ -685,13 +685,14 @@ static void set_option_to(uint64_t channel_id, void *to, OptReqScope req_scope, 
     return;
   });
 
+  int attrs = get_option_attrs(opt_idx);
   // For global-win-local options -> setlocal
   // For        win-local options -> setglobal and setlocal (opt_flags == 0)
-  const int opt_flags = (req_scope == kOptReqWin && !(flags & SOPT_GLOBAL))
+  const int opt_flags = (req_scope == kOptReqWin && !(attrs & SOPT_GLOBAL))
                         ? 0
                         : (req_scope == kOptReqGlobal) ? OPT_GLOBAL : OPT_LOCAL;
 
   WITH_SCRIPT_CONTEXT(channel_id, {
-    set_option_value_for(name.data, optval, opt_flags, req_scope, to, err);
+    set_option_value_for(name.data, opt_idx, optval, opt_flags, req_scope, to, err);
   });
 }

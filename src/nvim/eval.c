@@ -681,7 +681,7 @@ int eval_charconvert(const char *const enc_from, const char *const enc_to,
   set_vim_var_string(VV_CC_TO, enc_to, -1);
   set_vim_var_string(VV_FNAME_IN, fname_from, -1);
   set_vim_var_string(VV_FNAME_OUT, fname_to, -1);
-  sctx_T *ctx = get_option_sctx("charconvert");
+  sctx_T *ctx = get_option_sctx(kOptCharconvert);
   if (ctx != NULL) {
     current_sctx = *ctx;
   }
@@ -710,7 +710,7 @@ void eval_diff(const char *const origfile, const char *const newfile, const char
   set_vim_var_string(VV_FNAME_NEW, newfile, -1);
   set_vim_var_string(VV_FNAME_OUT, outfile, -1);
 
-  sctx_T *ctx = get_option_sctx("diffexpr");
+  sctx_T *ctx = get_option_sctx(kOptDiffexpr);
   if (ctx != NULL) {
     current_sctx = *ctx;
   }
@@ -732,7 +732,7 @@ void eval_patch(const char *const origfile, const char *const difffile, const ch
   set_vim_var_string(VV_FNAME_DIFF, difffile, -1);
   set_vim_var_string(VV_FNAME_OUT, outfile, -1);
 
-  sctx_T *ctx = get_option_sctx("patchexpr");
+  sctx_T *ctx = get_option_sctx(kOptPatchexpr);
   if (ctx != NULL) {
     current_sctx = *ctx;
   }
@@ -1134,7 +1134,7 @@ list_T *eval_spell_expr(char *badword, char *expr)
   if (p_verbose == 0) {
     emsg_off++;
   }
-  sctx_T *ctx = get_option_sctx("spellsuggest");
+  sctx_T *ctx = get_option_sctx(kOptSpellsuggest);
   if (ctx != NULL) {
     current_sctx = *ctx;
   }
@@ -1278,7 +1278,7 @@ void *call_func_retlist(const char *func, int argc, typval_T *argv)
 int eval_foldexpr(win_T *wp, int *cp)
 {
   const sctx_T saved_sctx = current_sctx;
-  const bool use_sandbox = was_set_insecurely(wp, "foldexpr", OPT_LOCAL);
+  const bool use_sandbox = was_set_insecurely(wp, kOptFoldexpr, OPT_LOCAL);
 
   char *arg = wp->w_p_fde;
   current_sctx = wp->w_p_script_ctx[WV_FDE].script_ctx;
@@ -1326,7 +1326,7 @@ int eval_foldexpr(win_T *wp, int *cp)
 /// Evaluate 'foldtext', returning an Array or a String (NULL_STRING on failure).
 Object eval_foldtext(win_T *wp)
 {
-  const bool use_sandbox = was_set_insecurely(wp, "foldtext", OPT_LOCAL);
+  const bool use_sandbox = was_set_insecurely(wp, kOptFoldtext, OPT_LOCAL);
   char *arg = wp->w_p_fdt;
   funccal_entry_T funccal_entry;
 
@@ -3788,9 +3788,9 @@ int eval_option(const char **const arg, typval_T *const rettv, const bool evalua
   *option_end = NUL;
 
   bool is_tty_opt = is_tty_option(*arg);
-  int opt_idx = is_tty_opt ? -1 : findoption(*arg);
+  OptIndex opt_idx = is_tty_opt ? kOptInvalid : findoption(*arg);
 
-  if (opt_idx < 0 && !is_tty_opt) {
+  if (opt_idx == kOptInvalid && !is_tty_opt) {
     // Only give error if result is going to be used.
     if (rettv != NULL) {
       semsg(_("E113: Unknown option: %s"), *arg);
@@ -8715,7 +8715,7 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
     // If it's still empty it was changed and restored, need to restore in
     // the complicated way.
     if (*p_cpo == NUL) {
-      set_option_value_give_err("cpo", CSTR_AS_OPTVAL(save_cpo), 0);
+      set_option_value_give_err(kOptCpoptions, CSTR_AS_OPTVAL(save_cpo), 0);
     }
     free_string_option(save_cpo);
   }

@@ -296,7 +296,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   char buf[MAXPATHL];
   char transbuf[MAXPATHL];
   char *stl;
-  char *opt_name;
+  OptIndex opt_idx = kOptInvalid;
   int opt_scope = 0;
   stl_hlrec_t *hltab;
   StlClickRecord *tabtab;
@@ -320,9 +320,9 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
     fillchar = ' ';
     attr = HL_ATTR(HLF_TPF);
     maxwidth = Columns;
-    opt_name = "tabline";
+    opt_idx = kOptTabline;
   } else if (draw_winbar) {
-    opt_name = "winbar";
+    opt_idx = kOptWinbar;
     stl = ((*wp->w_p_wbr != NUL) ? wp->w_p_wbr : p_wbr);
     opt_scope = ((*wp->w_p_wbr != NUL) ? OPT_LOCAL : 0);
     row = -1;  // row zero is first row of text
@@ -351,7 +351,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
 
     if (draw_ruler) {
       stl = p_ruf;
-      opt_name = "rulerformat";
+      opt_idx = kOptRulerformat;
       // advance past any leading group spec - implicit in ru_col
       if (*stl == '%') {
         if (*++stl == '-') {
@@ -379,7 +379,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
         attr = HL_ATTR(HLF_MSG);
       }
     } else {
-      opt_name = "statusline";
+      opt_idx = kOptStatusline;
       stl = ((*wp->w_p_stl != NUL) ? wp->w_p_stl : p_stl);
       opt_scope = ((*wp->w_p_stl != NUL) ? OPT_LOCAL : 0);
     }
@@ -402,7 +402,7 @@ static void win_redr_custom(win_T *wp, bool draw_winbar, bool draw_ruler)
   // Make a copy, because the statusline may include a function call that
   // might change the option value and free the memory.
   stl = xstrdup(stl);
-  build_stl_str_hl(ewp, buf, sizeof(buf), stl, opt_name, opt_scope,
+  build_stl_str_hl(ewp, buf, sizeof(buf), stl, opt_idx, opt_scope,
                    fillchar, maxwidth, &hltab, &tabtab, NULL);
 
   xfree(stl);
@@ -881,7 +881,7 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, linenr_T relnum, statuscol_T *
 
   StlClickRecord *clickrec;
   char *stc = xstrdup(wp->w_p_stc);
-  int width = build_stl_str_hl(wp, stcp->text, MAXPATHL, stc, "statuscolumn", OPT_LOCAL, ' ',
+  int width = build_stl_str_hl(wp, stcp->text, MAXPATHL, stc, kOptStatuscolumn, OPT_LOCAL, ' ',
                                stcp->width, &stcp->hlrec, fillclick ? &clickrec : NULL, stcp);
   xfree(stc);
 
@@ -913,8 +913,8 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, linenr_T relnum, statuscol_T *
 ///             Note: This should not be NameBuff
 /// @param outlen  The length of the output buffer
 /// @param fmt  The statusline format string
-/// @param opt_name  The option name corresponding to "fmt"
-/// @param opt_scope  The scope corresponding to "opt_name"
+/// @param opt_idx  Index of the option corresponding to "fmt"
+/// @param opt_scope  The scope corresponding to "opt_idx"
 /// @param fillchar  Character to use when filling empty space in the statusline
 /// @param maxwidth  The maximum width to make the statusline
 /// @param hltab  HL attributes (can be NULL)
@@ -922,9 +922,9 @@ int build_statuscol_str(win_T *wp, linenr_T lnum, linenr_T relnum, statuscol_T *
 /// @param stcp  Status column attributes (can be NULL)
 ///
 /// @return  The final width of the statusline
-int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_name, int opt_scope,
-                     int fillchar, int maxwidth, stl_hlrec_t **hltab, StlClickRecord **tabtab,
-                     statuscol_T *stcp)
+int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex opt_idx,
+                     int opt_scope, int fillchar, int maxwidth, stl_hlrec_t **hltab,
+                     StlClickRecord **tabtab, statuscol_T *stcp)
 {
   static size_t stl_items_len = 20;  // Initial value, grows as needed.
   static stl_item_t *stl_items = NULL;
@@ -957,10 +957,10 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
     stl_separator_locations = xmalloc(sizeof(int) * stl_items_len);
   }
 
-  // if "fmt" was set insecurely it needs to be evaluated in the sandbox
-  // "opt_name" will be NULL when caller is nvim_eval_statusline()
-  const int use_sandbox = opt_name ? was_set_insecurely(wp, opt_name, opt_scope)
-                                   : false;
+  // If "fmt" was set insecurely it needs to be evaluated in the sandbox.
+  // "opt_idx" will be kOptInvalid when caller is nvim_eval_statusline().
+  const int use_sandbox = (opt_idx != kOptInvalid) ? was_set_insecurely(wp, opt_idx, opt_scope)
+                                                   : false;
 
   // When the format starts with "%!" then evaluate it as an expression and
   // use the result as the actual format string.
@@ -1545,7 +1545,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
       break;
 
     case STL_SHOWCMD:
-      if (p_sc && (opt_name == NULL || strcmp(opt_name, p_sloc) == 0)) {
+      if (p_sc && (opt_idx == kOptInvalid || findoption(p_sloc) == opt_idx)) {
         str = showcmd_buf;
       }
       break;
@@ -2177,8 +2177,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, char *opt_n
   // TODO(Bram): find out why using called_emsg_before makes tests fail, does it
   // matter?
   // if (called_emsg > called_emsg_before)
-  if (opt_name && did_emsg > did_emsg_before) {
-    set_string_option_direct(opt_name, -1, "", OPT_FREE | opt_scope, SID_ERROR);
+  if (opt_idx != kOptInvalid && did_emsg > did_emsg_before) {
+    set_string_option_direct(opt_idx, "", OPT_FREE | opt_scope, SID_ERROR);
   }
 
   // A user function may reset KeyTyped, restore it.

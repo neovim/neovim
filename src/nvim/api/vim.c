@@ -948,8 +948,8 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
   buf_copy_options(buf, BCO_ENTER | BCO_NOHELP);
 
   if (scratch) {
-    set_string_option_direct_in_buf(buf, "bufhidden", -1, "hide", OPT_LOCAL, 0);
-    set_string_option_direct_in_buf(buf, "buftype", -1, "nofile", OPT_LOCAL, 0);
+    set_string_option_direct_in_buf(buf, kOptBufhidden, "hide", OPT_LOCAL, 0);
+    set_string_option_direct_in_buf(buf, kOptBuftype, "nofile", OPT_LOCAL, 0);
     assert(buf->b_ml.ml_mfp->mf_fd < 0);  // ml_open() should not have opened swapfile already
     buf->b_p_swf = false;
     buf->b_p_ml = false;
@@ -2239,7 +2239,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
                                buf,
                                sizeof(buf),
                                str.data,
-                               NULL,
+                               -1,
                                0,
                                fillchar,
                                maxwidth,

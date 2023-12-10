@@ -33,7 +33,7 @@ describe('build_stl_str_hl', function()
       output_buffer,
       buffer_byte_size,
       to_cstr(pat),
-      NULL,
+      -1,
       0,
       fillchar,
       maximum_cell_count,
