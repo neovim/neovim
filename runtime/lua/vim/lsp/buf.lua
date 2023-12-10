@@ -76,8 +76,75 @@ end
 ---     - on_list: (function) |lsp-on-list-handler| replacing the default handler.
 ---       Called for any non-empty result.
 function M.definition(options)
+  options = options or {}
   local params = util.make_position_params()
-  request_with_options(ms.textDocument_definition, params, options)
+  local bufnr = api.nvim_get_current_buf()
+
+  ---@param results table<integer, {error: lsp.ResponseError, result: lsp.Location|lsp.Location[]|lsp.LocationLink[]|nil}>
+  local function handler(results)
+    local client_id_to_items = {}
+    local total_items = 0
+    for client_id, v in pairs(results) do
+      if v.error == nil and v.result ~= nil then
+        -- first check for Location | LocationLink because
+        -- tbl_islist returns `false` for empty lists
+        if v.result.uri or v.result.targetUri then
+          local client = vim.lsp.get_client_by_id(client_id)
+          local items = util.locations_to_items({ v.result }, client.offset_encoding)
+          total_items = total_items + #items
+          client_id_to_items[client_id] = items
+        elseif vim.tbl_islist(v.result) then
+          local client = vim.lsp.get_client_by_id(client_id)
+          local items = util.locations_to_items(v.result, client.offset_encoding)
+          total_items = total_items + #items
+          client_id_to_items[client_id] = items
+        end
+      end
+    end
+
+    if total_items == 0 then
+      return
+    end
+
+    -- jump to the only response
+    if total_items == 1 then
+      for client_id, _ in pairs(client_id_to_items) do
+        local client = vim.lsp.get_client_by_id(client_id)
+
+        local loc = results[client_id].result
+        if vim.tbl_islist(loc) then
+          loc = loc[1]
+        end
+
+        return util.jump_to_location(loc, client.offset_encoding, options.reuse_win)
+      end
+    end
+
+    local items = {}
+
+    for _, v in pairs(client_id_to_items) do
+      for _, v2 in ipairs(v) do
+        table.insert(items, v2)
+      end
+    end
+
+    local title = 'LSP locations'
+    if options.on_list then
+      assert(type(options.on_list) == 'function', 'on_list is not a function')
+      return options.on_list({
+        title = title,
+        items = items,
+        -- FIXME currently passing nil as items can come from multiple clients
+        -- need a better way to attribute items to context
+        context = nil,
+      })
+    end
+
+    vim.fn.setqflist({}, ' ', { title = title, items = items })
+    vim.api.nvim_command('botright copen')
+  end
+
+  vim.lsp.buf_request_all(bufnr, ms.textDocument_definition, params, handler)
 end
 
 --- Jumps to the definition of the type of the symbol under the cursor.
