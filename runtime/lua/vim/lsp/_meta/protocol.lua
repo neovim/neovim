@@ -472,6 +472,9 @@ error('Cannot require a meta file')
 ---@since 3.17.0
 ---@class lsp.InlayHint
 ---The position of this hint.
+---
+---If multiple hints have the same position, they will be shown in the order
+---they appear in the response.
 ---@field position lsp.Position
 ---The label of this hint. A human readable string or an array of
 ---InlayHintLabelPart label parts.
@@ -614,12 +617,16 @@ error('Cannot require a meta file')
 ---A parameter literal used in inline completion requests.
 ---
 ---@since 3.18.0
+---@proposed
 ---@class lsp.InlineCompletionParams: lsp.TextDocumentPositionParams, lsp.WorkDoneProgressParams
 ---Additional information about the context in which inline completions were
 ---requested.
 ---@field context lsp.InlineCompletionContext
 
 ---Represents a collection of {@link InlineCompletionItem inline completion items} to be presented in the editor.
+---
+---@since 3.18.0
+---@proposed
 ---@class lsp.InlineCompletionList
 ---The inline completion items
 ---@field items lsp.InlineCompletionItem[]
@@ -627,11 +634,10 @@ error('Cannot require a meta file')
 ---An inline completion item represents a text snippet that is proposed inline to complete text that is being typed.
 ---
 ---@since 3.18.0
+---@proposed
 ---@class lsp.InlineCompletionItem
 ---The text to replace the range with. Must be set.
----@field insertText string
----The format of the insert text. The format applies to the `insertText`. If omitted defaults to `InsertTextFormat.PlainText`.
----@field insertTextFormat? lsp.InsertTextFormat
+---@field insertText string|lsp.StringValue
 ---A text that is used to decide if this inline completion should be shown. When `falsy` the {@link InlineCompletionItem.insertText} is used.
 ---@field filterText? string
 ---The range to replace. Must begin and end on the same line.
@@ -642,6 +648,7 @@ error('Cannot require a meta file')
 ---Inline completion options used during static or dynamic registration.
 ---
 ---@since 3.18.0
+---@proposed
 ---@class lsp.InlineCompletionRegistrationOptions: lsp.InlineCompletionOptions, lsp.StaticRegistrationOptions
 
 ---@class lsp.RegistrationParams
@@ -981,14 +988,23 @@ error('Cannot require a meta file')
 ---In future version of the protocol this property might become
 ---mandatory to better express this.
 ---@field activeSignature? uinteger
----The active parameter of the active signature. If omitted or the value
----lies outside the range of `signatures[activeSignature].parameters`
----defaults to 0 if the active signature has parameters. If
----the active signature has no parameters it is ignored.
+---The active parameter of the active signature.
+---
+---If `null`, no parameter of the signature is active (for example a named
+---argument that does not match any declared parameters). This is only valid
+---since 3.18.0 and if the client specifies the client capability
+---`textDocument.signatureHelp.noActiveParameterSupport === true`
+---
+---If omitted or the value lies outside the range of
+---`signatures[activeSignature].parameters` defaults to 0 if the active
+---signature has parameters.
+---
+---If the active signature has no parameters it is ignored.
+---
 ---In future version of the protocol this property might become
----mandatory to better express the active parameter if the
----active signature does have any.
----@field activeParameter? uinteger
+---mandatory (but still nullable) to better express the active parameter if
+---the active signature does have any.
+---@field activeParameter? uinteger|lsp.null
 
 ---Registration options for a {@link SignatureHelpRequest}.
 ---@class lsp.SignatureHelpRegistrationOptions: lsp.TextDocumentRegistrationOptions
@@ -1192,8 +1208,7 @@ error('Cannot require a meta file')
 ---The command this code lens represents.
 ---@field command? lsp.Command
 ---A data entry field that is preserved on a code lens item between
----a {@link CodeLensRequest} and a [CodeLensResolveRequest]
----(#CodeLensResolveRequest)
+---a {@link CodeLensRequest} and a {@link CodeLensResolveRequest}
 ---@field data? lsp.LSPAny
 
 ---Registration options for a {@link CodeLensRequest}.
@@ -1470,7 +1485,7 @@ error('Cannot require a meta file')
 
 ---@class lsp.ConfigurationItem
 ---The scope to get the configuration section for.
----@field scopeUri? string
+---@field scopeUri? lsp.URI
 ---The configuration section asked for.
 ---@field section? string
 
@@ -1503,14 +1518,14 @@ error('Cannot require a meta file')
 ---offset of b is 3 since `𐐀` is represented using two code units in UTF-16.
 ---Since 3.17 clients and servers can agree on a different string encoding
 ---representation (e.g. UTF-8). The client announces it's supported encoding
----via the client capability [`general.positionEncodings`](#clientCapabilities).
+---via the client capability [`general.positionEncodings`](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#clientCapabilities).
 ---The value is an array of position encodings the client supports, with
 ---decreasing preference (e.g. the encoding at index `0` is the most preferred
 ---one). To stay backwards compatible the only mandatory encoding is UTF-16
 ---represented via the string `utf-16`. The server can pick one of the
 ---encodings offered by the client and signals that encoding back to the
 ---client via the initialize result's property
----[`capabilities.positionEncoding`](#serverCapabilities). If the string value
+---[`capabilities.positionEncoding`](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#serverCapabilities). If the string value
 ---`utf-16` is missing from the client's capability `general.positionEncodings`
 ---servers can safely assume that the client supports UTF-16. If the server
 ---omits the position encoding in its initialize result the encoding defaults
@@ -1915,18 +1930,36 @@ error('Cannot require a meta file')
 ---Provides information about the context in which an inline completion was requested.
 ---
 ---@since 3.18.0
+---@proposed
 ---@class lsp.InlineCompletionContext
 ---Describes how the inline completion was triggered.
 ---@field triggerKind lsp.InlineCompletionTriggerKind
 ---Provides information about the currently selected item in the autocomplete widget if it is visible.
 ---@field selectedCompletionInfo? lsp.SelectedCompletionInfo
 
+---A string value used as a snippet is a template which allows to insert text
+---and to control the editor cursor when insertion happens.
+---
+---A snippet can define tab stops and placeholders with `$1`, `$2`
+---and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+---the end of the snippet. Variables are defined with `$name` and
+---`${name:default value}`.
+---
+---@since 3.18.0
+---@proposed
+---@class lsp.StringValue
+---The kind of string value.
+---@field kind "snippet"
+---The snippet string.
+---@field value string
+
 ---Inline completion options used during static registration.
 ---
 ---@since 3.18.0
+---@proposed
 ---@class lsp.InlineCompletionOptions
 
----General parameters to to register for an notification or to register a provider.
+---General parameters to register for a notification or to register a provider.
 ---@class lsp.Registration
 ---The id used to register the request. The id can be used to deregister
 ---the request again.
@@ -2097,6 +2130,7 @@ error('Cannot require a meta file')
 ---Inline completion options used during static registration.
 ---
 ---@since 3.18.0
+---@proposed
 ---@field inlineCompletionProvider? boolean|lsp.InlineCompletionOptions
 ---Workspace specific server capabilities.
 ---@field workspace? anonym12
@@ -2261,10 +2295,16 @@ error('Cannot require a meta file')
 ---@field parameters? lsp.ParameterInformation[]
 ---The index of the active parameter.
 ---
----If provided, this is used in place of `SignatureHelp.activeParameter`.
+---If `null`, no parameter of the signature is active (for example a named
+---argument that does not match any declared parameters). This is only valid
+---since 3.18.0 and if the client specifies the client capability
+---`textDocument.signatureHelp.noActiveParameterSupport === true`
+---
+---If provided (or `null`), this is used in place of
+---`SignatureHelp.activeParameter`.
 ---
 ---@since 3.16.0
----@field activeParameter? uinteger
+---@field activeParameter? uinteger|lsp.null
 
 ---Server Capabilities for a {@link SignatureHelpRequest}.
 ---@class lsp.SignatureHelpOptions
@@ -2545,6 +2585,7 @@ error('Cannot require a meta file')
 ---Describes the currently selected completion item.
 ---
 ---@since 3.18.0
+---@proposed
 ---@class lsp.SelectedCompletionInfo
 ---The range that will be replaced if this completion item is accepted.
 ---@field range lsp.Range
@@ -2758,6 +2799,11 @@ error('Cannot require a meta file')
 ---
 ---@since 3.17.0.
 ---@field diagnostics? lsp.DiagnosticWorkspaceClientCapabilities
+---Capabilities specific to the folding range requests scoped to the workspace.
+---
+---@since 3.18.0
+---@proposed
+---@field foldingRange? lsp.FoldingRangeWorkspaceClientCapabilities
 
 ---Text document specific client capabilities.
 ---@class lsp.TextDocumentClientCapabilities
@@ -2853,6 +2899,7 @@ error('Cannot require a meta file')
 ---Client capabilities specific to inline completions.
 ---
 ---@since 3.18.0
+---@proposed
 ---@field inlineCompletion? lsp.InlineCompletionClientCapabilities
 
 ---Capabilities specific to the notebook document support.
@@ -3081,6 +3128,23 @@ error('Cannot require a meta file')
 ---pulled diagnostics currently shown. It should be used with absolute care and
 ---is useful for situation where a server for example detects a project wide
 ---change that requires such a calculation.
+---@field refreshSupport? boolean
+
+---Client workspace capabilities specific to folding ranges
+---
+---@since 3.18.0
+---@proposed
+---@class lsp.FoldingRangeWorkspaceClientCapabilities
+---Whether the client implementation supports a refresh request sent from the
+---server to the client.
+---
+---Note that this event is global and will force the client to refresh all
+---folding ranges currently shown. It should be used with absolute care and is
+---useful for situation where a server for example detects a project wide
+---change that requires such a calculation.
+---
+---@since 3.18.0
+---@proposed
 ---@field refreshSupport? boolean
 
 ---@class lsp.TextDocumentSyncClientCapabilities
@@ -3474,6 +3538,7 @@ error('Cannot require a meta file')
 ---Client capabilities specific to inline completions.
 ---
 ---@since 3.18.0
+---@proposed
 ---@class lsp.InlineCompletionClientCapabilities
 ---Whether implementation supports dynamic registration for inline completion providers.
 ---@field dynamicRegistration? boolean
@@ -3662,18 +3727,13 @@ error('Cannot require a meta file')
 ---| 1 # Type
 ---| 2 # Parameter
 
----Defines whether the insert text in a completion item should be interpreted as
----plain text or a snippet.
----@alias lsp.InsertTextFormat
----| 1 # PlainText
----| 2 # Snippet
-
 ---The message type
 ---@alias lsp.MessageType
 ---| 1 # Error
 ---| 2 # Warning
 ---| 3 # Info
 ---| 4 # Log
+---| 5 # Debug
 
 ---Defines how the host (editor) should sync
 ---document changes to the language server.
@@ -3723,6 +3783,12 @@ error('Cannot require a meta file')
 ---@alias lsp.CompletionItemTag
 ---| 1 # Deprecated
 
+---Defines whether the insert text in a completion item should be interpreted as
+---plain text or a snippet.
+---@alias lsp.InsertTextFormat
+---| 1 # PlainText
+---| 2 # Snippet
+
 ---How whitespace and indentation is handled during completion
 ---item insertion.
 ---
@@ -3766,6 +3832,7 @@ error('Cannot require a meta file')
 ---Describes how an {@link InlineCompletionItemProvider inline completion provider} was triggered.
 ---
 ---@since 3.18.0
+---@proposed
 ---@alias lsp.InlineCompletionTriggerKind
 ---| 0 # Invoked
 ---| 1 # Automatic
@@ -4247,6 +4314,12 @@ error('Cannot require a meta file')
 ---
 ---@since 3.16.0
 ---@field activeParameterSupport? boolean
+---The client supports the `activeParameter` property on
+---`SignatureInformation` being set to `null` to indicate that no
+---parameter should be active.
+---
+---@since 3.18.0
+---@field noActiveParameterSupport? boolean
 
 ---@class anonym31
 ---The symbol kind values the client supports. When this
@@ -4352,7 +4425,7 @@ error('Cannot require a meta file')
 ---@field language string
 ---A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
 ---@field scheme? string
----A glob pattern, like `*.{ts,js}`.
+---A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
 ---@field pattern? string
 
 ---@class anonym50
@@ -4360,7 +4433,7 @@ error('Cannot require a meta file')
 ---@field language? string
 ---A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
 ---@field scheme string
----A glob pattern, like `*.{ts,js}`.
+---A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
 ---@field pattern? string
 
 ---@class anonym51
@@ -4368,7 +4441,7 @@ error('Cannot require a meta file')
 ---@field language? string
 ---A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
 ---@field scheme? string
----A glob pattern, like `*.{ts,js}`.
+---A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
 ---@field pattern string
 
 ---@class anonym52
