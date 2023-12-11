@@ -719,7 +719,7 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
                         int *cul_id, int *num_id)
 {
   MarkTreeIter itr[1];
-  if (!buf->b_signs || !marktree_itr_get_overlap(buf->b_marktree, row, 0, itr)) {
+  if (!marktree_itr_get_overlap(buf->b_marktree, row, 0, itr)) {
     return;
   }
 
@@ -815,7 +815,6 @@ static void buf_signcols_validate_range(buf_T *buf, int row1, int row2, int add)
     return;  // max signs were removed from the range, no need to count.
   }
 
-  int count = 0;  // Number of signs on the current row
   int currow = row1;
   MTPair pair = { 0 };
   MarkTreeIter itr[1];
@@ -825,15 +824,14 @@ static void buf_signcols_validate_range(buf_T *buf, int row1, int row2, int add)
   int *overlap = xcalloc(sizeof(int), (size_t)(row2 + 1 - row1));
 
   // First find the number of overlapping signs at "row1".
-  marktree_itr_get_overlap(buf->b_marktree, currow, 0, itr);
+  (void)marktree_itr_get_overlap(buf->b_marktree, currow, 0, itr);
   while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
     if (!mt_invalid(pair.start) && pair.start.flags & MT_FLAG_DECOR_SIGNTEXT) {
       overlap[0]++;
     }
   }
 
-  // Continue traversing the marktree until beyond "row2". Increment "count" for
-  // the start of a mark, increment the overlap array until the end of a paired mark.
+  // Continue traversing the marktree until beyond "row2".
   while (itr->x) {
     MTKey mark = marktree_itr_current(itr);
     if (mark.pos.row > row2) {
@@ -841,25 +839,20 @@ static void buf_signcols_validate_range(buf_T *buf, int row1, int row2, int add)
     }
     // Finish the count at the previous row.
     if (mark.pos.row != currow) {
-      buf_signcols_validate_row(buf, count + overlap[currow - row1], add);
+      buf_signcols_validate_row(buf, overlap[currow - row1], add);
       currow = mark.pos.row;
-      count = 0;
     }
-
-    // Increment count and overlap array for the range of a paired sign mark.
+    // Increment overlap array for the start and range of a paired sign mark.
     if (!mt_invalid(mark) && !mt_end(mark) && (mark.flags & MT_FLAG_DECOR_SIGNTEXT)) {
-      count++;
-      if (mt_paired(mark)) {
-        MTPos end = marktree_get_altpos(buf->b_marktree, mark, NULL);
-        for (int i = mark.pos.row + 1; i <= MIN(row2, end.row); i++) {
-          overlap[i - row1]++;
-        }
+      MTPos end = marktree_get_altpos(buf->b_marktree, mark, NULL);
+      for (int i = currow; i <= MIN(row2, end.row < 0 ? currow : end.row); i++) {
+        overlap[i - row1]++;
       }
     }
 
     marktree_itr_next(buf->b_marktree, itr);
   }
-  buf_signcols_validate_row(buf, count + overlap[currow - row1], add);
+  buf_signcols_validate_row(buf, overlap[currow - row1], add);
   xfree(overlap);
 }
 
