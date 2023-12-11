@@ -51,7 +51,7 @@ local function read_json(opt)
 end
 
 -- Gets the Lua symbol for a given fully-qualified LSP method name.
-local function name(s)
+local function to_luaname(s)
   -- "$/" prefix is special: https://microsoft.github.io/language-server-protocol/specification/#dollarRequests
   return s:gsub('^%$', 'dollar'):gsub('/', '_')
 end
@@ -95,7 +95,7 @@ local function gen_methods(protocol)
   ---@type (vim._gen_lsp.Request|vim._gen_lsp.Notification)[]
   local all = vim.list_extend(protocol.requests, protocol.notifications)
   table.sort(all, function(a, b)
-    return name(a.method) < name(b.method)
+    return to_luaname(a.method) < to_luaname(b.method)
   end)
   for _, item in ipairs(all) do
     if item.method then
@@ -105,7 +105,7 @@ local function gen_methods(protocol)
           output[#output + 1] = indent .. '--- ' .. docstring
         end
       end
-      output[#output + 1] = ("%s%s = '%s',"):format(indent, name(item.method), item.method)
+      output[#output + 1] = ("%s%s = '%s',"):format(indent, to_luaname(item.method), item.method)
     end
   end
   output[#output + 1] = '}'
@@ -193,6 +193,16 @@ function M.gen(opt)
     'decimal',
   }
 
+  ---@param documentation string
+  local _process_documentation = function(documentation)
+    documentation = documentation:gsub('\n', '\n---')
+    -- Remove <200b> (zero-width space) unicode characters: e.g., `**/<200b>*`
+    documentation = documentation:gsub('\226\128\139', '')
+    -- Escape annotations that are not recognized by lua-ls
+    documentation = documentation:gsub('%^---@sample', '---\\@sample')
+    return '---' .. documentation
+  end
+
   --- @class vim._gen_lsp.Type
   --- @field kind string a common field for all Types.
   --- @field name? string for ReferenceType, BaseType
@@ -202,8 +212,10 @@ function M.gen(opt)
   --- @field value? string|vim._gen_lsp.Type for StringLiteralType, MapType, StructureLiteralType
 
   ---@param type vim._gen_lsp.Type
+  ---@param prefix? string Optional prefix associated with the this type, made of (nested) field name.
+  ---             Used to generate class name for structure literal types.
   ---@return string
-  local function parse_type(type)
+  local function parse_type(type, prefix)
     -- ReferenceType | BaseType
     if type.kind == 'reference' or type.kind == 'base' then
       if vim.tbl_contains(simple_types, type.name) then
@@ -213,13 +225,13 @@ function M.gen(opt)
 
     -- ArrayType
     elseif type.kind == 'array' then
-      return parse_type(type.element) .. '[]'
+      return parse_type(type.element, prefix) .. '[]'
 
     -- OrType
     elseif type.kind == 'or' then
       local val = ''
       for _, item in ipairs(type.items) do
-        val = val .. parse_type(item) .. '|' --[[ @as string ]]
+        val = val .. parse_type(item, prefix) .. '|' --[[ @as string ]]
       end
       val = val:sub(0, -2)
       return val
@@ -232,7 +244,7 @@ function M.gen(opt)
     elseif type.kind == 'map' then
       local key = assert(type.key)
       local value = type.value --[[ @as vim._gen_lsp.Type ]]
-      return 'table<' .. parse_type(key) .. ', ' .. parse_type(value) .. '>'
+      return 'table<' .. parse_type(key, prefix) .. ', ' .. parse_type(value, prefix) .. '>'
 
     -- StructureLiteralType
     elseif type.kind == 'literal' then
@@ -240,7 +252,14 @@ function M.gen(opt)
       -- use | to continue the inline class to be able to add docs
       -- https://github.com/LuaLS/lua-language-server/issues/2128
       anonymous_num = anonymous_num + 1
-      local anonym = { '---@class anonym' .. anonymous_num }
+      local anonymous_classname = 'lsp._anonym' .. anonymous_num
+      if prefix then
+        anonymous_classname = anonymous_classname .. '.' .. prefix
+      end
+      local anonym = vim.tbl_flatten { -- remove nil
+        anonymous_num > 1 and '' or nil,
+        '---@class ' .. anonymous_classname,
+      }
 
       --- @class vim._gen_lsp.StructureLiteral translated to anonymous @class.
       --- @field deprecated? string
@@ -252,27 +271,29 @@ function M.gen(opt)
       ---@type vim._gen_lsp.StructureLiteral
       local structural_literal = assert(type.value) --[[ @as vim._gen_lsp.StructureLiteral ]]
       for _, field in ipairs(structural_literal.properties) do
+        anonym[#anonym + 1] = '---'
         if field.documentation then
-          field.documentation = field.documentation:gsub('\n', '\n---')
-          anonym[#anonym + 1] = '---' .. field.documentation
+          anonym[#anonym + 1] = _process_documentation(field.documentation)
         end
         anonym[#anonym + 1] = '---@field '
           .. field.name
           .. (field.optional and '?' or '')
           .. ' '
-          .. parse_type(field.type)
+          .. parse_type(field.type, prefix .. '.' .. field.name)
       end
-      anonym[#anonym + 1] = ''
+      -- anonym[#anonym + 1] = ''
       for _, line in ipairs(anonym) do
-        anonym_classes[#anonym_classes + 1] = line
+        if line then
+          anonym_classes[#anonym_classes + 1] = line
+        end
       end
-      return 'anonym' .. anonymous_num
+      return anonymous_classname
 
     -- TupleType
     elseif type.kind == 'tuple' then
       local tuple = '{ '
       for i, value in ipairs(type.items) do
-        tuple = tuple .. '[' .. i .. ']: ' .. parse_type(value) .. ', '
+        tuple = tuple .. '[' .. i .. ']: ' .. parse_type(value, prefix) .. ', '
       end
       -- remove , at the end
       tuple = tuple:sub(0, -3)
@@ -293,22 +314,22 @@ function M.gen(opt)
   --- @field proposed? boolean
   --- @field since? string
   for _, structure in ipairs(protocol.structures) do
+    -- output[#output + 1] = ''
     if structure.documentation then
-      structure.documentation = structure.documentation:gsub('\n', '\n---')
-      output[#output + 1] = '---' .. structure.documentation
+      output[#output + 1] = _process_documentation(structure.documentation)
     end
-    if structure.extends then
-      local class_string = '---@class lsp.'
-        .. structure.name
-        .. ': '
-        .. parse_type(structure.extends[1])
-      for _, mixin in ipairs(structure.mixins or {}) do
-        class_string = class_string .. ', ' .. parse_type(mixin)
-      end
-      output[#output + 1] = class_string
-    else
-      output[#output + 1] = '---@class lsp.' .. structure.name
+    local class_string = ('---@class lsp.%s'):format(structure.name)
+    if structure.extends or structure.mixins then
+      local inherits_from = table.concat(
+        vim.list_extend(
+          vim.tbl_map(parse_type, structure.extends or {}),
+          vim.tbl_map(parse_type, structure.mixins or {})
+        ),
+        ', '
+      )
+      class_string = class_string .. ': ' .. inherits_from
     end
+    output[#output + 1] = class_string
 
     --- @class vim._gen_lsp.Property translated to @field
     --- @field deprecated? string
@@ -319,15 +340,15 @@ function M.gen(opt)
     --- @field since? string
     --- @field type { kind: string, name: string }
     for _, field in ipairs(structure.properties or {}) do
+      output[#output + 1] = '---' -- Insert a single newline between @fields (and after @class)
       if field.documentation then
-        field.documentation = field.documentation:gsub('\n', '\n---')
-        output[#output + 1] = '---' .. field.documentation
+        output[#output + 1] = _process_documentation(field.documentation)
       end
       output[#output + 1] = '---@field '
         .. field.name
         .. (field.optional and '?' or '')
         .. ' '
-        .. parse_type(field.type)
+        .. parse_type(field.type, field.name)
     end
     output[#output + 1] = ''
   end
@@ -342,8 +363,7 @@ function M.gen(opt)
   --- @field values { name: string, value: string, documentation?: string, since?: string }[]
   for _, enum in ipairs(protocol.enumerations) do
     if enum.documentation then
-      enum.documentation = enum.documentation:gsub('\n', '\n---')
-      output[#output + 1] = '---' .. enum.documentation
+      output[#output + 1] = _process_documentation(enum.documentation)
     end
     local enum_type = '---@alias lsp.' .. enum.name
     for _, value in ipairs(enum.values) do
@@ -366,18 +386,20 @@ function M.gen(opt)
   --- @field type vim._gen_lsp.Type
   for _, alias in ipairs(protocol.typeAliases) do
     if alias.documentation then
-      alias.documentation = alias.documentation:gsub('\n', '\n---')
-      output[#output + 1] = '---' .. alias.documentation
+      output[#output + 1] = _process_documentation(alias.documentation)
     end
     if alias.type.kind == 'or' then
       local alias_type = '---@alias lsp.' .. alias.name .. ' '
       for _, item in ipairs(alias.type.items) do
-        alias_type = alias_type .. parse_type(item) .. '|'
+        alias_type = alias_type .. parse_type(item, alias.name) .. '|'
       end
       alias_type = alias_type:sub(0, -2)
       output[#output + 1] = alias_type
     else
-      output[#output + 1] = '---@alias lsp.' .. alias.name .. ' ' .. parse_type(alias.type)
+      output[#output + 1] = '---@alias lsp.'
+        .. alias.name
+        .. ' '
+        .. parse_type(alias.type, alias.name)
     end
     output[#output + 1] = ''
   end
@@ -387,7 +409,7 @@ function M.gen(opt)
     output[#output + 1] = line
   end
 
-  tofile(opt.output_file, table.concat(output, '\n'))
+  tofile(opt.output_file, table.concat(output, '\n') .. '\n')
 end
 
 ---@type vim._gen_lsp.opt
