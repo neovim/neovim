@@ -206,6 +206,11 @@ func Test_screenpos()
   call assert_equal(#{col: 1, row: 2, endcol: 1, curscol: 1}, screenpos(win_getid(), 1, 1))
   " nunmenu WinBar.TEST
   setlocal winbar&
+  call assert_equal(#{col: 1, row: 1, endcol: 1, curscol: 1}, screenpos(win_getid(), 1, 1))
+
+  call assert_equal(#{col: 0, row: 0, endcol: 0, curscol: 0}, screenpos(0, 0, 1))
+  call assert_equal(#{col: 0, row: 0, endcol: 0, curscol: 0}, screenpos(0, -1, 1))
+  call assert_equal(#{col: 1, row: 1, endcol: 1, curscol: 1}, screenpos(0, 1, -v:maxcol))
 endfunc
 
 func Test_screenpos_fold()
