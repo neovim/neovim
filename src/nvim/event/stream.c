@@ -128,15 +128,22 @@ void stream_may_close(Stream *stream)
 void stream_close_handle(Stream *stream)
   FUNC_ATTR_NONNULL_ALL
 {
+  uv_handle_t *handle = NULL;
   if (stream->uvstream) {
     if (uv_stream_get_write_queue_size(stream->uvstream) > 0) {
       WLOG("closed Stream (%p) with %zu unwritten bytes",
            (void *)stream,
            uv_stream_get_write_queue_size(stream->uvstream));
     }
-    uv_close((uv_handle_t *)stream->uvstream, close_cb);
+    handle = (uv_handle_t *)stream->uvstream;
   } else {
-    uv_close((uv_handle_t *)&stream->uv.idle, close_cb);
+    handle = (uv_handle_t *)&stream->uv.idle;
+  }
+
+  assert(handle != NULL);
+
+  if (!uv_is_closing(handle)) {
+    uv_close(handle, close_cb);
   }
 }
 
