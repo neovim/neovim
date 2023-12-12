@@ -1834,6 +1834,7 @@ describe('api/buf', function()
     it('works in empty buffer', function()
       eq(0, get_offset(0))
       eq(1, get_offset(1))
+      eq(-1, funcs.line2byte('$'))
     end)
 
     it('works in buffer with one line inserted', function()

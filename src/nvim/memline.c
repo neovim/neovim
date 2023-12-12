@@ -3907,7 +3907,7 @@ int ml_find_line_or_offset(buf_T *buf, linenr_T lnum, int *offp, bool no_ff)
       || lnum < 0) {
     // memline is currently empty. Although if it is loaded,
     // it behaves like there is one empty line.
-    if (!ffdos && buf->b_ml.ml_mfp && (lnum == 1 || lnum == 2)) {
+    if (no_ff && buf->b_ml.ml_mfp && (lnum == 1 || lnum == 2)) {
       return lnum - 1;
     }
     return -1;
