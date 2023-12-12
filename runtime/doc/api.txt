@@ -112,7 +112,9 @@ Basic types ~
   Dictionary (msgpack: map)
   Object
 <
-  Note: empty Array is accepted as a valid argument for Dictionary parameter.
+  Note: 
+    - An empty Array is accepted as a valid argument for Dictionary parameter.
+    - There is no Function type, so API functions cannot return Lua functions.
 
 Special types (msgpack EXT) ~
 
