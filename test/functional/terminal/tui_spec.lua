@@ -1714,6 +1714,36 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
   end)
+
+  it('cursor is not hidden on incsearch with no match', function()
+    feed_data('ifoo\027')
+    feed_data('/foo')
+    screen:expect([[
+      {1:foo}                                               |
+      {4:~                                                 }|*3
+      {5:[No Name] [+]                                     }|
+      /foo{1: }                                             |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    screen:sleep(10)
+    feed_data('b')
+    screen:expect([[
+      foo                                               |
+      {4:~                                                 }|*3
+      {5:[No Name] [+]                                     }|
+      /foob{1: }                                            |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    screen:sleep(10)
+    feed_data('a')
+    screen:expect([[
+      foo                                               |
+      {4:~                                                 }|*3
+      {5:[No Name] [+]                                     }|
+      /fooba{1: }                                           |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
 end)
 
 describe('TUI', function()
