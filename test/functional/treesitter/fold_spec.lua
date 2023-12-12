@@ -660,7 +660,7 @@ t2]])
       {3:~                                       }|
       {3:~                                       }|
       {3:~                                       }|
-      1 line less; before #2  0 seconds ago   |
+      1 line less; before #2  {MATCH:.*}|
     ]]}
   end)
 end)
