@@ -2255,6 +2255,11 @@ static void augment_terminfo(TUIData *tui, const char *term, int vte_version, in
   }
 }
 
+static bool should_invisible(TUIData *tui)
+{
+  return tui->busy || tui->want_invisible;
+}
+
 /// Write the sequence to begin flushing output to `buf`.
 /// If 'termsync' is set and the terminal supports synchronized output, begin synchronized update.
 /// Otherwise, hide the cursor to avoid cursor jumping.
@@ -2298,11 +2303,10 @@ static size_t flush_buf_end(TUIData *tui, char *buf, size_t len)
   }
 
   const char *str = NULL;
-  bool should_invisible = tui->busy || tui->want_invisible;
-  if (tui->is_invisible && !should_invisible) {
+  if (tui->is_invisible && !should_invisible(tui)) {
     str = unibi_get_str(tui->ut, unibi_cursor_normal);
     tui->is_invisible = false;
-  } else if (!tui->is_invisible && should_invisible) {
+  } else if (!tui->is_invisible && should_invisible(tui)) {
     str = unibi_get_str(tui->ut, unibi_cursor_invisible);
     tui->is_invisible = true;
   }
@@ -2322,7 +2326,7 @@ static void flush_buf(TUIData *tui)
   char pre[32];
   char post[32];
 
-  if (tui->bufpos <= 0) {
+  if (tui->bufpos <= 0 && tui->is_invisible == should_invisible(tui)) {
     return;
   }
 
