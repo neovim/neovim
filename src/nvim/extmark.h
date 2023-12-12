@@ -5,10 +5,9 @@
 
 #include "klib/kvec.h"
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
-#include "nvim/decoration_defs.h"  // IWYU pragma: keep
 #include "nvim/extmark_defs.h"  // IWYU pragma: export
 #include "nvim/macros_defs.h"
-#include "nvim/marktree_defs.h"  // IWYU pragma: keep
+#include "nvim/marktree_defs.h"
 #include "nvim/pos_defs.h"
 
 EXTERN int curbuf_splice_pending INIT( = 0);

@@ -131,6 +131,5 @@ typedef enum {
 } OptReqScope;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-// Initialize the OptIndex enum.
-# include "options_enum.generated.h"
+# include "options_enum.generated.h"  // IWYU pragma: export
 #endif

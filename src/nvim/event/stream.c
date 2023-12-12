@@ -4,6 +4,7 @@
 #include <uv.h>
 #include <uv/version.h>
 
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
 #include "nvim/log.h"

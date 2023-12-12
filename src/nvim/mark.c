@@ -2,13 +2,13 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
-#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
@@ -16,7 +16,6 @@
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark.h"
-#include "nvim/extmark_defs.h"
 #include "nvim/fold.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
@@ -32,7 +31,9 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/time.h"
 #include "nvim/path.h"
+#include "nvim/pos_defs.h"
 #include "nvim/quickfix.h"
 #include "nvim/strings.h"
 #include "nvim/textobject.h"

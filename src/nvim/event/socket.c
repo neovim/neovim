@@ -7,6 +7,7 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/charset.h"
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/socket.h"
 #include "nvim/event/stream.h"

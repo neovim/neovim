@@ -15,6 +15,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/signal.h"
 #include "nvim/event/stream.h"

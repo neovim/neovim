@@ -56,7 +56,6 @@ typedef enum {
   kCdCauseAuto,    ///< On 'autochdir'.
 } CdCause;
 
-// bring lots of system header files
 #include "nvim/os/os_defs.h"  // IWYU pragma: keep
 
 // return values for functions

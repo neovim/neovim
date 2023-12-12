@@ -1,7 +1,9 @@
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <uv.h>
 
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
 #include "nvim/event/wstream.h"

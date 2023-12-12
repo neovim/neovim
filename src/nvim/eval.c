@@ -32,6 +32,7 @@
 #include "nvim/eval/vars.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/process.h"
+#include "nvim/event/time.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"

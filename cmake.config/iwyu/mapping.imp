@@ -23,7 +23,6 @@
   { symbol: [ "extern_proc", private, '<uv.h>', public ] },
   { symbol: [ "iovec", private, '<sys/uio.h>', public ] },
 
-  { include: [ '"keysets_defs.generated.h"', private, '"nvim/api/private/dispatch.h"', public ] },
   { include: [ '<uv/unix.h>', private, '<uv.h>', public ] },
 ]
 

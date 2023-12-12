@@ -5,6 +5,7 @@
 
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/os/time.h"

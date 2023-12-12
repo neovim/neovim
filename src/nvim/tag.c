@@ -43,6 +43,7 @@
 #include "nvim/optionstr.h"
 #include "nvim/os/fs.h"
 #include "nvim/os/input.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
