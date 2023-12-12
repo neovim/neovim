@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <uv.h>
 
+#include "nvim/eval/typval.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/rbuffer_defs.h"
@@ -55,6 +56,7 @@ struct stream {
   size_t pending_reqs;
   size_t num_bytes;
   MultiQueue *events;
+  Callback on_close;
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

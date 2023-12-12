@@ -24,6 +24,9 @@ describe('channels', function()
     function! OnEvent(id, data, event) dict
       call rpcnotify(1, a:event, a:id, a:data)
     endfunction
+    function! OnClose(id) dict
+      let g:close = a:id
+    endfunction
   ]]
   before_each(function()
     clear()
@@ -39,7 +42,7 @@ describe('channels', function()
     source(init)
 
     meths.set_var('address', address)
-    command("let g:id = sockconnect('pipe', address, {'on_data':'OnEvent'})")
+    command("let g:id = sockconnect('pipe', address, {'on_data':'OnEvent', 'on_close':'OnClose'})")
     local id = eval("g:id")
     ok(id > 0)
 
@@ -52,12 +55,14 @@ describe('channels', function()
 
     command("call chansend(g:id, msgpackdump([[0,0,'nvim_eval',['2+3']]]))")
 
-
     local res = eval("msgpackdump([[1,0,v:null,5]])")
     eq({"\148\001\n\192\005"}, res)
     eq({'notification', 'data', {id, res}}, next_msg())
     command("call chansend(g:id, msgpackdump([[2,'nvim_command',['quit']]]))")
     eq({'notification', 'data', {id, {''}}}, next_msg())
+
+    command("call chanclose(g:id)")
+    eq(id, eval("g:close"))
   end)
 
   it('can use stdio channel', function()
