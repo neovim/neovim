@@ -3639,6 +3639,25 @@ Iter:slice({first}, {last})                                     *Iter:slice()*
     Return: ~
         Iter
 
+Iter:take({n})                                                   *Iter:take()*
+    Transforms an iterator to yield only the first n values.
+
+    Example: >lua
+        local it = vim.iter({ 1, 2, 3, 4 }):take(2)
+        it:next()
+        -- 1
+        it:next()
+        -- 2
+        it:next()
+        -- nil
+<
+
+    Parameters: ~
+      • {n}  (integer)
+
+    Return: ~
+        Iter
+
 Iter:totable()                                                *Iter:totable()*
     Collect the iterator into a table.
 
