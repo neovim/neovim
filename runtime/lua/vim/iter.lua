@@ -592,6 +592,41 @@ function ListIter.rfind(self, f) -- luacheck: no unused args
   self._head = self._tail
 end
 
+--- Transforms an iterator to yield only the first n values.
+---
+--- Example:
+---
+--- ```lua
+--- local it = vim.iter({ 1, 2, 3, 4 }):take(2)
+--- it:next()
+--- -- 1
+--- it:next()
+--- -- 2
+--- it:next()
+--- -- nil
+--- ```
+---
+---@param n integer
+---@return Iter
+function Iter.take(self, n)
+  local next = self.next
+  local i = 0
+  self.next = function()
+    if i < n then
+      i = i + 1
+      return next(self)
+    end
+  end
+  return self
+end
+
+---@private
+function ListIter.take(self, n)
+  local inc = self._head < self._tail and 1 or -1
+  self._tail = math.min(self._tail, self._head + n * inc)
+  return self
+end
+
 --- "Pops" a value from a |list-iterator| (gets the last value and decrements the tail).
 ---
 --- Example:

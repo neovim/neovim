@@ -203,6 +203,33 @@ describe('vim.iter', function()
     matches('skipback%(%) requires a list%-like table', pcall_err(it.nthback, it, 1))
   end)
 
+  it('take()', function()
+    do
+      local t = { 4, 3, 2, 1 }
+      eq({}, vim.iter(t):take(0):totable())
+      eq({ 4 }, vim.iter(t):take(1):totable())
+      eq({ 4, 3 }, vim.iter(t):take(2):totable())
+      eq({ 4, 3, 2 }, vim.iter(t):take(3):totable())
+      eq({ 4, 3, 2, 1 }, vim.iter(t):take(4):totable())
+      eq({ 4, 3, 2, 1 }, vim.iter(t):take(5):totable())
+    end
+
+    do
+      local t = { 4, 3, 2, 1 }
+      local it = vim.iter(t)
+      eq({ 4, 3 }, it:take(2):totable())
+      -- tail is already set from the previous take()
+      eq({ 4, 3 }, it:take(3):totable())
+    end
+
+    do
+      local it = vim.iter(vim.gsplit('a|b|c|d', '|'))
+      eq({ 'a', 'b' }, it:take(2):totable())
+      -- non-array iterators are consumed by take()
+      eq({}, it:take(2):totable())
+    end
+  end)
+
   it('any()', function()
     local function odd(v)
       return v % 2 ~= 0
