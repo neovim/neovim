@@ -1271,17 +1271,13 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             if (cterm_normal_fg_color) {
               color = cterm_normal_fg_color - 1;
             } else {
-              emsg(_("E419: FG color unknown"));
-              error = true;
-              break;
+              color = -1;
             }
           } else if (STRICMP(arg, "bg") == 0) {
             if (cterm_normal_bg_color > 0) {
               color = cterm_normal_bg_color - 1;
             } else {
-              emsg(_("E420: BG color unknown"));
-              error = true;
-              break;
+              color = -1;
             }
           } else {
             // Reduce calls to STRICMP a bit, it can be slow.
