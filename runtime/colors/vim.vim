@@ -14,8 +14,8 @@ let g:colors_name = 'vim'
 
 " General
 hi Conceal      guifg=LightGrey guibg=DarkGrey guisp=NONE gui=NONE         ctermfg=LightGrey ctermbg=DarkGrey cterm=NONE
-hi Cursor       guifg=bg        guibg=fg       guisp=NONE gui=NONE         ctermfg=bg        ctermbg=fg       cterm=NONE
-hi lCursor      guifg=bg        guibg=fg       guisp=NONE gui=NONE         ctermfg=bg        ctermbg=fg       cterm=NONE
+hi Cursor       guifg=bg        guibg=fg       guisp=NONE gui=NONE         ctermfg=NONE      ctermbg=NONE     cterm=NONE
+hi lCursor      guifg=bg        guibg=fg       guisp=NONE gui=NONE         ctermfg=NONE      ctermbg=NONE     cterm=NONE
 hi DiffText     guifg=NONE      guibg=Red      guisp=NONE gui=bold         ctermfg=NONE      ctermbg=Red      cterm=bold
 hi ErrorMsg     guifg=White     guibg=Red      guisp=NONE gui=NONE         ctermfg=White     ctermbg=DarkRed  cterm=NONE
 hi IncSearch    guifg=NONE      guibg=NONE     guisp=NONE gui=reverse      ctermfg=NONE      ctermbg=NONE     cterm=reverse
@@ -214,7 +214,7 @@ if &background ==# 'light'
   hi SpellRare    guifg=NONE      guibg=NONE         guisp=Magenta  gui=undercurl ctermfg=NONE        ctermbg=LightMagenta cterm=NONE
   hi TabLine      guifg=NONE      guibg=LightGrey    guisp=NONE     gui=underline ctermfg=black       ctermbg=LightGrey    cterm=underline
   hi Title        guifg=Magenta   guibg=NONE         guisp=NONE     gui=bold      ctermfg=DarkMagenta ctermbg=NONE         cterm=NONE
-  hi Visual       guifg=NONE      guibg=LightGrey    guisp=NONE     gui=NONE      ctermfg=NONE        ctermbg=NONE         cterm=NONE
+  hi Visual       guifg=NONE      guibg=LightGrey    guisp=NONE     gui=NONE      ctermfg=NONE        ctermbg=LightGrey    cterm=NONE
   hi WarningMsg   guifg=Red       guibg=NONE         guisp=NONE     gui=NONE      ctermfg=DarkRed     ctermbg=NONE         cterm=NONE
   hi Comment      guifg=Blue      guibg=NONE         guisp=NONE     gui=NONE      ctermfg=DarkBlue    ctermbg=NONE         cterm=NONE      term=bold
   hi Constant     guifg=Magenta   guibg=NONE         guisp=NONE     gui=NONE      ctermfg=DarkRed     ctermbg=NONE         cterm=NONE      term=underline
@@ -253,7 +253,7 @@ else
   hi SpellRare    guifg=NONE     guibg=NONE        guisp=Magenta gui=undercurl ctermfg=NONE         ctermbg=Magenta     cterm=NONE
   hi TabLine      guifg=NONE     guibg=DarkGrey    guisp=NONE    gui=underline ctermfg=white        ctermbg=DarkGrey    cterm=underline
   hi Title        guifg=Magenta  guibg=NONE        guisp=NONE    gui=bold      ctermfg=LightMagenta ctermbg=NONE        cterm=NONE
-  hi Visual       guifg=NONE     guibg=DarkGrey    guisp=NONE    gui=NONE      ctermfg=NONE         ctermbg=NONE        cterm=NONE
+  hi Visual       guifg=NONE     guibg=DarkGrey    guisp=NONE    gui=NONE      ctermfg=NONE         ctermbg=DarkGrey    cterm=NONE
   hi WarningMsg   guifg=Red      guibg=NONE        guisp=NONE    gui=NONE      ctermfg=LightRed     ctermbg=NONE        cterm=NONE
   hi Comment      guifg=#80a0ff  guibg=NONE        guisp=NONE    gui=NONE      ctermfg=Cyan         ctermbg=NONE        cterm=NONE      term=bold
   hi Constant     guifg=#ffa0a0  guibg=NONE        guisp=NONE    gui=NONE      ctermfg=Magenta      ctermbg=NONE        cterm=NONE      term=underline

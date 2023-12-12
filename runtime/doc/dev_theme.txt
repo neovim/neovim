@@ -18,8 +18,8 @@ Design
 - Be "Neovim branded", i.e. have mostly "green-blue" feel plus one or two
   colors reserved for very occasional user attention.
 
-- Be extra minimal for 'notermguicolors' (256 colors) while allowing a bit
-  more shades when 'termguicolors' is set (true colors).
+- Be oriented for 'termguicolors' (true colors) while being extra minimal for
+  'notermguicolors' (16 colors) as fallback.
 
 - Be accessible, i.e. have high enough contrast ratio (as defined in
   https://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef).
@@ -49,8 +49,7 @@ Palettes
 - Each palette has the following colors (descriptions are for dark background;
   reverse for light one):
 
-    - Four shades of "colored" greys for general UI. In 256 colors they are
-      exact greys; in true colors they are shades of "cold" grey.
+    - Four shades of colored "cold" greys for general UI.
 
         - Dark ones (from darkest to lightest) are reserved as background for
           |hl-NormalFloat| (considered as "black"), |hl-Normal| (background),
@@ -67,8 +66,17 @@ Palettes
   (which is used for |hl-Normal|) as possible. They should have (reasonably)
   different hues to make them visually separable.
 
-- Each palette color should have a 256 colors variant with closest color
-  computed based on the perceptually uniform distance measure.
+- For 16 colors:
+
+    - Greys are not used and are replaced with the foreground and background
+      colors of the terminal emulator.
+
+    - Non-grey colors fall back to terminal colors as ordered in ANSI codes
+      (https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit),
+      that is red (1, 9), green (2, 10), yellow (3, 11), blue (4, 12),
+      magenta (5, 13), cyan (6, 14).
+      To increase contrast, colors 1-6 are used for light background and 9-14
+      for dark background.
 
 
 ==============================================================================
@@ -91,13 +99,23 @@ Use:
 - Red to generally mean high user attention, i.e. errors; in particular for
   |hl-ErrorMsg|, |hl-DiffDelete|, |hl-DiagnosticError|.
 
-- Yellow very sparingly only with true colors to mean mild user attention,
-  i.e. warnings. That is, |hl-DiagnosticWarn| and |hl-WarningMsg|.
+- Yellow very sparingly to mean mild user attention, i.e. warnings. That is,
+  |hl-DiagnosticWarn| and |hl-WarningMsg|.
 
-- Blue very sparingly only with true colors as |hl-DiagnosticHint| and some
-  additional important syntax group (like `Identifier`).
+- Blue very sparingly as |hl-DiagnosticHint| and some additional important
+  syntax group (like `Identifier`).
 
 - Magenta very carefully (if at all).
+
+In case of 16 colors:
+
+- Rely on the assumption "Background color can be used as background; other
+  colors can be used as foreground". This means that in any
+  foreground/background combination there should be background and one
+  non-background color.
+
+- Use 0 (black) or 15 (bright white) as foreground for non-grey background,
+  depending on whether normal background is light or dark.
 
 
  vim:tw=78:ts=8:et:ft=help:norl:

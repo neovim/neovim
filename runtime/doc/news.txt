@@ -92,8 +92,21 @@ The following changes may require adaptations in user config or plugins.
   • Legacy and extmark signs are displayed and listed with the same priority:
       line number -> priority -> sign id -> recently placed
 
-• Default color scheme has been updated to be "Neovim branded" and accessible.
+• Default color scheme has been updated to be "Nvim branded" and accessible.
   Use `:colorscheme vim` to revert to the old legacy color scheme.
+
+  Here is a list of Nvim specific highlight groups which are now defined in
+  a meaningfully different way and might need an update:
+  • |hl-FloatBorder| is linked to |hl-NormalFloat| instead of |hl-WinSeparator|.
+  • |hl-NormalFloat| is not linked to |hl-Pmenu|.
+  • |hl-WinBar| is linked to |hl-StatusLine|.
+  • |hl-WinBarNC| is linked to |hl-StatusLineNC| instead of |hl-WinBar|.
+  • |hl-WinSeparator| is linked to |hl-Normal| instead of |hl-VertSplit|.
+
+  This also might result into some color schemes looking differently due to
+  them relying on an implicit assumptions about how highlight groups are
+  defined by default. To account for this, define all attributes of highlight
+  groups explicitly or use `:colorscheme vim` to restore previous definitions.
 
 • 'termguicolors' is enabled by default when Nvim is able to determine that
   the host terminal emulator supports 24-bit color.

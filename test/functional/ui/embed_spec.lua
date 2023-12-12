@@ -29,9 +29,6 @@ local function test_embed(ext_linegrid)
       [6] = {foreground = Screen.colors.NvimDarkGrey3, background = Screen.colors.NvimLightGrey1};
       [7] = {foreground = Screen.colors.NvimDarkRed};
       [8] = {foreground = Screen.colors.NvimDarkCyan};
-      [9] = {foreground = Screen.colors.NvimLightGrey3, background = Screen.colors.NvimDarkGrey1};
-      [10] = {foreground = Screen.colors.NvimLightRed};
-      [11] = {foreground = Screen.colors.NvimLightCyan};
     })
   end
 
@@ -60,11 +57,11 @@ local function test_embed(ext_linegrid)
     startup('--cmd', 'echoerr "foo"', '--cmd', 'color default', '--cmd', 'echoerr "bar"')
     screen:expect([[
                                                                   |*3
-      {9:                                                            }|
+      {6:                                                            }|
       {7:Error detected while processing pre-vimrc command line:}     |
       {7:foo}                                                         |
-      {10:bar}                                                         |
-      {11:Press ENTER or type command to continue}^                     |
+      {7:bar}                                                         |
+      {8:Press ENTER or type command to continue}^                     |
     ]])
   end)
 
