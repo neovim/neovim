@@ -3351,32 +3351,23 @@ describe('vim.keymap', function()
 
     eq(1, exec_lua[[return GlobalCount]])
   end)
+end)
 
-  it('exists() can check a lua function', function()
-    eq(true, exec_lua[[
+describe('Vimscript function exists()', function()
+  it('can check a lua function', function()
+    eq(1, exec_lua[[
       _G.test = function() print("hello") end
-      return vim.fn.exists('v:lua.test') == 1
+      return vim.fn.exists('v:lua.test')
     ]])
 
-    eq(true, exec_lua[[
-      return vim.fn.exists('v:lua.require("mpack").decode') == 1
-    ]])
-
-    eq(true, exec_lua[[
-      return vim.fn.exists("v:lua.require('vim.lsp').start") == 1
-    ]])
-
-    eq(true, exec_lua[[
-      return vim.fn.exists('v:lua.require"vim.lsp".start') == 1
-    ]])
-
-    eq(true, exec_lua[[
-      return vim.fn.exists("v:lua.require'vim.lsp'.start") == 1
-    ]])
-
-    eq(false, exec_lua[[
-      return vim.fn.exists("v:lua.require'vim.lsp'.unknown") == 1
-    ]])
+    eq(1, funcs.exists('v:lua.require("mpack").decode'))
+    eq(1, funcs.exists("v:lua.require('mpack').decode"))
+    eq(1, funcs.exists('v:lua.require"mpack".decode'))
+    eq(1, funcs.exists("v:lua.require'mpack'.decode"))
+    eq(1, funcs.exists("v:lua.require('vim.lsp').start"))
+    eq(1, funcs.exists('v:lua.require"vim.lsp".start'))
+    eq(1, funcs.exists("v:lua.require'vim.lsp'.start"))
+    eq(0, funcs.exists("v:lua.require'vim.lsp'.unknown"))
+    eq(0, funcs.exists('v:lua.?'))
   end)
-
 end)
