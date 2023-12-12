@@ -1125,6 +1125,9 @@ void f_screenpos(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     semsg(_(e_invalid_line_number_nr), pos.lnum);
     return;
   }
+  if (pos.col < 0) {
+    pos.col = 0;
+  }
   int row = 0;
   int scol = 0, ccol = 0, ecol = 0;
   textpos2screenpos(wp, &pos, &row, &scol, &ccol, &ecol, false);
