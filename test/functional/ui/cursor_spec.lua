@@ -213,7 +213,7 @@ describe('ui/cursor', function()
           m.hl_id = 64
           m.attr = {background = Screen.colors.DarkGray}
       end
-      if m.id_lm then m.id_lm = 69 end
+      if m.id_lm then m.id_lm = 70 end
     end
 
     -- Assert the new expectation.

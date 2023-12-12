@@ -72,15 +72,12 @@ describe('command-line option', function()
         env = { VIMRUNTIME = os.getenv('VIMRUNTIME') }
       })
       screen:expect([[
-        {1:^                                        }|
-        {2:~                                       }|*4
-        {3:[No Name]             0,0-1          All}|
-        {1:                                        }|
-                                                |
+        ^                                        |
+        ~                                       |*4
+        {1:[No Name]             0,0-1          All}|
+                                                |*2
       ]], {
-        [1] = {bg_indexed = true, foreground = Screen.colors.Grey91, background = tonumber('0x161616'), fg_indexed = true},
-        [2] = {bg_indexed = true, foreground = Screen.colors.Gray30, background = tonumber('0x161616'), fg_indexed = true},
-        [3] = {bg_indexed = true, foreground = tonumber('0xd2d2d2'), background = Screen.colors.Black , fg_indexed = true},
+        [1] = {reverse = true};
       })
       feed('i:cq<CR>')
       screen:expect([[

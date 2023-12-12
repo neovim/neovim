@@ -5136,6 +5136,18 @@ guisp={color-name}					*guisp*
 	    Black	White
 	    Orange	Purple		Violet
 
+	Colors which define Nvim's default color scheme:
+	    NvimDarkBlue    NvimLightBlue
+	    NvimDarkCyan    NvimLightCyan
+	    NvimDarkGreen   NvimLightGreen
+	    NvimDarkGrey1   NvimLightGrey1
+	    NvimDarkGrey2   NvimLightGrey2
+	    NvimDarkGrey3   NvimLightGrey3
+	    NvimDarkGrey4   NvimLightGrey4
+	    NvimDarkMagenta NvimLightMagenta
+	    NvimDarkRed     NvimLightRed
+	    NvimDarkYellow  NvimLightYellow
+
 	You can also specify a color by its RGB (red, green, blue) values.
 	The format is "#rrggbb", where
 		"rr"	is the Red value
