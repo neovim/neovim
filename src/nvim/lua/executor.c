@@ -2323,10 +2323,12 @@ bool nlua_func_exists(const char *lua_funcname)
   vim_snprintf(str, length, "return %s", lua_funcname);
   ADD_C(args, CSTR_AS_OBJ(str));
   Error err = ERROR_INIT;
-  Object result = NLUA_EXEC_STATIC("return type(loadstring(...)()) =='function'", args, &err);
+  Object result = NLUA_EXEC_STATIC("return type(loadstring(...)()) == 'function'", args, &err);
   xfree(str);
 
+  api_clear_error(&err);
   if (result.type != kObjectTypeBoolean) {
+    api_free_object(result);
     return false;
   }
   return result.data.boolean;
