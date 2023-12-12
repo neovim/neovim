@@ -21,6 +21,7 @@ Reporting problems
 - [Search existing issues][github-issues] (including closed!)
 - Update Neovim to the latest version to see if your problem persists.
 - Try to reproduce with `nvim --clean` ("factory defaults").
+- If a specific configuration or plugin is necessary to recreate the problem, use the minimal template in `contrib/minimal.lua` with `nvim --clean -u contrib/minimal.lua` after making the necessary changes.
 - [Bisect](https://neovim.io/doc/user/starting.html#bisect) your config: disable plugins incrementally, to narrow down the cause of the issue.
 - [Bisect][git-bisect] Neovim's source code to find the cause of a regression, if you can. This is _extremely_ helpful.
 - When reporting a crash, [include a stacktrace](https://github.com/neovim/neovim/wiki/FAQ#backtrace-linux).
