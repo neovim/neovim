@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim,
   testprg, ok, source, write_file, mkdir, rmdir = helpers.clear,
   helpers.eq, helpers.eval, helpers.exc_exec, helpers.feed_command, helpers.feed,
@@ -1139,6 +1140,31 @@ describe('jobs', function()
       eq(other_pid, eval('jobpid(' .. other_jobid .. ')'))
       command('call jobstop(' .. other_jobid .. ')')
     end)
+  end)
+
+  it('does not close the same handle twice on exit #25086', function()
+    local filename = string.format('%s.lua', helpers.tmpname())
+    write_file(filename, [[
+      vim.api.nvim_create_autocmd('VimLeavePre', {
+        callback = function()
+          local id = vim.fn.jobstart('sleep 0')
+          vim.fn.jobwait({id})
+        end,
+      })
+    ]])
+
+    local screen = thelpers.setup_child_nvim({
+      '-i', 'NONE',
+      '-u', filename,
+      '+q'
+    })
+
+    screen:expect{grid=[[
+                                                        |
+      [Process exited 0]{1: }                               |
+                                                        |*4
+      {3:-- TERMINAL --}                                    |
+    ]]}
   end)
 end)
 
