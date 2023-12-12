@@ -252,6 +252,8 @@ The following new APIs and features were added.
 • |vim.text.hexencode()| and |vim.text.hexdecode()| convert strings to and
   from byte representations.
 
+• Allow dictionaries and lists to be stored as vimscript in a session file.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

@@ -8241,43 +8241,80 @@ void var_set_global(const char *const name, typval_T vartv)
   restore_funccal();
 }
 
+static bool check_session_globals_allowed_types(VarType v_type)
+{
+  return v_type == VAR_NUMBER || v_type == VAR_FLOAT || v_type == VAR_STRING || v_type == VAR_LIST
+         || v_type == VAR_DICT;
+}
+
+static char *escape_session_globals_strings(char const *input)
+{
+  char *const p = vim_strsave_escaped(input, "\\\"\n\r");
+  for (char *t = p; *t != NUL; t++) {
+    if (*t == '\n') {
+      *t = 'n';
+    } else if (*t == '\r') {
+      *t = 'r';
+    }
+  }
+  return p;
+}
+
+static int store_session_globals_variable(FILE *fd, typval_T *value)
+{
+  switch (value->v_type) {
+  case VAR_DICT:
+    fprintf(fd, "{");
+    TV_DICT_ITER(value->vval.v_dict, inner_var, {
+      if (check_session_globals_allowed_types(inner_var->di_tv.v_type)) {
+        char *const p = escape_session_globals_strings(inner_var->di_key);
+        fprintf(fd, "\"%s\":", p);
+        xfree(p);
+        if (store_session_globals_variable(fd, &inner_var->di_tv) == FAIL) {
+          return FAIL;
+        }
+        fprintf(fd, ",");
+      }
+    });
+    fprintf(fd, "}");
+    break;
+  case VAR_LIST:
+    fprintf(fd, "[");
+    TV_LIST_ITER(value->vval.v_list, inner_var, {
+      if (store_session_globals_variable(fd, TV_LIST_ITEM_TV(inner_var)) == FAIL) {
+        return FAIL;
+      }
+      fprintf(fd, ",");
+    });
+    fprintf(fd, "]");
+    break;
+  case VAR_STRING: {
+    char *const p = escape_session_globals_strings(tv_get_string(value));
+    fprintf(fd, "\"%s\"", p);
+    xfree(p);
+    break;
+  }
+  case VAR_NUMBER:
+    fprintf(fd, "%s", tv_get_string(value));
+    break;
+  case VAR_FLOAT: {
+    float_T f = value->vval.v_float;
+    fprintf(fd, f < 0 ? "-%f" : "%f", fabs(f));
+    break;
+  }
+  default:
+    break;
+  }
+  return ferror(fd) ? FAIL : OK;
+}
+
 int store_session_globals(FILE *fd)
 {
   TV_DICT_ITER(&globvardict, this_var, {
-    if ((this_var->di_tv.v_type == VAR_NUMBER
-         || this_var->di_tv.v_type == VAR_STRING)
-        && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
-      // Escape special characters with a backslash.  Turn a LF and
-      // CR into \n and \r.
-      char *const p = vim_strsave_escaped(tv_get_string(&this_var->di_tv), "\\\"\n\r");
-      for (char *t = p; *t != NUL; t++) {
-        if (*t == '\n') {
-          *t = 'n';
-        } else if (*t == '\r') {
-          *t = 'r';
-        }
-      }
-      if ((fprintf(fd, "let %s = %c%s%c",
-                   this_var->di_key,
-                   ((this_var->di_tv.v_type == VAR_STRING) ? '"' : ' '),
-                   p,
-                   ((this_var->di_tv.v_type == VAR_STRING) ? '"' : ' ')) < 0)
-          || put_eol(fd) == FAIL) {
-        xfree(p);
-        return FAIL;
-      }
-      xfree(p);
-    } else if (this_var->di_tv.v_type == VAR_FLOAT
-               && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
-      float_T f = this_var->di_tv.vval.v_float;
-      int sign = ' ';
-
-      if (f < 0) {
-        f = -f;
-        sign = '-';
-      }
-      if ((fprintf(fd, "let %s = %c%f", this_var->di_key, sign, f) < 0)
-          || put_eol(fd) == FAIL) {
+    if (var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION
+        && check_session_globals_allowed_types(this_var->di_tv.v_type)) {
+      if (fprintf(fd, "let %s = ", this_var->di_key) < 0
+          || store_session_globals_variable(fd, &this_var->di_tv) == FAIL || put_eol(fd) == FAIL) {
         return FAIL;
       }
     }
