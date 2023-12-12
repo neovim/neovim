@@ -1716,6 +1716,8 @@ static void f_exists(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     } else {
       n = au_exists(p + 1);
     }
+  } else if (strncmp(p, "v:lua.", 6) == 0 && nlua_func_exists(p + 6)) {
+    n = true;
   } else {  // Internal variable.
     n = var_exists(p);
   }

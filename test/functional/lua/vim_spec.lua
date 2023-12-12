@@ -3352,4 +3352,31 @@ describe('vim.keymap', function()
     eq(1, exec_lua[[return GlobalCount]])
   end)
 
+  it('exists() can check a lua function', function()
+    eq(true, exec_lua[[
+      _G.test = function() print("hello") end
+      return vim.fn.exists('v:lua.test') == 1
+    ]])
+
+    eq(true, exec_lua[[
+      return vim.fn.exists('v:lua.require("mpack").decode') == 1
+    ]])
+
+    eq(true, exec_lua[[
+      return vim.fn.exists("v:lua.require('vim.lsp').start") == 1
+    ]])
+
+    eq(true, exec_lua[[
+      return vim.fn.exists('v:lua.require"vim.lsp".start') == 1
+    ]])
+
+    eq(true, exec_lua[[
+      return vim.fn.exists("v:lua.require'vim.lsp'.start") == 1
+    ]])
+
+    eq(false, exec_lua[[
+      return vim.fn.exists("v:lua.require'vim.lsp'.unknown") == 1
+    ]])
+  end)
+
 end)

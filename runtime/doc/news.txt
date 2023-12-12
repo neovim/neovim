@@ -339,6 +339,8 @@ The following changes to existing APIs or features add new behavior.
 
 • |vim.wait()| is no longer allowed to be called in |api-fast|.
 
+• Vimscript function |exists()| supports checking |v:lua| functions.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
