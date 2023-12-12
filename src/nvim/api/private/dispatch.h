@@ -27,5 +27,5 @@ extern const MsgpackRpcRequestHandler method_handlers[];
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/dispatch.h.generated.h"
 # include "api/private/dispatch_wrappers.h.generated.h"  // IWYU pragma: export
-# include "keysets_defs.generated.h"
+# include "keysets_defs.generated.h"  // IWYU pragma: export
 #endif

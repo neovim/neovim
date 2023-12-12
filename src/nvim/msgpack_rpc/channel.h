@@ -3,11 +3,7 @@
 #include <stdint.h>  // IWYU pragma: keep
 
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
-#include "nvim/channel.h"
-#include "nvim/event/multiqueue.h"
-#include "nvim/event/process.h"
-#include "nvim/event/socket.h"
-#include "nvim/event/wstream.h"
+#include "nvim/event/defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory_defs.h"  // IWYU pragma: keep
 #include "nvim/msgpack_rpc/channel_defs.h"  // IWYU pragma: export

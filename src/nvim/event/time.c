@@ -1,7 +1,10 @@
+#include <stdbool.h>
 #include <stdint.h>
 #include <uv.h>
 
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/event/time.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -14,6 +14,7 @@
 #include "nvim/buffer.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/drawscreen.h"
+#include "nvim/event/multiqueue.h"
 #include "nvim/ex_getln.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"

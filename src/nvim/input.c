@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
-#include "nvim/event/multiqueue.h"
+#include "nvim/event/defs.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"

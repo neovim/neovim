@@ -27,7 +27,6 @@
 #include "nvim/eval/userfunc.h"
 #include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
-#include "nvim/event/multiqueue.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
