@@ -47,6 +47,7 @@ ABOUT NVIM				*reference_toc* *doc-file-list* *Q_ct*
 |news|			News since the previous release
 |nvim|			Transitioning from Vim
 |vim-differences|	Nvim compared to Vim
+|faq|			Frequently Asked Questions
 |user-manual|		User manual: How to accomplish editing tasks.
 |quickref|		Overview of common commands
 |tutor|			30-minute interactive course for beginners
@@ -167,7 +168,8 @@ DEVELOPING NVIM
 
 |dev|			Development of Nvim
 |dev-style|		Development style guidelines
-|debug.txt|		Debugging Vim itself
+|dev-theme|		Colorscheme style guidelines
+|dev-tools|		Tools and advice for debugging Nvim
 
 Standard plugins ~
 						*standard-plugin-list*

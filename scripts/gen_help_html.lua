@@ -80,6 +80,7 @@ local exclude_invalid_urls = {
   ['http://wiki.services.openoffice.org/wiki/Dictionaries'] = 'spell.txt',
   ['http://www.adapower.com'] = 'ft_ada.txt',
   ['http://www.jclark.com/'] = 'quickfix.txt',
+  ['http://oldblog.antirez.com/post/redis-and-scripting.html'] = 'faq.txt',
 }
 
 -- Deprecated, brain-damaged files that I don't care about.
