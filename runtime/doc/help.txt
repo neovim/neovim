@@ -170,6 +170,7 @@ DEVELOPING NVIM
 |dev-style|		Development style guidelines
 |dev-theme|		Design guidelines (colorschemes etc.)
 |dev-tools|		Tools and techniques for developing Nvim
+|dev-vimpatch|		Merging patches from Vim
 
 Standard plugins ~
 						*standard-plugin-list*
