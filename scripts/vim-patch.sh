@@ -24,7 +24,7 @@ CREATED_FILES=()
 
 usage() {
   echo "Port Vim patches to Neovim"
-  echo "https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-vim"
+  echo "https://neovim.io/doc/user/dev_vimpatch.html"
   echo
   echo "Usage:  ${BASENAME} [-h | -l | -p vim-revision | -r pr-number]"
   echo
@@ -427,7 +427,7 @@ stage_patch() {
   or "%s -s --draft" to create a draft pull request.
 
   See the wiki for more information:
-    * https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-vim
+    * https://neovim.io/doc/user/dev_vimpatch.html
 ' "${vim_version}" "${BASENAME}" "${BASENAME}" "${BASENAME}"
   return $ret
 }
