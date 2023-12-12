@@ -113,6 +113,11 @@ should be stated explicitly and publicly.
 Third-party dependencies
 ------------------------
 
+For some dependencies we maintain temporary "forks", which are simply private
+branches with a few extra patches, while we wait for the upstream project to
+merge the patches. This is done instead of maintaining the patches as (fragile)
+CMake `PATCH_COMMAND` steps.
+
 These "bundled" dependencies can be updated by bumping their versions in `cmake.deps/deps.txt`.
 Some can be auto-bumped by `scripts/bump_deps.lua`.
 
@@ -124,9 +129,11 @@ Some can be auto-bumped by `scripts/bump_deps.lua`.
 * [libiconv](https://ftp.gnu.org/pub/gnu/libiconv)
 * [libuv](https://github.com/libuv/libuv)
 * [libvterm](http://www.leonerd.org.uk/code/libvterm/)
+  * Downloading from the original source is unreliable, so we use our [mirror](https://github.com/neovim/libvterm) instead.
 * [lua-compat](https://github.com/keplerproject/lua-compat-5.3)
 * [tree-sitter](https://github.com/tree-sitter/tree-sitter)
 * [unibilium](https://github.com/neovim/unibilium)
+  * The original project [was abandoned](https://github.com/neovim/neovim/issues/10302), so the [neovim/unibilium](https://github.com/neovim/unibilium) fork is considered "upstream" and is maintained on the `master` branch.
 * [treesitter parsers](https://github.com/neovim/neovim/blob/7e97c773e3ba78fcddbb2a0b9b0d572c8210c83e/cmake.deps/deps.txt#L47-L62)
 
 ### Vendored dependencies
