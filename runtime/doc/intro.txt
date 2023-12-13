@@ -49,10 +49,9 @@ For more information try one of these:
 ==============================================================================
 Nvim on the interwebs					*internet*
 
-			*www* *faq* *distribution* *download*
+			*www* *distribution* *download*
 
 	Nvim home page:	  https://neovim.io/
-	Nvim FAQ:	  https://github.com/neovim/neovim/wiki/FAQ
 	Downloads:	  https://github.com/neovim/neovim/releases
 	Vim FAQ:	  https://vimhelp.org/vim_faq.txt.html
 

@@ -56,7 +56,7 @@
   <launchable type="desktop-id">nvim.desktop</launchable>
   <url type="homepage">https://neovim.io/</url>
   <url type="bugtracker">https://github.com/neovim/neovim/issues</url>
-  <url type="faq">https://github.com/neovim/neovim/wiki/FAQ</url>
+  <url type="faq">https://neovim.io/doc/user/faq.html</url>
   <url type="help">https://neovim.io/doc/</url>
   <url type="donation">https://neovim.io/#sponsor</url>
   <url type="translate">https://github.com/neovim/neovim/tree/master/src/nvim/po</url>

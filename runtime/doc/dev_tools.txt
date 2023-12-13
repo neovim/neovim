@@ -1,0 +1,192 @@
+*dev_tools.txt*          Nvim
+
+
+                            NVIM REFERENCE MANUAL
+
+
+Tools and techniques for developing Nvim                        *dev-tools*
+
+The following advice is helpful when working on or debugging issues with Nvim
+itself. See also |debug.txt| for advice that applies to Vim.
+
+                                  Type |gO| to see the table of contents.
+
+==============================================================================
+Backtraces                                            *dev-tools-backtrace*
+
+LINUX ~
+
+Core dumps are disabled by default on Ubuntu
+https://stackoverflow.com/a/18368068, CentOS and others. To enable core dumps:
+>bash
+    ulimit -c unlimited
+<
+On systemd-based systems getting a backtrace is as easy as:
+>bash
+    coredumpctl -1 gdb
+<
+It's an optional tool, so you may need to install it:
+>bash
+    sudo apt install systemd-coredump
+<
+
+The full backtrace is most useful, send us the `bt.txt` file:
+>bash
+    2>&1 coredumpctl -1 gdb | tee -a bt.txt
+    thread apply all bt full
+<
+On older systems a `core` file will appear in the current directory. To get
+a backtrace from the `core` file:
+>bash
+    gdb build/bin/nvim core 2>&1 | tee backtrace.txt
+    thread apply all bt full
+<
+
+MACOS
+
+If `nvim` crashes, you can see the backtrace in `Console.app` (under "Crash
+Reports" or "User Diagnostic Reports" for older macOS versions).
+>bash
+    open -a Console
+<
+You may also want to enable core dumps on macOS. To do this, first make sure
+the `/cores/` directory exists and is writable:
+>bash
+    sudo mkdir /cores
+    sudo chown root:admin /cores
+    sudo chmod 1775 /cores
+<
+Then set the core size limit to `unlimited`:
+>bash
+    ulimit -c unlimited
+<
+Note that this is done per shell process. If you want to make this the default
+for all shells, add the above line to your shell's init file (e.g. `~/.bashrc`
+or similar).
+
+You can then open the core file in `lldb`:
+>bash
+    lldb -c /cores/core.12345
+<
+Apple's documentation archive has some other useful information
+https://developer.apple.com/library/archive/technotes/tn2124/_index.html#//apple_ref/doc/uid/DTS10003391-CH1-SECCOREDUMPS,
+but note that some of the things on this page are out of date (such as enabling
+core dumps with `/etc/launchd.conf`).
+
+==============================================================================
+Gdb                                                          *dev-tools-gdb*
+
+USING GDB TO STEP THROUGH FUNCTIONAL TESTS ~
+
+Use `TEST_TAG` to run tests matching busted tags (of the form `#foo` e.g.
+`it("test #foo ...", ...)`):
+>bash
+    GDB=1 TEST_TAG=foo make functionaltest
+<
+Then, in another terminal:
+>bash
+    gdb build/bin/nvim
+    target remote localhost:7777
+<
+- See also test/functional/helpers.lua https://github.com/neovim/neovim/blob/3098b18a2b63a841351f6d5e3697cb69db3035ef/test/functional/helpers.lua#L38-L44.
+
+
+USING LLDB TO STEP THROUGH UNIT TESTS ~
+
+>bash
+    lldb .deps/usr/bin/luajit -- .deps/usr/bin/busted --lpath="./build/?.lua" test/unit/
+<
+
+USING GDB ~
+
+To attach to a running `nvim` process with a pid of 1234:
+>bash
+    gdb -tui -p 1234 build/bin/nvim
+<
+The `gdb` interactive prompt will appear. At any time you can:
+
+- `break foo` to set a breakpoint on the `foo()` function
+- `n` to step over the next statement
+    - `<Enter>` to repeat the last command
+- `s` to step into the next statement
+- `c` to continue
+- `finish` to step out of the current function
+- `p zub` to print the value of `zub`
+- `bt` to see a backtrace (callstack) from the current location
+- `CTRL-x CTRL-a` or `tui enable` to show a TUI view of the source file in the
+  current debugging context. This can be extremely useful as it avoids the
+  need for a gdb "frontend".
+- `<up>` and `<down>` to scroll the source file view
+
+
+GDB "REVERSE DEBUGGING" ~
+
+- `set record full insn-number-max unlimited`
+- `continue` for a bit (at least until `main()` is executed
+- `record`
+- provoke the bug, then use `revert-next`, `reverse-step`, etc. to rewind the
+  debugger
+
+
+USING GDBSERVER ~
+
+You may want to connect multiple `gdb` clients to the same running `nvim`
+process, or you may want to connect to a remote `nvim` process with a local
+`gdb`. Using `gdbserver`, you can attach to a single process and control it
+from multiple `gdb` clients.
+
+Open a terminal and start `gdbserver` attached to `nvim` like this:
+>bash
+    gdbserver :6666 build/bin/nvim 2> gdbserver.log
+<
+`gdbserver` is now listening on port 6666. You then need to attach to this
+debugging session in another terminal:
+>bash
+    gdb build/bin/nvim
+<
+Once you've entered `gdb`, you need to attach to the remote session:
+>
+    target remote localhost:6666
+<
+In case gdbserver puts the TUI as a background process, the TUI can become
+unable to read input from pty (and receives SIGTTIN signal) and/or output data
+(SIGTTOU signal). To force the TUI as the foreground process, you can add
+>
+    signal (SIGTTOU, SIG_IGN);
+    if (!tcsetpgrp(data->input.in_fd, getpid())) {
+        perror("tcsetpgrp failed");
+    }
+<
+to `tui.c:terminfo_start`.
+
+
+USING GDBSERVER IN TMUX ~
+
+Consider using a custom makefile
+https://github.com/neovim/neovim/wiki/Building-Neovim#custom-makefile to
+quickly start debugging sessions using the `gdbserver` method mentioned above.
+This example `local.mk` will create the debugging session when you type
+`make debug`.
+>make
+    .PHONY: dbg-start dbg-attach debug build
+
+    build:
+        @$(MAKE) nvim
+
+    dbg-start: build
+        @tmux new-window -n 'dbg-neovim' 'gdbserver :6666 ./build/bin/nvim -D'
+
+    dbg-attach:
+        @tmux new-window -n 'dbg-cgdb' 'cgdb -x gdb_start.sh ./build/bin/nvim'
+
+    debug: dbg-start dbg-attach
+<
+Here `gdb_start.sh` includes `gdb` commands to be called when the debugger
+starts. It needs to attach to the server started by the `dbg-start` rule. For
+example:
+>
+    target remote localhost:6666
+    br main
+<
+
+vim:tw=78:ts=8:et:ft=help:norl:
