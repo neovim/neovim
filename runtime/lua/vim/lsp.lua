@@ -257,7 +257,7 @@ end
 --- Validates a client configuration as given to |vim.lsp.start_client()|.
 ---
 ---@param config (lsp.ClientConfig)
----@return (string|fun(dispatchers:table):table) Command
+---@return (string|fun(dispatchers:vim.rpc.Dispatchers):RpcClientPublic?) Command
 ---@return string[] Arguments
 ---@return string Encoding.
 local function validate_client_config(config)
@@ -290,7 +290,7 @@ local function validate_client_config(config)
     'flags.debounce_text_changes must be a number with the debounce time in milliseconds'
   )
 
-  local cmd, cmd_args --- @type (string|fun(dispatchers:table):table), string[]
+  local cmd, cmd_args --- @type (string|fun(dispatchers:vim.rpc.Dispatchers):RpcClientPublic), string[]
   local config_cmd = config.cmd
   if type(config_cmd) == 'function' then
     cmd = config_cmd
@@ -397,13 +397,14 @@ do
     end,
   })
 
+  ---@param client lsp.Client
   ---@return CTGroup
   local function get_group(client)
     local allow_inc_sync = if_nil(client.config.flags.allow_incremental_sync, true)
     local change_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'change')
     local sync_kind = change_capability or protocol.TextDocumentSyncKind.None
     if not allow_inc_sync and change_capability == protocol.TextDocumentSyncKind.Incremental then
-      sync_kind = protocol.TextDocumentSyncKind.Full
+      sync_kind = protocol.TextDocumentSyncKind.Full --[[@as integer]]
     end
     return {
       sync_kind = sync_kind,
@@ -572,7 +573,7 @@ do
       return
     end
 
-    local changes
+    local changes --- @type lsp.TextDocumentContentChangeEvent[]
     if sync_kind == protocol.TextDocumentSyncKind.None then
       return
     elseif sync_kind == protocol.TextDocumentSyncKind.Incremental then
@@ -650,6 +651,7 @@ do
   end
 
   ---@private
+  ---@param buf_state CTBufferState
   function changetracking._reset_timer(buf_state)
     local timer = buf_state.timer
     if timer then
@@ -663,6 +665,8 @@ do
 
   --- Flushes any outstanding change notification.
   ---@private
+  ---@param client lsp.Client
+  ---@param bufnr? integer
   function changetracking.flush(client, bufnr)
     local group = get_group(client)
     local state = state_by_group[group]
@@ -685,7 +689,7 @@ end
 --- Default handler for the 'textDocument/didOpen' LSP notification.
 ---
 ---@param bufnr integer Number of the buffer, or 0 for current
----@param client table Client object
+---@param client lsp.Client Client object
 local function text_document_did_open_handler(bufnr, client)
   changetracking.init(client, bufnr)
   if not vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'openClose') then
@@ -890,7 +894,7 @@ end
 ---@return string
 function lsp.status()
   local percentage = nil
-  local messages = {}
+  local messages = {} --- @type string[]
   for _, client in ipairs(vim.lsp.get_clients()) do
     for progress in client.progress do
       local value = progress.value
@@ -913,12 +917,15 @@ function lsp.status()
 end
 
 -- Determines whether the given option can be set by `set_defaults`.
+---@param bufnr integer
+---@param option string
+---@return boolean
 local function is_empty_or_default(bufnr, option)
   if vim.bo[bufnr][option] == '' then
     return true
   end
 
-  local info = vim.api.nvim_get_option_info2(option, { buf = bufnr })
+  local info = api.nvim_get_option_info2(option, { buf = bufnr })
   local scriptinfo = vim.tbl_filter(function(e)
     return e.sid == info.last_set_sid
   end, vim.fn.getscriptinfo())
@@ -932,6 +939,7 @@ end
 
 ---@private
 ---@param client lsp.Client
+---@param bufnr integer
 function lsp._set_defaults(client, bufnr)
   if
     client.supports_method(ms.textDocument_definition) and is_empty_or_default(bufnr, 'tagfunc')
@@ -1131,7 +1139,7 @@ function lsp.start_client(config)
   --- Returns the default handler if the user hasn't set a custom one.
   ---
   ---@param method (string) LSP method name
-  ---@return lsp-handler|nil The handler for the given method, if defined, or the default from |vim.lsp.handlers|
+  ---@return lsp.Handler|nil handler for the given method, if defined, or the default from |vim.lsp.handlers|
   local function resolve_handler(method)
     return handlers[method] or default_handlers[method]
   end
@@ -1189,7 +1197,7 @@ function lsp.start_client(config)
   --- Invoked when the client operation throws an error.
   ---
   ---@param code (integer) Error code
-  ---@param err (...) Other arguments may be passed depending on the error kind
+  ---@param err any Other arguments may be passed depending on the error kind
   ---@see vim.lsp.rpc.client_errors for possible errors. Use
   ---`vim.lsp.rpc.client_errors[code]` to get a human-friendly name.
   function dispatch.on_error(code, err)
@@ -1197,7 +1205,9 @@ function lsp.start_client(config)
     if config.on_error then
       local status, usererr = pcall(config.on_error, code, err)
       if not status then
-        local _ = log.error() and log.error(log_prefix, 'user on_error failed', { err = usererr })
+        if log.error() then
+          log.error(log_prefix, 'user on_error failed', { err = usererr })
+        end
         err_message(log_prefix, ' user on_error failed: ', tostring(usererr))
       end
     end
@@ -1283,7 +1293,7 @@ function lsp.start_client(config)
   end
 
   -- Start the RPC client.
-  local rpc
+  local rpc --- @type RpcClientPublic?
   if type(cmd) == 'function' then
     rpc = cmd(dispatch)
   else
@@ -1306,9 +1316,10 @@ function lsp.start_client(config)
     rpc = rpc,
     offset_encoding = offset_encoding,
     config = config,
-    attached_buffers = {},
+    attached_buffers = {}, --- @type table<integer,true>
 
     handlers = handlers,
+    --- @type table<string,function>
     commands = config.commands or {},
 
     --- @type table<integer,{ type: string, bufnr: integer, method: string}>
@@ -1346,7 +1357,7 @@ function lsp.start_client(config)
       verbose = 'verbose',
     }
 
-    local workspace_folders --- @type table[]?
+    local workspace_folders --- @type lsp.WorkspaceFolder[]?
     local root_uri --- @type string?
     local root_path --- @type string?
     if config.workspace_folders or config.root_dir then
@@ -1426,7 +1437,9 @@ function lsp.start_client(config)
       end
     end
 
-    local _ = log.trace() and log.trace(log_prefix, 'initialize_params', initialize_params)
+    if log.trace() then
+      log.trace(log_prefix, 'initialize_params', initialize_params)
+    end
     rpc.request('initialize', initialize_params, function(init_err, result)
       assert(not init_err, tostring(init_err))
       assert(result, 'server sent empty result')
@@ -1439,7 +1452,7 @@ function lsp.start_client(config)
       -- when to send certain events to clients.
       client.server_capabilities =
         assert(result.capabilities, "initialize result doesn't contain capabilities")
-      client.server_capabilities = protocol.resolve_capabilities(client.server_capabilities)
+      client.server_capabilities = assert(protocol.resolve_capabilities(client.server_capabilities))
 
       if client.server_capabilities.positionEncoding then
         client.offset_encoding = client.server_capabilities.positionEncoding
@@ -1455,12 +1468,13 @@ function lsp.start_client(config)
           write_error(lsp.client_errors.ON_INIT_CALLBACK_ERROR, err)
         end
       end
-      local _ = log.info()
-        and log.info(
+      if log.info() then
+        log.info(
           log_prefix,
           'server_capabilities',
           { server_capabilities = client.server_capabilities }
         )
+      end
 
       -- Only assign after initialized.
       active_clients[client_id] = client
@@ -1483,7 +1497,7 @@ function lsp.start_client(config)
   ---
   ---@param method string LSP method name.
   ---@param params table|nil LSP request params.
-  ---@param handler lsp-handler|nil Response |lsp-handler| for this method.
+  ---@param handler lsp.Handler|nil Response |lsp-handler| for this method.
   ---@param bufnr integer Buffer handle (0 for current).
   ---@return boolean status, integer|nil request_id {status} is a bool indicating
   ---whether the request was successful. If it is `false`, then it will
@@ -1677,9 +1691,9 @@ function lsp.start_client(config)
   ---
   ---@param command lsp.Command
   ---@param context? {bufnr: integer}
-  ---@param handler? lsp-handler only called if a server command
+  ---@param handler? lsp.Handler only called if a server command
   function client._exec_cmd(command, context, handler)
-    context = vim.deepcopy(context or {})
+    context = vim.deepcopy(context or {}) --[[@as lsp.HandlerContext]]
     context.bufnr = context.bufnr or api.nvim_get_current_buf()
     context.client_id = client.id
     local cmdname = command.command
@@ -1749,29 +1763,32 @@ function lsp.start_client(config)
   return client_id
 end
 
----@private
----@fn text_document_did_change_handler(_, bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
 --- Notify all attached clients that a buffer has changed.
-local text_document_did_change_handler
-do
-  text_document_did_change_handler = function(
-    _,
-    bufnr,
-    changedtick,
-    firstline,
-    lastline,
-    new_lastline
-  )
-    -- Detach (nvim_buf_attach) via returning True to on_lines if no clients are attached
-    if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
-      return true
-    end
-    util.buf_versions[bufnr] = changedtick
-    changetracking.send_changes(bufnr, firstline, lastline, new_lastline)
+---@param _ integer
+---@param bufnr integer
+---@param changedtick integer
+---@param firstline integer
+---@param lastline integer
+---@param new_lastline integer
+---@return true?
+local function text_document_did_change_handler(
+  _,
+  bufnr,
+  changedtick,
+  firstline,
+  lastline,
+  new_lastline
+)
+  -- Detach (nvim_buf_attach) via returning True to on_lines if no clients are attached
+  if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
+    return true
   end
+  util.buf_versions[bufnr] = changedtick
+  changetracking.send_changes(bufnr, firstline, lastline, new_lastline)
 end
 
 ---Buffer lifecycle handler for textDocument/didSave
+--- @param bufnr integer
 local function text_document_did_save_handler(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
@@ -1797,7 +1814,7 @@ local function text_document_did_save_handler(bufnr)
     end
     local save_capability = vim.tbl_get(client.server_capabilities, 'textDocumentSync', 'save')
     if save_capability then
-      local included_text
+      local included_text --- @type string?
       if type(save_capability) == 'table' and save_capability.includeText then
         included_text = text(bufnr)
       end
@@ -1826,8 +1843,9 @@ function lsp.buf_attach_client(bufnr, client_id)
   })
   bufnr = resolve_bufnr(bufnr)
   if not api.nvim_buf_is_loaded(bufnr) then
-    local _ = log.warn()
-      and log.warn(string.format('buf_attach_client called on unloaded buffer (id: %d): ', bufnr))
+    if log.warn() then
+      log.warn(string.format('buf_attach_client called on unloaded buffer (id: %d): ', bufnr))
+    end
     return false
   end
   local buffer_client_ids = all_buffer_active_clients[bufnr]
@@ -2087,7 +2105,7 @@ api.nvim_create_autocmd('VimLeavePre', {
       client.stop()
     end
 
-    local timeouts = {}
+    local timeouts = {} --- @type table<integer,integer>
     local max_timeout = 0
     local send_kill = false
 
@@ -2134,7 +2152,7 @@ api.nvim_create_autocmd('VimLeavePre', {
 ---@param bufnr (integer) Buffer handle, or 0 for current.
 ---@param method (string) LSP method name
 ---@param params table|nil Parameters to send to the server
----@param handler? lsp-handler See |lsp-handler|
+---@param handler? lsp.Handler See |lsp-handler|
 ---       If nil, follows resolution strategy defined in |lsp-handler-configuration|
 ---
 ---@return table<integer, integer> client_request_ids Map of client-id:request-id pairs
@@ -2152,7 +2170,7 @@ function lsp.buf_request(bufnr, method, params, handler)
   bufnr = resolve_bufnr(bufnr)
   local method_supported = false
   local clients = lsp.get_clients({ bufnr = bufnr })
-  local client_request_ids = {}
+  local client_request_ids = {} --- @type table<integer,integer>
   for _, client in ipairs(clients) do
     if client.supports_method(method, { bufnr = bufnr }) then
       method_supported = true
@@ -2194,7 +2212,7 @@ end
 --- a `client_id:result` map.
 ---@return function cancel Function that cancels all requests.
 function lsp.buf_request_all(bufnr, method, params, handler)
-  local results = {}
+  local results = {} --- @type table<integer,{error:string, result:any}>
   local result_count = 0
   local expected_result_count = 0
 
@@ -2324,6 +2342,7 @@ function lsp.formatexpr(opts)
       local params = util.make_formatting_params()
       local end_line = vim.fn.getline(end_lnum) --[[@as string]]
       local end_col = util._str_utfindex_enc(end_line, nil, client.offset_encoding)
+      --- @cast params +lsp.DocumentRangeFormattingParams
       params.range = {
         start = {
           line = start_lnum - 1,
@@ -2378,7 +2397,7 @@ end
 ---@return table result is table of (client_id, client) pairs
 ---@deprecated Use |vim.lsp.get_clients()| instead.
 function lsp.buf_get_clients(bufnr)
-  local result = {}
+  local result = {} --- @type table<integer,lsp.Client>
   for _, client in ipairs(lsp.get_clients({ bufnr = resolve_bufnr(bufnr) })) do
     result[client.id] = client
   end
@@ -2432,7 +2451,7 @@ function lsp.for_each_buffer_client(bufnr, fn)
 end
 
 --- Function to manage overriding defaults for LSP handlers.
----@param handler (function) See |lsp-handler|
+---@param handler (lsp.Handler) See |lsp-handler|
 ---@param override_config (table) Table containing the keys to override behavior of the {handler}
 function lsp.with(handler, override_config)
   return function(err, result, ctx, config)
@@ -2497,6 +2516,7 @@ end
 ---     arguments?: any[]
 ---
 --- The second argument is the `ctx` of |lsp-handler|
+--- @type table<string,function>
 lsp.commands = setmetatable({}, {
   __newindex = function(tbl, key, value)
     assert(type(key) == 'string', 'The key for commands in `vim.lsp.commands` must be a string')

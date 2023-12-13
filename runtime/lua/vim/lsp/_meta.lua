@@ -1,13 +1,14 @@
 ---@meta
 error('Cannot require a meta file')
 
----@alias lsp-handler fun(err: lsp.ResponseError|nil, result: any, context: lsp.HandlerContext, config: table|nil): any?
+---@alias lsp.Handler fun(err: lsp.ResponseError?, result: any, context: lsp.HandlerContext, config?: table): ...any
 
 ---@class lsp.HandlerContext
 ---@field method string
 ---@field client_id integer
 ---@field bufnr? integer
 ---@field params? any
+---@field version? integer
 
 ---@class lsp.ResponseError
 ---@field code integer

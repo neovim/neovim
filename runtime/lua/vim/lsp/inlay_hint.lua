@@ -17,13 +17,17 @@ local augroup = api.nvim_create_augroup('vim_lsp_inlayhint', {})
 
 --- |lsp-handler| for the method `textDocument/inlayHint`
 --- Store hints for a specific buffer and client
+---@param result lsp.InlayHint[]?
+---@param ctx lsp.HandlerContext
 ---@private
 function M.on_inlayhint(err, result, ctx, _)
   if err then
-    local _ = log.error() and log.error('inlayhint', err)
+    if log.error() then
+      log.error('inlayhint', err)
+    end
     return
   end
-  local bufnr = ctx.bufnr
+  local bufnr = assert(ctx.bufnr)
   if util.buf_versions[bufnr] ~= ctx.version then
     return
   end
@@ -40,7 +44,7 @@ function M.on_inlayhint(err, result, ctx, _)
     bufstate.version = ctx.version
   end
   local hints_by_client = bufstate.client_hint
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = assert(vim.lsp.get_client_by_id(client_id))
 
   local new_hints_by_lnum = vim.defaulttable()
   local num_unprocessed = #result
@@ -52,6 +56,8 @@ function M.on_inlayhint(err, result, ctx, _)
   end
 
   local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  ---@param position lsp.Position
+  ---@return integer
   local function pos_to_byte(position)
     local col = position.character
     if col > 0 then
@@ -78,6 +84,7 @@ function M.on_inlayhint(err, result, ctx, _)
 end
 
 --- |lsp-handler| for the method `textDocument/inlayHint/refresh`
+---@param ctx lsp.HandlerContext
 ---@private
 function M.on_refresh(err, _, ctx, _)
   if err then
@@ -212,7 +219,7 @@ local function clear(bufnr)
   end
   local bufstate = bufstates[bufnr]
   local client_lens = (bufstate or {}).client_hint or {}
-  local client_ids = vim.tbl_keys(client_lens)
+  local client_ids = vim.tbl_keys(client_lens) --- @type integer[]
   for _, iter_client_id in ipairs(client_ids) do
     if bufstate then
       bufstate.client_hint[iter_client_id] = {}
@@ -236,7 +243,7 @@ end
 
 --- Refresh inlay hints, only if we have attached clients that support it
 ---@param bufnr (integer) Buffer handle, or 0 for current
----@param opts? table Additional options to pass to util._refresh
+---@param opts? lsp.util.RefreshOptions Additional options to pass to util._refresh
 ---@private
 local function _refresh(bufnr, opts)
   opts = opts or {}
@@ -312,7 +319,7 @@ api.nvim_set_decoration_provider(namespace, {
     if bufstate.version ~= util.buf_versions[bufnr] then
       return
     end
-    local hints_by_client = bufstate.client_hint
+    local hints_by_client = assert(bufstate.client_hint)
 
     for lnum = topline, botline do
       if bufstate.applied[lnum] ~= bufstate.version then
@@ -321,14 +328,15 @@ api.nvim_set_decoration_provider(namespace, {
           local line_hints = hints_by_lnum[lnum] or {}
           for _, hint in pairs(line_hints) do
             local text = ''
-            if type(hint.label) == 'string' then
-              text = hint.label
+            local label = hint.label
+            if type(label) == 'string' then
+              text = label
             else
-              for _, part in ipairs(hint.label) do
+              for _, part in ipairs(label) do
                 text = text .. part.value
               end
             end
-            local vt = {}
+            local vt = {} --- @type {[1]: string, [2]: string?}[]
             if hint.paddingLeft then
               vt[#vt + 1] = { ' ' }
             end

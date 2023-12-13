@@ -891,7 +891,7 @@ end
 
 --- Creates a normalized object describing LSP server capabilities.
 ---@param server_capabilities table Table of capabilities supported by the server
----@return table|nil Normalized table of capabilities
+---@return lsp.ServerCapabilities|nil Normalized table of capabilities
 function protocol.resolve_capabilities(server_capabilities)
   local TextDocumentSyncKind = protocol.TextDocumentSyncKind
   local textDocumentSync = server_capabilities.textDocumentSync

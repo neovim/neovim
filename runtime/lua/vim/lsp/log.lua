@@ -91,7 +91,9 @@ do
     --
     -- Recommended usage:
     -- ```
-    -- local _ = log.warn() and log.warn("123")
+    -- if log.warn() then
+    --   log.warn("123")
+    -- end
     -- ```
     --
     -- This way you can avoid string allocations if the log level isn't high enough.
