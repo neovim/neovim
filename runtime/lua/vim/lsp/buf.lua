@@ -46,7 +46,7 @@ function M.hover()
 end
 
 local function request_with_options(name, params, options)
-  local req_handler
+  local req_handler --- @type function?
   if options then
     req_handler = function(err, result, ctx, config)
       local client = assert(vim.lsp.get_client_by_id(ctx.client_id))

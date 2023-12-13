@@ -156,10 +156,10 @@ function vim._os_proc_info(pid)
   elseif r.code ~= 0 then
     error('command failed: ' .. vim.fn.string(cmd))
   end
-  local ppid = assert(vim.system({ 'ps', '-p', pid, '-o', 'ppid=' }):wait().stdout)
+  local ppid_string = assert(vim.system({ 'ps', '-p', pid, '-o', 'ppid=' }):wait().stdout)
   -- Remove trailing whitespace.
   name = vim.trim(name):gsub('^.*/', '')
-  ppid = tonumber(ppid) or -1
+  local ppid = tonumber(ppid_string) or -1
   return {
     name = name,
     pid = pid,
@@ -533,20 +533,21 @@ function vim.region(bufnr, pos1, pos2, regtype, inclusive)
 
   local region = {}
   for l = pos1[1], pos2[1] do
-    local c1, c2
+    local c1 --- @type number
+    local c2 --- @type number
     if regtype:byte() == 22 then -- block selection: take width from regtype
       c1 = pos1[2]
-      c2 = c1 + regtype:sub(2)
+      c2 = c1 + tonumber(regtype:sub(2))
       -- and adjust for non-ASCII characters
       local bufline = vim.api.nvim_buf_get_lines(bufnr, l, l + 1, true)[1]
       local utflen = vim.str_utfindex(bufline, #bufline)
       if c1 <= utflen then
-        c1 = vim.str_byteindex(bufline, c1)
+        c1 = assert(tonumber(vim.str_byteindex(bufline, c1)))
       else
         c1 = #bufline + 1
       end
       if c2 <= utflen then
-        c2 = vim.str_byteindex(bufline, c2)
+        c2 = assert(tonumber(vim.str_byteindex(bufline, c2)))
       else
         c2 = #bufline + 1
       end
@@ -576,7 +577,7 @@ end
 ---@return table timer luv timer object
 function vim.defer_fn(fn, timeout)
   vim.validate({ fn = { fn, 'c', true } })
-  local timer = vim.uv.new_timer()
+  local timer = assert(vim.uv.new_timer())
   timer:start(
     timeout,
     0,
@@ -601,6 +602,7 @@ end
 ---@param msg string Content of the notification to show to the user.
 ---@param level integer|nil One of the values from |vim.log.levels|.
 ---@param opts table|nil Optional parameters. Unused by default.
+---@diagnostic disable-next-line: unused-local
 function vim.notify(msg, level, opts) -- luacheck: no unused args
   if level == vim.log.levels.ERROR then
     vim.api.nvim_err_writeln(msg)
@@ -700,6 +702,8 @@ end
 ---
 ---     1. Can we get it to just return things in the global namespace with that name prefix
 ---     2. Can we get it to return things from global namespace even with `print(` in front.
+---
+--- @param pat string
 function vim._expand_pat(pat, env)
   env = env or _G
 
@@ -801,11 +805,13 @@ function vim._expand_pat(pat, env)
   return keys, #prefix_match_pat
 end
 
+--- @param lua_string string
 vim._expand_pat_get_parts = function(lua_string)
   local parts = {}
 
   local accumulator, search_index = '', 1
-  local in_brackets, bracket_end = false, -1
+  local in_brackets = false
+  local bracket_end = -1 --- @type integer?
   local string_char = nil
   for idx = 1, #lua_string do
     local s = lua_string:sub(idx, idx)
@@ -938,9 +944,12 @@ function vim.keycode(str)
   return vim.api.nvim_replace_termcodes(str, true, true, true)
 end
 
+--- @param server_addr string
+--- @param connect_error string
 function vim._cs_remote(rcid, server_addr, connect_error, args)
+  --- @return string
   local function connection_failure_errmsg(consequence)
-    local explanation
+    local explanation --- @type string
     if server_addr == '' then
       explanation = 'No server specified with --server'
     else
@@ -983,7 +992,7 @@ function vim._cs_remote(rcid, server_addr, connect_error, args)
     local res = tostring(vim.rpcrequest(rcid, 'nvim_eval', args[2]))
     return { result = res, should_exit = true, tabbed = false }
   elseif subcmd ~= '' then
-    return { errmsg = 'Unknown option argument: ' .. args[1] }
+    return { errmsg = 'Unknown option argument: ' .. tostring(args[1]) }
   end
 
   if rcid == 0 then

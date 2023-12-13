@@ -432,6 +432,7 @@ end
 --- ```
 ---
 ---@return any
+---@diagnostic disable-next-line: unused-local
 function Iter.next(self) -- luacheck: no unused args
   -- This function is provided by the source iterator in Iter.new. This definition exists only for
   -- the docstring
@@ -489,6 +490,7 @@ end
 --- ```
 ---
 ---@return any
+---@diagnostic disable-next-line: unused-local
 function Iter.peek(self) -- luacheck: no unused args
   error('peek() requires a list-like table')
 end
@@ -568,12 +570,13 @@ end
 ---@see Iter.find
 ---
 ---@return any
+---@diagnostic disable-next-line: unused-local
 function Iter.rfind(self, f) -- luacheck: no unused args
   error('rfind() requires a list-like table')
 end
 
 ---@private
-function ListIter.rfind(self, f) -- luacheck: no unused args
+function ListIter.rfind(self, f)
   if type(f) ~= 'function' then
     local val = f
     f = function(v)
@@ -640,6 +643,7 @@ end
 --- ```
 ---
 ---@return any
+---@diagnostic disable-next-line: unused-local
 function Iter.nextback(self) -- luacheck: no unused args
   error('nextback() requires a list-like table')
 end
@@ -669,6 +673,7 @@ end
 --- ```
 ---
 ---@return any
+---@diagnostic disable-next-line: unused-local
 function Iter.peekback(self) -- luacheck: no unused args
   error('peekback() requires a list-like table')
 end
@@ -725,6 +730,7 @@ end
 ---
 ---@param n number Number of values to skip.
 ---@return Iter
+---@diagnostic disable-next-line: unused-local
 function Iter.skipback(self, n) -- luacheck: no unused args
   error('skipback() requires a list-like table')
   return self
@@ -791,6 +797,7 @@ end
 ---@param first number
 ---@param last number
 ---@return Iter
+---@diagnostic disable-next-line: unused-local
 function Iter.slice(self, first, last) -- luacheck: no unused args
   error('slice() requires a list-like table')
   return self
