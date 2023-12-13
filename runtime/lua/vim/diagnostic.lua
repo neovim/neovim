@@ -602,6 +602,10 @@ end
 ---                         signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
 ---                       })
 ---                   </pre>
+---                * numhl: (table) A table mapping |diagnostic-severity| to the highlight
+---                group used for the line number where the sign is placed.
+---                * linehl: (table) A table mapping |diagnostic-severity| to the highlight group
+---                used for the whole line the sign is placed in.
 ---       - float: Options for floating windows. See |vim.diagnostic.open_float()|.
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
 ---                           diagnostics are updated on InsertLeave)
@@ -885,11 +889,16 @@ M.handlers.signs = {
       end
     end
 
+    local numhl = opts.signs.numhl or {}
+    local linehl = opts.signs.linehl or {}
+
     for _, diagnostic in ipairs(diagnostics) do
       if api.nvim_buf_is_loaded(diagnostic.bufnr) then
         api.nvim_buf_set_extmark(bufnr, ns.user_data.sign_ns, diagnostic.lnum, 0, {
           sign_text = text[diagnostic.severity] or text[M.severity[diagnostic.severity]] or 'U',
           sign_hl_group = sign_highlight_map[diagnostic.severity],
+          number_hl_group = numhl[diagnostic.severity],
+          line_hl_group = linehl[diagnostic.severity],
           priority = get_priority(diagnostic.severity),
         })
       end
