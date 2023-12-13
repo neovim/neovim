@@ -16,6 +16,9 @@ UNIBILIUM_SHA256 9c4747c862ab5e3076dcf8fa8f0ea7a6b50f20ec5905618b953665559679748
 LIBVTERM_URL https://github.com/neovim/libvterm/archive/v0.3.3.tar.gz
 LIBVTERM_SHA256 0babe3ab42c354925dadede90d352f054aa9c4ae6842ea803a20c9741e172e56
 
+UTF8PROC_URL https://github.com/JuliaStrings/utf8proc/archive/v2.9.0.tar.gz
+UTF8PROC_SHA256 18c1626e9fc5a2e192311e36b3010bfc698078f692888940f1fa150547abb0c1
+
 LUV_URL https://github.com/luvit/luv/archive/dcd1a1cad5b05634a7691402d6ca2f214fb4ae76.tar.gz
 LUV_SHA256 b68c73ed233918da7e0b34b57c6bac0490e6c6f1b12c1051266b6ad9efa780d0
 
