@@ -108,6 +108,7 @@ function M.definition(options)
 
     local items = {}
 
+    -- luacheck: ignore 512
     for _, v in pairs(client_id_to_items) do
       for _, v2 in ipairs(v) do
         table.insert(items, v2)
