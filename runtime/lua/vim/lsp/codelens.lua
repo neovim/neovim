@@ -6,7 +6,7 @@ local M = {}
 
 --- bufnr → true|nil
 --- to throttle refreshes to at most one at a time
-local active_refreshes = {}
+local active_refreshes = {} --- @type table<integer,true>
 
 ---@type table<integer, table<integer, lsp.CodeLens[]>>
 --- bufnr -> client_id -> lenses
@@ -75,7 +75,7 @@ end
 function M.run()
   local line = api.nvim_win_get_cursor(0)[1]
   local bufnr = api.nvim_get_current_buf()
-  local options = {}
+  local options = {} --- @type {client: integer, lens: lsp.CodeLens}[]
   local lenses_by_client = lens_cache_by_buf[bufnr] or {}
   for client, lenses in pairs(lenses_by_client) do
     for _, lens in pairs(lenses) do
@@ -230,6 +230,7 @@ local function resolve_lenses(lenses, bufnr, client_id, callback)
     if lens.command then
       countdown()
     else
+      assert(client)
       client.request('codeLens/resolve', lens, function(_, result)
         if api.nvim_buf_is_loaded(bufnr) and result and result.command then
           lens.command = result.command
@@ -257,10 +258,13 @@ end
 
 --- |lsp-handler| for the method `textDocument/codeLens`
 ---
+---@param ctx lsp.HandlerContext
 function M.on_codelens(err, result, ctx, _)
   if err then
-    active_refreshes[ctx.bufnr] = nil
-    local _ = log.error() and log.error('codelens', err)
+    active_refreshes[assert(ctx.bufnr)] = nil
+    if log.error() then
+      log.error('codelens', err)
+    end
     return
   end
 
@@ -270,7 +274,7 @@ function M.on_codelens(err, result, ctx, _)
   -- once resolved.
   M.display(result, ctx.bufnr, ctx.client_id)
   resolve_lenses(result, ctx.bufnr, ctx.client_id, function()
-    active_refreshes[ctx.bufnr] = nil
+    active_refreshes[assert(ctx.bufnr)] = nil
     M.display(result, ctx.bufnr, ctx.client_id)
   end)
 end

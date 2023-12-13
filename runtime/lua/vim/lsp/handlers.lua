@@ -4,6 +4,7 @@ local ms = protocol.Methods
 local util = require('vim.lsp.util')
 local api = vim.api
 
+--- @type table<string,lsp.Handler>
 local M = {}
 
 -- FIXME: DOC: Expose in vimdocs
@@ -108,8 +109,7 @@ end
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_registerCapability
 M[ms.client_registerCapability] = function(_, result, ctx)
   local client_id = ctx.client_id
-  ---@type lsp.Client
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = assert(vim.lsp.get_client_by_id(client_id))
 
   client.dynamic_capabilities:register(result.registrations)
   for bufnr, _ in pairs(client.attached_buffers) do
@@ -139,7 +139,7 @@ end
 --see: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#client_unregisterCapability
 M[ms.client_unregisterCapability] = function(_, result, ctx)
   local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = assert(vim.lsp.get_client_by_id(client_id))
   client.dynamic_capabilities:unregister(result.unregisterations)
 
   for _, unreg in ipairs(result.unregisterations) do
@@ -158,7 +158,7 @@ M[ms.workspace_applyEdit] = function(_, workspace_edit, ctx)
   )
   -- TODO(ashkan) Do something more with label?
   local client_id = ctx.client_id
-  local client = vim.lsp.get_client_by_id(client_id)
+  local client = assert(vim.lsp.get_client_by_id(client_id))
   if workspace_edit.label then
     print('Workspace edit', workspace_edit.label)
   end
@@ -231,22 +231,23 @@ end
 M[ms.textDocument_references] = function(_, result, ctx, config)
   if not result or vim.tbl_isempty(result) then
     vim.notify('No references found')
-  else
-    local client = vim.lsp.get_client_by_id(ctx.client_id)
-    config = config or {}
-    local title = 'References'
-    local items = util.locations_to_items(result, client.offset_encoding)
+    return
+  end
 
-    if config.loclist then
-      vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
-      api.nvim_command('lopen')
-    elseif config.on_list then
-      assert(type(config.on_list) == 'function', 'on_list is not a function')
-      config.on_list({ title = title, items = items, context = ctx })
-    else
-      vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
-      api.nvim_command('botright copen')
-    end
+  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+  config = config or {}
+  local title = 'References'
+  local items = util.locations_to_items(result, client.offset_encoding)
+
+  if config.loclist then
+    vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
+    api.nvim_command('lopen')
+  elseif config.on_list then
+    assert(type(config.on_list) == 'function', 'on_list is not a function')
+    config.on_list({ title = title, items = items, context = ctx })
+  else
+    vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
+    api.nvim_command('botright copen')
   end
 end
 
@@ -259,26 +260,27 @@ end
 ---
 ---@param map_result function `((resp, bufnr) -> list)` to convert the response
 ---@param entity string name of the resource used in a `not found` error message
----@param title_fn function Function to call to generate list title
+---@param title_fn fun(ctx: lsp.HandlerContext): string Function to call to generate list title
+---@return lsp.Handler
 local function response_to_list(map_result, entity, title_fn)
   return function(_, result, ctx, config)
     if not result or vim.tbl_isempty(result) then
       vim.notify('No ' .. entity .. ' found')
-    else
-      config = config or {}
-      local title = title_fn(ctx)
-      local items = map_result(result, ctx.bufnr)
+      return
+    end
+    config = config or {}
+    local title = title_fn(ctx)
+    local items = map_result(result, ctx.bufnr)
 
-      if config.loclist then
-        vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
-        api.nvim_command('lopen')
-      elseif config.on_list then
-        assert(type(config.on_list) == 'function', 'on_list is not a function')
-        config.on_list({ title = title, items = items, context = ctx })
-      else
-        vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
-        api.nvim_command('botright copen')
-      end
+    if config.loclist then
+      vim.fn.setloclist(0, {}, ' ', { title = title, items = items, context = ctx })
+      api.nvim_command('lopen')
+    elseif config.on_list then
+      assert(type(config.on_list) == 'function', 'on_list is not a function')
+      config.on_list({ title = title, items = items, context = ctx })
+    else
+      vim.fn.setqflist({}, ' ', { title = title, items = items, context = ctx })
+      api.nvim_command('botright copen')
     end
   end
 end
@@ -304,7 +306,7 @@ M[ms.textDocument_rename] = function(_, result, ctx, _)
     vim.notify("Language server couldn't provide rename result", vim.log.levels.INFO)
     return
   end
-  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
   util.apply_workspace_edit(result, client.offset_encoding)
 end
 
@@ -313,7 +315,7 @@ M[ms.textDocument_rangeFormatting] = function(_, result, ctx, _)
   if not result then
     return
   end
-  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
   util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
 end
 
@@ -322,7 +324,7 @@ M[ms.textDocument_formatting] = function(_, result, ctx, _)
   if not result then
     return
   end
-  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
   util.apply_text_edits(result, ctx.bufnr, client.offset_encoding)
 end
 
@@ -331,7 +333,8 @@ M[ms.textDocument_completion] = function(_, result, _, _)
   if vim.tbl_isempty(result or {}) then
     return
   end
-  local row, col = unpack(api.nvim_win_get_cursor(0))
+  local cursor = api.nvim_win_get_cursor(0)
+  local row, col = cursor[1], cursor[2]
   local line = assert(api.nvim_buf_get_lines(0, row - 1, row, false)[1])
   local line_to_cursor = line:sub(col + 1)
   local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
@@ -354,6 +357,7 @@ end
 --- )
 --- ```
 ---
+---@param ctx lsp.HandlerContext
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
@@ -394,14 +398,16 @@ M[ms.textDocument_hover] = M.hover
 --- Jumps to a location. Used as a handler for multiple LSP methods.
 ---@param _ nil not used
 ---@param result (table) result of LSP method; a location or a list of locations.
----@param ctx (table) table containing the context of the request, including the method
+---@param ctx (lsp.HandlerContext) table containing the context of the request, including the method
 ---(`textDocument/definition` can return `Location` or `Location[]`
 local function location_handler(_, result, ctx, config)
   if result == nil or vim.tbl_isempty(result) then
-    local _ = log.info() and log.info(ctx.method, 'No location found')
+    if log.info() then
+      log.info(ctx.method, 'No location found')
+    end
     return nil
   end
-  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
 
   config = config or {}
 
@@ -450,7 +456,7 @@ M[ms.textDocument_implementation] = location_handler
 --- ```
 ---
 ---@param result table Response from the language server
----@param ctx table Client context
+---@param ctx lsp.HandlerContext Client context
 ---@param config table Configuration table.
 ---     - border:     (default=nil)
 ---         - Add borders to the floating window
@@ -470,7 +476,7 @@ function M.signature_help(_, result, ctx, config)
     end
     return
   end
-  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
   local triggers =
     vim.tbl_get(client.server_capabilities, 'signatureHelpProvider', 'triggerCharacters')
   local ft = vim.bo[ctx.bufnr].filetype

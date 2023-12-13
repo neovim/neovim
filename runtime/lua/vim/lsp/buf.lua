@@ -49,7 +49,7 @@ local function request_with_options(name, params, options)
   local req_handler
   if options then
     req_handler = function(err, result, ctx, config)
-      local client = vim.lsp.get_client_by_id(ctx.client_id)
+      local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
       local handler = client.handlers[name] or vim.lsp.handlers[name]
       handler(err, result, ctx, vim.tbl_extend('force', config or {}, options))
     end
@@ -299,12 +299,12 @@ function M.rename(new_name, options)
     )[1]
   end
 
-  local try_use_client
-  try_use_client = function(idx, client)
+  local function try_use_client(idx, client)
     if not client then
       return
     end
 
+    --- @param name string
     local function rename(name)
       local params = util.make_position_params(win, client.offset_encoding)
       params.newName = name

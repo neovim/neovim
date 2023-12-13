@@ -2089,7 +2089,7 @@ end
 --- Creates a `DocumentFormattingParams` object for the current buffer and cursor position.
 ---
 ---@param options table|nil with valid `FormattingOptions` entries
----@return `DocumentFormattingParams` object
+---@return lsp.DocumentFormattingParams object
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
 function M.make_formatting_params(options)
   validate({ options = { options, 't', true } })
@@ -2228,6 +2228,6 @@ end
 M._get_line_byte_from_position = get_line_byte_from_position
 
 ---@nodoc
-M.buf_versions = {}
+M.buf_versions = {} ---@type table<integer,integer>
 
 return M

@@ -478,7 +478,7 @@ do
   end
 
   vim.g = make_dict_accessor('g', false)
-  vim.v = make_dict_accessor('v', false)
+  vim.v = make_dict_accessor('v', false) --[[@as vim.v]]
   vim.b = make_dict_accessor('b')
   vim.w = make_dict_accessor('w')
   vim.t = make_dict_accessor('t')

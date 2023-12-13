@@ -1102,7 +1102,7 @@ with({handler}, {override_config})                            *vim.lsp.with()*
     Function to manage overriding defaults for LSP handlers.
 
     Parameters: ~
-      • {handler}          (function) See |lsp-handler|
+      • {handler}          (lsp.Handler) See |lsp-handler|
       • {override_config}  (table) Table containing the keys to override
                            behavior of the {handler}
 
@@ -1378,6 +1378,7 @@ on_diagnostic({_}, {result}, {ctx}, {config})
 <
 
     Parameters: ~
+      • {ctx}     lsp.HandlerContext
       • {config}  (table) Configuration table (see |vim.diagnostic.config()|).
 
                                  *vim.lsp.diagnostic.on_publish_diagnostics()*
@@ -1406,6 +1407,7 @@ on_publish_diagnostics({_}, {result}, {ctx}, {config})
 <
 
     Parameters: ~
+      • {ctx}     lsp.HandlerContext
       • {config}  (table) Configuration table (see |vim.diagnostic.config()|).
 
 
@@ -1440,6 +1442,9 @@ get({bufnr})                                          *vim.lsp.codelens.get()*
                                               *vim.lsp.codelens.on_codelens()*
 on_codelens({err}, {result}, {ctx}, {_})
     |lsp-handler| for the method `textDocument/codeLens`
+
+    Parameters: ~
+      • {ctx}  lsp.HandlerContext
 
 refresh()                                         *vim.lsp.codelens.refresh()*
     Refresh the codelens for the current buffer
@@ -1549,6 +1554,7 @@ get_at_pos({bufnr}, {row}, {col})
         • type (string) token type as string, e.g. "variable"
         • modifiers (table) token modifiers as a set. E.g., { static = true,
           readonly = true }
+        • client_id (integer)
 
                                    *vim.lsp.semantic_tokens.highlight_token()*
 highlight_token({token}, {bufnr}, {client_id}, {hl_group}, {opts})
@@ -1620,6 +1626,7 @@ hover({_}, {result}, {ctx}, {config})               *vim.lsp.handlers.hover()*
 <
 
     Parameters: ~
+      • {ctx}     lsp.HandlerContext
       • {config}  (table) Configuration table.
                   • border: (default=nil)
                     • Add borders to the floating window
@@ -1641,7 +1648,7 @@ signature_help({_}, {result}, {ctx}, {config})
 
     Parameters: ~
       • {result}  (table) Response from the language server
-      • {ctx}     (table) Client context
+      • {ctx}     lsp.HandlerContext Client context
       • {config}  (table) Configuration table.
                   • border: (default=nil)
                     • Add borders to the floating window
@@ -1849,7 +1856,7 @@ make_formatting_params({options})
       • {options}  (table|nil) with valid `FormattingOptions` entries
 
     Return: ~
-        `DocumentFormattingParams` object
+        lsp.DocumentFormattingParams object
 
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_formatting
@@ -2152,7 +2159,7 @@ start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
                                 for LSP server process
 
     Return: ~
-        (table|nil) Client RPC object, with these methods:
+        RpcClientPublic|nil Client RPC object, with these methods:
         • `notify()` |vim.lsp.rpc.notify()|
         • `request()` |vim.lsp.rpc.request()|
         • `is_closing()` returns a boolean indicating if the RPC is closing.
@@ -2185,6 +2192,6 @@ resolve_capabilities({server_capabilities})
                                server
 
     Return: ~
-        (table|nil) Normalized table of capabilities
+        lsp.ServerCapabilities|nil Normalized table of capabilities
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

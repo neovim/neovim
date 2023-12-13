@@ -37,6 +37,10 @@ local function severity_vim_to_lsp(severity)
   return severity
 end
 
+---@param lines string[]
+---@param lnum integer
+---@param col integer
+---@param offset_encoding string
 ---@return integer
 local function line_byte_from_position(lines, lnum, col, offset_encoding)
   if not lines or offset_encoding == 'utf-8' then
@@ -52,6 +56,8 @@ local function line_byte_from_position(lines, lnum, col, offset_encoding)
   return col
 end
 
+---@param bufnr integer
+---@return string[]
 local function get_buf_lines(bufnr)
   if vim.api.nvim_buf_is_loaded(bufnr) then
     return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -223,6 +229,7 @@ end
 --- )
 --- ```
 ---
+---@param ctx lsp.HandlerContext
 ---@param config table Configuration table (see |vim.diagnostic.config()|).
 function M.on_publish_diagnostics(_, result, ctx, config)
   local client_id = ctx.client_id
@@ -284,6 +291,7 @@ end
 --- )
 --- ```
 ---
+---@param ctx lsp.HandlerContext
 ---@param config table Configuration table (see |vim.diagnostic.config()|).
 function M.on_diagnostic(_, result, ctx, config)
   local client_id = ctx.client_id
@@ -400,6 +408,7 @@ end
 local bufstates = {}
 
 --- Disable pull diagnostics for a buffer
+--- @param bufnr integer
 --- @private
 local function disable(bufnr)
   local bufstate = bufstates[bufnr]
