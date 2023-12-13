@@ -493,7 +493,6 @@ static int virt_text_cursor_off(chartabsize_T *cts, bool on_NUL)
 void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
 {
   char *ptr;     // points to current char
-  char *posptr;  // points to char at pos->col
   int incr;
   int head;
   colnr_T *vts = wp->w_buffer->b_p_vts_array;
@@ -502,21 +501,10 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
   colnr_T vcol = 0;
   char *line = ptr = ml_get_buf(wp->w_buffer, pos->lnum);  // start of the line
 
-  if (pos->col == MAXCOL) {
-    // continue until the NUL
-    posptr = NULL;
-  } else {
-    // In a few cases the position can be beyond the end of the line.
-    for (colnr_T i = 0; i < pos->col; i++) {
-      if (ptr[i] == NUL) {
-        pos->col = i;
-        break;
-      }
-    }
-    posptr = ptr + pos->col;
-    posptr -= utf_head_off(line, posptr);
+  uintptr_t last_pos = (uintptr_t)(ptr + pos->col);
+  if (last_pos < (uintptr_t)ptr) {
+    last_pos = UINTPTR_MAX;  // unsigned overflow
   }
-
   chartabsize_T cts;
   bool on_NUL = false;
   init_chartabsize_arg(&cts, wp, pos->lnum, 0, line, line);
@@ -566,13 +554,13 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
         }
       }
 
-      if ((posptr != NULL) && (ptr >= posptr)) {
-        // character at pos->col
+      char *const next = ptr + utfc_ptr2len(ptr);
+      if ((uintptr_t)next > last_pos) {
         break;
       }
 
+      ptr = next;
       vcol += incr;
-      MB_PTR_ADV(ptr);
     }
   } else {
     while (true) {
@@ -589,13 +577,13 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
         break;
       }
 
-      if ((posptr != NULL) && (cts.cts_ptr >= posptr)) {
-        // character at pos->col
+      char *const next = cts.cts_ptr + utfc_ptr2len(cts.cts_ptr);
+      if ((uintptr_t)next > last_pos) {
         break;
       }
 
+      cts.cts_ptr = next;
       cts.cts_vcol += incr;
-      MB_PTR_ADV(cts.cts_ptr);
     }
     vcol = cts.cts_vcol;
     ptr = cts.cts_ptr;
