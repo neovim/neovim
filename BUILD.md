@@ -7,7 +7,7 @@
 2. `git clone https://github.com/neovim/neovim`
 3. `cd neovim && make CMAKE_BUILD_TYPE=RelWithDebInfo`
     - If you want the **stable release**, also run `git checkout stable`.
-    - If you want to install to a custom location, set `CMAKE_INSTALL_PREFIX`. See also [Installing Neovim](https://github.com/neovim/neovim/wiki/Installing-Neovim#install-from-source).
+    - If you want to install to a custom location, set `CMAKE_INSTALL_PREFIX`. See also [INSTALL.md](./INSTALL.md#install-from-source).
     - On BSD, use `gmake` instead of `make`.
     - To build on Windows, see the [Building on Windows](#building-on-windows) section. _MSVC (Visual Studio) is recommended._
 4. `sudo make install`

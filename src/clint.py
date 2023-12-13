@@ -2082,7 +2082,7 @@ def CheckLanguage(filename, clean_lines, linenum, error):
         if match:
             error(filename, linenum, 'runtime/deprecated', 4,
                   'Accessing list_T internals directly is prohibited; '
-                  'see https://github.com/neovim/neovim/wiki/List-management-in-Neovim')
+                  'see https://neovim.io/doc/user/dev_vimpatch.html#dev-vimpatch-list-management')
 
     # Check for suspicious usage of "if" like
     # } if (a == b) {

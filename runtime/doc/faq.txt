@@ -255,7 +255,7 @@ Use an optimized build:
     Build type: Release
 <
 If it reports `Build type: Debug` and you're building Nvim from source, see
-https://github.com/neovim/neovim/wiki/Building-Neovim.
+https://github.com/neovim/neovim/blob/master/BUILD.md.
 
 
 COLORS AREN'T DISPLAYED CORRECTLY ~

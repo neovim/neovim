@@ -158,10 +158,6 @@ These dependencies are "vendored" (inlined), we must update the sources manually
 * `runtime/lua/coxpcall.lua`: coxpcall (only needed for PUC lua, builtin to luajit)
 * `src/termkey`: [libtermkey](https://github.com/neovim/libtermkey)
 
-### Forks
-
-We may maintain forks, if we are waiting on upstream changes: https://github.com/neovim/neovim/wiki/Deps
-
 Non-technical dependencies
 --------------------------
 
