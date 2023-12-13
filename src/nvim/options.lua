@@ -9030,6 +9030,24 @@ return {
       varname = 'p_titlestring',
     },
     {
+      abbreviation = 'tsml',
+      defaults = { if_true = 256 },
+      desc = [=[
+        This option determines the maximum number of treesitter nodes matched
+        when a cursor query is executed. Higher values allow for deeper matches
+        at the expense of query execution time, while lower values can be used
+        to speed up the execution time.
+
+        The default value is 256. Maximum is 64000 and minimum is 32.
+      ]=],
+      full_name = 'tsmatchlimit',
+      scope = { 'global', 'buffer' },
+      short_desc = N_('maximum number of nodes in treesitter matches for each query'),
+      type = 'number',
+      redraw = { 'ui_option', 'current_buffer' },
+      varname = 'p_tsml',
+    },
+    {
       defaults = { if_true = true },
       desc = [=[
         This option and 'ttimeoutlen' determine the behavior when part of a

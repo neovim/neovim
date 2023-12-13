@@ -727,6 +727,7 @@ EXTERN char *p_titleold;        ///< 'titleold'
 EXTERN char *p_titlestring;     ///< 'titlestring'
 EXTERN char *p_tsr;             ///< 'thesaurus'
 EXTERN int p_tgc;               ///< 'termguicolors'
+EXTERN OptInt p_tsml;              ///< 'tsmatchlimit'
 EXTERN int p_ttimeout;          ///< 'ttimeout'
 EXTERN OptInt p_ttm;            ///< 'ttimeoutlen'
 EXTERN char *p_udir;            ///< 'undodir'
@@ -867,6 +868,7 @@ enum {
   BV_SWF,
   BV_TFU,
   BV_TSRFU,
+  BV_TSML,
   BV_TAGS,
   BV_TC,
   BV_TS,

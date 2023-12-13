@@ -7131,6 +7131,21 @@ vim.go.titleold = vim.o.titleold
 vim.o.titlestring = ""
 vim.go.titlestring = vim.o.titlestring
 
+--- This option determines the maximum number of treesitter nodes matched
+--- when a cursor query is executed. Higher values allow for deeper matches
+--- at the expense of query execution time, while lower values can be used
+--- to speed up the execution time.
+---
+--- The default value is 256. Maximum is 64000 and minimum is 32.
+---
+--- @type integer
+vim.o.tsmatchlimit = 256
+vim.o.tsml = vim.o.tsmatchlimit
+vim.bo.tsmatchlimit = vim.o.tsmatchlimit
+vim.bo.tsml = vim.bo.tsmatchlimit
+vim.go.tsmatchlimit = vim.o.tsmatchlimit
+vim.go.tsml = vim.go.tsmatchlimit
+
 --- This option and 'ttimeoutlen' determine the behavior when part of a
 --- key code sequence has been received by the `TUI`.
 ---

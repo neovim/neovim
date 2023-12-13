@@ -1453,24 +1453,42 @@ static int node_rawquery(lua_State *L)
   // reset the start depth
   ts_query_cursor_set_max_start_depth(cursor, UINT32_MAX);
 #endif
-  ts_query_cursor_set_match_limit(cursor, 256);
+
+  handle_T bufnr = (handle_T)lua_tointeger(L, 3);
+  buf_T *buf;
+  buf = handle_get_buffer(bufnr);
+
+  if (!buf) {
+    // is this the correct way to do this?
+#define BUFSIZE 256
+    char ebuf[BUFSIZE] = { 0 };
+    vim_snprintf(ebuf, BUFSIZE, "invalid buffer handle: %d", bufnr);
+    return luaL_argerror(L, 3, ebuf);
+#undef BUFSIZE
+  }
+
+  if (buf->b_p_tsml >= 32 && buf->b_p_tsml <= 64000) {
+    ts_query_cursor_set_match_limit(cursor, (uint32_t)buf->b_p_tsml);
+  } else {
+    ts_query_cursor_set_match_limit(cursor, (uint32_t)p_tsml);
+  }
   ts_query_cursor_exec(cursor, query, node);
 
-  bool captures = lua_toboolean(L, 3);
+  bool captures = lua_toboolean(L, 4);
 
-  if (lua_gettop(L) >= 4) {
-    uint32_t start = (uint32_t)luaL_checkinteger(L, 4);
-    uint32_t end = lua_gettop(L) >= 5 ? (uint32_t)luaL_checkinteger(L, 5) : MAXLNUM;
+  if (lua_gettop(L) >= 5) {
+    uint32_t start = (uint32_t)luaL_checkinteger(L, 5);
+    uint32_t end = lua_gettop(L) >= 6 ? (uint32_t)luaL_checkinteger(L, 6) : MAXLNUM;
     ts_query_cursor_set_point_range(cursor, (TSPoint){ start, 0 }, (TSPoint){ end, 0 });
   }
 
-  if (lua_gettop(L) >= 6 && !lua_isnil(L, 6)) {
-    if (!lua_istable(L, 6)) {
+  if (lua_gettop(L) >= 7 && !lua_isnil(L, 7)) {
+    if (!lua_istable(L, 7)) {
       return luaL_error(L, "table expected");
     }
     lua_pushnil(L);
     // stack: [dict, ..., nil]
-    while (lua_next(L, 6)) {
+    while (lua_next(L, 7)) {
       // stack: [dict, ..., key, value]
       if (lua_type(L, -2) == LUA_TSTRING) {
         char *k = (char *)lua_tostring(L, -2);

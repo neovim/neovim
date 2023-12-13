@@ -34,20 +34,22 @@
 local TSNode = {}
 
 ---@param query userdata
+---@param bufnr integer
 ---@param captures true
 ---@param start? integer
 ---@param end_? integer
 ---@param opts? table
 ---@return fun(): integer, TSNode, any
-function TSNode:_rawquery(query, captures, start, end_, opts) end
+function TSNode:_rawquery(query, bufnr, captures, start, end_, opts) end
 
 ---@param query userdata
+---@param bufnr integer
 ---@param captures false
 ---@param start? integer
 ---@param end_? integer
 ---@param opts? table
 ---@return fun(): string, any
-function TSNode:_rawquery(query, captures, start, end_, opts) end
+function TSNode:_rawquery(query, bufnr, captures, start, end_, opts) end
 
 ---@alias TSLoggerCallback fun(logtype: 'parse'|'lex', msg: string)
 

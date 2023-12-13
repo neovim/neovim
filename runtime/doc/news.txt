@@ -199,6 +199,9 @@ The following new APIs and features were added.
   • Improved error messages for query parsing.
   • |vim.treesitter.foldtext()| applies treesitter highlighting to
     foldtext.
+  • |vim.go.tsmatchlimit| and |vim.bo.tsmatchlimit| now allows for adjustment of
+    the maximum number of treesitter nodes matches when a cursor query is
+    executed.
 
 • |vim.ui.open()| opens URIs using the system default handler (macOS `open`,
   Windows `explorer`, Linux `xdg-open`, etc.)

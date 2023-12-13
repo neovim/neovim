@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "nvim/types_defs.h"
+
 typedef struct file_buffer buf_T;
 
 /// Reference to a buffer that stores the value of buf_free_count.
@@ -615,6 +617,7 @@ struct file_buffer {
   char *b_p_tc;                 ///< 'tagcase' local value
   unsigned b_tc_flags;          ///< flags for 'tagcase'
   char *b_p_dict;               ///< 'dictionary' local value
+  OptInt b_p_tsml;              ///< 'tsmatchlimit' local value
   char *b_p_tsr;                ///< 'thesaurus' local value
   char *b_p_tsrfu;              ///< 'thesaurusfunc' local value
   Callback b_tsrfu_cb;          ///< 'thesaurusfunc' callback
