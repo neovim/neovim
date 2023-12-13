@@ -65,10 +65,7 @@ if os.getenv('VALGRIND') then
     table.insert(prepend_argv, '--vgdb-error=0')
   end
 elseif os.getenv('GDB') then
-  local gdbserver_port = '7777'
-  if os.getenv('GDBSERVER_PORT') then
-    gdbserver_port = os.getenv('GDBSERVER_PORT')
-  end
+  local gdbserver_port = os.getenv('GDBSERVER_PORT') or '7777'
   prepend_argv = {'gdbserver', 'localhost:'..gdbserver_port}
 end
 

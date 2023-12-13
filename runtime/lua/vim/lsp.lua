@@ -329,11 +329,11 @@ end
 ---@param fn (T) Function to run
 ---@return T
 local function once(fn)
-  local value --- @type any
+  local value --- @type function
   local ran = false
   return function(...)
     if not ran then
-      value = fn(...)
+      value = fn(...) --- @type function
       ran = true
     end
     return value

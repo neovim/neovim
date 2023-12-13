@@ -133,7 +133,7 @@ function M.open(path)
     path = vim.fn.expand(path)
   end
 
-  local cmd
+  local cmd --- @type string[]
 
   if vim.fn.has('mac') == 1 then
     cmd = { 'open', path }

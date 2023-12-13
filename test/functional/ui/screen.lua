@@ -1593,6 +1593,7 @@ function Screen:_pprint_attrs(attrs, cterm)
     return table.concat(items, ", ")
 end
 
+---@diagnostic disable-next-line: unused-local, unused-function
 local function backward_find_meaningful(tbl, from)  -- luacheck: no unused
   for i = from or #tbl, 1, -1 do
     if tbl[i] ~= ' ' then

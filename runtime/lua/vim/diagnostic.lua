@@ -108,6 +108,7 @@ local function filter_by_severity(severity, diagnostics)
     severities[to_severity(s)] = true
   end
 
+  --- @param t table
   return vim.tbl_filter(function(t)
     return severities[t.severity]
   end, diagnostics)

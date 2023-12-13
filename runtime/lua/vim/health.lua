@@ -1,8 +1,8 @@
 local M = {}
 
-local s_output = {}
+local s_output = {} ---@type string[]
 
--- Returns the fold text of the current healthcheck section
+--- Returns the fold text of the current healthcheck section
 function M.foldtext()
   local foldtext = vim.fn.foldtext()
 
@@ -36,12 +36,13 @@ function M.foldtext()
   return vim.b.failedchecks[foldtext] and '+WE' .. foldtext:sub(4) or foldtext
 end
 
--- From a path return a list [{name}, {func}, {type}] representing a healthcheck
+--- @param path string path to search for the healthcheck
+--- @return string[] { name, func, type } representing a healthcheck
 local function filepath_to_healthcheck(path)
   path = vim.fs.normalize(path)
-  local name
-  local func
-  local filetype
+  local name --- @type string
+  local func --- @type string
+  local filetype --- @type string
   if path:find('vim$') then
     name = vim.fs.basename(path):gsub('%.vim$', '')
     func = 'health#' .. name .. '#check'
@@ -50,10 +51,10 @@ local function filepath_to_healthcheck(path)
     local subpath = path:gsub('.*lua/', '')
     if vim.fs.basename(subpath) == 'health.lua' then
       -- */health.lua
-      name = vim.fs.dirname(subpath)
+      name = assert(vim.fs.dirname(subpath))
     else
       -- */health/init.lua
-      name = vim.fs.dirname(vim.fs.dirname(subpath))
+      name = assert(vim.fs.dirname(assert(vim.fs.dirname(subpath))))
     end
     name = name:gsub('/', '.')
 
@@ -63,11 +64,12 @@ local function filepath_to_healthcheck(path)
   return { name, func, filetype }
 end
 
--- Returns { {name, func, type}, ... } representing healthchecks
+--- @param plugin_names string
+--- @return table<any,string[]> { {name, func, type}, ... } representing healthchecks
 local function get_healthcheck_list(plugin_names)
-  local healthchecks = {}
-  plugin_names = vim.split(plugin_names, ' ')
-  for _, p in pairs(plugin_names) do
+  local healthchecks = {} --- @type table<any,string[]>
+  local plugin_names_list = vim.split(plugin_names, ' ')
+  for _, p in pairs(plugin_names_list) do
     -- support vim/lsp/health{/init/}.lua as :checkhealth vim.lsp
 
     p = p:gsub('%.', '/')
@@ -83,7 +85,7 @@ local function get_healthcheck_list(plugin_names)
     if vim.tbl_count(paths) == 0 then
       healthchecks[#healthchecks + 1] = { p, '', '' } -- healthcheck not found
     else
-      local unique_paths = {}
+      local unique_paths = {} --- @type table<string, boolean>
       for _, v in pairs(paths) do
         unique_paths[v] = true
       end
@@ -100,10 +102,11 @@ local function get_healthcheck_list(plugin_names)
   return healthchecks
 end
 
--- Returns {name: [func, type], ..} representing healthchecks
+--- @param plugin_names string
+--- @return table<string, string[]> {name: [func, type], ..} representing healthchecks
 local function get_healthcheck(plugin_names)
   local health_list = get_healthcheck_list(plugin_names)
-  local healthchecks = {}
+  local healthchecks = {} --- @type table<string, string[]>
   for _, c in pairs(health_list) do
     if c[1] ~= 'vim' then
       healthchecks[c[1]] = { c[2], c[3] }
@@ -113,7 +116,11 @@ local function get_healthcheck(plugin_names)
   return healthchecks
 end
 
--- Indents lines *except* line 1 of a string if it contains newlines.
+--- Indents lines *except* line 1 of a string if it contains newlines.
+---
+--- @param s string
+--- @param columns integer
+--- @return string
 local function indent_after_line1(s, columns)
   local lines = vim.split(s, '\n')
   local indent = string.rep(' ', columns)
@@ -123,13 +130,20 @@ local function indent_after_line1(s, columns)
   return table.concat(lines, '\n')
 end
 
--- Changes ':h clipboard' to ':help |clipboard|'.
+--- Changes ':h clipboard' to ':help |clipboard|'.
+---
+--- @param s string
+--- @return string
 local function help_to_link(s)
   return vim.fn.substitute(s, [[\v:h%[elp] ([^|][^"\r\n ]+)]], [[:help |\1|]], [[g]])
 end
 
--- Format a message for a specific report item.
--- Variable args: Optional advice (string or list)
+--- Format a message for a specific report item.
+---
+--- @param status string
+--- @param msg string
+--- @param ... string|string[] Optional advice
+--- @return string
 local function format_report_message(status, msg, ...)
   local output = '- ' .. status
   if status ~= '' then
@@ -159,42 +173,54 @@ local function format_report_message(status, msg, ...)
   return help_to_link(output)
 end
 
+--- @param output string
 local function collect_output(output)
   vim.list_extend(s_output, vim.split(output, '\n'))
 end
 
--- Starts a new report.
+--- Starts a new report.
+---
+--- @param name string
 function M.start(name)
   local input = string.format('\n%s ~', name)
   collect_output(input)
 end
 
--- Reports a message in the current section.
+--- Reports a message in the current section.
+---
+--- @param msg string
 function M.info(msg)
   local input = format_report_message('', msg)
   collect_output(input)
 end
 
--- Reports a successful healthcheck.
+--- Reports a successful healthcheck.
+---
+--- @param msg string
 function M.ok(msg)
   local input = format_report_message('OK', msg)
   collect_output(input)
 end
 
--- Reports a health warning.
--- ...: Optional advice (string or table)
+--- Reports a health warning.
+---
+--- @param msg string
+--- @param ... string|string[] Optional advice
 function M.warn(msg, ...)
   local input = format_report_message('WARNING', msg, ...)
   collect_output(input)
 end
 
--- Reports a failed healthcheck.
--- ...: Optional advice (string or table)
+--- Reports a failed healthcheck.
+---
+--- @param msg string
+--- @param ... string|string[] Optional advice
 function M.error(msg, ...)
   local input = format_report_message('ERROR', msg, ...)
   collect_output(input)
 end
 
+--- @param type string
 local function deprecate(type)
   local before = string.format('vim.health.report_%s()', type)
   local after = string.format('vim.health.%s()', type)
@@ -206,22 +232,36 @@ local function deprecate(type)
   vim.print('Running healthchecks...')
 end
 
+--- @deprecated
+--- @param name string
 function M.report_start(name)
   deprecate('start')
   M.start(name)
 end
+
+--- @deprecated
+--- @param msg string
 function M.report_info(msg)
   deprecate('info')
   M.info(msg)
 end
+
+--- @deprecated
+--- @param msg string
 function M.report_ok(msg)
   deprecate('ok')
   M.ok(msg)
 end
+
+--- @deprecated
+--- @param msg string
 function M.report_warn(msg, ...)
   deprecate('warn')
   M.warn(msg, ...)
 end
+
+--- @deprecated
+--- @param msg string
 function M.report_error(msg, ...)
   deprecate('error')
   M.error(msg, ...)
@@ -251,7 +291,7 @@ local path2name = function(path)
 end
 
 local PATTERNS = { '/autoload/health/*.vim', '/lua/**/**/health.lua', '/lua/**/**/health/init.lua' }
--- :checkhealth completion function used by cmdexpand.c get_healthcheck_names()
+--- :checkhealth completion function used by cmdexpand.c get_healthcheck_names()
 M._complete = function()
   local names = vim.tbl_flatten(vim.tbl_map(function(pattern)
     return vim.tbl_map(path2name, vim.api.nvim_get_runtime_file(pattern, true))
@@ -270,6 +310,9 @@ end
 --- Runs all discovered healthchecks if plugin_names is empty.
 ---
 --- @param mods string command modifiers that affect splitting a window.
+--- @param plugin_names string glob of plugin names, split on whitespace. For example, using
+---                            `:checkhealth vim.* nvim` will healthcheck `vim.lsp`, `vim.treesitter`
+---                            and `nvim` modules.
 function M._check(mods, plugin_names)
   local healthchecks = plugin_names == '' and get_healthcheck('*') or get_healthcheck(plugin_names)
 
@@ -289,7 +332,8 @@ function M._check(mods, plugin_names)
   vim.cmd.file('health://')
   vim.cmd.setfiletype('checkhealth')
 
-  if healthchecks == nil or next(healthchecks) == nil then
+  -- This should only happen when doing `:checkhealth vim`
+  if next(healthchecks) == nil then
     vim.fn.setline(1, 'ERROR: No healthchecks found.')
     return
   end
@@ -325,7 +369,7 @@ function M._check(mods, plugin_names)
     local header = { string.rep('=', 78), name .. ': ' .. func, '' }
     -- remove empty line after header from report_start
     if s_output[1] == '' then
-      local tmp = {}
+      local tmp = {} ---@type string[]
       for i = 2, #s_output do
         tmp[#tmp + 1] = s_output[i]
       end

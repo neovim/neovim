@@ -617,11 +617,6 @@ function vim.tbl_islist(t)
   local num_elem = vim.tbl_count(t)
 
   if num_elem == 0 then
-    -- TODO(bfredl): in the future, we will always be inside nvim
-    -- then this check can be deleted.
-    if vim._empty_dict_mt == nil then
-      return nil
-    end
     return getmetatable(t) ~= vim._empty_dict_mt
   else
     for i = 1, num_elem do

@@ -19,7 +19,7 @@ for _, p in ipairs(Paths.include_paths) do
   Preprocess.add_to_include_path(p)
 end
 
-local child_pid = nil --- @type integer
+local child_pid = nil --- @type integer?
 --- @generic F: function
 --- @param func F
 --- @return F
