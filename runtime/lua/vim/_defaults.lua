@@ -298,7 +298,11 @@ if tty then
       end,
     })
 
-    io.stdout:write('\027]11;?\007')
+    local query = '\027]11;?\007'
+    if os.getenv('TMUX') then
+      query = string.format('\027Ptmux;%s\027\\', query:gsub('\027', '\027\027'))
+    end
+    io.stdout:write(query)
 
     timer:start(1000, 0, function()
       -- Delete the autocommand if no response was received
