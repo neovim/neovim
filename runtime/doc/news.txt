@@ -341,6 +341,9 @@ The following changes to existing APIs or features add new behavior.
 
 • Vimscript function |exists()| supports checking |v:lua| functions.
 
+• Diagnostic sign text is no longer configured with |sign_define()|.
+  Use |vim.diagnostic.config()| instead.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

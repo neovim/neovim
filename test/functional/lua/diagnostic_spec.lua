@@ -1080,9 +1080,19 @@ end)
             table.insert(virt_texts, (string.gsub(virt_text[i][2], "DiagnosticVirtualText", "")))
           end
 
+          local ns = vim.diagnostic.get_namespace(diagnostic_ns)
+          local sign_ns = ns.user_data.sign_ns
           local signs = {}
-          for _, v in ipairs(vim.fn.sign_getplaced(diagnostic_bufnr, {group = "*"})[1].signs) do
-            table.insert(signs, (string.gsub(v.name, "DiagnosticSign", "")))
+          local all_signs = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, sign_ns, 0, -1, {type = 'sign', details = true})
+          table.sort(all_signs, function(a, b)
+            return a[1] > b[1]
+          end)
+
+          for _, v in ipairs(all_signs) do
+            local s = v[4].sign_hl_group:gsub('DiagnosticSign', "")
+            if not vim.tbl_contains(signs, s) then
+              signs[#signs + 1] = s
+            end
           end
 
           return {virt_texts, signs}
@@ -1498,7 +1508,15 @@ end)
 
         vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
 
-        return vim.fn.sign_getplaced(diagnostic_bufnr, {group = '*'})[1].signs
+        local ns = vim.diagnostic.get_namespace(diagnostic_ns)
+        local sign_ns = ns.user_data.sign_ns
+
+        local signs = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, sign_ns, 0, -1, {type ='sign', details = true})
+        local result = {}
+        for _, s in ipairs(signs) do
+          result[#result + 1] = { lnum = s[2] + 1, name = s[4].sign_hl_group }
+        end
+        return result
       ]]
 
       eq({2, 'DiagnosticSignError'}, {result[1].lnum, result[1].name})
