@@ -137,6 +137,7 @@ struct TUIData {
   int width;
   int height;
   bool rgb;
+  int initial_clear;
 };
 
 static int got_winch = 0;
@@ -1042,7 +1043,11 @@ void tui_grid_clear(TUIData *tui, Integer g)
   // safe to clear cache at this point
   schar_cache_clear_if_full();
   kv_size(tui->invalid_regions) = 0;
-  clear_region(tui, 0, tui->height, 0, tui->width, 0);
+  if (tui->initial_clear == 2) {
+    clear_region(tui, 0, tui->height, 0, tui->width, 0);
+  } else {
+    tui->initial_clear = 1;
+  }
 }
 
 void tui_grid_cursor_goto(TUIData *tui, Integer grid, Integer row, Integer col)
@@ -1305,6 +1310,10 @@ void tui_default_colors_set(TUIData *tui, Integer rgb_fg, Integer rgb_bg, Intege
   tui->clear_attrs.cterm_bg_color = (int)cterm_bg;
 
   tui->print_attr_id = -1;
+  if (tui->initial_clear == 1) {
+    clear_region(tui, 0, tui->height, 0, tui->width, 0);
+  }
+  tui->initial_clear = 2;
   invalidate(tui, 0, tui->grid.height, 0, tui->grid.width);
 }
 
@@ -1474,7 +1483,9 @@ void tui_option_set(TUIData *tui, String name, Object value)
   } else if (strequal(name.data, "termguicolors")) {
     tui->rgb = value.data.boolean;
     tui->print_attr_id = -1;
-    invalidate(tui, 0, tui->grid.height, 0, tui->grid.width);
+    if (tui->initial_clear == 2) {
+      invalidate(tui, 0, tui->grid.height, 0, tui->grid.width);
+    }
 
     if (ui_client_channel_id) {
       MAXSIZE_TEMP_ARRAY(args, 2);
