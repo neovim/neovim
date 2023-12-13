@@ -441,9 +441,9 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                          warnings, information, and hints, respectively.
                          Example: >lua
 
-                         vim.diagnostic.config({
-                           sign = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
-                         })
+                           vim.diagnostic.config({
+                             signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
+                           })
 <
 
                      • float: Options for floating windows. See

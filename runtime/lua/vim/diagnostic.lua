@@ -598,9 +598,9 @@ end
 ---                to display in the sign column. The default is to use "E", "W", "I", and "H"
 ---                for errors, warnings, information, and hints, respectively. Example:
 ---                   <pre>lua
----                     vim.diagnostic.config({
----                       sign = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
----                     })
+---                       vim.diagnostic.config({
+---                         signs = { text = { [vim.diagnostic.severity.ERROR] = 'E', ... } }
+---                       })
 ---                   </pre>
 ---       - float: Options for floating windows. See |vim.diagnostic.open_float()|.
 ---       - update_in_insert: (default false) Update diagnostics in Insert mode (if false,
