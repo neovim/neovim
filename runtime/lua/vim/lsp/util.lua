@@ -535,6 +535,10 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
   if fix_eol then
     api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
   end
+
+  -- Show diagnostics in case nvim_buf_set_lines/text() invalidated diagnostic extmarks but did
+  -- not trigger 'textDocument/publishDiagnostics'.
+  vim.diagnostic.show(nil, bufnr, nil, {})
 end
 
 -- local valid_windows_path_characters = "[^<>:\"/\\|?*]"
