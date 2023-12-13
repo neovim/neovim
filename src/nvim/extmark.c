@@ -332,9 +332,13 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
       if (endpos.row < 0) {
         endpos = mark.pos;
       }
-      if ((endpos.col <= u_col || (!u_col && endpos.row == mark.pos.row))
-          && mark.pos.col >= l_col
-          && mark.pos.row >= l_row && endpos.row <= u_row - (u_col ? 0 : 1)) {
+      // Invalidate unpaired marks in deleted lines and paired marks whose entire
+      // range has been deleted.
+      if ((!mt_paired(mark) && mark.pos.row < u_row)
+          || (mt_paired(mark)
+              && (endpos.col <= u_col || (!u_col && endpos.row == mark.pos.row))
+              && mark.pos.col >= l_col
+              && mark.pos.row >= l_row && endpos.row <= u_row - (u_col ? 0 : 1))) {
         if (mt_no_undo(mark)) {
           extmark_del(buf, itr, mark, true);
           continue;

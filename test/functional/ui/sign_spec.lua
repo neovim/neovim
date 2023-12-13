@@ -218,14 +218,15 @@ describe('Signs', function()
       ]])
       -- "auto:3" accommodates all the signs we defined so far.
       command('set signcolumn=auto:3')
-      screen:expect([[
+      local s3 = [[
         {1:>>}{8:XX}{2:  }{6:  1 }a                                          |
         {8:XX}{1:>>}{2:  }{6:  2 }b                                          |
         {8:XX}{1:>>}WW{6:  3 }c                                          |
         {2:      }{6:  4 }^                                           |
         {0:~                                                    }|*9
                                                              |
-      ]])
+      ]]
+      screen:expect(s3)
       -- Check "yes:9".
       command('set signcolumn=yes:9')
       screen:expect([[
@@ -239,20 +240,22 @@ describe('Signs', function()
       -- Check "auto:N" larger than the maximum number of signs defined in
       -- a single line (same result as "auto:3").
       command('set signcolumn=auto:4')
-      screen:expect{grid=[[
-        {1:>>}{8:XX}{2:  }{6:  1 }a                                          |
-        {8:XX}{1:>>}{2:  }{6:  2 }b                                          |
-        {8:XX}{1:>>}WW{6:  3 }c                                          |
-        {2:      }{6:  4 }^                                           |
-        {0:~                                                    }|*9
-                                                             |
-      ]]}
+      screen:expect(s3)
       -- line deletion deletes signs.
       command('3move1')
       command('2d')
       screen:expect([[
         {1:>>}{8:XX}{6:  1 }a                                            |
         {8:XX}{1:>>}{6:  2 }^b                                            |
+        {2:    }{6:  3 }                                             |
+        {0:~                                                    }|*10
+                                                             |
+      ]])
+      -- character deletion does not delete signs.
+      feed('x')
+      screen:expect([[
+        {1:>>}{8:XX}{6:  1 }a                                            |
+        {8:XX}{1:>>}{6:  2 }^                                             |
         {2:    }{6:  3 }                                             |
         {0:~                                                    }|*10
                                                              |
