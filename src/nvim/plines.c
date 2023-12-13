@@ -109,8 +109,8 @@ void win_linetabsize_cts(chartabsize_T *cts, colnr_T len)
     cts->cts_vcol += win_lbr_chartabsize(cts, NULL);
   }
   // check for inline virtual text after the end of the line
-  if (len == MAXCOL && cts->cts_has_virt_text && *cts->cts_ptr == NUL) {
-    win_lbr_chartabsize(cts, NULL);
+  if (len == MAXCOL && cts->virt_row >= 0 && *cts->cts_ptr == NUL) {
+    (void)win_lbr_chartabsize(cts, NULL);
     cts->cts_vcol += cts->cts_cur_text_width_left + cts->cts_cur_text_width_right;
   }
 }
@@ -129,14 +129,14 @@ void init_chartabsize_arg(chartabsize_T *cts, win_T *wp, linenr_T lnum, colnr_T 
   cts->cts_max_head_vcol = 0;
   cts->cts_cur_text_width_left = 0;
   cts->cts_cur_text_width_right = 0;
-  cts->cts_has_virt_text = false;
-  cts->cts_row = lnum - 1;
+  cts->virt_row = -1;
+  cts->indent_width = INT_MIN;
 
-  if (cts->cts_row >= 0 && wp->w_buffer->b_virt_text_inline > 0) {
-    marktree_itr_get(wp->w_buffer->b_marktree, cts->cts_row, 0, cts->cts_iter);
+  if (lnum > 0 && wp->w_buffer->b_virt_text_inline > 0) {
+    marktree_itr_get(wp->w_buffer->b_marktree, lnum - 1, 0, cts->cts_iter);
     MTKey mark = marktree_itr_current(cts->cts_iter);
-    if (mark.pos.row == cts->cts_row) {
-      cts->cts_has_virt_text = true;
+    if (mark.pos.row == lnum - 1) {
+      cts->virt_row = lnum - 1;
     }
   }
 }
@@ -154,7 +154,7 @@ void clear_chartabsize_arg(chartabsize_T *cts)
 int lbr_chartabsize(chartabsize_T *cts)
 {
   if (!curwin->w_p_lbr && *get_showbreak_value(curwin) == NUL
-      && !curwin->w_p_bri && !cts->cts_has_virt_text) {
+      && !curwin->w_p_bri && cts->virt_row < 0) {
     if (curwin->w_p_wrap) {
       return win_nolbr_chartabsize(cts, NULL);
     }
@@ -199,9 +199,11 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   cts->cts_cur_text_width_left = 0;
   cts->cts_cur_text_width_right = 0;
 
+  char *const sbr = get_showbreak_value(wp);
+
   // No 'linebreak', 'showbreak' and 'breakindent': return quickly.
-  if (!wp->w_p_lbr && !wp->w_p_bri && *get_showbreak_value(wp) == NUL
-      && !cts->cts_has_virt_text) {
+  if (!wp->w_p_lbr && !wp->w_p_bri && *sbr == NUL
+      && cts->virt_row < 0) {
     if (wp->w_p_wrap) {
       return win_nolbr_chartabsize(cts, headp);
     }
@@ -217,12 +219,12 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   }
   bool is_doublewidth = size == 2 && MB_BYTE2LEN((uint8_t)(*s)) > 1;
 
-  if (cts->cts_has_virt_text) {
+  if (cts->virt_row >= 0) {
     int tab_size = size;
     int col = (int)(s - line);
     while (true) {
       MTKey mark = marktree_itr_current(cts->cts_iter);
-      if (mark.pos.row != cts->cts_row || mark.pos.col > col) {
+      if (mark.pos.row != cts->virt_row || mark.pos.col > col) {
         break;
       } else if (mark.pos.col == col) {
         if (!mt_end(mark) && mark.flags & (MT_FLAG_DECOR_VIRT_TEXT_INLINE)) {
@@ -260,7 +262,6 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   // May have to add something for 'breakindent' and/or 'showbreak'
   // string at the start of a screen line.
   int head = mb_added;
-  char *const sbr = get_showbreak_value(wp);
   // When "size" is 0, no new screen line is started.
   if (size > 0 && wp->w_p_wrap && (*sbr != NUL || wp->w_p_bri)) {
     int col_off_prev = win_col_off(wp);
@@ -277,11 +278,16 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
       if (wcol >= width2 && width2 > 0) {
         wcol %= width2;
       }
-      if (*sbr != NUL) {
-        head_prev += vim_strsize(sbr);
-      }
-      if (wp->w_p_bri) {
-        head_prev += get_breakindent_win(wp, line);
+      head_prev = cts->indent_width;
+      if (head_prev == INT_MIN) {
+        head_prev = 0;
+        if (*sbr != NUL) {
+          head_prev += vim_strsize(sbr);
+        }
+        if (wp->w_p_bri) {
+          head_prev += get_breakindent_win(wp, line);
+        }
+        cts->indent_width = head_prev;
       }
       if (wcol < head_prev) {
         head_prev -= wcol;
@@ -298,12 +304,16 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
 
     if (wcol + size > wp->w_width) {
       // cells taken by 'showbreak'/'breakindent' halfway current char
-      int head_mid = 0;
-      if (*sbr != NUL) {
-        head_mid += vim_strsize(sbr);
-      }
-      if (wp->w_p_bri) {
-        head_mid += get_breakindent_win(wp, line);
+      int head_mid = cts->indent_width;
+      if (head_mid == INT_MIN) {
+        head_mid = 0;
+        if (*sbr != NUL) {
+          head_mid += vim_strsize(sbr);
+        }
+        if (wp->w_p_bri) {
+          head_mid += get_breakindent_win(wp, line);
+        }
+        cts->indent_width = head_mid;
       }
       if (head_mid > 0 && wcol + size > wp->w_width_inner) {
         // Calculate effective window width.
@@ -520,7 +530,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
       && !wp->w_p_lbr
       && *get_showbreak_value(wp) == NUL
       && !wp->w_p_bri
-      && !cts.cts_has_virt_text) {
+      && cts.virt_row < 0) {
     while (true) {
       head = 0;
       int c = (uint8_t)(*ptr);
@@ -800,7 +810,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   char *s = ml_get_buf(wp->w_buffer, lnum);
   chartabsize_T cts;
   init_chartabsize_arg(&cts, wp, lnum, 0, s, s);
-  if (*s == NUL && !cts.cts_has_virt_text) {
+  if (*s == NUL && cts.virt_row < 0) {
     return 1;  // be quick for an empty line
   }
   win_linetabsize_cts(&cts, (colnr_T)MAXCOL);

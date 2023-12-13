@@ -2083,9 +2083,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
           char *p = ptr - (mb_off + 1);
           chartabsize_T cts;
 
-          init_chartabsize_arg(&cts, wp, lnum, wlv.vcol, line, p);
-          // do not want virtual text to be counted here
-          cts.cts_has_virt_text = false;
+          // lnum == 0, do not want virtual text to be counted here
+          init_chartabsize_arg(&cts, wp, 0, wlv.vcol, line, p);
           wlv.n_extra = win_lbr_chartabsize(&cts, NULL) - 1;
           clear_chartabsize_arg(&cts);
 
