@@ -1495,32 +1495,47 @@ end)
       ]])
     end)
 
-    it('sets signs', function()
-      local result = exec_lua [[
-        vim.diagnostic.config({
-          signs = true,
-        })
+    it('sets and clears signs #26193 #26555', function()
+      do
+        local result = exec_lua [[
+          vim.diagnostic.config({
+            signs = true,
+          })
 
-        local diagnostics = {
-          make_error('Error', 1, 1, 1, 2),
-          make_warning('Warning', 3, 3, 3, 3),
-        }
+          local diagnostics = {
+            make_error('Error', 1, 1, 1, 2),
+            make_warning('Warning', 3, 3, 3, 3),
+          }
 
-        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+          vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
 
-        local ns = vim.diagnostic.get_namespace(diagnostic_ns)
-        local sign_ns = ns.user_data.sign_ns
+          local ns = vim.diagnostic.get_namespace(diagnostic_ns)
+          local sign_ns = ns.user_data.sign_ns
 
-        local signs = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, sign_ns, 0, -1, {type ='sign', details = true})
-        local result = {}
-        for _, s in ipairs(signs) do
-          result[#result + 1] = { lnum = s[2] + 1, name = s[4].sign_hl_group }
-        end
-        return result
-      ]]
+          local signs = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, sign_ns, 0, -1, {type ='sign', details = true})
+          local result = {}
+          for _, s in ipairs(signs) do
+            result[#result + 1] = { lnum = s[2] + 1, name = s[4].sign_hl_group }
+          end
+          return result
+        ]]
 
-      eq({2, 'DiagnosticSignError'}, {result[1].lnum, result[1].name})
-      eq({4, 'DiagnosticSignWarn'}, {result[2].lnum, result[2].name})
+        eq({2, 'DiagnosticSignError'}, {result[1].lnum, result[1].name})
+        eq({4, 'DiagnosticSignWarn'}, {result[2].lnum, result[2].name})
+      end
+
+      do
+        local result = exec_lua [[
+          vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {})
+
+          local ns = vim.diagnostic.get_namespace(diagnostic_ns)
+          local sign_ns = ns.user_data.sign_ns
+
+          return vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, sign_ns, 0, -1, {type ='sign', details = true})
+        ]]
+
+        eq({}, result)
+      end
     end)
   end)
 

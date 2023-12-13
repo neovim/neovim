@@ -897,7 +897,7 @@ M.handlers.signs = {
   end,
   hide = function(namespace, bufnr)
     local ns = M.get_namespace(namespace)
-    if ns.user_data.sign_group and api.nvim_buf_is_valid(bufnr) then
+    if ns.user_data.sign_ns and api.nvim_buf_is_valid(bufnr) then
       api.nvim_buf_clear_namespace(bufnr, ns.user_data.sign_ns, 0, -1)
     end
   end,
