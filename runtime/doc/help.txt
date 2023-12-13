@@ -168,8 +168,8 @@ DEVELOPING NVIM
 
 |dev|			Development of Nvim
 |dev-style|		Development style guidelines
-|dev-theme|		Colorscheme style guidelines
-|dev-tools|		Tools and advice for debugging Nvim
+|dev-theme|		Design guidelines (colorschemes etc.)
+|dev-tools|		Tools and techniques for developing Nvim
 
 Standard plugins ~
 						*standard-plugin-list*

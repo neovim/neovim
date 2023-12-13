@@ -4,10 +4,10 @@
                             NVIM REFERENCE MANUAL
 
 
-Nvim style guide                                        *dev-tools*
+Tools and techniques for developing Nvim                        *dev-tools*
 
-The following advice is helpful when debugging Nvim itself. See also
-|debug.txt| for advice that applies to Vim.
+The following advice is helpful when working on or debugging issues with Nvim
+itself. See also |debug.txt| for advice that applies to Vim.
 
                                   Type |gO| to see the table of contents.
 
@@ -42,9 +42,9 @@ a backtrace from the `core` file:
     thread apply all bt full
 <
 
-MACOS / OSX ~
+MACOS
 
-If `nvim` crashes, you can see the backtrace in Console.app (under "Crash
+If `nvim` crashes, you can see the backtrace in `Console.app` (under "Crash
 Reports" or "User Diagnostic Reports" for older macOS versions).
 >bash
     open -a Console
