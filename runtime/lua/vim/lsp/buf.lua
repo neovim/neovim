@@ -106,20 +106,6 @@ function M.definition(options)
       return
     end
 
-    -- jump to the only response
-    if total_items == 1 then
-      for client_id, _ in pairs(client_id_to_items) do
-        local client = vim.lsp.get_client_by_id(client_id)
-
-        local loc = results[client_id].result
-        if vim.tbl_islist(loc) then
-          loc = loc[1]
-        end
-
-        return util.jump_to_location(loc, client.offset_encoding, options.reuse_win)
-      end
-    end
-
     local items = {}
 
     for _, v in pairs(client_id_to_items) do
@@ -138,6 +124,20 @@ function M.definition(options)
         -- need a better way to attribute items to context
         context = nil,
       })
+    end
+
+    -- jump to the only response
+    if total_items == 1 then
+      for client_id, _ in pairs(client_id_to_items) do
+        local client = vim.lsp.get_client_by_id(client_id)
+
+        local loc = results[client_id].result
+        if vim.tbl_islist(loc) then
+          loc = loc[1]
+        end
+
+        return util.jump_to_location(loc, client.offset_encoding, options.reuse_win)
+      end
     end
 
     vim.fn.setqflist({}, ' ', { title = title, items = items })
