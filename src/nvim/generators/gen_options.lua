@@ -1,5 +1,4 @@
 local options_file = arg[1]
-local options_enum_file = arg[2]
 
 local opt_fd = assert(io.open(options_file, 'w'))
 
@@ -171,7 +170,7 @@ local function dump_option(i, o)
   end
   if o.varname then
     w('    .var=&' .. o.varname)
-  -- Immutable options should directly point to the default value
+  -- Immutable options can directly point to the default value.
   elseif o.immutable then
     w(('    .var=&options[%u].def_val'):format(i - 1))
   elseif #o.scope == 1 and o.scope[1] == 'window' then
@@ -248,19 +247,3 @@ w('')
 for _, v in ipairs(defines) do
   w('#define ' .. v[1] .. ' ' .. v[2])
 end
-
--- Generate options enum file
-opt_fd = assert(io.open(options_enum_file, 'w'))
-
-w('typedef enum {')
-w('  kOptInvalid = -1,')
-
-for i, o in ipairs(options.options) do
-  w(('  kOpt%s = %u,'):format(lowercase_to_titlecase(o.full_name), i - 1))
-end
-
-w('  // Option count, used when iterating through options')
-w('#define kOptIndexCount ' .. tostring(#options.options))
-w('} OptIndex;')
-
-opt_fd:close()

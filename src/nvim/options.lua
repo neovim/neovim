@@ -2,6 +2,7 @@
 --- @field full_name string
 --- @field desc? string
 --- @field abbreviation? string
+--- @field alias? string|string[]
 --- @field short_desc? string|fun(): string
 --- @field varname? string
 --- @field pv_name? string
@@ -84,6 +85,7 @@ end
 return {
   cstr = cstr,
   --- @type vim.option_meta[]
+  --- The order of the options MUST be alphabetic for ":set all".
   options = {
     {
       abbreviation = 'al',
@@ -6809,6 +6811,7 @@ return {
     },
     {
       abbreviation = 'sd',
+      alias = { 'vi', 'viminfo' },
       cb = 'did_set_shada',
       defaults = {
         if_true = "!,'100,<50,s10,h",
@@ -6940,6 +6943,7 @@ return {
     },
     {
       abbreviation = 'sdf',
+      alias = { 'vif', 'viminfofile' },
       defaults = { if_true = '' },
       deny_duplicates = true,
       desc = [=[
@@ -9373,22 +9377,6 @@ return {
       short_desc = N_('specifies what to save for :mkview'),
       type = 'string',
       varname = 'p_vop',
-    },
-    {
-      abbreviation = 'vi',
-      full_name = 'viminfo',
-      nodefault = true,
-      scope = { 'global' },
-      short_desc = N_('Alias for shada'),
-      type = 'string',
-    },
-    {
-      abbreviation = 'vif',
-      full_name = 'viminfofile',
-      nodefault = true,
-      scope = { 'global' },
-      short_desc = N_('Alias for shadafile instead'),
-      type = 'string',
     },
     {
       abbreviation = 've',

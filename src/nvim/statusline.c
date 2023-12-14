@@ -1545,7 +1545,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       break;
 
     case STL_SHOWCMD:
-      if (p_sc && (opt_idx == kOptInvalid || findoption(p_sloc) == opt_idx)) {
+      if (p_sc && (opt_idx == kOptInvalid || find_option(p_sloc) == opt_idx)) {
         str = showcmd_buf;
       }
       break;

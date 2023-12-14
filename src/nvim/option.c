@@ -1,8 +1,8 @@
 // User-settable options. Checklist for adding a new option:
 // - Put it in options.lua
-// - For a global option: Add a variable for it in option_defs.h.
+// - For a global option: Add a variable for it in option_vars.h.
 // - For a buffer or window local option:
-//   - Add a BV_XX or WV_XX entry to option_defs.h
+//   - Add a BV_XX or WV_XX entry to option_vars.h
 //   - Add a variable to the window or buffer struct in buffer_defs.h.
 //   - For a window option, add some code to copy_winopt().
 //   - For a window string option, add code to check_winopt()
@@ -12,7 +12,7 @@
 //   - For a buffer string option, add code to check_buf_options().
 // - If it's a numeric option, add any necessary bounds checks to check_num_option_bounds().
 // - If it's a list of flags, add some code in do_set(), search for WW_ALL.
-// - Add documentation! doc/options.txt, and any other related places.
+// - Add documentation! "desc" in options.lua, and any other related places.
 // - Add an entry in runtime/optwin.vim.
 
 #define IN_OPTION_C
@@ -143,15 +143,13 @@ typedef enum {
 # include "option.c.generated.h"
 #endif
 
-// options[] is initialized here.
-// The order of the options MUST be alphabetic for ":set all" and findoption().
-// All option names MUST start with a lowercase letter (for findoption()).
-// Exception: "t_" options are at the end.
+// options[] is initialized in options.generated.h.
 // The options with a NULL variable are 'hidden': a set command for them is
 // ignored and they are not printed.
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "options.generated.h"
+# include "options_map.generated.h"
 #endif
 
 static int p_bin_dep_opts[] = {
@@ -664,7 +662,7 @@ void set_init_3(void)
   }
 
   if (buf_is_empty(curbuf)) {
-    int idx_ffs = findoption_len(S_LEN("ffs"));
+    int idx_ffs = find_option("ffs");
 
     // Apply the first entry of 'fileformats' to the initial buffer.
     if (idx_ffs >= 0 && (options[idx_ffs].flags & P_WAS_SET)) {
@@ -1132,7 +1130,7 @@ const char *find_option_end(const char *arg, OptIndex *opt_idxp)
     p++;
   }
 
-  *opt_idxp = findoption_len(arg, (size_t)(p - arg));
+  *opt_idxp = find_option_len(arg, (size_t)(p - arg));
   return p;
 }
 
@@ -3009,87 +3007,6 @@ void check_redraw(uint32_t flags)
   check_redraw_for(curbuf, curwin, flags);
 }
 
-/// Find index for named option
-///
-/// @param[in]  arg  Option to find index for.
-/// @param[in]  len  Length of the option.
-///
-/// @return Index of the option or kOptInvalid if option was not found.
-OptIndex findoption_len(const char *const arg, const size_t len)
-{
-  const char *s;
-  static int quick_tab[27] = { 0, 0 };  // quick access table
-
-  // For first call: Initialize the quick-access table.
-  // It contains the index for the first option that starts with a certain
-  // letter.  There are 26 letters, plus the first "t_" option.
-  if (quick_tab[1] == 0) {
-    const char *p = options[0].fullname;
-    for (OptIndex i = 1; i < kOptIndexCount; i++) {
-      s = options[i].fullname;
-
-      if (s[0] != p[0]) {
-        if (s[0] == 't' && s[1] == '_') {
-          quick_tab[26] = i;
-        } else {
-          quick_tab[CHAR_ORD_LOW(s[0])] = i;
-        }
-      }
-      p = s;
-    }
-  }
-
-  // Check for name starting with an illegal character.
-  if (len == 0 || arg[0] < 'a' || arg[0] > 'z') {
-    return kOptInvalid;
-  }
-
-  OptIndex opt_idx;
-  const bool is_term_opt = (len > 2 && arg[0] == 't' && arg[1] == '_');
-  if (is_term_opt) {
-    opt_idx = quick_tab[26];
-  } else {
-    opt_idx = quick_tab[CHAR_ORD_LOW(arg[0])];
-  }
-  // Match full name
-  for (; opt_idx < kOptIndexCount; opt_idx++) {
-    s = options[opt_idx].fullname;
-
-    // Break if first character no longer matches.
-    if (s[0] != arg[0]) {
-      opt_idx = kOptIndexCount;
-      break;
-    }
-
-    if (strncmp(arg, s, len) == 0 && s[len] == NUL) {
-      break;
-    }
-  }
-  if (opt_idx == kOptIndexCount && !is_term_opt) {
-    opt_idx = quick_tab[CHAR_ORD_LOW(arg[0])];
-    // Match short name
-    for (; opt_idx < kOptIndexCount; opt_idx++) {
-      s = options[opt_idx].shortname;
-      if (s != NULL && strncmp(arg, s, len) == 0 && s[len] == NUL) {
-        break;
-      }
-    }
-  }
-  if (opt_idx == kOptIndexCount) {
-    opt_idx = kOptInvalid;
-  } else {
-    // Nvim: handle option aliases.
-    if (strncmp(options[opt_idx].fullname, "viminfo", 7) == 0) {
-      if (strlen(options[opt_idx].fullname) == 7) {
-        return findoption_len("shada", 5);
-      }
-      assert(strcmp(options[opt_idx].fullname, "viminfofile") == 0);
-      return findoption_len("shadafile", 9);
-    }
-  }
-  return opt_idx;
-}
-
 bool is_tty_option(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -3147,15 +3064,28 @@ bool set_tty_option(const char *name, char *value)
   return false;
 }
 
-/// Find index for an option.
+/// Find index for an option. Don't go beyond `len` length.
 ///
-/// @param[in]  arg  Option name.
+/// @param[in]  name  Option name.
+/// @param      len   Option name length.
 ///
 /// @return Option index or kOptInvalid if option was not found.
-OptIndex findoption(const char *const arg)
+OptIndex find_option_len(const char *const name, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
-  return findoption_len(arg, strlen(arg));
+  int index = find_option_hash(name, len);
+  return index >= 0 ? option_hash_elems[index].opt_idx : kOptInvalid;
+}
+
+/// Find index for an option.
+///
+/// @param[in]  name  Option name.
+///
+/// @return Option index or kOptInvalid if option was not found.
+OptIndex find_option(const char *const name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return find_option_len(name, strlen(name));
 }
 
 /// Free an allocated OptVal.
@@ -5229,7 +5159,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
         return;
       }
       nextchar = *p;
-      opt_idx = findoption_len(arg, (size_t)(p - arg));
+      opt_idx = find_option_len(arg, (size_t)(p - arg));
       if (opt_idx == kOptInvalid || options[opt_idx].var == NULL) {
         xp->xp_context = EXPAND_NOTHING;
         return;
@@ -5534,7 +5464,7 @@ int ExpandOldSetting(int *numMatches, char ***matches)
 
   // For a terminal key code expand_option_idx is kOptInvalid.
   if (expand_option_idx == kOptInvalid) {
-    expand_option_idx = findoption(expand_option_name);
+    expand_option_idx = find_option(expand_option_name);
   }
 
   if (expand_option_idx != kOptInvalid) {
@@ -6146,7 +6076,7 @@ int get_sidescrolloff_value(win_T *wp)
 
 Dictionary get_vimoption(String name, int scope, buf_T *buf, win_T *win, Error *err)
 {
-  OptIndex opt_idx = findoption_len(name.data, name.size);
+  OptIndex opt_idx = find_option_len(name.data, name.size);
   VALIDATE_S(opt_idx != kOptInvalid, "option (not found)", name.data, {
     return (Dictionary)ARRAY_DICT_INIT;
   });
