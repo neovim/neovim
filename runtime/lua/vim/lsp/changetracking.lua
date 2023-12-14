@@ -7,8 +7,6 @@ local uv = vim.uv
 
 local M = {}
 
----@private
----
 --- LSP has 3 different sync modes:
 ---   - None (Servers will read the files themselves when needed)
 ---   - Full (Client sends the full buffer content on updates)
@@ -53,7 +51,6 @@ local function group_key(group)
   return tostring(group.sync_kind)
 end
 
----@private
 ---@type table<vim.lsp.CTGroup,vim.lsp.CTGroupState>
 local state_by_group = setmetatable({}, {
   __index = function(tbl, k)
@@ -124,7 +121,6 @@ local function incremental_changes(state, encoding, bufnr, firstline, lastline, 
   return incremental_change
 end
 
----@private
 function M.init(client, bufnr)
   assert(client.offset_encoding, 'lsp client must have an offset_encoding')
   local group = get_group(client)
@@ -161,7 +157,6 @@ function M.init(client, bufnr)
   end
 end
 
----@private
 function M._get_and_set_name(client, bufnr, name)
   local state = state_by_group[get_group(client)] or {}
   local buf_state = (state.buffers or {})[bufnr]
@@ -182,7 +177,6 @@ local function reset_timer(buf_state)
   end
 end
 
----@private
 function M.reset_buf(client, bufnr)
   M.flush(client, bufnr)
   local state = state_by_group[get_group(client)]
@@ -199,7 +193,6 @@ function M.reset_buf(client, bufnr)
   end
 end
 
----@private
 function M.reset(client)
   local state = state_by_group[get_group(client)]
   if not state then
@@ -277,7 +270,6 @@ local function send_changes(bufnr, sync_kind, state, buf_state)
   end
 end
 
----@private
 function M.send_changes(bufnr, firstline, lastline, new_lastline)
   local groups = {} ---@type table<string,vim.lsp.CTGroup>
   for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
@@ -330,7 +322,6 @@ function M.send_changes(bufnr, firstline, lastline, new_lastline)
 end
 
 --- Flushes any outstanding change notification.
----@private
 ---@param client lsp.Client
 ---@param bufnr? integer
 function M.flush(client, bufnr)
