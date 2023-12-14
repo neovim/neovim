@@ -5171,9 +5171,9 @@ printf({fmt}, {expr1} ...)                                            *printf()*
 <		This limits the length of the text used from "line" to
 		"width" bytes.
 
-		If the argument to be formatted is specified using a posional
-		argument specifier, and a '*' is used to indicate that a
-		number argument is to be used to specify the width or
+		If the argument to be formatted is specified using a
+		positional argument specifier, and a '*' is used to indicate
+		that a number argument is to be used to specify the width or
 		precision, the argument(s) to be used must also be specified
 		using a {n$} positional argument specifier. See |printf-$|.
 
