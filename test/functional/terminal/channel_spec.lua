@@ -192,12 +192,21 @@ describe('no crash when TermOpen autocommand', function()
     ]]}
     assert_alive()
   end)
+end)
 
-  it('nvim_open_term({force_crlf=true}) converts newlines', function()
-    local buf = meths.create_buf(false, true)
+describe('nvim_open_term', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(8, 10)
+    screen:attach()
+  end)
+
+  it('with force_crlf=true converts newlines', function()
     local win = meths.get_current_win()
+    local buf = meths.create_buf(false, true)
     local term = meths.open_term(buf, {force_crlf = true})
-    screen:try_resize(8, 10)
     meths.win_set_buf(win, buf)
     meths.chan_send(term, 'here\nthere\nfoo\r\nbar\n\ntest')
     screen:expect{grid=[[
@@ -207,10 +216,7 @@ describe('no crash when TermOpen autocommand', function()
       bar         |
                   |
       test        |
-      {0:~           }|
-      {0:~           }|
-      {0:~           }|
-                  |
+                  |*4
     ]]}
     meths.chan_send(term, '\nfirst')
     screen:expect{grid=[[
@@ -221,26 +227,20 @@ describe('no crash when TermOpen autocommand', function()
                   |
       test        |
       first       |
-      {0:~           }|
-      {0:~           }|
-                  |
+                  |*3
     ]]}
-    meths.buf_delete(buf, {force = true})
-    buf = meths.create_buf(false, true)
-    term = meths.open_term(buf, {force_crlf = false})
+  end)
+
+  it('with force_crlf=false does not convert newlines', function()
+    local win = meths.get_current_win()
+    local buf = meths.create_buf(false, true)
+    local term = meths.open_term(buf, {force_crlf = false})
     meths.win_set_buf(win, buf)
     meths.chan_send(term, 'here\nthere')
     screen:expect{grid=[[
       ^here        |
           there   |
-                  |
-                  |
-                  |
-                  |
-                  |
-                  |
-                  |
-                  |
+                  |*8
     ]]}
   end)
 end)
