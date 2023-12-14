@@ -139,17 +139,43 @@ configure_file (
   "${PROJECT_BINARY_DIR}/cmake.config/auto/config.h"
   )
 
-# Prevent double space in --version output if CMAKE_C_FLAGS is empty
-set(C_FLAGS_VERSION_OUTPUT ${CMAKE_C_FLAGS})
-if(C_FLAGS_VERSION_OUTPUT)
-  string(PREPEND C_FLAGS_VERSION_OUTPUT " ")
-endif()
+set(VERSION_STRING "${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS} ")
 
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.15)
-  configure_file(versiondef.h.in auto/versiondef.h.gen)
-else()
-  configure_file(versiondef_old.h.in auto/versiondef.h.gen)
-endif()
+foreach(BUILD_TYPE Debug Release RelWithDebInfo MinSizeRel)
+  string(TOUPPER ${BUILD_TYPE} BUILD_TYPE_UPPER)
+  set(GEN_CONFIG "$<CONFIG:${BUILD_TYPE}>")
+
+  set(GEN_RHS "${CMAKE_C_FLAGS_${BUILD_TYPE_UPPER}} ")
+  string(APPEND VERSION_STRING "$<${GEN_CONFIG}:${GEN_RHS}>")
+
+  set(GEN_RHS "$<$<BOOL:$<TARGET_PROPERTY:nvim,INTERPROCEDURAL_OPTIMIZATION_${BUILD_TYPE_UPPER}>>:${CMAKE_C_COMPILE_OPTIONS_IPO}>")
+  string(APPEND VERSION_STRING "$<${GEN_CONFIG}:${GEN_RHS}>")
+endforeach()
+
+string(APPEND VERSION_STRING " ")
+
+function(append_target_expression)
+  cmake_parse_arguments(ARG
+    ""
+    "PREFIX;PROPERTY"
+    ""
+    ${ARGN})
+
+  set(TARGET_EXPRESSION "$<TARGET_PROPERTY:nvim,${ARG_PROPERTY}>")
+  if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.15)
+    set(TARGET_EXPRESSION "$<REMOVE_DUPLICATES:${TARGET_EXPRESSION}>")
+  endif()
+  set(TARGET_EXPRESSION "${ARG_PREFIX}$<JOIN:${TARGET_EXPRESSION}, ${ARG_PREFIX}>")
+
+  set(VERSION_STRING "${VERSION_STRING} ${TARGET_EXPRESSION} " PARENT_SCOPE)
+endfunction()
+append_target_expression(PROPERTY COMPILE_OPTIONS)
+append_target_expression(PROPERTY LINK_FLAGS) # TODO(dundargoc): Replace/complement with LINK_OPTIONS when minimum version is 3.13+
+append_target_expression(PREFIX "-D" PROPERTY COMPILE_DEFINITIONS)
+append_target_expression(PREFIX "-I" PROPERTY INCLUDE_DIRECTORIES)
+string(REPLACE "  " " " VERSION_STRING "${VERSION_STRING}") # Remove duplicate whitespace
+
+configure_file(versiondef.h.in auto/versiondef.h.gen)
 
 file(GENERATE
   OUTPUT "${PROJECT_BINARY_DIR}/cmake.config/auto/versiondef-$<CONFIG>.h"
