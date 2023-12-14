@@ -1446,6 +1446,8 @@ function vim.api.nvim_notify(msg, log_level, opts) end
 ---                 is sent as a "\r", not as a "\n". `textlock` applies. It
 ---                 is possible to call `nvim_chan_send()` directly in the
 ---                 callback however. ["input", term, bufnr, data]
+---               • force_crlf: (boolean, default true) Convert "\n" to
+---                 "\r\n".
 --- @return integer
 function vim.api.nvim_open_term(buffer, opts) end
 

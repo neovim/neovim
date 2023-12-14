@@ -344,6 +344,8 @@ The following changes to existing APIs or features add new behavior.
 • Diagnostic sign text is no longer configured with |sign_define()|.
   Use |vim.diagnostic.config()| instead.
 
+• Added "force_crlf" option field in |nvim_open_term()|.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 
