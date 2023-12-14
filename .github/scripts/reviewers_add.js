@@ -28,6 +28,10 @@ module.exports = async ({ github, context }) => {
     reviewers.add("lewis6991");
   }
 
+  if (labels.includes("defaults")) {
+    reviewers.add("gpanders");
+  }
+
   if (labels.includes("dependencies")) {
     reviewers.add("jamessan");
   }
@@ -89,6 +93,10 @@ module.exports = async ({ github, context }) => {
     reviewers.add("bfredl");
     reviewers.add("clason");
     reviewers.add("lewis6991");
+  }
+
+  if (labels.includes("tui")) {
+    reviewers.add("gpanders");
   }
 
   if (labels.includes("typo")) {
