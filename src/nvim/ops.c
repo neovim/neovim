@@ -3949,6 +3949,7 @@ char *skip_comment(char *line, bool process, bool include_space, bool *is_commen
 }
 
 /// @param count              number of lines (minimal 2) to join at cursor position.
+/// @param insert_space       when true, insert spaces between connected lines.
 /// @param save_undo          when true, save lines for undo first.
 /// @param use_formatoptions  set to false when e.g. processing backspace and comment
 ///                           leaders should not be removed.
@@ -3958,6 +3959,7 @@ char *skip_comment(char *line, bool process, bool include_space, bool *is_commen
 /// @return  FAIL for failure, OK otherwise
 int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions, bool setmark)
 {
+  assert(count >= 1);
   char *curr = NULL;
   char *curr_start = NULL;
   char *cend;
@@ -3970,7 +3972,9 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   int remove_comments = (use_formatoptions == true)
                         && has_format_option(FO_REMOVE_COMS);
   bool prev_was_comment = false;
-  assert(count >= 1);
+  // check cursor line is truncated.
+  bool has_truncated = ((ml_get(curwin->w_cursor.lnum)[0] == NUL)
+                        && (curbuf->b_ml.ml_flags & ML_LOCKED_DIRTY));
 
   if (save_undo && u_save(curwin->w_cursor.lnum - 1,
                           curwin->w_cursor.lnum + (linenr_T)count) == FAIL) {
@@ -4118,8 +4122,10 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
 
   // Only report the change in the first line here, del_lines() will report
   // the deleted line.
-  changed_lines(curbuf, curwin->w_cursor.lnum, currsize,
-                curwin->w_cursor.lnum + 1, 0, true);
+  if (!has_truncated) {
+    changed_lines(curbuf, curwin->w_cursor.lnum, currsize,
+                  curwin->w_cursor.lnum + 1, 0, true);
+  }
 
   // Delete following lines. To do this we move the cursor there
   // briefly, and then move it back. After del_lines() the cursor may

@@ -393,6 +393,14 @@ describe('API: buffer events:', function()
     expectn('nvim_buf_detach_event', {b})
   end)
 
+  it('should not send change twice if line truncated before #11591', function()
+    local b, tick = editoriginal(true, {'abc', '{', 'def', '}'})
+    command('normal! yyjjvi{p')
+    expectn('nvim_buf_lines_event', {b, tick + 1, 2, 3, {''}, false})
+    expectn('nvim_buf_lines_event', {b, tick + 2, 3, 4, {}, false})
+    expectn('nvim_buf_lines_event', {b, tick + 3, 3, 3, {'abc', '}'}, false})
+  end)
+
   it('channel can watch many buffers at once', function()
     -- edit 3 buffers, make sure they all have windows visible so that when we
     -- move between buffers, none of them are unloaded
