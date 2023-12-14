@@ -18,9 +18,8 @@ if g:GCC->empty()
   throw 'Skipped: gcc is not found in $PATH'
 endif
 
-packadd termdebug
-
-func Test_termdebug_basic()
+function s:generate_files(bin_name)
+  let src_name = a:bin_name .. '.c'
   let lines =<< trim END
     #include <stdio.h>
     #include <stdlib.h>
@@ -46,8 +45,21 @@ func Test_termdebug_basic()
       return 0;
     }
   END
-  call writefile(lines, 'XTD_basic.c', 'D')
-  call system($'{g:GCC} -g -o XTD_basic XTD_basic.c')
+  call writefile(lines, src_name)
+  call system($'{g:GCC} -g -o {a:bin_name} {src_name}')
+endfunction
+
+function s:cleanup_files(bin_name)
+  call delete(a:bin_name)
+  call delete(a:bin_name .. '.c')
+endfunction
+
+packadd termdebug
+
+func Test_termdebug_basic()
+  let bin_name = 'XTD_basic'
+  let src_name = bin_name .. '.c'
+  call s:generate_files(bin_name)
 
   edit XTD_basic.c
   Termdebug ./XTD_basic
@@ -149,7 +161,72 @@ func Test_termdebug_basic()
   call WaitForAssert({-> assert_equal(1, winnr('$'))})
   call assert_equal([], sign_getplaced('', #{group: 'TermDebug'})[0].signs)
 
-  call delete('XTD_basic')
+  call s:cleanup_files(bin_name)
+  %bw!
+endfunc
+
+func Test_termdebug_tbreak()
+  let g:test_is_flaky = 1
+  let bin_name = 'XTD_tbreak'
+  let src_name = bin_name .. '.c'
+
+  eval s:generate_files(bin_name)
+
+  execute 'edit ' .. src_name
+  execute 'Termdebug ./' .. bin_name
+
+  call WaitForAssert({-> assert_equal(3, winnr('$'))})
+  let gdb_buf = winbufnr(1)
+  wincmd b
+
+  let bp_line = 22        " 'return' statement in main
+  let temp_bp_line = 10   " 'if' statement in 'for' loop body
+  execute "Tbreak " .. temp_bp_line
+  execute "Break " .. bp_line
+
+  call Nterm_wait(gdb_buf)
+  redraw!
+  " both temporary and normal breakpoint signs were displayed...
+  call assert_equal([
+        \ {'lnum': temp_bp_line, 'id': 1014, 'name': 'debugBreakpoint1.0',
+        \  'priority': 110, 'group': 'TermDebug'},
+        \ {'lnum': bp_line, 'id': 2014, 'name': 'debugBreakpoint2.0',
+        \  'priority': 110, 'group': 'TermDebug'}],
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)
+
+  Run
+  call Nterm_wait(gdb_buf, 400)
+  redraw!
+  " debugPC sign is on the line where the temp. bp was set;
+  " temp. bp sign was removed after hit;
+  " normal bp sign is still present
+  call WaitForAssert({-> assert_equal([
+        \ {'lnum': temp_bp_line, 'id': 12, 'name': 'debugPC', 'priority': 110,
+        \  'group': 'TermDebug'},
+        \ {'lnum': bp_line, 'id': 2014, 'name': 'debugBreakpoint2.0',
+        \  'priority': 110, 'group': 'TermDebug'}],
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
+
+  Continue
+  call Nterm_wait(gdb_buf)
+  redraw!
+  " debugPC is on the normal breakpoint,
+  " temp. bp on line 10 was only hit once
+  call WaitForAssert({-> assert_equal([
+        \ {'lnum': bp_line, 'id': 12, 'name': 'debugPC', 'priority': 110,
+        \  'group': 'TermDebug'},
+        \ {'lnum': bp_line, 'id': 2014, 'name': 'debugBreakpoint2.0',
+        \  'priority': 110, 'group': 'TermDebug'}],
+        "\ sign_getplaced('', #{group: 'TermDebug'})[0].signs)})
+        \ sign_getplaced('', #{group: 'TermDebug'})[0].signs->reverse())})
+
+  wincmd t
+  quit!
+  redraw!
+  call WaitForAssert({-> assert_equal(1, winnr('$'))})
+  call assert_equal([], sign_getplaced('', #{group: 'TermDebug'})[0].signs)
+
+  eval s:cleanup_files(bin_name)
   %bw!
 endfunc
 

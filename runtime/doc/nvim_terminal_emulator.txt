@@ -283,8 +283,13 @@ gdb:
  `:Run` [args]	    run the program with [args] or the previous arguments
  `:Arguments` {args}  set arguments for the next `:Run`
 
- *:Break*	set a breakpoint at the current line; a sign will be displayed
- *:Clear*	delete the breakpoint at the current line
+ *:Break*	set a breakpoint at the cursor position
+ :Break {position}
+		set a breakpoint at the specified position
+ *:Tbreak*	set a temporary breakpoint at the cursor position
+ :Tbreak {position}
+		set a temporary breakpoint at the specified position
+ *:Clear*	delete the breakpoint at the cursor position
 
  *:Step*	execute the gdb "step" command
  *:Over*	execute the gdb "next" command (`:Next` is a Vim command)

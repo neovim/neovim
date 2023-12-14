@@ -985,6 +985,7 @@ func s:InstallCommands()
   set cpo&vim
 
   command -nargs=? Break call s:SetBreakpoint(<q-args>)
+  command -nargs=? Tbreak call s:SetBreakpoint(<q-args>, v:true)
   command Clear call s:ClearBreakpoint()
   command Step call s:SendResumingCommand('-exec-step')
   command Over call s:SendResumingCommand('-exec-next')
@@ -1093,6 +1094,7 @@ endfunc
 " Delete installed debugger commands in the current window.
 func s:DeleteCommands()
   delcommand Break
+  delcommand Tbreak
   delcommand Clear
   delcommand Step
   delcommand Over
@@ -1193,7 +1195,7 @@ func s:Until(at)
 endfunc
 
 " :Break - Set a breakpoint at the cursor position.
-func s:SetBreakpoint(at)
+func s:SetBreakpoint(at, tbreak=v:false)
   " Setting a breakpoint may not work while the program is running.
   " Interrupt to make it work.
   let do_continue = 0
@@ -1206,7 +1208,12 @@ func s:SetBreakpoint(at)
   " Use the fname:lnum format, older gdb can't handle --source.
   let at = empty(a:at) ?
         \ fnameescape(expand('%:p')) . ':' . line('.') : a:at
-  call s:SendCommand('-break-insert ' . at)
+  if a:tbreak
+    let cmd = '-break-insert -t ' . at
+  else
+    let cmd = '-break-insert ' . at
+  endif
+  call s:SendCommand(cmd)
   if do_continue
     Continue
   endif
