@@ -5,7 +5,7 @@ local lsp_rpc = require('vim.lsp.rpc')
 local protocol = require('vim.lsp.protocol')
 local ms = protocol.Methods
 local util = require('vim.lsp.util')
-local changetracking = require('vim.lsp.changetracking')
+local changetracking = require('vim.lsp._changetracking')
 local semantic_tokens = require('vim.lsp.semantic_tokens')
 
 local api = vim.api
