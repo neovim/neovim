@@ -289,6 +289,55 @@ end
 --- @param firstline integer
 --- @param lastline integer
 --- @param new_lastline integer
+--- @param group vim.lsp.CTGroup
+local function send_changes_for_group(bufnr, firstline, lastline, new_lastline, group)
+  local state = state_by_group[group]
+  if not state then
+    error(
+      string.format(
+        'changetracking.init must have been called for all LSP clients. group=%s states=%s',
+        vim.inspect(group),
+        vim.inspect(vim.tbl_keys(state_by_group))
+      )
+    )
+  end
+  local buf_state = state.buffers[bufnr]
+  buf_state.needs_flush = true
+  reset_timer(buf_state)
+  local debounce = next_debounce(state.debounce, buf_state)
+  if group.sync_kind == protocol.TextDocumentSyncKind.Incremental then
+    -- This must be done immediately and cannot be delayed
+    -- The contents would further change and startline/endline may no longer fit
+    local changes = incremental_changes(
+      buf_state,
+      group.offset_encoding,
+      bufnr,
+      firstline,
+      lastline,
+      new_lastline
+    )
+    table.insert(buf_state.pending_changes, changes)
+  end
+  if debounce == 0 then
+    send_changes(bufnr, group.sync_kind, state, buf_state)
+  else
+    local timer = assert(uv.new_timer(), 'Must be able to create timer')
+    buf_state.timer = timer
+    timer:start(
+      debounce,
+      0,
+      vim.schedule_wrap(function()
+        reset_timer(buf_state)
+        send_changes(bufnr, group.sync_kind, state, buf_state)
+      end)
+    )
+  end
+end
+
+--- @param bufnr integer
+--- @param firstline integer
+--- @param lastline integer
+--- @param new_lastline integer
 function M.send_changes(bufnr, firstline, lastline, new_lastline)
   local groups = {} ---@type table<string,vim.lsp.CTGroup>
   for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
@@ -296,47 +345,7 @@ function M.send_changes(bufnr, firstline, lastline, new_lastline)
     groups[group_key(group)] = group
   end
   for _, group in pairs(groups) do
-    local state = state_by_group[group]
-    if not state then
-      error(
-        string.format(
-          'changetracking.init must have been called for all LSP clients. group=%s states=%s',
-          vim.inspect(group),
-          vim.inspect(vim.tbl_keys(state_by_group))
-        )
-      )
-    end
-    local buf_state = state.buffers[bufnr]
-    buf_state.needs_flush = true
-    reset_timer(buf_state)
-    local debounce = next_debounce(state.debounce, buf_state)
-    if group.sync_kind == protocol.TextDocumentSyncKind.Incremental then
-      -- This must be done immediately and cannot be delayed
-      -- The contents would further change and startline/endline may no longer fit
-      local changes = incremental_changes(
-        buf_state,
-        group.offset_encoding,
-        bufnr,
-        firstline,
-        lastline,
-        new_lastline
-      )
-      table.insert(buf_state.pending_changes, changes)
-    end
-    if debounce == 0 then
-      send_changes(bufnr, group.sync_kind, state, buf_state)
-    else
-      local timer = assert(uv.new_timer(), 'Must be able to create timer')
-      buf_state.timer = timer
-      timer:start(
-        debounce,
-        0,
-        vim.schedule_wrap(function()
-          reset_timer(buf_state)
-          send_changes(bufnr, group.sync_kind, state, buf_state)
-        end)
-      )
-    end
+    send_changes_for_group(bufnr, firstline, lastline, new_lastline, group)
   end
 end
 
