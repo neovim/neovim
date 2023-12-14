@@ -175,6 +175,34 @@ for _, ui in ipairs(vim.api.nvim_list_uis()) do
 end
 
 if tty then
+  --- Set an option after startup (so that OptionSet is fired), but only if not
+  --- already set by the user.
+  ---
+  --- @param option string Option name
+  --- @param value string Option value
+  local function setoption(option, value)
+    if vim.api.nvim_get_option_info2(option, {}).was_set then
+      -- Don't do anything if option is already set
+      return
+    end
+
+    -- Wait until Nvim is finished starting to set the option to ensure the
+    -- OptionSet event fires.
+    if vim.v.vim_did_enter == 1 then
+      if vim.o[option] ~= value then
+        vim.o[option] = value
+      end
+    else
+      vim.api.nvim_create_autocmd('VimEnter', {
+        once = true,
+        nested = true,
+        callback = function()
+          setoption(option, value)
+        end,
+      })
+    end
+  end
+
   --- Guess value of 'background' based on terminal color.
   ---
   --- We write Operating System Command (OSC) 11 to the terminal to request the
@@ -253,30 +281,6 @@ if tty then
 
     local timer = assert(vim.uv.new_timer())
 
-    ---@param bg string New value of the 'background' option
-    local function setbg(bg)
-      if vim.api.nvim_get_option_info2('background', {}).was_set then
-        -- Don't do anything if 'background' is already set
-        return
-      end
-
-      -- Wait until Nvim is finished starting to set 'background' to ensure the
-      -- OptionSet event fires.
-      if vim.v.vim_did_enter == 1 then
-        if vim.o.background ~= bg then
-          vim.o.background = bg
-        end
-      else
-        vim.api.nvim_create_autocmd('VimEnter', {
-          once = true,
-          nested = true,
-          callback = function()
-            setbg(bg)
-          end,
-        })
-      end
-    end
-
     local id = vim.api.nvim_create_autocmd('TermResponse', {
       nested = true,
       callback = function(args)
@@ -290,7 +294,7 @@ if tty then
           if rr and gg and bb then
             local luminance = (0.299 * rr) + (0.587 * gg) + (0.114 * bb)
             local bg = luminance < 0.5 and 'dark' or 'light'
-            setbg(bg)
+            setoption('background', bg)
           end
 
           return true
@@ -331,15 +335,8 @@ if tty then
   do
     if tty.rgb then
       -- The TUI was able to determine truecolor support
-      vim.o.termguicolors = true
+      setoption('termguicolors', true)
     else
-      --- Enable 'termguicolors', but only if it was not already set by the user.
-      local function settgc()
-        if not vim.api.nvim_get_option_info2('termguicolors', {}).was_set then
-          vim.o.termguicolors = true
-        end
-      end
-
       local caps = {} ---@type table<string, boolean>
       require('vim.termcap').query({ 'Tc', 'RGB', 'setrgbf', 'setrgbb' }, function(cap, found)
         if not found then
@@ -348,7 +345,7 @@ if tty then
 
         caps[cap] = true
         if caps.Tc or caps.RGB or (caps.setrgbf and caps.setrgbb) then
-          settgc()
+          setoption('termguicolors', true)
         end
       end)
 
@@ -395,7 +392,7 @@ if tty then
               and tonumber(params[#params - 1]) == g
               and tonumber(params[#params]) == b
             then
-              settgc()
+              setoption('termguicolors', true)
             end
 
             return true
