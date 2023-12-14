@@ -397,7 +397,7 @@ end
 ---@param new_lastline integer line to begin search in new_lines for last difference
 ---@param offset_encoding string encoding requested by language server
 ---@param line_ending string
----@return table TextDocumentContentChangeEvent see https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
+---@return lsp.TextDocumentContentChangeEvent : see https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
 function M.compute_diff(
   prev_lines,
   curr_lines,

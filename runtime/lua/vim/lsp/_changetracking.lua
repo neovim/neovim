@@ -77,6 +77,12 @@ local function get_group(client)
 end
 
 ---@param state vim.lsp.CTBufferState
+---@param encoding string
+---@param bufnr integer
+---@param firstline integer
+---@param lastline integer
+---@param new_lastline integer
+---@return lsp.TextDocumentContentChangeEvent
 local function incremental_changes(state, encoding, bufnr, firstline, lastline, new_lastline)
   local prev_lines = state.lines
   local curr_lines = state.lines_tmp
@@ -121,6 +127,8 @@ local function incremental_changes(state, encoding, bufnr, firstline, lastline, 
   return incremental_change
 end
 
+---@param client lsp.Client
+---@param bufnr integer
 function M.init(client, bufnr)
   assert(client.offset_encoding, 'lsp client must have an offset_encoding')
   local group = get_group(client)
@@ -157,6 +165,10 @@ function M.init(client, bufnr)
   end
 end
 
+--- @param client lsp.Client
+--- @param bufnr integer
+--- @param name string
+--- @return string
 function M._get_and_set_name(client, bufnr, name)
   local state = state_by_group[get_group(client)] or {}
   local buf_state = (state.buffers or {})[bufnr]
@@ -177,6 +189,8 @@ local function reset_timer(buf_state)
   end
 end
 
+--- @param client lsp.Client
+--- @param bufnr integer
 function M.reset_buf(client, bufnr)
   M.flush(client, bufnr)
   local state = state_by_group[get_group(client)]
@@ -193,6 +207,7 @@ function M.reset_buf(client, bufnr)
   end
 end
 
+--- @param client lsp.Client
 function M.reset(client)
   local state = state_by_group[get_group(client)]
   if not state then
@@ -270,6 +285,10 @@ local function send_changes(bufnr, sync_kind, state, buf_state)
   end
 end
 
+--- @param bufnr integer
+--- @param firstline integer
+--- @param lastline integer
+--- @param new_lastline integer
 function M.send_changes(bufnr, firstline, lastline, new_lastline)
   local groups = {} ---@type table<string,vim.lsp.CTGroup>
   for _, client in pairs(vim.lsp.get_clients({ bufnr = bufnr })) do
