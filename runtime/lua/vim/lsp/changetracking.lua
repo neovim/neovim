@@ -170,6 +170,18 @@ function M._get_and_set_name(client, bufnr, name)
   return old_name
 end
 
+---@param buf_state vim.lsp.CTBufferState
+local function reset_timer(buf_state)
+  local timer = buf_state.timer
+  if timer then
+    buf_state.timer = nil
+    if not timer:is_closing() then
+      timer:stop()
+      timer:close()
+    end
+  end
+end
+
 ---@private
 function M.reset_buf(client, bufnr)
   M.flush(client, bufnr)
@@ -183,7 +195,7 @@ function M.reset_buf(client, bufnr)
   assert(buf_state.refs >= 0, 'refcount on buffer state must not get negative')
   if buf_state.refs == 0 then
     state.buffers[bufnr] = nil
-    M._reset_timer(buf_state)
+    reset_timer(buf_state)
   end
 end
 
@@ -196,7 +208,7 @@ function M.reset(client)
   state.clients[client.id] = nil
   if vim.tbl_count(state.clients) == 0 then
     for _, buf_state in pairs(state.buffers) do
-      M._reset_timer(buf_state)
+      reset_timer(buf_state)
     end
     state.buffers = {}
   end
@@ -285,7 +297,7 @@ function M.send_changes(bufnr, firstline, lastline, new_lastline)
     end
     local buf_state = state.buffers[bufnr]
     buf_state.needs_flush = true
-    M._reset_timer(buf_state)
+    reset_timer(buf_state)
     local debounce = next_debounce(state.debounce, buf_state)
     if group.sync_kind == protocol.TextDocumentSyncKind.Incremental then
       -- This must be done immediately and cannot be delayed
@@ -309,23 +321,10 @@ function M.send_changes(bufnr, firstline, lastline, new_lastline)
         debounce,
         0,
         vim.schedule_wrap(function()
-          M._reset_timer(buf_state)
+          reset_timer(buf_state)
           send_changes(bufnr, group.sync_kind, state, buf_state)
         end)
       )
-    end
-  end
-end
-
----@private
----@param buf_state vim.lsp.CTBufferState
-function M._reset_timer(buf_state)
-  local timer = buf_state.timer
-  if timer then
-    buf_state.timer = nil
-    if not timer:is_closing() then
-      timer:stop()
-      timer:close()
     end
   end
 end
@@ -342,11 +341,11 @@ function M.flush(client, bufnr)
   end
   if bufnr then
     local buf_state = state.buffers[bufnr] or {}
-    M._reset_timer(buf_state)
+    reset_timer(buf_state)
     send_changes(bufnr, group.sync_kind, state, buf_state)
   else
     for buf, buf_state in pairs(state.buffers) do
-      M._reset_timer(buf_state)
+      reset_timer(buf_state)
       send_changes(buf, group.sync_kind, state, buf_state)
     end
   end
