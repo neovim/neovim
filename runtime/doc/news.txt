@@ -98,6 +98,9 @@ The following changes may require adaptations in user config or plugins.
 • 'termguicolors' is enabled by default when Nvim is able to determine that
   the host terminal emulator supports 24-bit color.
 
+• Diagnostic sign text is no longer configured with |sign_define()|.
+  Use |vim.diagnostic.config()| instead.
+
 ==============================================================================
 BREAKING CHANGES IN HEAD                                    *news-breaking-dev*
 
@@ -340,9 +343,6 @@ The following changes to existing APIs or features add new behavior.
 • |vim.wait()| is no longer allowed to be called in |api-fast|.
 
 • Vimscript function |exists()| supports checking |v:lua| functions.
-
-• Diagnostic sign text is no longer configured with |sign_define()|.
-  Use |vim.diagnostic.config()| instead.
 
 • Added "force_crlf" option field in |nvim_open_term()|.
 
