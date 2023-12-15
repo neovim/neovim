@@ -189,9 +189,7 @@ if tty then
     -- Wait until Nvim is finished starting to set the option to ensure the
     -- OptionSet event fires.
     if vim.v.vim_did_enter == 1 then
-      if vim.o[option] ~= value then
-        vim.o[option] = value
-      end
+      vim.o[option] = value
     else
       vim.api.nvim_create_autocmd('VimEnter', {
         once = true,
