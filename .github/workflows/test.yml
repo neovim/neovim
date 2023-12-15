@@ -49,34 +49,31 @@ jobs:
 
       - run: cmake -B build -G Ninja -D CI_LINT=ON
 
-      - if: "!cancelled()"
-        name: Determine if run should be aborted
-        id: abort_job
-        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lint
+          path: |
+            build
+            .deps
+          retention-days: 1
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: stylua
-        run: cmake --build build --target lintlua-stylua
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: luacheck
-        run: cmake --build build --target lintlua-luacheck
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: lintsh
-        run: cmake --build build --target lintsh
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: clint.py
-        run: cmake --build build --target lintc-clint
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: clang-tidy
-        run: cmake --build build --target lintc-clang-tidy
-
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: uncrustify
-        run: cmake --build build --target lintc-uncrustify
+  lint-matrix:
+    name: ${{ matrix.build }}
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [lintlua-stylua, lintlua-luacheck, lintsh, lintc-clint, lintc-clang-tidy, lintc-uncrustify]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    env:
+      CC: clang
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: lint
+      - name: ${{ matrix.build }}
+        run: cmake --build build --target ${{ matrix.build }}
 
   clang-analyzer:
     runs-on: ubuntu-22.04
