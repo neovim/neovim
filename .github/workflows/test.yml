@@ -29,7 +29,7 @@ env:
   # TEST_FILTER: foo
 
 jobs:
-  lint:
+  lint_build:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     env:
@@ -38,46 +38,53 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
-      - name: Install stylua
-        run: |
-          wget --directory-prefix="$BIN_DIR" https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-x86_64.zip
-          (cd "$BIN_DIR"; unzip stylua*.zip)
-
       - name: Build third-party deps
         run: |
           cmake -S cmake.deps -B .deps -G Ninja
           cmake --build .deps
 
-      - run: cmake -B build -G Ninja -D CI_LINT=ON
+      - run: |
+          cmake -B build -G Ninja
+          cmake --build build
 
-      - if: "!cancelled()"
-        name: Determine if run should be aborted
-        id: abort_job
-        run: echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+      - run: tar -cvf lint.tar build .deps
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: stylua
-        run: cmake --build build --target lintlua-stylua
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lint
+          path: lint.tar
+          retention-days: 1
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: luacheck
-        run: cmake --build build --target lintlua-luacheck
+  lint:
+    name: ${{ matrix.build }}
+    needs: lint_build
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [lintlua-stylua, lintlua-luacheck, lintsh, lintc-clint, lintc-clang-tidy, lintc-uncrustify]
+        # build: [lintlua-stylua, lintlua-luacheck, lintsh, lintc-clint, lintc-clang-tidy, lintc-uncrustify, clang-analyzer]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    env:
+      CC: clang
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: lintsh
-        run: cmake --build build --target lintsh
+      - if: ${{ matrix.build == 'lintlua-stylua' }}
+        name: Install stylua
+        run: |
+          wget --directory-prefix="$BIN_DIR" https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-x86_64.zip
+          (cd "$BIN_DIR"; unzip stylua*.zip)
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: clint.py
-        run: cmake --build build --target lintc-clint
+      - uses: actions/download-artifact@v4
+        with:
+          name: lint
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: clang-tidy
-        run: cmake --build build --target lintc-clang-tidy
+      - run: tar -xvf lint.tar
 
-      - if: success() || failure() && steps.abort_job.outputs.status == 'success'
-        name: uncrustify
-        run: cmake --build build --target lintc-uncrustify
+      - name: ${{ matrix.build }}
+        run: cmake --build build --target ${{ matrix.build }}
 
   clang-analyzer:
     runs-on: ubuntu-22.04
