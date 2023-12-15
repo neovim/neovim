@@ -44,12 +44,13 @@ jobs:
 
       - run: cmake -B build -G Ninja
 
+      - name: 'Tar files'
+        run: tar -cvf lint.tar build .deps
+
       - uses: actions/upload-artifact@v4
         with:
           name: lint
-          path: |
-            build
-            .deps
+          path: lint.tar
           retention-days: 1
 
   lint-matrix:
