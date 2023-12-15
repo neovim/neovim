@@ -118,7 +118,7 @@ jobs:
       # before running, and would therefore delete the downloaded artifacts
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y gettext-base
@@ -196,7 +196,7 @@ jobs:
           token: ${{ secrets.WINGET_TOKEN }}
       - name: Fetch nightly build msi from previous job
         if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name == 'nightly')
         name: Get version from nightly build msi
         id: get-version
