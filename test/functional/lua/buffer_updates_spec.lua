@@ -690,12 +690,14 @@ describe('lua: nvim_buf_attach on_bytes', function()
       local check_events = setup_eventcheck(verify, {"bastext"})
       meths.buf_set_text(0, 0, 3, 0, 3, {"fiol","kontra"})
       check_events {
-        { "test1", "bytes", 1, 3, 0, 3, 3, 0, 0, 0, 1, 6, 11 };
+        { "test1", "bytes", 1, 3, 0, 3, 3, 0, 0, 0, 0, 4, 4 };
+        { "test1", "bytes", 1, 3, 0, 7, 7, 0, 0, 0, 1, 6, 7 };
       }
 
       meths.buf_set_text(0, 1, 6, 1, 6, {"punkt","syntgitarr","övnings"})
       check_events {
-        { "test1", "bytes", 1, 4, 1, 6, 14, 0, 0, 0, 2, 8, 25 };
+        { "test1", "bytes", 1, 4, 1, 6, 14, 0, 0, 0, 0, 5, 5 };
+        { "test1", "bytes", 1, 4, 1, 11, 19, 0, 0, 0, 2, 8, 20 };
       }
 
       eq({ "basfiol", "kontrapunkt", "syntgitarr", "övningstext" },
@@ -712,17 +714,20 @@ describe('lua: nvim_buf_attach on_bytes', function()
 
       meths.buf_set_text(0, 3, 5, 3, 7, {" splitty","line "})
       check_events {
-        { "test1", "bytes", 1, 4, 3, 5, 57, 0, 2, 2, 1, 5, 14 };
+        { "test1", "bytes", 1, 4, 3, 5, 57, 0, 2, 2, 0, 8, 8 };
+        { "test1", "bytes", 1, 4, 3, 13, 65, 0, 2, 0, 1, 5, 6 };
       }
 
       meths.buf_set_text(0, 0, 8, 1, 2, {"JOINY"})
       check_events {
-        { "test1", "bytes", 1, 5, 0, 8, 8, 1, 2, 10, 0, 5, 5 };
+        { "test1", "bytes", 1, 5, 0, 8, 8, 1, 2, 8, 0, 5, 0 };
+        { "test1", "bytes", 1, 5, 0, 8, 8, 0, 2, 2, 0, 5, 5 };
       }
 
       meths.buf_set_text(0, 4, 0, 6, 0, {"was 5,6",""})
       check_events {
-        { "test1", "bytes", 1, 6, 4, 0, 75, 2, 0, 32, 1, 0, 8 };
+        { "test1", "bytes", 1, 6, 4, 0, 75, 1, 0, 16, 0, 0, 0 };
+        { "test1", "bytes", 1, 6, 4, 0, 75, 0, 15, 15, 0, 7, 7 };
       }
 
       eq({ "originalJOINYiginal line 2", "orivery text line 3", "origi splitty",
@@ -743,7 +748,8 @@ describe('lua: nvim_buf_attach on_bytes', function()
       -- TODO(bfredl): this works but is not as convenient as set_lines
       meths.buf_set_text(0, 4, 15, 5, 17, {""})
       check_events {
-        { "test1", "bytes", 1, 4, 4, 15, 79, 1, 17, 18, 0, 0, 0 };
+        { "test1", "bytes", 1, 4, 4, 15, 79, 1, 17, 1, 0, 0, 0 };
+        { "test1", "bytes", 1, 4, 4, 15, 79, 0, 17, 17, 0, 0, 0 };
       }
       eq({ "original line 2", "original line 3", "original line 4",
            "original line 5", "original line 6" },
