@@ -34,6 +34,7 @@ function M.query(caps, cb)
   local timer = assert(vim.uv.new_timer())
 
   local id = vim.api.nvim_create_autocmd('TermResponse', {
+    nested = true,
     callback = function(args)
       local resp = args.data ---@type string
       local k, rest = resp:match('^\027P1%+r(%x+)(.*)$')
