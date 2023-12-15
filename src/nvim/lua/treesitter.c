@@ -1456,7 +1456,11 @@ static int node_rawquery(lua_State *L)
 
   handle_T bufnr = (handle_T)lua_tointeger(L, 3);
   buf_T *buf;
-  buf = handle_get_buffer(bufnr);
+  if (bufnr == 0) {
+    buf = curbuf;
+  } else {
+    buf = handle_get_buffer(bufnr);
+  }
 
   if (!buf) {
     // is this the correct way to do this?
