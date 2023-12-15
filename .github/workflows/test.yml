@@ -35,7 +35,7 @@ jobs:
       CC: clang
     steps:
       - uses: actions/checkout@v4
-      - run: ./.github/scripts/install_deps.sh
+      - uses: ./.github/actions/setup
 
       - name: Install stylua
         run: |
@@ -70,7 +70,7 @@ jobs:
       CC: clang
     steps:
       - uses: actions/checkout@v4
-      - run: ./.github/scripts/install_deps.sh
+      - uses: ./.github/actions/setup
       - uses: actions/download-artifact@v4
         with:
           name: lint
