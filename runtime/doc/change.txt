@@ -425,7 +425,7 @@ Note that when 'nrformats' includes "octal", decimal numbers with leading
 zeros cause mistakes, because they can be confused with octal numbers.
 
 Note similarly, when 'nrformats' includes "bin", binary numbers with a leading
-'0x' or '0X' can be interpreted as hexadecimal rather than binary since '0b'
+'0b' or '0B' can be interpreted as hexadecimal rather than binary since '0b'
 are valid hexadecimal digits.
 
 When the number under the cursor is too big to fit into 64 bits, it will be
