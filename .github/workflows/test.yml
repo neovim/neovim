@@ -67,7 +67,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
-      - if: ${{ matrix.build == lintlua-stylua }}
+      - if: ${{ matrix.build == 'lintlua-stylua' }}
         name: Install stylua
         run: |
           wget --directory-prefix="$BIN_DIR" https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-x86_64.zip
