@@ -37,11 +37,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
-      - name: Install stylua
-        run: |
-          wget --directory-prefix="$BIN_DIR" https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-x86_64.zip
-          (cd "$BIN_DIR"; unzip stylua*.zip)
-
       - name: Build third-party deps
         run: |
           cmake -S cmake.deps -B .deps -G Ninja
@@ -71,8 +66,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+
+      - if: ${{ matrix.build == lintlua-stylua }}
+        name: Install stylua
+        run: |
+          wget --directory-prefix="$BIN_DIR" https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-x86_64.zip
+          (cd "$BIN_DIR"; unzip stylua*.zip)
+
       - uses: actions/download-artifact@v4
         with:
           name: lint
+
       - name: ${{ matrix.build }}
         run: cmake --build build --target ${{ matrix.build }}
