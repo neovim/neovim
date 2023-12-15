@@ -35,7 +35,7 @@ jobs:
       CC: clang
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup
+      - run: ./.github/scripts/install_deps.sh
 
       - name: Install stylua
         run: |
@@ -70,12 +70,9 @@ jobs:
       CC: clang
     steps:
       - uses: actions/checkout@v4
+      - run: ./.github/scripts/install_deps.sh
       - uses: actions/download-artifact@v4
         with:
           name: lint
-      - name: pwd
-        run: pwd
-      - name: wut
-        run: ls
       - name: ${{ matrix.build }}
         run: cmake --build build --target ${{ matrix.build }}
