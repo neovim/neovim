@@ -9044,7 +9044,7 @@ return {
       scope = { 'global', 'buffer' },
       short_desc = N_('maximum number of nodes in treesitter matches for each query'),
       type = 'number',
-      redraw = { 'ui_option', 'current_buffer' },
+      redraw = { 'current_buffer' },
       varname = 'p_tsml',
     },
     {
