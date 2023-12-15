@@ -39,14 +39,14 @@ jobs:
         run: ./scripts/genappimage.sh ${APPIMAGE_TAG}
       - name: tar.gz
         run: cpack --config build/CPackConfig.cmake -G TGZ
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: appimage
           path: |
             build/bin/nvim.appimage
             build/bin/nvim.appimage.zsync
           retention-days: 1
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: nvim-linux64
           path: |
@@ -74,7 +74,7 @@ jobs:
         run: printf 'NVIM_BUILD_TYPE=RelWithDebInfo\n' >> $GITHUB_ENV
       - name: Build universal binary
         run: ./.github/scripts/build_universal_macos.sh
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: nvim-macos
           path: build/nvim-macos.tar.gz
@@ -97,7 +97,7 @@ jobs:
         run: |
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE='RelWithDebInfo'
           cmake --build build --target package
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: nvim-win64
           path: |
