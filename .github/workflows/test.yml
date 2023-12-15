@@ -44,8 +44,7 @@ jobs:
 
       - run: cmake -B build -G Ninja
 
-      - name: 'Tar files'
-        run: tar -cvf lint.tar build .deps
+      - run: tar -cvf lint.tar build .deps
 
       - uses: actions/upload-artifact@v4
         with:
@@ -77,6 +76,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: lint
+
+      - run: tar -xvf lint.tar
 
       - name: ${{ matrix.build }}
         run: cmake --build build --target ${{ matrix.build }}
