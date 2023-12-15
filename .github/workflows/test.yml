@@ -73,5 +73,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: lint
+      - name: pwd
+        run: pwd
+      - name: wut
+        run: ls
       - name: ${{ matrix.build }}
         run: cmake --build build --target ${{ matrix.build }}
