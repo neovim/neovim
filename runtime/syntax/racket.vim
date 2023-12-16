@@ -4,7 +4,7 @@
 " Previous Maintainer:  Will Langstroth <will@langstroth.com>
 " URL:                  https://github.com/benknoble/vim-racket
 " Description:          Contains all of the keywords in #lang racket
-" Last Change: 2022 Aug 12
+" Last Change:          2023 Sep 22
 
 " Initializing:
 if exists("b:current_syntax")
@@ -514,13 +514,13 @@ syntax region racketString start=/\%(\\\)\@<!"/ skip=/\\[\\"]/ end=/"/ contains=
 syntax region racketString start=/#"/           skip=/\\[\\"]/ end=/"/ contains=racketStringEscapeError,racketStringEscape
 
 if exists("racket_no_string_fold")
-  syn region racketString start=/#<<\z(.*\)$/ end=/^\z1$/
+  syn region racketHereString start=/#<<\z(.*\)$/ end=/^\z1$/
 else
-  syn region racketString start=/#<<\z(.*\)$/ end=/^\z1$/ fold
+  syn region racketHereString start=/#<<\z(.*\)$/ end=/^\z1$/ fold
 endif
 
 
-syntax cluster racketTop  add=racketError,racketConstant,racketStruc,racketString
+syntax cluster racketTop  add=racketError,racketConstant,racketStruc,racketString,racketHereString
 
 " Numbers
 
@@ -623,6 +623,7 @@ highlight default link racketFunc Function
 
 highlight default link racketString String
 highlight default link racketStringEscape Special
+highlight default link racketHereString String
 highlight default link racketUStringEscape Special
 highlight default link racketStringEscapeError Error
 highlight default link racketChar Character
