@@ -799,7 +799,7 @@ static int buf_write_make_backup(char *fname, bool append, FileInfo *file_info_o
   char *backup_ext = *p_bex == NUL ? ".bak" : p_bex;
 
   if (*backup_copyp) {
-    int some_error = false;
+    bool some_error = false;
 
     // Try to make the backup in each directory in the 'bdir' option.
     //
@@ -1059,14 +1059,14 @@ nobackup:
 ///
 /// @return        FAIL for failure, OK otherwise
 int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T end, exarg_T *eap,
-              int append, int forceit, int reset_changed, int filtering)
+              bool append, bool forceit, bool reset_changed, bool filtering)
 {
   int retval = OK;
   int msg_save = msg_scroll;
-  int prev_got_int = got_int;
+  bool prev_got_int = got_int;
   // writing everything
-  int whole = (start == 1 && end == buf->b_ml.ml_line_count);
-  int write_undo_file = false;
+  bool whole = (start == 1 && end == buf->b_ml.ml_line_count);
+  bool write_undo_file = false;
   context_sha256_T sha_ctx;
   unsigned bkc = get_bkc_value(buf);
 
@@ -1245,7 +1245,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
   }
 
 #if defined(UNIX)
-  int made_writable = false;  // 'w' bit has been set
+  bool made_writable = false;  // 'w' bit has been set
 
   // When using ":w!" and the file was read-only: make it writable
   if (forceit && perm >= 0 && !(perm & 0200)
@@ -1352,7 +1352,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     }
   }
 
-  int notconverted = false;
+  bool notconverted = false;
 
   if (converted && wb_flags == 0
       && write_info.bw_iconv_fd == (iconv_t)-1
@@ -1364,7 +1364,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
     notconverted = true;
   }
 
-  int no_eol = false;  // no end-of-line written
+  bool no_eol = false;  // no end-of-line written
   int nchars;
   linenr_T lnum;
   int fileformat;

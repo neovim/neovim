@@ -968,7 +968,7 @@ char *get_menu_name(expand_T *xp, int idx)
 {
   static vimmenu_T *menu = NULL;
   char *str;
-  static int should_advance = false;
+  static bool should_advance = false;
 
   if (idx == 0) {           // first call: start at first item
     menu = expand_menu;
@@ -1334,9 +1334,9 @@ bool menu_is_toolbar(const char *const name)
   return strncmp(name, "ToolBar", 7) == 0;
 }
 
-/// Return true if the name is a menu separator identifier: Starts and ends
-/// with '-'
-int menu_is_separator(char *name)
+/// @return  true if the name is a menu separator identifier: Starts and ends
+///          with '-'
+bool menu_is_separator(char *name)
 {
   return name[0] == '-' && name[strlen(name) - 1] == '-';
 }
@@ -1344,7 +1344,7 @@ int menu_is_separator(char *name)
 /// True if a popup menu or starts with \ref MNU_HIDDEN_CHAR
 ///
 /// @return true if the menu is hidden
-static int menu_is_hidden(char *name)
+static bool menu_is_hidden(char *name)
 {
   return (name[0] == MNU_HIDDEN_CHAR)
          || (menu_is_popup(name) && name[5] != NUL);

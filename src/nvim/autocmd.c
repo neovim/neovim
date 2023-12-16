@@ -913,7 +913,7 @@ int do_autocmd_event(event_T event, const char *pat, bool once, int nested, char
   int patlen = (int)aucmd_pattern_length(pat);
   while (patlen) {
     // detect special <buffer[=X]> buffer-local patterns
-    int is_buflocal = aupat_is_buflocal(pat, patlen);
+    bool is_buflocal = aupat_is_buflocal(pat, patlen);
     if (is_buflocal) {
       const int buflocal_nr = aupat_get_buflocal_nr(pat, patlen);
 
@@ -977,7 +977,7 @@ int autocmd_register(int64_t id, event_T event, const char *pat, int patlen, int
   const int findgroup = group == AUGROUP_ALL ? current_augroup : group;
 
   // detect special <buffer[=X]> buffer-local patterns
-  const int is_buflocal = aupat_is_buflocal(pat, patlen);
+  const bool is_buflocal = aupat_is_buflocal(pat, patlen);
   int buflocal_nr = 0;
 
   char buflocal_pat[BUFLOCAL_PAT_LEN];  // for "<buffer=X>"
@@ -1568,7 +1568,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   static int nesting = 0;
   char *save_cmdarg;
   varnumber_T save_cmdbang;
-  static int filechangeshell_busy = false;
+  static bool filechangeshell_busy = false;
   proftime_T wait_time;
   bool did_save_redobuff = false;
   save_redo_T save_redo;

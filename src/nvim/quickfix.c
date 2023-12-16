@@ -5689,7 +5689,7 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
     return NULL;
   }
 
-  int failed = true;
+  bool failed = true;
   bufref_T newbufref;
   set_bufref(&newbufref, newbuf);
 
@@ -7318,7 +7318,7 @@ void free_quickfix(void)
 }
 #endif
 
-static void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg, typval_T *rettv)
+static void get_qf_loc_list(bool is_qf, win_T *wp, typval_T *what_arg, typval_T *rettv)
 {
   if (what_arg->v_type == VAR_UNKNOWN) {
     tv_list_alloc_ret(rettv, kListLenMayKnow);

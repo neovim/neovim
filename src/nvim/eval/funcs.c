@@ -305,7 +305,7 @@ int call_internal_method(const char *const fname, const int argcount, typval_T *
 }
 
 /// @return  true for a non-zero Number and a non-empty String.
-static int non_zero_arg(typval_T *argvars)
+static bool non_zero_arg(typval_T *argvars)
 {
   return ((argvars[0].v_type == VAR_NUMBER
            && argvars[0].vval.v_number != 0)
@@ -2443,7 +2443,7 @@ static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos, bool
                             : (varnumber_T)0));
   tv_list_append_number(l, (fp != NULL) ? (varnumber_T)fp->coladd : (varnumber_T)0);
   if (getcurpos) {
-    const int save_set_curswant = curwin->w_set_curswant;
+    const bool save_set_curswant = curwin->w_set_curswant;
     const colnr_T save_curswant = curwin->w_curswant;
     const colnr_T save_virtcol = curwin->w_virtcol;
 

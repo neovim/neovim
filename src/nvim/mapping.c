@@ -1121,7 +1121,7 @@ bool map_to_exists(const char *const str, const char *const modechars, const boo
   MAPMODE(mode, modechars, 'c', MODE_CMDLINE);
 #undef MAPMODE
 
-  int retval = map_to_exists_mode(rhs, mode, abbr);
+  bool retval = map_to_exists_mode(rhs, mode, abbr);
   xfree(buf);
 
   return retval;
@@ -1137,7 +1137,7 @@ bool map_to_exists(const char *const str, const char *const modechars, const boo
 /// @param[in]  abbr  true if checking abbreviations in place of mappings.
 ///
 /// @return true if there is at least one mapping with given parameters.
-int map_to_exists_mode(const char *const rhs, const int mode, const bool abbr)
+bool map_to_exists_mode(const char *const rhs, const int mode, const bool abbr)
 {
   bool exp_buffer = false;
 

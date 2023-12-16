@@ -919,7 +919,7 @@ void win_grid_alloc(win_T *wp)
     wp->w_lines = xcalloc((size_t)rows + 1, sizeof(wline_T));
   }
 
-  int was_resized = false;
+  bool was_resized = false;
   if (want_allocation && (!has_allocation
                           || grid_allocated->rows != total_rows
                           || grid_allocated->cols != total_cols)) {

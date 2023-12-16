@@ -1680,7 +1680,7 @@ static void create_windows(mparm_T *parmp)
     // Don't execute Win/Buf Enter/Leave autocommands here
     autocmd_no_enter++;
     autocmd_no_leave++;
-    int dorewind = true;
+    bool dorewind = true;
     while (done++ < 1000) {
       if (dorewind) {
         if (parmp->window_layout == WIN_TABS) {

@@ -374,7 +374,7 @@ static int calc_hist_idx(int histype, int num)
 
   histentry_T *hist = history[histype];
   if (num > 0) {
-    int wrapped = false;
+    bool wrapped = false;
     while (hist[i].hisnum > num) {
       if (--i < 0) {
         if (wrapped) {

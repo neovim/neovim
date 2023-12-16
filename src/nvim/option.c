@@ -4054,7 +4054,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
               return FAIL;
             }
           } else {    // string
-            int do_endif = false;
+            bool do_endif = false;
 
             // Don't set 'syntax' and 'filetype' again if the value is
             // already right, avoids reloading the syntax file.
@@ -4779,9 +4779,9 @@ static void init_buf_opt_idx(void)
 /// BCO_NOHELP   Don't copy the values to a help buffer.
 void buf_copy_options(buf_T *buf, int flags)
 {
-  int should_copy = true;
+  bool should_copy = true;
   char *save_p_isk = NULL;           // init for GCC
-  int did_isk = false;
+  bool did_isk = false;
 
   // Skip this when the option defaults have not been set yet.  Happens when
   // main() allocates the first buffer.
@@ -5120,7 +5120,7 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
   char nextchar;
   uint32_t flags = 0;
   OptIndex opt_idx = 0;
-  int is_term_option = false;
+  bool is_term_option = false;
 
   if (*arg == '<') {
     while (*p != '>') {

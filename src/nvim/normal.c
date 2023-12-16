@@ -4721,7 +4721,7 @@ static void nv_vreplace(cmdarg_T *cap)
 /// Swap case for "~" command, when it does not work like an operator.
 static void n_swapchar(cmdarg_T *cap)
 {
-  int did_change = 0;
+  bool did_change = false;
 
   if (checkclearopq(cap->oap)) {
     return;

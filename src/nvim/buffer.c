@@ -201,13 +201,13 @@ bool buf_ensure_loaded(buf_T *buf)
 /// @param flags_arg  extra flags for readfile()
 ///
 /// @return  FAIL for failure, OK otherwise.
-int open_buffer(int read_stdin, exarg_T *eap, int flags_arg)
+int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
 {
   int flags = flags_arg;
   int retval = OK;
   bufref_T old_curbuf;
   OptInt old_tw = curbuf->b_p_tw;
-  int read_fifo = false;
+  bool read_fifo = false;
   bool silent = shortmess(SHM_FILEINFO);
 
   // The 'readonly' flag is only set when BF_NEVERLOADED is being reset.

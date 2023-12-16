@@ -59,7 +59,7 @@ static int put_view_curpos(FILE *fd, const win_T *wp, char *spaces)
   return r >= 0;
 }
 
-static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
+static int ses_winsizes(FILE *fd, bool restore_size, win_T *tab_firstwin)
 {
   if (restore_size && (ssop_flags & SSOP_WINSIZE)) {
     int n = 0;
@@ -314,7 +314,7 @@ static int ses_put_fname(FILE *fd, char *name, unsigned *flagp)
 static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int current_arg_idx)
 {
   int f;
-  int did_next = false;
+  bool did_next = false;
 
   // Always restore cursor position for ":mksession".  For ":mkview" only
   // when 'viewoptions' contains "cursor".
@@ -528,8 +528,8 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
 /// @return FAIL on error, OK otherwise.
 static int makeopens(FILE *fd, char *dirnow)
 {
-  int only_save_windows = true;
-  int restore_size = true;
+  bool only_save_windows = true;
+  bool restore_size = true;
   win_T *edited_win = NULL;
   win_T *tab_firstwin;
   frame_T *tab_topframe;
@@ -627,7 +627,7 @@ static int makeopens(FILE *fd, char *dirnow)
     }
   }
 
-  int restore_stal = false;
+  bool restore_stal = false;
   // When there are two or more tabpages and 'showtabline' is 1 the tabline
   // will be displayed when creating the next tab.  That resizes the windows
   // in the first tab, which may cause problems.  Set 'showtabline' to 2
@@ -886,7 +886,7 @@ void ex_loadview(exarg_T *eap)
 ///   - SSOP_SLASH: filenames are written with "/" slash
 void ex_mkrc(exarg_T *eap)
 {
-  int view_session = false;  // :mkview, :mksession
+  bool view_session = false;  // :mkview, :mksession
   int using_vdir = false;  // using 'viewdir'?
   char *viewFile = NULL;
 

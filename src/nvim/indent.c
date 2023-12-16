@@ -434,7 +434,7 @@ int get_indent_str_vtab(const char *ptr, OptInt ts, colnr_T *vts, bool list)
 ///  @param size measured in spaces
 ///
 /// @return  true if the line was changed.
-int set_indent(int size, int flags)
+bool set_indent(int size, int flags)
 {
   char *newline;
   char *oldline;
@@ -442,7 +442,7 @@ int set_indent(int size, int flags)
   int doit = false;
   int ind_done = 0;  // Measured in spaces.
   int tab_pad;
-  int retval = false;
+  bool retval = false;
 
   // Number of initial whitespace chars when 'et' and 'pi' are both set.
   int orig_char_len = -1;
@@ -1094,14 +1094,14 @@ void ex_retab(exarg_T *eap)
 /// Get indent level from 'indentexpr'.
 int get_expr_indent(void)
 {
-  int use_sandbox = was_set_insecurely(curwin, kOptIndentexpr, OPT_LOCAL);
+  bool use_sandbox = was_set_insecurely(curwin, kOptIndentexpr, OPT_LOCAL);
   const sctx_T save_sctx = current_sctx;
 
   // Save and restore cursor position and curswant, in case it was changed
   // * via :normal commands.
   pos_T save_pos = curwin->w_cursor;
   colnr_T save_curswant = curwin->w_curswant;
-  int save_set_curswant = curwin->w_set_curswant;
+  bool save_set_curswant = curwin->w_set_curswant;
   set_vim_var_nr(VV_LNUM, (varnumber_T)curwin->w_cursor.lnum);
 
   if (use_sandbox) {

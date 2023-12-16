@@ -1322,7 +1322,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     char *comment_end = NULL;               // where lead_end has been found
     int extra_space = false;                // append extra space
     int current_flag;
-    int require_blank = false;              // requires blank after middle
+    bool require_blank = false;             // requires blank after middle
     char *p2;
 
     // If the comment leader has the start, middle or end flag, it may not
@@ -1979,7 +1979,7 @@ void del_lines(linenr_T nlines, bool undo)
 int get_leader_len(char *line, char **flags, bool backward, bool include_space)
 {
   int j;
-  int got_com = false;
+  bool got_com = false;
   char part_buf[COM_MAX_LEN];         // buffer for one option part
   char *string;                  // pointer to comment string
   int middle_match_len = 0;
@@ -1994,7 +1994,7 @@ int get_leader_len(char *line, char **flags, bool backward, bool include_space)
   // Repeat to match several nested comment strings.
   while (line[i] != NUL) {
     // scan through the 'comments' option for a match
-    int found_one = false;
+    bool found_one = false;
     for (char *list = curbuf->b_p_com; *list;) {
       // Get one option part into part_buf[].  Advance "list" to next
       // one.  Put "string" at start of string.
@@ -2129,7 +2129,7 @@ int get_last_leader_offset(char *line, char **flags)
   int i = (int)strlen(line);
   while (--i >= lower_check_bound) {
     // scan through the 'comments' option for a match
-    int found_one = false;
+    bool found_one = false;
     for (char *list = curbuf->b_p_com; *list;) {
       char *flags_save = list;
 

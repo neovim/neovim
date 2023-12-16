@@ -319,42 +319,42 @@ foldinfo_T fold_info(win_T *win, linenr_T lnum)
 
 // foldmethodIsManual() {{{2
 /// @return  true if 'foldmethod' is "manual"
-int foldmethodIsManual(win_T *wp)
+bool foldmethodIsManual(win_T *wp)
 {
   return wp->w_p_fdm[3] == 'u';
 }
 
 // foldmethodIsIndent() {{{2
 /// @return  true if 'foldmethod' is "indent"
-int foldmethodIsIndent(win_T *wp)
+bool foldmethodIsIndent(win_T *wp)
 {
   return wp->w_p_fdm[0] == 'i';
 }
 
 // foldmethodIsExpr() {{{2
 /// @return  true if 'foldmethod' is "expr"
-int foldmethodIsExpr(win_T *wp)
+bool foldmethodIsExpr(win_T *wp)
 {
   return wp->w_p_fdm[1] == 'x';
 }
 
 // foldmethodIsMarker() {{{2
 /// @return  true if 'foldmethod' is "marker"
-int foldmethodIsMarker(win_T *wp)
+bool foldmethodIsMarker(win_T *wp)
 {
   return wp->w_p_fdm[2] == 'r';
 }
 
 // foldmethodIsSyntax() {{{2
 /// @return  true if 'foldmethod' is "syntax"
-int foldmethodIsSyntax(win_T *wp)
+bool foldmethodIsSyntax(win_T *wp)
 {
   return wp->w_p_fdm[0] == 's';
 }
 
 // foldmethodIsDiff() {{{2
 /// @return  true if 'foldmethod' is "diff"
-int foldmethodIsDiff(win_T *wp)
+bool foldmethodIsDiff(win_T *wp)
 {
   return wp->w_p_fdm[0] == 'd';
 }
@@ -536,8 +536,8 @@ int foldManualAllowed(bool create)
 /// window.
 void foldCreate(win_T *wp, pos_T start, pos_T end)
 {
-  int use_level = false;
-  int closed = false;
+  bool use_level = false;
+  bool closed = false;
   int level = 0;
   pos_T start_rel = start;
   pos_T end_rel = end;

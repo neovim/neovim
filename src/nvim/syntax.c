@@ -4811,12 +4811,9 @@ static char *get_syn_pattern(char *arg, synpat_T *ci)
 static void syn_cmd_sync(exarg_T *eap, int syncing)
 {
   char *arg_start = eap->arg;
-  char *arg_end;
   char *key = NULL;
-  char *next_arg;
-  int illegal = false;
-  int finished = false;
-  char *cpo_save;
+  bool illegal = false;
+  bool finished = false;
 
   if (ends_excmd(*arg_start)) {
     syn_cmd_list(eap, true);
@@ -4824,8 +4821,8 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
   }
 
   while (!ends_excmd(*arg_start)) {
-    arg_end = skiptowhite(arg_start);
-    next_arg = skipwhite(arg_end);
+    char *arg_end = skiptowhite(arg_start);
+    char *next_arg = skipwhite(arg_end);
     xfree(key);
     key = vim_strnsave_up(arg_start, (size_t)(arg_end - arg_start));
     if (strcmp(key, "CCOMMENT") == 0) {
@@ -4895,7 +4892,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
         curwin->w_s->b_syn_linecont_ic = curwin->w_s->b_syn_ic;
 
         // Make 'cpoptions' empty, to avoid the 'l' flag
-        cpo_save = p_cpo;
+        char *cpo_save = p_cpo;
         p_cpo = empty_string_option;
         curwin->w_s->b_syn_linecont_prog =
           vim_regcomp(curwin->w_s->b_syn_linecont_pat, RE_MAGIC);

@@ -6212,7 +6212,7 @@ static void ex_redir(exarg_T *eap)
         semsg(_(e_invarg2), eap->arg);
       }
     } else if (*arg == '=' && arg[1] == '>') {
-      int append;
+      bool append;
 
       // redirect to a variable
       close_redir();

@@ -59,7 +59,7 @@
 #include "nvim/window.h"
 #include "xdiff/xdiff.h"
 
-static int diff_busy = false;         // using diff structs, don't change them
+static bool diff_busy = false;         // using diff structs, don't change them
 static bool diff_need_update = false;  // ex_diffupdate needs to be called
 
 // Flags obtained from the 'diffopt' option
@@ -384,7 +384,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
         }
         dp->df_lnum[idx] += amount_after;
       } else {
-        int check_unchanged = false;
+        bool check_unchanged = false;
 
         // 2. 3. 4. 5.: inserted/deleted lines touching this diff.
         if (deleted > 0) {
@@ -1003,7 +1003,7 @@ theend:
 static int check_external_diff(diffio_T *diffio)
 {
   // May try twice, first with "-a" and then without.
-  int io_error = false;
+  bool io_error = false;
   TriState ok = kFalse;
   while (true) {
     ok = kFalse;
@@ -1472,7 +1472,7 @@ void diff_win_options(win_T *wp, int addbuf)
 /// @param eap
 void ex_diffoff(exarg_T *eap)
 {
-  int diffwin = false;
+  bool diffwin = false;
 
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (eap->forceit ? wp->w_p_diff : (wp == curwin)) {
@@ -2155,12 +2155,12 @@ int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
   }
 
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
-    int zero = false;
+    bool zero = false;
 
     // Changed or inserted line.  If the other buffers have a count of
     // zero, the lines were inserted.  If the other buffers have the same
     // count, check if the lines are identical.
-    int cmp = false;
+    bool cmp = false;
 
     for (int i = 0; i < DB_COUNT; i++) {
       if ((i != idx) && (curtab->tp_diffbuf[i] != NULL)) {
@@ -2195,7 +2195,7 @@ int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
     // the difference.  Can't remove the entry here, we might be halfway
     // through updating the window.  Just report the text as unchanged.
     // Other windows might still show the change though.
-    if (zero == false) {
+    if (!zero) {
       return 0;
     }
     return -2;
@@ -2845,7 +2845,7 @@ void ex_diffgetput(exarg_T *eap)
   }
 
   if (*eap->arg == NUL) {
-    int found_not_ma = false;
+    bool found_not_ma = false;
     // No argument: Find the other buffer in the list of diff buffers.
     for (idx_other = 0; idx_other < DB_COUNT; idx_other++) {
       if ((curtab->tp_diffbuf[idx_other] != curbuf)
