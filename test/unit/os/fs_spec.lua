@@ -197,7 +197,7 @@ describe('fs.c', function()
 
     itp('returns the absolute path when given an executable inside $PATH', function()
       local fullpath = exe('ls')
-      eq(1, fs.path_is_absolute(to_cstr(fullpath)))
+      eq(true, fs.path_is_absolute(to_cstr(fullpath)))
     end)
 
     itp('returns the absolute path when given an executable relative to the current dir', function()

@@ -110,7 +110,7 @@ const char *parse_shape_opt(int what)
   int all_idx;
   int len;
   int i;
-  int found_ve = false;                 // found "ve" flag
+  bool found_ve = false;                 // found "ve" flag
 
   // First round: check for errors; second round: do it for real.
   for (int round = 1; round <= 2; round++) {

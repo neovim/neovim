@@ -270,22 +270,22 @@ bool arabic_combine(int one, int two)
   return false;
 }
 
-/// A_is_iso returns true if 'c' is an Arabic ISO-8859-6 character
+/// @return  true if 'c' is an Arabic ISO-8859-6 character
 ///          (alphabet/number/punctuation)
-static int A_is_iso(int c)
+static bool A_is_iso(int c)
 {
   return find_achar(c) != NULL;
 }
 
-/// A_is_ok returns true if 'c' is an Arabic 10646 (8859-6 or Form-B)
-static int A_is_ok(int c)
+/// @return  true if 'c' is an Arabic 10646 (8859-6 or Form-B)
+static bool A_is_ok(int c)
 {
   return (A_is_iso(c) || c == a_BYTE_ORDER_MARK);
 }
 
-/// A_is_valid returns true if 'c' is an Arabic 10646 (8859-6 or Form-B)
-///            with some exceptions/exclusions
-static int A_is_valid(int c)
+/// @return  true if 'c' is an Arabic 10646 (8859-6 or Form-B)
+///          with some exceptions/exclusions
+static bool A_is_valid(int c)
 {
   return (A_is_ok(c) && c != a_HAMZA);
 }
@@ -304,8 +304,8 @@ int arabic_shape(int c, int *c1p, int prev_c, int prev_c1, int next_c)
   }
 
   int curr_c;
-  int curr_laa = arabic_combine(c, *c1p);
-  int prev_laa = arabic_combine(prev_c, prev_c1);
+  bool curr_laa = arabic_combine(c, *c1p);
+  bool prev_laa = arabic_combine(prev_c, prev_c1);
 
   if (curr_laa) {
     if (A_is_valid(prev_c) && can_join(prev_c, a_LAM) && !prev_laa) {

@@ -88,7 +88,7 @@ MessageHistoryEntry *last_msg_hist = NULL;
 static int msg_hist_len = 0;
 
 static FILE *verbose_fd = NULL;
-static int verbose_did_open = false;
+static bool verbose_did_open = false;
 
 bool keep_msg_more = false;    // keep_msg was set by msgmore()
 
@@ -2549,11 +2549,9 @@ void clear_sb_text(int all)
 /// "g<" command.
 void show_sb_text(void)
 {
-  msgchunk_T *mp;
-
   // Only show something if there is more than one line, otherwise it looks
   // weird, typing a command without output results in one line.
-  mp = msg_sb_start(last_msgchunk);
+  msgchunk_T *mp = msg_sb_start(last_msgchunk);
   if (mp == NULL || mp->sb_prev == NULL) {
     vim_beep(BO_MESS);
   } else {
@@ -2663,13 +2661,13 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
 /// otherwise it's NUL.
 ///
 /// @return  true when jumping ahead to "confirm_msg_tail".
-static int do_more_prompt(int typed_char)
+static bool do_more_prompt(int typed_char)
 {
   static bool entered = false;
   int used_typed_char = typed_char;
   int oldState = State;
   int c;
-  int retval = false;
+  bool retval = false;
   bool to_redraw = false;
   msgchunk_T *mp_last = NULL;
   msgchunk_T *mp;
@@ -3395,7 +3393,6 @@ int do_dialog(int type, const char *title, const char *message, const char *butt
               const char *textfield, int ex_cmd)
 {
   int retval = 0;
-  char *hotkeys;
   int i;
 
   if (silent_mode      // No dialogs in silent mode ("ex -s")
@@ -3414,7 +3411,7 @@ int do_dialog(int type, const char *title, const char *message, const char *butt
   // Since we wait for a keypress, don't make the
   // user press RETURN as well afterwards.
   no_wait_return++;
-  hotkeys = msg_show_console_dialog(message, buttons, dfltbutton);
+  char *hotkeys = msg_show_console_dialog(message, buttons, dfltbutton);
 
   while (true) {
     // Get a typed character directly from the user.

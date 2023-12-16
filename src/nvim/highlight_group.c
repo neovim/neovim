@@ -670,7 +670,7 @@ void syn_init_cmdline_highlight(bool reset, bool init)
 /// @param reset clear groups first
 void init_highlight(bool both, bool reset)
 {
-  static int had_both = false;
+  static bool had_both = false;
 
   // Try finding the color scheme file.  Used when a color file was loaded
   // and 'background' or 't_Co' is changed.

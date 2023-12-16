@@ -1900,7 +1900,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
       case 'G': {
         // floating point
         char format[40];
-        int remove_trailing_zeroes = false;
+        bool remove_trailing_zeroes = false;
 
         double f = (tvs
                     ? tv_float(tvs, &arg_idx)

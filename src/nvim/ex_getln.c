@@ -109,7 +109,7 @@ typedef struct command_line_state {
   int count;
   int indent;
   int c;
-  int gotesc;                           // true when <ESC> just typed
+  bool gotesc;                          // true when <ESC> just typed
   int do_abbr;                          // when true check for abbr.
   char *lookfor;                        // string to match
   int hiscnt;                           // current history line in use
@@ -584,7 +584,8 @@ static int may_add_char_to_search(int firstc, int *c, incsearch_state_T *s)
   return OK;
 }
 
-static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool call_update_screen)
+static void finish_incsearch_highlighting(bool gotesc, incsearch_state_T *s,
+                                          bool call_update_screen)
 {
   if (!s->did_incsearch) {
     return;
@@ -840,7 +841,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     // error printed below, to avoid redraw issues
     tl_ret = try_leave(&tstate, &err);
     if (tv_dict_get_number(dict, "abort") != 0) {
-      s->gotesc = 1;
+      s->gotesc = true;
     }
     restore_v_event(dict, &save_v_event);
   }
@@ -4206,7 +4207,7 @@ int get_cmdline_firstc(void)
 int get_list_range(char **str, int *num1, int *num2)
 {
   int len;
-  int first = false;
+  bool first = false;
   varnumber_T num;
 
   *str = skipwhite((*str));
@@ -4280,7 +4281,7 @@ static int open_cmdwin(void)
   int save_restart_edit = restart_edit;
   int save_State = State;
   bool save_exmode = exmode_active;
-  int save_cmdmsg_rl = cmdmsg_rl;
+  bool save_cmdmsg_rl = cmdmsg_rl;
 
   // Can't do this when text or buffer is locked.
   // Can't do this recursively.  Can't do it when typing a password.

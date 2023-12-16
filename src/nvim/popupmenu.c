@@ -810,7 +810,7 @@ win_T *pum_set_info(int pum_idx, char *info)
 /// menu must be recomputed.
 static bool pum_set_selected(int n, int repeat)
 {
-  int resized = false;
+  bool resized = false;
   int context = pum_height / 2;
   int prev_selected = pum_selected;
 

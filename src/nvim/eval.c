@@ -564,7 +564,7 @@ static char *redir_varname = NULL;
 /// @param append  append to an existing variable
 ///
 /// @return  OK if successfully completed the setup.  FAIL otherwise.
-int var_redir_start(char *name, int append)
+int var_redir_start(char *name, bool append)
 {
   // Catch a bad name early.
   if (!eval_isnamec1(*name)) {
@@ -765,7 +765,7 @@ void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
 /// @param skip  only parse, don't execute
 ///
 /// @return  true or false.
-int eval_to_bool(char *arg, bool *error, exarg_T *eap, int skip)
+bool eval_to_bool(char *arg, bool *error, exarg_T *eap, int skip)
 {
   typval_T tv;
   bool retval = false;

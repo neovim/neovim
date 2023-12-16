@@ -190,7 +190,7 @@ void free_users(void)
 /// Done only once and then cached.
 static void init_users(void)
 {
-  static int lazy_init_done = false;
+  static bool lazy_init_done = false;
 
   if (lazy_init_done) {
     return;

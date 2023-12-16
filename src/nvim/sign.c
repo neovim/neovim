@@ -721,7 +721,7 @@ static int parse_sign_cmd_args(int cmd, char *arg, char **name, int *id, char **
 {
   char *arg1 = arg;
   char *filename = NULL;
-  int lnum_arg = false;
+  bool lnum_arg = false;
 
   // first arg could be placed sign id
   if (ascii_isdigit(*arg)) {

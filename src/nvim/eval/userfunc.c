@@ -928,7 +928,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   int tv_to_free_len = 0;
   proftime_T wait_start;
   proftime_T call_start;
-  int started_profiling = false;
+  bool started_profiling = false;
   bool did_save_redo = false;
   save_redo_T save_redo;
 
@@ -3035,7 +3035,7 @@ static inline bool fc_referenced(const funccall_T *const fc)
 
 /// @return true if items in "fc" do not have "copyID".  That means they are not
 /// referenced from anywhere that is in use.
-static int can_free_funccal(funccall_T *fc, int copyID)
+static bool can_free_funccal(funccall_T *fc, int copyID)
 {
   return fc->fc_l_varlist.lv_copyID != copyID
          && fc->fc_l_vars.dv_copyID != copyID
@@ -3048,7 +3048,7 @@ void ex_return(exarg_T *eap)
 {
   char *arg = eap->arg;
   typval_T rettv;
-  int returning = false;
+  bool returning = false;
 
   if (current_funccal == NULL) {
     emsg(_("E133: :return not inside a function"));
@@ -3395,7 +3395,7 @@ end:
 ///
 /// @return  true when the return can be carried out,
 ///          false when the return gets pending.
-int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
+bool do_return(exarg_T *eap, bool reanimate, bool is_cmd, void *rettv)
 {
   cstack_T *const cstack = eap->cstack;
 

@@ -1496,7 +1496,7 @@ int op_delete(oparg_T *oap)
   // register.  For the black hole register '_' don't yank anything.
   if (oap->regname != '_') {
     yankreg_T *reg = NULL;
-    int did_yank = false;
+    bool did_yank = false;
     if (oap->regname != 0) {
       // check for read-only register
       if (!valid_yank_reg(oap->regname, true)) {
@@ -1794,7 +1794,7 @@ static int op_replace(oparg_T *oap, int c)
   int n;
   struct block_def bd;
   char *after_p = NULL;
-  int had_ctrl_v_cr = false;
+  bool had_ctrl_v_cr = false;
 
   if ((curbuf->b_ml.ml_flags & ML_EMPTY) || oap->empty) {
     return OK;              // nothing to do
@@ -2638,7 +2638,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
     case kMTCharWise: {
       colnr_T startcol = 0;
       colnr_T endcol = MAXCOL;
-      int is_oneChar = false;
+      bool is_oneChar = false;
       colnr_T cs, ce;
       char *p = ml_get(lnum);
       bd.startspaces = 0;
@@ -3696,7 +3696,7 @@ void adjust_cursor_eol(void)
 }
 
 /// @return  true if lines starting with '#' should be left aligned.
-int preprocs_left(void)
+bool preprocs_left(void)
 {
   return ((curbuf->b_p_si && !curbuf->b_p_cin)
           || (curbuf->b_p_cin && in_cinkeys('#', ' ', true)
@@ -3956,7 +3956,7 @@ char *skip_comment(char *line, bool process, bool include_space, bool *is_commen
 ///                           to set those marks.
 ///
 /// @return  FAIL for failure, OK otherwise
-int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions, bool setmark)
+int do_join(size_t count, bool insert_space, bool save_undo, bool use_formatoptions, bool setmark)
 {
   char *curr = NULL;
   char *curr_start = NULL;
@@ -3967,8 +3967,7 @@ int do_join(size_t count, int insert_space, int save_undo, int use_formatoptions
   int sumsize = 0;              // size of the long new line
   int ret = OK;
   int *comments = NULL;
-  int remove_comments = (use_formatoptions == true)
-                        && has_format_option(FO_REMOVE_COMS);
+  bool remove_comments = use_formatoptions && has_format_option(FO_REMOVE_COMS);
   bool prev_was_comment = false;
   assert(count >= 1);
 

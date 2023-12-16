@@ -882,7 +882,7 @@ char *vim_findfile(void *search_ctx_arg)
       // is the last starting directory in the stop list?
       if (ff_path_in_stoplist(search_ctx->ffsc_start_dir,
                               (int)(path_end - search_ctx->ffsc_start_dir),
-                              search_ctx->ffsc_stopdirs_v) == true) {
+                              search_ctx->ffsc_stopdirs_v)) {
         break;
       }
 
@@ -1221,7 +1221,7 @@ static void ff_clear(ff_search_ctx_T *search_ctx)
 /// check if the given path is in the stopdirs
 ///
 /// @return  true if yes else false
-static int ff_path_in_stoplist(char *path, int path_len, char **stopdirs_v)
+static bool ff_path_in_stoplist(char *path, int path_len, char **stopdirs_v)
 {
   int i = 0;
 
@@ -1338,11 +1338,9 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
 {
   ff_search_ctx_T **search_ctx = (ff_search_ctx_T **)search_ctx_arg;
   static char *dir;
-  static int did_findfile_init = false;
-  char save_char;
+  static bool did_findfile_init = false;
   char *file_name = NULL;
   char *buf = NULL;
-  int rel_to_curdir;
 
   if (rel_fname != NULL && path_with_url(rel_fname)) {
     // Do not attempt to search "relative" to a URL. #6009
@@ -1355,7 +1353,7 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
     }
 
     // copy file name into NameBuff, expanding environment variables
-    save_char = ptr[len];
+    char save_char = ptr[len];
     ptr[len] = NUL;
     expand_env_esc(ptr, NameBuff, MAXPATHL, false, true, NULL);
     ptr[len] = save_char;
@@ -1372,12 +1370,12 @@ char *find_file_in_path_option(char *ptr, size_t len, int options, int first, ch
     }
   }
 
-  rel_to_curdir = ((*file_to_find)[0] == '.'
-                   && ((*file_to_find)[1] == NUL
-                       || vim_ispathsep((*file_to_find)[1])
-                       || ((*file_to_find)[1] == '.'
-                           && ((*file_to_find)[2] == NUL
-                               || vim_ispathsep((*file_to_find)[2])))));
+  bool rel_to_curdir = ((*file_to_find)[0] == '.'
+                        && ((*file_to_find)[1] == NUL
+                            || vim_ispathsep((*file_to_find)[1])
+                            || ((*file_to_find)[1] == '.'
+                                && ((*file_to_find)[2] == NUL
+                                    || vim_ispathsep((*file_to_find)[2])))));
   if (vim_isAbsName(*file_to_find)
       // "..", "../path", "." and "./path": don't use the path_option
       || rel_to_curdir

@@ -280,7 +280,7 @@ static char *do_one_arg(char *str)
 
 /// Separate the arguments in "str" and return a list of pointers in the
 /// growarray "gap".
-static void get_arglist(garray_T *gap, char *str, int escaped)
+static void get_arglist(garray_T *gap, char *str, bool escaped)
 {
   ga_init(gap, (int)sizeof(char *), 20);
   while (*str != NUL) {
@@ -426,7 +426,7 @@ static int do_arglist(char *str, int what, int after, bool will_edit)
   garray_T new_ga;
   int exp_count;
   char **exp_files;
-  int arg_escaped = true;
+  bool arg_escaped = true;
 
   if (check_arglist_locked() == FAIL) {
     return FAIL;

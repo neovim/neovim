@@ -180,7 +180,7 @@ int readfile(char *fname, char *sfname, linenr_T from, linenr_T lines_to_skip,
   off_T filesize = 0;
   bool skip_read = false;
   context_sha256_T sha_ctx;
-  int read_undo_file = false;
+  bool read_undo_file = false;
   int split = 0;  // number of split lines
   linenr_T linecnt;
   bool error = false;                   // errors encountered
@@ -2754,7 +2754,7 @@ int vim_rename(const char *from, const char *to)
   return 0;
 }
 
-static int already_warned = false;
+static bool already_warned = false;
 
 /// Check if any not hidden buffer has been changed.
 /// Postpone the check if there are characters in the stuff buffer, a global

@@ -696,7 +696,7 @@ void draw_tabline(void)
   win_T *wp;
   int attr_nosel = HL_ATTR(HLF_TP);
   int attr_fill = HL_ATTR(HLF_TPF);
-  int use_sep_chars = (t_colors < 8);
+  bool use_sep_chars = (t_colors < 8);
 
   if (default_grid.chars == NULL) {
     return;
@@ -772,7 +772,7 @@ void draw_tabline(void)
 
       grid_line_put_schar(col++, schar_from_ascii(' '), attr);
 
-      int modified = false;
+      bool modified = false;
 
       for (wincount = 0; wp != NULL; wp = wp->w_next, wincount++) {
         if (bufIsChanged(wp->w_buffer)) {
@@ -959,8 +959,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
   // If "fmt" was set insecurely it needs to be evaluated in the sandbox.
   // "opt_idx" will be kOptInvalid when caller is nvim_eval_statusline().
-  const int use_sandbox = (opt_idx != kOptInvalid) ? was_set_insecurely(wp, opt_idx, opt_scope)
-                                                   : false;
+  const bool use_sandbox = (opt_idx != kOptInvalid) ? was_set_insecurely(wp, opt_idx, opt_scope)
+                                                    : false;
 
   // When the format starts with "%!" then evaluate it as an expression and
   // use the result as the actual format string.

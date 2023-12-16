@@ -2703,7 +2703,7 @@ void do_check_cursorbind(void)
   colnr_T col = curwin->w_cursor.col;
   colnr_T coladd = curwin->w_cursor.coladd;
   colnr_T curswant = curwin->w_curswant;
-  int set_curswant = curwin->w_set_curswant;
+  bool set_curswant = curwin->w_set_curswant;
   win_T *old_curwin = curwin;
   buf_T *old_curbuf = curbuf;
   int old_VIsual_select = VIsual_select;

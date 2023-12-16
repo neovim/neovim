@@ -92,7 +92,7 @@ static void discard_pending_return(typval_T *p)
 // expression evaluation is done without producing any error messages, but all
 // error messages on parsing errors during the expression evaluation are given
 // (even if a try conditional is active).
-static int cause_abort = false;
+static bool cause_abort = false;
 
 /// @return  true when immediately aborting on error, or when an interrupt
 ///          occurred or an exception was thrown but not caught.
@@ -844,7 +844,7 @@ void ex_if(exarg_T *eap)
     int skip = CHECK_SKIP;
 
     bool error;
-    int result = eval_to_bool(eap->arg, &error, eap, skip);
+    bool result = eval_to_bool(eap->arg, &error, eap, skip);
 
     if (!skip && !error) {
       if (result) {
@@ -971,7 +971,7 @@ void ex_while(exarg_T *eap)
   if (cstack->cs_idx == CSTACK_LEN - 1) {
     eap->errmsg = _("E585: :while/:for nesting too deep");
   } else {
-    int result;
+    bool result;
     // The loop flag is set when we have jumped back from the matching
     // ":endwhile" or ":endfor".  When not set, need to initialise this
     // cstack entry.
@@ -1183,7 +1183,7 @@ void ex_throw(exarg_T *eap)
 /// used for rethrowing an uncaught exception.
 void do_throw(cstack_T *cstack)
 {
-  int inactivate_try = false;
+  bool inactivate_try = false;
 
   // Cleanup and deactivate up to the next surrounding try conditional that
   // is not in its finally clause.  Normally, do not deactivate the try
@@ -1861,7 +1861,7 @@ void leave_cleanup(cleanup_T *csp)
 int cleanup_conditionals(cstack_T *cstack, int searched_cond, int inclusive)
 {
   int idx;
-  int stop = false;
+  bool stop = false;
 
   for (idx = cstack->cs_idx; idx >= 0; idx--) {
     if (cstack->cs_flags[idx] & CSF_TRY) {
@@ -1998,7 +1998,7 @@ void ex_endfunction(exarg_T *eap)
 }
 
 /// @return  true if the string "p" looks like a ":while" or ":for" command.
-int has_loop_cmd(char *p)
+bool has_loop_cmd(char *p)
 {
   // skip modifiers, white space and ':'
   while (true) {

@@ -236,9 +236,9 @@ char *get_past_head(const char *path)
   return (char *)retval;
 }
 
-/// Return true if 'c' is a path separator.
+/// @return true if 'c' is a path separator.
 /// Note that for MS-Windows this includes the colon.
-int vim_ispathsep(int c)
+bool vim_ispathsep(int c)
 {
 #ifdef UNIX
   return c == '/';          // Unix has ':' inside file names
@@ -252,7 +252,7 @@ int vim_ispathsep(int c)
 }
 
 // Like vim_ispathsep(c), but exclude the colon for MS-Windows.
-int vim_ispathsep_nocolon(int c)
+bool vim_ispathsep_nocolon(int c)
 {
   return vim_ispathsep(c)
 #ifdef BACKSLASH_IN_FILENAME
@@ -261,8 +261,8 @@ int vim_ispathsep_nocolon(int c)
   ;
 }
 
-/// return true if 'c' is a path list separator.
-int vim_ispathlistsep(int c)
+/// @return true if 'c' is a path list separator.
+bool vim_ispathlistsep(int c)
 {
 #ifdef UNIX
   return c == ':';
@@ -970,20 +970,17 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
 
   for (int i = 0; i < gap->ga_len && !got_int; i++) {
     char *path = fnames[i];
-    int is_in_curdir;
     const char *dir_end = gettail_dir(path);
-    char *pathsep_p;
-    char *path_cutoff;
 
     len = strlen(path);
-    is_in_curdir = path_fnamencmp(curdir, path, (size_t)(dir_end - path)) == 0
-                   && curdir[dir_end - path] == NUL;
+    bool is_in_curdir = path_fnamencmp(curdir, path, (size_t)(dir_end - path)) == 0
+                        && curdir[dir_end - path] == NUL;
     if (is_in_curdir) {
       in_curdir[i] = xstrdup(path);
     }
 
     // Shorten the filename while maintaining its uniqueness
-    path_cutoff = get_path_cutoff(path, &path_ga);
+    char *path_cutoff = get_path_cutoff(path, &path_ga);
 
     // Don't assume all files can be reached without path when search
     // pattern starts with **/, so only remove path_cutoff
@@ -998,7 +995,7 @@ static void uniquefy_paths(garray_T *gap, char *pattern)
     } else {
       // Here all files can be reached without path, so get shortest
       // unique path.  We start at the end of the path. */
-      pathsep_p = path + len - 1;
+      char *pathsep_p = path + len - 1;
       while (find_previous_pathsep(path, &pathsep_p)) {
         if (vim_regexec(&regmatch, pathsep_p + 1, 0)
             && is_unique(pathsep_p + 1, gap, i)
@@ -1353,7 +1350,7 @@ void FreeWild(int count, char **files)
 }
 
 /// @return  true if we can expand this backtick thing here.
-static int vim_backtick(char *p)
+static bool vim_backtick(char *p)
 {
   return *p == '`' && *(p + 1) != NUL && *(p + strlen(p) - 1) == '`';
 }
@@ -2237,7 +2234,7 @@ int expand_wildcards(int num_pat, char **pat, int *num_files, char ***files, int
 }
 
 /// @return  true if "fname" matches with an entry in 'suffixes'.
-int match_suffix(char *fname)
+bool match_suffix(char *fname)
 {
 #define MAXSUFLEN 30  // maximum length of a file suffix
   char suf_buf[MAXSUFLEN];
@@ -2392,7 +2389,7 @@ static int path_to_absolute(const char *fname, char *buf, size_t len, int force)
 /// Check if file `fname` is a full (absolute) path.
 ///
 /// @return `true` if "fname" is absolute.
-int path_is_absolute(const char *fname)
+bool path_is_absolute(const char *fname)
 {
 #ifdef MSWIN
   if (*fname == NUL) {

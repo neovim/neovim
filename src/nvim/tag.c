@@ -207,8 +207,8 @@ static char *tagmatchname = NULL;   // name of last used tag
 // normal tagstack.
 static taggy_T ptag_entry = { NULL, INIT_FMARK, 0, 0, NULL };
 
-static int tfu_in_use = false;  // disallow recursive call of tagfunc
-static Callback tfu_cb;         // 'tagfunc' callback function
+static bool tfu_in_use = false;  // disallow recursive call of tagfunc
+static Callback tfu_cb;          // 'tagfunc' callback function
 
 // Used instead of NUL to separate tag fields in the growarrays.
 #define TAG_SEP 0x02
@@ -287,17 +287,17 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
   int cur_fnum = curbuf->b_fnum;
   int oldtagstackidx = tagstackidx;
   int prevtagstackidx = tagstackidx;
-  int new_tag = false;
-  int no_regexp = false;
+  bool new_tag = false;
+  bool no_regexp = false;
   int error_cur_match = 0;
-  int save_pos = false;
+  bool save_pos = false;
   fmark_T saved_fmark;
   int new_num_matches;
   char **new_matches;
-  int use_tagstack;
-  int skip_msg = false;
+  bool use_tagstack;
+  bool skip_msg = false;
   char *buf_ffname = curbuf->b_ffname;  // name for priority computation
-  int use_tfu = 1;
+  bool use_tfu = true;
   char *tofree = NULL;
 
   // remember the matches for the last used tag
@@ -323,7 +323,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
   if (type == DT_HELP) {
     type = DT_TAG;
     no_regexp = true;
-    use_tfu = 0;
+    use_tfu = false;
   }
 
   int prev_num_matches = num_matches;
@@ -792,7 +792,7 @@ end_do_tag:
 }
 
 // List all the matching tags.
-static void print_tag_list(int new_tag, int use_tagstack, int num_matches, char **matches)
+static void print_tag_list(bool new_tag, bool use_tagstack, int num_matches, char **matches)
 {
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
