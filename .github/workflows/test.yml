@@ -58,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [lintlua-stylua, lintlua-luacheck, lintsh, lintc-clint, lintc-clang-tidy, lintc-uncrustify]
+        build: [lintlua-stylua, lintlua-luacheck, lintsh, lintc-clint, lintc-clang-tidy, lintc-uncrustify, clang-analyzer]
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     env:
