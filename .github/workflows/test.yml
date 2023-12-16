@@ -42,7 +42,9 @@ jobs:
           cmake -S cmake.deps -B .deps -G Ninja
           cmake --build .deps
 
-      - run: cmake -B build -G Ninja
+      - run: |
+          cmake -B build -G Ninja
+          cmake --build build
 
       - run: tar -cvf lint.tar build .deps
 
