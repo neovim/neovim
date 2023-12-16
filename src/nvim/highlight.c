@@ -713,7 +713,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 
 static int rgb_blend(int ratio, int rgb1, int rgb2)
 {
-  int a = ratio, b = 100 - ratio;
+  int a = ratio;
+  int b = 100 - ratio;
   int r1 = (rgb1 & 0xFF0000) >> 16;
   int g1 = (rgb1 & 0x00FF00) >> 8;
   int b1 = (rgb1 & 0x0000FF) >> 0;
@@ -940,7 +941,11 @@ HlAttrs dict2hlattrs(Dict(highlight) *dict, bool use_rgb, int *link_id, Error *e
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, highlight, key)
   HlAttrs hlattrs = HLATTRS_INIT;
-  int32_t fg = -1, bg = -1, ctermfg = -1, ctermbg = -1, sp = -1;
+  int32_t fg = -1;
+  int32_t bg = -1;
+  int32_t ctermfg = -1;
+  int32_t ctermbg = -1;
+  int32_t sp = -1;
   int blend = -1;
   int16_t mask = 0;
   int16_t cterm_mask = 0;

@@ -279,13 +279,12 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   // - g:terminal_color_{NUM}
   // - the VTerm instance
   for (int i = 0; i < 16; i++) {
-    RgbValue color_val = -1;
     char var[64];
     snprintf(var, sizeof(var), "terminal_color_%d", i);
     char *name = get_config_string(var);
     if (name) {
       int dummy;
-      color_val = name_to_color(name, &dummy);
+      RgbValue color_val = name_to_color(name, &dummy);
       xfree(name);
 
       if (color_val != -1) {
@@ -390,7 +389,8 @@ void terminal_check_size(Terminal *term)
 
   int curwidth, curheight;
   vterm_get_size(term->vt, &curheight, &curwidth);
-  uint16_t width = 0, height = 0;
+  uint16_t width = 0;
+  uint16_t height = 0;
 
   // Check if there is a window that displays the terminal and find the maximum width and height.
   // Skip the autocommand window which isn't actually displayed.
@@ -1430,7 +1430,9 @@ static void mouse_action(Terminal *term, int button, int row, int col, bool pres
 // terminal should lose focus
 static bool send_mouse_event(Terminal *term, int c)
 {
-  int row = mouse_row, col = mouse_col, grid = mouse_grid;
+  int row = mouse_row;
+  int col = mouse_col;
+  int grid = mouse_grid;
   win_T *mouse_win = mouse_find_win(&grid, &row, &col);
   if (mouse_win == NULL) {
     goto end;

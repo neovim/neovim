@@ -597,7 +597,6 @@ static char *ins_compl_infercase_gettext(const char *str, int char_len, int comp
                                          int min_len, char **tofree)
 {
   bool has_lower = false;
-  bool was_letter = false;
 
   // Allocate wide character array for the completion and fill it.
   int *const wca = xmalloc((size_t)char_len * sizeof(*wca));
@@ -629,6 +628,7 @@ static char *ins_compl_infercase_gettext(const char *str, int char_len, int comp
   // Rule 2: No lower case, 2nd consecutive letter converted to
   // upper case.
   if (!has_lower) {
+    bool was_letter = false;
     const char *p = compl_orig_text;
     for (int i = 0; i < min_len; i++) {
       const int c = mb_ptr2char_adv(&p);

@@ -3008,7 +3008,6 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
   int try_match;
   int try_match_word;
   char *p;
-  char *line;
   bool icase;
 
   if (keytyped == NUL) {
@@ -3150,7 +3149,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
 
           // Just completed a word, check if it starts with "look".
           // search back for the start of a word.
-          line = get_cursor_line_ptr();
+          char *line = get_cursor_line_ptr();
           for (s = line + curwin->w_cursor.col; s > line; s = n) {
             n = mb_prevptr(line, s);
             if (!vim_iswordp(n)) {
@@ -3169,7 +3168,7 @@ bool in_cinkeys(int keytyped, int when, bool line_is_empty)
           if (keytyped == (int)(uint8_t)p[-1]
               || (icase && keytyped < 256
                   && TOLOWER_LOC(keytyped) == TOLOWER_LOC((uint8_t)p[-1]))) {
-            line = get_cursor_pos_ptr();
+            char *line = get_cursor_pos_ptr();
             assert(p >= look && (uintmax_t)(p - look) <= SIZE_MAX);
             if ((curwin->w_cursor.col == (colnr_T)(p - look)
                  || !vim_iswordc((uint8_t)line[-(p - look) - 1]))

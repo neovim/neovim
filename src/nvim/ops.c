@@ -390,7 +390,8 @@ static void shift_block(oparg_T *oap, int amount)
     bd.start_vcol = cts.cts_vcol;
     clear_chartabsize_arg(&cts);
 
-    int tabs = 0, spaces = 0;
+    int tabs = 0;
+    int spaces = 0;
     // OK, now total=all the VWS reqd, and textstart points at the 1st
     // non-ws char in the block.
     if (!curbuf->b_p_et) {
@@ -1891,7 +1892,8 @@ static int op_replace(oparg_T *oap, int c)
       size_t after_p_len = 0;
       int col = oldlen - bd.textcol - bd.textlen + 1;
       assert(col >= 0);
-      int newrows = 0, newcols = 0;
+      int newrows = 0;
+      int newcols = 0;
       if (had_ctrl_v_cr || (c != '\r' && c != '\n')) {
         // strlen(newp) at this point
         int newp_len = bd.textcol + bd.startspaces;
@@ -2040,11 +2042,9 @@ void op_tilde(oparg_T *oap)
   pos_T pos = oap->start;
   if (oap->motion_type == kMTBlockWise) {  // Visual block mode
     for (; pos.lnum <= oap->end.lnum; pos.lnum++) {
-      int one_change;
-
       block_prep(oap, &bd, pos.lnum, false);
       pos.col = bd.textcol;
-      one_change = swapchars(oap->op_type, &pos, bd.textlen);
+      int one_change = swapchars(oap->op_type, &pos, bd.textlen);
       did_change |= one_change;
     }
     if (did_change) {
@@ -2636,7 +2636,8 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       break;
 
     case kMTCharWise: {
-      colnr_T startcol = 0, endcol = MAXCOL;
+      colnr_T startcol = 0;
+      colnr_T endcol = MAXCOL;
       int is_oneChar = false;
       colnr_T cs, ce;
       char *p = ml_get(lnum);
@@ -2685,8 +2686,7 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
       if (endcol == MAXCOL) {
         endcol = (colnr_T)strlen(p);
       }
-      if (startcol > endcol
-          || is_oneChar) {
+      if (startcol > endcol || is_oneChar) {
         bd.textlen = 0;
       } else {
         bd.textlen = endcol - startcol + oap->inclusive;

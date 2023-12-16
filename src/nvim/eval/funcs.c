@@ -4054,8 +4054,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool clear_env = false;
   bool overlapped = false;
   ChannelStdinMode stdin_mode = kChannelStdinPipe;
-  CallbackReader on_stdout = CALLBACK_READER_INIT,
-                 on_stderr = CALLBACK_READER_INIT;
+  CallbackReader on_stdout = CALLBACK_READER_INIT;
+  CallbackReader on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   char *cwd = NULL;
   dictitem_T *job_env = NULL;
@@ -4118,7 +4118,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     }
   }
 
-  uint16_t width = 0, height = 0;
+  uint16_t width = 0;
+  uint16_t height = 0;
   char *term_name = NULL;
 
   if (pty) {
@@ -8553,8 +8554,8 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  CallbackReader on_stdout = CALLBACK_READER_INIT,
-                 on_stderr = CALLBACK_READER_INIT;
+  CallbackReader on_stdout = CALLBACK_READER_INIT;
+  CallbackReader on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   dict_T *job_opts = NULL;
   const char *cwd = ".";

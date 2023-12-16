@@ -538,7 +538,8 @@ void grid_line_flush_if_valid_row(void)
 void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int end_col, int c1,
                int c2, int attr)
 {
-  int row_off = 0, col_off = 0;
+  int row_off = 0;
+  int col_off = 0;
   grid_adjust(&grid, &row_off, &col_off);
   start_row += row_off;
   end_row += row_off;
@@ -650,8 +651,6 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
 {
   bool redraw_next;                         // redraw_this for next character
   bool clear_next = false;
-  int char_cells;                           // 1: normal char
-                                            // 2: occupies two display cells
   assert(0 <= row && row < grid->rows);
   // TODO(bfredl): check all callsites and eliminate
   // Check for illegal col, just in case
@@ -703,10 +702,12 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
 
   redraw_next = grid_char_needs_redraw(grid, col, (size_t)col + off_to, endcol - col);
 
-  int start_dirty = -1, end_dirty = 0;
+  int start_dirty = -1;
+  int end_dirty = 0;
 
   while (col < endcol) {
-    char_cells = 1;
+    int char_cells = 1;  // 1: normal char
+                         // 2: occupies two display cells
     if (col + 1 < endcol && linebuf_char[col + 1] == 0) {
       char_cells = 2;
     }

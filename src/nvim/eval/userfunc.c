@@ -105,7 +105,6 @@ static int get_function_args(char **argp, char endchar, garray_T *newargs, int *
   char *arg = *argp;
   char *p = arg;
   uint8_t c;
-  int i;
 
   if (newargs != NULL) {
     ga_init(newargs, (int)sizeof(char *), 3);
@@ -147,7 +146,7 @@ static int get_function_args(char **argp, char endchar, garray_T *newargs, int *
         arg = xstrdup(arg);
 
         // Check for duplicate argument name.
-        for (i = 0; i < newargs->ga_len; i++) {
+        for (int i = 0; i < newargs->ga_len; i++) {
           if (strcmp(((char **)(newargs->ga_data))[i], arg) == 0) {
             semsg(_("E853: Duplicate argument name: %s"), arg);
             xfree(arg);
@@ -922,7 +921,6 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
   static int depth = 0;
   dictitem_T *v;
   int fixvar_idx = 0;           // index in fc_fixvar[]
-  int ai;
   bool islambda = false;
   char numbuf[NUMBUFLEN];
   char *name;
@@ -1025,7 +1023,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars, typval_T *rett
     bool isdefault = false;
     typval_T def_rettv;
 
-    ai = i - fp->uf_args.ga_len;
+    int ai = i - fp->uf_args.ga_len;
     if (ai < 0) {
       // named argument a:name
       name = FUNCARG(fp, i);

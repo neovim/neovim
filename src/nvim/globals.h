@@ -124,7 +124,7 @@ EXTERN bool redraw_cmdline INIT( = false);          // cmdline must be redrawn
 EXTERN bool redraw_mode INIT( = false);             // mode must be redrawn
 EXTERN bool clear_cmdline INIT( = false);           // cmdline must be cleared
 EXTERN bool mode_displayed INIT( = false);          // mode is being displayed
-EXTERN int cmdline_star INIT( = false);             // cmdline is encrypted
+EXTERN int cmdline_star INIT( = 0);                 // cmdline is encrypted
 EXTERN bool redrawing_cmdline INIT( = false);       // cmdline is being redrawn
 EXTERN bool cmdline_was_last_drawn INIT( = false);  // cmdline was last drawn
 
@@ -591,9 +591,9 @@ EXTERN int reg_executing INIT( = 0);     // register being executed or zero
 EXTERN bool pending_end_reg_executing INIT( = false);
 EXTERN int reg_recorded INIT( = 0);      // last recorded register or zero
 
-EXTERN int no_mapping INIT( = false);    // currently no mapping allowed
+EXTERN int no_mapping INIT( = 0);        // currently no mapping allowed
 EXTERN int no_zero_mapping INIT( = 0);   // mapping zero not allowed
-EXTERN int allow_keys INIT( = false);    // allow key codes when no_mapping is set
+EXTERN int allow_keys INIT( = 0);        // allow key codes when no_mapping is set
 EXTERN int no_u_sync INIT( = 0);         // Don't call u_sync()
 EXTERN int u_sync_once INIT( = 0);       // Call u_sync() once when evaluating
                                          // an expression.

@@ -73,6 +73,24 @@ should be used instead of declaration and assignment, e.g. >c
     int j = g();  // GOOD: declaration has initialization.
 
 
+Initialization ~
+
+Multiple declarations can be defined in one line if they aren't initialized,
+but each initialization should be done on a separate line.
+
+>c
+    int i;
+    int j; // GOOD
+
+    int i, j;   // GOOD: multiple declarations, no initialization.
+
+    int i = 0;
+    int j = 0;  // GOOD: one initialization per line.
+
+    int i = 0, j;  // BAD: multiple declarations with initialization.
+
+    int i = 0, j = 0;  // BAD: multiple declarations with initialization.
+
 ==============================================================================
 Nvim-Specific Magic
 

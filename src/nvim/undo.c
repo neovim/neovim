@@ -963,12 +963,11 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, const char *file_name)
   }
 
   // Unserialize all extmark undo information
-  ExtmarkUndoObject *extup;
   kv_init(uhp->uh_extmark);
 
   while ((c = undo_read_2c(bi)) == UF_ENTRY_MAGIC) {
     bool error = false;
-    extup = unserialize_extmark(bi, &error, file_name);
+    ExtmarkUndoObject *extup = unserialize_extmark(bi, &error, file_name);
     if (error) {
       kv_destroy(uhp->uh_extmark);
       xfree(extup);
@@ -1553,7 +1552,9 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
   // We have put all of the headers into a table. Now we iterate through the
   // table and swizzle each sequence number we have stored in uh_*_seq into
   // a pointer corresponding to the header with that sequence number.
-  int16_t old_idx = -1, new_idx = -1, cur_idx = -1;
+  int16_t old_idx = -1;
+  int16_t new_idx = -1;
+  int16_t cur_idx = -1;
   for (int i = 0; i < num_head; i++) {
     u_header_T *uhp = uhp_table[i];
     if (uhp == NULL) {

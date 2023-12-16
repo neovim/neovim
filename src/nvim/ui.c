@@ -198,7 +198,8 @@ void ui_refresh(void)
     return;
   }
 
-  int width = INT_MAX, height = INT_MAX;
+  int width = INT_MAX;
+  int height = INT_MAX;
   bool ext_widgets[kUIExtCount];
   for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
     ext_widgets[i] = true;
