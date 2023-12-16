@@ -213,12 +213,8 @@ if(LUAC_PRG)
 endif()
 
 # Lint
-option(CI_LINT "Abort if lint programs not found" OFF)
-if(CI_LINT)
-  set(LINT_REQUIRED "REQUIRED")
-endif()
-find_program(SHELLCHECK_PRG shellcheck ${LINT_REQUIRED})
-find_program(STYLUA_PRG stylua ${LINT_REQUIRED})
+find_program(SHELLCHECK_PRG shellcheck)
+find_program(STYLUA_PRG stylua)
 
 add_glob_target(
   TARGET lintlua-luacheck

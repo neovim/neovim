@@ -25,9 +25,9 @@ runs:
     # if it makes the expression below simpler. hashFiles() has a timer that
     # will fail the job if it times out, which can happen if there are too many
     # files to search through.
-    - uses: actions/cache@v3
-      with:
-        path: .deps
-        key: ${{ env.CACHE_KEY }}-${{ steps.image.outputs.version }}-${{ hashFiles('cmake**',
-          '.github/**', 'CMakeLists.txt',
-          'runtime/CMakeLists.txt', 'src/nvim/**/CMakeLists.txt') }}
+    # - uses: actions/cache@v3
+    #   with:
+    #     path: .deps
+    #     key: ${{ env.CACHE_KEY }}-${{ steps.image.outputs.version }}-${{ hashFiles('cmake**',
+    #       '.github/**', 'CMakeLists.txt',
+    #       'runtime/CMakeLists.txt', 'src/nvim/**/CMakeLists.txt') }}
