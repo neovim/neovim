@@ -316,12 +316,12 @@ void shift_line(int left, int round, int amount, int call_changed_bytes)
         count = 0;
       }
     } else {
-      if (sw_val * amount > INT_MAX - count) {
-        count = INT_MAX;
-      } else {
-        count += sw_val * amount;
-      }
+      count += sw_val * amount;
     }
+  }
+
+  if (count > INT_MAX) {
+    count = INT_MAX;
   }
 
   // Set new indent
