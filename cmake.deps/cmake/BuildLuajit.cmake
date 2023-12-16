@@ -18,7 +18,7 @@ function(BuildLuajit)
   ExternalProject_Add(${_luajit_TARGET}
     URL ${LUAJIT_URL}
     URL_HASH SHA256=${LUAJIT_SHA256}
-    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luajit
+    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/${_luajit_TARGET}
     CONFIGURE_COMMAND "${_luajit_CONFIGURE_COMMAND}"
     BUILD_IN_SOURCE 1
     BUILD_COMMAND "${_luajit_BUILD_COMMAND}"
