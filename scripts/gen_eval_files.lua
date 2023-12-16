@@ -59,7 +59,7 @@ local LUA_KEYWORDS = {
 }
 
 local OPTION_TYPES = {
-  bool = 'boolean',
+  boolean = 'boolean',
   number = 'integer',
   string = 'string',
 }
@@ -603,7 +603,7 @@ local function build_option_tags(opt)
   local tags = { opt.full_name }
 
   tags[#tags + 1] = opt.abbreviation
-  if opt.type == 'bool' then
+  if opt.type == 'boolean' then
     for i = 1, #tags do
       tags[#tags + 1] = 'no' .. tags[i]
     end
@@ -642,7 +642,7 @@ local function render_option_doc(_f, opt, write)
     name_str = string.format("'%s'", opt.full_name)
   end
 
-  local otype = opt.type == 'bool' and 'boolean' or opt.type
+  local otype = opt.type == 'boolean' and 'boolean' or opt.type
   if opt.defaults.doc or opt.defaults.if_true ~= nil or opt.defaults.meta ~= nil then
     local v = render_option_default(opt.defaults, true)
     local pad = string.rep('\t', math.max(1, math.ceil((24 - #name_str) / 8)))

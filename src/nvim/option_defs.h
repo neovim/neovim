@@ -8,13 +8,20 @@
 #include "nvim/regexp_defs.h"
 #include "nvim/types_defs.h"
 
-/// Option value type
+/// Option value type.
+/// These types are also used as type flags by using the type value as an index for the type_flags
+/// bit field (@see option_has_type()).
 typedef enum {
-  kOptValTypeNil = 0,
+  kOptValTypeNil = -1,  // Make sure Nil can't be bitshifted and used as an option type flag.
   kOptValTypeBoolean,
   kOptValTypeNumber,
   kOptValTypeString,
 } OptValType;
+
+/// Always update this whenever a new option type is added.
+#define kOptValTypeSize (kOptValTypeString + 1)
+
+typedef uint32_t OptTypeFlags;
 
 typedef union {
   // boolean options are actually tri-states because they have a third "None" value.

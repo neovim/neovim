@@ -346,6 +346,9 @@ The following changes to existing APIs or features add new behavior.
 
 • Added "force_crlf" option field in |nvim_open_term()|.
 
+• Attempting to set an invalid keycode option (e.g. `set t_foo=123`) no longer
+  gives an error.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

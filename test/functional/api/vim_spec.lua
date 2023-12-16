@@ -1478,9 +1478,9 @@ describe('API', function()
         pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 42}))
       eq("Invalid 'value': expected valid option type, got Array",
         pcall_err(nvim, 'set_option_value', 'scrolloff', {}, {}))
-      eq("Invalid value for option 'scrolloff': expected Number, got Boolean true",
+      eq("Invalid value for option 'scrolloff': expected number, got boolean true",
         pcall_err(nvim, 'set_option_value', 'scrolloff', true, {}))
-      eq("Invalid value for option 'scrolloff': expected Number, got String \"wrong\"",
+      eq("Invalid value for option 'scrolloff': expected number, got string \"wrong\"",
         pcall_err(nvim, 'set_option_value', 'scrolloff', 'wrong', {}))
     end)
 
