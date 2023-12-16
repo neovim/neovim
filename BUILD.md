@@ -141,25 +141,17 @@ https://github.com/cascent/neovim-cygwin was built on Cygwin 2.9.0. Newer `libuv
 3. You have two options:
     - Build using `cmake` and `Ninja` generator:
       ```cmd
-      mkdir .deps
-      cd .deps
-      cmake -G Ninja ..\cmake.deps\
-      ninja
-      cd ..
-
-      mkdir build
-      cd build
-      cmake -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo ..
-      ninja
-      ninja install
+      cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
+      cmake --build .deps
+      cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
+      cmake --build build
       ```
       If you cannot install neovim with `ninja install` due to permission restriction, you can install neovim in a directory you have write access to.
       ```cmd
-      mkdir build
-      cd build
-      cmake -G Ninja -D CMAKE_INSTALL_PREFIX=C:\nvim -D CMAKE_BUILD_TYPE=RelWithDebInfo ..
-      ninja
-      ninja install
+      cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
+      cmake --build .deps
+      cmake -B build -G Ninja -D CMAKE_INSTALL_PREFIX=C:\nvim -D CMAKE_BUILD_TYPE=RelWithDebInfo
+      cmake --build build
       ```
     - Or, alternatively, you can use `mingw32-make`:
       ```cmd
@@ -246,41 +238,32 @@ Reference the [Debian package](https://packages.debian.org/sid/source/neovim) (o
 To build the bundled dependencies using CMake:
 
 ```sh
-mkdir .deps
-cd .deps
-cmake ../cmake.deps
-make
+cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build .deps
 ```
 
 By default the libraries and headers are placed in `.deps/usr`. Now you can build Neovim:
 
 ```sh
-mkdir build
-cd build
-cmake ..
-make
+cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build
 ```
 
 ### How to build without "bundled" dependencies
 
 1. Manually install the dependencies:
     - libuv libluv libtermkey luajit lua-lpeg lua-mpack msgpack-c tree-sitter unibilium
-2. Do the "CMake dance": create a `build` directory, switch to it, and run CMake:
+2. Run CMake:
    ```sh
-   mkdir build
-   cd build
-   cmake ..
+   cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
+   cmake --build build
    ```
    If all the dependencies are not available in the package, you can use only some of the bundled dependencies as follows (example of using `ninja`):
    ```sh
-   mkdir .deps
-   cd .deps
-   cmake ../cmake.deps/ -DUSE_BUNDLED=OFF -DUSE_BUNDLED_LIBVTERM=ON -DUSE_BUNDLED_TS=ON
-   ninja
-   cd ..
-   mkdir build
-   cd build
-   cmake ..
+   cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_BUNDLED=OFF -DUSE_BUNDLED_LIBVTERM=ON -DUSE_BUNDLED_TS=ON
+   cmake --build .deps
+   cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
+   cmake --build build
    ```
 3. Run `make`, `ninja`, or whatever build tool you [told CMake to generate](#xcode-and-msvc-project-files).
     - Using `ninja` is strongly recommended.
@@ -289,15 +272,10 @@ make
 
 ```sh
 sudo apt install luajit libluajit-5.1-dev lua-mpack lua-lpeg libunibilium-dev libmsgpack-dev libtermkey-dev
-mkdir .deps
-cd .deps
-cmake ../cmake.deps/ -DUSE_BUNDLED=OFF -DUSE_BUNDLED_LIBUV=ON -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_LIBVTERM=ON -DUSE_BUNDLED_TS=ON -G Ninja
-ninja
-cd ..
-mkdir build
-cd build
-cmake ..
-ninja
+cmake -S cmake.deps -B .deps -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_BUNDLED=OFF -DUSE_BUNDLED_LIBUV=ON -DUSE_BUNDLED_LUV=ON -DUSE_BUNDLED_LIBVTERM=ON -DUSE_BUNDLED_TS=ON
+cmake --build .deps
+cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build
 ```
 
 #### Example of using a Makefile
@@ -316,7 +294,7 @@ ninja
 General requirements (see [#1469](https://github.com/neovim/neovim/issues/1469#issuecomment-63058312)):
 
 - Clang or GCC version 4.9+
-- CMake version 3.10+, built with TLS/SSL support
+- CMake version 3.13+, built with TLS/SSL support
   - Optional: Get the latest CMake from an [installer](https://github.com/Kitware/CMake/releases) or the [Python package](https://pypi.org/project/cmake/) (`pip install cmake`)
 
 Platform-specific requirements are listed below.
