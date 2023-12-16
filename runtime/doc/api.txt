@@ -1582,6 +1582,19 @@ nvim_subscribe({event})                                     *nvim_subscribe()*
     Parameters: ~
       • {event}  Event type string
 
+nvim_terminal_get_info({buffer}, {*opts})           *nvim_terminal_get_info()*
+    Get information about a terminal buffer. If bufnr is invalid, an empty
+    dict is returned.
+
+    Parameters: ~
+      • {buffer}  Buffer handle, or 0 for current buffer.
+      • {opts}    Optional parameters. Currently unused.
+
+    Return: ~
+        Dictonary containing these keys:
+        • cursor: (dictonary) include row, col, visible.
+        • mouse: (boolean)
+
 nvim_unsubscribe({event})                                 *nvim_unsubscribe()*
     Unsubscribes to event broadcasts.
 

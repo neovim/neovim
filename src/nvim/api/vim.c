@@ -21,6 +21,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/channel.h"
 #include "nvim/context.h"
 #include "nvim/cursor.h"
@@ -2325,4 +2326,24 @@ Dictionary nvim_complete_set(Integer index, Dict(complete_set) *opts)
     }
   }
   return rv;
+}
+
+/// Get information about a terminal buffer.
+/// If bufnr is invalid, an empty dict is returned.
+///
+/// @param buffer           Buffer handle, or 0 for current buffer.
+/// @param opts       Optional parameters. Currently unused.
+/// @return Dictonary containing these keys:
+///       - cursor: (dictonary) include row, col, visible.
+///       - mouse:  (boolean)
+Dictionary nvim_terminal_get_info(Buffer buffer, Dict(empty) *opts, Error *err)
+  FUNC_API_SINCE(12)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf || !buf->terminal) {
+    return rv;
+  }
+
+  return terminal_get_info(buf->terminal);
 }

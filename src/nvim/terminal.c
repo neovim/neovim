@@ -1830,6 +1830,18 @@ static char *get_config_string(char *key)
   return NULL;
 }
 
+Dictionary terminal_get_info(Terminal *term)
+{
+  Dictionary result = ARRAY_DICT_INIT;
+  Dictionary cursor = ARRAY_DICT_INIT;
+  PUT(cursor, "row", INTEGER_OBJ(term->cursor.row));
+  PUT(cursor, "col", INTEGER_OBJ(term->cursor.col));
+  PUT(cursor, "visible", BOOLEAN_OBJ(term->cursor.visible));
+  PUT(result, "cursor", DICTIONARY_OBJ(cursor));
+  PUT(result, "mouse", BOOLEAN_OBJ(term->forward_mouse));
+  return result;
+}
+
 // }}}
 
 // vim: foldmethod=marker

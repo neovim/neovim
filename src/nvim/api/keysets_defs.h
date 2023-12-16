@@ -351,3 +351,8 @@ typedef struct {
   OptionalKeys is_set__complete_set_;
   String info;
 } Dict(complete_set);
+
+typedef struct {
+  OptionalKeys is_set__terminal_get_;
+  Integer bufnr;
+} Dict(terminal_get);

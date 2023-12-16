@@ -1,6 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local child_session = require('test.functional.terminal.helpers')
+local Screen = require('test.functional.ui.screen')
 local ok = helpers.ok
+local eq = helpers.eq
 
 if helpers.skip(helpers.is_os('win')) then return end
 
@@ -70,5 +72,24 @@ describe('api', function()
     ]])
 
     socket_session1:request("nvim_command", "qa!")
+  end)
+end)
+
+describe("terminal api", function()
+  it("nvim_terminal_get_info", function()
+    helpers.clear()
+    local screen = Screen.new(50, 10)
+    screen:attach()
+    helpers.command("terminal")
+    local buf = helpers.nvim('get_current_buf').id
+    eq({
+      cursor = {col = 0, row = 0, visible = true},
+      mouse = false
+    }, helpers.meths.terminal_get_info(buf, {}))
+
+    --invalid
+    helpers.command('new')
+    buf = helpers.nvim('get_current_buf').id
+    eq({}, helpers.meths.terminal_get_info(buf, {}))
   end)
 end)

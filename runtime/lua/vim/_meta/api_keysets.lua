@@ -272,6 +272,9 @@ error('Cannot require a meta file')
 --- @field ui_watched? boolean
 --- @field undo_restore? boolean
 
+--- @class vim.api.keyset.terminal_get
+--- @field bufnr? integer
+
 --- @class vim.api.keyset.user_command
 --- @field addr? any
 --- @field bang? boolean

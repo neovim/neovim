@@ -1931,6 +1931,14 @@ function vim.api.nvim_tabpage_list_wins(tabpage) end
 --- @param value any Variable value
 function vim.api.nvim_tabpage_set_var(tabpage, name, value) end
 
+--- Get information about a terminal buffer. If bufnr is invalid, an empty
+--- dict is returned.
+---
+--- @param buffer integer Buffer handle, or 0 for current buffer.
+--- @param opts vim.api.keyset.empty Optional parameters. Currently unused.
+--- @return table<string,any>
+function vim.api.nvim_terminal_get_info(buffer, opts) end
+
 --- Calls a function with window as temporary current window.
 ---
 --- @param window integer Window handle, or 0 for current window
