@@ -4217,7 +4217,9 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
 
     keep_filetype = true;                 // don't detect 'filetype'
     apply_autocmds(EVENT_BUFREADPOST, "quickfix", NULL, false, curbuf);
-    apply_autocmds(EVENT_BUFWINENTER, "quickfix", NULL, false, curbuf);
+    // TODO(tudor): assume qf_winid is curwin->handle? or refactor `int qf_winid` into `win_T* qf_win`
+    // or add apply_autocmds_winid, we only need the ID anyway
+    apply_autocmds_win(EVENT_BUFWINENTER, "quickfix", NULL, false, curbuf, curwin);
     keep_filetype = false;
     curbuf->b_ro_locked--;
 

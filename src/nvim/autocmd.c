@@ -1159,7 +1159,7 @@ int do_doautocmd(char *arg_start, bool do_msg, bool *did_something)
   // Loop over the events.
   while (*arg && !ends_excmd(*arg) && !ascii_iswhite(*arg)) {
     if (apply_autocmds_group(event_name2nr(arg, &arg), fname, NULL, true, group,
-                             curbuf, NULL, NULL)) {
+                             curbuf, NULL, NULL, NULL)) {
       nothing_done = false;
     }
   }
@@ -1473,7 +1473,23 @@ win_found:
 /// @return true if some commands were executed.
 bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_T *buf)
 {
-  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL, NULL);
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL, NULL, NULL);
+}
+
+/// Like apply_autocmds(), but with an extra "win" argument
+///
+/// @param event event that occurred
+/// @param fname filename, NULL or empty means use actual file name
+/// @param fname_io filename to use for <afile> on cmdline
+/// @param force When true, ignore autocmd_busy
+/// @param buf Buffer for <abuf>
+/// @param win Window for ev.win
+///
+/// @return true if some commands were executed.
+bool apply_autocmds_win(event_T event, char *fname, char *fname_io, bool force, buf_T *buf,
+                        win_T *win)
+{
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, win, NULL, NULL);
 }
 
 /// Like apply_autocmds(), but with extra "eap" argument.  This takes care of
@@ -1490,10 +1506,10 @@ bool apply_autocmds(event_T event, char *fname, char *fname_io, bool force, buf_
 bool apply_autocmds_exarg(event_T event, char *fname, char *fname_io, bool force, buf_T *buf,
                           exarg_T *eap)
 {
-  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, eap, NULL);
+  return apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL, eap, NULL);
 }
 
-/// Like apply_autocmds(), but handles the caller's retval.  If the script
+/// Like apply_autocmds_win(), but handles the caller's retval.  If the script
 /// processing is being aborted or if retval is FAIL when inside a try
 /// conditional, no autocommands are executed.  If otherwise the autocommands
 /// cause the script to be aborted, retval is set to FAIL.
@@ -1503,17 +1519,19 @@ bool apply_autocmds_exarg(event_T event, char *fname, char *fname_io, bool force
 /// @param fname_io fname to use for <afile> on cmdline
 /// @param force When true, ignore autocmd_busy
 /// @param buf Buffer for <abuf>
+/// @param win Window for ev.win
 /// @param[in,out] retval caller's retval
 ///
 /// @return true if some autocommands were executed
 bool apply_autocmds_retval(event_T event, char *fname, char *fname_io, bool force, buf_T *buf,
-                           int *retval)
+                           win_T *win, int *retval)
 {
   if (should_abort(*retval)) {
     return false;
   }
 
-  bool did_cmd = apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, NULL, NULL);
+  bool did_cmd = apply_autocmds_group(event, fname, fname_io, force, AUGROUP_ALL, buf, win, NULL,
+                                      NULL);
   if (did_cmd && aborting()) {
     *retval = FAIL;
   }
@@ -1561,7 +1579,7 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 ///
 /// @return true if some commands were executed.
 bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force, int group,
-                          buf_T *buf, exarg_T *eap, Object *data)
+                          buf_T *buf, win_T *win, exarg_T *eap, Object *data)
 {
   char *sfname = NULL;  // short file name
   bool retval = false;
@@ -1621,6 +1639,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   char *save_autocmd_fname = autocmd_fname;
   bool save_autocmd_fname_full = autocmd_fname_full;
   int save_autocmd_bufnr = autocmd_bufnr;
+  int save_autocmd_winid = autocmd_winid;
   char *save_autocmd_match = autocmd_match;
   int save_autocmd_busy = autocmd_busy;
   int save_autocmd_nested = autocmd_nested;
@@ -1652,6 +1671,9 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
 
   // Set the buffer number to be used for <abuf>.
   autocmd_bufnr = buf == NULL ? 0 : buf->b_fnum;
+
+  // Set the window id to be used for ev.win
+  autocmd_winid = win == NULL ? curwin->handle : win->handle;
 
   // When the file name is NULL or empty, use the file name of buffer "buf".
   // Always use the full path of the file name to match with, in case
@@ -1833,6 +1855,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   autocmd_fname = save_autocmd_fname;
   autocmd_fname_full = save_autocmd_fname_full;
   autocmd_bufnr = save_autocmd_bufnr;
+  autocmd_winid = save_autocmd_winid;
   autocmd_match = save_autocmd_match;
   current_sctx = save_current_sctx;
   restore_funccal();
@@ -1996,6 +2019,8 @@ static bool call_autocmd_callback(const AutoCmd *ac, const AutoPatCmd *apc)
     PUT(data, "match", CSTR_TO_OBJ(autocmd_match));
     PUT(data, "file", CSTR_TO_OBJ(autocmd_fname));
     PUT(data, "buf", INTEGER_OBJ(autocmd_bufnr));
+    // disable to make sure that the PR doesn't break anything that already exists in unexpected ways
+    // PUT(data, "win", INTEGER_OBJ(autocmd_winid));
 
     if (apc->data) {
       PUT(data, "data", copy_object(*apc->data, NULL));

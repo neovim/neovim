@@ -2565,10 +2565,11 @@ int do_ecmd(int fnum, char *ffname, char *sfname, exarg_T *eap, linenr_T newlnum
       do_modelines(OPT_WINONLY);
 
       apply_autocmds_retval(EVENT_BUFENTER, NULL, NULL, false, curbuf,
-                            &retval);
+                            NULL, &retval);
       if ((flags & ECMD_NOWINENTER) == 0) {
+        // TODO(tudor): save the above curwin in case BUFENTER changes it?
         apply_autocmds_retval(EVENT_BUFWINENTER, NULL, NULL, false, curbuf,
-                              &retval);
+                              curwin, &retval);
       }
     }
     check_arg_idx(curwin);
