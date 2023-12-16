@@ -103,6 +103,7 @@
 #include "nvim/statusline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
+#include "nvim/syntax_defs.h"
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
@@ -621,7 +622,8 @@ int update_screen(void)
     win_grid_alloc(wp);
 
     if (wp->w_redr_border || wp->w_redr_type >= UPD_NOT_VALID) {
-      win_redr_border(wp);
+      // win_redr_border(wp);
+      grid_draw_border(&wp->w_grid_alloc, wp->w_float_config, wp->w_border_adj, (int)wp->w_p_winbl);
     }
 
     if (wp->w_redr_type != 0) {
@@ -700,109 +702,6 @@ void end_search_hl(void)
 
   vim_regfree(screen_search_hl.rm.regprog);
   screen_search_hl.rm.regprog = NULL;
-}
-
-static void win_redr_bordertext(win_T *wp, VirtText vt, int col)
-{
-  for (size_t i = 0; i < kv_size(vt);) {
-    int attr = 0;
-    char *text = next_virt_text_chunk(vt, &i, &attr);
-    if (text == NULL) {
-      break;
-    }
-    attr = hl_apply_winblend(wp, attr);
-    col += grid_line_puts(col, text, -1, attr);
-  }
-}
-
-int win_get_bordertext_col(int total_col, int text_width, AlignTextPos align)
-{
-  switch (align) {
-  case kAlignLeft:
-    return 1;
-  case kAlignCenter:
-    return MAX((total_col - text_width) / 2 + 1, 1);
-  case kAlignRight:
-    return MAX(total_col - text_width + 1, 1);
-  }
-  UNREACHABLE;
-}
-
-static void win_redr_border(win_T *wp)
-{
-  wp->w_redr_border = false;
-  if (!(wp->w_floating && wp->w_float_config.border)) {
-    return;
-  }
-
-  ScreenGrid *grid = &wp->w_grid_alloc;
-
-  schar_T chars[8];
-  for (int i = 0; i < 8; i++) {
-    chars[i] = schar_from_str(wp->w_float_config.border_chars[i]);
-  }
-  int *attrs = wp->w_float_config.border_attr;
-
-  int *adj = wp->w_border_adj;
-  int irow = wp->w_height_inner + wp->w_winbar_height;
-  int icol = wp->w_width_inner;
-
-  if (adj[0]) {
-    grid_line_start(grid, 0);
-    if (adj[3]) {
-      grid_line_put_schar(0, chars[0], attrs[0]);
-    }
-
-    for (int i = 0; i < icol; i++) {
-      grid_line_put_schar(i + adj[3], chars[1], attrs[1]);
-    }
-
-    if (wp->w_float_config.title) {
-      int title_col = win_get_bordertext_col(icol, wp->w_float_config.title_width,
-                                             wp->w_float_config.title_pos);
-      win_redr_bordertext(wp, wp->w_float_config.title_chunks, title_col);
-    }
-    if (adj[1]) {
-      grid_line_put_schar(icol + adj[3], chars[2], attrs[2]);
-    }
-    grid_line_flush();
-  }
-
-  for (int i = 0; i < irow; i++) {
-    if (adj[3]) {
-      grid_line_start(grid, i + adj[0]);
-      grid_line_put_schar(0, chars[7], attrs[7]);
-      grid_line_flush();
-    }
-    if (adj[1]) {
-      int ic = (i == 0 && !adj[0] && chars[2]) ? 2 : 3;
-      grid_line_start(grid, i + adj[0]);
-      grid_line_put_schar(icol + adj[3], chars[ic], attrs[ic]);
-      grid_line_flush();
-    }
-  }
-
-  if (adj[2]) {
-    grid_line_start(grid, irow + adj[0]);
-    if (adj[3]) {
-      grid_line_put_schar(0, chars[6], attrs[6]);
-    }
-
-    for (int i = 0; i < icol; i++) {
-      int ic = (i == 0 && !adj[3] && chars[6]) ? 6 : 5;
-      grid_line_put_schar(i + adj[3], chars[ic], attrs[ic]);
-    }
-
-    if (wp->w_float_config.footer) {
-      int footer_col = win_get_bordertext_col(icol, wp->w_float_config.footer_width,
-                                              wp->w_float_config.footer_pos);
-      win_redr_bordertext(wp, wp->w_float_config.footer_chunks, footer_col);
-    }
-    if (adj[1]) {
-      grid_line_put_schar(icol + adj[3], chars[4], attrs[4]);
-    }
-    grid_line_flush();
-  }
 }
 
 /// Set cursor to its position in the current window.

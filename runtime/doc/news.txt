@@ -252,6 +252,9 @@ The following new APIs and features were added.
 • |vim.text.hexencode()| and |vim.text.hexdecode()| convert strings to and
   from byte representations.
 
+• Added new option 'completepopup' for config completion window and info preview
+  floating window.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

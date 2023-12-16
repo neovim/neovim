@@ -3981,6 +3981,136 @@ describe('builtin popupmenu', function()
         end)
       end)
     end
+
+    describe("completepopup", function()
+      before_each(function()
+        screen:try_resize(30, 11)
+        exec([[
+          funct Omni_test(findstart, base)
+            if a:findstart
+              return col(".") - 1
+            endif
+            return [#{word: "one", info: "1info"}, #{word: "two", info: "2info"}, #{word: "three", info: "3info"}]
+          endfunc
+          set omnifunc=Omni_test
+          set completeopt-=preview
+          set completepopup=border:rounded
+        ]])
+      end)
+
+      it('can set border', function()
+        feed('Gi<C-x><C-o>')
+        if multigrid then
+            screen:expect{grid=[[
+            ## grid 1
+              [2:------------------------------]|
+              [2:------------------------------]|
+              [2:------------------------------]|
+              [2:------------------------------]|
+              [2:------------------------------]|
+              [2:------------------------------]|
+              [2:------------------------------]|
+              [2:------------------------------]|
+              [2:------------------------------]|
+              [2:------------------------------]|
+              [3:------------------------------]|
+            ## grid 2
+              one^                           |
+              {1:~                             }|
+              {1:~                             }|
+              {1:~                             }|
+              {1:~                             }|
+              {1:~                             }|
+              {1:~                             }|
+              {1:~                             }|
+              {1:~                             }|
+              {1:~                             }|
+            ## grid 3
+              {2:-- }{5:match 1 of 3}               |
+            ## grid 4
+              ╭───────────────╮|
+              │{s:one            }│|
+              │{n:two            }│|
+              │{n:three          }│|
+              ╰───────────────╯|
+            ]], float_pos={
+              [4] = {{id = -1}, "NW", 2, 1, 0, false, 100};
+            }, win_viewport={
+              [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 3, linecount = 1, sum_scroll_delta = 0};
+            }}
+        else
+          screen:expect{grid=[[
+            one^                           |
+            ╭───────────────╮{1:             }|
+            │{s:one            }│{1:             }|
+            │{n:two            }│{1:             }|
+            │{n:three          }│{1:             }|
+            ╰───────────────╯{1:             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {2:-- }{5:match 1 of 3}               |
+          ]]}
+        end
+        -- avoid out of screen
+        feed(('a'):rep(25)..'<C-x><C-o>')
+        if multigrid then
+          screen:expect{grid=[[
+          ## grid 1
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [3:------------------------------]|
+          ## grid 2
+            oneaaaaaaaaaaaaaaaaaaaaaaaaaon|
+            e^                             |
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+          ## grid 3
+            {2:-- }{5:match 1 of 3}               |
+          ## grid 4
+            ╭──────╮|
+            │{s: one  }│|
+            │{n: two  }│|
+            │{n: three}│|
+            ╰──────╯|
+          ]], float_pos={
+            [4] = {{id = -1}, "NW", 2, 2, 22, false, 100};
+          }, win_viewport={
+            [2] = {win = {id = 1000}, topline = 0, botline = 2, curline = 0, curcol = 31, linecount = 1, sum_scroll_delta = 0};
+          }}
+        else
+          screen:expect{grid=[[
+            oneaaaaaaaaaaaaaaaaaaaaaaaaaon|
+            e^                             |
+            {1:~                     }╭──────╮|
+            {1:~                     }│{s: one  }│|
+            {1:~                     }│{n: two  }│|
+            {1:~                     }│{n: three}│|
+            {1:~                     }╰──────╯|
+            {1:~                             }|
+            {1:~                             }|
+            {1:~                             }|
+            {2:-- }{5:match 1 of 3}               |
+          ]]}
+        end
+      end)
+
+    end)
   end
 
   describe('with ext_multigrid', function()

@@ -427,6 +427,7 @@ EXTERN char *p_cpt;             ///< 'complete'
 EXTERN OptInt p_columns;        ///< 'columns'
 EXTERN int p_confirm;           ///< 'confirm'
 EXTERN char *p_cot;             ///< 'completeopt'
+EXTERN char *p_cpp;             ///< 'completepopup'
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char *p_csl;             ///< 'completeslash'
 #endif

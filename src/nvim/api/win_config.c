@@ -428,8 +428,8 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
   return true;
 }
 
-static void parse_bordertext(Object bordertext, BorderTextType bordertext_type,
-                             FloatConfig *fconfig, Error *err)
+void parse_bordertext(Object bordertext, BorderTextType bordertext_type, FloatConfig *fconfig,
+                      Error *err)
 {
   bool *is_present;
   VirtText *chunks;
@@ -478,8 +478,8 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type,
   *is_present = true;
 }
 
-static bool parse_bordertext_pos(String bordertext_pos, BorderTextType bordertext_type,
-                                 FloatConfig *fconfig, Error *err)
+bool parse_bordertext_pos(String bordertext_pos, BorderTextType bordertext_type,
+                          FloatConfig *fconfig, Error *err)
 {
   AlignTextPos *align;
   switch (bordertext_type) {
@@ -518,7 +518,7 @@ static bool parse_bordertext_pos(String bordertext_pos, BorderTextType bordertex
   return true;
 }
 
-static void parse_border_style(Object style,  FloatConfig *fconfig, Error *err)
+void parse_border_style(Object style,  FloatConfig *fconfig, Error *err)
 {
   struct {
     const char *name;

@@ -577,7 +577,6 @@ These legacy Vim features are not yet implemented:
 
 - *:gui*
 - *:gvim*
-- *'completepopup'*
 - *'previewpopup'*
 
 ==============================================================================
