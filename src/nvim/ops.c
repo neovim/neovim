@@ -290,13 +290,13 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
 /// @param call_changed_bytes  call changed_bytes()
 void shift_line(int left, int round, int amount, int call_changed_bytes)
 {
-  const int sw_val = get_sw_value_indent(curbuf);
+  const int64_t sw_val = get_sw_value_indent(curbuf);
 
-  int count = get_indent();  // get current indent
+  int64_t count = get_indent();  // get current indent
 
   if (round) {  // round off indent
-    int i = count / sw_val;  // number of 'shiftwidth' rounded down
-    int j = count % sw_val;  // extra spaces
+    int64_t i = count / sw_val;  // number of 'shiftwidth' rounded down
+    int64_t j = count % sw_val;  // extra spaces
     if (j && left) {  // first remove extra spaces
       amount--;
     }
@@ -316,15 +316,19 @@ void shift_line(int left, int round, int amount, int call_changed_bytes)
         count = 0;
       }
     } else {
-      count += sw_val * amount;
+      if (sw_val * amount > INT_MAX - count) {
+        count = INT_MAX;
+      } else {
+        count += sw_val * amount;
+      }
     }
   }
 
   // Set new indent
   if (State & VREPLACE_FLAG) {
-    change_indent(INDENT_SET, count, false, NUL, call_changed_bytes);
+    change_indent(INDENT_SET, (int)count, false, NUL, call_changed_bytes);
   } else {
-    (void)set_indent(count, call_changed_bytes ? SIN_CHANGED : 0);
+    (void)set_indent((int)count, call_changed_bytes ? SIN_CHANGED : 0);
   }
 }
 
