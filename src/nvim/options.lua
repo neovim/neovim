@@ -316,7 +316,7 @@ return {
         See |:hi-normal| if you want to set the background color explicitly.
         					*g:colors_name*
         When a color scheme is loaded (the "g:colors_name" variable is set)
-        setting 'background' will cause the color scheme to be reloaded.  If
+        changing 'background' will cause the color scheme to be reloaded.  If
         the color scheme adjusts to the value of 'background' this will work.
         However, if the color scheme sets 'background' itself the effect may
         be undone.  First delete the "g:colors_name" variable when needed.
@@ -326,13 +326,9 @@ return {
         	:if $TERM ==# "xterm"
         	:  set background=dark
         	:endif
-        <	When this option is set, the default settings for the highlight groups
+        <	When this option is changed, the default settings for the highlight groups
         will change.  To use other settings, place ":highlight" commands AFTER
         the setting of the 'background' option.
-        This option is also used in the "$VIMRUNTIME/syntax/syntax.vim" file
-        to select the colors for syntax highlighting.  After changing this
-        option, you must load syntax.vim again to see the result.  This can be
-        done with ":syntax on".
       ]=],
       expand_cb = 'expand_set_background',
       full_name = 'background',
