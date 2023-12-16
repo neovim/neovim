@@ -18,10 +18,7 @@ atan2
 atom
 atomic
 atom_chars
-atom_chars
 atom_codes
-atom_codes
-atom_concat
 atom_concat
 atom_length
 at_end_of_stream
@@ -32,6 +29,7 @@ call
 callable
 calls
 catch
+catchall_catch
 category
 category_property
 ceiling
@@ -45,9 +43,9 @@ coinduction
 coinductive
 compare
 complements
-complements
 complements_object
 compound
+conditionals
 conforms_to_protocol
 context
 context_switching_calls
@@ -87,6 +85,7 @@ end_object
 end_protocol
 engines
 ensure_loaded
+error
 evaluation_error
 events
 existence_error
@@ -152,12 +151,13 @@ nonvar
 number
 numbervars
 number_chars
-number_chars
-number_codes
 number_codes
 object
 object_property
 once
+one
+one_or_error
+one_or_more
 op
 open
 optimize
@@ -226,6 +226,7 @@ term_variables
 this
 threaded
 threaded_call
+threaded_cancel
 threaded_engine
 threaded_engine_create
 threaded_engine_destroy
@@ -250,6 +251,7 @@ type_error
 undefined_predicates
 underscore_variables
 unify_with_occurs_check
+uninstantiation_error
 unknown_entities
 unknown_predicates
 uses
@@ -260,3 +262,8 @@ write
 writeq
 write_canonical
 xor
+zero
+zero_or_error
+zero_or_more
+zero_or_one
+zero_or_one_or_error
