@@ -906,4 +906,38 @@ describe('API/win', function()
       eq(footer, cfg.footer)
     end)
   end)
+
+  describe('set_config', function()
+    it('no crash with invalid title', function ()
+      local win = meths.open_win(0, true, {
+        width = 10,
+        height = 10,
+        relative = "editor",
+        row = 10,
+        col = 10,
+        title = { { "test" } },
+        border = "single",
+      })
+      eq("title/footer cannot be an empty array",
+          pcall_err(meths.win_set_config, win, {title = {}}))
+      command("redraw!")
+      assert_alive()
+    end)
+
+    it('no crash with invalid footer', function ()
+      local win = meths.open_win(0, true, {
+        width = 10,
+        height = 10,
+        relative = "editor",
+        row = 10,
+        col = 10,
+        footer = { { "test" } },
+        border = "single",
+      })
+      eq("title/footer cannot be an empty array",
+          pcall_err(meths.win_set_config, win, {footer = {}}))
+      command("redraw!")
+      assert_alive()
+    end)
+  end)
 end)

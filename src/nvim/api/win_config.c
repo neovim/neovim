@@ -431,18 +431,36 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
 static void parse_bordertext(Object bordertext, BorderTextType bordertext_type,
                              FloatConfig *fconfig, Error *err)
 {
+  if (bordertext.type != kObjectTypeString && bordertext.type != kObjectTypeArray) {
+    api_set_error(err, kErrorTypeValidation, "title/footer must be string or array");
+    return;
+  }
+
+  if (bordertext.type == kObjectTypeArray && bordertext.data.array.size == 0) {
+    api_set_error(err, kErrorTypeValidation, "title/footer cannot be an empty array");
+    return;
+  }
+
   bool *is_present;
   VirtText *chunks;
   int *width;
   int default_hl_id;
   switch (bordertext_type) {
   case kBorderTextTitle:
+    if (fconfig->title) {
+      clear_virttext(&fconfig->title_chunks);
+    }
+
     is_present = &fconfig->title;
     chunks = &fconfig->title_chunks;
     width = &fconfig->title_width;
     default_hl_id = syn_check_group(S_LEN("FloatTitle"));
     break;
   case kBorderTextFooter:
+    if (fconfig->footer) {
+      clear_virttext(&fconfig->footer_chunks);
+    }
+
     is_present = &fconfig->footer;
     chunks = &fconfig->footer_chunks;
     width = &fconfig->footer_width;
@@ -459,16 +477,6 @@ static void parse_bordertext(Object bordertext, BorderTextType bordertext_type,
                                        .hl_id = default_hl_id }));
     *width = (int)mb_string2cells(bordertext.data.string.data);
     *is_present = true;
-    return;
-  }
-
-  if (bordertext.type != kObjectTypeArray) {
-    api_set_error(err, kErrorTypeValidation, "title must be string or array");
-    return;
-  }
-
-  if (bordertext.data.array.size == 0) {
-    api_set_error(err, kErrorTypeValidation, "title cannot be an empty array");
     return;
   }
 
@@ -774,10 +782,6 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
       return false;
     }
 
-    if (fconfig->title) {
-      clear_virttext(&fconfig->title_chunks);
-    }
-
     parse_bordertext(config->title, kBorderTextTitle, fconfig, err);
     if (ERROR_SET(err)) {
       return false;
@@ -799,10 +803,6 @@ static bool parse_float_config(Dict(float_config) *config, FloatConfig *fconfig,
     if (!HAS_KEY_X(config, border) && !fconfig->border) {
       api_set_error(err, kErrorTypeException, "footer requires border to be set");
       return false;
-    }
-
-    if (fconfig->footer) {
-      clear_virttext(&fconfig->footer_chunks);
     }
 
     parse_bordertext(config->footer, kBorderTextFooter, fconfig, err);
