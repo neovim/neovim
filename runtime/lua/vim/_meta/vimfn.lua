@@ -1024,6 +1024,8 @@ function vim.fn.complete_check() end
 ---     no item is selected when using the <Up> or
 ---     <Down> keys)
 ---    inserted  Inserted string. [NOT IMPLEMENTED YET]
+---    preview_winid     Info floating preview window id.
+---    preview_bufnr     Info floating preview buffer id.
 ---
 ---           *complete_info_mode*
 --- mode values are:

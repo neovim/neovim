@@ -2300,3 +2300,29 @@ void nvim_error_event(uint64_t channel_id, Integer lvl, String data)
   // if we fork nvim processes as async workers
   ELOG("async error on channel %" PRId64 ": %s", channel_id, data.size ? data.data : "");
 }
+
+/// Set info for the completion candidate index.
+/// if the info was shown in a window, then the
+/// window and buffer ids are returned for further
+/// customization. If the text was not shown, an
+/// empty dict is returned.
+///
+/// @param index  the completion candidate index
+/// @param opts   Optional parameters.
+///       - info: (string) info text.
+/// @return Dictionary containing these keys:
+///       - winid: (number) floating window id
+///       - bufnr: (number) buffer id in floating window
+Dictionary nvim_complete_set(Integer index, Dict(complete_set) *opts)
+  FUNC_API_SINCE(12)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+  if (HAS_KEY(opts, complete_set, info)) {
+    win_T *wp = pum_set_info((int)index, opts->info.data);
+    if (wp) {
+      PUT(rv, "winid", WINDOW_OBJ(wp->handle));
+      PUT(rv, "bufnr", BUFFER_OBJ(wp->w_buffer->handle));
+    }
+  }
+  return rv;
+}

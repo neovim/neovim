@@ -773,6 +773,16 @@ function vim.api.nvim_command(command) end
 --- @return string
 function vim.api.nvim_command_output(command) end
 
+--- Set info for the completion candidate index. if the info was shown in a
+--- window, then the window and buffer ids are returned for further
+--- customization. If the text was not shown, an empty dict is returned.
+---
+--- @param index integer the completion candidate index
+--- @param opts vim.api.keyset.complete_set Optional parameters.
+---              • info: (string) info text.
+--- @return table<string,any>
+function vim.api.nvim_complete_set(index, opts) end
+
 --- Create or get an autocommand group `autocmd-groups`.
 --- To get an existing group id, do:
 ---

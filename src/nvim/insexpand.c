@@ -63,6 +63,7 @@
 #include "nvim/undo.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 // Definitions used for CTRL-X submode.
 // Note: If you change CTRL-X submode, you must also maintain ctrl_x_msgs[]
@@ -1287,6 +1288,28 @@ void ins_compl_show_pum(void)
 
   if (has_event(EVENT_COMPLETECHANGED)) {
     trigger_complete_changed_event(cur);
+  }
+}
+
+/// used for set or update info
+void compl_set_info(int pum_idx)
+{
+  compl_T *comp = compl_first_match;
+  char *pum_text = compl_match_array[pum_idx].pum_text;
+
+  while (comp != NULL) {
+    if (pum_text == comp->cp_str
+        || pum_text == comp->cp_text[CPT_ABBR]) {
+      comp->cp_text[CPT_INFO] = compl_match_array[pum_idx].pum_info;
+
+      // if comp is current match update completed_item value
+      if (comp == compl_curr_match) {
+        dict_T *dict = ins_compl_dict_alloc(compl_curr_match);
+        set_vim_var_dict(VV_COMPLETED_ITEM, dict);
+      }
+      break;
+    }
+    comp = comp->cp_next;
   }
 }
 
@@ -2813,6 +2836,11 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
     ret = tv_dict_add_nr(retdict, S_LEN("selected"),
                          (compl_curr_match != NULL)
                          ? compl_curr_match->cp_number - 1 : -1);
+    win_T *wp = win_float_find_preview();
+    if (wp != NULL) {
+      tv_dict_add_nr(retdict, S_LEN("preview_winid"), wp->handle);
+      tv_dict_add_nr(retdict, S_LEN("preview_bufnr"), wp->w_buffer->handle);
+    }
   }
 
   (void)ret;

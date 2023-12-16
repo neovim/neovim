@@ -286,3 +286,13 @@ bool win_float_valid(const win_T *win)
   }
   return false;
 }
+
+win_T *win_float_find_preview(void)
+{
+  for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
+    if (wp->w_float_is_info) {
+      return wp;
+    }
+  }
+  return NULL;
+}

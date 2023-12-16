@@ -1450,6 +1450,10 @@ return {
           noselect  Do not select a match in the menu, force the user to
         	    select one from the menu. Only works in combination with
         	    "menu" or "menuone".
+
+           popup    Show extra information about the currently selected
+        	    completion in a popup window.  Only works in combination
+        	    with "menu" or "menuone".  Overrides "preview".
       ]=],
       expand_cb = 'expand_set_completeopt',
       full_name = 'completeopt',
