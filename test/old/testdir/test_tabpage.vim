@@ -905,4 +905,23 @@ func Test_tabpage_last_line()
   bwipe!
 endfunc
 
+" this was causing an endless loop
+func Test_tabpage_drop_tabmove()
+  augroup TestTabpageTabmove
+    au!
+    autocmd! TabEnter * :if tabpagenr() > 1 | tabmove - | endif
+  augroup end
+  $tab drop XTab_99.log
+  $tab drop XTab_98.log
+  $tab drop XTab_97.log
+
+  autocmd! TestTabpageTabmove
+  augroup! TestTabpageTabmove
+
+  " clean up
+  bwipe!
+  bwipe!
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

@@ -43,6 +43,8 @@ enum {
   LOWEST_WIN_ID = 1000,
 };
 
+EXTERN int tabpage_move_disallowed INIT( = 0);  ///< moving tabpages around disallowed
+
 /// Set to true if 'cmdheight' was explicitly set to 0.
 EXTERN bool p_ch_was_zero INIT( = false);
 
