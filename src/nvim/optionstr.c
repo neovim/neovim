@@ -663,10 +663,15 @@ int expand_set_ambiwidth(optexpand_T *args, int *numMatches, char ***matches)
 }
 
 /// The 'background' option is changed.
-const char *did_set_background(optset_T *args FUNC_ATTR_UNUSED)
+const char *did_set_background(optset_T *args)
 {
   if (check_opt_strings(p_bg, p_bg_values, false) != OK) {
     return e_invarg;
+  }
+
+  if (args->os_oldval.string.data[0] == *p_bg) {
+    // Value was not changed
+    return NULL;
   }
 
   int dark = (*p_bg == 'd');
