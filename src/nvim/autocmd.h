@@ -28,8 +28,8 @@ EXTERN win_T *last_cursormoved_win INIT( = NULL);
 EXTERN pos_T last_cursormoved INIT( = { 0, 0, 0 });
 
 EXTERN bool autocmd_busy INIT( = false);     ///< Is apply_autocmds() busy?
-EXTERN int autocmd_no_enter INIT( = false);  ///< *Enter autocmds disabled
-EXTERN int autocmd_no_leave INIT( = false);  ///< *Leave autocmds disabled
+EXTERN int autocmd_no_enter INIT( = false);  ///< Buf/WinEnter autocmds disabled
+EXTERN int autocmd_no_leave INIT( = false);  ///< Buf/WinLeave autocmds disabled
 EXTERN bool did_filetype INIT( = false);     ///< FileType event found
 /// value for did_filetype when starting to execute autocommands
 EXTERN bool keep_filetype INIT( = false);

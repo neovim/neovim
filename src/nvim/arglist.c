@@ -851,6 +851,9 @@ static void arg_all_close_unused_windows(arg_all_state_T *aall)
   if (aall->had_tab > 0) {
     goto_tabpage_tp(first_tabpage, true, true);
   }
+
+  // moving tabpages around in an autocommand may cause an endless loop
+  tabpage_move_disallowed++;
   while (true) {
     win_T *wpnext = NULL;
     tabpage_T *tpnext = curtab->tp_next;
@@ -950,6 +953,7 @@ static void arg_all_close_unused_windows(arg_all_state_T *aall)
     }
     goto_tabpage_tp(tpnext, true, true);
   }
+  tabpage_move_disallowed--;
 }
 
 /// Open up to "count" windows for the files in the argument list "aall->alist".
