@@ -2121,10 +2121,8 @@ int get_last_leader_offset(char *line, char **flags)
   int result = -1;
   int j;
   int lower_check_bound = 0;
-  char *string;
   char *com_leader;
   char *com_flags;
-  char *list;
   char part_buf[COM_MAX_LEN];         // buffer for one option part
 
   // Repeat to match several nested comment strings.
@@ -2132,13 +2130,13 @@ int get_last_leader_offset(char *line, char **flags)
   while (--i >= lower_check_bound) {
     // scan through the 'comments' option for a match
     int found_one = false;
-    for (list = curbuf->b_p_com; *list;) {
+    for (char *list = curbuf->b_p_com; *list;) {
       char *flags_save = list;
 
       // Get one option part into part_buf[].  Advance list to next one.
       // put string at start of string.
       (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
-      string = vim_strchr(part_buf, ':');
+      char *string = vim_strchr(part_buf, ':');
       if (string == NULL) {  // If everything is fine, this cannot actually
                              // happen.
         continue;
@@ -2216,14 +2214,14 @@ int get_last_leader_offset(char *line, char **flags)
       }
       int len1 = (int)strlen(com_leader);
 
-      for (list = curbuf->b_p_com; *list;) {
+      for (char *list = curbuf->b_p_com; *list;) {
         char *flags_save = list;
 
         (void)copy_option_part(&list, part_buf2, COM_MAX_LEN, ",");
         if (flags_save == com_flags) {
           continue;
         }
-        string = vim_strchr(part_buf2, ':');
+        char *string = vim_strchr(part_buf2, ':');
         string++;
         while (ascii_iswhite(*string)) {
           string++;

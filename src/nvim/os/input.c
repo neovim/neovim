@@ -415,7 +415,8 @@ static unsigned handle_mouse_event(const char **ptr, uint8_t *buf, unsigned bufs
 size_t input_enqueue_mouse(int code, uint8_t modifier, int grid, int row, int col)
 {
   modifier |= check_multiclick(code, grid, row, col);
-  uint8_t buf[7], *p = buf;
+  uint8_t buf[7];
+  uint8_t *p = buf;
   if (modifier) {
     p[0] = K_SPECIAL;
     p[1] = KS_MODIFIER;

@@ -53,15 +53,13 @@
 bool tabstop_set(char *var, colnr_T **array)
 {
   int valcount = 1;
-  int t;
-  char *cp;
 
   if (var[0] == NUL || (var[0] == '0' && var[1] == NUL)) {
     *array = NULL;
     return true;
   }
 
-  for (cp = var; *cp != NUL; cp++) {
+  for (char *cp = var; *cp != NUL; cp++) {
     if (cp == var || cp[-1] == ',') {
       char *end;
 
@@ -89,8 +87,8 @@ bool tabstop_set(char *var, colnr_T **array)
   *array = (colnr_T *)xmalloc((unsigned)(valcount + 1) * sizeof(int));
   (*array)[0] = (colnr_T)valcount;
 
-  t = 1;
-  for (cp = var; *cp != NUL;) {
+  int t = 1;
+  for (char *cp = var; *cp != NUL;) {
     int n = atoi(cp);
 
     // Catch negative values, overflow and ridiculous big values.
@@ -171,14 +169,13 @@ int tabstop_at(colnr_T col, OptInt ts, const colnr_T *vts)
 colnr_T tabstop_start(colnr_T col, int ts, colnr_T *vts)
 {
   colnr_T tabcol = 0;
-  int t;
 
   if (vts == NULL || vts[0] == 0) {
     return ((col / ts) * ts);
   }
 
   const int tabcount = vts[0];
-  for (t = 1; t <= tabcount; t++) {
+  for (int t = 1; t <= tabcount; t++) {
     tabcol += vts[t];
     if (tabcol > col) {
       return (tabcol - vts[t]);
@@ -258,8 +255,6 @@ void tabstop_fromto(colnr_T start_col, colnr_T end_col, int ts_arg, const colnr_
 /// See if two tabstop arrays contain the same values.
 bool tabstop_eq(const colnr_T *ts1, const colnr_T *ts2)
 {
-  int t;
-
   if ((ts1 == 0 && ts2) || (ts1 && ts2 == 0)) {
     return false;
   }
@@ -270,7 +265,7 @@ bool tabstop_eq(const colnr_T *ts1, const colnr_T *ts2)
     return false;
   }
 
-  for (t = 1; t <= ts1[0]; t++) {
+  for (int t = 1; t <= ts1[0]; t++) {
     if (ts1[t] != ts2[t]) {
       return false;
     }
@@ -282,15 +277,12 @@ bool tabstop_eq(const colnr_T *ts1, const colnr_T *ts2)
 /// Copy a tabstop array, allocating space for the new array.
 int *tabstop_copy(const int *oldts)
 {
-  int *newts;
-  int t;
-
   if (oldts == 0) {
     return 0;
   }
 
-  newts = xmalloc((unsigned)(oldts[0] + 1) * sizeof(int));
-  for (t = 0; t <= oldts[0]; t++) {
+  int *newts = xmalloc((unsigned)(oldts[0] + 1) * sizeof(int));
+  for (int t = 0; t <= oldts[0]; t++) {
     newts[t] = oldts[t];
   }
 
@@ -431,25 +423,22 @@ int get_indent_str_vtab(const char *ptr, OptInt ts, colnr_T *vts, bool list)
   return count;
 }
 
-// Set the indent of the current line.
-// Leaves the cursor on the first non-blank in the line.
-// Caller must take care of undo.
-// "flags":
-//  SIN_CHANGED:    call changed_bytes() if the line was changed.
-//  SIN_INSERT: insert the indent in front of the line.
-//  SIN_UNDO:   save line for undo before changing it.
-//  SIN_NOMARK: don't move extmarks (because just after ml_append or something)
-//  @param size measured in spaces
-// Returns true if the line was changed.
+/// Set the indent of the current line.
+/// Leaves the cursor on the first non-blank in the line.
+/// Caller must take care of undo.
+/// "flags":
+///  SIN_CHANGED:    call changed_bytes() if the line was changed.
+///  SIN_INSERT: insert the indent in front of the line.
+///  SIN_UNDO:   save line for undo before changing it.
+///  SIN_NOMARK: don't move extmarks (because just after ml_append or something)
+///  @param size measured in spaces
+///
+/// @return  true if the line was changed.
 int set_indent(int size, int flags)
 {
-  char *p;
   char *newline;
   char *oldline;
   char *s;
-  int todo;
-  int ind_len;  // Measured in characters.
-  int line_len;
   int doit = false;
   int ind_done = 0;  // Measured in spaces.
   int tab_pad;
@@ -460,9 +449,9 @@ int set_indent(int size, int flags)
 
   // First check if there is anything to do and compute the number of
   // characters needed for the indent.
-  todo = size;
-  ind_len = 0;
-  p = oldline = get_cursor_line_ptr();
+  int todo = size;
+  int ind_len = 0;  // Measured in characters.
+  char *p = oldline = get_cursor_line_ptr();
 
   // Calculate the buffer size for the new indent, and check to see if it
   // isn't already set.
@@ -560,7 +549,7 @@ int set_indent(int size, int flags)
   } else {
     p = skipwhite(p);
   }
-  line_len = (int)strlen(p) + 1;
+  int line_len = (int)strlen(p) + 1;
 
   // If 'preserveindent' and 'expandtab' are both set keep the original
   // characters and allocate accordingly.  We will fill the rest with spaces
@@ -933,23 +922,18 @@ static void emsg_text_too_long(void)
 /// ":retab".
 void ex_retab(exarg_T *eap)
 {
-  linenr_T lnum;
   bool got_tab = false;
   int num_spaces = 0;
-  int num_tabs;
-  int len;
   int start_col = 0;                   // For start of white-space string
   int64_t start_vcol = 0;                  // For start of white-space string
-  int old_len;
   char *new_line = (char *)1;  // init to non-NULL
   colnr_T *new_vts_array = NULL;
   char *new_ts_str;  // string value of tab argument
 
-  int save_list;
   linenr_T first_line = 0;              // first changed line
   linenr_T last_line = 0;               // last changed line
 
-  save_list = curwin->w_p_list;
+  int save_list = curwin->w_p_list;
   curwin->w_p_list = 0;             // don't want list mode here
 
   new_ts_str = eap->arg;
@@ -969,7 +953,7 @@ void ex_retab(exarg_T *eap)
   } else {
     new_ts_str = xmemdupz(new_ts_str, (size_t)(eap->arg - new_ts_str));
   }
-  for (lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
+  for (linenr_T lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
     char *ptr = ml_get(lnum);
     int col = 0;
     int64_t vcol = 0;
@@ -991,8 +975,8 @@ void ex_retab(exarg_T *eap)
           // Retabulate this string of white-space
 
           // len is virtual length of white string
-          len = num_spaces = (int)(vcol - start_vcol);
-          num_tabs = 0;
+          int len = num_spaces = (int)(vcol - start_vcol);
+          int num_tabs = 0;
           if (!curbuf->b_p_et) {
             int t, s;
 
@@ -1014,7 +998,7 @@ void ex_retab(exarg_T *eap)
 
             // len is actual number of white characters used
             len = num_spaces + num_tabs;
-            old_len = (int)strlen(ptr);
+            int old_len = (int)strlen(ptr);
             const int new_len = old_len - col + start_col + len + 1;
             if (new_len <= 0 || new_len >= MAXCOL) {
               emsg_text_too_long();
@@ -1110,19 +1094,14 @@ void ex_retab(exarg_T *eap)
 /// Get indent level from 'indentexpr'.
 int get_expr_indent(void)
 {
-  int indent = -1;
-  pos_T save_pos;
-  colnr_T save_curswant;
-  int save_set_curswant;
-  int save_State;
   int use_sandbox = was_set_insecurely(curwin, kOptIndentexpr, OPT_LOCAL);
   const sctx_T save_sctx = current_sctx;
 
   // Save and restore cursor position and curswant, in case it was changed
   // * via :normal commands.
-  save_pos = curwin->w_cursor;
-  save_curswant = curwin->w_curswant;
-  save_set_curswant = curwin->w_set_curswant;
+  pos_T save_pos = curwin->w_cursor;
+  colnr_T save_curswant = curwin->w_curswant;
+  int save_set_curswant = curwin->w_set_curswant;
   set_vim_var_nr(VV_LNUM, (varnumber_T)curwin->w_cursor.lnum);
 
   if (use_sandbox) {
@@ -1134,7 +1113,7 @@ int get_expr_indent(void)
   // Need to make a copy, the 'indentexpr' option could be changed while
   // evaluating it.
   char *inde_copy = xstrdup(curbuf->b_p_inde);
-  indent = (int)eval_to_number(inde_copy);
+  int indent = (int)eval_to_number(inde_copy);
   xfree(inde_copy);
 
   if (use_sandbox) {
@@ -1146,7 +1125,7 @@ int get_expr_indent(void)
   // Restore the cursor position so that 'indentexpr' doesn't need to.
   // Pretend to be in Insert mode, allow cursor past end of line for "o"
   // command.
-  save_State = State;
+  int save_State = State;
   State = MODE_INSERT;
   curwin->w_cursor = save_pos;
   curwin->w_curswant = save_curswant;
@@ -1187,7 +1166,6 @@ int get_lisp_indent(void)
   pos_T *pos;
   pos_T paren;
   int amount;
-  char *that;
 
   // Set vi_lisp to use the vi-compatible method.
   int vi_lisp = (vim_strchr(p_cpo, CPO_LISP) != NULL);
@@ -1217,7 +1195,7 @@ int get_lisp_indent(void)
         continue;
       }
 
-      for (that = get_cursor_line_ptr(); *that != NUL; that++) {
+      for (char *that = get_cursor_line_ptr(); *that != NUL; that++) {
         if (*that == ';') {
           while (*(that + 1) != NUL) {
             that++;
@@ -1267,7 +1245,7 @@ int get_lisp_indent(void)
       curwin->w_cursor.col = pos->col;
       colnr_T col = pos->col;
 
-      that = get_cursor_line_ptr();
+      char *that = get_cursor_line_ptr();
 
       if (vi_lisp && (get_indent() == 0)) {
         amount = 2;

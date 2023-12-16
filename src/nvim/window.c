@@ -759,7 +759,8 @@ void ui_ext_win_position(win_T *wp, bool validate)
   FloatConfig c = wp->w_float_config;
   if (!c.external) {
     ScreenGrid *grid = &default_grid;
-    Float row = c.row, col = c.col;
+    Float row = c.row;
+    Float col = c.col;
     if (c.relative == kFloatRelativeWindow) {
       Error dummy = ERROR_INIT;
       win_T *win = find_window_by_handle(c.window, &dummy);
@@ -771,7 +772,8 @@ void ui_ext_win_position(win_T *wp, bool validate)
           ui_ext_win_position(win, validate);
         }
         grid = &win->w_grid;
-        int row_off = 0, col_off = 0;
+        int row_off = 0;
+        int col_off = 0;
         grid_adjust(&grid, &row_off, &col_off);
         row += row_off;
         col += col_off;
@@ -5463,7 +5465,8 @@ void may_trigger_win_scrolled_resized(void)
   }
 
   int size_count = 0;
-  win_T *first_scroll_win = NULL, *first_size_win = NULL;
+  win_T *first_scroll_win = NULL;
+  win_T *first_size_win = NULL;
   int cwsr = check_window_scroll_resize(&size_count,
                                         &first_scroll_win, &first_size_win,
                                         NULL, NULL);
@@ -7404,7 +7407,8 @@ void win_get_tabwin(handle_T id, int *tabnr, int *winnr)
   *tabnr = 0;
   *winnr = 0;
 
-  int tnum = 1, wnum = 1;
+  int tnum = 1;
+  int wnum = 1;
   FOR_ALL_TABS(tp) {
     FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
       if (wp->handle == id) {

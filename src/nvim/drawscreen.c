@@ -928,7 +928,6 @@ int showmode(void)
 
   bool can_show_mode = (p_ch != 0 || ui_has(kUIMessages));
   if ((do_mode || reg_recording != 0) && can_show_mode) {
-    int sub_attr;
     if (skip_showmode()) {
       return 0;  // show mode later
     }
@@ -955,6 +954,7 @@ int showmode(void)
     lines_left = 0;
 
     if (do_mode) {
+      int sub_attr;
       msg_puts_attr("--", attr);
       // CTRL-X in Insert mode
       if (edit_submode != NULL && !shortmess(SHM_COMPLETIONMENU)) {

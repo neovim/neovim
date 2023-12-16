@@ -1223,8 +1223,10 @@ void tui_grid_scroll(TUIData *tui, Integer g, Integer startrow, Integer endrow, 
                      Integer endcol, Integer rows, Integer cols FUNC_ATTR_UNUSED)
 {
   UGrid *grid = &tui->grid;
-  int top = (int)startrow, bot = (int)endrow - 1;
-  int left = (int)startcol, right = (int)endcol - 1;
+  int top = (int)startrow;
+  int bot = (int)endrow - 1;
+  int left = (int)startcol;
+  int right = (int)endcol - 1;
 
   bool fullwidth = left == 0 && right == tui->width - 1;
   tui->scroll_region_is_full_screen = fullwidth
@@ -1565,7 +1567,8 @@ static void invalidate(TUIData *tui, int top, int bot, int left, int right)
 /// application (i.e., the host terminal).
 void tui_guess_size(TUIData *tui)
 {
-  int width = 0, height = 0;
+  int width = 0;
+  int height = 0;
 
   // 1 - try from a system call(ioctl/TIOCGWINSZ on unix)
   if (tui->out_isatty

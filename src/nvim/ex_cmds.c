@@ -618,7 +618,8 @@ void ex_sort(exarg_T *eap)
     goto sortend;
   }
 
-  bcount_t old_count = 0, new_count = 0;
+  bcount_t old_count = 0;
+  bcount_t new_count = 0;
 
   // Insert the lines in the sorted order below the last one.
   linenr_T lnum = eap->line2;
@@ -3303,7 +3304,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
     .do_number = false,
     .do_ic = kSubHonorOptions
   };
-  char *pat = NULL, *sub = NULL;  // init for GCC
+  char *pat = NULL;
+  char *sub = NULL;  // init for GCC
   int delimiter;
   bool has_second_delim = false;
   int sublen;
@@ -3501,7 +3503,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
       colnr_T copycol;
       colnr_T matchcol;
       colnr_T prev_matchcol = MAXCOL;
-      char *new_end, *new_start = NULL;
+      char *new_end;
+      char *new_start = NULL;
       int new_start_len = 0;
       char *p1;
       bool did_sub = false;
@@ -3971,7 +3974,8 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
 
           // TODO(bfredl): this has some robustness issues, look into later.
           bcount_t replaced_bytes = 0;
-          lpos_T start = regmatch.startpos[0], end = regmatch.endpos[0];
+          lpos_T start = regmatch.startpos[0];
+          lpos_T end = regmatch.endpos[0];
           for (i = 0; i < nmatch - 1; i++) {
             replaced_bytes += (bcount_t)strlen(ml_get((linenr_T)(lnum_start + i))) + 1;
           }

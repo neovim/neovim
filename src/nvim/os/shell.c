@@ -671,7 +671,8 @@ char *shell_argv_to_str(char **const argv)
 int os_call_shell(char *cmd, ShellOpts opts, char *extra_args)
 {
   DynamicBuffer input = DYNAMIC_BUFFER_INIT;
-  char *output = NULL, **output_ptr = NULL;
+  char *output = NULL;
+  char **output_ptr = NULL;
   int current_state = State;
   bool forward_output = true;
 
@@ -1123,7 +1124,8 @@ static void out_data_ring(char *output, size_t size)
 static void out_data_append_to_screen(char *output, size_t *count, bool eof)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *p = output, *end = output + *count;
+  char *p = output;
+  char *end = output + *count;
   while (p < end) {
     if (*p == '\n' || *p == '\r' || *p == TAB || *p == BELL) {
       msg_putchar_attr((uint8_t)(*p), 0);
@@ -1236,7 +1238,8 @@ static size_t word_length(const char *str)
 /// before we finish writing.
 static void read_input(DynamicBuffer *buf)
 {
-  size_t written = 0, len = 0;
+  size_t written = 0;
+  size_t len = 0;
   linenr_T lnum = curbuf->b_op_start.lnum;
   char *lp = ml_get(lnum);
 

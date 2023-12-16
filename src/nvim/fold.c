@@ -849,7 +849,6 @@ void foldUpdateAll(win_T *win)
 int foldMoveTo(const bool updown, const int dir, const int count)
 {
   int retval = FAIL;
-  linenr_T lnum;
   fold_T *fp;
 
   checkupdate(curwin);
@@ -908,7 +907,7 @@ int foldMoveTo(const bool updown, const int dir, const int count)
         if (dir == FORWARD) {
           // to start of next fold if there is one
           if (fp + 1 - (fold_T *)gap->ga_data < gap->ga_len) {
-            lnum = fp[1].fd_top + lnum_off;
+            linenr_T lnum = fp[1].fd_top + lnum_off;
             if (lnum > curwin->w_cursor.lnum) {
               lnum_found = lnum;
             }
@@ -916,7 +915,7 @@ int foldMoveTo(const bool updown, const int dir, const int count)
         } else {
           // to end of previous fold if there is one
           if (fp > (fold_T *)gap->ga_data) {
-            lnum = fp[-1].fd_top + lnum_off + fp[-1].fd_len - 1;
+            linenr_T lnum = fp[-1].fd_top + lnum_off + fp[-1].fd_len - 1;
             if (lnum < curwin->w_cursor.lnum) {
               lnum_found = lnum;
             }
@@ -926,12 +925,12 @@ int foldMoveTo(const bool updown, const int dir, const int count)
         // Open fold found, set cursor to its start/end and then check
         // nested folds.
         if (dir == FORWARD) {
-          lnum = fp->fd_top + lnum_off + fp->fd_len - 1;
+          linenr_T lnum = fp->fd_top + lnum_off + fp->fd_len - 1;
           if (lnum > curwin->w_cursor.lnum) {
             lnum_found = lnum;
           }
         } else {
-          lnum = fp->fd_top + lnum_off;
+          linenr_T lnum = fp->fd_top + lnum_off;
           if (lnum < curwin->w_cursor.lnum) {
             lnum_found = lnum;
           }
@@ -999,7 +998,6 @@ void foldAdjustVisual(void)
   }
 
   pos_T *start, *end;
-  char *ptr;
 
   if (ltoreq(VIsual, curwin->w_cursor)) {
     start = &VIsual;
@@ -1016,7 +1014,7 @@ void foldAdjustVisual(void)
     return;
   }
 
-  ptr = ml_get(end->lnum);
+  char *ptr = ml_get(end->lnum);
   end->col = (colnr_T)strlen(ptr);
   if (end->col > 0 && *p_sel == 'o') {
     end->col--;
@@ -2802,7 +2800,8 @@ void foldMoveRange(win_T *const wp, garray_T *gap, const linenr_T line1, const l
   // Case 5 or 6: changes rely on whether there are folds between the end of
   // this fold and "dest".
   size_t move_start = FOLD_INDEX(fp, gap);
-  size_t move_end = 0, dest_index = 0;
+  size_t move_end = 0;
+  size_t dest_index = 0;
   for (; VALID_FOLD(fp, gap) && fp->fd_top <= dest; fp++) {
     if (fp->fd_top <= line2) {
       // 5, or 6

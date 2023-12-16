@@ -2863,7 +2863,8 @@ static int eval5(char **arg, typval_T *rettv, evalarg_T *const evalarg)
       } else {
         bool error = false;
         varnumber_T n1, n2;
-        float_T f1 = 0, f2 = 0;
+        float_T f1 = 0;
+        float_T f2 = 0;
 
         if (rettv->v_type == VAR_FLOAT) {
           f1 = rettv->vval.v_float;
@@ -2954,7 +2955,8 @@ static int eval6(char **arg, typval_T *rettv, evalarg_T *const evalarg, bool wan
     }
 
     varnumber_T n1, n2;
-    float_T f1 = 0, f2 = 0;
+    float_T f1 = 0;
+    float_T f2 = 0;
     bool error = false;
     const bool evaluate = evalarg == NULL ? 0 : (evalarg->eval_flags & EVAL_EVALUATE);
     if (evaluate) {

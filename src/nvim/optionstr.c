@@ -2815,7 +2815,8 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
         if (c1 == 0 || char2cells(c1) > 1) {
           return e_invarg;
         }
-        int c2 = 0, c3 = 0;
+        int c2 = 0;
+        int c3 = 0;
         if (tab[i].cp == &lcs_chars.tab2) {
           if (*s == NUL) {
             return e_invarg;

@@ -435,8 +435,10 @@ void extmark_adjust(buf_T *buf, linenr_T line1, linenr_T line2, linenr_T amount,
     return;
   }
   bcount_t start_byte = ml_find_line_or_offset(buf, line1, NULL, true);
-  bcount_t old_byte = 0, new_byte = 0;
-  int old_row, new_row;
+  bcount_t old_byte = 0;
+  bcount_t new_byte = 0;
+  int old_row;
+  int new_row;
   if (amount == MAXLNUM) {
     old_row = line2 - line1 + 1;
     // TODO(bfredl): ej kasta?

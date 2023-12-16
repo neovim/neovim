@@ -305,7 +305,8 @@ static void compose_line(Integer row, Integer startcol, Integer endcol, LineFlag
   startcol = MAX(startcol, 0);
   // in case we start on the right half of a double-width char, we need to
   // check the left half. But skip it in output if it wasn't doublewidth.
-  int skipstart = 0, skipend = 0;
+  int skipstart = 0;
+  int skipend = 0;
   if (startcol > 0 && (flags & kLineFlagInvalid)) {
     startcol--;
     skipstart = 1;

@@ -710,7 +710,8 @@ void f_win_splitmove(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  int flags = 0, size = 0;
+  int flags = 0;
+  int size = 0;
 
   if (argvars[2].v_type != VAR_UNKNOWN) {
     dict_T *d;
