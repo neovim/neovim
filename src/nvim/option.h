@@ -134,7 +134,7 @@ static inline bool option_has_type(OptIndex opt_idx, OptValType type)
   // Ensure that the type is valid before accessing type_flags.
   assert(type > kOptValTypeNil && type < kOptValTypeSize);
   // Bitshift 1 by the value of type to get the type's corresponding flag, and check if it's set in
-  // the type_flags bit_field.
+  // the type_flags bit field.
   return get_option(opt_idx)->type_flags & (1 << type);
 }
 

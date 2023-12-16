@@ -643,7 +643,7 @@ static Object get_option_from(void *from, OptReqScope req_scope, String name, Er
     return (Object)OBJECT_INIT;
   });
 
-  OptVal value = get_option_value_strict(findoption(name.data), req_scope, from, err);
+  OptVal value = get_option_value_strict(find_option(name.data), req_scope, from, err);
   if (ERROR_SET(err)) {
     return (Object)OBJECT_INIT;
   }
@@ -669,7 +669,7 @@ static void set_option_to(uint64_t channel_id, void *to, OptReqScope req_scope, 
     return;
   });
 
-  OptIndex opt_idx = findoption(name.data);
+  OptIndex opt_idx = find_option(name.data);
   VALIDATE_S(opt_idx != kOptInvalid, "option name", name.data, {
     return;
   });

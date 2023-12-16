@@ -1943,7 +1943,7 @@ typval_T optval_as_tv(OptVal value, bool numbool)
 /// Set option "varname" to the value of "varp" for the current buffer/window.
 static void set_option_from_tv(const char *varname, typval_T *varp)
 {
-  OptIndex opt_idx = findoption(varname);
+  OptIndex opt_idx = find_option(varname);
   if (opt_idx == kOptInvalid) {
     semsg(_(e_unknown_option2), varname);
     return;
