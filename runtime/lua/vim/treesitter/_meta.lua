@@ -47,7 +47,7 @@ function TSNode:_rawquery(query, captures, start, end_, opts) end
 ---@param start? integer
 ---@param end_? integer
 ---@param opts? table
----@return fun(): string, any
+---@return fun(): integer, any
 function TSNode:_rawquery(query, captures, start, end_, opts) end
 
 ---@alias TSLoggerCallback fun(logtype: 'parse'|'lex', msg: string)

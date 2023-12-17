@@ -929,30 +929,55 @@ add_directive({name}, {handler}, {force})
     Handlers can set match level data by setting directly on the metadata
     object `metadata.key = value`, additionally, handlers can set node level
     data by using the capture id on the metadata table
-    `metadata[capture_id].key = value`
+    `metadata[capture_id].key = value`.
 
     Parameters: ~
-      • {name}     (`string`) Name of the directive, without leading #
-      • {handler}  (`function`)
+      • {name}     (`string`) Name of the directive, without leading `#`. Must
+                   end with `!`.
+      • {handler}  (`TSDirective`) function(match, pattern, source, directive,
+                   metadata) where:
                    • match: see |treesitter-query|
-                     • node-level data are accessible via `match[capture_id]`
+                     • node-level data (TSNode) are accessible via
+                       `match[capture_id]`
 
-                   • pattern: see |treesitter-query|
-                   • predicate: list of strings containing the full directive
-                     being called, e.g. `(node (#set! conceal "-"))` would get
-                     the predicate `{ "#set!", "conceal", "-" }`
-      • {force}    (`boolean?`)
+                   • pattern: see |treesitter-query| and
+                     |Query:iter_matches()|
+                   • source: buffer id or string from which the nodes in
+                     `match` are extracted.
+                   • directive: (string|integer[]), list of strings or
+                     capture_id's containing the full directive being called,
+                     where the first element being the name of the directive.
+                     For example, `(node (#set! conceal "-"))` would get a
+                     list `{ "#set!", "conceal", "-" }`.
+                   • metadata: TSMetadata , a Lua table to store metadata
+                     associated with this directive.
+      • {force}    (`boolean?`) Whether to override existing one with the same
+                   name, if any.
 
                                         *vim.treesitter.query.add_predicate()*
 add_predicate({name}, {handler}, {force})
     Adds a new predicate to be used in queries
 
     Parameters: ~
-      • {name}     (`string`) Name of the predicate, without leading #
-      • {handler}  (`function`)
-                   • see |vim.treesitter.query.add_directive()| for argument
-                     meanings
-      • {force}    (`boolean?`)
+      • {name}     (`string`) Name of the predicate, without leading `#`.
+                   Should end with `?`.
+      • {handler}  (`TSPredicate`) function(match, pattern, source, predicate)
+                   that: returns a boolean (true/false), whether the given
+                   match meets the predicate.
+                   • match: a mapping from capture_id to node. see
+                     |treesitter-query|
+                   • pattern: see |treesitter-query| and
+                     |Query:iter_matches()|
+                   • source: buffer id or string from which the nodes in
+                     `match` are extracted.
+                   • predicate: (string|integer)[], list of strings or
+                     capture_id's containing the full predicate being called,
+                     where the first element being the name of the predicate.
+                     For example, `((node) @aa (#eq? @aa "foo"))` would get a
+                     list `{ "#eq?", 3, "foo" }`, where 3 is the capture_id
+                     for `@aa`.
+      • {force}    (`boolean?`) Whether to override existing one with the same
+                   name, if any.
 
 edit({lang})                                     *vim.treesitter.query.edit()*
     Opens a live editor to query the buffer you started from.
@@ -969,14 +994,23 @@ edit({lang})                                     *vim.treesitter.query.edit()*
                 inferred from the current buffer's filetype.
 
 get({lang}, {query_name})                         *vim.treesitter.query.get()*
-    Returns the runtime query {query_name} for {lang}.
+    Returns the runtime query {query_name} for {lang}. All query files found
+    from runtimepath will be concatenated and then parsed.
+
+    Note: if query was explicitly set via |vim.treesitter.query.set()|,
+    runtime query files will be ignored and only the explicit query will be
+    used.
 
     Parameters: ~
       • {lang}        (`string`) Language to use for the query
       • {query_name}  (`string`) Name of the query (e.g. "highlights")
 
     Return: ~
-        (`Query?`) Parsed query
+        (`Query?`) Parsed query. Returns `nil` if no query files are found.
+
+    See also: ~
+      • |vim.treesitter.query.parse()|
+      • |vim.treesitter.query.set()|
 
                                             *vim.treesitter.query.get_files()*
 get_files({lang}, {query_name}, {is_included})
@@ -1020,13 +1054,15 @@ list_directives()                     *vim.treesitter.query.list_directives()*
     Lists the currently available directives to use in queries.
 
     Return: ~
-        (`string[]`) List of supported directives.
+        (`string[]`) List of the supported directive names. Names do not
+        include the '#' prefix.
 
 list_predicates()                     *vim.treesitter.query.list_predicates()*
     Lists the currently available predicates to use in queries.
 
     Return: ~
-        (`string[]`) List of supported predicates.
+        (`string[]`) List of the supported predicate names. Names do not
+        include the '#' prefix.
 
 omnifunc({findstart}, {base})                *vim.treesitter.query.omnifunc()*
     Omnifunc for completing node names and predicates in treesitter queries.
@@ -1069,12 +1105,17 @@ Query:iter_captures({node}, {source}, {start}, {stop})
     i.e., to get syntax highlight matches in the current viewport). When
     omitted, the {start} and {stop} row values are used from the given node.
 
-    The iterator returns three values: a numeric id identifying the capture,
-    the captured node, and metadata from any directives processing the match.
+    The iterator returns three values:
+    • capture_id: (integer) a numeric id identifying the capture,
+    • node: (TSNode) the captured node, and
+    • metadata: (TSMetadata) metadata table from any directives processing the
+      match.
+
     The following example shows how to get captures by name: >lua
-        for id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
-          local name = query.captures[id] -- name of the capture in the query
-          -- typically useful info about the node:
+        for capture_id, node, metadata in query:iter_captures(tree:root(), bufnr, first, last) do
+          local name = query.captures[capture_id] -- name of the capture in the query
+
+          -- typically useful info about the node (see |TSNode| for more details):
           local type = node:type() -- type of the captured node
           local row1, col1, row2, col2 = node:range() -- range of the capture
           -- ... use the info here ...
@@ -1089,17 +1130,20 @@ Query:iter_captures({node}, {source}, {start}, {stop})
       • {stop}    (`integer`) Stopping line for the search (end-exclusive)
 
     Return: ~
-        (`fun(end_line: integer?): integer, TSNode, TSMetadata`) capture id,
-        capture node, metadata
+        (`fun(end_line: integer?): integer, TSNode, TSMetadata`) Iterator of
+        capture id, capture node, metadata
 
                                                         *Query:iter_matches()*
 Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
     Iterates the matches of self on a given range.
 
     Iterate over all matches within a {node}. The arguments are the same as
-    for |Query:iter_captures()| but the iterated values are different: an
-    (1-based) index of the pattern in the query, a table mapping capture
-    indices to nodes, and metadata from any directives processing the match.
+    for |Query:iter_captures()| but the iterated values are different:
+    • pattern: (integer) an (1-based) index of the pattern in the query,
+    • match: (TSMatch) a table mapping capture indices to nodes, and
+    • metadata: (TSMetadata) metadata table from any directives processing the
+      match.
+
     If the query has more than one pattern, the capture table might be sparse
     and e.g. `pairs()` method should be used over `ipairs`. Here is an example
     iterating over all captures in every match: >lua
@@ -1127,8 +1171,8 @@ Query:iter_matches({node}, {source}, {start}, {stop}, {opts})
                     0.20.9.
 
     Return: ~
-        (`fun(): integer, table<integer,TSNode>, table`) pattern id, match,
-        metadata
+        (`fun(): integer, table<integer,TSNode>, TSMetadata`) Iterator of
+        pattern id, match, metadata
 
 set({lang}, {query_name}, {text})                 *vim.treesitter.query.set()*
     Sets the runtime query named {query_name} for {lang}
