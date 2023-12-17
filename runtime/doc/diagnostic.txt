@@ -317,12 +317,24 @@ SIGNS                                                   *diagnostic-signs*
 
 Signs are defined for each diagnostic severity. The default text for each sign
 is the first letter of the severity name (for example, "E" for ERROR). Signs
-can be customized using the following: >vim
+can be customized with |vim.diagnostic.config()|. Example: >lua
 
-    sign define DiagnosticSignError text=E texthl=DiagnosticSignError linehl= numhl=
-    sign define DiagnosticSignWarn text=W texthl=DiagnosticSignWarn linehl= numhl=
-    sign define DiagnosticSignInfo text=I texthl=DiagnosticSignInfo linehl= numhl=
-    sign define DiagnosticSignHint text=H texthl=DiagnosticSignHint linehl= numhl=
+    -- Highlight entire line for errors
+    -- Highlight the line number for warnings
+    vim.diagnostic.config({
+        signs = {
+            text = {
+                [vim.diagnostic.severity.ERROR] = '',
+                [vim.diagnostic.severity.WARN] = '',
+            },
+            linehl = {
+                [vim.diagnostic.severity.ERROR] = 'ErrorMsg',
+            },
+            numhl = {
+                [vim.diagnostic.severity.WARN] = 'WarningMsg',
+            },
+        },
+    })
 
 When the "severity_sort" option is set (see |vim.diagnostic.config()|) the
 priority of each sign depends on the severity of the associated diagnostic.
@@ -427,8 +439,8 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                              end
 <
 
-                     • signs: (default true) Use signs for diagnostics.
-                       Options:
+                     • signs: (default true) Use signs for diagnostics
+                       |diagnostic-signs|. Options:
                        • severity: Only show signs for diagnostics matching
                          the given severity |diagnostic-severity|
                        • priority: (number, default 10) Base priority to use
