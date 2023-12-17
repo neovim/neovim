@@ -1,5 +1,6 @@
 #pragma once
 
+#include "auto/config.h"
 #include "nvim/log_defs.h"  // IWYU pragma: export
 #include "nvim/macros_defs.h"
 

@@ -147,7 +147,6 @@ iwyu: build/.ran-cmake
 	|src/nvim/buffer.h\
 	|src/nvim/buffer_defs.h\
 	|src/nvim/channel.h\
-	|src/nvim/channel_defs.h\
 	|src/nvim/charset.h\
 	|src/nvim/drawline.h\
 	|src/nvim/eval.h\
