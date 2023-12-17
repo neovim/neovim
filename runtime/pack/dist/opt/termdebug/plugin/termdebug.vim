@@ -35,21 +35,14 @@
 " The communication with gdb uses GDB/MI.  See:
 " https://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI.html
 "
-" For neovim compatibility, the vim specific calls were replaced with neovim
-" specific calls:
-"   term_start -> termopen
-"   term_sendkeys -> chansend
-"   term_getline -> getbufline
-"   job_info && term_getjob -> using linux command ps to get the tty
-"   balloon -> nvim floating window
+" NEOVIM COMPATIBILITY
 "
-" The code for opening the floating window was taken from the beautiful
-" implementation of LanguageClient-Neovim:
-" https://github.com/autozimu/LanguageClient-neovim/blob/0ed9b69dca49c415390a8317b19149f97ae093fa/autoload/LanguageClient.vim#L304
-"
-" Neovim terminal also works seamlessly on windows, which is why the ability
-" Author: Bram Moolenaar
-" Copyright: Vim license applies, see ":help license"
+" The vim specific functionalities were replaced with neovim specific calls:
+" - term_start -> termopen
+" - term_sendkeys -> chansend
+" - term_getline -> getbufline
+" - job_info && term_getjob -> nvim_get_chan_info
+" - balloon -> vim.lsp.util.open_floating_preview
 
 " In case this gets sourced twice.
 if exists(':Termdebug')
@@ -1313,7 +1306,14 @@ endfunc
 
 " :Evaluate - evaluate what is specified / under the cursor
 func s:Evaluate(range, arg)
+  if s:eval_float_win_id > 0 && nvim_win_is_valid(s:eval_float_win_id)
+        \ && a:range == 0 && empty(a:arg)
+    call nvim_set_current_win(s:eval_float_win_id)
+    return
+  endif
   let expr = s:GetEvaluationExpression(a:range, a:arg)
+  let s:evalFromBalloonExpr = 1
+  let s:evalFromBalloonExprResult = ''
   let s:ignoreEvalError = 0
   call s:SendEval(expr)
 endfunc
@@ -1370,6 +1370,8 @@ let s:ignoreEvalError = 0
 let s:evalFromBalloonExpr = 0
 let s:evalFromBalloonExprResult = ''
 
+let s:eval_float_win_id = -1
+
 " Handle the result of data-evaluate-expression
 func s:HandleEvaluate(msg)
   let value = a:msg
@@ -1392,9 +1394,15 @@ func s:HandleEvaluate(msg)
     else
       let s:evalFromBalloonExprResult .= ' = ' . value
     endif
-    let s:evalFromBalloonExprResult = split(s:evalFromBalloonExprResult, '\\n')
-    call s:OpenHoverPreview(s:evalFromBalloonExprResult, v:null)
-    let s:evalFromBalloonExprResult = ''
+    " NEOVIM:
+    " - Result pretty-printing is not implemented. Vim prettifies the result
+    "   with balloon_split(), which is not ported to nvim.
+    " - Manually implement window focusing. Sometimes the result of pointer
+    "   evaluation arrives in two separate messages, one for the address
+    "   itself and the other for the value in that address. So with the stock
+    "   focus option, the second message will focus the window containing the
+    "   first message.
+    let s:eval_float_win_id = luaeval('select(2, vim.lsp.util.open_floating_preview(_A))', [s:evalFromBalloonExprResult])
   else
     echomsg '"' . s:evalexpr . '": ' . value
   endif
@@ -1403,131 +1411,8 @@ func s:HandleEvaluate(msg)
     " Looks like a pointer, also display what it points to.
     let s:ignoreEvalError = 1
     call s:SendEval('*' . s:evalexpr)
-  else
-    let s:evalFromBalloonExprResult = ''
   endif
 endfunc
-
-function! s:ShouldUseFloatWindow() abort
-  if exists('*nvim_open_win') && (get(g:, 'termdebug_useFloatingHover', 1) == 1)
-    return v:true
-  else
-    return v:false
-  endif
-endfunction
-
-function! s:CloseFloatingHoverOnCursorMove(win_id, opened) abort
-  if getpos('.') == a:opened
-    " Just after opening floating window, CursorMoved event is run.
-    " To avoid closing floating window immediately, check the cursor
-    " was really moved
-    return
-  endif
-  autocmd! nvim_termdebug_close_hover
-  let winnr = win_id2win(a:win_id)
-  if winnr == 0
-    return
-  endif
-  call nvim_win_close(a:win_id, v:true)
-endfunction
-
-function! s:CloseFloatingHoverOnBufEnter(win_id, bufnr) abort
-  let winnr = win_id2win(a:win_id)
-  if winnr == 0
-    " Float window was already closed
-    autocmd! nvim_termdebug_close_hover
-    return
-  endif
-  if winnr == winnr()
-    " Cursor is moving into floating window. Do not close it
-    return
-  endif
-  if bufnr('%') == a:bufnr
-    " When current buffer opened hover window, it's not another buffer. Skipped
-    return
-  endif
-  autocmd! nvim_termdebug_close_hover
-  call nvim_win_close(a:win_id, v:true)
-endfunction
-
-" Open preview window. Window is open in:
-"   - Floating window on Neovim (0.4.0 or later)
-"   - Preview window on Neovim (0.3.0 or earlier) or Vim
-function! s:OpenHoverPreview(lines, filetype) abort
-  " Use local variable since parameter is not modifiable
-  let lines = a:lines
-  let bufnr = bufnr('%')
-
-  let use_float_win = s:ShouldUseFloatWindow()
-  if use_float_win
-    let pos = getpos('.')
-
-    " Calculate width and height
-    let width = 0
-    for index in range(len(lines))
-      let line = lines[index]
-      let lw = strdisplaywidth(line)
-      if lw > width
-        let width = lw
-      endif
-      let lines[index] = line
-    endfor
-
-    let height = len(lines)
-
-    " Calculate anchor
-    " Prefer North, but if there is no space, fallback into South
-    let bottom_line = line('w0') + winheight(0) - 1
-    if pos[1] + height <= bottom_line
-      let vert = 'N'
-      let row = 1
-    else
-      let vert = 'S'
-      let row = 0
-    endif
-
-    " Prefer West, but if there is no space, fallback into East
-    if pos[2] + width <= &columns
-      let hor = 'W'
-      let col = 0
-    else
-      let hor = 'E'
-      let col = 1
-    endif
-
-    let buf = nvim_create_buf(v:false, v:true)
-    call nvim_buf_set_lines(buf, 0, -1, v:true, lines)
-    " using v:true for second argument of nvim_open_win make the floating
-    " window disappear
-    let float_win_id = nvim_open_win(buf, v:false, {
-          \   'relative': 'cursor',
-          \   'anchor': vert . hor,
-          \   'row': row,
-          \   'col': col,
-          \   'width': width,
-          \   'height': height,
-          \   'style': 'minimal',
-          \ })
-
-    if a:filetype isnot v:null
-      call nvim_set_option_value('filetype', a:filetype, { 'win' : float_win_id })
-    endif
-
-    call nvim_set_option_value('modified', v:false, { 'buf' : buf })
-    call nvim_set_option_value('modifiable', v:false, { 'buf' : buf })
-
-    " Unlike preview window, :pclose does not close window. Instead, close
-    " hover window automatically when cursor is moved.
-    let call_after_move = printf('<SID>CloseFloatingHoverOnCursorMove(%d, %s)', float_win_id, string(pos))
-    let call_on_bufenter = printf('<SID>CloseFloatingHoverOnBufEnter(%d, %d)', float_win_id, bufnr)
-    augroup nvim_termdebug_close_hover
-      execute 'autocmd CursorMoved,CursorMovedI,InsertEnter <buffer> call ' . call_after_move
-      execute 'autocmd BufEnter * call ' . call_on_bufenter
-    augroup END
-  else
-    echomsg a:lines[0]
-  endif
-endfunction
 
 " Handle an error.
 func s:HandleError(msg)
