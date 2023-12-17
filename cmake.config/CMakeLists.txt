@@ -173,6 +173,7 @@ append_target_expression(PROPERTY COMPILE_OPTIONS)
 append_target_expression(PROPERTY LINK_OPTIONS)
 append_target_expression(PREFIX "-D" PROPERTY COMPILE_DEFINITIONS)
 append_target_expression(PREFIX "-I" PROPERTY INCLUDE_DIRECTORIES)
+string(REPLACE ";" " " VERSION_STRING "${VERSION_STRING}") # Remove ; from LINK_FLAGS/LINK_OPTIONS
 string(REPLACE "  " " " VERSION_STRING "${VERSION_STRING}") # Remove duplicate whitespace
 
 configure_file(versiondef.h.in auto/versiondef.h.gen)
