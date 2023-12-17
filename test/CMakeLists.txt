@@ -1,5 +1,4 @@
 add_subdirectory(functional/fixtures)  # compile test programs
-get_directory_property(GENERATED_HELP_TAGS DIRECTORY ${PROJECT_SOURCE_DIR}/runtime DEFINITION GENERATED_HELP_TAGS)
 
 get_target_property(TEST_INCLUDE_DIRS main_lib INTERFACE_INCLUDE_DIRECTORIES)
 
@@ -35,7 +34,7 @@ add_custom_target(functionaltest
     -D TEST_TYPE=functional
     ${TEST_OPTIONS}
     -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-  DEPENDS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS}
+  DEPENDS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS} ${GENERATED_SYN_VIM}
   USES_TERMINAL)
 
 add_custom_target(benchmark

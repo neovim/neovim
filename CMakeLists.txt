@@ -33,10 +33,19 @@ include(InstallHelpers)
 include(PreventInTreeBuilds)
 include(Util)
 
+#-------------------------------------------------------------------------------
+# Variables
+#-------------------------------------------------------------------------------
+set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
+set(GENERATED_RUNTIME_DIR ${PROJECT_BINARY_DIR}/runtime)
+set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
+
+# GENERATED_RUNTIME_DIR
+set(GENERATED_HELP_TAGS ${GENERATED_RUNTIME_DIR}/doc/tags)
+set(GENERATED_SYN_VIM ${GENERATED_RUNTIME_DIR}/syntax/vim/generated.vim)
+
 set_directory_properties(PROPERTIES
   EP_PREFIX "${DEPS_BUILD_DIR}")
-
-set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 
 find_program(CCACHE_PRG ccache)
 if(CCACHE_PRG)
@@ -218,11 +227,13 @@ endif()
 find_program(SHELLCHECK_PRG shellcheck ${LINT_REQUIRED})
 find_program(STYLUA_PRG stylua ${LINT_REQUIRED})
 
+set(STYLUA_DIRS runtime scripts src test/unit)
+
 add_glob_target(
   TARGET lintlua-luacheck
   COMMAND $<TARGET_FILE:nvim>
   FLAGS -ll ${PROJECT_SOURCE_DIR}/test/lua_runner.lua ${CMAKE_BINARY_DIR}/usr luacheck -q
-  GLOB_DIRS runtime/ scripts/ src/ test/
+  GLOB_DIRS runtime scripts src test
   GLOB_PAT *.lua
   TOUCH_STRATEGY SINGLE)
 add_dependencies(lintlua-luacheck lua-dev-deps)
@@ -231,7 +242,7 @@ add_glob_target(
   TARGET lintlua-stylua
   COMMAND ${STYLUA_PRG}
   FLAGS --color=always --check --respect-ignores
-  GLOB_DIRS runtime/ scripts/ src/ test/unit/
+  GLOB_DIRS ${STYLUA_DIRS}
   GLOB_PAT *.lua
   TOUCH_STRATEGY SINGLE)
 
@@ -258,7 +269,7 @@ add_glob_target(
   TARGET formatlua
   COMMAND ${STYLUA_PRG}
   FLAGS --respect-ignores
-  GLOB_DIRS runtime/ scripts/ src/ test/unit/
+  GLOB_DIRS ${STYLUA_DIRS}
   GLOB_PAT *.lua)
 
 add_custom_target(format)
