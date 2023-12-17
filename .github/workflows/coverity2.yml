@@ -1,0 +1,38 @@
+name: coverity2
+on:
+  push:
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
+  pull_request:
+    branches:
+      - 'master'
+      - 'release-[0-9]+.[0-9]+'
+    paths-ignore:
+      - 'contrib/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      - name: Download Coverity
+        run: |
+          wget -q https://scan.coverity.com/download/cxx/linux64 --post-data "token=$TOKEN&project=neovim%2Fneovim" -O coverity_tool.tgz
+          mkdir cov-scan
+          tar ax -f coverity_tool.tgz --strip-components=1 -C cov-scan
+        env:
+          TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+
+      - run: make deps
+      - run: env PATH=$(pwd)/cov-scan/bin:$PATH cov-build --dir cov-int make
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: cov-int
