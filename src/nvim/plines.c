@@ -511,55 +511,47 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *en
   cts.cts_max_head_vcol = -1;
 
   // This function is used very often, do some speed optimizations.
-  // When 'list', 'linebreak', 'showbreak' and 'breakindent' are not set
+  // When 'linebreak', 'showbreak' and 'breakindent' are not set
   // and there are no virtual text use a simple loop.
-  // Also use this when 'list' is set but tabs take their normal size.
-  if ((!wp->w_p_list || (wp->w_p_lcs_chars.tab1 != NUL))
-      && !wp->w_p_lbr
-      && *get_showbreak_value(wp) == NUL
-      && !wp->w_p_bri
-      && cts.virt_row < 0) {
+  if (!wp->w_p_lbr && !wp->w_p_bri && cts.virt_row < 0 && *get_showbreak_value(wp) == NUL) {
+    bool const special_tab = !wp->w_p_list || wp->w_p_lcs_chars.tab1 != NUL;
+    CharInfo cur_char = utf_ptr2CharInfo(ptr);
     while (true) {
       head = 0;
-      int c = (uint8_t)(*ptr);
-
       // make sure we don't go past the end of the line
-      if (c == NUL) {
+      if (cur_char.value == 0 && cur_char.len == 1) {
         // NUL at end of line only takes one column
         incr = 1;
         break;
       }
 
       // A tab gets expanded, depending on the current column
-      if (c == TAB) {
+      if (cur_char.value == TAB && special_tab) {
         incr = tabstop_padding(vcol, ts, vts);
       } else {
-        // For utf-8, if the byte is >= 0x80, need to look at
-        // further bytes to find the cell width.
-        if (c >= 0x80) {
-          incr = utf_ptr2cells(ptr);
+        if (cur_char.value < 0) {
+          incr = kInvalidByteCells;
         } else {
-          incr = byte2cells(c);
+          incr = char2cells(cur_char.value);
         }
 
         // If a double-cell char doesn't fit at the end of a line
         // it wraps to the next line, it's like this char is three
         // cells wide.
-        if ((incr == 2)
-            && wp->w_p_wrap
-            && (MB_BYTE2LEN((uint8_t)(*ptr)) > 1)
-            && in_win_border(wp, vcol)) {
+        if (incr == 2 && cur_char.value >= 0x80
+            && wp->w_p_wrap && in_win_border(wp, vcol)) {
           incr++;
           head = 1;
         }
       }
 
-      char *const next = ptr + utfc_ptr2len(ptr);
-      if ((uintptr_t)next > last_pos) {
+      StrCharInfo const next_char = utfc_next((StrCharInfo){ ptr, cur_char });
+      if ((uintptr_t)next_char.ptr > last_pos) {
         break;
       }
 
-      ptr = next;
+      cur_char = next_char.chr;
+      ptr = next_char.ptr;
       vcol += incr;
     }
   } else {
