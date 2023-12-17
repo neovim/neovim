@@ -617,6 +617,8 @@ end
 ---
 ---@param namespace integer|nil Update the options for the given namespace. When omitted, update the
 ---                            global diagnostic options.
+---
+---@return table|nil table of current diagnostic config if `opts` is omitted.
 function M.config(opts, namespace)
   vim.validate({
     opts = { opts, 't', true },
