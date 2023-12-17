@@ -2,23 +2,23 @@ local api = vim.api
 
 local M = {}
 
----@class Range2
----@field [1] integer start row
----@field [2] integer end row
+---@class Range2 Range represented by rows
+---@field [1] integer start row (0-indexed).
+---@field [2] integer end row (0-indexed, exclusive).
 
----@class Range4
----@field [1] integer start row
----@field [2] integer start column
----@field [3] integer end row
----@field [4] integer end column
+---@class Range4 Range represented by rows and columns
+---@field [1] integer start row (0-indexed)
+---@field [2] integer start column (0-indexed)
+---@field [3] integer end row (0-indexed)
+---@field [4] integer end column (0-indexed, exclusive)
 
----@class Range6
----@field [1] integer start row
----@field [2] integer start column
----@field [3] integer start bytes
----@field [4] integer end row
----@field [5] integer end column
----@field [6] integer end bytes
+---@class Range6 Range represented by rows, columns, and bytes
+---@field [1] integer start row (0-indexed)
+---@field [2] integer start column (0-indexed)
+---@field [3] integer start bytes (0-indexed)
+---@field [4] integer end row (0-indexed)
+---@field [5] integer end column (0-indexed, exclusive)
+---@field [6] integer end bytes (0-indexed, exclusive)
 
 ---@alias Range Range2|Range4|Range6
 
@@ -72,7 +72,7 @@ setmetatable(M.cmp_pos, { __call = cmp_pos })
 
 ---@private
 ---Check if a variable is a valid range object
----@param r any
+---@param r Range|any
 ---@return boolean
 function M.validate(r)
   if type(r) ~= 'table' or #r ~= 6 and #r ~= 4 then
@@ -126,6 +126,7 @@ end
 ---@param r Range6
 ---@return integer, integer, integer, integer, integer, integer
 function M.unpack6(r)
+  assert(#r == 6, 'invalid Range6 given')
   return r[1], r[2], r[3], r[4], r[5], r[6]
 end
 

@@ -177,7 +177,7 @@ end
 
 --- Returns the node's range or an unpacked range table
 ---
----@param node_or_range (TSNode | table) Node or table of positions
+---@param node_or_range (TSNode | Range) Node or table of positions. see |TSNode:range()|.
 ---
 ---@return integer start_row
 ---@return integer start_col
@@ -185,18 +185,23 @@ end
 ---@return integer end_col
 function M.get_node_range(node_or_range)
   if type(node_or_range) == 'table' then
-    return unpack(node_or_range)
+    ---@cast node_or_range Range
+    vim.validate {
+      range = { node_or_range, Range.validate, 'integer list with 4 or 6 elements' },
+    }
+    return Range.unpack4(node_or_range)
   else
+    ---@cast node_or_range TSNode
     return node_or_range:range()
   end
 end
 
----Get the range of a |TSNode|. Can also supply {source} and {metadata}
----to get the range with directives applied.
+---Get the range of a |TSNode| with bytes information included.
+---Can also supply {source} and {metadata} to get the range with directives applied.
 ---@param node TSNode
 ---@param source integer|string|nil Buffer or string from which the {node} is extracted
 ---@param metadata TSMetadata|nil
----@return Range6
+---@return Range6 (table) a Range6 table containing six values.
 function M.get_range(node, source, metadata)
   if metadata and metadata.range then
     assert(source)
@@ -259,7 +264,7 @@ end
 --- Determines if a node contains a range
 ---
 ---@param node TSNode
----@param range table
+---@param range Range
 ---
 ---@return boolean True if the {node} contains the {range}
 function M.node_contains(node, range)
@@ -391,7 +396,8 @@ function M.get_node(opts)
 
   assert(row >= 0 and col >= 0, 'Invalid position: row and col must be non-negative')
 
-  local ts_range = { row, col, row, col }
+  ---@type Range4
+  local ts_range = { row, col, row, col + 1 }
 
   local root_lang_tree = M.get_parser(bufnr, opts.lang)
   if not root_lang_tree then
@@ -417,7 +423,9 @@ function M.get_node_at_pos(bufnr, row, col, opts)
   if bufnr == 0 then
     bufnr = api.nvim_get_current_buf()
   end
-  local ts_range = { row, col, row, col }
+
+  ---@type Range4
+  local ts_range = { row, col, row, col + 1 }
 
   opts = opts or {}
 

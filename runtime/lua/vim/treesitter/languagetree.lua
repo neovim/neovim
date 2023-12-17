@@ -416,8 +416,13 @@ end
 --- otherwise (typically injections) only if it intersects {range} (or if {range} is `true`).
 ---
 --- @param range boolean|Range|nil: Parse this range in the parser's source.
----     Set to `true` to run a complete parse of the source (Note: Can be slow!)
----     Set to `false|nil` to only parse regions with empty ranges (typically
+---     - If table, this may contain 2, 4, or 6 integers:
+---        - `{ start_line, end_line }`
+---        - `{ start_line, start_col, end_line, end_col }`
+---        - `{ start_line, start_col, start_byte, end_line, end_col, end_byte }`
+---        - Index is 0-based and always end-exclusive.
+---     - If `true`, run a complete parse of the source (Note: Can be slow!)
+---     - If `false|nil`, only parse regions with empty ranges (typically
 ---     only the root tree without injections).
 --- @return table<integer, TSTree>
 function LanguageTree:parse(range)
@@ -1084,6 +1089,7 @@ end
 --- Determines whether {range} is contained in the |LanguageTree|.
 ---
 ---@param range Range4 `{ start_line, start_col, end_line, end_col }`
+---              Range is 0-indexed and end-exclusive.
 ---@return boolean
 function LanguageTree:contains(range)
   for _, tree in pairs(self._trees) do
@@ -1098,6 +1104,7 @@ end
 --- Gets the tree that contains {range}.
 ---
 ---@param range Range4 `{ start_line, start_col, end_line, end_col }`
+---              Range is 0-indexed and end-exclusive.
 ---@param opts table|nil Optional keyword arguments:
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---@return TSTree|nil
@@ -1126,6 +1133,7 @@ end
 --- Gets the smallest named node that contains {range}.
 ---
 ---@param range Range4 `{ start_line, start_col, end_line, end_col }`
+---              Range is 0-indexed and end-exclusive.
 ---@param opts table|nil Optional keyword arguments:
 ---             - ignore_injections boolean Ignore injected languages (default true)
 ---@return TSNode | nil Found node
@@ -1139,6 +1147,7 @@ end
 --- Gets the appropriate language that contains {range}.
 ---
 ---@param range Range4 `{ start_line, start_col, end_line, end_col }`
+---              Range is 0-indexed and end-exclusive.
 ---@return LanguageTree Managing {range}
 function LanguageTree:language_for_range(range)
   for _, child in pairs(self._children) do
