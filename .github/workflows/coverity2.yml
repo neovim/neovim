@@ -4,7 +4,7 @@ on:
     branches:
       - 'master'
       - 'release-[0-9]+.[0-9]+'
-  pull_request:
+  pull_request_target:
     branches:
       - 'master'
       - 'release-[0-9]+.[0-9]+'
