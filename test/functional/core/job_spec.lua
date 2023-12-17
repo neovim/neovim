@@ -1154,17 +1154,26 @@ describe('jobs', function()
     ]])
 
     local screen = thelpers.setup_child_nvim({
+      '--cmd', 'set notermguicolors',
       '-i', 'NONE',
       '-u', filename,
-      '+q'
     })
+    -- Wait for startup to complete, so that all terminal responses are received.
+    screen:expect([[
+      {1: }                                                 |
+      ~                                                 |*3
+      {1:[No Name]                       0,0-1          All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
 
-    screen:expect{grid=[[
+    feed(':q<CR>')
+    screen:expect([[
                                                         |
       [Process exited 0]{1: }                               |
                                                         |*4
       {3:-- TERMINAL --}                                    |
-    ]]}
+    ]])
   end)
 end)
 
