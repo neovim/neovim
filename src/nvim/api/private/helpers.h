@@ -5,9 +5,9 @@
 
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/buffer_defs.h"  // IWYU pragma: keep
+#include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_eval_defs.h"
-#include "nvim/gettext.h"
-#include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"
 #include "nvim/message_defs.h"  // IWYU pragma: keep

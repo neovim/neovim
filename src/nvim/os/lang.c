@@ -20,6 +20,7 @@
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/garray.h"
 #include "nvim/gettext.h"
+#include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"

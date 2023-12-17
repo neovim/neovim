@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>  // IWYU pragma: keep
 

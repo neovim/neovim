@@ -236,6 +236,7 @@ local keysets_defs = io.open(keysets_outputf, 'wb')
 output:write([[
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
+#include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/map_defs.h"
 #include "nvim/msgpack_rpc/helpers.h"
@@ -662,6 +663,7 @@ output:write([[
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/func_attr.h"
+#include "nvim/globals.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/dispatch.h"
