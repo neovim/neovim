@@ -44,6 +44,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
+#include "nvim/eval/window.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
@@ -3747,7 +3748,7 @@ const char *set_option_value(const OptIndex opt_idx, const OptVal value, int opt
 /// Set the value of an option. Supports TTY options, unlike set_option_value().
 ///
 /// @param      name       Option name. Used for error messages and for setting TTY options.
-/// @param      opt_idx    Option indx in options[] table. If less than zero, `name` is used to
+/// @param      opt_idx    Option indx in options[] table. If kOptInvalid, `name` is used to
 ///                        check if the option is a TTY option, and an error is shown if it's not.
 ///                        If the option is a TTY option, the function fails silently.
 /// @param      value      Option value. If NIL_OPTVAL, the option value is cleared.
@@ -3783,6 +3784,240 @@ void set_option_value_give_err(const OptIndex opt_idx, OptVal value, int opt_fla
 
   if (errmsg != NULL) {
     emsg(_(errmsg));
+  }
+}
+
+/// Switch current context to get/set option value for window/buffer.
+///
+/// @param[out]  ctx        Current context. switchwin_T for window and aco_save_T for buffer.
+/// @param       req_scope  Requested option scope. See OptReqScope in option.h.
+/// @param[in]   from       Target buffer/window.
+/// @param[out]  err        Error message, if any.
+///
+/// @return  true if context was switched, false otherwise.
+static bool switch_option_context(void *const ctx, OptReqScope req_scope, void *const from,
+                                  Error *err)
+{
+  switch (req_scope) {
+  case kOptReqWin: {
+    win_T *const win = (win_T *)from;
+    switchwin_T *const switchwin = (switchwin_T *)ctx;
+
+    if (win == curwin) {
+      return false;
+    }
+
+    if (switch_win_noblock(switchwin, win, win_find_tabpage(win), true)
+        == FAIL) {
+      restore_win_noblock(switchwin, true);
+
+      if (try_end(err)) {
+        return false;
+      }
+      api_set_error(err, kErrorTypeException, "Problem while switching windows");
+      return false;
+    }
+    return true;
+  }
+  case kOptReqBuf: {
+    buf_T *const buf = (buf_T *)from;
+    aco_save_T *const aco = (aco_save_T *)ctx;
+
+    if (buf == curbuf) {
+      return false;
+    }
+    aucmd_prepbuf(aco, buf);
+    return true;
+  }
+  case kOptReqGlobal:
+    return false;
+  }
+  UNREACHABLE;
+}
+
+/// Restore context after getting/setting option for window/buffer. See switch_option_context() for
+/// params.
+static void restore_option_context(void *const ctx, OptReqScope req_scope)
+{
+  switch (req_scope) {
+  case kOptReqWin:
+    restore_win_noblock((switchwin_T *)ctx, true);
+    break;
+  case kOptReqBuf:
+    aucmd_restbuf((aco_save_T *)ctx);
+    break;
+  case kOptReqGlobal:
+    break;
+  }
+}
+
+/// Get attributes for an option.
+///
+/// @param  opt_idx  Option index in options[] table.
+///
+/// @return  Option attributes.
+///          0 for hidden or unknown option.
+///          See SOPT_* in option_defs.h for other flags.
+int get_option_attrs(OptIndex opt_idx)
+{
+  if (opt_idx == kOptInvalid) {
+    return 0;
+  }
+
+  vimoption_T *opt = get_option(opt_idx);
+
+  // Hidden option
+  if (opt->var == NULL) {
+    return 0;
+  }
+
+  int attrs = 0;
+
+  if (opt->indir == PV_NONE || (opt->indir & PV_BOTH)) {
+    attrs |= SOPT_GLOBAL;
+  }
+  if (opt->indir & PV_WIN) {
+    attrs |= SOPT_WIN;
+  } else if (opt->indir & PV_BUF) {
+    attrs |= SOPT_BUF;
+  }
+
+  return attrs;
+}
+
+/// Check if option has a value in the requested scope.
+///
+/// @param  opt_idx    Option index in options[] table.
+/// @param  req_scope  Requested option scope. See OptReqScope in option.h.
+///
+/// @return  true if option has a value in the requested scope, false otherwise.
+static bool option_has_scope(OptIndex opt_idx, OptReqScope req_scope)
+{
+  if (opt_idx == kOptInvalid) {
+    return false;
+  }
+
+  vimoption_T *opt = get_option(opt_idx);
+
+  // Hidden option.
+  if (opt->var == NULL) {
+    return false;
+  }
+  // TTY option.
+  if (is_tty_option(opt->fullname)) {
+    return req_scope == kOptReqGlobal;
+  }
+
+  switch (req_scope) {
+  case kOptReqGlobal:
+    return opt->var != VAR_WIN;
+  case kOptReqBuf:
+    return opt->indir & PV_BUF;
+  case kOptReqWin:
+    return opt->indir & PV_WIN;
+  }
+  UNREACHABLE;
+}
+
+/// Get the option value in the requested scope.
+///
+/// @param       opt_idx    Option index in options[] table.
+/// @param       req_scope  Requested option scope. See OptReqScope in option.h.
+/// @param[in]   from       Pointer to buffer or window for local option value.
+/// @param[out]  err        Error message, if any.
+///
+/// @return  Option value in the requested scope. Returns a Nil option value if option is not found,
+/// hidden or if it isn't present in the requested scope. (i.e. has no global, window-local or
+/// buffer-local value depending on opt_scope).
+OptVal get_option_value_strict(OptIndex opt_idx, OptReqScope req_scope, void *from, Error *err)
+{
+  if (opt_idx == kOptInvalid || !option_has_scope(opt_idx, req_scope)) {
+    return NIL_OPTVAL;
+  }
+
+  vimoption_T *opt = get_option(opt_idx);
+  switchwin_T switchwin;
+  aco_save_T aco;
+  void *ctx = req_scope == kOptReqWin ? (void *)&switchwin
+                                      : (req_scope == kOptReqBuf ? (void *)&aco : NULL);
+  bool switched = switch_option_context(ctx, req_scope, from, err);
+  if (ERROR_SET(err)) {
+    return NIL_OPTVAL;
+  }
+
+  char *varp = get_varp_scope(opt, req_scope == kOptReqGlobal ? OPT_GLOBAL : OPT_LOCAL);
+  OptVal retv = optval_from_varp(opt_idx, varp);
+
+  if (switched) {
+    restore_option_context(ctx, req_scope);
+  }
+
+  return retv;
+}
+
+/// Get option value for buffer / window.
+///
+/// @param       opt_idx    Option index in options[] table.
+/// @param[out]  flagsp     Set to the option flags (P_xxxx) (if not NULL).
+/// @param[in]   scope      Option scope (can be OPT_LOCAL, OPT_GLOBAL or a combination).
+/// @param[out]  hidden     Whether option is hidden.
+/// @param       req_scope  Requested option scope. See OptReqScope in option.h.
+/// @param[in]   from       Target buffer/window.
+/// @param[out]  err        Error message, if any.
+///
+/// @return  Option value. Must be freed by caller.
+OptVal get_option_value_for(OptIndex opt_idx, int scope, const OptReqScope req_scope,
+                            void *const from, Error *err)
+{
+  switchwin_T switchwin;
+  aco_save_T aco;
+  void *ctx = req_scope == kOptReqWin ? (void *)&switchwin
+                                      : (req_scope == kOptReqBuf ? (void *)&aco : NULL);
+
+  bool switched = switch_option_context(ctx, req_scope, from, err);
+  if (ERROR_SET(err)) {
+    return NIL_OPTVAL;
+  }
+
+  OptVal retv = get_option_value(opt_idx, scope);
+
+  if (switched) {
+    restore_option_context(ctx, req_scope);
+  }
+
+  return retv;
+}
+
+/// Set option value for buffer / window.
+///
+/// @param       name        Option name.
+/// @param       opt_idx     Option index in options[] table.
+/// @param[in]   value       Option value.
+/// @param[in]   opt_flags   Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
+/// @param       req_scope   Requested option scope. See OptReqScope in option.h.
+/// @param[in]   from        Target buffer/window.
+/// @param[out]  err         Error message, if any.
+void set_option_value_for(const char *name, OptIndex opt_idx, OptVal value, const int opt_flags,
+                          const OptReqScope req_scope, void *const from, Error *err)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  switchwin_T switchwin;
+  aco_save_T aco;
+  void *ctx = req_scope == kOptReqWin ? (void *)&switchwin
+                                      : (req_scope == kOptReqBuf ? (void *)&aco : NULL);
+
+  bool switched = switch_option_context(ctx, req_scope, from, err);
+  if (ERROR_SET(err)) {
+    return;
+  }
+
+  const char *const errmsg = set_option_value_handle_tty(name, opt_idx, value, opt_flags);
+  if (errmsg) {
+    api_set_error(err, kErrorTypeException, "%s", errmsg);
+  }
+
+  if (switched) {
+    restore_option_context(ctx, req_scope);
   }
 }
 
@@ -6035,7 +6270,7 @@ dict_T *get_winbuf_options(const int bufopt)
   dict_T *const d = tv_dict_alloc();
 
   for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
-    struct vimoption *opt = &options[opt_idx];
+    vimoption_T *opt = &options[opt_idx];
 
     if ((bufopt && (opt->indir & PV_BUF))
         || (!bufopt && (opt->indir & PV_WIN))) {

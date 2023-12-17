@@ -291,7 +291,7 @@ static void set_string_option_global(vimoption_T *opt, char **varp)
 /// @param opt_flags  OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL.
 ///
 /// TODO(famiu): Remove this and its win/buf variants.
-void set_string_option_direct(OptIndex opt_idx, const char *val, int opt_flags, int set_sid)
+void set_string_option_direct(OptIndex opt_idx, const char *val, int opt_flags, scid_T set_sid)
 {
   vimoption_T *opt = get_option(opt_idx);
 
