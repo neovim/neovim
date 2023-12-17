@@ -1495,12 +1495,36 @@ int do_set(char *arg, int opt_flags)
   return OK;
 }
 
+// Translate a string like "t_xx", "<t_xx>" or "<S-Tab>" to a key number.
+// When "has_lt" is true there is a '<' before "*arg_arg".
+// Returns 0 when the key is not recognized.
+static int find_key_len(const char *arg_arg, size_t len, bool has_lt)
+{
+  int key = 0;
+  const char *arg = arg_arg;
+
+  // Don't use get_special_key_code() for t_xx, we don't want it to call
+  // add_termcap_entry().
+  if (len >= 4 && arg[0] == 't' && arg[1] == '_') {
+    key = TERMCAP2KEY((uint8_t)arg[2], (uint8_t)arg[3]);
+  } else if (has_lt) {
+    arg--;  // put arg at the '<'
+    int modifiers = 0;
+    key = find_special_key(&arg, len + 1, &modifiers, FSK_KEYCODE | FSK_KEEP_X_KEY | FSK_SIMPLIFY,
+                           NULL);
+    if (modifiers) {  // can't handle modifiers here
+      key = 0;
+    }
+  }
+  return key;
+}
+
 /// Convert a key name or string into a key value.
 /// Used for 'wildchar' and 'cedit' options.
 int string_to_key(char *arg)
 {
   if (*arg == '<') {
-    return find_key_option(arg + 1, true);
+    return find_key_len(arg + 1, strlen(arg), true);
   }
   if (*arg == '^') {
     return CTRL_CHR((uint8_t)arg[1]);
@@ -3760,35 +3784,6 @@ void set_option_value_give_err(const OptIndex opt_idx, OptVal value, int opt_fla
   if (errmsg != NULL) {
     emsg(_(errmsg));
   }
-}
-
-// Translate a string like "t_xx", "<t_xx>" or "<S-Tab>" to a key number.
-// When "has_lt" is true there is a '<' before "*arg_arg".
-// Returns 0 when the key is not recognized.
-int find_key_option_len(const char *arg_arg, size_t len, bool has_lt)
-{
-  int key = 0;
-  const char *arg = arg_arg;
-
-  // Don't use get_special_key_code() for t_xx, we don't want it to call
-  // add_termcap_entry().
-  if (len >= 4 && arg[0] == 't' && arg[1] == '_') {
-    key = TERMCAP2KEY((uint8_t)arg[2], (uint8_t)arg[3]);
-  } else if (has_lt) {
-    arg--;  // put arg at the '<'
-    int modifiers = 0;
-    key = find_special_key(&arg, len + 1, &modifiers,
-                           FSK_KEYCODE | FSK_KEEP_X_KEY | FSK_SIMPLIFY, NULL);
-    if (modifiers) {  // can't handle modifiers here
-      key = 0;
-    }
-  }
-  return key;
-}
-
-static int find_key_option(const char *arg, bool has_lt)
-{
-  return find_key_option_len(arg, strlen(arg), has_lt);
 }
 
 /// if 'all' == false: show changed options
