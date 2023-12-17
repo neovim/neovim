@@ -2530,13 +2530,14 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
     win_close_othertab(win, free_buf, prev_curtab);
   }
   entering_window(curwin);
+  win_T *target_win = curwin;
 
   // Since goto_tabpage_tp above did not trigger *Enter autocommands, do
   // that now.
-  apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
-  apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
+  apply_autocmds_win(EVENT_WINENTER, NULL, NULL, false, curbuf, target_win);
+  apply_autocmds_win(EVENT_TABENTER, NULL, NULL, false, curbuf, target_win);
   if (old_curbuf != curbuf) {
-    apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
+    apply_autocmds_win(EVENT_BUFENTER, NULL, NULL, false, curbuf, target_win);
   }
   return true;
 }
@@ -2666,7 +2667,7 @@ int win_close(win_T *win, bool free_buf, bool force)
         return FAIL;
       }
       win->w_closing = true;
-      apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf);
+      apply_autocmds_win(EVENT_BUFLEAVE, NULL, NULL, false, curbuf, win);
       if (!win_valid(win)) {
         return FAIL;
       }
@@ -4030,8 +4031,8 @@ int win_new_tabpage(int after, char *filename)
     win_T *wp = curwin;
     apply_autocmds_win(EVENT_WINNEW, NULL, NULL, false, curbuf, wp);
     apply_autocmds_win(EVENT_WINENTER, NULL, NULL, false, curbuf, wp);
-    apply_autocmds(EVENT_TABNEW, filename, filename, false, curbuf);
-    apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
+    apply_autocmds_win(EVENT_TABNEW, filename, filename, false, curbuf, wp);
+    apply_autocmds_win(EVENT_TABENTER, NULL, NULL, false, curbuf, wp);
 
     return OK;
   }
@@ -4835,8 +4836,6 @@ void fix_current_dir(void)
     }
     bool dir_differs = pathcmp(new_dir, cwd, -1) != 0;
     if (!p_acd && dir_differs) {
-      // TODO(tudor): if only one of them four is called
-      // then we don't need to pass this_curwin, assume curwin is correct
       do_autocmd_dirchanged(new_dir, curwin->w_localdir ? kCdScopeWindow : kCdScopeTabpage,
                             kCdCauseWindow, true, this_curwin);
     }
