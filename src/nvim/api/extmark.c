@@ -222,7 +222,9 @@ static Array extmark_to_array(const ExtmarkInfo *extmark, bool id, bool add_dict
     }
 
     if (decor->conceal) {
-      String name = cstr_to_string((char *)&decor->conceal_char);
+      char bytes[MB_MAXCHAR + 1] = {0};
+      utf_char2bytes(decor->conceal_char, bytes);
+      String name = cstr_to_string(bytes);
       PUT(dict, "conceal", STRING_OBJ(name));
     }
 
