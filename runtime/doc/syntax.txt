@@ -1552,13 +1552,14 @@ edit F# or Fortran at all, use this in your startup vimrc: >
 FORTRAN					*fortran.vim* *ft-fortran-syntax*
 
 Default highlighting and dialect ~
-Highlighting appropriate for Fortran 2008 is used by default.  This choice
-should be appropriate for most users most of the time because Fortran 2008 is
-almost a superset of previous versions (Fortran 2003, 95, 90, and 77).  A
-small number of features new to Fortran 2018 and Fortran 2023 are supported
-and the complete transition to Fortran 2023 will be completed in the future.
-A few legacy constructs deleted or declared obsolescent in recent Fortran
-standards are highlighted as todo items.
+Vim highlights according to Fortran 2023 (the most recent standard) by
+default.  This choice should be appropriate for most users most of the time
+because Fortran 2023 is almost a superset of previous versions (Fortran 2018,
+2008, 2003, 95, 90, and 77).  A small number of features new to Fortran 2018
+and Fortran 2023 may have been omitted at present; the transition to Fortran
+2023 will be completed in the near future. A few legacy constructs deleted or
+declared obsolescent in recent Fortran standards are highlighted as todo
+items.
 
 The syntax script no longer supports Fortran dialects.  The variable
 fortran_dialect is now silently ignored.  Since computers are much faster now,
@@ -1568,7 +1569,7 @@ Fortran source code form ~
 Fortran code can be in either fixed or free source form.  Note that the
 syntax highlighting will not be correct if the form is incorrectly set.
 
-When you create a new fortran file, the syntax script assumes fixed source
+When you create a new Fortran file, the syntax script assumes fixed source
 form.  If you always use free source form, then >
     :let fortran_free_source=1
 If you always use fixed source form, then >
@@ -1581,10 +1582,10 @@ will work only if the "filetype plugin indent on" command precedes the "syntax
 on" command in your .vimrc file.
 
 
-When you edit an existing fortran file, the syntax script will assume free
+When you edit an existing Fortran file, the syntax script will assume free
 source form if the fortran_free_source variable has been set, and assumes
-fixed source form if the fortran_fixed_source variable has been set.  If
-neither of these variables have been set, the syntax script attempts to
+fixed source form if the fortran_fixed_source variable has been set.  Suppose
+neither of these variables have been set. In that case, the syntax script attempts to
 determine which source form has been used by examining the file extension
 using conventions common to the ifort, gfortran, Cray, NAG, and PathScale
 compilers (.f, .for, .f77 for fixed-source, .f90, .f95, .f03, .f08 for
@@ -1616,17 +1617,17 @@ intrinsics, you should set the variable fortran_vendor_intrinsics with a
 command such as >
     :let fortran_vendor_intrinsics=1
 
-Tabs in fortran files ~
+Tabs in Fortran files ~
 Tabs are not recognized by the Fortran standards.  Tabs are not a good idea in
-fixed format fortran source code which requires fixed column boundaries.
+fixed format Fortran source code which requires fixed column boundaries.
 Therefore, tabs are marked as errors.  Nevertheless, some programmers like
-using tabs.  If your fortran files contain tabs, then you should set the
+using tabs.  If your Fortran files contain tabs, then you should set the
 variable fortran_have_tabs in your vimrc with a command such as >
     :let fortran_have_tabs=1
 Unfortunately, the use of tabs will mean that the syntax file will not be able
 to detect incorrect margins.
 
-Syntax folding of fortran files ~
+Syntax folding of Fortran files ~
 If you wish to use foldmethod=syntax, then you must first set the variable
 fortran_fold with a command such as >
     :let fortran_fold=1
@@ -1659,7 +1660,7 @@ Parenthesis checking does not catch too few closing parentheses.  Hollerith
 strings are not recognized.  Some keywords may be highlighted incorrectly
 because Fortran90 has no reserved words.
 
-For further information related to fortran, see |ft-fortran-indent| and
+For further information related to Fortran, see |ft-fortran-indent| and
 |ft-fortran-plugin|.
 
 FREEBASIC				*freebasic.vim* *ft-freebasic-syntax*
