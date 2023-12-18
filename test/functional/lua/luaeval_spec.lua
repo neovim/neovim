@@ -69,15 +69,13 @@ describe('luaeval()', function()
       command([[let s = luaeval('"\0"')]])
       eq('\000', meths.get_var('s'))
     end)
-    it('are successfully converted to special dictionaries in table keys',
-    function()
+    it('are successfully converted to special dictionaries in table keys', function()
       command([[let d = luaeval('{["\0"]=1}')]])
       eq({_TYPE={}, _VAL={{{_TYPE={}, _VAL={'\n'}}, 1}}}, meths.get_var('d'))
       eq(1, funcs.eval('d._TYPE is v:msgpack_types.map'))
       eq(1, funcs.eval('d._VAL[0][0]._TYPE is v:msgpack_types.string'))
     end)
-    it('are successfully converted to blobs from a list',
-    function()
+    it('are successfully converted to blobs from a list', function()
       command([[let l = luaeval('{"abc", "a\0b", "c\0d", "def"}')]])
       eq({'abc', 'a\000b', 'c\000d', 'def'}, meths.get_var('l'))
     end)
@@ -116,6 +114,12 @@ describe('luaeval()', function()
 
     eq({4, 2}, funcs.luaeval('{4, 2}'))
     eq(3, eval('type(luaeval("{4, 2}"))'))
+
+    eq({NIL, 20}, funcs.luaeval('{[2] = 20}'))
+    eq(3, eval('type(luaeval("{[2] = 20}"))'))
+
+    eq({10, NIL, 30}, funcs.luaeval('{[1] = 10, [3] = 30}'))
+    eq(3, eval('type(luaeval("{[1] = 10, [3] = 30}"))'))
 
     local level = 30
     eq(nested_by_level[level].o, funcs.luaeval(nested_by_level[level].s))
@@ -182,7 +186,7 @@ describe('luaeval()', function()
   end)
 
   it('issues an error in some cases', function()
-    eq("Vim(call):E5100: Cannot convert given lua table: table should either have a sequence of positive integer keys or contain only string keys",
+    eq("Vim(call):E5100: Cannot convert given lua table: table should contain either only integer keys or only string keys",
        exc_exec('call luaeval("{1, foo=2}")'))
 
     startswith("Vim(call):E5107: Error loading lua [string \"luaeval()\"]:",

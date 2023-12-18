@@ -170,11 +170,12 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
 
 /// Helper structure for nlua_pop_typval
 typedef struct {
-  typval_T *tv;  ///< Location where conversion result is saved.
-  bool container;  ///< True if tv is a container.
-  bool special;  ///< If true then tv is a _VAL part of special dictionary
-                 ///< that represents mapping.
-  int idx;  ///< Container index (used to detect self-referencing structures).
+  typval_T *tv;     ///< Location where conversion result is saved.
+  size_t list_len;  ///< Maximum length when tv is a list.
+  bool container;   ///< True if tv is a container.
+  bool special;     ///< If true then tv is a _VAL part of special dictionary
+                    ///< that represents mapping.
+  int idx;          ///< Container index (used to detect self-referencing structures).
 } TVPopStackItem;
 
 /// Convert lua object to Vimscript typval_T
@@ -192,7 +193,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
   const int initial_size = lua_gettop(lstate);
   kvec_withinit_t(TVPopStackItem, 2) stack = KV_INITIAL_VALUE;
   kvi_init(stack);
-  kvi_push(stack, ((TVPopStackItem) { ret_tv, false, false, 0 }));
+  kvi_push(stack, ((TVPopStackItem){ .tv = ret_tv }));
   while (ret && kv_size(stack)) {
     if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) {
       semsg(_("E1502: Lua failed to grow stack to %i"), lua_gettop(lstate) + 3);
@@ -231,19 +232,14 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             });
             kvi_push(stack, cur);
             tv_list_append_list(cur.tv->vval.v_list, kv_pair);
-            cur = (TVPopStackItem) {
-              .tv = TV_LIST_ITEM_TV(tv_list_last(kv_pair)),
-              .container = false,
-              .special = false,
-              .idx = 0,
-            };
+            cur = (TVPopStackItem){ .tv = TV_LIST_ITEM_TV(tv_list_last(kv_pair)) };
           } else {
             dictitem_T *const di = tv_dict_item_alloc_len(s, len);
             if (tv_dict_add(cur.tv->vval.v_dict, di) == FAIL) {
               abort();
             }
             kvi_push(stack, cur);
-            cur = (TVPopStackItem) { &di->di_tv, false, false, 0 };
+            cur = (TVPopStackItem){ .tv = &di->di_tv };
           }
         } else {
           lua_pop(lstate, 1);
@@ -251,23 +247,18 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         }
       } else {
         assert(cur.tv->v_type == VAR_LIST);
-        lua_rawgeti(lstate, -1, tv_list_len(cur.tv->vval.v_list) + 1);
-        if (lua_isnil(lstate, -1)) {
-          lua_pop(lstate, 2);
+        if ((size_t)tv_list_len(cur.tv->vval.v_list) == cur.list_len) {
+          lua_pop(lstate, 1);
           continue;
         }
+        lua_rawgeti(lstate, -1, tv_list_len(cur.tv->vval.v_list) + 1);
         // Not populated yet, need to create list item to push.
         tv_list_append_owned_tv(cur.tv->vval.v_list, (typval_T) {
           .v_type = VAR_UNKNOWN,
         });
         kvi_push(stack, cur);
         // TODO(ZyX-I): Use indexes, here list item *will* be reallocated.
-        cur = (TVPopStackItem) {
-          .tv = TV_LIST_ITEM_TV(tv_list_last(cur.tv->vval.v_list)),
-          .container = false,
-          .special = false,
-          .idx = 0,
-        };
+        cur = (TVPopStackItem){ .tv = TV_LIST_ITEM_TV(tv_list_last(cur.tv->vval.v_list)) };
       }
     }
     assert(!cur.container);
@@ -331,6 +322,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         cur.tv->vval.v_list = tv_list_alloc((ptrdiff_t)table_props.maxidx);
         cur.tv->vval.v_list->lua_table_ref = table_ref;
         tv_list_ref(cur.tv->vval.v_list);
+        cur.list_len = table_props.maxidx;
         if (table_props.maxidx != 0) {
           cur.container = true;
           cur.idx = lua_gettop(lstate);
@@ -354,6 +346,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             cur.tv = &val_di->di_tv;
             cur.tv->vval.v_list->lua_table_ref = table_ref;
             assert(cur.tv->v_type == VAR_LIST);
+            cur.list_len = table_props.string_keys_num;
           } else {
             cur.tv->v_type = VAR_DICT;
             cur.tv->vval.v_dict = tv_dict_alloc();
@@ -371,9 +364,8 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         cur.tv->vval.v_float = (float_T)table_props.val;
         break;
       case kObjectTypeNil:
-        emsg(_("E5100: Cannot convert given lua table: table "
-               "should either have a sequence of positive integer keys "
-               "or contain only string keys"));
+        emsg(_("E5100: Cannot convert given lua table: table should "
+               "contain either only integer keys or only string keys"));
         ret = false;
         break;
       default:
@@ -1077,7 +1069,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
   const int initial_size = lua_gettop(lstate);
   kvec_withinit_t(ObjPopStackItem, 2) stack = KV_INITIAL_VALUE;
   kvi_init(stack);
-  kvi_push(stack, ((ObjPopStackItem) { &ret, false }));
+  kvi_push(stack, ((ObjPopStackItem){ .obj = &ret }));
   while (!ERROR_SET(err) && kv_size(stack)) {
     ObjPopStackItem cur = kv_pop(stack);
     if (cur.container) {
@@ -1087,8 +1079,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
       }
       if (cur.obj->type == kObjectTypeDictionary) {
         // stack: …, dict, key
-        if (cur.obj->data.dictionary.size
-            == cur.obj->data.dictionary.capacity) {
+        if (cur.obj->data.dictionary.size == cur.obj->data.dictionary.capacity) {
           lua_pop(lstate, 2);
           continue;
         }
@@ -1112,10 +1103,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
             .size = len,
           };
           kvi_push(stack, cur);
-          cur = (ObjPopStackItem) {
-            .obj = &cur.obj->data.dictionary.items[idx].value,
-            .container = false,
-          };
+          cur = (ObjPopStackItem){ .obj = &cur.obj->data.dictionary.items[idx].value };
         } else {
           // stack: …, dict
           lua_pop(lstate, 1);
@@ -1130,10 +1118,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
         const size_t idx = cur.obj->data.array.size++;
         lua_rawgeti(lstate, -1, (int)idx + 1);
         kvi_push(stack, cur);
-        cur = (ObjPopStackItem) {
-          .obj = &cur.obj->data.array.items[idx],
-          .container = false,
-        };
+        cur = (ObjPopStackItem){ .obj = &cur.obj->data.array.items[idx] };
       }
     }
     assert(!cur.container);
