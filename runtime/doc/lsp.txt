@@ -480,23 +480,23 @@ Use |LspTokenUpdate| and |vim.lsp.semantic_tokens.highlight_token()| for more
 complex highlighting.
 
 The following groups are linked by default to standard |group-name|s:
->
-    @lsp.type.class         Structure
-    @lsp.type.decorator     Function
-    @lsp.type.enum          Structure
-    @lsp.type.enumMember    Constant
-    @lsp.type.function      Function
-    @lsp.type.interface     Structure
-    @lsp.type.macro         Macro
-    @lsp.type.method        Function
-    @lsp.type.namespace     Structure
-    @lsp.type.parameter     Identifier
-    @lsp.type.property      Identifier
-    @lsp.type.struct        Structure
-    @lsp.type.type          Type
-    @lsp.type.typeParameter TypeDef
-    @lsp.type.variable      Identifier
-<
+
+@lsp.type.class          Structure
+@lsp.type.decorator      Function
+@lsp.type.enum           Structure
+@lsp.type.enumMember     Constant
+@lsp.type.function       Function
+@lsp.type.interface      Structure
+@lsp.type.macro          Macro
+@lsp.type.method         Function
+@lsp.type.namespace      Structure
+@lsp.type.parameter      Identifier
+@lsp.type.property       Identifier
+@lsp.type.struct         Structure
+@lsp.type.type           Type
+@lsp.type.typeParameter  TypeDef
+@lsp.type.variable       Identifier
+
 ==============================================================================
 EVENTS                                                            *lsp-events*
 
