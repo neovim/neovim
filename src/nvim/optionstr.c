@@ -676,9 +676,10 @@ const char *did_set_background(optset_T *args)
 
   int dark = (*p_bg == 'd');
 
-  init_highlight(false, false);
+  bool has_colors = get_var_value("g:colors_name") != NULL;
+  init_highlight(false, !has_colors);
 
-  if (dark != (*p_bg == 'd') && get_var_value("g:colors_name") != NULL) {
+  if (dark != (*p_bg == 'd') && has_colors) {
     // The color scheme must have set 'background' back to another
     // value, that's not what we want here.  Disable the color
     // scheme and set the colors again.
