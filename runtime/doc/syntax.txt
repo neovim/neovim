@@ -196,52 +196,52 @@ be preferred names for highlight groups that are common for many languages.
 These are the suggested group names (if syntax highlighting works properly
 you can see the actual color, except for "Ignore"):
 
-	 Comment	any comment
+Comment		any comment
 
-	 Constant	any constant
-	 String		a string constant: "this is a string"
-	 Character	a character constant: 'c', '\n'
-	 Number		a number constant: 234, 0xff
-	 Boolean	a boolean constant: TRUE, false
-	 Float		a floating point constant: 2.3e10
+Constant	any constant
+String		a string constant: "this is a string"
+Character	a character constant: 'c', '\n'
+Number		a number constant: 234, 0xff
+Boolean		a boolean constant: TRUE, false
+Float		a floating point constant: 2.3e10
 
-	 Identifier	any variable name
-	 Function	function name (also: methods for classes)
+Identifier	any variable name
+Function	function name (also: methods for classes)
 
-	 Statement	any statement
-	 Conditional	if, then, else, endif, switch, etc.
-	 Repeat		for, do, while, etc.
-	 Label		case, default, etc.
-	 Operator	"sizeof", "+", "*", etc.
-	 Keyword	any other keyword
-	 Exception	try, catch, throw
+Statement	any statement
+Conditional	if, then, else, endif, switch, etc.
+Repeat		for, do, while, etc.
+Label		case, default, etc.
+Operator	"sizeof", "+", "*", etc.
+Keyword		any other keyword
+Exception	try, catch, throw
 
-	 PreProc	generic Preprocessor
-	 Include	preprocessor #include
-	 Define		preprocessor #define
-	 Macro		same as Define
-	 PreCondit	preprocessor #if, #else, #endif, etc.
+PreProc		generic Preprocessor
+Include		preprocessor #include
+Define		preprocessor #define
+Macro		same as Define
+PreCondit	preprocessor #if, #else, #endif, etc.
 
-	 Type		int, long, char, etc.
-	 StorageClass	static, register, volatile, etc.
-	 Structure	struct, union, enum, etc.
-	 Typedef	A typedef
+Type		int, long, char, etc.
+StorageClass	static, register, volatile, etc.
+Structure	struct, union, enum, etc.
+Typedef		a typedef
 
-	 Special	any special symbol
-	 SpecialChar	special character in a constant
-	 Tag		you can use CTRL-] on this
-	 Delimiter	character that needs attention
-	 SpecialComment	special things inside a comment
-	 Debug		debugging statements
+Special		any special symbol
+SpecialChar	special character in a constant
+Tag		you can use CTRL-] on this
+Delimiter	character that needs attention
+SpecialComment	special things inside a comment
+Debug		debugging statements
 
-	 Underlined	text that stands out, HTML links
+Underlined	text that stands out, HTML links
 
-	 Ignore		left blank, hidden  |hl-Ignore|
+Ignore		left blank, hidden  |hl-Ignore|
 
-	 Error		any erroneous construct
+Error		any erroneous construct
 
-	 Todo		anything that needs extra attention; mostly the
-			keywords TODO FIXME and XXX
+Todo		anything that needs extra attention; mostly the
+		keywords TODO FIXME and XXX
 
 The names marked with * are the preferred groups; the others are minor groups.
 For the preferred groups, the "syntax.vim" file contains default highlighting.
