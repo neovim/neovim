@@ -136,52 +136,13 @@ generated-sources benchmark $(FORMAT) $(LINT) $(TEST) doc: | build/.ran-cmake
 
 test: $(TEST)
 
-# The ignored header files should be synced with the `check_includes_ignore`
-# array in src/clint.py
 iwyu: build/.ran-cmake
 	cmake --preset iwyu
 	cmake --build build > build/iwyu.log
-	iwyu-fix-includes --only_re="src/nvim" --ignore_re="(src/nvim/eval/encode.c|src/nvim/auto/|src/nvim/os/lang.c|src/nvim/map.c\
-	|src/nvim/api/private/validate.h\
-	|src/nvim/assert_defs.h\
-	|src/nvim/buffer.h\
-	|src/nvim/buffer_defs.h\
-	|src/nvim/channel.h\
-	|src/nvim/charset.h\
-	|src/nvim/eval.h\
-	|src/nvim/eval/encode.h\
-	|src/nvim/eval/typval.h\
-	|src/nvim/eval/typval_defs.h\
-	|src/nvim/eval/userfunc.h\
-	|src/nvim/event/libuv_process.h\
-	|src/nvim/event/loop.h\
-	|src/nvim/event/process.h\
-	|src/nvim/event/rstream.h\
-	|src/nvim/event/signal.h\
-	|src/nvim/event/socket.h\
-	|src/nvim/event/stream.h\
-	|src/nvim/event/time.h\
-	|src/nvim/event/wstream.h\
-	|src/nvim/garray.h\
-	|src/nvim/globals.h\
-	|src/nvim/grid.h\
-	|src/nvim/highlight.h\
-	|src/nvim/input.h\
-	|src/nvim/keycodes.h\
-	|src/nvim/lua/executor.h\
-	|src/nvim/main.h\
-	|src/nvim/msgpack_rpc/channel_defs.h\
-	|src/nvim/msgpack_rpc/helpers.h\
-	|src/nvim/msgpack_rpc/unpacker.h\
-	|src/nvim/option.h\
-	|src/nvim/os/input.h\
-	|src/nvim/os/pty_conpty_win.h\
-	|src/nvim/os/pty_process_unix.h\
-	|src/nvim/os/pty_process_win.h\
-	|src/nvim/tui/input.h\
-	|src/nvim/ui.h\
-	|src/nvim/viml/parser/expressions.h\
-	|src/nvim/viml/parser/parser.h\
+	iwyu-fix-includes --only_re="src/nvim" --ignore_re="(src/nvim/eval/encode.c\
+	|src/nvim/auto/\
+	|src/nvim/os/lang.c\
+	|src/nvim/map.c\
 	)" --nosafe_headers < build/iwyu.log
 	cmake -B build -U ENABLE_IWYU
 	cmake --build build

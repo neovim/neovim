@@ -2,8 +2,8 @@
 
 #include <uv.h>
 
-#include "nvim/event/loop.h"
 #include "nvim/event/process.h"
+#include "nvim/types_defs.h"
 
 typedef struct libuv_process {
   Process process;

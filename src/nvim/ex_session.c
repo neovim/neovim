@@ -25,6 +25,7 @@
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option.h"

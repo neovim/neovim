@@ -19,7 +19,6 @@
 
 #include "auto/config.h"  // IWYU pragma: keep
 #include "nvim/api/extmark.h"
-#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
 #include "nvim/arglist.h"

@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "nvim/channel.h"
+#include "nvim/channel_defs.h"  // IWYU pragma: keep
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/event/time.h"
@@ -13,6 +13,7 @@
 #include "nvim/hashtab_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte_defs.h"  // IWYU pragma: keep
+#include "nvim/msgpack_rpc/channel_defs.h"  // IWYU pragma: keep
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/os/fileio_defs.h"  // IWYU pragma: keep
 #include "nvim/os/stdpaths_defs.h"  // IWYU pragma: keep

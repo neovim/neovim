@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
@@ -22,6 +21,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
+#include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
@@ -34,7 +34,6 @@
 #include "nvim/insexpand.h"
 #include "nvim/keycodes.h"
 #include "nvim/lua/executor.h"
-#include "nvim/macros_defs.h"
 #include "nvim/main.h"
 #include "nvim/mapping.h"
 #include "nvim/mbyte.h"

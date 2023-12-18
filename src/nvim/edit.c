@@ -5,7 +5,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
-#include <sys/types.h>
+#include <uv.h>
 
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
@@ -18,6 +18,7 @@
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/extmark.h"

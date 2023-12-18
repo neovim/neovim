@@ -1,12 +1,10 @@
 #pragma once
 
-#include <msgpack.h>
 #include <msgpack/pack.h>
-#include <stddef.h>
 #include <string.h>
 
 #include "nvim/eval/typval.h"
-#include "nvim/eval/typval_defs.h"
+#include "nvim/func_attr.h"
 #include "nvim/garray_defs.h"
 
 /// Convert Vimscript value to msgpack string

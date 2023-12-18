@@ -86,35 +86,6 @@
 static inline bool ascii_iswhite(int c)
   REAL_FATTR_CONST
   REAL_FATTR_ALWAYS_INLINE;
-
-static inline bool ascii_iswhite_or_nul(int c)
-  REAL_FATTR_CONST
-  REAL_FATTR_ALWAYS_INLINE;
-
-static inline bool ascii_isdigit(int c)
-  REAL_FATTR_CONST
-  REAL_FATTR_ALWAYS_INLINE;
-
-static inline bool ascii_isxdigit(int c)
-  REAL_FATTR_CONST
-  REAL_FATTR_ALWAYS_INLINE;
-
-static inline bool ascii_isident(int c)
-  REAL_FATTR_CONST
-  REAL_FATTR_ALWAYS_INLINE;
-
-static inline bool ascii_isbdigit(int c)
-  REAL_FATTR_CONST
-  REAL_FATTR_ALWAYS_INLINE;
-
-static inline bool ascii_isodigit(int c)
-  REAL_FATTR_CONST
-  REAL_FATTR_ALWAYS_INLINE;
-
-static inline bool ascii_isspace(int c)
-  REAL_FATTR_CONST
-  REAL_FATTR_ALWAYS_INLINE;
-
 /// Checks if `c` is a space or tab character.
 ///
 /// @see {ascii_isdigit}
@@ -123,6 +94,9 @@ static inline bool ascii_iswhite(int c)
   return c == ' ' || c == '\t';
 }
 
+static inline bool ascii_iswhite_or_nul(int c)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 /// Checks if `c` is a space or tab character or NUL.
 ///
 /// @see {ascii_isdigit}
@@ -131,6 +105,9 @@ static inline bool ascii_iswhite_or_nul(int c)
   return ascii_iswhite(c) || c == NUL;
 }
 
+static inline bool ascii_isdigit(int c)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 /// Check whether character is a decimal digit.
 ///
 /// Library isdigit() function is officially locale-dependent and, for
@@ -145,6 +122,9 @@ static inline bool ascii_isdigit(int c)
   return c >= '0' && c <= '9';
 }
 
+static inline bool ascii_isxdigit(int c)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 /// Checks if `c` is a hexadecimal digit, that is, one of 0-9, a-f, A-F.
 ///
 /// @see {ascii_isdigit}
@@ -155,6 +135,9 @@ static inline bool ascii_isxdigit(int c)
          || (c >= 'A' && c <= 'F');
 }
 
+static inline bool ascii_isident(int c)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 /// Checks if `c` is an “identifier” character
 ///
 /// That is, whether it is alphanumeric character or underscore.
@@ -163,6 +146,9 @@ static inline bool ascii_isident(int c)
   return ASCII_ISALNUM(c) || c == '_';
 }
 
+static inline bool ascii_isbdigit(int c)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 /// Checks if `c` is a binary digit, that is, 0-1.
 ///
 /// @see {ascii_isdigit}
@@ -171,6 +157,9 @@ static inline bool ascii_isbdigit(int c)
   return (c == '0' || c == '1');
 }
 
+static inline bool ascii_isodigit(int c)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 /// Checks if `c` is an octal digit, that is, 0-7.
 ///
 /// @see {ascii_isdigit}
@@ -179,6 +168,9 @@ static inline bool ascii_isodigit(int c)
   return (c >= '0' && c <= '7');
 }
 
+static inline bool ascii_isspace(int c)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
 /// Checks if `c` is a white-space character, that is,
 /// one of \f, \n, \r, \t, \v.
 ///

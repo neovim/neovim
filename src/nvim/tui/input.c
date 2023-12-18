@@ -4,9 +4,8 @@
 #include <string.h>
 
 #include "klib/kvec.h"
-#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/event/defs.h"
+#include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
 #include "nvim/macros_defs.h"
 #include "nvim/main.h"

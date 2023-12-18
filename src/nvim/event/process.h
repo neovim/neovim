@@ -5,13 +5,8 @@
 #include <stdint.h>
 
 #include "nvim/eval/typval_defs.h"
-#include "nvim/event/loop.h"
-#include "nvim/event/multiqueue.h"
-#include "nvim/event/rstream.h"
-#include "nvim/event/stream.h"
-#include "nvim/event/wstream.h"
-
-struct process;
+#include "nvim/event/defs.h"  // IWYU pragma: export
+#include "nvim/types_defs.h"
 
 typedef enum {
   kProcessTypeUv,

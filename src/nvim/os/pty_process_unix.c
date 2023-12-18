@@ -32,7 +32,6 @@
 #include "auto/config.h"
 #include "klib/klist.h"
 #include "nvim/eval/typval.h"
-#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/process.h"
 #include "nvim/log.h"

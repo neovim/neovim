@@ -10,7 +10,7 @@
 #include "nvim/garray_defs.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
-typedef struct ucmd {
+typedef struct {
   char *uc_name;             ///< The command name
   uint32_t uc_argt;          ///< The argument type
   char *uc_rep;              ///< The command's replacement string

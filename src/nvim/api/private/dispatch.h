@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nvim/api/private/defs.h"
+#include "nvim/api/private/defs.h"  // IWYU pragma: export
 #include "nvim/memory_defs.h"
 #include "nvim/types_defs.h"
 

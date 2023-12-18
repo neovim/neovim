@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <sys/ioctl.h>
 
-#include "nvim/event/loop.h"
 #include "nvim/event/process.h"
+#include "nvim/types_defs.h"
 
 typedef struct pty_process {
   Process process;

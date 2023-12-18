@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
+#include <uv.h>
 
 #include "nvim/ascii_defs.h"
 #include "nvim/assert_defs.h"
@@ -19,7 +19,6 @@
 #include "nvim/eval/userfunc.h"
 #include "nvim/eval/vars.h"
 #include "nvim/garray.h"
-#include "nvim/garray_defs.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"

@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
@@ -1178,7 +1177,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         out_p = out_p - n + 1;
         // Fill up space left over by half a double-wide char.
         while (++group_len < stl_items[stl_groupitems[groupdepth]].minwid) {
-          MB_CHAR2BYTES(fillchar, out_p);
+          out_p += utf_char2bytes(fillchar, out_p);
         }
         // }
 
@@ -1201,7 +1200,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         if (min_group_width < 0) {
           min_group_width = 0 - min_group_width;
           while (group_len++ < min_group_width && out_p < out_end_p) {
-            MB_CHAR2BYTES(fillchar, out_p);
+            out_p += utf_char2bytes(fillchar, out_p);
           }
           // If the group is right-aligned, shift everything to the right and
           // prepend with filler characters.
@@ -1222,7 +1221,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
           // Prepend the fill characters
           for (; group_len > 0; group_len--) {
-            MB_CHAR2BYTES(fillchar, t);
+            t += utf_char2bytes(fillchar, t);
           }
         }
       }
@@ -1803,7 +1802,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
           if (l + 1 == minwid && fillchar == '-' && ascii_isdigit(*t)) {
             *out_p++ = ' ';
           } else {
-            MB_CHAR2BYTES(fillchar, out_p);
+            out_p += utf_char2bytes(fillchar, out_p);
           }
         }
         minwid = 0;
@@ -1826,7 +1825,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         // digit follows.
         if (fillable && *t == ' '
             && (!ascii_isdigit(*(t + 1)) || fillchar != '-')) {
-          MB_CHAR2BYTES(fillchar, out_p);
+          out_p += utf_char2bytes(fillchar, out_p);
         } else {
           *out_p++ = *t;
         }
@@ -1843,7 +1842,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
       // For left-aligned items, fill any remaining space with the fillchar
       for (; l < minwid && out_p < out_end_p; l++) {
-        MB_CHAR2BYTES(fillchar, out_p);
+        out_p += utf_char2bytes(fillchar, out_p);
       }
 
       // Otherwise if the item is a number, copy that to the output buffer.
@@ -2064,7 +2063,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
 
       // Fill up for half a double-wide character.
       while (++width < maxwidth) {
-        MB_CHAR2BYTES(fillchar, trunc_p);
+        trunc_p += utf_char2bytes(fillchar, trunc_p);
         *trunc_p = NUL;
       }
     }
@@ -2099,7 +2098,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         char *seploc = start + dislocation;
         STRMOVE(seploc, start);
         for (char *s = start; s < seploc;) {
-          MB_CHAR2BYTES(fillchar, s);
+          s += utf_char2bytes(fillchar, s);
         }
 
         for (int item_idx = stl_separator_locations[l] + 1;

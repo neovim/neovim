@@ -2,13 +2,12 @@
 
 #include <stdbool.h>
 #include <stddef.h>  // IWYU pragma: keep
-#include <string.h>
 
-#include "nvim/buffer_defs.h"
 #include "nvim/grid_defs.h"  // IWYU pragma: export
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/pos_defs.h"
+#include "nvim/types_defs.h"
 
 /// By default, all windows are drawn on a single rectangular grid, represented by
 /// this ScreenGrid instance. In multigrid mode each window will have its own

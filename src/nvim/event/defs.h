@@ -20,52 +20,6 @@ typedef struct {
 typedef struct multiqueue MultiQueue;
 typedef void (*PutCallback)(MultiQueue *multiq, void *data);
 
-#define multiqueue_put(q, h, ...) \
-  do { \
-    multiqueue_put_event(q, event_create(h, __VA_ARGS__)); \
-  } while (0)
-
-#define CREATE_EVENT(multiqueue, handler, ...) \
-  do { \
-    if (multiqueue) { \
-      multiqueue_put((multiqueue), (handler), __VA_ARGS__); \
-    } else { \
-      void *argv[] = { __VA_ARGS__ }; \
-      (handler)(argv); \
-    } \
-  } while (0)
-
-// Poll for events until a condition or timeout
-#define LOOP_PROCESS_EVENTS_UNTIL(loop, multiqueue, timeout, condition) \
-  do { \
-    int64_t remaining = timeout; \
-    uint64_t before = (remaining > 0) ? os_hrtime() : 0; \
-    while (!(condition)) { \
-      LOOP_PROCESS_EVENTS(loop, multiqueue, remaining); \
-      if (remaining == 0) { \
-        break; \
-      } else if (remaining > 0) { \
-        uint64_t now = os_hrtime(); \
-        remaining -= (int64_t)((now - before) / 1000000); \
-        before = now; \
-        if (remaining <= 0) { \
-          break; \
-        } \
-      } \
-    } \
-  } while (0)
-
-#define LOOP_PROCESS_EVENTS(loop, multiqueue, timeout) \
-  do { \
-    if (multiqueue && !multiqueue_empty(multiqueue)) { \
-      multiqueue_process_events(multiqueue); \
-    } else { \
-      loop_poll_events(loop, timeout); \
-    } \
-  } while (0)
-
-struct signal_watcher;
-
 typedef struct signal_watcher SignalWatcher;
 typedef void (*signal_cb)(SignalWatcher *watcher, int signum, void *data);
 typedef void (*signal_close_cb)(SignalWatcher *watcher, void *data);
@@ -78,8 +32,6 @@ struct signal_watcher {
   MultiQueue *events;
 };
 
-struct time_watcher;
-
 typedef struct time_watcher TimeWatcher;
 typedef void (*time_cb)(TimeWatcher *watcher, void *data);
 
@@ -91,8 +43,6 @@ struct time_watcher {
   bool blockable;
 };
 
-struct wbuffer;
-
 typedef struct wbuffer WBuffer;
 typedef void (*wbuffer_data_finalizer)(void *data);
 
@@ -101,8 +51,6 @@ struct wbuffer {
   char *data;
   wbuffer_data_finalizer cb;
 };
-
-struct stream;
 
 typedef struct stream Stream;
 /// Type of function called when the Stream buffer is filled with data
@@ -150,8 +98,6 @@ struct stream {
   size_t num_bytes;
   MultiQueue *events;
 };
-
-struct socket_watcher;
 
 #define ADDRESS_MAX_SIZE 256
 

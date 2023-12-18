@@ -1536,7 +1536,7 @@ static int set_sofo(slang_T *lp, const char *from, const char *to)
   // sl_sal_first[] for this.
   for (p = from, s = to; *p != NUL && *s != NUL;) {
     const int c = mb_cptr2char_adv(&p);
-    MB_CPTR_ADV(s);
+    s += utf_ptr2len(s);
     if (c >= 256) {
       lp->sl_sal_first[c & 0xff]++;
     }
