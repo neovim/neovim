@@ -1537,6 +1537,61 @@ end)
         eq({}, result)
       end
     end)
+
+    it('respects legacy signs placed with :sign define or sign_define #26618', function()
+      -- Legacy signs for diagnostics were deprecated in 0.10 and will be removed in 0.12
+      eq(0, helpers.funcs.has('nvim-0.12'))
+
+      helpers.command('sign define DiagnosticSignError text= texthl= linehl=ErrorMsg numhl=ErrorMsg')
+      helpers.command('sign define DiagnosticSignWarn text= texthl= linehl=WarningMsg numhl=WarningMsg')
+      helpers.command('sign define DiagnosticSignInfo text= texthl= linehl=Underlined numhl=Underlined')
+      helpers.command('sign define DiagnosticSignHint text= texthl= linehl=Underlined numhl=Underlined')
+
+      local result = exec_lua [[
+        vim.diagnostic.config({
+          signs = true,
+        })
+
+        local diagnostics = {
+          make_error('Error', 1, 1, 1, 2),
+          make_warning('Warning', 3, 3, 3, 3),
+        }
+
+        vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, diagnostics)
+
+        local ns = vim.diagnostic.get_namespace(diagnostic_ns)
+        local sign_ns = ns.user_data.sign_ns
+
+        local signs = vim.api.nvim_buf_get_extmarks(diagnostic_bufnr, sign_ns, 0, -1, {type ='sign', details = true})
+        local result = {}
+        for _, s in ipairs(signs) do
+          result[#result + 1] = {
+            lnum = s[2] + 1,
+            name = s[4].sign_hl_group,
+            text = s[4].sign_text or '',
+            numhl = s[4].number_hl_group,
+            linehl = s[4].line_hl_group,
+          }
+        end
+        return result
+      ]]
+
+      eq({
+        lnum = 2,
+        name = 'DiagnosticSignError',
+        text = '',
+        numhl = 'ErrorMsg',
+        linehl = 'ErrorMsg',
+      }, result[1])
+
+      eq({
+        lnum = 4,
+        name = 'DiagnosticSignWarn',
+        text = '',
+        numhl = 'WarningMsg',
+        linehl = 'WarningMsg',
+      }, result[2])
+    end)
   end)
 
   describe('open_float()', function()

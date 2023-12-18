@@ -588,7 +588,7 @@ end
 ---                           return diagnostic.message
 ---                         end
 ---                       </pre>
----       - signs: (default true) Use signs for diagnostics. Options:
+---       - signs: (default true) Use signs for diagnostics |diagnostic-signs|. Options:
 ---                * severity: Only show signs for diagnostics matching the given
 ---                severity |diagnostic-severity|
 ---                * priority: (number, default 10) Base priority to use for signs. When
@@ -883,7 +883,52 @@ M.handlers.signs = {
         api.nvim_create_namespace(string.format('%s/diagnostic/signs', ns.name))
     end
 
-    local text = {}
+    --- Handle legacy diagnostic sign definitions
+    --- These were deprecated in 0.10 and will be removed in 0.12
+    if opts.signs and not opts.signs.text and not opts.signs.numhl and not opts.signs.texthl then
+      for _, v in ipairs({ 'Error', 'Warn', 'Info', 'Hint' }) do
+        local name = string.format('DiagnosticSign%s', v)
+        local sign = vim.fn.sign_getdefined(name)[1]
+        if sign then
+          local severity = M.severity[v:upper()]
+          if vim.fn.has('nvim-0.11') == 1 then
+            vim.deprecate(
+              'Defining diagnostic signs with :sign-define or sign_define()',
+              'vim.diagnostic.config()',
+              '0.12',
+              nil,
+              false
+            )
+          end
+
+          if not opts.signs.text then
+            opts.signs.text = {}
+          end
+
+          if not opts.signs.numhl then
+            opts.signs.numhl = {}
+          end
+
+          if not opts.signs.linehl then
+            opts.signs.linehl = {}
+          end
+
+          if opts.signs.text[severity] == nil then
+            opts.signs.text[severity] = sign.text or ''
+          end
+
+          if opts.signs.numhl[severity] == nil then
+            opts.signs.numhl[severity] = sign.numhl
+          end
+
+          if opts.signs.linehl[severity] == nil then
+            opts.signs.linehl[severity] = sign.linehl
+          end
+        end
+      end
+    end
+
+    local text = {} ---@type table<string, string>
     for k in pairs(M.severity) do
       if opts.signs.text and opts.signs.text[k] then
         text[k] = opts.signs.text[k]

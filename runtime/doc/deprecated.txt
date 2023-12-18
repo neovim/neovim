@@ -116,6 +116,9 @@ internally and are no longer exposed as part of the API. Instead, use
 - *vim.lsp.diagnostic.set_underline()*
 - *vim.lsp.diagnostic.set_virtual_text()*
 
+Configuring |diagnostic-signs| with |:sign-define| or |sign_define()| is no
+longer supported. Use the "signs" key of |vim.diagnostic.config()| instead.
+
 LSP FUNCTIONS
 - *vim.lsp.buf.server_ready()*
   Use |LspAttach| instead, depending on your use-case. "Server ready" is not

@@ -387,6 +387,9 @@ DEPRECATIONS                                                *news-deprecations*
 The following functions are now deprecated and will be removed in a future
 release.
 
+• Configuring |diagnostic-signs| using |:sign-define| or |sign_define()|. Use
+  the "signs" key of |vim.diagnostic.config()| instead.
+
 • Checkhealth functions:
   - |health#report_error|, |vim.health.report_error()|	Use |vim.health.error()| instead.
   - |health#report_info|, |vim.health.report_info()|	Use |vim.health.info()| instead.
