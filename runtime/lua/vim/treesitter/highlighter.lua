@@ -163,6 +163,8 @@ end
 ---@param erow integer exclusive
 ---@private
 function TSHighlighter:prepare_highlight_states(srow, erow)
+  self._highlight_states = {}
+
   self.tree:for_each_tree(function(tstree, tree)
     if not tstree then
       return
@@ -200,11 +202,6 @@ function TSHighlighter:for_each_highlight_state(fn)
   for _, state in ipairs(self._highlight_states) do
     fn(state)
   end
-end
-
----@private
-function TSHighlighter:reset_highlight_state()
-  self._highlight_states = {}
 end
 
 ---@package
@@ -327,7 +324,7 @@ function TSHighlighter._on_spell_nav(_, _, buf, srow, _, erow, _)
     return
   end
 
-  self:reset_highlight_state()
+  self:prepare_highlight_states(srow, erow)
 
   for row = srow, erow do
     on_line_impl(self, buf, row, true)
@@ -345,7 +342,6 @@ function TSHighlighter._on_win(_, _win, buf, topline, botline)
     return false
   end
   self.tree:parse({ topline, botline + 1 })
-  self:reset_highlight_state()
   self:prepare_highlight_states(topline, botline + 1)
   self.redraw_count = self.redraw_count + 1
   return true
