@@ -9,7 +9,6 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
-#include "nvim/buffer_defs.h"
 #include "nvim/cursor.h"
 #include "nvim/eval/funcs.h"
 #include "nvim/eval/typval.h"
@@ -19,9 +18,12 @@
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
 #include "nvim/macros_defs.h"
+#include "nvim/mark.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
+#include "nvim/option_vars.h"
+#include "nvim/os/fs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
@@ -480,6 +482,68 @@ void f_tabpagewinnr(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   rettv->vval.v_number = nr;
 }
 
+/// Switch to a window for executing user code.
+/// Caller must call win_execute_after() later regardless of return value.
+///
+/// @return  whether switching the window succeded.
+bool win_execute_before(win_execute_T *args, win_T *wp, tabpage_T *tp)
+{
+  args->wp = wp;
+  args->curpos = wp->w_cursor;
+  args->cwd_status = FAIL;
+  args->apply_acd = false;
+
+  // Getting and setting directory can be slow on some systems, only do
+  // this when the current or target window/tab have a local directory or
+  // 'acd' is set.
+  if (curwin != wp
+      && (curwin->w_localdir != NULL || wp->w_localdir != NULL
+          || (curtab != tp && (curtab->tp_localdir != NULL || tp->tp_localdir != NULL))
+          || p_acd)) {
+    args->cwd_status = os_dirname(args->cwd, MAXPATHL);
+  }
+
+  // If 'acd' is set, check we are using that directory.  If yes, then
+  // apply 'acd' afterwards, otherwise restore the current directory.
+  if (args->cwd_status == OK && p_acd) {
+    do_autochdir();
+    char autocwd[MAXPATHL];
+    if (os_dirname(autocwd, MAXPATHL) == OK) {
+      args->apply_acd = strcmp(args->cwd, autocwd) == 0;
+    }
+  }
+
+  if (switch_win_noblock(&args->switchwin, wp, tp, true) == OK) {
+    check_cursor();
+    return true;
+  }
+  return false;
+}
+
+/// Restore the previous window after executing user code.
+void win_execute_after(win_execute_T *args)
+{
+  restore_win_noblock(&args->switchwin, true);
+
+  if (args->apply_acd) {
+    do_autochdir();
+  } else if (args->cwd_status == OK) {
+    os_chdir(args->cwd);
+  }
+
+  // Update the status line if the cursor moved.
+  if (win_valid(args->wp) && !equalpos(args->curpos, args->wp->w_cursor)) {
+    args->wp->w_redr_status = true;
+  }
+
+  // In case the command moved the cursor or changed the Visual area,
+  // check it is valid.
+  check_cursor();
+  if (VIsual_active) {
+    check_pos(curbuf, &VIsual);
+  }
+}
+
 /// "win_execute(win_id, command)" function
 void f_win_execute(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
@@ -494,7 +558,11 @@ void f_win_execute(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     return;
   }
 
-  WIN_EXECUTE(wp, tp, execute_common(argvars, rettv, 1));
+  win_execute_T win_execute_args;
+  if (win_execute_before(&win_execute_args, wp, tp)) {
+    execute_common(argvars, rettv, 1);
+  }
+  win_execute_after(&win_execute_args);
 }
 
 /// "win_findbuf()" function
@@ -914,16 +982,16 @@ int switch_win_noblock(switchwin_T *switchwin, win_T *win, tabpage_T *tp, bool n
   return OK;
 }
 
-// Restore current tabpage and window saved by switch_win(), if still valid.
-// When "no_display" is true the display won't be affected, no redraw is
-// triggered.
+/// Restore current tabpage and window saved by switch_win(), if still valid.
+/// When "no_display" is true the display won't be affected, no redraw is
+/// triggered.
 void restore_win(switchwin_T *switchwin, bool no_display)
 {
   restore_win_noblock(switchwin, no_display);
   unblock_autocmds();
 }
 
-// As restore_win() but without unblocking autocommands.
+/// As restore_win() but without unblocking autocommands.
 void restore_win_noblock(switchwin_T *switchwin, bool no_display)
 {
   if (switchwin->sw_curtab != NULL && valid_tabpage(switchwin->sw_curtab)) {
