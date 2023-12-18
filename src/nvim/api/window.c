@@ -435,10 +435,12 @@ Object nvim_win_call(Window window, LuaRef fun, Error *err)
 
   try_start();
   Object res = OBJECT_INIT;
-  WIN_EXECUTE(win, tabpage, {
+  win_execute_T win_execute_args;
+  if (win_execute_before(&win_execute_args, win, tabpage)) {
     Array args = ARRAY_DICT_INIT;
     res = nlua_call_ref(fun, NULL, args, true, err);
-  });
+  }
+  win_execute_after(&win_execute_args);
   try_end(err);
   return res;
 }

@@ -912,7 +912,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/eval/typval.h",
             "src/nvim/eval/typval_defs.h",
             "src/nvim/eval/userfunc.h",
-            "src/nvim/eval/window.h",
             "src/nvim/event/libuv_process.h",
             "src/nvim/event/loop.h",
             "src/nvim/event/process.h",
