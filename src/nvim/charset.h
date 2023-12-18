@@ -3,12 +3,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nvim/buffer_defs.h"
-#include "nvim/eval/typval_defs.h"
-#include "nvim/option_defs.h"
+#include "nvim/func_attr.h"
 #include "nvim/option_vars.h"
-#include "nvim/pos_defs.h"
-#include "nvim/strings.h"
+#include "nvim/strings.h"  // IWYU pragma: keep
 
 /// Return the folded-case equivalent of the given character
 ///

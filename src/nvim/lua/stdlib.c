@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <sys/types.h>
+#include <uv.h>
 
 #ifdef NVIM_VENDOR_BIT
 # include "bit.h"
@@ -14,7 +14,6 @@
 
 #include "cjson/lua_cjson.h"
 #include "mpack/lmpack.h"
-#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"

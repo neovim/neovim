@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "auto/config.h"
+#include "auto/config.h"  // IWYU pragma: keep
 #include "nvim/base64.h"
 #include "nvim/memory.h"
 

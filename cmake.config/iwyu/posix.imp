@@ -13,6 +13,7 @@
   { include: [ '<bits/termios-c_cflag.h>', private, '<termios.h>', public ] },
   { include: [ '<bits/termios-c_iflag.h>', private, '<termios.h>', public ] },
   { include: [ '<bits/termios-c_oflag.h>', private, '<termios.h>', public ] },
+  { include: [ '<sys/ttycom.h>', private, '<sys/ioctl.h>', public ] },
   { include: [ '<sys/unistd.h>', private, '<unistd.h>', public ] },
 
   { symbol: ["SOCK_STREAM", private, "<sys/socket.h>", public ] },
@@ -26,7 +27,6 @@
   { symbol: ["ntohs", private, "<arpa/inet.h>", public ] },
   { symbol: ["pthread_sigmask", private, "<signal.h>", public ] },
   { symbol: ["sigset_t", private, "<signal.h>", public ] },
-  { symbol: ["ssize_t", private, "<sys/types.h>", public ] },
   { symbol: ["uid_t", private, "<sys/types.h>", public ] },
 ]
 

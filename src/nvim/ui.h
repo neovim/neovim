@@ -3,7 +3,7 @@
 #include <stdint.h>  // IWYU pragma: keep
 
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
-#include "nvim/event/multiqueue.h"
+#include "nvim/event/defs.h"
 #include "nvim/grid_defs.h"  // IWYU pragma: keep
 #include "nvim/highlight_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"

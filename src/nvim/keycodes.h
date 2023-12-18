@@ -3,9 +3,8 @@
 #include <stddef.h>
 
 #include "nvim/ascii_defs.h"
-#include "nvim/option_defs.h"
+#include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/option_vars.h"
-#include "nvim/strings.h"
 
 // Keycode definitions for special keys.
 //

@@ -6,7 +6,6 @@
 #include "nvim/garray_defs.h"  // IWYU pragma: export
 #include "nvim/log.h"
 #include "nvim/memory.h"
-#include "nvim/types_defs.h"
 
 #define GA_EMPTY(ga_ptr) ((ga_ptr)->ga_len <= 0)
 

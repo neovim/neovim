@@ -216,18 +216,6 @@ typedef struct {
   uint8_t st_upper[256];  ///< chars: upper case
 } spelltab_T;
 
-// Use our own character-case definitions, because the current locale may
-// differ from what the .spl file uses.
-// These must not be called with negative number!
-// Multi-byte implementation.  For Unicode we can call utf_*(), but don't do
-// that for ASCII, because we don't want to use 'casemap' here.  Otherwise use
-// the "w" library function for characters above 255.
-#define SPELL_TOFOLD(c) ((c) >= 128 ? utf_fold(c) : (int)spelltab.st_fold[c])
-
-#define SPELL_TOUPPER(c) ((c) >= 128 ? mb_toupper(c) : (int)spelltab.st_upper[c])
-
-#define SPELL_ISUPPER(c) ((c) >= 128 ? mb_isupper(c) : spelltab.st_isu[c])
-
 /// Values for "what" argument of spell_add_word()
 typedef enum {
   SPELL_ADD_GOOD = 0,

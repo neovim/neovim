@@ -7,7 +7,6 @@
 #include "klib/kvec.h"
 #include "nvim/func_attr.h"
 #include "nvim/mbyte.h"
-#include "nvim/mbyte_defs.h"
 #include "nvim/memory.h"
 
 /// One parsed line

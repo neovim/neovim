@@ -1,11 +1,8 @@
 #pragma once
 
-#include <msgpack.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include <msgpack.h>  // IWYU pragma: keep
 
 #include "nvim/api/private/defs.h"
-#include "nvim/event/wstream.h"
 
 /// Value by which objects represented as EXT type are shifted
 ///

@@ -15,6 +15,7 @@
 #include "nvim/api/ui.h"
 #include "nvim/channel.h"
 #include "nvim/event/defs.h"
+#include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/event/process.h"
 #include "nvim/event/rstream.h"

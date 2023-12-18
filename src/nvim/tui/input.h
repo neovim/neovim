@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <uv.h>
 
-#include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
 #include "nvim/rbuffer_defs.h"
 #include "nvim/tui/input_defs.h"  // IWYU pragma: export

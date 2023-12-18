@@ -12,7 +12,6 @@
 #include "nvim/regexp_defs.h"
 #include "nvim/types_defs.h"
 
-// event_T definition
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "auevents_enum.generated.h"
 #endif

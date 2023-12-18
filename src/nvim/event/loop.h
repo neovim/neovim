@@ -1,19 +1,18 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <uv.h>
 
 #include "klib/klist.h"
-#include "nvim/event/multiqueue.h"
-#include "nvim/os/time.h"
+#include "nvim/event/defs.h"  // IWYU pragma: export
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 
 typedef void *WatcherPtr;
 
 #define _NOOP(x)
 KLIST_INIT(WatcherPtr, WatcherPtr, _NOOP)
 
-typedef struct loop {
+struct loop {
   uv_loop_t uv;
   MultiQueue *events;
   MultiQueue *thread_events;
@@ -42,7 +41,7 @@ typedef struct loop {
   uv_mutex_t mutex;
   int recursive;
   bool closing;  ///< Set to true if loop_close() has been called
-} Loop;
+};
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/loop.h.generated.h"

@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "luaconf.h"
-#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/linematch.h"
 #include "nvim/lua/converter.h"

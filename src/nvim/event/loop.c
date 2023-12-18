@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include <uv.h>
 
-#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/os/time.h"
+#include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/loop.c.generated.h"

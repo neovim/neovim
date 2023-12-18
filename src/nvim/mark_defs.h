@@ -86,41 +86,6 @@ typedef struct xfilemark {
 #define INIT_XFMARK { INIT_FMARK, NULL }
 
 /// Set fmark using given value
-#define SET_FMARK(fmarkp_, mark_, fnum_, view_) \
-  do { \
-    fmark_T *const fmarkp__ = fmarkp_; \
-    fmarkp__->mark = mark_; \
-    fmarkp__->fnum = fnum_; \
-    fmarkp__->timestamp = os_time(); \
-    fmarkp__->view = view_; \
-    fmarkp__->additional_data = NULL; \
-  } while (0)
-
-/// Free and set fmark using given value
-#define RESET_FMARK(fmarkp_, mark_, fnum_, view_) \
-  do { \
-    fmark_T *const fmarkp___ = fmarkp_; \
-    free_fmark(*fmarkp___); \
-    SET_FMARK(fmarkp___, mark_, fnum_, view_); \
-  } while (0)
-
-/// Set given extended mark (regular mark + file name)
-#define SET_XFMARK(xfmarkp_, mark_, fnum_, view_, fname_) \
-  do { \
-    xfmark_T *const xfmarkp__ = xfmarkp_; \
-    xfmarkp__->fname = fname_; \
-    SET_FMARK(&(xfmarkp__->fmark), mark_, fnum_, view_); \
-  } while (0)
-
-/// Free and set given extended mark (regular mark + file name)
-#define RESET_XFMARK(xfmarkp_, mark_, fnum_, view_, fname_) \
-  do { \
-    xfmark_T *const xfmarkp__ = xfmarkp_; \
-    free_xfmark(*xfmarkp__); \
-    xfmarkp__->fname = fname_; \
-    SET_FMARK(&(xfmarkp__->fmark), mark_, fnum_, view_); \
-  } while (0)
-
 static inline bool lt(pos_T a, pos_T b)
   REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
 /// Return true if position a is before (less than) position b.

@@ -8,7 +8,6 @@
 #include <string.h>
 
 #include "klib/kvec.h"
-#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/arglist.h"
 #include "nvim/ascii_defs.h"
