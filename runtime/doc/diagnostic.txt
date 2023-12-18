@@ -466,6 +466,9 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
       • {namespace}  (integer|nil) Update the options for the given namespace.
                      When omitted, update the global diagnostic options.
 
+    Return: ~
+        (table|nil) table of current diagnostic config if `opts` is omitted.
+
 disable({bufnr}, {namespace})                       *vim.diagnostic.disable()*
     Disable diagnostics in the given buffer.
 
