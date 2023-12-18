@@ -257,8 +257,9 @@ vim.go.awa = vim.go.autowriteall
 --- 	endif
 --- ```
 --- When this option is changed, the defaults for highlight groups
---- will change.  To override those defaults, place ":highlight" commands
---- AFTER setting the 'background' option.
+--- will change, except for attributes, colors, font and blend set by
+--- `:highlight` or `nvim_set_hl()`.  Setting one of "guifg" and
+--- "guibg" also keeps the other, likewise for "ctermfg" and "ctermbg".
 ---
 --- @type 'light'|'dark'
 vim.o.background = "dark"

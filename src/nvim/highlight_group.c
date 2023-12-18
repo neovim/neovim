@@ -55,9 +55,16 @@
 /// \addtogroup SG_SET
 /// @{
 enum {
-  SG_CTERM = 2,  // cterm has been set
-  SG_GUI = 4,    // gui has been set
-  SG_LINK = 8,   // link has been set
+  SG_CTERM_ATTR   = 0x01,
+  SG_CTERM_COLOR  = 0x02,
+  SG_GUI_ATTR     = 0x04,
+  SG_GUI_COLOR    = 0x08,
+  SG_GUI_SP       = 0x10,
+  SG_FONT         = 0x20,
+  SG_BLEND        = 0x40,
+  SG_LINK         = 0x80,
+  SG_ALL = SG_CTERM_ATTR | SG_CTERM_COLOR | SG_GUI_ATTR | SG_GUI_COLOR | SG_GUI_SP | SG_FONT |
+           SG_BLEND,
 };
 /// @}
 
@@ -948,6 +955,25 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   }
 
   bool update = HAS_KEY(dict, highlight, update) && dict->update;
+  if (!update) {
+    g->sg_set |= SG_ALL;
+  } else {
+    // Same keys as in dict2hlattrs().
+#define HAS(k) HAS_KEY(dict, highlight, k)
+    bool gui_attr = HAS(bold) || HAS(standout) || HAS(strikethrough) || HAS(underline)
+                    || HAS(undercurl) || HAS(underdouble) || HAS(underdotted)
+                    || HAS(underdashed) || HAS(italic) || HAS(reverse) || HAS(altfont)
+                    || HAS(dim) || HAS(blink) || HAS(conceal) || HAS(overline)
+                    || HAS(nocombine) || HAS(fg_indexed) || HAS(bg_indexed);
+#undef HAS
+    // cterm attrs follow gui attrs unless "cterm" is given.
+    g->sg_set |= (gui_attr ? SG_GUI_ATTR : 0)
+                 | (gui_attr || HAS_KEY(dict, highlight, cterm) ? SG_CTERM_ATTR : 0)
+                 | (HAS_KEY(dict, highlight, ctermfg) || HAS_KEY(dict, highlight, ctermbg)
+                    ? SG_CTERM_COLOR : 0)
+                 | (HAS_KEY(dict, highlight, font) ? SG_FONT : 0)
+                 | (HAS_KEY(dict, highlight, blend) ? SG_BLEND : 0);
+  }
   g->sg_gui = attrs.rgb_ae_attr &~HL_DEFAULT;
 
   g->sg_rgb_fg = attrs.rgb_fg_color;
@@ -955,18 +981,20 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   g->sg_rgb_sp = attrs.rgb_sp_color;
 
   struct {
-    int *dest; RgbValue val; Object name;
+    int *dest; RgbValue val; Object name; int flag;
   } cattrs[] = {
     { &g->sg_rgb_fg_idx, g->sg_rgb_fg,
-      HAS_KEY(dict, highlight, fg) ? dict->fg : dict->foreground },
+      HAS_KEY(dict, highlight, fg) ? dict->fg : dict->foreground, SG_GUI_COLOR },
     { &g->sg_rgb_bg_idx, g->sg_rgb_bg,
-      HAS_KEY(dict, highlight, bg) ? dict->bg : dict->background },
-    { &g->sg_rgb_sp_idx, g->sg_rgb_sp, HAS_KEY(dict, highlight, sp) ? dict->sp : dict->special },
-    { NULL, -1, NIL },
+      HAS_KEY(dict, highlight, bg) ? dict->bg : dict->background, SG_GUI_COLOR },
+    { &g->sg_rgb_sp_idx, g->sg_rgb_sp,
+      HAS_KEY(dict, highlight, sp) ? dict->sp : dict->special, SG_GUI_SP },
+    { NULL, -1, NIL, 0 },
   };
 
   for (int j = 0; cattrs[j].dest; j++) {
     if (cattrs[j].name.type != kObjectTypeNil) {
+      g->sg_set |= cattrs[j].flag;
       if (cattrs[j].val < 0) {
         *cattrs[j].dest = kColorIdxNone;
       } else if (cattrs[j].name.type == kObjectTypeString && cattrs[j].name.data.string.size) {
@@ -1041,13 +1069,14 @@ void set_hl_group(int id, HlAttrs attrs, Dict(highlight) *dict, int link_id)
   need_highlight_changed = true;
 }
 
-static bool set_gui_color(int idx, bool init, const char *arg, RgbValue *color, int *color_idx)
+static bool set_gui_color(int idx, bool init, int flag, const char *arg, RgbValue *color,
+                          int *color_idx)
 {
-  if (init && (hl_table[idx].sg_set & SG_GUI)) {
+  if (init && (hl_table[idx].sg_set & flag)) {
     return false;
   }
   if (!init) {
-    hl_table[idx].sg_set |= SG_GUI;
+    hl_table[idx].sg_set |= flag;
   }
   RgbValue old_color = *color;
   int old_idx = *color_idx;
@@ -1149,6 +1178,12 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
     if (from_id > 0) {
       hlgroup = &hl_table[from_id - 1];
+      if (init && forceit && hlgroup->sg_deflink > 0 && hlgroup->sg_deflink != to_id) {
+        // Keep a link set by ":hi! default link".
+        highlight_clear(from_id - 1);
+        hlgroup->sg_set &= SG_LINK;
+        return;
+      }
       if (dodefault && (forceit || hlgroup->sg_deflink == 0)) {
         hlgroup->sg_deflink = to_id;
         hlgroup->sg_deflink_sctx = current_sctx;
@@ -1157,6 +1192,10 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       }
     }
 
+    if (from_id > 0 && init && forceit) {
+      highlight_clear(from_id - 1);
+      hlgroup->sg_set = 0;
+    }
     if (from_id > 0 && (!init || hlgroup->sg_set == 0)) {
       // Don't allow a link when there already is some highlighting
       // for the group, unless '!' is used
@@ -1196,6 +1235,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       // Clear all default highlight groups and load the defaults.
       for (int j = 0; j < highlight_ga.ga_len; j++) {
         highlight_clear(j);
+        hl_table[j].sg_set &= SG_LINK;
       }
       init_highlight(true, true);
       highlight_changed();
@@ -1264,7 +1304,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       if (strcmp(key, "NONE") == 0) {
         if (!init || hl_table[idx].sg_set == 0) {
           if (!init) {
-            hl_table[idx].sg_set |= SG_CTERM + SG_GUI;
+            hl_table[idx].sg_set |= SG_ALL;
           }
           highlight_clear(idx);
         }
@@ -1343,24 +1383,27 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           break;
         }
         if (*key == 'C') {
-          if (!init || !(hl_table[idx].sg_set & SG_CTERM)) {
+          if (!init || !(hl_table[idx].sg_set & SG_CTERM_ATTR)) {
             if (!init) {
-              hl_table[idx].sg_set |= SG_CTERM;
+              hl_table[idx].sg_set |= SG_CTERM_ATTR;
             }
-            hl_table[idx].sg_cterm = attr;
-            hl_table[idx].sg_cterm_bold = false;
+            // Keep the bold of a user-set light ctermfg.
+            bool keep_bold = init && (hl_table[idx].sg_set & SG_CTERM_COLOR)
+                             && hl_table[idx].sg_cterm_bold;
+            hl_table[idx].sg_cterm = keep_bold ? attr | HL_BOLD : attr;
+            hl_table[idx].sg_cterm_bold = keep_bold;
           }
         } else if (*key == 'G') {
-          if (!init || !(hl_table[idx].sg_set & SG_GUI)) {
+          if (!init || !(hl_table[idx].sg_set & SG_GUI_ATTR)) {
             if (!init) {
-              hl_table[idx].sg_set |= SG_GUI;
+              hl_table[idx].sg_set |= SG_GUI_ATTR;
             }
             hl_table[idx].sg_gui = attr;
           }
         }
-      } else if (strcmp(key, "FONT") == 0 && (!init || !(hl_table[idx].sg_set & SG_GUI))) {
+      } else if (strcmp(key, "FONT") == 0 && (!init || !(hl_table[idx].sg_set & SG_FONT))) {
         if (!init) {
-          hl_table[idx].sg_set |= SG_GUI;
+          hl_table[idx].sg_set |= SG_FONT;
         }
         if (hl_table[idx].sg_font != NULL) {
           XFREE_CLEAR(hl_table[idx].sg_font);
@@ -1369,14 +1412,16 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           hl_table[idx].sg_font = xstrdup(arg);
         }
       } else if (strcmp(key, "CTERMFG") == 0 || strcmp(key, "CTERMBG") == 0) {
-        if (!init || !(hl_table[idx].sg_set & SG_CTERM)) {
+        bool is_fg = key[5] == 'F';
+        if (!init || !(hl_table[idx].sg_set & SG_CTERM_COLOR)) {
           if (!init) {
-            hl_table[idx].sg_set |= SG_CTERM;
+            hl_table[idx].sg_set |= SG_CTERM_COLOR;
           }
 
           // When setting the foreground color, and previously the "bold"
-          // flag was set for a light color, reset it now
-          if (key[5] == 'F' && hl_table[idx].sg_cterm_bold) {
+          // flag was set for a light color, reset it now.  Defaults never
+          // set a light color, so keep a bold set by nvim_set_hl().
+          if (is_fg && !init && hl_table[idx].sg_cterm_bold) {
             hl_table[idx].sg_cterm &= ~HL_BOLD;
             hl_table[idx].sg_cterm_bold = false;
           }
@@ -1418,7 +1463,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
             }
 
             TriState bold = kNone;
-            color = lookup_color(i, key[5] == 'F', &bold);
+            color = lookup_color(i, is_fg, &bold);
 
             // set/reset bold attribute to get light foreground
             // colors (on some terminals, e.g. "linux")
@@ -1431,7 +1476,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           }
           // Add one to the argument, to avoid zero.  Zero is used for
           // "NONE", then "color" is -1.
-          if (key[5] == 'F') {
+          if (is_fg) {
             hl_table[idx].sg_cterm_fg = color + 1;
             if (is_normal_group) {
               cterm_normal_fg_color = color + 1;
@@ -1465,19 +1510,19 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           }
         }
       } else if (strcmp(key, "GUIFG") == 0) {
-        did_change = set_gui_color(idx, init, arg, &hl_table[idx].sg_rgb_fg,
+        did_change = set_gui_color(idx, init, SG_GUI_COLOR, arg, &hl_table[idx].sg_rgb_fg,
                                    &hl_table[idx].sg_rgb_fg_idx);
         if (is_normal_group) {
           normal_fg = hl_table[idx].sg_rgb_fg;
         }
       } else if (strcmp(key, "GUIBG") == 0) {
-        did_change = set_gui_color(idx, init, arg, &hl_table[idx].sg_rgb_bg,
+        did_change = set_gui_color(idx, init, SG_GUI_COLOR, arg, &hl_table[idx].sg_rgb_bg,
                                    &hl_table[idx].sg_rgb_bg_idx);
         if (is_normal_group) {
           normal_bg = hl_table[idx].sg_rgb_bg;
         }
       } else if (strcmp(key, "GUISP") == 0) {
-        did_change = set_gui_color(idx, init, arg, &hl_table[idx].sg_rgb_sp,
+        did_change = set_gui_color(idx, init, SG_GUI_SP, arg, &hl_table[idx].sg_rgb_sp,
                                    &hl_table[idx].sg_rgb_sp_idx);
         if (is_normal_group) {
           normal_sp = hl_table[idx].sg_rgb_sp;
@@ -1485,11 +1530,16 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       } else if (strcmp(key, "START") == 0 || strcmp(key, "STOP") == 0) {
         // Ignored for now
       } else if (strcmp(key, "BLEND") == 0) {
-        if (strcmp(arg, "NONE") != 0) {
-          char *arg_end = arg;
-          hl_table[idx].sg_blend = getdigits_int(&arg_end, false, 0);
-        } else {
-          hl_table[idx].sg_blend = -1;
+        if (!init || !(hl_table[idx].sg_set & SG_BLEND)) {
+          if (!init) {
+            hl_table[idx].sg_set |= SG_BLEND;
+          }
+          if (strcmp(arg, "NONE") != 0) {
+            char *arg_end = arg;
+            hl_table[idx].sg_blend = getdigits_int(&arg_end, false, 0);
+          } else {
+            hl_table[idx].sg_blend = -1;
+          }
         }
       } else {
         semsg(_("E423: Illegal argument: %s"), key_start);

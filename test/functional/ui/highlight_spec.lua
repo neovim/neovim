@@ -22,6 +22,55 @@ describe('colorscheme compatibility', function()
     eq(1, fn.exists('+t_Co'))
     eq('256', eval('&t_Co'))
   end)
+
+  it("'background' change keeps user-set attrs and colors #26603", function()
+    local c = api.nvim_get_color_by_name
+    local function hl(name)
+      return api.nvim_get_hl(0, { name = name })
+    end
+    api.nvim_ui_attach(40, 10, { term_colors = 8 })
+    command('hi clear | set background=dark')
+    command('hi String cterm=underline gui=italic guisp=Red')
+    command('hi Search ctermbg=226 guibg=#1e1e1e')
+    command('hi FloatShadow blend=50')
+    command('hi StatusLine ctermfg=LightRed')
+    api.nvim_set_hl(0, 'Visual', { fg = 'Red' })
+    api.nvim_set_hl(0, 'MatchParen', { bg = 'Red', update = true })
+    api.nvim_set_hl(0, 'Directory', { bold = true, update = true })
+    local ns = api.nvim_create_namespace('')
+    api.nvim_set_hl(0, 'Foo', { fg = 'Red' })
+    api.nvim_set_hl(ns, 'Foo', { bg = 'Blue', default = true })
+    eq({}, api.nvim_get_hl(ns, { name = 'Foo' }))
+    command('set background=light')
+    eq({
+      cterm = { underline = true },
+      ctermfg = 2,
+      fg = c('NvimDarkGreen'),
+      italic = true,
+      sp = 0xff0000,
+    }, hl('String'))
+    eq({ bg = 0x1e1e1e, ctermbg = 226, ctermfg = 0, fg = c('NvimLightGrey1') }, hl('Search'))
+    eq({ bg = c('NvimLightGrey4'), blend = 50, ctermbg = 0 }, hl('FloatShadow'))
+    eq({ bold = true, reverse = true }, hl('StatusLine').cterm)
+    eq({ fg = 0xff0000 }, hl('Visual'))
+    eq({ bg = 0xff0000, bold = true, cterm = { bold = true, underline = true } }, hl('MatchParen'))
+    eq(
+      { bold = true, cterm = { bold = true }, ctermfg = 6, fg = c('NvimDarkCyan') },
+      hl('Directory')
+    )
+    api.nvim_set_hl(0, 'Character', { fg = 'Red' })
+    command('hi Boolean guifg=Red')
+    command('syntax reset')
+    eq({ link = 'Constant' }, hl('Character'))
+    eq({ link = 'Constant' }, hl('Boolean'))
+    command('hi default link Bar Comment')
+    command('hi! default link Number Special')
+    command('hi clear')
+    eq({ link = 'Comment' }, hl('Bar'))
+    eq({ bg = 0x0000ff, default = true }, api.nvim_get_hl(ns, { name = 'Foo' }))
+    command('hi clear')
+    eq({ link = 'Special' }, hl('Number'))
+  end)
 end)
 
 describe('highlight: `:syntax manual`', function()
