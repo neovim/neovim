@@ -461,6 +461,12 @@ describe('ext_multigrid', function()
       eq(20, win_info.height)
     end)
 
+    it("'scroll' option works properly", function()
+      eq(10, meths.get_option_value('scroll', { win = 0 }))
+      meths.set_option_value('scroll', 15, { win = 0 })
+      eq(15, meths.get_option_value('scroll', { win = 0 }))
+    end)
+
     it('gets written till grid width', function()
       insert(('a'):rep(60).."\n")
       screen:expect{grid=[[
