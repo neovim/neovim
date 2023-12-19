@@ -801,6 +801,23 @@ func Test_end_reg_executing()
   bwipe!
 endfunc
 
+func Test_reg_executing_in_range_normal()
+  new
+  set showcmd
+  call setline(1, range(10))
+  let g:log = []
+  nnoremap s <Cmd>let g:log += [reg_executing()]<CR>
+  let @r = 's'
+
+  %normal @r
+  call assert_equal(repeat(['r'], 10), g:log)
+
+  nunmap s
+  unlet g:log
+  set showcmd&
+  bwipe!
+endfunc
+
 " An operator-pending mode mapping shouldn't be applied to keys typed in
 " Insert mode immediately after a character search when replaying.
 func Test_replay_charsearch_omap()
