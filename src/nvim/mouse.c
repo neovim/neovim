@@ -1849,13 +1849,13 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
   int click_col = mouse_col;
 
   // XXX: this doesn't change click_grid if it is 1, even with multigrid
-  win_T *wp = mouse_find_win(&click_grid, &click_row, &click_col);
-  // Only use vcols[] after the window was redrawn.  Mainly matters
-  // for tests, a user would not click before redrawing.
-  if (wp == NULL || wp->w_redr_type != 0) {
+  if (mouse_find_win(&click_grid, &click_row, &click_col) != curwin
+      // Only use vcols[] after the window was redrawn.  Mainly matters
+      // for tests, a user would not click before redrawing.
+      || curwin->w_redr_type != 0) {
     return;
   }
-  ScreenGrid *gp = &wp->w_grid;
+  ScreenGrid *gp = &curwin->w_grid;
   int start_row = 0;
   int start_col = 0;
   grid_adjust(&gp, &start_row, &start_col);
@@ -1891,12 +1891,12 @@ static void mouse_check_grid(colnr_T *vcolp, int *flagsp)
       if (eol_vcol < 0) {
         // Empty line or whole line before w_leftcol,
         // with columns before buffer text
-        eol_vcol = wp->w_leftcol - 1;
+        eol_vcol = curwin->w_leftcol - 1;
       }
       *vcolp = eol_vcol + (int)(off - off_r);
     } else {
       // Empty line or whole line before w_leftcol
-      *vcolp = click_col - start_col + wp->w_leftcol;
+      *vcolp = click_col - start_col + curwin->w_leftcol;
     }
   } else if (col_from_screen >= 0) {
     // Use the virtual column from vcols[], it is accurate also after
