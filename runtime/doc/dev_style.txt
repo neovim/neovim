@@ -79,17 +79,6 @@ Non-symbols:
 - EXCEPTION: if the macro calls a function, then it must be moved to a normal
   header.
 
-Constants ~
-
-Do not use macros to define constants in headers.
-
-Macro constants in header files cannot be used by unit tests.
-
-However, you are allowed to define a macro that holds the same value as a
-non-enum constant (defined in the same header) if the value of the constant
-represents the size of an array.
-
-
 ==============================================================================
 Scoping                                                 *dev-style-scope*
 
