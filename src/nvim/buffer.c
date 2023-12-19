@@ -302,9 +302,9 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
     }
 #endif
 
-    // Help buffer is filtered.
+    // Help buffer: populate *local-additions* in help.txt
     if (bt_help(curbuf)) {
-      fix_help_buffer();
+      get_local_additions();
     }
   } else if (read_stdin) {
     int save_bin = curbuf->b_p_bin;
