@@ -424,9 +424,12 @@ octal number.
 Note that when 'nrformats' includes "octal", decimal numbers with leading
 zeros cause mistakes, because they can be confused with octal numbers.
 
-Note similarly, when 'nrformats' includes "bin", binary numbers with a leading
-'0b' or '0B' can be interpreted as hexadecimal rather than binary since '0b'
-are valid hexadecimal digits.
+Note similarly, when 'nrformats' includes both "bin" and "hex", binary numbers
+with a leading '0x' or '0X' can be interpreted as hexadecimal rather than
+binary since '0b' are valid hexadecimal digits.  CTRL-A on "0x0b11" results in
+"0x0b12", not "0x0b100".
+When 'nrformats' includes "bin" and doesn't include "hex", CTRL-A on "0b11" in
+"0x0b11" results in "0x0b100".
 
 When the number under the cursor is too big to fit into 64 bits, it will be
 rounded off to the nearest number that can be represented, and the
