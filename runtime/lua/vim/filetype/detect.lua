@@ -1661,6 +1661,7 @@ local patterns_hashbang = {
   ['^\\%(rexx\\|regina\\)\\>'] = { 'rexx', { vim_regex = true } },
   ['^janet\\>'] = { 'janet', { vim_regex = true } },
   ['^dart\\>'] = { 'dart', { vim_regex = true } },
+  ['^execlineb\\>'] = { 'execline', { vim_regex = true } },
 }
 
 ---@private
