@@ -26,7 +26,7 @@ enum { DP_MAX_ERROR = 3, };
 static kvec_t(DecorProvider) decor_providers = KV_INITIAL_VALUE;
 
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
-  { ns_id, false, LUA_NOREF, LUA_NOREF, \
+  { ns_id, kDecorProviderDisabled, LUA_NOREF, LUA_NOREF, \
     LUA_NOREF, LUA_NOREF, LUA_NOREF, \
     LUA_NOREF, -1, false, false, 0 }
 
@@ -37,7 +37,9 @@ static void decor_provider_error(DecorProvider *provider, const char *name, cons
   msg_schedule_semsg_multiline("Error in decoration provider %s.%s:\n%s", ns_name, name, msg);
 }
 
-static bool decor_provider_invoke(DecorProvider *provider, const char *name, LuaRef ref, Array args,
+// Note we pass in a provider index as this function may cause decor_providers providers to be
+// reallocated so we need to be careful with DecorProvider pointers
+static bool decor_provider_invoke(int provider_idx, const char *name, LuaRef ref, Array args,
                                   bool default_true)
 {
   Error err = ERROR_INIT;
@@ -47,6 +49,10 @@ static bool decor_provider_invoke(DecorProvider *provider, const char *name, Lua
   Object ret = nlua_call_ref(ref, name, args, true, &err);
   provider_active = false;
   textlock--;
+
+  // We get the provider here via an index in case the above call to nlua_call_ref causes
+  // decor_providers to be reallocated.
+  DecorProvider *provider = &kv_A(decor_providers, provider_idx);
 
   if (!ERROR_SET(&err)
       && api_object_to_bool(ret, "provider %s retval", default_true, &err)) {
@@ -59,7 +65,7 @@ static bool decor_provider_invoke(DecorProvider *provider, const char *name, Lua
     provider->error_count++;
 
     if (provider->error_count >= DP_MAX_ERROR) {
-      provider->active = false;
+      provider->state = kDecorProviderDisabled;
     }
   }
 
@@ -72,11 +78,7 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
 {
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
     DecorProvider *p = &kv_A(decor_providers, i);
-    if (!p->active) {
-      continue;
-    }
-
-    if (p->spell_nav != LUA_NOREF) {
+    if (p->state != kDecorProviderDisabled && p->spell_nav != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 6);
       ADD_C(args, INTEGER_OBJ(wp->handle));
       ADD_C(args, INTEGER_OBJ(wp->w_buffer->handle));
@@ -84,7 +86,7 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
       ADD_C(args, INTEGER_OBJ(start_col));
       ADD_C(args, INTEGER_OBJ(end_row));
       ADD_C(args, INTEGER_OBJ(end_col));
-      decor_provider_invoke(p, "spell", p->spell_nav, args, true);
+      decor_provider_invoke((int)i, "spell", p->spell_nav, args, true);
     }
   }
 }
@@ -93,27 +95,15 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
 ///
 /// @param[out] providers Decoration providers
 /// @param[out] err       Provider err
-void decor_providers_start(DecorProviders *providers)
+void decor_providers_start(void)
 {
-  kvi_init(*providers);
-
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
     DecorProvider *p = &kv_A(decor_providers, i);
-    if (!p->active) {
-      continue;
-    }
-
-    bool active;
-    if (p->redraw_start != LUA_NOREF) {
+    if (p->state != kDecorProviderDisabled && p->redraw_start != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 2);
       ADD_C(args, INTEGER_OBJ((int)display_tick));
-      active = decor_provider_invoke(p, "start", p->redraw_start, args, true);
-    } else {
-      active = true;
-    }
-
-    if (active) {
-      kvi_push(*providers, p);
+      bool active = decor_provider_invoke((int)i, "start", p->redraw_start, args, true);
+      kv_A(decor_providers, i).state = active ? kDecorProviderActive : kDecorProviderRedrawDisabled;
     }
   }
 }
@@ -125,10 +115,8 @@ void decor_providers_start(DecorProviders *providers)
 /// @param      providers      Decoration providers
 /// @param[out] line_providers Enabled line providers to invoke in win_line
 /// @param[out] err            Provider error
-void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
-                                DecorProviders *line_providers)
+void decor_providers_invoke_win(win_T *wp)
 {
-  kvi_init(*line_providers);
   // this might change in the future
   // then we would need decor_state.running_decor_provider just like "on_line" below
   assert(kv_size(decor_state.active) == 0);
@@ -138,17 +126,21 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
                            ? wp->w_botline
                            : MAX(wp->w_topline + wp->w_height_inner, wp->w_botline)));
 
-  for (size_t k = 0; k < kv_size(*providers); k++) {
-    DecorProvider *p = kv_A(*providers, k);
-    if (p && p->redraw_win != LUA_NOREF) {
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    DecorProvider *p = &kv_A(decor_providers, i);
+    if (p->state == kDecorProviderWinDisabled) {
+      p->state = kDecorProviderActive;
+    }
+
+    if (p->state == kDecorProviderActive && p->redraw_win != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 4);
       ADD_C(args, WINDOW_OBJ(wp->handle));
       ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
       // TODO(bfredl): we are not using this, but should be first drawn line?
       ADD_C(args, INTEGER_OBJ(wp->w_topline - 1));
       ADD_C(args, INTEGER_OBJ(knownmax - 1));
-      if (decor_provider_invoke(p, "win", p->redraw_win, args, true)) {
-        kvi_push(*line_providers, p);
+      if (!decor_provider_invoke((int)i, "win", p->redraw_win, args, true)) {
+        kv_A(decor_providers, i).state = kDecorProviderWinDisabled;
       }
     }
   }
@@ -161,21 +153,21 @@ void decor_providers_invoke_win(win_T *wp, DecorProviders *providers,
 /// @param      row       Row to invoke line callback for
 /// @param[out] has_decor Set when at least one provider invokes a line callback
 /// @param[out] err       Provider error
-void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, bool *has_decor)
+void decor_providers_invoke_line(win_T *wp, int row, bool *has_decor)
 {
   decor_state.running_decor_provider = true;
-  for (size_t k = 0; k < kv_size(*providers); k++) {
-    DecorProvider *p = kv_A(*providers, k);
-    if (p && p->redraw_line != LUA_NOREF) {
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    DecorProvider *p = &kv_A(decor_providers, i);
+    if (p->state == kDecorProviderActive && p->redraw_line != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 3);
       ADD_C(args, WINDOW_OBJ(wp->handle));
       ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
       ADD_C(args, INTEGER_OBJ(row));
-      if (decor_provider_invoke(p, "line", p->redraw_line, args, true)) {
+      if (decor_provider_invoke((int)i, "line", p->redraw_line, args, true)) {
         *has_decor = true;
       } else {
         // return 'false' or error: skip rest of this window
-        kv_A(*providers, k) = NULL;
+        kv_A(decor_providers, i).state = kDecorProviderWinDisabled;
       }
 
       hl_check_ns();
@@ -189,15 +181,15 @@ void decor_providers_invoke_line(win_T *wp, DecorProviders *providers, int row, 
 /// @param      buf       Buffer
 /// @param      providers Decoration providers
 /// @param[out] err       Provider error
-void decor_providers_invoke_buf(buf_T *buf, DecorProviders *providers)
+void decor_providers_invoke_buf(buf_T *buf)
 {
-  for (size_t i = 0; i < kv_size(*providers); i++) {
-    DecorProvider *p = kv_A(*providers, i);
-    if (p && p->redraw_buf != LUA_NOREF) {
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    DecorProvider *p = &kv_A(decor_providers, i);
+    if (p->state == kDecorProviderActive && p->redraw_buf != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 2);
       ADD_C(args, BUFFER_OBJ(buf->handle));
       ADD_C(args, INTEGER_OBJ((int64_t)display_tick));
-      decor_provider_invoke(p, "buf", p->redraw_buf, args, true);
+      decor_provider_invoke((int)i, "buf", p->redraw_buf, args, true);
     }
   }
 }
@@ -207,14 +199,15 @@ void decor_providers_invoke_buf(buf_T *buf, DecorProviders *providers)
 /// @param      providers   Decoration providers
 /// @param      displaytick Display tick
 /// @param[out] err         Provider error
-void decor_providers_invoke_end(DecorProviders *providers)
+void decor_providers_invoke_end(void)
 {
-  for (size_t i = 0; i < kv_size(*providers); i++) {
-    DecorProvider *p = kv_A(*providers, i);
-    if (p && p->active && p->redraw_end != LUA_NOREF) {
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    DecorProvider *p = &kv_A(decor_providers, i);
+    if (p->state != kDecorProviderDisabled && p->redraw_end != LUA_NOREF) {
       MAXSIZE_TEMP_ARRAY(args, 1);
       ADD_C(args, INTEGER_OBJ((int)display_tick));
-      decor_provider_invoke(p, "end", p->redraw_end, args, true);
+      decor_provider_invoke((int)i, "end", p->redraw_end, args, true);
+      kv_A(decor_providers, i).state = kDecorProviderActive;
     }
   }
   decor_check_to_be_deleted();
@@ -227,10 +220,8 @@ void decor_providers_invoke_end(DecorProviders *providers)
 /// like highlight_changed() (throttled to the next redraw or mode change)
 void decor_provider_invalidate_hl(void)
 {
-  size_t len = kv_size(decor_providers);
-  for (size_t i = 0; i < len; i++) {
-    DecorProvider *item = &kv_A(decor_providers, i);
-    item->hl_cached = false;
+  for (size_t i = 0; i < kv_size(decor_providers); i++) {
+    kv_A(decor_providers, i).hl_cached = false;
   }
 
   if (ns_hl_active) {
@@ -242,14 +233,11 @@ void decor_provider_invalidate_hl(void)
 DecorProvider *get_decor_provider(NS ns_id, bool force)
 {
   assert(ns_id > 0);
-  size_t i;
   size_t len = kv_size(decor_providers);
-  for (i = 0; i < len; i++) {
-    DecorProvider *item = &kv_A(decor_providers, i);
-    if (item->ns_id == ns_id) {
-      return item;
-    } else if (item->ns_id > ns_id) {
-      break;
+  for (size_t i = 0; i < len; i++) {
+    DecorProvider *p = &kv_A(decor_providers, i);
+    if (p->ns_id == ns_id) {
+      return p;
     }
   }
 
@@ -257,16 +245,7 @@ DecorProvider *get_decor_provider(NS ns_id, bool force)
     return NULL;
   }
 
-  // Adding a new provider, so allocate room in the vector
-  (void)kv_a(decor_providers, len);
-  if (i < len) {
-    // New ns_id needs to be inserted between existing providers to maintain
-    // ordering, so shift other providers with larger ns_id
-    memmove(&kv_A(decor_providers, i + 1),
-            &kv_A(decor_providers, i),
-            (len - i) * sizeof(kv_a(decor_providers, i)));
-  }
-  DecorProvider *item = &kv_a(decor_providers, i);
+  DecorProvider *item = &kv_a(decor_providers, len);
   *item = DECORATION_PROVIDER_INIT(ns_id);
 
   return item;
@@ -283,7 +262,7 @@ void decor_provider_clear(DecorProvider *p)
   NLUA_CLEAR_REF(p->redraw_line);
   NLUA_CLEAR_REF(p->redraw_end);
   NLUA_CLEAR_REF(p->spell_nav);
-  p->active = false;
+  p->state = kDecorProviderDisabled;
 }
 
 void decor_free_all_mem(void)

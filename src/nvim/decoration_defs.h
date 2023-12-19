@@ -124,7 +124,14 @@ typedef struct {
 
 typedef struct {
   NS ns_id;
-  bool active;
+
+  enum {
+    kDecorProviderActive = 1,
+    kDecorProviderWinDisabled = 2,
+    kDecorProviderRedrawDisabled = 3,
+    kDecorProviderDisabled = 4,
+  } state;
+
   LuaRef redraw_start;
   LuaRef redraw_buf;
   LuaRef redraw_win;
@@ -137,5 +144,3 @@ typedef struct {
 
   uint8_t error_count;
 } DecorProvider;
-
-typedef kvec_withinit_t(DecorProvider *, 4) DecorProviders;

@@ -552,8 +552,7 @@ int update_screen(void)
 
   ui_comp_set_screen_valid(true);
 
-  DecorProviders providers;
-  decor_providers_start(&providers);
+  decor_providers_start();
 
   // "start" callback could have changed highlights for global elements
   if (win_check_ns_hl(NULL)) {
@@ -600,7 +599,7 @@ int update_screen(void)
       }
 
       if (buf->b_mod_tick_decor < display_tick) {
-        decor_providers_invoke_buf(buf, &providers);
+        decor_providers_invoke_buf(buf);
         buf->b_mod_tick_decor = display_tick;
       }
     }
@@ -630,7 +629,7 @@ int update_screen(void)
         did_one = true;
         start_search_hl();
       }
-      win_update(wp, &providers);
+      win_update(wp);
     }
 
     // redraw status line and window bar after the window to minimize cursor movement
@@ -671,8 +670,7 @@ int update_screen(void)
   }
   did_intro = true;
 
-  decor_providers_invoke_end(&providers);
-  kvi_destroy(providers);
+  decor_providers_invoke_end();
 
   // either cmdline is cleared, not drawn or mode is last drawn
   cmdline_was_last_drawn = false;
@@ -1427,7 +1425,7 @@ static void draw_sep_connectors_win(win_T *wp)
 /// top: from first row to top_end (when scrolled down)
 /// mid: from mid_start to mid_end (update inversion or changed text)
 /// bot: from bot_start to last row (when scrolled up)
-static void win_update(win_T *wp, DecorProviders *providers)
+static void win_update(win_T *wp)
 {
   int top_end = 0;              // Below last row of the top area that needs
                                 // updating.  0 when no top area updating.
@@ -1494,8 +1492,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
 
   decor_redraw_reset(wp, &decor_state);
 
-  DecorProviders line_providers;
-  decor_providers_invoke_win(wp, providers, &line_providers);
+  decor_providers_invoke_win(wp);
 
   if (win_redraw_signcols(wp)) {
     wp->w_lines_valid = 0;
@@ -2284,7 +2281,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         spellvars_T zero_spv = { 0 };
         row = win_line(wp, lnum, srow, wp->w_grid.rows, false,
                        foldinfo.fi_lines > 0 ? &zero_spv : &spv,
-                       foldinfo, &line_providers);
+                       foldinfo);
 
         if (foldinfo.fi_lines == 0) {
           wp->w_lines[idx].wl_folded = false;
@@ -2322,7 +2319,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         // text doesn't need to be drawn, but the number column does.
         foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum
                           ? cursorline_fi : fold_info(wp, lnum);
-        (void)win_line(wp, lnum, srow, wp->w_grid.rows, true, &spv, info, &line_providers);
+        (void)win_line(wp, lnum, srow, wp->w_grid.rows, true, &spv, info);
       }
 
       // This line does not need to be drawn, advance to the next one.
@@ -2344,7 +2341,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
       wp->w_lines_valid = 0;
       wp->w_valid &= ~VALID_WCOL;
       decor_redraw_reset(wp, &decor_state);
-      decor_providers_invoke_win(wp, providers, &line_providers);
+      decor_providers_invoke_win(wp);
       continue;
     }
 
@@ -2419,7 +2416,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         spellvars_T zero_spv = { 0 };
         foldinfo_T zero_foldinfo = { 0 };
         row = win_line(wp, wp->w_botline, row, wp->w_grid.rows, false, &zero_spv,
-                       zero_foldinfo, &line_providers);
+                       zero_foldinfo);
       }
     } else if (dollar_vcol == -1) {
       wp->w_botline = lnum;
@@ -2442,8 +2439,6 @@ static void win_update(win_T *wp, DecorProviders *providers)
                  HLF_EOB);
     set_empty_rows(wp, row);
   }
-
-  kvi_destroy(line_providers);
 
   if (wp->w_redr_type >= UPD_REDRAW_TOP) {
     draw_vsep_win(wp);
@@ -2485,7 +2480,7 @@ static void win_update(win_T *wp, DecorProviders *providers)
         // Don't update for changes in buffer again.
         int mod_set = curbuf->b_mod_set;
         curbuf->b_mod_set = false;
-        win_update(curwin, providers);
+        win_update(curwin);
         must_redraw = 0;
         curbuf->b_mod_set = mod_set;
       }

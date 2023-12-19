@@ -945,7 +945,7 @@ static void win_line_start(win_T *wp, winlinevars_T *wlv, bool save_extra)
 ///
 /// @return             the number of last row the line occupies.
 int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_only, spellvars_T *spv,
-             foldinfo_T foldinfo, DecorProviders *providers)
+             foldinfo_T foldinfo)
 {
   winlinevars_T wlv;                  // variables passed between functions
 
@@ -1081,7 +1081,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
     has_decor = decor_redraw_line(wp, lnum - 1, &decor_state);
 
-    decor_providers_invoke_line(wp, providers, lnum - 1, &has_decor);
+    decor_providers_invoke_line(wp, lnum - 1, &has_decor);
 
     if (has_decor) {
       extra_check = true;

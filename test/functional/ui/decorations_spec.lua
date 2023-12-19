@@ -687,6 +687,17 @@ describe('decorations providers', function()
       {18:Press ENTER or type command to continue}^ |
     ]]}
   end)
+
+   it('can add new providers during redraw #26652', function()
+    setup_provider [[
+    local ns = api.nvim_create_namespace('test_no_add')
+    function on_do(...)
+      api.nvim_set_decoration_provider(ns, {})
+    end
+    ]]
+
+    helpers.assert_alive()
+  end)
 end)
 
 local example_text = [[
