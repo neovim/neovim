@@ -2381,6 +2381,7 @@ describe('highlight namespaces', function()
   end)
 
   it('Normal in set_hl #25474', function()
+    command('highlight Ignore guifg=bg ctermfg=White')
     meths.set_hl(0, 'Normal', {bg='#333333'})
     command('highlight Ignore')
     screen:expect{grid=[[
