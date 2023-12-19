@@ -18,6 +18,9 @@
 
 static kvec_t(DecorProvider) decor_providers = KV_INITIAL_VALUE;
 
+// Flag to raise when decor_providers cannot be reallocated, e.g. during a redraw cycle
+static bool decor_providers_locked = false;
+
 #define DECORATION_PROVIDER_INIT(ns_id) (DecorProvider) \
   { ns_id, false, LUA_NOREF, LUA_NOREF, \
     LUA_NOREF, LUA_NOREF, LUA_NOREF, \
@@ -88,6 +91,7 @@ void decor_providers_invoke_spell(win_T *wp, int start_row, int start_col, int e
 /// @param[out] err       Provider err
 void decor_providers_start(DecorProviders *providers)
 {
+  decor_providers_locked = true;
   kvi_init(*providers);
 
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
@@ -211,6 +215,7 @@ void decor_providers_invoke_end(DecorProviders *providers)
     }
   }
   decor_check_to_be_deleted();
+  decor_providers_locked = false;
 }
 
 /// Mark all cached state of per-namespace highlights as invalid. Revalidate
@@ -247,6 +252,11 @@ DecorProvider *get_decor_provider(NS ns_id, bool force)
   }
 
   if (!force) {
+    return NULL;
+  }
+
+  // Cannot add new providers during a redraw
+  if (decor_providers_locked) {
     return NULL;
   }
 

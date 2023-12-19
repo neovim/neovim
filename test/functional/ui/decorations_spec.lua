@@ -687,6 +687,29 @@ describe('decorations providers', function()
       {18:Press ENTER or type command to continue}^ |
     ]]}
   end)
+
+  it('cannot add new providers during redraw #26652', function()
+    insert(mulholland)
+
+    setup_provider [[
+    local ns = api.nvim_create_namespace('test_no_add')
+    function on_do(...)
+      api.nvim_set_decoration_provider(ns, {})
+    end
+    ]]
+
+    screen:expect{grid=[[
+      {2:Error executing lua: [string "<nvim>"]:5}|
+      {2:: cannot set decoration provider}        |
+      {2:stack traceback:}                        |
+      {2:        [C]: in function 'nvim_set_decor}|
+      {2:ation_provider'}                         |
+      {2:        [string "<nvim>"]:5: in function}|
+      {2: <[string "<nvim>"]:4>}                  |
+      {18:Press ENTER or type command to continue}^ |
+    ]]}
+
+  end)
 end)
 
 local example_text = [[
