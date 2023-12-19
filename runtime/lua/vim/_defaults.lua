@@ -194,7 +194,7 @@ if tty then
   --- already set by the user.
   ---
   --- @param option string Option name
-  --- @param value string Option value
+  --- @param value any Option value
   local function setoption(option, value)
     if vim.api.nvim_get_option_info2(option, {}).was_set then
       -- Don't do anything if option is already set

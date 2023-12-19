@@ -3110,7 +3110,6 @@ nvim_open_win({buffer}, {enter}, {*config})                  *nvim_open_win()*
     Example (Lua): buffer-relative float (travels as buffer is scrolled) >lua
         vim.api.nvim_open_win(0, false,
           {relative='win', width=12, height=3, bufpos={100,10}})
-        })
 <
 
     Attributes: ~

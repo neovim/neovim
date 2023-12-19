@@ -659,7 +659,7 @@ void pum_redraw(void)
   }
 }
 
-/// create a floting preview window for info
+/// create a floating preview window for info
 /// @return  NULL when no enough room to show
 static win_T *pum_create_float_preview(bool enter)
 {
@@ -971,7 +971,7 @@ static bool pum_set_selected(int n, int repeat)
             if (curwin->w_p_wrap) {
               lnum += plines_win(curwin, lnum, true);
             }
-            // adjust floting window by actually height and max info text width
+            // adjust floating window by actually height and max info text width
             pum_adjust_float_position(curwin, lnum, max_info_width);
           }
 

@@ -1,5 +1,5 @@
 // drawscreen.c: Code for updating all the windows on the screen.
-// This is the top level, drawline.c is the middle and grid.c/screen.c the lower level.
+// This is the top level, drawline.c is the middle and grid.c the lower level.
 
 // update_screen() is the function that updates all windows and status lines.
 // It is called from the main loop when must_redraw is non-zero.  It may be
