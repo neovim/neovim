@@ -31,6 +31,7 @@ describe("'fillchars'", function()
                                  |
       ]])
     end)
+
     it('supports whitespace', function()
       screen:expect([[
         ^                         |
@@ -43,6 +44,7 @@ describe("'fillchars'", function()
                                  |*4
       ]])
     end)
+
     it('supports multibyte char', function()
       command('set fillchars=eob:ñ')
       screen:expect([[
@@ -51,6 +53,7 @@ describe("'fillchars'", function()
                                  |
       ]])
     end)
+
     it('handles invalid values', function()
       shouldfail('eob:') -- empty string
       shouldfail('eob:馬') -- doublewidth char
@@ -59,6 +62,33 @@ describe("'fillchars'", function()
       shouldfail('eob:\255', 'eob:<ff>') -- invalid UTF-8
     end)
   end)
+
+  it('"diff" flag', function()
+    screen:try_resize(45, 8)
+    screen:set_default_attr_ids({
+      [1] = {background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue};
+      [2] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1};
+      [3] = {background = Screen.colors.LightBlue};
+      [4] = {reverse = true};
+      [5] = {reverse = true, bold = true};
+    })
+    command('set fillchars=diff:…')
+    insert('a\nb\nc\nd\ne')
+    command('vnew')
+    insert('a\nd\ne\nf')
+    command('windo diffthis')
+    screen:expect([[
+      {1:  }a                   │{1:  }a                   |
+      {1:  }{2:……………………………………………………}│{1:  }{3:b                   }|
+      {1:  }{2:……………………………………………………}│{1:  }{3:c                   }|
+      {1:  }d                   │{1:  }d                   |
+      {1:  }e                   │{1:  }^e                   |
+      {1:  }{3:f                   }│{1:  }{2:……………………………………………………}|
+      {4:[No Name] [+]          }{5:[No Name] [+]         }|
+                                                   |
+    ]])
+  end)
+
   it('has global value', function()
     screen:try_resize(50, 5)
     insert("foo\nbar")
@@ -72,6 +102,7 @@ describe("'fillchars'", function()
                                                         |
     ]])
   end)
+
   it('has window-local value', function()
     screen:try_resize(50, 5)
     insert("foo\nbar")
@@ -85,6 +116,7 @@ describe("'fillchars'", function()
                                                         |
     ]])
   end)
+
   it('using :set clears window-local value', function()
     screen:try_resize(50, 5)
     insert("foo\nbar")
@@ -121,6 +153,7 @@ describe("'listchars'", function()
                                                         |
     ]])
   end)
+
   it('has window-local value', function()
     feed('i<tab><tab><tab><esc>')
     command('set list laststatus=0')
@@ -133,6 +166,7 @@ describe("'listchars'", function()
                                                         |
     ]])
   end)
+
   it('using :set clears window-local value', function()
     feed('i<tab><tab><tab><esc>')
     command('set list laststatus=0')
