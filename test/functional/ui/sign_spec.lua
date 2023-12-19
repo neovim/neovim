@@ -368,13 +368,14 @@ describe('Signs', function()
       ]])
     end)
 
-    it('shows the line number when signcolumn=number but no marks on a line have text', function()
+    it('signcolumn=number', function()
       feed('ia<cr>b<cr>c<cr><esc>')
       command('set number signcolumn=number')
       command('sign define pietSearch text=>> texthl=Search numhl=Error')
       command('sign define pietError text=    texthl=Search numhl=Error')
       command('sign place 1 line=1 name=pietSearch buffer=1')
       command('sign place 2 line=2 name=pietError  buffer=1')
+      -- line number should be drawn if sign has no text
       -- no signcolumn, line number for "a" is Search, for "b" is Error, for "c" is LineNr
       screen:expect([[
         {1: >> }a                                                |
@@ -382,6 +383,35 @@ describe('Signs', function()
         {6:  3 }c                                                |
         {6:  4 }^                                                 |
         {0:~                                                    }|*9
+                                                             |
+      ]])
+      -- number column on wrapped part of a line should be empty
+      feed('gg100aa<Esc>')
+      screen:expect([[
+        {1: >> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+            aa^a                                              |
+        {8:  2 }b                                                |
+        {6:  3 }c                                                |
+        {6:  4 }                                                 |
+        {0:~                                                    }|*7
+                                                             |
+      ]])
+      meths.buf_set_extmark(0, meths.create_namespace('test'), 0, 0, {
+        virt_lines = { { { 'VIRT LINES' } } },
+        virt_lines_above = true,
+      })
+      feed('<C-Y>')
+      -- number column on virtual lines should be empty
+      screen:expect([[
+            VIRT LINES                                       |
+        {1: >> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+            aa^a                                              |
+        {8:  2 }b                                                |
+        {6:  3 }c                                                |
+        {6:  4 }                                                 |
+        {0:~                                                    }|*6
                                                              |
       ]])
     end)

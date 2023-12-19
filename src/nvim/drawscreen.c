@@ -954,7 +954,6 @@ int showmode(void)
     lines_left = 0;
 
     if (do_mode) {
-      int sub_attr;
       msg_puts_attr("--", attr);
       // CTRL-X in Insert mode
       if (edit_submode != NULL && !shortmess(SHM_COMPLETIONMENU)) {
@@ -981,7 +980,8 @@ int showmode(void)
           }
           if (edit_submode_extra != NULL) {
             msg_puts_attr(" ", attr);  // Add a space in between.
-            if ((int)edit_submode_highl < HLF_COUNT) {
+            int sub_attr;
+            if (edit_submode_highl < HLF_COUNT) {
               sub_attr = win_hl_attr(curwin, (int)edit_submode_highl);
             } else {
               sub_attr = attr;
