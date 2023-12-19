@@ -1336,30 +1336,30 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
 
   if (start_col > 0 && col_rows == 0) {
     char *prev_ptr = ptr;
-    chartabsize_T cts;
-    int charsize = 0;
-    int head = 0;
+    CharSize cs = { 0 };
 
-    init_chartabsize_arg(&cts, wp, lnum, wlv.vcol, line, ptr);
-    cts.cts_max_head_vcol = start_col;
-    while (cts.cts_vcol < start_col && *cts.cts_ptr != NUL) {
-      head = 0;
-      charsize = win_lbr_chartabsize(&cts, &head);
-      cts.cts_vcol += charsize;
-      prev_ptr = cts.cts_ptr;
-      MB_PTR_ADV(cts.cts_ptr);
+    CharsizeArg arg;
+    CSType cstype = init_charsize_arg(&arg, wp, lnum, line);
+    arg.max_head_vcol = start_col;
+    int vcol = wlv.vcol;
+    StrCharInfo ci = utf_ptr2StrCharInfo(ptr);
+    while (vcol < start_col && *ci.ptr != NUL) {
+      cs = win_charsize(cstype, vcol, ci.ptr, ci.chr.value, &arg);
+      vcol += cs.width;
+      prev_ptr = ci.ptr;
+      ci = utfc_next(ci);
       if (wp->w_p_list) {
-        in_multispace = *prev_ptr == ' ' && (*cts.cts_ptr == ' '
+        in_multispace = *prev_ptr == ' ' && (*ci.ptr == ' '
                                              || (prev_ptr > line && prev_ptr[-1] == ' '));
         if (!in_multispace) {
           multispace_pos = 0;
-        } else if (cts.cts_ptr >= line + leadcol
+        } else if (ci.ptr >= line + leadcol
                    && wp->w_p_lcs_chars.multispace != NULL) {
           multispace_pos++;
           if (wp->w_p_lcs_chars.multispace[multispace_pos] == NUL) {
             multispace_pos = 0;
           }
-        } else if (cts.cts_ptr < line + leadcol
+        } else if (ci.ptr < line + leadcol
                    && wp->w_p_lcs_chars.leadmultispace != NULL) {
           multispace_pos++;
           if (wp->w_p_lcs_chars.leadmultispace[multispace_pos] == NUL) {
@@ -1368,9 +1368,10 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
         }
       }
     }
-    wlv.vcol = cts.cts_vcol;
-    ptr = cts.cts_ptr;
-    clear_chartabsize_arg(&cts);
+    wlv.vcol = vcol;
+    ptr = ci.ptr;
+    int charsize = cs.width;
+    int head = cs.head;
 
     // When:
     // - 'cuc' is set, or
@@ -2081,12 +2082,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, int col_rows, s
             && vim_isbreak(mb_c) && !vim_isbreak((uint8_t)(*ptr))) {
           int mb_off = utf_head_off(line, ptr - 1);
           char *p = ptr - (mb_off + 1);
-          chartabsize_T cts;
 
+          CharsizeArg arg;
           // lnum == 0, do not want virtual text to be counted here
-          init_chartabsize_arg(&cts, wp, 0, wlv.vcol, line, p);
-          wlv.n_extra = win_lbr_chartabsize(&cts, NULL) - 1;
-          clear_chartabsize_arg(&cts);
+          CSType cstype = init_charsize_arg(&arg, wp, 0, line);
+          wlv.n_extra = win_charsize(cstype, wlv.vcol, p, utf_ptr2CharInfo(p).value,
+                                     &arg).width - 1;
 
           if (on_last_col && mb_c != TAB) {
             // Do not continue search/match highlighting over the

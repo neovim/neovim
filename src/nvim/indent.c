@@ -1246,18 +1246,19 @@ int get_lisp_indent(void)
       curwin->w_cursor.col = pos->col;
       colnr_T col = pos->col;
 
-      char *that = get_cursor_line_ptr();
+      char *line = get_cursor_line_ptr();
 
-      char *line = that;
-      chartabsize_T cts;
-      init_chartabsize_arg(&cts, curwin, pos->lnum, 0, line, line);
-      while (*cts.cts_ptr != NUL && col > 0) {
-        cts.cts_vcol += lbr_chartabsize_adv(&cts);
+      CharsizeArg arg;
+      CSType cstype = init_charsize_arg(&arg, curwin, pos->lnum, line);
+
+      StrCharInfo sci = utf_ptr2StrCharInfo(line);
+      amount = 0;
+      while (*sci.ptr != NUL && col > 0) {
+        amount += win_charsize(cstype, amount, sci.ptr, sci.chr.value, &arg).width;
+        sci = utfc_next(sci);
         col--;
       }
-      amount = cts.cts_vcol;
-      that = cts.cts_ptr;
-      clear_chartabsize_arg(&cts);
+      char *that = sci.ptr;
 
       // Some keywords require "body" indenting rules (the
       // non-standard-lisp ones are Scheme special forms):
@@ -1272,15 +1273,10 @@ int get_lisp_indent(void)
         }
         colnr_T firsttry = amount;
 
-        init_chartabsize_arg(&cts, curwin, (colnr_T)(that - line),
-                             amount, line, that);
-        while (ascii_iswhite(*cts.cts_ptr)) {
-          cts.cts_vcol += lbr_chartabsize(&cts);
-          cts.cts_ptr++;
+        while (ascii_iswhite(*that)) {
+          amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &arg).width;
+          that++;
         }
-        that = cts.cts_ptr;
-        amount = cts.cts_vcol;
-        clear_chartabsize_arg(&cts);
 
         if (*that && (*that != ';')) {
           // Not a comment line.
@@ -1292,37 +1288,38 @@ int get_lisp_indent(void)
 
           parencount = 0;
 
-          init_chartabsize_arg(&cts, curwin,
-                               (colnr_T)(that - line), amount, line, that);
-          if (((*that != '"') && (*that != '\'') && (*that != '#')
-               && (((uint8_t)(*that) < '0') || ((uint8_t)(*that) > '9')))) {
+          CharInfo ci = utf_ptr2CharInfo(that);
+          if (((ci.value != '"') && (ci.value != '\'') && (ci.value != '#')
+               && ((ci.value < '0') || (ci.value > '9')))) {
             int quotecount = 0;
-            while (*cts.cts_ptr
-                   && (!ascii_iswhite(*cts.cts_ptr) || quotecount || parencount)) {
-              if (*cts.cts_ptr == '"') {
+            while (*that && (!ascii_iswhite(ci.value) || quotecount || parencount)) {
+              if (ci.value == '"') {
                 quotecount = !quotecount;
               }
-              if (((*cts.cts_ptr == '(') || (*cts.cts_ptr == '[')) && !quotecount) {
+              if (((ci.value == '(') || (ci.value == '[')) && !quotecount) {
                 parencount++;
               }
-              if (((*cts.cts_ptr == ')') || (*cts.cts_ptr == ']')) && !quotecount) {
+              if (((ci.value == ')') || (ci.value == ']')) && !quotecount) {
                 parencount--;
               }
-              if ((*cts.cts_ptr == '\\') && (*(cts.cts_ptr + 1) != NUL)) {
-                cts.cts_vcol += lbr_chartabsize_adv(&cts);
+              if ((ci.value == '\\') && (*(that + 1) != NUL)) {
+                amount += win_charsize(cstype, amount, that, ci.value, &arg).width;
+                StrCharInfo next_sci = utfc_next((StrCharInfo){ that, ci });
+                that = next_sci.ptr;
+                ci = next_sci.chr;
               }
 
-              cts.cts_vcol += lbr_chartabsize_adv(&cts);
+              amount += win_charsize(cstype, amount, that, ci.value, &arg).width;
+              StrCharInfo next_sci = utfc_next((StrCharInfo){ that, ci });
+              that = next_sci.ptr;
+              ci = next_sci.chr;
             }
           }
 
-          while (ascii_iswhite(*cts.cts_ptr)) {
-            cts.cts_vcol += lbr_chartabsize(&cts);
-            cts.cts_ptr++;
+          while (ascii_iswhite(*that)) {
+            amount += win_charsize(cstype, amount, that, (uint8_t)(*that), &arg).width;
+            that++;
           }
-          that = cts.cts_ptr;
-          amount = cts.cts_vcol;
-          clear_chartabsize_arg(&cts);
 
           if (!*that || (*that == ';')) {
             amount = firsttry;

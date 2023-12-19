@@ -110,3 +110,11 @@ static inline StrCharInfo utfc_next(StrCharInfo cur)
     next += next_len;
   }
 }
+
+static inline StrCharInfo utf_ptr2StrCharInfo(char *ptr)
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE REAL_FATTR_PURE;
+
+static inline StrCharInfo utf_ptr2StrCharInfo(char *ptr)
+{
+  return (StrCharInfo){ .ptr = ptr, .chr = utf_ptr2CharInfo(ptr) };
+}
