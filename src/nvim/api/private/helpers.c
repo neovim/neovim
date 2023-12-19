@@ -1044,7 +1044,7 @@ bool set_mark(buf_T *buf, String name, Integer line, Integer col, Error *err)
     }
   }
   assert(INT32_MIN <= line && line <= INT32_MAX);
-  pos_T pos = { (linenr_T)line, (int)col, (int)col };
+  pos_T pos = { (linenr_T)line, (int)col, 0 };
   res = setmark_pos(*name.data, &pos, buf->handle, NULL);
   if (!res) {
     if (deleting) {
