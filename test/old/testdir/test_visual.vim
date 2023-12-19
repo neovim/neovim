@@ -1589,6 +1589,41 @@ func Test_Visual_r_CTRL_C()
   call feedkeys("\<c-v>$gr\<c-c>", 'tx')
   call assert_equal([''], getline(1, 1))
   bw!
-endfu
+endfunc
+
+func Test_visual_drag_out_of_window()
+  rightbelow vnew
+  call setline(1, '123456789')
+  set mouse=a
+  func ClickExpr(off)
+    call Ntest_setmouse(1, getwininfo(win_getid())[0].wincol + a:off)
+    return "\<LeftMouse>"
+  endfunc
+  func DragExpr(off)
+    call Ntest_setmouse(1, getwininfo(win_getid())[0].wincol + a:off)
+    return "\<LeftDrag>"
+  endfunc
+
+  nnoremap <expr> <F2> ClickExpr(5)
+  nnoremap <expr> <F3> DragExpr(-1)
+  redraw
+  call feedkeys("\<F2>\<F3>\<LeftRelease>", 'tx')
+  call assert_equal([1, 6], [col('.'), col('v')])
+  call feedkeys("\<Esc>", 'tx')
+
+  nnoremap <expr> <F2> ClickExpr(6)
+  nnoremap <expr> <F3> DragExpr(-2)
+  redraw
+  call feedkeys("\<F2>\<F3>\<LeftRelease>", 'tx')
+  call assert_equal([1, 7], [col('.'), col('v')])
+  call feedkeys("\<Esc>", 'tx')
+
+  nunmap <F2>
+  nunmap <F3>
+  delfunc ClickExpr
+  delfunc DragExpr
+  set mouse&
+  bwipe!
+endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
