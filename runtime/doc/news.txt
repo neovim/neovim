@@ -15,7 +15,7 @@ BREAKING CHANGES                                                *news-breaking*
 
 The following changes may require adaptations in user config or plugins.
 
-• In some cases, the cursor in the Nvim |TUI| would blink even without
+• In some cases, the cursor in the Nvim |TUI| used to blink even without
   configuring 'guicursor' as mentioned in |cursor-blinking|. This was a bug
   that has now been fixed. If your cursor has stopped blinking, add the
   following (or similar, adapted to user preference) to your |config| file: >vim
@@ -238,7 +238,7 @@ The following new APIs and features were added.
 • Floating windows can now be hidden by setting `hide` in |nvim_open_win()| or
   |nvim_win_set_config()|.
 
-• The |:terminal| command now accepts some |:command-modifiers| (specifically
+• |:terminal| command now accepts some |:command-modifiers| (specifically
   |:horizontal| and those that affect splitting a window).
 
 • |$NVIM_APPNAME| can be set to a relative path instead of only a name.
@@ -259,16 +259,16 @@ The following new APIs and features were added.
   clipboard is now bundled by default and will be automatically enabled under
   certain conditions. |clipboard-osc52|
 
-• The 'termsync' option asks the terminal emulator to buffer screen updates
-  until the redraw cycle is complete. Requires support from the terminal.
+• 'termsync' option asks the terminal emulator to buffer screen updates until
+  the redraw cycle is complete. Requires support from the terminal.
 
 • |vim.text.hexencode()| and |vim.text.hexdecode()| convert strings to and
   from byte representations.
 
-• 'completeopt' option supports "popup" flags to show extra information in
-  in floating window.
+• 'completeopt' option supports "popup" flag to show extra information in a
+  floating window.
 
-• Added `x1` and `x2` mouse buttons as possible arguments to |nvim_input_mouse()|
+• |nvim_input_mouse()| supports mouse buttons "x1" and "x2".
 
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
@@ -358,9 +358,6 @@ The following changes to existing APIs or features add new behavior.
 • |vim.wait()| is no longer allowed to be called in |api-fast|.
 
 • Vimscript function |exists()| supports checking |v:lua| functions.
-
-• Diagnostic sign text is no longer configured with |sign_define()|.
-  Use |vim.diagnostic.config()| instead.
 
 • Added "force_crlf" option field in |nvim_open_term()|.
 
