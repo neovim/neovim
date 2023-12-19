@@ -270,6 +270,11 @@ The following new APIs and features were added.
 
 • |nvim_input_mouse()| supports mouse buttons "x1" and "x2".
 
+|CompleteDone| now sets the `reason` key in `v:event` which specifies the
+reason for completion being done.
+
+See https://github.com/neovim/neovim/pull/20671 for more information.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
