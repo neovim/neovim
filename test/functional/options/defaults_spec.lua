@@ -378,7 +378,7 @@ describe('XDG defaults', function()
             .. root_path
             .. ('/b'):rep(2048)
             .. '/nvim'
-            .. (',' .. root_path .. '/c/nvim'):rep(512)
+            .. (',' .. root_path .. '/c/nvim')
             .. ','
             .. root_path
             .. ('/X'):rep(4096)
@@ -393,12 +393,12 @@ describe('XDG defaults', function()
             .. root_path
             .. ('/B'):rep(2048)
             .. '/nvim/site'
-            .. (',' .. root_path .. '/C/nvim/site'):rep(512)
+            .. (',' .. root_path .. '/C/nvim/site')
             .. ','
             .. vimruntime
             .. ','
             .. libdir
-            .. (',' .. root_path .. '/C/nvim/site/after'):rep(512)
+            .. (',' .. root_path .. '/C/nvim/site/after')
             .. ','
             .. root_path
             .. ('/B'):rep(2048)
@@ -413,7 +413,7 @@ describe('XDG defaults', function()
             .. '/'
             .. data_dir
             .. '/site/after'
-            .. (',' .. root_path .. '/c/nvim/after'):rep(512)
+            .. (',' .. root_path .. '/c/nvim/after')
             .. ','
             .. root_path
             .. ('/b'):rep(2048)
@@ -449,7 +449,7 @@ describe('XDG defaults', function()
             .. root_path
             .. ('/b'):rep(2048)
             .. '/nvim'
-            .. (',' .. root_path .. '/c/nvim'):rep(512)
+            .. (',' .. root_path .. '/c/nvim')
             .. ','
             .. root_path
             .. ('/X'):rep(4096)
@@ -464,12 +464,12 @@ describe('XDG defaults', function()
             .. root_path
             .. ('/B'):rep(2048)
             .. '/nvim/site'
-            .. (',' .. root_path .. '/C/nvim/site'):rep(512)
+            .. (',' .. root_path .. '/C/nvim/site')
             .. ','
             .. vimruntime
             .. ','
             .. libdir
-            .. (',' .. root_path .. '/C/nvim/site/after'):rep(512)
+            .. (',' .. root_path .. '/C/nvim/site/after')
             .. ','
             .. root_path
             .. ('/B'):rep(2048)
@@ -484,7 +484,7 @@ describe('XDG defaults', function()
             .. '/'
             .. data_dir
             .. '/site/after'
-            .. (',' .. root_path .. '/c/nvim/after'):rep(512)
+            .. (',' .. root_path .. '/c/nvim/after')
             .. ','
             .. root_path
             .. ('/b'):rep(2048)
