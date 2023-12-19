@@ -1177,6 +1177,7 @@ int do_execreg(int regname, int colon, int addcr, int silent)
       }
     }
     reg_executing = regname == 0 ? '"' : regname;  // disable the 'q' command
+    pending_end_reg_executing = false;
   }
   return retval;
 }
