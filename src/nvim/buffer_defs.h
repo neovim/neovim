@@ -1316,9 +1316,3 @@ struct window_S {
   // Size of the w_statuscol_click_defs array
   size_t w_statuscol_click_defs_size;
 };
-
-/// Macros defined in Vim, but not in Neovim
-// uncrustify:off
-#define CHANGEDTICK(buf) \
-  (=== Include buffer.h & use buf_(get|set|inc) _changedtick ===)
-// uncrustify:on

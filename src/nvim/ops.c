@@ -215,7 +215,6 @@ int get_extra_op_char(int optype)
 /// handle a shift operation
 void op_shift(oparg_T *oap, int curs_top, int amount)
 {
-  int i;
   int block_col = 0;
 
   if (u_save((linenr_T)(oap->start.lnum - 1),
@@ -227,7 +226,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     block_col = curwin->w_cursor.col;
   }
 
-  for (i = oap->line_count - 1; i >= 0; i--) {
+  for (int i = oap->line_count - 1; i >= 0; i--) {
     int first_char = (uint8_t)(*get_cursor_line_ptr());
     if (first_char == NUL) {  // empty line
       curwin->w_cursor.col = 0;
