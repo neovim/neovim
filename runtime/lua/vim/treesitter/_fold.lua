@@ -444,8 +444,30 @@ function M.foldtext()
       end
       line_pos = end_col
 
+      -- get possible semantic highlight for the symbol
+      local extmarks = vim.api.nvim_buf_get_extmarks(
+        bufnr,
+        -1,
+        { foldstart - 1, start_col },
+        { foldstart - 1, end_col - 1 },
+        {
+          details = true,
+          hl_name = true,
+          type = 'highlight',
+        }
+      )
+      -- ensure priority sort (buf_get_extmarks returns "traversal order")
+      table.sort(extmarks, function(a, b)
+        return a[4].priority < b[4].priority
+      end)
+      local extmark_hl = extmarks[1]
+
       local text = line:sub(start_col + 1, end_col)
-      table.insert(result, { text, { { '@' .. name, priority } }, range = { start_col, end_col } })
+      local highlights = {
+        { '@' .. name, extmark_hl and (priority - 1) or priority },
+        extmark_hl and { extmark_hl[4].hl_group, priority },
+      }
+      table.insert(result, { text, highlights, range = { start_col, end_col } })
     end
   end
 
@@ -487,7 +509,52 @@ function M.foldtext()
     end
   end
 
-  return result
+  local extmarks = vim.api.nvim_buf_get_extmarks(
+    0,
+    -1,
+    { foldstart - 1, 1 },
+    { foldstart - 1, -1 },
+    {
+      details = true,
+      hl_name = true,
+      type = 'virt_text',
+    }
+  )
+
+  local merged_vt = {}
+  local last_found = 0
+
+  -- merge inline extmarks into the line's virt text chunks
+  for _, mark in ipairs(extmarks) do
+    if mark[4].virt_text and mark[4].virt_text_pos == 'inline' then
+      local virt_text = mark[4].virt_text --[[@as any[] ]]
+      local col_start = mark[3] --[[@as integer]]
+      local cur_width = 0
+      for idx, res_chunk in ipairs(result) do
+        cur_width = cur_width + #res_chunk[1]
+        if cur_width >= col_start then
+          if idx > last_found then
+            table.insert(merged_vt, res_chunk)
+          end
+          last_found = idx
+          for _, vt in ipairs(virt_text) do
+            table.insert(merged_vt, vt)
+          end
+          break
+        end
+        if idx > last_found then
+          table.insert(merged_vt, res_chunk)
+        end
+      end
+    end
+  end
+
+  -- add the remaining virt text chunks to the result
+  for idx = last_found + 1, #result do
+    table.insert(merged_vt, result[idx])
+  end
+
+  return merged_vt
 end
 
 return M
