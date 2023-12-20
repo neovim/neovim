@@ -221,10 +221,6 @@ int get_number(int colon, int *mouse_used)
 /// the line number.
 int prompt_for_number(int *mouse_used)
 {
-  int i;
-  int save_cmdline_row;
-  int save_State;
-
   // When using ":silent" assume that <CR> was entered.
   if (mouse_used != NULL) {
     msg_puts(_("Type number and <Enter> or click with the mouse "
@@ -235,14 +231,14 @@ int prompt_for_number(int *mouse_used)
 
   // Set the state such that text can be selected/copied/pasted and we still
   // get mouse events.
-  save_cmdline_row = cmdline_row;
+  int save_cmdline_row = cmdline_row;
   cmdline_row = 0;
-  save_State = State;
+  int save_State = State;
   State = MODE_ASKMORE;  // prevents a screen update when using a timer
   // May show different mouse shape.
   setmouse();
 
-  i = get_number(true, mouse_used);
+  int i = get_number(true, mouse_used);
   if (KeyTyped) {
     // don't call wait_return() now
     if (msg_row > 0) {

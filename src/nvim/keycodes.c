@@ -875,9 +875,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
                         const char *const cpo_val)
   FUNC_ATTR_NONNULL_ARG(1, 3, 7)
 {
-  char key;
   size_t dlen = 0;
-  const char *src;
   const char *const end = from + from_len - 1;
 
   // backslash is a special character
@@ -891,7 +889,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
   const size_t buf_len = allocated ? from_len * 6 + 1 : 128;
   char *result = allocated ? xmalloc(buf_len) : *bufp;  // buffer for resulting string
 
-  src = from;
+  const char *src = from;
 
   // Copy each byte from *from to result[dlen]
   while (src <= end) {
@@ -966,7 +964,7 @@ char *replace_termcodes(const char *const from, const size_t from_len, char **co
     // For "from" side the CTRL-V at the end is included, for the "to"
     // part it is removed.
     // If 'cpoptions' does not contain 'B', also accept a backslash.
-    key = *src;
+    char key = *src;
     if (key == Ctrl_V || (do_backslash && key == '\\')) {
       src++;  // skip CTRL-V or backslash
       if (src > end) {

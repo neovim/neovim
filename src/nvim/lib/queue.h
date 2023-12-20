@@ -23,9 +23,9 @@
 
 #include "nvim/func_attr.h"
 
-typedef struct _queue {
-  struct _queue *next;
-  struct _queue *prev;
+typedef struct queue {
+  struct queue *next;
+  struct queue *prev;
 } QUEUE;
 
 // Public macros.

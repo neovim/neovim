@@ -450,10 +450,8 @@ static void next_search_hl(win_T *win, match_T *search_hl, match_T *shl, linenr_
     } else if (vim_strchr(p_cpo, CPO_SEARCH) == NULL
                || (shl->rm.endpos[0].lnum == 0
                    && shl->rm.endpos[0].col <= shl->rm.startpos[0].col)) {
-      char *ml;
-
       matchcol = shl->rm.startpos[0].col;
-      ml = ml_get_buf(shl->buf, lnum) + matchcol;
+      char *ml = ml_get_buf(shl->buf, lnum) + matchcol;
       if (*ml == NUL) {
         matchcol++;
         shl->lnum = 0;
