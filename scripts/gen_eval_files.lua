@@ -48,6 +48,16 @@ local LUA_OPTION_META_HEADER = {
   'vim.wo = vim.wo',
 }
 
+local LUA_VVAR_META_HEADER = {
+  '--- @meta _',
+  '-- THIS FILE IS GENERATED',
+  '-- DO NOT EDIT',
+  "error('Cannot require a meta file')",
+  '',
+  '--- @class vim.v',
+  'vim.v = ...',
+}
+
 local LUA_KEYWORDS = {
   ['and'] = true,
   ['end'] = true,
@@ -56,6 +66,8 @@ local LUA_KEYWORDS = {
   ['if'] = true,
   ['while'] = true,
   ['repeat'] = true,
+  ['true'] = true,
+  ['false'] = true,
 }
 
 local OPTION_TYPES = {
@@ -534,6 +546,30 @@ local function render_option_meta(_f, opt, write)
   end
 end
 
+--- @param _f string
+--- @param opt vim.option_meta
+--- @param write fun(line: string)
+local function render_vvar_meta(_f, opt, write)
+  write('')
+
+  local desc = split(norm_text(opt.desc))
+  while desc[#desc]:match('^%s*$') do
+    desc[#desc] = nil
+  end
+
+  for _, l in ipairs(desc) do
+    write('--- ' .. l)
+  end
+
+  write('--- @type ' .. (opt.type or 'any'))
+
+  if LUA_KEYWORDS[opt.full_name] then
+    write("vim.v['" .. opt.full_name .. "'] = ...")
+  else
+    write('vim.v.' .. opt.full_name .. ' = ...')
+  end
+end
+
 --- @param s string[]
 --- @return string
 local function scope_to_doc(s)
@@ -574,6 +610,21 @@ local function scope_more_doc(o)
   return ''
 end
 
+--- @param x string
+--- @return string
+local function dedent(x)
+  local xs = split(x)
+  local leading_ws = xs[1]:match('^%s*') --[[@as string]]
+  local leading_ws_pat = '^' .. leading_ws
+
+  for i in ipairs(xs) do
+    local strip_pat = xs[i]:match(leading_ws_pat) and leading_ws_pat or '^%s*'
+    xs[i] = xs[i]:gsub(strip_pat, '')
+  end
+
+  return table.concat(xs, '\n')
+end
+
 --- @return table<string,vim.option_meta>
 local function get_option_meta()
   local opts = require('src/nvim/options').options
@@ -592,6 +643,18 @@ local function get_option_meta()
       end
       ret[o.full_name] = r
     end
+  end
+  return ret
+end
+
+--- @return table<string,vim.option_meta>
+local function get_vvar_meta()
+  local info = require('src/nvim/vvars').vars
+  local ret = {} --- @type table<string,vim.option_meta>
+  for name, o in pairs(info) do
+    o.desc = dedent(o.desc)
+    o.full_name = name
+    ret[name] = o
   end
   return ret
 end
@@ -662,6 +725,45 @@ local function render_option_doc(_f, opt, write)
       write(l)
     else
       write('\t' .. l:gsub('\\<', '<'))
+    end
+  end
+end
+
+--- @param _f string
+--- @param vvar vim.option_meta
+--- @param write fun(line: string)
+local function render_vvar_doc(_f, vvar, write)
+  local name = vvar.full_name
+
+  local tags = { 'v:' .. name, name .. '-variable' }
+  if vvar.tags then
+    vim.list_extend(tags, vvar.tags)
+  end
+
+  for i, t in ipairs(tags) do
+    tags[i] = '*' .. t .. '*'
+  end
+
+  local tag_str = table.concat(tags, ' ')
+  local conceal_offset = 2 * (#tags - 1)
+
+  local tag_pad = string.rep('\t', math.ceil((64 - #tag_str + conceal_offset) / 8))
+  write(tag_pad .. tag_str)
+
+  local desc = split(vvar.desc)
+
+  if (#desc == 1 or #desc == 2 and desc[2]:match('^%s*$')) and #name < 10 then
+    -- single line
+    write('v:' .. name .. '\t' .. desc[1]:gsub('^%s*', ''))
+    write('')
+  else
+    write('v:' .. name)
+    for _, l in ipairs(desc) do
+      if l == '<' or l:match('^<%s') then
+        write(l)
+      else
+        write('\t\t' .. l:gsub('\\<', '<'))
+      end
     end
   end
 end
@@ -755,6 +857,22 @@ local CONFIG = {
     },
     funcs = get_option_meta,
     render = render_option_doc,
+  },
+  {
+    path = 'runtime/lua/vim/_meta/vvars.lua',
+    header = LUA_VVAR_META_HEADER,
+    funcs = get_vvar_meta,
+    render = render_vvar_meta,
+  },
+  {
+    path = 'runtime/doc/vvars.txt',
+    header = { '' },
+    from = 'Type |gO| to see the table of contents.',
+    footer = {
+      ' vim:tw=78:ts=8:noet:ft=help:norl:',
+    },
+    funcs = get_vvar_meta,
+    render = render_vvar_doc,
   },
 }
 
