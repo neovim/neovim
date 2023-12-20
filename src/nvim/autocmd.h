@@ -13,6 +13,7 @@
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/pos_defs.h"
+#include "nvim/types_defs.h"
 
 // Set by the apply_autocmds_group function if the given event is equal to
 // EVENT_FILETYPE. Used by the readfile function in order to determine if

@@ -23,6 +23,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
+#include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/winfloat.h"

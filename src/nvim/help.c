@@ -36,7 +36,6 @@
 #include "nvim/pos_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/strings.h"
-#include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"

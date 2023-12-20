@@ -23,6 +23,7 @@
 #include "nvim/search.h"
 #include "nvim/state_defs.h"
 #include "nvim/strings.h"
+#include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
 // Find result cache for cpp_baseclass

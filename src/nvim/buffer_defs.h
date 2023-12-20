@@ -4,16 +4,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-typedef struct file_buffer buf_T;
-
-/// Reference to a buffer that stores the value of buf_free_count.
-/// bufref_valid() only needs to check "buf" when the count differs.
-typedef struct {
-  buf_T *br_buf;
-  int br_fnum;
-  int br_buf_free_count;
-} bufref_T;
-
 #include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/arglist_defs.h"
@@ -27,10 +17,23 @@ typedef struct {
 #include "nvim/mapping_defs.h"
 #include "nvim/mark_defs.h"
 #include "nvim/marktree_defs.h"
+#include "nvim/memline_defs.h"
 #include "nvim/option_vars.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/pos_defs.h"
+#include "nvim/regexp_defs.h"
+#include "nvim/sign_defs.h"
 #include "nvim/statusline_defs.h"
+#include "nvim/terminal.h"
 #include "nvim/undo_defs.h"
+
+/// Reference to a buffer that stores the value of buf_free_count.
+/// bufref_valid() only needs to check "buf" when the count differs.
+typedef struct {
+  buf_T *br_buf;
+  int br_fnum;
+  int br_buf_free_count;
+} bufref_T;
 
 #define GETFILE_SUCCESS(x)    ((x) <= 0)
 #define MODIFIABLE(buf) (buf->b_p_ma)
@@ -80,17 +83,9 @@ typedef struct {
 // Mask to check for flags that prevent normal writing
 #define BF_WRITE_MASK   (BF_NOTEDITED + BF_NEW + BF_READERR)
 
-typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
 typedef uint64_t disptick_T;  // display tick type
-
-#include "nvim/memline_defs.h"
-#include "nvim/os/fs_defs.h"
-#include "nvim/regexp_defs.h"
-#include "nvim/sign_defs.h"
-#include "nvim/syntax_defs.h"
-#include "nvim/terminal.h"
 
 // The taggy struct is used to store the information about a :tag command.
 typedef struct taggy {

@@ -34,6 +34,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/rbuffer.h"
+#include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 
 #ifdef MSWIN
