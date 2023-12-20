@@ -2248,7 +2248,7 @@ static const char *set_bool_option(const int opt_idx, char *const varp, const in
 
   if (options[opt_idx].flags & P_UI_OPTION) {
     ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
-                       BOOLEAN_OBJ(*varp));
+                       BOOLEAN_OBJ(*(int *)varp));
   }
   if ((int *)varp == &p_ru || (int *)varp == &p_sc) {
     // in case 'ruler' or 'showcmd' changed

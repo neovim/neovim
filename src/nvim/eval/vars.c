@@ -1644,7 +1644,7 @@ static void set_option_from_tv(const char *varname, typval_T *varp)
       emsg(_(e_stringreq));
       return;
     }
-    numval = (long)varp->vval.v_number;
+    numval = varp->vval.v_bool;
     strval = "0";  // avoid using "false"
   } else {
     numval = (long)tv_get_number_chk(varp, &error);
