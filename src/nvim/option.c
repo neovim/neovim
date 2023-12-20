@@ -2626,8 +2626,7 @@ static const char *set_num_option(int opt_idx, char *varp, long value, char *err
   }
 
   if ((curwin->w_p_scr <= 0
-       || (curwin->w_p_scr > curwin->w_height
-           && curwin->w_height > 0))
+       || (curwin->w_p_scr > curwin->w_height_inner && curwin->w_height_inner > 0))
       && full_screen) {
     if (pp == &(curwin->w_p_scr)) {
       if (curwin->w_p_scr != 0) {
@@ -2637,8 +2636,8 @@ static const char *set_num_option(int opt_idx, char *varp, long value, char *err
     } else if (curwin->w_p_scr <= 0) {
       // If 'scroll' became invalid because of a side effect silently adjust it.
       curwin->w_p_scr = 1;
-    } else {  // curwin->w_p_scr > curwin->w_height
-      curwin->w_p_scr = curwin->w_height;
+    } else {  // curwin->w_p_scr > curwin->w_height_inner
+      curwin->w_p_scr = curwin->w_height_inner;
     }
   }
   if ((p_sj < -100 || p_sj >= Rows) && full_screen) {
