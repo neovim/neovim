@@ -692,10 +692,14 @@ function Query:iter_captures(node, source, start, stop)
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
+  local bufnr = source --[[@as integer]]
+  if type(source) == 'string' then
+    bufnr = api.nvim_get_current_buf()
+  end
 
   start, stop = value_or_node_range(start, stop, node)
 
-  local raw_iter = node:_rawquery(self.query, true, start, stop)
+  local raw_iter = node:_rawquery(self.query, bufnr, true, start, stop)
   local function iter(end_line)
     local capture, captured_node, match = raw_iter()
     local metadata = {}
@@ -754,10 +758,14 @@ function Query:iter_matches(node, source, start, stop, opts)
   if type(source) == 'number' and source == 0 then
     source = api.nvim_get_current_buf()
   end
+  local bufnr = source --[[@as integer]]
+  if type(source) == 'string' then
+    bufnr = api.nvim_get_current_buf()
+  end
 
   start, stop = value_or_node_range(start, stop, node)
 
-  local raw_iter = node:_rawquery(self.query, false, start, stop, opts)
+  local raw_iter = node:_rawquery(self.query, bufnr, false, start, stop, opts)
   ---@cast raw_iter fun(): string, any
   local function iter()
     local pattern, match = raw_iter()

@@ -2881,6 +2881,10 @@ static const char *validate_num_option(const OptInt *pp, OptInt *valuep)
     if (value < 0) {
       return e_positive;
     }
+  } else if (pp == &p_tsml) {
+    if (value < 32 || value > 64000) {
+      return e_invarg;
+    }
   } else if (pp == &p_hi) {
     if (value < 0) {
       return e_positive;
@@ -4261,6 +4265,8 @@ void *get_varp_scope_from(vimoption_T *p, int scope, buf_T *buf, win_T *win)
       return &(win->w_p_lcs);
     case PV_VE:
       return &(win->w_p_ve);
+    case PV_TSML:
+      return &(buf->b_p_tsml);
     }
     return NULL;     // "cannot happen"
   }
@@ -4348,6 +4354,8 @@ void *get_varp_from(vimoption_T *p, buf_T *buf, win_T *win)
     return *win->w_p_lcs != NUL ? &(win->w_p_lcs) : p->var;
   case PV_VE:
     return *win->w_p_ve != NUL ? &win->w_p_ve : p->var;
+  case PV_TSML:
+    return buf->b_p_tsml >= 0 ? &(buf->b_p_tsml) : p->var;
 
   case PV_ARAB:
     return &(win->w_p_arab);
@@ -4994,6 +5002,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_inex = xstrdup(p_inex);
       COPY_OPT_SCTX(buf, BV_INEX);
       buf->b_p_dict = empty_string_option;
+      buf->b_p_tsml = -1;
       buf->b_p_tsr = empty_string_option;
       buf->b_p_tsrfu = empty_string_option;
       buf->b_p_qe = xstrdup(p_qe);

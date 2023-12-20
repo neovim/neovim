@@ -24,6 +24,7 @@ describe('UI receives option updates', function()
       showtabline=1,
       termguicolors=false,
       termsync=true,
+      tsmatchlimit = 256,
       ttimeout=true,
       ttimeoutlen=50,
       verbose=0,

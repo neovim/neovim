@@ -6646,6 +6646,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	NOTE: Use of special characters in 'titlestring' may cause the display
 	to be garbled (e.g., when it contains a CR or NL character).
 
+						*'tsmatchlimit'* *'tsml'*
+'tsmatchlimit' 'tsml'	number	(default 256)
+			global or local to buffer |global-local|
+	This option determines the maximum number of treesitter nodes matched
+	when a cursor query is executed. Higher values allow for deeper matches
+	at the expense of query execution time, while lower values can be used
+	to speed up the execution time.
+
+	The default value is 256. Maximum is 64000 and minimum is 32.
+
 					*'ttimeout'* *'nottimeout'*
 'ttimeout'		boolean	(default on)
 			global
