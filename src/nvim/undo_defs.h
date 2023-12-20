@@ -18,8 +18,6 @@ typedef struct {
   colnr_T vi_curswant;  ///< MAXCOL from w_curswant
 } visualinfo_T;
 
-#include "nvim/buffer_defs.h"
-
 typedef struct u_entry u_entry_T;
 struct u_entry {
   u_entry_T *ue_next;  ///< pointer to next entry in list

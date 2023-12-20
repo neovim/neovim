@@ -8,6 +8,7 @@
 #include "auto/config.h"
 #include "klib/kvec.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval_defs.h"

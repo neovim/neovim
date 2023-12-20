@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/debugger.h"
@@ -32,6 +33,7 @@
 #include "nvim/regexp.h"
 #include "nvim/runtime.h"
 #include "nvim/state_defs.h"
+#include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
 /// batch mode debugging: don't save and restore typeahead.

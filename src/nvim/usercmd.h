@@ -3,6 +3,7 @@
 #include <stddef.h>  // IWYU pragma: keep
 #include <stdint.h>
 
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"

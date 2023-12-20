@@ -15,6 +15,7 @@
 #include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
+#include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 

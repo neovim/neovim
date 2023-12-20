@@ -20,6 +20,7 @@
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
 #include "nvim/memory.h"
+#include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

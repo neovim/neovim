@@ -21,6 +21,7 @@
 #include "nvim/memory.h"
 #include "nvim/option.h"
 #include "nvim/pos_defs.h"
+#include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/deprecated.c.generated.h"

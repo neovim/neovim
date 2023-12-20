@@ -16,6 +16,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/extmark.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/fold.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
@@ -37,6 +38,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/strings.h"
 #include "nvim/textobject.h"
+#include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 
 // This file contains routines to maintain and manipulate marks.

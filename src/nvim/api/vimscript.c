@@ -11,6 +11,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vimscript.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/userfunc.h"
