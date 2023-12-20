@@ -72,8 +72,9 @@ Integer nvim_buf_line_count(Buffer buffer, Error *err)
     return 0;
   }
 
-  // return sentinel value if the buffer isn't loaded
-  if (buf->b_ml.ml_mfp == NULL) {
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
     return 0;
   }
 
@@ -162,6 +163,12 @@ Boolean nvim_buf_attach(uint64_t channel_id, Buffer buffer, Boolean send_buffer,
     return false;
   }
 
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return false;
+  }
+
   BufUpdateCallbacks cb = BUF_UPDATE_CALLBACKS_INIT;
 
   if (channel_id == LUA_INTERNAL_CALL) {
@@ -217,6 +224,11 @@ Boolean nvim_buf_detach(uint64_t channel_id, Buffer buffer, Error *err)
     return false;
   }
 
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return false;
+  }
   buf_updates_unregister(buf, channel_id);
   return true;
 }
@@ -266,8 +278,9 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
     return rv;
   }
 
-  // return sentinel value if the buffer isn't loaded
-  if (buf->b_ml.ml_mfp == NULL) {
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
     return rv;
   }
 
@@ -335,11 +348,9 @@ void nvim_buf_set_lines(uint64_t channel_id, Buffer buffer, Integer start, Integ
   }
 
   // load buffer first if it's not loaded
-  if (buf->b_ml.ml_mfp == NULL) {
-    if (!buf_ensure_loaded(buf)) {
-      api_set_error(err, kErrorTypeException, "Failed to load buffer");
-      return;
-    }
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return;
   }
 
   bool oob = false;
@@ -512,16 +523,15 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   }
 
   buf_T *buf = find_buffer_by_handle(buffer, err);
+
   if (!buf) {
     return;
   }
 
   // load buffer first if it's not loaded
-  if (buf->b_ml.ml_mfp == NULL) {
-    if (!buf_ensure_loaded(buf)) {
-      api_set_error(err, kErrorTypeException, "Failed to load buffer");
-      return;
-    }
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return;
   }
 
   bool oob = false;
@@ -763,15 +773,15 @@ ArrayOf(String) nvim_buf_get_text(uint64_t channel_id, Buffer buffer,
   FUNC_API_SINCE(9)
 {
   Array rv = ARRAY_DICT_INIT;
-
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return rv;
   }
 
-  // return sentinel value if the buffer isn't loaded
-  if (buf->b_ml.ml_mfp == NULL) {
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
     return rv;
   }
 
@@ -855,13 +865,15 @@ Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
   FUNC_API_SINCE(5)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
+
   if (!buf) {
     return 0;
   }
 
-  // return sentinel value if the buffer isn't loaded
-  if (buf->b_ml.ml_mfp == NULL) {
-    return -1;
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return 0;
   }
 
   VALIDATE((index >= 0 && index <= buf->b_ml.ml_line_count), "%s", "Index out of bounds", {
@@ -880,12 +892,18 @@ Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
 Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
   FUNC_API_SINCE(1)
 {
+  Object rv = OBJECT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return (Object)OBJECT_INIT;
+    return rv;
   }
 
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return rv;
+  }
   return dict_get_value(buf->b_vars, name, err);
 }
 
@@ -898,12 +916,17 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
   FUNC_API_SINCE(2)
 {
-  const buf_T *const buf = find_buffer_by_handle(buffer, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return -1;
   }
 
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return -1;
+  }
   return buf_get_changedtick(buf);
 }
 
@@ -917,12 +940,12 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
   FUNC_API_SINCE(3)
 {
+  ArrayOf(Dictionary) rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return (Array)ARRAY_DICT_INIT;
+    return rv;
   }
-
   return keymap_array(mode, buf);
 }
 
@@ -965,6 +988,12 @@ void nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
     return;
   }
 
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return;
+  }
+
   dict_set_var(buf->b_vars, name, value, false, false, err);
 }
 
@@ -982,6 +1011,11 @@ void nvim_buf_del_var(Buffer buffer, String name, Error *err)
     return;
   }
 
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return;
+  }
   dict_set_var(buf->b_vars, name, NIL, true, false, err);
 }
 
@@ -994,12 +1028,18 @@ String nvim_buf_get_name(Buffer buffer, Arena *arena, Error *err)
   FUNC_API_SINCE(1)
 {
   String rv = STRING_INIT;
+
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
-  if (!buf || buf->b_ffname == NULL) {
+  if (!buf) {
     return rv;
   }
 
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return rv;
+  }
   return cstr_as_string(buf->b_ffname);
 }
 
@@ -1014,6 +1054,12 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
+    return;
+  }
+
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
     return;
   }
 
@@ -1060,7 +1106,7 @@ void nvim_buf_delete(Buffer buffer, Dict(buf_delete) *opts, Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
-  if (ERROR_SET(err)) {
+  if (!buf || ERROR_SET(err)) {
     return;
   }
 
@@ -1090,6 +1136,7 @@ void nvim_buf_delete(Buffer buffer, Dict(buf_delete) *opts, Error *err)
 Boolean nvim_buf_is_valid(Buffer buffer)
   FUNC_API_SINCE(1)
 {
+  // is the check needed here?
   Error stub = ERROR_INIT;
   Boolean ret = find_buffer_by_handle(buffer, &stub) != NULL;
   api_clear_error(&stub);
@@ -1112,6 +1159,12 @@ Boolean nvim_buf_del_mark(Buffer buffer, String name, Error *err)
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
+    return res;
+  }
+
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
     return res;
   }
 
@@ -1161,6 +1214,12 @@ Boolean nvim_buf_set_mark(Buffer buffer, String name, Integer line, Integer col,
     return res;
   }
 
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
+    return res;
+  }
+
   VALIDATE_S((name.size == 1), "mark name (must be a single char)", name.data, {
     return res;
   });
@@ -1190,6 +1249,12 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
+    return rv;
+  }
+
+  // load buffer first if it's not loaded
+  if (!buf_ensure_loaded(buf)) {
+    api_set_error(err, kErrorTypeException, "Failed to load buffer");
     return rv;
   }
 
@@ -1242,11 +1307,14 @@ Object nvim_buf_call(Buffer buffer, LuaRef fun, Error *err)
   FUNC_API_LUA_ONLY
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
+
   if (!buf) {
     return NIL;
   }
+
   try_start();
   aco_save_T aco;
+  // load buffer first if it's not loaded
   aucmd_prepbuf(&aco, buf);
 
   Array args = ARRAY_DICT_INIT;
