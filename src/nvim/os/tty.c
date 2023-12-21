@@ -2,7 +2,10 @@
 // Terminal/console utils
 //
 
-#include "nvim/os/os.h"  // IWYU pragma: keep (Windows)
+#ifdef MSWIN
+# include "nvim/memory.h"
+# include "nvim/os/os.h"
+#endif
 #include "nvim/os/tty.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
