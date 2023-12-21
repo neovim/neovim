@@ -352,9 +352,10 @@ local function render_eval_meta(f, fun, write)
 
     if desc then
       --- @type string
-      desc = desc:gsub('\n%s*\n%s*$', '\n')
+      desc = desc:gsub('^      ', ''):gsub('\n      ', '\n')
+      desc = norm_text(desc):gsub('\n%s*\n%s*$', '\n')
       for _, l in ipairs(split(desc)) do
-        l = l:gsub('^      ', ''):gsub('\t', '  '):gsub('@', '\\@')
+        l = l:gsub('\t', '  '):gsub('@', '\\@')
         write('--- ' .. l)
       end
     end
