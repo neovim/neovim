@@ -2,7 +2,7 @@
 " Language:	Microsoft Macro Assembler (80x86)
 " Orig Author:	Rob Brady <robb@datatone.com>
 " Maintainer:	Wu Yongwei <wuyongwei@gmail.com>
-" Last Change:	2023-09-09 20:48:26 +0800
+" Last Change:	2023-12-20 10:20:04 +0800
 
 " Quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -459,8 +459,9 @@ syn keyword masmOpcode		VMOVAPD VMOVAPS VMOVD VMOVQ VMOVDDUP
 syn keyword masmOpcode		VMOVHLPS VMOVHPD VMOVHPS VMOVLHPS VMOVLPD
 syn keyword masmOpcode		VMOVLPS VMOVNTDQA VMOVNTDQ VMOVNTPD VMOVNTPS
 syn keyword masmOpcode		VMOVSD VMOVSHDUP VMOVSLDUP VMOVSS VMOVUPD
-syn keyword masmOpcode		VMOVUPS VMOVDQA32 VMOVDQA64 VMOVDQU8
-syn keyword masmOpcode		VMOVDQU16 VMOVDQU32 VMOVDQU64 VMULPD VMULPS
+syn keyword masmOpcode		VMOVUPS VMOVDQA VMOVDQA32 VMOVDQA64
+syn keyword masmOpcode		VMOVDQU VMOVDQU8 VMOVDQU16 VMOVDQU32 VMOVDQU64
+syn keyword masmOpcode		VMULPD VMULPS
 syn keyword masmOpcode		VMULSD VMULSS VORPD VORPS VSQRTPD VSQRTPS
 syn keyword masmOpcode		VSQRTSD VSQRTSS VSUBPD VSUBPS VSUBSD VSUBSS
 syn keyword masmOpcode		VUCOMISD VUCOMISS VUNPCKHPD VUNPCKHPS VUNPCKLPD
@@ -468,8 +469,8 @@ syn keyword masmOpcode		VUNPCKLPS VXORPD VXORPS VEXTRACTPS VINSERTPS
 syn keyword masmOpcode		VPEXTRB VPEXTRW VPEXTRD VPEXTRQ VPINSRB VPINSRW
 syn keyword masmOpcode		VPINSRD VPINSRQ VPACKSSWB VPACKSSDW VPACKUSDW
 syn keyword masmOpcode		VPACKUSWB VPADDB VPADDW VPADDD VPADDQ VPADDSB
-syn keyword masmOpcode		VPADDSW VPADDUSB VPADDUSW VPANDD VPANDQ VPANDND
-syn keyword masmOpcode		VPANDNQ VPAVGB VPAVGW VPCMPEQB VPCMPEQW
+syn keyword masmOpcode		VPADDSW VPADDUSB VPADDUSW VPAND VPANDD VPANDQ
+syn keyword masmOpcode		VPANDND VPANDNQ VPAVGB VPAVGW VPCMPEQB VPCMPEQW
 syn keyword masmOpcode		VPCMPEQD VPCMPEQQ VPCMPGTB VPCMPGTW VPCMPGTD
 syn keyword masmOpcode		VPCMPGTQ VPMAXSB VPMAXSW VPMAXSD VPMAXSQ
 syn keyword masmOpcode		VPMAXUB VPMAXUW VPMAXUD VPMAXUQ VPMINSB VPMINSW
@@ -482,7 +483,8 @@ syn keyword masmOpcode		VPMULLQ VPMULLW VPORD VPORQ VPSUBB VPSUBW
 syn keyword masmOpcode		VPSUBD VPSUBQ VPSUBSB VPSUBSW VPSUBUSB VPSUBUSW
 syn keyword masmOpcode		VPUNPCKHBW VPUNPCKHWD VPUNPCKHDQ VPUNPCKHQDQ
 syn keyword masmOpcode		VPUNPCKLBW VPUNPCKLWD VPUNPCKLDQ VPUNPCKLQDQ
-syn keyword masmOpcode		VPXORD VPXORQ VPSADBW VPSHUFB VPSHUFHW VPSHUFLW
+syn keyword masmOpcode		VPXOR VPXORD VPXORQ
+syn keyword masmOpcode		VPSADBW VPSHUFB VPSHUFHW VPSHUFLW
 syn keyword masmOpcode		VPSHUFD VPSLLDQ VPSLLW VPSLLD VPSLLQ VPSRAW
 syn keyword masmOpcode		VPSRAD VPSRAQ VPSRLDQ VPSRLW VPSRLD VPSRLQ
 syn keyword masmOpcode		VPSLLVW VPSRLVW VPSHUFPD VPSHUFPS VEXTRACTF32X4
@@ -516,7 +518,7 @@ syn keyword masmOpcode		VFNMSUB132SS VFNMSUB213SS VFNMSUB231SS
 syn keyword masmOpcode		VPSRAVW VPSRAVQ
 
 " Other opcodes in Pentium and later processors
-syn keyword masmOpcode		CMPXCHG8B CPUID UD2
+syn keyword masmOpcode		CMPXCHG8B CPUID UD2 MOVSXD
 syn keyword masmOpcode		RSM RDMSR WRMSR RDPMC RDTSC SYSENTER SYSEXIT
 syn match   masmOpcode	   "CMOV\(P[EO]\|\(N\?\([ABGL]E\?\|[CEOPSZ]\)\)\)\>"
 
