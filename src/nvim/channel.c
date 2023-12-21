@@ -30,6 +30,7 @@
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
+#include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
@@ -574,7 +575,10 @@ size_t channel_send(uint64_t id, char *data, size_t len, bool data_owned, const 
       goto retfree;
     }
     // unbuffered write
-    written = len * fwrite(data, len, 1, stderr);
+    ptrdiff_t wres = os_write(STDERR_FILENO, data, len, false);
+    if (wres >= 0) {
+      written = (size_t)wres;
+    }
     goto retfree;
   }
 
