@@ -923,6 +923,8 @@ set(GEN_EVAL_FILES
   ${NVIM_RUNTIME_DIR}/doc/builtin.txt
   ${NVIM_RUNTIME_DIR}/lua/vim/_meta/options.lua
   ${NVIM_RUNTIME_DIR}/doc/options.txt
+  ${NVIM_RUNTIME_DIR}/lua/vim/_meta/vvars.lua
+  ${NVIM_RUNTIME_DIR}/doc/vvars.txt
 )
 
 add_custom_command(
@@ -933,6 +935,7 @@ add_custom_command(
     ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua
     ${PROJECT_SOURCE_DIR}/src/nvim/options.lua
+    ${PROJECT_SOURCE_DIR}/src/nvim/vvars.lua
     ${NVIM_RUNTIME_DIR}/doc/api.mpack
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
