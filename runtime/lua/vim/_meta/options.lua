@@ -352,7 +352,7 @@ vim.go.bkc = vim.go.backupcopy
 ---   get one in the option (see `option-backslash`), for example:
 ---
 --- ```vim
----      set bdir=c:\\tmp,\ dir\\,with\\,commas,\\\ dir\ with\ spaces
+---     set bdir=c:\\tmp,\ dir\\,with\\,commas,\\\ dir\ with\ spaces
 --- ```
 ---
 --- See also 'backup' and 'writebackup' options.
@@ -1754,7 +1754,7 @@ vim.go.dg = vim.go.digraph
 ---   get one in the option (see `option-backslash`), for example:
 ---
 --- ```vim
----      set dir=c:\\tmp,\ dir\\,with\\,commas,\\\ dir\ with\ spaces
+---     set dir=c:\\tmp,\ dir\\,with\\,commas,\\\ dir\ with\ spaces
 --- ```
 ---
 --- Editing the same file twice will result in a warning.  Using "/tmp" on
@@ -1943,7 +1943,7 @@ vim.go.efm = vim.go.errorformat
 --- Otherwise this is a comma-separated list of event names.  Example:
 ---
 --- ```vim
----      set ei=WinEnter,WinLeave
+---     set ei=WinEnter,WinLeave
 --- ```
 ---
 ---
@@ -2236,7 +2236,7 @@ vim.bo.ft = vim.bo.filetype
 --- Example:
 ---
 --- ```vim
----      set fillchars=stl:\ ,stlnc:\ ,vert:│,fold:·,diff:-
+---     set fillchars=stl:\ ,stlnc:\ ,vert:│,fold:·,diff:-
 --- ```
 ---
 --- For the "stl", "stlnc", "foldopen", "foldclose" and "foldsep" items
@@ -2608,9 +2608,9 @@ vim.go.fs = vim.go.fsync
 --- of all or one match.  See `complex-change`.
 ---
 --- 	command		'gdefault' on	'gdefault' off	~
---- 	s///		  subst. all	  subst. one
---- 	s///g		  subst. one	  subst. all
---- 	s///gg		  subst. all	  subst. one
+--- 	:s///		  subst. all	  subst. one
+--- 	:s///g		  subst. one	  subst. all
+--- 	:s///gg		  subst. all	  subst. one
 ---
 --- NOTE: Setting this option may break plugins that rely on the default
 --- behavior of the 'g' flag. This will also make the 'g' flag have the
@@ -2748,8 +2748,8 @@ vim.go.gp = vim.go.grepprg
 --- Examples of cursor highlighting:
 ---
 --- ```vim
----      highlight Cursor gui=reverse guifg=NONE guibg=NONE
----      highlight Cursor gui=NONE guifg=bg guibg=fg
+---     highlight Cursor gui=reverse guifg=NONE guibg=NONE
+---     highlight Cursor gui=NONE guifg=bg guibg=fg
 --- ```
 ---
 ---
@@ -2771,7 +2771,7 @@ vim.go.gcr = vim.go.guicursor
 --- `option-backslash`.  For example:
 ---
 --- ```vim
----      set guifont=Screen15,\ 7x13,font\\,with\\,commas
+---     set guifont=Screen15,\ 7x13,font\\,with\\,commas
 --- ```
 --- will make Vim try to use the font "Screen15" first, and if it fails it
 --- will try to use "7x13" and then "font,with,commas" instead.
@@ -2786,7 +2786,7 @@ vim.go.gcr = vim.go.guicursor
 --- For Win32 and Mac OS:
 ---
 --- ```vim
----      set guifont=*
+---     set guifont=*
 --- ```
 --- will bring up a font requester, where you can pick the font you want.
 ---
@@ -2795,7 +2795,7 @@ vim.go.gcr = vim.go.guicursor
 --- For Mac OSX you can use something like this:
 ---
 --- ```vim
----      set guifont=Monaco:h10
+---     set guifont=Monaco:h10
 --- ```
 --- *E236*
 --- Note that the fonts must be mono-spaced (all characters have the same
@@ -2824,8 +2824,8 @@ vim.go.gcr = vim.go.guicursor
 --- - Examples:
 ---
 --- ```vim
----      set guifont=courier_new:h12:w5:b:cRUSSIAN
----      set guifont=Andale_Mono:h7.5:w4.5
+---     set guifont=courier_new:h12:w5:b:cRUSSIAN
+---     set guifont=Andale_Mono:h7.5:w4.5
 --- ```
 ---
 ---
@@ -3158,9 +3158,9 @@ vim.go.imd = vim.go.imdisable
 
 --- Specifies whether :lmap or an Input Method (IM) is to be used in
 --- Insert mode.  Valid values:
---- 	0	lmap is off and IM is off
---- 	1	lmap is ON and IM is off
---- 	2	lmap is off and IM is ON
+--- 	0	:lmap is off and IM is off
+--- 	1	:lmap is ON and IM is off
+--- 	2	:lmap is off and IM is ON
 --- To always reset the option to zero when leaving Insert mode with <Esc>
 --- this can be used:
 ---
@@ -3184,9 +3184,9 @@ vim.bo.imi = vim.bo.iminsert
 --- entering a search pattern.  Valid values:
 --- 	-1	the value of 'iminsert' is used, makes it look like
 --- 		'iminsert' is also used when typing a search pattern
---- 	0	lmap is off and IM is off
---- 	1	lmap is ON and IM is off
---- 	2	lmap is off and IM is ON
+--- 	0	:lmap is off and IM is off
+--- 	1	:lmap is ON and IM is off
+--- 	2	:lmap is off and IM is ON
 --- Note that this option changes when using CTRL-^ in Command-line mode
 --- `c_CTRL-^`.
 --- The value is set to 1 when it is not -1 and setting the 'keymap'
@@ -3611,12 +3611,12 @@ vim.go.kp = vim.go.keywordprg
 --- Example (for Greek, in UTF-8):				*greek*
 ---
 --- ```vim
----      set langmap=ΑA,ΒB,ΨC,ΔD,ΕE,ΦF,ΓG,ΗH,ΙI,ΞJ,ΚK,ΛL,ΜM,ΝN,ΟO,ΠP,QQ,ΡR,ΣS,ΤT,ΘU,ΩV,WW,ΧX,ΥY,ΖZ,αa,βb,ψc,δd,εe,φf,γg,ηh,ιi,ξj,κk,λl,μm,νn,οo,πp,qq,ρr,σs,τt,θu,ωv,ςw,χx,υy,ζz
+---     set langmap=ΑA,ΒB,ΨC,ΔD,ΕE,ΦF,ΓG,ΗH,ΙI,ΞJ,ΚK,ΛL,ΜM,ΝN,ΟO,ΠP,QQ,ΡR,ΣS,ΤT,ΘU,ΩV,WW,ΧX,ΥY,ΖZ,αa,βb,ψc,δd,εe,φf,γg,ηh,ιi,ξj,κk,λl,μm,νn,οo,πp,qq,ρr,σs,τt,θu,ωv,ςw,χx,υy,ζz
 --- ```
 --- Example (exchanges meaning of z and y for commands):
 ---
 --- ```vim
----      set langmap=zy,yz,ZY,YZ
+---     set langmap=zy,yz,ZY,YZ
 --- ```
 ---
 --- The 'langmap' option is a list of parts, separated with commas.  Each
@@ -3939,9 +3939,9 @@ vim.wo.list = vim.o.list
 --- Examples:
 ---
 --- ```vim
----      set lcs=tab:>-,trail:-
----      set lcs=tab:>-,eol:<,nbsp:%
----      set lcs=extends:>,precedes:<
+---     set lcs=tab:>-,trail:-
+---     set lcs=tab:>-,eol:<,nbsp:%
+---     set lcs=extends:>,precedes:<
 --- ```
 --- `hl-NonText` highlighting will be used for "eol", "extends" and
 --- "precedes". `hl-Whitespace` for "nbsp", "space", "tab", "multispace",
@@ -4031,13 +4031,13 @@ vim.go.menc = vim.go.makeencoding
 --- "myfilter" do it like this:
 ---
 --- ```vim
----      set makeprg=gmake\ \\\|\ myfilter
+---     set makeprg=gmake\ \\\|\ myfilter
 --- ```
 --- The placeholder "$*" can be given (even multiple times) to specify
 --- where the arguments will be included, for example:
 ---
 --- ```vim
----      set makeprg=latex\ \\\\nonstopmode\ \\\\input\\{$*}
+---     set makeprg=latex\ \\\\nonstopmode\ \\\\input\\{$*}
 --- ```
 --- This option cannot be set from a `modeline` or in the `sandbox`, for
 --- security reasons.
@@ -5471,7 +5471,7 @@ vim.go.ssop = vim.go.sessionoptions
 --- Example:
 ---
 --- ```vim
----      set shada='50,<1000,s100,:0,n~/nvim/shada
+---     set shada='50,<1000,s100,:0,n~/nvim/shada
 --- ```
 ---
 --- '50		Marks will be remembered for the last 50 files you
@@ -5979,7 +5979,7 @@ vim.go.ss = vim.go.sidescroll
 ---
 --- ```vim
 ---
---- 	 set nowrap sidescroll=0 listchars=extends:>,precedes:<
+--- 	 set nowrap sidescroll=1 listchars=extends:>,precedes:<
 --- 	 set sidescrolloff=1
 --- ```
 ---
@@ -6610,40 +6610,40 @@ vim.wo.stc = vim.wo.statuscolumn
 --- Emulate standard status line with 'ruler' set
 ---
 --- ```vim
----    set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+---   set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
 --- ```
 --- Similar, but add ASCII value of char under the cursor (like "ga")
 ---
 --- ```vim
----    set statusline=%<%f%h%m%r%=%b\ 0x%B\ \ %l,%c%V\ %P
+---   set statusline=%<%f%h%m%r%=%b\ 0x%B\ \ %l,%c%V\ %P
 --- ```
 --- Display byte count and byte value, modified flag in red.
 ---
 --- ```vim
----    set statusline=%<%f%=\ [%1*%M%*%n%R%H]\ %-19(%3l,%02c%03V%)%O'%02b'
----    hi User1 term=inverse,bold cterm=inverse,bold ctermfg=red
+---   set statusline=%<%f%=\ [%1*%M%*%n%R%H]\ %-19(%3l,%02c%03V%)%O'%02b'
+---   hi User1 term=inverse,bold cterm=inverse,bold ctermfg=red
 --- ```
 --- Display a ,GZ flag if a compressed file is loaded
 ---
 --- ```vim
----    set statusline=...%r%{VarExists('b:gzflag','\ [GZ]')}%h...
+---   set statusline=...%r%{VarExists('b:gzflag','\ [GZ]')}%h...
 --- ```
 --- In the `:autocmd`'s:
 ---
 --- ```vim
----    let b:gzflag = 1
+---   let b:gzflag = 1
 --- ```
 --- And:
 ---
 --- ```vim
----    unlet b:gzflag
+---   unlet b:gzflag
 --- ```
 --- And define this function:
 ---
 --- ```vim
----    function VarExists(var, val)
----        if exists(a:var) | return a:val | else | return '' | endif
----    endfunction
+---   function VarExists(var, val)
+---       if exists(a:var) | return a:val | else | return '' | endif
+---   endfunction
 --- ```
 ---
 ---
@@ -7212,15 +7212,15 @@ vim.go.titleold = vim.o.titleold
 --- Example:
 ---
 --- ```vim
----      auto BufEnter * let &titlestring = hostname() .. "/" .. expand("%:p")
----      set title titlestring=%<%F%=%l/%L-%P titlelen=70
+---     auto BufEnter * let &titlestring = hostname() .. "/" .. expand("%:p")
+---     set title titlestring=%<%F%=%l/%L-%P titlelen=70
 --- ```
 --- The value of 'titlelen' is used to align items in the middle or right
 --- of the available space.
 --- Some people prefer to have the file name first:
 ---
 --- ```vim
----      set titlestring=%t%(\ %M%)%(\ (%{expand(\"%:~:.:h\")})%)%(\ %a%)
+---     set titlestring=%t%(\ %M%)%(\ (%{expand(\"%:~:.:h\")})%)%(\ %a%)
 --- ```
 --- Note the use of "%{ }" and an expression to get the path of the file,
 --- without the file name.  The "%( %)" constructs are used to add a
