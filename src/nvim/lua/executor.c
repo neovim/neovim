@@ -252,8 +252,7 @@ static int nlua_luv_thread_common_cfpcall(lua_State *lstate, int nargs, int nres
     if (status == LUA_ERRMEM && !(flags & LUVF_CALLBACK_NOEXIT)) {
       // Terminate this thread, as the main thread may be able to continue
       // execution.
-      os_errmsg(e_outofmem);
-      os_errmsg("\n");
+      fprintf(stderr, "%s\n", e_outofmem);
       lua_close(lstate);
 #ifdef MSWIN
       ExitThread(0);
@@ -640,8 +639,7 @@ static bool nlua_init_packages(lua_State *lstate, bool is_standalone)
   lua_getglobal(lstate, "require");
   lua_pushstring(lstate, "vim._init_packages");
   if (nlua_pcall(lstate, 1, 0)) {
-    os_errmsg(lua_tostring(lstate, -1));
-    os_errmsg("\n");
+    fprintf(stderr, "%s\n", lua_tostring(lstate, -1));
     return false;
   }
 
@@ -815,12 +813,12 @@ void nlua_init(char **argv, int argc, int lua_arg0)
 
   lua_State *lstate = luaL_newstate();
   if (lstate == NULL) {
-    os_errmsg(_("E970: Failed to initialize lua interpreter\n"));
+    fprintf(stderr, _("E970: Failed to initialize lua interpreter\n"));
     os_exit(1);
   }
   luaL_openlibs(lstate);
   if (!nlua_state_init(lstate)) {
-    os_errmsg(_("E970: Failed to initialize builtin lua modules\n"));
+    fprintf(stderr, _("E970: Failed to initialize builtin lua modules\n"));
 #ifdef EXITFREE
     nlua_common_free_all_mem(lstate);
 #endif
@@ -2307,8 +2305,7 @@ void nlua_init_defaults(void)
   lua_getglobal(L, "require");
   lua_pushstring(L, "vim._defaults");
   if (nlua_pcall(L, 1, 0)) {
-    os_errmsg(lua_tostring(L, -1));
-    os_errmsg("\n");
+    fprintf(stderr, "%s\n", lua_tostring(L, -1));
   }
 }
 
