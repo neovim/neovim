@@ -32,8 +32,9 @@ Defaults					            *nvim-defaults*
   ":syntax off" to |init.vim|.
 - Default color scheme has been updated. This can result in color schemes
   looking differently due to them relying on how highlight groups are defined
-  by default. Add ":colorscheme vim" to |init.vim| or your color scheme file to
-  restore the old default links and colors.
+  by default. Add ":colorscheme vim" to |init.vim| or
+  ":source $VIMRUNTIME/colors/vim.lua" to your color scheme file to restore
+  the old default links and colors.
 
 - 'autoindent' is enabled
 - 'autoread' is enabled (works in all UIs, including terminal)
