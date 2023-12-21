@@ -1803,13 +1803,13 @@ locations_to_items({locations}, {offset_encoding})
     |setloclist()|.
 
     Parameters: ~
-      • {locations}        (table) list of `Location`s or `LocationLink`s
+      • {locations}        lsp.Location[]|lsp.LocationLink[]
       • {offset_encoding}  (string) offset_encoding for locations
                            utf-8|utf-16|utf-32 default to first client of
                            buffer
 
     Return: ~
-        (table) list of items
+        vim.lsp.util.LocationItem [] list of items
 
 lookup_section({settings}, {section})          *vim.lsp.util.lookup_section()*
     Helper function to return nested values in language server settings

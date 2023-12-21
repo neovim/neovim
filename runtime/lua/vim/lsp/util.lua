@@ -1754,6 +1754,13 @@ local position_sort = sort_by_key(function(v)
   return { v.start.line, v.start.character }
 end)
 
+---@class vim.lsp.util.LocationItem
+---@field filename string
+---@field lnum integer 1-indexed line number
+---@field col integer 1-indexed column
+---@field text string
+---@field user_data lsp.Location|lsp.LocationLink
+
 --- Returns the items with the byte position calculated correctly and in sorted
 --- order, for display in quickfix and location lists.
 ---
@@ -1763,10 +1770,10 @@ end)
 --- The result can be passed to the {list} argument of |setqflist()| or
 --- |setloclist()|.
 ---
----@param locations table list of `Location`s or `LocationLink`s
+---@param locations lsp.Location[]|lsp.LocationLink[]
 ---@param offset_encoding string offset_encoding for locations utf-8|utf-16|utf-32
 ---                              default to first client of buffer
----@return table list of items
+---@return vim.lsp.util.LocationItem[] list of items
 function M.locations_to_items(locations, offset_encoding)
   if offset_encoding == nil then
     vim.notify_once(
@@ -1777,6 +1784,7 @@ function M.locations_to_items(locations, offset_encoding)
   end
 
   local items = {}
+  ---@type table<string, {start: lsp.Position, location: lsp.Location|lsp.LocationLink}[]>
   local grouped = setmetatable({}, {
     __index = function(t, k)
       local v = {}
@@ -1791,6 +1799,7 @@ function M.locations_to_items(locations, offset_encoding)
     table.insert(grouped[uri], { start = range.start, location = d })
   end
 
+  ---@type string[]
   local keys = vim.tbl_keys(grouped)
   table.sort(keys)
   -- TODO(ashkan) I wish we could do this lazily.
@@ -1799,16 +1808,13 @@ function M.locations_to_items(locations, offset_encoding)
     table.sort(rows, position_sort)
     local filename = vim.uri_to_fname(uri)
 
-    -- list of row numbers
-    local uri_rows = {}
+    local line_numbers = {}
     for _, temp in ipairs(rows) do
-      local pos = temp.start
-      local row = pos.line
-      table.insert(uri_rows, row)
+      table.insert(line_numbers, temp.start.line)
     end
 
     -- get all the lines for this uri
-    local lines = get_lines(vim.uri_to_bufnr(uri), uri_rows)
+    local lines = get_lines(vim.uri_to_bufnr(uri), line_numbers)
 
     for _, temp in ipairs(rows) do
       local pos = temp.start
