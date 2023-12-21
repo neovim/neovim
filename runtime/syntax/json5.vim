@@ -49,9 +49,11 @@ syn match   json5Key /@\?\%(\I\|\$\)\%(\i\|\$\)*\s*\ze::\@!/ contains=@Spell
 syn match   json5Key /"\([^"]\|\\"\)\{-}"\ze\s*:/ contains=json5Escape,@Spell
 
 " Comment
-syn region  json5LineComment    start=+\/\/+ end=+$+ keepend contains=@Spell
-syn region  json5LineComment    start=+^\s*\/\/+ skip=+\n\s*\/\/+ end=+$+ keepend fold contains=@Spell
-syn region  json5Comment        start="/\*"  end="\*/" fold contains=@Spell
+syn region  json5LineComment    start=+\/\/+ end=+$+ keepend contains=@Spell,json5Todo
+syn region  json5LineComment    start=+^\s*\/\/+ skip=+\n\s*\/\/+ end=+$+ keepend fold contains=@Spell,json5Todo
+syn region  json5Comment        start="/\*"  end="\*/" fold contains=@Spell,json5Todo
+
+syn keyword json5Todo           contained TODO FIXME XXX
 
 " Define the default highlighting
 hi def link json5String             String
@@ -66,6 +68,7 @@ hi def link json5Boolean            Boolean
 hi def link json5LineComment        Comment
 hi def link json5Comment            Comment
 hi def link json5NumError           Error
+hi def link json5Todo               Todo
 
 if !exists('b:current_syntax')
   let b:current_syntax = 'json5'
