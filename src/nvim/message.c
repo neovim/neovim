@@ -225,7 +225,7 @@ int verb_msg(const char *s)
 }
 
 /// Displays the string 's' on the status line
-/// When terminal not initialized (yet) os_errmsg(..) is used.
+/// When terminal not initialized (yet) printf("%s", ..) is used.
 ///
 /// @return  true if wait_return() not called
 int msg(const char *s, const int attr)
@@ -748,7 +748,7 @@ bool emsg_multiline(const char *s, bool multiline)
 /// emsg() - display an error message
 ///
 /// Rings the bell, if appropriate, and calls message() to do the real work
-/// When terminal not initialized (yet) os_errmsg(..) is used.
+/// When terminal not initialized (yet) fprintf(stderr, "%s", ..) is used.
 ///
 /// @return true if wait_return() not called
 bool emsg(const char *s)
@@ -2635,9 +2635,9 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
       memcpy(p, s, (size_t)len);
       *(p + len) = '\0';
       if (info_message) {
-        os_msg(buf);
+        printf("%s", buf);
       } else {
-        os_errmsg(buf);
+        fprintf(stderr, "%s", buf);
       }
     }
 
@@ -2898,40 +2898,6 @@ static bool do_more_prompt(int typed_char)
   entered = false;
   return retval;
 }
-
-#if defined(MSWIN)
-/// Headless (no UI) error message handler.
-static void do_msg(const char *str, bool errmsg)
-{
-  static bool did_err = false;
-  assert(str != NULL);
-  wchar_t *utf16str;
-  int r = utf8_to_utf16(str, -1, &utf16str);
-  if (r != 0 && !did_err) {
-    did_err = true;
-    fprintf(stderr, "utf8_to_utf16 failed: %d", r);
-    ELOG("utf8_to_utf16 failed: %d", r);
-  } else if (r == 0) {
-    if (errmsg) {
-      fwprintf(stderr, L"%ls", utf16str);
-    } else {
-      wprintf(L"%ls", utf16str);
-    }
-    xfree(utf16str);
-  }
-}
-
-void os_errmsg(const char *str)
-{
-  do_msg(str, true);
-}
-
-/// Headless (no UI) message handler.
-void os_msg(const char *str)
-{
-  do_msg(str, false);
-}
-#endif  // MSWIN
 
 void msg_moremsg(int full)
 {

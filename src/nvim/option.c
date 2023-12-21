@@ -1486,10 +1486,10 @@ int do_set(char *arg, int opt_flags)
   if (silent_mode && did_show) {
     // After displaying option values in silent mode.
     silent_mode = false;
-    info_message = true;        // use os_msg(), not os_errmsg()
+    info_message = true;        // use stdout, not stderr
     msg_putchar('\n');
     silent_mode = true;
-    info_message = false;       // use os_msg(), not os_errmsg()
+    info_message = false;       // use stdout, not stderr
   }
 
   return OK;
@@ -3926,7 +3926,7 @@ static void showoneopt(vimoption_T *opt, int opt_flags)
   int save_silent = silent_mode;
 
   silent_mode = false;
-  info_message = true;          // use os_msg(), not os_errmsg()
+  info_message = true;          // use stdout, not stderr
 
   OptIndex opt_idx = get_opt_idx(opt);
   void *varp = get_varp_scope(opt, opt_flags);

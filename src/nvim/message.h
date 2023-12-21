@@ -65,10 +65,3 @@ EXTERN int msg_listdo_overwrite INIT( = 0);
 // Prefer using semsg(), because perror() may send the output to the wrong
 // destination and mess up the screen.
 #define PERROR(msg) (void)semsg("%s: %s", (msg), strerror(errno))
-
-#ifndef MSWIN
-/// Headless (no UI) error message handler.
-# define os_errmsg(str)        fprintf(stderr, "%s", (str))
-/// Headless (no UI) message handler.
-# define os_msg(str)           printf("%s", (str))
-#endif
