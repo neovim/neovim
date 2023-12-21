@@ -62,8 +62,7 @@ typedef struct {
   /// cmdline. Only useful for string options.
   opt_expand_cb_T opt_expand_cb;
 
-  // TODO(famiu): Use OptVal for def_val.
-  void *def_val;     ///< default values for variable (neovim!!)
+  OptVal def_val;     ///< default values for variable (neovim!!)
   LastSet last_set;  ///< script in which the option was last set
 } vimoption_T;
 

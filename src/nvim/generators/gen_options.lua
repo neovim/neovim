@@ -90,6 +90,12 @@ local function get_flags(o)
   return flags
 end
 
+--- @param opt_type vim.option_type
+--- @return string
+local function opt_type_enum(opt_type)
+  return ('kOptValType%s'):format(lowercase_to_titlecase(opt_type))
+end
+
 --- @param o vim.option_meta
 --- @return string
 local function get_type_flags(o)
@@ -99,7 +105,7 @@ local function get_type_flags(o)
 
   for _, opt_type in ipairs(opt_types) do
     assert(type(opt_type) == 'string')
-    type_flags = ('%s | (1 << kOptValType%s)'):format(type_flags, lowercase_to_titlecase(opt_type))
+    type_flags = ('%s | (1 << %s)'):format(type_flags, opt_type_enum(opt_type))
   end
 
   return type_flags
@@ -125,31 +131,47 @@ local function get_cond(c, base_string)
   return cond_string
 end
 
-local value_dumpers = {
-  ['function'] = function(v)
-    return v()
-  end,
-  string = cstr,
-  boolean = function(v)
-    return v and 'true' or 'false'
-  end,
-  number = function(v)
-    return ('%iL'):format(v)
-  end,
-  ['nil'] = function(_)
-    return '0'
-  end,
-}
-
-local get_value = function(v)
-  return '(void *) ' .. value_dumpers[type(v)](v)
+--- @param s string
+--- @return string
+local cstr_to_string = function(s)
+  return ('{ .data = %s, .size = sizeof(%s) - 1 }'):format(s, s)
 end
 
+--- @param v vim.option_value|function
+--- @return string
+local get_opt_val = function(v)
+  --- @type vim.option_type
+  local v_type
+
+  if type(v) == 'function' then
+    v, v_type = v() --[[ @as string, vim.option_type ]]
+
+    if v_type == 'string' then
+      v = cstr_to_string(v)
+    end
+  else
+    v_type = type(v) --[[ @as vim.option_type ]]
+
+    if v_type == 'boolean' then
+      v = v and 'true' or 'false'
+    elseif v_type == 'number' then
+      v = ('%iL'):format(v)
+    elseif v_type == 'string' then
+      v = cstr_to_string(cstr(v))
+    end
+  end
+
+  return ('{ .type = %s, .data.%s = %s }'):format(opt_type_enum(v_type), v_type, v)
+end
+
+--- @param d vim.option_value|function
+--- @param n string
+--- @return string
 local get_defaults = function(d, n)
   if d == nil then
     error("option '" .. n .. "' should have a default value")
   end
-  return get_value(d)
+  return get_opt_val(d)
 end
 
 --- @type {[1]:string,[2]:string}[]
