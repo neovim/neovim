@@ -1,8 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, command = helpers.clear, helpers.feed, helpers.command
-local source = helpers.source
-local meths = helpers.meths
+local clear, feed, exec, meths = helpers.clear, helpers.feed, helpers.exec, helpers.meths
 
 describe('Signs', function()
   local screen
@@ -30,10 +28,12 @@ describe('Signs', function()
   describe(':sign place', function()
     it('allows signs with combining characters', function()
       feed('ia<cr>b<cr><esc>')
-      command('sign define piet1 text=𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄ texthl=Search')
-      command('sign define piet2 text=𠜎̀́̂̃̄̅ texthl=Search')
-      command('sign place 1 line=1 name=piet1 buffer=1')
-      command('sign place 2 line=2 name=piet2 buffer=1')
+      exec([[
+        sign define piet1 text=𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄ texthl=Search
+        sign define piet2 text=𠜎̀́̂̃̄̅ texthl=Search
+        sign place 1 line=1 name=piet1 buffer=1
+        sign place 2 line=2 name=piet2 buffer=1
+      ]])
       screen:expect([[
         {1:𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄}a                                                  |
         {1:𠜎̀́̂̃̄̅}b                                                  |
@@ -45,11 +45,13 @@ describe('Signs', function()
 
     it('shadows previously placed signs', function()
       feed('ia<cr>b<cr>c<cr><esc>')
-      command('sign define piet text=>> texthl=Search')
-      command('sign define pietx text=>! texthl=Search')
-      command('sign place 1 line=1 name=piet buffer=1')
-      command('sign place 2 line=3 name=piet buffer=1')
-      command('sign place 3 line=1 name=pietx buffer=1')
+      exec([[
+        sign define piet text=>> texthl=Search
+        sign define pietx text=>! texthl=Search
+        sign place 1 line=1 name=piet buffer=1
+        sign place 2 line=3 name=piet buffer=1
+        sign place 3 line=1 name=pietx buffer=1
+      ]])
       screen:expect([[
         {1:>!}a                                                  |
         {2:  }b                                                  |
@@ -62,8 +64,8 @@ describe('Signs', function()
 
     it('allows signs with no text', function()
       feed('ia<cr>b<cr><esc>')
-      command('sign define piet1 text= texthl=Search')
-      command('sign place 1 line=1 name=piet1 buffer=1')
+      exec('sign define piet1 text= texthl=Search')
+      exec('sign place 1 line=1 name=piet1 buffer=1')
       screen:expect([[
         a                                                    |
         b                                                    |
@@ -78,7 +80,7 @@ describe('Signs', function()
       -- This used to cause a crash due to :sign using a special redraw
       -- (not updating nvim's specific highlight data structures)
       -- without proper redraw first, as split just flags for redraw later.
-      source([[
+      exec([[
         set cursorline
         sign define piet text=>> texthl=Search
         split
@@ -103,16 +105,18 @@ describe('Signs', function()
 
     it('can combine text, linehl and numhl', function()
       feed('ia<cr>b<cr>c<cr><esc>')
-      command('set number')
-      command('sign define piet text=>> texthl=Search')
-      command('sign define pietx linehl=ErrorMsg')
-      command('sign define pietxx numhl=Folded')
-      command('sign place 1 line=1 name=piet buffer=1')
-      command('sign place 2 line=2 name=pietx buffer=1')
-      command('sign place 3 line=3 name=pietxx buffer=1')
-      command('sign place 4 line=4 name=piet buffer=1')
-      command('sign place 5 line=4 name=pietx buffer=1')
-      command('sign place 6 line=4 name=pietxx buffer=1')
+      exec([[
+        set number
+        sign define piet text=>> texthl=Search
+        sign define pietx linehl=ErrorMsg
+        sign define pietxx numhl=Folded
+        sign place 1 line=1 name=piet buffer=1
+        sign place 2 line=2 name=pietx buffer=1
+        sign place 3 line=3 name=pietxx buffer=1
+        sign place 4 line=4 name=piet buffer=1
+        sign place 5 line=4 name=pietx buffer=1
+        sign place 6 line=4 name=pietxx buffer=1
+      ]])
       screen:expect([[
         {1:>>}{6:  1 }a                                              |
         {2:  }{6:  2 }{8:b                                              }|
@@ -122,17 +126,19 @@ describe('Signs', function()
                                                              |
       ]])
       -- Check that 'statuscolumn' correctly applies numhl
-      command('set statuscolumn=%s%=%l\\ ')
+      exec('set statuscolumn=%s%=%l\\ ')
       screen:expect_unchanged()
     end)
 
     it('highlights the cursorline sign with culhl', function()
       feed('ia<cr>b<cr>c<esc>')
-      command('sign define piet text=>> texthl=Search culhl=ErrorMsg')
-      command('sign place 1 line=1 name=piet buffer=1')
-      command('sign place 2 line=2 name=piet buffer=1')
-      command('sign place 3 line=3 name=piet buffer=1')
-      command('set cursorline')
+      exec([[
+        sign define piet text=>> texthl=Search culhl=ErrorMsg
+        sign place 1 line=1 name=piet buffer=1
+        sign place 2 line=2 name=piet buffer=1
+        sign place 3 line=3 name=piet buffer=1
+        set cursorline
+      ]])
       screen:expect([[
         {1:>>}a                                                  |
         {1:>>}b                                                  |
@@ -148,7 +154,7 @@ describe('Signs', function()
         {0:~                                                    }|*10
                                                              |
       ]])
-      command('set nocursorline')
+      exec('set nocursorline')
       screen:expect([[
         {1:>>}a                                                  |
         {1:>>}^b                                                  |
@@ -156,7 +162,7 @@ describe('Signs', function()
         {0:~                                                    }|*10
                                                              |
       ]])
-      command('set cursorline cursorlineopt=line')
+      exec('set cursorline cursorlineopt=line')
       screen:expect([[
         {1:>>}a                                                  |
         {1:>>}{3:^b                                                  }|
@@ -164,8 +170,8 @@ describe('Signs', function()
         {0:~                                                    }|*10
                                                              |
       ]])
-      command('set cursorlineopt=number')
-      command('hi! link SignColumn IncSearch')
+      exec('set cursorlineopt=number')
+      exec('hi! link SignColumn IncSearch')
       feed('Go<esc>2G')
       screen:expect([[
         {1:>>}a                                                  |
@@ -176,28 +182,40 @@ describe('Signs', function()
                                                              |
       ]])
       -- Check that 'statuscolumn' cursorline/signcolumn highlights are the same (#21726)
-      command('set statuscolumn=%s')
+      exec('set statuscolumn=%s')
       screen:expect_unchanged()
     end)
 
     it('multiple signs #9295', function()
       feed('ia<cr>b<cr>c<cr><esc>')
-      command('set number')
-      command('set signcolumn=yes:2')
-      command('sign define pietSearch text=>> texthl=Search')
-      command('sign define pietError text=XX texthl=Error')
-      command('sign define pietWarn text=WW texthl=Warning')
-      command('sign place 1 line=1 name=pietSearch buffer=1')
-      command('sign place 2 line=1 name=pietError buffer=1')
-      -- Line 2 helps checking that signs in the same line are ordered by Id.
-      command('sign place 4 line=2 name=pietSearch buffer=1')
-      command('sign place 3 line=2 name=pietError buffer=1')
+      exec([[
+        set number
+        set signcolumn=yes:2
+        sign define pietSearch text=>> texthl=Search
+        sign define pietError text=XX texthl=Error
+        sign define pietWarn text=WW texthl=Warning
+        sign place 6 line=3 name=pietSearch buffer=1
+        sign place 7 line=3 name=pietWarn buffer=1
+        sign place 5 line=3 name=pietError buffer=1
+      ]])
       -- Line 3 checks that with a limit over the maximum number
       -- of signs, the ones with the highest Ids are being picked,
       -- and presented by their sorted Id order.
-      command('sign place 6 line=3 name=pietSearch buffer=1')
-      command('sign place 7 line=3 name=pietWarn buffer=1')
-      command('sign place 5 line=3 name=pietError buffer=1')
+      screen:expect([[
+        {2:    }{6:  1 }a                                            |
+        {2:    }{6:  2 }b                                            |
+        {1:>>}WW{6:  3 }c                                            |
+        {2:    }{6:  4 }^                                             |
+        {0:~                                                    }|*9
+                                                             |
+      ]])
+      exec([[
+        sign place 1 line=1 name=pietSearch buffer=1
+        sign place 2 line=1 name=pietError buffer=1
+        " Line 2 helps checking that signs in the same line are ordered by Id.
+        sign place 4 line=2 name=pietSearch buffer=1
+        sign place 3 line=2 name=pietError buffer=1
+      ]])
       screen:expect([[
         {1:>>}{8:XX}{6:  1 }a                                            |
         {8:XX}{1:>>}{6:  2 }b                                            |
@@ -207,7 +225,7 @@ describe('Signs', function()
                                                              |
       ]])
       -- With the default setting, we get the sign with the top id.
-      command('set signcolumn=yes:1')
+      exec('set signcolumn=yes:1')
       screen:expect([[
         {8:XX}{6:  1 }a                                              |
         {1:>>}{6:  2 }b                                              |
@@ -217,7 +235,7 @@ describe('Signs', function()
                                                              |
       ]])
       -- "auto:3" accommodates all the signs we defined so far.
-      command('set signcolumn=auto:3')
+      exec('set signcolumn=auto:3')
       local s3 = [[
         {1:>>}{8:XX}{2:  }{6:  1 }a                                          |
         {8:XX}{1:>>}{2:  }{6:  2 }b                                          |
@@ -228,7 +246,7 @@ describe('Signs', function()
       ]]
       screen:expect(s3)
       -- Check "yes:9".
-      command('set signcolumn=yes:9')
+      exec('set signcolumn=yes:9')
       screen:expect([[
         {1:>>}{8:XX}{2:              }{6:  1 }a                              |
         {8:XX}{1:>>}{2:              }{6:  2 }b                              |
@@ -239,11 +257,11 @@ describe('Signs', function()
       ]])
       -- Check "auto:N" larger than the maximum number of signs defined in
       -- a single line (same result as "auto:3").
-      command('set signcolumn=auto:4')
+      exec('set signcolumn=auto:4')
       screen:expect(s3)
       -- line deletion deletes signs.
-      command('3move1')
-      command('2d')
+      exec('3move1')
+      exec('2d')
       screen:expect([[
         {1:>>}{8:XX}{6:  1 }a                                            |
         {8:XX}{1:>>}{6:  2 }^b                                            |
@@ -264,9 +282,9 @@ describe('Signs', function()
 
     it('auto-resize sign column with minimum size (#13783)', function()
       feed('ia<cr>b<cr>c<cr><esc>')
-      command('set number')
+      exec('set number')
       -- sign column should always accommodate at the minimum size
-      command('set signcolumn=auto:1-3')
+      exec('set signcolumn=auto:1-3')
       screen:expect([[
         {2:  }{6:  1 }a                                              |
         {2:  }{6:  2 }b                                              |
@@ -276,7 +294,7 @@ describe('Signs', function()
                                                              |
       ]])
       -- should support up to 8 signs at minimum
-      command('set signcolumn=auto:8-9')
+      exec('set signcolumn=auto:8-9')
       screen:expect([[
         {2:                }{6:  1 }a                                |
         {2:                }{6:  2 }b                                |
@@ -287,9 +305,9 @@ describe('Signs', function()
       ]])
       -- should keep the same sign size when signs are not exceeding
       -- the minimum
-      command('set signcolumn=auto:2-5')
-      command('sign define pietSearch text=>> texthl=Search')
-      command('sign place 1 line=1 name=pietSearch buffer=1')
+      exec('set signcolumn=auto:2-5')
+      exec('sign define pietSearch text=>> texthl=Search')
+      exec('sign place 1 line=1 name=pietSearch buffer=1')
       screen:expect([[
         {1:>>}{2:  }{6:  1 }a                                            |
         {2:    }{6:  2 }b                                            |
@@ -300,9 +318,11 @@ describe('Signs', function()
       ]])
       -- should resize itself when signs are exceeding minimum but
       -- not over the maximum
-      command('sign place 2 line=1 name=pietSearch buffer=1')
-      command('sign place 3 line=1 name=pietSearch buffer=1')
-      command('sign place 4 line=1 name=pietSearch buffer=1')
+      exec([[
+        sign place 2 line=1 name=pietSearch buffer=1
+        sign place 3 line=1 name=pietSearch buffer=1
+        sign place 4 line=1 name=pietSearch buffer=1
+      ]])
       screen:expect([[
         {1:>>>>>>>>}{6:  1 }a                                        |
         {2:        }{6:  2 }b                                        |
@@ -312,9 +332,9 @@ describe('Signs', function()
                                                              |
       ]])
       -- should not increase size because sign with existing id is moved
-      command('sign place 4 line=1 name=pietSearch buffer=1')
+      exec('sign place 4 line=1 name=pietSearch buffer=1')
       screen:expect_unchanged()
-      command('sign unplace 4')
+      exec('sign unplace 4')
       screen:expect([[
         {1:>>>>>>}{6:  1 }a                                          |
         {2:      }{6:  2 }b                                          |
@@ -323,13 +343,15 @@ describe('Signs', function()
         {0:~                                                    }|*9
                                                              |
       ]])
-      command('sign place 4 line=1 name=pietSearch buffer=1')
+      exec('sign place 4 line=1 name=pietSearch buffer=1')
       -- should keep the column at maximum size when signs are
       -- exceeding the maximum
-      command('sign place 5 line=1 name=pietSearch buffer=1')
-      command('sign place 6 line=1 name=pietSearch buffer=1')
-      command('sign place 7 line=1 name=pietSearch buffer=1')
-      command('sign place 8 line=1 name=pietSearch buffer=1')
+      exec([[
+        sign place 5 line=1 name=pietSearch buffer=1
+        sign place 6 line=1 name=pietSearch buffer=1
+        sign place 7 line=1 name=pietSearch buffer=1
+        sign place 8 line=1 name=pietSearch buffer=1
+      ]])
       screen:expect([[
         {1:>>>>>>>>>>}{6:  1 }a                                      |
         {2:          }{6:  2 }b                                      |
@@ -342,11 +364,13 @@ describe('Signs', function()
 
     it('ignores signs with no icon and text when calculating the signcolumn width', function()
       feed('ia<cr>b<cr>c<cr><esc>')
-      command('set number')
-      command('set signcolumn=auto:2')
-      command('sign define pietSearch text=>> texthl=Search')
-      command('sign define pietError text= texthl=Error')
-      command('sign place 2 line=1 name=pietError buffer=1')
+      exec([[
+        set number
+        set signcolumn=auto:2
+        sign define pietSearch text=>> texthl=Search
+        sign define pietError text= texthl=Error
+        sign place 2 line=1 name=pietError buffer=1
+      ]])
       -- no signcolumn with only empty sign
       screen:expect([[
         {6:  1 }a                                                |
@@ -357,7 +381,7 @@ describe('Signs', function()
                                                              |
       ]])
       -- single column with 1 sign with text and one sign without
-      command('sign place 1 line=1 name=pietSearch buffer=1')
+      exec('sign place 1 line=1 name=pietSearch buffer=1')
       screen:expect([[
         {1:>>}{6:  1 }a                                              |
         {2:  }{6:  2 }b                                              |
@@ -370,11 +394,13 @@ describe('Signs', function()
 
     it('signcolumn=number', function()
       feed('ia<cr>b<cr>c<cr><esc>')
-      command('set number signcolumn=number')
-      command('sign define pietSearch text=>> texthl=Search numhl=Error')
-      command('sign define pietError text=    texthl=Search numhl=Error')
-      command('sign place 1 line=1 name=pietSearch buffer=1')
-      command('sign place 2 line=2 name=pietError  buffer=1')
+      exec([[
+        set number signcolumn=number
+        sign define pietSearch text=>> texthl=Search numhl=Error
+        sign define pietError text=    texthl=Search numhl=Error
+        sign place 1 line=1 name=pietSearch buffer=1
+        sign place 2 line=2 name=pietError  buffer=1
+      ]])
       -- line number should be drawn if sign has no text
       -- no signcolumn, line number for "a" is Search, for "b" is Error, for "c" is LineNr
       screen:expect([[
@@ -417,8 +443,8 @@ describe('Signs', function()
     end)
 
     it('can have 32bit sign IDs', function()
-      command('sign define piet text=>> texthl=Search')
-      command('sign place 100000 line=1 name=piet buffer=1')
+      exec('sign define piet text=>> texthl=Search')
+      exec('sign place 100000 line=1 name=piet buffer=1')
       feed(':sign place<cr>')
       screen:expect([[
         {1:>>}                                                   |
@@ -443,11 +469,11 @@ describe('Signs', function()
 
   it('signcolumn width is updated when removing all signs after deleting lines', function()
     meths.buf_set_lines(0, 0, 1, true, {'a', 'b', 'c', 'd', 'e'})
-    command('sign define piet text=>>')
-    command('sign place 10001 line=1 name=piet')
-    command('sign place 10002 line=5 name=piet')
-    command('2delete')
-    command('sign unplace 10001')
+    exec('sign define piet text=>>')
+    exec('sign place 10001 line=1 name=piet')
+    exec('sign place 10002 line=5 name=piet')
+    exec('2delete')
+    exec('sign unplace 10001')
     screen:expect([[
       {2:  }a                                                  |
       {2:  }^c                                                  |
@@ -456,7 +482,7 @@ describe('Signs', function()
       {0:~                                                    }|*9
                                                            |
     ]])
-    command('sign unplace 10002')
+    exec('sign unplace 10002')
     screen:expect([[
       a                                                    |
       ^c                                                    |
@@ -469,11 +495,11 @@ describe('Signs', function()
 
   it('signcolumn width is updated when removing all signs after inserting lines', function()
     meths.buf_set_lines(0, 0, 1, true, {'a', 'b', 'c', 'd', 'e'})
-    command('sign define piet text=>>')
-    command('sign place 10001 line=1 name=piet')
-    command('sign place 10002 line=5 name=piet')
-    command('copy .')
-    command('sign unplace 10001')
+    exec('sign define piet text=>>')
+    exec('sign place 10001 line=1 name=piet')
+    exec('sign place 10002 line=5 name=piet')
+    exec('copy .')
+    exec('sign unplace 10001')
     screen:expect([[
       {2:  }a                                                  |
       {2:  }^a                                                  |
@@ -484,7 +510,7 @@ describe('Signs', function()
       {0:~                                                    }|*7
                                                            |
     ]])
-    command('sign unplace 10002')
+    exec('sign unplace 10002')
     screen:expect([[
       a                                                    |
       ^a                                                    |
@@ -499,7 +525,7 @@ describe('Signs', function()
 
   it('numhl highlight is applied when signcolumn=no', function()
     screen:try_resize(screen._width, 4)
-    command([[
+    exec([[
       set nu scl=no
       call setline(1, ['line1', 'line2', 'line3'])
       call nvim_buf_set_extmark(0, nvim_create_namespace('test'), 0, 0, {'number_hl_group':'Error'})

@@ -1212,7 +1212,7 @@ static bool win_redraw_signcols(win_T *wp)
   } else if (wp->w_maxscwidth <= 1 && buf->b_signs_with_text >= (size_t)wp->w_maxscwidth) {
     width = wp->w_maxscwidth;
   } else {
-    width = buf_signcols_validate(wp, buf, false);
+    width = MIN(wp->w_maxscwidth, buf_signcols_validate(wp, buf, false));
   }
 
   int scwidth = wp->w_scwidth;
