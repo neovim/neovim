@@ -24,7 +24,7 @@
 #include "nvim/regexp_defs.h"
 #include "nvim/sign_defs.h"
 #include "nvim/statusline_defs.h"
-#include "nvim/terminal.h"
+#include "nvim/types_defs.h"
 #include "nvim/undo_defs.h"
 
 /// Reference to a buffer that stores the value of buf_free_count.

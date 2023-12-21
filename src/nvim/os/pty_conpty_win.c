@@ -1,5 +1,6 @@
 #include <uv.h>
 
+#include "nvim/log.h"
 #include "nvim/os/os.h"
 #include "nvim/os/pty_conpty_win.h"
 #include "nvim/vim_defs.h"

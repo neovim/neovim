@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <lauxlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "klib/kvec.h"
@@ -8,6 +9,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/decoration_provider.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
@@ -15,6 +17,12 @@
 #include "nvim/lua/executor.h"
 #include "nvim/message.h"
 #include "nvim/pos_defs.h"
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "decoration_provider.c.generated.h"
+#endif
+
+enum { DP_MAX_ERROR = 3, };
 
 static kvec_t(DecorProvider) decor_providers = KV_INITIAL_VALUE;
 

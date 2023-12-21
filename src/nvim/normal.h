@@ -1,9 +1,11 @@
 #pragma once
 
-#include "nvim/buffer_defs.h"  // IWYU pragma: keep
+#include <stddef.h>  // IWYU pragma: keep
+
 #include "nvim/macros_defs.h"
 #include "nvim/normal_defs.h"  // IWYU pragma: export
 #include "nvim/pos_defs.h"  // IWYU pragma: keep
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 
 /// Values for find_ident_under_cursor()
 enum {

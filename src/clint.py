@@ -906,7 +906,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/buffer_defs.h",
             "src/nvim/channel.h",
             "src/nvim/charset.h",
-            "src/nvim/drawline.h",
             "src/nvim/eval.h",
             "src/nvim/eval/encode.h",
             "src/nvim/eval/typval.h",

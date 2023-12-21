@@ -4,18 +4,19 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/channel.h"
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/event/time.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/grid_defs.h"  // IWYU pragma: keep
 #include "nvim/hashtab_defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mbyte_defs.h"  // IWYU pragma: keep
 #include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/os/fileio_defs.h"  // IWYU pragma: keep
 #include "nvim/os/stdpaths_defs.h"  // IWYU pragma: keep
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 #include "nvim/vim_defs.h"  // IWYU pragma: keep
 
 #define COPYID_INC 2
