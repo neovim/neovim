@@ -6,8 +6,7 @@
 --- @field short_desc? string|fun(): string
 --- @field varname? string
 --- @field pv_name? string
---- @field type 'boolean'|'number'|'string'
---- @field hidden? boolean
+--- @field type vim.option_type|vim.option_type[]
 --- @field immutable? boolean
 --- @field list? 'comma'|'onecomma'|'commacolon'|'onecommacolon'|'flags'|'flagscomma'
 --- @field scope vim.option_scope[]
@@ -41,6 +40,8 @@
 --- @field meta? integer|boolean|string Default to use in Lua meta files
 
 --- @alias vim.option_scope 'global'|'buffer'|'window'
+--- @alias vim.option_type 'boolean'|'number'|'string'
+--- @alias vim.option_value boolean|number|string
 
 --- @alias vim.option_redraw
 --- |'statuslines'
@@ -59,18 +60,11 @@ local function cstr(s)
 end
 
 --- @param s string
---- @return fun(): string
-local function macros(s)
+--- @param t vim.option_type
+--- @return fun(): string, vim.option_type
+local function macros(s, t)
   return function()
-    return '.string=' .. s
-  end
-end
-
---- @param s string
---- @return fun(): string
-local function imacros(s)
-  return function()
-    return '.number=' .. s
+    return s, t
   end
 end
 
@@ -989,7 +983,7 @@ return {
     {
       cb = 'did_set_cedit',
       defaults = {
-        if_true = macros('CTRL_F_STR'),
+        if_true = macros('CTRL_F_STR', 'string'),
         doc = 'CTRL-F',
       },
       desc = [=[
@@ -1283,7 +1277,7 @@ return {
       abbreviation = 'co',
       cb = 'did_set_lines_or_columns',
       defaults = {
-        if_true = imacros('DFLT_COLS'),
+        if_true = macros('DFLT_COLS', 'number'),
         doc = '80 or terminal width',
       },
       desc = [=[
@@ -1605,7 +1599,7 @@ return {
     {
       abbreviation = 'cpo',
       cb = 'did_set_cpoptions',
-      defaults = { if_true = macros('CPO_VIM') },
+      defaults = { if_true = macros('CPO_VIM', 'string') },
       desc = [=[
         A sequence of single character flags.  When a character is present
         this indicates Vi-compatible behavior.  This is used for things where
@@ -2340,7 +2334,7 @@ return {
     {
       abbreviation = 'enc',
       cb = 'did_set_encoding',
-      defaults = { if_true = macros('ENC_DFLT') },
+      defaults = { if_true = macros('ENC_DFLT', 'string') },
       deny_in_modelines = true,
       desc = [=[
         String-encoding used internally and for |RPC| communication.
@@ -2464,7 +2458,7 @@ return {
     },
     {
       abbreviation = 'ef',
-      defaults = { if_true = macros('DFLT_ERRORFILE') },
+      defaults = { if_true = macros('DFLT_ERRORFILE', 'string') },
       desc = [=[
         Name of the errorfile for the QuickFix mode (see |:cf|).
         When the "-q" command-line argument is used, 'errorfile' is set to the
@@ -2486,7 +2480,7 @@ return {
     {
       abbreviation = 'efm',
       defaults = {
-        if_true = macros('DFLT_EFM'),
+        if_true = macros('DFLT_EFM', 'string'),
         doc = 'is very long',
       },
       deny_duplicates = true,
@@ -2678,7 +2672,7 @@ return {
       alloced = true,
       cb = 'did_set_fileformat',
       defaults = {
-        if_true = macros('DFLT_FF'),
+        if_true = macros('DFLT_FF', 'string'),
         doc = 'Windows: "dos", Unix: "unix"',
       },
       desc = [=[
@@ -2711,7 +2705,7 @@ return {
       abbreviation = 'ffs',
       cb = 'did_set_fileformats',
       defaults = {
-        if_true = macros('DFLT_FFS_VIM'),
+        if_true = macros('DFLT_FFS_VIM', 'string'),
         doc = 'Windows: "dos,unix", Unix: "unix,dos"',
       },
       deny_duplicates = true,
@@ -3288,7 +3282,7 @@ return {
       abbreviation = 'fo',
       alloced = true,
       cb = 'did_set_formatoptions',
-      defaults = { if_true = macros('DFLT_FO_VIM') },
+      defaults = { if_true = macros('DFLT_FO_VIM', 'string') },
       desc = [=[
         This is a sequence of letters which describes how automatic
         formatting is to be done.
@@ -3381,7 +3375,7 @@ return {
     },
     {
       abbreviation = 'gfm',
-      defaults = { if_true = macros('DFLT_GREPFORMAT') },
+      defaults = { if_true = macros('DFLT_GREPFORMAT', 'string') },
       deny_duplicates = true,
       desc = [=[
         Format to recognize for the ":grep" command output.
@@ -3789,7 +3783,7 @@ return {
       abbreviation = 'hf',
       cb = 'did_set_helpfile',
       defaults = {
-        if_true = macros('DFLT_HELPFILE'),
+        if_true = macros('DFLT_HELPFILE', 'string'),
         doc = [[(MS-Windows) "$VIMRUNTIME\doc\help.txt"
                   (others) "$VIMRUNTIME/doc/help.txt"]],
       },
@@ -3886,7 +3880,7 @@ return {
     {
       abbreviation = 'hl',
       cb = 'did_set_highlight',
-      defaults = { if_true = macros('HIGHLIGHT_INIT') },
+      defaults = { if_true = macros('HIGHLIGHT_INIT', 'string') },
       deny_duplicates = true,
       full_name = 'highlight',
       list = 'onecomma',
@@ -4052,7 +4046,7 @@ return {
     {
       abbreviation = 'imi',
       cb = 'did_set_iminsert',
-      defaults = { if_true = imacros('B_IMODE_NONE') },
+      defaults = { if_true = macros('B_IMODE_NONE', 'number') },
       desc = [=[
         Specifies whether :lmap or an Input Method (IM) is to be used in
         Insert mode.  Valid values:
@@ -4078,7 +4072,7 @@ return {
     },
     {
       abbreviation = 'ims',
-      defaults = { if_true = imacros('B_IMODE_USE_INSERT') },
+      defaults = { if_true = macros('B_IMODE_USE_INSERT', 'number') },
       desc = [=[
         Specifies whether :lmap or an Input Method (IM) is to be used when
         entering a search pattern.  Valid values:
@@ -4784,7 +4778,7 @@ return {
     {
       cb = 'did_set_lines_or_columns',
       defaults = {
-        if_true = imacros('DFLT_ROWS'),
+        if_true = macros('DFLT_ROWS', 'number'),
         doc = '24 or terminal height',
       },
       desc = [=[
@@ -4872,7 +4866,7 @@ return {
     {
       abbreviation = 'lw',
       defaults = {
-        if_true = macros('LISPWORD_VALUE'),
+        if_true = macros('LISPWORD_VALUE', 'string'),
         doc = 'is very long',
       },
       deny_duplicates = true,
@@ -5182,7 +5176,7 @@ return {
     },
     {
       abbreviation = 'mco',
-      defaults = { if_true = imacros('MAX_MCO') },
+      defaults = { if_true = macros('MAX_MCO', 'number') },
       full_name = 'maxcombine',
       scope = { 'global' },
       short_desc = N_('maximum nr of combining characters displayed'),
@@ -9583,7 +9577,7 @@ return {
       abbreviation = 'wc',
       cb = 'did_set_wildchar',
       defaults = {
-        if_true = imacros('TAB'),
+        if_true = macros('TAB', 'number'),
         doc = '<Tab>',
       },
       desc = [=[
