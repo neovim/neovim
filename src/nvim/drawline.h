@@ -4,14 +4,13 @@
 #include <stdint.h>
 
 #include "klib/kvec.h"
-#include "nvim/decoration_provider.h"
-#include "nvim/fold_defs.h"
+#include "nvim/decoration_defs.h"  // IWYU pragma: keep
+#include "nvim/fold_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 
-// Maximum columns for terminal highlight attributes
-#define TERM_ATTRS_MAX 1024
+enum { TERM_ATTRS_MAX = 1024, };  ///< Maximum columns for terminal highlight attributes
 
 typedef struct {
   NS ns_id;
@@ -23,7 +22,7 @@ EXTERN kvec_t(WinExtmark) win_extmark_arr INIT( = KV_INITIAL_VALUE);
 
 EXTERN bool conceal_cursor_used INIT( = false);
 
-// Spell checking variables passed from win_update() to win_line().
+/// Spell checking variables passed from win_update() to win_line().
 typedef struct {
   bool spv_has_spell;         ///< drawn window has spell checking
   bool spv_unchanged;         ///< not updating for changed text

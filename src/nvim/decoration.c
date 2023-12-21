@@ -20,7 +20,6 @@
 #include "nvim/move.h"
 #include "nvim/option_vars.h"
 #include "nvim/pos_defs.h"
-#include "nvim/sign.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration.c.generated.h"

@@ -17,7 +17,6 @@
 #include "nvim/map_defs.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/os/pty_process.h"
-#include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 
 static inline bool callback_reader_set(CallbackReader reader)

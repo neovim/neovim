@@ -1,10 +1,10 @@
 #pragma once
 
-#include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/syntax_defs.h"  // IWYU pragma: export
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 
 enum {
   HL_CONTAINED   = 0x01,     ///< not used on toplevel

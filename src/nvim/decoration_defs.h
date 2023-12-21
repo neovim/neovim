@@ -125,3 +125,21 @@ typedef struct {
 
 // initializes in a valid state for the DecorHighlightInline branch
 #define DECOR_INLINE_INIT { .ext = false, .data.hl = DECOR_HIGHLIGHT_INLINE_INIT }
+
+typedef struct {
+  NS ns_id;
+  bool active;
+  LuaRef redraw_start;
+  LuaRef redraw_buf;
+  LuaRef redraw_win;
+  LuaRef redraw_line;
+  LuaRef redraw_end;
+  LuaRef hl_def;
+  LuaRef spell_nav;
+  int hl_valid;
+  bool hl_cached;
+
+  uint8_t error_count;
+} DecorProvider;
+
+typedef kvec_withinit_t(DecorProvider *, 4) DecorProviders;

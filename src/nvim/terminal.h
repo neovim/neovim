@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
+#include "nvim/types_defs.h"  // IWYU pragma: keep
 
 typedef void (*terminal_write_cb)(const char *buffer, size_t size, void *data);
 typedef void (*terminal_resize_cb)(uint16_t width, uint16_t height, void *data);

@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "auto/config.h"
 #include "nvim/base64.h"
 #include "nvim/memory.h"
 

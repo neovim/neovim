@@ -6,7 +6,6 @@
 
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
-#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/drawscreen.h"

@@ -40,7 +40,6 @@
 
 #ifdef MSWIN
 # include "nvim/os/os_win_console.h"
-# include "nvim/os/tty.h"
 #endif
 
 #define OUTBUF_SIZE 0xffff

@@ -10,7 +10,6 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
-#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/drawscreen.h"
