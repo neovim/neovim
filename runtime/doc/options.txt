@@ -306,19 +306,13 @@ created, thus they behave slightly differently:
 
 :se[t] {option}<	Set the effective value of {option} to its global
 			value.
-			For string |global-local| options, the local value is
-			removed, so that the global value will be used.
+			For |global-local| options, the local value is removed,
+			so that the global value will be used.
 			For all other options, the global value is copied to
 			the local value.
 
 :setl[ocal] {option}<	Set the effective value of {option} to its global
-			value.
-			For number and boolean |global-local| options, the
-			local value is removed, so that the global value will
-			be used.
-			For all other options, including string |global-local|
-			options, the global value is copied to the local
-			value.
+			value by copying the global value to the local value.
 
 Note that the behaviour for |global-local| options is slightly different
 between string and number-based options.
