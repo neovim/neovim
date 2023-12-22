@@ -27,7 +27,7 @@ EXTERN const char *ui_ext_names[] INIT( = {
 // uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui.h.generated.h"
-# include "ui_events_call.h.generated.h"  // IWYU pragma: export
+# include "ui_events_call.h.generated.h"
 #endif
 // uncrustify:on
 

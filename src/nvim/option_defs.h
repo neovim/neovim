@@ -131,5 +131,5 @@ typedef enum {
 } OptReqScope;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "options_enum.generated.h"  // IWYU pragma: export
+# include "options_enum.generated.h"
 #endif
