@@ -13,6 +13,7 @@ typedef enum {
   kUITabline,
   kUIWildmenu,
   kUIMessages,
+  kUIExtGraphics,
 #define kUIGlobalCount kUILinegrid
   kUILinegrid,
   kUIMultigrid,

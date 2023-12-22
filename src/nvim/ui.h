@@ -17,6 +17,7 @@ EXTERN const char *ui_ext_names[] INIT( = {
   "ext_tabline",
   "ext_wildmenu",
   "ext_messages",
+  "ext_graphics",
   "ext_linegrid",
   "ext_multigrid",
   "ext_hlstate",
