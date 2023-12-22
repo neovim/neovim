@@ -924,6 +924,22 @@ local function render(elem)
   end
 
   o:close()
+
+  if vim.endswith(elem.path, '.txt') then
+    vim.cmd.edit(elem.path)
+    vim.opt.expandtab = false
+    local range --- @type {[1]:integer,[2]:integer}
+    if elem.from then
+      local start = vim.fn.searchpos('\\V'..elem.from)[1]
+      if start then
+        local eend = vim.api.nvim_buf_line_count(0)
+        range = {start, eend}
+      end
+    else
+    end
+    vim.cmd({cmd = 'retab', bang = true, range = range})
+    vim.cmd.write()
+  end
 end
 
 local function main()
