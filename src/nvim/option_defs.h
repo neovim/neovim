@@ -8,6 +8,10 @@
 #include "nvim/regexp_defs.h"
 #include "nvim/types_defs.h"
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "options_enum.generated.h"
+#endif
+
 /// Option value type.
 /// These types are also used as type flags by using the type value as an index for the type_flags
 /// bit field (@see option_has_type()).
@@ -50,10 +54,11 @@ typedef struct {
   /// Pointer to the option variable.  The variable can be an OptInt (numeric
   /// option), an int (boolean option) or a char pointer (string option).
   void *os_varp;
-  int os_idx;
+  OptIndex os_idx;
   int os_flags;
 
   /// Old value of the option.
+  /// TODO(famiu): Convert `os_oldval` and `os_newval` to `OptVal` to accomodate multitype options.
   OptValData os_oldval;
   /// New value of the option.
   OptValData os_newval;
@@ -129,7 +134,3 @@ typedef enum {
   kOptReqWin    = 1,  ///< Request window-local option value
   kOptReqBuf    = 2,  ///< Request buffer-local option value
 } OptReqScope;
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "options_enum.generated.h"
-#endif
