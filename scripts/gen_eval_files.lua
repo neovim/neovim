@@ -470,11 +470,11 @@ local function render_eval_doc(f, fun, write)
   local desc_l = split(vim.trim(desc))
   for _, l in ipairs(desc_l) do
     if vim.startswith(l, '<') and not l:match('^<[^ \t]+>') then
-      write('<                ' .. l:sub(2))
+      write('<' .. string.rep(' ', 15) .. l:sub(2))
     elseif l:match('^>[a-z0-9]*$') then
       write(l)
     else
-      write('                ' .. l)
+      write(string.rep(' ', 16) .. l)
     end
   end
 
@@ -930,14 +930,14 @@ local function render(elem)
     vim.opt.expandtab = false
     local range --- @type {[1]:integer,[2]:integer}
     if elem.from then
-      local start = vim.fn.searchpos('\\V'..elem.from)[1]
+      local start = vim.fn.searchpos('\\V' .. elem.from)[1]
       if start then
         local eend = vim.api.nvim_buf_line_count(0)
-        range = {start, eend}
+        range = { start, eend }
       end
     else
     end
-    vim.cmd({cmd = 'retab', bang = true, range = range})
+    vim.cmd({ cmd = 'retab', bang = true, range = range })
     vim.cmd.write()
   end
 end
