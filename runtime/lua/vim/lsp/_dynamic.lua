@@ -55,7 +55,7 @@ function M:unregister(unregisterations)
 end
 
 --- @param method string
---- @param opts? {bufnr?: number}
+--- @param opts? {bufnr: integer?}
 --- @return lsp.Registration? (table|nil) the registration if found
 --- @private
 function M:get(method, opts)
@@ -76,7 +76,7 @@ function M:get(method, opts)
 end
 
 --- @param method string
---- @param opts? {bufnr?: number}
+--- @param opts? {bufnr: integer?}
 --- @private
 function M:supports(method, opts)
   return self:get(method, opts) ~= nil

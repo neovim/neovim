@@ -1073,7 +1073,7 @@ function lsp.start_client(config)
     end
 
     --- @param method string
-    --- @param opts? {bufnr?: number}
+    --- @param opts? {bufnr: integer?}
     client.supports_method = function(method, opts)
       opts = opts or {}
       local required_capability = lsp._request_name_to_capability[method]
