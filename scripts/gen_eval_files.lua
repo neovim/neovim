@@ -337,9 +337,30 @@ local function render_api_keyset_meta(_f, fun, write)
   end
 end
 
+--- @param x string
+--- @return string
+local function dedent(x)
+  local xs = split(x)
+  local leading_ws = xs[1]:match('^%s*') --[[@as string]]
+  local leading_ws_pat = '^' .. leading_ws
+
+  for i in ipairs(xs) do
+    local strip_pat = xs[i]:match(leading_ws_pat) and leading_ws_pat or '^%s*'
+    xs[i] = xs[i]:gsub(strip_pat, '')
+  end
+
+  return table.concat(xs, '\n')
+end
+
 --- @return table<string, vim.EvalFn>
 local function get_eval_meta()
-  return require('src/nvim/eval').funcs
+  local meta = require('src/nvim/eval').funcs
+  for _, o in pairs(meta) do
+    if o.desc then
+      o.desc = dedent(o.desc)
+    end
+  end
+  return meta
 end
 
 --- @param f string
@@ -366,7 +387,6 @@ local function render_eval_meta(f, fun, write)
       --- @type string
       desc = desc:gsub('\n%s*\n%s*$', '\n')
       for _, l in ipairs(split(desc)) do
-        l = l:gsub('^      ', ''):gsub('\t', '  '):gsub('@', '\\@')
         write('--- ' .. l)
       end
     end
@@ -447,16 +467,14 @@ local function render_eval_doc(f, fun, write)
     rendered_tags[name] = true
   end
 
-  desc = vim.trim(desc)
-  local desc_l = split(desc)
+  local desc_l = split(vim.trim(desc))
   for _, l in ipairs(desc_l) do
-    l = l:gsub('^      ', '')
     if vim.startswith(l, '<') and not l:match('^<[^ \t]+>') then
-      write('<\t\t' .. l:sub(2))
+      write('<                ' .. l:sub(2))
     elseif l:match('^>[a-z0-9]*$') then
       write(l)
     else
-      write('\t\t' .. l)
+      write('                ' .. l)
     end
   end
 
@@ -610,21 +628,6 @@ local function scope_more_doc(o)
   return ''
 end
 
---- @param x string
---- @return string
-local function dedent(x)
-  local xs = split(x)
-  local leading_ws = xs[1]:match('^%s*') --[[@as string]]
-  local leading_ws_pat = '^' .. leading_ws
-
-  for i in ipairs(xs) do
-    local strip_pat = xs[i]:match(leading_ws_pat) and leading_ws_pat or '^%s*'
-    xs[i] = xs[i]:gsub(strip_pat, '')
-  end
-
-  return table.concat(xs, '\n')
-end
-
 --- @return table<string,vim.option_meta>
 local function get_option_meta()
   local opts = require('src/nvim/options').options
@@ -636,7 +639,7 @@ local function get_option_meta()
         table.insert(o.scope, 'tab')
       end
       local r = vim.deepcopy(o) --[[@as vim.option_meta]]
-      r.desc = o.desc:gsub('^        ', ''):gsub('\n        ', '\n')
+      r.desc = dedent(o.desc)
       r.defaults = r.defaults or {}
       if r.defaults.meta == nil then
         r.defaults.meta = optinfo[o.full_name].default
@@ -693,9 +696,8 @@ end
 local function render_option_doc(_f, opt, write)
   local tags = build_option_tags(opt)
   local tag_str = table.concat(tags, ' ')
-  local conceal_offset = 2 * (#tags - 1)
-  local tag_pad = string.rep('\t', math.ceil((64 - #tag_str + conceal_offset) / 8))
-  -- local pad = string.rep(' ', 80 - #tag_str + conceal_offset)
+  local conceal_offset = 2 * #tags
+  local tag_pad = string.rep(' ', 78 - #tag_str + conceal_offset)
   write(tag_pad .. tag_str)
 
   local name_str --- @type string
@@ -706,25 +708,26 @@ local function render_option_doc(_f, opt, write)
   end
 
   local otype = opt.type == 'boolean' and 'boolean' or opt.type
+
+  local def = ''
   if opt.defaults.doc or opt.defaults.if_true ~= nil or opt.defaults.meta ~= nil then
     local v = render_option_default(opt.defaults, true)
-    local pad = string.rep('\t', math.max(1, math.ceil((24 - #name_str) / 8)))
     if opt.defaults.doc then
-      local deflen = #string.format('%s%s%s (', name_str, pad, otype)
+      v = vim.trim(dedent(v))
+      local margin = 24 + #otype + #' (default '
       --- @type string
-      v = v:gsub('\n', '\n' .. string.rep(' ', deflen - 2))
+      v = v:gsub('\n', '\n' .. string.rep(' ', margin))
     end
-    write(string.format('%s%s%s\t(default %s)', name_str, pad, otype, v))
-  else
-    write(string.format('%s\t%s', name_str, otype))
+    def = string.format(' (default %s)', v)
   end
 
-  write('\t\t\t' .. scope_to_doc(opt.scope) .. scope_more_doc(opt))
+  write(string.format('%-23s %s%s', name_str, otype, def))
+  write(string.format('%s%s%s', string.rep(' ', 24), scope_to_doc(opt.scope), scope_more_doc(opt)))
   for _, l in ipairs(split(opt.desc)) do
     if l == '<' or l:match('^<%s') then
       write(l)
     else
-      write('\t' .. l:gsub('\\<', '<'))
+      write(string.rep(' ', 8) .. l:gsub('\\<', '<'))
     end
   end
 end
@@ -745,16 +748,15 @@ local function render_vvar_doc(_f, vvar, write)
   end
 
   local tag_str = table.concat(tags, ' ')
-  local conceal_offset = 2 * (#tags - 1)
-
-  local tag_pad = string.rep('\t', math.ceil((64 - #tag_str + conceal_offset) / 8))
+  local conceal_offset = 2 * #tags
+  local tag_pad = string.rep(' ', 78 - #tag_str + conceal_offset)
   write(tag_pad .. tag_str)
 
   local desc = split(vvar.desc)
 
   if (#desc == 1 or #desc == 2 and desc[2]:match('^%s*$')) and #name < 10 then
     -- single line
-    write('v:' .. name .. '\t' .. desc[1]:gsub('^%s*', ''))
+    write(string.format('%-15s %s', 'v:' .. name, vim.trim(desc[1])))
     write('')
   else
     write('v:' .. name)
@@ -762,7 +764,7 @@ local function render_vvar_doc(_f, vvar, write)
       if l == '<' or l:match('^<%s') then
         write(l)
       else
-        write('\t\t' .. l:gsub('\\<', '<'))
+        write(string.rep(' ', 16) .. l:gsub('\\<', '<'))
       end
     end
   end
@@ -801,7 +803,7 @@ local CONFIG = {
     funcs = get_eval_meta,
     render = render_eval_doc,
     header = {
-      '*builtin.txt*	Nvim',
+      '*builtin.txt*    Nvim',
       '',
       '',
       '\t\t  NVIM REFERENCE MANUAL',
@@ -813,12 +815,12 @@ local CONFIG = {
       '',
       '\t\t\t\t      Type |gO| to see the table of contents.',
       '==============================================================================',
-      '1. Details					*builtin-function-details*',
+      '1. Details                                       *builtin-function-details*',
       '',
     },
     footer = {
       '==============================================================================',
-      '2. Matching a pattern in a String			*string-match*',
+      '2. Matching a pattern in a String                        *string-match*',
       '',
       'This is common between several functions. A regexp pattern as explained at',
       '|pattern| is normally used to find a match in the buffer lines.  When a',
