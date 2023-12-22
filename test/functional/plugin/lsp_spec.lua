@@ -3936,12 +3936,15 @@ describe('LSP', function()
 
   describe('#dynamic vim.lsp._dynamic', function()
     it('supports dynamic registration', function()
+      ---@type string
       local root_dir = helpers.tmpname()
       os.remove(root_dir)
       mkdir(root_dir)
       local tmpfile = root_dir .. '/dynamic.foo'
       local file = io.open(tmpfile, 'w')
-      file:close()
+      if file then
+        file:close()
+      end
 
       exec_lua(create_server_definition)
       local result = exec_lua([[
@@ -3952,6 +3955,9 @@ describe('LSP', function()
           name = 'dynamic-test',
           cmd = server.cmd,
           root_dir = root_dir,
+          get_language_id = function()
+            return "dummy-lang"
+          end,
           capabilities = {
             textDocument = {
               formatting = {
@@ -3985,6 +3991,13 @@ describe('LSP', function()
             {
               id = 'range-formatting',
               method = 'textDocument/rangeFormatting',
+              registerOptions = {
+              documentSelector = {
+                  {
+                    language = "dummy-lang"
+                  },
+                }
+              }
             },
           },
         }, { client_id = client_id })
@@ -4002,7 +4015,11 @@ describe('LSP', function()
         local function check(method, fname)
           local bufnr = fname and vim.fn.bufadd(fname) or nil
           local client = vim.lsp.get_client_by_id(client_id)
-          result[#result + 1] = {method = method, fname = fname, supported = client.supports_method(method, {bufnr = bufnr})}
+          result[#result + 1] = {
+            method = method,
+            fname = fname,
+            supported = client.supports_method(method, {bufnr = bufnr})
+          }
         end
 
 
