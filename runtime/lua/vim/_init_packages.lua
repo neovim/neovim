@@ -55,6 +55,7 @@ vim._submodules = {
   inspect = true,
   version = true,
   fs = true,
+  glob = true,
   iter = true,
   re = true,
   text = true,
