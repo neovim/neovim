@@ -604,24 +604,24 @@ static void draw_lnum_col(win_T *wp, winlinevars_T *wlv, int sign_num_attr, int 
   }
 }
 
-/// Prepare and build the 'statuscolumn' string for line "lnum" in window "wp".
+/// Build and draw the 'statuscolumn' string for line "lnum" in window "wp".
 /// Fill "stcp" with the built status column string and attributes.
-/// This can be called three times per win_line(), once for virt_lines, once for
-/// the start of the buffer line "lnum" and once for the wrapped lines.
 ///
 /// @param[out] stcp  Status column attributes
-static void get_statuscol_str(win_T *wp, linenr_T lnum, int virtnum, statuscol_T *stcp)
+static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int virtnum,
+                           statuscol_T *stcp)
 {
   // When called for the first non-filler row of line "lnum" set num v:vars
   linenr_T relnum = virtnum == 0 ? abs(get_cursor_rel_lnum(wp, lnum)) : -1;
 
+  char buf[MAXPATHL];
   // When a buffer's line count has changed, make a best estimate for the full
   // width of the status column by building with "w_nrwidth_line_count". Add
   // potentially truncated width and rebuild before drawing anything.
   if (wp->w_statuscol_line_count != wp->w_nrwidth_line_count) {
     wp->w_statuscol_line_count = wp->w_nrwidth_line_count;
     set_vim_var_nr(VV_VIRTNUM, 0);
-    build_statuscol_str(wp, wp->w_nrwidth_line_count, 0, stcp);
+    build_statuscol_str(wp, wp->w_nrwidth_line_count, 0, buf, stcp);
     if (stcp->truncate > 0) {
       // Add truncated width to avoid unnecessary redraws
       int addwidth = MIN(stcp->truncate, MAX_NUMBERWIDTH - wp->w_nrwidth);
@@ -634,7 +634,7 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int virtnum, statuscol_T
   }
   set_vim_var_nr(VV_VIRTNUM, virtnum);
 
-  int width = build_statuscol_str(wp, lnum, relnum, stcp);
+  int width = build_statuscol_str(wp, lnum, relnum, buf, stcp);
   // Force a redraw in case of error or when truncated
   if (*wp->w_p_stc == NUL || (stcp->truncate > 0 && wp->w_nrwidth < MAX_NUMBERWIDTH)) {
     if (stcp->truncate > 0) {  // Avoid truncating 'statuscolumn'
@@ -648,44 +648,26 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int virtnum, statuscol_T
     return;
   }
 
-  // Reset text/highlight pointer and current attr for new line
-  stcp->textp = stcp->text;
-  stcp->hlrecp = stcp->hlrec;
-  stcp->cur_attr = stcp->num_attr;
-  stcp->text_end = stcp->text + strlen(stcp->text);
+  char *p = buf;
+  char transbuf[MAXPATHL];
+  int attr = stcp->num_attr;
+  size_t len = strlen(buf);
 
-  int fill = stcp->width - width;
-  if (fill > 0) {
-    // Fill up with ' '
-    memset(stcp->text_end, ' ', (size_t)fill);
-    *(stcp->text_end += fill) = NUL;
+  // Draw each segment with the specified highlighting.
+  for (stl_hlrec_t *sp = stcp->hlrec; sp->start != NULL; sp++) {
+    ptrdiff_t textlen = sp->start - p;
+    // Make all characters printable.
+    size_t translen = transstr_buf(p, textlen, transbuf, MAXPATHL, true);
+    draw_col_buf(wp, wlv, transbuf, translen, attr, false);
+    p = sp->start;
+    int hl = sp->userhl;
+    attr = hl < 0 ? syn_id2attr(-hl) : stcp->num_attr;
   }
-}
+  size_t translen = transstr_buf(p, buf + len - p, transbuf, MAXPATHL, true);
+  draw_col_buf(wp, wlv, transbuf, translen, attr, false);
 
-/// Get information needed to display the next segment in the 'statuscolumn'.
-///
-/// @param stcp  Status column attributes
-/// @param[in,out]  wlv
-static void draw_statuscol(win_T *wp, statuscol_T *stcp, winlinevars_T *wlv)
-{
-  do {
-    int attr = stcp->cur_attr;
-    char *start = stcp->textp;
-    stcp->textp = stcp->hlrecp->start ? stcp->hlrecp->start : stcp->text_end;
-    ptrdiff_t len = stcp->textp - start;
-    // Prepare for next highlight section if not yet at the end
-    if (stcp->textp < stcp->text_end) {
-      int hl = stcp->hlrecp->userhl;
-      stcp->cur_attr = hl < 0 ? syn_id2attr(-hl) : stcp->num_attr;
-      stcp->hlrecp++;
-    }
-    // Skip over empty highlight sections
-    if (len) {
-      static char transbuf[(MAX_NUMBERWIDTH + 9 + 9 * SIGN_WIDTH) * MB_MAXBYTES + 1];
-      size_t translen = transstr_buf(start, len, transbuf, sizeof transbuf, true);
-      draw_col_buf(wp, wlv, transbuf, translen, attr, false);
-    }
-  } while (stcp->textp < stcp->text_end);
+  // Fill up with ' '
+  draw_col_fill(wlv, ' ', stcp->width - width, stcp->num_attr);
 }
 
 static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
@@ -1550,19 +1532,16 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         if (sign_num_attr == 0) {
           statuscol.num_attr = get_line_number_attr(wp, &wlv);
         }
-        if (statuscol.textp == NULL) {
-          v = (ptr - line);
-          get_statuscol_str(wp, lnum, wlv.row - startrow - wlv.filler_lines, &statuscol);
-          if (!end_fill) {
-            // Get the line again as evaluating 'statuscolumn' may free it.
-            line = ml_get_buf(wp->w_buffer, lnum);
-            ptr = line + v;
-          }
-          if (wp->w_redr_statuscol) {
-            break;
-          }
+        v = (ptr - line);
+        draw_statuscol(wp, &wlv, lnum, wlv.row - startrow - wlv.filler_lines, &statuscol);
+        if (wp->w_redr_statuscol) {
+          break;
         }
-        draw_statuscol(wp, &statuscol, &wlv);
+        if (!end_fill) {
+          // Get the line again as evaluating 'statuscolumn' may free it.
+          line = ml_get_buf(wp->w_buffer, lnum);
+          ptr = line + v;
+        }
       } else {
         // draw builtin info columns: fold, sign, number
         draw_foldcolumn(wp, &wlv);
@@ -2906,12 +2885,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       if (wlv.filler_todo <= 0) {
         wlv.need_showbreak = true;
       }
-      if (statuscol.draw) {
-        if (vim_strchr(p_cpo, CPO_NUMCOL) && wlv.row > startrow + wlv.filler_lines) {
-          statuscol.draw = false;  // don't draw status column if "n" is in 'cpo'
-        } else {
-          statuscol.textp = NULL;  // re-evaluate with new v:virtnum
-        }
+      if (statuscol.draw && vim_strchr(p_cpo, CPO_NUMCOL)
+          && wlv.row > startrow + wlv.filler_lines) {
+        statuscol.draw = false;  // don't draw status column if "n" is in 'cpo'
       }
       wlv.filler_todo--;
       virt_line_offset = -1;
