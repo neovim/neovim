@@ -4476,6 +4476,25 @@ l5
     ]]}
   end)
 
+  it ('can add a single sign (with sign_name)', function()
+    insert(example_test3)
+    feed 'gg'
+
+    local sign_mark_id = meths.buf_set_extmark(0, ns, 1, -1, {sign_text='S', sign_name="SignName"})
+
+    screen:expect{grid=[[
+      {1:  }^l1                                              |
+      S l2                                              |
+      {1:  }l3                                              |
+      {1:  }l4                                              |
+      {1:  }l5                                              |
+      {1:  }                                                |
+      {2:~                                                 }|*3
+                                                        |
+    ]]}
+    eq('SignName', meths.buf_get_extmark_by_id(0, ns, sign_mark_id, {details=true})[3].sign_name)
+  end)
+
   it('can add a single sign and text highlight', function()
     insert(example_test3)
     feed 'gg'

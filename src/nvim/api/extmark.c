@@ -671,6 +671,9 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
       goto error;
     });
     sign.flags |= kSHIsSign;
+    if (HAS_KEY(opts, set_extmark, sign_name)) {
+      sign.sign_name = xstrdup(opts->sign_name.data);
+    }
   }
 
   bool right_gravity = GET_BOOL_OR_TRUE(opts, set_extmark, right_gravity);
@@ -823,6 +826,10 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   return (Integer)id;
 
 error:
+  if (sign.sign_name) {
+    xfree(sign.sign_name);
+    api_free_string(opts->sign_name);
+  }
   clear_virttext(&virt_text.data.virt_text);
   clear_virtlines(&virt_lines.data.virt_lines);
   return 0;
