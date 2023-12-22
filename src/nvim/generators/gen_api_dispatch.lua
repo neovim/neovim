@@ -106,7 +106,7 @@ for i = 6, #arg do
   end
   headers[#headers + 1] = parts[#parts - 1] .. '/' .. parts[#parts]
 
-  local input = io.open(full_path, 'rb')
+  local input = assert(io.open(full_path, 'rb'))
 
   local tmp = c_grammar.grammar:match(input:read('*all'))
   for j = 1, #tmp do
@@ -216,16 +216,16 @@ end
 
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
-local funcs_metadata_output = io.open(funcs_metadata_outputf, 'wb')
+local funcs_metadata_output = assert(io.open(funcs_metadata_outputf, 'wb'))
 local packed = mpack.encode(exported_functions)
 local dump_bin_array = require('generators.dump_bin_array')
 dump_bin_array(funcs_metadata_output, 'funcs_metadata', packed)
 funcs_metadata_output:close()
 
 -- start building the dispatch wrapper output
-local output = io.open(dispatch_outputf, 'wb')
+local output = assert(io.open(dispatch_outputf, 'wb'))
 
-local keysets_defs = io.open(keysets_outputf, 'wb')
+local keysets_defs = assert(io.open(keysets_outputf, 'wb'))
 
 -- ===========================================================================
 -- NEW API FILES MUST GO HERE.
@@ -256,6 +256,8 @@ output:write([[
 #include "nvim/ui_client.h"
 
 ]])
+
+keysets_defs:write('// IWYU pragma: private, include "nvim/api/private/dispatch.h"\n\n')
 
 for _, k in ipairs(keysets) do
   local c_name = {}
@@ -633,7 +635,7 @@ output:write(hashfun)
 output:close()
 
 functions.keysets = keysets
-local mpack_output = io.open(mpack_outputf, 'wb')
+local mpack_output = assert(io.open(mpack_outputf, 'wb'))
 mpack_output:write(mpack.encode(functions))
 mpack_output:close()
 
@@ -653,7 +655,7 @@ local function write_shifted_output(_, str)
 end
 
 -- start building lua output
-output = io.open(lua_c_bindings_outputf, 'wb')
+output = assert(io.open(lua_c_bindings_outputf, 'wb'))
 
 output:write([[
 #include <lua.h>

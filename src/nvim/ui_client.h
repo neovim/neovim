@@ -39,6 +39,6 @@ EXTERN bool ui_client_forward_stdin INIT( = false);
 // uncrustify:off
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_client.h.generated.h"
-# include "ui_events_client.h.generated.h"  // IWYU pragma: export
+# include "ui_events_client.h.generated.h"
 #endif
 // uncrustify:on

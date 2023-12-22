@@ -2,7 +2,6 @@
 // - Put it in options.lua
 // - For a global option: Add a variable for it in option_vars.h.
 // - For a buffer or window local option:
-//   - Add a BV_XX or WV_XX entry to option_vars.h
 //   - Add a variable to the window or buffer struct in buffer_defs.h.
 //   - For a window option, add some code to copy_winopt().
 //   - For a window string option, add code to check_winopt()
