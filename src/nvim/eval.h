@@ -7,8 +7,9 @@
 #include "nvim/channel_defs.h"  // IWYU pragma: keep
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
-#include "nvim/event/time.h"
-#include "nvim/ex_cmds_defs.h"
+#include "nvim/eval_defs.h"  // IWYU pragma: export
+#include "nvim/event/defs.h"
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/grid_defs.h"  // IWYU pragma: keep
 #include "nvim/hashtab_defs.h"
 #include "nvim/macros_defs.h"
@@ -177,24 +178,8 @@ typedef enum {
   VV_VIRTNUM,
 } VimVarIndex;
 
-/// All recognized msgpack types
-typedef enum {
-  kMPNil,
-  kMPBoolean,
-  kMPInteger,
-  kMPFloat,
-  kMPString,
-  kMPBinary,
-  kMPArray,
-  kMPMap,
-  kMPExt,
-} MessagePackType;
-#define LAST_MSGPACK_TYPE kMPExt
-
 /// Array mapping values from MessagePackType to corresponding list pointers
-extern const list_T *eval_msgpack_type_lists[LAST_MSGPACK_TYPE + 1];
-
-#undef LAST_MSGPACK_TYPE
+extern const list_T *eval_msgpack_type_lists[NUM_MSGPACK_TYPES];
 
 // Struct passed to get_v_event() and restore_v_event().
 typedef struct {
@@ -258,31 +243,16 @@ typedef enum {
   kDictListItems,  ///< List dictionary contents: [keys, values].
 } DictListType;
 
-typedef int (*ex_unletlock_callback)(lval_T *, char *, exarg_T *, int);
-
 // Used for checking if local variables or arguments used in a lambda.
 extern bool *eval_lavars_used;
 
-/// Struct passed through eval() functions.
-/// See EVALARG_EVALUATE for a fixed value with eval_flags set to EVAL_EVALUATE.
-typedef struct {
-  int eval_flags;     ///< EVAL_ flag values below
-
-  /// copied from exarg_T when "getline" is "getsourceline". Can be NULL.
-  LineGetter eval_getline;
-  void *eval_cookie;  ///< argument for eval_getline()
-
-  /// pointer to the last line obtained with getsourceline()
-  char *eval_tofree;
-} evalarg_T;
+// Character used as separated in autoload function/variable names.
+#define AUTOLOAD_CHAR '#'
 
 /// Flag for expression evaluation.
 enum {
   EVAL_EVALUATE = 1,  ///< when missing don't actually evaluate
 };
-
-// Character used as separated in autoload function/variable names.
-#define AUTOLOAD_CHAR '#'
 
 /// Passed to an eval() function to enable evaluation.
 EXTERN evalarg_T EVALARG_EVALUATE INIT( = { EVAL_EVALUATE, NULL, NULL, NULL });

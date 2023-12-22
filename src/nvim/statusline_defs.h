@@ -1,11 +1,8 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stddef.h>
 
 #include "nvim/fold_defs.h"
-#include "nvim/macros_defs.h"
-#include "nvim/os/os_defs.h"
 #include "nvim/sign_defs.h"
 
 /// Status line click definition

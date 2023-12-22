@@ -996,6 +996,48 @@ static inline void hms_dealloc(HistoryMergerState *const hms_p)
 #define HMS_ITER(hms_p, cur_entry, code) \
   HMLL_FORALL(&((hms_p)->hmll), cur_entry, code)
 
+/// Iterate over global variables
+///
+/// @warning No modifications to global variable dictionary must be performed
+///          while iteration is in progress.
+///
+/// @param[in]   iter   Iterator. Pass NULL to start iteration.
+/// @param[out]  name   Variable name.
+/// @param[out]  rettv  Variable value.
+///
+/// @return Pointer that needs to be passed to next `var_shada_iter` invocation
+///         or NULL to indicate that iteration is over.
+static const void *var_shada_iter(const void *const iter, const char **const name, typval_T *rettv,
+                                  var_flavour_T flavour)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
+{
+  const hashitem_T *hi;
+  const hashitem_T *hifirst = globvarht.ht_array;
+  const size_t hinum = (size_t)globvarht.ht_mask + 1;
+  *name = NULL;
+  if (iter == NULL) {
+    hi = globvarht.ht_array;
+    while ((size_t)(hi - hifirst) < hinum
+           && (HASHITEM_EMPTY(hi)
+               || !(var_flavour(hi->hi_key) & flavour))) {
+      hi++;
+    }
+    if ((size_t)(hi - hifirst) == hinum) {
+      return NULL;
+    }
+  } else {
+    hi = (const hashitem_T *)iter;
+  }
+  *name = TV_DICT_HI2DI(hi)->di_key;
+  tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
+  while ((size_t)(++hi - hifirst) < hinum) {
+    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flavour)) {
+      return hi;
+    }
+  }
+  return NULL;
+}
+
 /// Find buffer for given buffer name (cached)
 ///
 /// @param[in,out]  fname_bufs  Cache containing fname to buffer mapping.

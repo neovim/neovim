@@ -13,6 +13,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
@@ -35,6 +36,7 @@
 #include "nvim/path.h"
 #include "nvim/pos_defs.h"
 #include "nvim/runtime.h"
+#include "nvim/strings.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
@@ -516,6 +518,50 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
     did_lcd = true;
   }
 
+  return OK;
+}
+
+static int store_session_globals(FILE *fd)
+{
+  TV_DICT_ITER(&globvardict, this_var, {
+    if ((this_var->di_tv.v_type == VAR_NUMBER
+         || this_var->di_tv.v_type == VAR_STRING)
+        && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
+      // Escape special characters with a backslash.  Turn a LF and
+      // CR into \n and \r.
+      char *const p = vim_strsave_escaped(tv_get_string(&this_var->di_tv), "\\\"\n\r");
+      for (char *t = p; *t != NUL; t++) {
+        if (*t == '\n') {
+          *t = 'n';
+        } else if (*t == '\r') {
+          *t = 'r';
+        }
+      }
+      if ((fprintf(fd, "let %s = %c%s%c",
+                   this_var->di_key,
+                   ((this_var->di_tv.v_type == VAR_STRING) ? '"' : ' '),
+                   p,
+                   ((this_var->di_tv.v_type == VAR_STRING) ? '"' : ' ')) < 0)
+          || put_eol(fd) == FAIL) {
+        xfree(p);
+        return FAIL;
+      }
+      xfree(p);
+    } else if (this_var->di_tv.v_type == VAR_FLOAT
+               && var_flavour(this_var->di_key) == VAR_FLAVOUR_SESSION) {
+      float_T f = this_var->di_tv.vval.v_float;
+      int sign = ' ';
+
+      if (f < 0) {
+        f = -f;
+        sign = '-';
+      }
+      if ((fprintf(fd, "let %s = %c%f", this_var->di_key, sign, f) < 0)
+          || put_eol(fd) == FAIL) {
+        return FAIL;
+      }
+    }
+  });
   return OK;
 }
 

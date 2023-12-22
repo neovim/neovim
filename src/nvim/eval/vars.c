@@ -43,6 +43,8 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
+typedef int (*ex_unletlock_callback)(lval_T *, char *, exarg_T *, int);
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/vars.c.generated.h"
 #endif

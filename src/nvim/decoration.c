@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/helpers.h"
