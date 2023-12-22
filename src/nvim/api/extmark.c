@@ -665,9 +665,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   if (HAS_KEY(opts, set_extmark, sign_text)) {
-    sign.text.ptr = NULL;
-    VALIDATE_S(init_sign_text(NULL, &sign.text.ptr, opts->sign_text.data),
-               "sign_text", "", {
+    sign.text[0] = 0;
+    VALIDATE_S(init_sign_text(NULL, sign.text, opts->sign_text.data), "sign_text", "", {
       goto error;
     });
     sign.flags |= kSHIsSign;
@@ -785,7 +784,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
     uint32_t decor_indexed = DECOR_ID_INVALID;
     if (sign.flags & kSHIsSign) {
       decor_indexed = decor_put_sh(sign);
-      if (sign.text.ptr != NULL) {
+      if (sign.text[0]) {
         decor_flags |= MT_FLAG_DECOR_SIGNTEXT;
       }
       if (sign.number_hl_id || sign.line_hl_id || sign.cursorline_hl_id) {

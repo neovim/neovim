@@ -415,8 +415,8 @@ describe('Signs', function()
       feed('gg100aa<Esc>')
       screen:expect([[
         {1: >> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-            aa^a                                              |
+        {8:    }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+        {8:    }aa^a                                              |
         {8:  2 }b                                                |
         {6:  3 }c                                                |
         {6:  4 }                                                 |
@@ -430,10 +430,10 @@ describe('Signs', function()
       feed('<C-Y>')
       -- number column on virtual lines should be empty
       screen:expect([[
-            VIRT LINES                                       |
+        {6:    }VIRT LINES                                       |
         {1: >> }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
-            aa^a                                              |
+        {8:    }aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+        {8:    }aa^a                                              |
         {8:  2 }b                                                |
         {6:  3 }c                                                |
         {6:  4 }                                                 |

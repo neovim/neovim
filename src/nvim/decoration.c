@@ -5,6 +5,7 @@
 
 #include "nvim/api/extmark.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
@@ -19,6 +20,7 @@
 #include "nvim/move.h"
 #include "nvim/option_vars.h"
 #include "nvim/pos_defs.h"
+#include "nvim/sign.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "decoration.c.generated.h"
@@ -158,7 +160,7 @@ DecorSignHighlight decor_sh_from_inline(DecorHighlightInline item)
   DecorSignHighlight conv = {
     .flags = item.flags,
     .priority = item.priority,
-    .text.sc[0] = item.conceal_char,
+    .text[0] = item.conceal_char,
     .hl_id = item.hl_id,
     .number_hl_id = 0,
     .line_hl_id = 0,
@@ -207,7 +209,7 @@ void buf_put_decor_sh(buf_T *buf, DecorSignHighlight *sh, int row1, int row2)
   if (sh->flags & kSHIsSign) {
     sh->sign_add_id = sign_add_id++;
     buf->b_signs++;
-    if (sh->text.ptr) {
+    if (sh->text[0]) {
       buf->b_signs_with_text++;
       buf_signcols_invalidate_range(buf, row1, row2, 1);
     }
@@ -253,7 +255,7 @@ void buf_remove_decor_sh(buf_T *buf, int row1, int row2, DecorSignHighlight *sh)
   if (sh->flags & kSHIsSign) {
     assert(buf->b_signs > 0);
     buf->b_signs--;
-    if (sh->text.ptr) {
+    if (sh->text[0]) {
       assert(buf->b_signs_with_text > 0);
       buf->b_signs_with_text--;
       if (row2 >= row1) {
@@ -312,9 +314,6 @@ void decor_free_inner(DecorVirtText *vt, uint32_t first_idx)
   while (idx != DECOR_ID_INVALID) {
     DecorSignHighlight *sh = &kv_A(decor_items, idx);
     if (sh->flags & kSHIsSign) {
-      xfree(sh->text.ptr);
-    }
-    if (sh->flags & kSHIsSign) {
       xfree(sh->sign_name);
     }
     sh->flags = 0;
@@ -362,8 +361,11 @@ void decor_check_invalid_glyphs(void)
 {
   for (size_t i = 0; i < kv_size(decor_items); i++) {
     DecorSignHighlight *it = &kv_A(decor_items, i);
-    if ((it->flags & kSHConceal) && schar_high(it->text.sc[0])) {
-      it->text.sc[0] = schar_from_char(schar_get_first_codepoint(it->text.sc[0]));
+    int width = (it->flags & kSHIsSign) ? SIGN_WIDTH : ((it->flags & kSHConceal) ? 1 : 0);
+    for (int j = 0; j < width; j++) {
+      if (schar_high(it->text[j])) {
+        it->text[j] = schar_from_char(schar_get_first_codepoint(it->text[j]));
+      }
     }
   }
 }
@@ -661,7 +663,7 @@ next_mark:
       if (item.start_row == state->row && item.start_col == col) {
         DecorSignHighlight *sh = &item.data.sh;
         conceal = 2;
-        conceal_char = sh->text.sc[0];
+        conceal_char = sh->text[0];
         state->col_until = MIN(state->col_until, item.start_col);
         conceal_attr = item.attr_id;
       }
@@ -729,7 +731,7 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
   while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
     if (!mt_invalid(pair.start) && mt_decor_sign(pair.start)) {
       DecorSignHighlight *sh = decor_find_sign(mt_decor(pair.start));
-      num_text += (sh->text.ptr != NULL);
+      num_text += (sh->text[0] != NUL);
       kv_push(signs, ((SignItem){ sh, pair.start.id }));
     }
   }
@@ -741,7 +743,7 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
     }
     if (!mt_end(mark) && !mt_invalid(mark) && mt_decor_sign(mark)) {
       DecorSignHighlight *sh = decor_find_sign(mt_decor(mark));
-      num_text += (sh->text.ptr != NULL);
+      num_text += (sh->text[0] != NUL);
       kv_push(signs, ((SignItem){ sh, mark.id }));
     }
 
@@ -755,8 +757,8 @@ void decor_redraw_signs(win_T *wp, buf_T *buf, int row, SignTextAttrs sattrs[], 
 
     for (size_t i = 0; i < kv_size(signs); i++) {
       DecorSignHighlight *sh = kv_A(signs, i).sh;
-      if (idx >= 0 && sh->text.ptr) {
-        sattrs[idx].text = sh->text.ptr;
+      if (idx >= 0 && sh->text[0]) {
+        memcpy(sattrs[idx].text, sh->text, SIGN_WIDTH * sizeof(sattr_T));
         sattrs[idx--].hl_id = sh->hl_id;
       }
       if (*num_id == 0) {
@@ -1033,7 +1035,7 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
     PUT(*dict, "hl_eol", BOOLEAN_OBJ(sh_hl.flags & kSHHlEol));
     if (sh_hl.flags & kSHConceal) {
       char buf[MAX_SCHAR_SIZE];
-      schar_get(buf, sh_hl.text.sc[0]);
+      schar_get(buf, sh_hl.text[0]);
       PUT(*dict, "conceal", CSTR_TO_OBJ(buf));
     }
 
@@ -1081,8 +1083,10 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
   }
 
   if (sh_sign.flags & kSHIsSign) {
-    if (sh_sign.text.ptr) {
-      PUT(*dict, "sign_text", CSTR_TO_OBJ(sh_sign.text.ptr));
+    if (sh_sign.text[0]) {
+      char buf[SIGN_WIDTH * MAX_SCHAR_SIZE];
+      describe_sign_text(buf, sh_sign.text);
+      PUT(*dict, "sign_text", CSTR_TO_OBJ(buf));
     }
 
     if (sh_sign.sign_name) {
