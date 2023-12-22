@@ -18,7 +18,7 @@
 #include "nvim/mark_defs.h"
 #include "nvim/marktree_defs.h"
 #include "nvim/memline_defs.h"
-#include "nvim/option_vars.h"
+#include "nvim/option_defs.h"
 #include "nvim/os/fs_defs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp_defs.h"

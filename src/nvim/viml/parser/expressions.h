@@ -8,8 +8,6 @@
 #include "nvim/types_defs.h"
 #include "nvim/viml/parser/parser.h"
 
-struct expr_ast_node;
-
 // Defines whether to ignore case:
 //    ==   kCCStrategyUseOption
 //    ==#  kCCStrategyMatchCase
