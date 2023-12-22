@@ -663,7 +663,6 @@ static void get_statuscol_str(win_T *wp, linenr_T lnum, int virtnum, statuscol_T
 }
 
 /// Get information needed to display the next segment in the 'statuscolumn'.
-/// If not yet at the end, prepare for next segment and decrement "wlv->draw_state".
 ///
 /// @param stcp  Status column attributes
 /// @param[in,out]  wlv
@@ -671,22 +670,19 @@ static void draw_statuscol(win_T *wp, statuscol_T *stcp, winlinevars_T *wlv)
 {
   do {
     int attr = stcp->cur_attr;
-    char *text = stcp->textp;
-    char *section_end = stcp->hlrecp->start ? stcp->hlrecp->start : stcp->text_end;
-    ptrdiff_t len = section_end - text;
+    char *start = stcp->textp;
+    stcp->textp = stcp->hlrecp->start ? stcp->hlrecp->start : stcp->text_end;
+    ptrdiff_t len = stcp->textp - start;
     // Prepare for next highlight section if not yet at the end
-    if (section_end < stcp->text_end) {
+    if (stcp->textp < stcp->text_end) {
       int hl = stcp->hlrecp->userhl;
-      stcp->textp = stcp->hlrecp->start;
       stcp->cur_attr = hl < 0 ? syn_id2attr(-hl) : stcp->num_attr;
       stcp->hlrecp++;
-    } else {
-      stcp->textp = section_end;
     }
     // Skip over empty highlight sections
     if (len) {
       static char transbuf[(MAX_NUMBERWIDTH + 9 + 9 * SIGN_WIDTH) * MB_MAXBYTES + 1];
-      size_t translen = transstr_buf(text, len, transbuf, sizeof transbuf, true);
+      size_t translen = transstr_buf(start, len, transbuf, sizeof transbuf, true);
       draw_col_buf(wp, wlv, transbuf, translen, attr, false);
     }
   } while (stcp->textp < stcp->text_end);
@@ -1582,7 +1578,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       win_col_offset = wlv.off;
 
       // Check if 'breakindent' applies and show it.
-      // May change wlv.draw_state to WL_BRI or WL_BRI - 1.
       if (!wp->w_briopt_sbr) {
         handle_breakindent(wp, &wlv);
       }
