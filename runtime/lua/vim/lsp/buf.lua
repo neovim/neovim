@@ -266,6 +266,9 @@ end
 ---     - name (string|nil):
 ---         Restrict clients used for rename to ones where client.name matches
 ---         this field.
+---     - notify (boolean|nil):
+---         After successful renaming, show a notification how many occurrences
+---         were renamed in how many files. Defaults to false.
 function M.rename(new_name, options)
   options = options or {}
   local bufnr = options.bufnr or api.nvim_get_current_buf()
@@ -336,7 +339,9 @@ function M.rename(new_name, options)
         or vim.lsp.handlers[ms.textDocument_rename]
       client.request(ms.textDocument_rename, params, function(...)
         handler(...)
-        rename_notify(...)
+        if options.notify then
+          rename_notify(...)
+        end
         try_use_client(next(clients, idx))
       end, bufnr)
     end
