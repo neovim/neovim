@@ -964,21 +964,21 @@ An alternative is to switch to the C++ highlighting: >
 Variable		Highlight ~
 *c_gnu*			GNU gcc specific items
 *c_comment_strings*	strings and numbers inside a comment
-*c_space_errors*		trailing white space and spaces before a <Tab>
-*c_no_trail_space_error*	 ... but no trailing spaces
+*c_space_errors*	trailing white space and spaces before a <Tab>
+*c_no_trail_space_error*   ... but no trailing spaces
 *c_no_tab_space_error*	 ... but no spaces before a <Tab>
 *c_no_bracket_error*	don't highlight {}; inside [] as errors
 *c_no_curly_error*	don't highlight {}; inside [] and () as errors;
-				except { and } in first column
-				Default is to highlight them, otherwise you
-				can't spot a missing ")".
+			 ...except { and } in first column
+			Default is to highlight them, otherwise you
+			can't spot a missing ")".
 *c_curly_error*		highlight a missing } by finding all pairs; this
 			forces syncing from the start of the file, can be slow
 *c_no_ansi*		don't do standard ANSI types and constants
-*c_ansi_typedefs*		 ... but do standard ANSI types
+*c_ansi_typedefs*	 ... but do standard ANSI types
 *c_ansi_constants*	 ... but do standard ANSI constants
 *c_no_utf*		don't highlight \u and \U in strings
-*c_syntax_for_h*		for `*.h` files use C syntax instead of C++ and use objc
+*c_syntax_for_h*	for `*.h` files use C syntax instead of C++ and use objc
 			syntax instead of objcpp
 *c_no_if0*		don't highlight "#if 0" blocks as comments
 *c_no_cformat*		don't highlight %-formats in strings
