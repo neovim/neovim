@@ -226,7 +226,7 @@ void ex_menu(exarg_T *eap)
     } else {
       map_buf = NULL;
       map_to = replace_termcodes(map_to, strlen(map_to), &map_buf, 0,
-                                 REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
+                                 REPTERM_DO_LT, NULL, p_cpo);
     }
     menuarg.modes = modes;
     menuarg.noremap[0] = noremap;

@@ -912,7 +912,6 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/globals.h",
             "src/nvim/grid.h",
             "src/nvim/highlight.h",
-            "src/nvim/keycodes.h",
             "src/nvim/lua/executor.h",
             "src/nvim/main.h",
             "src/nvim/mark.h",

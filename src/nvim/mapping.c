@@ -303,11 +303,11 @@ static void showmap(mapblock_T *mp, bool local)
 /// @param[in] orig_rhs   Original mapping RHS, with characters to replace.
 /// @param[in] rhs_lua   Lua reference for Lua mappings.
 /// @param[in] orig_rhs_len   `strlen` of orig_rhs.
-/// @param[in] cpo_flags  See param docs for @ref replace_termcodes.
+/// @param[in] cpo_val  See param docs for @ref replace_termcodes.
 /// @param[out] mapargs   MapArguments struct holding the replaced strings.
 static bool set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs_len,
                                const char *const orig_rhs, const size_t orig_rhs_len,
-                               const LuaRef rhs_lua, const int cpo_flags,
+                               const LuaRef rhs_lua, const char *const cpo_val,
                                MapArguments *const mapargs)
 {
   char lhs_buf[128];
@@ -324,7 +324,7 @@ static bool set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
   const int flags = REPTERM_FROM_PART | REPTERM_DO_LT;
   char *bufarg = lhs_buf;
   char *replaced = replace_termcodes(orig_lhs, orig_lhs_len, &bufarg, 0,
-                                     flags, &did_simplify, cpo_flags);
+                                     flags, &did_simplify, cpo_val);
   if (replaced == NULL) {
     return false;
   }
@@ -332,7 +332,7 @@ static bool set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
   xstrlcpy(mapargs->lhs, replaced, sizeof(mapargs->lhs));
   if (did_simplify) {
     replaced = replace_termcodes(orig_lhs, orig_lhs_len, &bufarg, 0,
-                                 flags | REPTERM_NO_SIMPLIFY, NULL, cpo_flags);
+                                 flags | REPTERM_NO_SIMPLIFY, NULL, cpo_val);
     if (replaced == NULL) {
       return false;
     }
@@ -342,14 +342,14 @@ static bool set_maparg_lhs_rhs(const char *const orig_lhs, const size_t orig_lhs
     mapargs->alt_lhs_len = 0;
   }
 
-  set_maparg_rhs(orig_rhs, orig_rhs_len, rhs_lua, 0, cpo_flags, mapargs);
+  set_maparg_rhs(orig_rhs, orig_rhs_len, rhs_lua, 0, cpo_val, mapargs);
 
   return true;
 }
 
 /// @see set_maparg_lhs_rhs
 static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len,
-                           const LuaRef rhs_lua, const scid_T sid, const int cpo_flags,
+                           const LuaRef rhs_lua, const scid_T sid, const char *const cpo_val,
                            MapArguments *const mapargs)
 {
   mapargs->rhs_lua = rhs_lua;
@@ -365,7 +365,7 @@ static void set_maparg_rhs(const char *const orig_rhs, const size_t orig_rhs_len
     } else {
       char *rhs_buf = NULL;
       char *replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf, sid,
-                                         REPTERM_DO_LT, NULL, cpo_flags);
+                                         REPTERM_DO_LT, NULL, cpo_val);
       mapargs->rhs_len = strlen(replaced);
       // NB: replace_termcodes may produce an empty string even if orig_rhs is non-empty
       // (e.g. a single ^V, see :h map-empty-rhs)
@@ -492,7 +492,7 @@ static int str_to_mapargs(const char *strargs, bool is_unmap, MapArguments *mapa
   size_t orig_rhs_len = strlen(rhs_start);
   if (!set_maparg_lhs_rhs(lhs_to_replace, orig_lhs_len,
                           rhs_start, orig_rhs_len, LUA_NOREF,
-                          CPO_TO_CPO_FLAGS, mapargs)) {
+                          p_cpo, mapargs)) {
     return 1;
   }
 
@@ -1103,7 +1103,7 @@ bool map_to_exists(const char *const str, const char *const modechars, const boo
 
   char *buf = NULL;
   const char *const rhs = replace_termcodes(str, strlen(str), &buf, 0,
-                                            REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
+                                            REPTERM_DO_LT, NULL, p_cpo);
 
 #define MAPMODE(mode, modechars, chr, modeflags) \
   do { \
@@ -1189,16 +1189,16 @@ static bool expand_buffer = false;
 /// wider than the original description. The caller has to free the string
 /// afterwards.
 ///
-/// @param cpo_flags  Value of various flags present in &cpo
+/// @param[in] cpo_val  See param docs for @ref replace_termcodes.
 ///
 /// @return  NULL when there is a problem.
-static char *translate_mapping(char *str_in, int cpo_flags)
+static char *translate_mapping(const char *const str_in, const char *const cpo_val)
 {
-  uint8_t *str = (uint8_t *)str_in;
+  const uint8_t *str = (const uint8_t *)str_in;
   garray_T ga;
   ga_init(&ga, 1, 40);
 
-  bool cpo_bslash = cpo_flags & FLAG_CPO_BSLASH;
+  const bool cpo_bslash = (vim_strchr(cpo_val, CPO_BSLASH) != NULL);
 
   for (; *str; str++) {
     int c = *str;
@@ -1377,7 +1377,7 @@ int ExpandMappings(char *pat, regmatch_T *regmatch, int *numMatches, char ***mat
         continue;
       }
 
-      char *p = translate_mapping(mp->m_keys, CPO_TO_CPO_FLAGS);
+      char *p = translate_mapping(mp->m_keys, p_cpo);
       if (p == NULL) {
         continue;
       }
@@ -1677,7 +1677,7 @@ char *eval_map_expr(mapblock_T *mp, int c)
   char *res = NULL;
 
   if (replace_keycodes) {
-    replace_termcodes(p, strlen(p), &res, 0, REPTERM_DO_LT, NULL, CPO_TO_CPO_FLAGS);
+    replace_termcodes(p, strlen(p), &res, 0, REPTERM_DO_LT, NULL, p_cpo);
   } else {
     // Escape K_SPECIAL in the result to be able to use the string as typeahead.
     res = vim_strsave_escape_ks(p);
@@ -2168,7 +2168,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   const int mode = get_map_mode((char **)&which, 0);
 
   char *keys_simplified = replace_termcodes(keys, strlen(keys), &keys_buf, 0,
-                                            flags, &did_simplify, CPO_TO_CPO_FLAGS);
+                                            flags, &did_simplify, p_cpo);
   mapblock_T *mp = NULL;
   int buffer_local;
   LuaRef rhs_lua;
@@ -2178,7 +2178,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     // When the lhs is being simplified the not-simplified keys are
     // preferred for printing, like in do_map().
     (void)replace_termcodes(keys, strlen(keys), &alt_keys_buf, 0,
-                            flags | REPTERM_NO_SIMPLIFY, NULL, CPO_TO_CPO_FLAGS);
+                            flags | REPTERM_NO_SIMPLIFY, NULL, p_cpo);
     rhs = check_map(alt_keys_buf, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
   }
 
@@ -2343,14 +2343,14 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   bool buffer = tv_dict_get_number(d, "buffer") != 0;
   // mode from the dict is not used
 
-  set_maparg_rhs(orig_rhs, strlen(orig_rhs), rhs_lua, sid, CPO_TO_CPO_FLAGS, &args);
+  set_maparg_rhs(orig_rhs, strlen(orig_rhs), rhs_lua, sid, p_cpo, &args);
 
   mapblock_T **map_table = buffer ? curbuf->b_maphash : maphash;
   mapblock_T **abbr_table = buffer ? &curbuf->b_first_abbr : &first_abbr;
 
   // Delete any existing mapping for this lhs and mode.
   MapArguments unmap_args = MAP_ARGUMENTS_INIT;
-  set_maparg_lhs_rhs(lhs, strlen(lhs), "", 0, LUA_NOREF, CPO_TO_CPO_FLAGS, &unmap_args);
+  set_maparg_lhs_rhs(lhs, strlen(lhs), "", 0, LUA_NOREF, p_cpo, &unmap_args);
   unmap_args.buffer = buffer;
   buf_do_map(MAPTYPE_UNMAP, &unmap_args, mode, is_abbr, curbuf);
   xfree(unmap_args.rhs);
@@ -2400,7 +2400,7 @@ void f_maplist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
         char *lhs = str2special_save(mp->m_keys, true, false);
         (void)replace_termcodes(lhs, strlen(lhs), &keys_buf, 0, flags, &did_simplify,
-                                CPO_TO_CPO_FLAGS);
+                                p_cpo);
         xfree(lhs);
 
         Dictionary dict = mapblock_fill_dict(mp,
@@ -2440,7 +2440,7 @@ void f_mapcheck(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 void add_map(char *lhs, char *rhs, int mode, bool buffer)
 {
   MapArguments args = MAP_ARGUMENTS_INIT;
-  set_maparg_lhs_rhs(lhs, strlen(lhs), rhs, strlen(rhs), LUA_NOREF, 0, &args);
+  set_maparg_lhs_rhs(lhs, strlen(lhs), rhs, strlen(rhs), LUA_NOREF, p_cpo, &args);
   args.buffer = buffer;
 
   buf_do_map(MAPTYPE_NOREMAP, &args, mode, false, curbuf);
@@ -2720,7 +2720,7 @@ void modify_keymap(uint64_t channel_id, Buffer buffer, bool is_unmap, String mod
 
   if (!set_maparg_lhs_rhs(lhs.data, lhs.size,
                           rhs.data, rhs.size, lua_funcref,
-                          CPO_TO_CPO_FLAGS, &parsed_args)) {
+                          p_cpo, &parsed_args)) {
     api_set_error(err, kErrorTypeValidation,  "LHS exceeds maximum map length: %s", lhs.data);
     goto fail_and_free;
   }
