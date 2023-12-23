@@ -4,8 +4,8 @@
 #include <stddef.h>
 
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
-#include "nvim/eval.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
+#include "nvim/eval_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/hashtab_defs.h"  // IWYU pragma: keep
 #include "nvim/pos_defs.h"

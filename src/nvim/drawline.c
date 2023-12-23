@@ -36,6 +36,7 @@
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/option_vars.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/quickfix.h"
