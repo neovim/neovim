@@ -189,14 +189,14 @@ end
 
 ---@class vim.lsp.rpc.Error
 ---@field code integer RPC error code defined by JSON RPC
----@field message string? arbitrary message to send to server
----@field data any? arbitrary data to send to server
+---@field message? string arbitrary message to send to server
+---@field data? any arbitrary data to send to server
 
 --- Creates an RPC response object/table.
 ---
 ---@param code integer RPC error code defined by JSON RPC
----@param message string? arbitrary message to send to server
----@param data any? arbitrary data to send to server
+---@param message? string arbitrary message to send to server
+---@param data? any arbitrary data to send to server
 ---@return vim.lsp.rpc.Error
 function M.rpc_response_error(code, message, data)
   -- TODO should this error or just pick a sane error (like InternalError)?
@@ -339,10 +339,10 @@ end
 --- Sends a request to the LSP server and runs {callback} upon response.
 ---
 ---@param method string The invoked LSP method
----@param params table? Parameters for the invoked LSP method
----@param callback fun(err: lsp.ResponseError?, result: any) Callback to invoke
----@param notify_reply_callback function? Callback to invoke as soon as a request is no longer pending
----@return boolean success, integer? request_id true, request_id if request could be sent, `false` if not
+---@param params? table Parameters for the invoked LSP method
+---@param callback fun(err?: lsp.ResponseError, result: any) Callback to invoke
+---@param notify_reply_callback? function Callback to invoke as soon as a request is no longer pending
+---@return boolean success, integer request_id? true, request_id if request could be sent, `false` if not
 function Client:request(method, params, callback, notify_reply_callback)
   validate({
     callback = { callback, 'f' },
@@ -564,8 +564,8 @@ end
 --- @class RpcClientPublic
 --- @field is_closing fun(): boolean
 --- @field terminate fun()
---- @field request fun(method: string, params: table?, callback: function, notify_reply_callbacks?: function)
---- @field notify fun(methid: string, params: table?): boolean
+--- @field request fun(method: string, params?: table, callback: function, notify_reply_callbacks?: function)
+--- @field notify fun(methid: string, params?: table): boolean
 
 ---@param client RpcClient
 ---@return RpcClientPublic
@@ -604,7 +604,7 @@ local function public_client(client)
   return result
 end
 
----@param dispatchers vim.lsp.rpc.Dispatchers?
+---@param dispatchers? vim.lsp.rpc.Dispatchers
 ---@return vim.lsp.rpc.Dispatchers
 local function merge_dispatchers(dispatchers)
   if dispatchers then
@@ -698,7 +698,7 @@ end
 ---@field on_error vim.lsp.rpc.on_exit
 
 ---@class vim.lsp.rpc.PublicClient
----@field request fun(method: string, params: table?, callback: fun(err: lsp.ResponseError | nil, result: any), notify_reply_callback:function?)
+---@field request fun(method: string, params?: table, callback: fun(err: lsp.ResponseError | nil, result: any), notify_reply_callback:function?)
 ---@field notify fun(method: string, params: any)
 ---@field is_closing fun(): boolean
 ---@field terminate fun(): nil
@@ -765,17 +765,17 @@ end
 ---
 ---@param cmd string Command to start the LSP server.
 ---@param cmd_args string[] List of additional string arguments to pass to {cmd}.
----@param dispatchers vim.lsp.rpc.Dispatchers? Dispatchers for LSP message types. Valid
+---@param dispatchers? vim.lsp.rpc.Dispatchers Dispatchers for LSP message types. Valid
 ---dispatcher names are:
 --- - `"notification"`
 --- - `"server_request"`
 --- - `"on_error"`
 --- - `"on_exit"`
----@param extra_spawn_params vim.lsp.rpc.ExtraSpawnParams? Additional context for the LSP
+---@param extra_spawn_params? vim.lsp.rpc.ExtraSpawnParams Additional context for the LSP
 --- server process. May contain:
 --- - {cwd} (string) Working directory for the LSP server process
---- - {detached} (boolean?) Detach the LSP server process from the current process. Defaults to false on Windows and true otherwise.
---- - {env} (table?) Additional environment variables for LSP server process
+--- - {detached?} (boolean) Detach the LSP server process from the current process. Defaults to false on Windows and true otherwise.
+--- - {env?} (table) Additional environment variables for LSP server process
 ---@return vim.lsp.rpc.PublicClient? #Client RPC object, with these methods:
 --- - `notify()` |vim.lsp.rpc.notify()|
 --- - `request()` |vim.lsp.rpc.request()|
