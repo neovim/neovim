@@ -7,6 +7,8 @@ local command = helpers.command
 local eq, neq, matches = helpers.eq, helpers.neq, helpers.matches
 local getcompletion = helpers.funcs.getcompletion
 local feed = helpers.feed
+local source = helpers.source
+local exec_lua = helpers.exec_lua
 
 describe(':checkhealth', function()
   it("detects invalid $VIMRUNTIME", function()
@@ -366,33 +368,27 @@ describe(':checkhealth window', function()
   it("opens in tab", function()
     local screen = Screen.new(50, 25)
     screen:attach({ext_multigrid=true})
-    feed('ihello')
-    feed('<esc>')
+    -- create an empty buffer called "my_buff"
+    exec_lua 'vim.api.nvim_create_buf(false, true)'
+    command('file my_buff')
     command("checkhealth success1")
-    screen:expect{grid=[[
-    ## grid 1
-       + [No Name]  h//                                X|
-      [4:--------------------------------------------------]|*23
-      [3:--------------------------------------------------]|
-    ## grid 2 (hidden)
-      hello                                             |
-      ~                                                 |*23
-    ## grid 3
-                                                        |
-    ## grid 4
-      ^                                                  |
-      ──────────────────────────────────────────────────|
-      ────────────────────────────                      |
-      test_plug.success1: require("test_plug.success1.  |
-      health").check()                                  |
-                                                        |
-      report 1                                          |
-      - OK everything is fine                           |
-                                                        |
-      report 2                                          |
-      - OK nothing to see here                          |
-                                                        |
-      ~                                                 |*11
-    ]]}
+    -- define a function that collects all buffers in each tab
+    -- returns a dictionary like {tab1 = ["buf1", "buf2"], tab2 = ["buf3"]}
+    source([[
+        function CollectBuffersPerTab()
+                let buffs = {}
+                for i in range(tabpagenr('$'))
+                  let key = 'tab' . (i + 1)
+                  let value = []
+                  for j in tabpagebuflist(i + 1)
+                    call add(value, bufname(j))
+                  endfor
+                  let buffs[key] = value
+                endfor
+                return buffs
+        endfunction
+    ]])
+    local buffers_per_tab = exec_lua("return vim.fn.CollectBuffersPerTab()")
+    eq(buffers_per_tab, {tab1 = { "my_buff" }, tab2 = {"health://"}})
   end)
 end)
