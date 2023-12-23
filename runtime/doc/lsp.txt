@@ -2144,8 +2144,7 @@ rpc_response_error({code}, {message}, {data})
     Creates an RPC response object/table.
 
     Parameters: ~
-      • {code}     (integer) RPC error code defined in
-                   |vim.lsp.protocol.ErrorCodes|
+      • {code}     (integer) RPC error code defined by JSON RPC
       • {message}  string? arbitrary message to send to server
       • {data}     any? arbitrary data to send to server
 
