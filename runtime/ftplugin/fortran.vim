@@ -1,6 +1,6 @@
 " Vim settings file
-" Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, 77, 66)
-" Version:	(v54) 2023 December 5
+" Language:	Fortran 2023 (and Fortran 2018, 2008, 2003, 95, 90, 77, 66)
+" Version:	(v55) 2023 December 22
 " Maintainers:	Ajit J. Thakkar <ajit@unb.ca>; <https://ajit.ext.unb.ca/>
 " 	        Joshua Hollett <j.hollett@uwinnipeg.ca>
 " Usage:	For instructions, do :help fortran-plugin from Vim
@@ -110,7 +110,9 @@ if !exists("b:match_words")
   let b:match_ignorecase = 1
   let b:match_words =
     \ '(:),' .
-    \ '\<select\s*case\>:' . s:notselect. '\<case\>:\<end\s*select\>,' .
+    \ s:notend .'\<select\s\+type\>:' . s:notselect. '\<type\|class\>:\<end\s*select\>,' .
+    \ s:notend .'\<select\s\+rank\>:' . s:notselect. '\<rank\>:\<end\s*select\>,' .
+    \ s:notend .'\<select\>:'         . s:notselect. '\<case\>:\<end\s*select\>,' .
     \ s:notelse . '\<if\s*(.\+)\s*then\>:' .
     \ s:nothash . '\<else\s*\%(if\s*(.\+)\s*then\)\=\>:' . s:nothash . '\<end\s*if\>,'.
     \ 'do\s\+\(\d\+\):\%(^\s*\)\@<=\1\s,'.
@@ -119,6 +121,9 @@ if !exists("b:match_words")
     \ s:notend . '\<type\s*[^(]:\<end\s*type\>,'.
     \ s:notend . '\<forall\>:\<end\s*forall\>,'.
     \ s:notend . '\<associate\>:\<end\s*associate\>,'.
+    \ s:notend . '\<change\s\+team\>:\<end\s*team\>,'.
+    \ s:notend . '\<critical\>:\<end\s*critical\>,'.
+    \ s:notend . '\<block\>:\<end\s*block\>,'.
     \ s:notend . '\<enum\>:\<end\s*enum\>,'.
     \ s:notend . '\<interface\>:\<end\s*interface\>,'.
     \ s:notend . '\<subroutine\>:\<end\s*subroutine\>,'.
