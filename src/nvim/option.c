@@ -2197,6 +2197,44 @@ static const char *did_set_laststatus(optset_T *args)
   return NULL;
 }
 
+/// Process the updated 'lines' or 'columns' option value.
+static const char *did_set_lines_or_columns(optset_T *args)
+{
+  // If the screen (shell) height has been changed, assume it is the
+  // physical screenheight.
+  if (p_lines != Rows || p_columns != Columns) {
+    // Changing the screen size is not allowed while updating the screen.
+    if (updating_screen) {
+      OptVal oldval = (OptVal){ .type = kOptValTypeNumber, .data = args->os_oldval };
+      set_option_varp(args->os_idx, args->os_varp, oldval, false);
+    } else if (full_screen) {
+      screen_resize((int)p_columns, (int)p_lines);
+    } else {
+      // TODO(bfredl): is this branch ever needed?
+      // Postpone the resizing; check the size and cmdline position for
+      // messages.
+      Rows = (int)p_lines;
+      Columns = (int)p_columns;
+      check_screensize();
+      int new_row = (int)(Rows - MAX(p_ch, 1));
+      if (cmdline_row > new_row && Rows > p_ch) {
+        assert(p_ch >= 0 && new_row <= INT_MAX);
+        cmdline_row = new_row;
+      }
+    }
+    if (p_window >= Rows || !option_was_set(kOptWindow)) {
+      p_window = Rows - 1;
+    }
+  }
+
+  // Adjust 'scrolljump' if needed.
+  if (p_sj >= Rows && full_screen) {
+    p_sj = Rows / 2;
+  }
+
+  return NULL;
+}
+
 /// Process the updated 'lisp' option value.
 static const char *did_set_lisp(optset_T *args)
 {
@@ -2400,7 +2438,6 @@ static const char *did_set_previewwindow(optset_T *args)
 /// Process the new 'pumblend' option value.
 static const char *did_set_pumblend(optset_T *args FUNC_ATTR_UNUSED)
 {
-  p_pb = MAX(MIN(p_pb, 100), 0);
   hl_invalidate_blends();
   pum_grid.blending = (p_pb > 0);
   if (pum_drawn()) {
@@ -2771,78 +2808,61 @@ static void do_spelllang_source(win_T *win)
 }
 
 /// Check the bounds of numeric options.
-static const char *check_num_option_bounds(OptInt *pp, OptInt old_value, char *errbuf,
-                                           size_t errbuflen, const char *errmsg)
+///
+/// @param          opt_idx    Index in options[] table. Must not be kOptInvalid.
+/// @param[in]      varp       Pointer to option variable.
+/// @param[in,out]  newval     Pointer to new option value. Will be set to bound checked value.
+/// @param[out]     errbuf     Buffer for error message. Cannot be NULL.
+/// @param          errbuflen  Length of error buffer.
+///
+/// @return Error message, if any.
+static const char *check_num_option_bounds(OptIndex opt_idx, void *varp, OptInt *newval,
+                                           char *errbuf, size_t errbuflen)
+  FUNC_ATTR_NONNULL_ARG(4)
 {
-  int old_Rows = Rows;  // remember old Rows
-  // Check the (new) bounds for Rows and Columns here.
-  if (p_lines < min_rows() && full_screen) {
-    if (errbuf != NULL) {
+  const char *errmsg = NULL;
+
+  switch (opt_idx) {
+  case kOptLines:
+    if (*newval < min_rows() && full_screen) {
       vim_snprintf(errbuf, errbuflen, _("E593: Need at least %d lines"), min_rows());
       errmsg = errbuf;
+      *newval = min_rows();
     }
-    p_lines = min_rows();
-  }
-  if (p_columns < MIN_COLUMNS && full_screen) {
-    if (errbuf != NULL) {
+    // True max size is defined by check_screensize().
+    *newval = MIN(*newval, INT_MAX);
+    break;
+  case kOptColumns:
+    if (*newval < MIN_COLUMNS && full_screen) {
       vim_snprintf(errbuf, errbuflen, _("E594: Need at least %d columns"), MIN_COLUMNS);
       errmsg = errbuf;
+      *newval = MIN_COLUMNS;
     }
-    p_columns = MIN_COLUMNS;
-  }
-
-  // True max size is defined by check_screensize()
-  p_lines = MIN(p_lines, INT_MAX);
-  p_columns = MIN(p_columns, INT_MAX);
-
-  // If the screen (shell) height has been changed, assume it is the
-  // physical screenheight.
-  if (p_lines != Rows || p_columns != Columns) {
-    // Changing the screen size is not allowed while updating the screen.
-    if (updating_screen) {
-      *pp = old_value;
-    } else if (full_screen) {
-      screen_resize((int)p_columns, (int)p_lines);
-    } else {
-      // TODO(bfredl): is this branch ever needed?
-      // Postpone the resizing; check the size and cmdline position for
-      // messages.
-      Rows = (int)p_lines;
-      Columns = (int)p_columns;
-      check_screensize();
-      int new_row = (int)(Rows - MAX(p_ch, 1));
-      if (cmdline_row > new_row && Rows > p_ch) {
-        assert(p_ch >= 0 && new_row <= INT_MAX);
-        cmdline_row = new_row;
-      }
+    // True max size is defined by check_screensize().
+    *newval = MIN(*newval, INT_MAX);
+    break;
+  case kOptPumblend:
+    *newval = MAX(MIN(*newval, 100), 0);
+    break;
+  case kOptScrolljump:
+    if ((*newval < -100 || *newval >= Rows) && full_screen) {
+      errmsg = e_scroll;
+      *newval = 1;
     }
-    if (p_window >= Rows || !option_was_set(kOptWindow)) {
-      p_window = Rows - 1;
-    }
-  }
-
-  if ((curwin->w_p_scr <= 0
-       || (curwin->w_p_scr > curwin->w_height_inner && curwin->w_height_inner > 0))
-      && full_screen) {
-    if (pp == &(curwin->w_p_scr)) {
-      if (curwin->w_p_scr != 0) {
+    break;
+  case kOptScroll:
+    if (varp == &(curwin->w_p_scr)
+        && (*newval <= 0
+            || (*newval > curwin->w_height_inner && curwin->w_height_inner > 0))
+        && full_screen) {
+      if (*newval != 0) {
         errmsg = e_scroll;
       }
-      win_comp_scroll(curwin);
-    } else if (curwin->w_p_scr <= 0) {
-      // If 'scroll' became invalid because of a side effect silently adjust it.
-      curwin->w_p_scr = 1;
-    } else {  // curwin->w_p_scr > curwin->w_height_inner
-      curwin->w_p_scr = curwin->w_height_inner;
+      *newval = win_default_scroll(curwin);
     }
-  }
-  if ((p_sj < -100 || p_sj >= Rows) && full_screen) {
-    if (Rows != old_Rows) {  // Rows changed, just adjust p_sj
-      p_sj = Rows / 2;
-    } else {
-      errmsg = e_scroll;
-      p_sj = 1;
-    }
+    break;
+  default:
+    break;
   }
 
   return errmsg;
@@ -3512,14 +3532,6 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
   }
   opt->flags |= P_ALLOCED;
 
-  // Check the bound for num options.
-  if (new_value.type == kOptValTypeNumber) {
-    errmsg = check_num_option_bounds((OptInt *)varp, old_value.data.number, errbuf, errbuflen,
-                                     errmsg);
-    // Re-assign new_value because the new value was modified by the bound check.
-    new_value = optval_from_varp(opt_idx, varp);
-  }
-
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0 && (opt->indir & PV_BOTH)) {
     // Global option with local value set to use global value.
     // Free the local value and clear it.
@@ -3660,8 +3672,10 @@ static const char *set_option(const OptIndex opt_idx, void *varp, OptVal value, 
 
   if (value.type == kOptValTypeNumber) {
     errmsg = validate_num_option((OptInt *)varp, &value.data.number);
-
-    // Don't change the value and return early if validation failed.
+    if (errmsg != NULL) {
+      goto err;
+    }
+    errmsg = check_num_option_bounds(opt_idx, varp, &value.data.number, errbuf, errbuflen);
     if (errmsg != NULL) {
       goto err;
     }
