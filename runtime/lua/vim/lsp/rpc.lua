@@ -16,7 +16,7 @@ end
 --- Embeds the given string into a table and correctly computes `Content-Length`.
 ---
 ---@param encoded_message string
----@return string #string containing encoded message and `Content-Length` attribute
+---@return string #encoded message with `Content-Length` attribute
 local function format_message_with_content_length(encoded_message)
   return table.concat({
     'Content-Length: ',
@@ -342,7 +342,7 @@ end
 ---@param params? table Parameters for the invoked LSP method
 ---@param callback fun(err?: lsp.ResponseError, result: any) Callback to invoke
 ---@param notify_reply_callback? function Callback to invoke as soon as a request is no longer pending
----@return boolean success, integer request_id? true, request_id if request could be sent, `false` if not
+---@return boolean success, integer|nil request_id true, request_id if request could be sent, `false` if not
 function Client:request(method, params, callback, notify_reply_callback)
   validate({
     callback = { callback, 'f' },
@@ -389,7 +389,7 @@ end
 ---@param ... any
 ---@return boolean status
 ---@return any head
----@return any? ...
+---@return any|nil ...
 function Client:pcall_handler(errkind, status, head, ...)
   if not status then
     self:on_error(errkind, head, ...)
@@ -404,7 +404,7 @@ end
 ---@param ... any
 ---@return boolean status
 ---@return any head
----@return any? ...
+---@return any|nil ...
 function Client:try_call(errkind, fn, ...)
   return self:pcall_handler(errkind, pcall(fn, ...))
 end
@@ -588,7 +588,7 @@ local function public_client(client)
   ---@param params (table?) Parameters for the invoked LSP method
   ---@param callback fun(err: lsp.ResponseError | nil, result: any) Callback to invoke
   ---@param notify_reply_callback (function?) Callback to invoke as soon as a request is no longer pending
-  ---@return boolean success, integer? request_id true, message_id if request could be sent, `false` if not
+  ---@return boolean success, integer|nil request_id true, message_id if request could be sent, `false` if not
   function result.request(method, params, callback, notify_reply_callback)
     return client:request(method, params, callback, notify_reply_callback)
   end
@@ -776,7 +776,7 @@ end
 --- - {cwd} (string) Working directory for the LSP server process
 --- - {detached?} (boolean) Detach the LSP server process from the current process. Defaults to false on Windows and true otherwise.
 --- - {env?} (table) Additional environment variables for LSP server process
----@return vim.lsp.rpc.PublicClient? #Client RPC object, with these methods:
+---@return vim.lsp.rpc.PublicClient|nil #Client RPC object, with these methods:
 --- - `notify()` |vim.lsp.rpc.notify()|
 --- - `request()` |vim.lsp.rpc.request()|
 --- - `is_closing()` returns a boolean indicating if the RPC is closing.
