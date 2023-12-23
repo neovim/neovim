@@ -348,7 +348,13 @@ function LanguageTree:_parse_regions(range)
   -- If there are no ranges, set to an empty list
   -- so the included ranges in the parser are cleared.
   for i, ranges in pairs(self:included_regions()) do
-    if not self._valid[i] and intercepts_region(ranges, range) then
+    if
+      not self._valid[i]
+      and (
+        intercepts_region(ranges, range)
+        or (self._trees[i] and intercepts_region(self._trees[i]:included_ranges(false), range))
+      )
+    then
       self._parser:set_included_ranges(ranges)
       local parse_time, tree, tree_changes =
         tcall(self._parser.parse, self._parser, self._trees[i], self._source, true)
