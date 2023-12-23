@@ -6,7 +6,7 @@ local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedu
 local is_win = uv.os_uname().version:find('Windows')
 
 --- Checks whether a given path exists and is a directory.
----@param filename (string) path to check
+---@param filename string path to check
 ---@return boolean
 local function is_dir(filename)
   local stat = uv.fs_stat(filename)
@@ -15,7 +15,7 @@ end
 
 --- Embeds the given string into a table and correctly computes `Content-Length`.
 ---
----@param encoded_message (string)
+---@param encoded_message string
 ---@return string #string containing encoded message and `Content-Length` attribute
 local function format_message_with_content_length(encoded_message)
   return table.concat({
@@ -159,8 +159,8 @@ M.client_errors = vim.tbl_add_reverse_lookup(M.client_errors)
 
 --- Constructs an error message from an LSP error object.
 ---
----@param err (table) The error object
----@return (string) #The formatted error message
+---@param err table The error object
+---@return string #The formatted error message
 function M.format_rpc_error(err)
   validate({
     err = { err, 't' },
@@ -313,8 +313,8 @@ end
 
 ---@package
 --- Sends a notification to the LSP server.
----@param method (string) The invoked LSP method
----@param params (any) Parameters for the invoked LSP method
+---@param method string The invoked LSP method
+---@param params any Parameters for the invoked LSP method
 ---@return boolean `true` if notification could be sent, `false` if not
 function Client:notify(method, params)
   return self:encode_and_send({
@@ -338,10 +338,10 @@ end
 ---@package
 --- Sends a request to the LSP server and runs {callback} upon response.
 ---
----@param method (string) The invoked LSP method
----@param params (table?) Parameters for the invoked LSP method
+---@param method string The invoked LSP method
+---@param params table? Parameters for the invoked LSP method
 ---@param callback fun(err: lsp.ResponseError?, result: any) Callback to invoke
----@param notify_reply_callback (function?) Callback to invoke as soon as a request is no longer pending
+---@param notify_reply_callback function? Callback to invoke as soon as a request is no longer pending
 ---@return boolean success, integer? request_id true, request_id if request could be sent, `false` if not
 function Client:request(method, params, callback, notify_reply_callback)
   validate({
@@ -763,8 +763,8 @@ end
 --- interact with it. Communication with the spawned process happens via stdio. For
 --- communication via TCP, spawn a process manually and use |vim.lsp.rpc.connect()|
 ---
----@param cmd (string) Command to start the LSP server.
----@param cmd_args (string[]) List of additional string arguments to pass to {cmd}.
+---@param cmd string Command to start the LSP server.
+---@param cmd_args string[] List of additional string arguments to pass to {cmd}.
 ---@param dispatchers vim.lsp.rpc.Dispatchers? Dispatchers for LSP message types. Valid
 ---dispatcher names are:
 --- - `"notification"`
