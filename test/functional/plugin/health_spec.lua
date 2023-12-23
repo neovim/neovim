@@ -371,7 +371,7 @@ describe(':checkhealth window', function()
     command("checkhealth success1")
     screen:expect{grid=[[
     ## grid 1
-      {MATCH: %+ %[No Name%]  h:?//                                X}|
+       + [No Name]  h//                                X|
       [4:--------------------------------------------------]|*23
       [3:--------------------------------------------------]|
     ## grid 2 (hidden)
