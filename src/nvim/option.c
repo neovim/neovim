@@ -2868,155 +2868,164 @@ static const char *check_num_option_bounds(OptIndex opt_idx, void *varp, OptInt 
   return errmsg;
 }
 
-/// Options that need some validation.
-static const char *validate_num_option(const OptInt *pp, OptInt *valuep)
+/// Validate and bound check option value.
+///
+/// @param          opt_idx    Index in options[] table. Must not be kOptInvalid.
+/// @param[in]      varp       Pointer to option variable.
+/// @param[in,out]  newval     Pointer to new option value. Will be set to bound checked value.
+/// @param[out]     errbuf     Buffer for error message. Cannot be NULL.
+/// @param          errbuflen  Length of error buffer.
+///
+/// @return Error message, if any.
+static const char *validate_num_option(OptIndex opt_idx, void *varp, OptInt *newval, char *errbuf,
+                                       size_t errbuflen)
 {
-  OptInt value = *valuep;
+  OptInt value = *newval;
 
   // Many number options assume their value is in the signed int range.
   if (value < INT_MIN || value > INT_MAX) {
     return e_invarg;
   }
 
-  if (pp == &p_wh) {
+  if (varp == &p_wh) {
     if (value < 1) {
       return e_positive;
     } else if (p_wmh > value) {
       return e_winheight;
     }
-  } else if (pp == &p_hh) {
+  } else if (varp == &p_hh) {
     if (value < 0) {
       return e_positive;
     }
-  } else if (pp == &p_wmh) {
+  } else if (varp == &p_wmh) {
     if (value < 0) {
       return e_positive;
     } else if (value > p_wh) {
       return e_winheight;
     }
-  } else if (pp == &p_wiw) {
+  } else if (varp == &p_wiw) {
     if (value < 1) {
       return e_positive;
     } else if (p_wmw > value) {
       return e_winwidth;
     }
-  } else if (pp == &p_wmw) {
+  } else if (varp == &p_wmw) {
     if (value < 0) {
       return e_positive;
     } else if (value > p_wiw) {
       return e_winwidth;
     }
-  } else if (pp == &p_mco) {
-    *valuep = MAX_MCO;
-  } else if (pp == &p_titlelen) {
+  } else if (varp == &p_mco) {
+    *newval = MAX_MCO;
+  } else if (varp == &p_titlelen) {
     if (value < 0) {
       return e_positive;
     }
-  } else if (pp == &p_uc) {
+  } else if (varp == &p_uc) {
     if (value < 0) {
       return e_positive;
     }
-  } else if (pp == &p_ch) {
+  } else if (varp == &p_ch) {
     if (value < 0) {
       return e_positive;
     } else {
       p_ch_was_zero = value == 0;
     }
-  } else if (pp == &p_tm) {
+  } else if (varp == &p_tm) {
     if (value < 0) {
       return e_positive;
     }
-  } else if (pp == &p_hi) {
+  } else if (varp == &p_hi) {
     if (value < 0) {
       return e_positive;
     } else if (value > 10000) {
       return e_invarg;
     }
-  } else if (pp == &p_pyx) {
+  } else if (varp == &p_pyx) {
     if (value == 0) {
-      *valuep = 3;
+      *newval = 3;
     } else if (value != 3) {
       return e_invarg;
     }
-  } else if (pp == &p_re) {
+  } else if (varp == &p_re) {
     if (value < 0 || value > 2) {
       return e_invarg;
     }
-  } else if (pp == &p_report) {
+  } else if (varp == &p_report) {
     if (value < 0) {
       return e_positive;
     }
-  } else if (pp == &p_so) {
+  } else if (varp == &p_so) {
     if (value < 0 && full_screen) {
       return e_positive;
     }
-  } else if (pp == &p_siso) {
+  } else if (varp == &p_siso) {
     if (value < 0 && full_screen) {
       return e_positive;
     }
-  } else if (pp == &p_cwh) {
+  } else if (varp == &p_cwh) {
     if (value < 1) {
       return e_positive;
     }
-  } else if (pp == &p_ut) {
+  } else if (varp == &p_ut) {
     if (value < 0) {
       return e_positive;
     }
-  } else if (pp == &p_ss) {
+  } else if (varp == &p_ss) {
     if (value < 0) {
       return e_positive;
     }
-  } else if (pp == &curwin->w_p_fdl || pp == &curwin->w_allbuf_opt.wo_fdl) {
+  } else if (varp == &curwin->w_p_fdl || varp == &curwin->w_allbuf_opt.wo_fdl) {
     if (value < 0) {
       return e_positive;
     }
-  } else if (pp == &curwin->w_p_cole || pp == &curwin->w_allbuf_opt.wo_cole) {
+  } else if (varp == &curwin->w_p_cole || varp == &curwin->w_allbuf_opt.wo_cole) {
     if (value < 0) {
       return e_positive;
     } else if (value > 3) {
       return e_invarg;
     }
-  } else if (pp == &curwin->w_p_nuw || pp == &curwin->w_allbuf_opt.wo_nuw) {
+  } else if (varp == &curwin->w_p_nuw || varp == &curwin->w_allbuf_opt.wo_nuw) {
     if (value < 1) {
       return e_positive;
     } else if (value > MAX_NUMBERWIDTH) {
       return e_invarg;
     }
-  } else if (pp == &curbuf->b_p_iminsert || pp == &p_iminsert) {
+  } else if (varp == &curbuf->b_p_iminsert || varp == &p_iminsert) {
     if (value < 0 || value > B_IMODE_LAST) {
       return e_invarg;
     }
-  } else if (pp == &curbuf->b_p_imsearch || pp == &p_imsearch) {
+  } else if (varp == &curbuf->b_p_imsearch || varp == &p_imsearch) {
     if (value < -1 || value > B_IMODE_LAST) {
       return e_invarg;
     }
-  } else if (pp == &curbuf->b_p_channel || pp == &p_channel) {
+  } else if (varp == &curbuf->b_p_channel || varp == &p_channel) {
     return e_invarg;
-  } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
+  } else if (varp == &curbuf->b_p_scbk || varp == &p_scbk) {
     if (value < -1 || value > SB_MAX) {
       return e_invarg;
     }
-  } else if (pp == &curbuf->b_p_sw || pp == &p_sw) {
+  } else if (varp == &curbuf->b_p_sw || varp == &p_sw) {
     if (value < 0) {
       return e_positive;
     }
-  } else if (pp == &curbuf->b_p_ts || pp == &p_ts) {
+  } else if (varp == &curbuf->b_p_ts || varp == &p_ts) {
     if (value < 1) {
       return e_positive;
     } else if (value > TABSTOP_MAX) {
       return e_invarg;
     }
-  } else if (pp == &curbuf->b_p_tw || pp == &p_tw) {
+  } else if (varp == &curbuf->b_p_tw || varp == &p_tw) {
     if (value < 0) {
       return e_positive;
     }
-  } else if (pp == &p_wd) {
+  } else if (varp == &p_wd) {
     if (value < 0) {
       return e_positive;
     }
   }
 
-  return NULL;
+  return check_num_option_bounds(opt_idx, varp, newval, errbuf, errbuflen);
 }
 
 /// Called after an option changed: check if something needs to be redrawn.
@@ -3459,7 +3468,8 @@ static bool is_option_local_value_unset(vimoption_T *opt, buf_T *buf, win_T *win
 /// @return  NULL on success, an untranslated error message on error.
 static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value, OptVal new_value,
                                   int opt_flags, bool *value_checked, bool value_replaced,
-                                  char *errbuf, size_t errbuflen)
+                                  char *errbuf,  // NOLINT(readability-non-const-parameter)
+                                  size_t errbuflen)
 {
   vimoption_T *opt = &options[opt_idx];
   const char *errmsg = NULL;
@@ -3671,11 +3681,7 @@ static const char *set_option(const OptIndex opt_idx, void *varp, OptVal value, 
   OptVal used_old_value = oldval_is_global ? optval_from_varp(opt_idx, get_varp(opt)) : old_value;
 
   if (value.type == kOptValTypeNumber) {
-    errmsg = validate_num_option((OptInt *)varp, &value.data.number);
-    if (errmsg != NULL) {
-      goto err;
-    }
-    errmsg = check_num_option_bounds(opt_idx, varp, &value.data.number, errbuf, errbuflen);
+    errmsg = validate_num_option(opt_idx, varp, &value.data.number, errbuf, errbuflen);
     if (errmsg != NULL) {
       goto err;
     }
