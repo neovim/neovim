@@ -188,7 +188,7 @@ function M.format_rpc_error(err)
 end
 
 ---@class vim.lsp.rpc.Error
----@field code integer RPC error code defined by JSON RPC
+---@field code integer RPC error code defined by JSON RPC, see `vim.lsp.protocol.ErrorCodes`
 ---@field message? string arbitrary message to send to server
 ---@field data? any arbitrary data to send to server
 
