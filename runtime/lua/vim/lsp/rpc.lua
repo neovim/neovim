@@ -187,7 +187,7 @@ function M.format_rpc_error(err)
   return table.concat(message_parts, ' ')
 end
 
----@class vim.lsp.rpc.RpcError
+---@class vim.lsp.rpc.Error
 ---@field code integer RPC error code defined by JSON RPC
 ---@field message string? arbitrary message to send to server
 ---@field data any? arbitrary data to send to server
@@ -197,7 +197,7 @@ end
 ---@param code integer RPC error code defined by JSON RPC
 ---@param message string? arbitrary message to send to server
 ---@param data any? arbitrary data to send to server
----@return vim.lsp.rpc.RpcError
+---@return vim.lsp.rpc.Error
 function M.rpc_response_error(code, message, data)
   -- TODO should this error or just pick a sane error (like InternalError)?
   local code_name = assert(protocol.ErrorCodes[code], 'Invalid RPC error code')
@@ -231,7 +231,7 @@ local default_dispatchers = {
   ---@param method (string) The invoked LSP method
   ---@param params (table) Parameters for the invoked LSP method
   ---@return nil
-  ---@return vim.lsp.rpc.RpcError #`vim.lsp.protocol.ErrorCodes.MethodNotFound`
+  ---@return vim.lsp.rpc.Error #`vim.lsp.protocol.ErrorCodes.MethodNotFound`
   server_request = function(method, params)
     log_debug('server_request', method, params)
     return nil, M.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
@@ -287,14 +287,14 @@ function M.create_read_loop(handle_body, on_no_chunk, on_error)
   end
 end
 
----@class vim.lsp.rpc.RpcClient
+---@class vim.lsp.rpc.Client
 ---@field message_index integer
 ---@field message_callbacks table<integer, function> dict of message_id to callback
 ---@field notify_reply_callbacks table<integer, function> dict of message_id to callback
 ---@field transport vim.lsp.rpc.Transport
 ---@field dispatchers vim.lsp.rpc.Dispatchers
 
----@class vim.lsp.rpc.RpcClient
+---@class vim.lsp.rpc.Client
 local Client = {}
 
 ---@private
@@ -423,7 +423,7 @@ function Client:handle_body(body)
   log_debug('rpc.receive', decoded)
 
   if type(decoded.method) == 'string' and decoded.id then
-    local err --- @type vim.lsp.rpc.RpcError?
+    local err --- @type vim.lsp.rpc.Error?
     -- Schedule here so that the users functions don't trigger an error and
     -- we can still use the result.
     schedule(function()
@@ -449,7 +449,7 @@ function Client:handle_body(body)
             )
           end
           if err then
-            ---@cast err vim.lsp.rpc.RpcError
+            ---@cast err vim.lsp.rpc.Error
             assert(
               type(err) == 'table',
               'err must be a table. Use rpc_response_error to help format errors.'
@@ -549,7 +549,7 @@ end
 
 ---@param dispatchers vim.lsp.rpc.Dispatchers
 ---@param transport vim.lsp.rpc.Transport
----@return vim.lsp.rpc.RpcClient
+---@return vim.lsp.rpc.Client
 local function new_client(dispatchers, transport)
   local state = {
     message_index = 0,
@@ -642,7 +642,7 @@ end
 ---
 ---@param host string host to connect to
 ---@param port integer port to connect to
----@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicRpcClient #function intended to be passed to |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
+---@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient #function intended to be passed to |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
 function M.connect(host, port)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
@@ -687,7 +687,7 @@ function M.connect(host, port)
   end
 end
 
----@alias vim.lsp.rpc.Dispatcher fun(method: string, params: table<string, any>):nil, vim.lsp.rpc.RpcError?
+---@alias vim.lsp.rpc.Dispatcher fun(method: string, params: table<string, any>):nil, vim.lsp.rpc.Error?
 ---@alias vim.lsp.rpc.on_error fun(code: integer, ...: any)
 ---@alias vim.lsp.rpc.on_exit fun(code: integer, signal: integer)
 
@@ -697,7 +697,7 @@ end
 ---@field on_exit vim.lsp.rpc.on_error
 ---@field on_error vim.lsp.rpc.on_exit
 
----@class vim.lsp.rpc.PublicRpcClient
+---@class vim.lsp.rpc.PublicClient
 ---@field request fun(method: string, params: table?, callback: fun(err: lsp.ResponseError | nil, result: any), notify_reply_callback:function?)
 ---@field notify fun(method: string, params: any)
 ---@field is_closing fun(): boolean
@@ -708,7 +708,7 @@ end
 --- Unix and name on Windows)
 ---
 ---@param pipe_path string file path of the domain socket (Unix) or name of the named pipe (Windows) to connect to
----@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicRpcClient #function intended to be passed to |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
+---@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient #function intended to be passed to |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
 function M.domain_socket_connect(pipe_path)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
@@ -776,7 +776,7 @@ end
 --- - {cwd} (string) Working directory for the LSP server process
 --- - {detached} (boolean?) Detach the LSP server process from the current process. Defaults to false on Windows and true otherwise.
 --- - {env} (table?) Additional environment variables for LSP server process
----@return vim.lsp.rpc.PublicRpcClient? #Client RPC object, with these methods:
+---@return vim.lsp.rpc.PublicClient? #Client RPC object, with these methods:
 --- - `notify()` |vim.lsp.rpc.notify()|
 --- - `request()` |vim.lsp.rpc.request()|
 --- - `is_closing()` returns a boolean indicating if the RPC is closing.
