@@ -642,7 +642,7 @@ end
 ---
 ---@param host string host to connect to
 ---@param port integer port to connect to
----@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicRpcClient? #function intended to be passed to |vim.lsp.rpc.start_client| or |vim.lsp.start| on the field cmd
+---@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicRpcClient #function intended to be passed to |vim.lsp.rpc.start_client| or |vim.lsp.start| on the field cmd
 function M.connect(host, port)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
@@ -708,21 +708,20 @@ end
 --- Unix and name on Windows)
 ---
 ---@param pipe_path string file path of the domain socket (Unix) or name of the named pipe (Windows) to connect to
----@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicRpcClient? #function intended to be passed to |vim.lsp.rpc.start_client| or |vim.lsp.start| on the field cmd
+---@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicRpcClient #function intended to be passed to |vim.lsp.rpc.start_client| or |vim.lsp.start| on the field cmd
 function M.domain_socket_connect(pipe_path)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
     local pipe, err_msg, err_name = uv.new_pipe(false)
-    if not pipe then
-      local _ = log.error()
-        and log.error(
-          'pipe with name %s could not be opened. Error: %s. Reason: %s',
-          pipe_path,
-          err_name,
-          err_msg
-        )
-      return
-    end
+    assert(
+      pipe,
+      string.format(
+        'pipe with name %s could not be opened. Error: %s. Reason: %s',
+        pipe_path,
+        err_name,
+        err_msg
+      )
+    )
     local closing = false
     local transport = {
       write = vim.schedule_wrap(function(msg)
