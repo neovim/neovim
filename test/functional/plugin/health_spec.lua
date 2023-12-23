@@ -6,6 +6,7 @@ local curbuf_contents = helpers.curbuf_contents
 local command = helpers.command
 local eq, neq, matches = helpers.eq, helpers.neq, helpers.matches
 local getcompletion = helpers.funcs.getcompletion
+local feed = helpers.feed
 
 describe(':checkhealth', function()
   it("detects invalid $VIMRUNTIME", function()
@@ -198,5 +199,200 @@ describe(':checkhealth provider', function()
     command('let g:loaded_python3_provider = 0')
     command('checkhealth provider')
     eq(nil, string.match(curbuf_contents(), 'WRONG!!!'))
+  end)
+end)
+
+describe(':checkhealth window', function()
+  before_each(function()
+    clear{args={'-u', 'NORC'}}
+    -- Provides healthcheck functions
+    command("set runtimepath+=test/functional/fixtures")
+    command("set nofoldenable nowrap laststatus=0")
+  end)
+
+  it("opens directly if no buffer created", function()
+    local screen = Screen.new(50, 12)
+    screen:attach({ext_multigrid=true})
+    command("checkhealth success1")
+    screen:expect{grid=[[
+    ## grid 1
+      [2:--------------------------------------------------]|*11
+      [3:--------------------------------------------------]|
+    ## grid 2
+      ^                                                  |
+      ──────────────────────────────────────────────────|
+      ────────────────────────────                      |
+      test_plug.success1: require("test_plug.success1.  |
+      health").check()                                  |
+                                                        |
+      report 1                                          |
+      - OK everything is fine                           |
+                                                        |
+      report 2                                          |
+      - OK nothing to see here                          |
+    ## grid 3
+                                                        |
+    ]]}
+  end)
+
+  it("opens in vsplit window when no buffer created", function()
+    local screen = Screen.new(50, 20)
+    screen:attach({ext_multigrid=true})
+    command("vertical checkhealth success1")
+    screen:expect{grid=[[
+    ## grid 1
+      [4:-------------------------]│[2:------------------------]|*19
+      [3:--------------------------------------------------]|
+    ## grid 2
+                              |
+      ~                       |*18
+    ## grid 3
+                                                        |
+    ## grid 4
+      ^                         |
+      ─────────────────────────|*3
+      ───                      |
+      test_plug.success1:      |
+      require("test_plug.      |
+      success1.health").check()|
+                               |
+      report 1                 |
+      - OK everything is fine  |
+                               |
+      report 2                 |
+      - OK nothing to see here |
+                               |
+      ~                        |*4
+    ]]}
+  end)
+
+  it("opens in split window when no buffer created", function()
+    local screen = Screen.new(50, 25)
+    screen:attach({ext_multigrid=true})
+    command("horizontal checkhealth success1")
+    screen:expect{grid=[[
+    ## grid 1
+      [4:--------------------------------------------------]|*12
+      health://                                         |
+      [2:--------------------------------------------------]|*11
+      [3:--------------------------------------------------]|
+    ## grid 2
+                                                        |
+      ~                                                 |*10
+    ## grid 3
+                                                        |
+    ## grid 4
+      ^                                                  |
+      ──────────────────────────────────────────────────|
+      ────────────────────────────                      |
+      test_plug.success1: require("test_plug.success1.  |
+      health").check()                                  |
+                                                        |
+      report 1                                          |
+      - OK everything is fine                           |
+                                                        |
+      report 2                                          |
+      - OK nothing to see here                          |
+                                                        |
+    ]]}
+  end)
+
+  it("opens in split window", function()
+    local screen = Screen.new(50, 25)
+    screen:attach({ext_multigrid=true})
+    feed('ihello')
+    feed('<esc>')
+    command("horizontal checkhealth success1")
+    screen:expect{grid=[[
+    ## grid 1
+      [4:--------------------------------------------------]|*12
+      health://                                         |
+      [2:--------------------------------------------------]|*11
+      [3:--------------------------------------------------]|
+    ## grid 2
+      hello                                             |
+      ~                                                 |*10
+    ## grid 3
+                                                        |
+    ## grid 4
+      ^                                                  |
+      ──────────────────────────────────────────────────|
+      ────────────────────────────                      |
+      test_plug.success1: require("test_plug.success1.  |
+      health").check()                                  |
+                                                        |
+      report 1                                          |
+      - OK everything is fine                           |
+                                                        |
+      report 2                                          |
+      - OK nothing to see here                          |
+                                                        |
+    ]]}
+  end)
+
+  it("opens in vsplit window", function()
+    local screen = Screen.new(50, 25)
+    screen:attach({ext_multigrid=true})
+    feed('ihello')
+    feed('<esc>')
+    command("vertical checkhealth success1")
+    screen:expect{grid=[[
+    ## grid 1
+      [4:-------------------------]│[2:------------------------]|*24
+      [3:--------------------------------------------------]|
+    ## grid 2
+      hello                   |
+      ~                       |*23
+    ## grid 3
+                                                        |
+    ## grid 4
+      ^                         |
+      ─────────────────────────|*3
+      ───                      |
+      test_plug.success1:      |
+      require("test_plug.      |
+      success1.health").check()|
+                               |
+      report 1                 |
+      - OK everything is fine  |
+                               |
+      report 2                 |
+      - OK nothing to see here |
+                               |
+      ~                        |*9
+    ]]}
+  end)
+
+  it("opens in tab", function()
+    local screen = Screen.new(50, 25)
+    screen:attach({ext_multigrid=true})
+    feed('ihello')
+    feed('<esc>')
+    command("checkhealth success1")
+    screen:expect{grid=[[
+    ## grid 1
+       + [No Name]  h//                                X|
+      [4:--------------------------------------------------]|*23
+      [3:--------------------------------------------------]|
+    ## grid 2 (hidden)
+      hello                                             |
+      ~                                                 |*23
+    ## grid 3
+                                                        |
+    ## grid 4
+      ^                                                  |
+      ──────────────────────────────────────────────────|
+      ────────────────────────────                      |
+      test_plug.success1: require("test_plug.success1.  |
+      health").check()                                  |
+                                                        |
+      report 1                                          |
+      - OK everything is fine                           |
+                                                        |
+      report 2                                          |
+      - OK nothing to see here                          |
+                                                        |
+      ~                                                 |*11
+]]}
   end)
 end)

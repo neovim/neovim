@@ -274,13 +274,13 @@ function M._check(splitmod, plugin_names)
 
   local emptybuf = vim.fn.bufnr('$') == 1 and vim.fn.getline(1) == '' and 1 == vim.fn.line('$')
   local mod = function()
-    if emptybuf then
-      -- if this is the default buffer when Nvim starts, open healthcheck directly
-      return 'buffer'
-    elseif splitmod == 'vertical' then
+    if splitmod == 'vertical' then
       return 'vertical sbuffer'
     elseif splitmod == 'horizontal' then
       return 'horizontal sbuffer'
+    elseif emptybuf then
+      -- if this is the default buffer when Nvim starts, open healthcheck directly
+      return 'buffer'
     else
       -- if not specified otherwise open healthcheck in a tab
       return 'tab sbuffer'
