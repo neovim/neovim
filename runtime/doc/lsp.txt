@@ -2100,8 +2100,8 @@ domain_socket_connect({pipe_path})
                      the named pipe (Windows) to connect to
 
     Return: ~
-        fun(dispatchers: vim.lsp.rpc.Dispatchers ): vim.lsp.rpc.PublicRpcClient #function intended to be passed to |vim.lsp.rpc.start_client| or
-        |vim.lsp.start| on the field cmd
+        fun(dispatchers: vim.lsp.rpc.Dispatchers ): vim.lsp.rpc.PublicRpcClient #function intended to be passed to |vim.lsp.start_client()| or
+        |vim.lsp.start()| on the field cmd
 
 format_rpc_error({err})                       *vim.lsp.rpc.format_rpc_error()*
     Constructs an error message from an LSP error object.
