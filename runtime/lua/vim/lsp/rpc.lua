@@ -16,7 +16,7 @@ end
 --- Embeds the given string into a table and correctly computes `Content-Length`.
 ---
 ---@param encoded_message string
----@return string #encoded message with `Content-Length` attribute
+---@return string#encoded message with `Content-Length` attribute
 local function format_message_with_content_length(encoded_message)
   return table.concat({
     'Content-Length: ',
@@ -48,7 +48,7 @@ end
 --- Parses an LSP Message's header
 ---
 ---@param header string The header to parse.
----@return vim.lsp.rpc.Headers #parsed headers
+---@return vim.lsp.rpc.Headers#parsed headers
 local function parse_headers(header)
   assert(type(header) == 'string', 'header must be a string')
   local headers = {} --- @type table<string,string>
@@ -160,7 +160,7 @@ M.client_errors = vim.tbl_add_reverse_lookup(M.client_errors)
 --- Constructs an error message from an LSP error object.
 ---
 ---@param err table The error object
----@return string #The formatted error message
+---@return string#The formatted error message
 function M.format_rpc_error(err)
   validate({
     err = { err, 't' },
@@ -231,7 +231,7 @@ local default_dispatchers = {
   ---@param method (string) The invoked LSP method
   ---@param params (table) Parameters for the invoked LSP method
   ---@return nil
-  ---@return vim.lsp.rpc.Error #`vim.lsp.protocol.ErrorCodes.MethodNotFound`
+  ---@return vim.lsp.rpc.Error#`vim.lsp.protocol.ErrorCodes.MethodNotFound`
   server_request = function(method, params)
     log_debug('server_request', method, params)
     return nil, M.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
@@ -642,7 +642,7 @@ end
 ---
 ---@param host string host to connect to
 ---@param port integer port to connect to
----@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient #function intended to be passed to |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
+---@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient#function intended to be passed to |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
 function M.connect(host, port)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
@@ -708,7 +708,7 @@ end
 --- Unix and name on Windows)
 ---
 ---@param pipe_path string file path of the domain socket (Unix) or name of the named pipe (Windows) to connect to
----@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient #function intended to be passed to |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
+---@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient#function intended to be passed to |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
 function M.domain_socket_connect(pipe_path)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
@@ -776,7 +776,7 @@ end
 --- - {cwd} (string) Working directory for the LSP server process
 --- - {detached?} (boolean) Detach the LSP server process from the current process. Defaults to false on Windows and true otherwise.
 --- - {env?} (table) Additional environment variables for LSP server process
----@return vim.lsp.rpc.PublicClient|nil #Client RPC object, with these methods:
+---@return vim.lsp.rpc.PublicClient|nil#Client RPC object, with these methods:
 --- - `notify()` |vim.lsp.rpc.notify()|
 --- - `request()` |vim.lsp.rpc.request()|
 --- - `is_closing()` returns a boolean indicating if the RPC is closing.
