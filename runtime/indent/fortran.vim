@@ -1,6 +1,6 @@
 " Vim indent file
-" Language:	Fortran 2008 (and Fortran 2003, 95, 90, and 77)
-" Version:	(v49) 2023 December 1
+" Language:	Fortran 2023 (and Fortran 2018, 2008, 2003, 95, 90, 77, 66)
+" Version:	(v50) 2023 December 22
 " Maintainers:	Ajit J. Thakkar <ajit@unb.ca>; <https://ajit.ext.unb.ca/>
 " 	        Joshua Hollett <j.hollett@uwinnipeg.ca>
 " Usage:	For instructions, do :help fortran-indent from Vim
@@ -22,8 +22,8 @@ let b:undo_indent = "setl inde< indk<"
 
 setlocal indentkeys+==~end,=~case,=~if,=~else,=~do,=~where,=~elsewhere,=~select
 setlocal indentkeys+==~endif,=~enddo,=~endwhere,=~endselect,=~elseif
-setlocal indentkeys+==~type,=~interface,=~forall,=~associate,=~block,=~enum
-setlocal indentkeys+==~endforall,=~endassociate,=~endblock,=~endenum
+setlocal indentkeys+==~interface,=~forall,=~associate,=~block,=~enum,=~critical
+setlocal indentkeys+==~endforall,=~endassociate,=~endblock,=~endenum,=~endcritical
 if exists("b:fortran_indent_more") || exists("g:fortran_indent_more")
   setlocal indentkeys+==~function,=~subroutine,=~module,=~contains,=~program
   setlocal indentkeys+==~endfunction,=~endsubroutine,=~endmodule
@@ -49,7 +49,7 @@ if !exists("b:fortran_fixed_source")
     " Fixed-form file extension defaults
     let b:fortran_fixed_source = 1
   else
-    " Modern fortran still allows both fixed and free source form
+    " Modern fortran compilers still allow both fixed and free source form
     " Assume fixed source form unless signs of free source form
     " are detected in the first five columns of the first s:lmax lines.
     " Detection becomes more accurate and time-consuming if more lines
@@ -109,8 +109,9 @@ function FortranGetIndent(lnum)
 
   "Add a shiftwidth to statements following if, else, else if, case, class,
   "where, else where, forall, type, interface and associate statements
-  if prevstat =~? '^\s*\(case\|class\|else\|else\s*if\|else\s*where\)\>'
-	\ ||prevstat=~? '^\s*\(type\|interface\|associate\|enum\)\>'
+  if prevstat =~? '^\s*\(case\|class\s\+is\|else\|else\s*if\|else\s*where\)\>'
+	\ ||prevstat=~? '^\s*\(type\|rank\|interface\|associate\|enum\|critical\)\>'
+	\ ||prevstat=~? '^\s*change\s\+team\>'
 	\ ||prevstat=~?'^\s*\(\d\+\s\)\=\s*\(\a\w*\s*:\)\=\s*\(forall\|where\|block\)\>'
 	\ ||prevstat=~? '^\s*\(\d\+\s\)\=\s*\(\a\w*\s*:\)\=\s*if\>'
      let ind = ind + shiftwidth()
@@ -145,10 +146,10 @@ function FortranGetIndent(lnum)
 
   "Subtract a shiftwidth from else, else if, elsewhere, case, class, end if,
   " end where, end select, end forall, end interface, end associate,
-  " end enum, end type, end block and end type statements
+  " end enum, end type, end block, end team and end type statements
   if getline(v:lnum) =~? '^\s*\(\d\+\s\)\=\s*'
-        \. '\(else\|else\s*if\|else\s*where\|case\|class\|'
-        \. 'end\s*\(if\|where\|select\|interface\|'
+        \. '\(else\|else\s*if\|else\s*where\|case\|class\|rank\|type\s\+is\|'
+        \. 'end\s*\(if\|where\|select\|interface\|critical\|team\|'
         \. 'type\|forall\|associate\|enum\|block\)\)\>'
     let ind = ind - shiftwidth()
     " Fix indent for case statement immediately after select
