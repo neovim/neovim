@@ -2253,7 +2253,7 @@ void f_mapset(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   // Delete any existing mapping for this lhs and mode.
   MapArguments unmap_args = MAP_ARGUMENTS_INIT;
-  set_maparg_lhs_rhs(lhs, strlen(lhs), "", 0, LUA_NOREF, 0, &unmap_args);
+  set_maparg_lhs_rhs(lhs, strlen(lhs), "", 0, LUA_NOREF, CPO_TO_CPO_FLAGS, &unmap_args);
   unmap_args.buffer = buffer;
   buf_do_map(MAPTYPE_UNMAP, &unmap_args, mode, is_abbr, curbuf);
   xfree(unmap_args.rhs);
