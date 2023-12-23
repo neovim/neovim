@@ -393,6 +393,6 @@ describe(':checkhealth window', function()
       - OK nothing to see here                          |
                                                         |
       ~                                                 |*11
-]]}
+    ]]}
   end)
 end)
