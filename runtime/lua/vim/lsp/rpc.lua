@@ -194,7 +194,7 @@ end
 
 --- Creates an RPC response object/table.
 ---
----@param code integer RPC error code defined in |vim.lsp.protocol.ErrorCodes|
+---@param code integer RPC error code defined by JSON RPC
 ---@param message string? arbitrary message to send to server
 ---@param data any? arbitrary data to send to server
 ---@return vim.lsp.rpc.RpcError
@@ -642,7 +642,7 @@ end
 ---
 ---@param host string host to connect to
 ---@param port integer port to connect to
----@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicRpcClient #function intended to be passed to |vim.lsp.rpc.start_client| or |vim.lsp.start| on the field cmd
+---@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicRpcClient #function intended to be passed to |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
 function M.connect(host, port)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)

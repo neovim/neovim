@@ -2086,8 +2086,8 @@ connect({host}, {port})                                *vim.lsp.rpc.connect()*
       • {port}  (integer) port to connect to
 
     Return: ~
-        fun(dispatchers: vim.lsp.rpc.Dispatchers ): vim.lsp.rpc.PublicRpcClient #function intended to be passed to |vim.lsp.rpc.start_client| or
-        |vim.lsp.start| on the field cmd
+        fun(dispatchers: vim.lsp.rpc.Dispatchers ): vim.lsp.rpc.PublicRpcClient #function intended to be passed to |vim.lsp.start_client()| or
+        |vim.lsp.start()| on the field cmd
 
                                          *vim.lsp.rpc.domain_socket_connect()*
 domain_socket_connect({pipe_path})
