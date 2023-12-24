@@ -615,9 +615,9 @@ describe('decorations providers', function()
       vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
     ]])
     setup_provider([[
-      local function on_do(kind, winid, bufnr, topline, botline_guess)
+      local function on_do(kind, winid, bufnr, topline, botline)
         if kind == 'win' then
-          if topline < 100 and botline_guess > 100 then
+          if topline < 100 and botline > 100 then
             api.nvim_buf_set_extmark(bufnr, ns1, 99, -1, { sign_text = 'X' })
           else
             api.nvim_buf_clear_namespace(bufnr, ns1, 0, -1)
@@ -655,7 +655,7 @@ describe('decorations providers', function()
       eok = true
     ]])
     setup_provider([[
-      local function on_do(kind, winid, bufnr, topline, botline_guess)
+      local function on_do(kind, winid, bufnr, topline, botline)
         if kind == 'line' then
           api.nvim_buf_set_extmark(bufnr, ns1, 1, -1, { sign_text = 'X' })
           eok = pcall(api.nvim_buf_clear_namespace, bufnr, ns1, 0, -1)

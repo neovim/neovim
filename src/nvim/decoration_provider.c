@@ -15,6 +15,7 @@
 #include "nvim/log.h"
 #include "nvim/lua/executor.h"
 #include "nvim/message.h"
+#include "nvim/move.h"
 #include "nvim/pos_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -121,10 +122,9 @@ void decor_providers_invoke_win(win_T *wp)
   // then we would need decor_state.running_decor_provider just like "on_line" below
   assert(kv_size(decor_state.active) == 0);
 
-  linenr_T knownmax = MIN(wp->w_buffer->b_ml.ml_line_count,
-                          ((wp->w_valid & VALID_BOTLINE)
-                           ? wp->w_botline
-                           : MAX(wp->w_topline + wp->w_height_inner, wp->w_botline)));
+  if (kv_size(decor_providers) > 0) {
+    validate_botline(wp);
+  }
 
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
     DecorProvider *p = &kv_A(decor_providers, i);
@@ -138,7 +138,7 @@ void decor_providers_invoke_win(win_T *wp)
       ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
       // TODO(bfredl): we are not using this, but should be first drawn line?
       ADD_C(args, INTEGER_OBJ(wp->w_topline - 1));
-      ADD_C(args, INTEGER_OBJ(knownmax - 1));
+      ADD_C(args, INTEGER_OBJ(wp->w_botline - 1 - 1));
       if (!decor_provider_invoke((int)i, "win", p->redraw_win, args, true)) {
         kv_A(decor_providers, i).state = kDecorProviderWinDisabled;
       }
