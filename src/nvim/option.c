@@ -3589,6 +3589,43 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
   return errmsg;
 }
 
+/// Validate the new value for an option.
+///
+/// @param  opt_idx         Index in options[] table. Must not be kOptInvalid.
+/// @param  varp            Pointer to option variable.
+/// @param  newval[in,out]  New option value. Might be modified.
+static const char *validate_option_value(const OptIndex opt_idx, void *varp, OptVal *newval,
+                                         int opt_flags, char *errbuf, size_t errbuflen)
+{
+  const char *errmsg = NULL;
+  vimoption_T *opt = &options[opt_idx];
+
+  if (newval->type == kOptValTypeNil) {
+    // Don't try to unset local value if scope is global.
+    // TODO(famiu): Change this to forbid changing all non-local scopes when the API scope bug is
+    // fixed.
+    if (opt_flags == OPT_GLOBAL) {
+      errmsg = _("Cannot unset global option value");
+    } else {
+      optval_free(*newval);
+      *newval = optval_unset_local(opt_idx, varp);
+    }
+  } else if (!option_has_type(opt_idx, newval->type)) {
+    char *rep = optval_to_cstr(*newval);
+    char *valid_types = option_get_valid_types(opt_idx);
+    snprintf(errbuf, IOSIZE, _("Invalid value for option '%s': expected %s, got %s %s"),
+             opt->fullname, valid_types, optval_type_get_name(newval->type), rep);
+    xfree(rep);
+    xfree(valid_types);
+    errmsg = errbuf;
+  } else if (newval->type == kOptValTypeNumber) {
+    // Validate and bound check num option values.
+    errmsg = validate_num_option(opt_idx, varp, &newval->data.number, errbuf, errbuflen);
+  }
+
+  return errmsg;
+}
+
 /// Set the value of an option using an OptVal.
 ///
 /// @param       opt_idx         Index in options[] table. Must not be kOptInvalid.
@@ -3602,78 +3639,50 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
 /// @return  NULL on success, an untranslated error message on error.
 static const char *set_option(const OptIndex opt_idx, void *varp, OptVal value, int opt_flags,
                               const bool value_replaced, char *errbuf, size_t errbuflen)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
-  assert(opt_idx != kOptInvalid && varp != NULL);
+  assert(opt_idx != kOptInvalid);
 
-  const char *errmsg = NULL;
-  bool value_checked = false;
-
-  vimoption_T *opt = &options[opt_idx];
-
-  if (value.type == kOptValTypeNil) {
-    // Don't try to unset local value if scope is global.
-    // TODO(famiu): Change this to forbid changing all non-local scopes when the API scope bug is
-    // fixed.
-    if (opt_flags == OPT_GLOBAL) {
-      errmsg = _("Cannot unset global option value");
-    } else {
-      optval_free(value);
-      value = optval_unset_local(opt_idx, varp);
-    }
-  } else if (!option_has_type(opt_idx, value.type)) {
-    char *rep = optval_to_cstr(value);
-    char *valid_types = option_get_valid_types(opt_idx);
-    snprintf(errbuf, IOSIZE, _("Invalid value for option '%s': expected %s, got %s %s"),
-             opt->fullname, valid_types, optval_type_get_name(value.type), rep);
-    xfree(rep);
-    xfree(valid_types);
-    errmsg = errbuf;
-  }
+  const char *errmsg = validate_option_value(opt_idx, varp, &value, opt_flags, errbuf, errbuflen);
 
   if (errmsg != NULL) {
-    goto err;
+    optval_free(value);
+    return errmsg;
   }
+
+  vimoption_T *opt = &options[opt_idx];
+  const bool scope_local = opt_flags & OPT_LOCAL;
+  const bool scope_global = opt_flags & OPT_GLOBAL;
+  const bool scope_both = !scope_local && !scope_global;
+  const bool opt_is_global_local = opt->indir & PV_BOTH;
+  // Whether local value of global-local option is unset.
+  // NOTE: When this is true, it also implies that opt_is_global_local is true.
+  const bool is_opt_local_unset = is_option_local_value_unset(opt, curbuf, curwin);
 
   // When using ":set opt=val" for a global option with a local value the local value will be reset,
   // use the global value here.
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0 && ((int)opt->indir & PV_BOTH)) {
+  if (scope_both && opt_is_global_local) {
     varp = opt->var;
   }
 
+  void *varp_local = get_varp_scope(opt, OPT_LOCAL);
+  void *varp_global = get_varp_scope(opt, OPT_GLOBAL);
+
   OptVal old_value = optval_from_varp(opt_idx, varp);
-  OptVal old_global_value = NIL_OPTVAL;
-  OptVal old_local_value = NIL_OPTVAL;
-
-  // Save the local and global values before changing anything. This is needed as for a global-only
-  // option setting the "local value" in fact sets the global value (since there is only one value).
-  //
-  // TODO(famiu): This needs to be changed to use the current type of the old value instead of
-  // value.type, when multi-type options are added.
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
-    old_global_value = optval_from_varp(opt_idx, get_varp_scope(opt, OPT_GLOBAL));
-    old_local_value = optval_from_varp(opt_idx, get_varp_scope(opt, OPT_LOCAL));
-
-    // If local value of global-local option is unset, use global value as local value.
-    if (is_option_local_value_unset(opt, curbuf, curwin)) {
-      old_local_value = old_global_value;
-    }
-  }
-
+  OptVal old_global_value = optval_from_varp(opt_idx, varp_global);
+  // If local value of global-local option is unset, use global value as local value.
+  OptVal old_local_value = is_opt_local_unset
+                           ? old_global_value
+                           : optval_from_varp(opt_idx, varp_local);
   // Value that's actually being used.
-  // For local scope of a global-local option, it is equal to the global value.
-  // In every other case, it is the same as old_value.
-  const bool oldval_is_global = ((int)opt->indir & PV_BOTH) && (opt_flags & OPT_LOCAL);
-  OptVal used_old_value = oldval_is_global ? optval_from_varp(opt_idx, get_varp(opt)) : old_value;
+  // For local scope of a global-local option, it's equal to the global value if the local value is
+  // unset. In every other case, it is the same as old_value.
+  // This value is used instead of old_value when triggering the OptionSet autocommand.
+  OptVal used_old_value = (scope_local && is_opt_local_unset)
+                          ? optval_from_varp(opt_idx, get_varp(opt))
+                          : old_value;
 
-  if (value.type == kOptValTypeNumber) {
-    errmsg = validate_num_option(opt_idx, varp, &value.data.number, errbuf, errbuflen);
-    if (errmsg != NULL) {
-      goto err;
-    }
-  }
-
-  set_option_varp(opt_idx, varp, value, false);
-
+  // Save the old values and the new value in case they get changed.
   OptVal saved_used_value = optval_copy(used_old_value);
   OptVal saved_old_global_value = optval_copy(old_global_value);
   OptVal saved_old_local_value = optval_copy(old_local_value);
@@ -3690,6 +3699,11 @@ static const char *set_option(const OptIndex opt_idx, void *varp, OptVal value, 
     secure = 1;
   }
 
+  bool value_checked = false;
+
+  // Set option through its variable pointer.
+  set_option_varp(opt_idx, varp, value, false);
+  // Process any side effects.
   errmsg = did_set_option(opt_idx, varp, old_value, value, opt_flags, &value_checked,
                           value_replaced, errbuf, errbuflen);
 
@@ -3701,12 +3715,6 @@ static const char *set_option(const OptIndex opt_idx, void *varp, OptVal value, 
                               saved_old_local_value, saved_new_value, errmsg);
     }
     if (opt->flags & P_UI_OPTION) {
-      // Calculate saved_new_value again as its value might be changed by bound checks.
-      // NOTE: Currently there are no buffer/window local UI options, but if there ever are buffer
-      // or window local UI options added in the future, varp might become invalid if the buffer or
-      // window is closed during an autocommand, and a check would have to be added for it.
-      optval_free(saved_new_value);
-      saved_new_value = optval_copy(optval_from_varp(opt_idx, varp));
       ui_call_option_set(cstr_as_string(opt->fullname), optval_as_object(saved_new_value));
     }
   }
@@ -3716,9 +3724,7 @@ static const char *set_option(const OptIndex opt_idx, void *varp, OptVal value, 
   optval_free(saved_old_local_value);
   optval_free(saved_old_global_value);
   optval_free(saved_new_value);
-  return errmsg;
-err:
-  optval_free(value);
+
   return errmsg;
 }
 
