@@ -817,47 +817,6 @@ example, `"\uFEFF"`, is the Unicode zero-width no-break space character, which
 would be invisible if included in the source as straight UTF-8.
 
 
-Function Calls ~
-
-On one line if it fits; otherwise, wrap arguments at the parenthesis.
-
-Function calls have the following format: >c
-
-    bool retval = do_something(argument1, argument2, argument3);
-
-If the arguments do not all fit on one line, they should be broken up onto
-multiple lines, with each subsequent line aligned with the first argument. Do
-not add spaces after the open paren or before the close paren: >c
-
-    bool retval = do_something(averyveryveryverylongargument1,
-                               argument2, argument3);
-
-If the function has many arguments, consider having one per line if this makes
-the code more readable: >c
-
-    bool retval = do_something(argument1,
-                               argument2,
-                               argument3,
-                               argument4);
-
-Arguments may optionally all be placed on subsequent lines, with one line per
-argument: >c
-
-    if (...) {
-      ...
-      ...
-      if (...) {
-        do_something(
-            argument1,  // 4 space indent
-            argument2,
-            argument3,
-            argument4);
-      }
-
-In particular, this should be done if the function signature is so long that
-it cannot fit within the maximum line length.
-
-
 Braced Initializer Lists ~
 
 Format a braced list exactly like you would format a function call in its
@@ -959,11 +918,6 @@ Horizontal Whitespace ~
 
 Use of horizontal whitespace depends on location.
 
-    General ~
->c
-        int x[] = { 0 };  // Spaces inside braces for braced-init-list.
-<
-
     Variables ~
 >c
         int long_variable = 0;  // Don't align assignments.
@@ -979,26 +933,6 @@ Use of horizontal whitespace depends on location.
           { "Emma",      "Mason",   2  },
         };
 <
-
-
-    Operators ~
->c
-        x = 0;            // Assignment operators always have spaces around
-                          // them.
-        x = -5;           // No spaces separating unary operators and their
-        x++;              // arguments.
-        if (x && !y)
-<
-
-Vertical Whitespace ~
-
-Minimize use of vertical whitespace.
-
-The basic principle is: The more code that fits on one screen, the easier it
-is to follow and understand the control flow of the program. Of course,
-readability can suffer from code being too dense as well as too spread out, so
-use your judgment. But in general, minimize use of vertical whitespace.
-
 
 ==============================================================================
 Parting Words

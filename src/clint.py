@@ -749,53 +749,6 @@ BRACES = {
 }
 
 
-CLOSING_BRACES = {v: k for k, v in BRACES.items()}
-
-
-def GetExprBracesPosition(clean_lines, linenum, pos):
-    """List positions of all kinds of braces
-
-    If input points to ( or { or [ then function proceeds until finding the
-    position which closes it.
-
-    Args:
-      clean_lines: A CleansedLines instance containing the file.
-      linenum: Current line number.
-      pos: A position on the line.
-
-    Yields:
-      A tuple (linenum, pos, brace, depth) that points to each brace.
-      Additionally each new line (linenum, pos, 's', depth) is yielded, for each
-      line end (linenum, pos, 'e', depth) is yielded and at the very end it
-      yields (linenum, pos, None, None).
-    """
-    depth = 0
-    yielded_line_start = True
-    startpos = pos
-    while linenum < clean_lines.NumLines() - 1:
-        line = clean_lines.elided_with_space_strings[linenum]
-        if not line.startswith('#') or yielded_line_start:
-            # Ignore #ifdefs, but not if it is macros that are checked
-            for i, brace in enumerate(line[startpos:]):
-                pos = i + startpos
-                if brace != ' ' and not yielded_line_start:
-                    yield (linenum, pos, 's', depth)
-                    yielded_line_start = True
-                if brace in BRACES:
-                    depth += 1
-                    yield (linenum, pos, brace, depth)
-                elif brace in CLOSING_BRACES:
-                    yield (linenum, pos, brace, depth)
-                    depth -= 1
-                if depth == 0:
-                    yield (linenum, pos, None, None)
-                    return
-            yield (linenum, len(line) - 1, 'e', depth)
-        yielded_line_start = False
-        startpos = 0
-        linenum += 1
-
-
 def FindEndOfExpressionInLine(line, startpos, depth, startchar, endchar):
     """Find the position just after the matching endchar.
 
@@ -1665,8 +1618,7 @@ def CheckSpacing(filename, clean_lines, linenum, error):
                   line[commentpos - 1] not in string.whitespace) or
                  (commentpos >= 2 and
                   line[commentpos - 2] not in string.whitespace))):
-                error(filename, linenum, 'whitespace/comments', 2,
-                      'At least two spaces is best between code and comments')
+                return
             # There should always be a space between the // and the comment
             commentend = commentpos + 2
             if commentend < len(line) and not line[commentend] == ' ':
@@ -1777,8 +1729,7 @@ def CheckSpacing(filename, clean_lines, linenum, error):
     # There shouldn't be space around unary operators
     match = Search(r'(!\s|~\s|[\s]--[\s;]|[\s]\+\+[\s;])', line)
     if match:
-        error(filename, linenum, 'whitespace/operators', 4,
-              'Extra space for operator %s' % match.group(1))
+        return
 
     # For if/for/while/switch, the left and right parens should be
     # consistent about how many spaces are inside the parens, and
