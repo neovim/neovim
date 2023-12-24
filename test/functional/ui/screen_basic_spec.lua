@@ -618,22 +618,20 @@ local function screen_tests(linegrid)
       ]])
       feed(':set columns=0<CR>')
       screen:expect([[
-                    |*5
-        {1:            }|
-        {8:E594: Need a}|
-        {8:t least 12 c}|
-        {8:olumns: colu}|
-        {8:mns=0}       |
-        {7:Press ENTER }|
-        {7:or type comm}|
-        {7:and to conti}|
-        {7:nue}^         |
+                            |
+        {0:~                   }|*7
+        {1:                    }|
+        {8:E594: Need at least }|
+        {8:12 columns: columns=}|
+        {8:0}                   |
+        {7:Press ENTER or type }|
+        {7:command to continue}^ |
       ]])
       feed('<CR>')
       screen:expect([[
-        ^            |
-        {0:~           }|*12
-                    |
+        ^                    |
+        {0:~                   }|*12
+                            |
       ]])
     end)
   end)

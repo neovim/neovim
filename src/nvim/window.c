@@ -6561,14 +6561,16 @@ void win_new_width(win_T *wp, int width)
   win_set_inner_size(wp, true);
 }
 
+OptInt win_default_scroll(win_T *wp)
+{
+  return MAX(wp->w_height_inner / 2, 1);
+}
+
 void win_comp_scroll(win_T *wp)
 {
   const OptInt old_w_p_scr = wp->w_p_scr;
+  wp->w_p_scr = win_default_scroll(wp);
 
-  wp->w_p_scr = wp->w_height_inner / 2;
-  if (wp->w_p_scr == 0) {
-    wp->w_p_scr = 1;
-  }
   if (wp->w_p_scr != old_w_p_scr) {
     // Used by "verbose set scroll".
     wp->w_p_script_ctx[WV_SCROLL].script_ctx.sc_sid = SID_WINLAYOUT;

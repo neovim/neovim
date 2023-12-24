@@ -1269,6 +1269,7 @@ return {
     },
     {
       abbreviation = 'co',
+      cb = 'did_set_lines_or_columns',
       defaults = {
         if_true = macros('DFLT_COLS'),
         doc = '80 or terminal width',
@@ -4744,6 +4745,7 @@ return {
       type = 'boolean',
     },
     {
+      cb = 'did_set_lines_or_columns',
       defaults = {
         if_true = macros('DFLT_ROWS'),
         doc = '24 or terminal height',
