@@ -696,14 +696,15 @@ function Query:iter_captures(node, source, start, stop)
   start, stop = value_or_node_range(start, stop, node)
 
   local raw_iter = node:_rawquery(self.query, true, start, stop)
+  local metadata = {}
   local function iter(end_line)
     local capture, captured_node, match = raw_iter()
-    local metadata = {}
 
     if match ~= nil then
       local active = self:match_preds(match, match.pattern, source)
       match.active = active
       if not active then
+        metadata = {}
         if end_line and captured_node:range() > end_line then
           return nil, captured_node, nil
         end

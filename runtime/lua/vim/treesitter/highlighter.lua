@@ -294,7 +294,9 @@ local function on_line_impl(self, buf, line, is_spell_nav)
             hl_group = hl,
             ephemeral = true,
             priority = priority,
-            conceal = metadata.conceal,
+            conceal = (metadata[capture] and metadata[capture].conceal)
+                and metadata[capture].conceal
+              or metadata.conceal,
             spell = spell,
           })
         end
