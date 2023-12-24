@@ -366,8 +366,6 @@ describe(':checkhealth window', function()
   end)
 
   it("opens in tab", function()
-    local screen = Screen.new(50, 25)
-    screen:attach({ext_multigrid=true})
     -- create an empty buffer called "my_buff"
     exec_lua 'vim.api.nvim_create_buf(false, true)'
     command('file my_buff')
