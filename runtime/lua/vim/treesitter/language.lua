@@ -37,6 +37,11 @@ end
 
 ---@deprecated
 function M.require_language(lang, path, silent, symbol_name)
+  vim.deprecate(
+    'vim.treesitter.language.require_language()',
+    'vim.treesitter.language.add()',
+    '0.12'
+  )
   local opts = {
     silent = silent,
     path = path,

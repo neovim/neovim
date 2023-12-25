@@ -180,6 +180,7 @@ local _str_byteindex_enc = M._str_byteindex_enc
 ---@param new_lines (table) list of strings to replace the original
 ---@return table The modified {lines} object
 function M.set_lines(lines, A, B, new_lines)
+  vim.deprecate('vim.lsp.util.set_lines()', 'nil', '0.12')
   -- 0-indexing to 1-indexing
   local i_0 = A[1] + 1
   -- If it extends past the end, truncate it to the end. This is because the
@@ -346,7 +347,7 @@ end
 ---@private
 ---@deprecated Use vim.lsp.status() or access client.progress directly
 function M.get_progress_messages()
-  vim.deprecate('vim.lsp.util.get_progress_messages', 'vim.lsp.status', '0.11.0')
+  vim.deprecate('vim.lsp.util.get_progress_messages()', 'vim.lsp.status()', '0.11')
   local new_messages = {}
   local progress_remove = {}
 
@@ -552,7 +553,7 @@ end
 ---@return lsp.CompletionItem[] List of completion items
 ---@see https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 function M.extract_completion_items(result)
-  vim.deprecate('vim.lsp.util.extract_completion_items', nil, '0.11')
+  vim.deprecate('vim.lsp.util.extract_completion_items()', nil, '0.11')
   if type(result) == 'table' and result.items then
     -- result is a `CompletionList`
     return result.items
@@ -612,7 +613,7 @@ end
 ---@param input string unparsed snippet
 ---@return string parsed snippet
 function M.parse_snippet(input)
-  vim.deprecate('vim.lsp.util.parse_snippet', nil, '0.11')
+  vim.deprecate('vim.lsp.util.parse_snippet()', nil, '0.11')
   local ok, parsed = pcall(function()
     return snippet.parse(input)
   end)
@@ -634,7 +635,7 @@ end
 ---@return table[] items
 ---@see complete-items
 function M.text_document_completion_list_to_complete_items(result, prefix)
-  vim.deprecate('vim.lsp.util.text_document_completion_list_to_complete_items', nil, '0.11')
+  vim.deprecate('vim.lsp.util.text_document_completion_list_to_complete_items()', nil, '0.11')
   return require('vim.lsp._completion')._lsp_to_complete_items(result, prefix)
 end
 
@@ -1885,6 +1886,7 @@ end
 ---@param lines table list of lines to trim
 ---@return table trimmed list of lines
 function M.trim_empty_lines(lines)
+  vim.deprecate('vim.lsp.util.trim_empty_lines()', 'vim.split() with `trimempty`', '0.12')
   local start = 1
   for i = 1, #lines do
     if lines[i] ~= nil and #lines[i] > 0 then
@@ -1911,6 +1913,7 @@ end
 ---@param lines table list of lines
 ---@return string filetype or "markdown" if it was unchanged.
 function M.try_trim_markdown_code_blocks(lines)
+  vim.deprecate('vim.lsp.util.try_trim_markdown_code_blocks()', 'nil', '0.12')
   local language_id = lines[1]:match('^```(.*)')
   if language_id then
     local has_inner_code_fence = false

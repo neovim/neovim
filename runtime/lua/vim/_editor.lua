@@ -888,7 +888,7 @@ end
 
 ---@private
 function vim.pretty_print(...)
-  vim.deprecate('vim.pretty_print', 'vim.print', '0.10')
+  vim.deprecate('vim.pretty_print()', 'vim.print()', '0.10')
   return vim.print(...)
 end
 
