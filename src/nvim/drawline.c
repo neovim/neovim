@@ -90,7 +90,7 @@ typedef struct {
 
   bool extra_for_extmark;    ///< n_extra set for inline virtual text
 
-  char extra[57];            ///< sign, line number and 'fdc' must fit in here
+  char extra[11];            ///< must be as large as transchar_charbuf[] in charset.c
 
   hlf_T diff_hlf;            ///< type of diff highlighting
 
@@ -2329,9 +2329,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             mb_c = (uint8_t)(*wlv.p_extra);
             p = get_extra_buf((size_t)wlv.n_extra + 1);
             memset(p, ' ', (size_t)wlv.n_extra);
-            strncpy(p,  // NOLINT(runtime/printf)
-                    wlv.p_extra + 1,
-                    (size_t)strlen(wlv.p_extra) - 1);
+            memcpy(p, wlv.p_extra + 1, strlen(wlv.p_extra) - 1);
             p[wlv.n_extra] = NUL;
             wlv.p_extra = p;
           } else {
