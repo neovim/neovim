@@ -2329,7 +2329,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             mb_c = (uint8_t)(*wlv.p_extra);
             p = get_extra_buf((size_t)wlv.n_extra + 1);
             memset(p, ' ', (size_t)wlv.n_extra);
-            xstrlcpy(p, wlv.p_extra + 1, strlen(wlv.p_extra));
+            memcpy(p, wlv.p_extra + 1, strlen(wlv.p_extra) - 1);
             p[wlv.n_extra] = NUL;
             wlv.p_extra = p;
           } else {
