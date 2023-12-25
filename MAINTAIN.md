@@ -75,11 +75,15 @@ When a (non-experimental) feature is slated to be removed it should:
   - Use of the deprecated feature will still work.
   - This means deprecating via documentation and annotation (`@deprecated`) only.
   - Include a note in `news.txt` under `DEPRECATIONS`.
+  - For Lua features, use `vim.deprecate()`. The specified version is the
+    current minor version + 2. For example, if the current version is
+    `v0.10.0-dev-1957+gd676746c33` then use `0.12`.
+  - For Vimscript features, use `v:lua.vim.deprecate()`. Use the same version
+    as described for Lua features.
 2. Be _hard_ deprecated in a following a release in which it was soft deprecated.
-  - Use of the deprecated feature will still work but should issue a warning
-    (typically via `vim.deprecate()` for Lua features).
-  - Features implemented in Vimscript or in C will need bespoke implementations
-    to communicate to users that the feature is deprecated
+  - Use of the deprecated feature will still work but should issue a warning.
+  - Features implemented in C will need bespoke implementations to communicate
+    to users that the feature is deprecated.
 3. Be removed in a release following the release in which it was hard deprecated
   - Usually this will be the next release, but it may be a later release if a
     longer deprecation cycle is desired

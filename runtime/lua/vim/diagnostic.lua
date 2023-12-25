@@ -891,15 +891,13 @@ M.handlers.signs = {
         local sign = vim.fn.sign_getdefined(name)[1]
         if sign then
           local severity = M.severity[v:upper()]
-          if vim.fn.has('nvim-0.11') == 1 then
-            vim.deprecate(
-              'Defining diagnostic signs with :sign-define or sign_define()',
-              'vim.diagnostic.config()',
-              '0.12',
-              nil,
-              false
-            )
-          end
+          vim.deprecate(
+            'Defining diagnostic signs with :sign-define or sign_define()',
+            'vim.diagnostic.config()',
+            '0.12',
+            nil,
+            false
+          )
 
           if not opts.signs.text then
             opts.signs.text = {}
