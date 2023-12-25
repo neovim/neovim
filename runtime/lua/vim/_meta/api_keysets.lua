@@ -251,6 +251,7 @@ error('Cannot require a meta file')
 --- @field virt_text_pos? string
 --- @field virt_text_win_col? integer
 --- @field virt_text_hide? boolean
+--- @field virt_text_repeat_linebreak? boolean
 --- @field hl_eol? boolean
 --- @field hl_mode? string
 --- @field invalidate? boolean

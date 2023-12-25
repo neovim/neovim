@@ -391,6 +391,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start, Object e
 ///                                  text is selected or hidden because of
 ///                                  scrolling with 'nowrap' or 'smoothscroll'.
 ///                                  Currently only affects "overlay" virt_text.
+///               - virt_text_repeat_linebreak : repeat the virtual text on
+///                                              wrapped lines.
 ///               - hl_mode : control how highlights are combined with the
 ///                           highlights of the text. Currently only affects
 ///                           virt_text highlights, but might affect `hl_group`
@@ -613,7 +615,8 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer line, Integer
   }
 
   hl.flags |= opts->hl_eol ? kSHHlEol : 0;
-  virt_text.flags |= opts->virt_text_hide ? kVTHide : 0;
+  virt_text.flags |= ((opts->virt_text_hide ? kVTHide : 0)
+                      | (opts->virt_text_repeat_linebreak ? kVTRepeatLinebreak : 0));
 
   if (HAS_KEY(opts, set_extmark, hl_mode)) {
     String str = opts->hl_mode;

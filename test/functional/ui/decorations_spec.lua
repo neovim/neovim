@@ -2094,6 +2094,32 @@ describe('extmark decorations', function()
                                                         |
     ]]}
   end)
+
+  it('virt_text_repeat_linebreak repeats virtual text on wrapped lines', function()
+    screen:try_resize(40, 5)
+    meths.set_option_value('breakindent', true, {})
+    insert(example_text)
+    meths.buf_set_extmark(0, ns, 1, 0, { virt_text = {{'│', 'NonText'}}, virt_text_pos = 'overlay', virt_text_repeat_linebreak = true })
+    meths.buf_set_extmark(0, ns, 1, 3, { virt_text = {{'│', 'NonText'}}, virt_text_pos = 'overlay', virt_text_repeat_linebreak = true })
+    command('norm gg')
+    screen:expect{grid=[[
+      ^for _,item in ipairs(items) do          |
+      {1:│}  {1:│}local text, hl_id_cell, count = unpa|
+      {1:│}  {1:│}ck(item)                            |
+          if hl_id_cell ~= nil then           |
+                                              |
+    ]]}
+    meths.buf_clear_namespace(0, ns, 0, -1)
+    meths.buf_set_extmark(0, ns, 1, 0, { virt_text = {{'│', 'NonText'}}, virt_text_repeat_linebreak = true, virt_text_win_col = 0 })
+    meths.buf_set_extmark(0, ns, 1, 0, { virt_text = {{'│', 'NonText'}}, virt_text_repeat_linebreak = true, virt_text_win_col = 2 })
+    screen:expect{grid=[[
+      ^for _,item in ipairs(items) do          |
+      {1:│} {1:│} local text, hl_id_cell, count = unpa|
+      {1:│} {1:│} ck(item)                            |
+          if hl_id_cell ~= nil then           |
+                                              |
+    ]]}
+  end)
 end)
 
 describe('decorations: inline virtual text', function()

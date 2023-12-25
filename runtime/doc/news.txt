@@ -339,11 +339,10 @@ The following changes to existing APIs or features add new behavior.
   In addition, |nvim_buf_get_extmarks()| has gained an "overlap" option to
   return such ranges even if they started before the specified position.
 
-• Extmarks can opt-out of precise undo tracking using the new "undo_restore"
-  flag to |nvim_buf_set_extmark()|
-
-• Extmarks can be automatically hidden or removed using the new "invalidate"
-  flag to |nvim_buf_set_extmark()|
+• The following flags were added to |nvim_buf_set_extmark()|:
+  - "undo_restore": opt-out extmarks of precise undo tracking.
+  - "invalidate": automatically hide or delete extmarks.
+  - "virt_text_repeat_linebreak": repeat virtual text on wrapped lines.
 
 • LSP hover and signature help now use Treesitter for highlighting of Markdown
   content.

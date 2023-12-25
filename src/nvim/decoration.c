@@ -1061,11 +1061,11 @@ void decor_to_dict_legacy(Dictionary *dict, DecorInline decor, bool hl_name)
     Array chunks = virt_text_to_array(virt_text->data.virt_text, hl_name);
     PUT(*dict, "virt_text", ARRAY_OBJ(chunks));
     PUT(*dict, "virt_text_hide", BOOLEAN_OBJ(virt_text->flags & kVTHide));
+    PUT(*dict, "virt_text_repeat_linebreak", BOOLEAN_OBJ(virt_text->flags & kVTRepeatLinebreak));
     if (virt_text->pos == kVPosWinCol) {
       PUT(*dict, "virt_text_win_col", INTEGER_OBJ(virt_text->col));
     }
-    PUT(*dict, "virt_text_pos",
-        CSTR_TO_OBJ(virt_text_pos_str[virt_text->pos]));
+    PUT(*dict, "virt_text_pos", CSTR_TO_OBJ(virt_text_pos_str[virt_text->pos]));
     priority = virt_text->priority;
   }
 

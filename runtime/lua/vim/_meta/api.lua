@@ -519,6 +519,8 @@ function vim.api.nvim_buf_line_count(buffer) end
 ---                 text is selected or hidden because of scrolling with
 ---                 'nowrap' or 'smoothscroll'. Currently only affects
 ---                 "overlay" virt_text.
+---               • virt_text_repeat_linebreak : repeat the virtual text on
+---                 wrapped lines.
 ---               • hl_mode : control how highlights are combined with the
 ---                 highlights of the text. Currently only affects virt_text
 ---                 highlights, but might affect `hl_group` in later versions.

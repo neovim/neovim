@@ -33,6 +33,7 @@ typedef struct {
   String virt_text_pos;
   Integer virt_text_win_col;
   Boolean virt_text_hide;
+  Boolean virt_text_repeat_linebreak;
   Boolean hl_eol;
   String hl_mode;
   Boolean invalidate;

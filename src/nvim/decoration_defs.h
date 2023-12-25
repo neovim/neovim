@@ -77,6 +77,7 @@ enum {
   kVTIsLines = 1,
   kVTHide = 2,
   kVTLinesAbove = 4,
+  kVTRepeatLinebreak = 8,
 };
 
 typedef struct DecorVirtText DecorVirtText;

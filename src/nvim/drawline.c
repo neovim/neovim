@@ -286,10 +286,12 @@ static void draw_virt_text(win_T *wp, buf_T *buf, int col_off, int *end_col, int
       int vcol = item->draw_col - col_off;
       col = draw_virt_text_item(buf, item->draw_col, vt->data.virt_text,
                                 vt->hl_mode, max_col, vcol);
+      if (vt->pos == kVPosEndOfLine && do_eol) {
+        state->eol_col = col + 1;
+      }
     }
-    item->draw_col = INT_MIN;  // deactivate
-    if (vt && vt->pos == kVPosEndOfLine && do_eol) {
-      state->eol_col = col + 1;
+    if (!vt || !(vt->flags & kVTRepeatLinebreak)) {
+      item->draw_col = INT_MIN;  // deactivate
     }
 
     *end_col = MAX(*end_col, col);
@@ -1588,7 +1590,9 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           && wlv.vcol >= wp->w_virtcol)
          || number_only)
         && wlv.filler_todo <= 0) {
-      draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
+      if (!number_only) {
+        draw_virt_text(wp, buf, win_col_offset, &wlv.col, wlv.row);
+      }
       // don't clear anything after wlv.col
       win_put_linebuf(wp, wlv.row, 0, wlv.col, wlv.col, bg_attr, false);
       // Pretend we have finished updating the window.  Except when

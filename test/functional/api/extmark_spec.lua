@@ -1549,6 +1549,7 @@ describe('API/extmarks', function()
       virt_lines_above = true,
       virt_lines_leftcol = true,
       virt_text = { { "text", "Macro" }, { "???" }, { "stack", { "Type", "Search" } } },
+      virt_text_repeat_linebreak = false,
       virt_text_hide = true,
       virt_text_pos = "right_align",
     } }, get_extmark_by_id(ns, marks[1], { details = true }))
@@ -1557,6 +1558,7 @@ describe('API/extmarks', function()
       right_gravity = true,
       priority = 0,
       virt_text = { { "", "Macro" }, { "", { "Type", "Search" } }, { "" } },
+      virt_text_repeat_linebreak = false,
       virt_text_hide = false,
       virt_text_pos = "win_col",
       virt_text_win_col = 1,
