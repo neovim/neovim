@@ -18,6 +18,7 @@
 #include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -3068,6 +3069,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
     return;
   }
 
+  colnr_T split_pos = 0;
   if (y_type == kMTLineWise) {
     if (flags & PUT_LINE_SPLIT) {
       // "p" or "P" in Visual mode: split the lines to put the text in
@@ -3075,23 +3077,24 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
       if (u_save_cursor() == FAIL) {
         goto end;
       }
-      char *p = get_cursor_pos_ptr();
+      char *curline = get_cursor_line_ptr();
+      char *p = curline + curwin->w_cursor.col;
       if (dir == FORWARD && *p != NUL) {
         MB_PTR_ADV(p);
       }
+      // we need this later for the correct extmark_splice() event
+      split_pos = (colnr_T)(p - curline);
+
       char *ptr = xstrdup(p);
       ml_append(curwin->w_cursor.lnum, ptr, 0, false);
       xfree(ptr);
 
-      char *oldp = get_cursor_line_ptr();
-      p = oldp + curwin->w_cursor.col;
-      if (dir == FORWARD && *p != NUL) {
-        MB_PTR_ADV(p);
-      }
-      ptr = xmemdupz(oldp, (size_t)(p - oldp));
+      ptr = xmemdupz(get_cursor_line_ptr(), (size_t)split_pos);
       ml_replace(curwin->w_cursor.lnum, ptr, false);
       nr_lines++;
       dir = FORWARD;
+
+      buf_updates_send_changes(curbuf, curwin->w_cursor.lnum, 1, 1);
     }
     if (flags & PUT_LINE_FORWARD) {
       // Must be "p" for a Visual block, put lines below the block.
@@ -3550,7 +3553,7 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
         bcount_t totsize = 0;
         int lastsize = 0;
         if (y_type == kMTCharWise
-            || (y_type == kMTLineWise && flags & PUT_LINE_SPLIT)) {
+            || (y_type == kMTLineWise && (flags & PUT_LINE_SPLIT))) {
           for (i = 0; i < y_size - 1; i++) {
             totsize += (bcount_t)strlen(y_array[i]) + 1;
           }
@@ -3561,9 +3564,9 @@ void do_put(int regname, yankreg_T *reg, int dir, int count, int flags)
           extmark_splice(curbuf, (int)new_cursor.lnum - 1, col, 0, 0, 0,
                          (int)y_size - 1, lastsize, totsize,
                          kExtmarkUndo);
-        } else if (y_type == kMTLineWise && flags & PUT_LINE_SPLIT) {
+        } else if (y_type == kMTLineWise && (flags & PUT_LINE_SPLIT)) {
           // Account for last pasted NL + last NL
-          extmark_splice(curbuf, (int)new_cursor.lnum - 1, col + 1, 0, 0, 0,
+          extmark_splice(curbuf, (int)new_cursor.lnum - 1, split_pos, 0, 0, 0,
                          (int)y_size + 1, 0, totsize + 2, kExtmarkUndo);
         }
 
