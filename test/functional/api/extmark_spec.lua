@@ -1837,7 +1837,7 @@ describe('API/win_extmark', function()
           -- notifications from 2nd call
           { {id = 1000}, ns, marks[1], 1, 0 },
           { {id = 1000}, ns, marks[2], 1, 2 },
-          -- notifications from 3nd call
+          -- notifications from 3rd call
           { {id = 1000}, ns, marks[1], 1, 0 },
           { {id = 1000}, ns, marks[2], 1, 2 },
           { {id = 1000}, ns, marks[3], 1, 4 },
