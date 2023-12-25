@@ -1296,9 +1296,6 @@ vim.bo.ci = vim.bo.copyindent
 --- 		when it didn't exist when editing it.  This is a
 --- 		protection against a file unexpectedly created by
 --- 		someone else.  Vi didn't complain about this.
---- 							*cpo-p*
---- 	p	Vi compatible Lisp indenting.  When not present, a
---- 		slightly better algorithm is used.
 --- 							*cpo-P*
 --- 	P	When included, a ":write" command that appends to a
 --- 		file will set the file name for the current buffer, if

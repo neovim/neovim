@@ -675,7 +675,7 @@ Options:
   bioskey (MS-DOS)
   conskey (MS-DOS)
   *'cp'* *'nocompatible'* *'nocp'* *'compatible'* (Nvim is always "nocompatible".)
-  'cpoptions' (gjkHw<*- and all POSIX flags were removed)
+  'cpoptions' (gjpkHw<*- and all POSIX flags were removed)
   *'cryptmethod'* *'cm'* *'key'* (Vim encryption implementation)
   cscopepathcomp
   cscopeprg

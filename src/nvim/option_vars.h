@@ -151,7 +151,6 @@
 #define CPO_NUMCOL      'n'     // 'number' column also used for text
 #define CPO_LINEOFF     'o'
 #define CPO_OVERNEW     'O'     // silently overwrite new file
-#define CPO_LISP        'p'     // 'lisp' indenting
 #define CPO_FNAMEAPP    'P'     // set file name for ":w >>file"
 #define CPO_JOINCOL     'q'     // with "3J" use column after first join
 #define CPO_REDO        'r'
