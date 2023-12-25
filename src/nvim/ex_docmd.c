@@ -7386,6 +7386,44 @@ void set_pressedreturn(bool val)
   ex_pressedreturn = val;
 }
 
+/// ":checkhealth [plugins]"
+static void ex_checkhealth(exarg_T *eap)
+{
+  Error err = ERROR_INIT;
+  MAXSIZE_TEMP_ARRAY(args, 2);
+
+  char mods[1024];
+  size_t mods_len = 0;
+  mods[0] = NUL;
+
+  if (cmdmod.cmod_tab > 0 || cmdmod.cmod_split != 0) {
+    bool multi_mods = false;
+    mods_len = add_win_cmd_modifiers(mods, &cmdmod, &multi_mods);
+    assert(mods_len < sizeof(mods));
+  }
+  ADD_C(args, STRING_OBJ(((String){ .data = mods, .size = mods_len })));
+  ADD_C(args, CSTR_AS_OBJ(eap->arg));
+
+  NLUA_EXEC_STATIC("return vim.health._check(...)", args, &err);
+  if (!ERROR_SET(&err)) {
+    return;
+  }
+
+  const char *vimruntime_env = os_getenv("VIMRUNTIME");
+  if (vimruntime_env == NULL) {
+    emsg(_("E5009: $VIMRUNTIME is empty or unset"));
+  } else {
+    bool rtp_ok = NULL != strstr(p_rtp, vimruntime_env);
+    if (rtp_ok) {
+      semsg(_("E5009: Invalid $VIMRUNTIME: %s"), vimruntime_env);
+    } else {
+      emsg(_("E5009: Invalid 'runtimepath'"));
+    }
+  }
+  semsg_multiline(err.msg);
+  api_clear_error(&err);
+}
+
 static void ex_terminal(exarg_T *eap)
 {
   char ex_cmd[1024];
@@ -7393,10 +7431,8 @@ static void ex_terminal(exarg_T *eap)
 
   if (cmdmod.cmod_tab > 0 || cmdmod.cmod_split != 0) {
     bool multi_mods = false;
-
-    // ex_cmd must be a null terminated string before passing to add_win_cmd_modifiers
-    ex_cmd[0] = '\0';
-
+    // ex_cmd must be a null-terminated string before passing to add_win_cmd_modifiers
+    ex_cmd[0] = NUL;
     len = add_win_cmd_modifiers(ex_cmd, &cmdmod, &multi_mods);
     assert(len < sizeof(ex_cmd));
     int result = snprintf(ex_cmd + len, sizeof(ex_cmd) - len, " new");

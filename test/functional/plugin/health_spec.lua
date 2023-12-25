@@ -6,7 +6,7 @@ local curbuf_contents = helpers.curbuf_contents
 local command = helpers.command
 local eq, neq, matches = helpers.eq, helpers.neq, helpers.matches
 local getcompletion = helpers.funcs.getcompletion
-local feed = helpers.feed
+local insert = helpers.insert
 local source = helpers.source
 local exec_lua = helpers.exec_lua
 
@@ -237,16 +237,19 @@ describe(':checkhealth window', function()
     ]]}
   end)
 
-  it("opens in vsplit window when no buffer created", function()
+  local function test_health_vsplit(left, emptybuf, mods)
     local screen = Screen.new(50, 20)
     screen:attach({ext_multigrid=true})
-    command("vertical checkhealth success1")
-    screen:expect{grid=[[
+    if not emptybuf then
+      insert('hello')
+    end
+    command(mods .. ' checkhealth success1')
+    screen:expect(([[
     ## grid 1
-      [4:-------------------------]│[2:------------------------]|*19
+      %s
       [3:--------------------------------------------------]|
     ## grid 2
-                              |
+      %s                   |
       ~                       |*18
     ## grid 3
                                                         |
@@ -265,21 +268,44 @@ describe(':checkhealth window', function()
       - OK nothing to see here |
                                |
       ~                        |*4
-    ]]}
-  end)
+    ]]):format(left
+               and '[4:-------------------------]│[2:------------------------]|*19'
+               or '[2:------------------------]│[4:-------------------------]|*19',
+               emptybuf and '     ' or 'hello')
+    )
+  end
 
-  it("opens in split window when no buffer created", function()
+  for _, mods in ipairs({ 'vertical', 'leftabove vertical', 'topleft vertical' }) do
+    it(('opens in left vsplit window with :%s and no buffer created'):format(mods), function()
+      test_health_vsplit(true, true, mods)
+    end)
+    it(('opens in left vsplit window with :%s and non-empty buffer'):format(mods), function()
+      test_health_vsplit(true, false, mods)
+    end)
+  end
+
+  for _, mods in ipairs({ 'rightbelow vertical', 'botright vertical' }) do
+    it(('opens in right vsplit window with :%s and no buffer created'):format(mods), function()
+      test_health_vsplit(false, true, mods)
+    end)
+    it(('opens in right vsplit window with :%s and non-empty buffer'):format(mods), function()
+      test_health_vsplit(false, false, mods)
+    end)
+  end
+
+  local function test_health_split(top, emptybuf, mods)
     local screen = Screen.new(50, 25)
     screen:attach({ext_multigrid=true})
-    command("horizontal checkhealth success1")
-    screen:expect{grid=[[
+    if not emptybuf then
+      insert('hello')
+    end
+    command(mods .. ' checkhealth success1')
+    screen:expect(([[
     ## grid 1
-      [4:--------------------------------------------------]|*12
-      health://                                         |
-      [2:--------------------------------------------------]|*11
+%s
       [3:--------------------------------------------------]|
     ## grid 2
-                                                        |
+      %s                                             |
       ~                                                 |*10
     ## grid 3
                                                         |
@@ -296,74 +322,37 @@ describe(':checkhealth window', function()
       report 2                                          |
       - OK nothing to see here                          |
                                                         |
-    ]]}
-  end)
-
-  it("opens in split window", function()
-    local screen = Screen.new(50, 25)
-    screen:attach({ext_multigrid=true})
-    feed('ihello')
-    feed('<esc>')
-    command("horizontal checkhealth success1")
-    screen:expect{grid=[[
-    ## grid 1
+    ]]):format(top
+               and [[
       [4:--------------------------------------------------]|*12
       health://                                         |
+      [2:--------------------------------------------------]|*11]]
+               or ([[
       [2:--------------------------------------------------]|*11
-      [3:--------------------------------------------------]|
-    ## grid 2
-      hello                                             |
-      ~                                                 |*10
-    ## grid 3
-                                                        |
-    ## grid 4
-      ^                                                  |
-      ──────────────────────────────────────────────────|
-      ────────────────────────────                      |
-      test_plug.success1: require("test_plug.success1.  |
-      health").check()                                  |
-                                                        |
-      report 1                                          |
-      - OK everything is fine                           |
-                                                        |
-      report 2                                          |
-      - OK nothing to see here                          |
-                                                        |
-    ]]}
-  end)
+      [No Name] %s                                     |
+      [4:--------------------------------------------------]|*12]]
+               ):format(emptybuf and '   ' or '[+]'),
+               emptybuf and '     ' or 'hello')
+    )
+  end
 
-  it("opens in vsplit window", function()
-    local screen = Screen.new(50, 25)
-    screen:attach({ext_multigrid=true})
-    feed('ihello')
-    feed('<esc>')
-    command("vertical checkhealth success1")
-    screen:expect{grid=[[
-    ## grid 1
-      [4:-------------------------]│[2:------------------------]|*24
-      [3:--------------------------------------------------]|
-    ## grid 2
-      hello                   |
-      ~                       |*23
-    ## grid 3
-                                                        |
-    ## grid 4
-      ^                         |
-      ─────────────────────────|*3
-      ───                      |
-      test_plug.success1:      |
-      require("test_plug.      |
-      success1.health").check()|
-                               |
-      report 1                 |
-      - OK everything is fine  |
-                               |
-      report 2                 |
-      - OK nothing to see here |
-                               |
-      ~                        |*9
-    ]]}
-  end)
+  for _, mods in ipairs({ 'horizontal', 'leftabove', 'topleft' }) do
+    it(('opens in top split window with :%s and no buffer created'):format(mods), function()
+      test_health_split(true, true, mods)
+    end)
+    it(('opens in top split window with :%s and non-empty buffer'):format(mods), function()
+      test_health_split(true, false, mods)
+    end)
+  end
+
+  for _, mods in ipairs({ 'rightbelow', 'botright' }) do
+    it(('opens in bottom split window with :%s and no buffer created'):format(mods), function()
+      test_health_split(false, true, mods)
+    end)
+    it(('opens in bottom split window with :%s and non-empty buffer'):format(mods), function()
+      test_health_split(false, false, mods)
+    end)
+  end
 
   it("opens in tab", function()
     -- create an empty buffer called "my_buff"

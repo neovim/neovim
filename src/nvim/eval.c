@@ -8810,39 +8810,6 @@ void eval_fmt_source_name_line(char *buf, size_t bufsize)
   }
 }
 
-/// ":checkhealth [plugins]"
-void ex_checkhealth(exarg_T *eap)
-{
-  Error err = ERROR_INIT;
-  MAXSIZE_TEMP_ARRAY(args, 2);
-  if (cmdmod.cmod_split & WSP_VERT) {
-    ADD_C(args, CSTR_AS_OBJ("vertical"));
-  } else if (cmdmod.cmod_split & WSP_HOR) {
-    ADD_C(args, CSTR_AS_OBJ("horizontal"));
-  } else {
-    ADD_C(args, CSTR_AS_OBJ("tab"));
-  }
-  ADD_C(args, CSTR_AS_OBJ(eap->arg));
-  NLUA_EXEC_STATIC("return vim.health._check(...)", args, &err);
-  if (!ERROR_SET(&err)) {
-    return;
-  }
-
-  const char *vimruntime_env = os_getenv("VIMRUNTIME");
-  if (vimruntime_env == NULL) {
-    emsg(_("E5009: $VIMRUNTIME is empty or unset"));
-  } else {
-    bool rtp_ok = NULL != strstr(p_rtp, vimruntime_env);
-    if (rtp_ok) {
-      semsg(_("E5009: Invalid $VIMRUNTIME: %s"), vimruntime_env);
-    } else {
-      emsg(_("E5009: Invalid 'runtimepath'"));
-    }
-  }
-  semsg_multiline(err.msg);
-  api_clear_error(&err);
-}
-
 void invoke_prompt_callback(void)
 {
   typval_T rettv;
