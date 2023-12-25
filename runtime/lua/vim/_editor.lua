@@ -1019,6 +1019,18 @@ end
 ---
 ---@return string|nil # Deprecated message, or nil if no message was shown.
 function vim.deprecate(name, alternative, version, plugin, backtrace)
+  -- Only issue warning if feature is hard-deprecated as specified by MAINTAIN.md.
+  if plugin == nil then
+    local current_version = vim.version()
+    local deprecated_version = assert(vim.version.parse(version))
+    local soft_deprecated_version =
+      { deprecated_version.major, deprecated_version.minor - 1, deprecated_version.patch }
+    local deprecate = vim.version.lt(current_version, soft_deprecated_version)
+    if deprecate then
+      return
+    end
+  end
+
   local msg = ('%s is deprecated'):format(name)
   plugin = plugin or 'Nvim'
   msg = alternative and ('%s, use %s instead.'):format(msg, alternative) or msg
