@@ -366,6 +366,8 @@ The following changes to existing APIs or features add new behavior.
 • Attempting to set an invalid keycode option (e.g. `set t_foo=123`) no longer
   gives an error.
 
+• |:checkhealth| buffer can now be opened in a split window using |:vertical| or |:horizontal|.
+
 ==============================================================================
 REMOVED FEATURES                                                 *news-removed*
 

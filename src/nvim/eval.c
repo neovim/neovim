@@ -8814,7 +8814,14 @@ void eval_fmt_source_name_line(char *buf, size_t bufsize)
 void ex_checkhealth(exarg_T *eap)
 {
   Error err = ERROR_INIT;
-  MAXSIZE_TEMP_ARRAY(args, 1);
+  MAXSIZE_TEMP_ARRAY(args, 2);
+  if (cmdmod.cmod_split & WSP_VERT) {
+    ADD_C(args, CSTR_AS_OBJ("vertical"));
+  } else if (cmdmod.cmod_split & WSP_HOR) {
+    ADD_C(args, CSTR_AS_OBJ("horizontal"));
+  } else {
+    ADD_C(args, CSTR_AS_OBJ("tab"));
+  }
   ADD_C(args, CSTR_AS_OBJ(eap->arg));
   NLUA_EXEC_STATIC("return vim.health._check(...)", args, &err);
   if (!ERROR_SET(&err)) {
