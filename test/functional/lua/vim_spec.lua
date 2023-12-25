@@ -132,11 +132,13 @@ describe('lua stdlib', function()
     -- vim.deprecate(name, alternative, version, plugin, backtrace)
     eq(dedent[[
       foo.bar() is deprecated, use zub.wooo{ok=yay} instead. :help deprecated
-      This feature will be removed in Nvim version 2.17]],
-      exec_lua('return vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', '2.17'))
+      This feature will be removed in Nvim version 0.10]],
+      exec_lua('return vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', '0.10'))
     -- Same message, skipped.
     eq(vim.NIL,
-      exec_lua('return vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', '2.17'))
+      exec_lua('return vim.deprecate(...)', 'foo.bar()', 'zub.wooo{ok=yay}', '0.10'))
+    -- Don't show error if not hard deprecated
+    eq(vim.NIL, exec_lua('return vim.deprecate(...)', 'foo.bar()', 'nil', '5000.0.0'))
     -- When `plugin` is specified, don't show ":help deprecated". #22235
     eq(dedent[[
       foo.bar() is deprecated, use zub.wooo{ok=yay} instead.
