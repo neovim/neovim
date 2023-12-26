@@ -1162,9 +1162,21 @@ func Test_CompleteChanged()
   call feedkeys("a\<C-N>\<C-N>\<C-N>\<C-N>\<C-P>", 'tx')
   call assert_equal('foobar', g:word)
 
+  func Omni_test(findstart, base)
+    if a:findstart
+      return col(".")
+    endif
+    return [#{word: "one"}, #{word: "two"}, #{word: "five"}]
+  endfunc
+  set omnifunc=Omni_test
+  set completeopt=menu,menuone
+  call feedkeys("i\<C-X>\<C-O>\<BS>\<BS>\<BS>f", 'tx')
+  call assert_equal('five', g:word)
+
   autocmd! AAAAA_Group
   set complete& completeopt&
   delfunc! OnPumChange
+  delfunc! Omni_test
   bw!
 endfunc
 

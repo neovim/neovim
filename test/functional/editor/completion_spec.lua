@@ -1027,6 +1027,29 @@ describe('completion', function()
     feed('<esc>')
   end)
 
+  it('correct set completed_item in CompleteChanged', function()
+    source([[
+      funct Omni_test(findstart, base)
+        if a:findstart
+          return col(".")
+        endif
+        return [#{word: "one"}, #{word: "two"}, #{word: "five"}]
+      endfunc
+      set omnifunc=Omni_test
+      set complete=.
+      function! OnChange()
+        let g:event = copy(v:event)
+        let g:item = get(v:event, 'completed_item', {})
+        let g:word = get(g:item, 'word', v:null)
+      endfunction
+      autocmd CompleteChanged * call OnChange()
+    ]])
+    feed('i<C-X><C-O>')
+    eq('one', eval('g:word'))
+    feed('<BS><BS><BS>f')
+    eq('five', eval('g:word'))
+  end)
+
   it('is stopped by :stopinsert from timer #12976', function()
     screen:try_resize(32,14)
     command([[call setline(1, ['hello', 'hullo', 'heeee', ''])]])
