@@ -135,7 +135,7 @@ q			Stops recording.
 
 							*@*
 @{0-9a-z".=*+}		Execute the contents of register {0-9a-z".=*+} [count]
-			times. Note that register '%' (name of the current
+			times.  Note that register '%' (name of the current
 			file) and '#' (name of the alternate file) cannot be
 			used.
 			The register is executed like a mapping, that means
