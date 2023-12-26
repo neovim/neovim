@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "nvim/api/buffer.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
@@ -13,11 +14,16 @@
 #include "nvim/autocmd.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/buffer_updates.h"
+#include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/drawscreen.h"
+#include "nvim/edit.h"
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/extmark.h"
+#include "nvim/extmark_defs.h"
 #include "nvim/getchar.h"
 #include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
@@ -33,6 +39,7 @@
 #include "nvim/menu.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
+#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
@@ -665,64 +672,10 @@ void pum_redraw(void)
   }
 }
 
-/// create a floating preview window for info
-/// Autocommands are blocked for the duration of the call.
-/// @return  NULL when no enough room to show
-static win_T *pum_create_float_preview(bool enter)
-{
-  WinConfig config = WIN_CONFIG_INIT;
-  config.relative = kFloatRelativeEditor;
-  // when pum_above is SW otherwise is NW
-  config.anchor = pum_above ? kFloatAnchorSouth : 0;
-  int col = pum_col + pum_width + pum_scrollbar + 1;
-  // TODO(glepnir): support config align border by using completepopup
-  // align menu
-  config.row = pum_row;
-  int right_extra = Columns - col;
-  if (right_extra > 0) {
-    config.width = right_extra;
-    config.col = col - 1;
-  } else if (pum_col - 2 > 0) {
-    config.width = pum_col - 2;
-    config.col = pum_col - config.width - 1;
-  } else {
-    return NULL;
-  }
-  config.height = pum_height;
-  config.style = kWinStyleMinimal;
-  config.hide = true;
-
-  block_autocmds();
-
-  Error err = ERROR_INIT;
-  win_T *wp = win_new_float(NULL, true, config, &err);
-  // TODO(glepnir): remove win_enter usage
-  if (enter) {
-    win_enter(wp, false);
-  }
-
-  // create a new buffer
-  Buffer b = nvim_create_buf(false, true, &err);
-  if (!b) {
-    win_free(wp, NULL);
-    unblock_autocmds();
-    return NULL;
-  }
-  buf_T *buf = find_buffer_by_handle(b, &err);
-  set_option_direct_for(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL, 0, kOptReqBuf,
-                        buf);
-  wp->w_float_is_info = true;
-  wp->w_p_diff = false;
-  buf->b_p_bl = false;
-  win_set_buf(wp, buf, &err);
-
-  unblock_autocmds();
-  return wp;
-}
-
 /// set info text to preview buffer.
 static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *max_width)
 {
+  bcount_t inserted_bytes = 0;
   for (char *p = info; *p != NUL;) {
     int text_width = 0;
     char *e = vim_strchr(p, '\n');
@@ -736,6 +689,7 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
     }
     *e = NUL;
     ml_append_buf(buf, (*lnum)++, p, (int)(e - p + 1), false);
+    inserted_bytes += (bcount_t)strlen(p) + 1;
     text_width = (int)mb_string2cells(p);
     if (text_width > *max_width) {
       *max_width = text_width;
@@ -745,66 +699,78 @@ static void pum_preview_set_text(buf_T *buf, char *info, linenr_T *lnum, int *ma
   }
   // delete the empty last line
   ml_delete_buf(buf, buf->b_ml.ml_line_count, false);
+  if (strstr(p_cot, "popup") != NULL) {
+    extmark_splice(buf, 1, 0, 1, 0, 0, buf->b_ml.ml_line_count, 0, inserted_bytes, kExtmarkNoUndo);
+  }
 }
 
-/// adjust floating preview window width and height
-static void pum_adjust_float_position(win_T *wp, int height, int width)
+/// adjust floating info preview window position
+static void pum_adjust_info_position(win_T *wp, int height, int width)
 {
-  // when floating window in right and right no enough room to show
-  // but left has enough room, adjust floating window to left.
-  if (wp->w_config.width < width && wp->w_config.col > pum_col) {
-    if ((pum_col - 2) > width) {
-      wp->w_config.width = width;
-      wp->w_config.col = pum_col - width - 1;
-    }
+  int col = pum_col + pum_width + pum_scrollbar + 1;
+  // TODO(glepnir): support config align border by using completepopup
+  // align menu
+  int right_extra = Columns - col;
+  int left_extra = pum_col - 2;
+
+  if (right_extra > width) {  // place in right
+    wp->w_config.width = width;
+    wp->w_config.col = col - 1;
+  } else if (left_extra > width) {  // place in left
+    wp->w_config.width = width;
+    wp->w_config.col = pum_col - wp->w_config.width - 1;
+  } else {  // either width is enough just use the biggest one.
+    const bool place_in_right = right_extra > left_extra;
+    wp->w_config.width = place_in_right ? right_extra : left_extra;
+    wp->w_config.col = place_in_right ? col - 1 : pum_col - wp->w_config.width - 1;
   }
-  wp->w_config.width = MIN(wp->w_config.width, width);
+  // when pum_above is SW otherwise is NW
+  wp->w_config.anchor = pum_above ? kFloatAnchorSouth : 0;
+  wp->w_config.row = pum_above ? pum_row + height : pum_row;
   wp->w_config.height = MIN(Rows, height);
   wp->w_config.hide = false;
   win_config_float(wp, wp->w_config);
 }
 
-/// used in nvim_complete_set
-win_T *pum_set_info(int pum_idx, char *info)
+/// Used for nvim_complete_set
+///
+/// @param selected the selected compl item.
+/// @parma info     Info string.
+/// @return a win_T pointer.
+win_T *pum_set_info(int selected, char *info)
 {
-  if (!pum_is_visible || pum_idx < 0 || pum_idx > pum_size) {
+  if (!pum_is_visible || !compl_match_curr_select(selected)) {
     return NULL;
   }
-  pum_array[pum_idx].pum_info = xstrdup(info);
-  compl_set_info(pum_idx);
-  bool use_float = strstr(p_cot, "popup") != NULL ? true : false;
-  if (pum_idx != pum_selected || !use_float) {
-    return NULL;
-  }
-
   block_autocmds();
   RedrawingDisabled++;
   no_u_sync++;
   win_T *wp = win_float_find_preview();
   if (wp == NULL) {
-    wp = pum_create_float_preview(false);
-    // no enough room to show
+    wp = win_float_create(false, true);
     if (!wp) {
       return NULL;
     }
   } else {
     // clean exist buffer
+    linenr_T count = wp->w_buffer->b_ml.ml_line_count;
     while (!buf_is_empty(wp->w_buffer)) {
       ml_delete_buf(wp->w_buffer, 1, false);
     }
+    bcount_t deleted_bytes = get_region_bytecount(wp->w_buffer, 1, count, 0, 0);
+    extmark_splice(wp->w_buffer, 1, 0, count, 0, deleted_bytes, 1, 0, 0, kExtmarkNoUndo);
   }
-  no_u_sync--;
-  RedrawingDisabled--;
-
   linenr_T lnum = 0;
   int max_info_width = 0;
   pum_preview_set_text(wp->w_buffer, info, &lnum, &max_info_width);
-  redraw_later(wp, UPD_SOME_VALID);
+  no_u_sync--;
+  RedrawingDisabled--;
+  redraw_later(wp, UPD_NOT_VALID);
 
   if (wp->w_p_wrap) {
     lnum += plines_win(wp, lnum, true);
   }
-  pum_adjust_float_position(wp, lnum, max_info_width);
+  pum_adjust_info_position(wp, lnum, max_info_width);
   unblock_autocmds();
   return wp;
 }
@@ -828,6 +794,13 @@ static bool pum_set_selected(int n, int repeat)
   int prev_selected = pum_selected;
 
   pum_selected = n;
+  bool use_float = strstr(p_cot, "popup") != NULL;
+  // when new leader add and info window is shown and no selected we still
+  // need use the first index item to update the info float window position.
+  bool force_select = use_float && pum_selected < 0 && win_float_find_preview();
+  if (force_select) {
+    pum_selected = 0;
+  }
 
   if ((pum_selected >= 0) && (pum_selected < pum_size)) {
     if (pum_first > pum_selected - 4) {
@@ -890,7 +863,6 @@ static bool pum_set_selected(int n, int repeat)
         && (vim_strchr(p_cot, 'p') != NULL)) {
       win_T *curwin_save = curwin;
       tabpage_T *curtab_save = curtab;
-      bool use_float = strstr(p_cot, "popup") != NULL ? true : false;
 
       if (use_float) {
         block_autocmds();
@@ -915,7 +887,7 @@ static bool pum_set_selected(int n, int repeat)
         if (wp) {
           win_enter(wp, false);
         } else {
-          wp = pum_create_float_preview(true);
+          wp = win_float_create(true, true);
           if (wp) {
             resized = true;
           }
@@ -986,7 +958,7 @@ static bool pum_set_selected(int n, int repeat)
               lnum += plines_win(curwin, lnum, true);
             }
             // adjust floating window by actually height and max info text width
-            pum_adjust_float_position(curwin, lnum, max_info_width);
+            pum_adjust_info_position(curwin, lnum, max_info_width);
           }
 
           if ((curwin != curwin_save && win_valid(curwin_save))
@@ -1044,6 +1016,11 @@ static bool pum_set_selected(int n, int repeat)
         unblock_autocmds();
       }
     }
+  }
+
+  // restore before selected value
+  if (force_select) {
+    pum_selected = n;
   }
 
   return resized;
