@@ -169,9 +169,9 @@ describe('editorconfig', function()
     local filename = testdir .. pathsep .. 'trim.txt'
     -- luacheck: push ignore 613
     local untrimmed = [[
-This line ends in whitespace
-So does this one
-And this one
+This line ends in whitespace 
+So does this one    
+And this one         
 But not this one
 ]]
     -- luacheck: pop
