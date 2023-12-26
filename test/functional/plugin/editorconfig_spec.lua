@@ -12,10 +12,8 @@ local testdir = 'Xtest-editorconfig'
 local function test_case(name, expected, buffer)
   local filename = testdir .. pathsep .. name
   local buf = buffer and buffer or 0
-  --io.write("file", filename)
   command('edit ' .. filename)
   for opt, val in pairs(expected) do
-    --io.write("value", tostring(meths.get_option_value(opt, {buf=buf})))
     eq(val, meths.get_option_value(opt, {buf=buf}), name)
   end
 end
