@@ -32,11 +32,13 @@ target_link_libraries(main_lib INTERFACE
   treesitter
   unibilium)
 
-# Libintl (not Intl) selects our FindLibintl.cmake script. #8464
-find_package(Libintl REQUIRED)
-target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBINTL_INCLUDE_DIR})
-if (LIBINTL_LIBRARY)
-  target_link_libraries(main_lib INTERFACE ${LIBINTL_LIBRARY})
+if(ENABLE_LIBINTL)
+  # Libintl (not Intl) selects our FindLibintl.cmake script. #8464
+  find_package(Libintl REQUIRED)
+  target_include_directories(main_lib SYSTEM BEFORE INTERFACE ${LIBINTL_INCLUDE_DIR})
+  if (LIBINTL_LIBRARY)
+    target_link_libraries(main_lib INTERFACE ${LIBINTL_LIBRARY})
+  endif()
 endif()
 
 # The unit test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
