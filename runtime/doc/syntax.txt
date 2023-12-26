@@ -2801,10 +2801,20 @@ To highlight R code in knitr chunk headers: >
 	let rmd_syn_hl_chunk = 1
 
 By default, chunks of R code will be highlighted following the rules of R
-language. If you want proper syntax highlighting of chunks of other languages,
-you should add them to either `markdown_fenced_languages` or
-`rmd_fenced_languages`. For example to properly highlight both R and Python,
-you may add this to your |vimrc|: >
+language. Moreover, whenever the buffer is saved, Vim scans the buffer and
+highlights other languages if they are present in new chunks. LaTeX code also
+is automatically recognized and highlighted when the buffer is saved. This
+behavior can be controlled with the variables `rmd_dynamic_fenced_languages`,
+and `rmd_include_latex` whose valid values are: >
+	let rmd_dynamic_fenced_languages = 0 " No autodetection of languages
+	let rmd_dynamic_fenced_languages = 1 " Autodetection of languages
+	let rmd_include_latex = 0 " Don't highlight LaTeX code
+	let rmd_include_latex = 1 " Autodetect LaTeX code
+	let rmd_include_latex = 2 " Always include LaTeX highlighting
+
+If the value of `rmd_dynamic_fenced_languages` is 0, you still can set the
+list of languages whose chunks of code should be properly highlighted, as in
+the example: >
 	let rmd_fenced_languages = ['r', 'python']
 
 

@@ -1,7 +1,7 @@
 " Language: Markdown with chunks of R, Python and other languages
 " Maintainer: Jakson Aquino <jalvesaq@gmail.com>
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change: Wed May 17, 2023  06:34AM
+" Last Change: Sun Dec 24, 2023  07:21AM
 "
 "   For highlighting pandoc extensions to markdown like citations and TeX and
 "   many other advanced features like folding of markdown sections, it is
@@ -15,6 +15,13 @@ endif
 
 let s:cpo_save = &cpo
 set cpo&vim
+
+let g:rmd_include_latex = get(g:, 'rmd_include_latex', 1)
+if g:rmd_include_latex == 0 || g:rmd_include_latex == 1
+  let b:rmd_has_LaTeX = v:false
+elseif g:rmd_include_latex == 2
+  let b:rmd_has_LaTeX = v:true
+endif
 
 " Highlight the header of the chunks as R code
 let g:rmd_syn_hl_chunk = get(g:, 'rmd_syn_hl_chunk', 0)
@@ -136,7 +143,7 @@ syn match knitrBodyVar '| \zs\S\{-}\ze:' contained containedin=knitrBodyOptions
 let g:rmd_fenced_languages = get(g:, 'rmd_fenced_languages', ['r'])
 
 let s:no_syntax_vim = []
-function IncludeLanguage(lng)
+function s:IncludeLanguage(lng)
   if a:lng =~ '='
     let ftpy = substitute(a:lng, '.*=', '', '')
     let lnm = substitute(a:lng, '=.*', '', '')
@@ -171,11 +178,23 @@ function IncludeLanguage(lng)
 endfunction
 
 for s:type in g:rmd_fenced_languages
-  call IncludeLanguage(s:type)
+  call s:IncludeLanguage(s:type)
 endfor
 unlet! s:type
 
-function CheckRmdFencedLanguages()
+let s:LaTeX_included = v:false
+function s:IncludeLaTeX()
+  let s:LaTeX_included = v:true
+  unlet! b:current_syntax
+  syn include @RmdLaTeX syntax/tex.vim
+  " From vim-pandoc-syntax
+  syn region rmdLaTeXInlineMath start=/\v\\@<!\$\S@=/ end=/\v\\@<!\$\d@!/ keepend contains=@RmdLaTeX
+  syn match rmdLaTeXCmd /\\[[:alpha:]]\+\(\({.\{-}}\)\=\(\[.\{-}\]\)\=\)*/ contains=@RmdLaTeX
+  syn region rmdLaTeX start='\$\$'  end='\$\$' keepend contains=@RmdLaTeX
+  syn region rmdLaTeX start=/\\begin{\z(.\{-}\)}/ end=/\\end{\z1}/ keepend contains=@RmdLaTeX
+endfunction
+
+function s:CheckRmdFencedLanguages()
   let alines = getline(1, '$')
   call filter(alines, "v:val =~ '^```{'")
   call map(alines, "substitute(v:val, '^```{', '', '')")
@@ -193,16 +212,31 @@ function CheckRmdFencedLanguages()
     endfor
     if has_lng == 0
       let g:rmd_fenced_languages += [tpy]
-      call IncludeLanguage(tpy)
+      call s:IncludeLanguage(tpy)
     endif
   endfor
+
+  if hlexists('pandocLaTeXCommand')
+    return
+  endif
+  if g:rmd_include_latex
+    if !b:rmd_has_LaTeX && (search('\$\$', 'wn') > 0 ||
+          \ search('\\begin{', 'wn') > 0) ||
+          \ search('\\[[:alpha:]]\+', 'wn') ||
+          \ search('\$[^\$]\+\$', 'wn')
+      let b:rmd_has_LaTeX = v:true
+    endif
+    if b:rmd_has_LaTeX && !s:LaTeX_included
+      call s:IncludeLaTeX()
+    endif
+  endif
 endfunction
 
 if g:rmd_dynamic_fenced_languages
-  call CheckRmdFencedLanguages()
+  call s:CheckRmdFencedLanguages()
   augroup RmdSyntax
     autocmd!
-    autocmd BufWritePost <buffer> call CheckRmdFencedLanguages()
+    autocmd BufWritePost <buffer> call s:CheckRmdFencedLanguages()
   augroup END
 endif
 
@@ -224,6 +258,8 @@ endif
 unlet s:save_pandoc_lngs
 let &cpo = s:cpo_save
 unlet s:cpo_save
+
+syntax iskeyword clear
 
 let b:current_syntax = "rmd"
 
