@@ -23,7 +23,7 @@ describe('statuscolumn', function()
   end)
 
   it("fails with invalid 'statuscolumn'", function()
-    command([[set stc=%{v:relnum?v:relnum:(v:lnum==5?invalid:v:lnum)}\ ]])
+    command([[set stc=%{v:relnum?v:relnum:(v:lnum==5?'truncate':v:lnum)}%{!v:relnum&&v:lnum==5?invalid:''}\ ]])
     screen:expect([[
       4  aaaaa                                             |
       3  aaaaa                                             |
@@ -43,6 +43,22 @@ describe('statuscolumn', function()
     command('norm 5G')
     eq('Vim(redraw):E121: Undefined variable: invalid', pcall_err(command, 'redraw!'))
     eq('', eval('&statuscolumn'))
+    screen:expect([[
+       4 aaaaa                                             |
+       5 ^aaaaa                                             |
+       6 aaaaa                                             |
+       7 aaaaa                                             |
+       8 aaaaa                                             |
+       9 aaaaa                                             |
+      10 aaaaa                                             |
+      11 aaaaa                                             |
+      12 aaaaa                                             |
+      13 aaaaa                                             |
+      14 aaaaa                                             |
+      15 aaaaa                                             |
+      16 aaaaa                                             |
+                                                           |
+    ]])
   end)
 
   it("widens with irregular 'statuscolumn' width", function()

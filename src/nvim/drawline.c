@@ -640,12 +640,12 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int vir
   int width = build_statuscol_str(wp, lnum, relnum, buf, stcp);
   // Force a redraw in case of error or when truncated
   if (*wp->w_p_stc == NUL || (stcp->truncate > 0 && wp->w_nrwidth < MAX_NUMBERWIDTH)) {
-    if (stcp->truncate > 0) {  // Avoid truncating 'statuscolumn'
-      wp->w_nrwidth = MIN(MAX_NUMBERWIDTH, wp->w_nrwidth + stcp->truncate);
-      wp->w_nrwidth_width = wp->w_nrwidth;
-    } else {  // 'statuscolumn' reset due to error
+    if (*wp->w_p_stc == NUL) {  // 'statuscolumn' reset due to error
       wp->w_nrwidth_line_count = 0;
       wp->w_nrwidth = (wp->w_p_nu || wp->w_p_rnu) * number_width(wp);
+    } else {  // Avoid truncating 'statuscolumn'
+      wp->w_nrwidth_width = wp->w_nrwidth;
+      wp->w_nrwidth = MIN(MAX_NUMBERWIDTH, wp->w_nrwidth + stcp->truncate);
     }
     wp->w_redr_statuscol = true;
     return;
