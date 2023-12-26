@@ -1307,26 +1307,30 @@ void ins_compl_show_pum(void)
   }
 }
 
-/// used for set or update info
-void compl_set_info(int pum_idx)
+/// check selected is current match.
+///
+/// @param selected the item which is selected.
+/// @return bool    return true when is current match otherwise is false.
+bool compl_match_curr_select(int selected)
 {
-  compl_T *comp = compl_first_match;
-  char *pum_text = compl_match_array[pum_idx].pum_text;
-
-  while (comp != NULL) {
-    if (pum_text == comp->cp_str
-        || pum_text == comp->cp_text[CPT_ABBR]) {
-      comp->cp_text[CPT_INFO] = compl_match_array[pum_idx].pum_info;
-
-      // if comp is current match update completed_item value
-      if (comp == compl_curr_match) {
-        dict_T *dict = ins_compl_dict_alloc(compl_curr_match);
-        set_vim_var_dict(VV_COMPLETED_ITEM, dict);
-      }
-      break;
-    }
-    comp = comp->cp_next;
+  if (selected < 0) {
+    return false;
   }
+  compl_T *match = compl_first_match;
+  int selected_idx = -1, list_idx = 0;
+  do {
+    if (!match_at_original_text(match)) {
+      if (compl_curr_match != NULL
+          && compl_curr_match->cp_number == match->cp_number) {
+        selected_idx = list_idx;
+        break;
+      }
+      list_idx += 1;
+    }
+    match = match->cp_next;
+  } while (match != NULL && !is_first_match(match));
+
+  return selected == selected_idx;
 }
 
 #define DICT_FIRST      (1)     ///< use just first element in "dict"
