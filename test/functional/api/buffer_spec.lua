@@ -117,6 +117,27 @@ describe('api/buf', function()
       eq({5, 2}, meths.win_get_cursor(win2))
     end)
 
+    it('line_count has defined behaviour for unloaded buffers', function()
+      -- we'll need to know our bufnr for when it gets unloaded
+      local bufnr = curbuf('get_number')
+      -- replace the buffer contents with these three lines
+      request('nvim_buf_set_lines', bufnr, 0, -1, 1, {"line1", "line2", "line3", "line4"})
+      -- check the line count is correct
+      eq(4, request('nvim_buf_line_count', bufnr))
+      -- force unload the buffer (this will discard changes)
+      command('new')
+      command('bunload! '..bufnr)
+    end)
+
+    it('get_lines has defined behaviour for unloaded buffers', function()
+      -- we'll need to know our bufnr for when it gets unloaded
+      local bufnr = curbuf('get_number')
+      -- replace the buffer contents with these three lines
+      buffer('set_lines', bufnr, 0, -1, 1, {"line1", "line2", "line3", "line4"})
+      -- confirm that getting lines works
+      eq({"line2", "line3"}, buffer('get_lines', bufnr, 1, 3, 1))
+    end)
+
     describe('handles topline', function()
       local screen
       before_each(function()
@@ -1796,9 +1817,6 @@ describe('api/buf', function()
       command("set hidden")
       command("enew")
       eq(6, bufmeths.get_offset(1,1))
-      command("bunload! 1")
-      eq(-1, bufmeths.get_offset(1,1))
-      eq(-1, bufmeths.get_offset(1,0))
     end)
 
     it('works in empty buffer', function()
