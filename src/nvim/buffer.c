@@ -1305,6 +1305,12 @@ int do_buffer(int action, int start, int dir, int count, int forceit)
     }
     return FAIL;
   }
+
+  if (action == DOBUF_GOTO && buf != curbuf && !check_can_set_curbuf_forceit(forceit)) {
+    // disallow navigating to another buffer when 'winfixbuf' is applied
+    return FAIL;
+  }
+
   if ((action == DOBUF_GOTO || action == DOBUF_SPLIT) && (buf->b_flags & BF_DUMMY)) {
     // disallow navigating to the dummy buffer
     semsg(_(e_nobufnr), count);

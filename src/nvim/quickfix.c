@@ -2699,7 +2699,7 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
       // Didn't find it, go to the window before the quickfix
       // window, unless 'switchbuf' contains 'uselast': in this case we
       // try to jump to the previously used window first.
-      if ((swb_flags & SWB_USELAST) && win_valid(prevwin)) {
+      if ((swb_flags & SWB_USELAST) && !prevwin->w_p_wfb && win_valid(prevwin)) {
         win = prevwin;
       } else if (altwin != NULL) {
         win = altwin;
@@ -2714,6 +2714,7 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
     // Remember a usable window.
     if (altwin == NULL
         && !win->w_p_pvw
+        && !win->w_p_wfb
         && bt_normal(win->w_buffer)) {
       altwin = win;
     }
@@ -2802,6 +2803,25 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int
                      ECMD_HIDE + ECMD_SET_HELP,
                      prev_winid == curwin->handle ? curwin : NULL);
   } else {
+    if (!forceit && curwin->w_p_wfb) {
+      if (qi->qfl_type == QFLT_LOCATION) {
+        // Location lists cannot split or reassign their window
+        // so 'winfixbuf' windows must fail
+        semsg("%s", e_winfixbuf_cannot_go_to_buffer);
+        return QF_ABORT;
+      }
+
+      if (!win_valid(prevwin)) {
+        // Split the window, which will be 'nowinfixbuf', and set curwin to that
+        exarg_T new_eap = {
+          .cmdidx = CMD_split,
+          .cmd = "split",
+          .arg = "",
+        };
+        ex_splitview(&new_eap);
+      }
+    }
+
     retval = buflist_getfile(qf_ptr->qf_fnum, 1,
                              GETF_SETMARK | GETF_SWITCH, forceit);
   }
@@ -4297,6 +4317,11 @@ static void qf_jump_first(qf_info_T *qi, unsigned save_qfid, int forceit)
   if (qf_restore_list(qi, save_qfid) == FAIL) {
     return;
   }
+
+  if (!check_can_set_curbuf_forceit(forceit)) {
+    return;
+  }
+
   // Autocommands might have cleared the list, check for that
   if (!qf_list_empty(qf_get_curlist(qi))) {
     qf_jump(qi, 0, 0, forceit);
@@ -5125,7 +5150,7 @@ void ex_cfile(exarg_T *eap)
 
   // This function is used by the :cfile, :cgetfile and :caddfile
   // commands.
-  // :cfile always creates a new quickfix list and jumps to the
+  // :cfile always creates a new quickfix list and may jump to the
   // first error.
   // :cgetfile creates a new quickfix list but doesn't jump to the
   // first error.
@@ -5587,6 +5612,10 @@ theend:
 /// ":lvimgrepadd {pattern} file(s)"
 void ex_vimgrep(exarg_T *eap)
 {
+  if (!check_can_set_curbuf_forceit(eap->forceit)) {
+    return;
+  }
+
   char *au_name = vgr_get_auname(eap->cmdidx);
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
                                         curbuf->b_fname, true, curbuf)) {

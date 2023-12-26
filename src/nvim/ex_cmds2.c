@@ -444,6 +444,27 @@ int buf_write_all(buf_T *buf, bool forceit)
 /// ":argdo", ":windo", ":bufdo", ":tabdo", ":cdo", ":ldo", ":cfdo" and ":lfdo"
 void ex_listdo(exarg_T *eap)
 {
+  if (curwin->w_p_wfb) {
+    if ((eap->cmdidx == CMD_ldo || eap->cmdidx == CMD_lfdo) && !eap->forceit) {
+      // Disallow :ldo if 'winfixbuf' is applied
+      semsg("%s", e_winfixbuf_cannot_go_to_buffer);
+      return;
+    }
+
+    if (win_valid(prevwin)) {
+      // Change the current window to another because 'winfixbuf' is enabled
+      curwin = prevwin;
+    } else {
+      // Split the window, which will be 'nowinfixbuf', and set curwin to that
+      exarg_T new_eap = {
+        .cmdidx = CMD_split,
+        .cmd = "split",
+        .arg = "",
+      };
+      ex_splitview(&new_eap);
+    }
+  }
+
   char *save_ei = NULL;
 
   // Temporarily override SHM_OVER and SHM_OVERALL to avoid that file

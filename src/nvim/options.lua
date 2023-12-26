@@ -8406,6 +8406,8 @@ return {
         		"split" when both are present.
            uselast	If included, jump to the previously used window when
         		jumping to errors with |quickfix| commands.
+        If a window has 'winfixbuf' enabled, 'switchbuf' is currently not
+        applied to the split window.
       ]=],
       expand_cb = 'expand_set_switchbuf',
       full_name = 'switchbuf',
@@ -9815,6 +9817,23 @@ return {
       short_desc = N_('nr of lines to scroll for CTRL-F and CTRL-B'),
       type = 'number',
       varname = 'p_window',
+    },
+    {
+      abbreviation = 'wfb',
+      defaults = { if_true = false },
+      desc = [=[
+        If enabled, the buffer and any window that displays it are paired.
+        For example, attempting to change the buffer with |:edit| will fail.
+        Other commands which change a window's buffer such as |:cnext| will
+        also skip any window with 'winfixbuf' enabled. However if a command
+        has an "!" option, a window can be forced to switch buffers.
+      ]=],
+      full_name = 'winfixbuf',
+      pv_name = 'p_wfb',
+      redraw = { 'current_window' },
+      scope = { 'window' },
+      short_desc = N_('pin a window to a specific buffer'),
+      type = 'boolean',
     },
     {
       abbreviation = 'wfh',

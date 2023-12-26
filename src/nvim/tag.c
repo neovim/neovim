@@ -290,6 +290,10 @@ void set_buflocal_tfu_callback(buf_T *buf)
 /// @param verbose  print "tag not found" message
 void do_tag(char *tag, int type, int count, int forceit, bool verbose)
 {
+  if (postponed_split == 0 && !check_can_set_curbuf_forceit(forceit)) {
+    return;
+  }
+
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
   int tagstacklen = curwin->w_tagstacklen;
@@ -2784,6 +2788,10 @@ static char *tag_full_fname(tagptrs_T *tagp)
 /// @return  OK for success, NOTAGFILE when file not found, FAIL otherwise.
 static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
 {
+  if (postponed_split == 0 && !check_can_set_curbuf_forceit(forceit)) {
+    return FAIL;
+  }
+
   char *pbuf_end;
   char *tofree_fname = NULL;
   tagptrs_T tagp;

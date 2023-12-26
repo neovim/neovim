@@ -160,6 +160,8 @@ The following new APIs and features were added.
   • 'breakindent' performance is significantly improved for wrapped lines.
   • Cursor movement, insertion with [count] and |screenpos()| are now faster.
 
+• |'winfixbuf'| keeps a window focused onto a specific buffer
+
 • |vim.iter()| provides a generic iterator interface for tables and Lua
   iterators |for-in|.
 
