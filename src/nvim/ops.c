@@ -820,14 +820,13 @@ yankreg_T *get_yank_register(int regname, int mode)
     // reg is set to clipboard contents.
     return reg;
   } else if (mode == YREG_PUT && (regname == '*' || regname == '+')) {
-      // in case clipboard not available and we aren't actually pasting,
-      // return an empty register
-      reg = xmalloc(sizeof(yankreg_T));
-      reg->y_array = NULL;
-      reg->y_size = 0;
-      return reg;
-  }
-  else if (mode != YREG_YANK
+    // in case clipboard not available and we aren't actually pasting,
+    // return an empty register
+    reg = xmalloc(sizeof(yankreg_T));
+    reg->y_array = NULL;
+    reg->y_size = 0;
+    return reg;
+  } else if (mode != YREG_YANK
              && (regname == 0 || regname == '"' || regname == '*' || regname == '+')
              && y_previous != NULL) {
     // in case clipboard not available, paste from previous used register
