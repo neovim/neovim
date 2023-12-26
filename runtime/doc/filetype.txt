@@ -735,6 +735,14 @@ To enable this behavior, set the following variable in your vimrc: >
 	let g:rst_style = 1
 
 
+RNOWEB							      *ft-rnoweb-plugin*
+
+The 'formatexpr' option is set dynamically with different values for R code
+and for LaTeX code. If you prefer that 'formatexpr' is not set, add to your
+|vimrc|: >
+	let rnw_dynamic_comments = 0
+
+
 RPM SPEC						*ft-spec-plugin*
 
 Since the text for this plugin is rather long it has been put in a separate
