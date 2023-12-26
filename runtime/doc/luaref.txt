@@ -4811,7 +4811,7 @@ debug.setupvalue({func}, {up}, {value})                     *debug.setupvalue()*
         upvalue with the given index. Otherwise, it returns the name of the
         upvalue.
 
-debug.traceback([{thread},] [{message}] [,{level}])          *debug.traceback()*
+debug.traceback([{thread},] [{message} [,{level}]])          *debug.traceback()*
         Returns a string with a traceback of the call stack. An optional
         {message} string is appended at the beginning of the traceback. An
         optional {level} number tells at which level to start the traceback
