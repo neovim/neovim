@@ -22,6 +22,18 @@ API
 LUA
 - vim.region()		Use |getregionpos()| instead.
 
+DIAGNOSTICS
+- *vim.diagnostic.goto_next()*	Use |vim.diagnostic.jump()| with `{count = 1}` instead.
+- *vim.diagnostic.goto_prev()*	Use |vim.diagnostic.jump()| with `{count = -1}` instead.
+- *vim.diagnostic.get_next_pos()*
+	Use the "lnum" and "col" fields from the return value of
+	|vim.diagnostic.get_next()| instead.
+- *vim.diagnostic.get_prev_pos()*
+	Use the "lnum" and "col" fields from the return value of
+	|vim.diagnostic.get_prev()| instead.
+- The "win_id" parameter used by various functions is deprecated in favor of
+  "winid" |winid|
+
 ------------------------------------------------------------------------------
 DEPRECATED IN 0.10					*deprecated-0.10*
 
@@ -203,9 +215,6 @@ internally and are no longer exposed as part of the API. Instead, use
 - *vim.lsp.diagnostic.set_signs()*
 - *vim.lsp.diagnostic.set_underline()*
 - *vim.lsp.diagnostic.set_virtual_text()*
-
-Configuring |diagnostic-signs| with |:sign-define| or |sign_define()| is no
-longer supported. Use the "signs" key of |vim.diagnostic.config()| instead.
 
 LSP FUNCTIONS
 - *vim.lsp.buf.server_ready()*
