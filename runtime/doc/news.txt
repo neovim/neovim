@@ -393,6 +393,16 @@ release.
 • Configuring |diagnostic-signs| using |:sign-define| or |sign_define()|. Use
   the "signs" key of |vim.diagnostic.config()| instead.
 
+• |vim.diagnostic| functions:
+  - |vim.diagnostic.goto_next()| and |vim.diagnostic.goto_prev()| are
+    deprecated in favor of |vim.diagnostic.jump()|
+  - |vim.diagnostic.get_next_pos()| and |vim.diagnostic.get_prev_pos()| are
+    deprecated without a direct replacement. The "lnum" and "col" fields can
+    be access directly from the return value of |vim.diagnostic.get_next()|
+    and |vim.diagnostic.get_prev()| functions, respectively.
+  - The "win_id" parameter used by various functions is deprecated in favor of
+    "winid" |winid|
+
 • Checkhealth functions:
   - |health#report_error|, |vim.health.report_error()|	Use |vim.health.error()| instead.
   - |health#report_info|, |vim.health.report_info()|	Use |vim.health.info()| instead.

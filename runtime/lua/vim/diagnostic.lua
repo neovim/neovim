@@ -439,13 +439,18 @@ local function set_list(loclist, opts)
   end
 end
 
-local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
+--- @param position number[] Position (as a (row, col) tuple) to begin searching
+--- @param search_forward boolean True to search forward through the buffer, false to search
+---                               backward
+--- @param bufnr number Buffer number to search in
+--- @param opts table Optional parameters
+--- @return Diagnostic?
+local function next_diagnostic(position, search_forward, bufnr, opts)
   position[1] = position[1] - 1
   bufnr = get_bufnr(bufnr)
   local wrap = vim.F.if_nil(opts.wrap, true)
   local line_count = api.nvim_buf_line_count(bufnr)
-  local diagnostics =
-    get_diagnostics(bufnr, vim.tbl_extend('keep', opts, { namespace = namespace }), true)
+  local diagnostics = get_diagnostics(bufnr, opts, true)
   local line_diagnostics = diagnostic_lines(diagnostics)
 
   for i = 0, line_count do
@@ -489,21 +494,32 @@ local function next_diagnostic(position, search_forward, bufnr, opts, namespace)
   end
 end
 
-local function diagnostic_move_pos(opts, pos)
+--- Move the cursor to the given position
+--- @param pos number[] Position to move to as a 0-indexed (row, col) tuple
+--- @param opts table? Optional parameters
+--- @private
+local function jump(pos, opts)
   opts = opts or {}
 
   local float = vim.F.if_nil(opts.float, true)
-  local win_id = opts.win_id or api.nvim_get_current_win()
+
+  -- Support deprecated win_id alias
+  if opts.win_id then
+    opts.winid = opts.win_id
+    opts.win_id = nil
+  end
+
+  local winid = opts.winid or api.nvim_get_current_win()
 
   if not pos then
-    api.nvim_echo({ { 'No more valid diagnostics to move to', 'WarningMsg' } }, true, {})
+    api.nvim_echo({ { 'No more valid diagnostics to jump to', 'WarningMsg' } }, true, {})
     return
   end
 
-  api.nvim_win_call(win_id, function()
+  api.nvim_win_call(winid, function()
     -- Save position in the window's jumplist
     vim.cmd("normal! m'")
-    api.nvim_win_set_cursor(win_id, { pos[1] + 1, pos[2] })
+    api.nvim_win_set_cursor(winid, { pos[1] + 1, pos[2] })
     -- Open folds under the cursor
     vim.cmd('normal! zv')
   end)
@@ -512,7 +528,7 @@ local function diagnostic_move_pos(opts, pos)
     local float_opts = type(float) == 'table' and float or {}
     vim.schedule(function()
       M.open_float(vim.tbl_extend('keep', float_opts, {
-        bufnr = api.nvim_win_get_buf(win_id),
+        bufnr = api.nvim_win_get_buf(winid),
         scope = 'cursor',
         focus = false,
       }))
@@ -765,11 +781,17 @@ end
 function M.get_prev(opts)
   opts = opts or {}
 
-  local win_id = opts.win_id or api.nvim_get_current_win()
-  local bufnr = api.nvim_win_get_buf(win_id)
-  local cursor_position = opts.cursor_position or api.nvim_win_get_cursor(win_id)
+  -- Support deprecated win_id alias
+  if opts.win_id then
+    opts.winid = opts.win_id
+    opts.win_id = nil
+  end
 
-  return next_diagnostic(cursor_position, false, bufnr, opts, opts.namespace)
+  local winid = opts.winid or api.nvim_get_current_win()
+  local bufnr = api.nvim_win_get_buf(winid)
+  local cursor_position = opts.cursor_position or api.nvim_win_get_cursor(winid)
+
+  return next_diagnostic(cursor_position, false, bufnr, opts)
 end
 
 --- Return the position of the previous diagnostic in the current buffer.
@@ -777,7 +799,13 @@ end
 ---@param opts table|nil See |vim.diagnostic.goto_next()|
 ---@return table|false Previous diagnostic position as a (row, col) tuple or false if there is no
 ---                    prior diagnostic
+---@deprecated
 function M.get_prev_pos(opts)
+  vim.deprecate(
+    'vim.diagnostic.get_prev_pos',
+    'access the lnum and col fields from get_prev() instead',
+    '0.12'
+  )
   local prev = M.get_prev(opts)
   if not prev then
     return false
@@ -788,22 +816,40 @@ end
 
 --- Move to the previous diagnostic in the current buffer.
 ---@param opts table|nil See |vim.diagnostic.goto_next()|
+---@deprecated
 function M.goto_prev(opts)
-  return diagnostic_move_pos(opts, M.get_prev_pos(opts))
+  vim.deprecate('vim.diagnostic.goto_prev()', 'vim.diagnostic.jump()', '0.12')
+
+  -- Support deprecated win_id alias
+  if opts and opts.win_id then
+    opts.winid = opts.win_id
+    opts.win_id = nil
+  end
+
+  local prev = M.get_prev(opts)
+  if prev then
+    jump({ prev.lnum, prev.col }, opts)
+  end
 end
 
 --- Get the next diagnostic closest to the cursor position.
 ---
----@param opts table|nil See |vim.diagnostic.goto_next()|
+---@param opts table|nil See |vim.diagnostic.jump()|
 ---@return Diagnostic|nil Next diagnostic
 function M.get_next(opts)
   opts = opts or {}
 
-  local win_id = opts.win_id or api.nvim_get_current_win()
-  local bufnr = api.nvim_win_get_buf(win_id)
-  local cursor_position = opts.cursor_position or api.nvim_win_get_cursor(win_id)
+  -- Support deprecated win_id alias
+  if opts.win_id then
+    opts.winid = opts.win_id
+    opts.win_id = nil
+  end
 
-  return next_diagnostic(cursor_position, true, bufnr, opts, opts.namespace)
+  local winid = opts.winid or api.nvim_get_current_win()
+  local bufnr = api.nvim_win_get_buf(winid)
+  local cursor_position = opts.cursor_position or api.nvim_win_get_cursor(winid)
+
+  return next_diagnostic(cursor_position, true, bufnr, opts)
 end
 
 --- Return the position of the next diagnostic in the current buffer.
@@ -811,7 +857,13 @@ end
 ---@param opts table|nil See |vim.diagnostic.goto_next()|
 ---@return table|false Next diagnostic position as a (row, col) tuple or false if no next
 ---                    diagnostic.
+---@deprecated
 function M.get_next_pos(opts)
+  vim.deprecate(
+    'vim.diagnostic.get_next_pos',
+    'access the lnum and col fields from get_next() instead',
+    '0.12'
+  )
   local next = M.get_next(opts)
   if not next then
     return false
@@ -833,9 +885,96 @@ end
 ---                    to |vim.diagnostic.open_float()|. Unless overridden, the float will show
 ---                    diagnostics at the new cursor position (as if "cursor" were passed to
 ---                    the "scope" option).
----         - win_id: (number, default 0) Window ID
+---         - winid: (number, default 0) Window ID
+---@deprecated
 function M.goto_next(opts)
-  return diagnostic_move_pos(opts, M.get_next_pos(opts))
+  vim.deprecate('vim.diagnostic.goto_next()', 'vim.diagnostic.jump()', '0.12')
+
+  -- Support deprecated win_id alias
+  if opts and opts.win_id then
+    opts.winid = opts.win_id
+    opts.win_id = nil
+  end
+
+  local next = M.get_next(opts)
+  if next then
+    jump({ next.lnum, next.col }, opts)
+  end
+end
+
+--- @class vim.diagnostic.JumpOptions
+--- @field diagnostic Diagnostic?
+--- @field count number?
+--- @field namespace number?
+--- @field cursor_position number[]?
+--- @field wrap boolean?
+--- @field severity DiagnosticSeverity?
+--- @field float boolean|table|nil
+--- @field winid number?
+
+--- Jump to a diagnostic.
+---
+--- @param opts vim.diagnostic.JumpOptions A table with the following optional keys:
+---               - diagnostic: (table) The diagnostic item to jump to |diagnostic-structure|.
+---                                     Mutually exclusive with "count", "namespace", and "severity".
+---               - count: (number) The number of diagnostics to move by. A positive integer moves
+---                                 forward by {count} diagnostics, while a negative integer moves
+---                                 backward by {count} diagnostics. Mutually exclusive with
+---                                 "diagnostic".
+---               - namespace: (number) Only consider diagnostics from the given namespace. Only used
+---                                     when "count" is non-nil. Default is to include diagnostics
+---                                     from all namespaces.
+---               - cursor_position: (table) Cursor position as a (row, col) tuple. Used to find the
+---                                          nearest diagnostic when "count" is used. Only used when
+---                                          "count" is non-nil. Default is the current cursor
+---                                          position.
+---               - wrap: (boolean) Whether to wrap around the file or not. Similar to 'wrapscan'.
+---                                 Default is "true".
+---               - severity: Only consider diagnostics that match the given |diagnostic-severity|.
+---                           Only used when "count" is non-nil. Default is to include diagnostics
+---                           of all severitys.
+---               - float: (boolean or table) If "true", call |vim.diagnostic.open_float()| after
+---                                           moving. If a table, also pass the table as the {opts}
+---                                           parameter to |vim.diagnostic.open_float()|. Unless
+---                                           overridden, the float will show diagnostics at the new
+---                                           cursor position (as if "cursor" were used as the
+---                                           "scope" option). Default is "true".
+---               - winid: (number) |window-ID|. Default is the ID of the current window.
+--- @return Diagnostic? The diagnostic moved to, if any.
+function M.jump(opts)
+  -- One of "diagnostic" or "count" must be provided
+  assert(
+    opts.diagnostic or opts.count,
+    'One of "diagnostic" or "count" must be specified in the options to vim.diagnostic.jump()'
+  )
+
+  if opts.diagnostic then
+    jump({ opts.diagnostic.lnum, opts.diagnostic.col }, opts)
+    return
+  end
+
+  local winid = opts.winid or api.nvim_get_current_win()
+  local cursor = opts.cursor_position or api.nvim_win_get_cursor(winid)
+  local bufnr = api.nvim_win_get_buf(winid)
+  local count = opts.count
+  local diag = nil
+  while count ~= 0 do
+    local next = next_diagnostic(cursor, count > 0, bufnr, opts)
+    if not next then
+      break
+    end
+    cursor = { next.lnum + 1, next.col }
+    if count > 0 then
+      count = count - 1
+    else
+      count = count + 1
+    end
+    diag = next
+  end
+  if diag then
+    jump({ diag.lnum, diag.col }, opts)
+  end
+  return diag
 end
 
 M.handlers.signs = {
@@ -1331,7 +1470,7 @@ end
 ---                      Overrides the setting from |vim.diagnostic.config()|.
 ---            - suffix: Same as {prefix}, but appends the text to the diagnostic instead of
 ---                      prepending it. Overrides the setting from |vim.diagnostic.config()|.
----@return integer|nil, integer|nil: ({float_bufnr}, {win_id})
+---@return integer|nil, integer|nil: ({float_bufnr}, {winid})
 function M.open_float(opts, ...)
   -- Support old (bufnr, opts) signature
   local bufnr

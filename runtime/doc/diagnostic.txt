@@ -546,20 +546,10 @@ get_next({opts})                                   *vim.diagnostic.get_next()*
     Get the next diagnostic closest to the cursor position.
 
     Parameters: ~
-      • {opts}  (table|nil) See |vim.diagnostic.goto_next()|
+      • {opts}  (table|nil) See |vim.diagnostic.jump()|
 
     Return: ~
         Diagnostic|nil Next diagnostic
-
-get_next_pos({opts})                           *vim.diagnostic.get_next_pos()*
-    Return the position of the next diagnostic in the current buffer.
-
-    Parameters: ~
-      • {opts}  (table|nil) See |vim.diagnostic.goto_next()|
-
-    Return: ~
-        table|false Next diagnostic position as a (row, col) tuple or false if
-        no next diagnostic.
 
 get_prev({opts})                                   *vim.diagnostic.get_prev()*
     Get the previous diagnostic closest to the cursor position.
@@ -569,43 +559,6 @@ get_prev({opts})                                   *vim.diagnostic.get_prev()*
 
     Return: ~
         Diagnostic|nil Previous diagnostic
-
-get_prev_pos({opts})                           *vim.diagnostic.get_prev_pos()*
-    Return the position of the previous diagnostic in the current buffer.
-
-    Parameters: ~
-      • {opts}  (table|nil) See |vim.diagnostic.goto_next()|
-
-    Return: ~
-        table|false Previous diagnostic position as a (row, col) tuple or
-        false if there is no prior diagnostic
-
-goto_next({opts})                                 *vim.diagnostic.goto_next()*
-    Move to the next diagnostic.
-
-    Parameters: ~
-      • {opts}  (table|nil) Configuration table with the following keys:
-                • namespace: (number) Only consider diagnostics from the given
-                  namespace.
-                • cursor_position: (cursor position) Cursor position as a
-                  (row, col) tuple. See |nvim_win_get_cursor()|. Defaults to
-                  the current cursor position.
-                • wrap: (boolean, default true) Whether to loop around file or
-                  not. Similar to 'wrapscan'.
-                • severity: See |diagnostic-severity|.
-                • float: (boolean or table, default true) If "true", call
-                  |vim.diagnostic.open_float()| after moving. If a table, pass
-                  the table as the {opts} parameter to
-                  |vim.diagnostic.open_float()|. Unless overridden, the float
-                  will show diagnostics at the new cursor position (as if
-                  "cursor" were passed to the "scope" option).
-                • win_id: (number, default 0) Window ID
-
-goto_prev({opts})                                 *vim.diagnostic.goto_prev()*
-    Move to the previous diagnostic in the current buffer.
-
-    Parameters: ~
-      • {opts}  (table|nil) See |vim.diagnostic.goto_next()|
 
 hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
     Hide currently displayed diagnostics.
@@ -634,6 +587,43 @@ is_disabled({bufnr}, {namespace})               *vim.diagnostic.is_disabled()*
 
     Return: ~
         (boolean)
+
+jump({opts})                                           *vim.diagnostic.jump()*
+    Jump to a diagnostic.
+
+    Parameters: ~
+      • {opts}  vim.diagnostic.JumpOptions A table with the following optional keys:
+                • diagnostic: (table) The diagnostic item to jump to
+                  |diagnostic-structure|. Mutually exclusive with "count",
+                  "namespace", and "severity".
+                • count: (number) The number of diagnostics to move by. A
+                  positive integer moves forward by {count} diagnostics, while
+                  a negative integer moves backward by {count} diagnostics.
+                  Mutually exclusive with "diagnostic".
+                • namespace: (number) Only consider diagnostics from the given
+                  namespace. Only used when "count" is non-nil. Default is to
+                  include diagnostics from all namespaces.
+                • cursor_position: (table) Cursor position as a (row, col)
+                  tuple. Used to find the nearest diagnostic when "count" is
+                  used. Only used when "count" is non-nil. Default is the
+                  current cursor position.
+                • wrap: (boolean) Whether to wrap around the file or not.
+                  Similar to 'wrapscan'. Default is "true".
+                • severity: Only consider diagnostics that match the given
+                  |diagnostic-severity|. Only used when "count" is non-nil.
+                  Default is to include diagnostics of all severitys.
+                • float: (boolean or table) If "true", call
+                  |vim.diagnostic.open_float()| after moving. If a table, also
+                  pass the table as the {opts} parameter to
+                  |vim.diagnostic.open_float()|. Unless overridden, the float
+                  will show diagnostics at the new cursor position (as if
+                  "cursor" were used as the "scope" option). Default is
+                  "true".
+                • winid: (number) |window-ID|. Default is the ID of the
+                  current window.
+
+    Return: ~
+        Diagnostic ?|nil The diagnostic moved to, if any.
 
                                                       *vim.diagnostic.match()*
 match({str}, {pat}, {groups}, {severity_map}, {defaults})
@@ -719,7 +709,7 @@ open_float({opts}, {...})                        *vim.diagnostic.open_float()*
                   from |vim.diagnostic.config()|.
 
     Return: ~
-        integer|nil, integer|nil: ({float_bufnr}, {win_id})
+        integer|nil, integer|nil: ({float_bufnr}, {winid})
 
 reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
     Remove all diagnostics from the given namespace.
