@@ -9,11 +9,14 @@ local exec_lua = helpers.exec_lua
 
 local testdir = 'Xtest-editorconfig'
 
-local function test_case(name, expected)
+local function test_case(name, expected, buffer)
   local filename = testdir .. pathsep .. name
+  local buf = buffer and buffer or 0
+  --io.write("file", filename)
   command('edit ' .. filename)
   for opt, val in pairs(expected) do
-    eq(val, meths.get_option_value(opt, {buf=0}), name)
+    --io.write("value", tostring(meths.get_option_value(opt, {buf=buf})))
+    eq(val, meths.get_option_value(opt, {buf=buf}), name)
   end
 end
 
@@ -168,9 +171,9 @@ describe('editorconfig', function()
     local filename = testdir .. pathsep .. 'trim.txt'
     -- luacheck: push ignore 613
     local untrimmed = [[
-This line ends in whitespace 
-So does this one    
-And this one         
+This line ends in whitespace
+So does this one
+And this one
 But not this one
 ]]
     -- luacheck: pop
@@ -203,9 +206,10 @@ But not this one
   it('can be disabled per-buffer', function()
     meths.set_option_value('shiftwidth', 42, {})
     local bufnr = funcs.bufadd(testdir .. pathsep .. '3_space.txt')
-    meths.buf_set_var(bufnr, 'editorconfig', false)
-    test_case('3_space.txt', { shiftwidth = 42 })
-    test_case('4_space.py', { shiftwidth = 4 })
+    meths.buf_set_var(bufnr, 'editorconfig', false);
+    -- the order of the following test cases matters
+    test_case('3_space.txt', { shiftwidth = 42 }, 1)
+    test_case('4_space.py', { shiftwidth = 4 }, 0)
   end)
 
   it('does not operate on invalid buffers', function()
