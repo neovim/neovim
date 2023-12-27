@@ -213,7 +213,7 @@ bool findpar(bool *pincl, int dir, int count, int what, bool both)
     curr++;
   }
   curwin->w_cursor.lnum = curr;
-  if (curr == curbuf->b_ml.ml_line_count && what != '}') {
+  if (curr == curbuf->b_ml.ml_line_count && what != '}' && dir == FORWARD) {
     char *line = ml_get(curr);
 
     // Put the cursor on the last character in the last line and make the
