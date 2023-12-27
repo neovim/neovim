@@ -691,11 +691,7 @@ static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
       }
     }
 
-    // Correct end of highlighted area for 'breakindent',
-    // required wen 'linebreak' is also set.
-    if (wlv->tocol == wlv->vcol) {
-      wlv->tocol += num;
-    }
+    colnr_T vcol_before = wlv->vcol;
 
     for (int i = 0; i < num; i++) {
       linebuf_char[wlv->off] = schar_from_ascii(' ');
@@ -708,6 +704,17 @@ static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
       linebuf_attr[wlv->off] = myattr;
       linebuf_vcol[wlv->off] = wlv->vcol++;  // These are vcols, sorry I don't make the rules
       wlv->off++;
+    }
+
+    // Correct start of highlighted area for 'breakindent',
+    if (wlv->fromcol >= vcol_before && wlv->fromcol < wlv->vcol) {
+      wlv->fromcol = wlv->vcol;
+    }
+
+    // Correct end of highlighted area for 'breakindent',
+    // required wen 'linebreak' is also set.
+    if (wlv->tocol == vcol_before) {
+      wlv->tocol = wlv->vcol;
     }
 
     if (wp->w_skipcol > 0 && wlv->startrow == 0 && wp->w_p_wrap && wp->w_briopt_sbr) {
@@ -737,13 +744,13 @@ static void handle_showbreak_and_filler(win_T *wp, winlinevars_T *wlv)
     }
     // Combine 'showbreak' with 'cursorline', prioritizing 'showbreak'.
     int attr = hl_combine_attr(wlv->cul_attr, win_hl_attr(wp, HLF_AT));
-    int vcol_before = wlv->vcol;
+    colnr_T vcol_before = wlv->vcol;
     draw_col_buf(wp, wlv, sbr, strlen(sbr), attr, true);
     wlv->vcol_sbr = wlv->vcol;
 
     // Correct start of highlighted area for 'showbreak'.
-    if (wlv->fromcol >= vcol_before && wlv->fromcol < wlv->vcol_sbr) {
-      wlv->fromcol = wlv->vcol_sbr;
+    if (wlv->fromcol >= vcol_before && wlv->fromcol < wlv->vcol) {
+      wlv->fromcol = wlv->vcol;
     }
 
     // Correct end of highlighted area for 'showbreak',
