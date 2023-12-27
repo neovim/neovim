@@ -1097,3 +1097,25 @@ describe('user session', function()
     eq(1, eval('g:lua_session'))
   end)
 end)
+
+describe('inccommand on ex mode', function()
+  it('should not preview', function()
+    clear()
+    local screen
+    screen = Screen.new(60, 10)
+    screen:attach()
+    local id = funcs.termopen({ nvim_prog, '-u', 'NONE', '-c', 'set termguicolors', '-E', 'test/README.md' }, {
+      env = { VIMRUNTIME = os.getenv('VIMRUNTIME') }
+    })
+    funcs.chansend(id, '%s/N')
+    screen:expect{grid=[[
+      {1:^                                                            }|
+      {1:                                                            }|*6
+      {1:Entering Ex mode.  Type "visual" to go to Normal mode.      }|
+      {1::%s/N                                                       }|
+                                                                  |
+    ]], attr_ids={
+      [1] = {background = Screen.colors.NvimDarkGrey2, foreground = Screen.colors.NvimLightGrey2};
+    }}
+  end)
+end)
