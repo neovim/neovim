@@ -919,10 +919,7 @@ char *vim_getenv(const char *name)
   // Don't do this when default_vimruntime_dir is non-empty.
   char *vim_path = NULL;
   if (vimruntime
-#ifdef HAVE_PATHDEF
-      && *default_vimruntime_dir == NUL
-#endif
-      ) {
+      && *default_vimruntime_dir == NUL) {
     kos_env_path = os_getenv("VIM");
     if (kos_env_path != NULL) {
       vim_path = vim_version_dir(kos_env_path);
@@ -981,7 +978,6 @@ char *vim_getenv(const char *name)
     assert(vim_path != exe_name);
   }
 
-#ifdef HAVE_PATHDEF
   // When there is a pathdef.c file we can use default_vim_dir and
   // default_vimruntime_dir
   if (vim_path == NULL) {
@@ -995,7 +991,6 @@ char *vim_getenv(const char *name)
       }
     }
   }
-#endif
 
   // Set the environment variable, so that the new value can be found fast
   // next time, and others can also use it (e.g. Perl).
