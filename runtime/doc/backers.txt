@@ -1,8 +1,15 @@
-# Bountysource Backers
+*backers.txt*          Nvim
 
-Thank you to everyone who backed our [Bountysource fundraiser](https://www.bountysource.com/teams/neovim/fundraiser)!
 
-### Your name and URL in BACKERS.md.
+                     NVIM REFERENCE MANUAL
+
+
+==============================================================================
+Fundraiser Backers
+
+Thank you to everyone who backed the original Neovim Fundraiser.
+
+LIST OF BACKERS
 
 - [Bob Breznak](http://brez.io)
 - [Tim Uruski](http://timuruski.net)
@@ -223,7 +230,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - BenBergman
 - Bengt Lüers
 - Benjamin Bryant
-- Bèr 'berkes' Kessels
+- Bèr "berkes" Kessels
 - Bernd Homuth
 - Bheesham Persaud
 - Bilal Quadri
@@ -459,7 +466,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Matthias Lehmann
 - Maximilian Gerlach
 - Meryn Stol
-- Michael 'manveru' Fellinger
+- Michael "manveru" Fellinger
 - Michael "beefsack" Alexander
 - Michael Iles
 - Michael Irwin/mdi
@@ -641,6 +648,9 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Ziling Zhao
 - Zsolt Botykai
 
-### Anonymous Supporters
+ANONYMOUS SUPPORTERS
 
-There were also 307 other people who didn't claim any level of reward but contributed to the fundraiser. Thank you all for the support!
+There were also 307 other people who didn't claim any level of reward but
+contributed to the fundraiser. Thank you all for the support!
+
+vim:tw=78:ts=8:et:ft=help:norl:
