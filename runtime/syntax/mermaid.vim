@@ -2,7 +2,7 @@
 " Language:     Mermaid
 " Maintainer:   Craig MacEahern <https://github.com/craigmac/vim-mermaid>
 " Filenames:    *.mmd
-" Last Change:  2022 Nov 22
+" Last Change:  2023 Dec 26
 
 if exists("b:current_syntax")
   finish
@@ -85,54 +85,30 @@ syntax keyword mermaidKeyword
 highlight link mermaidKeyword Keyword
 
 syntax match mermaidStatement "|"
-syntax match mermaidStatement "--\?[>x)]>\?+\?-\?"
 syntax match mermaidStatement "\~\~\~"
 syntax match mermaidStatement "--"
-syntax match mermaidStatement "---"
-syntax match mermaidStatement "-->"
+syntax match mermaidStatement "\%(<|\|[<*o]\)\?\%(--\|\.\.\)\%(|>\|[>*o]\)\?"
+syntax match mermaidStatement "-\{2,4}[>ox-]"
+syntax match mermaidStatement "\.-[>ox]"
 syntax match mermaidStatement "-\."
-syntax match mermaidStatement "\.->"
-syntax match mermaidStatement "-\.-"
-syntax match mermaidStatement "-\.\.-"
-syntax match mermaidStatement "-\.\.\.-"
+syntax match mermaidStatement "-\.\{1,3}-"
 syntax match mermaidStatement "=="
-syntax match mermaidStatement "==>"
-syntax match mermaidStatement "===>"
-syntax match mermaidStatement "====>"
+syntax match mermaidStatement "=\{2,4}[>ox=]"
 syntax match mermaidStatement "&"
-syntax match mermaidStatement "--o"
-syntax match mermaidStatement "--x"
+syntax match mermaidStatement "--\?[>x)]>\?[+-]\?"
 syntax match mermaidStatement "x--x"
-syntax match mermaidStatement "-----"
-syntax match mermaidStatement "---->"
-syntax match mermaidStatement "==="
-syntax match mermaidStatement "===="
-syntax match mermaidStatement "====="
+syntax match mermaidStatement "o--o\?"
+syntax match mermaidStatement "<-->\?"
 syntax match mermaidStatement ":::"
-syntax match mermaidStatement "<|--"
-syntax match mermaidStatement "\*--"
-syntax match mermaidStatement "o--"
-syntax match mermaidStatement "o--o"
-syntax match mermaidStatement "<--"
-syntax match mermaidStatement "<-->"
-syntax match mermaidStatement "\.\."
-syntax match mermaidStatement "<\.\."
-syntax match mermaidStatement "<|\.\."
-syntax match mermaidStatement "--|>"
-syntax match mermaidStatement "--\*"
-syntax match mermaidStatement "--o"
-syntax match mermaidStatement "\.\.>"
-syntax match mermaidStatement "\.\.|>"
-syntax match mermaidStatement "<|--|>"
 syntax match mermaidStatement "||--o{"
 highlight link mermaidStatement Statement
 
-syntax match mermaidIdentifier "[\+-]\?\w\+(.*)[\$\*]\?"
-highlight link mermaidIdentifier Identifier
+" FIXME: This unexpectedly matches flow chart node `id1(text)` or others.
+"syntax match mermaidIdentifier "[\+-]\?\w\+(.*)[\$\*]\?"
+"highlight link mermaidIdentifier Identifier
 
-syntax match mermaidType "[\+-\#\~]\?\cint\>"
-syntax match mermaidType "[\+-\#\~]\?\cString\>"
-syntax match mermaidType "[\+-\#\~]\?\cbool\>"
+syntax match mermaidType "[\+-\#\~]\?\c\%(const\s\+\|\*\s*\)*\%(unsigned\s\+\)\?\%(int\|u\?int\%(8\|16\|32\|64\)_t\|char\|long\|long\s\+long\)\>\%(\s\+const\|\s*[\*&]\)*"
+syntax match mermaidType "[\+-\#\~]\?\c\%(const\s\+\|\*\s*\)*\%(double\|float\|String\|bool\)\>\%(\s\+const\|\s*[\*&]\)*"
 syntax match mermaidType "[\+-\#\~]\?\cBigDecimal\>"
 syntax match mermaidType "[\+-\#\~]\?\cList\~.\+\~"
 syntax match mermaidType "<<\w\+>>"
