@@ -2706,7 +2706,6 @@ void list_version(void)
     version_msg("\"\n");
 #endif
 
-#ifdef HAVE_PATHDEF
     if (*default_vim_dir != NUL) {
       version_msg(_("  fall-back for $VIM: \""));
       version_msg(default_vim_dir);
@@ -2718,7 +2717,6 @@ void list_version(void)
       version_msg(default_vimruntime_dir);
       version_msg("\"\n");
     }
-#endif
   }
 
   version_msg(p_verbose > 0
