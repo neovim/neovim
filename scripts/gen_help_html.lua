@@ -37,6 +37,9 @@ local spell_dict = {
   vimL = 'Vimscript',
   viml = 'Vimscript',
 }
+local spell_ignore_files = {
+  ['backers.txt'] = 'true',
+}
 local language = nil
 
 local M = {}
@@ -86,6 +89,7 @@ local exclude_invalid_urls = {
 -- Deprecated, brain-damaged files that I don't care about.
 local ignore_errors = {
   ['pi_netrw.txt'] = true,
+  ['backers.txt'] = true,
 }
 
 local function tofile(fname, text)
@@ -386,9 +390,10 @@ local function visit_validate(root, level, lang_tree, opt, stats)
     and (not vim.tbl_contains({ 'codespan', 'taglink', 'tag' }, parent))
   then
     local text_nopunct = vim.fn.trim(text, '.,', 0) -- Ignore some punctuation.
-    if spell_dict[text_nopunct] then
+    local fname_basename = assert(vim.fs.basename(opt.fname))
+    if spell_dict[text_nopunct] and not spell_ignore_files[fname_basename] then
       invalid_spelling[text_nopunct] = invalid_spelling[text_nopunct] or {}
-      invalid_spelling[text_nopunct][vim.fs.basename(opt.fname)] = node_text(root:parent())
+      invalid_spelling[text_nopunct][fname_basename] = node_text(root:parent())
     end
   elseif node_name == 'url' then
     local fixed_url, _ = fix_url(trim(text))

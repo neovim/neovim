@@ -895,18 +895,18 @@ describe('completion', function()
 
   it("'ignorecase' 'infercase' CTRL-X CTRL-N #6451", function()
     feed_command('set ignorecase infercase')
-    feed_command('edit BACKERS.md')
+    feed_command('edit runtime/doc/backers.txt')
     feed('oX<C-X><C-N>')
-    screen:expect([[
-      # Bountysource Backers                                      |
+    screen:expect{grid=[[
+      *backers.txt*          Nvim                                 |
       Xnull^                                                       |
       {2:Xnull          }{6: }                                            |
-      {1:Xoxomoon       }{6: }ryone who backed our [Bountysource fundraise|
-      {1:Xu             }{6: }ountysource.com/teams/neovim/fundraiser)!   |
+      {1:Xoxomoon       }{6: }                                            |
+      {1:Xu             }{6: }     NVIM REFERENCE MANUAL                  |
       {1:Xpayn          }{2: }                                            |
-      {1:Xinity         }{2: }d URL in BACKERS.md.                        |
+      {1:Xinity         }{2: }                                            |
       {3:-- Keyword Local completion (^N^P) }{4:match 1 of 7}             |
-    ]])
+    ]]}
   end)
 
   it('CompleteChanged autocommand', function()
