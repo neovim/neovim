@@ -963,6 +963,29 @@ func Test_cursor_position_with_showbreak()
   call StopVimInTerminal(buf)
 endfunc
 
+func Test_visual_starts_before_skipcol()
+  CheckScreendump
+
+  let lines =<< trim END
+    1new
+    setlocal breakindent
+    call setline(1, "\t" .. join(range(100)))
+  END
+  call writefile(lines, 'XvisualStartsBeforeSkipcol', 'D')
+  let buf = RunVimInTerminal('-S XvisualStartsBeforeSkipcol', #{rows: 6})
+
+  call term_sendkeys(buf, "v$")
+  call VerifyScreenDump(buf, 'Test_visual_starts_before_skipcol_1', {})
+  call term_sendkeys(buf, "\<Esc>:setlocal showbreak=+++\<CR>gv")
+  call VerifyScreenDump(buf, 'Test_visual_starts_before_skipcol_2', {})
+  call term_sendkeys(buf, "\<Esc>:setlocal breakindentopt+=sbr\<CR>gv")
+  call VerifyScreenDump(buf, 'Test_visual_starts_before_skipcol_3', {})
+  call term_sendkeys(buf, "\<Esc>:setlocal nobreakindent\<CR>gv")
+  call VerifyScreenDump(buf, 'Test_visual_starts_before_skipcol_4', {})
+
+  call StopVimInTerminal(buf)
+endfunc
+
 func Test_no_spurious_match()
   let s:input = printf('- y %s y %s', repeat('x', 50), repeat('x', 50))
   call s:test_windows('setl breakindent breakindentopt=list:-1 formatlistpat=^- hls')
