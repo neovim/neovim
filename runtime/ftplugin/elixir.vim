@@ -1,7 +1,7 @@
 " Elixir filetype plugin
 " Language: Elixir
 " Maintainer:	Mitchell Hanberg <vimNOSPAM@mitchellhanberg.com>
-" Last Change: 2023 Dec 26
+" Last Change: 2023 Dec 27
 
 if exists("b:did_ftplugin")
   finish
@@ -33,7 +33,7 @@ setlocal indentkeys+=0=after,0=catch,0=do,0=else,0=end,0=rescue
 " Enable keys that are usually the first keys in a line
 setlocal indentkeys+=0->,0\|>,0},0],0),>
 
-let b:undo_ftplugin = 'setlocal sw< sts< et< isk< com< cms<'
+let b:undo_ftplugin = 'setlocal sw< sts< et< isk< com< cms< indk<'
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
