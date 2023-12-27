@@ -754,9 +754,11 @@ describe('clipboard (with fake clipboard.vim)', function()
   end)
 
   it('has correct value for clipboard registers #24257', function ()
+    -- disable clipboard provider to test this behavior on non-X11 systems
+    command('let g:clipboard = ""')
     eval('setreg("*", "")')
     eval('setreg("+", "waddup")')
-    eq("", eval('getreg("*")'))
-    eq("waddup", eval('getreg("+")'))
+    eq('', eval('getreg("*")'))
+    eq('waddup', eval('getreg("+")'))
   end)
 end)
