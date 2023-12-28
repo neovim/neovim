@@ -4150,7 +4150,7 @@ string.upper({s})                                               *string.upper()*
         locale.
 
 ------------------------------------------------------------------------------
-5.4.1  Patterns                                 *lua-patterns
+5.4.1  Patterns                                 *lua-patterns*
 
 A character class is used to represent a set of characters. The following
 combinations are allowed in describing a character class:
