@@ -138,7 +138,7 @@ bool try_end(Error *err)
     api_set_error(err, kErrorTypeException, "Keyboard interrupt");
     got_int = false;
   } else if (msg_list != NULL && *msg_list != NULL) {
-    int should_free;
+    bool should_free;
     char *msg = get_exception_string(*msg_list,
                                      ET_ERROR,
                                      NULL,

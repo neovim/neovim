@@ -1012,7 +1012,7 @@ static int check_external_diff(diffio_T *diffio)
     if (fd == NULL) {
       io_error = true;
     } else {
-      if (fwrite("line1\n", (size_t)6, (size_t)1, fd) != 1) {
+      if (fwrite("line1\n", 6, 1, fd) != 1) {
         io_error = true;
       }
       fclose(fd);
@@ -1021,7 +1021,7 @@ static int check_external_diff(diffio_T *diffio)
       if (fd == NULL) {
         io_error = true;
       } else {
-        if (fwrite("line2\n", (size_t)6, (size_t)1, fd) != 1) {
+        if (fwrite("line2\n", 6, 1, fd) != 1) {
           io_error = true;
         }
         fclose(fd);
@@ -1166,9 +1166,9 @@ static int diff_file(diffio_T *dio)
                tmp_orig, tmp_new);
   append_redir(cmd, len, p_srr, tmp_diff);
   block_autocmds();  // Avoid ShellCmdPost stuff
-  (void)call_shell(cmd,
-                   kShellOptFilter | kShellOptSilent | kShellOptDoOut,
-                   NULL);
+  call_shell(cmd,
+             kShellOptFilter | kShellOptSilent | kShellOptDoOut,
+             NULL);
   unblock_autocmds();
   xfree(cmd);
   return OK;
@@ -1250,7 +1250,7 @@ void ex_diffpatch(exarg_T *eap)
     vim_snprintf(buf, buflen, "patch -o %s %s < %s",
                  tmp_new, tmp_orig, esc_name);
     block_autocmds();  // Avoid ShellCmdPost stuff
-    (void)call_shell(buf, kShellOptFilter, NULL);
+    call_shell(buf, kShellOptFilter, NULL);
     unblock_autocmds();
   }
 
@@ -1398,7 +1398,7 @@ static void set_diff_option(win_T *wp, bool value)
 /// Set options in window "wp" for diff mode.
 ///
 /// @param addbuf Add buffer to diff.
-void diff_win_options(win_T *wp, int addbuf)
+void diff_win_options(win_T *wp, bool addbuf)
 {
   win_T *old_curwin = curwin;
 
@@ -1888,7 +1888,7 @@ static void count_filler_lines_and_topline(int *curlinenum_to, int *linesfiller,
 {
   const diff_T *curdif = thistopdiff;
   int ch_virtual_lines = 0;
-  int isfiller = 0;
+  bool isfiller = false;
   while (virtual_lines_passed > 0) {
     if (ch_virtual_lines) {
       virtual_lines_passed--;
@@ -1901,7 +1901,7 @@ static void count_filler_lines_and_topline(int *curlinenum_to, int *linesfiller,
     } else {
       (*linesfiller) = 0;
       ch_virtual_lines = get_max_diff_length(curdif);
-      isfiller = (curdif->df_count[toidx] ? 0 : 1);
+      isfiller = (curdif->df_count[toidx] ? false : true);
       if (isfiller) {
         while (curdif && curdif->df_next && curdif->df_lnum[toidx] ==
                curdif->df_next->df_lnum[toidx]
@@ -2444,8 +2444,8 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
   changed_line_abv_curs_win(towin);
 
   check_topfill(towin, false);
-  (void)hasFoldingWin(towin, towin->w_topline, &towin->w_topline,
-                      NULL, true, NULL);
+  hasFoldingWin(towin, towin->w_topline, &towin->w_topline,
+                NULL, true, NULL);
 }
 
 /// This is called when 'diffopt' is changed.

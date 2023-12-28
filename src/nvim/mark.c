@@ -929,8 +929,8 @@ void ex_delmarks(exarg_T *eap)
     // clear specified marks only
     const Timestamp timestamp = os_time();
     for (char *p = eap->arg; *p != NUL; p++) {
-      int lower = ASCII_ISLOWER(*p);
-      int digit = ascii_isdigit(*p);
+      bool lower = ASCII_ISLOWER(*p);
+      bool digit = ascii_isdigit(*p);
       if (lower || digit || ASCII_ISUPPER(*p)) {
         if (p[1] == '-') {
           // clear range of marks

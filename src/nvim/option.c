@@ -420,7 +420,7 @@ void set_init_1(bool clean_arg)
 /// TODO(famiu): Refactor this when def_val uses OptVal.
 static void set_option_default(const OptIndex opt_idx, int opt_flags)
 {
-  int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
+  bool both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
 
   // pointer to variable for current option
   vimoption_T *opt = &options[opt_idx];
@@ -616,8 +616,8 @@ void set_init_3(void)
   // Set 'shellpipe' and 'shellredir', depending on the 'shell' option.
   // This is done after other initializations, where 'shell' might have been
   // set, but only if they have not been set before.
-  int do_srr = !(options[kOptShellredir].flags & P_WAS_SET);
-  int do_sp = !(options[kOptShellpipe].flags & P_WAS_SET);
+  bool do_srr = !(options[kOptShellredir].flags & P_WAS_SET);
+  bool do_sp = !(options[kOptShellpipe].flags & P_WAS_SET);
 
   size_t len = 0;
   char *p = (char *)invocation_path_tail(p_sh, &len);
@@ -738,7 +738,7 @@ void ex_set(exarg_T *eap)
   if (eap->forceit) {
     flags |= OPT_ONECOLUMN;
   }
-  (void)do_set(eap->arg, flags);
+  do_set(eap->arg, flags);
 }
 
 /// Get the default value for a string option.
@@ -1674,18 +1674,18 @@ static char *option_expand(OptIndex opt_idx, char *val)
 static void didset_options(void)
 {
   // initialize the table for 'iskeyword' et.al.
-  (void)init_chartab();
+  init_chartab();
 
   didset_string_options();
 
-  (void)spell_check_msm();
-  (void)spell_check_sps();
-  (void)compile_cap_prog(curwin->w_s);
-  (void)did_set_spell_option(true);
+  spell_check_msm();
+  spell_check_sps();
+  compile_cap_prog(curwin->w_s);
+  did_set_spell_option(true);
   // set cedit_key
-  (void)did_set_cedit(NULL);
+  did_set_cedit(NULL);
   // initialize the table for 'breakat'.
-  (void)did_set_breakat(NULL);
+  did_set_breakat(NULL);
   didset_window_options(curwin, true);
 }
 
@@ -1696,17 +1696,17 @@ static void didset_options2(void)
   highlight_changed();
 
   // Parse default for 'fillchars'.
-  (void)set_fillchars_option(curwin, curwin->w_p_fcs, true);
+  set_fillchars_option(curwin, curwin->w_p_fcs, true);
 
   // Parse default for 'listchars'.
-  (void)set_listchars_option(curwin, curwin->w_p_lcs, true);
+  set_listchars_option(curwin, curwin->w_p_lcs, true);
 
   // Parse default for 'wildmode'.
   check_opt_wim();
   xfree(curbuf->b_p_vsts_array);
-  (void)tabstop_set(curbuf->b_p_vsts, &curbuf->b_p_vsts_array);
+  tabstop_set(curbuf->b_p_vsts, &curbuf->b_p_vsts_array);
   xfree(curbuf->b_p_vts_array);
-  (void)tabstop_set(curbuf->b_p_vts,  &curbuf->b_p_vts_array);
+  tabstop_set(curbuf->b_p_vts,  &curbuf->b_p_vts_array);
 }
 
 /// Check for string options that are NULL (normally only termcap options).
@@ -1852,7 +1852,7 @@ sctx_T *get_option_sctx(OptIndex opt_idx)
 /// window-local value.
 void set_option_sctx(OptIndex opt_idx, int opt_flags, sctx_T script_ctx)
 {
-  int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
+  bool both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   int indir = (int)options[opt_idx].indir;
   nlua_set_sctx(&script_ctx);
   LastSet last_set = {
@@ -2183,14 +2183,14 @@ static const char *did_set_laststatus(optset_T *args)
   // Also clear the cmdline to remove the ruler if there is one
   if (value == 3 && old_value != 3) {
     frame_new_height(topframe, topframe->fr_height - STATUS_HEIGHT, false, false);
-    (void)win_comp_pos();
+    win_comp_pos();
     clear_cmdline = true;
   }
   // When switching from global statusline, increase height of topframe by STATUS_HEIGHT
   // in order to to re-add the space that was previously taken by the global statusline
   if (old_value == 3 && value != 3) {
     frame_new_height(topframe, topframe->fr_height + STATUS_HEIGHT, false, false);
-    (void)win_comp_pos();
+    win_comp_pos();
   }
 
   last_status(false);  // (re)set last window status line.
@@ -2240,7 +2240,7 @@ static const char *did_set_lisp(optset_T *args)
 {
   buf_T *buf = (buf_T *)args->os_buf;
   // When 'lisp' option changes include/exclude '-' in keyword characters.
-  (void)buf_init_chartab(buf, false);          // ignore errors
+  buf_init_chartab(buf, false);          // ignore errors
   return NULL;
 }
 
@@ -2381,7 +2381,7 @@ static const char *did_set_paste(optset_T *args FUNC_ATTR_UNUSED)
       buf->b_p_vsts = buf->b_p_vsts_nopaste ? xstrdup(buf->b_p_vsts_nopaste) : empty_string_option;
       xfree(buf->b_p_vsts_array);
       if (buf->b_p_vsts && buf->b_p_vsts != empty_string_option) {
-        (void)tabstop_set(buf->b_p_vsts, &buf->b_p_vsts_array);
+        tabstop_set(buf->b_p_vsts, &buf->b_p_vsts_array);
       } else {
         buf->b_p_vsts_array = NULL;
       }
@@ -3522,7 +3522,7 @@ static const char *did_set_option(OptIndex opt_idx, void *varp, OptVal old_value
     set_option_varp(opt_idx, varp, old_value, true);
     // When resetting some values, need to act on it.
     if (restore_chartab) {
-      (void)buf_init_chartab(curbuf, true);
+      buf_init_chartab(curbuf, true);
     }
 
     // Unset new_value as it is no longer valid.
@@ -4385,7 +4385,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char **valuep, uint64_
           if (fprintf(fd, "%s %s+=", cmd, name) < 0) {
             goto fail;
           }
-          (void)copy_option_part(&p, part, size, ",");
+          copy_option_part(&p, part, size, ",");
           if (put_escstr(fd, part, 2) == FAIL || put_eol(fd) == FAIL) {
             goto fail;
           }
@@ -5149,7 +5149,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_vsts = xstrdup(p_vsts);
       COPY_OPT_SCTX(buf, BV_VSTS);
       if (p_vsts && p_vsts != empty_string_option) {
-        (void)tabstop_set(p_vsts, &buf->b_p_vsts_array);
+        tabstop_set(p_vsts, &buf->b_p_vsts_array);
       } else {
         buf->b_p_vsts_array = NULL;
       }
@@ -5198,7 +5198,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_s.b_syn_isk = empty_string_option;
       buf->b_s.b_p_spc = xstrdup(p_spc);
       COPY_OPT_SCTX(buf, BV_SPC);
-      (void)compile_cap_prog(&buf->b_s);
+      compile_cap_prog(&buf->b_s);
       buf->b_s.b_p_spf = xstrdup(p_spf);
       COPY_OPT_SCTX(buf, BV_SPF);
       buf->b_s.b_p_spl = xstrdup(p_spl);
@@ -5260,7 +5260,7 @@ void buf_copy_options(buf_T *buf, int flags)
       if (dont_do_help) {
         buf->b_p_isk = save_p_isk;
         if (p_vts && p_vts != empty_string_option && !buf->b_p_vts_array) {
-          (void)tabstop_set(p_vts, &buf->b_p_vts_array);
+          tabstop_set(p_vts, &buf->b_p_vts_array);
         } else {
           buf->b_p_vts_array = NULL;
         }
@@ -5273,7 +5273,7 @@ void buf_copy_options(buf_T *buf, int flags)
         buf->b_p_vts = xstrdup(p_vts);
         COPY_OPT_SCTX(buf, BV_VTS);
         if (p_vts && p_vts != empty_string_option && !buf->b_p_vts_array) {
-          (void)tabstop_set(p_vts, &buf->b_p_vts_array);
+          tabstop_set(p_vts, &buf->b_p_vts_array);
         } else {
           buf->b_p_vts_array = NULL;
         }
@@ -5295,7 +5295,7 @@ void buf_copy_options(buf_T *buf, int flags)
 
   check_buf_options(buf);           // make sure we don't have NULLs
   if (did_isk) {
-    (void)buf_init_chartab(buf, false);
+    buf_init_chartab(buf, false);
   }
 }
 

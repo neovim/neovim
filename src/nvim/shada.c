@@ -1252,7 +1252,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       // string is close to useless: you can only use it with :& or :~ and
       // that’s all because s//~ is not available until the first call to
       // regtilde. Vim was not calling this for some reason.
-      (void)regtilde(cur_entry.data.sub_string.sub, magic_isset(), false);
+      regtilde(cur_entry.data.sub_string.sub, magic_isset(), false);
       // Do not free shada entry: its allocated memory was saved above.
       break;
     case kSDItemHistoryEntry:
@@ -4024,7 +4024,7 @@ static bool shada_removable(const char *name)
 
   char *new_name = home_replace_save(NULL, name);
   for (char *p = p_shada; *p;) {
-    (void)copy_option_part(&p, part, ARRAY_SIZE(part), ", ");
+    copy_option_part(&p, part, ARRAY_SIZE(part), ", ");
     if (part[0] == 'r') {
       home_replace(NULL, part + 1, NameBuff, MAXPATHL, true);
       size_t n = strlen(NameBuff);

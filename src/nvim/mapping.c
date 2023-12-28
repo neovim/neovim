@@ -1528,7 +1528,6 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
                             : (mp = mp->m_next)) {
       int qlen = mp->m_keylen;
       char *q = mp->m_keys;
-      int match;
 
       if (strchr(mp->m_keys, K_SPECIAL) != NULL) {
         // Might have K_SPECIAL escaped mp->m_keys.
@@ -1537,9 +1536,9 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
         qlen = (int)strlen(q);
       }
       // find entries with right mode and keys
-      match = (mp->m_mode & State)
-              && qlen == len
-              && !strncmp(q, ptr, (size_t)len);
+      int match = (mp->m_mode & State)
+                  && qlen == len
+                  && !strncmp(q, ptr, (size_t)len);
       if (q != mp->m_keys) {
         xfree(q);
       }
@@ -1587,7 +1586,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
         }
         tb[j] = NUL;
         // insert the last typed char
-        (void)ins_typebuf((char *)tb, 1, 0, true, mp->m_silent);
+        ins_typebuf((char *)tb, 1, 0, true, mp->m_silent);
       }
 
       // copy values here, calling eval_map_expr() may make "mp" invalid!
@@ -1603,7 +1602,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       }
       if (s != NULL) {
         // insert the to string
-        (void)ins_typebuf(s, noremap, 0, true, silent);
+        ins_typebuf(s, noremap, 0, true, silent);
         // no abbrev. for these chars
         typebuf.tb_no_abbr_cnt += (int)strlen(s) + j + 1;
         if (expr) {
@@ -1615,7 +1614,7 @@ bool check_abbr(int c, char *ptr, int col, int mincol)
       tb[1] = NUL;
       len = clen;  // Delete characters instead of bytes
       while (len-- > 0) {  // delete the from string
-        (void)ins_typebuf((char *)tb, 1, 0, true, silent);
+        ins_typebuf((char *)tb, 1, 0, true, silent);
       }
       return true;
     }
@@ -2177,8 +2176,8 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   if (did_simplify) {
     // When the lhs is being simplified the not-simplified keys are
     // preferred for printing, like in do_map().
-    (void)replace_termcodes(keys, strlen(keys), &alt_keys_buf, 0,
-                            flags | REPTERM_NO_SIMPLIFY, NULL, p_cpo);
+    replace_termcodes(keys, strlen(keys), &alt_keys_buf, 0,
+                      flags | REPTERM_NO_SIMPLIFY, NULL, p_cpo);
     rhs = check_map(alt_keys_buf, mode, exact, false, abbr, &mp, &buffer_local, &rhs_lua);
   }
 
@@ -2399,8 +2398,8 @@ void f_maplist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
         bool did_simplify = false;
 
         char *lhs = str2special_save(mp->m_keys, true, false);
-        (void)replace_termcodes(lhs, strlen(lhs), &keys_buf, 0, flags, &did_simplify,
-                                p_cpo);
+        replace_termcodes(lhs, strlen(lhs), &keys_buf, 0, flags, &did_simplify,
+                          p_cpo);
         xfree(lhs);
 
         Dictionary dict = mapblock_fill_dict(mp,

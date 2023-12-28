@@ -11,7 +11,7 @@ extern slang_T *first_lang;
 extern char *int_wordlist;
 
 extern spelltab_T spelltab;
-extern int did_set_spelltab;
+extern bool did_set_spelltab;
 
 extern char *e_format;
 

@@ -100,7 +100,7 @@ void ex_perldo(exarg_T *eap)
 /// Careful: autocommands may make "buf" invalid!
 ///
 /// @return FAIL for failure, OK otherwise
-int autowrite(buf_T *buf, int forceit)
+int autowrite(buf_T *buf, bool forceit)
 {
   bufref_T bufref;
 
@@ -132,7 +132,7 @@ void autowrite_all(void)
     if (bufIsChanged(buf) && !buf->b_p_ro && !bt_dontwrite(buf)) {
       bufref_T bufref;
       set_bufref(&bufref, buf);
-      (void)buf_write_all(buf, false);
+      buf_write_all(buf, false);
       // an autocommand may have deleted the buffer
       if (!bufref_valid(&bufref)) {
         buf = firstbuf;
@@ -145,7 +145,7 @@ void autowrite_all(void)
 /// For flags use the CCGD_ values.
 bool check_changed(buf_T *buf, int flags)
 {
-  int forceit = (flags & CCGD_FORCEIT);
+  bool forceit = (flags & CCGD_FORCEIT);
   bufref_T bufref;
   set_bufref(&bufref, buf);
 
@@ -211,7 +211,7 @@ void dialog_changed(buf_T *buf, bool checkall)
     if (buf->b_fname != NULL
         && check_overwrite(&ea, buf, buf->b_fname, buf->b_ffname, false) == OK) {
       // didn't hit Cancel
-      (void)buf_write_all(buf, false);
+      buf_write_all(buf, false);
     }
   } else if (ret == VIM_NO) {
     unchanged(buf, true, false);
@@ -227,7 +227,7 @@ void dialog_changed(buf_T *buf, bool checkall)
         if (buf2->b_fname != NULL
             && check_overwrite(&ea, buf2, buf2->b_fname, buf2->b_ffname, false) == OK) {
           // didn't hit Cancel
-          (void)buf_write_all(buf2, false);
+          buf_write_all(buf2, false);
         }
         // an autocommand may have deleted the buffer
         if (!bufref_valid(&bufref)) {
@@ -261,7 +261,7 @@ bool dialog_close_terminal(buf_T *buf)
 
 /// @return true if the buffer "buf" can be abandoned, either by making it
 /// hidden, autowriting it or unloading it.
-bool can_abandon(buf_T *buf, int forceit)
+bool can_abandon(buf_T *buf, bool forceit)
 {
   return buf_hide(buf)
          || !bufIsChanged(buf)
@@ -423,7 +423,7 @@ int check_fname(void)
 /// Flush the contents of a buffer, unless it has no file name.
 ///
 /// @return  FAIL for failure, OK otherwise
-int buf_write_all(buf_T *buf, int forceit)
+int buf_write_all(buf_T *buf, bool forceit)
 {
   buf_T *old_curbuf = curbuf;
 
@@ -744,7 +744,7 @@ void ex_checktime(exarg_T *eap)
   } else {
     buf_T *buf = buflist_findnr((int)eap->line2);
     if (buf != NULL) {           // cannot happen?
-      (void)buf_check_timestamp(buf);
+      buf_check_timestamp(buf);
     }
   }
   no_check_timestamps = save_no_check_timestamps;
@@ -763,7 +763,7 @@ static void script_host_execute(char *name, exarg_T *eap)
     tv_list_append_number(args, (int)eap->line1);
     tv_list_append_number(args, (int)eap->line2);
 
-    (void)eval_call_provider(name, "execute", args, true);
+    eval_call_provider(name, "execute", args, true);
   }
 }
 
@@ -779,7 +779,7 @@ static void script_host_execute_file(char *name, exarg_T *eap)
     // current range
     tv_list_append_number(args, (int)eap->line1);
     tv_list_append_number(args, (int)eap->line2);
-    (void)eval_call_provider(name, "execute_file", args, true);
+    eval_call_provider(name, "execute_file", args, true);
   }
 }
 
@@ -790,7 +790,7 @@ static void script_host_do_range(char *name, exarg_T *eap)
     tv_list_append_number(args, (int)eap->line1);
     tv_list_append_number(args, (int)eap->line2);
     tv_list_append_string(args, eap->arg, -1);
-    (void)eval_call_provider(name, "do_range", args, true);
+    eval_call_provider(name, "do_range", args, true);
   }
 }
 

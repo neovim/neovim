@@ -85,7 +85,7 @@ int init_chartab(void)
 ///
 /// @return FAIL if 'iskeyword', 'isident', 'isfname' or 'isprint' option has
 /// an error, OK otherwise.
-int buf_init_chartab(buf_T *buf, int global)
+int buf_init_chartab(buf_T *buf, bool global)
 {
   int c;
 
@@ -490,7 +490,7 @@ char *str_foldcase(char *str, int orglen, char *buf, int buflen)
           }
         }
       }
-      (void)utf_char2bytes(lc, STR_PTR(i));
+      utf_char2bytes(lc, STR_PTR(i));
     }
 
     // skip to next multi-byte char
@@ -1446,9 +1446,9 @@ bool rem_backslash(const char *str)
                  && str[1] != '?'
                  && !vim_isfilec((uint8_t)str[1])));
 
-#else  // ifdef BACKSLASH_IN_FILENAME
+#else
   return str[0] == '\\' && str[1] != NUL;
-#endif  // ifdef BACKSLASH_IN_FILENAME
+#endif
 }
 
 /// Halve the number of backslashes in a file name argument.

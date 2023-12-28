@@ -228,7 +228,7 @@ int verb_msg(const char *s)
 /// When terminal not initialized (yet) printf("%s", ..) is used.
 ///
 /// @return  true if wait_return() not called
-int msg(const char *s, const int attr)
+bool msg(const char *s, const int attr)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   return msg_attr_keep(s, attr, false, false);
@@ -289,7 +289,6 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   FUNC_ATTR_NONNULL_ALL
 {
   static int entered = 0;
-  char *buf = NULL;
 
   if (keep && multiline) {
     // Not implemented. 'multiline' is only used by nvim-added messages,
@@ -328,7 +327,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
 
   // Truncate the message if needed.
   msg_start();
-  buf = msg_strtrunc(s, false);
+  char *buf = msg_strtrunc(s, false);
   if (buf != NULL) {
     s = buf;
   }
@@ -342,7 +341,7 @@ bool msg_attr_keep(const char *s, int attr, bool keep, bool multiline)
   if (need_clear) {
     msg_clr_eos();
   }
-  int retval = msg_end();
+  bool retval = msg_end();
 
   if (keep && retval && vim_strsize(s) < (Rows - cmdline_row - 1) * Columns + sc_col) {
     set_keep_msg(s, 0);
@@ -461,7 +460,7 @@ void trunc_string(const char *s, char *buf, int room_in, int buflen)
     }
   } else if (e + 3 < buflen) {
     // set the middle and copy the last part
-    memmove(buf + e, "...", (size_t)3);
+    memmove(buf + e, "...", 3);
     len = (int)strlen(s + i) + 1;
     if (len >= buflen - e - 3) {
       len = buflen - e - 3 - 1;
@@ -840,7 +839,7 @@ void siemsg(const char *s, ...)
 
   va_list ap;
   va_start(ap, s);
-  (void)semsgv(s, ap);
+  semsgv(s, ap);
   va_end(ap);
 #ifdef ABORT_ON_INTERNAL_ERROR
   msg_putchar('\n');  // avoid overwriting the error message
@@ -858,7 +857,7 @@ void internal_error(const char *where)
 static void msg_semsg_event(void **argv)
 {
   char *s = argv[0];
-  (void)emsg(s);
+  emsg(s);
   xfree(s);
 }
 
@@ -877,7 +876,7 @@ void msg_schedule_semsg(const char *const fmt, ...)
 static void msg_semsg_multiline_event(void **argv)
 {
   char *s = argv[0];
-  (void)emsg_multiline(s, true);
+  emsg_multiline(s, true);
   xfree(s);
 }
 
@@ -905,7 +904,7 @@ char *msg_trunc(char *s, bool force, int attr)
   char *ts = msg_may_trunc(force, s);
 
   msg_hist_off = true;
-  int n = msg(ts, attr);
+  bool n = msg(ts, attr);
   msg_hist_off = false;
 
   if (n) {
@@ -970,7 +969,7 @@ static void add_msg_hist_multiattr(const char *s, int len, int attr, bool multil
 
   // Don't let the message history get too big
   while (msg_hist_len > MAX_MSG_HIST_LEN) {
-    (void)delete_first_msg();
+    delete_first_msg();
   }
 
   // allocate an entry and add the message at the end of the history
@@ -1035,7 +1034,7 @@ void ex_messages(exarg_T *eap)
     int keep = eap->addr_count == 0 ? 0 : eap->line2;
 
     while (msg_hist_len > keep) {
-      (void)delete_first_msg();
+      delete_first_msg();
     }
     return;
   }
@@ -1250,7 +1249,7 @@ void wait_return(int redraw)
     // Avoid that the mouse-up event causes visual mode to start.
     if (c == K_LEFTMOUSE || c == K_MIDDLEMOUSE || c == K_RIGHTMOUSE
         || c == K_X1MOUSE || c == K_X2MOUSE) {
-      (void)jump_to_mouse(MOUSE_SETPOS, NULL, 0);
+      jump_to_mouse(MOUSE_SETPOS, NULL, 0);
     } else if (vim_strchr("\r\n ", c) == NULL && c != Ctrl_C) {
       // Put the character back in the typeahead buffer.  Don't use the
       // stuff buffer, because lmaps wouldn't work.
@@ -1797,7 +1796,7 @@ void str2specialbuf(const char *sp, char *buf, size_t len)
 }
 
 /// print line for :print or :list command
-void msg_prt_line(const char *s, int list)
+void msg_prt_line(const char *s, bool list)
 {
   int c;
   int col = 0;
@@ -2523,7 +2522,7 @@ void sb_text_end_cmdline(void)
 /// Clear any text remembered for scrolling back.
 /// When "all" is false keep the last line.
 /// Called when redrawing the screen.
-void clear_sb_text(int all)
+void clear_sb_text(bool all)
 {
   msgchunk_T *mp;
   msgchunk_T **lastp;
@@ -2827,7 +2826,7 @@ static bool do_more_prompt(int typed_char)
             grid_fill(&msg_grid_adj, 0, 1, 0, Columns, ' ', ' ',
                       HL_ATTR(HLF_MSG));
             // display line at top
-            (void)disp_sb_line(0, mp);
+            disp_sb_line(0, mp);
           } else {
             // redisplay all lines
             // TODO(bfredl): this case is not optimized (though only concerns
@@ -2899,7 +2898,7 @@ static bool do_more_prompt(int typed_char)
   return retval;
 }
 
-void msg_moremsg(int full)
+void msg_moremsg(bool full)
 {
   int attr = hl_combine_attr(HL_ATTR(HLF_MSG), HL_ATTR(HLF_M));
   grid_line_start(&msg_grid_adj, Rows - 1);
@@ -2991,7 +2990,7 @@ void msg_clr_cmdline(void)
 /// call wait_return() if the message does not fit in the available space
 ///
 /// @return  true if wait_return() not called.
-int msg_end(void)
+bool msg_end(void)
 {
   // If the string is larger than the window,
   // or the ruler option is set and we run into it,

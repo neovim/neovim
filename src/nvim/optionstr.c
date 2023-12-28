@@ -148,21 +148,21 @@ static char SHM_ALL[] = { SHM_RO, SHM_MOD, SHM_LINES,
 /// option values.
 void didset_string_options(void)
 {
-  (void)opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true);
-  (void)opt_strings_flags(p_bkc, p_bkc_values, &bkc_flags, true);
-  (void)opt_strings_flags(p_bo, p_bo_values, &bo_flags, true);
-  (void)opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, true);
-  (void)opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true);
-  (void)opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true);
-  (void)opt_strings_flags(p_dy, p_dy_values, &dy_flags, true);
-  (void)opt_strings_flags(p_jop, p_jop_values, &jop_flags, true);
-  (void)opt_strings_flags(p_rdb, p_rdb_values, &rdb_flags, true);
-  (void)opt_strings_flags(p_tc, p_tc_values, &tc_flags, false);
-  (void)opt_strings_flags(p_tpf, p_tpf_values, &tpf_flags, true);
-  (void)opt_strings_flags(p_ve, p_ve_values, &ve_flags, true);
-  (void)opt_strings_flags(p_swb, p_swb_values, &swb_flags, true);
-  (void)opt_strings_flags(p_wop, p_wop_values, &wop_flags, true);
-  (void)opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
+  opt_strings_flags(p_cmp, p_cmp_values, &cmp_flags, true);
+  opt_strings_flags(p_bkc, p_bkc_values, &bkc_flags, true);
+  opt_strings_flags(p_bo, p_bo_values, &bo_flags, true);
+  opt_strings_flags(p_ssop, p_ssop_values, &ssop_flags, true);
+  opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true);
+  opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true);
+  opt_strings_flags(p_dy, p_dy_values, &dy_flags, true);
+  opt_strings_flags(p_jop, p_jop_values, &jop_flags, true);
+  opt_strings_flags(p_rdb, p_rdb_values, &rdb_flags, true);
+  opt_strings_flags(p_tc, p_tc_values, &tc_flags, false);
+  opt_strings_flags(p_tpf, p_tpf_values, &tpf_flags, true);
+  opt_strings_flags(p_ve, p_ve_values, &ve_flags, true);
+  opt_strings_flags(p_swb, p_swb_values, &swb_flags, true);
+  opt_strings_flags(p_wop, p_wop_values, &wop_flags, true);
+  opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
 }
 
 char *illegal_char(char *errbuf, size_t errbuflen, int c)
@@ -301,7 +301,7 @@ void set_string_option_direct(OptIndex opt_idx, const char *val, int opt_flags, 
 
   assert(opt->var != &p_shada);
 
-  int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
+  bool both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   char *s = xstrdup(val);
   char **varp = (char **)get_varp_scope(opt, both ? OPT_LOCAL : opt_flags);
 
@@ -748,7 +748,7 @@ const char *did_set_backupcopy(optset_T *args)
         + ((*flags & BKC_YES) != 0)
         + ((*flags & BKC_NO) != 0) != 1) {
       // Must have exactly one of "auto", "yes"  and "no".
-      (void)opt_strings_flags(oldval, p_bkc_values, flags, true);
+      opt_strings_flags(oldval, p_bkc_values, flags, true);
       return e_invarg;
     }
   }
@@ -905,11 +905,11 @@ static const char *did_set_global_listfillchars(win_T *win, char *val, bool opt_
     // here, so ignore the return value.
     if (opt_lcs) {
       if (*wp->w_p_lcs == NUL) {
-        (void)set_listchars_option(wp, wp->w_p_lcs, true);
+        set_listchars_option(wp, wp->w_p_lcs, true);
       }
     } else {
       if (*wp->w_p_fcs == NUL) {
-        (void)set_fillchars_option(wp, wp->w_p_fcs, true);
+        set_fillchars_option(wp, wp->w_p_fcs, true);
       }
     }
   }
@@ -1220,7 +1220,7 @@ const char *did_set_display(optset_T *args FUNC_ATTR_UNUSED)
   if (opt_strings_flags(p_dy, p_dy_values, &dy_flags, true) != OK) {
     return e_invarg;
   }
-  (void)init_chartab();
+  init_chartab();
   msg_grid_validate();
   return NULL;
 }
@@ -1425,7 +1425,7 @@ int expand_set_foldcolumn(optexpand_T *args, int *numMatches, char ***matches)
 const char *did_set_foldexpr(optset_T *args)
 {
   win_T *win = (win_T *)args->os_win;
-  (void)did_set_optexpr(args);
+  did_set_optexpr(args);
   if (foldmethodIsExpr(win)) {
     foldUpdateAll(win);
   }
@@ -1973,7 +1973,7 @@ const char *did_set_sessionoptions(optset_T *args)
   if ((ssop_flags & SSOP_CURDIR) && (ssop_flags & SSOP_SESDIR)) {
     // Don't allow both "sesdir" and "curdir".
     const char *oldval = args->os_oldval.string.data;
-    (void)opt_strings_flags(oldval, p_ssop_values, &ssop_flags, true);
+    opt_strings_flags(oldval, p_ssop_values, &ssop_flags, true);
     return e_invarg;
   }
   return NULL;

@@ -675,13 +675,13 @@ static void win_move_into_split(win_T *wp, win_T *targetwin, int size, int flags
 
   // Remove the old window and frame from the tree of frames
   int dir;
-  (void)winframe_remove(wp, &dir, NULL);
+  winframe_remove(wp, &dir, NULL);
   win_remove(wp, NULL);
   last_status(false);     // may need to remove last status line
-  (void)win_comp_pos();   // recompute window positions
+  win_comp_pos();   // recompute window positions
 
   // Split a window on the desired side and put the old window there
-  (void)win_split_ins(size, flags, wp, dir);
+  win_split_ins(size, flags, wp, dir);
 
   // If splitting horizontally, try to preserve height
   if (size == 0 && !(flags & WSP_VERT)) {

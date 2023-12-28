@@ -73,7 +73,7 @@ typedef void *(*user_expand_func_T)(const char *, int, typval_T *);
 # include "cmdexpand.c.generated.h"
 #endif
 
-static int cmd_showtail;  ///< Only show path tail in lists ?
+static bool cmd_showtail;  ///< Only show path tail in lists ?
 
 /// "compl_match_array" points the currently displayed list of entries in the
 /// popup menu.  It is NULL when there is no popup menu.
@@ -325,7 +325,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
     beep_flush();
   } else if (xp->xp_numfiles == 1) {
     // free expanded pattern
-    (void)ExpandOne(xp, NULL, NULL, 0, WILD_FREE);
+    ExpandOne(xp, NULL, NULL, 0, WILD_FREE);
   }
 
   return OK;
@@ -334,7 +334,7 @@ int nextwild(expand_T *xp, int type, int options, bool escape)
 /// Create and display a cmdline completion popup menu with items from
 /// "matches".
 static int cmdline_pum_create(CmdlineInfo *ccline, expand_T *xp, char **matches, int numMatches,
-                              int showtail)
+                              bool showtail)
 {
   assert(numMatches >= 0);
   // Add all the completion matches
@@ -441,7 +441,7 @@ static int wildmenu_match_len(expand_T *xp, char *s)
 /// If inversion is possible we use it. Else '=' characters are used.
 ///
 /// @param matches  list of matches
-static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int match, int showtail)
+static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int match, bool showtail)
 {
   int len;
   int clen;                     // length in screen cells
@@ -964,7 +964,7 @@ void ExpandCleanup(expand_T *xp)
 /// @param showtail     display only the tail of the full path of a file name
 /// @param dir_attr     highlight attribute to use for directory names
 static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, int lines, int linenr,
-                                int maxlen, int showtail, int dir_attr)
+                                int maxlen, bool showtail, int dir_attr)
 {
   char *p;
   int lastlen = 999;
@@ -1023,7 +1023,7 @@ static void showmatches_oneline(expand_T *xp, char **matches, int numMatches, in
 /// Show all matches for completion on the command line.
 /// Returns EXPAND_NOTHING when the character that triggered expansion should
 /// be inserted like a normal character.
-int showmatches(expand_T *xp, int wildmenu)
+int showmatches(expand_T *xp, bool wildmenu)
 {
   CmdlineInfo *const ccline = get_cmdline_info();
   int numMatches;
@@ -1032,8 +1032,7 @@ int showmatches(expand_T *xp, int wildmenu)
   int maxlen;
   int lines;
   int columns;
-  int attr;
-  int showtail;
+  bool showtail;
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
@@ -1102,7 +1101,7 @@ int showmatches(expand_T *xp, int wildmenu)
       lines = (numMatches + columns - 1) / columns;
     }
 
-    attr = HL_ATTR(HLF_D);      // find out highlighting for directories
+    int attr = HL_ATTR(HLF_D);      // find out highlighting for directories
 
     if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
       msg_puts_attr(_("tagname"), HL_ATTR(HLF_T));
@@ -3244,7 +3243,7 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
 
       char **p;
       int num_p = 0;
-      (void)ExpandFromContext(&xpc, buf, &p, &num_p, WILD_SILENT | expand_options);
+      ExpandFromContext(&xpc, buf, &p, &num_p, WILD_SILENT | expand_options);
       if (num_p > 0) {
         ExpandEscape(&xpc, buf, num_p, p, WILD_SILENT | expand_options);
 
@@ -3264,7 +3263,7 @@ void globpath(char *path, char *file, garray_T *ga, int expand_options, bool dir
 }
 
 /// Translate some keys pressed when 'wildmenu' is used.
-int wildmenu_translate_key(CmdlineInfo *cclp, int key, expand_T *xp, int did_wild_list)
+int wildmenu_translate_key(CmdlineInfo *cclp, int key, expand_T *xp, bool did_wild_list)
 {
   int c = key;
 

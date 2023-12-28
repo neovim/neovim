@@ -263,13 +263,13 @@ void grid_clear_line(ScreenGrid *grid, size_t off, int width, bool valid)
     grid->chars[off + (size_t)col] = schar_from_ascii(' ');
   }
   int fill = valid ? 0 : -1;
-  (void)memset(grid->attrs + off, fill, (size_t)width * sizeof(sattr_T));
-  (void)memset(grid->vcols + off, -1, (size_t)width * sizeof(colnr_T));
+  memset(grid->attrs + off, fill, (size_t)width * sizeof(sattr_T));
+  memset(grid->vcols + off, -1, (size_t)width * sizeof(colnr_T));
 }
 
 void grid_invalidate(ScreenGrid *grid)
 {
-  (void)memset(grid->attrs, -1, sizeof(sattr_T) * (size_t)grid->rows * (size_t)grid->cols);
+  memset(grid->attrs, -1, sizeof(sattr_T) * (size_t)grid->rows * (size_t)grid->cols);
 }
 
 static bool grid_invalid_row(ScreenGrid *grid, int row)

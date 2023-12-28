@@ -1668,7 +1668,7 @@ static void f_exepath(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   char *path = NULL;
 
-  (void)os_can_exe(tv_get_string(&argvars[0]), &path, true);
+  os_can_exe(tv_get_string(&argvars[0]), &path, true);
 
 #ifdef BACKSLASH_IN_FILENAME
   if (path != NULL) {
@@ -2214,8 +2214,8 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     len = strlen(fname);
     if (*mods != NUL) {
       size_t usedlen = 0;
-      (void)modify_fname((char *)mods, false, &usedlen,
-                         (char **)&fname, &fbuf, &len);
+      modify_fname((char *)mods, false, &usedlen,
+                   (char **)&fname, &fbuf, &len);
     }
   }
 
@@ -3634,7 +3634,7 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   });
 
   // Ask for choice.
-  int mouse_used;
+  bool mouse_used;
   int selected = prompt_for_number(&mouse_used);
   if (mouse_used) {
     selected -= lines_left;
@@ -4163,7 +4163,7 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   const char *error = NULL;
   if (data->is_rpc) {
     // Ignore return code, but show error later.
-    (void)channel_close(data->id, kChannelPartRpc, &error);
+    channel_close(data->id, kChannelPartRpc, &error);
   }
   process_stop(&data->stream.proc);
   rettv->vval.v_number = 1;
@@ -5211,7 +5211,7 @@ static void f_printf(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     if (!did_emsg) {
       char *s = xmalloc((size_t)len + 1);
       rettv->vval.v_string = s;
-      (void)vim_vsnprintf_typval(s, (size_t)len + 1, fmt, dummy_ap, argvars + 1);
+      vim_vsnprintf_typval(s, (size_t)len + 1, fmt, dummy_ap, argvars + 1);
     }
     did_emsg |= saved_did_emsg;
   }
@@ -5802,7 +5802,7 @@ static void f_getreginfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (list == NULL) {
     return;
   }
-  (void)tv_dict_add_list(dict, S_LEN("regcontents"), list);
+  tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
   char buf[NUMBUFLEN + 2];
   buf[0] = NUL;
@@ -5821,15 +5821,15 @@ static void f_getreginfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   case kMTUnknown:
     abort();
   }
-  (void)tv_dict_add_str(dict, S_LEN("regtype"), buf);
+  tv_dict_add_str(dict, S_LEN("regtype"), buf);
 
   buf[0] = (char)get_register_name(get_unname_register());
   buf[1] = NUL;
   if (regname == '"') {
-    (void)tv_dict_add_str(dict, S_LEN("points_to"), buf);
+    tv_dict_add_str(dict, S_LEN("points_to"), buf);
   } else {
-    (void)tv_dict_add_bool(dict, S_LEN("isunnamed"),
-                           regname == buf[0] ? kBoolVarTrue : kBoolVarFalse);
+    tv_dict_add_bool(dict, S_LEN("isunnamed"),
+                     regname == buf[0] ? kBoolVarTrue : kBoolVarFalse);
   }
 }
 
@@ -8082,7 +8082,7 @@ static void f_str2float(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (*p == '+' || *p == '-') {
     p = skipwhite(p + 1);
   }
-  (void)string2float(p, &rettv->vval.v_float);
+  string2float(p, &rettv->vval.v_float);
   if (isneg) {
     rettv->vval.v_float *= -1;
   }
@@ -8397,7 +8397,7 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 
   if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count && col >= 0
       && (size_t)col <= strlen(ml_get(lnum)) && curwin->w_p_cole > 0) {
-    (void)syn_get_id(curwin, lnum, col, false, NULL, false);
+    syn_get_id(curwin, lnum, col, false, NULL, false);
     syntax_flags = get_syntax_info(&matchid);
 
     // get the conceal character
@@ -8435,7 +8435,7 @@ static void f_synstack(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       && col >= 0
       && (size_t)col <= strlen(ml_get(lnum))) {
     tv_list_alloc_ret(rettv, kListLenMayKnow);
-    (void)syn_get_id(curwin, lnum, col, false, NULL, true);
+    syn_get_id(curwin, lnum, col, false, NULL, true);
 
     int id;
     int i = 0;
@@ -8509,8 +8509,8 @@ static void f_taglist(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   if (argvars[1].v_type != VAR_UNKNOWN) {
     fname = tv_get_string(&argvars[1]);
   }
-  (void)get_tags(tv_list_alloc_ret(rettv, kListLenUnknown),
-                 (char *)tag_pattern, (char *)fname);
+  get_tags(tv_list_alloc_ret(rettv, kListLenUnknown),
+           (char *)tag_pattern, (char *)fname);
 }
 
 /// "tempname()" function
@@ -8629,7 +8629,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   curbuf->b_p_swf = false;
 
   apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, false, curbuf);
-  (void)setfname(curbuf, NameBuff, NULL, true);
+  setfname(curbuf, NameBuff, NULL, true);
   apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, false, curbuf);
 
   // Save the job id and pid in b:terminal_job_{id,pid}

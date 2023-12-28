@@ -826,7 +826,7 @@ static void buf_signcols_validate_range(buf_T *buf, int row1, int row2, int add)
   int *overlap = xcalloc(sizeof(int), (size_t)(row2 + 1 - row1));
 
   // First find the number of overlapping signs at "row1".
-  (void)marktree_itr_get_overlap(buf->b_marktree, currow, 0, itr);
+  marktree_itr_get_overlap(buf->b_marktree, currow, 0, itr);
   while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
     if (!mt_invalid(pair.start) && pair.start.flags & MT_FLAG_DECOR_SIGNTEXT) {
       overlap[0]++;

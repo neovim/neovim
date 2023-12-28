@@ -78,21 +78,20 @@ static void pum_compute_size(void)
   pum_kind_width = 0;
   pum_extra_width = 0;
   for (int i = 0; i < pum_size; i++) {
-    int w;
     if (pum_array[i].pum_text != NULL) {
-      w = vim_strsize(pum_array[i].pum_text);
+      int w = vim_strsize(pum_array[i].pum_text);
       if (pum_base_width < w) {
         pum_base_width = w;
       }
     }
     if (pum_array[i].pum_kind != NULL) {
-      w = vim_strsize(pum_array[i].pum_kind) + 1;
+      int w = vim_strsize(pum_array[i].pum_kind) + 1;
       if (pum_kind_width < w) {
         pum_kind_width = w;
       }
     }
     if (pum_array[i].pum_extra != NULL) {
-      w = vim_strsize(pum_array[i].pum_extra) + 1;
+      int w = vim_strsize(pum_array[i].pum_extra) + 1;
       if (pum_extra_width < w) {
         pum_extra_width = w;
       }
@@ -776,7 +775,7 @@ win_T *pum_set_info(int pum_idx, char *info)
   } else {
     // clean exist buffer
     while (!buf_is_empty(wp->w_buffer)) {
-      ml_delete_buf(wp->w_buffer, (linenr_T)1, false);
+      ml_delete_buf(wp->w_buffer, 1, false);
     }
   }
   no_u_sync--;
@@ -1139,13 +1138,13 @@ void pum_set_event_info(dict_T *dict)
     r = (double)pum_row;
     c = (double)pum_col;
   }
-  (void)tv_dict_add_float(dict, S_LEN("height"), h);
-  (void)tv_dict_add_float(dict, S_LEN("width"), w);
-  (void)tv_dict_add_float(dict, S_LEN("row"), r);
-  (void)tv_dict_add_float(dict, S_LEN("col"), c);
-  (void)tv_dict_add_nr(dict, S_LEN("size"), pum_size);
-  (void)tv_dict_add_bool(dict, S_LEN("scrollbar"),
-                         pum_scrollbar ? kBoolVarTrue : kBoolVarFalse);
+  tv_dict_add_float(dict, S_LEN("height"), h);
+  tv_dict_add_float(dict, S_LEN("width"), w);
+  tv_dict_add_float(dict, S_LEN("row"), r);
+  tv_dict_add_float(dict, S_LEN("col"), c);
+  tv_dict_add_nr(dict, S_LEN("size"), pum_size);
+  tv_dict_add_bool(dict, S_LEN("scrollbar"),
+                   pum_scrollbar ? kBoolVarTrue : kBoolVarFalse);
 }
 
 static void pum_position_at_mouse(int min_width)

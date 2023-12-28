@@ -918,7 +918,7 @@ static void arg_all_close_unused_windows(arg_all_state_T *aall)
           if (!buf_hide(buf) && buf->b_nwindows <= 1 && bufIsChanged(buf)) {
             bufref_T bufref;
             set_bufref(&bufref, buf);
-            (void)autowrite(buf, false);
+            autowrite(buf, false);
             // Check if autocommands removed the window.
             if (!win_valid(wp) || !bufref_valid(&bufref)) {
               wpnext = lastwin->w_floating ? lastwin : firstwin;  // Start all over...
@@ -1018,10 +1018,10 @@ static void arg_all_open_windows(arg_all_state_T *aall, int count)
         aall->new_curwin = curwin;
         aall->new_curtab = curtab;
       }
-      (void)do_ecmd(0, alist_name(&AARGLIST(aall->alist)[i]), NULL, NULL, ECMD_ONE,
-                    ((buf_hide(curwin->w_buffer)
-                      || bufIsChanged(curwin->w_buffer)) ? ECMD_HIDE : 0) + ECMD_OLDBUF,
-                    curwin);
+      do_ecmd(0, alist_name(&AARGLIST(aall->alist)[i]), NULL, NULL, ECMD_ONE,
+              ((buf_hide(curwin->w_buffer)
+                || bufIsChanged(curwin->w_buffer)) ? ECMD_HIDE : 0) + ECMD_OLDBUF,
+              curwin);
       if (tab_drop_empty_window && i == count - 1) {
         autocmd_no_enter++;
       }

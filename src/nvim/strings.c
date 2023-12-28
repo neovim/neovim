@@ -183,21 +183,17 @@ char *vim_strnsave_unquoted(const char *const string, const size_t length)
 char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newline)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  char *d;
-  char *escaped_string;
   size_t l;
-  int csh_like;
-  bool fish_like;
 
   // Only csh and similar shells expand '!' within single quotes.  For sh and
   // the like we must not put a backslash before it, it will be taken
   // literally.  If do_special is set the '!' will be escaped twice.
   // Csh also needs to have "\n" escaped twice when do_special is set.
-  csh_like = csh_like_shell();
+  int csh_like = csh_like_shell();
 
   // Fish shell uses '\' as an escape character within single quotes, so '\'
   // itself must be escaped to get a literal '\'.
-  fish_like = fish_like_shell();
+  bool fish_like = fish_like_shell();
 
   // First count the number of extra bytes required.
   size_t length = strlen(string) + 3;       // two quotes and a trailing NUL
@@ -229,8 +225,8 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
   }
 
   // Allocate memory for the result and fill it.
-  escaped_string = xmalloc(length);
-  d = escaped_string;
+  char *escaped_string = xmalloc(length);
+  char *d = escaped_string;
 
   // add opening quote
 #ifdef MSWIN
@@ -301,9 +297,7 @@ char *vim_strsave_shellescape(const char *string, bool do_special, bool do_newli
 char *vim_strsave_up(const char *string)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  char *p1;
-
-  p1 = xstrdup(string);
+  char *p1 = xstrdup(string);
   vim_strup(p1);
   return p1;
 }
@@ -376,9 +370,7 @@ char *strcase_save(const char *const orig, bool upper)
 void del_trailing_spaces(char *ptr)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *q;
-
-  q = ptr + strlen(ptr);
+  char *q = ptr + strlen(ptr);
   while (--q > ptr && ascii_iswhite(q[0]) && q[-1] != '\\' && q[-1] != Ctrl_V) {
     *q = NUL;
   }
@@ -1360,11 +1352,11 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
     } else {
       size_t min_field_width = 0;
       size_t precision = 0;
-      int zero_padding = 0;
-      int precision_specified = 0;
-      int justify_left = 0;
-      int alternate_form = 0;
-      int force_sign = 0;
+      bool zero_padding = false;
+      bool precision_specified = false;
+      bool justify_left = false;
+      bool alternate_form = false;
+      bool force_sign = false;
 
       // if both ' ' and '+' flags appear, ' ' flag should be ignored
       int space_for_positive = 1;
@@ -1429,17 +1421,17 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
       while (true) {
         switch (*p) {
         case '0':
-          zero_padding = 1; p++; continue;
+          zero_padding = true; p++; continue;
         case '-':
-          justify_left = 1; p++; continue;
+          justify_left = true; p++; continue;
         // if both '0' and '-' flags appear, '0' should be ignored
         case '+':
-          force_sign = 1; space_for_positive = 0; p++; continue;
+          force_sign = true; space_for_positive = 0; p++; continue;
         case ' ':
-          force_sign = 1; p++; continue;
+          force_sign = true; p++; continue;
         // if both ' ' and '+' flags appear, ' ' should be ignored
         case '#':
-          alternate_form = 1; p++; continue;
+          alternate_form = true; p++; continue;
         case '\'':
           p++; continue;
         default:
@@ -1474,7 +1466,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
           min_field_width = (size_t)j;
         } else {
           min_field_width = (size_t)-j;
-          justify_left = 1;
+          justify_left = true;
         }
       } else if (ascii_isdigit((int)(*p))) {
         // size_t could be wider than unsigned int; make sure we treat
@@ -1490,7 +1482,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
       // parse precision
       if (*p == '.') {
         p++;
-        precision_specified = 1;
+        precision_specified = true;
 
         if (ascii_isdigit((int)(*p))) {
           // size_t could be wider than unsigned int; make sure we
@@ -1525,7 +1517,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
           if (j >= 0) {
             precision = (size_t)j;
           } else {
-            precision_specified = 0;
+            precision_specified = false;
             precision = 0;
           }
         }
@@ -1780,7 +1772,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
         // '0' flag should be ignored. This is so with Solaris 2.6, Digital
         // UNIX 4.0, HPUX 10, Linux, FreeBSD, NetBSD; but not with Perl.
         if (precision_specified) {
-          zero_padding = 0;
+          zero_padding = false;
         }
 
         if (fmt_spec == 'd') {
@@ -1868,8 +1860,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
               && !(zero_padding_insertion_ind < str_arg_l
                    && tmp[zero_padding_insertion_ind] == '0')) {
             // assure leading zero for alternate-form octal numbers
-            if (!precision_specified
-                || precision < num_of_digits + 1) {
+            if (!precision_specified || precision < num_of_digits + 1) {
               // precision is increased to force the first character to be
               // zero, except if a zero value is formatted with an explicit
               // precision of zero
@@ -1926,12 +1917,12 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
                                      force_sign, space_for_positive),
                    sizeof(tmp));
           str_arg_l = strlen(tmp);
-          zero_padding = 0;
+          zero_padding = false;
         } else if (xisnan(f)) {
           // Not a number: nan or NAN
           memmove(tmp, ASCII_ISUPPER(fmt_spec) ? "NAN" : "nan", 4);
           str_arg_l = 3;
-          zero_padding = 0;
+          zero_padding = false;
         } else {
           // Regular float number
           format[0] = '%';
@@ -2017,8 +2008,8 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
 
       default:
         // unrecognized conversion specifier, keep format string as-is
-        zero_padding = 0;  // turn zero padding off for non-numeric conversion
-        justify_left = 1;
+        zero_padding = false;  // turn zero padding off for non-numeric conversion
+        justify_left = true;
         min_field_width = 0;  // reset flags
 
         // discard the unrecognized conversion, just keep
@@ -2229,7 +2220,7 @@ char *strrep(const char *src, const char *what, const char *rep)
 }
 
 /// Implementation of "byteidx()" and "byteidxcomp()" functions
-static void byteidx_common(typval_T *argvars, typval_T *rettv, int comp)
+static void byteidx_common(typval_T *argvars, typval_T *rettv, bool comp)
 {
   rettv->vval.v_number = -1;
 

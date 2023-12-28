@@ -615,7 +615,7 @@ int main(int argc, char **argv)
 
   // WORKAROUND(mhi): #3023
   if (cb_flags & CB_UNNAMEDMASK) {
-    (void)eval_has_provider("clipboard");
+    eval_has_provider("clipboard");
   }
 
   if (params.luaf != NULL) {
@@ -1013,7 +1013,7 @@ static void command_line_scan(mparm_T *parmp)
   char **argv = parmp->argv;
   int argv_idx;                         // index in argv[n][]
   bool had_minmin = false;              // found "--" argument
-  int want_argument;                    // option argument with argument
+  bool want_argument;                   // option argument with argument
   int n;
 
   argc--;
@@ -1581,7 +1581,7 @@ static void read_stdin(void)
   bool save_msg_didany = msg_didany;
   set_buflisted(true);
   // Create memfile and read from stdin.
-  (void)open_buffer(true, NULL, 0);
+  open_buffer(true, NULL, 0);
   if (buf_is_empty(curbuf) && curbuf->b_next != NULL) {
     // stdin was empty, go to buffer 2 (e.g. "echo file1 | xargs nvim"). #8561
     do_cmdline_cmd("silent! bnext");
@@ -1703,7 +1703,7 @@ static void create_windows(mparm_T *parmp)
         set_buflisted(true);
 
         // create memfile, read file
-        (void)open_buffer(false, NULL, 0);
+        open_buffer(false, NULL, 0);
 
         if (swap_exists_action == SEA_QUIT) {
           if (got_int || only_one_window()) {
@@ -1725,7 +1725,7 @@ static void create_windows(mparm_T *parmp)
       }
       os_breakcheck();
       if (got_int) {
-        (void)vgetc();          // only break the file loading, not the rest
+        vgetc();          // only break the file loading, not the rest
         break;
       }
     }
@@ -1804,9 +1804,9 @@ static void edit_buffers(mparm_T *parmp, char *cwd)
       // Edit file from arg list, if there is one.  When "Quit" selected
       // at the ATTENTION prompt close the window.
       swap_exists_did_quit = false;
-      (void)do_ecmd(0, arg_idx < GARGCOUNT
-                    ? alist_name(&GARGLIST[arg_idx])
-                    : NULL, NULL, NULL, ECMD_LASTL, ECMD_HIDE, curwin);
+      do_ecmd(0, arg_idx < GARGCOUNT
+              ? alist_name(&GARGLIST[arg_idx])
+              : NULL, NULL, NULL, ECMD_LASTL, ECMD_HIDE, curwin);
       if (swap_exists_did_quit) {
         // abort or quit selected
         if (got_int || only_one_window()) {
@@ -1825,7 +1825,7 @@ static void edit_buffers(mparm_T *parmp, char *cwd)
     }
     os_breakcheck();
     if (got_int) {
-      (void)vgetc();            // only break the file loading, not the rest
+      vgetc();            // only break the file loading, not the rest
       break;
     }
   }
@@ -1957,7 +1957,7 @@ static void do_system_initialization(void)
 
 #ifdef SYS_VIMRC_FILE
   // Get system wide defaults, if the file name is defined.
-  (void)do_source(SYS_VIMRC_FILE, false, DOSO_NONE, NULL);
+  do_source(SYS_VIMRC_FILE, false, DOSO_NONE, NULL);
 #endif
 }
 

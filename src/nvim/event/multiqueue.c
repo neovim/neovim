@@ -156,7 +156,7 @@ void multiqueue_purge_events(MultiQueue *self)
 {
   assert(self);
   while (!multiqueue_empty(self)) {
-    (void)multiqueue_remove(self);
+    multiqueue_remove(self);
   }
 }
 

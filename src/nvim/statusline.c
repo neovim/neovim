@@ -725,8 +725,6 @@ void draw_tabline(void)
     win_T *cwp;
     int wincount;
     int c;
-    int len;
-    char *p;
     grid_line_start(&default_grid, 0);
     FOR_ALL_TABS(tp) {
       tabcount++;
@@ -782,7 +780,7 @@ void draw_tabline(void)
       if (modified || wincount > 1) {
         if (wincount > 1) {
           vim_snprintf(NameBuff, MAXPATHL, "%d", wincount);
-          len = (int)strlen(NameBuff);
+          int len = (int)strlen(NameBuff);
           if (col + len >= Columns - 3) {
             break;
           }
@@ -801,8 +799,8 @@ void draw_tabline(void)
         // Get buffer name in NameBuff[]
         get_trans_bufname(cwp->w_buffer);
         shorten_dir(NameBuff);
-        len = vim_strsize(NameBuff);
-        p = NameBuff;
+        int len = vim_strsize(NameBuff);
+        char *p = NameBuff;
         while (len > room) {
           len -= ptr2cells(p);
           MB_PTR_ADV(p);
@@ -1399,7 +1397,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
     case STL_VIM_EXPR:     // '{'
     {
       char *block_start = fmt_p - 1;
-      int reevaluate = (*fmt_p == '%');
+      bool reevaluate = (*fmt_p == '%');
       itemisflag = true;
 
       if (reevaluate) {

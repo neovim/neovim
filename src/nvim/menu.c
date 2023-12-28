@@ -69,7 +69,7 @@ void ex_menu(exarg_T *eap)
   char *map_to;            // command mapped to the menu entry
   int noremap;
   bool silent = false;
-  int unmenu;
+  bool unmenu;
   char *map_buf;
   char *p;
   int i;
@@ -868,7 +868,7 @@ char *set_context_in_menu_cmd(expand_T *xp, const char *cmd, char *arg, bool for
   char *after_dot;
   char *p;
   char *path_name = NULL;
-  int unmenu;
+  bool unmenu;
   vimmenu_T *menu;
 
   xp->xp_context = EXPAND_UNSUCCESSFUL;
@@ -1132,7 +1132,7 @@ static bool menu_namecmp(const char *const name, const char *const mname)
 ///                     to whether the command is a "nore" command.
 /// @param[out] unmenu  If not NULL, the flag it points to is set according
 ///                     to whether the command is an "unmenu" command.
-int get_menu_cmd_modes(const char *cmd, bool forceit, int *noremap, int *unmenu)
+int get_menu_cmd_modes(const char *cmd, bool forceit, int *noremap, bool *unmenu)
 {
   int modes;
 

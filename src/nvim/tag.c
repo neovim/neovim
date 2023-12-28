@@ -279,7 +279,7 @@ void set_buflocal_tfu_callback(buf_T *buf)
 /// @param tag  tag (pattern) to jump to
 /// @param forceit  :ta with !
 /// @param verbose  print "tag not found" message
-void do_tag(char *tag, int type, int count, int forceit, int verbose)
+void do_tag(char *tag, int type, int count, int forceit, bool verbose)
 {
   taggy_T *tagstack = curwin->w_tagstack;
   int tagstackidx = curwin->w_tagstackidx;
@@ -546,7 +546,6 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
 
   // Repeat searching for tags, when a file has not been found.
   while (true) {
-    int other_name;
     char *name;
 
     // When desired match not found yet, try to find it (and others).
@@ -560,7 +559,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
     } else {
       name = tag;
     }
-    other_name = (tagmatchname == NULL || strcmp(tagmatchname, name) != 0);
+    bool other_name = (tagmatchname == NULL || strcmp(tagmatchname, name) != 0);
     if (new_tag
         || (cur_match >= num_matches && max_num_matches != MAXCOL)
         || other_name) {
@@ -717,7 +716,7 @@ void do_tag(char *tag, int type, int count, int forceit, int verbose)
         smsg(0, _("File \"%s\" does not exist"), nofile_fname);
       }
 
-      int ic = (matches[cur_match][0] & MT_IC_OFF);
+      bool ic = (matches[cur_match][0] & MT_IC_OFF);
       if (type != DT_TAG && type != DT_SELECT && type != DT_JUMP
           && (num_matches > 1 || ic)
           && !skip_msg) {
@@ -1160,7 +1159,7 @@ static int tag_strnicmp(char *s1, char *s2, size_t len)
 }
 
 // Extract info from the tag search pattern "pats->pat".
-static void prepare_pats(pat_T *pats, int has_re)
+static void prepare_pats(pat_T *pats, bool has_re)
 {
   pats->head = pats->pat;
   pats->headlen = pats->len;
@@ -1275,7 +1274,7 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
     char *res_fname;
     char *res_cmd;
     char *res_kind;
-    int has_extra = 0;
+    bool has_extra = false;
     int name_only = flags & TAG_NAMES;
 
     if (TV_LIST_ITEM_TV(li)->v_type != VAR_DICT) {
@@ -1310,7 +1309,7 @@ static int find_tagfunc_tags(char *pat, garray_T *ga, int *match_count, int flag
         res_cmd = tv->vval.v_string;
         continue;
       }
-      has_extra = 1;
+      has_extra = true;
       if (!strcmp(dict_key, "kind")) {
         res_kind = tv->vval.v_string;
         continue;
@@ -1530,7 +1529,7 @@ static int findtags_apply_tfu(findtags_state_T *st, char *pat, char *buf_ffname)
 /// reached end of a emacs included tags file)
 static tags_read_status_T findtags_get_next_line(findtags_state_T *st, tagsearch_info_T *sinfo_p)
 {
-  int eof;
+  bool eof;
 
   // For binary search: compute the next offset to use.
   if (st->state == TS_BINARY) {
@@ -1545,7 +1544,7 @@ static tags_read_status_T findtags_get_next_line(findtags_state_T *st, tagsearch
     sinfo_p->curr_offset -= st->lbuf_size * 2;
     if (sinfo_p->curr_offset < 0) {
       sinfo_p->curr_offset = 0;
-      (void)fseek(st->fp, 0, SEEK_SET);
+      fseek(st->fp, 0, SEEK_SET);
       st->state = TS_STEP_FORWARD;
     }
   }
@@ -2304,7 +2303,7 @@ int find_tags(char *pat, int *num_matches, char ***matchesp, int flags, int minc
   char *saved_pat = NULL;                // copy of pat[]
 
   int findall = (mincount == MAXCOL || mincount == TAG_MANY);  // find all matching tags
-  int has_re = (flags & TAG_REGEXP);            // regexp used
+  bool has_re = (flags & TAG_REGEXP);            // regexp used
   int noic = (flags & TAG_NOIC);
   int verbose = (flags & TAG_VERBOSE);
   int save_p_ic = p_ic;
@@ -2564,7 +2563,7 @@ int get_tagfname(tagname_T *tnp, int first, char *buf)
 
       // Copy next file name into buf.
       buf[0] = NUL;
-      (void)copy_option_part(&tnp->tn_np, buf, MAXPATHL - 1, " ,");
+      copy_option_part(&tnp->tn_np, buf, MAXPATHL - 1, " ,");
 
       char *r_ptr = vim_findfile_stopdir(buf);
       // move the filename one char forward and truncate the
@@ -2774,7 +2773,7 @@ static char *tag_full_fname(tagptrs_T *tagp)
 /// @param keep_help  keep help flag
 ///
 /// @return  OK for success, NOTAGFILE when file not found, FAIL otherwise.
-static int jumpto_tag(const char *lbuf_arg, int forceit, int keep_help)
+static int jumpto_tag(const char *lbuf_arg, int forceit, bool keep_help)
 {
   char *pbuf_end;
   char *tofree_fname = NULL;
@@ -2947,11 +2946,10 @@ static int jumpto_tag(const char *lbuf_arg, int forceit, int keep_help)
 
         // try again, ignore case now
         p_ic = true;
-        if (!do_search(NULL, pbuf[0], pbuf[0], pbuf + 1, 1,
-                       search_options, NULL)) {
+        if (!do_search(NULL, pbuf[0], pbuf[0], pbuf + 1, 1, search_options, NULL)) {
           // Failed to find pattern, take a guess: "^func  ("
           found = 2;
-          (void)test_for_static(&tagp);
+          test_for_static(&tagp);
           char cc = *tagp.tagname_end;
           *tagp.tagname_end = NUL;
           snprintf(pbuf, LSIZE, "^%s\\s\\*(", tagp.tagname);
@@ -3171,7 +3169,7 @@ static void tagstack_clear_entry(taggy_T *item)
 }
 
 /// @param tagnames  expand tag names
-int expand_tags(int tagnames, char *pat, int *num_file, char ***file)
+int expand_tags(bool tagnames, char *pat, int *num_file, char ***file)
 {
   int extra_flag;
   size_t name_buf_size = 100;
@@ -3203,10 +3201,8 @@ int expand_tags(int tagnames, char *pat, int *num_file, char ***file)
       parse_match((*file)[i], &t_p);
       len = (size_t)(t_p.tagname_end - t_p.tagname);
       if (len > name_buf_size - 3) {
-        char *buf;
-
         name_buf_size = len + 3;
-        buf = xrealloc(name_buf, name_buf_size);
+        char *buf = xrealloc(name_buf, name_buf_size);
         name_buf = buf;
       }
 
@@ -3317,12 +3313,11 @@ int get_tags(list_T *list, char *pat, char *buf_fname)
           // skip "file:" (static tag)
           p += 4;
         } else if (!ascii_iswhite(*p)) {
-          char *n;
           int len;
 
           // Add extra field as a dict entry.  Fields are
           // separated by Tabs.
-          n = p;
+          char *n = p;
           while (*p != NUL && *p >= ' ' && *p < 127 && *p != ':') {
             p++;
           }

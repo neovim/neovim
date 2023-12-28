@@ -108,7 +108,7 @@ void win_linetabsize_cts(chartabsize_T *cts, colnr_T len)
   }
   // check for inline virtual text after the end of the line
   if (len == MAXCOL && cts->cts_has_virt_text && *cts->cts_ptr == NUL) {
-    (void)win_lbr_chartabsize(cts, NULL);
+    win_lbr_chartabsize(cts, NULL);
     cts->cts_vcol += cts->cts_cur_text_width_left + cts->cts_cur_text_width_right;
   }
 }

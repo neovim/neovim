@@ -188,15 +188,12 @@ static char *get_buffcont(buffheader_T *buffer, int dozero)
 /// K_SPECIAL in the returned string is escaped.
 char *get_recorded(void)
 {
-  char *p;
-  size_t len;
-
-  p = get_buffcont(&recordbuff, true);
+  char *p = get_buffcont(&recordbuff, true);
   free_buff(&recordbuff);
 
   // Remove the characters that were added the last time, these must be the
   // (possibly mapped) characters that stopped the recording.
-  len = strlen(p);
+  size_t len = strlen(p);
   if (len >= last_recorded_len) {
     len -= last_recorded_len;
     p[len] = NUL;
@@ -272,12 +269,10 @@ static void add_buff(buffheader_T *const buf, const char *const s, ptrdiff_t sle
 /// Only works when it was just added.
 static void delete_buff_tail(buffheader_T *buf, int slen)
 {
-  int len;
-
   if (buf->bh_curr == NULL) {
     return;  // nothing to delete
   }
-  len = (int)strlen(buf->bh_curr->b_str);
+  int len = (int)strlen(buf->bh_curr->b_str);
   if (len < slen) {
     return;
   }
@@ -331,18 +326,16 @@ static void add_char_buff(buffheader_T *buf, int c)
 /// if that one is empty.
 /// If advance == true go to the next char.
 /// No translation is done K_SPECIAL is escaped.
-static int read_readbuffers(int advance)
+static int read_readbuffers(bool advance)
 {
-  int c;
-
-  c = read_readbuf(&readbuf1, advance);
+  int c = read_readbuf(&readbuf1, advance);
   if (c == NUL) {
     c = read_readbuf(&readbuf2, advance);
   }
   return c;
 }
 
-static int read_readbuf(buffheader_T *buf, int advance)
+static int read_readbuf(buffheader_T *buf, bool advance)
 {
   if (buf->bh_first.b_next == NULL) {  // buffer is empty
     return NUL;
@@ -1000,7 +993,7 @@ int ins_char_typebuf(int c, int modifiers)
   unsigned len = special_to_buf(c, modifiers, true, buf);
   assert(len < sizeof(buf));
   buf[len] = NUL;
-  (void)ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
+  ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
   return (int)len;
 }
 
@@ -1314,7 +1307,6 @@ void openscript(char *name, bool directly)
   // always, "make test" would fail.
   if (directly) {
     oparg_T oa;
-    int oldcurscript;
     int save_State = State;
     int save_restart_edit = restart_edit;
     int save_finish_op = finish_op;
@@ -1326,11 +1318,11 @@ void openscript(char *name, bool directly)
     clear_oparg(&oa);
     finish_op = false;
 
-    oldcurscript = curscript;
+    int oldcurscript = curscript;
     do {
       update_topline_cursor();          // update cursor position and topline
       normal_cmd(&oa, false);           // execute one command
-      (void)vpeekc();                   // check for end of file
+      vpeekc();                   // check for end of file
     } while (scriptin[oldcurscript] != NULL);
 
     State = save_State;
@@ -1450,8 +1442,6 @@ int vgetc(void)
     mouse_row = old_mouse_row;
     mouse_col = old_mouse_col;
   } else {
-    int c2;
-    int n;
     // number of characters recorded from the last vgetc() call
     static size_t last_vgetc_recorded_len = 0;
 
@@ -1481,7 +1471,7 @@ int vgetc(void)
         int save_allow_keys = allow_keys;
         no_mapping++;
         allow_keys = 0;                 // make sure BS is not found
-        c2 = vgetorpeek(true);          // no mapping for these chars
+        int c2 = vgetorpeek(true);          // no mapping for these chars
         c = vgetorpeek(true);
         no_mapping--;
         allow_keys = save_allow_keys;
@@ -1574,6 +1564,7 @@ int vgetc(void)
       // For a multi-byte character get all the bytes and return the
       // converted character.
       // Note: This will loop until enough bytes are received!
+      int n;
       if ((n = MB_BYTE2LEN_CHECK(c)) > 1) {
         no_mapping++;
         buf[0] = (uint8_t)c;
@@ -1582,8 +1573,8 @@ int vgetc(void)
           if (buf[i] == K_SPECIAL) {
             // Must be a K_SPECIAL - KS_SPECIAL - KE_FILLER sequence,
             // which represents a K_SPECIAL (0x80).
-            (void)vgetorpeek(true);  // skip KS_SPECIAL
-            (void)vgetorpeek(true);  // skip KE_FILLER
+            vgetorpeek(true);  // skip KS_SPECIAL
+            vgetorpeek(true);  // skip KE_FILLER
           }
         }
         no_mapping--;
@@ -1605,7 +1596,7 @@ int vgetc(void)
           && !is_mouse_key(c)) {
         mod_mask = 0;
         int len = ins_char_typebuf(c, 0);
-        (void)ins_char_typebuf(ESC, 0);
+        ins_char_typebuf(ESC, 0);
         ungetchars(len + 3);  // K_SPECIAL KS_MODIFIER MOD_MASK_ALT takes 3 more bytes
         continue;
       }
@@ -1637,9 +1628,7 @@ int vgetc(void)
 /// directly from the user (ignoring typeahead).
 int safe_vgetc(void)
 {
-  int c;
-
-  c = vgetc();
+  int c = vgetc();
   if (c == NUL) {
     c = get_keystroke(NULL);
   }
@@ -1677,9 +1666,7 @@ int vpeekc(void)
 /// buffer, it must be an ESC that is recognized as the start of a key code.
 int vpeekc_any(void)
 {
-  int c;
-
-  c = vpeekc();
+  int c = vpeekc();
   if (c == NUL && typebuf.tb_len > 0) {
     c = ESC;
   }
@@ -1690,10 +1677,8 @@ int vpeekc_any(void)
 /// @return  true if a character is available, false otherwise.
 bool char_avail(void)
 {
-  int retval;
-
   no_mapping++;
-  retval = vpeekc();
+  int retval = vpeekc();
   no_mapping--;
   return retval != NUL;
 }
@@ -1719,7 +1704,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
       if (!char_avail()) {
         // Flush screen updates before blocking.
         ui_flush();
-        (void)os_inchar(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
+        os_inchar(NULL, 0, -1, typebuf.tb_change_cnt, main_loop.events);
         if (!multiqueue_empty(main_loop.events)) {
           state_handle_k_event();
           continue;
@@ -1792,7 +1777,7 @@ static void getchar_common(typval_T *argvars, typval_T *rettv)
         if (win == NULL) {
           return;
         }
-        (void)mouse_comp_pos(win, &row, &col, &lnum);
+        mouse_comp_pos(win, &row, &col, &lnum);
         for (wp = firstwin; wp != win; wp = wp->w_next) {
           winnr++;
         }
@@ -1948,7 +1933,6 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
   mapblock_T *mp_match;
   int mp_match_len = 0;
   int max_mlen = 0;
-  int tb_c1;
   int keylen = *keylenp;
   int local_State = get_real_state();
   bool is_plug_map = false;
@@ -1972,7 +1956,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
   // - waiting for "hit return to continue" and CR or SPACE typed
   // - waiting for a char with --more--
   // - in Ctrl-X mode, and we get a valid char for that mode
-  tb_c1 = typebuf.tb_buf[typebuf.tb_off];
+  int tb_c1 = typebuf.tb_buf[typebuf.tb_off];
   if (no_mapping == 0
       && (no_zero_mapping == 0 || tb_c1 != '0')
       && (typebuf.tb_maplen == 0 || is_plug_map
@@ -2188,7 +2172,7 @@ static int handle_mapping(int *keylenp, const bool *timedout, int *mapdepth)
     // mode temporarily.  Append K_SELECT to switch back to Select mode.
     if (VIsual_active && VIsual_select && (mp->m_mode & MODE_VISUAL)) {
       VIsual_select = false;
-      (void)ins_typebuf(K_SELECT_STRING, REMAP_NONE, 0, true, false);
+      ins_typebuf(K_SELECT_STRING, REMAP_NONE, 0, true, false);
     }
 
     // Copy the values from *mp that are used, because evaluating the
@@ -2652,7 +2636,7 @@ static int vgetorpeek(bool advance)
               showcmd_idx = typebuf.tb_len - SHOWCMD_COLS;
             }
             while (showcmd_idx < typebuf.tb_len) {
-              (void)add_to_showcmd(typebuf.tb_buf[typebuf.tb_off + showcmd_idx++]);
+              add_to_showcmd(typebuf.tb_buf[typebuf.tb_off + showcmd_idx++]);
             }
             curwin->w_wcol = old_wcol;
             curwin->w_wrow = old_wrow;
@@ -2918,7 +2902,6 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
 {
   garray_T line_ga;
   int c1 = -1;
-  int c2;
   int cmod = 0;
   bool aborted = false;
 
@@ -2945,7 +2928,7 @@ char *getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
     // Get two extra bytes for special keys
     if (c1 == K_SPECIAL) {
       c1 = vgetorpeek(true);
-      c2 = vgetorpeek(true);
+      int c2 = vgetorpeek(true);
       if (c1 == KS_MODIFIER) {
         cmod = c2;
         continue;

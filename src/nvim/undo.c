@@ -344,7 +344,7 @@ static inline void zero_fmark_additional_data(fmark_T *fmarks)
 /// "reload" is true when saving for a buffer reload.
 /// Careful: may trigger autocommands that reload the buffer.
 /// Returns FAIL when lines could not be saved, OK otherwise.
-int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, int reload)
+int u_savecommon(buf_T *buf, linenr_T top, linenr_T bot, linenr_T newbot, bool reload)
 {
   if (!reload) {
     // When making changes is not allowed return FAIL.  It's a crude way
@@ -934,7 +934,7 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi, const char *file_name)
     default:
       // Field not supported, skip it.
       while (--len >= 0) {
-        (void)undo_read_byte(bi);
+        undo_read_byte(bi);
       }
     }
   }
@@ -1255,7 +1255,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf, 
     semsg(_(e_not_open), file_name);
     goto theend;
   }
-  (void)os_setperm(file_name, perm);
+  os_setperm(file_name, perm);
   if (p_verbose > 0) {
     verbose_enter();
     smsg(0, _("Writing undo file: %s"), file_name);
@@ -1500,7 +1500,7 @@ void u_read_undo(char *name, const uint8_t *hash, const char *orig_name FUNC_ATT
     default:
       // field not supported, skip
       while (--len >= 0) {
-        (void)undo_read_byte(&bi);
+        undo_read_byte(&bi);
       }
     }
   }
@@ -2250,7 +2250,7 @@ target_zero:
 ///
 /// @param undo If `true`, go up the tree. Down if `false`.
 /// @param do_buf_event If `true`, send buffer updates.
-static void u_undoredo(int undo, bool do_buf_event)
+static void u_undoredo(bool undo, bool do_buf_event)
 {
   char **newarray = NULL;
   linenr_T newlnum = MAXLNUM;

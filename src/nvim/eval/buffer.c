@@ -583,7 +583,8 @@ void f_getbufinfo(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 ///
 /// @return  range (from start to end) of lines in rettv from the specified
 ///          buffer.
-static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, int retlist, typval_T *rettv)
+static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, bool retlist,
+                             typval_T *rettv)
 {
   rettv->v_type = (retlist ? VAR_LIST : VAR_STRING);
   rettv->vval.v_string = NULL;

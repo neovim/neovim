@@ -600,10 +600,10 @@ EXTERN int u_sync_once INIT( = 0);       // Call u_sync() once when evaluating
 EXTERN bool force_restart_edit INIT( = false);  // force restart_edit after
                                                 // ex_normal returns
 EXTERN int restart_edit INIT( = 0);      // call edit when next cmd finished
-EXTERN int arrow_used;                  // Normally false, set to true after
-                                        // hitting cursor key in insert mode.
-                                        // Used by vgetorpeek() to decide when
-                                        // to call u_sync()
+EXTERN bool arrow_used;                  // Normally false, set to true after
+                                         // hitting cursor key in insert mode.
+                                         // Used by vgetorpeek() to decide when
+                                         // to call u_sync()
 EXTERN bool ins_at_eol INIT( = false);   // put cursor after eol when
                                          // restarting edit after CTRL-O
 
@@ -658,9 +658,9 @@ EXTERN bool typebuf_was_empty INIT( = false);
 EXTERN int ex_normal_busy INIT( = 0);      // recursiveness of ex_normal()
 EXTERN int expr_map_lock INIT( = 0);       // running expr mapping, prevent use of ex_normal() and text changes
 EXTERN bool ignore_script INIT( = false);  // ignore script input
-EXTERN int stop_insert_mode;              // for ":stopinsert"
-EXTERN bool KeyTyped;                     // true if user typed current char
-EXTERN int KeyStuffed;                    // true if current char from stuffbuf
+EXTERN bool stop_insert_mode;              // for ":stopinsert"
+EXTERN bool KeyTyped;                      // true if user typed current char
+EXTERN int KeyStuffed;                     // true if current char from stuffbuf
 EXTERN int maptick INIT( = 0);             // tick for each non-mapped char
 
 EXTERN int must_redraw INIT( = 0);           // type of redraw necessary
@@ -724,7 +724,7 @@ EXTERN char *empty_string_option INIT( = "");
 EXTERN bool redir_off INIT( = false);        // no redirection for a moment
 EXTERN FILE *redir_fd INIT( = NULL);         // message redirection file
 EXTERN int redir_reg INIT( = 0);             // message redirection register
-EXTERN int redir_vname INIT( = 0);           // message redirection variable
+EXTERN bool redir_vname INIT( = false);      // message redirection variable
 EXTERN garray_T *capture_ga INIT( = NULL);   // captured output for execute()
 
 EXTERN uint8_t langmap_mapchar[256];     // mapping for language keys

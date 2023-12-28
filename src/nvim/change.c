@@ -85,7 +85,7 @@ void change_warning(buf_T *buf, int col)
     msg_puts_attr(_(w_readonly), HL_ATTR(HLF_W) | MSG_HIST);
     set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();
-    (void)msg_end();
+    msg_end();
     if (msg_silent == 0 && !silent_mode && ui_active()) {
       ui_flush();
       os_delay(1002, true);  // give the user time to think about it
@@ -184,7 +184,7 @@ static void changed_common(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnum
     // Create a new entry if a new undo-able change was started or we
     // don't have an entry yet.
     if (buf->b_new_change || buf->b_changelistlen == 0) {
-      int add;
+      bool add;
       if (buf->b_changelistlen == 0) {
         add = true;
       } else {
@@ -567,7 +567,7 @@ void changed_lines(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnume, linen
 /// When `ff` is true also reset 'fileformat'.
 /// When `always_inc_changedtick` is true b:changedtick is incremented even
 /// when the changed flag was off.
-void unchanged(buf_T *buf, int ff, bool always_inc_changedtick)
+void unchanged(buf_T *buf, bool ff, bool always_inc_changedtick)
 {
   if (buf->b_changed || (ff && file_ff_differs(buf, false))) {
     buf->b_changed = false;
@@ -922,8 +922,9 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 
 /// Copy the indent from ptr to the current line (and fill to size).
 /// Leaves the cursor on the first non-blank in the line.
+///
 /// @return true if the line was changed.
-int copy_indent(int size, char *src)
+bool copy_indent(int size, char *src)
 {
   char *p = NULL;
   char *line = NULL;
@@ -1053,7 +1054,7 @@ int copy_indent(int size, char *src)
 /// @param dir  FORWARD or BACKWARD
 ///
 /// @return true on success, false on failure
-int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
+bool open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
 {
   char *next_line = NULL;         // copy of the next line
   char *p_extra = NULL;           // what goes to next line
@@ -1074,7 +1075,6 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   char saved_char = NUL;          // init for GCC
   pos_T *pos;
   bool do_si = may_do_si();
-  bool do_cindent;
   bool no_si = false;             // reset did_si afterwards
   int first_char = NUL;           // init for GCC
   int vreplace_mode;
@@ -1155,10 +1155,8 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     //   "if (condition) {"
     if (!trunc_line && do_si && *saved_line != NUL
         && (p_extra == NULL || first_char != '{')) {
-      char *ptr;
-
       old_cursor = curwin->w_cursor;
-      ptr = saved_line;
+      char *ptr = saved_line;
       if (flags & OPENLINE_DO_COM) {
         lead_len = get_leader_len(ptr, NULL, false, true);
       } else {
@@ -1288,9 +1286,9 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   }
 
   // May do indenting after opening a new line.
-  do_cindent = !p_paste && (curbuf->b_p_cin || *curbuf->b_p_inde != NUL)
-               && in_cinkeys(dir == FORWARD ? KEY_OPEN_FORW : KEY_OPEN_BACK,
-                             ' ', linewhite(curwin->w_cursor.lnum));
+  bool do_cindent = !p_paste && (curbuf->b_p_cin || *curbuf->b_p_inde != NUL)
+                    && in_cinkeys(dir == FORWARD ? KEY_OPEN_FORW : KEY_OPEN_BACK,
+                                  ' ', linewhite(curwin->w_cursor.lnum));
 
   // Find out if the current line starts with a comment leader.
   // This may then be inserted in front of the new line.
@@ -1321,7 +1319,6 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     char lead_end[COM_MAX_LEN];             // end-comment string
     char *comment_end = NULL;               // where lead_end has been found
     int extra_space = false;                // append extra space
-    int current_flag;
     bool require_blank = false;             // requires blank after middle
     char *p2;
 
@@ -1333,7 +1330,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
         continue;
       }
       if (*p == COM_START || *p == COM_MIDDLE) {
-        current_flag = (unsigned char)(*p);
+        int current_flag = (unsigned char)(*p);
         if (*p == COM_START) {
           // Doing "O" on a start of comment does not insert leader.
           if (dir == BACKWARD) {
@@ -1342,7 +1339,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
 
           // find start of middle part
-          (void)copy_option_part(&p, lead_middle, COM_MAX_LEN, ",");
+          copy_option_part(&p, lead_middle, COM_MAX_LEN, ",");
           require_blank = false;
         }
 
@@ -1353,7 +1350,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
           }
           p++;
         }
-        (void)copy_option_part(&p, lead_middle, COM_MAX_LEN, ",");
+        copy_option_part(&p, lead_middle, COM_MAX_LEN, ",");
 
         while (*p && p[-1] != ':') {  // find end of end flags
           // Check whether we allow automatic ending of comments
@@ -1498,13 +1495,12 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
             int repl_size = vim_strnsize(lead_repl, lead_repl_len);
             int old_size = 0;
             char *endp = p;
-            int l;
 
             while (old_size < repl_size && p > leader) {
               MB_PTR_BACK(leader, p);
               old_size += ptr2cells(p);
             }
-            l = lead_repl_len - (int)(endp - p);
+            int l = lead_repl_len - (int)(endp - p);
             if (l != 0) {
               memmove(endp + l, endp,
                       (size_t)((leader + lead_len) - endp));
@@ -1731,7 +1727,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     if (curwin->w_cursor.lnum >= Insstart.lnum + vr_lines_changed) {
       // In case we NL to a new line, BS to the previous one, and NL
       // again, we don't want to save the new line for undo twice.
-      (void)u_save_cursor();  // errors are ignored!
+      u_save_cursor();  // errors are ignored!
       vr_lines_changed++;
     }
     ml_replace(curwin->w_cursor.lnum, p_extra, true);
@@ -1754,14 +1750,14 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     }
     // Copy the indent
     if (curbuf->b_p_ci) {
-      (void)copy_indent(newindent, saved_line);
+      copy_indent(newindent, saved_line);
 
       // Set the 'preserveindent' option so that any further screwing
       // with the line doesn't entirely destroy our efforts to preserve
       // it.  It gets restored at the function end.
       curbuf->b_p_pi = true;
     } else {
-      (void)set_indent(newindent, SIN_INSERT|SIN_NOMARK);
+      set_indent(newindent, SIN_INSERT|SIN_NOMARK);
     }
     less_cols -= curwin->w_cursor.col;
 
@@ -2002,7 +1998,7 @@ int get_leader_len(char *line, char **flags, bool backward, bool include_space)
         *flags = list;              // remember where flags started
       }
       char *prev_list = list;
-      (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
+      copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
       string = vim_strchr(part_buf, ':');
       if (string == NULL) {         // missing ':', ignore this part
         continue;
@@ -2135,7 +2131,7 @@ int get_last_leader_offset(char *line, char **flags)
 
       // Get one option part into part_buf[].  Advance list to next one.
       // put string at start of string.
-      (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
+      copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
       char *string = vim_strchr(part_buf, ':');
       if (string == NULL) {  // If everything is fine, this cannot actually
                              // happen.
@@ -2217,7 +2213,7 @@ int get_last_leader_offset(char *line, char **flags)
       for (char *list = curbuf->b_p_com; *list;) {
         char *flags_save = list;
 
-        (void)copy_option_part(&list, part_buf2, COM_MAX_LEN, ",");
+        copy_option_part(&list, part_buf2, COM_MAX_LEN, ",");
         if (flags_save == com_flags) {
           continue;
         }
