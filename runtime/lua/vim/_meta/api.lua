@@ -1493,7 +1493,6 @@ function vim.api.nvim_open_term(buffer, opts) end
 --- ```lua
 ---     vim.api.nvim_open_win(0, false,
 ---       {relative='win', width=12, height=3, bufpos={100,10}})
----     })
 --- ```
 ---
 --- @param buffer integer Buffer to display, or 0 for current buffer

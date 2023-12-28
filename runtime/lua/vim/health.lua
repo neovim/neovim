@@ -251,7 +251,7 @@ local path2name = function(path)
 end
 
 local PATTERNS = { '/autoload/health/*.vim', '/lua/**/**/health.lua', '/lua/**/**/health/init.lua' }
--- :checkhealth completion function used by ex_getln.c get_healthcheck_names()
+-- :checkhealth completion function used by cmdexpand.c get_healthcheck_names()
 M._complete = function()
   local names = vim.tbl_flatten(vim.tbl_map(function(pattern)
     return vim.tbl_map(path2name, vim.api.nvim_get_runtime_file(pattern, true))

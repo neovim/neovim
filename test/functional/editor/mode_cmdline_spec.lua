@@ -72,7 +72,7 @@ describe('cmdline', function()
   describe('history', function()
     it('correctly clears start of the history', function()
       -- Regression test: check absence of the memory leak when clearing start of
-      -- the history using ex_getln.c/clr_history().
+      -- the history using cmdhist.c/clr_history().
       eq(1, funcs.histadd(':', 'foo'))
       eq(1, funcs.histdel(':'))
       eq('', funcs.histget(':', -1))
@@ -80,7 +80,7 @@ describe('cmdline', function()
 
     it('correctly clears end of the history', function()
       -- Regression test: check absence of the memory leak when clearing end of
-      -- the history using ex_getln.c/clr_history().
+      -- the history using cmdhist.c/clr_history().
       meths.set_option_value('history', 1, {})
       eq(1, funcs.histadd(':', 'foo'))
       eq(1, funcs.histdel(':'))
@@ -88,7 +88,7 @@ describe('cmdline', function()
     end)
 
     it('correctly removes item from history', function()
-      -- Regression test: check that ex_getln.c/del_history_idx() correctly clears
+      -- Regression test: check that cmdhist.c/del_history_idx() correctly clears
       -- history index after removing history entry. If it does not then deleting
       -- history will result in a double free.
       eq(1, funcs.histadd(':', 'foo'))

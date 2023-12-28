@@ -58,7 +58,7 @@ typedef struct {
   int os_flags;
 
   /// Old value of the option.
-  /// TODO(famiu): Convert `os_oldval` and `os_newval` to `OptVal` to accomodate multitype options.
+  /// TODO(famiu): Convert `os_oldval` and `os_newval` to `OptVal` to accommodate multitype options.
   OptValData os_oldval;
   /// New value of the option.
   OptValData os_newval;
