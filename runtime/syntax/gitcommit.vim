@@ -2,7 +2,7 @@
 " Language:	git commit file
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
 " Filenames:	*.git/COMMIT_EDITMSG
-" Last Change:	2022 Jan 05
+" Last Change:	2023 Dec 28
 
 if exists("b:current_syntax")
   finish
@@ -21,7 +21,11 @@ endif
 syn include @gitcommitDiff syntax/diff.vim
 syn region gitcommitDiff start=/\%(^diff --\%(git\|cc\|combined\) \)\@=/ end=/^\%(diff --\|$\|@@\@!\|[^[:alnum:]\ +-]\S\@!\)\@=/ fold contains=@gitcommitDiff
 
-syn match   gitcommitSummary	"^.*\%<51v." contained containedin=gitcommitFirstLine nextgroup=gitcommitOverflow contains=@Spell
+if get(g:, 'gitcommit_summary_length') < 0
+  syn match   gitcommitSummary	"^.*$" contained containedin=gitcommitFirstLine nextgroup=gitcommitOverflow contains=@Spell
+elseif get(g:, 'gitcommit_summary_length', 1) > 0
+  exe 'syn match   gitcommitSummary	"^.*\%<' . (get(g:, 'gitcommit_summary_length', 50) + 1) . 'v." contained containedin=gitcommitFirstLine nextgroup=gitcommitOverflow contains=@Spell'
+endif
 syn match   gitcommitOverflow	".*" contained contains=@Spell
 syn match   gitcommitBlank	"^.\+" contained contains=@Spell
 syn match   gitcommitFirstLine	"\%^.*" nextgroup=gitcommitBlank,gitcommitComment skipnl
