@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Generates Nvim :help docs from C/Lua docstrings, using Doxygen.
+
+r"""Generates Nvim :help docs from C/Lua docstrings, using Doxygen.
 
 Also generates *.mpack files. To inspect the *.mpack structure:
     :new | put=v:lua.vim.inspect(v:lua.vim.mpack.decode(readfile('runtime/doc/api.mpack','B')))
@@ -32,24 +33,29 @@ The generated :help text for each function is formatted as follows:
     parameter is marked as [out].
   - Each function documentation is separated by a single line.
 """
+
+from __future__ import annotations
+
 import argparse
+import collections
+import dataclasses
+import logging
 import os
 import re
-import sys
 import shutil
-import textwrap
 import subprocess
-import collections
-import msgpack
-import logging
-from typing import Tuple
+import sys
+import textwrap
 from pathlib import Path
-
+from typing import Any, Callable, Dict, List, Literal, Tuple
 from xml.dom import minidom
+
+import msgpack
+
 Element = minidom.Element
 Document = minidom.Document
 
-MIN_PYTHON_VERSION = (3, 6)
+MIN_PYTHON_VERSION = (3, 7)
 MIN_DOXYGEN_VERSION = (1, 9, 0)
 
 if sys.version_info < MIN_PYTHON_VERSION:
@@ -68,7 +74,7 @@ if doxygen_version < MIN_DOXYGEN_VERSION:
 # Need a `nvim` that supports `-l`, try the local build
 nvim_path = Path(__file__).parent / "../build/bin/nvim"
 if nvim_path.exists():
-    nvim = str(nvim_path)
+    nvim = nvim_path.resolve()
 else:
     # Until 0.9 is released, use this hacky way to check that "nvim -l foo.lua" works.
     nvim_out = subprocess.check_output(['nvim', '-h'], universal_newlines=True)
@@ -103,12 +109,59 @@ filter_cmd = '%s %s' % (sys.executable, script_path)
 msgs = []  # Messages to show on exit.
 lua2dox = os.path.join(base_dir, 'scripts', 'lua2dox.lua')
 
-CONFIG = {
-    'api': {
-        'mode': 'c',
-        'filename': 'api.txt',
+
+SectionName = str
+
+@dataclasses.dataclass
+class Config:
+    """Config for documentation."""
+
+    mode: Literal['c', 'lua']
+
+    filename: str
+    """Generated documentation target, e.g. api.txt"""
+
+    section_order: List[str]
+    """Section ordering."""
+
+    files: List[str]
+    """List of files/directories for doxygen to read, relative to `base_dir`."""
+
+    file_patterns: str
+    """file patterns used by doxygen."""
+
+    section_name: Dict[str, SectionName]
+    """Section name overrides. Key: filename (e.g., vim.c)"""
+
+    section_fmt: Callable[[SectionName], str]
+    """For generated section names."""
+
+    helptag_fmt: Callable[[SectionName], str]
+    """Section helptag."""
+
+    fn_helptag_fmt: Callable[[str, str, bool], str]
+    """Per-function helptag."""
+
+    module_override: Dict[str, str]
+    """Module name overrides (for Lua)."""
+
+    append_only: List[str]
+    """Append the docs for these modules, do not start a new section."""
+
+    fn_name_prefix: str
+    """Only function with this prefix are considered"""
+
+    fn_name_fmt: Callable[[str, str], str] | None = None
+
+    include_tables: bool = True
+
+
+CONFIG: Dict[str, Config] = {
+    'api': Config(
+        mode = 'c',
+        filename = 'api.txt',
         # Section ordering.
-        'section_order': [
+        section_order=[
             'vim.c',
             'vimscript.c',
             'command.c',
@@ -121,31 +174,22 @@ CONFIG = {
             'autocmd.c',
             'ui.c',
         ],
-        # List of files/directories for doxygen to read, relative to `base_dir`
-        'files': ['src/nvim/api'],
-        # file patterns used by doxygen
-        'file_patterns': '*.h *.c',
-        # Only function with this prefix are considered
-        'fn_name_prefix': 'nvim_',
-        # Section name overrides.
-        'section_name': {
+        files=['src/nvim/api'],
+        file_patterns = '*.h *.c',
+        fn_name_prefix = 'nvim_',
+        section_name={
             'vim.c': 'Global',
         },
-        # For generated section names.
-        'section_fmt': lambda name: f'{name} Functions',
-        # Section helptag.
-        'helptag_fmt': lambda name: f'*api-{name.lower()}*',
-        # Per-function helptag.
-        'fn_helptag_fmt': lambda fstem, name, istbl: f'*{name}()*',
-        # Module name overrides (for Lua).
-        'module_override': {},
-        # Append the docs for these modules, do not start a new section.
-        'append_only': [],
-    },
-    'lua': {
-        'mode': 'lua',
-        'filename': 'lua.txt',
-        'section_order': [
+        section_fmt=lambda name: f'{name} Functions',
+        helptag_fmt=lambda name: f'*api-{name.lower()}*',
+        fn_helptag_fmt=lambda fstem, name, istbl: f'*{name}()*',
+        module_override={},
+        append_only=[],
+    ),
+    'lua': Config(
+        mode='lua',
+        filename='lua.txt',
+        section_order=[
             'highlight.lua',
             'regex.lua',
             'diff.lua',
@@ -171,7 +215,7 @@ CONFIG = {
             'snippet.lua',
             'text.lua',
         ],
-        'files': [
+        files=[
             'runtime/lua/vim/iter.lua',
             'runtime/lua/vim/_editor.lua',
             'runtime/lua/vim/_options.lua',
@@ -197,30 +241,30 @@ CONFIG = {
             'runtime/lua/vim/_meta/regex.lua',
             'runtime/lua/vim/_meta/spell.lua',
         ],
-        'file_patterns': '*.lua',
-        'fn_name_prefix': '',
-        'fn_name_fmt': lambda fstem, name: (
+        file_patterns='*.lua',
+        fn_name_prefix='',
+        fn_name_fmt=lambda fstem, name: (
             name if fstem in [ 'vim.iter' ] else
             f'vim.{name}' if fstem in [ '_editor', 'vim.regex'] else
             f'vim.{name}' if fstem == '_options' and not name[0].isupper() else
             f'{fstem}.{name}' if fstem.startswith('vim') else
             name
         ),
-        'section_name': {
+        section_name={
             'lsp.lua': 'core',
             '_inspector.lua': 'inspector',
         },
-        'section_fmt': lambda name: (
+        section_fmt=lambda name: (
             'Lua module: vim' if name.lower() == '_editor' else
             'LUA-VIMSCRIPT BRIDGE' if name.lower() == '_options' else
             f'VIM.{name.upper()}' if name.lower() in [ 'highlight', 'mpack', 'json', 'base64', 'diff', 'spell', 'regex' ] else
             'VIM' if name.lower() == 'builtin' else
             f'Lua module: vim.{name.lower()}'),
-        'helptag_fmt': lambda name: (
+        helptag_fmt=lambda name: (
             '*lua-vim*' if name.lower() == '_editor' else
             '*lua-vimscript*' if name.lower() == '_options' else
             f'*vim.{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name, istbl: (
+        fn_helptag_fmt=lambda fstem, name, istbl: (
             f'*vim.opt:{name.split(":")[-1]}()*' if ':' in name and name.startswith('Option') else
             # Exclude fstem for methods
             f'*{name}()*' if ':' in name else
@@ -230,7 +274,7 @@ CONFIG = {
             f'*{fstem}()*' if fstem.endswith('.' + name) else
             f'*{fstem}.{name}{"" if istbl else "()"}*'
             ),
-        'module_override': {
+        module_override={
             # `shared` functions are exposed on the `vim` module.
             'shared': 'vim',
             '_inspector': 'vim',
@@ -255,14 +299,14 @@ CONFIG = {
             'text': 'vim.text',
             'glob': 'vim.glob',
         },
-        'append_only': [
+        append_only=[
             'shared.lua',
         ],
-    },
-    'lsp': {
-        'mode': 'lua',
-        'filename': 'lsp.txt',
-        'section_order': [
+    ),
+    'lsp': Config(
+        mode='lua',
+        filename='lsp.txt',
+        section_order=[
             'lsp.lua',
             'buf.lua',
             'diagnostic.lua',
@@ -276,50 +320,50 @@ CONFIG = {
             'rpc.lua',
             'protocol.lua',
         ],
-        'files': [
+        files=[
             'runtime/lua/vim/lsp',
             'runtime/lua/vim/lsp.lua',
         ],
-        'file_patterns': '*.lua',
-        'fn_name_prefix': '',
-        'section_name': {'lsp.lua': 'lsp'},
-        'section_fmt': lambda name: (
+        file_patterns='*.lua',
+        fn_name_prefix='',
+        section_name={'lsp.lua': 'lsp'},
+        section_fmt=lambda name: (
             'Lua module: vim.lsp'
             if name.lower() == 'lsp'
             else f'Lua module: vim.lsp.{name.lower()}'),
-        'helptag_fmt': lambda name: (
+        helptag_fmt=lambda name: (
             '*lsp-core*'
             if name.lower() == 'lsp'
             else f'*lsp-{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name, istbl: (
+        fn_helptag_fmt=lambda fstem, name, istbl: (
             f'*vim.lsp.{name}{"" if istbl else "()"}*' if fstem == 'lsp' and name != 'client' else
             # HACK. TODO(justinmk): class/structure support in lua2dox
             '*vim.lsp.client*' if 'lsp.client' == f'{fstem}.{name}' else
             f'*vim.lsp.{fstem}.{name}{"" if istbl else "()"}*'),
-        'module_override': {},
-        'append_only': [],
-    },
-    'diagnostic': {
-        'mode': 'lua',
-        'filename': 'diagnostic.txt',
-        'section_order': [
+        module_override={},
+        append_only=[],
+    ),
+    'diagnostic': Config(
+        mode='lua',
+        filename='diagnostic.txt',
+        section_order=[
             'diagnostic.lua',
         ],
-        'files': ['runtime/lua/vim/diagnostic.lua'],
-        'file_patterns': '*.lua',
-        'fn_name_prefix': '',
-        'include_tables': False,
-        'section_name': {'diagnostic.lua': 'diagnostic'},
-        'section_fmt': lambda _: 'Lua module: vim.diagnostic',
-        'helptag_fmt': lambda _: '*diagnostic-api*',
-        'fn_helptag_fmt': lambda fstem, name, istbl: f'*vim.{fstem}.{name}{"" if istbl else "()"}*',
-        'module_override': {},
-        'append_only': [],
-    },
-    'treesitter': {
-        'mode': 'lua',
-        'filename': 'treesitter.txt',
-        'section_order': [
+        files=['runtime/lua/vim/diagnostic.lua'],
+        file_patterns='*.lua',
+        fn_name_prefix='',
+        include_tables=False,
+        section_name={'diagnostic.lua': 'diagnostic'},
+        section_fmt=lambda _: 'Lua module: vim.diagnostic',
+        helptag_fmt=lambda _: '*diagnostic-api*',
+        fn_helptag_fmt=lambda fstem, name, istbl: f'*vim.{fstem}.{name}{"" if istbl else "()"}*',
+        module_override={},
+        append_only=[],
+    ),
+    'treesitter': Config(
+        mode='lua',
+        filename='treesitter.txt',
+        section_order=[
             'treesitter.lua',
             'language.lua',
             'query.lua',
@@ -327,30 +371,30 @@ CONFIG = {
             'languagetree.lua',
             'dev.lua',
         ],
-        'files': [
+        files=[
             'runtime/lua/vim/treesitter.lua',
             'runtime/lua/vim/treesitter/',
         ],
-        'file_patterns': '*.lua',
-        'fn_name_prefix': '',
-        'section_name': {},
-        'section_fmt': lambda name: (
+        file_patterns='*.lua',
+        fn_name_prefix='',
+        section_name={},
+        section_fmt=lambda name: (
             'Lua module: vim.treesitter'
             if name.lower() == 'treesitter'
             else f'Lua module: vim.treesitter.{name.lower()}'),
-        'helptag_fmt': lambda name: (
+        helptag_fmt=lambda name: (
             '*lua-treesitter-core*'
             if name.lower() == 'treesitter'
             else f'*lua-treesitter-{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name, istbl: (
+        fn_helptag_fmt=lambda fstem, name, istbl: (
             f'*vim.{fstem}.{name}()*'
             if fstem == 'treesitter'
             else f'*{name}()*'
             if name[0].isupper()
             else f'*vim.treesitter.{fstem}.{name}()*'),
-        'module_override': {},
-        'append_only': [],
-    }
+        module_override={},
+        append_only=[],
+    ),
 }
 
 param_exclude = (
@@ -814,6 +858,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
 
     return chunks, xrefs
 
+
 def is_program_listing(para):
     """
     Return True if `para` contains a "programlisting" (i.e. a Markdown code
@@ -834,6 +879,7 @@ def is_program_listing(para):
     ]
 
     return len(children) == 1 and children[0].nodeName == 'programlisting'
+
 
 def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent='',
                         fmt_vimhelp=False):
@@ -910,6 +956,8 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
     The `fmt_vimhelp` variable controls some special cases for use by
     fmt_doxygen_xml_as_vimhelp(). (TODO: ugly :)
     """
+    config: Config = CONFIG[target]
+
     fns = {}  # Map of func_name:docstring.
     deprecated_fns = {}  # Map of func_name:docstring.
 
@@ -934,7 +982,7 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
             continue
 
         istbl = return_type.startswith('table')  # Special from lua2dox.lua.
-        if istbl and not CONFIG[target].get('include_tables', True):
+        if istbl and not config.include_tables:
             continue
 
         if return_type.startswith(('ArrayOf', 'DictionaryOf')):
@@ -962,7 +1010,7 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
             declname = get_child(param, 'declname')
             if declname:
                 param_name = get_text(declname).strip()
-            elif CONFIG[target]['mode'] == 'lua':
+            elif config.mode == 'lua':
                 # XXX: this is what lua2dox gives us...
                 param_name = param_type
                 param_type = ''
@@ -998,11 +1046,11 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
             fstem = '?'
             if '.' in compoundname:
                 fstem = compoundname.split('.')[0]
-                fstem = CONFIG[target]['module_override'].get(fstem, fstem)
-            vimtag = CONFIG[target]['fn_helptag_fmt'](fstem, name, istbl)
+                fstem = config.module_override.get(fstem, fstem)
+            vimtag = config.fn_helptag_fmt(fstem, name, istbl)
 
-            if 'fn_name_fmt' in CONFIG[target]:
-                name = CONFIG[target]['fn_name_fmt'](fstem, name)
+            if config.fn_name_fmt:
+                name = config.fn_name_fmt(fstem, name)
 
         if istbl:
             aopen, aclose = '', ''
@@ -1085,7 +1133,7 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
 
         if 'Deprecated' in str(xrefs_all):
             deprecated_fns[name] = fn
-        elif name.startswith(CONFIG[target]['fn_name_prefix']):
+        elif name.startswith(config.fn_name_prefix):
             fns[name] = fn
 
     fns = collections.OrderedDict(sorted(
@@ -1102,6 +1150,8 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
       1. Vim help text for functions found in `filename`.
       2. Vim help text for deprecated functions.
     """
+    config: Config = CONFIG[target]
+
     fns_txt = {}  # Map of func_name:vim-help-text.
     deprecated_fns_txt = {}  # Map of func_name:vim-help-text.
     fns, _ = extract_from_xml(filename, target, text_width, True)
@@ -1164,7 +1214,7 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
 
         func_doc = "\n".join(map(align_tags, split_lines))
 
-        if (name.startswith(CONFIG[target]['fn_name_prefix'])
+        if (name.startswith(config.fn_name_prefix)
            and name != "nvim_error_event"):
             fns_txt[name] = func_doc
 
@@ -1237,9 +1287,12 @@ def main(doxygen_config, args):
     for target in CONFIG:
         if args.target is not None and target != args.target:
             continue
+
+        config: Config = CONFIG[target]
+
         mpack_file = os.path.join(
             base_dir, 'runtime', 'doc',
-            CONFIG[target]['filename'].replace('.txt', '.mpack'))
+            config.filename.replace('.txt', '.mpack'))
         if os.path.exists(mpack_file):
             os.remove(mpack_file)
 
@@ -1255,11 +1308,10 @@ def main(doxygen_config, args):
                 stderr=(subprocess.STDOUT if debug else subprocess.DEVNULL))
         p.communicate(
             doxygen_config.format(
-                input=' '.join(
-                    [f'"{file}"' for file in CONFIG[target]['files']]),
+                input=' '.join([f'"{file}"' for file in config.files]),
                 output=output_dir,
                 filter=filter_cmd,
-                file_patterns=CONFIG[target]['file_patterns'])
+                file_patterns=config.file_patterns)
             .encode('utf8')
         )
         if p.returncode:
@@ -1294,9 +1346,9 @@ def main(doxygen_config, args):
                     filename = os.path.basename(filename)
                     name = os.path.splitext(filename)[0].lower()
                     sectname = name.upper() if name == 'ui' else name.title()
-                    sectname = CONFIG[target]['section_name'].get(filename, sectname)
-                    title = CONFIG[target]['section_fmt'](sectname)
-                    section_tag = CONFIG[target]['helptag_fmt'](sectname)
+                    sectname = config.section_name.get(filename, sectname)
+                    title = config.section_fmt(sectname)
+                    section_tag = config.helptag_fmt(sectname)
                     # Module/Section id matched against @defgroup.
                     #   "*api-buffer*" => "api-buffer"
                     section_id = section_tag.strip('*')
@@ -1319,22 +1371,22 @@ def main(doxygen_config, args):
 
         if len(sections) == 0:
             fail(f'no sections for target: {target} (look for errors near "Preprocessing" log lines above)')
-        if len(sections) > len(CONFIG[target]['section_order']):
+        if len(sections) > len(config.section_order):
             raise RuntimeError(
                 'found new modules "{}"; update the "section_order" map'.format(
-                    set(sections).difference(CONFIG[target]['section_order'])))
-        first_section_tag = sections[CONFIG[target]['section_order'][0]][1]
+                    set(sections).difference(config.section_order)))
+        first_section_tag = sections[config.section_order[0]][1]
 
         docs = ''
 
-        for filename in CONFIG[target]['section_order']:
+        for filename in config.section_order:
             try:
                 title, section_tag, section_doc = sections.pop(filename)
             except KeyError:
                 msg(f'warning: empty docs, skipping (target={target}): {filename}')
                 msg(f'    existing docs: {sections.keys()}')
                 continue
-            if filename not in CONFIG[target]['append_only']:
+            if filename not in config.append_only:
                 docs += sep
                 docs += '\n{}{}'.format(title, section_tag.rjust(text_width - len(title)))
             docs += section_doc
@@ -1343,8 +1395,7 @@ def main(doxygen_config, args):
         docs = docs.rstrip() + '\n\n'
         docs += f' vim:tw=78:ts=8:sw={indentation}:sts={indentation}:et:ft=help:norl:\n'
 
-        doc_file = os.path.join(base_dir, 'runtime', 'doc',
-                                CONFIG[target]['filename'])
+        doc_file = os.path.join(base_dir, 'runtime', 'doc', config.filename)
 
         if os.path.exists(doc_file):
             delete_lines_below(doc_file, first_section_tag)
