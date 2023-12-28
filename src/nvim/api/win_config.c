@@ -225,7 +225,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(win_config) *config, Err
   }
 
   WinConfig fconfig = WIN_CONFIG_INIT;
-  if (!parse_float_config(config, &fconfig, false, true, err)) {
+  if (!parse_float_config(NULL, config, &fconfig, false, err)) {
     return 0;
   }
 
@@ -396,7 +396,7 @@ void nvim_win_set_config(Window window, Dict(win_config) *config, Error *err)
                   && !(HAS_KEY_X(config, external) ? config->external : fconfig.external)
                   && (has_split || has_vertical || was_split);
 
-  if (!parse_float_config(config, &fconfig, !was_split || to_split, false, err)) {
+  if (!parse_float_config(win, config, &fconfig, !was_split || to_split, err)) {
     return;
   }
   if (was_split && !to_split) {
@@ -1023,8 +1023,8 @@ static void parse_border_style(Object style, WinConfig *fconfig, Error *err)
   }
 }
 
-static bool parse_float_config(Dict(win_config) *config, WinConfig *fconfig, bool reconf,
-                               bool new_win, Error *err)
+static bool parse_float_config(win_T *wp, Dict(win_config) *config, WinConfig *fconfig, bool reconf,
+                               Error *err)
 {
 #define HAS_KEY_X(d, key) HAS_KEY(d, win_config, key)
   bool has_relative = false, relative_is_win = false, is_split = false;
@@ -1049,7 +1049,7 @@ static bool parse_float_config(Dict(win_config) *config, WinConfig *fconfig, boo
   } else if (!config->external) {
     if (HAS_KEY_X(config, vertical) || HAS_KEY_X(config, split)) {
       is_split = true;
-    } else if (new_win) {
+    } else if (wp == NULL) {  // new win
       api_set_error(err, kErrorTypeValidation,
                     "Must specify 'relative' or 'external' when creating a float");
       return false;
@@ -1141,6 +1141,17 @@ static bool parse_float_config(Dict(win_config) *config, WinConfig *fconfig, boo
   }
 
   if (relative_is_win || is_split) {
+    if (reconf && relative_is_win) {
+      win_T *target_win = find_window_by_handle(config->win, err);
+      if (!target_win) {
+        return false;
+      }
+
+      if (target_win == wp) {
+        api_set_error(err, kErrorTypeException, "floating window cannot be relative to itself");
+        return false;
+      }
+    }
     fconfig->window = curwin->handle;
     if (HAS_KEY_X(config, win)) {
       if (config->win > 0) {
@@ -1266,7 +1277,7 @@ static bool parse_float_config(Dict(win_config) *config, WinConfig *fconfig, boo
   }
 
   if (HAS_KEY_X(config, noautocmd)) {
-    if (!new_win) {
+    if (wp) {
       api_set_error(err, kErrorTypeValidation, "'noautocmd' cannot be used with existing windows");
       return false;
     }
