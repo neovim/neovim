@@ -751,7 +751,10 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
     return text
 
 
-def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=False):
+def para_as_map(parent: Element,
+                indent: str = '',
+                width: int = (text_width - indentation),
+                ):
     """Extracts a Doxygen XML <para> node to a map.
 
     Keys:
@@ -787,7 +790,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
     kind = ''
     if is_inline(parent):
         # Flatten inline text from a tree of non-block nodes.
-        text = doc_wrap(render_node(parent, "", fmt_vimhelp=fmt_vimhelp),
+        text = doc_wrap(render_node(parent, ""),
                         indent=indent, width=width)
     else:
         prev = None  # Previous node
@@ -805,8 +808,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
                 elif kind == 'see':
                     groups['seealso'].append(child)
                 elif kind == 'warning':
-                    text += render_node(child, text, indent=indent,
-                                        width=width, fmt_vimhelp=fmt_vimhelp)
+                    text += render_node(child, text, indent=indent, width=width)
                 elif kind == 'since':
                     since_match = re.match(r'^(\d+)', get_text(child))
                     since = int(since_match.group(1)) if since_match else 0
@@ -827,8 +829,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
                         and ' ' != text[-1]):
                     text += ' '
 
-                text += render_node(child, text, indent=indent, width=width,
-                                    fmt_vimhelp=fmt_vimhelp)
+                text += render_node(child, text, indent=indent, width=width)
                 prev = child
 
     chunks['text'] += text
@@ -839,17 +840,17 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
             update_params_map(child, ret_map=chunks['params'], width=width)
     for child in groups['note']:
         chunks['note'].append(render_node(
-            child, '', indent=indent, width=width, fmt_vimhelp=fmt_vimhelp).rstrip())
+            child, '', indent=indent, width=width).rstrip())
     for child in groups['return']:
         chunks['return'].append(render_node(
-            child, '', indent=indent, width=width, fmt_vimhelp=fmt_vimhelp))
+            child, '', indent=indent, width=width))
     for child in groups['seealso']:
         # Example:
         #   <simplesect kind="see">
         #     <para>|autocommand|</para>
         #   </simplesect>
         chunks['seealso'].append(render_node(
-            child, '', indent=indent, width=width, fmt_vimhelp=fmt_vimhelp))
+            child, '', indent=indent, width=width))
 
     xrefs = set()
     for child in groups['xrefs']:
@@ -898,6 +899,9 @@ class FunctionDoc:
     annotations: List[str]
     """Attributes, e.g., FUNC_API_REMOTE_ONLY. See annotation_map"""
 
+    notes: List[Docstring]
+    """Notes: (@note strings)"""
+
     signature: str
     """Function signature with *tags*."""
 
@@ -916,41 +920,122 @@ class FunctionDoc:
     seealso: List[Docstring]
     """See also: (@see strings)"""
 
-    # for fmt_node_as_vimhelp
-    desc_node: Element | None = None
-    brief_desc_node: Element | None = None
+    xrefs: List[Docstring]
+    """XRefs. Currently only used to track Deprecated functions."""
 
     # for INCLUDE_C_DECL
     c_decl: str | None = None
 
+    prerelease: bool = False
 
-def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent='',
-                        fmt_vimhelp=False):
+    def export_mpack(self) -> Dict[str, Any]:
+        """Convert a dict to be exported as mpack data."""
+        exported = self.__dict__.copy()
+        del exported['notes']
+        del exported['c_decl']
+        del exported['prerelease']
+        del exported['xrefs']
+        exported['return'] = exported.pop('return_')
+        return exported
+
+    def doc_concatenated(self) -> Docstring:
+        """Concatenate all the paragraphs in `doc` into a single string, but
+        remove blank lines before 'programlisting' blocks. #25127
+
+        BEFORE (without programlisting processing):
+            ```vimdoc
+            Example:
+
+            >vim
+                :echo nvim_get_color_by_name("Pink")
+            <
+            ```
+
+        AFTER:
+            ```vimdoc
+            Example: >vim
+                :echo nvim_get_color_by_name("Pink")
+            <
+            ```
+        """
+        def is_program_listing(paragraph: str) -> bool:
+            lines = paragraph.strip().split('\n')
+            return lines[0].startswith('>') and lines[-1] == '<'
+
+        rendered = []
+        for paragraph in self.doc:
+            if is_program_listing(paragraph):
+                rendered.append(' ')  # Example: >vim
+            elif rendered:
+                rendered.append('\n\n')
+            rendered.append(paragraph)
+        return ''.join(rendered)
+
+    def render(self) -> Docstring:
+        """Renders function documentation as Vim :help text."""
+        rendered_blocks: List[Docstring] = []
+
+        def fmt_param_doc(m):
+            """Renders a params map as Vim :help text."""
+            max_name_len = max_name(m.keys()) + 4
+            out = ''
+            for name, desc in m.items():
+                if name == 'self':
+                    continue
+                name = '  • {}'.format('{{{}}}'.format(name).ljust(max_name_len))
+                out += '{}{}\n'.format(name, desc)
+            return out.rstrip()
+
+        # Generate text from the gathered items.
+        chunks: List[Docstring] = [self.doc_concatenated()]
+
+        notes = []
+        if self.prerelease:
+            notes = ["  This API is pre-release (unstable)."]
+        notes += self.notes
+        if len(notes) > 0:
+            chunks.append('\nNote: ~')
+            for s in notes:
+                chunks.append('  ' + s)
+
+        if self.parameters_doc:
+            chunks.append('\nParameters: ~')
+            chunks.append(fmt_param_doc(self.parameters_doc))
+
+        if self.return_:
+            chunks.append('\nReturn (multiple): ~' if len(self.return_) > 1
+                          else '\nReturn: ~')
+            for s in self.return_:
+                chunks.append('    ' + s)
+
+        if self.seealso:
+            chunks.append('\nSee also: ~')
+            for s in self.seealso:
+                chunks.append('  ' + s)
+
+        # Note: xrefs are currently only used to remark "Deprecated: "
+        # for deprecated functions; visible when INCLUDE_DEPRECATED is set
+        for s in self.xrefs:
+            chunks.append('\n' + s)
+
+        rendered_blocks.append(clean_lines('\n'.join(chunks).strip()))
+        rendered_blocks.append('')
+
+        return clean_lines('\n'.join(rendered_blocks).strip())
+
+
+def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent=''):
     """Renders (nested) Doxygen <para> nodes as Vim :help text.
+
+    Only handles "text" nodes. Used for individual elements (see render_node())
+    and in extract_defgroups().
 
     NB: Blank lines in a docstring manifest as <para> tags.
     """
     rendered_blocks = []
 
-    def fmt_param_doc(m):
-        """Renders a params map as Vim :help text."""
-        max_name_len = max_name(m.keys()) + 4
-        out = ''
-        for name, desc in m.items():
-            if name == 'self':
-                continue
-            name = '  • {}'.format('{{{}}}'.format(name).ljust(max_name_len))
-            out += '{}{}\n'.format(name, desc)
-        return out.rstrip()
-
-    def has_nonexcluded_params(m):
-        """Returns true if any of the given params has at least
-        one non-excluded item."""
-        if fmt_param_doc(m) != '':
-            return True
-
     for child in parent.childNodes:
-        para, _ = para_as_map(child, indent, width, fmt_vimhelp)
+        para, _ = para_as_map(child, indent, width)
 
         # 'programlisting' blocks are Markdown code blocks. Do not include
         # these as a separate paragraph, but append to the last non-empty line
@@ -963,25 +1048,6 @@ def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent=
 
         # Generate text from the gathered items.
         chunks = [para['text']]
-        notes = ["    This API is pre-release (unstable)."] if para['prerelease'] else []
-        notes += para['note']
-        if len(notes) > 0:
-            chunks.append('\nNote: ~')
-            for s in notes:
-                chunks.append(s)
-        if len(para['params']) > 0 and has_nonexcluded_params(para['params']):
-            chunks.append('\nParameters: ~')
-            chunks.append(fmt_param_doc(para['params']))
-        if len(para['return']) > 0:
-            chunks.append('\nReturn (multiple): ~' if len(para['return']) > 1 else '\nReturn: ~')
-            for s in para['return']:
-                chunks.append(s)
-        if len(para['seealso']) > 0:
-            chunks.append('\nSee also: ~')
-            for s in para['seealso']:
-                chunks.append(s)
-        for s in para['xrefs']:
-            chunks.append(s)
 
         rendered_blocks.append(clean_lines('\n'.join(chunks).strip()))
         rendered_blocks.append('')
@@ -989,7 +1055,8 @@ def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent=
     return clean_lines('\n'.join(rendered_blocks).strip())
 
 
-def extract_from_xml(filename, target, width, fmt_vimhelp) -> Tuple[
+def extract_from_xml(filename, target, *,
+                     width: int, fmt_vimhelp: bool) -> Tuple[
     Dict[FunctionName, FunctionDoc],
     Dict[FunctionName, FunctionDoc],
 ]:
@@ -1130,18 +1197,20 @@ def extract_from_xml(filename, target, width, fmt_vimhelp) -> Tuple[
         # Tracks `xrefsect` titles.  As of this writing, used only for separating
         # deprecated functions.
         xrefs_all = set()
-        paras: List[Dict[str, Any]] = []
+        paras: List[Dict[str, Any]] = []  # paras means paragraphs!
         brief_desc = find_first(member, 'briefdescription')
         if brief_desc:
             for child in brief_desc.childNodes:
                 para, xrefs = para_as_map(child)
+                paras.append(para)
                 xrefs_all.update(xrefs)
 
         desc = find_first(member, 'detaileddescription')
         if desc:
+            paras_detail = []  # override briefdescription
             for child in desc.childNodes:
                 para, xrefs = para_as_map(child)
-                paras.append(para)
+                paras_detail.append(para)
                 xrefs_all.update(xrefs)
             log.debug(
                 textwrap.indent(
@@ -1149,18 +1218,25 @@ def extract_from_xml(filename, target, width, fmt_vimhelp) -> Tuple[
                            desc.toprettyxml(indent='  ', newl='\n')),
                     ' ' * indentation))
 
+            # override briefdescription, if detaileddescription is not empty
+            # (note: briefdescription can contain some erroneous luadoc
+            #  comments from preceding comments, this is a bug of lua2dox)
+            if any((para['text'] or para['note'] or para['params'] or
+                    para['return'] or para['seealso']
+                    ) for para in paras_detail):
+                paras = paras_detail
+
         fn = FunctionDoc(
             annotations=list(annotations),
+            notes=[],
             signature=signature,
             parameters=params,
             parameters_doc=collections.OrderedDict(),
             doc=[],
             return_=[],
             seealso=[],
+            xrefs=[],
         )
-        if fmt_vimhelp:
-            fn.desc_node = desc
-            fn.brief_desc_node = brief_desc
 
         for m in paras:
             if m.get('text', ''):
@@ -1172,6 +1248,12 @@ def extract_from_xml(filename, target, width, fmt_vimhelp) -> Tuple[
                 fn.return_ += m['return']
             if 'seealso' in m and len(m['seealso']) > 0:
                 fn.seealso += m['seealso']
+            if m.get('prerelease', False):
+                fn.prerelease = True
+            if 'note' in m:
+                fn.notes += m['note']
+            if 'xrefs' in m:
+                fn.xrefs += m['xrefs']
 
         if INCLUDE_C_DECL:
             fn.c_decl = c_decl
@@ -1203,17 +1285,14 @@ def fmt_doxygen_xml_as_vimhelp(filename, target) -> Tuple[Docstring, Docstring]:
     deprecated_fns_txt = {}  # Map of func_name:vim-help-text.
 
     fns: Dict[FunctionName, FunctionDoc]
-    fns, _ = extract_from_xml(filename, target, text_width, True)
+    fns, _ = extract_from_xml(filename, target,
+                              width=text_width, fmt_vimhelp=True)
 
     for fn_name, fn in fns.items():
         # Generate Vim :help for parameters.
 
-        # Generate body.
-        doc = ''
-        if fn.desc_node:
-            doc = fmt_node_as_vimhelp(fn.desc_node, fmt_vimhelp=True)
-        if not doc and fn.brief_desc_node:
-            doc = fmt_node_as_vimhelp(fn.brief_desc_node)
+        # Generate body from FunctionDoc, not XML nodes
+        doc = fn.render()
         if not doc and fn_name.startswith("nvim__"):
             continue
         if not doc:
@@ -1393,11 +1472,14 @@ def main(doxygen_config, args):
             filename = get_text(find_first(compound, 'name'))
             if filename.endswith('.c') or filename.endswith('.lua'):
                 xmlfile = os.path.join(base, '{}.xml'.format(compound.getAttribute('refid')))
+
                 # Extract unformatted (*.mpack).
-                fn_map, _ = extract_from_xml(xmlfile, target, 9999, False)
+                fn_map, _ = extract_from_xml(
+                    xmlfile, target, width=9999, fmt_vimhelp=False)
+
                 # Extract formatted (:help).
                 functions_text, deprecated_text = fmt_doxygen_xml_as_vimhelp(
-                    os.path.join(base, '{}.xml'.format(compound.getAttribute('refid'))), target)
+                    xmlfile, target)
 
                 if not functions_text and not deprecated_text:
                     continue
@@ -1461,11 +1543,11 @@ def main(doxygen_config, args):
         with open(doc_file, 'ab') as fp:
             fp.write(docs.encode('utf8'))
 
-        fn_map_full = collections.OrderedDict(sorted(
-            (name, fn_doc.__dict__) for (name, fn_doc) in fn_map_full.items()
+        fn_map_full_exported = collections.OrderedDict(sorted(
+            (name, fn_doc.export_mpack()) for (name, fn_doc) in fn_map_full.items()
         ))
         with open(mpack_file, 'wb') as fp:
-            fp.write(msgpack.packb(fn_map_full, use_bin_type=True))  # type: ignore
+            fp.write(msgpack.packb(fn_map_full_exported, use_bin_type=True))  # type: ignore
 
         if not args.keep_tmpfiles:
             shutil.rmtree(output_dir)
