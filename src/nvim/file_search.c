@@ -238,7 +238,6 @@ static const char e_path_too_long_for_completion[]
 void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, int free_visited,
                         int find_what, void *search_ctx_arg, int tagfile, char *rel_fname)
 {
-  char *wc_part;
   ff_stack_T *sptr;
   ff_search_ctx_T *search_ctx;
 
@@ -373,7 +372,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
   // split into:
   //  -fix path
   //  -wildcard_stuff (might be NULL)
-  wc_part = vim_strchr(path, '*');
+  char *wc_part = vim_strchr(path, '*');
   if (wc_part != NULL) {
     int64_t llevel;
     int len;
@@ -549,24 +548,22 @@ void vim_findfile_cleanup(void *ctx)
 ///          NULL if nothing found.
 char *vim_findfile(void *search_ctx_arg)
 {
-  char *file_path;
   char *rest_of_wildcards;
   char *path_end = NULL;
   ff_stack_T *stackp = NULL;
   size_t len;
   char *p;
   char *suf;
-  ff_search_ctx_T *search_ctx;
 
   if (search_ctx_arg == NULL) {
     return NULL;
   }
 
-  search_ctx = (ff_search_ctx_T *)search_ctx_arg;
+  ff_search_ctx_T *search_ctx = (ff_search_ctx_T *)search_ctx_arg;
 
   // filepath is used as buffer for various actions and as the storage to
   // return a found filename.
-  file_path = xmalloc(MAXPATHL);
+  char *file_path = xmalloc(MAXPATHL);
 
   // store the end of the start dir -- needed for upward search
   if (search_ctx->ffsc_start_dir != NULL) {
@@ -929,13 +926,11 @@ fail:
 /// Can handle it if the passed search_context is NULL;
 void vim_findfile_free_visited(void *search_ctx_arg)
 {
-  ff_search_ctx_T *search_ctx;
-
   if (search_ctx_arg == NULL) {
     return;
   }
 
-  search_ctx = (ff_search_ctx_T *)search_ctx_arg;
+  ff_search_ctx_T *search_ctx = (ff_search_ctx_T *)search_ctx_arg;
   vim_findfile_free_visited_list(&search_ctx->ffsc_visited_lists_list);
   vim_findfile_free_visited_list(&search_ctx->ffsc_dir_visited_lists_list);
 }
@@ -1157,9 +1152,7 @@ static void ff_push(ff_search_ctx_T *search_ctx, ff_stack_T *stack_ptr)
 /// @return  NULL if stack is empty.
 static ff_stack_T *ff_pop(ff_search_ctx_T *search_ctx)
 {
-  ff_stack_T *sptr;
-
-  sptr = search_ctx->ffsc_stack_ptr;
+  ff_stack_T *sptr = search_ctx->ffsc_stack_ptr;
   if (search_ctx->ffsc_stack_ptr != NULL) {
     search_ctx->ffsc_stack_ptr = search_ctx->ffsc_stack_ptr->ffs_prev;
   }
@@ -1224,8 +1217,6 @@ static void ff_clear(ff_search_ctx_T *search_ctx)
 /// @return  true if yes else false
 static bool ff_path_in_stoplist(char *path, int path_len, char **stopdirs_v)
 {
-  int i = 0;
-
   // eat up trailing path separators, except the first
   while (path_len > 1 && vim_ispathsep(path[path_len - 1])) {
     path_len--;
@@ -1236,7 +1227,7 @@ static bool ff_path_in_stoplist(char *path, int path_len, char **stopdirs_v)
     return true;
   }
 
-  for (i = 0; stopdirs_v[i] != NULL; i++) {
+  for (int i = 0; stopdirs_v[i] != NULL; i++) {
     if ((int)strlen(stopdirs_v[i]) > path_len) {
       // match for parent directory. So '/home' also matches
       // '/home/rks'. Check for PATHSEP in stopdirs_v[i], else

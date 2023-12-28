@@ -121,7 +121,7 @@ hashitem_T *hash_lookup(const hashtab_T *const ht, const char *const key, const 
 {
 #ifdef HT_DEBUG
   hash_count_lookup++;
-#endif  // ifdef HT_DEBUG
+#endif
 
   // Quickly handle the most common situations:
   // - return if there is no item at all
@@ -154,7 +154,7 @@ hashitem_T *hash_lookup(const hashtab_T *const ht, const char *const key, const 
 #ifdef HT_DEBUG
     // count a "miss" for hashtab lookup
     hash_count_perturb++;
-#endif  // ifdef HT_DEBUG
+#endif
     idx = 5 * idx + perturb + 1;
     hi = &ht->ht_array[idx & ht->ht_mask];
 
@@ -189,7 +189,7 @@ void hash_debug_results(void)
           (int64_t)hash_count_perturb);
   fprintf(stderr, "Percentage of perturb loops: %" PRId64 "%%\r\n",
           (int64_t)(hash_count_perturb * 100 / hash_count_lookup));
-#endif  // ifdef HT_DEBUG
+#endif
 }
 
 /// Add (empty) item for key `key` to hashtable `ht`.
@@ -287,7 +287,7 @@ static void hash_may_resize(hashtab_T *ht, size_t minitems)
   if (ht->ht_filled >= ht->ht_mask + 1) {
     emsg("hash_may_resize(): table completely filled");
   }
-#endif  // ifdef HT_DEBUG
+#endif
 
   size_t minsize;
   const size_t oldsize = ht->ht_mask + 1;

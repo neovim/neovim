@@ -19,7 +19,7 @@ enum {
 
 /// While redrawing the screen this flag is set.  It means the screen size
 /// ('lines' and 'rows') must not be changed.
-EXTERN bool updating_screen INIT( = 0);
+EXTERN bool updating_screen INIT( = false);
 
 EXTERN match_T screen_search_hl INIT( = { 0 });  ///< used for 'hlsearch' highlight matching
 

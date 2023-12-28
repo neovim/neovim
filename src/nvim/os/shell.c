@@ -119,14 +119,10 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   int i;
   size_t len;
   char *p;
-  bool dir;
   char *extra_shell_arg = NULL;
   ShellOpts shellopts = kShellOptExpand | kShellOptSilent;
   int j;
   char *tempname;
-  char *command;
-  FILE *fd;
-  char *buffer;
 #define STYLE_ECHO      0       // use "echo", the default
 #define STYLE_GLOB      1       // use "glob", for csh
 #define STYLE_VIMGLOB   2       // use "vimglob", for Posix sh
@@ -242,7 +238,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     len += sizeof("egin;" " end") - 1;
   }
 
-  command = xmalloc(len);
+  char *command = xmalloc(len);
 
   // Build the shell command:
   // - Set $nonomatch depending on EW_NOTFOUND (hopefully the shell
@@ -390,7 +386,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
   }
 
   // read the names from the file into memory
-  fd = fopen(tempname, READBIN);
+  FILE *fd = fopen(tempname, READBIN);
   if (fd == NULL) {
     // Something went wrong, perhaps a file name with a special char.
     if (!(flags & EW_SILENT)) {
@@ -417,7 +413,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
 #endif
   len = (size_t)templen;
   fseek(fd, 0, SEEK_SET);
-  buffer = xmalloc(len + 1);
+  char *buffer = xmalloc(len + 1);
   // fread() doesn't terminate buffer with NUL;
   // appropriate termination (not always NUL) is done below.
   size_t readlen = fread(buffer, 1, len, fd);
@@ -538,7 +534,7 @@ int os_expand_wildcards(int num_pat, char **pat, int *num_file, char ***file, in
     }
 
     // check if this entry should be included
-    dir = (os_isdir((*file)[i]));
+    bool dir = (os_isdir((*file)[i]));
     if ((dir && !(flags & EW_DIR)) || (!dir && !(flags & EW_FILE))) {
       continue;
     }
@@ -704,7 +700,7 @@ int os_call_shell(char *cmd, ShellOpts opts, char *extra_args)
   xfree(input.data);
 
   if (output) {
-    (void)write_output(output, nread, true);
+    write_output(output, nread, true);
     xfree(output);
   }
 
@@ -1144,7 +1140,7 @@ static void out_data_append_to_screen(char *output, size_t *count, bool eof)
         goto end;
       }
 
-      (void)msg_outtrans_len(p, i, 0);
+      msg_outtrans_len(p, i, 0);
       p += i;
     }
   }

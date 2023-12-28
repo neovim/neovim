@@ -719,7 +719,7 @@ static void sign_jump_cmd(buf_T *buf, linenr_T lnum, const char *name, int id, c
     return;
   }
 
-  (void)sign_jump(id, group, buf);
+  sign_jump(id, group, buf);
 }
 
 /// Parse the command line arguments for the ":sign place", ":sign unplace" and

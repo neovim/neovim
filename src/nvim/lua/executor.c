@@ -2172,7 +2172,7 @@ int nlua_do_ucmd(ucmd_T *cmd, exarg_T *eap, bool preview)
   // every possible modifier (with room to spare). If the list of possible
   // modifiers grows this may need to be updated.
   char buf[200] = { 0 };
-  (void)uc_mods(buf, &cmdmod, false);
+  uc_mods(buf, &cmdmod, false);
   lua_pushstring(lstate, buf);
   lua_setfield(lstate, -2, "mods");
 

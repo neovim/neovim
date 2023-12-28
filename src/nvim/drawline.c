@@ -935,7 +935,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
   int spell_attr = 0;                   // attributes desired by spelling
   int word_end = 0;                     // last byte with same spell_attr
   int cur_checked_col = 0;              // checked column for current line
-  int extra_check = 0;                  // has syntax or linebreak
+  bool extra_check = 0;                 // has syntax or linebreak
   int multi_attr = 0;                   // attributes desired by multibyte
   int mb_l = 1;                         // multi-byte byte length
   int mb_c = 0;                         // decoded multi-byte character
@@ -2158,7 +2158,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           if (!wp->w_p_lbr || !wp->w_p_list) {
             wlv.n_extra = tab_len;
           } else {
-            char *p;
             int saved_nextra = wlv.n_extra;
 
             if (wlv.vcol_off > 0) {
@@ -2184,7 +2183,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
                 len += wlv.n_extra - tab_len;
               }
               mb_c = wp->w_p_lcs_chars.tab1;
-              p = get_extra_buf((size_t)len + 1);
+              char *p = get_extra_buf((size_t)len + 1);
               memset(p, ' ', (size_t)len);
               p[len] = NUL;
               wlv.p_extra = p;
@@ -2293,10 +2292,8 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           wlv.c_extra = NUL;
           wlv.c_final = NUL;
           if (wp->w_p_lbr) {
-            char *p;
-
             mb_c = (uint8_t)(*wlv.p_extra);
-            p = get_extra_buf((size_t)wlv.n_extra + 1);
+            char *p = get_extra_buf((size_t)wlv.n_extra + 1);
             memset(p, ' ', (size_t)wlv.n_extra);
             memcpy(p, wlv.p_extra + 1, strlen(wlv.p_extra) - 1);
             p[wlv.n_extra] = NUL;

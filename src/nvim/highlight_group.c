@@ -979,16 +979,12 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   // Handle ":highlight link {from} {to}" command.
   if (dolink) {
     const char *from_start = linep;
-    const char *from_end;
-    const char *to_start;
-    const char *to_end;
-    int from_id;
     int to_id;
     HlGroup *hlgroup = NULL;
 
-    from_end = skiptowhite(from_start);
-    to_start = skipwhite(from_end);
-    to_end = skiptowhite(to_start);
+    const char *from_end = skiptowhite(from_start);
+    const char *to_start = skipwhite(from_end);
+    const char *to_end = skiptowhite(to_start);
 
     if (ends_excmd((uint8_t)(*from_start))
         || ends_excmd((uint8_t)(*to_start))) {
@@ -1002,7 +998,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       return;
     }
 
-    from_id = syn_check_group(from_start, (size_t)(from_end - from_start));
+    int from_id = syn_check_group(from_start, (size_t)(from_end - from_start));
     if (strncmp(to_start, "NONE", 4) == 0) {
       to_id = 0;
     } else {
@@ -1558,7 +1554,7 @@ static void highlight_list_one(const int id)
                             sgp->sg_blend + 1, NULL, "blend");
 
   if (sgp->sg_link && !got_int) {
-    (void)syn_list_header(didh, 0, id, true);
+    syn_list_header(didh, 0, id, true);
     didh = true;
     msg_puts_attr("links to", HL_ATTR(HLF_D));
     msg_putchar(' ');
@@ -1688,7 +1684,7 @@ static bool highlight_list_arg(const int id, bool didh, const int type, int iarg
     }
   }
 
-  (void)syn_list_header(didh, vim_strsize(ts) + (int)strlen(name) + 1, id, false);
+  syn_list_header(didh, vim_strsize(ts) + (int)strlen(name) + 1, id, false);
   didh = true;
   if (!got_int) {
     if (*name != NUL) {
@@ -2076,7 +2072,6 @@ int syn_get_final_id(int hl_id)
 
 bool syn_ns_get_final_id(int *ns_id, int *hl_idp)
 {
-  int count;
   int hl_id = *hl_idp;
   bool used = false;
 
@@ -2087,7 +2082,7 @@ bool syn_ns_get_final_id(int *ns_id, int *hl_idp)
 
   // Follow links until there is no more.
   // Look out for loops!  Break after 100 links.
-  for (count = 100; --count >= 0;) {
+  for (int count = 100; --count >= 0;) {
     HlGroup *sgp = &hl_table[hl_id - 1];  // index is ID minus one
 
     // TODO(bfredl): when using "tmp" attribute (no link) the function might be

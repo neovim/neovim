@@ -231,8 +231,8 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
   TRY_WRAP(err, {
     // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
     // (see above) to capture abort-causing non-exception errors.
-    (void)call_func(fn.data, (int)fn.size, &rettv, (int)args.size,
-                    vim_args, &funcexe);
+    call_func(fn.data, (int)fn.size, &rettv, (int)args.size,
+              vim_args, &funcexe);
   });
 
   if (!ERROR_SET(err)) {

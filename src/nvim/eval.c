@@ -529,7 +529,7 @@ void eval_clear(void)
   free_autoload_scriptnames();
 
   // unreferenced lists and dicts
-  (void)garbage_collect(false);
+  garbage_collect(false);
 
   // functions not garbage collected
   free_all_functions();
@@ -761,7 +761,7 @@ void fill_evalarg_from_eap(evalarg_T *evalarg, exarg_T *eap, bool skip)
 /// @param skip  only parse, don't execute
 ///
 /// @return  true or false.
-bool eval_to_bool(char *arg, bool *error, exarg_T *eap, int skip)
+bool eval_to_bool(char *arg, bool *error, exarg_T *eap, bool skip)
 {
   typval_T tv;
   bool retval = false;
@@ -1726,7 +1726,7 @@ void clear_lval(lval_T *lp)
 /// @param endp  points to just after the parsed name.
 /// @param op    NULL, "+" for "+=", "-" for "-=", "*" for "*=", "/" for "/=",
 ///              "%" for "%=", "." for ".=" or "=" for "=".
-void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool is_const,
+void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, bool copy, const bool is_const,
                   const char *op)
 {
   int cc;
@@ -1795,8 +1795,8 @@ void set_var_lval(lval_T *lp, char *endp, typval_T *rettv, int copy, const bool 
       return;
     }
 
-    (void)tv_list_assign_range(lp->ll_list, rettv->vval.v_list,
-                               lp->ll_n1, lp->ll_n2, lp->ll_empty2, op, lp->ll_name);
+    tv_list_assign_range(lp->ll_list, rettv->vval.v_list,
+                         lp->ll_n1, lp->ll_n2, lp->ll_empty2, op, lp->ll_name);
   } else {
     typval_T oldtv = TV_INITIAL_VALUE;
     dict_T *dict = lp->ll_dict;
@@ -8585,9 +8585,9 @@ char *do_string_sub(char *str, char *pat, char *sub, typval_T *expr, const char 
       int i = (int)(regmatch.startp[0] - tail);
       memmove((char *)ga.ga_data + ga.ga_len, tail, (size_t)i);
       // add the substituted text
-      (void)vim_regsub(&regmatch, sub, expr,
-                       (char *)ga.ga_data + ga.ga_len + i, sublen,
-                       REGSUB_COPY | REGSUB_MAGIC);
+      vim_regsub(&regmatch, sub, expr,
+                 (char *)ga.ga_data + ga.ga_len + i, sublen,
+                 REGSUB_COPY | REGSUB_MAGIC);
       ga.ga_len += i + sublen - 1;
       tail = regmatch.endp[0];
       if (*tail == NUL) {
@@ -8727,7 +8727,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
   funcexe.fe_firstline = curwin->w_cursor.lnum;
   funcexe.fe_lastline = curwin->w_cursor.lnum;
   funcexe.fe_evaluate = true;
-  (void)call_func(func, name_len, &rettv, 2, argvars, &funcexe);
+  call_func(func, name_len, &rettv, 2, argvars, &funcexe);
 
   tv_list_unref(arguments);
   // Restore caller scope information

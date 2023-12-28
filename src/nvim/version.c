@@ -2580,7 +2580,7 @@ void ex_version(exarg_T *eap)
 /// When "wrap" is true wrap the string in [].
 /// @param s
 /// @param wrap
-static void version_msg_wrap(char *s, int wrap)
+static void version_msg_wrap(char *s, bool wrap)
 {
   int len = vim_strsize(s) + (wrap ? 2 : 0);
 
@@ -2647,7 +2647,7 @@ void list_in_columns(char **items, int size, int current)
   for (int i = 0; !got_int && i < nrow * ncol; i++) {
     int idx = (i / ncol) + (i % ncol) * nrow;
     if (idx < item_count) {
-      int last_col = (i + 1) % ncol == 0;
+      bool last_col = (i + 1) % ncol == 0;
       if (idx == current) {
         msg_putchar('[');
       }

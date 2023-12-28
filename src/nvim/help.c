@@ -171,9 +171,9 @@ void ex_help(exarg_T *eap)
       // set b_p_ro flag).
       // Set the alternate file to the previously edited file.
       alt_fnum = curbuf->b_fnum;
-      (void)do_ecmd(0, NULL, NULL, NULL, ECMD_LASTL,
-                    ECMD_HIDE + ECMD_SET_HELP,
-                    NULL);  // buffer is still open, don't store info
+      do_ecmd(0, NULL, NULL, NULL, ECMD_LASTL,
+              ECMD_HIDE + ECMD_SET_HELP,
+              NULL);  // buffer is still open, don't store info
 
       if ((cmdmod.cmod_flags & CMOD_KEEPALT) == 0) {
         curwin->w_alt_fnum = alt_fnum;
@@ -251,7 +251,7 @@ char *check_help_lang(char *arg)
 /// @param wrong_case  no matching case
 ///
 /// @return  a heuristic indicating how well the given string matches.
-int help_heuristic(char *matched_string, int offset, int wrong_case)
+int help_heuristic(char *matched_string, int offset, bool wrong_case)
   FUNC_ATTR_PURE
 {
   int num_letters = 0;
@@ -618,7 +618,7 @@ void prepare_help_buffer(void)
   if (strcmp(curbuf->b_p_isk, p) != 0) {
     set_string_option_direct(kOptIskeyword, p, OPT_FREE|OPT_LOCAL, 0);
     check_buf_options(curbuf);
-    (void)buf_init_chartab(curbuf, false);
+    buf_init_chartab(curbuf, false);
   }
 
   // Don't use the global foldmethod.

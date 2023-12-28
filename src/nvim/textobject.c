@@ -169,14 +169,13 @@ found:
 /// @return       true if the next paragraph or section was found.
 bool findpar(bool *pincl, int dir, int count, int what, bool both)
 {
-  linenr_T curr;
   bool first;               // true on first line
   linenr_T fold_first;      // first line of a closed fold
   linenr_T fold_last;       // last line of a closed fold
   bool fold_skipped;        // true if a closed fold was skipped this
                             // iteration
 
-  curr = curwin->w_cursor.lnum;
+  linenr_T curr = curwin->w_cursor.lnum;
 
   while (count--) {
     bool did_skip = false;  // true after separating lines have been skipped
@@ -259,9 +258,7 @@ static bool inmacro(char *opt, const char *s)
 /// If 'both' is true also stop at '}'
 bool startPS(linenr_T lnum, int para, bool both)
 {
-  char *s;
-
-  s = ml_get(lnum);
+  char *s = ml_get(lnum);
   if ((uint8_t)(*s) == para || *s == '\f' || (both && *s == '}')) {
     return true;
   }
@@ -293,9 +290,7 @@ static bool cls_bigword;  ///< true for "W", "B" or "E"
 /// boundaries are of interest.
 static int cls(void)
 {
-  int c;
-
-  c = gchar_cursor();
+  int c = gchar_cursor();
   if (c == ' ' || c == '\t' || c == NUL) {
     return 0;
   }
@@ -534,9 +529,7 @@ static bool skip_chars(int cclass, int dir)
 /// Go back to the start of the word or the start of white space
 static void back_in_line(void)
 {
-  int sclass;                       // starting class
-
-  sclass = cls();
+  int sclass = cls();  // starting class
   while (true) {
     if (curwin->w_cursor.col == 0) {        // stop at start of line
       break;
@@ -723,15 +716,13 @@ int current_word(oparg_T *oap, int count, bool include, bool bigword)
 /// When Visual active, extend it by one or more sentences.
 int current_sent(oparg_T *oap, int count, bool include)
 {
-  pos_T start_pos;
-  pos_T pos;
   bool start_blank;
   int c;
   bool at_start_sent;
   int ncount;
 
-  start_pos = curwin->w_cursor;
-  pos = start_pos;
+  pos_T start_pos = curwin->w_cursor;
+  pos_T pos = start_pos;
   findsent(FORWARD, 1);        // Find start of next sentence.
 
   // When the Visual area is bigger than one character: Extend it.
@@ -1314,7 +1305,7 @@ extend:
   }
 
   // First move back to the start_lnum of the paragraph or white lines
-  int white_in_front = linewhite(start_lnum);
+  bool white_in_front = linewhite(start_lnum);
   while (start_lnum > 1) {
     if (white_in_front) {           // stop at first white line
       if (!linewhite(start_lnum - 1)) {

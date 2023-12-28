@@ -205,7 +205,7 @@ void mf_close_file(buf_T *buf, bool getlines)
   if (getlines) {
     // get all blocks in memory by accessing all lines (clumsy!)
     for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
-      (void)ml_get_buf(buf, lnum);
+      ml_get_buf(buf, lnum);
     }
   }
 
@@ -272,7 +272,7 @@ bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
 
   // Init the data to all zero, to avoid reading uninitialized data.
   // This also avoids that the passwd file ends up in the swap file!
-  (void)memset(hp->bh_data, 0, (size_t)mfp->mf_page_size * page_count);
+  memset(hp->bh_data, 0, (size_t)mfp->mf_page_size * page_count);
 
   return hp;
 }
@@ -758,7 +758,7 @@ static bool mf_do_open(memfile_T *mfp, char *fname, int flags)
     return false;
   }
 
-  (void)os_set_cloexec(mfp->mf_fd);
+  os_set_cloexec(mfp->mf_fd);
 
   return true;
 }

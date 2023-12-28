@@ -530,7 +530,7 @@ bool augroup_exists(const char *name)
 }
 
 /// ":augroup {name}".
-void do_augroup(char *arg, int del_group)
+void do_augroup(char *arg, bool del_group)
 {
   if (del_group) {
     if (*arg == NUL) {
@@ -755,7 +755,7 @@ void do_autocmd(exarg_T *eap, char *arg_in, int forceit)
   char *arg = arg_in;
   char *envpat = NULL;
   char *cmd;
-  int need_free = false;
+  bool need_free = false;
   bool nested = false;
   bool once = false;
   int group;
@@ -1222,7 +1222,7 @@ void ex_doautoall(exarg_T *eap)
 
   // Execute autocommands for the current buffer last.
   if (retval == OK) {
-    (void)do_doautocmd(arg, false, &did_aucmd);
+    do_doautocmd(arg, false, &did_aucmd);
     if (call_do_modelines && did_aucmd) {
       do_modelines(0);
     }
@@ -1568,12 +1568,11 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
   bool retval = false;
   static int nesting = 0;
   char *save_cmdarg;
-  varnumber_T save_cmdbang;
   static bool filechangeshell_busy = false;
   proftime_T wait_time;
   bool did_save_redobuff = false;
   save_redo_T save_redo;
-  const bool save_KeyTyped = KeyTyped;  // NOLINT
+  const bool save_KeyTyped = KeyTyped;
 
   // Quickly return if there are no autocommands for this event or
   // autocommands are blocked.
@@ -1782,7 +1781,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     patcmd.data = data;
 
     // set v:cmdarg (only when there is a matching pattern)
-    save_cmdbang = get_vim_var_nr(VV_CMDBANG);
+    varnumber_T save_cmdbang = get_vim_var_nr(VV_CMDBANG);
     if (eap != NULL) {
       save_cmdarg = set_cmdarg(eap, NULL);
       set_vim_var_nr(VV_CMDBANG, eap->forceit);
@@ -1815,7 +1814,7 @@ bool apply_autocmds_group(event_T event, char *fname, char *fname_io, bool force
     }
 
     if (eap != NULL) {
-      (void)set_cmdarg(NULL, save_cmdarg);
+      set_cmdarg(NULL, save_cmdarg);
       set_vim_var_nr(VV_CMDBANG, save_cmdbang);
     }
     // delete from active_apc_list
@@ -2164,7 +2163,7 @@ char *expand_get_augroup_name(expand_T *xp, int idx)
 }
 
 /// @param doautocmd  true for :doauto*, false for :autocmd
-char *set_context_in_autocmd(expand_T *xp, char *arg, int doautocmd)
+char *set_context_in_autocmd(expand_T *xp, char *arg, bool doautocmd)
 {
   // check for a group name, skip it if present
   autocmd_include_groups = false;
@@ -2478,7 +2477,7 @@ bool au_event_is_empty(event_T event)
 
 /// Scan over the events.  "*" stands for all events.
 /// true when group name was found
-static char *arg_event_skip(char *arg, int have_group)
+static char *arg_event_skip(char *arg, bool have_group)
 {
   char *pat;
   char *p;

@@ -1603,7 +1603,7 @@ static int qf_parse_get_fields(char *linebuf, size_t linelen, efm_T *fmt_ptr, qf
   // Always ignore case when looking for a matching error.
   regmatch.rm_ic = true;
   regmatch.regprog = fmt_ptr->prog;
-  int r = vim_regexec(&regmatch, linebuf, 0);
+  bool r = vim_regexec(&regmatch, linebuf, 0);
   fmt_ptr->prog = regmatch.regprog;
   int status = QF_FAIL;
   if (r) {
@@ -1970,7 +1970,7 @@ static qf_info_T *ll_get_or_alloc_list(win_T *wp)
 /// For a location list command, returns the stack for the current window.  If
 /// the location list is not found, then returns NULL and prints an error
 /// message if 'print_emsg' is true.
-static qf_info_T *qf_cmd_get_stack(exarg_T *eap, int print_emsg)
+static qf_info_T *qf_cmd_get_stack(exarg_T *eap, bool print_emsg)
 {
   qf_info_T *qi = &ql_info;
 
@@ -2512,7 +2512,7 @@ static void win_set_loclist(win_T *wp, qf_info_T *qi)
 
 /// Find a help window or open one. If 'newwin' is true, then open a new help
 /// window.
-static int jump_to_help_window(qf_info_T *qi, bool newwin, int *opened_window)
+static int jump_to_help_window(qf_info_T *qi, bool newwin, bool *opened_window)
 {
   win_T *wp = NULL;
 
@@ -2715,7 +2715,7 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
 // window, jump to it. Otherwise open a new window to display the file. If
 // 'newwin' is true, then always open a new window. This is called from either
 // a quickfix or a location list window.
-static int qf_jump_to_usable_window(int qf_fnum, bool newwin, int *opened_window)
+static int qf_jump_to_usable_window(int qf_fnum, bool newwin, bool *opened_window)
 {
   win_T *usable_wp = NULL;
   bool usable_win = false;
@@ -2770,7 +2770,7 @@ static int qf_jump_to_usable_window(int qf_fnum, bool newwin, int *opened_window
 ///          QF_ABORT if the quickfix/location list was freed by an autocmd
 ///          when opening the buffer.
 static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit, int prev_winid,
-                               int *opened_window)
+                               bool *opened_window)
 {
   qf_list_T *qfl = qf_get_curlist(qi);
   int old_changetick = qfl->qf_changedtick;
@@ -2905,7 +2905,7 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, buf
 ///          FAIL if not able to jump/open a window.
 ///          NOTDONE if a file is not associated with the entry.
 ///          QF_ABORT if the quickfix/location list was modified by an autocmd.
-static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, int *opened_window)
+static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, bool *opened_window)
 {
   qf_list_T *qfl = qf_get_curlist(qi);
   int old_changetick = qfl->qf_changedtick;
@@ -2964,7 +2964,7 @@ static int qf_jump_open_window(qf_info_T *qi, qfline_T *qf_ptr, bool newwin, int
 ///          QF_ABORT if the quickfix/location list is freed by an autocmd when opening
 ///          the file.
 static int qf_jump_to_buffer(qf_info_T *qi, int qf_index, qfline_T *qf_ptr, int forceit,
-                             int prev_winid, int *opened_window, int openfold, int print_message)
+                             int prev_winid, bool *opened_window, int openfold, bool print_message)
 {
   // If there is a file name, read the wanted file if needed, and check
   // autowrite etc.
@@ -3051,7 +3051,7 @@ static void qf_jump_newwin(qf_info_T *qi, int dir, int errornr, int forceit, boo
 
   int prev_winid = curwin->handle;
 
-  int opened_window = false;
+  bool opened_window = false;
   int retval = qf_jump_open_window(qi, qf_ptr, newwin, &opened_window);
   if (retval == FAIL) {
     goto failed;
@@ -3988,7 +3988,7 @@ static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
   buf_inc_changedtick(buf);
 
   if (old_last == NULL) {
-    (void)qf_win_pos_update(qi, 0);
+    qf_win_pos_update(qi, 0);
 
     // restore curwin/curbuf and a few other things
     aucmd_restbuf(&aco);
@@ -4199,7 +4199,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last, int q
     }
     if (old_last == NULL) {
       // Delete the empty line which is now at the end
-      (void)ml_delete(lnum + 1, false);
+      ml_delete(lnum + 1, false);
     }
 
     qfga_clear();
@@ -4583,7 +4583,7 @@ int qf_get_cur_valid_idx(exarg_T *eap)
 /// Used by :cdo, :ldo, :cfdo and :lfdo commands.
 /// For :cdo and :ldo, returns the 'n'th valid error entry.
 /// For :cfdo and :lfdo, returns the 'n'th valid file entry.
-static size_t qf_get_nth_valid_entry(qf_list_T *qfl, size_t n, int fdo)
+static size_t qf_get_nth_valid_entry(qf_list_T *qfl, size_t n, bool fdo)
   FUNC_ATTR_NONNULL_ALL
 {
   // Check if the list has valid errors.
@@ -5706,7 +5706,7 @@ static buf_T *load_dummy_buffer(char *fname, char *dirname_start, char *resultin
     aucmd_prepbuf(&aco, newbuf);
 
     // Need to set the filename for autocommands.
-    (void)setfname(curbuf, fname, NULL, false);
+    setfname(curbuf, fname, NULL, false);
 
     // Create swap file now to avoid the ATTENTION message.
     check_need_swap(true);
@@ -5958,7 +5958,7 @@ static int qf_get_list_from_lines(dict_T *what, dictitem_T *di, dict_T *retdict)
 
   if (qf_init_ext(qi, 0, NULL, NULL, &di->di_tv, errorformat,
                   true, 0, 0, NULL, NULL) > 0) {
-    (void)get_errorlist(qi, NULL, 0, 0, l);
+    get_errorlist(qi, NULL, 0, 0, l);
     qf_free(&qi->qf_lists[0]);
   }
   xfree(qi);
@@ -7324,7 +7324,7 @@ static void get_qf_loc_list(bool is_qf, win_T *wp, typval_T *what_arg, typval_T 
   if (what_arg->v_type == VAR_UNKNOWN) {
     tv_list_alloc_ret(rettv, kListLenMayKnow);
     if (is_qf || wp != NULL) {
-      (void)get_errorlist(NULL, wp, -1, 0, rettv->vval.v_list);
+      get_errorlist(NULL, wp, -1, 0, rettv->vval.v_list);
     }
   } else {
     tv_dict_alloc_ret(rettv);

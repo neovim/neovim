@@ -442,7 +442,7 @@ int update_screen(void)
   // will be redrawn later or in win_update().
   must_redraw = 0;
 
-  updating_screen = 1;
+  updating_screen = true;
 
   display_tick++;  // let syntax code know we're in a next round of
                    // display updating
@@ -655,7 +655,7 @@ int update_screen(void)
     wp->w_buffer->b_signcols.resized = false;
   }
 
-  updating_screen = 0;
+  updating_screen = false;
 
   // Clear or redraw the command line.  Done last, because scrolling may
   // mess up the command line.
@@ -917,11 +917,11 @@ int showmode(void)
 
   msg_grid_validate();
 
-  int do_mode = ((p_smd && msg_silent == 0)
-                 && ((State & MODE_TERMINAL)
-                     || (State & MODE_INSERT)
-                     || restart_edit != NUL
-                     || VIsual_active));
+  bool do_mode = ((p_smd && msg_silent == 0)
+                  && ((State & MODE_TERMINAL)
+                      || (State & MODE_INSERT)
+                      || restart_edit != NUL
+                      || VIsual_active));
 
   bool can_show_mode = (p_ch != 0 || ui_has(kUIMessages));
   if ((do_mode || reg_recording != 0) && can_show_mode) {
@@ -1608,14 +1608,14 @@ static void win_update(win_T *wp)
         }
       }
 
-      (void)hasFoldingWin(wp, mod_top, &mod_top, NULL, true, NULL);
+      hasFoldingWin(wp, mod_top, &mod_top, NULL, true, NULL);
       if (mod_top > lnumt) {
         mod_top = lnumt;
       }
 
       // Now do the same for the bottom line (one above mod_bot).
       mod_bot--;
-      (void)hasFoldingWin(wp, mod_bot, NULL, &mod_bot, true, NULL);
+      hasFoldingWin(wp, mod_bot, NULL, &mod_bot, true, NULL);
       mod_bot++;
       if (mod_bot < lnumb) {
         mod_bot = lnumb;
@@ -1686,17 +1686,15 @@ static void win_update(win_T *wp)
       // New topline is above old topline: May scroll down.
       int j;
       if (hasAnyFolding(wp)) {
-        linenr_T ln;
-
         // count the number of lines we are off, counting a sequence
         // of folded lines as one
         j = 0;
-        for (ln = wp->w_topline; ln < wp->w_lines[0].wl_lnum; ln++) {
+        for (linenr_T ln = wp->w_topline; ln < wp->w_lines[0].wl_lnum; ln++) {
           j++;
           if (j >= wp->w_grid.rows - 2) {
             break;
           }
-          (void)hasFoldingWin(wp, ln, NULL, &ln, true, NULL);
+          hasFoldingWin(wp, ln, NULL, &ln, true, NULL);
         }
       } else {
         j = wp->w_lines[0].wl_lnum - wp->w_topline;
@@ -2318,7 +2316,7 @@ static void win_update(win_T *wp)
         // text doesn't need to be drawn, but the number column does.
         foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum
                           ? cursorline_fi : fold_info(wp, lnum);
-        (void)win_line(wp, lnum, srow, wp->w_grid.rows, true, &spv, info);
+        win_line(wp, lnum, srow, wp->w_grid.rows, true, &spv, info);
       }
 
       // This line does not need to be drawn, advance to the next one.

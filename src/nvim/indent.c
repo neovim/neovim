@@ -888,7 +888,7 @@ int get_breakindent_win(win_T *wp, char *line)
 // non-blank in the line.
 // When extra == 1: Return true if the cursor is before the first non-blank in
 // the line.
-int inindent(int extra)
+bool inindent(int extra)
 {
   char *ptr;
   colnr_T col;
@@ -1340,7 +1340,7 @@ static int lisp_match(char *p)
   char *word = *curbuf->b_p_lw != NUL ? curbuf->b_p_lw : p_lispwords;
 
   while (*word != NUL) {
-    (void)copy_option_part(&word, buf, sizeof(buf), ",");
+    copy_option_part(&word, buf, sizeof(buf), ",");
     int len = (int)strlen(buf);
 
     if ((strncmp(buf, p, (size_t)len) == 0) && ascii_iswhite_or_nul(p[len])) {

@@ -212,7 +212,7 @@ static int ses_do_win(win_T *wp)
 /// @param flagp
 ///
 /// @returns FAIL if writing fails.
-static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname, unsigned *flagp)
+static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, bool fullname, unsigned *flagp)
 {
   char *buf = NULL;
 
@@ -225,7 +225,7 @@ static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname, unsigne
     if (s != NULL) {
       if (fullname) {
         buf = xmalloc(MAXPATHL);
-        (void)vim_FullName(s, buf, MAXPATHL, false);
+        vim_FullName(s, buf, MAXPATHL, false);
         s = buf;
       }
       char *fname_esc = ses_escape_fname(s, flagp);
@@ -322,7 +322,7 @@ static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp, int curr
 
   // Always restore cursor position for ":mksession".  For ":mkview" only
   // when 'viewoptions' contains "cursor".
-  int do_cursor = (flagp == &ssop_flags || *flagp & SSOP_CURSOR);
+  bool do_cursor = (flagp == &ssop_flags || *flagp & SSOP_CURSOR);
 
   // Local argument list.
   if (wp->w_alist == &global_alist) {
@@ -975,7 +975,7 @@ void ex_mkrc(exarg_T *eap)
 
   FILE *fd = open_exfile(fname, eap->forceit, WRITEBIN);
   if (fd != NULL) {
-    int failed = false;
+    bool failed = false;
     unsigned *flagp;
     if (eap->cmdidx == CMD_mkview) {
       flagp = &vop_flags;
@@ -985,7 +985,7 @@ void ex_mkrc(exarg_T *eap)
 
     // Write the version command for :mkvimrc
     if (eap->cmdidx == CMD_mkvimrc) {
-      (void)put_line(fd, "version 6.0");
+      put_line(fd, "version 6.0");
     }
 
     if (eap->cmdidx == CMD_mksession) {

@@ -158,7 +158,7 @@ int get_keystroke(MultiQueue *events)
 /// When "mouse_used" is not NULL allow using the mouse.
 ///
 /// @param colon  allow colon to abort
-int get_number(int colon, int *mouse_used)
+int get_number(int colon, bool *mouse_used)
 {
   int n = 0;
   int typed = 0;
@@ -219,7 +219,7 @@ int get_number(int colon, int *mouse_used)
 ///
 /// When "mouse_used" is not NULL allow using the mouse and in that case return
 /// the line number.
-int prompt_for_number(int *mouse_used)
+int prompt_for_number(bool *mouse_used)
 {
   // When using ":silent" assume that <CR> was entered.
   if (mouse_used != NULL) {
