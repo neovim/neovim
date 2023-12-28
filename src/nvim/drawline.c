@@ -716,10 +716,10 @@ static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
     if (wlv->tocol == vcol_before) {
       wlv->tocol = wlv->vcol;
     }
+  }
 
-    if (wp->w_skipcol > 0 && wlv->startrow == 0 && wp->w_p_wrap && wp->w_briopt_sbr) {
-      wlv->need_showbreak = false;
-    }
+  if (wp->w_skipcol > 0 && wlv->startrow == 0 && wp->w_p_wrap && wp->w_briopt_sbr) {
+    wlv->need_showbreak = false;
   }
 }
 
@@ -739,9 +739,6 @@ static void handle_showbreak_and_filler(win_T *wp, winlinevars_T *wlv)
   char *const sbr = get_showbreak_value(wp);
   if (*sbr != NUL && wlv->need_showbreak) {
     // Draw 'showbreak' at the start of each broken line.
-    if (wp->w_skipcol == 0 || wlv->startrow != 0 || !wp->w_p_wrap) {
-      wlv->need_showbreak = false;
-    }
     // Combine 'showbreak' with 'cursorline', prioritizing 'showbreak'.
     int attr = hl_combine_attr(wlv->cul_attr, win_hl_attr(wp, HLF_AT));
     colnr_T vcol_before = wlv->vcol;
@@ -758,6 +755,10 @@ static void handle_showbreak_and_filler(win_T *wp, winlinevars_T *wlv)
     if (wlv->tocol == vcol_before) {
       wlv->tocol = wlv->vcol;
     }
+  }
+
+  if (wp->w_skipcol == 0 || wlv->startrow > 0 || !wp->w_p_wrap || !wp->w_briopt_sbr) {
+    wlv->need_showbreak = false;
   }
 }
 
