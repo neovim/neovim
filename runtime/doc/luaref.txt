@@ -4150,7 +4150,7 @@ string.upper({s})                                               *string.upper()*
         locale.
 
 ------------------------------------------------------------------------------
-5.4.1  Patterns                                 *lua-patterns
+5.4.1  Patterns                                 *lua-patterns*
 
 A character class is used to represent a set of characters. The following
 combinations are allowed in describing a character class:
@@ -4811,7 +4811,7 @@ debug.setupvalue({func}, {up}, {value})                     *debug.setupvalue()*
         upvalue with the given index. Otherwise, it returns the name of the
         upvalue.
 
-debug.traceback([{thread},] [{message}] [,{level}])          *debug.traceback()*
+debug.traceback([{thread},] [{message} [,{level}]])          *debug.traceback()*
         Returns a string with a traceback of the call stack. An optional
         {message} string is appended at the beginning of the traceback. An
         optional {level} number tells at which level to start the traceback
