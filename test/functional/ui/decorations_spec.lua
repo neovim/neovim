@@ -762,6 +762,8 @@ describe('extmark decorations', function()
       [39] = {foreground = Screen.colors.Blue1, background = Screen.colors.LightCyan1, bold = true};
       [40] = {reverse = true};
       [41] = {bold = true, reverse = true};
+      [42] = {undercurl = true, special = Screen.colors.Red};
+      [43] = {background = Screen.colors.Yellow, undercurl = true, special = Screen.colors.Red};
     }
 
     ns = meths.create_namespace 'test'
@@ -1901,6 +1903,23 @@ describe('extmark decorations', function()
       {29:as}{28:^df}                                              |
       {1:~                                                 }|*2
       {24:-- VISUAL BLOCK --}                                |
+    ]])
+  end)
+
+  it('highlight works properly with multibyte text and spell #26771', function()
+    insert('口口\n')
+    screen:try_resize(50, 3)
+    meths.buf_set_extmark(0, ns, 0, 0, { end_col = 3, hl_group = 'Search' })
+    screen:expect([[
+      {34:口}口                                              |
+      ^                                                  |
+                                                        |
+    ]])
+    command('setlocal spell')
+    screen:expect([[
+      {43:口}{42:口}                                              |
+      ^                                                  |
+                                                        |
     ]])
   end)
 

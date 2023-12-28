@@ -1542,7 +1542,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         if (sign_num_attr == 0) {
           statuscol.num_attr = get_line_number_attr(wp, &wlv);
         }
-        v = (ptr - line);
+        v = ptr - line;
         draw_statuscol(wp, &wlv, lnum, wlv.row - startrow - wlv.filler_lines, &statuscol);
         if (wp->w_redr_statuscol) {
           break;
@@ -1646,11 +1646,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
           decor_need_recheck = false;
         }
         if (wlv.filler_todo <= 0) {
-          extmark_attr = decor_redraw_col(wp, (colnr_T)v, wlv.off, selected, &decor_state);
+          extmark_attr = decor_redraw_col(wp, (colnr_T)(ptr - line), wlv.off, selected,
+                                          &decor_state);
         }
 
         if (!has_fold && wp->w_buffer->b_virt_text_inline > 0) {
-          handle_inline_virtual_text(wp, &wlv, v);
+          handle_inline_virtual_text(wp, &wlv, ptr - line);
           if (wlv.n_extra > 0 && wlv.virt_inline_hl_mode <= kHlModeReplace) {
             // restore search_attr and area_attr when n_extra is down to zero
             // TODO(bfredl): this is ugly as fuck. look if we can do this some other way.
@@ -1692,7 +1693,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         // Check for start/end of 'hlsearch' and other matches.
         // After end, check for start/end of next match.
         // When another match, have to check for start again.
-        v = (ptr - line);
+        v = ptr - line;
         search_attr = update_search_hl(wp, lnum, (colnr_T)v, &line, &screen_search_hl,
                                        &has_match_conc, &match_conc, lcs_eol_one,
                                        &on_last_col, &search_attr_from_match);
@@ -1756,6 +1757,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     }
 
     if (draw_folded && wlv.n_extra == 0 && wlv.col == win_col_offset) {
+      v = ptr - line;
       linenr_T lnume = lnum + foldinfo.fi_lines - 1;
       memset(buf_fold, ' ', FOLD_TEXT_LEN);
       wlv.p_extra = get_foldtext(wp, lnum, lnume, foldinfo, buf_fold, &fold_vt);
@@ -1943,7 +1945,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
         // Get extmark and syntax attributes, unless still at the start of the line
         // (double-wide char that doesn't fit).
-        v = (ptr - line);
+        v = ptr - line;
         if (has_syntax && v > 0) {
           // Get the syntax attribute for the character.  If there
           // is an error, disable syntax highlighting.
@@ -2001,7 +2003,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         // Only do this when there is no syntax highlighting, the
         // @Spell cluster is not used or the current syntax item
         // contains the @Spell cluster.
-        v = (ptr - line);
+        v = ptr - line;
         if (spv->spv_has_spell && v >= word_end && v > cur_checked_col) {
           spell_attr = 0;
           // do not calculate cap_col at the end of the line or when
@@ -2671,12 +2673,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         && !has_fold) {
       if (has_decor && *ptr == NUL && lcs_eol_one == 0) {
         // Tricky: there might be a virtual text just _after_ the last char
-        decor_redraw_col(wp, (colnr_T)v, wlv.off, false, &decor_state);
+        decor_redraw_col(wp, (colnr_T)(ptr - line), wlv.off, false, &decor_state);
       }
       if (*ptr != NUL
           || lcs_eol_one > 0
           || (wlv.n_extra > 0 && (wlv.c_extra != NUL || *wlv.p_extra != NUL))
-          || has_more_inline_virt(&wlv, v)) {
+          || has_more_inline_virt(&wlv, ptr - line)) {
         mb_c = wp->w_p_lcs_chars.ext;
         wlv.char_attr = win_hl_attr(wp, HLF_AT);
         mb_schar = schar_from_char(mb_c);
@@ -2819,7 +2821,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       // At the end of screen line: might need to peek for decorations just after
       // this position.
       if (!has_fold && wp->w_p_wrap && wlv.n_extra == 0) {
-        decor_redraw_col(wp, (int)(ptr - line), -3, false, &decor_state);
+        decor_redraw_col(wp, (colnr_T)(ptr - line), -3, false, &decor_state);
         // Check position/hiding of virtual text again on next screen line.
         decor_need_recheck = true;
       } else if (has_fold || !wp->w_p_wrap) {
@@ -2837,7 +2839,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
             || (wp->w_p_list && wp->w_p_lcs_chars.eol != NUL
                 && wlv.p_extra != at_end_str)
             || (wlv.n_extra != 0 && (wlv.c_extra != NUL || *wlv.p_extra != NUL))
-            || has_more_inline_virt(&wlv, v))) {
+            || has_more_inline_virt(&wlv, ptr - line))) {
       bool wrap = wp->w_p_wrap       // Wrapping enabled.
                   && wlv.filler_todo <= 0          // Not drawing diff filler lines.
                   && lcs_eol_one != -1         // Haven't printed the lcs_eol character.
