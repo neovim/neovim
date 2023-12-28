@@ -112,6 +112,11 @@ lua2dox = os.path.join(base_dir, 'scripts', 'lua2dox.lua')
 
 SectionName = str
 
+Docstring = str  # Represents (formatted) vimdoc string
+
+FunctionName = str
+
+
 @dataclasses.dataclass
 class Config:
     """Config for documentation."""
@@ -881,6 +886,44 @@ def is_program_listing(para):
     return len(children) == 1 and children[0].nodeName == 'programlisting'
 
 
+FunctionParam = Tuple[
+    str,  # type
+    str,  # parameter name
+]
+
+@dataclasses.dataclass
+class FunctionDoc:
+    """Data structure for function documentation. Also exported as msgpack."""
+
+    annotations: List[str]
+    """Attributes, e.g., FUNC_API_REMOTE_ONLY. See annotation_map"""
+
+    signature: str
+    """Function signature with *tags*."""
+
+    parameters: List[FunctionParam]
+    """Parameters: (type, name)"""
+
+    parameters_doc: Dict[str, Docstring]
+    """Parameters documentation. Key is parameter name, value is doc."""
+
+    doc: List[Docstring]
+    """Main description for the function. Separated by paragraph."""
+
+    return_: List[Docstring]
+    """Return:, or Return (multiple): (@return strings)"""
+
+    seealso: List[Docstring]
+    """See also: (@see strings)"""
+
+    # for fmt_node_as_vimhelp
+    desc_node: Element | None = None
+    brief_desc_node: Element | None = None
+
+    # for INCLUDE_C_DECL
+    c_decl: str | None = None
+
+
 def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent='',
                         fmt_vimhelp=False):
     """Renders (nested) Doxygen <para> nodes as Vim :help text.
@@ -946,7 +989,10 @@ def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent=
     return clean_lines('\n'.join(rendered_blocks).strip())
 
 
-def extract_from_xml(filename, target, width, fmt_vimhelp):
+def extract_from_xml(filename, target, width, fmt_vimhelp) -> Tuple[
+    Dict[FunctionName, FunctionDoc],
+    Dict[FunctionName, FunctionDoc],
+]:
     """Extracts Doxygen info as maps without formatting the text.
 
     Returns two maps:
@@ -958,8 +1004,8 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
     """
     config: Config = CONFIG[target]
 
-    fns = {}  # Map of func_name:docstring.
-    deprecated_fns = {}  # Map of func_name:docstring.
+    fns: Dict[FunctionName, FunctionDoc] = {}
+    deprecated_fns: Dict[FunctionName, FunctionDoc] = {}
 
     dom = minidom.parse(filename)
     compoundname = get_text(dom.getElementsByTagName('compoundname')[0])
@@ -1084,7 +1130,7 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
         # Tracks `xrefsect` titles.  As of this writing, used only for separating
         # deprecated functions.
         xrefs_all = set()
-        paras = []
+        paras: List[Dict[str, Any]] = []
         brief_desc = find_first(member, 'briefdescription')
         if brief_desc:
             for child in brief_desc.childNodes:
@@ -1103,47 +1149,48 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
                            desc.toprettyxml(indent='  ', newl='\n')),
                     ' ' * indentation))
 
-        fn = {
-            'annotations': list(annotations),
-            'signature': signature,
-            'parameters': params,
-            'parameters_doc': collections.OrderedDict(),
-            'doc': [],
-            'return': [],
-            'seealso': [],
-        }
+        fn = FunctionDoc(
+            annotations=list(annotations),
+            signature=signature,
+            parameters=params,
+            parameters_doc=collections.OrderedDict(),
+            doc=[],
+            return_=[],
+            seealso=[],
+        )
         if fmt_vimhelp:
-            fn['desc_node'] = desc
-            fn['brief_desc_node'] = brief_desc
+            fn.desc_node = desc
+            fn.brief_desc_node = brief_desc
 
         for m in paras:
-            if 'text' in m:
-                if not m['text'] == '':
-                    fn['doc'].append(m['text'])
+            if m.get('text', ''):
+                fn.doc.append(m['text'])
             if 'params' in m:
                 # Merge OrderedDicts.
-                fn['parameters_doc'].update(m['params'])
+                fn.parameters_doc.update(m['params'])
             if 'return' in m and len(m['return']) > 0:
-                fn['return'] += m['return']
+                fn.return_ += m['return']
             if 'seealso' in m and len(m['seealso']) > 0:
-                fn['seealso'] += m['seealso']
+                fn.seealso += m['seealso']
 
         if INCLUDE_C_DECL:
-            fn['c_decl'] = c_decl
+            fn.c_decl = c_decl
 
         if 'Deprecated' in str(xrefs_all):
             deprecated_fns[name] = fn
         elif name.startswith(config.fn_name_prefix):
             fns[name] = fn
 
+    # sort functions by name (lexicographically)
     fns = collections.OrderedDict(sorted(
         fns.items(),
-        key=lambda key_item_tuple: key_item_tuple[0].lower()))
+        key=lambda key_item_tuple: key_item_tuple[0].lower(),
+    ))
     deprecated_fns = collections.OrderedDict(sorted(deprecated_fns.items()))
     return fns, deprecated_fns
 
 
-def fmt_doxygen_xml_as_vimhelp(filename, target):
+def fmt_doxygen_xml_as_vimhelp(filename, target) -> Tuple[Docstring, Docstring]:
     """Entrypoint for generating Vim :help from from Doxygen XML.
 
     Returns 2 items:
@@ -1154,20 +1201,26 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
 
     fns_txt = {}  # Map of func_name:vim-help-text.
     deprecated_fns_txt = {}  # Map of func_name:vim-help-text.
+
+    fns: Dict[FunctionName, FunctionDoc]
     fns, _ = extract_from_xml(filename, target, text_width, True)
 
-    for name, fn in fns.items():
+    for fn_name, fn in fns.items():
         # Generate Vim :help for parameters.
-        if fn['desc_node']:
-            doc = fmt_node_as_vimhelp(fn['desc_node'], fmt_vimhelp=True)
-        if not doc and fn['brief_desc_node']:
-            doc = fmt_node_as_vimhelp(fn['brief_desc_node'])
-        if not doc and name.startswith("nvim__"):
+
+        # Generate body.
+        doc = ''
+        if fn.desc_node:
+            doc = fmt_node_as_vimhelp(fn.desc_node, fmt_vimhelp=True)
+        if not doc and fn.brief_desc_node:
+            doc = fmt_node_as_vimhelp(fn.brief_desc_node)
+        if not doc and fn_name.startswith("nvim__"):
             continue
         if not doc:
             doc = 'TODO: Documentation'
 
-        annotations = '\n'.join(fn['annotations'])
+        # Annotations: put before Parameters
+        annotations: str = '\n'.join(fn.annotations)
         if annotations:
             annotations = ('\n\nAttributes: ~\n' +
                            textwrap.indent(annotations, '    '))
@@ -1177,18 +1230,22 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
             else:
                 doc = doc[:i] + annotations + '\n\n' + doc[i:]
 
+        # C Declaration: (debug only)
         if INCLUDE_C_DECL:
             doc += '\n\nC Declaration: ~\n>\n'
-            doc += fn['c_decl']
+            assert fn.c_decl is not None
+            doc += fn.c_decl
             doc += '\n<'
 
-        func_doc = fn['signature'] + '\n'
+        # Start of function documentations. e.g.,
+        # nvim_cmd({*cmd}, {*opts})                                         *nvim_cmd()*
+        func_doc = fn.signature + '\n'
         func_doc += textwrap.indent(clean_lines(doc), ' ' * indentation)
 
         # Verbatim handling.
         func_doc = re.sub(r'^\s+([<>])$', r'\1', func_doc, flags=re.M)
 
-        split_lines = func_doc.split('\n')
+        split_lines: List[str] = func_doc.split('\n')
         start = 0
         while True:
             try:
@@ -1214,12 +1271,14 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
 
         func_doc = "\n".join(map(align_tags, split_lines))
 
-        if (name.startswith(config.fn_name_prefix)
-           and name != "nvim_error_event"):
-            fns_txt[name] = func_doc
+        if (fn_name.startswith(config.fn_name_prefix)
+            and fn_name != "nvim_error_event"):
+            fns_txt[fn_name] = func_doc
 
-    return ('\n\n'.join(list(fns_txt.values())),
-            '\n\n'.join(list(deprecated_fns_txt.values())))
+    return (
+        '\n\n'.join(list(fns_txt.values())),
+        '\n\n'.join(list(deprecated_fns_txt.values())),
+    )
 
 
 def delete_lines_below(filename, tokenstr):
@@ -1402,9 +1461,11 @@ def main(doxygen_config, args):
         with open(doc_file, 'ab') as fp:
             fp.write(docs.encode('utf8'))
 
-        fn_map_full = collections.OrderedDict(sorted(fn_map_full.items()))
+        fn_map_full = collections.OrderedDict(sorted(
+            (name, fn_doc.__dict__) for (name, fn_doc) in fn_map_full.items()
+        ))
         with open(mpack_file, 'wb') as fp:
-            fp.write(msgpack.packb(fn_map_full, use_bin_type=True))
+            fp.write(msgpack.packb(fn_map_full, use_bin_type=True))  # type: ignore
 
         if not args.keep_tmpfiles:
             shutil.rmtree(output_dir)
