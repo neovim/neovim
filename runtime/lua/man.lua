@@ -238,7 +238,7 @@ local function get_path(sect, name, silent)
   -- If you run man -w strlen and string.3 comes up first, this is a problem. We
   -- should search for a matching named one in the results list.
   -- However, if you search for man -w clock_gettime, you will *only* get
-  -- clock_getres.2, which is the right page. Searching the resuls for
+  -- clock_getres.2, which is the right page. Searching the results for
   -- clock_gettime will no longer work. In this case, we should just use the
   -- first one that was found in the correct section.
   --

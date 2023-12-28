@@ -121,16 +121,14 @@ languages like Python and C#. Example: >lua
 
     func_with_opts { foo = true, filename = "hello.world" }
 <
-There's nothing special going on here except that parentheses are treated as
-whitespace. But visually, this small bit of sugar gets reasonably close to
-a "keyword args" interface. Nvim code tends to prefer this style.
+There's nothing special going on here except that parentheses are implicitly
+added. But visually, this small bit of sugar gets reasonably close to a
+"keyword args" interface.
 
-------------------------------------------------------------------------------
-LUA PATTERNS                                                    *lua-patterns*
-
+                                                                   *lua-regex*
 Lua intentionally does not support regular expressions, instead it has limited
-"patterns" |lua-pattern| which avoid the performance pitfalls of extended
-regex. Lua scripts can also use Vim regex via |vim.regex()|.
+|lua-patterns| which avoid the performance pitfalls of extended regex. Lua
+scripts can also use Vim regex via |vim.regex()|.
 
 Examples: >lua
 
