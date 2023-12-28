@@ -7057,7 +7057,7 @@ M.funcs = {
 
     ]=],
     name = 'mode',
-    params = {},
+    params = { { 'expr', 'any' } },
     signature = 'mode([expr])',
   },
   msgpackdump = {

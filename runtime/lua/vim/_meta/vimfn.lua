@@ -5829,8 +5829,9 @@ function vim.fn.mkdir(name, flags, prot) end
 --- the leading character(s).
 --- Also see |visualmode()|.
 ---
+--- @param expr? any
 --- @return any
-function vim.fn.mode() end
+function vim.fn.mode(expr) end
 
 --- Convert a list of Vimscript objects to msgpack. Returned value is a
 --- |readfile()|-style list. When {type} contains "B", a |Blob| is
