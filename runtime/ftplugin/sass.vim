@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	Sass
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
-" Last Change:	2019 Dec 05
+" Last Change:	2023 Dec 28
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -21,6 +21,11 @@ if &filetype =~# '\<s[ac]ss]\>'
   setlocal iskeyword+=$
   setlocal iskeyword+=%
   let b:undo_ftplugin .= ' isk<'
+endif
+
+if get(g:, 'sass_recommended_style', 1)
+  setlocal shiftwidth=2 softtabstop=2 expandtab
+  let b:undo_ftplugin .= ' sw< sts< et<'
 endif
 
 let &l:define = '^\C\v\s*%(\@function|\@mixin|\=)|^\s*%(\$[[:alnum:]-]+:|[%.][:alnum:]-]+\s*%(\{|$))@='
