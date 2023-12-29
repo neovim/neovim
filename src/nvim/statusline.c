@@ -1631,9 +1631,10 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
         break;
       }
       bool fold = opt == STL_FOLDCOL;
-      int width = fold ? (compute_foldcolumn(wp, 0) > 0) : wp->w_scwidth;
+      int fdc = fold ? compute_foldcolumn(wp, 0) : 0;
+      int width = fold ? fdc > 0 : wp->w_scwidth;
 
-      if (width == 0) {
+      if (width <= 0) {
         break;
       }
       foldsignitem = curitem;
@@ -1641,13 +1642,13 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       char *p = NULL;
       if (fold) {
         schar_T fold_buf[10];
-        size_t n = fill_foldcolumn(NULL, wp, stcp->foldinfo,
-                                   (linenr_T)get_vim_var_nr(VV_LNUM), 0, fold_buf);
+        fill_foldcolumn(NULL, wp, stcp->foldinfo,
+                        (linenr_T)get_vim_var_nr(VV_LNUM), 0, fdc, fold_buf);
         stl_items[curitem].minwid = -((stcp->use_cul ? HLF_CLF : HLF_FC) + 1);
         size_t buflen = 0;
         // TODO(bfredl): this is very backwards. we must support schar_T
-        // being used directly in 'statuscol'
-        for (size_t i = 0; i < n; i++) {
+        // being used directly in 'statuscolumn'
+        for (int i = 0; i < fdc; i++) {
           schar_get(out_p + buflen, fold_buf[i]);
           buflen += strlen(out_p + buflen);
         }
