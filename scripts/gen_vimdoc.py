@@ -102,6 +102,8 @@ LOG_LEVELS = {
 
 text_width = 78
 indentation = 4
+SECTION_SEP = '=' * text_width
+
 script_path = os.path.abspath(__file__)
 base_dir = os.path.dirname(os.path.dirname(script_path))
 out_dir = os.path.join(base_dir, 'tmp-{target}-doc')
@@ -1378,7 +1380,7 @@ def delete_lines_below(filename, tokenstr):
         fp.writelines(lines[0:i])
 
 
-def extract_defgroups(base: str, dom: Document):
+def extract_defgroups(base: str, dom: Document) -> Dict[SectionName, Docstring]:
     '''Generate module-level (section) docs (@defgroup).'''
     section_docs = {}
 
@@ -1412,6 +1414,101 @@ def extract_defgroups(base: str, dom: Document):
         section_docs[groupname] = "\n".join(doc_list)
 
     return section_docs
+
+
+@dataclasses.dataclass
+class Section:
+    """Represents a section. Includes section heading (defgroup)
+    and all the FunctionDoc that belongs to this section."""
+
+    name: str
+    '''Name of the section. Usually derived from basename of lua/c src file.
+    Example: "Autocmd".'''
+
+    title: str
+    '''Formatted section config. see config.section_fmt().
+    Example: "Autocmd Functions". '''
+
+    helptag: str
+    '''see config.helptag_fmt(). Example: *api-autocmd*'''
+
+    @property
+    def id(self) -> str:
+        '''section id: Module/Section id matched against @defgroup.
+           e.g., "*api-autocmd*" => "api-autocmd"
+        '''
+        return self.helptag.strip('*')
+
+    doc: str = ""
+    '''Section heading docs extracted from @defgroup.'''
+
+    # TODO: Do not carry rendered text, but handle FunctionDoc for better OOP
+    functions_text: Docstring | None = None
+    '''(Rendered) doc of all the functions that belong to this section.'''
+
+    deprecated_functions_text: Docstring | None = None
+    '''(Rendered) doc of all the deprecated functions that belong to this
+    section.'''
+
+    def __repr__(self):
+        return f"Section(title='{self.title}', helptag='{self.helptag}')"
+
+    @classmethod
+    def make_from(cls, filename: str, config: Config,
+                  section_docs: Dict[SectionName, str],
+                  *,
+                  functions_text: Docstring,
+                  deprecated_functions_text: Docstring,
+                  ):
+        # filename: e.g., 'autocmd.c'
+        # name: e.g. 'autocmd'
+        name = os.path.splitext(filename)[0].lower()
+
+        # section name: e.g. "Autocmd"
+        sectname: SectionName
+        sectname = name.upper() if name == 'ui' else name.title()
+        sectname = config.section_name.get(filename, sectname)
+
+        # Formatted (this is what's going to be written in the vimdoc)
+        # e.g., "Autocmd Functions"
+        title: str = config.section_fmt(sectname)
+
+        # section tag: e.g., "*api-autocmd*"
+        section_tag: str = config.helptag_fmt(sectname)
+
+        section = cls(name=sectname, title=title, helptag=section_tag,
+                      functions_text=functions_text,
+                      deprecated_functions_text=deprecated_functions_text,
+                      )
+        section.doc = section_docs.get(section.id) or ''
+        return section
+
+    def render(self, add_header=True) -> str:
+        """Render as vimdoc."""
+        doc = ''
+
+        if add_header:
+            doc += SECTION_SEP
+            doc += '\n{}{}'.format(
+                self.title,
+                self.helptag.rjust(text_width - len(self.title))
+            )
+
+        if self.doc:
+            doc += '\n\n' + self.doc
+
+        if self.functions_text:
+            doc += '\n\n' + self.functions_text
+
+        if INCLUDE_DEPRECATED and self.deprecated_functions_text:
+            doc += f'\n\n\nDeprecated {self.name} Functions: ~\n\n'
+            doc += self.deprecated_functions_text
+
+        return doc
+
+    def __bool__(self) -> bool:
+        """Whether this section has contents. Used for skipping empty ones."""
+        return bool(self.doc or self.functions_text)
 
 
 def main(doxygen_config, args):
@@ -1455,14 +1552,16 @@ def main(doxygen_config, args):
         if p.returncode:
             sys.exit(p.returncode)
 
-        fn_map_full = {}  # Collects all functions as each module is processed.
-        sections = {}
-        sep = '=' * text_width
+        # Collects all functions as each module is processed.
+        fn_map_full: Dict[FunctionName, FunctionDoc] = {}
+        # key: filename (e.g. autocmd.c)
+        sections: Dict[str, Section] = {}
 
         base = os.path.join(output_dir, 'xml')
         dom = minidom.parse(os.path.join(base, 'index.xml'))
 
-        section_docs = extract_defgroups(base, dom)
+        # Collect all @defgroups (section headings after the '===...' separator
+        section_docs: Dict[SectionName, Docstring] = extract_defgroups(base, dom)
 
         # Generate docs for all functions in the current module.
         for compound in dom.getElementsByTagName('compound'):
@@ -1470,45 +1569,38 @@ def main(doxygen_config, args):
                 continue
 
             filename = get_text(find_first(compound, 'name'))
-            if filename.endswith('.c') or filename.endswith('.lua'):
-                xmlfile = os.path.join(base, '{}.xml'.format(compound.getAttribute('refid')))
+            if not (
+                filename.endswith('.c') or
+                filename.endswith('.lua')
+            ):
+                continue
 
-                # Extract unformatted (*.mpack).
-                fn_map, _ = extract_from_xml(
-                    xmlfile, target, width=9999, fmt_vimhelp=False)
+            xmlfile = os.path.join(base, '{}.xml'.format(compound.getAttribute('refid')))
 
-                # Extract formatted (:help).
-                functions_text, deprecated_text = fmt_doxygen_xml_as_vimhelp(
-                    xmlfile, target)
+            # Extract unformatted (*.mpack).
+            fn_map, _ = extract_from_xml(
+                xmlfile, target, width=9999, fmt_vimhelp=False)
 
-                if not functions_text and not deprecated_text:
-                    continue
-                else:
-                    filename = os.path.basename(filename)
-                    name = os.path.splitext(filename)[0].lower()
-                    sectname = name.upper() if name == 'ui' else name.title()
-                    sectname = config.section_name.get(filename, sectname)
-                    title = config.section_fmt(sectname)
-                    section_tag = config.helptag_fmt(sectname)
-                    # Module/Section id matched against @defgroup.
-                    #   "*api-buffer*" => "api-buffer"
-                    section_id = section_tag.strip('*')
+            # Extract formatted (:help).
+            functions_text, deprecated_text = fmt_doxygen_xml_as_vimhelp(
+                xmlfile, target)
 
-                    doc = ''
-                    section_doc = section_docs.get(section_id)
-                    if section_doc:
-                        doc += '\n\n' + section_doc
+            if not functions_text and not deprecated_text:
+                continue
 
-                    if functions_text:
-                        doc += '\n\n' + functions_text
+            filename = os.path.basename(filename)
 
-                    if INCLUDE_DEPRECATED and deprecated_text:
-                        doc += f'\n\n\nDeprecated {sectname} Functions: ~\n\n'
-                        doc += deprecated_text
+            section: Section = Section.make_from(
+                filename, config, section_docs,
+                functions_text=functions_text,
+                deprecated_functions_text=deprecated_text,
+            )
 
-                    if doc:
-                        sections[filename] = (title, section_tag, doc)
-                        fn_map_full.update(fn_map)
+            if section:  # if not empty
+                sections[filename] = section
+                fn_map_full.update(fn_map)
+            else:
+                log.debug("Skipping empty section: %s", section)
 
         if len(sections) == 0:
             fail(f'no sections for target: {target} (look for errors near "Preprocessing" log lines above)')
@@ -1516,21 +1608,20 @@ def main(doxygen_config, args):
             raise RuntimeError(
                 'found new modules "{}"; update the "section_order" map'.format(
                     set(sections).difference(config.section_order)))
-        first_section_tag = sections[config.section_order[0]][1]
+        first_section_tag = sections[config.section_order[0]].helptag
 
         docs = ''
 
         for filename in config.section_order:
             try:
-                title, section_tag, section_doc = sections.pop(filename)
+                section: Section = sections.pop(filename)
             except KeyError:
                 msg(f'warning: empty docs, skipping (target={target}): {filename}')
                 msg(f'    existing docs: {sections.keys()}')
                 continue
-            if filename not in config.append_only:
-                docs += sep
-                docs += '\n{}{}'.format(title, section_tag.rjust(text_width - len(title)))
-            docs += section_doc
+
+            add_sep_and_header = filename not in config.append_only
+            docs += section.render(add_header=add_sep_and_header)
             docs += '\n\n\n'
 
         docs = docs.rstrip() + '\n\n'
