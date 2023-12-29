@@ -829,6 +829,7 @@ void setcursor_mayforce(bool force)
 
     grid_adjust(&grid, &row, &col);
     ui_grid_cursor_goto(grid->handle, row, col);
+    ui_call_reset_cursor();
   }
 }
 

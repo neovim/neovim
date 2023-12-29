@@ -1107,6 +1107,17 @@ void tui_mode_info_set(TUIData *tui, bool guicursor_enabled, Array args)
   tui_set_mode(tui, tui->showing_mode);
 }
 
+void tui_set_cursor(TUIData *tui)
+{
+  tui_set_mode(tui, tui->showing_mode);
+}
+
+void tui_reset_cursor(TUIData *tui)
+{
+  unibi_out_ext(tui, tui->unibi_ext.reset_cursor_color);
+  unibi_out_ext(tui, tui->unibi_ext.reset_cursor_style);
+}
+
 void tui_update_menu(TUIData *tui)
 {
   // Do nothing; menus are for GUI only

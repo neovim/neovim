@@ -29,7 +29,7 @@ typedef enum {
 typedef enum {
   SHAPE_BLOCK     = 0,       ///< block cursor
   SHAPE_HOR       = 1,       ///< horizontal bar cursor
-  SHAPE_VER       = 2,  ///< vertical bar cursor
+  SHAPE_VER       = 2,       ///< vertical bar cursor
 } CursorShape;
 
 #define MSHAPE_NUMBERED 1000    // offset for shapes identified by number

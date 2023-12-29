@@ -1671,6 +1671,7 @@ void enter_buffer(buf_T *buf)
     curwin->w_topfill = 0;
     apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
     apply_autocmds(EVENT_BUFWINENTER, NULL, NULL, false, curbuf);
+    ui_call_set_cursor();
   }
 
   // If autocommands did not change the cursor position, restore cursor lnum
