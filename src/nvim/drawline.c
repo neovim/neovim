@@ -386,33 +386,20 @@ static bool use_cursor_line_highlight(win_T *wp, linenr_T lnum)
 static void draw_foldcolumn(win_T *wp, winlinevars_T *wlv)
 {
   int fdc = compute_foldcolumn(wp, 0);
-  if (fdc <= 0) {
-    return;
+  if (fdc > 0) {
+    int attr = win_hl_attr(wp, use_cursor_line_highlight(wp, wlv->lnum) ? HLF_CLF : HLF_FC);
+    fill_foldcolumn(wlv, wp, wlv->foldinfo, wlv->lnum, attr, fdc, NULL);
   }
-
-  int attr = use_cursor_line_highlight(wp, wlv->lnum)
-             ? win_hl_attr(wp, HLF_CLF) : win_hl_attr(wp, HLF_FC);
-
-  fill_foldcolumn(wlv, wp, wlv->foldinfo, wlv->lnum, attr, NULL);
 }
 
-/// Fills the foldcolumn at "p" for window "wp".
-/// Only to be called when 'foldcolumn' > 0.
+/// Draw the foldcolumn or fill "out_buffer". Assume monocell characters.
 ///
-/// @param[out] p  Char array to write into
-/// @param lnum    Absolute current line number
-/// @param closed  Whether it is in 'foldcolumn' mode
-///
-/// Assume monocell characters
-/// @return number of chars added to \param p
-size_t fill_foldcolumn(void *maybe_wlv, win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr,
-                       schar_T *out_buffer)
+/// @param fdc  Current width of the foldcolumn
+/// @param[out] out_buffer  Char array to write into, only used for 'statuscolumn'
+void fill_foldcolumn(void *maybe_wlv, win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr,
+                     int fdc, schar_T *out_buffer)
 {
-  int i = 0;
-  int fdc = compute_foldcolumn(wp, 0);    // available cell width
-  int char_counter = 0;
   bool closed = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
-
   int level = foldinfo.fi_level;
 
   winlinevars_T *wlv = maybe_wlv;  // TODO(bfredl): this is bullshit
@@ -420,10 +407,14 @@ size_t fill_foldcolumn(void *maybe_wlv, win_T *wp, foldinfo_T foldinfo, linenr_T
   // If the column is too narrow, we start at the lowest level that
   // fits and use numbers to indicate the depth.
   int first_level = MAX(level - fdc - closed + 1, 1);
+  int endcol = MIN(fdc, level);
+  int i = 0;
 
-  for (i = 0; i < MIN(fdc, level); i++) {
+  for (i = 0; i < endcol; i++) {
     int symbol = 0;
-    if (foldinfo.fi_lnum == lnum && first_level + i >= foldinfo.fi_low_level) {
+    if (i == endcol - 1 && closed) {
+      symbol = wp->w_p_fcs_chars.foldclosed;
+    } else if (foldinfo.fi_lnum == lnum && first_level + i >= foldinfo.fi_low_level) {
       symbol = wp->w_p_fcs_chars.foldopen;
     } else if (first_level == 1) {
       symbol = wp->w_p_fcs_chars.foldsep;
@@ -434,49 +425,21 @@ size_t fill_foldcolumn(void *maybe_wlv, win_T *wp, foldinfo_T foldinfo, linenr_T
     }
 
     if (out_buffer) {
-      out_buffer[char_counter++] = schar_from_char(symbol);
+      out_buffer[i] = schar_from_char(symbol);
     } else {
-      linebuf_vcol[wlv->off] = -3;
+      linebuf_vcol[wlv->off] = (i == endcol - 1 && closed) ? -2 : -3;
       linebuf_attr[wlv->off] = attr;
       linebuf_char[wlv->off++] = schar_from_char(symbol);
-      char_counter++;
-    }
-
-    if (first_level + i >= level) {
-      i++;
-      break;
     }
   }
 
-  if (closed) {
-    if (char_counter > 0) {
-      // rollback previous write
-      char_counter--;
-      if (!out_buffer) {
-        wlv->off--;
-      }
+  if (out_buffer) {
+    while (i < fdc) {
+      out_buffer[i++] = schar_from_ascii(' ');
     }
-    if (out_buffer) {
-      out_buffer[char_counter++] = schar_from_char(wp->w_p_fcs_chars.foldclosed);
-    } else {
-      linebuf_vcol[wlv->off] = -2;
-      linebuf_attr[wlv->off] = attr;
-      linebuf_char[wlv->off++] = schar_from_char(wp->w_p_fcs_chars.foldclosed);
-      char_counter++;
-    }
+  } else {
+    draw_col_fill(wlv, schar_from_ascii(' '), fdc - i, attr);
   }
-
-  int width = MAX(char_counter + (fdc - i), fdc);
-  if (char_counter < width) {
-    if (out_buffer) {
-      while (char_counter < width) {
-        out_buffer[char_counter++] = schar_from_ascii(' ');
-      }
-    } else {
-      draw_col_fill(wlv, schar_from_ascii(' '), width - char_counter, attr);
-    }
-  }
-  return (size_t)width;
 }
 
 /// Get information needed to display the sign in line "wlv->lnum" in window "wp".
@@ -668,9 +631,7 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int vir
   }
   size_t translen = transstr_buf(p, buf + len - p, transbuf, MAXPATHL, true);
   draw_col_buf(wp, wlv, transbuf, translen, attr, false);
-
-  // Fill up with ' '
-  draw_col_fill(wlv, ' ', stcp->width - width, stcp->num_attr);
+  draw_col_fill(wlv, schar_from_ascii(' '), stcp->width - width, stcp->num_attr);
 }
 
 static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
