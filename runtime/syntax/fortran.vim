@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:	Fortran 2023 (and Fortran 2018, 2008, 2003, 95, 90, and 77)
-" Version:	(v108) 2023 December 22
+" Version:	(v109) 2023 December 29
 " Maintainers:	Ajit J. Thakkar <ajit@unb.ca>; <https://ajit.ext.unb.ca/>
 " 	        Joshua Hollett <j.hollett@uwinnipeg.ca>
 " Usage:	For instructions, do :help fortran-syntax from Vim
@@ -133,8 +133,8 @@ syn keyword fortranAttribute    abstract external private public protected inten
 syn keyword fortranAttribute	pointer target allocatable dimension codimension sequence parameter save
 
 syn keyword fortranUnitHeader	result operator assignment
-syn match fortranUnitHeader     "\(end\s*\)\?\(subroutine\|function\|module\|program\|submodule\)\>"
-syn match fortranBlock          "\(end\s*\)\?\(block\|critical\|associate\)\>"
+syn match fortranUnitHeader     "\<\(end\s*\)\?\(subroutine\|function\|module\|program\|submodule\)\>"
+syn match fortranBlock          "\<\(end\s*\)\?\(block\|critical\|associate\)\>"
 syn match fortranCalled		"\(call\s\+\)\@7<=\a\w*"
 syn match fortranRepeat		"\<do\>"
 syn keyword fortranRepeat       concurrent
@@ -349,6 +349,9 @@ endif
 
 if exists("fortran_fold")
 
+  if has("folding")
+    setlocal foldmethod=syntax
+  endif
   if (b:fortran_fixed_source == 1)
     syn region fortranProgram transparent fold keepend start="^\s*program\s\+\z(\a\w*\)" skip="^\([!c*]\|\s*#\).*$" excludenl end="\<end\s*\(program\(\s\+\z1\>\)\=\|$\)" contains=ALLBUT,fortranModule
     syn region fortranModule transparent fold keepend start="^\s*submodule\s\+(\a\w*\s*\(:\a\w*\s*\)*)\s*\z\(\a\w*\)" skip="^\([!c*]\|\s*#\).*$" excludenl end="\<end\s*\(submodule\(\s\+\z1\>\)\=\|$\)" contains=ALLBUT,fortranProgram,fortranModule
