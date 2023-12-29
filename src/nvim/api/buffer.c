@@ -163,12 +163,6 @@ Boolean nvim_buf_attach(uint64_t channel_id, Buffer buffer, Boolean send_buffer,
     return false;
   }
 
-  // load buffer first if it's not loaded
-  if (!buf_ensure_loaded(buf)) {
-    api_set_error(err, kErrorTypeException, "Failed to load buffer");
-    return false;
-  }
-
   BufUpdateCallbacks cb = BUF_UPDATE_CALLBACKS_INIT;
 
   if (channel_id == LUA_INTERNAL_CALL) {
@@ -922,11 +916,6 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
     return -1;
   }
 
-  // load buffer first if it's not loaded
-  if (!buf_ensure_loaded(buf)) {
-    api_set_error(err, kErrorTypeException, "Failed to load buffer");
-    return -1;
-  }
   return buf_get_changedtick(buf);
 }
 
