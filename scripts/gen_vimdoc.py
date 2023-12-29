@@ -89,8 +89,8 @@ else:
 
 
 # DEBUG = ('DEBUG' in os.environ)
-INCLUDE_C_DECL = ('INCLUDE_C_DECL' in os.environ)
-INCLUDE_DEPRECATED = ('INCLUDE_DEPRECATED' in os.environ)
+INCLUDE_C_DECL = os.environ.get('INCLUDE_C_DECL', '0') != '0'
+INCLUDE_DEPRECATED = os.environ.get('INCLUDE_DEPRECATED', '0') != '0'
 
 log = logging.getLogger(__name__)
 
@@ -168,7 +168,7 @@ CONFIG: Dict[str, Config] = {
         mode = 'c',
         filename = 'api.txt',
         # Section ordering.
-        section_order=[
+        section_order=[x for x in [
             'vim.c',
             'vimscript.c',
             'command.c',
@@ -180,7 +180,8 @@ CONFIG: Dict[str, Config] = {
             'tabpage.c',
             'autocmd.c',
             'ui.c',
-        ],
+            'deprecated.c' if INCLUDE_DEPRECATED else ''
+        ] if x],
         files=['src/nvim/api'],
         file_patterns = '*.h *.c',
         fn_name_prefix = 'nvim_',
@@ -1287,18 +1288,21 @@ def fmt_doxygen_xml_as_vimhelp(filename, target) -> Tuple[Docstring, Docstring]:
     deprecated_fns_txt = {}  # Map of func_name:vim-help-text.
 
     fns: Dict[FunctionName, FunctionDoc]
-    fns, _ = extract_from_xml(filename, target,
-                              width=text_width, fmt_vimhelp=True)
+    deprecated_fns: Dict[FunctionName, FunctionDoc]
+    fns, deprecated_fns = extract_from_xml(
+        filename, target, width=text_width, fmt_vimhelp=True)
 
-    for fn_name, fn in fns.items():
+    def _handle_fn(fn_name: FunctionName, fn: FunctionDoc,
+                   fns_txt: Dict[FunctionName, Docstring], deprecated=False):
         # Generate Vim :help for parameters.
 
         # Generate body from FunctionDoc, not XML nodes
         doc = fn.render()
         if not doc and fn_name.startswith("nvim__"):
-            continue
+            return
         if not doc:
-            doc = 'TODO: Documentation'
+            doc = ('TODO: Documentation' if not deprecated
+                   else 'Deprecated.')
 
         # Annotations: put before Parameters
         annotations: str = '\n'.join(fn.annotations)
@@ -1355,6 +1359,11 @@ def fmt_doxygen_xml_as_vimhelp(filename, target) -> Tuple[Docstring, Docstring]:
         if (fn_name.startswith(config.fn_name_prefix)
             and fn_name != "nvim_error_event"):
             fns_txt[fn_name] = func_doc
+
+    for fn_name, fn in fns.items():
+        _handle_fn(fn_name, fn, fns_txt)
+    for fn_name, fn in deprecated_fns.items():
+        _handle_fn(fn_name, fn, deprecated_fns_txt, deprecated=True)
 
     return (
         '\n\n'.join(list(fns_txt.values())),
@@ -1508,7 +1517,8 @@ class Section:
 
     def __bool__(self) -> bool:
         """Whether this section has contents. Used for skipping empty ones."""
-        return bool(self.doc or self.functions_text)
+        return bool(self.doc or self.functions_text or
+                    (INCLUDE_DEPRECATED and self.deprecated_functions_text))
 
 
 def main(doxygen_config, args):
@@ -1606,8 +1616,11 @@ def main(doxygen_config, args):
             fail(f'no sections for target: {target} (look for errors near "Preprocessing" log lines above)')
         if len(sections) > len(config.section_order):
             raise RuntimeError(
-                'found new modules "{}"; update the "section_order" map'.format(
-                    set(sections).difference(config.section_order)))
+                '{}: found new modules {}; '
+                'update the "section_order" map'.format(
+                    target,
+                    set(sections).difference(config.section_order))
+            )
         first_section_tag = sections[config.section_order[0]].helptag
 
         docs = ''
