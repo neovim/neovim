@@ -2,6 +2,7 @@ name: optional
 on:
   pull_request:
     types: [labeled, opened, synchronize, reopened]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
@@ -16,7 +17,7 @@ env:
 
 jobs:
   s390x:
-    if: contains(github.event.pull_request.labels.*.name, 'ci-s390x')
+    if: contains(github.event.pull_request.labels.*.name, 'ci-s390x') || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
