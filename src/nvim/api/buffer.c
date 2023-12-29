@@ -893,11 +893,6 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
     return rv;
   }
 
-  // load buffer first if it's not loaded
-  if (!buf_ensure_loaded(buf)) {
-    api_set_error(err, kErrorTypeException, "Failed to load buffer");
-    return rv;
-  }
   return dict_get_value(buf->b_vars, name, err);
 }
 
@@ -977,12 +972,6 @@ void nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
     return;
   }
 
-  // load buffer first if it's not loaded
-  if (!buf_ensure_loaded(buf)) {
-    api_set_error(err, kErrorTypeException, "Failed to load buffer");
-    return;
-  }
-
   dict_set_var(buf->b_vars, name, value, false, false, err);
 }
 
@@ -1000,11 +989,6 @@ void nvim_buf_del_var(Buffer buffer, String name, Error *err)
     return;
   }
 
-  // load buffer first if it's not loaded
-  if (!buf_ensure_loaded(buf)) {
-    api_set_error(err, kErrorTypeException, "Failed to load buffer");
-    return;
-  }
   dict_set_var(buf->b_vars, name, NIL, true, false, err);
 }
 
@@ -1125,7 +1109,6 @@ void nvim_buf_delete(Buffer buffer, Dict(buf_delete) *opts, Error *err)
 Boolean nvim_buf_is_valid(Buffer buffer)
   FUNC_API_SINCE(1)
 {
-  // is the check needed here?
   Error stub = ERROR_INIT;
   Boolean ret = find_buffer_by_handle(buffer, &stub) != NULL;
   api_clear_error(&stub);
