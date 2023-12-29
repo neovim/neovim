@@ -979,6 +979,8 @@ EXTERN const char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"
 EXTERN const char line_msg[] INIT(= N_(" line "));
 
 EXTERN FILE *time_fd INIT(= NULL);  // where to write startup timing
+#define STARTUP_TIME_BUF_SIZE 8192
+EXTERN char *startup_time_buf INIT(= NULL); // startup timing buffer
 
 // Some compilers warn for not using a return value, but in some situations we
 // can't do anything useful with the value.  Assign to this variable to avoid

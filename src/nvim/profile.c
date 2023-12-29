@@ -907,7 +907,7 @@ void time_start(const char *message)
   // initialize the global variables
   g_prev_time = g_start_time = profile_start();
 
-  fprintf(time_fd, "\n\ntimes in msec\n");
+  fprintf(time_fd, "\ntimes in msec\n");
   fprintf(time_fd, " clock   self+sourced   self:  sourced script\n");
   fprintf(time_fd, " clock   elapsed:              other lines\n\n");
 
@@ -943,4 +943,44 @@ void time_msg(const char *mesg, const proftime_T *start)
   // reset `g_prev_time` and print the message
   g_prev_time = now;
   fprintf(time_fd, ": %s\n", mesg);
+}
+
+/// Initializes the time time_fd stream used to write startup times
+///
+/// @param startup_time_file the startuptime report file path
+/// @param process_name the name of the current process to write in the report. Example: "Main" or "TUI"
+void time_init(const char *startup_time_file, const char *process_name)
+{
+  time_fd = fopen(startup_time_file, "a");
+  if (time_fd == NULL) {
+    semsg(_(e_notopen), startup_time_file);
+    return;
+  }
+  startup_time_buf = xmalloc(sizeof(char) * (STARTUP_TIME_BUF_SIZE + 1));
+  // set a large buffer so that flushing only happens after initialization
+  if (setvbuf(time_fd, startup_time_buf, _IOFBF, STARTUP_TIME_BUF_SIZE + 1) != 0) {
+    xfree(startup_time_buf);
+    fclose(time_fd);
+    time_fd = NULL;
+    semsg("Error initializing startup time");
+    return;
+  }
+  fprintf(time_fd, "--- Startup times for %s process ---\n", process_name);
+}
+
+/// Flushes the startuptimes to disk for the current process
+void time_finish(void)
+{
+  if (time_fd == NULL) {
+    return;
+  }
+  assert(startup_time_buf != NULL);
+  TIME_MSG("--- NVIM STARTED ---\n");
+
+  // flush buffer to disk
+  fclose(time_fd);
+  time_fd = NULL;
+
+  xfree(startup_time_buf);
+  startup_time_buf = NULL;
 }
