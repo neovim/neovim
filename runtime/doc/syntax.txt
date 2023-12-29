@@ -1633,21 +1633,22 @@ fortran_fold with a command such as >
     :let fortran_fold=1
 to instruct the syntax script to define fold regions for program units, that
 is main programs starting with a program statement, subroutines, function
-subprograms, block data subprograms, interface blocks, and modules.  If you
-also set the variable fortran_fold_conditionals with a command such as >
+subprograms, modules, submodules, and block data units. Block, interface,
+associate, critical, type definition, and change team constructs will also be
+folded.  If you also set the variable fortran_fold_conditionals with a command
+such as >
     :let fortran_fold_conditionals=1
-then fold regions will also be defined for do loops, if blocks, and select
-case constructs.  If you also set the variable fortran_fold_multilinecomments
-with a command such as >
+then fold regions will also be defined for do loops, if blocks, select case,
+select type, and select rank constructs.  If you also set the variable
+fortran_fold_multilinecomments with a command such as >
     :let fortran_fold_multilinecomments=1
 then fold regions will also be defined for three or more consecutive comment
 lines.  Note that defining fold regions can be slow for large files.
 
 If fortran_fold, and possibly fortran_fold_conditionals and/or
-fortran_fold_multilinecomments, have been set, then vim will fold your file if
-you set foldmethod=syntax.  Comments or blank lines placed between two program
-units are not folded because they are seen as not belonging to any program
-unit.
+fortran_fold_multilinecomments, have been set, then vim will fold your file.
+Comments or blank lines placed between two program units are not folded
+because they are seen as not belonging to any program unit.
 
 The syntax/fortran.vim script contains embedded comments that tell you how to
 comment and/or uncomment some lines to (a) activate recognition of some
