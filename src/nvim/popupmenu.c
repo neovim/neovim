@@ -1001,9 +1001,9 @@ win_T *pum_set_info(int selected, char *info)
   block_autocmds();
   RedrawingDisabled++;
   no_u_sync++;
-  win_T *wp = win_float_find_preview();
+  win_T *wp = win_float_find(false);
   if (wp == NULL) {
-    wp = win_float_create(false, true);
+    wp = win_float_create(false, true, false);
     if (!wp) {
       return NULL;
     }
@@ -1048,7 +1048,7 @@ static bool pum_set_selected(int n, int repeat)
   // Close the floating preview window if 'selected' is -1, indicating a return to the original
   // state. It is also closed when the selected item has no corresponding info item.
   if (use_float && (pum_selected < 0 || pum_array[pum_selected].pum_info == NULL)) {
-    win_T *wp = win_float_find_preview();
+    win_T *wp = win_float_find(false);
     if (wp) {
       wp->w_config.hide = true;
       win_config_float(wp, wp->w_config);
@@ -1123,13 +1123,13 @@ static bool pum_set_selected(int n, int repeat)
       no_u_sync++;
 
       if (!use_float) {
-        resized = prepare_tagpreview(false);
+        resized = prepare_tagpreview(false, false);
       } else {
-        win_T *wp = win_float_find_preview();
+        win_T *wp = win_float_find(false);
         if (wp) {
           win_enter(wp, false);
         } else {
-          wp = win_float_create(true, true);
+          wp = win_float_create(true, true, false);
           if (wp) {
             resized = true;
           }
@@ -1284,9 +1284,8 @@ void pum_check_clear(void)
     }
     pum_is_drawn = false;
     pum_external = false;
-    win_T *wp = win_float_find_preview();
-    if (wp != NULL) {
-      win_close(wp, false, false);
+    if (get_cot_flags() & kOptCotFlagPopup) {
+      win_float_close(false);
     }
   }
 }
