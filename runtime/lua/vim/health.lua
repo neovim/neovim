@@ -206,22 +206,27 @@ local function deprecate(type)
   vim.print('Running healthchecks...')
 end
 
+---@deprecated
 function M.report_start(name)
   deprecate('start')
   M.start(name)
 end
+---@deprecated
 function M.report_info(msg)
   deprecate('info')
   M.info(msg)
 end
+---@deprecated
 function M.report_ok(msg)
   deprecate('ok')
   M.ok(msg)
 end
+---@deprecated
 function M.report_warn(msg, ...)
   deprecate('warn')
   M.warn(msg, ...)
 end
+---@deprecated
 function M.report_error(msg, ...)
   deprecate('error')
   M.error(msg, ...)
