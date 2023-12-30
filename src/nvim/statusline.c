@@ -1640,8 +1640,8 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
       char *p = NULL;
       if (fold) {
         schar_T fold_buf[10];
-        fill_foldcolumn(wp, stcp->foldinfo,
-                        (linenr_T)get_vim_var_nr(VV_LNUM), 0, fdc, fold_buf);
+        fill_foldcolumn(wp, stcp->foldinfo, (linenr_T)get_vim_var_nr(VV_LNUM),
+                        0, fdc, NULL, fold_buf);
         stl_items[curitem].minwid = -((stcp->use_cul ? HLF_CLF : HLF_FC) + 1);
         size_t buflen = 0;
         // TODO(bfredl): this is very backwards. we must support schar_T
