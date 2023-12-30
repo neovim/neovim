@@ -90,7 +90,7 @@ For each of the functions below, use the corresponding function in
 - *vim.lsp.diagnostic.enable()*
 - *vim.lsp.diagnostic.get()*
 - *vim.lsp.diagnostic.get_all()*	Use |vim.diagnostic.get()| instead.
-- *vim.lsp.diagnostic.get_count()*	Use |vim.diagnostic.get()| instead.
+- *vim.lsp.diagnostic.get_count()*	Use |vim.diagnostic.count()| instead.
 - *vim.lsp.diagnostic.get_line_diagnostics()* Use |vim.diagnostic.get()| instead.
 - *vim.lsp.diagnostic.get_next()*
 - *vim.lsp.diagnostic.get_next_pos()*

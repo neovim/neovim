@@ -930,6 +930,122 @@ end)
     end)
   end)
 
+  describe('count', function()
+    it('returns actually present severity counts', function()
+      eq(
+        exec_lua [[return {
+          [vim.diagnostic.severity.ERROR] = 4,
+          [vim.diagnostic.severity.WARN] = 3,
+          [vim.diagnostic.severity.INFO] = 2,
+          [vim.diagnostic.severity.HINT] = 1,
+        }]],
+        exec_lua [[
+          vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+            make_error("Error 1", 1, 1, 1, 2),
+            make_error("Error 2", 1, 3, 1, 4),
+            make_error("Error 3", 1, 5, 1, 6),
+            make_error("Error 4", 1, 7, 1, 8),
+            make_warning("Warning 1", 2, 1, 2, 2),
+            make_warning("Warning 2", 2, 3, 2, 4),
+            make_warning("Warning 3", 2, 5, 2, 6),
+            make_info("Info 1", 3, 1, 3, 2),
+            make_info("Info 2", 3, 3, 3, 4),
+            make_hint("Hint 1", 4, 1, 4, 2),
+          })
+          return vim.diagnostic.count(diagnostic_bufnr)
+        ]]
+      )
+      eq(
+        exec_lua [[return {
+          [vim.diagnostic.severity.ERROR] = 2,
+          [vim.diagnostic.severity.INFO] = 1,
+        }]],
+        exec_lua [[
+          vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+            make_error("Error 1", 1, 1, 1, 2),
+            make_error("Error 2", 1, 3, 1, 4),
+            make_info("Info 1", 3, 1, 3, 2),
+          })
+          return vim.diagnostic.count(diagnostic_bufnr)
+        ]]
+      )
+    end)
+
+    it('returns only requested diagnostics count when severity range is supplied', function()
+      eq(
+        exec_lua [[return {
+          { [vim.diagnostic.severity.ERROR] = 1, [vim.diagnostic.severity.WARN] = 1 },
+          { [vim.diagnostic.severity.WARN] = 1,  [vim.diagnostic.severity.INFO] = 1, [vim.diagnostic.severity.HINT] = 1 },
+          { [vim.diagnostic.severity.WARN] = 1,  [vim.diagnostic.severity.INFO] = 1 },
+        }]],
+        exec_lua [[
+          vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+            make_error("Error 1", 1, 1, 1, 5),
+            make_warning("Warning on Server 1", 1, 1, 2, 3),
+            make_info("Ignored information", 1, 1, 2, 3),
+            make_hint("Here's a hint", 1, 1, 2, 3),
+          })
+
+          return {
+            vim.diagnostic.count(diagnostic_bufnr, { severity = {min=vim.diagnostic.severity.WARN} }),
+            vim.diagnostic.count(diagnostic_bufnr, { severity = {max=vim.diagnostic.severity.WARN} }),
+            vim.diagnostic.count(diagnostic_bufnr, {
+              severity = {
+                min=vim.diagnostic.severity.INFO,
+                max=vim.diagnostic.severity.WARN,
+              }
+            }),
+          }
+        ]]
+      )
+    end)
+
+    it('returns only requested diagnostics when severities are supplied', function()
+      eq(
+        exec_lua [[return {
+          { [vim.diagnostic.severity.WARN] = 1 },
+          { [vim.diagnostic.severity.ERROR] = 1 },
+          { [vim.diagnostic.severity.WARN] = 1, [vim.diagnostic.severity.INFO] = 1 },
+        }]],
+        exec_lua [[
+          vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+            make_error("Error 1", 1, 1, 1, 5),
+            make_warning("Warning on Server 1", 1, 1, 2, 3),
+            make_info("Ignored information", 1, 1, 2, 3),
+            make_hint("Here's a hint", 1, 1, 2, 3),
+          })
+
+          return {
+            vim.diagnostic.count(diagnostic_bufnr, { severity = {vim.diagnostic.severity.WARN} }),
+            vim.diagnostic.count(diagnostic_bufnr, { severity = {vim.diagnostic.severity.ERROR} }),
+            vim.diagnostic.count(diagnostic_bufnr, {
+              severity = {
+                vim.diagnostic.severity.INFO,
+                vim.diagnostic.severity.WARN,
+              }
+            }),
+          }
+        ]]
+      )
+    end)
+
+    it('allows filtering by line', function()
+      eq(
+        exec_lua [[return { [vim.diagnostic.severity.ERROR] = 1 }]],
+        exec_lua [[
+          vim.diagnostic.set(diagnostic_ns, diagnostic_bufnr, {
+            make_error("Error 1", 1, 1, 1, 5),
+            make_warning("Warning on Server 1", 1, 1, 2, 3),
+            make_info("Ignored information", 1, 1, 2, 3),
+            make_error("Error On Other Line", 2, 1, 1, 5),
+          })
+
+          return vim.diagnostic.count(diagnostic_bufnr, {lnum = 2})
+        ]]
+      )
+    end)
+  end)
+
   describe('config()', function()
     it('works with global, namespace, and ephemeral options', function()
       eq(1, exec_lua [[
