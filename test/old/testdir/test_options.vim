@@ -2578,7 +2578,7 @@ func Test_string_option_revert_on_failure()
         \ ['nrformats', 'alpha', 'a123'],
         \ ['omnifunc', 'MyOmniFunc', '1a-'],
         \ ['operatorfunc', 'MyOpFunc', '1a-'],
-        "\ ['previewpopup', 'width:20', 'a123'],
+        \ ['previewpopup', 'width:20', 'a123'],
         "\ ['printoptions', 'paper:A4', 'a123:'],
         \ ['quickfixtextfunc', 'MyQfFunc', '1a-'],
         \ ['rulerformat', '%l', '%['],

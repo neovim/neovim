@@ -363,6 +363,7 @@ OPTIONS
 • |g:clipboard| autodetection only selects tmux when running inside tmux
 • 'statusline' allows "stacking" highlight groups (groups inherit from
   previous highlight attributes)
+• Added 'previewpopup' option.
 
 PERFORMANCE
 

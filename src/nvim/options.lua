@@ -6603,6 +6603,28 @@ local options = {
       varname = 'p_pvh',
     },
     {
+      abbreviation = 'pvp',
+      cb = 'did_set_previewpopup',
+      values = {
+        'height:',
+        'width:',
+      },
+      expand_cb = 'expand_set_popupoption',
+      defaults = { if_true = '' },
+      desc = [=[
+        When not empty a floating window is used for commands that would open
+        a preview window.  See |preview-popup|.
+        Not used for the insert completion info, add "popup" to
+        'completeopt' for that.
+      ]=],
+      full_name = 'previewpopup',
+      list = 'commacolon',
+      scope = { 'global' },
+      short_desc = N_('use a floating window for preview'),
+      type = 'string',
+      varname = 'p_pvp',
+    },
+    {
       abbreviation = 'pvw',
       cb = 'did_set_previewwindow',
       defaults = false,

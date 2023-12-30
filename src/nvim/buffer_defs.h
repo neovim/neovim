@@ -990,6 +990,11 @@ typedef enum {
   kBorderTextFooter = 1,
 } BorderTextType;
 
+typedef enum {
+  kWinFloatPreview,
+  kWinFloatInfo,
+} WinFloatKind;
+
 /// See ":help nvim_open_win()" for documentation.
 typedef struct {
   Window window;
@@ -1194,6 +1199,11 @@ struct window_S {
   pos_save_T w_save_cursor;         // backup of cursor pos and topline
   bool w_do_win_fix_cursor;         // if true cursor may be invalid
 
+  int w_maxwidth;                   // maxwidth of floating preview window from 'previewpopup'
+  int w_maxheight;                  // maxheight of floating preview window from 'previewpopup'
+  int w_wantline;                   // "line" for floating preview window
+  int w_wantcol;                    // "col" for floating preview window
+
   int w_winrow_off;  ///< offset from winrow to the inner window area
   int w_wincol_off;  ///< offset from wincol to the inner window area
                      ///< this includes float border but excludes special columns
@@ -1361,6 +1371,7 @@ struct window_S {
   bool w_pos_changed;                   // true if window position changed
   bool w_floating;                      ///< whether the window is floating
   bool w_float_is_info;                 // the floating window is info float
+  varnumber_T w_float_last_changedtick;  // b:changedtick of popup buffer
   WinConfig w_config;
 
   // w_fraction is the fractional row of the cursor within the window, from

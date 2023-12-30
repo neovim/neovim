@@ -5042,6 +5042,10 @@ static void ex_pclose(exarg_T *eap)
       break;
     }
   }
+
+  if (*p_pvp != NUL) {
+    win_float_close(kWinFloatPreview);
+  }
 }
 
 /// Close window "win" and take care of handling closing the last window for a
@@ -7359,7 +7363,7 @@ static void prepare_preview_window(void)
 {
   // Open the preview window or popup and make it the current window.
   g_do_tagpreview = (int)p_pvh;
-  prepare_tagpreview(true);
+  prepare_tagpreview(true, *p_pvp != NUL);
 }
 
 static void back_to_current_window(win_T *curwin_save)

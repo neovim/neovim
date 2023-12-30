@@ -5033,6 +5033,17 @@ vim.o.pvh = vim.o.previewheight
 vim.go.previewheight = vim.o.previewheight
 vim.go.pvh = vim.go.previewheight
 
+--- When not empty a floating window is used for commands that would open
+--- a preview window.  See `preview-popup`.
+--- Not used for the insert completion info, add "popup" to
+--- 'completeopt' for that.
+---
+--- @type string
+vim.o.previewpopup = ""
+vim.o.pvp = vim.o.previewpopup
+vim.go.previewpopup = vim.o.previewpopup
+vim.go.pvp = vim.go.previewpopup
+
 --- Identifies the preview window.  Only one window can have this option
 --- set.  It's normally not set directly, but by using one of the commands
 --- `:ptag`, `:pedit`, etc.
