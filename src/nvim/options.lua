@@ -6632,6 +6632,43 @@ local options = {
       varname = 'p_pvh',
     },
     {
+      abbreviation = 'pvp',
+      cb = 'did_set_previewpopup',
+      values = {
+        'height:',
+        'width:',
+        'border:',
+      },
+      expand_cb = 'expand_set_popupoption',
+      defaults = { if_true = '' },
+      desc = [=[
+        When not empty a floating window is used for commands that would open
+        a preview window.  See |preview-popup|.
+        The option is a comma-separated list of these items:
+           height  Height of the window.  When omitted, it is derived from
+                   the content.
+           width   Width of the window.  When omitted, it is derived from
+                   the content.
+           border  One of the 'winborder' styles.  When omitted, 'winborder'
+                   is used.  A custom (comma separated) border cannot be
+                   given here, use 'winborder'.
+        The window background uses |hl-NormalFloat| and the border uses
+        |hl-FloatBorder|.
+        Not used for the insert completion info, add "popup" to 'completeopt'
+        for that.
+
+        Example: >vim
+        	set previewpopup=height:10,width:60,border:rounded
+        <
+      ]=],
+      full_name = 'previewpopup',
+      list = 'commacolon',
+      scope = { 'global' },
+      short_desc = N_('use a floating window for preview'),
+      type = 'string',
+      varname = 'p_pvp',
+    },
+    {
       abbreviation = 'pvw',
       cb = 'did_set_previewwindow',
       defaults = false,

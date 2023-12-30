@@ -996,8 +996,8 @@ static bool parse_float_bufpos(Array bufpos, lpos_T *out)
   return true;
 }
 
-static void parse_bordertext(Object bordertext, BorderTextType bordertext_type, WinConfig *fconfig,
-                             Error *err)
+void parse_bordertext(Object bordertext, BorderTextType bordertext_type, WinConfig *fconfig,
+                      Error *err)
 {
   VALIDATE_EXP(!(bordertext.type != kObjectTypeString && bordertext.type != kObjectTypeArray),
                "title/footer", "String or Array", api_typename(bordertext.type), {

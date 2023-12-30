@@ -5062,6 +5062,34 @@ vim.o.pvh = vim.o.previewheight
 vim.go.previewheight = vim.o.previewheight
 vim.go.pvh = vim.go.previewheight
 
+--- When not empty a floating window is used for commands that would open
+--- a preview window.  See `preview-popup`.
+--- The option is a comma-separated list of these items:
+---    height  Height of the window.  When omitted, it is derived from
+---            the content.
+---    width   Width of the window.  When omitted, it is derived from
+---            the content.
+---    border  One of the 'winborder' styles.  When omitted, 'winborder'
+---            is used.  A custom (comma separated) border cannot be
+---            given here, use 'winborder'.
+--- The window background uses `hl-NormalFloat` and the border uses
+--- `hl-FloatBorder`.
+--- Not used for the insert completion info, add "popup" to 'completeopt'
+--- for that.
+---
+--- Example:
+---
+--- ```vim
+--- 	set previewpopup=height:10,width:60,border:rounded
+--- ```
+---
+---
+--- @type string
+vim.o.previewpopup = ""
+vim.o.pvp = vim.o.previewpopup
+vim.go.previewpopup = vim.o.previewpopup
+vim.go.pvp = vim.go.previewpopup
+
 --- Identifies the preview window.  Only one window can have this option
 --- set.  It's normally not set directly, but by using one of the commands
 --- `:ptag`, `:pedit`, etc.

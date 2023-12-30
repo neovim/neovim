@@ -2604,3 +2604,28 @@ const char *check_chars_options(void)
   }
   return NULL;
 }
+
+const char *did_set_previewpopup(optset_T *args)
+{
+  WinConfig fconfig = WIN_CONFIG_INIT;
+  if (!win_float_parse_option(p_pvp, &fconfig)) {
+    return e_invarg;
+  }
+  return NULL;
+}
+
+int expand_set_popupoption(optexpand_T *args, int *numMatches, char ***matches)
+{
+  expand_T *xp = args->oe_xp;
+  if (xp->xp_pattern - args->oe_set_arg >= 7 && strncmp(xp->xp_pattern - 7, "border:", 7) == 0) {
+    return expand_set_opt_string(args, opt_winborder_values,
+                                 ARRAY_SIZE(opt_winborder_values) - 1,
+                                 numMatches, matches);
+  }
+  if (xp->xp_pattern > args->oe_set_arg && *(xp->xp_pattern - 1) == ':') {
+    return FAIL;
+  }
+  return expand_set_opt_string(args, opt_pvp_values,
+                               ARRAY_SIZE(opt_pvp_values) - 1,
+                               numMatches, matches);
+}
