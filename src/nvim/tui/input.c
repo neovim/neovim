@@ -370,15 +370,6 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
     button = last_pressed_button;
   }
 
-  if (ev == TERMKEY_MOUSE_UNKNOWN && !(key->code.mouse[0] & 0x20)) {
-    int code = key->code.mouse[0] & ~0x3c;
-    // https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Other-buttons
-    if (code == 66 || code == 67) {
-      ev = TERMKEY_MOUSE_PRESS;
-      button = code + 4 - 64;
-    }
-  }
-
   if ((button == 0 && ev != TERMKEY_MOUSE_RELEASE)
       || (ev != TERMKEY_MOUSE_PRESS && ev != TERMKEY_MOUSE_DRAG && ev != TERMKEY_MOUSE_RELEASE)) {
     return;
