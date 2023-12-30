@@ -2854,7 +2854,7 @@ static void get_complete_info(list_T *what_list, dict_T *retdict)
     ret = tv_dict_add_nr(retdict, S_LEN("selected"),
                          (compl_curr_match != NULL)
                          ? compl_curr_match->cp_number - 1 : -1);
-    win_T *wp = win_float_find_preview();
+    win_T *wp = win_float_find_preview(true);
     if (wp != NULL) {
       tv_dict_add_nr(retdict, S_LEN("preview_winid"), wp->handle);
       tv_dict_add_nr(retdict, S_LEN("preview_bufnr"), wp->w_buffer->handle);
