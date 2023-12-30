@@ -629,12 +629,36 @@ describe('API: get highlight', function()
   it('can override exist highlight group by force #20323', function()
     local white = tonumber('ffffff', 16)
     local green = tonumber('00ff00', 16)
+    local grey = tonumber('888888', 16)
     meths.set_hl(0, 'Foo', { fg=white })
     meths.set_hl(0, 'Foo', { fg=green, force = true })
     eq({ fg = green },meths.get_hl(0, {name = 'Foo'}))
     meths.set_hl(0, 'Bar', {link = 'Comment', default = true})
     meths.set_hl(0, 'Bar', {link = 'Foo',default = true, force = true})
     eq({link ='Foo', default = true}, meths.get_hl(0, {name = 'Bar'}))
+    -- don't overwrite exist value by default value
+    meths.set_hl(0, 'FooBar', {fg = white, bg = grey})
+    meths.set_hl(0, 'FooBar', {fg = green, force = true})
+    eq({fg=green, bg=grey}, meths.get_hl(0, { name = 'FooBar'}))
+
+    --update guifg and ctermfg
+    meths.set_hl(0, 'FooBar', {fg = green, ctermfg = 5, force = true})
+    eq({fg=green, bg=grey, ctermfg=5}, meths.get_hl(0, { name = 'FooBar'}))
+
+    --update ctermfg
+    meths.set_hl(0, 'FooBar', {ctermfg = 10, force = true})
+    eq({fg=green, bg=grey, ctermfg=10}, meths.get_hl(0, { name = 'FooBar'}))
+
+    --update ctermbg
+    meths.set_hl(0, 'FooBar', { ctermbg = 20, force = true})
+    eq({fg=green, bg=grey, ctermfg=10, ctermbg=20}, meths.get_hl(0, { name = 'FooBar'}))
+
+    --update mask
+    meths.set_hl(0, 'FooBar', { underline = true, force = true})
+    eq({fg=green, bg=grey, ctermfg=10, ctermbg=20, underline = true, cterm = {underline = true}}, meths.get_hl(0, { name = 'FooBar'}))
+
+    meths.set_hl(0, 'FooBar', { bold = true, force = true})
+    eq({fg=green, bg=grey, ctermfg=10, ctermbg=20, underline = true, bold = true, cterm = {underline = true, bold = true}}, meths.get_hl(0, { name = 'FooBar'}))
   end)
 end)
 
