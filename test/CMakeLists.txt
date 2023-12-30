@@ -1,5 +1,6 @@
 add_subdirectory(functional/fixtures)  # compile test programs
 get_directory_property(GENERATED_HELP_TAGS DIRECTORY ${PROJECT_SOURCE_DIR}/runtime DEFINITION GENERATED_HELP_TAGS)
+get_directory_property(GENERATED_SYN_VIM DIRECTORY ${PROJECT_SOURCE_DIR}/runtime DEFINITION GENERATED_SYN_VIM)
 
 if(NOT BUSTED_OUTPUT_TYPE)
   set(BUSTED_OUTPUT_TYPE "nvim")
@@ -10,7 +11,7 @@ if(BUSTED_PRG)
   get_target_property(TEST_INCLUDE_DIRS main_lib INTERFACE_INCLUDE_DIRECTORIES)
 
   set(UNITTEST_PREREQS nvim)
-  set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS})
+  set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test pwsh-test streams-test tty-test ${GENERATED_HELP_TAGS} ${GENERATED_SYN_VIM})
   set(BENCHMARK_PREREQS nvim tty-test)
 
   check_lua_module(${LUA_PRG} "ffi" LUA_HAS_FFI)
