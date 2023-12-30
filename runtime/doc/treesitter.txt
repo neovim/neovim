@@ -1416,10 +1416,7 @@ LanguageTree:tree_for_range({range}, {opts})
 
 LanguageTree:trees()                                    *LanguageTree:trees()*
     Returns all trees of the regions parsed by this parser. Does not include
-    child languages. The result is list-like if
-    • this LanguageTree is the root, in which case the result is empty or a
-      singleton list; or
-    • the root LanguageTree is fully parsed.
+    child languages.
 
     Return: ~
         (`table<integer, TSTree>`)

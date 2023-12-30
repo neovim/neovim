@@ -815,20 +815,27 @@ end]]
     local root = parser:parse()[1]:root()
     parser:set_included_regions({{root:child(0)}})
     parser:invalidate()
-    return { parser:parse(true)[1]:root():range() }
+    local _, tree = next(parser:parse(true))
+    return { tree:root():range() }
     ]]
 
     eq({ 0, 0, 18, 1 }, res2)
 
-    eq({ { { 0, 0, 0, 18, 1, 512 } } }, exec_lua [[ return parser:included_regions() ]])
+    eq(
+      { { { 0, 0, 0, 18, 1, 512 } } },
+      exec_lua [[
+      return vim.tbl_values(parser:included_regions())
+    ]]
+    )
 
-    local range_tbl = exec_lua [[
+    eq(
+      { { { 0, 0, 0, 17, 1, 508 } } },
+      exec_lua [[
       parser:set_included_regions { { { 0, 0, 17, 1 } } }
       parser:parse()
-      return parser:included_regions()
+      return vim.tbl_values(parser:included_regions())
     ]]
-
-    eq({ { { 0, 0, 0, 17, 1, 508 } } }, range_tbl)
+    )
   end)
 
   it('allows to set complex ranges', function()
@@ -845,7 +852,8 @@ end]]
 
     parser:set_included_regions({nodes})
 
-    local root = parser:parse(true)[1]:root()
+    local _, tree = next(parser:parse(true))
+    local root = tree:root()
 
     local res = {}
     for i=0,(root:named_child_count() - 1) do
@@ -1381,15 +1389,40 @@ int x = INT_MAX;
       1,
       exec_lua [[
       parser:parse({0, 2})
-      return #parser:children().lua:trees()
+      return vim.tbl_count(parser:children().lua:trees())
     ]]
     )
 
     eq(
-      2,
+      1,
       exec_lua [[
       parser:parse({2, 6})
-      return #parser:children().lua:trees()
+      return vim.tbl_count(parser:children().lua:trees())
+    ]]
+    )
+
+    --- Don't discard trees during a batch
+    eq(
+      2,
+      exec_lua [[
+      parser:invalidate()
+      parser:_start_batch()
+      parser:parse({0, 2})
+      parser:parse({2, 6})
+      parser:_finish_batch()
+      return vim.tbl_count(parser:children().lua:trees())
+    ]]
+    )
+
+    -- Retain children if nothing is actually parsed
+    eq(
+      2,
+      exec_lua [[
+      parser:_start_batch()
+      parser:parse({0, 2})
+      parser:parse({2, 6})
+      parser:_finish_batch()
+      return vim.tbl_count(parser:children().lua:trees())
     ]]
     )
 
@@ -1397,7 +1430,7 @@ int x = INT_MAX;
       7,
       exec_lua [[
       parser:parse(true)
-      return #parser:children().lua:trees()
+      return vim.tbl_count(parser:children().lua:trees())
     ]]
     )
   end)
