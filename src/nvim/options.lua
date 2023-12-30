@@ -6035,6 +6035,24 @@ return {
       varname = 'p_pvh',
     },
     {
+      abbreviation = 'pvp',
+      cb = 'did_set_previewpopup',
+      expand_cb = 'expand_set_popupoption',
+      defaults = { if_true = '' },
+      desc = [=[
+        When not empty a floating window is used for commands that would open
+        a preview window.  See |preview-popup|.
+        Not used for the insert completion info, add "popup" to
+        'completeopt' for that.
+      ]=],
+      full_name = 'previewpopup',
+      list = 'commacolon',
+      scope = { 'global' },
+      short_desc = N_('use a flaoting window for preview'),
+      type = 'string',
+      varname = 'p_pvp',
+    },
+    {
       abbreviation = 'pvw',
       cb = 'did_set_previewwindow',
       defaults = { if_true = false },
@@ -6050,6 +6068,18 @@ return {
       short_desc = N_('identifies the preview window'),
       tags = { 'E590' },
       type = 'boolean',
+    },
+    {
+      abbreviation = 'pvwid',
+      defaults = { if_true = 9999 },
+      desc = [=[
+        Preview window id.
+      ]=],
+      full_name = 'previewwindowid',
+      scope = { 'global' },
+      short_desc = N_('preview window id'),
+      varname = 'p_pvwid',
+      type = 'number',
     },
     {
       defaults = { if_true = true },

@@ -9359,6 +9359,207 @@ describe('float window', function()
         })
       end
     end)
+    it('#previewpopup option', function()
+      command('call writefile(["bar"], "foo", "a")')
+      finally(function()
+        os.remove('foo')
+      end)
+      command('set previewpopup=height:2,width:5,border:single | pedit foo')
+      if multigrid then
+        screen:expect({grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4
+            {5:┌}{11:foo}{5:┐}|
+            {5:│}{1:bar}{5:│}|
+            {5:└───┘}|
+          ]], float_pos={
+          [4] = {1001, "NW", 1, 1, 1, false, 50};
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }, win_viewport_margins={
+          [2] = {
+            bottom = 0,
+            left = 0,
+            right = 0,
+            top = 0,
+            win = 1000
+          },
+          [4] = {
+            bottom = 1,
+            left = 1,
+            right = 1,
+            top = 1,
+            win = 1001
+          }
+        }
+        })
+      else
+        screen:expect({
+          grid = [[
+            ^                                        |
+            {0:~}{5:┌}{11:foo}{5:┐}{0:                                  }|
+            {0:~}{5:│}{1:bar}{5:│}{0:                                  }|
+            {0:~}{5:└───┘}{0:                                  }|
+            {0:~                                       }|*2
+                                                    |
+          ]]
+        })
+      end
+      eq(1001, api.nvim_get_option_value("previewwindowid", {scope= 'global'}))
+
+      --refconfig it by using set
+      command('set previewpopup=height:2,width:5,border:double')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 4
+            {5:╔═}{11:foo}{5:═╗}|
+            {5:║}{1:bar  }{5:║}|
+            {5:║}{1:     }{5:║}|
+            {5:╚═════╝}|
+          ]], float_pos={
+          [4] = {1001, "NW", 1, 1, 1, false, 50};
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [4] = {win = 1001, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }, win_viewport_margins={
+          [2] = {
+            bottom = 0,
+            left = 0,
+            right = 0,
+            top = 0,
+            win = 1000
+          },
+          [4] = {
+            bottom = 1,
+            left = 1,
+            right = 1,
+            top = 1,
+            win = 1001
+          }
+        }
+        })
+      else
+        screen:expect({
+          grid = [[
+            ^                                        |
+            {0:~}{5:╔═}{11:foo}{5:═╗}{0:                                }|
+            {0:~}{5:║}{1:bar  }{5:║}{0:                                }|
+            {0:~}{5:║}{1:     }{5:║}{0:                                }|
+            {0:~}{5:╚═════╝}{0:                                }|
+            {0:~                                       }|
+                                                    |
+          ]]
+        })
+      end
+      --can close by pclose command
+      command('pclose')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ]], win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }, win_viewport_margins={
+          [2] = {
+            bottom = 0,
+            left = 0,
+            right = 0,
+            top = 0,
+            win = 1000
+          }
+        }
+        })
+      else
+        screen:expect({
+          grid = [[
+            ^                                        |
+            {0:~                                       }|*5
+                                                    |
+          ]]
+        })
+      end
+
+      --when open an empty buffer/file will use max width and height
+      command('set previewpopup=height:2,width:7,border:double | pedit unexist')
+      if multigrid then
+        screen:expect({
+          grid = [[
+          ## grid 1
+            [2:----------------------------------------]|*6
+            [3:----------------------------------------]|
+          ## grid 2
+            ^                                        |
+            {0:~                                       }|*5
+          ## grid 3
+                                                    |
+          ## grid 5
+            {5:╔}{11:unexist}{5:╗}|
+            {5:║}{1:       }{5:║}|
+            {5:╚═══════╝}|
+          ]], float_pos={
+          [5] = {1002, "NW", 1, 1, 1, false, 50};
+        }, win_viewport={
+          [2] = {win = 1000, topline = 0, botline = 2, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+          [5] = {win = 1002, topline = 0, botline = 1, curline = 0, curcol = 0, linecount = 1, sum_scroll_delta = 0};
+        }, win_viewport_margins={
+          [2] = {
+            bottom = 0,
+            left = 0,
+            right = 0,
+            top = 0,
+            win = 1000
+          },
+          [5] = {
+            bottom = 1,
+            left = 1,
+            right = 1,
+            top = 1,
+            win = 1002
+          }
+        }
+        })
+      else
+        screen:expect({
+          grid = [[
+            ^                                        |
+            {0:~}{5:╔}{11:unexist}{5:╗}{0:                              }|
+            {0:~}{5:║}{1:       }{5:║}{0:                              }|
+            {0:~}{5:╚═══════╝}{0:                              }|
+            {0:~                                       }|*2
+                                                    |
+          ]]
+        })
+      end
+    end)
+
+    it('invalid argument in previewpopup', function ()
+      local err = pcall_err(n.exec_capture, 'set previewpopup=height:10,border:nonexist')
+      eq('nvim_exec2(): Vim(set):E474: Invalid argument: previewpopup=height:10,border:nonexist', err)
+    end)
   end
 
   describe('with ext_multigrid', function()

@@ -47,6 +47,7 @@
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
+#include "nvim/winfloat.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "optionstr.c.generated.h"
@@ -141,6 +142,11 @@ static char *(p_tpf_values[]) = { "BS", "HT", "FF", "ESC", "DEL", "C0", "C1", NU
 static char *(p_rdb_values[]) = { "compositor", "nothrottle", "invalid", "nodelta", "line",
                                   "flush", NULL };
 static char *(p_sloc_values[]) = { "last", "statusline", "tabline", NULL };
+
+// Note: Keep this in sync with parse_float_option()
+static char *(p_popup_option_values[]) = { "height:", "width:", "border:", NULL };
+static char *(p_popup_option_border_values[]) = { "single", "double", "none", "rounded", "solid",
+                                                  "shadow", NULL };
 
 /// All possible flags for 'shm'.
 /// the literal chars before 0 are removed flags. these are safely ignored
@@ -2880,4 +2886,42 @@ const char *check_chars_options(void)
     }
   }
   return NULL;
+}
+
+const char *did_set_previewpopup(optset_T *args)
+{
+  win_T *wp = win_float_find_preview(kFloatPreview);
+  WinConfig fconfig = wp ? wp->w_config : WIN_CONFIG_INIT;
+  if (!parse_float_option(&fconfig)) {
+    return e_invarg;
+  }
+
+  if (wp) {
+    win_config_float(wp, fconfig);
+  }
+  return NULL;
+}
+
+int expand_set_popupoption(optexpand_T *args, int *numMatches, char ***matches)
+{
+  expand_T *xp = args->oe_xp;
+
+  if (xp->xp_pattern > args->oe_set_arg && *(xp->xp_pattern - 1) == ':') {
+    int arg_len = (int)(xp->xp_pattern - args->oe_set_arg);
+
+    // match border:
+    if (arg_len >= 7 && strncmp(xp->xp_pattern - 7, "border:", 7) == 0) {
+      return expand_set_opt_string(args, p_popup_option_border_values,
+                                   ARRAY_SIZE(p_popup_option_border_values) - 1, numMatches,
+                                   matches);
+    }
+
+    return FAIL;
+  }
+
+  return expand_set_opt_string(args,
+                               p_popup_option_values,
+                               ARRAY_SIZE(p_popup_option_values) - 1,
+                               numMatches,
+                               matches);
 }

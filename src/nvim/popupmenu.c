@@ -745,9 +745,9 @@ win_T *pum_set_info(int selected, char *info)
   block_autocmds();
   RedrawingDisabled++;
   no_u_sync++;
-  win_T *wp = win_float_find_preview();
+  win_T *wp = win_float_find_preview(kFloatInfo);
   if (wp == NULL) {
-    wp = win_float_create(false, true);
+    wp = win_float_create(false, true, kFloatInfo);
     if (!wp) {
       return NULL;
     }
@@ -797,7 +797,7 @@ static bool pum_set_selected(int n, int repeat)
   bool use_float = strstr(p_cot, "popup") != NULL;
   // when new leader add and info window is shown and no selected we still
   // need use the first index item to update the info float window position.
-  bool force_select = use_float && pum_selected < 0 && win_float_find_preview();
+  bool force_select = use_float && pum_selected < 0 && win_float_find_preview(kFloatInfo);
   if (force_select) {
     pum_selected = 0;
   }
@@ -881,13 +881,13 @@ static bool pum_set_selected(int n, int repeat)
       no_u_sync++;
 
       if (!use_float) {
-        resized = prepare_tagpreview(false);
+        resized = prepare_tagpreview(false, false);
       } else {
-        win_T *wp = win_float_find_preview();
+        win_T *wp = win_float_find_preview(kFloatInfo);
         if (wp) {
           win_enter(wp, false);
         } else {
-          wp = win_float_create(true, true);
+          wp = win_float_create(true, true, kFloatInfo);
           if (wp) {
             resized = true;
           }
@@ -898,7 +898,7 @@ static bool pum_set_selected(int n, int repeat)
       RedrawingDisabled--;
       g_do_tagpreview = 0;
 
-      if (curwin->w_p_pvw || curwin->w_float_is_info) {
+      if (curwin->w_p_pvw || (curwin->w_float_is == kFloatInfo)) {
         int res = OK;
         if (!resized
             && (curbuf->b_nwindows == 1)
@@ -1054,9 +1054,8 @@ void pum_check_clear(void)
     }
     pum_is_drawn = false;
     pum_external = false;
-    win_T *wp = win_float_find_preview();
-    if (wp != NULL) {
-      win_close(wp, false, false);
+    if (strstr(p_cot, "popup") != NULL) {
+      win_float_close(kFloatInfo);
     }
   }
 }
