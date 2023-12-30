@@ -388,7 +388,9 @@ static void draw_foldcolumn(win_T *wp, winlinevars_T *wlv)
   int fdc = compute_foldcolumn(wp, 0);
   if (fdc > 0) {
     int attr = win_hl_attr(wp, use_cursor_line_highlight(wp, wlv->lnum) ? HLF_CLF : HLF_FC);
-    fill_foldcolumn(wlv, wp, wlv->foldinfo, wlv->lnum, attr, fdc, NULL);
+    fill_foldcolumn(wp, wlv->foldinfo, wlv->lnum, attr, fdc, NULL);
+    assert(wlv->off == 0);
+    wlv->off = fdc;
   }
 }
 
@@ -396,23 +398,23 @@ static void draw_foldcolumn(win_T *wp, winlinevars_T *wlv)
 ///
 /// @param fdc  Current width of the foldcolumn
 /// @param[out] out_buffer  Char array to write into, only used for 'statuscolumn'
-void fill_foldcolumn(void *maybe_wlv, win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr,
-                     int fdc, schar_T *out_buffer)
+void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, int fdc,
+                     schar_T *out_buffer)
 {
   bool closed = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
   int level = foldinfo.fi_level;
 
-  winlinevars_T *wlv = maybe_wlv;  // TODO(bfredl): this is bullshit
-
   // If the column is too narrow, we start at the lowest level that
   // fits and use numbers to indicate the depth.
   int first_level = MAX(level - fdc - closed + 1, 1);
-  int endcol = MIN(fdc, level);
+  int closedcol = MIN(fdc, level);
   int i = 0;
 
-  for (i = 0; i < endcol; i++) {
+  for (i = 0; i < fdc; i++) {
     int symbol = 0;
-    if (i == endcol - 1 && closed) {
+    if (i >= level) {
+      symbol = ' ';
+    } else if (i == closedcol - 1 && closed) {
       symbol = wp->w_p_fcs_chars.foldclosed;
     } else if (foldinfo.fi_lnum == lnum && first_level + i >= foldinfo.fi_low_level) {
       symbol = wp->w_p_fcs_chars.foldopen;
@@ -427,18 +429,10 @@ void fill_foldcolumn(void *maybe_wlv, win_T *wp, foldinfo_T foldinfo, linenr_T l
     if (out_buffer) {
       out_buffer[i] = schar_from_char(symbol);
     } else {
-      linebuf_vcol[wlv->off] = (i == endcol - 1 && closed) ? -2 : -3;
-      linebuf_attr[wlv->off] = attr;
-      linebuf_char[wlv->off++] = schar_from_char(symbol);
+      linebuf_vcol[i] = i >= level ? -1 : (i == closedcol - 1 && closed) ? -2 : -3;
+      linebuf_attr[i] = attr;
+      linebuf_char[i] = schar_from_char(symbol);
     }
-  }
-
-  if (out_buffer) {
-    while (i < fdc) {
-      out_buffer[i++] = schar_from_ascii(' ');
-    }
-  } else {
-    draw_col_fill(wlv, schar_from_ascii(' '), fdc - i, attr);
   }
 }
 
