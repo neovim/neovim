@@ -2702,9 +2702,10 @@ char *getcmdline(int firstc, int count, int indent, bool do_concat FUNC_ATTR_UNU
   return (char *)command_line_enter(firstc, count, indent, true);
 }
 
-buf_T getcmdbuf(int firstc, int count, int indent) {
+/// Get the command line buffer
+static buf_T getcmdbuf(int firstc, int count, int indent) {
   command_line_enter(firstc, count, indent, true);
-  return ccline.;
+  return ccline->cmdbuff;
 }
 
 /// Get a command line with a prompt
@@ -2974,7 +2975,9 @@ static void alloc_cmdbuff(int len)
     len += 20;
   }
 
-  ccline.cmdbuff = xmalloc((size_t)len);
+  // buflist_new(V, char *sfname_arg, linenr_T lnum, int flags)
+
+  ccline.cmdbuff = buflist_new(":", ":", 0, 0);
   ccline.cmdbufflen = len;
 }
 
