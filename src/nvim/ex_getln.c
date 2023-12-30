@@ -2702,6 +2702,11 @@ char *getcmdline(int firstc, int count, int indent, bool do_concat FUNC_ATTR_UNU
   return (char *)command_line_enter(firstc, count, indent, true);
 }
 
+buf_T getcmdbuf(int firstc, int count, int indent) {
+  command_line_enter(firstc, count, indent, true);
+  return ccline.;
+}
+
 /// Get a command line with a prompt
 ///
 /// This is prepared to be called recursively from getcmdline() (e.g. by
