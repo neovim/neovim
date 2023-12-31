@@ -148,7 +148,7 @@ iwyu: build/.ran-cmake
 	cmake --build build
 
 clean:
-	+test -d build && $(BUILD_TOOL) -C build clean || true
+	+test -d build && $(BUILD_TOOL) -C build clean && $(BUILD_TOOL) -C build reset-doc || true
 	$(MAKE) -C test/old/testdir clean
 	$(MAKE) -C runtime/indent clean
 

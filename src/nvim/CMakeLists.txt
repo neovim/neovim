@@ -903,6 +903,8 @@ set(VIMDOC_FILES
   ${NVIM_RUNTIME_DIR}/doc/treesitter.mpack
   ${NVIM_RUNTIME_DIR}/doc/treesitter.txt
 )
+set(VIMDOC_TXT_FILES ${VIMDOC_FILES})
+list(FILTER VIMDOC_TXT_FILES EXCLUDE REGEX "\.mpack$")
 
 file(GLOB API_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
 
@@ -951,3 +953,10 @@ add_custom_target(doc-eval DEPENDS ${GEN_EVAL_FILES})
 add_custom_target(doc-vim DEPENDS ${VIMDOC_FILES})
 add_custom_target(doc)
 add_dependencies(doc doc-vim doc-eval)
+
+# Reset generated doc files (which have been deleted during clean)
+# that are version-controlled by git.
+add_custom_target(reset-doc
+  COMMAND git checkout -- ${GEN_EVAL_FILES} ${VIMDOC_TXT_FILES}
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
