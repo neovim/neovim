@@ -38,16 +38,27 @@ footer = """
 [git]
 # parse the commits based on https://www.conventionalcommits.org
 conventional_commits = true
-# filter out the commits that are not conventional
-filter_unconventional = true
+# do not filter out the commits that are not conventional
+filter_unconventional = false
+# do not filter out the commits that are not matched by commit parsers
+filter_commits = false
 # process each line of a commit as an individual commit
 split_commits = false
 # regex for preprocessing the commit messages
 commit_preprocessors = [
 #    { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](https://github.com/neovim/neovim/issues/${2}))"},
+    { pattern = '^\[Backport release.*\]\s*', replace = '' },
+    { pattern = '[\s\r\n]+$', replace = '' },  # strip trailing empty lines
 ]
 # regex for parsing and grouping commits
 commit_parsers = [
+    # Exclude "merge commits"
+    { message = '^Merge pull request #[0-9]+ from .*[\n\s]*', skip = true },
+    { message = '^Merge #[0-9]+', skip = true },
+    # Exclude the release commit itself and version bump
+    { message = '^NVIM [0-9.]+[\r\n]', skip = true },
+    { message = '^[Vv]ersion bump$', skip = true },
+
     { message = "!:", group = "Breaking"},
     { message = "^feat", group = "Features"},
     { message = "^fix", group = "Bug Fixes"},
@@ -56,11 +67,16 @@ commit_parsers = [
     { message = "^refactor", group = "Refactor"},
     { message = "^test", group = "Testing"},
     { message = "^chore", group = "Miscellaneous Tasks"},
+    { message = "^ci", group = "Build System"},
     { message = "^build", group = "Build System"},
-    { message = "^Revert", group = "Reverted Changes"},
+    { message = "^[rR]evert", group = "Reverted Changes"},
+    { message = "^vim-patch", group = "Vim Patches"},
+
+    # All other commits that are not conventional should be reviewed manually
+    # Note: '[' is lexicographically larger than 'Z', so this section is put at the end
+    { message = "^([^)\r\n]+):", group = "[unclassified; TODO: review manually]", scope = "$1" },
+    { message = ".*", group = "[unclassified; TODO: review manually]" },
 ]
-# filter out the commits that are not matched by commit parsers
-filter_commits = true
 # glob pattern for matching git tags
 tag_pattern = "v[0-9]*"
 # regex for skipping tags
