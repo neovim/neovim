@@ -26,7 +26,7 @@ typedef int64_t blocknr_T;
 /// The free list is a single linked list, not sorted.
 /// The blocks in the free list have no block of memory allocated and
 /// the contents of the block in the file (if any) is irrelevant.
-typedef struct bhdr {
+typedef struct {
   blocknr_T bh_bnum;                 ///< key used in hash table
 
   void *bh_data;                     ///< pointer to memory (for used block)
@@ -44,7 +44,7 @@ typedef enum {
 } mfdirty_T;
 
 /// A memory file.
-typedef struct memfile {
+typedef struct {
   char *mf_fname;                    ///< name of the file
   char *mf_ffname;                   ///< idem, full path
   int mf_fd;                         ///< file descriptor

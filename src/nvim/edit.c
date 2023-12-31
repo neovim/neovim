@@ -64,7 +64,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-typedef struct insert_state {
+typedef struct {
   VimState state;
   cmdarg_T *ca;
   int mincol;

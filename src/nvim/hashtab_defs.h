@@ -21,7 +21,7 @@ typedef size_t hash_T;
 /// value, so that you can get a pointer to the value subtracting an offset from
 /// the pointer to the key.
 /// This reduces the size of this item by 1/3.
-typedef struct hashitem_S {
+typedef struct {
   /// Cached hash number for hi_key.
   hash_T hi_hash;
 
@@ -48,7 +48,7 @@ enum {
 /// Values are of any type.
 ///
 /// The hashtable grows to accommodate more entries when needed.
-typedef struct hashtable_S {
+typedef struct {
   hash_T ht_mask;        ///< mask used for hash value
                          ///< (nr of items in array is "ht_mask" + 1)
   size_t ht_used;        ///< number of items used

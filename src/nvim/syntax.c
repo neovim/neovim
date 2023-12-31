@@ -75,7 +75,7 @@ static const char e_trailing_char_after_rsb_str_str[]
 // and for the actually highlighted text (_h_start and _h_end).
 //
 // Note that ordering of members is optimized to reduce padding.
-typedef struct syn_pattern {
+typedef struct {
   char sp_type;                         // see SPTYPE_ defines below
   bool sp_syncing;                      // this item used for syncing
   int16_t sp_syn_match_id;              // highlight group ID of pattern
@@ -95,7 +95,7 @@ typedef struct syn_pattern {
   syn_time_T sp_time;
 } synpat_T;
 
-typedef struct syn_cluster_S {
+typedef struct {
   char *scl_name;           // syntax cluster name
   char *scl_name_u;         // uppercase of scl_name
   int16_t *scl_list;        // IDs in this syntax cluster
@@ -104,7 +104,7 @@ typedef struct syn_cluster_S {
 // For the current state we need to remember more than just the idx.
 // When si_m_endpos.lnum is 0, the items other than si_idx are unknown.
 // (The end positions have the column number of the next char)
-typedef struct state_item {
+typedef struct {
   int si_idx;                           // index of syntax pattern or
                                         // KEYWORD_IDX
   int si_id;                            // highlight group ID for keywords

@@ -59,7 +59,7 @@ typedef enum {
 #define TAGSTACKSIZE    20
 
 /// Represents view in which the mark was created
-typedef struct fmarkv {
+typedef struct {
   linenr_T topline_offset;  ///< Amount of lines from the mark lnum to the top of the window.
                             ///< Use MAXLNUM to indicate that the mark does not have a view.
 } fmarkv_T;
@@ -67,7 +67,7 @@ typedef struct fmarkv {
 #define INIT_FMARKV { MAXLNUM }
 
 /// Structure defining single local mark
-typedef struct filemark {
+typedef struct {
   pos_T mark;           ///< Cursor position.
   int fnum;             ///< File number.
   Timestamp timestamp;  ///< Time when this mark was last set.
@@ -78,7 +78,7 @@ typedef struct filemark {
 #define INIT_FMARK { { 0, 0, 0 }, 0, 0, INIT_FMARKV, NULL }
 
 /// Structure defining extended mark (mark with file name attached)
-typedef struct xfilemark {
+typedef struct {
   fmark_T fmark;       ///< Actual mark.
   char *fname;  ///< File name, used when fnum == 0.
 } xfmark_T;

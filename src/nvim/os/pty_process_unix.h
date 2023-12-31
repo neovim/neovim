@@ -7,7 +7,7 @@
 #include "nvim/event/process.h"
 #include "nvim/types_defs.h"
 
-typedef struct pty_process {
+typedef struct {
   Process process;
   uint16_t width, height;
   struct winsize winsize;

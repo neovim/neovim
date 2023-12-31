@@ -107,7 +107,7 @@ typedef enum {
 /// Usually the list contains one or more entries. But an empty list can be
 /// created using setqflist()/setloclist() with a title and/or user context
 /// information and entries can be added later using setqflist()/setloclist().
-typedef struct qf_list_S {
+typedef struct {
   unsigned qf_id;         ///< Unique identifier for this list
   qfltype_T qfl_type;
   qfline_T *qf_start;     ///< pointer to the first error
@@ -232,7 +232,7 @@ typedef struct {
 } qffields_T;
 
 /// :vimgrep command arguments
-typedef struct vgr_args_S {
+typedef struct {
   int tomatch;          ///< maximum number of matches to find
   char *spat;          ///< search pattern
   int flags;             ///< search modifier

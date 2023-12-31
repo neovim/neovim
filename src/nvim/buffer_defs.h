@@ -88,7 +88,7 @@ typedef struct frame_S frame_T;
 typedef uint64_t disptick_T;  // display tick type
 
 // The taggy struct is used to store the information about a :tag command.
-typedef struct taggy {
+typedef struct {
   char *tagname;                // tag name
   fmark_T fmark;                // cursor position BEFORE ":tag"
   int cur_match;                // match number
@@ -808,7 +808,7 @@ struct tabpage_S {
 // may not reflect what is actually in the buffer.  When wl_valid is false,
 // the entries can only be used to count the number of displayed lines used.
 // wl_lnum and wl_lastlnum are invalid too.
-typedef struct w_line {
+typedef struct {
   linenr_T wl_lnum;             // buffer line number for logical line
   uint16_t wl_size;             // height in screen lines
   char wl_valid;                // true values are valid for text in buffer

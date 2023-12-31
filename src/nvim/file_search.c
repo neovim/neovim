@@ -157,7 +157,7 @@ typedef struct ff_visited_list_hdr {
 //   ffsc_stopdirs_v:   array of stop directories for upward search
 //   ffsc_find_what:    FINDFILE_BOTH, FINDFILE_DIR or FINDFILE_FILE
 //   ffsc_tagfile:      searching for tags file, don't use 'suffixesadd'
-typedef struct ff_search_ctx_T {
+typedef struct {
   ff_stack_T *ffsc_stack_ptr;
   ff_visited_list_hdr_T *ffsc_visited_list;
   ff_visited_list_hdr_T *ffsc_dir_visited_list;

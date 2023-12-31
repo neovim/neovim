@@ -74,7 +74,7 @@ enum {
 ///
 /// @note Only offset for the last search pattern is used, not for the last
 ///       substitute pattern.
-typedef struct soffset {
+typedef struct {
   char dir;     ///< Search direction: forward ('/') or backward ('?')
   bool line;    ///< True if search has line offset.
   bool end;     ///< True if search sets cursor at the end.
@@ -82,7 +82,7 @@ typedef struct soffset {
 } SearchOffset;
 
 /// Structure containing last search pattern and its attributes.
-typedef struct spat {
+typedef struct {
   char *pat;            ///< The pattern (in allocated memory) or NULL.
   bool magic;           ///< Magicness of the pattern.
   bool no_scs;          ///< No smartcase for this pattern.
@@ -99,7 +99,7 @@ typedef struct {
   int sa_wrapped;    ///< search wrapped around
 } searchit_arg_T;
 
-typedef struct searchstat {
+typedef struct {
   int cur;      // current position of found words
   int cnt;      // total count of found words
   bool exact_match;    // true if matched exactly on specified position

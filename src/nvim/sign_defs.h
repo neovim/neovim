@@ -9,7 +9,7 @@ typedef struct {
 } SignTextAttrs;
 
 /// Struct to hold the sign properties.
-typedef struct sign {
+typedef struct {
   char *sn_name;   // name of sign
   char *sn_icon;   // name of pixmap
   schar_T sn_text[SIGN_WIDTH];   // text used instead of pixmap

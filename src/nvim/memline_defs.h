@@ -7,14 +7,14 @@
 /// are the branches leading to that block. This is stored in ml_stack.  Each
 /// entry is a pointer to info in a block (may be data block or pointer block)
 ///
-typedef struct info_pointer {
+typedef struct {
   blocknr_T ip_bnum;            // block number
   linenr_T ip_low;              // lowest lnum in this block
   linenr_T ip_high;             // highest lnum in this block
   int ip_index;                 // index for block with current lnum
 } infoptr_T;    // block/index pair
 
-typedef struct ml_chunksize {
+typedef struct {
   int mlcs_numlines;
   int mlcs_totalsize;
 } chunksize_T;
@@ -39,7 +39,7 @@ typedef struct ml_chunksize {
 ///             memory.  With this structure it is roughly (N * 128) pointer
 ///             moves, where N is the height (typically 1-3).
 ///
-typedef struct memline {
+typedef struct {
   linenr_T ml_line_count;       // number of lines in the buffer
 
   memfile_T *ml_mfp;          // pointer to associated memfile
