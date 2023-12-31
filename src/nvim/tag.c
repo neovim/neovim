@@ -60,7 +60,7 @@
 #include "nvim/window.h"
 
 // Structure to hold pointers to various items in a tag line.
-typedef struct tag_pointers {
+typedef struct {
   // filled in by parse_tag_line():
   char *tagname;        // start of tag name (skip "file:")
   char *tagname_end;    // char after tag name

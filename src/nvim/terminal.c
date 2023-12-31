@@ -86,7 +86,7 @@
 #include "nvim/ui.h"
 #include "nvim/vim_defs.h"
 
-typedef struct terminal_state {
+typedef struct {
   VimState state;
   Terminal *term;
   int save_rd;              // saved value of RedrawingDisabled

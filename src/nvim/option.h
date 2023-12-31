@@ -42,7 +42,7 @@ typedef enum {
 // buffers.  Indicate this by setting "var" to VAR_WIN.
 #define VAR_WIN ((char *)-1)
 
-typedef struct vimoption {
+typedef struct {
   char *fullname;           ///< full option name
   char *shortname;          ///< permissible abbreviation
   uint32_t flags;           ///< see above

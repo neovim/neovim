@@ -74,7 +74,7 @@ typedef struct {
 #define CALLBACK_NONE ((Callback)CALLBACK_INIT)
 
 /// Structure holding dictionary watcher
-typedef struct dict_watcher {
+typedef struct {
   Callback callback;
   char *key_pattern;
   size_t key_pattern_len;

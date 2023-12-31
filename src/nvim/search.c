@@ -90,7 +90,7 @@ static const char e_search_hit_bottom_without_match_for_str[]
 // one for other searches.  last_idx points to the one that was used the last
 // time.
 
-static struct spat spats[2] = {
+static SearchPattern spats[2] = {
   // Last used search pattern
   [0] = { NULL, true, false, 0, { '/', false, false, 0 }, NULL },
   // Last used substitute pattern
@@ -106,7 +106,7 @@ static char lastc_bytes[MB_MAXBYTES + 1];
 static int lastc_bytelen = 1;             // >1 for multi-byte char
 
 // copy of spats[], for keeping the search patterns while executing autocmds
-static struct spat saved_spats[2];
+static SearchPattern saved_spats[2];
 static char *saved_mr_pattern = NULL;
 static int saved_spats_last_idx = 0;
 static bool saved_spats_no_hlsearch = false;
@@ -116,7 +116,7 @@ static char *mr_pattern = NULL;
 
 // Type used by find_pattern_in_path() to remember which included files have
 // been searched already.
-typedef struct SearchedFile {
+typedef struct {
   FILE *fp;              // File pointer
   char *name;            // Full name of file
   linenr_T lnum;                // Line we were up to in file
@@ -270,7 +270,7 @@ void restore_search_patterns(void)
   set_no_hlsearch(saved_spats_no_hlsearch);
 }
 
-static inline void free_spat(struct spat *const spat)
+static inline void free_spat(SearchPattern *const spat)
 {
   xfree(spat->pat);
   tv_dict_unref(spat->additional_data);
@@ -291,7 +291,7 @@ void free_search_patterns(void)
 
 // copy of spats[RE_SEARCH], for keeping the search patterns while incremental
 // searching
-static struct spat saved_last_search_spat;
+static SearchPattern saved_last_search_spat;
 static int did_save_last_search_spat = 0;
 static int saved_last_idx = 0;
 static bool saved_no_hlsearch = false;
@@ -1047,7 +1047,7 @@ int do_search(oparg_T *oap, int dirc, int search_delim, char *pat, int count, in
 
   // Save the values for when (options & SEARCH_KEEP) is used.
   // (there is no "if ()" around this because gcc wants them initialized)
-  struct soffset old_off = spats[0].off;
+  SearchOffset old_off = spats[0].off;
 
   pos = curwin->w_cursor;       // start searching at the cursor position
 

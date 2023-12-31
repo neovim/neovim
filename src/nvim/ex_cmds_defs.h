@@ -128,7 +128,7 @@ struct aucmd_executable_t {
 typedef char *(*LineGetter)(int, void *, int, bool);
 
 /// Structure for command definition.
-typedef struct cmdname {
+typedef struct {
   char *cmd_name;                      ///< Name of the command.
   ex_func_T cmd_func;                  ///< Function with implementation of this command.
   ex_preview_func_T cmd_preview_func;  ///< Preview callback function of this command.

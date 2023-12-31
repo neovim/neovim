@@ -124,7 +124,7 @@ slang_T *first_lang = NULL;
 char *int_wordlist = NULL;
 
 // Structure to store info for word matching.
-typedef struct matchinf_S {
+typedef struct {
   langp_T *mi_lp;                   // info for language and region
 
   // pointers to original text to be checked
@@ -163,14 +163,14 @@ typedef struct matchinf_S {
 } matchinf_T;
 
 // Structure used for the cookie argument of do_in_runtimepath().
-typedef struct spelload_S {
+typedef struct {
   char sl_lang[MAXWLEN + 1];            // language name
   slang_T *sl_slang;                    // resulting slang_T struct
   int sl_nobreak;                       // NOBREAK language found
 } spelload_T;
 
 #define SY_MAXLEN   30
-typedef struct syl_item_S {
+typedef struct {
   char sy_chars[SY_MAXLEN];               // the sequence of chars
   int sy_len;
 } syl_item_T;

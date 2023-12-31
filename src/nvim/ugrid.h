@@ -2,12 +2,12 @@
 
 #include "nvim/types_defs.h"
 
-typedef struct ucell {
+typedef struct {
   schar_T data;
   sattr_T attr;
 } UCell;
 
-typedef struct ugrid {
+typedef struct {
   int row, col;
   int width, height;
   UCell **cells;

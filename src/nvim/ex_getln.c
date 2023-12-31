@@ -102,7 +102,7 @@ typedef struct {
   optmagic_T magic_overruled_save;
 } incsearch_state_T;
 
-typedef struct command_line_state {
+typedef struct {
   VimState state;
   int firstc;
   int count;
@@ -131,7 +131,7 @@ typedef struct command_line_state {
   buf_T *b_im_ptr_buf;  ///< buffer where b_im_ptr is valid
 } CommandLineState;
 
-typedef struct cmdpreview_undo_info {
+typedef struct {
   u_header_T *save_b_u_oldhead;
   u_header_T *save_b_u_newhead;
   u_header_T *save_b_u_curhead;
@@ -147,7 +147,7 @@ typedef struct cmdpreview_undo_info {
   colnr_T save_b_u_line_colnr;
 } CpUndoInfo;
 
-typedef struct cmdpreview_buf_info {
+typedef struct {
   buf_T *buf;
   OptInt save_b_p_ul;
   int save_b_changed;
@@ -157,7 +157,7 @@ typedef struct cmdpreview_buf_info {
   CpUndoInfo undo_info;
 } CpBufInfo;
 
-typedef struct cmdpreview_win_info {
+typedef struct {
   win_T *win;
   pos_T save_w_cursor;
   viewstate_T save_viewstate;
@@ -165,7 +165,7 @@ typedef struct cmdpreview_win_info {
   int save_w_p_cuc;
 } CpWinInfo;
 
-typedef struct cmdpreview_info {
+typedef struct {
   kvec_t(CpWinInfo) win_info;
   kvec_t(CpBufInfo) buf_info;
   bool save_hls;

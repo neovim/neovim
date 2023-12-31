@@ -63,7 +63,7 @@
 #define WF_MIXCAP   0x20        // mix of upper and lower case: macaRONI
 
 /// Information used when looking for suggestions.
-typedef struct suginfo_S {
+typedef struct {
   garray_T su_ga;                  ///< suggestions, contains "suggest_T"
   int su_maxcount;                 ///< max. number of suggestions displayed
   int su_maxscore;                 ///< maximum score for adding to su_ga
@@ -186,7 +186,7 @@ typedef enum {
 } state_T;
 
 /// Struct to keep the state at each level in suggest_try_change().
-typedef struct trystate_S {
+typedef struct {
   state_T ts_state;          ///< state at this level, STATE_
   int ts_score;              ///< score
   idx_T ts_arridx;           ///< index in tree array, start of node

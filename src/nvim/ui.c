@@ -37,7 +37,7 @@
 #include "nvim/window.h"
 #include "nvim/winfloat.h"
 
-typedef struct ui_event_callback {
+typedef struct {
   LuaRef cb;
   bool ext_widgets[kUIGlobalCount];
 } UIEventCallback;

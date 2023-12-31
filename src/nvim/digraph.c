@@ -38,7 +38,7 @@
 
 typedef int result_T;
 
-typedef struct digraph {
+typedef struct {
   uint8_t char1;
   uint8_t char2;
   result_T result;

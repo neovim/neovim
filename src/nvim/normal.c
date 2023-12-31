@@ -75,7 +75,7 @@
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
-typedef struct normal_state {
+typedef struct {
   VimState state;
   bool command_finished;
   bool ctrl_w;

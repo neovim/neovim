@@ -20,7 +20,7 @@ typedef enum {
 enum { HIST_COUNT = HIST_DEBUG + 1, };  ///< Number of history tables
 
 /// History entry definition
-typedef struct hist_entry {
+typedef struct {
   int hisnum;           ///< Entry identifier number.
   char *hisstr;         ///< Actual entry, separator char after the NUL.
   Timestamp timestamp;  ///< Time when entry was added.

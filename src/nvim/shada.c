@@ -346,25 +346,25 @@ typedef struct {
   PMap(cstr_t) file_marks;  ///< All file marks.
 } WriteMergerState;
 
-struct sd_read_def;
+typedef struct sd_read_def ShaDaReadDef;
 
 /// Function used to close files defined by ShaDaReadDef
-typedef void (*ShaDaReadCloser)(struct sd_read_def *const sd_reader)
+typedef void (*ShaDaReadCloser)(ShaDaReadDef *const sd_reader)
   REAL_FATTR_NONNULL_ALL;
 
 /// Function used to read ShaDa files
-typedef ptrdiff_t (*ShaDaFileReader)(struct sd_read_def *const sd_reader,
+typedef ptrdiff_t (*ShaDaFileReader)(ShaDaReadDef *const sd_reader,
                                      void *const dest,
                                      const size_t size)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Function used to skip in ShaDa files
-typedef int (*ShaDaFileSkipper)(struct sd_read_def *const sd_reader,
+typedef int (*ShaDaFileSkipper)(ShaDaReadDef *const sd_reader,
                                 const size_t offset)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Structure containing necessary pointers for reading ShaDa files
-typedef struct sd_read_def {
+struct sd_read_def {
   ShaDaFileReader read;   ///< Reader function.
   ShaDaReadCloser close;  ///< Close function.
   ShaDaFileSkipper skip;  ///< Function used to skip some bytes.
@@ -373,27 +373,27 @@ typedef struct sd_read_def {
   const char *error;      ///< Error message in case of error.
   uintmax_t fpos;         ///< Current position (amount of bytes read since
                           ///< reader structure initialization). May overflow.
-} ShaDaReadDef;
+};
 
-struct sd_write_def;
+typedef struct sd_write_def ShaDaWriteDef;
 
 /// Function used to close files defined by ShaDaWriteDef
-typedef void (*ShaDaWriteCloser)(struct sd_write_def *const sd_writer)
+typedef void (*ShaDaWriteCloser)(ShaDaWriteDef *const sd_writer)
   REAL_FATTR_NONNULL_ALL;
 
 /// Function used to write ShaDa files
-typedef ptrdiff_t (*ShaDaFileWriter)(struct sd_write_def *const sd_writer,
+typedef ptrdiff_t (*ShaDaFileWriter)(ShaDaWriteDef *const sd_writer,
                                      const void *const src,
                                      const size_t size)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Structure containing necessary pointers for writing ShaDa files
-typedef struct sd_write_def {
+struct sd_write_def {
   ShaDaFileWriter write;   ///< Writer function.
   ShaDaWriteCloser close;  ///< Close function.
   void *cookie;            ///< Data describing object written to.
   const char *error;       ///< Error message in case of error.
-} ShaDaWriteDef;
+};
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "shada.c.generated.h"

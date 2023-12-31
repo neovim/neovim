@@ -38,7 +38,7 @@ typedef enum {
 #define SHAPE_MOUSE     1       // used for mouse pointer shape
 #define SHAPE_CURSOR    2       // used for text cursor shape
 
-typedef struct cursor_entry {
+typedef struct {
   char *full_name;        ///< mode description
   CursorShape shape;      ///< cursor shape: one of the SHAPE_ defines
   int mshape;             ///< mouse shape: one of the MSHAPE defines

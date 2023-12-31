@@ -78,7 +78,7 @@ enum {
 /// Info from "REP", "REPSAL" and "SAL" entries in ".aff" file used in si_rep,
 /// si_repsal, sl_rep, and si_sal.  Not for sl_sal!
 /// One replacement: from "ft_from" to "ft_to".
-typedef struct fromto_S {
+typedef struct {
   char *ft_from;
   char *ft_to;
 } fromto_T;
@@ -86,7 +86,7 @@ typedef struct fromto_S {
 /// Info from "SAL" entries in ".aff" file used in sl_sal.
 /// The info is split for quick processing by spell_soundfold().
 /// Note that "sm_oneof" and "sm_rules" point into sm_lead.
-typedef struct salitem_S {
+typedef struct {
   char *sm_lead;    ///< leading letters
   int sm_leadlen;   ///< length of "sm_lead"
   char *sm_oneof;   ///< letters from () or NULL
@@ -192,7 +192,7 @@ struct slang_S {
 };
 
 /// Structure used in "b_langp", filled from 'spelllang'.
-typedef struct langp_S {
+typedef struct {
   slang_T *lp_slang;    ///< info for this language
   slang_T *lp_sallang;  ///< language used for sound folding or NULL
   slang_T *lp_replang;  ///< language used for REP items or NULL
@@ -223,7 +223,7 @@ typedef enum {
   SPELL_ADD_RARE = 2,
 } SpellAddType;
 
-typedef struct wordcount_S {
+typedef struct {
   uint16_t wc_count;  ///< nr of times word was seen
   char wc_word[];     ///< word
 } wordcount_T;

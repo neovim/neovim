@@ -31,7 +31,7 @@ struct keyentry {
 };
 
 // Struct used to store one state of the state stack.
-typedef struct buf_state {
+typedef struct {
   int bs_idx;                    // index of pattern
   int bs_flags;                  // flags for pattern
   int bs_seqnr;                  // stores si_seqnr

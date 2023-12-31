@@ -5,7 +5,7 @@
 #include "nvim/event/process.h"
 #include "nvim/types_defs.h"
 
-typedef struct libuv_process {
+typedef struct {
   Process process;
   uv_process_t uv;
   uv_process_options_t uvopts;

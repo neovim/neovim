@@ -49,7 +49,7 @@
 //      "exp_name"  NULL or non-NULL, to be freed later.
 //      "tv"        points to the Dictionary typval_T
 //      "newkey"    is the key for the new item.
-typedef struct lval_S {
+typedef struct {
   const char *ll_name;  ///< Start of variable name (can be NULL).
   size_t ll_name_len;   ///< Length of the .ll_name.
   char *ll_exp_name;    ///< NULL or expanded name in allocated memory.

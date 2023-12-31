@@ -334,7 +334,7 @@ static const char *msg_compressing = N_("Compressing word tree...");
 #define MAXLINELEN  500         // Maximum length in bytes of a line in a .aff
                                 // and .dic file.
 // Main structure to store the contents of a ".aff" file.
-typedef struct afffile_S {
+typedef struct {
   char *af_enc;                 // "SET", normalized, alloc'ed string or NULL
   int af_flagtype;              // AFT_CHAR, AFT_LONG, AFT_NUM or AFT_CAPLONG
   unsigned af_rare;             // RARE ID for rare word
@@ -376,7 +376,7 @@ struct affentry_S {
 #define AH_KEY_LEN 17          // 2 x 8 bytes + NUL
 
 // Affix header from ".aff" file.  Used for af_pref and af_suff.
-typedef struct affheader_S {
+typedef struct {
   char ah_key[AH_KEY_LEN];      // key for hashtab == name of affix
   unsigned ah_flag;             // affix name as number, uses "af_flagtype"
   int ah_newID;                 // prefix ID after renumbering; 0 if not used
@@ -388,7 +388,7 @@ typedef struct affheader_S {
 #define HI2AH(hi)   ((affheader_T *)(hi)->hi_key)
 
 // Flag used in compound items.
-typedef struct compitem_S {
+typedef struct {
   char ci_key[AH_KEY_LEN];      // key for hashtab == name of compound
   unsigned ci_flag;             // affix name as number, uses "af_flagtype"
   int ci_newID;                 // affix ID after renumbering.
@@ -449,7 +449,7 @@ struct wordnode_S {
 #define HI2WN(hi)    (wordnode_T *)((hi)->hi_key)
 
 // Info used while reading the spell files.
-typedef struct spellinfo_S {
+typedef struct {
   wordnode_T *si_foldroot;     // tree with case-folded words
   int si_foldwcount;           // nr of words in si_foldroot
 
