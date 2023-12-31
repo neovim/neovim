@@ -305,7 +305,10 @@ function STHighlighter:send_request()
         method = method .. '/delta'
         params.previousResultId = current_result.result_id
       end
-      local success, request_id = client.request(method, params, function(err, response, ctx)
+
+      --- response handlers for "textDocument/semanticTokens/full" and ".../delta".
+      ---@type vim.lsp.ResponseHandler
+      local handler = function(err, response, ctx, _)
         -- look client up again using ctx.client_id instead of using a captured
         -- client object
         local c = vim.lsp.get_client_by_id(ctx.client_id)
@@ -314,7 +317,8 @@ function STHighlighter:send_request()
         if not err and c and highlighter then
           coroutine.wrap(STHighlighter.process_response)(highlighter, response, c, version)
         end
-      end, self.bufnr)
+      end
+      local success, request_id = client.request(method, params, handler, self.bufnr)
 
       if success then
         active_request.request_id = request_id
@@ -335,7 +339,7 @@ end
 --- Finally, a redraw command is issued to force nvim to redraw the screen to
 --- pick up changed highlight tokens.
 ---
----@param response lsp.SemanticTokens|lsp.SemanticTokensDelta
+---@param response lsp.SemanticTokens|lsp.SemanticTokensDelta|nil
 ---@private
 function STHighlighter:process_response(response, client, version)
   local state = self.client_state[client.id]
@@ -776,8 +780,11 @@ end
 --- invalidate the current results of all buffers and automatically kick off a
 --- new request for buffers that are displayed in a window. For those that aren't, a
 --- the BufWinEnter event should take care of it next time it's displayed.
+--- @return vim.NIL void On a successful request, return void.
+--- @type vim.lsp.RequestHandler
 function M._refresh(err, _, ctx)
   if err then
+    -- TODO(wookayin): error, should not return vim.NIL
     return vim.NIL
   end
 
@@ -792,6 +799,7 @@ function M._refresh(err, _, ctx)
     end
   end
 
+  -- successful
   return vim.NIL
 end
 

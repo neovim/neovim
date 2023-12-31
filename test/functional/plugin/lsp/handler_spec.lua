@@ -1,11 +1,13 @@
 local helpers = require('test.functional.helpers')(after_each)
 
+local clear = helpers.clear
 local eq = helpers.eq
 local exec_lua = helpers.exec_lua
 local pcall_err = helpers.pcall_err
 local matches = helpers.matches
 
 describe('lsp-handlers', function()
+  before_each(clear)
   describe('vim.lsp._with_extend', function()
     it('should return a table with the default keys', function()
       eq(
