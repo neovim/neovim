@@ -402,7 +402,7 @@ end
 ---
 ---@see |extend()|
 ---
----@param behavior string Decides what to do if a key is found in more than one map:
+---@param behavior 'error'|'keep'|'force' Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
@@ -418,7 +418,7 @@ end
 ---
 ---@generic T1: table
 ---@generic T2: table
----@param behavior "error"|"keep"|"force" (string) Decides what to do if a key is found in more than one map:
+---@param behavior 'error'|'keep'|'force' Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
