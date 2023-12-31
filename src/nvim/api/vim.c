@@ -30,6 +30,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
+#include "nvim/ex_getln_defs.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/globals.h"
@@ -967,6 +968,11 @@ fail:
     api_set_error(err, kErrorTypeException, "Failed to create buffer");
   }
   return 0;
+}
+
+Buffer nvim_cmdline_get_buf() {
+  CmdlineInfo *const ccline = get_cmdline_info();
+  return ccline->cmdbuff;
 }
 
 /// Open a terminal instance in a buffer

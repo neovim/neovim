@@ -2979,6 +2979,9 @@ static void alloc_cmdbuff(int len)
 
   ccline.cmdbuff = buflist_new(":", ":", 0, 0);
   ccline.cmdbufflen = len;
+
+  // Create an unlisted buffer for commands 
+  ccline.cmdbuff = buflist_new(NULL, NULL, 1, BLN_DUMMY);
 }
 
 /// Re-allocate the command line to length len + something extra.
