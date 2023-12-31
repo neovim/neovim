@@ -229,13 +229,15 @@ end
 --- )
 --- ```
 ---
+---@param params lsp.PublishDiagnosticsParams
 ---@param ctx lsp.HandlerContext
 ---@param config table Configuration table (see |vim.diagnostic.config()|).
-function M.on_publish_diagnostics(_, result, ctx, config)
+---@type vim.lsp.NotificationHandler
+function M.on_publish_diagnostics(_, params, ctx, config)
   local client_id = ctx.client_id
-  local uri = result.uri
+  local uri = params.uri
   local fname = vim.uri_to_fname(uri)
-  local diagnostics = result.diagnostics
+  local diagnostics = params.diagnostics
   if #diagnostics == 0 and vim.fn.bufexists(fname) == 0 then
     return
   end
@@ -291,8 +293,10 @@ end
 --- )
 --- ```
 ---
+---@param result lsp.DocumentDiagnosticReport  TODO verify partial results
 ---@param ctx lsp.HandlerContext
 ---@param config table Configuration table (see |vim.diagnostic.config()|).
+---@type vim.lsp.ResponseHandler
 function M.on_diagnostic(_, result, ctx, config)
   local client_id = ctx.client_id
   local uri = ctx.params.textDocument.uri

@@ -406,7 +406,7 @@ function M.get_progress_messages()
 end
 
 --- Applies a list of text edits to a buffer.
----@param text_edits table list of `TextEdit` objects
+---@param text_edits lsp.TextEdit[] list of `TextEdit` objects
 ---@param bufnr integer Buffer id
 ---@param offset_encoding string utf-8|utf-16|utf-32
 ---@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textEdit
@@ -426,6 +426,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
 
   -- Fix reversed range and indexing each text_edits
   local index = 0
+  ---@param text_edit lsp.TextEdit
   text_edits = vim.tbl_map(function(text_edit)
     index = index + 1
     text_edit._index = index
@@ -440,7 +441,7 @@ function M.apply_text_edits(text_edits, bufnr, offset_encoding)
       text_edit.range['end'] = start
     end
     return text_edit
-  end, text_edits)
+  end, text_edits) --[[ @as lsp.TextEdit[] ]]
 
   -- Sort text_edits
   table.sort(text_edits, function(a, b)
@@ -628,10 +629,10 @@ end
 --- |complete-items|.
 ---
 ---@deprecated
----@param result table The result of a `textDocument/completion` call, e.g.
---- from |vim.lsp.buf.completion()|, which may be one of `CompletionItem[]`,
---- `CompletionList` or `null`
----@param prefix (string) the prefix to filter the completion items
+---@param result lsp.CompletionItem[]|lsp.CompletionList The result of a `textDocument/completion`
+---  call, e.g. from |vim.lsp.buf.completion()|, which may be one of `CompletionItem[]`,
+--- `CompletionList`.
+---@param prefix string the prefix to filter the completion items
 ---@return table[] items
 ---@see complete-items
 function M.text_document_completion_list_to_complete_items(result, prefix)
@@ -1708,7 +1709,7 @@ do --[[ References ]]
   --- Shows a list of document highlights for a certain buffer.
   ---
   ---@param bufnr integer Buffer id
-  ---@param references table List of `DocumentHighlight` objects to highlight
+  ---@param references lsp.DocumentHighlight[] List of `DocumentHighlight` objects to highlight
   ---@param offset_encoding string One of "utf-8", "utf-16", "utf-32".
   ---@see https://microsoft.github.io/language-server-protocol/specification/#textDocumentContentChangeEvent
   function M.buf_highlight_references(bufnr, references, offset_encoding)
@@ -1843,8 +1844,12 @@ end
 
 --- Converts symbols to quickfix list items.
 ---
----@param symbols table DocumentSymbol[] or SymbolInformation[]
+---@param symbols lsp.DocumentSymbol[] | lsp.WorkspaceSymbol[] | lsp.SymbolInformation[]
+---@param bufnr integer|nil
+---@return vim.lsp.util.LocationItem[]
 function M.symbols_to_items(symbols, bufnr)
+  ---@param _symbols lsp.DocumentSymbol[] | lsp.WorkspaceSymbol[] | lsp.SymbolInformation[]
+  ---@param _items vim.lsp.util.LocationItem[]
   local function _symbols_to_items(_symbols, _items, _bufnr)
     for _, symbol in ipairs(_symbols) do
       if symbol.location then -- SymbolInformation type
@@ -1869,6 +1874,7 @@ function M.symbols_to_items(symbols, bufnr)
         })
         if symbol.children then
           for _, v in ipairs(_symbols_to_items(symbol.children, _items, _bufnr)) do
+            -- TODO: This line will be never executed, seems wrong; validate the correctness
             for _, s in ipairs(v) do
               table.insert(_items, s)
             end

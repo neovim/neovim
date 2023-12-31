@@ -51,6 +51,8 @@ local constants = {
     Info = 3,
     -- A log message.
     Log = 4,
+    -- A deug message.
+    Debug = 5,
   },
 
   -- The file event type.

@@ -306,7 +306,8 @@ function STHighlighter:send_request()
         method = method .. '/delta'
         params.previousResultId = current_result.result_id
       end
-      local success, request_id = client.request(method, params, function(err, response, ctx)
+      ---@type vim.lsp.ResponseHandler
+      local handler = function(err, response, ctx, _)
         -- look client up again using ctx.client_id instead of using a captured
         -- client object
         local c = vim.lsp.get_client_by_id(ctx.client_id)
@@ -315,7 +316,8 @@ function STHighlighter:send_request()
         if not err and c and highlighter then
           coroutine.wrap(STHighlighter.process_response)(highlighter, response, c, version)
         end
-      end, self.bufnr)
+      end
+      local success, request_id = client.request(method, params, handler, self.bufnr)
 
       if success then
         active_request.request_id = request_id
@@ -336,7 +338,7 @@ end
 --- Finally, a redraw command is issued to force nvim to redraw the screen to
 --- pick up changed highlight tokens.
 ---
----@param response lsp.SemanticTokens|lsp.SemanticTokensDelta
+---@param response lsp.SemanticTokens|lsp.SemanticTokensDelta|nil
 ---@private
 function STHighlighter:process_response(response, client, version)
   local state = self.client_state[client.id]
@@ -763,6 +765,7 @@ function M.highlight_token(token, bufnr, client_id, hl_group, opts)
   })
 end
 
+-- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
 --- |lsp-handler| for the method `workspace/semanticTokens/refresh`
 ---
 --- Refresh requests are sent by the server to indicate a project-wide change
@@ -771,8 +774,9 @@ end
 --- new request for buffers that are displayed in a window. For those that aren't, a
 --- the BufWinEnter event should take care of it next time it's displayed.
 ---
----@see https://microsoft.github.io/language-server-protocol/specifications/specification-current/#semanticTokens_refreshRequest
-handlers[ms.workspace_semanticTokens_refresh] = function(err, _, ctx)
+---@return any void
+---@type vim.lsp.RequestHandler
+handlers[ms.workspace_semanticTokens_refresh] = function(err, _, ctx, _)
   if err then
     return vim.NIL
   end
@@ -788,6 +792,7 @@ handlers[ms.workspace_semanticTokens_refresh] = function(err, _, ctx)
     end
   end
 
+  -- TODO validate return type, looks successful
   return vim.NIL
 end
 

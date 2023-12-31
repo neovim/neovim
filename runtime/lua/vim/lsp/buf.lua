@@ -9,10 +9,10 @@ local M = {}
 --- Sends an async request to all active clients attached to the current
 --- buffer.
 ---
----@param method (string) LSP method name
----@param params (table|nil) Parameters to send to the server
----@param handler (function|nil) See |lsp-handler|. Follows |lsp-handler-resolution|
---
+---@param method string LSP method name
+---@param params table|nil Parameters to send to the server
+---@param handler vim.lsp.Handler|nil See |lsp-handler|. Follows |lsp-handler-resolution|
+---
 ---@return table<integer, integer> client_request_ids Map of client-id:request-id pairs
 ---for all successful requests.
 ---@return function _cancel_all_requests Function which can be used to

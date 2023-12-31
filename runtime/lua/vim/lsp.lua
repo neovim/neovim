@@ -799,7 +799,8 @@ function lsp.start_client(config)
   --- Returns the default handler if the user hasn't set a custom one.
   ---
   ---@param method (string) LSP method name
-  ---@return lsp.Handler|nil handler for the given method, if defined, or the default from |vim.lsp.handlers|
+  ---@return vim.lsp.Handler|nil handler for the given method, if defined,
+  ---                            or the default from |vim.lsp.handlers|
   local function resolve_handler(method)
     return handlers[method] or default_handlers[method]
   end
@@ -814,7 +815,7 @@ function lsp.start_client(config)
     if log.trace() then
       log.trace('notification', method, params)
     end
-    local handler = resolve_handler(method)
+    local handler = resolve_handler(method) --[[ @as vim.lsp.NotificationHandler ]]
     if handler then
       -- Method name is provided here for convenience.
       handler(nil, params, { method = method, client_id = client_id })
@@ -832,7 +833,7 @@ function lsp.start_client(config)
     if log.trace() then
       log.trace('server_request', method, params)
     end
-    local handler = resolve_handler(method)
+    local handler = resolve_handler(method) --[[ @as vim.lsp.RequestHandler ]]
     if handler then
       if log.trace() then
         log.trace('server_request: found handler for', method)
@@ -1159,7 +1160,7 @@ function lsp.start_client(config)
   ---
   ---@param method string LSP method name.
   ---@param params table|nil LSP request params.
-  ---@param handler lsp.Handler|nil Response |lsp-handler| for this method.
+  ---@param handler vim.lsp.ResponseHandler|nil Response |lsp-handler| for this method.
   ---@param bufnr integer Buffer handle (0 for current).
   ---@return boolean status, integer|nil request_id {status} is a bool indicating
   ---whether the request was successful. If it is `false`, then it will
@@ -1353,7 +1354,7 @@ function lsp.start_client(config)
   ---
   ---@param command lsp.Command
   ---@param context? {bufnr: integer}
-  ---@param handler? lsp.Handler only called if a server command
+  ---@param handler? vim.lsp.ResponseHandler only called if a server command
   function client._exec_cmd(command, context, handler)
     context = vim.deepcopy(context or {}, true) --[[@as lsp.HandlerContext]]
     context.bufnr = context.bufnr or api.nvim_get_current_buf()
@@ -1811,10 +1812,10 @@ api.nvim_create_autocmd('VimLeavePre', {
 --- Sends an async request for all active clients attached to the
 --- buffer.
 ---
----@param bufnr (integer) Buffer handle, or 0 for current.
----@param method (string) LSP method name
+---@param bufnr integer Buffer handle, or 0 for current.
+---@param method string LSP method name, see |vim.lsp.protocol.Methods|
 ---@param params table|nil Parameters to send to the server
----@param handler? lsp.Handler See |lsp-handler|
+---@param handler? vim.lsp.ResponseHandler See |lsp-handler|
 ---       If nil, follows resolution strategy defined in |lsp-handler-configuration|
 ---
 ---@return table<integer, integer> client_request_ids Map of client-id:request-id pairs
@@ -1866,9 +1867,9 @@ end
 --- Sends an async request for all active clients attached to the buffer and executes the `handler`
 --- callback with the combined result.
 ---
----@param bufnr (integer) Buffer handle, or 0 for current.
----@param method (string) LSP method name
----@param params (table|nil) Parameters to send to the server
+---@param bufnr integer Buffer handle, or 0 for current.
+---@param method string LSP method name
+---@param params table|nil Parameters to send to the server
 ---@param handler fun(results: table<integer, {error: lsp.ResponseError, result: any}>) (function)
 --- Handler called after all requests are completed. Server results are passed as
 --- a `client_id:result` map.
@@ -2119,7 +2120,7 @@ function lsp.for_each_buffer_client(bufnr, fn)
 end
 
 --- Function to manage overriding defaults for LSP handlers.
----@param handler (lsp.Handler) See |lsp-handler|
+---@param handler vim.lsp.Handler See |lsp-handler|
 ---@param override_config (table) Table containing the keys to override behavior of the {handler}
 function lsp.with(handler, override_config)
   return function(err, result, ctx, config)
