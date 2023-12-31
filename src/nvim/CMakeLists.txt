@@ -284,6 +284,7 @@ set(BINARY_LIB_DIR ${PROJECT_BINARY_DIR}/lib/nvim/)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
 set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
+set(GEN_EVAL_TOUCH ${TOUCHES_DIR}/gen_doc_eval)
 set(LUAJIT_RUNTIME_DIR ${DEPS_PREFIX}/share/luajit-2.1/jit)
 set(NVIM_RUNTIME_DIR ${PROJECT_SOURCE_DIR}/runtime)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/src/unicode)
@@ -892,16 +893,19 @@ add_custom_target(generated-sources DEPENDS
 )
 
 set(VIMDOC_FILES
-  ${NVIM_RUNTIME_DIR}/doc/api.mpack
   ${NVIM_RUNTIME_DIR}/doc/api.txt
-  ${NVIM_RUNTIME_DIR}/doc/diagnostic.mpack
   ${NVIM_RUNTIME_DIR}/doc/diagnostic.txt
-  ${NVIM_RUNTIME_DIR}/doc/lsp.mpack
   ${NVIM_RUNTIME_DIR}/doc/lsp.txt
-  ${NVIM_RUNTIME_DIR}/doc/lua.mpack
   ${NVIM_RUNTIME_DIR}/doc/lua.txt
-  ${NVIM_RUNTIME_DIR}/doc/treesitter.mpack
   ${NVIM_RUNTIME_DIR}/doc/treesitter.txt
+)
+
+set(MPACK_FILES
+  ${NVIM_RUNTIME_DIR}/doc/api.mpack
+  ${NVIM_RUNTIME_DIR}/doc/diagnostic.mpack
+  ${NVIM_RUNTIME_DIR}/doc/lsp.mpack
+  ${NVIM_RUNTIME_DIR}/doc/lua.mpack
+  ${NVIM_RUNTIME_DIR}/doc/treesitter.mpack
 )
 
 file(GLOB API_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
@@ -914,28 +918,19 @@ file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
 )
 
 add_custom_command(
-  OUTPUT ${VIMDOC_FILES}
+  OUTPUT ${MPACK_FILES}
   COMMAND ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.py
   DEPENDS
     nvim
     ${API_SOURCES}
     ${LUA_SOURCES}
+    ${VIMDOC_FILES}
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
-set(GEN_EVAL_FILES
-  ${NVIM_RUNTIME_DIR}/doc/builtin.txt
-  ${NVIM_RUNTIME_DIR}/doc/options.txt
-  ${NVIM_RUNTIME_DIR}/doc/vvars.txt
-  ${NVIM_RUNTIME_DIR}/lua/vim/_meta/api.lua
-  ${NVIM_RUNTIME_DIR}/lua/vim/_meta/api_keysets.lua
-  ${NVIM_RUNTIME_DIR}/lua/vim/_meta/options.lua
-  ${NVIM_RUNTIME_DIR}/lua/vim/_meta/vimfn.lua
-  ${NVIM_RUNTIME_DIR}/lua/vim/_meta/vvars.lua
-)
-
 add_custom_command(
-  OUTPUT ${GEN_EVAL_FILES}
+  OUTPUT ${GEN_EVAL_TOUCH}
+  COMMAND ${CMAKE_COMMAND} -E touch ${GEN_EVAL_TOUCH}
   COMMAND $<TARGET_FILE:nvim> -l ${PROJECT_SOURCE_DIR}/scripts/gen_eval_files.lua
   DEPENDS
     ${API_METADATA}
@@ -947,7 +942,7 @@ add_custom_command(
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
-add_custom_target(doc-eval DEPENDS ${GEN_EVAL_FILES})
+add_custom_target(doc-eval DEPENDS ${GEN_EVAL_TOUCH})
 add_custom_target(doc-vim DEPENDS ${VIMDOC_FILES})
 add_custom_target(doc)
 add_dependencies(doc doc-vim doc-eval)
