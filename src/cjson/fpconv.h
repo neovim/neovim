@@ -19,4 +19,6 @@ extern void fpconv_init(void);
 extern int fpconv_g_fmt(char *str, double num, int precision);
 extern double fpconv_strtod(const char *nptr, char **endptr);
 
+extern char locale_decimal_point;
+
 #endif // FPCONV_H
