@@ -839,10 +839,10 @@ api.nvim_create_autocmd('VimLeavePre', {
 --- Sends an async request for all active clients attached to the
 --- buffer.
 ---
----@param bufnr (integer) Buffer handle, or 0 for current.
----@param method (string) LSP method name
+---@param bufnr integer Buffer handle, or 0 for current.
+---@param method string LSP method name, see |vim.lsp.protocol.Methods|
 ---@param params table|nil Parameters to send to the server
----@param handler? lsp.Handler See |lsp-handler|
+---@param handler? vim.lsp.ResponseHandler See |lsp-handler|
 ---       If nil, follows resolution strategy defined in |lsp-handler-configuration|
 ---
 ---@return table<integer, integer> client_request_ids Map of client-id:request-id pairs
@@ -894,9 +894,9 @@ end
 --- Sends an async request for all active clients attached to the buffer and executes the `handler`
 --- callback with the combined result.
 ---
----@param bufnr (integer) Buffer handle, or 0 for current.
----@param method (string) LSP method name
----@param params (table|nil) Parameters to send to the server
+---@param bufnr integer Buffer handle, or 0 for current.
+---@param method string LSP method name
+---@param params table|nil Parameters to send to the server
 ---@param handler fun(results: table<integer, {error: lsp.ResponseError?, result: any}>) (function)
 --- Handler called after all requests are completed. Server results are passed as
 --- a `client_id:result` map.
@@ -1153,7 +1153,7 @@ function lsp.for_each_buffer_client(bufnr, fn)
 end
 
 --- Function to manage overriding defaults for LSP handlers.
----@param handler (lsp.Handler) See |lsp-handler|
+---@param handler vim.lsp.Handler See |lsp-handler|
 ---@param override_config (table) Table containing the keys to override behavior of the {handler}
 function lsp.with(handler, override_config)
   return function(err, result, ctx, config)

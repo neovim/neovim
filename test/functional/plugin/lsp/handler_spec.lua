@@ -1,12 +1,14 @@
 local t = require('test.testutil')
 local n = require('test.functional.testnvim')()
 
+local clear = t.clear
 local eq = t.eq
 local exec_lua = n.exec_lua
 local pcall_err = t.pcall_err
 local matches = t.matches
 
 describe('lsp-handlers', function()
+  before_each(clear)
   describe('vim.lsp._with_extend', function()
     it('should return a table with the default keys', function()
       eq(
