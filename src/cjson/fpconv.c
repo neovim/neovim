@@ -40,7 +40,7 @@
 #define snprintf sprintf_s
 #endif
 
-static const char locale_decimal_point = '.';
+extern char char locale_decimal_point = '.';
 
 static void fpconv_update_locale(void) {
     char buf[8];
