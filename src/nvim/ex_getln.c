@@ -661,12 +661,22 @@ static void init_ccline(int firstc, int indent)
   // Don't let quitting the More prompt make this fail.
   got_int = false;
 
-  // Create empty command-line buffer.
-  if (buf_open_scratch(0, ("cmd")) == FAIL) {
-    // Some autocommand messed it up?
-    win_close(curwin, true, false);
-    ga_clear(&winsizes);
+  // Create a dummy buffer for commands
+  buf_T *newbuf = buflist_new(NULL, NULL, 1, BLN_DUMMY);
+
+  if (newbuf == NULL) {
     return;
+  }
+
+  // enter the dummy buffer
+  try_start();
+  int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, newbuf->b_fnum, 0);
+  Error err;
+  if (!try_end(&err) && result == FAIL) {
+    api_set_error(&err,
+                  kErrorTypeException,
+                  "Failed to switch to buffer %d",
+                  newbuf->b_fnum);
   }
   // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
   set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL);
@@ -872,6 +882,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
       s->gotesc = true;
     }
     restore_v_event(dict, &save_v_event);
+    wipe_buffer(ccline.cmdfilebuf, false);
   }
 
   cmdmsg_rl = false;
@@ -2955,7 +2966,6 @@ bool cmdline_at_end(void) FUNC_ATTR_PURE
 // Assigns the new buffer to ccline.cmdbuff and ccline.cmdbufflen.
 static void alloc_cmdbuff(int len)
 {
-  garray_T winsizes;
   // give some extra space to avoid having to allocate all the time
   if (len < 80) {
     len = 100;
@@ -2963,25 +2973,9 @@ static void alloc_cmdbuff(int len)
     len += 20;
   }
 
-  // buflist_new(V, char *sfname_arg, linenr_T lnum, int flags)
 
   ccline.cmdbuff = xmalloc((size_t)len);
   ccline.cmdbufflen = len;
-
-  // Create empty command-line buffer.
-  if (buf_open_scratch(0, _("[Command Line]")) == FAIL) {
-    // Some autocommand messed it up?
-    win_close(curwin, true, false);
-    ga_clear(&winsizes);
-  }
-  // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
-  set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL);
-  curbuf->b_p_ma = true;
-  curwin->w_p_fen = false;
-  curwin->w_p_rl = cmdmsg_rl;
-  cmdmsg_rl = false;
-
-  ccline.cmdfilebuf = curbuf;
 }
 
 /// Re-allocate the command line to length len + something extra.
@@ -3514,6 +3508,7 @@ void put_on_cmdline(const char *str, int len, bool redraw)
   }
 
   realloc_cmdbuff(ccline.cmdlen + len + 1);
+  msg_puts(str);
 
   if (!ccline.overstrike) {
     memmove(ccline.cmdbuff + ccline.cmdpos + len, ccline.cmdbuff + ccline.cmdpos,
@@ -3538,6 +3533,7 @@ void put_on_cmdline(const char *str, int len, bool redraw)
       ccline.cmdlen = ccline.cmdpos + len;
     }
   }
+
   memmove(ccline.cmdbuff + ccline.cmdpos, str, (size_t)len);
   ccline.cmdbuff[ccline.cmdlen] = NUL;
 
