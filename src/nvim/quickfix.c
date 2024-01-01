@@ -272,7 +272,7 @@ enum { QF_WINHEIGHT = 10, };  ///< default height for quickfix window
 // Macro to loop through all the items in a quickfix list
 // Quickfix item index starts from 1, so i below starts at 1
 #define FOR_ALL_QFL_ITEMS(qfl, qfp, i) \
-  for ((i) = 1, (qfp) = (qfl)->qf_start;  /* NOLINT(readability/braces) */ \
+  for ((i) = 1, (qfp) = (qfl)->qf_start; \
        !got_int && (i) <= (qfl)->qf_count && (qfp) != NULL; \
        (i)++, (qfp) = (qfp)->qf_next)
 

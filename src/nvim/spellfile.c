@@ -574,7 +574,7 @@ static inline int spell_check_magic_string(FILE *const fd)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   char buf[VIMSPELLMAGICL];
-  SPELL_READ_BYTES(buf, VIMSPELLMAGICL, fd,; );  // NOLINT(whitespace/parens)
+  SPELL_READ_BYTES(buf, VIMSPELLMAGICL, fd,; );
   if (memcmp(buf, VIMSPELLMAGIC, VIMSPELLMAGICL) != 0) {
     return SP_FORMERROR;
   }
@@ -1036,7 +1036,7 @@ static int read_region_section(FILE *fd, slang_T *lp, int len)
   if (len > MAXREGIONS * 2) {
     return SP_FORMERROR;
   }
-  SPELL_READ_NONNUL_BYTES(lp->sl_regions, (size_t)len, fd,; );  // NOLINT(whitespace/parens)
+  SPELL_READ_NONNUL_BYTES(lp->sl_regions, (size_t)len, fd,; );
   lp->sl_regions[len] = NUL;
   return 0;
 }
@@ -1101,7 +1101,7 @@ static int read_prefcond_section(FILE *fd, slang_T *lp)
     if (n > 0) {
       char buf[MAXWLEN + 1];
       buf[0] = '^';  // always match at one position only
-      SPELL_READ_NONNUL_BYTES(buf + 1, (size_t)n, fd,; );  // NOLINT(whitespace/parens)
+      SPELL_READ_NONNUL_BYTES(buf + 1, (size_t)n, fd,; );
       buf[n + 1] = NUL;
       lp->sl_prefprog[i] = vim_regcomp(buf, RE_MAGIC | RE_STRING);
     }
@@ -3978,7 +3978,7 @@ static int tree_add_word(spellinfo_T *spin, const char *word, wordnode_T *root, 
   //    (si_compress_cnt == 1) and the number of free nodes drops below the
   //    maximum word length.
 #ifndef SPELL_COMPRESS_ALWAYS
-  if (spin->si_compress_cnt == 1       // NOLINT(readability/braces)
+  if (spin->si_compress_cnt == 1
       ? spin->si_free_count < MAXWLEN
       : spin->si_blocks_cnt >= compress_start)
 #endif

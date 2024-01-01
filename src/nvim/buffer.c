@@ -276,7 +276,7 @@ int open_buffer(bool read_stdin, exarg_T *eap, int flags_arg)
                       || (S_ISCHR(perm)
                           && is_dev_fd_file(curbuf->b_ffname))
 # endif
-                      )) {  // NOLINT(whitespace/parens)
+                      )) {
       read_fifo = true;
     }
     if (read_fifo) {
@@ -2145,7 +2145,7 @@ buf_T *buflist_findname_exp(char *fname)
 #else
                                false
 #endif
-                               );  // NOLINT(whitespace/parens)
+                               );
   if (ffname != NULL) {
     buf = buflist_findname(ffname);
     xfree(ffname);

@@ -3399,7 +3399,7 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
     CLEAR_GA_AND_ERROR_OUT(ad_ga); \
   }
 #define CHECKED_KEY(un, entry_name, name, error_desc, tgt, condition, attr, proc) \
-  else if (CHECK_KEY((un).data.via.map.ptr[i].key, name))  /* NOLINT(readability/braces) */ \
+  else if (CHECK_KEY((un).data.via.map.ptr[i].key, name)) \
   { \
     CHECKED_ENTRY(condition, \
                   "has " name " key value " error_desc, \
@@ -3430,7 +3430,7 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
 #define INTEGER_KEY(un, entry_name, name, tgt) \
   INT_KEY(un, entry_name, name, tgt, TOINT)
 #define ADDITIONAL_KEY(un) \
-  else {  /* NOLINT(readability/braces) */ \
+  else { \
     ga_grow(&ad_ga, 1); \
     memcpy(((char *)ad_ga.ga_data) + ((size_t)ad_ga.ga_len \
                                       * sizeof(*(un).data.via.map.ptr)), \

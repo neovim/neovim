@@ -209,7 +209,7 @@ static void set_init_default_backupskip(void)
       p = "/tmp";
 # endif
       mustfree = false;
-    } else  // NOLINT(readability/braces)
+    } else
 #endif
     {
       p = vim_getenv(names[n]);
