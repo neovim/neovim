@@ -2,8 +2,7 @@
 " Language:		Ruby
 " Maintainer:		Tim Pope <vimNOSPAM@tpope.org>
 " URL:			https://github.com/vim-ruby/vim-ruby
-" Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
-" Last Change:		2023 Sep 1st
+" Last Change:		2023 Dec 31
 
 if (exists("b:did_ftplugin"))
   finish
@@ -60,35 +59,38 @@ if !exists('g:ruby_version_paths')
   let g:ruby_version_paths = {}
 endif
 
+let s:path_split = has('win32') ? ';' : ':'
+
 function! s:query_path(root) abort
-  " Disabled by default for security reasons.  
-  if !get(g:, 'ruby_exec', get(g:, 'plugin_exec', 0))
-    return []
+  " Disabled by default for security reasons.
+  if !get(g:, 'ruby_exec', get(g:, 'plugin_exec', 0)) || empty(a:root)
+    return map(split($RUBYLIB, s:path_split), 'v:val ==# "." ? "" : v:val')
   endif
   let code = "print $:.join %q{,}"
-  if &shell =~# 'sh' && empty(&shellxquote)
-    let prefix = 'env PATH='.shellescape($PATH).' '
-  else
-    let prefix = ''
-  endif
   if &shellxquote == "'"
-    let path_check = prefix.'ruby --disable-gems -e "' . code . '"'
+    let args = ' --disable-gems -e "' . code . '"'
   else
-    let path_check = prefix."ruby --disable-gems -e '" . code . "'"
+    let args = " --disable-gems -e '" . code . "'"
   endif
 
-  let cd = haslocaldir() ? 'lcd' : 'cd'
+  let cd = haslocaldir() ? 'lcd' : exists(':tcd') && haslocaldir(-1) ? 'tcd' : 'cd'
   let cwd = fnameescape(getcwd())
   try
     exe cd fnameescape(a:root)
-    let s:tmp_cwd = getcwd()
-    if (fnamemodify(exepath('ruby'), ':p:h') ==# cwd
-          \ && (index(split($PATH,has("win32")? ';' : ':'), s:tmp_cwd) == -1 || s:tmp_cwd == '.'))
-      let path = []
+    for dir in split($PATH, s:path_split)
+      if dir !=# '.' && executable(dir . '/ruby') == 1
+	let exepath = dir . '/ruby'
+	break
+      endif
+    endfor
+    if exists('l:exepath')
+      let path = split(system(exepath . args),',')
+      if v:shell_error
+	let path = []
+      endif
     else
-      let path = split(system(path_check),',')
+      let path = []
     endif
-    unlet! s:tmp_cwd
     exe cd cwd
     return path
   finally
@@ -129,10 +131,8 @@ else
   if !exists('g:ruby_default_path')
     if has("ruby") && has("win32")
       ruby ::VIM::command( 'let g:ruby_default_path = split("%s",",")' % $:.join(%q{,}) )
-    elseif executable('ruby') && !empty($HOME)
-      let g:ruby_default_path = s:query_path($HOME)
     else
-      let g:ruby_default_path = map(split($RUBYLIB,':'), 'v:val ==# "." ? "" : v:val')
+      let g:ruby_default_path = s:query_path($HOME)
     endif
   endif
   let s:ruby_paths = g:ruby_default_path
