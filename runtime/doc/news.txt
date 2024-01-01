@@ -275,6 +275,11 @@ The following new APIs and features were added.
 • |v_Q-default| and |v_@-default| repeat a register for each line of a visual
   selection.
 
+• |vim.diagnostic.count()| returns the number of diagnostics for a given
+  buffer and/or namespace, by severity. This is a faster alternative to
+  |vim.diagnostic.get()| when only the number of diagnostics is needed, but
+  not the diagnostics themselves.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
