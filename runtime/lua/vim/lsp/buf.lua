@@ -38,13 +38,6 @@ function M.server_ready()
   return not not vim.lsp.buf_notify(0, 'window/progress', {})
 end
 
---- Displays hover information about the symbol under the cursor in a floating
---- window. Calling the function twice will jump into the floating window.
-function M.hover()
-  local params = util.make_position_params()
-  request(ms.textDocument_hover, params)
-end
-
 local function request_with_options(name, params, options)
   local req_handler --- @type function?
   if options then
@@ -55,6 +48,16 @@ local function request_with_options(name, params, options)
     end
   end
   request(name, params, req_handler)
+end
+
+--- Displays hover information about the symbol under the cursor in a floating
+--- window. Calling the function twice will jump into the floating window.
+---
+--- @param options table|nil additional options
+---      - silent: (boolean) Do not notify if there is no hover result.
+function M.hover(options)
+  local params = util.make_position_params()
+  request_with_options(ms.textDocument_hover, params, options)
 end
 
 --- Jumps to the declaration of the symbol under the cursor.

@@ -1258,9 +1258,14 @@ format({options})                                       *vim.lsp.buf.format()*
                      Defaults to `nil` in other modes, formatting the full
                      buffer
 
-hover()                                                  *vim.lsp.buf.hover()*
+hover({options})                                         *vim.lsp.buf.hover()*
     Displays hover information about the symbol under the cursor in a floating
     window. Calling the function twice will jump into the floating window.
+
+    Parameters: ~
+      • {options}  (table|nil) additional options
+                   • silent: (boolean) Do not notify if there is no hover
+                     result.
 
 implementation({options})                       *vim.lsp.buf.implementation()*
     Lists all the implementations for the symbol under the cursor in the
