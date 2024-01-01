@@ -620,7 +620,7 @@ elseif exists("b:is_bash")
  syn keyword shStatement bg builtin disown export false fg getopts jobs let printf sleep true unalias
  syn keyword shStatement typeset nextgroup=shSetOption
  syn keyword shStatement fc hash history source suspend times type
- syn keyword shStatement bind builtin caller compopt declare dirs disown enable export help logout mapfile popd pushd readarray shopt source typeset
+ syn keyword shStatement bind builtin caller compopt declare dirs disown enable export help logout local mapfile popd pushd readarray shopt source typeset
 else
  syn keyword shStatement login newgrp
 endif
