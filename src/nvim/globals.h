@@ -366,7 +366,7 @@ EXTERN win_T *lastwin;               // last window
 EXTERN win_T *prevwin INIT( = NULL);  // previous window
 #define ONE_WINDOW (firstwin == lastwin)
 #define FOR_ALL_FRAMES(frp, first_frame) \
-  for ((frp) = first_frame; (frp) != NULL; (frp) = (frp)->fr_next)  // NOLINT
+  for ((frp) = first_frame; (frp) != NULL; (frp) = (frp)->fr_next)
 
 // When using this macro "break" only breaks out of the inner loop. Use "goto"
 // to break out of the tabpage loop.
@@ -408,7 +408,7 @@ EXTERN buf_T *curbuf INIT( = NULL);    // currently active buffer
   for (buf_T *buf = lastbuf; buf != NULL; buf = buf->b_prev)
 
 #define FOR_ALL_BUF_WININFO(buf, wip) \
-  for ((wip) = (buf)->b_wininfo; (wip) != NULL; (wip) = (wip)->wi_next)   // NOLINT
+  for ((wip) = (buf)->b_wininfo; (wip) != NULL; (wip) = (wip)->wi_next)
 
 // List of files being edited (global argument list).  curwin->w_alist points
 // to this when the window is using the global argument list.

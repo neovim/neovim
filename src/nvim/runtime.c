@@ -1085,7 +1085,7 @@ static int load_pack_plugin(bool opt, char *fname)
   size_t len = strlen(ffname) + sizeof(plugpat);
   char *pat = xmallocz(len);
 
-  vim_snprintf(pat, len, plugpat, ffname);  // NOLINT
+  vim_snprintf(pat, len, plugpat, ffname);
   gen_expand_wildcards_and_cb(1, &pat, EW_FILE, true, source_callback_vim_lua, NULL);
 
   char *cmd = xstrdup("g:did_load_filetypes");

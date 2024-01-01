@@ -77,7 +77,7 @@ enum { BUFLOCAL_PAT_LEN = 25, };
 
 /// Iterates over all the events for auto commands
 #define FOR_ALL_AUEVENTS(event) \
-  for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS; event = (event_T)((int)event + 1))  // NOLINT
+  for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS; event = (event_T)((int)event + 1))
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "autocmd.h.generated.h"

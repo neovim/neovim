@@ -223,7 +223,7 @@ bool cause_errthrow(const char *mesg, bool multiline, bool severe, bool *ignore)
     // catch clause; just finally clauses are executed before the script
     // is terminated.
     return false;
-  } else  // NOLINT(readability/braces)
+  } else
 #endif
   {
     // Prepare the throw of an error exception, so that everything will

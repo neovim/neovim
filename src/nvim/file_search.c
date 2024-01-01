@@ -308,7 +308,7 @@ void *vim_findfile_init(char *path, char *filename, char *stopdirs, int level, i
         goto error_return;
       }
       path += 2;
-    } else  // NOLINT(readability/braces)
+    } else
 #endif
     if (os_dirname(ff_expand_buffer, MAXPATHL) == FAIL) {
       goto error_return;

@@ -619,7 +619,7 @@ void expand_env_esc(char *restrict srcp, char *restrict dst, int dstlen, bool es
           while (c-- > 0 && *tail != NUL && *tail != '}') {
             *var++ = *tail++;
           }
-        } else  // NOLINT
+        } else
 #endif
         {
           while (c-- > 0 && *tail != NUL && vim_isIDc((uint8_t)(*tail))) {
