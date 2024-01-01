@@ -83,6 +83,17 @@ function! provider#node#Detect() abort
     let pnpm_opts.job_id = jobstart('pnpm --loglevel silent root -g', pnpm_opts)
   endif
 
+  let bun_opts = {}
+  if executable('bun')
+    let bun_opts = deepcopy(s:NodeHandler)
+    let bun_opts.entry_point = '/node_modules/neovim/bin/cli.js'
+    let bun_config_dir = '/.bun'
+    let bun_default_path = $HOME . bun_config_dir . '/install' . '/global' . bun_opts.entry_point
+    if filereadable(bun_default_path)
+      return [bun_default_path, '']
+    endif
+  endif
+
   " npm returns the directory faster, so let's check that first
   if !empty(npm_opts)
     let result = jobwait([npm_opts.job_id])
