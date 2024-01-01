@@ -30,6 +30,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
+#include "nvim/ex_getln.h"
 #include "nvim/ex_getln_defs.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
@@ -970,9 +971,13 @@ fail:
   return 0;
 }
 
-Buffer nvim_cmdline_get_buf() {
+/// Gets the active command line buffer if one exists 
+///
+/// @return Buffer handle
+Buffer nvim_cmdline_get_buf(void) 
+  FUNC_API_SINCE(10) {
   CmdlineInfo *const ccline = get_cmdline_info();
-  return ccline->cmdbuff;
+  return ccline->cmdfilebuf->handle;
 }
 
 /// Open a terminal instance in a buffer

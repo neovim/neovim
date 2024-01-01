@@ -2705,7 +2705,7 @@ char *getcmdline(int firstc, int count, int indent, bool do_concat FUNC_ATTR_UNU
 /// Get the command line buffer
 static buf_T getcmdbuf(int firstc, int count, int indent) {
   command_line_enter(firstc, count, indent, true);
-  return ccline->cmdbuff;
+  return *ccline.cmdfilebuf;
 }
 
 /// Get a command line with a prompt
@@ -2968,6 +2968,8 @@ bool cmdline_at_end(void)
 // Assigns the new buffer to ccline.cmdbuff and ccline.cmdbufflen.
 static void alloc_cmdbuff(int len)
 {
+
+  garray_T winsizes;
   // give some extra space to avoid having to allocate all the time
   if (len < 80) {
     len = 100;
@@ -2977,11 +2979,23 @@ static void alloc_cmdbuff(int len)
 
   // buflist_new(V, char *sfname_arg, linenr_T lnum, int flags)
 
-  ccline.cmdbuff = buflist_new(":", ":", 0, 0);
+  ccline.cmdbuff = xmalloc((size_t)len);
   ccline.cmdbufflen = len;
 
-  // Create an unlisted buffer for commands 
-  ccline.cmdbuff = buflist_new(NULL, NULL, 1, BLN_DUMMY);
+  // Create empty command-line buffer.
+  if (buf_open_scratch(0, _("[Command Line]")) == FAIL) {
+    // Some autocommand messed it up?
+    win_close(curwin, true, false);
+    ga_clear(&winsizes);
+  }
+  // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
+  set_option_value_give_err(kOptBufhidden, STATIC_CSTR_AS_OPTVAL("wipe"), OPT_LOCAL);
+  curbuf->b_p_ma = true;
+  curwin->w_p_fen = false;
+  curwin->w_p_rl = cmdmsg_rl;
+  cmdmsg_rl = false;
+
+  ccline.cmdfilebuf = curbuf;
 }
 
 /// Re-allocate the command line to length len + something extra.
