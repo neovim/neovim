@@ -167,6 +167,7 @@ variables can be used to overrule the filetype used for certain extensions:
 	`*.sh`		g:bash_is_sh		|ft-sh-syntax|
 	`*.tex`		g:tex_flavor		|ft-tex-plugin|
 	`*.typ`		g:filetype_typ
+	`*.v`		g:filetype_v
 	`*.w`		g:filetype_w		|ft-cweb-syntax|
 
 For a few filetypes the global variable is used only when the filetype could

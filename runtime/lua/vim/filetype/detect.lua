@@ -1530,12 +1530,26 @@ function M.v(_, bufnr)
     -- Filetype was already detected
     return
   end
+  if vim.g.filetype_v then
+    return vim.g.filetype_v
+  end
+  local in_comment = 0
   for _, line in ipairs(getlines(bufnr, 1, 200)) do
-    if not line:find('^%s*/') then
-      if findany(line, { ';%s*$', ';%s*/' }) then
-        return 'verilog'
-      elseif findany(line, { '%.%s*$', '%.%s*%(%*' }) then
+    if line:find('^%s*/%*') then
+      in_comment = 1
+    end
+    if in_comment == 1 then
+      if line:find('%*/') then
+        in_comment = 0
+      end
+    elseif not line:find('^%s*//') then
+      if
+        line:find('%.%s*$') and not line:find('/[/*]')
+        or line:find('%(%*') and not line:find('/[/*].*%(%*')
+      then
         return 'coq'
+      elseif findany(line, { ';%s*$', ';%s*/[/*]' }) then
+        return 'verilog'
       end
     end
   end
