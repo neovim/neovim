@@ -563,9 +563,6 @@ static void draw_lnum_col(win_T *wp, winlinevars_T *wlv, int sign_num_attr, int 
 }
 
 /// Build and draw the 'statuscolumn' string for line "lnum" in window "wp".
-/// Fill "stcp" with the built status column string and attributes.
-///
-/// @param[out] stcp  Status column attributes
 static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int virtnum,
                            statuscol_T *stcp)
 {
@@ -579,11 +576,9 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int vir
   if (wp->w_statuscol_line_count != wp->w_nrwidth_line_count) {
     wp->w_statuscol_line_count = wp->w_nrwidth_line_count;
     set_vim_var_nr(VV_VIRTNUM, 0);
-    build_statuscol_str(wp, wp->w_nrwidth_line_count, 0, buf, stcp);
-    if (stcp->truncate > 0) {
-      // Add truncated width to avoid unnecessary redraws
-      int addwidth = MIN(stcp->truncate, MAX_NUMBERWIDTH - wp->w_nrwidth);
-      stcp->truncate = 0;
+    int width = build_statuscol_str(wp, wp->w_nrwidth_line_count, 0, buf, stcp);
+    if (width > stcp->width) {
+      int addwidth = MIN(width - stcp->width, MAX_STCWIDTH - stcp->width);
       stcp->width += addwidth;
       wp->w_nrwidth += addwidth;
       wp->w_nrwidth_width = wp->w_nrwidth;
@@ -594,13 +589,13 @@ static void draw_statuscol(win_T *wp, winlinevars_T *wlv, linenr_T lnum, int vir
 
   int width = build_statuscol_str(wp, lnum, relnum, buf, stcp);
   // Force a redraw in case of error or when truncated
-  if (*wp->w_p_stc == NUL || (stcp->truncate > 0 && wp->w_nrwidth < MAX_NUMBERWIDTH)) {
+  if (*wp->w_p_stc == NUL || (width > stcp->width && stcp->width < MAX_STCWIDTH)) {
     if (*wp->w_p_stc == NUL) {  // 'statuscolumn' reset due to error
       wp->w_nrwidth_line_count = 0;
       wp->w_nrwidth = (wp->w_p_nu || wp->w_p_rnu) * number_width(wp);
     } else {  // Avoid truncating 'statuscolumn'
+      wp->w_nrwidth += MIN(width - stcp->width, MAX_STCWIDTH - stcp->width);
       wp->w_nrwidth_width = wp->w_nrwidth;
-      wp->w_nrwidth = MIN(MAX_NUMBERWIDTH, wp->w_nrwidth + stcp->truncate);
     }
     wp->w_redr_statuscol = true;
     return;

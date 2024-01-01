@@ -5923,9 +5923,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	%s	sign column for currently drawn line
 	%C	fold column for currently drawn line
 
-	NOTE: To draw the sign and fold columns, their items must be included in
-	'statuscolumn'. Even when they are not included, the status column width
-	will adapt to the 'signcolumn' and 'foldcolumn' width.
+	The 'statuscolumn' width follows that of the default columns and
+	adapts to the |'numberwidth'|, |'signcolumn'| and |'foldcolumn'| option
+	values (regardless of whether the sign and fold items are present).
+	Aditionally, the 'statuscolumn' grows with the size of the evaluated
+	format string, up to a point (following the maximum size of the default
+	fold, sign and number columns). Shrinking only happens when the number
+	of lines in a buffer changes, or the 'statuscolumn' option is set.
 
 	The |v:lnum|    variable holds the line number to be drawn.
 	The |v:relnum|  variable holds the relative line number to be drawn.
