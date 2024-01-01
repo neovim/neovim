@@ -9,7 +9,7 @@ filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
 all: nvim
 
-CMAKE_PRG ?= $(shell (command -v cmake3 || echo cmake))
+CMAKE ?= $(shell (command -v cmake3 || echo cmake))
 CMAKE_BUILD_TYPE ?= Debug
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
 # Extra CMake flags which extend the default set
@@ -28,7 +28,7 @@ override CMAKE_EXTRA_FLAGS += -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX)
 
 checkprefix:
 	@if [ -f build/.ran-cmake ]; then \
-	  cached_prefix=$(shell $(CMAKE_PRG) -L -N build | 2>/dev/null grep 'CMAKE_INSTALL_PREFIX' | cut -d '=' -f2); \
+	  cached_prefix=$(shell $(CMAKE) -L -N build | 2>/dev/null grep 'CMAKE_INSTALL_PREFIX' | cut -d '=' -f2); \
 	  if ! [ "$(CMAKE_INSTALL_PREFIX)" = "$$cached_prefix" ]; then \
 	    printf "Re-running CMake: CMAKE_INSTALL_PREFIX '$(CMAKE_INSTALL_PREFIX)' does not match cached value '%s'.\n" "$$cached_prefix"; \
 	    $(RM) build/.ran-cmake; \
@@ -53,17 +53,6 @@ ifeq (,$(BUILD_TOOL))
   endif
 endif
 
-# Only need to handle Ninja here.  Make will inherit the VERBOSE variable, and the -j, -l, and -n flags.
-ifeq ($(CMAKE_GENERATOR),Ninja)
-  ifneq ($(VERBOSE),)
-    BUILD_TOOL += -v
-  endif
-  BUILD_TOOL += $(shell printf '%s' '$(MAKEFLAGS)' | grep -o -- ' *-[jl][0-9]\+ *')
-  ifeq (n,$(findstring n,$(firstword -$(MAKEFLAGS))))
-    BUILD_TOOL += -n
-  endif
-endif
-
 DEPS_CMAKE_FLAGS ?=
 USE_BUNDLED ?=
 
@@ -81,49 +70,48 @@ endif
 SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
 nvim: build/.ran-cmake deps
-	+$(BUILD_TOOL) -C build
+	$(BUILD_TOOL) -C build
 
 libnvim: build/.ran-cmake deps
-	+$(BUILD_TOOL) -C build libnvim
+	$(BUILD_TOOL) -C build libnvim
 
 cmake:
 	touch CMakeLists.txt
 	$(MAKE) build/.ran-cmake
 
 build/.ran-cmake: | deps
-	cd build && $(CMAKE_PRG) -G '$(CMAKE_GENERATOR)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(MAKEFILE_DIR)
+	$(CMAKE) -B build -G '$(CMAKE_GENERATOR)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $(MAKEFILE_DIR)
 	touch $@
 
 deps: | build/.ran-deps-cmake
 ifeq ($(call filter-true,$(USE_BUNDLED)),)
-	+$(BUILD_TOOL) -C $(DEPS_BUILD_DIR)
+	$(BUILD_TOOL) -C $(DEPS_BUILD_DIR)
 endif
 
 ifeq ($(call filter-true,$(USE_BUNDLED)),)
 $(DEPS_BUILD_DIR):
 	mkdir -p "$@"
 build/.ran-deps-cmake:: $(DEPS_BUILD_DIR)
-	cd $(DEPS_BUILD_DIR) && \
-		$(CMAKE_PRG) -G '$(CMAKE_GENERATOR)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
-		$(DEPS_CMAKE_FLAGS) $(MAKEFILE_DIR)/cmake.deps
+	$(CMAKE) -S $(MAKEFILE_DIR)/cmake.deps -B $(DEPS_BUILD_DIR) -G '$(CMAKE_GENERATOR)' \
+		$(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) $(DEPS_CMAKE_FLAGS)
 endif
 build/.ran-deps-cmake::
 	mkdir -p build
 	touch $@
 
 # TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
-oldtest: | nvim build/runtime/doc/tags
-	+$(SINGLE_MAKE) -C test/old/testdir clean
+oldtest: | nvim
+	$(SINGLE_MAKE) -C test/old/testdir clean
 ifeq ($(strip $(TEST_FILE)),)
-	+$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) $(MAKEOVERRIDES)
+	$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) $(MAKEOVERRIDES)
 else
 	@# Handle TEST_FILE=test_foo{,.res,.vim}.
-	+$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE)))
+	$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE)))
 endif
 # Build oldtest by specifying the relative .vim filename.
 .PHONY: phony_force
 test/old/testdir/%.vim: phony_force nvim
-	+$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst test/old/testdir/%.vim,%,$@)
+	$(SINGLE_MAKE) -C test/old/testdir NVIM_PRG=$(NVIM_PRG) SCRIPTS= $(MAKEOVERRIDES) $(patsubst test/old/testdir/%.vim,%,$@)
 
 functionaltest-lua: | nvim
 	$(BUILD_TOOL) -C build functionaltest
@@ -132,23 +120,23 @@ FORMAT=formatc formatlua format
 LINT=lintlua lintsh lintc clang-analyzer lintcommit lint
 TEST=functionaltest unittest
 generated-sources benchmark $(FORMAT) $(LINT) $(TEST) doc: | build/.ran-cmake
-	$(CMAKE_PRG) --build build --target $@
+	$(CMAKE) --build build --target $@
 
 test: $(TEST)
 
 iwyu: build/.ran-cmake
-	cmake --preset iwyu
-	cmake --build build > build/iwyu.log
+	$(CMAKE) --preset iwyu
+	$(CMAKE) --build build > build/iwyu.log
 	iwyu-fix-includes --only_re="src/nvim" --ignore_re="(src/nvim/eval/encode.c\
 	|src/nvim/auto/\
 	|src/nvim/os/lang.c\
 	|src/nvim/map.c\
 	)" --nosafe_headers < build/iwyu.log
-	cmake -B build -U ENABLE_IWYU
-	cmake --build build
+	$(CMAKE) -B build -U ENABLE_IWYU
+	$(CMAKE) --build build
 
 clean:
-	+test -d build && $(BUILD_TOOL) -C build clean || true
+	test -d build && $(BUILD_TOOL) -C build clean || true
 	$(MAKE) -C test/old/testdir clean
 	$(MAKE) -C runtime/indent clean
 
@@ -157,7 +145,7 @@ distclean:
 	$(MAKE) clean
 
 install: checkprefix nvim
-	+$(BUILD_TOOL) -C build install
+	$(BUILD_TOOL) -C build install
 
 appimage:
 	bash scripts/genappimage.sh

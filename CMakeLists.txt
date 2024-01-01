@@ -228,7 +228,7 @@ endif()
 find_program(SHELLCHECK_PRG shellcheck ${LINT_REQUIRED})
 find_program(STYLUA_PRG stylua ${LINT_REQUIRED})
 
-set(STYLUA_DIRS runtime scripts src test)
+set(STYLUA_DIRS runtime scripts src test contrib)
 
 add_glob_target(
   TARGET lintlua-luacheck

@@ -3,12 +3,12 @@ add_library(main_lib INTERFACE)
 # Internally we need to make a distinction between "nvim without runtime files"
 # (nvim_bin) and "nvim with runtime files" (nvim).
 add_executable(nvim_bin EXCLUDE_FROM_ALL)
-set_target_properties(nvim_bin PROPERTIES OUTPUT_NAME nvim)
 
 set_target_properties(nvim_bin
   PROPERTIES
   EXPORT_COMPILE_COMMANDS ON
-  ENABLE_EXPORTS TRUE)
+  ENABLE_EXPORTS TRUE
+  OUTPUT_NAME nvim)
 
 #-------------------------------------------------------------------------------
 # Dependencies

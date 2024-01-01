@@ -182,6 +182,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG)
     BuildMo(${LANGUAGE})
   endforeach()
 
-  add_custom_target(nvim_translations ALL DEPENDS ${LANGUAGE_MO_FILES})
+  add_custom_target(nvim_translations DEPENDS ${LANGUAGE_MO_FILES})
   add_custom_target(update-po DEPENDS ${UPDATE_PO_TARGETS})
+  add_dependencies(nvim nvim_translations)
 endif()

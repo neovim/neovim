@@ -89,7 +89,7 @@ function(add_glob_target)
   endif()
 
   if(ARG_TOUCH_STRATEGY STREQUAL SINGLE)
-    set(touch_file ${TOUCHES_DIR}/ran-${ARG_TARGET})
+    set(touch_file ${TOUCHES_DIR}/${ARG_TARGET})
     add_custom_command(
       OUTPUT ${touch_file}
       COMMAND ${CMAKE_COMMAND} -E touch ${touch_file}
@@ -103,7 +103,7 @@ function(add_glob_target)
     foreach(f ${ARG_FILES})
       string(REGEX REPLACE "^${PROJECT_SOURCE_DIR}/" "" tf ${f})
       string(REGEX REPLACE "[/.]" "-" tf ${tf})
-      set(touch_file ${touch_dir}/ran-${tf})
+      set(touch_file ${touch_dir}/${tf})
       add_custom_command(
         OUTPUT ${touch_file}
         COMMAND ${CMAKE_COMMAND} -E touch ${touch_file}
@@ -133,7 +133,7 @@ function(add_glob_target)
       file(MAKE_DIRECTORY ${td})
       string(REGEX REPLACE "^${PROJECT_SOURCE_DIR}/" "" tf ${touch_dir})
       string(REGEX REPLACE "[/.]" "-" tf ${tf})
-      set(touch_file ${td}/ran-${tf})
+      set(touch_file ${td}/${tf})
 
       add_custom_command(
         OUTPUT ${touch_file}
