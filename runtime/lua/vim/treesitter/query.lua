@@ -370,6 +370,14 @@ local predicate_handlers = {
     return string_set[node_text]
   end,
 
+  ['if?'] = function(_, bufnr, _, predicate)
+    local var = predicate[2]
+    if vim.b[bufnr][var] ~= nil then
+      return vim.b[bufnr][var]
+    end
+    return vim.g[var]
+  end,
+
   ['has-ancestor?'] = function(match, _, _, predicate)
     local node = match[predicate[2]]
     if not node then

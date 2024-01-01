@@ -487,7 +487,7 @@ end]]
     return list
     ]]
 
-    eq({ 'any-of?', 'contains?', 'eq?', 'has-ancestor?', 'has-parent?', 'is-main?', 'lua-match?', 'match?', 'vim-match?' }, res_list)
+    eq({ 'any-of?', 'contains?', 'eq?', 'has-ancestor?', 'has-parent?', 'if?', 'is-main?', 'lua-match?', 'match?', 'vim-match?' }, res_list)
   end)
 
   it('allows to set simple ranges', function()
