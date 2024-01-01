@@ -1269,7 +1269,7 @@ function M.show(namespace, bufnr, diagnostics, opts)
     return
   end
 
-  if M.is_disabled(bufnr, namespace) then
+  if api.nvim_buf_is_valid(bufnr) or M.is_disabled(bufnr, namespace) then
     return
   end
 
