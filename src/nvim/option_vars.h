@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nvim/macros_defs.h"
+#include "nvim/sign_defs.h"
 #include "nvim/types_defs.h"
 
 // option_vars.h: definition of global variables for settable options
@@ -785,7 +786,10 @@ EXTERN int p_cdh;               ///< 'cdhome'
 
 #define SB_MAX 100000  // Maximum 'scrollback' value.
 
-#define MAX_NUMBERWIDTH 20      // used for 'numberwidth' and 'statuscolumn'
+#define MAX_NUMBERWIDTH 20      // used for 'numberwidth'
+
+// Maximum 'statuscolumn' width: number + sign + fold columns
+#define MAX_STCWIDTH MAX_NUMBERWIDTH + SIGN_SHOW_MAX * SIGN_WIDTH + 9
 
 #define TABSTOP_MAX 9999
 

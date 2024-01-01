@@ -1964,11 +1964,7 @@ int build_stl_str_hl(win_T *wp, char *out, size_t outlen, char *fmt, OptIndex op
   // What follows is post-processing to handle alignment and highlighting.
 
   int width = vim_strsize(out);
-  // Return truncated width for 'statuscolumn'
-  if (stcp != NULL && width > stcp->width) {
-    stcp->truncate = width - stcp->width;
-  }
-  if (maxwidth > 0 && width > maxwidth) {
+  if (maxwidth > 0 && width > maxwidth && (!stcp || width > MAX_STCWIDTH)) {
     // Result is too long, must truncate somewhere.
     int item_idx = 0;
     char *trunc_p;

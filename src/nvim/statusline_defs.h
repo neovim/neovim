@@ -58,7 +58,6 @@ typedef struct {
   int width;                           ///< width of the status column
   int num_attr;                        ///< default highlight attr
   int sign_cul_id;                     ///< cursorline sign highlight id
-  int truncate;                        ///< truncated width
   bool draw;                           ///< whether to draw the statuscolumn
   bool use_cul;                        ///< whether to use cursorline attrs
   stl_hlrec_t *hlrec;                  ///< highlight groups
