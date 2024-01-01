@@ -33,7 +33,7 @@ foreach(PACKAGE ${PACKAGES})
     add_custom_command(OUTPUT "${GENERATED_PACKAGE_DIR}/${PACKNAME}/doc/tags"
       COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${PACKAGE} ${GENERATED_PACKAGE_DIR}/${PACKNAME}
-      COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
+      COMMAND $<TARGET_FILE:nvim_bin>
         -u NONE -i NONE -e --headless -c "helptags doc" -c quit
       DEPENDS
         nvim_bin
@@ -67,7 +67,7 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
   COMMAND ${CMAKE_COMMAND} -E remove_directory doc
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${PROJECT_SOURCE_DIR}/runtime/doc doc
-  COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
+  COMMAND $<TARGET_FILE:nvim_bin>
     -u NONE -i NONE -e --headless -c "helptags ++t doc" -c quit
   DEPENDS
     nvim_bin
@@ -77,7 +77,7 @@ add_custom_command(OUTPUT ${GENERATED_HELP_TAGS}
 
 # TODO: This doesn't work. wait for "nvim -l" to land?
 add_custom_target(doc_html
-  COMMAND "${PROJECT_BINARY_DIR}/bin/nvim"
+  COMMAND $<TARGET_FILE:nvim_bin>
     -V1 -es --clean -c "lua require('scripts.gen_help_html').gen('./build/runtime/doc', './build/doc_html', nil, 'todo_commit_id')" -c "0cq"
   DEPENDS
     ${GENERATED_HELP_TAGS}
