@@ -300,6 +300,7 @@ The following changes to existing APIs or features add new behavior.
 <
   • Enabled treesitter highlighting for treesitter query files.
   • Enabled treesitter highlighting for help files.
+  • Enabled treesitter highlighting for Lua files.
 
 • The `workspace/didChangeWatchedFiles` LSP client capability is now enabled
   by default.
