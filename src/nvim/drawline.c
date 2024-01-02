@@ -388,17 +388,16 @@ static void draw_foldcolumn(win_T *wp, winlinevars_T *wlv)
   int fdc = compute_foldcolumn(wp, 0);
   if (fdc > 0) {
     int attr = win_hl_attr(wp, use_cursor_line_highlight(wp, wlv->lnum) ? HLF_CLF : HLF_FC);
-    fill_foldcolumn(wp, wlv->foldinfo, wlv->lnum, attr, fdc, NULL);
-    assert(wlv->off == 0);
-    wlv->off = fdc;
+    fill_foldcolumn(wp, wlv->foldinfo, wlv->lnum, attr, fdc, &wlv->off, NULL);
   }
 }
 
 /// Draw the foldcolumn or fill "out_buffer". Assume monocell characters.
 ///
 /// @param fdc  Current width of the foldcolumn
-/// @param[out] out_buffer  Char array to write into, only used for 'statuscolumn'
-void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, int fdc,
+/// @param[out] wlv_off  Pointer to linebuf offset, incremented for default column
+/// @param[out] out_buffer  Char array to fill, only used for 'statuscolumn'
+void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, int fdc, int *wlv_off,
                      schar_T *out_buffer)
 {
   bool closed = foldinfo.fi_level != 0 && foldinfo.fi_lines > 0;
@@ -408,9 +407,8 @@ void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, in
   // fits and use numbers to indicate the depth.
   int first_level = MAX(level - fdc - closed + 1, 1);
   int closedcol = MIN(fdc, level);
-  int i = 0;
 
-  for (i = 0; i < fdc; i++) {
+  for (int i = 0; i < fdc; i++) {
     int symbol = 0;
     if (i >= level) {
       symbol = ' ';
@@ -429,9 +427,9 @@ void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, in
     if (out_buffer) {
       out_buffer[i] = schar_from_char(symbol);
     } else {
-      linebuf_vcol[i] = i >= level ? -1 : (i == closedcol - 1 && closed) ? -2 : -3;
-      linebuf_attr[i] = attr;
-      linebuf_char[i] = schar_from_char(symbol);
+      linebuf_vcol[*wlv_off] = i >= level ? -1 : (i == closedcol - 1 && closed) ? -2 : -3;
+      linebuf_attr[*wlv_off] = attr;
+      linebuf_char[(*wlv_off)++] = schar_from_char(symbol);
     }
   }
 }
