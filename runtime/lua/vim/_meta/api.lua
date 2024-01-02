@@ -236,10 +236,12 @@ function vim.api.nvim_buf_clear_highlight(buffer, ns_id, line_start, line_end) e
 ---
 --- @param buffer integer Buffer handle, or 0 for current buffer
 --- @param ns_id integer Namespace to clear, or -1 to clear all namespaces.
---- @param line_start integer Start of range of lines to clear
---- @param line_end integer End of range of lines to clear (exclusive) or -1 to
----                   clear to end of buffer.
-function vim.api.nvim_buf_clear_namespace(buffer, ns_id, line_start, line_end) end
+--- @param start any Start of range of lines to clear: a 0-indexed (row, col) or
+---               a 0-indexed integer for the starting row
+--- @param end_ any End of range of lines to clear: a 0-indexed (row, col) or
+---               a 0-indexed integer for the end row (exclusive) or -1 to
+---               clear to end of buffer.
+function vim.api.nvim_buf_clear_namespace(buffer, ns_id, start, end_) end
 
 --- Creates a buffer-local command `user-commands`.
 ---

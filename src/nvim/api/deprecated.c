@@ -95,8 +95,10 @@ void nvim_buf_clear_highlight(Buffer buffer, Integer ns_id, Integer line_start, 
 {
   Object start;
   start.data.integer = line_start;
+  start.type = kObjectTypeInteger;
   Object end;
   end.data.integer = line_end;
+  end.type = kObjectTypeInteger;
   nvim_buf_clear_namespace(buffer, ns_id, start, end, err);
 }
 
