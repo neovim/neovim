@@ -164,6 +164,7 @@ CONFIG = {
             'filetype.lua',
             'keymap.lua',
             'fs.lua',
+            'glob.lua',
             'secure.lua',
             'version.lua',
             'iter.lua',
@@ -187,6 +188,7 @@ CONFIG = {
             'runtime/lua/vim/_inspector.lua',
             'runtime/lua/vim/snippet.lua',
             'runtime/lua/vim/text.lua',
+            'runtime/lua/vim/glob.lua',
             'runtime/lua/vim/_meta/builtin.lua',
             'runtime/lua/vim/_meta/diff.lua',
             'runtime/lua/vim/_meta/mpack.lua',
@@ -251,6 +253,7 @@ CONFIG = {
             'spell': 'vim.spell',
             'snippet': 'vim.snippet',
             'text': 'vim.text',
+            'glob': 'vim.glob',
         },
         'append_only': [
             'shared.lua',
