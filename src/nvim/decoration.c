@@ -93,20 +93,13 @@ void bufhl_add_hl_pos_offset(buf_T *buf, int src_id, int hl_id, lpos_T pos_start
 
 void decor_redraw(buf_T *buf, int row1, int row2, DecorInline decor)
 {
-  if (row2 >= row1) {
-    redraw_buf_range_later(buf, row1 + 1, row2 + 1);
-  }
-
   if (decor.ext) {
     DecorVirtText *vt = decor.data.ext.vt;
     while (vt) {
-      if (vt->flags & kVTIsLines) {
-        redraw_buf_line_later(buf, row1 + 1 + ((vt->flags & kVTLinesAbove) ? 0 : 1), true);
+      bool below = (vt->flags & kVTIsLines) && !(vt->flags & kVTLinesAbove);
+      redraw_buf_line_later(buf, row1 + 1 + below, true);
+      if (vt->flags & kVTIsLines || vt->pos == kVPosInline) {
         changed_line_display_buf(buf);
-      } else {
-        if (vt->pos == kVPosInline) {
-          changed_line_display_buf(buf);
-        }
       }
       vt = vt->next;
     }
