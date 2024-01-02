@@ -226,6 +226,7 @@ end
 ---@return vim.lsp.rpc.Error
 function M.rpc_response_error(code, message, data)
   -- TODO should this error or just pick a sane error (like InternalError)?
+  ---@type string
   local code_name = assert(protocol.ErrorCodes[code], 'Invalid RPC error code')
   return setmetatable({
     code = code,
@@ -473,6 +474,7 @@ function Client:handle_body(body)
               type(err) == 'table',
               'err must be a table. Use rpc_response_error to help format errors.'
             )
+            ---@type string
             local code_name = assert(
               protocol.ErrorCodes[err.code],
               'Errors must use protocol.ErrorCodes. Use rpc_response_error to help format errors.'
@@ -620,34 +622,24 @@ end
 ---@param dispatchers? vim.lsp.rpc.Dispatchers
 ---@return vim.lsp.rpc.Dispatchers
 local function merge_dispatchers(dispatchers)
-  if dispatchers then
-    local user_dispatchers = dispatchers
-    dispatchers = {}
-    for dispatch_name, default_dispatch in pairs(default_dispatchers) do
-      ---@cast dispatch_name string
-      ---@cast default_dispatch function
-      local user_dispatcher = user_dispatchers[dispatch_name] --- @type function
-      if user_dispatcher then
-        if type(user_dispatcher) ~= 'function' then
-          error(string.format('dispatcher.%s must be a function', dispatch_name))
-        end
-        -- server_request is wrapped elsewhere.
-        if
-          not (dispatch_name == 'server_request' or dispatch_name == 'on_exit') -- TODO this blocks the loop exiting for some reason.
-        then
-          user_dispatcher = schedule_wrap(user_dispatcher)
-        end
-        --- @diagnostic disable-next-line:no-unknown
-        dispatchers[dispatch_name] = user_dispatcher
-      else
-        --- @diagnostic disable-next-line:no-unknown
-        dispatchers[dispatch_name] = default_dispatch
-      end
-    end
-  else
-    dispatchers = default_dispatchers
+  if not dispatchers then
+    return default_dispatchers
   end
-  return dispatchers
+  ---@diagnostic disable-next-line: no-unknown
+  for name, fn in pairs(dispatchers) do
+    if type(fn) ~= 'function' then
+      error(string.format('dispatcher.%s must be a function', name))
+    end
+  end
+  return {
+    notification = dispatchers.notification and vim.schedule_wrap(dispatchers.notification)
+      or default_dispatchers.notification,
+    on_error = dispatchers.on_error and vim.schedule_wrap(dispatchers.on_error)
+      or default_dispatchers.on_error,
+
+    on_exit = dispatchers.on_exit or default_dispatchers.on_exit,
+    server_request = dispatchers.server_request or default_dispatchers.server_request,
+  }
 end
 
 --- Create a LSP RPC client factory that connects via TCP to the given host
