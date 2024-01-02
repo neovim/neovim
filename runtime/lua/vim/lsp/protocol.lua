@@ -314,7 +314,7 @@ local constants = {
 }
 
 for k, v in pairs(constants) do
-  local tbl = vim.deepcopy(v)
+  local tbl = vim.deepcopy(v, true)
   vim.tbl_add_reverse_lookup(tbl)
   protocol[k] = tbl
 end

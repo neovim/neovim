@@ -282,6 +282,8 @@ The following new APIs and features were added.
   |vim.diagnostic.get()| when only the number of diagnostics is needed, but
   not the diagnostics themselves.
 
+• |vim.deepcopy()| has a `noref` argument to avoid hashing table values.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 

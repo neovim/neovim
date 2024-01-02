@@ -134,7 +134,7 @@ local function prefix_source(diagnostics)
       return d
     end
 
-    local t = vim.deepcopy(d)
+    local t = vim.deepcopy(d, true)
     t.message = string.format('%s: %s', d.source, d.message)
     return t
   end, diagnostics)
@@ -146,7 +146,7 @@ local function reformat_diagnostics(format, diagnostics)
     diagnostics = { diagnostics, 't' },
   })
 
-  local formatted = vim.deepcopy(diagnostics)
+  local formatted = vim.deepcopy(diagnostics, true)
   for _, diagnostic in ipairs(formatted) do
     diagnostic.message = format(diagnostic)
   end
@@ -373,7 +373,7 @@ local function get_diagnostics(bufnr, opts, clamp)
           or d.col < 0
           or d.end_col < 0
         then
-          d = vim.deepcopy(d)
+          d = vim.deepcopy(d, true)
           d.lnum = math.max(math.min(d.lnum, line_count), 0)
           d.end_lnum = math.max(math.min(d.end_lnum, line_count), 0)
           d.col = math.max(d.col, 0)
@@ -636,7 +636,7 @@ function M.config(opts, namespace)
 
   if not opts then
     -- Return current config
-    return vim.deepcopy(t)
+    return vim.deepcopy(t, true)
   end
 
   for k, v in pairs(opts) do
@@ -723,7 +723,7 @@ end
 ---
 ---@return table A list of active diagnostic namespaces |vim.diagnostic|.
 function M.get_namespaces()
-  return vim.deepcopy(all_namespaces)
+  return vim.deepcopy(all_namespaces, true)
 end
 
 ---@class Diagnostic
@@ -756,7 +756,7 @@ function M.get(bufnr, opts)
     opts = { opts, 't', true },
   })
 
-  return vim.deepcopy(get_diagnostics(bufnr, opts, false))
+  return vim.deepcopy(get_diagnostics(bufnr, opts, false), true)
 end
 
 --- Get current diagnostics count.
