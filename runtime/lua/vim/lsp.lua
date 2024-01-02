@@ -1353,7 +1353,7 @@ function lsp.start_client(config)
   ---@param context? {bufnr: integer}
   ---@param handler? lsp.Handler only called if a server command
   function client._exec_cmd(command, context, handler)
-    context = vim.deepcopy(context or {}) --[[@as lsp.HandlerContext]]
+    context = vim.deepcopy(context or {}, true) --[[@as lsp.HandlerContext]]
     context.bufnr = context.bufnr or api.nvim_get_current_buf()
     context.client_id = client.id
     local cmdname = command.command

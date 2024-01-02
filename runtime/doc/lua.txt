@@ -1905,15 +1905,24 @@ vim.deep_equal({a}, {b})                                    *vim.deep_equal()*
     Return: ~
         (boolean) `true` if values are equals, else `false`
 
-vim.deepcopy({orig})                                          *vim.deepcopy()*
+vim.deepcopy({orig}, {noref})                                 *vim.deepcopy()*
     Returns a deep copy of the given object. Non-table objects are copied as
     in a typical Lua assignment, whereas table objects are copied recursively.
     Functions are naively copied, so functions in the copied table point to
     the same functions as those in the input table. Userdata and threads are
     not copied and will throw an error.
 
+    Note: `noref=true` is much more performant on tables with unique table
+    fields, while `noref=false` is more performant on tables that reuse table
+    fields.
+
     Parameters: ~
-      • {orig}  (table) Table to copy
+      • {orig}   (table) Table to copy
+      • {noref}  (boolean|nil) When `false` (default) a contained table is
+                 only copied once and all references point to this single
+                 copy. When `true` every occurrence of a table results in a
+                 new copy. This also means that a cyclic reference can cause
+                 `deepcopy()` to fail.
 
     Return: ~
         (table) Table of copied keys and (nested) values.
