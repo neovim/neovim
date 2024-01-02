@@ -2991,6 +2991,33 @@ vim.fs.parents({start})                                     *vim.fs.parents()*
 
 
 ==============================================================================
+Lua module: vim.glob                                                *vim.glob*
+
+vim.glob.to_lpeg({pattern})                               *vim.glob.to_lpeg()*
+    Parses a raw glob into an |lua-lpeg| pattern.
+
+    This uses glob semantics from LSP 3.17.0: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#pattern
+
+    Glob patterns can have the following syntax:
+    • `*` to match one or more characters in a path segment
+    • `?` to match on one character in a path segment
+    • `**` to match any number of path segments, including none
+    • `{}` to group conditions (e.g. `*.{ts,js}` matches TypeScript and
+      JavaScript files)
+    • `[]` to declare a range of characters to match in a path segment (e.g.,
+      `example.[0-9]` to match on `example.0`, `example.1`, …)
+    • `[!...]` to negate a range of characters to match in a path segment
+      (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not
+      `example.0`)
+
+    Parameters: ~
+      • {pattern}  (string) The raw glob pattern
+
+    Return: ~
+        vim.lpeg.Pattern pattern An |lua-lpeg| representation of the pattern
+
+
+==============================================================================
 Lua module: vim.secure                                            *vim.secure*
 
 vim.secure.read({path})                                    *vim.secure.read()*
