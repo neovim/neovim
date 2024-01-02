@@ -193,6 +193,8 @@ The following new APIs and features were added.
     windows.
   • |vim.lsp.util.locations_to_items()| sets the `user_data` of each item to
     the original LSP `Location` or `LocationLink`.
+  • Added support for connecting to servers using named pipes (Windows) or
+    unix domain sockets (Unix) via |vim.lsp.rpc.domain_socket_connect()|.
 
 • Treesitter
   • Bundled parsers and queries (highlight, folds) for Markdown, Python, and
