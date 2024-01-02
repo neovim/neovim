@@ -391,7 +391,7 @@ int mf_sync(memfile_T *mfp, int flags)
   // Then we only try to write blocks within the existing file. If that also
   // fails then we give up.
   int status = OK;
-  bhdr_T *hp;
+  bhdr_T *hp = NULL;
   // note, "last" block is typically earlier in the hash list
   map_foreach_value(&mfp->mf_hash, hp, {
     if (((flags & MFS_ALL) || hp->bh_bnum >= 0)
