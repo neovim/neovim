@@ -2089,8 +2089,7 @@ connect({host}, {port})                                *vim.lsp.rpc.connect()*
         fun(dispatchers: vim.lsp.rpc.Dispatchers ): vim.lsp.rpc.PublicClient function intended to be passed to |vim.lsp.start_client()| or
         |vim.lsp.start()| on the field cmd
 
-                                         *vim.lsp.rpc.domain_socket_connect()*
-domain_socket_connect({pipe_path})
+connect_pipe({pipe_path})                         *vim.lsp.rpc.connect_pipe()*
     Create a LSP RPC client factory that connects via named pipes (Windows) or
     unix domain sockets (Unix) to the given pipe_path (file path on Unix and
     name on Windows)
@@ -2100,8 +2099,7 @@ domain_socket_connect({pipe_path})
                      the named pipe (Windows) to connect to
 
     Return: ~
-        fun(dispatchers: vim.lsp.rpc.Dispatchers ): vim.lsp.rpc.PublicClient::function intended to be passed to
-        |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
+        fun(dispatchers: vim.lsp.rpc.Dispatchers ): vim.lsp.rpc.PublicClient function to use as cmd in |vim.lsp.start()|
 
 format_rpc_error({err})                       *vim.lsp.rpc.format_rpc_error()*
     Constructs an error message from an LSP error object.

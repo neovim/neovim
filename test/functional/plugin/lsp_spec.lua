@@ -3861,7 +3861,7 @@ describe('LSP', function()
       ]]
       eq(result.method, "initialize")
     end)
-    it('can connect to lsp server via rpc.domain_socket_connect', function()
+    it('can connect to lsp server via rpc.connect_pipe', function()
       local tmpfile
       if is_os("win") then
         tmpfile = "\\\\.\\\\pipe\\pipe.test"
@@ -3885,7 +3885,7 @@ describe('LSP', function()
                         client:close()
                 end))
         end)
-        vim.lsp.start({ name = "dummy", cmd = vim.lsp.rpc.domain_socket_connect(SOCK) })
+        vim.lsp.start({ name = "dummy", cmd = vim.lsp.rpc.connect_pipe(SOCK) })
         vim.wait(1000, function() return init ~= nil end)
         assert(init, "server must receive `initialize` request")
         server:close()

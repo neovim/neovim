@@ -705,8 +705,8 @@ end
 --- Unix and name on Windows)
 ---
 ---@param pipe_path string file path of the domain socket (Unix) or name of the named pipe (Windows) to connect to
----@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient#function intended to be passed to |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
-function M.domain_socket_connect(pipe_path)
+---@return fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient function to use as cmd in |vim.lsp.start()|
+function M.connect_pipe(pipe_path)
   return function(dispatchers)
     dispatchers = merge_dispatchers(dispatchers)
     local pipe =
