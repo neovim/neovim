@@ -425,6 +425,12 @@ end
 ---     Runs the on_attach function from the client's config if it was defined.
 ---     Useful for buffer-local setup.
 ---
+---  - supports_method(method, [opts]): boolean
+---     Checks if a client supports a given method.
+---     Always returns true for unknown off-spec methods.
+---     [opts] is a optional `{bufnr?: integer}` table.
+---     Some language server capabilities can be file specific.
+---
 --- - Members
 ---  - {id} (number): The id allocated to the client.
 ---
