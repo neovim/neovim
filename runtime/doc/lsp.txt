@@ -2086,8 +2086,8 @@ connect({host}, {port})                                *vim.lsp.rpc.connect()*
       • {port}  (integer) port to connect to
 
     Return: ~
-        fun(dispatchers: vim.lsp.rpc.Dispatchers ): vim.lsp.rpc.PublicClient::function intended to be passed to
-        |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
+        fun(dispatchers: vim.lsp.rpc.Dispatchers ): vim.lsp.rpc.PublicClient function intended to be passed to |vim.lsp.start_client()| or
+        |vim.lsp.start()| on the field cmd
 
                                          *vim.lsp.rpc.domain_socket_connect()*
 domain_socket_connect({pipe_path})
@@ -2162,14 +2162,14 @@ start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
       • {cmd}                 (string) Command to start the LSP server.
       • {cmd_args}            string[] List of additional string arguments to
                               pass to {cmd}.
-      • {dispatchers}         vim.lsp.rpc.Dispatchers |nil Dispatchers for LSP message types. Valid
-                              dispatcher names are:
+      • {dispatchers}         (table|nil) Dispatchers for LSP message types.
+                              Valid dispatcher names are:
                               • `"notification"`
                               • `"server_request"`
                               • `"on_error"`
                               • `"on_exit"`
-      • {extra_spawn_params}  vim.lsp.rpc.ExtraSpawnParams |nil Additional context for the LSP server
-                              process. May contain:
+      • {extra_spawn_params}  (table|nil) Additional context for the LSP
+                              server process. May contain:
                               • {cwd} (string) Working directory for the LSP
                                 server process
                               • {detached?} (boolean) Detach the LSP server
@@ -2179,7 +2179,7 @@ start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
                                 variables for LSP server process
 
     Return: ~
-        vim.lsp.rpc.PublicClient |nil#Client RPC object, with these methods:
+        (table|nil) client RPC object, with these methods:
         • `notify()` |vim.lsp.rpc.notify()|
         • `request()` |vim.lsp.rpc.request()|
         • `is_closing()` returns a boolean indicating if the RPC is closing.
