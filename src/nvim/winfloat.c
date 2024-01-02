@@ -240,7 +240,9 @@ void win_float_remove(bool bang, int count)
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
     kv_push(float_win_arr, wp);
   }
-  qsort(float_win_arr.items, float_win_arr.size, sizeof(win_T *), float_zindex_cmp);
+  if (float_win_arr.size > 0) {
+    qsort(float_win_arr.items, float_win_arr.size, sizeof(win_T *), float_zindex_cmp);
+  }
   for (size_t i = 0; i < float_win_arr.size; i++) {
     if (win_close(float_win_arr.items[i], false, false) == FAIL) {
       break;
