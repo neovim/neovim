@@ -125,6 +125,7 @@ void decor_providers_invoke_win(win_T *wp)
   if (kv_size(decor_providers) > 0) {
     validate_botline(wp);
   }
+  linenr_T botline = MIN(wp->w_botline, wp->w_buffer->b_ml.ml_line_count);
 
   for (size_t i = 0; i < kv_size(decor_providers); i++) {
     DecorProvider *p = &kv_A(decor_providers, i);
@@ -138,7 +139,7 @@ void decor_providers_invoke_win(win_T *wp)
       ADD_C(args, BUFFER_OBJ(wp->w_buffer->handle));
       // TODO(bfredl): we are not using this, but should be first drawn line?
       ADD_C(args, INTEGER_OBJ(wp->w_topline - 1));
-      ADD_C(args, INTEGER_OBJ(wp->w_botline - 1 - 1));
+      ADD_C(args, INTEGER_OBJ(botline - 1));
       if (!decor_provider_invoke((int)i, "win", p->redraw_win, args, true)) {
         kv_A(decor_providers, i).state = kDecorProviderWinDisabled;
       }
