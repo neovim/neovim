@@ -2980,7 +2980,9 @@ static void foldlevelExpr(fline_T *flp)
 
   // "<1", "<2", .. : end a fold with a certain level
   case '<':
-    flp->lvl_next = n - 1;
+    // To prevent an unexpected start of a new fold, the next
+    // level must not exceed the level of the current fold.
+    flp->lvl_next = MIN(flp->lvl, n - 1);
     flp->end = n;
     break;
 
