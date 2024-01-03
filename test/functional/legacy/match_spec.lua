@@ -11,8 +11,8 @@ describe('matchaddpos()', function()
   it('can add more than 8 match positions vim-patch:9.0.0620', function()
     local screen = Screen.new(60, 14)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {background = Screen.colors.Yellow},  -- Search
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { background = Screen.colors.Yellow }, -- Search
     })
     screen:attach()
     exec([[
@@ -43,8 +43,8 @@ describe('match highlighting', function()
   it('does not continue in linebreak vim-patch:8.2.3698', function()
     local screen = Screen.new(75, 10)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
     })
     screen:attach()
     exec([=[
@@ -63,9 +63,9 @@ describe('match highlighting', function()
   it('is shown with incsearch vim-patch:8.2.3940', function()
     local screen = Screen.new(75, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {background = Screen.colors.Yellow},  -- Search
-      [2] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { background = Screen.colors.Yellow }, -- Search
+      [2] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
     })
     screen:attach()
     exec([[
@@ -95,8 +95,8 @@ describe('match highlighting', function()
   it('on a Tab vim-patch:8.2.4062', function()
     local screen = Screen.new(75, 10)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
     })
     screen:attach()
     exec([[

@@ -52,7 +52,7 @@ describe('printf()', function()
     -- zero-fill modifier is ignored when used with left-align
     -- force-sign and add-blank are ignored
     -- use-grouping-characters modifier is ignored always
-    eq('0b00011   ', funcs.printf('% \'+#0-10.5b', 3))
+    eq('0b00011   ', funcs.printf("% '+#0-10.5b", 3))
   end)
   it('errors out when %b modifier is used for a list', function()
     eq('Vim(call):E745: Using a List as a Number', exc_exec('call printf("%b", [])'))

@@ -110,7 +110,9 @@ describe('mapping', function()
     command('imapclear')
     command('set whichwrap=<,>,[,]')
     feed('G3o<esc>2k')
-    command([[:exe ":norm! iTest3: text with a (parenthesis here\<C-G>U\<Right>new line here\<esc>\<up>\<up>."]])
+    command(
+      [[:exe ":norm! iTest3: text with a (parenthesis here\<C-G>U\<Right>new line here\<esc>\<up>\<up>."]]
+    )
 
     expect([[
 

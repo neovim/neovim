@@ -25,7 +25,8 @@ describe(':Tutor', function()
   end)
 
   it('applies {unix:…,win:…} transform', function()
-    local expected = is_os('win') and [[
+    local expected = is_os('win')
+        and [[
       {0:  }^                                                                              |
       {0:  } 3. To verify that a file was retrieved, cursor back and notice that there    |
       {0:  }    are now two copies of Lesson 5.3, the original and the retrieved version. |
@@ -56,7 +57,8 @@ describe(':Tutor', function()
       {0:  } 5. {2::r !dir}                  reads the output of the dir command and          |
       {0:  }                             puts it below the cursor position.               |
       {0:  }                                                                              |
-    ]] or [[
+    ]]
+      or [[
       {0:  }^                                                                              |
       {0:  } 3. To verify that a file was retrieved, cursor back and notice that there    |
       {0:  }    are now two copies of Lesson 5.3, the original and the retrieved version. |

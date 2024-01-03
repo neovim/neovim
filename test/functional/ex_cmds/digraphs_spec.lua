@@ -10,13 +10,13 @@ describe(':digraphs', function()
     clear()
     screen = Screen.new(65, 8)
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [4] = {bold = true},
-      [5] = {background = Screen.colors.LightGrey},
-      [6] = {foreground = Screen.colors.Blue1},
-      [7] = {bold = true, reverse = true},
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      [4] = { bold = true },
+      [5] = { background = Screen.colors.LightGrey },
+      [6] = { foreground = Screen.colors.Blue1 },
+      [7] = { bold = true, reverse = true },
     })
     screen:attach()
   end)

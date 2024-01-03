@@ -8,14 +8,17 @@ local funcs = helpers.funcs
 local pcall_err = helpers.pcall_err
 
 before_each(clear)
-for _, func in ipairs({'min', 'max'}) do
+for _, func in ipairs({ 'min', 'max' }) do
   describe(func .. '()', function()
-    it('gives a single error message when multiple values failed conversions',
-    function()
-      eq('Vim(echo):E745: Using a List as a Number',
-         pcall_err(command, 'echo ' .. func .. '([-5, [], [], [], 5])'))
-      eq('Vim(echo):E745: Using a List as a Number',
-         pcall_err(command, 'echo ' .. func .. '({1:-5, 2:[], 3:[], 4:[], 5:5})'))
+    it('gives a single error message when multiple values failed conversions', function()
+      eq(
+        'Vim(echo):E745: Using a List as a Number',
+        pcall_err(command, 'echo ' .. func .. '([-5, [], [], [], 5])')
+      )
+      eq(
+        'Vim(echo):E745: Using a List as a Number',
+        pcall_err(command, 'echo ' .. func .. '({1:-5, 2:[], 3:[], 4:[], 5:5})')
+      )
       for errmsg, errinput in pairs({
         ['Vim(echo):E745: Using a List as a Number'] = '[]',
         ['Vim(echo):E805: Using a Float as a Number'] = '0.0',
@@ -31,18 +34,26 @@ for _, func in ipairs({'min', 'max'}) do
       eq(0, eval(func .. '({})'))
     end)
     it('works with arrays/dictionaries with one item', function()
-      eq(5, funcs[func]({5}))
-      eq(5, funcs[func]({test=5}))
+      eq(5, funcs[func]({ 5 }))
+      eq(5, funcs[func]({ test = 5 }))
     end)
     it('works with NULL arrays/dictionaries', function()
       eq(0, eval(func .. '(v:_null_list)'))
       eq(0, eval(func .. '(v:_null_dict)'))
     end)
     it('errors out for invalid types', function()
-      for _, errinput in ipairs({'1', 'v:true', 'v:false', 'v:null',
-                                 'function("tr")', '""'}) do
-        eq(('Vim(echo):E712: Argument of %s() must be a List or Dictionary'):format(func),
-           pcall_err(command, 'echo ' .. func .. '(' .. errinput .. ')'))
+      for _, errinput in ipairs({
+        '1',
+        'v:true',
+        'v:false',
+        'v:null',
+        'function("tr")',
+        '""',
+      }) do
+        eq(
+          ('Vim(echo):E712: Argument of %s() must be a List or Dictionary'):format(func),
+          pcall_err(command, 'echo ' .. func .. '(' .. errinput .. ')')
+        )
       end
     end)
   end)

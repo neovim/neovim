@@ -3,12 +3,12 @@
 -- for more information about this.
 local helpers = require('test.functional.helpers')(nil)
 require('test.functional.ui.screen')
-local busted = require("busted")
+local busted = require('busted')
 local is_os = helpers.is_os
 
 if is_os('win') then
   local ffi = require('ffi')
-  ffi.cdef[[
+  ffi.cdef [[
   typedef int errno_t;
   errno_t _set_fmode(int mode);
   ]]
@@ -17,10 +17,10 @@ end
 
 local testid = (function()
   local id = 0
-  return (function()
+  return function()
     id = id + 1
     return id
-  end)
+  end
 end)()
 
 -- Global before_each. https://github.com/Olivine-Labs/busted/issues/613
@@ -29,13 +29,11 @@ local function before_each(_element, _parent)
   _G._nvim_test_id = id
   return nil, true
 end
-busted.subscribe({ 'test', 'start' },
-  before_each,
-  {
-    -- Ensure our --helper is handled before --output (see busted/runner.lua).
-    priority = 1,
-    -- Don't generate a test-id for skipped tests. /shrug
-    predicate = function (element, _, status)
-      return not ((element.descriptor == 'pending' or status == 'pending'))
-    end
-  })
+busted.subscribe({ 'test', 'start' }, before_each, {
+  -- Ensure our --helper is handled before --output (see busted/runner.lua).
+  priority = 1,
+  -- Don't generate a test-id for skipped tests. /shrug
+  predicate = function(element, _, status)
+    return not (element.descriptor == 'pending' or status == 'pending')
+  end,
+})

@@ -10,10 +10,13 @@ local write_file = helpers.write_file
 
 describe("'tagcase' option", function()
   setup(function()
-    write_file('Xtags', [[
+    write_file(
+      'Xtags',
+      [[
       Bar	Xtext	3
       Foo	Xtext	2
-      foo	Xtext	4]])
+      foo	Xtext	4]]
+    )
   end)
 
   before_each(function()

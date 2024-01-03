@@ -17,10 +17,10 @@ describe('messages', function()
   it('a warning causes scrolling if and only if it has a stacktrace', function()
     screen = Screen.new(75, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
-      [2] = {bold = true, reverse = true},  -- MsgSeparator
-      [3] = {foreground = Screen.colors.Red},  -- WarningMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
+      [2] = { bold = true, reverse = true }, -- MsgSeparator
+      [3] = { foreground = Screen.colors.Red }, -- WarningMsg
     })
     screen:attach()
 
@@ -32,11 +32,14 @@ describe('messages', function()
     command('enew')
     command('set readonly')
     feed('u')
-    screen:expect({grid = [[
+    screen:expect({
+      grid = [[
                                                                                  |
       {0:~                                                                          }|*4
       {3:W10: Warning: Changing a readonly file}^                                     |
-    ]], timeout = 500})
+    ]],
+      timeout = 500,
+    })
     screen:expect([[
       ^                                                                           |
       {0:~                                                                          }|*4
@@ -48,8 +51,8 @@ describe('messages', function()
   it('clearing mode does not remove message', function()
     screen = Screen.new(60, 10)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
     })
     screen:attach()
     exec([[
@@ -104,8 +107,8 @@ describe('messages', function()
     it('works', function()
       screen = Screen.new(75, 6)
       screen:set_default_attr_ids({
-        [1] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
-        [2] = {foreground = Screen.colors.Brown},  -- LineNr
+        [1] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
+        [2] = { foreground = Screen.colors.Brown }, -- LineNr
       })
       screen:attach()
 
@@ -401,15 +404,15 @@ describe('messages', function()
     it('verbose message before echo command', function()
       screen = Screen.new(60, 10)
       screen:set_default_attr_ids({
-        [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-        [1] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
+        [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+        [1] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
       })
       screen:attach()
 
-      command('cd '..nvim_dir)
+      command('cd ' .. nvim_dir)
       meths.set_option_value('shell', './shell-test', {})
       meths.set_option_value('shellcmdflag', 'REP 20', {})
-      meths.set_option_value('shellxquote', '', {})  -- win: avoid extra quotes
+      meths.set_option_value('shellxquote', '', {}) -- win: avoid extra quotes
 
       -- display a page and go back, results in exactly the same view
       feed([[:4 verbose echo system('foo')<CR>]])
@@ -455,7 +458,7 @@ describe('messages', function()
       -- do the same with 'cmdheight' set to 2
       feed('q')
       command('set ch=2')
-      command('mode')  -- FIXME: bottom is invalid after scrolling
+      command('mode') -- FIXME: bottom is invalid after scrolling
       screen:expect([[
         ^                                                            |
         {0:~                                                           }|*7
@@ -506,9 +509,9 @@ describe('messages', function()
     it('with control characters can be quit vim-patch:8.2.1844', function()
       screen = Screen.new(40, 10)
       screen:set_default_attr_ids({
-        [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-        [1] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
-        [2] = {foreground = Screen.colors.Blue},  -- SpecialKey
+        [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+        [1] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
+        [2] = { foreground = Screen.colors.Blue }, -- SpecialKey
       })
       screen:attach()
 
@@ -538,9 +541,9 @@ describe('messages', function()
     before_each(function()
       screen = Screen.new(40, 6)
       screen:set_default_attr_ids({
-        [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-        [2] = {bold = true},  -- ModeMsg
-        [3] = {bold = true, reverse=true},  -- StatusLine
+        [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+        [2] = { bold = true }, -- ModeMsg
+        [3] = { bold = true, reverse = true }, -- StatusLine
       })
       screen:attach()
     end)
@@ -613,9 +616,9 @@ describe('messages', function()
   it('y/n prompt works', function()
     screen = Screen.new(75, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
-      [2] = {bold = true, reverse = true},  -- MsgSeparator
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
+      [2] = { bold = true, reverse = true }, -- MsgSeparator
     })
     screen:attach()
     command('set noincsearch nohlsearch inccommand=')
@@ -671,10 +674,10 @@ describe('messages', function()
   it("fileinfo works when 'cmdheight' has just decreased", function()
     screen = Screen.new(40, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue};  -- NonText
-      [1] = {bold = true};  -- TabLineSel
-      [2] = {underline = true, background = Screen.colors.LightGrey};  -- TabLine
-      [3] = {reverse = true};  -- TabLineFill
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { bold = true }, -- TabLineSel
+      [2] = { underline = true, background = Screen.colors.LightGrey }, -- TabLine
+      [3] = { reverse = true }, -- TabLineFill
     })
     screen:attach()
 
@@ -685,7 +688,7 @@ describe('messages', function()
       tabnew
       set cmdheight=2
     ]])
-    command('mode')  -- FIXME: bottom is invalid after scrolling
+    command('mode') -- FIXME: bottom is invalid after scrolling
     screen:expect([[
       {2: [No Name] }{1: [No Name] }{3:                 }{2:X}|
       ^                                        |
@@ -707,7 +710,7 @@ describe('messages', function()
   it('fileinfo does not overwrite echo message vim-patch:8.2.4156', function()
     screen = Screen.new(40, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
     })
     screen:attach()
 

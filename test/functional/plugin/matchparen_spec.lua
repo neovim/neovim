@@ -11,13 +11,13 @@ describe('matchparen', function()
   local screen
 
   before_each(function()
-    clear{args={'-u', 'NORC'}}
-    screen = Screen.new(20,5)
+    clear { args = { '-u', 'NORC' } }
+    screen = Screen.new(20, 5)
     screen:attach()
-    screen:set_default_attr_ids( {
-      [0] = {bold=true, foreground=255},
-      [1] = {bold=true},
-    } )
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = 255 },
+      [1] = { bold = true },
+    })
   end)
 
   it('uses correct column after i_<Up>. Vim patch 7.4.1296', function()
@@ -39,6 +39,5 @@ describe('matchparen', function()
       }                   |
       {1:-- INSERT --}        |
     ]])
-
   end)
 end)

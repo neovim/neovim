@@ -55,14 +55,14 @@ before_each(function()
     endfunction
   ]])
   screen:set_default_attr_ids({
-    EOB={bold = true, foreground = Screen.colors.Blue1},
-    T={foreground=Screen.colors.Red},
-    RBP1={background=Screen.colors.Red},
-    RBP2={background=Screen.colors.Yellow},
-    RBP3={background=Screen.colors.Green},
-    RBP4={background=Screen.colors.Blue},
-    SEP={bold = true, reverse = true},
-    CONFIRM={bold = true, foreground = Screen.colors.SeaGreen4},
+    EOB = { bold = true, foreground = Screen.colors.Blue1 },
+    T = { foreground = Screen.colors.Red },
+    RBP1 = { background = Screen.colors.Red },
+    RBP2 = { background = Screen.colors.Yellow },
+    RBP3 = { background = Screen.colors.Green },
+    RBP4 = { background = Screen.colors.Blue },
+    SEP = { bold = true, reverse = true },
+    CONFIRM = { bold = true, foreground = Screen.colors.SeaGreen4 },
   })
 end)
 
@@ -110,7 +110,7 @@ describe('input()', function()
   end)
   it('allows unequal numeric values when using {opts} dictionary', function()
     command('echohl Test')
-    meths.set_var('opts', {prompt=1, default=2, cancelreturn=3})
+    meths.set_var('opts', { prompt = 1, default = 2, cancelreturn = 3 })
     feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
@@ -132,7 +132,7 @@ describe('input()', function()
   end)
   it('works with redraw', function()
     command('echohl Test')
-    meths.set_var('opts', {prompt='Foo>', default='Bar'})
+    meths.set_var('opts', { prompt = 'Foo>', default = 'Bar' })
     feed([[:echo inputdialog(opts)<CR>]])
     screen:expect([[
                                |
@@ -140,11 +140,14 @@ describe('input()', function()
       {T:Foo>}Bar^                  |
     ]])
     command('mode')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
                                |
       {EOB:~                        }|*3
       {T:Foo>}Bar^                  |
-    ]], reset=true}
+    ]],
+      reset = true,
+    }
     feed('<BS>')
     screen:expect([[
                                |
@@ -152,11 +155,14 @@ describe('input()', function()
       {T:Foo>}Ba^                   |
     ]])
     command('mode')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
                                |
       {EOB:~                        }|*3
       {T:Foo>}Ba^                   |
-    ]], reset=true}
+    ]],
+      reset = true,
+    }
   end)
   it('allows omitting everything with dictionary argument', function()
     command('echohl Test')
@@ -200,22 +206,17 @@ describe('input()', function()
     eq('DEF2', meths.get_var('var'))
   end)
   it('errors out on invalid inputs', function()
-    eq('Vim(call):E730: Using a List as a String',
-       exc_exec('call input([])'))
-    eq('Vim(call):E730: Using a List as a String',
-       exc_exec('call input("", [])'))
-    eq('Vim(call):E730: Using a List as a String',
-       exc_exec('call input("", "", [])'))
-    eq('Vim(call):E730: Using a List as a String',
-       exc_exec('call input({"prompt": []})'))
-    eq('Vim(call):E730: Using a List as a String',
-       exc_exec('call input({"default": []})'))
-    eq('Vim(call):E730: Using a List as a String',
-       exc_exec('call input({"completion": []})'))
-    eq('Vim(call):E5050: {opts} must be the only argument',
-       exc_exec('call input({}, "default")'))
-    eq('Vim(call):E118: Too many arguments for function: input',
-       exc_exec('call input("prompt> ", "default", "file", "extra")'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call input([])'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call input("", [])'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call input("", "", [])'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call input({"prompt": []})'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call input({"default": []})'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call input({"completion": []})'))
+    eq('Vim(call):E5050: {opts} must be the only argument', exc_exec('call input({}, "default")'))
+    eq(
+      'Vim(call):E118: Too many arguments for function: input',
+      exc_exec('call input("prompt> ", "default", "file", "extra")')
+    )
   end)
   it('supports highlighting', function()
     command('nnoremap <expr> X input({"highlight": "RainBowParens"})[-1]')
@@ -291,7 +292,7 @@ describe('inputdialog()', function()
   end)
   it('allows unequal numeric values when using {opts} dictionary', function()
     command('echohl Test')
-    meths.set_var('opts', {prompt=1, default=2, cancelreturn=3})
+    meths.set_var('opts', { prompt = 1, default = 2, cancelreturn = 3 })
     feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
@@ -313,7 +314,7 @@ describe('inputdialog()', function()
   end)
   it('works with redraw', function()
     command('echohl Test')
-    meths.set_var('opts', {prompt='Foo>', default='Bar'})
+    meths.set_var('opts', { prompt = 'Foo>', default = 'Bar' })
     feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
@@ -321,11 +322,14 @@ describe('inputdialog()', function()
       {T:Foo>}Bar^                  |
     ]])
     command('mode')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
                                |
       {EOB:~                        }|*3
       {T:Foo>}Bar^                  |
-    ]], reset=true}
+    ]],
+      reset = true,
+    }
     feed('<BS>')
     screen:expect([[
                                |
@@ -333,11 +337,14 @@ describe('inputdialog()', function()
       {T:Foo>}Ba^                   |
     ]])
     command('mode')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
                                |
       {EOB:~                        }|*3
       {T:Foo>}Ba^                   |
-    ]], reset=true}
+    ]],
+      reset = true,
+    }
   end)
   it('allows omitting everything with dictionary argument', function()
     command('echohl Test')
@@ -372,22 +379,20 @@ describe('inputdialog()', function()
     eq('DEF2', meths.get_var('var'))
   end)
   it('errors out on invalid inputs', function()
-    eq('Vim(call):E730: Using a List as a String',
-       exc_exec('call inputdialog([])'))
-    eq('Vim(call):E730: Using a List as a String',
-       exc_exec('call inputdialog("", [])'))
-    eq('Vim(call):E730: Using a List as a String',
-       exc_exec('call inputdialog("", "", [])'))
-    eq('Vim(call):E730: Using a List as a String',
-       exc_exec('call inputdialog({"prompt": []})'))
-    eq('Vim(call):E730: Using a List as a String',
-       exc_exec('call inputdialog({"default": []})'))
-    eq('Vim(call):E730: Using a List as a String',
-       exc_exec('call inputdialog({"completion": []})'))
-    eq('Vim(call):E5050: {opts} must be the only argument',
-       exc_exec('call inputdialog({}, "default")'))
-    eq('Vim(call):E118: Too many arguments for function: inputdialog',
-       exc_exec('call inputdialog("prompt> ", "default", "file", "extra")'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog([])'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog("", [])'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog("", "", [])'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog({"prompt": []})'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog({"default": []})'))
+    eq('Vim(call):E730: Using a List as a String', exc_exec('call inputdialog({"completion": []})'))
+    eq(
+      'Vim(call):E5050: {opts} must be the only argument',
+      exc_exec('call inputdialog({}, "default")')
+    )
+    eq(
+      'Vim(call):E118: Too many arguments for function: inputdialog',
+      exc_exec('call inputdialog("prompt> ", "default", "file", "extra")')
+    )
   end)
   it('supports highlighting', function()
     command('nnoremap <expr> X inputdialog({"highlight": "RainBowParens"})[-1]')
@@ -404,84 +409,89 @@ end)
 describe('confirm()', function()
   -- oldtest: Test_confirm()
   it('works', function()
-    meths.set_option_value('more', false, {})  -- Avoid hit-enter prompt
+    meths.set_option_value('more', false, {}) -- Avoid hit-enter prompt
     meths.set_option_value('laststatus', 2, {})
     -- screen:expect() calls are needed to avoid feeding input too early
-    screen:expect({any = '%[No Name%]'})
+    screen:expect({ any = '%[No Name%]' })
 
     async_meths.command([[let a = confirm('Press O to proceed')]])
-    screen:expect({any = '{CONFIRM:.+: }'})
+    screen:expect({ any = '{CONFIRM:.+: }' })
     feed('o')
-    screen:expect({any = '%[No Name%]'})
+    screen:expect({ any = '%[No Name%]' })
     eq(1, meths.get_var('a'))
 
     async_meths.command([[let a = 'Are you sure?'->confirm("&Yes\n&No")]])
-    screen:expect({any = '{CONFIRM:.+: }'})
+    screen:expect({ any = '{CONFIRM:.+: }' })
     feed('y')
-    screen:expect({any = '%[No Name%]'})
+    screen:expect({ any = '%[No Name%]' })
     eq(1, meths.get_var('a'))
 
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
-    screen:expect({any = '{CONFIRM:.+: }'})
+    screen:expect({ any = '{CONFIRM:.+: }' })
     feed('n')
-    screen:expect({any = '%[No Name%]'})
+    screen:expect({ any = '%[No Name%]' })
     eq(2, meths.get_var('a'))
 
     -- Not possible to match Vim's CTRL-C test here as CTRL-C always sets got_int in Nvim.
 
     -- confirm() should return 0 when pressing ESC.
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
-    screen:expect({any = '{CONFIRM:.+: }'})
+    screen:expect({ any = '{CONFIRM:.+: }' })
     feed('<Esc>')
-    screen:expect({any = '%[No Name%]'})
+    screen:expect({ any = '%[No Name%]' })
     eq(0, meths.get_var('a'))
 
     -- Default choice is returned when pressing <CR>.
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No")]])
-    screen:expect({any = '{CONFIRM:.+: }'})
+    screen:expect({ any = '{CONFIRM:.+: }' })
     feed('<CR>')
-    screen:expect({any = '%[No Name%]'})
+    screen:expect({ any = '%[No Name%]' })
     eq(1, meths.get_var('a'))
 
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No", 2)]])
-    screen:expect({any = '{CONFIRM:.+: }'})
+    screen:expect({ any = '{CONFIRM:.+: }' })
     feed('<CR>')
-    screen:expect({any = '%[No Name%]'})
+    screen:expect({ any = '%[No Name%]' })
     eq(2, meths.get_var('a'))
 
     async_meths.command([[let a = confirm('Are you sure?', "&Yes\n&No", 0)]])
-    screen:expect({any = '{CONFIRM:.+: }'})
+    screen:expect({ any = '{CONFIRM:.+: }' })
     feed('<CR>')
-    screen:expect({any = '%[No Name%]'})
+    screen:expect({ any = '%[No Name%]' })
     eq(0, meths.get_var('a'))
 
     -- Test with the {type} 4th argument
-    for _, type in ipairs({'Error', 'Question', 'Info', 'Warning', 'Generic'}) do
+    for _, type in ipairs({ 'Error', 'Question', 'Info', 'Warning', 'Generic' }) do
       async_meths.command(([[let a = confirm('Are you sure?', "&Yes\n&No", 1, '%s')]]):format(type))
-      screen:expect({any = '{CONFIRM:.+: }'})
+      screen:expect({ any = '{CONFIRM:.+: }' })
       feed('y')
-      screen:expect({any = '%[No Name%]'})
+      screen:expect({ any = '%[No Name%]' })
       eq(1, meths.get_var('a'))
     end
 
-    eq('Vim(call):E730: Using a List as a String',
-       pcall_err(command, 'call confirm([])'))
-    eq('Vim(call):E730: Using a List as a String',
-       pcall_err(command, 'call confirm("Are you sure?", [])'))
-    eq('Vim(call):E745: Using a List as a Number',
-       pcall_err(command, 'call confirm("Are you sure?", "&Yes\n&No\n", [])'))
-    eq('Vim(call):E730: Using a List as a String',
-       pcall_err(command, 'call confirm("Are you sure?", "&Yes\n&No\n", 0, [])'))
+    eq('Vim(call):E730: Using a List as a String', pcall_err(command, 'call confirm([])'))
+    eq(
+      'Vim(call):E730: Using a List as a String',
+      pcall_err(command, 'call confirm("Are you sure?", [])')
+    )
+    eq(
+      'Vim(call):E745: Using a List as a Number',
+      pcall_err(command, 'call confirm("Are you sure?", "&Yes\n&No\n", [])')
+    )
+    eq(
+      'Vim(call):E730: Using a List as a String',
+      pcall_err(command, 'call confirm("Are you sure?", "&Yes\n&No\n", 0, [])')
+    )
   end)
 
-  it("shows dialog even if :silent #8788", function()
+  it('shows dialog even if :silent #8788', function()
     command("autocmd BufNewFile * call confirm('test')")
 
     local function check_and_clear(edit_line)
       screen:expect([[
                                  |
         {SEP:                         }|
-        ]]..edit_line..[[
+        ]] .. edit_line .. [[
         {CONFIRM:test}                     |
         {CONFIRM:[O]k: }^                   |
       ]])

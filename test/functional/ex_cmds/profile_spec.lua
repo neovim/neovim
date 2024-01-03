@@ -1,13 +1,13 @@
 require('os')
 local luv = require('luv')
 
-local helpers  = require('test.functional.helpers')(after_each)
-local eval     = helpers.eval
-local command  = helpers.command
-local eq, neq  = helpers.eq, helpers.neq
+local helpers = require('test.functional.helpers')(after_each)
+local eval = helpers.eval
+local command = helpers.command
+local eq, neq = helpers.eq, helpers.neq
 local tempfile = helpers.tmpname()
-local source   = helpers.source
-local matches  = helpers.matches
+local source = helpers.source
+local matches = helpers.matches
 local read_file = helpers.read_file
 
 -- tmpname() also creates the file on POSIX systems. Remove it again.

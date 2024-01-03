@@ -39,21 +39,21 @@ describe('nvim_get_keymap', function()
   -- Basic mapping and table to be used to describe results
   local foo_bar_string = 'nnoremap foo bar'
   local foo_bar_map_table = {
-    lhs='foo',
-    lhsraw='foo',
-    script=0,
-    silent=0,
-    rhs='bar',
-    expr=0,
-    sid=0,
-    scriptversion=1,
-    buffer=0,
-    nowait=0,
-    mode='n',
-    mode_bits=0x01,
-    abbr=0,
-    noremap=1,
-    lnum=0,
+    lhs = 'foo',
+    lhsraw = 'foo',
+    script = 0,
+    silent = 0,
+    rhs = 'bar',
+    expr = 0,
+    sid = 0,
+    scriptversion = 1,
+    buffer = 0,
+    nowait = 0,
+    mode = 'n',
+    mode_bits = 0x01,
+    abbr = 0,
+    noremap = 1,
+    lnum = 0,
   }
 
   it('returns empty list when no map', function()
@@ -66,10 +66,8 @@ describe('nvim_get_keymap', function()
     -- Should be the same as the dictionary we supplied earlier
     -- and the dictionary you would get from maparg
     -- since this is a global map, and not script local
-    eq({foo_bar_map_table}, meths.get_keymap('n'))
-    eq({funcs.maparg('foo', 'n', false, true)},
-      meths.get_keymap('n')
-    )
+    eq({ foo_bar_map_table }, meths.get_keymap('n'))
+    eq({ funcs.maparg('foo', 'n', false, true) }, meths.get_keymap('n'))
 
     -- Add another mapping
     command('nnoremap foo_longer bar_longer')
@@ -78,15 +76,11 @@ describe('nvim_get_keymap', function()
     foolong_bar_map_table['lhsraw'] = 'foo_longer'
     foolong_bar_map_table['rhs'] = 'bar_longer'
 
-    eq({foolong_bar_map_table, foo_bar_map_table},
-      meths.get_keymap('n')
-    )
+    eq({ foolong_bar_map_table, foo_bar_map_table }, meths.get_keymap('n'))
 
     -- Remove a mapping
     command('unmap foo_longer')
-    eq({foo_bar_map_table},
-      meths.get_keymap('n')
-    )
+    eq({ foo_bar_map_table }, meths.get_keymap('n'))
   end)
 
   it('works for other modes', function()
@@ -100,7 +94,7 @@ describe('nvim_get_keymap', function()
     insert_table['mode'] = 'i'
     insert_table['mode_bits'] = 0x10
 
-    eq({insert_table}, meths.get_keymap('i'))
+    eq({ insert_table }, meths.get_keymap('i'))
   end)
 
   it('considers scope', function()
@@ -117,8 +111,8 @@ describe('nvim_get_keymap', function()
     command('nnoremap <buffer> foo bar')
 
     -- The buffer mapping should not show up
-    eq({foolong_bar_map_table}, meths.get_keymap('n'))
-    eq({buffer_table}, curbufmeths.get_keymap('n'))
+    eq({ foolong_bar_map_table }, meths.get_keymap('n'))
+    eq({ buffer_table }, curbufmeths.get_keymap('n'))
   end)
 
   it('considers scope for overlapping maps', function()
@@ -129,8 +123,8 @@ describe('nvim_get_keymap', function()
 
     command('nnoremap <buffer> foo bar')
 
-    eq({foo_bar_map_table}, meths.get_keymap('n'))
-    eq({buffer_table}, curbufmeths.get_keymap('n'))
+    eq({ foo_bar_map_table }, meths.get_keymap('n'))
+    eq({ buffer_table }, curbufmeths.get_keymap('n'))
   end)
 
   it('can retrieve mapping for different buffers', function()
@@ -149,81 +143,118 @@ describe('nvim_get_keymap', function()
     -- Final buffer will have buffer mappings
     local buffer_table = shallowcopy(foo_bar_map_table)
     buffer_table['buffer'] = final_buffer
-    eq({buffer_table}, meths.buf_get_keymap(final_buffer, 'n'))
-    eq({buffer_table}, meths.buf_get_keymap(0, 'n'))
+    eq({ buffer_table }, meths.buf_get_keymap(final_buffer, 'n'))
+    eq({ buffer_table }, meths.buf_get_keymap(0, 'n'))
 
     command('buffer ' .. original_buffer)
     eq(original_buffer, curbufmeths.get_number())
     -- Original buffer won't have any mappings
     eq({}, meths.get_keymap('n'))
     eq({}, curbufmeths.get_keymap('n'))
-    eq({buffer_table}, meths.buf_get_keymap(final_buffer, 'n'))
+    eq({ buffer_table }, meths.buf_get_keymap(final_buffer, 'n'))
   end)
 
   -- Test toggle switches for basic options
   -- @param  option  The key represented in the `maparg()` result dict
-  local function global_and_buffer_test(map,
-                                        option,
-                                        option_token,
-                                        global_on_result,
-                                        buffer_on_result,
-                                        global_off_result,
-                                        buffer_off_result,
-                                        new_windows)
-
+  local function global_and_buffer_test(
+    map,
+    option,
+    option_token,
+    global_on_result,
+    buffer_on_result,
+    global_off_result,
+    buffer_off_result,
+    new_windows
+  )
     local function make_new_windows(number_of_windows)
       if new_windows == nil then
         return nil
       end
 
-      for _=1,number_of_windows do
+      for _ = 1, number_of_windows do
         command('new')
       end
     end
 
-    local mode = string.sub(map, 1,1)
+    local mode = string.sub(map, 1, 1)
     -- Don't run this for the <buffer> mapping, since it doesn't make sense
     if option_token ~= '<buffer>' then
-      it(string.format( 'returns %d for the key "%s" when %s is used globally with %s (%s)',
-          global_on_result, option, option_token, map, mode), function()
-        make_new_windows(new_windows)
-        command(map .. ' ' .. option_token .. ' foo bar')
-        local result = meths.get_keymap(mode)[1][option]
-        eq(global_on_result, result)
-      end)
+      it(
+        string.format(
+          'returns %d for the key "%s" when %s is used globally with %s (%s)',
+          global_on_result,
+          option,
+          option_token,
+          map,
+          mode
+        ),
+        function()
+          make_new_windows(new_windows)
+          command(map .. ' ' .. option_token .. ' foo bar')
+          local result = meths.get_keymap(mode)[1][option]
+          eq(global_on_result, result)
+        end
+      )
     end
 
-    it(string.format('returns %d for the key "%s" when %s is used for buffers with %s (%s)',
-        buffer_on_result, option, option_token, map, mode), function()
-      make_new_windows(new_windows)
-      command(map .. ' <buffer> ' .. option_token .. ' foo bar')
-      local result = curbufmeths.get_keymap(mode)[1][option]
-      eq(buffer_on_result, result)
-    end)
+    it(
+      string.format(
+        'returns %d for the key "%s" when %s is used for buffers with %s (%s)',
+        buffer_on_result,
+        option,
+        option_token,
+        map,
+        mode
+      ),
+      function()
+        make_new_windows(new_windows)
+        command(map .. ' <buffer> ' .. option_token .. ' foo bar')
+        local result = curbufmeths.get_keymap(mode)[1][option]
+        eq(buffer_on_result, result)
+      end
+    )
 
     -- Don't run these for the <buffer> mapping, since it doesn't make sense
     if option_token ~= '<buffer>' then
-      it(string.format('returns %d for the key "%s" when %s is not used globally with %s (%s)',
-          global_off_result, option, option_token, map, mode), function()
-        make_new_windows(new_windows)
-        command(map .. ' baz bat')
-        local result = meths.get_keymap(mode)[1][option]
-        eq(global_off_result, result)
-      end)
+      it(
+        string.format(
+          'returns %d for the key "%s" when %s is not used globally with %s (%s)',
+          global_off_result,
+          option,
+          option_token,
+          map,
+          mode
+        ),
+        function()
+          make_new_windows(new_windows)
+          command(map .. ' baz bat')
+          local result = meths.get_keymap(mode)[1][option]
+          eq(global_off_result, result)
+        end
+      )
 
-      it(string.format('returns %d for the key "%s" when %s is not used for buffers with %s (%s)',
-          buffer_off_result, option, option_token, map, mode), function()
-        make_new_windows(new_windows)
-        command(map .. ' <buffer> foo bar')
+      it(
+        string.format(
+          'returns %d for the key "%s" when %s is not used for buffers with %s (%s)',
+          buffer_off_result,
+          option,
+          option_token,
+          map,
+          mode
+        ),
+        function()
+          make_new_windows(new_windows)
+          command(map .. ' <buffer> foo bar')
 
-        local result = curbufmeths.get_keymap(mode)[1][option]
-        eq(buffer_off_result, result)
-      end)
+          local result = curbufmeths.get_keymap(mode)[1][option]
+          eq(buffer_off_result, result)
+        end
+      )
     end
   end
 
   -- Standard modes and returns the same values in the dictionary as maparg()
-  local mode_list = {'nnoremap', 'nmap', 'imap', 'inoremap', 'cnoremap'}
+  local mode_list = { 'nnoremap', 'nmap', 'imap', 'inoremap', 'cnoremap' }
   for mode in pairs(mode_list) do
     global_and_buffer_test(mode_list[mode], 'silent', '<silent>', 1, 1, 0, 0)
     global_and_buffer_test(mode_list[mode], 'nowait', '<nowait>', 1, 1, 0, 0)
@@ -272,16 +303,16 @@ describe('nvim_get_keymap', function()
 
   it('works correctly despite various &cpo settings', function()
     local cpo_table = {
-      script=0,
-      silent=0,
-      expr=0,
-      sid=0,
-      scriptversion=1,
-      buffer=0,
-      nowait=0,
-      abbr=0,
-      noremap=1,
-      lnum=0,
+      script = 0,
+      silent = 0,
+      expr = 0,
+      sid = 0,
+      scriptversion = 1,
+      buffer = 0,
+      nowait = 0,
+      abbr = 0,
+      noremap = 1,
+      lnum = 0,
     }
     local function cpomap(lhs, rhs, mode)
       local ret = shallowcopy(cpo_table)
@@ -323,57 +354,67 @@ describe('nvim_get_keymap', function()
       'set cpo+=B',
     }) do
       command(cmd)
-      eq({cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'n'),
-          cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'n')},
-         get_keymap_noraw('n'))
-      eq({cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'x'),
-          cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'x')},
-         get_keymap_noraw('x'))
-      eq({cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 's'),
-          cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 's')},
-         get_keymap_noraw('s'))
-      eq({cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 'o'),
-          cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 'o')},
-         get_keymap_noraw('o'))
+      eq({
+        cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'n'),
+        cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'n'),
+      }, get_keymap_noraw('n'))
+      eq({
+        cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'x'),
+        cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'x'),
+      }, get_keymap_noraw('x'))
+      eq({
+        cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 's'),
+        cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 's'),
+      }, get_keymap_noraw('s'))
+      eq({
+        cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 'o'),
+        cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 'o'),
+      }, get_keymap_noraw('o'))
     end
   end)
 
   it('always uses space for space and bar for bar', function()
     local space_table = {
-      lhs='|   |',
-      lhsraw='|   |',
-      rhs='|    |',
-      mode='n',
-      mode_bits=0x01,
-      abbr=0,
-      script=0,
-      silent=0,
-      expr=0,
-      sid=0,
-      scriptversion=1,
-      buffer=0,
-      nowait=0,
-      noremap=1,
-      lnum=0,
+      lhs = '|   |',
+      lhsraw = '|   |',
+      rhs = '|    |',
+      mode = 'n',
+      mode_bits = 0x01,
+      abbr = 0,
+      script = 0,
+      silent = 0,
+      expr = 0,
+      sid = 0,
+      scriptversion = 1,
+      buffer = 0,
+      nowait = 0,
+      noremap = 1,
+      lnum = 0,
     }
     command('nnoremap \\|<Char-0x20><Char-32><Space><Bar> \\|<Char-0x20><Char-32><Space> <Bar>')
-    eq({space_table}, meths.get_keymap('n'))
+    eq({ space_table }, meths.get_keymap('n'))
   end)
 
   it('can handle lua mappings', function()
-    eq(0, exec_lua([[
+    eq(
+      0,
+      exec_lua([[
       GlobalCount = 0
       vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
       return GlobalCount
-    ]]))
+    ]])
+    )
 
     feed('asdf\n')
     eq(1, exec_lua([[return GlobalCount]]))
 
-    eq(2, exec_lua([[
+    eq(
+      2,
+      exec_lua([[
       vim.api.nvim_get_keymap('n')[1].callback()
       return GlobalCount
-    ]]))
+    ]])
+    )
 
     exec([[
       call nvim_get_keymap('n')[0].callback()
@@ -383,42 +424,42 @@ describe('nvim_get_keymap', function()
     local mapargs = meths.get_keymap('n')
     mapargs[1].callback = nil
     eq({
-      lhs='asdf',
-      lhsraw='asdf',
-      script=0,
-      silent=0,
-      expr=0,
-      sid=sid_lua,
-      scriptversion=1,
-      buffer=0,
-      nowait=0,
-      mode='n',
-      mode_bits=0x01,
-      abbr=0,
-      noremap=0,
-      lnum=0,
+      lhs = 'asdf',
+      lhsraw = 'asdf',
+      script = 0,
+      silent = 0,
+      expr = 0,
+      sid = sid_lua,
+      scriptversion = 1,
+      buffer = 0,
+      nowait = 0,
+      mode = 'n',
+      mode_bits = 0x01,
+      abbr = 0,
+      noremap = 0,
+      lnum = 0,
     }, mapargs[1])
   end)
 
   it('can handle map descriptions', function()
-    meths.set_keymap('n', 'lhs', 'rhs', {desc="map description"})
+    meths.set_keymap('n', 'lhs', 'rhs', { desc = 'map description' })
     eq({
-      lhs='lhs',
-      lhsraw='lhs',
-      rhs='rhs',
-      script=0,
-      silent=0,
-      expr=0,
-      sid=sid_api_client,
-      scriptversion=1,
-      buffer=0,
-      nowait=0,
-      mode='n',
-      mode_bits=0x01,
-      abbr=0,
-      noremap=0,
-      lnum=0,
-      desc='map description'
+      lhs = 'lhs',
+      lhsraw = 'lhs',
+      rhs = 'rhs',
+      script = 0,
+      silent = 0,
+      expr = 0,
+      sid = sid_api_client,
+      scriptversion = 1,
+      buffer = 0,
+      nowait = 0,
+      mode = 'n',
+      mode_bits = 0x01,
+      abbr = 0,
+      noremap = 0,
+      lnum = 0,
+      desc = 'map description',
     }, meths.get_keymap('n')[1])
   end)
 end)
@@ -490,8 +531,8 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     -- assume MAXMAPLEN of 50 chars, as declared in mapping_defs.h
     local MAXMAPLEN = 50
     local lhs = ''
-    for i=1,MAXMAPLEN do
-      lhs = lhs..(i % 10)
+    for i = 1, MAXMAPLEN do
+      lhs = lhs .. (i % 10)
     end
 
     -- exactly 50 chars should be fine
@@ -502,23 +543,20 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq({}, get_mapargs('', lhs))
 
     -- 51 chars should produce an error
-    lhs = lhs..'1'
-    eq('LHS exceeds maximum map length: '..lhs,
-      pcall_err(meths.set_keymap, '', lhs, 'rhs', {}))
-    eq('LHS exceeds maximum map length: '..lhs,
-      pcall_err(meths.del_keymap, '', lhs))
+    lhs = lhs .. '1'
+    eq('LHS exceeds maximum map length: ' .. lhs, pcall_err(meths.set_keymap, '', lhs, 'rhs', {}))
+    eq('LHS exceeds maximum map length: ' .. lhs, pcall_err(meths.del_keymap, '', lhs))
   end)
 
   it('does not throw errors when rhs is longer than MAXMAPLEN', function()
     local MAXMAPLEN = 50
     local rhs = ''
-    for i=1,MAXMAPLEN do
-      rhs = rhs..(i % 10)
+    for i = 1, MAXMAPLEN do
+      rhs = rhs .. (i % 10)
     end
-    rhs = rhs..'1'
+    rhs = rhs .. '1'
     meths.set_keymap('', 'lhs', rhs, {})
-    eq(generate_mapargs('', 'lhs', rhs),
-       get_mapargs('', 'lhs'))
+    eq(generate_mapargs('', 'lhs', rhs), get_mapargs('', 'lhs'))
   end)
 
   it('error on invalid mode shortname', function()
@@ -534,7 +572,10 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq('Invalid mode shortname: "!!"', pcall_err(meths.set_keymap, '!!', 'lhs', 'rhs', {}))
     eq('Invalid mode shortname: "map"', pcall_err(meths.set_keymap, 'map', 'lhs', 'rhs', {}))
     eq('Invalid mode shortname: "vmap"', pcall_err(meths.set_keymap, 'vmap', 'lhs', 'rhs', {}))
-    eq('Invalid mode shortname: "xnoremap"', pcall_err(meths.set_keymap, 'xnoremap', 'lhs', 'rhs', {}))
+    eq(
+      'Invalid mode shortname: "xnoremap"',
+      pcall_err(meths.set_keymap, 'xnoremap', 'lhs', 'rhs', {})
+    )
     eq('Invalid mode shortname: " "', pcall_err(meths.del_keymap, ' ', 'lhs'))
     eq('Invalid mode shortname: "m"', pcall_err(meths.del_keymap, 'm', 'lhs'))
     eq('Invalid mode shortname: "?"', pcall_err(meths.del_keymap, '?', 'lhs'))
@@ -551,32 +592,29 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   end)
 
   it('error on invalid optnames', function()
-    eq("Invalid key: 'silentt'",
-      pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {silentt = true}))
-    eq("Invalid key: 'sidd'",
-      pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {sidd = false}))
-    eq("Invalid key: 'nowaiT'",
-      pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {nowaiT = false}))
+    eq("Invalid key: 'silentt'", pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', { silentt = true }))
+    eq("Invalid key: 'sidd'", pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', { sidd = false }))
+    eq("Invalid key: 'nowaiT'", pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', { nowaiT = false }))
   end)
 
   it('error on <buffer> option key', function()
-    eq("Invalid key: 'buffer'",
-      pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {buffer = true}))
+    eq("Invalid key: 'buffer'", pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', { buffer = true }))
   end)
 
   it('error when "replace_keycodes" is used without "expr"', function()
-    eq('"replace_keycodes" requires "expr"',
-      pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {replace_keycodes = true}))
+    eq(
+      '"replace_keycodes" requires "expr"',
+      pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', { replace_keycodes = true })
+    )
   end)
 
-  local optnames = {'nowait', 'silent', 'script', 'expr', 'unique'}
+  local optnames = { 'nowait', 'silent', 'script', 'expr', 'unique' }
   for _, opt in ipairs(optnames) do
     -- note: need '%' to escape hyphens, which have special meaning in lua
-    it('throws an error when given non-boolean value for '..opt, function()
+    it('throws an error when given non-boolean value for ' .. opt, function()
       local opts = {}
       opts[opt] = 'fooo'
-      eq(opt..' is not a boolean',
-        pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', opts))
+      eq(opt .. ' is not a boolean', pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', opts))
     end)
   end
 
@@ -591,26 +629,21 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
   it('does not throw when LHS or RHS have leading/trailing whitespace', function()
     meths.set_keymap('n', '   lhs', 'rhs', {})
-    eq(generate_mapargs('n', '<Space><Space><Space>lhs', 'rhs'),
-       get_mapargs('n', '   lhs'))
+    eq(generate_mapargs('n', '<Space><Space><Space>lhs', 'rhs'), get_mapargs('n', '   lhs'))
 
     meths.set_keymap('n', 'lhs    ', 'rhs', {})
-    eq(generate_mapargs('n', 'lhs<Space><Space><Space><Space>', 'rhs'),
-       get_mapargs('n', 'lhs    '))
+    eq(generate_mapargs('n', 'lhs<Space><Space><Space><Space>', 'rhs'), get_mapargs('n', 'lhs    '))
 
     meths.set_keymap('v', ' lhs  ', '\trhs\t\f', {})
-    eq(generate_mapargs('v', '<Space>lhs<Space><Space>', '\trhs\t\f'),
-       get_mapargs('v', ' lhs  '))
+    eq(generate_mapargs('v', '<Space>lhs<Space><Space>', '\trhs\t\f'), get_mapargs('v', ' lhs  '))
   end)
 
   it('can set noremap mappings', function()
-    meths.set_keymap('x', 'lhs', 'rhs', {noremap = true})
-    eq(generate_mapargs('x', 'lhs', 'rhs', {noremap = true}),
-       get_mapargs('x', 'lhs'))
+    meths.set_keymap('x', 'lhs', 'rhs', { noremap = true })
+    eq(generate_mapargs('x', 'lhs', 'rhs', { noremap = true }), get_mapargs('x', 'lhs'))
 
-    meths.set_keymap('t', 'lhs', 'rhs', {noremap = true})
-    eq(generate_mapargs('t', 'lhs', 'rhs', {noremap = true}),
-       get_mapargs('t', 'lhs'))
+    meths.set_keymap('t', 'lhs', 'rhs', { noremap = true })
+    eq(generate_mapargs('t', 'lhs', 'rhs', { noremap = true }), get_mapargs('t', 'lhs'))
   end)
 
   it('can unmap mappings', function()
@@ -618,14 +651,14 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     meths.del_keymap('v', 'lhs')
     eq({}, get_mapargs('v', 'lhs'))
 
-    meths.set_keymap('t', 'lhs', 'rhs', {noremap = true})
+    meths.set_keymap('t', 'lhs', 'rhs', { noremap = true })
     meths.del_keymap('t', 'lhs')
     eq({}, get_mapargs('t', 'lhs'))
   end)
 
   -- Test some edge cases
   it('"!" and empty string are synonyms for mapmode-nvo', function()
-    local nvo_shortnames = {'', '!'}
+    local nvo_shortnames = { '', '!' }
     for _, name in ipairs(nvo_shortnames) do
       meths.set_keymap(name, 'lhs', 'rhs', {})
       meths.del_keymap(name, 'lhs')
@@ -633,12 +666,11 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     end
   end)
 
-  local special_chars = {'<C-U>', '<S-Left>', '<F12><F2><Tab>', '<Space><Tab>'}
+  local special_chars = { '<C-U>', '<S-Left>', '<F12><F2><Tab>', '<Space><Tab>' }
   for _, lhs in ipairs(special_chars) do
     for _, rhs in ipairs(special_chars) do
       local mapmode = '!'
-      it('can set mappings with special characters, lhs: '..lhs..', rhs: '..rhs,
-          function()
+      it('can set mappings with special characters, lhs: ' .. lhs .. ', rhs: ' .. rhs, function()
         meths.set_keymap(mapmode, lhs, rhs, {})
         eq(generate_mapargs(mapmode, lhs, rhs), get_mapargs(mapmode, lhs))
       end)
@@ -654,39 +686,34 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   it('can set mappings whose RHS is a <Nop>', function()
     meths.set_keymap('i', 'lhs', '<Nop>', {})
     command('normal ilhs')
-    eq({''}, curbufmeths.get_lines(0, -1, 0))  -- imap to <Nop> does nothing
-    eq(generate_mapargs('i', 'lhs', '<Nop>', {}),
-       get_mapargs('i', 'lhs'))
+    eq({ '' }, curbufmeths.get_lines(0, -1, 0)) -- imap to <Nop> does nothing
+    eq(generate_mapargs('i', 'lhs', '<Nop>', {}), get_mapargs('i', 'lhs'))
 
     -- also test for case insensitivity
     meths.set_keymap('i', 'lhs', '<nOp>', {})
     command('normal ilhs')
-    eq({''}, curbufmeths.get_lines(0, -1, 0))
+    eq({ '' }, curbufmeths.get_lines(0, -1, 0))
     -- note: RHS in returned mapargs() dict reflects the original RHS
     -- provided by the user
-    eq(generate_mapargs('i', 'lhs', '<nOp>', {}),
-       get_mapargs('i', 'lhs'))
+    eq(generate_mapargs('i', 'lhs', '<nOp>', {}), get_mapargs('i', 'lhs'))
 
     meths.set_keymap('i', 'lhs', '<NOP>', {})
     command('normal ilhs')
-    eq({''}, curbufmeths.get_lines(0, -1, 0))
-    eq(generate_mapargs('i', 'lhs', '<NOP>', {}),
-       get_mapargs('i', 'lhs'))
+    eq({ '' }, curbufmeths.get_lines(0, -1, 0))
+    eq(generate_mapargs('i', 'lhs', '<NOP>', {}), get_mapargs('i', 'lhs'))
 
     -- a single ^V in RHS is also <Nop> (see :h map-empty-rhs)
     meths.set_keymap('i', 'lhs', '\022', {})
     command('normal ilhs')
-    eq({''}, curbufmeths.get_lines(0, -1, 0))
-    eq(generate_mapargs('i', 'lhs', '\022', {}),
-       get_mapargs('i', 'lhs'))
+    eq({ '' }, curbufmeths.get_lines(0, -1, 0))
+    eq(generate_mapargs('i', 'lhs', '\022', {}), get_mapargs('i', 'lhs'))
   end)
 
   it('treats an empty RHS in a mapping like a <Nop>', function()
     meths.set_keymap('i', 'lhs', '', {})
     command('normal ilhs')
-    eq({''}, curbufmeths.get_lines(0, -1, 0))
-    eq(generate_mapargs('i', 'lhs', '', {}),
-       get_mapargs('i', 'lhs'))
+    eq({ '' }, curbufmeths.get_lines(0, -1, 0))
+    eq(generate_mapargs('i', 'lhs', '', {}), get_mapargs('i', 'lhs'))
   end)
 
   it('can set and unset <M-">', function()
@@ -698,21 +725,24 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq({}, get_mapargs('i', '<M-">'))
   end)
 
-  it('interprets control sequences in expr-quotes correctly when called '
-     ..'inside vim', function()
-    command([[call nvim_set_keymap('i', "\<space>", "\<tab>", {})]])
-    eq(generate_mapargs('i', '<Space>', '\t', {sid=0}),
-       get_mapargs('i', '<Space>'))
-    feed('i ')
-    eq({'\t'}, curbufmeths.get_lines(0, -1, 0))
-  end)
+  it(
+    'interprets control sequences in expr-quotes correctly when called ' .. 'inside vim',
+    function()
+      command([[call nvim_set_keymap('i', "\<space>", "\<tab>", {})]])
+      eq(generate_mapargs('i', '<Space>', '\t', { sid = 0 }), get_mapargs('i', '<Space>'))
+      feed('i ')
+      eq({ '\t' }, curbufmeths.get_lines(0, -1, 0))
+    end
+  )
 
   it('throws appropriate error messages when setting <unique> maps', function()
     meths.set_keymap('l', 'lhs', 'rhs', {})
-    eq('E227: mapping already exists for lhs',
-      pcall_err(meths.set_keymap, 'l', 'lhs', 'rhs', {unique = true}))
+    eq(
+      'E227: mapping already exists for lhs',
+      pcall_err(meths.set_keymap, 'l', 'lhs', 'rhs', { unique = true })
+    )
     -- different mapmode, no error should be thrown
-    meths.set_keymap('t', 'lhs', 'rhs', {unique = true})
+    meths.set_keymap('t', 'lhs', 'rhs', { unique = true })
   end)
 
   it('can set <expr> mappings whose RHS change dynamically', function()
@@ -728,14 +758,14 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq(1, meths.call_function('FlipFlop', {}))
     eq(0, meths.call_function('FlipFlop', {}))
 
-    meths.set_keymap('i', 'lhs', 'FlipFlop()', {expr = true})
+    meths.set_keymap('i', 'lhs', 'FlipFlop()', { expr = true })
     command('normal ilhs')
-    eq({'1'}, curbufmeths.get_lines(0, -1, 0))
+    eq({ '1' }, curbufmeths.get_lines(0, -1, 0))
 
     command('normal! ggVGd')
 
     command('normal ilhs')
-    eq({'0'}, curbufmeths.get_lines(0, -1, 0))
+    eq({ '0' }, curbufmeths.get_lines(0, -1, 0))
   end)
 
   it('can set mappings that do trigger other mappings', function()
@@ -743,30 +773,30 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     meths.set_keymap('i', 'lhs', 'mhs', {})
 
     command('normal imhs')
-    eq({'rhs'}, curbufmeths.get_lines(0, -1, 0))
+    eq({ 'rhs' }, curbufmeths.get_lines(0, -1, 0))
 
     command('normal! ggVGd')
 
     command('normal ilhs')
-    eq({'rhs'}, curbufmeths.get_lines(0, -1, 0))
+    eq({ 'rhs' }, curbufmeths.get_lines(0, -1, 0))
   end)
 
   it("can set noremap mappings that don't trigger other mappings", function()
     meths.set_keymap('i', 'mhs', 'rhs', {})
-    meths.set_keymap('i', 'lhs', 'mhs', {noremap = true})
+    meths.set_keymap('i', 'lhs', 'mhs', { noremap = true })
 
     command('normal imhs')
-    eq({'rhs'}, curbufmeths.get_lines(0, -1, 0))
+    eq({ 'rhs' }, curbufmeths.get_lines(0, -1, 0))
 
     command('normal! ggVGd')
 
-    command('normal ilhs')  -- shouldn't trigger mhs-to-rhs mapping
-    eq({'mhs'}, curbufmeths.get_lines(0, -1, 0))
+    command('normal ilhs') -- shouldn't trigger mhs-to-rhs mapping
+    eq({ 'mhs' }, curbufmeths.get_lines(0, -1, 0))
   end)
 
-  it("can set nowait mappings that fire without waiting", function()
-    meths.set_keymap('i', '123456', 'longer',  {})
-    meths.set_keymap('i', '123',    'shorter', {nowait = true})
+  it('can set nowait mappings that fire without waiting', function()
+    meths.set_keymap('i', '123456', 'longer', {})
+    meths.set_keymap('i', '123', 'shorter', { nowait = true })
 
     -- feed keys one at a time; if all keys arrive atomically, the longer
     -- mapping will trigger
@@ -775,16 +805,15 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
       feed(c)
       sleep(5)
     end
-    eq({'shorter456'}, curbufmeths.get_lines(0, -1, 0))
+    eq({ 'shorter456' }, curbufmeths.get_lines(0, -1, 0))
   end)
 
   -- Perform exhaustive tests of basic functionality
-  local mapmodes = {'n', 'v', 'x', 's', 'o', '!', 'i', 'l', 'c', 't', '', 'ia', 'ca', '!a'}
+  local mapmodes = { 'n', 'v', 'x', 's', 'o', '!', 'i', 'l', 'c', 't', '', 'ia', 'ca', '!a' }
   for _, mapmode in ipairs(mapmodes) do
-    it('can set/unset normal mappings in mapmode '..mapmode, function()
+    it('can set/unset normal mappings in mapmode ' .. mapmode, function()
       meths.set_keymap(mapmode, 'lhs', 'rhs', {})
-      eq(generate_mapargs(mapmode, 'lhs', 'rhs'),
-         get_mapargs(mapmode, 'lhs'))
+      eq(generate_mapargs(mapmode, 'lhs', 'rhs'), get_mapargs(mapmode, 'lhs'))
 
       -- some mapmodes (like 'o') will prevent other mapmodes (like '!') from
       -- taking effect, so unmap after each mapping
@@ -794,10 +823,9 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   end
 
   for _, mapmode in ipairs(mapmodes) do
-    it('can set/unset noremap mappings using mapmode '..mapmode, function()
-      meths.set_keymap(mapmode, 'lhs', 'rhs', {noremap = true})
-      eq(generate_mapargs(mapmode, 'lhs', 'rhs', {noremap = true}),
-         get_mapargs(mapmode, 'lhs'))
+    it('can set/unset noremap mappings using mapmode ' .. mapmode, function()
+      meths.set_keymap(mapmode, 'lhs', 'rhs', { noremap = true })
+      eq(generate_mapargs(mapmode, 'lhs', 'rhs', { noremap = true }), get_mapargs(mapmode, 'lhs'))
 
       meths.del_keymap(mapmode, 'lhs')
       eq({}, get_mapargs(mapmode, 'lhs'))
@@ -806,53 +834,70 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
   -- Test map-arguments, using optnames from above
   -- remove some map arguments that are harder to test, or were already tested
-  optnames = {'nowait', 'silent', 'expr', 'noremap'}
+  optnames = { 'nowait', 'silent', 'expr', 'noremap' }
   for _, mapmode in ipairs(mapmodes) do
     -- Test with single mappings
     for _, maparg in ipairs(optnames) do
-      it('can set/unset '..mapmode..'-mappings with maparg: '..maparg,
-          function()
-        meths.set_keymap(mapmode, 'lhs', 'rhs', {[maparg] = true})
-        eq(generate_mapargs(mapmode, 'lhs', 'rhs', {[maparg] = true}),
-           get_mapargs(mapmode, 'lhs'))
+      it('can set/unset ' .. mapmode .. '-mappings with maparg: ' .. maparg, function()
+        meths.set_keymap(mapmode, 'lhs', 'rhs', { [maparg] = true })
+        eq(
+          generate_mapargs(mapmode, 'lhs', 'rhs', { [maparg] = true }),
+          get_mapargs(mapmode, 'lhs')
+        )
         meths.del_keymap(mapmode, 'lhs')
         eq({}, get_mapargs(mapmode, 'lhs'))
       end)
-      it ('can set/unset '..mapmode..'-mode mappings with maparg '..
-          maparg..', whose value is false', function()
-        meths.set_keymap(mapmode, 'lhs', 'rhs', {[maparg] = false})
-        eq(generate_mapargs(mapmode, 'lhs', 'rhs'),
-           get_mapargs(mapmode, 'lhs'))
-        meths.del_keymap(mapmode, 'lhs')
-        eq({}, get_mapargs(mapmode, 'lhs'))
-      end)
+      it(
+        'can set/unset '
+          .. mapmode
+          .. '-mode mappings with maparg '
+          .. maparg
+          .. ', whose value is false',
+        function()
+          meths.set_keymap(mapmode, 'lhs', 'rhs', { [maparg] = false })
+          eq(generate_mapargs(mapmode, 'lhs', 'rhs'), get_mapargs(mapmode, 'lhs'))
+          meths.del_keymap(mapmode, 'lhs')
+          eq({}, get_mapargs(mapmode, 'lhs'))
+        end
+      )
     end
 
     -- Test with triplets of mappings, one of which is false
     for i = 1, (#optnames - 2) do
       local opt1, opt2, opt3 = optnames[i], optnames[i + 1], optnames[i + 2]
-      it('can set/unset '..mapmode..'-mode mappings with mapargs '..
-          opt1..', '..opt2..', '..opt3, function()
-        local opts = {[opt1] = true, [opt2] = false, [opt3] = true}
-        meths.set_keymap(mapmode, 'lhs', 'rhs', opts)
-        eq(generate_mapargs(mapmode, 'lhs', 'rhs', opts),
-           get_mapargs(mapmode, 'lhs'))
-        meths.del_keymap(mapmode, 'lhs')
-        eq({}, get_mapargs(mapmode, 'lhs'))
-      end)
+      it(
+        'can set/unset '
+          .. mapmode
+          .. '-mode mappings with mapargs '
+          .. opt1
+          .. ', '
+          .. opt2
+          .. ', '
+          .. opt3,
+        function()
+          local opts = { [opt1] = true, [opt2] = false, [opt3] = true }
+          meths.set_keymap(mapmode, 'lhs', 'rhs', opts)
+          eq(generate_mapargs(mapmode, 'lhs', 'rhs', opts), get_mapargs(mapmode, 'lhs'))
+          meths.del_keymap(mapmode, 'lhs')
+          eq({}, get_mapargs(mapmode, 'lhs'))
+        end
+      )
     end
   end
 
   it('can make lua mappings', function()
-    eq(0, exec_lua [[
+    eq(
+      0,
+      exec_lua [[
       GlobalCount = 0
       vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
       return GlobalCount
-    ]])
+    ]]
+    )
 
     feed('asdf\n')
 
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua [[return GlobalCount]])
   end)
 
   it(':map command shows lua mapping correctly', function()
@@ -861,8 +906,8 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     ]]
     assert.truthy(
       string.match(
-        exec_lua[[return vim.api.nvim_exec2(':nmap asdf', { output = true }).output]],
-        "^\nn  asdf          <Lua %d+>"
+        exec_lua [[return vim.api.nvim_exec2(':nmap asdf', { output = true }).output]],
+        '^\nn  asdf          <Lua %d+>'
       )
     )
   end)
@@ -871,29 +916,34 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     exec_lua [[
       vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() print('jkl;') end })
     ]]
-    assert.truthy(string.match(funcs.mapcheck('asdf', 'n'),
-                  "^<Lua %d+>"))
+    assert.truthy(string.match(funcs.mapcheck('asdf', 'n'), '^<Lua %d+>'))
   end)
 
   it('maparg() returns lua mapping correctly', function()
-    eq(0, exec_lua([[
+    eq(
+      0,
+      exec_lua([[
       GlobalCount = 0
       vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
       return GlobalCount
-    ]]))
+    ]])
+    )
 
-    assert.truthy(string.match(funcs.maparg('asdf', 'n'), "^<Lua %d+>"))
+    assert.truthy(string.match(funcs.maparg('asdf', 'n'), '^<Lua %d+>'))
 
     local mapargs = funcs.maparg('asdf', 'n', false, true)
     mapargs.callback = nil
     mapargs.lhsraw = nil
     mapargs.lhsrawalt = nil
-    eq(generate_mapargs('n', 'asdf', nil, {sid=sid_lua}), mapargs)
+    eq(generate_mapargs('n', 'asdf', nil, { sid = sid_lua }), mapargs)
 
-    eq(1, exec_lua([[
+    eq(
+      1,
+      exec_lua([[
       vim.fn.maparg('asdf', 'n', false, true).callback()
       return GlobalCount
-    ]]))
+    ]])
+    )
 
     exec([[
       call maparg('asdf', 'n', v:false, v:true).callback()
@@ -908,7 +958,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
     feed('aa')
 
-    eq({'π<M-π>foo<'}, meths.buf_get_lines(0, 0, -1, false))
+    eq({ 'π<M-π>foo<' }, meths.buf_get_lines(0, 0, -1, false))
   end)
 
   it('can make lua expr mappings without replacing keycodes', function()
@@ -918,7 +968,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
     feed('iaa<esc>')
 
-    eq({'<space>'}, meths.buf_get_lines(0, 0, -1, false))
+    eq({ '<space>' }, meths.buf_get_lines(0, 0, -1, false))
   end)
 
   it('lua expr mapping returning nil is equivalent to returning an empty string', function()
@@ -928,41 +978,50 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
     feed('iaa<esc>')
 
-    eq({''}, meths.buf_get_lines(0, 0, -1, false))
+    eq({ '' }, meths.buf_get_lines(0, 0, -1, false))
   end)
 
   it('does not reset pum in lua mapping', function()
-    eq(0, exec_lua [[
+    eq(
+      0,
+      exec_lua [[
       VisibleCount = 0
       vim.api.nvim_set_keymap('i', '<F2>', '', {callback = function() VisibleCount = VisibleCount + vim.fn.pumvisible() end})
       return VisibleCount
-    ]])
+    ]]
+    )
     feed('i<C-X><C-V><F2><F2><esc>')
-    eq(2, exec_lua[[return VisibleCount]])
+    eq(2, exec_lua [[return VisibleCount]])
   end)
 
   it('redo of lua mappings in op-pending mode work', function()
-    eq(0, exec_lua [[
+    eq(
+      0,
+      exec_lua [[
       OpCount = 0
       vim.api.nvim_set_keymap('o', '<F2>', '', {callback = function() OpCount = OpCount + 1 end})
       return OpCount
-    ]])
+    ]]
+    )
     feed('d<F2>')
-    eq(1, exec_lua[[return OpCount]])
+    eq(1, exec_lua [[return OpCount]])
     feed('.')
-    eq(2, exec_lua[[return OpCount]])
+    eq(2, exec_lua [[return OpCount]])
   end)
 
   it('can overwrite lua mappings', function()
-    eq(0, exec_lua [[
+    eq(
+      0,
+      exec_lua [[
       GlobalCount = 0
       vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
       return GlobalCount
-    ]])
+    ]]
+    )
 
     feed('asdf\n')
 
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua [[return GlobalCount]])
 
     exec_lua [[
       vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount - 1 end })
@@ -970,19 +1029,22 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
     feed('asdf\n')
 
-    eq(0, exec_lua[[return GlobalCount]])
+    eq(0, exec_lua [[return GlobalCount]])
   end)
 
   it('can unmap lua mappings', function()
-    eq(0, exec_lua [[
+    eq(
+      0,
+      exec_lua [[
       GlobalCount = 0
       vim.api.nvim_set_keymap('n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
       return GlobalCount
-    ]])
+    ]]
+    )
 
     feed('asdf\n')
 
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua [[return GlobalCount]])
 
     exec_lua [[
       vim.api.nvim_del_keymap('n', 'asdf' )
@@ -990,20 +1052,23 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
     feed('asdf\n')
 
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua [[return GlobalCount]])
     eq('\nNo mapping found', helpers.exec_capture('nmap asdf'))
   end)
 
   it('no double-free when unmapping simplifiable lua mappings', function()
-    eq(0, exec_lua [[
+    eq(
+      0,
+      exec_lua [[
       GlobalCount = 0
       vim.api.nvim_set_keymap('n', '<C-I>', '', {callback = function() GlobalCount = GlobalCount + 1 end })
       return GlobalCount
-    ]])
+    ]]
+    )
 
     feed('<C-I>\n')
 
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua [[return GlobalCount]])
 
     exec_lua [[
       vim.api.nvim_del_keymap('n', '<C-I>')
@@ -1011,15 +1076,14 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
     feed('<C-I>\n')
 
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua [[return GlobalCount]])
     eq('\nNo mapping found', helpers.exec_capture('nmap <C-I>'))
   end)
 
   it('can set descriptions on mappings', function()
-    meths.set_keymap('n', 'lhs', 'rhs', {desc="map description"})
-    eq(generate_mapargs('n', 'lhs', 'rhs', {desc="map description"}), get_mapargs('n', 'lhs'))
-    eq("\nn  lhs           rhs\n                 map description",
-       helpers.exec_capture("nmap lhs"))
+    meths.set_keymap('n', 'lhs', 'rhs', { desc = 'map description' })
+    eq(generate_mapargs('n', 'lhs', 'rhs', { desc = 'map description' }), get_mapargs('n', 'lhs'))
+    eq('\nn  lhs           rhs\n                 map description', helpers.exec_capture('nmap lhs'))
   end)
 
   it('can define !-mode abbreviations with lua callbacks', function()
@@ -1035,7 +1099,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq('The 1 and the bar and the 2 again', meths.get_current_line())
 
     feed ':let x = "The foo is the one"<cr>'
-    eq('The 3 is the one', meths.eval'x')
+    eq('The 3 is the one', meths.eval 'x')
   end)
 
   it('can define insert mode abbreviations with lua callbacks', function()
@@ -1051,7 +1115,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq('The 1 and the bar and the 2 again', meths.get_current_line())
 
     feed ':let x = "The foo is the one"<cr>'
-    eq('The foo is the one', meths.eval'x')
+    eq('The foo is the one', meths.eval 'x')
   end)
 
   it('can define cmdline mode abbreviations with lua callbacks', function()
@@ -1067,7 +1131,7 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     eq('The foo and the bar and the foo again', meths.get_current_line())
 
     feed ':let x = "The foo is the one"<cr>'
-    eq('The 1 is the one', meths.eval'x')
+    eq('The 1 is the one', meths.eval 'x')
   end)
 end)
 
@@ -1081,7 +1145,7 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
   -- switch to the given buffer, abandoning any changes in the current buffer
   local function switch_to_buf(bufnr)
-    command(bufnr..'buffer!')
+    command(bufnr .. 'buffer!')
   end
 
   -- `set hidden`, then create two buffers and return their bufnr's
@@ -1090,10 +1154,10 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
   local function make_two_buffers(start_from_first)
     command('set hidden')
 
-    local first_buf = meths.call_function('bufnr', {'%'})
+    local first_buf = meths.call_function('bufnr', { '%' })
     command('new')
-    local second_buf = meths.call_function('bufnr', {'%'})
-    neq(second_buf, first_buf)  -- sanity check
+    local second_buf = meths.call_function('bufnr', { '%' })
+    neq(second_buf, first_buf) -- sanity check
 
     if start_from_first then
       switch_to_buf(first_buf)
@@ -1103,8 +1167,10 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
   end
 
   it('rejects negative bufnr values', function()
-    eq('Wrong type for argument 1 when calling nvim_buf_set_keymap, expecting Buffer',
-      pcall_err(bufmeths.set_keymap, -1, '', 'lhs', 'rhs', {}))
+    eq(
+      'Wrong type for argument 1 when calling nvim_buf_set_keymap, expecting Buffer',
+      pcall_err(bufmeths.set_keymap, -1, '', 'lhs', 'rhs', {})
+    )
   end)
 
   it('can set mappings active in the current buffer but not others', function()
@@ -1112,17 +1178,17 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     bufmeths.set_keymap(0, '', 'lhs', 'irhs<Esc>', {})
     command('normal lhs')
-    eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ 'rhs' }, bufmeths.get_lines(0, 0, 1, 1))
 
     -- mapping should have no effect in new buffer
     switch_to_buf(second)
     command('normal lhs')
-    eq({''}, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ '' }, bufmeths.get_lines(0, 0, 1, 1))
 
     -- mapping should remain active in old buffer
     switch_to_buf(first)
     command('normal ^lhs')
-    eq({'rhsrhs'}, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ 'rhsrhs' }, bufmeths.get_lines(0, 0, 1, 1))
   end)
 
   it('can set local mappings in buffer other than current', function()
@@ -1131,12 +1197,12 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     -- shouldn't do anything
     command('normal lhs')
-    eq({''}, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ '' }, bufmeths.get_lines(0, 0, 1, 1))
 
     -- should take effect
     switch_to_buf(first)
     command('normal lhs')
-    eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ 'rhs' }, bufmeths.get_lines(0, 0, 1, 1))
   end)
 
   it('can disable mappings made in another buffer, inside that buffer', function()
@@ -1147,36 +1213,38 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     -- shouldn't do anything
     command('normal lhs')
-    eq({''}, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ '' }, bufmeths.get_lines(0, 0, 1, 1))
   end)
 
   it("can't disable mappings given wrong buffer handle", function()
     local first, second = make_two_buffers(false)
     bufmeths.set_keymap(first, '', 'lhs', 'irhs<Esc>', {})
-    eq('E31: No such mapping',
-      pcall_err(bufmeths.del_keymap, second, '', 'lhs'))
+    eq('E31: No such mapping', pcall_err(bufmeths.del_keymap, second, '', 'lhs'))
 
     -- should still work
     switch_to_buf(first)
     command('normal lhs')
-    eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
+    eq({ 'rhs' }, bufmeths.get_lines(0, 0, 1, 1))
   end)
 
-  it("does not crash when setting mapping in a non-existing buffer #13541", function()
+  it('does not crash when setting mapping in a non-existing buffer #13541', function()
     pcall_err(bufmeths.set_keymap, 100, '', 'lsh', 'irhs<Esc>', {})
     helpers.assert_alive()
   end)
 
   it('can make lua mappings', function()
-    eq(0, exec_lua [[
+    eq(
+      0,
+      exec_lua [[
       GlobalCount = 0
       vim.api.nvim_buf_set_keymap(0, 'n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
       return GlobalCount
-    ]])
+    ]]
+    )
 
     feed('asdf\n')
 
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua [[return GlobalCount]])
   end)
 
   it('can make lua expr mappings replacing keycodes', function()
@@ -1186,7 +1254,7 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     feed('aa')
 
-    eq({'π<M-π>foo<'}, meths.buf_get_lines(0, 0, -1, false))
+    eq({ 'π<M-π>foo<' }, meths.buf_get_lines(0, 0, -1, false))
   end)
 
   it('can make lua expr mappings without replacing keycodes', function()
@@ -1196,20 +1264,22 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     feed('iaa<esc>')
 
-    eq({'<space>'}, meths.buf_get_lines(0, 0, -1, false))
+    eq({ '<space>' }, meths.buf_get_lines(0, 0, -1, false))
   end)
 
-
   it('can overwrite lua mappings', function()
-    eq(0, exec_lua [[
+    eq(
+      0,
+      exec_lua [[
       GlobalCount = 0
       vim.api.nvim_buf_set_keymap(0, 'n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
       return GlobalCount
-    ]])
+    ]]
+    )
 
     feed('asdf\n')
 
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua [[return GlobalCount]])
 
     exec_lua [[
       vim.api.nvim_buf_set_keymap(0, 'n', 'asdf', '', {callback = function() GlobalCount = GlobalCount - 1 end })
@@ -1217,19 +1287,22 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     feed('asdf\n')
 
-    eq(0, exec_lua[[return GlobalCount]])
+    eq(0, exec_lua [[return GlobalCount]])
   end)
 
   it('can unmap lua mappings', function()
-    eq(0, exec_lua [[
+    eq(
+      0,
+      exec_lua [[
       GlobalCount = 0
       vim.api.nvim_buf_set_keymap(0, 'n', 'asdf', '', {callback = function() GlobalCount = GlobalCount + 1 end })
       return GlobalCount
-    ]])
+    ]]
+    )
 
     feed('asdf\n')
 
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua [[return GlobalCount]])
 
     exec_lua [[
       vim.api.nvim_buf_del_keymap(0, 'n', 'asdf' )
@@ -1237,20 +1310,23 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     feed('asdf\n')
 
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua [[return GlobalCount]])
     eq('\nNo mapping found', helpers.exec_capture('nmap asdf'))
   end)
 
   it('no double-free when unmapping simplifiable lua mappings', function()
-    eq(0, exec_lua [[
+    eq(
+      0,
+      exec_lua [[
       GlobalCount = 0
       vim.api.nvim_buf_set_keymap(0, 'n', '<C-I>', '', {callback = function() GlobalCount = GlobalCount + 1 end })
       return GlobalCount
-    ]])
+    ]]
+    )
 
     feed('<C-I>\n')
 
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua [[return GlobalCount]])
 
     exec_lua [[
       vim.api.nvim_buf_del_keymap(0, 'n', '<C-I>')
@@ -1258,7 +1334,7 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
 
     feed('<C-I>\n')
 
-    eq(1, exec_lua[[return GlobalCount]])
+    eq(1, exec_lua [[return GlobalCount]])
     eq('\nNo mapping found', helpers.exec_capture('nmap <C-I>'))
   end)
 end)

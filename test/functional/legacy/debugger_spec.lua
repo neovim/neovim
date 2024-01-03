@@ -13,8 +13,8 @@ describe('debugger', function()
   before_each(function()
     screen = Screen.new(999, 10)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue};
-      [1] = {reverse = true, bold = true};
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { reverse = true, bold = true },
     })
     screen:attach()
   end)
@@ -30,13 +30,16 @@ describe('debugger', function()
     command(':let g:Xtest_var = 10')
     command(':breakadd expr g:Xtest_var')
     feed(':source %<CR>')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       ^let g:Xtest_var += 1{MATCH: *}|
       {0:~{MATCH: *}}|*8
       :source %{MATCH: *}|
-    ]]}
+    ]],
+    }
     feed(':source %<CR>')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       let g:Xtest_var += 1{MATCH: *}|
       {0:~{MATCH: *}}|
       {1:{MATCH: *}}|
@@ -47,15 +50,19 @@ describe('debugger', function()
       {MATCH:.*}XdebugBreakExpr.vim{MATCH: *}|
       line 1: let g:Xtest_var += 1{MATCH: *}|
       >^{MATCH: *}|
-    ]]}
+    ]],
+    }
     feed('cont<CR>')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       ^let g:Xtest_var += 1{MATCH: *}|
       {0:~{MATCH: *}}|*8
       {MATCH: *}|
-    ]]}
+    ]],
+    }
     feed(':source %<CR>')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       let g:Xtest_var += 1{MATCH: *}|
       {0:~{MATCH: *}}|
       {1:{MATCH: *}}|
@@ -66,6 +73,7 @@ describe('debugger', function()
       {MATCH:.*}XdebugBreakExpr.vim{MATCH: *}|
       line 1: let g:Xtest_var += 1{MATCH: *}|
       >^{MATCH: *}|
-    ]]}
+    ]],
+    }
   end)
 end)

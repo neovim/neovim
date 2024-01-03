@@ -13,13 +13,13 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
     local screen = Screen.new(40, 5)
     screen:attach()
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},
-      [1] = {background = Screen.colors.Red},
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { background = Screen.colors.Red },
     })
 
-    command("highlight MyGroup1 term=bold ctermbg=red guibg=red")
-    command("highlight MyGroup2 term=italic ctermbg=green guibg=green")
-    command("highlight MyGroup3 term=underline ctermbg=blue guibg=blue")
+    command('highlight MyGroup1 term=bold ctermbg=red guibg=red')
+    command('highlight MyGroup2 term=italic ctermbg=green guibg=green')
+    command('highlight MyGroup3 term=underline ctermbg=blue guibg=blue')
 
     -- Check that "matchaddpos()" positions matches correctly
     insert('abcdefghijklmnopq')
@@ -30,7 +30,7 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
                                               |
     ]])
 
-    command("call clearmatches()")
+    command('call clearmatches()')
     command("call setline(1, 'abcdΣabcdef')")
     command("call matchaddpos('MyGroup1', [[1, 4, 2], [1, 9, 2]])")
     screen:expect([[
@@ -40,4 +40,3 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
     ]])
   end)
 end)
-

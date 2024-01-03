@@ -16,24 +16,24 @@ describe('mappings with <Cmd>', function()
   local tmpfile = 'X_ex_cmds_cmd_map'
 
   local function cmdmap(lhs, rhs)
-    command('noremap '..lhs..' <Cmd>'..rhs..'<cr>')
-    command('noremap! '..lhs..' <Cmd>'..rhs..'<cr>')
+    command('noremap ' .. lhs .. ' <Cmd>' .. rhs .. '<cr>')
+    command('noremap! ' .. lhs .. ' <Cmd>' .. rhs .. '<cr>')
   end
 
   before_each(function()
     clear()
     screen = Screen.new(65, 8)
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [4] = {bold = true},
-      [5] = {background = Screen.colors.LightGrey},
-      [6] = {foreground = Screen.colors.Blue1},
-      [7] = {bold = true, reverse = true},
-      [8] = {background = Screen.colors.WebGray},
-      [9] = {background = Screen.colors.LightMagenta},
-      [10] = {foreground = Screen.colors.Red},
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      [4] = { bold = true },
+      [5] = { background = Screen.colors.LightGrey },
+      [6] = { foreground = Screen.colors.Blue1 },
+      [7] = { bold = true, reverse = true },
+      [8] = { background = Screen.colors.WebGray },
+      [9] = { background = Screen.colors.LightMagenta },
+      [10] = { foreground = Screen.colors.Red },
     })
     screen:attach()
 
@@ -57,7 +57,7 @@ describe('mappings with <Cmd>', function()
     feed('gg')
     cmdmap('<F8>', 'startinsert')
     cmdmap('<F9>', 'stopinsert')
-    command("abbr foo <Cmd>let g:y = 17<cr>bar")
+    command('abbr foo <Cmd>let g:y = 17<cr>bar')
   end)
 
   after_each(function()
@@ -121,7 +121,7 @@ describe('mappings with <Cmd>', function()
     feed('<F3>')
     eq('foo…bar', eval('g:str'))
     local str = eval([["foo\<D-…>bar"]])
-    command([[noremap <F3> <Cmd>let g:str = ']]..str..[['<CR>]])
+    command([[noremap <F3> <Cmd>let g:str = ']] .. str .. [['<CR>]])
     feed('<F3>')
     eq(str, eval('g:str'))
     command([[noremap <F3> <Cmd>let g:str = 'foo<D-…>bar'<CR>]])
@@ -160,7 +160,7 @@ describe('mappings with <Cmd>', function()
     eq('n', eval('mode(1)'))
 
     -- operator-pending mode
-    feed("d<F3>")
+    feed('d<F3>')
     eq('no', eval('m'))
     -- did leave operator-pending mode
     eq('n', eval('mode(1)'))
@@ -171,21 +171,21 @@ describe('mappings with <Cmd>', function()
     eq('i', eval('mode(1)'))
 
     -- replace mode
-    feed("<Ins><F3>")
+    feed('<Ins><F3>')
     eq('R', eval('m'))
     eq('R', eval('mode(1)'))
     feed('<esc>')
     eq('n', eval('mode(1)'))
 
     -- virtual replace mode
-    feed("gR<F3>")
+    feed('gR<F3>')
     eq('Rv', eval('m'))
     eq('Rv', eval('mode(1)'))
     feed('<esc>')
     eq('n', eval('mode(1)'))
 
     -- langmap works, but is not distinguished in mode(1)
-    feed(":set iminsert=1<cr>i<F3>")
+    feed(':set iminsert=1<cr>i<F3>')
     eq('i', eval('m'))
     eq('i', eval('mode(1)'))
     feed('<esc>')
@@ -212,15 +212,15 @@ describe('mappings with <Cmd>', function()
 
     -- check v:count and v:register works
     feed('<F2>')
-    eq({'n', 0, '"'}, eval('s'))
+    eq({ 'n', 0, '"' }, eval('s'))
     feed('7<F2>')
-    eq({'n', 7, '"'}, eval('s'))
+    eq({ 'n', 7, '"' }, eval('s'))
     feed('"e<F2>')
-    eq({'n', 0, 'e'}, eval('s'))
+    eq({ 'n', 0, 'e' }, eval('s'))
     feed('5"k<F2>')
-    eq({'n', 5, 'k'}, eval('s'))
+    eq({ 'n', 5, 'k' }, eval('s'))
     feed('"+2<F2>')
-    eq({'n', 2, '+'}, eval('s'))
+    eq({ 'n', 2, '+' }, eval('s'))
 
     -- text object enters visual mode
     feed('<F7>')
@@ -249,7 +249,7 @@ describe('mappings with <Cmd>', function()
       {4:-- INSERT --}                                                     |
     ]])
     -- feedkeys were not executed immediately
-    eq({'n', 'of test text'}, eval('[m,a]'))
+    eq({ 'n', 'of test text' }, eval('[m,a]'))
     eq('i', eval('mode(1)'))
     feed('<esc>')
 
@@ -261,7 +261,7 @@ describe('mappings with <Cmd>', function()
                                                                        |
     ]])
     -- feedkeys(..., 'x') was executed immediately, but insert mode gets aborted
-    eq({'n', 'of alphabetatest text'}, eval('[m,b]'))
+    eq({ 'n', 'of alphabetatest text' }, eval('[m,b]'))
     eq('n', eval('mode(1)'))
   end)
 
@@ -270,9 +270,11 @@ describe('mappings with <Cmd>', function()
     command('noremap ,f <Cmd>nosuchcommand<cr>')
     command('noremap ,e <Cmd>throw "very error"\\| call append(1, "yy")<cr>')
     command('noremap ,m <Cmd>echoerr "The message."\\| call append(1, "zz")<cr>')
-    command('noremap ,w <Cmd>for i in range(5)\\|if i==1\\|echoerr "Err"\\|endif\\|call append(1, i)\\|endfor<cr>')
+    command(
+      'noremap ,w <Cmd>for i in range(5)\\|if i==1\\|echoerr "Err"\\|endif\\|call append(1, i)\\|endfor<cr>'
+    )
 
-    feed(":normal ,x<cr>")
+    feed(':normal ,x<cr>')
     screen:expect([[
       ^some short lines                                                 |
       aa                                                               |
@@ -282,9 +284,9 @@ describe('mappings with <Cmd>', function()
       :normal ,x                                                       |
     ]])
 
-    eq('Vim:E492: Not an editor command: nosuchcommand', exc_exec("normal ,f"))
-    eq('very error', exc_exec("normal ,e"))
-    eq('Vim(echoerr):The message.', exc_exec("normal ,m"))
+    eq('Vim:E492: Not an editor command: nosuchcommand', exc_exec('normal ,f'))
+    eq('very error', exc_exec('normal ,e'))
+    eq('Vim(echoerr):The message.', exc_exec('normal ,m'))
     feed('w')
     screen:expect([[
       some ^short lines                                                 |
@@ -296,7 +298,7 @@ describe('mappings with <Cmd>', function()
     ]])
 
     command(':%d')
-    eq('Vim(echoerr):Err', exc_exec("normal ,w"))
+    eq('Vim(echoerr):Err', exc_exec('normal ,w'))
     screen:expect([[
       ^                                                                 |
       0                                                                |
@@ -332,7 +334,7 @@ describe('mappings with <Cmd>', function()
     -- can invoke operator, ending visual mode
     feed('<F5>')
     eq('n', funcs.mode(1))
-    eq({'some short l'}, funcs.getreg('a',1,1))
+    eq({ 'some short l' }, funcs.getreg('a', 1, 1))
 
     -- error doesn't interrupt visual mode
     feed('ggvw<F6>')
@@ -393,12 +395,12 @@ describe('mappings with <Cmd>', function()
     -- visual mapping in select mode restart select mode after operator
     feed('<F5>')
     eq('s', funcs.mode(1))
-    eq({'some short l'}, funcs.getreg('a',1,1))
+    eq({ 'some short l' }, funcs.getreg('a', 1, 1))
 
     -- select mode mapping works, and does not restart select mode
     feed('<F2>')
     eq('n', funcs.mode(1))
-    eq({'some short l'}, funcs.getreg('b',1,1))
+    eq({ 'some short l' }, funcs.getreg('b', 1, 1))
 
     -- error doesn't interrupt temporary visual mode
     feed('<esc>ggvw<c-g><F6>')
@@ -468,17 +470,16 @@ describe('mappings with <Cmd>', function()
     eq('i', eval('mode(1)'))
   end)
 
-
   it('works in operator-pending mode', function()
     feed('d<F4>')
     expect([[
         lines
         of test text]])
-    eq({'some short '}, funcs.getreg('"',1,1))
+    eq({ 'some short ' }, funcs.getreg('"', 1, 1))
     feed('.')
     expect([[
         test text]])
-    eq({'lines', 'of '}, funcs.getreg('"',1,1))
+    eq({ 'lines', 'of ' }, funcs.getreg('"', 1, 1))
     feed('uu')
     expect([[
         some short lines
@@ -504,7 +505,7 @@ describe('mappings with <Cmd>', function()
     feed('"bd<F7>')
     expect([[
         soest text]])
-    eq(funcs.getreg('b',1,1), {'me short lines', 'of t'})
+    eq(funcs.getreg('b', 1, 1), { 'me short lines', 'of t' })
 
     -- startinsert aborts operator
     feed('d<F8>')
@@ -514,7 +515,6 @@ describe('mappings with <Cmd>', function()
   end)
 
   it('works in insert mode', function()
-
     -- works the same as <c-o>w<c-o>w
     feed('iindeed <F4>little ')
     screen:expect([[
@@ -534,7 +534,6 @@ describe('mappings with <Cmd>', function()
       {2:E605: Exception not caught: very error}                           |
       {3:Press ENTER or type command to continue}^                          |
     ]])
-
 
     feed('<cr>')
     eq('E605: Exception not caught: very error', eval('v:errmsg'))
@@ -562,7 +561,7 @@ describe('mappings with <Cmd>', function()
       of stuff test text]])
 
     feed('<F5>')
-    eq(funcs.getreg('a',1,1), {'deed some short little lines', 'of stuff t'})
+    eq(funcs.getreg('a', 1, 1), { 'deed some short little lines', 'of stuff t' })
 
     -- still in insert
     screen:expect([[
@@ -704,7 +703,6 @@ describe('mappings with <Cmd>', function()
     ]])
     eq('i', eval('mode(1)'))
     eq(9, eval('g:y'))
-
   end)
 
   it("doesn't crash when invoking cmdline mode recursively #8859", function()
@@ -726,18 +724,20 @@ describe('mappings with <Cmd>', function()
     ]])
   end)
 
-  it("works with <SID> mappings", function()
+  it('works with <SID> mappings', function()
     command('new!')
-    write_file(tmpfile, [[
+    write_file(
+      tmpfile,
+      [[
       map <f2> <Cmd>call <SID>do_it()<Cr>
       function! s:do_it()
         let g:x = 10
       endfunction
-    ]])
-    command('source '..tmpfile)
+    ]]
+    )
+    command('source ' .. tmpfile)
     feed('<f2>')
     eq('', eval('v:errmsg'))
     eq(10, eval('g:x'))
   end)
 end)
-

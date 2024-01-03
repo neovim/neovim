@@ -1,4 +1,4 @@
-local helpers = require("test.functional.helpers")(after_each)
+local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
@@ -33,23 +33,27 @@ describe(':*map', function()
 
   it('shows <Nop> as mapping rhs', function()
     command('nmap asdf <Nop>')
-    eq([[
+    eq(
+      [[
 
 n  asdf          <Nop>]],
-       exec_capture('nmap asdf'))
+      exec_capture('nmap asdf')
+    )
   end)
 
   it('mappings with description can be filtered', function()
-    meths.set_keymap('n', 'asdf1', 'qwert', {desc='do the one thing'})
-    meths.set_keymap('n', 'asdf2', 'qwert', {desc='doesnot really do anything'})
-    meths.set_keymap('n', 'asdf3', 'qwert', {desc='do the other thing'})
-    eq([[
+    meths.set_keymap('n', 'asdf1', 'qwert', { desc = 'do the one thing' })
+    meths.set_keymap('n', 'asdf2', 'qwert', { desc = 'doesnot really do anything' })
+    meths.set_keymap('n', 'asdf3', 'qwert', { desc = 'do the other thing' })
+    eq(
+      [[
 
 n  asdf3         qwert
                  do the other thing
 n  asdf1         qwert
                  do the one thing]],
-       exec_capture('filter the nmap'))
+      exec_capture('filter the nmap')
+    )
   end)
 
   it('<Plug> mappings ignore nore', function()
@@ -75,7 +79,7 @@ n  asdf1         qwert
       nmap increase_x_remap x<Plug>(Increase_x)x
       nnoremap increase_x_noremap x<Plug>(Increase_x)x
     ]]
-    insert("Some text")
+    insert('Some text')
     eq('Some text', eval("getline('.')"))
 
     feed('increase_x_remap')

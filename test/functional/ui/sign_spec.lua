@@ -9,20 +9,20 @@ describe('Signs', function()
     clear()
     screen = Screen.new()
     screen:attach()
-    screen:set_default_attr_ids( {
-      [0] = {bold=true, foreground=255},
-      [1] = {background = Screen.colors.Yellow},
-      [2] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.Grey},
-      [3] = {background = Screen.colors.Gray90},
-      [4] = {bold = true, reverse = true},
-      [5] = {reverse = true},
-      [6] = {foreground = Screen.colors.Brown},
-      [7] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
-      [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [9] = {bold = true, foreground = Screen.colors.Magenta},
-      [10] = {foreground = Screen.colors.Blue1},
-      [11] = {bold = true, foreground = Screen.colors.SeaGreen4},
-    } )
+    screen:set_default_attr_ids({
+      [0] = { bold = true, foreground = 255 },
+      [1] = { background = Screen.colors.Yellow },
+      [2] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.Grey },
+      [3] = { background = Screen.colors.Gray90 },
+      [4] = { bold = true, reverse = true },
+      [5] = { reverse = true },
+      [6] = { foreground = Screen.colors.Brown },
+      [7] = { foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey },
+      [8] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [9] = { bold = true, foreground = Screen.colors.Magenta },
+      [10] = { foreground = Screen.colors.Blue1 },
+      [11] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+    })
   end)
 
   describe(':sign place', function()
@@ -468,7 +468,7 @@ describe('Signs', function()
   end)
 
   it('signcolumn width is updated when removing all signs after deleting lines', function()
-    meths.buf_set_lines(0, 0, 1, true, {'a', 'b', 'c', 'd', 'e'})
+    meths.buf_set_lines(0, 0, 1, true, { 'a', 'b', 'c', 'd', 'e' })
     exec('sign define piet text=>>')
     exec('sign place 10001 line=1 name=piet')
     exec('sign place 10002 line=5 name=piet')
@@ -494,7 +494,7 @@ describe('Signs', function()
   end)
 
   it('signcolumn width is updated when removing all signs after inserting lines', function()
-    meths.buf_set_lines(0, 0, 1, true, {'a', 'b', 'c', 'd', 'e'})
+    meths.buf_set_lines(0, 0, 1, true, { 'a', 'b', 'c', 'd', 'e' })
     exec('sign define piet text=>>')
     exec('sign place 10001 line=1 name=piet')
     exec('sign place 10002 line=5 name=piet')

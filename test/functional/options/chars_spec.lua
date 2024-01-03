@@ -16,10 +16,9 @@ describe("'fillchars'", function()
     screen:attach()
   end)
 
-  local function shouldfail(val,errval)
+  local function shouldfail(val, errval)
     errval = errval or val
-    eq('Vim(set):E474: Invalid argument: fillchars='..errval,
-       exc_exec('set fillchars='..val))
+    eq('Vim(set):E474: Invalid argument: fillchars=' .. errval, exc_exec('set fillchars=' .. val))
   end
 
   describe('"eob" flag', function()
@@ -66,11 +65,11 @@ describe("'fillchars'", function()
   it('"diff" flag', function()
     screen:try_resize(45, 8)
     screen:set_default_attr_ids({
-      [1] = {background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue};
-      [2] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1};
-      [3] = {background = Screen.colors.LightBlue};
-      [4] = {reverse = true};
-      [5] = {reverse = true, bold = true};
+      [1] = { background = Screen.colors.Grey, foreground = Screen.colors.DarkBlue },
+      [2] = { background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1 },
+      [3] = { background = Screen.colors.LightBlue },
+      [4] = { reverse = true },
+      [5] = { reverse = true, bold = true },
     })
     command('set fillchars=diff:…')
     insert('a\nb\nc\nd\ne')
@@ -91,7 +90,7 @@ describe("'fillchars'", function()
 
   it('has global value', function()
     screen:try_resize(50, 5)
-    insert("foo\nbar")
+    insert('foo\nbar')
     command('set laststatus=0')
     command('1,2fold')
     command('vsplit')
@@ -105,7 +104,7 @@ describe("'fillchars'", function()
 
   it('has window-local value', function()
     screen:try_resize(50, 5)
-    insert("foo\nbar")
+    insert('foo\nbar')
     command('set laststatus=0')
     command('1,2fold')
     command('vsplit')
@@ -119,7 +118,7 @@ describe("'fillchars'", function()
 
   it('using :set clears window-local value', function()
     screen:try_resize(50, 5)
-    insert("foo\nbar")
+    insert('foo\nbar')
     command('set laststatus=0')
     command('setl fillchars=fold:x')
     command('1,2fold')

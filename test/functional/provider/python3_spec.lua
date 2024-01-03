@@ -20,7 +20,10 @@ do
       matches(expected, pcall_err(command, 'py3 print("foo")'))
       matches(expected, pcall_err(command, 'py3file foo'))
     end)
-    pending(string.format('Python 3 (or the pynvim module) is broken/missing (%s)', reason), function() end)
+    pending(
+      string.format('Python 3 (or the pynvim module) is broken/missing (%s)', reason),
+      function() end
+    )
     return
   end
 end
@@ -41,25 +44,33 @@ describe('python3 provider', function()
 
   it('python3_execute', function()
     command('python3 vim.vars["set_by_python3"] = [100, 0]')
-    eq({100, 0}, eval('g:set_by_python3'))
+    eq({ 100, 0 }, eval('g:set_by_python3'))
   end)
 
   it('does not truncate error message <1 MB', function()
     -- XXX: Python limits the error name to 200 chars, so this test is
     -- mostly bogus.
     local very_long_symbol = string.rep('a', 1200)
-    feed_command(':silent! py3 print('..very_long_symbol..' b)')
+    feed_command(':silent! py3 print(' .. very_long_symbol .. ' b)')
     -- Error message will contain this (last) line.
-    matches(string.format(dedent([[
+    matches(
+      string.format(
+        dedent([[
       ^Error invoking 'python_execute' on channel 3 %%(python3%%-script%%-host%%):
         File "<string>", line 1
           print%%(%s b%%)
       %%C*
-      SyntaxError: invalid syntax%%C*$]]), very_long_symbol), eval('v:errmsg'))
+      SyntaxError: invalid syntax%%C*$]]),
+        very_long_symbol
+      ),
+      eval('v:errmsg')
+    )
   end)
 
   it('python3_execute with nested commands', function()
-    command([[python3 vim.command('python3 vim.command("python3 vim.command(\'let set_by_nested_python3 = 555\')")')]])
+    command(
+      [[python3 vim.command('python3 vim.command("python3 vim.command(\'let set_by_nested_python3 = 555\')")')]]
+    )
     eq(555, eval('g:set_by_nested_python3'))
   end)
 
@@ -70,7 +81,7 @@ describe('python3 provider', function()
       line3
       line4]])
     feed('ggjvj:python3 vim.vars["range"] = vim.current.range[:]<CR>')
-    eq({'line2', 'line3'}, eval('g:range'))
+    eq({ 'line2', 'line3' }, eval('g:range'))
   end)
 
   it('py3file', function()
@@ -102,7 +113,7 @@ describe('python3 provider', function()
 
   describe('py3eval()', function()
     it('works', function()
-      eq({1, 2, {['key'] = 'val'}}, funcs.py3eval('[1, 2, {"key": "val"}]'))
+      eq({ 1, 2, { ['key'] = 'val' } }, funcs.py3eval('[1, 2, {"key": "val"}]'))
     end)
 
     it('errors out when given non-string', function()
@@ -131,7 +142,7 @@ describe('python3 provider', function()
     command 'set pyxversion=3' -- no error
     eq('Vim(set):E474: Invalid argument: pyxversion=2', pcall_err(command, 'set pyxversion=2'))
     command 'set pyxversion=0' -- allowed, but equivalent to pyxversion=3
-    eq(3, eval'&pyxversion')
+    eq(3, eval '&pyxversion')
   end)
 
   it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
@@ -146,7 +157,7 @@ describe('python3 provider', function()
       autocmd BufDelete * python3 foo()
       autocmd BufUnload * python3 foo()]=])
     feed_command("exe 'split' tempname()")
-    feed_command("bwipeout!")
+    feed_command('bwipeout!')
     feed_command('help help')
     assert_alive()
   end)

@@ -27,7 +27,7 @@ describe('CursorHold', function()
       retry(10, nil, function()
         ut = ut * 2
         meths.set_option_value('updatetime', ut, {})
-        feed('0')  -- reset did_cursorhold
+        feed('0') -- reset did_cursorhold
         meths.set_var('cursorhold', 0)
         sleep(ut / 4)
         fn()
@@ -44,15 +44,23 @@ describe('CursorHold', function()
 
     local ignore_key = meths.replace_termcodes('<Ignore>', true, true, true)
     test_cursorhold(function() end, 1)
-    test_cursorhold(function() feed('') end, 1)
-    test_cursorhold(function() meths.feedkeys('', 'n', true) end, 1)
-    test_cursorhold(function() feed('<Ignore>') end, 0)
-    test_cursorhold(function() meths.feedkeys(ignore_key, 'n', true) end, 0)
+    test_cursorhold(function()
+      feed('')
+    end, 1)
+    test_cursorhold(function()
+      meths.feedkeys('', 'n', true)
+    end, 1)
+    test_cursorhold(function()
+      feed('<Ignore>')
+    end, 0)
+    test_cursorhold(function()
+      meths.feedkeys(ignore_key, 'n', true)
+    end, 0)
   end)
 
   it("reducing 'updatetime' while waiting for CursorHold #20241", function()
     meths.set_option_value('updatetime', 10000, {})
-    feed('0')  -- reset did_cursorhold
+    feed('0') -- reset did_cursorhold
     meths.set_var('cursorhold', 0)
     sleep(50)
     eq(0, meths.get_var('cursorhold'))

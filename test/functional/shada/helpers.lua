@@ -17,17 +17,18 @@ local function reset(o)
   o = o and o or {}
   local args_rm = o.args_rm or {}
   table.insert(args_rm, '-i')
-  local args={
-    '-i', o.shadafile or tmpname,
+  local args = {
+    '-i',
+    o.shadafile or tmpname,
   }
   if type(o) == 'string' then
-    args = concat_tables(args, {'--cmd', o})
+    args = concat_tables(args, { '--cmd', o })
   elseif o.args then
     args = concat_tables(args, o.args)
   end
-  helpers.clear{
-    args_rm=args_rm,
-    args=args,
+  helpers.clear {
+    args_rm = args_rm,
+    args = args,
   }
   meths.set_var('tmpname', tmpname)
 end
@@ -57,7 +58,7 @@ local get_shada_rw = function(fname)
   return wshada, sdrcmd, fname, clean
 end
 
-local mpack_keys = {'type', 'timestamp', 'length', 'value'}
+local mpack_keys = { 'type', 'timestamp', 'length', 'value' }
 
 local read_shada_file = function(fname)
   local fd = io.open(fname, 'r')
@@ -81,8 +82,8 @@ local read_shada_file = function(fname)
 end
 
 return {
-  reset=reset,
-  clear=clear,
-  get_shada_rw=get_shada_rw,
-  read_shada_file=read_shada_file,
+  reset = reset,
+  clear = clear,
+  get_shada_rw = get_shada_rw,
+  read_shada_file = read_shada_file,
 }

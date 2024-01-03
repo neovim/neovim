@@ -58,7 +58,9 @@ describe('tabpage', function()
   end)
 
   it('no segfault with strange WinClosed autocommand #20290', function()
-    pcall(exec, [[
+    pcall(
+      exec,
+      [[
       set nohidden
       edit Xa
       split Xb
@@ -66,45 +68,46 @@ describe('tabpage', function()
       new
       autocmd WinClosed * tabprev | bwipe!
       close
-    ]])
+    ]]
+    )
     assert_alive()
   end)
 
   it('nvim_win_close and nvim_win_hide update tabline #20285', function()
     eq(1, #meths.list_tabpages())
-    eq({1, 1}, funcs.win_screenpos(0))
+    eq({ 1, 1 }, funcs.win_screenpos(0))
     local win1 = curwin().id
 
     command('tabnew')
     eq(2, #meths.list_tabpages())
-    eq({2, 1}, funcs.win_screenpos(0))
+    eq({ 2, 1 }, funcs.win_screenpos(0))
     local win2 = curwin().id
 
     meths.win_close(win1, true)
     eq(win2, curwin().id)
     eq(1, #meths.list_tabpages())
-    eq({1, 1}, funcs.win_screenpos(0))
+    eq({ 1, 1 }, funcs.win_screenpos(0))
 
     command('tabnew')
     eq(2, #meths.list_tabpages())
-    eq({2, 1}, funcs.win_screenpos(0))
+    eq({ 2, 1 }, funcs.win_screenpos(0))
     local win3 = curwin().id
 
     meths.win_hide(win2)
     eq(win3, curwin().id)
     eq(1, #meths.list_tabpages())
-    eq({1, 1}, funcs.win_screenpos(0))
+    eq({ 1, 1 }, funcs.win_screenpos(0))
   end)
 
   it('switching tabpage after setting laststatus=3 #19591', function()
     local screen = Screen.new(40, 8)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},
-      [1] = {bold = true, reverse = true},  -- StatusLine
-      [2] = {reverse = true},  -- TabLineFill
-      [3] = {bold = true}, -- TabLineSel
-      [4] = {background = Screen.colors.LightGrey, underline = true},  -- TabLine
-      [5] = {bold = true, foreground = Screen.colors.Magenta},
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { bold = true, reverse = true }, -- StatusLine
+      [2] = { reverse = true }, -- TabLineFill
+      [3] = { bold = true }, -- TabLineSel
+      [4] = { background = Screen.colors.LightGrey, underline = true }, -- TabLine
+      [5] = { bold = true, foreground = Screen.colors.Magenta },
     })
     screen:attach()
 
@@ -130,7 +133,7 @@ describe('tabpage', function()
     ]])
   end)
 
-  it(":tabmove handles modifiers and addr", function()
+  it(':tabmove handles modifiers and addr', function()
     command('tabnew | tabnew | tabnew')
     eq(4, funcs.nvim_tabpage_get_number(0))
     command('     silent      :keepalt   :: :::    silent!    -    tabmove')

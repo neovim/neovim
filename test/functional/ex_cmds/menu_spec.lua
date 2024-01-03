@@ -4,9 +4,7 @@ local expect, feed = helpers.expect, helpers.feed
 local eq, eval = helpers.eq, helpers.eval
 local funcs = helpers.funcs
 
-
 describe(':emenu', function()
-
   before_each(function()
     clear()
     command('nnoremenu Test.Test inormal<ESC>')
@@ -41,26 +39,25 @@ describe(':emenu', function()
   end)
 
   it('executes correct bindings in command mode', function()
-      feed('ithis is a sentence<esc>^yiwo<esc>')
+    feed('ithis is a sentence<esc>^yiwo<esc>')
 
-      -- Invoke "Edit.Paste" in normal-mode.
-      nvim('command', 'emenu Edit.Paste')
+    -- Invoke "Edit.Paste" in normal-mode.
+    nvim('command', 'emenu Edit.Paste')
 
-      -- Invoke "Edit.Paste" and "Test.Test" in command-mode.
-      feed(':')
-      nvim('command', 'emenu Edit.Paste')
-      nvim('command', 'emenu Test.Test')
+    -- Invoke "Edit.Paste" and "Test.Test" in command-mode.
+    feed(':')
+    nvim('command', 'emenu Edit.Paste')
+    nvim('command', 'emenu Test.Test')
 
-      expect([[
+    expect([[
         this is a sentence
         this]])
-      -- Assert that Edit.Paste pasted @" into the commandline.
-      eq('thiscmdmode', eval('getcmdline()'))
+    -- Assert that Edit.Paste pasted @" into the commandline.
+    eq('thiscmdmode', eval('getcmdline()'))
   end)
 end)
 
 describe('menu_get', function()
-
   before_each(function()
     clear()
     command([=[
@@ -83,12 +80,12 @@ describe('menu_get', function()
   end)
 
   it("path='', modes='a'", function()
-    local m = funcs.menu_get("","a");
+    local m = funcs.menu_get('', 'a')
     -- HINT: To print the expected table and regenerate the tests:
     -- print(require('vim.inspect')(m))
     local expected = {
       {
-        shortcut = "T",
+        shortcut = 'T',
         hidden = 0,
         submenus = {
           {
@@ -97,45 +94,45 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "insert",
-                silent = 0
+                rhs = 'insert',
+                silent = 0,
               },
               s = {
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "x",
-                silent = 0
+                rhs = 'x',
+                silent = 0,
               },
               n = {
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "inormal<Esc>",
-                silent = 0
+                rhs = 'inormal<Esc>',
+                silent = 0,
               },
               v = {
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "x",
-                silent = 0
+                rhs = 'x',
+                silent = 0,
               },
               c = {
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "cmdmode",
-                silent = 0
-              }
+                rhs = 'cmdmode',
+                silent = 0,
+              },
             },
             priority = 500,
-            name = "Test",
-            hidden = 0
+            name = 'Test',
+            hidden = 0,
           },
           {
             priority = 500,
-            name = "Nested",
+            name = 'Nested',
             submenus = {
               {
                 mappings = {
@@ -143,34 +140,34 @@ describe('menu_get', function()
                     sid = 0,
                     noremap = 0,
                     enabled = 1,
-                    rhs = "level1",
-                    silent = 0
+                    rhs = 'level1',
+                    silent = 0,
                   },
                   v = {
                     sid = 0,
                     noremap = 0,
                     enabled = 1,
-                    rhs = "level1",
-                    silent = 0
+                    rhs = 'level1',
+                    silent = 0,
                   },
                   s = {
                     sid = 0,
                     noremap = 0,
                     enabled = 1,
-                    rhs = "level1",
-                    silent = 0
+                    rhs = 'level1',
+                    silent = 0,
                   },
                   n = {
                     sid = 0,
                     noremap = 0,
                     enabled = 1,
-                    rhs = "level1",
-                    silent = 0
-                  }
+                    rhs = 'level1',
+                    silent = 0,
+                  },
                 },
                 priority = 500,
-                name = "test",
-                hidden = 0
+                name = 'test',
+                hidden = 0,
               },
               {
                 mappings = {
@@ -178,67 +175,67 @@ describe('menu_get', function()
                     sid = 0,
                     noremap = 0,
                     enabled = 1,
-                    rhs = "level2",
-                    silent = 0
+                    rhs = 'level2',
+                    silent = 0,
                   },
                   v = {
                     sid = 0,
                     noremap = 0,
                     enabled = 1,
-                    rhs = "level2",
-                    silent = 0
+                    rhs = 'level2',
+                    silent = 0,
                   },
                   s = {
                     sid = 0,
                     noremap = 0,
                     enabled = 1,
-                    rhs = "level2",
-                    silent = 0
+                    rhs = 'level2',
+                    silent = 0,
                   },
                   n = {
                     sid = 0,
                     noremap = 0,
                     enabled = 1,
-                    rhs = "level2",
-                    silent = 0
-                  }
+                    rhs = 'level2',
+                    silent = 0,
+                  },
                 },
                 priority = 500,
-                name = "Nested2",
-                hidden = 0
-              }
+                name = 'Nested2',
+                hidden = 0,
+              },
             },
-            hidden = 0
-          }
+            hidden = 0,
+          },
         },
         priority = 500,
-        name = "Test"
+        name = 'Test',
       },
       {
         priority = 500,
-        name = "Export",
+        name = 'Export',
         submenus = {
           {
-            tooltip = "This is the tooltip",
+            tooltip = 'This is the tooltip',
             hidden = 0,
-            name = "Script",
+            name = 'Script',
             priority = 500,
             mappings = {
               n = {
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "p",
-                silent = 0
-              }
-            }
-          }
+                rhs = 'p',
+                silent = 0,
+              },
+            },
+          },
         },
-        hidden = 0
+        hidden = 0,
       },
       {
         priority = 500,
-        name = "Edit",
+        name = 'Edit',
         submenus = {
           {
             mappings = {
@@ -246,27 +243,27 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "<C-R>\"",
-                silent = 0
+                rhs = '<C-R>"',
+                silent = 0,
               },
               n = {
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "p",
-                silent = 0
-              }
+                rhs = 'p',
+                silent = 0,
+              },
             },
             priority = 500,
-            name = "Paste",
-            hidden = 0
-          }
+            name = 'Paste',
+            hidden = 0,
+          },
         },
-        hidden = 0
+        hidden = 0,
       },
       {
         priority = 500,
-        name = "]Export",
+        name = ']Export',
         submenus = {
           {
             mappings = {
@@ -274,72 +271,76 @@ describe('menu_get', function()
                 sid = 0,
                 noremap = 0,
                 enabled = 1,
-                rhs = "thisoneshouldbehidden",
-                silent = 0
+                rhs = 'thisoneshouldbehidden',
+                silent = 0,
               },
               v = {
                 sid = 0,
                 noremap = 0,
                 enabled = 1,
-                rhs = "thisoneshouldbehidden",
-                silent = 0
+                rhs = 'thisoneshouldbehidden',
+                silent = 0,
               },
               s = {
                 sid = 0,
                 noremap = 0,
                 enabled = 1,
-                rhs = "thisoneshouldbehidden",
-                silent = 0
+                rhs = 'thisoneshouldbehidden',
+                silent = 0,
               },
               n = {
                 sid = 0,
                 noremap = 0,
                 enabled = 1,
-                rhs = "thisoneshouldbehidden",
-                silent = 0
-              }
+                rhs = 'thisoneshouldbehidden',
+                silent = 0,
+              },
             },
             priority = 500,
-            name = "hidden",
-            hidden = 0
-          }
+            name = 'hidden',
+            hidden = 0,
+          },
         },
-        hidden = 1
-      }
+        hidden = 1,
+      },
     }
     eq(expected, m)
   end)
 
   it('matching path, all modes', function()
-    local m = funcs.menu_get("Export", "a")
-    local expected = { {
-      hidden = 0,
-      name = "Export",
-      priority = 500,
-      submenus = { {
-        tooltip = "This is the tooltip",
+    local m = funcs.menu_get('Export', 'a')
+    local expected = {
+      {
         hidden = 0,
-        name = "Script",
+        name = 'Export',
         priority = 500,
-        mappings = {
-          n = {
-            sid = 1,
-            noremap = 1,
-            enabled = 1,
-            rhs = "p",
-            silent = 0
-          }
-        }
-      } }
-    } }
+        submenus = {
+          {
+            tooltip = 'This is the tooltip',
+            hidden = 0,
+            name = 'Script',
+            priority = 500,
+            mappings = {
+              n = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = 'p',
+                silent = 0,
+              },
+            },
+          },
+        },
+      },
+    }
     eq(expected, m)
   end)
 
   it('no path, matching modes', function()
-    local m = funcs.menu_get("","i")
+    local m = funcs.menu_get('', 'i')
     local expected = {
       {
-        shortcut = "T",
+        shortcut = 'T',
         hidden = 0,
         submenus = {
           {
@@ -348,27 +349,27 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "insert",
-                silent = 0
-              }
+                rhs = 'insert',
+                silent = 0,
+              },
             },
             priority = 500,
-            name = "Test",
-            hidden = 0
+            name = 'Test',
+            hidden = 0,
           },
         },
         priority = 500,
-        name = "Test"
-      }
+        name = 'Test',
+      },
     }
     eq(expected, m)
   end)
 
   it('matching path and modes', function()
-    local m = funcs.menu_get("Test","i")
+    local m = funcs.menu_get('Test', 'i')
     local expected = {
       {
-        shortcut = "T",
+        shortcut = 'T',
         submenus = {
           {
             mappings = {
@@ -376,26 +377,25 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "insert",
-                silent = 0
+                rhs = 'insert',
+                silent = 0,
               },
             },
             priority = 500,
-            name = "Test",
-            hidden = 0
+            name = 'Test',
+            hidden = 0,
           },
         },
         priority = 500,
-        name = "Test",
-        hidden = 0
-      }
+        name = 'Test',
+        hidden = 0,
+      },
     }
     eq(expected, m)
   end)
 end)
 
 describe('menu_get', function()
-
   before_each(function()
     clear()
     command('aunmenu *')
@@ -412,10 +412,10 @@ describe('menu_get', function()
     command('nnoremenu &Test.Test8 <NoP>')
     command('nnoremenu &Test.Test9 ""')
 
-    local m = funcs.menu_get("");
+    local m = funcs.menu_get('')
     local expected = {
       {
-        shortcut = "T",
+        shortcut = 'T',
         hidden = 0,
         submenus = {
           {
@@ -425,12 +425,12 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "inormal<Esc>",
-                silent = 0
-              }
+                rhs = 'inormal<Esc>',
+                silent = 0,
+              },
             },
-            name = "Test",
-            hidden = 0
+            name = 'Test',
+            hidden = 0,
           },
           {
             priority = 500,
@@ -439,12 +439,12 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "<Tab><Esc>",
-                silent = 0
-              }
+                rhs = '<Tab><Esc>',
+                silent = 0,
+              },
             },
-            name = "Test2",
-            hidden = 0
+            name = 'Test2',
+            hidden = 0,
           },
           {
             priority = 500,
@@ -453,19 +453,19 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "yA<C-R>0<Tab>xyz<Esc>",
-                silent = 0
+                rhs = 'yA<C-R>0<Tab>xyz<Esc>',
+                silent = 0,
               },
               v = {
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "yA<C-R>0<Tab>xyz<Esc>",
-                silent = 0
-              }
+                rhs = 'yA<C-R>0<Tab>xyz<Esc>',
+                silent = 0,
+              },
             },
-            name = "Test3",
-            hidden = 0
+            name = 'Test3',
+            hidden = 0,
           },
           {
             priority = 500,
@@ -474,12 +474,12 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "<C-R>*",
-                silent = 0
-              }
+                rhs = '<C-R>*',
+                silent = 0,
+              },
             },
-            name = "Test4",
-            hidden = 0
+            name = 'Test4',
+            hidden = 0,
           },
           {
             priority = 500,
@@ -488,12 +488,12 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "<C-R>+",
-                silent = 0
-              }
+                rhs = '<C-R>+',
+                silent = 0,
+              },
             },
-            name = "Test5",
-            hidden = 0
+            name = 'Test5',
+            hidden = 0,
           },
           {
             priority = 500,
@@ -502,12 +502,12 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "",
-                silent = 0
-              }
+                rhs = '',
+                silent = 0,
+              },
             },
-            name = "Test6",
-            hidden = 0
+            name = 'Test6',
+            hidden = 0,
           },
           {
             priority = 500,
@@ -516,12 +516,12 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "",
-                silent = 0
-              }
+                rhs = '',
+                silent = 0,
+              },
             },
-            name = "Test7",
-            hidden = 0
+            name = 'Test7',
+            hidden = 0,
           },
           {
             priority = 500,
@@ -530,12 +530,12 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "",
-                silent = 0
-              }
+                rhs = '',
+                silent = 0,
+              },
             },
-            name = "Test8",
-            hidden = 0
+            name = 'Test8',
+            hidden = 0,
           },
           {
             priority = 500,
@@ -544,17 +544,17 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "\"\"",
-                silent = 0
-              }
+                rhs = '""',
+                silent = 0,
+              },
             },
-            name = "Test9",
-            hidden = 0
-          }
+            name = 'Test9',
+            hidden = 0,
+          },
         },
         priority = 500,
-        name = "Test"
-      }
+        name = 'Test',
+      },
     }
 
     eq(m, expected)
@@ -565,12 +565,12 @@ describe('menu_get', function()
     command('nnoremenu &Test\\ 1.Test\\ 2 Wargl')
     command('nnoremenu &Test4.Test<Tab>3 i space<Esc>')
 
-    local m = funcs.menu_get("");
+    local m = funcs.menu_get('')
     local expected = {
       {
-        shortcut = "T",
+        shortcut = 'T',
         hidden = 0,
-        actext = "Y",
+        actext = 'Y',
         submenus = {
           {
             mappings = {
@@ -578,21 +578,21 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "inormal<Alt-j>",
-                silent = 0
-              }
+                rhs = 'inormal<Alt-j>',
+                silent = 0,
+              },
             },
             hidden = 0,
-            actext = "X x",
+            actext = 'X x',
             priority = 500,
-            name = "Test"
-          }
+            name = 'Test',
+          },
         },
         priority = 500,
-        name = "Test"
+        name = 'Test',
       },
       {
-        shortcut = "T",
+        shortcut = 'T',
         hidden = 0,
         submenus = {
           {
@@ -602,19 +602,19 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "Wargl",
-                silent = 0
-              }
+                rhs = 'Wargl',
+                silent = 0,
+              },
             },
-            name = "Test 2",
-            hidden = 0
-          }
+            name = 'Test 2',
+            hidden = 0,
+          },
         },
         priority = 500,
-        name = "Test 1"
+        name = 'Test 1',
       },
       {
-        shortcut = "T",
+        shortcut = 'T',
         hidden = 0,
         submenus = {
           {
@@ -623,19 +623,19 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "i space<Esc>",
-                silent = 0
-              }
+                rhs = 'i space<Esc>',
+                silent = 0,
+              },
             },
             hidden = 0,
-            actext = "3",
+            actext = '3',
             priority = 500,
-            name = "Test"
-          }
+            name = 'Test',
+          },
         },
         priority = 500,
-        name = "Test4"
-      }
+        name = 'Test4',
+      },
     }
 
     eq(m, expected)

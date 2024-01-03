@@ -5,16 +5,16 @@ local clear, command, expect = helpers.clear, helpers.command, helpers.expect
 local source, write_file = helpers.source, helpers.write_file
 
 local function sixlines(text)
-    local result = ''
-    for _ = 1, 6 do
-      result = result .. text .. '\n'
-    end
-    return result
+  local result = ''
+  for _ = 1, 6 do
+    result = result .. text .. '\n'
+  end
+  return result
 end
 
 local function diff(text, nodedent)
   local fname = helpers.tmpname()
-  command('w! '..fname)
+  command('w! ' .. fname)
   helpers.poke_eventloop()
   local data = io.open(fname):read('*all')
   if nodedent then
@@ -40,7 +40,16 @@ describe('character classes in regexp', function()
     -- The original test32.in file was not in utf-8 encoding and did also
     -- contain some control characters.  We use lua escape sequences to write
     -- them to the test file.
-    local line = ctrl1..punct1..digits..punct2..upper..punct3..lower..punct4..ctrl2..iso_text
+    local line = ctrl1
+      .. punct1
+      .. digits
+      .. punct2
+      .. upper
+      .. punct3
+      .. lower
+      .. punct4
+      .. ctrl2
+      .. iso_text
     write_file('test36.in', sixlines(line))
   end)
   before_each(function()
@@ -59,8 +68,9 @@ describe('character classes in regexp', function()
       4 s/\%#=0[0-9]//g
       5 s/\%#=1[0-9]//g
       6 s/\%#=2[0-9]//g]])
-    diff(sixlines(ctrl1..punct1..punct2..upper..punct3..lower..punct4..
-        ctrl2..iso_text))
+    diff(
+      sixlines(ctrl1 .. punct1 .. punct2 .. upper .. punct3 .. lower .. punct4 .. ctrl2 .. iso_text)
+    )
   end)
   it('is working', function()
     source([[
@@ -86,8 +96,11 @@ describe('character classes in regexp', function()
       4 s/\%#=0[0-7]//g
       5 s/\%#=1[0-7]//g
       6 s/\%#=2[0-7]//g]])
-    diff(sixlines(ctrl1..punct1..'89'..punct2..upper..punct3..lower..punct4..ctrl2..
-      iso_text))
+    diff(
+      sixlines(
+        ctrl1 .. punct1 .. '89' .. punct2 .. upper .. punct3 .. lower .. punct4 .. ctrl2 .. iso_text
+      )
+    )
   end)
   it('is working', function()
     source([[
@@ -113,7 +126,11 @@ describe('character classes in regexp', function()
       4 s/\%#=0[0-9A-Fa-f]//g
       5 s/\%#=1[0-9A-Fa-f]//g
       6 s/\%#=2[0-9A-Fa-f]//g]])
-      diff(sixlines(ctrl1..punct1..punct2..'GHIXYZ'..punct3..'ghiwxyz'..punct4..ctrl2..iso_text))
+    diff(
+      sixlines(
+        ctrl1 .. punct1 .. punct2 .. 'GHIXYZ' .. punct3 .. 'ghiwxyz' .. punct4 .. ctrl2 .. iso_text
+      )
+    )
   end)
   it('is working', function()
     source([[
@@ -139,7 +156,7 @@ describe('character classes in regexp', function()
       4 s/\%#=0[0-9A-Za-z_]//g
       5 s/\%#=1[0-9A-Za-z_]//g
       6 s/\%#=2[0-9A-Za-z_]//g]])
-      diff(sixlines(ctrl1..punct1..punct2..'[\\]^`'..punct4..ctrl2..iso_text))
+    diff(sixlines(ctrl1 .. punct1 .. punct2 .. '[\\]^`' .. punct4 .. ctrl2 .. iso_text))
   end)
   it('is working', function()
     source([[
@@ -165,8 +182,7 @@ describe('character classes in regexp', function()
       4 s/\%#=0[A-Za-z_]//g
       5 s/\%#=1[A-Za-z_]//g
       6 s/\%#=2[A-Za-z_]//g]])
-      diff(sixlines(ctrl1..punct1..digits..punct2..'[\\]^`'..punct4..ctrl2..
-        iso_text))
+    diff(sixlines(ctrl1 .. punct1 .. digits .. punct2 .. '[\\]^`' .. punct4 .. ctrl2 .. iso_text))
   end)
   it('is working', function()
     source([[
@@ -192,7 +208,7 @@ describe('character classes in regexp', function()
       4 s/\%#=0[A-Za-z]//g
       5 s/\%#=1[A-Za-z]//g
       6 s/\%#=2[A-Za-z]//g]])
-    diff(sixlines(ctrl1..punct1..digits..punct2..punct3..punct4..ctrl2..iso_text))
+    diff(sixlines(ctrl1 .. punct1 .. digits .. punct2 .. punct3 .. punct4 .. ctrl2 .. iso_text))
   end)
   it('is working', function()
     source([[
@@ -218,8 +234,11 @@ describe('character classes in regexp', function()
       4 s/\%#=0[a-z]//g
       5 s/\%#=1[a-z]//g
       6 s/\%#=2[a-z]//g]])
-    diff(sixlines(ctrl1..punct1..digits..punct2..upper..punct3..punct4..
-      ctrl2..iso_text))
+    diff(
+      sixlines(
+        ctrl1 .. punct1 .. digits .. punct2 .. upper .. punct3 .. punct4 .. ctrl2 .. iso_text
+      )
+    )
   end)
   it('is working', function()
     source([[
@@ -245,8 +264,11 @@ describe('character classes in regexp', function()
       4 s/\%#=0[A-Z]//g
       5 s/\%#=1[A-Z]//g
       6 s/\%#=2[A-Z]//g]])
-    diff(sixlines(ctrl1..punct1..digits..punct2..punct3..lower..punct4..
-      ctrl2..iso_text))
+    diff(
+      sixlines(
+        ctrl1 .. punct1 .. digits .. punct2 .. punct3 .. lower .. punct4 .. ctrl2 .. iso_text
+      )
+    )
   end)
   it('is working', function()
     source([[
@@ -272,8 +294,19 @@ describe('character classes in regexp', function()
       4 s/\%#=0\%4l^\t...//g
       5 s/\%#=1\%5l^\t...//g
       6 s/\%#=2\%6l^\t...//g]])
-    diff(sixlines(string.sub(punct1, 1)..digits..punct2..upper..punct3..
-      lower..punct4..ctrl2..iso_text))
+    diff(
+      sixlines(
+        string.sub(punct1, 1)
+          .. digits
+          .. punct2
+          .. upper
+          .. punct3
+          .. lower
+          .. punct4
+          .. ctrl2
+          .. iso_text
+      )
+    )
   end)
   it('does not convert character class ranges to an incorrect class', function()
     source([[
@@ -284,7 +317,9 @@ describe('character classes in regexp', function()
       5 s/\%#=1[^0-z]//g
       6 s/\%#=2[^0-z]//g
     ]])
-    diff(string.rep(ctrl1..punct1..punct4..ctrl2..iso_text..'\n', 3)
-      ..string.rep(digits..punct2..upper..punct3..lower..'\n', 3))
+    diff(
+      string.rep(ctrl1 .. punct1 .. punct4 .. ctrl2 .. iso_text .. '\n', 3)
+        .. string.rep(digits .. punct2 .. upper .. punct3 .. lower .. '\n', 3)
+    )
   end)
 end)

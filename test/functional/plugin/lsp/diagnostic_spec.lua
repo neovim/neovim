@@ -12,10 +12,10 @@ describe('vim.lsp.diagnostic', function()
   local fake_uri
 
   before_each(function()
-    clear {env={
-      NVIM_LUA_NOTRACK="1";
-      VIMRUNTIME=os.getenv"VIMRUNTIME";
-    }}
+    clear { env = {
+      NVIM_LUA_NOTRACK = '1',
+      VIMRUNTIME = os.getenv 'VIMRUNTIME',
+    } }
 
     exec_lua [[
       require('vim.lsp')
@@ -76,9 +76,10 @@ describe('vim.lsp.diagnostic', function()
       }
     ]]
 
-    fake_uri = "file:///fake/uri"
+    fake_uri = 'file:///fake/uri'
 
-    exec_lua([[
+    exec_lua(
+      [[
       fake_uri = ...
       diagnostic_bufnr = vim.uri_to_bufnr(fake_uri)
       local lines = {"1st line of text", "2nd line of text", "wow", "cool", "more", "lines"}
@@ -86,7 +87,9 @@ describe('vim.lsp.diagnostic', function()
       vim.api.nvim_buf_set_lines(diagnostic_bufnr, 0, 1, false, lines)
       vim.api.nvim_win_set_buf(0, diagnostic_bufnr)
       return diagnostic_bufnr
-    ]], fake_uri)
+    ]],
+      fake_uri
+    )
   end)
 
   after_each(function()
@@ -113,17 +116,18 @@ describe('vim.lsp.diagnostic', function()
           vim.lsp.diagnostic.get_line_diagnostics(diagnostic_bufnr, 1)[1],
         }
       ]]
-      eq({code = 42, data = "Hello world"}, result[1].user_data.lsp)
+      eq({ code = 42, data = 'Hello world' }, result[1].user_data.lsp)
       eq(42, result[1].code)
       eq(42, result[2].code)
-      eq("Hello world", result[2].data)
+      eq('Hello world', result[2].data)
     end)
   end)
 
-  describe("vim.lsp.diagnostic.on_publish_diagnostics", function()
+  describe('vim.lsp.diagnostic.on_publish_diagnostics', function()
     it('allows configuring the virtual text via vim.lsp.with', function()
       local expected_spacing = 10
-      local extmarks = exec_lua([[
+      local extmarks = exec_lua(
+        [[
         PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
           virtual_text = {
             spacing = ...,
@@ -139,7 +143,9 @@ describe('vim.lsp.diagnostic', function()
         )
 
         return get_extmarks(diagnostic_bufnr, client_id)
-      ]], expected_spacing)
+      ]],
+        expected_spacing
+      )
 
       local virt_text = extmarks[1][4].virt_text
       local spacing = virt_text[1][1]
@@ -149,7 +155,8 @@ describe('vim.lsp.diagnostic', function()
 
     it('allows configuring the virtual text via vim.lsp.with using a function', function()
       local expected_spacing = 10
-      local extmarks = exec_lua([[
+      local extmarks = exec_lua(
+        [[
         spacing = ...
 
         PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
@@ -169,7 +176,9 @@ describe('vim.lsp.diagnostic', function()
         )
 
         return get_extmarks(diagnostic_bufnr, client_id)
-      ]], expected_spacing)
+      ]],
+        expected_spacing
+      )
 
       local virt_text = extmarks[1][4].virt_text
       local spacing = virt_text[1][1]
@@ -179,7 +188,8 @@ describe('vim.lsp.diagnostic', function()
 
     it('allows filtering via severity limit', function()
       local get_extmark_count_with_severity = function(severity_limit)
-        return exec_lua([[
+        return exec_lua(
+          [[
           PublishDiagnostics = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
             underline = false,
             virtual_text = {
@@ -196,20 +206,23 @@ describe('vim.lsp.diagnostic', function()
           )
 
           return #get_extmarks(diagnostic_bufnr, client_id)
-        ]], severity_limit)
+        ]],
+          severity_limit
+        )
       end
 
       -- No messages with Error or higher
-      eq(0, get_extmark_count_with_severity("Error"))
+      eq(0, get_extmark_count_with_severity('Error'))
 
       -- But now we don't filter it
-      eq(1, get_extmark_count_with_severity("Warning"))
-      eq(1, get_extmark_count_with_severity("Hint"))
+      eq(1, get_extmark_count_with_severity('Warning'))
+      eq(1, get_extmark_count_with_severity('Hint'))
     end)
 
     it('correctly handles UTF-16 offsets', function()
-      local line = "All 💼 and no 🎉 makes Jack a dull 👦"
-      local result = exec_lua([[
+      local line = 'All 💼 and no 🎉 makes Jack a dull 👦'
+      local result = exec_lua(
+        [[
         local line = ...
         vim.api.nvim_buf_set_lines(diagnostic_bufnr, 0, -1, false, {line})
 
@@ -225,7 +238,9 @@ describe('vim.lsp.diagnostic', function()
         vim.lsp.stop_client(client_id)
         vim.api.nvim_exec_autocmds('VimLeavePre', { modeline = false })
         return diags
-      ]], line)
+      ]],
+        line
+      )
       eq(1, #result)
       eq(exec_lua([[return vim.str_byteindex(..., 7, true)]], line), result[1].col)
       eq(exec_lua([[return vim.str_byteindex(..., 8, true)]], line), result[1].end_col)

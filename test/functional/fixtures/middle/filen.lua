@@ -1,1 +1,1 @@
-table.insert(_G.test_loadorder, "mittel")
+table.insert(_G.test_loadorder, 'mittel')

@@ -8,7 +8,7 @@ local source = helpers.source
 describe('lispwords', function()
   before_each(clear)
 
-  it('should be set global-local',function()
+  it('should be set global-local', function()
     source([[
       setglobal lispwords=foo,bar,baz
       setlocal lispwords-=foo

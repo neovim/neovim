@@ -5,7 +5,7 @@ local exec_lua = helpers.exec_lua
 local clear = helpers.clear
 local feed = helpers.feed
 local funcs = helpers.funcs
-local inspect = require'vim.inspect'
+local inspect = require 'vim.inspect'
 
 describe('vim.ui_attach', function()
   local screen
@@ -26,54 +26,67 @@ describe('vim.ui_attach', function()
       end
     ]]
 
-    screen = Screen.new(40,5)
+    screen = Screen.new(40, 5)
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1};
-      [2] = {bold = true};
-      [3] = {background = Screen.colors.Grey};
-      [4] = {background = Screen.colors.LightMagenta};
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { bold = true },
+      [3] = { background = Screen.colors.Grey },
+      [4] = { background = Screen.colors.LightMagenta },
     })
     screen:attach()
   end)
 
   local function expect_events(expected)
-    local evs = exec_lua "return get_events(...)"
+    local evs = exec_lua 'return get_events(...)'
     eq(expected, evs, inspect(evs))
   end
 
   it('can receive popupmenu events', function()
     exec_lua [[ vim.ui_attach(ns, {ext_popupmenu=true}, on_event) ]]
     feed('ifo')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       fo^                                      |
       {1:~                                       }|*3
       {2:-- INSERT --}                            |
-    ]]}
+    ]],
+    }
 
-    funcs.complete(1, {'food', 'foobar', 'foo'})
-    screen:expect{grid=[[
+    funcs.complete(1, { 'food', 'foobar', 'foo' })
+    screen:expect {
+      grid = [[
       food^                                    |
       {1:~                                       }|*3
       {2:-- INSERT --}                            |
-    ]]}
+    ]],
+    }
     expect_events {
-      { "popupmenu_show", { { "food", "", "", "" }, { "foobar", "", "", "" }, { "foo", "", "", "" } }, 0, 0, 0, 1 };
+      {
+        'popupmenu_show',
+        { { 'food', '', '', '' }, { 'foobar', '', '', '' }, { 'foo', '', '', '' } },
+        0,
+        0,
+        0,
+        1,
+      },
     }
 
     feed '<c-n>'
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       foobar^                                  |
       {1:~                                       }|*3
       {2:-- INSERT --}                            |
-    ]]}
+    ]],
+    }
     expect_events {
-       { "popupmenu_select", 1 };
+      { 'popupmenu_select', 1 },
     }
 
     feed '<c-y>'
     screen:expect_unchanged()
     expect_events {
-       { "popupmenu_hide" };
+      { 'popupmenu_hide' },
     }
 
     -- vim.ui_detach() stops events, and reenables builtin pum immediately
@@ -82,26 +95,31 @@ describe('vim.ui_attach', function()
       vim.fn.complete(1, {'food', 'foobar', 'foo'})
     ]]
 
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       food^                                    |
       {3:food           }{1:                         }|
       {4:foobar         }{1:                         }|
       {4:foo            }{1:                         }|
       {2:-- INSERT --}                            |
-    ]]}
-    expect_events {
+    ]],
     }
-
+    expect_events {}
   end)
 
   it('does not crash on exit', function()
     funcs.system({
       helpers.nvim_prog,
-      '-u', 'NONE',
-      '-i', 'NONE',
-      '--cmd', [[ lua ns = vim.api.nvim_create_namespace 'testspace' ]],
-      '--cmd', [[ lua vim.ui_attach(ns, {ext_popupmenu=true}, function() end) ]],
-      '--cmd', 'quitall!',
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+      '--cmd',
+      [[ lua ns = vim.api.nvim_create_namespace 'testspace' ]],
+      '--cmd',
+      [[ lua vim.ui_attach(ns, {ext_popupmenu=true}, function() end) ]],
+      '--cmd',
+      'quitall!',
     })
     eq(0, helpers.eval('v:shell_error'))
   end)

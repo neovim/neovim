@@ -8,7 +8,7 @@ local NIL = helpers.NIL
 
 describe('autoload/msgpack.vim', function()
   before_each(function()
-    clear{args={'-u', 'NORC'}}
+    clear { args = { '-u', 'NORC' } }
   end)
 
   local sp = function(typ, val)
@@ -16,16 +16,15 @@ describe('autoload/msgpack.vim', function()
   end
   local mapsp = function(...)
     local val = ''
-    for i=1,(select('#', ...)/2) do
-      val = ('%s[%s,%s],'):format(val, select(i * 2 - 1, ...),
-                                  select(i * 2, ...))
+    for i = 1, (select('#', ...) / 2) do
+      val = ('%s[%s,%s],'):format(val, select(i * 2 - 1, ...), select(i * 2, ...))
     end
     return sp('map', '[' .. val .. ']')
   end
 
-  local nan = -(1.0/0.0-1.0/0.0)
-  local inf = 1.0/0.0
-  local minus_inf = -(1.0/0.0)
+  local nan = -(1.0 / 0.0 - 1.0 / 0.0)
+  local inf = 1.0 / 0.0
+  local minus_inf = -(1.0 / 0.0)
 
   describe('function msgpack#equal', function()
     local msgpack_eq = function(expected, a, b)
@@ -39,10 +38,8 @@ describe('autoload/msgpack.vim', function()
       msgpack_eq(0, '1', '0')
     end)
     it('compares integer specials correctly', function()
-      msgpack_eq(1, sp('integer', '[-1, 1, 0, 0]'),
-                    sp('integer', '[-1, 1, 0, 0]'))
-      msgpack_eq(0, sp('integer', '[-1, 1, 0, 0]'),
-                    sp('integer', '[ 1, 1, 0, 0]'))
+      msgpack_eq(1, sp('integer', '[-1, 1, 0, 0]'), sp('integer', '[-1, 1, 0, 0]'))
+      msgpack_eq(0, sp('integer', '[-1, 1, 0, 0]'), sp('integer', '[ 1, 1, 0, 0]'))
     end)
     it('compares integer specials with raw integer correctly', function()
       msgpack_eq(1, sp('integer', '[-1, 0, 0, 1]'), '-1')
@@ -58,27 +55,21 @@ describe('autoload/msgpack.vim', function()
       msgpack_eq(0, '"abc\\ndef"', '"abc\\nghi"')
     end)
     it('compares binary specials correctly', function()
-      msgpack_eq(1, sp('binary', '["abc\\n", "def"]'),
-                    sp('binary', '["abc\\n", "def"]'))
-      msgpack_eq(0, sp('binary', '["abc", "def"]'),
-                    sp('binary', '["abc\\n", "def"]'))
+      msgpack_eq(1, sp('binary', '["abc\\n", "def"]'), sp('binary', '["abc\\n", "def"]'))
+      msgpack_eq(0, sp('binary', '["abc", "def"]'), sp('binary', '["abc\\n", "def"]'))
     end)
     it('compares binary specials with raw binaries correctly', function()
       msgpack_eq(1, sp('binary', '["abc", "def"]'), '"abc\\ndef"')
       msgpack_eq(0, sp('binary', '["abc", "def"]'), '"abcdef"')
     end)
     it('compares string specials correctly', function()
-      msgpack_eq(1, sp('string', '["abc\\n", "def"]'),
-                    sp('string', '["abc\\n", "def"]'))
-      msgpack_eq(0, sp('string', '["abc", "def"]'),
-                    sp('string', '["abc\\n", "def"]'))
+      msgpack_eq(1, sp('string', '["abc\\n", "def"]'), sp('string', '["abc\\n", "def"]'))
+      msgpack_eq(0, sp('string', '["abc", "def"]'), sp('string', '["abc\\n", "def"]'))
     end)
     it('compares string specials with binary correctly', function()
-      msgpack_eq(0, sp('string', '["abc\\n", "def"]'),
-                    sp('binary', '["abc\\n", "def"]'))
+      msgpack_eq(0, sp('string', '["abc\\n", "def"]'), sp('binary', '["abc\\n", "def"]'))
       msgpack_eq(0, sp('string', '["abc", "def"]'), '"abc\\ndef"')
-      msgpack_eq(0, sp('binary', '["abc\\n", "def"]'),
-                    sp('string', '["abc\\n", "def"]'))
+      msgpack_eq(0, sp('binary', '["abc\\n", "def"]'), sp('string', '["abc\\n", "def"]'))
       msgpack_eq(0, '"abc\\ndef"', sp('string', '["abc", "def"]'))
     end)
     it('compares ext specials correctly', function()
@@ -97,44 +88,54 @@ describe('autoload/msgpack.vim', function()
     end)
     it('compares map specials correctly', function()
       msgpack_eq(1, mapsp(), mapsp())
-      msgpack_eq(1, mapsp(sp('binary', '[""]'), '""'),
-                    mapsp(sp('binary', '[""]'), '""'))
-      msgpack_eq(1, mapsp(mapsp('1', '1'), mapsp('1', '1')),
-                    mapsp(mapsp('1', '1'), mapsp('1', '1')))
+      msgpack_eq(1, mapsp(sp('binary', '[""]'), '""'), mapsp(sp('binary', '[""]'), '""'))
+      msgpack_eq(
+        1,
+        mapsp(mapsp('1', '1'), mapsp('1', '1')),
+        mapsp(mapsp('1', '1'), mapsp('1', '1'))
+      )
       msgpack_eq(0, mapsp(), mapsp('1', '1'))
-      msgpack_eq(0, mapsp(sp('binary', '["a"]'), '""'),
-                    mapsp(sp('binary', '[""]'), '""'))
-      msgpack_eq(0, mapsp(sp('binary', '[""]'), '"a"'),
-                    mapsp(sp('binary', '[""]'), '""'))
-      msgpack_eq(0, mapsp(sp('binary', '["a"]'), '"a"'),
-                    mapsp(sp('binary', '[""]'), '""'))
-      msgpack_eq(0, mapsp(mapsp('1', '1'), mapsp('1', '1')),
-                    mapsp(sp('binary', '[""]'), mapsp('1', '1')))
-      msgpack_eq(0, mapsp(mapsp('1', '1'), mapsp('1', '1')),
-                    mapsp(mapsp('2', '1'), mapsp('1', '1')))
-      msgpack_eq(0, mapsp(mapsp('1', '1'), mapsp('1', '1')),
-                    mapsp(mapsp('1', '2'), mapsp('1', '1')))
-      msgpack_eq(0, mapsp(mapsp('1', '1'), mapsp('1', '1')),
-                    mapsp(mapsp('1', '1'), mapsp('2', '1')))
-      msgpack_eq(0, mapsp(mapsp('1', '1'), mapsp('1', '1')),
-                    mapsp(mapsp('1', '1'), mapsp('1', '2')))
-      msgpack_eq(1, mapsp(mapsp('2', '1'), mapsp('1', '1'),
-                          mapsp('1', '1'), mapsp('1', '1')),
-                    mapsp(mapsp('1', '1'), mapsp('1', '1'),
-                          mapsp('2', '1'), mapsp('1', '1')))
+      msgpack_eq(0, mapsp(sp('binary', '["a"]'), '""'), mapsp(sp('binary', '[""]'), '""'))
+      msgpack_eq(0, mapsp(sp('binary', '[""]'), '"a"'), mapsp(sp('binary', '[""]'), '""'))
+      msgpack_eq(0, mapsp(sp('binary', '["a"]'), '"a"'), mapsp(sp('binary', '[""]'), '""'))
+      msgpack_eq(
+        0,
+        mapsp(mapsp('1', '1'), mapsp('1', '1')),
+        mapsp(sp('binary', '[""]'), mapsp('1', '1'))
+      )
+      msgpack_eq(
+        0,
+        mapsp(mapsp('1', '1'), mapsp('1', '1')),
+        mapsp(mapsp('2', '1'), mapsp('1', '1'))
+      )
+      msgpack_eq(
+        0,
+        mapsp(mapsp('1', '1'), mapsp('1', '1')),
+        mapsp(mapsp('1', '2'), mapsp('1', '1'))
+      )
+      msgpack_eq(
+        0,
+        mapsp(mapsp('1', '1'), mapsp('1', '1')),
+        mapsp(mapsp('1', '1'), mapsp('2', '1'))
+      )
+      msgpack_eq(
+        0,
+        mapsp(mapsp('1', '1'), mapsp('1', '1')),
+        mapsp(mapsp('1', '1'), mapsp('1', '2'))
+      )
+      msgpack_eq(
+        1,
+        mapsp(mapsp('2', '1'), mapsp('1', '1'), mapsp('1', '1'), mapsp('1', '1')),
+        mapsp(mapsp('1', '1'), mapsp('1', '1'), mapsp('2', '1'), mapsp('1', '1'))
+      )
     end)
     it('compares map specials with raw maps correctly', function()
       msgpack_eq(1, mapsp(), '{}')
       msgpack_eq(1, mapsp(sp('string', '["1"]'), '1'), '{"1": 1}')
-      msgpack_eq(1, mapsp(sp('string', '["1"]'), sp('integer', '[1, 0, 0, 1]')),
-                    '{"1": 1}')
-      msgpack_eq(0, mapsp(sp('integer', '[1, 0, 0, 1]'), sp('string', '["1"]')),
-                    '{1: "1"}')
-      msgpack_eq(0, mapsp('"1"', sp('integer', '[1, 0, 0, 1]')),
-                    '{"1": 1}')
-      msgpack_eq(0,
-                 mapsp(sp('string', '["1"]'), '1', sp('string', '["2"]'), '2'),
-                 '{"1": 1}')
+      msgpack_eq(1, mapsp(sp('string', '["1"]'), sp('integer', '[1, 0, 0, 1]')), '{"1": 1}')
+      msgpack_eq(0, mapsp(sp('integer', '[1, 0, 0, 1]'), sp('string', '["1"]')), '{1: "1"}')
+      msgpack_eq(0, mapsp('"1"', sp('integer', '[1, 0, 0, 1]')), '{"1": 1}')
+      msgpack_eq(0, mapsp(sp('string', '["1"]'), '1', sp('string', '["2"]'), '2'), '{"1": 1}')
       msgpack_eq(0, mapsp(sp('string', '["1"]'), '1'), '{"1": 1, "2": 2}')
     end)
     it('compares raw arrays correctly', function()
@@ -195,8 +196,7 @@ describe('autoload/msgpack.vim', function()
     end)
     it('compares float specials correctly', function()
       msgpack_eq(1, sp('float', '0.0'), sp('float', '0.0'))
-      msgpack_eq(1, sp('float', '(1.0/0.0-1.0/0.0)'),
-                    sp('float', '(1.0/0.0-1.0/0.0)'))
+      msgpack_eq(1, sp('float', '(1.0/0.0-1.0/0.0)'), sp('float', '(1.0/0.0-1.0/0.0)'))
       msgpack_eq(1, sp('float', '1.0/0.0'), sp('float', '1.0/0.0'))
       msgpack_eq(1, sp('float', '-(1.0/0.0)'), sp('float', '-(1.0/0.0)'))
       msgpack_eq(1, sp('float', '0.0'), sp('float', '0.0'))
@@ -206,10 +206,8 @@ describe('autoload/msgpack.vim', function()
       msgpack_eq(0, sp('float', '0.0'), sp('float', '-(1.0/0.0)'))
       msgpack_eq(0, sp('float', '1.0/0.0'), sp('float', '-(1.0/0.0)'))
       msgpack_eq(0, sp('float', '(1.0/0.0-1.0/0.0)'), sp('float', '-(1.0/0.0)'))
-      msgpack_eq(1, sp('float', '(1.0/0.0-1.0/0.0)'),
-                    sp('float', '-(1.0/0.0-1.0/0.0)'))
-      msgpack_eq(1, sp('float', '-(1.0/0.0-1.0/0.0)'),
-                    sp('float', '-(1.0/0.0-1.0/0.0)'))
+      msgpack_eq(1, sp('float', '(1.0/0.0-1.0/0.0)'), sp('float', '-(1.0/0.0-1.0/0.0)'))
+      msgpack_eq(1, sp('float', '-(1.0/0.0-1.0/0.0)'), sp('float', '-(1.0/0.0-1.0/0.0)'))
       msgpack_eq(0, sp('float', '(1.0/0.0-1.0/0.0)'), sp('float', '1.0/0.0'))
     end)
     it('compares boolean specials correctly', function()
@@ -219,8 +217,7 @@ describe('autoload/msgpack.vim', function()
     it('compares nil specials correctly', function()
       msgpack_eq(1, sp('nil', '1'), sp('nil', '0'))
     end)
-    it('compares nil, boolean and integer values with each other correctly',
-    function()
+    it('compares nil, boolean and integer values with each other correctly', function()
       msgpack_eq(0, sp('boolean', '1'), '1')
       msgpack_eq(0, sp('boolean', '1'), sp('nil', '0'))
       msgpack_eq(0, sp('boolean', '1'), sp('nil', '1'))
@@ -238,16 +235,11 @@ describe('autoload/msgpack.vim', function()
     it('works', function()
       eq(1, nvim_eval('msgpack#is_int(1)'))
       eq(1, nvim_eval('msgpack#is_int(-1)'))
-      eq(1, nvim_eval(('msgpack#is_int(%s)'):format(
-          sp('integer', '[1, 0, 0, 1]'))))
-      eq(1, nvim_eval(('msgpack#is_int(%s)'):format(
-          sp('integer', '[-1, 0, 0, 1]'))))
-      eq(0, nvim_eval(('msgpack#is_int(%s)'):format(
-          sp('float', '0.0'))))
-      eq(0, nvim_eval(('msgpack#is_int(%s)'):format(
-          sp('boolean', '0'))))
-      eq(0, nvim_eval(('msgpack#is_int(%s)'):format(
-          sp('nil', '0'))))
+      eq(1, nvim_eval(('msgpack#is_int(%s)'):format(sp('integer', '[1, 0, 0, 1]'))))
+      eq(1, nvim_eval(('msgpack#is_int(%s)'):format(sp('integer', '[-1, 0, 0, 1]'))))
+      eq(0, nvim_eval(('msgpack#is_int(%s)'):format(sp('float', '0.0'))))
+      eq(0, nvim_eval(('msgpack#is_int(%s)'):format(sp('boolean', '0'))))
+      eq(0, nvim_eval(('msgpack#is_int(%s)'):format(sp('nil', '0'))))
       eq(0, nvim_eval('msgpack#is_int("")'))
     end)
   end)
@@ -256,16 +248,11 @@ describe('autoload/msgpack.vim', function()
     it('works', function()
       eq(1, nvim_eval('msgpack#is_uint(1)'))
       eq(0, nvim_eval('msgpack#is_uint(-1)'))
-      eq(1, nvim_eval(('msgpack#is_uint(%s)'):format(
-          sp('integer', '[1, 0, 0, 1]'))))
-      eq(0, nvim_eval(('msgpack#is_uint(%s)'):format(
-          sp('integer', '[-1, 0, 0, 1]'))))
-      eq(0, nvim_eval(('msgpack#is_uint(%s)'):format(
-          sp('float', '0.0'))))
-      eq(0, nvim_eval(('msgpack#is_uint(%s)'):format(
-          sp('boolean', '0'))))
-      eq(0, nvim_eval(('msgpack#is_uint(%s)'):format(
-          sp('nil', '0'))))
+      eq(1, nvim_eval(('msgpack#is_uint(%s)'):format(sp('integer', '[1, 0, 0, 1]'))))
+      eq(0, nvim_eval(('msgpack#is_uint(%s)'):format(sp('integer', '[-1, 0, 0, 1]'))))
+      eq(0, nvim_eval(('msgpack#is_uint(%s)'):format(sp('float', '0.0'))))
+      eq(0, nvim_eval(('msgpack#is_uint(%s)'):format(sp('boolean', '0'))))
+      eq(0, nvim_eval(('msgpack#is_uint(%s)'):format(sp('nil', '0'))))
       eq(0, nvim_eval('msgpack#is_uint("")'))
     end)
   end)
@@ -274,18 +261,20 @@ describe('autoload/msgpack.vim', function()
     it('works', function()
       local epoch = os.date('%Y-%m-%dT%H:%M:%S', 0)
       eq(epoch, nvim_eval('msgpack#strftime("%Y-%m-%dT%H:%M:%S", 0)'))
-      eq(epoch, nvim_eval(
-          ('msgpack#strftime("%%Y-%%m-%%dT%%H:%%M:%%S", %s)'):format(sp(
-              'integer', '[1, 0, 0, 0]'))))
+      eq(
+        epoch,
+        nvim_eval(
+          ('msgpack#strftime("%%Y-%%m-%%dT%%H:%%M:%%S", %s)'):format(sp('integer', '[1, 0, 0, 0]'))
+        )
+      )
     end)
   end)
 
   describe('function msgpack#strptime', function()
     it('works', function()
-      for _, v in ipairs({0, 10, 100000, 204, 1000000000}) do
+      for _, v in ipairs({ 0, 10, 100000, 204, 1000000000 }) do
         local time = os.date('%Y-%m-%dT%H:%M:%S', v)
-        eq(v, nvim_eval('msgpack#strptime("%Y-%m-%dT%H:%M:%S", '
-                                      .. '"' .. time .. '")'))
+        eq(v, nvim_eval('msgpack#strptime("%Y-%m-%dT%H:%M:%S", ' .. '"' .. time .. '")'))
       end
     end)
   end)
@@ -367,25 +356,27 @@ describe('autoload/msgpack.vim', function()
       string_eq('[[[[{}]]]]', sp('array', '[[[[{}]]]]'))
       string_eq('{}', sp('map', '[]'))
       string_eq('{2: 10}', sp('map', '[[2, 10]]'))
-      string_eq('{{1: 1}: {1: 1}, {2: 1}: {1: 1}}',
-                mapsp(mapsp('2', '1'), mapsp('1', '1'),
-                      mapsp('1', '1'), mapsp('1', '1')))
-      string_eq('{{1: 1}: {1: 1}, {2: 1}: {1: 1}}',
-                mapsp(mapsp('1', '1'), mapsp('1', '1'),
-                      mapsp('2', '1'), mapsp('1', '1')))
-      string_eq('{[1, 2, {{1: 2}: 1}]: [1, 2, {{1: 2}: 1}]}',
-                mapsp(('[1, 2, %s]'):format(mapsp(mapsp('1', '2'), '1')),
-                      ('[1, 2, %s]'):format(mapsp(mapsp('1', '2'), '1'))))
+      string_eq(
+        '{{1: 1}: {1: 1}, {2: 1}: {1: 1}}',
+        mapsp(mapsp('2', '1'), mapsp('1', '1'), mapsp('1', '1'), mapsp('1', '1'))
+      )
+      string_eq(
+        '{{1: 1}: {1: 1}, {2: 1}: {1: 1}}',
+        mapsp(mapsp('1', '1'), mapsp('1', '1'), mapsp('2', '1'), mapsp('1', '1'))
+      )
+      string_eq(
+        '{[1, 2, {{1: 2}: 1}]: [1, 2, {{1: 2}: 1}]}',
+        mapsp(
+          ('[1, 2, %s]'):format(mapsp(mapsp('1', '2'), '1')),
+          ('[1, 2, %s]'):format(mapsp(mapsp('1', '2'), '1'))
+        )
+      )
       string_eq('0x0000000000000000', sp('integer', '[1, 0, 0, 0]'))
       string_eq('-0x0000000100000000', sp('integer', '[-1, 0, 2, 0]'))
-      string_eq('0x123456789abcdef0',
-                sp('integer', '[ 1, 0,  610839793, 448585456]'))
-      string_eq('-0x123456789abcdef0',
-                sp('integer', '[-1, 0,  610839793, 448585456]'))
-      string_eq('0xf23456789abcdef0',
-                sp('integer', '[ 1, 3, 1684581617, 448585456]'))
-      string_eq('-0x723456789abcdef0',
-                sp('integer', '[-1, 1, 1684581617, 448585456]'))
+      string_eq('0x123456789abcdef0', sp('integer', '[ 1, 0,  610839793, 448585456]'))
+      string_eq('-0x123456789abcdef0', sp('integer', '[-1, 0,  610839793, 448585456]'))
+      string_eq('0xf23456789abcdef0', sp('integer', '[ 1, 3, 1684581617, 448585456]'))
+      string_eq('-0x723456789abcdef0', sp('integer', '[-1, 1, 1684581617, 448585456]'))
       string_eq('0.0', sp('float', '0.0'))
       string_eq('inf', sp('float', '(1.0/0.0)'))
       string_eq('-inf', sp('float', '-(1.0/0.0)'))
@@ -466,15 +457,15 @@ describe('autoload/msgpack.vim', function()
       nvim_command('let spbln._VAL = 1')
       nvim_command('let spnil._VAL = 1')
 
-      eq({_TYPE={}, _VAL={{{}}}}, nvim_eval('sparr2'))
-      eq({_TYPE={}, _VAL={{'abc', {{}}}}}, nvim_eval('spmap2'))
-      eq({_TYPE={}, _VAL={1, 0, 0, 0}}, nvim_eval('spint2'))
-      eq({_TYPE={}, _VAL=1.0}, nvim_eval('spflt2'))
-      eq({_TYPE={}, _VAL={2, {'abc', 'def'}}}, nvim_eval('spext2'))
-      eq({_TYPE={}, _VAL={'abc', 'def'}}, nvim_eval('spstr2'))
-      eq({_TYPE={}, _VAL={'abc', 'def'}}, nvim_eval('spbin2'))
-      eq({_TYPE={}, _VAL=0}, nvim_eval('spbln2'))
-      eq({_TYPE={}, _VAL=0}, nvim_eval('spnil2'))
+      eq({ _TYPE = {}, _VAL = { { {} } } }, nvim_eval('sparr2'))
+      eq({ _TYPE = {}, _VAL = { { 'abc', { {} } } } }, nvim_eval('spmap2'))
+      eq({ _TYPE = {}, _VAL = { 1, 0, 0, 0 } }, nvim_eval('spint2'))
+      eq({ _TYPE = {}, _VAL = 1.0 }, nvim_eval('spflt2'))
+      eq({ _TYPE = {}, _VAL = { 2, { 'abc', 'def' } } }, nvim_eval('spext2'))
+      eq({ _TYPE = {}, _VAL = { 'abc', 'def' } }, nvim_eval('spstr2'))
+      eq({ _TYPE = {}, _VAL = { 'abc', 'def' } }, nvim_eval('spbin2'))
+      eq({ _TYPE = {}, _VAL = 0 }, nvim_eval('spbln2'))
+      eq({ _TYPE = {}, _VAL = 0 }, nvim_eval('spnil2'))
 
       nvim_command('let sparr._TYPE = []')
       nvim_command('let spmap._TYPE = []')
@@ -525,8 +516,8 @@ describe('autoload/msgpack.vim', function()
       nvim_command('let flt = 3.0')
       nvim_command('let bin = ""')
 
-      eq({{{}}}, nvim_eval('arr2'))
-      eq({['1']={}}, nvim_eval('map2'))
+      eq({ { {} } }, nvim_eval('arr2'))
+      eq({ ['1'] = {} }, nvim_eval('map2'))
       eq(1, nvim_eval('int2'))
       eq(2.0, nvim_eval('flt2'))
       eq('abc', nvim_eval('bin2'))
@@ -549,14 +540,16 @@ describe('autoload/msgpack.vim', function()
 
   describe('function msgpack#eval', function()
     local eval_eq = function(expected_type, expected_val, str, ...)
-      nvim_command(('let g:__val = msgpack#eval(\'%s\', %s)'):format(str:gsub(
-          '\'', '\'\''), select(1, ...) or '{}'))
+      nvim_command(
+        ("let g:__val = msgpack#eval('%s', %s)"):format(str:gsub("'", "''"), select(1, ...) or '{}')
+      )
       eq(expected_type, nvim_eval('msgpack#type(g:__val)'))
       local expected_val_full = expected_val
-      if (not (({float=true, integer=true})[expected_type]
-              and type(expected_val) ~= 'table')
-          and expected_type ~= 'array') then
-        expected_val_full = {_TYPE={}, _VAL=expected_val_full}
+      if
+        not (({ float = true, integer = true })[expected_type] and type(expected_val) ~= 'table')
+        and expected_type ~= 'array'
+      then
+        expected_val_full = { _TYPE = {}, _VAL = expected_val_full }
       end
       if expected_val_full == expected_val_full then
         eq(expected_val_full, nvim_eval('g:__val'))
@@ -570,68 +563,65 @@ describe('autoload/msgpack.vim', function()
     end
 
     it('correctly loads binary strings', function()
-      eval_eq('binary', {'abcdef'}, '"abcdef"')
-      eval_eq('binary', {'abc', 'def'}, '"abc\\ndef"')
-      eval_eq('binary', {'abc\ndef'}, '"abc\\0def"')
-      eval_eq('binary', {'\nabc\ndef\n'}, '"\\0abc\\0def\\0"')
-      eval_eq('binary', {'abc\n\n\ndef'}, '"abc\\0\\0\\0def"')
-      eval_eq('binary', {'abc\n', '\ndef'}, '"abc\\0\\n\\0def"')
-      eval_eq('binary', {'abc', '', '', 'def'}, '"abc\\n\\n\\ndef"')
-      eval_eq('binary', {'abc', '', '', 'def', ''}, '"abc\\n\\n\\ndef\\n"')
-      eval_eq('binary', {'', 'abc', '', '', 'def'}, '"\\nabc\\n\\n\\ndef"')
-      eval_eq('binary', {''}, '""')
-      eval_eq('binary', {'"'}, '"\\""')
-      eval_eq('binary', {'py3 print(sys.version_info)'},
-              '"py3 print(sys.version_info)"')
+      eval_eq('binary', { 'abcdef' }, '"abcdef"')
+      eval_eq('binary', { 'abc', 'def' }, '"abc\\ndef"')
+      eval_eq('binary', { 'abc\ndef' }, '"abc\\0def"')
+      eval_eq('binary', { '\nabc\ndef\n' }, '"\\0abc\\0def\\0"')
+      eval_eq('binary', { 'abc\n\n\ndef' }, '"abc\\0\\0\\0def"')
+      eval_eq('binary', { 'abc\n', '\ndef' }, '"abc\\0\\n\\0def"')
+      eval_eq('binary', { 'abc', '', '', 'def' }, '"abc\\n\\n\\ndef"')
+      eval_eq('binary', { 'abc', '', '', 'def', '' }, '"abc\\n\\n\\ndef\\n"')
+      eval_eq('binary', { '', 'abc', '', '', 'def' }, '"\\nabc\\n\\n\\ndef"')
+      eval_eq('binary', { '' }, '""')
+      eval_eq('binary', { '"' }, '"\\""')
+      eval_eq('binary', { 'py3 print(sys.version_info)' }, '"py3 print(sys.version_info)"')
     end)
 
     it('correctly loads strings', function()
-      eval_eq('string', {'abcdef'}, '="abcdef"')
-      eval_eq('string', {'abc', 'def'}, '="abc\\ndef"')
-      eval_eq('string', {'abc\ndef'}, '="abc\\0def"')
-      eval_eq('string', {'\nabc\ndef\n'}, '="\\0abc\\0def\\0"')
-      eval_eq('string', {'abc\n\n\ndef'}, '="abc\\0\\0\\0def"')
-      eval_eq('string', {'abc\n', '\ndef'}, '="abc\\0\\n\\0def"')
-      eval_eq('string', {'abc', '', '', 'def'}, '="abc\\n\\n\\ndef"')
-      eval_eq('string', {'abc', '', '', 'def', ''}, '="abc\\n\\n\\ndef\\n"')
-      eval_eq('string', {'', 'abc', '', '', 'def'}, '="\\nabc\\n\\n\\ndef"')
-      eval_eq('string', {''}, '=""')
-      eval_eq('string', {'"'}, '="\\""')
-      eval_eq('string', {'py3 print(sys.version_info)'},
-              '="py3 print(sys.version_info)"')
+      eval_eq('string', { 'abcdef' }, '="abcdef"')
+      eval_eq('string', { 'abc', 'def' }, '="abc\\ndef"')
+      eval_eq('string', { 'abc\ndef' }, '="abc\\0def"')
+      eval_eq('string', { '\nabc\ndef\n' }, '="\\0abc\\0def\\0"')
+      eval_eq('string', { 'abc\n\n\ndef' }, '="abc\\0\\0\\0def"')
+      eval_eq('string', { 'abc\n', '\ndef' }, '="abc\\0\\n\\0def"')
+      eval_eq('string', { 'abc', '', '', 'def' }, '="abc\\n\\n\\ndef"')
+      eval_eq('string', { 'abc', '', '', 'def', '' }, '="abc\\n\\n\\ndef\\n"')
+      eval_eq('string', { '', 'abc', '', '', 'def' }, '="\\nabc\\n\\n\\ndef"')
+      eval_eq('string', { '' }, '=""')
+      eval_eq('string', { '"' }, '="\\""')
+      eval_eq('string', { 'py3 print(sys.version_info)' }, '="py3 print(sys.version_info)"')
     end)
 
     it('correctly loads ext values', function()
-      eval_eq('ext', {0, {'abcdef'}}, '+(0)"abcdef"')
-      eval_eq('ext', {0, {'abc', 'def'}}, '+(0)"abc\\ndef"')
-      eval_eq('ext', {0, {'abc\ndef'}}, '+(0)"abc\\0def"')
-      eval_eq('ext', {0, {'\nabc\ndef\n'}}, '+(0)"\\0abc\\0def\\0"')
-      eval_eq('ext', {0, {'abc\n\n\ndef'}}, '+(0)"abc\\0\\0\\0def"')
-      eval_eq('ext', {0, {'abc\n', '\ndef'}}, '+(0)"abc\\0\\n\\0def"')
-      eval_eq('ext', {0, {'abc', '', '', 'def'}}, '+(0)"abc\\n\\n\\ndef"')
-      eval_eq('ext', {0, {'abc', '', '', 'def', ''}},
-              '+(0)"abc\\n\\n\\ndef\\n"')
-      eval_eq('ext', {0, {'', 'abc', '', '', 'def'}},
-              '+(0)"\\nabc\\n\\n\\ndef"')
-      eval_eq('ext', {0, {''}}, '+(0)""')
-      eval_eq('ext', {0, {'"'}}, '+(0)"\\""')
+      eval_eq('ext', { 0, { 'abcdef' } }, '+(0)"abcdef"')
+      eval_eq('ext', { 0, { 'abc', 'def' } }, '+(0)"abc\\ndef"')
+      eval_eq('ext', { 0, { 'abc\ndef' } }, '+(0)"abc\\0def"')
+      eval_eq('ext', { 0, { '\nabc\ndef\n' } }, '+(0)"\\0abc\\0def\\0"')
+      eval_eq('ext', { 0, { 'abc\n\n\ndef' } }, '+(0)"abc\\0\\0\\0def"')
+      eval_eq('ext', { 0, { 'abc\n', '\ndef' } }, '+(0)"abc\\0\\n\\0def"')
+      eval_eq('ext', { 0, { 'abc', '', '', 'def' } }, '+(0)"abc\\n\\n\\ndef"')
+      eval_eq('ext', { 0, { 'abc', '', '', 'def', '' } }, '+(0)"abc\\n\\n\\ndef\\n"')
+      eval_eq('ext', { 0, { '', 'abc', '', '', 'def' } }, '+(0)"\\nabc\\n\\n\\ndef"')
+      eval_eq('ext', { 0, { '' } }, '+(0)""')
+      eval_eq('ext', { 0, { '"' } }, '+(0)"\\""')
 
-      eval_eq('ext', {-1, {'abcdef'}}, '+(-1)"abcdef"')
-      eval_eq('ext', {-1, {'abc', 'def'}}, '+(-1)"abc\\ndef"')
-      eval_eq('ext', {-1, {'abc\ndef'}}, '+(-1)"abc\\0def"')
-      eval_eq('ext', {-1, {'\nabc\ndef\n'}}, '+(-1)"\\0abc\\0def\\0"')
-      eval_eq('ext', {-1, {'abc\n\n\ndef'}}, '+(-1)"abc\\0\\0\\0def"')
-      eval_eq('ext', {-1, {'abc\n', '\ndef'}}, '+(-1)"abc\\0\\n\\0def"')
-      eval_eq('ext', {-1, {'abc', '', '', 'def'}}, '+(-1)"abc\\n\\n\\ndef"')
-      eval_eq('ext', {-1, {'abc', '', '', 'def', ''}},
-              '+(-1)"abc\\n\\n\\ndef\\n"')
-      eval_eq('ext', {-1, {'', 'abc', '', '', 'def'}},
-              '+(-1)"\\nabc\\n\\n\\ndef"')
-      eval_eq('ext', {-1, {''}}, '+(-1)""')
-      eval_eq('ext', {-1, {'"'}}, '+(-1)"\\""')
+      eval_eq('ext', { -1, { 'abcdef' } }, '+(-1)"abcdef"')
+      eval_eq('ext', { -1, { 'abc', 'def' } }, '+(-1)"abc\\ndef"')
+      eval_eq('ext', { -1, { 'abc\ndef' } }, '+(-1)"abc\\0def"')
+      eval_eq('ext', { -1, { '\nabc\ndef\n' } }, '+(-1)"\\0abc\\0def\\0"')
+      eval_eq('ext', { -1, { 'abc\n\n\ndef' } }, '+(-1)"abc\\0\\0\\0def"')
+      eval_eq('ext', { -1, { 'abc\n', '\ndef' } }, '+(-1)"abc\\0\\n\\0def"')
+      eval_eq('ext', { -1, { 'abc', '', '', 'def' } }, '+(-1)"abc\\n\\n\\ndef"')
+      eval_eq('ext', { -1, { 'abc', '', '', 'def', '' } }, '+(-1)"abc\\n\\n\\ndef\\n"')
+      eval_eq('ext', { -1, { '', 'abc', '', '', 'def' } }, '+(-1)"\\nabc\\n\\n\\ndef"')
+      eval_eq('ext', { -1, { '' } }, '+(-1)""')
+      eval_eq('ext', { -1, { '"' } }, '+(-1)"\\""')
 
-      eval_eq('ext', {42, {'py3 print(sys.version_info)'}},
-              '+(42)"py3 print(sys.version_info)"')
+      eval_eq(
+        'ext',
+        { 42, { 'py3 print(sys.version_info)' } },
+        '+(42)"py3 print(sys.version_info)"'
+      )
     end)
 
     it('correctly loads floats', function()
@@ -650,17 +640,17 @@ describe('autoload/msgpack.vim', function()
     it('correctly loads integers', function()
       eval_eq('integer', 10, '10')
       eval_eq('integer', -10, '-10')
-      eval_eq('integer', { 1, 0,  610839793, 448585456}, ' 0x123456789ABCDEF0')
-      eval_eq('integer', {-1, 0,  610839793, 448585456}, '-0x123456789ABCDEF0')
-      eval_eq('integer', { 1, 3, 1684581617, 448585456}, ' 0xF23456789ABCDEF0')
-      eval_eq('integer', {-1, 1, 1684581617, 448585456}, '-0x723456789ABCDEF0')
-      eval_eq('integer', { 1, 0, 0, 0x100}, '0x100')
-      eval_eq('integer', {-1, 0, 0, 0x100}, '-0x100')
+      eval_eq('integer', { 1, 0, 610839793, 448585456 }, ' 0x123456789ABCDEF0')
+      eval_eq('integer', { -1, 0, 610839793, 448585456 }, '-0x123456789ABCDEF0')
+      eval_eq('integer', { 1, 3, 1684581617, 448585456 }, ' 0xF23456789ABCDEF0')
+      eval_eq('integer', { -1, 1, 1684581617, 448585456 }, '-0x723456789ABCDEF0')
+      eval_eq('integer', { 1, 0, 0, 0x100 }, '0x100')
+      eval_eq('integer', { -1, 0, 0, 0x100 }, '-0x100')
 
-      eval_eq('integer', ('a'):byte(), '\'a\'')
-      eval_eq('integer', 0xAB, '\'«\'')
-      eval_eq('integer', 0, '\'\\0\'')
-      eval_eq('integer', 10246567, '\'\\10246567\'')
+      eval_eq('integer', ('a'):byte(), "'a'")
+      eval_eq('integer', 0xAB, "'«'")
+      eval_eq('integer', 0, "'\\0'")
+      eval_eq('integer', 10246567, "'\\10246567'")
     end)
 
     it('correctly loads constants', function()
@@ -668,71 +658,94 @@ describe('autoload/msgpack.vim', function()
       eval_eq('boolean', 0, 'FALSE')
       eval_eq('nil', 0, 'NIL')
       eval_eq('nil', 0, 'NIL', '{"NIL": 1, "nan": 2, "T": 3}')
-      eval_eq('float', nan, 'nan',
-              '{"NIL": "1", "nan": "2", "T": "3"}')
+      eval_eq('float', nan, 'nan', '{"NIL": "1", "nan": "2", "T": "3"}')
       eval_eq('integer', 3, 'T', '{"NIL": "1", "nan": "2", "T": "3"}')
-      eval_eq('integer', {1, 0, 0, 0}, 'T',
-              ('{"NIL": "1", "nan": "2", "T": \'%s\'}'):format(
-                  sp('integer', '[1, 0, 0, 0]')))
+      eval_eq(
+        'integer',
+        { 1, 0, 0, 0 },
+        'T',
+        ('{"NIL": "1", "nan": "2", "T": \'%s\'}'):format(sp('integer', '[1, 0, 0, 0]'))
+      )
     end)
 
     it('correctly loads maps', function()
       eval_eq('map', {}, '{}')
-      eval_eq('map', {{{_TYPE={}, _VAL={{1, 2}}}, {_TYPE={}, _VAL={{3, 4}}}}},
-              '{{1: 2}: {3: 4}}')
-      eval_eq('map', {{{_TYPE={}, _VAL={{1, 2}}}, {_TYPE={}, _VAL={{3, 4}}}},
-                      {1, 2}},
-              '{{1: 2}: {3: 4}, 1: 2}')
+      eval_eq(
+        'map',
+        { { { _TYPE = {}, _VAL = { { 1, 2 } } }, { _TYPE = {}, _VAL = { { 3, 4 } } } } },
+        '{{1: 2}: {3: 4}}'
+      )
+      eval_eq(
+        'map',
+        { { { _TYPE = {}, _VAL = { { 1, 2 } } }, { _TYPE = {}, _VAL = { { 3, 4 } } } }, { 1, 2 } },
+        '{{1: 2}: {3: 4}, 1: 2}'
+      )
 
-      eval_eq('map', {{{_TYPE={}, _VAL={
-                          {{_TYPE={}, _VAL={'py3 print(sys.version_info)'}},
-                           2}}},
-                       {_TYPE={}, _VAL={{3, 4}}}},
-                      {1, 2}},
-              '{{"py3 print(sys.version_info)": 2}: {3: 4}, 1: 2}')
+      eval_eq('map', {
+        {
+          {
+            _TYPE = {},
+            _VAL = {
+              { { _TYPE = {}, _VAL = { 'py3 print(sys.version_info)' } }, 2 },
+            },
+          },
+          { _TYPE = {}, _VAL = { { 3, 4 } } },
+        },
+        { 1, 2 },
+      }, '{{"py3 print(sys.version_info)": 2}: {3: 4}, 1: 2}')
     end)
 
     it('correctly loads arrays', function()
       eval_eq('array', {}, '[]')
-      eval_eq('array', {1}, '[1]')
-      eval_eq('array', {{_TYPE={}, _VAL=1}}, '[TRUE]')
-      eval_eq('array', {{{_TYPE={}, _VAL={{1, 2}}}}, {_TYPE={}, _VAL={{3, 4}}}},
-              '[[{1: 2}], {3: 4}]')
+      eval_eq('array', { 1 }, '[1]')
+      eval_eq('array', { { _TYPE = {}, _VAL = 1 } }, '[TRUE]')
+      eval_eq(
+        'array',
+        { { { _TYPE = {}, _VAL = { { 1, 2 } } } }, { _TYPE = {}, _VAL = { { 3, 4 } } } },
+        '[[{1: 2}], {3: 4}]'
+      )
 
-      eval_eq('array', {{_TYPE={}, _VAL={'py3 print(sys.version_info)'}}},
-              '["py3 print(sys.version_info)"]')
+      eval_eq(
+        'array',
+        { { _TYPE = {}, _VAL = { 'py3 print(sys.version_info)' } } },
+        '["py3 print(sys.version_info)"]'
+      )
     end)
 
     it('errors out when needed', function()
-      eq('empty:Parsed string is empty',
-         exc_exec('call msgpack#eval("", {})'))
-      eq('unknown:Invalid non-space character: ^',
-         exc_exec('call msgpack#eval("^", {})'))
-      eq('char-invalid:Invalid integer character literal format: \'\'',
-         exc_exec('call msgpack#eval("\'\'", {})'))
-      eq('char-invalid:Invalid integer character literal format: \'ab\'',
-         exc_exec('call msgpack#eval("\'ab\'", {})'))
-      eq('char-invalid:Invalid integer character literal format: \'',
-         exc_exec('call msgpack#eval("\'", {})'))
-      eq('"-invalid:Invalid string: "',
-         exc_exec('call msgpack#eval("\\"", {})'))
-      eq('"-invalid:Invalid string: ="',
-         exc_exec('call msgpack#eval("=\\"", {})'))
-      eq('"-invalid:Invalid string: +(0)"',
-         exc_exec('call msgpack#eval("+(0)\\"", {})'))
-      eq('0.-nodigits:Decimal dot must be followed by digit(s): .e1',
-         exc_exec('call msgpack#eval("0.e1", {})'))
-      eq('0x-long:Must have at most 16 hex digits: FEDCBA98765432100',
-         exc_exec('call msgpack#eval("0xFEDCBA98765432100", {})'))
-      eq('0x-empty:Must have number after 0x: ',
-         exc_exec('call msgpack#eval("0x", {})'))
-      eq('name-unknown:Unknown name FOO: FOO',
-         exc_exec('call msgpack#eval("FOO", {})'))
+      eq('empty:Parsed string is empty', exc_exec('call msgpack#eval("", {})'))
+      eq('unknown:Invalid non-space character: ^', exc_exec('call msgpack#eval("^", {})'))
+      eq(
+        "char-invalid:Invalid integer character literal format: ''",
+        exc_exec('call msgpack#eval("\'\'", {})')
+      )
+      eq(
+        "char-invalid:Invalid integer character literal format: 'ab'",
+        exc_exec('call msgpack#eval("\'ab\'", {})')
+      )
+      eq(
+        "char-invalid:Invalid integer character literal format: '",
+        exc_exec('call msgpack#eval("\'", {})')
+      )
+      eq('"-invalid:Invalid string: "', exc_exec('call msgpack#eval("\\"", {})'))
+      eq('"-invalid:Invalid string: ="', exc_exec('call msgpack#eval("=\\"", {})'))
+      eq('"-invalid:Invalid string: +(0)"', exc_exec('call msgpack#eval("+(0)\\"", {})'))
+      eq(
+        '0.-nodigits:Decimal dot must be followed by digit(s): .e1',
+        exc_exec('call msgpack#eval("0.e1", {})')
+      )
+      eq(
+        '0x-long:Must have at most 16 hex digits: FEDCBA98765432100',
+        exc_exec('call msgpack#eval("0xFEDCBA98765432100", {})')
+      )
+      eq('0x-empty:Must have number after 0x: ', exc_exec('call msgpack#eval("0x", {})'))
+      eq('name-unknown:Unknown name FOO: FOO', exc_exec('call msgpack#eval("FOO", {})'))
 
-      eq('name-unknown:Unknown name py3: py3 print(sys.version_info)',
-         exc_exec('call msgpack#eval("py3 print(sys.version_info)", {})'))
-      eq('name-unknown:Unknown name o: o',
-         exc_exec('call msgpack#eval("-info", {})'))
+      eq(
+        'name-unknown:Unknown name py3: py3 print(sys.version_info)',
+        exc_exec('call msgpack#eval("py3 print(sys.version_info)", {})')
+      )
+      eq('name-unknown:Unknown name o: o', exc_exec('call msgpack#eval("-info", {})'))
     end)
   end)
 end)

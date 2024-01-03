@@ -9,8 +9,8 @@ local clear, expect, source = helpers.clear, helpers.expect, helpers.source
 describe('78', function()
   setup(clear)
   teardown(function()
-    os.remove(".Xtest.swp")
-    os.remove(".Xtest.swo")
+    os.remove('.Xtest.swp')
+    os.remove('.Xtest.swo')
   end)
 
   it('is working', function()

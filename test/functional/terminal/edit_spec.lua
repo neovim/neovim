@@ -15,7 +15,7 @@ local pesc = helpers.pesc
 describe(':edit term://*', function()
   local get_screen = function(columns, lines)
     local scr = screen.new(columns, lines)
-    scr:attach({rgb=false})
+    scr:attach({ rgb = false })
     return scr
   end
 
@@ -32,7 +32,7 @@ describe(':edit term://*', function()
     local termopen_runs = meths.get_var('termopen_runs')
     eq(1, #termopen_runs)
     local cwd = funcs.fnamemodify('.', ':p:~'):gsub([[[\/]*$]], '')
-    matches('^term://'..pesc(cwd)..'//%d+:$', termopen_runs[1])
+    matches('^term://' .. pesc(cwd) .. '//%d+:$', termopen_runs[1])
   end)
 
   it("runs TermOpen early enough to set buffer-local 'scrollback'", function()
@@ -40,32 +40,30 @@ describe(':edit term://*', function()
     local scr = get_screen(columns, lines)
     local rep = 97
     meths.set_option_value('shellcmdflag', 'REP ' .. rep, {})
-    command('set shellxquote=')  -- win: avoid extra quotes
+    command('set shellxquote=') -- win: avoid extra quotes
     local sb = 10
-    command('autocmd TermOpen * :setlocal scrollback='..tostring(sb)
-            ..'|call feedkeys("G", "n")')
+    command(
+      'autocmd TermOpen * :setlocal scrollback=' .. tostring(sb) .. '|call feedkeys("G", "n")'
+    )
     command('edit term://foobar')
 
     local bufcontents = {}
     local winheight = curwinmeths.get_height()
     local buf_cont_start = rep - sb - winheight + 2
-    for i = buf_cont_start,(rep - 1) do
+    for i = buf_cont_start, (rep - 1) do
       bufcontents[#bufcontents + 1] = ('%d: foobar'):format(i)
     end
     bufcontents[#bufcontents + 1] = ''
     bufcontents[#bufcontents + 1] = '[Process exited 0]'
 
     local exp_screen = '\n'
-    for i = 1,(winheight - 1) do
+    for i = 1, (winheight - 1) do
       local line = bufcontents[#bufcontents - winheight + i]
-      exp_screen = (exp_screen
-                    .. line
-                    .. (' '):rep(columns - #line)
-                    .. '|\n')
+      exp_screen = (exp_screen .. line .. (' '):rep(columns - #line) .. '|\n')
     end
-    exp_screen = exp_screen..'^[Process exited 0]  |\n'
+    exp_screen = exp_screen .. '^[Process exited 0]  |\n'
 
-    exp_screen = exp_screen..(' '):rep(columns)..'|\n'
+    exp_screen = exp_screen .. (' '):rep(columns) .. '|\n'
     scr:expect(exp_screen)
     eq(bufcontents, curbufmeths.get_lines(0, -1, true))
   end)

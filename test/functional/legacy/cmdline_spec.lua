@@ -16,10 +16,10 @@ describe('cmdline', function()
     local screen = Screen.new(30, 10)
     screen:attach()
     screen:set_default_attr_ids {
-      [1] = {underline = true, background = Screen.colors.LightGrey};
-      [2] = {bold = true};
-      [3] = {reverse = true};
-      [4] = {bold = true, foreground = Screen.colors.Blue1};
+      [1] = { underline = true, background = Screen.colors.LightGrey },
+      [2] = { bold = true },
+      [3] = { reverse = true },
+      [4] = { bold = true, foreground = Screen.colors.Blue1 },
     }
 
     feed_command([[call setline(1, range(30))]])
@@ -37,23 +37,28 @@ describe('cmdline', function()
     ]])
 
     feed [[:tabnew<cr>]]
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1: + [No Name] }{2: [No Name] }{3:     }{1:X}|
       ^                              |
       {4:~                             }|*7
       :tabnew                       |
-    ]]}
+    ]],
+    }
 
     feed [[<C-w>-<C-w>-]]
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1: + [No Name] }{2: [No Name] }{3:     }{1:X}|
       ^                              |
       {4:~                             }|*5
                                     |*3
-    ]]}
+    ]],
+    }
 
     feed [[gt]]
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {2: + [No Name] }{1: [No Name] }{3:     }{1:X}|
       ^0                             |
       1                             |
@@ -64,7 +69,8 @@ describe('cmdline', function()
       6                             |
       7                             |
                                     |
-    ]]}
+    ]],
+    }
 
     feed [[gt]]
     screen:expect([[
@@ -104,8 +110,8 @@ describe('cmdline', function()
   it('tabline is redrawn on entering cmdline', function()
     local screen = Screen.new(30, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {reverse = true},  -- TabLineFill
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { reverse = true }, -- TabLineFill
     })
     screen:attach()
     exec([[
@@ -125,7 +131,7 @@ describe('cmdline', function()
   it('cmdline cursor position is correct after :redraw with cmdheight=2', function()
     local screen = Screen.new(30, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
     })
     screen:attach()
     exec([[
@@ -152,8 +158,8 @@ describe('cmdline', function()
   it("setting 'cmdheight' works after outputting two messages vim-patch:9.0.0665", function()
     local screen = Screen.new(60, 8)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {bold = true, reverse = true},  -- StatusLine
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { bold = true, reverse = true }, -- StatusLine
     })
     screen:attach()
     exec([[
@@ -186,10 +192,10 @@ describe('cmdline', function()
   it("changing 'cmdheight' when there is a tabline", function()
     local screen = Screen.new(60, 8)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {bold = true, reverse = true},  -- StatusLine
-      [2] = {bold = true},  -- TabLineSel
-      [3] = {reverse = true},  -- TabLineFill
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { bold = true, reverse = true }, -- StatusLine
+      [2] = { bold = true }, -- TabLineSel
+      [3] = { reverse = true }, -- TabLineFill
     })
     screen:attach()
     meths.set_option_value('laststatus', 2, {})
@@ -208,7 +214,7 @@ describe('cmdline', function()
   it("ruler has correct position with 'rulerformat' set", function()
     local screen = Screen.new(20, 3)
     screen:set_default_attr_ids {
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
     }
     screen:attach()
     meths.set_option_value('ruler', true, {})
@@ -231,17 +237,17 @@ describe('cmdwin', function()
   it('still uses a new buffer when interrupting more prompt on open', function()
     local screen = Screen.new(30, 16)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {bold = true, reverse = true},  -- StatusLine
-      [2] = {reverse = true},  -- StatusLineNC
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen},  -- MoreMsg
-      [4] = {bold = true},  -- ModeMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { bold = true, reverse = true }, -- StatusLine
+      [2] = { reverse = true }, -- StatusLineNC
+      [3] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
+      [4] = { bold = true }, -- ModeMsg
     })
     screen:attach()
     command('set more')
     command('autocmd WinNew * highlight')
     feed('q:')
-    screen:expect({any = pesc('{3:-- More --}^')})
+    screen:expect({ any = pesc('{3:-- More --}^') })
     feed('q')
     screen:expect([[
                                     |

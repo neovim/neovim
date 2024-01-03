@@ -17,12 +17,12 @@ describe('tabline', function()
   -- oldtest: Test_tabline_showcmd()
   it('showcmdloc=tabline works', function()
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {background = Screen.colors.LightGrey},  -- Visual
-      [2] = {bold = true},  -- MoreMsg, TabLineSel
-      [3] = {reverse = true},  -- TabLineFill
-      [4] = {background = Screen.colors.LightGrey, underline = true},  -- TabLine
-      [5] = {background = Screen.colors.LightGrey, foreground = Screen.colors.DarkBlue},  -- Folded
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { background = Screen.colors.LightGrey }, -- Visual
+      [2] = { bold = true }, -- MoreMsg, TabLineSel
+      [3] = { reverse = true }, -- TabLineFill
+      [4] = { background = Screen.colors.LightGrey, underline = true }, -- TabLine
+      [5] = { background = Screen.colors.LightGrey, foreground = Screen.colors.DarkBlue }, -- Folded
     })
     exec([[
       func MyTabLine()

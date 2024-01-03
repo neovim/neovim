@@ -12,7 +12,7 @@ describe('vim._watch', function()
 
   describe('watch', function()
     it('detects file changes', function()
-      skip(is_os('bsd'), "Stopped working on bsd after 3ca967387c49c754561c3b11a574797504d40f38")
+      skip(is_os('bsd'), 'Stopped working on bsd after 3ca967387c49c754561c3b11a574797504d40f38')
       local root_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
 
       local result = exec_lua(
@@ -99,7 +99,7 @@ describe('vim._watch', function()
 
   describe('poll', function()
     it('detects file changes', function()
-      skip(is_os('bsd'), "bsd only reports rename on folders if file inside change")
+      skip(is_os('bsd'), 'bsd only reports rename on folders if file inside change')
       local root_dir = vim.uv.fs_mkdtemp(vim.fs.dirname(helpers.tmpname()) .. '/nvim_XXXXXXXXXX')
 
       local result = exec_lua(
@@ -165,12 +165,12 @@ describe('vim._watch', function()
       local expected = {
         {
           change_type = created,
-          path = root_dir .. "/file",
+          path = root_dir .. '/file',
         },
         {
           change_type = deleted,
-          path = root_dir .. "/file",
-        }
+          path = root_dir .. '/file',
+        },
       }
       eq(expected, result)
     end)

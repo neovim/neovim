@@ -154,7 +154,10 @@ describe('vim.snippet', function()
   end)
 
   it('errors with multiple placeholders for the same index', function()
-    test_expand_fail('class ${1:Foo} { void ${1:foo}() {} }', 'multiple placeholders for tabstop $1')
+    test_expand_fail(
+      'class ${1:Foo} { void ${1:foo}() {} }',
+      'multiple placeholders for tabstop $1'
+    )
   end)
 
   it('errors with multiple $0 tabstops', function()
@@ -162,26 +165,32 @@ describe('vim.snippet', function()
   end)
 
   it('cancels session when deleting the snippet', function()
-    test_expand_success({ 'local function $1()', '  $0', 'end' }, { 'local function ()', '  ', 'end' })
+    test_expand_success(
+      { 'local function $1()', '  $0', 'end' },
+      { 'local function ()', '  ', 'end' }
+    )
     feed('<esc>Vjjd')
     eq(false, exec_lua('return vim.snippet.active()'))
   end)
 
   it('cancels session when inserting outside snippet region', function()
     feed('i<cr>')
-    test_expand_success({ 'local function $1()', '  $0', 'end' }, { '', 'local function ()', '  ', 'end' })
+    test_expand_success(
+      { 'local function $1()', '  $0', 'end' },
+      { '', 'local function ()', '  ', 'end' }
+    )
     feed('<esc>O-- A comment')
     eq(false, exec_lua('return vim.snippet.active()'))
   end)
 
-  it('inserts choice', function ()
+  it('inserts choice', function()
     test_expand_success({ 'console.${1|assert,log,error|}()' }, { 'console.()' })
     sleep(100)
     feed('<Down><C-y>')
     eq({ 'console.log()' }, buf_lines(0))
   end)
 
-  it('closes the choice completion menu when jumping', function ()
+  it('closes the choice completion menu when jumping', function()
     test_expand_success({ 'console.${1|assert,log,error|}($2)' }, { 'console.()' })
     sleep(100)
     exec_lua('vim.snippet.jump(1)')

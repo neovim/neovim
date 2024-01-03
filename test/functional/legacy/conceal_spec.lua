@@ -6,7 +6,7 @@ local exec = helpers.exec
 local feed = helpers.feed
 
 local expect_pos = function(row, col)
-  return helpers.eq({row, col}, helpers.eval('[screenrow(), screencol()]'))
+  return helpers.eq({ row, col }, helpers.eval('[screenrow(), screencol()]'))
 end
 
 describe('Conceal', function()
@@ -19,10 +19,10 @@ describe('Conceal', function()
   it('works', function()
     local screen = Screen.new(75, 12)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {bold = true, reverse = true},  -- StatusLine
-      [2] = {reverse = true},  -- StatusLineNC, IncSearch
-      [3] = {bold = true},  -- ModeMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { bold = true, reverse = true }, -- StatusLine
+      [2] = { reverse = true }, -- StatusLineNC, IncSearch
+      [3] = { bold = true }, -- ModeMsg
     })
     screen:attach()
     exec([[
@@ -386,9 +386,9 @@ describe('Conceal', function()
   it('CursorColumn and ColorColumn on wrapped line', function()
     local screen = Screen.new(40, 10)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {background = Screen.colors.Grey90},  -- CursorColumn
-      [2] = {background = Screen.colors.LightRed},  -- ColorColumn
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { background = Screen.colors.Grey90 }, -- CursorColumn
+      [2] = { background = Screen.colors.LightRed }, -- ColorColumn
     })
     screen:attach()
     -- Check that cursorcolumn and colorcolumn don't get broken in presence of
@@ -437,8 +437,8 @@ describe('Conceal', function()
   it('resize editor', function()
     local screen = Screen.new(75, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {foreground = Screen.colors.Blue},  -- Comment
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { foreground = Screen.colors.Blue }, -- Comment
     })
     screen:attach()
     exec([[
@@ -465,7 +465,7 @@ describe('Conceal', function()
   it('with linebreak', function()
     local screen = Screen.new(75, 8)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
     })
     screen:attach()
     exec([[

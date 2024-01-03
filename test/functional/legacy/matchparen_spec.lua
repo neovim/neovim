@@ -13,8 +13,8 @@ describe('matchparen', function()
     local screen = Screen.new(30, 7)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {bold = true},
-      [2] = {background = Screen.colors.LightGrey},
+      [1] = { bold = true },
+      [2] = { background = Screen.colors.LightGrey },
     })
 
     exec([[
@@ -40,8 +40,8 @@ describe('matchparen', function()
   it('matchparen highlight is cleared when switching buffer', function()
     local screen = Screen.new(20, 5)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},
-      [1] = {background = Screen.colors.Cyan},
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { background = Screen.colors.Cyan },
     })
     screen:attach()
 
@@ -82,11 +82,11 @@ describe('matchparen', function()
     local screen = Screen.new(30, 9)
     screen:attach()
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue};
-      [1] = {background = Screen.colors.Plum1};
-      [2] = {background = Screen.colors.Grey};
-      [3] = {bold = true};
-      [4] = {bold = true, foreground = Screen.colors.SeaGreen};
+      [0] = { bold = true, foreground = Screen.colors.Blue },
+      [1] = { background = Screen.colors.Plum1 },
+      [2] = { background = Screen.colors.Grey },
+      [3] = { bold = true },
+      [4] = { bold = true, foreground = Screen.colors.SeaGreen },
     })
 
     exec([[
@@ -97,7 +97,8 @@ describe('matchparen', function()
     ]])
 
     feed('i<C-X><C-N><C-N>')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       aa                            |
       aaa                           |
       aaaa                          |
@@ -107,6 +108,7 @@ describe('matchparen', function()
       {1: aaaa           }{0:              }|
       {0:~                             }|
       {3:-- }{4:match 2 of 3}               |
-    ]]}
+    ]],
+    }
   end)
 end)

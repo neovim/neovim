@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, eq, command, funcs =
-  helpers.clear, helpers.eq, helpers.command, helpers.funcs
+local clear, eq, command, funcs = helpers.clear, helpers.eq, helpers.command, helpers.funcs
 
 describe(':z^', function()
   before_each(clear)

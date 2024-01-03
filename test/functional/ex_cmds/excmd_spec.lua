@@ -1,4 +1,4 @@
-local helpers = require("test.functional.helpers")(after_each)
+local helpers = require('test.functional.helpers')(after_each)
 local command = helpers.command
 local eq = helpers.eq
 local clear = helpers.clear
@@ -20,15 +20,25 @@ describe('Ex cmds', function()
     command(':later 9999999999999999999999999999999999999999')
     command(':echo expand("#<9999999999999999999999999999999999999999")')
     command(':lockvar 9999999999999999999999999999999999999999')
-    command(':winsize 9999999999999999999999999999999999999999 9999999999999999999999999999999999999999')
-    check_excmd_err(':tabnext 9999999999999999999999999999999999999999',
-                    'Vim(tabnext):E475: Invalid argument: 9999999999999999999999999999999999999999')
-    check_excmd_err(':N 9999999999999999999999999999999999999999',
-                    'Vim(Next):E939: Positive count required')
-    check_excmd_err(':bdelete 9999999999999999999999999999999999999999',
-                    'Vim(bdelete):E939: Positive count required')
-    eq('Vim(menu):E329: No menu "9999999999999999999999999999999999999999"',
-      pcall_err(command, ':menu 9999999999999999999999999999999999999999'))
+    command(
+      ':winsize 9999999999999999999999999999999999999999 9999999999999999999999999999999999999999'
+    )
+    check_excmd_err(
+      ':tabnext 9999999999999999999999999999999999999999',
+      'Vim(tabnext):E475: Invalid argument: 9999999999999999999999999999999999999999'
+    )
+    check_excmd_err(
+      ':N 9999999999999999999999999999999999999999',
+      'Vim(Next):E939: Positive count required'
+    )
+    check_excmd_err(
+      ':bdelete 9999999999999999999999999999999999999999',
+      'Vim(bdelete):E939: Positive count required'
+    )
+    eq(
+      'Vim(menu):E329: No menu "9999999999999999999999999999999999999999"',
+      pcall_err(command, ':menu 9999999999999999999999999999999999999999')
+    )
     assert_alive()
   end)
 

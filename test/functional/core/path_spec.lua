@@ -13,7 +13,7 @@ local write_file = helpers.write_file
 
 local function join_path(...)
   local pathsep = (is_os('win') and '\\' or '/')
-  return table.concat({...}, pathsep)
+  return table.concat({ ... }, pathsep)
 end
 
 describe('path collapse', function()
@@ -23,40 +23,40 @@ describe('path collapse', function()
   before_each(function()
     targetdir = join_path('test', 'functional', 'fixtures')
     clear()
-    command('edit '..join_path(targetdir, 'tty-test.c'))
+    command('edit ' .. join_path(targetdir, 'tty-test.c'))
     expected_path = eval('expand("%:p")')
   end)
 
   it('with /./ segment #7117', function()
-    command('edit '..join_path(targetdir, '.', 'tty-test.c'))
+    command('edit ' .. join_path(targetdir, '.', 'tty-test.c'))
     eq(expected_path, eval('expand("%:p")'))
   end)
 
   it('with ./ prefix #7117', function()
-    command('edit '..join_path('.', targetdir, 'tty-test.c'))
+    command('edit ' .. join_path('.', targetdir, 'tty-test.c'))
     eq(expected_path, eval('expand("%:p")'))
   end)
 
   it('with ./ prefix, after directory change #7117', function()
-    command('edit '..join_path('.', targetdir, 'tty-test.c'))
+    command('edit ' .. join_path('.', targetdir, 'tty-test.c'))
     command('cd test')
     eq(expected_path, eval('expand("%:p")'))
   end)
 
   it('with /../ segment #7117', function()
-    command('edit '..join_path(targetdir, '..', 'fixtures', 'tty-test.c'))
+    command('edit ' .. join_path(targetdir, '..', 'fixtures', 'tty-test.c'))
     eq(expected_path, eval('expand("%:p")'))
   end)
 
   it('with ../ and different starting directory #7117', function()
     command('cd test')
-    command('edit '..join_path('..', targetdir, 'tty-test.c'))
+    command('edit ' .. join_path('..', targetdir, 'tty-test.c'))
     eq(expected_path, eval('expand("%:p")'))
   end)
 
   it('with ./../ and different starting directory #7117', function()
     command('cd test')
-    command('edit '..join_path('.', '..', targetdir, 'tty-test.c'))
+    command('edit ' .. join_path('.', '..', targetdir, 'tty-test.c'))
     eq(expected_path, eval('expand("%:p")'))
   end)
 end)
@@ -67,16 +67,16 @@ describe('expand wildcard', function()
   it('with special characters #24421', function()
     local folders = is_os('win') and {
       '{folder}',
-      'folder$name'
+      'folder$name',
     } or {
       'folder-name',
-      'folder#name'
+      'folder#name',
     }
     for _, folder in ipairs(folders) do
       mkdir(folder)
       local file = join_path(folder, 'file.txt')
       write_file(file, '')
-      eq(file, eval('expand("'..folder..'/*")'))
+      eq(file, eval('expand("' .. folder .. '/*")'))
       rmdir(folder)
     end
   end)
@@ -131,14 +131,30 @@ describe('file search', function()
     test_cfile([[c:foo]], [[c]])
     -- Examples from: https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#example-ways-to-refer-to-the-same-file
     test_cfile([[c:\temp\test-file.txt]], [[c:]], [[c:\temp\test-file.txt]])
-    test_cfile([[\\127.0.0.1\c$\temp\test-file.txt]], [[127.0.0.1]], [[\\127.0.0.1\c$\temp\test-file.txt]])
-    test_cfile([[\\LOCALHOST\c$\temp\test-file.txt]], [[LOCALHOST]], [[\\LOCALHOST\c$\temp\test-file.txt]])
+    test_cfile(
+      [[\\127.0.0.1\c$\temp\test-file.txt]],
+      [[127.0.0.1]],
+      [[\\127.0.0.1\c$\temp\test-file.txt]]
+    )
+    test_cfile(
+      [[\\LOCALHOST\c$\temp\test-file.txt]],
+      [[LOCALHOST]],
+      [[\\LOCALHOST\c$\temp\test-file.txt]]
+    )
     -- not supported yet
     test_cfile([[\\.\c:\temp\test-file.txt]], [[.]], [[\\.\c]])
     -- not supported yet
     test_cfile([[\\?\c:\temp\test-file.txt]], [[c:]], [[\\]])
-    test_cfile([[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]], [[.]], [[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]])
-    test_cfile([[\\127.0.0.1\c$\temp\test-file.txt]], [[127.0.0.1]], [[\\127.0.0.1\c$\temp\test-file.txt]])
+    test_cfile(
+      [[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]],
+      [[.]],
+      [[\\.\UNC\LOCALHOST\c$\temp\test-file.txt]]
+    )
+    test_cfile(
+      [[\\127.0.0.1\c$\temp\test-file.txt]],
+      [[127.0.0.1]],
+      [[\\127.0.0.1\c$\temp\test-file.txt]]
+    )
   end)
 
   ---@param funcname 'finddir' | 'findfile'
