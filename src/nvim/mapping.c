@@ -36,6 +36,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
+#include "nvim/mapping_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/mbyte_defs.h"
 #include "nvim/memory.h"
@@ -140,20 +141,6 @@ mapblock_T *get_maphash_list(int state, int c)
 mapblock_T *get_buf_maphash_list(int state, int c)
 {
   return curbuf->b_maphash[MAP_HASH(state, c)];
-}
-
-/// Retrieve the mapblock at the index either globally or for a certain buffer
-///
-/// @param  index  The index in the maphash[]
-/// @param  buf  The buffer to get the maphash from. NULL for global
-mapblock_T *get_maphash(int index, buf_T *buf)
-  FUNC_ATTR_PURE
-{
-  if (index >= MAX_MAPHASH) {
-    return NULL;
-  }
-
-  return (buf == NULL) ? maphash[index] : buf->b_maphash[index];
 }
 
 /// Delete one entry from the abbrlist or maphash[].
@@ -2820,16 +2807,23 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
 {
   Array mappings = ARRAY_DICT_INIT;
 
-  // Convert the string mode to the integer mode
-  // that is stored within each mapblock
-  char *p = mode.data;
-  int int_mode = get_map_mode(&p, 0);
+  char *p = mode.size > 0 ? mode.data : "m";
+  bool forceit = *p == '!';
+  // Convert the string mode to the integer mode stored within each mapblock.
+  int int_mode = get_map_mode(&p, forceit);
+  if (forceit) {
+    assert(p == mode.data);
+    p++;
+  }
+  bool is_abbrev = (int_mode & (MODE_INSERT | MODE_CMDLINE)) != 0 && *p == 'a';
 
   // Determine the desired buffer value
   int buffer_value = (buf == NULL) ? 0 : buf->handle;
 
-  for (int i = 0; i < MAX_MAPHASH; i++) {
-    for (const mapblock_T *current_maphash = get_maphash(i, buf);
+  for (int i = 0; i < (is_abbrev ? 1 : MAX_MAPHASH); i++) {
+    for (const mapblock_T *current_maphash = is_abbrev
+                                             ? (buf ? buf->b_first_abbr : first_abbr)
+                                             : (buf ? buf->b_maphash[i] : maphash[i]);
          current_maphash;
          current_maphash = current_maphash->m_next) {
       if (current_maphash->m_simplified) {
@@ -2839,7 +2833,7 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
       if (int_mode & current_maphash->m_mode) {
         ADD(mappings,
             DICTIONARY_OBJ(mapblock_fill_dict(current_maphash, NULL,
-                                              buffer_value, false, false)));
+                                              buffer_value, is_abbrev, false)));
       }
     }
   }
