@@ -1636,27 +1636,19 @@ Unfortunately, the use of tabs will mean that the syntax file will not be able
 to detect incorrect margins.
 
 Syntax folding of Fortran files ~
-If you wish to use foldmethod=syntax, then you must first set the variable
-fortran_fold with a command such as >
+Vim will fold your file using foldmethod=syntax, if you set the variable
+fortran_fold in your .vimrc with a command such as >
     :let fortran_fold=1
 to instruct the syntax script to define fold regions for program units, that
 is main programs starting with a program statement, subroutines, function
-subprograms, modules, submodules, and block data units. Block, interface,
-associate, critical, type definition, and change team constructs will also be
-folded.  If you also set the variable fortran_fold_conditionals with a command
-such as >
+subprograms, modules, submodules, blocks of comment lines, and block data
+units. Block, interface, associate, critical, type definition, and change team
+constructs will also be folded.  If you also set the variable
+fortran_fold_conditionals with a command such as >
     :let fortran_fold_conditionals=1
 then fold regions will also be defined for do loops, if blocks, select case,
-select type, and select rank constructs.  If you also set the variable
-fortran_fold_multilinecomments with a command such as >
-    :let fortran_fold_multilinecomments=1
-then fold regions will also be defined for three or more consecutive comment
-lines.  Note that defining fold regions can be slow for large files.
-
-If fortran_fold, and possibly fortran_fold_conditionals and/or
-fortran_fold_multilinecomments, have been set, then vim will fold your file.
-Comments or blank lines placed between two program units are not folded
-because they are seen as not belonging to any program unit.
+select type, and select rank constructs.  Note that defining fold regions can
+be slow for large files.
 
 The syntax/fortran.vim script contains embedded comments that tell you how to
 comment and/or uncomment some lines to (a) activate recognition of some
