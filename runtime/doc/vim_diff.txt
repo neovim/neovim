@@ -302,8 +302,6 @@ Options:
   global-local string options work.
 
   'autoread'    works in the terminal (if it supports "focus" events)
-  'background'  colorscheme is only reloaded if value is changed, not every
-                time it is set
   'cpoptions'   flags: |cpo-_|
   'diffopt'     "linematch" feature
   'exrc'        searches for ".nvim.lua", ".nvimrc", or ".exrc" files. The
