@@ -113,6 +113,64 @@ func Test_window_quit()
   bw Xa Xb
 endfunc
 
+func Test_window_curwin_not_prevwin()
+  botright split
+  call assert_equal(2, winnr())
+  call assert_equal(1, winnr('#'))
+  quit
+  call assert_equal(1, winnr())
+  call assert_equal(0, winnr('#'))
+
+  botright split
+  botright split
+  call assert_equal(3, winnr())
+  call assert_equal(2, winnr('#'))
+  1quit
+  call assert_equal(2, winnr())
+  call assert_equal(1, winnr('#'))
+
+  botright split
+  call assert_equal(1, tabpagenr())
+  call assert_equal(3, winnr())
+  call assert_equal(2, winnr('#'))
+  wincmd T
+  call assert_equal(2, tabpagenr())
+  call assert_equal(1, winnr())
+  call assert_equal(0, winnr('#'))
+  tabfirst
+  call assert_equal(1, tabpagenr())
+  call assert_equal(2, winnr())
+  call assert_equal(0, winnr('#'))
+
+  tabonly
+  botright split
+  wincmd t
+  wincmd p
+  call assert_equal(3, winnr())
+  call assert_equal(1, winnr('#'))
+  quit
+  call assert_equal(2, winnr())
+  call assert_equal(1, winnr('#'))
+
+  botright split
+  wincmd t
+  wincmd p
+  call assert_equal(1, tabpagenr())
+  call assert_equal(3, winnr())
+  call assert_equal(1, winnr('#'))
+  wincmd T
+  call assert_equal(2, tabpagenr())
+  call assert_equal(1, winnr())
+  call assert_equal(0, winnr('#'))
+  tabfirst
+  call assert_equal(1, tabpagenr())
+  call assert_equal(2, winnr())
+  call assert_equal(1, winnr('#'))
+
+  tabonly
+  only
+endfunc
+
 func Test_window_horizontal_split()
   call assert_equal(1, winnr('$'))
   3wincmd s

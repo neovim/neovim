@@ -4738,10 +4738,14 @@ static void win_enter_ext(win_T *const wp, const int flags)
   if (wp->w_buffer != curbuf) {
     buf_copy_options(wp->w_buffer, BCO_ENTER | BCO_NOHELP);
   }
+
   if (!curwin_invalid) {
     prevwin = curwin;           // remember for CTRL-W p
     curwin->w_redr_status = true;
+  } else if (wp == prevwin) {
+    prevwin = NULL;             // don't want it to be the new curwin
   }
+
   curwin = wp;
   curbuf = wp->w_buffer;
 
