@@ -12,9 +12,15 @@ local eval = helpers.eval
 local shada_file = 'Xtest.shada'
 
 local function _clear()
-  clear{args={'-i', shada_file, -- Need shada for these tests.
-              '--cmd', 'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler'},
-        args_rm={'-i', '--cmd'}}
+  clear {
+    args = {
+      '-i',
+      shada_file, -- Need shada for these tests.
+      '--cmd',
+      'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler',
+    },
+    args_rm = { '-i', '--cmd' },
+  }
 end
 
 describe(':oldfiles', function()
@@ -40,8 +46,8 @@ describe(':oldfiles', function()
     feed_command('oldfiles')
     screen:expect([[
                                                                                                           |
-      1: ]].. add_padding(oldfiles[1]) ..[[ |
-      2: ]].. add_padding(oldfiles[2]) ..[[ |
+      1: ]] .. add_padding(oldfiles[1]) .. [[ |
+      2: ]] .. add_padding(oldfiles[2]) .. [[ |
                                                                                                           |
       Press ENTER or type command to continue^                                                             |
     ]])
@@ -59,7 +65,7 @@ describe(':oldfiles', function()
     feed_command('rshada!')
 
     local function get_oldfiles(cmd)
-      local t = eval([[split(execute(']]..cmd..[['), "\n")]])
+      local t = eval([[split(execute(']] .. cmd .. [['), "\n")]])
       for i, _ in ipairs(t) do
         t[i] = t[i]:gsub('^%d+:%s+', '')
       end
@@ -68,16 +74,16 @@ describe(':oldfiles', function()
     end
 
     local oldfiles = get_oldfiles('oldfiles')
-    eq({another, file1, file2}, oldfiles)
+    eq({ another, file1, file2 }, oldfiles)
 
     oldfiles = get_oldfiles('filter file_ oldfiles')
-    eq({file1, file2}, oldfiles)
+    eq({ file1, file2 }, oldfiles)
 
     oldfiles = get_oldfiles('filter /another/ oldfiles')
-    eq({another}, oldfiles)
+    eq({ another }, oldfiles)
 
     oldfiles = get_oldfiles('filter! file_ oldfiles')
-    eq({another}, oldfiles)
+    eq({ another }, oldfiles)
   end)
 end)
 

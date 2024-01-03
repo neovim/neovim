@@ -32,7 +32,7 @@ local multiline_text = [[
   7 8 9
 ]]
 
-local multimatch_text  = [[
+local multimatch_text = [[
   a bdc eae a fgl lzia r
   x
 ]]
@@ -62,70 +62,70 @@ local long_multiline_text = [[
 
 local function common_setup(screen, inccommand, text)
   if screen then
-    command("syntax on")
-    command("set nohlsearch")
-    command("hi Substitute guifg=red guibg=yellow")
+    command('syntax on')
+    command('set nohlsearch')
+    command('hi Substitute guifg=red guibg=yellow')
     screen:attach()
     screen:set_default_attr_ids({
-      [1]  = {foreground = Screen.colors.Fuchsia},
-      [2]  = {foreground = Screen.colors.Brown, bold = true},
-      [3]  = {foreground = Screen.colors.SlateBlue},
-      [4]  = {bold = true, foreground = Screen.colors.SlateBlue},
-      [5]  = {foreground = Screen.colors.DarkCyan},
-      [6]  = {bold = true},
-      [7]  = {underline = true, bold = true, foreground = Screen.colors.SlateBlue},
-      [8]  = {foreground = Screen.colors.Slateblue, underline = true},
-      [9]  = {background = Screen.colors.Yellow},
-      [10] = {reverse = true},
-      [11] = {reverse = true, bold=true},
-      [12] = {foreground = Screen.colors.Red, background = Screen.colors.Yellow},
-      [13] = {bold = true, foreground = Screen.colors.SeaGreen},
-      [14] = {foreground = Screen.colors.White, background = Screen.colors.Red},
-      [15] = {bold=true, foreground=Screen.colors.Blue},
-      [16] = {background=Screen.colors.Grey90},  -- cursorline
-      [17] = {foreground = Screen.colors.Blue1},
-      vis  = {background=Screen.colors.LightGrey}
+      [1] = { foreground = Screen.colors.Fuchsia },
+      [2] = { foreground = Screen.colors.Brown, bold = true },
+      [3] = { foreground = Screen.colors.SlateBlue },
+      [4] = { bold = true, foreground = Screen.colors.SlateBlue },
+      [5] = { foreground = Screen.colors.DarkCyan },
+      [6] = { bold = true },
+      [7] = { underline = true, bold = true, foreground = Screen.colors.SlateBlue },
+      [8] = { foreground = Screen.colors.Slateblue, underline = true },
+      [9] = { background = Screen.colors.Yellow },
+      [10] = { reverse = true },
+      [11] = { reverse = true, bold = true },
+      [12] = { foreground = Screen.colors.Red, background = Screen.colors.Yellow },
+      [13] = { bold = true, foreground = Screen.colors.SeaGreen },
+      [14] = { foreground = Screen.colors.White, background = Screen.colors.Red },
+      [15] = { bold = true, foreground = Screen.colors.Blue },
+      [16] = { background = Screen.colors.Grey90 }, -- cursorline
+      [17] = { foreground = Screen.colors.Blue1 },
+      vis = { background = Screen.colors.LightGrey },
     })
   end
 
-  command("set inccommand=" .. (inccommand or ""))
+  command('set inccommand=' .. (inccommand or ''))
 
   if text then
     insert(text)
   end
 end
 
-describe(":substitute, inccommand=split interactivity", function()
+describe(':substitute, inccommand=split interactivity', function()
   before_each(function()
     clear()
-    common_setup(nil, "split", default_text)
+    common_setup(nil, 'split', default_text)
   end)
 
   -- Test the tests: verify that the `1==bufnr('$')` assertion
   -- in the "no preview" tests (below) actually means something.
-  it("previews interactive cmdline", function()
+  it('previews interactive cmdline', function()
     feed(':%s/tw/MO/g')
     retry(nil, 1000, function()
       eq(2, eval("bufnr('$')"))
     end)
   end)
 
-  it("no preview if invoked by a script", function()
+  it('no preview if invoked by a script', function()
     source('%s/tw/MO/g')
     poke_eventloop()
     eq(1, eval("bufnr('$')"))
     -- sanity check: assert the buffer state
-    expect(default_text:gsub("tw", "MO"))
+    expect(default_text:gsub('tw', 'MO'))
   end)
 
-  it("no preview if invoked by feedkeys()", function()
+  it('no preview if invoked by feedkeys()', function()
     -- in a script...
     source([[:call feedkeys(":%s/tw/MO/g\<CR>")]])
     -- or interactively...
     feed([[:call feedkeys(":%s/bs/BUU/g\<lt>CR>")<CR>]])
     eq(1, eval("bufnr('$')"))
     -- sanity check: assert the buffer state
-    expect(default_text:gsub("tw", "MO"):gsub("bs", "BUU"))
+    expect(default_text:gsub('tw', 'MO'):gsub('bs', 'BUU'))
   end)
 end)
 
@@ -133,8 +133,8 @@ describe(":substitute, 'inccommand' preserves", function()
   before_each(clear)
 
   it('listed buffers (:ls)', function()
-    local screen = Screen.new(30,10)
-    common_setup(screen, "split", "ABC")
+    local screen = Screen.new(30, 10)
+    common_setup(screen, 'split', 'ABC')
 
     feed(':%s/AB/BA/')
     poke_eventloop()
@@ -159,62 +159,62 @@ describe(":substitute, 'inccommand' preserves", function()
 
     feed('ggyG')
     local X = meths.get_vvar('maxcol')
-    eq({0, 1, 1, 0}, funcs.getpos("'["))
-    eq({0, 101, X, 0}, funcs.getpos("']"))
+    eq({ 0, 1, 1, 0 }, funcs.getpos("'["))
+    eq({ 0, 101, X, 0 }, funcs.getpos("']"))
 
     feed(":'[,']s/def/")
     poke_eventloop()
-    eq({0, 1, 1, 0}, funcs.getpos("'["))
-    eq({0, 101, X, 0}, funcs.getpos("']"))
+    eq({ 0, 1, 1, 0 }, funcs.getpos("'["))
+    eq({ 0, 101, X, 0 }, funcs.getpos("']"))
 
     feed('DEF/g')
     poke_eventloop()
-    eq({0, 1, 1, 0}, funcs.getpos("'["))
-    eq({0, 101, X, 0}, funcs.getpos("']"))
+    eq({ 0, 1, 1, 0 }, funcs.getpos("'["))
+    eq({ 0, 101, X, 0 }, funcs.getpos("']"))
 
     feed('<CR>')
     expect(('abc\nDEF\n'):rep(50))
   end)
 
-  for _, case in pairs{"", "split", "nosplit"} do
-    it("various delimiters (inccommand="..case..")", function()
+  for _, case in pairs { '', 'split', 'nosplit' } do
+    it('various delimiters (inccommand=' .. case .. ')', function()
       insert(default_text)
-      command("set inccommand=" .. case)
+      command('set inccommand=' .. case)
 
       local delims = { '/', '#', ';', '%', ',', '@', '!' }
-      for _,delim in pairs(delims) do
-        feed(":%s"..delim.."lines"..delim.."LINES"..delim.."g")
+      for _, delim in pairs(delims) do
+        feed(':%s' .. delim .. 'lines' .. delim .. 'LINES' .. delim .. 'g')
         poke_eventloop()
         feed('<CR>')
         expect([[
           Inc substitution on
           two LINES
           ]])
-        command("undo")
+        command('undo')
       end
     end)
   end
 
-  for _, case in pairs{"", "split", "nosplit"} do
-    it("'undolevels' (inccommand="..case..")", function()
-      command("set undolevels=139")
-      command("setlocal undolevels=34")
-      command("split")  -- Show the buffer in multiple windows
-      command("set inccommand=" .. case)
-      insert("as")
-      feed(":%s/as/glork/")
+  for _, case in pairs { '', 'split', 'nosplit' } do
+    it("'undolevels' (inccommand=" .. case .. ')', function()
+      command('set undolevels=139')
+      command('setlocal undolevels=34')
+      command('split') -- Show the buffer in multiple windows
+      command('set inccommand=' .. case)
+      insert('as')
+      feed(':%s/as/glork/')
       poke_eventloop()
-      feed("<enter>")
-      eq(meths.get_option_value('undolevels', {scope='global'}), 139)
-      eq(meths.get_option_value('undolevels', {buf=0}), 34)
+      feed('<enter>')
+      eq(meths.get_option_value('undolevels', { scope = 'global' }), 139)
+      eq(meths.get_option_value('undolevels', { buf = 0 }), 34)
     end)
   end
 
-  for _, case in ipairs({"", "split", "nosplit"}) do
-    it("empty undotree() (inccommand="..case..")", function()
-      command("set undolevels=1000")
-      command("set inccommand=" .. case)
-      local expected_undotree = eval("undotree()")
+  for _, case in ipairs({ '', 'split', 'nosplit' }) do
+    it('empty undotree() (inccommand=' .. case .. ')', function()
+      command('set undolevels=1000')
+      command('set inccommand=' .. case)
+      local expected_undotree = eval('undotree()')
 
       -- Start typing an incomplete :substitute command.
       feed([[:%s/e/YYYY/g]])
@@ -223,15 +223,15 @@ describe(":substitute, 'inccommand' preserves", function()
       feed([[<C-\><C-N>]])
 
       -- The undo tree should be unchanged.
-      eq(expected_undotree, eval("undotree()"))
-      eq({}, eval("undotree()")["entries"])
+      eq(expected_undotree, eval('undotree()'))
+      eq({}, eval('undotree()')['entries'])
     end)
   end
 
-  for _, case in ipairs({"", "split", "nosplit"}) do
-    it("undotree() with branches (inccommand="..case..")", function()
-      command("set undolevels=1000")
-      command("set inccommand=" .. case)
+  for _, case in ipairs({ '', 'split', 'nosplit' }) do
+    it('undotree() with branches (inccommand=' .. case .. ')', function()
+      command('set undolevels=1000')
+      command('set inccommand=' .. case)
       -- Make some changes.
       feed([[isome text 1<C-\><C-N>]])
       feed([[osome text 2<C-\><C-N>]])
@@ -249,8 +249,8 @@ describe(":substitute, 'inccommand' preserves", function()
         some text 1
         some text 3XX
         some text 5]])
-      local expected_undotree = eval("undotree()")
-      eq(5, #expected_undotree["entries"])  -- sanity
+      local expected_undotree = eval('undotree()')
+      eq(5, #expected_undotree['entries']) -- sanity
 
       -- Start typing an incomplete :substitute command.
       feed([[:%s/e/YYYY/g]])
@@ -259,31 +259,31 @@ describe(":substitute, 'inccommand' preserves", function()
       feed([[<C-\><C-N>]])
 
       -- The undo tree should be unchanged.
-      eq(expected_undotree, eval("undotree()"))
+      eq(expected_undotree, eval('undotree()'))
     end)
   end
 
-  for _, case in pairs{"", "split", "nosplit"} do
-    it("b:changedtick (inccommand="..case..")", function()
-      command("set inccommand=" .. case)
+  for _, case in pairs { '', 'split', 'nosplit' } do
+    it('b:changedtick (inccommand=' .. case .. ')', function()
+      command('set inccommand=' .. case)
       feed([[isome text 1<C-\><C-N>]])
       feed([[osome text 2<C-\><C-N>]])
-      local expected_tick = eval("b:changedtick")
+      local expected_tick = eval('b:changedtick')
       ok(expected_tick > 0)
 
       expect([[
         some text 1
         some text 2]])
-      feed(":%s/e/XXX/")
+      feed(':%s/e/XXX/')
       poke_eventloop()
 
-      eq(expected_tick, eval("b:changedtick"))
+      eq(expected_tick, eval('b:changedtick'))
     end)
   end
 
-  for _, case in ipairs({'', 'split', 'nosplit'}) do
-    it('previous substitute string ~ (inccommand='..case..') #12109', function()
-      local screen = Screen.new(30,10)
+  for _, case in ipairs({ '', 'split', 'nosplit' }) do
+    it('previous substitute string ~ (inccommand=' .. case .. ') #12109', function()
+      local screen = Screen.new(30, 10)
       common_setup(screen, case, default_text)
 
       feed(':%s/Inc/SUB<CR>')
@@ -348,7 +348,7 @@ describe(":substitute, 'inccommand' preserves", function()
 end)
 
 describe(":substitute, 'inccommand' preserves undo", function()
-  local cases = { "", "split", "nosplit" }
+  local cases = { '', 'split', 'nosplit' }
 
   local substrings = {
     { ':%s/', '1' },
@@ -370,29 +370,29 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
   local function test_sub(substring, split, redoable)
     command('bwipe!')
-    command("set inccommand=" .. split)
+    command('set inccommand=' .. split)
 
-    insert("1")
-    feed("o2<esc>")
-    command("undo")
-    feed("o3<esc>")
+    insert('1')
+    feed('o2<esc>')
+    command('undo')
+    feed('o3<esc>')
     if redoable then
-      feed("o4<esc>")
-      command("undo")
+      feed('o4<esc>')
+      command('undo')
     end
     for _, s in pairs(substring) do
       feed(s)
     end
     poke_eventloop()
-    feed("<enter>")
-    command("undo")
+    feed('<enter>')
+    command('undo')
 
-    feed("g-")
+    feed('g-')
     expect([[
       1
       2]])
 
-    feed("g+")
+    feed('g+')
     expect([[
       1
       3]])
@@ -400,34 +400,34 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
   local function test_notsub(substring, split, redoable)
     command('bwipe!')
-    command("set inccommand=" .. split)
+    command('set inccommand=' .. split)
 
-    insert("1")
-    feed("o2<esc>")
-    command("undo")
-    feed("o3<esc>")
+    insert('1')
+    feed('o2<esc>')
+    command('undo')
+    feed('o3<esc>')
     if redoable then
-      feed("o4<esc>")
-      command("undo")
+      feed('o4<esc>')
+      command('undo')
     end
     for _, s in pairs(substring) do
       feed(s)
     end
     poke_eventloop()
-    feed("<esc>")
+    feed('<esc>')
 
-    feed("g-")
+    feed('g-')
     expect([[
       1
       2]])
 
-    feed("g+")
+    feed('g+')
     expect([[
       1
       3]])
 
     if redoable then
-      feed("<c-r>")
+      feed('<c-r>')
       expect([[
         1
         3
@@ -435,20 +435,19 @@ describe(":substitute, 'inccommand' preserves undo", function()
     end
   end
 
-
   local function test_threetree(substring, split)
     command('bwipe!')
-    command("set inccommand=" .. split)
+    command('set inccommand=' .. split)
 
-    insert("1")
-    feed("o2<esc>")
-    feed("o3<esc>")
-    feed("uu")
-    feed("oa<esc>")
-    feed("ob<esc>")
-    feed("uu")
-    feed("oA<esc>")
-    feed("oB<esc>")
+    insert('1')
+    feed('o2<esc>')
+    feed('o3<esc>')
+    feed('uu')
+    feed('oa<esc>')
+    feed('ob<esc>')
+    feed('uu')
+    feed('oA<esc>')
+    feed('oB<esc>')
 
     -- This is the undo tree (x-Axis is timeline), we're at B now
     --    ----------------A - B
@@ -457,45 +456,45 @@ describe(":substitute, 'inccommand' preserves undo", function()
     --  |/
     --  1 - 2 - 3
 
-    feed("2u")
+    feed('2u')
     for _, s in pairs(substring) do
       feed(s)
       poke_eventloop()
     end
-    feed("<esc>")
+    feed('<esc>')
     expect([[
       1]])
-    feed("g-")
+    feed('g-')
     expect([[
       ]])
-    feed("g+")
+    feed('g+')
     expect([[
       1]])
-    feed("<c-r>")
+    feed('<c-r>')
     expect([[
       1
       A]])
 
-    feed("g-") -- go to b
-    feed("2u")
+    feed('g-') -- go to b
+    feed('2u')
     for _, s in pairs(substring) do
       feed(s)
       poke_eventloop()
     end
-    feed("<esc>")
-    feed("<c-r>")
+    feed('<esc>')
+    feed('<c-r>')
     expect([[
       1
       a]])
 
-    feed("g-") -- go to 3
-    feed("2u")
+    feed('g-') -- go to 3
+    feed('2u')
     for _, s in pairs(substring) do
       feed(s)
       poke_eventloop()
     end
-    feed("<esc>")
-    feed("<c-r>")
+    feed('<esc>')
+    feed('<c-r>')
     expect([[
       1
       2]])
@@ -503,37 +502,37 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
   before_each(clear)
 
-  it("at a non-leaf of the undo tree", function()
-   for _, case in pairs(cases) do
-     for _, str in pairs(substrings) do
-       for _, redoable in pairs({true}) do
-         test_sub(str, case, redoable)
-       end
-     end
-   end
-  end)
-
-  it("at a leaf of the undo tree", function()
+  it('at a non-leaf of the undo tree', function()
     for _, case in pairs(cases) do
       for _, str in pairs(substrings) do
-        for _, redoable in pairs({false}) do
+        for _, redoable in pairs({ true }) do
           test_sub(str, case, redoable)
         end
       end
     end
   end)
 
-  it("when interrupting substitution", function()
+  it('at a leaf of the undo tree', function()
     for _, case in pairs(cases) do
       for _, str in pairs(substrings) do
-        for _, redoable in pairs({true,false}) do
+        for _, redoable in pairs({ false }) do
+          test_sub(str, case, redoable)
+        end
+      end
+    end
+  end)
+
+  it('when interrupting substitution', function()
+    for _, case in pairs(cases) do
+      for _, str in pairs(substrings) do
+        for _, redoable in pairs({ true, false }) do
           test_notsub(str, case, redoable)
         end
       end
     end
   end)
 
-  it("in a complex undo scenario", function()
+  it('in a complex undo scenario', function()
     for _, case in pairs(cases) do
       for _, str in pairs(substrings) do
         test_threetree(str, case)
@@ -545,32 +544,32 @@ describe(":substitute, 'inccommand' preserves undo", function()
     for _, case in pairs(cases) do
       clear()
       common_setup(nil, case, default_text)
-      command("set undolevels=0")
+      command('set undolevels=0')
 
-      feed("1G0")
-      insert("X")
-      feed(":%s/tw/MO/")
+      feed('1G0')
+      insert('X')
+      feed(':%s/tw/MO/')
       poke_eventloop()
-      feed("<esc>")
-      command("undo")
+      feed('<esc>')
+      command('undo')
       expect(default_text)
-      command("undo")
-      expect(default_text:gsub("Inc", "XInc"))
-      command("undo")
+      command('undo')
+      expect(default_text:gsub('Inc', 'XInc'))
+      command('undo')
 
-      feed(":%s/tw/MO/g")
+      feed(':%s/tw/MO/g')
       poke_eventloop()
-      feed("<CR>")
-      expect(default_text:gsub("tw", "MO"))
-      command("undo")
+      feed('<CR>')
+      expect(default_text:gsub('tw', 'MO'))
+      command('undo')
       expect(default_text)
-      command("undo")
-      expect(default_text:gsub("tw", "MO"))
+      command('undo')
+      expect(default_text:gsub('tw', 'MO'))
     end
   end)
 
   it('with undolevels=1', function()
-    local screen = Screen.new(20,10)
+    local screen = Screen.new(20, 10)
 
     for _, case in pairs(cases) do
       clear()
@@ -582,35 +581,35 @@ describe(":substitute, 'inccommand' preserves undo", function()
         {15:~                   }|*6
                             |
       ]])
-      command("set undolevels=1")
+      command('set undolevels=1')
 
-      feed("1G0")
-      insert("X")
-      feed("IY<esc>")
-      feed(":%s/tw/MO/")
+      feed('1G0')
+      insert('X')
+      feed('IY<esc>')
+      feed(':%s/tw/MO/')
       poke_eventloop()
-      feed("<esc>")
-      feed("u")
-      expect(default_text:gsub("Inc", "XInc"))
-      feed("u")
+      feed('<esc>')
+      feed('u')
+      expect(default_text:gsub('Inc', 'XInc'))
+      feed('u')
       expect(default_text)
 
-      feed(":%s/tw/MO/g")
+      feed(':%s/tw/MO/g')
       poke_eventloop()
-      feed("<enter>")
-      feed(":%s/MO/GO/g")
+      feed('<enter>')
+      feed(':%s/MO/GO/g')
       poke_eventloop()
-      feed("<enter>")
-      feed(":%s/GO/NO/g")
+      feed('<enter>')
+      feed(':%s/GO/NO/g')
       poke_eventloop()
-      feed("<enter>")
-      feed("u")
-      expect(default_text:gsub("tw", "GO"))
-      feed("u")
-      expect(default_text:gsub("tw", "MO"))
-      feed("u")
+      feed('<enter>')
+      feed('u')
+      expect(default_text:gsub('tw', 'GO'))
+      feed('u')
+      expect(default_text:gsub('tw', 'MO'))
+      feed('u')
 
-      if case == "split" then
+      if case == 'split' then
         screen:expect([[
           Inc substitution on |
           ^MOo lines           |
@@ -631,28 +630,28 @@ describe(":substitute, 'inccommand' preserves undo", function()
   end)
 
   it('with undolevels=2', function()
-    local screen = Screen.new(20,10)
+    local screen = Screen.new(20, 10)
 
     for _, case in pairs(cases) do
       clear()
       common_setup(screen, case, default_text)
-      command("set undolevels=2")
+      command('set undolevels=2')
 
-      feed("2GAx<esc>")
-      feed("Ay<esc>")
-      feed("Az<esc>")
-      feed(":%s/tw/AR")
+      feed('2GAx<esc>')
+      feed('Ay<esc>')
+      feed('Az<esc>')
+      feed(':%s/tw/AR')
       poke_eventloop()
-      feed("<esc>")
-      feed("u")
-      expect(default_text:gsub("lines", "linesxy"))
-      feed("u")
-      expect(default_text:gsub("lines", "linesx"))
-      feed("u")
+      feed('<esc>')
+      feed('u')
+      expect(default_text:gsub('lines', 'linesxy'))
+      feed('u')
+      expect(default_text:gsub('lines', 'linesx'))
+      feed('u')
       expect(default_text)
-      feed("u")
+      feed('u')
 
-      if case == "split" then
+      if case == 'split' then
         screen:expect([[
           Inc substitution on |
           two line^s           |
@@ -670,27 +669,27 @@ describe(":substitute, 'inccommand' preserves undo", function()
         ]])
       end
 
-      feed(":%s/tw/MO/g")
+      feed(':%s/tw/MO/g')
       poke_eventloop()
-      feed("<enter>")
-      feed(":%s/MO/GO/g")
+      feed('<enter>')
+      feed(':%s/MO/GO/g')
       poke_eventloop()
-      feed("<enter>")
-      feed(":%s/GO/NO/g")
+      feed('<enter>')
+      feed(':%s/GO/NO/g')
       poke_eventloop()
-      feed("<enter>")
-      feed(":%s/NO/LO/g")
+      feed('<enter>')
+      feed(':%s/NO/LO/g')
       poke_eventloop()
-      feed("<enter>")
-      feed("u")
-      expect(default_text:gsub("tw", "NO"))
-      feed("u")
-      expect(default_text:gsub("tw", "GO"))
-      feed("u")
-      expect(default_text:gsub("tw", "MO"))
-      feed("u")
+      feed('<enter>')
+      feed('u')
+      expect(default_text:gsub('tw', 'NO'))
+      feed('u')
+      expect(default_text:gsub('tw', 'GO'))
+      feed('u')
+      expect(default_text:gsub('tw', 'MO'))
+      feed('u')
 
-      if case == "split" then
+      if case == 'split' then
         screen:expect([[
           Inc substitution on |
           ^MOo lines           |
@@ -711,18 +710,18 @@ describe(":substitute, 'inccommand' preserves undo", function()
   end)
 
   it('with undolevels=-1', function()
-    local screen = Screen.new(20,10)
+    local screen = Screen.new(20, 10)
 
     for _, case in pairs(cases) do
       clear()
       common_setup(screen, case, default_text)
 
-      command("set undolevels=-1")
-      feed(":%s/tw/MO/g")
+      command('set undolevels=-1')
+      feed(':%s/tw/MO/g')
       poke_eventloop()
-      feed("<enter>")
-      feed("u")
-      if case == "split" then
+      feed('<enter>')
+      feed('u')
+      if case == 'split' then
         screen:expect([[
           Inc substitution on |
           ^MOo lines           |
@@ -744,13 +743,13 @@ describe(":substitute, 'inccommand' preserves undo", function()
       clear()
       common_setup(screen, case, default_text)
 
-      command("set undolevels=-1")
-      feed("1G")
-      feed("IL<esc>")
-      feed(":%s/tw/MO/g")
+      command('set undolevels=-1')
+      feed('1G')
+      feed('IL<esc>')
+      feed(':%s/tw/MO/g')
       poke_eventloop()
-      feed("<esc>")
-      feed("u")
+      feed('<esc>')
+      feed('u')
 
       screen:expect([[
         ^LInc substitution on|
@@ -761,21 +760,20 @@ describe(":substitute, 'inccommand' preserves undo", function()
       ]])
     end
   end)
-
 end)
 
-describe(":substitute, inccommand=split", function()
+describe(':substitute, inccommand=split', function()
   local screen
 
   before_each(function()
     clear()
-    screen = Screen.new(30,15)
-    common_setup(screen, "split", default_text .. default_text)
+    screen = Screen.new(30, 15)
+    common_setup(screen, 'split', default_text .. default_text)
   end)
 
   it("preserves 'modified' buffer flag", function()
-    command("set nomodified")
-    feed(":%s/tw")
+    command('set nomodified')
+    feed(':%s/tw')
     screen:expect([[
       Inc substitution on           |
       {12:tw}o lines                     |
@@ -789,22 +787,22 @@ describe(":substitute, inccommand=split", function()
       {10:[Preview]                     }|
       :%s/tw^                        |
     ]])
-    feed([[<C-\><C-N>]])  -- Cancel the :substitute command.
-    eq(0, eval("&modified"))
+    feed([[<C-\><C-N>]]) -- Cancel the :substitute command.
+    eq(0, eval('&modified'))
   end)
 
-  it("shows preview when cmd modifiers are present", function()
+  it('shows preview when cmd modifiers are present', function()
     -- one modifier
     feed(':keeppatterns %s/tw/to')
-    screen:expect{any=[[{12:to}o lines]]}
+    screen:expect { any = [[{12:to}o lines]] }
     feed('<Esc>')
-    screen:expect{any=[[two lines]]}
+    screen:expect { any = [[two lines]] }
 
     -- multiple modifiers
     feed(':keeppatterns silent %s/tw/to')
-    screen:expect{any=[[{12:to}o lines]]}
+    screen:expect { any = [[{12:to}o lines]] }
     feed('<Esc>')
-    screen:expect{any=[[two lines]]}
+    screen:expect { any = [[two lines]] }
 
     -- non-modifier prefix
     feed(':silent tabedit %s/tw/to')
@@ -821,12 +819,12 @@ describe(":substitute, inccommand=split", function()
 
     -- leading colons
     feed(':::%s/tw/to')
-    screen:expect{any=[[{12:to}o lines]]}
+    screen:expect { any = [[{12:to}o lines]] }
     feed('<Esc>')
-    screen:expect{any=[[two lines]]}
+    screen:expect { any = [[two lines]] }
   end)
 
-  it("ignores new-window modifiers when splitting the preview window", function()
+  it('ignores new-window modifiers when splitting the preview window', function()
     -- one modifier
     feed(':topleft %s/tw/to')
     screen:expect([[
@@ -843,7 +841,7 @@ describe(":substitute, inccommand=split", function()
       :topleft %s/tw/to^             |
     ]])
     feed('<Esc>')
-    screen:expect{any=[[two lines]]}
+    screen:expect { any = [[two lines]] }
 
     -- multiple modifiers
     feed(':topleft vert %s/tw/to')
@@ -861,11 +859,11 @@ describe(":substitute, inccommand=split", function()
       :topleft vert %s/tw/to^        |
     ]])
     feed('<Esc>')
-    screen:expect{any=[[two lines]]}
+    screen:expect { any = [[two lines]] }
   end)
 
   it('shows split window when typing the pattern', function()
-    feed(":%s/tw")
+    feed(':%s/tw')
     screen:expect([[
       Inc substitution on           |
       {12:tw}o lines                     |
@@ -882,7 +880,7 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it('shows preview with empty replacement', function()
-    feed(":%s/tw/")
+    feed(':%s/tw/')
     screen:expect([[
       Inc substitution on           |
       o lines                       |
@@ -897,7 +895,7 @@ describe(":substitute, inccommand=split", function()
       :%s/tw/^                       |
     ]])
 
-    feed("x")
+    feed('x')
     screen:expect([[
       Inc substitution on           |
       {12:x}o lines                      |
@@ -912,7 +910,7 @@ describe(":substitute, inccommand=split", function()
       :%s/tw/x^                      |
     ]])
 
-    feed("<bs>")
+    feed('<bs>')
     screen:expect([[
       Inc substitution on           |
       o lines                       |
@@ -926,11 +924,10 @@ describe(":substitute, inccommand=split", function()
       {10:[Preview]                     }|
       :%s/tw/^                       |
     ]])
-
   end)
 
   it('shows split window when typing replacement', function()
-    feed(":%s/tw/XX")
+    feed(':%s/tw/XX')
     screen:expect([[
       Inc substitution on           |
       {12:XX}o lines                     |
@@ -947,8 +944,8 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it('does not show split window for :s/', function()
-    feed("2gg")
-    feed(":s/tw")
+    feed('2gg')
+    feed(':s/tw')
     screen:expect([[
       Inc substitution on           |
       {12:tw}o lines                     |
@@ -961,8 +958,8 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it("'hlsearch' is active, 'cursorline' is not", function()
-    command("set hlsearch cursorline")
-    feed("gg")
+    command('set hlsearch cursorline')
+    feed('gg')
 
     -- Assert that 'cursorline' is active.
     screen:expect([[
@@ -975,7 +972,7 @@ describe(":substitute, inccommand=split", function()
                                     |
     ]])
 
-    feed(":%s/tw")
+    feed(':%s/tw')
     -- 'cursorline' is NOT active during preview.
     screen:expect([[
       Inc substitution on           |
@@ -1045,9 +1042,9 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it('actually replaces text', function()
-    feed(":%s/tw/XX/g")
+    feed(':%s/tw/XX/g')
     poke_eventloop()
-    feed("<Enter>")
+    feed('<Enter>')
 
     screen:expect([[
       Inc substitution on           |
@@ -1061,12 +1058,12 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it('shows correct line numbers with many lines', function()
-    feed("gg")
-    feed("2yy")
-    feed("2000p")
-    command("1,1000s/tw/BB/g")
+    feed('gg')
+    feed('2yy')
+    feed('2000p')
+    command('1,1000s/tw/BB/g')
 
-    feed(":%s/tw/X")
+    feed(':%s/tw/X')
     screen:expect([[
       BBo lines                     |
       Inc substitution on           |
@@ -1089,26 +1086,26 @@ describe(":substitute, inccommand=split", function()
   it('does not spam the buffer numbers', function()
     -- The preview buffer is re-used (unless user deleted it), so buffer numbers
     -- will not increase on each keystroke.
-    feed(":%s/tw/Xo/g")
+    feed(':%s/tw/Xo/g')
     -- Delete and re-type the g a few times.
-    feed("<BS>")
+    feed('<BS>')
     poke_eventloop()
-    feed("g")
+    feed('g')
     poke_eventloop()
-    feed("<BS>")
+    feed('<BS>')
     poke_eventloop()
-    feed("g")
+    feed('g')
     poke_eventloop()
-    feed("<CR>")
+    feed('<CR>')
     poke_eventloop()
-    feed(":vs tmp<enter>")
+    feed(':vs tmp<enter>')
     eq(3, funcs.bufnr('$'))
   end)
 
   it('works with the n flag', function()
-    feed(":%s/tw/Mix/n")
+    feed(':%s/tw/Mix/n')
     poke_eventloop()
-    feed("<Enter>")
+    feed('<Enter>')
     screen:expect([[
       Inc substitution on           |
       two lines                     |
@@ -1124,17 +1121,17 @@ describe(":substitute, inccommand=split", function()
     -- prevent redraws from 'incsearch'
     meths.set_option_value('incsearch', false, {})
     -- Assert that 'inccommand' is ENABLED initially.
-    eq("split", eval("&inccommand"))
+    eq('split', eval('&inccommand'))
     -- Set 'redrawtime' to minimal value, to ensure timeout is triggered.
-    command("set redrawtime=1 nowrap")
+    command('set redrawtime=1 nowrap')
     -- Load a big file.
-    command("silent edit! test/functional/fixtures/bigfile_oneline.txt")
+    command('silent edit! test/functional/fixtures/bigfile_oneline.txt')
     -- Start :substitute with a slow pattern.
     feed([[:%s/B.*N/x]])
     poke_eventloop()
 
     -- Assert that 'inccommand' is DISABLED in cmdline mode.
-    eq("", eval("&inccommand"))
+    eq('', eval('&inccommand'))
     -- Assert that preview cleared (or never manifested).
     screen:expect([[
       0000;<control>;Cc;0;BN;;;;;N;N|
@@ -1156,7 +1153,7 @@ describe(":substitute, inccommand=split", function()
 
     -- Assert that 'inccommand' is again ENABLED after leaving cmdline mode.
     feed([[<C-\><C-N>]])
-    eq("split", eval("&inccommand"))
+    eq('split', eval('&inccommand'))
   end)
 
   it("deactivates if 'foldexpr' is slow #9557", function()
@@ -1192,12 +1189,12 @@ describe(":substitute, inccommand=split", function()
     end)
   end)
 
-  it("clears preview if non-previewable command is edited #5585", function()
+  it('clears preview if non-previewable command is edited #5585', function()
     feed('gg')
     -- Put a non-previewable command in history.
     feed(":echo 'foo'<CR>")
     -- Start an incomplete :substitute command.
-    feed(":1,2s/t/X")
+    feed(':1,2s/t/X')
 
     screen:expect([[
       Inc subs{12:X}itution on           |
@@ -1214,7 +1211,7 @@ describe(":substitute, inccommand=split", function()
     ]])
 
     -- Select the previous command.
-    feed("<C-P>")
+    feed('<C-P>')
     -- Assert that preview was cleared.
     screen:expect([[
       Inc substitution on           |
@@ -1229,7 +1226,7 @@ describe(":substitute, inccommand=split", function()
 
   it([[preview changes correctly with c_CTRL-R_= and c_CTRL-\_e]], function()
     feed('gg')
-    feed(":1,2s/t/X")
+    feed(':1,2s/t/X')
     screen:expect([[
       Inc subs{12:X}itution on           |
       {12:X}wo lines                     |
@@ -1304,23 +1301,22 @@ describe(":substitute, inccommand=split", function()
       :echo^                         |
     ]])
   end)
-
 end)
 
-describe("inccommand=nosplit", function()
+describe('inccommand=nosplit', function()
   local screen
 
   before_each(function()
     clear()
-    screen = Screen.new(20,10)
-    common_setup(screen, "nosplit", default_text .. default_text)
+    screen = Screen.new(20, 10)
+    common_setup(screen, 'nosplit', default_text .. default_text)
   end)
 
-  it("works with :smagic, :snomagic", function()
-    command("set hlsearch")
-    insert("Line *.3.* here")
+  it('works with :smagic, :snomagic', function()
+    command('set hlsearch')
+    insert('Line *.3.* here')
 
-    feed(":%smagic/3.*/X")    -- start :smagic command
+    feed(':%smagic/3.*/X') -- start :smagic command
     screen:expect([[
       Inc substitution on |
       two lines           |
@@ -1331,8 +1327,8 @@ describe("inccommand=nosplit", function()
       :%smagic/3.*/X^      |
     ]])
 
-    feed([[<C-\><C-N>]])      -- cancel
-    feed(":%snomagic/3.*/X")  -- start :snomagic command
+    feed([[<C-\><C-N>]]) -- cancel
+    feed(':%snomagic/3.*/X') -- start :snomagic command
     screen:expect([[
       Inc substitution on |
       two lines           |
@@ -1344,18 +1340,18 @@ describe("inccommand=nosplit", function()
     ]])
   end)
 
-  it("shows preview when cmd modifiers are present", function()
+  it('shows preview when cmd modifiers are present', function()
     -- one modifier
     feed(':keeppatterns %s/tw/to')
-    screen:expect{any=[[{12:to}o lines]]}
+    screen:expect { any = [[{12:to}o lines]] }
     feed('<Esc>')
-    screen:expect{any=[[two lines]]}
+    screen:expect { any = [[two lines]] }
 
     -- multiple modifiers
     feed(':keeppatterns silent %s/tw/to')
-    screen:expect{any=[[{12:to}o lines]]}
+    screen:expect { any = [[{12:to}o lines]] }
     feed('<Esc>')
-    screen:expect{any=[[two lines]]}
+    screen:expect { any = [[two lines]] }
 
     -- non-modifier prefix
     feed(':silent tabedit %s/tw/to')
@@ -1372,14 +1368,14 @@ describe("inccommand=nosplit", function()
     ]])
   end)
 
-  it("does not show window after toggling :set inccommand", function()
-    feed(":%s/tw/OKOK")
-    feed("<Esc>")
-    command("set icm=split")
-    feed(":%s/tw/OKOK")
-    feed("<Esc>")
-    command("set icm=nosplit")
-    feed(":%s/tw/OKOK")
+  it('does not show window after toggling :set inccommand', function()
+    feed(':%s/tw/OKOK')
+    feed('<Esc>')
+    command('set icm=split')
+    feed(':%s/tw/OKOK')
+    feed('<Esc>')
+    command('set icm=nosplit')
+    feed(':%s/tw/OKOK')
     poke_eventloop()
     screen:expect([[
       Inc substitution on |
@@ -1393,9 +1389,9 @@ describe("inccommand=nosplit", function()
   end)
 
   it('never shows preview buffer', function()
-    command("set hlsearch")
+    command('set hlsearch')
 
-    feed(":%s/tw")
+    feed(':%s/tw')
     screen:expect([[
       Inc substitution on |
       {12:tw}o lines           |
@@ -1406,7 +1402,7 @@ describe("inccommand=nosplit", function()
       :%s/tw^              |
     ]])
 
-    feed("/BM")
+    feed('/BM')
     screen:expect([[
       Inc substitution on |
       {12:BM}o lines           |
@@ -1417,7 +1413,7 @@ describe("inccommand=nosplit", function()
       :%s/tw/BM^           |
     ]])
 
-    feed("/")
+    feed('/')
     screen:expect([[
       Inc substitution on |
       {12:BM}o lines           |
@@ -1428,7 +1424,7 @@ describe("inccommand=nosplit", function()
       :%s/tw/BM/^          |
     ]])
 
-    feed("<enter>")
+    feed('<enter>')
     screen:expect([[
       Inc substitution on |
       BMo lines           |
@@ -1440,11 +1436,11 @@ describe("inccommand=nosplit", function()
     ]])
   end)
 
-  it("clears preview if non-previewable command is edited", function()
+  it('clears preview if non-previewable command is edited', function()
     -- Put a non-previewable command in history.
     feed(":echo 'foo'<CR>")
     -- Start an incomplete :substitute command.
-    feed(":1,2s/t/X")
+    feed(':1,2s/t/X')
 
     screen:expect([[
       Inc subs{12:X}itution on |
@@ -1457,7 +1453,7 @@ describe("inccommand=nosplit", function()
     ]])
 
     -- Select the previous command.
-    feed("<C-P>")
+    feed('<C-P>')
     -- Assert that preview was cleared.
     screen:expect([[
       Inc substitution on |
@@ -1470,7 +1466,7 @@ describe("inccommand=nosplit", function()
     ]])
   end)
 
-  it("does not execute trailing bar-separated commands #7494", function()
+  it('does not execute trailing bar-separated commands #7494', function()
     feed(':%s/two/three/g|q!')
     screen:expect([[
       Inc substitution on |
@@ -1484,7 +1480,7 @@ describe("inccommand=nosplit", function()
     eq(eval('v:null'), eval('v:exiting'))
   end)
 
-  it("does not break bar-separated command #8796", function()
+  it('does not break bar-separated command #8796', function()
     source([[
       function! F()
         if v:false | return | endif
@@ -1492,7 +1488,7 @@ describe("inccommand=nosplit", function()
     ]])
     command('call timer_start(10, {-> F()}, {"repeat":-1})')
     feed(':%s/')
-    sleep(20)  -- Allow some timer activity.
+    sleep(20) -- Allow some timer activity.
     screen:expect([[
       Inc substitution on |
       two lines           |
@@ -1507,21 +1503,21 @@ end)
 
 describe(":substitute, 'inccommand' with a failing expression", function()
   local screen
-  local cases = { "", "split", "nosplit" }
+  local cases = { '', 'split', 'nosplit' }
 
   local function refresh(case)
     clear()
-    screen = Screen.new(20,10)
+    screen = Screen.new(20, 10)
     common_setup(screen, case, default_text)
   end
 
   it('in the pattern does nothing', function()
     for _, case in pairs(cases) do
       refresh(case)
-      command("set inccommand=" .. case)
-      feed(":silent! %s/tw\\(/LARD/")
+      command('set inccommand=' .. case)
+      feed(':silent! %s/tw\\(/LARD/')
       poke_eventloop()
-      feed("<enter>")
+      feed('<enter>')
       expect(default_text)
     end
   end)
@@ -1529,15 +1525,15 @@ describe(":substitute, 'inccommand' with a failing expression", function()
   it('in the replacement deletes the matches', function()
     for _, case in pairs(cases) do
       refresh(case)
-      local replacements = { "\\='LARD", "\\=xx_novar__xx" }
+      local replacements = { "\\='LARD", '\\=xx_novar__xx' }
 
       for _, repl in pairs(replacements) do
-        command("set inccommand=" .. case)
-        feed(":silent! %s/tw/" .. repl .. "/")
+        command('set inccommand=' .. case)
+        feed(':silent! %s/tw/' .. repl .. '/')
         poke_eventloop()
-        feed("<enter>")
-        expect(default_text:gsub("tw", ""))
-        command("undo")
+        feed('<enter>')
+        expect(default_text:gsub('tw', ''))
+        command('undo')
       end
     end
   end)
@@ -1565,27 +1561,26 @@ describe(":substitute, 'inccommand' with a failing expression", function()
       ]])
     end
   end)
-
 end)
 
 describe("'inccommand' and :cnoremap", function()
-  local cases = { "",  "split", "nosplit" }
+  local cases = { '', 'split', 'nosplit' }
   local screen
 
   local function refresh(case, visual)
     clear()
-    screen = visual and Screen.new(80,10) or nil
+    screen = visual and Screen.new(80, 10) or nil
     common_setup(screen, case, default_text)
   end
 
   it('work with remapped characters', function()
     for _, case in pairs(cases) do
       refresh(case)
-      local cmd = "%s/lines/LINES/g"
+      local cmd = '%s/lines/LINES/g'
 
       for i = 1, string.len(cmd) do
         local c = string.sub(cmd, i, i)
-        command("cnoremap ".. c .. " " .. c)
+        command('cnoremap ' .. c .. ' ' .. c)
       end
 
       feed(':' .. cmd)
@@ -1595,58 +1590,58 @@ describe("'inccommand' and :cnoremap", function()
         Inc substitution on
         two LINES
         ]])
-      end
+    end
   end)
 
   it('work when mappings move the cursor', function()
     for _, case in pairs(cases) do
       refresh(case)
-      command("cnoremap ,S LINES/<left><left><left><left><left><left>")
+      command('cnoremap ,S LINES/<left><left><left><left><left><left>')
 
-      feed(":%s/lines/")
+      feed(':%s/lines/')
       poke_eventloop()
-      feed(",S")
+      feed(',S')
       poke_eventloop()
-      feed("or three <enter>")
+      feed('or three <enter>')
       poke_eventloop()
       expect([[
         Inc substitution on
         two or three LINES
         ]])
 
-      command("cnoremap ;S /X/<left><left><left>")
-      feed(":%s/")
+      command('cnoremap ;S /X/<left><left><left>')
+      feed(':%s/')
       poke_eventloop()
-      feed(";S")
+      feed(';S')
       poke_eventloop()
-      feed("I<enter>")
+      feed('I<enter>')
       expect([[
         Xnc substitution on
         two or three LXNES
         ]])
 
-      command("cnoremap ,T //Y/<left><left><left>")
-      feed(":%s")
+      command('cnoremap ,T //Y/<left><left><left>')
+      feed(':%s')
       poke_eventloop()
-      feed(",T")
+      feed(',T')
       poke_eventloop()
-      feed("X<enter>")
+      feed('X<enter>')
       expect([[
         Ync substitution on
         two or three LYNES
         ]])
 
-      command("cnoremap ;T s//Z/<left><left><left>")
-      feed(":%")
+      command('cnoremap ;T s//Z/<left><left><left>')
+      feed(':%')
       poke_eventloop()
-      feed(";T")
+      feed(';T')
       poke_eventloop()
-      feed("Y<enter>")
+      feed('Y<enter>')
       expect([[
         Znc substitution on
         two or three LZNES
         ]])
-      end
+    end
   end)
 
   it('still works with a broken mapping', function()
@@ -1654,8 +1649,8 @@ describe("'inccommand' and :cnoremap", function()
       refresh(case, true)
       command("cnoremap <expr> x execute('bwipeout!')[-1].'x'")
 
-      feed(":%s/tw/tox<enter>")
-      screen:expect{any=[[{14:^E565:]]}
+      feed(':%s/tw/tox<enter>')
+      screen:expect { any = [[{14:^E565:]] }
       feed('<c-c>')
 
       -- error thrown b/c of the mapping
@@ -1672,10 +1667,10 @@ describe("'inccommand' and :cnoremap", function()
       refresh(case)
       command("cnoremap <expr> x cursor(1, 1)[-1].'x'")
 
-      feed(":%s/tw/tox")
+      feed(':%s/tw/tox')
       poke_eventloop()
-      feed("/g<enter>")
-      expect(default_text:gsub("tw", "tox"))
+      feed('/g<enter>')
+      expect(default_text:gsub('tw', 'tox'))
     end
   end)
 
@@ -1684,10 +1679,10 @@ describe("'inccommand' and :cnoremap", function()
       refresh(case)
       command("cnoremap <expr> x execute('set inccommand=')[-1]")
 
-      feed(":%s/tw/tox")
+      feed(':%s/tw/tox')
       poke_eventloop()
-      feed("a/g<enter>")
-      expect(default_text:gsub("tw", "toa"))
+      feed('a/g<enter>')
+      expect(default_text:gsub('tw', 'toa'))
     end
   end)
 
@@ -1697,13 +1692,12 @@ describe("'inccommand' and :cnoremap", function()
       source([[cnoremap x <C-\>eextend(g:, {'fo': getcmdline()})
       \.fo<CR><C-c>:new<CR>:bw!<CR>:<C-r>=remove(g:, 'fo')<CR>x]])
 
-      feed(":%s/tw/tox")
+      feed(':%s/tw/tox')
       poke_eventloop()
-      feed("/<enter>")
-      expect(default_text:gsub("tw", "tox"))
+      feed('/<enter>')
+      expect(default_text:gsub('tw', 'tox'))
     end
   end)
-
 end)
 
 describe("'inccommand' autocommands", function()
@@ -1744,9 +1738,9 @@ describe("'inccommand' autocommands", function()
   }
 
   local function bufferlist(t)
-    local s = ""
+    local s = ''
     for _, buffer in pairs(t) do
-      s = s .. ", " .. tostring(buffer)
+      s = s .. ', ' .. tostring(buffer)
     end
     return s
   end
@@ -1758,12 +1752,12 @@ describe("'inccommand' autocommands", function()
   end
 
   local function register_autocmd(event)
-    meths.set_var(event .. "_fired", {})
-    command("autocmd " .. event .. " * call add(g:" .. event .. "_fired, expand('<abuf>'))")
+    meths.set_var(event .. '_fired', {})
+    command('autocmd ' .. event .. ' * call add(g:' .. event .. "_fired, expand('<abuf>'))")
   end
 
   it('are not fired when splitting', function()
-    common_setup(nil, "split", default_text)
+    common_setup(nil, 'split', default_text)
 
     local eventsObserved = {}
     for event, _ in pairs(eventsExpected) do
@@ -1771,44 +1765,47 @@ describe("'inccommand' autocommands", function()
       register_autocmd(event)
     end
 
-    feed(":%s/tw")
+    feed(':%s/tw')
 
     for event, _ in pairs(eventsExpected) do
-      eventsObserved[event].open = meths.get_var(event .. "_fired")
-      meths.set_var(event .. "_fired", {})
+      eventsObserved[event].open = meths.get_var(event .. '_fired')
+      meths.set_var(event .. '_fired', {})
     end
 
-    feed("/<enter>")
+    feed('/<enter>')
 
     for event, _ in pairs(eventsExpected) do
-        eventsObserved[event].close = meths.get_var(event .. "_fired")
+      eventsObserved[event].close = meths.get_var(event .. '_fired')
     end
 
     for event, _ in pairs(eventsExpected) do
-      eq(event .. bufferlist(eventsExpected[event].open),
-         event .. bufferlist(eventsObserved[event].open))
-      eq(event .. bufferlist(eventsExpected[event].close),
-         event .. bufferlist(eventsObserved[event].close))
+      eq(
+        event .. bufferlist(eventsExpected[event].open),
+        event .. bufferlist(eventsObserved[event].open)
+      )
+      eq(
+        event .. bufferlist(eventsExpected[event].close),
+        event .. bufferlist(eventsObserved[event].close)
+      )
     end
   end)
-
 end)
 
 describe("'inccommand' split windows", function()
   local screen
   local function refresh()
     clear()
-    screen = Screen.new(40,30)
-    common_setup(screen, "split", default_text)
+    screen = Screen.new(40, 30)
+    common_setup(screen, 'split', default_text)
   end
 
   it('work after more splits', function()
     refresh()
 
-    feed("gg")
-    command("vsplit")
-    command("split")
-    feed(":%s/tw")
+    feed('gg')
+    command('vsplit')
+    command('split')
+    feed(':%s/tw')
     screen:expect([[
       Inc substitution on │Inc substitution on|
       {12:tw}o lines           │{12:tw}o lines          |
@@ -1826,12 +1823,12 @@ describe("'inccommand' split windows", function()
       :%s/tw^                                  |
     ]])
 
-    feed("<esc>")
-    command("only")
-    command("split")
-    command("vsplit")
+    feed('<esc>')
+    command('only')
+    command('split')
+    command('vsplit')
 
-    feed(":%s/tw")
+    feed(':%s/tw')
     screen:expect([[
       Inc substitution on │Inc substitution on|
       {12:tw}o lines           │{12:tw}o lines          |
@@ -1851,20 +1848,20 @@ describe("'inccommand' split windows", function()
   end)
 
   local settings = {
-    "splitbelow",
-    "splitright",
-    "noequalalways",
-    "equalalways eadirection=ver",
-    "equalalways eadirection=hor",
-    "equalalways eadirection=both",
+    'splitbelow',
+    'splitright',
+    'noequalalways',
+    'equalalways eadirection=ver',
+    'equalalways eadirection=hor',
+    'equalalways eadirection=both',
   }
 
-  it("are not affected by various settings", function()
+  it('are not affected by various settings', function()
     for _, setting in pairs(settings) do
       refresh()
-      command("set " .. setting)
+      command('set ' .. setting)
 
-      feed(":%s/tw")
+      feed(':%s/tw')
 
       screen:expect([[
         Inc substitution on                     |
@@ -1883,7 +1880,7 @@ describe("'inccommand' split windows", function()
   it("don't open if there's not enough room", function()
     refresh()
     screen:try_resize(40, 3)
-    feed("gg:%s/tw")
+    feed('gg:%s/tw')
     screen:expect([[
       Inc substitution on                     |
       {12:tw}o lines                               |
@@ -1897,43 +1894,43 @@ describe("'inccommand' with 'gdefault'", function()
     clear()
   end)
 
-  it("does not lock up #7244", function()
-    common_setup(nil, "nosplit", "{")
-    command("set gdefault")
-    feed(":s/{\\n")
-    eq({mode='c', blocking=false}, nvim("get_mode"))
-    feed("/A<Enter>")
-    expect("A")
-    eq({mode='n', blocking=false}, nvim("get_mode"))
+  it('does not lock up #7244', function()
+    common_setup(nil, 'nosplit', '{')
+    command('set gdefault')
+    feed(':s/{\\n')
+    eq({ mode = 'c', blocking = false }, nvim('get_mode'))
+    feed('/A<Enter>')
+    expect('A')
+    eq({ mode = 'n', blocking = false }, nvim('get_mode'))
   end)
 
-  it("with multiline text and range, does not lock up #7244", function()
-    common_setup(nil, "nosplit", "{\n\n{")
-    command("set gdefault")
-    feed(":%s/{\\n")
-    eq({mode='c', blocking=false}, nvim("get_mode"))
-    feed("/A<Enter>")
-    expect("A\nA")
-    eq({mode='n', blocking=false}, nvim("get_mode"))
+  it('with multiline text and range, does not lock up #7244', function()
+    common_setup(nil, 'nosplit', '{\n\n{')
+    command('set gdefault')
+    feed(':%s/{\\n')
+    eq({ mode = 'c', blocking = false }, nvim('get_mode'))
+    feed('/A<Enter>')
+    expect('A\nA')
+    eq({ mode = 'n', blocking = false }, nvim('get_mode'))
   end)
 
-  it("does not crash on zero-width matches #7485", function()
-    common_setup(nil, "split", default_text)
-    command("set gdefault")
-    feed("gg")
-    feed("Vj")
-    feed(":s/\\%V")
-    eq({mode='c', blocking=false}, nvim("get_mode"))
-    feed("<Esc>")
-    eq({mode='n', blocking=false}, nvim("get_mode"))
+  it('does not crash on zero-width matches #7485', function()
+    common_setup(nil, 'split', default_text)
+    command('set gdefault')
+    feed('gg')
+    feed('Vj')
+    feed(':s/\\%V')
+    eq({ mode = 'c', blocking = false }, nvim('get_mode'))
+    feed('<Esc>')
+    eq({ mode = 'n', blocking = false }, nvim('get_mode'))
   end)
 
-  it("removes highlights after abort for a zero-width match", function()
-    local screen = Screen.new(30,5)
-    common_setup(screen, "nosplit", default_text)
-    command("set gdefault")
+  it('removes highlights after abort for a zero-width match', function()
+    local screen = Screen.new(30, 5)
+    common_setup(screen, 'nosplit', default_text)
+    command('set gdefault')
 
-    feed(":%s/\\%1c/a/")
+    feed(':%s/\\%1c/a/')
     screen:expect([[
       {12:a}Inc substitution on          |
       {12:a}two lines                    |
@@ -1942,7 +1939,7 @@ describe("'inccommand' with 'gdefault'", function()
       :%s/\%1c/a/^                   |
     ]])
 
-    feed("<Esc>")
+    feed('<Esc>')
     screen:expect([[
       Inc substitution on           |
       two lines                     |
@@ -1951,21 +1948,20 @@ describe("'inccommand' with 'gdefault'", function()
                                     |
     ]])
   end)
-
 end)
 
-describe(":substitute", function()
+describe(':substitute', function()
   local screen
   before_each(function()
     clear()
-    screen = Screen.new(30,15)
+    screen = Screen.new(30, 15)
   end)
 
-  it("inccommand=split, highlights multiline substitutions", function()
-    common_setup(screen, "split", multiline_text)
-    feed("gg")
+  it('inccommand=split, highlights multiline substitutions', function()
+    common_setup(screen, 'split', multiline_text)
+    feed('gg')
 
-    feed(":%s/2\\_.*X")
+    feed(':%s/2\\_.*X')
     screen:expect([[
       1 {12:2 3}                         |
       {12:A B C}                         |
@@ -1982,7 +1978,7 @@ describe(":substitute", function()
       :%s/2\_.*X^                    |
     ]])
 
-    feed("/MMM")
+    feed('/MMM')
     screen:expect([[
       1 {12:MMM} Y Z                     |
       7 8 9                         |
@@ -1995,7 +1991,7 @@ describe(":substitute", function()
       :%s/2\_.*X/MMM^                |
     ]])
 
-    feed("\\rK\\rLLL")
+    feed('\\rK\\rLLL')
     screen:expect([[
       1 {12:MMM}                         |
       {12:K}                             |
@@ -2012,11 +2008,11 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=nosplit, highlights multiline substitutions", function()
-    common_setup(screen, "nosplit", multiline_text)
-    feed("gg")
+  it('inccommand=nosplit, highlights multiline substitutions', function()
+    common_setup(screen, 'nosplit', multiline_text)
+    feed('gg')
 
-    feed(":%s/2\\_.*X/MMM")
+    feed(':%s/2\\_.*X/MMM')
     screen:expect([[
       1 {12:MMM} Y Z                     |
       7 8 9                         |
@@ -2025,7 +2021,7 @@ describe(":substitute", function()
       :%s/2\_.*X/MMM^                |
     ]])
 
-    feed("\\rK\\rLLL")
+    feed('\\rK\\rLLL')
     screen:expect([[
       1 {12:MMM}                         |
       {12:K}                             |
@@ -2037,12 +2033,12 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=split, highlights multiple matches on a line", function()
-    common_setup(screen, "split", multimatch_text)
-    command("set gdefault")
-    feed("gg")
+  it('inccommand=split, highlights multiple matches on a line', function()
+    common_setup(screen, 'split', multimatch_text)
+    command('set gdefault')
+    feed('gg')
 
-    feed(":%s/a/XLK")
+    feed(':%s/a/XLK')
     screen:expect([[
       {12:XLK} bdc e{12:XLK}e {12:XLK} fgl lzi{12:XLK} r|
       x                             |
@@ -2057,12 +2053,12 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=nosplit, highlights multiple matches on a line", function()
-    common_setup(screen, "nosplit", multimatch_text)
-    command("set gdefault")
-    feed("gg")
+  it('inccommand=nosplit, highlights multiple matches on a line', function()
+    common_setup(screen, 'nosplit', multimatch_text)
+    command('set gdefault')
+    feed('gg')
 
-    feed(":%s/a/XLK")
+    feed(':%s/a/XLK')
     screen:expect([[
       {12:XLK} bdc e{12:XLK}e {12:XLK} fgl lzi{12:XLK} r|
       x                             |
@@ -2072,11 +2068,11 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=split, with \\zs", function()
-    common_setup(screen, "split", multiline_text)
-    feed("gg")
+  it('inccommand=split, with \\zs', function()
+    common_setup(screen, 'split', multiline_text)
+    feed('gg')
 
-    feed(":%s/[0-9]\\n\\zs[A-Z]/OKO")
+    feed(':%s/[0-9]\\n\\zs[A-Z]/OKO')
     screen:expect([[
       {12:OKO} B C                       |
       4 5 6                         |
@@ -2094,11 +2090,11 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=nosplit, with \\zs", function()
-    common_setup(screen, "nosplit", multiline_text)
-    feed("gg")
+  it('inccommand=nosplit, with \\zs', function()
+    common_setup(screen, 'nosplit', multiline_text)
+    feed('gg')
 
-    feed(":%s/[0-9]\\n\\zs[A-Z]/OKO")
+    feed(':%s/[0-9]\\n\\zs[A-Z]/OKO')
     screen:expect([[
       1 2 3                         |
       {12:OKO} B C                       |
@@ -2111,10 +2107,10 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=split, substitutions of different length", function()
-    common_setup(screen, "split", "T T123 T2T TTT T090804\nx")
+  it('inccommand=split, substitutions of different length', function()
+    common_setup(screen, 'split', 'T T123 T2T TTT T090804\nx')
 
-    feed(":%s/T\\([0-9]\\+\\)/\\1\\1/g")
+    feed(':%s/T\\([0-9]\\+\\)/\\1\\1/g')
     screen:expect([[
       T {12:123123} {12:22}T TTT {12:090804090804} |
       x                             |
@@ -2128,10 +2124,10 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=nosplit, substitutions of different length", function()
-    common_setup(screen, "nosplit", "T T123 T2T TTT T090804\nx")
+  it('inccommand=nosplit, substitutions of different length', function()
+    common_setup(screen, 'nosplit', 'T T123 T2T TTT T090804\nx')
 
-    feed(":%s/T\\([0-9]\\+\\)/\\1\\1/g")
+    feed(':%s/T\\([0-9]\\+\\)/\\1\\1/g')
     screen:expect([[
       T {12:123123} {12:22}T TTT {12:090804090804} |
       x                             |
@@ -2140,7 +2136,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=split, contraction of lines", function()
+  it('inccommand=split, contraction of lines', function()
     local text = [[
       T T123 T T123 T2T TT T23423424
       x
@@ -2149,8 +2145,8 @@ describe(":substitute", function()
       alx
       ]]
 
-    common_setup(screen, "split", text)
-    feed(":%s/[QR]\\n")
+    common_setup(screen, 'split', text)
+    feed(':%s/[QR]\\n')
     screen:expect([[
       afa {12:Q}                         |
       adf la;lkd {12:R}                  |
@@ -2166,7 +2162,7 @@ describe(":substitute", function()
       :%s/[QR]\n^                    |
     ]])
 
-    feed("/KKK")
+    feed('/KKK')
     screen:expect([[
       T T123 T T123 T2T TT T23423424|
       x                             |
@@ -2181,7 +2177,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=nosplit, contraction of lines", function()
+  it('inccommand=nosplit, contraction of lines', function()
     local text = [[
       T T123 T T123 T2T TT T23423424
       x
@@ -2190,8 +2186,8 @@ describe(":substitute", function()
       alx
       ]]
 
-    common_setup(screen, "nosplit", text)
-    feed(":%s/[QR]\\n/KKK")
+    common_setup(screen, 'nosplit', text)
+    feed(':%s/[QR]\\n/KKK')
     screen:expect([[
       T T123 T T123 T2T TT T23423424|
       x                             |
@@ -2202,7 +2198,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=split, contraction of two subsequent NL chars", function()
+  it('inccommand=split, contraction of two subsequent NL chars', function()
     local text = [[
       AAA AA
 
@@ -2214,9 +2210,10 @@ describe(":substitute", function()
 
     -- This used to crash, but more than 20 highlight entries are required
     -- to reproduce it (so that the marktree has multiple nodes)
-    common_setup(screen, "split", string.rep(text,10))
-    feed(":%s/\\n\\n/<c-v><c-m>/g")
-    screen:expect{grid=[[
+    common_setup(screen, 'split', string.rep(text, 10))
+    feed(':%s/\\n\\n/<c-v><c-m>/g')
+    screen:expect {
+      grid = [[
       CCC CC                        |
       AAA AA                        |
       BBB BB                        |
@@ -2232,11 +2229,12 @@ describe(":substitute", function()
       | 7|{12: }AAA AA                   |
       {10:[Preview]                     }|
       :%s/\n\n/{17:^M}/g^                 |
-    ]]}
+    ]],
+    }
     assert_alive()
   end)
 
-  it("inccommand=nosplit, contraction of two subsequent NL chars", function()
+  it('inccommand=nosplit, contraction of two subsequent NL chars', function()
     local text = [[
       AAA AA
 
@@ -2246,9 +2244,10 @@ describe(":substitute", function()
 
 ]]
 
-    common_setup(screen, "nosplit", string.rep(text,10))
-    feed(":%s/\\n\\n/<c-v><c-m>/g")
-    screen:expect{grid=[[
+    common_setup(screen, 'nosplit', string.rep(text, 10))
+    feed(':%s/\\n\\n/<c-v><c-m>/g')
+    screen:expect {
+      grid = [[
       CCC CC                        |
       AAA AA                        |
       BBB BB                        |
@@ -2264,13 +2263,14 @@ describe(":substitute", function()
       CCC CC                        |
                                     |
       :%s/\n\n/{17:^M}/g^                 |
-    ]]}
+    ]],
+    }
     assert_alive()
   end)
 
-  it("inccommand=split, multibyte text", function()
-    common_setup(screen, "split", multibyte_text)
-    feed(":%s/£.*ѫ/X¥¥")
+  it('inccommand=split, multibyte text', function()
+    common_setup(screen, 'split', multibyte_text)
+    feed(':%s/£.*ѫ/X¥¥')
     screen:expect([[
        a{12:X¥¥}¥KOL                     |
       £ ¥  libm                     |
@@ -2286,7 +2286,7 @@ describe(":substitute", function()
       :%s/£.*ѫ/X¥¥^                  |
     ]])
 
-    feed("\\ra££   ¥")
+    feed('\\ra££   ¥')
     screen:expect([[
        a{12:X¥¥}                         |
       {12:a££   ¥}¥KOL                   |
@@ -2306,9 +2306,9 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=nosplit, multibyte text", function()
-    common_setup(screen, "nosplit", multibyte_text)
-    feed(":%s/£.*ѫ/X¥¥")
+  it('inccommand=nosplit, multibyte text', function()
+    common_setup(screen, 'nosplit', multibyte_text)
+    feed(':%s/£.*ѫ/X¥¥')
     screen:expect([[
        {12:X¥¥} PEPPERS                  |
       {12:X¥¥}                           |
@@ -2320,7 +2320,7 @@ describe(":substitute", function()
       :%s/£.*ѫ/X¥¥^                  |
     ]])
 
-    feed("\\ra££   ¥")
+    feed('\\ra££   ¥')
     screen:expect([[
        {12:X¥¥}                          |
       {12:a££   ¥} PEPPERS               |
@@ -2336,11 +2336,11 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=split, small cmdwinheight", function()
-    common_setup(screen, "split", long_multiline_text)
-    command("set cmdwinheight=2")
+  it('inccommand=split, small cmdwinheight', function()
+    common_setup(screen, 'split', long_multiline_text)
+    command('set cmdwinheight=2')
 
-    feed(":%s/[a-z]")
+    feed(':%s/[a-z]')
     screen:expect([[
       X Y Z                         |
       7 8 9                         |
@@ -2359,7 +2359,7 @@ describe(":substitute", function()
       :%s/[a-z]^                     |
     ]])
 
-    feed("/JLKR £")
+    feed('/JLKR £')
     screen:expect([[
       X Y Z                         |
       7 8 9                         |
@@ -2378,7 +2378,7 @@ describe(":substitute", function()
       :%s/[a-z]/JLKR £^              |
     ]])
 
-    feed("\\rѫ ab   \\rXXXX")
+    feed('\\rѫ ab   \\rXXXX')
     screen:expect([[
       7 8 9                         |
       K L M                         |
@@ -2398,11 +2398,11 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=split, large cmdwinheight", function()
-    common_setup(screen, "split", long_multiline_text)
-    command("set cmdwinheight=11")
+  it('inccommand=split, large cmdwinheight', function()
+    common_setup(screen, 'split', long_multiline_text)
+    command('set cmdwinheight=11')
 
-    feed(":%s/. .$")
+    feed(':%s/. .$')
     screen:expect([[
       t {12:œ ¥}                         |
       {11:[No Name] [+]                 }|
@@ -2421,7 +2421,7 @@ describe(":substitute", function()
       :%s/. .$^                      |
     ]])
 
-    feed("/ YYY")
+    feed('/ YYY')
     screen:expect([[
       t {12: YYY}                        |
       {11:[No Name] [+]                 }|
@@ -2440,7 +2440,7 @@ describe(":substitute", function()
       :%s/. .$/ YYY^                 |
     ]])
 
-    feed("\\r KKK")
+    feed('\\r KKK')
     screen:expect([[
       a {12: YYY}                        |
       {11:[No Name] [+]                 }|
@@ -2460,8 +2460,8 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=split, lookaround", function()
-    common_setup(screen, "split", "something\neverything\nsomeone")
+  it('inccommand=split, lookaround', function()
+    common_setup(screen, 'split', 'something\neverything\nsomeone')
     feed([[:%s/\(some\)\@<lt>=thing/one/]])
     screen:expect([[
       some{12:one}                       |
@@ -2475,7 +2475,7 @@ describe(":substitute", function()
       :%s/\(some\)\@<=thing/one/^    |
     ]])
 
-    feed("<C-c>")
+    feed('<C-c>')
     feed('gg')
     poke_eventloop()
     feed([[:%s/\(some\)\@<lt>!thing/one/]])
@@ -2524,7 +2524,7 @@ describe(":substitute", function()
 
   it("doesn't prompt to swap cmd range", function()
     screen = Screen.new(50, 8) -- wide to avoid hit-enter prompt
-    common_setup(screen, "split", default_text)
+    common_setup(screen, 'split', default_text)
     feed(':2,1s/tw/MO/g')
 
     -- substitution preview should have been made, without prompting
@@ -2565,19 +2565,19 @@ it(':substitute with inccommand during :terminal activity', function()
   end
   retry(2, 40000, function()
     clear()
-    local screen = Screen.new(30,15)
+    local screen = Screen.new(30, 15)
 
-    command("set cmdwinheight=3")
+    command('set cmdwinheight=3')
     feed(([[:terminal "%s" REP 5000 xxx<cr>]]):format(testprg('shell-test')))
     command('file term')
-    feed('G')  -- Follow :terminal output.
+    feed('G') -- Follow :terminal output.
     command('new')
     common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
     command('wincmd =')
 
     feed('gg')
     feed(':%s/foo/ZZZ')
-    sleep(20)  -- Allow some terminal activity.
+    sleep(20) -- Allow some terminal activity.
     poke_eventloop()
     screen:sleep(0)
     screen:expect_unchanged()
@@ -2586,7 +2586,7 @@ end)
 
 it(':substitute with inccommand, timer-induced :redraw #9777', function()
   clear()
-  local screen = Screen.new(30,12)
+  local screen = Screen.new(30, 12)
   command('set cmdwinheight=3')
   command('call timer_start(10, {-> execute("redraw")}, {"repeat":-1})')
   command('call timer_start(10, {-> execute("redrawstatus")}, {"repeat":-1})')
@@ -2594,7 +2594,7 @@ it(':substitute with inccommand, timer-induced :redraw #9777', function()
 
   feed('gg')
   feed(':%s/foo/ZZZ')
-  sleep(20)  -- Allow some timer activity.
+  sleep(20) -- Allow some timer activity.
   screen:expect([[
     {12:ZZZ} bar baz                   |
     bar baz fox                   |
@@ -2611,12 +2611,17 @@ end)
 
 it(':substitute with inccommand, allows :redraw before first separator is typed #18857', function()
   clear()
-  local screen = Screen.new(30,6)
+  local screen = Screen.new(30, 6)
   common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
   command('hi! link NormalFloat CursorLine')
   local float_buf = meths.create_buf(false, true)
   meths.open_win(float_buf, false, {
-    relative = 'editor', height = 1, width = 5, row = 3, col = 0, focusable = false,
+    relative = 'editor',
+    height = 1,
+    width = 5,
+    row = 3,
+    col = 0,
+    focusable = false,
   })
   feed(':')
   screen:expect([[
@@ -2636,7 +2641,7 @@ it(':substitute with inccommand, allows :redraw before first separator is typed 
     {15:~                             }|
     :%s^                           |
   ]])
-  meths.buf_set_lines(float_buf, 0, -1, true, {'foo'})
+  meths.buf_set_lines(float_buf, 0, -1, true, { 'foo' })
   command('redraw')
   screen:expect([[
     foo bar baz                   |
@@ -2720,7 +2725,7 @@ end)
 
 it(":substitute doesn't crash with inccommand, if undo is empty #12932", function()
   clear()
-  local screen = Screen.new(10,5)
+  local screen = Screen.new(10, 5)
   command('set undolevels=-1')
   common_setup(screen, 'split', 'test')
   feed(':%s/test')
@@ -2805,10 +2810,31 @@ end)
 
 it('long :%s/ with inccommand does not collapse cmdline', function()
   clear()
-  local screen = Screen.new(10,5)
+  local screen = Screen.new(10, 5)
   common_setup(screen, 'nosplit')
-  feed(':%s/AAAAAAA', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
-    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A')
+  feed(
+    ':%s/AAAAAAA',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A',
+    'A'
+  )
   screen:expect([[
                 |
     {11:            }|

@@ -138,29 +138,28 @@ before_each(function()
     endfunction
   ]])
   screen:set_default_attr_ids({
-    RBP1={background = Screen.colors.Red},
-    RBP2={background = Screen.colors.Yellow},
-    RBP3={background = Screen.colors.Green},
-    RBP4={background = Screen.colors.Blue},
-    EOB={bold = true, foreground = Screen.colors.Blue1},
-    ERR={foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-    SK={foreground = Screen.colors.Blue},
-    PE={bold = true, foreground = Screen.colors.SeaGreen4},
-    NUM={foreground = Screen.colors.Blue2},
-    NPAR={foreground = Screen.colors.Yellow},
-    SQ={foreground = Screen.colors.Blue3},
-    SB={foreground = Screen.colors.Blue4},
-    E={foreground = Screen.colors.Red, background = Screen.colors.Blue},
-    M={bold = true},
-    MSEP={bold = true, reverse = true};
+    RBP1 = { background = Screen.colors.Red },
+    RBP2 = { background = Screen.colors.Yellow },
+    RBP3 = { background = Screen.colors.Green },
+    RBP4 = { background = Screen.colors.Blue },
+    EOB = { bold = true, foreground = Screen.colors.Blue1 },
+    ERR = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+    SK = { foreground = Screen.colors.Blue },
+    PE = { bold = true, foreground = Screen.colors.SeaGreen4 },
+    NUM = { foreground = Screen.colors.Blue2 },
+    NPAR = { foreground = Screen.colors.Yellow },
+    SQ = { foreground = Screen.colors.Blue3 },
+    SB = { foreground = Screen.colors.Blue4 },
+    E = { foreground = Screen.colors.Red, background = Screen.colors.Blue },
+    M = { bold = true },
+    MSEP = { bold = true, reverse = true },
   })
 end)
 
 local function set_color_cb(funcname, callback_return, id)
   meths.set_var('id', id or '')
   if id and id ~= '' and funcs.exists('*' .. funcname .. 'N') then
-    command(('let g:Nvim_color_input%s = {cmdline -> %sN(%s, cmdline)}'):format(
-      id, funcname, id))
+    command(('let g:Nvim_color_input%s = {cmdline -> %sN(%s, cmdline)}'):format(id, funcname, id))
     if callback_return then
       meths.set_var('callback_return' .. id, callback_return)
     end
@@ -228,13 +227,16 @@ describe('Command-line coloring', function()
       :echo {RBP1:(}{RBP2:(}42{RBP2:)}^                             |
     ]])
     redraw_input()
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
                                               |
       {EOB:~                                       }|*6
       :echo {RBP1:(}{RBP2:(}42{RBP2:)}^                             |
-    ]], reset=true}
+    ]],
+      reset = true,
+    }
   end)
-  for _, func_part in ipairs({'', 'n', 'msg'}) do
+  for _, func_part in ipairs({ '', 'n', 'msg' }) do
     it('disables :echo' .. func_part .. ' messages', function()
       set_color_cb('Echo' .. func_part .. 'ing')
       start_prompt('echo')
@@ -245,11 +247,11 @@ describe('Command-line coloring', function()
       ]])
     end)
   end
-  it('does the right thing when hl start appears to split multibyte char',
-  function()
+  it('does the right thing when hl start appears to split multibyte char', function()
     set_color_cb('SplitMultibyteStart')
     start_prompt('echo "«')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
                                               |
       {EOB:~                                       }|*2
       {MSEP:                                        }|
@@ -257,7 +259,8 @@ describe('Command-line coloring', function()
       {ERR:E5405: Chunk 0 start 7 splits multibyte }|
       {ERR:character}                               |
       :echo "«^                                |
-    ]]}
+    ]],
+    }
     feed('»')
     screen:expect([[
                                               |
@@ -269,8 +272,7 @@ describe('Command-line coloring', function()
       :echo "«»^                               |
     ]])
   end)
-  it('does the right thing when hl end appears to split multibyte char',
-  function()
+  it('does the right thing when hl end appears to split multibyte char', function()
     set_color_cb('SplitMultibyteEnd')
     start_prompt('echo "«')
     screen:expect([[
@@ -427,7 +429,7 @@ describe('Command-line coloring', function()
     ]])
 
     feed('<CR><CR><CR>')
-    set_color_cb('ReturningGlobal', {{0, 1, 'Normal'}, 42})
+    set_color_cb('ReturningGlobal', { { 0, 1, 'Normal' }, 42 })
     start_prompt('#')
     screen:expect([[
                                               |
@@ -439,7 +441,7 @@ describe('Command-line coloring', function()
     ]])
 
     feed('<CR><CR><CR>')
-    set_color_cb('ReturningGlobal2', {{0, 1, 'Normal'}, {1}})
+    set_color_cb('ReturningGlobal2', { { 0, 1, 'Normal' }, { 1 } })
     start_prompt('+')
     screen:expect([[
                                               |
@@ -452,7 +454,7 @@ describe('Command-line coloring', function()
     ]])
 
     feed('<CR><CR><CR>')
-    set_color_cb('ReturningGlobal2', {{0, 1, 'Normal'}, {2, 3, 'Normal'}})
+    set_color_cb('ReturningGlobal2', { { 0, 1, 'Normal' }, { 2, 3, 'Normal' } })
     start_prompt('+')
     screen:expect([[
                                               |
@@ -465,7 +467,7 @@ describe('Command-line coloring', function()
     ]])
 
     feed('<CR><CR><CR>')
-    set_color_cb('ReturningGlobal2', {{0, 1, 'Normal'}, {1, 3, 'Normal'}})
+    set_color_cb('ReturningGlobal2', { { 0, 1, 'Normal' }, { 1, 3, 'Normal' } })
     start_prompt('+')
     screen:expect([[
                                               |
@@ -477,7 +479,7 @@ describe('Command-line coloring', function()
     ]])
   end)
   it('does not error out when called from a errorred out cycle', function()
-    set_color_cb('ReturningGlobal', {{0, 1, 'Normal'}})
+    set_color_cb('ReturningGlobal', { { 0, 1, 'Normal' } })
     feed(dedent([[
       :set regexpengine=2
       :for pat in [' \ze*', ' \zs*']
@@ -499,12 +501,14 @@ describe('Command-line coloring', function()
       :
       :
     ]]))
-    eq({'', ':', 'E888 detected for  \\ze*', ':', 'E888 detected for  \\zs*'},
-       curbufmeths.get_lines(0, -1, false))
+    eq(
+      { '', ':', 'E888 detected for  \\ze*', ':', 'E888 detected for  \\zs*' },
+      curbufmeths.get_lines(0, -1, false)
+    )
     eq('', funcs.execute('messages'))
   end)
   it('allows nesting input()s', function()
-    set_color_cb('ReturningGlobal', {{0, 1, 'RBP1'}}, '')
+    set_color_cb('ReturningGlobal', { { 0, 1, 'RBP1' } }, '')
     start_prompt('1')
     screen:expect([[
                                               |
@@ -512,7 +516,7 @@ describe('Command-line coloring', function()
       :{RBP1:1}^                                      |
     ]])
 
-    set_color_cb('ReturningGlobal', {{0, 1, 'RBP2'}}, '1')
+    set_color_cb('ReturningGlobal', { { 0, 1, 'RBP2' } }, '1')
     start_prompt('2')
     screen:expect([[
                                               |
@@ -520,7 +524,7 @@ describe('Command-line coloring', function()
       :{RBP2:2}^                                      |
     ]])
 
-    set_color_cb('ReturningGlobal', {{0, 1, 'RBP3'}}, '2')
+    set_color_cb('ReturningGlobal', { { 0, 1, 'RBP3' } }, '2')
     start_prompt('3')
     screen:expect([[
                                               |
@@ -528,7 +532,7 @@ describe('Command-line coloring', function()
       :{RBP3:3}^                                      |
     ]])
 
-    set_color_cb('ReturningGlobal', {{0, 1, 'RBP4'}}, '3')
+    set_color_cb('ReturningGlobal', { { 0, 1, 'RBP4' } }, '3')
     start_prompt('4')
     screen:expect([[
                                               |
@@ -568,7 +572,7 @@ describe('Command-line coloring', function()
   end)
   it('runs callback with the same data only once', function()
     local function new_recording_calls(...)
-      eq({...}, meths.get_var('recording_calls'))
+      eq({ ... }, meths.get_var('recording_calls'))
       meths.set_var('recording_calls', {})
     end
     set_color_cb('Recording')
@@ -578,22 +582,21 @@ describe('Command-line coloring', function()
     --     new_recording_calls(expected_result) -- (actual_before_fix)
     --
     feed('a')
-    new_recording_calls('a')  -- ('a', 'a')
+    new_recording_calls('a') -- ('a', 'a')
     feed('b')
     new_recording_calls('ab') -- ('a', 'ab', 'ab')
     feed('c')
-    new_recording_calls('abc')  -- ('ab', 'abc', 'abc')
+    new_recording_calls('abc') -- ('ab', 'abc', 'abc')
     feed('<BS>')
-    new_recording_calls('ab')  -- ('abc', 'ab', 'ab')
+    new_recording_calls('ab') -- ('abc', 'ab', 'ab')
     feed('<BS>')
-    new_recording_calls('a')  -- ('ab', 'a', 'a')
+    new_recording_calls('a') -- ('ab', 'a', 'a')
     feed('<BS>')
-    new_recording_calls()  -- ('a')
+    new_recording_calls() -- ('a')
     feed('<CR><CR>')
     eq('', meths.get_var('out'))
   end)
-  it('does not crash when callback has caught not-a-editor-command exception',
-  function()
+  it('does not crash when callback has caught not-a-editor-command exception', function()
     source([[
       function CaughtExc(cmdline) abort
         try
@@ -624,7 +627,7 @@ describe('Ex commands coloring', function()
     feed(':let x = "«"\n')
     eq('«', meths.get_var('x'))
     local msg = 'E5405: Chunk 0 start 10 splits multibyte character'
-    eq('\n'..msg, funcs.execute('messages'))
+    eq('\n' .. msg, funcs.execute('messages'))
   end)
   it('does not error out when called from a errorred out cycle', function()
     -- Apparently when there is a cycle in which one of the commands errors out
@@ -641,8 +644,10 @@ describe('Ex commands coloring', function()
       :  endtry
       :endfor
     ]]))
-    eq({'', 'E888 detected for  \\ze*', 'E888 detected for  \\zs*'},
-       curbufmeths.get_lines(0, -1, false))
+    eq(
+      { '', 'E888 detected for  \\ze*', 'E888 detected for  \\zs*' },
+      curbufmeths.get_lines(0, -1, false)
+    )
     eq('', funcs.execute('messages'))
   end)
   it('does not crash when using `n` in debug mode', function()
@@ -698,8 +703,10 @@ describe('Ex commands coloring', function()
       {PE:Press ENTER or type command to continue}^ |
     ]])
     feed('<CR>')
-    eq('Error detected while processing :\nE605: Exception not caught: 42\nE749: Empty buffer',
-       exec_capture('messages'))
+    eq(
+      'Error detected while processing :\nE605: Exception not caught: 42\nE749: Empty buffer',
+      exec_capture('messages')
+    )
   end)
   it('errors out when failing to get callback', function()
     meths.set_var('Nvim_color_cmdline', 42)
@@ -780,7 +787,7 @@ describe('Expressions coloring support', function()
       {EOB:~                                       }|*6
       :^                                       |
     ]])
-    funcs.setreg('a', {'\192'})
+    funcs.setreg('a', { '\192' })
     feed('<C-r>="<C-r><C-r>a"<C-r><C-r>a"foo"')
     screen:expect([[
                                               |

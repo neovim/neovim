@@ -31,7 +31,7 @@ describe('fnamemodify()', function()
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
       command('set shellslash')
-      root = string.sub(root, 1, -2)..'/'
+      root = string.sub(root, 1, -2) .. '/'
       eq(root, fnamemodify([[\]], ':p:h'))
       eq(root, fnamemodify([[\]], ':p'))
       eq(root, fnamemodify([[/]], ':p:h'))
@@ -44,7 +44,7 @@ describe('fnamemodify()', function()
   end)
 
   it('handles examples from ":help filename-modifiers"', function()
-    local filename = "src/version.c"
+    local filename = 'src/version.c'
     local cwd = getcwd()
 
     eq_slashconvert(cwd .. '/src/version.c', fnamemodify(filename, ':p'))
@@ -70,7 +70,7 @@ describe('fnamemodify()', function()
   end)
 
   it('handles advanced examples from ":help filename-modifiers"', function()
-    local filename = "src/version.c.gz"
+    local filename = 'src/version.c.gz'
 
     eq('gz', fnamemodify(filename, ':e'))
     eq('c.gz', fnamemodify(filename, ':e:e'))

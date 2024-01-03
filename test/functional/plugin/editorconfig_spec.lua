@@ -13,7 +13,7 @@ local function test_case(name, expected)
   local filename = testdir .. pathsep .. name
   command('edit ' .. filename)
   for opt, val in pairs(expected) do
-    eq(val, meths.get_option_value(opt, {buf=0}), name)
+    eq(val, meths.get_option_value(opt, { buf = 0 }), name)
   end
 end
 

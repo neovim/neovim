@@ -15,7 +15,9 @@ end
 
 describe('put', function()
   before_each(clear)
-  after_each(function() eq({}, meths.get_vvar('errors')) end)
+  after_each(function()
+    eq({}, meths.get_vvar('errors'))
+  end)
 
   it('very large count 64-bit', function()
     if sizeoflong() < 8 then

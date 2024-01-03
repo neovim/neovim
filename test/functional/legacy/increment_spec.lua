@@ -6,7 +6,6 @@ local call, clear = helpers.call, helpers.clear
 local eq, nvim = helpers.eq, helpers.meths
 
 describe('Ctrl-A/Ctrl-X on visual selections', function()
-
   before_each(function()
     clear()
     source([=[

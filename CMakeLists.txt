@@ -227,7 +227,7 @@ endif()
 find_program(SHELLCHECK_PRG shellcheck ${LINT_REQUIRED})
 find_program(STYLUA_PRG stylua ${LINT_REQUIRED})
 
-set(STYLUA_DIRS runtime scripts src test/unit)
+set(STYLUA_DIRS runtime scripts src test)
 
 add_glob_target(
   TARGET lintlua-luacheck
@@ -235,7 +235,7 @@ add_glob_target(
   FLAGS -ll ${PROJECT_SOURCE_DIR}/test/lua_runner.lua ${CMAKE_BINARY_DIR}/usr luacheck -q
   GLOB_DIRS runtime scripts src test
   GLOB_PAT *.lua
-  TOUCH_STRATEGY SINGLE)
+  TOUCH_STRATEGY PER_DIR)
 add_dependencies(lintlua-luacheck lua-dev-deps)
 
 add_glob_target(
@@ -244,7 +244,7 @@ add_glob_target(
   FLAGS --color=always --check --respect-ignores
   GLOB_DIRS ${STYLUA_DIRS}
   GLOB_PAT *.lua
-  TOUCH_STRATEGY SINGLE)
+  TOUCH_STRATEGY PER_DIR)
 
 add_custom_target(lintlua)
 add_dependencies(lintlua lintlua-luacheck lintlua-stylua)
@@ -255,7 +255,7 @@ add_glob_target(
   FLAGS -x -a
   GLOB_DIRS scripts
   GLOB_PAT *.sh
-  TOUCH_STRATEGY SINGLE)
+  TOUCH_STRATEGY PER_DIR)
 
 add_custom_target(lintcommit
   COMMAND $<TARGET_FILE:nvim> -u NONE -l ${PROJECT_SOURCE_DIR}/scripts/lintcommit.lua main)
@@ -270,7 +270,8 @@ add_glob_target(
   COMMAND ${STYLUA_PRG}
   FLAGS --respect-ignores
   GLOB_DIRS ${STYLUA_DIRS}
-  GLOB_PAT *.lua)
+  GLOB_PAT *.lua
+  TOUCH_STRATEGY PER_DIR)
 
 add_custom_target(format)
 add_dependencies(format formatc formatlua)

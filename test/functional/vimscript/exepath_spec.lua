@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, call =
-  helpers.eq, helpers.clear, helpers.call
+local eq, clear, call = helpers.eq, helpers.clear, helpers.call
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local matches = helpers.matches
@@ -14,20 +13,26 @@ local find_dummies = function(ext_pat)
   matches('null' .. ext_pat, call('exepath', 'null'))
   matches('true' .. ext_pat, call('exepath', 'true'))
   matches('false' .. ext_pat, call('exepath', 'false'))
-  command("let $PATH = '"..tmp_path.."'")
+  command("let $PATH = '" .. tmp_path .. "'")
 end
 
 describe('exepath()', function()
   before_each(clear)
 
   it('fails for invalid values', function()
-    for _, input in ipairs({'v:null', 'v:true', 'v:false', '{}', '[]'}) do
-      eq('Vim(call):E1174: String required for argument 1', exc_exec('call exepath('..input..')'))
+    for _, input in ipairs({ 'v:null', 'v:true', 'v:false', '{}', '[]' }) do
+      eq(
+        'Vim(call):E1174: String required for argument 1',
+        exc_exec('call exepath(' .. input .. ')')
+      )
     end
     eq('Vim(call):E1175: Non-empty string required for argument 1', exc_exec('call exepath("")'))
     command('let $PATH = fnamemodify("./test/functional/fixtures/bin", ":p")')
-    for _, input in ipairs({'v:null', 'v:true', 'v:false'}) do
-      eq('Vim(call):E1174: String required for argument 1', exc_exec('call exepath('..input..')'))
+    for _, input in ipairs({ 'v:null', 'v:true', 'v:false' }) do
+      eq(
+        'Vim(call):E1174: String required for argument 1',
+        exc_exec('call exepath(' .. input .. ')')
+      )
     end
   end)
 
@@ -40,24 +45,30 @@ describe('exepath()', function()
     it('append extension if omitted', function()
       local filename = 'cmd'
       local pathext = '.exe'
-      clear({env={PATHEXT=pathext}})
-      eq(call('exepath', filename..pathext), call('exepath', filename))
+      clear({ env = { PATHEXT = pathext } })
+      eq(call('exepath', filename .. pathext), call('exepath', filename))
     end)
 
-    it('returns file WITH extension if files both with and without extension exist in $PATH', function()
-      local ext_pat = '%.CMD$'
-      find_dummies(ext_pat)
-      set_shell_powershell()
-      find_dummies(ext_pat)
-    end)
+    it(
+      'returns file WITH extension if files both with and without extension exist in $PATH',
+      function()
+        local ext_pat = '%.CMD$'
+        find_dummies(ext_pat)
+        set_shell_powershell()
+        find_dummies(ext_pat)
+      end
+    )
   else
     it('returns 1 for commands in $PATH (not Windows)', function()
       local exe = 'ls'
       matches(exe .. '$', call('exepath', exe))
     end)
 
-    it('returns file WITHOUT extension if files both with and without extension exist in $PATH', function()
-      find_dummies('$')
-    end)
+    it(
+      'returns file WITHOUT extension if files both with and without extension exist in $PATH',
+      function()
+        find_dummies('$')
+      end
+    )
   end
 end)

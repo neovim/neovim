@@ -9,37 +9,49 @@ describe('vim.loader', function()
   before_each(helpers.clear)
 
   it('handles changing files (#23027)', function()
-    exec_lua[[
+    exec_lua [[
       vim.loader.enable()
     ]]
 
     local tmp = helpers.tmpname()
     command('edit ' .. tmp)
 
-    eq(1, exec_lua([[
+    eq(
+      1,
+      exec_lua(
+        [[
       vim.api.nvim_buf_set_lines(0, 0, -1, true, {'_G.TEST=1'})
       vim.cmd.write()
       loadfile(...)()
       return _G.TEST
-    ]], tmp))
+    ]],
+        tmp
+      )
+    )
 
     -- fs latency
     helpers.sleep(10)
 
-    eq(2, exec_lua([[
+    eq(
+      2,
+      exec_lua(
+        [[
       vim.api.nvim_buf_set_lines(0, 0, -1, true, {'_G.TEST=2'})
       vim.cmd.write()
       loadfile(...)()
       return _G.TEST
-    ]], tmp))
+    ]],
+        tmp
+      )
+    )
   end)
 
   it('handles % signs in modpath (#24491)', function()
-    exec_lua[[
+    exec_lua [[
       vim.loader.enable()
     ]]
 
-    local tmp1, tmp2 = (function (t)
+    local tmp1, tmp2 = (function(t)
       assert(os.remove(t))
       assert(helpers.mkdir(t))
       assert(helpers.mkdir(t .. '/%'))

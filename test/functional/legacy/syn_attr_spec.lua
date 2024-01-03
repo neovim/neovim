@@ -37,12 +37,12 @@ describe('synIDattr()', function()
       end)
     end
 
-    for _, mode in ipairs({'cterm', 'gui'}) do
+    for _, mode in ipairs({ 'cterm', 'gui' }) do
       describe(('"%s"'):format(mode), function()
         for _, attr in ipairs(bool_attrs) do
           none_test(attr, mode)
         end
-        for _, attr in ipairs({'inverse', 'bg', 'fg', 'sp'}) do
+        for _, attr in ipairs({ 'inverse', 'bg', 'fg', 'sp' }) do
           none_test(attr, mode)
         end
       end)

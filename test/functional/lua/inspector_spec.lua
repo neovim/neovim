@@ -46,9 +46,9 @@ describe('vim.inspect_pos', function()
             hl_group_link = 'Normal',
             ns_id = 1,
             priority = 4096,
-            right_gravity = true
+            right_gravity = true,
           },
-          row = 0
+          row = 0,
         },
         {
           col = 10,
@@ -63,10 +63,10 @@ describe('vim.inspect_pos', function()
             hl_group_link = 'Normal',
             ns_id = 2,
             priority = 4096,
-            right_gravity = true
+            right_gravity = true,
           },
-          row = 0
-        }
+          row = 0,
+        },
       },
       treesitter = {},
       semantic_tokens = {},

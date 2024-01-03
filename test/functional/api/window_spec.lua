@@ -1,9 +1,18 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, nvim, curbuf, curbuf_contents, window, curwin, eq, neq,
-  ok, feed, insert, eval, tabpage = helpers.clear, helpers.nvim, helpers.curbuf,
-  helpers.curbuf_contents, helpers.window, helpers.curwin, helpers.eq,
-  helpers.neq, helpers.ok, helpers.feed, helpers.insert, helpers.eval,
+local clear, nvim, curbuf, curbuf_contents, window, curwin, eq, neq, ok, feed, insert, eval, tabpage =
+  helpers.clear,
+  helpers.nvim,
+  helpers.curbuf,
+  helpers.curbuf_contents,
+  helpers.window,
+  helpers.curwin,
+  helpers.eq,
+  helpers.neq,
+  helpers.ok,
+  helpers.feed,
+  helpers.insert,
+  helpers.eval,
   helpers.tabpage
 local poke_eventloop = helpers.poke_eventloop
 local curwinmeths = helpers.curwinmeths
@@ -25,8 +34,7 @@ describe('API/win', function()
       nvim('command', 'new')
       nvim('set_current_win', nvim('list_wins')[2])
       eq(curbuf(), window('get_buf', nvim('list_wins')[2]))
-      neq(window('get_buf', nvim('list_wins')[1]),
-        window('get_buf', nvim('list_wins')[2]))
+      neq(window('get_buf', nvim('list_wins')[1]), window('get_buf', nvim('list_wins')[2]))
     end)
   end)
 
@@ -48,15 +56,25 @@ describe('API/win', function()
       local new_buf = meths.create_buf(true, true)
       local old_win = meths.get_current_win()
       local new_win = meths.open_win(new_buf, false, {
-        relative='editor', row=10, col=10, width=50, height=10,
+        relative = 'editor',
+        row = 10,
+        col = 10,
+        width = 50,
+        height = 10,
       })
       feed('q:')
-      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-         pcall_err(meths.win_set_buf, 0, new_buf))
-      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-         pcall_err(meths.win_set_buf, old_win, new_buf))
-      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-         pcall_err(meths.win_set_buf, new_win, 0))
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(meths.win_set_buf, 0, new_buf)
+      )
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(meths.win_set_buf, old_win, new_buf)
+      )
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(meths.win_set_buf, new_win, 0)
+      )
 
       local next_buf = meths.create_buf(true, true)
       meths.win_set_buf(new_win, next_buf)
@@ -66,63 +84,70 @@ describe('API/win', function()
 
   describe('{get,set}_cursor', function()
     it('works', function()
-      eq({1, 0}, curwin('get_cursor'))
+      eq({ 1, 0 }, curwin('get_cursor'))
       nvim('command', 'normal ityping\027o  some text')
       eq('typing\n  some text', curbuf_contents())
-      eq({2, 10}, curwin('get_cursor'))
-      curwin('set_cursor', {2, 6})
+      eq({ 2, 10 }, curwin('get_cursor'))
+      curwin('set_cursor', { 2, 6 })
       nvim('command', 'normal i dumb')
       eq('typing\n  some dumb text', curbuf_contents())
     end)
 
     it('does not leak memory when using invalid window ID with invalid pos', function()
-      eq('Invalid window id: 1', pcall_err(meths.win_set_cursor, 1, {"b\na"}))
+      eq('Invalid window id: 1', pcall_err(meths.win_set_cursor, 1, { 'b\na' }))
     end)
 
     it('updates the screen, and also when the window is unfocused', function()
       local screen = Screen.new(30, 9)
       screen:set_default_attr_ids({
-        [1] = {bold = true, foreground = Screen.colors.Blue},
-        [2] = {bold = true, reverse = true};
-        [3] = {reverse = true};
+        [1] = { bold = true, foreground = Screen.colors.Blue },
+        [2] = { bold = true, reverse = true },
+        [3] = { reverse = true },
       })
       screen:attach()
 
-      insert("prologue")
+      insert('prologue')
       feed('100o<esc>')
-      insert("epilogue")
+      insert('epilogue')
       local win = curwin()
       feed('gg')
 
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
         ^prologue                      |
                                       |*8
-      ]]}
+      ]],
+      }
       -- cursor position is at beginning
-      eq({1, 0}, window('get_cursor', win))
+      eq({ 1, 0 }, window('get_cursor', win))
 
       -- move cursor to end
-      window('set_cursor', win, {101, 0})
-      screen:expect{grid=[[
+      window('set_cursor', win, { 101, 0 })
+      screen:expect {
+        grid = [[
                                       |*7
         ^epilogue                      |
                                       |
-      ]]}
+      ]],
+      }
 
       -- move cursor to the beginning again
-      window('set_cursor', win, {1, 0})
-      screen:expect{grid=[[
+      window('set_cursor', win, { 1, 0 })
+      screen:expect {
+        grid = [[
         ^prologue                      |
                                       |*8
-      ]]}
+      ]],
+      }
 
       -- move focus to new window
-      nvim('command',"new")
+      nvim('command', 'new')
       neq(win, curwin())
 
       -- sanity check, cursor position is kept
-      eq({1, 0}, window('get_cursor', win))
-      screen:expect{grid=[[
+      eq({ 1, 0 }, window('get_cursor', win))
+      screen:expect {
+        grid = [[
         ^                              |
         {1:~                             }|*2
         {2:[No Name]                     }|
@@ -130,11 +155,13 @@ describe('API/win', function()
                                       |*2
         {3:[No Name] [+]                 }|
                                       |
-      ]]}
+      ]],
+      }
 
       -- move cursor to end
-      window('set_cursor', win, {101, 0})
-      screen:expect{grid=[[
+      window('set_cursor', win, { 101, 0 })
+      screen:expect {
+        grid = [[
         ^                              |
         {1:~                             }|*2
         {2:[No Name]                     }|
@@ -142,11 +169,13 @@ describe('API/win', function()
         epilogue                      |
         {3:[No Name] [+]                 }|
                                       |
-      ]]}
+      ]],
+      }
 
       -- move cursor to the beginning again
-      window('set_cursor', win, {1, 0})
-      screen:expect{grid=[[
+      window('set_cursor', win, { 1, 0 })
+      screen:expect {
+        grid = [[
         ^                              |
         {1:~                             }|*2
         {2:[No Name]                     }|
@@ -154,42 +183,43 @@ describe('API/win', function()
                                       |*2
         {3:[No Name] [+]                 }|
                                       |
-      ]]}
+      ]],
+      }
 
       -- curwin didn't change back
       neq(win, curwin())
     end)
 
     it('remembers what column it wants to be in', function()
-      insert("first line")
+      insert('first line')
       feed('o<esc>')
-      insert("second line")
+      insert('second line')
 
       feed('gg')
       poke_eventloop() -- let nvim process the 'gg' command
 
       -- cursor position is at beginning
       local win = curwin()
-      eq({1, 0}, window('get_cursor', win))
+      eq({ 1, 0 }, window('get_cursor', win))
 
       -- move cursor to column 5
-      window('set_cursor', win, {1, 5})
+      window('set_cursor', win, { 1, 5 })
 
       -- move down a line
       feed('j')
       poke_eventloop() -- let nvim process the 'j' command
 
       -- cursor is still in column 5
-      eq({2, 5}, window('get_cursor', win))
+      eq({ 2, 5 }, window('get_cursor', win))
     end)
 
     it('updates cursorline and statusline ruler in non-current window', function()
       local screen = Screen.new(60, 8)
       screen:set_default_attr_ids({
-        [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-        [2] = {background = Screen.colors.Grey90},  -- CursorLine
-        [3] = {bold = true, reverse = true},  -- StatusLine
-        [4] = {reverse = true},  -- StatusLineNC
+        [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+        [2] = { background = Screen.colors.Grey90 }, -- CursorLine
+        [3] = { bold = true, reverse = true }, -- StatusLine
+        [4] = { reverse = true }, -- StatusLineNC
       })
       screen:attach()
       command('set ruler')
@@ -210,7 +240,7 @@ describe('API/win', function()
         {3:[No Name] [+]  4,3         All }{4:[No Name] [+]  4,3        All}|
                                                                     |
       ]])
-      window('set_cursor', oldwin, {1, 0})
+      window('set_cursor', oldwin, { 1, 0 })
       screen:expect([[
         aaa                           │{2:aaa                          }|
         bbb                           │bbb                          |
@@ -225,10 +255,10 @@ describe('API/win', function()
     it('updates cursorcolumn in non-current window', function()
       local screen = Screen.new(60, 8)
       screen:set_default_attr_ids({
-        [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-        [2] = {background = Screen.colors.Grey90},  -- CursorColumn
-        [3] = {bold = true, reverse = true},  -- StatusLine
-        [4] = {reverse = true},  -- StatusLineNC
+        [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+        [2] = { background = Screen.colors.Grey90 }, -- CursorColumn
+        [3] = { bold = true, reverse = true }, -- StatusLine
+        [4] = { reverse = true }, -- StatusLineNC
       })
       screen:attach()
       command('set cursorcolumn')
@@ -248,7 +278,7 @@ describe('API/win', function()
         {3:[No Name] [+]                  }{4:[No Name] [+]                }|
                                                                     |
       ]])
-      window('set_cursor', oldwin, {2, 0})
+      window('set_cursor', oldwin, { 2, 0 })
       screen:expect([[
         aa{2:a}                           │{2:a}aa                          |
         bb{2:b}                           │bbb                          |
@@ -264,12 +294,13 @@ describe('API/win', function()
   describe('{get,set}_height', function()
     it('works', function()
       nvim('command', 'vsplit')
-      eq(window('get_height', nvim('list_wins')[2]),
-        window('get_height', nvim('list_wins')[1]))
+      eq(window('get_height', nvim('list_wins')[2]), window('get_height', nvim('list_wins')[1]))
       nvim('set_current_win', nvim('list_wins')[2])
       nvim('command', 'split')
-      eq(window('get_height', nvim('list_wins')[2]),
-        math.floor(window('get_height', nvim('list_wins')[1]) / 2))
+      eq(
+        window('get_height', nvim('list_wins')[2]),
+        math.floor(window('get_height', nvim('list_wins')[1]) / 2)
+      )
       window('set_height', nvim('list_wins')[2], 2)
       eq(2, window('get_height', nvim('list_wins')[2]))
     end)
@@ -310,12 +341,13 @@ describe('API/win', function()
   describe('{get,set}_width', function()
     it('works', function()
       nvim('command', 'split')
-      eq(window('get_width', nvim('list_wins')[2]),
-        window('get_width', nvim('list_wins')[1]))
+      eq(window('get_width', nvim('list_wins')[2]), window('get_width', nvim('list_wins')[1]))
       nvim('set_current_win', nvim('list_wins')[2])
       nvim('command', 'vsplit')
-      eq(window('get_width', nvim('list_wins')[2]),
-        math.floor(window('get_width', nvim('list_wins')[1]) / 2))
+      eq(
+        window('get_width', nvim('list_wins')[2]),
+        math.floor(window('get_width', nvim('list_wins')[1]) / 2)
+      )
       window('set_width', nvim('list_wins')[2], 2)
       eq(2, window('get_width', nvim('list_wins')[2]))
     end)
@@ -339,9 +371,9 @@ describe('API/win', function()
 
   describe('{get,set,del}_var', function()
     it('works', function()
-      curwin('set_var', 'lua', {1, 2, {['3'] = 1}})
-      eq({1, 2, {['3'] = 1}}, curwin('get_var', 'lua'))
-      eq({1, 2, {['3'] = 1}}, nvim('eval', 'w:lua'))
+      curwin('set_var', 'lua', { 1, 2, { ['3'] = 1 } })
+      eq({ 1, 2, { ['3'] = 1 } }, curwin('get_var', 'lua'))
+      eq({ 1, 2, { ['3'] = 1 } }, nvim('eval', 'w:lua'))
       eq(1, funcs.exists('w:lua'))
       curwinmeths.del_var('lua')
       eq(0, funcs.exists('w:lua'))
@@ -353,16 +385,16 @@ describe('API/win', function()
     end)
 
     it('window_set_var returns the old value', function()
-      local val1 = {1, 2, {['3'] = 1}}
-      local val2 = {4, 7}
+      local val1 = { 1, 2, { ['3'] = 1 } }
+      local val2 = { 4, 7 }
       eq(NIL, request('window_set_var', 0, 'lua', val1))
       eq(val1, request('window_set_var', 0, 'lua', val2))
     end)
 
     it('window_del_var returns the old value', function()
-      local val1 = {1, 2, {['3'] = 1}}
-      local val2 = {4, 7}
-      eq(NIL,  request('window_set_var', 0, 'lua', val1))
+      local val1 = { 1, 2, { ['3'] = 1 } }
+      local val2 = { 4, 7 }
+      eq(NIL, request('window_set_var', 0, 'lua', val1))
       eq(val1, request('window_set_var', 0, 'lua', val2))
       eq(val2, request('window_del_var', 0, 'lua'))
     end)
@@ -372,18 +404,18 @@ describe('API/win', function()
     it('works', function()
       nvim('set_option_value', 'colorcolumn', '4,3', {})
       eq('4,3', nvim('get_option_value', 'colorcolumn', {}))
-      command("set modified hidden")
-      command("enew") -- edit new buffer, window option is preserved
+      command('set modified hidden')
+      command('enew') -- edit new buffer, window option is preserved
       eq('4,3', nvim('get_option_value', 'colorcolumn', {}))
 
       -- global-local option
-      nvim('set_option_value', 'statusline', 'window-status', {win=0})
-      eq('window-status', nvim('get_option_value', 'statusline', {win=0}))
-      eq('', nvim('get_option_value', 'statusline', {scope='global'}))
-      command("set modified")
-      command("enew") -- global-local: not preserved in new buffer
+      nvim('set_option_value', 'statusline', 'window-status', { win = 0 })
+      eq('window-status', nvim('get_option_value', 'statusline', { win = 0 }))
+      eq('', nvim('get_option_value', 'statusline', { scope = 'global' }))
+      command('set modified')
+      command('enew') -- global-local: not preserved in new buffer
       -- confirm local value was not copied
-      eq('', nvim('get_option_value', 'statusline', {win = 0}))
+      eq('', nvim('get_option_value', 'statusline', { win = 0 }))
       eq('', eval('&l:statusline'))
     end)
 
@@ -391,16 +423,16 @@ describe('API/win', function()
       nvim('command', 'tabnew')
       local tab1 = unpack(nvim('list_tabpages'))
       local win1 = unpack(tabpage('list_wins', tab1))
-      nvim('set_option_value', 'statusline', 'window-status', {win=win1.id})
+      nvim('set_option_value', 'statusline', 'window-status', { win = win1.id })
       nvim('command', 'split')
       nvim('command', 'wincmd J')
       nvim('command', 'wincmd j')
-      eq('window-status', nvim('get_option_value', 'statusline', {win = win1.id}))
+      eq('window-status', nvim('get_option_value', 'statusline', { win = win1.id }))
       assert_alive()
     end)
 
     it('returns values for unset local options', function()
-      eq(-1, nvim('get_option_value', 'scrolloff', {win=0, scope='local'}))
+      eq(-1, nvim('get_option_value', 'scrolloff', { win = 0, scope = 'local' }))
     end)
   end)
 
@@ -410,13 +442,11 @@ describe('API/win', function()
       local width = window('get_width', nvim('list_wins')[1])
       nvim('command', 'split')
       nvim('command', 'vsplit')
-      eq({0, 0}, window('get_position', nvim('list_wins')[1]))
+      eq({ 0, 0 }, window('get_position', nvim('list_wins')[1]))
       local vsplit_pos = math.floor(width / 2)
       local split_pos = math.floor(height / 2)
-      local win2row, win2col =
-        unpack(window('get_position', nvim('list_wins')[2]))
-      local win3row, win3col =
-        unpack(window('get_position', nvim('list_wins')[3]))
+      local win2row, win2col = unpack(window('get_position', nvim('list_wins')[2]))
+      local win3row, win3col = unpack(window('get_position', nvim('list_wins')[3]))
       eq(0, win2row)
       eq(0, win3col)
       ok(vsplit_pos - 1 <= win2col and win2col <= vsplit_pos + 1)
@@ -428,12 +458,9 @@ describe('API/win', function()
     it('works', function()
       nvim('command', 'tabnew')
       nvim('command', 'vsplit')
-      eq(window('get_tabpage',
-        nvim('list_wins')[1]), nvim('list_tabpages')[1])
-      eq(window('get_tabpage',
-        nvim('list_wins')[2]), nvim('list_tabpages')[2])
-      eq(window('get_tabpage',
-        nvim('list_wins')[3]), nvim('list_tabpages')[2])
+      eq(window('get_tabpage', nvim('list_wins')[1]), nvim('list_tabpages')[1])
+      eq(window('get_tabpage', nvim('list_wins')[2]), nvim('list_tabpages')[2])
+      eq(window('get_tabpage', nvim('list_wins')[3]), nvim('list_tabpages')[2])
     end)
   end)
 
@@ -477,16 +504,16 @@ describe('API/win', function()
       local oldwin = meths.get_current_win()
       command('split')
       local newwin = meths.get_current_win()
-      meths.win_close(newwin,false)
-      eq({oldwin}, meths.list_wins())
+      meths.win_close(newwin, false)
+      eq({ oldwin }, meths.list_wins())
     end)
 
     it('can close noncurrent window', function()
       local oldwin = meths.get_current_win()
       command('split')
       local newwin = meths.get_current_win()
-      meths.win_close(oldwin,false)
-      eq({newwin}, meths.list_wins())
+      meths.win_close(oldwin, false)
+      eq({ newwin }, meths.list_wins())
     end)
 
     it("handles changed buffer when 'hidden' is unset", function()
@@ -495,9 +522,11 @@ describe('API/win', function()
       insert('text')
       command('new')
       local newwin = meths.get_current_win()
-      eq("Vim:E37: No write since last change (add ! to override)",
-         pcall_err(meths.win_close, oldwin,false))
-      eq({newwin,oldwin}, meths.list_wins())
+      eq(
+        'Vim:E37: No write since last change (add ! to override)',
+        pcall_err(meths.win_close, oldwin, false)
+      )
+      eq({ newwin, oldwin }, meths.list_wins())
     end)
 
     it('handles changed buffer with force', function()
@@ -505,8 +534,8 @@ describe('API/win', function()
       insert('text')
       command('new')
       local newwin = meths.get_current_win()
-      meths.win_close(oldwin,true)
-      eq({newwin}, meths.list_wins())
+      meths.win_close(oldwin, true)
+      eq({ newwin }, meths.list_wins())
     end)
 
     it('in cmdline-window #9767', function()
@@ -514,15 +543,21 @@ describe('API/win', function()
       eq(2, #meths.list_wins())
       local oldwin = meths.get_current_win()
       local otherwin = meths.open_win(0, false, {
-        relative='editor', row=10, col=10, width=10, height=10,
+        relative = 'editor',
+        row = 10,
+        col = 10,
+        width = 10,
+        height = 10,
       })
       -- Open cmdline-window.
       feed('q:')
       eq(4, #meths.list_wins())
       eq(':', funcs.getcmdwintype())
       -- Not allowed to close previous window from cmdline-window.
-      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-         pcall_err(meths.win_close, oldwin, true))
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(meths.win_close, oldwin, true)
+      )
       -- Closing other windows is fine.
       meths.win_close(otherwin, true)
       eq(false, meths.win_is_valid(otherwin))
@@ -538,7 +573,11 @@ describe('API/win', function()
       local prevwin = curwin().id
       eq(2, eval('tabpagenr()'))
       local win = meths.open_win(0, true, {
-        relative='editor', row=10, col=10, width=50, height=10
+        relative = 'editor',
+        row = 10,
+        col = 10,
+        width = 50,
+        height = 10,
       })
       local tab = eval('tabpagenr()')
       command('tabprevious')
@@ -556,37 +595,45 @@ describe('API/win', function()
       command('split')
       local newwin = meths.get_current_win()
       meths.win_hide(newwin)
-      eq({oldwin}, meths.list_wins())
+      eq({ oldwin }, meths.list_wins())
     end)
     it('can hide noncurrent window', function()
       local oldwin = meths.get_current_win()
       command('split')
       local newwin = meths.get_current_win()
       meths.win_hide(oldwin)
-      eq({newwin}, meths.list_wins())
+      eq({ newwin }, meths.list_wins())
     end)
     it('does not close the buffer', function()
       local oldwin = meths.get_current_win()
       local oldbuf = meths.get_current_buf()
       local buf = meths.create_buf(true, false)
       local newwin = meths.open_win(buf, true, {
-        relative='win', row=3, col=3, width=12, height=3
+        relative = 'win',
+        row = 3,
+        col = 3,
+        width = 12,
+        height = 3,
       })
       meths.win_hide(newwin)
-      eq({oldwin}, meths.list_wins())
-      eq({oldbuf, buf}, meths.list_bufs())
+      eq({ oldwin }, meths.list_wins())
+      eq({ oldbuf, buf }, meths.list_bufs())
     end)
     it('deletes the buffer when bufhidden=wipe', function()
       local oldwin = meths.get_current_win()
       local oldbuf = meths.get_current_buf()
       local buf = meths.create_buf(true, false).id
       local newwin = meths.open_win(buf, true, {
-        relative='win', row=3, col=3, width=12, height=3
+        relative = 'win',
+        row = 3,
+        col = 3,
+        width = 12,
+        height = 3,
       })
-      meths.set_option_value('bufhidden', 'wipe', {buf=buf})
+      meths.set_option_value('bufhidden', 'wipe', { buf = buf })
       meths.win_hide(newwin)
-      eq({oldwin}, meths.list_wins())
-      eq({oldbuf}, meths.list_bufs())
+      eq({ oldwin }, meths.list_wins())
+      eq({ oldbuf }, meths.list_bufs())
     end)
     it('in the cmdwin', function()
       feed('q:')
@@ -596,12 +643,18 @@ describe('API/win', function()
 
       local old_win = meths.get_current_win()
       local other_win = meths.open_win(0, false, {
-        relative='win', row=3, col=3, width=12, height=3
+        relative = 'win',
+        row = 3,
+        col = 3,
+        width = 12,
+        height = 3,
       })
       feed('q:')
       -- Cannot close the previous window.
-      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-         pcall_err(meths.win_hide, old_win))
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(meths.win_hide, old_win)
+      )
       -- Can close other windows.
       meths.win_hide(other_win)
       eq(false, meths.win_is_valid(other_win))
@@ -617,48 +670,66 @@ describe('API/win', function()
         ccc
         ddd
         eee]])
-      eq("Invalid window id: 23",
-         pcall_err(meths.win_text_height, 23, {}))
-      eq("Line index out of bounds",
-         pcall_err(curwinmeths.text_height, { start_row = 5 }))
-      eq("Line index out of bounds",
-         pcall_err(curwinmeths.text_height, { start_row = -6 }))
-      eq("Line index out of bounds",
-         pcall_err(curwinmeths.text_height, { end_row = 5 }))
-      eq("Line index out of bounds",
-         pcall_err(curwinmeths.text_height, { end_row = -6 }))
-      eq("'start_row' is higher than 'end_row'",
-         pcall_err(curwinmeths.text_height, { start_row = 3, end_row = 1 }))
-      eq("'start_vcol' specified without 'start_row'",
-         pcall_err(curwinmeths.text_height, { end_row = 2, start_vcol = 0 }))
-      eq("'end_vcol' specified without 'end_row'",
-         pcall_err(curwinmeths.text_height, { start_row = 2, end_vcol = 0 }))
-      eq("Invalid 'start_vcol': out of range",
-         pcall_err(curwinmeths.text_height, { start_row = 2, start_vcol = -1 }))
-      eq("Invalid 'start_vcol': out of range",
-         pcall_err(curwinmeths.text_height, { start_row = 2, start_vcol = X + 1 }))
-      eq("Invalid 'end_vcol': out of range",
-         pcall_err(curwinmeths.text_height, { end_row = 2, end_vcol = -1 }))
-      eq("Invalid 'end_vcol': out of range",
-         pcall_err(curwinmeths.text_height, { end_row = 2, end_vcol = X + 1 }))
-      eq("'start_vcol' is higher than 'end_vcol'",
-         pcall_err(curwinmeths.text_height, { start_row = 2, end_row = 2, start_vcol = 10, end_vcol = 5 }))
+      eq('Invalid window id: 23', pcall_err(meths.win_text_height, 23, {}))
+      eq('Line index out of bounds', pcall_err(curwinmeths.text_height, { start_row = 5 }))
+      eq('Line index out of bounds', pcall_err(curwinmeths.text_height, { start_row = -6 }))
+      eq('Line index out of bounds', pcall_err(curwinmeths.text_height, { end_row = 5 }))
+      eq('Line index out of bounds', pcall_err(curwinmeths.text_height, { end_row = -6 }))
+      eq(
+        "'start_row' is higher than 'end_row'",
+        pcall_err(curwinmeths.text_height, { start_row = 3, end_row = 1 })
+      )
+      eq(
+        "'start_vcol' specified without 'start_row'",
+        pcall_err(curwinmeths.text_height, { end_row = 2, start_vcol = 0 })
+      )
+      eq(
+        "'end_vcol' specified without 'end_row'",
+        pcall_err(curwinmeths.text_height, { start_row = 2, end_vcol = 0 })
+      )
+      eq(
+        "Invalid 'start_vcol': out of range",
+        pcall_err(curwinmeths.text_height, { start_row = 2, start_vcol = -1 })
+      )
+      eq(
+        "Invalid 'start_vcol': out of range",
+        pcall_err(curwinmeths.text_height, { start_row = 2, start_vcol = X + 1 })
+      )
+      eq(
+        "Invalid 'end_vcol': out of range",
+        pcall_err(curwinmeths.text_height, { end_row = 2, end_vcol = -1 })
+      )
+      eq(
+        "Invalid 'end_vcol': out of range",
+        pcall_err(curwinmeths.text_height, { end_row = 2, end_vcol = X + 1 })
+      )
+      eq(
+        "'start_vcol' is higher than 'end_vcol'",
+        pcall_err(
+          curwinmeths.text_height,
+          { start_row = 2, end_row = 2, start_vcol = 10, end_vcol = 5 }
+        )
+      )
     end)
 
     it('with two diff windows', function()
       local X = meths.get_vvar('maxcol')
       local screen = Screen.new(45, 22)
       screen:set_default_attr_ids({
-        [0] = {foreground = Screen.colors.Blue1, bold = true};
-        [1] = {foreground = Screen.colors.Blue4, background = Screen.colors.Grey};
-        [2] = {foreground = Screen.colors.Brown};
-        [3] = {foreground = Screen.colors.Blue1, background = Screen.colors.LightCyan1, bold = true};
-        [4] = {background = Screen.colors.LightBlue};
-        [5] = {foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey};
-        [6] = {background = Screen.colors.Plum1};
-        [7] = {background = Screen.colors.Red, bold = true};
-        [8] = {reverse = true};
-        [9] = {bold = true, reverse = true};
+        [0] = { foreground = Screen.colors.Blue1, bold = true },
+        [1] = { foreground = Screen.colors.Blue4, background = Screen.colors.Grey },
+        [2] = { foreground = Screen.colors.Brown },
+        [3] = {
+          foreground = Screen.colors.Blue1,
+          background = Screen.colors.LightCyan1,
+          bold = true,
+        },
+        [4] = { background = Screen.colors.LightBlue },
+        [5] = { foreground = Screen.colors.Blue4, background = Screen.colors.LightGrey },
+        [6] = { background = Screen.colors.Plum1 },
+        [7] = { background = Screen.colors.Red, bold = true },
+        [8] = { reverse = true },
+        [9] = { bold = true, reverse = true },
       })
       screen:attach()
       exec([[
@@ -670,7 +741,8 @@ describe('API/win', function()
         windo diffthis
       ]])
       feed('24gg')
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
         {1:  }{2:    }{3:----------------}│{1:  }{2:  1 }{4:00000001!       }|
         {1:  }{2:    }{3:----------------}│{1:  }{2:  2 }{4:00000002!!      }|
         {1:  }{2:  1 }00000003!!!     │{1:  }{2:  3 }00000003!!!     |
@@ -693,13 +765,16 @@ describe('API/win', function()
         {1:  }{2: 41 }{4:00000050!!!!!!!!}│{1:  }{2:    }{3:----------------}|
         {8:[No Name] [+]          }{9:[No Name] [+]         }|
                                                      |
-      ]]}
+      ]],
+      }
       screen:try_resize(45, 3)
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
         {1:  }{2: 19 }00000028!!!!!!!!│{1:  }{2: 24 }^00000028!!!!!!!!|
         {8:[No Name] [+]          }{9:[No Name] [+]         }|
                                                      |
-      ]]}
+      ]],
+      }
       eq({ all = 20, fill = 5 }, meths.win_text_height(1000, {}))
       eq({ all = 20, fill = 5 }, meths.win_text_height(1001, {}))
       eq({ all = 20, fill = 5 }, meths.win_text_height(1000, { start_row = 0 }))
@@ -724,27 +799,51 @@ describe('API/win', function()
       eq({ all = 7, fill = 3 }, meths.win_text_height(1001, { start_row = 16, end_row = 19 }))
       eq({ all = 6, fill = 5 }, meths.win_text_height(1000, { start_row = -1 }))
       eq({ all = 5, fill = 5 }, meths.win_text_height(1000, { start_row = -1, start_vcol = X }))
-      eq({ all = 0, fill = 0 }, meths.win_text_height(1000, { start_row = -1, start_vcol = X, end_row = -1 }))
-      eq({ all = 0, fill = 0 }, meths.win_text_height(1000, { start_row = -1, start_vcol = X, end_row = -1, end_vcol = X }))
-      eq({ all = 1, fill = 0 }, meths.win_text_height(1000, { start_row = -1, start_vcol = 0, end_row = -1, end_vcol = X }))
+      eq(
+        { all = 0, fill = 0 },
+        meths.win_text_height(1000, { start_row = -1, start_vcol = X, end_row = -1 })
+      )
+      eq(
+        { all = 0, fill = 0 },
+        meths.win_text_height(1000, { start_row = -1, start_vcol = X, end_row = -1, end_vcol = X })
+      )
+      eq(
+        { all = 1, fill = 0 },
+        meths.win_text_height(1000, { start_row = -1, start_vcol = 0, end_row = -1, end_vcol = X })
+      )
       eq({ all = 3, fill = 2 }, meths.win_text_height(1001, { end_row = 0 }))
       eq({ all = 2, fill = 2 }, meths.win_text_height(1001, { end_row = 0, end_vcol = 0 }))
-      eq({ all = 2, fill = 2 }, meths.win_text_height(1001, { start_row = 0, end_row = 0, end_vcol = 0 }))
-      eq({ all = 0, fill = 0 }, meths.win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 0, end_vcol = 0 }))
-      eq({ all = 1, fill = 0 }, meths.win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 0, end_vcol = X }))
+      eq(
+        { all = 2, fill = 2 },
+        meths.win_text_height(1001, { start_row = 0, end_row = 0, end_vcol = 0 })
+      )
+      eq(
+        { all = 0, fill = 0 },
+        meths.win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 0, end_vcol = 0 })
+      )
+      eq(
+        { all = 1, fill = 0 },
+        meths.win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 0, end_vcol = X })
+      )
       eq({ all = 11, fill = 5 }, meths.win_text_height(1001, { end_row = 18 }))
-      eq({ all = 9, fill = 3 }, meths.win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 18 }))
+      eq(
+        { all = 9, fill = 3 },
+        meths.win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 18 })
+      )
       eq({ all = 10, fill = 5 }, meths.win_text_height(1001, { end_row = 18, end_vcol = 0 }))
-      eq({ all = 8, fill = 3 }, meths.win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 18, end_vcol = 0 }))
+      eq(
+        { all = 8, fill = 3 },
+        meths.win_text_height(1001, { start_row = 0, start_vcol = 0, end_row = 18, end_vcol = 0 })
+      )
     end)
 
     it('with wrapped lines', function()
       local X = meths.get_vvar('maxcol')
       local screen = Screen.new(45, 22)
       screen:set_default_attr_ids({
-        [0] = {foreground = Screen.colors.Blue1, bold = true};
-        [1] = {foreground = Screen.colors.Brown};
-        [2] = {background = Screen.colors.Yellow};
+        [0] = { foreground = Screen.colors.Blue1, bold = true },
+        [1] = { foreground = Screen.colors.Brown },
+        [2] = { background = Screen.colors.Yellow },
       })
       screen:attach()
       exec([[
@@ -752,9 +851,22 @@ describe('API/win', function()
         call setline(1, repeat([repeat('foobar-', 36)], 3))
       ]])
       local ns = meths.create_namespace('')
-      meths.buf_set_extmark(0, ns, 1, 100, { virt_text = {{('?'):rep(15), 'Search'}}, virt_text_pos = 'inline' })
-      meths.buf_set_extmark(0, ns, 2, 200, { virt_text = {{('!'):rep(75), 'Search'}}, virt_text_pos = 'inline' })
-      screen:expect{grid=[[
+      meths.buf_set_extmark(
+        0,
+        ns,
+        1,
+        100,
+        { virt_text = { { ('?'):rep(15), 'Search' } }, virt_text_pos = 'inline' }
+      )
+      meths.buf_set_extmark(
+        0,
+        ns,
+        2,
+        200,
+        { virt_text = { { ('!'):rep(75), 'Search' } }, virt_text_pos = 'inline' }
+      )
+      screen:expect {
+        grid = [[
         {1:  1 }^foobar-foobar-foobar-foobar-foobar-foobar|
         -foobar-foobar-foobar-foobar-foobar-foobar-fo|
         obar-foobar-foobar-foobar-foobar-foobar-fooba|
@@ -777,48 +889,123 @@ describe('API/win', function()
         {2:!!!!!!!!!}ar-foobar-foobar-foobar-foobar-fooba|
         r-foobar-foobar-                             |
                                                      |
-      ]]}
+      ]],
+      }
       screen:try_resize(45, 2)
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
         {1:  1 }^foobar-foobar-foobar-foobar-foobar-foobar|
                                                      |
-      ]]}
+      ]],
+      }
       eq({ all = 21, fill = 0 }, meths.win_text_height(0, {}))
       eq({ all = 6, fill = 0 }, meths.win_text_height(0, { start_row = 0, end_row = 0 }))
       eq({ all = 7, fill = 0 }, meths.win_text_height(0, { start_row = 1, end_row = 1 }))
       eq({ all = 8, fill = 0 }, meths.win_text_height(0, { start_row = 2, end_row = 2 }))
-      eq({ all = 0, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 0 }))
-      eq({ all = 1, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 41 }))
-      eq({ all = 2, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 42 }))
-      eq({ all = 2, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 86 }))
-      eq({ all = 3, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 87 }))
-      eq({ all = 6, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 266 }))
-      eq({ all = 7, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 267 }))
-      eq({ all = 7, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 311 }))
-      eq({ all = 7, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 312 }))
-      eq({ all = 7, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = X }))
-      eq({ all = 7, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 40, end_row = 1, end_vcol = X }))
-      eq({ all = 6, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 41, end_row = 1, end_vcol = X }))
-      eq({ all = 6, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 85, end_row = 1, end_vcol = X }))
-      eq({ all = 5, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 86, end_row = 1, end_vcol = X }))
-      eq({ all = 2, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 265, end_row = 1, end_vcol = X }))
-      eq({ all = 1, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 266, end_row = 1, end_vcol = X }))
-      eq({ all = 1, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 310, end_row = 1, end_vcol = X }))
-      eq({ all = 0, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 311, end_row = 1, end_vcol = X }))
-      eq({ all = 1, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 86, end_row = 1, end_vcol = 131 }))
-      eq({ all = 1, fill = 0 }, meths.win_text_height(0, { start_row = 1, start_vcol = 221, end_row = 1, end_vcol = 266 }))
+      eq(
+        { all = 0, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 0 })
+      )
+      eq(
+        { all = 1, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 41 })
+      )
+      eq(
+        { all = 2, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 42 })
+      )
+      eq(
+        { all = 2, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 86 })
+      )
+      eq(
+        { all = 3, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 87 })
+      )
+      eq(
+        { all = 6, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 266 })
+      )
+      eq(
+        { all = 7, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 267 })
+      )
+      eq(
+        { all = 7, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 311 })
+      )
+      eq(
+        { all = 7, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = 312 })
+      )
+      eq(
+        { all = 7, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 0, end_row = 1, end_vcol = X })
+      )
+      eq(
+        { all = 7, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 40, end_row = 1, end_vcol = X })
+      )
+      eq(
+        { all = 6, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 41, end_row = 1, end_vcol = X })
+      )
+      eq(
+        { all = 6, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 85, end_row = 1, end_vcol = X })
+      )
+      eq(
+        { all = 5, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 86, end_row = 1, end_vcol = X })
+      )
+      eq(
+        { all = 2, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 265, end_row = 1, end_vcol = X })
+      )
+      eq(
+        { all = 1, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 266, end_row = 1, end_vcol = X })
+      )
+      eq(
+        { all = 1, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 310, end_row = 1, end_vcol = X })
+      )
+      eq(
+        { all = 0, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 311, end_row = 1, end_vcol = X })
+      )
+      eq(
+        { all = 1, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 86, end_row = 1, end_vcol = 131 })
+      )
+      eq(
+        { all = 1, fill = 0 },
+        meths.win_text_height(0, { start_row = 1, start_vcol = 221, end_row = 1, end_vcol = 266 })
+      )
       eq({ all = 18, fill = 0 }, meths.win_text_height(0, { start_row = 0, start_vcol = 131 }))
       eq({ all = 19, fill = 0 }, meths.win_text_height(0, { start_row = 0, start_vcol = 130 }))
       eq({ all = 20, fill = 0 }, meths.win_text_height(0, { end_row = 2, end_vcol = 311 }))
       eq({ all = 21, fill = 0 }, meths.win_text_height(0, { end_row = 2, end_vcol = 312 }))
-      eq({ all = 17, fill = 0 }, meths.win_text_height(0, { start_row = 0, start_vcol = 131, end_row = 2, end_vcol = 311 }))
-      eq({ all = 19, fill = 0 }, meths.win_text_height(0, { start_row = 0, start_vcol = 130, end_row = 2, end_vcol = 312 }))
+      eq(
+        { all = 17, fill = 0 },
+        meths.win_text_height(0, { start_row = 0, start_vcol = 131, end_row = 2, end_vcol = 311 })
+      )
+      eq(
+        { all = 19, fill = 0 },
+        meths.win_text_height(0, { start_row = 0, start_vcol = 130, end_row = 2, end_vcol = 312 })
+      )
       eq({ all = 16, fill = 0 }, meths.win_text_height(0, { start_row = 0, start_vcol = 221 }))
       eq({ all = 17, fill = 0 }, meths.win_text_height(0, { start_row = 0, start_vcol = 220 }))
       eq({ all = 14, fill = 0 }, meths.win_text_height(0, { end_row = 2, end_vcol = 41 }))
       eq({ all = 15, fill = 0 }, meths.win_text_height(0, { end_row = 2, end_vcol = 42 }))
-      eq({ all = 9, fill = 0 }, meths.win_text_height(0, { start_row = 0, start_vcol = 221, end_row = 2, end_vcol = 41 }))
-      eq({ all = 11, fill = 0 }, meths.win_text_height(0, { start_row = 0, start_vcol = 220, end_row = 2, end_vcol = 42 }))
+      eq(
+        { all = 9, fill = 0 },
+        meths.win_text_height(0, { start_row = 0, start_vcol = 221, end_row = 2, end_vcol = 41 })
+      )
+      eq(
+        { all = 11, fill = 0 },
+        meths.win_text_height(0, { start_row = 0, start_vcol = 220, end_row = 2, end_vcol = 42 })
+      )
     end)
   end)
 
@@ -826,11 +1013,20 @@ describe('API/win', function()
     it('noautocmd option works', function()
       command('autocmd BufEnter,BufLeave,BufWinEnter * let g:fired = 1')
       meths.open_win(meths.create_buf(true, true), true, {
-        relative='win', row=3, col=3, width=12, height=3, noautocmd=true
+        relative = 'win',
+        row = 3,
+        col = 3,
+        width = 12,
+        height = 3,
+        noautocmd = true,
       })
       eq(0, funcs.exists('g:fired'))
       meths.open_win(meths.create_buf(true, true), true, {
-        relative='win', row=3, col=3, width=12, height=3
+        relative = 'win',
+        row = 3,
+        col = 3,
+        width = 12,
+        height = 3,
       })
       eq(1, funcs.exists('g:fired'))
     end)
@@ -838,25 +1034,51 @@ describe('API/win', function()
     it('disallowed in cmdwin if enter=true or buf=curbuf', function()
       local new_buf = meths.create_buf(true, true)
       feed('q:')
-      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-         pcall_err(meths.open_win, new_buf, true, {
-           relative='editor', row=5, col=5, width=5, height=5,
-         }))
-      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-         pcall_err(meths.open_win, 0, false, {
-           relative='editor', row=5, col=5, width=5, height=5,
-         }))
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(meths.open_win, new_buf, true, {
+          relative = 'editor',
+          row = 5,
+          col = 5,
+          width = 5,
+          height = 5,
+        })
+      )
+      eq(
+        'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(meths.open_win, 0, false, {
+          relative = 'editor',
+          row = 5,
+          col = 5,
+          width = 5,
+          height = 5,
+        })
+      )
 
-      eq(new_buf, meths.win_get_buf(meths.open_win(new_buf, false, {
-           relative='editor', row=5, col=5, width=5, height=5,
-         })))
+      eq(
+        new_buf,
+        meths.win_get_buf(meths.open_win(new_buf, false, {
+          relative = 'editor',
+          row = 5,
+          col = 5,
+          width = 5,
+          height = 5,
+        }))
+      )
     end)
 
     it('aborts if buffer is invalid', function()
       local wins_before = meths.list_wins()
-      eq('Invalid buffer id: 1337', pcall_err(meths.open_win, 1337, false, {
-           relative='editor', row=5, col=5, width=5, height=5,
-         }))
+      eq(
+        'Invalid buffer id: 1337',
+        pcall_err(meths.open_win, 1337, false, {
+          relative = 'editor',
+          row = 5,
+          col = 5,
+          width = 5,
+          height = 5,
+        })
+      )
       eq(wins_before, meths.list_wins())
     end)
   end)
@@ -865,7 +1087,11 @@ describe('API/win', function()
     it('includes border', function()
       local b = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' }
       local win = meths.open_win(0, true, {
-        relative='win', row=3, col=3, width=12, height=3,
+        relative = 'win',
+        row = 3,
+        col = 3,
+        width = 12,
+        height = 3,
         border = b,
       })
 
@@ -875,17 +1101,21 @@ describe('API/win', function()
 
     it('includes border with highlight group', function()
       local b = {
-        {'a', 'Normal'},
-        {'b', 'Special'},
-        {'c', 'String'},
-        {'d', 'Comment'},
-        {'e', 'Visual'},
-        {'f', 'Error'},
-        {'g', 'Constant'},
-        {'h', 'PreProc'},
+        { 'a', 'Normal' },
+        { 'b', 'Special' },
+        { 'c', 'String' },
+        { 'd', 'Comment' },
+        { 'e', 'Visual' },
+        { 'f', 'Error' },
+        { 'g', 'Constant' },
+        { 'h', 'PreProc' },
       }
       local win = meths.open_win(0, true, {
-        relative='win', row=3, col=3, width=12, height=3,
+        relative = 'win',
+        row = 3,
+        col = 3,
+        width = 12,
+        height = 3,
         border = b,
       })
 
@@ -894,11 +1124,17 @@ describe('API/win', function()
     end)
 
     it('includes title and footer', function()
-      local title = { {'A', {'StatusLine', 'TabLine'}}, {'B'}, {'C', 'WinBar'} }
-      local footer = { {'A', 'WinBar'}, {'B'}, {'C', {'StatusLine', 'TabLine'}} }
+      local title = { { 'A', { 'StatusLine', 'TabLine' } }, { 'B' }, { 'C', 'WinBar' } }
+      local footer = { { 'A', 'WinBar' }, { 'B' }, { 'C', { 'StatusLine', 'TabLine' } } }
       local win = meths.open_win(0, true, {
-        relative='win', row=3, col=3, width=12, height=3,
-        border = 'single', title = title, footer = footer,
+        relative = 'win',
+        row = 3,
+        col = 3,
+        width = 12,
+        height = 3,
+        border = 'single',
+        title = title,
+        footer = footer,
       })
 
       local cfg = meths.win_get_config(win)
@@ -908,35 +1144,39 @@ describe('API/win', function()
   end)
 
   describe('set_config', function()
-    it('no crash with invalid title', function ()
+    it('no crash with invalid title', function()
       local win = meths.open_win(0, true, {
         width = 10,
         height = 10,
-        relative = "editor",
+        relative = 'editor',
         row = 10,
         col = 10,
-        title = { { "test" } },
-        border = "single",
+        title = { { 'test' } },
+        border = 'single',
       })
-      eq("title/footer cannot be an empty array",
-          pcall_err(meths.win_set_config, win, {title = {}}))
-      command("redraw!")
+      eq(
+        'title/footer cannot be an empty array',
+        pcall_err(meths.win_set_config, win, { title = {} })
+      )
+      command('redraw!')
       assert_alive()
     end)
 
-    it('no crash with invalid footer', function ()
+    it('no crash with invalid footer', function()
       local win = meths.open_win(0, true, {
         width = 10,
         height = 10,
-        relative = "editor",
+        relative = 'editor',
         row = 10,
         col = 10,
-        footer = { { "test" } },
-        border = "single",
+        footer = { { 'test' } },
+        border = 'single',
       })
-      eq("title/footer cannot be an empty array",
-          pcall_err(meths.win_set_config, win, {footer = {}}))
-      command("redraw!")
+      eq(
+        'title/footer cannot be an empty array',
+        pcall_err(meths.win_set_config, win, { footer = {} })
+      )
+      command('redraw!')
       assert_alive()
     end)
   end)

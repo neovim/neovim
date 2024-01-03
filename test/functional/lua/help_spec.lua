@@ -8,7 +8,9 @@ local exec_lua = helpers.exec_lua
 local eq = helpers.eq
 local ok = helpers.ok
 
-if helpers.skip(helpers.is_ci('cirrus'), 'No need to run this on Cirrus') then return end
+if helpers.skip(helpers.is_ci('cirrus'), 'No need to run this on Cirrus') then
+  return
+end
 
 describe(':help docs', function()
   before_each(clear)
@@ -23,10 +25,14 @@ describe(':help docs', function()
     ok(rv.helpfiles > 100, '>100 :help files', rv.helpfiles)
 
     eq({}, rv.parse_errors, 'no parse errors')
-    eq(0,  rv.err_count, 'no parse errors')
+    eq(0, rv.err_count, 'no parse errors')
     eq({}, rv.invalid_links, 'invalid tags in :help docs')
     eq({}, rv.invalid_urls, 'invalid URLs in :help docs')
-    eq({}, rv.invalid_spelling, 'invalid spelling in :help docs (see spell_dict in scripts/gen_help_html.lua)')
+    eq(
+      {},
+      rv.invalid_spelling,
+      'invalid spelling in :help docs (see spell_dict in scripts/gen_help_html.lua)'
+    )
   end)
 
   it('gen_help_html.lua generates HTML', function()
@@ -36,7 +42,8 @@ describe(':help docs', function()
 
     local tmpdir = exec_lua('return vim.fs.dirname(vim.fn.tempname())')
     -- Because gen() is slow (~30s), this test is limited to a few files.
-    local rv = exec_lua([[
+    local rv = exec_lua(
+      [[
       local to_dir = ...
       return require('scripts.gen_help_html').gen(
         './build/runtime/doc',

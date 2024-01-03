@@ -16,40 +16,44 @@ describe('vim.json.decode()', function()
   end)
 
   it('validation', function()
-    eq('Expected object key string but found invalid token at character 2',
-      pcall_err(exec_lua, [[return vim.json.decode('{a:"b"}')]]))
+    eq(
+      'Expected object key string but found invalid token at character 2',
+      pcall_err(exec_lua, [[return vim.json.decode('{a:"b"}')]])
+    )
   end)
 
   it('options', function()
     local jsonstr = '{"arr":[1,2,null],"bar":[3,7],"foo":{"a":"b"},"baz":null}'
     eq({
-        arr = { 1, 2, vim.NIL },
-        bar = { 3, 7 },
-        baz = vim.NIL,
-        foo = { a = 'b' },
-      },
-      exec_lua([[return vim.json.decode(..., {})]], jsonstr))
+      arr = { 1, 2, vim.NIL },
+      bar = { 3, 7 },
+      baz = vim.NIL,
+      foo = { a = 'b' },
+    }, exec_lua([[return vim.json.decode(..., {})]], jsonstr))
     eq({
-        arr = { 1, 2, vim.NIL },
+      arr = { 1, 2, vim.NIL },
+      bar = { 3, 7 },
+      -- baz = nil,
+      foo = { a = 'b' },
+    }, exec_lua([[return vim.json.decode(..., { luanil = { object = true } })]], jsonstr))
+    eq({
+      arr = { 1, 2 },
+      bar = { 3, 7 },
+      baz = vim.NIL,
+      foo = { a = 'b' },
+    }, exec_lua([[return vim.json.decode(..., { luanil = { array = true } })]], jsonstr))
+    eq(
+      {
+        arr = { 1, 2 },
         bar = { 3, 7 },
         -- baz = nil,
         foo = { a = 'b' },
       },
-      exec_lua([[return vim.json.decode(..., { luanil = { object = true } })]], jsonstr))
-    eq({
-        arr = { 1, 2 },
-        bar = { 3, 7 },
-        baz = vim.NIL,
-        foo = { a = 'b' },
-      },
-      exec_lua([[return vim.json.decode(..., { luanil = { array = true } })]], jsonstr))
-    eq({
-        arr = { 1, 2 },
-        bar = { 3, 7 },
-        -- baz = nil,
-        foo = { a = 'b' },
-      },
-      exec_lua([[return vim.json.decode(..., { luanil = { array = true, object = true } })]], jsonstr))
+      exec_lua(
+        [[return vim.json.decode(..., { luanil = { array = true, object = true } })]],
+        jsonstr
+      )
+    )
   end)
 
   it('parses integer numbers', function()
@@ -96,13 +100,15 @@ describe('vim.json.decode()', function()
   end)
 
   it('parses containers', function()
-    eq({1}, exec_lua([[return vim.json.decode('[1]')]]))
-    eq({vim.NIL, 1}, exec_lua([[return vim.json.decode('[null, 1]')]]))
-    eq({['1']=2}, exec_lua([[return vim.json.decode('{"1": 2}')]]))
-    eq({['1']=2, ['3']={{['4']={['5']={{}, 1}}}}},
-       exec_lua([[return vim.json.decode('{"1": 2, "3": [{"4": {"5": [ [], 1]}}]}')]]))
+    eq({ 1 }, exec_lua([[return vim.json.decode('[1]')]]))
+    eq({ vim.NIL, 1 }, exec_lua([[return vim.json.decode('[null, 1]')]]))
+    eq({ ['1'] = 2 }, exec_lua([[return vim.json.decode('{"1": 2}')]]))
+    eq(
+      { ['1'] = 2, ['3'] = { { ['4'] = { ['5'] = { {}, 1 } } } } },
+      exec_lua([[return vim.json.decode('{"1": 2, "3": [{"4": {"5": [ [], 1]}}]}')]])
+    )
     -- Empty string is a valid key. #20757
-    eq({['']=42}, exec_lua([[return vim.json.decode('{"": 42}')]]))
+    eq({ [''] = 42 }, exec_lua([[return vim.json.decode('{"": 42}')]]))
   end)
 
   it('parses strings properly', function()
@@ -111,8 +117,8 @@ describe('vim.json.decode()', function()
     eq('\\/"\t\b\n\r\f', exec_lua([=[return vim.json.decode([["\\\/\"\t\b\n\r\f"]])]=]))
     eq('/a', exec_lua([=[return vim.json.decode([["\/a"]])]=]))
     -- Unicode characters: 2-byte, 3-byte
-    eq('«',exec_lua([=[return vim.json.decode([["«"]])]=]))
-    eq('ફ',exec_lua([=[return vim.json.decode([["ફ"]])]=]))
+    eq('«', exec_lua([=[return vim.json.decode([["«"]])]=]))
+    eq('ફ', exec_lua([=[return vim.json.decode([["ફ"]])]=]))
   end)
 
   it('parses surrogate pairs properly', function()
@@ -120,11 +126,11 @@ describe('vim.json.decode()', function()
   end)
 
   it('accepts all spaces in every position where space may be put', function()
-    local s = ' \t\n\r \t\r\n \n\t\r \n\r\t \r\t\n \r\n\t\t \n\r\t \r\n\t\n \r\t\n\r \t\r \n\t\r\n \n \t\r\n \r\t\n\t \r\n\t\r \n\r \t\n\r\t \r \t\n\r \n\t\r\t \n\r\t\n \r\n \t\r\n\t'
+    local s =
+      ' \t\n\r \t\r\n \n\t\r \n\r\t \r\t\n \r\n\t\t \n\r\t \r\n\t\n \r\t\n\r \t\r \n\t\r\n \n \t\r\n \r\t\n\t \r\n\t\r \n\r \t\n\r\t \r \t\n\r \n\t\r\t \n\r\t\n \r\n \t\r\n\t'
     local str = ('%s{%s"key"%s:%s[%s"val"%s,%s"val2"%s]%s,%s"key2"%s:%s1%s}%s'):gsub('%%s', s)
-    eq({key={'val', 'val2'}, key2=1}, exec_lua([[return vim.json.decode(...)]], str))
+    eq({ key = { 'val', 'val2' }, key2 = 1 }, exec_lua([[return vim.json.decode(...)]], str))
   end)
-
 end)
 
 describe('vim.json.encode()', function()
@@ -170,5 +176,4 @@ describe('vim.json.encode()', function()
   it('dumps vim.NIL', function()
     eq('null', exec_lua([[return vim.json.encode(vim.NIL)]]))
   end)
-
 end)

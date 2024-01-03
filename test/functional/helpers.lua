@@ -22,51 +22,64 @@ local module = {}
 
 local start_dir = luv.cwd()
 local runtime_set = 'set runtimepath^=./build/lib/nvim/'
-module.nvim_prog = (
-  os.getenv('NVIM_PRG')
-  or global_helpers.test_build_dir .. '/bin/nvim'
-)
+module.nvim_prog = (os.getenv('NVIM_PRG') or global_helpers.test_build_dir .. '/bin/nvim')
 -- Default settings for the test session.
 module.nvim_set = (
   'set shortmess+=IS background=light termguicolors noswapfile noautoindent startofline'
-  ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
-  ..' belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid')
+  .. ' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
+  .. ' belloff= wildoptions-=pum joinspaces noshowcmd noruler nomore redrawdebug=invalid'
+)
 module.nvim_argv = {
-  module.nvim_prog, '-u', 'NONE', '-i', 'NONE',
+  module.nvim_prog,
+  '-u',
+  'NONE',
+  '-i',
+  'NONE',
   -- XXX: find treesitter parsers.
-  '--cmd', runtime_set,
-  '--cmd', module.nvim_set,
+  '--cmd',
+  runtime_set,
+  '--cmd',
+  module.nvim_set,
   -- Remove default mappings.
-  '--cmd', 'mapclear | mapclear!',
+  '--cmd',
+  'mapclear | mapclear!',
   -- Make screentest work after changing to the new default color scheme
   -- Source 'vim' color scheme without side effects
   -- TODO: rewrite tests
-  '--cmd', 'lua dofile("runtime/colors/vim.lua")',
-  '--cmd', 'unlet g:colors_name',
-  '--embed'}
+  '--cmd',
+  'lua dofile("runtime/colors/vim.lua")',
+  '--cmd',
+  'unlet g:colors_name',
+  '--embed',
+}
 
 -- Directory containing nvim.
-module.nvim_dir = module.nvim_prog:gsub("[/\\][^/\\]+$", "")
+module.nvim_dir = module.nvim_prog:gsub('[/\\][^/\\]+$', '')
 if module.nvim_dir == module.nvim_prog then
-  module.nvim_dir = "."
+  module.nvim_dir = '.'
 end
 
 local prepend_argv
 
 if os.getenv('VALGRIND') then
   local log_file = os.getenv('VALGRIND_LOG') or 'valgrind-%p.log'
-  prepend_argv = {'valgrind', '-q', '--tool=memcheck',
-                  '--leak-check=yes', '--track-origins=yes',
-                  '--show-possibly-lost=no',
-                  '--suppressions=src/.valgrind.supp',
-                  '--log-file='..log_file}
+  prepend_argv = {
+    'valgrind',
+    '-q',
+    '--tool=memcheck',
+    '--leak-check=yes',
+    '--track-origins=yes',
+    '--show-possibly-lost=no',
+    '--suppressions=src/.valgrind.supp',
+    '--log-file=' .. log_file,
+  }
   if os.getenv('GDB') then
     table.insert(prepend_argv, '--vgdb=yes')
     table.insert(prepend_argv, '--vgdb-error=0')
   end
 elseif os.getenv('GDB') then
   local gdbserver_port = os.getenv('GDBSERVER_PORT') or '7777'
-  prepend_argv = {'gdbserver', 'localhost:'..gdbserver_port}
+  prepend_argv = { 'gdbserver', 'localhost:' .. gdbserver_port }
 end
 
 if prepend_argv then
@@ -86,8 +99,8 @@ local session, loop_running, last_error, method_error
 
 if not is_os('win') then
   local sigpipe_handler = luv.new_signal()
-  luv.signal_start(sigpipe_handler, "sigpipe", function()
-    print("warning: got SIGPIPE signal. Likely related to a crash in nvim")
+  luv.signal_start(sigpipe_handler, 'sigpipe', function()
+    print('warning: got SIGPIPE signal. Likely related to a crash in nvim')
   end)
 end
 
@@ -151,15 +164,15 @@ function module.expect_msg_seq(...)
     error('need at least 1 argument')
   end
   local arg1 = select(1, ...)
-  if (arg1['seqs'] and select('#', ...) > 1) or type(arg1) ~= 'table'  then
+  if (arg1['seqs'] and select('#', ...) > 1) or type(arg1) ~= 'table' then
     error('invalid args')
   end
   local ignore = arg1['ignore'] and arg1['ignore'] or {}
-  local seqs = arg1['seqs'] and arg1['seqs'] or {...}
+  local seqs = arg1['seqs'] and arg1['seqs'] or { ... }
   if type(ignore) ~= 'table' then
     error("'ignore' arg must be a list of strings")
   end
-  table.sort(seqs, function(a, b)  -- Sort ascending, by (shallow) length.
+  table.sort(seqs, function(a, b) -- Sort ascending, by (shallow) length.
     return #a < #b
   end)
 
@@ -172,7 +185,7 @@ function module.expect_msg_seq(...)
     end
     return string.format('%s\n%s\n%s', err1, string.rep('=', 78), err2)
   end
-  local msg_timeout = module.load_adjust(10000)  -- Big timeout for ASAN/valgrind.
+  local msg_timeout = module.load_adjust(10000) -- Big timeout for ASAN/valgrind.
   for anum = 1, #seqs do
     local expected_seq = seqs[anum]
     -- Collect enough messages to compare the next expected sequence.
@@ -180,9 +193,17 @@ function module.expect_msg_seq(...)
       local msg = module.next_msg(msg_timeout)
       local msg_type = msg and msg[2] or nil
       if msg == nil then
-        error(cat_err(final_error,
-                      string.format('got %d messages (ignored %d), expected %d',
-                                    #actual_seq, nr_ignored, #expected_seq)))
+        error(
+          cat_err(
+            final_error,
+            string.format(
+              'got %d messages (ignored %d), expected %d',
+              #actual_seq,
+              nr_ignored,
+              #expected_seq
+            )
+          )
+        )
       elseif tbl_contains(ignore, msg_type) then
         nr_ignored = nr_ignored + 1
       else
@@ -194,7 +215,7 @@ function module.expect_msg_seq(...)
       return result
     end
     local message = result
-    if type(result) == "table" then
+    if type(result) == 'table' then
       -- 'eq' returns several things
       message = result.message
     end
@@ -204,7 +225,7 @@ function module.expect_msg_seq(...)
 end
 
 local function call_and_stop_on_error(lsession, ...)
-  local status, result = Session.safe_pcall(...)  -- luacheck: ignore
+  local status, result = Session.safe_pcall(...) -- luacheck: ignore
   if not status then
     lsession:stop()
     last_error = result
@@ -267,7 +288,7 @@ function module.nvim_prog_abs()
   -- system(['build/bin/nvim']) does not work for whatever reason. It must
   -- be executable searched in $PATH or something starting with / or ./.
   if module.nvim_prog:match('[/\\]') then
-    return module.request('nvim_call_function', 'fnamemodify', {module.nvim_prog, ':p'})
+    return module.request('nvim_call_function', 'fnamemodify', { module.nvim_prog, ':p' })
   else
     return module.nvim_prog
   end
@@ -286,14 +307,17 @@ function module.expect_exit(fn_or_timeout, ...)
   if type(fn_or_timeout) == 'function' then
     eq(eof_err_msg, module.pcall_err(fn_or_timeout, ...))
   else
-    eq(eof_err_msg, module.pcall_err(function(timeout, fn, ...)
-      fn(...)
-      while session:next_message(timeout) do
-      end
-      if session.eof_err then
-        error(session.eof_err[2])
-      end
-    end, fn_or_timeout, ...))
+    eq(
+      eof_err_msg,
+      module.pcall_err(function(timeout, fn, ...)
+        fn(...)
+        while session:next_message(timeout) do
+        end
+        if session.eof_err then
+          error(session.eof_err[2])
+        end
+      end, fn_or_timeout, ...)
+    )
   end
 end
 
@@ -306,7 +330,7 @@ end
 -- Executes a Vimscript function via RPC.
 -- Fails on Vimscript error, but does not update v:errmsg.
 function module.call(name, ...)
-  return module.request('nvim_call_function', name, {...})
+  return module.request('nvim_call_function', name, { ... })
 end
 
 -- Executes a Vimscript function via Lua.
@@ -329,13 +353,13 @@ local function nvim_feed(input)
 end
 
 function module.feed(...)
-  for _, v in ipairs({...}) do
+  for _, v in ipairs({ ... }) do
     nvim_feed(dedent(v))
   end
 end
 
 function module.rawfeed(...)
-  for _, v in ipairs({...}) do
+  for _, v in ipairs({ ... }) do
     nvim_feed(dedent(v))
   end
 end
@@ -343,7 +367,7 @@ end
 function module.merge_args(...)
   local i = 1
   local argv = {}
-  for anum = 1,select('#', ...) do
+  for anum = 1, select('#', ...) do
     local args = select(anum, ...)
     if args then
       for _, arg in ipairs(args) do
@@ -375,9 +399,9 @@ end
 --      {'-N'}
 local function remove_args(args, args_rm)
   local new_args = {}
-  local skip_following = {'-u', '-i', '-c', '--cmd', '-s', '--listen'}
+  local skip_following = { '-u', '-i', '-c', '--cmd', '-s', '--listen' }
   if not args_rm or #args_rm == 0 then
-    return {unpack(args)}
+    return { unpack(args) }
   end
   for _, v in ipairs(args_rm) do
     assert(type(v) == 'string')
@@ -389,7 +413,7 @@ local function remove_args(args, args_rm)
     elseif tbl_contains(args_rm, arg) then
       last = arg
     elseif arg == runtime_set and tbl_contains(args_rm, 'runtimepath') then
-      table.remove(new_args)  -- Remove the preceding "--cmd".
+      table.remove(new_args) -- Remove the preceding "--cmd".
       last = ''
     else
       table.insert(new_args, arg)
@@ -404,12 +428,16 @@ function module.check_close()
   end
   local start_time = luv.now()
   session:close()
-  luv.update_time()  -- Update cached value of luv.now() (libuv: uv_now()).
+  luv.update_time() -- Update cached value of luv.now() (libuv: uv_now()).
   local end_time = luv.now()
   local delta = end_time - start_time
   if delta > 500 then
-    print("nvim took " .. delta .. " milliseconds to exit after last test\n"..
-          "This indicates a likely problem with the test even if it passed!\n")
+    print(
+      'nvim took '
+        .. delta
+        .. ' milliseconds to exit after last test\n'
+        .. 'This indicates a likely problem with the test even if it passed!\n'
+    )
     io.stdout:flush()
   end
   session = nil
@@ -421,17 +449,16 @@ function module.spawn(argv, merge, env, keep, io_extra)
     module.check_close()
   end
 
-  local child_stream = ChildProcessStream.spawn(
-      merge and module.merge_args(prepend_argv, argv) or argv,
-      env, io_extra)
+  local child_stream =
+    ChildProcessStream.spawn(merge and module.merge_args(prepend_argv, argv) or argv, env, io_extra)
   return Session.new(child_stream)
 end
 
 -- Creates a new Session connected by domain socket (named pipe) or TCP.
 function module.connect(file_or_address)
-  local addr, port = string.match(file_or_address, "(.*):(%d+)")
-  local stream = (addr and port) and SocketStream.connect(addr, port) or
-    SocketStream.open(file_or_address)
+  local addr, port = string.match(file_or_address, '(.*):(%d+)')
+  local stream = (addr and port) and SocketStream.connect(addr, port)
+    or SocketStream.open(file_or_address)
   return Session.new(stream)
 end
 
@@ -463,7 +490,7 @@ end
 --
 ---@see clear() for parameters.
 function module.new_argv(...)
-  local args = {unpack(module.nvim_argv)}
+  local args = { unpack(module.nvim_argv) }
   table.insert(args, '--headless')
   if _G._nvim_test_id then
     -- Set the server name to the test-id for logging. #8519
@@ -475,7 +502,7 @@ function module.new_argv(...)
   local env = nil
   local opts = select(1, ...)
   if type(opts) ~= 'table' then
-    new_args = {...}
+    new_args = { ... }
   else
     args = remove_args(args, opts.args_rm)
     if opts.env then
@@ -520,7 +547,7 @@ end
 
 function module.insert(...)
   nvim_feed('i')
-  for _, v in ipairs({...}) do
+  for _, v in ipairs({ ... }) do
     local escaped = v:gsub('<', '<lt>')
     module.rawfeed(escaped)
   end
@@ -530,7 +557,7 @@ end
 -- Executes an ex-command by user input. Because nvim_input() is used, Vimscript
 -- errors will not manifest as client (lua) errors. Use command() for that.
 function module.feed_command(...)
-  for _, v in ipairs({...}) do
+  for _, v in ipairs({ ... }) do
     if v:sub(1, 1) ~= '/' then
       -- not a search command, prefix with colon
       nvim_feed(':')
@@ -546,7 +573,7 @@ function module.source(code)
 end
 
 function module.has_powershell()
-  return module.eval('executable("'..(is_os('win') and 'powershell' or 'pwsh')..'")') == 1
+  return module.eval('executable("' .. (is_os('win') and 'powershell' or 'pwsh') .. '")') == 1
 end
 
 --- Sets Nvim shell to powershell.
@@ -560,16 +587,20 @@ function module.set_shell_powershell(fake)
     assert(found)
   end
   local shell = found and (is_os('win') and 'powershell' or 'pwsh') or module.testprg('pwsh-test')
-  local cmd = 'Remove-Item -Force '..table.concat(is_os('win')
-    and {'alias:cat', 'alias:echo', 'alias:sleep', 'alias:sort', 'alias:tee'}
-    or  {'alias:echo'}, ',')..';'
+  local cmd = 'Remove-Item -Force '
+    .. table.concat(
+      is_os('win') and { 'alias:cat', 'alias:echo', 'alias:sleep', 'alias:sort', 'alias:tee' }
+        or { 'alias:echo' },
+      ','
+    )
+    .. ';'
   module.exec([[
-    let &shell = ']]..shell..[['
+    let &shell = ']] .. shell .. [['
     set shellquote= shellxquote=
     let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command '
     let &shellcmdflag .= '[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();'
     let &shellcmdflag .= '$PSDefaultParameterValues[''Out-File:Encoding'']=''utf8'';'
-    let &shellcmdflag .= ']]..cmd..[['
+    let &shellcmdflag .= ']] .. cmd .. [['
     let &shellredir = '2>&1 | %%{ "$_" } | Out-File %s; exit $LastExitCode'
     let &shellpipe  = '2>&1 | %%{ "$_" } | tee %s; exit $LastExitCode'
   ]])
@@ -580,7 +611,9 @@ function module.create_callindex(func)
   local table = {}
   setmetatable(table, {
     __index = function(tbl, arg1)
-      local ret = function(...) return func(arg1, ...) end
+      local ret = function(...)
+        return func(arg1, ...)
+      end
       tbl[arg1] = ret
       return ret
     end,
@@ -589,11 +622,11 @@ function module.create_callindex(func)
 end
 
 local function ui(method, ...)
-  return module.request('nvim_ui_'..method, ...)
+  return module.request('nvim_ui_' .. method, ...)
 end
 
 function module.nvim_async(method, ...)
-  session:notify('nvim_'..method, ...)
+  session:notify('nvim_' .. method, ...)
 end
 
 module.async_meths = module.create_callindex(module.nvim_async)
@@ -602,19 +635,19 @@ module.uimeths = module.create_callindex(ui)
 local function create_api(request, call)
   local m = {}
   function m.nvim(method, ...)
-    return request('nvim_'..method, ...)
+    return request('nvim_' .. method, ...)
   end
 
   function m.buffer(method, ...)
-    return request('nvim_buf_'..method, ...)
+    return request('nvim_buf_' .. method, ...)
   end
 
   function m.window(method, ...)
-    return request('nvim_win_'..method, ...)
+    return request('nvim_win_' .. method, ...)
   end
 
   function m.tabpage(method, ...)
-    return request('nvim_tabpage_'..method, ...)
+    return request('nvim_tabpage_' .. method, ...)
   end
 
   function m.curbuf(method, ...)
@@ -682,12 +715,12 @@ function module.poke_eventloop()
 end
 
 function module.buf_lines(bufnr)
-  return module.exec_lua("return vim.api.nvim_buf_get_lines((...), 0, -1, false)", bufnr)
+  return module.exec_lua('return vim.api.nvim_buf_get_lines((...), 0, -1, false)', bufnr)
 end
 
 ---@see buf_lines()
 function module.curbuf_contents()
-  module.poke_eventloop()  -- Before inspecting the buffer, do whatever.
+  module.poke_eventloop() -- Before inspecting the buffer, do whatever.
   return table.concat(module.curbuf('get_lines', 0, -1, true), '\n')
 end
 
@@ -701,9 +734,9 @@ function module.expect_any(contents)
 end
 
 function module.expect_events(expected, received, kind)
-  local inspect = require'vim.inspect'
+  local inspect = require 'vim.inspect'
   if not pcall(eq, expected, received) then
-    local msg = 'unexpected '..kind..' received.\n\n'
+    local msg = 'unexpected ' .. kind .. ' received.\n\n'
 
     msg = msg .. 'received events:\n'
     for _, e in ipairs(received) do
@@ -728,11 +761,15 @@ function module.assert_visible(bufnr, visible)
   assert(type(visible) == 'boolean')
   eq(visible, module.bufmeths.is_loaded(bufnr))
   if visible then
-    assert(-1 ~= module.funcs.bufwinnr(bufnr),
-      'expected buffer to be visible in current tabpage: '..tostring(bufnr))
+    assert(
+      -1 ~= module.funcs.bufwinnr(bufnr),
+      'expected buffer to be visible in current tabpage: ' .. tostring(bufnr)
+    )
   else
-    assert(-1 == module.funcs.bufwinnr(bufnr),
-      'expected buffer NOT visible in current tabpage: '..tostring(bufnr))
+    assert(
+      -1 == module.funcs.bufwinnr(bufnr),
+      'expected buffer NOT visible in current tabpage: ' .. tostring(bufnr)
+    )
   end
 end
 
@@ -746,21 +783,20 @@ local function do_rmdir(path)
   end
   for file in vim.fs.dir(path) do
     if file ~= '.' and file ~= '..' then
-      local abspath = path..'/'..file
+      local abspath = path .. '/' .. file
       if global_helpers.isdir(abspath) then
-        do_rmdir(abspath)  -- recurse
+        do_rmdir(abspath) -- recurse
       else
         local ret, err = os.remove(abspath)
         if not ret then
           if not session then
-            error('os.remove: '..err)
+            error('os.remove: ' .. err)
           else
             -- Try Nvim delete(): it handles `readonly` attribute on Windows,
             -- and avoids Lua cross-version/platform incompatibilities.
             if -1 == module.call('delete', abspath) then
-              local hint = (is_os('win')
-                and ' (hint: try :%bwipeout! before rmdir())' or '')
-              error('delete() failed'..hint..': '..abspath)
+              local hint = (is_os('win') and ' (hint: try :%bwipeout! before rmdir())' or '')
+              error('delete() failed' .. hint .. ': ' .. abspath)
             end
           end
         end
@@ -769,7 +805,7 @@ local function do_rmdir(path)
   end
   local ret, err = luv.fs_rmdir(path)
   if not ret then
-    error('luv.fs_rmdir('..path..'): '..err)
+    error('luv.fs_rmdir(' .. path .. '): ' .. err)
   end
 end
 
@@ -778,12 +814,12 @@ function module.rmdir(path)
   if not ret and is_os('win') then
     -- Maybe "Permission denied"; try again after changing the nvim
     -- process to the top-level directory.
-    module.command([[exe 'cd '.fnameescape(']]..start_dir.."')")
+    module.command([[exe 'cd '.fnameescape(']] .. start_dir .. "')")
     ret, _ = pcall(do_rmdir, path)
   end
   -- During teardown, the nvim process may not exit quickly enough, then rmdir()
   -- will fail (on Windows).
-  if not ret then  -- Try again.
+  if not ret then -- Try again.
     sleep(1000)
     do_rmdir(path)
   end
@@ -815,14 +851,14 @@ end
 -- Calls pending() and returns `true` if the system is too slow to
 -- run fragile or expensive tests. Else returns `false`.
 function module.skip_fragile(pending_fn, cond)
-  if pending_fn == nil or type(pending_fn) ~= type(function()end) then
-    error("invalid pending_fn")
+  if pending_fn == nil or type(pending_fn) ~= type(function() end) then
+    error('invalid pending_fn')
   end
   if cond then
-    pending_fn("skipped (test is fragile on this system)", function() end)
+    pending_fn('skipped (test is fragile on this system)', function() end)
     return true
-  elseif os.getenv("TEST_SKIP_FRAGILE") then
-    pending_fn("skipped (TEST_SKIP_FRAGILE)", function() end)
+  elseif os.getenv('TEST_SKIP_FRAGILE') then
+    pending_fn('skipped (TEST_SKIP_FRAGILE)', function() end)
     return true
   end
   return false
@@ -839,7 +875,7 @@ end
 --- @param code string
 --- @return any
 function module.exec_lua(code, ...)
-  return module.meths.exec_lua(code, {...})
+  return module.meths.exec_lua(code, { ... })
 end
 
 function module.get_pathsep()
@@ -848,8 +884,8 @@ end
 
 --- Gets the filesystem root dir, namely "/" or "C:/".
 function module.pathroot()
-  local pathsep = package.config:sub(1,1)
-  return is_os('win') and (module.nvim_dir:sub(1,2)..pathsep) or '/'
+  local pathsep = package.config:sub(1, 1)
+  return is_os('win') and (module.nvim_dir:sub(1, 2) .. pathsep) or '/'
 end
 
 --- Gets the full `…/build/bin/{name}` path of a test program produced by
@@ -880,14 +916,14 @@ end
 
 function module.missing_provider(provider)
   if provider == 'ruby' or provider == 'node' or provider == 'perl' then
-    local e = module.funcs['provider#'..provider..'#Detect']()[2]
+    local e = module.funcs['provider#' .. provider .. '#Detect']()[2]
     return e ~= '' and e or false
   elseif provider == 'python' or provider == 'python3' then
     local py_major_version = (provider == 'python3' and 3 or 2)
     local e = module.funcs['provider#pythonx#Detect'](py_major_version)[2]
     return e ~= '' and e or false
   else
-    assert(false, 'Unknown provider: '..provider)
+    assert(false, 'Unknown provider: ' .. provider)
   end
 end
 
@@ -905,7 +941,7 @@ function module.alter_slashes(obj)
     end
     return ret
   else
-    assert(false, 'expected string or table of strings, got '..type(obj))
+    assert(false, 'expected string or table of strings, got ' .. type(obj))
   end
 end
 
@@ -922,7 +958,7 @@ end
 
 function module.parse_context(ctx)
   local parsed = {}
-  for _, item in ipairs({'regs', 'jumps', 'bufs', 'gvars'}) do
+  for _, item in ipairs({ 'regs', 'jumps', 'bufs', 'gvars' }) do
     parsed[item] = filter(function(v)
       return type(v) == 'table'
     end, module.call('msgpackparse', ctx[item]))
@@ -943,16 +979,17 @@ end
 
 -- Kill (reap) a process by PID.
 function module.os_kill(pid)
-  return os.execute((is_os('win')
-    and 'taskkill /f /t /pid '..pid..' > nul'
-    or  'kill -9 '..pid..' > /dev/null'))
+  return os.execute(
+    (
+      is_os('win') and 'taskkill /f /t /pid ' .. pid .. ' > nul'
+      or 'kill -9 ' .. pid .. ' > /dev/null'
+    )
+  )
 end
 
 -- Create folder with non existing parents
 function module.mkdir_p(path)
-  return os.execute((is_os('win')
-    and 'mkdir '..path
-    or 'mkdir -p '..path))
+  return os.execute((is_os('win') and 'mkdir ' .. path or 'mkdir -p ' .. path))
 end
 
 --- @class test.functional.helpers: test.helpers
@@ -967,7 +1004,7 @@ return function(after_each)
       if session then
         local msg = session:next_message(0)
         if msg then
-          if msg[1] == "notification" and msg[2] == "nvim_error_event" then
+          if msg[1] == 'notification' and msg[2] == 'nvim_error_event' then
             error(msg[3][2])
           end
         end

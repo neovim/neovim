@@ -21,15 +21,23 @@ describe('u CTRL-R g- g+', function()
   before_each(clear)
 
   local function create_history(num_steps)
-    if num_steps == 0 then return end
+    if num_steps == 0 then
+      return
+    end
     insert('1')
-    if num_steps == 1 then return end
+    if num_steps == 1 then
+      return
+    end
     feed('o2<esc>')
     feed('o3<esc>')
     feed('u')
-    if num_steps == 2 then return end
+    if num_steps == 2 then
+      return
+    end
     feed('o4<esc>')
-    if num_steps == 3 then return end
+    if num_steps == 3 then
+      return
+    end
     feed('u')
   end
 
@@ -57,13 +65,23 @@ describe('u CTRL-R g- g+', function()
     undo_and_redo(2, 'g-', 'g+', '1')
   end)
   it('undoes properly around a branch point', function()
-    undo_and_redo(3, 'u', '<C-r>', [[
+    undo_and_redo(
+      3,
+      'u',
+      '<C-r>',
+      [[
       1
-      2]])
-    undo_and_redo(3, 'g-', 'g+', [[
+      2]]
+    )
+    undo_and_redo(
+      3,
+      'g-',
+      'g+',
+      [[
       1
       2
-      3]])
+      3]]
+    )
   end)
   it('can find the previous sequence after undoing to a branch', function()
     undo_and_redo(4, 'u', '<C-r>', '1')

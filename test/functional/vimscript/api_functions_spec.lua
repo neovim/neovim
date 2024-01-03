@@ -11,24 +11,24 @@ local feed = helpers.feed
 describe('eval-API', function()
   before_each(clear)
 
-  it("work", function()
+  it('work', function()
     command("call nvim_command('let g:test = 1')")
     eq(1, eval("nvim_get_var('test')"))
 
-    local buf = eval("nvim_get_current_buf()")
-    command("call nvim_buf_set_lines("..buf..", 0, -1, v:true, ['aa', 'bb'])")
+    local buf = eval('nvim_get_current_buf()')
+    command('call nvim_buf_set_lines(' .. buf .. ", 0, -1, v:true, ['aa', 'bb'])")
     expect([[
       aa
       bb]])
 
-    command("call nvim_win_set_cursor(0, [1, 1])")
+    command('call nvim_win_set_cursor(0, [1, 1])')
     command("call nvim_input('ax<esc>')")
     expect([[
       aax
       bb]])
   end)
 
-  it("throw errors for invalid arguments", function()
+  it('throw errors for invalid arguments', function()
     local err = exc_exec('call nvim_get_current_buf("foo")')
     eq('Vim(call):E118: Too many arguments for function: nvim_get_current_buf', err)
 
@@ -36,100 +36,121 @@ describe('eval-API', function()
     eq('Vim(call):E119: Not enough arguments for function: nvim_set_option_value', err)
 
     err = exc_exec('call nvim_buf_set_lines(1, 0, -1, [], ["list"])')
-    eq('Vim(call):E5555: API call: Wrong type for argument 4 when calling nvim_buf_set_lines, expecting Boolean', err)
+    eq(
+      'Vim(call):E5555: API call: Wrong type for argument 4 when calling nvim_buf_set_lines, expecting Boolean',
+      err
+    )
 
     err = exc_exec('call nvim_buf_set_lines(0, 0, -1, v:true, "string")')
-    eq('Vim(call):E5555: API call: Wrong type for argument 5 when calling nvim_buf_set_lines, expecting ArrayOf(String)', err)
+    eq(
+      'Vim(call):E5555: API call: Wrong type for argument 5 when calling nvim_buf_set_lines, expecting ArrayOf(String)',
+      err
+    )
 
     err = exc_exec('call nvim_buf_get_number("0")')
-    eq('Vim(call):E5555: API call: Wrong type for argument 1 when calling nvim_buf_get_number, expecting Buffer', err)
+    eq(
+      'Vim(call):E5555: API call: Wrong type for argument 1 when calling nvim_buf_get_number, expecting Buffer',
+      err
+    )
 
     err = exc_exec('call nvim_buf_line_count(17)')
     eq('Vim(call):E5555: API call: Invalid buffer id: 17', err)
   end)
 
   it('cannot change text or window if textlocked', function()
-    command("autocmd TextYankPost <buffer> ++once call nvim_buf_set_lines(0, 0, -1, v:false, [])")
-    matches('Vim%(call%):E5555: API call: E565: Not allowed to change text or change window$',
-       pcall_err(command, "normal! yy"))
+    command('autocmd TextYankPost <buffer> ++once call nvim_buf_set_lines(0, 0, -1, v:false, [])')
+    matches(
+      'Vim%(call%):E5555: API call: E565: Not allowed to change text or change window$',
+      pcall_err(command, 'normal! yy')
+    )
 
-    command("autocmd TextYankPost <buffer> ++once call nvim_open_term(0, {})")
-    matches('Vim%(call%):E5555: API call: E565: Not allowed to change text or change window$',
-       pcall_err(command, "normal! yy"))
+    command('autocmd TextYankPost <buffer> ++once call nvim_open_term(0, {})')
+    matches(
+      'Vim%(call%):E5555: API call: E565: Not allowed to change text or change window$',
+      pcall_err(command, 'normal! yy')
+    )
 
     -- Functions checking textlock should also not be usable from <expr> mappings.
-    command("inoremap <expr> <f2> nvim_win_close(0, 1)")
-    eq('Vim(normal):E5555: API call: E565: Not allowed to change text or change window',
-       pcall_err(command, [[execute "normal i\<f2>"]]))
+    command('inoremap <expr> <f2> nvim_win_close(0, 1)')
+    eq(
+      'Vim(normal):E5555: API call: E565: Not allowed to change text or change window',
+      pcall_err(command, [[execute "normal i\<f2>"]])
+    )
 
     -- Text-changing functions gave a "Failed to save undo information" error when called from an
     -- <expr> mapping outside do_cmdline() (msg_list == NULL), so use feed() to test this.
     command("inoremap <expr> <f2> nvim_buf_set_text(0, 0, 0, 0, 0, ['hi'])")
     meths.set_vvar('errmsg', '')
-    feed("i<f2><esc>")
-    eq('E5555: API call: E565: Not allowed to change text or change window',
-       meths.get_vvar('errmsg'))
+    feed('i<f2><esc>')
+    eq(
+      'E5555: API call: E565: Not allowed to change text or change window',
+      meths.get_vvar('errmsg')
+    )
 
     -- Some functions checking textlock (usually those that may change the current window or buffer)
     -- also ought to not be usable in the cmdwin.
     local old_win = meths.get_current_win()
-    feed("q:")
-    eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-       pcall_err(meths.set_current_win, old_win))
+    feed('q:')
+    eq(
+      'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+      pcall_err(meths.set_current_win, old_win)
+    )
 
     -- But others, like nvim_buf_set_lines(), which just changes text, is OK.
-    curbufmeths.set_lines(0, -1, 1, {"wow!"})
-    eq({'wow!'}, curbufmeths.get_lines(0, -1, 1))
+    curbufmeths.set_lines(0, -1, 1, { 'wow!' })
+    eq({ 'wow!' }, curbufmeths.get_lines(0, -1, 1))
 
     -- Turning the cmdwin buffer into a terminal buffer would be pretty weird.
-    eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
-       pcall_err(meths.open_term, 0, {}))
+    eq(
+      'E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+      pcall_err(meths.open_term, 0, {})
+    )
 
     -- But turning a different buffer into a terminal from the cmdwin is OK.
     local term_buf = meths.create_buf(false, true)
     meths.open_term(term_buf, {})
-    eq('terminal', meths.get_option_value("buftype", {buf = term_buf}))
+    eq('terminal', meths.get_option_value('buftype', { buf = term_buf }))
   end)
 
-  it("use buffer numbers and windows ids as handles", function()
+  it('use buffer numbers and windows ids as handles', function()
     local screen = Screen.new(40, 8)
     screen:attach()
     local bnr = eval("bufnr('')")
-    local bhnd = eval("nvim_get_current_buf()")
-    local wid = eval("win_getid()")
-    local whnd = eval("nvim_get_current_win()")
+    local bhnd = eval('nvim_get_current_buf()')
+    local wid = eval('win_getid()')
+    local whnd = eval('nvim_get_current_win()')
     eq(bnr, bhnd)
     eq(wid, whnd)
 
-    command("new") -- creates new buffer and new window
+    command('new') -- creates new buffer and new window
     local bnr2 = eval("bufnr('')")
-    local bhnd2 = eval("nvim_get_current_buf()")
-    local wid2 = eval("win_getid()")
-    local whnd2 = eval("nvim_get_current_win()")
+    local bhnd2 = eval('nvim_get_current_buf()')
+    local wid2 = eval('win_getid()')
+    local whnd2 = eval('nvim_get_current_win()')
     eq(bnr2, bhnd2)
     eq(wid2, whnd2)
     neq(bnr, bnr2)
     neq(wid, wid2)
     -- 0 is synonymous to the current buffer
-    eq(bnr2, eval("nvim_buf_get_number(0)"))
+    eq(bnr2, eval('nvim_buf_get_number(0)'))
 
-    command("bn") -- show old buffer in new window
-    eq(bnr, eval("nvim_get_current_buf()"))
+    command('bn') -- show old buffer in new window
+    eq(bnr, eval('nvim_get_current_buf()'))
     eq(bnr, eval("bufnr('')"))
-    eq(bnr, eval("nvim_buf_get_number(0)"))
-    eq(wid2, eval("win_getid()"))
-    eq(whnd2, eval("nvim_get_current_win()"))
+    eq(bnr, eval('nvim_buf_get_number(0)'))
+    eq(wid2, eval('win_getid()'))
+    eq(whnd2, eval('nvim_get_current_win()'))
   end)
 
-  it("get_lines and set_lines use NL to represent NUL", function()
-    curbufmeths.set_lines(0, -1, true, {"aa\0", "b\0b"})
-    eq({'aa\n', 'b\nb'}, eval("nvim_buf_get_lines(0, 0, -1, 1)"))
+  it('get_lines and set_lines use NL to represent NUL', function()
+    curbufmeths.set_lines(0, -1, true, { 'aa\0', 'b\0b' })
+    eq({ 'aa\n', 'b\nb' }, eval('nvim_buf_get_lines(0, 0, -1, 1)'))
 
     command('call nvim_buf_set_lines(0, 1, 2, v:true, ["xx", "\\nyy"])')
-    eq({'aa\0', 'xx', '\0yy'}, curbufmeths.get_lines(0, -1, 1))
+    eq({ 'aa\0', 'xx', '\0yy' }, curbufmeths.get_lines(0, -1, 1))
   end)
 
-  it("that are FUNC_ATTR_NOEVAL cannot be called", function()
+  it('that are FUNC_ATTR_NOEVAL cannot be called', function()
     -- Deprecated vim_ prefix is not exported.
     local err = exc_exec('call vim_get_current_buffer("foo")')
     eq('Vim(call):E117: Unknown function: vim_get_current_buffer', err)
@@ -149,25 +170,24 @@ describe('eval-API', function()
   end)
 
   it('have metadata accessible with api_info()', function()
-    local api_keys = eval("sort(keys(api_info()))")
-    eq({'error_types', 'functions', 'types',
-        'ui_events', 'ui_options', 'version'}, api_keys)
+    local api_keys = eval('sort(keys(api_info()))')
+    eq({ 'error_types', 'functions', 'types', 'ui_events', 'ui_options', 'version' }, api_keys)
   end)
 
   it('are highlighted by vim.vim syntax file', function()
     local screen = Screen.new(40, 8)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Brown},
-      [2] = {foreground = Screen.colors.DarkCyan},
-      [3] = {foreground = Screen.colors.SlateBlue},
-      [4] = {foreground = Screen.colors.Fuchsia},
-      [5] = {bold = true, foreground = Screen.colors.Blue},
+      [1] = { bold = true, foreground = Screen.colors.Brown },
+      [2] = { foreground = Screen.colors.DarkCyan },
+      [3] = { foreground = Screen.colors.SlateBlue },
+      [4] = { foreground = Screen.colors.Fuchsia },
+      [5] = { bold = true, foreground = Screen.colors.Blue },
     })
 
-    command("set ft=vim")
-    command("set rtp^=build/runtime/")
-    command("syntax on")
+    command('set ft=vim')
+    command('set rtp^=build/runtime/')
+    command('syntax on')
     insert([[
       call bufnr('%')
       call nvim_input('typing...')
@@ -183,9 +203,11 @@ describe('eval-API', function()
   end)
 
   it('cannot be called from sandbox', function()
-    eq('Vim(call):E48: Not allowed in sandbox',
-       pcall_err(command, "sandbox call nvim_input('ievil')"))
-    eq({''}, meths.buf_get_lines(0, 0, -1, true))
+    eq(
+      'Vim(call):E48: Not allowed in sandbox',
+      pcall_err(command, "sandbox call nvim_input('ievil')")
+    )
+    eq({ '' }, meths.buf_get_lines(0, 0, -1, true))
   end)
 
   it('converts blobs to API strings', function()

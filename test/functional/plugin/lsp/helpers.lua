@@ -11,11 +11,13 @@ local M = {}
 function M.clear_notrace()
   -- problem: here be dragons
   -- solution: don't look too closely for dragons
-  clear {env={
-    NVIM_LUA_NOTRACK="1";
-    NVIM_APPNAME="nvim_lsp_test";
-    VIMRUNTIME=os.getenv"VIMRUNTIME";
-  }}
+  clear {
+    env = {
+      NVIM_LUA_NOTRACK = '1',
+      NVIM_APPNAME = 'nvim_lsp_test',
+      VIMRUNTIME = os.getenv 'VIMRUNTIME',
+    },
+  }
 end
 
 M.create_server_definition = [[
@@ -79,7 +81,8 @@ M.fake_lsp_code = 'test/functional/fixtures/fake-lsp-server.lua'
 M.fake_lsp_logfile = 'Xtest-fake-lsp.log'
 
 local function fake_lsp_server_setup(test_name, timeout_ms, options, settings)
-  exec_lua([=[
+  exec_lua(
+    [=[
     lsp = require('vim.lsp')
     local test_name, fake_lsp_code, fake_lsp_logfile, timeout, options, settings = ...
     TEST_RPC_CLIENT_ID = lsp.start_client {
@@ -115,33 +118,49 @@ local function fake_lsp_server_setup(test_name, timeout_ms, options, settings)
         vim.rpcnotify(1, "exit", ...)
       end;
     }
-  ]=], test_name, M.fake_lsp_code, M.fake_lsp_logfile, timeout_ms or 1e3, options or {}, settings or {})
+  ]=],
+    test_name,
+    M.fake_lsp_code,
+    M.fake_lsp_logfile,
+    timeout_ms or 1e3,
+    options or {},
+    settings or {}
+  )
 end
 
 function M.test_rpc_server(config)
   if config.test_name then
     M.clear_notrace()
-    fake_lsp_server_setup(config.test_name, config.timeout_ms or 1e3, config.options, config.settings)
+    fake_lsp_server_setup(
+      config.test_name,
+      config.timeout_ms or 1e3,
+      config.options,
+      config.settings
+    )
   end
   local client = setmetatable({}, {
     __index = function(_, name)
       -- Workaround for not being able to yield() inside __index for Lua 5.1 :(
       -- Otherwise I would just return the value here.
       return function(...)
-        return exec_lua([=[
+        return exec_lua(
+          [=[
         local name = ...
         if type(TEST_RPC_CLIENT[name]) == 'function' then
           return TEST_RPC_CLIENT[name](select(2, ...))
         else
           return TEST_RPC_CLIENT[name]
         end
-        ]=], name, ...)
+        ]=],
+          name,
+          ...
+        )
       end
-    end;
+    end,
   })
   local code, signal
   local function on_request(method, args)
-    if method == "init" then
+    if method == 'init' then
       if config.on_init then
         config.on_init(client, unpack(args))
       end

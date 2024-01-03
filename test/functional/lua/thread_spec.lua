@@ -17,11 +17,11 @@ describe('thread', function()
     screen = Screen.new(50, 10)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {bold = true, reverse = true},
-      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [5] = {bold = true},
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { bold = true, reverse = true },
+      [3] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [4] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      [5] = { bold = true },
     })
   end)
 
@@ -150,7 +150,7 @@ describe('thread', function()
         thread_test:do_test()
       ]]
 
-      eq({'notification', 'result', {true}}, next_msg())
+      eq({ 'notification', 'result', { true } }, next_msg())
     end)
 
     it('uv', function()
@@ -182,7 +182,7 @@ describe('thread', function()
         thread_test:do_test()
       ]]
 
-      eq({'notification', 'result', {{33, NIL, 'text'}}}, next_msg())
+      eq({ 'notification', 'result', { { 33, NIL, 'text' } } }, next_msg())
     end)
 
     it('json', function()
@@ -197,7 +197,7 @@ describe('thread', function()
         thread_test:do_test()
       ]]
 
-      eq({'notification', 'result', {{33, NIL, 'text'}}}, next_msg())
+      eq({ 'notification', 'result', { { 33, NIL, 'text' } } }, next_msg())
     end)
 
     it('diff', function()
@@ -212,14 +212,18 @@ describe('thread', function()
         thread_test:do_test()
       ]]
 
-      eq({'notification', 'result',
-          {table.concat({
+      eq({
+        'notification',
+        'result',
+        {
+          table.concat({
             '@@ -1 +1 @@',
             '-Hello',
             '+Helli',
-            ''
-          }, '\n')}},
-        next_msg())
+            '',
+          }, '\n'),
+        },
+      }, next_msg())
     end)
   end)
 end)
@@ -241,28 +245,30 @@ describe('threadpool', function()
       work:queue()
     ]]
 
-    eq({'notification', 'result', {true}}, next_msg())
+    eq({ 'notification', 'result', { true } }, next_msg())
   end)
 
   it('with invalid argument', function()
-    local status = pcall_err(exec_lua, [[
+    local status = pcall_err(
+      exec_lua,
+      [[
       local work = vim.uv.new_thread(function() end, function() end)
       work:queue({})
-    ]])
+    ]]
+    )
 
-    eq([[Error: thread arg not support type 'function' at 1]],
-       status)
+    eq([[Error: thread arg not support type 'function' at 1]], status)
   end)
 
   it('with invalid return value', function()
     local screen = Screen.new(50, 10)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {bold = true, reverse = true},
-      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [5] = {bold = true},
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { bold = true, reverse = true },
+      [3] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [4] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      [5] = { bold = true },
     })
 
     exec_lua [[
@@ -338,7 +344,7 @@ describe('threadpool', function()
         threadpool_test:do_test()
       ]]
 
-      eq({'notification', 'result', {{33, NIL, 'text'}}}, next_msg())
+      eq({ 'notification', 'result', { { 33, NIL, 'text' } } }, next_msg())
     end)
 
     it('json', function()
@@ -354,7 +360,7 @@ describe('threadpool', function()
         threadpool_test:do_test()
       ]]
 
-      eq({'notification', 'result', {{33, NIL, 'text'}}}, next_msg())
+      eq({ 'notification', 'result', { { 33, NIL, 'text' } } }, next_msg())
     end)
 
     it('work', function()
@@ -369,14 +375,18 @@ describe('threadpool', function()
         threadpool_test:do_test()
       ]]
 
-      eq({'notification', 'result',
-          {table.concat({
+      eq({
+        'notification',
+        'result',
+        {
+          table.concat({
             '@@ -1 +1 @@',
             '-Hello',
             '+Helli',
-            ''
-          }, '\n')}},
-        next_msg())
+            '',
+          }, '\n'),
+        },
+      }, next_msg())
     end)
   end)
 end)

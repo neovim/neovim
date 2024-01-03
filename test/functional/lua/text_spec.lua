@@ -20,4 +20,3 @@ describe('vim.text', function()
     end)
   end)
 end)
-

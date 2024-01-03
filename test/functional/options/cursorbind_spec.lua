@@ -12,10 +12,10 @@ describe("'cursorbind'", function()
   it("behaves consistently whether 'cursorline' is set or not vim-patch:8.2.4795", function()
     local screen = Screen.new(60, 8)
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [2] = {bold = true, reverse = true},  -- StatusLine
-      [3] = {reverse = true},  -- StatusLineNC
-      [4] = {background = Screen.colors.Grey90},  -- CursorLine, CursorColumn
+      [1] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [2] = { bold = true, reverse = true }, -- StatusLine
+      [3] = { reverse = true }, -- StatusLineNC
+      [4] = { background = Screen.colors.Grey90 }, -- CursorLine, CursorColumn
     })
     screen:attach()
     exec([[

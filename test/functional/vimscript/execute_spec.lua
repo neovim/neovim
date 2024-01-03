@@ -26,8 +26,8 @@ describe('execute()', function()
   end)
 
   it('captures the concatenated outputs of a List of commands', function()
-    eq("foobar", funcs.execute({'echon "foo"', 'echon "bar"'}))
-    eq("\nfoo\nbar", funcs.execute({'echo "foo"', 'echo "bar"'}))
+    eq('foobar', funcs.execute({ 'echon "foo"', 'echon "bar"' }))
+    eq('\nfoo\nbar', funcs.execute({ 'echo "foo"', 'echo "bar"' }))
   end)
 
   it('supports nested execute("execute(...)")', function()
@@ -104,26 +104,31 @@ describe('execute()', function()
   end)
 
   it('captures output with highlights', function()
-    eq('\nErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red',
-       eval('execute("hi ErrorMsg")'))
+    eq(
+      '\nErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red',
+      eval('execute("hi ErrorMsg")')
+    )
   end)
 
   it('does not corrupt the command display #5422', function()
     local screen = Screen.new(70, 7)
     screen:attach()
     feed(':echo execute("hi ErrorMsg")<CR>')
-    screen:expect([[
+    screen:expect(
+      [[
                                                                             |
       {1:~                                                                     }|*2
       {2:                                                                      }|
                                                                             |
       ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red         |
       {3:Press ENTER or type command to continue}^                               |
-    ]], {
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {bold = true, reverse = true},
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
-    })
+    ]],
+      {
+        [1] = { bold = true, foreground = Screen.colors.Blue1 },
+        [2] = { bold = true, reverse = true },
+        [3] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      }
+    )
     feed('<CR>')
   end)
 
@@ -250,7 +255,7 @@ describe('execute()', function()
   -- with how nvim currently displays the output.
   it('captures shell-command output', function()
     local win_lf = is_os('win') and '\13' or ''
-    eq('\n:!echo foo\r\n\nfoo'..win_lf..'\n', funcs.execute('!echo foo'))
+    eq('\n:!echo foo\r\n\nfoo' .. win_lf .. '\n', funcs.execute('!echo foo'))
   end)
 
   describe('{silent} argument', function()
@@ -268,10 +273,14 @@ describe('execute()', function()
 
     it('gives E493 instead of prompting on backwards range for ""', function()
       command('split')
-      eq('Vim(windo):E493: Backwards range given: 2,1windo echo',
-         pcall_err(funcs.execute, '2,1windo echo', ''))
-      eq('Vim(windo):E493: Backwards range given: 2,1windo echo',
-         pcall_err(funcs.execute, {'2,1windo echo'}, ''))
+      eq(
+        'Vim(windo):E493: Backwards range given: 2,1windo echo',
+        pcall_err(funcs.execute, '2,1windo echo', '')
+      )
+      eq(
+        'Vim(windo):E493: Backwards range given: 2,1windo echo',
+        pcall_err(funcs.execute, { '2,1windo echo' }, '')
+      )
     end)
 
     it('captures but does not display output for "silent"', function()
@@ -286,11 +295,14 @@ describe('execute()', function()
       eq('42', eval('g:mes'))
 
       command('let g:mes = execute("echon 13", "silent")')
-      screen:expect{grid=[[
+      screen:expect {
+        grid = [[
       ^                                        |
       ~                                       |*3
                                               |
-      ]], unchanged=true}
+      ]],
+        unchanged = true,
+      }
       eq('13', eval('g:mes'))
     end)
 

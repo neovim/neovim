@@ -63,19 +63,25 @@ describe('json_decode() function', function()
   end
 
   it('accepts readfile()-style list', function()
-    eq({Test=1}, funcs.json_decode({
-      '{',
-      '\t"Test": 1',
-      '}',
-    }))
+    eq(
+      { Test = 1 },
+      funcs.json_decode({
+        '{',
+        '\t"Test": 1',
+        '}',
+      })
+    )
   end)
 
   it('accepts strings with newlines', function()
-    eq({Test=1}, funcs.json_decode([[
+    eq(
+      { Test = 1 },
+      funcs.json_decode([[
       {
         "Test": 1
       }
-    ]]))
+    ]])
+    )
   end)
 
   it('parses null, true, false', function()
@@ -85,34 +91,21 @@ describe('json_decode() function', function()
   end)
 
   it('fails to parse incomplete null, true, false', function()
-    eq('Vim(call):E474: Expected null: n',
-       exc_exec('call json_decode("n")'))
-    eq('Vim(call):E474: Expected null: nu',
-       exc_exec('call json_decode("nu")'))
-    eq('Vim(call):E474: Expected null: nul',
-       exc_exec('call json_decode("nul")'))
-    eq('Vim(call):E474: Expected null: nul\n\t',
-       exc_exec('call json_decode("nul\\n\\t")'))
+    eq('Vim(call):E474: Expected null: n', exc_exec('call json_decode("n")'))
+    eq('Vim(call):E474: Expected null: nu', exc_exec('call json_decode("nu")'))
+    eq('Vim(call):E474: Expected null: nul', exc_exec('call json_decode("nul")'))
+    eq('Vim(call):E474: Expected null: nul\n\t', exc_exec('call json_decode("nul\\n\\t")'))
 
-    eq('Vim(call):E474: Expected true: t',
-       exc_exec('call json_decode("t")'))
-    eq('Vim(call):E474: Expected true: tr',
-       exc_exec('call json_decode("tr")'))
-    eq('Vim(call):E474: Expected true: tru',
-       exc_exec('call json_decode("tru")'))
-    eq('Vim(call):E474: Expected true: tru\t\n',
-       exc_exec('call json_decode("tru\\t\\n")'))
+    eq('Vim(call):E474: Expected true: t', exc_exec('call json_decode("t")'))
+    eq('Vim(call):E474: Expected true: tr', exc_exec('call json_decode("tr")'))
+    eq('Vim(call):E474: Expected true: tru', exc_exec('call json_decode("tru")'))
+    eq('Vim(call):E474: Expected true: tru\t\n', exc_exec('call json_decode("tru\\t\\n")'))
 
-    eq('Vim(call):E474: Expected false: f',
-       exc_exec('call json_decode("f")'))
-    eq('Vim(call):E474: Expected false: fa',
-       exc_exec('call json_decode("fa")'))
-    eq('Vim(call):E474: Expected false: fal',
-       exc_exec('call json_decode("fal")'))
-    eq('Vim(call):E474: Expected false: fal   <',
-       exc_exec('call json_decode("   fal   <")'))
-    eq('Vim(call):E474: Expected false: fals',
-       exc_exec('call json_decode("fals")'))
+    eq('Vim(call):E474: Expected false: f', exc_exec('call json_decode("f")'))
+    eq('Vim(call):E474: Expected false: fa', exc_exec('call json_decode("fa")'))
+    eq('Vim(call):E474: Expected false: fal', exc_exec('call json_decode("fal")'))
+    eq('Vim(call):E474: Expected false: fal   <', exc_exec('call json_decode("   fal   <")'))
+    eq('Vim(call):E474: Expected false: fals', exc_exec('call json_decode("fals")'))
   end)
 
   it('parses integer numbers', function()
@@ -125,46 +118,41 @@ describe('json_decode() function', function()
   end)
 
   it('fails to parse +numbers and .number', function()
-    eq('Vim(call):E474: Unidentified byte: +1000',
-       exc_exec('call json_decode("+1000")'))
-    eq('Vim(call):E474: Unidentified byte: .1000',
-       exc_exec('call json_decode(".1000")'))
+    eq('Vim(call):E474: Unidentified byte: +1000', exc_exec('call json_decode("+1000")'))
+    eq('Vim(call):E474: Unidentified byte: .1000', exc_exec('call json_decode(".1000")'))
   end)
 
   it('fails to parse numbers with leading zeroes', function()
-    eq('Vim(call):E474: Leading zeroes are not allowed: 00.1',
-       exc_exec('call json_decode("00.1")'))
-    eq('Vim(call):E474: Leading zeroes are not allowed: 01',
-       exc_exec('call json_decode("01")'))
-    eq('Vim(call):E474: Leading zeroes are not allowed: -01',
-       exc_exec('call json_decode("-01")'))
-    eq('Vim(call):E474: Leading zeroes are not allowed: -001.0',
-       exc_exec('call json_decode("-001.0")'))
+    eq('Vim(call):E474: Leading zeroes are not allowed: 00.1', exc_exec('call json_decode("00.1")'))
+    eq('Vim(call):E474: Leading zeroes are not allowed: 01', exc_exec('call json_decode("01")'))
+    eq('Vim(call):E474: Leading zeroes are not allowed: -01', exc_exec('call json_decode("-01")'))
+    eq(
+      'Vim(call):E474: Leading zeroes are not allowed: -001.0',
+      exc_exec('call json_decode("-001.0")')
+    )
   end)
 
   it('fails to parse incomplete numbers', function()
-    eq('Vim(call):E474: Missing number after minus sign: -.1',
-       exc_exec('call json_decode("-.1")'))
-    eq('Vim(call):E474: Missing number after minus sign: -',
-       exc_exec('call json_decode("-")'))
-    eq('Vim(call):E474: Missing number after decimal dot: -1.',
-       exc_exec('call json_decode("-1.")'))
-    eq('Vim(call):E474: Missing number after decimal dot: 0.',
-       exc_exec('call json_decode("0.")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e',
-       exc_exec('call json_decode("0.0e")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e+',
-       exc_exec('call json_decode("0.0e+")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e-',
-       exc_exec('call json_decode("0.0e-")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e-',
-       exc_exec('call json_decode("0.0e-")'))
-    eq('Vim(call):E474: Missing number after decimal dot: 1.e5',
-       exc_exec('call json_decode("1.e5")'))
-    eq('Vim(call):E474: Missing number after decimal dot: 1.e+5',
-       exc_exec('call json_decode("1.e+5")'))
-    eq('Vim(call):E474: Missing number after decimal dot: 1.e+',
-       exc_exec('call json_decode("1.e+")'))
+    eq('Vim(call):E474: Missing number after minus sign: -.1', exc_exec('call json_decode("-.1")'))
+    eq('Vim(call):E474: Missing number after minus sign: -', exc_exec('call json_decode("-")'))
+    eq('Vim(call):E474: Missing number after decimal dot: -1.', exc_exec('call json_decode("-1.")'))
+    eq('Vim(call):E474: Missing number after decimal dot: 0.', exc_exec('call json_decode("0.")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e', exc_exec('call json_decode("0.0e")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e+', exc_exec('call json_decode("0.0e+")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e-', exc_exec('call json_decode("0.0e-")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e-', exc_exec('call json_decode("0.0e-")'))
+    eq(
+      'Vim(call):E474: Missing number after decimal dot: 1.e5',
+      exc_exec('call json_decode("1.e5")')
+    )
+    eq(
+      'Vim(call):E474: Missing number after decimal dot: 1.e+5',
+      exc_exec('call json_decode("1.e+5")')
+    )
+    eq(
+      'Vim(call):E474: Missing number after decimal dot: 1.e+',
+      exc_exec('call json_decode("1.e+")')
+    )
   end)
 
   it('parses floating-point numbers', function()
@@ -202,25 +190,23 @@ describe('json_decode() function', function()
   end)
 
   it('fails to parse numbers with spaces inside', function()
-    eq('Vim(call):E474: Missing number after minus sign: - 1000',
-       exc_exec('call json_decode("- 1000")'))
-    eq('Vim(call):E474: Missing number after decimal dot: 0. ',
-       exc_exec('call json_decode("0. ")'))
-    eq('Vim(call):E474: Missing number after decimal dot: 0. 0',
-       exc_exec('call json_decode("0. 0")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e 1',
-       exc_exec('call json_decode("0.0e 1")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e+ 1',
-       exc_exec('call json_decode("0.0e+ 1")'))
-    eq('Vim(call):E474: Missing exponent: 0.0e- 1',
-       exc_exec('call json_decode("0.0e- 1")'))
+    eq(
+      'Vim(call):E474: Missing number after minus sign: - 1000',
+      exc_exec('call json_decode("- 1000")')
+    )
+    eq('Vim(call):E474: Missing number after decimal dot: 0. ', exc_exec('call json_decode("0. ")'))
+    eq(
+      'Vim(call):E474: Missing number after decimal dot: 0. 0',
+      exc_exec('call json_decode("0. 0")')
+    )
+    eq('Vim(call):E474: Missing exponent: 0.0e 1', exc_exec('call json_decode("0.0e 1")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e+ 1', exc_exec('call json_decode("0.0e+ 1")'))
+    eq('Vim(call):E474: Missing exponent: 0.0e- 1', exc_exec('call json_decode("0.0e- 1")'))
   end)
 
   it('fails to parse "," and ":"', function()
-    eq('Vim(call):E474: Comma not inside container: ,  ',
-       exc_exec('call json_decode("  ,  ")'))
-    eq('Vim(call):E474: Colon not inside container: :  ',
-       exc_exec('call json_decode("  :  ")'))
+    eq('Vim(call):E474: Comma not inside container: ,  ', exc_exec('call json_decode("  ,  ")'))
+    eq('Vim(call):E474: Colon not inside container: :  ', exc_exec('call json_decode("  :  ")'))
   end)
 
   it('parses empty containers', function()
@@ -229,123 +215,151 @@ describe('json_decode() function', function()
   end)
 
   it('fails to parse "[" and "{"', function()
-    eq('Vim(call):E474: Unexpected end of input: {',
-       exc_exec('call json_decode("{")'))
-    eq('Vim(call):E474: Unexpected end of input: [',
-       exc_exec('call json_decode("[")'))
+    eq('Vim(call):E474: Unexpected end of input: {', exc_exec('call json_decode("{")'))
+    eq('Vim(call):E474: Unexpected end of input: [', exc_exec('call json_decode("[")'))
   end)
 
   it('fails to parse "}" and "]"', function()
-    eq('Vim(call):E474: No container to close: ]',
-       exc_exec('call json_decode("]")'))
-    eq('Vim(call):E474: No container to close: }',
-       exc_exec('call json_decode("}")'))
+    eq('Vim(call):E474: No container to close: ]', exc_exec('call json_decode("]")'))
+    eq('Vim(call):E474: No container to close: }', exc_exec('call json_decode("}")'))
   end)
 
-  it('fails to parse containers which are closed by different brackets',
-  function()
-    eq('Vim(call):E474: Closing dictionary with square bracket: ]',
-       exc_exec('call json_decode("{]")'))
-    eq('Vim(call):E474: Closing list with curly bracket: }',
-       exc_exec('call json_decode("[}")'))
+  it('fails to parse containers which are closed by different brackets', function()
+    eq(
+      'Vim(call):E474: Closing dictionary with square bracket: ]',
+      exc_exec('call json_decode("{]")')
+    )
+    eq('Vim(call):E474: Closing list with curly bracket: }', exc_exec('call json_decode("[}")'))
   end)
 
   it('fails to parse concat inside container', function()
-    eq('Vim(call):E474: Expected comma before list item: []]',
-       exc_exec('call json_decode("[[][]]")'))
-    eq('Vim(call):E474: Expected comma before list item: {}]',
-       exc_exec('call json_decode("[{}{}]")'))
-    eq('Vim(call):E474: Expected comma before list item: ]',
-       exc_exec('call json_decode("[1 2]")'))
-    eq('Vim(call):E474: Expected comma before dictionary key: ": 4}',
-       exc_exec('call json_decode("{\\"1\\": 2 \\"3\\": 4}")'))
-    eq('Vim(call):E474: Expected colon before dictionary value: , "3" 4}',
-       exc_exec('call json_decode("{\\"1\\" 2, \\"3\\" 4}")'))
+    eq(
+      'Vim(call):E474: Expected comma before list item: []]',
+      exc_exec('call json_decode("[[][]]")')
+    )
+    eq(
+      'Vim(call):E474: Expected comma before list item: {}]',
+      exc_exec('call json_decode("[{}{}]")')
+    )
+    eq('Vim(call):E474: Expected comma before list item: ]', exc_exec('call json_decode("[1 2]")'))
+    eq(
+      'Vim(call):E474: Expected comma before dictionary key: ": 4}',
+      exc_exec('call json_decode("{\\"1\\": 2 \\"3\\": 4}")')
+    )
+    eq(
+      'Vim(call):E474: Expected colon before dictionary value: , "3" 4}',
+      exc_exec('call json_decode("{\\"1\\" 2, \\"3\\" 4}")')
+    )
   end)
 
   it('fails to parse containers with leading comma or colon', function()
-    eq('Vim(call):E474: Leading comma: ,}',
-       exc_exec('call json_decode("{,}")'))
-    eq('Vim(call):E474: Leading comma: ,]',
-       exc_exec('call json_decode("[,]")'))
-    eq('Vim(call):E474: Using colon not in dictionary: :]',
-       exc_exec('call json_decode("[:]")'))
-    eq('Vim(call):E474: Unexpected colon: :}',
-       exc_exec('call json_decode("{:}")'))
+    eq('Vim(call):E474: Leading comma: ,}', exc_exec('call json_decode("{,}")'))
+    eq('Vim(call):E474: Leading comma: ,]', exc_exec('call json_decode("[,]")'))
+    eq('Vim(call):E474: Using colon not in dictionary: :]', exc_exec('call json_decode("[:]")'))
+    eq('Vim(call):E474: Unexpected colon: :}', exc_exec('call json_decode("{:}")'))
   end)
 
   it('fails to parse containers with trailing comma', function()
-    eq('Vim(call):E474: Trailing comma: ]',
-       exc_exec('call json_decode("[1,]")'))
-    eq('Vim(call):E474: Trailing comma: }',
-       exc_exec('call json_decode("{\\"1\\": 2,}")'))
+    eq('Vim(call):E474: Trailing comma: ]', exc_exec('call json_decode("[1,]")'))
+    eq('Vim(call):E474: Trailing comma: }', exc_exec('call json_decode("{\\"1\\": 2,}")'))
   end)
 
   it('fails to parse dictionaries with missing value', function()
-    eq('Vim(call):E474: Expected value after colon: }',
-       exc_exec('call json_decode("{\\"1\\":}")'))
-    eq('Vim(call):E474: Expected value: }',
-       exc_exec('call json_decode("{\\"1\\"}")'))
+    eq('Vim(call):E474: Expected value after colon: }', exc_exec('call json_decode("{\\"1\\":}")'))
+    eq('Vim(call):E474: Expected value: }', exc_exec('call json_decode("{\\"1\\"}")'))
   end)
 
   it('fails to parse containers with two commas or colons', function()
-    eq('Vim(call):E474: Duplicate comma: , "2": 2}',
-       exc_exec('call json_decode("{\\"1\\": 1,, \\"2\\": 2}")'))
-    eq('Vim(call):E474: Duplicate comma: , "2", 2]',
-       exc_exec('call json_decode("[\\"1\\", 1,, \\"2\\", 2]")'))
-    eq('Vim(call):E474: Duplicate colon: : 2}',
-       exc_exec('call json_decode("{\\"1\\": 1, \\"2\\":: 2}")'))
-    eq('Vim(call):E474: Comma after colon: , 2}',
-       exc_exec('call json_decode("{\\"1\\": 1, \\"2\\":, 2}")'))
-    eq('Vim(call):E474: Unexpected colon: : "2": 2}',
-       exc_exec('call json_decode("{\\"1\\": 1,: \\"2\\": 2}")'))
-    eq('Vim(call):E474: Unexpected colon: :, "2": 2}',
-       exc_exec('call json_decode("{\\"1\\": 1:, \\"2\\": 2}")'))
+    eq(
+      'Vim(call):E474: Duplicate comma: , "2": 2}',
+      exc_exec('call json_decode("{\\"1\\": 1,, \\"2\\": 2}")')
+    )
+    eq(
+      'Vim(call):E474: Duplicate comma: , "2", 2]',
+      exc_exec('call json_decode("[\\"1\\", 1,, \\"2\\", 2]")')
+    )
+    eq(
+      'Vim(call):E474: Duplicate colon: : 2}',
+      exc_exec('call json_decode("{\\"1\\": 1, \\"2\\":: 2}")')
+    )
+    eq(
+      'Vim(call):E474: Comma after colon: , 2}',
+      exc_exec('call json_decode("{\\"1\\": 1, \\"2\\":, 2}")')
+    )
+    eq(
+      'Vim(call):E474: Unexpected colon: : "2": 2}',
+      exc_exec('call json_decode("{\\"1\\": 1,: \\"2\\": 2}")')
+    )
+    eq(
+      'Vim(call):E474: Unexpected colon: :, "2": 2}',
+      exc_exec('call json_decode("{\\"1\\": 1:, \\"2\\": 2}")')
+    )
   end)
 
   it('fails to parse concat of two values', function()
-    eq('Vim(call):E474: Trailing characters: []',
-       exc_exec('call json_decode("{}[]")'))
+    eq('Vim(call):E474: Trailing characters: []', exc_exec('call json_decode("{}[]")'))
   end)
 
   it('parses containers', function()
-    eq({1}, funcs.json_decode('[1]'))
-    eq({NIL, 1}, funcs.json_decode('[null, 1]'))
-    eq({['1']=2}, funcs.json_decode('{"1": 2}'))
-    eq({['1']=2, ['3']={{['4']={['5']={{}, 1}}}}},
-       funcs.json_decode('{"1": 2, "3": [{"4": {"5": [[], 1]}}]}'))
+    eq({ 1 }, funcs.json_decode('[1]'))
+    eq({ NIL, 1 }, funcs.json_decode('[null, 1]'))
+    eq({ ['1'] = 2 }, funcs.json_decode('{"1": 2}'))
+    eq(
+      { ['1'] = 2, ['3'] = { { ['4'] = { ['5'] = { {}, 1 } } } } },
+      funcs.json_decode('{"1": 2, "3": [{"4": {"5": [[], 1]}}]}')
+    )
   end)
 
   it('fails to parse incomplete strings', function()
-    eq('Vim(call):E474: Expected string end: \t"',
-       exc_exec('call json_decode("\\t\\"")'))
-    eq('Vim(call):E474: Expected string end: \t"abc',
-       exc_exec('call json_decode("\\t\\"abc")'))
-    eq('Vim(call):E474: Unfinished escape sequence: \t"abc\\',
-       exc_exec('call json_decode("\\t\\"abc\\\\")'))
-    eq('Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u',
-       exc_exec('call json_decode("\\t\\"abc\\\\u")'))
-    eq('Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u0',
-       exc_exec('call json_decode("\\t\\"abc\\\\u0")'))
-    eq('Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u00',
-       exc_exec('call json_decode("\\t\\"abc\\\\u00")'))
-    eq('Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u000',
-       exc_exec('call json_decode("\\t\\"abc\\\\u000")'))
-    eq('Vim(call):E474: Expected four hex digits after \\u: \\u"    ',
-       exc_exec('call json_decode("\\t\\"abc\\\\u\\"    ")'))
-    eq('Vim(call):E474: Expected four hex digits after \\u: \\u0"    ',
-       exc_exec('call json_decode("\\t\\"abc\\\\u0\\"    ")'))
-    eq('Vim(call):E474: Expected four hex digits after \\u: \\u00"    ',
-       exc_exec('call json_decode("\\t\\"abc\\\\u00\\"    ")'))
-    eq('Vim(call):E474: Expected four hex digits after \\u: \\u000"    ',
-       exc_exec('call json_decode("\\t\\"abc\\\\u000\\"    ")'))
-    eq('Vim(call):E474: Expected string end: \t"abc\\u0000',
-       exc_exec('call json_decode("\\t\\"abc\\\\u0000")'))
+    eq('Vim(call):E474: Expected string end: \t"', exc_exec('call json_decode("\\t\\"")'))
+    eq('Vim(call):E474: Expected string end: \t"abc', exc_exec('call json_decode("\\t\\"abc")'))
+    eq(
+      'Vim(call):E474: Unfinished escape sequence: \t"abc\\',
+      exc_exec('call json_decode("\\t\\"abc\\\\")')
+    )
+    eq(
+      'Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u',
+      exc_exec('call json_decode("\\t\\"abc\\\\u")')
+    )
+    eq(
+      'Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u0',
+      exc_exec('call json_decode("\\t\\"abc\\\\u0")')
+    )
+    eq(
+      'Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u00',
+      exc_exec('call json_decode("\\t\\"abc\\\\u00")')
+    )
+    eq(
+      'Vim(call):E474: Unfinished unicode escape sequence: \t"abc\\u000',
+      exc_exec('call json_decode("\\t\\"abc\\\\u000")')
+    )
+    eq(
+      'Vim(call):E474: Expected four hex digits after \\u: \\u"    ',
+      exc_exec('call json_decode("\\t\\"abc\\\\u\\"    ")')
+    )
+    eq(
+      'Vim(call):E474: Expected four hex digits after \\u: \\u0"    ',
+      exc_exec('call json_decode("\\t\\"abc\\\\u0\\"    ")')
+    )
+    eq(
+      'Vim(call):E474: Expected four hex digits after \\u: \\u00"    ',
+      exc_exec('call json_decode("\\t\\"abc\\\\u00\\"    ")')
+    )
+    eq(
+      'Vim(call):E474: Expected four hex digits after \\u: \\u000"    ',
+      exc_exec('call json_decode("\\t\\"abc\\\\u000\\"    ")')
+    )
+    eq(
+      'Vim(call):E474: Expected string end: \t"abc\\u0000',
+      exc_exec('call json_decode("\\t\\"abc\\\\u0000")')
+    )
   end)
 
   it('fails to parse unknown escape sequences', function()
-    eq('Vim(call):E474: Unknown escape sequence: \\a"',
-       exc_exec('call json_decode("\\t\\"\\\\a\\"")'))
+    eq(
+      'Vim(call):E474: Unknown escape sequence: \\a"',
+      exc_exec('call json_decode("\\t\\"\\\\a\\"")')
+    )
   end)
 
   it('parses strings properly', function()
@@ -354,64 +368,105 @@ describe('json_decode() function', function()
     eq('\\/"\t\b\n\r\f', funcs.json_decode([["\\\/\"\t\b\n\r\f"]]))
     eq('/a', funcs.json_decode([["\/a"]]))
     -- Unicode characters: 2-byte, 3-byte, 4-byte
-    eq({
-      '«',
-      'ફ',
-      '\240\144\128\128',
-    }, funcs.json_decode({
-      '[',
-      '"«",',
-      '"ફ",',
-      '"\240\144\128\128"',
-      ']',
-    }))
+    eq(
+      {
+        '«',
+        'ફ',
+        '\240\144\128\128',
+      },
+      funcs.json_decode({
+        '[',
+        '"«",',
+        '"ફ",',
+        '"\240\144\128\128"',
+        ']',
+      })
+    )
   end)
 
   it('fails on strings with invalid bytes', function()
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \255"',
-       exc_exec('call json_decode("\\t\\"\\xFF\\"")'))
-    eq('Vim(call):E474: ASCII control characters cannot be present inside string: ',
-       exc_exec('call json_decode(["\\"\\n\\""])'))
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \255"',
+      exc_exec('call json_decode("\\t\\"\\xFF\\"")')
+    )
+    eq(
+      'Vim(call):E474: ASCII control characters cannot be present inside string: ',
+      exc_exec('call json_decode(["\\"\\n\\""])')
+    )
     -- 0xC2 starts 2-byte unicode character
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \194"',
-       exc_exec('call json_decode("\\t\\"\\xC2\\"")'))
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \194"',
+      exc_exec('call json_decode("\\t\\"\\xC2\\"")')
+    )
     -- 0xE0 0xAA starts 3-byte unicode character
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \224"',
-       exc_exec('call json_decode("\\t\\"\\xE0\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \224\170"',
-       exc_exec('call json_decode("\\t\\"\\xE0\\xAA\\"")'))
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \224"',
+      exc_exec('call json_decode("\\t\\"\\xE0\\"")')
+    )
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \224\170"',
+      exc_exec('call json_decode("\\t\\"\\xE0\\xAA\\"")')
+    )
     -- 0xF0 0x90 0x80 starts 4-byte unicode character
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \240"',
-       exc_exec('call json_decode("\\t\\"\\xF0\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \240\144"',
-       exc_exec('call json_decode("\\t\\"\\xF0\\x90\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \240\144\128"',
-       exc_exec('call json_decode("\\t\\"\\xF0\\x90\\x80\\"")'))
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \240"',
+      exc_exec('call json_decode("\\t\\"\\xF0\\"")')
+    )
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \240\144"',
+      exc_exec('call json_decode("\\t\\"\\xF0\\x90\\"")')
+    )
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \240\144\128"',
+      exc_exec('call json_decode("\\t\\"\\xF0\\x90\\x80\\"")')
+    )
     -- 0xF9 0x80 0x80 0x80 starts 5-byte unicode character
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \249"',
-       exc_exec('call json_decode("\\t\\"\\xF9\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \249\128"',
-       exc_exec('call json_decode("\\t\\"\\xF9\\x80\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \249\128\128"',
-       exc_exec('call json_decode("\\t\\"\\xF9\\x80\\x80\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \249\128\128\128"',
-       exc_exec('call json_decode("\\t\\"\\xF9\\x80\\x80\\x80\\"")'))
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \249"',
+      exc_exec('call json_decode("\\t\\"\\xF9\\"")')
+    )
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \249\128"',
+      exc_exec('call json_decode("\\t\\"\\xF9\\x80\\"")')
+    )
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \249\128\128"',
+      exc_exec('call json_decode("\\t\\"\\xF9\\x80\\x80\\"")')
+    )
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \249\128\128\128"',
+      exc_exec('call json_decode("\\t\\"\\xF9\\x80\\x80\\x80\\"")')
+    )
     -- 0xFC 0x90 0x80 0x80 0x80 starts 6-byte unicode character
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \252"',
-       exc_exec('call json_decode("\\t\\"\\xFC\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \252\144"',
-       exc_exec('call json_decode("\\t\\"\\xFC\\x90\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \252\144\128"',
-       exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \252\144\128\128"',
-       exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\"")'))
-    eq('Vim(call):E474: Only UTF-8 strings allowed: \252\144\128\128\128"',
-       exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\x80\\"")'))
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \252"',
+      exc_exec('call json_decode("\\t\\"\\xFC\\"")')
+    )
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \252\144"',
+      exc_exec('call json_decode("\\t\\"\\xFC\\x90\\"")')
+    )
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \252\144\128"',
+      exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\"")')
+    )
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \252\144\128\128"',
+      exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\"")')
+    )
+    eq(
+      'Vim(call):E474: Only UTF-8 strings allowed: \252\144\128\128\128"',
+      exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\x80\\"")')
+    )
     -- Specification does not allow unquoted characters above 0x10FFFF
-    eq('Vim(call):E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \249\128\128\128\128"',
-       exc_exec('call json_decode("\\t\\"\\xF9\\x80\\x80\\x80\\x80\\"")'))
-    eq('Vim(call):E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \252\144\128\128\128\128"',
-       exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\x80\\x80\\"")'))
+    eq(
+      'Vim(call):E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \249\128\128\128\128"',
+      exc_exec('call json_decode("\\t\\"\\xF9\\x80\\x80\\x80\\x80\\"")')
+    )
+    eq(
+      'Vim(call):E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \252\144\128\128\128\128"',
+      exc_exec('call json_decode("\\t\\"\\xFC\\x90\\x80\\x80\\x80\\x80\\"")')
+    )
     -- '"\249\128\128\128\128"',
     -- '"\252\144\128\128\128\128"',
   end)
@@ -445,47 +500,105 @@ describe('json_decode() function', function()
   end
 
   it('parses strings with NUL properly', function()
-    sp_decode_eq({_TYPE='string', _VAL={'\n'}}, '"\\u0000"')
-    sp_decode_eq({_TYPE='string', _VAL={'\n', '\n'}}, '"\\u0000\\n\\u0000"')
-    sp_decode_eq({_TYPE='string', _VAL={'\n«\n'}}, '"\\u0000\\u00AB\\u0000"')
+    sp_decode_eq({ _TYPE = 'string', _VAL = { '\n' } }, '"\\u0000"')
+    sp_decode_eq({ _TYPE = 'string', _VAL = { '\n', '\n' } }, '"\\u0000\\n\\u0000"')
+    sp_decode_eq({ _TYPE = 'string', _VAL = { '\n«\n' } }, '"\\u0000\\u00AB\\u0000"')
   end)
 
   it('parses dictionaries with duplicate keys to special maps', function()
-    sp_decode_eq({_TYPE='map', _VAL={{'a', 1}, {'a', 2}}},
-                 '{"a": 1, "a": 2}')
-    sp_decode_eq({_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'a', 2}}},
-                 '{"b": 3, "a": 1, "a": 2}')
-    sp_decode_eq({_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}}},
-                 '{"b": 3, "a": 1, "c": 4, "a": 2}')
-    sp_decode_eq({_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}, {'c', 4}}},
-                 '{"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}')
-    sp_decode_eq({{_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}, {'c', 4}}}},
-                 '[{"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}]')
-    sp_decode_eq({{d={_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}, {'c', 4}}}}},
-                 '[{"d": {"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}}]')
-    sp_decode_eq({1, {d={_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}, {'c', 4}}}}},
-                 '[1, {"d": {"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}}]')
-    sp_decode_eq({1, {a={}, d={_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'a', 2}, {'c', 4}}}}},
-                 '[1, {"a": [], "d": {"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}}]')
-    sp_decode_eq({_TYPE='map', _VAL={{'', 3}, {'a', 1}, {'c', 4}, {'d', 2}, {'', 4}}},
-                 '{"": 3, "a": 1, "c": 4, "d": 2, "": 4}')
-    sp_decode_eq({{_TYPE='map', _VAL={{'', 3}, {'a', 1}, {'c', 4}, {'d', 2}, {'', 4}}}},
-                 '[{"": 3, "a": 1, "c": 4, "d": 2, "": 4}]')
+    sp_decode_eq({ _TYPE = 'map', _VAL = { { 'a', 1 }, { 'a', 2 } } }, '{"a": 1, "a": 2}')
+    sp_decode_eq(
+      { _TYPE = 'map', _VAL = { { 'b', 3 }, { 'a', 1 }, { 'a', 2 } } },
+      '{"b": 3, "a": 1, "a": 2}'
+    )
+    sp_decode_eq(
+      { _TYPE = 'map', _VAL = { { 'b', 3 }, { 'a', 1 }, { 'c', 4 }, { 'a', 2 } } },
+      '{"b": 3, "a": 1, "c": 4, "a": 2}'
+    )
+    sp_decode_eq(
+      { _TYPE = 'map', _VAL = { { 'b', 3 }, { 'a', 1 }, { 'c', 4 }, { 'a', 2 }, { 'c', 4 } } },
+      '{"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}'
+    )
+    sp_decode_eq(
+      { { _TYPE = 'map', _VAL = { { 'b', 3 }, { 'a', 1 }, { 'c', 4 }, { 'a', 2 }, { 'c', 4 } } } },
+      '[{"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}]'
+    )
+    sp_decode_eq({
+      {
+        d = {
+          _TYPE = 'map',
+          _VAL = { { 'b', 3 }, { 'a', 1 }, { 'c', 4 }, { 'a', 2 }, { 'c', 4 } },
+        },
+      },
+    }, '[{"d": {"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}}]')
+    sp_decode_eq({
+      1,
+      {
+        d = {
+          _TYPE = 'map',
+          _VAL = { { 'b', 3 }, { 'a', 1 }, { 'c', 4 }, { 'a', 2 }, { 'c', 4 } },
+        },
+      },
+    }, '[1, {"d": {"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}}]')
+    sp_decode_eq({
+      1,
+      {
+        a = {},
+        d = {
+          _TYPE = 'map',
+          _VAL = {
+            { 'b', 3 },
+            { 'a', 1 },
+            { 'c', 4 },
+            { 'a', 2 },
+            {
+              'c',
+              4,
+            },
+          },
+        },
+      },
+    }, '[1, {"a": [], "d": {"b": 3, "a": 1, "c": 4, "a": 2, "c": 4}}]')
+    sp_decode_eq(
+      { _TYPE = 'map', _VAL = { { '', 3 }, { 'a', 1 }, { 'c', 4 }, { 'd', 2 }, { '', 4 } } },
+      '{"": 3, "a": 1, "c": 4, "d": 2, "": 4}'
+    )
+    sp_decode_eq(
+      { { _TYPE = 'map', _VAL = { { '', 3 }, { 'a', 1 }, { 'c', 4 }, { 'd', 2 }, { '', 4 } } } },
+      '[{"": 3, "a": 1, "c": 4, "d": 2, "": 4}]'
+    )
   end)
 
   it('parses dictionaries with empty keys', function()
-    eq({[""] = 4}, funcs.json_decode('{"": 4}'))
-    eq({b = 3, a = 1, c = 4, d = 2, [""] = 4},
-       funcs.json_decode('{"b": 3, "a": 1, "c": 4, "d": 2, "": 4}'))
+    eq({ [''] = 4 }, funcs.json_decode('{"": 4}'))
+    eq(
+      { b = 3, a = 1, c = 4, d = 2, [''] = 4 },
+      funcs.json_decode('{"b": 3, "a": 1, "c": 4, "d": 2, "": 4}')
+    )
   end)
 
   it('parses dictionaries with keys with NUL bytes to special maps', function()
-    sp_decode_eq({_TYPE='map', _VAL={{{_TYPE='string', _VAL={'a\n', 'b'}}, 4}}},
-                 '{"a\\u0000\\nb": 4}')
-    sp_decode_eq({_TYPE='map', _VAL={{{_TYPE='string', _VAL={'a\n', 'b', ''}}, 4}}},
-                 '{"a\\u0000\\nb\\n": 4}')
-    sp_decode_eq({_TYPE='map', _VAL={{'b', 3}, {'a', 1}, {'c', 4}, {'d', 2}, {{_TYPE='string', _VAL={'\n'}}, 4}}},
-                 '{"b": 3, "a": 1, "c": 4, "d": 2, "\\u0000": 4}')
+    sp_decode_eq(
+      { _TYPE = 'map', _VAL = { { { _TYPE = 'string', _VAL = { 'a\n', 'b' } }, 4 } } },
+      '{"a\\u0000\\nb": 4}'
+    )
+    sp_decode_eq(
+      { _TYPE = 'map', _VAL = { { { _TYPE = 'string', _VAL = { 'a\n', 'b', '' } }, 4 } } },
+      '{"a\\u0000\\nb\\n": 4}'
+    )
+    sp_decode_eq({
+      _TYPE = 'map',
+      _VAL = {
+        { 'b', 3 },
+        { 'a', 1 },
+        { 'c', 4 },
+        { 'd', 2 },
+        {
+          { _TYPE = 'string', _VAL = { '\n' } },
+          4,
+        },
+      },
+    }, '{"b": 3, "a": 1, "c": 4, "d": 2, "\\u0000": 4}')
   end)
 
   it('parses U+00C3 correctly', function()
@@ -493,32 +606,30 @@ describe('json_decode() function', function()
   end)
 
   it('fails to parse empty string', function()
-    eq('Vim(call):E474: Attempt to decode a blank string',
-       exc_exec('call json_decode("")'))
-    eq('Vim(call):E474: Attempt to decode a blank string',
-       exc_exec('call json_decode([])'))
-    eq('Vim(call):E474: Attempt to decode a blank string',
-       exc_exec('call json_decode([""])'))
-    eq('Vim(call):E474: Attempt to decode a blank string',
-       exc_exec('call json_decode(" ")'))
-    eq('Vim(call):E474: Attempt to decode a blank string',
-       exc_exec('call json_decode("\\t")'))
-    eq('Vim(call):E474: Attempt to decode a blank string',
-       exc_exec('call json_decode("\\n")'))
-    eq('Vim(call):E474: Attempt to decode a blank string',
-       exc_exec('call json_decode(" \\t\\n \\n\\t\\t \\n\\t\\n \\n \\t\\n\\t ")'))
+    eq('Vim(call):E474: Attempt to decode a blank string', exc_exec('call json_decode("")'))
+    eq('Vim(call):E474: Attempt to decode a blank string', exc_exec('call json_decode([])'))
+    eq('Vim(call):E474: Attempt to decode a blank string', exc_exec('call json_decode([""])'))
+    eq('Vim(call):E474: Attempt to decode a blank string', exc_exec('call json_decode(" ")'))
+    eq('Vim(call):E474: Attempt to decode a blank string', exc_exec('call json_decode("\\t")'))
+    eq('Vim(call):E474: Attempt to decode a blank string', exc_exec('call json_decode("\\n")'))
+    eq(
+      'Vim(call):E474: Attempt to decode a blank string',
+      exc_exec('call json_decode(" \\t\\n \\n\\t\\t \\n\\t\\n \\n \\t\\n\\t ")')
+    )
   end)
 
   it('accepts all spaces in every position where space may be put', function()
-    local s = ' \t\n\r \t\r\n \n\t\r \n\r\t \r\t\n \r\n\t\t \n\r\t \r\n\t\n \r\t\n\r \t\r \n\t\r\n \n \t\r\n \r\t\n\t \r\n\t\r \n\r \t\n\r\t \r \t\n\r \n\t\r\t \n\r\t\n \r\n \t\r\n\t'
+    local s =
+      ' \t\n\r \t\r\n \n\t\r \n\r\t \r\t\n \r\n\t\t \n\r\t \r\n\t\n \r\t\n\r \t\r \n\t\r\n \n \t\r\n \r\t\n\t \r\n\t\r \n\r \t\n\r\t \r \t\n\r \n\t\r\t \n\r\t\n \r\n \t\r\n\t'
     local str = ('%s{%s"key"%s:%s[%s"val"%s,%s"val2"%s]%s,%s"key2"%s:%s1%s}%s'):gsub('%%s', s)
-    eq({key={'val', 'val2'}, key2=1}, funcs.json_decode(str))
+    eq({ key = { 'val', 'val2' }, key2 = 1 }, funcs.json_decode(str))
   end)
 
-  it('does not overflow when writing error message about decoding ["", ""]',
-  function()
-    eq('Vim(call):E474: Attempt to decode a blank string',
-       pcall_err(command, 'call json_decode(["", ""])'))
+  it('does not overflow when writing error message about decoding ["", ""]', function()
+    eq(
+      'Vim(call):E474: Attempt to decode a blank string',
+      pcall_err(command, 'call json_decode(["", ""])')
+    )
   end)
 end)
 
@@ -558,30 +669,35 @@ describe('json_encode() function', function()
   end)
 
   it('fails to dump NaN and infinite values', function()
-    eq('Vim(call):E474: Unable to represent NaN value in JSON',
-       exc_exec('call json_encode(str2float("nan"))'))
-    eq('Vim(call):E474: Unable to represent infinity in JSON',
-       exc_exec('call json_encode(str2float("inf"))'))
-    eq('Vim(call):E474: Unable to represent infinity in JSON',
-       exc_exec('call json_encode(-str2float("inf"))'))
+    eq(
+      'Vim(call):E474: Unable to represent NaN value in JSON',
+      exc_exec('call json_encode(str2float("nan"))')
+    )
+    eq(
+      'Vim(call):E474: Unable to represent infinity in JSON',
+      exc_exec('call json_encode(str2float("inf"))')
+    )
+    eq(
+      'Vim(call):E474: Unable to represent infinity in JSON',
+      exc_exec('call json_encode(-str2float("inf"))')
+    )
   end)
 
   it('dumps lists', function()
     eq('[]', funcs.json_encode({}))
-    eq('[[]]', funcs.json_encode({{}}))
-    eq('[[], []]', funcs.json_encode({{}, {}}))
+    eq('[[]]', funcs.json_encode({ {} }))
+    eq('[[], []]', funcs.json_encode({ {}, {} }))
   end)
 
   it('dumps dictionaries', function()
     eq('{}', eval('json_encode({})'))
-    eq('{"d": []}', funcs.json_encode({d={}}))
-    eq('{"d": [], "e": []}', funcs.json_encode({d={}, e={}}))
+    eq('{"d": []}', funcs.json_encode({ d = {} }))
+    eq('{"d": [], "e": []}', funcs.json_encode({ d = {}, e = {} }))
     -- Empty keys are allowed per JSON spec (and Vim dicts, and msgpack).
-    eq('{"": []}', funcs.json_encode({['']={}}))
+    eq('{"": []}', funcs.json_encode({ [''] = {} }))
   end)
 
-  it('cannot dump generic mapping with generic mapping keys and values',
-  function()
+  it('cannot dump generic mapping with generic mapping keys and values', function()
     command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
     command('let todumpv1 = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
     command('let todumpv2 = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
@@ -674,33 +790,43 @@ describe('json_encode() function', function()
   end)
 
   it('fails to dump a function reference', function()
-    eq('Vim(call):E474: Error while dumping encode_tv2json() argument, itself: attempt to dump function reference',
-       exc_exec('call json_encode(function("tr"))'))
+    eq(
+      'Vim(call):E474: Error while dumping encode_tv2json() argument, itself: attempt to dump function reference',
+      exc_exec('call json_encode(function("tr"))')
+    )
   end)
 
   it('fails to dump a partial', function()
     command('function T() dict\nendfunction')
-    eq('Vim(call):E474: Error while dumping encode_tv2json() argument, itself: attempt to dump function reference',
-       exc_exec('call json_encode(function("T", [1, 2], {}))'))
+    eq(
+      'Vim(call):E474: Error while dumping encode_tv2json() argument, itself: attempt to dump function reference',
+      exc_exec('call json_encode(function("T", [1, 2], {}))')
+    )
   end)
 
   it('fails to dump a function reference in a list', function()
-    eq('Vim(call):E474: Error while dumping encode_tv2json() argument, index 0: attempt to dump function reference',
-       exc_exec('call json_encode([function("tr")])'))
+    eq(
+      'Vim(call):E474: Error while dumping encode_tv2json() argument, index 0: attempt to dump function reference',
+      exc_exec('call json_encode([function("tr")])')
+    )
   end)
 
   it('fails to dump a recursive list', function()
     command('let todump = [[[]]]')
     command('call add(todump[0][0], todump)')
-    eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
-       exc_exec('call json_encode(todump)'))
+    eq(
+      'Vim(call):E724: unable to correctly dump variable with self-referencing container',
+      exc_exec('call json_encode(todump)')
+    )
   end)
 
   it('fails to dump a recursive dict', function()
     command('let todump = {"d": {"d": {}}}')
     command('call extend(todump.d.d, {"d": todump})')
-    eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
-       exc_exec('call json_encode([todump])'))
+    eq(
+      'Vim(call):E724: unable to correctly dump variable with self-referencing container',
+      exc_exec('call json_encode([todump])')
+    )
   end)
 
   it('can dump dict with two same dicts inside', function()
@@ -718,40 +844,51 @@ describe('json_encode() function', function()
   it('fails to dump a recursive list in a special dict', function()
     command('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
     command('call add(todump._VAL, todump)')
-    eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
-       exc_exec('call json_encode(todump)'))
+    eq(
+      'Vim(call):E724: unable to correctly dump variable with self-referencing container',
+      exc_exec('call json_encode(todump)')
+    )
   end)
 
   it('fails to dump a recursive (val) map in a special dict', function()
     command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
     command('call add(todump._VAL, ["", todump])')
-    eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
-       exc_exec('call json_encode([todump])'))
+    eq(
+      'Vim(call):E724: unable to correctly dump variable with self-referencing container',
+      exc_exec('call json_encode([todump])')
+    )
   end)
 
   it('fails to dump a recursive (val) map in a special dict, _VAL reference', function()
     command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [["", []]]}')
     command('call add(todump._VAL[0][1], todump._VAL)')
-    eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
-       exc_exec('call json_encode(todump)'))
+    eq(
+      'Vim(call):E724: unable to correctly dump variable with self-referencing container',
+      exc_exec('call json_encode(todump)')
+    )
   end)
 
-  it('fails to dump a recursive (val) special list in a special dict',
-  function()
+  it('fails to dump a recursive (val) special list in a special dict', function()
     command('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
     command('call add(todump._VAL, ["", todump._VAL])')
-    eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
-       exc_exec('call json_encode(todump)'))
+    eq(
+      'Vim(call):E724: unable to correctly dump variable with self-referencing container',
+      exc_exec('call json_encode(todump)')
+    )
   end)
 
   it('fails when called with no arguments', function()
-    eq('Vim(call):E119: Not enough arguments for function: json_encode',
-       exc_exec('call json_encode()'))
+    eq(
+      'Vim(call):E119: Not enough arguments for function: json_encode',
+      exc_exec('call json_encode()')
+    )
   end)
 
   it('fails when called with two arguments', function()
-    eq('Vim(call):E118: Too many arguments for function: json_encode',
-       exc_exec('call json_encode(["", ""], 1)'))
+    eq(
+      'Vim(call):E118: Too many arguments for function: json_encode',
+      exc_exec('call json_encode(["", ""], 1)')
+    )
   end)
 
   it('ignores improper values in &isprint', function()
@@ -761,15 +898,23 @@ describe('json_encode() function', function()
   end)
 
   it('fails when using surrogate character in a UTF-8 string', function()
-    eq('Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \237\160\128',
-       exc_exec('call json_encode("\237\160\128")'))
-    eq('Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \237\175\191',
-       exc_exec('call json_encode("\237\175\191")'))
+    eq(
+      'Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \237\160\128',
+      exc_exec('call json_encode("\237\160\128")')
+    )
+    eq(
+      'Vim(call):E474: UTF-8 string contains code point which belongs to a surrogate pair: \237\175\191',
+      exc_exec('call json_encode("\237\175\191")')
+    )
   end)
 
   it('dumps control characters as expected', function()
-    eq([["\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000B\f\r\u000E\u000F\u0010\u0011\u0012\u0013"]],
-       eval('json_encode({"_TYPE": v:msgpack_types.string, "_VAL": ["\n\1\2\3\4\5\6\7\8\9", "\11\12\13\14\15\16\17\18\19"]})'))
+    eq(
+      [["\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000B\f\r\u000E\u000F\u0010\u0011\u0012\u0013"]],
+      eval(
+        'json_encode({"_TYPE": v:msgpack_types.string, "_VAL": ["\n\1\2\3\4\5\6\7\8\9", "\11\12\13\14\15\16\17\18\19"]})'
+      )
+    )
   end)
 
   it('can dump NULL string', function()
@@ -789,9 +934,13 @@ describe('json_encode() function', function()
   end)
 
   it('fails to parse NULL strings and lists', function()
-    eq('Vim(call):E474: Attempt to decode a blank string',
-       exc_exec('call json_decode($XXX_UNEXISTENT_VAR_XXX)'))
-    eq('Vim(call):E474: Attempt to decode a blank string',
-       exc_exec('call json_decode(v:_null_list)'))
+    eq(
+      'Vim(call):E474: Attempt to decode a blank string',
+      exc_exec('call json_decode($XXX_UNEXISTENT_VAR_XXX)')
+    )
+    eq(
+      'Vim(call):E474: Attempt to decode a blank string',
+      exc_exec('call json_decode(v:_null_list)')
+    )
   end)
 end)

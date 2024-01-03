@@ -19,7 +19,6 @@ describe(':terminal cursor', function()
     screen = thelpers.screen_setup()
   end)
 
-
   it('moves the screen cursor when focused', function()
     thelpers.feed_data('testing cursor')
     screen:expect([[
@@ -114,7 +113,6 @@ describe(':terminal cursor', function()
   end)
 end)
 
-
 describe('cursor with customized highlighting', function()
   local screen
 
@@ -124,12 +122,12 @@ describe('cursor with customized highlighting', function()
     nvim('command', 'highlight TermCursorNC ctermfg=55 ctermbg=56 cterm=NONE')
     screen = Screen.new(50, 7)
     screen:set_default_attr_ids({
-      [1] = {foreground = 45, background = 46},
-      [2] = {foreground = 55, background = 56},
-      [3] = {bold = true},
+      [1] = { foreground = 45, background = 46 },
+      [2] = { foreground = 55, background = 56 },
+      [3] = { bold = true },
     })
-    screen:attach({rgb=false})
-    command('call termopen(["'..testprg('tty-test')..'"])')
+    screen:attach({ rgb = false })
+    command('call termopen(["' .. testprg('tty-test') .. '"])')
     feed('i')
     poke_eventloop()
   end)
@@ -155,22 +153,28 @@ describe('buffer cursor position is correct in terminal without number column', 
 
   local function setup_ex_register(str)
     screen = thelpers.setup_child_nvim({
-      '-u', 'NONE',
-      '-i', 'NONE',
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
       '-E',
-      '--cmd', string.format('let @r = "%s"', str),
+      '--cmd',
+      string.format('let @r = "%s"', str),
       -- <Left> and <Right> don't always work
-      '--cmd', 'cnoremap <C-X> <Left>',
-      '--cmd', 'cnoremap <C-O> <Right>',
-      '--cmd', 'set notermguicolors',
+      '--cmd',
+      'cnoremap <C-X> <Left>',
+      '--cmd',
+      'cnoremap <C-O> <Right>',
+      '--cmd',
+      'set notermguicolors',
     }, {
       cols = 70,
     })
     screen:set_default_attr_ids({
-      [1] = {foreground = 253, background = 11};
-      [2] = {reverse = true};
-      [3] = {bold = true},
-      [4] = {background = 11};
+      [1] = { foreground = 253, background = 11 },
+      [2] = { reverse = true },
+      [3] = { bold = true },
+      [4] = { background = 11 },
     })
     -- Also check for real cursor position, as it is used for stuff like input methods
     screen._handle_busy_start = function() end
@@ -198,7 +202,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :aaaaaaaa{2:^ }                                                            |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 9}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 9 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
                                                                               |*4
@@ -206,7 +210,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :aaaaaaa^a{4: }                                                            |
                                                                               |
       ]])
-      eq({6, 8}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 8 }, eval('nvim_win_get_cursor(0)'))
     end)
 
     it('near the end', function()
@@ -217,7 +221,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :aaaaaa{2:^a}a                                                             |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 7}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 7 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
                                                                               |*4
@@ -225,7 +229,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :aaaaa^a{4:a}a                                                             |
                                                                               |
       ]])
-      eq({6, 6}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 6 }, eval('nvim_win_get_cursor(0)'))
     end)
 
     it('near the start', function()
@@ -236,7 +240,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :a{2:^a}aaaaaa                                                             |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 2}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 2 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
                                                                               |*4
@@ -244,7 +248,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :^a{4:a}aaaaaa                                                             |
                                                                               |
       ]])
-      eq({6, 1}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 1 }, eval('nvim_win_get_cursor(0)'))
     end)
   end)
 
@@ -261,7 +265,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :µµµµµµµµ{2:^ }                                                            |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 17}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 17 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
                                                                               |*4
@@ -269,7 +273,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :µµµµµµµ^µ{4: }                                                            |
                                                                               |
       ]])
-      eq({6, 15}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 15 }, eval('nvim_win_get_cursor(0)'))
     end)
 
     it('near the end', function()
@@ -280,7 +284,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :µµµµµµ{2:^µ}µ                                                             |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 13}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 13 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
                                                                               |*4
@@ -288,7 +292,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :µµµµµ^µ{4:µ}µ                                                             |
                                                                               |
       ]])
-      eq({6, 11}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 11 }, eval('nvim_win_get_cursor(0)'))
     end)
 
     it('near the start', function()
@@ -299,7 +303,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :µ{2:^µ}µµµµµµ                                                             |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 3}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 3 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
                                                                               |*4
@@ -307,77 +311,84 @@ describe('buffer cursor position is correct in terminal without number column', 
         :^µ{4:µ}µµµµµµ                                                             |
                                                                               |
       ]])
-      eq({6, 1}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 1 }, eval('nvim_win_get_cursor(0)'))
     end)
   end)
 
-  describe('in a line with single-cell composed multibyte characters and no trailing spaces,', function()
-    if skip(is_os('win'), "Encoding problem?") then return end
+  describe(
+    'in a line with single-cell composed multibyte characters and no trailing spaces,',
+    function()
+      if skip(is_os('win'), 'Encoding problem?') then
+        return
+      end
 
-    before_each(function()
-      setup_ex_register('µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳')
-    end)
+      before_each(function()
+        setup_ex_register('µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳')
+      end)
 
-    it('at the end', function()
-      feed('<C-R>r')
-      screen:expect([[
+      it('at the end', function()
+        feed('<C-R>r')
+        screen:expect([[
                                                                               |*4
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳{2:^ }                                                            |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 33}, eval('nvim_win_get_cursor(0)'))
-      feed([[<C-\><C-N>]])
-      screen:expect([[
+        eq({ 6, 33 }, eval('nvim_win_get_cursor(0)'))
+        feed([[<C-\><C-N>]])
+        screen:expect([[
                                                                               |*4
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳µ̳µ̳µ̳µ̳µ̳µ̳^µ̳{4: }                                                            |
                                                                               |
       ]])
-      eq({6, 29}, eval('nvim_win_get_cursor(0)'))
-    end)
+        eq({ 6, 29 }, eval('nvim_win_get_cursor(0)'))
+      end)
 
-    it('near the end', function()
-      feed('<C-R>r<C-X><C-X>')
-      screen:expect([[
+      it('near the end', function()
+        feed('<C-R>r<C-X><C-X>')
+        screen:expect([[
                                                                               |*4
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳µ̳µ̳µ̳µ̳µ̳{2:^µ̳}µ̳                                                             |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 25}, eval('nvim_win_get_cursor(0)'))
-      feed([[<C-\><C-N>]])
-      screen:expect([[
+        eq({ 6, 25 }, eval('nvim_win_get_cursor(0)'))
+        feed([[<C-\><C-N>]])
+        screen:expect([[
                                                                               |*4
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳µ̳µ̳µ̳µ̳^µ̳{4:µ̳}µ̳                                                             |
                                                                               |
       ]])
-      eq({6, 21}, eval('nvim_win_get_cursor(0)'))
-    end)
+        eq({ 6, 21 }, eval('nvim_win_get_cursor(0)'))
+      end)
 
-    it('near the start', function()
-      feed('<C-R>r<C-B><C-O>')
-      screen:expect([[
+      it('near the start', function()
+        feed('<C-R>r<C-B><C-O>')
+        screen:expect([[
                                                                               |*4
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :µ̳{2:^µ̳}µ̳µ̳µ̳µ̳µ̳µ̳                                                             |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 5}, eval('nvim_win_get_cursor(0)'))
-      feed([[<C-\><C-N>]])
-      screen:expect([[
+        eq({ 6, 5 }, eval('nvim_win_get_cursor(0)'))
+        feed([[<C-\><C-N>]])
+        screen:expect([[
                                                                               |*4
         Entering Ex mode.  Type "visual" to go to Normal mode.                |
         :^µ̳{4:µ̳}µ̳µ̳µ̳µ̳µ̳µ̳                                                             |
                                                                               |
       ]])
-      eq({6, 1}, eval('nvim_win_get_cursor(0)'))
-    end)
-  end)
+        eq({ 6, 1 }, eval('nvim_win_get_cursor(0)'))
+      end)
+    end
+  )
 
   describe('in a line with double-cell multibyte characters and no trailing spaces,', function()
-    if skip(is_os('win'), "Encoding problem?") then return end
+    if skip(is_os('win'), 'Encoding problem?') then
+      return
+    end
 
     before_each(function()
       setup_ex_register('哦哦哦哦哦哦哦哦')
@@ -391,7 +402,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :哦哦哦哦哦哦哦哦{2:^ }                                                    |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 25}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 25 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
                                                                               |*4
@@ -399,7 +410,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :哦哦哦哦哦哦哦^哦{4: }                                                    |
                                                                               |
       ]])
-      eq({6, 22}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 22 }, eval('nvim_win_get_cursor(0)'))
     end)
 
     it('near the end', function()
@@ -410,7 +421,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :哦哦哦哦哦哦{2:^哦}哦                                                     |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 19}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 19 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
                                                                               |*4
@@ -418,7 +429,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :哦哦哦哦哦^哦{4:哦}哦                                                     |
                                                                               |
       ]])
-      eq({6, 16}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 16 }, eval('nvim_win_get_cursor(0)'))
     end)
 
     it('near the start', function()
@@ -429,7 +440,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :哦{2:^哦}哦哦哦哦哦哦                                                     |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 4}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 4 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
                                                                               |*4
@@ -437,7 +448,7 @@ describe('buffer cursor position is correct in terminal without number column', 
         :^哦{4:哦}哦哦哦哦哦哦                                                     |
                                                                               |
       ]])
-      eq({6, 1}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 1 }, eval('nvim_win_get_cursor(0)'))
     end)
   end)
 
@@ -451,7 +462,7 @@ describe('buffer cursor position is correct in terminal without number column', 
       {3:-- TERMINAL --}                                                        |
     ]])
     matches('^:aaaaaaaa    [ ]*$', eval('nvim_get_current_line()'))
-    eq({6, 13}, eval('nvim_win_get_cursor(0)'))
+    eq({ 6, 13 }, eval('nvim_win_get_cursor(0)'))
     feed([[<C-\><C-N>]])
     screen:expect([[
                                                                             |*4
@@ -459,7 +470,7 @@ describe('buffer cursor position is correct in terminal without number column', 
       :aaaaaaaa   ^ {4: }                                                        |
                                                                             |
     ]])
-    eq({6, 12}, eval('nvim_win_get_cursor(0)'))
+    eq({ 6, 12 }, eval('nvim_win_get_cursor(0)'))
   end)
 end)
 
@@ -468,23 +479,29 @@ describe('buffer cursor position is correct in terminal with number column', fun
 
   local function setup_ex_register(str)
     screen = thelpers.setup_child_nvim({
-      '-u', 'NONE',
-      '-i', 'NONE',
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
       '-E',
-      '--cmd', string.format('let @r = "%s"', str),
+      '--cmd',
+      string.format('let @r = "%s"', str),
       -- <Left> and <Right> don't always work
-      '--cmd', 'cnoremap <C-X> <Left>',
-      '--cmd', 'cnoremap <C-O> <Right>',
-      '--cmd', 'set notermguicolors',
+      '--cmd',
+      'cnoremap <C-X> <Left>',
+      '--cmd',
+      'cnoremap <C-O> <Right>',
+      '--cmd',
+      'set notermguicolors',
     }, {
       cols = 70,
     })
     screen:set_default_attr_ids({
-      [1] = {foreground = 253, background = 11};
-      [2] = {reverse = true};
-      [3] = {bold = true},
-      [4] = {background = 11};
-      [7] = {foreground = 130};
+      [1] = { foreground = 253, background = 11 },
+      [2] = { reverse = true },
+      [3] = { bold = true },
+      [4] = { background = 11 },
+      [7] = { foreground = 130 },
     })
     -- Also check for real cursor position, as it is used for stuff like input methods
     screen._handle_busy_start = function() end
@@ -521,7 +538,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:aaaaaaaa{2:^ }                                                        |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 9}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 9 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
         {7:  1 }                                                                  |
@@ -532,7 +549,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:aaaaaaa^a{4: }                                                        |
                                                                               |
       ]])
-      eq({6, 8}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 8 }, eval('nvim_win_get_cursor(0)'))
     end)
 
     it('near the end', function()
@@ -546,7 +563,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:aaaaaa{2:^a}a                                                         |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 7}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 7 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
         {7:  1 }                                                                  |
@@ -557,7 +574,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:aaaaa^a{4:a}a                                                         |
                                                                               |
       ]])
-      eq({6, 6}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 6 }, eval('nvim_win_get_cursor(0)'))
     end)
 
     it('near the start', function()
@@ -571,7 +588,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:a{2:^a}aaaaaa                                                         |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 2}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 2 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
         {7:  1 }                                                                  |
@@ -582,7 +599,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:^a{4:a}aaaaaa                                                         |
                                                                               |
       ]])
-      eq({6, 1}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 1 }, eval('nvim_win_get_cursor(0)'))
     end)
   end)
 
@@ -602,7 +619,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µµµµµµµµ{2:^ }                                                        |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 17}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 17 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
         {7:  1 }                                                                  |
@@ -613,7 +630,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µµµµµµµ^µ{4: }                                                        |
                                                                               |
       ]])
-      eq({6, 15}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 15 }, eval('nvim_win_get_cursor(0)'))
     end)
 
     it('near the end', function()
@@ -627,7 +644,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µµµµµµ{2:^µ}µ                                                         |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 13}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 13 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
         {7:  1 }                                                                  |
@@ -638,7 +655,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µµµµµ^µ{4:µ}µ                                                         |
                                                                               |
       ]])
-      eq({6, 11}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 11 }, eval('nvim_win_get_cursor(0)'))
     end)
 
     it('near the start', function()
@@ -652,7 +669,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µ{2:^µ}µµµµµµ                                                         |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 3}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 3 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
         {7:  1 }                                                                  |
@@ -663,20 +680,24 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:^µ{4:µ}µµµµµµ                                                         |
                                                                               |
       ]])
-      eq({6, 1}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 1 }, eval('nvim_win_get_cursor(0)'))
     end)
   end)
 
-  describe('in a line with single-cell composed multibyte characters and no trailing spaces,', function()
-    if skip(is_os('win'), "Encoding problem?") then return end
+  describe(
+    'in a line with single-cell composed multibyte characters and no trailing spaces,',
+    function()
+      if skip(is_os('win'), 'Encoding problem?') then
+        return
+      end
 
-    before_each(function()
-      setup_ex_register('µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳')
-    end)
+      before_each(function()
+        setup_ex_register('µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳')
+      end)
 
-    it('at the end', function()
-      feed('<C-R>r')
-      screen:expect([[
+      it('at the end', function()
+        feed('<C-R>r')
+        screen:expect([[
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
@@ -685,9 +706,9 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µ̳µ̳µ̳µ̳µ̳µ̳µ̳µ̳{2:^ }                                                        |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 33}, eval('nvim_win_get_cursor(0)'))
-      feed([[<C-\><C-N>]])
-      screen:expect([[
+        eq({ 6, 33 }, eval('nvim_win_get_cursor(0)'))
+        feed([[<C-\><C-N>]])
+        screen:expect([[
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
@@ -696,12 +717,12 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µ̳µ̳µ̳µ̳µ̳µ̳µ̳^µ̳{4: }                                                        |
                                                                               |
       ]])
-      eq({6, 29}, eval('nvim_win_get_cursor(0)'))
-    end)
+        eq({ 6, 29 }, eval('nvim_win_get_cursor(0)'))
+      end)
 
-    it('near the end', function()
-      feed('<C-R>r<C-X><C-X>')
-      screen:expect([[
+      it('near the end', function()
+        feed('<C-R>r<C-X><C-X>')
+        screen:expect([[
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
@@ -710,9 +731,9 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µ̳µ̳µ̳µ̳µ̳µ̳{2:^µ̳}µ̳                                                         |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 25}, eval('nvim_win_get_cursor(0)'))
-      feed([[<C-\><C-N>]])
-      screen:expect([[
+        eq({ 6, 25 }, eval('nvim_win_get_cursor(0)'))
+        feed([[<C-\><C-N>]])
+        screen:expect([[
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
@@ -721,12 +742,12 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µ̳µ̳µ̳µ̳µ̳^µ̳{4:µ̳}µ̳                                                         |
                                                                               |
       ]])
-      eq({6, 21}, eval('nvim_win_get_cursor(0)'))
-    end)
+        eq({ 6, 21 }, eval('nvim_win_get_cursor(0)'))
+      end)
 
-    it('near the start', function()
-      feed('<C-R>r<C-B><C-O>')
-      screen:expect([[
+      it('near the start', function()
+        feed('<C-R>r<C-B><C-O>')
+        screen:expect([[
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
@@ -735,9 +756,9 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:µ̳{2:^µ̳}µ̳µ̳µ̳µ̳µ̳µ̳                                                         |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 5}, eval('nvim_win_get_cursor(0)'))
-      feed([[<C-\><C-N>]])
-      screen:expect([[
+        eq({ 6, 5 }, eval('nvim_win_get_cursor(0)'))
+        feed([[<C-\><C-N>]])
+        screen:expect([[
         {7:  1 }                                                                  |
         {7:  2 }                                                                  |
         {7:  3 }                                                                  |
@@ -746,12 +767,15 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:^µ̳{4:µ̳}µ̳µ̳µ̳µ̳µ̳µ̳                                                         |
                                                                               |
       ]])
-      eq({6, 1}, eval('nvim_win_get_cursor(0)'))
-    end)
-  end)
+        eq({ 6, 1 }, eval('nvim_win_get_cursor(0)'))
+      end)
+    end
+  )
 
   describe('in a line with double-cell multibyte characters and no trailing spaces,', function()
-    if skip(is_os('win'), "Encoding problem?") then return end
+    if skip(is_os('win'), 'Encoding problem?') then
+      return
+    end
 
     before_each(function()
       setup_ex_register('哦哦哦哦哦哦哦哦')
@@ -768,7 +792,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:哦哦哦哦哦哦哦哦{2:^ }                                                |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 25}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 25 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
         {7:  1 }                                                                  |
@@ -779,7 +803,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:哦哦哦哦哦哦哦^哦{4: }                                                |
                                                                               |
       ]])
-      eq({6, 22}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 22 }, eval('nvim_win_get_cursor(0)'))
     end)
 
     it('near the end', function()
@@ -793,7 +817,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:哦哦哦哦哦哦{2:^哦}哦                                                 |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 19}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 19 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
         {7:  1 }                                                                  |
@@ -804,7 +828,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:哦哦哦哦哦^哦{4:哦}哦                                                 |
                                                                               |
       ]])
-      eq({6, 16}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 16 }, eval('nvim_win_get_cursor(0)'))
     end)
 
     it('near the start', function()
@@ -818,7 +842,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:哦{2:^哦}哦哦哦哦哦哦                                                 |
         {3:-- TERMINAL --}                                                        |
       ]])
-      eq({6, 4}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 4 }, eval('nvim_win_get_cursor(0)'))
       feed([[<C-\><C-N>]])
       screen:expect([[
         {7:  1 }                                                                  |
@@ -829,7 +853,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
         {7:  6 }:^哦{4:哦}哦哦哦哦哦哦                                                 |
                                                                               |
       ]])
-      eq({6, 1}, eval('nvim_win_get_cursor(0)'))
+      eq({ 6, 1 }, eval('nvim_win_get_cursor(0)'))
     end)
   end)
 
@@ -846,7 +870,7 @@ describe('buffer cursor position is correct in terminal with number column', fun
       {3:-- TERMINAL --}                                                        |
     ]])
     matches('^:aaaaaaaa    [ ]*$', eval('nvim_get_current_line()'))
-    eq({6, 13}, eval('nvim_win_get_cursor(0)'))
+    eq({ 6, 13 }, eval('nvim_win_get_cursor(0)'))
     feed([[<C-\><C-N>]])
     screen:expect([[
       {7:  1 }                                                                  |
@@ -857,6 +881,6 @@ describe('buffer cursor position is correct in terminal with number column', fun
       {7:  6 }:aaaaaaaa   ^ {4: }                                                    |
                                                                             |
     ]])
-    eq({6, 12}, eval('nvim_win_get_cursor(0)'))
+    eq({ 6, 12 }, eval('nvim_win_get_cursor(0)'))
   end)
 end)

@@ -1,8 +1,12 @@
 -- ShaDa marks saving/reading support
 local helpers = require('test.functional.helpers')(after_each)
 local meths, curwinmeths, curbufmeths, nvim_command, funcs, eq =
-  helpers.meths, helpers.curwinmeths, helpers.curbufmeths, helpers.command,
-  helpers.funcs, helpers.eq
+  helpers.meths,
+  helpers.curwinmeths,
+  helpers.curbufmeths,
+  helpers.command,
+  helpers.funcs,
+  helpers.eq
 local feed = helpers.feed
 local exc_exec, exec_capture = helpers.exc_exec, helpers.exec_capture
 local expect_exit = helpers.expect_exit
@@ -63,13 +67,13 @@ describe('ShaDa support code', function()
     eq('Vim(normal):E20: Mark not set', exc_exec('normal! `A'))
   end)
 
-  it('does read back global mark even with `\'0` and `f0` in shada', function()
+  it("does read back global mark even with `'0` and `f0` in shada", function()
     nvim_command('edit ' .. testfilename)
     nvim_command('mark A')
     nvim_command('2')
     nvim_command('kB')
     nvim_command('wshada')
-    reset('set shada=\'0,f0')
+    reset("set shada='0,f0")
     nvim_command('language C')
     nvim_command('normal! `A')
     eq(testfilename, funcs.fnamemodify(curbufmeths.get_name(), ':t'))
@@ -160,13 +164,12 @@ describe('ShaDa support code', function()
     nvim_command('wshada')
     nvim_command('quit')
     nvim_command('rshada')
-    nvim_command('normal! \15')  -- <C-o>
+    nvim_command('normal! \15') -- <C-o>
     eq(testfilename_2, funcs.bufname('%'))
-    eq({2, 0}, curwinmeths.get_cursor())
+    eq({ 2, 0 }, curwinmeths.get_cursor())
   end)
 
-  it('is able to dump and restore jump list with different times (slow!)',
-  function()
+  it('is able to dump and restore jump list with different times (slow!)', function()
     nvim_command('edit ' .. testfilename_2)
     nvim_command('sleep 2')
     nvim_command('normal! G')
@@ -218,33 +221,39 @@ describe('ShaDa support code', function()
 
   -- -c temporary sets lnum to zero to make `+/pat` work, so calling setpcmark()
   -- during -c used to add item with zero lnum to jump list.
-  it('does not create incorrect file for non-existent buffers when writing from -c',
-  function()
-    local argv = helpers.new_argv{
-      args_rm={
+  it('does not create incorrect file for non-existent buffers when writing from -c', function()
+    local argv = helpers.new_argv {
+      args_rm = {
         '-i',
-        '--embed',  -- no --embed
+        '--embed', -- no --embed
       },
-      args={
-        '-i', meths.get_var('tmpname'),  -- Use same shada file as parent.
-        '--cmd', 'silent edit '..non_existent_testfilename,
-        '-c', 'qall'},
+      args = {
+        '-i',
+        meths.get_var('tmpname'), -- Use same shada file as parent.
+        '--cmd',
+        'silent edit ' .. non_existent_testfilename,
+        '-c',
+        'qall',
+      },
     }
     eq('', funcs.system(argv))
     eq(0, exc_exec('rshada'))
   end)
 
-  it('does not create incorrect file for non-existent buffers opened from -c',
-  function()
-    local argv = helpers.new_argv{
-      args_rm={
+  it('does not create incorrect file for non-existent buffers opened from -c', function()
+    local argv = helpers.new_argv {
+      args_rm = {
         '-i',
-        '--embed',  -- no --embed
+        '--embed', -- no --embed
       },
-      args={
-        '-i', meths.get_var('tmpname'),  -- Use same shada file as parent.
-        '-c', 'silent edit '..non_existent_testfilename,
-        '-c', 'autocmd VimEnter * qall'},
+      args = {
+        '-i',
+        meths.get_var('tmpname'), -- Use same shada file as parent.
+        '-c',
+        'silent edit ' .. non_existent_testfilename,
+        '-c',
+        'autocmd VimEnter * qall',
+      },
     }
     eq('', funcs.system(argv))
     eq(0, exc_exec('rshada'))

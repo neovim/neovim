@@ -11,10 +11,9 @@ local meths = helpers.meths
 local insert = helpers.insert
 local curbufmeths = helpers.curbufmeths
 
-
 describe('macros', function()
   before_each(function()
-    clear({args_rm = {'--cmd'}})
+    clear({ args_rm = { '--cmd' } })
   end)
   it('can be recorded and replayed', function()
     feed('qiahello<esc>q')
@@ -42,16 +41,16 @@ hello]]
     feed [[gg]]
 
     feed [[qqAFOO<esc>q]]
-    eq({'helloFOO', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+    eq({ 'helloFOO', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
 
-    feed[[Q]]
-    eq({'helloFOOFOO', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+    feed [[Q]]
+    eq({ 'helloFOOFOO', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
 
-    feed[[G3Q]]
-    eq({'helloFOOFOO', 'hello', 'helloFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+    feed [[G3Q]]
+    eq({ 'helloFOOFOO', 'hello', 'helloFOOFOOFOO' }, curbufmeths.get_lines(0, -1, false))
 
-    feed[[ggV3jQ]]
-    eq({'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+    feed [[ggV3jQ]]
+    eq({ 'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO' }, curbufmeths.get_lines(0, -1, false))
   end)
 
   it('can be replayed with @', function()
@@ -61,37 +60,36 @@ hello]]
     feed [[gg]]
 
     feed [[qqAFOO<esc>q]]
-    eq({'helloFOO', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+    eq({ 'helloFOO', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
 
-    feed[[Q]]
-    eq({'helloFOOFOO', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+    feed [[Q]]
+    eq({ 'helloFOOFOO', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
 
-    feed[[G3@@]]
-    eq({'helloFOOFOO', 'hello', 'helloFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+    feed [[G3@@]]
+    eq({ 'helloFOOFOO', 'hello', 'helloFOOFOOFOO' }, curbufmeths.get_lines(0, -1, false))
 
-    feed[[ggV2j@@]]
-    eq({'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO'}, curbufmeths.get_lines(0, -1, false))
+    feed [[ggV2j@@]]
+    eq({ 'helloFOOFOOFOO', 'helloFOO', 'helloFOOFOOFOOFOO' }, curbufmeths.get_lines(0, -1, false))
   end)
 
   it('can be replayed with @q and @w', function()
-
     insert [[hello
 hello
 hello]]
     feed [[gg]]
 
     feed [[qqAFOO<esc>qu]]
-    eq({'hello', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+    eq({ 'hello', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
 
     feed [[qwA123<esc>qu]]
-    eq({'hello', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+    eq({ 'hello', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
 
-    feed[[V3j@q]]
-    eq({'helloFOO', 'helloFOO', 'helloFOO'}, curbufmeths.get_lines(0, -1, false))
+    feed [[V3j@q]]
+    eq({ 'helloFOO', 'helloFOO', 'helloFOO' }, curbufmeths.get_lines(0, -1, false))
 
     feed [[gg]]
-    feed[[Vj@w]]
-    eq({'helloFOO123', 'helloFOO123', 'helloFOO'}, curbufmeths.get_lines(0, -1, false))
+    feed [[Vj@w]]
+    eq({ 'helloFOO123', 'helloFOO123', 'helloFOO' }, curbufmeths.get_lines(0, -1, false))
   end)
 
   it('can be replayed with @q and @w visual-block', function()
@@ -101,17 +99,17 @@ hello]]
     feed [[gg]]
 
     feed [[qqAFOO<esc>qu]]
-    eq({'hello', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+    eq({ 'hello', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
 
     feed [[qwA123<esc>qu]]
-    eq({'hello', 'hello', 'hello'}, curbufmeths.get_lines(0, -1, false))
+    eq({ 'hello', 'hello', 'hello' }, curbufmeths.get_lines(0, -1, false))
 
-    feed[[<C-v>3j@q]]
-    eq({'helloFOO', 'helloFOO', 'helloFOO'}, curbufmeths.get_lines(0, -1, false))
+    feed [[<C-v>3j@q]]
+    eq({ 'helloFOO', 'helloFOO', 'helloFOO' }, curbufmeths.get_lines(0, -1, false))
 
     feed [[gg]]
-    feed[[<C-v>j@w]]
-    eq({'helloFOO123', 'helloFOO123', 'helloFOO'}, curbufmeths.get_lines(0, -1, false))
+    feed [[<C-v>j@w]]
+    eq({ 'helloFOO123', 'helloFOO123', 'helloFOO' }, curbufmeths.get_lines(0, -1, false))
   end)
 end)
 
@@ -140,16 +138,16 @@ describe('immediately after a macro has finished executing,', function()
     end)
 
     it('if the macro does not end with a <Nop> mapping', function()
-      feed('@asq')  -- "q" from "s" mapping should start recording a macro instead of being no-op
-      eq({mode = 'n', blocking = false}, meths.get_mode())
+      feed('@asq') -- "q" from "s" mapping should start recording a macro instead of being no-op
+      eq({ mode = 'n', blocking = false }, meths.get_mode())
       expect('')
       eq('', eval('@a'))
     end)
 
     it('if the macro ends with a <Nop> mapping', function()
       command('nnoremap 0 <Nop>')
-      feed('@asq')  -- "q" from "s" mapping should start recording a macro instead of being no-op
-      eq({mode = 'n', blocking = false}, meths.get_mode())
+      feed('@asq') -- "q" from "s" mapping should start recording a macro instead of being no-op
+      eq({ mode = 'n', blocking = false }, meths.get_mode())
       expect('')
       eq('', eval('@a'))
     end)

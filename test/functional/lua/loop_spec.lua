@@ -15,16 +15,15 @@ local retry = helpers.retry
 before_each(clear)
 
 describe('vim.uv', function()
-
   it('version', function()
-    assert(funcs.luaeval('vim.uv.version()')>=72961, "libuv version too old")
-    matches("(%d+)%.(%d+)%.(%d+)", funcs.luaeval('vim.uv.version_string()'))
+    assert(funcs.luaeval('vim.uv.version()') >= 72961, 'libuv version too old')
+    matches('(%d+)%.(%d+)%.(%d+)', funcs.luaeval('vim.uv.version_string()'))
   end)
 
   it('timer', function()
     exec_lua('vim.api.nvim_set_var("coroutine_cnt", 0)', {})
 
-    local code=[[
+    local code = [[
       local uv = vim.uv
 
       local touch = 0
@@ -61,14 +60,14 @@ describe('vim.uv', function()
   end)
 
   it('is API safe', function()
-    local screen = Screen.new(50,10)
+    local screen = Screen.new(50, 10)
     screen:attach()
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {bold = true, reverse = true},
-      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
-      [5] = {bold = true},
+      [1] = { bold = true, foreground = Screen.colors.Blue1 },
+      [2] = { bold = true, reverse = true },
+      [3] = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      [4] = { bold = true, foreground = Screen.colors.SeaGreen4 },
+      [5] = { bold = true },
     })
 
     -- deferred API functions are disabled, as their safety can't be guaranteed
@@ -96,7 +95,7 @@ describe('vim.uv', function()
     ]])
     feed('<cr>')
     eq(false, eval("get(g:, 'valid', v:false)"))
-    eq(true, exec_lua("return _G.is_fast"))
+    eq(true, exec_lua('return _G.is_fast'))
 
     -- callbacks can be scheduled to be executed in the main event loop
     -- where the entire API is available
@@ -116,7 +115,7 @@ describe('vim.uv', function()
       howdy                                             |
     ]])
     eq(true, eval("get(g:, 'valid', v:false)"))
-    eq(false, exec_lua("return _G.is_fast"))
+    eq(false, exec_lua('return _G.is_fast'))
 
     -- fast (not deferred) API functions are allowed to be called directly
     exec_lua([[
@@ -133,7 +132,7 @@ describe('vim.uv', function()
       {1:~                                                 }|*8
       {5:-- INSERT --}                                      |
     ]])
-    eq({blocking=false, mode='n'}, exec_lua("return _G.mode"))
+    eq({ blocking = false, mode = 'n' }, exec_lua('return _G.mode'))
   end)
 
   it("is equal to require('luv')", function()

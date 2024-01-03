@@ -32,7 +32,7 @@ local feed = helpers.feed
 local expect_exit = helpers.expect_exit
 
 describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
-  local max_func_args = 20  -- from eval.h
+  local max_func_args = 20 -- from eval.h
   local range = helpers.funcs.range
 
   before_each(clear)
@@ -41,7 +41,7 @@ describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
     local printf = helpers.funcs.printf
     local rep = helpers.funcs['repeat']
     local expected = '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,'
-    eq(expected, printf(rep('%d,', max_func_args-1), unpack(range(2, max_func_args))))
+    eq(expected, printf(rep('%d,', max_func_args - 1), unpack(range(2, max_func_args))))
     local ret = exc_exec('call printf("", 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21)')
     eq('Vim(call):E740: Too many arguments for function printf', ret)
   end)
@@ -55,15 +55,15 @@ describe('Up to MAX_FUNC_ARGS arguments are handled by', function()
   end)
 end)
 
-describe("backtick expansion", function()
+describe('backtick expansion', function()
   setup(function()
     clear()
-    mkdir("test-backticks")
-    write_file("test-backticks/file1", "test file 1")
-    write_file("test-backticks/file2", "test file 2")
-    write_file("test-backticks/file3", "test file 3")
-    mkdir("test-backticks/subdir")
-    write_file("test-backticks/subdir/file4", "test file 4")
+    mkdir('test-backticks')
+    write_file('test-backticks/file1', 'test file 1')
+    write_file('test-backticks/file2', 'test file 2')
+    write_file('test-backticks/file3', 'test file 3')
+    mkdir('test-backticks/subdir')
+    write_file('test-backticks/subdir/file4', 'test file 4')
     -- Long path might cause "Press ENTER" prompt; use :silent to avoid it.
     command('silent cd test-backticks')
   end)
@@ -74,30 +74,30 @@ describe("backtick expansion", function()
 
   it("with default 'shell'", function()
     if helpers.is_os('win') then
-      command(":silent args `dir /b *2`")
+      command(':silent args `dir /b *2`')
     else
-      command(":silent args `echo ***2`")
+      command(':silent args `echo ***2`')
     end
-    eq({ "file2", }, eval("argv()"))
+    eq({ 'file2' }, eval('argv()'))
     if helpers.is_os('win') then
-      command(":silent args `dir /s/b *4`")
-      eq({ "subdir\\file4", }, eval("map(argv(), 'fnamemodify(v:val, \":.\")')"))
+      command(':silent args `dir /s/b *4`')
+      eq({ 'subdir\\file4' }, eval('map(argv(), \'fnamemodify(v:val, ":.")\')'))
     else
-      command(":silent args `echo */*4`")
-      eq({ "subdir/file4", }, eval("argv()"))
+      command(':silent args `echo */*4`')
+      eq({ 'subdir/file4' }, eval('argv()'))
     end
   end)
 
-  it("with shell=fish", function()
+  it('with shell=fish', function()
     if eval("executable('fish')") == 0 then
       pending('missing "fish" command')
       return
     end
-    command("set shell=fish")
-    command(":silent args `echo ***2`")
-    eq({ "file2", }, eval("argv()"))
-    command(":silent args `echo */*4`")
-    eq({ "subdir/file4", }, eval("argv()"))
+    command('set shell=fish')
+    command(':silent args `echo ***2`')
+    eq({ 'file2' }, eval('argv()'))
+    command(':silent args `echo */*4`')
+    eq({ 'subdir/file4' }, eval('argv()'))
   end)
 end)
 
@@ -106,7 +106,9 @@ describe('List support code', function()
   local min_dur = 8
   local len = 131072
 
-  if not pending('does not actually allows interrupting with just got_int', function() end) then return end
+  if not pending('does not actually allows interrupting with just got_int', function() end) then
+    return
+  end
   -- The following tests are confirmed to work with os_breakcheck() just before
   -- `if (got_int) {break;}` in tv_list_copy and list_join_inner() and not to
   -- work without.
@@ -153,7 +155,7 @@ describe('List support code', function()
   end)
 end)
 
-describe("uncaught exception", function()
+describe('uncaught exception', function()
   before_each(clear)
 
   it('is not forgotten #13490', function()
@@ -164,11 +166,14 @@ describe("uncaught exception", function()
     -- from processing the others.
     -- Only the first thrown exception should be rethrown from the :try below, though.
     for i = 1, 3 do
-      write_file('throw' .. i .. '.vim', ([[
+      write_file(
+        'throw' .. i .. '.vim',
+        ([[
         let result ..= '%d'
         throw 'throw%d'
         let result ..= 'X'
-      ]]):format(i, i))
+      ]]):format(i, i)
+      )
     end
     finally(function()
       for i = 1, 3 do
@@ -184,9 +189,9 @@ describe("uncaught exception", function()
   it('multiline exception remains multiline #25350', function()
     local screen = Screen.new(80, 11)
     screen:set_default_attr_ids({
-      [1] = {bold = true, reverse = true};  -- MsgSeparator
-      [2] = {foreground = Screen.colors.White, background = Screen.colors.Red};  -- ErrorMsg
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen};  -- MoreMsg
+      [1] = { bold = true, reverse = true }, -- MsgSeparator
+      [2] = { foreground = Screen.colors.White, background = Screen.colors.Red }, -- ErrorMsg
+      [3] = { bold = true, foreground = Screen.colors.SeaGreen }, -- MoreMsg
     })
     screen:attach()
     exec_lua([[
@@ -195,7 +200,8 @@ describe("uncaught exception", function()
       end
     ]])
     feed(':try\rlua _G.Oops()\rendtry\r')
-    screen:expect{grid=[[
+    screen:expect {
+      grid = [[
       {1:                                                                                }|
       :try                                                                            |
       :  lua _G.Oops()                                                                |
@@ -207,7 +213,8 @@ describe("uncaught exception", function()
       {2:        [string "<nvim>"]:2: in function 'Oops'}                                 |
       {2:        [string ":lua"]:1: in main chunk}                                        |
       {3:Press ENTER or type command to continue}^                                         |
-    ]]}
+    ]],
+    }
   end)
 end)
 
@@ -217,16 +224,23 @@ describe('listing functions using :function', function()
   it('works for lambda functions with <lambda> #20466', function()
     command('let A = {-> 1}')
     local num = exec_capture('echo A'):match("function%('<lambda>(%d+)'%)")
-    eq(([[
+    eq(
+      ([[
    function <lambda>%s(...)
 1  return 1
-   endfunction]]):format(num), exec_capture(('function <lambda>%s'):format(num)))
+   endfunction]]):format(num),
+      exec_capture(('function <lambda>%s'):format(num))
+    )
   end)
 
   it('does not crash if another function is deleted while listing', function()
     local screen = Screen.new(80, 24)
     screen:attach()
-    matches('Vim%(function%):E454: Function list was modified$', pcall_err(exec_lua, [=[
+    matches(
+      'Vim%(function%):E454: Function list was modified$',
+      pcall_err(
+        exec_lua,
+        [=[
       vim.cmd([[
         func Func1()
         endfunc
@@ -247,14 +261,20 @@ describe('listing functions using :function', function()
       vim.cmd('function')
 
       vim.ui_detach(ns)
-    ]=]))
+    ]=]
+      )
+    )
     assert_alive()
   end)
 
   it('does not crash if the same function is deleted while listing', function()
     local screen = Screen.new(80, 24)
     screen:attach()
-    matches('Vim%(function%):E454: Function list was modified$', pcall_err(exec_lua, [=[
+    matches(
+      'Vim%(function%):E454: Function list was modified$',
+      pcall_err(
+        exec_lua,
+        [=[
       vim.cmd([[
         func Func1()
         endfunc
@@ -275,7 +295,9 @@ describe('listing functions using :function', function()
       vim.cmd('function')
 
       vim.ui_detach(ns)
-    ]=]))
+    ]=]
+      )
+    )
     assert_alive()
   end)
 end)
@@ -283,7 +305,9 @@ end)
 it('no double-free in garbage collection #16287', function()
   clear()
   -- Don't use exec() here as using a named script reproduces the issue better.
-  write_file('Xgarbagecollect.vim', [[
+  write_file(
+    'Xgarbagecollect.vim',
+    [[
     func Foo() abort
       let s:args = [a:000]
       let foo0 = ""
@@ -306,7 +330,8 @@ it('no double-free in garbage collection #16287', function()
     set updatetime=1
     call Foo()
     call Foo()
-  ]])
+  ]]
+  )
   finally(function()
     os.remove('Xgarbagecollect.vim')
   end)

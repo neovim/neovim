@@ -72,7 +72,7 @@ describe('prompt buffer', function()
   -- oldtest: Test_prompt_basic()
   it('works', function()
     source_script()
-    feed("hello\n")
+    feed('hello\n')
     screen:expect([[
       cmd: hello               |
       Command: "hello"         |
@@ -83,7 +83,7 @@ describe('prompt buffer', function()
       ~                        |*3
       -- INSERT --             |
     ]])
-    feed("exit\n")
+    feed('exit\n')
     screen:expect([[
       ^other buffer             |
       ~                        |*8
@@ -94,7 +94,7 @@ describe('prompt buffer', function()
   -- oldtest: Test_prompt_editing()
   it('editing', function()
     source_script()
-    feed("hello<BS><BS>")
+    feed('hello<BS><BS>')
     screen:expect([[
       cmd: hel^                 |
       ~                        |*3
@@ -103,7 +103,7 @@ describe('prompt buffer', function()
       ~                        |*3
       -- INSERT --             |
     ]])
-    feed("<Left><Left><Left><BS>-")
+    feed('<Left><Left><Left><BS>-')
     screen:expect([[
       cmd: -^hel                |
       ~                        |*3
@@ -112,7 +112,7 @@ describe('prompt buffer', function()
       ~                        |*3
       -- INSERT --             |
     ]])
-    feed("<C-O>lz")
+    feed('<C-O>lz')
     screen:expect([[
       cmd: -hz^el               |
       ~                        |*3
@@ -121,7 +121,7 @@ describe('prompt buffer', function()
       ~                        |*3
       -- INSERT --             |
     ]])
-    feed("<End>x")
+    feed('<End>x')
     screen:expect([[
       cmd: -hzelx^              |
       ~                        |*3
@@ -130,7 +130,7 @@ describe('prompt buffer', function()
       ~                        |*3
       -- INSERT --             |
     ]])
-    feed("<C-U>exit\n")
+    feed('<C-U>exit\n')
     screen:expect([[
       ^other buffer             |
       ~                        |*8
@@ -141,16 +141,18 @@ describe('prompt buffer', function()
   -- oldtest: Test_prompt_switch_windows()
   it('switch windows', function()
     source_script()
-    feed("<C-O>:call SwitchWindows()<CR>")
-    screen:expect{grid=[[
+    feed('<C-O>:call SwitchWindows()<CR>')
+    screen:expect {
+      grid = [[
       cmd:                     |
       ~                        |*3
       [Prompt] [+]             |
       ^other buffer             |
       ~                        |*3
                                |
-    ]]}
-    feed("<C-O>:call SwitchWindows()<CR>")
+    ]],
+    }
+    feed('<C-O>:call SwitchWindows()<CR>')
     screen:expect([[
       cmd: ^                    |
       ~                        |*3
@@ -159,7 +161,7 @@ describe('prompt buffer', function()
       ~                        |*3
       -- INSERT --             |
     ]])
-    feed("<Esc>")
+    feed('<Esc>')
     screen:expect([[
       cmd:^                     |
       ~                        |*3

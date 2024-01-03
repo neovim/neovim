@@ -18,7 +18,7 @@ describe(':terminal mouse', function()
     screen = thelpers.screen_setup()
     local lines = {}
     for i = 1, 30 do
-      table.insert(lines, 'line'..tostring(i))
+      table.insert(lines, 'line' .. tostring(i))
     end
     table.insert(lines, '')
     feed_data(lines)

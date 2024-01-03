@@ -14,13 +14,13 @@ describe("'langmap'", function()
     feed('gg0')
   end)
 
-  it("converts keys in normal mode", function()
+  it('converts keys in normal mode', function()
     feed('ix')
     expect('iii ww')
     feed('whello<esc>')
     expect('iii helloww')
   end)
-  it("gives characters that are mapped by :nmap.", function()
+  it('gives characters that are mapped by :nmap.', function()
     command('map i 0x')
     feed('w')
     expect('ii www')
@@ -32,20 +32,18 @@ describe("'langmap'", function()
     it("'langnoremap' is by default ON", function()
       eq(1, eval('&langnoremap'))
     end)
-    it("Results of maps are not converted when 'langnoremap' ON.",
-    function()
+    it("Results of maps are not converted when 'langnoremap' ON.", function()
       command('nmap x i')
       feed('xdl<esc>')
       expect('dliii www')
     end)
-    it("applies when deciding whether to map recursively", function()
+    it('applies when deciding whether to map recursively', function()
       command('nmap l i')
       command('nmap w j')
       feed('ll')
       expect('liii www')
     end)
-    it("does not stop applying 'langmap' on first character of a mapping",
-    function()
+    it("does not stop applying 'langmap' on first character of a mapping", function()
       command('1t1')
       command('1t1')
       command('goto 1')
@@ -56,8 +54,7 @@ describe("'langmap'", function()
       iii www
       ihelloii www]])
     end)
-    it("Results of maps are converted when 'langnoremap' OFF.",
-    function()
+    it("Results of maps are converted when 'langnoremap' OFF.", function()
       command('set nolangnoremap')
       command('nmap x i')
       feed('xdl<esc>')
@@ -65,8 +62,7 @@ describe("'langmap'", function()
     end)
   end)
   -- e.g. CTRL-W_j  ,  mj , 'j and "jp
-  it('conversions are applied to keys in middle of command',
-  function()
+  it('conversions are applied to keys in middle of command', function()
     -- Works in middle of window command
     feed('<C-w>s')
     local origwin = curwin()
@@ -74,12 +70,12 @@ describe("'langmap'", function()
     neq(origwin, curwin())
     -- Works when setting a mark
     feed('yy3p3gg0mwgg0mi')
-    eq({0, 3, 1, 0}, call('getpos', "'i"))
-    eq({0, 1, 1, 0}, call('getpos', "'w"))
+    eq({ 0, 3, 1, 0 }, call('getpos', "'i"))
+    eq({ 0, 1, 1, 0 }, call('getpos', "'w"))
     feed('3dd')
     -- Works when moving to a mark
     feed("'i")
-    eq({0, 1, 1, 0}, call('getpos', '.'))
+    eq({ 0, 1, 1, 0 }, call('getpos', '.'))
     -- Works when selecting a register
     feed('qillqqwhhq')
     eq('hh', eval('@i'))
@@ -193,8 +189,7 @@ describe("'langmap'", function()
       eq(1, eval('gotten_one'))
     end)
   end)
-  it('conversions are not applied during setreg()',
-  function()
+  it('conversions are not applied during setreg()', function()
     call('setreg', 'i', 'ww')
     eq('ww', eval('@i'))
   end)
@@ -214,12 +209,18 @@ describe("'langmap'", function()
   end)
 
   local function testrecording(command_string, expect_string, setup_function, expect_macro)
-    if setup_function then setup_function() end
+    if setup_function then
+      setup_function()
+    end
     feed('qa' .. command_string .. 'q')
     expect(expect_string)
-    eq(expect_macro or helpers.funcs.nvim_replace_termcodes(command_string, true, true, true),
-      eval('@a'))
-    if setup_function then setup_function() end
+    eq(
+      expect_macro or helpers.funcs.nvim_replace_termcodes(command_string, true, true, true),
+      eval('@a')
+    )
+    if setup_function then
+      setup_function()
+    end
     -- n.b. may need nvim_replace_termcodes() here.
     feed('@a')
     expect(expect_string)
@@ -276,5 +277,4 @@ describe("'langmap'", function()
     testrecording('<C-w>', 'whello', local_setup, eval([["\<*C-w>"]]))
     testrecording('<C-i>', 'ihello', local_setup, eval([["\<*C-i>"]]))
   end)
-
 end)

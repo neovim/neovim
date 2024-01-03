@@ -51,7 +51,10 @@ describe('Remote', function()
       local client_starter = spawn(new_argv(), false, nil, true)
       set_session(client_starter)
       -- Call jobstart() and jobwait() in the same RPC request to reduce flakiness.
-      eq({ 0 }, exec_lua([[return vim.fn.jobwait({ vim.fn.jobstart({...}, {
+      eq(
+        { 0 },
+        exec_lua(
+          [[return vim.fn.jobwait({ vim.fn.jobstart({...}, {
         stdout_buffered = true,
         stderr_buffered = true,
         on_stdout = function(_, data, _)
@@ -60,7 +63,15 @@ describe('Remote', function()
         on_stderr = function(_, data, _)
           _G.Remote_stderr = table.concat(data, '\n')
         end,
-      }) })]], nvim_prog, '--clean', '--headless', '--server', addr, ...))
+      }) })]],
+          nvim_prog,
+          '--clean',
+          '--headless',
+          '--server',
+          addr,
+          ...
+        )
+      )
       local res = exec_lua([[return { _G.Remote_stdout, _G.Remote_stderr }]])
       client_starter:close()
       set_session(server)
@@ -95,7 +106,7 @@ describe('Remote', function()
     end)
 
     it('send keys', function()
-      eq({ '', '' }, run_remote('--remote-send', ':edit '..fname..'<CR><C-W>v'))
+      eq({ '', '' }, run_remote('--remote-send', ':edit ' .. fname .. '<CR><C-W>v'))
       expect(contents)
       eq(2, #funcs.getwininfo())
       -- Only a single buffer as we're using edit and not drop like --remote does

@@ -36,11 +36,12 @@ describe('wait()', function()
   end)
 
   it('returns -2 when interrupted', function()
-    feed_command('call rpcnotify(g:channel, "ready") | '..
-                 'call rpcnotify(g:channel, "wait", wait(-1, 0))')
-    eq({'notification', 'ready', {}}, next_msg())
+    feed_command(
+      'call rpcnotify(g:channel, "ready") | ' .. 'call rpcnotify(g:channel, "wait", wait(-1, 0))'
+    )
+    eq({ 'notification', 'ready', {} }, next_msg())
     feed('<c-c>')
-    eq({'notification', 'wait', {-2}}, next_msg())
+    eq({ 'notification', 'wait', { -2 } }, next_msg())
   end)
 
   it('returns -3 on error', function()

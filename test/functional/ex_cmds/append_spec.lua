@@ -29,8 +29,7 @@ local cmdtest = function(cmd, prep, ret1)
     -- Used to crash because this invokes history processing which uses
     -- hist_char2type which after fdb68e35e4c729c7ed097d8ade1da29e5b3f4b31
     -- crashed.
-    it(cmd .. 's' .. prep .. ' the current line by default when feeding',
-    function()
+    it(cmd .. 's' .. prep .. ' the current line by default when feeding', function()
       feed(':' .. cmd .. '\nabc\ndef\n.\n')
       eq(ret1, buffer_contents())
     end)
@@ -63,8 +62,8 @@ describe('the first line is redrawn correctly after inserting text in an empty b
     clear()
     screen = Screen.new(20, 8)
     screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue},
-      [2] = {bold = true, reverse = true},
+      [1] = { bold = true, foreground = Screen.colors.Blue },
+      [2] = { bold = true, reverse = true },
     })
     screen:attach()
   end)

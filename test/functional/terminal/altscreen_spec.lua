@@ -6,7 +6,9 @@ local feed_data = thelpers.feed_data
 local enter_altscreen = thelpers.enter_altscreen
 local exit_altscreen = thelpers.exit_altscreen
 
-if helpers.skip(helpers.is_os('win')) then return end
+if helpers.skip(helpers.is_os('win')) then
+  return
+end
 
 describe(':terminal altscreen', function()
   local screen
@@ -14,8 +16,17 @@ describe(':terminal altscreen', function()
   before_each(function()
     clear()
     screen = thelpers.screen_setup()
-    feed_data({'line1', 'line2', 'line3', 'line4', 'line5', 'line6',
-               'line7', 'line8', ''})
+    feed_data({
+      'line1',
+      'line2',
+      'line3',
+      'line4',
+      'line5',
+      'line6',
+      'line7',
+      'line8',
+      '',
+    })
     screen:expect([[
       line4                                             |
       line5                                             |
@@ -73,8 +84,17 @@ describe(':terminal altscreen', function()
 
   describe('with lines printed after the screen height limit', function()
     before_each(function()
-      feed_data({'line9', 'line10', 'line11', 'line12', 'line13',
-                 'line14', 'line15', 'line16', ''})
+      feed_data({
+        'line9',
+        'line10',
+        'line11',
+        'line12',
+        'line13',
+        'line14',
+        'line15',
+        'line16',
+        '',
+      })
       screen:expect([[
         line12                                            |
         line13                                            |

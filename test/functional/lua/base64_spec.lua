@@ -49,12 +49,15 @@ describe('vim.base64', function()
     end
 
     -- Explicitly check encoded output
-    eq('VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=', encode('The quick brown fox jumps over the lazy dog\n'))
+    eq(
+      'VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZwo=',
+      encode('The quick brown fox jumps over the lazy dog\n')
+    )
 
     -- Test vectors from rfc4648
     local rfc4648 = {
       { '', '' },
-      { 'f', 'Zg==', },
+      { 'f', 'Zg==' },
       { 'fo', 'Zm8=' },
       { 'foo', 'Zm9v' },
       { 'foob', 'Zm9vYg==' },

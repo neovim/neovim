@@ -44,6 +44,4 @@ describe(':ls', function()
       eq('\n  3 %aF ', string.match(ls_output, '^\n *3 ... '))
     end)
   end)
-
 end)
-

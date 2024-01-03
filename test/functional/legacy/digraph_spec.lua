@@ -10,9 +10,9 @@ describe('digraph', function()
   it('characters displayed on the screen', function()
     local screen = Screen.new(10, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {foreground = Screen.colors.Blue},  -- SpecialKey
-      [2] = {bold = true},  -- ModeMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { foreground = Screen.colors.Blue }, -- SpecialKey
+      [2] = { bold = true }, -- ModeMsg
     })
     screen:attach()
     feed('i<C-K>')

@@ -24,10 +24,10 @@ describe('setqflist()', function()
   end)
 
   it('sets w:quickfix_title', function()
-    setqflist({''}, 'r', 'foo')
+    setqflist({ '' }, 'r', 'foo')
     command('copen')
     eq('foo', get_cur_win_var('quickfix_title'))
-    setqflist({}, 'r', {['title'] = 'qf_title'})
+    setqflist({}, 'r', { ['title'] = 'qf_title' })
     eq('qf_title', get_cur_win_var('quickfix_title'))
   end)
 
@@ -38,7 +38,10 @@ describe('setqflist()', function()
   end)
 
   it('requires a dict for {what}', function()
-    eq('Vim(call):E715: Dictionary required', exc_exec('call setqflist([], "r", function("function"))'))
+    eq(
+      'Vim(call):E715: Dictionary required',
+      exc_exec('call setqflist([], "r", function("function"))')
+    )
   end)
 end)
 
@@ -73,11 +76,11 @@ describe('setloclist()', function()
     helpers.insert([[
     hello world]])
 
-    command("vsplit")
-    command("autocmd WinLeave * :call nvim_win_close(0, v:true)")
+    command('vsplit')
+    command('autocmd WinLeave * :call nvim_win_close(0, v:true)')
 
-    command("call setloclist(0, [])")
-    command("lopen")
+    command('call setloclist(0, [])')
+    command('lopen')
 
     helpers.assert_alive()
   end)

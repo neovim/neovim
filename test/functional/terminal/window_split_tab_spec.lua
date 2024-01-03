@@ -35,7 +35,7 @@ describe(':terminal', function()
     command('terminal')
     command('vsplit foo')
     eq(3, eval("winnr('$')"))
-    feed('ZQ')  -- Close split, should not crash. #7538
+    feed('ZQ') -- Close split, should not crash. #7538
     assert_alive()
   end)
 
@@ -91,9 +91,9 @@ describe(':terminal', function()
       -- win: SIGWINCH is unreliable, use a weaker test. #7506
       retry(3, 30000, function()
         screen:try_resize(w1, h1)
-        screen:expect{any='rows: 7, cols: 47'}
+        screen:expect { any = 'rows: 7, cols: 47' }
         screen:try_resize(w2, h2)
-        screen:expect{any='rows: 4, cols: 41'}
+        screen:expect { any = 'rows: 4, cols: 41' }
       end)
       return
     end
@@ -122,8 +122,7 @@ describe(':terminal', function()
     command('split')
     command('terminal')
     feed('a<Cmd>wincmd j<CR>')
-    eq(2, eval("winnr()"))
+    eq(2, eval('winnr()'))
     eq('t', eval('mode(1)'))
   end)
-
 end)

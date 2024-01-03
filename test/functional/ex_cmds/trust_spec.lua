@@ -22,7 +22,7 @@ describe(':trust', function()
 
   before_each(function()
     helpers.write_file('test_file', 'test')
-    clear{env={XDG_STATE_HOME=xstate}}
+    clear { env = { XDG_STATE_HOME = xstate } }
   end)
 
   after_each(function()
@@ -72,7 +72,10 @@ describe(':trust', function()
     local trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
     eq(string.format('! %s', cwd .. pathsep .. 'test_file'), vim.trim(trust))
 
-    matches('^Removed ".*test_file" from trust database%.$', exec_capture('trust ++remove test_file'))
+    matches(
+      '^Removed ".*test_file" from trust database%.$',
+      exec_capture('trust ++remove test_file')
+    )
     trust = helpers.read_file(funcs.stdpath('state') .. pathsep .. 'trust')
     eq(string.format(''), vim.trim(trust))
   end)

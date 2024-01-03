@@ -40,7 +40,7 @@ local grid_without_inlay_hints = [[
                                                     |
 ]]
 
-local grid_with_inlay_hints =  [[
+local grid_with_inlay_hints = [[
   auto add(int a, int b)-> int { return a + b; }    |
                                                     |
   int main() {                                      |
@@ -60,7 +60,8 @@ before_each(function()
   screen:attach()
 
   exec_lua(create_server_definition)
-  exec_lua([[
+  exec_lua(
+    [[
     local response = ...
     server = _create_server({
       capabilities = {
@@ -77,7 +78,9 @@ before_each(function()
     vim.api.nvim_win_set_buf(0, bufnr)
 
     client_id = vim.lsp.start({ name = 'dummy', cmd = server.cmd })
-  ]], response)
+  ]],
+    response
+  )
 
   insert(text)
   exec_lua([[vim.lsp.inlay_hint.enable(bufnr)]])
@@ -145,7 +148,8 @@ describe('vim.lsp.inlay_hint', function()
         paddingRight = false,
       }
 
-      exec_lua([[
+      exec_lua(
+        [[
         local expected2 = ...
         server2 = _create_server({
           capabilities = {
@@ -159,7 +163,9 @@ describe('vim.lsp.inlay_hint', function()
         })
         client2 = vim.lsp.start({ name = 'dummy2', cmd = server2.cmd })
         vim.lsp.inlay_hint.enable(bufnr)
-      ]], expected2)
+      ]],
+        expected2
+      )
 
       --- @type vim.lsp.inlay_hint.get.ret
       local res = exec_lua([[return vim.lsp.inlay_hint.get()]])

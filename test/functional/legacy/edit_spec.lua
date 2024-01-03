@@ -31,9 +31,9 @@ describe('edit', function()
   it('inserting a register using CTRL-R', function()
     local screen = Screen.new(10, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {foreground = Screen.colors.Blue},  -- SpecialKey
-      [2] = {bold = true},  -- ModeMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { foreground = Screen.colors.Blue }, -- SpecialKey
+      [2] = { bold = true }, -- ModeMsg
     })
     screen:attach()
     feed('a<C-R>')
@@ -54,13 +54,13 @@ describe('edit', function()
   it('positioning cursor after CTRL-R expression failed', function()
     local screen = Screen.new(60, 6)
     screen:set_default_attr_ids({
-      [0] = {bold = true, foreground = Screen.colors.Blue},  -- NonText
-      [1] = {foreground = Screen.colors.Blue},  -- SpecialKey
-      [2] = {foreground = Screen.colors.SlateBlue},
-      [3] = {bold = true},  -- ModeMsg
-      [4] = {reverse = true, bold = true},  -- MsgSeparator
-      [5] = {background = Screen.colors.Red, foreground = Screen.colors.White},  -- ErrorMsg
-      [6] = {foreground = Screen.colors.SeaGreen, bold = true},  -- MoreMsg
+      [0] = { bold = true, foreground = Screen.colors.Blue }, -- NonText
+      [1] = { foreground = Screen.colors.Blue }, -- SpecialKey
+      [2] = { foreground = Screen.colors.SlateBlue },
+      [3] = { bold = true }, -- ModeMsg
+      [4] = { reverse = true, bold = true }, -- MsgSeparator
+      [5] = { background = Screen.colors.Red, foreground = Screen.colors.White }, -- ErrorMsg
+      [6] = { foreground = Screen.colors.SeaGreen, bold = true }, -- MoreMsg
     })
     screen:attach()
 

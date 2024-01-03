@@ -32,12 +32,12 @@ describe('WinResized', function()
     -- increase window height, two windows will be reported
     feed('<C-W>+')
     eq(1, eval('g:resized'))
-    eq({windows = {1002, 1001}}, eval('g:v_event'))
+    eq({ windows = { 1002, 1001 } }, eval('g:v_event'))
 
     -- increase window width, three windows will be reported
     feed('<C-W>>')
     eq(2, eval('g:resized'))
-    eq({windows = {1002, 1001, 1000}}, eval('g:v_event'))
+    eq({ windows = { 1002, 1001, 1000 } }, eval('g:v_event'))
   end)
 end)
 
@@ -63,22 +63,22 @@ describe('WinScrolled', function()
   end)
 
   it('is triggered by scrolling vertically', function()
-    local lines = {'123', '123'}
+    local lines = { '123', '123' }
     meths.buf_set_lines(0, 0, -1, true, lines)
     eq(0, eval('g:scrolled'))
 
     feed('<C-E>')
     eq(1, eval('g:scrolled'))
     eq({
-      all = {leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
 
     feed('<C-Y>')
     eq(2, eval('g:scrolled'))
     eq({
-      all = {leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = 0, topline = -1, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = 0, topline = -1, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
   end)
 
@@ -86,58 +86,58 @@ describe('WinScrolled', function()
     command('set nowrap')
     local width = meths.win_get_width(0)
     local line = '123' .. ('*'):rep(width * 2)
-    local lines = {line, line}
+    local lines = { line, line }
     meths.buf_set_lines(0, 0, -1, true, lines)
     eq(0, eval('g:scrolled'))
 
     feed('zl')
     eq(1, eval('g:scrolled'))
     eq({
-      all = {leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
 
     feed('zh')
     eq(2, eval('g:scrolled'))
     eq({
-      all = {leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = -1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = -1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
   end)
 
   it('is triggered by horizontal scrolling from cursor move', function()
     command('set nowrap')
-    local lines = {'', '', 'Foo'}
+    local lines = { '', '', 'Foo' }
     meths.buf_set_lines(0, 0, -1, true, lines)
-    meths.win_set_cursor(0, {3, 0})
+    meths.win_set_cursor(0, { 3, 0 })
     eq(0, eval('g:scrolled'))
 
     feed('zl')
     eq(1, eval('g:scrolled'))
     eq({
-      all = {leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
 
     feed('zl')
     eq(2, eval('g:scrolled'))
     eq({
-      all = {leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
 
     feed('h')
     eq(3, eval('g:scrolled'))
     eq({
-      all = {leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = -1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = -1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
 
     feed('zh')
     eq(4, eval('g:scrolled'))
     eq({
-      all = {leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = -1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = -1, topline = 0, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
   end)
 
@@ -145,22 +145,22 @@ describe('WinScrolled', function()
   it('is triggered by scrolling on a long wrapped line #19968', function()
     local height = meths.win_get_height(0)
     local width = meths.win_get_width(0)
-    meths.buf_set_lines(0, 0, -1, true, {('foo'):rep(height * width)})
-    meths.win_set_cursor(0, {1, height * width - 1})
+    meths.buf_set_lines(0, 0, -1, true, { ('foo'):rep(height * width) })
+    meths.win_set_cursor(0, { 1, height * width - 1 })
     eq(0, eval('g:scrolled'))
 
     feed('gj')
     eq(1, eval('g:scrolled'))
     eq({
-      all = {leftcol = 0, topline = 0, topfill = 0, width = 0, height = 0, skipcol = width},
-      ['1000'] = {leftcol = 0, topline = 0, topfill = 0, width = 0, height = 0, skipcol = width},
+      all = { leftcol = 0, topline = 0, topfill = 0, width = 0, height = 0, skipcol = width },
+      ['1000'] = { leftcol = 0, topline = 0, topfill = 0, width = 0, height = 0, skipcol = width },
     }, eval('g:v_event'))
 
     feed('0')
     eq(2, eval('g:scrolled'))
     eq({
-      all = {leftcol = 0, topline = 0, topfill = 0, width = 0, height = 0, skipcol = width},
-      ['1000'] = {leftcol = 0, topline = 0, topfill = 0, width = 0, height = 0, skipcol = -width},
+      all = { leftcol = 0, topline = 0, topfill = 0, width = 0, height = 0, skipcol = width },
+      ['1000'] = { leftcol = 0, topline = 0, topfill = 0, width = 0, height = 0, skipcol = -width },
     }, eval('g:v_event'))
 
     feed('$')
@@ -181,15 +181,15 @@ describe('WinScrolled', function()
     feed('i<C-X><C-E><Esc>')
     eq(1, eval('g:scrolled'))
     eq({
-      all = {leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
 
     feed('i<C-X><C-Y><Esc>')
     eq(2, eval('g:scrolled'))
     eq({
-      all = {leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = 0, topline = -1, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = 0, topline = -1, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
 
     feed('L')
@@ -198,8 +198,8 @@ describe('WinScrolled', function()
     feed('A<CR><Esc>')
     eq(3, eval('g:scrolled'))
     eq({
-      all = {leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
   end)
 end)
@@ -257,30 +257,30 @@ describe('WinScrolled', function()
 
     feed('<C-E>')
     eq({
-      all = {leftcol = 0, topline = 1, topfill = 1, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1001'] = {leftcol = 0, topline = 0, topfill = -1, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 0, topline = 1, topfill = 1, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1001'] = { leftcol = 0, topline = 0, topfill = -1, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
 
     feed('2<C-E>')
     eq({
-      all = {leftcol = 0, topline = 2, topfill = 2, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = 0, topline = 2, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1001'] = {leftcol = 0, topline = 0, topfill = -2, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 0, topline = 2, topfill = 2, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = 0, topline = 2, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1001'] = { leftcol = 0, topline = 0, topfill = -2, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
 
     feed('<C-E>')
     eq({
-      all = {leftcol = 0, topline = 2, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1001'] = {leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 0, topline = 2, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1001'] = { leftcol = 0, topline = 1, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
 
     feed('2<C-Y>')
     eq({
-      all = {leftcol = 0, topline = 3, topfill = 1, width = 0, height = 0, skipcol = 0},
-      ['1000'] = {leftcol = 0, topline = -2, topfill = 0, width = 0, height = 0, skipcol = 0},
-      ['1001'] = {leftcol = 0, topline = -1, topfill = 1, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 0, topline = 3, topfill = 1, width = 0, height = 0, skipcol = 0 },
+      ['1000'] = { leftcol = 0, topline = -2, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      ['1001'] = { leftcol = 0, topline = -1, topfill = 1, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
   end)
 
@@ -297,14 +297,20 @@ describe('WinScrolled', function()
     eq(0, eval('g:scrolled'))
 
     local buf = meths.create_buf(true, true)
-    meths.buf_set_lines(buf, 0, -1, false, {'@', 'b', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'})
+    meths.buf_set_lines(
+      buf,
+      0,
+      -1,
+      false,
+      { '@', 'b', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n' }
+    )
     local win = meths.open_win(buf, false, {
       height = 5,
       width = 10,
       col = 0,
       row = 1,
       relative = 'editor',
-      style = 'minimal'
+      style = 'minimal',
     })
     screen:expect({ any = '@' })
     local winid_str = tostring(win.id)
@@ -315,16 +321,16 @@ describe('WinScrolled', function()
     eq(1, eval('g:scrolled'))
     eq(winid_str, eval('g:amatch'))
     eq({
-      all = {leftcol = 0, topline = 3, topfill = 0, width = 0, height = 0, skipcol = 0},
-      [winid_str] = {leftcol = 0, topline = 3, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 0, topline = 3, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      [winid_str] = { leftcol = 0, topline = 3, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
 
     meths.input_mouse('wheel', 'up', '', 0, 3, 3)
     eq(2, eval('g:scrolled'))
     eq(tostring(win.id), eval('g:amatch'))
     eq({
-      all = {leftcol = 0, topline = 3, topfill = 0, width = 0, height = 0, skipcol = 0},
-      [winid_str] = {leftcol = 0, topline = -3, topfill = 0, width = 0, height = 0, skipcol = 0},
+      all = { leftcol = 0, topline = 3, topfill = 0, width = 0, height = 0, skipcol = 0 },
+      [winid_str] = { leftcol = 0, topline = -3, topfill = 0, width = 0, height = 0, skipcol = 0 },
     }, eval('g:v_event'))
   end)
 end)
