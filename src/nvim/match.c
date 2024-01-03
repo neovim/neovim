@@ -666,7 +666,7 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char **lin
 /// is endcol.
 /// Return the updated search_attr.
 int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char **line, match_T *search_hl,
-                     int *has_match_conc, int *match_conc, int lcs_eol_one, bool *on_last_col,
+                     int *has_match_conc, int *match_conc, bool lcs_eol_todo, bool *on_last_col,
                      bool *search_attr_from_match)
 {
   matchitem_T *cur = wp->w_match_head;  // points to the match list
@@ -787,7 +787,7 @@ int update_search_hl(win_T *wp, linenr_T lnum, colnr_T col, char **line, match_T
     }
   }
   // Only highlight one character after the last column.
-  if (*(*line + col) == NUL && (wp->w_p_list && lcs_eol_one == -1)) {
+  if (*(*line + col) == NUL && (wp->w_p_list && !lcs_eol_todo)) {
     search_attr = 0;
   }
   return search_attr;

@@ -2132,7 +2132,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   Dictionary result = ARRAY_DICT_INIT;
 
   int maxwidth;
-  int fillchar = 0;
+  schar_T fillchar = 0;
   int statuscol_lnum = 0;
   Window window = 0;
 
@@ -2148,11 +2148,13 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   }
   if (HAS_KEY(opts, eval_statusline, fillchar)) {
     VALIDATE_EXP((*opts->fillchar.data != 0
-                  && ((size_t)utf_ptr2len(opts->fillchar.data) == opts->fillchar.size)),
+                  && ((size_t)utfc_ptr2len(opts->fillchar.data) == opts->fillchar.size)),
                  "fillchar", "single character", NULL, {
       return result;
     });
-    fillchar = utf_ptr2char(opts->fillchar.data);
+    int c;
+    fillchar = utfc_ptr2schar(opts->fillchar.data, &c);
+    // TODO(bfredl): actually check c is single width
   }
 
   int use_bools = (int)opts->use_winbar + (int)opts->use_tabline;
@@ -2181,7 +2183,7 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   SignTextAttrs sattrs[SIGN_SHOW_MAX] = { 0 };
 
   if (opts->use_tabline) {
-    fillchar = ' ';
+    fillchar = schar_from_ascii(' ');
   } else {
     if (fillchar == 0) {
       if (opts->use_winbar) {
@@ -2242,16 +2244,8 @@ Dictionary nvim_eval_statusline(String str, Dict(eval_statusline) *opts, Error *
   int p_crb_save = wp->w_p_crb;
   wp->w_p_crb = false;
 
-  int width = build_stl_str_hl(wp,
-                               buf,
-                               sizeof(buf),
-                               str.data,
-                               -1,
-                               0,
-                               fillchar,
-                               maxwidth,
-                               opts->highlights ? &hltab : NULL,
-                               NULL,
+  int width = build_stl_str_hl(wp, buf, sizeof(buf), str.data, -1, 0, fillchar, maxwidth,
+                               opts->highlights ? &hltab : NULL, NULL,
                                statuscol_lnum ? &statuscol : NULL);
 
   PUT(result, "width", INTEGER_OBJ(width));

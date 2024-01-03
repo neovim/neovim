@@ -5662,7 +5662,7 @@ void win_setheight_win(int height, win_T *win)
     // If there is extra space created between the last window and the command
     // line, clear it.
     if (full_screen && msg_scrolled == 0 && row < cmdline_row) {
-      grid_fill(&default_grid, row, cmdline_row, 0, Columns, ' ', ' ', 0);
+      grid_clear(&default_grid, row, cmdline_row, 0, Columns, 0);
       if (msg_grid.chars) {
         clear_cmdline = true;
       }
@@ -6145,7 +6145,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
     }
   }
   int row = win_comp_pos();
-  grid_fill(&default_grid, row, cmdline_row, 0, Columns, ' ', ' ', 0);
+  grid_clear(&default_grid, row, cmdline_row, 0, Columns, 0);
   if (msg_grid.chars) {
     clear_cmdline = true;
   }
@@ -6640,7 +6640,7 @@ void command_height(void)
 
       // clear the lines added to cmdline
       if (full_screen) {
-        grid_fill(&default_grid, cmdline_row, Rows, 0, Columns, ' ', ' ', 0);
+        grid_clear(&default_grid, cmdline_row, Rows, 0, Columns, 0);
       }
       msg_row = cmdline_row;
       redraw_cmdline = true;

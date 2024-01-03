@@ -1696,10 +1696,10 @@ static void didset_options2(void)
   highlight_changed();
 
   // Parse default for 'fillchars'.
-  set_fillchars_option(curwin, curwin->w_p_fcs, true);
+  set_chars_option(curwin, curwin->w_p_fcs, kFillchars, true);
 
   // Parse default for 'listchars'.
-  set_listchars_option(curwin, curwin->w_p_lcs, true);
+  set_chars_option(curwin, curwin->w_p_lcs, kListchars, true);
 
   // Parse default for 'wildmode'.
   check_opt_wim();
@@ -4991,8 +4991,8 @@ void didset_window_options(win_T *wp, bool valid_cursor)
   check_colorcolumn(wp);
   briopt_check(wp);
   fill_culopt_flags(NULL, wp);
-  set_fillchars_option(wp, wp->w_p_fcs, true);
-  set_listchars_option(wp, wp->w_p_lcs, true);
+  set_chars_option(wp, wp->w_p_fcs, kFillchars, true);
+  set_chars_option(wp, wp->w_p_lcs, kListchars, true);
   parse_winhl_opt(wp);  // sets w_hl_needs_update also for w_p_winbl
   check_blending(wp);
   set_winbar_win(wp, false, valid_cursor);

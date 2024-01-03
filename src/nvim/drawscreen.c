@@ -546,7 +546,7 @@ int update_screen(void)
 
   // might need to clear space on default_grid for the message area.
   if (type == UPD_NOT_VALID && clear_cmdline && !ui_has(kUIMessages)) {
-    grid_fill(&default_grid, Rows - (int)p_ch, Rows, 0, Columns, ' ', ' ', 0);
+    grid_clear(&default_grid, Rows - (int)p_ch, Rows, 0, Columns, 0);
   }
 
   ui_comp_set_screen_valid(true);
@@ -1297,9 +1297,8 @@ static void draw_vsep_win(win_T *wp)
 
   // draw the vertical separator right of this window
   int hl = win_hl_attr(wp, HLF_C);
-  int c = wp->w_p_fcs_chars.vert;
-  grid_fill(&default_grid, wp->w_winrow, W_ENDROW(wp),
-            W_ENDCOL(wp), W_ENDCOL(wp) + 1, c, ' ', hl);
+  schar_T c = wp->w_p_fcs_chars.vert;
+  grid_fill(&default_grid, wp->w_winrow, W_ENDROW(wp), W_ENDCOL(wp), W_ENDCOL(wp) + 1, c, c, hl);
 }
 
 /// Draw the horizontal separator below window "wp"
@@ -1311,9 +1310,8 @@ static void draw_hsep_win(win_T *wp)
 
   // draw the horizontal separator below this window
   int hl = win_hl_attr(wp, HLF_C);
-  int c = wp->w_p_fcs_chars.horiz;
-  grid_fill(&default_grid, W_ENDROW(wp), W_ENDROW(wp) + 1,
-            wp->w_wincol, W_ENDCOL(wp), c, c, hl);
+  schar_T c = wp->w_p_fcs_chars.horiz;
+  grid_fill(&default_grid, W_ENDROW(wp), W_ENDROW(wp) + 1, wp->w_wincol, W_ENDCOL(wp), c, c, hl);
 }
 
 /// Get the separator connector for specified window corner of window "wp"
@@ -1321,21 +1319,19 @@ static schar_T get_corner_sep_connector(win_T *wp, WindowCorner corner)
 {
   // It's impossible for windows to be connected neither vertically nor horizontally
   // So if they're not vertically connected, assume they're horizontally connected
-  int c;
   if (vsep_connected(wp, corner)) {
     if (hsep_connected(wp, corner)) {
-      c = wp->w_p_fcs_chars.verthoriz;
+      return wp->w_p_fcs_chars.verthoriz;
     } else if (corner == WC_TOP_LEFT || corner == WC_BOTTOM_LEFT) {
-      c = wp->w_p_fcs_chars.vertright;
+      return wp->w_p_fcs_chars.vertright;
     } else {
-      c = wp->w_p_fcs_chars.vertleft;
+      return wp->w_p_fcs_chars.vertleft;
     }
   } else if (corner == WC_TOP_LEFT || corner == WC_TOP_RIGHT) {
-    c = wp->w_p_fcs_chars.horizdown;
+    return wp->w_p_fcs_chars.horizdown;
   } else {
-    c = wp->w_p_fcs_chars.horizup;
+    return wp->w_p_fcs_chars.horizup;
   }
-  return schar_from_char(c);
 }
 
 /// Draw separator connecting characters on the corners of window "wp"
@@ -2384,7 +2380,7 @@ static void win_update(win_T *wp)
       // Last line isn't finished: Display "@@@" in the last screen line.
       grid_line_start(&wp->w_grid, wp->w_grid.rows - 1);
       grid_line_fill(0, MIN(wp->w_grid.cols, 3), wp->w_p_fcs_chars.lastline, at_attr);
-      grid_line_fill(3, wp->w_grid.cols, ' ', at_attr);
+      grid_line_fill(3, wp->w_grid.cols, schar_from_ascii(' '), at_attr);
       grid_line_flush();
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
@@ -2399,7 +2395,8 @@ static void win_update(win_T *wp)
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
-      win_draw_end(wp, wp->w_p_fcs_chars.lastline, ' ', true, srow, wp->w_grid.rows, HLF_AT);
+      win_draw_end(wp, wp->w_p_fcs_chars.lastline, schar_from_ascii(' '), true, srow,
+                   wp->w_grid.rows, HLF_AT);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     }
@@ -2432,7 +2429,8 @@ static void win_update(win_T *wp)
       lastline = 0;
     }
 
-    win_draw_end(wp, wp->w_p_fcs_chars.eob, ' ', false, MAX(lastline, row), wp->w_grid.rows,
+    win_draw_end(wp, wp->w_p_fcs_chars.eob, schar_from_ascii(' '), false, MAX(lastline, row),
+                 wp->w_grid.rows,
                  HLF_EOB);
     set_empty_rows(wp, row);
   }
@@ -2519,10 +2517,9 @@ void win_scroll_lines(win_T *wp, int row, int line_count)
   }
 }
 
-/// Call grid_fill() with columns adjusted for 'rightleft' if needed.
+/// Call grid_clear() with columns adjusted for 'rightleft' if needed.
 /// Return the new offset.
-static int win_fill_end(win_T *wp, int c1, int c2, int off, int width, int row, int endrow,
-                        int attr)
+static int win_clear_end(win_T *wp, int off, int width, int row, int endrow, int attr)
 {
   int nn = off + width;
   const int endcol = wp->w_grid.cols;
@@ -2532,9 +2529,9 @@ static int win_fill_end(win_T *wp, int c1, int c2, int off, int width, int row, 
   }
 
   if (wp->w_p_rl) {
-    grid_fill(&wp->w_grid, row, endrow, endcol - nn, endcol - off, c1, c2, attr);
+    grid_clear(&wp->w_grid, row, endrow, endcol - nn, endcol - off, attr);
   } else {
-    grid_fill(&wp->w_grid, row, endrow, off, nn, c1, c2, attr);
+    grid_clear(&wp->w_grid, row, endrow, off, nn, attr);
   }
 
   return nn;
@@ -2543,7 +2540,8 @@ static int win_fill_end(win_T *wp, int c1, int c2, int off, int width, int row, 
 /// Clear lines near the end of the window and mark the unused lines with "c1".
 /// Use "c2" as filler character.
 /// When "draw_margin" is true, then draw the sign/fold/number columns.
-void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row, int endrow, hlf_T hl)
+void win_draw_end(win_T *wp, schar_T c1, schar_T c2, bool draw_margin, int row, int endrow,
+                  hlf_T hl)
 {
   assert(hl >= 0 && hl < HLF_COUNT);
   int n = 0;
@@ -2552,19 +2550,16 @@ void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row, int endr
     // draw the fold column
     int fdc = compute_foldcolumn(wp, 0);
     if (fdc > 0) {
-      n = win_fill_end(wp, ' ', ' ', n, fdc, row, endrow,
-                       win_hl_attr(wp, HLF_FC));
+      n = win_clear_end(wp, n, fdc, row, endrow, win_hl_attr(wp, HLF_FC));
     }
     // draw the sign column
     int count = wp->w_scwidth;
     if (count > 0) {
-      n = win_fill_end(wp, ' ', ' ', n, SIGN_WIDTH * count, row,
-                       endrow, win_hl_attr(wp, HLF_SC));
+      n = win_clear_end(wp, n, SIGN_WIDTH * count, row, endrow, win_hl_attr(wp, HLF_SC));
     }
     // draw the number column
     if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
-      n = win_fill_end(wp, ' ', ' ', n, number_width(wp) + 1, row, endrow,
-                       win_hl_attr(wp, HLF_N));
+      n = win_clear_end(wp, n, number_width(wp) + 1, row, endrow, win_hl_attr(wp, HLF_N));
     }
   }
 

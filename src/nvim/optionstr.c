@@ -21,6 +21,7 @@
 #include "nvim/fold.h"
 #include "nvim/gettext.h"
 #include "nvim/globals.h"
+#include "nvim/grid.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
@@ -876,18 +877,15 @@ int expand_set_casemap(optexpand_T *args, int *numMatches, char ***matches)
 }
 
 /// The global 'listchars' or 'fillchars' option is changed.
-static const char *did_set_global_listfillchars(win_T *win, char *val, bool opt_lcs, int opt_flags)
+static const char *did_set_global_chars_option(win_T *win, char *val, CharsOption what,
+                                               int opt_flags)
 {
   const char *errmsg = NULL;
-  char **local_ptr = opt_lcs ? &win->w_p_lcs : &win->w_p_fcs;
+  char **local_ptr = (what == kListchars) ? &win->w_p_lcs : &win->w_p_fcs;
 
   // only apply the global value to "win" when it does not have a
   // local value
-  if (opt_lcs) {
-    errmsg = set_listchars_option(win, val, **local_ptr == NUL || !(opt_flags & OPT_GLOBAL));
-  } else {
-    errmsg = set_fillchars_option(win, val, **local_ptr == NUL || !(opt_flags & OPT_GLOBAL));
-  }
+  errmsg = set_chars_option(win, val, what, **local_ptr == NUL || !(opt_flags & OPT_GLOBAL));
   if (errmsg != NULL) {
     return errmsg;
   }
@@ -903,14 +901,9 @@ static const char *did_set_global_listfillchars(win_T *win, char *val, bool opt_
     // again, it was changed when setting the global value.
     // If no error was returned above, we don't expect an error
     // here, so ignore the return value.
-    if (opt_lcs) {
-      if (*wp->w_p_lcs == NUL) {
-        set_listchars_option(wp, wp->w_p_lcs, true);
-      }
-    } else {
-      if (*wp->w_p_fcs == NUL) {
-        set_fillchars_option(wp, wp->w_p_fcs, true);
-      }
+    char *opt = (what == kListchars) ? wp->w_p_lcs : wp->w_p_fcs;
+    if (*opt == NUL) {
+      set_chars_option(wp, opt, what, true);
     }
   }
 
@@ -926,13 +919,14 @@ const char *did_set_chars_option(optset_T *args)
   char **varp = (char **)args->os_varp;
   const char *errmsg = NULL;
 
-  if (varp == &p_lcs      // global 'listchars'
-      || varp == &p_fcs) {  // global 'fillchars'
-    errmsg = did_set_global_listfillchars(win, *varp, varp == &p_lcs, args->os_flags);
+  if (varp == &p_lcs) {      // global 'listchars'
+    errmsg = did_set_global_chars_option(win, *varp, kListchars, args->os_flags);
+  } else if (varp == &p_fcs) {  // global 'fillchars'
+    errmsg = did_set_global_chars_option(win, *varp, kFillchars, args->os_flags);
   } else if (varp == &win->w_p_lcs) {  // local 'listchars'
-    errmsg = set_listchars_option(win, *varp, true);
+    errmsg = set_chars_option(win, *varp, kListchars, true);
   } else if (varp == &win->w_p_fcs) {  // local 'fillchars'
-    errmsg = set_fillchars_option(win, *varp, true);
+    errmsg = set_chars_option(win, *varp, kFillchars, true);
   }
 
   return errmsg;
@@ -2603,7 +2597,7 @@ static const char e_conflicts_with_value_of_fillchars[]
 /// Calls mb_cptr2char_adv(p) and returns the character.
 /// If "p" starts with "\x", "\u" or "\U" the hex or unicode value is used.
 /// Returns 0 for invalid hex or invalid UTF-8 byte.
-static int get_encoded_char_adv(const char **p)
+static schar_T get_encoded_char_adv(const char **p)
 {
   const char *s = *p;
 
@@ -2618,71 +2612,69 @@ static int get_encoded_char_adv(const char **p)
       num = num * 256 + n;
     }
     *p += 2;
-    return (int)num;
+    return (char2cells((int)num) > 1) ? 0 : schar_from_char((int)num);
   }
 
-  // TODO(bfredl): use schar_T representation and utfc_ptr2len
-  int clen = utf_ptr2len(s);
-  int c = mb_cptr2char_adv(p);
-  if (clen == 1 && c > 127) {  // Invalid UTF-8 byte
-    return 0;
-  }
-  return c;
+  int clen = utfc_ptr2len(s);
+  int firstc;
+  schar_T c = utfc_ptr2schar(s, &firstc);
+  *p += clen;
+  // Invalid UTF-8 byte or doublewidth not allowed
+  return ((clen == 1 && firstc > 127) || char2cells(firstc) > 1) ? 0 : c;
 }
 
 struct chars_tab {
-  int *cp;           ///< char value
+  schar_T *cp;       ///< char value
   const char *name;  ///< char id
-  int def;           ///< default value
-  int fallback;      ///< default value when "def" isn't single-width
+  const char *def;   ///< default value
+  const char *fallback;      ///< default value when "def" isn't single-width
 };
 
 static fcs_chars_T fcs_chars;
 static const struct chars_tab fcs_tab[] = {
-  { &fcs_chars.stl,        "stl",       ' ',    NUL },
-  { &fcs_chars.stlnc,      "stlnc",     ' ',    NUL },
-  { &fcs_chars.wbr,        "wbr",       ' ',    NUL },
-  { &fcs_chars.horiz,      "horiz",     0x2500, '-' },  // ─
-  { &fcs_chars.horizup,    "horizup",   0x2534, '-' },  // ┴
-  { &fcs_chars.horizdown,  "horizdown", 0x252c, '-' },  // ┬
-  { &fcs_chars.vert,       "vert",      0x2502, '|' },  // │
-  { &fcs_chars.vertleft,   "vertleft",  0x2524, '|' },  // ┤
-  { &fcs_chars.vertright,  "vertright", 0x251c, '|' },  // ├
-  { &fcs_chars.verthoriz,  "verthoriz", 0x253c, '+' },  // ┼
-  { &fcs_chars.fold,       "fold",      0x00b7, '-' },  // ·
-  { &fcs_chars.foldopen,   "foldopen",  '-',    NUL },
-  { &fcs_chars.foldclosed, "foldclose", '+',    NUL },
-  { &fcs_chars.foldsep,    "foldsep",   0x2502, '|' },  // │
-  { &fcs_chars.diff,       "diff",      '-',    NUL },
-  { &fcs_chars.msgsep,     "msgsep",    ' ',    NUL },
-  { &fcs_chars.eob,        "eob",       '~',    NUL },
-  { &fcs_chars.lastline,   "lastline",  '@',    NUL },
+  { &fcs_chars.stl,        "stl",       " ", NULL },
+  { &fcs_chars.stlnc,      "stlnc",     " ", NULL },
+  { &fcs_chars.wbr,        "wbr",       " ", NULL },
+  { &fcs_chars.horiz,      "horiz",     "─", "-" },
+  { &fcs_chars.horizup,    "horizup",   "┴", "-" },
+  { &fcs_chars.horizdown,  "horizdown", "┬", "-" },
+  { &fcs_chars.vert,       "vert",      "│", "|" },
+  { &fcs_chars.vertleft,   "vertleft",  "┤", "|" },
+  { &fcs_chars.vertright,  "vertright", "├", "|" },
+  { &fcs_chars.verthoriz,  "verthoriz", "┼", "+" },
+  { &fcs_chars.fold,       "fold",      "·", "-" },
+  { &fcs_chars.foldopen,   "foldopen",  "-", NULL },
+  { &fcs_chars.foldclosed, "foldclose", "+", NULL },
+  { &fcs_chars.foldsep,    "foldsep",   "│", "|" },
+  { &fcs_chars.diff,       "diff",      "-", NULL },
+  { &fcs_chars.msgsep,     "msgsep",    " ", NULL },
+  { &fcs_chars.eob,        "eob",       "~", NULL },
+  { &fcs_chars.lastline,   "lastline",  "@", NULL },
 };
 
 static lcs_chars_T lcs_chars;
 static const struct chars_tab lcs_tab[] = {
-  { &lcs_chars.eol,     "eol",            NUL, NUL },
-  { &lcs_chars.ext,     "extends",        NUL, NUL },
-  { &lcs_chars.nbsp,    "nbsp",           NUL, NUL },
-  { &lcs_chars.prec,    "precedes",       NUL, NUL },
-  { &lcs_chars.space,   "space",          NUL, NUL },
-  { &lcs_chars.tab2,    "tab",            NUL, NUL },
-  { &lcs_chars.lead,    "lead",           NUL, NUL },
-  { &lcs_chars.trail,   "trail",          NUL, NUL },
-  { &lcs_chars.conceal, "conceal",        NUL, NUL },
-  { NULL,               "multispace",     NUL, NUL },
-  { NULL,               "leadmultispace", NUL, NUL },
+  { &lcs_chars.eol,     "eol",            NULL, NULL },
+  { &lcs_chars.ext,     "extends",        NULL, NULL },
+  { &lcs_chars.nbsp,    "nbsp",           NULL, NULL },
+  { &lcs_chars.prec,    "precedes",       NULL, NULL },
+  { &lcs_chars.space,   "space",          NULL, NULL },
+  { &lcs_chars.tab2,    "tab",            NULL, NULL },
+  { &lcs_chars.lead,    "lead",           NULL, NULL },
+  { &lcs_chars.trail,   "trail",          NULL, NULL },
+  { &lcs_chars.conceal, "conceal",        NULL, NULL },
+  { NULL,               "multispace",     NULL, NULL },
+  { NULL,               "leadmultispace", NULL, NULL },
 };
 
 /// Handle setting 'listchars' or 'fillchars'.
 /// Assume monocell characters
 ///
 /// @param value  points to either the global or the window-local value.
-/// @param is_listchars  is true for "listchars" and false for "fillchars".
+/// @param what   kListchars or kFillchars
 /// @param apply  if false, do not store the flags, only check for errors.
 /// @return error message, NULL if it's OK.
-static const char *set_chars_option(win_T *wp, const char *value, const bool is_listchars,
-                                    const bool apply)
+const char *set_chars_option(win_T *wp, const char *value, CharsOption what, bool apply)
 {
   const char *last_multispace = NULL;   // Last occurrence of "multispace:"
   const char *last_lmultispace = NULL;  // Last occurrence of "leadmultispace:"
@@ -2691,7 +2683,7 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
 
   const struct chars_tab *tab;
   int entries;
-  if (is_listchars) {
+  if (what == kListchars) {
     tab = lcs_tab;
     entries = ARRAY_SIZE(lcs_tab);
     if (wp->w_p_lcs[0] == NUL) {
@@ -2713,23 +2705,24 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
         if (tab[i].cp != NULL) {
           // XXX: Characters taking 2 columns is forbidden (TUI limitation?).
           // Set old defaults in this case.
-          *(tab[i].cp) = char2cells(tab[i].def) == 1 ? tab[i].def : tab[i].fallback;
+          *(tab[i].cp) = schar_from_str((tab[i].def && ptr2cells(tab[i].def) == 1)
+                                        ? tab[i].def : tab[i].fallback);
         }
       }
 
-      if (is_listchars) {
+      if (what == kListchars) {
         lcs_chars.tab1 = NUL;
         lcs_chars.tab3 = NUL;
 
         if (multispace_len > 0) {
-          lcs_chars.multispace = xmalloc(((size_t)multispace_len + 1) * sizeof(int));
+          lcs_chars.multispace = xmalloc(((size_t)multispace_len + 1) * sizeof(schar_T));
           lcs_chars.multispace[multispace_len] = NUL;
         } else {
           lcs_chars.multispace = NULL;
         }
 
         if (lead_multispace_len > 0) {
-          lcs_chars.leadmultispace = xmalloc(((size_t)lead_multispace_len + 1) * sizeof(int));
+          lcs_chars.leadmultispace = xmalloc(((size_t)lead_multispace_len + 1) * sizeof(schar_T));
           lcs_chars.leadmultispace[lead_multispace_len] = NUL;
         } else {
           lcs_chars.leadmultispace = NULL;
@@ -2748,15 +2741,15 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
           continue;
         }
 
-        if (is_listchars && strcmp(tab[i].name, "multispace") == 0) {
+        if (what == kListchars && strcmp(tab[i].name, "multispace") == 0) {
           const char *s = p + len + 1;
           if (round == 0) {
             // Get length of lcs-multispace string in the first round
             last_multispace = p;
             multispace_len = 0;
             while (*s != NUL && *s != ',') {
-              int c1 = get_encoded_char_adv(&s);
-              if (c1 == 0 || char2cells(c1) > 1) {
+              schar_T c1 = get_encoded_char_adv(&s);
+              if (c1 == 0) {
                 return e_invarg;
               }
               multispace_len++;
@@ -2769,7 +2762,7 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
-              int c1 = get_encoded_char_adv(&s);
+              schar_T c1 = get_encoded_char_adv(&s);
               if (p == last_multispace) {
                 lcs_chars.multispace[multispace_pos++] = c1;
               }
@@ -2779,15 +2772,15 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
           break;
         }
 
-        if (is_listchars && strcmp(tab[i].name, "leadmultispace") == 0) {
+        if (what == kListchars && strcmp(tab[i].name, "leadmultispace") == 0) {
           const char *s = p + len + 1;
           if (round == 0) {
             // get length of lcs-leadmultispace string in first round
             last_lmultispace = p;
             lead_multispace_len = 0;
             while (*s != NUL && *s != ',') {
-              int c1 = get_encoded_char_adv(&s);
-              if (c1 == 0 || char2cells(c1) > 1) {
+              schar_T c1 = get_encoded_char_adv(&s);
+              if (c1 == 0) {
                 return e_invarg;
               }
               lead_multispace_len++;
@@ -2800,7 +2793,7 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
           } else {
             int multispace_pos = 0;
             while (*s != NUL && *s != ',') {
-              int c1 = get_encoded_char_adv(&s);
+              schar_T c1 = get_encoded_char_adv(&s);
               if (p == last_lmultispace) {
                 lcs_chars.leadmultispace[multispace_pos++] = c1;
               }
@@ -2811,23 +2804,23 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
         }
 
         const char *s = p + len + 1;
-        int c1 = get_encoded_char_adv(&s);
-        if (c1 == 0 || char2cells(c1) > 1) {
+        schar_T c1 = get_encoded_char_adv(&s);
+        if (c1 == 0) {
           return e_invarg;
         }
-        int c2 = 0;
-        int c3 = 0;
+        schar_T c2 = 0;
+        schar_T c3 = 0;
         if (tab[i].cp == &lcs_chars.tab2) {
           if (*s == NUL) {
             return e_invarg;
           }
           c2 = get_encoded_char_adv(&s);
-          if (c2 == 0 || char2cells(c2) > 1) {
+          if (c2 == 0) {
             return e_invarg;
           }
           if (!(*s == ',' || *s == NUL)) {
             c3 = get_encoded_char_adv(&s);
-            if (c3 == 0 || char2cells(c3) > 1) {
+            if (c3 == 0) {
               return e_invarg;
             }
           }
@@ -2859,7 +2852,7 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
   }
 
   if (apply) {
-    if (is_listchars) {
+    if (what == kListchars) {
       xfree(wp->w_p_lcs_chars.multispace);
       xfree(wp->w_p_lcs_chars.leadmultispace);
       wp->w_p_lcs_chars = lcs_chars;
@@ -2869,18 +2862,6 @@ static const char *set_chars_option(win_T *wp, const char *value, const bool is_
   }
 
   return NULL;          // no error
-}
-
-/// Handle the new value of 'fillchars'.
-const char *set_fillchars_option(win_T *wp, char *val, bool apply)
-{
-  return set_chars_option(wp, val, false, apply);
-}
-
-/// Handle the new value of 'listchars'.
-const char *set_listchars_option(win_T *wp, char *val, bool apply)
-{
-  return set_chars_option(wp, val, true, apply);
 }
 
 /// Function given to ExpandGeneric() to obtain possible arguments of the
@@ -2911,17 +2892,17 @@ char *get_listchars_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
 /// @return  an untranslated error message if any of them is invalid, NULL otherwise.
 const char *check_chars_options(void)
 {
-  if (set_listchars_option(curwin, p_lcs, false) != NULL) {
+  if (set_chars_option(curwin, p_lcs, kListchars, false) != NULL) {
     return e_conflicts_with_value_of_listchars;
   }
-  if (set_fillchars_option(curwin, p_fcs, false) != NULL) {
+  if (set_chars_option(curwin, p_fcs, kFillchars, false) != NULL) {
     return e_conflicts_with_value_of_fillchars;
   }
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (set_listchars_option(wp, wp->w_p_lcs, true) != NULL) {
+    if (set_chars_option(wp, wp->w_p_lcs, kListchars, true) != NULL) {
       return e_conflicts_with_value_of_listchars;
     }
-    if (set_fillchars_option(wp, wp->w_p_fcs, true) != NULL) {
+    if (set_chars_option(wp, wp->w_p_fcs, kFillchars, true) != NULL) {
       return e_conflicts_with_value_of_fillchars;
     }
   }

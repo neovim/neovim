@@ -27,6 +27,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
+#include "nvim/optionstr.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 
@@ -67,7 +68,7 @@ void grid_adjust(ScreenGrid **grid, int *row_off, int *col_off)
   }
 }
 
-schar_T schar_from_str(char *str)
+schar_T schar_from_str(const char *str)
 {
   if (str == NULL) {
     return 0;
@@ -120,6 +121,13 @@ void schar_cache_clear(void)
 {
   decor_check_invalid_glyphs();
   set_clear(glyph, &glyph_cache);
+
+  // for char options we have stored the original strings. Regenerate
+  // the parsed schar_T values with the new clean cache.
+  // This must not return an error as cell widths have not changed.
+  if (check_chars_options()) {
+    abort();
+  }
 }
 
 bool schar_high(schar_T sc)
@@ -137,15 +145,39 @@ bool schar_high(schar_T sc)
 # define schar_idx(sc) (sc >> 8)
 #endif
 
-void schar_get(char *buf_out, schar_T sc)
+/// sets final NUL
+size_t schar_get(char *buf_out, schar_T sc)
+{
+  size_t len = schar_get_adv(&buf_out, sc);
+  *buf_out = NUL;
+  return len;
+}
+
+/// advance buf_out. do NOT set final NUL
+size_t schar_get_adv(char **buf_out, schar_T sc)
+{
+  size_t len;
+  if (schar_high(sc)) {
+    uint32_t idx = schar_idx(sc);
+    assert(idx < glyph_cache.h.n_keys);
+    len = strlen(&glyph_cache.keys[idx]);
+    memcpy(*buf_out, &glyph_cache.keys[idx], len);
+  } else {
+    len = strnlen((char *)&sc, 4);
+    memcpy(*buf_out, (char *)&sc, len);
+  }
+  *buf_out += len;
+  return len;
+}
+
+size_t schar_len(schar_T sc)
 {
   if (schar_high(sc)) {
     uint32_t idx = schar_idx(sc);
     assert(idx < glyph_cache.h.n_keys);
-    xstrlcpy(buf_out, &glyph_cache.keys[idx], 32);
+    return strlen(&glyph_cache.keys[idx]);
   } else {
-    memcpy(buf_out, (char *)&sc, 4);
-    buf_out[4] = NUL;
+    return strnlen((char *)&sc, 4);
   }
 }
 
@@ -433,14 +465,13 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
   return col - start_col;
 }
 
-void grid_line_fill(int start_col, int end_col, int c, int attr)
+void grid_line_fill(int start_col, int end_col, schar_T sc, int attr)
 {
   end_col = MIN(end_col, grid_line_maxcol);
   if (start_col >= end_col) {
     return;
   }
 
-  schar_T sc = schar_from_char(c);
   for (int col = start_col; col < end_col; col++) {
     linebuf_char[col] = sc;
     linebuf_attr[col] = attr;
@@ -532,11 +563,17 @@ void grid_line_flush_if_valid_row(void)
   grid_line_flush();
 }
 
+void grid_clear(ScreenGrid *grid, int start_row, int end_row, int start_col, int end_col, int attr)
+{
+  grid_fill(grid, start_row, end_row, start_col, end_col, schar_from_ascii(' '),
+            schar_from_ascii(' '), attr);
+}
+
 /// Fill the grid from "start_row" to "end_row" (exclusive), from "start_col"
 /// to "end_col" (exclusive) with character "c1" in first column followed by
 /// "c2" in the other columns.  Use attributes "attr".
-void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int end_col, int c1,
-               int c2, int attr)
+void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int end_col, schar_T c1,
+               schar_T c2, int attr)
 {
   int row_off = 0;
   int col_off = 0;
@@ -582,7 +619,7 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
     }
 
     int col = start_col;
-    schar_T sc = schar_from_char(c1);
+    schar_T sc = c1;
     for (col = start_col; col < end_col; col++) {
       size_t off = lineoff + (size_t)col;
       if (grid->chars[off] != sc || grid->attrs[off] != attr || rdb_flags & RDB_NODELTA) {
@@ -595,7 +632,7 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int 
       }
       grid->vcols[off] = -1;
       if (col == start_col) {
-        sc = schar_from_char(c2);
+        sc = c2;
       }
     }
     if (dirty_last > dirty_first) {
@@ -683,7 +720,7 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
         col++;
       }
       if (col <= endcol) {
-        grid_fill(grid, row, row + 1, col + coloff, endcol + coloff + 1, ' ', ' ', bg_attr);
+        grid_clear(grid, row, row + 1, col + coloff, endcol + coloff + 1, bg_attr);
       }
     }
     col = endcol + 1;
