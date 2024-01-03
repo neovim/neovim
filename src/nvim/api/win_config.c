@@ -199,7 +199,7 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dict(float_config) *config, E
     Boolean noautocmd = !enter || fconfig.noautocmd;
     win_set_buf(wp, buf, noautocmd, err);
     if (!fconfig.noautocmd) {
-      apply_autocmds(EVENT_WINNEW, NULL, NULL, false, buf);
+      apply_autocmds_win(EVENT_WINNEW, NULL, NULL, false, buf, wp);
     }
   }
   if (!win_valid(wp)) {

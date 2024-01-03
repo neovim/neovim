@@ -1489,7 +1489,7 @@ theend:
   return file_name;
 }
 
-void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre)
+void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre, win_T *target_win)
 {
   static bool recursive = false;
 
@@ -1550,7 +1550,7 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope, CdCause cause, bool pre
     abort();
   }
 
-  apply_autocmds(event, buf, new_dir, false, curbuf);
+  apply_autocmds_win(event, buf, new_dir, false, curbuf, target_win);
 
   restore_v_event(dict, &save_v_event);
 
@@ -1578,7 +1578,7 @@ int vim_chdirfile(char *fname, CdCause cause)
   }
 
   if (cause != kCdCauseOther) {
-    do_autocmd_dirchanged(dir, kCdScopeWindow, cause, true);
+    do_autocmd_dirchanged(dir, kCdScopeWindow, cause, true, NULL);
   }
 
   if (os_chdir(dir) != 0) {
@@ -1586,7 +1586,7 @@ int vim_chdirfile(char *fname, CdCause cause)
   }
 
   if (cause != kCdCauseOther) {
-    do_autocmd_dirchanged(dir, kCdScopeWindow, cause, false);
+    do_autocmd_dirchanged(dir, kCdScopeWindow, cause, false, NULL);
   }
 
   return OK;

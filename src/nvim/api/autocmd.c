@@ -778,7 +778,8 @@ void nvim_exec_autocmds(Object event, Dict(exec_autocmds) *opts, Error *err)
 
     FOREACH_ITEM(patterns, pat, {
       char *fname = !has_buffer ? pat.data.string.data : NULL;
-      did_aucmd |= apply_autocmds_group(event_nr, fname, NULL, true, au_group, buf, NULL, data);
+      did_aucmd |= apply_autocmds_group(event_nr, fname, NULL, true, au_group, buf, NULL, NULL,
+                                        data);
     })
   })
 

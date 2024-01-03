@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nvim/buffer_defs.h"
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 #include "nvim/vim_defs.h"  // IWYU pragma: keep
 

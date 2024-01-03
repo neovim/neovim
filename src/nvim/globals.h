@@ -312,6 +312,7 @@ EXTERN struct caller_scope {
   char *autocmd_fname, *autocmd_match;
   bool autocmd_fname_full;
   int autocmd_bufnr;
+  int autocmd_winid;
   void *funccalp;
 } provider_caller_scope;
 EXTERN int provider_call_nesting INIT( = 0);
