@@ -2,10 +2,7 @@
 
 #include <stdbool.h>
 
-#include "klib/kvec.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/grid_defs.h"
-#include "nvim/macros_defs.h"
 
 typedef struct {
   String text;

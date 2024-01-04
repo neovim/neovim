@@ -20,7 +20,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_encode.h"
 #include "nvim/garray.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
 #include "nvim/macros_defs.h"
@@ -1056,3 +1056,17 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 #undef TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS
 #undef TYPVAL_ENCODE_CONV_RECURSE
 #undef TYPVAL_ENCODE_ALLOW_SPECIALS
+
+/// Initialize ListReaderState structure
+ListReaderState encode_init_lrstate(const list_T *const list)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return (ListReaderState) {
+    .list = list,
+    .li = tv_list_first(list),
+    .offset = 0,
+    .li_length = (TV_LIST_ITEM_TV(tv_list_first(list))->vval.v_string == NULL
+                  ? 0
+                  : strlen(TV_LIST_ITEM_TV(tv_list_first(list))->vval.v_string)),
+  };
+}

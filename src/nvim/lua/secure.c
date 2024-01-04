@@ -4,7 +4,7 @@
 
 #include "nvim/charset.h"
 #include "nvim/ex_cmds_defs.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/secure.h"

@@ -2,12 +2,12 @@
 
 #include <stdbool.h>
 #include <stdint.h>  // IWYU pragma: keep
-#include <string.h>  // IWYU pragma: keep
+#include <string.h>
 #include <time.h>  // IWYU pragma: keep
 
 #include "auto/config.h"
 #include "nvim/macros_defs.h"
-#include "nvim/memory_defs.h"  // IWYU pragma: export
+#include "nvim/memory_defs.h"  // IWYU pragma: keep
 
 /// `malloc()` function signature
 typedef void *(*MemMalloc)(size_t);

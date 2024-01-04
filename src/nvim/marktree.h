@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include "nvim/decoration_defs.h"
-#include "nvim/marktree_defs.h"  // IWYU pragma: export
+#include "nvim/marktree_defs.h"  // IWYU pragma: keep
 #include "nvim/pos_defs.h"  // IWYU pragma: keep
 // only for debug functions:
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep

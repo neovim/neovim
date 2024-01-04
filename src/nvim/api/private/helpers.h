@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 #include "klib/kvec.h"
-#include "nvim/api/private/defs.h"  // IWYU pragma: export
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/buffer_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/ex_eval_defs.h"

@@ -4,7 +4,6 @@
 #include <stddef.h>
 
 #include "nvim/eval/typval_defs.h"
-#include "nvim/types_defs.h"
 
 typedef enum {
   XP_PREFIX_NONE,  ///< prefix not used

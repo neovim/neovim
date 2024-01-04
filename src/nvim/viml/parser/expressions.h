@@ -6,7 +6,7 @@
 
 #include "nvim/eval/typval_defs.h"
 #include "nvim/types_defs.h"
-#include "nvim/viml/parser/parser.h"
+#include "nvim/viml/parser/parser_defs.h"
 
 // Defines whether to ignore case:
 //    ==   kCCStrategyUseOption

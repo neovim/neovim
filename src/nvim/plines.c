@@ -9,12 +9,13 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/diff.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
 #include "nvim/indent.h"
 #include "nvim/macros_defs.h"
-#include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/marktree.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -24,6 +25,7 @@
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state.h"
+#include "nvim/state_defs.h"
 #include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

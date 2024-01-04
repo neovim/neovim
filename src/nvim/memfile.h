@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nvim/memfile_defs.h"  // IWYU pragma: export
+#include "nvim/memfile_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 /// flags for mf_sync()

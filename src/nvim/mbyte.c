@@ -46,9 +46,10 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/grid.h"
+#include "nvim/grid_defs.h"
 #include "nvim/iconv_defs.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"
@@ -2802,4 +2803,15 @@ char *get_encoding_name(expand_T *xp FUNC_ATTR_UNUSED, int idx)
   }
 
   return (char *)enc_canon_table[idx].name;
+}
+
+/// Compare strings
+///
+/// @param[in]  ic  True if case is to be ignored.
+///
+/// @return 0 if s1 == s2, <0 if s1 < s2, >0 if s1 > s2.
+int mb_strcmp_ic(bool ic, const char *s1, const char *s2)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (ic ? mb_stricmp(s1, s2) : strcmp(s1, s2));
 }

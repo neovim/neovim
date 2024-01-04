@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nvim/ex_cmds_defs.h"  // IWYU pragma: export
+#include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 
 /// flags for do_ecmd()
 enum {

@@ -21,6 +21,7 @@
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/state.h"
+#include "nvim/state_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
 

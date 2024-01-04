@@ -3,12 +3,11 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>  // IWYU pragma: keep
-#include <stdio.h>
 
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/grid_defs.h"
 #include "nvim/macros_defs.h"
-#include "nvim/message_defs.h"  // IWYU pragma: export
+#include "nvim/message_defs.h"  // IWYU pragma: keep
 
 /// Types of dialogs passed to do_dialog().
 enum {

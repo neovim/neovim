@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stddef.h>
-
 #include "nvim/ascii_defs.h"
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 

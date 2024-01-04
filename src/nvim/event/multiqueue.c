@@ -48,7 +48,7 @@
 
 #include "nvim/event/defs.h"
 #include "nvim/event/multiqueue.h"
-#include "nvim/lib/queue.h"
+#include "nvim/lib/queue_defs.h"
 #include "nvim/memory.h"
 
 typedef struct multiqueue_item MultiQueueItem;

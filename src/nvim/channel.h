@@ -4,10 +4,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "nvim/channel_defs.h"  // IWYU pragma: export
+#include "nvim/channel_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
+#include "nvim/event/defs.h"
 #include "nvim/event/libuv_process.h"
-#include "nvim/event/process.h"
 #include "nvim/func_attr.h"
 #include "nvim/macros_defs.h"
 #include "nvim/map_defs.h"

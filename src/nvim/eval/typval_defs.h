@@ -2,10 +2,11 @@
 
 #include <inttypes.h>
 #include <limits.h>
+#include <stdbool.h>
 
 #include "nvim/garray_defs.h"
 #include "nvim/hashtab_defs.h"
-#include "nvim/lib/queue.h"
+#include "nvim/lib/queue_defs.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 

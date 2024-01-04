@@ -32,6 +32,7 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/decoration.h"
+#include "nvim/decoration_defs.h"
 #include "nvim/extmark.h"
 #include "nvim/extmark_defs.h"
 #include "nvim/globals.h"
@@ -41,6 +42,7 @@
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/undo.h"
+#include "nvim/undo_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "extmark.c.generated.h"

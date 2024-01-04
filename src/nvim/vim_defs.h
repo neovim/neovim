@@ -1,8 +1,5 @@
 #pragma once
 
-#include "auto/config.h"
-#include "nvim/os/os_defs.h"  // IWYU pragma: keep
-
 // Some defines from the old feature.h
 #define SESSION_FILE "Session.vim"
 #define MAX_MSG_HIST_LEN 200

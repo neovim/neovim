@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "nvim/api/extmark.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/buffer_defs.h"
@@ -13,6 +14,7 @@
 #include "nvim/extmark.h"
 #include "nvim/fold.h"
 #include "nvim/grid.h"
+#include "nvim/grid_defs.h"
 #include "nvim/highlight.h"
 #include "nvim/highlight_group.h"
 #include "nvim/map_defs.h"

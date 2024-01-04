@@ -14,15 +14,18 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/globals.h"
 #include "nvim/memory.h"
 #include "nvim/runtime.h"
 #include "nvim/vim_defs.h"
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
+#include "nvim/viml/parser/parser_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vimscript.c.generated.h"

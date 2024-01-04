@@ -93,3 +93,8 @@ struct ui_t {
   // TODO(bfredl): integrate into struct!
   UIData data[1];
 };
+
+typedef struct {
+  const char *name;
+  void (*fn)(Array args);
+} UIClientHandler;

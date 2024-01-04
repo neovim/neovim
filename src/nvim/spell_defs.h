@@ -4,9 +4,6 @@
 #include <stdint.h>
 
 #include "nvim/buffer_defs.h"
-#include "nvim/garray_defs.h"
-#include "nvim/hashtab_defs.h"
-#include "nvim/regexp_defs.h"
 
 enum {
   /// Assume max. word len is this many bytes.

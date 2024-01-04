@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "klib/kvec.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/stream.h"
@@ -13,6 +14,7 @@
 #include "nvim/memory.h"
 #include "nvim/option_vars.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/rbuffer.h"
 #include "nvim/strings.h"
 #include "nvim/tui/input.h"

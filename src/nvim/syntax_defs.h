@@ -1,9 +1,6 @@
 #pragma once
 
 #include "nvim/buffer_defs.h"
-#include "nvim/garray_defs.h"
-#include "nvim/highlight_defs.h"
-#include "nvim/regexp_defs.h"
 
 #define SST_MIN_ENTRIES 150    // minimal size for state stack array
 #define SST_MAX_ENTRIES 1000   // maximal size for state stack array

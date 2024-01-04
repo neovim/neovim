@@ -2,7 +2,7 @@
 
 #include <stddef.h>  // IWYU pragma: keep
 
-#include "nvim/os/fileio_defs.h"  // IWYU pragma: export
+#include "nvim/os/fileio_defs.h"  // IWYU pragma: keep
 
 /// file_open() flags
 typedef enum {

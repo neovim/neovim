@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii_defs.h"
 #include "nvim/macros_defs.h"

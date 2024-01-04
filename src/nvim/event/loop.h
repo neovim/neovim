@@ -4,7 +4,7 @@
 #include <uv.h>
 
 #include "klib/klist.h"
-#include "nvim/event/defs.h"  // IWYU pragma: export
+#include "nvim/event/defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 typedef void *WatcherPtr;

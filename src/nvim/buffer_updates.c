@@ -5,6 +5,7 @@
 
 #include "klib/kvec.h"
 #include "nvim/api/buffer.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert_defs.h"
 #include "nvim/buffer.h"

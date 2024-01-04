@@ -6,7 +6,7 @@
 #include "nvim/event/defs.h"
 #include "nvim/macros_defs.h"
 #include "nvim/memory_defs.h"  // IWYU pragma: keep
-#include "nvim/msgpack_rpc/channel_defs.h"  // IWYU pragma: export
+#include "nvim/msgpack_rpc/channel_defs.h"  // IWYU pragma: keep
 
 #define METHOD_MAXLEN 512
 

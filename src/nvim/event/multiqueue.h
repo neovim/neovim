@@ -2,7 +2,7 @@
 
 #include <stddef.h>  // IWYU pragma: keep
 
-#include "nvim/event/defs.h"  // IWYU pragma: export
+#include "nvim/event/defs.h"  // IWYU pragma: keep
 #include "nvim/os/time.h"  // IWYU pragma: keep
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -12,6 +12,7 @@
 #include "nvim/main.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/rbuffer.h"
+#include "nvim/rbuffer_defs.h"
 #include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
