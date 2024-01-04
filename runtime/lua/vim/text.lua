@@ -1,4 +1,4 @@
---- Text processing functions.
+-- Text processing functions.
 
 local M = {}
 

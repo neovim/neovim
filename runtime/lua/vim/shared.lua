@@ -581,7 +581,7 @@ function vim.tbl_isarray(t)
   local count = 0
 
   for k, _ in pairs(t) do
-    --- Check if the number k is an integer
+    -- Check if the number k is an integer
     if type(k) == 'number' and k == math.floor(k) then
       count = count + 1
     else

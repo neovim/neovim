@@ -1069,7 +1069,7 @@ function M.show_document(location, offset_encoding, opts)
   -- location may be Location or LocationLink
   local range = location.range or location.targetSelectionRange
   if range then
-    --- Jump to new location (adjusting for encoding of characters)
+    -- Jump to new location (adjusting for encoding of characters)
     local row = range.start.line
     local col = get_line_byte_from_position(bufnr, range.start, offset_encoding)
     api.nvim_win_set_cursor(win, { row + 1, col })

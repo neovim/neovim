@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Generates Nvim :help docs from C/Lua docstrings, using Doxygen.
+
+r"""Generates Nvim :help docs from C/Lua docstrings, using Doxygen.
 
 Also generates *.mpack files. To inspect the *.mpack structure:
     :new | put=v:lua.vim.inspect(v:lua.vim.mpack.decode(readfile('runtime/doc/api.mpack','B')))
@@ -32,24 +33,29 @@ The generated :help text for each function is formatted as follows:
     parameter is marked as [out].
   - Each function documentation is separated by a single line.
 """
+
+from __future__ import annotations
+
 import argparse
+import collections
+import dataclasses
+import logging
 import os
 import re
-import sys
 import shutil
-import textwrap
 import subprocess
-import collections
-import msgpack
-import logging
-from typing import Tuple
+import sys
+import textwrap
 from pathlib import Path
-
+from typing import Any, Callable, Dict, List, Literal, Tuple
 from xml.dom import minidom
+
+import msgpack
+
 Element = minidom.Element
 Document = minidom.Document
 
-MIN_PYTHON_VERSION = (3, 6)
+MIN_PYTHON_VERSION = (3, 7)
 MIN_DOXYGEN_VERSION = (1, 9, 0)
 
 if sys.version_info < MIN_PYTHON_VERSION:
@@ -68,7 +74,7 @@ if doxygen_version < MIN_DOXYGEN_VERSION:
 # Need a `nvim` that supports `-l`, try the local build
 nvim_path = Path(__file__).parent / "../build/bin/nvim"
 if nvim_path.exists():
-    nvim = str(nvim_path)
+    nvim = nvim_path.resolve()
 else:
     # Until 0.9 is released, use this hacky way to check that "nvim -l foo.lua" works.
     nvim_out = subprocess.check_output(['nvim', '-h'], universal_newlines=True)
@@ -83,8 +89,8 @@ else:
 
 
 # DEBUG = ('DEBUG' in os.environ)
-INCLUDE_C_DECL = ('INCLUDE_C_DECL' in os.environ)
-INCLUDE_DEPRECATED = ('INCLUDE_DEPRECATED' in os.environ)
+INCLUDE_C_DECL = os.environ.get('INCLUDE_C_DECL', '0') != '0'
+INCLUDE_DEPRECATED = os.environ.get('INCLUDE_DEPRECATED', '0') != '0'
 
 log = logging.getLogger(__name__)
 
@@ -96,6 +102,8 @@ LOG_LEVELS = {
 
 text_width = 78
 indentation = 4
+SECTION_SEP = '=' * text_width
+
 script_path = os.path.abspath(__file__)
 base_dir = os.path.dirname(os.path.dirname(script_path))
 out_dir = os.path.join(base_dir, 'tmp-{target}-doc')
@@ -103,12 +111,64 @@ filter_cmd = '%s %s' % (sys.executable, script_path)
 msgs = []  # Messages to show on exit.
 lua2dox = os.path.join(base_dir, 'scripts', 'lua2dox.lua')
 
-CONFIG = {
-    'api': {
-        'mode': 'c',
-        'filename': 'api.txt',
+
+SectionName = str
+
+Docstring = str  # Represents (formatted) vimdoc string
+
+FunctionName = str
+
+
+@dataclasses.dataclass
+class Config:
+    """Config for documentation."""
+
+    mode: Literal['c', 'lua']
+
+    filename: str
+    """Generated documentation target, e.g. api.txt"""
+
+    section_order: List[str]
+    """Section ordering."""
+
+    files: List[str]
+    """List of files/directories for doxygen to read, relative to `base_dir`."""
+
+    file_patterns: str
+    """file patterns used by doxygen."""
+
+    section_name: Dict[str, SectionName]
+    """Section name overrides. Key: filename (e.g., vim.c)"""
+
+    section_fmt: Callable[[SectionName], str]
+    """For generated section names."""
+
+    helptag_fmt: Callable[[SectionName], str]
+    """Section helptag."""
+
+    fn_helptag_fmt: Callable[[str, str, bool], str]
+    """Per-function helptag."""
+
+    module_override: Dict[str, str]
+    """Module name overrides (for Lua)."""
+
+    append_only: List[str]
+    """Append the docs for these modules, do not start a new section."""
+
+    fn_name_prefix: str
+    """Only function with this prefix are considered"""
+
+    fn_name_fmt: Callable[[str, str], str] | None = None
+
+    include_tables: bool = True
+
+
+CONFIG: Dict[str, Config] = {
+    'api': Config(
+        mode = 'c',
+        filename = 'api.txt',
         # Section ordering.
-        'section_order': [
+        section_order=[x for x in [
             'vim.c',
             'vimscript.c',
             'command.c',
@@ -120,32 +180,24 @@ CONFIG = {
             'tabpage.c',
             'autocmd.c',
             'ui.c',
-        ],
-        # List of files/directories for doxygen to read, relative to `base_dir`
-        'files': ['src/nvim/api'],
-        # file patterns used by doxygen
-        'file_patterns': '*.h *.c',
-        # Only function with this prefix are considered
-        'fn_name_prefix': 'nvim_',
-        # Section name overrides.
-        'section_name': {
+            'deprecated.c' if INCLUDE_DEPRECATED else ''
+        ] if x],
+        files=['src/nvim/api'],
+        file_patterns = '*.h *.c',
+        fn_name_prefix = 'nvim_',
+        section_name={
             'vim.c': 'Global',
         },
-        # For generated section names.
-        'section_fmt': lambda name: f'{name} Functions',
-        # Section helptag.
-        'helptag_fmt': lambda name: f'*api-{name.lower()}*',
-        # Per-function helptag.
-        'fn_helptag_fmt': lambda fstem, name, istbl: f'*{name}()*',
-        # Module name overrides (for Lua).
-        'module_override': {},
-        # Append the docs for these modules, do not start a new section.
-        'append_only': [],
-    },
-    'lua': {
-        'mode': 'lua',
-        'filename': 'lua.txt',
-        'section_order': [
+        section_fmt=lambda name: f'{name} Functions',
+        helptag_fmt=lambda name: f'*api-{name.lower()}*',
+        fn_helptag_fmt=lambda fstem, name, istbl: f'*{name}()*',
+        module_override={},
+        append_only=[],
+    ),
+    'lua': Config(
+        mode='lua',
+        filename='lua.txt',
+        section_order=[
             'highlight.lua',
             'regex.lua',
             'diff.lua',
@@ -171,7 +223,7 @@ CONFIG = {
             'snippet.lua',
             'text.lua',
         ],
-        'files': [
+        files=[
             'runtime/lua/vim/iter.lua',
             'runtime/lua/vim/_editor.lua',
             'runtime/lua/vim/_options.lua',
@@ -197,30 +249,30 @@ CONFIG = {
             'runtime/lua/vim/_meta/regex.lua',
             'runtime/lua/vim/_meta/spell.lua',
         ],
-        'file_patterns': '*.lua',
-        'fn_name_prefix': '',
-        'fn_name_fmt': lambda fstem, name: (
+        file_patterns='*.lua',
+        fn_name_prefix='',
+        fn_name_fmt=lambda fstem, name: (
             name if fstem in [ 'vim.iter' ] else
             f'vim.{name}' if fstem in [ '_editor', 'vim.regex'] else
             f'vim.{name}' if fstem == '_options' and not name[0].isupper() else
             f'{fstem}.{name}' if fstem.startswith('vim') else
             name
         ),
-        'section_name': {
+        section_name={
             'lsp.lua': 'core',
             '_inspector.lua': 'inspector',
         },
-        'section_fmt': lambda name: (
+        section_fmt=lambda name: (
             'Lua module: vim' if name.lower() == '_editor' else
             'LUA-VIMSCRIPT BRIDGE' if name.lower() == '_options' else
             f'VIM.{name.upper()}' if name.lower() in [ 'highlight', 'mpack', 'json', 'base64', 'diff', 'spell', 'regex' ] else
             'VIM' if name.lower() == 'builtin' else
             f'Lua module: vim.{name.lower()}'),
-        'helptag_fmt': lambda name: (
+        helptag_fmt=lambda name: (
             '*lua-vim*' if name.lower() == '_editor' else
             '*lua-vimscript*' if name.lower() == '_options' else
             f'*vim.{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name, istbl: (
+        fn_helptag_fmt=lambda fstem, name, istbl: (
             f'*vim.opt:{name.split(":")[-1]}()*' if ':' in name and name.startswith('Option') else
             # Exclude fstem for methods
             f'*{name}()*' if ':' in name else
@@ -230,7 +282,7 @@ CONFIG = {
             f'*{fstem}()*' if fstem.endswith('.' + name) else
             f'*{fstem}.{name}{"" if istbl else "()"}*'
             ),
-        'module_override': {
+        module_override={
             # `shared` functions are exposed on the `vim` module.
             'shared': 'vim',
             '_inspector': 'vim',
@@ -255,14 +307,14 @@ CONFIG = {
             'text': 'vim.text',
             'glob': 'vim.glob',
         },
-        'append_only': [
+        append_only=[
             'shared.lua',
         ],
-    },
-    'lsp': {
-        'mode': 'lua',
-        'filename': 'lsp.txt',
-        'section_order': [
+    ),
+    'lsp': Config(
+        mode='lua',
+        filename='lsp.txt',
+        section_order=[
             'lsp.lua',
             'buf.lua',
             'diagnostic.lua',
@@ -276,50 +328,50 @@ CONFIG = {
             'rpc.lua',
             'protocol.lua',
         ],
-        'files': [
+        files=[
             'runtime/lua/vim/lsp',
             'runtime/lua/vim/lsp.lua',
         ],
-        'file_patterns': '*.lua',
-        'fn_name_prefix': '',
-        'section_name': {'lsp.lua': 'lsp'},
-        'section_fmt': lambda name: (
+        file_patterns='*.lua',
+        fn_name_prefix='',
+        section_name={'lsp.lua': 'lsp'},
+        section_fmt=lambda name: (
             'Lua module: vim.lsp'
             if name.lower() == 'lsp'
             else f'Lua module: vim.lsp.{name.lower()}'),
-        'helptag_fmt': lambda name: (
+        helptag_fmt=lambda name: (
             '*lsp-core*'
             if name.lower() == 'lsp'
             else f'*lsp-{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name, istbl: (
+        fn_helptag_fmt=lambda fstem, name, istbl: (
             f'*vim.lsp.{name}{"" if istbl else "()"}*' if fstem == 'lsp' and name != 'client' else
             # HACK. TODO(justinmk): class/structure support in lua2dox
             '*vim.lsp.client*' if 'lsp.client' == f'{fstem}.{name}' else
             f'*vim.lsp.{fstem}.{name}{"" if istbl else "()"}*'),
-        'module_override': {},
-        'append_only': [],
-    },
-    'diagnostic': {
-        'mode': 'lua',
-        'filename': 'diagnostic.txt',
-        'section_order': [
+        module_override={},
+        append_only=[],
+    ),
+    'diagnostic': Config(
+        mode='lua',
+        filename='diagnostic.txt',
+        section_order=[
             'diagnostic.lua',
         ],
-        'files': ['runtime/lua/vim/diagnostic.lua'],
-        'file_patterns': '*.lua',
-        'fn_name_prefix': '',
-        'include_tables': False,
-        'section_name': {'diagnostic.lua': 'diagnostic'},
-        'section_fmt': lambda _: 'Lua module: vim.diagnostic',
-        'helptag_fmt': lambda _: '*diagnostic-api*',
-        'fn_helptag_fmt': lambda fstem, name, istbl: f'*vim.{fstem}.{name}{"" if istbl else "()"}*',
-        'module_override': {},
-        'append_only': [],
-    },
-    'treesitter': {
-        'mode': 'lua',
-        'filename': 'treesitter.txt',
-        'section_order': [
+        files=['runtime/lua/vim/diagnostic.lua'],
+        file_patterns='*.lua',
+        fn_name_prefix='',
+        include_tables=False,
+        section_name={'diagnostic.lua': 'diagnostic'},
+        section_fmt=lambda _: 'Lua module: vim.diagnostic',
+        helptag_fmt=lambda _: '*diagnostic-api*',
+        fn_helptag_fmt=lambda fstem, name, istbl: f'*vim.{fstem}.{name}{"" if istbl else "()"}*',
+        module_override={},
+        append_only=[],
+    ),
+    'treesitter': Config(
+        mode='lua',
+        filename='treesitter.txt',
+        section_order=[
             'treesitter.lua',
             'language.lua',
             'query.lua',
@@ -327,30 +379,30 @@ CONFIG = {
             'languagetree.lua',
             'dev.lua',
         ],
-        'files': [
+        files=[
             'runtime/lua/vim/treesitter.lua',
             'runtime/lua/vim/treesitter/',
         ],
-        'file_patterns': '*.lua',
-        'fn_name_prefix': '',
-        'section_name': {},
-        'section_fmt': lambda name: (
+        file_patterns='*.lua',
+        fn_name_prefix='',
+        section_name={},
+        section_fmt=lambda name: (
             'Lua module: vim.treesitter'
             if name.lower() == 'treesitter'
             else f'Lua module: vim.treesitter.{name.lower()}'),
-        'helptag_fmt': lambda name: (
+        helptag_fmt=lambda name: (
             '*lua-treesitter-core*'
             if name.lower() == 'treesitter'
             else f'*lua-treesitter-{name.lower()}*'),
-        'fn_helptag_fmt': lambda fstem, name, istbl: (
+        fn_helptag_fmt=lambda fstem, name, istbl: (
             f'*vim.{fstem}.{name}()*'
             if fstem == 'treesitter'
             else f'*{name}()*'
             if name[0].isupper()
             else f'*vim.treesitter.{fstem}.{name}()*'),
-        'module_override': {},
-        'append_only': [],
-    }
+        module_override={},
+        append_only=[],
+    ),
 }
 
 param_exclude = (
@@ -702,7 +754,10 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
     return text
 
 
-def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=False):
+def para_as_map(parent: Element,
+                indent: str = '',
+                width: int = (text_width - indentation),
+                ):
     """Extracts a Doxygen XML <para> node to a map.
 
     Keys:
@@ -738,7 +793,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
     kind = ''
     if is_inline(parent):
         # Flatten inline text from a tree of non-block nodes.
-        text = doc_wrap(render_node(parent, "", fmt_vimhelp=fmt_vimhelp),
+        text = doc_wrap(render_node(parent, ""),
                         indent=indent, width=width)
     else:
         prev = None  # Previous node
@@ -756,8 +811,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
                 elif kind == 'see':
                     groups['seealso'].append(child)
                 elif kind == 'warning':
-                    text += render_node(child, text, indent=indent,
-                                        width=width, fmt_vimhelp=fmt_vimhelp)
+                    text += render_node(child, text, indent=indent, width=width)
                 elif kind == 'since':
                     since_match = re.match(r'^(\d+)', get_text(child))
                     since = int(since_match.group(1)) if since_match else 0
@@ -778,8 +832,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
                         and ' ' != text[-1]):
                     text += ' '
 
-                text += render_node(child, text, indent=indent, width=width,
-                                    fmt_vimhelp=fmt_vimhelp)
+                text += render_node(child, text, indent=indent, width=width)
                 prev = child
 
     chunks['text'] += text
@@ -790,17 +843,17 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
             update_params_map(child, ret_map=chunks['params'], width=width)
     for child in groups['note']:
         chunks['note'].append(render_node(
-            child, '', indent=indent, width=width, fmt_vimhelp=fmt_vimhelp).rstrip())
+            child, '', indent=indent, width=width).rstrip())
     for child in groups['return']:
         chunks['return'].append(render_node(
-            child, '', indent=indent, width=width, fmt_vimhelp=fmt_vimhelp))
+            child, '', indent=indent, width=width))
     for child in groups['seealso']:
         # Example:
         #   <simplesect kind="see">
         #     <para>|autocommand|</para>
         #   </simplesect>
         chunks['seealso'].append(render_node(
-            child, '', indent=indent, width=width, fmt_vimhelp=fmt_vimhelp))
+            child, '', indent=indent, width=width))
 
     xrefs = set()
     for child in groups['xrefs']:
@@ -813,6 +866,7 @@ def para_as_map(parent, indent='', width=text_width - indentation, fmt_vimhelp=F
                                         width=width) + '\n')
 
     return chunks, xrefs
+
 
 def is_program_listing(para):
     """
@@ -835,33 +889,156 @@ def is_program_listing(para):
 
     return len(children) == 1 and children[0].nodeName == 'programlisting'
 
-def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent='',
-                        fmt_vimhelp=False):
+
+FunctionParam = Tuple[
+    str,  # type
+    str,  # parameter name
+]
+
+@dataclasses.dataclass
+class FunctionDoc:
+    """Data structure for function documentation. Also exported as msgpack."""
+
+    annotations: List[str]
+    """Attributes, e.g., FUNC_API_REMOTE_ONLY. See annotation_map"""
+
+    notes: List[Docstring]
+    """Notes: (@note strings)"""
+
+    signature: str
+    """Function signature with *tags*."""
+
+    parameters: List[FunctionParam]
+    """Parameters: (type, name)"""
+
+    parameters_doc: Dict[str, Docstring]
+    """Parameters documentation. Key is parameter name, value is doc."""
+
+    doc: List[Docstring]
+    """Main description for the function. Separated by paragraph."""
+
+    return_: List[Docstring]
+    """Return:, or Return (multiple): (@return strings)"""
+
+    seealso: List[Docstring]
+    """See also: (@see strings)"""
+
+    xrefs: List[Docstring]
+    """XRefs. Currently only used to track Deprecated functions."""
+
+    # for INCLUDE_C_DECL
+    c_decl: str | None = None
+
+    prerelease: bool = False
+
+    def export_mpack(self) -> Dict[str, Any]:
+        """Convert a dict to be exported as mpack data."""
+        exported = self.__dict__.copy()
+        del exported['notes']
+        del exported['c_decl']
+        del exported['prerelease']
+        del exported['xrefs']
+        exported['return'] = exported.pop('return_')
+        return exported
+
+    def doc_concatenated(self) -> Docstring:
+        """Concatenate all the paragraphs in `doc` into a single string, but
+        remove blank lines before 'programlisting' blocks. #25127
+
+        BEFORE (without programlisting processing):
+            ```vimdoc
+            Example:
+
+            >vim
+                :echo nvim_get_color_by_name("Pink")
+            <
+            ```
+
+        AFTER:
+            ```vimdoc
+            Example: >vim
+                :echo nvim_get_color_by_name("Pink")
+            <
+            ```
+        """
+        def is_program_listing(paragraph: str) -> bool:
+            lines = paragraph.strip().split('\n')
+            return lines[0].startswith('>') and lines[-1] == '<'
+
+        rendered = []
+        for paragraph in self.doc:
+            if is_program_listing(paragraph):
+                rendered.append(' ')  # Example: >vim
+            elif rendered:
+                rendered.append('\n\n')
+            rendered.append(paragraph)
+        return ''.join(rendered)
+
+    def render(self) -> Docstring:
+        """Renders function documentation as Vim :help text."""
+        rendered_blocks: List[Docstring] = []
+
+        def fmt_param_doc(m):
+            """Renders a params map as Vim :help text."""
+            max_name_len = max_name(m.keys()) + 4
+            out = ''
+            for name, desc in m.items():
+                if name == 'self':
+                    continue
+                name = '  • {}'.format('{{{}}}'.format(name).ljust(max_name_len))
+                out += '{}{}\n'.format(name, desc)
+            return out.rstrip()
+
+        # Generate text from the gathered items.
+        chunks: List[Docstring] = [self.doc_concatenated()]
+
+        notes = []
+        if self.prerelease:
+            notes = ["  This API is pre-release (unstable)."]
+        notes += self.notes
+        if len(notes) > 0:
+            chunks.append('\nNote: ~')
+            for s in notes:
+                chunks.append('  ' + s)
+
+        if self.parameters_doc:
+            chunks.append('\nParameters: ~')
+            chunks.append(fmt_param_doc(self.parameters_doc))
+
+        if self.return_:
+            chunks.append('\nReturn (multiple): ~' if len(self.return_) > 1
+                          else '\nReturn: ~')
+            for s in self.return_:
+                chunks.append('    ' + s)
+
+        if self.seealso:
+            chunks.append('\nSee also: ~')
+            for s in self.seealso:
+                chunks.append('  ' + s)
+
+        # Note: xrefs are currently only used to remark "Deprecated: "
+        # for deprecated functions; visible when INCLUDE_DEPRECATED is set
+        for s in self.xrefs:
+            chunks.append('\n' + s)
+
+        rendered_blocks.append(clean_lines('\n'.join(chunks).strip()))
+        rendered_blocks.append('')
+
+        return clean_lines('\n'.join(rendered_blocks).strip())
+
+
+def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent=''):
     """Renders (nested) Doxygen <para> nodes as Vim :help text.
+
+    Only handles "text" nodes. Used for individual elements (see render_node())
+    and in extract_defgroups().
 
     NB: Blank lines in a docstring manifest as <para> tags.
     """
     rendered_blocks = []
 
-    def fmt_param_doc(m):
-        """Renders a params map as Vim :help text."""
-        max_name_len = max_name(m.keys()) + 4
-        out = ''
-        for name, desc in m.items():
-            if name == 'self':
-                continue
-            name = '  • {}'.format('{{{}}}'.format(name).ljust(max_name_len))
-            out += '{}{}\n'.format(name, desc)
-        return out.rstrip()
-
-    def has_nonexcluded_params(m):
-        """Returns true if any of the given params has at least
-        one non-excluded item."""
-        if fmt_param_doc(m) != '':
-            return True
-
     for child in parent.childNodes:
-        para, _ = para_as_map(child, indent, width, fmt_vimhelp)
+        para, _ = para_as_map(child, indent, width)
 
         # 'programlisting' blocks are Markdown code blocks. Do not include
         # these as a separate paragraph, but append to the last non-empty line
@@ -874,25 +1051,6 @@ def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent=
 
         # Generate text from the gathered items.
         chunks = [para['text']]
-        notes = ["    This API is pre-release (unstable)."] if para['prerelease'] else []
-        notes += para['note']
-        if len(notes) > 0:
-            chunks.append('\nNote: ~')
-            for s in notes:
-                chunks.append(s)
-        if len(para['params']) > 0 and has_nonexcluded_params(para['params']):
-            chunks.append('\nParameters: ~')
-            chunks.append(fmt_param_doc(para['params']))
-        if len(para['return']) > 0:
-            chunks.append('\nReturn (multiple): ~' if len(para['return']) > 1 else '\nReturn: ~')
-            for s in para['return']:
-                chunks.append(s)
-        if len(para['seealso']) > 0:
-            chunks.append('\nSee also: ~')
-            for s in para['seealso']:
-                chunks.append(s)
-        for s in para['xrefs']:
-            chunks.append(s)
 
         rendered_blocks.append(clean_lines('\n'.join(chunks).strip()))
         rendered_blocks.append('')
@@ -900,7 +1058,11 @@ def fmt_node_as_vimhelp(parent: Element, width=text_width - indentation, indent=
     return clean_lines('\n'.join(rendered_blocks).strip())
 
 
-def extract_from_xml(filename, target, width, fmt_vimhelp):
+def extract_from_xml(filename, target, *,
+                     width: int, fmt_vimhelp: bool) -> Tuple[
+    Dict[FunctionName, FunctionDoc],
+    Dict[FunctionName, FunctionDoc],
+]:
     """Extracts Doxygen info as maps without formatting the text.
 
     Returns two maps:
@@ -910,8 +1072,10 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
     The `fmt_vimhelp` variable controls some special cases for use by
     fmt_doxygen_xml_as_vimhelp(). (TODO: ugly :)
     """
-    fns = {}  # Map of func_name:docstring.
-    deprecated_fns = {}  # Map of func_name:docstring.
+    config: Config = CONFIG[target]
+
+    fns: Dict[FunctionName, FunctionDoc] = {}
+    deprecated_fns: Dict[FunctionName, FunctionDoc] = {}
 
     dom = minidom.parse(filename)
     compoundname = get_text(dom.getElementsByTagName('compoundname')[0])
@@ -934,7 +1098,7 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
             continue
 
         istbl = return_type.startswith('table')  # Special from lua2dox.lua.
-        if istbl and not CONFIG[target].get('include_tables', True):
+        if istbl and not config.include_tables:
             continue
 
         if return_type.startswith(('ArrayOf', 'DictionaryOf')):
@@ -962,7 +1126,7 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
             declname = get_child(param, 'declname')
             if declname:
                 param_name = get_text(declname).strip()
-            elif CONFIG[target]['mode'] == 'lua':
+            elif config.mode == 'lua':
                 # XXX: this is what lua2dox gives us...
                 param_name = param_type
                 param_type = ''
@@ -998,11 +1162,11 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
             fstem = '?'
             if '.' in compoundname:
                 fstem = compoundname.split('.')[0]
-                fstem = CONFIG[target]['module_override'].get(fstem, fstem)
-            vimtag = CONFIG[target]['fn_helptag_fmt'](fstem, name, istbl)
+                fstem = config.module_override.get(fstem, fstem)
+            vimtag = config.fn_helptag_fmt(fstem, name, istbl)
 
-            if 'fn_name_fmt' in CONFIG[target]:
-                name = CONFIG[target]['fn_name_fmt'](fstem, name)
+            if config.fn_name_fmt:
+                name = config.fn_name_fmt(fstem, name)
 
         if istbl:
             aopen, aclose = '', ''
@@ -1036,18 +1200,20 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
         # Tracks `xrefsect` titles.  As of this writing, used only for separating
         # deprecated functions.
         xrefs_all = set()
-        paras = []
+        paras: List[Dict[str, Any]] = []  # paras means paragraphs!
         brief_desc = find_first(member, 'briefdescription')
         if brief_desc:
             for child in brief_desc.childNodes:
                 para, xrefs = para_as_map(child)
+                paras.append(para)
                 xrefs_all.update(xrefs)
 
         desc = find_first(member, 'detaileddescription')
         if desc:
+            paras_detail = []  # override briefdescription
             for child in desc.childNodes:
                 para, xrefs = para_as_map(child)
-                paras.append(para)
+                paras_detail.append(para)
                 xrefs_all.update(xrefs)
             log.debug(
                 textwrap.indent(
@@ -1055,69 +1221,91 @@ def extract_from_xml(filename, target, width, fmt_vimhelp):
                            desc.toprettyxml(indent='  ', newl='\n')),
                     ' ' * indentation))
 
-        fn = {
-            'annotations': list(annotations),
-            'signature': signature,
-            'parameters': params,
-            'parameters_doc': collections.OrderedDict(),
-            'doc': [],
-            'return': [],
-            'seealso': [],
-        }
-        if fmt_vimhelp:
-            fn['desc_node'] = desc
-            fn['brief_desc_node'] = brief_desc
+            # override briefdescription, if detaileddescription is not empty
+            # (note: briefdescription can contain some erroneous luadoc
+            #  comments from preceding comments, this is a bug of lua2dox)
+            if any((para['text'] or para['note'] or para['params'] or
+                    para['return'] or para['seealso']
+                    ) for para in paras_detail):
+                paras = paras_detail
+
+        fn = FunctionDoc(
+            annotations=list(annotations),
+            notes=[],
+            signature=signature,
+            parameters=params,
+            parameters_doc=collections.OrderedDict(),
+            doc=[],
+            return_=[],
+            seealso=[],
+            xrefs=[],
+        )
 
         for m in paras:
-            if 'text' in m:
-                if not m['text'] == '':
-                    fn['doc'].append(m['text'])
+            if m.get('text', ''):
+                fn.doc.append(m['text'])
             if 'params' in m:
                 # Merge OrderedDicts.
-                fn['parameters_doc'].update(m['params'])
+                fn.parameters_doc.update(m['params'])
             if 'return' in m and len(m['return']) > 0:
-                fn['return'] += m['return']
+                fn.return_ += m['return']
             if 'seealso' in m and len(m['seealso']) > 0:
-                fn['seealso'] += m['seealso']
+                fn.seealso += m['seealso']
+            if m.get('prerelease', False):
+                fn.prerelease = True
+            if 'note' in m:
+                fn.notes += m['note']
+            if 'xrefs' in m:
+                fn.xrefs += m['xrefs']
 
         if INCLUDE_C_DECL:
-            fn['c_decl'] = c_decl
+            fn.c_decl = c_decl
 
         if 'Deprecated' in str(xrefs_all):
             deprecated_fns[name] = fn
-        elif name.startswith(CONFIG[target]['fn_name_prefix']):
+        elif name.startswith(config.fn_name_prefix):
             fns[name] = fn
 
+    # sort functions by name (lexicographically)
     fns = collections.OrderedDict(sorted(
         fns.items(),
-        key=lambda key_item_tuple: key_item_tuple[0].lower()))
+        key=lambda key_item_tuple: key_item_tuple[0].lower(),
+    ))
     deprecated_fns = collections.OrderedDict(sorted(deprecated_fns.items()))
     return fns, deprecated_fns
 
 
-def fmt_doxygen_xml_as_vimhelp(filename, target):
+def fmt_doxygen_xml_as_vimhelp(filename, target) -> Tuple[Docstring, Docstring]:
     """Entrypoint for generating Vim :help from from Doxygen XML.
 
     Returns 2 items:
       1. Vim help text for functions found in `filename`.
       2. Vim help text for deprecated functions.
     """
+    config: Config = CONFIG[target]
+
     fns_txt = {}  # Map of func_name:vim-help-text.
     deprecated_fns_txt = {}  # Map of func_name:vim-help-text.
-    fns, _ = extract_from_xml(filename, target, text_width, True)
 
-    for name, fn in fns.items():
+    fns: Dict[FunctionName, FunctionDoc]
+    deprecated_fns: Dict[FunctionName, FunctionDoc]
+    fns, deprecated_fns = extract_from_xml(
+        filename, target, width=text_width, fmt_vimhelp=True)
+
+    def _handle_fn(fn_name: FunctionName, fn: FunctionDoc,
+                   fns_txt: Dict[FunctionName, Docstring], deprecated=False):
         # Generate Vim :help for parameters.
-        if fn['desc_node']:
-            doc = fmt_node_as_vimhelp(fn['desc_node'], fmt_vimhelp=True)
-        if not doc and fn['brief_desc_node']:
-            doc = fmt_node_as_vimhelp(fn['brief_desc_node'])
-        if not doc and name.startswith("nvim__"):
-            continue
-        if not doc:
-            doc = 'TODO: Documentation'
 
-        annotations = '\n'.join(fn['annotations'])
+        # Generate body from FunctionDoc, not XML nodes
+        doc = fn.render()
+        if not doc and fn_name.startswith("nvim__"):
+            return
+        if not doc:
+            doc = ('TODO: Documentation' if not deprecated
+                   else 'Deprecated.')
+
+        # Annotations: put before Parameters
+        annotations: str = '\n'.join(fn.annotations)
         if annotations:
             annotations = ('\n\nAttributes: ~\n' +
                            textwrap.indent(annotations, '    '))
@@ -1127,18 +1315,22 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
             else:
                 doc = doc[:i] + annotations + '\n\n' + doc[i:]
 
+        # C Declaration: (debug only)
         if INCLUDE_C_DECL:
             doc += '\n\nC Declaration: ~\n>\n'
-            doc += fn['c_decl']
+            assert fn.c_decl is not None
+            doc += fn.c_decl
             doc += '\n<'
 
-        func_doc = fn['signature'] + '\n'
+        # Start of function documentations. e.g.,
+        # nvim_cmd({*cmd}, {*opts})                                         *nvim_cmd()*
+        func_doc = fn.signature + '\n'
         func_doc += textwrap.indent(clean_lines(doc), ' ' * indentation)
 
         # Verbatim handling.
         func_doc = re.sub(r'^\s+([<>])$', r'\1', func_doc, flags=re.M)
 
-        split_lines = func_doc.split('\n')
+        split_lines: List[str] = func_doc.split('\n')
         start = 0
         while True:
             try:
@@ -1164,12 +1356,19 @@ def fmt_doxygen_xml_as_vimhelp(filename, target):
 
         func_doc = "\n".join(map(align_tags, split_lines))
 
-        if (name.startswith(CONFIG[target]['fn_name_prefix'])
-           and name != "nvim_error_event"):
-            fns_txt[name] = func_doc
+        if (fn_name.startswith(config.fn_name_prefix)
+            and fn_name != "nvim_error_event"):
+            fns_txt[fn_name] = func_doc
 
-    return ('\n\n'.join(list(fns_txt.values())),
-            '\n\n'.join(list(deprecated_fns_txt.values())))
+    for fn_name, fn in fns.items():
+        _handle_fn(fn_name, fn, fns_txt)
+    for fn_name, fn in deprecated_fns.items():
+        _handle_fn(fn_name, fn, deprecated_fns_txt, deprecated=True)
+
+    return (
+        '\n\n'.join(list(fns_txt.values())),
+        '\n\n'.join(list(deprecated_fns_txt.values())),
+    )
 
 
 def delete_lines_below(filename, tokenstr):
@@ -1190,7 +1389,7 @@ def delete_lines_below(filename, tokenstr):
         fp.writelines(lines[0:i])
 
 
-def extract_defgroups(base: str, dom: Document):
+def extract_defgroups(base: str, dom: Document) -> Dict[SectionName, Docstring]:
     '''Generate module-level (section) docs (@defgroup).'''
     section_docs = {}
 
@@ -1226,6 +1425,102 @@ def extract_defgroups(base: str, dom: Document):
     return section_docs
 
 
+@dataclasses.dataclass
+class Section:
+    """Represents a section. Includes section heading (defgroup)
+    and all the FunctionDoc that belongs to this section."""
+
+    name: str
+    '''Name of the section. Usually derived from basename of lua/c src file.
+    Example: "Autocmd".'''
+
+    title: str
+    '''Formatted section config. see config.section_fmt().
+    Example: "Autocmd Functions". '''
+
+    helptag: str
+    '''see config.helptag_fmt(). Example: *api-autocmd*'''
+
+    @property
+    def id(self) -> str:
+        '''section id: Module/Section id matched against @defgroup.
+           e.g., "*api-autocmd*" => "api-autocmd"
+        '''
+        return self.helptag.strip('*')
+
+    doc: str = ""
+    '''Section heading docs extracted from @defgroup.'''
+
+    # TODO: Do not carry rendered text, but handle FunctionDoc for better OOP
+    functions_text: Docstring | None = None
+    '''(Rendered) doc of all the functions that belong to this section.'''
+
+    deprecated_functions_text: Docstring | None = None
+    '''(Rendered) doc of all the deprecated functions that belong to this
+    section.'''
+
+    def __repr__(self):
+        return f"Section(title='{self.title}', helptag='{self.helptag}')"
+
+    @classmethod
+    def make_from(cls, filename: str, config: Config,
+                  section_docs: Dict[SectionName, str],
+                  *,
+                  functions_text: Docstring,
+                  deprecated_functions_text: Docstring,
+                  ):
+        # filename: e.g., 'autocmd.c'
+        # name: e.g. 'autocmd'
+        name = os.path.splitext(filename)[0].lower()
+
+        # section name: e.g. "Autocmd"
+        sectname: SectionName
+        sectname = name.upper() if name == 'ui' else name.title()
+        sectname = config.section_name.get(filename, sectname)
+
+        # Formatted (this is what's going to be written in the vimdoc)
+        # e.g., "Autocmd Functions"
+        title: str = config.section_fmt(sectname)
+
+        # section tag: e.g., "*api-autocmd*"
+        section_tag: str = config.helptag_fmt(sectname)
+
+        section = cls(name=sectname, title=title, helptag=section_tag,
+                      functions_text=functions_text,
+                      deprecated_functions_text=deprecated_functions_text,
+                      )
+        section.doc = section_docs.get(section.id) or ''
+        return section
+
+    def render(self, add_header=True) -> str:
+        """Render as vimdoc."""
+        doc = ''
+
+        if add_header:
+            doc += SECTION_SEP
+            doc += '\n{}{}'.format(
+                self.title,
+                self.helptag.rjust(text_width - len(self.title))
+            )
+
+        if self.doc:
+            doc += '\n\n' + self.doc
+
+        if self.functions_text:
+            doc += '\n\n' + self.functions_text
+
+        if INCLUDE_DEPRECATED and self.deprecated_functions_text:
+            doc += f'\n\n\nDeprecated {self.name} Functions: ~\n\n'
+            doc += self.deprecated_functions_text
+
+        return doc
+
+    def __bool__(self) -> bool:
+        """Whether this section has contents. Used for skipping empty ones."""
+        return bool(self.doc or self.functions_text or
+                    (INCLUDE_DEPRECATED and self.deprecated_functions_text))
+
+
 def main(doxygen_config, args):
     """Generates:
 
@@ -1237,9 +1532,12 @@ def main(doxygen_config, args):
     for target in CONFIG:
         if args.target is not None and target != args.target:
             continue
+
+        config: Config = CONFIG[target]
+
         mpack_file = os.path.join(
             base_dir, 'runtime', 'doc',
-            CONFIG[target]['filename'].replace('.txt', '.mpack'))
+            config.filename.replace('.txt', '.mpack'))
         if os.path.exists(mpack_file):
             os.remove(mpack_file)
 
@@ -1255,24 +1553,25 @@ def main(doxygen_config, args):
                 stderr=(subprocess.STDOUT if debug else subprocess.DEVNULL))
         p.communicate(
             doxygen_config.format(
-                input=' '.join(
-                    [f'"{file}"' for file in CONFIG[target]['files']]),
+                input=' '.join([f'"{file}"' for file in config.files]),
                 output=output_dir,
                 filter=filter_cmd,
-                file_patterns=CONFIG[target]['file_patterns'])
+                file_patterns=config.file_patterns)
             .encode('utf8')
         )
         if p.returncode:
             sys.exit(p.returncode)
 
-        fn_map_full = {}  # Collects all functions as each module is processed.
-        sections = {}
-        sep = '=' * text_width
+        # Collects all functions as each module is processed.
+        fn_map_full: Dict[FunctionName, FunctionDoc] = {}
+        # key: filename (e.g. autocmd.c)
+        sections: Dict[str, Section] = {}
 
         base = os.path.join(output_dir, 'xml')
         dom = minidom.parse(os.path.join(base, 'index.xml'))
 
-        section_docs = extract_defgroups(base, dom)
+        # Collect all @defgroups (section headings after the '===...' separator
+        section_docs: Dict[SectionName, Docstring] = extract_defgroups(base, dom)
 
         # Generate docs for all functions in the current module.
         for compound in dom.getElementsByTagName('compound'):
@@ -1280,80 +1579,79 @@ def main(doxygen_config, args):
                 continue
 
             filename = get_text(find_first(compound, 'name'))
-            if filename.endswith('.c') or filename.endswith('.lua'):
-                xmlfile = os.path.join(base, '{}.xml'.format(compound.getAttribute('refid')))
-                # Extract unformatted (*.mpack).
-                fn_map, _ = extract_from_xml(xmlfile, target, 9999, False)
-                # Extract formatted (:help).
-                functions_text, deprecated_text = fmt_doxygen_xml_as_vimhelp(
-                    os.path.join(base, '{}.xml'.format(compound.getAttribute('refid'))), target)
+            if not (
+                filename.endswith('.c') or
+                filename.endswith('.lua')
+            ):
+                continue
 
-                if not functions_text and not deprecated_text:
-                    continue
-                else:
-                    filename = os.path.basename(filename)
-                    name = os.path.splitext(filename)[0].lower()
-                    sectname = name.upper() if name == 'ui' else name.title()
-                    sectname = CONFIG[target]['section_name'].get(filename, sectname)
-                    title = CONFIG[target]['section_fmt'](sectname)
-                    section_tag = CONFIG[target]['helptag_fmt'](sectname)
-                    # Module/Section id matched against @defgroup.
-                    #   "*api-buffer*" => "api-buffer"
-                    section_id = section_tag.strip('*')
+            xmlfile = os.path.join(base, '{}.xml'.format(compound.getAttribute('refid')))
 
-                    doc = ''
-                    section_doc = section_docs.get(section_id)
-                    if section_doc:
-                        doc += '\n\n' + section_doc
+            # Extract unformatted (*.mpack).
+            fn_map, _ = extract_from_xml(
+                xmlfile, target, width=9999, fmt_vimhelp=False)
 
-                    if functions_text:
-                        doc += '\n\n' + functions_text
+            # Extract formatted (:help).
+            functions_text, deprecated_text = fmt_doxygen_xml_as_vimhelp(
+                xmlfile, target)
 
-                    if INCLUDE_DEPRECATED and deprecated_text:
-                        doc += f'\n\n\nDeprecated {sectname} Functions: ~\n\n'
-                        doc += deprecated_text
+            if not functions_text and not deprecated_text:
+                continue
 
-                    if doc:
-                        sections[filename] = (title, section_tag, doc)
-                        fn_map_full.update(fn_map)
+            filename = os.path.basename(filename)
+
+            section: Section = Section.make_from(
+                filename, config, section_docs,
+                functions_text=functions_text,
+                deprecated_functions_text=deprecated_text,
+            )
+
+            if section:  # if not empty
+                sections[filename] = section
+                fn_map_full.update(fn_map)
+            else:
+                log.debug("Skipping empty section: %s", section)
 
         if len(sections) == 0:
             fail(f'no sections for target: {target} (look for errors near "Preprocessing" log lines above)')
-        if len(sections) > len(CONFIG[target]['section_order']):
+        if len(sections) > len(config.section_order):
             raise RuntimeError(
-                'found new modules "{}"; update the "section_order" map'.format(
-                    set(sections).difference(CONFIG[target]['section_order'])))
-        first_section_tag = sections[CONFIG[target]['section_order'][0]][1]
+                '{}: found new modules {}; '
+                'update the "section_order" map'.format(
+                    target,
+                    set(sections).difference(config.section_order))
+            )
+        first_section_tag = sections[config.section_order[0]].helptag
 
         docs = ''
 
-        for filename in CONFIG[target]['section_order']:
+        for filename in config.section_order:
             try:
-                title, section_tag, section_doc = sections.pop(filename)
+                section: Section = sections.pop(filename)
             except KeyError:
                 msg(f'warning: empty docs, skipping (target={target}): {filename}')
                 msg(f'    existing docs: {sections.keys()}')
                 continue
-            if filename not in CONFIG[target]['append_only']:
-                docs += sep
-                docs += '\n{}{}'.format(title, section_tag.rjust(text_width - len(title)))
-            docs += section_doc
+
+            add_sep_and_header = filename not in config.append_only
+            docs += section.render(add_header=add_sep_and_header)
             docs += '\n\n\n'
 
         docs = docs.rstrip() + '\n\n'
         docs += f' vim:tw=78:ts=8:sw={indentation}:sts={indentation}:et:ft=help:norl:\n'
 
-        doc_file = os.path.join(base_dir, 'runtime', 'doc',
-                                CONFIG[target]['filename'])
+        doc_file = os.path.join(base_dir, 'runtime', 'doc', config.filename)
 
         if os.path.exists(doc_file):
             delete_lines_below(doc_file, first_section_tag)
         with open(doc_file, 'ab') as fp:
             fp.write(docs.encode('utf8'))
 
-        fn_map_full = collections.OrderedDict(sorted(fn_map_full.items()))
+        fn_map_full_exported = collections.OrderedDict(sorted(
+            (name, fn_doc.export_mpack()) for (name, fn_doc) in fn_map_full.items()
+        ))
         with open(mpack_file, 'wb') as fp:
-            fp.write(msgpack.packb(fn_map_full, use_bin_type=True))
+            fp.write(msgpack.packb(fn_map_full_exported, use_bin_type=True))  # type: ignore
 
         if not args.keep_tmpfiles:
             shutil.rmtree(output_dir)

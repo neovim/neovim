@@ -73,6 +73,9 @@ function vim.api.nvim__id_dictionary(dct) end
 function vim.api.nvim__id_float(flt) end
 
 --- @private
+--- NB: if your UI doesn't use hlstate, this will not return hlstate first
+--- time.
+---
 --- @param grid integer
 --- @param row integer
 --- @param col integer
