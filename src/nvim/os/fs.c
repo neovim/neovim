@@ -18,6 +18,7 @@
 
 #include "auto/config.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/os_defs.h"
 
 #if defined(HAVE_ACL)
 # ifdef HAVE_SYS_ACL_H
@@ -33,7 +34,7 @@
 #endif
 
 #include "nvim/ascii_defs.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"

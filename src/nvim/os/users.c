@@ -9,8 +9,10 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/cmdexpand_defs.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/memory.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/vim_defs.h"
 #ifdef HAVE_PWD_FUNCS
 # include <pwd.h>

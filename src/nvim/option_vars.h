@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nvim/macros_defs.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/sign_defs.h"
 #include "nvim/types_defs.h"
 

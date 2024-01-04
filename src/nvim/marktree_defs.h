@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "klib/kvec.h"
 #include "nvim/decoration_defs.h"
 #include "nvim/map_defs.h"
 

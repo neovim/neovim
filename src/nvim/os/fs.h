@@ -5,7 +5,7 @@
 #include <stdio.h>  // IWYU pragma: keep
 #include <uv.h>  // IWYU pragma: keep
 
-#include "nvim/os/fs_defs.h"  // IWYU pragma: export
+#include "nvim/os/fs_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

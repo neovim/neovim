@@ -3,8 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "nvim/garray_defs.h"  // IWYU pragma: export
-#include "nvim/log.h"
+#include "nvim/garray_defs.h"  // IWYU pragma: keep
 #include "nvim/memory.h"
 
 #define GA_EMPTY(ga_ptr) ((ga_ptr)->ga_len <= 0)
@@ -22,15 +21,6 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "garray.h.generated.h"
 #endif
-
-static inline void *ga_append_via_ptr(garray_T *gap, size_t item_size)
-{
-  if ((int)item_size != gap->ga_itemsize) {
-    WLOG("wrong item size (%zu), should be %d", item_size, gap->ga_itemsize);
-  }
-  ga_grow(gap, 1);
-  return ((char *)gap->ga_data) + (item_size * (size_t)gap->ga_len++);
-}
 
 /// Deep free a garray of specific type using a custom free function.
 /// Items in the array as well as the array itself are freed.

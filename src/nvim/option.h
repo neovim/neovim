@@ -1,19 +1,16 @@
 #pragma once
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>  // IWYU pragma: keep
 
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/api/private/helpers.h"
-#include "nvim/assert_defs.h"
 #include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
 #include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
-#include "nvim/math.h"
-#include "nvim/option_defs.h"  // IWYU pragma: export
+#include "nvim/option_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 /// The options that are local to a window or buffer have "indir" set to one of
@@ -126,24 +123,3 @@ static inline const char *optval_type_get_name(const OptValType type)
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.h.generated.h"
 #endif
-
-/// Check if option supports a specific type.
-static inline bool option_has_type(OptIndex opt_idx, OptValType type)
-{
-  // Ensure that type flags variable can hold all types.
-  STATIC_ASSERT(kOptValTypeSize <= sizeof(OptTypeFlags) * 8,
-                "Option type_flags cannot fit all option types");
-  // Ensure that the type is valid before accessing type_flags.
-  assert(type > kOptValTypeNil && type < kOptValTypeSize);
-  // Bitshift 1 by the value of type to get the type's corresponding flag, and check if it's set in
-  // the type_flags bit field.
-  return get_option(opt_idx)->type_flags & (1 << type);
-}
-
-/// Check if option is multitype (supports multiple types).
-static inline bool option_is_multitype(OptIndex opt_idx)
-{
-  const OptTypeFlags type_flags = get_option(opt_idx)->type_flags;
-  assert(type_flags != 0);
-  return !is_power_of_two(type_flags);
-}

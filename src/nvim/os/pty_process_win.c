@@ -409,3 +409,15 @@ cleanup:
 
   return rc;
 }
+
+PtyProcess pty_process_init(Loop *loop, void *data)
+{
+  PtyProcess rv;
+  rv.process = process_init(loop, kProcessTypePty, data);
+  rv.width = 80;
+  rv.height = 24;
+  rv.conpty = NULL;
+  rv.finish_wait = NULL;
+  rv.process_handle = NULL;
+  return rv;
+}

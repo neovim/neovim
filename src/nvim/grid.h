@@ -3,9 +3,8 @@
 #include <stdbool.h>
 #include <stddef.h>  // IWYU pragma: keep
 
-#include "nvim/grid_defs.h"  // IWYU pragma: export
+#include "nvim/grid_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
-#include "nvim/mbyte.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 
@@ -40,18 +39,6 @@ EXTERN char *linebuf_scratch INIT( = NULL);
 #else
 # define schar_from_ascii(x) ((schar_T)(x))
 #endif
-
-/// Put a unicode character in a screen cell.
-static inline schar_T schar_from_char(int c)
-{
-  schar_T sc = 0;
-  if (c >= 0x200000) {
-    // TODO(bfredl): this must NEVER happen, even if the file contained overlong sequences
-    c = 0xFFFD;
-  }
-  utf_char2bytes(c, (char *)&sc);
-  return sc;
-}
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "grid.h.generated.h"

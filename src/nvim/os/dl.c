@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <uv.h>
 
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/os/dl.h"

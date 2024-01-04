@@ -18,6 +18,7 @@
 #include "nvim/cursor.h"
 #include "nvim/eval/typval_defs.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/globals.h"
 #include "nvim/keycodes.h"
 #include "nvim/macros_defs.h"

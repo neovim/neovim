@@ -4,7 +4,6 @@
 
 #include "nvim/extmark_defs.h"
 #include "nvim/mark_defs.h"
-#include "nvim/pos_defs.h"
 
 enum { UNDO_HASH_SIZE = 32, };  ///< Size in bytes of the hash used in the undo file.
 

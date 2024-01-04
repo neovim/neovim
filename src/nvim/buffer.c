@@ -32,6 +32,7 @@
 #include "nvim/ascii_defs.h"
 #include "nvim/assert_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
@@ -43,21 +44,26 @@
 #include "nvim/digraph.h"
 #include "nvim/drawscreen.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
+#include "nvim/ex_eval_defs.h"
 #include "nvim/ex_getln.h"
 #include "nvim/extmark.h"
 #include "nvim/file_search.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/getchar.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/hashtab.h"
+#include "nvim/hashtab_defs.h"
 #include "nvim/help.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
@@ -65,25 +71,33 @@
 #include "nvim/map_defs.h"
 #include "nvim/mapping.h"
 #include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile_defs.h"
+#include "nvim/memline.h"
+#include "nvim/memline_defs.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/os/fs.h"
+#include "nvim/os/fs_defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/path.h"
 #include "nvim/plines.h"
 #include "nvim/pos_defs.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
+#include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
+#include "nvim/runtime_defs.h"
 #include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/state_defs.h"
@@ -4136,4 +4150,50 @@ int buf_open_scratch(handle_T bufnr, char *bufname)
   set_option_value_give_err(kOptSwapfile, BOOLEAN_OPTVAL(false), OPT_LOCAL);
   RESET_BINDING(curwin);
   return OK;
+}
+
+bool buf_is_empty(buf_T *buf)
+{
+  return buf->b_ml.ml_line_count == 1 && *ml_get_buf(buf, 1) == '\0';
+}
+
+/// Increment b:changedtick value
+///
+/// Also checks b: for consistency in case of debug build.
+///
+/// @param[in,out]  buf  Buffer to increment value in.
+void buf_inc_changedtick(buf_T *const buf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  buf_set_changedtick(buf, buf_get_changedtick(buf) + 1);
+}
+
+/// Set b:changedtick, also checking b: for consistency in debug build
+///
+/// @param[out]  buf  Buffer to set changedtick in.
+/// @param[in]  changedtick  New value.
+void buf_set_changedtick(buf_T *const buf, const varnumber_T changedtick)
+  FUNC_ATTR_NONNULL_ALL
+{
+  typval_T old_val = buf->changedtick_di.di_tv;
+
+#ifndef NDEBUG
+  dictitem_T *const changedtick_di = tv_dict_find(buf->b_vars, S_LEN("changedtick"));
+  assert(changedtick_di != NULL);
+  assert(changedtick_di->di_tv.v_type == VAR_NUMBER);
+  assert(changedtick_di->di_tv.v_lock == VAR_FIXED);
+  // For some reason formatc does not like the below.
+# ifndef UNIT_TESTING_LUA_PREPROCESSING
+  assert(changedtick_di->di_flags == (DI_FLAGS_RO|DI_FLAGS_FIX));
+# endif
+  assert(changedtick_di == (dictitem_T *)&buf->changedtick_di);
+#endif
+  buf->changedtick_di.di_tv.vval.v_number = changedtick;
+
+  if (tv_dict_is_watched(buf->b_vars)) {
+    tv_dict_watcher_notify(buf->b_vars,
+                           (char *)buf->changedtick_di.di_key,
+                           &buf->changedtick_di.di_tv,
+                           &old_val);
+  }
 }

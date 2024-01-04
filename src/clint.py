@@ -853,17 +853,12 @@ def CheckIncludes(filename, lines, error):
     check_includes_ignore = [
             "src/nvim/api/private/validate.h",
             "src/nvim/assert_defs.h",
-            "src/nvim/buffer.h",
             "src/nvim/channel.h",
             "src/nvim/charset.h",
-            "src/nvim/eval/encode.h",
             "src/nvim/eval/typval.h",
-            "src/nvim/eval/typval_defs.h",
-            "src/nvim/event/libuv_process.h",
             "src/nvim/event/multiqueue.h",
             "src/nvim/garray.h",
             "src/nvim/globals.h",
-            "src/nvim/grid.h",
             "src/nvim/highlight.h",
             "src/nvim/lua/executor.h",
             "src/nvim/main.h",
@@ -872,18 +867,17 @@ def CheckIncludes(filename, lines, error):
             "src/nvim/msgpack_rpc/unpacker.h",
             "src/nvim/option.h",
             "src/nvim/os/pty_conpty_win.h",
-            "src/nvim/os/pty_process_unix.h",
             "src/nvim/os/pty_process_win.h",
-            "src/nvim/tui/input.h",
-            "src/nvim/viml/parser/expressions.h",
-            "src/nvim/viml/parser/parser.h",
                              ]
 
     skip_headers = [
             "auto/config.h",
             "klib/klist.h",
             "klib/kvec.h",
+            "mpack/mpack_core.h",
+            "mpack/object.h",
             "nvim/func_attr.h",
+            "termkey/termkey.h",
             ]
 
     for i in check_includes_ignore:

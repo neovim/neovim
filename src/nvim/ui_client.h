@@ -4,15 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "nvim/api/private/defs.h"
 #include "nvim/grid_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/types_defs.h"
-
-typedef struct {
-  const char *name;
-  void (*fn)(Array args);
-} UIClientHandler;
+#include "nvim/ui_defs.h"  // IWYU pragma: keep
 
 // Temporary buffer for converting a single grid_line event
 EXTERN size_t grid_line_buf_size INIT( = 0);

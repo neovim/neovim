@@ -9,7 +9,6 @@
 #include "nvim/ex_cmds_defs.h"  // IWYU pragma: keep
 #include "nvim/func_attr.h"
 #include "nvim/macros_defs.h"
-#include "nvim/map_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/usercmd.h"  // IWYU pragma: keep
 

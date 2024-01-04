@@ -1,14 +1,14 @@
 #pragma once
 
-#include <stddef.h>  // IWYU pragma: keep
-#include <stdint.h>  // IWYU pragma: keep
-#include <uv.h>  // IWYU pragma: keep
+#include <stddef.h>
+#include <stdint.h>
+#include <uv.h>
 
-#include "nvim/cmdexpand_defs.h"  // IWYU pragma: keep
-#include "nvim/garray_defs.h"  // IWYU pragma: keep
-#include "nvim/os/os_defs.h"  // IWYU pragma: export
-#include "nvim/os/stdpaths_defs.h"  // IWYU pragma: keep
-#include "nvim/types_defs.h"  // IWYU pragma: keep
+#include "nvim/cmdexpand_defs.h"
+#include "nvim/garray_defs.h"
+#include "nvim/os/os_defs.h"
+#include "nvim/os/stdpaths_defs.h"
+#include "nvim/types_defs.h"
 
 extern char *default_vim_dir;
 extern char *default_vimruntime_dir;

@@ -3,11 +3,6 @@
 #include <stdbool.h>
 
 #include "nvim/autocmd_defs.h"
-#include "nvim/eval/typval_defs.h"
-#include "nvim/ex_eval_defs.h"
-#include "nvim/garray_defs.h"
-#include "nvim/pos_defs.h"
-#include "nvim/types_defs.h"
 
 typedef enum {
   ETYPE_TOP,       ///< toplevel

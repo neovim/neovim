@@ -20,6 +20,7 @@
 #include "nvim/grid.h"
 #include "nvim/highlight_group.h"
 #include "nvim/marktree.h"
+#include "nvim/marktree_defs.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"

@@ -16,7 +16,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "nvim/rbuffer_defs.h"  // IWYU pragma: export
+#include "nvim/rbuffer_defs.h"  // IWYU pragma: keep
 
 // Macros that simplify working with the read/write pointers directly by hiding
 // ring buffer wrap logic. Some examples:

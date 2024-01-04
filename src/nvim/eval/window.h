@@ -6,7 +6,7 @@
 #include "nvim/eval/typval_defs.h"  // IWYU pragma: keep
 #include "nvim/os/os_defs.h"
 #include "nvim/pos_defs.h"
-#include "nvim/types_defs.h"  // IWYU pragma: keep
+#include "nvim/types_defs.h"
 
 /// Structure used by switch_win() to pass values to restore_win()
 typedef struct {

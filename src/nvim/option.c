@@ -30,8 +30,11 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/ascii_defs.h"
+#include "nvim/assert_defs.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/cmdexpand.h"
@@ -51,9 +54,11 @@
 #include "nvim/ex_session.h"
 #include "nvim/fold.h"
 #include "nvim/garray.h"
-#include "nvim/gettext.h"
+#include "nvim/garray_defs.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/highlight_group.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
@@ -63,6 +68,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/macros_defs.h"
 #include "nvim/mapping.h"
+#include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"
 #include "nvim/memline.h"
@@ -79,10 +85,12 @@
 #include "nvim/os/input.h"
 #include "nvim/os/lang.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/popupmenu.h"
 #include "nvim/pos_defs.h"
 #include "nvim/regexp.h"
+#include "nvim/regexp_defs.h"
 #include "nvim/runtime.h"
 #include "nvim/search.h"
 #include "nvim/spell.h"
@@ -94,7 +102,9 @@
 #include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_defs.h"
 #include "nvim/undo.h"
+#include "nvim/undo_defs.h"
 #include "nvim/vim_defs.h"
 #include "nvim/window.h"
 
@@ -6398,4 +6408,25 @@ static Dictionary vimoption2dict(vimoption_T *opt, int req_scope, buf_T *buf, wi
   PUT(dict, "allows_duplicates", BOOLEAN_OBJ(!(opt->flags & P_NODUP)));
 
   return dict;
+}
+
+/// Check if option is multitype (supports multiple types).
+static bool option_is_multitype(OptIndex opt_idx)
+{
+  const OptTypeFlags type_flags = get_option(opt_idx)->type_flags;
+  assert(type_flags != 0);
+  return !is_power_of_two(type_flags);
+}
+
+/// Check if option supports a specific type.
+bool option_has_type(OptIndex opt_idx, OptValType type)
+{
+  // Ensure that type flags variable can hold all types.
+  STATIC_ASSERT(kOptValTypeSize <= sizeof(OptTypeFlags) * 8,
+                "Option type_flags cannot fit all option types");
+  // Ensure that the type is valid before accessing type_flags.
+  assert(type > kOptValTypeNil && type < kOptValTypeSize);
+  // Bitshift 1 by the value of type to get the type's corresponding flag, and check if it's set in
+  // the type_flags bit field.
+  return get_option(opt_idx)->type_flags & (1 << type);
 }

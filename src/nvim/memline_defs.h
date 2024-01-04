@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nvim/memfile_defs.h"
+#include "nvim/pos_defs.h"
 
 ///
 /// When searching for a specific line, we remember what blocks in the tree

@@ -19,7 +19,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/eval/vars.h"
 #include "nvim/ex_eval.h"
-#include "nvim/garray.h"
+#include "nvim/garray_defs.h"
 #include "nvim/globals.h"
 #include "nvim/highlight_group.h"
 #include "nvim/lua/executor.h"
@@ -27,11 +27,13 @@
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/memory_defs.h"
 #include "nvim/message.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/pos_defs.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_defs.h"
 #include "nvim/version.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

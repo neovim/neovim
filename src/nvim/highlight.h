@@ -4,8 +4,8 @@
 
 #include "nvim/api/keysets_defs.h"  // IWYU pragma: keep
 #include "nvim/api/private/defs.h"  // IWYU pragma: keep
-#include "nvim/buffer_defs.h"  // IWYU pragma: keep
-#include "nvim/highlight_defs.h"  // IWYU pragma: export
+#include "nvim/buffer_defs.h"
+#include "nvim/highlight_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/option_vars.h"
 #include "nvim/types_defs.h"

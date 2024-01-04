@@ -4,11 +4,14 @@
 #include <uv.h>
 
 #include "nvim/eval/typval.h"
+#include "nvim/event/defs.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/process.h"
 #include "nvim/log.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
+#include "nvim/types_defs.h"
 #include "nvim/ui_client.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -125,4 +128,12 @@ static void exit_cb(uv_process_t *handle, int64_t status, int term_signal)
 #endif
   proc->status = term_signal ? 128 + term_signal : (int)status;
   proc->internal_exit_cb(proc);
+}
+
+LibuvProcess libuv_process_init(Loop *loop, void *data)
+{
+  LibuvProcess rv = {
+    .process = process_init(loop, kProcessTypeUv, data)
+  };
+  return rv;
 }

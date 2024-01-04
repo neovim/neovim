@@ -12,7 +12,7 @@
 #include <uv.h>
 
 #include "auto/config.h"
-#include "nvim/gettext.h"
+#include "nvim/gettext_defs.h"
 #include "nvim/globals.h"
 #include "nvim/log.h"
 #include "nvim/macros_defs.h"
@@ -22,6 +22,7 @@
 #include "nvim/os/fs.h"
 #include "nvim/os/os_defs.h"
 #include "nvim/rbuffer.h"
+#include "nvim/rbuffer_defs.h"
 #include "nvim/types_defs.h"
 
 #ifdef MSWIN

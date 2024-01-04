@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "nvim/api/private/defs.h"  // IWYU pragma: export
+#include "nvim/api/private/defs.h"  // IWYU pragma: keep
 #include "nvim/api/private/helpers.h"
 #include "nvim/assert_defs.h"
 #include "nvim/macros_defs.h"

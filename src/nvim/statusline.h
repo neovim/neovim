@@ -4,7 +4,7 @@
 
 #include "nvim/macros_defs.h"
 #include "nvim/option_defs.h"  // IWYU pragma: keep
-#include "nvim/statusline_defs.h"  // IWYU pragma: export
+#include "nvim/statusline_defs.h"  // IWYU pragma: keep
 #include "nvim/types_defs.h"  // IWYU pragma: keep
 
 /// Array defining what should be done when tabline is clicked

@@ -9,14 +9,14 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/validate.h"
 #include "nvim/autocmd.h"
+#include "nvim/autocmd_defs.h"
 #include "nvim/buffer.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/globals.h"
-#include "nvim/macros_defs.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
 #include "nvim/types_defs.h"
 #include "nvim/vim_defs.h"
-#include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/options.c.generated.h"

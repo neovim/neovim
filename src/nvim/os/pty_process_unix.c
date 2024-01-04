@@ -32,6 +32,7 @@
 #include "auto/config.h"
 #include "klib/klist.h"
 #include "nvim/eval/typval.h"
+#include "nvim/event/defs.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/process.h"
 #include "nvim/log.h"
@@ -39,6 +40,7 @@
 #include "nvim/os/os_defs.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/os/pty_process_unix.h"
+#include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/pty_process_unix.c.generated.h"
@@ -402,4 +404,14 @@ static void chld_handler(uv_signal_t *handle, int signum)
     }
     proc->internal_exit_cb(proc);
   }
+}
+
+PtyProcess pty_process_init(Loop *loop, void *data)
+{
+  PtyProcess rv;
+  rv.process = process_init(loop, kProcessTypePty, data);
+  rv.width = 80;
+  rv.height = 24;
+  rv.tty_fd = -1;
+  return rv;
 }

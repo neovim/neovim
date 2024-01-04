@@ -2,7 +2,6 @@
 
 #include "nvim/eval/typval_defs.h"
 #include "nvim/os/time_defs.h"
-#include "nvim/pos_defs.h"
 
 // marks: positions in a file
 // (a normal mark is a lnum/col pair, the same as a file position)

@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include "klib/kvec.h"
-#include "nvim/decoration_defs.h"  // IWYU pragma: export
+#include "nvim/decoration_defs.h"  // IWYU pragma: keep
 #include "nvim/macros_defs.h"
 #include "nvim/marktree_defs.h"
 #include "nvim/pos_defs.h"  // IWYU pragma: keep

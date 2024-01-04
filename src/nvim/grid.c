@@ -22,14 +22,17 @@
 #include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
+#include "nvim/highlight_defs.h"
 #include "nvim/log.h"
 #include "nvim/map_defs.h"
+#include "nvim/mbyte.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/option_vars.h"
 #include "nvim/optionstr.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
+#include "nvim/ui_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "grid.c.generated.h"
@@ -1064,4 +1067,16 @@ win_T *get_win_by_grid_handle(handle_T handle)
     }
   }
   return NULL;
+}
+
+/// Put a unicode character in a screen cell.
+schar_T schar_from_char(int c)
+{
+  schar_T sc = 0;
+  if (c >= 0x200000) {
+    // TODO(bfredl): this must NEVER happen, even if the file contained overlong sequences
+    c = 0xFFFD;
+  }
+  utf_char2bytes(c, (char *)&sc);
+  return sc;
 }

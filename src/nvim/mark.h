@@ -7,7 +7,7 @@
 #include "nvim/extmark_defs.h"  // IWYU pragma: keep
 #include "nvim/func_attr.h"
 #include "nvim/macros_defs.h"
-#include "nvim/mark_defs.h"  // IWYU pragma: export
+#include "nvim/mark_defs.h"  // IWYU pragma: keep
 #include "nvim/os/time.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

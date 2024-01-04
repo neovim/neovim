@@ -14,12 +14,14 @@
 #include "nvim/context.h"
 #include "nvim/eval/encode.h"
 #include "nvim/eval/typval.h"
+#include "nvim/eval/typval_defs.h"
 #include "nvim/eval/userfunc.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/hashtab.h"
 #include "nvim/keycodes.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
+#include "nvim/option_defs.h"
 #include "nvim/shada.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

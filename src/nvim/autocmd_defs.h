@@ -4,13 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "klib/kvec.h"
-#include "nvim/api/private/defs.h"
 #include "nvim/buffer_defs.h"
-#include "nvim/eval/typval_defs.h"
 #include "nvim/ex_cmds_defs.h"
-#include "nvim/regexp_defs.h"
-#include "nvim/types_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "auevents_enum.generated.h"

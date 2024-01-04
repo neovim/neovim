@@ -13,7 +13,7 @@
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/macros_defs.h"
-#include "nvim/mark.h"
+#include "nvim/mark_defs.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"

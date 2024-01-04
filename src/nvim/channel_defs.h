@@ -3,13 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "nvim/eval/typval_defs.h"
 #include "nvim/event/defs.h"
-#include "nvim/garray_defs.h"
-#include "nvim/macros_defs.h"
-#include "nvim/map_defs.h"
-#include "nvim/msgpack_rpc/channel_defs.h"
-#include "nvim/types_defs.h"
 
 #define CHAN_STDIO 1
 #define CHAN_STDERR 2
