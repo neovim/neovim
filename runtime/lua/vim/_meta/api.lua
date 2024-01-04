@@ -155,7 +155,8 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---                    will be `nvim_buf_changedtick_event`. Not for Lua
 ---                    callbacks.
 --- @param opts vim.api.keyset.buf_attach Optional parameters.
----                    • on_lines: Lua callback invoked on change. Return `true` to detach. Args:
+---                    • on_lines: Lua callback invoked on change. Return `true` to
+---                      detach. Args:
 ---                      • the string "lines"
 ---                      • buffer handle
 ---                      • b:changedtick
@@ -168,7 +169,8 @@ function vim.api.nvim_buf_add_highlight(buffer, ns_id, hl_group, line, col_start
 ---
 ---                    • on_bytes: Lua callback invoked on change. This
 ---                      callback receives more granular information about the
----                      change compared to on_lines. Return `true` to detach. Args:
+---                      change compared to on_lines. Return `true` to
+---                      detach. Args:
 ---                      • the string "bytes"
 ---                      • buffer handle
 ---                      • b:changedtick
@@ -530,7 +532,8 @@ function vim.api.nvim_buf_line_count(buffer) end
 ---                 wrapped lines.
 ---               • hl_mode : control how highlights are combined with the
 ---                 highlights of the text. Currently only affects virt_text
----                 highlights, but might affect `hl_group` in later versions.
+---                 highlights, but might affect `hl_group` in
+---                 later versions.
 ---                 • "replace": only show the virt_text color. This is the
 ---                   default.
 ---                 • "combine": combine with background text color.
@@ -740,7 +743,8 @@ function vim.api.nvim_chan_send(chan, data) end
 ---               • NOTE: Cannot be used with {pattern}
 ---
 ---             • group: (string|int) The augroup name or id.
----               • NOTE: If not passed, will only delete autocmds not in any group.
+---               • NOTE: If not passed, will only delete autocmds not in any
+---                 group.
 function vim.api.nvim_clear_autocmds(opts) end
 
 --- Executes an Ex command.
@@ -808,7 +812,9 @@ function vim.api.nvim_complete_set(index, opts) end
 --- @return integer
 function vim.api.nvim_create_augroup(name, opts) end
 
---- Creates an `autocommand` event handler, defined by `callback` (Lua function or Vimscript function name string) or `command` (Ex command string).
+--- Creates an `autocommand` event handler, defined by `callback` (Lua
+--- function or Vimscript function name string) or `command` (Ex command
+--- string).
 --- Example using Lua callback:
 ---
 --- ```lua
@@ -1525,8 +1531,8 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---               • height: Window height (in character cells). Minimum of 1.
 ---               • bufpos: Places float relative to buffer text (only when
 ---                 relative="win"). Takes a tuple of zero-indexed [line,
----                 column]. `row` and `col` if given are applied relative to this position, else they
----                 default to:
+---                 column]. `row` and `col` if given are
+---                 applied relative to this position, else they default to:
 ---                 • `row=1` and `col=0` if `anchor` is "NW" or "NE"
 ---                 • `row=0` and `col=0` if `anchor` is "SW" or "SE" (thus
 ---                   like a tooltip near the buffer text).
@@ -1541,8 +1547,9 @@ function vim.api.nvim_open_term(buffer, opts) end
 ---               • external: GUI should display the window as an external
 ---                 top-level window. Currently accepts no other positioning
 ---                 configuration together with this.
----               • zindex: Stacking order. floats with higher `zindex` go on top on floats with lower indices. Must be larger
----                 than zero. The following screen elements have hard-coded
+---               • zindex: Stacking order. floats with higher `zindex` go on
+---                 top on floats with lower indices. Must be larger than
+---                 zero. The following screen elements have hard-coded
 ---                 z-indices:
 ---                 • 100: insert completion popupmenu
 ---                 • 200: message scrollback
@@ -1661,7 +1668,8 @@ function vim.api.nvim_parse_expression(expr, flags, highlight) end
 --- @param data string Multiline input. May be binary (containing NUL bytes).
 --- @param crlf boolean Also break lines at CR and CRLF.
 --- @param phase integer -1: paste in a single call (i.e. without streaming). To
----              "stream" a paste, call `nvim_paste` sequentially with these `phase` values:
+---              "stream" a paste, call `nvim_paste` sequentially
+---              with these `phase` values:
 ---              • 1: starts the paste (exactly once)
 ---              • 2: continues the paste (zero or more times)
 ---              • 3: ends the paste (exactly once)

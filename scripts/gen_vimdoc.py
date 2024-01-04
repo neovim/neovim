@@ -34,7 +34,7 @@ The generated :help text for each function is formatted as follows:
   - Each function documentation is separated by a single line.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # PEP-563, python 3.7+
 
 import argparse
 import collections
@@ -47,8 +47,11 @@ import subprocess
 import sys
 import textwrap
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Literal, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 from xml.dom import minidom
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
 
 import msgpack
 
@@ -165,7 +168,7 @@ class Config:
 
 CONFIG: Dict[str, Config] = {
     'api': Config(
-        mode = 'c',
+        mode='c',
         filename = 'api.txt',
         # Section ordering.
         section_order=[x for x in [
@@ -576,7 +579,7 @@ def is_inline(n):
     return True
 
 
-def doc_wrap(text, prefix='', width=70, func=False, indent=None):
+def doc_wrap(text, prefix='', width=70, func=False, indent=None) -> str:
     """Wraps text to `width`.
 
     First line is prefixed with `prefix`, subsequent lines are aligned.
@@ -651,12 +654,18 @@ def update_params_map(parent, ret_map, width=text_width - indentation):
     return ret_map
 
 
-def render_node(n, text, prefix='', indent='', width=text_width - indentation,
-                fmt_vimhelp=False):
+def render_node(n: Element, text: str, prefix='', *,
+                indent: str = '',
+                width: int = (text_width - indentation),
+                fmt_vimhelp: bool = False):
     """Renders a node as Vim help text, recursively traversing all descendants."""
 
     def ind(s):
         return s if fmt_vimhelp else ''
+
+    # Get the current column offset from the last line of `text`
+    # (needed to appropriately wrap multiple and contiguous inline elements)
+    col_offset: int = len_lastline(text)
 
     text = ''
     # space_preceding = (len(text) > 0 and ' ' == text[-1][-1])
@@ -682,7 +691,14 @@ def render_node(n, text, prefix='', indent='', width=text_width - indentation,
 
         text += '\n{}\n<'.format(textwrap.indent(o, ' ' * 4))
     elif is_inline(n):
-        text = doc_wrap(get_text(n), prefix=prefix, indent=indent, width=width)
+        o = get_text(n).strip()
+        if o:
+            DEL = chr(127)  # a dummy character to pad for proper line wrap
+            assert len(DEL) == 1
+            dummy_padding = DEL * max(0, col_offset - len(prefix))
+            text += doc_wrap(dummy_padding + o,
+                             prefix=prefix, indent=indent, width=width
+                            ).replace(DEL, "")
     elif n.nodeName == 'verbatim':
         # TODO: currently we don't use this. The "[verbatim]" hint is there as
         # a reminder that we must decide how to format this if we do use it.
