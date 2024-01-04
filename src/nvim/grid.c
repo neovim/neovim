@@ -334,6 +334,9 @@ static int grid_line_coloff = 0;
 static int grid_line_maxcol = 0;
 static int grid_line_first = INT_MAX;
 static int grid_line_last = 0;
+static int grid_line_clear_to = 0;
+static int grid_line_clear_attr = 0;
+static bool grid_line_rl = false;
 
 /// Start a group of grid_line_puts calls that builds a single grid line.
 ///
@@ -342,14 +345,18 @@ static int grid_line_last = 0;
 void grid_line_start(ScreenGrid *grid, int row)
 {
   int col = 0;
+  grid_line_maxcol = grid->cols;
   grid_adjust(&grid, &row, &col);
   assert(grid_line_grid == NULL);
   grid_line_row = row;
   grid_line_grid = grid;
   grid_line_coloff = col;
   grid_line_first = (int)linebuf_size;
-  grid_line_maxcol = grid->cols - grid_line_coloff;
+  grid_line_maxcol = MIN(grid_line_maxcol, grid->cols - grid_line_coloff);
   grid_line_last = 0;
+  grid_line_clear_to = 0;
+  grid_line_clear_attr = 0;
+  grid_line_rl = false;
 
   assert((size_t)grid_line_maxcol <= linebuf_size);
 
@@ -465,11 +472,11 @@ int grid_line_puts(int col, const char *text, int textlen, int attr)
   return col - start_col;
 }
 
-void grid_line_fill(int start_col, int end_col, schar_T sc, int attr)
+int grid_line_fill(int start_col, int end_col, schar_T sc, int attr)
 {
   end_col = MIN(end_col, grid_line_maxcol);
   if (start_col >= end_col) {
-    return;
+    return end_col;
   }
 
   for (int col = start_col; col < end_col; col++) {
@@ -480,6 +487,17 @@ void grid_line_fill(int start_col, int end_col, schar_T sc, int attr)
 
   grid_line_first = MIN(grid_line_first, start_col);
   grid_line_last = MAX(grid_line_last, end_col);
+  return end_col;
+}
+
+void grid_line_clear_end(int start_col, int end_col, int attr)
+{
+  if (grid_line_first > start_col) {
+    grid_line_first = start_col;
+    grid_line_last = start_col;
+  }
+  grid_line_clear_to = end_col;
+  grid_line_clear_attr = attr;
 }
 
 /// move the cursor to a position in a currently rendered line.
@@ -490,13 +508,15 @@ void grid_line_cursor_goto(int col)
 
 void grid_line_mirror(void)
 {
-  if (grid_line_first >= grid_line_last) {
+  grid_line_clear_to = MAX(grid_line_last, grid_line_clear_to);
+  if (grid_line_first >= grid_line_clear_to) {
     return;
   }
-  linebuf_mirror(&grid_line_first, &grid_line_last, grid_line_maxcol);
+  linebuf_mirror(&grid_line_first, &grid_line_last, &grid_line_clear_to, grid_line_maxcol);
+  grid_line_rl = true;
 }
 
-void linebuf_mirror(int *firstp, int *lastp, int maxcol)
+void linebuf_mirror(int *firstp, int *lastp, int *clearp, int maxcol)
 {
   int first = *firstp;
   int last = *lastp;
@@ -529,8 +549,9 @@ void linebuf_mirror(int *firstp, int *lastp, int maxcol)
     linebuf_vcol[mirror - col] = scratch_vcol[col];
   }
 
-  *lastp = maxcol - first;
-  *firstp = maxcol - last;
+  *firstp = maxcol - *clearp;
+  *clearp = maxcol - first;
+  *lastp = maxcol - last;
 }
 
 /// End a group of grid_line_puts calls and send the screen buffer to the UI layer.
@@ -538,13 +559,14 @@ void grid_line_flush(void)
 {
   ScreenGrid *grid = grid_line_grid;
   grid_line_grid = NULL;
-  assert(grid_line_last <= grid_line_maxcol);
-  if (grid_line_first >= grid_line_last) {
+  grid_line_clear_to = MAX(grid_line_last, grid_line_clear_to);
+  assert(grid_line_clear_to <= grid_line_maxcol);
+  if (grid_line_first >= grid_line_clear_to) {
     return;
   }
 
   grid_put_linebuf(grid, grid_line_row, grid_line_coloff, grid_line_first, grid_line_last,
-                   grid_line_last, false, 0, false);
+                   grid_line_clear_to, grid_line_rl, grid_line_clear_attr, false);
 }
 
 /// flush grid line but only if on a valid row
@@ -565,94 +587,15 @@ void grid_line_flush_if_valid_row(void)
 
 void grid_clear(ScreenGrid *grid, int start_row, int end_row, int start_col, int end_col, int attr)
 {
-  grid_fill(grid, start_row, end_row, start_col, end_col, schar_from_ascii(' '),
-            schar_from_ascii(' '), attr);
-}
-
-/// Fill the grid from "start_row" to "end_row" (exclusive), from "start_col"
-/// to "end_col" (exclusive) with character "c1" in first column followed by
-/// "c2" in the other columns.  Use attributes "attr".
-void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col, int end_col, schar_T c1,
-               schar_T c2, int attr)
-{
-  int row_off = 0;
-  int col_off = 0;
-  grid_adjust(&grid, &row_off, &col_off);
-  start_row += row_off;
-  end_row += row_off;
-  start_col += col_off;
-  end_col += col_off;
-
-  // safety check
-  if (end_row > grid->rows) {
-    end_row = grid->rows;
-  }
-  if (end_col > grid->cols) {
-    end_col = grid->cols;
-  }
-
-  // nothing to do
-  if (start_row >= end_row || start_col >= end_col) {
-    return;
-  }
-
   for (int row = start_row; row < end_row; row++) {
-    int dirty_first = INT_MAX;
-    int dirty_last = 0;
-    size_t lineoff = grid->line_offset[row];
-
-    // When drawing over the right half of a double-wide char clear
-    // out the left half.  When drawing over the left half of a
-    // double wide-char clear out the right half.  Only needed in a
-    // terminal.
-    if (start_col > 0 && grid->chars[lineoff + (size_t)start_col] == NUL) {
-      size_t off = lineoff + (size_t)start_col - 1;
-      grid->chars[off] = schar_from_ascii(' ');
-      grid->attrs[off] = attr;
-      dirty_first = start_col - 1;
+    grid_line_start(grid, row);
+    end_col = MIN(end_col, grid_line_maxcol);
+    if (grid_line_row >= grid_line_grid->rows || start_col >= end_col) {
+      grid_line_grid = NULL;  // TODO(bfredl): make callers behave instead
+      return;
     }
-    if (end_col < grid->cols && grid->chars[lineoff + (size_t)end_col] == NUL) {
-      size_t off = lineoff + (size_t)end_col;
-      grid->chars[off] = schar_from_ascii(' ');
-      grid->attrs[off] = attr;
-      dirty_last = end_col + 1;
-    }
-
-    int col = start_col;
-    schar_T sc = c1;
-    for (col = start_col; col < end_col; col++) {
-      size_t off = lineoff + (size_t)col;
-      if (grid->chars[off] != sc || grid->attrs[off] != attr || rdb_flags & RDB_NODELTA) {
-        grid->chars[off] = sc;
-        grid->attrs[off] = attr;
-        if (dirty_first == INT_MAX) {
-          dirty_first = col;
-        }
-        dirty_last = col + 1;
-      }
-      grid->vcols[off] = -1;
-      if (col == start_col) {
-        sc = c2;
-      }
-    }
-    if (dirty_last > dirty_first) {
-      if (grid->throttled) {
-        // Note: assumes msg_grid is the only throttled grid
-        assert(grid == &msg_grid);
-        int dirty = 0;
-        if (attr != HL_ATTR(HLF_MSG) || c2 != ' ') {
-          dirty = dirty_last;
-        } else if (c1 != ' ') {
-          dirty = dirty_first + 1;
-        }
-        if (grid->dirty_col && dirty > grid->dirty_col[row]) {
-          grid->dirty_col[row] = dirty;
-        }
-      } else {
-        int last = c2 != ' ' ? dirty_last : dirty_first + (c1 != ' ');
-        ui_line(grid, row, dirty_first, last, dirty_last, attr, false);
-      }
-    }
+    grid_line_clear_end(start_col, end_col, attr);
+    grid_line_flush();
   }
 }
 
@@ -712,19 +655,12 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
     col--;
   }
 
+  int clear_start = endcol;
   if (rl) {
-    // Clear rest first, because it's left of the text.
-    if (clear_width > 0) {
-      while (col <= endcol && grid->chars[off_to + (size_t)col] == schar_from_ascii(' ')
-             && grid->attrs[off_to + (size_t)col] == bg_attr) {
-        col++;
-      }
-      if (col <= endcol) {
-        grid_clear(grid, row, row + 1, col + coloff, endcol + coloff + 1, bg_attr);
-      }
-    }
-    col = endcol + 1;
+    clear_start = col;
+    col = endcol;
     endcol = clear_width;
+    clear_width = col;
   }
 
   if (p_arshape && !p_tbidi && endcol > col) {
@@ -797,45 +733,49 @@ void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int col, int endcol
     end_dirty++;
   }
 
-  int clear_end = -1;
-  if (clear_width > 0 && !rl) {
-    // blank out the rest of the line
-    // TODO(bfredl): we could cache winline widths
-    while (col < clear_width) {
-      size_t off = (size_t)col + off_to;
-      if (grid->chars[off] != schar_from_ascii(' ')
-          || grid->attrs[off] != bg_attr
-          || rdb_flags & RDB_NODELTA) {
-        grid->chars[off] = schar_from_ascii(' ');
-        grid->attrs[off] = bg_attr;
-        if (start_dirty == -1) {
-          start_dirty = col;
-          end_dirty = col;
-        } else if (clear_end == -1) {
-          end_dirty = endcol;
-        }
-        clear_end = col + 1;
+  int clear_dirty_start = -1, clear_end = -1;
+  // blank out the rest of the line
+  // TODO(bfredl): we could cache winline widths
+  col = clear_start;
+  while (col < clear_width) {
+    size_t off = (size_t)col + off_to;
+    if (grid->chars[off] != schar_from_ascii(' ')
+        || grid->attrs[off] != bg_attr
+        || rdb_flags & RDB_NODELTA) {
+      grid->chars[off] = schar_from_ascii(' ');
+      grid->attrs[off] = bg_attr;
+      if (clear_dirty_start == -1) {
+        clear_dirty_start = col;
       }
-      grid->vcols[off] = MAXCOL;
-      col++;
+      clear_end = col + 1;
+    }
+    grid->vcols[off] = MAXCOL;
+    col++;
+  }
+
+  if (rl && start_dirty != -1 && clear_dirty_start != -1) {
+    if (grid->throttled || clear_dirty_start >= start_dirty - 5) {
+      // cannot draw now or too small to be worth a separate "clear" event
+      start_dirty = clear_dirty_start;
+    } else {
+      ui_line(grid, row, invalid_row, coloff + clear_dirty_start, coloff + clear_dirty_start,
+              coloff + clear_end, bg_attr, wrap);
+    }
+    clear_end = end_dirty;
+  } else {
+    if (start_dirty == -1) {  // clear only
+      start_dirty = clear_dirty_start;
+      end_dirty = clear_dirty_start;
+    } else if (clear_end < end_dirty) {  // put only
+      clear_end = end_dirty;
+    } else {
+      end_dirty = endcol;
     }
   }
 
-  if (clear_end < end_dirty) {
-    clear_end = end_dirty;
-  }
-  if (start_dirty == -1) {
-    start_dirty = end_dirty;
-  }
   if (clear_end > start_dirty) {
     if (!grid->throttled) {
-      int start_pos = coloff + start_dirty;
-      // When drawing over the right half of a double-wide char clear out the
-      // left half.  Only needed in a terminal.
-      if (invalid_row && start_pos == 0) {
-        start_pos = -1;
-      }
-      ui_line(grid, row, start_pos, coloff + end_dirty, coloff + clear_end,
+      ui_line(grid, row, invalid_row, coloff + start_dirty, coloff + end_dirty, coloff + clear_end,
               bg_attr, wrap);
     } else if (grid->dirty_col) {
       // TODO(bfredl): really get rid of the extra pseudo terminal in message.c

@@ -204,6 +204,7 @@ void msg_grid_validate(void)
   } else if (msg_grid.chars && !msg_scrolled && msg_grid_pos != max_rows) {
     msg_grid_set_pos(max_rows, false);
   }
+  msg_grid_adj.cols = Columns;
 
   if (msg_grid.chars && !msg_scrolled && cmdline_row < msg_grid_pos) {
     // TODO(bfredl): this should already be the case, but fails in some
@@ -2349,7 +2350,7 @@ void msg_scroll_flush(void)
     for (int i = MAX(Rows - MAX(delta, 1), 0); i < Rows; i++) {
       int row = i - msg_grid_pos;
       assert(row >= 0);
-      ui_line(&msg_grid, row, 0, msg_grid.dirty_col[row], msg_grid.cols,
+      ui_line(&msg_grid, row, false, 0, msg_grid.dirty_col[row], msg_grid.cols,
               HL_ATTR(HLF_MSG), false);
       msg_grid.dirty_col[row] = 0;
     }

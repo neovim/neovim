@@ -1296,9 +1296,11 @@ static void draw_vsep_win(win_T *wp)
   }
 
   // draw the vertical separator right of this window
-  int hl = win_hl_attr(wp, HLF_C);
-  schar_T c = wp->w_p_fcs_chars.vert;
-  grid_fill(&default_grid, wp->w_winrow, W_ENDROW(wp), W_ENDCOL(wp), W_ENDCOL(wp) + 1, c, c, hl);
+  for (int row = wp->w_winrow; row < W_ENDROW(wp); row++) {
+    grid_line_start(&default_grid, row);
+    grid_line_put_schar(W_ENDCOL(wp), wp->w_p_fcs_chars.vert, win_hl_attr(wp, HLF_C));
+    grid_line_flush();
+  }
 }
 
 /// Draw the horizontal separator below window "wp"
@@ -1309,9 +1311,9 @@ static void draw_hsep_win(win_T *wp)
   }
 
   // draw the horizontal separator below this window
-  int hl = win_hl_attr(wp, HLF_C);
-  schar_T c = wp->w_p_fcs_chars.horiz;
-  grid_fill(&default_grid, W_ENDROW(wp), W_ENDROW(wp) + 1, wp->w_wincol, W_ENDCOL(wp), c, c, hl);
+  grid_line_start(&default_grid, W_ENDROW(wp));
+  grid_line_fill(wp->w_wincol, W_ENDCOL(wp), wp->w_p_fcs_chars.horiz, win_hl_attr(wp, HLF_C));
+  grid_line_flush();
 }
 
 /// Get the separator connector for specified window corner of window "wp"
@@ -2395,7 +2397,7 @@ static void win_update(win_T *wp)
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
-      win_draw_end(wp, wp->w_p_fcs_chars.lastline, schar_from_ascii(' '), true, srow,
+      win_draw_end(wp, wp->w_p_fcs_chars.lastline, true, srow,
                    wp->w_grid.rows, HLF_AT);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
@@ -2429,7 +2431,7 @@ static void win_update(win_T *wp)
       lastline = 0;
     }
 
-    win_draw_end(wp, wp->w_p_fcs_chars.eob, schar_from_ascii(' '), false, MAX(lastline, row),
+    win_draw_end(wp, wp->w_p_fcs_chars.eob, false, MAX(lastline, row),
                  wp->w_grid.rows,
                  HLF_EOB);
     set_empty_rows(wp, row);
@@ -2517,60 +2519,43 @@ void win_scroll_lines(win_T *wp, int row, int line_count)
   }
 }
 
-/// Call grid_clear() with columns adjusted for 'rightleft' if needed.
-/// Return the new offset.
-static int win_clear_end(win_T *wp, int off, int width, int row, int endrow, int attr)
-{
-  int nn = off + width;
-  const int endcol = wp->w_grid.cols;
-
-  if (nn > endcol) {
-    nn = endcol;
-  }
-
-  if (wp->w_p_rl) {
-    grid_clear(&wp->w_grid, row, endrow, endcol - nn, endcol - off, attr);
-  } else {
-    grid_clear(&wp->w_grid, row, endrow, off, nn, attr);
-  }
-
-  return nn;
-}
-
 /// Clear lines near the end of the window and mark the unused lines with "c1".
-/// Use "c2" as filler character.
 /// When "draw_margin" is true, then draw the sign/fold/number columns.
-void win_draw_end(win_T *wp, schar_T c1, schar_T c2, bool draw_margin, int row, int endrow,
-                  hlf_T hl)
+void win_draw_end(win_T *wp, schar_T c1, bool draw_margin, int startrow, int endrow, hlf_T hl)
 {
   assert(hl >= 0 && hl < HLF_COUNT);
-  int n = 0;
+  for (int row = startrow; row < endrow; row++) {
+    grid_line_start(&wp->w_grid, row);
 
-  if (draw_margin) {
-    // draw the fold column
-    int fdc = compute_foldcolumn(wp, 0);
-    if (fdc > 0) {
-      n = win_clear_end(wp, n, fdc, row, endrow, win_hl_attr(wp, HLF_FC));
-    }
-    // draw the sign column
-    int count = wp->w_scwidth;
-    if (count > 0) {
-      n = win_clear_end(wp, n, SIGN_WIDTH * count, row, endrow, win_hl_attr(wp, HLF_SC));
-    }
-    // draw the number column
-    if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
-      n = win_clear_end(wp, n, number_width(wp) + 1, row, endrow, win_hl_attr(wp, HLF_N));
-    }
-  }
+    int n = 0;
+    if (draw_margin) {
+      // draw the fold column
+      int fdc = MAX(0, compute_foldcolumn(wp, 0));
+      n = grid_line_fill(n, n + fdc, schar_from_ascii(' '), win_hl_attr(wp, HLF_FC));
 
-  int attr = hl_combine_attr(win_bg_attr(wp), win_hl_attr(wp, (int)hl));
+      // draw the sign column
+      n = grid_line_fill(n, n + wp->w_scwidth, schar_from_ascii(' '), win_hl_attr(wp, HLF_FC));
 
-  const int endcol = wp->w_grid.cols;
-  if (wp->w_p_rl) {
-    grid_fill(&wp->w_grid, row, endrow, 0, endcol - 1 - n, c2, c2, attr);
-    grid_fill(&wp->w_grid, row, endrow, endcol - 1 - n, endcol - n, c1, c2, attr);
-  } else {
-    grid_fill(&wp->w_grid, row, endrow, n, endcol, c1, c2, attr);
+      // draw the number column
+      if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
+        int width = number_width(wp) + 1;
+        n = grid_line_fill(n, n + width, schar_from_ascii(' '), win_hl_attr(wp, HLF_N));
+      }
+    }
+
+    int attr = hl_combine_attr(win_bg_attr(wp), win_hl_attr(wp, (int)hl));
+
+    if (n < wp->w_grid.cols) {
+      grid_line_put_schar(n, c1, 0);  // base attr is inherited from clear
+      n++;
+    }
+
+    grid_line_clear_end(n, wp->w_grid.cols, attr);
+
+    if (wp->w_p_rl) {
+      grid_line_mirror();
+    }
+    grid_line_flush();
   }
 }
 
