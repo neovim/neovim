@@ -541,7 +541,9 @@ get({bufnr}, {opts})                                    *vim.diagnostic.get()*
                  • severity: See |diagnostic-severity|.
 
     Return: ~
-        Diagnostic [] table A list of diagnostic items |diagnostic-structure|. Keys `bufnr` , `end_lnum` , `end_col` , and `severity` are guaranteed to be present.
+        Diagnostic [] table A list of diagnostic items |diagnostic-structure|.
+        Keys `bufnr` , `end_lnum` , `end_col` , and `severity` are
+        guaranteed to be present.
 
 get_namespace({namespace})                    *vim.diagnostic.get_namespace()*
     Get namespace metadata.
@@ -634,8 +636,8 @@ hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
     |vim.diagnostic.disable()|.
 
     Parameters: ~
-      • {namespace}  (integer|nil) Diagnostic namespace. When omitted, hide diagnostics from all
-                     namespaces.
+      • {namespace}  (integer|nil) Diagnostic namespace. When omitted, hide
+                     diagnostics from all namespaces.
       • {bufnr}      (integer|nil) Buffer number, or 0 for current buffer.
                      When omitted, hide diagnostics in all buffers.
 
@@ -644,9 +646,9 @@ is_disabled({bufnr}, {namespace})               *vim.diagnostic.is_disabled()*
 
     Parameters: ~
       • {bufnr}      (integer|nil) Buffer number, or 0 for current buffer.
-      • {namespace}  (integer|nil) Diagnostic namespace. When omitted, checks if all diagnostics are
-                     disabled in {bufnr}. Otherwise, only checks if
-                     diagnostics from {namespace} are disabled.
+      • {namespace}  (integer|nil) Diagnostic namespace. When omitted, checks
+                     if all diagnostics are disabled in {bufnr}. Otherwise,
+                     only checks if diagnostics from {namespace} are disabled.
 
     Return: ~
         (boolean)
@@ -746,8 +748,8 @@ reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
     re-displayed, use |vim.diagnostic.hide()|.
 
     Parameters: ~
-      • {namespace}  (integer|nil) Diagnostic namespace. When omitted, remove diagnostics from all
-                     namespaces.
+      • {namespace}  (integer|nil) Diagnostic namespace. When omitted, remove
+                     diagnostics from all namespaces.
       • {bufnr}      (integer|nil) Remove diagnostics for the given buffer.
                      When omitted, diagnostics are removed for all buffers.
 
@@ -795,8 +797,8 @@ show({namespace}, {bufnr}, {diagnostics}, {opts})
     Display diagnostics for the given namespace and buffer.
 
     Parameters: ~
-      • {namespace}    (integer|nil) Diagnostic namespace. When omitted, show diagnostics from all
-                       namespaces.
+      • {namespace}    (integer|nil) Diagnostic namespace. When omitted, show
+                       diagnostics from all namespaces.
       • {bufnr}        (integer|nil) Buffer number, or 0 for current buffer.
                        When omitted, show diagnostics in all buffers.
       • {diagnostics}  (table|nil) The diagnostics to display. When omitted,

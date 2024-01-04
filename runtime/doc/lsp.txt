@@ -1128,7 +1128,8 @@ code_action({options})                             *vim.lsp.buf.code_action()*
     Parameters: ~
       • {options}  (table|nil) Optional table which holds the following
                    optional fields:
-                   • context: (table|nil) Corresponds to `CodeActionContext` of the LSP specification:
+                   • context: (table|nil) Corresponds to `CodeActionContext` of
+                     the LSP specification:
                      • diagnostics (table|nil): LSP `Diagnostic[]`. Inferred
                        from the current position if not provided.
                      • only (table|nil): List of LSP `CodeActionKind`s used to
@@ -1510,7 +1511,8 @@ get({filter})                                       *vim.lsp.inlay_hint.get()*
                   • range (lsp.Range?)
 
     Return: ~
-        vim.lsp.inlay_hint.get.ret [] Each list item is a table with the following fields:
+        vim.lsp.inlay_hint.get.ret [] Each list item is a table with the
+        following fields:
         • bufnr (integer)
         • client_id (integer)
         • inlay_hint (lsp.InlayHint)
@@ -2090,8 +2092,9 @@ connect({host}, {port})                                *vim.lsp.rpc.connect()*
       • {port}  (integer) port to connect to
 
     Return: ~
-        fun(dispatchers: vim.lsp.rpc.Dispatchers ): vim.lsp.rpc.PublicClient function intended to be passed to |vim.lsp.start_client()| or
-        |vim.lsp.start()| on the field cmd
+        fun(dispatchers: vim.lsp.rpc.Dispatchers ): vim.lsp.rpc.PublicClient function
+        intended to be passed to |vim.lsp.start_client()| or |vim.lsp.start()|
+        on the field cmd
 
                                          *vim.lsp.rpc.domain_socket_connect()*
 domain_socket_connect({pipe_path})
@@ -2104,7 +2107,8 @@ domain_socket_connect({pipe_path})
                      the named pipe (Windows) to connect to
 
     Return: ~
-        fun(dispatchers: vim.lsp.rpc.Dispatchers ): vim.lsp.rpc.PublicClient::function intended to be passed to
+        fun(dispatchers: vim.lsp.rpc.Dispatchers ):
+        vim.lsp.rpc.PublicClient::function intended to be passed to
         |vim.lsp.start_client()| or |vim.lsp.start()| on the field cmd
 
 format_rpc_error({err})                       *vim.lsp.rpc.format_rpc_error()*

@@ -680,8 +680,10 @@ vim.regex:match_line({bufnr}, {line_idx}, {start}, {end_})
 
 vim.regex:match_str({str})                                 *regex:match_str()*
     Match the string against the regex. If the string should match the regex
-    precisely, surround the regex with `^` and `$` . If there was a match, the byte indices for the beginning and end of the
-    match are returned. When there is no match, `nil` is returned. Because any integer is "truthy", `regex:match_str()` can be directly used as a condition in an if-statement.
+    precisely, surround the regex with `^` and `$` . If there was a match, the
+    byte indices for the beginning and end of the match are returned. When
+    there is no match, `nil` is returned. Because any integer is "truthy", `regex:match_str()` can
+    be directly used as a condition in an if-statement.
 
     Parameters: ~
       • {str}  (string)
@@ -713,9 +715,9 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
       • {a}     (string) First string to compare
       • {b}     (string) Second string to compare
       • {opts}  table<string,any> Optional parameters:
-                • `on_hunk` (callback): Invoked for each hunk in the diff. Return a
-                  negative number to cancel the callback for any remaining
-                  hunks. Args:
+                • `on_hunk` (callback): Invoked for each hunk in the diff.
+                  Return a negative number to cancel the callback for any
+                  remaining hunks. Args:
                   • `start_a` (integer): Start line of hunk in {a}.
                   • `count_a` (integer): Hunk size in {a}.
                   • `start_b` (integer): Start line of hunk in {b}.
@@ -858,7 +860,8 @@ vim.spell.check({str})                                     *vim.spell.check()*
       • {str}  (string)
 
     Return: ~
-        `{[1]: string, [2]: string, [3]: string}[]` List of tuples with three items:
+        `{[1]: string, [2]: string, [3]: string}[]` List of tuples with three
+        items:
         • The badly spelled word.
         • The type of the spelling error: "bad" spelling mistake "rare" rare
           word "local" word only valid in another region "caps" word should
@@ -1581,7 +1584,8 @@ vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
     Parameters: ~
       • {name}         string Deprecated feature (function, API, etc.).
       • {alternative}  (string|nil) Suggested alternative feature.
-      • {version}      string Version when the deprecated function will be removed.
+      • {version}      string Version when the deprecated function will be
+                       removed.
       • {plugin}       string|nil Name of the plugin that owns the deprecated
                        feature. Defaults to "Nvim".
       • {backtrace}    boolean|nil Prints backtrace. Defaults to true.
@@ -1692,7 +1696,8 @@ vim.paste({lines}, {phase})                                      *vim.paste()*
       • {lines}  string[] # |readfile()|-style list of lines to paste.
                  |channel-lines|
       • {phase}  paste_phase -1: "non-streaming" paste: the call contains all
-                 lines. If paste is "streamed", `phase` indicates the stream state:
+                 lines. If paste is "streamed", `phase` indicates
+                 the stream state:
                  • 1: starts the paste (exactly once)
                  • 2: continues the paste (zero or more times)
                  • 3: ends the paste (exactly once)
@@ -1896,7 +1901,8 @@ vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
 vim.deep_equal({a}, {b})                                    *vim.deep_equal()*
     Deep compare values for equality
 
-    Tables are compared recursively unless they both provide the `eq` metamethod. All other types are compared using the equality `==` operator.
+    Tables are compared recursively unless they both provide the `eq` metamethod.
+    All other types are compared using the equality `==` operator.
 
     Parameters: ~
       • {a}  any First value
@@ -2276,7 +2282,8 @@ vim.tbl_get({o}, {...})                                        *vim.tbl_get()*
         any Nested value indexed by key (if it exists), else nil
 
 vim.tbl_isarray({t})                                       *vim.tbl_isarray()*
-    Tests if `t` is an "array": a table indexed only by integers (potentially non-contiguous).
+    Tests if `t` is an "array": a table indexed only by integers (potentially
+    non-contiguous).
 
     If the indexes start from 1 and are contiguous then the array is also a
     list. |vim.tbl_islist()|
@@ -2307,8 +2314,8 @@ vim.tbl_isempty({t})                                       *vim.tbl_isempty()*
       • https://github.com/premake/premake-core/blob/master/src/base/table.lua
 
 vim.tbl_islist({t})                                         *vim.tbl_islist()*
-    Tests if `t` is a "list": a table indexed only by contiguous integers starting from 1 (what |lua-length| calls a "regular
-    array").
+    Tests if `t` is a "list": a table indexed only by contiguous integers
+    starting from 1 (what |lua-length| calls a "regular array").
 
     Empty table `{}` is a list, unless it was created by |vim.empty_dict()| or
     returned as a dict-like |API| or Vimscript result, for example from
@@ -3150,7 +3157,8 @@ vim.version.cmp({v1}, {v2})                                *vim.version.cmp()*
         (integer) -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
 
 vim.version.eq({v1}, {v2})                                  *vim.version.eq()*
-    Returns `true` if the given versions are equal. See |vim.version.cmp()| for usage.
+    Returns `true` if the given versions are equal. See |vim.version.cmp()|
+    for usage.
 
     Parameters: ~
       • {v1}  Version|number[]
@@ -3204,7 +3212,8 @@ vim.version.parse({version}, {opts})                     *vim.version.parse()*
                      "1.0", "0-x", "tmux 3.2a" into valid versions.
 
     Return: ~
-        (table|nil) parsed_version Version object or `nil` if input is invalid.
+        (table|nil) parsed_version Version object or `nil` if input is
+        invalid.
 
     See also: ~
       • # https://semver.org/spec/v2.0.0.html
@@ -3762,7 +3771,8 @@ vim.snippet.exit()                                        *vim.snippet.exit()*
     Exits the current snippet.
 
 vim.snippet.expand({input})                             *vim.snippet.expand()*
-    Expands the given snippet text. Refer to https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax for the specification of valid input.
+    Expands the given snippet text. Refer to https://microsoft.github.io/language-server-protocol/specification/#snippet_syntax for
+    the specification of valid input.
 
     Tabstops are highlighted with hl-SnippetTabstop.
 
