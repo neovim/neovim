@@ -34,7 +34,7 @@ The generated :help text for each function is formatted as follows:
   - Each function documentation is separated by a single line.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # PEP-563, python 3.7+
 
 import argparse
 import collections
@@ -47,8 +47,11 @@ import subprocess
 import sys
 import textwrap
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Literal, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 from xml.dom import minidom
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
 
 import msgpack
 
@@ -165,7 +168,7 @@ class Config:
 
 CONFIG: Dict[str, Config] = {
     'api': Config(
-        mode = 'c',
+        mode='c',
         filename = 'api.txt',
         # Section ordering.
         section_order=[x for x in [
