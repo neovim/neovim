@@ -1,6 +1,7 @@
 local G = vim.lsp._snippet_grammar
 local snippet_group = vim.api.nvim_create_augroup('vim/snippet', {})
 local snippet_ns = vim.api.nvim_create_namespace('vim/snippet')
+local hl_group = 'SnippetTabstop'
 
 --- Returns the 0-based cursor position.
 ---
@@ -117,11 +118,11 @@ local Tabstop = {}
 --- @return vim.snippet.Tabstop
 function Tabstop.new(index, bufnr, range, choices)
   local extmark_id = vim.api.nvim_buf_set_extmark(bufnr, snippet_ns, range[1], range[2], {
-    right_gravity = false,
+    right_gravity = true,
     end_right_gravity = true,
     end_line = range[3],
     end_col = range[4],
-    hl_group = 'SnippetTabstop',
+    hl_group = hl_group,
   })
 
   local self = setmetatable(
@@ -159,6 +160,21 @@ end
 function Tabstop:set_text(text)
   local range = self:get_range()
   vim.api.nvim_buf_set_text(self.bufnr, range[1], range[2], range[3], range[4], text_to_lines(text))
+end
+
+--- Sets the right gravity of the tabstop's extmark.
+---
+--- @package
+--- @param right_gravity boolean
+function Tabstop:set_right_gravity(right_gravity)
+  local range = self:get_range()
+  self.extmark_id = vim.api.nvim_buf_set_extmark(self.bufnr, snippet_ns, range[1], range[2], {
+    right_gravity = right_gravity,
+    end_right_gravity = true,
+    end_line = range[3],
+    end_col = range[4],
+    hl_group = hl_group,
+  })
 end
 
 --- @class vim.snippet.Session
@@ -215,6 +231,17 @@ function Session:get_dest_index(direction)
       end
       return dest_index
     end
+  end
+end
+
+--- Sets the right gravity of the tabstop group with the given index.
+---
+--- @package
+--- @param index integer
+--- @param right_gravity boolean
+function Session:set_group_gravity(index, right_gravity)
+  for _, tabstop in ipairs(self.tabstops[index]) do
+    tabstop:set_right_gravity(right_gravity)
   end
 end
 
@@ -560,8 +587,14 @@ function M.jump(direction)
   -- Clear the autocommands so that we can move the cursor freely while selecting the tabstop.
   vim.api.nvim_clear_autocmds({ group = snippet_group, buffer = M._session.bufnr })
 
+  -- Deactivate expansion of the current tabstop.
+  M._session:set_group_gravity(M._session.current_tabstop.index, true)
+
   M._session.current_tabstop = dest
   select_tabstop(dest)
+
+  -- Activate expansion of the destination tabstop.
+  M._session:set_group_gravity(dest.index, false)
 
   -- Restore the autocommands.
   setup_autocmds(M._session.bufnr)
