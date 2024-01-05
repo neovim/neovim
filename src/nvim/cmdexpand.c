@@ -2092,10 +2092,9 @@ static const char *set_context_by_cmdname(const char *cmd, cmdidx_T cmdidx, expa
     set_context_in_runtime_cmd(xp, arg);
     break;
 
-#ifdef HAVE_WORKING_LIBINTL
   case CMD_language:
     return set_context_in_lang_cmd(xp, arg);
-#endif
+
   case CMD_profile:
     set_context_in_profile_cmd(xp, arg);
     break;
@@ -2606,10 +2605,8 @@ static int ExpandOther(char *pat, expand_T *xp, regmatch_T *rmp, char ***matches
     { EXPAND_AUGROUP, expand_get_augroup_name, true, false },
     { EXPAND_SIGN, get_sign_name, true, true },
     { EXPAND_PROFILE, get_profile_name, true, true },
-#ifdef HAVE_WORKING_LIBINTL
     { EXPAND_LANGUAGE, get_lang_arg, true, false },
     { EXPAND_LOCALES, get_locales, true, false },
-#endif
     { EXPAND_ENV_VARS, get_env_name, true, true },
     { EXPAND_USER, get_users, true, false },
     { EXPAND_ARGLIST, get_arglist_name, true, false },
