@@ -75,6 +75,7 @@ static const char *command_complete[] = {
   [EXPAND_HELP] = "help",
   [EXPAND_HIGHLIGHT] = "highlight",
   [EXPAND_HISTORY] = "history",
+  [EXPAND_KEYMAP] = "keymap",
 #ifdef HAVE_WORKING_LIBINTL
   [EXPAND_LOCALES] = "locale",
 #endif

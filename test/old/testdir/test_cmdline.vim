@@ -532,6 +532,13 @@ func Test_getcompletion()
   let l = getcompletion('horse', 'filetype')
   call assert_equal([], l)
 
+  if has('keymap')
+    let l = getcompletion('acc', 'keymap')
+    call assert_true(index(l, 'accents') >= 0)
+    let l = getcompletion('nullkeymap', 'keymap')
+    call assert_equal([], l)
+  endif
+
   let l = getcompletion('z', 'syntax')
   call assert_true(index(l, 'zimbu') >= 0)
   let l = getcompletion('emacs', 'syntax')

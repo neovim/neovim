@@ -1389,6 +1389,7 @@ completion can be enabled:
 	-complete=help		help subjects
 	-complete=highlight	highlight groups
 	-complete=history	:history suboptions
+	-complete=keymap	keyboard mappings
 	-complete=locale	locale names (as output of locale -a)
 	-complete=lua		Lua expression |:lua|
 	-complete=mapclear	buffer argument

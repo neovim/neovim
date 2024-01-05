@@ -2889,6 +2889,7 @@ function vim.fn.getcmdwintype() end
 --- help    help subjects
 --- highlight  highlight groups
 --- history    |:history| suboptions
+--- keymap    keyboard mappings
 --- locale    locale names (as output of locale -a)
 --- mapclear  buffer argument
 --- mapping    mapping name
