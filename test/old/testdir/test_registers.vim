@@ -890,4 +890,24 @@ func Test_register_y_append_reset()
   bwipe!
 endfunc
 
+func Test_insert_small_delete_replace_mode()
+  new
+  call setline(1, ['foo', 'bar', 'foobar',  'bar'])
+  let @-='foo'
+  call cursor(2, 1)
+  exe ":norm! R\<C-R>-\<C-R>-"
+  call assert_equal('foofoo', getline(2))
+  call cursor(3, 1)
+  norm! D
+  call assert_equal(['foo', 'foofoo', '',  'bar'], getline(1, 4))
+  call cursor(4, 2)
+  exe ":norm! R\<C-R>-ZZZZ"
+  call assert_equal(['foo', 'foofoo', '',  'bfoobarZZZZ'], getline(1, 4))
+  call cursor(1, 1)
+  let @-=''
+  exe ":norm! R\<C-R>-ZZZ"
+  call assert_equal(['ZZZ', 'foofoo', '',  'bfoobarZZZZ'], getline(1, 4))
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

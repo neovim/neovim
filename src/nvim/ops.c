@@ -1282,9 +1282,22 @@ int insert_reg(int regname, bool literally_arg)
     } else {
       for (size_t i = 0; i < reg->y_size; i++) {
         if (regname == '-') {
+          Direction dir = BACKWARD;
+          if ((State & REPLACE_FLAG) != 0) {
+            pos_T curpos;
+            u_save_cursor();
+            del_bytes((colnr_T)strlen(reg->y_array[0]), true, false);
+            curpos = curwin->w_cursor;
+            if (oneright() == FAIL) {
+              // hit end of line, need to put forward (after the current position)
+              dir = FORWARD;
+            }
+            curwin->w_cursor = curpos;
+          }
+
           AppendCharToRedobuff(Ctrl_R);
           AppendCharToRedobuff(regname);
-          do_put(regname, NULL, BACKWARD, 1, PUT_CURSEND);
+          do_put(regname, NULL, dir, 1, PUT_CURSEND);
         } else {
           stuffescaped(reg->y_array[i], literally);
         }

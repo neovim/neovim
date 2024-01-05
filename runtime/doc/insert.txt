@@ -160,22 +160,22 @@ CTRL-R CTRL-O {register}			*i_CTRL-R_CTRL-O*
 		auto-indent.  Does the same as pasting with the mouse
 		|<MiddleMouse>|. When the register is linewise this will
 		insert the text above the current line, like with `P`.
-		Does not replace characters!
 		The '.' register (last inserted text) is still inserted as
 		typed.
 		After this command, the '.' register contains the command
 		typed and not the text. I.e., the literals "^R^O" and not the
 		text from the register.
+		Does not replace characters in |Replace-mode|!
 
 CTRL-R CTRL-P {register}			*i_CTRL-R_CTRL-P*
 		Insert the contents of a register literally and fix the
 		indent, like |[<MiddleMouse>|.
-		Does not replace characters!
 		The '.' register (last inserted text) is still inserted as
 		typed.
 		After this command, the '.' register contains the command
 		typed and not the text. I.e., the literals "^R^P" and not the
 		text from the register.
+		Does not replace characters in |Replace-mode|!
 
 						*i_CTRL-T*
 CTRL-T		Insert one shiftwidth of indent at the start of the current
