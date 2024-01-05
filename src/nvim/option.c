@@ -5461,6 +5461,10 @@ void set_context_in_set_cmd(expand_T *xp, char *arg, int opt_flags)
     xp->xp_context = EXPAND_FILETYPE;
     return;
   }
+  if (options[opt_idx].var == &p_keymap) {
+    xp->xp_context = EXPAND_KEYMAP;
+    return;
+  }
 
   // Now pick. If the option has a custom expander, use that. Otherwise, just
   // fill with the existing option value.
