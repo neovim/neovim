@@ -955,6 +955,13 @@ int current_block(oparg_T *oap, int count, bool include, int what, int other)
       }
     }
 
+    // In Visual mode, when resulting area is empty
+    // i.e. there is no inner block to select, abort.
+    if (equalpos(start_pos, *end_pos) && VIsual_active) {
+      curwin->w_cursor = old_pos;
+      return FAIL;
+    }
+
     // In Visual mode, when the resulting area is not bigger than what we
     // started with, extend it to the next block, and then exclude again.
     // Don't try to expand the area if the area is empty.

@@ -578,7 +578,8 @@ i]						*v_i]* *v_i[* *i]* *i[*
 i[			"inner [] block", select [count] '[' ']' blocks.  This
 			goes backwards to the [count] unclosed '[', and finds
 			the matching ']'.  The enclosed text is selected,
-			excluding the '[' and ']'.  The |cpo-M| option flag
+			excluding the '[' and ']'.  It's an error to select an
+			empty inner block like "[]".  The |cpo-M| option flag
 			is used to handle escaped brackets.
 			When used in Visual mode it is made charwise.
 
@@ -596,7 +597,8 @@ i(							*vib* *v_ib* *v_i(* *ib*
 ib			"inner block", select [count] blocks, from "[count] [("
 			to the matching ')', excluding the '(' and ')' (see
 			|[(|).  If the cursor is not inside a () block, then
-			find the next "(".  The |cpo-M| option flag
+			find the next "(".  It's an error to select an empty
+			inner block like "()".  The |cpo-M| option flag
 			is used to handle escaped parenthesis.
 			When used in Visual mode it is made charwise.
 
@@ -610,8 +612,9 @@ a<			"a <> block", select [count] <> blocks, from the
 i>						*v_i>* *v_i<* *i>* *i<*
 i<			"inner <> block", select [count] <> blocks, from
 			the [count]'th unmatched '<' backwards to the matching
-			'>', excluding the '<' and '>'.  The |cpo-M| option flag
-			is used to handle escaped '<' and '>'.
+			'>', excluding the '<' and '>'.  It's an error to
+			select an empty inner block like "<>".  The |cpo-M|
+			option flag is used to handle escaped '<' and '>'.
 			When used in Visual mode it is made charwise.
 
 						*v_at* *at*
@@ -640,7 +643,8 @@ i}							*v_i}* *i}* *i{*
 i{							*v_iB* *v_i{* *iB*
 iB			"inner Block", select [count] Blocks, from `[count] [{`
 			to the matching "}", excluding the "{" and "}" (see
-			|[{|).  The |cpo-M| option flag is used to handle
+			|[{|).  It"s an error to select an empty inner block
+			like "{}".  The |cpo-M| option flag is used to handle
 			escaped braces.
 			When used in Visual mode it is made charwise.
 
