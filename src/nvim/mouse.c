@@ -229,7 +229,7 @@ static int get_fpos_of_mouse(pos_T *mpos)
     return IN_STATUS_LINE;
   }
 
-  if (winrow == -1 && wp->w_winbar_height != 0) {
+  if (winrow < 0 && winrow + wp->w_winbar_height >= 0) {
     return MOUSE_WINBAR;
   }
 
@@ -1249,7 +1249,7 @@ retnomove:
   bool below_window = grid == DEFAULT_GRID_HANDLE && row + wp->w_winbar_height >= wp->w_height;
   on_status_line = below_window && row + wp->w_winbar_height - wp->w_height + 1 == 1;
   on_sep_line = grid == DEFAULT_GRID_HANDLE && col >= wp->w_width && col - wp->w_width + 1 == 1;
-  on_winbar = row == -1 && wp->w_winbar_height != 0;
+  on_winbar = row < 0 && row + wp->w_winbar_height >= 0;
   on_statuscol = !below_window && !on_status_line && !on_sep_line && !on_winbar
                  && *wp->w_p_stc != NUL
                  && (wp->w_p_rl
