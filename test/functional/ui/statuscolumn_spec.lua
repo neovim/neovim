@@ -77,6 +77,18 @@ describe('statuscolumn', function()
       1    aaaaa                                           |
                                                            |
     ]])
+    -- Doesn't crash when trying to fill click defs that do not fit (#26845)
+    command('norm gg')
+    command([=[
+      set stc=%@Click@%{v:relnum?v:relnum:(v:lnum==5?'bbbbb':v:lnum)}%T
+      norm 5Gzt | redraw!
+    ]=])
+    screen:expect([[
+      bbbbba^eaaa                                           |
+      1    aaaaa                                           |
+      2    aaaaa                                           |
+                                                           |
+    ]])
   end)
 
   it("works with 'number' and 'relativenumber'", function()
