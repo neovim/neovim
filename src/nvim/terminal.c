@@ -91,6 +91,7 @@ typedef struct {
   Terminal *term;
   int save_rd;              // saved value of RedrawingDisabled
   bool close;
+  bool restart_edit;
   bool got_bsl;             // if the last input was <C-\>
   bool got_bsl_o;           // if left terminal mode with <c-\><c-o>
 } TerminalState;
@@ -471,7 +472,7 @@ bool terminal_enter(void)
   s->state.check = terminal_check;
   state_enter(&s->state);
 
-  if (!s->got_bsl_o) {
+  if (!s->got_bsl_o && !s->restart_edit) {
     restart_edit = 0;
   }
   State = save_state;
@@ -638,6 +639,9 @@ static int terminal_execute(VimState *state, int key)
   }
 
   if (curbuf->terminal == NULL) {
+    s->restart_edit = true;
+    restart_edit = 'I';
+    stuffcharReadbuff(K_NOP);
     return 0;
   }
   if (s->term != curbuf->terminal) {
