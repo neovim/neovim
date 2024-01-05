@@ -955,9 +955,10 @@ int current_block(oparg_T *oap, int count, bool include, int what, int other)
       }
     }
 
-    if (equalpos(start_pos, *end_pos)) {
-      // empty block like this: ()
-      // there is no inner block to select, abort
+    // In Visual mode, when resulting area is empty
+    // i.e. there is no inner block to select, abort.
+    if (equalpos(start_pos, *end_pos) && VIsual_active) {
+      curwin->w_cursor = old_pos;
       return FAIL;
     }
 
