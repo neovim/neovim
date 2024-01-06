@@ -46,7 +46,9 @@ Headers system ~
 Nvim uses two types of headers. There are "normal" headers and "defs" headers.
 Typically, each normal header will have a corresponding defs header, e.g.
 `fileio.h` and `fileio_defs.h`. This distinction is done to minimize
-recompilation on change. The goal is to achieve the following:
+recompilation on change. The reason for this is because adding a function or
+modifying a function's signature happens more frequently than changing a type
+The goal is to achieve the following:
 
 - All headers (defs and normal) must include only defs headers, system
   headers, and generated declarations. In other words, headers must not
@@ -68,7 +70,6 @@ Non-symbols:
   - typedefs
   - structs
   - enums
-
 
 - All symbols must be moved to normal headers.
 

@@ -26,12 +26,12 @@ with these (optional) keys:
 
 							*ui-rgb*
 - `rgb`			Decides the color format.
-			- true:	(default) 24-bit RGB colors
-			- false:	Terminal colors (8-bit, max 256)
+			- true: (default) 24-bit RGB colors
+			- false: Terminal colors (8-bit, max 256)
 
 							*ui-override*
 - `override`		Decides how UI capabilities are resolved.
-			- true:	Enable requested UI capabilities, even if not
+			- true: Enable requested UI capabilities, even if not
 			  supported by all connected UIs (including |TUI|).
 			- false: (default) Disable UI capabilities not
 			  supported by all connected UIs (including TUI).
@@ -138,7 +138,7 @@ procedure:
    to set |g:| variables visible to init.vim
 
 3. If the UI wants to do additional setup after user config is loaded,
-   register a VimEnter autocmd: >vim
+   register a VimEnter autocmd: >lua
       nvim_command("autocmd VimEnter * call rpcrequest(1, 'vimenter')")
 
 4. Now invoke |nvim_ui_attach()|. The UI must handle user input by now:
@@ -188,7 +188,7 @@ the editor.
 	`attr_id`:	Cursor attribute id (defined by `hl_attr_define`).
 			When attr_id is 0, the background and foreground
 			colors should be swapped.
-	`attr_id_lm`:	Cursor attribute id for when 'langmap' is active.
+	`attr_id_lm`:	Cursor attribute id for when |:lmap| is on.
 	`short_name`:	Mode code name, see 'guicursor'.
 	`name`:		Mode descriptive name.
 	`mouse_shape`:	(To be implemented.)
@@ -555,7 +555,7 @@ with the following possible keys:
     `kind`:	always present. One of the following values:
 	"ui":       Builtin UI highlight. |highlight-groups|
 	"syntax":   Highlight applied to a buffer by a syntax declaration or
-	            other runtime/plugin functionality such as
+		    other runtime/plugin functionality such as
 		    |nvim_buf_add_highlight()|
 	"terminal": highlight from a process running in a |terminal-emulator|.
 		    Contains no further semantic information.
