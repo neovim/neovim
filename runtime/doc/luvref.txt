@@ -977,15 +977,15 @@ called from another thread.
     async:send()
 <
 
-uv.new_async([{callback}])                                      *uv.new_async()*
+uv.new_async({callback})                                        *uv.new_async()*
 
                 Parameters:
-                - `callback`: `callable` or `nil`
+                - `callback`: `callable`
                   - `...`: `threadargs` passed to/from
                     `uv.async_send(async, ...)`
 
                 Creates and initializes a new |uv_async_t|. Returns the Lua
-                userdata wrapping it. A `nil` callback is allowed.
+                userdata wrapping it.
 
                 Returns: `uv_async_t userdata` or `fail`
 
@@ -2067,11 +2067,11 @@ uv.pipe({read_flags}, {write_flags})                                 *uv.pipe()*
 uv.pipe_bind2({pipe}, {name}, {flags})                         *uv.pipe_bind2()*
 
                 > method form `pipe:pipe_bind(name, flags)`
-	
+
                 Parameters:
                 - `pipe`: `uv_pipe_t userdata`
                 - `name`: `string`
-                - `flags`: `integer` or `table` or `nil`(default: 0)
+                - `flags`: `integer` or `table` or `nil` (default: 0)
 
                 Flags:
                  - If `type(flags)` is `number`, it must be `0` or
@@ -2101,7 +2101,7 @@ uv.pipe_connect2(pipe, name, [flags], [callback])           *uv.pipe_connect2()*
                 Parameters:
                 - `pipe`: `uv_pipe_t userdata`
                 - `name`: `string`
-                - `flags`: `integer` or `table` or `nil`(default: 0)
+                - `flags`: `integer` or `table` or `nil` (default: 0)
                 - `callback`: `callable` or `nil`
                   - `err`: `nil` or `string`
 
