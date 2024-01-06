@@ -87,19 +87,24 @@ end
 
 local MAX_TIMEOUT = 2 ^ 31
 
---- @param timeout? integer
+--- @param timeout? integer timeout (in milliseconds), must be >= 0.
 --- @return vim.SystemCompleted
 function SystemObj:wait(timeout)
   local state = self._state
 
-  local done = vim.wait(timeout or state.timeout or MAX_TIMEOUT, function()
+  -- If timeout == 0, vim.wait() will return immediately and uv timer won't schedule on_exit()
+  -- in which state.result will be set
+  timeout = math.max(1, timeout or state.timeout or MAX_TIMEOUT)
+
+  local done = vim.wait(timeout, function()
     return state.result ~= nil
   end)
 
   if not done then
     -- Send sigkill since this cannot be caught
     self:_timeout(SIG.KILL)
-    vim.wait(timeout or state.timeout or MAX_TIMEOUT, function()
+    -- wait a bit more until state.result is set
+    vim.wait(timeout, function()
       return state.result ~= nil
     end)
   end
