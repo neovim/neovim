@@ -31,7 +31,7 @@ M.vars = {
     ]=],
   },
   cmdarg = {
-    type = 'string[]',
+    type = 'string',
     desc = [=[
       The extra arguments ("++p", "++enc=", "++ff=") given to a file
       read/write command.  This is set before an autocommand event
@@ -54,6 +54,7 @@ M.vars = {
     ]=],
   },
   cmdbang = {
+    type = 'integer',
     desc = [=[
       Set like v:cmdarg for a file read/write command.  When a "!"
       was used the value is 1, otherwise it is 0.  Note that this
@@ -149,6 +150,7 @@ M.vars = {
     ]=],
   },
   errors = {
+    type = 'string[]',
     tags = { 'assert-return' },
     desc = [=[
       Errors found by assert functions, such as |assert_true()|.
@@ -215,6 +217,7 @@ M.vars = {
     ]=],
   },
   exception = {
+    type = 'string',
     desc = [=[
       The value of the exception most recently caught and not
       finished.  See also |v:throwpoint| and |throw-variables|.
@@ -229,6 +232,7 @@ M.vars = {
     ]=],
   },
   ['false'] = {
+    type = 'boolean',
     desc = [=[
       Special value used to put "false" in JSON and msgpack.  See
       |json_encode()|.  This value is converted to "v:false" when used
@@ -670,7 +674,7 @@ M.vars = {
     ]=],
   },
   shell_error = {
-    type = 'string',
+    type = 'integer',
     desc = [=[
       Result of the last shell command.  When non-zero, the last
       shell command had an error.  When zero, there was no problem.
@@ -693,7 +697,7 @@ M.vars = {
     ]=],
   },
   stderr = {
-    type = 'string',
+    type = 'integer',
     desc = [=[
       |channel-id| corresponding to stderr. The value is always 2;
       use this variable to make your code more descriptive.
@@ -816,6 +820,7 @@ M.vars = {
     ]=],
   },
   ['true'] = {
+    type = 'boolean',
     desc = [=[
       Special value used to put "true" in JSON and msgpack.  See
       |json_encode()|.  This value is converted to "v:true" when used

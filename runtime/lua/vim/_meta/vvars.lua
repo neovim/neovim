@@ -34,14 +34,14 @@ vim.v.charconvert_to = ...
 --- leading space to make it possible to append this variable
 --- directly after the read/write command. Note: "+cmd" isn't
 --- included here, because it will be executed anyway.
---- @type string[]
+--- @type string
 vim.v.cmdarg = ...
 
 --- Set like v:cmdarg for a file read/write command.  When a "!"
 --- was used the value is 1, otherwise it is 0.  Note that this
 --- can only be used in autocommands.  For user commands `<bang>`
 --- can be used.
---- @type any
+--- @type integer
 vim.v.cmdbang = ...
 
 --- The current locale setting for collation order of the runtime
@@ -141,7 +141,7 @@ vim.v.errmsg = ...
 ---
 --- If v:errors is set to anything but a list it is made an empty
 --- list by the assert function.
---- @type any
+--- @type string[]
 vim.v.errors = ...
 
 --- Dictionary of event data for the current `autocommand`.  Valid
@@ -210,7 +210,7 @@ vim.v.event = ...
 --- ```
 ---
 --- Output: "caught oops".
---- @type any
+--- @type string
 vim.v.exception = ...
 
 --- Exit code, or `v:null` before invoking the `VimLeavePre`
@@ -228,7 +228,7 @@ vim.v.exiting = ...
 --- as a String (e.g. in `expr5` with string concatenation
 --- operator) and to zero when used as a Number (e.g. in `expr5`
 --- or `expr7` when used with numeric operators). Read-only.
---- @type any
+--- @type boolean
 vim.v['false'] = ...
 
 --- What should happen after a `FileChangedShell` event was
@@ -608,7 +608,7 @@ vim.v.servername = ...
 ---     echo 'could not rename "foo" to "bar"!'
 ---   endif
 --- ```
---- @type string
+--- @type integer
 vim.v.shell_error = ...
 
 --- Last given status message.
@@ -624,7 +624,7 @@ vim.v.statusmsg = ...
 --- ```vim
 --- :call chansend(v:stderr, "error: toaster empty\n")
 --- ```
---- @type string
+--- @type integer
 vim.v.stderr = ...
 
 --- `SwapExists` autocommands can set this to the selected choice
@@ -733,7 +733,7 @@ vim.v.throwpoint = ...
 --- as a String (e.g. in `expr5` with string concatenation
 --- operator) and to one when used as a Number (e.g. in `expr5` or
 --- `expr7` when used with numeric operators). Read-only.
---- @type any
+--- @type boolean
 vim.v['true'] = ...
 
 --- Value of the current item of a `List` or `Dictionary`.  Only
