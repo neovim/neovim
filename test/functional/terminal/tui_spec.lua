@@ -24,7 +24,6 @@ local funcs = helpers.funcs
 local meths = helpers.meths
 local is_ci = helpers.is_ci
 local is_os = helpers.is_os
-local is_arch = helpers.is_arch
 local new_pipename = helpers.new_pipename
 local spawn_argv = helpers.spawn_argv
 local set_session = helpers.set_session
@@ -1932,9 +1931,6 @@ describe('TUI', function()
   end)
 
   it('argv[0] can be overridden #23953', function()
-    if is_arch('aarch64') then
-      pending('execl does not work on aarch64')
-    end
     if not exec_lua('return pcall(require, "ffi")') then
       pending('missing LuaJIT FFI')
     end
@@ -1944,7 +1940,7 @@ describe('TUI', function()
       [=[
       local ffi = require('ffi')
       ffi.cdef([[int execl(const char *, const char *, ...);]])
-      ffi.C.execl(vim.v.progpath, 'Xargv0nvim', '--clean')
+      ffi.C.execl(vim.v.progpath, 'Xargv0nvim', '--clean', nil)
     ]=]
     )
     finally(function()
