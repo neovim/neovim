@@ -26,7 +26,7 @@ local function test_embed(ext_linegrid)
       [3] = { bold = true, foreground = Screen.colors.Blue1 },
       [4] = { bold = true, foreground = Screen.colors.Green },
       [5] = { bold = true, reverse = true },
-      [6] = { foreground = Screen.colors.NvimDarkGrey3, background = Screen.colors.NvimLightGrey1 },
+      [6] = { foreground = Screen.colors.NvimLightGrey3, background = Screen.colors.NvimDarkGrey3 },
       [7] = { foreground = Screen.colors.NvimDarkRed },
       [8] = { foreground = Screen.colors.NvimDarkCyan },
     })
