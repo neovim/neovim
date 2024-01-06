@@ -20,15 +20,23 @@ PARSER FILES                                              *treesitter-parsers*
 Parsers are the heart of tree-sitter. They are libraries that tree-sitter will
 search for in the `parser` runtime directory. By default, Nvim bundles parsers
 for C, Lua, Vimscript, Vimdoc and Treesitter query files, but parsers can be
-installed manually or via a plugin like
-https://github.com/nvim-treesitter/nvim-treesitter. Parsers are searched for
-as `parser/{lang}.*` in any 'runtimepath' directory. If multiple parsers for
-the same language are found, the first one is used. (This typically implies
-the priority "user config > plugins > bundled".
+installed via a plugin like https://github.com/nvim-treesitter/nvim-treesitter
+or even manually.
+
+Parsers are searched for as `parser/{lang}.*` in any 'runtimepath' directory.
+If multiple parsers for the same language are found, the first one is used.
+(NOTE: This typically implies the priority "user config > plugins > bundled".)
 A parser can also be loaded manually using a full path: >lua
 
     vim.treesitter.language.add('python', { path = "/path/to/python.so" })
 <
+To associate certain |filetypes| with a treesitter language (name of parser),
+use |vim.treesitter.language.register()|. For example, to use the `xml`
+treesitter parser for buffers with filetype `svg` or `xslt`, use: >lua
+
+    vim.treesitter.language.register('xml', { 'svg', 'xslt' })
+<
+
 ==============================================================================
 TREESITTER TREES                                             *treesitter-tree*
                                                                       *TSTree*
@@ -832,6 +840,9 @@ inspect({lang})                            *vim.treesitter.language.inspect()*
 
 register({lang}, {filetype})              *vim.treesitter.language.register()*
     Register a parser named {lang} to be used for {filetype}(s).
+
+    Note: this adds or overrides the mapping for {filetype}, any existing
+    mappings from other filetypes to {lang} will be preserved.
 
     Parameters: ~
       • {lang}      (string) Name of parser
