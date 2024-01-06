@@ -190,6 +190,8 @@ for _, ui in ipairs(vim.api.nvim_list_uis()) do
 end
 
 if tty then
+  local group = vim.api.nvim_create_augroup('nvim_tty', {})
+
   --- Set an option after startup (so that OptionSet is fired), but only if not
   --- already set by the user.
   ---
@@ -207,6 +209,7 @@ if tty then
       vim.o[option] = value
     else
       vim.api.nvim_create_autocmd('VimEnter', {
+        group = group,
         once = true,
         nested = true,
         callback = function()
@@ -295,6 +298,7 @@ if tty then
     local timer = assert(vim.uv.new_timer())
 
     local id = vim.api.nvim_create_autocmd('TermResponse', {
+      group = group,
       nested = true,
       callback = function(args)
         local resp = args.data ---@type string
@@ -370,6 +374,7 @@ if tty then
       local b = 3
 
       local id = vim.api.nvim_create_autocmd('TermResponse', {
+        group = group,
         nested = true,
         callback = function(args)
           local resp = args.data ---@type string
