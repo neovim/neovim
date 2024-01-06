@@ -1823,7 +1823,7 @@ describe('TUI', function()
     write_file(script_file, [=[
       local ffi = require('ffi')
       ffi.cdef([[int execl(const char *, const char *, ...);]])
-      ffi.C.execl(vim.v.progpath, 'Xargv0nvim', '--clean')
+      ffi.C.execl(vim.v.progpath, 'Xargv0nvim', '--clean', nil)
     ]=])
     finally(function()
       os.remove(script_file)
