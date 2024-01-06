@@ -161,7 +161,7 @@ static const char *highlight_init_both[] = {
   "default link FloatFooter    FloatTitle",
   "default link FloatTitle     Title",
   "default link FoldColumn     SignColumn",
-  "default link IncSearch      Search",
+  "default link IncSearch      CurSearch",
   "default link LineNrAbove    LineNr",
   "default link LineNrBelow    LineNr",
   "default link MsgSeparator   StatusLine",
