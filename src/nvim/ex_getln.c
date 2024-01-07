@@ -1511,6 +1511,13 @@ static int command_line_erase_chars(CommandLineState *s)
         p = mb_prevptr(ccline.cmdbuff, p);
       }
 
+      char *save_p_isk = curbuf->b_p_isk;
+      curbuf->b_p_isk = p_isk;
+      int save_p_lisp = curbuf->b_p_lisp;
+      // init_chartab() uses 'lisp' to decide whether to add "-" to chartab[]
+      curbuf->b_p_lisp = p_lisp;
+      (void)init_chartab();
+
       int i = mb_get_class(p);
       while (p > ccline.cmdbuff && mb_get_class(p) == i) {
         p = mb_prevptr(ccline.cmdbuff, p);
@@ -1519,6 +1526,10 @@ static int command_line_erase_chars(CommandLineState *s)
       if (mb_get_class(p) != i) {
         p += utfc_ptr2len(p);
       }
+
+      curbuf->b_p_isk = save_p_isk;
+      curbuf->b_p_lisp = save_p_lisp;
+      (void)init_chartab();
     }
 
     ccline.cmdpos = (int)(p - ccline.cmdbuff);
