@@ -13,7 +13,7 @@ local dedent = helpers.dedent
 
 do
   clear()
-  local reason = missing_provider('python3')
+  local reason = missing_provider('python')
   if reason then
     it(':python3 reports E319 if provider is missing', function()
       local expected = [[Vim%(py3.*%):E319: No "python3" provider found.*]]

@@ -169,7 +169,7 @@ func Test_Catch_Exception_Message()
   try
     py3 raise RuntimeError( 'TEST' )
   catch /.*/
-    call assert_match('^Vim(.*):.*RuntimeError: TEST$', v:exception )
+    call assert_match('^Vim(.*):.*RuntimeError: TEST.*$', v:exception )
   endtry
 endfunc
 

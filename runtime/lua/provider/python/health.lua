@@ -217,7 +217,7 @@ end
 function M.check()
   health.start('Python 3 provider (optional)')
 
-  local pyname = 'python3'
+  local pyname = 'python3' ---@type string?
   local python_exe = ''
   local virtual_env = os.getenv('VIRTUAL_ENV')
   local venv = virtual_env and vim.fn.resolve(virtual_env) or ''
@@ -237,11 +237,10 @@ function M.check()
     health.info(message)
   end
 
-  local python_table = vim.fn['provider#pythonx#Detect'](3)
-  pyname = python_table[1]
-  local pythonx_warnings = python_table[2]
+  local pythonx_warnings
+  pyname, pythonx_warnings = require('vim.provider.python').detect_by_module('neovim')
 
-  if pyname == '' then
+  if not pyname then
     health.warn(
       'No Python executable found that can `import neovim`. '
         .. 'Using the first available executable for diagnostics.'
@@ -251,7 +250,7 @@ function M.check()
   end
 
   -- No Python executable could `import neovim`, or host_prog_var was used.
-  if pythonx_warnings ~= '' then
+  if pythonx_warnings then
     health.warn(pythonx_warnings, {
       'See :help provider-python for more information.',
       'You may disable this provider (and warning) by adding `let g:loaded_python3_provider = 0` to your init.vim',
@@ -364,9 +363,8 @@ function M.check()
     -- can import 'pynvim'. If so, that Python failed to import 'neovim' as
     -- well, which is most probably due to a failed pip upgrade:
     -- https://github.com/neovim/neovim/wiki/Following-HEAD#20181118
-    local pynvim_table = vim.fn['provider#pythonx#DetectByModule']('pynvim', 3)
-    local pynvim_exe = pynvim_table[1]
-    if pynvim_exe ~= '' then
+    local pynvim_exe = require('vim.provider.python').detect_by_module('pynvim')
+    if pynvim_exe then
       local message = 'Detected pip upgrade failure: Python executable can import "pynvim" but not "neovim": '
         .. pynvim_exe
       local advice = {

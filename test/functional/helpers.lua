@@ -932,17 +932,14 @@ function module.new_pipename()
 end
 
 --- @param provider string
---- @return string|false?
+--- @return string|boolean?
 function module.missing_provider(provider)
   if provider == 'ruby' or provider == 'node' or provider == 'perl' then
     --- @type string?
     local e = module.fn['provider#' .. provider .. '#Detect']()[2]
     return e ~= '' and e or false
-  elseif provider == 'python' or provider == 'python3' then
-    local py_major_version = (provider == 'python3' and 3 or 2)
-    --- @type string?
-    local e = module.fn['provider#pythonx#Detect'](py_major_version)[2]
-    return e ~= '' and e or false
+  elseif provider == 'python' then
+    return module.exec_lua([[return {require('vim.provider.python').detect_by_module('neovim')}]])[2]
   end
   assert(false, 'Unknown provider: ' .. provider)
 end

@@ -190,11 +190,9 @@ endfunction
 
 " Registration of standard hosts
 
-" Python/Python3
-call remote#host#Register('python', '*',
-      \ function('provider#pythonx#Require'))
+" Python3
 call remote#host#Register('python3', '*',
-      \ function('provider#pythonx#Require'))
+      \ function('provider#python3#Require'))
 
 " Ruby
 call remote#host#Register('ruby', '*.rb',
