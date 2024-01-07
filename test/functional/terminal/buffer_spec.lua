@@ -322,7 +322,18 @@ describe(':terminal buffer', function()
     command('split')
     command('enew')
     local term = meths.open_term(0, {})
-    command('autocmd TermOSC * let g:osc_event = deepcopy(v:event)')
+    exec_lua([[
+      vim.api.nvim_create_autocmd('TermRequest', {
+        callback = function(args)
+          local req = args.data
+          local command, payload = req:match('\027%](%d+);(.*)$')
+          vim.g.osc_event = {
+            command = tonumber(command),
+            payload = payload,
+          }
+        end,
+      })
+    ]])
 
     -- cwd will be inserted in a file URI, which cannot contain backs
     local cwd = funcs.getcwd():gsub('\\', '/')

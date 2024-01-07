@@ -169,37 +169,28 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
 
 static Set(ptr_t) invalidated_terminals = SET_INIT;
 
-static void emit_osc_event(void **argv)
+static void emit_term_request(void **argv)
 {
-  int command = (int)(ptrdiff_t)argv[0];
-  char *payload = argv[1];
-  int payload_length = (int)(ptrdiff_t)argv[2];
+  char *payload = argv[0];
+  size_t payload_length = (size_t)argv[1];
 
-  save_v_event_T save_v_event;
-  dict_T *dict = get_v_event(&save_v_event);
-
-  typval_T cmd;
-  cmd.v_type = VAR_NUMBER;
-  cmd.vval.v_number = command;
-  tv_dict_add_nr(dict, S_LEN("command"), cmd.vval.v_number);
-
-  typval_T str;
-  str.v_type = VAR_STRING;
-  str.vval.v_string = payload;
-  tv_dict_add_str_len(dict, S_LEN("payload"), str.vval.v_string, payload_length);
-
-  tv_dict_set_keys_readonly(dict);
-
-  apply_autocmds(EVENT_TERMOSC, NULL, NULL, false, curbuf);
-
-  restore_v_event(dict, &save_v_event);
+  String termrequest = { .data = payload, .size = payload_length };
+  Object data = STRING_OBJ(termrequest);
+  set_vim_var_string(VV_TERMREQUEST, payload, (ptrdiff_t)payload_length);
+  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL , curbuf, NULL, &data);
   xfree(payload);
 }
 
 static int on_osc(int command, VTermStringFragment frag, void *user)
 {
-  char *str = xmemdupz(frag.str, frag.len);
-  multiqueue_put(main_loop.events, emit_osc_event, 3, command, str, frag.len);
+  if (frag.str == NULL) {
+    return 0;
+  }
+
+  StringBuilder request = KV_INITIAL_VALUE;
+  kv_printf(request, "\x1b]%d;", command);
+  kv_concat_len(request, frag.str, frag.len);
+  multiqueue_put(main_loop.events, emit_term_request, request.items, (void *)request.size);
   return 1;
 }
 

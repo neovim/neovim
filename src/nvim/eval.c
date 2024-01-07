@@ -185,6 +185,7 @@ static struct vimvar {
   VV(VV_VERSION,          "version",          VAR_NUMBER, VV_COMPAT + VV_RO),
   VV(VV_LNUM,             "lnum",             VAR_NUMBER, VV_RO_SBX),
   VV(VV_TERMRESPONSE,     "termresponse",     VAR_STRING, VV_RO),
+  VV(VV_TERMREQUEST,      "termrequest",      VAR_STRING, VV_RO),
   VV(VV_FNAME,            "fname",            VAR_STRING, VV_RO),
   VV(VV_LANG,             "lang",             VAR_STRING, VV_RO),
   VV(VV_LC_TIME,          "lc_time",          VAR_STRING, VV_RO),

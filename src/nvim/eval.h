@@ -87,6 +87,7 @@ typedef enum {
   VV_VERSION,
   VV_LNUM,
   VV_TERMRESPONSE,
+  VV_TERMREQUEST,
   VV_FNAME,
   VV_LANG,
   VV_LC_TIME,
