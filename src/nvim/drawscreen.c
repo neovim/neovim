@@ -2285,9 +2285,8 @@ static void win_update(win_T *wp)
 
         // Display one line
         spellvars_T zero_spv = { 0 };
-        row = win_line(wp, lnum, srow, wp->w_grid.rows, false,
-                       foldinfo.fi_lines > 0 ? &zero_spv : &spv,
-                       foldinfo);
+        row = win_line(wp, lnum, srow, wp->w_grid.rows, 0,
+                       foldinfo.fi_lines > 0 ? &zero_spv : &spv, foldinfo);
 
         if (foldinfo.fi_lines == 0) {
           wp->w_lines[idx].wl_folded = false;
@@ -2325,7 +2324,7 @@ static void win_update(win_T *wp)
         // text doesn't need to be drawn, but the number column does.
         foldinfo_T info = wp->w_p_cul && lnum == wp->w_cursor.lnum
                           ? cursorline_fi : fold_info(wp, lnum);
-        win_line(wp, lnum, srow, wp->w_grid.rows, true, &spv, info);
+        win_line(wp, lnum, srow, wp->w_grid.rows, wp->w_lines[idx].wl_size, &spv, info);
       }
 
       // This line does not need to be drawn, advance to the next one.
@@ -2422,8 +2421,7 @@ static void win_update(win_T *wp)
         // for ml_line_count+1 and only draw filler lines
         spellvars_T zero_spv = { 0 };
         foldinfo_T zero_foldinfo = { 0 };
-        row = win_line(wp, wp->w_botline, row, wp->w_grid.rows, false, &zero_spv,
-                       zero_foldinfo);
+        row = win_line(wp, wp->w_botline, row, wp->w_grid.rows, 0, &zero_spv, zero_foldinfo);
       }
     } else if (dollar_vcol == -1) {
       wp->w_botline = lnum;
