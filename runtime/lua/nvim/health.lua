@@ -183,10 +183,6 @@ local function check_rplugin_manifest()
   health.start('Remote Plugins')
 
   local existing_rplugins = {}
-  for _, item in ipairs(vim.fn['remote#host#PluginsForHost']('python')) do
-    existing_rplugins[item.path] = 'python'
-  end
-
   for _, item in ipairs(vim.fn['remote#host#PluginsForHost']('python3')) do
     existing_rplugins[item.path] = 'python3'
   end
