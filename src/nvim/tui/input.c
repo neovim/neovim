@@ -237,13 +237,13 @@ static size_t handle_termkey_modifiers(TermKeyKey *key, char *buf, size_t buflen
 {
   size_t len = 0;
   if (key->modifiers & TERMKEY_KEYMOD_SHIFT) {  // Shift
-    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "S-");
+    len += (size_t)snprintf(buf + len, buflen - len, "S-");
   }
   if (key->modifiers & TERMKEY_KEYMOD_ALT) {  // Alt
-    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "A-");
+    len += (size_t)snprintf(buf + len, buflen - len, "A-");
   }
   if (key->modifiers & TERMKEY_KEYMOD_CTRL) {  // Ctrl
-    len += (size_t)snprintf(buf + len, sizeof(buf) - len, "C-");
+    len += (size_t)snprintf(buf + len, buflen - len, "C-");
   }
   assert(len < buflen);
   return len;
