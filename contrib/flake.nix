@@ -134,7 +134,6 @@
 
             buildInputs = with pkgs;
               oa.buildInputs ++ [
-                cmake
                 lua.pkgs.luacheck
                 sumneko-lua-language-server
                 pythonEnv
