@@ -41,7 +41,7 @@
 
 static PMap(uint64_t) connected_uis = MAP_INIT;
 
-#define mpack_w(b, byte) *(*b)++ = (char)(byte);
+#define mpack_w(b, byte) *(*(b))++ = (char)(byte);
 static void mpack_w2(char **b, uint32_t v)
 {
   *(*b)++ = (char)((v >> 8) & 0xff);
@@ -98,10 +98,9 @@ static char *mpack_array_dyn16(char **buf)
   return pos;
 }
 
-static void mpack_str(char **buf, const char *str)
+static void mpack_str(char **buf, const char *str, size_t len)
 {
   assert(sizeof(schar_T) - 1 < 0x20);
-  size_t len = strlen(str);
   mpack_w(buf, 0xa0 | len);
   memcpy(*buf, str, len);
   *buf += len;
@@ -566,7 +565,7 @@ static void flush_event(UIData *data)
     // [2, "redraw", [...]]
     mpack_array(buf, 3);
     mpack_uint(buf, 2);
-    mpack_str(buf, "redraw");
+    mpack_str(buf, S_LEN("redraw"));
     data->nevents_pos = mpack_array_dyn16(buf);
   }
 }
@@ -607,7 +606,7 @@ static bool prepare_call(UI *ui, const char *name)
     data->cur_event = name;
     char **buf = &data->buf_wptr;
     data->ncalls_pos = mpack_array_dyn16(buf);
-    mpack_str(buf, name);
+    mpack_str(buf, name, strlen(name));
     data->nevents++;
     data->ncalls = 1;
     return true;
@@ -640,17 +639,18 @@ static void push_call(UI *ui, const char *name, Array args)
       remote_ui_flush_buf(ui);
     }
 
-    if (data->pack_totlen > UI_BUF_SIZE - strlen(name) - 20) {
+    size_t name_len = strlen(name);
+    if (data->pack_totlen > UI_BUF_SIZE - name_len - 20) {
       // TODO(bfredl): manually testable by setting UI_BUF_SIZE to 1024 (mode_info_set)
-      data->temp_buf = xmalloc(20 + strlen(name) + data->pack_totlen);
+      data->temp_buf = xmalloc(20 + name_len + data->pack_totlen);
       data->buf_wptr = data->temp_buf;
       char **buf = &data->buf_wptr;
       mpack_array(buf, 3);
       mpack_uint(buf, 2);
-      mpack_str(buf, "redraw");
+      mpack_str(buf, S_LEN("redraw"));
       mpack_array(buf, 1);
       mpack_array(buf, 2);
-      mpack_str(buf, name);
+      mpack_str(buf, name, name_len);
     } else {
       prepare_call(ui, name);
     }
@@ -895,9 +895,9 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
         uint32_t csize = (repeat > 1) ? 3 : ((attrs[i] != last_hl) ? 2 : 1);
         nelem++;
         mpack_array(buf, csize);
-        char sc_buf[MAX_SCHAR_SIZE];
-        schar_get(sc_buf, chunk[i]);
-        mpack_str(buf, sc_buf);
+        char *size_byte = (*buf)++;
+        size_t len = schar_get_adv(buf, chunk[i]);
+        *size_byte = (char)(0xa0 | len);
         if (csize >= 2) {
           mpack_uint(buf, (uint32_t)attrs[i]);
           if (csize >= 3) {
@@ -916,7 +916,7 @@ void remote_ui_raw_line(UI *ui, Integer grid, Integer row, Integer startcol, Int
       nelem++;
       data->ncells_pending += 1;
       mpack_array(buf, 3);
-      mpack_str(buf, " ");
+      mpack_str(buf, S_LEN(" "));
       mpack_uint(buf, (uint32_t)clearattr);
       mpack_uint(buf, (uint32_t)(clearcol - endcol));
     }

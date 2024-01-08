@@ -508,7 +508,7 @@ static void redraw_wildmenu(expand_T *xp, int num_matches, char **matches, int m
     }
   }
 
-  int fillchar = fillchar_status(&attr, curwin);
+  schar_T fillchar = fillchar_status(&attr, curwin);
 
   if (first_match == 0) {
     *buf = NUL;

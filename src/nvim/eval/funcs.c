@@ -6881,15 +6881,8 @@ static void f_screenchar(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   ScreenGrid *grid;
   screenchar_adjust(&grid, &row, &col);
 
-  int c;
-  if (row < 0 || row >= grid->rows || col < 0 || col >= grid->cols) {
-    c = -1;
-  } else {
-    char buf[MAX_SCHAR_SIZE + 1];
-    schar_get(buf, grid_getchar(grid, row, col, NULL));
-    c = utf_ptr2char(buf);
-  }
-  rettv->vval.v_number = c;
+  rettv->vval.v_number = (row < 0 || row >= grid->rows || col < 0 || col >= grid->cols)
+                         ? -1 : schar_get_first_codepoint(grid_getchar(grid, row, col, NULL));
 }
 
 /// "screenchars()" function
@@ -8383,7 +8376,6 @@ static void f_synIDtrans(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 static void f_synconcealed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   int syntax_flags = 0;
-  int cchar;
   int matchid = 0;
   char str[NUMBUFLEN];
 
@@ -8402,14 +8394,13 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv, EvalFuncData fptr
 
     // get the conceal character
     if ((syntax_flags & HL_CONCEAL) && curwin->w_p_cole < 3) {
-      cchar = syn_get_sub_char();
+      schar_T cchar = schar_from_char(syn_get_sub_char());
       if (cchar == NUL && curwin->w_p_cole == 1) {
         cchar = (curwin->w_p_lcs_chars.conceal == NUL)
-                ? ' '
-                : curwin->w_p_lcs_chars.conceal;
+                ? schar_from_ascii(' ') : curwin->w_p_lcs_chars.conceal;
       }
       if (cchar != NUL) {
-        utf_char2bytes(cchar, str);
+        schar_get(str, cchar);
       }
     }
   }

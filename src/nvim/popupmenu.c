@@ -629,19 +629,19 @@ void pum_redraw(void)
       }
 
       if (pum_rl) {
-        grid_line_fill(col_off - pum_base_width - n + 1, grid_col + 1, ' ', attr);
+        grid_line_fill(col_off - pum_base_width - n + 1, grid_col + 1, schar_from_ascii(' '), attr);
         grid_col = col_off - pum_base_width - n + 1;
       } else {
-        grid_line_fill(grid_col, col_off + pum_base_width + n, ' ', attr);
+        grid_line_fill(grid_col, col_off + pum_base_width + n, schar_from_ascii(' '), attr);
         grid_col = col_off + pum_base_width + n;
       }
       totwidth = pum_base_width + n;
     }
 
     if (pum_rl) {
-      grid_line_fill(col_off - pum_width + 1, grid_col + 1, ' ', attr);
+      grid_line_fill(col_off - pum_width + 1, grid_col + 1, schar_from_ascii(' '), attr);
     } else {
-      grid_line_fill(grid_col, col_off + pum_width, ' ', attr);
+      grid_line_fill(grid_col, col_off + pum_width, schar_from_ascii(' '), attr);
     }
 
     if (pum_scrollbar > 0) {

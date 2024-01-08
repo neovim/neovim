@@ -971,41 +971,41 @@ typedef struct {
 
 /// Characters from the 'listchars' option.
 typedef struct {
-  int eol;
-  int ext;
-  int prec;
-  int nbsp;
-  int space;
-  int tab1;  ///< first tab character
-  int tab2;  ///< second tab character
-  int tab3;  ///< third tab character
-  int lead;
-  int trail;
-  int *multispace;
-  int *leadmultispace;
-  int conceal;
+  schar_T eol;
+  schar_T ext;
+  schar_T prec;
+  schar_T nbsp;
+  schar_T space;
+  schar_T tab1;  ///< first tab character
+  schar_T tab2;  ///< second tab character
+  schar_T tab3;  ///< third tab character
+  schar_T lead;
+  schar_T trail;
+  schar_T *multispace;
+  schar_T *leadmultispace;
+  schar_T conceal;
 } lcs_chars_T;
 
 /// Characters from the 'fillchars' option.
 typedef struct {
-  int stl;
-  int stlnc;
-  int wbr;
-  int horiz;
-  int horizup;
-  int horizdown;
-  int vert;
-  int vertleft;
-  int vertright;
-  int verthoriz;
-  int fold;
-  int foldopen;    ///< when fold is open
-  int foldclosed;  ///< when fold is closed
-  int foldsep;     ///< continuous fold marker
-  int diff;
-  int msgsep;
-  int eob;
-  int lastline;
+  schar_T stl;
+  schar_T stlnc;
+  schar_T wbr;
+  schar_T horiz;
+  schar_T horizup;
+  schar_T horizdown;
+  schar_T vert;
+  schar_T vertleft;
+  schar_T vertright;
+  schar_T verthoriz;
+  schar_T fold;
+  schar_T foldopen;    ///< when fold is open
+  schar_T foldclosed;  ///< when fold is closed
+  schar_T foldsep;     ///< continuous fold marker
+  schar_T diff;
+  schar_T msgsep;
+  schar_T eob;
+  schar_T lastline;
 } fcs_chars_T;
 
 /// Structure which contains all information that belongs to a window.
