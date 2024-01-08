@@ -976,8 +976,6 @@ TabClosed			After closing a tab page. <afile> expands to
 							*TermOpen*
 TermOpen			When a |terminal| job is starting.  Can be
 				used to configure the terminal buffer.
-							*TermOSC*
-TermOSC				When a |terminal| job emits an OSC sequence.
 							*TermEnter*
 TermEnter			After entering |Terminal-mode|.
 				After TermOpen.
@@ -988,6 +986,11 @@ TermLeave			After leaving |Terminal-mode|.
 TermClose			When a |terminal| job ends.
 				Sets these |v:event| keys:
 				    status
+							*TermRequest*
+TermRequest			When a |terminal| job emits an OSC or DCS
+				sequence. Sets |v:termrequest|. When used from
+				Lua, the request string is included in the
+				"data" field of the autocommand callback.
 							*TermResponse*
 TermResponse			When Nvim receives an OSC or DCS response from
 				the terminal.  Sets |v:termresponse|. When used
