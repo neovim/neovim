@@ -2082,7 +2082,37 @@ describe('extmark decorations', function()
     ]]}
   end)
 
-  it('works with double width char and rightleft', function()
+  it('virtual text overwrites double-width char properly', function()
+    screen:try_resize(50, 3)
+    insert('abcdefghij口klmnopqrstu口vwx口yz')
+    feed('0')
+    meths.buf_set_extmark(0, ns, 0, 0, { virt_text = {{'!!!!!', 'Underlined'}}, virt_text_win_col = 11 })
+    screen:expect{grid=[[
+      ^abcdefghij {28:!!!!!}opqrstu口vwx口yz                  |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('8x')
+    screen:expect{grid=[[
+      ^ij口klmnopq{28:!!!!!} vwx口yz                          |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('3l5x')
+    screen:expect{grid=[[
+      ij口^pqrstu {28:!!!!!} yz                               |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+    feed('5x')
+    screen:expect{grid=[[
+      ij口^u口vwx {28:!!!!!}                                  |
+      {1:~                                                 }|
+                                                        |
+    ]]}
+  end)
+
+  it('virtual text works with double-width char and rightleft', function()
     screen:try_resize(50, 3)
     insert('abcdefghij口klmnopqrstu口vwx口yz')
     feed('0')
