@@ -152,7 +152,7 @@ describe('vim.ui', function()
         vim.fn.executable = function() return 0 end
       ]]
       eq(
-        'vim.ui.open: no handler found (tried: wslview, xdg-open)',
+        'vim.ui.open: no handler found (tried: explorer.exe, xdg-open)',
         exec_lua [[local _, err = vim.ui.open('foo') ; return err]]
       )
     end)
