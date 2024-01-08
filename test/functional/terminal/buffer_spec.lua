@@ -339,7 +339,7 @@ describe(':terminal buffer', function()
     local cwd = funcs.getcwd():gsub('\\', '/')
     local parent = cwd:match('^(.+/)')
     local expected = 'file://host' .. parent
-    local payload = '\027]7;' .. expected ..  '\027\\'
+    local payload = '\027]7;' .. expected .. '\027\\'
     meths.chan_send(term, payload)
     eq({ command = 7, payload = expected }, eval('g:osc_event'))
   end)

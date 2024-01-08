@@ -177,7 +177,7 @@ static void emit_term_request(void **argv)
   String termrequest = { .data = payload, .size = payload_length };
   Object data = STRING_OBJ(termrequest);
   set_vim_var_string(VV_TERMREQUEST, payload, (ptrdiff_t)payload_length);
-  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL , curbuf, NULL, &data);
+  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, curbuf, NULL, &data);
   xfree(payload);
 }
 
