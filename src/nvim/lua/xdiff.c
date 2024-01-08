@@ -185,7 +185,12 @@ static mmfile_t get_string_arg(lua_State *lstate, int idx)
     luaL_argerror(lstate, idx, "expected string");
   }
   mmfile_t mf;
-  mf.ptr = (char *)lua_tolstring(lstate, idx, (size_t *)&mf.size);
+  size_t size;
+  mf.ptr = (char *)lua_tolstring(lstate, idx, &size);
+  if (size > INT_MAX) {
+    luaL_argerror(lstate, idx, "string too long");
+  }
+  mf.size = (int)size;
   return mf;
 }
 
