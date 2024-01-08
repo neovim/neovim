@@ -17,10 +17,9 @@ end
 
 -- Resolves Python executable path by invoking and checking `sys.executable`.
 local function python_exepath(invocation)
-  local python = vim.fn.fnameescape(invocation)
-  local out = vim.fn.system(python .. ' -c "import sys; sys.stdout.write(sys.executable)"')
-  assert(vim.v.shell_error == 0, out)
-  return vim.fs.normalize(vim.trim(out))
+  local p = vim.system({ invocation, '-c', 'import sys; sys.stdout.write(sys.executable)' }):wait()
+  assert(p.code == 0, p.stderr)
+  return vim.fs.normalize(vim.trim(p.stdout))
 end
 
 -- Check if pyenv is available and a valid pyenv root can be found, then return
