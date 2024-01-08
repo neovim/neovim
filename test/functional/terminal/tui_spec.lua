@@ -2810,7 +2810,7 @@ describe('TUI bg color', function()
 
   it('queries the terminal for background color', function()
     retry(nil, 1000, function()
-      eq(true, eval("get(g:, 'oscrequest', 0)"))
+      eq(true, eval("get(g:, 'oscrequest', v:false)"))
     end)
   end)
 
