@@ -45,7 +45,7 @@ augroup tar
   au BufReadCmd   *.tar.xz		call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.txz			call tar#Browse(expand("<amatch>"))
   au BufReadCmd   *.tar.zst		call tar#Browse(expand("<amatch>"))
-  au BufReadCmd   *.tzs			call tar#Browse(expand("<amatch>"))
+  au BufReadCmd   *.tzst			call tar#Browse(expand("<amatch>"))
 augroup END
 
 " ---------------------------------------------------------------------
