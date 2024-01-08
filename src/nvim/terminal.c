@@ -194,11 +194,24 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   return 1;
 }
 
+static int on_dcs(const char *command, size_t commandlen, VTermStringFragment frag, void *user)
+{
+  if ((command == NULL) || (frag.str == NULL)) {
+    return 0;
+  }
+
+  StringBuilder request = KV_INITIAL_VALUE;
+  kv_printf(request, "\x1bP%*s", (int)commandlen, command);
+  kv_concat_len(request, frag.str, frag.len);
+  multiqueue_put(main_loop.events, emit_term_request, request.items, (void *)request.size);
+  return 1;
+}
+
 static VTermStateFallbacks vterm_fallbacks = {
   .control = NULL,
   .csi = NULL,
   .osc = on_osc,
-  .dcs = NULL,
+  .dcs = on_dcs,
   .apc = NULL,
   .pm = NULL,
   .sos = NULL,
