@@ -291,9 +291,11 @@ function Lua2DoxFilter:process_magic(line)
     for _, type in ipairs(TYPES) do
       line = line:gsub('^@param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. ')%)', '@param %1 %2')
       line = line:gsub('^@param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. '|nil)%)', '@param %1 %2')
+      line = line:gsub('^@param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. '%?)%)', '@param %1 %2')
 
       line = line:gsub('^@return%s+.*%((' .. type .. ')%)', '@return %1')
       line = line:gsub('^@return%s+.*%((' .. type .. '|nil)%)', '@return %1')
+      line = line:gsub('^@return%s+.*%((' .. type .. '%?)%)', '@return %1')
     end
   end
 
