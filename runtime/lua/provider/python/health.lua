@@ -18,9 +18,9 @@ end
 -- Resolves Python executable path by invoking and checking `sys.executable`.
 local function python_exepath(invocation)
   local python = vim.fn.fnameescape(invocation)
-  local out = vim.fn.system(python .. ' -c "import sys; sys.stdout.write(sys.executable)"')
-  assert(vim.v.shell_error == 0, out)
-  return vim.fs.normalize(vim.trim(out))
+  local p = vim.system({ python, '-c', 'import sys; sys.stdout.write(sys.executable)' }):wait()
+  assert(p.code == 0, p.stderr)
+  return vim.fs.normalize(vim.trim(p.stdout))
 end
 
 -- Check if pyenv is available and a valid pyenv root can be found, then return
@@ -35,10 +35,10 @@ local function check_for_pyenv()
 
   health.info('pyenv: Path: ' .. pyenv_path)
 
-  local pyenv_root = os.getenv('PYENV_ROOT') and vim.fn.resolve('$PYENV_ROOT') or ''
+  local pyenv_root = os.getenv('PYENV_ROOT') and vim.fn.resolve(vim.fn.expand('$PYENV_ROOT')) or ''
 
   if pyenv_root == '' then
-    pyenv_root = vim.fn.system({ pyenv_path, 'root' })
+    pyenv_root = vim.health._system({ pyenv_path, 'root' }, { ignore_error = true })
     health.info('pyenv: $PYENV_ROOT is not set. Infer from `pyenv root`.')
   end
 
@@ -69,24 +69,33 @@ local function check_bin(bin)
 end
 
 -- Fetch the contents of a URL.
+---@return string error message. If success, returns an empty string ("").
 local function download(url)
   local has_curl = executable('curl')
-  if has_curl and vim.fn.system({ 'curl', '-V' }):find('Protocols:.*https') then
-    local out, rc = health.system({ 'curl', '-sL', url }, { stderr = true, ignore_error = true })
+  if
+    has_curl
+    and health._system({ 'curl', '-V' }, { ignore_error = true }):find('Protocols:.*https')
+  then
+    local out, rc = health._system({ 'curl', '-sL', url }, { stderr = true, ignore_error = true })
     if rc ~= 0 then
       return 'curl error with ' .. url .. ': ' .. rc
     else
       return out
     end
   elseif executable('python') then
-    local script = "try:\n\
-          from urllib.request import urlopen\n\
-          except ImportError:\n\
-          from urllib2 import urlopen\n\
-          response = urlopen('" .. url .. "')\n\
-          print(response.read().decode('utf8'))\n"
-    local out, rc = health.system({ 'python', '-c', script })
-    if out == '' and rc ~= 0 then
+    local script = ([[if True:
+    try:
+      from urllib.request import urlopen
+    except ImportError:
+      from urllib2 import urlopen
+    response = urlopen('%s')
+    print(response.read().decode('utf8'))
+    ]]):format(url)
+    local out, rc = health._system(
+      { 'python', '-c', script },
+      { stderr = true, ignore_error = true }
+    )
+    if out == '' then
       return 'python urllib.request error: ' .. rc
     else
       return out
@@ -94,7 +103,6 @@ local function download(url)
   end
 
   local message = 'missing `curl` '
-
   if has_curl then
     message = message .. '(with HTTPS support) '
   end
@@ -142,7 +150,7 @@ end
 local function version_info(python)
   local pypi_version = latest_pypi_version()
 
-  local python_version, rc = health.system({
+  local python_version, rc = health._system({
     python,
     '-c',
     'import sys; print(".".join(str(x) for x in sys.version_info[:3]))',
@@ -153,7 +161,7 @@ local function version_info(python)
   end
 
   local nvim_path
-  nvim_path, rc = health.system({
+  nvim_path, rc = health._system({
     python,
     '-c',
     'import sys; sys.path = [p for p in sys.path if p != ""]; import neovim; print(neovim.__file__)',
@@ -178,7 +186,7 @@ local function version_info(python)
 
   -- Try to get neovim.VERSION (added in 0.1.11dev).
   local nvim_version
-  nvim_version, rc = health.system({
+  nvim_version, rc = health._system({
     python,
     '-c',
     'from neovim import VERSION as v; print("{}.{}.{}{}".format(v.major, v.minor, v.patch, v.prerelease))',
@@ -225,7 +233,7 @@ function M.check()
   local host_prog_var = pyname .. '_host_prog'
   local python_multiple = {}
 
-  if health.provider_disabled(pyname) then
+  if health._provider_disabled(pyname) then
     return
   end
 
@@ -268,7 +276,7 @@ function M.check()
     end
 
     if pyenv ~= '' then
-      python_exe = health.system({ pyenv, 'which', pyname }, { stderr = true })
+      python_exe = health._system({ pyenv, 'which', pyname }, { stderr = true })
       if python_exe == '' then
         health.warn('pyenv could not find ' .. pyname .. '.')
       end
@@ -490,12 +498,11 @@ function M.check()
     health.warn(msg, vim.tbl_keys(hints))
   else
     health.info(msg)
-    health.info(
-      'Python version: '
-        .. health.system(
-          'python -c "import platform, sys; sys.stdout.write(platform.python_version())"'
-        )
-    )
+    health.info('Python version: ' .. health._system({
+      'python',
+      '-c',
+      'import platform, sys; sys.stdout.write(platform.python_version())',
+    }))
     health.ok('$VIRTUAL_ENV provides :!python.')
   end
 end

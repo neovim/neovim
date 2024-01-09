@@ -9,6 +9,66 @@ local getcompletion = helpers.funcs.getcompletion
 local insert = helpers.insert
 local source = helpers.source
 local exec_lua = helpers.exec_lua
+local pcall_err = helpers.pcall_err
+
+describe('vim.health', function()
+  before_each(clear)
+
+  describe('_system()', function()
+    it('can capture stdout correctly on success', function()
+      eq(
+        { 'OK', 0 },
+        exec_lua [[
+          return { vim.health._system({ "bash", "-c", "echo OK; >&2 echo NOERR; exit 0" }) }
+        ]]
+      )
+    end)
+
+    it('can capture stdout and stderr correctly on error, ignore_error = false', function()
+      matches(
+        'output: STDOUT\n\nstderr: STDERR',
+        pcall_err(
+          exec_lua,
+          [[
+            return vim.health._system({ "bash", "-c", "echo STDOUT; >&2 echo STDERR; exit 1" })
+          ]]
+        )
+      )
+    end)
+
+    it('can capture stdout and stderr correctly on error, ignore_error = true', function()
+      local t = exec_lua [[
+        local msg, code = vim.health._system(
+          { "bash", "-c", "echo ' STDOUT '; >&2 echo STDERR; exit 3" }, { ignore_error = true })
+        return { msg, code }
+      ]]
+      ---@diagnostic disable-next-line: no-unknown
+      local msg, exitcode = unpack(t)
+      eq(msg, 'STDOUT') -- trimmed
+      eq(exitcode, 3)
+    end)
+
+    it('does not raise when ENOENT when ignore_error = true', function()
+      matches(
+        'ENOENT: no such file or directory',
+        exec_lua [[
+          return vim.health._system(
+            { "a-command-that-would-never-exist-on-PATH" }, { ignore_error = true }
+          )
+        ]]
+      )
+    end)
+
+    it('handles timeout', function()
+      matches(
+        [[Command timeout: sleep '1.0']],
+        exec_lua [[
+          return vim.health._system({ "sleep", "1.0" }, { timeout = 0.1, ignore_error = true })
+        ]]
+      )
+    end)
+  end)
+end)
 
 describe(':checkhealth', function()
   it('detects invalid $VIMRUNTIME', function()
@@ -198,13 +258,36 @@ describe('health.vim', function()
 end)
 
 describe(':checkhealth provider', function()
+  before_each(clear)
+
   it("works correctly with a wrongly configured 'shell'", function()
-    clear()
     command([[set shell=echo\ WRONG!!!]])
-    command('let g:loaded_perl_provider = 0')
     command('let g:loaded_python3_provider = 0')
-    command('checkhealth provider')
+    command('checkhealth provider.python')
     eq(nil, string.match(curbuf_contents(), 'WRONG!!!'))
+  end)
+
+  -- only tests if provider checkhealth can run, doesn't validate results
+  -- that can vary by different installation and environment scenarios
+  it('python', function()
+    command('checkhealth provider.python')
+    matches('Python 3 provider %(optional%) ~', curbuf_contents())
+  end)
+  it('ruby', function()
+    command('checkhealth provider.ruby')
+    matches('Ruby provider %(optional%) ~', curbuf_contents())
+  end)
+  it('node', function()
+    command('checkhealth provider.node')
+    matches('Node.js provider %(optional%) ~', curbuf_contents())
+  end)
+  it('perl', function()
+    command('checkhealth provider.perl')
+    matches('Perl provider %(optional%) ~', curbuf_contents())
+  end)
+  it('clipboard', function()
+    command('checkhealth provider.clipboard')
+    matches('Clipboard %(optional%) ~', curbuf_contents())
   end)
 end)
 

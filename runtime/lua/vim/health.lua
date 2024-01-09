@@ -267,7 +267,9 @@ function M.report_error(msg, ...)
   M.error(msg, ...)
 end
 
-function M.provider_disabled(provider)
+--- @private
+--- @param provider string
+function M._provider_disabled(provider)
   local loaded_var = 'loaded_' .. provider .. '_provider'
   local v = vim.g[loaded_var]
   if v == 0 then
@@ -275,19 +277,6 @@ function M.provider_disabled(provider)
     return true
   end
   return false
-end
-
--- Handler for s:system() function.
-local function system_handler(self, _, data, event)
-  if event == 'stderr' then
-    if self.add_stderr_to_output then
-      self.output = self.output .. table.concat(data, '')
-    else
-      self.stderr = self.stderr .. table.concat(data, '')
-    end
-  elseif event == 'stdout' then
-    self.output = self.output .. table.concat(data, '')
-  end
 end
 
 -- Attempts to construct a shell command from an args list.
@@ -307,72 +296,82 @@ local function shellify(cmd)
   return table.concat(escaped, ' ')
 end
 
-function M.cmd_ok(cmd)
+--- @private
+function M._cmd_ok(cmd)
   local out = vim.fn.system(cmd)
   return vim.v.shell_error == 0, out
 end
 
---- Run a system command and timeout after 30 seconds.
+--- @private
 ---
---- @param cmd table List of command arguments to execute
---- @param args ?table Optional arguments:
----                   - stdin (string): Data to write to the job's stdin
----                   - stderr (boolean): Append stderr to stdout
----                   - ignore_error (boolean): If true, ignore error output
----                   - timeout (number): Number of seconds to wait before timing out (default 30)
-function M.system(cmd, args)
-  args = args or {}
-  local stdin = args.stdin or ''
-  local stderr = vim.F.if_nil(args.stderr, false)
-  local ignore_error = vim.F.if_nil(args.ignore_error, false)
+--- Run a system command and timeout after {timeout} seconds, and return stdout as string.
+--- When the command fails (non-zero exit code), throw an error with stdout/stderr output (unless
+--- ignore_error is set).
+---
+--- @param cmd string[] Command arguments to execute
+--- @param opts? table Optional arguments:
+---               - stderr (boolean): Append stderr to stdout
+---               - ignore_error (boolean): If true, don't raise but return error as string.
+---               - timeout (number): Number of seconds to wait before timing out (default 30)
+--- @return string stdout output, also stderr if { stderr = true }
+--- @return integer exit code
+function M._system(cmd, opts)
+  opts = opts or {}
+  local stderr = vim.F.if_nil(opts.stderr, false)
+  local ignore_error = vim.F.if_nil(opts.ignore_error, false)
+  local timeout = vim.F.if_nil(opts.timeout, 30) * 1000 ---@type integer
 
-  local shell_error_code = 0
-  local opts = {
-    add_stderr_to_output = stderr,
-    output = '',
-    stderr = '',
-    on_stdout = system_handler,
-    on_stderr = system_handler,
-    on_exit = function(_, data)
-      shell_error_code = data
-    end,
-  }
-  local jobid = vim.fn.jobstart(cmd, opts)
-
-  if jobid < 1 then
-    local message =
-      string.format('Command error (job=%d): %s (in %s)', jobid, shellify(cmd), vim.loop.cwd())
-    error(message)
-    return opts.output, 1
+  local p ---@type vim.SystemObj
+  if not ignore_error then
+    p = vim.system(cmd)
+  else
+    -- ignore_error: catch ENOENT errors (command not found)
+    local ok
+    ok, p = pcall(vim.system, cmd)
+    if not ok then
+      local err = p --[[ @as string ]]
+      return ('Command error: %s\n (in %s)\n'):format(shellify(cmd), vim.loop.cwd()) .. err, 1
+    end
   end
 
-  if stdin:find('^%s$') then
-    vim.fn.chansend(jobid, stdin)
-  end
+  local ret = p:wait(timeout)
+  ret.stdout = ret.stdout or ''
+  ret.stderr = ret.stderr or ''
 
-  local res = vim.fn.jobwait({ jobid }, vim.F.if_nil(args.timeout, 30) * 1000)
-  if res[1] == -1 then
-    error('Command timed out: ' .. shellify(cmd))
-    vim.fn.jobstop(jobid)
-  elseif shell_error_code ~= 0 and not ignore_error then
-    local emsg = string.format(
-      'Command error (job=%d, exit code %d): %s (in %s)',
-      jobid,
-      shell_error_code,
+  local emsg = nil
+  if ret.code == 124 and ret.signal == 9 then -- timeout
+    emsg = string.format('Command timeout: %s (in %s)', shellify(cmd), vim.loop.cwd())
+  elseif ret.code ~= 0 and not ignore_error then
+    emsg = string.format(
+      'Command error (exit code %d): %s (in %s)',
+      ret.code,
       shellify(cmd),
       vim.loop.cwd()
     )
-    if opts.output:find('%S') then
-      emsg = string.format('%s\noutput: %s', emsg, opts.output)
+    if ret.stdout:find('%S') then
+      emsg = emsg .. '\n' .. string.format('output: %s', ret.stdout)
     end
-    if opts.stderr:find('%S') then
-      emsg = string.format('%s\nstderr: %s', emsg, opts.stderr)
+    if ret.stderr:find('%S') then
+      emsg = emsg .. '\n' .. string.format('stderr: %s', ret.stderr)
     end
-    error(emsg)
   end
 
-  -- return opts.output
-  return vim.trim(vim.fn.system(cmd)), shell_error_code
+  if emsg then
+    if ignore_error then
+      return vim.trim(emsg), ret.code
+    else
+      error(emsg)
+    end
+  end
+
+  -- output stdout only unless { stderr = true }, and concat stdout+stderr when { stderr = true }
+  if not stderr then
+    return vim.trim(ret.stdout), ret.code
+  else
+    -- Note: the result may look different than in console when stdout and stderr are interleaved,
+    -- but it'd be fine enough for the purpose of checkhealth output, for the sake of simplicity
+    return vim.trim(ret.stdout .. ret.stderr), ret.code
+  end
 end
 
 local path2name = function(path)

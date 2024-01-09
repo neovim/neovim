@@ -7,7 +7,7 @@ local M = {}
 function M.check()
   health.start('Ruby provider (optional)')
 
-  if health.provider_disabled('ruby') then
+  if health._provider_disabled('ruby') then
     return
   end
 

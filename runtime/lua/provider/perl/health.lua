@@ -5,7 +5,7 @@ local M = {}
 function M.check()
   health.start('Perl provider (optional)')
 
-  if health.provider_disabled('perl') then
+  if health._provider_disabled('perl') then
     return
   end
 
@@ -29,7 +29,7 @@ function M.check()
 
   -- we cannot use cpanm that is on the path, as it may not be for the perl
   -- set with g:perl_host_prog
-  local ok = health.cmd_ok({ perl_exec, '-W', '-MApp::cpanminus', '-e', '' })
+  local ok = health._cmd_ok({ perl_exec, '-W', '-MApp::cpanminus', '-e', '' })
   if not ok then
     return { perl_exec, '"App::cpanminus" module is not installed' }
   end
@@ -41,7 +41,7 @@ function M.check()
     'my $app = App::cpanminus::script->new; $app->parse_options ("--info", "-q", "Neovim::Ext"); exit $app->doit',
   }
   local latest_cpan
-  ok, latest_cpan = health.cmd_ok(latest_cpan_cmd)
+  ok, latest_cpan = health._cmd_ok(latest_cpan_cmd)
   if not ok or latest_cpan:find('^%s*$') then
     health.error(
       'Failed to run: ' .. table.concat(latest_cpan_cmd, ' '),
@@ -72,7 +72,7 @@ function M.check()
 
   local current_cpan_cmd = { perl_exec, '-W', '-MNeovim::Ext', '-e', 'print $Neovim::Ext::VERSION' }
   local current_cpan
-  ok, current_cpan = health.cmd_ok(current_cpan_cmd)
+  ok, current_cpan = health._cmd_ok(current_cpan_cmd)
   if not ok then
     health.error(
       'Failed to run: ' .. table.concat(current_cpan_cmd, ' '),
