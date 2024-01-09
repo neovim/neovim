@@ -480,8 +480,8 @@ end:
 /// Indexing is zero-based. Row indices are end-inclusive, and column indices
 /// are end-exclusive.
 ///
-/// If `start_col` or `end_col` exceed line length the remaining space is padded
-/// using spaces.
+/// If `start_col` exceeds line length the leading space is padded using spaces
+/// and `end_col` is silently ignored.
 ///
 /// To insert text at a given `(row, column)` location, use `start_row = end_row
 /// = row` and `start_col = end_col = col`. To delete the text in a range, use
