@@ -35,7 +35,7 @@ local function check_for_pyenv()
 
   health.info('pyenv: Path: ' .. pyenv_path)
 
-  local pyenv_root = os.getenv('PYENV_ROOT') and vim.fn.resolve('$PYENV_ROOT') or ''
+  local pyenv_root = vim.fn.resolve(os.getenv('PYENV_ROOT') or '')
 
   if pyenv_root == '' then
     pyenv_root = vim.fn.system({ pyenv_path, 'root' })
