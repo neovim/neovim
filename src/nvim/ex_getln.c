@@ -905,7 +905,7 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
     need_wait_return = false;
   }
 
-  set_string_option_direct(kOptInccommand, s->save_p_icm, OPT_FREE, SID_NONE);
+  set_string_option_direct(kOptInccommand, s->save_p_icm, 0, SID_NONE);
   State = s->save_State;
   if (cmdpreview != save_cmdpreview) {
     cmdpreview = save_cmdpreview;  // restore preview state

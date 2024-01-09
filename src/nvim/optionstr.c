@@ -289,7 +289,7 @@ static void set_string_option_global(vimoption_T *opt, char **varp)
 /// "set_sid" is SID_NONE don't set the scriptID.  Otherwise set the scriptID to
 /// "set_sid".
 ///
-/// @param opt_flags  OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL.
+/// @param  opt_flags  Option flags.
 ///
 /// TODO(famiu): Remove this and its win/buf variants.
 void set_string_option_direct(OptIndex opt_idx, const char *val, int opt_flags, scid_T set_sid)
@@ -306,7 +306,7 @@ void set_string_option_direct(OptIndex opt_idx, const char *val, int opt_flags, 
   char *s = xstrdup(val);
   char **varp = (char **)get_varp_scope(opt, both ? OPT_LOCAL : opt_flags);
 
-  if ((opt_flags & OPT_FREE) && (opt->flags & P_ALLOCED)) {
+  if (opt->flags & P_ALLOCED) {
     free_string_option(*varp);
   }
   *varp = s;
