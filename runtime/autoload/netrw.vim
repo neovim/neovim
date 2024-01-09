@@ -2074,9 +2074,9 @@ fun! netrw#NetRead(mode,...)
        let wholechoice = wholechoice . " " . choice
        let ichoice     = ichoice + 1
        if ichoice > a:0
-       	if !exists("g:netrw_quiet")
-	 call netrw#ErrorMsg(s:ERROR,"Unbalanced string in filename '". wholechoice ."'",3)
-	endif
+        if !exists("g:netrw_quiet")
+         call netrw#ErrorMsg(s:ERROR,"Unbalanced string in filename '". wholechoice ."'",3)
+        endif
 "        call Dret("netrw#NetRead :2 getcwd<".getcwd().">")
         return
        endif
@@ -2497,9 +2497,9 @@ fun! netrw#NetWrite(...) range
        let wholechoice= wholechoice . " " . choice
        let ichoice    = ichoice + 1
        if choice > a:0
-       	if !exists("g:netrw_quiet")
-	 call netrw#ErrorMsg(s:ERROR,"Unbalanced string in filename '". wholechoice ."'",13)
-	endif
+        if !exists("g:netrw_quiet")
+         call netrw#ErrorMsg(s:ERROR,"Unbalanced string in filename '". wholechoice ."'",13)
+        endif
 "        call Dret("netrw#NetWrite")
         return
        endif
@@ -4956,12 +4956,12 @@ fun! s:NetrwBrowseChgDir(islocal,newdir,...)
       if g:netrw_chgwin >= 1
 "       call Decho("edit-a-file: changing window to #".g:netrw_chgwin.": (due to g:netrw_chgwin)",'~'.expand("<slnum>"))
        if winnr("$")+1 == g:netrw_chgwin
-	" if g:netrw_chgwin is set to one more than the last window, then
-	" vertically split the last window to make that window available.
-	let curwin= winnr()
-	exe "NetrwKeepj keepalt ".winnr("$")."wincmd w"
-	vs
-	exe "NetrwKeepj keepalt ".g:netrw_chgwin."wincmd ".curwin
+       " if g:netrw_chgwin is set to one more than the last window, then
+       " vertically split the last window to make that window available.
+       let curwin= winnr()
+       exe "NetrwKeepj keepalt ".winnr("$")."wincmd w"
+       vs
+       exe "NetrwKeepj keepalt ".g:netrw_chgwin."wincmd ".curwin
        endif
        exe "NetrwKeepj keepalt ".g:netrw_chgwin."wincmd w"
       endif
@@ -6070,7 +6070,7 @@ fun! s:NetrwServerEdit(islocal,fname)
        " used something like <cr>.
 "       call Decho("user must have closed server AND did not use ctrl-r",'~'.expand("<slnum>"))
        if exists("g:netrw_browse_split")
-	unlet g:netrw_browse_split
+        unlet g:netrw_browse_split
        endif
        let g:netrw_browse_split= 0
        if exists("s:netrw_browse_split_".winnr())
@@ -6104,7 +6104,7 @@ fun! s:NetrwServerEdit(islocal,fname)
       if !ctrlr
 "       call Decho("server<".g:netrw_servername."> not available and ctrl-r not used",'~'.expand("<slnum>"))
        if exists("g:netrw_browse_split")
-	unlet g:netrw_browse_split
+        unlet g:netrw_browse_split
        endif
        let g:netrw_browse_split= 0
        call s:NetrwBrowse(islocal,s:NetrwBrowseChgDir(islocal,a:fname))
@@ -7446,7 +7446,7 @@ fun! s:NetrwMarkFileExe(islocal,enbloc)
      for fname in s:netrwmarkfilelist_{curbufnr}
       if a:islocal
        if g:netrw_keepdir
-	let fname= s:ShellEscape(netrw#WinPath(s:ComposePath(curdir,fname)))
+        let fname= s:ShellEscape(netrw#WinPath(s:ComposePath(curdir,fname)))
        endif
       else
        let fname= s:ShellEscape(netrw#WinPath(b:netrw_curdir.fname))
@@ -10575,7 +10575,7 @@ fun! s:NetrwRemoteRmFile(path,rmfile,all)
       let ret= system(netrw_rm_cmd)
       if v:shell_error != 0
        if exists("b:netrw_curdir") && b:netrw_curdir != getcwd() && !g:netrw_keepdir
-	call netrw#ErrorMsg(s:ERROR,"remove failed; perhaps due to vim's current directory<".getcwd()."> not matching netrw's (".b:netrw_curdir.") (see :help netrw-cd)",102)
+        call netrw#ErrorMsg(s:ERROR,"remove failed; perhaps due to vim's current directory<".getcwd()."> not matching netrw's (".b:netrw_curdir.") (see :help netrw-cd)",102)
        else
         call netrw#ErrorMsg(s:WARNING,"cmd<".netrw_rm_cmd."> failed",60)
        endif
@@ -11083,16 +11083,16 @@ fun! s:LocalListing()
 "   call Decho("pfile   <".pfile.">",'~'.expand("<slnum>"))
 
    if w:netrw_liststyle == s:LONGLIST
-    let longfile= printf("%-".g:netrw_maxfilenamelen."S",pfile)
-    let sz   = getfsize(filename)
-	let szlen = 15 - (strdisplaywidth(longfile) - g:netrw_maxfilenamelen)
-    let szlen = (szlen > 0) ? szlen : 0
+    let longfile = printf("%-".g:netrw_maxfilenamelen."S",pfile)
+    let sz       = getfsize(filename)
+    let szlen    = 15 - (strdisplaywidth(longfile) - g:netrw_maxfilenamelen)
+    let szlen    = (szlen > 0) ? szlen : 0
 
     if g:netrw_sizestyle =~# "[hH]"
      let sz= s:NetrwHumanReadable(sz)
     endif
     let fsz  = printf("%".szlen."S",sz)
-    let pfile   = longfile."  ".fsz." ".strftime(g:netrw_timefmt,getftime(filename))
+    let pfile= longfile."  ".fsz." ".strftime(g:netrw_timefmt,getftime(filename))
 "    call Decho("longlist support: sz=".sz." fsz=".fsz,'~'.expand("<slnum>"))
    endif
 
@@ -12112,7 +12112,7 @@ fun! s:NetrwLcd(newdir)
      if (has("win32") || has("win95") || has("win64") || has("win16")) && !g:netrw_cygwin
        if a:newdir =~ '^\\\\\w\+' || a:newdir =~ '^//\w\+'
          let dirname = '\'
-	 exe 'NetrwKeepj sil lcd '.fnameescape(dirname)
+         exe 'NetrwKeepj sil lcd '.fnameescape(dirname)
        endif
      endif
   catch /^Vim\%((\a\+)\)\=:E472/
