@@ -337,7 +337,7 @@ static int draw_virt_text_item(buf_T *buf, int col, VirtText vt, HlMode hl_mode,
     schar_T dummy[2] = { schar_from_ascii(' '), schar_from_ascii(' ') };
     int maxcells = max_col - col;
     // When overwriting the right half of a double-width char, clear the left half.
-    if (linebuf_char[col] == 0) {
+    if (!through && linebuf_char[col] == 0) {
       assert(col > 0);
       linebuf_char[col - 1] = schar_from_ascii(' ');
       // Clear the right half as well for the assertion in line_putchar().
