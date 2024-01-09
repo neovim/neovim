@@ -770,6 +770,7 @@ M.vars = {
     desc = 'Value of |String| type.  Read-only.  See: |type()|',
   },
   termresponse = {
+    type = 'string',
     desc = [=[
       The value of the most recent OSC or DCS control sequence
       received by Nvim from the terminal. This can be read in a
@@ -778,6 +779,7 @@ M.vars = {
     ]=],
   },
   termrequest = {
+    type = 'string',
     desc = [=[
       The value of the most recent OSC or DCS control sequence
       sent from a process running in the embedded |terminal|.
