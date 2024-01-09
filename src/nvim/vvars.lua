@@ -770,11 +770,21 @@ M.vars = {
     desc = 'Value of |String| type.  Read-only.  See: |type()|',
   },
   termresponse = {
+    type = 'string',
     desc = [=[
-      The value of the most recent OSC or DCS escape sequence
+      The value of the most recent OSC or DCS control sequence
       received by Nvim from the terminal. This can be read in a
       |TermResponse| event handler after querying the terminal using
       another escape sequence.
+    ]=],
+  },
+  termrequest = {
+    type = 'string',
+    desc = [=[
+      The value of the most recent OSC or DCS control sequence
+      sent from a process running in the embedded |terminal|.
+      This can be read in a |TermRequest| event handler to respond
+      to queries from embedded applications.
     ]=],
   },
   testing = {

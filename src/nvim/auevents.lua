@@ -109,6 +109,7 @@ return {
     'TermEnter', -- after entering Terminal mode
     'TermLeave', -- after leaving Terminal mode
     'TermOpen', -- after opening a terminal buffer
+    'TermRequest', -- after an unhandled OSC sequence is emitted
     'TermResponse', -- after setting "v:termresponse"
     'TextChanged', -- text was modified
     'TextChangedI', -- text was modified in Insert mode(no popup)
@@ -166,6 +167,7 @@ return {
     TabNewEntered = true,
     TermClose = true,
     TermOpen = true,
+    TermRequest = true,
     UIEnter = true,
     UILeave = true,
   },

@@ -317,6 +317,18 @@ describe(':terminal buffer', function()
       pcall_err(command, 'write test/functional/fixtures/tty-test.c')
     )
   end)
+
+  it('emits TermRequest events', function()
+    command('split')
+    command('enew')
+    local term = meths.open_term(0, {})
+    -- cwd will be inserted in a file URI, which cannot contain backs
+    local cwd = funcs.getcwd():gsub('\\', '/')
+    local parent = cwd:match('^(.+/)')
+    local expected = '\027]7;file://host' .. parent
+    meths.chan_send(term, string.format('%s\027\\', expected))
+    eq(expected, eval('v:termrequest'))
+  end)
 end)
 
 describe('No heap-buffer-overflow when using', function()

@@ -647,9 +647,16 @@ v:t_number	Value of |Number| type.  Read-only.  See: |type()|
 					*v:t_string* *t_string-variable*
 v:t_string	Value of |String| type.  Read-only.  See: |type()|
 
+				*v:termrequest* *termrequest-variable*
+v:termrequest
+		The value of the most recent OSC or DCS control sequence
+		sent from a process running in the embedded |terminal|.
+		This can be read in a |TermRequest| event handler to respond
+		to queries from embedded applications.
+
 				*v:termresponse* *termresponse-variable*
 v:termresponse
-		The value of the most recent OSC or DCS escape sequence
+		The value of the most recent OSC or DCS control sequence
 		received by Nvim from the terminal. This can be read in a
 		|TermResponse| event handler after querying the terminal using
 		another escape sequence.

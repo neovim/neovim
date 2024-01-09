@@ -28,6 +28,7 @@ local new_pipename = helpers.new_pipename
 local spawn_argv = helpers.spawn_argv
 local set_session = helpers.set_session
 local write_file = helpers.write_file
+local eval = helpers.eval
 
 if helpers.skip(is_os('win')) then
   return
@@ -2736,6 +2737,42 @@ describe('TUI', function()
       unchanged = true,
     }
   end)
+
+  it('queries the terminal for truecolor support', function()
+    clear()
+    exec_lua([[
+      vim.api.nvim_create_autocmd('TermRequest', {
+        callback = function(args)
+          local req = args.data
+          local payload = req:match('^\027P%+q([%x;]+)$')
+          if payload then
+            vim.g.xtgettcap = true
+            return true
+          end
+        end,
+      })
+    ]])
+    screen = thelpers.setup_child_nvim({
+      '-u',
+      'NONE',
+      '-i',
+      'NONE',
+    }, {
+      env = {
+        VIMRUNTIME = os.getenv('VIMRUNTIME'),
+
+        -- Force COLORTERM to be unset and use a TERM that does not contain Tc or RGB in terminfo.
+        -- This will force the nested nvim instance to query with XTGETTCAP
+        COLORTERM = '',
+        TERM = 'xterm-256colors',
+      },
+    })
+
+    retry(nil, 1000, function()
+      eq(true, eval("get(g:, 'xtgettcap', v:false)"))
+      eq(1, eval('&termguicolors'))
+    end)
+  end)
 end)
 
 describe('TUI bg color', function()
@@ -2743,6 +2780,18 @@ describe('TUI bg color', function()
 
   local function setup_bg_test()
     clear()
+    exec_lua([[
+      vim.api.nvim_create_autocmd('TermRequest', {
+        callback = function(args)
+          local req = args.data
+          if req == '\027]11;?' then
+            vim.g.oscrequest = true
+            return true
+          end
+        end,
+      })
+    ]])
+
     screen = thelpers.setup_child_nvim({
       '-u',
       'NONE',
@@ -2758,6 +2807,12 @@ describe('TUI bg color', function()
   end
 
   before_each(setup_bg_test)
+
+  it('queries the terminal for background color', function()
+    retry(nil, 1000, function()
+      eq(true, eval("get(g:, 'oscrequest', v:false)"))
+    end)
+  end)
 
   it('triggers OptionSet event on unsplit terminal-response', function()
     screen:expect([[

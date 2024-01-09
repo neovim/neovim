@@ -169,6 +169,54 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
 
 static Set(ptr_t) invalidated_terminals = SET_INIT;
 
+static void emit_term_request(void **argv)
+{
+  char *payload = argv[0];
+  size_t payload_length = (size_t)argv[1];
+
+  String termrequest = { .data = payload, .size = payload_length };
+  Object data = STRING_OBJ(termrequest);
+  set_vim_var_string(VV_TERMREQUEST, payload, (ptrdiff_t)payload_length);
+  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, curbuf, NULL, &data);
+  xfree(payload);
+}
+
+static int on_osc(int command, VTermStringFragment frag, void *user)
+{
+  if (frag.str == NULL) {
+    return 0;
+  }
+
+  StringBuilder request = KV_INITIAL_VALUE;
+  kv_printf(request, "\x1b]%d;", command);
+  kv_concat_len(request, frag.str, frag.len);
+  multiqueue_put(main_loop.events, emit_term_request, request.items, (void *)request.size);
+  return 1;
+}
+
+static int on_dcs(const char *command, size_t commandlen, VTermStringFragment frag, void *user)
+{
+  if ((command == NULL) || (frag.str == NULL)) {
+    return 0;
+  }
+
+  StringBuilder request = KV_INITIAL_VALUE;
+  kv_printf(request, "\x1bP%*s", (int)commandlen, command);
+  kv_concat_len(request, frag.str, frag.len);
+  multiqueue_put(main_loop.events, emit_term_request, request.items, (void *)request.size);
+  return 1;
+}
+
+static VTermStateFallbacks vterm_fallbacks = {
+  .control = NULL,
+  .csi = NULL,
+  .osc = on_osc,
+  .dcs = on_dcs,
+  .apc = NULL,
+  .pm = NULL,
+  .sos = NULL,
+};
+
 void terminal_init(void)
 {
   time_watcher_init(&main_loop, &refresh_timer, NULL);
@@ -222,6 +270,7 @@ void terminal_open(Terminal **termpp, buf_T *buf, TerminalOptions opts)
   vterm_screen_enable_reflow(rv->vts, true);
   // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(rv->vts, &vterm_screen_callbacks, rv);
+  vterm_screen_set_unrecognised_fallbacks(rv->vts, &vterm_fallbacks, rv);
   vterm_screen_set_damage_merge(rv->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(rv->vts, 1);
   vterm_output_set_callback(rv->vt, term_output_callback, rv);

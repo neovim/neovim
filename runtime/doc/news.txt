@@ -284,6 +284,9 @@ The following new APIs and features were added.
 
 • |vim.deepcopy()| has a `noref` argument to avoid hashing table values.
 
+• Terminal buffers emit a |TermRequest| autocommand event when the child
+  process emits an OSC or DCS control sequence.
+
 ==============================================================================
 CHANGED FEATURES                                                 *news-changed*
 
