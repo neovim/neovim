@@ -691,14 +691,14 @@ vim.v.t_string = ...
 --- sent from a process running in the embedded `terminal`.
 --- This can be read in a `TermRequest` event handler to respond
 --- to queries from embedded applications.
---- @type any
+--- @type string
 vim.v.termrequest = ...
 
 --- The value of the most recent OSC or DCS control sequence
 --- received by Nvim from the terminal. This can be read in a
 --- `TermResponse` event handler after querying the terminal using
 --- another escape sequence.
---- @type any
+--- @type string
 vim.v.termresponse = ...
 
 --- Must be set before using `test_garbagecollect_now()`.
