@@ -149,7 +149,6 @@
 #define CPO_LISTWM      'L'     // 'list' changes wrapmargin
 #define CPO_SHOWMATCH   'm'
 #define CPO_MATCHBSL    'M'     // "%" ignores use of backslashes
-#define CPO_NUMCOL      'n'     // 'number' column also used for text
 #define CPO_LINEOFF     'o'
 #define CPO_OVERNEW     'O'     // silently overwrite new file
 #define CPO_FNAMEAPP    'P'     // set file name for ":w >>file"

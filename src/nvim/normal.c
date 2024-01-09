@@ -2457,21 +2457,15 @@ static bool nv_screengo(oparg_T *oap, int dir, int dist)
   bool retval = true;
   bool atend = false;
   int col_off1;                 // margin offset for first screen line
-  int col_off2;                 // margin offset for wrapped screen line
   int width1;                   // text width for first screen line
-  int width2;                   // text width for wrapped screen line
 
   oap->motion_type = kMTCharWise;
   oap->inclusive = (curwin->w_curswant == MAXCOL);
 
   col_off1 = curwin_col_off();
-  col_off2 = col_off1 - curwin_col_off2();
   width1 = curwin->w_width_inner - col_off1;
-  width2 = curwin->w_width_inner - col_off2;
 
-  if (width2 == 0) {
-    width2 = 1;  // Avoid divide by zero.
-  }
+  int width2 = MAX(width1, 1); // Avoid divide by zero.
 
   if (curwin->w_width_inner != 0) {
     int n;
@@ -5219,12 +5213,11 @@ static void nv_g_home_m_cmd(cmdarg_T *cap)
   cap->oap->inclusive = false;
   if (curwin->w_p_wrap && curwin->w_width_inner != 0) {
     int width1 = curwin->w_width_inner - curwin_col_off();
-    int width2 = width1 + curwin_col_off2();
 
     validate_virtcol();
     i = 0;
-    if (curwin->w_virtcol >= (colnr_T)width1 && width2 > 0) {
-      i = (curwin->w_virtcol - width1) / width2 * width2 + width1;
+    if (curwin->w_virtcol >= (colnr_T)width1 && width1 > 0) {
+      i = (curwin->w_virtcol - width1) / width1 * width1 + width1;
     }
   } else {
     i = curwin->w_leftcol;
@@ -5233,8 +5226,7 @@ static void nv_g_home_m_cmd(cmdarg_T *cap)
   // 'relativenumber' is on and lines are wrapping the middle can be more
   // to the left.
   if (cap->nchar == 'm') {
-    i += (curwin->w_width_inner - curwin_col_off()
-          + ((curwin->w_p_wrap && i > 0) ? curwin_col_off2() : 0)) / 2;
+    i += (curwin->w_width_inner - curwin_col_off()) / 2;
   }
   coladvance((colnr_T)i);
   if (flag) {
@@ -5287,12 +5279,11 @@ static void nv_g_dollar_cmd(cmdarg_T *cap)
     curwin->w_curswant = MAXCOL;              // so we stay at the end
     if (cap->count1 == 1) {
       int width1 = curwin->w_width_inner - col_off;
-      int width2 = width1 + curwin_col_off2();
 
       validate_virtcol();
       i = width1 - 1;
       if (curwin->w_virtcol >= (colnr_T)width1) {
-        i += ((curwin->w_virtcol - width1) / width2 + 1) * width2;
+        i += ((curwin->w_virtcol - width1) / width1 + 1) * width1;
       }
       coladvance((colnr_T)i);
 

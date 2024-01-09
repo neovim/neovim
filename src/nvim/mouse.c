@@ -1615,7 +1615,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
       int width1 = win->w_width_inner - win_col_off(win);
       int skip_lines = 0;
       if (win->w_skipcol > width1) {
-        skip_lines = (win->w_skipcol - width1) / (width1 + win_col_off2(win)) + 1;
+        skip_lines = (win->w_skipcol - width1) / width1 + 1;
       } else if (win->w_skipcol > 0) {
         skip_lines = 1;
       }
@@ -1638,7 +1638,7 @@ bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 
   if (!retval) {
     // Compute the column without wrapping.
-    int off = win_col_off(win) - win_col_off2(win);
+    int off = win_col_off(win);
     if (col < off) {
       col = off;
     }

@@ -166,12 +166,12 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_number()
-  it("works 'number' and 'cpo'+=n", function()
+  it("works with 'number'", function()
     exec([[
       call setline(1, [ 'one ' .. 'word '->repeat(20), 'two ' .. 'long word '->repeat(7), 'line', 'line', 'line', ])
       set smoothscroll scrolloff=5
       set splitkeep=topline
-      set number cpo+=n
+      set number
       :3
       func g:DoRel()
         set number relativenumber scrolloff=0
@@ -180,42 +180,7 @@ describe('smoothscroll', function()
         exe "normal 2Gzt\<C-E>"
       endfunc
     ]])
-    screen:expect([[
-        1 one word word word word word word wo|
-      rd word word word word word word word wo|
-      rd word word word word word             |
-        2 two long word long word long word lo|
-      ng word long word long word long word   |
-        3 ^line                                |
-        4 line                                |
-        5 line                                |
-      ~                                       |*3
-                                              |
-    ]])
-    feed('<C-E>')
-    screen:expect([[
-      <<<word word word word word word word wo|
-      rd word word word word word             |
-        2 two long word long word long word lo|
-      ng word long word long word long word   |
-        3 ^line                                |
-        4 line                                |
-        5 line                                |
-      ~                                       |*4
-                                              |
-    ]])
-    feed('<C-E>')
-    screen:expect([[
-      <<<word word word word word             |
-        2 two long word long word long word lo|
-      ng word long word long word long word   |
-        3 ^line                                |
-        4 line                                |
-        5 line                                |
-      ~                                       |*5
-                                              |
-    ]])
-    exec('set cpo-=n')
+    feed('2<C-E>')
     screen:expect([[
       <<< d word word word word word word     |
         2 two long word long word long word lo|
@@ -873,7 +838,6 @@ describe('smoothscroll', function()
     exec([[
       silent normal yy
       silent normal 19p
-      set cpoptions+=n
       vsplit
       vertical resize 0
       set foldcolumn=1
@@ -883,8 +847,8 @@ describe('smoothscroll', function()
     ]])
     screen:expect([[
       {1: }│                                      |
-      {2:@}│                                      |*15
-      {2:^@}│                                      |
+      {1: }│                                      |*15
+      {1:^ }│                                      |
       {3:< }{4:[No Name] [+]                         }|
                                               |
     ]])
@@ -915,7 +879,7 @@ describe('smoothscroll', function()
   end)
 
   -- oldtest: Test_smoothscroll_crash()
-  it('does not crash with small window and cpo+=n', function()
+  it('does not crash with small window', function()
     screen:try_resize(40, 12)
     exec([[
       20 new
