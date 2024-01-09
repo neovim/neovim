@@ -258,7 +258,7 @@ end
 --- Validates a client configuration as given to |vim.lsp.start_client()|.
 ---
 ---@param config (lsp.ClientConfig)
----@return (string|fun(dispatchers:vim.rpc.Dispatchers):RpcClientPublic?) Command
+---@return (string|fun(dispatchers:vim.rpc.Dispatchers):vim.lsp.rpc.PublicClient?) Command
 ---@return string[] Arguments
 ---@return string Encoding.
 local function validate_client_config(config)
@@ -291,7 +291,7 @@ local function validate_client_config(config)
     'flags.debounce_text_changes must be a number with the debounce time in milliseconds'
   )
 
-  local cmd, cmd_args --- @type (string|fun(dispatchers:vim.rpc.Dispatchers):RpcClientPublic), string[]
+  local cmd, cmd_args --- @type (string|fun(dispatchers:vim.rpc.Dispatchers):vim.lsp.rpc.PublicClient), string[]
   local config_cmd = config.cmd
   if type(config_cmd) == 'function' then
     cmd = config_cmd
@@ -826,6 +826,8 @@ function lsp.start_client(config)
   ---
   ---@param method (string) LSP method name
   ---@param params (table) The parameters for that method
+  ---@return any result
+  ---@return lsp.ResponseError error code and message set in case an exception happens during the request.
   function dispatch.server_request(method, params)
     if log.trace() then
       log.trace('server_request', method, params)
@@ -953,7 +955,7 @@ function lsp.start_client(config)
   end
 
   -- Start the RPC client.
-  local rpc --- @type RpcClientPublic?
+  local rpc --- @type vim.lsp.rpc.PublicClient?
   if type(cmd) == 'function' then
     rpc = cmd(dispatch)
   else

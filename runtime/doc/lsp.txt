@@ -2089,7 +2089,10 @@ Lua module: vim.lsp.rpc                                              *lsp-rpc*
 
 connect({host}, {port})                                *vim.lsp.rpc.connect()*
     Create a LSP RPC client factory that connects via TCP to the given host
-    and port
+    and port.
+
+    Return a function that can be passed to the `cmd` field for
+    |vim.lsp.start_client()| or |vim.lsp.start()|.
 
     Parameters: ~
       • {host}  (`string`) host to connect to
@@ -2097,14 +2100,15 @@ connect({host}, {port})                                *vim.lsp.rpc.connect()*
 
     Return: ~
         (`fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient`)
-        function intended to be passed to |vim.lsp.start_client()| or
-        |vim.lsp.start()| on the field cmd
 
                                          *vim.lsp.rpc.domain_socket_connect()*
 domain_socket_connect({pipe_path})
     Create a LSP RPC client factory that connects via named pipes (Windows) or
     unix domain sockets (Unix) to the given pipe_path (file path on Unix and
-    name on Windows)
+    name on Windows).
+
+    Return a function that can be passed to the `cmd` field for
+    |vim.lsp.start_client()| or |vim.lsp.start()|.
 
     Parameters: ~
       • {pipe_path}  (`string`) file path of the domain socket (Unix) or name
@@ -2112,8 +2116,6 @@ domain_socket_connect({pipe_path})
 
     Return: ~
         (`fun(dispatchers: vim.lsp.rpc.Dispatchers): vim.lsp.rpc.PublicClient`)
-        function intended to be passed to |vim.lsp.start_client()| or
-        |vim.lsp.start()| on the field cmd
 
 format_rpc_error({err})                       *vim.lsp.rpc.format_rpc_error()*
     Constructs an error message from an LSP error object.
@@ -2122,7 +2124,7 @@ format_rpc_error({err})                       *vim.lsp.rpc.format_rpc_error()*
       • {err}  (`table`) The error object
 
     Return: ~
-        (`string`) The formatted error message
+        (`string`) error_message The formatted error message
 
 notify({method}, {params})                              *vim.lsp.rpc.notify()*
     Sends a notification to the LSP server.
@@ -2144,24 +2146,29 @@ request({method}, {params}, {callback}, {notify_reply_callback})
                                  method
       • {callback}               (`fun(err: lsp.ResponseError?, result: any)`)
                                  Callback to invoke
-      • {notify_reply_callback}  (`function?`) Callback to invoke as soon as a
-                                 request is no longer pending
+      • {notify_reply_callback}  (`fun(message_id: integer)?`) Callback to
+                                 invoke as soon as a request is no longer
+                                 pending
 
-    Return: ~
-        (`boolean success, integer? request_id`) true, message_id if request
-        could be sent, `false` if not
+    Return (multiple): ~
+        (`boolean`) success `true` if request could be sent, `false` if not
+        (`integer?`) message_id if request could be sent, `nil` if not
 
                                             *vim.lsp.rpc.rpc_response_error()*
 rpc_response_error({code}, {message}, {data})
-    Creates an RPC response object/table.
+    Creates an RPC response table `error` to be sent to the LSP response.
 
     Parameters: ~
-      • {code}     (`integer`) RPC error code defined by JSON RPC
+      • {code}     (`integer`) RPC error code defined, see
+                   `vim.lsp.protocol.ErrorCodes`
       • {message}  (`string?`) arbitrary message to send to server
       • {data}     (`any?`) arbitrary data to send to server
 
     Return: ~
-        (`vim.lsp.rpc.Error`)
+        (`lsp.ResponseError`)
+
+    See also: ~
+      • lsp.ErrorCodes See `vim.lsp.protocol.ErrorCodes`
 
                                                          *vim.lsp.rpc.start()*
 start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
@@ -2174,14 +2181,14 @@ start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
       • {cmd}                 (`string`) Command to start the LSP server.
       • {cmd_args}            (`string[]`) List of additional string arguments
                               to pass to {cmd}.
-      • {dispatchers}         (`table?`) Dispatchers for LSP message types.
-                              Valid dispatcher names are:
+      • {dispatchers}         (`vim.lsp.rpc.Dispatchers?`) Dispatchers for LSP
+                              message types. Valid dispatcher names are:
                               • `"notification"`
                               • `"server_request"`
                               • `"on_error"`
                               • `"on_exit"`
-      • {extra_spawn_params}  (`table?`) Additional context for the LSP server
-                              process. May contain:
+      • {extra_spawn_params}  (`vim.lsp.rpc.ExtraSpawnParams?`) Additional
+                              context for the LSP server process. May contain:
                               • {cwd} (string) Working directory for the LSP
                                 server process
                               • {detached?} (boolean) Detach the LSP server
@@ -2191,7 +2198,7 @@ start({cmd}, {cmd_args}, {dispatchers}, {extra_spawn_params})
                                 variables for LSP server process
 
     Return: ~
-        (`table?`) client RPC object, with these methods:
+        (`vim.lsp.rpc.PublicClient?`) Client RPC object, with these methods:
         • `notify()` |vim.lsp.rpc.notify()|
         • `request()` |vim.lsp.rpc.request()|
         • `is_closing()` returns a boolean indicating if the RPC is closing.
