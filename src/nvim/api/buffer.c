@@ -555,8 +555,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   end_col = end_col < 0 ? (int64_t)len_at_end + end_col + 1 : end_col;
 
-  bool ve_start_col= (size_t)start_col > len_at_start;
-  bool ve_end_col= (size_t)end_col > len_at_end;
+  bool ve_start_col = (size_t)start_col > len_at_start;
+  bool ve_end_col = (size_t)end_col > len_at_end;
   // CHECK: possible wraparound bug?
   end_col = ve_end_col ? (int64_t)len_at_end : end_col;
 
@@ -565,7 +565,8 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   });
 
   // Silently ignore larger than line end_col
-  VALIDATE(( (start_row <= end_row ) && !(end_row == start_row && ( !ve_end_col && start_col > end_col ))),
+  VALIDATE(((start_row <= end_row)
+            && !(end_row == start_row && (!ve_end_col && start_col > end_col))),
            "%s", "'start' is higher than 'end'", {
     goto early_end;
   });
