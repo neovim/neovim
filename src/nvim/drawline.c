@@ -206,7 +206,7 @@ static void margin_columns_win(win_T *wp, int *left_col, int *right_col)
 /// Handles composing chars
 static int line_putchar(buf_T *buf, const char **pp, schar_T *dest, int maxcells, int vcol)
 {
-  // Caller should handle overwriting the left half of a double-width char.
+  // Caller should handle overwriting the right half of a double-width char.
   assert(dest[0] != 0);
 
   const char *p = *pp;
@@ -873,7 +873,7 @@ static colnr_T get_leadcol(win_T *wp, const char *ptr, const char *line)
 }
 
 /// Start a screen line at column zero.
-static void win_line_start(win_T *wp, winlinevars_T *wlv, bool save_extra)
+static void win_line_start(win_T *wp, winlinevars_T *wlv)
 {
   wlv->col = 0;
   wlv->off = 0;
@@ -1456,7 +1456,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
     ptr = line + v;  // "line" may have been updated
   }
 
-  win_line_start(wp, &wlv, false);
+  win_line_start(wp, &wlv);
   bool draw_cols = true;
   int leftcols_width = 0;
 
@@ -2848,7 +2848,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
         break;
       }
 
-      win_line_start(wp, &wlv, true);
+      win_line_start(wp, &wlv);
       draw_cols = true;
 
       lcs_prec_todo = wp->w_p_lcs_chars.prec;
