@@ -393,6 +393,8 @@ describe('vim.iter', function()
   it('flatten()', function()
     local t = { { 1, { 2 } }, { { { { 3 } } }, { 4 } }, { 5 } }
 
+    eq(t, vim.iter(t):flatten(-1):totable())
+    eq(t, vim.iter(t):flatten(0):totable())
     eq({ 1, { 2 }, { { { 3 } } }, { 4 }, 5 }, vim.iter(t):flatten():totable())
     eq({ 1, 2, { { 3 } }, 4, 5 }, vim.iter(t):flatten(2):totable())
     eq({ 1, 2, { 3 }, 4, 5 }, vim.iter(t):flatten(3):totable())
