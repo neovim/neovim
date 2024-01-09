@@ -717,12 +717,14 @@ def render_node(n: Element, text: str, prefix='', *,
     elif n.nodeName in ('para', 'heading'):
         did_prefix = False
         for c in n.childNodes:
+            c_text = render_node(c, text, prefix=(prefix if not did_prefix else ''), indent=indent, width=width)
             if (is_inline(c)
-                    and '' != get_text(c).strip()
+                    and '' != c_text.strip()
                     and text
-                    and ' ' != text[-1]):
+                    and text[-1] not in (' ', '(', '|')
+                    and not c_text.startswith(')')):
                 text += ' '
-            text += render_node(c, text, prefix=(prefix if not did_prefix else ''), indent=indent, width=width)
+            text += c_text
             did_prefix = True
     elif n.nodeName == 'itemizedlist':
         for c in n.childNodes:
@@ -840,15 +842,17 @@ def para_as_map(parent: Element,
                     raise RuntimeError('unhandled simplesect: {}\n{}'.format(
                         child.nodeName, child.toprettyxml(indent='  ', newl='\n')))
             else:
+                child_text = render_node(child, text, indent=indent, width=width)
                 if (prev is not None
                         and is_inline(self_or_child(prev))
                         and is_inline(self_or_child(child))
                         and '' != get_text(self_or_child(child)).strip()
                         and text
-                        and ' ' != text[-1]):
+                        and text[-1] not in (' ', '(', '|')
+                        and not child_text.startswith(')')):
                     text += ' '
 
-                text += render_node(child, text, indent=indent, width=width)
+                text += child_text
                 prev = child
 
     chunks['text'] += text

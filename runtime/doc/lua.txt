@@ -606,7 +606,7 @@ vim.highlight.on_yank({opts})                        *vim.highlight.on_yank()*
     Highlight the yanked text
 
     Parameters: ~
-      • {opts}  (table|nil) Optional parameters
+      • {opts}  (`table?`) Optional parameters
                 • higroup highlight group for yanked region (default
                   "IncSearch")
                 • timeout time in ms before highlight is cleared (default 150)
@@ -631,14 +631,14 @@ vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
     Apply highlight group to range of text.
 
     Parameters: ~
-      • {bufnr}    (integer) Buffer number to apply highlighting to
-      • {ns}       (integer) Namespace to add highlight to
-      • {higroup}  (string) Highlight group to use for highlighting
-      • {start}    integer[]|string Start of region as a (line, column) tuple
-                   or string accepted by |getpos()|
-      • {finish}   integer[]|string End of region as a (line, column) tuple or
-                   string accepted by |getpos()|
-      • {opts}     (table|nil) Optional parameters
+      • {bufnr}    (`integer`) Buffer number to apply highlighting to
+      • {ns}       (`integer`) Namespace to add highlight to
+      • {higroup}  (`string`) Highlight group to use for highlighting
+      • {start}    (`integer[]|string`) Start of region as a (line, column)
+                   tuple or string accepted by |getpos()|
+      • {finish}   (`integer[]|string`) End of region as a (line, column)
+                   tuple or string accepted by |getpos()|
+      • {opts}     (`table?`) Optional parameters
                    • regtype type of range (see |setreg()|, default charwise)
                    • inclusive boolean indicating whether the range is
                      end-inclusive (default false)
@@ -660,10 +660,10 @@ vim.regex({re})                                                  *vim.regex()*
     They can be controlled with flags, see |/magic| and |/ignorecase|.
 
     Parameters: ~
-      • {re}  (string)
+      • {re}  (`string`)
 
     Return: ~
-        vim.regex
+        (`vim.regex`)
 
                                                           *regex:match_line()*
 vim.regex:match_line({bufnr}, {line_idx}, {start}, {end_})
@@ -673,10 +673,10 @@ vim.regex:match_line({bufnr}, {line_idx}, {start}, {end_})
     will be relative {start}.
 
     Parameters: ~
-      • {bufnr}     (integer)
-      • {line_idx}  (integer)
-      • {start}     (integer|nil)
-      • {end_}      (integer|nil)
+      • {bufnr}     (`integer`)
+      • {line_idx}  (`integer`)
+      • {start}     (`integer?`)
+      • {end_}      (`integer?`)
 
 vim.regex:match_str({str})                                 *regex:match_str()*
     Match the string against the regex. If the string should match the regex
@@ -686,7 +686,7 @@ vim.regex:match_str({str})                                 *regex:match_str()*
     be directly used as a condition in an if-statement.
 
     Parameters: ~
-      • {str}  (string)
+      • {str}  (`string`)
 
 
 ==============================================================================
@@ -712,9 +712,9 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
 <
 
     Parameters: ~
-      • {a}     (string) First string to compare
-      • {b}     (string) Second string to compare
-      • {opts}  table<string,any> Optional parameters:
+      • {a}     (`string`) First string to compare
+      • {b}     (`string`) Second string to compare
+      • {opts}  (`table<string,any>`) Optional parameters:
                 • `on_hunk` (callback): Invoked for each hunk in the diff.
                   Return a negative number to cancel the callback for any
                   remaining hunks. Args:
@@ -753,7 +753,7 @@ vim.diff({a}, {b}, {opts})                                        *vim.diff()*
                   the internal diff library.
 
     Return: ~
-        string|table|nil See {opts.result_type}. `nil` if {opts.on_hunk} is
+        (`string|table?`) See {opts.result_type}. `nil` if {opts.on_hunk} is
         given.
 
 
@@ -768,7 +768,7 @@ vim.mpack.decode({str})                                   *vim.mpack.decode()*
     Decodes (or "unpacks") the msgpack-encoded {str} to a Lua object.
 
     Parameters: ~
-      • {str}  (string)
+      • {str}  (`string`)
 
 vim.mpack.encode({obj})                                   *vim.mpack.encode()*
     Encodes (or "packs") Lua object {obj} as msgpack in a Lua string.
@@ -794,8 +794,8 @@ vim.json.decode({str}, {opts})                             *vim.json.decode()*
 <
 
     Parameters: ~
-      • {str}   (string) Stringified JSON data.
-      • {opts}  table<string,any>|nil Options table with keys:
+      • {str}   (`string`) Stringified JSON data.
+      • {opts}  (`table<string,any>?`) Options table with keys:
                 • luanil: (table) Table with keys:
                   • object: (boolean) When true, converts `null` in JSON
                     objects to Lua `nil` instead of |vim.NIL|.
@@ -803,16 +803,16 @@ vim.json.decode({str}, {opts})                             *vim.json.decode()*
                     to Lua `nil` instead of |vim.NIL|.
 
     Return: ~
-        any
+        (`any`)
 
 vim.json.encode({obj})                                     *vim.json.encode()*
     Encodes (or "packs") Lua object {obj} as JSON in a Lua string.
 
     Parameters: ~
-      • {obj}  any
+      • {obj}  (`any`)
 
     Return: ~
-        (string)
+        (`string`)
 
 
 ==============================================================================
@@ -822,19 +822,19 @@ vim.base64.decode({str})                                 *vim.base64.decode()*
     Decode a Base64 encoded string.
 
     Parameters: ~
-      • {str}  (string) Base64 encoded string
+      • {str}  (`string`) Base64 encoded string
 
     Return: ~
-        (string) Decoded string
+        (`string`) Decoded string
 
 vim.base64.encode({str})                                 *vim.base64.encode()*
     Encode {str} using Base64.
 
     Parameters: ~
-      • {str}  (string) String to encode
+      • {str}  (`string`) String to encode
 
     Return: ~
-        (string) Encoded string
+        (`string`) Encoded string
 
 
 ==============================================================================
@@ -857,11 +857,11 @@ vim.spell.check({str})                                     *vim.spell.check()*
 <
 
     Parameters: ~
-      • {str}  (string)
+      • {str}  (`string`)
 
     Return: ~
-        `{[1]: string, [2]: string, [3]: string}[]` List of tuples with three
-        items:
+        (`{[1]: string, [2]: string, [3]: string}[]`) List of tuples with
+        three items:
         • The badly spelled word.
         • The type of the spelling error: "bad" spelling mistake "rare" rare
           word "local" word only valid in another region "caps" word should
@@ -945,13 +945,13 @@ vim.iconv({str}, {from}, {to}, {opts})                           *vim.iconv()*
     ":Man 3 iconv".
 
     Parameters: ~
-      • {str}   (string) Text to convert
-      • {from}  (number) Encoding of {str}
-      • {to}    (number) Target encoding
-      • {opts}  table<string,any>|nil
+      • {str}   (`string`) Text to convert
+      • {from}  (`number`) Encoding of {str}
+      • {to}    (`number`) Target encoding
+      • {opts}  (`table<string,any>?`)
 
     Return: ~
-        (string|nil) Converted string if conversion succeeds, `nil` otherwise.
+        (`string?`) Converted string if conversion succeeds, `nil` otherwise.
 
 vim.in_fast_event()                                      *vim.in_fast_event()*
     Returns true if the code is executing as part of a "fast" event handler,
@@ -967,10 +967,10 @@ vim.rpcnotify({channel}, {method}, {args}, {...})            *vim.rpcnotify()*
     This function also works in a fast callback |lua-loop-callbacks|.
 
     Parameters: ~
-      • {channel}  (integer)
-      • {method}   (string)
-      • {args}     any[]|nil
-      • {...}      any|nil
+      • {channel}  (`integer`)
+      • {method}   (`string`)
+      • {args}     (`any[]?`)
+      • {...}      (`any?`)
 
 vim.rpcrequest({channel}, {method}, {args}, {...})          *vim.rpcrequest()*
     Sends a request to {channel} to invoke {method} via |RPC| and blocks until
@@ -980,17 +980,17 @@ vim.rpcrequest({channel}, {method}, {args}, {...})          *vim.rpcrequest()*
     special value
 
     Parameters: ~
-      • {channel}  (integer)
-      • {method}   (string)
-      • {args}     any[]|nil
-      • {...}      any|nil
+      • {channel}  (`integer`)
+      • {method}   (`string`)
+      • {args}     (`any[]?`)
+      • {...}      (`any?`)
 
 vim.schedule({fn})                                            *vim.schedule()*
     Schedules {fn} to be invoked soon by the main event-loop. Useful to avoid
     |textlock| or other temporary restrictions.
 
     Parameters: ~
-      • {fn}  (function)
+      • {fn}  (`function`)
 
 vim.str_byteindex({str}, {index}, {use_utf16})           *vim.str_byteindex()*
     Convert UTF-32 or UTF-16 {index} to byte index. If {use_utf16} is not
@@ -1001,9 +1001,9 @@ vim.str_byteindex({str}, {index}, {use_utf16})           *vim.str_byteindex()*
     sequence.
 
     Parameters: ~
-      • {str}        (string)
-      • {index}      (number)
-      • {use_utf16}  any|nil
+      • {str}        (`string`)
+      • {index}      (`number`)
+      • {use_utf16}  (`any?`)
 
 vim.str_utf_end({str}, {index})                            *vim.str_utf_end()*
     Gets the distance (in bytes) from the last byte of the codepoint
@@ -1020,11 +1020,11 @@ vim.str_utf_end({str}, {index})                            *vim.str_utf_end()*
 <
 
     Parameters: ~
-      • {str}    (string)
-      • {index}  (number)
+      • {str}    (`string`)
+      • {index}  (`number`)
 
     Return: ~
-        (number)
+        (`number`)
 
 vim.str_utf_pos({str})                                     *vim.str_utf_pos()*
     Gets a list of the starting byte positions of each UTF-8 codepoint in the
@@ -1033,10 +1033,10 @@ vim.str_utf_pos({str})                                     *vim.str_utf_pos()*
     Embedded NUL bytes are treated as terminating the string.
 
     Parameters: ~
-      • {str}  (string)
+      • {str}  (`string`)
 
     Return: ~
-        (table)
+        (`table`)
 
 vim.str_utf_start({str}, {index})                        *vim.str_utf_start()*
     Gets the distance (in bytes) from the starting byte of the codepoint
@@ -1056,11 +1056,11 @@ vim.str_utf_start({str}, {index})                        *vim.str_utf_start()*
 <
 
     Parameters: ~
-      • {str}    (string)
-      • {index}  (number)
+      • {str}    (`string`)
+      • {index}  (`number`)
 
     Return: ~
-        (number)
+        (`number`)
 
 vim.str_utfindex({str}, {index})                          *vim.str_utfindex()*
     Convert byte index to UTF-32 and UTF-16 indices. If {index} is not
@@ -1072,23 +1072,23 @@ vim.str_utfindex({str}, {index})                          *vim.str_utfindex()*
     that sequence.
 
     Parameters: ~
-      • {str}    (string)
-      • {index}  (number|nil)
+      • {str}    (`string`)
+      • {index}  (`number?`)
 
     Return (multiple): ~
-        (integer) UTF-32 index
-        (integer) UTF-16 index
+        (`integer`) UTF-32 index
+        (`integer`) UTF-16 index
 
 vim.stricmp({a}, {b})                                          *vim.stricmp()*
     Compares strings case-insensitively.
 
     Parameters: ~
-      • {a}  (string)
-      • {b}  (string)
+      • {a}  (`string`)
+      • {b}  (`string`)
 
     Return: ~
-        0|1|-1 if strings are equal, {a} is greater than {b} or {a} is lesser
-        than {b}, respectively.
+        (`0|1|-1`) if strings are equal, {a} is greater than {b} or {a} is
+        lesser than {b}, respectively.
 
 vim.ui_attach({ns}, {options}, {callback})                   *vim.ui_attach()*
     Attach to ui events, similar to |nvim_ui_attach()| but receive events as
@@ -1126,16 +1126,16 @@ vim.ui_attach({ns}, {options}, {callback})                   *vim.ui_attach()*
 <
 
     Parameters: ~
-      • {ns}        (integer)
-      • {options}   table<string, any>
-      • {callback}  fun()
+      • {ns}        (`integer`)
+      • {options}   (`table<string, any>`)
+      • {callback}  (`fun()`)
 
 vim.ui_detach({ns})                                          *vim.ui_detach()*
     Detach a callback previously attached with |vim.ui_attach()| for the given
     namespace {ns}.
 
     Parameters: ~
-      • {ns}  (integer)
+      • {ns}  (`integer`)
 
 vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
     Wait for {time} in milliseconds until {callback} returns `true`.
@@ -1170,16 +1170,16 @@ vim.wait({time}, {callback}, {interval}, {fast_only})             *vim.wait()*
 <
 
     Parameters: ~
-      • {time}       (integer) Number of milliseconds to wait
-      • {callback}   fun():|nil boolean Optional callback. Waits until
+      • {time}       (`integer`) Number of milliseconds to wait
+      • {callback}   (`fun(): boolean?`) Optional callback. Waits until
                      {callback} returns true
-      • {interval}   (integer|nil) (Approximate) number of milliseconds to
-                     wait between polls
-      • {fast_only}  (boolean|nil) If true, only |api-fast| events will be
+      • {interval}   (`integer?`) (Approximate) number of milliseconds to wait
+                     between polls
+      • {fast_only}  (`boolean?`) If true, only |api-fast| events will be
                      processed.
 
     Return: ~
-        boolean, nil|-1|-2
+        (`boolean, -1|-2?`)
         • If {callback} returns `true` during the {time}: `true, nil`
         • If {callback} never returns `true` during the {time}: `false, -1`
         • If {callback} is interrupted during the {time}: `false, -2`
@@ -1376,7 +1376,7 @@ Option:append({value})                                      *vim.opt:append()*
 <
 
     Parameters: ~
-      • {value}  (string) Value to append
+      • {value}  (`string`) Value to append
 
 Option:get()                                                   *vim.opt:get()*
     Returns a Lua-representation of the option. Boolean, number and string
@@ -1422,7 +1422,7 @@ Option:get()                                                   *vim.opt:get()*
 <
 
     Return: ~
-        string|integer|boolean|nil value of option
+        (`string|integer|boolean?`) value of option
 
 Option:prepend({value})                                    *vim.opt:prepend()*
     Prepend a value to string-style options. See |:set^=|
@@ -1433,7 +1433,7 @@ Option:prepend({value})                                    *vim.opt:prepend()*
 <
 
     Parameters: ~
-      • {value}  (string) Value to prepend
+      • {value}  (`string`) Value to prepend
 
 Option:remove({value})                                      *vim.opt:remove()*
     Remove a value from string-style options. See |:set-=|
@@ -1444,7 +1444,7 @@ Option:remove({value})                                      *vim.opt:remove()*
 <
 
     Parameters: ~
-      • {value}  (string) Value to remove
+      • {value}  (`string`) Value to remove
 
 vim.bo                                                                *vim.bo*
     Get or set buffer-scoped |options| for the buffer with number {bufnr}.
@@ -1471,7 +1471,7 @@ vim.env                                                              *vim.env*
 <
 
     Parameters: ~
-      • {var}  (string)
+      • {var}  (`string`)
 
 vim.go                                                                *vim.go*
     Get or set global |options|. Like `:setglobal`. Invalid key is an error.
@@ -1553,12 +1553,12 @@ vim.cmd                                                            *vim.cmd()*
 <
 
     Parameters: ~
-      • {command}  string|table Command(s) to execute. If a string, executes
-                   multiple lines of Vim script at once. In this case, it is
-                   an alias to |nvim_exec2()|, where `opts.output` is set to
-                   false. Thus it works identical to |:source|. If a table,
-                   executes a single command. In this case, it is an alias to
-                   |nvim_cmd()| where `opts` is empty.
+      • {command}  (`string|table`) Command(s) to execute. If a string,
+                   executes multiple lines of Vim script at once. In this
+                   case, it is an alias to |nvim_exec2()|, where `opts.output`
+                   is set to false. Thus it works identical to |:source|. If a
+                   table, executes a single command. In this case, it is an
+                   alias to |nvim_cmd()| where `opts` is empty.
 
     See also: ~
       • |ex-cmd-index|
@@ -1570,34 +1570,34 @@ vim.defer_fn({fn}, {timeout})                                 *vim.defer_fn()*
     |vim.schedule_wrap()|ped automatically, so API functions are safe to call.
 
     Parameters: ~
-      • {fn}       (function) Callback to call once `timeout` expires
-      • {timeout}  (integer) Number of milliseconds to wait before calling
+      • {fn}       (`function`) Callback to call once `timeout` expires
+      • {timeout}  (`integer`) Number of milliseconds to wait before calling
                    `fn`
 
     Return: ~
-        (table) timer luv timer object
+        (`table`) timer luv timer object
 
                                                              *vim.deprecate()*
 vim.deprecate({name}, {alternative}, {version}, {plugin}, {backtrace})
     Shows a deprecation message to the user.
 
     Parameters: ~
-      • {name}         string Deprecated feature (function, API, etc.).
-      • {alternative}  (string|nil) Suggested alternative feature.
-      • {version}      string Version when the deprecated function will be
+      • {name}         (`string`) Deprecated feature (function, API, etc.).
+      • {alternative}  (`string?`) Suggested alternative feature.
+      • {version}      (`string`) Version when the deprecated function will be
                        removed.
-      • {plugin}       string|nil Name of the plugin that owns the deprecated
+      • {plugin}       (`string?`) Name of the plugin that owns the deprecated
                        feature. Defaults to "Nvim".
-      • {backtrace}    boolean|nil Prints backtrace. Defaults to true.
+      • {backtrace}    (`boolean?`) Prints backtrace. Defaults to true.
 
     Return: ~
-        (string|nil) Deprecated message, or nil if no message was shown.
+        (`string?`) Deprecated message, or nil if no message was shown.
 
 vim.inspect                                                    *vim.inspect()*
     Gets a human-readable representation of the given object.
 
     Return: ~
-        (string)
+        (`string`)
 
     See also: ~
       • |vim.print()|
@@ -1613,10 +1613,10 @@ vim.keycode({str})                                             *vim.keycode()*
 <
 
     Parameters: ~
-      • {str}  (string) String to be converted.
+      • {str}  (`string`) String to be converted.
 
     Return: ~
-        (string)
+        (`string`)
 
     See also: ~
       • |nvim_replace_termcodes()|
@@ -1635,9 +1635,9 @@ vim.notify({msg}, {level}, {opts})                              *vim.notify()*
     writes to |:messages|.
 
     Parameters: ~
-      • {msg}    (string) Content of the notification to show to the user.
-      • {level}  (integer|nil) One of the values from |vim.log.levels|.
-      • {opts}   (table|nil) Optional parameters. Unused by default.
+      • {msg}    (`string`) Content of the notification to show to the user.
+      • {level}  (`integer?`) One of the values from |vim.log.levels|.
+      • {opts}   (`table?`) Optional parameters. Unused by default.
 
 vim.notify_once({msg}, {level}, {opts})                    *vim.notify_once()*
     Displays a notification only one time.
@@ -1646,12 +1646,12 @@ vim.notify_once({msg}, {level}, {opts})                    *vim.notify_once()*
     display a notification.
 
     Parameters: ~
-      • {msg}    (string) Content of the notification to show to the user.
-      • {level}  (integer|nil) One of the values from |vim.log.levels|.
-      • {opts}   (table|nil) Optional parameters. Unused by default.
+      • {msg}    (`string`) Content of the notification to show to the user.
+      • {level}  (`integer?`) One of the values from |vim.log.levels|.
+      • {opts}   (`table?`) Optional parameters. Unused by default.
 
     Return: ~
-        (boolean) true if message was displayed, else false
+        (`boolean`) true if message was displayed, else false
 
 vim.on_key({fn}, {ns_id})                                       *vim.on_key()*
     Adds Lua function {fn} with namespace id {ns_id} as a listener to every,
@@ -1666,15 +1666,15 @@ vim.on_key({fn}, {ns_id})                                       *vim.on_key()*
       • {fn} will receive the keys after mappings have been evaluated
 
     Parameters: ~
-      • {fn}     fun(key: string) Function invoked on every key press.
+      • {fn}     (`fun(key: string)`) Function invoked on every key press.
                  |i_CTRL-V| Returning nil removes the callback associated with
                  namespace {ns_id}.
-      • {ns_id}  integer? Namespace ID. If nil or 0, generates and returns a
-                 new |nvim_create_namespace()| id.
+      • {ns_id}  (`integer?`) Namespace ID. If nil or 0, generates and returns
+                 a new |nvim_create_namespace()| id.
 
     Return: ~
-        (integer) Namespace id associated with {fn}. Or count of all callbacks
-        if on_key() is called without arguments.
+        (`integer`) Namespace id associated with {fn}. Or count of all
+        callbacks if on_key() is called without arguments.
 
 vim.paste({lines}, {phase})                                      *vim.paste()*
     Paste handler, invoked by |nvim_paste()| when a conforming UI (such as the
@@ -1693,9 +1693,9 @@ vim.paste({lines}, {phase})                                      *vim.paste()*
 <
 
     Parameters: ~
-      • {lines}  string[] # |readfile()|-style list of lines to paste.
+      • {lines}  (`string[]`) |readfile()|-style list of lines to paste.
                  |channel-lines|
-      • {phase}  paste_phase -1: "non-streaming" paste: the call contains all
+      • {phase}  (`-1|1|2|3`) -1: "non-streaming" paste: the call contains all
                  lines. If paste is "streamed", `phase` indicates
                  the stream state:
                  • 1: starts the paste (exactly once)
@@ -1703,10 +1703,10 @@ vim.paste({lines}, {phase})                                      *vim.paste()*
                  • 3: ends the paste (exactly once)
 
     Return: ~
-        (boolean) result false if client should cancel the paste.
+        (`boolean`) result false if client should cancel the paste.
 
     See also: ~
-      • |paste| @alias paste_phase -1 | 1 | 2 | 3
+      • |paste|
 
 vim.print({...})                                                 *vim.print()*
     "Pretty prints" the given arguments and returns them unmodified.
@@ -1716,7 +1716,7 @@ vim.print({...})                                                 *vim.print()*
 <
 
     Return: ~
-        any given arguments.
+        (`any`) given arguments.
 
     See also: ~
       • |vim.inspect()|
@@ -1732,17 +1732,17 @@ vim.region({bufnr}, {pos1}, {pos2}, {regtype}, {inclusive})
     returned as |v:maxcol| (big number).
 
     Parameters: ~
-      • {bufnr}      (integer) Buffer number, or 0 for current buffer
-      • {pos1}       integer[]|string Start of region as a (line, column)
+      • {bufnr}      (`integer`) Buffer number, or 0 for current buffer
+      • {pos1}       (`integer[]|string`) Start of region as a (line, column)
                      tuple or |getpos()|-compatible string
-      • {pos2}       integer[]|string End of region as a (line, column) tuple
-                     or |getpos()|-compatible string
-      • {regtype}    (string) |setreg()|-style selection type
-      • {inclusive}  (boolean) Controls whether the ending column is inclusive
-                     (see also 'selection').
+      • {pos2}       (`integer[]|string`) End of region as a (line, column)
+                     tuple or |getpos()|-compatible string
+      • {regtype}    (`string`) |setreg()|-style selection type
+      • {inclusive}  (`boolean`) Controls whether the ending column is
+                     inclusive (see also 'selection').
 
     Return: ~
-        (table) region Dict of the form `{linenr = {startcol,endcol}}`.
+        (`table`) region Dict of the form `{linenr = {startcol,endcol}}`.
         `endcol` is exclusive, and whole lines are returned as
         `{startcol,endcol} = {0,-1}`.
 
@@ -1759,10 +1759,10 @@ vim.schedule_wrap({fn})                                  *vim.schedule_wrap()*
 <
 
     Parameters: ~
-      • {fn}  (function)
+      • {fn}  (`function`)
 
     Return: ~
-        (function)
+        (`function`)
 
     See also: ~
       • |lua-loop-callbacks|
@@ -1792,8 +1792,8 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
     throws an error if {cmd} cannot be run.
 
     Parameters: ~
-      • {cmd}      (string[]) Command to execute
-      • {opts}     (SystemOpts|nil) Options:
+      • {cmd}      (`string[]`) Command to execute
+      • {opts}     (`vim.SystemOpts?`) Options:
                    • cwd: (string) Set the current working directory for the
                      sub-process.
                    • env: table<string,string> Set environment variables for
@@ -1823,12 +1823,13 @@ vim.system({cmd}, {opts}, {on_exit})                            *vim.system()*
                      process will still keep the parent's event loop alive
                      unless the parent process calls |uv.unref()| on the
                      child's process handle.
-      • {on_exit}  (function|nil) Called when subprocess exits. When provided,
-                   the command runs asynchronously. Receives SystemCompleted
-                   object, see return of SystemObj:wait().
+      • {on_exit}  (`fun(out: vim.SystemCompleted)?`) Called when subprocess
+                   exits. When provided, the command runs asynchronously.
+                   Receives SystemCompleted object, see return of
+                   SystemObj:wait().
 
     Return: ~
-        vim.SystemObj Object with the fields:
+        (`vim.SystemObj`) Object with the fields:
         • pid (integer) Process ID
         • wait (fun(timeout: integer|nil): SystemCompleted) Wait for the
           process to complete. Upon timeout the process is sent the KILL
@@ -1855,12 +1856,12 @@ vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
     Can also be pretty-printed with `:Inspect!`.                   *:Inspect!*
 
     Parameters: ~
-      • {bufnr}   (integer|nil) defaults to the current buffer
-      • {row}     (integer|nil) row to inspect, 0-based. Defaults to the row
-                  of the current cursor
-      • {col}     (integer|nil) col to inspect, 0-based. Defaults to the col
-                  of the current cursor
-      • {filter}  (table|nil) a table with key-value pairs to filter the items
+      • {bufnr}   (`integer?`) defaults to the current buffer
+      • {row}     (`integer?`) row to inspect, 0-based. Defaults to the row of
+                  the current cursor
+      • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
+                  the current cursor
+      • {filter}  (`table?`) a table with key-value pairs to filter the items
                   • syntax (boolean): include syntax based highlight groups
                     (defaults to true)
                   • treesitter (boolean): include treesitter based highlight
@@ -1872,7 +1873,7 @@ vim.inspect_pos({bufnr}, {row}, {col}, {filter})           *vim.inspect_pos()*
                     (defaults to true)
 
     Return: ~
-        (table) a table with the following key-value pairs. Items are in
+        (`table`) a table with the following key-value pairs. Items are in
         "traversal order":
         • treesitter: a list of treesitter captures
         • syntax: a list of syntax groups
@@ -1888,12 +1889,12 @@ vim.show_pos({bufnr}, {row}, {col}, {filter})                 *vim.show_pos()*
     Can also be shown with `:Inspect`.                              *:Inspect*
 
     Parameters: ~
-      • {bufnr}   (integer|nil) defaults to the current buffer
-      • {row}     (integer|nil) row to inspect, 0-based. Defaults to the row
-                  of the current cursor
-      • {col}     (integer|nil) col to inspect, 0-based. Defaults to the col
-                  of the current cursor
-      • {filter}  (table|nil) see |vim.inspect_pos()|
+      • {bufnr}   (`integer?`) defaults to the current buffer
+      • {row}     (`integer?`) row to inspect, 0-based. Defaults to the row of
+                  the current cursor
+      • {col}     (`integer?`) col to inspect, 0-based. Defaults to the col of
+                  the current cursor
+      • {filter}  (`table?`) see |vim.inspect_pos()|
 
 
 
@@ -1905,11 +1906,11 @@ vim.deep_equal({a}, {b})                                    *vim.deep_equal()*
     All other types are compared using the equality `==` operator.
 
     Parameters: ~
-      • {a}  any First value
-      • {b}  any Second value
+      • {a}  (`any`) First value
+      • {b}  (`any`) Second value
 
     Return: ~
-        (boolean) `true` if values are equals, else `false`
+        (`boolean`) `true` if values are equals, else `false`
 
 vim.deepcopy({orig}, {noref})                                 *vim.deepcopy()*
     Returns a deep copy of the given object. Non-table objects are copied as
@@ -1923,15 +1924,15 @@ vim.deepcopy({orig}, {noref})                                 *vim.deepcopy()*
     fields.
 
     Parameters: ~
-      • {orig}   (table) Table to copy
-      • {noref}  (boolean|nil) When `false` (default) a contained table is
-                 only copied once and all references point to this single
-                 copy. When `true` every occurrence of a table results in a
-                 new copy. This also means that a cyclic reference can cause
+      • {orig}   (`table`) Table to copy
+      • {noref}  (`boolean?`) When `false` (default) a contained table is only
+                 copied once and all references point to this single copy.
+                 When `true` every occurrence of a table results in a new
+                 copy. This also means that a cyclic reference can cause
                  `deepcopy()` to fail.
 
     Return: ~
-        (table) Table of copied keys and (nested) values.
+        (`table`) Table of copied keys and (nested) values.
 
 vim.defaulttable({createfn})                              *vim.defaulttable()*
     Creates a table whose missing keys are provided by {createfn} (like
@@ -1944,21 +1945,21 @@ vim.defaulttable({createfn})                              *vim.defaulttable()*
 <
 
     Parameters: ~
-      • {createfn}  function?(key:any):any Provides the value for a missing
+      • {createfn}  (`fun(key:any):any?`) Provides the value for a missing
                     `key`.
 
     Return: ~
-        (table) Empty table with `__index` metamethod.
+        (`table`) Empty table with `__index` metamethod.
 
 vim.endswith({s}, {suffix})                                   *vim.endswith()*
     Tests if `s` ends with `suffix`.
 
     Parameters: ~
-      • {s}       (string) String
-      • {suffix}  (string) Suffix to match
+      • {s}       (`string`) String
+      • {suffix}  (`string`) Suffix to match
 
     Return: ~
-        (boolean) `true` if `suffix` is a suffix of `s`
+        (`boolean`) `true` if `suffix` is a suffix of `s`
 
 vim.gsplit({s}, {sep}, {opts})                                  *vim.gsplit()*
     Gets an |iterator| that splits a string at each instance of a separator,
@@ -1978,15 +1979,15 @@ vim.gsplit({s}, {sep}, {opts})                                  *vim.gsplit()*
 <
 
     Parameters: ~
-      • {s}     (string) String to split
-      • {sep}   (string) Separator or pattern
-      • {opts}  (table|nil) Keyword arguments |kwargs|:
+      • {s}     (`string`) String to split
+      • {sep}   (`string`) Separator or pattern
+      • {opts}  (`table?`) Keyword arguments |kwargs|:
                 • plain: (boolean) Use `sep` literally (as in string.find).
                 • trimempty: (boolean) Discard empty segments at start and end
                   of the sequence.
 
     Return: ~
-        (function) Iterator over the split components
+        (`function`) Iterator over the split components
 
     See also: ~
       • |string.gmatch()|
@@ -1999,20 +2000,20 @@ vim.is_callable({f})                                       *vim.is_callable()*
     Returns true if object `f` can be called as a function.
 
     Parameters: ~
-      • {f}  any Any object
+      • {f}  (`any`) Any object
 
     Return: ~
-        (boolean) `true` if `f` is callable, else `false`
+        (`boolean`) `true` if `f` is callable, else `false`
 
 vim.list_contains({t}, {value})                          *vim.list_contains()*
     Checks if a list-like table (integer keys without gaps) contains `value`.
 
     Parameters: ~
-      • {t}      (table) Table to check (must be list-like, not validated)
-      • {value}  any Value to compare
+      • {t}      (`table`) Table to check (must be list-like, not validated)
+      • {value}  (`any`) Value to compare
 
     Return: ~
-        (boolean) `true` if `t` contains `value`
+        (`boolean`) `true` if `t` contains `value`
 
     See also: ~
       • |vim.tbl_contains()| for checking values in general tables
@@ -2023,13 +2024,13 @@ vim.list_extend({dst}, {src}, {start}, {finish})           *vim.list_extend()*
     NOTE: This mutates dst!
 
     Parameters: ~
-      • {dst}     (table) List which will be modified and appended to
-      • {src}     (table) List from which values will be inserted
-      • {start}   (integer|nil) Start index on src. Defaults to 1
-      • {finish}  (integer|nil) Final index on src. Defaults to `#src`
+      • {dst}     (`table`) List which will be modified and appended to
+      • {src}     (`table`) List from which values will be inserted
+      • {start}   (`integer?`) Start index on src. Defaults to 1
+      • {finish}  (`integer?`) Final index on src. Defaults to `#src`
 
     Return: ~
-        (table) dst
+        (`table`) dst
 
     See also: ~
       • |vim.tbl_extend()|
@@ -2039,21 +2040,21 @@ vim.list_slice({list}, {start}, {finish})                   *vim.list_slice()*
     (inclusive)
 
     Parameters: ~
-      • {list}    (list) Table
-      • {start}   (integer|nil) Start range of slice
-      • {finish}  (integer|nil) End range of slice
+      • {list}    (`list`) Table
+      • {start}   (`integer?`) Start range of slice
+      • {finish}  (`integer?`) End range of slice
 
     Return: ~
-        (list) Copy of table sliced from start to finish (inclusive)
+        (`list`) Copy of table sliced from start to finish (inclusive)
 
 vim.pesc({s})                                                     *vim.pesc()*
     Escapes magic chars in |lua-patterns|.
 
     Parameters: ~
-      • {s}  (string) String to escape
+      • {s}  (`string`) String to escape
 
     Return: ~
-        (string) %-escaped pattern string
+        (`string`) %-escaped pattern string
 
     See also: ~
       • https://github.com/rxi/lume
@@ -2084,10 +2085,10 @@ vim.ringbuf({size})                                            *vim.ringbuf()*
     • |Ringbuf:clear()|
 
     Parameters: ~
-      • {size}  (integer)
+      • {size}  (`integer`)
 
     Return: ~
-        (table)
+        (`table`)
 
 vim.Ringbuf:clear()                                          *Ringbuf:clear()*
     Clear all items.
@@ -2096,28 +2097,28 @@ vim.Ringbuf:peek()                                            *Ringbuf:peek()*
     Returns the first unread item without removing it
 
     Return: ~
-        any?|nil
+        (`any?`)
 
 vim.Ringbuf:pop()                                              *Ringbuf:pop()*
     Removes and returns the first unread item
 
     Return: ~
-        any?|nil
+        (`any?`)
 
 vim.Ringbuf:push({item})                                      *Ringbuf:push()*
     Adds an item, overriding the oldest item if the buffer is full.
 
     Parameters: ~
-      • {item}  any
+      • {item}  (`any`)
 
 vim.spairs({t})                                                 *vim.spairs()*
     Enumerates key-value pairs of a table, ordered by key.
 
     Parameters: ~
-      • {t}  (table) Dict-like table
+      • {t}  (`table`) Dict-like table
 
     Return: ~
-        (function) |for-in| iterator over sorted keys and their values
+        (`function`) |for-in| iterator over sorted keys and their values
 
     See also: ~
       • Based on https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -2134,13 +2135,13 @@ vim.split({s}, {sep}, {opts})                                    *vim.split()*
 <
 
     Parameters: ~
-      • {s}     (string) String to split
-      • {sep}   (string) Separator or pattern
-      • {opts}  (table|nil) Keyword arguments |kwargs| accepted by
+      • {s}     (`string`) String to split
+      • {sep}   (`string`) Separator or pattern
+      • {opts}  (`table?`) Keyword arguments |kwargs| accepted by
                 |vim.gsplit()|
 
     Return: ~
-        string[] List of split components
+        (`string[]`) List of split components
 
     See also: ~
       • |vim.gsplit()|
@@ -2150,11 +2151,11 @@ vim.startswith({s}, {prefix})                               *vim.startswith()*
     Tests if `s` starts with `prefix`.
 
     Parameters: ~
-      • {s}       (string) String
-      • {prefix}  (string) Prefix to match
+      • {s}       (`string`) String
+      • {prefix}  (`string`) Prefix to match
 
     Return: ~
-        (boolean) `true` if `prefix` is a prefix of `s`
+        (`boolean`) `true` if `prefix` is a prefix of `s`
 
 vim.tbl_add_reverse_lookup({o})                 *vim.tbl_add_reverse_lookup()*
     Add the reverse lookup values to an existing table. For example:
@@ -2163,10 +2164,10 @@ vim.tbl_add_reverse_lookup({o})                 *vim.tbl_add_reverse_lookup()*
     Note that this modifies the input.
 
     Parameters: ~
-      • {o}  (table) Table to add the reverse to
+      • {o}  (`table`) Table to add the reverse to
 
     Return: ~
-        (table) o
+        (`table`) o
 
 vim.tbl_contains({t}, {value}, {opts})                    *vim.tbl_contains()*
     Checks if a table contains a given value, specified either directly or via
@@ -2180,14 +2181,14 @@ vim.tbl_contains({t}, {value}, {opts})                    *vim.tbl_contains()*
 <
 
     Parameters: ~
-      • {t}      (table) Table to check
-      • {value}  any Value to compare or predicate function reference
-      • {opts}   (table|nil) Keyword arguments |kwargs|:
+      • {t}      (`table`) Table to check
+      • {value}  (`any`) Value to compare or predicate function reference
+      • {opts}   (`table?`) Keyword arguments |kwargs|:
                  • predicate: (boolean) `value` is a function reference to be
                    checked (default false)
 
     Return: ~
-        (boolean) `true` if `t` contains `value`
+        (`boolean`) `true` if `t` contains `value`
 
     See also: ~
       • |vim.list_contains()| for checking values in list-like tables
@@ -2199,10 +2200,10 @@ vim.tbl_count({t})                                           *vim.tbl_count()*
 <
 
     Parameters: ~
-      • {t}  (table) Table
+      • {t}  (`table`) Table
 
     Return: ~
-        (integer) Number of non-nil values in table
+        (`integer`) Number of non-nil values in table
 
     See also: ~
       • https://github.com/Tieske/Penlight/blob/master/lua/pl/tablex.lua
@@ -2211,15 +2212,15 @@ vim.tbl_deep_extend({behavior}, {...})                 *vim.tbl_deep_extend()*
     Merges recursively two or more tables.
 
     Parameters: ~
-      • {behavior}  (string) Decides what to do if a key is found in more than
-                    one map:
+      • {behavior}  (`string`) Decides what to do if a key is found in more
+                    than one map:
                     • "error": raise an error
                     • "keep": use value from the leftmost map
                     • "force": use value from the rightmost map
-      • {...}       (table) Two or more tables
+      • {...}       (`table`) Two or more tables
 
     Return: ~
-        (table) Merged table
+        (`table`) Merged table
 
     See also: ~
       • |vim.tbl_extend()|
@@ -2228,15 +2229,15 @@ vim.tbl_extend({behavior}, {...})                           *vim.tbl_extend()*
     Merges two or more tables.
 
     Parameters: ~
-      • {behavior}  (string) Decides what to do if a key is found in more than
-                    one map:
+      • {behavior}  (`string`) Decides what to do if a key is found in more
+                    than one map:
                     • "error": raise an error
                     • "keep": use value from the leftmost map
                     • "force": use value from the rightmost map
-      • {...}       (table) Two or more tables
+      • {...}       (`table`) Two or more tables
 
     Return: ~
-        (table) Merged table
+        (`table`) Merged table
 
     See also: ~
       • |extend()|
@@ -2245,21 +2246,21 @@ vim.tbl_filter({func}, {t})                                 *vim.tbl_filter()*
     Filter a table using a predicate function
 
     Parameters: ~
-      • {func}  (function) Function
-      • {t}     (table) Table
+      • {func}  (`function`) Function
+      • {t}     (`table`) Table
 
     Return: ~
-        (table) Table of filtered values
+        (`table`) Table of filtered values
 
 vim.tbl_flatten({t})                                       *vim.tbl_flatten()*
     Creates a copy of a list-like table such that any nested tables are
     "unrolled" and appended to the result.
 
     Parameters: ~
-      • {t}  (table) List-like table
+      • {t}  (`table`) List-like table
 
     Return: ~
-        (table) Flattened copy of the given list-like table
+        (`table`) Flattened copy of the given list-like table
 
     See also: ~
       • From https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -2274,12 +2275,12 @@ vim.tbl_get({o}, {...})                                        *vim.tbl_get()*
 <
 
     Parameters: ~
-      • {o}    (table) Table to index
-      • {...}  any Optional keys (0 or more, variadic) via which to index the
-               table
+      • {o}    (`table`) Table to index
+      • {...}  (`any`) Optional keys (0 or more, variadic) via which to index
+               the table
 
     Return: ~
-        any Nested value indexed by key (if it exists), else nil
+        (`any`) Nested value indexed by key (if it exists), else nil
 
 vim.tbl_isarray({t})                                       *vim.tbl_isarray()*
     Tests if `t` is an "array": a table indexed only by integers (potentially
@@ -2293,10 +2294,10 @@ vim.tbl_isarray({t})                                       *vim.tbl_isarray()*
     |rpcrequest()| or |vim.fn|.
 
     Parameters: ~
-      • {t}  (table)
+      • {t}  (`table`)
 
     Return: ~
-        (boolean) `true` if array-like table, else `false`.
+        (`boolean`) `true` if array-like table, else `false`.
 
     See also: ~
       • https://github.com/openresty/luajit2#tableisarray
@@ -2305,10 +2306,10 @@ vim.tbl_isempty({t})                                       *vim.tbl_isempty()*
     Checks if a table is empty.
 
     Parameters: ~
-      • {t}  (table) Table to check
+      • {t}  (`table`) Table to check
 
     Return: ~
-        (boolean) `true` if `t` is empty
+        (`boolean`) `true` if `t` is empty
 
     See also: ~
       • https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -2322,10 +2323,10 @@ vim.tbl_islist({t})                                         *vim.tbl_islist()*
     |rpcrequest()| or |vim.fn|.
 
     Parameters: ~
-      • {t}  (table)
+      • {t}  (`table`)
 
     Return: ~
-        (boolean) `true` if list-like table, else `false`.
+        (`boolean`) `true` if list-like table, else `false`.
 
     See also: ~
       • |vim.tbl_isarray()|
@@ -2335,10 +2336,10 @@ vim.tbl_keys({t})                                             *vim.tbl_keys()*
     return table of keys is not guaranteed.
 
     Parameters: ~
-      • {t}  (table) Table
+      • {t}  (`table`) Table
 
     Return: ~
-        (list) List of keys
+        (`list`) List of keys
 
     See also: ~
       • From https://github.com/premake/premake-core/blob/master/src/base/table.lua
@@ -2347,30 +2348,30 @@ vim.tbl_map({func}, {t})                                       *vim.tbl_map()*
     Apply a function to all values of a table.
 
     Parameters: ~
-      • {func}  (function) Function
-      • {t}     (table) Table
+      • {func}  (`function`) Function
+      • {t}     (`table`) Table
 
     Return: ~
-        (table) Table of transformed values
+        (`table`) Table of transformed values
 
 vim.tbl_values({t})                                         *vim.tbl_values()*
     Return a list of all values used in a table. However, the order of the
     return table of values is not guaranteed.
 
     Parameters: ~
-      • {t}  (table) Table
+      • {t}  (`table`) Table
 
     Return: ~
-        (list) List of values
+        (`list`) List of values
 
 vim.trim({s})                                                     *vim.trim()*
     Trim whitespace (Lua pattern "%s") from both sides of a string.
 
     Parameters: ~
-      • {s}  (string) String to trim
+      • {s}  (`string`) String to trim
 
     Return: ~
-        (string) String with whitespace removed from its beginning and end
+        (`string`) String with whitespace removed from its beginning and end
 
     See also: ~
       • |lua-patterns|
@@ -2410,7 +2411,7 @@ vim.validate({opt})                                           *vim.validate()*
 <
 
     Parameters: ~
-      • {opt}  (table) Names of parameters to validate. Each key is a
+      • {opt}  (`table`) Names of parameters to validate. Each key is a
                parameter name; each value is a tuple in one of these forms:
                1. (arg_value, type_name, optional)
                   • arg_value: argument value
@@ -2447,9 +2448,9 @@ vim.loader.find({modname}, {opts})                         *vim.loader.find()*
     Finds Lua modules for the given module name.
 
     Parameters: ~
-      • {modname}  (string) Module name, or `"*"` to find the top-level
+      • {modname}  (`string`) Module name, or `"*"` to find the top-level
                    modules instead
-      • {opts}     (table|nil) Options for finding a module:
+      • {opts}     (`table?`) Options for finding a module:
                    • rtp: (boolean) Search for modname in the runtime path
                      (defaults to `true`)
                    • paths: (string[]) Extra paths to search for modname
@@ -2462,7 +2463,7 @@ vim.loader.find({modname}, {opts})                         *vim.loader.find()*
                      first one (defaults to `false`)
 
     Return: ~
-        (list) A list of results with the following properties:
+        (`list`) A list of results with the following properties:
         • modpath: (string) the path to the module
         • modname: (string) the name of the module
         • stat: (table|nil) the fs_stat of the module path. Won't be returned
@@ -2472,7 +2473,7 @@ vim.loader.reset({path})                                  *vim.loader.reset()*
     Resets the cache for the path, or all the paths if path is nil.
 
     Parameters: ~
-      • {path}  string? path to reset
+      • {path}  (`string?`) path to reset
 
 
 ==============================================================================
@@ -2482,57 +2483,57 @@ vim.uri_decode({str})                                       *vim.uri_decode()*
     URI-decodes a string containing percent escapes.
 
     Parameters: ~
-      • {str}  (string) string to decode
+      • {str}  (`string`) string to decode
 
     Return: ~
-        (string) decoded string
+        (`string`) decoded string
 
 vim.uri_encode({str}, {rfc})                                *vim.uri_encode()*
     URI-encodes a string using percent escapes.
 
     Parameters: ~
-      • {str}  (string) string to encode
-      • {rfc}  "rfc2396" | "rfc2732" | "rfc3986" | nil
+      • {str}  (`string`) string to encode
+      • {rfc}  (`"rfc2396"|"rfc2732"|"rfc3986"?`)
 
     Return: ~
-        (string) encoded string
+        (`string`) encoded string
 
 vim.uri_from_bufnr({bufnr})                             *vim.uri_from_bufnr()*
     Gets a URI from a bufnr.
 
     Parameters: ~
-      • {bufnr}  (integer)
+      • {bufnr}  (`integer`)
 
     Return: ~
-        (string) URI
+        (`string`) URI
 
 vim.uri_from_fname({path})                              *vim.uri_from_fname()*
     Gets a URI from a file path.
 
     Parameters: ~
-      • {path}  (string) Path to file
+      • {path}  (`string`) Path to file
 
     Return: ~
-        (string) URI
+        (`string`) URI
 
 vim.uri_to_bufnr({uri})                                   *vim.uri_to_bufnr()*
     Gets the buffer for a uri. Creates a new unloaded buffer if no buffer for
     the uri already exists.
 
     Parameters: ~
-      • {uri}  (string)
+      • {uri}  (`string`)
 
     Return: ~
-        (integer) bufnr
+        (`integer`) bufnr
 
 vim.uri_to_fname({uri})                                   *vim.uri_to_fname()*
     Gets a filename from a URI.
 
     Parameters: ~
-      • {uri}  (string)
+      • {uri}  (`string`)
 
     Return: ~
-        (string) filename or unchanged URI for non-file URIs
+        (`string`) filename or unchanged URI for non-file URIs
 
 
 ==============================================================================
@@ -2549,7 +2550,7 @@ vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
 <
 
     Parameters: ~
-      • {opts}        (table) Additional options. See |input()|
+      • {opts}        (`table`) Additional options. See |input()|
                       • prompt (string|nil) Text of the prompt
                       • default (string|nil) Default reply to the input
                       • completion (string|nil) Specifies type of completion
@@ -2558,7 +2559,7 @@ vim.ui.input({opts}, {on_confirm})                            *vim.ui.input()*
                         "-complete=" argument. See |:command-completion|
                       • highlight (function) Function that will be used for
                         highlighting user inputs.
-      • {on_confirm}  (function) ((input|nil) -> ()) Called once the user
+      • {on_confirm}  (`function`) ((input|nil) -> ()) Called once the user
                       confirms or abort the input. `input` is what the user
                       typed (it might be an empty string if nothing was
                       entered), or `nil` if the user aborted the dialog.
@@ -2577,11 +2578,11 @@ vim.ui.open({path})                                            *vim.ui.open()*
 <
 
     Parameters: ~
-      • {path}  (string) Path or URL to open
+      • {path}  (`string`) Path or URL to open
 
     Return (multiple): ~
-        vim.SystemCompleted|nil Command result, or nil if not found.
-        (string|nil) Error message on failure
+        (`vim.SystemCompleted?`) Command result, or nil if not found.
+        (`string?`) Error message on failure
 
     See also: ~
       • |vim.system()|
@@ -2606,8 +2607,8 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
 <
 
     Parameters: ~
-      • {items}      (table) Arbitrary items
-      • {opts}       (table) Additional options
+      • {items}      (`table`) Arbitrary items
+      • {opts}       (`table`) Additional options
                      • prompt (string|nil) Text of the prompt. Defaults to
                        `Select one of:`
                      • format_item (function item -> text) Function to format
@@ -2617,7 +2618,7 @@ vim.ui.select({items}, {opts}, {on_choice})                  *vim.ui.select()*
                        item shape. Plugins reimplementing `vim.ui.select` may
                        wish to use this to infer the structure or semantics of
                        `items`, or the context in which select() was called.
-      • {on_choice}  (function) ((item|nil, idx|nil) -> ()) Called once the
+      • {on_choice}  (`function`) ((item|nil, idx|nil) -> ()) Called once the
                      user made a choice. `idx` is the 1-based index of `item`
                      within `items`. `nil` if the user aborted the dialog.
 
@@ -2707,7 +2708,7 @@ vim.filetype.add({filetypes})                             *vim.filetype.add()*
 <
 
     Parameters: ~
-      • {filetypes}  (table) A table containing new filetype maps (see
+      • {filetypes}  (`table`) A table containing new filetype maps (see
                      example).
 
                                                    *vim.filetype.get_option()*
@@ -2727,11 +2728,11 @@ vim.filetype.get_option({filetype}, {option})
     may not reflect later changes.
 
     Parameters: ~
-      • {filetype}  (string) Filetype
-      • {option}    (string) Option name
+      • {filetype}  (`string`) Filetype
+      • {option}    (`string`) Option name
 
     Return: ~
-        string|boolean|integer: Option value
+        (`string|boolean|integer`) Option value
 
 vim.filetype.match({args})                              *vim.filetype.match()*
     Perform filetype detection.
@@ -2763,7 +2764,7 @@ vim.filetype.match({args})                              *vim.filetype.match()*
 <
 
     Parameters: ~
-      • {args}  (table) Table specifying which matching strategy to use.
+      • {args}  (`table`) Table specifying which matching strategy to use.
                 Accepted keys are:
                 • buf (number): Buffer number to use for matching. Mutually
                   exclusive with {contents}
@@ -2779,8 +2780,8 @@ vim.filetype.match({args})                              *vim.filetype.match()*
                   Mutually exclusive with {buf}.
 
     Return (multiple): ~
-        (string|nil) If a match was found, the matched filetype.
-        (function|nil) A function that modifies buffer state when called (for
+        (`string?`) If a match was found, the matched filetype.
+        (`function?`) A function that modifies buffer state when called (for
         example, to set some filetype specific buffer variables). The function
         accepts a buffer number as its only argument.
 
@@ -2796,7 +2797,7 @@ vim.keymap.del({modes}, {lhs}, {opts})                      *vim.keymap.del()*
 <
 
     Parameters: ~
-      • {opts}  (table|nil) A table of optional arguments:
+      • {opts}  (`table?`) A table of optional arguments:
                 • "buffer": (integer|boolean) Remove a mapping from the given
                   buffer. When `0` or `true`, use the current buffer.
 
@@ -2820,12 +2821,12 @@ vim.keymap.set({mode}, {lhs}, {rhs}, {opts})                *vim.keymap.set()*
 <
 
     Parameters: ~
-      • {mode}  string|table Mode short-name, see |nvim_set_keymap()|. Can
+      • {mode}  (`string|table`) Mode short-name, see |nvim_set_keymap()|. Can
                 also be list of modes to create mapping on multiple modes.
-      • {lhs}   (string) Left-hand side |{lhs}| of the mapping.
-      • {rhs}   string|function Right-hand side |{rhs}| of the mapping, can be
-                a Lua function.
-      • {opts}  (table|nil) Table of |:map-arguments|.
+      • {lhs}   (`string`) Left-hand side |{lhs}| of the mapping.
+      • {rhs}   (`string|function`) Right-hand side |{rhs}| of the mapping,
+                can be a Lua function.
+      • {opts}  (`table?`) Table of |:map-arguments|.
                 • Same as |nvim_set_keymap()| {opts}, except:
                   • "replace_keycodes" defaults to `true` if "expr" is `true`.
                   • "noremap": inverse of "remap" (see below).
@@ -2850,26 +2851,26 @@ vim.fs.basename({file})                                    *vim.fs.basename()*
     Return the basename of the given path
 
     Parameters: ~
-      • {file}  (string) Path
+      • {file}  (`string`) Path
 
     Return: ~
-        (string|nil) Basename of {file}
+        (`string?`) Basename of {file}
 
 vim.fs.dir({path}, {opts})                                      *vim.fs.dir()*
     Return an iterator over the items located in {path}
 
     Parameters: ~
-      • {path}  (string) An absolute or relative path to the directory to
+      • {path}  (`string`) An absolute or relative path to the directory to
                 iterate over. The path is first normalized
                 |vim.fs.normalize()|.
-      • {opts}  (table|nil) Optional keyword arguments:
+      • {opts}  (`table?`) Optional keyword arguments:
                 • depth: integer|nil How deep the traverse (default 1)
                 • skip: (fun(dir_name: string): boolean)|nil Predicate to
                   control traversal. Return false to stop searching the
                   current directory. Only useful when depth > 1
 
     Return: ~
-        Iterator over items in {path}. Each iteration yields two values:
+        (`Iterator`) over items in {path}. Each iteration yields two values:
         "name" and "type". "name" is the basename of the item relative to
         {path}. "type" is one of the following: "file", "directory", "link",
         "fifo", "socket", "char", "block", "unknown".
@@ -2878,10 +2879,10 @@ vim.fs.dirname({file})                                      *vim.fs.dirname()*
     Return the parent directory of the given path
 
     Parameters: ~
-      • {file}  (string) Path
+      • {file}  (`string`) Path
 
     Return: ~
-        (string|nil) Parent directory of {file}
+        (`string?`) Parent directory of {file}
 
 vim.fs.find({names}, {opts})                                   *vim.fs.find()*
     Find files or directories (or other items as specified by `opts.type`) in
@@ -2917,7 +2918,7 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
 <
 
     Parameters: ~
-      • {names}  (string|string[]|fun(name: string, path: string): boolean)
+      • {names}  (`string|string[]|fun(name: string, path: string): boolean`)
                  Names of the items to find. Must be base names, paths and
                  globs are not supported when {names} is a string or a table.
                  If {names} is a function, it is called for each traversed
@@ -2925,7 +2926,7 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                  • name: base name of the current item
                  • path: full path of the current item The function should
                    return `true` if the given item is considered a match.
-      • {opts}   (table) Optional keyword arguments:
+      • {opts}   (`table`) Optional keyword arguments:
                  • path (string): Path to begin searching from. If omitted,
                    the |current-directory| is used.
                  • upward (boolean, default false): If true, search upward
@@ -2940,17 +2941,18 @@ vim.fs.find({names}, {opts})                                   *vim.fs.find()*
                    number of matches.
 
     Return: ~
-        (string[]) Normalized paths |vim.fs.normalize()| of all matching items
+        (`string[]`) Normalized paths |vim.fs.normalize()| of all matching
+        items
 
 vim.fs.joinpath({...})                                     *vim.fs.joinpath()*
     Concatenate directories and/or file paths into a single path with
     normalization (e.g., `"foo/"` and `"bar"` get joined to `"foo/bar"`)
 
     Parameters: ~
-      • {...}  (string)
+      • {...}  (`string`)
 
     Return: ~
-        (string)
+        (`string`)
 
 vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
     Normalize a path to a standard format. A tilde (~) character at the
@@ -2970,13 +2972,13 @@ vim.fs.normalize({path}, {opts})                          *vim.fs.normalize()*
 <
 
     Parameters: ~
-      • {path}  (string) Path to normalize
-      • {opts}  (table|nil) Options:
+      • {path}  (`string`) Path to normalize
+      • {opts}  (`table?`) Options:
                 • expand_env: boolean Expand environment variables (default:
                   true)
 
     Return: ~
-        (string) Normalized path
+        (`string`) Normalized path
 
 vim.fs.parents({start})                                     *vim.fs.parents()*
     Iterate over all the parents of the given path.
@@ -2996,12 +2998,12 @@ vim.fs.parents({start})                                     *vim.fs.parents()*
 <
 
     Parameters: ~
-      • {start}  (string) Initial path.
+      • {start}  (`string`) Initial path.
 
     Return (multiple): ~
-        fun(_, dir: string): string? Iterator
-        nil
-        (string|nil)
+        (`fun(_, dir: string): string?`) Iterator
+        (`nil`)
+        (`string?`)
 
 
 ==============================================================================
@@ -3025,10 +3027,11 @@ vim.glob.to_lpeg({pattern})                               *vim.glob.to_lpeg()*
       `example.0`)
 
     Parameters: ~
-      • {pattern}  (string) The raw glob pattern
+      • {pattern}  (`string`) The raw glob pattern
 
     Return: ~
-        vim.lpeg.Pattern pattern An |lua-lpeg| representation of the pattern
+        (`vim.lpeg.Pattern`) pattern An |lua-lpeg| representation of the
+        pattern
 
 
 ==============================================================================
@@ -3040,10 +3043,10 @@ vim.secure.read({path})                                    *vim.secure.read()*
     $XDG_STATE_HOME/nvim/trust.
 
     Parameters: ~
-      • {path}  (string) Path to a file to read.
+      • {path}  (`string`) Path to a file to read.
 
     Return: ~
-        (string|nil) The contents of the given file if it exists and is
+        (`string?`) The contents of the given file if it exists and is
         trusted, or nil otherwise.
 
     See also: ~
@@ -3055,7 +3058,7 @@ vim.secure.trust({opts})                                  *vim.secure.trust()*
     The trust database is located at |$XDG_STATE_HOME|/nvim/trust.
 
     Parameters: ~
-      • {opts}  (table)
+      • {opts}  (`table`)
                 • action (string): "allow" to add a file to the trust database
                   and trust it, "deny" to add a file to the trust database and
                   deny it, "remove" to remove file from the trust database
@@ -3066,8 +3069,9 @@ vim.secure.trust({opts})                                  *vim.secure.trust()*
                   exclusive with {path}.
 
     Return (multiple): ~
-        (boolean) success true if operation was successful
-        (string) msg full path if operation was successful, else error message
+        (`boolean`) success true if operation was successful
+        (`string`) msg full path if operation was successful, else error
+        message
 
 
 ==============================================================================
@@ -3150,51 +3154,51 @@ vim.version.cmp({v1}, {v2})                                *vim.version.cmp()*
         otherwise-equivalent versions.
 
     Parameters: ~
-      • {v1}  Version|number[] Version object.
-      • {v2}  Version|number[] Version to compare with `v1` .
+      • {v1}  (`Version|number[]`) Version object.
+      • {v2}  (`Version|number[]`) Version to compare with `v1` .
 
     Return: ~
-        (integer) -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
+        (`integer`) -1 if `v1 < v2`, 0 if `v1 == v2`, 1 if `v1 > v2`.
 
 vim.version.eq({v1}, {v2})                                  *vim.version.eq()*
-    Returns `true` if the given versions are equal. See |vim.version.cmp()|
-    for usage.
+    Returns `true` if the given versions are equal. See |vim.version.cmp()| for
+    usage.
 
     Parameters: ~
-      • {v1}  Version|number[]
-      • {v2}  Version|number[]
+      • {v1}  (`Version|number[]`)
+      • {v2}  (`Version|number[]`)
 
     Return: ~
-        (boolean)
+        (`boolean`)
 
 vim.version.gt({v1}, {v2})                                  *vim.version.gt()*
     Returns `true` if `v1 > v2` . See |vim.version.cmp()| for usage.
 
     Parameters: ~
-      • {v1}  Version|number[]
-      • {v2}  Version|number[]
+      • {v1}  (`Version|number[]`)
+      • {v2}  (`Version|number[]`)
 
     Return: ~
-        (boolean)
+        (`boolean`)
 
 vim.version.last({versions})                              *vim.version.last()*
     TODO: generalize this, move to func.lua
 
     Parameters: ~
-      • {versions}  Version []
+      • {versions}  (`Version[]`)
 
     Return: ~
-        Version ?|nil
+        (`Version?`)
 
 vim.version.lt({v1}, {v2})                                  *vim.version.lt()*
     Returns `true` if `v1 < v2` . See |vim.version.cmp()| for usage.
 
     Parameters: ~
-      • {v1}  Version|number[]
-      • {v2}  Version|number[]
+      • {v1}  (`Version|number[]`)
+      • {v2}  (`Version|number[]`)
 
     Return: ~
-        (boolean)
+        (`boolean`)
 
 vim.version.parse({version}, {opts})                     *vim.version.parse()*
     Parses a semantic version string and returns a version object which can be
@@ -3204,16 +3208,15 @@ vim.version.parse({version}, {opts})                     *vim.version.parse()*
 <
 
     Parameters: ~
-      • {version}  (string) Version string to parse.
-      • {opts}     (table|nil) Optional keyword arguments:
+      • {version}  (`string`) Version string to parse.
+      • {opts}     (`table?`) Optional keyword arguments:
                    • strict (boolean): Default false. If `true`, no coercion
                      is attempted on input not conforming to semver v2.0.0. If
                      `false`, `parse()` attempts to coerce input such as
                      "1.0", "0-x", "tmux 3.2a" into valid versions.
 
     Return: ~
-        (table|nil) parsed_version Version object or `nil` if input is
-        invalid.
+        (`table?`) parsed_version Version object or `nil` if input is invalid.
 
     See also: ~
       • # https://semver.org/spec/v2.0.0.html
@@ -3243,7 +3246,7 @@ vim.version.range({spec})                                *vim.version.range()*
 <
 
     Parameters: ~
-      • {spec}  (string) Version range "spec"
+      • {spec}  (`string`) Version range "spec"
 
     See also: ~
       • # https://github.com/npm/node-semver#ranges
@@ -3328,13 +3331,13 @@ filter({f}, {src}, {...})                                  *vim.iter.filter()*
 <
 
     Parameters: ~
-      • {f}    function(...):bool Filter function. Accepts the current
-               iterator or table values as arguments and returns true if those
-               values should be kept in the final table
-      • {src}  table|function Table or iterator function to filter
+      • {f}    (`fun(...):bool`) Filter function. Accepts the current iterator
+               or table values as arguments and returns true if those values
+               should be kept in the final table
+      • {src}  (`table|function`) Table or iterator function to filter
 
     Return: ~
-        (table)
+        (`table`)
 
     See also: ~
       • |Iter:filter()|
@@ -3343,7 +3346,7 @@ Iter:all({pred})                                                  *Iter:all()*
     Returns true if all items in the iterator match the given predicate.
 
     Parameters: ~
-      • {pred}  function(...):bool Predicate function. Takes all values
+      • {pred}  (`fun(...):bool`) Predicate function. Takes all values
                 returned from the previous stage in the pipeline as arguments
                 and returns true if the predicate matches.
 
@@ -3352,7 +3355,7 @@ Iter:any({pred})                                                  *Iter:any()*
     predicate.
 
     Parameters: ~
-      • {pred}  function(...):bool Predicate function. Takes all values
+      • {pred}  (`fun(...):bool`) Predicate function. Takes all values
                 returned from the previous stage in the pipeline as arguments
                 and returns true if the predicate matches.
 
@@ -3364,7 +3367,7 @@ Iter:each({f})                                                   *Iter:each()*
     |Iter:map()|.
 
     Parameters: ~
-      • {f}  function(...) Function to execute for each item in the pipeline.
+      • {f}  (`fun(...)`) Function to execute for each item in the pipeline.
              Takes all of the values returned by the previous stage in the
              pipeline as arguments.
 
@@ -3391,7 +3394,7 @@ Iter:enumerate()                                            *Iter:enumerate()*
 <
 
     Return: ~
-        Iter
+        (`Iter`)
 
 Iter:filter({f})                                               *Iter:filter()*
     Filters an iterator pipeline.
@@ -3401,12 +3404,12 @@ Iter:filter({f})                                               *Iter:filter()*
 <
 
     Parameters: ~
-      • {f}  function(...):bool Takes all values returned from the previous
+      • {f}  (`fun(...):bool`) Takes all values returned from the previous
              stage in the pipeline and returns false or nil if the current
              iterator element should be removed.
 
     Return: ~
-        Iter
+        (`Iter`)
 
 Iter:find({f})                                                   *Iter:find()*
     Find the first value in the iterator that satisfies the given predicate.
@@ -3429,7 +3432,7 @@ Iter:find({f})                                                   *Iter:find()*
 <
 
     Return: ~
-        any
+        (`any`)
 
 Iter:flatten({depth})                                         *Iter:flatten()*
     Flattens a |list-iterator|, un-nesting nested values up to the given
@@ -3447,11 +3450,11 @@ Iter:flatten({depth})                                         *Iter:flatten()*
 <
 
     Parameters: ~
-      • {depth}  (number|nil) Depth to which |list-iterator| should be
+      • {depth}  (`number?`) Depth to which |list-iterator| should be
                  flattened (defaults to 1)
 
     Return: ~
-        Iter
+        (`Iter`)
 
 Iter:fold({init}, {f})                                           *Iter:fold()*
     Folds ("reduces") an iterator into a single value.
@@ -3469,11 +3472,11 @@ Iter:fold({init}, {f})                                           *Iter:fold()*
 <
 
     Parameters: ~
-      • {init}  any Initial value of the accumulator.
-      • {f}     function(acc:any, ...):A Accumulation function.
+      • {init}  (`any`) Initial value of the accumulator.
+      • {f}     (`fun(acc:any, ...):any`) Accumulation function.
 
     Return: ~
-        any
+        (`any`)
 
 Iter:join({delim})                                               *Iter:join()*
     Collect the iterator into a delimited string.
@@ -3483,10 +3486,10 @@ Iter:join({delim})                                               *Iter:join()*
     Consumes the iterator.
 
     Parameters: ~
-      • {delim}  (string) Delimiter
+      • {delim}  (`string`) Delimiter
 
     Return: ~
-        (string)
+        (`string`)
 
 Iter:last()                                                      *Iter:last()*
     Drains the iterator and returns the last item.
@@ -3502,7 +3505,7 @@ Iter:last()                                                      *Iter:last()*
 <
 
     Return: ~
-        any
+        (`any`)
 
 Iter:map({f})                                                     *Iter:map()*
     Maps the items of an iterator pipeline to the values returned by `f`.
@@ -3520,13 +3523,13 @@ Iter:map({f})                                                     *Iter:map()*
 <
 
     Parameters: ~
-      • {f}  function(...):any Mapping function. Takes all values returned
-             from the previous stage in the pipeline as arguments and returns
-             one or more new values, which are used in the next pipeline
-             stage. Nil return values are filtered from the output.
+      • {f}  (`fun(...):any`) Mapping function. Takes all values returned from
+             the previous stage in the pipeline as arguments and returns one
+             or more new values, which are used in the next pipeline stage.
+             Nil return values are filtered from the output.
 
     Return: ~
-        Iter
+        (`Iter`)
 
 Iter:next()                                                      *Iter:next()*
     Gets the next value from the iterator.
@@ -3542,7 +3545,7 @@ Iter:next()                                                      *Iter:next()*
 <
 
     Return: ~
-        any
+        (`any`)
 
 Iter:nextback()                                              *Iter:nextback()*
     "Pops" a value from a |list-iterator| (gets the last value and decrements
@@ -3557,7 +3560,7 @@ Iter:nextback()                                              *Iter:nextback()*
 <
 
     Return: ~
-        any
+        (`any`)
 
 Iter:nth({n})                                                     *Iter:nth()*
     Gets the nth value of an iterator (and advances to it).
@@ -3571,10 +3574,10 @@ Iter:nth({n})                                                     *Iter:nth()*
 <
 
     Parameters: ~
-      • {n}  (number) The index of the value to return.
+      • {n}  (`number`) The index of the value to return.
 
     Return: ~
-        any
+        (`any`)
 
 Iter:nthback({n})                                             *Iter:nthback()*
     Gets the nth value from the end of a |list-iterator| (and advances to it).
@@ -3588,10 +3591,10 @@ Iter:nthback({n})                                             *Iter:nthback()*
 <
 
     Parameters: ~
-      • {n}  (number) The index of the value to return.
+      • {n}  (`number`) The index of the value to return.
 
     Return: ~
-        any
+        (`any`)
 
 Iter:peek()                                                      *Iter:peek()*
     Gets the next value in a |list-iterator| without consuming it.
@@ -3607,7 +3610,7 @@ Iter:peek()                                                      *Iter:peek()*
 <
 
     Return: ~
-        any
+        (`any`)
 
 Iter:peekback()                                              *Iter:peekback()*
     Gets the last value of a |list-iterator| without consuming it.
@@ -3625,7 +3628,7 @@ Iter:peekback()                                              *Iter:peekback()*
 <
 
     Return: ~
-        any
+        (`any`)
 
 Iter:rev()                                                        *Iter:rev()*
     Reverses a |list-iterator| pipeline.
@@ -3637,7 +3640,7 @@ Iter:rev()                                                        *Iter:rev()*
 <
 
     Return: ~
-        Iter
+        (`Iter`)
 
 Iter:rfind({f})                                                 *Iter:rfind()*
     Gets the first value in a |list-iterator| that satisfies a predicate,
@@ -3655,7 +3658,7 @@ Iter:rfind({f})                                                 *Iter:rfind()*
 <
 
     Return: ~
-        any
+        (`any`)
 
     See also: ~
       • Iter.find
@@ -3670,10 +3673,10 @@ Iter:skip({n})                                                   *Iter:skip()*
 <
 
     Parameters: ~
-      • {n}  (number) Number of values to skip.
+      • {n}  (`number`) Number of values to skip.
 
     Return: ~
-        Iter
+        (`Iter`)
 
 Iter:skipback({n})                                           *Iter:skipback()*
     Skips `n` values backwards from the end of a |list-iterator| pipeline.
@@ -3687,10 +3690,10 @@ Iter:skipback({n})                                           *Iter:skipback()*
 <
 
     Parameters: ~
-      • {n}  (number) Number of values to skip.
+      • {n}  (`number`) Number of values to skip.
 
     Return: ~
-        Iter
+        (`Iter`)
 
 Iter:slice({first}, {last})                                     *Iter:slice()*
     Sets the start and end of a |list-iterator| pipeline.
@@ -3698,11 +3701,11 @@ Iter:slice({first}, {last})                                     *Iter:slice()*
     Equivalent to `:skip(first - 1):skipback(len - last + 1)`.
 
     Parameters: ~
-      • {first}  (number)
-      • {last}   (number)
+      • {first}  (`number`)
+      • {last}   (`number`)
 
     Return: ~
-        Iter
+        (`Iter`)
 
 Iter:take({n})                                                   *Iter:take()*
     Transforms an iterator to yield only the first n values.
@@ -3718,10 +3721,10 @@ Iter:take({n})                                                   *Iter:take()*
 <
 
     Parameters: ~
-      • {n}  (integer)
+      • {n}  (`integer`)
 
     Return: ~
-        Iter
+        (`Iter`)
 
 Iter:totable()                                                *Iter:totable()*
     Collect the iterator into a table.
@@ -3747,7 +3750,7 @@ Iter:totable()                                                *Iter:totable()*
     |Iter:fold()|.
 
     Return: ~
-        (table)
+        (`table`)
 
 map({f}, {src}, {...})                                        *vim.iter.map()*
     Maps a table or other |iterable|. >lua
@@ -3756,13 +3759,13 @@ map({f}, {src}, {...})                                        *vim.iter.map()*
 <
 
     Parameters: ~
-      • {f}    function(...):?any Map function. Accepts the current iterator
+      • {f}    (`fun(...): any?`) Map function. Accepts the current iterator
                or table values as arguments and returns one or more new
                values. Nil values are removed from the final table.
-      • {src}  table|function Table or iterator function to filter
+      • {src}  (`table|function`) Table or iterator function to filter
 
     Return: ~
-        (table)
+        (`table`)
 
     See also: ~
       • |Iter:map()|
@@ -3774,10 +3777,10 @@ totable({f}, {...})                                       *vim.iter.totable()*
 <
 
     Parameters: ~
-      • {f}  (function) Iterator function
+      • {f}  (`function`) Iterator function
 
     Return: ~
-        (table)
+        (`table`)
 
 
 ==============================================================================
@@ -3787,7 +3790,7 @@ vim.snippet.active()                                    *vim.snippet.active()*
     Returns `true` if there's an active snippet in the current buffer.
 
     Return: ~
-        (boolean)
+        (`boolean`)
 
 vim.snippet.exit()                                        *vim.snippet.exit()*
     Exits the current snippet.
@@ -3799,7 +3802,7 @@ vim.snippet.expand({input})                             *vim.snippet.expand()*
     Tabstops are highlighted with hl-SnippetTabstop.
 
     Parameters: ~
-      • {input}  (string)
+      • {input}  (`string`)
 
 vim.snippet.jump({direction})                             *vim.snippet.jump()*
     Jumps within the active snippet in the given direction. If the jump isn't
@@ -3816,7 +3819,7 @@ vim.snippet.jump({direction})                             *vim.snippet.jump()*
 <
 
     Parameters: ~
-      • {direction}  (vim.snippet.Direction) Navigation direction. -1 for
+      • {direction}  (`vim.snippet.Direction`) Navigation direction. -1 for
                      previous, 1 for next.
 
 vim.snippet.jumpable({direction})                     *vim.snippet.jumpable()*
@@ -3833,11 +3836,11 @@ vim.snippet.jumpable({direction})                     *vim.snippet.jumpable()*
 <
 
     Parameters: ~
-      • {direction}  (vim.snippet.Direction) Navigation direction. -1 for
+      • {direction}  (`vim.snippet.Direction`) Navigation direction. -1 for
                      previous, 1 for next.
 
     Return: ~
-        (boolean)
+        (`boolean`)
 
 
 ==============================================================================
@@ -3847,18 +3850,18 @@ vim.text.hexdecode({enc})                               *vim.text.hexdecode()*
     Hex decode a string.
 
     Parameters: ~
-      • {enc}  (string) String to decode
+      • {enc}  (`string`) String to decode
 
     Return: ~
-        (string) Decoded string
+        (`string`) Decoded string
 
 vim.text.hexencode({str})                               *vim.text.hexencode()*
     Hex encode a string.
 
     Parameters: ~
-      • {str}  (string) String to encode
+      • {str}  (`string`) String to encode
 
     Return: ~
-        (string) Hex encoded string
+        (`string`) Hex encoded string
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

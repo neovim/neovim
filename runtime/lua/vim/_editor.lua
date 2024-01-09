@@ -95,7 +95,7 @@ vim.log = {
 --- throws an error if {cmd} cannot be run.
 ---
 --- @param cmd (string[]) Command to execute
---- @param opts (SystemOpts|nil) Options:
+--- @param opts vim.SystemOpts? Options:
 ---   - cwd: (string) Set the current working directory for the sub-process.
 ---   - env: table<string,string> Set environment variables for the new process. Inherits the
 ---     current environment with `NVIM` set to |v:servername|.
@@ -118,7 +118,7 @@ vim.log = {
 ---     parent exits. Note that the child process will still keep the parent's event loop alive
 ---     unless the parent process calls |uv.unref()| on the child's process handle.
 ---
---- @param on_exit (function|nil) Called when subprocess exits. When provided, the command runs
+--- @param on_exit? fun(out: vim.SystemCompleted) Called when subprocess exits. When provided, the command runs
 ---   asynchronously. Receives SystemCompleted object, see return of SystemObj:wait().
 ---
 --- @return vim.SystemObj Object with the fields:
@@ -219,10 +219,9 @@ do
   --- ```
   ---
   ---@see |paste|
-  ---@alias paste_phase -1 | 1 | 2 | 3
   ---
   ---@param lines  string[] # |readfile()|-style list of lines to paste. |channel-lines|
-  ---@param phase paste_phase  -1: "non-streaming" paste: the call contains all lines.
+  ---@param phase (-1|1|2|3)  -1: "non-streaming" paste: the call contains all lines.
   ---              If paste is "streamed", `phase` indicates the stream state:
   ---                - 1: starts the paste (exactly once)
   ---                - 2: continues the paste (zero or more times)

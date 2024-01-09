@@ -1,6 +1,6 @@
 local uv = vim.uv
 
---- @class SystemOpts
+--- @class vim.SystemOpts
 --- @field stdin? string|string[]|true
 --- @field stdout? fun(err:string?, data: string?)|false
 --- @field stderr? fun(err:string?, data: string?)|false
@@ -302,7 +302,7 @@ end
 --- Run a system command
 ---
 --- @param cmd string[]
---- @param opts? SystemOpts
+--- @param opts? vim.SystemOpts
 --- @param on_exit? fun(out: vim.SystemCompleted)
 --- @return vim.SystemObj
 function M.run(cmd, opts, on_exit)

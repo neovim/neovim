@@ -55,17 +55,7 @@ The effect is that you will get the function documented, but not with the parame
 
 local TYPES = { 'integer', 'number', 'string', 'table', 'list', 'boolean', 'function' }
 
-local TAGGED_TYPES = { 'TSNode', 'LanguageTree' }
-
--- Document these as 'table'
-local ALIAS_TYPES = {
-  'Range',
-  'Range4',
-  'Range6',
-  'TSMetadata',
-  'vim.filetype.add.filetypes',
-  'vim.filetype.match.args',
-}
+local luacats_parser = require('src/nvim/generators/luacats_grammar')
 
 local debug_outfile = nil --- @type string?
 local debug_output = {}
@@ -161,6 +151,91 @@ local function removeCommentFromLine(line)
   return line:sub(1, pos_comment - 1), line:sub(pos_comment)
 end
 
+--- @param parsed luacats.Return
+--- @return string
+local function get_return_type(parsed)
+  local elems = {} --- @type string[]
+  for _, v in ipairs(parsed) do
+    local e = v.type --- @type string
+    if v.name then
+      e = e .. ' ' .. v.name --- @type string
+    end
+    elems[#elems + 1] = e
+  end
+  return '(' .. table.concat(elems, ', ') .. ')'
+end
+
+--- @param name string
+--- @return string
+local function process_name(name, optional)
+  if optional then
+    name = name:sub(1, -2) --- @type string
+  end
+  return name
+end
+
+--- @param ty string
+--- @param generics table<string,string>
+--- @return string
+local function process_type(ty, generics, optional)
+  -- replace generic types
+  for k, v in pairs(generics) do
+    ty = ty:gsub(k, v) --- @type string
+  end
+
+  -- strip parens
+  ty = ty:gsub('^%((.*)%)$', '%1')
+
+  if optional and not ty:find('nil') then
+    ty = ty .. '?'
+  end
+
+  -- remove whitespace in unions
+  ty = ty:gsub('%s*|%s*', '|')
+
+  -- replace '|nil' with '?'
+  ty = ty:gsub('|nil', '?')
+  ty = ty:gsub('nil|(.*)', '%1?')
+
+  return '(`' .. ty .. '`)'
+end
+
+--- @param parsed luacats.Param
+--- @param generics table<string,string>
+--- @return string
+local function process_param(parsed, generics)
+  local name, ty = parsed.name, parsed.type
+  local optional = vim.endswith(name, '?')
+
+  return table.concat({
+    '/// @param',
+    process_name(name, optional),
+    process_type(ty, generics, optional),
+    parsed.desc,
+  }, ' ')
+end
+
+--- @param parsed luacats.Return
+--- @param generics table<string,string>
+--- @return string
+local function process_return(parsed, generics)
+  local ty, name --- @type string, string
+  if #parsed == 1 then
+    ty, name = parsed[1].type, parsed[1].name or ''
+  else
+    ty, name = get_return_type(parsed), ''
+  end
+
+  local optional = vim.endswith(name, '?')
+
+  return table.concat({
+    '/// @return',
+    process_type(ty, generics, optional),
+    process_name(name, optional),
+    parsed.desc,
+  }, ' ')
+end
+
 --- Processes "@…" directives in a docstring line.
 ---
 --- @param line string
@@ -175,93 +250,54 @@ local function process_magic(line, generics)
     return '/// ' .. line
   end
 
-  local magic = line:sub(2)
-  local magic_split = vim.split(magic, ' ', { plain = true })
+  local magic_split = vim.split(line, ' ', { plain = true })
   local directive = magic_split[1]
 
   if
     vim.list_contains({
-      'cast',
-      'diagnostic',
-      'overload',
-      'meta',
-      'type',
+      '@cast',
+      '@diagnostic',
+      '@overload',
+      '@meta',
+      '@type',
     }, directive)
   then
     -- Ignore LSP directives
     return '// gg:"' .. line .. '"'
-  end
-
-  if directive == 'defgroup' or directive == 'addtogroup' then
+  elseif directive == '@defgroup' or directive == '@addtogroup' then
     -- Can't use '.' in defgroup, so convert to '--'
-    return '/// @' .. magic:gsub('%.', '-dot-')
+    return '/// ' .. line:gsub('%.', '-dot-')
   end
 
-  if directive == 'generic' then
-    local generic_name, generic_type = line:match('@generic%s*(%w+)%s*:?%s*(.*)')
-    if generic_type == '' then
-      generic_type = 'any'
+  -- preprocess line before parsing
+  if directive == '@param' or directive == '@return' then
+    for _, type in ipairs(TYPES) do
+      line = line:gsub('^@param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. ')%)', '@param %1 %2')
+      line = line:gsub('^@param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. '|nil)%)', '@param %1 %2')
+
+      line = line:gsub('^@return%s+.*%((' .. type .. ')%)', '@return %1')
+      line = line:gsub('^@return%s+.*%((' .. type .. '|nil)%)', '@return %1')
     end
-    generics[generic_name] = generic_type
+  end
+
+  local parsed = luacats_parser:match(line)
+
+  if not parsed then
+    return '/// ' .. line
+  end
+
+  local kind = parsed.kind
+
+  if kind == 'generic' then
+    generics[parsed.name] = parsed.type or 'any'
     return
+  elseif kind == 'param' then
+    return process_param(parsed --[[@as luacats.Param]], generics)
+  elseif kind == 'return' then
+    return process_return(parsed --[[@as luacats.Return]], generics)
   end
 
-  local type_index = 2
-
-  if directive == 'param' then
-    for _, type in ipairs(TYPES) do
-      magic = magic:gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. ')%)', 'param %1 %2')
-      magic = magic:gsub('^param%s+([a-zA-Z_?]+)%s+.*%((' .. type .. '|nil)%)', 'param %1 %2')
-    end
-    magic_split = vim.split(magic, ' ', { plain = true })
-    type_index = 3
-  elseif directive == 'return' then
-    for _, type in ipairs(TYPES) do
-      magic = magic:gsub('^return%s+.*%((' .. type .. ')%)', 'return %1')
-      magic = magic:gsub('^return%s+.*%((' .. type .. '|nil)%)', 'return %1')
-    end
-    -- Remove first "#" comment char, if any. https://github.com/LuaLS/lua-language-server/wiki/Annotations#return
-    magic = magic:gsub('# ', '', 1)
-    -- handle the return of vim.spell.check
-    magic = magic:gsub('({.*}%[%])', '`%1`')
-    magic_split = vim.split(magic, ' ', { plain = true })
-  end
-
-  local ty = magic_split[type_index]
-
-  if ty then
-    -- fix optional parameters
-    if magic_split[2]:find('%?$') then
-      if not ty:find('nil') then
-        ty = ty .. '|nil'
-      end
-      magic_split[2] = magic_split[2]:sub(1, -2)
-    end
-
-    -- replace generic types
-    for k, v in pairs(generics) do
-      ty = ty:gsub(k, v) --- @type string
-    end
-
-    for _, type in ipairs(TAGGED_TYPES) do
-      ty = ty:gsub(type, '|%1|')
-    end
-
-    for _, type in ipairs(ALIAS_TYPES) do
-      ty = ty:gsub('^' .. type .. '$', 'table') --- @type string
-    end
-
-    -- surround some types by ()
-    for _, type in ipairs(TYPES) do
-      ty = ty:gsub('^(' .. type .. '|nil):?$', '(%1)'):gsub('^(' .. type .. '):?$', '(%1)')
-    end
-
-    magic_split[type_index] = ty
-  end
-
-  magic = table.concat(magic_split, ' ')
-
-  return '/// @' .. magic
+  error(string.format('unhandled parsed line %q: %s', line, parsed))
 end
 
 --- @param line string

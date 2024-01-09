@@ -812,9 +812,8 @@ function vim.api.nvim_complete_set(index, opts) end
 --- @return integer
 function vim.api.nvim_create_augroup(name, opts) end
 
---- Creates an `autocommand` event handler, defined by `callback` (Lua
---- function or Vimscript function name string) or `command` (Ex command
---- string).
+--- Creates an `autocommand` event handler, defined by `callback` (Lua function
+--- or Vimscript function name string) or `command` (Ex command string).
 --- Example using Lua callback:
 ---
 --- ```lua

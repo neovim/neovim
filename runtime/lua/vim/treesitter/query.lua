@@ -793,7 +793,7 @@ end
 --- of the query file, e.g., if the path ends in `/lua/highlights.scm`, the parser for the
 --- `lua` language will be used.
 ---@param buf (integer) Buffer handle
----@param opts (QueryLinterOpts|nil) Optional keyword arguments:
+---@param opts? QueryLinterOpts (table) Optional keyword arguments:
 ---   - langs (string|string[]|nil) Language(s) to use for checking the query.
 ---            If multiple languages are specified, queries are validated for all of them
 ---   - clear (boolean) if `true`, just clear current lint errors

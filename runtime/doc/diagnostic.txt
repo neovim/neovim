@@ -390,7 +390,7 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
           any of the above.
 
     Parameters: ~
-      • {opts}       (table|nil) When omitted or "nil", retrieve the current
+      • {opts}       (`table?`) When omitted or "nil", retrieve the current
                      configuration. Otherwise, a configuration table with the
                      following keys:
                      • underline: (default true) Use underline for
@@ -475,55 +475,55 @@ config({opts}, {namespace})                          *vim.diagnostic.config()*
                        severities are displayed before lower severities (e.g.
                        ERROR is displayed before WARN). Options:
                        • reverse: (boolean) Reverse sort order
-      • {namespace}  (integer|nil) Update the options for the given namespace.
+      • {namespace}  (`integer?`) Update the options for the given namespace.
                      When omitted, update the global diagnostic options.
 
     Return: ~
-        (table|nil) table of current diagnostic config if `opts` is omitted.
+        (`table?`) table of current diagnostic config if `opts` is omitted.
 
 count({bufnr}, {opts})                                *vim.diagnostic.count()*
     Get current diagnostics count.
 
     Parameters: ~
-      • {bufnr}  (integer|nil) Buffer number to get diagnostics from. Use 0
-                 for current buffer or nil for all buffers.
-      • {opts}   (table|nil) A table with the following keys:
+      • {bufnr}  (`integer?`) Buffer number to get diagnostics from. Use 0 for
+                 current buffer or nil for all buffers.
+      • {opts}   (`table?`) A table with the following keys:
                  • namespace: (number) Limit diagnostics to the given
                    namespace.
                  • lnum: (number) Limit diagnostics to the given line number.
                  • severity: See |diagnostic-severity|.
 
     Return: ~
-        (table) A table with actually present severity values as keys (see
+        (`table`) A table with actually present severity values as keys (see
         |diagnostic-severity|) and integer counts as values.
 
 disable({bufnr}, {namespace})                       *vim.diagnostic.disable()*
     Disable diagnostics in the given buffer.
 
     Parameters: ~
-      • {bufnr}      (integer|nil) Buffer number, or 0 for current buffer.
-                     When omitted, disable diagnostics in all buffers.
-      • {namespace}  (integer|nil) Only disable diagnostics for the given
+      • {bufnr}      (`integer?`) Buffer number, or 0 for current buffer. When
+                     omitted, disable diagnostics in all buffers.
+      • {namespace}  (`integer?`) Only disable diagnostics for the given
                      namespace.
 
 enable({bufnr}, {namespace})                         *vim.diagnostic.enable()*
     Enable diagnostics in the given buffer.
 
     Parameters: ~
-      • {bufnr}      (integer|nil) Buffer number, or 0 for current buffer.
-                     When omitted, enable diagnostics in all buffers.
-      • {namespace}  (integer|nil) Only enable diagnostics for the given
+      • {bufnr}      (`integer?`) Buffer number, or 0 for current buffer. When
+                     omitted, enable diagnostics in all buffers.
+      • {namespace}  (`integer?`) Only enable diagnostics for the given
                      namespace.
 
 fromqflist({list})                               *vim.diagnostic.fromqflist()*
     Convert a list of quickfix items to a list of diagnostics.
 
     Parameters: ~
-      • {list}  table[] List of quickfix items from |getqflist()| or
+      • {list}  (`table[]`) List of quickfix items from |getqflist()| or
                 |getloclist()|.
 
     Return: ~
-        Diagnostic [] array of |diagnostic-structure|
+        (`Diagnostic[]`) array of |diagnostic-structure|
 
 get({bufnr}, {opts})                                    *vim.diagnostic.get()*
     Get current diagnostics.
@@ -532,77 +532,77 @@ get({bufnr}, {opts})                                    *vim.diagnostic.get()*
     diagnostics in a buffer, use |vim.diagnostic.set()|.
 
     Parameters: ~
-      • {bufnr}  (integer|nil) Buffer number to get diagnostics from. Use 0
-                 for current buffer or nil for all buffers.
-      • {opts}   (table|nil) A table with the following keys:
+      • {bufnr}  (`integer?`) Buffer number to get diagnostics from. Use 0 for
+                 current buffer or nil for all buffers.
+      • {opts}   (`table?`) A table with the following keys:
                  • namespace: (number) Limit diagnostics to the given
                    namespace.
                  • lnum: (number) Limit diagnostics to the given line number.
                  • severity: See |diagnostic-severity|.
 
     Return: ~
-        Diagnostic [] table A list of diagnostic items |diagnostic-structure|.
-        Keys `bufnr` , `end_lnum` , `end_col` , and `severity` are
+        (`Diagnostic[]`) table A list of diagnostic items
+        |diagnostic-structure|. Keys `bufnr` , `end_lnum` , `end_col` , and `severity` are
         guaranteed to be present.
 
 get_namespace({namespace})                    *vim.diagnostic.get_namespace()*
     Get namespace metadata.
 
     Parameters: ~
-      • {namespace}  (integer) Diagnostic namespace
+      • {namespace}  (`integer`) Diagnostic namespace
 
     Return: ~
-        (table) Namespace metadata
+        (`table`) Namespace metadata
 
 get_namespaces()                             *vim.diagnostic.get_namespaces()*
     Get current diagnostic namespaces.
 
     Return: ~
-        (table) A list of active diagnostic namespaces |vim.diagnostic|.
+        (`table`) A list of active diagnostic namespaces |vim.diagnostic|.
 
 get_next({opts})                                   *vim.diagnostic.get_next()*
     Get the next diagnostic closest to the cursor position.
 
     Parameters: ~
-      • {opts}  (table|nil) See |vim.diagnostic.goto_next()|
+      • {opts}  (`table?`) See |vim.diagnostic.goto_next()|
 
     Return: ~
-        Diagnostic|nil Next diagnostic
+        (`Diagnostic?`) Next diagnostic
 
 get_next_pos({opts})                           *vim.diagnostic.get_next_pos()*
     Return the position of the next diagnostic in the current buffer.
 
     Parameters: ~
-      • {opts}  (table|nil) See |vim.diagnostic.goto_next()|
+      • {opts}  (`table?`) See |vim.diagnostic.goto_next()|
 
     Return: ~
-        table|false Next diagnostic position as a (row, col) tuple or false if
-        no next diagnostic.
+        (`table|false`) Next diagnostic position as a (row, col) tuple or
+        false if no next diagnostic.
 
 get_prev({opts})                                   *vim.diagnostic.get_prev()*
     Get the previous diagnostic closest to the cursor position.
 
     Parameters: ~
-      • {opts}  nil|table See |vim.diagnostic.goto_next()|
+      • {opts}  (`table?`) See |vim.diagnostic.goto_next()|
 
     Return: ~
-        Diagnostic|nil Previous diagnostic
+        (`Diagnostic?`) Previous diagnostic
 
 get_prev_pos({opts})                           *vim.diagnostic.get_prev_pos()*
     Return the position of the previous diagnostic in the current buffer.
 
     Parameters: ~
-      • {opts}  (table|nil) See |vim.diagnostic.goto_next()|
+      • {opts}  (`table?`) See |vim.diagnostic.goto_next()|
 
     Return: ~
-        table|false Previous diagnostic position as a (row, col) tuple or
+        (`table|false`) Previous diagnostic position as a (row, col) tuple or
         false if there is no prior diagnostic
 
 goto_next({opts})                                 *vim.diagnostic.goto_next()*
     Move to the next diagnostic.
 
     Parameters: ~
-      • {opts}  (table|nil) Configuration table with the following keys:
+      • {opts}  (`table?`) Configuration table with the following keys:
                 • namespace: (number) Only consider diagnostics from the given
                   namespace.
                 • cursor_position: (cursor position) Cursor position as a
@@ -623,7 +623,7 @@ goto_prev({opts})                                 *vim.diagnostic.goto_prev()*
     Move to the previous diagnostic in the current buffer.
 
     Parameters: ~
-      • {opts}  (table|nil) See |vim.diagnostic.goto_next()|
+      • {opts}  (`table?`) See |vim.diagnostic.goto_next()|
 
 hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
     Hide currently displayed diagnostics.
@@ -636,22 +636,22 @@ hide({namespace}, {bufnr})                             *vim.diagnostic.hide()*
     |vim.diagnostic.disable()|.
 
     Parameters: ~
-      • {namespace}  (integer|nil) Diagnostic namespace. When omitted, hide
+      • {namespace}  (`integer?`) Diagnostic namespace. When omitted, hide
                      diagnostics from all namespaces.
-      • {bufnr}      (integer|nil) Buffer number, or 0 for current buffer.
-                     When omitted, hide diagnostics in all buffers.
+      • {bufnr}      (`integer?`) Buffer number, or 0 for current buffer. When
+                     omitted, hide diagnostics in all buffers.
 
 is_disabled({bufnr}, {namespace})               *vim.diagnostic.is_disabled()*
     Check whether diagnostics are disabled in a given buffer.
 
     Parameters: ~
-      • {bufnr}      (integer|nil) Buffer number, or 0 for current buffer.
-      • {namespace}  (integer|nil) Diagnostic namespace. When omitted, checks
-                     if all diagnostics are disabled in {bufnr}. Otherwise,
-                     only checks if diagnostics from {namespace} are disabled.
+      • {bufnr}      (`integer?`) Buffer number, or 0 for current buffer.
+      • {namespace}  (`integer?`) Diagnostic namespace. When omitted, checks if
+                     all diagnostics are disabled in {bufnr}. Otherwise, only
+                     checks if diagnostics from {namespace} are disabled.
 
     Return: ~
-        (boolean)
+        (`boolean`)
 
                                                       *vim.diagnostic.match()*
 match({str}, {pat}, {groups}, {severity_map}, {defaults})
@@ -669,25 +669,25 @@ match({str}, {pat}, {groups}, {severity_map}, {defaults})
 <
 
     Parameters: ~
-      • {str}           (string) String to parse diagnostics from.
-      • {pat}           (string) Lua pattern with capture groups.
-      • {groups}        (table) List of fields in a |diagnostic-structure| to
-                        associate with captures from {pat}.
-      • {severity_map}  (table) A table mapping the severity field from
+      • {str}           (`string`) String to parse diagnostics from.
+      • {pat}           (`string`) Lua pattern with capture groups.
+      • {groups}        (`table`) List of fields in a |diagnostic-structure|
+                        to associate with captures from {pat}.
+      • {severity_map}  (`table`) A table mapping the severity field from
                         {groups} with an item from |vim.diagnostic.severity|.
-      • {defaults}      (table|nil) Table of default values for any fields not
+      • {defaults}      (`table?`) Table of default values for any fields not
                         listed in {groups}. When omitted, numeric values
                         default to 0 and "severity" defaults to ERROR.
 
     Return: ~
-        Diagnostic|nil: |diagnostic-structure| or `nil` if {pat} fails to
-        match {str}.
+        (`Diagnostic?`) |diagnostic-structure| or `nil` if {pat} fails to match
+        {str}.
 
 open_float({opts}, {...})                        *vim.diagnostic.open_float()*
     Show diagnostics in a floating window.
 
     Parameters: ~
-      • {opts}  (table|nil) Configuration table with the same keys as
+      • {opts}  (`table?`) Configuration table with the same keys as
                 |vim.lsp.util.open_floating_preview()| in addition to the
                 following:
                 • bufnr: (number) Buffer number to show diagnostics from.
@@ -737,7 +737,7 @@ open_float({opts}, {...})                        *vim.diagnostic.open_float()*
                   from |vim.diagnostic.config()|.
 
     Return: ~
-        integer|nil, integer|nil: ({float_bufnr}, {win_id})
+        (`integer?, integer?`) ({float_bufnr}, {win_id})
 
 reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
     Remove all diagnostics from the given namespace.
@@ -748,27 +748,27 @@ reset({namespace}, {bufnr})                           *vim.diagnostic.reset()*
     re-displayed, use |vim.diagnostic.hide()|.
 
     Parameters: ~
-      • {namespace}  (integer|nil) Diagnostic namespace. When omitted, remove
+      • {namespace}  (`integer?`) Diagnostic namespace. When omitted, remove
                      diagnostics from all namespaces.
-      • {bufnr}      (integer|nil) Remove diagnostics for the given buffer.
+      • {bufnr}      (`integer?`) Remove diagnostics for the given buffer.
                      When omitted, diagnostics are removed for all buffers.
 
 set({namespace}, {bufnr}, {diagnostics}, {opts})        *vim.diagnostic.set()*
     Set diagnostics for the given namespace and buffer.
 
     Parameters: ~
-      • {namespace}    (integer) The diagnostic namespace
-      • {bufnr}        (integer) Buffer number
-      • {diagnostics}  (table) A list of diagnostic items
+      • {namespace}    (`integer`) The diagnostic namespace
+      • {bufnr}        (`integer`) Buffer number
+      • {diagnostics}  (`table`) A list of diagnostic items
                        |diagnostic-structure|
-      • {opts}         (table|nil) Display options to pass to
+      • {opts}         (`table?`) Display options to pass to
                        |vim.diagnostic.show()|
 
 setloclist({opts})                               *vim.diagnostic.setloclist()*
     Add buffer diagnostics to the location list.
 
     Parameters: ~
-      • {opts}  (table|nil) Configuration table with the following keys:
+      • {opts}  (`table?`) Configuration table with the following keys:
                 • namespace: (number) Only add diagnostics from the given
                   namespace.
                 • winnr: (number, default 0) Window number to set location
@@ -783,7 +783,7 @@ setqflist({opts})                                 *vim.diagnostic.setqflist()*
     Add all diagnostics to the quickfix list.
 
     Parameters: ~
-      • {opts}  (table|nil) Configuration table with the following keys:
+      • {opts}  (`table?`) Configuration table with the following keys:
                 • namespace: (number) Only add diagnostics from the given
                   namespace.
                 • open: (boolean, default true) Open quickfix list after
@@ -797,17 +797,17 @@ show({namespace}, {bufnr}, {diagnostics}, {opts})
     Display diagnostics for the given namespace and buffer.
 
     Parameters: ~
-      • {namespace}    (integer|nil) Diagnostic namespace. When omitted, show
+      • {namespace}    (`integer?`) Diagnostic namespace. When omitted, show
                        diagnostics from all namespaces.
-      • {bufnr}        (integer|nil) Buffer number, or 0 for current buffer.
+      • {bufnr}        (`integer?`) Buffer number, or 0 for current buffer.
                        When omitted, show diagnostics in all buffers.
-      • {diagnostics}  (table|nil) The diagnostics to display. When omitted,
+      • {diagnostics}  (`table?`) The diagnostics to display. When omitted,
                        use the saved diagnostics for the given namespace and
                        buffer. This can be used to display a list of
                        diagnostics without saving them or to display only a
                        subset of diagnostics. May not be used when {namespace}
                        or {bufnr} is nil.
-      • {opts}         (table|nil) Display options. See
+      • {opts}         (`table?`) Display options. See
                        |vim.diagnostic.config()|.
 
 toqflist({diagnostics})                            *vim.diagnostic.toqflist()*
@@ -815,9 +815,9 @@ toqflist({diagnostics})                            *vim.diagnostic.toqflist()*
     passed to |setqflist()| or |setloclist()|.
 
     Parameters: ~
-      • {diagnostics}  (table) List of diagnostics |diagnostic-structure|.
+      • {diagnostics}  (`table`) List of diagnostics |diagnostic-structure|.
 
     Return: ~
-        table[] of quickfix list items |setqflist-what|
+        (`table[]`) of quickfix list items |setqflist-what|
 
  vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

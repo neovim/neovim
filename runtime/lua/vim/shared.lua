@@ -875,7 +875,7 @@ end
 --- a.b.c = 1
 --- ```
 ---
----@param createfn function?(key:any):any Provides the value for a missing `key`.
+---@param createfn? fun(key:any):any Provides the value for a missing `key`.
 ---@return table # Empty table with `__index` metamethod.
 function vim.defaulttable(createfn)
   createfn = createfn or function(_)
