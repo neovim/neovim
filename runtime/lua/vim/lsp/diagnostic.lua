@@ -299,6 +299,16 @@ function M.on_diagnostic(_, result, ctx, config)
   local fname = vim.uri_to_fname(uri)
 
   if result == nil then
+    local client_name = vim.lsp.get_client_by_id(client_id).name
+    vim.notify_once(
+      string.format(
+        "LSP: client '%s' (id %s) returned nil to textDocument/diagnostic.\nThis is a bug in the LSP server, and should be fixed within '%s'.",
+        client_name,
+        client_id,
+        client_name
+      ),
+      vim.log.levels.WARN
+    )
     return
   end
 
