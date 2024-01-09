@@ -4266,7 +4266,7 @@ skip:
   // Show 'inccommand' preview if there are matched lines.
   if (cmdpreview_ns > 0 && !aborting()) {
     if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
-      set_string_option_direct(kOptInccommand, "", OPT_FREE, SID_NONE);
+      set_string_option_direct(kOptInccommand, "", 0, SID_NONE);
     } else if (*p_icm != NUL && pat != NULL) {
       if (pre_hl_id == 0) {
         pre_hl_id = syn_check_group(S_LEN("Substitute"));
@@ -4546,7 +4546,7 @@ bool prepare_tagpreview(bool undo_sync)
   RESET_BINDING(curwin);                // don't take over 'scrollbind' and 'cursorbind'
   curwin->w_p_diff = false;             // no 'diff'
 
-  set_string_option_direct(kOptFoldcolumn, "0", OPT_FREE, SID_NONE);  // no 'foldcolumn'
+  set_string_option_direct(kOptFoldcolumn, "0", 0, SID_NONE);  // no 'foldcolumn'
   return true;
 }
 
@@ -4565,7 +4565,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
   buf_T *cmdpreview_buf = NULL;
 
   // disable file info message
-  set_string_option_direct(kOptShortmess, "F", OPT_FREE, SID_NONE);
+  set_string_option_direct(kOptShortmess, "F", 0, SID_NONE);
 
   // Update the topline to ensure that main window is on the correct line
   update_topline(curwin);
@@ -4666,7 +4666,7 @@ static int show_sub(exarg_T *eap, pos_T old_cusr, PreviewLines *preview_lines, i
 
   xfree(str);
 
-  set_string_option_direct(kOptShortmess, save_shm_p, OPT_FREE, SID_NONE);
+  set_string_option_direct(kOptShortmess, save_shm_p, 0, SID_NONE);
   xfree(save_shm_p);
 
   return preview ? 2 : 1;

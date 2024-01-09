@@ -79,16 +79,14 @@ enum {
 /// When OPT_GLOBAL and OPT_LOCAL are both missing, set both local and global
 /// values, get local value.
 typedef enum {
-  // TODO(famiu): See if `OPT_FREE` is really necessary and remove it if not.
-  OPT_FREE      = 0x01,   ///< Free old value if it was allocated.
-  OPT_GLOBAL    = 0x02,   ///< Use global value.
-  OPT_LOCAL     = 0x04,   ///< Use local value.
-  OPT_MODELINE  = 0x08,   ///< Option in modeline.
-  OPT_WINONLY   = 0x10,   ///< Only set window-local options.
-  OPT_NOWIN     = 0x20,   ///< Don’t set window-local options.
-  OPT_ONECOLUMN = 0x40,   ///< list options one per line
-  OPT_NO_REDRAW = 0x80,   ///< ignore redraw flags on option
-  OPT_SKIPRTP   = 0x100,  ///< "skiprtp" in 'sessionoptions'
+  OPT_GLOBAL    = 0x01,  ///< Use global value.
+  OPT_LOCAL     = 0x02,  ///< Use local value.
+  OPT_MODELINE  = 0x04,  ///< Option in modeline.
+  OPT_WINONLY   = 0x08,  ///< Only set window-local options.
+  OPT_NOWIN     = 0x10,  ///< Don’t set window-local options.
+  OPT_ONECOLUMN = 0x20,  ///< list options one per line
+  OPT_NO_REDRAW = 0x40,  ///< ignore redraw flags on option
+  OPT_SKIPRTP   = 0x80,  ///< "skiprtp" in 'sessionoptions'
 } OptionSetFlags;
 
 /// Return value from get_option_attrs().

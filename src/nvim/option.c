@@ -370,9 +370,6 @@ void set_init_1(bool clean_arg)
   check_win_options(curwin);
   check_options();
 
-  // Set all options to their default value
-  set_options_default(OPT_FREE);
-
   // set 'laststatus'
   last_status(false);
 
@@ -433,7 +430,7 @@ static void set_option_default(const OptIndex opt_idx, int opt_flags)
       if (opt->indir != PV_NONE) {
         set_string_option_direct(opt_idx, opt->def_val, opt_flags, 0);
       } else {
-        if ((opt_flags & OPT_FREE) && (flags & P_ALLOCED)) {
+        if (flags & P_ALLOCED) {
           free_string_option(*(char **)(varp));
         }
         *(char **)varp = opt->def_val;
@@ -482,7 +479,7 @@ static void set_option_default(const OptIndex opt_idx, int opt_flags)
 
 /// Set all options (except terminal options) to their default value.
 ///
-/// @param opt_flags  OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL
+/// @param  opt_flags  Option flags.
 static void set_options_default(int opt_flags)
 {
   for (OptIndex opt_idx = 0; opt_idx < kOptIndexCount; opt_idx++) {
@@ -1431,7 +1428,7 @@ int do_set(char *arg, int opt_flags)
         if (*arg == '&') {
           arg++;
           // Only for :set command set global value of local options.
-          set_options_default(OPT_FREE | opt_flags);
+          set_options_default(opt_flags);
           didset_options();
           didset_options2();
           ui_refresh_options();
@@ -6216,7 +6213,7 @@ void set_fileformat(int eol_style, int opt_flags)
 
   // p is NULL if "eol_style" is EOL_UNKNOWN.
   if (p != NULL) {
-    set_string_option_direct(kOptFileformat, p, OPT_FREE | opt_flags, 0);
+    set_string_option_direct(kOptFileformat, p, opt_flags, 0);
   }
 
   // This may cause the buffer to become (un)modified.
