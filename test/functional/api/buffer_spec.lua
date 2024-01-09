@@ -775,11 +775,12 @@ describe('api/buf', function()
       set_text(0, 20, 0, 21, {'foo'})
       eq({'goodbye bar         foo', 'text and', 'more'}, get_lines(0, 3, true))
 
+      -- silently ignores end column
       set_text(2, 6, 2, 15, {'baz'})
-      eq({'more  baz      '}, get_lines(2, 3, true))
+      eq({'more  baz'}, get_lines(2, 3, true))
 
       -- can use negative column numbers
-      set_text(2, -7, 2, -1, {'!'})
+      set_text(2, -1, 2, -1, {'!'})
       eq({'more  baz!'}, get_lines(2, 3, true))
     end)
 

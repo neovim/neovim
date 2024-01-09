@@ -557,12 +557,15 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
 
   bool ve_start_col= (size_t)start_col > len_at_start;
   bool ve_end_col= (size_t)end_col > len_at_end;
+  // CHECK: possible wraparound bug?
+  end_col = ve_end_col ? (int64_t)len_at_end : end_col;
 
   VALIDATE_RANGE((end_col >= 0), "end_col", {
     goto early_end;
   });
 
-  VALIDATE((start_row <= end_row && !(end_row == start_row && start_col > end_col)),
+  // Silently ignore larger than line end_col
+  VALIDATE(( (start_row <= end_row ) && !(end_row == start_row && ( !ve_end_col && start_col > end_col ))),
            "%s", "'start' is higher than 'end'", {
     goto early_end;
   });
@@ -595,17 +598,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   String last_item = replacement.items[replacement.size - 1].data.string;
 
   size_t firstlen = (size_t)start_col + first_item.size;
-  size_t last_part_len = 0;
-
-  if (ve_end_col) {
-    if (start_row == end_row) {
-      last_part_len = (size_t)end_col > firstlen ? (size_t)end_col - firstlen :0;
-    } else {
-      last_part_len = (size_t)end_col;
-    }
-  } else {
-    last_part_len = len_at_end - (size_t)end_col;
-  }
+  size_t last_part_len = len_at_end - (size_t)end_col;
 
   if (replacement.size == 1) {
     firstlen += last_part_len;
@@ -624,11 +617,7 @@ void nvim_buf_set_text(uint64_t channel_id, Buffer buffer, Integer start_row, In
   memcpy(first + start_col, first_item.data, first_item.size);
   memchrsub(first + start_col, NUL, NL, first_item.size);
   if (replacement.size == 1) {
-    if (ve_end_col) {
-      memset(first + start_col + first_item.size, ' ', last_part_len);
-    } else {
-      memcpy(first + start_col + first_item.size, str_at_end + end_col, last_part_len);
-    }
+    memcpy(first + start_col + first_item.size, str_at_end + end_col, last_part_len);
   } else {
     last = xmallocz(last_item.size + last_part_len);
     memcpy(last, last_item.data, last_item.size);
