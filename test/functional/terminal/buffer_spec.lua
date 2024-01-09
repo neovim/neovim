@@ -318,30 +318,16 @@ describe(':terminal buffer', function()
     )
   end)
 
-  it('emits #OSC events', function()
+  it('emits TermRequest events', function()
     command('split')
     command('enew')
     local term = meths.open_term(0, {})
-    exec_lua([[
-      vim.api.nvim_create_autocmd('TermRequest', {
-        callback = function(args)
-          local req = args.data
-          local command, payload = req:match('\027%](%d+);(.*)$')
-          vim.g.osc_event = {
-            command = tonumber(command),
-            payload = payload,
-          }
-        end,
-      })
-    ]])
-
     -- cwd will be inserted in a file URI, which cannot contain backs
     local cwd = funcs.getcwd():gsub('\\', '/')
     local parent = cwd:match('^(.+/)')
-    local expected = 'file://host' .. parent
-    local payload = '\027]7;' .. expected .. '\027\\'
-    meths.chan_send(term, payload)
-    eq({ command = 7, payload = expected }, eval('g:osc_event'))
+    local expected = '\027]7;file://host' .. parent
+    meths.chan_send(term, string.format('%s\027\\', expected))
+    eq(expected, eval('v:termrequest'))
   end)
 end)
 
