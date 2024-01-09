@@ -315,7 +315,7 @@ end
 --- Run a system command and timeout after 30 seconds.
 ---
 --- @param cmd table List of command arguments to execute
---- @param args ?table Optional arguments:
+--- @param args? table Optional arguments:
 ---                   - stdin (string): Data to write to the job's stdin
 ---                   - stderr (boolean): Append stderr to stdout
 ---                   - ignore_error (boolean): If true, ignore error output

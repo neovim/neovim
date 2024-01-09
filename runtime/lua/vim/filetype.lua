@@ -2165,7 +2165,7 @@ end
 --- }
 --- ```
 ---
----@param filetypes vim.filetype.add.filetypes A table containing new filetype maps (see example).
+---@param filetypes vim.filetype.add.filetypes (table) A table containing new filetype maps (see example).
 function M.add(filetypes)
   for k, v in pairs(filetypes.extension or {}) do
     extension[k] = v
@@ -2300,7 +2300,7 @@ end
 --- vim.filetype.match({ contents = {'#!/usr/bin/env bash'} })
 --- ```
 ---
----@param args vim.filetype.match.args Table specifying which matching strategy to use.
+---@param args vim.filetype.match.args (table) Table specifying which matching strategy to use.
 ---                 Accepted keys are:
 ---                   * buf (number): Buffer number to use for matching. Mutually exclusive with
 ---                                   {contents}

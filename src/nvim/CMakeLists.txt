@@ -925,6 +925,8 @@ add_custom_command(
     ${API_SOURCES}
     ${LUA_SOURCES}
     ${VIMDOC_FILES}
+    ${PROJECT_SOURCE_DIR}/scripts/gen_vimdoc.py
+    ${PROJECT_SOURCE_DIR}/scripts/lua2dox.lua
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 

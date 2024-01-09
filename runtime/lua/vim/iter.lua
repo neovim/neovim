@@ -181,9 +181,9 @@ end
 --- local bufs = vim.iter(vim.api.nvim_list_bufs()):filter(vim.api.nvim_buf_is_loaded)
 --- ```
 ---
----@param f function(...):bool Takes all values returned from the previous stage
----                            in the pipeline and returns false or nil if the
----                            current iterator element should be removed.
+---@param f fun(...):bool Takes all values returned from the previous stage
+---                       in the pipeline and returns false or nil if the
+---                       current iterator element should be removed.
 ---@return Iter
 function Iter.filter(self, f)
   return self:map(function(...)
@@ -272,11 +272,11 @@ end
 --- -- { 6, 12 }
 --- ```
 ---
----@param f function(...):any Mapping function. Takes all values returned from
----                           the previous stage in the pipeline as arguments
----                           and returns one or more new values, which are used
----                           in the next pipeline stage. Nil return values
----                           are filtered from the output.
+---@param f fun(...):any Mapping function. Takes all values returned from
+---                      the previous stage in the pipeline as arguments
+---                      and returns one or more new values, which are used
+---                      in the next pipeline stage. Nil return values
+---                      are filtered from the output.
 ---@return Iter
 function Iter.map(self, f)
   -- Implementation note: the reader may be forgiven for observing that this
@@ -340,9 +340,9 @@ end
 ---
 --- For functions with side effects. To modify the values in the iterator, use |Iter:map()|.
 ---
----@param f function(...) Function to execute for each item in the pipeline.
----                       Takes all of the values returned by the previous stage
----                       in the pipeline as arguments.
+---@param f fun(...) Function to execute for each item in the pipeline.
+---                  Takes all of the values returned by the previous stage
+---                  in the pipeline as arguments.
 function Iter.each(self, f)
   local function fn(...)
     if select(1, ...) ~= nil then
@@ -464,7 +464,7 @@ end
 ---@generic A
 ---
 ---@param init A Initial value of the accumulator.
----@param f function(acc:A, ...):A Accumulation function.
+---@param f fun(acc:A, ...):A Accumulation function.
 ---@return A
 function Iter.fold(self, init, f)
   local acc = init
@@ -884,9 +884,9 @@ end
 
 --- Returns true if any of the items in the iterator match the given predicate.
 ---
----@param pred function(...):bool Predicate function. Takes all values returned from the previous
----                                stage in the pipeline as arguments and returns true if the
----                                predicate matches.
+---@param pred fun(...):bool Predicate function. Takes all values returned from the previous
+---                          stage in the pipeline as arguments and returns true if the
+---                          predicate matches.
 function Iter.any(self, pred)
   local any = false
 
@@ -908,9 +908,9 @@ end
 
 --- Returns true if all items in the iterator match the given predicate.
 ---
----@param pred function(...):bool Predicate function. Takes all values returned from the previous
----                                stage in the pipeline as arguments and returns true if the
----                                predicate matches.
+---@param pred fun(...):bool Predicate function. Takes all values returned from the previous
+---                          stage in the pipeline as arguments and returns true if the
+---                          predicate matches.
 function Iter.all(self, pred)
   local all = true
 
@@ -1106,9 +1106,9 @@ end
 ---
 ---@see |Iter:filter()|
 ---
----@param f function(...):bool Filter function. Accepts the current iterator or table values as
----                            arguments and returns true if those values should be kept in the
----                            final table
+---@param f fun(...):bool Filter function. Accepts the current iterator or table values as
+---                       arguments and returns true if those values should be kept in the
+---                       final table
 ---@param src table|function Table or iterator function to filter
 ---@return table
 function M.filter(f, src, ...)
@@ -1124,9 +1124,9 @@ end
 ---
 ---@see |Iter:map()|
 ---
----@param f function(...):?any Map function. Accepts the current iterator or table values as
----                            arguments and returns one or more new values. Nil values are removed
----                            from the final table.
+---@param f fun(...): any? Map function. Accepts the current iterator or table values as
+---                        arguments and returns one or more new values. Nil values are removed
+---                        from the final table.
 ---@param src table|function Table or iterator function to filter
 ---@return table
 function M.map(f, src, ...)
