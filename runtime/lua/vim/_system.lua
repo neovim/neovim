@@ -61,7 +61,7 @@ end
 --- @field wait fun(self: vim.SystemObj, timeout?: integer): vim.SystemCompleted
 --- @field kill fun(self: vim.SystemObj, signal: integer|string)
 --- @field write fun(self: vim.SystemObj, data?: string|string[])
---- @field is_closing fun(self: vim.SystemObj): boolean?
+--- @field is_closing fun(self: vim.SystemObj): boolean
 local SystemObj = {}
 
 --- @param state vim.SystemState
@@ -140,7 +140,7 @@ end
 --- @return boolean
 function SystemObj:is_closing()
   local handle = self._state.handle
-  return handle == nil or handle:is_closing()
+  return handle == nil or handle:is_closing() or false
 end
 
 ---@param output fun(err:string?, data: string?)|false
