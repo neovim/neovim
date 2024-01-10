@@ -173,11 +173,13 @@ static void emit_term_request(void **argv)
 {
   char *payload = argv[0];
   size_t payload_length = (size_t)argv[1];
+  Terminal *rv = argv[2];
 
+  buf_T *buf = handle_get_buffer(rv->buf_handle);
   String termrequest = { .data = payload, .size = payload_length };
   Object data = STRING_OBJ(termrequest);
   set_vim_var_string(VV_TERMREQUEST, payload, (ptrdiff_t)payload_length);
-  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, curbuf, NULL, &data);
+  apply_autocmds_group(EVENT_TERMREQUEST, NULL, NULL, false, AUGROUP_ALL, buf, NULL, &data);
   xfree(payload);
 }
 
@@ -190,7 +192,7 @@ static int on_osc(int command, VTermStringFragment frag, void *user)
   StringBuilder request = KV_INITIAL_VALUE;
   kv_printf(request, "\x1b]%d;", command);
   kv_concat_len(request, frag.str, frag.len);
-  multiqueue_put(main_loop.events, emit_term_request, request.items, (void *)request.size);
+  multiqueue_put(main_loop.events, emit_term_request, request.items, (void *)request.size, user);
   return 1;
 }
 
@@ -203,7 +205,7 @@ static int on_dcs(const char *command, size_t commandlen, VTermStringFragment fr
   StringBuilder request = KV_INITIAL_VALUE;
   kv_printf(request, "\x1bP%*s", (int)commandlen, command);
   kv_concat_len(request, frag.str, frag.len);
-  multiqueue_put(main_loop.events, emit_term_request, request.items, (void *)request.size);
+  multiqueue_put(main_loop.events, emit_term_request, request.items, (void *)request.size, user);
   return 1;
 }
 
