@@ -3771,6 +3771,67 @@ describe('builtin popupmenu', function()
         ]])
       end
       if multigrid then
+        meths.input_mouse('right', 'press', '', 2, 0, 18)
+        screen:expect {
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*5
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|*4
+        ## grid 3
+          :let g:menustr = 'bar'          |
+        ## grid 4
+          {n: foo }|
+          {n: bar }|
+          {n: baz }|
+        ]],
+          float_pos = {
+            [4] = { { id = -1 }, 'NW', 2, 1, 17, false, 250 },
+          },
+        }
+      else
+        feed('<RightMouse><18,0>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~                }{n: foo }{1:          }|
+          {1:~                }{n: bar }{1:          }|
+          {1:~                }{n: baz }{1:          }|
+          {1:~                               }|
+          :let g:menustr = 'bar'          |
+        ]])
+      end
+      if multigrid then
+        meths.input_mouse('right', 'press', '', 4, 1, 3)
+        screen:expect({
+          grid = [[
+        ## grid 1
+          [2:--------------------------------]|*5
+          [3:--------------------------------]|
+        ## grid 2
+          ^popup menu test                 |
+          {1:~                               }|*4
+        ## grid 3
+          :let g:menustr = 'bar'          |
+        ## grid 4
+          {n: foo }|
+          {n: bar }|
+          {n: baz }|
+        ]],
+          float_pos = { [4] = { { id = -1 }, 'NW', 2, 3, 19, false, 250 } },
+        })
+      else
+        feed('<RightMouse><20,2>')
+        screen:expect([[
+          ^popup menu test                 |
+          {1:~                               }|*2
+          {1:~                  }{n: foo }{1:        }|
+          {1:~                  }{n: bar }{1:        }|
+          :let g:menustr = 'b{n: baz }        |
+        ]])
+      end
+      if multigrid then
         meths.input_mouse('left', 'press', '', 4, 2, 2)
         screen:expect({
           grid = [[
@@ -3785,7 +3846,7 @@ describe('builtin popupmenu', function()
         ]],
         })
       else
-        feed('<LeftMouse><22,5>')
+        feed('<LeftMouse><21,5>')
         screen:expect([[
           ^popup menu test                 |
           {1:~                               }|*4
@@ -4022,7 +4083,7 @@ describe('builtin popupmenu', function()
         ]],
         })
       else
-        feed('<LeftMouse><22,3>')
+        feed('<LeftMouse><21,3>')
         screen:expect([[
           popup menu test                 |
           {1:~                               }|
