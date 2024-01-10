@@ -243,6 +243,10 @@ Error		any erroneous construct
 Todo		anything that needs extra attention; mostly the
 		keywords TODO FIXME and XXX
 
+Added		added line in a diff
+Changed		changed line in a diff
+Removed		removed line in a diff
+
 The names marked with * are the preferred groups; the others are minor groups.
 For the preferred groups, the "syntax.vim" file contains default highlighting.
 The minor groups are linked to the preferred groups, so they get the same
@@ -1224,7 +1228,7 @@ To highlight KDE-reserved features, set >
 g:desktop_enable_kde follows g:desktop_enable_nonstd if not supplied
 
 
-DIFF						*diff.vim* *ft-diff-syntax*
+DIFF							*diff.vim*
 
 The diff highlighting normally finds translated headers.  This can be slow if
 there are very long lines in the file.  To disable translations: >
@@ -1233,15 +1237,6 @@ there are very long lines in the file.  To disable translations: >
 
 Also see |diff-slow|.
 
-Since the Vim 9.1 release the diff filetype links the diffAdded,
-diffRemoved and diffChanged highlighting groups to |hl-DiffAdd|,
-|hl-DiffDelete| and |hl-DiffChange| by default.  If you do not want this, you
-can change it to the previous groups like this in your |vimrc| >
-
-	hi link diffRemoved Special
-	hi link diffChanged PreProc
-	hi link diffAdded Identifier
-<
 DIRCOLORS			       *dircolors.vim* *ft-dircolors-syntax*
 
 The dircolors utility highlighting definition has one option.  It exists to
