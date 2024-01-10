@@ -318,16 +318,23 @@ describe(':terminal buffer', function()
     )
   end)
 
-  it('emits TermRequest events', function()
+  it('emits TermRequest events #26972', function()
     command('split')
     command('enew')
     local term = meths.open_term(0, {})
+    local termbuf = meths.get_current_buf().id
+
+    -- Test that autocommand buffer is associated with the terminal buffer, not the current buffer
+    command('au TermRequest * let g:termbuf = +expand("<abuf>")')
+    command('wincmd p')
+
     -- cwd will be inserted in a file URI, which cannot contain backs
     local cwd = funcs.getcwd():gsub('\\', '/')
     local parent = cwd:match('^(.+/)')
     local expected = '\027]7;file://host' .. parent
     meths.chan_send(term, string.format('%s\027\\', expected))
     eq(expected, eval('v:termrequest'))
+    eq(termbuf, eval('g:termbuf'))
   end)
 end)
 
