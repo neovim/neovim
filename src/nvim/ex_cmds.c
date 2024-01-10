@@ -3886,9 +3886,25 @@ static int do_sub(exarg_T *eap, const proftime_T timeout, const int cmdpreview_n
           goto skip;
         }
 
+        // If the substitute string contains a call to the 'input' function,
+        // prevent it from executing while the user is typing the command
+        // by skipping step 3.
+        bool skip_sub= false;
+        regmatch_T input_match = {
+           .regprog = vim_regcomp("\\\\=input(.*)", RE_MAGIC)
+        };
+        if (input_match.regprog != NULL){
+          skip_sub = vim_regexec(&input_match, sub, 0);
+          vim_regfree(input_match.regprog);
+        }
+
+        if (cmdpreview_ns <= 0){
+          skip_sub = false;
+        }
+
         // 3. Substitute the string. During 'inccommand' preview only do this if
-        //    there is a replace pattern.
-        if (cmdpreview_ns <= 0 || has_second_delim) {
+        //    there is a replace pattern, and the the replace pattern doesn't prompt the user.
+        if (!skip_sub && (cmdpreview_ns <= 0 || has_second_delim)) {
           linenr_T lnum_start = lnum;  // save the start lnum
           int save_ma = curbuf->b_p_ma;
           int save_sandbox = sandbox;
