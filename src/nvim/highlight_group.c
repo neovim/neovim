@@ -313,6 +313,8 @@ static const char *highlight_init_light[] = {
   "Normal guifg=NvimDarkGrey2 guibg=NvimLightGrey2 ctermfg=NONE ctermbg=NONE",
 
   // UI
+  "Added                guifg=NvimDarGreen                                   ctermfg=2",
+  "Changed              guifg=NvimDarkCyan                                   ctermfg=6",
   "ColorColumn                               guibg=NvimLightGrey4            cterm=reverse",
   "Conceal              guifg=NvimLightGrey4",
   "CurSearch            guifg=NvimLightGrey1 guibg=NvimDarkYellow            ctermfg=15 ctermbg=3",
@@ -341,6 +343,7 @@ static const char *highlight_init_light[] = {
   "RedrawDebugClear                          guibg=NvimLightYellow           ctermfg=15 ctermbg=3",
   "RedrawDebugComposed                       guibg=NvimLightGreen            ctermfg=15 ctermbg=2",
   "RedrawDebugRecompose                      guibg=NvimLightRed              ctermfg=15 ctermbg=1",
+  "Removed              guifg=NvimDarkRed                                    ctermfg=1",
   "Search               guifg=NvimDarkGrey1  guibg=NvimLightYellow           ctermfg=15 ctermbg=3",
   "SignColumn           guifg=NvimLightGrey4",
   "SpecialKey           guifg=NvimLightGrey4",
@@ -382,6 +385,8 @@ static const char *highlight_init_dark[] = {
   "Normal guifg=NvimLightGrey2 guibg=NvimDarkGrey2 ctermfg=NONE ctermbg=NONE",
 
   // UI
+  "Added                guifg=NvimLightGreen                                ctermfg=10",
+  "Changed              guifg=NvimLightCyan                                 ctermfg=14",
   "ColorColumn                                guibg=NvimDarkGrey4           cterm=reverse",
   "Conceal              guifg=NvimDarkGrey4",
   "CurSearch            guifg=NvimDarkGrey1   guibg=NvimLightYellow         ctermfg=0 ctermbg=11",
@@ -410,6 +415,7 @@ static const char *highlight_init_dark[] = {
   "RedrawDebugClear                           guibg=NvimDarkYellow          ctermfg=0 ctermbg=11",
   "RedrawDebugComposed                        guibg=NvimDarkGreen           ctermfg=0 ctermbg=10",
   "RedrawDebugRecompose                       guibg=NvimDarkRed             ctermfg=0 ctermbg=9",
+  "Removed              guifg=NvimLightRed                                  ctermfg=9",
   "Search               guifg=NvimLightGrey1  guibg=NvimDarkYellow          ctermfg=0 ctermbg=11",
   "SignColumn           guifg=NvimDarkGrey4",
   "SpecialKey           guifg=NvimDarkGrey4",

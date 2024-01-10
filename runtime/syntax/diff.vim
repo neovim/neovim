@@ -378,9 +378,9 @@ hi def link diffBDiffer		Constant
 hi def link diffIsA		Constant
 hi def link diffNoEOL		Constant
 hi def link diffCommon		Constant
-hi def link diffRemoved		DiffDelete
-hi def link diffChanged		DiffChange
-hi def link diffAdded		DiffAdd
+hi def link diffRemoved		Removed
+hi def link diffChanged		Changed
+hi def link diffAdded		Added
 hi def link diffLine		Statement
 hi def link diffSubname		PreProc
 hi def link diffComment		Comment
