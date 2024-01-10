@@ -229,7 +229,6 @@ end
 ---@return Iter
 function Iter.flatten(self, depth) -- luacheck: no unused args
   error('flatten() requires a list-like table')
-  return self
 end
 
 ---@private
@@ -244,7 +243,6 @@ function ListIter.flatten(self, depth)
     -- exit early if we try to flatten a dict-like table
     if flattened == nil then
       error('flatten() requires a list-like table')
-      return self
     end
 
     for _, v in pairs(flattened) do
@@ -540,9 +538,8 @@ end
 --- ```
 ---
 ---@return Iter
-function Iter.rev(self)
+function Iter.rev(self) -- luacheck: no unused args
   error('rev() requires a list-like table')
-  return self
 end
 
 ---@private
@@ -812,7 +809,6 @@ end
 ---@diagnostic disable-next-line: unused-local
 function Iter.skipback(self, n) -- luacheck: no unused args
   error('skipback() requires a list-like table')
-  return self
 end
 
 ---@private
@@ -879,7 +875,6 @@ end
 ---@diagnostic disable-next-line: unused-local
 function Iter.slice(self, first, last) -- luacheck: no unused args
   error('slice() requires a list-like table')
-  return self
 end
 
 ---@private
