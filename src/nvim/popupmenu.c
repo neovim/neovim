@@ -58,7 +58,8 @@ static bool pum_rl;                 // true when popupmenu is drawn 'rightleft'
 
 static int pum_anchor_grid;         // grid where position is defined
 static int pum_row;                 // top row of pum
-static int pum_col;                 // left column of pum
+static int pum_col;                 // left column of pum, right column if 'rightleft'
+static int pum_left_col;            // left column of pum, before padding or scrollbar
 static bool pum_above;              // pum is drawn above cursor line
 
 static bool pum_is_visible = false;
@@ -464,14 +465,14 @@ void pum_redraw(void)
 
   grid_assign_handle(&pum_grid);
 
-  bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_col - col_off,
+  pum_left_col = pum_col - col_off;
+  bool moved = ui_comp_put_grid(&pum_grid, pum_row, pum_left_col,
                                 pum_height, grid_width, false, true);
   bool invalid_grid = moved || pum_invalid;
   pum_invalid = false;
   must_redraw_pum = false;
 
-  if (!pum_grid.chars
-      || pum_grid.rows != pum_height || pum_grid.cols != grid_width) {
+  if (!pum_grid.chars || pum_grid.rows != pum_height || pum_grid.cols != grid_width) {
     grid_alloc(&pum_grid, pum_height, grid_width, !invalid_grid, false);
     ui_call_grid_resize(pum_grid.handle, pum_grid.cols, pum_grid.rows);
   } else if (invalid_grid) {
@@ -480,9 +481,8 @@ void pum_redraw(void)
   if (ui_has(kUIMultigrid)) {
     const char *anchor = pum_above ? "SW" : "NW";
     int row_off = pum_above ? -pum_height : 0;
-    ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string((char *)anchor),
-                          pum_anchor_grid, pum_row - row_off, pum_col - col_off,
-                          false, pum_grid.zindex);
+    ui_call_win_float_pos(pum_grid.handle, -1, cstr_as_string((char *)anchor), pum_anchor_grid,
+                          pum_row - row_off, pum_left_col, false, pum_grid.zindex);
   }
 
   // Never display more than we have
@@ -1160,7 +1160,14 @@ static void pum_position_at_mouse(int min_width)
       max_col = MAX(Columns - wp->w_wincol, wp->w_grid.cols);
     }
   }
-  pum_anchor_grid = mouse_grid;
+  if (pum_grid.handle != 0 && mouse_grid == pum_grid.handle) {
+    // Repositioning the menu by right-clicking on itself
+    mouse_grid = pum_anchor_grid;
+    mouse_row += pum_row;
+    mouse_col += pum_left_col;
+  } else {
+    pum_anchor_grid = mouse_grid;
+  }
   if (max_row - mouse_row > pum_size) {
     // Enough space below the mouse row.
     pum_above = false;
