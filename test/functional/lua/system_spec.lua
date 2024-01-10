@@ -73,13 +73,25 @@ describe('vim.system', function()
       it('supports timeout', function()
         eq({
           code = 124,
-          signal = 15,
+          signal = 15, -- SIGTERM
           stdout = '',
           stderr = '',
         }, system({ 'sleep', '10' }, { timeout = 1000 }))
       end)
     end)
   end
+
+  it('supports timeout = 0', function()
+    local ret = exec_lua [[
+      return vim.system({ 'sleep', '1' }):wait(0)
+    ]] --[[ @as any ]]
+    eq({
+      code = 124,
+      signal = 9, -- SIGKILL, because wait(...)
+      stdout = '',
+      stderr = '',
+    }, ret)
+  end)
 
   it('kill processes', function()
     exec_lua([[
