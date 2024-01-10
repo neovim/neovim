@@ -328,7 +328,13 @@ void extmark_splice_delete(buf_T *buf, int l_row, colnr_T l_col, int u_row, coln
 
     bool invalidated = false;
     // Invalidate/delete mark
-    if (!only_copy && !mt_invalid(mark) && mt_invalidate(mark) && !mt_end(mark)) {
+    if (!only_copy && !mt_invalid(mark) && !mt_end(mark)
+        && (mt_invalidate(mark)
+            // Marks in deleted lines at the end of the buffer are invalid
+            // regardless of whether "invalidate" flag is set.
+            // No splice operation can make them valid again except undo.
+            || buf->b_ml.ml_flags & ML_EMPTY
+            || mark.pos.row == buf->b_ml.ml_line_count)) {
       MTPos endpos = marktree_get_altpos(buf->b_marktree, mark, NULL);
       if (endpos.row < 0) {
         endpos = mark.pos;
