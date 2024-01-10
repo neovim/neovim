@@ -43,7 +43,7 @@ TREESITTER TREES                                             *treesitter-tree*
 
 A "treesitter tree" represents the parsed contents of a buffer, which can be
 used to perform further analysis. It is a |userdata| reference to an object
-held by the tree-sitter library.
+held by the tree-sitter C library.
 
 An instance `TSTree` of a treesitter tree supports the following methods.
 
@@ -59,7 +59,7 @@ TREESITTER NODES                                             *treesitter-node*
 
 A "treesitter node" represents one specific element of the parsed contents of
 a buffer, which can be captured by a |Query| for, e.g., highlighting. It is
-a |userdata| reference to an object held by the tree-sitter library.
+a |userdata| reference to an object held by the tree-sitter C library.
 
 An instance `TSNode` of a treesitter node supports the following methods.
 
@@ -103,16 +103,18 @@ TSNode:named_child({index})                              *TSNode:named_child()*
 
 TSNode:start()                                          *TSNode:start()*
     Get the node's start position. Return three values: the row, column and
-    total byte count (all zero-based).
+    total byte count (all 0-indexed).
 
 TSNode:end_()                                           *TSNode:end_()*
     Get the node's end position. Return three values: the row, column and
-    total byte count (all zero-based).
+    total byte count (all 0-indexed). The end position is exclusive.
 
 TSNode:range({include_bytes})                           *TSNode:range()*
-    Get the range of the node.
+    Get the range of the node. The start position is inclusive, but the end
+    position is exclusive (end-exclusive). The start and the end positions
+    are 0-indexed.
 
-    Return four or six values:
+    Return a table of four values or six values:
         - start row
         - start column
         - start byte (if {include_bytes} is `true`)
@@ -163,12 +165,13 @@ TSNode:tree()                                           *TSNode:tree()*
                                                 *TSNode:descendant_for_range()*
 TSNode:descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
     Get the smallest node within this node that spans the given range of (row,
-    column) positions
+    column) positions. The range follows the convention of |TSNode:range()|.
 
                                           *TSNode:named_descendant_for_range()*
 TSNode:named_descendant_for_range({start_row}, {start_col}, {end_row}, {end_col})
     Get the smallest named node within this node that spans the given range of
-    (row, column) positions
+    (row, column) positions. The range follows the convention of
+    |TSNode:range()|.
                                                         *TSNode:equal()*
 TSNode:equal({node})
     Check if {node} refers to the same node within the same tree.
@@ -290,9 +293,9 @@ The following directives are built in:
             ((node1) @left (node2) @right (#set! "type" "pair"))
 <
     `offset!`                                      *treesitter-directive-offset!*
-        Takes the range of the captured node and applies an offset. This will
-        generate a new range object for the captured node as
-        `metadata[capture_id].range`.
+        Takes the range of the captured node and applies an offset (range is
+        0-indexed and end-exclusive). This will generate a new range object
+        for the captured node as `metadata[capture_id].range`.
 
         Parameters: ~
             {capture_id}
@@ -636,7 +639,8 @@ get_node_range({node_or_range})              *vim.treesitter.get_node_range()*
     Returns the node's range or an unpacked range table
 
     Parameters: ~
-      • {node_or_range}  (|TSNode| | table) Node or table of positions
+      • {node_or_range}  (|TSNode| | Range) Node or table of positions. see
+                         |TSNode:range()|.
 
     Return (multiple): ~
         (integer) start_row
@@ -676,8 +680,8 @@ get_parser({bufnr}, {lang}, {opts})              *vim.treesitter.get_parser()*
         |LanguageTree| object to use for parsing
 
 get_range({node}, {source}, {metadata})           *vim.treesitter.get_range()*
-    Get the range of a |TSNode|. Can also supply {source} and {metadata} to
-    get the range with directives applied.
+    Get the range of a |TSNode| with bytes information included. Can also
+    supply {source} and {metadata} to get the range with directives applied.
 
     Parameters: ~
       • {node}      |TSNode|
@@ -686,7 +690,7 @@ get_range({node}, {source}, {metadata})           *vim.treesitter.get_range()*
       • {metadata}  TSMetadata|nil
 
     Return: ~
-        (table)
+        (table) a Range6 table containing six values.
 
                                           *vim.treesitter.get_string_parser()*
 get_string_parser({str}, {lang}, {opts})
@@ -1117,7 +1121,8 @@ LanguageTree:contains({range})                       *LanguageTree:contains()*
     Determines whether {range} is contained in the |LanguageTree|.
 
     Parameters: ~
-      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {range}  (table) `{ start_line, start_col, end_line, end_col }` Range
+                 is 0-indexed and end-exclusive.
 
     Return: ~
         (boolean)
@@ -1172,7 +1177,8 @@ LanguageTree:language_for_range({range})
     Gets the appropriate language that contains {range}.
 
     Parameters: ~
-      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {range}  (table) `{ start_line, start_col, end_line, end_col }` Range
+                 is 0-indexed and end-exclusive.
 
     Return: ~
         |LanguageTree| Managing {range}
@@ -1182,7 +1188,8 @@ LanguageTree:named_node_for_range({range}, {opts})
     Gets the smallest named node that contains {range}.
 
     Parameters: ~
-      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {range}  (table) `{ start_line, start_col, end_line, end_col }` Range
+                 is 0-indexed and end-exclusive.
       • {opts}   (table|nil) Optional keyword arguments:
                  • ignore_injections boolean Ignore injected languages
                    (default true)
@@ -1202,10 +1209,17 @@ LanguageTree:parse({range})                             *LanguageTree:parse()*
 
     Parameters: ~
       • {range}  boolean|Range|nil: Parse this range in the parser's source.
-                 Set to `true` to run a complete parse of the source (Note:
-                 Can be slow!) Set to `false|nil` to only parse regions with
-                 empty ranges (typically only the root tree without
-                 injections).
+                 • If table, this may contain 2, 4, or 6 integers:
+                   • `{ start_line, end_line }`
+                   • `{ start_line, start_col, end_line, end_col }`
+                   • `{ start_line, start_col, start_byte, end_line, end_col,
+                     end_byte }`
+                   • Index is 0-based and always end-exclusive.
+
+                 • If `true`, run a complete parse of the source (Note: Can be
+                   slow!)
+                 • If `false|nil`, only parse regions with empty ranges
+                   (typically only the root tree without injections).
 
     Return: ~
         table<integer, TSTree>
@@ -1242,7 +1256,8 @@ LanguageTree:tree_for_range({range}, {opts})
     Gets the tree that contains {range}.
 
     Parameters: ~
-      • {range}  (table) `{ start_line, start_col, end_line, end_col }`
+      • {range}  (table) `{ start_line, start_col, end_line, end_col }` Range
+                 is 0-indexed and end-exclusive.
       • {opts}   (table|nil) Optional keyword arguments:
                  • ignore_injections boolean Ignore injected languages
                    (default true)
