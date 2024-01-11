@@ -757,8 +757,6 @@ void buf_clear(void)
 {
   linenr_T line_count = curbuf->b_ml.ml_line_count;
   extmark_free_all(curbuf);   // delete any extmarks
-  map_destroy(int, curbuf->b_signcols.invalid);
-  *curbuf->b_signcols.invalid = (Map(int, SignRange)) MAP_INIT;
   while (!(curbuf->b_ml.ml_flags & ML_EMPTY)) {
     ml_delete(1, false);
   }
@@ -929,8 +927,6 @@ static void free_buffer_stuff(buf_T *buf, int free_flags)
   }
   uc_clear(&buf->b_ucmds);               // clear local user commands
   extmark_free_all(buf);                 // delete any extmarks
-  map_destroy(int, buf->b_signcols.invalid);
-  *buf->b_signcols.invalid = (Map(int, SignRange)) MAP_INIT;
   map_clear_mode(buf, MAP_ALL_MODES, true, false);  // clear local mappings
   map_clear_mode(buf, MAP_ALL_MODES, true, true);   // clear local abbrevs
   XFREE_CLEAR(buf->b_start_fenc);

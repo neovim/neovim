@@ -1201,27 +1201,30 @@ void comp_col(void)
 /// Redraw entire window "wp" if configured 'signcolumn' width changes.
 static bool win_redraw_signcols(win_T *wp)
 {
-  int width;
-  bool rebuild_stc = false;
   buf_T *buf = wp->w_buffer;
 
-  if (wp->w_minscwidth <= SCL_NO) {
-    if (*wp->w_p_stc) {
-      buf_signcols_validate(wp, buf, true);
-      if (buf->b_signcols.resized) {
-        rebuild_stc = true;
-        wp->w_nrwidth_line_count = 0;
-      }
-    }
-    width = 0;
-  } else if (wp->w_maxscwidth <= 1 && buf->b_signs_with_text >= (size_t)wp->w_maxscwidth) {
-    width = wp->w_maxscwidth;
-  } else {
-    width = MIN(wp->w_maxscwidth, buf_signcols_validate(wp, buf, false));
+  if (!buf->b_signcols.autom
+      && (*wp->w_p_stc != NUL || (wp->w_maxscwidth > 1 && wp->w_minscwidth != wp->w_maxscwidth))) {
+    buf->b_signcols.autom = true;
+    buf_signcols_count_range(buf, 0, buf->b_ml.ml_line_count, MAXLNUM, kNone);
+  }
+
+  while (buf->b_signcols.max > 0 && buf->b_signcols.count[buf->b_signcols.max - 1] == 0) {
+    buf->b_signcols.resized = true;
+    buf->b_signcols.max--;
+  }
+
+  int width = MIN(wp->w_maxscwidth, buf->b_signcols.max);
+  bool rebuild_stc = buf->b_signcols.resized && *wp->w_p_stc != NUL;
+
+  if (rebuild_stc) {
+    wp->w_nrwidth_line_count = 0;
+  } else if (wp->w_minscwidth == 0 && wp->w_maxscwidth == 1) {
+    width = buf->b_signs_with_text > 0;
   }
 
   int scwidth = wp->w_scwidth;
-  wp->w_scwidth = MAX(wp->w_minscwidth, width);
+  wp->w_scwidth = MAX(MAX(0, wp->w_minscwidth), width);
   return (wp->w_scwidth != scwidth || rebuild_stc);
 }
 

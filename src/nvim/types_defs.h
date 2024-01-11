@@ -48,13 +48,6 @@ typedef enum {
 
 typedef int64_t OptInt;
 
-// Range entry for the "b_signcols.invalid" map in which the keys are the range start.
-typedef struct {
-  int end;  // End of the invalid range.
-  int add;  // Number of signs added in the invalid range, negative for deleted signs.
-} SignRange;
-#define SIGNRANGE_INIT { 0, 0 }
-
 enum { SIGN_WIDTH = 2, };  ///< Number of display cells for a sign in the signcolumn
 
 typedef struct file_buffer buf_T;

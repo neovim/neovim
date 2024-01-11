@@ -521,8 +521,8 @@ describe('statuscolumn', function()
     command([[set stc=%6s\ %l]])
     exec_lua('vim.api.nvim_buf_set_extmark(0, ns, 7, 0, {sign_text = "𒀀"})')
     screen:expect([[
-      {0:    𒀀  8}^aaaaa                                        |
-      {0:    }{1:  }{0: 9}aaaaa                                        |
+      {0:    𒀀  8 }^aaaaa                                       |
+      {0:    }{1:  }{0: 9 }aaaaa                                       |
                                                            |
     ]])
   end)

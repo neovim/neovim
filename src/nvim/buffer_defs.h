@@ -685,10 +685,12 @@ struct file_buffer {
                                 // may use a different synblock_T.
 
   struct {
-    int max;                         // maximum number of signs on a single line
-    int max_count;                   // number of lines with max number of signs
-    bool resized;                    // whether max changed at start of redraw
-    Map(int, SignRange) invalid[1];  // map of invalid ranges to be checked
+    int max;                    // maximum number of signs on a single line
+    int count[SIGN_SHOW_MAX];   // number of lines with number of signs
+    bool resized;               // whether max changed at start of redraw
+    bool autom;                 // whether 'signcolumn' is displayed in "auto:n>1"
+                                // configured window. "b_signcols" calculation
+                                // is skipped if false.
   } b_signcols;
 
   Terminal *terminal;           // Terminal instance associated with the buffer
