@@ -572,13 +572,6 @@ A subset of the `vim.*` API is available in threads. This includes:
   like `vim.split`, `vim.tbl_*`, `vim.list_*`, and so on.
 - `vim.is_thread()` returns true from a non-main thread.
 
-------------------------------------------------------------------------------
-VIM.LPEG                                                            *lua-lpeg*
-
-                                                             *vim.lpeg* *vim.re*
-The Lpeg library for parsing expression grammars is being included as
-`vim.lpeg` (https://www.inf.puc-rio.br/~roberto/lpeg/). In addition, its regex-like
-interface is available as `vim.re` (https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
 
 ==============================================================================
 VIM.HIGHLIGHT                                                  *vim.highlight*
@@ -644,49 +637,6 @@ vim.highlight.range({bufnr}, {ns}, {higroup}, {start}, {finish}, {opts})
                      end-inclusive (default false)
                    • priority number indicating priority of highlight (default
                      priorities.user)
-
-
-==============================================================================
-VIM.REGEX                                                          *vim.regex*
-
-
-Vim regexes can be used directly from Lua. Currently they only allow
-matching within a single line.
-
-
-vim.regex({re})                                                  *vim.regex()*
-    Parse the Vim regex {re} and return a regex object. Regexes are "magic"
-    and case-sensitive by default, regardless of 'magic' and 'ignorecase'.
-    They can be controlled with flags, see |/magic| and |/ignorecase|.
-
-    Parameters: ~
-      • {re}  (`string`)
-
-    Return: ~
-        (`vim.regex`)
-
-                                                          *regex:match_line()*
-vim.regex:match_line({bufnr}, {line_idx}, {start}, {end_})
-    Match line {line_idx} (zero-based) in buffer {bufnr}. If {start} and {end}
-    are supplied, match only this byte index range. Otherwise see
-    |regex:match_str()|. If {start} is used, then the returned byte indices
-    will be relative {start}.
-
-    Parameters: ~
-      • {bufnr}     (`integer`)
-      • {line_idx}  (`integer`)
-      • {start}     (`integer?`)
-      • {end_}      (`integer?`)
-
-vim.regex:match_str({str})                                 *regex:match_str()*
-    Match the string against the regex. If the string should match the regex
-    precisely, surround the regex with `^` and `$` . If there was a match, the
-    byte indices for the beginning and end of the match are returned. When
-    there is no match, `nil` is returned. Because any integer is "truthy", `regex:match_str()` can
-    be directly used as a condition in an if-statement.
-
-    Parameters: ~
-      • {str}  (`string`)
 
 
 ==============================================================================
@@ -3032,6 +2982,478 @@ vim.glob.to_lpeg({pattern})                               *vim.glob.to_lpeg()*
     Return: ~
         (`vim.lpeg.Pattern`) pattern An |lua-lpeg| representation of the
         pattern
+
+
+==============================================================================
+VIM.LPEG                                                            *vim.lpeg*
+
+
+LPeg is a pattern-matching library for Lua, based on
+Parsing Expression Grammars (https://bford.info/packrat/) (PEGs).
+
+                                                                    *lua-lpeg*
+                                                            *vim.lpeg.Pattern*
+The LPeg library for parsing expression grammars is included as `vim.lpeg`
+(https://www.inf.puc-rio.br/~roberto/lpeg/).
+
+In addition, its regex-like interface is available as |vim.re|
+(https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
+
+vim.lpeg.B({pattern})                                           *vim.lpeg.B()*
+    Returns a pattern that matches only if the input string at the current
+    position is preceded by `patt`. Pattern `patt` must match only strings
+    with some fixed length, and it cannot contain captures. Like the and
+    predicate, this pattern never consumes any input, independently of success
+    or failure.
+
+    Parameters: ~
+      • {pattern}  (`vim.lpeg.Pattern`)
+
+    Return: ~
+        (`vim.lpeg.Pattern`)
+
+vim.lpeg.C({patt})                                              *vim.lpeg.C()*
+    Creates a simple capture, which captures the substring of the subject that
+    matches `patt`. The captured value is a string. If `patt` has other
+    captures, their values are returned after this one.
+
+    Example: >lua
+        local function split (s, sep)
+          sep = lpeg.P(sep)
+          local elem = lpeg.C((1 - sep)^0)
+          local p = elem * (sep * elem)^0
+          return lpeg.match(p, s)
+        end
+        local a, b, c = split('a,b,c', ',')
+        assert(a == 'a')
+        assert(b == 'b')
+        assert(c == 'c')
+<
+
+    Parameters: ~
+      • {patt}  (`vim.lpeg.Pattern`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Carg({n})                                           *vim.lpeg.Carg()*
+    Creates an argument capture. This pattern matches the empty string and
+    produces the value given as the nth extra argument given in the call to `lpeg.match` .
+
+    Parameters: ~
+      • {n}  (`integer`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cb({name})                                            *vim.lpeg.Cb()*
+    Creates a back capture. This pattern matches the empty string and produces
+    the values produced by the most recent group capture named `name` (where
+    `name` can be any Lua value). Most recent means the last complete
+    outermost group capture with the given name. A Complete capture means that
+    the entire pattern corresponding to the capture has matched. An Outermost
+    capture means that the capture is not inside another complete capture. In
+    the same way that LPeg does not specify when it evaluates captures, it
+    does not specify whether it reuses values previously produced by the group
+    or re-evaluates them.
+
+    Parameters: ~
+      • {name}  (`any`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cc({...})                                             *vim.lpeg.Cc()*
+    Creates a constant capture. This pattern matches the empty string and
+    produces all given values as its captured values.
+
+    Parameters: ~
+      • {...}  (`any`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cf({patt}, {func})                                    *vim.lpeg.Cf()*
+    Creates a fold capture. If `patt` produces a list of captures C1 C2 ...
+    Cn, this capture will produce the value `func(...func(func(C1, C2),
+    C3)...,Cn)`, that is, it will fold (or accumulate, or reduce) the captures
+    from `patt` using function `func`. This capture assumes that `patt` should
+    produce at least one capture with at least one value (of any type), which
+    becomes the initial value of an accumulator. (If you need a specific
+    initial value, you may prefix a constant captureto `patt`.) For each
+    subsequent capture, LPeg calls `func` with this accumulator as the first
+    argument and all values produced by the capture as extra arguments; the
+    first result from this call becomes the new value for the accumulator. The
+    final value of the accumulator becomes the captured value.
+
+    Example: >lua
+        local number = lpeg.R("09") ^ 1 / tonumber
+        local list = number * ("," * number) ^ 0
+        local function add(acc, newvalue) return acc + newvalue end
+        local sum = lpeg.Cf(list, add)
+        assert(sum:match("10,30,43") == 83)
+<
+
+    Parameters: ~
+      • {patt}  (`vim.lpeg.Pattern`)
+      • {func}  (`fun(acc, newvalue)`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cg({patt}, {name})                                    *vim.lpeg.Cg()*
+    Creates a group capture. It groups all values returned by `patt` into a
+    single capture. The group may be anonymous (if no name is given) or named
+    with the given name (which can be any non-nil Lua value).
+
+    Parameters: ~
+      • {patt}  (`vim.lpeg.Pattern`)
+      • {name}  (`string?`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cmt({patt}, {fn})                                    *vim.lpeg.Cmt()*
+    Creates a match-time capture. Unlike all other captures, this one is
+    evaluated immediately when a match occurs (even if it is part of a larger
+    pattern that fails later). It forces the immediate evaluation of all its
+    nested captures and then calls `function`. The given function gets as
+    arguments the entire subject, the current position (after the match of
+    `patt`), plus any capture values produced by `patt`. The first value
+    returned by `function` defines how the match happens. If the call returns
+    a number, the match succeeds and the returned number becomes the new
+    current position. (Assuming a subject sand current position i, the
+    returned number must be in the range [i, len(s) + 1].) If the call returns
+    true, the match succeeds without consuming any input (so, to return true
+    is equivalent to return i). If the call returns false, nil, or no value,
+    the match fails. Any extra values returned by the function become the
+    values produced by the capture.
+
+    Parameters: ~
+      • {patt}  (`vim.lpeg.Pattern`)
+      • {fn}    (`function`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cp()                                                  *vim.lpeg.Cp()*
+    Creates a position capture. It matches the empty string and captures the
+    position in the subject where the match occurs. The captured value is a
+    number.
+
+    Example: >lua
+        local I = lpeg.Cp()
+        local function anywhere(p) return lpeg.P({I * p * I + 1 * lpeg.V(1)}) end
+        local match_start, match_end = anywhere("world"):match("hello world!")
+        assert(match_start == 7)
+        assert(match_end == 12)
+<
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Cs({patt})                                            *vim.lpeg.Cs()*
+    Creates a substitution capture. This function creates a substitution
+    capture, which captures the substring of the subject that matches `patt`,
+    with substitutions. For any capture inside `patt` with a value, the
+    substring that matched the capture is replaced by the capture value (which
+    should be a string). The final captured value is the string resulting from
+    all replacements.
+
+    Example: >lua
+        local function gsub (s, patt, repl)
+          patt = lpeg.P(patt)
+          patt = lpeg.Cs((patt / repl + 1)^0)
+          return lpeg.match(patt, s)
+        end
+        assert(gsub('Hello, xxx!', 'xxx', 'World') == 'Hello, World!')
+<
+
+    Parameters: ~
+      • {patt}  (`vim.lpeg.Pattern`)
+
+    Return: ~
+        (`vim.lpeg.Capture`)
+
+vim.lpeg.Ct({patt})                                            *vim.lpeg.Ct()*
+    Creates a table capture. This capture returns a table with all values from
+    all anonymous captures made by `patt` inside this table in successive
+    integer keys, starting at 1. Moreover, for each named capture group
+    created by `patt`, the first value of the group is put into the table with
+    the group name as its key. The captured value is only the table.
+
+    Parameters: ~
+      • {patt}  (vim.lpeg.Pattern |' `) @return (` vim.lpeg.Capture`)
+
+vim.lpeg.lpeg                                                     *vim.lpeg()*
+    LPeg is a new pattern-matching library for Lua, based on Parsing Expression
+    Grammars (PEGs).
+
+vim.lpeg.match({pattern}, {subject}, {init})                *vim.lpeg.match()*
+    Matches the given `pattern` against the `subject` string. If the match
+    succeeds, returns the index in the subject of the first character after
+    the match, or the captured values (if the pattern captured any value). An
+    optional numeric argument `init` makes the match start at that position in
+    the subject string. As usual in Lua libraries, a negative value counts
+    from the end. Unlike typical pattern-matching functions, `match` works
+    only in anchored mode; that is, it tries to match the pattern with a
+    prefix of the given subject string (at position `init`), not with an
+    arbitrary substring of the subject. So, if we want to find a pattern
+    anywhere in a string, we must either write a loop in Lua or write a
+    pattern that matches anywhere.
+
+    Example: >lua
+        local pattern = lpeg.R("az") ^ 1 * -1
+        assert(pattern:match("hello") == 6)
+        assert(lpeg.match(pattern, "hello") == 6)
+        assert(pattern:match("1 hello") == nil)
+<
+
+    Parameters: ~
+      • {pattern}  (`vim.lpeg.Pattern`)
+      • {subject}  (`string`)
+      • {init}     (`integer?`)
+
+    Return: ~
+        (`integer|vim.lpeg.Capture?`)
+
+vim.lpeg.P({value})                                             *vim.lpeg.P()*
+    Converts the given value into a proper pattern. This following rules are
+    applied:
+    • If the argument is a pattern, it is returned unmodified.
+    • If the argument is a string, it is translated to a pattern that matches
+      the string literally.
+    • If the argument is a non-negative number `n`, the result is a pattern
+      that matches exactly `n` characters.
+    • If the argument is a negative number `-n`, the result is a pattern that
+      succeeds only if the input string has less than `n` characters left:
+      `lpeg.P(-n)` is equivalent to `-lpeg.P(n)` (see the unary minus
+      operation).
+    • If the argument is a boolean, the result is a pattern that always
+      succeeds or always fails (according to the boolean value), without
+      consuming any input.
+    • If the argument is a table, it is interpreted as a grammar (see
+      Grammars).
+    • If the argument is a function, returns a pattern equivalent to a
+      match-time captureover the empty string.
+
+    Parameters: ~
+      • {value}  (`vim.lpeg.Pattern|string|integer|boolean|table|function`)
+
+    Return: ~
+        (`vim.lpeg.Pattern`)
+
+vim.lpeg.Pattern:match({subject}, {init})                    *Pattern:match()*
+    Matches the given `pattern` against the `subject` string. If the match
+    succeeds, returns the index in the subject of the first character after
+    the match, or the captured values (if the pattern captured any value). An
+    optional numeric argument `init` makes the match start at that position in
+    the subject string. As usual in Lua libraries, a negative value counts
+    from the end. Unlike typical pattern-matching functions, `match` works
+    only in anchored mode; that is, it tries to match the pattern with a
+    prefix of the given subject string (at position `init`), not with an
+    arbitrary substring of the subject. So, if we want to find a pattern
+    anywhere in a string, we must either write a loop in Lua or write a
+    pattern that matches anywhere.
+
+    Example: >lua
+        local pattern = lpeg.R("az") ^ 1 * -1
+        assert(pattern:match("hello") == 6)
+        assert(lpeg.match(pattern, "hello") == 6)
+        assert(pattern:match("1 hello") == nil)
+<
+
+    Parameters: ~
+      • {subject}  (`string`)
+      • {init}     (`integer?`)
+
+    Return: ~
+        (`integer|vim.lpeg.Capture?`)
+
+vim.lpeg.R({...})                                               *vim.lpeg.R()*
+    Returns a pattern that matches any single character belonging to one of
+    the given ranges. Each `range` is a string `xy` of length 2, representing
+    all characters with code between the codes of `x` and `y` (both
+    inclusive). As an example, the pattern `lpeg.R("09")` matches any digit,
+    and `lpeg.R("az", "AZ")` matches any ASCII letter.
+
+    Example: >lua
+        local pattern = lpeg.R("az") ^ 1 * -1
+        assert(pattern:match("hello") == 6)
+<
+
+    Parameters: ~
+      • {...}  (`string`)
+
+    Return: ~
+        (`vim.lpeg.Pattern`)
+
+vim.lpeg.S({string})                                            *vim.lpeg.S()*
+    Returns a pattern that matches any single character that appears in the
+    given string (the `S` stands for Set). As an example, the pattern
+    `lpeg.S("+-*&zwj;/")` matches any arithmetic operator. Note that, if `s`
+    is a character (that is, a string of length 1), then `lpeg.P(s)` is
+    equivalent to `lpeg.S(s)` which is equivalent to `lpeg.R(s..s)`. Note also
+    that both `lpeg.S("")` and `lpeg.R()` are patterns that always fail.
+
+    Parameters: ~
+      • {string}  (`string`)
+
+    Return: ~
+        (`vim.lpeg.Pattern`)
+
+vim.lpeg.setmaxstack({max})                           *vim.lpeg.setmaxstack()*
+    Sets a limit for the size of the backtrack stack used by LPeg to track
+    calls and choices. The default limit is `400`. Most well-written patterns
+    need little backtrack levels and therefore you seldom need to change this
+    limit; before changing it you should try to rewrite your pattern to avoid
+    the need for extra space. Nevertheless, a few useful patterns may
+    overflow. Also, with recursive grammars, subjects with deep recursion may
+    also need larger limits.
+
+    Parameters: ~
+      • {max}  (`integer`)
+
+vim.lpeg.type({value})                                       *vim.lpeg.type()*
+    Returns the string `"pattern"` if the given value is a pattern, otherwise
+    `nil`.
+
+    Return: ~
+        (`"pattern"?`)
+
+vim.lpeg.V({v})                                                 *vim.lpeg.V()*
+    Creates a non-terminal (a variable) for a grammar. This operation creates
+    a non-terminal (a variable) for a grammar. The created non-terminal refers
+    to the rule indexed by `v` in the enclosing grammar.
+
+    Example: >lua
+        local b = lpeg.P({"(" * ((1 - lpeg.S "()") + lpeg.V(1)) ^ 0 * ")"})
+        assert(b:match('((string))') == 11)
+        assert(b:match('(') == nil)
+<
+
+    Parameters: ~
+      • {v}  (`string|integer`)
+
+    Return: ~
+        (`vim.lpeg.Pattern`)
+
+vim.lpeg.version()                                        *vim.lpeg.version()*
+    Returns a string with the running version of LPeg.
+
+    Return: ~
+        (`string`)
+
+
+==============================================================================
+VIM.RE                                                                *vim.re*
+
+
+The `vim.re` module provides a conventional regex-like syntax for pattern usage
+within LPeg |vim.lpeg|.
+
+See https://www.inf.puc-rio.br/~roberto/lpeg/re.html for the original
+documentation including regex syntax and more concrete examples.
+
+vim.re.compile({string}, {defs})                            *vim.re.compile()*
+    Compiles the given {string} and returns an equivalent LPeg pattern. The
+    given string may define either an expression or a grammar. The optional
+    {defs} table provides extra Lua values to be used by the pattern.
+
+    Parameters: ~
+      • {string}  (`string`)
+      • {defs}    (`table?`)
+
+    Return: ~
+        (`vim.lpeg.Pattern`)
+
+vim.re.find({subject}, {pattern}, {init})                      *vim.re.find()*
+    Searches the given {pattern} in the given {subject}. If it finds a match,
+    returns the index where this occurrence starts and the index where it
+    ends. Otherwise, returns nil.
+
+    An optional numeric argument {init} makes the search starts at that
+    position in the subject string. As usual in Lua libraries, a negative
+    value counts from the end.
+
+    Parameters: ~
+      • {subject}  (`string`)
+      • {pattern}  (`vim.lpeg.Pattern|string`)
+      • {init}     (`integer?`)
+
+    Return (multiple): ~
+        (`integer?`) the index where the occurrence starts, nil if no match
+        (`integer?`) the index where the occurrence ends, nil if no match
+
+vim.re.gsub({subject}, {pattern}, {replacement})               *vim.re.gsub()*
+    Does a global substitution, replacing all occurrences of {pattern} in the
+    given {subject} by {replacement}.
+
+    Parameters: ~
+      • {subject}      (`string`)
+      • {pattern}      (`vim.lpeg.Pattern|string`)
+      • {replacement}  (`string`)
+
+    Return: ~
+        (`string`)
+
+vim.re.match({subject}, {pattern}, {init})                    *vim.re.match()*
+    Matches the given {pattern} against the given {subject}, returning all
+    captures.
+
+    Parameters: ~
+      • {subject}  (`string`)
+      • {pattern}  (`vim.lpeg.Pattern|string`)
+      • {init}     (`integer?`)
+
+    Return: ~
+        (`integer|vim.lpeg.Capture?`)
+
+    See also: ~
+      • vim.lpeg.match()
+
+
+==============================================================================
+VIM.REGEX                                                          *vim.regex*
+
+
+Vim regexes can be used directly from Lua. Currently they only allow
+matching within a single line.
+
+
+vim.regex({re})                                                  *vim.regex()*
+    Parse the Vim regex {re} and return a regex object. Regexes are "magic"
+    and case-sensitive by default, regardless of 'magic' and 'ignorecase'.
+    They can be controlled with flags, see |/magic| and |/ignorecase|.
+
+    Parameters: ~
+      • {re}  (`string`)
+
+    Return: ~
+        (`vim.regex`)
+
+                                                          *regex:match_line()*
+vim.regex:match_line({bufnr}, {line_idx}, {start}, {end_})
+    Match line {line_idx} (zero-based) in buffer {bufnr}. If {start} and {end}
+    are supplied, match only this byte index range. Otherwise see
+    |regex:match_str()|. If {start} is used, then the returned byte indices
+    will be relative {start}.
+
+    Parameters: ~
+      • {bufnr}     (`integer`)
+      • {line_idx}  (`integer`)
+      • {start}     (`integer?`)
+      • {end_}      (`integer?`)
+
+vim.regex:match_str({str})                                 *regex:match_str()*
+    Match the string against the regex. If the string should match the regex
+    precisely, surround the regex with `^` and `$` . If there was a match, the
+    byte indices for the beginning and end of the match are returned. When
+    there is no match, `nil` is returned. Because any integer is "truthy", `regex:match_str()` can
+    be directly used as a condition in an if-statement.
+
+    Parameters: ~
+      • {str}  (`string`)
 
 
 ==============================================================================

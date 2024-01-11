@@ -156,8 +156,11 @@ These dependencies are "vendored" (inlined), we must update the sources manually
     * Run `scripts/gen_lsp.lua` to update.
 * `runtime/lua/vim/_meta/lpeg.lua`: LPeg definitions.
     * Refer to [`LuaCATS/lpeg`](https://github.com/LuaCATS/lpeg) for updates.
+    * Update the git SHA revision from which the documentation was taken.
 * `runtime/lua/vim/re.lua`: LPeg regex module.
     * Vendored from LPeg. Needs to be updated when LPeg is updated.
+* `runtime/lua/vim/_meta/re.lua`: docs for LPeg regex module.
+    * Needs to be updated when LPeg is updated.
 * `src/bit.c`: only for PUC lua: port of `require'bit'` from luajit https://bitop.luajit.org/
 * `runtime/lua/coxpcall.lua`: coxpcall (only needed for PUC lua, builtin to luajit)
 * `src/termkey`: [libtermkey](https://github.com/neovim/libtermkey)

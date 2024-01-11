@@ -202,7 +202,6 @@ CONFIG: Dict[str, Config] = {
         filename='lua.txt',
         section_order=[
             'highlight.lua',
-            'regex.lua',
             'diff.lua',
             'mpack.lua',
             'json.lua',
@@ -220,6 +219,9 @@ CONFIG: Dict[str, Config] = {
             'keymap.lua',
             'fs.lua',
             'glob.lua',
+            'lpeg.lua',
+            're.lua',
+            'regex.lua',
             'secure.lua',
             'version.lua',
             'iter.lua',
@@ -250,6 +252,8 @@ CONFIG: Dict[str, Config] = {
             'runtime/lua/vim/_meta/json.lua',
             'runtime/lua/vim/_meta/base64.lua',
             'runtime/lua/vim/_meta/regex.lua',
+            'runtime/lua/vim/_meta/lpeg.lua',
+            'runtime/lua/vim/_meta/re.lua',
             'runtime/lua/vim/_meta/spell.lua',
         ],
         file_patterns='*.lua',
@@ -268,7 +272,10 @@ CONFIG: Dict[str, Config] = {
         section_fmt=lambda name: (
             'Lua module: vim' if name.lower() == '_editor' else
             'LUA-VIMSCRIPT BRIDGE' if name.lower() == '_options' else
-            f'VIM.{name.upper()}' if name.lower() in [ 'highlight', 'mpack', 'json', 'base64', 'diff', 'spell', 'regex' ] else
+            f'VIM.{name.upper()}' if name.lower() in [
+                'highlight', 'mpack', 'json', 'base64', 'diff', 'spell',
+                'regex', 'lpeg', 're',
+            ] else
             'VIM' if name.lower() == 'builtin' else
             f'Lua module: vim.{name.lower()}'),
         helptag_fmt=lambda name: (
@@ -305,6 +312,8 @@ CONFIG: Dict[str, Config] = {
             'json': 'vim.json',
             'base64': 'vim.base64',
             'regex': 'vim.regex',
+            'lpeg': 'vim.lpeg',
+            're': 'vim.re',
             'spell': 'vim.spell',
             'snippet': 'vim.snippet',
             'text': 'vim.text',
@@ -1350,31 +1359,20 @@ def fmt_doxygen_xml_as_vimhelp(filename, target) -> Tuple[Docstring, Docstring]:
         # Verbatim handling.
         func_doc = re.sub(r'^\s+([<>])$', r'\1', func_doc, flags=re.M)
 
-        split_lines: List[str] = func_doc.split('\n')
-        start = 0
-        while True:
-            try:
-                start = split_lines.index('>', start)
-            except ValueError:
-                break
+        def process_helptags(func_doc: str) -> str:
+            lines: List[str] = func_doc.split('\n')
+            # skip ">lang ... <" regions
+            is_verbatim: bool = False
+            for i in range(len(lines)):
+                if re.search(' >([a-z])*$', lines[i]):
+                    is_verbatim = True
+                elif is_verbatim and lines[i].strip() == '<':
+                    is_verbatim = False
+                if not is_verbatim:
+                    lines[i] = align_tags(lines[i])
+            return "\n".join(lines)
 
-            try:
-                end = split_lines.index('<', start)
-            except ValueError:
-                break
-
-            split_lines[start + 1:end] = [
-                ('    ' + x).rstrip()
-                for x in textwrap.dedent(
-                    "\n".join(
-                        split_lines[start+1:end]
-                    )
-                ).split("\n")
-            ]
-
-            start = end
-
-        func_doc = "\n".join(map(align_tags, split_lines))
+        func_doc = process_helptags(func_doc)
 
         if (fn_name.startswith(config.fn_name_prefix)
             and fn_name != "nvim_error_event"):
