@@ -462,6 +462,38 @@ describe('vim.iter', function()
     )
   end)
 
+  it('flatten()', function()
+    local t = { { 1, { 2 } }, { { { { 3 } } }, { 4 } }, { 5 } }
+
+    eq(t, vim.iter(t):flatten(-1):totable())
+    eq(t, vim.iter(t):flatten(0):totable())
+    eq({ 1, { 2 }, { { { 3 } } }, { 4 }, 5 }, vim.iter(t):flatten():totable())
+    eq({ 1, 2, { { 3 } }, 4, 5 }, vim.iter(t):flatten(2):totable())
+    eq({ 1, 2, { 3 }, 4, 5 }, vim.iter(t):flatten(3):totable())
+    eq({ 1, 2, 3, 4, 5 }, vim.iter(t):flatten(4):totable())
+
+    local m = { a = 1, b = { 2, 3 }, d = { 4 } }
+    local it = vim.iter(m)
+
+    local flat_err = 'flatten%(%) requires a list%-like table'
+    matches(flat_err, pcall_err(it.flatten, it))
+
+    -- cases from the documentation
+    local simple_example = { 1, { 2 }, { { 3 } } }
+    eq({ 1, 2, { 3 } }, vim.iter(simple_example):flatten():totable())
+
+    local not_list_like = vim.iter({ [2] = 2 })
+    matches(flat_err, pcall_err(not_list_like.flatten, not_list_like))
+
+    local also_not_list_like = vim.iter({ nil, 2 })
+    matches(flat_err, pcall_err(not_list_like.flatten, also_not_list_like))
+
+    local nested_non_lists = vim.iter({ 1, { { a = 2 } }, { { nil } }, { 3 } })
+    eq({ 1, { a = 2 }, { nil }, 3 }, nested_non_lists:flatten():totable())
+    -- only error if we're going deep enough to flatten a dict-like table
+    matches(flat_err, pcall_err(nested_non_lists.flatten, nested_non_lists, math.huge))
+  end)
+
   it('handles map-like tables', function()
     local it = vim.iter({ a = 1, b = 2, c = 3 }):map(function(k, v)
       if v % 2 ~= 0 then

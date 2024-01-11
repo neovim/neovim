@@ -112,6 +112,35 @@ local function sanitize(t)
   return t
 end
 
+--- Flattens a single list-like table. Errors if it attempts to flatten a
+--- dict-like table
+---@param v table table which should be flattened
+---@param max_depth number depth to which the table should be flattened
+---@param depth number current iteration depth
+---@param result table output table that contains flattened result
+---@return table|nil flattened table if it can be flattened, otherwise nil
+local function flatten(v, max_depth, depth, result)
+  if depth < max_depth and type(v) == 'table' then
+    local i = 0
+    for _ in pairs(v) do
+      i = i + 1
+
+      if v[i] == nil then
+        -- short-circuit: this is not a list like table
+        return nil
+      end
+
+      if flatten(v[i], max_depth, depth + 1, result) == nil then
+        return nil
+      end
+    end
+  else
+    result[#result + 1] = v
+  end
+
+  return result
+end
+
 --- Determine if the current iterator stage should continue.
 ---
 --- If any arguments are passed to this function, then return those arguments
@@ -176,6 +205,54 @@ function ListIter.filter(self, f)
     end
   end
   self._tail = n
+  return self
+end
+
+--- Flattens a |list-iterator|, un-nesting nested values up to the given {depth}.
+--- Errors if it attempts to flatten a dict-like value.
+---
+--- Examples:
+---
+--- ```lua
+--- vim.iter({ 1, { 2 }, { { 3 } } }):flatten():totable()
+--- -- { 1, 2, { 3 } }
+---
+--- vim.iter({1, { { a = 2 } }, { 3 } }):flatten():totable()
+--- -- { 1, { a = 2 }, 3 }
+---
+--- vim.iter({ 1, { { a = 2 } }, { 3 } }):flatten(math.huge):totable()
+--- -- error: attempt to flatten a dict-like table
+--- ```
+---
+---@param depth? number Depth to which |list-iterator| should be flattened
+---                        (defaults to 1)
+---@return Iter
+function Iter.flatten(self, depth) -- luacheck: no unused args
+  error('flatten() requires a list-like table')
+end
+
+---@private
+function ListIter.flatten(self, depth)
+  depth = depth or 1
+  local inc = self._head < self._tail and 1 or -1
+  local target = {}
+
+  for i = self._head, self._tail - inc, inc do
+    local flattened = flatten(self._table[i], depth, 0, {})
+
+    -- exit early if we try to flatten a dict-like table
+    if flattened == nil then
+      error('flatten() requires a list-like table')
+    end
+
+    for _, v in pairs(flattened) do
+      target[#target + 1] = v
+    end
+  end
+
+  self._head = 1
+  self._tail = #target + 1
+  self._table = target
   return self
 end
 
@@ -461,9 +538,8 @@ end
 --- ```
 ---
 ---@return Iter
-function Iter.rev(self)
+function Iter.rev(self) -- luacheck: no unused args
   error('rev() requires a list-like table')
-  return self
 end
 
 ---@private
@@ -733,7 +809,6 @@ end
 ---@diagnostic disable-next-line: unused-local
 function Iter.skipback(self, n) -- luacheck: no unused args
   error('skipback() requires a list-like table')
-  return self
 end
 
 ---@private
@@ -800,7 +875,6 @@ end
 ---@diagnostic disable-next-line: unused-local
 function Iter.slice(self, first, last) -- luacheck: no unused args
   error('slice() requires a list-like table')
-  return self
 end
 
 ---@private

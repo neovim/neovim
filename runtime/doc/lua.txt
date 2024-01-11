@@ -3431,6 +3431,28 @@ Iter:find({f})                                                   *Iter:find()*
     Return: ~
         any
 
+Iter:flatten({depth})                                         *Iter:flatten()*
+    Flattens a |list-iterator|, un-nesting nested values up to the given
+    {depth}. Errors if it attempts to flatten a dict-like value.
+
+    Examples: >lua
+        vim.iter({ 1, { 2 }, { { 3 } } }):flatten():totable()
+        -- { 1, 2, { 3 } }
+
+        vim.iter({1, { { a = 2 } }, { 3 } }):flatten():totable()
+        -- { 1, { a = 2 }, 3 }
+
+        vim.iter({ 1, { { a = 2 } }, { 3 } }):flatten(math.huge):totable()
+        -- error: attempt to flatten a dict-like table
+<
+
+    Parameters: ~
+      • {depth}  (number|nil) Depth to which |list-iterator| should be
+                 flattened (defaults to 1)
+
+    Return: ~
+        Iter
+
 Iter:fold({init}, {f})                                           *Iter:fold()*
     Folds ("reduces") an iterator into a single value.
 
