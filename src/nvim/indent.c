@@ -797,8 +797,7 @@ int get_breakindent_win(win_T *wp, char *line)
   int bri = 0;
   // window width minus window margin space, i.e. what rests for text
   const int eff_wwidth = wp->w_width_inner -
-                         ((wp->w_p_nu || wp->w_p_rnu)
-                          && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL) ? number_width(wp) + 1 : 0);
+                         ((wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) + 1 : 0);
 
   // used cached indent, unless
   // - buffer changed
@@ -857,9 +856,6 @@ int get_breakindent_win(win_T *wp, char *line)
   } else {
     bri = prev_indent + wp->w_briopt_shift;
   }
-
-  // Add offset for number column, if 'n' is in 'cpoptions'
-  bri += win_col_off2(wp);
 
   // add additional indent for numbered lists
   if (wp->w_briopt_list > 0) {

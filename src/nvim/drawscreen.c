@@ -1502,12 +1502,11 @@ static void win_update(win_T *wp)
   if (wp->w_skipcol > 0) {
     int w = 0;
     int width1 = wp->w_width_inner - win_col_off(wp);
-    int width2 = width1 + win_col_off2(wp);
     int add = width1;
 
     while (w < wp->w_skipcol) {
       if (w > 0) {
-        add = width2;
+        add = width1;
       }
       w += add;
     }
@@ -2558,7 +2557,7 @@ void win_draw_end(win_T *wp, schar_T c1, schar_T c2, bool draw_margin, int row, 
       n = win_clear_end(wp, n, SIGN_WIDTH * count, row, endrow, win_hl_attr(wp, HLF_SC));
     }
     // draw the number column
-    if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
+    if (wp->w_p_nu || wp->w_p_rnu) {
       n = win_clear_end(wp, n, number_width(wp) + 1, row, endrow, win_hl_attr(wp, HLF_N));
     }
   }

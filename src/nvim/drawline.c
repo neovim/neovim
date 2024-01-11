@@ -168,7 +168,6 @@ static void margin_columns_win(win_T *wp, int *left_col, int *right_col)
 
   int cur_col_off = win_col_off(wp);
   int width1;
-  int width2;
 
   if (saved_w_virtcol == wp->w_virtcol && prev_wp == wp
       && prev_col_off == cur_col_off) {
@@ -178,16 +177,15 @@ static void margin_columns_win(win_T *wp, int *left_col, int *right_col)
   }
 
   width1 = wp->w_width_inner - cur_col_off;
-  width2 = width1 + win_col_off2(wp);
 
   *left_col = 0;
   *right_col = width1;
 
   if (wp->w_virtcol >= (colnr_T)width1) {
-    *right_col = width1 + ((wp->w_virtcol - width1) / width2 + 1) * width2;
+    *right_col = width1 + ((wp->w_virtcol - width1) / width1 + 1) * width1;
   }
-  if (wp->w_virtcol >= (colnr_T)width1 && width2 > 0) {
-    *left_col = (wp->w_virtcol - width1) / width2 * width2 + width1;
+  if (wp->w_virtcol >= (colnr_T)width1 && width1 > 0) {
+    *left_col = (wp->w_virtcol - width1) / width1 * width1 + width1;
   }
 
   // cache values
@@ -534,13 +532,7 @@ static int get_line_number_attr(win_T *wp, winlinevars_T *wlv)
 /// blanks when the 'n' flag isn't in 'cpo'.
 static void draw_lnum_col(win_T *wp, winlinevars_T *wlv, int sign_num_attr, int sign_cul_attr)
 {
-  bool has_cpo_n = vim_strchr(p_cpo, CPO_NUMCOL) != NULL;
-
-  if ((wp->w_p_nu || wp->w_p_rnu)
-      && (wlv->row == wlv->startrow + wlv->filler_lines || !has_cpo_n)
-      // there is no line number in a wrapped line when "n" is in
-      // 'cpoptions', but 'breakindent' assumes it anyway.
-      && !((has_cpo_n && !wp->w_p_bri) && wp->w_skipcol > 0 && wlv->lnum == wp->w_topline)) {
+  if (wp->w_p_nu || wp->w_p_rnu) {
     // If 'signcolumn' is set to 'number' and a sign is present in "lnum",
     // then display the sign instead of the line number.
     if (wp->w_minscwidth == SCL_NUM && wlv->sattrs[0].text[0]
@@ -643,7 +635,6 @@ static void handle_breakindent(win_T *wp, winlinevars_T *wlv)
     }
     int num = get_breakindent_win(wp, ml_get_buf(wp->w_buffer, wlv->lnum));
     if (wlv->row == wlv->startrow) {
-      num -= win_col_off2(wp);
       if (wlv->n_extra < 0) {
         num = 0;
       }
@@ -2854,10 +2845,6 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
       lcs_prec_todo = wp->w_p_lcs_chars.prec;
       if (wlv.filler_todo <= 0) {
         wlv.need_showbreak = true;
-      }
-      if (statuscol.draw && vim_strchr(p_cpo, CPO_NUMCOL)
-          && wlv.row > startrow + wlv.filler_lines) {
-        statuscol.draw = false;  // don't draw status column if "n" is in 'cpo'
       }
       wlv.filler_todo--;
       virt_line_offset = -1;

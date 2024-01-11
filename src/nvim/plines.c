@@ -262,7 +262,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
   // When "size" is 0, no new screen line is started.
   if (size > 0 && wp->w_p_wrap && (*sbr != NUL || wp->w_p_bri)) {
     int col_off_prev = win_col_off(wp);
-    int width2 = wp->w_width_inner - col_off_prev + win_col_off2(wp);
+    int width2 = wp->w_width_inner - col_off_prev;  // TODO: sussy baka
     colnr_T wcol = vcol + col_off_prev;
     colnr_T max_head_vcol = cts->cts_max_head_vcol;
     int added = 0;
@@ -362,7 +362,7 @@ int win_lbr_chartabsize(chartabsize_T *cts, int *headp)
     colnr_T colmax = (colnr_T)(wp->w_width_inner - numberextra - col_adj);
     if (vcol >= colmax) {
       colmax += col_adj;
-      int n = colmax + win_col_off2(wp);
+      int n = colmax;
       if (n > 0) {
         colmax += (((vcol - colmax) / n) + 1) * n - col_adj;
       }
@@ -441,12 +441,10 @@ static bool in_win_border(win_T *wp, colnr_T vcol)
   if ((int)vcol == width1 - 1) {
     return true;
   }
-  int width2 = width1 + win_col_off2(wp);  // width of further lines
-
-  if (width2 <= 0) {
+  if (width1 <= 0) {
     return false;
   }
-  return (vcol - width1) % width2 == width2 - 1;
+  return (vcol - width1) % width1 == width1 - 1;
 }
 
 /// Get how many virtual columns inline virtual text should offset the cursor.
@@ -820,7 +818,6 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
     return 1;
   }
   col -= width;
-  width += win_col_off2(wp);
   const int64_t lines = (col + (width - 1)) / width + 1;
   return (lines > 0 && lines <= INT_MAX) ? (int)lines : INT_MAX;
 }
@@ -871,7 +868,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
 
   lines += 1;
   if (col > width) {
-    lines += (col - width) / (width + win_col_off2(wp)) + 1;
+    lines += (col - width) / width + 1;
   }
   return lines;
 }
@@ -937,12 +934,9 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
                         const linenr_T end_lnum, const int64_t end_vcol, int64_t *const fill)
 {
   int width1 = 0;
-  int width2 = 0;
   if (start_vcol >= 0 || end_vcol >= 0) {
     width1 = wp->w_width_inner - win_col_off(wp);
-    width2 = width1 + win_col_off2(wp);
     width1 = MAX(width1, 0);
-    width2 = MAX(width2, 0);
   }
 
   int64_t height_sum_fill = 0;
@@ -955,9 +949,9 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
     const bool folded = hasFoldingWin(wp, lnum, &lnum, &lnum_next, true, NULL);
     height_cur_nofill = folded ? 1 : plines_win_nofill(wp, lnum, false);
     height_sum_nofill += height_cur_nofill;
-    const int64_t row_off = (start_vcol < width1 || width2 <= 0)
+    const int64_t row_off = (start_vcol < width1 || width1 <= 0)
                             ? 0
-                            : 1 + (start_vcol - width1) / width2;
+                            : 1 + (start_vcol - width1) / width1;
     height_sum_nofill -= MIN(row_off, height_cur_nofill);
     lnum = lnum_next + 1;
   }
@@ -975,9 +969,9 @@ int64_t win_text_height(win_T *const wp, const linenr_T start_lnum, const int64_
     height_sum_nofill -= height_cur_nofill;
     const int64_t row_off = end_vcol == 0
                             ? 0
-                            : (end_vcol <= width1 || width2 <= 0)
+                            : (end_vcol <= width1 || width1 <= 0)
                             ? 1
-                            : 1 + (end_vcol - width1 + width2 - 1) / width2;
+                            : 1 + (end_vcol - width1 + width1 - 1) / width1;
     height_sum_nofill += MIN(row_off, height_cur_nofill);
   }
 

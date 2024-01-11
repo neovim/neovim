@@ -6443,8 +6443,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
         wp->w_skipcol += wp->w_width_inner - win_col_off(wp);
         wp->w_wrow--;
         while (wp->w_wrow >= wp->w_height_inner) {
-          wp->w_skipcol += wp->w_width_inner - win_col_off(wp)
-                           + win_col_off2(wp);
+          wp->w_skipcol += wp->w_width_inner - win_col_off(wp);
           wp->w_wrow--;
         }
       }

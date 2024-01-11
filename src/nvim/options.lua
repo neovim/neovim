@@ -1697,10 +1697,6 @@ return {
         		account.  Thus in "( \( )" and "\( ( \)" the outer
         		parenthesis match.  When included "%" ignores
         		backslashes, which is Vi compatible.
-        							*cpo-n*
-        	n	When included, the column used for 'number' and
-        		'relativenumber' will also be used for text of wrapped
-        		lines.
         							*cpo-o*
         	o	Line offset to search command is not remembered for
         		next search.
