@@ -2611,8 +2611,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
       // When the window is too narrow draw all "@" lines.
       if (leftcols_width >= wp->w_grid.cols && wp->w_p_wrap) {
-        win_draw_end(wp, schar_from_ascii('@'), schar_from_ascii(' '), true, wlv.row,
-                     wp->w_grid.rows, HLF_AT);
+        win_draw_end(wp, schar_from_ascii('@'), true, wlv.row, wp->w_grid.rows, HLF_AT);
         set_empty_rows(wp, wlv.row);
         wlv.row = endrow;
       }
@@ -2836,8 +2835,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool number_onl
 
       // When the window is too narrow draw all "@" lines.
       if (wlv.col <= leftcols_width) {
-        win_draw_end(wp, schar_from_ascii('@'), schar_from_ascii(' '), true, wlv.row,
-                     wp->w_grid.rows, HLF_AT);
+        win_draw_end(wp, schar_from_ascii('@'), true, wlv.row, wp->w_grid.rows, HLF_AT);
         set_empty_rows(wp, wlv.row);
         wlv.row = endrow;
       }
@@ -2883,8 +2881,7 @@ static void win_put_linebuf(win_T *wp, int row, int coloff, int endcol, int clea
   int start_col = 0;
 
   if (wp->w_p_rl) {
-    linebuf_mirror(&start_col, &clear_width, grid->cols);
-    endcol = grid->cols - 1 - endcol;
+    linebuf_mirror(&start_col, &endcol, &clear_width, grid->cols);
   }
 
   // Take care of putting "<<<" on the first line for 'smoothscroll'.
