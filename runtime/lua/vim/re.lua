@@ -3,6 +3,7 @@
 -- written by Roberto Ierusalimschy
 --
 --- vendored from lpeg-1.1.0
+--- documentation available at runtime/lua/vim/_meta/re.lua
 
 -- imported functions and modules
 local tonumber, type, print, error = tonumber, type, print, error

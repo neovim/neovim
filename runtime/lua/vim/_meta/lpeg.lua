@@ -1,7 +1,24 @@
 --- @meta
+error('Cannot require a meta file')
 
--- These types were taken from https://github.com/LuaCATS/lpeg, with types being renamed to include
--- the vim namespace and with some descriptions made less verbose.
+-- These types were taken from https://github.com/LuaCATS/lpeg
+-- (based on revision 4aded588f9531d89555566bb1de27490354b91c7)
+-- with types being renamed to include the vim namespace and with some descriptions made less verbose.
+
+---@defgroup vim.lpeg
+---<pre>help
+---LPeg is a pattern-matching library for Lua, based on
+---Parsing Expression Grammars (https://bford.info/packrat/) (PEGs).
+---
+---                                                                    *lua-lpeg*
+---                                                            *vim.lpeg.Pattern*
+---The LPeg library for parsing expression grammars is included as `vim.lpeg`
+---(https://www.inf.puc-rio.br/~roberto/lpeg/).
+---
+---In addition, its regex-like interface is available as |vim.re|
+---(https://www.inf.puc-rio.br/~roberto/lpeg/re.html).
+---
+---</pre>
 
 --- *LPeg* is a new pattern-matching library for Lua, based on [Parsing Expression Grammars](https://bford.info/packrat/) (PEGs).
 vim.lpeg = {}
@@ -32,6 +49,7 @@ local Pattern = {}
 --- matches anywhere.
 ---
 --- Example:
+---
 --- ```lua
 --- local pattern = lpeg.R("az") ^ 1 * -1
 --- assert(pattern:match("hello") == 6)
@@ -55,6 +73,7 @@ function vim.lpeg.match(pattern, subject, init) end
 --- we must either write a loop in Lua or write a pattern that matches anywhere.
 ---
 --- Example:
+---
 --- ```lua
 --- local pattern = lpeg.R("az") ^ 1 * -1
 --- assert(pattern:match("hello") == 6)
@@ -69,7 +88,7 @@ function Pattern:match(subject, init) end
 
 --- Returns the string `"pattern"` if the given value is a pattern, otherwise `nil`.
 ---
---- @return 'pattern'|nil
+--- @return "pattern"|nil
 function vim.lpeg.type(value) end
 
 --- Returns a string with the running version of LPeg.
@@ -115,6 +134,7 @@ function vim.lpeg.B(pattern) end
 --- `lpeg.R("az", "AZ")` matches any ASCII letter.
 ---
 --- Example:
+---
 --- ```lua
 --- local pattern = lpeg.R("az") ^ 1 * -1
 --- assert(pattern:match("hello") == 6)
@@ -137,6 +157,7 @@ function vim.lpeg.S(string) end
 --- for a grammar. The created non-terminal refers to the rule indexed by `v` in the enclosing grammar.
 ---
 --- Example:
+---
 --- ```lua
 --- local b = lpeg.P({"(" * ((1 - lpeg.S "()") + lpeg.V(1)) ^ 0 * ")"})
 --- assert(b:match('((string))') == 11)
@@ -168,6 +189,7 @@ function vim.lpeg.V(v) end
 --- that table.
 ---
 --- Example:
+---
 --- ```lua
 --- lpeg.locale(lpeg)
 --- local space = lpeg.space^0
@@ -191,6 +213,7 @@ function vim.lpeg.locale(tab) end
 --- The captured value is a string. If `patt` has other captures, their values are returned after this one.
 ---
 --- Example:
+---
 --- ```lua
 --- local function split (s, sep)
 ---   sep = lpeg.P(sep)
@@ -241,6 +264,7 @@ function vim.lpeg.Cc(...) end
 --- becomes the captured value.
 ---
 --- Example:
+---
 --- ```lua
 --- local number = lpeg.R("09") ^ 1 / tonumber
 --- local list = number * ("," * number) ^ 0
@@ -267,6 +291,7 @@ function vim.lpeg.Cg(patt, name) end
 --- subject where the match occurs. The captured value is a number.
 ---
 --- Example:
+---
 --- ```lua
 --- local I = lpeg.Cp()
 --- local function anywhere(p) return lpeg.P({I * p * I + 1 * lpeg.V(1)}) end
@@ -285,6 +310,7 @@ function vim.lpeg.Cp() end
 --- value is the string resulting from all replacements.
 ---
 --- Example:
+---
 --- ```lua
 --- local function gsub (s, patt, repl)
 ---   patt = lpeg.P(patt)

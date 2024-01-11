@@ -912,6 +912,7 @@ file(GLOB API_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/nvim/api/*.c)
 
 file(GLOB LUA_SOURCES CONFIGURE_DEPENDS
   ${NVIM_RUNTIME_DIR}/lua/vim/*.lua
+  ${NVIM_RUNTIME_DIR}/lua/vim/_meta/*.lua
   ${NVIM_RUNTIME_DIR}/lua/vim/filetype/*.lua
   ${NVIM_RUNTIME_DIR}/lua/vim/lsp/*.lua
   ${NVIM_RUNTIME_DIR}/lua/vim/treesitter/*.lua
