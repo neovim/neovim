@@ -89,6 +89,7 @@
 #include "nvim/buffer_updates.h"
 #include "nvim/change.h"
 #include "nvim/cursor.h"
+#include "nvim/decoration.h"
 #include "nvim/drawscreen.h"
 #include "nvim/edit.h"
 #include "nvim/eval/funcs.h"
@@ -2423,17 +2424,38 @@ static void u_undoredo(bool undo, bool do_buf_event)
     curbuf->b_op_end.lnum = curbuf->b_ml.ml_line_count;
   }
 
+  int row1 = MAXLNUM;
+  int row2 = -1;
+  int row3 = -1;
+  // Tricky: ExtmarkSavePos may come after ExtmarkSplice which does call
+  // buf_signcols_count_range() but then misses the yet unrestored marks.
+  if (curbuf->b_signcols.autom && curbuf->b_signs_with_text) {
+    for (int i = 0; i < (int)kv_size(curhead->uh_extmark); i++) {
+      ExtmarkUndoObject undo_info = kv_A(curhead->uh_extmark, i);
+      if (undo_info.type == kExtmarkSplice) {
+        ExtmarkSplice s = undo_info.data.splice;
+        if (s.old_row > 0 || s.new_row > 0) {
+          row1 = MIN(row1, s.start_row);
+          row2 = MAX(row2, s.start_row + (undo ? s.new_row : s.old_row) + 1);
+          row3 = MAX(row3, s.start_row + (undo ? s.old_row : s.new_row) + 1);
+        }
+      }
+    }
+    if (row2 != -1) {
+      // Remove signs inside edited region from "b_signcols.count".
+      buf_signcols_count_range(curbuf, row1, row2, 0, kTrue);
+    }
+  }
   // Adjust Extmarks
-  ExtmarkUndoObject undo_info;
   if (undo) {
     for (int i = (int)kv_size(curhead->uh_extmark) - 1; i > -1; i--) {
-      undo_info = kv_A(curhead->uh_extmark, i);
+      ExtmarkUndoObject undo_info = kv_A(curhead->uh_extmark, i);
       extmark_apply_undo(undo_info, undo);
     }
     // redo
   } else {
     for (int i = 0; i < (int)kv_size(curhead->uh_extmark); i++) {
-      undo_info = kv_A(curhead->uh_extmark, i);
+      ExtmarkUndoObject undo_info = kv_A(curhead->uh_extmark, i);
       extmark_apply_undo(undo_info, undo);
     }
   }
@@ -2442,7 +2464,10 @@ static void u_undoredo(bool undo, bool do_buf_event)
     // should have all info to send a buffer-reloaing on_lines/on_bytes event
     buf_updates_unload(curbuf, true);
   }
-  // finish Adjusting extmarks
+  // Finish adjusting extmarks: add signs inside edited region to "b_signcols.count".
+  if (row2 != -1) {
+    buf_signcols_count_range(curbuf, row1, row3, 0, kNone);
+  }
 
   curhead->uh_entry = newlist;
   curhead->uh_flags = new_flags;

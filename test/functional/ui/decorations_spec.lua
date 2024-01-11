@@ -4898,14 +4898,103 @@ l5
   it('correct width with multiple overlapping signs', function()
     screen:try_resize(20, 4)
     insert(example_test3)
-    api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1', end_row=2})
-    api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S2', end_row=2})
+    api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S1'})
+    api.nvim_buf_set_extmark(0, ns, 0, -1, {sign_text='S2', end_row=2})
+    api.nvim_buf_set_extmark(0, ns, 1, -1, {sign_text='S3', end_row=2})
     feed('gg')
 
+    local s1 = [[
+      S1S2^l1              |
+      S2S3l2              |
+      S2S3l3              |
+                          |
+    ]]
+    screen:expect{grid=s1}
+    -- Correct width when :move'ing a line with signs
+    command('move2')
     screen:expect{grid=[[
-      S1{1:  }^l1              |
-      S1S2l2              |
-      S1S2l3              |
+      S3{1:    }l2            |
+      S1S2S3^l1            |
+      {1:      }l3            |
+                          |
+    ]]}
+    command('silent undo')
+    screen:expect{grid=s1}
+    command('d')
+    screen:expect{grid=[[
+      S1S2S3^l2            |
+      S2S3{1:  }l3            |
+      {1:      }l4            |
+                          |
+    ]]}
+    command('d')
+    screen:expect{grid=[[
+      S1S2S3^l3            |
+      {1:      }l4            |
+      {1:      }l5            |
+                          |
+    ]]}
+  end)
+
+  it('correct width when adding and removing multiple signs', function()
+    screen:try_resize(20, 4)
+    insert(example_test3)
+    feed('gg')
+    command([[
+      let ns = nvim_create_namespace('')
+      call nvim_buf_set_extmark(0, ns, 0, 0, {'sign_text':'S1', 'end_row':3})
+      let s1 = nvim_buf_set_extmark(0, ns, 2, 0, {'sign_text':'S2', 'end_row':4})
+      let s2 = nvim_buf_set_extmark(0, ns, 5, 0, {'sign_text':'S3'})
+      let s3 = nvim_buf_set_extmark(0, ns, 6, 0, {'sign_text':'S3'})
+      let s4 = nvim_buf_set_extmark(0, ns, 5, 0, {'sign_text':'S3'})
+      let s5 = nvim_buf_set_extmark(0, ns, 6, 0, {'sign_text':'S3'})
+      redraw!
+      call nvim_buf_del_extmark(0, ns, s2)
+      call nvim_buf_del_extmark(0, ns, s3)
+      call nvim_buf_del_extmark(0, ns, s4)
+      call nvim_buf_del_extmark(0, ns, s5)
+      redraw!
+      call nvim_buf_del_extmark(0, ns, s1)
+    ]])
+    screen:expect{grid=[[
+      S1^l1                |
+      S1l2                |
+      S1l3                |
+                          |
+    ]]}
+  end)
+
+  it('correct width when deleting lines', function()
+    screen:try_resize(20, 4)
+    insert(example_test3)
+    feed('gg')
+    command([[
+      let ns = nvim_create_namespace('')
+      call nvim_buf_set_extmark(0, ns, 4, 0, {'sign_text':'S1'})
+      call nvim_buf_set_extmark(0, ns, 4, 0, {'sign_text':'S2'})
+      let s3 =  nvim_buf_set_extmark(0, ns, 5, 0, {'sign_text':'S3'})
+      call nvim_buf_del_extmark(0, ns, s3)
+      norm 4Gdd
+    ]])
+    screen:expect{grid=[[
+      {1:    }l3              |
+      S1S2l5              |
+      {1:    }^                |
+                          |
+    ]]}
+  end)
+
+  it('correct width when splitting lines with signs on different columns', function()
+    screen:try_resize(20, 4)
+    insert(example_test3)
+    feed('gg')
+    api.nvim_buf_set_extmark(0, ns, 0, 0, {sign_text='S1'})
+    api.nvim_buf_set_extmark(0, ns, 0, 1, {sign_text='S2'})
+    feed('a<cr><esc>')
+    screen:expect{grid=[[
+      S1l                 |
+      S2^1                 |
+      {1:  }l2                |
                           |
     ]]}
   end)

@@ -521,9 +521,18 @@ void extmark_splice_impl(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
     extmark_splice_delete(buf, start_row, start_col, end_row, end_col, uvp, false, undo);
   }
 
+  // Remove signs inside edited region from "b_signcols.count", add after splicing.
+  if (old_row > 0 || new_row > 0) {
+    buf_signcols_count_range(buf, start_row, start_row + old_row + 1, 0, kTrue);
+  }
+
   marktree_splice(buf->b_marktree, (int32_t)start_row, start_col,
                   old_row, old_col,
                   new_row, new_col);
+
+  if (old_row > 0 || new_row > 0) {
+    buf_signcols_count_range(buf, start_row, start_row + new_row + 1, 0, kNone);
+  }
 
   if (undo == kExtmarkUndo) {
     u_header_T *uhp = u_force_get_undo_header(buf);
@@ -603,9 +612,15 @@ void extmark_move_region(buf_T *buf, int start_row, colnr_T start_col, bcount_t 
                           extent_row, extent_col, extent_byte,
                           0, 0, 0);
 
+  int row1 = MIN(start_row, new_row);
+  int row2 = MAX(start_row, new_row) + extent_row;
+  buf_signcols_count_range(buf, row1, row2, 0, kTrue);
+
   marktree_move_region(buf->b_marktree, start_row, start_col,
                        extent_row, extent_col,
                        new_row, new_col);
+
+  buf_signcols_count_range(buf, row1, row2, 0, kNone);
 
   buf_updates_send_splice(buf, new_row, new_col, new_byte,
                           0, 0, 0,

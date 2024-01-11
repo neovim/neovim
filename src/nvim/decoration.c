@@ -207,7 +207,7 @@ void buf_put_decor_sh(buf_T *buf, DecorSignHighlight *sh, int row1, int row2)
     buf->b_signs++;
     if (sh->text[0]) {
       buf->b_signs_with_text++;
-      buf_signcols_invalidate_range(buf, row1, row2, 1);
+      buf_signcols_count_range(buf, row1, row2, 1, kFalse);
     }
   }
 }
@@ -254,8 +254,11 @@ void buf_remove_decor_sh(buf_T *buf, int row1, int row2, DecorSignHighlight *sh)
     if (sh->text[0]) {
       assert(buf->b_signs_with_text > 0);
       buf->b_signs_with_text--;
-      if (row2 >= row1) {
-        buf_signcols_invalidate_range(buf, row1, row2, -1);
+      if (buf->b_signs_with_text) {
+        buf_signcols_count_range(buf, row1, row2, -1, kFalse);
+      } else {
+        buf->b_signcols.resized = true;
+        buf->b_signcols.max = buf->b_signcols.count[0] = 0;
       }
     }
   }
@@ -785,42 +788,36 @@ DecorSignHighlight *decor_find_sign(DecorInline decor)
   }
 }
 
-static void buf_signcols_validate_row(buf_T *buf, int count, int add)
+/// Count the number of signs in a range after adding/removing a sign, or to
+/// (re-)initialize a range in "b_signcols.count".
+///
+/// @param add  1, -1 or 0 for an added, deleted or initialized range.
+/// @param clear  kFalse, kTrue or kNone for an, added/deleted, cleared, or initialized range.
+void buf_signcols_count_range(buf_T *buf, int row1, int row2, int add, TriState clear)
 {
-  // If "count" is greater than current max, set it and reset "max_count".
-  if (count > buf->b_signcols.max) {
-    buf->b_signcols.max = count;
-    buf->b_signcols.max_count = 0;
-    buf->b_signcols.resized = true;
-  }
-  // If row has or had "max" signs, adjust "max_count" with sign of "add".
-  if (count == buf->b_signcols.max - (add < 0 ? -add : 0)) {
-    buf->b_signcols.max_count += (add > 0) - (add < 0);
-  }
-}
-
-/// Validate a range by counting the number of overlapping signs and adjusting
-/// "b_signcols" accordingly.
-static void buf_signcols_validate_range(buf_T *buf, int row1, int row2, int add)
-{
-  if (-add == buf->b_signcols.max) {
-    buf->b_signcols.max_count -= (row2 + 1 - row1);
-    return;  // max signs were removed from the range, no need to count.
+  if (!buf->b_signcols.autom || !buf->b_signs_with_text) {
+    return;
   }
 
-  int currow = row1;
-  MTPair pair = { 0 };
-  MarkTreeIter itr[1];
+  static int nested = 0;
+  // An undo/redo may trigger subsequent calls before its own kNone call.
+  if ((nested += clear) > (0 + (clear == kTrue))) {
+    return;  // Avoid adding signs more than once.
+  }
 
-  // Allocate an array of integers holding the overlapping signs in the range.
+  // Allocate an array of integers holding the number of signs in the range.
   assert(row2 >= row1);
-  int *overlap = xcalloc(sizeof(int), (size_t)(row2 + 1 - row1));
+  int *count = xcalloc(sizeof(int), (size_t)(row2 + 1 - row1));
+  MarkTreeIter itr[1];
+  MTPair pair = { 0 };
 
-  // First find the number of overlapping signs at "row1".
-  marktree_itr_get_overlap(buf->b_marktree, currow, 0, itr);
+  // Increment count array for signs that start before "row1" but do overlap the range.
+  marktree_itr_get_overlap(buf->b_marktree, row1, 0, itr);
   while (marktree_itr_step_overlap(buf->b_marktree, itr, &pair)) {
-    if (!mt_invalid(pair.start) && pair.start.flags & MT_FLAG_DECOR_SIGNTEXT) {
-      overlap[0]++;
+    if ((pair.start.flags & MT_FLAG_DECOR_SIGNTEXT) && !mt_invalid(pair.start)) {
+      for (int i = row1; i <= MIN(row2, pair.end_pos.row); i++) {
+        count[i - row1]++;
+      }
     }
   }
 
@@ -830,84 +827,37 @@ static void buf_signcols_validate_range(buf_T *buf, int row1, int row2, int add)
     if (mark.pos.row > row2) {
       break;
     }
-    // Finish the count at the previous row.
-    if (mark.pos.row != currow) {
-      buf_signcols_validate_row(buf, overlap[currow - row1], add);
-      currow = mark.pos.row;
-    }
-    // Increment overlap array for the start and range of a paired sign mark.
-    if (!mt_invalid(mark) && !mt_end(mark) && (mark.flags & MT_FLAG_DECOR_SIGNTEXT)) {
+    if ((mark.flags & MT_FLAG_DECOR_SIGNTEXT) && !mt_invalid(mark) && !mt_end(mark)) {
+      // Increment count array for the range of a paired sign mark.
       MTPos end = marktree_get_altpos(buf->b_marktree, mark, NULL);
-      for (int i = currow; i <= MIN(row2, end.row); i++) {
-        overlap[i - row1]++;
+      for (int i = mark.pos.row; i <= MIN(row2, end.row); i++) {
+        count[i - row1]++;
       }
     }
 
     marktree_itr_next(buf->b_marktree, itr);
   }
-  buf_signcols_validate_row(buf, overlap[currow - row1], add);
-  xfree(overlap);
-}
 
-int buf_signcols_validate(win_T *wp, buf_T *buf, bool stc_check)
-{
-  if (!map_size(buf->b_signcols.invalid)) {
-    return buf->b_signcols.max;
-  }
-
-  int start;
-  SignRange range;
-  map_foreach(buf->b_signcols.invalid, start, range, {
-    // Leave rest of the ranges invalid if max is already at configured
-    // maximum or resize is detected for a 'statuscolumn' rebuild.
-    if ((stc_check && buf->b_signcols.resized)
-        || (!stc_check && range.add > 0 && buf->b_signcols.max >= wp->w_maxscwidth)) {
-      return wp->w_maxscwidth;
+  // For each row increment "b_signcols.count" at the number of counted signs,
+  // and decrement at the previous number of signs. These two operations are
+  // split in separate calls if "clear" is not kNone (surrounding a marktree splice).
+  for (int i = 0; i < row2 + 1 - row1; i++) {
+    int width = MIN(SIGN_SHOW_MAX, count[i] - add);
+    if (clear != kNone && width > 0) {
+      buf->b_signcols.count[width - 1]--;
+      assert(buf->b_signcols.count[width - 1] >= 0);
     }
-    buf_signcols_validate_range(buf, start, range.end, range.add);
-  });
-
-  // Check if we need to scan the entire buffer.
-  if (buf->b_signcols.max_count == 0) {
-    buf->b_signcols.max = 0;
-    buf->b_signcols.resized = true;
-    buf_signcols_validate_range(buf, 0, buf->b_ml.ml_line_count, 1);
-  }
-
-  map_clear(int, buf->b_signcols.invalid);
-  return buf->b_signcols.max;
-}
-
-static void buf_signcols_invalidate_range(buf_T *buf, int row1, int row2, int add)
-{
-  if (!buf->b_signs_with_text) {
-    buf->b_signcols.max = buf->b_signcols.max_count = 0;
-    buf->b_signcols.resized = true;
-    map_clear(int, buf->b_signcols.invalid);
-    return;
-  }
-
-  // Remove an invalid range if sum of added/removed signs is now 0.
-  SignRange *srp = map_ref(int, SignRange)(buf->b_signcols.invalid, row1, NULL);
-  if (srp && srp->end == row2 && srp->add + add == 0) {
-    map_del(int, SignRange)(buf->b_signcols.invalid, row1, NULL);
-    return;
-  }
-
-  // Merge with overlapping invalid range.
-  int start;
-  SignRange range;
-  map_foreach(buf->b_signcols.invalid, start, range, {
-    if (row1 <= range.end && start <= row2) {
-      row1 = MIN(row1, start);
-      row2 = MAX(row2, range.end);
-      break;
+    width = MIN(SIGN_SHOW_MAX, count[i]);
+    if (clear != kTrue && width > 0) {
+      buf->b_signcols.count[width - 1]++;
+      if (width > buf->b_signcols.max) {
+        buf->b_signcols.resized = true;
+        buf->b_signcols.max = width;
+      }
     }
-  });
+  }
 
-  srp = map_put_ref(int, SignRange)(buf->b_signcols.invalid, row1, NULL, NULL);
-  srp->end = row2;
-  srp->add += add;
+  xfree(count);
 }
 
 void decor_redraw_end(DecorState *state)
