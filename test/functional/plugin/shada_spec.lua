@@ -14,8 +14,6 @@ local eq, meths, nvim_eval, nvim_command, nvim, exc_exec, funcs, nvim_feed, curb
 local neq = helpers.neq
 local read_file = helpers.read_file
 
-local mpack = require('mpack')
-
 local shada_helpers = require('test.functional.shada.helpers')
 local get_shada_rw = shada_helpers.get_shada_rw
 
@@ -26,7 +24,7 @@ end
 local mpack_eq = function(expected, mpack_result)
   local mpack_keys = { 'type', 'timestamp', 'length', 'value' }
 
-  local unpack = mpack.Unpacker()
+  local unpack = vim.mpack.Unpacker()
   local actual = {}
   local cur, val
   local i = 0

@@ -1,6 +1,5 @@
 -- Specs for :cd, :tcd, :lcd and getcwd()
 
-local luv = require('luv')
 local helpers = require('test.functional.helpers')(after_each)
 
 local eq = helpers.eq
@@ -56,7 +55,7 @@ for _, cmd in ipairs { 'cd', 'chdir' } do
 
     after_each(function()
       for _, d in pairs(directories) do
-        luv.fs_rmdir(d)
+        vim.uv.fs_rmdir(d)
       end
     end)
 

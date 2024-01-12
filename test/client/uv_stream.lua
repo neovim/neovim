@@ -1,4 +1,4 @@
-local uv = require('luv')
+local uv = vim.uv
 
 local StdioStream = {}
 StdioStream.__index = StdioStream

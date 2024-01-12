@@ -1,4 +1,4 @@
-local mpack = require('mpack')
+local mpack = vim.mpack
 
 -- temporary hack to be able to manipulate buffer/window/tabpage
 local Buffer = {}

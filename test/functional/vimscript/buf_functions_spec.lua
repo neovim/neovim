@@ -1,7 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local luv = require('luv')
-
 local eq = helpers.eq
 local clear = helpers.clear
 local funcs = helpers.funcs
@@ -87,7 +85,7 @@ describe('bufname() function', function()
   it('returns expected buffer name', function()
     eq('', funcs.bufname('%')) -- Buffer has no name yet
     command('file ' .. fname)
-    local wd = luv.cwd()
+    local wd = vim.uv.cwd()
     local sep = get_pathsep()
     local curdirname = funcs.fnamemodify(wd, ':t')
     for _, arg in ipairs({ '%', 1, 'X', wd }) do
@@ -120,7 +118,7 @@ describe('bufnr() function', function()
   it('returns expected buffer number', function()
     eq(1, funcs.bufnr('%'))
     command('file ' .. fname)
-    local wd = luv.cwd()
+    local wd = vim.uv.cwd()
     local curdirname = funcs.fnamemodify(wd, ':t')
     eq(1, funcs.bufnr(fname))
     eq(1, funcs.bufnr(wd))

@@ -62,8 +62,7 @@ describe('has()', function()
   end)
 
   it('"wsl"', function()
-    local luv = require('luv')
-    local is_wsl = luv.os_uname()['release']:lower():match('microsoft') and true or false
+    local is_wsl = vim.uv.os_uname()['release']:lower():match('microsoft') and true or false
     if is_wsl then
       eq(1, funcs.has('wsl'))
     else

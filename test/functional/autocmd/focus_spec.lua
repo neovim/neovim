@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
-local luv = require('luv')
 local clear = helpers.clear
 local feed_command = helpers.feed_command
 local feed_data = thelpers.feed_data
@@ -42,7 +41,7 @@ describe('autoread TUI FocusGained/FocusLost', function()
 
     helpers.write_file(path, '')
     local atime = os.time() - 10
-    luv.fs_utime(path, atime, atime)
+    vim.uv.fs_utime(path, atime, atime)
 
     screen:expect {
       grid = [[

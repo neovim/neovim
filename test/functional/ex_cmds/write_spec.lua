@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local luv = require('luv')
 local eq, eval, clear, write_file, source, insert =
   helpers.eq, helpers.eval, helpers.clear, helpers.write_file, helpers.source, helpers.insert
 local pcall_err = helpers.pcall_err
@@ -159,7 +158,7 @@ describe(':write', function()
     end
     write_file(fname_bak, 'TTYX')
     skip(is_os('win'), [[FIXME: exc_exec('write!') outputs 0 in Windows]])
-    luv.fs_symlink(fname_bak .. ('/xxxxx'):rep(20), fname)
+    vim.uv.fs_symlink(fname_bak .. ('/xxxxx'):rep(20), fname)
     eq("Vim(write):E166: Can't open linked file for writing", pcall_err(command, 'write!'))
   end)
 end)

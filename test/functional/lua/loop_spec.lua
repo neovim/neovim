@@ -24,13 +24,11 @@ describe('vim.uv', function()
     exec_lua('vim.api.nvim_set_var("coroutine_cnt", 0)', {})
 
     local code = [[
-      local uv = vim.uv
-
       local touch = 0
       local function wait(ms)
         local this = coroutine.running()
         assert(this)
-        local timer = uv.new_timer()
+        local timer = vim.uv.new_timer()
         timer:start(ms, 0, vim.schedule_wrap(function ()
           timer:close()
           touch = touch + 1

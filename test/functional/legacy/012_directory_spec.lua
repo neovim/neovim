@@ -4,7 +4,6 @@
 -- - "dir", in directory relative to current dir
 
 local helpers = require('test.functional.helpers')(after_each)
-local luv = require('luv')
 
 local eq = helpers.eq
 local neq = helpers.neq
@@ -62,21 +61,21 @@ describe("'directory' option", function()
     meths.set_option_value('directory', '.', {})
 
     -- sanity check: files should not exist yet.
-    eq(nil, luv.fs_stat('.Xtest1.swp'))
+    eq(nil, vim.uv.fs_stat('.Xtest1.swp'))
 
     command('edit! Xtest1')
     poke_eventloop()
     eq('Xtest1', funcs.buffer_name('%'))
     -- Verify that the swapfile exists. In the legacy test this was done by
     -- reading the output from :!ls.
-    neq(nil, luv.fs_stat('.Xtest1.swp'))
+    neq(nil, vim.uv.fs_stat('.Xtest1.swp'))
 
     meths.set_option_value('directory', './Xtest2,.', {})
     command('edit Xtest1')
     poke_eventloop()
 
     -- swapfile should no longer exist in CWD.
-    eq(nil, luv.fs_stat('.Xtest1.swp'))
+    eq(nil, vim.uv.fs_stat('.Xtest1.swp'))
 
     eq({ 'Xtest1.swp', 'Xtest3' }, ls_dir_sorted('Xtest2'))
 

@@ -1,4 +1,4 @@
-local luv = require('luv')
+local uv = vim.uv
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
@@ -32,7 +32,7 @@ describe('command-line option', function()
     end)
 
     it('treats - as stdin', function()
-      eq(nil, luv.fs_stat(fname))
+      eq(nil, uv.fs_stat(fname))
       funcs.system({
         nvim_prog_abs(),
         '-u',
@@ -47,12 +47,12 @@ describe('command-line option', function()
         fname,
       }, { ':call setline(1, "42")', ':wqall!', '' })
       eq(0, eval('v:shell_error'))
-      local attrs = luv.fs_stat(fname)
+      local attrs = uv.fs_stat(fname)
       eq(#'42\n', attrs.size)
     end)
 
     it('does not expand $VAR', function()
-      eq(nil, luv.fs_stat(fname))
+      eq(nil, uv.fs_stat(fname))
       eq(true, not not dollar_fname:find('%$%w+'))
       write_file(dollar_fname, ':call setline(1, "100500")\n:wqall!\n')
       funcs.system({
@@ -69,7 +69,7 @@ describe('command-line option', function()
         fname,
       })
       eq(0, eval('v:shell_error'))
-      local attrs = luv.fs_stat(fname)
+      local attrs = uv.fs_stat(fname)
       eq(#'100500\n', attrs.size)
     end)
 
@@ -170,7 +170,7 @@ describe('command-line option', function()
         })
       )
       eq(2, eval('v:shell_error'))
-      eq(nil, luv.fs_stat(fname_2))
+      eq(nil, uv.fs_stat(fname_2))
     end)
   end)
 

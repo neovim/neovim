@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local mpack = require('mpack')
 local clear, funcs, eq = helpers.clear, helpers.funcs, helpers.eq
 local call = helpers.call
 local meths = helpers.meths
@@ -12,7 +11,7 @@ local function read_mpack_file(fname)
 
   local data = fd:read('*a')
   fd:close()
-  local unpack = mpack.Unpacker()
+  local unpack = vim.mpack.Unpacker()
   return unpack(data)
 end
 

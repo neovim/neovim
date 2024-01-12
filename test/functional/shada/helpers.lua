@@ -3,8 +3,6 @@ local meths = helpers.meths
 local write_file = helpers.write_file
 local concat_tables = helpers.concat_tables
 
-local mpack = require('mpack')
-
 local tmpname = helpers.tmpname()
 
 --   o={
@@ -64,7 +62,7 @@ local read_shada_file = function(fname)
   local fd = io.open(fname, 'r')
   local mstring = fd:read('*a')
   fd:close()
-  local unpack = mpack.Unpacker()
+  local unpack = vim.mpack.Unpacker()
   local ret = {}
   local cur, val
   local i = 0

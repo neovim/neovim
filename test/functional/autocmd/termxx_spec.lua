@@ -1,4 +1,4 @@
-local luv = require('luv')
+local uv = vim.uv
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 
@@ -78,14 +78,14 @@ describe('autocmd TermClose', function()
       eq(1, eval('get(g:, "test_job_started", 0)'))
     end)
 
-    luv.update_time()
-    local start = luv.now()
+    uv.update_time()
+    local start = uv.now()
     command('call jobstop(g:test_job)')
     retry(nil, nil, function()
       eq(1, eval('get(g:, "test_job_exited", 0)'))
     end)
-    luv.update_time()
-    local duration = luv.now() - start
+    uv.update_time()
+    local duration = uv.now() - start
     -- Nvim begins SIGTERM after KILL_TIMEOUT_MS.
     ok(duration >= 2000)
     ok(duration <= 4000) -- Epsilon for slow CI
@@ -105,14 +105,14 @@ describe('autocmd TermClose', function()
       eq(1, eval('get(g:, "test_job_started", 0)'))
     end)
 
-    luv.update_time()
-    local start = luv.now()
+    uv.update_time()
+    local start = uv.now()
     command('call jobstop(g:test_job)')
     retry(nil, nil, function()
       eq(1, eval('get(g:, "test_job_exited", 0)'))
     end)
-    luv.update_time()
-    local duration = luv.now() - start
+    uv.update_time()
+    local duration = uv.now() - start
     -- Nvim begins SIGKILL after (2 * KILL_TIMEOUT_MS).
     ok(duration >= 4000)
     ok(duration <= 7000) -- Epsilon for slow CI

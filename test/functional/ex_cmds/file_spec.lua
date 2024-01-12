@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local luv = require('luv')
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
@@ -8,7 +7,7 @@ local rmdir = helpers.rmdir
 local mkdir = helpers.mkdir
 
 describe(':file', function()
-  local swapdir = luv.cwd() .. '/Xtest-file_spec'
+  local swapdir = vim.uv.cwd() .. '/Xtest-file_spec'
   before_each(function()
     clear()
     rmdir(swapdir)

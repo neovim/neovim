@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local luv = require('luv')
 
 local mkdir = helpers.mkdir
 local clear = helpers.clear
@@ -28,8 +27,8 @@ end)
 after_each(function()
   os.remove(fname)
   os.remove(dfname)
-  luv.fs_rmdir(ddname)
-  luv.fs_rmdir(dname)
+  vim.uv.fs_rmdir(ddname)
+  vim.uv.fs_rmdir(dname)
 end)
 
 describe('writefile()', function()
